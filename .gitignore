@@ -93,3 +93,7 @@ Thumbs.db
 # Plastic SCM
 *.ignore
 *.orig
+
+# Local art staging workspace (not for version control)
+/[Aa]ssets/[Aa]rts/[Ss]taging/
+/[Aa]ssets/[Aa]rts/[Ss]taging.meta

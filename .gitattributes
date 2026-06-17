@@ -101,3 +101,8 @@
 *.apk filter=lfs diff=lfs merge=lfs -text
 *.aab filter=lfs diff=lfs merge=lfs -text
 *.app filter=lfs diff=lfs merge=lfs -text
+
+# =============================================================================
+# Exclusions — local staging, not tracked (see .gitignore)
+# =============================================================================
+Assets/Arts/Staging/** -filter -diff -merge text
