@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using NineGrid.Content;
 using NineGrid.Core.Content;
+using NineGrid.Core.Effects;
 using NineGrid.Core.Systems;
-using NineGrid.Core.Utilities;
 using NineGrid.Core.Utilities;
 using NUnit.Framework;
 using QFramework;
@@ -42,6 +42,25 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(catalog.Rewards.Pools.ContainsKey("kill.elite"));
             Assert.IsTrue(catalog.Rewards.Rooms.ContainsKey(RoomKind.Shop));
             Assert.AreEqual(9, catalog.Rewards.NodeDeckRules.Count);
+        }
+
+        [Test]
+        public void DefaultCatalogKeepsBatchOnePendingGateAndQuickWinsImplemented()
+        {
+            var catalog = NineGridArchitecture.Current.GetSystem<IContentSystem>().Catalog;
+            var report = NineGridArchitecture.Current.GetSystem<IContentSystem>().ValidateCatalog();
+
+            Assert.IsTrue(report.IsValid, FirstIssue(report));
+            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 51);
+            Assert.LessOrEqual(report.PendingEffectIds.Count, 73);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 21);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.Relic), 3);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.PlayerSkill), 3);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 46);
+
+            AssertImplemented(catalog, report, "relic.vitality_amulet.max_hp");
+            AssertImplemented(catalog, report, "relic.throwing_knife_bag.node_start");
+            AssertImplemented(catalog, report, "relic.potion_bag.node_start");
         }
 
         [Test]
@@ -147,6 +166,41 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(34, avatar.Stats.GetBase(StatId.Hp));
         }
 
+        [Test]
+        public void VitalityAmuletCatalogDslAppliesPermanentMaxHpModifier()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+
+            content.ActivateRelic("relic.vitality_amulet");
+
+            Assert.AreEqual(36, architecture.GetSystem<IStatSystem>().GetEffectiveInt(avatar, StatId.MaxHp));
+        }
+
+        [Test]
+        public void BagRelicsCatalogDslSpawnConfiguredHelpCardsIntoPlayerPoolOnNodeStart()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var player = architecture.GetModel<PlayerModel>();
+            var content = architecture.GetSystem<IContentSystem>();
+            var deck = architecture.GetModel<DeckModel>();
+            var registry = architecture.GetModel<CardRegistry>();
+
+            player.AddRelic("relic.throwing_knife_bag");
+            player.AddRelic("relic.potion_bag");
+            content.ActivateRelic("relic.throwing_knife_bag");
+            content.ActivateRelic("relic.potion_bag");
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new NodeStartedAction());
+
+            Assert.AreEqual(4, deck.PlayerCardPoolUids.Count);
+            Assert.AreEqual(2, CountCardsByDef(deck.PlayerCardPoolUids, registry, "help.throwing_knife"));
+            Assert.AreEqual(2, CountCardsByDef(deck.PlayerCardPoolUids, registry, "help.healing_potion"));
+        }
+
         private static bool Contains(IReadOnlyList<string> values, string expected)
         {
             for (var i = 0; i < values.Count; i++)
@@ -171,6 +225,47 @@ namespace NineGrid.Core.Tests
             }
 
             return false;
+        }
+
+        private static int CountEffectsByContainer(
+            GameContentCatalog catalog,
+            IReadOnlyList<string> effectIds,
+            EffectContainerType containerType)
+        {
+            var count = 0;
+            for (var i = 0; i < effectIds.Count; i++)
+            {
+                ContentEffectDefinition effect;
+                if (catalog.TryGetEffect(effectIds[i], out effect) && effect.ContainerType == containerType)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static int CountCardsByDef(IReadOnlyList<int> cardUids, CardRegistry registry, string defId)
+        {
+            var count = 0;
+            for (var i = 0; i < cardUids.Count; i++)
+            {
+                if (registry.Get(cardUids[i]).DefId == defId)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static void AssertImplemented(GameContentCatalog catalog, ContentValidationReport report, string effectId)
+        {
+            ContentEffectDefinition effect;
+            Assert.IsTrue(catalog.TryGetEffect(effectId, out effect), "Missing effect: " + effectId);
+            Assert.AreEqual(ContentImplementationState.Implemented, effect.State, effectId);
+            Assert.IsTrue(Contains(report.ImplementedEffectIds, effectId), effectId);
+            Assert.IsFalse(Contains(report.PendingEffectIds, effectId), effectId);
         }
 
         private static string FirstIssue(ContentValidationReport report)

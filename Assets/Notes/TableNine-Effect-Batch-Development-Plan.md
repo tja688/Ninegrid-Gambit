@@ -11,10 +11,10 @@
 
 | 项目 | 数量 |
 |:--|--:|
-| hardcoded implemented effects | 48 |
-| hardcoded explicit pending effects | 38 |
+| hardcoded implemented effects | 51 |
+| hardcoded explicit pending effects | 35 |
 | pending monster skill placeholder effects | 38 |
-| runtime pending effects | 76 |
+| runtime pending effects | 73 |
 | runtime total effects | 124 |
 | help cards | 27 |
 | relics | 19 |
@@ -71,7 +71,7 @@ Core EditMode test methods:
 | `P3ActionPipelineTests.cs` | 2 |
 | `P4NodeFlowTests.cs` | 11 |
 | `P5EffectSystemTests.cs` | 12 |
-| `P6ContentLandingTests.cs` | 6 |
+| `P6ContentLandingTests.cs` | 9 |
 | `P6LubanContentTests.cs` | 1 |
 | `P6R3LubanIntegrationTests.cs` | 4 |
 
@@ -101,14 +101,11 @@ HelpCard pending, 21:
 - `help.ward_magic_card.pending`
 - `help.watchtower.pending`
 
-Relic pending, 6:
+Relic pending, 3:
 
 - `relic.gold_armor.pending`
 - `relic.heavy_armor.pending`
 - `relic.lucky_coin.pending`
-- `relic.potion_bag.pending`
-- `relic.throwing_knife_bag.pending`
-- `relic.vitality_amulet.max_hp`
 
 PlayerSkill pending, 3:
 
@@ -167,16 +164,51 @@ MonsterSkill pending, 46:
 
 ### 0.3 相比上一版笔记的变化
 
-- 核心 burn-down 数字未移动：implemented 48、runtime pending 76、runtime total 124。
+- 批次1后核心 burn-down 数字已移动：implemented 51、runtime pending 73、runtime total 124。
 - Luban 仍是最小样例，不是生产内容源；Hardcoded catalog 仍是当前运行真源。
-- 本次补充了完整 pending ID 清单，并把 runtime pending 明确拆成 `38` 个显式 pending 和 `38` 个 `PendingSkill` 展开项。
-- Atom 表面比旧快照更明确：15 trigger、7 condition、9 target、17 action。下一批不要再把“缺表达力”和“已存在 atom 但未转内容”混在一起。
+- pending ID 清单已扣除批次1转换项，并把 runtime pending 明确拆成 `35` 个显式 pending 和 `38` 个 `PendingSkill` 展开项。
+- Atom 表面比旧快照更明确：15 trigger、7 condition、9 target、17 action。后续批次不要再把“缺表达力”和“已存在 atom 但未转内容”混在一起。
 
 ### 0.4 下一批建议
 
-优先落地批次1：建立 pending count / container count 闸门，并尝试只用现有 atom 转 1-3 个准确表达的 quick win。若 quick win 语义无法完全表达，就只完成闸门和报告，不强行清零。
+优先落地批次2：实现 ValueExpr v1，用通用动态数值能力解锁一组真实效果；批次1已完成 pending count / container count 闸门和 3 个现有 atom quick win。
 
-## 1. 当前事实基线
+## 1. 批次1落地记录（2026-06-18）
+
+目标：建立 hardcoded catalog 的 pending 上限闸门，并只转换现有 atom 已能准确表达的效果。
+
+本批转换：
+
+- `relic.vitality_amulet.max_hp`：Relic / Modifier / `Player`，`MaxHp +6`，复用现有 `Modifier` DSL。
+- `relic.throwing_knife_bag.node_start`：Relic / Triggered / `OnNodeStart`，向 `PlayerCardPool` 生成 2 张 `help.throwing_knife`。
+- `relic.potion_bag.node_start`：Relic / Triggered / `OnNodeStart`，向 `PlayerCardPool` 生成 2 张 `help.healing_potion`。
+
+本批闸门：
+
+- `P6ContentLandingTests.DefaultCatalogKeepsBatchOnePendingGateAndQuickWinsImplemented` 将 runtime pending 上限锁到 `<= 73`，并按容器锁定上限：HelpCard `<= 21`、Relic `<= 3`、PlayerSkill `<= 3`、MonsterSkill `<= 46`。
+- 转换项均断言为 `Implemented`，且不再出现在 pending report。
+
+批次1后数量：
+
+| 项目 | 数量 |
+|:--|--:|
+| hardcoded implemented effects | 51 |
+| hardcoded explicit pending effects | 35 |
+| pending monster skill placeholder effects | 38 |
+| runtime pending effects | 73 |
+| runtime total effects | 124 |
+
+验证记录：
+
+- Unity MCP refresh/compile：通过，Console 无编译错误。
+- 新增 P6 窄测试 3 个：通过。
+- `P5EffectSystemTests` + `P6ContentLandingTests`：21/21 通过。
+- `NineGrid.Core.Tests` EditMode 全量：54/54 通过。
+- `Assets/Notes/CI/check-core-guards.ps1`：通过。
+
+下一批建议：进入批次2 `ValueExpr v1`，优先解锁 `help.fireball.pending`、`help.impact_tutorial.pending`、`help.shield_bash_tutorial.pending`、`skill.thorn_skin.pending`、`skill.hard.pending` 这类动态数值效果。
+
+## 2. 当前事实基线
 
 ### 已经可靠的地基
 
@@ -188,11 +220,11 @@ MonsterSkill pending, 46:
 ### 当前还没签收的部分
 
 - `TableNineContentCatalog.cs` 仍是主要内容真源，Luban 只是最小样例，不是生产内容源。
-- hardcoded catalog 预计有 48 个 implemented effect、76 个 pending effect，R4 远未清零。
+- hardcoded catalog 预计有 51 个 implemented effect、73 个 pending effect，R4 远未清零。
 - 设计文档里效果总量更大：帮助卡 22 条、遗物 58 条、玩家技能 7 条、怪物技能 81 条。hardcoded catalog 覆盖了帮助卡和玩家技能的大部分，但遗物和怪物技能仍是子集/原型。
 - R5 的全内容回放网、pending 闸门、Luban 全量迁移闸门还没有完成。
 
-## 2. 核心判断
+## 3. 核心判断
 
 不要按“帮助卡 -> 遗物 -> 玩家技能 -> 怪物技能”硬推进。那会把同一种能力重复拆开，越做越乱。
 
@@ -204,7 +236,7 @@ MonsterSkill pending, 46:
 4. 每批都用 schema + catalog DSL + 行为测试证明。
 5. 最后再全量迁表、pending 清零、CI 卡死。
 
-## 3. 效果分类准则
+## 4. 效果分类准则
 
 每条效果先归入三态之一：
 
@@ -216,7 +248,7 @@ MonsterSkill pending, 46:
 
 不要把“规则改写”伪装成属性，不要把“动态数值”做成一堆专属 action，不要靠“记得减回去”处理临时效果。
 
-## 4. 批次规划
+## 5. 批次规划
 
 ### 批次0：事实重置
 
@@ -229,7 +261,7 @@ MonsterSkill pending, 46:
 - 标出上次规划后已经变化的事实。
 - 不做玩法代码，除非明确要求。
 
-### 批次1：基线闸门 + 现有 atom 快速清理
+### 批次1：基线闸门 + 现有 atom 快速清理（已落地）
 
 目标：让混乱变成可测量，并只转当前 atom 已经能准确表达的少量 pending。
 
@@ -366,15 +398,15 @@ MonsterSkill pending, 46:
 - 增加 hardcoded/Luban parity 测试。
 - pending 闸门逐步从“允许存在”变成“不允许增加”，最终变成 `pending == 0`。
 
-## 5. 推荐下一步
+## 6. 推荐下一步
 
 下一次如果要直接进入实现，建议从：
 
-1. **落地批次1**：建立 pending 闸门和现状报告，让后续 burn-down 可见。
-2. **落地批次2**：做 ValueExpr v1，因为它能解锁最多真实效果。
-3. **落地批次3**：做目标过滤/移动控制，帮助卡和怪物位移类会明显减少 pending。
+1. **落地批次2**：做 ValueExpr v1，因为它能解锁最多真实效果。
+2. **落地批次3**：做目标过滤/移动控制，帮助卡和怪物位移类会明显减少 pending。
+3. **落地批次4**：做生命周期、防伤、规则改写 v1，处理先攻、庇佑、嘲讽等效果。
 
-## 6. 给后续 AI 的技能入口
+## 7. 给后续 AI 的技能入口
 
 已创建 Codex skill：
 

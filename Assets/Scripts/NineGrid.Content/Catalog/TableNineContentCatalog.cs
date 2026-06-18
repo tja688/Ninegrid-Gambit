@@ -111,6 +111,10 @@ namespace NineGrid.Content
                     "{\"atom\":\"Player\"}",
                     "{\"atom\":\"Heal\",\"amount\":6,\"actor\":\"Player\"}"),
                 "[每关卡结束时] 恢复6点血量"));
+            c.AddEffect(Impl("relic.vitality_amulet.max_hp", EffectContainerType.Relic,
+                Modifier("relic.vitality_amulet.max_hp", "Relic", "{\"atom\":\"Player\"}", null,
+                    "{\"stat\":\"MaxHp\",\"op\":\"Add\",\"value\":6,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}"),
+                "血量上限+6"));
 
             c.AddEffect(Impl("relic.dragon_scale_armor.rule", EffectContainerType.Relic,
                 Rule("relic.dragon_scale_armor.rule", "Relic",
@@ -288,6 +292,19 @@ namespace NineGrid.Content
                     "{\"atom\":\"Repeat\",\"count\":2,\"action\":{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Player\"}}"),
                 "[使用帮助卡时] 对随机怪物连续造成2次2点伤害"));
 
+            c.AddEffect(Impl("relic.throwing_knife_bag.node_start", EffectContainerType.Relic,
+                Triggered("relic.throwing_knife_bag.node_start", "Relic",
+                    "{\"atom\":\"OnNodeStart\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"Spawn\",\"defId\":\"help.throwing_knife\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\",\"count\":2}"),
+                "[每关卡开始时] 将两张飞刀加入到玩家侧卡组"));
+            c.AddEffect(Impl("relic.potion_bag.node_start", EffectContainerType.Relic,
+                Triggered("relic.potion_bag.node_start", "Relic",
+                    "{\"atom\":\"OnNodeStart\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"Spawn\",\"defId\":\"help.healing_potion\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\",\"count\":2}"),
+                "[每关卡开始时] 将两张恢复药水加入到玩家侧卡组"));
+
             c.AddEffect(Impl("relic.junk_slot_machine.use", EffectContainerType.Relic,
                 Triggered("relic.junk_slot_machine.use", "Relic",
                     "{\"atom\":\"OnUseHelpCard\"}",
@@ -374,8 +391,8 @@ namespace NineGrid.Content
             Relic(c, "relic.wood_sword", "木剑", ContentRarity.White, "攻击+1，木套装额外+2").AddEffect("relic.wood_sword.base").AddEffect("relic.wood_sword.set");
             Relic(c, "relic.wood_armor", "木甲", ContentRarity.White, "血量上限+2，木套装额外+8").AddEffect("relic.wood_armor.base").AddEffect("relic.wood_armor.set");
             Relic(c, "relic.lucky_coin", "幸运硬币", ContentRarity.White, "击杀精英/层主时加入金币卡").AddEffect(Pending(c, "relic.lucky_coin.pending", EffectContainerType.Relic, "精英/Boss 击杀额外金币卡"));
-            Relic(c, "relic.throwing_knife_bag", "飞刀袋", ContentRarity.White, "每关卡开始加入两张飞刀").AddEffect(Pending(c, "relic.throwing_knife_bag.pending", EffectContainerType.Relic, "每关卡开始加入两张飞刀"));
-            Relic(c, "relic.potion_bag", "药水袋", ContentRarity.White, "每关卡开始加入两张恢复药水").AddEffect(Pending(c, "relic.potion_bag.pending", EffectContainerType.Relic, "每关卡开始加入两张恢复药水"));
+            Relic(c, "relic.throwing_knife_bag", "飞刀袋", ContentRarity.White, "每关卡开始加入两张飞刀").AddEffect("relic.throwing_knife_bag.node_start");
+            Relic(c, "relic.potion_bag", "药水袋", ContentRarity.White, "每关卡开始加入两张恢复药水").AddEffect("relic.potion_bag.node_start");
             Relic(c, "relic.junk_launcher", "废物发射器", ContentRarity.White, "使用帮助卡时随机伤害").AddEffect("relic.junk_launcher.use");
             Relic(c, "relic.junk_coating", "废物涂层", ContentRarity.White, "使用帮助卡时获得护甲").AddEffect("relic.junk_coating.use");
             Relic(c, "relic.sling", "弹弓", ContentRarity.White, "击杀怪物时随机伤害").AddEffect("relic.sling.kill");
@@ -383,7 +400,7 @@ namespace NineGrid.Content
             Relic(c, "relic.gold_knife", "打金刀", ContentRarity.White, "击杀怪物时获得2金币").AddEffect("relic.gold_knife.kill");
             Relic(c, "relic.heavy_armor", "重盔甲", ContentRarity.White, "基础护甲+1，按基础护甲补当前护甲").AddEffect(Pending(c, "relic.heavy_armor.pending", EffectContainerType.Relic, "关卡开始按基础护甲获得护甲"));
             Relic(c, "relic.gold_armor", "金币盔甲", ContentRarity.White, "金币抵消护甲伤害").AddEffect(Pending(c, "relic.gold_armor.pending", EffectContainerType.Relic, "伤害公式金币抵消"));
-            Relic(c, "relic.vitality_amulet", "活力护符", ContentRarity.Blue, "血量上限+6，关卡结束恢复6").AddEffect(Pending(c, "relic.vitality_amulet.max_hp", EffectContainerType.Relic, "血量上限+6")).AddEffect("relic.vitality_amulet.node_end");
+            Relic(c, "relic.vitality_amulet", "活力护符", ContentRarity.Blue, "血量上限+6，关卡结束恢复6").AddEffect("relic.vitality_amulet.max_hp").AddEffect("relic.vitality_amulet.node_end");
             Relic(c, "relic.dragon_scale_armor", "龙鳞甲", ContentRarity.Gold, "所有怪物攻击-1").AddEffect("relic.dragon_scale_armor.rule");
             Relic(c, "relic.phoenix_feather", "凤凰羽毛", ContentRarity.Gold, "致命伤害免死").AddEffect("relic.phoenix_feather.fatal");
             Relic(c, "relic.craving", "渴望", ContentRarity.Gold, "所有恢复血量效果翻倍").AddEffect("relic.craving.rule");
