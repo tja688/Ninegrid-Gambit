@@ -85,6 +85,39 @@ namespace NineGrid.Core
         }
     }
 
+    public sealed class ConditionalDealDamageIfAliveAction : GameAction
+    {
+        public ConditionalDealDamageIfAliveAction(int actorUid, int targetUid, int amount)
+        {
+            ActorUid = actorUid;
+            TargetUid = targetUid;
+            Amount = amount;
+        }
+
+        public int ActorUid { get; private set; }
+        public int TargetUid { get; private set; }
+        public int Amount { get; private set; }
+        public override string ActionName { get { return "ConditionalDealDamageIfAlive"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            CardInstance actor;
+            if (!context.GetModel<CardRegistry>().TryGet(ActorUid, out actor))
+            {
+                return GameActionResult.Empty;
+            }
+
+            if (actor.Zone.Value == ZoneId.Graveyard
+                || actor.Zone.Value == ZoneId.Removed
+                || (int)Math.Round(actor.Stats.GetBase(StatId.Hp)) <= 0)
+            {
+                return GameActionResult.Empty;
+            }
+
+            return new GameActionResult().AddFollowUp(new DealDamageAction(ActorUid, TargetUid, Amount));
+        }
+    }
+
     public sealed class MoveCardAction : GameAction
     {
         private static readonly TriggerPoint[] sPostTriggers =
@@ -336,6 +369,50 @@ namespace NineGrid.Core
                 .AddEvent(new CoreGameEvent(CoreEventType.EffectModifierApplied, context.ActionId, ActionName)
                     .WithCard(TargetUid)
                     .WithAmount((int)Stat)
+                    .WithDelta((int)Math.Round(Value))
+                    .WithMessage(Source));
+        }
+    }
+
+    public sealed class AddRuleModifierAction : GameAction
+    {
+        public AddRuleModifierAction(
+            int targetUid,
+            RuleId rule,
+            ModifierOp op,
+            float value,
+            ModifierLayer layer,
+            ModifierScope scope,
+            string source)
+        {
+            TargetUid = targetUid;
+            Rule = rule;
+            Op = op;
+            Value = value;
+            Layer = layer;
+            Scope = scope;
+            Source = source ?? "effect.action.rule";
+        }
+
+        public int TargetUid { get; private set; }
+        public RuleId Rule { get; private set; }
+        public ModifierOp Op { get; private set; }
+        public float Value { get; private set; }
+        public ModifierLayer Layer { get; private set; }
+        public ModifierScope Scope { get; private set; }
+        public string Source { get; private set; }
+        public override string ActionName { get { return "AddRuleModifier"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            IStatCondition condition = TargetUid == 0 ? null : new TargetUidCondition(TargetUid);
+            var modifier = new RuleModifier(Rule, Op, Value, Layer, new ModifierSource(Source), Scope, condition);
+            context.GetSystem<IStatSystem>().RuleModifiers.Add(modifier);
+
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.EffectModifierApplied, context.ActionId, ActionName)
+                    .WithCard(TargetUid)
+                    .WithAmount((int)Rule)
                     .WithDelta((int)Math.Round(Value))
                     .WithMessage(Source));
         }

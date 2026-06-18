@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NineGrid.Core.Commands;
+using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using NUnit.Framework;
 using QFramework;
@@ -77,6 +78,45 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(0, board.GetCardUid(targetSlot));
             Assert.IsFalse(deckSystem.HasEnemyOnBoard());
             Assert.AreEqual(GamePhase.RewardItemChoice, phaseSystem.CurrentPhase);
+        }
+
+        [Test]
+        public void FirstStrikeMonsterDealsDamageBeforePlayerAttack()
+        {
+            NineGridArchitecture.ResetForTests();
+            InitialGameFactory.Create(
+                NineGridArchitecture.Current,
+                new InitialGameOptions { AvatarAttack = 3 });
+
+            var architecture = NineGridArchitecture.Current;
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var statSystem = architecture.GetSystem<IStatSystem>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+            var options = new NodeDeckOptions { PlayerOpeningCount = 0, EnemyOpeningCount = 1 }
+                .AddEnemyCard(new CardDraft("monster.first_striker", CardKind.Monster)
+                {
+                    MaxHp = 2,
+                    Attack = 5
+                });
+
+            architecture.SendCommand(new StartNodeCommand(options));
+            var targetSlot = FindFirstMonsterSlot();
+            var monster = registry.Get(board.GetCardUid(targetSlot));
+            statSystem.RuleModifiers.Add(new RuleModifier(
+                RuleId.FirstStrike,
+                ModifierOp.Override,
+                1,
+                ModifierLayer.Persistent,
+                new ModifierSource("test.first_strike"),
+                ModifierScope.Permanent,
+                new TargetUidCondition(monster.Uid)));
+
+            var result = architecture.SendCommand(new AttackCommand(targetSlot));
+
+            Assert.IsTrue(result.Accepted);
+            Assert.AreEqual(25, avatar.Stats.GetBase(StatId.Hp));
+            Assert.AreEqual(ZoneId.Graveyard, monster.Zone.Value);
         }
 
         [Test]

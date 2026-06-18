@@ -99,10 +99,22 @@ namespace NineGrid.Core.Systems
             }
 
             var avatar = registry.Get(board.AvatarUid.Value);
-            var damage = this.GetSystem<IStatSystem>().GetEffectiveInt(avatar, StatId.Attack);
+            var statSystem = this.GetSystem<IStatSystem>();
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             var startIndex = pipeline.EventLog.Entries.Count;
-            pipeline.Enqueue(new DealDamageAction(avatar.Uid, targetUid, damage));
+            var avatarFirstStrike = HasFirstStrike(statSystem, avatar);
+            var targetFirstStrike = HasFirstStrike(statSystem, target);
+            if (targetFirstStrike && !avatarFirstStrike)
+            {
+                pipeline.Enqueue(new DealDamageAction(target.Uid, avatar.Uid, GetAttackDamage(statSystem, target)));
+                pipeline.Enqueue(new ConditionalDealDamageIfAliveAction(avatar.Uid, target.Uid, GetAttackDamage(statSystem, avatar)));
+            }
+            else
+            {
+                pipeline.Enqueue(new DealDamageAction(avatar.Uid, targetUid, GetAttackDamage(statSystem, avatar)));
+                pipeline.Enqueue(new ConditionalDealDamageIfAliveAction(target.Uid, avatar.Uid, GetAttackDamage(statSystem, target)));
+            }
+
             var resolved = pipeline.RunToCompletion();
 
             if (ContainsEventSince(startIndex, CoreEventType.CardKilled, targetUid))
@@ -276,6 +288,22 @@ namespace NineGrid.Core.Systems
             }
 
             return false;
+        }
+
+        private static bool HasFirstStrike(IStatSystem statSystem, CardInstance card)
+        {
+            return statSystem.EvaluateRule(RuleId.FirstStrike, 0f, statSystem.CreateContext(card)) > 0f;
+        }
+
+        private static int GetAttackDamage(IStatSystem statSystem, CardInstance card)
+        {
+            var damage = statSystem.GetEffectiveInt(card, StatId.Attack);
+            if (card.Kind == CardKind.Monster)
+            {
+                damage += (int)System.Math.Round(statSystem.EvaluateRule(RuleId.EnemyAttackDelta, 0f, statSystem.CreateContext(card)));
+            }
+
+            return System.Math.Max(0, damage);
         }
 
         private void RefreshLegalCommands()

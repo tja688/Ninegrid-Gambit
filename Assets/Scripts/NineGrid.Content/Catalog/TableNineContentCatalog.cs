@@ -70,6 +70,13 @@ namespace NineGrid.Content
                     "{\"atom\":\"Rotate\",\"direction\":\"CounterClockwise\"}"),
                 "[使用时] 逆时针旋转一次"));
 
+            c.AddEffect(Impl("help.ward_magic_card.use", EffectContainerType.HelpCard,
+                Triggered("help.ward_magic_card.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageMultiplier\",\"op\":\"Override\",\"value\":0,\"layer\":\"Temporary\",\"scope\":\"Once\",\"source\":\"help.ward_magic_card\"}"),
+                "[使用时] 下一次玩家受到伤害时，该次伤害变为0"));
+
             c.AddEffect(Impl("help.impact_tutorial.use", EffectContainerType.HelpCard,
                 Triggered("help.impact_tutorial.use", "HelpCard",
                     "{\"atom\":\"OnUseHelpCard\"}",
@@ -240,6 +247,19 @@ namespace NineGrid.Content
                     "[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":6}]",
                     "{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Conditional\",\"scope\":\"Permanent\"}"),
                 "[场上] 处于格6时，本卡攻击力+2"));
+            c.AddEffect(Impl("skill.stray_cub.first_strike", EffectContainerType.MonsterSkill,
+                Rule("skill.stray_cub.first_strike", "MonsterSkill",
+                    "{\"rule\":\"FirstStrike\",\"target\":\"Self\",\"op\":\"Override\",\"value\":1,\"layer\":\"Conditional\",\"scope\":\"Permanent\"}",
+                    "[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":6}]"),
+                "[场上] 处于格6时，本卡获得先攻"));
+            c.AddEffect(Impl("skill.first_strike.rule", EffectContainerType.MonsterSkill,
+                Rule("skill.first_strike.rule", "MonsterSkill",
+                    "{\"rule\":\"FirstStrike\",\"target\":\"Self\",\"op\":\"Override\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}"),
+                "持有先攻技能"));
+            c.AddEffect(Impl("skill.blessing.rule", EffectContainerType.MonsterSkill,
+                Rule("skill.blessing.rule", "MonsterSkill",
+                    "{\"rule\":\"DamageMultiplier\",\"target\":\"Self\",\"op\":\"Override\",\"value\":0,\"layer\":\"Temporary\",\"scope\":\"Once\"}"),
+                "下一次受到伤害时，该次伤害变为0"));
             c.AddEffect(Impl("skill.thief_claims.move", EffectContainerType.MonsterSkill,
                 Triggered("skill.thief_claims.move", "MonsterSkill",
                     "{\"atom\":\"OnSelfMove\",\"every\":3}",
@@ -409,7 +429,7 @@ namespace NineGrid.Content
         private static void AddHelpCards(GameContentCatalog c)
         {
             Help(c, "help.healing_potion", "恢复药水", ContentRarity.White, 30, "恢复").AddEffect("help.healing_potion.use");
-            Help(c, "help.ward_magic_card", "庇佑魔法卡", ContentRarity.White, 20, "护甲").AddEffect(Pending(c, "help.ward_magic_card.pending", EffectContainerType.HelpCard, "下一次玩家受到伤害时，该次伤害变为0"));
+            Help(c, "help.ward_magic_card", "庇佑魔法卡", ContentRarity.White, 20, "护甲").AddEffect("help.ward_magic_card.use");
             Help(c, "help.throwing_knife", "飞刀", ContentRarity.White, 20, "直伤").AddEffect("help.throwing_knife.use");
             Help(c, "help.fireball", "火球术", ContentRarity.White, 30, "直伤").AddEffect("help.fireball.use");
             Help(c, "help.rotation_wheel", "旋转轮", ContentRarity.White, 20, "位移").AddEffect("help.rotation_wheel.use");
@@ -481,7 +501,7 @@ namespace NineGrid.Content
         private static void AddMonsterSkills(GameContentCatalog c)
         {
             Skill(c, "skill.beggar_bond", "丐帮同心", EffectContainerType.MonsterSkill, "每移动5次洗入乞丐").AddEffect("skill.beggar_bond.move");
-            Skill(c, "skill.stray_cub", "流浪幼崽", EffectContainerType.MonsterSkill, "格6攻击+2并获得先攻").AddEffect("skill.stray_cub.slot6").AddEffect(Pending(c, "skill.stray_cub.first_strike", EffectContainerType.MonsterSkill, "先攻技能"));
+            Skill(c, "skill.stray_cub", "流浪幼崽", EffectContainerType.MonsterSkill, "格6攻击+2并获得先攻").AddEffect("skill.stray_cub.slot6").AddEffect("skill.stray_cub.first_strike");
             Skill(c, "skill.thief_claims", "东西归我了！", EffectContainerType.MonsterSkill, "每移动3次移除相邻帮助卡").AddEffect("skill.thief_claims.move");
             Skill(c, "skill.monster_battle_hardened", "历战怪物", EffectContainerType.MonsterSkill, "战斗时本卡攻击+2").AddEffect("skill.monster_battle_hardened.battle");
             Skill(c, "skill.learning_growth", "学习成长", EffectContainerType.MonsterSkill, "其他怪物获得攻击时本卡攻击+1").AddEffect(Pending(c, "skill.learning_growth.pending", EffectContainerType.MonsterSkill, "监听其他怪物攻击增加"));
@@ -540,8 +560,8 @@ namespace NineGrid.Content
             PendingSkill(c, "skill.violence_nutrition", "暴力即养分");
             PendingSkill(c, "skill.absorb_bone", "吸骨");
             PendingSkill(c, "skill.mixed_bones", "混合骨头");
-            PendingSkill(c, "skill.first_strike", "先攻");
-            PendingSkill(c, "skill.blessing", "庇佑");
+            Skill(c, "skill.first_strike", "先攻", EffectContainerType.MonsterSkill, "持有先攻技能").AddEffect("skill.first_strike.rule");
+            Skill(c, "skill.blessing", "庇佑", EffectContainerType.MonsterSkill, "下一次受到伤害时，该次伤害变为0").AddEffect("skill.blessing.rule");
         }
 
         private static void AddMonsterCards(GameContentCatalog c)
@@ -794,11 +814,17 @@ namespace NineGrid.Content
 
         private static string Rule(string id, string container, string rule)
         {
+            return Rule(id, container, rule, null);
+        }
+
+        private static string Rule(string id, string container, string rule, string conditions)
+        {
             return "{"
                 + "\"id\":\"" + id + "\","
                 + "\"typeTag\":\"" + TypeTag(container) + "\","
                 + "\"containerType\":\"" + container + "\","
                 + "\"kind\":\"RuleModifier\","
+                + (string.IsNullOrEmpty(conditions) ? string.Empty : "\"conditions\":" + conditions + ",")
                 + "\"ruleModifier\":" + rule
                 + "}";
         }

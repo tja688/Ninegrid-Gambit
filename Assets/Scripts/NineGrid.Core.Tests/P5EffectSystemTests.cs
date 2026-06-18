@@ -195,6 +195,10 @@ namespace NineGrid.Core.Tests
                 "help.impact_tutorial.use",
                 "help.shield_bash_tutorial.use",
                 "help.rotation_wheel.use",
+                "help.ward_magic_card.use",
+                "skill.stray_cub.first_strike",
+                "skill.first_strike.rule",
+                "skill.blessing.rule",
                 "skill.thief_claims.move",
                 "skill.unstable.move",
                 "skill.random_walk.move"
@@ -336,6 +340,64 @@ namespace NineGrid.Core.Tests
             architecture.GetSystem<IActionPipelineSystem>().Execute(new HealAction(avatar.Uid, avatar.Uid, 5));
 
             Assert.AreEqual(20, avatar.Stats.GetBase(StatId.Hp));
+        }
+
+        [Test]
+        public void AddRuleModifierAtomPreventsOnlyTheNextMatchingDamage()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var avatar = Avatar();
+            var monster = CreateMonster("monster.rule.damage", 20, SlotId.Board(2));
+            var definition = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.rule.prevent.next\","
+                + "\"typeTag\":\"【类型帮助卡】\","
+                + "\"containerType\":\"HelpCard\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"target\":{\"atom\":\"Player\"},"
+                + "\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageMultiplier\",\"op\":\"Override\",\"value\":0,\"layer\":\"Temporary\",\"scope\":\"Once\",\"source\":\"test.prevent\"}"
+                + "}");
+            Assert.IsTrue(Effects().Validate(definition).IsValid);
+            Effects().Activate(definition, new EffectOwner(EffectContainerType.HelpCard, "test.rule.prevent.next", 0));
+
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            pipeline.Execute(new UseItemAction(6001));
+            pipeline.Execute(new DealDamageAction(monster.Uid, avatar.Uid, 7));
+            Assert.AreEqual(30, avatar.Stats.GetBase(StatId.Hp));
+
+            pipeline.Execute(new DealDamageAction(monster.Uid, avatar.Uid, 7));
+            Assert.AreEqual(23, avatar.Stats.GetBase(StatId.Hp));
+        }
+
+        [Test]
+        public void TargetedRuleModifierPreventsDamageOnlyForItsOwner()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var avatar = Avatar();
+            var protectedMonster = CreateMonster("monster.blessed", 20, SlotId.Board(2));
+            var otherMonster = CreateMonster("monster.other", 20, SlotId.Board(4));
+            var definition = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.rule.targeted\","
+                + "\"typeTag\":\"【类型怪物技能】\","
+                + "\"containerType\":\"MonsterSkill\","
+                + "\"kind\":\"RuleModifier\","
+                + "\"ruleModifier\":{\"rule\":\"DamageMultiplier\",\"target\":\"Self\",\"op\":\"Override\",\"value\":0,\"layer\":\"Temporary\",\"scope\":\"Once\"}"
+                + "}");
+            Assert.IsTrue(Effects().Validate(definition).IsValid);
+            var instance = Effects().Activate(definition, new EffectOwner(EffectContainerType.MonsterSkill, "test.rule.targeted", protectedMonster.Uid));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new DealDamageAction(avatar.Uid, otherMonster.Uid, 5));
+            Assert.AreEqual(15, otherMonster.Stats.GetBase(StatId.Hp));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new DealDamageAction(avatar.Uid, protectedMonster.Uid, 5));
+            Assert.AreEqual(20, protectedMonster.Stats.GetBase(StatId.Hp));
+            EffectInstance ignored;
+            Assert.IsFalse(Effects().TryGetInstance(instance.InstanceId, out ignored));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new DealDamageAction(avatar.Uid, protectedMonster.Uid, 5));
+            Assert.AreEqual(15, protectedMonster.Stats.GetBase(StatId.Hp));
         }
 
         [Test]

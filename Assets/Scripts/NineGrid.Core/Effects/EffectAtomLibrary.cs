@@ -1361,6 +1361,41 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    [EffectAtom("AddRuleModifier", EffectAtomKind.Action)]
+    public sealed class AddRuleModifierEffectAction : IAction
+    {
+        private RuleId mRule = RuleId.DamageMultiplier;
+        private ModifierOp mOp = ModifierOp.Add;
+        private float mValue;
+        private ModifierLayer mLayer = ModifierLayer.Temporary;
+        private ModifierScope mScope = ModifierScope.Once;
+        private string mSource = "effect.action.rule";
+
+        public void Configure(EffectDslNode config)
+        {
+            mRule = config.Get("rule").AsEnum(RuleId.DamageMultiplier);
+            mOp = config.Get("op").AsEnum(ModifierOp.Add);
+            mValue = config.Get("value").AsFloat(0f);
+            mLayer = config.Get("layer").AsEnum(ModifierLayer.Temporary);
+            mScope = config.Get("scope").AsEnum(ModifierScope.Once);
+            mSource = config.Get("source").AsString("effect.action.rule");
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            var result = new List<GameAction>();
+            for (var i = 0; i < targets.Count; i++)
+            {
+                if (targets[i] != 0)
+                {
+                    result.Add(new AddRuleModifierAction(targets[i], mRule, mOp, mValue, mLayer, mScope, mSource));
+                }
+            }
+
+            return result;
+        }
+    }
+
     [EffectAtom("GrantSkill", EffectAtomKind.Action)]
     public sealed class GrantSkillEffectAction : IAction
     {

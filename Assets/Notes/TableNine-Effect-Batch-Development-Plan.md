@@ -291,9 +291,54 @@ MonsterSkill pending, 46:
 - `NineGrid.Core.Tests` EditMode 全量：63/63 通过。
 - `Assets/Notes/CI/check-core-guards.ps1`：通过。
 
-下一批建议：进入批次4 `Lifecycle, Prevention, and Rule Modifiers v1`，优先处理 `help.ward_magic_card.pending`、`relic.gold_armor.pending`、`skill.taunt.pending`、`skill.first_strike.pending`、`skill.blessing.pending`。
+下一批建议：批次4 已完成首个小闭环；继续批次4 后续可处理 `skill.taunt.pending`、`relic.gold_armor.pending`、`help.doubling_tower.pending`，或进入批次5 奖励/选择动作。
 
-## 4. 当前事实基线
+## 4. 批次4落地记录（2026-06-18）
+
+目标：实现生命周期、防伤、规则改写 v1 的最小可验闭环，先补一次性防伤和先攻规则，不展开到嘲讽/金币抵伤/帮助卡二次触发。
+
+本批新增能力：
+
+- 新增 `RuleId.DamageMultiplier`：伤害动作在扣护甲/血量前先询问规则修正；`ModifierScope.Once` 的防伤规则会在一次实际伤害结算后清理。
+- 新增 `RuleId.FirstStrike`：战斗入口按先攻规则决定玩家/怪物伤害顺序；怪物先攻且先造成致命伤害时，玩家不再反击。
+- 新增 `ruleModifier.target`：RuleModifier 可约束到 `Self` 或 `Player`，避免怪物技能变成全局规则。
+- 新增 `AddRuleModifier` action atom：Triggered 效果可以给目标注册一次性/临时规则修正。
+- 战斗反击开始接入 `EnemyAttackDelta`，让已有龙鳞甲类规则进入真实伤害入口。
+
+本批转换：
+
+- `help.ward_magic_card.use`：HelpCard / Triggered / `[使用时]`，给玩家注册一次性 `DamageMultiplier Override 0`。
+- `skill.stray_cub.first_strike`：MonsterSkill / RuleModifier / `Self`，处于格6时获得 `FirstStrike`。
+- `skill.first_strike.rule`：MonsterSkill / RuleModifier / `Self`，持有先攻。
+- `skill.blessing.rule`：MonsterSkill / RuleModifier / `Self`，下一次受到伤害变为0。
+
+刻意延后：
+
+- `skill.taunt.pending` 仍保持 pending。它需要交互合法性规则入口和“只能攻击本卡”的拒绝原因测试。
+- `relic.gold_armor.pending` 仍保持 pending。当前批次只完成乘法/覆盖型防伤，金币抵伤需要 PlayerModel 金币扣减与伤害公式联动。
+- `help.doubling_tower.pending` 仍保持 pending。它需要帮助卡触发二次执行与一次性移除语义，适合单独小批。
+
+批次4后数量：
+
+| 项目 | 数量 |
+|:--|--:|
+| hardcoded implemented effects | 63 |
+| hardcoded explicit pending effects | 25 |
+| pending monster skill placeholder effects | 36 |
+| runtime pending effects | 61 |
+| runtime total effects | 124 |
+
+验证记录：
+
+- Unity MCP refresh/compile：通过，Console 无编译错误；Unity Test Framework 写入 TestResults.xml 产生 2 条保存结果提示。
+- 批次4窄测试 6 个：通过。
+- `P5EffectSystemTests` + `P6ContentLandingTests`：34/34 通过。
+- `NineGrid.Core.Tests` EditMode 全量：68/68 通过。
+- `Assets/Notes/CI/check-core-guards.ps1`：通过。
+
+下一批建议：继续批次4 后续小批，优先做 `skill.taunt.pending` 的交互合法性规则；如果想换能力簇，则进入批次5 处理宝箱/奖励/选择动作。
+
+## 5. 当前事实基线
 
 ### 已经可靠的地基
 
@@ -305,11 +350,11 @@ MonsterSkill pending, 46:
 ### 当前还没签收的部分
 
 - `TableNineContentCatalog.cs` 仍是主要内容真源，Luban 只是最小样例，不是生产内容源。
-- hardcoded catalog 预计有 59 个 implemented effect、65 个 pending effect，R4 远未清零。
+- hardcoded catalog 预计有 63 个 implemented effect、61 个 pending effect，R4 远未清零。
 - 设计文档里效果总量更大：帮助卡 22 条、遗物 58 条、玩家技能 7 条、怪物技能 81 条。hardcoded catalog 覆盖了帮助卡和玩家技能的大部分，但遗物和怪物技能仍是子集/原型。
 - R5 的全内容回放网、pending 闸门、Luban 全量迁移闸门还没有完成。
 
-## 5. 核心判断
+## 6. 核心判断
 
 不要按“帮助卡 -> 遗物 -> 玩家技能 -> 怪物技能”硬推进。那会把同一种能力重复拆开，越做越乱。
 
@@ -321,7 +366,7 @@ MonsterSkill pending, 46:
 4. 每批都用 schema + catalog DSL + 行为测试证明。
 5. 最后再全量迁表、pending 清零、CI 卡死。
 
-## 6. 效果分类准则
+## 7. 效果分类准则
 
 每条效果先归入三态之一：
 
@@ -333,7 +378,7 @@ MonsterSkill pending, 46:
 
 不要把“规则改写”伪装成属性，不要把“动态数值”做成一堆专属 action，不要靠“记得减回去”处理临时效果。
 
-## 7. 批次规划
+## 8. 批次规划
 
 ### 批次0：事实重置
 
@@ -401,7 +446,7 @@ MonsterSkill pending, 46:
 - 没有候选目标时不崩、不产生幽灵副作用。
 - 移动仍走 GameAction，并产出 EventLog。
 
-### 批次4：生命周期、防伤、规则改写 v1
+### 批次4：生命周期、防伤、规则改写 v1（首个小闭环已落地）
 
 目标：解决“下一次”“只生效一次”“直到某时”“不能做某事”等规则型效果。
 
@@ -483,15 +528,15 @@ MonsterSkill pending, 46:
 - 增加 hardcoded/Luban parity 测试。
 - pending 闸门逐步从“允许存在”变成“不允许增加”，最终变成 `pending == 0`。
 
-## 8. 推荐下一步
+## 9. 推荐下一步
 
 下一次如果要直接进入实现，建议从：
 
-1. **落地批次4**：做生命周期、防伤、规则改写 v1，处理先攻、庇佑、嘲讽等效果。
+1. **继续批次4 后续小批**：做 `skill.taunt.pending` 的交互合法性规则，或做 `relic.gold_armor.pending` 的金币抵伤。
 2. **落地批次5**：接奖励/选择/内容动作，处理宝箱卡、血液转换、轻车熟路、幸运硬币。
 3. **落地批次6**：补 cause/source 与递归保护后，再处理 `skill.thorn_skin.pending`、火焰链式等来源敏感效果。
 
-## 9. 给后续 AI 的技能入口
+## 10. 给后续 AI 的技能入口
 
 已创建 Codex skill：
 

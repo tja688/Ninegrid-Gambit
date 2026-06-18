@@ -38,6 +38,34 @@ namespace NineGrid.Core.Stats
             return mModifiers.RemoveAll(modifier => modifier.Scope == scope);
         }
 
+        public int Consume(RuleId rule, ModifierScope scope, StatEvaluationContext context)
+        {
+            return Consume(rule, scope, context, null);
+        }
+
+        public int Consume(RuleId rule, ModifierScope scope, StatEvaluationContext context, IList<RuleModifier> consumed)
+        {
+            var removed = 0;
+            for (var i = mModifiers.Count - 1; i >= 0; i--)
+            {
+                var modifier = mModifiers[i];
+                if (modifier.Rule != rule || modifier.Scope != scope || !modifier.IsActive(context))
+                {
+                    continue;
+                }
+
+                mModifiers.RemoveAt(i);
+                if (consumed != null)
+                {
+                    consumed.Add(modifier);
+                }
+
+                removed++;
+            }
+
+            return removed;
+        }
+
         public float Evaluate(RuleId rule, float baseValue, StatEvaluationContext context)
         {
             var value = baseValue;

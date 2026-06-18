@@ -45,18 +45,18 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void DefaultCatalogKeepsBatchThreePendingGateAndConvertedEffectsImplemented()
+        public void DefaultCatalogKeepsBatchFourPendingGateAndConvertedEffectsImplemented()
         {
             var catalog = NineGridArchitecture.Current.GetSystem<IContentSystem>().Catalog;
             var report = NineGridArchitecture.Current.GetSystem<IContentSystem>().ValidateCatalog();
 
             Assert.IsTrue(report.IsValid, FirstIssue(report));
-            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 59);
-            Assert.LessOrEqual(report.PendingEffectIds.Count, 65);
-            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 16);
+            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 63);
+            Assert.LessOrEqual(report.PendingEffectIds.Count, 61);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 15);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.Relic), 3);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.PlayerSkill), 3);
-            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 43);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 40);
 
             AssertImplemented(catalog, report, "relic.vitality_amulet.max_hp");
             AssertImplemented(catalog, report, "relic.throwing_knife_bag.node_start");
@@ -69,6 +69,10 @@ namespace NineGrid.Core.Tests
             AssertImplemented(catalog, report, "skill.thief_claims.move");
             AssertImplemented(catalog, report, "skill.unstable.move");
             AssertImplemented(catalog, report, "skill.random_walk.move");
+            AssertImplemented(catalog, report, "help.ward_magic_card.use");
+            AssertImplemented(catalog, report, "skill.stray_cub.first_strike");
+            AssertImplemented(catalog, report, "skill.first_strike.rule");
+            AssertImplemented(catalog, report, "skill.blessing.rule");
         }
 
         [Test]
@@ -303,6 +307,53 @@ namespace NineGrid.Core.Tests
 
             Assert.AreEqual(SlotId.Board(5), walker.Slot.Value);
             Assert.AreEqual(SlotId.Board(4), help.Slot.Value);
+        }
+
+        [Test]
+        public void BatchFourWardMagicPreventsOnlyNextPlayerDamageFromCatalog()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+            var monster = PlaceMonster("monster.ward.attacker", 20, SlotId.Board(2));
+
+            UseHelpCard("help.ward_magic_card");
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new DealDamageAction(monster.Uid, avatar.Uid, 8));
+            Assert.AreEqual(30, avatar.Stats.GetBase(StatId.Hp));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new DealDamageAction(monster.Uid, avatar.Uid, 8));
+            Assert.AreEqual(22, avatar.Stats.GetBase(StatId.Hp));
+        }
+
+        [Test]
+        public void BatchFourFirstStrikeAndBlessingCatalogRulesApplyToOwner()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var statSystem = architecture.GetSystem<IStatSystem>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+            avatar.Stats.SetBase(StatId.Attack, 5);
+            var cub = PlaceMonster("monster.wandering_child", 10, SlotId.Board(6));
+
+            P5CatalogTestSupport.ActivateCatalogEffect(
+                architecture,
+                "skill.stray_cub.first_strike",
+                new EffectOwner(EffectContainerType.MonsterSkill, "skill.stray_cub", cub.Uid));
+
+            Assert.AreEqual(1f, statSystem.EvaluateRule(RuleId.FirstStrike, 0f, statSystem.CreateContext(cub)));
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new MoveCardAction(cub.Uid, SlotId.Board(4)));
+            Assert.AreEqual(0f, statSystem.EvaluateRule(RuleId.FirstStrike, 0f, statSystem.CreateContext(cub)));
+
+            P5CatalogTestSupport.ActivateCatalogEffect(
+                architecture,
+                "skill.blessing.rule",
+                new EffectOwner(EffectContainerType.MonsterSkill, "skill.blessing", cub.Uid));
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new DealDamageAction(avatar.Uid, cub.Uid, 5));
+            Assert.AreEqual(10, cub.Stats.GetBase(StatId.Hp));
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new DealDamageAction(avatar.Uid, cub.Uid, 5));
+            Assert.AreEqual(5, cub.Stats.GetBase(StatId.Hp));
         }
 
         private static bool Contains(IReadOnlyList<string> values, string expected)

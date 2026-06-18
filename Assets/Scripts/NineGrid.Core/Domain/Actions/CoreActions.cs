@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using NineGrid.Core.Effects;
+using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 
 namespace NineGrid.Core
@@ -38,7 +40,17 @@ namespace NineGrid.Core
                 return GameActionResult.Empty;
             }
 
-            var damage = Math.Max(0, Amount);
+            var statSystem = context.GetSystem<IStatSystem>();
+            var statContext = statSystem.CreateContext(target);
+            var baseDamage = Math.Max(0, Amount);
+            var damage = Math.Max(0, (int)Math.Round(statSystem.EvaluateRule(RuleId.DamageMultiplier, baseDamage, statContext)));
+            if (baseDamage > 0)
+            {
+                var consumed = new List<RuleModifier>();
+                statSystem.RuleModifiers.Consume(RuleId.DamageMultiplier, ModifierScope.Once, statContext, consumed);
+                DeactivateConsumedEffects(context, consumed);
+            }
+
             var armor = Math.Max(0, (int)Math.Round(target.Stats.GetBase(StatId.Armor)));
             var hp = Math.Max(0, (int)Math.Round(target.Stats.GetBase(StatId.Hp)));
             var armorLoss = Math.Min(armor, damage);
@@ -84,6 +96,26 @@ namespace NineGrid.Core
             }
 
             return result;
+        }
+
+        private static void DeactivateConsumedEffects(GameActionContext context, IReadOnlyList<RuleModifier> consumed)
+        {
+            if (consumed == null || consumed.Count == 0)
+            {
+                return;
+            }
+
+            var effectSystem = context.GetSystem<IEffectSystem>();
+            for (var i = 0; i < consumed.Count; i++)
+            {
+                var source = consumed[i].Source.Id;
+                if (string.IsNullOrEmpty(source) || !source.StartsWith("effect:", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                effectSystem.Deactivate(source.Substring("effect:".Length));
+            }
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)

@@ -287,6 +287,18 @@ namespace NineGrid.Core.Effects
             {
                 result.Add("schema.action.skillDefId", path + ".skillDefId is required for GrantSkill.");
             }
+            else if (Same(atom, "AddRuleModifier"))
+            {
+                if (!node.Has("rule"))
+                {
+                    result.Add("schema.action.rule", path + ".rule is required for AddRuleModifier.");
+                }
+
+                if (!node.Has("value"))
+                {
+                    result.Add("schema.action.value", path + ".value is required for AddRuleModifier.");
+                }
+            }
             else if (Same(atom, "Move") && !node.Has("toSlot"))
             {
                 result.Add("schema.action.toSlot", path + ".toSlot is required for Move.");

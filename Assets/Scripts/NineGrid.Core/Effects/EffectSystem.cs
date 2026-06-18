@@ -304,7 +304,7 @@ namespace NineGrid.Core.Effects
         private RuleModifier CreateRuleModifier(EffectInstance instance)
         {
             var node = instance.Definition.RuleModifier;
-            var condition = CreateCompositeStatCondition(instance);
+            var condition = CreateCompositeStatCondition(instance, ResolveRuleModifierTargetUid(instance, node));
             return new RuleModifier(
                 node.Get("rule").AsEnum(RuleId.RecoveryMultiplier),
                 node.Get("op").AsEnum(ModifierOp.Add),
@@ -317,13 +317,23 @@ namespace NineGrid.Core.Effects
 
         private IStatCondition CreateCompositeStatCondition(EffectInstance instance)
         {
-            if (instance.Conditions.Count == 0)
+            return CreateCompositeStatCondition(instance, 0);
+        }
+
+        private IStatCondition CreateCompositeStatCondition(EffectInstance instance, int targetUid)
+        {
+            if (instance.Conditions.Count == 0 && targetUid == 0)
             {
                 return null;
             }
 
             var buildContext = new EffectBuildContext(((IBelongToArchitecture)this).GetArchitecture(), instance);
             var conditions = new List<IStatCondition>();
+            if (targetUid != 0)
+            {
+                conditions.Add(new TargetUidCondition(targetUid));
+            }
+
             for (var i = 0; i < instance.Conditions.Count; i++)
             {
                 var condition = instance.Conditions[i].CreateStatCondition(buildContext);
@@ -334,6 +344,27 @@ namespace NineGrid.Core.Effects
             }
 
             return conditions.Count == 0 ? null : new AllStatCondition(conditions);
+        }
+
+        private int ResolveRuleModifierTargetUid(EffectInstance instance, EffectDslNode node)
+        {
+            if (node == null || node.IsNull || !node.Has("target"))
+            {
+                return 0;
+            }
+
+            var target = node.Get("target").AsString(string.Empty);
+            if (string.Equals(target, "Self", StringComparison.OrdinalIgnoreCase))
+            {
+                return instance.Owner == null ? 0 : instance.Owner.OwnerUid;
+            }
+
+            if (string.Equals(target, "Player", StringComparison.OrdinalIgnoreCase))
+            {
+                return this.GetModel<BoardModel>().AvatarUid.Value;
+            }
+
+            return 0;
         }
 
         private CardInstance GetOwnerCard(EffectOwner owner)

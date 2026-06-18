@@ -61,7 +61,9 @@ namespace NineGrid.Core
         RecoveryMultiplier,
         InteractionDistance,
         EnemyAttackDelta,
-        GoldCostOffset
+        GoldCostOffset,
+        DamageMultiplier,
+        FirstStrike
     }
 
     public enum RoomKind

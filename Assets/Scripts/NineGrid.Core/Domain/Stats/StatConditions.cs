@@ -90,4 +90,19 @@ namespace NineGrid.Core.Stats
             return context != null && context.OwnerSlot.IsAdjacentTo(TargetSlot);
         }
     }
+
+    public sealed class TargetUidCondition : IStatCondition
+    {
+        public TargetUidCondition(int targetUid)
+        {
+            TargetUid = targetUid;
+        }
+
+        public int TargetUid { get; private set; }
+
+        public bool IsMet(StatEvaluationContext context)
+        {
+            return context != null && context.Owner != null && context.Owner.Uid == TargetUid;
+        }
+    }
 }
