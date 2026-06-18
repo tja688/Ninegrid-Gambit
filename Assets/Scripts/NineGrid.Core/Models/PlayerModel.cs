@@ -45,6 +45,12 @@ namespace NineGrid.Core
             Touch();
         }
 
+        public void AddInteractionCount(int delta)
+        {
+            InteractionCount.Value += delta;
+            Touch();
+        }
+
         public void AddRelic(string defId)
         {
             if (!string.IsNullOrEmpty(defId) && !mRelicDefIds.Contains(defId))

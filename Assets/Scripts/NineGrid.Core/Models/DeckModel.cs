@@ -116,6 +116,29 @@ namespace NineGrid.Core
             return removed;
         }
 
+        public bool TryPeekDrawPile(out int uid)
+        {
+            if (mDrawPileUids.Count == 0)
+            {
+                uid = 0;
+                return false;
+            }
+
+            uid = mDrawPileUids[0];
+            return true;
+        }
+
+        public void ReorderDrawPile(IReadOnlyList<int> orderedUids)
+        {
+            mDrawPileUids.Clear();
+            for (var i = 0; i < orderedUids.Count; i++)
+            {
+                mDrawPileUids.Add(orderedUids[i]);
+            }
+
+            Touch();
+        }
+
         public void Clear()
         {
             mDrawPileUids.Clear();

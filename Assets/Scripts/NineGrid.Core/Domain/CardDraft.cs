@@ -1,0 +1,118 @@
+using System.Collections.Generic;
+
+namespace NineGrid.Core
+{
+    public sealed class CardDraft
+    {
+        public CardDraft(string defId, CardKind kind)
+        {
+            DefId = defId ?? string.Empty;
+            Kind = kind;
+        }
+
+        public string DefId { get; private set; }
+        public CardKind Kind { get; private set; }
+        public int MaxHp { get; set; }
+        public int Hp { get; set; }
+        public int Attack { get; set; }
+        public int Armor { get; set; }
+        public int Recovery { get; set; }
+        public int GoldReward { get; set; }
+        public bool IsElite { get; set; }
+
+        public CardInstance Create(CardRegistry registry)
+        {
+            var card = registry.Create(DefId, Kind);
+            if (MaxHp > 0)
+            {
+                card.Stats.SetBase(StatId.MaxHp, MaxHp);
+                card.Stats.SetBase(StatId.Hp, Hp > 0 ? Hp : MaxHp);
+            }
+
+            if (Attack != 0)
+            {
+                card.Stats.SetBase(StatId.Attack, Attack);
+            }
+
+            if (Armor != 0)
+            {
+                card.Stats.SetBase(StatId.Armor, Armor);
+            }
+
+            if (Recovery != 0)
+            {
+                card.Stats.SetBase(StatId.Recovery, Recovery);
+            }
+
+            if (GoldReward != 0)
+            {
+                card.Counters.Set(CoreCounterKeys.GoldReward, GoldReward);
+            }
+
+            if (IsElite)
+            {
+                card.Counters.Set(CoreCounterKeys.Elite, 1);
+            }
+
+            return card;
+        }
+    }
+
+    public sealed class NodeDeckOptions
+    {
+        private readonly List<CardDraft> mPlayerCards = new List<CardDraft>();
+        private readonly List<CardDraft> mEnemyCards = new List<CardDraft>();
+
+        public NodeDeckOptions()
+        {
+            PlayerOpeningCount = 3;
+            EnemyOpeningCount = 3;
+            RequireElite = false;
+        }
+
+        public int PlayerOpeningCount { get; set; }
+        public int EnemyOpeningCount { get; set; }
+        public bool RequireElite { get; set; }
+
+        public IReadOnlyList<CardDraft> PlayerCards
+        {
+            get { return mPlayerCards; }
+        }
+
+        public IReadOnlyList<CardDraft> EnemyCards
+        {
+            get { return mEnemyCards; }
+        }
+
+        public NodeDeckOptions AddPlayerCard(CardDraft draft)
+        {
+            if (draft != null)
+            {
+                mPlayerCards.Add(draft);
+            }
+
+            return this;
+        }
+
+        public NodeDeckOptions AddEnemyCard(CardDraft draft)
+        {
+            if (draft != null)
+            {
+                mEnemyCards.Add(draft);
+            }
+
+            return this;
+        }
+
+        public static NodeDeckOptions CreateDefaultBattle()
+        {
+            return new NodeDeckOptions()
+                .AddPlayerCard(new CardDraft("player.strike", CardKind.PlayerCard))
+                .AddPlayerCard(new CardDraft("player.guard", CardKind.PlayerCard))
+                .AddPlayerCard(new CardDraft("player.coin", CardKind.Item) { GoldReward = 1 })
+                .AddEnemyCard(new CardDraft("monster.slime", CardKind.Monster) { MaxHp = 3, Attack = 1, GoldReward = 1 })
+                .AddEnemyCard(new CardDraft("monster.bat", CardKind.Monster) { MaxHp = 2, Attack = 1, GoldReward = 1 })
+                .AddEnemyCard(new CardDraft("monster.guard", CardKind.Monster) { MaxHp = 4, Attack = 1, Armor = 1, GoldReward = 2 });
+        }
+    }
+}

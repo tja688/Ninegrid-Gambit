@@ -8,6 +8,7 @@ namespace NineGrid.Core
         public BindableProperty<int> NodeIndex { get; private set; }
         public BindableProperty<ulong> Seed { get; private set; }
         public BindableProperty<RoomKind> Room { get; private set; }
+        public BindableProperty<GamePhase> Phase { get; private set; }
         public BindableProperty<int> Version { get; private set; }
 
         protected override void OnInit()
@@ -18,6 +19,7 @@ namespace NineGrid.Core
                 NodeIndex = new BindableProperty<int>(0);
                 Seed = new BindableProperty<ulong>(1UL);
                 Room = new BindableProperty<RoomKind>(RoomKind.None);
+                Phase = new BindableProperty<GamePhase>(GamePhase.None);
                 Version = new BindableProperty<int>(0);
             }
         }
@@ -28,6 +30,13 @@ namespace NineGrid.Core
             NodeIndex.Value = 0;
             Seed.Value = seed;
             Room.Value = RoomKind.Battle;
+            Phase.Value = GamePhase.BuildEnemyPool;
+            Touch();
+        }
+
+        public void SetPhase(GamePhase phase)
+        {
+            Phase.Value = phase;
             Touch();
         }
 

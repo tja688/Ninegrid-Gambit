@@ -19,6 +19,11 @@ namespace NineGrid.Core
             RegisterModel(new RunModel());
 
             RegisterSystem<IStatSystem>(new StatSystem());
+            RegisterSystem<ITriggerSystem>(new TriggerSystem());
+            RegisterSystem<IActionPipelineSystem>(new ActionPipelineSystem());
+            RegisterSystem<IBoardSystem>(new BoardSystem());
+            RegisterSystem<IDeckSystem>(new DeckSystem());
+            RegisterSystem<IPhaseSystem>(new PhaseSystem());
         }
 
         public static IArchitecture Current

@@ -76,4 +76,82 @@ namespace NineGrid.Core
         Treasure,
         Event
     }
+
+    public enum TriggerTiming
+    {
+        Pre,
+        Post
+    }
+
+    public enum TriggerPoint
+    {
+        BeforeAction,
+        AfterAction,
+        OnBattle,
+        OnDamage,
+        OnHeal,
+        OnArmorGained,
+        OnGoldChanged,
+        OnRemove,
+        OnKill,
+        OnDeal,
+        OnRotate,
+        OnMove,
+        OnSwap,
+        OnInteract,
+        OnUseHelpCard,
+        OnNodeStart,
+        OnNodeEnd,
+        OnActionRejected
+    }
+
+    public enum CoreEventType
+    {
+        ActionStarted,
+        ActionFinished,
+        ActionRejected,
+        DamageDealt,
+        HpChanged,
+        ArmorChanged,
+        Healed,
+        GoldModified,
+        CardRemoved,
+        CardKilled,
+        CardMoved,
+        CardSwapped,
+        BoardRotated,
+        CardDealt,
+        DrawPileExhausted,
+        SlotsFilled,
+        InteractionChanged,
+        PhaseChanged,
+        NodeStarted,
+        NodeCompleted,
+        ItemPicked,
+        EmptyClicked,
+        ItemUsed
+    }
+
+    public enum GamePhase
+    {
+        None,
+        BuildEnemyPool,
+        ResetNode,
+        DealOpeningCards,
+        InteractionLoop,
+        ClearCheck,
+        RewardItemChoice,
+        RoomChoice,
+        RoomEvent,
+        NodeCompleted
+    }
+
+    public enum GameCommandKind
+    {
+        StartNode,
+        Attack,
+        PickupItem,
+        ClickEmpty,
+        UseItem
+    }
 }
