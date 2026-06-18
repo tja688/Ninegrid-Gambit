@@ -1,0 +1,8 @@
+[
+  {
+    "id": "deck.common.1",
+    "display_name": "通用一层",
+    "kind": "Reserve",
+    "monster_def_ids": "monster.slime"
+  }
+]

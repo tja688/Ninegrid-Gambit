@@ -1,0 +1,16 @@
+[
+  {
+    "def_id": "skill.hard_skin",
+    "display_name": "硬皮",
+    "container_type": "PlayerSkill",
+    "design_text": "血量上限+10",
+    "effect_ids": "skill.hard_skin.max_hp"
+  },
+  {
+    "def_id": "monster.slime.skill",
+    "display_name": "粘液本能",
+    "container_type": "MonsterSkill",
+    "design_text": "待补技能示例",
+    "effect_ids": "monster.slime.pending"
+  }
+]

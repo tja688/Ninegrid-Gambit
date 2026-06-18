@@ -1,0 +1,37 @@
+[
+  {
+    "id": "help.healing_potion.use",
+    "container_type": "HelpCard",
+    "state": "Implemented",
+    "json": "{\"id\":\"help.healing_potion.use\",\"typeTag\":\"【类型帮助卡】\",\"verb\":\"Use\",\"kind\":\"Triggered\",\"containerType\":\"HelpCard\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":10,\"actor\":\"Player\"}}",
+    "design_text": "[使用时] 恢复10点血量"
+  },
+  {
+    "id": "help.throwing_knife.use",
+    "container_type": "HelpCard",
+    "state": "Implemented",
+    "json": "{\"id\":\"help.throwing_knife.use\",\"typeTag\":\"【类型帮助卡】\",\"verb\":\"Use\",\"kind\":\"Triggered\",\"containerType\":\"HelpCard\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"RandomMonster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":6,\"actor\":\"Player\"}}",
+    "design_text": "[使用时] 对目标怪物卡造成6点伤害"
+  },
+  {
+    "id": "relic.junk_launcher.use",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.junk_launcher.use\",\"typeTag\":\"【类型遗物】\",\"verb\":\"Trigger\",\"kind\":\"Triggered\",\"containerType\":\"Relic\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"RandomMonster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Player\"}}",
+    "design_text": "[使用帮助卡时] 对随机一张怪物卡造成2点伤害"
+  },
+  {
+    "id": "skill.hard_skin.max_hp",
+    "container_type": "PlayerSkill",
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.hard_skin.max_hp\",\"typeTag\":\"【类型玩家技能】\",\"verb\":\"Passive\",\"kind\":\"Modifier\",\"containerType\":\"PlayerSkill\",\"target\":{\"atom\":\"Player\"},\"modifier\":{\"stat\":\"MaxHp\",\"op\":\"Add\",\"value\":10,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}",
+    "design_text": "获得本技能时血量上限+10"
+  },
+  {
+    "id": "monster.slime.pending",
+    "container_type": "MonsterSkill",
+    "state": "PendingAtom",
+    "json": "",
+    "design_text": "示例：待补原子的怪物技能仍会被 ContentSystem 记录为 pending"
+  }
+]

@@ -2,7 +2,8 @@
     "name": "NineGrid.Content",
     "rootNamespace": "NineGrid.Content",
     "references": [
-        "NineGrid.Core"
+        "NineGrid.Core",
+        "Luban.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

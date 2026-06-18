@@ -1,0 +1,18 @@
+[
+  {
+    "id": "reward.help.basic.healing_potion",
+    "pool_id": "reward.help.basic",
+    "def_id": "help.healing_potion",
+    "kind": "HelpCard",
+    "weight": 100,
+    "count": 1
+  },
+  {
+    "id": "reward.help.basic.throwing_knife",
+    "pool_id": "reward.help.basic",
+    "def_id": "help.throwing_knife",
+    "kind": "HelpCard",
+    "weight": 100,
+    "count": 1
+  }
+]

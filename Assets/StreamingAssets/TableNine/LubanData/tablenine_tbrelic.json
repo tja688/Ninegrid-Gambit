@@ -1,0 +1,10 @@
+[
+  {
+    "def_id": "relic.junk_launcher",
+    "display_name": "废物发射器",
+    "rarity": "Blue",
+    "design_text": "使用帮助卡时对随机怪物造成2点伤害",
+    "tags": "junk",
+    "effect_ids": "relic.junk_launcher.use"
+  }
+]

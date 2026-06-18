@@ -1,0 +1,15 @@
+[
+  {
+    "node_index": 1,
+    "total_monster_count": 6,
+    "level1_min": 4,
+    "level1_max": 6,
+    "level2_min": 0,
+    "level2_max": 1,
+    "level3_min": 0,
+    "level3_max": 0,
+    "elite_count": 0,
+    "boss_count": 0,
+    "deck_kind": "Reserve"
+  }
+]

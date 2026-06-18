@@ -1,0 +1,11 @@
+[
+  {
+    "id": "default",
+    "monster_removed_gold": 5,
+    "unused_help_card_gold": 10,
+    "skip_help_choice_gold": 10,
+    "skip_relic_choice_gold": 20,
+    "discard_relic_gold": 20,
+    "shop_delete_help_card_gold": 10
+  }
+]
