@@ -1,0 +1,22 @@
+{
+    "name": "NineGrid.Core.Tests",
+    "rootNamespace": "NineGrid.Core.Tests",
+    "references": [
+        "NineGrid.Core",
+        "QFramework"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}
