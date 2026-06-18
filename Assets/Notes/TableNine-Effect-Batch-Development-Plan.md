@@ -208,7 +208,50 @@ MonsterSkill pending, 46:
 
 下一批建议：进入批次2 `ValueExpr v1`，优先解锁 `help.fireball.pending`、`help.impact_tutorial.pending`、`help.shield_bash_tutorial.pending`、`skill.thorn_skin.pending`、`skill.hard.pending` 这类动态数值效果。
 
-## 2. 当前事实基线
+## 2. 批次2落地记录（2026-06-18）
+
+目标：实现 `ValueExpr v1`，让动作 atom 可以从玩家、当前目标、事件和简单表达式读取动态数值，同时保持旧 `amount` 常量 DSL 兼容。
+
+本批新增能力：
+
+- `DealDamage`、`Heal`、`GainArmor` 支持 `value` 字段；旧 `amount` 字段继续可用。
+- `value` 支持 `source + stat` 读值：`Player`、`Target`、`Owner/Self`、`EventTarget`、`EventCard`、`Actor`。
+- `value` 支持 `Event` 字段：`Amount`、`Delta`、`RemainingHp`、`RemainingArmor`。
+- `value` 支持简单组合：`Add`、`Subtract`、`Multiply`、`Min`、`Max`、`Negate`。
+- `EffectAtomSchemas` 增加表达式 schema 校验，能拦截未知 source/stat/op/field；动作数值现在要求 `amount` 或 `value` 二选一。
+
+本批转换：
+
+- `help.fireball.use`：HelpCard / Triggered / `[使用时]`，随机怪物目标，伤害值读取 `Player.Attack`。
+- `help.impact_tutorial.use`：HelpCard / Triggered / `[使用时]`，随机怪物目标，伤害值读取 `Player.Hp`。
+- `help.shield_bash_tutorial.use`：HelpCard / Triggered / `[使用时]`，随机怪物目标，伤害值读取 `Player.Armor`。
+- `help.food_card.use`：HelpCard / Triggered / `[使用时]`，治疗值为 `Player.MaxHp - Player.Hp`。
+
+刻意延后：
+
+- `skill.thorn_skin.pending` 仍保持 pending。它需要在 `OnBattle` 上再次造成伤害，当前还缺 source/cause 标签与递归保护；放入批次6更稳。
+- `skill.hard.pending` 仍保持 pending。它需要记录“本次战斗损失护甲值”，不是纯当前 stat 读值。
+
+批次2后数量：
+
+| 项目 | 数量 |
+|:--|--:|
+| hardcoded implemented effects | 55 |
+| hardcoded explicit pending effects | 31 |
+| pending monster skill placeholder effects | 38 |
+| runtime pending effects | 69 |
+| runtime total effects | 124 |
+
+验证记录：
+
+- Unity MCP refresh/compile：通过，Console 无编译错误。
+- `P5EffectSystemTests` + `P6ContentLandingTests`：23/23 通过。
+- `NineGrid.Core.Tests` EditMode 全量：56/56 通过。
+- `Assets/Notes/CI/check-core-guards.ps1`：通过。
+
+下一批建议：进入批次3 `Target Filters and Movement Control v1`，补选择/过滤/随机目标能力，再转换 `help.rotation_wheel.pending`、`help.swap_card.pending`、`help.teleport_card.pending`、`skill.thief_claims.pending`、`skill.unstable.pending`、`skill.random_walk.pending` 中的一小组。
+
+## 3. 当前事实基线
 
 ### 已经可靠的地基
 
@@ -220,11 +263,11 @@ MonsterSkill pending, 46:
 ### 当前还没签收的部分
 
 - `TableNineContentCatalog.cs` 仍是主要内容真源，Luban 只是最小样例，不是生产内容源。
-- hardcoded catalog 预计有 51 个 implemented effect、73 个 pending effect，R4 远未清零。
+- hardcoded catalog 预计有 55 个 implemented effect、69 个 pending effect，R4 远未清零。
 - 设计文档里效果总量更大：帮助卡 22 条、遗物 58 条、玩家技能 7 条、怪物技能 81 条。hardcoded catalog 覆盖了帮助卡和玩家技能的大部分，但遗物和怪物技能仍是子集/原型。
 - R5 的全内容回放网、pending 闸门、Luban 全量迁移闸门还没有完成。
 
-## 3. 核心判断
+## 4. 核心判断
 
 不要按“帮助卡 -> 遗物 -> 玩家技能 -> 怪物技能”硬推进。那会把同一种能力重复拆开，越做越乱。
 
@@ -236,7 +279,7 @@ MonsterSkill pending, 46:
 4. 每批都用 schema + catalog DSL + 行为测试证明。
 5. 最后再全量迁表、pending 清零、CI 卡死。
 
-## 4. 效果分类准则
+## 5. 效果分类准则
 
 每条效果先归入三态之一：
 
@@ -248,7 +291,7 @@ MonsterSkill pending, 46:
 
 不要把“规则改写”伪装成属性，不要把“动态数值”做成一堆专属 action，不要靠“记得减回去”处理临时效果。
 
-## 5. 批次规划
+## 6. 批次规划
 
 ### 批次0：事实重置
 
@@ -278,7 +321,7 @@ MonsterSkill pending, 46:
 - 转换项有 executable DSL 和测试。
 - P5/P6 相关测试通过。
 
-### 批次2：动态数值表达 ValueExpr v1
+### 批次2：动态数值表达 ValueExpr v1（已落地）
 
 目标：解决“造成等同于 X 的伤害/恢复/加成”这一大类共通难题。
 
@@ -398,15 +441,15 @@ MonsterSkill pending, 46:
 - 增加 hardcoded/Luban parity 测试。
 - pending 闸门逐步从“允许存在”变成“不允许增加”，最终变成 `pending == 0`。
 
-## 6. 推荐下一步
+## 7. 推荐下一步
 
 下一次如果要直接进入实现，建议从：
 
-1. **落地批次2**：做 ValueExpr v1，因为它能解锁最多真实效果。
-2. **落地批次3**：做目标过滤/移动控制，帮助卡和怪物位移类会明显减少 pending。
-3. **落地批次4**：做生命周期、防伤、规则改写 v1，处理先攻、庇佑、嘲讽等效果。
+1. **落地批次3**：做目标过滤/移动控制，帮助卡和怪物位移类会明显减少 pending。
+2. **落地批次4**：做生命周期、防伤、规则改写 v1，处理先攻、庇佑、嘲讽等效果。
+3. **落地批次6**：补 cause/source 与递归保护后，再处理 `skill.thorn_skin.pending`、火焰链式等来源敏感效果。
 
-## 7. 给后续 AI 的技能入口
+## 8. 给后续 AI 的技能入口
 
 已创建 Codex skill：
 

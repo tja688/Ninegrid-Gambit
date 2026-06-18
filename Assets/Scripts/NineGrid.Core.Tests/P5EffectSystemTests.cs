@@ -93,6 +93,69 @@ namespace NineGrid.Core.Tests
             AssertHasIssue(missingValidation, "schema.condition.defId");
             AssertHasIssue(missingValidation, "schema.target.defId");
             AssertHasIssue(missingValidation, "schema.action.defId");
+
+            var badValue = effectSystem.ParseJson(
+                "{"
+                + "\"id\":\"bad.value\","
+                + "\"typeTag\":\"【类型帮助卡】\","
+                + "\"containerType\":\"HelpCard\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"target\":{\"atom\":\"Player\"},"
+                + "\"action\":{\"atom\":\"GainArmor\",\"value\":{\"source\":\"Nowhere\",\"stat\":\"Bogus\"}}"
+                + "}");
+            var valueValidation = effectSystem.Validate(badValue);
+            Assert.IsFalse(valueValidation.IsValid);
+            AssertHasIssue(valueValidation, "schema.value.source");
+        }
+
+        [Test]
+        public void ValueExpressionReadsPlayerTargetAndEventValuesDeterministically()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var avatar = Avatar();
+            avatar.Stats.SetBase(StatId.Attack, 7);
+            avatar.Stats.SetBase(StatId.MaxHp, 20);
+            avatar.Stats.SetBase(StatId.Hp, 10);
+            var monster = CreateMonster("monster.value_expr", 30, SlotId.Board(2));
+            monster.Stats.SetBase(StatId.Attack, 3);
+
+            var damageDefinition = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.value.damage\","
+                + "\"typeTag\":\"【类型帮助卡】\","
+                + "\"containerType\":\"HelpCard\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"target\":{\"atom\":\"SlotCard\",\"slot\":2},"
+                + "\"action\":{\"atom\":\"Sequence\",\"actions\":["
+                + "{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Player\",\"stat\":\"Attack\"},\"actor\":\"Player\"},"
+                + "{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Target\",\"stat\":\"Attack\"},\"actor\":\"Player\"}"
+                + "]}"
+                + "}");
+            Assert.IsTrue(Effects().Validate(damageDefinition).IsValid);
+            Effects().Activate(damageDefinition, new EffectOwner(EffectContainerType.HelpCard, "test.value.damage", 0));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new UseItemAction(999));
+
+            Assert.AreEqual(20, monster.Stats.GetBase(StatId.Hp));
+
+            var eventDefinition = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.value.event\","
+                + "\"typeTag\":\"【类型玩家技能】\","
+                + "\"containerType\":\"PlayerSkill\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnDamageTaken\"},"
+                + "\"target\":{\"atom\":\"Player\"},"
+                + "\"action\":{\"atom\":\"GainArmor\",\"value\":{\"source\":\"Event\",\"field\":\"Amount\"}}"
+                + "}");
+            Assert.IsTrue(Effects().Validate(eventDefinition).IsValid);
+            Effects().Activate(eventDefinition, new EffectOwner(EffectContainerType.PlayerSkill, "test.value.event", 0));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new DealDamageAction(monster.Uid, avatar.Uid, 6));
+
+            Assert.AreEqual(6, avatar.Stats.GetBase(StatId.Armor));
         }
 
         [Test]
@@ -109,7 +172,11 @@ namespace NineGrid.Core.Tests
                 "relic.dragon_scale_armor.rule",
                 "relic.craving.rule",
                 "relic.wood_sword.set",
-                "relic.junk_launcher.volley"
+                "relic.junk_launcher.volley",
+                "help.fireball.use",
+                "help.food_card.use",
+                "help.impact_tutorial.use",
+                "help.shield_bash_tutorial.use"
             };
 
             for (var i = 0; i < effectIds.Length; i++)

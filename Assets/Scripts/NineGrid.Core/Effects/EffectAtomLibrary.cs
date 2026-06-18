@@ -985,12 +985,12 @@ namespace NineGrid.Core.Effects
     [EffectAtom("DealDamage", EffectAtomKind.Action)]
     public sealed class DealDamageEffectAction : IAction
     {
-        private int mAmount;
+        private EffectValueExpression mAmount;
         private string mActorRef = "Player";
 
         public void Configure(EffectDslNode config)
         {
-            mAmount = config.Get("amount").AsInt(0);
+            mAmount = EffectValueExpression.FromActionAmount(config);
             mActorRef = config.Get("actor").AsString("Player");
         }
 
@@ -1002,7 +1002,7 @@ namespace NineGrid.Core.Effects
             {
                 if (targets[i] != 0)
                 {
-                    result.Add(new DealDamageAction(actorUid, targets[i], mAmount));
+                    result.Add(new DealDamageAction(actorUid, targets[i], mAmount.Evaluate(context, targets[i])));
                 }
             }
 
@@ -1013,12 +1013,12 @@ namespace NineGrid.Core.Effects
     [EffectAtom("Heal", EffectAtomKind.Action)]
     public sealed class HealEffectAction : IAction
     {
-        private int mAmount;
+        private EffectValueExpression mAmount;
         private string mActorRef = "Self";
 
         public void Configure(EffectDslNode config)
         {
-            mAmount = config.Get("amount").AsInt(0);
+            mAmount = EffectValueExpression.FromActionAmount(config);
             mActorRef = config.Get("actor").AsString("Self");
         }
 
@@ -1030,7 +1030,7 @@ namespace NineGrid.Core.Effects
             {
                 if (targets[i] != 0)
                 {
-                    result.Add(new HealAction(actorUid, targets[i], mAmount));
+                    result.Add(new HealAction(actorUid, targets[i], mAmount.Evaluate(context, targets[i])));
                 }
             }
 
@@ -1041,11 +1041,11 @@ namespace NineGrid.Core.Effects
     [EffectAtom("GainArmor", EffectAtomKind.Action)]
     public sealed class GainArmorEffectAction : IAction
     {
-        private int mAmount;
+        private EffectValueExpression mAmount;
 
         public void Configure(EffectDslNode config)
         {
-            mAmount = config.Get("amount").AsInt(0);
+            mAmount = EffectValueExpression.FromActionAmount(config);
         }
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
@@ -1055,7 +1055,7 @@ namespace NineGrid.Core.Effects
             {
                 if (targets[i] != 0)
                 {
-                    result.Add(new GainArmorAction(targets[i], mAmount));
+                    result.Add(new GainArmorAction(targets[i], mAmount.Evaluate(context, targets[i])));
                 }
             }
 
@@ -1474,6 +1474,333 @@ namespace NineGrid.Core.Effects
             return context != null
                 && context.Owner != null
                 && LevelParityEffectCondition.IsExpected(context.Owner.Counters.Get(CoreCounterKeys.Level), mParity);
+        }
+    }
+
+    internal sealed class EffectValueExpression
+    {
+        private readonly EffectDslNode mNode;
+        private readonly int mFallback;
+        private readonly bool mUseNode;
+
+        private EffectValueExpression(EffectDslNode node, int fallback, bool useNode)
+        {
+            mNode = node;
+            mFallback = fallback;
+            mUseNode = useNode;
+        }
+
+        public static EffectValueExpression FromActionAmount(EffectDslNode config)
+        {
+            if (config != null && config.Has("value"))
+            {
+                return new EffectValueExpression(config.Get("value"), 0, true);
+            }
+
+            return new EffectValueExpression(null, config == null ? 0 : config.Get("amount").AsInt(0), false);
+        }
+
+        public int Evaluate(EffectRuntimeContext context, int targetUid)
+        {
+            return Math.Max(0, (int)Math.Round(mUseNode ? EvaluateNode(mNode, context, targetUid) : mFallback));
+        }
+
+        private static float EvaluateNode(EffectDslNode node, EffectRuntimeContext context, int targetUid)
+        {
+            if (node == null || node.IsNull)
+            {
+                return 0f;
+            }
+
+            if (!node.IsObject)
+            {
+                return node.AsFloat(0f);
+            }
+
+            if (node.Has("constant"))
+            {
+                return node.Get("constant").AsFloat(0f);
+            }
+
+            if (node.Has("op"))
+            {
+                return EvaluateOp(node, context, targetUid);
+            }
+
+            return EvaluateSource(node, context, targetUid);
+        }
+
+        private static float EvaluateOp(EffectDslNode node, EffectRuntimeContext context, int targetUid)
+        {
+            var values = node.Get("values").AsArray();
+            var op = node.Get("op").AsString(string.Empty);
+            if (values.Count == 0)
+            {
+                return 0f;
+            }
+
+            var current = EvaluateNode(values[0], context, targetUid);
+            if (Same(op, "Negate"))
+            {
+                return -current;
+            }
+
+            for (var i = 1; i < values.Count; i++)
+            {
+                var next = EvaluateNode(values[i], context, targetUid);
+                if (Same(op, "Add"))
+                {
+                    current += next;
+                }
+                else if (Same(op, "Subtract"))
+                {
+                    current -= next;
+                }
+                else if (Same(op, "Multiply"))
+                {
+                    current *= next;
+                }
+                else if (Same(op, "Min"))
+                {
+                    current = Math.Min(current, next);
+                }
+                else if (Same(op, "Max"))
+                {
+                    current = Math.Max(current, next);
+                }
+            }
+
+            return current;
+        }
+
+        private static float EvaluateSource(EffectDslNode node, EffectRuntimeContext context, int targetUid)
+        {
+            var source = node.Get("source").AsString(string.Empty);
+            if (Same(source, "Event"))
+            {
+                return EvaluateEventField(context, node.Get("field").AsString("Amount"));
+            }
+
+            var card = ResolveCard(context, targetUid, source);
+            if (card == null)
+            {
+                return 0f;
+            }
+
+            var stat = node.Get("stat").AsEnum(StatId.Attack);
+            if (stat == StatId.Hp || stat == StatId.Armor)
+            {
+                return card.Stats.GetBase(stat);
+            }
+
+            return context.Architecture.GetSystem<IStatSystem>().GetEffectiveValue(card, stat);
+        }
+
+        private static float EvaluateEventField(EffectRuntimeContext context, string field)
+        {
+            if (context == null)
+            {
+                return 0f;
+            }
+
+            var events = context.Events;
+            for (var i = 0; i < events.Count; i++)
+            {
+                if (Same(field, "Amount") && events[i].Amount != 0)
+                {
+                    return events[i].Amount;
+                }
+
+                if (Same(field, "Delta") && events[i].Delta != 0)
+                {
+                    return events[i].Delta;
+                }
+
+                if (Same(field, "RemainingHp"))
+                {
+                    return events[i].RemainingHp;
+                }
+
+                if (Same(field, "RemainingArmor"))
+                {
+                    return events[i].RemainingArmor;
+                }
+            }
+
+            return 0f;
+        }
+
+        private static CardInstance ResolveCard(EffectRuntimeContext context, int targetUid, string source)
+        {
+            if (context == null)
+            {
+                return null;
+            }
+
+            if (Same(source, "Player"))
+            {
+                return context.AvatarCard;
+            }
+
+            if (Same(source, "Target"))
+            {
+                return context.GetCard(targetUid);
+            }
+
+            if (Same(source, "Owner") || Same(source, "Self"))
+            {
+                return context.OwnerCard;
+            }
+
+            if (Same(source, "EventTarget"))
+            {
+                return context.GetCard(context.FirstEventTargetUid());
+            }
+
+            if (Same(source, "EventCard"))
+            {
+                return context.GetCard(context.FirstEventCardUid());
+            }
+
+            if (Same(source, "Actor"))
+            {
+                return context.GetCard(TargetResolver.ResolveSingleCardRef(context, "Actor"));
+            }
+
+            return null;
+        }
+
+        public static void Validate(EffectDslNode node, string path, EffectValidationResult result)
+        {
+            if (node == null || node.IsNull || result == null)
+            {
+                return;
+            }
+
+            if (!node.IsObject)
+            {
+                if (node.AsFloat(0f) < 0f)
+                {
+                    result.Add("schema.range.value", path + " must be >= 0.");
+                }
+
+                return;
+            }
+
+            if (node.Has("constant"))
+            {
+                if (node.Get("constant").AsFloat(0f) < 0f)
+                {
+                    result.Add("schema.range.value", path + ".constant must be >= 0.");
+                }
+
+                return;
+            }
+
+            if (node.Has("op"))
+            {
+                ValidateOp(node, path, result);
+                return;
+            }
+
+            ValidateSource(node, path, result);
+        }
+
+        private static void ValidateOp(EffectDslNode node, string path, EffectValidationResult result)
+        {
+            var op = node.Get("op").AsString(string.Empty);
+            if (!IsSupportedOp(op))
+            {
+                result.Add("schema.value.op", path + ".op is not supported.");
+            }
+
+            var values = node.Get("values").AsArray();
+            if (values.Count == 0)
+            {
+                result.Add("schema.value.values", path + ".values must not be empty.");
+            }
+
+            for (var i = 0; i < values.Count; i++)
+            {
+                Validate(values[i], path + ".values[" + i + "]", result);
+            }
+        }
+
+        private static void ValidateSource(EffectDslNode node, string path, EffectValidationResult result)
+        {
+            var source = node.Get("source").AsString(string.Empty);
+            if (!IsSupportedSource(source))
+            {
+                result.Add("schema.value.source", path + ".source is not supported.");
+                return;
+            }
+
+            if (Same(source, "Event"))
+            {
+                if (!IsSupportedEventField(node.Get("field").AsString(string.Empty)))
+                {
+                    result.Add("schema.value.field", path + ".field is not supported.");
+                }
+
+                return;
+            }
+
+            if (!node.Has("stat"))
+            {
+                result.Add("schema.value.stat", path + ".stat is required.");
+                return;
+            }
+
+            if (!IsSupportedStat(node.Get("stat").AsString(string.Empty)))
+            {
+                result.Add("schema.value.stat", path + ".stat is not supported.");
+            }
+        }
+
+        private static bool IsSupportedSource(string source)
+        {
+            return Same(source, "Player")
+                || Same(source, "Target")
+                || Same(source, "Owner")
+                || Same(source, "Self")
+                || Same(source, "EventTarget")
+                || Same(source, "EventCard")
+                || Same(source, "Actor")
+                || Same(source, "Event");
+        }
+
+        private static bool IsSupportedStat(string stat)
+        {
+            if (string.IsNullOrEmpty(stat))
+            {
+                return false;
+            }
+
+            StatId ignored;
+            return Enum.TryParse(stat, true, out ignored);
+        }
+
+        private static bool IsSupportedEventField(string field)
+        {
+            return Same(field, "Amount")
+                || Same(field, "Delta")
+                || Same(field, "RemainingHp")
+                || Same(field, "RemainingArmor");
+        }
+
+        private static bool IsSupportedOp(string op)
+        {
+            return Same(op, "Add")
+                || Same(op, "Subtract")
+                || Same(op, "Multiply")
+                || Same(op, "Min")
+                || Same(op, "Max")
+                || Same(op, "Negate");
+        }
+
+        private static bool Same(string left, string right)
+        {
+            return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

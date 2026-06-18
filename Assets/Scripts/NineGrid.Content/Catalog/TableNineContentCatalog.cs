@@ -35,6 +35,13 @@ namespace NineGrid.Content
                     "{\"atom\":\"DealDamage\",\"amount\":6,\"actor\":\"Player\"}"),
                 "[使用时] 对目标怪物卡造成6点伤害"));
 
+            c.AddEffect(Impl("help.fireball.use", EffectContainerType.HelpCard,
+                Triggered("help.fireball.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"RandomMonster\"}",
+                    "{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Player\",\"stat\":\"Attack\"},\"actor\":\"Player\"}"),
+                "[使用时] 对目标怪物卡造成等同于玩家攻击的伤害"));
+
             c.AddEffect(Impl("help.bomb.use", EffectContainerType.HelpCard,
                 Triggered("help.bomb.use", "HelpCard",
                     "{\"atom\":\"OnUseHelpCard\"}",
@@ -48,6 +55,27 @@ namespace NineGrid.Content
                     "{\"atom\":\"Player\"}",
                     "{\"atom\":\"GainArmor\",\"amount\":5}"),
                 "[使用时] 玩家获得5点护甲"));
+
+            c.AddEffect(Impl("help.food_card.use", EffectContainerType.HelpCard,
+                Triggered("help.food_card.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"Heal\",\"value\":{\"op\":\"Subtract\",\"values\":[{\"source\":\"Player\",\"stat\":\"MaxHp\"},{\"source\":\"Player\",\"stat\":\"Hp\"}]},\"actor\":\"Player\"}"),
+                "[使用时] 将玩家卡血量回满"));
+
+            c.AddEffect(Impl("help.impact_tutorial.use", EffectContainerType.HelpCard,
+                Triggered("help.impact_tutorial.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"RandomMonster\"}",
+                    "{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Player\",\"stat\":\"Hp\"},\"actor\":\"Player\"}"),
+                "[使用时] 对目标怪物卡造成等同于玩家当前血量的伤害"));
+
+            c.AddEffect(Impl("help.shield_bash_tutorial.use", EffectContainerType.HelpCard,
+                Triggered("help.shield_bash_tutorial.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"RandomMonster\"}",
+                    "{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Player\",\"stat\":\"Armor\"},\"actor\":\"Player\"}"),
+                "[使用时] 对目标怪物卡造成等同于玩家当前护甲的伤害"));
 
             c.AddEffect(Impl("help.gold_card.use", EffectContainerType.HelpCard,
                 Triggered("help.gold_card.use", "HelpCard",
@@ -358,7 +386,7 @@ namespace NineGrid.Content
             Help(c, "help.healing_potion", "恢复药水", ContentRarity.White, 30, "恢复").AddEffect("help.healing_potion.use");
             Help(c, "help.ward_magic_card", "庇佑魔法卡", ContentRarity.White, 20, "护甲").AddEffect(Pending(c, "help.ward_magic_card.pending", EffectContainerType.HelpCard, "下一次玩家受到伤害时，该次伤害变为0"));
             Help(c, "help.throwing_knife", "飞刀", ContentRarity.White, 20, "直伤").AddEffect("help.throwing_knife.use");
-            Help(c, "help.fireball", "火球术", ContentRarity.White, 30, "直伤").AddEffect(Pending(c, "help.fireball.pending", EffectContainerType.HelpCard, "对目标怪物卡造成等同于玩家攻击的伤害"));
+            Help(c, "help.fireball", "火球术", ContentRarity.White, 30, "直伤").AddEffect("help.fireball.use");
             Help(c, "help.rotation_wheel", "旋转轮", ContentRarity.White, 20, "位移").AddEffect(Pending(c, "help.rotation_wheel.pending", EffectContainerType.HelpCard, "逆时针旋转一次"));
             Help(c, "help.brutality_card", "暴力卡", ContentRarity.White, 30, "攻击").AddEffect(Pending(c, "help.brutality_card.pending", EffectContainerType.HelpCard, "玩家当前总攻击翻倍，战斗一次后复原"));
             Help(c, "help.rolling_stone", "滚石", ContentRarity.White, 50, "直伤").AddEffect(Pending(c, "help.rolling_stone.pending", EffectContainerType.HelpCard, "移动到格3时移除格6普通怪物和本卡"));
@@ -370,11 +398,11 @@ namespace NineGrid.Content
             Help(c, "help.teleport_card", "传送卡", ContentRarity.White, 30, "位移").AddEffect(Pending(c, "help.teleport_card.pending", EffectContainerType.HelpCard, "将一张非玩家卡洗回战斗卡组"));
             Help(c, "help.blood_conversion", "血液转换", ContentRarity.White, 50, "特殊").AddEffect(Pending(c, "help.blood_conversion.pending", EffectContainerType.HelpCard, "扣除5点血量上限并随机获得奖励"));
             Help(c, "help.gold_card", "金币卡", ContentRarity.Blue, 30, "经济").AddEffect("help.gold_card.use");
-            Help(c, "help.food_card", "食品卡", ContentRarity.Blue, 50, "恢复").AddEffect(Pending(c, "help.food_card.pending", EffectContainerType.HelpCard, "将玩家卡血量回满"));
+            Help(c, "help.food_card", "食品卡", ContentRarity.Blue, 50, "恢复").AddEffect("help.food_card.use");
             Help(c, "help.common_chest_card", "普通宝箱卡", ContentRarity.Blue, 100, "经济").AddEffect(Pending(c, "help.common_chest_card.pending", EffectContainerType.HelpCard, "从三个遗物中选择一个获得"));
             Help(c, "help.healing_spring", "治疗泉", ContentRarity.Blue, 80, "恢复").AddEffect(Pending(c, "help.healing_spring.pending", EffectContainerType.HelpCard, "多区域恢复效果"));
-            Help(c, "help.impact_tutorial", "撞击教程", ContentRarity.Blue, 80, "血量").AddEffect(Pending(c, "help.impact_tutorial.pending", EffectContainerType.HelpCard, "造成等同于玩家当前血量的伤害"));
-            Help(c, "help.shield_bash_tutorial", "盾击教程", ContentRarity.Blue, 80, "护甲").AddEffect(Pending(c, "help.shield_bash_tutorial.pending", EffectContainerType.HelpCard, "造成等同于玩家当前护甲的伤害"));
+            Help(c, "help.impact_tutorial", "撞击教程", ContentRarity.Blue, 80, "血量").AddEffect("help.impact_tutorial.use");
+            Help(c, "help.shield_bash_tutorial", "盾击教程", ContentRarity.Blue, 80, "护甲").AddEffect("help.shield_bash_tutorial.use");
             Help(c, "help.kidnapping", "绑票", ContentRarity.Blue, 100, "护甲").AddEffect(Pending(c, "help.kidnapping.pending", EffectContainerType.HelpCard, "移除非精英非层主怪物并获得等同于护甲的护甲"));
             Help(c, "help.blue_chest_card", "蓝色宝箱卡", ContentRarity.Gold, 150, "经济").AddEffect(Pending(c, "help.blue_chest_card.pending", EffectContainerType.HelpCard, "从三个遗物中选择一个获得"));
             Help(c, "help.watchtower", "瞭望塔", ContentRarity.Gold, 150, "直伤").AddEffect(Pending(c, "help.watchtower.pending", EffectContainerType.HelpCard, "场上/道具牌格随机伤害"));

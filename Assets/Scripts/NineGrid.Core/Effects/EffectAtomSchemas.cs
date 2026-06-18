@@ -262,9 +262,14 @@ namespace NineGrid.Core.Effects
 
             if (Same(atom, "DealDamage") || Same(atom, "Heal") || Same(atom, "GainArmor"))
             {
-                if (!node.Has("amount"))
+                if (!node.Has("amount") && !node.Has("value"))
                 {
-                    result.Add("schema.action.amount", path + ".amount is required for " + atom + ".");
+                    result.Add("schema.action.amount", path + ".amount or .value is required for " + atom + ".");
+                }
+
+                if (node.Has("value"))
+                {
+                    EffectValueExpression.Validate(node.Get("value"), path + ".value", result);
                 }
             }
             else if (Same(atom, "ModifyGold") && !node.Has("delta"))
