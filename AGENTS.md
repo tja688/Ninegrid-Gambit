@@ -24,6 +24,11 @@
 - 项目已经初始化 codegraph，在有代码查询需求、架构了解需求的情况下强烈建议利用 codegraph MCP 进行了解、查找。
 - CodeGraph 使用提醒：它擅长“符号/类/方法/调用关系/影响面”，不擅长一次性查询混合了批次号、pending ID、设计文档、测试名、Luban 数据的宽泛任务。查询不理想时，先把问题拆成明确符号或代码区域，例如 `UseItemAction`、`EffectAtomLibrary`、`TableNineContentCatalog`、`P6ContentLandingTests`；查具体 pending ID、中文设计文本、JSON 行、计划笔记时优先用 `rg` 精确检索。代码刚改完且 codegraph 可能未同步时，以文件读取和 Unity 编译/测试结果为准。
 
+## 效果落地技能
+
+- 单效果落地、拼装分析、扩原子/RuleModifier 等需求，使用技能 **`table-nine-effect-landing`**（`.cursor/skills/table-nine-effect-landing/`）。
+- 旧技能 `table-nine-effect-batches`（批次 1–8 路线图）已归档，不再用于新任务。
+
 ## 协作需求
 
 - 每次完成任务后，将本次改动**全量提交**至 git，提交信息应简洁、准确地概括改动内容与目的。
