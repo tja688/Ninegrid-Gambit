@@ -1,4 +1,242 @@
 [
-  { "id": "reward.help.basic.healing_potion", "pool_id": "reward.help.basic", "def_id": "help.healing_potion", "kind": "HelpCard", "weight": 100, "count": 1 },
-  { "id": "reward.help.basic.throwing_knife", "pool_id": "reward.help.basic", "def_id": "help.throwing_knife", "kind": "HelpCard", "weight": 100, "count": 1 }
+  {
+    "id": "help.choice.00.help_healing_potion",
+    "pool_id": "help.choice",
+    "def_id": "help.healing_potion",
+    "kind": "HelpCard",
+    "weight": 20,
+    "count": 1
+  },
+  {
+    "id": "help.choice.01.help_throwing_knife",
+    "pool_id": "help.choice",
+    "def_id": "help.throwing_knife",
+    "kind": "HelpCard",
+    "weight": 20,
+    "count": 1
+  },
+  {
+    "id": "help.choice.02.help_sturdy_shield",
+    "pool_id": "help.choice",
+    "def_id": "help.sturdy_shield",
+    "kind": "HelpCard",
+    "weight": 20,
+    "count": 1
+  },
+  {
+    "id": "help.choice.03.help_bomb",
+    "pool_id": "help.choice",
+    "def_id": "help.bomb",
+    "kind": "HelpCard",
+    "weight": 8,
+    "count": 1
+  },
+  {
+    "id": "help.choice.04.help_gold_card",
+    "pool_id": "help.choice",
+    "def_id": "help.gold_card",
+    "kind": "HelpCard",
+    "weight": 5,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.00.help_healing_potion",
+    "pool_id": "help.white.choice",
+    "def_id": "help.healing_potion",
+    "kind": "HelpCard",
+    "weight": 20,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.01.help_ward_magic_card",
+    "pool_id": "help.white.choice",
+    "def_id": "help.ward_magic_card",
+    "kind": "HelpCard",
+    "weight": 20,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.02.help_throwing_knife",
+    "pool_id": "help.white.choice",
+    "def_id": "help.throwing_knife",
+    "kind": "HelpCard",
+    "weight": 20,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.03.help_fireball",
+    "pool_id": "help.white.choice",
+    "def_id": "help.fireball",
+    "kind": "HelpCard",
+    "weight": 20,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.04.help_rotation_wheel",
+    "pool_id": "help.white.choice",
+    "def_id": "help.rotation_wheel",
+    "kind": "HelpCard",
+    "weight": 20,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.05.help_bomb",
+    "pool_id": "help.white.choice",
+    "def_id": "help.bomb",
+    "kind": "HelpCard",
+    "weight": 8,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.06.help_sturdy_shield",
+    "pool_id": "help.white.choice",
+    "def_id": "help.sturdy_shield",
+    "kind": "HelpCard",
+    "weight": 20,
+    "count": 1
+  },
+  {
+    "id": "kill.boss.00.help_golden_chest_card",
+    "pool_id": "kill.boss",
+    "def_id": "help.golden_chest_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "kill.boss.01.help_gold_card",
+    "pool_id": "kill.boss",
+    "def_id": "help.gold_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 2
+  },
+  {
+    "id": "kill.boss.02.help_stat_boost_card",
+    "pool_id": "kill.boss",
+    "def_id": "help.stat_boost_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "kill.elite.00.help_blue_chest_card",
+    "pool_id": "kill.elite",
+    "def_id": "help.blue_chest_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "kill.elite.01.help_gold_card",
+    "pool_id": "kill.elite",
+    "def_id": "help.gold_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "kill.elite.02.help_stat_boost_card",
+    "pool_id": "kill.elite",
+    "def_id": "help.stat_boost_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.00.relic_wood_shield",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.wood_shield",
+    "kind": "Relic",
+    "weight": 65,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.01.relic_vitality_amulet",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.vitality_amulet",
+    "kind": "Relic",
+    "weight": 30,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.02.relic_dragon_scale_armor",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.dragon_scale_armor",
+    "kind": "Relic",
+    "weight": 5,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.00.relic_wood_shield",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.wood_shield",
+    "kind": "Relic",
+    "weight": 40,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.01.relic_vitality_amulet",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.vitality_amulet",
+    "kind": "Relic",
+    "weight": 50,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.02.relic_dragon_scale_armor",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.dragon_scale_armor",
+    "kind": "Relic",
+    "weight": 10,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.00.relic_wood_shield",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.wood_shield",
+    "kind": "Relic",
+    "weight": 65,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.01.relic_vitality_amulet",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.vitality_amulet",
+    "kind": "Relic",
+    "weight": 30,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.02.relic_dragon_scale_armor",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.dragon_scale_armor",
+    "kind": "Relic",
+    "weight": 5,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.00.relic_vitality_amulet",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.vitality_amulet",
+    "kind": "Relic",
+    "weight": 50,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.01.relic_dragon_scale_armor",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.dragon_scale_armor",
+    "kind": "Relic",
+    "weight": 50,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.02.relic_phoenix_feather",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.phoenix_feather",
+    "kind": "Relic",
+    "weight": 50,
+    "count": 1
+  }
 ]

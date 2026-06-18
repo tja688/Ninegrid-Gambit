@@ -1,0 +1,19 @@
+{
+    "name": "NineGrid.Content.Editor",
+    "rootNamespace": "NineGrid.Content.Editor",
+    "references": [
+        "NineGrid.Core",
+        "NineGrid.Content"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

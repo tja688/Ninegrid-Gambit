@@ -50,7 +50,7 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void LubanCatalogIsMinimalSampleAndFallsBackToHardcodedForProduction()
+        public void LubanCatalogMatchesHardcodedProductionScopeAfterBatchEightMigration()
         {
             var lubanDirectory = ContentCatalogBootstrap.ResolveLubanDataDirectory();
             if (string.IsNullOrEmpty(lubanDirectory))
@@ -62,13 +62,15 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(ContentCatalogBootstrap.TryLoadLubanCatalog(lubanDirectory, out lubanCatalog));
             var hardcoded = TableNineContentCatalog.CreateDefault();
 
-            Assert.Less(lubanCatalog.Cards.Count, hardcoded.Cards.Count);
-            Assert.Less(lubanCatalog.Effects.Count, hardcoded.Effects.Count);
-            Assert.AreNotEqual(hardcoded.Cards.Count, lubanCatalog.Cards.Count);
+            Assert.AreEqual(hardcoded.Cards.Count, lubanCatalog.Cards.Count);
+            Assert.AreEqual(hardcoded.Effects.Count, lubanCatalog.Effects.Count);
+            Assert.AreEqual(hardcoded.Skills.Count, lubanCatalog.Skills.Count);
+            Assert.AreEqual(hardcoded.Relics.Count, lubanCatalog.Relics.Count);
+            Assert.AreEqual(hardcoded.MonsterDecks.Count, lubanCatalog.MonsterDecks.Count);
         }
 
         [Test]
-        public void AutoSourceUsesLubanOnlyWhenExplicitlyAvailableAndCallerAcceptsSampleScope()
+        public void AutoSourceUsesLubanProductionCatalogWhenStreamingAssetsAreAvailable()
         {
             var lubanDirectory = ContentCatalogBootstrap.ResolveLubanDataDirectory();
             if (string.IsNullOrEmpty(lubanDirectory))
@@ -80,7 +82,8 @@ namespace NineGrid.Core.Tests
 
             var autoCatalog = ContentCatalogBootstrap.Load(ContentCatalogSourceKind.Auto);
             Assert.IsNotNull(autoCatalog);
-            Assert.Greater(autoCatalog.Effects.Count, 0);
+            Assert.AreEqual(TableNineContentCatalog.CreateDefault().Effects.Count, autoCatalog.Effects.Count);
+            Assert.AreEqual(TableNineContentCatalog.CreateDefault().Cards.Count, autoCatalog.Cards.Count);
         }
     }
 }

@@ -1,6 +1,34 @@
 [
   {
-    "id": "reward.help.basic",
+    "id": "help.choice",
+    "pick_count": 3
+  },
+  {
+    "id": "help.white.choice",
+    "pick_count": 3
+  },
+  {
+    "id": "kill.boss",
+    "pick_count": 3
+  },
+  {
+    "id": "kill.elite",
+    "pick_count": 3
+  },
+  {
+    "id": "relic.blood_conversion",
+    "pick_count": 1
+  },
+  {
+    "id": "relic.blue_chest",
+    "pick_count": 3
+  },
+  {
+    "id": "relic.common_chest",
+    "pick_count": 3
+  },
+  {
+    "id": "relic.golden_chest",
     "pick_count": 3
   }
 ]
