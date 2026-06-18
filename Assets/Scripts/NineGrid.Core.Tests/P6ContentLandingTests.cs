@@ -45,17 +45,17 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void DefaultCatalogKeepsBatchFivePendingGateAndConvertedEffectsImplemented()
+        public void DefaultCatalogKeepsBatchSixPendingGateAndConvertedEffectsImplemented()
         {
             var catalog = NineGridArchitecture.Current.GetSystem<IContentSystem>().Catalog;
             var report = NineGridArchitecture.Current.GetSystem<IContentSystem>().ValidateCatalog();
 
             Assert.IsTrue(report.IsValid, FirstIssue(report));
-            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 70);
-            Assert.LessOrEqual(report.PendingEffectIds.Count, 55);
+            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 71);
+            Assert.LessOrEqual(report.PendingEffectIds.Count, 54);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 11);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.Relic), 2);
-            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.PlayerSkill), 2);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.PlayerSkill), 1);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 40);
 
             AssertImplemented(catalog, report, "relic.vitality_amulet.max_hp");
@@ -80,6 +80,7 @@ namespace NineGrid.Core.Tests
             AssertImplemented(catalog, report, "skill.easy_road.node_end");
             AssertImplemented(catalog, report, "relic.lucky_coin.elite_kill");
             AssertImplemented(catalog, report, "relic.lucky_coin.boss_kill");
+            AssertImplemented(catalog, report, "skill.thorn_skin.battle");
         }
 
         [Test]
@@ -428,6 +429,23 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(HasEvent(architecture.GetSystem<IActionPipelineSystem>().EventLog, CoreEventType.BaseStatModified));
         }
 
+        [Test]
+        public void BatchSixThornSkinCatalogDslDealsTargetAttackDamageOnce()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+            var monster = PlaceMonster("monster.thorn.catalog", 20, SlotId.Board(2));
+            monster.Stats.SetBase(StatId.Attack, 4);
+
+            architecture.GetSystem<IContentSystem>().ActivatePlayerSkill("skill.thorn_skin");
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new DealDamageAction(avatar.Uid, monster.Uid, 1));
+
+            Assert.AreEqual(15, monster.Stats.GetBase(StatId.Hp));
+            Assert.AreEqual(1, CountEvents(architecture.GetSystem<IActionPipelineSystem>().EventLog, CoreEventType.EffectTriggered));
+        }
+
         private static bool Contains(IReadOnlyList<string> values, string expected)
         {
             for (var i = 0; i < values.Count; i++)
@@ -550,6 +568,20 @@ namespace NineGrid.Core.Tests
             }
 
             return false;
+        }
+
+        private static int CountEvents(EventLog eventLog, CoreEventType type)
+        {
+            var count = 0;
+            for (var i = 0; i < eventLog.Entries.Count; i++)
+            {
+                if (eventLog.Entries[i].Type == type)
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         private static void AssertRewardOffered(string poolId, int amount, string expectedDefId)

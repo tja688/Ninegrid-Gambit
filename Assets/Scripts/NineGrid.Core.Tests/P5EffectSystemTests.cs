@@ -37,6 +37,7 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("AdjacentCard"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("WeightedRandom"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("CardCounter"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("EventTarget"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("OfferRewardChoice"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("ModifyBaseStat"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("GrantRewardFromPool"));
@@ -222,6 +223,48 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void OnBattleTriggerCanFilterDamageSourceAndRejectRecursiveEffectDamage()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var avatar = Avatar();
+            var monster = CreateMonster("monster.thorn.target", 20, SlotId.Board(2));
+            monster.Stats.SetBase(StatId.Attack, 4);
+
+            var definition = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.thorn.guard\","
+                + "\"typeTag\":\"【类型玩家技能】\","
+                + "\"containerType\":\"PlayerSkill\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},"
+                + "\"target\":{\"atom\":\"EventTarget\"},"
+                + "\"action\":{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Target\",\"stat\":\"Attack\"},\"actor\":\"Player\"}"
+                + "}");
+            Assert.IsTrue(Effects().Validate(definition).IsValid);
+            Effects().Activate(definition, new EffectOwner(EffectContainerType.PlayerSkill, "test.thorn.guard", 0));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new DealDamageAction(avatar.Uid, monster.Uid, 1));
+
+            Assert.AreEqual(15, monster.Stats.GetBase(StatId.Hp));
+            Assert.AreEqual(1, CountEvents(architecture.GetSystem<IActionPipelineSystem>().EventLog, CoreEventType.EffectTriggered));
+
+            var invalidDepth = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.bad.depth\","
+                + "\"typeTag\":\"【类型玩家技能】\","
+                + "\"containerType\":\"PlayerSkill\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnBattle\",\"targetKind\":\"Bogus\",\"maxActionDepth\":-1},"
+                + "\"target\":{\"atom\":\"EventTarget\"},"
+                + "\"action\":{\"atom\":\"DealDamage\",\"amount\":1}"
+                + "}");
+            var validation = Effects().Validate(invalidDepth);
+            Assert.IsFalse(validation.IsValid);
+            AssertHasIssue(validation, "schema.trigger.targetKind");
+            AssertHasIssue(validation, "schema.range.maxActionDepth");
+        }
+
+        [Test]
         public void RepresentativeCatalogDslPassesValidationAndGoldenSnapshots()
         {
             var effectSystem = Effects();
@@ -254,7 +297,8 @@ namespace NineGrid.Core.Tests
                 "help.blood_conversion.use",
                 "skill.easy_road.node_end",
                 "relic.lucky_coin.elite_kill",
-                "relic.lucky_coin.boss_kill"
+                "relic.lucky_coin.boss_kill",
+                "skill.thorn_skin.battle"
             };
 
             for (var i = 0; i < effectIds.Length; i++)
@@ -673,6 +717,20 @@ namespace NineGrid.Core.Tests
             }
 
             return false;
+        }
+
+        private static int CountEvents(EventLog eventLog, CoreEventType type)
+        {
+            var count = 0;
+            for (var i = 0; i < eventLog.Entries.Count; i++)
+            {
+                if (eventLog.Entries[i].Type == type)
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
     }
 }

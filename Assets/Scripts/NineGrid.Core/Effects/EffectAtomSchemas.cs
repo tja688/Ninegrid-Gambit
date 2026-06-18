@@ -359,9 +359,19 @@ namespace NineGrid.Core.Effects
         {
             if (kind == EffectAtomKind.Trigger)
             {
+                if (Same(atom, "OnBattle") && node.Has("targetKind") && !IsSupportedCardKind(node.Get("targetKind").AsString(string.Empty)))
+                {
+                    result.Add("schema.trigger.targetKind", path + ".targetKind is not supported.");
+                }
+
                 if (Same(atom, "OnSelfMove") && node.Has("every") && node.Get("every").AsInt(1) < 1)
                 {
                     result.Add("schema.range.every", path + ".every must be >= 1.");
+                }
+
+                if (Same(atom, "OnBattle") && node.Has("maxActionDepth") && node.Get("maxActionDepth").AsInt(-1) < 0)
+                {
+                    result.Add("schema.range.maxActionDepth", path + ".maxActionDepth must be >= 0.");
                 }
 
                 if (Same(atom, "OnMoveToSlot") && node.Has("slot") && !IsBoardSlot(node.Get("slot").AsInt(0)))
@@ -482,6 +492,17 @@ namespace NineGrid.Core.Effects
         private static bool IsBoardSlot(int slot)
         {
             return slot >= SlotId.MinBoardIndex && slot <= SlotId.MaxBoardIndex;
+        }
+
+        private static bool IsSupportedCardKind(string kind)
+        {
+            if (string.IsNullOrEmpty(kind))
+            {
+                return false;
+            }
+
+            CardKind ignored;
+            return Enum.TryParse(kind, true, out ignored);
         }
 
         private static bool Same(string left, string right)

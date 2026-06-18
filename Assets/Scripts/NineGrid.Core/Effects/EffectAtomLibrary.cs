@@ -44,7 +44,56 @@ namespace NineGrid.Core.Effects
     [EffectAtom("OnBattle", EffectAtomKind.Trigger)]
     public sealed class OnBattleTrigger : TriggerAtomBase
     {
+        private string mSourceAction = string.Empty;
+        private CardKind mTargetKind = CardKind.Unknown;
+        private int mMaxActionDepth = -1;
+
         public override TriggerPoint Point { get { return TriggerPoint.OnBattle; } }
+
+        public override void Configure(EffectDslNode config)
+        {
+            base.Configure(config);
+            mSourceAction = config.Get("sourceAction").AsString(string.Empty);
+            mTargetKind = config.Get("targetKind").AsEnum(CardKind.Unknown);
+            mMaxActionDepth = config.Get("maxActionDepth").AsInt(-1);
+        }
+
+        public override bool Matches(EffectRuntimeContext context)
+        {
+            if (!base.Matches(context))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mSourceAction)
+                && (context.TriggerContext.Action == null
+                    || !Same(context.TriggerContext.Action.ActionName, mSourceAction)))
+            {
+                return false;
+            }
+
+            if (mMaxActionDepth >= 0
+                && (context.ActionContext == null || context.ActionContext.Depth > mMaxActionDepth))
+            {
+                return false;
+            }
+
+            if (mTargetKind != CardKind.Unknown)
+            {
+                CardInstance target;
+                if (!context.TryGetCard(context.FirstEventTargetUid(), out target) || target.Kind != mTargetKind)
+                {
+                    return false;
+                }
+            }
+
+            return HasEvent(context, CoreEventType.DamageDealt);
+        }
+
+        private static bool Same(string left, string right)
+        {
+            return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     [EffectAtom("OnKill", EffectAtomKind.Trigger)]
@@ -403,6 +452,13 @@ namespace NineGrid.Core.Effects
     {
         public void Configure(EffectDslNode config) { }
         public IReadOnlyList<int> Resolve(EffectRuntimeContext context) { return TargetResolver.Single(context.FirstEventCardUid()); }
+    }
+
+    [EffectAtom("EventTarget", EffectAtomKind.Target)]
+    public sealed class EventTargetTarget : ITarget
+    {
+        public void Configure(EffectDslNode config) { }
+        public IReadOnlyList<int> Resolve(EffectRuntimeContext context) { return TargetResolver.Single(context.FirstEventTargetUid()); }
     }
 
     [EffectAtom("RandomMonster", EffectAtomKind.Target)]

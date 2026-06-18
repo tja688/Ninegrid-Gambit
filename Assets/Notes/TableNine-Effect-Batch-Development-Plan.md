@@ -424,7 +424,48 @@ MonsterSkill pending, 46:
 
 下一批建议：如果继续批次5，应先做 `ChoicePayload v1 / SelectedTargets v1`，一口气收 `help.stat_boost_card.pending`、`help.swap_card.pending`、`help.teleport_card.pending`；如果切换能力簇，则进入批次6 处理来源标签、计数器和递归保护。
 
-## 6. 当前事实基线
+## 6. 批次6首个小闭环记录（2026-06-18）
+
+目标：补齐 OnBattle 的最小来源过滤和递归保护能力，先转换 `skill.thorn_skin.pending`，不把学习成长、烈焰链式、暴力狂/吸骨等更大来源归因问题混进同一批。
+
+本批新增能力：
+
+- `OnBattle` trigger 支持 `sourceAction`，可限定触发来源 action，例如只响应 `DealDamage`。
+- `OnBattle` trigger 支持 `targetKind`，可限定事件目标卡类型，例如只响应目标为 `Monster` 的伤害。
+- `OnBattle` trigger 支持 `maxActionDepth`，本批用 `0` 限制只响应顶层战斗伤害，阻止由效果自身 follow-up 造成的伤害再次递归触发。
+- 新增 `EventTarget` target atom，让 DSL 能直接把当前事件目标作为动作目标。
+- `EffectAtomSchemas` 增加 `OnBattle.targetKind` 和 `OnBattle.maxActionDepth` 校验。
+
+本批转换：
+
+- `skill.thorn_skin.battle`：PlayerSkill / Triggered / `OnBattle + DealDamage + targetKind Monster + maxActionDepth 0`，对当前受伤怪物造成等同其攻击的伤害。
+
+刻意延后：
+
+- `skill.learning_growth.pending` 仍保持 pending。它需要属性增加事件带来源/目标归因，而当前 `AddStatModifier` 与 `ModifyBaseStat` 事件还不足以表达“其他怪物获得攻击”。
+- `skill.flame_boiling.pending` 仍保持 pending。它需要帮助卡伤害来源增益，适合在来源标签扩展到具体 defId/cause 后处理。
+- `skill.violence_maniac.pending`、`skill.violence_nutrition.pending`、`skill.absorb_bone.pending` 仍保持 pending。它们需要移除来源、被移除卡基础属性快照和来源敏感连锁。
+
+批次6首个小闭环后数量：
+
+| 项目 | 数量 |
+|:--|--:|
+| hardcoded implemented effects | 71 |
+| hardcoded explicit pending effects | 18 |
+| pending monster skill placeholder effects | 36 |
+| runtime pending effects | 54 |
+| runtime total effects | 125 |
+
+验证记录：
+
+- Unity MCP refresh/compile：通过，Console 无错误。
+- `NineGrid.Core.Tests` EditMode 全量：74/74 通过。
+- `Assets/Notes/CI/check-core-guards.ps1`：通过。
+- `Assets/Notes/CI/run-core-tests.ps1`：Core tests passed；本机已有 Unity Editor 打开项目，batchmode 末尾报告重复实例提示，最终以 Unity MCP 全量测试为准。
+
+下一批建议：继续批次6B，先补更明确的 `sourceDefId/cause` 事件标签与属性变化来源，再处理 `skill.learning_growth.pending` 或烈焰链式“不递归”效果；如果想快速收内容，则回到 `ChoicePayload v1 / SelectedTargets v1` 处理 `help.stat_boost_card.pending`、`help.swap_card.pending`、`help.teleport_card.pending`。
+
+## 7. 当前事实基线
 
 ### 已经可靠的地基
 
@@ -440,7 +481,7 @@ MonsterSkill pending, 46:
 - 设计文档里效果总量更大：帮助卡 22 条、遗物 58 条、玩家技能 7 条、怪物技能 81 条。hardcoded catalog 覆盖了帮助卡和玩家技能的大部分，但遗物和怪物技能仍是子集/原型。
 - R5 的全内容回放网、pending 闸门、Luban 全量迁移闸门还没有完成。
 
-## 7. 核心判断
+## 8. 核心判断
 
 不要按“帮助卡 -> 遗物 -> 玩家技能 -> 怪物技能”硬推进。那会把同一种能力重复拆开，越做越乱。
 
@@ -452,7 +493,7 @@ MonsterSkill pending, 46:
 4. 每批都用 schema + catalog DSL + 行为测试证明。
 5. 最后再全量迁表、pending 清零、CI 卡死。
 
-## 8. 效果分类准则
+## 9. 效果分类准则
 
 每条效果先归入三态之一：
 
@@ -464,7 +505,7 @@ MonsterSkill pending, 46:
 
 不要把“规则改写”伪装成属性，不要把“动态数值”做成一堆专属 action，不要靠“记得减回去”处理临时效果。
 
-## 9. 批次规划
+## 10. 批次规划
 
 ### 批次0：事实重置
 
@@ -615,15 +656,15 @@ MonsterSkill pending, 46:
 - 增加 hardcoded/Luban parity 测试。
 - pending 闸门逐步从“允许存在”变成“不允许增加”，最终变成 `pending == 0`。
 
-## 10. 推荐下一步
+## 11. 推荐下一步
 
 下一次如果要直接进入实现，建议从：
 
 1. **继续批次4 后续小批**：做 `skill.taunt.pending` 的交互合法性规则，或做 `relic.gold_armor.pending` 的金币抵伤。
 2. **继续批次5 后续小批**：实现 `ChoicePayload v1 / SelectedTargets v1`，处理 `help.stat_boost_card.pending`、`help.swap_card.pending`、`help.teleport_card.pending`。
-3. **落地批次6**：补 cause/source 与递归保护后，再处理 `skill.thorn_skin.pending`、火焰链式等来源敏感效果。
+3. **继续批次6B**：补更明确的 `sourceDefId/cause` 事件标签后，处理 `skill.learning_growth.pending`、火焰链式等来源敏感效果。
 
-## 11. 给后续 AI 的技能入口
+## 12. 给后续 AI 的技能入口
 
 已创建 Codex skill：
 

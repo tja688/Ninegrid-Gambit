@@ -130,6 +130,13 @@ namespace NineGrid.Content
                     "{\"atom\":\"OfferRewardChoice\",\"poolId\":\"relic.golden_chest\"}"),
                 "[使用时] 从三个遗物中选择一个获得"));
 
+            c.AddEffect(Impl("skill.thorn_skin.battle", EffectContainerType.PlayerSkill,
+                Triggered("skill.thorn_skin.battle", "PlayerSkill",
+                    "{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0}",
+                    "{\"atom\":\"EventTarget\"}",
+                    "{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Target\",\"stat\":\"Attack\"},\"actor\":\"Player\"}"),
+                "[战斗时] 对怪物卡造成等同于该怪物卡攻击的伤害"));
+
             c.AddEffect(Impl("help.flame.use", EffectContainerType.HelpCard,
                 Triggered("help.flame.use", "HelpCard",
                     "{\"atom\":\"OnUseHelpCard\"}",
@@ -535,7 +542,7 @@ namespace NineGrid.Content
         private static void AddPlayerSkills(GameContentCatalog c)
         {
             Skill(c, "skill.thorn_skin", "刺皮", EffectContainerType.PlayerSkill, "战斗时对怪物造成等同其攻击的伤害")
-                .AddEffect(Pending(c, "skill.thorn_skin.pending", EffectContainerType.PlayerSkill, "动态取目标攻击值"));
+                .AddEffect("skill.thorn_skin.battle");
             Skill(c, "skill.hard_skin", "硬皮", EffectContainerType.PlayerSkill, "血量上限+10，关卡结束恢复10")
                 .AddEffect("skill.hard_skin.max_hp").AddEffect("skill.hard_skin.node_end");
             Skill(c, "skill.battle_hardened", "历战", EffectContainerType.PlayerSkill, "战斗时攻击+2，换敌复原")
