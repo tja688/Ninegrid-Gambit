@@ -369,7 +369,11 @@ namespace NineGrid.Core.Tests
                 "skill.intense_burning.flame_deal",
                 "skill.violence_maniac.move",
                 "skill.violence_nutrition.monster_remove",
-                "skill.violence_nutrition.help_remove"
+                "skill.violence_nutrition.help_remove",
+                "skill.hoodlum.slot1",
+                "skill.fall_apart.remove",
+                "skill.gear_delivery.move",
+                "skill.space_mastery.battle"
             };
 
             for (var i = 0; i < effectIds.Length; i++)

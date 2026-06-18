@@ -622,6 +622,85 @@ namespace NineGrid.Content
                     + "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"skill.guide\"}"
                     + "]}"),
                 "任意怪物移动到福地时获得2点护甲且攻击+1"));
+
+            c.AddEffect(Impl("skill.turn_world.enter", EffectContainerType.MonsterSkill,
+                Triggered("skill.turn_world.enter", "MonsterSkill",
+                    "{\"atom\":\"OnEnter\"}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"Rotate\",\"count\":1}"),
+                "[登场] 旋转一次"));
+            c.AddEffect(Impl("skill.hoodlum.slot1", EffectContainerType.MonsterSkill,
+                Triggered("skill.hoodlum.slot1", "MonsterSkill",
+                    "{\"atom\":\"OnMoveToSlot\",\"slot\":1,\"target\":\"Self\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Self\"}"),
+                "[场上] 每次移动到格1时，对玩家造成2点伤害"));
+            c.AddEffect(Impl("skill.fall_apart.remove", EffectContainerType.MonsterSkill,
+                Triggered("skill.fall_apart.remove", "MonsterSkill",
+                    "{\"atom\":\"OnRemove\"}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"ShuffleInto\",\"defId\":\"monster.skull_head\",\"kind\":\"Monster\",\"count\":1,\"top\":false},"
+                    + "{\"atom\":\"ShuffleInto\",\"defId\":\"monster.headless_skeleton\",\"kind\":\"Monster\",\"count\":1,\"top\":false}"
+                    + "]}"),
+                "[场上] [被移除时]，将一张骷髅头和一张无头骷髅洗入战斗卡组"));
+            c.AddEffect(Impl("skill.air_strike.slot1", EffectContainerType.MonsterSkill,
+                Triggered("skill.air_strike.slot1", "MonsterSkill",
+                    "{\"atom\":\"OnMoveToSlot\",\"slot\":1,\"target\":\"Self\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Self\"}"),
+                "[场上] 移动到格1时对玩家造成2点伤害"));
+            c.AddEffect(Impl("skill.air_strike.slot3", EffectContainerType.MonsterSkill,
+                Triggered("skill.air_strike.slot3", "MonsterSkill",
+                    "{\"atom\":\"OnMoveToSlot\",\"slot\":3,\"target\":\"Self\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Self\"}"),
+                "[场上] 移动到格3时对玩家造成2点伤害"));
+            c.AddEffect(Impl("skill.air_strike.slot7", EffectContainerType.MonsterSkill,
+                Triggered("skill.air_strike.slot7", "MonsterSkill",
+                    "{\"atom\":\"OnMoveToSlot\",\"slot\":7,\"target\":\"Self\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Self\"}"),
+                "[场上] 移动到格7时对玩家造成2点伤害"));
+            c.AddEffect(Impl("skill.air_strike.slot9", EffectContainerType.MonsterSkill,
+                Triggered("skill.air_strike.slot9", "MonsterSkill",
+                    "{\"atom\":\"OnMoveToSlot\",\"slot\":9,\"target\":\"Self\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Self\"}"),
+                "[场上] 移动到格9时对玩家造成2点伤害"));
+            c.AddEffect(Impl("skill.space_mastery.battle", EffectContainerType.MonsterSkill,
+                Triggered("skill.space_mastery.battle", "MonsterSkill",
+                    "{\"atom\":\"OnBattle\"}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"Rotate\",\"count\":1}"),
+                "玩家与本卡战斗后，旋转一次"));
+            c.AddEffect(Impl("skill.gear_delivery.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.gear_delivery.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":2}",
+                    "{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":1}",
+                    "{\"atom\":\"WeightedRandom\",\"choices\":["
+                    + "{\"weight\":1,\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"skill.gear_delivery\"}},"
+                    + "{\"weight\":1,\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":2,\"reason\":\"skill.gear_delivery\"}}"
+                    + "]}"),
+                "每移动2次，使随机一张其他怪物卡攻击+1或者护甲+2"));
+            c.AddEffect(Impl("skill.stone_growth.slot1", EffectContainerType.MonsterSkill,
+                Triggered("skill.stone_growth.slot1", "MonsterSkill",
+                    "{\"atom\":\"OnMoveToSlot\",\"slot\":1,\"target\":\"Self\"}",
+                    "{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]}",
+                    "{\"atom\":\"GainArmor\",\"amount\":2}"),
+                "[场上] 移动到格1时，其他怪物获得2点护甲"));
+            c.AddEffect(Impl("skill.stone_growth.slot4", EffectContainerType.MonsterSkill,
+                Triggered("skill.stone_growth.slot4", "MonsterSkill",
+                    "{\"atom\":\"OnMoveToSlot\",\"slot\":4,\"target\":\"Self\"}",
+                    "{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]}",
+                    "{\"atom\":\"GainArmor\",\"amount\":2}"),
+                "[场上] 移动到格4时，其他怪物获得2点护甲"));
+            c.AddEffect(Impl("skill.stone_growth.slot7", EffectContainerType.MonsterSkill,
+                Triggered("skill.stone_growth.slot7", "MonsterSkill",
+                    "{\"atom\":\"OnMoveToSlot\",\"slot\":7,\"target\":\"Self\"}",
+                    "{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]}",
+                    "{\"atom\":\"GainArmor\",\"amount\":2}"),
+                "[场上] 移动到格7时，其他怪物获得2点护甲"));
         }
 
         private static void AddHelpCards(GameContentCatalog c)
@@ -722,34 +801,36 @@ namespace NineGrid.Content
             Skill(c, "skill.stroll", "漫步", EffectContainerType.MonsterSkill, "每移动1次攻击+2").AddEffect("skill.stroll.move");
             Skill(c, "skill.falling_rocks", "落石", EffectContainerType.MonsterSkill, "累计损失10护甲洗入石人").AddEffect("skill.falling_rocks.cumulative");
 
-            PendingSkill(c, "skill.hoodlum", "混的人");
+            Skill(c, "skill.hoodlum", "混的人", EffectContainerType.MonsterSkill, "每次移动到格1时对玩家造成2点伤害").AddEffect("skill.hoodlum.slot1");
             PendingSkill(c, "skill.rascality", "痞气");
             PendingSkill(c, "skill.bloodthirst", "嗜血");
             PendingSkill(c, "skill.smart", "大聪明");
-            PendingSkill(c, "skill.gear_delivery", "发装备了！");
+            Skill(c, "skill.gear_delivery", "发装备了！", EffectContainerType.MonsterSkill, "每移动2次随机强化其他怪物").AddEffect("skill.gear_delivery.move");
             PendingSkill(c, "skill.fire_power", "火之力");
             PendingSkill(c, "skill.sacrifice", "献祭");
             PendingSkill(c, "skill.rolling_crush", "滚动碾压");
             PendingSkill(c, "skill.stone_lover", "石头爱好者");
             PendingSkill(c, "skill.throw_stone", "丢石头");
-            PendingSkill(c, "skill.fall_apart", "散架");
+            Skill(c, "skill.fall_apart", "散架", EffectContainerType.MonsterSkill, "被移除时洗入骷髅头与无头骷髅").AddEffect("skill.fall_apart.remove");
             PendingSkill(c, "skill.strong_combo", "强力组合");
             PendingSkill(c, "skill.delivery", "快递");
-            PendingSkill(c, "skill.turn_world", "转动");
+            Skill(c, "skill.turn_world", "转动", EffectContainerType.MonsterSkill, "登场旋转一次").AddEffect("skill.turn_world.enter");
             PendingSkill(c, "skill.hot_observation", "灼热观察");
-            PendingSkill(c, "skill.air_strike", "空中打击");
+            Skill(c, "skill.air_strike", "空中打击", EffectContainerType.MonsterSkill, "移动到角格时对玩家造成2点伤害")
+                .AddEffect("skill.air_strike.slot1").AddEffect("skill.air_strike.slot3").AddEffect("skill.air_strike.slot7").AddEffect("skill.air_strike.slot9");
             PendingSkill(c, "skill.relentless_chase", "不休追击");
             PendingSkill(c, "skill.stocking", "进货");
             PendingSkill(c, "skill.orc_tactics", "兽人战术");
             PendingSkill(c, "skill.fight_me", "和我打！");
             Skill(c, "skill.intense_burning", "剧烈燃烧", EffectContainerType.MonsterSkill, "每有一张烈焰加入战斗卡组，额外加入一张且不递归").AddEffect("skill.intense_burning.flame_deal");
-            PendingSkill(c, "skill.stone_growth", "石增长");
+            Skill(c, "skill.stone_growth", "石增长", EffectContainerType.MonsterSkill, "移动到左列时其他怪物获得2点护甲")
+                .AddEffect("skill.stone_growth.slot1").AddEffect("skill.stone_growth.slot4").AddEffect("skill.stone_growth.slot7");
             PendingSkill(c, "skill.stone_shelter", "石庇护");
             PendingSkill(c, "skill.fracture_fall_apart", "折损散架");
             Skill(c, "skill.range_expand", "范围扩大", EffectContainerType.MonsterSkill, "所有怪物卡视为与本卡正交相邻").AddEffect("skill.range_expand.rule");
             PendingSkill(c, "skill.flame_breath", "烈焰吐息");
             Skill(c, "skill.flame_boiling", "烈焰沸腾", EffectContainerType.MonsterSkill, "烈焰帮助卡造成的伤害+1").AddEffect("skill.flame_boiling.rule");
-            PendingSkill(c, "skill.space_mastery", "空间掌握");
+            Skill(c, "skill.space_mastery", "空间掌握", EffectContainerType.MonsterSkill, "玩家与本卡战斗后旋转一次").AddEffect("skill.space_mastery.battle");
             PendingSkill(c, "skill.otherworld_help", "异界帮助");
             PendingSkill(c, "skill.absorb_stone", "吸石");
             Skill(c, "skill.guide", "引路", EffectContainerType.MonsterSkill, "每移动3次创建福地，怪物进入福地获得护甲和攻击")

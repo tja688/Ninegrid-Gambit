@@ -17,8 +17,8 @@
     "def_id": "skill.air_strike",
     "display_name": "空中打击",
     "container_type": "MonsterSkill",
-    "design_text": "空中打击",
-    "effect_ids": "skill.air_strike.pending"
+    "design_text": "移动到角格时对玩家造成2点伤害",
+    "effect_ids": "skill.air_strike.slot1|skill.air_strike.slot3|skill.air_strike.slot7|skill.air_strike.slot9"
   },
   {
     "def_id": "skill.arsenal",
@@ -101,8 +101,8 @@
     "def_id": "skill.fall_apart",
     "display_name": "散架",
     "container_type": "MonsterSkill",
-    "design_text": "散架",
-    "effect_ids": "skill.fall_apart.pending"
+    "design_text": "被移除时洗入骷髅头与无头骷髅",
+    "effect_ids": "skill.fall_apart.remove"
   },
   {
     "def_id": "skill.falling_rocks",
@@ -164,8 +164,8 @@
     "def_id": "skill.gear_delivery",
     "display_name": "发装备了！",
     "container_type": "MonsterSkill",
-    "design_text": "发装备了！",
-    "effect_ids": "skill.gear_delivery.pending"
+    "design_text": "每移动2次随机强化其他怪物",
+    "effect_ids": "skill.gear_delivery.move"
   },
   {
     "def_id": "skill.gift",
@@ -206,8 +206,8 @@
     "def_id": "skill.hoodlum",
     "display_name": "混的人",
     "container_type": "MonsterSkill",
-    "design_text": "混的人",
-    "effect_ids": "skill.hoodlum.pending"
+    "design_text": "每次移动到格1时对玩家造成2点伤害",
+    "effect_ids": "skill.hoodlum.slot1"
   },
   {
     "def_id": "skill.hot_observation",
@@ -346,8 +346,8 @@
     "def_id": "skill.space_mastery",
     "display_name": "空间掌握",
     "container_type": "MonsterSkill",
-    "design_text": "空间掌握",
-    "effect_ids": "skill.space_mastery.pending"
+    "design_text": "玩家与本卡战斗后旋转一次",
+    "effect_ids": "skill.space_mastery.battle"
   },
   {
     "def_id": "skill.stocking",
@@ -360,8 +360,8 @@
     "def_id": "skill.stone_growth",
     "display_name": "石增长",
     "container_type": "MonsterSkill",
-    "design_text": "石增长",
-    "effect_ids": "skill.stone_growth.pending"
+    "design_text": "移动到左列时其他怪物获得2点护甲",
+    "effect_ids": "skill.stone_growth.slot1|skill.stone_growth.slot4|skill.stone_growth.slot7"
   },
   {
     "def_id": "skill.stone_lover",
@@ -451,8 +451,8 @@
     "def_id": "skill.turn_world",
     "display_name": "转动",
     "container_type": "MonsterSkill",
-    "design_text": "转动",
-    "effect_ids": "skill.turn_world.pending"
+    "design_text": "登场旋转一次",
+    "effect_ids": "skill.turn_world.enter"
   },
   {
     "def_id": "skill.unstable",

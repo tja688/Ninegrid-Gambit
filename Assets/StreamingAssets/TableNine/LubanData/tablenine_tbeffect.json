@@ -385,11 +385,32 @@
     "design_text": "吸石"
   },
   {
-    "id": "skill.air_strike.pending",
+    "id": "skill.air_strike.slot1",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "空中打击"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.air_strike.slot1\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":1,\"target\":\"Self\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Self\"}}",
+    "design_text": "[场上] 移动到格1时对玩家造成2点伤害"
+  },
+  {
+    "id": "skill.air_strike.slot3",
+    "container_type": "MonsterSkill",
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.air_strike.slot3\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":3,\"target\":\"Self\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Self\"}}",
+    "design_text": "[场上] 移动到格3时对玩家造成2点伤害"
+  },
+  {
+    "id": "skill.air_strike.slot7",
+    "container_type": "MonsterSkill",
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.air_strike.slot7\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":7,\"target\":\"Self\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Self\"}}",
+    "design_text": "[场上] 移动到格7时对玩家造成2点伤害"
+  },
+  {
+    "id": "skill.air_strike.slot9",
+    "container_type": "MonsterSkill",
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.air_strike.slot9\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":9,\"target\":\"Self\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Self\"}}",
+    "design_text": "[场上] 移动到格9时对玩家造成2点伤害"
   },
   {
     "id": "skill.arsenal.node_end",
@@ -469,11 +490,11 @@
     "design_text": "等级奇偶条件伤害倍率"
   },
   {
-    "id": "skill.fall_apart.pending",
+    "id": "skill.fall_apart.remove",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "散架"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.fall_apart.remove\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnRemove\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"ShuffleInto\",\"defId\":\"monster.skull_head\",\"kind\":\"Monster\",\"count\":1,\"top\":false},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.headless_skeleton\",\"kind\":\"Monster\",\"count\":1,\"top\":false}]}}",
+    "design_text": "[场上] [被移除时]，将一张骷髅头和一张无头骷髅洗入战斗卡组"
   },
   {
     "id": "skill.falling_rocks.cumulative",
@@ -532,11 +553,11 @@
     "design_text": "折损散架"
   },
   {
-    "id": "skill.gear_delivery.pending",
+    "id": "skill.gear_delivery.move",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "发装备了！"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.gear_delivery.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":2},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":1},\"action\":{\"atom\":\"WeightedRandom\",\"choices\":[{\"weight\":1,\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"skill.gear_delivery\"}},{\"weight\":1,\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":2,\"reason\":\"skill.gear_delivery\"}}]}}",
+    "design_text": "每移动2次，使随机一张其他怪物卡攻击+1或者护甲+2"
   },
   {
     "id": "skill.gift.move",
@@ -609,11 +630,11 @@
     "design_text": "[每关卡结束时] 恢复10点血量"
   },
   {
-    "id": "skill.hoodlum.pending",
+    "id": "skill.hoodlum.slot1",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "混的人"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.hoodlum.slot1\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":1,\"target\":\"Self\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Self\"}}",
+    "design_text": "[场上] 每次移动到格1时，对玩家造成2点伤害"
   },
   {
     "id": "skill.hot_observation.pending",
@@ -749,11 +770,11 @@
     "design_text": "大聪明"
   },
   {
-    "id": "skill.space_mastery.pending",
+    "id": "skill.space_mastery.battle",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "空间掌握"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.space_mastery.battle\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Rotate\",\"count\":1}}",
+    "design_text": "玩家与本卡战斗后，旋转一次"
   },
   {
     "id": "skill.stocking.pending",
@@ -763,11 +784,25 @@
     "design_text": "进货"
   },
   {
-    "id": "skill.stone_growth.pending",
+    "id": "skill.stone_growth.slot1",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "石增长"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.stone_growth.slot1\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":1,\"target\":\"Self\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"GainArmor\",\"amount\":2}}",
+    "design_text": "[场上] 移动到格1时，其他怪物获得2点护甲"
+  },
+  {
+    "id": "skill.stone_growth.slot4",
+    "container_type": "MonsterSkill",
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.stone_growth.slot4\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":4,\"target\":\"Self\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"GainArmor\",\"amount\":2}}",
+    "design_text": "[场上] 移动到格4时，其他怪物获得2点护甲"
+  },
+  {
+    "id": "skill.stone_growth.slot7",
+    "container_type": "MonsterSkill",
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.stone_growth.slot7\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":7,\"target\":\"Self\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"GainArmor\",\"amount\":2}}",
+    "design_text": "[场上] 移动到格7时，其他怪物获得2点护甲"
   },
   {
     "id": "skill.stone_lover.pending",
@@ -861,11 +896,11 @@
     "design_text": "[每关卡开始时] 将一张倍增塔放入道具牌格"
   },
   {
-    "id": "skill.turn_world.pending",
+    "id": "skill.turn_world.enter",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "转动"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.turn_world.enter\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEnter\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Rotate\",\"count\":1}}",
+    "design_text": "[登场] 旋转一次"
   },
   {
     "id": "skill.unstable.move",

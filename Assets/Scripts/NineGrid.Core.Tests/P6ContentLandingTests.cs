@@ -51,12 +51,12 @@ namespace NineGrid.Core.Tests
             var report = NineGridArchitecture.Current.GetSystem<IContentSystem>().ValidateCatalog();
 
             Assert.IsTrue(report.IsValid, FirstIssue(report));
-            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 89);
-            Assert.LessOrEqual(report.PendingEffectIds.Count, 39);
+            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 100);
+            Assert.LessOrEqual(report.PendingEffectIds.Count, 32);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 6);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.Relic), 1);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.PlayerSkill), 1);
-            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 31);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 24);
 
             AssertImplemented(catalog, report, "relic.vitality_amulet.max_hp");
             AssertImplemented(catalog, report, "relic.throwing_knife_bag.node_start");
@@ -99,6 +99,37 @@ namespace NineGrid.Core.Tests
             AssertImplemented(catalog, report, "help.stat_boost_card.use");
             AssertImplemented(catalog, report, "help.bear_trap.use");
             AssertImplemented(catalog, report, "skill.range_expand.rule");
+            AssertImplemented(catalog, report, "skill.hoodlum.slot1");
+            AssertImplemented(catalog, report, "skill.fall_apart.remove");
+            AssertImplemented(catalog, report, "skill.turn_world.enter");
+            AssertImplemented(catalog, report, "skill.air_strike.slot1");
+            AssertImplemented(catalog, report, "skill.gear_delivery.move");
+            AssertImplemented(catalog, report, "skill.stone_growth.slot1");
+            AssertImplemented(catalog, report, "skill.space_mastery.battle");
+        }
+
+        [Test]
+        public void MonsterComposableBatchNineCatalogDslHandlesMovementAndRemovalSkills()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var avatar = architecture.GetModel<BoardModel>().AvatarUid.Value;
+            var registry = architecture.GetModel<CardRegistry>();
+            var deck = architecture.GetModel<DeckModel>();
+            var avatarCard = registry.Get(avatar);
+            var initialHp = avatarCard.Stats.GetBase(StatId.Hp);
+
+            var hoodlum = PlaceMonster("monster.hoodlum", 20, SlotId.Board(2));
+            content.ApplyContentToCard(hoodlum);
+            pipeline.Execute(new MoveCardAction(hoodlum.Uid, SlotId.Board(1)));
+            Assert.AreEqual(initialHp - 2, avatarCard.Stats.GetBase(StatId.Hp));
+
+            var skeleton = PlaceMonster("monster.big_skeleton", 20, SlotId.Board(3));
+            content.ApplyContentToCard(skeleton);
+            pipeline.Execute(new RemoveCardAction(skeleton.Uid, ZoneId.Removed, "test", "test"));
+            Assert.AreEqual(1, CountCardsByDef(deck.DrawPileUids, registry, "monster.skull_head"));
+            Assert.AreEqual(1, CountCardsByDef(deck.DrawPileUids, registry, "monster.headless_skeleton"));
         }
 
         [Test]
