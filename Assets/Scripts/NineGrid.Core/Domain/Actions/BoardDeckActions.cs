@@ -60,7 +60,8 @@ namespace NineGrid.Core
         private static readonly TriggerPoint[] sPostTriggers =
         {
             TriggerPoint.AfterAction,
-            TriggerPoint.OnDeal
+            TriggerPoint.OnDeal,
+            TriggerPoint.OnEnter
         };
 
         public OpeningDealAction(NodeDeckOptions options)
@@ -186,7 +187,8 @@ namespace NineGrid.Core
         private static readonly TriggerPoint[] sPostTriggers =
         {
             TriggerPoint.AfterAction,
-            TriggerPoint.OnDeal
+            TriggerPoint.OnDeal,
+            TriggerPoint.OnEnter
         };
 
         public override string ActionName { get { return "FillEmptySlots"; } }
@@ -259,7 +261,8 @@ namespace NineGrid.Core
         {
             TriggerPoint.AfterAction,
             TriggerPoint.OnRotate,
-            TriggerPoint.OnMove
+            TriggerPoint.OnMove,
+            TriggerPoint.OnMoveToSlot
         };
 
         public static IReadOnlyList<SlotId> ClockwisePath
@@ -319,7 +322,8 @@ namespace NineGrid.Core
         {
             TriggerPoint.AfterAction,
             TriggerPoint.OnSwap,
-            TriggerPoint.OnMove
+            TriggerPoint.OnMove,
+            TriggerPoint.OnMoveToSlot
         };
 
         public SwapBoardSlotsAction(SlotId left, SlotId right)

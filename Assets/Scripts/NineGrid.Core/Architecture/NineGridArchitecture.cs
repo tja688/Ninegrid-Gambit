@@ -1,4 +1,5 @@
 using NineGrid.Core.Systems;
+using NineGrid.Core.Effects;
 using NineGrid.Core.Utilities;
 using QFramework;
 
@@ -20,6 +21,7 @@ namespace NineGrid.Core
 
             RegisterSystem<IStatSystem>(new StatSystem());
             RegisterSystem<ITriggerSystem>(new TriggerSystem());
+            RegisterSystem<IEffectSystem>(new EffectSystem());
             RegisterSystem<IActionPipelineSystem>(new ActionPipelineSystem());
             RegisterSystem<IBoardSystem>(new BoardSystem());
             RegisterSystem<IDeckSystem>(new DeckSystem());

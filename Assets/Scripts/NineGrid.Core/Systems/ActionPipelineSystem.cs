@@ -148,9 +148,8 @@ namespace NineGrid.Core.Systems
 
             var result = action.Apply(context) ?? GameActionResult.Empty;
             EventLog.AppendRange(result.Events);
-            ResolveTriggeredActions(result.FollowUpActions, depth + 1);
-
             DispatchTriggers(action, TriggerTiming.Post, action.GetPostTriggerPoints(context, result.Events), result.Events, context, depth);
+            ResolveTriggeredActions(result.FollowUpActions, depth + 1);
 
             EventLog.Append(new CoreGameEvent(CoreEventType.ActionFinished, actionId, action.ActionName));
         }

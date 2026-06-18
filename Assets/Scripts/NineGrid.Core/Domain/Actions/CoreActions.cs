@@ -10,7 +10,11 @@ namespace NineGrid.Core
         {
             TriggerPoint.AfterAction,
             TriggerPoint.OnBattle,
-            TriggerPoint.OnDamage
+            TriggerPoint.OnDamage,
+            TriggerPoint.OnArmorBreak,
+            TriggerPoint.OnDamageTaken,
+            TriggerPoint.OnFatalDamage,
+            TriggerPoint.OnCumulative
         };
 
         public DealDamageAction(int actorUid, int targetUid, int amount)
@@ -76,7 +80,7 @@ namespace NineGrid.Core
 
             if (newHp <= 0 && target.Kind != CardKind.Avatar)
             {
-                result.AddFollowUp(new KillAction(ActorUid, TargetUid));
+                result.AddFollowUp(new KillIfDeadAction(ActorUid, TargetUid));
             }
 
             return result;

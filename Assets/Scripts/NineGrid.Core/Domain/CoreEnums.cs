@@ -97,9 +97,15 @@ namespace NineGrid.Core
         OnDeal,
         OnRotate,
         OnMove,
+        OnMoveToSlot,
         OnSwap,
         OnInteract,
         OnUseHelpCard,
+        OnEnter,
+        OnArmorBreak,
+        OnDamageTaken,
+        OnFatalDamage,
+        OnCumulative,
         OnNodeStart,
         OnNodeEnd,
         OnActionRejected
@@ -129,7 +135,12 @@ namespace NineGrid.Core
         NodeCompleted,
         ItemPicked,
         EmptyClicked,
-        ItemUsed
+        ItemUsed,
+        EffectTriggered,
+        EffectModifierApplied,
+        EffectDeactivated,
+        CardSpawned,
+        SkillGranted
     }
 
     public enum GamePhase

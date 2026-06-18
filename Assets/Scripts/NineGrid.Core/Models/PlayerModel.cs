@@ -60,6 +60,17 @@ namespace NineGrid.Core
             }
         }
 
+        public bool RemoveRelic(string defId)
+        {
+            var removed = mRelicDefIds.Remove(defId);
+            if (removed)
+            {
+                Touch();
+            }
+
+            return removed;
+        }
+
         public void AddSkill(string defId)
         {
             if (!string.IsNullOrEmpty(defId) && !mSkillDefIds.Contains(defId))
@@ -67,6 +78,17 @@ namespace NineGrid.Core
                 mSkillDefIds.Add(defId);
                 Touch();
             }
+        }
+
+        public bool RemoveSkill(string defId)
+        {
+            var removed = mSkillDefIds.Remove(defId);
+            if (removed)
+            {
+                Touch();
+            }
+
+            return removed;
         }
 
         public void Reset()
