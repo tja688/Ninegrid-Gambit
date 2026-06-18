@@ -36,10 +36,12 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("OwnsRelicSet"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("AdjacentHasCard"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("EventFilter"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("SelectedOption"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("RandomMonster"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("FilteredCards"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("AdjacentCard"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("BoardMarkEventCard"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("SelectedCards"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("WeightedRandom"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("CardCounter"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("EventTarget"));
@@ -48,6 +50,7 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("GrantRewardFromPool"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("GrantRelic"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("GrantPlayerSkillContent"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("MoveToDrawPile"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("SetBoardMark"));
 
             var invalid = effectSystem.ParseJson(
@@ -137,6 +140,24 @@ namespace NineGrid.Core.Tests
             Assert.IsFalse(movementValidation.IsValid);
             AssertHasIssue(movementValidation, "schema.range.count");
             AssertHasIssue(movementValidation, "schema.rotate.direction");
+
+            var badSelection = effectSystem.ParseJson(
+                "{"
+                + "\"id\":\"bad.selection\","
+                + "\"typeTag\":\"【类型帮助卡】\","
+                + "\"containerType\":\"HelpCard\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"conditions\":[{\"atom\":\"SelectedOption\"}],"
+                + "\"target\":{\"atom\":\"SelectedCards\",\"count\":-1,\"kind\":\"Ghost\",\"zone\":\"Nowhere\"},"
+                + "\"action\":{\"atom\":\"Swap\"}"
+                + "}");
+            var selectionValidation = effectSystem.Validate(badSelection);
+            Assert.IsFalse(selectionValidation.IsValid);
+            AssertHasIssue(selectionValidation, "schema.condition.option");
+            AssertHasIssue(selectionValidation, "schema.range.count");
+            AssertHasIssue(selectionValidation, "schema.target.kind");
+            AssertHasIssue(selectionValidation, "schema.target.zone");
 
             var badReward = effectSystem.ParseJson(
                 "{"
@@ -645,6 +666,96 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void SelectedCardsTargetUsesUseItemPayloadAndRejectsAvatar()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+            var first = CreateMonster("monster.selected.first", 10, SlotId.Board(1));
+            var second = CreateMonster("monster.selected.second", 10, SlotId.Board(2));
+            var firstSlot = first.Slot.Value;
+            var secondSlot = second.Slot.Value;
+
+            var definition = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.selected.swap\","
+                + "\"typeTag\":\"【类型帮助卡】\","
+                + "\"containerType\":\"HelpCard\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"target\":{\"atom\":\"SelectedCards\",\"zone\":\"Board\",\"count\":2},"
+                + "\"action\":{\"atom\":\"Swap\"}"
+                + "}");
+            Assert.IsTrue(Effects().Validate(definition).IsValid);
+            Effects().Activate(definition, new EffectOwner(EffectContainerType.HelpCard, "help.selected.test", 0));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new UseItemAction(9001, new[] { avatar.Uid, first.Uid }));
+            Assert.AreEqual(firstSlot, first.Slot.Value);
+            Assert.AreEqual(secondSlot, second.Slot.Value);
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new UseItemAction(9001, new[] { first.Uid, second.Uid }));
+            Assert.AreEqual(secondSlot, first.Slot.Value);
+            Assert.AreEqual(firstSlot, second.Slot.Value);
+        }
+
+        [Test]
+        public void SelectedOptionConditionChoosesConfiguredBranch()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var avatar = architecture.GetModel<CardRegistry>().Get(architecture.GetModel<BoardModel>().AvatarUid.Value);
+
+            var definition = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.selected.option\","
+                + "\"typeTag\":\"【类型帮助卡】\","
+                + "\"containerType\":\"HelpCard\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"target\":{\"atom\":\"Player\"},"
+                + "\"action\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"SelectedOption\",\"option\":\"Armor\"},"
+                + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":3}}"
+                + "}");
+            Assert.IsTrue(Effects().Validate(definition).IsValid);
+            Effects().Activate(definition, new EffectOwner(EffectContainerType.HelpCard, "help.selected.option", 0));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new UseItemAction(9001, null, "Attack"));
+            Assert.AreEqual(0, avatar.Stats.GetBase(StatId.Armor));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new UseItemAction(9001, null, "Armor"));
+            Assert.AreEqual(3, avatar.Stats.GetBase(StatId.Armor));
+        }
+
+        [Test]
+        public void MoveToDrawPileAtomShufflesExistingSelectedCard()
+        {
+            var architecture = NineGridArchitecture.Current;
+            architecture.GetUtility<IRngUtility>().SetSeed(20260618UL);
+            var deck = architecture.GetModel<DeckModel>();
+            var target = CreateMonster("monster.teleport.target", 10, SlotId.Board(1));
+
+            var definition = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.selected.teleport\","
+                + "\"typeTag\":\"【类型帮助卡】\","
+                + "\"containerType\":\"HelpCard\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"target\":{\"atom\":\"SelectedCards\",\"zone\":\"Board\",\"count\":1},"
+                + "\"action\":{\"atom\":\"MoveToDrawPile\"}"
+                + "}");
+            Assert.IsTrue(Effects().Validate(definition).IsValid);
+            Effects().Activate(definition, new EffectOwner(EffectContainerType.HelpCard, "help.selected.teleport", 0));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new UseItemAction(9001, new[] { target.Uid }));
+
+            Assert.AreEqual(ZoneId.DrawPile, target.Zone.Value);
+            Assert.AreEqual(SlotId.None, target.Slot.Value);
+            Assert.IsTrue(ContainsUid(deck.DrawPileUids, target.Uid));
+            Assert.IsTrue(architecture.GetSystem<IActionPipelineSystem>().EventLog.Contains(CoreEventType.CardDealt));
+        }
+
+        [Test]
         public void RotateAtomSupportsCounterClockwiseMovement()
         {
             var architecture = NineGridArchitecture.Current;
@@ -931,6 +1042,19 @@ namespace NineGrid.Core.Tests
             }
 
             return count;
+        }
+
+        private static bool ContainsUid(IReadOnlyList<int> values, int uid)
+        {
+            for (var i = 0; i < values.Count; i++)
+            {
+                if (values[i] == uid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static SlotId ExpectedBlessedSlot(ulong seed)

@@ -227,6 +227,11 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.condition.key", path + ".key is required for CardCounter.");
                 }
 
+                if (Same(atom, "SelectedOption") && !node.Has("option"))
+                {
+                    result.Add("schema.condition.option", path + ".option is required for SelectedOption.");
+                }
+
                 if (Same(atom, "AdjacentHasCard") && !node.Has("defId"))
                 {
                     result.Add("schema.condition.defId", path + ".defId is required for AdjacentHasCard.");
@@ -499,6 +504,24 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.range.count", path + ".count must be >= 0.");
                 }
 
+                if (Same(atom, "SelectedCards"))
+                {
+                    if (node.Has("count") && node.Get("count").AsInt(0) < 0)
+                    {
+                        result.Add("schema.range.count", path + ".count must be >= 0.");
+                    }
+
+                    if (node.Has("kind") && !IsSupportedCardKind(node.Get("kind").AsString(string.Empty)))
+                    {
+                        result.Add("schema.target.kind", path + ".kind is not supported.");
+                    }
+
+                    if (node.Has("zone") && !IsSupportedZone(node.Get("zone").AsString(string.Empty)))
+                    {
+                        result.Add("schema.target.zone", path + ".zone is not supported.");
+                    }
+                }
+
                 if (Same(atom, "BoardMarkEventCard"))
                 {
                     if (node.Has("mark") && !IsSupportedBoardMark(node.Get("mark").AsString(string.Empty)))
@@ -621,6 +644,17 @@ namespace NineGrid.Core.Effects
 
             CoreEventType ignored;
             return Enum.TryParse(eventType, true, out ignored);
+        }
+
+        private static bool IsSupportedZone(string zone)
+        {
+            if (string.IsNullOrEmpty(zone))
+            {
+                return false;
+            }
+
+            ZoneId ignored;
+            return Enum.TryParse(zone, true, out ignored);
         }
 
         private static bool IsSupportedBoardMark(string mark)

@@ -51,9 +51,9 @@ namespace NineGrid.Core.Tests
             var report = NineGridArchitecture.Current.GetSystem<IContentSystem>().ValidateCatalog();
 
             Assert.IsTrue(report.IsValid, FirstIssue(report));
-            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 78);
-            Assert.LessOrEqual(report.PendingEffectIds.Count, 49);
-            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 11);
+            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 81);
+            Assert.LessOrEqual(report.PendingEffectIds.Count, 46);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 8);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.Relic), 2);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.PlayerSkill), 1);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 35);
@@ -88,6 +88,9 @@ namespace NineGrid.Core.Tests
             AssertImplemented(catalog, report, "skill.violence_nutrition.help_remove");
             AssertImplemented(catalog, report, "skill.guide.create_blessed");
             AssertImplemented(catalog, report, "skill.guide.blessed_enter");
+            AssertImplemented(catalog, report, "help.swap_card.use");
+            AssertImplemented(catalog, report, "help.teleport_card.use");
+            AssertImplemented(catalog, report, "help.stat_boost_card.use");
         }
 
         [Test]
@@ -437,6 +440,41 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void BatchFiveCSelectedHelpCardsExecuteFromCatalog()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var registry = architecture.GetModel<CardRegistry>();
+            var deck = architecture.GetModel<DeckModel>();
+            var board = architecture.GetModel<BoardModel>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+            avatar.Stats.SetBase(StatId.MaxHp, 20);
+            avatar.Stats.SetBase(StatId.Hp, 10);
+
+            UseHelpCard("help.stat_boost_card", null, "Attack");
+            Assert.AreEqual(2, avatar.Stats.GetBase(StatId.Attack));
+
+            UseHelpCard("help.stat_boost_card", null, "Armor");
+            Assert.AreEqual(1, avatar.Stats.GetBase(StatId.Armor));
+
+            UseHelpCard("help.stat_boost_card", null, "Hp");
+            Assert.AreEqual(22, avatar.Stats.GetBase(StatId.MaxHp));
+            Assert.AreEqual(12, avatar.Stats.GetBase(StatId.Hp));
+
+            var first = PlaceMonster("monster.swap.first", 10, SlotId.Board(1));
+            var second = PlaceHelpCard("help.swap.second", SlotId.Board(2));
+            UseHelpCard("help.swap_card", new[] { first.Uid, second.Uid }, null);
+            Assert.AreEqual(SlotId.Board(2), first.Slot.Value);
+            Assert.AreEqual(SlotId.Board(1), second.Slot.Value);
+
+            var teleported = PlaceMonster("monster.teleport.target", 10, SlotId.Board(3));
+            UseHelpCard("help.teleport_card", new[] { teleported.Uid }, null);
+            Assert.AreEqual(ZoneId.DrawPile, teleported.Zone.Value);
+            Assert.AreEqual(SlotId.None, teleported.Slot.Value);
+            Assert.IsTrue(ContainsUid(deck.DrawPileUids, teleported.Uid));
+            Assert.IsTrue(HasEvent(architecture.GetSystem<IActionPipelineSystem>().EventLog, CoreEventType.CardDealt));
+        }
+
+        [Test]
         public void BatchSixThornSkinCatalogDslDealsTargetAttackDamageOnce()
         {
             var architecture = NineGridArchitecture.Current;
@@ -566,6 +604,19 @@ namespace NineGrid.Core.Tests
             return false;
         }
 
+        private static bool ContainsUid(IReadOnlyList<int> values, int uid)
+        {
+            for (var i = 0; i < values.Count; i++)
+            {
+                if (values[i] == uid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private static int CountEffectsByContainer(
             GameContentCatalog catalog,
             IReadOnlyList<string> effectIds,
@@ -628,12 +679,17 @@ namespace NineGrid.Core.Tests
 
         private static void UseHelpCard(string defId)
         {
+            UseHelpCard(defId, null, null);
+        }
+
+        private static void UseHelpCard(string defId, IReadOnlyList<int> selectedCardUids, string selectedOption)
+        {
             var architecture = NineGridArchitecture.Current;
             var content = architecture.GetSystem<IContentSystem>();
             var registry = architecture.GetModel<CardRegistry>();
             var card = content.CreateDraft(defId).Create(registry);
             content.ApplyContentToCard(card);
-            architecture.GetSystem<IActionPipelineSystem>().Execute(new UseItemAction(card.Uid));
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new UseItemAction(card.Uid, selectedCardUids, selectedOption));
         }
 
         private static void RemoveFromBoard(CardInstance card)

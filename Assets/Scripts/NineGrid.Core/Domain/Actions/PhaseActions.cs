@@ -182,11 +182,25 @@ namespace NineGrid.Core
         };
 
         public UseItemAction(int itemUid)
+            : this(itemUid, null, null)
+        {
+        }
+
+        public UseItemAction(int itemUid, IReadOnlyList<int> selectedCardUids)
+            : this(itemUid, selectedCardUids, null)
+        {
+        }
+
+        public UseItemAction(int itemUid, IReadOnlyList<int> selectedCardUids, string selectedOption)
         {
             ItemUid = itemUid;
+            SelectedCardUids = selectedCardUids == null ? new int[0] : new List<int>(selectedCardUids).ToArray();
+            SelectedOption = selectedOption ?? string.Empty;
         }
 
         public int ItemUid { get; private set; }
+        public IReadOnlyList<int> SelectedCardUids { get; private set; }
+        public string SelectedOption { get; private set; }
         public override string ActionName { get { return "UseItem"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -198,15 +212,42 @@ namespace NineGrid.Core
                 sourceDefId = item.DefId;
             }
 
+            var itemUsed = new CoreGameEvent(CoreEventType.ItemUsed, context.ActionId, ActionName)
+                .WithCard(ItemUid)
+                .WithSource(sourceDefId, "use");
+            if (SelectedCardUids.Count > 0)
+            {
+                itemUsed.WithTarget(SelectedCardUids[0]);
+            }
+
+            if (!string.IsNullOrEmpty(SelectedOption) || SelectedCardUids.Count > 0)
+            {
+                itemUsed.WithMessage(BuildSelectionMessage());
+            }
+
             return new GameActionResult()
-                .AddEvent(new CoreGameEvent(CoreEventType.ItemUsed, context.ActionId, ActionName)
-                    .WithCard(ItemUid)
-                    .WithSource(sourceDefId, "use"));
+                .AddEvent(itemUsed);
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
         {
             return sPostTriggers;
+        }
+
+        private string BuildSelectionMessage()
+        {
+            var message = "option=" + SelectedOption + ";cards=";
+            for (var i = 0; i < SelectedCardUids.Count; i++)
+            {
+                if (i > 0)
+                {
+                    message += ",";
+                }
+
+                message += SelectedCardUids[i].ToString();
+            }
+
+            return message;
         }
     }
 }

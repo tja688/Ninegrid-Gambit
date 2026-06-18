@@ -424,6 +424,41 @@ MonsterSkill pending, 46:
 
 下一批建议：如果继续批次5，应先做 `ChoicePayload v1 / SelectedTargets v1`，一口气收 `help.stat_boost_card.pending`、`help.swap_card.pending`、`help.teleport_card.pending`；如果切换能力簇，则进入批次6 处理来源标签、计数器和递归保护。
 
+### 5.2 批次5C彻底闭环记录（2026-06-18）
+
+目标：补齐 `ChoicePayload v1 / SelectedTargets v1`，让需要玩家选择选项或目标的帮助卡可以通过 Core action 负载进入效果 DSL，不引入 UI 依赖。
+
+本批新增能力：
+
+- `UseItemAction` 新增 `SelectedCardUids` 与 `SelectedOption` 负载，并在 `ItemUsed` 事件中记录选择摘要。
+- 新增 `SelectedCards` target atom：从本次 `UseItemAction` 选择负载读取目标，支持 `count`、`kind`、`zone` 过滤，默认拒绝玩家头像。
+- 新增 `SelectedOption` condition atom：用于三选一/多选一分支判断。
+- 新增 `MoveToDrawPile` action atom / `ShuffleCardIntoDrawPileAction`：把一张已存在的非玩家卡通过 GameAction 洗回战斗牌堆，并写入 `CardDealt` 事件。
+- `EffectAtomSchemas` 增加 `SelectedOption.option`、`SelectedCards.count/kind/zone` 校验。
+
+本批转换：
+
+- `help.swap_card.use`：HelpCard / Triggered / `[使用时]`，选择两张棋盘上的非玩家卡并互换位置。
+- `help.teleport_card.use`：HelpCard / Triggered / `[使用时]`，选择一张棋盘上的非玩家卡洗回战斗牌堆。
+- `help.stat_boost_card.use`：HelpCard / Triggered / `[使用时]`，按选项执行攻击+1、护甲+1或血量上限与当前血量+2。
+
+批次5C后数量：
+
+| 项目 | 数量 |
+|:--|--:|
+| hardcoded implemented effects | 81 |
+| runtime pending effects | 46 |
+| runtime total effects | 127 |
+
+验证记录：
+
+- Unity MCP refresh/compile：通过，Console 无编译错误；仅有 Unity Test Framework 写入 `TestResults.xml` 提示。
+- 批次5C窄测试 5 个：通过。
+- `NineGrid.Core.Tests` EditMode 全量：87/87 通过。
+- `Assets/Notes/CI/check-core-guards.ps1`：通过。
+
+下一批建议：批次5的奖励、内容动作、随机发放、玩家选项和玩家目标选择已经形成闭环；后续不再继续扩批次5。若要快速收帮助卡长尾，可进入 `SelectedTarget + ValueExpr` 小批处理 `help.armor_breaking_hammer.pending` / `help.kidnapping.pending`；若按能力簇推进，优先继续批次4的 `skill.taunt.pending` 或批次6C的移除卡属性快照。
+
 ## 6. 批次6首个小闭环记录（2026-06-18）
 
 目标：补齐 OnBattle 的最小来源过滤和递归保护能力，先转换 `skill.thorn_skin.pending`，不把学习成长、烈焰链式、暴力狂/吸骨等更大来源归因问题混进同一批。
@@ -564,7 +599,7 @@ MonsterSkill pending, 46:
 ### 当前还没签收的部分
 
 - `TableNineContentCatalog.cs` 仍是主要内容真源，Luban 只是最小样例，不是生产内容源。
-- hardcoded catalog 预计有 76 个 implemented effect、50 个 pending effect，R4 远未清零。
+- hardcoded catalog 预计有 81 个 implemented effect、46 个 runtime pending effect，R4 仍未清零。
 - 设计文档里效果总量更大：帮助卡 22 条、遗物 58 条、玩家技能 7 条、怪物技能 81 条。hardcoded catalog 覆盖了帮助卡和玩家技能的大部分，但遗物和怪物技能仍是子集/原型。
 - R5 的全内容回放网、pending 闸门、Luban 全量迁移闸门还没有完成。
 
@@ -748,7 +783,7 @@ MonsterSkill pending, 46:
 下一次如果要直接进入实现，建议从：
 
 1. **继续批次4 后续小批**：做 `skill.taunt.pending` 的交互合法性规则，或做 `relic.gold_armor.pending` 的金币抵伤。
-2. **继续批次5 后续小批**：实现 `ChoicePayload v1 / SelectedTargets v1`，处理 `help.stat_boost_card.pending`、`help.swap_card.pending`、`help.teleport_card.pending`。
+2. **帮助卡长尾小批**：复用 `SelectedCards` / `ValueExpr` 处理 `help.armor_breaking_hammer.pending`、`help.kidnapping.pending` 这类已接近可表达的选择目标效果。
 3. **继续批次6后续小批**：基于 `sourceDefId/cause` 处理被移除卡属性快照，优先收 `skill.absorb_bone.pending`。
 
 ## 12. 给后续 AI 的技能入口

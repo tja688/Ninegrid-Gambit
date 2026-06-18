@@ -287,6 +287,74 @@ namespace NineGrid.Core
         }
     }
 
+    public sealed class ShuffleCardIntoDrawPileAction : GameAction
+    {
+        private static readonly TriggerPoint[] sPostTriggers =
+        {
+            TriggerPoint.AfterAction,
+            TriggerPoint.OnDeal
+        };
+
+        public ShuffleCardIntoDrawPileAction(int cardUid, bool top, string cause = null)
+        {
+            CardUid = cardUid;
+            Top = top;
+            Cause = cause ?? string.Empty;
+        }
+
+        public int CardUid { get; private set; }
+        public bool Top { get; private set; }
+        public string Cause { get; private set; }
+        public override string ActionName { get { return "ShuffleCardIntoDrawPile"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var registry = context.GetModel<CardRegistry>();
+            CardInstance card;
+            if (!registry.TryGet(CardUid, out card) || card.Kind == CardKind.Avatar)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var fromSlot = card.Slot.Value;
+            var board = context.GetModel<BoardModel>();
+            var deck = context.GetModel<DeckModel>();
+            board.RemoveCard(card);
+            deck.AddToDrawPile(card, Top);
+
+            if (!Top)
+            {
+                Shuffle(deck, context.Architecture.GetUtility<IRngUtility>());
+            }
+
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
+                    .WithCard(card.Uid)
+                    .WithSlots(fromSlot, SlotId.None)
+                    .WithMessage("shuffleExisting:" + card.DefId)
+                    .WithSource(card.DefId, Cause));
+        }
+
+        public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
+        {
+            return sPostTriggers;
+        }
+
+        private static void Shuffle(DeckModel deck, IRngUtility rng)
+        {
+            var shuffled = new List<int>(deck.DrawPileUids);
+            for (var i = shuffled.Count - 1; i > 0; i--)
+            {
+                var swapIndex = rng.Range(0, i + 1);
+                var temp = shuffled[i];
+                shuffled[i] = shuffled[swapIndex];
+                shuffled[swapIndex] = temp;
+            }
+
+            deck.ReorderDrawPile(shuffled);
+        }
+    }
+
     public sealed class SpawnCardAction : GameAction
     {
         private static readonly TriggerPoint[] sPostTriggers =

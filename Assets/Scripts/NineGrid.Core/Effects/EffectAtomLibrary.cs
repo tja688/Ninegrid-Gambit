@@ -746,6 +746,79 @@ namespace NineGrid.Core.Effects
         public IReadOnlyList<int> Resolve(EffectRuntimeContext context) { return TargetResolver.MonstersOnBoard(context); }
     }
 
+    [EffectAtom("SelectedCards", EffectAtomKind.Target)]
+    public sealed class SelectedCardsTarget : ITarget
+    {
+        private CardKind mKind = CardKind.Unknown;
+        private ZoneId mZone = ZoneId.None;
+        private int mCount;
+        private bool mAllowAvatar;
+
+        public void Configure(EffectDslNode config)
+        {
+            mKind = config.Get("kind").AsEnum(CardKind.Unknown);
+            mZone = config.Get("zone").AsEnum(ZoneId.None);
+            mCount = Math.Max(0, config.Get("count").AsInt(0));
+            mAllowAvatar = config.Get("allowAvatar").AsBool(false);
+        }
+
+        public IReadOnlyList<int> Resolve(EffectRuntimeContext context)
+        {
+            var result = new List<int>();
+            var useItem = context.TriggerContext == null ? null : context.TriggerContext.Action as UseItemAction;
+            if (useItem == null)
+            {
+                return result;
+            }
+
+            for (var i = 0; i < useItem.SelectedCardUids.Count; i++)
+            {
+                CardInstance card;
+                if (!context.TryGetCard(useItem.SelectedCardUids[i], out card))
+                {
+                    continue;
+                }
+
+                if (!mAllowAvatar && card.Kind == CardKind.Avatar)
+                {
+                    continue;
+                }
+
+                if (mKind != CardKind.Unknown && card.Kind != mKind)
+                {
+                    continue;
+                }
+
+                if (mZone != ZoneId.None && card.Zone.Value != mZone)
+                {
+                    continue;
+                }
+
+                AddUnique(result, card.Uid);
+            }
+
+            if (mCount > 0 && result.Count != mCount)
+            {
+                return new int[0];
+            }
+
+            return result;
+        }
+
+        private static void AddUnique(List<int> values, int uid)
+        {
+            for (var i = 0; i < values.Count; i++)
+            {
+                if (values[i] == uid)
+                {
+                    return;
+                }
+            }
+
+            values.Add(uid);
+        }
+    }
+
     [EffectAtom("OrthoAdjacent", EffectAtomKind.Target)]
     public sealed class OrthoAdjacentTarget : ITarget
     {
@@ -1078,6 +1151,28 @@ namespace NineGrid.Core.Effects
             var uid = TargetResolver.ResolveSingleCardRef(context, mTargetRef);
             CardInstance card;
             return context.TryGetCard(uid, out card) && card.Counters.Get(mKey) >= mMin;
+        }
+
+        public IStatCondition CreateStatCondition(EffectBuildContext context)
+        {
+            return null;
+        }
+    }
+
+    [EffectAtom("SelectedOption", EffectAtomKind.Condition)]
+    public sealed class SelectedOptionEffectCondition : ICondition
+    {
+        private string mOption = string.Empty;
+
+        public void Configure(EffectDslNode config)
+        {
+            mOption = config.Get("option").AsString(string.Empty);
+        }
+
+        public bool IsMet(EffectRuntimeContext context)
+        {
+            var useItem = context.TriggerContext == null ? null : context.TriggerContext.Action as UseItemAction;
+            return useItem != null && string.Equals(useItem.SelectedOption, mOption, StringComparison.OrdinalIgnoreCase);
         }
 
         public IStatCondition CreateStatCondition(EffectBuildContext context)
@@ -1781,6 +1876,31 @@ namespace NineGrid.Core.Effects
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
         {
             return new[] { new ShuffleIntoDrawPileAction(mDefId, mKind, mCount, mTop, context.SourceDefId) };
+        }
+    }
+
+    [EffectAtom("MoveToDrawPile", EffectAtomKind.Action)]
+    public sealed class MoveToDrawPileEffectAction : IAction
+    {
+        private bool mTop;
+
+        public void Configure(EffectDslNode config)
+        {
+            mTop = config.Get("top").AsBool(false);
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            var result = new List<GameAction>();
+            for (var i = 0; i < targets.Count; i++)
+            {
+                if (targets[i] != 0)
+                {
+                    result.Add(new ShuffleCardIntoDrawPileAction(targets[i], mTop, context.SourceDefId));
+                }
+            }
+
+            return result;
         }
     }
 

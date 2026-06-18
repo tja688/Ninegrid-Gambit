@@ -111,6 +111,29 @@ namespace NineGrid.Content
                     + "]}"
                     + "]}"),
                 "[使用时] 扣除5点血量上限并随机获得攻击+1、护甲+1、50金币或随机遗物"));
+            c.AddEffect(Impl("help.swap_card.use", EffectContainerType.HelpCard,
+                Triggered("help.swap_card.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"SelectedCards\",\"zone\":\"Board\",\"count\":2}",
+                    "{\"atom\":\"Swap\"}"),
+                "[使用时] 选择除玩家卡外的两张卡牌互换所在格子位置"));
+            c.AddEffect(Impl("help.teleport_card.use", EffectContainerType.HelpCard,
+                Triggered("help.teleport_card.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"SelectedCards\",\"zone\":\"Board\",\"count\":1}",
+                    "{\"atom\":\"MoveToDrawPile\"}"),
+                "[使用时] 选择除玩家卡外的一张卡牌洗回战斗卡组"));
+            c.AddEffect(Impl("help.stat_boost_card.use", EffectContainerType.HelpCard,
+                Triggered("help.stat_boost_card.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"SelectedOption\",\"option\":\"Attack\"},"
+                    + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"statBoost.attack\"},"
+                    + "\"elseAction\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"SelectedOption\",\"option\":\"Armor\"},"
+                    + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":1,\"reason\":\"statBoost.armor\"},"
+                    + "\"elseAction\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"SelectedOption\",\"option\":\"Hp\"},"
+                    + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":2,\"reason\":\"statBoost.hp\"}}}}}"),
+                "[使用时] 选择攻击+1、护甲+1或血量上限与当前血量+2"));
             c.AddEffect(Impl("help.common_chest_card.use", EffectContainerType.HelpCard,
                 Triggered("help.common_chest_card.use", "HelpCard",
                     "{\"atom\":\"OnUseHelpCard\"}",
@@ -553,11 +576,11 @@ namespace NineGrid.Content
             Help(c, "help.brutality_card", "暴力卡", ContentRarity.White, 30, "攻击").AddEffect(Pending(c, "help.brutality_card.pending", EffectContainerType.HelpCard, "玩家当前总攻击翻倍，战斗一次后复原"));
             Help(c, "help.rolling_stone", "滚石", ContentRarity.White, 50, "直伤").AddEffect(Pending(c, "help.rolling_stone.pending", EffectContainerType.HelpCard, "移动到格3时移除格6普通怪物和本卡"));
             Help(c, "help.bomb", "爆弹", ContentRarity.White, 50, "直伤").AddEffect("help.bomb.use");
-            Help(c, "help.swap_card", "交换卡", ContentRarity.White, 50, "位移").AddEffect(Pending(c, "help.swap_card.pending", EffectContainerType.HelpCard, "选择两张非玩家卡互换位置"));
+            Help(c, "help.swap_card", "交换卡", ContentRarity.White, 50, "位移").AddEffect("help.swap_card.use");
             Help(c, "help.armor_breaking_hammer", "破击锤", ContentRarity.White, 50, "直伤").AddEffect(Pending(c, "help.armor_breaking_hammer.pending", EffectContainerType.HelpCard, "将目标怪物卡护甲降低10点"));
             Help(c, "help.sturdy_shield", "耐用盾牌", ContentRarity.White, 50, "护甲").AddEffect("help.sturdy_shield.use");
             Help(c, "help.bear_trap", "捕熊陷阱", ContentRarity.White, 50, "直伤").AddEffect(Pending(c, "help.bear_trap.pending", EffectContainerType.HelpCard, "正交相邻格补牌为怪物时造成10点伤害后移除本卡"));
-            Help(c, "help.teleport_card", "传送卡", ContentRarity.White, 30, "位移").AddEffect(Pending(c, "help.teleport_card.pending", EffectContainerType.HelpCard, "将一张非玩家卡洗回战斗卡组"));
+            Help(c, "help.teleport_card", "传送卡", ContentRarity.White, 30, "位移").AddEffect("help.teleport_card.use");
             Help(c, "help.blood_conversion", "血液转换", ContentRarity.White, 50, "特殊").AddEffect("help.blood_conversion.use");
             Help(c, "help.gold_card", "金币卡", ContentRarity.Blue, 30, "经济").AddEffect("help.gold_card.use");
             Help(c, "help.food_card", "食品卡", ContentRarity.Blue, 50, "恢复").AddEffect("help.food_card.use");
@@ -569,7 +592,7 @@ namespace NineGrid.Content
             Help(c, "help.blue_chest_card", "蓝色宝箱卡", ContentRarity.Gold, 150, "经济").AddEffect("help.blue_chest_card.use");
             Help(c, "help.watchtower", "瞭望塔", ContentRarity.Gold, 150, "直伤").AddEffect(Pending(c, "help.watchtower.pending", EffectContainerType.HelpCard, "场上/道具牌格随机伤害"));
             Help(c, "help.doubling_tower", "倍增塔", ContentRarity.Gold, 150, "特殊").AddEffect(Pending(c, "help.doubling_tower.pending", EffectContainerType.HelpCard, "帮助卡触发两次"));
-            Help(c, "help.stat_boost_card", "属性提升卡", ContentRarity.Gold, 100, "特殊").AddEffect(Pending(c, "help.stat_boost_card.pending", EffectContainerType.HelpCard, "选择攻击/护甲/血量提升"));
+            Help(c, "help.stat_boost_card", "属性提升卡", ContentRarity.Gold, 100, "特殊").AddEffect("help.stat_boost_card.use");
             Help(c, "help.golden_chest_card", "金色宝箱卡", ContentRarity.Red, 400, "特殊").AddEffect("help.golden_chest_card.use");
             Help(c, "help.flame", "烈焰", ContentRarity.Red, 400, "特殊").AddEffect("help.flame.use");
         }
