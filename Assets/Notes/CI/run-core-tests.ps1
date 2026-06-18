@@ -57,6 +57,15 @@ catch {
     exit 1
 }
 
+$guardScript = Join-Path $PSScriptRoot "check-core-guards.ps1"
+if (Test-Path $guardScript) {
+    Write-Host "Running Core architecture guard..."
+    & $guardScript -ProjectPath $ProjectPath
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+}
+
 New-Item -ItemType Directory -Force -Path $ArtifactsDir | Out-Null
 
 Write-Host "Project : $ProjectPath"

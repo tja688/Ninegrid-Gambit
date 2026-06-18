@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using NineGrid.Core.Commands;
 using NineGrid.Core.Systems;
 using NUnit.Framework;
@@ -212,6 +214,197 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void FullNodeReplayScriptAssertsAllInteractionPaths()
+        {
+            NineGridArchitecture.ResetForTests();
+            InitialGameFactory.Create(
+                NineGridArchitecture.Current,
+                new InitialGameOptions { Seed = 42, AvatarAttack = 1 });
+
+            var architecture = NineGridArchitecture.Current;
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var deck = architecture.GetModel<DeckModel>();
+            var player = architecture.GetModel<PlayerModel>();
+            var phaseSystem = architecture.GetSystem<IPhaseSystem>();
+            var deckSystem = architecture.GetSystem<IDeckSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var avatarSlot = board.AvatarSlot.Value;
+
+            var options = new NodeDeckOptions { PlayerOpeningCount = 1, EnemyOpeningCount = 2 }
+                .AddPlayerCard(new CardDraft("player.loot", CardKind.PlayerCard) { GoldReward = 3 })
+                .AddEnemyCard(new CardDraft("monster.tank", CardKind.Monster)
+                {
+                    MaxHp = 5,
+                    Attack = 0
+                })
+                .AddEnemyCard(new CardDraft("monster.weak", CardKind.Monster)
+                {
+                    MaxHp = 1,
+                    Attack = 0,
+                    GoldReward = 5
+                });
+
+            var startResult = architecture.SendCommand(new StartNodeCommand(options));
+            Assert.IsTrue(startResult.Accepted);
+            Assert.AreEqual(GamePhase.InteractionLoop, phaseSystem.CurrentPhase);
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.NodeStarted));
+
+            var coinsBefore = player.Coins.Value;
+            var interactionBefore = player.InteractionCount.Value;
+            Assert.AreEqual(0, interactionBefore);
+
+            var illegalAttackSlot = FindNonAdjacentOccupiedOrEmptySlot(avatarSlot, board);
+            AssertUseCommandRejected(
+                architecture,
+                new AttackCommand(illegalAttackSlot),
+                GameCommandKind.Attack);
+
+            var tankSlot = FindAdjacentSlot(
+                avatarSlot,
+                board,
+                slot =>
+                {
+                    var uid = board.GetCardUid(slot);
+                    if (uid == 0)
+                    {
+                        return false;
+                    }
+
+                    var card = registry.Get(uid);
+                    return card.Kind == CardKind.Monster && card.Stats.GetBase(StatId.Hp) > 1;
+                },
+                "adjacent monster for non-kill attack");
+            var tankUid = board.GetCardUid(tankSlot);
+            var tank = registry.Get(tankUid);
+            Assert.Greater(tank.Stats.GetBase(StatId.Hp), 1);
+
+            var logBeforeNonKillAttack = pipeline.EventLog.Entries.Count;
+            var attackNonKill = architecture.SendCommand(new AttackCommand(tankSlot));
+            Assert.IsTrue(attackNonKill.Accepted);
+            Assert.AreEqual(tank.Stats.GetBase(StatId.MaxHp) - 1, tank.Stats.GetBase(StatId.Hp));
+            Assert.AreEqual(interactionBefore, player.InteractionCount.Value);
+            Assert.IsFalse(HasEventSince(pipeline.EventLog, logBeforeNonKillAttack, CoreEventType.BoardRotated));
+            Assert.IsTrue(HasEventSince(pipeline.EventLog, logBeforeNonKillAttack, CoreEventType.DamageDealt));
+
+            AssertUseCommandRejected(
+                architecture,
+                new PickupItemCommand(tankSlot),
+                GameCommandKind.PickupItem);
+
+            AssertUseCommandRejected(
+                architecture,
+                new ClickEmptyCommand(tankSlot),
+                GameCommandKind.ClickEmpty);
+
+            var weakUid = FindBoardCardUid(
+                board,
+                registry,
+                card => card.DefId == "monster.weak");
+            var lootUid = FindBoardCardUid(
+                board,
+                registry,
+                card => card.DefId == "player.loot");
+
+            var item = registry.Create("item.heal", CardKind.HelpCard);
+            deck.AddToItemSlots(item);
+            var interactionBeforeItem = player.InteractionCount.Value;
+            var logBeforeItem = pipeline.EventLog.Entries.Count;
+            var useItemResult = architecture.SendCommand(new UseItemCommand(item.Uid));
+            Assert.IsTrue(useItemResult.Accepted);
+            Assert.AreEqual(interactionBeforeItem, player.InteractionCount.Value);
+            Assert.IsTrue(HasEventSince(pipeline.EventLog, logBeforeItem, CoreEventType.ItemUsed));
+            Assert.IsFalse(HasEventSince(pipeline.EventLog, logBeforeItem, CoreEventType.BoardRotated));
+
+            RotateUntilAdjacent(architecture, avatarSlot, board, weakUid);
+            var weakSlot = FindSlotOfCard(board, weakUid);
+            var interactionBeforeKill = player.InteractionCount.Value;
+            var logBeforeKill = pipeline.EventLog.Entries.Count;
+            var killAttack = architecture.SendCommand(new AttackCommand(weakSlot));
+            Assert.IsTrue(killAttack.Accepted);
+            Assert.AreEqual(0, board.GetCardUid(weakSlot));
+            Assert.AreEqual(interactionBeforeKill + 1, player.InteractionCount.Value);
+            Assert.IsTrue(HasEventSince(pipeline.EventLog, logBeforeKill, CoreEventType.CardKilled));
+            Assert.IsTrue(HasEventSince(pipeline.EventLog, logBeforeKill, CoreEventType.GoldModified));
+            Assert.IsTrue(HasEventSince(pipeline.EventLog, logBeforeKill, CoreEventType.BoardRotated));
+            Assert.IsTrue(HasEventSince(pipeline.EventLog, logBeforeKill, CoreEventType.SlotsFilled));
+
+            RotateUntilAdjacent(architecture, avatarSlot, board, lootUid);
+            var pickupSlot = FindSlotOfCard(board, lootUid);
+            var interactionBeforePickup = player.InteractionCount.Value;
+            var logBeforePickup = pipeline.EventLog.Entries.Count;
+            var pickupResult = architecture.SendCommand(new PickupItemCommand(pickupSlot));
+            Assert.IsTrue(pickupResult.Accepted);
+            Assert.AreEqual(coinsBefore + 3 + 5, player.Coins.Value);
+            Assert.AreEqual(interactionBeforePickup + 1, player.InteractionCount.Value);
+            Assert.IsTrue(HasEventSince(pipeline.EventLog, logBeforePickup, CoreEventType.ItemPicked));
+            Assert.IsTrue(HasEventSince(pipeline.EventLog, logBeforePickup, CoreEventType.BoardRotated));
+            Assert.IsTrue(HasEventSince(pipeline.EventLog, logBeforePickup, CoreEventType.SlotsFilled));
+
+            var emptySlot = FindAdjacentSlot(
+                avatarSlot,
+                board,
+                slot => board.IsEmpty(slot),
+                "adjacent empty slot");
+            var interactionBeforeClick = player.InteractionCount.Value;
+            var logBeforeClick = pipeline.EventLog.Entries.Count;
+            var clickResult = architecture.SendCommand(new ClickEmptyCommand(emptySlot));
+            Assert.IsTrue(clickResult.Accepted);
+            Assert.AreEqual(interactionBeforeClick + 1, player.InteractionCount.Value);
+            Assert.IsTrue(HasEventSince(pipeline.EventLog, logBeforeClick, CoreEventType.EmptyClicked));
+            Assert.IsTrue(HasEventSince(pipeline.EventLog, logBeforeClick, CoreEventType.BoardRotated));
+
+            while (deckSystem.HasEnemyOnBoard())
+            {
+                var remainingMonsterSlot = TryFindAdjacentSlot(
+                    avatarSlot,
+                    board,
+                    slot =>
+                    {
+                        var uid = board.GetCardUid(slot);
+                        return uid != 0 && registry.Get(uid).Kind == CardKind.Monster;
+                    });
+                if (remainingMonsterSlot != SlotId.None)
+                {
+                    var cleanupAttack = architecture.SendCommand(new AttackCommand(remainingMonsterSlot));
+                    Assert.IsTrue(cleanupAttack.Accepted);
+                    continue;
+                }
+
+                var rotateSlot = TryFindAdjacentSlot(avatarSlot, board, slot => board.IsEmpty(slot));
+                if (rotateSlot == SlotId.None)
+                {
+                    Assert.Fail("Could not rotate board to reach remaining monsters.");
+                }
+
+                var rotateClick = architecture.SendCommand(new ClickEmptyCommand(rotateSlot));
+                Assert.IsTrue(rotateClick.Accepted);
+            }
+
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.CardDealt));
+            if (deck.DrawPileUids.Count == 0)
+            {
+                Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.DrawPileExhausted));
+            }
+            Assert.IsFalse(deckSystem.HasEnemyOnBoard());
+            Assert.IsTrue(deckSystem.IsNodeCleared());
+            Assert.AreEqual(GamePhase.RewardItemChoice, phaseSystem.CurrentPhase);
+            Assert.IsTrue(phaseSystem.CanExecute(GameCommandKind.StartNode));
+            Assert.IsFalse(phaseSystem.CanExecute(GameCommandKind.Attack));
+            Assert.IsFalse(phaseSystem.CanExecute(GameCommandKind.PickupItem));
+            Assert.IsFalse(phaseSystem.CanExecute(GameCommandKind.ClickEmpty));
+            Assert.IsFalse(phaseSystem.CanExecute(GameCommandKind.UseItem));
+
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.ActionRejected));
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.NodeCompleted));
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.PhaseChanged));
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.InteractionChanged));
+            Assert.GreaterOrEqual(EventsOfType(pipeline.EventLog, CoreEventType.BoardRotated).Count, 3);
+            Assert.GreaterOrEqual(player.InteractionCount.Value, interactionBefore + 3);
+            Assert.AreEqual(coinsBefore + 3 + 5, player.Coins.Value);
+        }
+
+        [Test]
         public void UseItemAcceptsValidItemInItemSlots()
         {
             var architecture = NineGridArchitecture.Current;
@@ -253,6 +446,15 @@ namespace NineGrid.Core.Tests
             GameCommandKind expectedCommand,
             int expectedCardUid)
         {
+            AssertUseCommandRejected(architecture, command, expectedCommand, expectedCardUid);
+        }
+
+        private static void AssertUseCommandRejected(
+            IArchitecture architecture,
+            ICommand<CoreCommandResult> command,
+            GameCommandKind expectedCommand,
+            int expectedCardUid = 0)
+        {
             var pipeline = architecture.GetSystem<IActionPipelineSystem>();
             Evt_ActionRejected rejected = null;
             architecture.RegisterEvent<Evt_ActionRejected>(evt => rejected = evt);
@@ -262,8 +464,181 @@ namespace NineGrid.Core.Tests
             Assert.IsFalse(result.Accepted);
             Assert.IsNotNull(rejected);
             Assert.AreEqual(expectedCommand, rejected.Command);
-            Assert.AreEqual(expectedCardUid, rejected.CardUid);
+            if (expectedCardUid != 0)
+            {
+                Assert.AreEqual(expectedCardUid, rejected.CardUid);
+            }
+
             Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.ActionRejected));
+        }
+
+        private static int FindBoardCardUid(
+            BoardModel board,
+            CardRegistry registry,
+            Func<CardInstance, bool> predicate)
+        {
+            foreach (var uid in board.BoardCardUids())
+            {
+                if (predicate(registry.Get(uid)))
+                {
+                    return uid;
+                }
+            }
+
+            Assert.Fail("Could not find board card matching predicate.");
+            return 0;
+        }
+
+        private static SlotId FindSlotOfCard(BoardModel board, int cardUid)
+        {
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var slot = SlotId.Board(i);
+                if (board.GetCardUid(slot) == cardUid)
+                {
+                    return slot;
+                }
+            }
+
+            Assert.Fail("Card uid " + cardUid + " is not on the board.");
+            return SlotId.None;
+        }
+
+        private static void RotateUntilAdjacent(
+            IArchitecture architecture,
+            SlotId avatarSlot,
+            BoardModel board,
+            int cardUid)
+        {
+            var cardSlot = FindSlotOfCard(board, cardUid);
+            if (avatarSlot.IsAdjacentTo(cardSlot))
+            {
+                return;
+            }
+
+            var probeSlots = new[]
+            {
+                SlotId.Board(2),
+                SlotId.Board(4),
+                SlotId.Board(6),
+                SlotId.Board(8)
+            };
+
+            for (var attempt = 0; attempt < 8; attempt++)
+            {
+                cardSlot = FindSlotOfCard(board, cardUid);
+                if (avatarSlot.IsAdjacentTo(cardSlot))
+                {
+                    return;
+                }
+
+                SlotId rotateSlot = SlotId.None;
+                for (var i = 0; i < probeSlots.Length; i++)
+                {
+                    if (probeSlots[i] != avatarSlot && board.IsEmpty(probeSlots[i]))
+                    {
+                        rotateSlot = probeSlots[i];
+                        break;
+                    }
+                }
+
+                if (rotateSlot == SlotId.None)
+                {
+                    Assert.Fail(
+                        "Could not find adjacent empty slot to rotate toward card #"
+                        + cardUid
+                        + " at "
+                        + cardSlot
+                        + ".");
+                }
+
+                var clickResult = architecture.SendCommand(new ClickEmptyCommand(rotateSlot));
+                Assert.IsTrue(clickResult.Accepted);
+            }
+
+            Assert.Fail("Card #" + cardUid + " never became adjacent to avatar.");
+        }
+
+        private static SlotId TryFindAdjacentSlot(
+            SlotId avatarSlot,
+            BoardModel board,
+            Func<SlotId, bool> predicate)
+        {
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var slot = SlotId.Board(i);
+                if (slot == avatarSlot || !avatarSlot.IsAdjacentTo(slot))
+                {
+                    continue;
+                }
+
+                if (predicate(slot))
+                {
+                    return slot;
+                }
+            }
+
+            return SlotId.None;
+        }
+
+        private static SlotId FindAdjacentSlot(
+            SlotId avatarSlot,
+            BoardModel board,
+            Func<SlotId, bool> predicate,
+            string description)
+        {
+            var slot = TryFindAdjacentSlot(avatarSlot, board, predicate);
+            if (slot == SlotId.None)
+            {
+                Assert.Fail("Could not find " + description + ".");
+            }
+
+            return slot;
+        }
+
+        private static SlotId FindNonAdjacentOccupiedOrEmptySlot(SlotId avatarSlot, BoardModel board)
+        {
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var slot = SlotId.Board(i);
+                if (slot == avatarSlot || avatarSlot.IsAdjacentTo(slot))
+                {
+                    continue;
+                }
+
+                return slot;
+            }
+
+            Assert.Fail("Could not find a non-adjacent board slot.");
+            return SlotId.None;
+        }
+
+        private static bool HasEventSince(EventLog eventLog, int startIndex, CoreEventType type)
+        {
+            var entries = eventLog.Entries;
+            for (var i = startIndex; i < entries.Count; i++)
+            {
+                if (entries[i].Type == type)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static List<CoreGameEvent> EventsOfType(EventLog eventLog, CoreEventType type)
+        {
+            var result = new List<CoreGameEvent>();
+            for (var i = 0; i < eventLog.Entries.Count; i++)
+            {
+                if (eventLog.Entries[i].Type == type)
+                {
+                    result.Add(eventLog.Entries[i]);
+                }
+            }
+
+            return result;
         }
 
         private static SlotId FindFirstMonsterSlot()

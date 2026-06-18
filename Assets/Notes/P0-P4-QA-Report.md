@@ -139,7 +139,11 @@
 
    **修补情况（2026-06-18）**：对照 `RUL_发牌`，敌方池/玩家池为**节点开局暂存区**，非节点内 reserve；`OpeningDealAction` 在开局选牌后把两侧池**剩余牌全部洗入运行时抽牌堆**，开局后池应为空。抽牌堆耗尽时按规则停止补牌，不从池回灌。`DeckModel`/`DeckSystem` 已加语义注释。新增 `OpeningDealDrainsStagingPoolsIntoDrawPile`、`NodeStaysActiveWhileEnemiesRemainAfterStagingPoolIsDrained` 测试。
 4. 补完整 P4 回放式测试：攻击击杀、攻击未击杀、拾取、点空格、用道具、补牌、清场、非法操作、最终阶段全部断言。
+
+   **修补情况（2026-06-18）**：新增 `P4NodeFlowTests.FullNodeReplayScriptAssertsAllInteractionPaths`，以固定种子 `42` 串行回放一整局节点：非法攻击 → 攻击未击杀（无旋转/无互动计数）→ 非法拾取怪物 → 非法点占格 → 用道具（无旋转）→ 击杀弱怪（金币+旋转+补空）→ 拾取金币牌 → 点空格 → 清场循环 → `RewardItemChoice` 终态断言（合法命令集、EventLog 关键事件、`DrawPileExhausted`/`SlotsFilled`/`CardDealt` 等）。抽取 `RotateUntilAdjacent`、`AssertUseCommandRejected` 等辅助方法。Unity EditMode **25/25 通过**（`NineGrid.Core.Tests`）。
 5. 为 P3/P4 加守门：禁止 Core 直接引用 UnityEngine、禁止系统绕过 Action 改 Model，可先用 `rg`/Roslyn 简单检查，后续再进 CI。
+
+   **修补情况（2026-06-18）**：新增 `Assets/Notes/CI/check-core-guards.ps1` / `check-core-guards.sh`（`rg` 扫描 Core 与 Systems）；白名单 `ActionPipelineSystem` / `TriggerSystem` / `StatSystem`。镜像 EditMode 测试 `P0ArchitectureGuardTests`（3 条）+ 共享扫描器 `CoreArchitectureGuard`。`run-core-tests` 脚本在 Unity batchmode 前自动跑守门。当前代码库守门 **0 违规**；全量 **28/28** EditMode 通过。
 
 ## 本次质检未改动项
 

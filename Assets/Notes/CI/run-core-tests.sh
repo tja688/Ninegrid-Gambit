@@ -48,6 +48,13 @@ resolve_unity_path() {
 }
 
 UNITY_BIN="$(resolve_unity_path)" || exit 1
+
+GUARD_SCRIPT="$SCRIPT_DIR/check-core-guards.sh"
+if [[ -x "$GUARD_SCRIPT" || -f "$GUARD_SCRIPT" ]]; then
+  echo "Running Core architecture guard..."
+  bash "$GUARD_SCRIPT" "$PROJECT_PATH"
+fi
+
 mkdir -p "$ARTIFACTS_DIR"
 
 echo "Project : $PROJECT_PATH"

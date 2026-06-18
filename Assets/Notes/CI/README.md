@@ -22,12 +22,41 @@ P0 规划曾写「纯 C# 测试工程 + `dotnet test`」。当前仓库实际情
 | 测试类 | 阶段 |
 |:--|:--|
 | `P0InfrastructureTests` | P0 |
+| `P0ArchitectureGuardTests` | P0（架构守门） |
 | `P1ModelTests` | P1 |
 | `P2StatPipelineTests` | P2 |
 | `P3ActionPipelineTests` | P3 |
 | `P4NodeFlowTests` | P4 |
 
-当前共 **17** 条用例（以 Test Runner 实际列出为准）。
+当前共 **28** 条用例（以 Test Runner 实际列出为准）。
+
+## 架构守门（P3/P4）
+
+在跑 EditMode 测试前，可先执行静态守门（无需打开 Unity）：
+
+PowerShell：
+
+```powershell
+.\Assets\Notes\CI\check-core-guards.ps1
+```
+
+Bash：
+
+```bash
+./Assets/Notes/CI/check-core-guards.sh
+```
+
+守门规则（`rg` 扫描 `Assets/Scripts/NineGrid.Core`）：
+
+| 检查 | 说明 |
+|:--|:--|
+| `noEngineReferences` | `NineGrid.Core.asmdef` 必须为 `true` |
+| 禁止 `UnityEngine` | Core 源码不得 `using UnityEngine` 或写 `UnityEngine.*` |
+| System 不经 Action 改 Model | `Systems/*.cs` 中不得直接调用棋盘/牌堆/玩家等突变 API；白名单：`ActionPipelineSystem`、`TriggerSystem`、`StatSystem`（P2 修饰器入口） |
+
+同一规则在 EditMode 中有镜像测试：`P0ArchitectureGuardTests`（3 条）。
+
+`run-core-tests.ps1` / `run-core-tests.sh` 会在启动 Unity batchmode **之前**自动跑守门脚本。
 
 ## 本地验收
 
