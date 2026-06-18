@@ -3,6 +3,179 @@
 日期：2026-06-18  
 目的：把 P5/P6/R3/R4 后续工作从“很多东西都开了头”整理成可执行、可验证、可连续委托给 AI 的批次路线。
 
+## 0. 批次0事实重置记录（2026-06-18）
+
+本次只做事实重置，不改玩法代码。统计来源为 `TableNineContentCatalog.cs`、`EffectAtomLibrary.cs`、`Assets/Tools/Luban/Datas/*.json`、核心设计文档和 `NineGrid.Core.Tests`。
+
+### 0.1 当前数量
+
+| 项目 | 数量 |
+|:--|--:|
+| hardcoded implemented effects | 48 |
+| hardcoded explicit pending effects | 38 |
+| pending monster skill placeholder effects | 38 |
+| runtime pending effects | 76 |
+| runtime total effects | 124 |
+| help cards | 27 |
+| relics | 19 |
+| skill definitions total | 69 |
+| explicit skill definitions before `PendingSkill` expansion | 31 |
+| monster cards | 60 |
+| monster decks | 6 |
+| reward pools | 4 |
+| reward entries | 14 |
+| rooms | 5 |
+| node deck rules | 9 |
+
+Effect atom surface:
+
+| Atom lane | Count |
+|:--|--:|
+| Triggers | 15 |
+| Conditions | 7 |
+| Targets | 9 |
+| Actions | 17 |
+
+Luban sample rows:
+
+| File | Rows |
+|:--|--:|
+| `cards.json` | 3 |
+| `economy.json` | 1 |
+| `effects.json` | 5 |
+| `monster_decks.json` | 1 |
+| `node_deck_rules.json` | 1 |
+| `relics.json` | 1 |
+| `reward_entries.json` | 2 |
+| `reward_pools.json` | 1 |
+| `rooms.json` | 3 |
+| `skills.json` | 2 |
+
+Design doc effect lines:
+
+| Doc | Effect lines |
+|:--|--:|
+| `帮助卡数据.md` | 22 |
+| `遗物数据.md` | 58 |
+| `玩家技能.md` | 7 |
+| `怪物技能.md` | 81 |
+
+Core EditMode test methods:
+
+| Test file | Tests |
+|:--|--:|
+| `P0ArchitectureGuardTests.cs` | 3 |
+| `P0InfrastructureTests.cs` | 4 |
+| `P1ModelTests.cs` | 2 |
+| `P2StatPipelineTests.cs` | 6 |
+| `P3ActionPipelineTests.cs` | 2 |
+| `P4NodeFlowTests.cs` | 11 |
+| `P5EffectSystemTests.cs` | 12 |
+| `P6ContentLandingTests.cs` | 6 |
+| `P6LubanContentTests.cs` | 1 |
+| `P6R3LubanIntegrationTests.cs` | 4 |
+
+### 0.2 Pending IDs by container
+
+HelpCard pending, 21:
+
+- `help.armor_breaking_hammer.pending`
+- `help.bear_trap.pending`
+- `help.blood_conversion.pending`
+- `help.blue_chest_card.pending`
+- `help.brutality_card.pending`
+- `help.common_chest_card.pending`
+- `help.doubling_tower.pending`
+- `help.fireball.pending`
+- `help.food_card.pending`
+- `help.golden_chest_card.pending`
+- `help.healing_spring.pending`
+- `help.impact_tutorial.pending`
+- `help.kidnapping.pending`
+- `help.rolling_stone.pending`
+- `help.rotation_wheel.pending`
+- `help.shield_bash_tutorial.pending`
+- `help.stat_boost_card.pending`
+- `help.swap_card.pending`
+- `help.teleport_card.pending`
+- `help.ward_magic_card.pending`
+- `help.watchtower.pending`
+
+Relic pending, 6:
+
+- `relic.gold_armor.pending`
+- `relic.heavy_armor.pending`
+- `relic.lucky_coin.pending`
+- `relic.potion_bag.pending`
+- `relic.throwing_knife_bag.pending`
+- `relic.vitality_amulet.max_hp`
+
+PlayerSkill pending, 3:
+
+- `skill.easy_road.pending`
+- `skill.even_hatred.pending`
+- `skill.thorn_skin.pending`
+
+MonsterSkill pending, 46:
+
+- `skill.absorb_bone.pending`
+- `skill.absorb_stone.pending`
+- `skill.air_strike.pending`
+- `skill.blessing.pending`
+- `skill.bloodthirst.pending`
+- `skill.delivery.pending`
+- `skill.fall_apart.pending`
+- `skill.fight_me.pending`
+- `skill.find_weakness.pending`
+- `skill.fire_power.pending`
+- `skill.first_strike.pending`
+- `skill.flame_boiling.pending`
+- `skill.flame_breath.pending`
+- `skill.fracture_fall_apart.pending`
+- `skill.gear_delivery.pending`
+- `skill.guide.pending`
+- `skill.hard.pending`
+- `skill.hoodlum.pending`
+- `skill.hot_observation.pending`
+- `skill.intense_burning.pending`
+- `skill.learning_growth.pending`
+- `skill.mixed_bones.pending`
+- `skill.orc_tactics.pending`
+- `skill.otherworld_help.pending`
+- `skill.random_walk.pending`
+- `skill.range_expand.pending`
+- `skill.rascality.pending`
+- `skill.relentless_chase.pending`
+- `skill.rolling_crush.pending`
+- `skill.sacrifice.pending`
+- `skill.smart.pending`
+- `skill.space_mastery.pending`
+- `skill.stocking.pending`
+- `skill.stone_growth.pending`
+- `skill.stone_lover.pending`
+- `skill.stone_shelter.pending`
+- `skill.stray_cub.first_strike`
+- `skill.strong_combo.pending`
+- `skill.swallow_stone.pending`
+- `skill.taunt.pending`
+- `skill.thief_claims.pending`
+- `skill.throw_stone.pending`
+- `skill.turn_world.pending`
+- `skill.unstable.pending`
+- `skill.violence_maniac.pending`
+- `skill.violence_nutrition.pending`
+
+### 0.3 相比上一版笔记的变化
+
+- 核心 burn-down 数字未移动：implemented 48、runtime pending 76、runtime total 124。
+- Luban 仍是最小样例，不是生产内容源；Hardcoded catalog 仍是当前运行真源。
+- 本次补充了完整 pending ID 清单，并把 runtime pending 明确拆成 `38` 个显式 pending 和 `38` 个 `PendingSkill` 展开项。
+- Atom 表面比旧快照更明确：15 trigger、7 condition、9 target、17 action。下一批不要再把“缺表达力”和“已存在 atom 但未转内容”混在一起。
+
+### 0.4 下一批建议
+
+优先落地批次1：建立 pending count / container count 闸门，并尝试只用现有 atom 转 1-3 个准确表达的 quick win。若 quick win 语义无法完全表达，就只完成闸门和报告，不强行清零。
+
 ## 1. 当前事实基线
 
 ### 已经可靠的地基
