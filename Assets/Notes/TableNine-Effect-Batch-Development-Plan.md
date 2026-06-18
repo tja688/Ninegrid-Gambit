@@ -80,7 +80,7 @@ Core EditMode test methods:
 HelpCard pending, 21:
 
 - `help.armor_breaking_hammer.pending`
-- `help.bear_trap.pending`
+- `help.bear_trap.pending`（已在批次7B落地为 `help.bear_trap.use`）
 - `help.blood_conversion.pending`
 - `help.blue_chest_card.pending`
 - `help.brutality_card.pending`
@@ -664,6 +664,40 @@ MonsterSkill pending, 46:
 
 下一批建议：继续批次7B，做 `help.bear_trap.pending` 的补牌陷阱触发与自移除；或者做 `skill.range_expand.pending` 的邻接规则改写入口。
 
+### 6.4 批次7B落地记录（2026-06-18）
+
+目标：把 `help.bear_trap.pending` 收成真实 catalog DSL，验证“正交相邻补牌为怪物时触发、造成伤害、陷阱自移除并注销自身 effect”的完整闭环；不新建陷阱格状态，也不扩展到遗物陷阱格或移动锁。
+
+本批新增能力：
+
+- 无新增 Core atom。复用既有 `OnDeal`、`ActionSource`、`EventFilter`、`Adjacent`、`EventCard`、`Sequence`、`DealDamage`、`RemoveCard`、`DeactivateSelfEffect`。
+- `help.bear_trap.use` 用 `ActionSource(FillEmptySlots)` 明确限定真实补牌来源，避免普通生成/洗入卡牌误触发。
+
+本批转换：
+
+- `help.bear_trap.use`：HelpCard / Triggered / `OnDeal + FillEmptySlots + CardDealt Monster + Adjacent(Self, EventCard)`，对补到正交相邻格的怪物造成 10 点伤害，然后将捕熊陷阱移到 `Removed` 并注销自身 effect。
+- `help.bear_trap.pending` 已移除，`help.bear_trap` 现在引用实现态 DSL。
+
+批次7B后数量：
+
+| 项目 | 数量 |
+|:--|--:|
+| hardcoded implemented effects | 88 |
+| runtime pending effects | 40 |
+| pending HelpCard effects | 6 |
+| pending Relic effects | 1 |
+| pending PlayerSkill effects | 1 |
+| pending MonsterSkill effects | 32 |
+
+验证记录：
+
+- `Assets/Notes/CI/check-core-guards.ps1`：通过。
+- Unity MCP refresh/compile：通过，Console 无 error；仅有 MCP WebSocket warning、TestResults 保存与 PerformanceTesting setup/cleanup 提示。
+- 新增 P6 窄测试 `BatchSevenBBearTrapCatalogDslDamagesAdjacentRefillMonsterThenRemovesSelf`：通过。
+- `NineGrid.Core.Tests` EditMode 全量：95/95 通过。
+
+下一批建议：继续批次7的 `skill.range_expand.pending`，补邻接规则改写入口；或转入帮助卡长尾小批，处理 `help.armor_breaking_hammer.pending` / `help.kidnapping.pending`。
+
 ## 7. 当前事实基线
 
 ### 已经可靠的地基
@@ -676,7 +710,7 @@ MonsterSkill pending, 46:
 ### 当前还没签收的部分
 
 - `TableNineContentCatalog.cs` 仍是主要内容真源，Luban 只是最小样例，不是生产内容源。
-- hardcoded catalog 预计有 87 个 implemented effect、41 个 runtime pending effect，R4 仍未清零。
+- hardcoded catalog 预计有 88 个 implemented effect、40 个 runtime pending effect，R4 仍未清零。
 - 设计文档里效果总量更大：帮助卡 22 条、遗物 58 条、玩家技能 7 条、怪物技能 81 条。hardcoded catalog 覆盖了帮助卡和玩家技能的大部分，但遗物和怪物技能仍是子集/原型。
 - R5 的全内容回放网、pending 闸门、Luban 全量迁移闸门还没有完成。
 
@@ -859,8 +893,8 @@ MonsterSkill pending, 46:
 
 下一次如果要直接进入实现，建议从：
 
-1. **继续批次7B**：处理 `help.bear_trap.pending` 的补牌陷阱触发与自移除。
-2. **邻接规则小批**：处理 `skill.range_expand.pending` 的邻接规则改写入口。
+1. **邻接规则小批**：处理 `skill.range_expand.pending` 的邻接规则改写入口。
+2. **陷阱/场地后续小批**：继续从陷阱格遗物或 Boss 移动锁中切一个可验证闭环。
 3. **帮助卡长尾小批**：复用 `SelectedCards` / `ValueExpr` 处理 `help.armor_breaking_hammer.pending`、`help.kidnapping.pending` 这类已接近可表达的选择目标效果。
 
 ## 12. 给后续 AI 的技能入口

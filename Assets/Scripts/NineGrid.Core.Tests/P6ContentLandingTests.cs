@@ -51,9 +51,9 @@ namespace NineGrid.Core.Tests
             var report = NineGridArchitecture.Current.GetSystem<IContentSystem>().ValidateCatalog();
 
             Assert.IsTrue(report.IsValid, FirstIssue(report));
-            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 87);
-            Assert.LessOrEqual(report.PendingEffectIds.Count, 41);
-            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 7);
+            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 88);
+            Assert.LessOrEqual(report.PendingEffectIds.Count, 40);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 6);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.Relic), 1);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.PlayerSkill), 1);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 32);
@@ -97,6 +97,7 @@ namespace NineGrid.Core.Tests
             AssertImplemented(catalog, report, "help.swap_card.use");
             AssertImplemented(catalog, report, "help.teleport_card.use");
             AssertImplemented(catalog, report, "help.stat_boost_card.use");
+            AssertImplemented(catalog, report, "help.bear_trap.use");
         }
 
         [Test]
@@ -664,6 +665,33 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(5, mover.Stats.GetBase(StatId.Armor));
             Assert.AreEqual(3, mover.Stats.GetBase(StatId.Attack));
             Assert.IsTrue(HasEvent(architecture.GetSystem<IActionPipelineSystem>().EventLog, CoreEventType.BoardMarked));
+        }
+
+        [Test]
+        public void BatchSevenBBearTrapCatalogDslDamagesAdjacentRefillMonsterThenRemovesSelf()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var deck = architecture.GetModel<DeckModel>();
+            var boardSystem = architecture.GetSystem<IBoardSystem>();
+
+            var trap = content.CreateDraft("help.bear_trap").Create(registry);
+            architecture.GetModel<BoardModel>().PlaceCard(trap, SlotId.Board(1));
+            content.ApplyContentToCard(trap);
+
+            var monster = registry.Create("monster.bear.trap.target", CardKind.Monster);
+            monster.Stats.SetBase(StatId.MaxHp, 15);
+            monster.Stats.SetBase(StatId.Hp, 15);
+            deck.AddToDrawPile(monster, false);
+
+            boardSystem.FillEmptySlots();
+
+            Assert.AreEqual(SlotId.Board(2), monster.Slot.Value);
+            Assert.AreEqual(5, monster.Stats.GetBase(StatId.Hp));
+            Assert.AreEqual(ZoneId.Removed, trap.Zone.Value);
+            Assert.IsFalse(Contains(trap.EffectIds, "help.bear_trap.use"));
+            Assert.IsTrue(HasEvent(architecture.GetSystem<IActionPipelineSystem>().EventLog, CoreEventType.EffectTriggered));
         }
 
         private static bool Contains(IReadOnlyList<string> values, string expected)

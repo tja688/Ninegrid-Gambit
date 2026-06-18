@@ -70,6 +70,20 @@ namespace NineGrid.Content
                     "{\"atom\":\"Rotate\",\"direction\":\"CounterClockwise\"}"),
                 "[使用时] 逆时针旋转一次"));
 
+            c.AddEffect(Impl("help.bear_trap.use", EffectContainerType.HelpCard,
+                Triggered("help.bear_trap.use", "HelpCard",
+                    "{\"atom\":\"OnDeal\"}",
+                    "{\"atom\":\"EventCard\"}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"DealDamage\",\"amount\":10,\"actor\":\"Self\"},"
+                    + "{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"Self\"},\"destination\":\"Removed\",\"reason\":\"bearTrap\"},"
+                    + "{\"atom\":\"DeactivateSelfEffect\"}"
+                    + "]}",
+                    "[{\"atom\":\"ActionSource\",\"action\":\"FillEmptySlots\"},"
+                    + "{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"Monster\"},"
+                    + "{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"EventCard\"}]"),
+                "[场上] 当正交相邻格补牌为怪物卡时，对其造成10点伤害，之后移除本卡"));
+
             c.AddEffect(Impl("help.ward_magic_card.use", EffectContainerType.HelpCard,
                 Triggered("help.ward_magic_card.use", "HelpCard",
                     "{\"atom\":\"OnUseHelpCard\"}",
@@ -619,7 +633,7 @@ namespace NineGrid.Content
             Help(c, "help.swap_card", "交换卡", ContentRarity.White, 50, "位移").AddEffect("help.swap_card.use");
             Help(c, "help.armor_breaking_hammer", "破击锤", ContentRarity.White, 50, "直伤").AddEffect(Pending(c, "help.armor_breaking_hammer.pending", EffectContainerType.HelpCard, "将目标怪物卡护甲降低10点"));
             Help(c, "help.sturdy_shield", "耐用盾牌", ContentRarity.White, 50, "护甲").AddEffect("help.sturdy_shield.use");
-            Help(c, "help.bear_trap", "捕熊陷阱", ContentRarity.White, 50, "直伤").AddEffect(Pending(c, "help.bear_trap.pending", EffectContainerType.HelpCard, "正交相邻格补牌为怪物时造成10点伤害后移除本卡"));
+            Help(c, "help.bear_trap", "捕熊陷阱", ContentRarity.White, 50, "直伤").AddEffect("help.bear_trap.use");
             Help(c, "help.teleport_card", "传送卡", ContentRarity.White, 30, "位移").AddEffect("help.teleport_card.use");
             Help(c, "help.blood_conversion", "血液转换", ContentRarity.White, 50, "特殊").AddEffect("help.blood_conversion.use");
             Help(c, "help.gold_card", "金币卡", ContentRarity.Blue, 30, "经济").AddEffect("help.gold_card.use");
