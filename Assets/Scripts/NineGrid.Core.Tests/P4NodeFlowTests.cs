@@ -1,6 +1,7 @@
 using NineGrid.Core.Commands;
 using NineGrid.Core.Systems;
 using NUnit.Framework;
+using QFramework;
 
 namespace NineGrid.Core.Tests
 {
@@ -97,6 +98,126 @@ namespace NineGrid.Core.Tests
             Assert.IsFalse(result.Accepted);
             Assert.IsNotNull(rejected);
             Assert.AreEqual(GameCommandKind.Attack, rejected.Command);
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.ActionRejected));
+        }
+
+        [Test]
+        public void UseItemIsRejectedWhenPhaseDoesNotAllowIt()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var registry = architecture.GetModel<CardRegistry>();
+            var deck = architecture.GetModel<DeckModel>();
+            var item = registry.Create("item.potion", CardKind.Item);
+            deck.AddToItemSlots(item);
+
+            AssertUseItemRejected(
+                architecture,
+                new UseItemCommand(item.Uid),
+                GameCommandKind.UseItem,
+                item.Uid);
+        }
+
+        [Test]
+        public void UseItemIsRejectedForUnknownUid()
+        {
+            var architecture = NineGridArchitecture.Current;
+            EnterInteractionLoop(architecture);
+
+            AssertUseItemRejected(
+                architecture,
+                new UseItemCommand(9999),
+                GameCommandKind.UseItem,
+                9999);
+        }
+
+        [Test]
+        public void UseItemIsRejectedWhenCardIsNotInItemSlots()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var registry = architecture.GetModel<CardRegistry>();
+            var deck = architecture.GetModel<DeckModel>();
+            EnterInteractionLoop(architecture);
+
+            var item = registry.Create("item.off_deck", CardKind.Item);
+            deck.AddToDrawPile(item, false);
+
+            AssertUseItemRejected(
+                architecture,
+                new UseItemCommand(item.Uid),
+                GameCommandKind.UseItem,
+                item.Uid);
+        }
+
+        [Test]
+        public void UseItemIsRejectedWhenCardKindIsNotUsable()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var registry = architecture.GetModel<CardRegistry>();
+            var deck = architecture.GetModel<DeckModel>();
+            EnterInteractionLoop(architecture);
+
+            var playerCard = registry.Create("player.wrong_slot", CardKind.PlayerCard);
+            deck.AddToItemSlots(playerCard);
+
+            AssertUseItemRejected(
+                architecture,
+                new UseItemCommand(playerCard.Uid),
+                GameCommandKind.UseItem,
+                playerCard.Uid);
+        }
+
+        [Test]
+        public void UseItemAcceptsValidItemInItemSlots()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var registry = architecture.GetModel<CardRegistry>();
+            var deck = architecture.GetModel<DeckModel>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var player = architecture.GetModel<PlayerModel>();
+            EnterInteractionLoop(architecture);
+
+            var item = registry.Create("item.heal", CardKind.HelpCard);
+            deck.AddToItemSlots(item);
+            var interactionBefore = player.InteractionCount.Value;
+
+            var result = architecture.SendCommand(new UseItemCommand(item.Uid));
+
+            Assert.IsTrue(result.Accepted);
+            Assert.AreEqual(interactionBefore, player.InteractionCount.Value);
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.ItemUsed));
+        }
+
+        private static void EnterInteractionLoop(IArchitecture architecture)
+        {
+            var options = new NodeDeckOptions { PlayerOpeningCount = 0, EnemyOpeningCount = 1 }
+                .AddEnemyCard(new CardDraft("monster.blocker", CardKind.Monster)
+                {
+                    MaxHp = 5,
+                    Attack = 0
+                });
+            var startResult = architecture.SendCommand(new StartNodeCommand(options));
+            Assert.IsTrue(startResult.Accepted);
+            Assert.AreEqual(
+                GamePhase.InteractionLoop,
+                architecture.GetSystem<IPhaseSystem>().CurrentPhase);
+        }
+
+        private static void AssertUseItemRejected(
+            IArchitecture architecture,
+            UseItemCommand command,
+            GameCommandKind expectedCommand,
+            int expectedCardUid)
+        {
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            Evt_ActionRejected rejected = null;
+            architecture.RegisterEvent<Evt_ActionRejected>(evt => rejected = evt);
+
+            var result = architecture.SendCommand(command);
+
+            Assert.IsFalse(result.Accepted);
+            Assert.IsNotNull(rejected);
+            Assert.AreEqual(expectedCommand, rejected.Command);
+            Assert.AreEqual(expectedCardUid, rejected.CardUid);
             Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.ActionRejected));
         }
 

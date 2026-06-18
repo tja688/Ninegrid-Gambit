@@ -8,7 +8,7 @@
 
 | 阶段 | 规划主题 | 落地结论 | 主要判断 |
 |:--|:--|:--|:--|
-| P0 | 工程基建 | 部分落地 | 三层 asmdef、Architecture、RNG/Log/Config 已有；但纯 C# `dotnet test` 链路未真正跑到 NineGrid 测试。 |
+| P0 | 工程基建 | 部分落地 → **验收链路已补** | 三层 asmdef、Architecture、RNG/Log/Config 已有；正式验收改为 Unity EditMode Test Runner（`Assets/Notes/CI`），17 条用例 MCP 验证通过。 |
 | P1 | 数据模型层 | 基本落地 | CardInstance、Registry、Board/Deck/Player/Run、初始工厂与迁移测试齐备；缺独立控制台入口，仅有报告字符串/单测验证。 |
 | P2 | 属性管线 | 基本落地 | Modifier、StatPipeline、RuleModifierRegistry、条件与 Scope 清理测试覆盖较完整；生命周期自动清理由后续系统触发，当前仍需手动调用。 |
 | P3 | 动作流水线 + 触发骨架 | 部分落地 | GameAction、队列/反应栈、EventLog、TriggerSystem 与最小 Action 集已有；但 PRE 触发、旁路约束、完整 EventLog 断言仍偏薄。 |
@@ -22,8 +22,9 @@
 - 执行 `dotnet test 'Ninegrid Gambit.sln' --no-restore`：退出码为 0，但没有测试执行输出。
 - 执行 `dotnet test 'Ninegrid Gambit.sln' --no-restore --list-tests -v normal`：构建成功，0 警告 0 错误，但未列出 NineGrid 测试。
 - 发现 solution 当前没有生成 `NineGrid.Core` / `NineGrid.Core.Tests` 对应 csproj；`Get-ChildItem -Recurse -Filter '*NineGrid*.csproj'` 无结果。
+- **修补后**：Unity MCP `run_tests(assembly_names=["NineGrid.Core.Tests"])` → **17/17 EditMode 通过**；正式验收见 `Assets/Notes/CI/README.md`。
 
-结论：现有 `P0InfrastructureTests` 到 `P4NodeFlowTests` 是有效的 Unity/NUnit 测试源码证据，但不是“纯 C# `dotnet test` 绿灯”的工具链证据。
+结论：现有 `P0InfrastructureTests` 到 `P4NodeFlowTests` 是有效的 Unity/NUnit 测试源码证据；**正式验收已改为 Unity Test Runner**（`Assets/Notes/CI/run-core-tests.ps1`），不再以 solution 级 `dotnet test` 作为 P0 绿灯口径。
 
 ## P0 工程基建
 
@@ -42,7 +43,7 @@
 - `NineGrid.Core.Tests.asmdef` 是 Editor/TestAssemblies 风格，`noEngineReferences: false`，并非严格纯 C# 测试工程。
 - “Core 里写 `using UnityEngine.UIElements` 会编译失败”目前主要依赖 asmdef `noEngineReferences`，缺少自动化守门测试或 CI 检查。
 
-判定：P0 基建代码基本具备，自动化验收链路未闭环。
+判定：P0 基建代码基本具备；**自动化验收链路已闭环**（Unity Test Runner + `Assets/Notes/CI` 脚本）。
 
 ## P1 数据模型层
 
@@ -120,7 +121,7 @@
 
 - 规划要求的节点状态机链路是“构建敌方池 -> 重置 -> 发牌 -> 互动循环 -> 通关检查 -> 道具三选一 -> 房间二选一 -> 房间事件 -> 下一节点”。当前实际只推进到 `RewardItemChoice`，之后 `RefreshLegalCommands` 又允许 `StartNode`，没有道具三选一、房间二选一、房间事件、下一节点语义。
 - 规划指定 `PhaseSystem(FSMKit)`；当前是手写 phase switch，没有 FSMKit 状态对象或显式状态进入/退出。
-- `UseItem(int itemUid)` 只检查阶段合法，然后直接接受任意 uid；没有验证 item 是否存在、是否属于道具牌格、是否可用。因此“非法操作被拒”不完整。
+- `UseItem(int itemUid)` 校验阶段、`itemUid` 存在、`ItemSlots` zone/kind（`Item`/`HelpCard`）；非法操作广播 `Evt_ActionRejected`（见 `P4NodeFlowTests` 五条用例）。
 - `OpeningDealAction` 只把 opening count 选中的卡移入 draw pile；如果敌方池数量大于 `EnemyOpeningCount`，剩余 `EnemyCardPoolUids` 没有后续入堆机制，而 `IsNodeCleared` 又要求敌方池为空，可能导致节点无法通关。
 - P4 测试未覆盖 `PickupItemCommand`、`ClickEmptyCommand`、`UseItemCommand`、攻击未击杀不旋转不计数、道具使用不旋转不计数、补牌耗尽、抽牌堆顶序、多敌/剩余敌池、完整脚本化操作串。
 
@@ -129,7 +130,11 @@
 ## 优先修复建议
 
 1. 先补 P0 测试链路：生成/维护 `NineGrid.Core` 和 `NineGrid.Core.Tests` csproj，或明确改成 Unity Test Runner/batchmode 验收，并把命令写入 Notes/CI。
+
+   **修补情况（2026-06-18）**：采用 **Unity EditMode Test Runner** 作为正式验收链路（未维护独立 csproj）。原因：`NineGrid.Core` 引用 `QFramework`，而 QFramework 源码依赖 `UnityEngine`；`NineGrid.Core.Tests` 为 Editor + `TestAssemblies` 程序集，根目录 Unity 生成的 `*.csproj`/`*.sln` 亦在 `.gitignore` 中。已新增 `Assets/Notes/CI/README.md`、`run-core-tests.ps1`、`run-core-tests.sh`；本地 MCP 验证 `NineGrid.Core.Tests` **17/17 通过**。batchmode 命令：`.\Assets\Notes\CI\run-core-tests.ps1`（需先关闭本工程 Unity 编辑器）。
 2. 补 P4 的非法命令验证：`UseItem` 至少校验 uid 存在、zone/kind 合法、当前阶段合法；补对应测试。
+
+   **修补情况（2026-06-18）**：`PhaseSystem.UseItem` 在入队前增加校验：`itemUid > 0`、卡牌存在、`ZoneId.ItemSlots` + `DeckModel.ItemSlotUids` 登记、`CardKind.Item`/`HelpCard`；非法时走 `Reject` 并广播 `Evt_ActionRejected`。新增 5 条 `P4NodeFlowTests`（阶段非法 / uid 不存在 / zone 非法 / kind 非法 / 合法用道具），P4 测试类 **8/8 通过**。
 3. 明确 Deck/Pool 语义：敌方池是否是全节点 reserve；若是，应有抽牌堆耗尽后从池补入的规则；若不是，开局应把参与本节点的敌方池清空或改名避免误判。
 4. 补完整 P4 回放式测试：攻击击杀、攻击未击杀、拾取、点空格、用道具、补牌、清场、非法操作、最终阶段全部断言。
 5. 为 P3/P4 加守门：禁止 Core 直接引用 UnityEngine、禁止系统绕过 Action 改 Model，可先用 `rg`/Roslyn 简单检查，后续再进 CI。

@@ -178,11 +178,57 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.UseItem, "Command is not legal in phase " + CurrentPhase, SlotId.None, itemUid);
             }
 
+            if (itemUid <= 0)
+            {
+                return Reject(GameCommandKind.UseItem, "Item uid is invalid.", SlotId.None, itemUid);
+            }
+
+            var registry = this.GetModel<CardRegistry>();
+            CardInstance card;
+            if (!registry.TryGet(itemUid, out card))
+            {
+                return Reject(GameCommandKind.UseItem, "Item card uid does not exist.", SlotId.None, itemUid);
+            }
+
+            if (card.Zone.Value != ZoneId.ItemSlots)
+            {
+                return Reject(GameCommandKind.UseItem, "Item is not in item slots.", SlotId.None, itemUid);
+            }
+
+            if (!IsRegisteredInItemSlots(this.GetModel<DeckModel>(), itemUid))
+            {
+                return Reject(GameCommandKind.UseItem, "Item is not registered in item slots.", SlotId.None, itemUid);
+            }
+
+            if (!IsUsableItemKind(card.Kind))
+            {
+                return Reject(GameCommandKind.UseItem, "Card is not a usable item.", SlotId.None, itemUid);
+            }
+
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new UseItemAction(itemUid));
             var resolved = pipeline.RunToCompletion();
             resolved += CompleteNodeIfCleared();
             return CoreCommandResult.Accept(resolved);
+        }
+
+        private static bool IsRegisteredInItemSlots(DeckModel deck, int itemUid)
+        {
+            var itemSlots = deck.ItemSlotUids;
+            for (var i = 0; i < itemSlots.Count; i++)
+            {
+                if (itemSlots[i] == itemUid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsUsableItemKind(CardKind kind)
+        {
+            return kind == CardKind.Item || kind == CardKind.HelpCard;
         }
 
         private int ResolveInteractiveRotation()
