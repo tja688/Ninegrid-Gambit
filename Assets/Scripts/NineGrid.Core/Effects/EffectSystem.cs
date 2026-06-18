@@ -93,7 +93,7 @@ namespace NineGrid.Core.Effects
         {
             AtomRegistry = new EffectAtomRegistry();
             AtomRegistry.DiscoverLoadedAssemblies();
-            Validator = new EffectValidator();
+            Validator = new EffectValidator(AtomRegistry);
             Clear();
         }
 

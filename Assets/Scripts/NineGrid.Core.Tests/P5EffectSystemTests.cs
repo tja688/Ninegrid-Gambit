@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NineGrid.Core.Content;
 using NineGrid.Core.Effects;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
@@ -14,6 +15,7 @@ namespace NineGrid.Core.Tests
         {
             NineGridArchitecture.ResetForTests();
             InitialGameFactory.Create(NineGridArchitecture.Current);
+            P5CatalogTestSupport.RegisterCatalog(NineGridArchitecture.Current);
         }
 
         [TearDown]
@@ -28,7 +30,9 @@ namespace NineGrid.Core.Tests
             var effectSystem = Effects();
             Assert.IsTrue(effectSystem.AtomRegistry.Triggers.ContainsKey("OnFatalDamage"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("OwnsRelicSet"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("AdjacentHasCard"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("RandomMonster"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("AdjacentCard"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("WeightedRandom"));
 
             var invalid = effectSystem.ParseJson(
@@ -52,38 +56,103 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void SelfMoveAdjacentSequenceCanRunThreeActions()
+        public void ValidatorRejectsUnknownAtomMissingSchemaAndOutOfRangeFields()
         {
-            var architecture = NineGridArchitecture.Current;
-            var board = architecture.GetModel<BoardModel>();
-            var deck = architecture.GetModel<DeckModel>();
-            var player = architecture.GetModel<PlayerModel>();
-            var avatar = Avatar();
-            var head = CreateMonster("monster.recombine_head", 5, SlotId.Board(1));
+            var effectSystem = Effects();
 
-            Activate(
-                RecombineHeadJson(),
-                new EffectOwner(EffectContainerType.MonsterSkill, "skill.recombine_head", head.Uid));
+            var unknownAtom = effectSystem.ParseJson(
+                "{"
+                + "\"id\":\"bad.unknown\","
+                + "\"typeTag\":\"【类型遗物】\","
+                + "\"containerType\":\"Relic\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnFakeTrigger\"},"
+                + "\"target\":{\"atom\":\"Player\"},"
+                + "\"action\":{\"atom\":\"DealDamage\",\"amount\":-1}"
+                + "}");
+            var unknownValidation = effectSystem.Validate(unknownAtom);
+            Assert.IsFalse(unknownValidation.IsValid);
+            AssertHasIssue(unknownValidation, "atom.unknown");
+            AssertHasIssue(unknownValidation, "schema.range.amount");
 
-            architecture.GetSystem<IActionPipelineSystem>().Execute(new MoveCardAction(head.Uid, SlotId.Board(2)));
-
-            Assert.AreEqual(1, avatar.Stats.GetBase(StatId.Armor));
-            Assert.AreEqual(2, player.Coins.Value);
-            Assert.AreEqual(1, deck.DrawPileUids.Count);
-            Assert.AreEqual("monster.big_skull", architecture.GetModel<CardRegistry>().Get(deck.DrawPileUids[0]).DefId);
-            Assert.AreEqual(SlotId.Board(2), board.GetCardUid(SlotId.Board(2)) == head.Uid ? head.Slot.Value : SlotId.None);
+            var missingFields = effectSystem.ParseJson(
+                "{"
+                + "\"id\":\"bad.missing\","
+                + "\"typeTag\":\"【类型怪物技能】\","
+                + "\"containerType\":\"MonsterSkill\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnCumulative\"},"
+                + "\"conditions\":[{\"atom\":\"AdjacentHasCard\"}],"
+                + "\"target\":{\"atom\":\"AdjacentCard\"},"
+                + "\"action\":{\"atom\":\"ShuffleInto\"}"
+                + "}");
+            var missingValidation = effectSystem.Validate(missingFields);
+            Assert.IsFalse(missingValidation.IsValid);
+            AssertHasIssue(missingValidation, "schema.trigger.metric");
+            AssertHasIssue(missingValidation, "schema.trigger.threshold");
+            AssertHasIssue(missingValidation, "schema.condition.defId");
+            AssertHasIssue(missingValidation, "schema.target.defId");
+            AssertHasIssue(missingValidation, "schema.action.defId");
         }
 
         [Test]
-        public void CumulativeArmorLostThresholdShufflesStoneCard()
+        public void RepresentativeCatalogDslPassesValidationAndGoldenSnapshots()
+        {
+            var effectSystem = Effects();
+            var effectIds = new[]
+            {
+                "skill.recombine_head.move",
+                "skill.falling_rocks.cumulative",
+                "relic.phoenix_feather.fatal",
+                "relic.junk_slot_machine.use",
+                "skill.stray_cub.slot6",
+                "relic.dragon_scale_armor.rule",
+                "relic.craving.rule",
+                "relic.wood_sword.set",
+                "relic.junk_launcher.volley"
+            };
+
+            for (var i = 0; i < effectIds.Length; i++)
+            {
+                var definition = effectSystem.ParseJson(P5CatalogTestSupport.RequireEffectJson(effectIds[i]));
+                var validation = effectSystem.Validate(definition);
+                Assert.IsTrue(validation.IsValid, effectIds[i] + " => " + FirstIssue(validation));
+                Assert.IsFalse(string.IsNullOrEmpty(validation.GoldenSnapshot));
+            }
+        }
+
+        [Test]
+        public void RecombineHeadCatalogDslRemovesAdjacentSkullAndShufflesBigSkeleton()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var deck = architecture.GetModel<DeckModel>();
+            var headless = CreateMonster("monster.headless_skeleton", 6, SlotId.Board(4));
+            CreateMonster("monster.skull_head", 3, SlotId.Board(2));
+
+            P5CatalogTestSupport.ActivateCatalogEffect(
+                architecture,
+                "skill.recombine_head.move",
+                new EffectOwner(EffectContainerType.MonsterSkill, "skill.recombine_head", headless.Uid));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new MoveCardAction(headless.Uid, SlotId.Board(1)));
+
+            Assert.AreEqual(0, CountBoardMonsters(architecture));
+            Assert.AreEqual(1, deck.DrawPileUids.Count);
+            Assert.AreEqual("monster.big_skeleton", architecture.GetModel<CardRegistry>().Get(deck.DrawPileUids[0]).DefId);
+        }
+
+        [Test]
+        public void CumulativeArmorLostCatalogDslShufflesStoneCard()
         {
             var architecture = NineGridArchitecture.Current;
             var avatar = Avatar();
             avatar.Stats.SetBase(StatId.Armor, 10);
+            var megalith = CreateMonster("monster.megalith", 8, SlotId.Board(1));
 
-            Activate(
-                CumulativeArmorLostJson(),
-                new EffectOwner(EffectContainerType.MonsterSkill, "skill.falling_rocks", avatar.Uid));
+            P5CatalogTestSupport.ActivateCatalogEffect(
+                architecture,
+                "skill.falling_rocks.cumulative",
+                new EffectOwner(EffectContainerType.MonsterSkill, "skill.falling_rocks", megalith.Uid));
 
             var pipeline = architecture.GetSystem<IActionPipelineSystem>();
             pipeline.Execute(new DealDamageAction(0, avatar.Uid, 7));
@@ -92,19 +161,20 @@ namespace NineGrid.Core.Tests
             pipeline.Execute(new DealDamageAction(0, avatar.Uid, 3));
             var deck = architecture.GetModel<DeckModel>();
             Assert.AreEqual(1, deck.DrawPileUids.Count);
-            Assert.AreEqual("monster.stone_legion", architecture.GetModel<CardRegistry>().Get(deck.DrawPileUids[0]).DefId);
+            Assert.AreEqual("monster.stone_man", architecture.GetModel<CardRegistry>().Get(deck.DrawPileUids[0]).DefId);
         }
 
         [Test]
-        public void FatalDamagePhoenixHealsAndRemovesItsOwnRelic()
+        public void FatalDamagePhoenixCatalogDslHealsAndRemovesItsOwnRelic()
         {
             var architecture = NineGridArchitecture.Current;
             var player = architecture.GetModel<PlayerModel>();
             var avatar = Avatar();
             player.AddRelic("relic.phoenix_feather");
 
-            var instance = Activate(
-                PhoenixFeatherJson(),
+            var instance = P5CatalogTestSupport.ActivateCatalogEffect(
+                architecture,
+                "relic.phoenix_feather.fatal",
                 new EffectOwner(EffectContainerType.Relic, "relic.phoenix_feather", 0));
 
             architecture.GetSystem<IActionPipelineSystem>().Execute(new DealDamageAction(0, avatar.Uid, 99));
@@ -116,13 +186,14 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void WeightedRandomSlotMachineUsesDeterministicChoice()
+        public void WeightedRandomSlotMachineCatalogDslUsesDeterministicChoice()
         {
             var architecture = NineGridArchitecture.Current;
             var player = architecture.GetModel<PlayerModel>();
 
-            Activate(
-                SlotMachineJson(),
+            P5CatalogTestSupport.ActivateCatalogEffect(
+                architecture,
+                "relic.junk_slot_machine.use",
                 new EffectOwner(EffectContainerType.Relic, "relic.junk_slot_machine", 0));
 
             architecture.GetSystem<IActionPipelineSystem>().Execute(new UseItemAction(123));
@@ -132,15 +203,16 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void ConditionalAuraModifierTurnsOffWhenOwnerLeavesSlot()
+        public void ConditionalAuraCatalogDslTurnsOffWhenOwnerLeavesSlot()
         {
             var architecture = NineGridArchitecture.Current;
             var statSystem = architecture.GetSystem<IStatSystem>();
-            var cub = CreateMonster("monster.stray_cub", 10, SlotId.Board(6));
+            var cub = CreateMonster("monster.wandering_child", 1, SlotId.Board(6));
             cub.Stats.SetBase(StatId.Attack, 1);
 
-            Activate(
-                StrayCubAuraJson(),
+            P5CatalogTestSupport.ActivateCatalogEffect(
+                architecture,
+                "skill.stray_cub.slot6",
                 new EffectOwner(EffectContainerType.MonsterSkill, "skill.stray_cub", cub.Uid));
 
             Assert.AreEqual(3, statSystem.GetEffectiveInt(cub, StatId.Attack));
@@ -151,26 +223,26 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void DragonScaleArmorRegistersEnemyAttackRuleModifier()
+        public void DragonScaleArmorCatalogDslRegistersEnemyAttackRuleModifier()
         {
-            var statSystem = NineGridArchitecture.Current.GetSystem<IStatSystem>();
-
-            Activate(
-                DragonScaleArmorJson(),
+            P5CatalogTestSupport.ActivateCatalogEffect(
+                NineGridArchitecture.Current,
+                "relic.dragon_scale_armor.rule",
                 new EffectOwner(EffectContainerType.Relic, "relic.dragon_scale_armor", 0));
 
-            Assert.AreEqual(-1f, statSystem.EvaluateRule(RuleId.EnemyAttackDelta, 0f));
+            Assert.AreEqual(-1f, NineGridArchitecture.Current.GetSystem<IStatSystem>().EvaluateRule(RuleId.EnemyAttackDelta, 0f));
         }
 
         [Test]
-        public void CravingDoublesHealingThroughRuleModifier()
+        public void CravingCatalogDslDoublesHealingThroughRuleModifier()
         {
             var architecture = NineGridArchitecture.Current;
             var avatar = Avatar();
             avatar.Stats.SetBase(StatId.Hp, 10);
 
-            Activate(
-                CravingJson(),
+            P5CatalogTestSupport.ActivateCatalogEffect(
+                architecture,
+                "relic.craving.rule",
                 new EffectOwner(EffectContainerType.Relic, "relic.craving", 0));
 
             architecture.GetSystem<IActionPipelineSystem>().Execute(new HealAction(avatar.Uid, avatar.Uid, 5));
@@ -179,36 +251,31 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void RelicSetConditionControlsModifierAtEvaluationTime()
+        public void WoodSetCatalogDslControlsModifierAtEvaluationTime()
         {
             var architecture = NineGridArchitecture.Current;
             var player = architecture.GetModel<PlayerModel>();
             var avatar = Avatar();
-            player.AddRelic("relic.wood_shield");
-            player.AddRelic("relic.wood_sword");
-            player.AddRelic("relic.wood_armor");
+            P5CatalogTestSupport.ActivateWoodSet(architecture);
 
-            Activate(
-                WoodSetBonusJson(),
-                new EffectOwner(EffectContainerType.Relic, "relic.wood_sword", 0));
-
-            Assert.AreEqual(3, architecture.GetSystem<IStatSystem>().GetEffectiveInt(avatar, StatId.Attack));
+            Assert.AreEqual(4, architecture.GetSystem<IStatSystem>().GetEffectiveInt(avatar, StatId.Attack));
 
             player.RemoveRelic("relic.wood_armor");
 
-            Assert.AreEqual(1, architecture.GetSystem<IStatSystem>().GetEffectiveInt(avatar, StatId.Attack));
+            Assert.AreEqual(2, architecture.GetSystem<IStatSystem>().GetEffectiveInt(avatar, StatId.Attack));
         }
 
         [Test]
-        public void RandomMonsterTargetAndRepeatCompositeDealDamageTwice()
+        public void RandomMonsterTargetAndRepeatCatalogDslDealDamageTwice()
         {
             var architecture = NineGridArchitecture.Current;
             var first = CreateMonster("monster.first", 10, SlotId.Board(1));
             var second = CreateMonster("monster.second", 10, SlotId.Board(3));
 
-            Activate(
-                RandomRepeatDamageJson(),
-                new EffectOwner(EffectContainerType.Relic, "relic.random_bolts", 0));
+            P5CatalogTestSupport.ActivateCatalogEffect(
+                architecture,
+                "relic.junk_launcher.volley",
+                new EffectOwner(EffectContainerType.Relic, "relic.junk_launcher", 0));
 
             architecture.GetSystem<IActionPipelineSystem>().Execute(new UseItemAction(100));
 
@@ -219,12 +286,6 @@ namespace NineGrid.Core.Tests
         private static IEffectSystem Effects()
         {
             return NineGridArchitecture.Current.GetSystem<IEffectSystem>();
-        }
-
-        private static EffectInstance Activate(string json, EffectOwner owner)
-        {
-            var effectSystem = Effects();
-            return effectSystem.Activate(effectSystem.ParseJson(json), owner);
         }
 
         private static CardInstance Avatar()
@@ -245,6 +306,23 @@ namespace NineGrid.Core.Tests
             return monster;
         }
 
+        private static int CountBoardMonsters(IArchitecture architecture)
+        {
+            var board = architecture.GetModel<BoardModel>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var count = 0;
+            foreach (var uid in board.BoardCardUids())
+            {
+                CardInstance card;
+                if (registry.TryGet(uid, out card) && card.Kind == CardKind.Monster)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
         private static void AssertHasIssue(EffectValidationResult validation, string code)
         {
             for (var i = 0; i < validation.Issues.Count; i++)
@@ -258,6 +336,11 @@ namespace NineGrid.Core.Tests
             Assert.Fail("Missing validation issue: " + code);
         }
 
+        private static string FirstIssue(EffectValidationResult validation)
+        {
+            return validation.Issues.Count == 0 ? string.Empty : validation.Issues[0].ToString();
+        }
+
         private static bool Contains(IReadOnlyList<string> values, string expected)
         {
             for (var i = 0; i < values.Count; i++)
@@ -269,130 +352,6 @@ namespace NineGrid.Core.Tests
             }
 
             return false;
-        }
-
-        private static string RecombineHeadJson()
-        {
-            return "{"
-                + "\"id\":\"skill.recombine_head\","
-                + "\"typeTag\":\"【类型怪物技能】\","
-                + "\"containerType\":\"MonsterSkill\","
-                + "\"kind\":\"Triggered\","
-                + "\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},"
-                + "\"conditions\":[{\"atom\":\"Adjacent\",\"left\":\"Self\",\"slot\":5}],"
-                + "\"target\":{\"atom\":\"Player\"},"
-                + "\"action\":{\"atom\":\"Sequence\",\"actions\":["
-                + "{\"atom\":\"GainArmor\",\"amount\":1},"
-                + "{\"atom\":\"ModifyGold\",\"delta\":2,\"reason\":\"recombine\"},"
-                + "{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skull\",\"kind\":\"Monster\",\"count\":1,\"top\":true}"
-                + "]}"
-                + "}";
-        }
-
-        private static string CumulativeArmorLostJson()
-        {
-            return "{"
-                + "\"id\":\"skill.falling_rocks\","
-                + "\"typeTag\":\"【类型怪物技能】\","
-                + "\"containerType\":\"MonsterSkill\","
-                + "\"kind\":\"Triggered\","
-                + "\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"armorLost\",\"threshold\":10},"
-                + "\"target\":{\"atom\":\"Player\"},"
-                + "\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_legion\",\"kind\":\"Monster\",\"count\":1,\"top\":true}"
-                + "}";
-        }
-
-        private static string PhoenixFeatherJson()
-        {
-            return "{"
-                + "\"id\":\"relic.phoenix_feather\","
-                + "\"typeTag\":\"【类型遗物】\","
-                + "\"containerType\":\"Relic\","
-                + "\"kind\":\"Triggered\","
-                + "\"trigger\":{\"atom\":\"OnFatalDamage\",\"target\":\"Player\"},"
-                + "\"target\":{\"atom\":\"Player\"},"
-                + "\"action\":{\"atom\":\"Sequence\",\"actions\":["
-                + "{\"atom\":\"Heal\",\"amount\":15,\"actor\":\"Player\"},"
-                + "{\"atom\":\"DeactivateSelfEffect\"}"
-                + "]}"
-                + "}";
-        }
-
-        private static string SlotMachineJson()
-        {
-            return "{"
-                + "\"id\":\"relic.junk_slot_machine\","
-                + "\"typeTag\":\"【类型遗物】\","
-                + "\"containerType\":\"Relic\","
-                + "\"kind\":\"Triggered\","
-                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
-                + "\"target\":{\"atom\":\"Player\"},"
-                + "\"action\":{\"atom\":\"WeightedRandom\",\"choices\":["
-                + "{\"weight\":1,\"action\":{\"atom\":\"ModifyGold\",\"delta\":9,\"reason\":\"slot\"}},"
-                + "{\"weight\":0,\"action\":{\"atom\":\"GainArmor\",\"amount\":99}}"
-                + "]}"
-                + "}";
-        }
-
-        private static string StrayCubAuraJson()
-        {
-            return "{"
-                + "\"id\":\"skill.stray_cub_slot6\","
-                + "\"typeTag\":\"【类型怪物技能】\","
-                + "\"containerType\":\"MonsterSkill\","
-                + "\"kind\":\"Modifier\","
-                + "\"target\":{\"atom\":\"Self\"},"
-                + "\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":6}],"
-                + "\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Conditional\",\"scope\":\"Permanent\"}"
-                + "}";
-        }
-
-        private static string DragonScaleArmorJson()
-        {
-            return "{"
-                + "\"id\":\"relic.dragon_scale_armor\","
-                + "\"typeTag\":\"【类型遗物】\","
-                + "\"containerType\":\"Relic\","
-                + "\"kind\":\"RuleModifier\","
-                + "\"ruleModifier\":{\"rule\":\"EnemyAttackDelta\",\"op\":\"Add\",\"value\":-1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}"
-                + "}";
-        }
-
-        private static string CravingJson()
-        {
-            return "{"
-                + "\"id\":\"relic.craving\","
-                + "\"typeTag\":\"【类型遗物】\","
-                + "\"containerType\":\"Relic\","
-                + "\"kind\":\"RuleModifier\","
-                + "\"ruleModifier\":{\"rule\":\"RecoveryMultiplier\",\"op\":\"Multiply\",\"value\":2,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}"
-                + "}";
-        }
-
-        private static string WoodSetBonusJson()
-        {
-            return "{"
-                + "\"id\":\"relic.wood_set_bonus\","
-                + "\"typeTag\":\"【类型遗物】\","
-                + "\"containerType\":\"Relic\","
-                + "\"kind\":\"Modifier\","
-                + "\"target\":{\"atom\":\"Player\"},"
-                + "\"conditions\":[{\"atom\":\"OwnsRelicSet\",\"defIds\":[\"relic.wood_shield\",\"relic.wood_sword\",\"relic.wood_armor\"]}],"
-                + "\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Conditional\",\"scope\":\"Permanent\"}"
-                + "}";
-        }
-
-        private static string RandomRepeatDamageJson()
-        {
-            return "{"
-                + "\"id\":\"relic.random_bolts\","
-                + "\"typeTag\":\"【类型遗物】\","
-                + "\"containerType\":\"Relic\","
-                + "\"kind\":\"Triggered\","
-                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
-                + "\"target\":{\"atom\":\"RandomMonster\"},"
-                + "\"action\":{\"atom\":\"Repeat\",\"count\":2,\"action\":{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Player\"}}"
-                + "}";
         }
     }
 }

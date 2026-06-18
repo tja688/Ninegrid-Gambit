@@ -281,6 +281,54 @@ namespace NineGrid.Content
                     "{\"atom\":\"OnSelfMove\",\"every\":1}", "{\"atom\":\"Self\"}",
                     "{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"skill.stroll\"}"),
                 "每移动1次，本卡攻击+2"));
+            c.AddEffect(Impl("relic.junk_launcher.volley", EffectContainerType.Relic,
+                Triggered("relic.junk_launcher.volley", "Relic",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"RandomMonster\"}",
+                    "{\"atom\":\"Repeat\",\"count\":2,\"action\":{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Player\"}}"),
+                "[使用帮助卡时] 对随机怪物连续造成2次2点伤害"));
+
+            c.AddEffect(Impl("relic.junk_slot_machine.use", EffectContainerType.Relic,
+                Triggered("relic.junk_slot_machine.use", "Relic",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"WeightedRandom\",\"choices\":["
+                    + "{\"weight\":1,\"action\":{\"atom\":\"ModifyGold\",\"delta\":9,\"reason\":\"slot\"}},"
+                    + "{\"weight\":0,\"action\":{\"atom\":\"GainArmor\",\"amount\":1}},"
+                    + "{\"weight\":0,\"action\":{\"atom\":\"Heal\",\"amount\":1,\"actor\":\"Player\"}},"
+                    + "{\"weight\":0,\"action\":{\"atom\":\"DealDamage\",\"amount\":1,\"actor\":\"Player\"}},"
+                    + "{\"weight\":0,\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.throwing_knife\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}},"
+                    + "{\"weight\":0,\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.bomb\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}},"
+                    + "{\"weight\":0,\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.sturdy_shield\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}},"
+                    + "{\"weight\":0,\"action\":{\"atom\":\"ModifyGold\",\"delta\":1,\"reason\":\"slot\"}},"
+                    + "{\"weight\":0,\"action\":{\"atom\":\"Rotate\",\"count\":1}}"
+                    + "]}"),
+                "[使用帮助卡时] 随机触发九选一"));
+
+            c.AddEffect(Impl("skill.recombine_head.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.recombine_head.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":1}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"RemoveCard\"},"
+                    + "{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"AdjacentCard\",\"origin\":\"Self\",\"defId\":\"monster.skull_head\"}},"
+                    + "{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton\",\"kind\":\"Monster\",\"count\":1,\"top\":true}"
+                    + "]}",
+                    "[{\"atom\":\"AdjacentHasCard\",\"origin\":\"Self\",\"defId\":\"monster.skull_head\"}]"),
+                "相邻骷髅头时移除双方并洗入大骷髅"));
+
+            c.AddEffect(Impl("skill.recombine_body.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.recombine_body.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":1}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"RemoveCard\"},"
+                    + "{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"AdjacentCard\",\"origin\":\"Self\",\"defId\":\"monster.headless_skeleton\"}},"
+                    + "{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton\",\"kind\":\"Monster\",\"count\":1,\"top\":true}"
+                    + "]}",
+                    "[{\"atom\":\"AdjacentHasCard\",\"origin\":\"Self\",\"defId\":\"monster.headless_skeleton\"}]"),
+                "相邻无头骷髅时移除双方并洗入大骷髅"));
+
             c.AddEffect(Impl("skill.falling_rocks.cumulative", EffectContainerType.MonsterSkill,
                 Triggered("skill.falling_rocks.cumulative", "MonsterSkill",
                     "{\"atom\":\"OnCumulative\",\"metric\":\"armorLost\",\"threshold\":10}", "{\"atom\":\"Player\"}",
@@ -339,7 +387,7 @@ namespace NineGrid.Content
             Relic(c, "relic.dragon_scale_armor", "龙鳞甲", ContentRarity.Gold, "所有怪物攻击-1").AddEffect("relic.dragon_scale_armor.rule");
             Relic(c, "relic.phoenix_feather", "凤凰羽毛", ContentRarity.Gold, "致命伤害免死").AddEffect("relic.phoenix_feather.fatal");
             Relic(c, "relic.craving", "渴望", ContentRarity.Gold, "所有恢复血量效果翻倍").AddEffect("relic.craving.rule");
-            Relic(c, "relic.junk_slot_machine", "废物老虎机", ContentRarity.Gold, "使用帮助卡时随机触发九选一").AddEffect(Pending(c, "relic.junk_slot_machine.pending", EffectContainerType.Relic, "九选一复合随机"));
+            Relic(c, "relic.junk_slot_machine", "废物老虎机", ContentRarity.Gold, "使用帮助卡时随机触发九选一").AddEffect("relic.junk_slot_machine.use");
         }
 
         private static void AddPlayerSkills(GameContentCatalog c)
@@ -375,8 +423,8 @@ namespace NineGrid.Content
             Skill(c, "skill.hard", "坚硬", EffectContainerType.MonsterSkill, "左列战斗时按损失护甲伤害玩家").AddEffect(Pending(c, "skill.hard.pending", EffectContainerType.MonsterSkill, "战斗损失护甲动态伤害"));
             Skill(c, "skill.swallow_stone", "吞石", EffectContainerType.MonsterSkill, "每移动2次吸相邻怪物护甲").AddEffect(Pending(c, "skill.swallow_stone.pending", EffectContainerType.MonsterSkill, "护甲转移"));
             Skill(c, "skill.taunt", "嘲讽", EffectContainerType.MonsterSkill, "相邻时只能与本卡战斗").AddEffect(Pending(c, "skill.taunt.pending", EffectContainerType.MonsterSkill, "交互合法性规则改写"));
-            Skill(c, "skill.recombine_head", "重新组合头", EffectContainerType.MonsterSkill, "相邻骷髅头组合").AddEffect(Pending(c, "skill.recombine_head.pending", EffectContainerType.MonsterSkill, "按相邻指定 def 组合移除"));
-            Skill(c, "skill.recombine_body", "重新组合身", EffectContainerType.MonsterSkill, "相邻无头骷髅组合").AddEffect(Pending(c, "skill.recombine_body.pending", EffectContainerType.MonsterSkill, "按相邻指定 def 组合移除"));
+            Skill(c, "skill.recombine_head", "重新组合头", EffectContainerType.MonsterSkill, "相邻骷髅头组合").AddEffect("skill.recombine_head.move");
+            Skill(c, "skill.recombine_body", "重新组合身", EffectContainerType.MonsterSkill, "相邻无头骷髅组合").AddEffect("skill.recombine_body.move");
             Skill(c, "skill.unstable", "不稳定", EffectContainerType.MonsterSkill, "每移动3次随机交换怪物").AddEffect(Pending(c, "skill.unstable.pending", EffectContainerType.MonsterSkill, "随机第二目标交换"));
             Skill(c, "skill.rotate_lover", "爱好旋转", EffectContainerType.MonsterSkill, "每移动3次旋转").AddEffect("skill.rotate_lover.move");
             Skill(c, "skill.random_walk", "乱步", EffectContainerType.MonsterSkill, "每移动3次与随机帮助卡交换").AddEffect(Pending(c, "skill.random_walk.pending", EffectContainerType.MonsterSkill, "随机帮助卡目标"));

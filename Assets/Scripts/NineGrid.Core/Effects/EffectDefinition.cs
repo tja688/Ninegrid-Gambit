@@ -134,6 +134,18 @@ namespace NineGrid.Core.Effects
 
     public sealed class EffectValidator
     {
+        private readonly EffectAtomRegistry mRegistry;
+
+        public EffectValidator()
+            : this(null)
+        {
+        }
+
+        public EffectValidator(EffectAtomRegistry registry)
+        {
+            mRegistry = registry;
+        }
+
         public EffectValidationResult Validate(EffectDefinition definition)
         {
             var result = new EffectValidationResult();
@@ -147,6 +159,11 @@ namespace NineGrid.Core.Effects
             ValidateRequiredFields(definition, result);
             ValidateMutualExclusion(definition, result);
             ValidateVerb(definition, result);
+            if (mRegistry != null)
+            {
+                EffectAtomSchemas.ValidateDefinition(definition, mRegistry, result);
+            }
+
             result.GoldenSnapshot = BuildGoldenSnapshot(definition);
             return result;
         }

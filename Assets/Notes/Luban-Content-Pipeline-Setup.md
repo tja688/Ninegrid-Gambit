@@ -59,11 +59,25 @@ $env:LUBAN_EXE = "D:\Tools\Luban\Luban.exe"
 - `ContentSystem.ValidateCatalog()` 能复用现有效果校验。
 - `CreateDraft / ApplyContentToCard / ActivateRelic / ActivatePlayerSkill` 都能消费 catalog。
 
+### R3 接入程度（2026-06-18 复检）
+
+| 能力 | 状态 | 说明 |
+|:--|:--|:--|
+| Luban 生成器 + 表定义 + 最小 JSON 样例 | 已落地 | `Assets/Tools/Luban` + `StreamingAssets/TableNine/LubanData` |
+| 生成代码 → `GameContentCatalog` 映射 | 已落地 | `TableNineLubanCatalogFactory` |
+| `IContentSystem` 消费 Luban catalog | 已落地 | `P6LubanContentTests` 验证 parse/validate/draft |
+| 运行时默认内容源 | **未切换** | 仍依赖 `TableNineContentCatalog` 硬编码全量内容 |
+| 统一引导入口 | **已补** | `ContentCatalogBootstrap.Load(...)`；注册仍由调用方经 `IConfigUtility` 注入 |
+| 全量内容迁表 | **未开始** | Luban 目前仅 3 卡 / 5 效果样例，远小于 catalog |
+| 改数值只动配表 | **未达成** | 主内容仍在 C# `TableNineContentCatalog.cs` |
+
+结论：**R3 管线骨架和接入口已通，但尚未成为主内容源**。当前合理策略是 `Hardcoded` 继续服务 P6 全量逻辑，`Luban` 保持样例通道，后续按批次把 `TableNineContentCatalog` 搬进 `Assets/Tools/Luban/Datas`。
+
 当前不足主要不在 Luban 管线，而在内容表达和校验硬度：
 
 - `TableNineContentCatalog` 仍是全量硬编码内容源，本次只接了一块最小真表。
 - 大量 P6 内容仍是 `PendingAtom`，迁移到 Luban 后也只会更清楚地暴露 pending，不会自动变成可执行效果。
-- `EffectValidator` 还没有逐 atom schema 校验，表迁移前建议先补“未知 atom / 缺字段 / 参数范围”的硬校验。
+- `EffectValidator` 已补 atom schema 校验（未知 atom / 缺字段 / 参数范围）；表迁移前可先跑 representative catalog DSL 单测。
 - 长远看，效果 DSL 可以从字符串列升级为 Luban 多态 bean；但现在直接字符串承载更适合快速迁移现有 JSON DSL。
 
 建议下一步顺序：
@@ -71,3 +85,4 @@ $env:LUBAN_EXE = "D:\Tools\Luban\Luban.exe"
 1. 把 `TableNineContentCatalog` 的硬编码内容分批搬进 `Assets/Tools/Luban/Datas`。
 2. 每批搬迁后跑 `gen_table_nine.ps1` 和 `NineGrid.Core.Tests`。
 3. 等 pending burn-down 稳定后，再把 `P6ContentLandingTests` 从“允许 pending”改成“pending 必须为 0”。
+4. 全量迁表完成前，运行时默认 `Load(Hardcoded)` 后注入 `IConfigUtility`。

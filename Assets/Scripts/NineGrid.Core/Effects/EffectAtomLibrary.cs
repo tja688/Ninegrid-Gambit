@@ -517,6 +517,80 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    [EffectAtom("AdjacentHasCard", EffectAtomKind.Condition)]
+    public sealed class AdjacentHasCardEffectCondition : ICondition
+    {
+        private string mOriginRef = "Self";
+        private string mDefId = string.Empty;
+
+        public void Configure(EffectDslNode config)
+        {
+            mOriginRef = config.Get("origin").AsString("Self");
+            mDefId = config.Get("defId").AsString(string.Empty);
+        }
+
+        public bool IsMet(EffectRuntimeContext context)
+        {
+            return ResolveAdjacentCardUid(context, mOriginRef, mDefId) != 0;
+        }
+
+        public IStatCondition CreateStatCondition(EffectBuildContext context)
+        {
+            return null;
+        }
+
+        internal static int ResolveAdjacentCardUid(EffectRuntimeContext context, string originRef, string defId)
+        {
+            if (context == null || string.IsNullOrEmpty(defId))
+            {
+                return 0;
+            }
+
+            var originUid = TargetResolver.ResolveSingleCardRef(context, originRef);
+            CardInstance origin;
+            if (!context.TryGetCard(originUid, out origin) || !origin.Slot.Value.IsBoardSlot)
+            {
+                return 0;
+            }
+
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var slot = SlotId.Board(i);
+                if (!slot.IsAdjacentTo(origin.Slot.Value))
+                {
+                    continue;
+                }
+
+                var cardUid = context.Board.GetCardUid(slot);
+                CardInstance card;
+                if (context.TryGetCard(cardUid, out card) && card.DefId == defId)
+                {
+                    return cardUid;
+                }
+            }
+
+            return 0;
+        }
+    }
+
+    [EffectAtom("AdjacentCard", EffectAtomKind.Target)]
+    public sealed class AdjacentCardTarget : ITarget
+    {
+        private string mOriginRef = "Self";
+        private string mDefId = string.Empty;
+
+        public void Configure(EffectDslNode config)
+        {
+            mOriginRef = config.Get("origin").AsString("Self");
+            mDefId = config.Get("defId").AsString(string.Empty);
+        }
+
+        public IReadOnlyList<int> Resolve(EffectRuntimeContext context)
+        {
+            return TargetResolver.Single(AdjacentHasCardEffectCondition.ResolveAdjacentCardUid(context, mOriginRef, mDefId));
+        }
+    }
+
     [EffectAtom("AtSlot", EffectAtomKind.Condition)]
     public sealed class AtSlotEffectCondition : ICondition
     {
@@ -777,8 +851,9 @@ namespace NineGrid.Core.Effects
             var registry = context.Architecture.GetSystem<IEffectSystem>().AtomRegistry;
             for (var i = 0; i < mActions.Count; i++)
             {
+                var actionTargets = ActionTargetResolver.Resolve(context, registry, mActions[i], targets);
                 var action = registry.CreateAction(mActions[i]);
-                var actions = action.BuildActions(context, targets);
+                var actions = action.BuildActions(context, actionTargets);
                 for (var j = 0; j < actions.Count; j++)
                 {
                     result.Add(actions[j]);
@@ -826,7 +901,8 @@ namespace NineGrid.Core.Effects
                 if (roll < cursor)
                 {
                     var action = context.Architecture.GetSystem<IEffectSystem>().AtomRegistry.CreateAction(mChoices[i].Action);
-                    return action.BuildActions(context, targets);
+                    var actionTargets = ActionTargetResolver.Resolve(context, context.Architecture.GetSystem<IEffectSystem>().AtomRegistry, mChoices[i].Action, targets);
+                    return action.BuildActions(context, actionTargets);
                 }
             }
 
@@ -864,8 +940,9 @@ namespace NineGrid.Core.Effects
             var registry = context.Architecture.GetSystem<IEffectSystem>().AtomRegistry;
             for (var i = 0; i < mCount; i++)
             {
+                var actionTargets = ActionTargetResolver.Resolve(context, registry, mAction, targets);
                 var action = registry.CreateAction(mAction);
-                var actions = action.BuildActions(context, targets);
+                var actions = action.BuildActions(context, actionTargets);
                 for (var j = 0; j < actions.Count; j++)
                 {
                     result.Add(actions[j]);
@@ -900,7 +977,8 @@ namespace NineGrid.Core.Effects
                 return new GameAction[0];
             }
 
-            return registry.CreateAction(selected).BuildActions(context, targets);
+            var actionTargets = ActionTargetResolver.Resolve(context, registry, selected, targets);
+            return registry.CreateAction(selected).BuildActions(context, actionTargets);
         }
     }
 
@@ -1222,6 +1300,23 @@ namespace NineGrid.Core.Effects
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
         {
             return new[] { new DeactivateEffectAction(context.Instance.InstanceId) };
+        }
+    }
+
+    internal static class ActionTargetResolver
+    {
+        public static IReadOnlyList<int> Resolve(
+            EffectRuntimeContext context,
+            EffectAtomRegistry registry,
+            EffectDslNode actionNode,
+            IReadOnlyList<int> defaultTargets)
+        {
+            if (actionNode == null || actionNode.IsNull || !actionNode.Has("target"))
+            {
+                return defaultTargets;
+            }
+
+            return registry.CreateTarget(actionNode.Get("target")).Resolve(context);
         }
     }
 

@@ -3,6 +3,7 @@ using NineGrid.Content;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using NineGrid.Core.Utilities;
+using NineGrid.Core.Utilities;
 using NUnit.Framework;
 using QFramework;
 
@@ -16,7 +17,7 @@ namespace NineGrid.Core.Tests
             NineGridArchitecture.ResetForTests();
             InitialGameFactory.Create(NineGridArchitecture.Current);
             var catalog = TableNineContentCatalog.CreateDefault();
-            NineGridArchitecture.Current.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, catalog);
+            P5CatalogTestSupport.RegisterCatalog(NineGridArchitecture.Current.GetUtility<IConfigUtility>(), catalog);
             NineGridArchitecture.Current.GetSystem<IContentSystem>().Load(catalog);
         }
 
