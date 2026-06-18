@@ -73,6 +73,7 @@ namespace NineGrid.Core
         Shop,
         Tavern,
         Fountain,
+        Gold,
         Treasure,
         Event
     }
@@ -140,7 +141,12 @@ namespace NineGrid.Core
         EffectModifierApplied,
         EffectDeactivated,
         CardSpawned,
-        SkillGranted
+        SkillGranted,
+        BaseStatModified,
+        RelicGranted,
+        RewardOffered,
+        RoomResolved,
+        ContentLoaded
     }
 
     public enum GamePhase

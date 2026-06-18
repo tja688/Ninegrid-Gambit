@@ -4,6 +4,8 @@ namespace NineGrid.Core
 {
     public sealed class CardDraft
     {
+        private readonly List<string> mEffectIds = new List<string>();
+
         public CardDraft(string defId, CardKind kind)
         {
             DefId = defId ?? string.Empty;
@@ -19,6 +21,23 @@ namespace NineGrid.Core
         public int Recovery { get; set; }
         public int GoldReward { get; set; }
         public bool IsElite { get; set; }
+        public bool IsBoss { get; set; }
+        public int Level { get; set; }
+
+        public IReadOnlyList<string> EffectIds
+        {
+            get { return mEffectIds; }
+        }
+
+        public CardDraft AddEffect(string effectId)
+        {
+            if (!string.IsNullOrEmpty(effectId) && !mEffectIds.Contains(effectId))
+            {
+                mEffectIds.Add(effectId);
+            }
+
+            return this;
+        }
 
         public CardInstance Create(CardRegistry registry)
         {
@@ -52,6 +71,22 @@ namespace NineGrid.Core
             if (IsElite)
             {
                 card.Counters.Set(CoreCounterKeys.Elite, 1);
+            }
+
+            if (IsBoss)
+            {
+                card.Counters.Set(CoreCounterKeys.Elite, 1);
+                card.Counters.Set(CoreCounterKeys.Boss, 1);
+            }
+
+            if (Level > 0)
+            {
+                card.Counters.Set(CoreCounterKeys.Level, Level);
+            }
+
+            for (var i = 0; i < mEffectIds.Count; i++)
+            {
+                card.AddEffect(mEffectIds[i]);
             }
 
             return card;

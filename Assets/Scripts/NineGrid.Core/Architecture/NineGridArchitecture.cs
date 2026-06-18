@@ -21,7 +21,10 @@ namespace NineGrid.Core
 
             RegisterSystem<IStatSystem>(new StatSystem());
             RegisterSystem<ITriggerSystem>(new TriggerSystem());
+            RegisterSystem<IContentSystem>(new ContentSystem());
             RegisterSystem<IEffectSystem>(new EffectSystem());
+            RegisterSystem<IEconomySystem>(new EconomySystem());
+            RegisterSystem<IRewardSystem>(new RewardSystem());
             RegisterSystem<IActionPipelineSystem>(new ActionPipelineSystem());
             RegisterSystem<IBoardSystem>(new BoardSystem());
             RegisterSystem<IDeckSystem>(new DeckSystem());

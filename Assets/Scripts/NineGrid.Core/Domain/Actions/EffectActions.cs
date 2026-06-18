@@ -164,7 +164,7 @@ namespace NineGrid.Core
 
             for (var i = 0; i < Count; i++)
             {
-                var card = registry.Create(DefId, Kind);
+                var card = CreateConfiguredCard(context, registry, DefId, Kind);
                 deck.AddToDrawPile(card, Top);
                 result.AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
                     .WithCard(card.Uid)
@@ -196,6 +196,15 @@ namespace NineGrid.Core
             }
 
             deck.ReorderDrawPile(shuffled);
+        }
+
+        private static CardInstance CreateConfiguredCard(GameActionContext context, CardRegistry registry, string defId, CardKind fallbackKind)
+        {
+            var content = context.GetSystem<IContentSystem>();
+            var draft = content.CreateDraft(defId);
+            var card = draft.Kind == CardKind.Unknown ? registry.Create(defId, fallbackKind) : draft.Create(registry);
+            content.ApplyContentToCard(card);
+            return card;
         }
     }
 
@@ -233,7 +242,7 @@ namespace NineGrid.Core
 
             for (var i = 0; i < Count; i++)
             {
-                var card = registry.Create(DefId, Kind);
+                var card = CreateConfiguredCard(context, registry, DefId, Kind);
                 Place(card, board, deck);
                 result.AddEvent(new CoreGameEvent(CoreEventType.CardSpawned, context.ActionId, ActionName)
                     .WithCard(card.Uid)
@@ -276,6 +285,15 @@ namespace NineGrid.Core
                     deck.AddToDrawPile(card, false);
                     break;
             }
+        }
+
+        private static CardInstance CreateConfiguredCard(GameActionContext context, CardRegistry registry, string defId, CardKind fallbackKind)
+        {
+            var content = context.GetSystem<IContentSystem>();
+            var draft = content.CreateDraft(defId);
+            var card = draft.Kind == CardKind.Unknown ? registry.Create(defId, fallbackKind) : draft.Create(registry);
+            content.ApplyContentToCard(card);
+            return card;
         }
     }
 

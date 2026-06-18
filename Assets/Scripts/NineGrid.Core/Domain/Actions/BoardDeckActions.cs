@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NineGrid.Core.Systems;
 using NineGrid.Core.Utilities;
 
 namespace NineGrid.Core
@@ -26,15 +27,22 @@ namespace NineGrid.Core
 
             for (var i = 0; i < Options.PlayerCards.Count; i++)
             {
-                deck.AddToPlayerCardPool(Options.PlayerCards[i].Create(registry));
+                deck.AddToPlayerCardPool(CreateConfiguredCard(context, Options.PlayerCards[i], registry));
             }
 
             for (var i = 0; i < Options.EnemyCards.Count; i++)
             {
-                deck.AddToEnemyCardPool(Options.EnemyCards[i].Create(registry));
+                deck.AddToEnemyCardPool(CreateConfiguredCard(context, Options.EnemyCards[i], registry));
             }
 
             return GameActionResult.Empty;
+        }
+
+        private static CardInstance CreateConfiguredCard(GameActionContext context, CardDraft draft, CardRegistry registry)
+        {
+            var card = draft.Create(registry);
+            context.GetSystem<IContentSystem>().ApplyContentToCard(card);
+            return card;
         }
 
         private static void RemoveNonAvatarCards(CardRegistry registry)

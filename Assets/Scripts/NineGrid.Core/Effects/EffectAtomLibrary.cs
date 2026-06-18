@@ -65,7 +65,26 @@ namespace NineGrid.Core.Effects
     public sealed class OnUseHelpCardTrigger : TriggerAtomBase
     {
         public override TriggerPoint Point { get { return TriggerPoint.OnUseHelpCard; } }
-        public override bool Matches(EffectRuntimeContext context) { return base.Matches(context) && HasEvent(context, CoreEventType.ItemUsed); }
+
+        public override bool Matches(EffectRuntimeContext context)
+        {
+            if (!base.Matches(context))
+            {
+                return false;
+            }
+
+            var events = context.Events;
+            for (var i = 0; i < events.Count; i++)
+            {
+                if (events[i].Type == CoreEventType.ItemUsed
+                    && (context.OwnerUid == 0 || events[i].CardUid == context.OwnerUid))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 
     [EffectAtom("OnNodeStart", EffectAtomKind.Trigger)]
