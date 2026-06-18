@@ -13,16 +13,30 @@ namespace NineGrid.Core.Stats
             Registry = registry;
             Board = board;
             Player = player;
+            ActionName = string.Empty;
+            SourceDefId = string.Empty;
+            Cause = string.Empty;
         }
 
         public CardInstance Owner { get; private set; }
         public CardRegistry Registry { get; private set; }
         public BoardModel Board { get; private set; }
         public PlayerModel Player { get; private set; }
+        public string ActionName { get; private set; }
+        public string SourceDefId { get; private set; }
+        public string Cause { get; private set; }
 
         public SlotId OwnerSlot
         {
             get { return Owner == null ? SlotId.None : Owner.Slot.Value; }
+        }
+
+        public StatEvaluationContext WithActionSource(string actionName, string sourceDefId, string cause)
+        {
+            ActionName = actionName ?? string.Empty;
+            SourceDefId = sourceDefId ?? string.Empty;
+            Cause = cause ?? string.Empty;
+            return this;
         }
     }
 
@@ -180,6 +194,69 @@ namespace NineGrid.Core.Stats
         public bool IsMet(StatEvaluationContext context)
         {
             return Zone == ZoneId.None || (context != null && context.Owner != null && context.Owner.Zone.Value == Zone);
+        }
+    }
+
+    public sealed class ActionSourceCondition : IStatCondition
+    {
+        public ActionSourceCondition(
+            string actionName,
+            string sourceDefId,
+            string excludeSourceDefId,
+            string cause,
+            string excludeCause)
+        {
+            ActionName = actionName ?? string.Empty;
+            SourceDefId = sourceDefId ?? string.Empty;
+            ExcludeSourceDefId = excludeSourceDefId ?? string.Empty;
+            Cause = cause ?? string.Empty;
+            ExcludeCause = excludeCause ?? string.Empty;
+        }
+
+        public string ActionName { get; private set; }
+        public string SourceDefId { get; private set; }
+        public string ExcludeSourceDefId { get; private set; }
+        public string Cause { get; private set; }
+        public string ExcludeCause { get; private set; }
+
+        public bool IsMet(StatEvaluationContext context)
+        {
+            if (context == null)
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(ActionName) && !Same(context.ActionName, ActionName))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(SourceDefId) && !Same(context.SourceDefId, SourceDefId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(ExcludeSourceDefId) && Same(context.SourceDefId, ExcludeSourceDefId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(Cause) && !Same(context.Cause, Cause))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(ExcludeCause) && Same(context.Cause, ExcludeCause))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool Same(string left, string right)
+        {
+            return string.Equals(left ?? string.Empty, right ?? string.Empty, System.StringComparison.OrdinalIgnoreCase);
         }
     }
 }

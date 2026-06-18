@@ -36,6 +36,7 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("OwnsRelicSet"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("AdjacentHasCard"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("EventFilter"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("ActionSource"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("SelectedOption"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("CardZone"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("RandomMonster"));

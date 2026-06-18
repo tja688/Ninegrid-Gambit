@@ -45,9 +45,11 @@ namespace NineGrid.Core
             }
 
             var statSystem = context.GetSystem<IStatSystem>();
-            var statContext = statSystem.CreateContext(target);
+            var statContext = statSystem.CreateContext(target).WithActionSource(ActionName, SourceDefId, Cause);
             var baseDamage = Math.Max(0, Amount);
-            var damage = Math.Max(0, (int)Math.Round(statSystem.EvaluateRule(RuleId.DamageMultiplier, baseDamage, statContext)));
+            var multipliedDamage = Math.Max(0, (int)Math.Round(statSystem.EvaluateRule(RuleId.DamageMultiplier, baseDamage, statContext)));
+            var flatDamage = baseDamage > 0 ? (int)Math.Round(statSystem.EvaluateRule(RuleId.DamageFlatDelta, 0f, statContext)) : 0;
+            var damage = Math.Max(0, multipliedDamage + flatDamage);
             if (baseDamage > 0)
             {
                 var consumed = new List<RuleModifier>();
@@ -336,6 +338,8 @@ namespace NineGrid.Core
             var deck = context.GetModel<DeckModel>();
             var card = registry.Get(CardUid);
             var fromSlot = card.Slot.Value;
+            var removedAttack = (int)Math.Round(card.Stats.GetBase(StatId.Attack));
+            var removedArmor = (int)Math.Round(card.Stats.GetBase(StatId.Armor));
 
             board.RemoveCard(card);
             deck.RemoveCard(card);
@@ -346,6 +350,7 @@ namespace NineGrid.Core
                 .AddEvent(new CoreGameEvent(CoreEventType.CardRemoved, context.ActionId, ActionName)
                     .WithCard(CardUid)
                     .WithSlots(fromSlot, SlotId.None)
+                    .WithRemovedStats(removedAttack, removedArmor)
                     .WithMessage(Reason)
                     .WithSource(SourceDefId, Reason));
         }
@@ -387,6 +392,8 @@ namespace NineGrid.Core
             }
 
             var fromSlot = target.Slot.Value;
+            var removedAttack = (int)Math.Round(target.Stats.GetBase(StatId.Attack));
+            var removedArmor = (int)Math.Round(target.Stats.GetBase(StatId.Armor));
             target.Stats.SetBase(StatId.Hp, 0);
             board.RemoveCard(target);
             deck.RemoveCard(target);
@@ -404,6 +411,7 @@ namespace NineGrid.Core
                     .WithTarget(TargetUid)
                     .WithCard(TargetUid)
                     .WithSlots(fromSlot, SlotId.None)
+                    .WithRemovedStats(removedAttack, removedArmor)
                     .WithMessage("kill"));
 
             var goldReward = target.Counters.Get(CoreCounterKeys.GoldReward);

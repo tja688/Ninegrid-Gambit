@@ -308,9 +308,14 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.action.stat", path + ".stat is required for ModifyBaseStat.");
                 }
 
-                if (!node.Has("delta"))
+                if (!node.Has("delta") && !node.Has("value"))
                 {
-                    result.Add("schema.action.delta", path + ".delta is required for ModifyBaseStat.");
+                    result.Add("schema.action.delta", path + ".delta or .value is required for ModifyBaseStat.");
+                }
+
+                if (node.Has("value"))
+                {
+                    EffectValueExpression.Validate(node.Get("value"), path + ".value", result);
                 }
             }
             else if (Same(atom, "OfferRewardChoice") && !node.Has("poolId"))
@@ -486,6 +491,15 @@ namespace NineGrid.Core.Effects
                     if (node.Has("stat") && !IsSupportedStat(node.Get("stat").AsString(string.Empty)))
                     {
                         result.Add("schema.condition.stat", path + ".stat is not supported.");
+                    }
+                }
+
+                if (Same(atom, "ActionSource") && node.Has("action"))
+                {
+                    var action = node.Get("action").AsString(string.Empty);
+                    if (string.IsNullOrEmpty(action))
+                    {
+                        result.Add("schema.condition.action", path + ".action must not be empty.");
                     }
                 }
 

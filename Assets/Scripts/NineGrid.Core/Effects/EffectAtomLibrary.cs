@@ -1048,9 +1048,8 @@ namespace NineGrid.Core.Effects
                 return leftCard.Slot.Value.IsAdjacentTo(mFixedSlot);
             }
 
-            var right = TargetResolver.ResolveSingleCardRef(context, mRightRef);
-            CardInstance rightCard;
-            return context.TryGetCard(right, out rightCard) && leftCard.Slot.Value.IsAdjacentTo(rightCard.Slot.Value);
+            var rightSlot = ResolveRightSlot(context, mRightRef);
+            return rightSlot != SlotId.None && leftCard.Slot.Value.IsAdjacentTo(rightSlot);
         }
 
         public IStatCondition CreateStatCondition(EffectBuildContext context)
@@ -1064,6 +1063,25 @@ namespace NineGrid.Core.Effects
             return mFixedSlot != SlotId.None && TargetResolver.IsSelfRef(mLeftRef)
                 ? new AdjacentCondition(mFixedSlot)
                 : null;
+        }
+
+        private static SlotId ResolveRightSlot(EffectRuntimeContext context, string rightRef)
+        {
+            if (string.Equals(rightRef, "EventCard", StringComparison.OrdinalIgnoreCase))
+            {
+                var events = context.Events;
+                for (var i = 0; i < events.Count; i++)
+                {
+                    if (events[i].CardUid != 0 && events[i].FromSlot.IsBoardSlot)
+                    {
+                        return events[i].FromSlot;
+                    }
+                }
+            }
+
+            var right = TargetResolver.ResolveSingleCardRef(context, rightRef);
+            CardInstance rightCard;
+            return context.TryGetCard(right, out rightCard) ? rightCard.Slot.Value : SlotId.None;
         }
     }
 
@@ -1362,6 +1380,100 @@ namespace NineGrid.Core.Effects
         private static bool Same(string left, string right)
         {
             return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    [EffectAtom("ActionSource", EffectAtomKind.Condition)]
+    public sealed class ActionSourceEffectCondition : ICondition
+    {
+        private string mActionName = string.Empty;
+        private string mSourceDefId = string.Empty;
+        private string mExcludeSourceDefId = string.Empty;
+        private string mCause = string.Empty;
+        private string mExcludeCause = string.Empty;
+
+        public void Configure(EffectDslNode config)
+        {
+            mActionName = config.Get("action").AsString(string.Empty);
+            mSourceDefId = config.Get("sourceDefId").AsString(string.Empty);
+            mExcludeSourceDefId = config.Get("excludeSourceDefId").AsString(string.Empty);
+            mCause = config.Get("cause").AsString(string.Empty);
+            mExcludeCause = config.Get("excludeCause").AsString(string.Empty);
+        }
+
+        public bool IsMet(EffectRuntimeContext context)
+        {
+            if (context == null)
+            {
+                return false;
+            }
+
+            var actionName = context.TriggerContext == null || context.TriggerContext.Action == null
+                ? string.Empty
+                : context.TriggerContext.Action.ActionName;
+            if (!MatchesAction(actionName))
+            {
+                return false;
+            }
+
+            var events = context.Events;
+            if (events.Count == 0)
+            {
+                return string.IsNullOrEmpty(mSourceDefId)
+                    && string.IsNullOrEmpty(mExcludeSourceDefId)
+                    && string.IsNullOrEmpty(mCause)
+                    && string.IsNullOrEmpty(mExcludeCause);
+            }
+
+            for (var i = 0; i < events.Count; i++)
+            {
+                if (MatchesSource(events[i].SourceDefId, events[i].Cause))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public IStatCondition CreateStatCondition(EffectBuildContext context)
+        {
+            return new ActionSourceCondition(mActionName, mSourceDefId, mExcludeSourceDefId, mCause, mExcludeCause);
+        }
+
+        private bool MatchesAction(string actionName)
+        {
+            return string.IsNullOrEmpty(mActionName) || Same(actionName, mActionName);
+        }
+
+        private bool MatchesSource(string sourceDefId, string cause)
+        {
+            if (!string.IsNullOrEmpty(mSourceDefId) && !Same(sourceDefId, mSourceDefId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mExcludeSourceDefId) && Same(sourceDefId, mExcludeSourceDefId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mCause) && !Same(cause, mCause))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mExcludeCause) && Same(cause, mExcludeCause))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool Same(string left, string right)
+        {
+            return string.Equals(left ?? string.Empty, right ?? string.Empty, StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -1720,12 +1832,16 @@ namespace NineGrid.Core.Effects
     {
         private StatId mStat = StatId.Attack;
         private int mDelta;
+        private EffectValueExpression mValue;
+        private bool mUseValue;
         private string mReason = string.Empty;
 
         public void Configure(EffectDslNode config)
         {
             mStat = config.Get("stat").AsEnum(StatId.Attack);
             mDelta = config.Get("delta").AsInt(0);
+            mUseValue = config.Has("value");
+            mValue = mUseValue ? EffectValueExpression.FromActionAmount(config) : null;
             mReason = config.Get("reason").AsString("effect");
         }
 
@@ -1736,7 +1852,8 @@ namespace NineGrid.Core.Effects
             {
                 if (targets[i] != 0)
                 {
-                    result.Add(new ModifyBaseStatAction(targets[i], mStat, mDelta, mReason, context.SourceDefId));
+                    var delta = mUseValue ? mValue.Evaluate(context, targets[i]) : mDelta;
+                    result.Add(new ModifyBaseStatAction(targets[i], mStat, delta, mReason, context.SourceDefId));
                 }
             }
 
@@ -2646,6 +2763,16 @@ namespace NineGrid.Core.Effects
                 {
                     return events[i].RemainingArmor;
                 }
+
+                if (Same(field, "RemovedAttack"))
+                {
+                    return events[i].RemovedAttack;
+                }
+
+                if (Same(field, "RemovedArmor"))
+                {
+                    return events[i].RemovedArmor;
+                }
             }
 
             return 0f;
@@ -2806,7 +2933,9 @@ namespace NineGrid.Core.Effects
             return Same(field, "Amount")
                 || Same(field, "Delta")
                 || Same(field, "RemainingHp")
-                || Same(field, "RemainingArmor");
+                || Same(field, "RemainingArmor")
+                || Same(field, "RemovedAttack")
+                || Same(field, "RemovedArmor");
         }
 
         private static bool IsSupportedOp(string op)

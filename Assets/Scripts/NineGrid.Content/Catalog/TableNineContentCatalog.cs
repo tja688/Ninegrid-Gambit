@@ -546,6 +546,12 @@ namespace NineGrid.Content
                     "[{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"sourceDefId\":\"help.flame\",\"excludeCause\":\"skill.intense_burning\"}]"),
                 "每有一张烈焰加入战斗卡组，额外加入一张；额外加入的烈焰不再触发本效果"));
 
+            c.AddEffect(Impl("skill.flame_boiling.rule", EffectContainerType.MonsterSkill,
+                Rule("skill.flame_boiling.rule", "MonsterSkill",
+                    "{\"rule\":\"DamageFlatDelta\",\"op\":\"Add\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"skill.flame_boiling\"}",
+                    "[{\"atom\":\"ActionSource\",\"action\":\"DealDamage\",\"sourceDefId\":\"help.flame\"}]"),
+                "烈焰帮助卡造成的伤害+1"));
+
             c.AddEffect(Impl("skill.violence_maniac.move", EffectContainerType.MonsterSkill,
                 Triggered("skill.violence_maniac.move", "MonsterSkill",
                     "{\"atom\":\"OnSelfMove\",\"every\":2}",
@@ -571,6 +577,17 @@ namespace NineGrid.Content
                     "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":5,\"reason\":\"skill.violence_nutrition\"}",
                     "[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"sourceDefId\":\"skill.violence_maniac\",\"targetKind\":\"HelpCard\"}]"),
                 "每依靠暴力狂移除一张帮助卡，本卡护甲+5"));
+
+            c.AddEffect(Impl("skill.absorb_bone.remove", EffectContainerType.MonsterSkill,
+                Triggered("skill.absorb_bone.remove", "MonsterSkill",
+                    "{\"atom\":\"OnRemove\"}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"value\":{\"source\":\"Event\",\"field\":\"RemovedAttack\"},\"reason\":\"skill.absorb_bone.attack\"},"
+                    + "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"value\":{\"source\":\"Event\",\"field\":\"RemovedArmor\"},\"reason\":\"skill.absorb_bone.armor\"}"
+                    + "]}",
+                    "[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"targetKind\":\"Monster\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"EventCard\"}]"),
+                "正交相邻格怪物被移除时，获得该怪物移除前的攻击和护甲"));
 
             c.AddEffect(Impl("skill.guide.create_blessed", EffectContainerType.MonsterSkill,
                 Triggered("skill.guide.create_blessed", "MonsterSkill",
@@ -713,7 +730,7 @@ namespace NineGrid.Content
             PendingSkill(c, "skill.fracture_fall_apart", "折损散架");
             PendingSkill(c, "skill.range_expand", "范围扩大");
             PendingSkill(c, "skill.flame_breath", "烈焰吐息");
-            PendingSkill(c, "skill.flame_boiling", "烈焰沸腾");
+            Skill(c, "skill.flame_boiling", "烈焰沸腾", EffectContainerType.MonsterSkill, "烈焰帮助卡造成的伤害+1").AddEffect("skill.flame_boiling.rule");
             PendingSkill(c, "skill.space_mastery", "空间掌握");
             PendingSkill(c, "skill.otherworld_help", "异界帮助");
             PendingSkill(c, "skill.absorb_stone", "吸石");
@@ -723,7 +740,7 @@ namespace NineGrid.Content
             PendingSkill(c, "skill.find_weakness", "发现弱点");
             Skill(c, "skill.violence_maniac", "暴力狂", EffectContainerType.MonsterSkill, "每移动2次，移除相邻格子上的怪物卡和帮助卡").AddEffect("skill.violence_maniac.move");
             Skill(c, "skill.violence_nutrition", "暴力即养分", EffectContainerType.MonsterSkill, "依靠暴力狂移除怪物得攻击，移除帮助卡得护甲").AddEffect("skill.violence_nutrition.monster_remove").AddEffect("skill.violence_nutrition.help_remove");
-            PendingSkill(c, "skill.absorb_bone", "吸骨");
+            Skill(c, "skill.absorb_bone", "吸骨", EffectContainerType.MonsterSkill, "相邻怪物被移除时获得其移除前攻击和护甲").AddEffect("skill.absorb_bone.remove");
             PendingSkill(c, "skill.mixed_bones", "混合骨头");
             Skill(c, "skill.first_strike", "先攻", EffectContainerType.MonsterSkill, "持有先攻技能").AddEffect("skill.first_strike.rule");
             Skill(c, "skill.blessing", "庇佑", EffectContainerType.MonsterSkill, "下一次受到伤害时，该次伤害变为0").AddEffect("skill.blessing.rule");

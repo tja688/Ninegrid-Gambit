@@ -586,7 +586,43 @@ MonsterSkill pending, 46:
 
 下一批建议：批次6能力地基已经覆盖 `OnBattle` 来源过滤、通用事件来源过滤、非递归发牌链和来源敏感移除收益；若继续同簇，最小后续是 `removed-card stat snapshot v1`，处理 `skill.absorb_bone.pending`。如果切到新能力簇，则进入批次7 棋盘标记与场地规则。
 
-### 6.2 批次7首个小闭环记录（2026-06-18）
+### 6.2 批次6尾巴收束记录（2026-06-18）
+
+目标：清理批次6B刻意留下的两个尾巴：被移除卡属性快照与来源敏感伤害加值，让批次6的来源/计数/递归能力簇形成干净闭环。
+
+本批新增能力：
+
+- `CoreGameEvent` 的 `CardRemoved` 事件新增 `RemovedAttack` / `RemovedArmor` 快照，`RemoveCardAction` 与 `KillAction` 会记录卡牌移除前的基础攻击和护甲。
+- `ValueExpr` 的 `Event` source 新增 `RemovedAttack` / `RemovedArmor` 字段，`ModifyBaseStat` action 支持 `value`，可从事件快照驱动属性变化。
+- 新增 `RuleId.DamageFlatDelta`，`DealDamageAction` 在基础伤害大于 0 时按规则追加平加伤害。
+- 新增 `ActionSource` condition，可作为 RuleModifier 条件读取当前 action 的 `action/sourceDefId/cause`，用于来源敏感规则。
+- `Adjacent` condition 在右侧为 `EventCard` 时会优先读取事件 `FromSlot`，让“被移除前相邻”语义可验证。
+
+本批转换：
+
+- `skill.flame_boiling.rule`：MonsterSkill / RuleModifier / `DamageFlatDelta +1`，仅当 `DealDamage` 的 `SourceDefId == help.flame` 时生效；非烈焰来源不加伤害。
+- `skill.absorb_bone.remove`：MonsterSkill / Triggered / `OnRemove + CardRemoved Monster + Adjacent(Self, EventCard)`，正交相邻怪物被移除时，本卡获得该怪物移除前的基础攻击和护甲。
+
+批次6尾巴收束后数量：
+
+| 项目 | 数量 |
+|:--|--:|
+| hardcoded implemented effects | 87 |
+| runtime pending effects | 41 |
+| pending HelpCard effects | 7 |
+| pending Relic effects | 1 |
+| pending PlayerSkill effects | 1 |
+| pending MonsterSkill effects | 32 |
+
+验证记录：
+
+- `Assets/Notes/CI/check-core-guards.ps1`：通过。
+- Unity MCP refresh/compile：通过，Console 无编译错误；仅有 Easy Save obsolete warning 与一次 MCP WebSocket warning。
+- `NineGrid.Core.Tests` EditMode 全量：94/94 通过。
+
+下一批建议：批次6已收束干净；若继续能力簇推进，建议进入批次7B，处理 `help.bear_trap.pending` 的补牌陷阱触发与自移除，或做 `skill.range_expand.pending` 的邻接规则改写。
+
+### 6.3 批次7首个小闭环记录（2026-06-18）
 
 目标：补齐棋盘标记/场地规则的最小闭环，先让福地成为可见、可触发、可随节点重置的棋盘状态；不把移动锁、全图视为相邻、陷阱帮助卡一起混进同一批。
 
@@ -640,7 +676,7 @@ MonsterSkill pending, 46:
 ### 当前还没签收的部分
 
 - `TableNineContentCatalog.cs` 仍是主要内容真源，Luban 只是最小样例，不是生产内容源。
-- hardcoded catalog 预计有 85 个 implemented effect、43 个 runtime pending effect，R4 仍未清零。
+- hardcoded catalog 预计有 87 个 implemented effect、41 个 runtime pending effect，R4 仍未清零。
 - 设计文档里效果总量更大：帮助卡 22 条、遗物 58 条、玩家技能 7 条、怪物技能 81 条。hardcoded catalog 覆盖了帮助卡和玩家技能的大部分，但遗物和怪物技能仍是子集/原型。
 - R5 的全内容回放网、pending 闸门、Luban 全量迁移闸门还没有完成。
 
@@ -823,8 +859,8 @@ MonsterSkill pending, 46:
 
 下一次如果要直接进入实现，建议从：
 
-1. **继续批次6后续小批**：基于 `sourceDefId/cause` 处理被移除卡属性快照，优先收 `skill.absorb_bone.pending`。
-2. **继续批次7B**：处理 `help.bear_trap.pending` 的补牌陷阱触发与自移除。
+1. **继续批次7B**：处理 `help.bear_trap.pending` 的补牌陷阱触发与自移除。
+2. **邻接规则小批**：处理 `skill.range_expand.pending` 的邻接规则改写入口。
 3. **帮助卡长尾小批**：复用 `SelectedCards` / `ValueExpr` 处理 `help.armor_breaking_hammer.pending`、`help.kidnapping.pending` 这类已接近可表达的选择目标效果。
 
 ## 12. 给后续 AI 的技能入口

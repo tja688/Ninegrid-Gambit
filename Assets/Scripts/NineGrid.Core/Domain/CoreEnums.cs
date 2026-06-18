@@ -63,6 +63,7 @@ namespace NineGrid.Core
         EnemyAttackDelta,
         GoldCostOffset,
         DamageMultiplier,
+        DamageFlatDelta,
         FirstStrike,
         GoldArmorAbsorb,
         AttackTargetRestriction

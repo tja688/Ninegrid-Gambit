@@ -51,12 +51,12 @@ namespace NineGrid.Core.Tests
             var report = NineGridArchitecture.Current.GetSystem<IContentSystem>().ValidateCatalog();
 
             Assert.IsTrue(report.IsValid, FirstIssue(report));
-            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 85);
-            Assert.LessOrEqual(report.PendingEffectIds.Count, 43);
+            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 87);
+            Assert.LessOrEqual(report.PendingEffectIds.Count, 41);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 7);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.Relic), 1);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.PlayerSkill), 1);
-            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 34);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 32);
 
             AssertImplemented(catalog, report, "relic.vitality_amulet.max_hp");
             AssertImplemented(catalog, report, "relic.throwing_knife_bag.node_start");
@@ -90,6 +90,8 @@ namespace NineGrid.Core.Tests
             AssertImplemented(catalog, report, "skill.violence_maniac.move");
             AssertImplemented(catalog, report, "skill.violence_nutrition.monster_remove");
             AssertImplemented(catalog, report, "skill.violence_nutrition.help_remove");
+            AssertImplemented(catalog, report, "skill.flame_boiling.rule");
+            AssertImplemented(catalog, report, "skill.absorb_bone.remove");
             AssertImplemented(catalog, report, "skill.guide.create_blessed");
             AssertImplemented(catalog, report, "skill.guide.blessed_enter");
             AssertImplemented(catalog, report, "help.swap_card.use");
@@ -589,6 +591,51 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(ZoneId.Removed, help.Zone.Value);
             Assert.AreEqual(initialAttack + 3, owner.Stats.GetBase(StatId.Attack));
             Assert.AreEqual(initialArmor + 5, owner.Stats.GetBase(StatId.Armor));
+        }
+
+        [Test]
+        public void BatchSixTailFlameBoilingCatalogDslAddsOnlyFlameDamage()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var avatar = architecture.GetModel<CardRegistry>().Get(architecture.GetModel<BoardModel>().AvatarUid.Value);
+            var dragon = PlaceMonster("monster.fire_dragon", 50, SlotId.Board(1));
+            content.ApplyContentToCard(dragon);
+            var flameTarget = PlaceMonster("monster.flame.target", 20, SlotId.Board(2));
+            var normalTarget = PlaceMonster("monster.normal.target", 20, SlotId.Board(3));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(
+                new DealDamageAction(avatar.Uid, flameTarget.Uid, 2, "help.flame"));
+            architecture.GetSystem<IActionPipelineSystem>().Execute(
+                new DealDamageAction(avatar.Uid, normalTarget.Uid, 2, "help.fireball"));
+
+            Assert.AreEqual(17, flameTarget.Stats.GetBase(StatId.Hp));
+            Assert.AreEqual(18, normalTarget.Stats.GetBase(StatId.Hp));
+        }
+
+        [Test]
+        public void BatchSixTailAbsorbBoneCatalogDslUsesRemovedAdjacentMonsterSnapshot()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var owner = PlaceMonster("monster.skeleton_king", 30, SlotId.Board(5));
+            content.ApplyContentToCard(owner);
+            var initialAttack = owner.Stats.GetBase(StatId.Attack);
+            var initialArmor = owner.Stats.GetBase(StatId.Armor);
+            var adjacent = PlaceMonster("monster.bone.adjacent", 10, SlotId.Board(2));
+            adjacent.Stats.SetBase(StatId.Attack, 4);
+            adjacent.Stats.SetBase(StatId.Armor, 6);
+            var diagonal = PlaceMonster("monster.bone.diagonal", 10, SlotId.Board(9));
+            diagonal.Stats.SetBase(StatId.Attack, 7);
+            diagonal.Stats.SetBase(StatId.Armor, 8);
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(
+                new RemoveCardAction(adjacent.Uid, ZoneId.Removed, "test.adjacent"));
+            architecture.GetSystem<IActionPipelineSystem>().Execute(
+                new RemoveCardAction(diagonal.Uid, ZoneId.Removed, "test.diagonal"));
+
+            Assert.AreEqual(initialAttack + 4, owner.Stats.GetBase(StatId.Attack));
+            Assert.AreEqual(initialArmor + 6, owner.Stats.GetBase(StatId.Armor));
         }
 
         [Test]

@@ -30,6 +30,8 @@ namespace NineGrid.Core
         public int Delta { get; private set; }
         public int RemainingHp { get; private set; }
         public int RemainingArmor { get; private set; }
+        public int RemovedAttack { get; private set; }
+        public int RemovedArmor { get; private set; }
         public string SourceDefId { get; private set; }
         public string Cause { get; private set; }
         public string Message { get; private set; }
@@ -75,6 +77,13 @@ namespace NineGrid.Core
         {
             RemainingHp = hp;
             RemainingArmor = armor;
+            return this;
+        }
+
+        public CoreGameEvent WithRemovedStats(int attack, int armor)
+        {
+            RemovedAttack = attack;
+            RemovedArmor = armor;
             return this;
         }
 
