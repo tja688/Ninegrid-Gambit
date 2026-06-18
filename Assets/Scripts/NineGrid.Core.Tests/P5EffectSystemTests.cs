@@ -966,6 +966,44 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void RangeExpandRuleTreatsAllMonsterCardsAsAdjacentToOwnerOnly()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var boardSystem = architecture.GetSystem<IBoardSystem>();
+            var owner = CreateMonster("monster.range.owner", 20, SlotId.Board(1));
+            var adjacentMonster = CreateMonster("monster.range.adjacent", 20, SlotId.Board(2));
+            var farMonster = CreateMonster("monster.range.far", 20, SlotId.Board(9));
+            var farHelp = architecture.GetModel<CardRegistry>().Create("help.range.far", CardKind.HelpCard);
+            architecture.GetModel<BoardModel>().PlaceCard(farHelp, SlotId.Board(7));
+            P5CatalogTestSupport.ActivateCatalogEffect(
+                architecture,
+                "skill.range_expand.rule",
+                new EffectOwner(EffectContainerType.MonsterSkill, "skill.range_expand", owner.Uid));
+
+            Assert.IsTrue(boardSystem.AreAdjacent(owner.Slot.Value, adjacentMonster.Slot.Value));
+            Assert.IsTrue(boardSystem.AreAdjacent(owner.Slot.Value, farMonster.Slot.Value));
+            Assert.IsFalse(boardSystem.AreAdjacent(owner.Slot.Value, farHelp.Slot.Value));
+            Assert.IsFalse(boardSystem.AreAdjacent(adjacentMonster.Slot.Value, farMonster.Slot.Value));
+
+            var effect = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.range.filtered\","
+                + "\"typeTag\":\"【类型怪物技能】\","
+                + "\"containerType\":\"MonsterSkill\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnNodeStart\"},"
+                + "\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\"},"
+                + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":1}"
+                + "}");
+            Effects().Activate(effect, new EffectOwner(EffectContainerType.MonsterSkill, "test.range.filtered", owner.Uid));
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new NodeStartedAction());
+
+            Assert.AreEqual(1, adjacentMonster.Stats.GetBase(StatId.Armor));
+            Assert.AreEqual(1, farMonster.Stats.GetBase(StatId.Armor));
+            Assert.AreEqual(0, farHelp.Stats.GetBase(StatId.Armor));
+        }
+
+        [Test]
         public void DoublingTowerOnBoardReplaysMonsterTargetedHelpCardWithoutRemovingSelf()
         {
             var architecture = NineGridArchitecture.Current;

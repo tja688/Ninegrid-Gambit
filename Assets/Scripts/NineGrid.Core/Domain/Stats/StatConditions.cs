@@ -16,6 +16,7 @@ namespace NineGrid.Core.Stats
             ActionName = string.Empty;
             SourceDefId = string.Empty;
             Cause = string.Empty;
+            TargetUid = 0;
         }
 
         public CardInstance Owner { get; private set; }
@@ -25,6 +26,7 @@ namespace NineGrid.Core.Stats
         public string ActionName { get; private set; }
         public string SourceDefId { get; private set; }
         public string Cause { get; private set; }
+        public int TargetUid { get; private set; }
 
         public SlotId OwnerSlot
         {
@@ -36,6 +38,12 @@ namespace NineGrid.Core.Stats
             ActionName = actionName ?? string.Empty;
             SourceDefId = sourceDefId ?? string.Empty;
             Cause = cause ?? string.Empty;
+            return this;
+        }
+
+        public StatEvaluationContext WithTarget(int targetUid)
+        {
+            TargetUid = targetUid;
             return this;
         }
     }

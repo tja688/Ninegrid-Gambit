@@ -698,6 +698,44 @@ MonsterSkill pending, 46:
 
 下一批建议：继续批次7的 `skill.range_expand.pending`，补邻接规则改写入口；或转入帮助卡长尾小批，处理 `help.armor_breaking_hammer.pending` / `help.kidnapping.pending`。
 
+### 6.5 批次7收束记录（2026-06-18）
+
+目标：把批次7剩余的 `skill.range_expand.pending` 收成真实场地规则，补齐“所有怪物视为与本卡正交相邻”的可复用邻接规则入口；不扩展到 Boss 移动锁、陷阱格遗物或其他怪物长尾。
+
+本批新增能力：
+
+- 新增 `RuleId.VirtualAdjacency`：`BoardSystem.AreAdjacent` 在几何正交相邻之外，会查询怪物卡之间的虚拟邻接规则。
+- `StatEvaluationContext` 新增 `TargetUid`，让规则评估可以知道“本次邻接比较的另一张卡”。
+- `IBoardSystem` 增加卡牌级邻接查询重载，保留原有槽位查询入口。
+- `OrthoAdjacent`、`FilteredCards.adjacentTo`、`AdjacentHasCard`、`Adjacent` runtime condition 改为走 `IBoardSystem.AreAdjacent`，避免 DSL 目标/条件绕过虚拟邻接规则。
+
+本批转换：
+
+- `skill.range_expand.rule`：MonsterSkill / RuleModifier / `VirtualAdjacency`，持有者与任意其他怪物卡视为正交相邻。
+- `skill.range_expand.pending` 已移除，`monster.skeleton_mage` 现在通过 `skill.range_expand` 激活实现态 DSL。
+
+批次7收束后数量：
+
+| 项目 | 数量 |
+|:--|--:|
+| hardcoded implemented effects | 89 |
+| runtime pending effects | 39 |
+| pending HelpCard effects | 6 |
+| pending Relic effects | 1 |
+| pending PlayerSkill effects | 1 |
+| pending MonsterSkill effects | 31 |
+
+验证记录：
+
+- `Assets/Notes/CI/check-core-guards.ps1`：通过。
+- Unity MCP refresh/compile：通过，Console 无 error。
+- 新增 P5 窄测试 `RangeExpandRuleTreatsAllMonsterCardsAsAdjacentToOwnerOnly`：通过（包含 `FilteredCards.adjacentTo` DSL 目标验证）。
+- 新增 P6 窄测试 `BatchSevenRangeExpandCatalogDslMakesSkeletonMageVirtuallyAdjacentToMonsters`：通过。
+- `NineGrid.Core.Tests` EditMode 全量：97/97 通过。
+- `Assets/Notes/CI/run-core-tests.ps1`：报告 `NineGrid Core tests passed`；本机已有 Unity Editor 打开项目，batchmode 末尾仍有重复实例提示，最终以 Unity MCP 全量测试为准。
+
+下一批建议：批次7主线已收束干净。后续若继续场地规则，建议切 Boss 移动锁的最小移动入口拒绝闭环；若继续 burn-down，优先处理帮助卡长尾 `help.armor_breaking_hammer.pending` / `help.kidnapping.pending`。
+
 ## 7. 当前事实基线
 
 ### 已经可靠的地基
@@ -710,7 +748,7 @@ MonsterSkill pending, 46:
 ### 当前还没签收的部分
 
 - `TableNineContentCatalog.cs` 仍是主要内容真源，Luban 只是最小样例，不是生产内容源。
-- hardcoded catalog 预计有 88 个 implemented effect、40 个 runtime pending effect，R4 仍未清零。
+- hardcoded catalog 预计有 89 个 implemented effect、39 个 runtime pending effect，R4 仍未清零。
 - 设计文档里效果总量更大：帮助卡 22 条、遗物 58 条、玩家技能 7 条、怪物技能 81 条。hardcoded catalog 覆盖了帮助卡和玩家技能的大部分，但遗物和怪物技能仍是子集/原型。
 - R5 的全内容回放网、pending 闸门、Luban 全量迁移闸门还没有完成。
 
@@ -893,9 +931,9 @@ MonsterSkill pending, 46:
 
 下一次如果要直接进入实现，建议从：
 
-1. **邻接规则小批**：处理 `skill.range_expand.pending` 的邻接规则改写入口。
-2. **陷阱/场地后续小批**：继续从陷阱格遗物或 Boss 移动锁中切一个可验证闭环。
-3. **帮助卡长尾小批**：复用 `SelectedCards` / `ValueExpr` 处理 `help.armor_breaking_hammer.pending`、`help.kidnapping.pending` 这类已接近可表达的选择目标效果。
+1. **场地规则后续小批**：从 Boss 移动锁中切一个移动入口拒绝闭环。
+2. **帮助卡长尾小批**：复用 `SelectedCards` / `ValueExpr` 处理 `help.armor_breaking_hammer.pending`、`help.kidnapping.pending` 这类已接近可表达的选择目标效果。
+3. **怪物技能相邻收益小批**：复用 `VirtualAdjacency` 和现有相邻目标，处理 `skill.swallow_stone.pending` 或 `skill.absorb_stone.pending`。
 
 ## 12. 给后续 AI 的技能入口
 

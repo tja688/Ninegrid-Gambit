@@ -850,16 +850,12 @@ namespace NineGrid.Core.Effects
             }
 
             var result = new List<int>();
+            var boardSystem = context.Architecture.GetSystem<IBoardSystem>();
             for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
             {
                 var slot = SlotId.Board(i);
-                if (!slot.IsAdjacentTo(card.Slot.Value))
-                {
-                    continue;
-                }
-
                 var cardUid = context.Board.GetCardUid(slot);
-                if (cardUid != 0)
+                if (cardUid != 0 && boardSystem.AreAdjacent(card, slot, cardUid))
                 {
                     result.Add(cardUid);
                 }
@@ -954,17 +950,15 @@ namespace NineGrid.Core.Effects
                 return 0;
             }
 
+            var boardSystem = context.Architecture.GetSystem<IBoardSystem>();
             for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
             {
                 var slot = SlotId.Board(i);
-                if (!slot.IsAdjacentTo(origin.Slot.Value))
-                {
-                    continue;
-                }
-
                 var cardUid = context.Board.GetCardUid(slot);
                 CardInstance card;
-                if (context.TryGetCard(cardUid, out card) && card.DefId == defId)
+                if (context.TryGetCard(cardUid, out card)
+                    && card.DefId == defId
+                    && boardSystem.AreAdjacent(origin, slot, cardUid))
                 {
                     return cardUid;
                 }
@@ -1045,11 +1039,12 @@ namespace NineGrid.Core.Effects
 
             if (mFixedSlot != SlotId.None)
             {
-                return leftCard.Slot.Value.IsAdjacentTo(mFixedSlot);
+                return context.Architecture.GetSystem<IBoardSystem>().AreAdjacent(leftCard, mFixedSlot, context.Board.GetCardUid(mFixedSlot));
             }
 
-            var rightSlot = ResolveRightSlot(context, mRightRef);
-            return rightSlot != SlotId.None && leftCard.Slot.Value.IsAdjacentTo(rightSlot);
+            int rightUid;
+            var rightSlot = ResolveRightSlot(context, mRightRef, out rightUid);
+            return rightSlot != SlotId.None && context.Architecture.GetSystem<IBoardSystem>().AreAdjacent(leftCard, rightSlot, rightUid);
         }
 
         public IStatCondition CreateStatCondition(EffectBuildContext context)
@@ -1065,8 +1060,9 @@ namespace NineGrid.Core.Effects
                 : null;
         }
 
-        private static SlotId ResolveRightSlot(EffectRuntimeContext context, string rightRef)
+        private static SlotId ResolveRightSlot(EffectRuntimeContext context, string rightRef, out int rightUid)
         {
+            rightUid = 0;
             if (string.Equals(rightRef, "EventCard", StringComparison.OrdinalIgnoreCase))
             {
                 var events = context.Events;
@@ -1074,14 +1070,15 @@ namespace NineGrid.Core.Effects
                 {
                     if (events[i].CardUid != 0 && events[i].FromSlot.IsBoardSlot)
                     {
+                        rightUid = events[i].CardUid;
                         return events[i].FromSlot;
                     }
                 }
             }
 
-            var right = TargetResolver.ResolveSingleCardRef(context, rightRef);
+            rightUid = TargetResolver.ResolveSingleCardRef(context, rightRef);
             CardInstance rightCard;
-            return context.TryGetCard(right, out rightCard) ? rightCard.Slot.Value : SlotId.None;
+            return context.TryGetCard(rightUid, out rightCard) ? rightCard.Slot.Value : SlotId.None;
         }
     }
 
@@ -2511,7 +2508,7 @@ namespace NineGrid.Core.Effects
                 return;
             }
 
-            if (requiresAdjacency && (adjacentToCard == null || !card.Slot.Value.IsAdjacentTo(adjacentToCard.Slot.Value)))
+            if (requiresAdjacency && (adjacentToCard == null || !context.Architecture.GetSystem<IBoardSystem>().AreAdjacent(card, adjacentToCard)))
             {
                 return;
             }

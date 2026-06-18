@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NineGrid.Core.Stats;
 using QFramework;
 
 namespace NineGrid.Core.Systems
@@ -7,6 +8,8 @@ namespace NineGrid.Core.Systems
     {
         IReadOnlyList<SlotId> ClockwisePath { get; }
         bool AreAdjacent(SlotId left, SlotId right);
+        bool AreAdjacent(CardInstance left, CardInstance right);
+        bool AreAdjacent(CardInstance left, SlotId rightSlot, int rightUid);
         bool IsSlotAvailable(SlotId slot);
         int RotateClockwise();
         int Swap(SlotId left, SlotId right);
@@ -26,7 +29,43 @@ namespace NineGrid.Core.Systems
 
         public bool AreAdjacent(SlotId left, SlotId right)
         {
-            return left.IsAdjacentTo(right);
+            if (!left.IsBoardSlot || !right.IsBoardSlot)
+            {
+                return false;
+            }
+
+            if (left.IsAdjacentTo(right))
+            {
+                return true;
+            }
+
+            var board = this.GetModel<BoardModel>();
+            return AreVirtuallyAdjacent(board.GetCardUid(left), board.GetCardUid(right));
+        }
+
+        public bool AreAdjacent(CardInstance left, CardInstance right)
+        {
+            if (left == null || right == null)
+            {
+                return false;
+            }
+
+            return AreAdjacent(left, right.Slot.Value, right.Uid);
+        }
+
+        public bool AreAdjacent(CardInstance left, SlotId rightSlot, int rightUid)
+        {
+            if (left == null || !left.Slot.Value.IsBoardSlot || !rightSlot.IsBoardSlot)
+            {
+                return false;
+            }
+
+            if (left.Slot.Value.IsAdjacentTo(rightSlot))
+            {
+                return true;
+            }
+
+            return AreVirtuallyAdjacent(left.Uid, rightUid);
         }
 
         public bool IsSlotAvailable(SlotId slot)
@@ -48,6 +87,34 @@ namespace NineGrid.Core.Systems
         public int FillEmptySlots()
         {
             return this.GetSystem<IActionPipelineSystem>().Execute(new FillEmptySlotsAction());
+        }
+
+        private bool AreVirtuallyAdjacent(int leftUid, int rightUid)
+        {
+            return HasVirtualAdjacency(leftUid, rightUid) || HasVirtualAdjacency(rightUid, leftUid);
+        }
+
+        private bool HasVirtualAdjacency(int ownerUid, int targetUid)
+        {
+            if (ownerUid == 0 || targetUid == 0 || ownerUid == targetUid)
+            {
+                return false;
+            }
+
+            var registry = this.GetModel<CardRegistry>();
+            CardInstance owner;
+            CardInstance target;
+            if (!registry.TryGet(ownerUid, out owner)
+                || !registry.TryGet(targetUid, out target)
+                || owner.Kind != CardKind.Monster
+                || target.Kind != CardKind.Monster)
+            {
+                return false;
+            }
+
+            var statSystem = this.GetSystem<IStatSystem>();
+            var context = statSystem.CreateContext(owner).WithTarget(targetUid);
+            return statSystem.EvaluateRule(RuleId.VirtualAdjacency, 0f, context) > 0f;
         }
     }
 }

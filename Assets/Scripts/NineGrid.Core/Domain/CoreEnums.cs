@@ -66,7 +66,8 @@ namespace NineGrid.Core
         DamageFlatDelta,
         FirstStrike,
         GoldArmorAbsorb,
-        AttackTargetRestriction
+        AttackTargetRestriction,
+        VirtualAdjacency
     }
 
     public enum BoardMarkId

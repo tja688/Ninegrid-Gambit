@@ -375,6 +375,10 @@ namespace NineGrid.Content
                     "{\"rule\":\"AttackTargetRestriction\",\"target\":\"Self\",\"op\":\"Override\",\"value\":0,\"layer\":\"Conditional\",\"scope\":\"Permanent\"}",
                     "[{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"Player\"}]"),
                 "[场上] 处于玩家卡正交相邻格时，玩家只能与本卡战斗"));
+            c.AddEffect(Impl("skill.range_expand.rule", EffectContainerType.MonsterSkill,
+                Rule("skill.range_expand.rule", "MonsterSkill",
+                    "{\"rule\":\"VirtualAdjacency\",\"target\":\"Self\",\"op\":\"Override\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}"),
+                "[场上] 所有怪物卡视为与本卡正交相邻"));
             c.AddEffect(Impl("relic.gold_armor.rule", EffectContainerType.Relic,
                 Rule("relic.gold_armor.rule", "Relic",
                     "{\"rule\":\"GoldArmorAbsorb\",\"op\":\"Override\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}"),
@@ -742,7 +746,7 @@ namespace NineGrid.Content
             PendingSkill(c, "skill.stone_growth", "石增长");
             PendingSkill(c, "skill.stone_shelter", "石庇护");
             PendingSkill(c, "skill.fracture_fall_apart", "折损散架");
-            PendingSkill(c, "skill.range_expand", "范围扩大");
+            Skill(c, "skill.range_expand", "范围扩大", EffectContainerType.MonsterSkill, "所有怪物卡视为与本卡正交相邻").AddEffect("skill.range_expand.rule");
             PendingSkill(c, "skill.flame_breath", "烈焰吐息");
             Skill(c, "skill.flame_boiling", "烈焰沸腾", EffectContainerType.MonsterSkill, "烈焰帮助卡造成的伤害+1").AddEffect("skill.flame_boiling.rule");
             PendingSkill(c, "skill.space_mastery", "空间掌握");

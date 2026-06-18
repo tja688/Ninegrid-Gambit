@@ -51,12 +51,12 @@ namespace NineGrid.Core.Tests
             var report = NineGridArchitecture.Current.GetSystem<IContentSystem>().ValidateCatalog();
 
             Assert.IsTrue(report.IsValid, FirstIssue(report));
-            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 88);
-            Assert.LessOrEqual(report.PendingEffectIds.Count, 40);
+            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 89);
+            Assert.LessOrEqual(report.PendingEffectIds.Count, 39);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 6);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.Relic), 1);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.PlayerSkill), 1);
-            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 32);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 31);
 
             AssertImplemented(catalog, report, "relic.vitality_amulet.max_hp");
             AssertImplemented(catalog, report, "relic.throwing_knife_bag.node_start");
@@ -98,6 +98,7 @@ namespace NineGrid.Core.Tests
             AssertImplemented(catalog, report, "help.teleport_card.use");
             AssertImplemented(catalog, report, "help.stat_boost_card.use");
             AssertImplemented(catalog, report, "help.bear_trap.use");
+            AssertImplemented(catalog, report, "skill.range_expand.rule");
         }
 
         [Test]
@@ -692,6 +693,23 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(ZoneId.Removed, trap.Zone.Value);
             Assert.IsFalse(Contains(trap.EffectIds, "help.bear_trap.use"));
             Assert.IsTrue(HasEvent(architecture.GetSystem<IActionPipelineSystem>().EventLog, CoreEventType.EffectTriggered));
+        }
+
+        [Test]
+        public void BatchSevenRangeExpandCatalogDslMakesSkeletonMageVirtuallyAdjacentToMonsters()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var boardSystem = architecture.GetSystem<IBoardSystem>();
+            var mage = PlaceMonster("monster.skeleton_mage", 20, SlotId.Board(1));
+            var farMonster = PlaceMonster("monster.range.target", 20, SlotId.Board(9));
+            var help = PlaceHelpCard("help.range.helper", SlotId.Board(7));
+
+            content.ApplyContentToCard(mage);
+
+            Assert.IsTrue(Contains(mage.EffectIds, "skill.range_expand.rule"));
+            Assert.IsTrue(boardSystem.AreAdjacent(mage.Slot.Value, farMonster.Slot.Value));
+            Assert.IsFalse(boardSystem.AreAdjacent(mage.Slot.Value, help.Slot.Value));
         }
 
         private static bool Contains(IReadOnlyList<string> values, string expected)
