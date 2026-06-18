@@ -102,6 +102,51 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void OpeningDealDrainsStagingPoolsIntoDrawPile()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var deck = architecture.GetModel<DeckModel>();
+            var options = new NodeDeckOptions { PlayerOpeningCount = 1, EnemyOpeningCount = 1 }
+                .AddPlayerCard(new CardDraft("player.a", CardKind.PlayerCard))
+                .AddPlayerCard(new CardDraft("player.b", CardKind.PlayerCard))
+                .AddEnemyCard(new CardDraft("monster.a", CardKind.Monster) { MaxHp = 2, Attack = 0 })
+                .AddEnemyCard(new CardDraft("monster.b", CardKind.Monster) { MaxHp = 2, Attack = 0 })
+                .AddEnemyCard(new CardDraft("monster.c", CardKind.Monster) { MaxHp = 2, Attack = 0 });
+
+            var startResult = architecture.SendCommand(new StartNodeCommand(options));
+
+            Assert.IsTrue(startResult.Accepted);
+            Assert.AreEqual(0, deck.PlayerCardPoolUids.Count);
+            Assert.AreEqual(0, deck.EnemyCardPoolUids.Count);
+        }
+
+        [Test]
+        public void NodeStaysActiveWhileEnemiesRemainAfterStagingPoolIsDrained()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var deck = architecture.GetModel<DeckModel>();
+            var deckSystem = architecture.GetSystem<IDeckSystem>();
+            var phaseSystem = architecture.GetSystem<IPhaseSystem>();
+            var options = new NodeDeckOptions { PlayerOpeningCount = 0, EnemyOpeningCount = 1 }
+                .AddEnemyCard(new CardDraft("monster.one", CardKind.Monster) { MaxHp = 1, Attack = 0 })
+                .AddEnemyCard(new CardDraft("monster.two", CardKind.Monster) { MaxHp = 1, Attack = 0 });
+
+            var startResult = architecture.SendCommand(new StartNodeCommand(options));
+            Assert.IsTrue(startResult.Accepted);
+            Assert.AreEqual(0, deck.EnemyCardPoolUids.Count);
+            Assert.IsTrue(deckSystem.HasPendingEnemyCards());
+            Assert.AreEqual(GamePhase.InteractionLoop, phaseSystem.CurrentPhase);
+
+            var targetSlot = FindFirstMonsterSlot();
+            Assert.AreNotEqual(SlotId.None, targetSlot);
+
+            var attackResult = architecture.SendCommand(new AttackCommand(targetSlot));
+            Assert.IsTrue(attackResult.Accepted);
+            Assert.IsTrue(deckSystem.HasPendingEnemyCards());
+            Assert.AreEqual(GamePhase.InteractionLoop, phaseSystem.CurrentPhase);
+        }
+
+        [Test]
         public void UseItemIsRejectedWhenPhaseDoesNotAllowIt()
         {
             var architecture = NineGridArchitecture.Current;

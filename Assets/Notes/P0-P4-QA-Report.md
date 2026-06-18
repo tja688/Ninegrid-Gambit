@@ -122,7 +122,7 @@
 - 规划要求的节点状态机链路是“构建敌方池 -> 重置 -> 发牌 -> 互动循环 -> 通关检查 -> 道具三选一 -> 房间二选一 -> 房间事件 -> 下一节点”。当前实际只推进到 `RewardItemChoice`，之后 `RefreshLegalCommands` 又允许 `StartNode`，没有道具三选一、房间二选一、房间事件、下一节点语义。
 - 规划指定 `PhaseSystem(FSMKit)`；当前是手写 phase switch，没有 FSMKit 状态对象或显式状态进入/退出。
 - `UseItem(int itemUid)` 校验阶段、`itemUid` 存在、`ItemSlots` zone/kind（`Item`/`HelpCard`）；非法操作广播 `Evt_ActionRejected`（见 `P4NodeFlowTests` 五条用例）。
-- `OpeningDealAction` 只把 opening count 选中的卡移入 draw pile；如果敌方池数量大于 `EnemyOpeningCount`，剩余 `EnemyCardPoolUids` 没有后续入堆机制，而 `IsNodeCleared` 又要求敌方池为空，可能导致节点无法通关。
+- 敌方池/玩家池为开局暂存区（`RUL_发牌` 第 3 步洗入抽牌堆），非节点内 reserve；`OpeningDealAction` 已 drain 剩余池牌，通关判定不再被滞留池牌阻塞。
 - P4 测试未覆盖 `PickupItemCommand`、`ClickEmptyCommand`、`UseItemCommand`、攻击未击杀不旋转不计数、道具使用不旋转不计数、补牌耗尽、抽牌堆顶序、多敌/剩余敌池、完整脚本化操作串。
 
 判定：P4 已跑通最短无技能战斗，不满足完整 P4 验收。
@@ -136,6 +136,8 @@
 
    **修补情况（2026-06-18）**：`PhaseSystem.UseItem` 在入队前增加校验：`itemUid > 0`、卡牌存在、`ZoneId.ItemSlots` + `DeckModel.ItemSlotUids` 登记、`CardKind.Item`/`HelpCard`；非法时走 `Reject` 并广播 `Evt_ActionRejected`。新增 5 条 `P4NodeFlowTests`（阶段非法 / uid 不存在 / zone 非法 / kind 非法 / 合法用道具），P4 测试类 **8/8 通过**。
 3. 明确 Deck/Pool 语义：敌方池是否是全节点 reserve；若是，应有抽牌堆耗尽后从池补入的规则；若不是，开局应把参与本节点的敌方池清空或改名避免误判。
+
+   **修补情况（2026-06-18）**：对照 `RUL_发牌`，敌方池/玩家池为**节点开局暂存区**，非节点内 reserve；`OpeningDealAction` 在开局选牌后把两侧池**剩余牌全部洗入运行时抽牌堆**，开局后池应为空。抽牌堆耗尽时按规则停止补牌，不从池回灌。`DeckModel`/`DeckSystem` 已加语义注释。新增 `OpeningDealDrainsStagingPoolsIntoDrawPile`、`NodeStaysActiveWhileEnemiesRemainAfterStagingPoolIsDrained` 测试。
 4. 补完整 P4 回放式测试：攻击击杀、攻击未击杀、拾取、点空格、用道具、补牌、清场、非法操作、最终阶段全部断言。
 5. 为 P3/P4 加守门：禁止 Core 直接引用 UnityEngine、禁止系统绕过 Action 改 Model，可先用 `rg`/Roslyn 简单检查，后续再进 CI。
 

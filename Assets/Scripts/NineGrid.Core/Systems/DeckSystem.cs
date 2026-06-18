@@ -61,13 +61,18 @@ namespace NineGrid.Core.Systems
 
         public bool HasPendingEnemyCards()
         {
-            return this.GetModel<DeckModel>().EnemyCardPoolUids.Count > 0 || HasEnemyInDrawPile() || HasEnemyOnBoard();
+            var deck = this.GetModel<DeckModel>();
+            // Enemy staging pool should be empty after opening deal; keep check for setup-phase safety.
+            return deck.EnemyCardPoolUids.Count > 0 || HasEnemyInDrawPile() || HasEnemyOnBoard();
         }
 
         public bool IsNodeCleared()
         {
             var deck = this.GetModel<DeckModel>();
-            return deck.DrawPileUids.Count == 0 && deck.EnemyCardPoolUids.Count == 0 && !HasEnemyOnBoard();
+            // FLOW_005 / RUL_发牌: runtime draw pile empty, no board enemies; staging pools empty post-opening.
+            return deck.DrawPileUids.Count == 0
+                && deck.EnemyCardPoolUids.Count == 0
+                && !HasEnemyOnBoard();
         }
     }
 }

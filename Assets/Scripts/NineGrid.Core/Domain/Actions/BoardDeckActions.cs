@@ -86,6 +86,10 @@ namespace NineGrid.Core
                 deck.AddToDrawPile(card, false);
             }
 
+            // RUL_发牌 step 3: remaining staging pools merge into runtime draw pile (not in-node reserve).
+            DrainStagingPool(deck, registry, deck.PlayerCardPoolUids);
+            DrainStagingPool(deck, registry, deck.EnemyCardPoolUids);
+
             ShuffleDrawPile(deck, context.Architecture.GetUtility<IRngUtility>());
 
             return new GameActionResult()
@@ -128,6 +132,25 @@ namespace NineGrid.Core
                     selected.Add(pool[i]);
                     selectedFromPool++;
                 }
+            }
+        }
+
+        private static void DrainStagingPool(DeckModel deck, CardRegistry registry, IReadOnlyList<int> poolUids)
+        {
+            if (poolUids.Count == 0)
+            {
+                return;
+            }
+
+            var remaining = new List<int>(poolUids.Count);
+            for (var i = 0; i < poolUids.Count; i++)
+            {
+                remaining.Add(poolUids[i]);
+            }
+
+            for (var i = 0; i < remaining.Count; i++)
+            {
+                deck.AddToDrawPile(registry.Get(remaining[i]), false);
             }
         }
 

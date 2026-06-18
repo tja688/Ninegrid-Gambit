@@ -6,7 +6,9 @@ namespace NineGrid.Core
     public sealed class DeckModel : AbstractModel
     {
         private readonly List<int> mDrawPileUids = new List<int>();
+        // Node-setup staging only; drained into draw pile by OpeningDealAction (see RUL_发牌).
         private readonly List<int> mPlayerCardPoolUids = new List<int>();
+        // Node-setup staging only; drained into draw pile by OpeningDealAction (see RUL_发牌).
         private readonly List<int> mEnemyCardPoolUids = new List<int>();
         private readonly List<int> mItemSlotUids = new List<int>();
 
