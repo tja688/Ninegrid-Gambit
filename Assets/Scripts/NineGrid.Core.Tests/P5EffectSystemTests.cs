@@ -32,12 +32,14 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(effectSystem.AtomRegistry.Triggers.ContainsKey("OnFatalDamage"));
             Assert.IsTrue(effectSystem.AtomRegistry.Triggers.ContainsKey("OnEvent"));
             Assert.IsTrue(effectSystem.AtomRegistry.Triggers.ContainsKey("OnDeal"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Triggers.ContainsKey("OnMoveToBoardMark"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("OwnsRelicSet"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("AdjacentHasCard"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("EventFilter"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("RandomMonster"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("FilteredCards"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("AdjacentCard"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("BoardMarkEventCard"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("WeightedRandom"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("CardCounter"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("EventTarget"));
@@ -46,6 +48,7 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("GrantRewardFromPool"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("GrantRelic"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("GrantPlayerSkillContent"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("SetBoardMark"));
 
             var invalid = effectSystem.ParseJson(
                 "{"
@@ -192,6 +195,24 @@ namespace NineGrid.Core.Tests
             AssertHasIssue(eventFilterValidation, "schema.condition.eventType");
             AssertHasIssue(eventFilterValidation, "schema.condition.targetKind");
             AssertHasIssue(eventFilterValidation, "schema.condition.stat");
+
+            var badBoardMark = effectSystem.ParseJson(
+                "{"
+                + "\"id\":\"bad.board.mark\","
+                + "\"typeTag\":\"【类型怪物技能】\","
+                + "\"containerType\":\"MonsterSkill\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnMoveToBoardMark\",\"mark\":\"Nope\"},"
+                + "\"target\":{\"atom\":\"BoardMarkEventCard\",\"mark\":\"None\"},"
+                + "\"action\":{\"atom\":\"SetBoardMark\",\"mark\":\"Missing\",\"random\":true,\"count\":-1,\"excludeSlots\":[0]}"
+                + "}");
+            var boardMarkValidation = effectSystem.Validate(badBoardMark);
+            Assert.IsFalse(boardMarkValidation.IsValid);
+            AssertHasIssue(boardMarkValidation, "schema.trigger.mark");
+            AssertHasIssue(boardMarkValidation, "schema.target.mark");
+            AssertHasIssue(boardMarkValidation, "schema.action.mark");
+            AssertHasIssue(boardMarkValidation, "schema.range.count");
+            AssertHasIssue(boardMarkValidation, "schema.range.excludeSlots");
         }
 
         [Test]
@@ -724,6 +745,68 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(5, owner.Stats.GetBase(StatId.Armor));
         }
 
+        [Test]
+        public void SetBoardMarkAtomCreatesVisibleRandomBlessedSlot()
+        {
+            var architecture = NineGridArchitecture.Current;
+            architecture.GetUtility<IRngUtility>().SetSeed(20260618UL);
+            var owner = CreateMonster("monster.guide.owner", 20, SlotId.Board(1));
+            var expected = ExpectedBlessedSlot(20260618UL);
+
+            var definition = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.board.mark.create\","
+                + "\"typeTag\":\"【类型怪物技能】\","
+                + "\"containerType\":\"MonsterSkill\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},"
+                + "\"target\":{\"atom\":\"Self\"},"
+                + "\"action\":{\"atom\":\"SetBoardMark\",\"mark\":\"Blessed\",\"random\":true,\"count\":1,\"onlyUnmarked\":true,\"excludeSlots\":[5]}"
+                + "}");
+            Assert.IsTrue(Effects().Validate(definition).IsValid, FirstIssue(Effects().Validate(definition)));
+            Effects().Activate(definition, new EffectOwner(EffectContainerType.MonsterSkill, "test.board.mark.create", owner.Uid));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new MoveCardAction(owner.Uid, SlotId.Board(2)));
+
+            Assert.IsTrue(architecture.GetModel<BoardModel>().IsBlessed(expected));
+            Assert.AreEqual(1, architecture.GetModel<BoardModel>().CountMarkedSlots(BoardMarkId.Blessed));
+            Assert.AreEqual(1, CountEvents(architecture.GetSystem<IActionPipelineSystem>().EventLog, CoreEventType.BoardMarked));
+        }
+
+        [Test]
+        public void OnMoveToBoardMarkRewardsMarkedMonsterTarget()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var owner = CreateMonster("monster.guide.owner", 20, SlotId.Board(1));
+            var mover = CreateMonster("monster.guide.target", 20, SlotId.Board(4));
+            mover.Stats.SetBase(StatId.Attack, 2);
+            mover.Stats.SetBase(StatId.Armor, 3);
+            architecture.GetSystem<IActionPipelineSystem>().Execute(
+                new SetBoardMarkAction(SlotId.Board(3), BoardMarkId.Blessed, true, "test", "setup"));
+
+            var definition = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.board.mark.enter\","
+                + "\"typeTag\":\"【类型怪物技能】\","
+                + "\"containerType\":\"MonsterSkill\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnMoveToBoardMark\",\"mark\":\"Blessed\",\"targetKind\":\"Monster\"},"
+                + "\"target\":{\"atom\":\"BoardMarkEventCard\",\"mark\":\"Blessed\",\"targetKind\":\"Monster\"},"
+                + "\"action\":{\"atom\":\"Sequence\",\"actions\":["
+                + "{\"atom\":\"GainArmor\",\"amount\":2},"
+                + "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"test.board.mark\"}"
+                + "]}"
+                + "}");
+            Assert.IsTrue(Effects().Validate(definition).IsValid, FirstIssue(Effects().Validate(definition)));
+            Effects().Activate(definition, new EffectOwner(EffectContainerType.MonsterSkill, "test.board.mark.enter", owner.Uid));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new MoveCardAction(mover.Uid, SlotId.Board(3)));
+
+            Assert.AreEqual(5, mover.Stats.GetBase(StatId.Armor));
+            Assert.AreEqual(3, mover.Stats.GetBase(StatId.Attack));
+            Assert.AreEqual(1, CountEvents(architecture.GetSystem<IActionPipelineSystem>().EventLog, CoreEventType.EffectTriggered));
+        }
+
         private static IEffectSystem Effects()
         {
             return NineGridArchitecture.Current.GetSystem<IEffectSystem>();
@@ -848,6 +931,13 @@ namespace NineGrid.Core.Tests
             }
 
             return count;
+        }
+
+        private static SlotId ExpectedBlessedSlot(ulong seed)
+        {
+            var candidates = new[] { 1, 2, 3, 4, 6, 7, 8, 9 };
+            var index = new DeterministicRngUtility(seed).Range(0, candidates.Length);
+            return SlotId.Board(candidates[index]);
         }
     }
 }

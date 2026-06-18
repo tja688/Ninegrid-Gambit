@@ -66,6 +66,12 @@ namespace NineGrid.Core
         FirstStrike
     }
 
+    public enum BoardMarkId
+    {
+        None,
+        Blessed
+    }
+
     public enum RoomKind
     {
         None,
@@ -148,6 +154,7 @@ namespace NineGrid.Core
         RelicGranted,
         RewardOffered,
         RoomResolved,
+        BoardMarked,
         ContentLoaded
     }
 

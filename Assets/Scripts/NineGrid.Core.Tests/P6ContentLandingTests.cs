@@ -45,18 +45,18 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void DefaultCatalogKeepsBatchSixPendingGateAndConvertedEffectsImplemented()
+        public void DefaultCatalogKeepsBatchSevenPendingGateAndConvertedEffectsImplemented()
         {
             var catalog = NineGridArchitecture.Current.GetSystem<IContentSystem>().Catalog;
             var report = NineGridArchitecture.Current.GetSystem<IContentSystem>().ValidateCatalog();
 
             Assert.IsTrue(report.IsValid, FirstIssue(report));
-            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 76);
-            Assert.LessOrEqual(report.PendingEffectIds.Count, 50);
+            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 78);
+            Assert.LessOrEqual(report.PendingEffectIds.Count, 49);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 11);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.Relic), 2);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.PlayerSkill), 1);
-            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 36);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 35);
 
             AssertImplemented(catalog, report, "relic.vitality_amulet.max_hp");
             AssertImplemented(catalog, report, "relic.throwing_knife_bag.node_start");
@@ -86,6 +86,8 @@ namespace NineGrid.Core.Tests
             AssertImplemented(catalog, report, "skill.violence_maniac.move");
             AssertImplemented(catalog, report, "skill.violence_nutrition.monster_remove");
             AssertImplemented(catalog, report, "skill.violence_nutrition.help_remove");
+            AssertImplemented(catalog, report, "skill.guide.create_blessed");
+            AssertImplemented(catalog, report, "skill.guide.blessed_enter");
         }
 
         [Test]
@@ -510,6 +512,34 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(initialArmor + 5, owner.Stats.GetBase(StatId.Armor));
         }
 
+        [Test]
+        public void BatchSevenGuideCatalogDslCreatesBlessedSlotAndRewardsMonsterEntry()
+        {
+            var architecture = NineGridArchitecture.Current;
+            architecture.GetUtility<IRngUtility>().SetSeed(20260618UL);
+            var content = architecture.GetSystem<IContentSystem>();
+            var board = architecture.GetModel<BoardModel>();
+            var guide = PlaceMonster("monster.ringleader", 20, SlotId.Board(1));
+            content.ApplyContentToCard(guide);
+            var expected = ExpectedBlessedSlot(20260618UL);
+
+            MoveThreeTimes(guide, SlotId.Board(2), SlotId.Board(1), SlotId.Board(2));
+
+            Assert.IsTrue(board.IsBlessed(expected));
+            Assert.AreEqual(1, board.CountMarkedSlots(BoardMarkId.Blessed));
+
+            var mover = PlaceMonster("monster.guide.reward.target", 20, SlotId.Board(4));
+            mover.Stats.SetBase(StatId.Attack, 2);
+            mover.Stats.SetBase(StatId.Armor, 3);
+            architecture.GetSystem<IActionPipelineSystem>().Execute(
+                new SetBoardMarkAction(SlotId.Board(3), BoardMarkId.Blessed, true, "test", "setup"));
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new MoveCardAction(mover.Uid, SlotId.Board(3)));
+
+            Assert.AreEqual(5, mover.Stats.GetBase(StatId.Armor));
+            Assert.AreEqual(3, mover.Stats.GetBase(StatId.Attack));
+            Assert.IsTrue(HasEvent(architecture.GetSystem<IActionPipelineSystem>().EventLog, CoreEventType.BoardMarked));
+        }
+
         private static bool Contains(IReadOnlyList<string> values, string expected)
         {
             for (var i = 0; i < values.Count; i++)
@@ -665,6 +695,13 @@ namespace NineGrid.Core.Tests
             }
 
             Assert.Fail("Missing reward offer for pool: " + poolId);
+        }
+
+        private static SlotId ExpectedBlessedSlot(ulong seed)
+        {
+            var candidates = new[] { 1, 2, 3, 4, 6, 7, 8, 9 };
+            var index = new DeterministicRngUtility(seed).Range(0, candidates.Length);
+            return SlotId.Board(candidates[index]);
         }
 
         private static string FirstIssue(ContentValidationReport report)

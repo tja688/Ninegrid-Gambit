@@ -168,6 +168,48 @@ namespace NineGrid.Core
         }
     }
 
+    public sealed class SetBoardMarkAction : GameAction
+    {
+        public SetBoardMarkAction(SlotId slot, BoardMarkId mark, bool marked, string sourceDefId = null, string cause = null)
+        {
+            Slot = slot;
+            Mark = mark;
+            Marked = marked;
+            SourceDefId = sourceDefId ?? string.Empty;
+            Cause = cause ?? string.Empty;
+        }
+
+        public SlotId Slot { get; private set; }
+        public BoardMarkId Mark { get; private set; }
+        public bool Marked { get; private set; }
+        public string SourceDefId { get; private set; }
+        public string Cause { get; private set; }
+        public override string ActionName { get { return "SetBoardMark"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            if (!Slot.IsBoardSlot || Mark == BoardMarkId.None)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var board = context.GetModel<BoardModel>();
+            if (board.IsMarked(Slot, Mark) == Marked)
+            {
+                return GameActionResult.Empty;
+            }
+
+            board.SetMark(Slot, Mark, Marked);
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.BoardMarked, context.ActionId, ActionName)
+                    .WithSlots(Slot, Slot)
+                    .WithAmount((int)Mark)
+                    .WithDelta(Marked ? 1 : -1)
+                    .WithMessage(Mark.ToString())
+                    .WithSource(SourceDefId, Cause));
+        }
+    }
+
     public sealed class ShuffleIntoDrawPileAction : GameAction
     {
         private static readonly TriggerPoint[] sPostTriggers =

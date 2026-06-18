@@ -104,15 +104,53 @@ namespace NineGrid.Core
 
         public bool IsBlessed(SlotId slot)
         {
-            EnsureBoardSlot(slot);
-            return mBlessedSlots[slot.Index];
+            return IsMarked(slot, BoardMarkId.Blessed);
         }
 
         public void SetBlessed(SlotId slot, bool blessed)
         {
+            SetMark(slot, BoardMarkId.Blessed, blessed);
+        }
+
+        public bool IsMarked(SlotId slot, BoardMarkId mark)
+        {
             EnsureBoardSlot(slot);
-            mBlessedSlots[slot.Index] = blessed;
+            switch (mark)
+            {
+                case BoardMarkId.Blessed:
+                    return mBlessedSlots[slot.Index];
+                default:
+                    return false;
+            }
+        }
+
+        public void SetMark(SlotId slot, BoardMarkId mark, bool marked)
+        {
+            EnsureBoardSlot(slot);
+            switch (mark)
+            {
+                case BoardMarkId.Blessed:
+                    mBlessedSlots[slot.Index] = marked;
+                    break;
+                default:
+                    return;
+            }
+
             Touch();
+        }
+
+        public int CountMarkedSlots(BoardMarkId mark)
+        {
+            var count = 0;
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                if (IsMarked(SlotId.Board(i), mark))
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         public void ClearBoardCards()

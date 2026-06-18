@@ -189,6 +189,11 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.trigger.slot", path + ".slot is required for OnMoveToSlot.");
                 }
 
+                if (Same(atom, "OnMoveToBoardMark") && !node.Has("mark"))
+                {
+                    result.Add("schema.trigger.mark", path + ".mark is required for OnMoveToBoardMark.");
+                }
+
                 if (Same(atom, "OnCumulative"))
                 {
                     if (!node.Has("metric"))
@@ -255,6 +260,11 @@ namespace NineGrid.Core.Effects
                 if (Same(atom, "AdjacentCard") && !node.Has("defId"))
                 {
                     result.Add("schema.target.defId", path + ".defId is required for AdjacentCard.");
+                }
+
+                if (Same(atom, "BoardMarkEventCard") && !node.Has("mark"))
+                {
+                    result.Add("schema.target.mark", path + ".mark is required for BoardMarkEventCard.");
                 }
 
                 return;
@@ -332,6 +342,18 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.action.value", path + ".value is required for AddRuleModifier.");
                 }
             }
+            else if (Same(atom, "SetBoardMark"))
+            {
+                if (!node.Has("mark"))
+                {
+                    result.Add("schema.action.mark", path + ".mark is required for SetBoardMark.");
+                }
+
+                if (!node.Get("random").AsBool(false) && !node.Has("slot"))
+                {
+                    result.Add("schema.action.slot", path + ".slot is required for fixed SetBoardMark.");
+                }
+            }
             else if (Same(atom, "Move") && !node.Has("toSlot"))
             {
                 result.Add("schema.action.toSlot", path + ".toSlot is required for Move.");
@@ -367,6 +389,19 @@ namespace NineGrid.Core.Effects
                 if (Same(atom, "OnEvent") && node.Has("eventType") && !IsSupportedEventType(node.Get("eventType").AsString(string.Empty)))
                 {
                     result.Add("schema.trigger.eventType", path + ".eventType is not supported.");
+                }
+
+                if (Same(atom, "OnMoveToBoardMark"))
+                {
+                    if (node.Has("mark") && !IsSupportedBoardMark(node.Get("mark").AsString(string.Empty)))
+                    {
+                        result.Add("schema.trigger.mark", path + ".mark is not supported.");
+                    }
+
+                    if (node.Has("targetKind") && !IsSupportedCardKind(node.Get("targetKind").AsString(string.Empty)))
+                    {
+                        result.Add("schema.trigger.targetKind", path + ".targetKind is not supported.");
+                    }
                 }
 
                 if (Same(atom, "OnSelfMove") && node.Has("every") && node.Get("every").AsInt(1) < 1)
@@ -464,6 +499,19 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.range.count", path + ".count must be >= 0.");
                 }
 
+                if (Same(atom, "BoardMarkEventCard"))
+                {
+                    if (node.Has("mark") && !IsSupportedBoardMark(node.Get("mark").AsString(string.Empty)))
+                    {
+                        result.Add("schema.target.mark", path + ".mark is not supported.");
+                    }
+
+                    if (node.Has("targetKind") && !IsSupportedCardKind(node.Get("targetKind").AsString(string.Empty)))
+                    {
+                        result.Add("schema.target.targetKind", path + ".targetKind is not supported.");
+                    }
+                }
+
                 return;
             }
 
@@ -495,6 +543,33 @@ namespace NineGrid.Core.Effects
                 if (!Same(direction, "Clockwise") && !Same(direction, "CounterClockwise"))
                 {
                     result.Add("schema.rotate.direction", path + ".direction must be Clockwise or CounterClockwise.");
+                }
+            }
+
+            if (Same(atom, "SetBoardMark"))
+            {
+                if (node.Has("mark") && !IsSupportedBoardMark(node.Get("mark").AsString(string.Empty)))
+                {
+                    result.Add("schema.action.mark", path + ".mark is not supported.");
+                }
+
+                if (node.Has("slot") && !IsBoardSlot(node.Get("slot").AsInt(0)))
+                {
+                    result.Add("schema.range.slot", path + ".slot must be between 1 and 9.");
+                }
+
+                if (node.Has("count") && node.Get("count").AsInt(0) < 0)
+                {
+                    result.Add("schema.range.count", path + ".count must be >= 0.");
+                }
+
+                var excludeSlots = node.Get("excludeSlots").AsArray();
+                for (var i = 0; i < excludeSlots.Count; i++)
+                {
+                    if (!IsBoardSlot(excludeSlots[i].AsInt(0)))
+                    {
+                        result.Add("schema.range.excludeSlots", path + ".excludeSlots[" + i + "] must be between 1 and 9.");
+                    }
                 }
             }
         }
@@ -546,6 +621,17 @@ namespace NineGrid.Core.Effects
 
             CoreEventType ignored;
             return Enum.TryParse(eventType, true, out ignored);
+        }
+
+        private static bool IsSupportedBoardMark(string mark)
+        {
+            if (string.IsNullOrEmpty(mark))
+            {
+                return false;
+            }
+
+            BoardMarkId parsed;
+            return Enum.TryParse(mark, true, out parsed) && parsed != BoardMarkId.None;
         }
 
         private static bool IsSupportedStat(string stat)

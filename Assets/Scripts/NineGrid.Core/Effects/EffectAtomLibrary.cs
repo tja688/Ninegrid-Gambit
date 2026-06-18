@@ -284,6 +284,57 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    [EffectAtom("OnMoveToBoardMark", EffectAtomKind.Trigger)]
+    public sealed class OnMoveToBoardMarkTrigger : TriggerAtomBase
+    {
+        private BoardMarkId mMark = BoardMarkId.Blessed;
+        private CardKind mTargetKind = CardKind.Unknown;
+
+        public override TriggerPoint Point { get { return TriggerPoint.OnMoveToSlot; } }
+
+        public override void Configure(EffectDslNode config)
+        {
+            base.Configure(config);
+            mMark = config.Get("mark").AsEnum(BoardMarkId.Blessed);
+            mTargetKind = config.Get("targetKind").AsEnum(CardKind.Unknown);
+        }
+
+        public override bool Matches(EffectRuntimeContext context)
+        {
+            if (!base.Matches(context) || mMark == BoardMarkId.None)
+            {
+                return false;
+            }
+
+            var events = context.Events;
+            for (var i = 0; i < events.Count; i++)
+            {
+                if (events[i].Type != CoreEventType.CardMoved || !events[i].ToSlot.IsBoardSlot)
+                {
+                    continue;
+                }
+
+                if (!context.Board.IsMarked(events[i].ToSlot, mMark))
+                {
+                    continue;
+                }
+
+                if (mTargetKind == CardKind.Unknown)
+                {
+                    return true;
+                }
+
+                CardInstance card;
+                if (context.TryGetCard(events[i].CardUid, out card) && card.Kind == mTargetKind)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
     [EffectAtom("OnEnter", EffectAtomKind.Trigger)]
     public sealed class OnEnterTrigger : TriggerAtomBase
     {
@@ -493,6 +544,75 @@ namespace NineGrid.Core.Effects
     {
         public void Configure(EffectDslNode config) { }
         public IReadOnlyList<int> Resolve(EffectRuntimeContext context) { return TargetResolver.Single(context.FirstEventTargetUid()); }
+    }
+
+    [EffectAtom("BoardMarkEventCard", EffectAtomKind.Target)]
+    public sealed class BoardMarkEventCardTarget : ITarget
+    {
+        private BoardMarkId mMark = BoardMarkId.Blessed;
+        private CardKind mTargetKind = CardKind.Unknown;
+
+        public void Configure(EffectDslNode config)
+        {
+            mMark = config.Get("mark").AsEnum(BoardMarkId.Blessed);
+            mTargetKind = config.Get("targetKind").AsEnum(CardKind.Unknown);
+        }
+
+        public IReadOnlyList<int> Resolve(EffectRuntimeContext context)
+        {
+            var result = new List<int>();
+            if (context == null || mMark == BoardMarkId.None)
+            {
+                return result;
+            }
+
+            var events = context.Events;
+            for (var i = 0; i < events.Count; i++)
+            {
+                if (events[i].Type != CoreEventType.CardMoved || !events[i].ToSlot.IsBoardSlot)
+                {
+                    continue;
+                }
+
+                if (!context.Board.IsMarked(events[i].ToSlot, mMark))
+                {
+                    continue;
+                }
+
+                CardInstance card;
+                if (!context.TryGetCard(events[i].CardUid, out card))
+                {
+                    continue;
+                }
+
+                if (mTargetKind != CardKind.Unknown && card.Kind != mTargetKind)
+                {
+                    continue;
+                }
+
+                AddUnique(result, card.Uid);
+            }
+
+            return result;
+        }
+
+        private static void AddUnique(List<int> values, int uid)
+        {
+            if (uid == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < values.Count; i++)
+            {
+                if (values[i] == uid)
+                {
+                    return;
+                }
+            }
+
+            values.Add(uid);
+        }
     }
 
     [EffectAtom("RandomMonster", EffectAtomKind.Target)]
@@ -1758,6 +1878,124 @@ namespace NineGrid.Core.Effects
             }
 
             return result;
+        }
+    }
+
+    [EffectAtom("SetBoardMark", EffectAtomKind.Action)]
+    public sealed class SetBoardMarkEffectAction : IAction
+    {
+        private readonly List<SlotId> mExcludeSlots = new List<SlotId>();
+        private BoardMarkId mMark = BoardMarkId.Blessed;
+        private SlotId mSlot = SlotId.None;
+        private bool mMarked = true;
+        private bool mRandom;
+        private bool mOnlyUnmarked = true;
+        private int mCount = 1;
+
+        public void Configure(EffectDslNode config)
+        {
+            mMark = config.Get("mark").AsEnum(BoardMarkId.Blessed);
+            mMarked = config.Get("marked").AsBool(true);
+            mRandom = config.Get("random").AsBool(false);
+            mOnlyUnmarked = config.Get("onlyUnmarked").AsBool(true);
+            mCount = Math.Max(0, config.Get("count").AsInt(1));
+            mSlot = config.Has("slot") ? SlotId.Board(config.Get("slot").AsInt(1)) : SlotId.None;
+            mExcludeSlots.Clear();
+            AddExcludedSlots(config.Get("excludeSlots"));
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            var slots = ResolveSlots(context);
+            var result = new List<GameAction>();
+            for (var i = 0; i < slots.Count; i++)
+            {
+                result.Add(new SetBoardMarkAction(slots[i], mMark, mMarked, context.SourceDefId, context.EffectId));
+            }
+
+            return result;
+        }
+
+        private List<SlotId> ResolveSlots(EffectRuntimeContext context)
+        {
+            var result = new List<SlotId>();
+            if (context == null || mMark == BoardMarkId.None || mCount <= 0)
+            {
+                return result;
+            }
+
+            if (!mRandom)
+            {
+                if (mSlot.IsBoardSlot)
+                {
+                    result.Add(mSlot);
+                }
+
+                return result;
+            }
+
+            var candidates = new List<SlotId>();
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var slot = SlotId.Board(i);
+                if (IsExcluded(slot))
+                {
+                    continue;
+                }
+
+                if (mOnlyUnmarked && context.Board.IsMarked(slot, mMark) == mMarked)
+                {
+                    continue;
+                }
+
+                candidates.Add(slot);
+            }
+
+            var take = Math.Min(mCount, candidates.Count);
+            for (var i = 0; i < take; i++)
+            {
+                var index = context.Rng.Range(0, candidates.Count);
+                result.Add(candidates[index]);
+                candidates.RemoveAt(index);
+            }
+
+            return result;
+        }
+
+        private void AddExcludedSlots(EffectDslNode node)
+        {
+            var values = node.AsArray();
+            if (values.Count == 0)
+            {
+                AddExcludedSlot(node.AsInt(0));
+                return;
+            }
+
+            for (var i = 0; i < values.Count; i++)
+            {
+                AddExcludedSlot(values[i].AsInt(0));
+            }
+        }
+
+        private void AddExcludedSlot(int index)
+        {
+            if (index >= SlotId.MinBoardIndex && index <= SlotId.MaxBoardIndex)
+            {
+                mExcludeSlots.Add(SlotId.Board(index));
+            }
+        }
+
+        private bool IsExcluded(SlotId slot)
+        {
+            for (var i = 0; i < mExcludeSlots.Count; i++)
+            {
+                if (mExcludeSlots[i] == slot)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 

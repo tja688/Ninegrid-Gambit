@@ -510,6 +510,48 @@ MonsterSkill pending, 46:
 
 下一批建议：批次6能力地基已经覆盖 `OnBattle` 来源过滤、通用事件来源过滤、非递归发牌链和来源敏感移除收益；若继续同簇，最小后续是 `removed-card stat snapshot v1`，处理 `skill.absorb_bone.pending`。如果切到新能力簇，则进入批次7 棋盘标记与场地规则。
 
+### 6.2 批次7首个小闭环记录（2026-06-18）
+
+目标：补齐棋盘标记/场地规则的最小闭环，先让福地成为可见、可触发、可随节点重置的棋盘状态；不把移动锁、全图视为相邻、陷阱帮助卡一起混进同一批。
+
+本批新增能力：
+
+- 新增 `BoardMarkId.Blessed` 与 `CoreEventType.BoardMarked`，`BoardModel` 现在提供 `IsMarked` / `SetMark` / `CountMarkedSlots`，并继续兼容既有 `IsBlessed` / `SetBlessed`。
+- 新增 `SetBoardMarkAction`，棋盘标记变更通过 `GameAction` 进入流水线并写入 EventLog。
+- 新增 `SetBoardMark` action atom：支持随机选择棋盘格、排除指定格、只选择未标记格，本批用于“非格5且未标记为福地”。
+- 新增 `OnMoveToBoardMark` trigger 与 `BoardMarkEventCard` target：可以监听卡牌移动到指定棋盘标记，并把实际进入标记格的卡作为动作目标。
+- `EffectAtomSchemas` 增加标记 atom 的 `mark`、`targetKind`、`slot/count/excludeSlots` 校验，错误 mark 或越界格子会在 catalog validation 阶段失败。
+
+本批转换：
+
+- `skill.guide.create_blessed`：MonsterSkill / Triggered / `OnSelfMove every 3`，随机将一个非格5、未标记的棋盘格标记为 `Blessed`。
+- `skill.guide.blessed_enter`：MonsterSkill / Triggered / `OnMoveToBoardMark Blessed + targetKind Monster`，任意怪物移动到福地时获得 `Armor +2` 与 `Attack +1`。
+- `skill.guide.pending` 已移除，`monster.ringleader` 现在会随内容应用激活这两个 DSL 效果。
+
+刻意延后：
+
+- `help.bear_trap.pending` 仍保持 pending。它可以复用 `OnEnter`/相邻目标能力，但“帮助卡自身作为陷阱、补牌触发后移除自身”的语义适合下一个小闭环单独验。
+- `skill.range_expand.pending` 仍保持 pending。它是“所有怪物视为与本卡正交相邻”的邻接规则重写，需要 `RuleModifier` 或 BoardSystem 邻接查询入口，不应伪装成标记。
+- Boss 移动锁仍延后。它需要移动入口查询规则并拒绝/跳过旋转、交换、补位等多种移动来源。
+
+批次7首个小闭环后数量：
+
+| 项目 | 数量 |
+|:--|--:|
+| hardcoded implemented effects | 78 |
+| hardcoded explicit pending effects | 17 |
+| pending monster skill placeholder effects | 32 |
+| runtime pending effects | 49 |
+| runtime total effects | 127 |
+
+验证记录：
+
+- `Assets/Notes/CI/check-core-guards.ps1`：通过。
+- Unity MCP refresh/compile：通过，Console 无 error；仅有 TestResults 保存与 PerformanceTesting cleanup 提示。
+- `NineGrid.Core.Tests` EditMode 全量：83/83 通过。
+
+下一批建议：继续批次7B，做 `help.bear_trap.pending` 的补牌陷阱触发与自移除；或者做 `skill.range_expand.pending` 的邻接规则改写入口。
+
 ## 7. 当前事实基线
 
 ### 已经可靠的地基

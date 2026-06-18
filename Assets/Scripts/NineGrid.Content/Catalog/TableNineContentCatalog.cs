@@ -525,6 +525,22 @@ namespace NineGrid.Content
                     "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":5,\"reason\":\"skill.violence_nutrition\"}",
                     "[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"sourceDefId\":\"skill.violence_maniac\",\"targetKind\":\"HelpCard\"}]"),
                 "每依靠暴力狂移除一张帮助卡，本卡护甲+5"));
+
+            c.AddEffect(Impl("skill.guide.create_blessed", EffectContainerType.MonsterSkill,
+                Triggered("skill.guide.create_blessed", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":3}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"SetBoardMark\",\"mark\":\"Blessed\",\"random\":true,\"count\":1,\"onlyUnmarked\":true,\"excludeSlots\":[5]}"),
+                "每移动3次，在非格5且未标记为福地的格子中随机标记1个福地"));
+            c.AddEffect(Impl("skill.guide.blessed_enter", EffectContainerType.MonsterSkill,
+                Triggered("skill.guide.blessed_enter", "MonsterSkill",
+                    "{\"atom\":\"OnMoveToBoardMark\",\"mark\":\"Blessed\",\"targetKind\":\"Monster\"}",
+                    "{\"atom\":\"BoardMarkEventCard\",\"mark\":\"Blessed\",\"targetKind\":\"Monster\"}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"GainArmor\",\"amount\":2},"
+                    + "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"skill.guide\"}"
+                    + "]}"),
+                "任意怪物移动到福地时获得2点护甲且攻击+1"));
         }
 
         private static void AddHelpCards(GameContentCatalog c)
@@ -655,7 +671,9 @@ namespace NineGrid.Content
             PendingSkill(c, "skill.space_mastery", "空间掌握");
             PendingSkill(c, "skill.otherworld_help", "异界帮助");
             PendingSkill(c, "skill.absorb_stone", "吸石");
-            PendingSkill(c, "skill.guide", "引路");
+            Skill(c, "skill.guide", "引路", EffectContainerType.MonsterSkill, "每移动3次创建福地，怪物进入福地获得护甲和攻击")
+                .AddEffect("skill.guide.create_blessed")
+                .AddEffect("skill.guide.blessed_enter");
             PendingSkill(c, "skill.find_weakness", "发现弱点");
             Skill(c, "skill.violence_maniac", "暴力狂", EffectContainerType.MonsterSkill, "每移动2次，移除相邻格子上的怪物卡和帮助卡").AddEffect("skill.violence_maniac.move");
             Skill(c, "skill.violence_nutrition", "暴力即养分", EffectContainerType.MonsterSkill, "依靠暴力狂移除怪物得攻击，移除帮助卡得护甲").AddEffect("skill.violence_nutrition.monster_remove").AddEffect("skill.violence_nutrition.help_remove");
