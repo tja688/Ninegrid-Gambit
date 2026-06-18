@@ -39,6 +39,7 @@ namespace NineGrid.Core.Effects
 
             return false;
         }
+
     }
 
     [EffectAtom("OnBattle", EffectAtomKind.Trigger)]
@@ -101,6 +102,39 @@ namespace NineGrid.Core.Effects
     {
         public override TriggerPoint Point { get { return TriggerPoint.OnKill; } }
         public override bool Matches(EffectRuntimeContext context) { return base.Matches(context) && HasEvent(context, CoreEventType.CardKilled); }
+    }
+
+    [EffectAtom("OnDeal", EffectAtomKind.Trigger)]
+    public sealed class OnDealTrigger : TriggerAtomBase
+    {
+        public override TriggerPoint Point { get { return TriggerPoint.OnDeal; } }
+        public override bool Matches(EffectRuntimeContext context) { return base.Matches(context) && HasEvent(context, CoreEventType.CardDealt); }
+    }
+
+    [EffectAtom("OnEvent", EffectAtomKind.Trigger)]
+    public sealed class OnEventTrigger : TriggerAtomBase
+    {
+        private CoreEventType mEventType = CoreEventType.ActionStarted;
+        private bool mHasEventType;
+
+        public override TriggerPoint Point { get { return TriggerPoint.AfterAction; } }
+
+        public override void Configure(EffectDslNode config)
+        {
+            base.Configure(config);
+            mHasEventType = config.Has("eventType");
+            mEventType = config.Get("eventType").AsEnum(CoreEventType.ActionStarted);
+        }
+
+        public override bool Matches(EffectRuntimeContext context)
+        {
+            if (!base.Matches(context) || context.Events.Count == 0)
+            {
+                return false;
+            }
+
+            return !mHasEventType || HasEvent(context, mEventType);
+        }
     }
 
     [EffectAtom("OnRemove", EffectAtomKind.Trigger)]
@@ -932,6 +966,148 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    [EffectAtom("EventFilter", EffectAtomKind.Condition)]
+    public sealed class EventFilterEffectCondition : ICondition
+    {
+        private readonly List<CoreEventType> mEventTypes = new List<CoreEventType>();
+        private StatId mStat = StatId.Attack;
+        private bool mHasStat;
+        private int mMinDelta = int.MinValue;
+        private CardKind mTargetKind = CardKind.Unknown;
+        private string mTargetNotRef = string.Empty;
+        private string mSourceDefId = string.Empty;
+        private string mExcludeSourceDefId = string.Empty;
+        private string mCause = string.Empty;
+        private string mExcludeCause = string.Empty;
+
+        public void Configure(EffectDslNode config)
+        {
+            AddEventType(config.Get("eventType").AsString(string.Empty));
+            var eventTypes = config.Get("eventTypes").AsArray();
+            for (var i = 0; i < eventTypes.Count; i++)
+            {
+                AddEventType(eventTypes[i].AsString(string.Empty));
+            }
+
+            mHasStat = config.Has("stat");
+            mStat = config.Get("stat").AsEnum(StatId.Attack);
+            mMinDelta = config.Has("minDelta") ? config.Get("minDelta").AsInt(0) : int.MinValue;
+            mTargetKind = config.Get("targetKind").AsEnum(CardKind.Unknown);
+            mTargetNotRef = config.Get("targetNot").AsString(string.Empty);
+            mSourceDefId = config.Get("sourceDefId").AsString(string.Empty);
+            mExcludeSourceDefId = config.Get("excludeSourceDefId").AsString(string.Empty);
+            mCause = config.Get("cause").AsString(string.Empty);
+            mExcludeCause = config.Get("excludeCause").AsString(string.Empty);
+        }
+
+        public bool IsMet(EffectRuntimeContext context)
+        {
+            var events = context.Events;
+            for (var i = 0; i < events.Count; i++)
+            {
+                if (Matches(context, events[i]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public IStatCondition CreateStatCondition(EffectBuildContext context)
+        {
+            return null;
+        }
+
+        private bool Matches(EffectRuntimeContext context, CoreGameEvent gameEvent)
+        {
+            if (mEventTypes.Count > 0 && !ContainsEventType(gameEvent.Type))
+            {
+                return false;
+            }
+
+            if (mHasStat && gameEvent.Amount != (int)mStat)
+            {
+                return false;
+            }
+
+            if (mMinDelta != int.MinValue && gameEvent.Delta < mMinDelta)
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mSourceDefId) && !Same(gameEvent.SourceDefId, mSourceDefId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mExcludeSourceDefId) && Same(gameEvent.SourceDefId, mExcludeSourceDefId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mCause) && !Same(gameEvent.Cause, mCause))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mExcludeCause) && Same(gameEvent.Cause, mExcludeCause))
+            {
+                return false;
+            }
+
+            var eventTargetUid = gameEvent.TargetUid != 0 ? gameEvent.TargetUid : gameEvent.CardUid;
+            if (mTargetKind != CardKind.Unknown)
+            {
+                CardInstance target;
+                if (!context.TryGetCard(eventTargetUid, out target) || target.Kind != mTargetKind)
+                {
+                    return false;
+                }
+            }
+
+            var forbiddenUid = TargetResolver.ResolveSingleCardRef(context, mTargetNotRef);
+            if (forbiddenUid != 0 && eventTargetUid == forbiddenUid)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private void AddEventType(string eventType)
+        {
+            if (string.IsNullOrEmpty(eventType))
+            {
+                return;
+            }
+
+            CoreEventType parsed;
+            if (Enum.TryParse(eventType, true, out parsed) && !ContainsEventType(parsed))
+            {
+                mEventTypes.Add(parsed);
+            }
+        }
+
+        private bool ContainsEventType(CoreEventType eventType)
+        {
+            for (var i = 0; i < mEventTypes.Count; i++)
+            {
+                if (mEventTypes[i] == eventType)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool Same(string left, string right)
+        {
+            return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
     [EffectAtom("OwnsRelicSet", EffectAtomKind.Condition)]
     public sealed class OwnsRelicSetEffectCondition : ICondition
     {
@@ -1182,11 +1358,13 @@ namespace NineGrid.Core.Effects
     {
         private EffectValueExpression mAmount;
         private string mActorRef = "Player";
+        private string mCause = string.Empty;
 
         public void Configure(EffectDslNode config)
         {
             mAmount = EffectValueExpression.FromActionAmount(config);
             mActorRef = config.Get("actor").AsString("Player");
+            mCause = config.Get("cause").AsString(string.Empty);
         }
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
@@ -1197,7 +1375,7 @@ namespace NineGrid.Core.Effects
             {
                 if (targets[i] != 0)
                 {
-                    result.Add(new DealDamageAction(actorUid, targets[i], mAmount.Evaluate(context, targets[i])));
+                    result.Add(new DealDamageAction(actorUid, targets[i], mAmount.Evaluate(context, targets[i]), context.SourceDefId, EffectActionSource.CauseOrEffect(context, mCause)));
                 }
             }
 
@@ -1210,11 +1388,13 @@ namespace NineGrid.Core.Effects
     {
         private EffectValueExpression mAmount;
         private string mActorRef = "Self";
+        private string mCause = string.Empty;
 
         public void Configure(EffectDslNode config)
         {
             mAmount = EffectValueExpression.FromActionAmount(config);
             mActorRef = config.Get("actor").AsString("Self");
+            mCause = config.Get("cause").AsString(string.Empty);
         }
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
@@ -1225,7 +1405,7 @@ namespace NineGrid.Core.Effects
             {
                 if (targets[i] != 0)
                 {
-                    result.Add(new HealAction(actorUid, targets[i], mAmount.Evaluate(context, targets[i])));
+                    result.Add(new HealAction(actorUid, targets[i], mAmount.Evaluate(context, targets[i]), context.SourceDefId, EffectActionSource.CauseOrEffect(context, mCause)));
                 }
             }
 
@@ -1237,10 +1417,12 @@ namespace NineGrid.Core.Effects
     public sealed class GainArmorEffectAction : IAction
     {
         private EffectValueExpression mAmount;
+        private string mCause = string.Empty;
 
         public void Configure(EffectDslNode config)
         {
             mAmount = EffectValueExpression.FromActionAmount(config);
+            mCause = config.Get("cause").AsString(string.Empty);
         }
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
@@ -1250,7 +1432,7 @@ namespace NineGrid.Core.Effects
             {
                 if (targets[i] != 0)
                 {
-                    result.Add(new GainArmorAction(targets[i], mAmount.Evaluate(context, targets[i])));
+                    result.Add(new GainArmorAction(targets[i], mAmount.Evaluate(context, targets[i]), context.SourceDefId, EffectActionSource.CauseOrEffect(context, mCause)));
                 }
             }
 
@@ -1272,7 +1454,7 @@ namespace NineGrid.Core.Effects
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
         {
-            return new[] { new ModifyGoldAction(mDelta, mReason) };
+            return new[] { new ModifyGoldAction(mDelta, mReason, context.SourceDefId) };
         }
     }
 
@@ -1297,7 +1479,7 @@ namespace NineGrid.Core.Effects
             {
                 if (targets[i] != 0)
                 {
-                    result.Add(new ModifyBaseStatAction(targets[i], mStat, mDelta, mReason));
+                    result.Add(new ModifyBaseStatAction(targets[i], mStat, mDelta, mReason, context.SourceDefId));
                 }
             }
 
@@ -1478,7 +1660,7 @@ namespace NineGrid.Core.Effects
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
         {
-            return new[] { new ShuffleIntoDrawPileAction(mDefId, mKind, mCount, mTop) };
+            return new[] { new ShuffleIntoDrawPileAction(mDefId, mKind, mCount, mTop, context.SourceDefId) };
         }
     }
 
@@ -1505,7 +1687,7 @@ namespace NineGrid.Core.Effects
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
         {
-            return new[] { new SpawnCardAction(mDefId, mKind, mZone, mSlot, mCount) };
+            return new[] { new SpawnCardAction(mDefId, mKind, mZone, mSlot, mCount, context.SourceDefId) };
         }
     }
 
@@ -1536,7 +1718,7 @@ namespace NineGrid.Core.Effects
             {
                 if (targets[i] != 0)
                 {
-                    result.Add(new AddStatModifierAction(targets[i], mStat, mOp, mValue, mLayer, mScope, mSource));
+                    result.Add(new AddStatModifierAction(targets[i], mStat, mOp, mValue, mLayer, mScope, mSource, context.SourceDefId));
                 }
             }
 
@@ -1614,7 +1796,7 @@ namespace NineGrid.Core.Effects
             {
                 if (targets[i] != 0)
                 {
-                    result.Add(new RemoveCardAction(targets[i], mDestination, mReason));
+                    result.Add(new RemoveCardAction(targets[i], mDestination, mReason, context.SourceDefId));
                 }
             }
 
@@ -1647,6 +1829,14 @@ namespace NineGrid.Core.Effects
             }
 
             return registry.CreateTarget(actionNode.Get("target")).Resolve(context);
+        }
+    }
+
+    internal static class EffectActionSource
+    {
+        public static string CauseOrEffect(EffectRuntimeContext context, string configuredCause)
+        {
+            return string.IsNullOrEmpty(configuredCause) ? context.EffectId : configuredCause;
         }
     }
 

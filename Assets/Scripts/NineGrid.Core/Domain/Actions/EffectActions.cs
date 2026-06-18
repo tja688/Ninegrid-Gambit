@@ -39,7 +39,8 @@ namespace NineGrid.Core
             var result = new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.EffectTriggered, context.ActionId, ActionName)
                     .WithCard(instance.Owner == null ? 0 : instance.Owner.OwnerUid)
-                    .WithMessage(instance.Definition.Id));
+                    .WithMessage(instance.Definition.Id)
+                    .WithSource(instance.Owner == null ? string.Empty : instance.Owner.SourceDefId, instance.Definition.Id));
 
             var actions = mPreparedActions ?? effectSystem.BuildTriggeredActions(InstanceId, mTriggerContext);
             for (var i = 0; i < actions.Count; i++)
@@ -175,18 +176,20 @@ namespace NineGrid.Core
             TriggerPoint.OnDeal
         };
 
-        public ShuffleIntoDrawPileAction(string defId, CardKind kind, int count, bool top)
+        public ShuffleIntoDrawPileAction(string defId, CardKind kind, int count, bool top, string cause = null)
         {
             DefId = defId ?? string.Empty;
             Kind = kind;
             Count = Math.Max(0, count);
             Top = top;
+            Cause = cause ?? string.Empty;
         }
 
         public string DefId { get; private set; }
         public CardKind Kind { get; private set; }
         public int Count { get; private set; }
         public bool Top { get; private set; }
+        public string Cause { get; private set; }
         public override string ActionName { get { return "ShuffleIntoDrawPile"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -201,7 +204,8 @@ namespace NineGrid.Core
                 deck.AddToDrawPile(card, Top);
                 result.AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
                     .WithCard(card.Uid)
-                    .WithMessage("shuffleInto:" + DefId));
+                    .WithMessage("shuffleInto:" + DefId)
+                    .WithSource(DefId, Cause));
             }
 
             if (!Top && Count > 0)
@@ -250,13 +254,14 @@ namespace NineGrid.Core
             TriggerPoint.OnEnter
         };
 
-        public SpawnCardAction(string defId, CardKind kind, ZoneId zone, SlotId slot, int count)
+        public SpawnCardAction(string defId, CardKind kind, ZoneId zone, SlotId slot, int count, string cause = null)
         {
             DefId = defId ?? string.Empty;
             Kind = kind;
             Zone = zone;
             Slot = slot;
             Count = Math.Max(0, count);
+            Cause = cause ?? string.Empty;
         }
 
         public string DefId { get; private set; }
@@ -264,6 +269,7 @@ namespace NineGrid.Core
         public ZoneId Zone { get; private set; }
         public SlotId Slot { get; private set; }
         public int Count { get; private set; }
+        public string Cause { get; private set; }
         public override string ActionName { get { return "SpawnCard"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -280,12 +286,14 @@ namespace NineGrid.Core
                 result.AddEvent(new CoreGameEvent(CoreEventType.CardSpawned, context.ActionId, ActionName)
                     .WithCard(card.Uid)
                     .WithSlots(SlotId.None, card.Slot.Value)
-                    .WithMessage(DefId));
+                    .WithMessage(DefId)
+                    .WithSource(DefId, Cause));
                 if (card.Zone.Value == ZoneId.Board)
                 {
                     result.AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
                         .WithCard(card.Uid)
-                        .WithSlots(SlotId.None, card.Slot.Value));
+                        .WithSlots(SlotId.None, card.Slot.Value)
+                        .WithSource(DefId, Cause));
                 }
             }
 
@@ -339,7 +347,8 @@ namespace NineGrid.Core
             float value,
             ModifierLayer layer,
             ModifierScope scope,
-            string source)
+            string source,
+            string sourceDefId = null)
         {
             TargetUid = targetUid;
             Stat = stat;
@@ -348,6 +357,7 @@ namespace NineGrid.Core
             Layer = layer;
             Scope = scope;
             Source = source ?? "effect.action";
+            SourceDefId = sourceDefId ?? string.Empty;
         }
 
         public int TargetUid { get; private set; }
@@ -357,6 +367,7 @@ namespace NineGrid.Core
         public ModifierLayer Layer { get; private set; }
         public ModifierScope Scope { get; private set; }
         public string Source { get; private set; }
+        public string SourceDefId { get; private set; }
         public override string ActionName { get { return "AddStatModifier"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -368,9 +379,11 @@ namespace NineGrid.Core
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.EffectModifierApplied, context.ActionId, ActionName)
                     .WithCard(TargetUid)
+                    .WithTarget(TargetUid)
                     .WithAmount((int)Stat)
                     .WithDelta((int)Math.Round(Value))
-                    .WithMessage(Source));
+                    .WithMessage(Source)
+                    .WithSource(SourceDefId, Source));
         }
     }
 

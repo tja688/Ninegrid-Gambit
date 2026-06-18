@@ -30,8 +30,11 @@ namespace NineGrid.Core.Tests
         {
             var effectSystem = Effects();
             Assert.IsTrue(effectSystem.AtomRegistry.Triggers.ContainsKey("OnFatalDamage"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Triggers.ContainsKey("OnEvent"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Triggers.ContainsKey("OnDeal"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("OwnsRelicSet"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("AdjacentHasCard"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("EventFilter"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("RandomMonster"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("FilteredCards"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("AdjacentCard"));
@@ -171,6 +174,24 @@ namespace NineGrid.Core.Tests
             AssertHasIssue(contentActionValidation, "schema.action.poolId");
             AssertHasIssue(contentActionValidation, "schema.action.relicDefId");
             AssertHasIssue(contentActionValidation, "schema.action.skillDefId");
+
+            var badEventFilter = effectSystem.ParseJson(
+                "{"
+                + "\"id\":\"bad.event.filter\","
+                + "\"typeTag\":\"【类型怪物技能】\","
+                + "\"containerType\":\"MonsterSkill\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"Nope\"},"
+                + "\"conditions\":[{\"atom\":\"EventFilter\",\"eventTypes\":[\"BaseStatModified\",\"Nope\"],\"targetKind\":\"Ghost\",\"stat\":\"Bogus\"}],"
+                + "\"target\":{\"atom\":\"Self\"},"
+                + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1}"
+                + "}");
+            var eventFilterValidation = effectSystem.Validate(badEventFilter);
+            Assert.IsFalse(eventFilterValidation.IsValid);
+            AssertHasIssue(eventFilterValidation, "schema.trigger.eventType");
+            AssertHasIssue(eventFilterValidation, "schema.condition.eventType");
+            AssertHasIssue(eventFilterValidation, "schema.condition.targetKind");
+            AssertHasIssue(eventFilterValidation, "schema.condition.stat");
         }
 
         [Test]
@@ -298,7 +319,12 @@ namespace NineGrid.Core.Tests
                 "skill.easy_road.node_end",
                 "relic.lucky_coin.elite_kill",
                 "relic.lucky_coin.boss_kill",
-                "skill.thorn_skin.battle"
+                "skill.thorn_skin.battle",
+                "skill.learning_growth.gain",
+                "skill.intense_burning.flame_deal",
+                "skill.violence_maniac.move",
+                "skill.violence_nutrition.monster_remove",
+                "skill.violence_nutrition.help_remove"
             };
 
             for (var i = 0; i < effectIds.Length; i++)
@@ -621,6 +647,83 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(HasBoardRotatedEvent(architecture.GetSystem<IActionPipelineSystem>().EventLog, -1, "counterClockwise"));
         }
 
+        [Test]
+        public void LearningGrowthCatalogDslRespondsToOtherMonsterAttackGainWithoutSelfRecursion()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var learner = CreateMonster("monster.learning.growth", 20, SlotId.Board(1));
+            var other = CreateMonster("monster.other.buff", 20, SlotId.Board(2));
+
+            P5CatalogTestSupport.ActivateCatalogEffect(
+                architecture,
+                "skill.learning_growth.gain",
+                new EffectOwner(EffectContainerType.MonsterSkill, "skill.learning_growth", learner.Uid));
+
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            pipeline.Execute(new ModifyBaseStatAction(other.Uid, StatId.Attack, 1, "test.other.buff", "skill.test_buff"));
+
+            Assert.AreEqual(1, learner.Stats.GetBase(StatId.Attack));
+            Assert.AreEqual(1, CountEvents(pipeline.EventLog, CoreEventType.EffectTriggered));
+
+            pipeline.Execute(new ModifyBaseStatAction(learner.Uid, StatId.Attack, 1, "test.self.buff", "skill.test_buff"));
+            pipeline.Execute(new ModifyBaseStatAction(other.Uid, StatId.Attack, 1, "skill.learning_growth", "skill.learning_growth"));
+
+            Assert.AreEqual(2, learner.Stats.GetBase(StatId.Attack));
+            Assert.AreEqual(1, CountEvents(pipeline.EventLog, CoreEventType.EffectTriggered));
+        }
+
+        [Test]
+        public void IntenseBurningCatalogDslDuplicatesFlameDealsWithoutRecursiveLoop()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var owner = CreateMonster("monster.intense.burning", 20, SlotId.Board(1));
+            var deck = architecture.GetModel<DeckModel>();
+            var registry = architecture.GetModel<CardRegistry>();
+
+            P5CatalogTestSupport.ActivateCatalogEffect(
+                architecture,
+                "skill.intense_burning.flame_deal",
+                new EffectOwner(EffectContainerType.MonsterSkill, "skill.intense_burning", owner.Uid));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(
+                new ShuffleIntoDrawPileAction("help.flame", CardKind.HelpCard, 1, false, "skill.devotion"));
+
+            Assert.AreEqual(2, CountCardsByDef(deck.DrawPileUids, registry, "help.flame"));
+            Assert.AreEqual(1, CountEvents(architecture.GetSystem<IActionPipelineSystem>().EventLog, CoreEventType.EffectTriggered));
+        }
+
+        [Test]
+        public void ViolenceManiacCatalogDslTagsRemovalsForViolenceNutrition()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var owner = CreateMonster("monster.violence.owner", 20, SlotId.Board(5));
+            var monster = CreateMonster("monster.violence.target", 20, SlotId.Board(2));
+            var help = architecture.GetModel<CardRegistry>().Create("help.violence.target", CardKind.HelpCard);
+            architecture.GetModel<BoardModel>().PlaceCard(help, SlotId.Board(4));
+
+            P5CatalogTestSupport.ActivateCatalogEffect(
+                architecture,
+                "skill.violence_maniac.move",
+                new EffectOwner(EffectContainerType.MonsterSkill, "skill.violence_maniac", owner.Uid));
+            P5CatalogTestSupport.ActivateCatalogEffect(
+                architecture,
+                "skill.violence_nutrition.monster_remove",
+                new EffectOwner(EffectContainerType.MonsterSkill, "skill.violence_nutrition", owner.Uid));
+            P5CatalogTestSupport.ActivateCatalogEffect(
+                architecture,
+                "skill.violence_nutrition.help_remove",
+                new EffectOwner(EffectContainerType.MonsterSkill, "skill.violence_nutrition", owner.Uid));
+
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            pipeline.Execute(new MoveCardAction(owner.Uid, SlotId.Board(8)));
+            pipeline.Execute(new MoveCardAction(owner.Uid, SlotId.Board(5)));
+
+            Assert.AreEqual(ZoneId.Removed, monster.Zone.Value);
+            Assert.AreEqual(ZoneId.Removed, help.Zone.Value);
+            Assert.AreEqual(3, owner.Stats.GetBase(StatId.Attack));
+            Assert.AreEqual(5, owner.Stats.GetBase(StatId.Armor));
+        }
+
         private static IEffectSystem Effects()
         {
             return NineGridArchitecture.Current.GetSystem<IEffectSystem>();
@@ -725,6 +828,20 @@ namespace NineGrid.Core.Tests
             for (var i = 0; i < eventLog.Entries.Count; i++)
             {
                 if (eventLog.Entries[i].Type == type)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static int CountCardsByDef(IReadOnlyList<int> cardUids, CardRegistry registry, string defId)
+        {
+            var count = 0;
+            for (var i = 0; i < cardUids.Count; i++)
+            {
+                if (registry.Get(cardUids[i]).DefId == defId)
                 {
                     count++;
                 }

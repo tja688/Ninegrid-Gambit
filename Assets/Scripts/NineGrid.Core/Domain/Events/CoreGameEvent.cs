@@ -12,6 +12,8 @@ namespace NineGrid.Core
             ActionName = actionName ?? string.Empty;
             FromSlot = SlotId.None;
             ToSlot = SlotId.None;
+            SourceDefId = string.Empty;
+            Cause = string.Empty;
             Message = string.Empty;
         }
 
@@ -28,6 +30,8 @@ namespace NineGrid.Core
         public int Delta { get; private set; }
         public int RemainingHp { get; private set; }
         public int RemainingArmor { get; private set; }
+        public string SourceDefId { get; private set; }
+        public string Cause { get; private set; }
         public string Message { get; private set; }
 
         public CoreGameEvent WithActor(int actorUid)
@@ -80,6 +84,13 @@ namespace NineGrid.Core
             return this;
         }
 
+        public CoreGameEvent WithSource(string sourceDefId, string cause)
+        {
+            SourceDefId = sourceDefId ?? string.Empty;
+            Cause = cause ?? string.Empty;
+            return this;
+        }
+
         internal void AssignSequence(long sequence)
         {
             Sequence = sequence;
@@ -87,7 +98,7 @@ namespace NineGrid.Core
 
         public override string ToString()
         {
-            return "#" + Sequence + " " + Type + " action=" + ActionId + " card=" + CardUid + " target=" + TargetUid + " " + Message;
+            return "#" + Sequence + " " + Type + " action=" + ActionId + " card=" + CardUid + " target=" + TargetUid + " source=" + SourceDefId + " cause=" + Cause + " " + Message;
         }
     }
 }

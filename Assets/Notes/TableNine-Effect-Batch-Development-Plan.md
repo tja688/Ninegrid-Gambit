@@ -465,6 +465,51 @@ MonsterSkill pending, 46:
 
 下一批建议：继续批次6B，先补更明确的 `sourceDefId/cause` 事件标签与属性变化来源，再处理 `skill.learning_growth.pending` 或烈焰链式“不递归”效果；如果想快速收内容，则回到 `ChoicePayload v1 / SelectedTargets v1` 处理 `help.stat_boost_card.pending`、`help.swap_card.pending`、`help.teleport_card.pending`。
 
+### 6.1 批次6B落地记录（2026-06-18）
+
+目标：补齐结构化来源标签、事件过滤和非递归链式触发，把批次6从 `OnBattle` 特例推进成通用来源敏感能力。
+
+本批新增能力：
+
+- `CoreGameEvent` 新增 `SourceDefId` / `Cause` 字段；伤害、治疗、护甲、金币、移除、用卡、基础属性修改、洗入/生成卡牌、效果触发事件会写入来源信息。
+- 新增 `OnEvent` trigger：用于监听普通 action 产出的事件，例如 `BaseStatModified` / `EffectModifierApplied`。
+- 新增 `OnDeal` trigger：用于监听洗入/发牌事件 `CardDealt`。
+- 新增 `EventFilter` condition：支持 `eventType/eventTypes`、`stat`、`minDelta`、`targetKind`、`targetNot`、`sourceDefId`、`excludeSourceDefId`、`cause`、`excludeCause`。
+- `EffectAtomSchemas` 增加 `OnEvent.eventType`、`EventFilter.eventTypes/targetKind/stat` 校验，避免来源过滤 DSL 静默写错。
+- effect action atom 会把 `EffectOwner.SourceDefId` 透传到后续 GameAction；洗入/生成卡牌事件以被创建卡牌 defId 作为 `SourceDefId`，以触发它的技能/遗物/帮助卡作为 `Cause`。
+
+本批转换：
+
+- `skill.learning_growth.gain`：MonsterSkill / Triggered / `OnEvent + EventFilter`，当其他怪物获得攻击时，本卡 `Attack +1`；排除 `skill.learning_growth` 自身来源，防止学习成长互相递归触发。
+- `skill.intense_burning.flame_deal`：MonsterSkill / Triggered / `OnDeal + EventFilter`，每有一张 `help.flame` 加入战斗卡组，额外加入一张 `help.flame`；排除 `Cause == skill.intense_burning`，证明额外加入不会递归。
+- `skill.violence_maniac.move`：MonsterSkill / Triggered / `OnSelfMove every 2`，移除正交相邻怪物卡和帮助卡，并用 `SourceDefId == skill.violence_maniac` 标记移除来源。
+- `skill.violence_nutrition.monster_remove`：MonsterSkill / Triggered / `OnRemove + EventFilter`，每依靠暴力狂移除一张怪物卡，本卡 `Attack +3`。
+- `skill.violence_nutrition.help_remove`：MonsterSkill / Triggered / `OnRemove + EventFilter`，每依靠暴力狂移除一张帮助卡，本卡 `Armor +5`。
+
+刻意延后：
+
+- `skill.flame_boiling.pending` 仍保持 pending。它是“烈焰帮助卡伤害+1”的来源敏感伤害加值规则，需要后续补 `DamageFlatDelta` / source-aware damage rule，而不是伪装成当前卡牌攻击。
+- `skill.absorb_bone.pending` 仍保持 pending。它需要移除事件携带被移除卡的基础攻击/护甲快照，建议作为批次6C或批次7前置小批处理。
+
+批次6B后数量：
+
+| 项目 | 数量 |
+|:--|--:|
+| hardcoded implemented effects | 76 |
+| hardcoded explicit pending effects | 17 |
+| pending monster skill placeholder effects | 33 |
+| runtime pending effects | 50 |
+| runtime total effects | 126 |
+
+验证记录：
+
+- Unity MCP refresh/compile：通过，Console 无编译错误；仅有 Unity Test Framework 保存 `TestResults.xml` 与 PerformanceTesting setup/cleanup 提示。
+- `P5EffectSystemTests` + `P6ContentLandingTests`：46/46 通过。
+- `NineGrid.Core.Tests` EditMode 全量：80/80 通过。
+- `Assets/Notes/CI/check-core-guards.ps1`：通过。
+
+下一批建议：批次6能力地基已经覆盖 `OnBattle` 来源过滤、通用事件来源过滤、非递归发牌链和来源敏感移除收益；若继续同簇，最小后续是 `removed-card stat snapshot v1`，处理 `skill.absorb_bone.pending`。如果切到新能力簇，则进入批次7 棋盘标记与场地规则。
+
 ## 7. 当前事实基线
 
 ### 已经可靠的地基
@@ -477,7 +522,7 @@ MonsterSkill pending, 46:
 ### 当前还没签收的部分
 
 - `TableNineContentCatalog.cs` 仍是主要内容真源，Luban 只是最小样例，不是生产内容源。
-- hardcoded catalog 预计有 70 个 implemented effect、55 个 pending effect，R4 远未清零。
+- hardcoded catalog 预计有 76 个 implemented effect、50 个 pending effect，R4 远未清零。
 - 设计文档里效果总量更大：帮助卡 22 条、遗物 58 条、玩家技能 7 条、怪物技能 81 条。hardcoded catalog 覆盖了帮助卡和玩家技能的大部分，但遗物和怪物技能仍是子集/原型。
 - R5 的全内容回放网、pending 闸门、Luban 全量迁移闸门还没有完成。
 
@@ -662,7 +707,7 @@ MonsterSkill pending, 46:
 
 1. **继续批次4 后续小批**：做 `skill.taunt.pending` 的交互合法性规则，或做 `relic.gold_armor.pending` 的金币抵伤。
 2. **继续批次5 后续小批**：实现 `ChoicePayload v1 / SelectedTargets v1`，处理 `help.stat_boost_card.pending`、`help.swap_card.pending`、`help.teleport_card.pending`。
-3. **继续批次6B**：补更明确的 `sourceDefId/cause` 事件标签后，处理 `skill.learning_growth.pending`、火焰链式等来源敏感效果。
+3. **继续批次6后续小批**：基于 `sourceDefId/cause` 处理被移除卡属性快照，优先收 `skill.absorb_bone.pending`。
 
 ## 12. 给后续 AI 的技能入口
 

@@ -58,6 +58,16 @@ namespace NineGrid.Core.Effects
             get { return Instance == null || Instance.Owner == null ? 0 : Instance.Owner.OwnerUid; }
         }
 
+        public string SourceDefId
+        {
+            get { return Instance == null || Instance.Owner == null ? string.Empty : Instance.Owner.SourceDefId; }
+        }
+
+        public string EffectId
+        {
+            get { return Instance == null || Instance.Definition == null ? string.Empty : Instance.Definition.Id; }
+        }
+
         public CardInstance OwnerCard
         {
             get

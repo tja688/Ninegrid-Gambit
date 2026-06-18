@@ -191,9 +191,17 @@ namespace NineGrid.Core
 
         public override GameActionResult Apply(GameActionContext context)
         {
+            var sourceDefId = string.Empty;
+            CardInstance item;
+            if (context.GetModel<CardRegistry>().TryGet(ItemUid, out item))
+            {
+                sourceDefId = item.DefId;
+            }
+
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.ItemUsed, context.ActionId, ActionName)
-                    .WithCard(ItemUid));
+                    .WithCard(ItemUid)
+                    .WithSource(sourceDefId, "use"));
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)

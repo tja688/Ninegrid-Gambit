@@ -364,6 +364,11 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.trigger.targetKind", path + ".targetKind is not supported.");
                 }
 
+                if (Same(atom, "OnEvent") && node.Has("eventType") && !IsSupportedEventType(node.Get("eventType").AsString(string.Empty)))
+                {
+                    result.Add("schema.trigger.eventType", path + ".eventType is not supported.");
+                }
+
                 if (Same(atom, "OnSelfMove") && node.Has("every") && node.Get("every").AsInt(1) < 1)
                 {
                     result.Add("schema.range.every", path + ".every must be >= 1.");
@@ -406,6 +411,33 @@ namespace NineGrid.Core.Effects
                 if (Same(atom, "CardCounter") && node.Has("min") && node.Get("min").AsInt(1) < 1)
                 {
                     result.Add("schema.range.min", path + ".min must be >= 1.");
+                }
+
+                if (Same(atom, "EventFilter"))
+                {
+                    if (node.Has("eventType") && !IsSupportedEventType(node.Get("eventType").AsString(string.Empty)))
+                    {
+                        result.Add("schema.condition.eventType", path + ".eventType is not supported.");
+                    }
+
+                    var eventTypes = node.Get("eventTypes").AsArray();
+                    for (var i = 0; i < eventTypes.Count; i++)
+                    {
+                        if (!IsSupportedEventType(eventTypes[i].AsString(string.Empty)))
+                        {
+                            result.Add("schema.condition.eventType", path + ".eventTypes[" + i + "] is not supported.");
+                        }
+                    }
+
+                    if (node.Has("targetKind") && !IsSupportedCardKind(node.Get("targetKind").AsString(string.Empty)))
+                    {
+                        result.Add("schema.condition.targetKind", path + ".targetKind is not supported.");
+                    }
+
+                    if (node.Has("stat") && !IsSupportedStat(node.Get("stat").AsString(string.Empty)))
+                    {
+                        result.Add("schema.condition.stat", path + ".stat is not supported.");
+                    }
                 }
 
                 return;
@@ -503,6 +535,28 @@ namespace NineGrid.Core.Effects
 
             CardKind ignored;
             return Enum.TryParse(kind, true, out ignored);
+        }
+
+        private static bool IsSupportedEventType(string eventType)
+        {
+            if (string.IsNullOrEmpty(eventType))
+            {
+                return false;
+            }
+
+            CoreEventType ignored;
+            return Enum.TryParse(eventType, true, out ignored);
+        }
+
+        private static bool IsSupportedStat(string stat)
+        {
+            if (string.IsNullOrEmpty(stat))
+            {
+                return false;
+            }
+
+            StatId ignored;
+            return Enum.TryParse(stat, true, out ignored);
         }
 
         private static bool Same(string left, string right)

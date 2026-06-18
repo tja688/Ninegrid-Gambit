@@ -8,18 +8,20 @@ namespace NineGrid.Core
 {
     public sealed class ModifyBaseStatAction : GameAction
     {
-        public ModifyBaseStatAction(int targetUid, StatId stat, int delta, string reason)
+        public ModifyBaseStatAction(int targetUid, StatId stat, int delta, string reason, string sourceDefId = null)
         {
             TargetUid = targetUid;
             Stat = stat;
             Delta = delta;
             Reason = reason ?? string.Empty;
+            SourceDefId = sourceDefId ?? string.Empty;
         }
 
         public int TargetUid { get; private set; }
         public StatId Stat { get; private set; }
         public int Delta { get; private set; }
         public string Reason { get; private set; }
+        public string SourceDefId { get; private set; }
         public override string ActionName { get { return "ModifyBaseStat"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -43,9 +45,11 @@ namespace NineGrid.Core
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.BaseStatModified, context.ActionId, ActionName)
                     .WithCard(TargetUid)
+                    .WithTarget(TargetUid)
                     .WithAmount((int)Stat)
                     .WithDelta(Delta)
-                    .WithMessage(Reason));
+                    .WithMessage(Reason)
+                    .WithSource(SourceDefId, Reason));
         }
     }
 

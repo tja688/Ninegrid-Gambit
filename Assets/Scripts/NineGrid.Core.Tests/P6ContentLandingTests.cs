@@ -51,12 +51,12 @@ namespace NineGrid.Core.Tests
             var report = NineGridArchitecture.Current.GetSystem<IContentSystem>().ValidateCatalog();
 
             Assert.IsTrue(report.IsValid, FirstIssue(report));
-            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 71);
-            Assert.LessOrEqual(report.PendingEffectIds.Count, 54);
+            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 76);
+            Assert.LessOrEqual(report.PendingEffectIds.Count, 50);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 11);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.Relic), 2);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.PlayerSkill), 1);
-            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 40);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 36);
 
             AssertImplemented(catalog, report, "relic.vitality_amulet.max_hp");
             AssertImplemented(catalog, report, "relic.throwing_knife_bag.node_start");
@@ -81,6 +81,11 @@ namespace NineGrid.Core.Tests
             AssertImplemented(catalog, report, "relic.lucky_coin.elite_kill");
             AssertImplemented(catalog, report, "relic.lucky_coin.boss_kill");
             AssertImplemented(catalog, report, "skill.thorn_skin.battle");
+            AssertImplemented(catalog, report, "skill.learning_growth.gain");
+            AssertImplemented(catalog, report, "skill.intense_burning.flame_deal");
+            AssertImplemented(catalog, report, "skill.violence_maniac.move");
+            AssertImplemented(catalog, report, "skill.violence_nutrition.monster_remove");
+            AssertImplemented(catalog, report, "skill.violence_nutrition.help_remove");
         }
 
         [Test]
@@ -444,6 +449,65 @@ namespace NineGrid.Core.Tests
 
             Assert.AreEqual(15, monster.Stats.GetBase(StatId.Hp));
             Assert.AreEqual(1, CountEvents(architecture.GetSystem<IActionPipelineSystem>().EventLog, CoreEventType.EffectTriggered));
+        }
+
+        [Test]
+        public void BatchSixBLearningGrowthCatalogDslGainsAttackFromOtherMonsterOnly()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var learner = PlaceMonster("monster.young_orc", 20, SlotId.Board(1));
+            content.ApplyContentToCard(learner);
+            var other = PlaceMonster("monster.brainless_orc", 20, SlotId.Board(2));
+            content.ApplyContentToCard(other);
+            var initialAttack = learner.Stats.GetBase(StatId.Attack);
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(
+                new ModifyBaseStatAction(other.Uid, StatId.Attack, 1, "test.other.buff", "skill.test_buff"));
+
+            Assert.AreEqual(initialAttack + 1, learner.Stats.GetBase(StatId.Attack));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(
+                new ModifyBaseStatAction(learner.Uid, StatId.Attack, 1, "test.self.buff", "skill.test_buff"));
+
+            Assert.AreEqual(initialAttack + 2, learner.Stats.GetBase(StatId.Attack));
+        }
+
+        [Test]
+        public void BatchSixBIntenseBurningCatalogDslDuplicatesFlameWithoutRecursing()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var owner = PlaceMonster("monster.fire_cult_leader", 20, SlotId.Board(1));
+            content.ApplyContentToCard(owner);
+            var deck = architecture.GetModel<DeckModel>();
+            var registry = architecture.GetModel<CardRegistry>();
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(
+                new ShuffleIntoDrawPileAction("help.flame", CardKind.HelpCard, 1, false, "skill.devotion"));
+
+            Assert.AreEqual(2, CountCardsByDef(deck.DrawPileUids, registry, "help.flame"));
+            Assert.AreEqual(1, CountEvents(architecture.GetSystem<IActionPipelineSystem>().EventLog, CoreEventType.EffectTriggered));
+        }
+
+        [Test]
+        public void BatchSixBViolenceManiacCatalogDslFeedsViolenceNutritionBySource()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var owner = PlaceMonster("monster.orc_boss", 20, SlotId.Board(5));
+            content.ApplyContentToCard(owner);
+            var initialAttack = owner.Stats.GetBase(StatId.Attack);
+            var initialArmor = owner.Stats.GetBase(StatId.Armor);
+            var monster = PlaceMonster("monster.veteran.orc.target", 20, SlotId.Board(2));
+            var help = PlaceHelpCard("help.violence.target", SlotId.Board(4));
+
+            MoveThreeTimes(owner, SlotId.Board(8), SlotId.Board(5), SlotId.Board(8));
+
+            Assert.AreEqual(ZoneId.Removed, monster.Zone.Value);
+            Assert.AreEqual(ZoneId.Removed, help.Zone.Value);
+            Assert.AreEqual(initialAttack + 3, owner.Stats.GetBase(StatId.Attack));
+            Assert.AreEqual(initialArmor + 5, owner.Stats.GetBase(StatId.Armor));
         }
 
         private static bool Contains(IReadOnlyList<string> values, string expected)

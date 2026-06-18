@@ -19,16 +19,20 @@ namespace NineGrid.Core
             TriggerPoint.OnCumulative
         };
 
-        public DealDamageAction(int actorUid, int targetUid, int amount)
+        public DealDamageAction(int actorUid, int targetUid, int amount, string sourceDefId = null, string cause = null)
         {
             ActorUid = actorUid;
             TargetUid = targetUid;
             Amount = amount;
+            SourceDefId = sourceDefId ?? string.Empty;
+            Cause = cause ?? string.Empty;
         }
 
         public int ActorUid { get; private set; }
         public int TargetUid { get; private set; }
         public int Amount { get; private set; }
+        public string SourceDefId { get; private set; }
+        public string Cause { get; private set; }
         public override string ActionName { get { return "DealDamage"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -69,7 +73,8 @@ namespace NineGrid.Core
                     .WithTarget(TargetUid)
                     .WithCard(TargetUid)
                     .WithDelta(-armorLoss)
-                    .WithRemaining(newHp, newArmor));
+                    .WithRemaining(newHp, newArmor)
+                    .WithSource(SourceDefId, Cause));
             }
 
             if (hpLoss > 0)
@@ -79,7 +84,8 @@ namespace NineGrid.Core
                     .WithTarget(TargetUid)
                     .WithCard(TargetUid)
                     .WithDelta(-hpLoss)
-                    .WithRemaining(newHp, newArmor));
+                    .WithRemaining(newHp, newArmor)
+                    .WithSource(SourceDefId, Cause));
             }
 
             result.AddEvent(new CoreGameEvent(CoreEventType.DamageDealt, context.ActionId, ActionName)
@@ -88,7 +94,8 @@ namespace NineGrid.Core
                 .WithCard(TargetUid)
                 .WithAmount(damage)
                 .WithDelta(armorLoss + hpLoss)
-                .WithRemaining(newHp, newArmor));
+                .WithRemaining(newHp, newArmor)
+                .WithSource(SourceDefId, Cause));
 
             if (newHp <= 0 && target.Kind != CardKind.Avatar)
             {
@@ -132,16 +139,20 @@ namespace NineGrid.Core
             TriggerPoint.OnHeal
         };
 
-        public HealAction(int actorUid, int targetUid, int amount)
+        public HealAction(int actorUid, int targetUid, int amount, string sourceDefId = null, string cause = null)
         {
             ActorUid = actorUid;
             TargetUid = targetUid;
             Amount = amount;
+            SourceDefId = sourceDefId ?? string.Empty;
+            Cause = cause ?? string.Empty;
         }
 
         public int ActorUid { get; private set; }
         public int TargetUid { get; private set; }
         public int Amount { get; private set; }
+        public string SourceDefId { get; private set; }
+        public string Cause { get; private set; }
         public override string ActionName { get { return "Heal"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -163,13 +174,15 @@ namespace NineGrid.Core
                     .WithCard(TargetUid)
                     .WithAmount(modifiedAmount)
                     .WithDelta(healed)
-                    .WithRemaining(newHp, (int)Math.Round(target.Stats.GetBase(StatId.Armor))))
+                    .WithRemaining(newHp, (int)Math.Round(target.Stats.GetBase(StatId.Armor)))
+                    .WithSource(SourceDefId, Cause))
                 .AddEvent(new CoreGameEvent(CoreEventType.HpChanged, context.ActionId, ActionName)
                     .WithActor(ActorUid)
                     .WithTarget(TargetUid)
                     .WithCard(TargetUid)
                     .WithDelta(healed)
-                    .WithRemaining(newHp, (int)Math.Round(target.Stats.GetBase(StatId.Armor))));
+                    .WithRemaining(newHp, (int)Math.Round(target.Stats.GetBase(StatId.Armor)))
+                    .WithSource(SourceDefId, Cause));
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
@@ -186,14 +199,18 @@ namespace NineGrid.Core
             TriggerPoint.OnArmorGained
         };
 
-        public GainArmorAction(int targetUid, int amount)
+        public GainArmorAction(int targetUid, int amount, string sourceDefId = null, string cause = null)
         {
             TargetUid = targetUid;
             Amount = amount;
+            SourceDefId = sourceDefId ?? string.Empty;
+            Cause = cause ?? string.Empty;
         }
 
         public int TargetUid { get; private set; }
         public int Amount { get; private set; }
+        public string SourceDefId { get; private set; }
+        public string Cause { get; private set; }
         public override string ActionName { get { return "GainArmor"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -209,7 +226,8 @@ namespace NineGrid.Core
                     .WithTarget(TargetUid)
                     .WithCard(TargetUid)
                     .WithDelta(delta)
-                    .WithRemaining((int)Math.Round(target.Stats.GetBase(StatId.Hp)), newArmor));
+                    .WithRemaining((int)Math.Round(target.Stats.GetBase(StatId.Hp)), newArmor)
+                    .WithSource(SourceDefId, Cause));
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
@@ -226,14 +244,16 @@ namespace NineGrid.Core
             TriggerPoint.OnGoldChanged
         };
 
-        public ModifyGoldAction(int delta, string reason)
+        public ModifyGoldAction(int delta, string reason, string sourceDefId = null)
         {
             Delta = delta;
             Reason = reason ?? string.Empty;
+            SourceDefId = sourceDefId ?? string.Empty;
         }
 
         public int Delta { get; private set; }
         public string Reason { get; private set; }
+        public string SourceDefId { get; private set; }
         public override string ActionName { get { return "ModifyGold"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -245,7 +265,8 @@ namespace NineGrid.Core
                 .AddEvent(new CoreGameEvent(CoreEventType.GoldModified, context.ActionId, ActionName)
                     .WithDelta(Delta)
                     .WithAmount(player.Coins.Value)
-                    .WithMessage(Reason));
+                    .WithMessage(Reason)
+                    .WithSource(SourceDefId, Reason));
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
@@ -262,16 +283,18 @@ namespace NineGrid.Core
             TriggerPoint.OnRemove
         };
 
-        public RemoveCardAction(int cardUid, ZoneId destinationZone, string reason)
+        public RemoveCardAction(int cardUid, ZoneId destinationZone, string reason, string sourceDefId = null)
         {
             CardUid = cardUid;
             DestinationZone = destinationZone;
             Reason = reason ?? string.Empty;
+            SourceDefId = sourceDefId ?? string.Empty;
         }
 
         public int CardUid { get; private set; }
         public ZoneId DestinationZone { get; private set; }
         public string Reason { get; private set; }
+        public string SourceDefId { get; private set; }
         public override string ActionName { get { return "RemoveCard"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -291,7 +314,8 @@ namespace NineGrid.Core
                 .AddEvent(new CoreGameEvent(CoreEventType.CardRemoved, context.ActionId, ActionName)
                     .WithCard(CardUid)
                     .WithSlots(fromSlot, SlotId.None)
-                    .WithMessage(Reason));
+                    .WithMessage(Reason)
+                    .WithSource(SourceDefId, Reason));
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)

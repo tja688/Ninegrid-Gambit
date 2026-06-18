@@ -483,6 +483,48 @@ namespace NineGrid.Content
                     "{\"atom\":\"OnCumulative\",\"metric\":\"armorLost\",\"threshold\":10}", "{\"atom\":\"Player\"}",
                     "{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_man\",\"kind\":\"Monster\",\"count\":1,\"top\":false}"),
                 "每累计损失满10点护甲，将一张石人军团怪物洗入战斗卡组"));
+
+            c.AddEffect(Impl("skill.learning_growth.gain", EffectContainerType.MonsterSkill,
+                Triggered("skill.learning_growth.gain", "MonsterSkill",
+                    "{\"atom\":\"OnEvent\"}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"skill.learning_growth\"}",
+                    "[{\"atom\":\"EventFilter\",\"eventTypes\":[\"BaseStatModified\",\"EffectModifierApplied\"],\"stat\":\"Attack\",\"minDelta\":1,\"targetKind\":\"Monster\",\"targetNot\":\"Self\",\"excludeSourceDefId\":\"skill.learning_growth\"}]"),
+                "每当其他怪物卡获得攻击时，本卡攻击+1，且不响应学习成长自身产生的攻击增加"));
+
+            c.AddEffect(Impl("skill.intense_burning.flame_deal", EffectContainerType.MonsterSkill,
+                Triggered("skill.intense_burning.flame_deal", "MonsterSkill",
+                    "{\"atom\":\"OnDeal\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"ShuffleInto\",\"defId\":\"help.flame\",\"kind\":\"HelpCard\",\"count\":1,\"top\":false}",
+                    "[{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"sourceDefId\":\"help.flame\",\"excludeCause\":\"skill.intense_burning\"}]"),
+                "每有一张烈焰加入战斗卡组，额外加入一张；额外加入的烈焰不再触发本效果"));
+
+            c.AddEffect(Impl("skill.violence_maniac.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.violence_maniac.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":2}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"skill.violence_maniac\",\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]}},"
+                    + "{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"skill.violence_maniac\",\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"Board\",\"adjacentTo\":\"Self\"}}"
+                    + "]}"),
+                "每移动2次，移除相邻格子上的怪物卡和帮助卡"));
+
+            c.AddEffect(Impl("skill.violence_nutrition.monster_remove", EffectContainerType.MonsterSkill,
+                Triggered("skill.violence_nutrition.monster_remove", "MonsterSkill",
+                    "{\"atom\":\"OnRemove\"}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":3,\"reason\":\"skill.violence_nutrition\"}",
+                    "[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"sourceDefId\":\"skill.violence_maniac\",\"targetKind\":\"Monster\"}]"),
+                "每依靠暴力狂移除一张怪物卡，本卡攻击+3"));
+
+            c.AddEffect(Impl("skill.violence_nutrition.help_remove", EffectContainerType.MonsterSkill,
+                Triggered("skill.violence_nutrition.help_remove", "MonsterSkill",
+                    "{\"atom\":\"OnRemove\"}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":5,\"reason\":\"skill.violence_nutrition\"}",
+                    "[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"sourceDefId\":\"skill.violence_maniac\",\"targetKind\":\"HelpCard\"}]"),
+                "每依靠暴力狂移除一张帮助卡，本卡护甲+5"));
         }
 
         private static void AddHelpCards(GameContentCatalog c)
@@ -563,7 +605,7 @@ namespace NineGrid.Content
             Skill(c, "skill.stray_cub", "流浪幼崽", EffectContainerType.MonsterSkill, "格6攻击+2并获得先攻").AddEffect("skill.stray_cub.slot6").AddEffect("skill.stray_cub.first_strike");
             Skill(c, "skill.thief_claims", "东西归我了！", EffectContainerType.MonsterSkill, "每移动3次移除相邻帮助卡").AddEffect("skill.thief_claims.move");
             Skill(c, "skill.monster_battle_hardened", "历战怪物", EffectContainerType.MonsterSkill, "战斗时本卡攻击+2").AddEffect("skill.monster_battle_hardened.battle");
-            Skill(c, "skill.learning_growth", "学习成长", EffectContainerType.MonsterSkill, "其他怪物获得攻击时本卡攻击+1").AddEffect(Pending(c, "skill.learning_growth.pending", EffectContainerType.MonsterSkill, "监听其他怪物攻击增加"));
+            Skill(c, "skill.learning_growth", "学习成长", EffectContainerType.MonsterSkill, "其他怪物获得攻击时本卡攻击+1").AddEffect("skill.learning_growth.gain");
             Skill(c, "skill.survival_wisdom", "生存智慧", EffectContainerType.MonsterSkill, "战斗时恢复1且攻击+1").AddEffect("skill.survival_wisdom.battle");
             Skill(c, "skill.devotion", "献身", EffectContainerType.MonsterSkill, "被移除时加入烈焰").AddEffect("skill.devotion.remove");
             Skill(c, "skill.love_fire", "恋火", EffectContainerType.MonsterSkill, "有烈焰时攻击+4").AddEffect("skill.love_fire.aura");
@@ -603,7 +645,7 @@ namespace NineGrid.Content
             PendingSkill(c, "skill.stocking", "进货");
             PendingSkill(c, "skill.orc_tactics", "兽人战术");
             PendingSkill(c, "skill.fight_me", "和我打！");
-            PendingSkill(c, "skill.intense_burning", "剧烈燃烧");
+            Skill(c, "skill.intense_burning", "剧烈燃烧", EffectContainerType.MonsterSkill, "每有一张烈焰加入战斗卡组，额外加入一张且不递归").AddEffect("skill.intense_burning.flame_deal");
             PendingSkill(c, "skill.stone_growth", "石增长");
             PendingSkill(c, "skill.stone_shelter", "石庇护");
             PendingSkill(c, "skill.fracture_fall_apart", "折损散架");
@@ -615,8 +657,8 @@ namespace NineGrid.Content
             PendingSkill(c, "skill.absorb_stone", "吸石");
             PendingSkill(c, "skill.guide", "引路");
             PendingSkill(c, "skill.find_weakness", "发现弱点");
-            PendingSkill(c, "skill.violence_maniac", "暴力狂");
-            PendingSkill(c, "skill.violence_nutrition", "暴力即养分");
+            Skill(c, "skill.violence_maniac", "暴力狂", EffectContainerType.MonsterSkill, "每移动2次，移除相邻格子上的怪物卡和帮助卡").AddEffect("skill.violence_maniac.move");
+            Skill(c, "skill.violence_nutrition", "暴力即养分", EffectContainerType.MonsterSkill, "依靠暴力狂移除怪物得攻击，移除帮助卡得护甲").AddEffect("skill.violence_nutrition.monster_remove").AddEffect("skill.violence_nutrition.help_remove");
             PendingSkill(c, "skill.absorb_bone", "吸骨");
             PendingSkill(c, "skill.mixed_bones", "混合骨头");
             Skill(c, "skill.first_strike", "先攻", EffectContainerType.MonsterSkill, "持有先攻技能").AddEffect("skill.first_strike.rule");
