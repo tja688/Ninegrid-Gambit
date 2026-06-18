@@ -149,8 +149,7 @@ namespace NineGrid.Core.Systems
 
             if (!string.IsNullOrEmpty(room.RewardPoolId))
             {
-                var poolChoices = RollPool(room.RewardPoolId);
-                pipeline.Enqueue(new OfferRewardChoiceAction(room.RewardPoolId, poolChoices.Count));
+                pipeline.Enqueue(new OfferRewardChoiceAction(room.RewardPoolId, 0));
             }
 
             if (room.ShopOfferCount > 0)

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Text;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 
@@ -96,10 +98,34 @@ namespace NineGrid.Core
 
         public override GameActionResult Apply(GameActionContext context)
         {
+            var offered = context.GetSystem<IRewardSystem>().RollPool(PoolId);
+            var amount = offered.Count > 0 ? offered.Count : OptionCount;
+            var message = offered.Count > 0 ? FormatOfferedRewards(PoolId, offered) : PoolId;
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.RewardOffered, context.ActionId, ActionName)
-                    .WithAmount(OptionCount)
-                    .WithMessage(PoolId));
+                    .WithAmount(amount)
+                    .WithMessage(message));
+        }
+
+        private static string FormatOfferedRewards(string poolId, IReadOnlyList<RewardEntry> offered)
+        {
+            var builder = new StringBuilder(poolId ?? string.Empty);
+            builder.Append("|");
+            for (var i = 0; i < offered.Count; i++)
+            {
+                if (i > 0)
+                {
+                    builder.Append(",");
+                }
+
+                builder.Append(offered[i].DefId);
+                builder.Append(":");
+                builder.Append(offered[i].Kind);
+                builder.Append(":");
+                builder.Append(offered[i].Count);
+            }
+
+            return builder.ToString();
         }
     }
 

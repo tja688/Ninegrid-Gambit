@@ -844,6 +844,38 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    [EffectAtom("CardCounter", EffectAtomKind.Condition)]
+    public sealed class CardCounterEffectCondition : ICondition
+    {
+        private string mTargetRef = "EventCard";
+        private string mKey = string.Empty;
+        private int mMin = 1;
+
+        public void Configure(EffectDslNode config)
+        {
+            mTargetRef = config.Get("target").AsString("EventCard");
+            mKey = config.Get("key").AsString(string.Empty);
+            mMin = Math.Max(1, config.Get("min").AsInt(1));
+        }
+
+        public bool IsMet(EffectRuntimeContext context)
+        {
+            if (string.IsNullOrEmpty(mKey))
+            {
+                return false;
+            }
+
+            var uid = TargetResolver.ResolveSingleCardRef(context, mTargetRef);
+            CardInstance card;
+            return context.TryGetCard(uid, out card) && card.Counters.Get(mKey) >= mMin;
+        }
+
+        public IStatCondition CreateStatCondition(EffectBuildContext context)
+        {
+            return null;
+        }
+    }
+
     [EffectAtom("OwnsRelicSet", EffectAtomKind.Condition)]
     public sealed class OwnsRelicSetEffectCondition : ICondition
     {
@@ -1185,6 +1217,24 @@ namespace NineGrid.Core.Effects
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
         {
             return new[] { new ModifyGoldAction(mDelta, mReason) };
+        }
+    }
+
+    [EffectAtom("OfferRewardChoice", EffectAtomKind.Action)]
+    public sealed class OfferRewardChoiceEffectAction : IAction
+    {
+        private string mPoolId = string.Empty;
+        private int mOptionCount;
+
+        public void Configure(EffectDslNode config)
+        {
+            mPoolId = config.Get("poolId").AsString(string.Empty);
+            mOptionCount = Math.Max(0, config.Get("optionCount").AsInt(0));
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            return new[] { new OfferRewardChoiceAction(mPoolId, mOptionCount) };
         }
     }
 

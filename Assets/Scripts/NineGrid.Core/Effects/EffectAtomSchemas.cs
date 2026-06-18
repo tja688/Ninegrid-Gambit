@@ -217,6 +217,11 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.condition.hasCard", path + " requires defId, kind, or zone for HasCard.");
                 }
 
+                if (Same(atom, "CardCounter") && !node.Has("key"))
+                {
+                    result.Add("schema.condition.key", path + ".key is required for CardCounter.");
+                }
+
                 if (Same(atom, "AdjacentHasCard") && !node.Has("defId"))
                 {
                     result.Add("schema.condition.defId", path + ".defId is required for AdjacentHasCard.");
@@ -275,6 +280,10 @@ namespace NineGrid.Core.Effects
             else if (Same(atom, "ModifyGold") && !node.Has("delta"))
             {
                 result.Add("schema.action.delta", path + ".delta is required for ModifyGold.");
+            }
+            else if (Same(atom, "OfferRewardChoice") && !node.Has("poolId"))
+            {
+                result.Add("schema.action.poolId", path + ".poolId is required for OfferRewardChoice.");
             }
             else if (Same(atom, "ShuffleInto") || Same(atom, "Spawn"))
             {
@@ -358,6 +367,11 @@ namespace NineGrid.Core.Effects
                     {
                         result.Add("schema.range.pct", path + ".pct must be in (0, 1].");
                     }
+                }
+
+                if (Same(atom, "CardCounter") && node.Has("min") && node.Get("min").AsInt(1) < 1)
+                {
+                    result.Add("schema.range.min", path + ".min must be >= 1.");
                 }
 
                 return;

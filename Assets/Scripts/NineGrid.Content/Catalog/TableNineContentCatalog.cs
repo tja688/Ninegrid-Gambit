@@ -97,6 +97,24 @@ namespace NineGrid.Content
                     "{\"atom\":\"Player\"}",
                     "{\"atom\":\"ModifyGold\",\"delta\":50,\"reason\":\"goldCard\"}"),
                 "[使用时] 为玩家提供50金币"));
+            c.AddEffect(Impl("help.common_chest_card.use", EffectContainerType.HelpCard,
+                Triggered("help.common_chest_card.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"OfferRewardChoice\",\"poolId\":\"relic.common_chest\"}"),
+                "[使用时] 从三个遗物中选择一个获得"));
+            c.AddEffect(Impl("help.blue_chest_card.use", EffectContainerType.HelpCard,
+                Triggered("help.blue_chest_card.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"OfferRewardChoice\",\"poolId\":\"relic.blue_chest\"}"),
+                "[使用时] 从三个遗物中选择一个获得"));
+            c.AddEffect(Impl("help.golden_chest_card.use", EffectContainerType.HelpCard,
+                Triggered("help.golden_chest_card.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"OfferRewardChoice\",\"poolId\":\"relic.golden_chest\"}"),
+                "[使用时] 从三个遗物中选择一个获得"));
 
             c.AddEffect(Impl("help.flame.use", EffectContainerType.HelpCard,
                 Triggered("help.flame.use", "HelpCard",
@@ -146,6 +164,20 @@ namespace NineGrid.Content
                     "{\"atom\":\"Player\"}",
                     "{\"atom\":\"ModifyGold\",\"delta\":2,\"reason\":\"goldKnife\"}"),
                 "[击杀怪物时] 获得2金币"));
+            c.AddEffect(Impl("relic.lucky_coin.elite_kill", EffectContainerType.Relic,
+                Triggered("relic.lucky_coin.elite_kill", "Relic",
+                    "{\"atom\":\"OnKill\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"ShuffleInto\",\"defId\":\"help.gold_card\",\"kind\":\"HelpCard\",\"count\":1,\"top\":false}",
+                    "[{\"atom\":\"CardCounter\",\"target\":\"EventCard\",\"key\":\"elite\"}]"),
+                "[击杀精英时] 将一张金币卡加入战斗卡组"));
+            c.AddEffect(Impl("relic.lucky_coin.boss_kill", EffectContainerType.Relic,
+                Triggered("relic.lucky_coin.boss_kill", "Relic",
+                    "{\"atom\":\"OnKill\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"ShuffleInto\",\"defId\":\"help.gold_card\",\"kind\":\"HelpCard\",\"count\":1,\"top\":false}",
+                    "[{\"atom\":\"CardCounter\",\"target\":\"EventCard\",\"key\":\"boss\"}]"),
+                "[击杀层主时] 将一张金币卡加入战斗卡组"));
 
             c.AddEffect(Impl("relic.vitality_amulet.node_end", EffectContainerType.Relic,
                 Triggered("relic.vitality_amulet.node_end", "Relic",
@@ -229,6 +261,12 @@ namespace NineGrid.Content
                     + "{\"weight\":1,\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.bomb\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\"}},"
                     + "{\"weight\":1,\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.armor_breaking_hammer\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\"}}]}"),
                 "[每关卡结束时] 加入飞刀/爆弹/破击锤之一"));
+            c.AddEffect(Impl("skill.easy_road.node_end", EffectContainerType.PlayerSkill,
+                Triggered("skill.easy_road.node_end", "PlayerSkill",
+                    "{\"atom\":\"OnNodeEnd\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"OfferRewardChoice\",\"poolId\":\"help.white.choice\"}"),
+                "[每关卡结束时] 进行一次白色帮助卡三选一"));
             c.AddEffect(Impl("skill.tower_child.node_start", EffectContainerType.PlayerSkill,
                 Triggered("skill.tower_child.node_start", "PlayerSkill",
                     "{\"atom\":\"OnNodeStart\"}",
@@ -444,16 +482,16 @@ namespace NineGrid.Content
             Help(c, "help.blood_conversion", "血液转换", ContentRarity.White, 50, "特殊").AddEffect(Pending(c, "help.blood_conversion.pending", EffectContainerType.HelpCard, "扣除5点血量上限并随机获得奖励"));
             Help(c, "help.gold_card", "金币卡", ContentRarity.Blue, 30, "经济").AddEffect("help.gold_card.use");
             Help(c, "help.food_card", "食品卡", ContentRarity.Blue, 50, "恢复").AddEffect("help.food_card.use");
-            Help(c, "help.common_chest_card", "普通宝箱卡", ContentRarity.Blue, 100, "经济").AddEffect(Pending(c, "help.common_chest_card.pending", EffectContainerType.HelpCard, "从三个遗物中选择一个获得"));
+            Help(c, "help.common_chest_card", "普通宝箱卡", ContentRarity.Blue, 100, "经济").AddEffect("help.common_chest_card.use");
             Help(c, "help.healing_spring", "治疗泉", ContentRarity.Blue, 80, "恢复").AddEffect(Pending(c, "help.healing_spring.pending", EffectContainerType.HelpCard, "多区域恢复效果"));
             Help(c, "help.impact_tutorial", "撞击教程", ContentRarity.Blue, 80, "血量").AddEffect("help.impact_tutorial.use");
             Help(c, "help.shield_bash_tutorial", "盾击教程", ContentRarity.Blue, 80, "护甲").AddEffect("help.shield_bash_tutorial.use");
             Help(c, "help.kidnapping", "绑票", ContentRarity.Blue, 100, "护甲").AddEffect(Pending(c, "help.kidnapping.pending", EffectContainerType.HelpCard, "移除非精英非层主怪物并获得等同于护甲的护甲"));
-            Help(c, "help.blue_chest_card", "蓝色宝箱卡", ContentRarity.Gold, 150, "经济").AddEffect(Pending(c, "help.blue_chest_card.pending", EffectContainerType.HelpCard, "从三个遗物中选择一个获得"));
+            Help(c, "help.blue_chest_card", "蓝色宝箱卡", ContentRarity.Gold, 150, "经济").AddEffect("help.blue_chest_card.use");
             Help(c, "help.watchtower", "瞭望塔", ContentRarity.Gold, 150, "直伤").AddEffect(Pending(c, "help.watchtower.pending", EffectContainerType.HelpCard, "场上/道具牌格随机伤害"));
             Help(c, "help.doubling_tower", "倍增塔", ContentRarity.Gold, 150, "特殊").AddEffect(Pending(c, "help.doubling_tower.pending", EffectContainerType.HelpCard, "帮助卡触发两次"));
             Help(c, "help.stat_boost_card", "属性提升卡", ContentRarity.Gold, 100, "特殊").AddEffect(Pending(c, "help.stat_boost_card.pending", EffectContainerType.HelpCard, "选择攻击/护甲/血量提升"));
-            Help(c, "help.golden_chest_card", "金色宝箱卡", ContentRarity.Red, 400, "特殊").AddEffect(Pending(c, "help.golden_chest_card.pending", EffectContainerType.HelpCard, "从三个遗物中选择一个获得"));
+            Help(c, "help.golden_chest_card", "金色宝箱卡", ContentRarity.Red, 400, "特殊").AddEffect("help.golden_chest_card.use");
             Help(c, "help.flame", "烈焰", ContentRarity.Red, 400, "特殊").AddEffect("help.flame.use");
         }
 
@@ -463,7 +501,7 @@ namespace NineGrid.Content
             Relic(c, "relic.wood_shield", "木盾", ContentRarity.White, "基础护甲+1，木套装额外+2").AddEffect("relic.wood_shield.base").AddEffect("relic.wood_shield.set");
             Relic(c, "relic.wood_sword", "木剑", ContentRarity.White, "攻击+1，木套装额外+2").AddEffect("relic.wood_sword.base").AddEffect("relic.wood_sword.set");
             Relic(c, "relic.wood_armor", "木甲", ContentRarity.White, "血量上限+2，木套装额外+8").AddEffect("relic.wood_armor.base").AddEffect("relic.wood_armor.set");
-            Relic(c, "relic.lucky_coin", "幸运硬币", ContentRarity.White, "击杀精英/层主时加入金币卡").AddEffect(Pending(c, "relic.lucky_coin.pending", EffectContainerType.Relic, "精英/Boss 击杀额外金币卡"));
+            Relic(c, "relic.lucky_coin", "幸运硬币", ContentRarity.White, "击杀精英/层主时加入金币卡").AddEffect("relic.lucky_coin.elite_kill").AddEffect("relic.lucky_coin.boss_kill");
             Relic(c, "relic.throwing_knife_bag", "飞刀袋", ContentRarity.White, "每关卡开始加入两张飞刀").AddEffect("relic.throwing_knife_bag.node_start");
             Relic(c, "relic.potion_bag", "药水袋", ContentRarity.White, "每关卡开始加入两张恢复药水").AddEffect("relic.potion_bag.node_start");
             Relic(c, "relic.junk_launcher", "废物发射器", ContentRarity.White, "使用帮助卡时随机伤害").AddEffect("relic.junk_launcher.use");
@@ -495,7 +533,7 @@ namespace NineGrid.Content
             Skill(c, "skill.tower_child", "塔之子", EffectContainerType.PlayerSkill, "关卡开始放入倍增塔")
                 .AddEffect("skill.tower_child.node_start");
             Skill(c, "skill.easy_road", "轻车熟路", EffectContainerType.PlayerSkill, "关卡结束白色帮助卡三选一")
-                .AddEffect(Pending(c, "skill.easy_road.pending", EffectContainerType.PlayerSkill, "白色帮助卡三选一奖励"));
+                .AddEffect("skill.easy_road.node_end");
         }
 
         private static void AddMonsterSkills(GameContentCatalog c)
@@ -656,10 +694,26 @@ namespace NineGrid.Content
                     .Add("help.sturdy_shield", CardKind.HelpCard, 20)
                     .Add("help.bomb", CardKind.HelpCard, 8)
                     .Add("help.gold_card", CardKind.HelpCard, 5))
+                .AddPool(new RewardPoolDefinition("help.white.choice", 3)
+                    .Add("help.healing_potion", CardKind.HelpCard, 20)
+                    .Add("help.ward_magic_card", CardKind.HelpCard, 20)
+                    .Add("help.throwing_knife", CardKind.HelpCard, 20)
+                    .Add("help.fireball", CardKind.HelpCard, 20)
+                    .Add("help.rotation_wheel", CardKind.HelpCard, 20)
+                    .Add("help.bomb", CardKind.HelpCard, 8)
+                    .Add("help.sturdy_shield", CardKind.HelpCard, 20))
                 .AddPool(new RewardPoolDefinition("relic.common_chest", 3)
                     .Add("relic.wood_shield", CardKind.Relic, 65)
                     .Add("relic.vitality_amulet", CardKind.Relic, 30)
                     .Add("relic.dragon_scale_armor", CardKind.Relic, 5))
+                .AddPool(new RewardPoolDefinition("relic.blue_chest", 3)
+                    .Add("relic.wood_shield", CardKind.Relic, 40)
+                    .Add("relic.vitality_amulet", CardKind.Relic, 50)
+                    .Add("relic.dragon_scale_armor", CardKind.Relic, 10))
+                .AddPool(new RewardPoolDefinition("relic.golden_chest", 3)
+                    .Add("relic.vitality_amulet", CardKind.Relic, 50)
+                    .Add("relic.dragon_scale_armor", CardKind.Relic, 50)
+                    .Add("relic.phoenix_feather", CardKind.Relic, 50))
                 .AddRoom(new RoomDefinition(RoomKind.Shop, "商店") { Weight = 25, ShopOfferCount = 6 })
                 .AddRoom(new RoomDefinition(RoomKind.Gold, "金币房") { Weight = 20, GoldDelta = 50 })
                 .AddRoom(new RoomDefinition(RoomKind.Treasure, "宝箱房") { Weight = 20, RewardPoolId = "relic.common_chest" })

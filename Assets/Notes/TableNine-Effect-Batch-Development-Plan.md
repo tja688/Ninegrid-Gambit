@@ -338,7 +338,51 @@ MonsterSkill pending, 46:
 
 下一批建议：继续批次4 后续小批，优先做 `skill.taunt.pending` 的交互合法性规则；如果想换能力簇，则进入批次5 处理宝箱/奖励/选择动作。
 
-## 5. 当前事实基线
+## 5. 批次5落地记录（2026-06-18）
+
+目标：实现奖励、选择、内容动作的最小可验闭环，让效果 DSL 能产出确定性的奖励候选事件，并转换宝箱/轻车熟路/幸运硬币。
+
+本批新增能力：
+
+- 新增 `OfferRewardChoice` action atom：Triggered 效果可以通过 `poolId` 请求奖励候选，不引入 UI 依赖。
+- `OfferRewardChoiceAction` 执行时通过 `RewardSystem.RollPool` 抽取候选，并在 `RewardOffered` 事件 `Message` 中记录 `poolId|defId:kind:count` 列表。
+- 新增 `CardCounter` condition：可检查 `EventCard` 或指定目标卡的 counter，例如 `elite` / `boss` 标记。
+- `EffectAtomSchemas` 增加 `OfferRewardChoice.poolId`、`CardCounter.key`、`CardCounter.min` 校验。
+- 新增奖励池 `help.white.choice`、`relic.blue_chest`、`relic.golden_chest`，保留 `relic.common_chest` 作为普通宝箱池。
+
+本批转换：
+
+- `help.common_chest_card.use`：HelpCard / Triggered / `[使用时]`，提供 `relic.common_chest` 三选一。
+- `help.blue_chest_card.use`：HelpCard / Triggered / `[使用时]`，提供 `relic.blue_chest` 三选一。
+- `help.golden_chest_card.use`：HelpCard / Triggered / `[使用时]`，提供 `relic.golden_chest` 三选一。
+- `skill.easy_road.node_end`：PlayerSkill / Triggered / `OnNodeEnd`，提供 `help.white.choice` 白色帮助卡三选一。
+- `relic.lucky_coin.elite_kill`：Relic / Triggered / `OnKill + EventCard.elite`，洗入 1 张 `help.gold_card`。
+- `relic.lucky_coin.boss_kill`：Relic / Triggered / `OnKill + EventCard.boss`，洗入 1 张 `help.gold_card`。
+
+刻意延后：
+
+- `help.blood_conversion.pending` 仍保持 pending。它需要扣除 MaxHp、四路随机奖励、随机遗物发放的组合语义；当前批次只签收“奖励候选事件”和击杀奖励内容动作。
+
+批次5后数量：
+
+| 项目 | 数量 |
+|:--|--:|
+| hardcoded implemented effects | 69 |
+| hardcoded explicit pending effects | 20 |
+| pending monster skill placeholder effects | 36 |
+| runtime pending effects | 56 |
+| runtime total effects | 125 |
+
+验证记录：
+
+- Unity MCP refresh/compile：通过，Console 无编译错误；Unity Test Framework 写入 TestResults.xml 产生 1 条保存结果提示。
+- `P5EffectSystemTests` + `P6ContentLandingTests`：36/36 通过。
+- `NineGrid.Core.Tests` EditMode 全量：70/70 通过。
+- `Assets/Notes/CI/check-core-guards.ps1`：通过。
+
+下一批建议：继续批次5 后续小批，补 `help.blood_conversion.pending` 所需的随机奖励/授予内容动作；或切到批次6，处理 `skill.thorn_skin.pending`、来源标签与递归保护。
+
+## 6. 当前事实基线
 
 ### 已经可靠的地基
 
@@ -350,11 +394,11 @@ MonsterSkill pending, 46:
 ### 当前还没签收的部分
 
 - `TableNineContentCatalog.cs` 仍是主要内容真源，Luban 只是最小样例，不是生产内容源。
-- hardcoded catalog 预计有 63 个 implemented effect、61 个 pending effect，R4 远未清零。
+- hardcoded catalog 预计有 69 个 implemented effect、56 个 pending effect，R4 远未清零。
 - 设计文档里效果总量更大：帮助卡 22 条、遗物 58 条、玩家技能 7 条、怪物技能 81 条。hardcoded catalog 覆盖了帮助卡和玩家技能的大部分，但遗物和怪物技能仍是子集/原型。
 - R5 的全内容回放网、pending 闸门、Luban 全量迁移闸门还没有完成。
 
-## 6. 核心判断
+## 7. 核心判断
 
 不要按“帮助卡 -> 遗物 -> 玩家技能 -> 怪物技能”硬推进。那会把同一种能力重复拆开，越做越乱。
 
@@ -366,7 +410,7 @@ MonsterSkill pending, 46:
 4. 每批都用 schema + catalog DSL + 行为测试证明。
 5. 最后再全量迁表、pending 清零、CI 卡死。
 
-## 7. 效果分类准则
+## 8. 效果分类准则
 
 每条效果先归入三态之一：
 
@@ -378,7 +422,7 @@ MonsterSkill pending, 46:
 
 不要把“规则改写”伪装成属性，不要把“动态数值”做成一堆专属 action，不要靠“记得减回去”处理临时效果。
 
-## 8. 批次规划
+## 9. 批次规划
 
 ### 批次0：事实重置
 
@@ -465,7 +509,7 @@ MonsterSkill pending, 46:
 - 激活、触发、失活、清理全部有测试。
 - 不叠加/一次性/跨节点保留等生命周期边界明确。
 
-### 批次5：奖励、选择、内容动作
+### 批次5：奖励、选择、内容动作（首个小闭环已落地）
 
 目标：把宝箱、导师、奖励、获得遗物/技能/帮助卡这类内容动作接进 DSL。
 
@@ -528,15 +572,15 @@ MonsterSkill pending, 46:
 - 增加 hardcoded/Luban parity 测试。
 - pending 闸门逐步从“允许存在”变成“不允许增加”，最终变成 `pending == 0`。
 
-## 9. 推荐下一步
+## 10. 推荐下一步
 
 下一次如果要直接进入实现，建议从：
 
 1. **继续批次4 后续小批**：做 `skill.taunt.pending` 的交互合法性规则，或做 `relic.gold_armor.pending` 的金币抵伤。
-2. **落地批次5**：接奖励/选择/内容动作，处理宝箱卡、血液转换、轻车熟路、幸运硬币。
+2. **继续批次5 后续小批**：处理 `help.blood_conversion.pending` 的随机奖励/授予内容动作。
 3. **落地批次6**：补 cause/source 与递归保护后，再处理 `skill.thorn_skin.pending`、火焰链式等来源敏感效果。
 
-## 10. 给后续 AI 的技能入口
+## 11. 给后续 AI 的技能入口
 
 已创建 Codex skill：
 

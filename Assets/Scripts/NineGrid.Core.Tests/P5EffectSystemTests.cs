@@ -36,6 +36,8 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("FilteredCards"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("AdjacentCard"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("WeightedRandom"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("CardCounter"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("OfferRewardChoice"));
 
             var invalid = effectSystem.ParseJson(
                 "{"
@@ -124,6 +126,23 @@ namespace NineGrid.Core.Tests
             Assert.IsFalse(movementValidation.IsValid);
             AssertHasIssue(movementValidation, "schema.range.count");
             AssertHasIssue(movementValidation, "schema.rotate.direction");
+
+            var badReward = effectSystem.ParseJson(
+                "{"
+                + "\"id\":\"bad.reward\","
+                + "\"typeTag\":\"【类型遗物】\","
+                + "\"containerType\":\"Relic\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnKill\"},"
+                + "\"conditions\":[{\"atom\":\"CardCounter\",\"min\":0}],"
+                + "\"target\":{\"atom\":\"Player\"},"
+                + "\"action\":{\"atom\":\"OfferRewardChoice\"}"
+                + "}");
+            var rewardValidation = effectSystem.Validate(badReward);
+            Assert.IsFalse(rewardValidation.IsValid);
+            AssertHasIssue(rewardValidation, "schema.condition.key");
+            AssertHasIssue(rewardValidation, "schema.range.min");
+            AssertHasIssue(rewardValidation, "schema.action.poolId");
         }
 
         [Test]
@@ -201,7 +220,13 @@ namespace NineGrid.Core.Tests
                 "skill.blessing.rule",
                 "skill.thief_claims.move",
                 "skill.unstable.move",
-                "skill.random_walk.move"
+                "skill.random_walk.move",
+                "help.common_chest_card.use",
+                "help.blue_chest_card.use",
+                "help.golden_chest_card.use",
+                "skill.easy_road.node_end",
+                "relic.lucky_coin.elite_kill",
+                "relic.lucky_coin.boss_kill"
             };
 
             for (var i = 0; i < effectIds.Length; i++)
