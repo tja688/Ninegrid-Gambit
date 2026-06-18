@@ -367,6 +367,11 @@ namespace NineGrid.Core.Effects
                     }
                 }
 
+                if (Same(atom, "FilteredCards") && node.Has("count") && node.Get("count").AsInt(0) < 0)
+                {
+                    result.Add("schema.range.count", path + ".count must be >= 0.");
+                }
+
                 return;
             }
 
@@ -390,6 +395,15 @@ namespace NineGrid.Core.Effects
             if (Same(atom, "Rotate") && node.Has("count") && node.Get("count").AsInt(0) < 0)
             {
                 result.Add("schema.range.count", path + ".count must be >= 0.");
+            }
+
+            if (Same(atom, "Rotate") && node.Has("direction"))
+            {
+                var direction = node.Get("direction").AsString(string.Empty);
+                if (!Same(direction, "Clockwise") && !Same(direction, "CounterClockwise"))
+                {
+                    result.Add("schema.rotate.direction", path + ".direction must be Clockwise or CounterClockwise.");
+                }
             }
         }
 

@@ -278,6 +278,17 @@ namespace NineGrid.Core
             get { return sClockwisePath; }
         }
 
+        public RotateBoardClockwiseAction()
+            : this(true)
+        {
+        }
+
+        public RotateBoardClockwiseAction(bool clockwise)
+        {
+            Clockwise = clockwise;
+        }
+
+        public bool Clockwise { get; private set; }
         public override string ActionName { get { return "RotateBoardClockwise"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -305,7 +316,8 @@ namespace NineGrid.Core
                 }
 
                 var fromSlot = sClockwisePath[i];
-                var toSlot = sClockwisePath[(i + 1) % sClockwisePath.Length];
+                var toIndex = Clockwise ? (i + 1) % sClockwisePath.Length : (i + sClockwisePath.Length - 1) % sClockwisePath.Length;
+                var toSlot = sClockwisePath[toIndex];
                 board.PlaceCard(registry.Get(uids[i]), toSlot);
                 result.AddEvent(new CoreGameEvent(CoreEventType.CardMoved, context.ActionId, ActionName)
                     .WithCard(uids[i])
@@ -313,8 +325,8 @@ namespace NineGrid.Core
             }
 
             result.AddEvent(new CoreGameEvent(CoreEventType.BoardRotated, context.ActionId, ActionName)
-                .WithAmount(1)
-                .WithMessage("clockwise"));
+                .WithAmount(Clockwise ? 1 : -1)
+                .WithMessage(Clockwise ? "clockwise" : "counterClockwise"));
             return result;
         }
 

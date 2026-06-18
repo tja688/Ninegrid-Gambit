@@ -422,6 +422,113 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    [EffectAtom("FilteredCards", EffectAtomKind.Target)]
+    public sealed class FilteredCardsTarget : ITarget
+    {
+        private readonly List<string> mIncludeRefs = new List<string>();
+        private readonly List<string> mExcludeRefs = new List<string>();
+        private CardKind mKind = CardKind.Unknown;
+        private ZoneId mZone = ZoneId.None;
+        private string mAdjacentToRef = string.Empty;
+        private bool mRandom;
+        private int mCount;
+
+        public void Configure(EffectDslNode config)
+        {
+            mKind = config.Get("kind").AsEnum(CardKind.Unknown);
+            mZone = config.Get("zone").AsEnum(ZoneId.None);
+            mAdjacentToRef = config.Get("adjacentTo").AsString(string.Empty);
+            mRandom = config.Get("random").AsBool(false);
+            mCount = Math.Max(0, config.Get("count").AsInt(mRandom ? 1 : 0));
+            AddRefs(config.Get("include"), mIncludeRefs);
+            AddRefs(config.Get("exclude"), mExcludeRefs);
+        }
+
+        public IReadOnlyList<int> Resolve(EffectRuntimeContext context)
+        {
+            var result = new List<int>();
+            for (var i = 0; i < mIncludeRefs.Count; i++)
+            {
+                AddUnique(result, TargetResolver.ResolveSingleCardRef(context, mIncludeRefs[i]));
+            }
+
+            var candidates = TargetResolver.FilteredCards(context, mKind, mZone, mAdjacentToRef, mExcludeRefs);
+            for (var i = candidates.Count - 1; i >= 0; i--)
+            {
+                if (Contains(result, candidates[i]))
+                {
+                    candidates.RemoveAt(i);
+                }
+            }
+
+            if (mRandom)
+            {
+                var take = mCount <= 0 ? 1 : Math.Min(mCount, candidates.Count);
+                for (var i = 0; i < take; i++)
+                {
+                    var index = context.Rng.Range(0, candidates.Count);
+                    AddUnique(result, candidates[index]);
+                    candidates.RemoveAt(index);
+                }
+
+                return result;
+            }
+
+            var limit = mCount <= 0 ? candidates.Count : Math.Min(mCount, candidates.Count);
+            for (var i = 0; i < limit; i++)
+            {
+                AddUnique(result, candidates[i]);
+            }
+
+            return result;
+        }
+
+        private static void AddRefs(EffectDslNode node, List<string> refs)
+        {
+            var values = node.AsArray();
+            if (values.Count > 0)
+            {
+                for (var i = 0; i < values.Count; i++)
+                {
+                    AddRef(refs, values[i].AsString(string.Empty));
+                }
+
+                return;
+            }
+
+            AddRef(refs, node.AsString(string.Empty));
+        }
+
+        private static void AddRef(List<string> refs, string value)
+        {
+            if (!string.IsNullOrEmpty(value))
+            {
+                refs.Add(value);
+            }
+        }
+
+        private static void AddUnique(List<int> values, int uid)
+        {
+            if (uid != 0 && !Contains(values, uid))
+            {
+                values.Add(uid);
+            }
+        }
+
+        private static bool Contains(IReadOnlyList<int> values, int uid)
+        {
+            for (var i = 0; i < values.Count; i++)
+            {
+                if (values[i] == uid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
     [EffectAtom("AllMonsters", EffectAtomKind.Target)]
     public sealed class AllMonstersTarget : ITarget
     {
@@ -1147,10 +1254,15 @@ namespace NineGrid.Core.Effects
     public sealed class RotateEffectAction : IAction
     {
         private int mCount = 1;
+        private bool mClockwise = true;
 
         public void Configure(EffectDslNode config)
         {
             mCount = Math.Max(0, config.Get("count").AsInt(1));
+            mClockwise = !string.Equals(
+                config.Get("direction").AsString("Clockwise"),
+                "CounterClockwise",
+                StringComparison.OrdinalIgnoreCase);
         }
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
@@ -1158,7 +1270,7 @@ namespace NineGrid.Core.Effects
             var result = new List<GameAction>();
             for (var i = 0; i < mCount; i++)
             {
-                result.Add(new RotateBoardClockwiseAction());
+                result.Add(new RotateBoardClockwiseAction(mClockwise));
             }
 
             return result;
@@ -1342,6 +1454,46 @@ namespace NineGrid.Core.Effects
             return result;
         }
 
+        public static List<int> FilteredCards(
+            EffectRuntimeContext context,
+            CardKind kind,
+            ZoneId zone,
+            string adjacentToRef,
+            IReadOnlyList<string> excludeRefs)
+        {
+            var result = new List<int>();
+            if (context == null)
+            {
+                return result;
+            }
+
+            var adjacentToUid = ResolveSingleCardRef(context, adjacentToRef);
+            CardInstance adjacentToCard = null;
+            var requiresAdjacency = !string.IsNullOrEmpty(adjacentToRef);
+            var hasAdjacentOrigin = !requiresAdjacency || context.TryGetCard(adjacentToUid, out adjacentToCard);
+            if (!hasAdjacentOrigin)
+            {
+                return result;
+            }
+
+            if (zone == ZoneId.None || zone == ZoneId.Board)
+            {
+                foreach (var uid in context.Board.BoardCardUids())
+                {
+                    AddIfMatches(context, result, uid, kind, ZoneId.Board, requiresAdjacency, adjacentToCard, excludeRefs);
+                }
+
+                return result;
+            }
+
+            foreach (var pair in context.Registry.Cards)
+            {
+                AddIfMatches(context, result, pair.Key, kind, zone, requiresAdjacency, adjacentToCard, excludeRefs);
+            }
+
+            return result;
+        }
+
         public static int ResolveSingleCardRef(EffectRuntimeContext context, string reference)
         {
             if (context == null)
@@ -1387,6 +1539,48 @@ namespace NineGrid.Core.Effects
             }
 
             return 0;
+        }
+
+        private static void AddIfMatches(
+            EffectRuntimeContext context,
+            List<int> result,
+            int uid,
+            CardKind kind,
+            ZoneId zone,
+            bool requiresAdjacency,
+            CardInstance adjacentToCard,
+            IReadOnlyList<string> excludeRefs)
+        {
+            CardInstance card;
+            if (!context.TryGetCard(uid, out card))
+            {
+                return;
+            }
+
+            if (kind != CardKind.Unknown && card.Kind != kind)
+            {
+                return;
+            }
+
+            if (zone != ZoneId.None && card.Zone.Value != zone)
+            {
+                return;
+            }
+
+            if (requiresAdjacency && (adjacentToCard == null || !card.Slot.Value.IsAdjacentTo(adjacentToCard.Slot.Value)))
+            {
+                return;
+            }
+
+            for (var i = 0; i < excludeRefs.Count; i++)
+            {
+                if (uid == ResolveSingleCardRef(context, excludeRefs[i]))
+                {
+                    return;
+                }
+            }
+
+            result.Add(uid);
         }
 
         public static bool IsSelfRef(string reference)

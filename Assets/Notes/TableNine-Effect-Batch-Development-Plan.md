@@ -251,7 +251,49 @@ MonsterSkill pending, 46:
 
 下一批建议：进入批次3 `Target Filters and Movement Control v1`，补选择/过滤/随机目标能力，再转换 `help.rotation_wheel.pending`、`help.swap_card.pending`、`help.teleport_card.pending`、`skill.thief_claims.pending`、`skill.unstable.pending`、`skill.random_walk.pending` 中的一小组。
 
-## 3. 当前事实基线
+## 3. 批次3落地记录（2026-06-18）
+
+目标：实现目标过滤与移动控制 v1，让目标 atom 能表达“九宫格随机/过滤/相邻/排除自身”这类通用选择，并补齐逆时针旋转。
+
+本批新增能力：
+
+- `FilteredCards` target 支持 `kind`、`zone`、`adjacentTo`、`include`、`exclude`、`random`、`count`。
+- `FilteredCards.random` 走 seeded `IRngUtility`；无候选时返回空目标，不产生副作用。
+- `Rotate` action 增加 `direction`，支持 `Clockwise` / `CounterClockwise`；逆时针仍通过 `GameAction` 产出 `CardMoved` / `BoardRotated` 事件。
+- `EffectAtomSchemas` 增加 `FilteredCards.count` 与 `Rotate.direction` 校验。
+
+本批转换：
+
+- `help.rotation_wheel.use`：HelpCard / Triggered / `[使用时]`，逆时针旋转一次。
+- `skill.thief_claims.move`：MonsterSkill / Triggered / `OnSelfMove every 3`，移除正交相邻帮助卡。
+- `skill.unstable.move`：MonsterSkill / Triggered / `OnSelfMove every 3`，与九宫格随机另一张怪物卡交换。
+- `skill.random_walk.move`：MonsterSkill / Triggered / `OnSelfMove every 3`，与九宫格随机帮助卡交换。
+
+刻意延后：
+
+- `help.swap_card.pending` 仍保持 pending。原文是“选择两张非玩家卡互换位置”，当前 `UseItemAction` 还没有承载玩家选择目标。
+- `help.teleport_card.pending` 仍保持 pending。原文是“选择一张非玩家卡洗回战斗卡组”，同样需要先补可验证的选择目标负载。
+
+批次3后数量：
+
+| 项目 | 数量 |
+|:--|--:|
+| hardcoded implemented effects | 59 |
+| hardcoded explicit pending effects | 27 |
+| pending monster skill placeholder effects | 38 |
+| runtime pending effects | 65 |
+| runtime total effects | 124 |
+
+验证记录：
+
+- Unity MCP refresh/compile：通过，Console 无编译错误。
+- `P5EffectSystemTests` + `P6ContentLandingTests`：30/30 通过。
+- `NineGrid.Core.Tests` EditMode 全量：63/63 通过。
+- `Assets/Notes/CI/check-core-guards.ps1`：通过。
+
+下一批建议：进入批次4 `Lifecycle, Prevention, and Rule Modifiers v1`，优先处理 `help.ward_magic_card.pending`、`relic.gold_armor.pending`、`skill.taunt.pending`、`skill.first_strike.pending`、`skill.blessing.pending`。
+
+## 4. 当前事实基线
 
 ### 已经可靠的地基
 
@@ -263,11 +305,11 @@ MonsterSkill pending, 46:
 ### 当前还没签收的部分
 
 - `TableNineContentCatalog.cs` 仍是主要内容真源，Luban 只是最小样例，不是生产内容源。
-- hardcoded catalog 预计有 55 个 implemented effect、69 个 pending effect，R4 远未清零。
+- hardcoded catalog 预计有 59 个 implemented effect、65 个 pending effect，R4 远未清零。
 - 设计文档里效果总量更大：帮助卡 22 条、遗物 58 条、玩家技能 7 条、怪物技能 81 条。hardcoded catalog 覆盖了帮助卡和玩家技能的大部分，但遗物和怪物技能仍是子集/原型。
 - R5 的全内容回放网、pending 闸门、Luban 全量迁移闸门还没有完成。
 
-## 4. 核心判断
+## 5. 核心判断
 
 不要按“帮助卡 -> 遗物 -> 玩家技能 -> 怪物技能”硬推进。那会把同一种能力重复拆开，越做越乱。
 
@@ -279,7 +321,7 @@ MonsterSkill pending, 46:
 4. 每批都用 schema + catalog DSL + 行为测试证明。
 5. 最后再全量迁表、pending 清零、CI 卡死。
 
-## 5. 效果分类准则
+## 6. 效果分类准则
 
 每条效果先归入三态之一：
 
@@ -291,7 +333,7 @@ MonsterSkill pending, 46:
 
 不要把“规则改写”伪装成属性，不要把“动态数值”做成一堆专属 action，不要靠“记得减回去”处理临时效果。
 
-## 6. 批次规划
+## 7. 批次规划
 
 ### 批次0：事实重置
 
@@ -340,7 +382,7 @@ MonsterSkill pending, 46:
 - schema 能拦住错误表达。
 - 真实 catalog DSL 能执行。
 
-### 批次3：目标过滤与移动控制 v1
+### 批次3：目标过滤与移动控制 v1（已落地）
 
 目标：解决“选择/随机/相邻/非玩家/指定类型目标”和基础位移控制。
 
@@ -441,15 +483,15 @@ MonsterSkill pending, 46:
 - 增加 hardcoded/Luban parity 测试。
 - pending 闸门逐步从“允许存在”变成“不允许增加”，最终变成 `pending == 0`。
 
-## 7. 推荐下一步
+## 8. 推荐下一步
 
 下一次如果要直接进入实现，建议从：
 
-1. **落地批次3**：做目标过滤/移动控制，帮助卡和怪物位移类会明显减少 pending。
-2. **落地批次4**：做生命周期、防伤、规则改写 v1，处理先攻、庇佑、嘲讽等效果。
+1. **落地批次4**：做生命周期、防伤、规则改写 v1，处理先攻、庇佑、嘲讽等效果。
+2. **落地批次5**：接奖励/选择/内容动作，处理宝箱卡、血液转换、轻车熟路、幸运硬币。
 3. **落地批次6**：补 cause/source 与递归保护后，再处理 `skill.thorn_skin.pending`、火焰链式等来源敏感效果。
 
-## 8. 给后续 AI 的技能入口
+## 9. 给后续 AI 的技能入口
 
 已创建 Codex skill：
 

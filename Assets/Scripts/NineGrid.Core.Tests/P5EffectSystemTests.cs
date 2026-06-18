@@ -3,6 +3,7 @@ using NineGrid.Core.Content;
 using NineGrid.Core.Effects;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
+using NineGrid.Core.Utilities;
 using NUnit.Framework;
 using QFramework;
 
@@ -32,6 +33,7 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("OwnsRelicSet"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("AdjacentHasCard"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("RandomMonster"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("FilteredCards"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("AdjacentCard"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("WeightedRandom"));
 
@@ -107,6 +109,21 @@ namespace NineGrid.Core.Tests
             var valueValidation = effectSystem.Validate(badValue);
             Assert.IsFalse(valueValidation.IsValid);
             AssertHasIssue(valueValidation, "schema.value.source");
+
+            var badMovement = effectSystem.ParseJson(
+                "{"
+                + "\"id\":\"bad.movement\","
+                + "\"typeTag\":\"【类型帮助卡】\","
+                + "\"containerType\":\"HelpCard\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"target\":{\"atom\":\"FilteredCards\",\"count\":-1},"
+                + "\"action\":{\"atom\":\"Rotate\",\"direction\":\"Sideways\"}"
+                + "}");
+            var movementValidation = effectSystem.Validate(badMovement);
+            Assert.IsFalse(movementValidation.IsValid);
+            AssertHasIssue(movementValidation, "schema.range.count");
+            AssertHasIssue(movementValidation, "schema.rotate.direction");
         }
 
         [Test]
@@ -176,7 +193,11 @@ namespace NineGrid.Core.Tests
                 "help.fireball.use",
                 "help.food_card.use",
                 "help.impact_tutorial.use",
-                "help.shield_bash_tutorial.use"
+                "help.shield_bash_tutorial.use",
+                "help.rotation_wheel.use",
+                "skill.thief_claims.move",
+                "skill.unstable.move",
+                "skill.random_walk.move"
             };
 
             for (var i = 0; i < effectIds.Length; i++)
@@ -350,6 +371,85 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(16, totalHp);
         }
 
+        [Test]
+        public void FilteredCardsTargetUsesSeededRandomCandidateForSwap()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var rng = architecture.GetUtility<IRngUtility>();
+            rng.SetSeed(20260618UL);
+            var owner = CreateMonster("monster.unstable.test", 10, SlotId.Board(1));
+            var first = CreateMonster("monster.first.candidate", 10, SlotId.Board(2));
+            var second = CreateMonster("monster.second.candidate", 10, SlotId.Board(3));
+            var expectedIndex = new DeterministicRngUtility(20260618UL).Range(0, 2);
+            var expected = expectedIndex == 0 ? first : second;
+            var expectedSlot = expected.Slot.Value;
+
+            var definition = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.filtered.swap\","
+                + "\"typeTag\":\"【类型怪物技能】\","
+                + "\"containerType\":\"MonsterSkill\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},"
+                + "\"target\":{\"atom\":\"FilteredCards\",\"include\":[\"Self\"],\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":1},"
+                + "\"action\":{\"atom\":\"Swap\"}"
+                + "}");
+            Assert.IsTrue(Effects().Validate(definition).IsValid);
+            Effects().Activate(definition, new EffectOwner(EffectContainerType.MonsterSkill, "test.filtered.swap", owner.Uid));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new MoveCardAction(owner.Uid, SlotId.Board(5)));
+
+            Assert.AreEqual(expectedSlot, owner.Slot.Value);
+            Assert.AreEqual(SlotId.Board(5), expected.Slot.Value);
+        }
+
+        [Test]
+        public void FilteredCardsTargetNoCandidateDoesNotEmitSideEffects()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var owner = CreateMonster("monster.thief.test", 10, SlotId.Board(1));
+            var definition = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.filtered.noop\","
+                + "\"typeTag\":\"【类型怪物技能】\","
+                + "\"containerType\":\"MonsterSkill\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},"
+                + "\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"Board\",\"adjacentTo\":\"Self\"},"
+                + "\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\"}"
+                + "}");
+            Assert.IsTrue(Effects().Validate(definition).IsValid);
+            Effects().Activate(definition, new EffectOwner(EffectContainerType.MonsterSkill, "test.filtered.noop", owner.Uid));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new MoveCardAction(owner.Uid, SlotId.Board(2)));
+
+            Assert.IsFalse(architecture.GetSystem<IActionPipelineSystem>().EventLog.Contains(CoreEventType.CardRemoved));
+        }
+
+        [Test]
+        public void RotateAtomSupportsCounterClockwiseMovement()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var monster = CreateMonster("monster.rotate.target", 10, SlotId.Board(1));
+            var definition = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.rotate.counter\","
+                + "\"typeTag\":\"【类型帮助卡】\","
+                + "\"containerType\":\"HelpCard\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"target\":{\"atom\":\"Player\"},"
+                + "\"action\":{\"atom\":\"Rotate\",\"direction\":\"CounterClockwise\"}"
+                + "}");
+            Assert.IsTrue(Effects().Validate(definition).IsValid);
+            Effects().Activate(definition, new EffectOwner(EffectContainerType.HelpCard, "test.rotate.counter", 0));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new UseItemAction(501));
+
+            Assert.AreEqual(SlotId.Board(4), monster.Slot.Value);
+            Assert.IsTrue(HasBoardRotatedEvent(architecture.GetSystem<IActionPipelineSystem>().EventLog, -1, "counterClockwise"));
+        }
+
         private static IEffectSystem Effects()
         {
             return NineGridArchitecture.Current.GetSystem<IEffectSystem>();
@@ -413,6 +513,20 @@ namespace NineGrid.Core.Tests
             for (var i = 0; i < values.Count; i++)
             {
                 if (values[i] == expected)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool HasBoardRotatedEvent(EventLog eventLog, int amount, string message)
+        {
+            for (var i = 0; i < eventLog.Entries.Count; i++)
+            {
+                var entry = eventLog.Entries[i];
+                if (entry.Type == CoreEventType.BoardRotated && entry.Amount == amount && entry.Message == message)
                 {
                     return true;
                 }

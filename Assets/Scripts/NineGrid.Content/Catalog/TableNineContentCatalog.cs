@@ -63,6 +63,13 @@ namespace NineGrid.Content
                     "{\"atom\":\"Heal\",\"value\":{\"op\":\"Subtract\",\"values\":[{\"source\":\"Player\",\"stat\":\"MaxHp\"},{\"source\":\"Player\",\"stat\":\"Hp\"}]},\"actor\":\"Player\"}"),
                 "[使用时] 将玩家卡血量回满"));
 
+            c.AddEffect(Impl("help.rotation_wheel.use", EffectContainerType.HelpCard,
+                Triggered("help.rotation_wheel.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"Rotate\",\"direction\":\"CounterClockwise\"}"),
+                "[使用时] 逆时针旋转一次"));
+
             c.AddEffect(Impl("help.impact_tutorial.use", EffectContainerType.HelpCard,
                 Triggered("help.impact_tutorial.use", "HelpCard",
                     "{\"atom\":\"OnUseHelpCard\"}",
@@ -233,6 +240,12 @@ namespace NineGrid.Content
                     "[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":6}]",
                     "{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Conditional\",\"scope\":\"Permanent\"}"),
                 "[场上] 处于格6时，本卡攻击力+2"));
+            c.AddEffect(Impl("skill.thief_claims.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.thief_claims.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":3}",
+                    "{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"Board\",\"adjacentTo\":\"Self\"}",
+                    "{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"thiefClaims\"}"),
+                "每移动3次，移除正交相邻帮助卡"));
             c.AddEffect(Impl("skill.monster_battle_hardened.battle", EffectContainerType.MonsterSkill,
                 Triggered("skill.monster_battle_hardened.battle", "MonsterSkill",
                     "{\"atom\":\"OnBattle\"}",
@@ -274,6 +287,18 @@ namespace NineGrid.Content
                     "{\"atom\":\"Self\"}",
                     "{\"atom\":\"Rotate\",\"count\":1}"),
                 "每移动3次，旋转一次"));
+            c.AddEffect(Impl("skill.unstable.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.unstable.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":3}",
+                    "{\"atom\":\"FilteredCards\",\"include\":[\"Self\"],\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":1}",
+                    "{\"atom\":\"Swap\"}"),
+                "每移动3次，与九宫格上随机另一张怪物卡交换位置"));
+            c.AddEffect(Impl("skill.random_walk.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.random_walk.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":3}",
+                    "{\"atom\":\"FilteredCards\",\"include\":[\"Self\"],\"kind\":\"HelpCard\",\"zone\":\"Board\",\"random\":true,\"count\":1}",
+                    "{\"atom\":\"Swap\"}"),
+                "每移动3次，与九宫格上随机帮助卡交换位置"));
             c.AddEffect(Impl("skill.give_punch.enter2", EffectContainerType.MonsterSkill,
                 Triggered("skill.give_punch.enter2", "MonsterSkill",
                     "{\"atom\":\"OnEnter\"}", "{\"atom\":\"Player\"}",
@@ -387,7 +412,7 @@ namespace NineGrid.Content
             Help(c, "help.ward_magic_card", "庇佑魔法卡", ContentRarity.White, 20, "护甲").AddEffect(Pending(c, "help.ward_magic_card.pending", EffectContainerType.HelpCard, "下一次玩家受到伤害时，该次伤害变为0"));
             Help(c, "help.throwing_knife", "飞刀", ContentRarity.White, 20, "直伤").AddEffect("help.throwing_knife.use");
             Help(c, "help.fireball", "火球术", ContentRarity.White, 30, "直伤").AddEffect("help.fireball.use");
-            Help(c, "help.rotation_wheel", "旋转轮", ContentRarity.White, 20, "位移").AddEffect(Pending(c, "help.rotation_wheel.pending", EffectContainerType.HelpCard, "逆时针旋转一次"));
+            Help(c, "help.rotation_wheel", "旋转轮", ContentRarity.White, 20, "位移").AddEffect("help.rotation_wheel.use");
             Help(c, "help.brutality_card", "暴力卡", ContentRarity.White, 30, "攻击").AddEffect(Pending(c, "help.brutality_card.pending", EffectContainerType.HelpCard, "玩家当前总攻击翻倍，战斗一次后复原"));
             Help(c, "help.rolling_stone", "滚石", ContentRarity.White, 50, "直伤").AddEffect(Pending(c, "help.rolling_stone.pending", EffectContainerType.HelpCard, "移动到格3时移除格6普通怪物和本卡"));
             Help(c, "help.bomb", "爆弹", ContentRarity.White, 50, "直伤").AddEffect("help.bomb.use");
@@ -457,7 +482,7 @@ namespace NineGrid.Content
         {
             Skill(c, "skill.beggar_bond", "丐帮同心", EffectContainerType.MonsterSkill, "每移动5次洗入乞丐").AddEffect("skill.beggar_bond.move");
             Skill(c, "skill.stray_cub", "流浪幼崽", EffectContainerType.MonsterSkill, "格6攻击+2并获得先攻").AddEffect("skill.stray_cub.slot6").AddEffect(Pending(c, "skill.stray_cub.first_strike", EffectContainerType.MonsterSkill, "先攻技能"));
-            Skill(c, "skill.thief_claims", "东西归我了！", EffectContainerType.MonsterSkill, "每移动3次移除相邻帮助卡").AddEffect(Pending(c, "skill.thief_claims.pending", EffectContainerType.MonsterSkill, "相邻帮助卡目标筛选"));
+            Skill(c, "skill.thief_claims", "东西归我了！", EffectContainerType.MonsterSkill, "每移动3次移除相邻帮助卡").AddEffect("skill.thief_claims.move");
             Skill(c, "skill.monster_battle_hardened", "历战怪物", EffectContainerType.MonsterSkill, "战斗时本卡攻击+2").AddEffect("skill.monster_battle_hardened.battle");
             Skill(c, "skill.learning_growth", "学习成长", EffectContainerType.MonsterSkill, "其他怪物获得攻击时本卡攻击+1").AddEffect(Pending(c, "skill.learning_growth.pending", EffectContainerType.MonsterSkill, "监听其他怪物攻击增加"));
             Skill(c, "skill.survival_wisdom", "生存智慧", EffectContainerType.MonsterSkill, "战斗时恢复1且攻击+1").AddEffect("skill.survival_wisdom.battle");
@@ -470,9 +495,9 @@ namespace NineGrid.Content
             Skill(c, "skill.taunt", "嘲讽", EffectContainerType.MonsterSkill, "相邻时只能与本卡战斗").AddEffect(Pending(c, "skill.taunt.pending", EffectContainerType.MonsterSkill, "交互合法性规则改写"));
             Skill(c, "skill.recombine_head", "重新组合头", EffectContainerType.MonsterSkill, "相邻骷髅头组合").AddEffect("skill.recombine_head.move");
             Skill(c, "skill.recombine_body", "重新组合身", EffectContainerType.MonsterSkill, "相邻无头骷髅组合").AddEffect("skill.recombine_body.move");
-            Skill(c, "skill.unstable", "不稳定", EffectContainerType.MonsterSkill, "每移动3次随机交换怪物").AddEffect(Pending(c, "skill.unstable.pending", EffectContainerType.MonsterSkill, "随机第二目标交换"));
+            Skill(c, "skill.unstable", "不稳定", EffectContainerType.MonsterSkill, "每移动3次随机交换怪物").AddEffect("skill.unstable.move");
             Skill(c, "skill.rotate_lover", "爱好旋转", EffectContainerType.MonsterSkill, "每移动3次旋转").AddEffect("skill.rotate_lover.move");
-            Skill(c, "skill.random_walk", "乱步", EffectContainerType.MonsterSkill, "每移动3次与随机帮助卡交换").AddEffect(Pending(c, "skill.random_walk.pending", EffectContainerType.MonsterSkill, "随机帮助卡目标"));
+            Skill(c, "skill.random_walk", "乱步", EffectContainerType.MonsterSkill, "每移动3次与随机帮助卡交换").AddEffect("skill.random_walk.move");
             Skill(c, "skill.give_punch", "给你一拳", EffectContainerType.MonsterSkill, "登场在偶数边位时伤害玩家").AddEffect("skill.give_punch.enter2").AddEffect("skill.give_punch.enter4").AddEffect("skill.give_punch.enter6").AddEffect("skill.give_punch.enter8");
             Skill(c, "skill.call_followers", "呼唤信徒", EffectContainerType.MonsterSkill, "每移动3次加入龙信徒").AddEffect("skill.call_followers.move");
             Skill(c, "skill.gift", "礼物", EffectContainerType.MonsterSkill, "每移动3次放旋转轮").AddEffect("skill.gift.move");
