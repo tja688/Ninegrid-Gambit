@@ -51,9 +51,9 @@ namespace NineGrid.Core.Tests
             var report = NineGridArchitecture.Current.GetSystem<IContentSystem>().ValidateCatalog();
 
             Assert.IsTrue(report.IsValid, FirstIssue(report));
-            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 69);
-            Assert.LessOrEqual(report.PendingEffectIds.Count, 56);
-            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 12);
+            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 70);
+            Assert.LessOrEqual(report.PendingEffectIds.Count, 55);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 11);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.Relic), 2);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.PlayerSkill), 2);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 40);
@@ -76,6 +76,7 @@ namespace NineGrid.Core.Tests
             AssertImplemented(catalog, report, "help.common_chest_card.use");
             AssertImplemented(catalog, report, "help.blue_chest_card.use");
             AssertImplemented(catalog, report, "help.golden_chest_card.use");
+            AssertImplemented(catalog, report, "help.blood_conversion.use");
             AssertImplemented(catalog, report, "skill.easy_road.node_end");
             AssertImplemented(catalog, report, "relic.lucky_coin.elite_kill");
             AssertImplemented(catalog, report, "relic.lucky_coin.boss_kill");
@@ -402,6 +403,29 @@ namespace NineGrid.Core.Tests
             architecture.GetSystem<IActionPipelineSystem>().Execute(new DealDamageAction(avatar.Uid, elite.Uid, 99));
 
             Assert.GreaterOrEqual(CountCardsByDef(deck.DrawPileUids, registry, "help.gold_card"), 2);
+        }
+
+        [Test]
+        public void BatchFiveBloodConversionCatalogDslSpendsMaxHpAndRollsReward()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+            avatar.Stats.SetBase(StatId.MaxHp, 30);
+            avatar.Stats.SetBase(StatId.Hp, 30);
+            avatar.Stats.SetBase(StatId.Attack, 3);
+            avatar.Stats.SetBase(StatId.Armor, 2);
+            architecture.GetUtility<IRngUtility>().SetSeed(1UL);
+
+            UseHelpCard("help.blood_conversion");
+
+            Assert.AreEqual(25, avatar.Stats.GetBase(StatId.MaxHp));
+            Assert.AreEqual(25, avatar.Stats.GetBase(StatId.Hp));
+            Assert.AreEqual(4, avatar.Stats.GetBase(StatId.Attack));
+            Assert.AreEqual(2, avatar.Stats.GetBase(StatId.Armor));
+            Assert.AreEqual(0, architecture.GetModel<PlayerModel>().Coins.Value);
+            Assert.IsTrue(HasEvent(architecture.GetSystem<IActionPipelineSystem>().EventLog, CoreEventType.BaseStatModified));
         }
 
         private static bool Contains(IReadOnlyList<string> values, string expected)

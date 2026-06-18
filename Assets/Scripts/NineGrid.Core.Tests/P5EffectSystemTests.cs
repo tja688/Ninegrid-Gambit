@@ -38,6 +38,10 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("WeightedRandom"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("CardCounter"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("OfferRewardChoice"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("ModifyBaseStat"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("GrantRewardFromPool"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("GrantRelic"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("GrantPlayerSkillContent"));
 
             var invalid = effectSystem.ParseJson(
                 "{"
@@ -143,6 +147,29 @@ namespace NineGrid.Core.Tests
             AssertHasIssue(rewardValidation, "schema.condition.key");
             AssertHasIssue(rewardValidation, "schema.range.min");
             AssertHasIssue(rewardValidation, "schema.action.poolId");
+
+            var badContentActions = effectSystem.ParseJson(
+                "{"
+                + "\"id\":\"bad.content.actions\","
+                + "\"typeTag\":\"【类型帮助卡】\","
+                + "\"containerType\":\"HelpCard\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"target\":{\"atom\":\"Player\"},"
+                + "\"action\":{\"atom\":\"Sequence\",\"actions\":["
+                + "{\"atom\":\"ModifyBaseStat\"},"
+                + "{\"atom\":\"GrantRewardFromPool\"},"
+                + "{\"atom\":\"GrantRelic\"},"
+                + "{\"atom\":\"GrantPlayerSkillContent\"}"
+                + "]}"
+                + "}");
+            var contentActionValidation = effectSystem.Validate(badContentActions);
+            Assert.IsFalse(contentActionValidation.IsValid);
+            AssertHasIssue(contentActionValidation, "schema.action.stat");
+            AssertHasIssue(contentActionValidation, "schema.action.delta");
+            AssertHasIssue(contentActionValidation, "schema.action.poolId");
+            AssertHasIssue(contentActionValidation, "schema.action.relicDefId");
+            AssertHasIssue(contentActionValidation, "schema.action.skillDefId");
         }
 
         [Test]
@@ -224,6 +251,7 @@ namespace NineGrid.Core.Tests
                 "help.common_chest_card.use",
                 "help.blue_chest_card.use",
                 "help.golden_chest_card.use",
+                "help.blood_conversion.use",
                 "skill.easy_road.node_end",
                 "relic.lucky_coin.elite_kill",
                 "relic.lucky_coin.boss_kill"
@@ -459,6 +487,18 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void GrantRewardFromPoolActionRollsAndGrantsContent()
+        {
+            var architecture = NineGridArchitecture.Current;
+            architecture.GetUtility<IRngUtility>().SetSeed(3UL);
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new GrantRewardFromPoolAction("relic.blood_conversion"));
+
+            Assert.IsTrue(HasRelic(architecture.GetModel<PlayerModel>(), "relic.wood_shield"));
+            Assert.IsTrue(architecture.GetSystem<IActionPipelineSystem>().EventLog.Contains(CoreEventType.RelicGranted));
+        }
+
+        [Test]
         public void FilteredCardsTargetUsesSeededRandomCandidateForSwap()
         {
             var architecture = NineGridArchitecture.Current;
@@ -600,6 +640,19 @@ namespace NineGrid.Core.Tests
             for (var i = 0; i < values.Count; i++)
             {
                 if (values[i] == expected)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool HasRelic(PlayerModel player, string relicDefId)
+        {
+            for (var i = 0; i < player.RelicDefIds.Count; i++)
+            {
+                if (player.RelicDefIds[i] == relicDefId)
                 {
                     return true;
                 }

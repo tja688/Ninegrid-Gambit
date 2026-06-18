@@ -97,6 +97,20 @@ namespace NineGrid.Content
                     "{\"atom\":\"Player\"}",
                     "{\"atom\":\"ModifyGold\",\"delta\":50,\"reason\":\"goldCard\"}"),
                 "[使用时] 为玩家提供50金币"));
+            c.AddEffect(Impl("help.blood_conversion.use", EffectContainerType.HelpCard,
+                Triggered("help.blood_conversion.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":-5,\"reason\":\"bloodConversion\"},"
+                    + "{\"atom\":\"WeightedRandom\",\"choices\":["
+                    + "{\"weight\":1,\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"bloodConversion.attack\"}},"
+                    + "{\"weight\":1,\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":1,\"reason\":\"bloodConversion.armor\"}},"
+                    + "{\"weight\":1,\"action\":{\"atom\":\"ModifyGold\",\"delta\":50,\"reason\":\"bloodConversion.gold\"}},"
+                    + "{\"weight\":1,\"action\":{\"atom\":\"GrantRewardFromPool\",\"poolId\":\"relic.blood_conversion\"}}"
+                    + "]}"
+                    + "]}"),
+                "[使用时] 扣除5点血量上限并随机获得攻击+1、护甲+1、50金币或随机遗物"));
             c.AddEffect(Impl("help.common_chest_card.use", EffectContainerType.HelpCard,
                 Triggered("help.common_chest_card.use", "HelpCard",
                     "{\"atom\":\"OnUseHelpCard\"}",
@@ -479,7 +493,7 @@ namespace NineGrid.Content
             Help(c, "help.sturdy_shield", "耐用盾牌", ContentRarity.White, 50, "护甲").AddEffect("help.sturdy_shield.use");
             Help(c, "help.bear_trap", "捕熊陷阱", ContentRarity.White, 50, "直伤").AddEffect(Pending(c, "help.bear_trap.pending", EffectContainerType.HelpCard, "正交相邻格补牌为怪物时造成10点伤害后移除本卡"));
             Help(c, "help.teleport_card", "传送卡", ContentRarity.White, 30, "位移").AddEffect(Pending(c, "help.teleport_card.pending", EffectContainerType.HelpCard, "将一张非玩家卡洗回战斗卡组"));
-            Help(c, "help.blood_conversion", "血液转换", ContentRarity.White, 50, "特殊").AddEffect(Pending(c, "help.blood_conversion.pending", EffectContainerType.HelpCard, "扣除5点血量上限并随机获得奖励"));
+            Help(c, "help.blood_conversion", "血液转换", ContentRarity.White, 50, "特殊").AddEffect("help.blood_conversion.use");
             Help(c, "help.gold_card", "金币卡", ContentRarity.Blue, 30, "经济").AddEffect("help.gold_card.use");
             Help(c, "help.food_card", "食品卡", ContentRarity.Blue, 50, "恢复").AddEffect("help.food_card.use");
             Help(c, "help.common_chest_card", "普通宝箱卡", ContentRarity.Blue, 100, "经济").AddEffect("help.common_chest_card.use");
@@ -714,6 +728,10 @@ namespace NineGrid.Content
                     .Add("relic.vitality_amulet", CardKind.Relic, 50)
                     .Add("relic.dragon_scale_armor", CardKind.Relic, 50)
                     .Add("relic.phoenix_feather", CardKind.Relic, 50))
+                .AddPool(new RewardPoolDefinition("relic.blood_conversion", 1)
+                    .Add("relic.wood_shield", CardKind.Relic, 65)
+                    .Add("relic.vitality_amulet", CardKind.Relic, 30)
+                    .Add("relic.dragon_scale_armor", CardKind.Relic, 5))
                 .AddRoom(new RoomDefinition(RoomKind.Shop, "商店") { Weight = 25, ShopOfferCount = 6 })
                 .AddRoom(new RoomDefinition(RoomKind.Gold, "金币房") { Weight = 20, GoldDelta = 50 })
                 .AddRoom(new RoomDefinition(RoomKind.Treasure, "宝箱房") { Weight = 20, RewardPoolId = "relic.common_chest" })

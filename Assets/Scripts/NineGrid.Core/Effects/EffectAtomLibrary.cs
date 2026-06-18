@@ -1220,6 +1220,35 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    [EffectAtom("ModifyBaseStat", EffectAtomKind.Action)]
+    public sealed class ModifyBaseStatEffectAction : IAction
+    {
+        private StatId mStat = StatId.Attack;
+        private int mDelta;
+        private string mReason = string.Empty;
+
+        public void Configure(EffectDslNode config)
+        {
+            mStat = config.Get("stat").AsEnum(StatId.Attack);
+            mDelta = config.Get("delta").AsInt(0);
+            mReason = config.Get("reason").AsString("effect");
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            var result = new List<GameAction>();
+            for (var i = 0; i < targets.Count; i++)
+            {
+                if (targets[i] != 0)
+                {
+                    result.Add(new ModifyBaseStatAction(targets[i], mStat, mDelta, mReason));
+                }
+            }
+
+            return result;
+        }
+    }
+
     [EffectAtom("OfferRewardChoice", EffectAtomKind.Action)]
     public sealed class OfferRewardChoiceEffectAction : IAction
     {
@@ -1235,6 +1264,54 @@ namespace NineGrid.Core.Effects
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
         {
             return new[] { new OfferRewardChoiceAction(mPoolId, mOptionCount) };
+        }
+    }
+
+    [EffectAtom("GrantRewardFromPool", EffectAtomKind.Action)]
+    public sealed class GrantRewardFromPoolEffectAction : IAction
+    {
+        private string mPoolId = string.Empty;
+
+        public void Configure(EffectDslNode config)
+        {
+            mPoolId = config.Get("poolId").AsString(string.Empty);
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            return new[] { new GrantRewardFromPoolAction(mPoolId) };
+        }
+    }
+
+    [EffectAtom("GrantRelic", EffectAtomKind.Action)]
+    public sealed class GrantRelicEffectAction : IAction
+    {
+        private string mRelicDefId = string.Empty;
+
+        public void Configure(EffectDslNode config)
+        {
+            mRelicDefId = config.Get("relicDefId").AsString(string.Empty);
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            return new[] { new GrantRelicAction(mRelicDefId) };
+        }
+    }
+
+    [EffectAtom("GrantPlayerSkillContent", EffectAtomKind.Action)]
+    public sealed class GrantPlayerSkillContentEffectAction : IAction
+    {
+        private string mSkillDefId = string.Empty;
+
+        public void Configure(EffectDslNode config)
+        {
+            mSkillDefId = config.Get("skillDefId").AsString(string.Empty);
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            return new[] { new GrantPlayerSkillContentAction(mSkillDefId) };
         }
     }
 

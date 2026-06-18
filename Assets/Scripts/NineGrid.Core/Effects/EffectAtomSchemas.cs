@@ -281,9 +281,33 @@ namespace NineGrid.Core.Effects
             {
                 result.Add("schema.action.delta", path + ".delta is required for ModifyGold.");
             }
+            else if (Same(atom, "ModifyBaseStat"))
+            {
+                if (!node.Has("stat"))
+                {
+                    result.Add("schema.action.stat", path + ".stat is required for ModifyBaseStat.");
+                }
+
+                if (!node.Has("delta"))
+                {
+                    result.Add("schema.action.delta", path + ".delta is required for ModifyBaseStat.");
+                }
+            }
             else if (Same(atom, "OfferRewardChoice") && !node.Has("poolId"))
             {
                 result.Add("schema.action.poolId", path + ".poolId is required for OfferRewardChoice.");
+            }
+            else if (Same(atom, "GrantRewardFromPool") && !node.Has("poolId"))
+            {
+                result.Add("schema.action.poolId", path + ".poolId is required for GrantRewardFromPool.");
+            }
+            else if (Same(atom, "GrantRelic") && !node.Has("relicDefId"))
+            {
+                result.Add("schema.action.relicDefId", path + ".relicDefId is required for GrantRelic.");
+            }
+            else if (Same(atom, "GrantPlayerSkillContent") && !node.Has("skillDefId"))
+            {
+                result.Add("schema.action.skillDefId", path + ".skillDefId is required for GrantPlayerSkillContent.");
             }
             else if (Same(atom, "ShuffleInto") || Same(atom, "Spawn"))
             {

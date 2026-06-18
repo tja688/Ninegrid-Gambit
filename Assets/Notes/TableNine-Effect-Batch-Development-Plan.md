@@ -382,6 +382,48 @@ MonsterSkill pending, 46:
 
 下一批建议：继续批次5 后续小批，补 `help.blood_conversion.pending` 所需的随机奖励/授予内容动作；或切到批次6，处理 `skill.thorn_skin.pending`、来源标签与递归保护。
 
+### 5.1 批次5后续补全记录（2026-06-18）
+
+目标：检查批次5首轮遗留的 `help.blood_conversion.pending` 是否已经具备收口条件；能收的直接补齐，不能收的按能力缺口重新排期。
+
+本批新增能力：
+
+- 新增 `ModifyBaseStat` action atom：Triggered 效果可以修改目标卡基础属性，支持 `MaxHp` 负数扣减。
+- 新增 `GrantRelic`、`GrantPlayerSkillContent` action atom：把已有内容授予 GameAction 暴露给效果 DSL。
+- 新增 `GrantRewardFromPool` action atom / `GrantRewardFromPoolAction`：从奖励池按权重抽取并立即发放可支持的内容；当前用于“随机遗物”。
+- `ModifyBaseStatAction` 修复旧边界：降低 `MaxHp` 时会把当前 `Hp` 夹到新上限，避免出现当前血量高于上限。
+- `EffectAtomSchemas` 增加 `ModifyBaseStat.stat/delta`、`GrantRewardFromPool.poolId`、`GrantRelic.relicDefId`、`GrantPlayerSkillContent.skillDefId` 校验。
+- 新增奖励池 `relic.blood_conversion`，作为血液转换随机遗物分支。
+
+本批转换：
+
+- `help.blood_conversion.use`：HelpCard / Triggered / `[使用时]`，先扣除玩家 `MaxHp 5`，再在攻击+1、护甲+1、金币+50、随机遗物四个分支中等权随机一个。
+
+遗留问题能力判断：
+
+- `help.blood_conversion.pending`：已具备修复能力，本批已补全并移除 pending。
+- `help.stat_boost_card.pending`：已有 `ModifyBaseStat` 地基，但还缺玩家选择选项负载；建议放入批次5C `ChoicePayload v1` 收口。
+- `help.swap_card.pending` / `help.teleport_card.pending`：目标过滤已具备，但还缺玩家选择目标负载；建议同批次5C 或批次3后续 `SelectedTargets v1` 收口。
+- `help.doubling_tower.pending`：不是奖励/选择动作问题，需要帮助卡二次触发、一次性移除和递归保护；建议批次4后续或批次6收口。
+
+批次5后续补全后数量：
+
+| 项目 | 数量 |
+|:--|--:|
+| hardcoded implemented effects | 70 |
+| hardcoded explicit pending effects | 19 |
+| pending monster skill placeholder effects | 36 |
+| runtime pending effects | 55 |
+| runtime total effects | 125 |
+
+验证记录：
+
+- Unity MCP refresh/compile：通过，Console 无编译错误；Unity Test Framework 写入 TestResults.xml 产生 1 条保存结果提示和 1 条 PerformanceTesting 清理 warning。
+- `NineGrid.Core.Tests` EditMode 全量：72/72 通过。
+- `Assets/Notes/CI/check-core-guards.ps1`：通过。
+
+下一批建议：如果继续批次5，应先做 `ChoicePayload v1 / SelectedTargets v1`，一口气收 `help.stat_boost_card.pending`、`help.swap_card.pending`、`help.teleport_card.pending`；如果切换能力簇，则进入批次6 处理来源标签、计数器和递归保护。
+
 ## 6. 当前事实基线
 
 ### 已经可靠的地基
@@ -394,7 +436,7 @@ MonsterSkill pending, 46:
 ### 当前还没签收的部分
 
 - `TableNineContentCatalog.cs` 仍是主要内容真源，Luban 只是最小样例，不是生产内容源。
-- hardcoded catalog 预计有 69 个 implemented effect、56 个 pending effect，R4 远未清零。
+- hardcoded catalog 预计有 70 个 implemented effect、55 个 pending effect，R4 远未清零。
 - 设计文档里效果总量更大：帮助卡 22 条、遗物 58 条、玩家技能 7 条、怪物技能 81 条。hardcoded catalog 覆盖了帮助卡和玩家技能的大部分，但遗物和怪物技能仍是子集/原型。
 - R5 的全内容回放网、pending 闸门、Luban 全量迁移闸门还没有完成。
 
@@ -509,7 +551,7 @@ MonsterSkill pending, 46:
 - 激活、触发、失活、清理全部有测试。
 - 不叠加/一次性/跨节点保留等生命周期边界明确。
 
-### 批次5：奖励、选择、内容动作（首个小闭环已落地）
+### 批次5：奖励、选择、内容动作（血液转换补全已落地）
 
 目标：把宝箱、导师、奖励、获得遗物/技能/帮助卡这类内容动作接进 DSL。
 
@@ -526,6 +568,7 @@ MonsterSkill pending, 46:
 
 - Core 只产出确定性的奖励候选/事件，不引入 UI 依赖。
 - RewardSystem/ContentSystem 负责内容引用和发放。
+- 对“随机立即发放”类效果，使用 `GrantRewardFromPool`，仍通过 GameAction 和 EventLog 验证。
 
 ### 批次6：计数器、来源标签、递归保护
 
@@ -577,7 +620,7 @@ MonsterSkill pending, 46:
 下一次如果要直接进入实现，建议从：
 
 1. **继续批次4 后续小批**：做 `skill.taunt.pending` 的交互合法性规则，或做 `relic.gold_armor.pending` 的金币抵伤。
-2. **继续批次5 后续小批**：处理 `help.blood_conversion.pending` 的随机奖励/授予内容动作。
+2. **继续批次5 后续小批**：实现 `ChoicePayload v1 / SelectedTargets v1`，处理 `help.stat_boost_card.pending`、`help.swap_card.pending`、`help.teleport_card.pending`。
 3. **落地批次6**：补 cause/source 与递归保护后，再处理 `skill.thorn_skin.pending`、火焰链式等来源敏感效果。
 
 ## 11. 给后续 AI 的技能入口
