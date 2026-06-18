@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NineGrid.Core.Content;
 using NineGrid.Core.Effects;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
@@ -538,6 +539,142 @@ namespace NineGrid.Core
                     .WithAmount((int)Rule)
                     .WithDelta((int)Math.Round(Value))
                     .WithMessage(Source));
+        }
+    }
+
+    public sealed class ReplayHelpCardEffectsAction : GameAction
+    {
+        public ReplayHelpCardEffectsAction(int towerUid, string towerEffectInstanceId, UseItemAction useItem, CardKind targetKind, bool deactivateSelf)
+        {
+            TowerUid = towerUid;
+            TowerEffectInstanceId = towerEffectInstanceId ?? string.Empty;
+            UseItem = useItem;
+            TargetKind = targetKind;
+            DeactivateSelf = deactivateSelf;
+        }
+
+        public int TowerUid { get; private set; }
+        public string TowerEffectInstanceId { get; private set; }
+        public UseItemAction UseItem { get; private set; }
+        public CardKind TargetKind { get; private set; }
+        public bool DeactivateSelf { get; private set; }
+        public override string ActionName { get { return "ReplayHelpCardEffects"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            if (UseItem == null || UseItem.ItemUid == 0 || UseItem.ItemUid == TowerUid)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var registry = context.GetModel<CardRegistry>();
+            CardInstance usedCard;
+            if (!registry.TryGet(UseItem.ItemUid, out usedCard) || usedCard.Kind != CardKind.HelpCard)
+            {
+                return GameActionResult.Empty;
+            }
+
+            if (!MatchesSelectedTargetKind(context, UseItem, TargetKind))
+            {
+                return GameActionResult.Empty;
+            }
+
+            var content = context.GetSystem<IContentSystem>();
+            var catalog = content.Catalog;
+            CardContentDefinition cardDefinition;
+            if (catalog == null || !catalog.TryGetCard(usedCard.DefId, out cardDefinition))
+            {
+                return GameActionResult.Empty;
+            }
+
+            var triggerEvent = new CoreGameEvent(CoreEventType.ItemUsed, context.ActionId, ActionName)
+                .WithCard(UseItem.ItemUid)
+                .WithSource(usedCard.DefId, "replay");
+            if (UseItem.SelectedCardUids.Count > 0)
+            {
+                triggerEvent.WithTarget(UseItem.SelectedCardUids[0]);
+            }
+
+            var triggerContext = new TriggerContext(
+                TriggerPoint.OnUseHelpCard,
+                TriggerTiming.Post,
+                UseItem,
+                new[] { triggerEvent },
+                context);
+
+            var result = new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.EffectTriggered, context.ActionId, ActionName)
+                    .WithCard(TowerUid)
+                    .WithTarget(UseItem.ItemUid)
+                    .WithMessage("replay:" + usedCard.DefId)
+                    .WithSource("help.doubling_tower", "replay"));
+
+            AddReplayFollowUps(context.GetSystem<IEffectSystem>(), catalog, cardDefinition.EffectIds, usedCard.DefId, UseItem.ItemUid, triggerContext, result);
+
+            if (DeactivateSelf && TowerUid != 0)
+            {
+                result.AddFollowUp(new RemoveCardAction(TowerUid, ZoneId.Removed, "doublingTower", "help.doubling_tower"));
+                result.AddFollowUp(new DeactivateEffectAction(TowerEffectInstanceId));
+            }
+
+            return result;
+        }
+
+        private static void AddReplayFollowUps(
+            IEffectSystem effectSystem,
+            GameContentCatalog catalog,
+            IReadOnlyList<string> effectIds,
+            string sourceDefId,
+            int ownerUid,
+            TriggerContext triggerContext,
+            GameActionResult result)
+        {
+            for (var i = 0; i < effectIds.Count; i++)
+            {
+                ContentEffectDefinition contentEffect;
+                if (!catalog.TryGetEffect(effectIds[i], out contentEffect)
+                    || contentEffect.State != ContentImplementationState.Implemented
+                    || contentEffect.ContainerType != EffectContainerType.HelpCard
+                    || contentEffect.Id == "help.doubling_tower.board_monster"
+                    || contentEffect.Id == "help.doubling_tower.item_player")
+                {
+                    continue;
+                }
+
+                var definition = effectSystem.ParseJson(contentEffect.Json);
+                if (definition.Kind != EffectKind.Triggered)
+                {
+                    continue;
+                }
+
+                var temporary = effectSystem.Activate(definition, new EffectOwner(EffectContainerType.HelpCard, sourceDefId, ownerUid));
+                var actions = effectSystem.BuildTriggeredActions(temporary.InstanceId, triggerContext);
+                effectSystem.Deactivate(temporary.InstanceId);
+                for (var j = 0; j < actions.Count; j++)
+                {
+                    result.AddFollowUp(actions[j]);
+                }
+            }
+        }
+
+        private static bool MatchesSelectedTargetKind(GameActionContext context, UseItemAction useItem, CardKind targetKind)
+        {
+            if (targetKind == CardKind.Unknown)
+            {
+                return true;
+            }
+
+            var registry = context.GetModel<CardRegistry>();
+            for (var i = 0; i < useItem.SelectedCardUids.Count; i++)
+            {
+                CardInstance card;
+                if (registry.TryGet(useItem.SelectedCardUids[i], out card) && card.Kind == targetKind)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 

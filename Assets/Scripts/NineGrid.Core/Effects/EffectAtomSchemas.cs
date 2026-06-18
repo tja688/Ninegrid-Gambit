@@ -227,6 +227,11 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.condition.key", path + ".key is required for CardCounter.");
                 }
 
+                if (Same(atom, "CardZone") && !node.Has("zone"))
+                {
+                    result.Add("schema.condition.zone", path + ".zone is required for CardZone.");
+                }
+
                 if (Same(atom, "SelectedOption") && !node.Has("option"))
                 {
                     result.Add("schema.condition.option", path + ".option is required for SelectedOption.");
@@ -359,6 +364,10 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.action.slot", path + ".slot is required for fixed SetBoardMark.");
                 }
             }
+            else if (Same(atom, "ReplayHelpCardEffects") && node.Has("targetKind") && !IsSupportedCardKind(node.Get("targetKind").AsString(string.Empty)))
+            {
+                result.Add("schema.action.targetKind", path + ".targetKind is not supported.");
+            }
             else if (Same(atom, "Move") && !node.Has("toSlot"))
             {
                 result.Add("schema.action.toSlot", path + ".toSlot is required for Move.");
@@ -478,6 +487,11 @@ namespace NineGrid.Core.Effects
                     {
                         result.Add("schema.condition.stat", path + ".stat is not supported.");
                     }
+                }
+
+                if (Same(atom, "CardZone") && node.Has("zone") && !IsSupportedZone(node.Get("zone").AsString(string.Empty)))
+                {
+                    result.Add("schema.condition.zone", path + ".zone is not supported.");
                 }
 
                 return;

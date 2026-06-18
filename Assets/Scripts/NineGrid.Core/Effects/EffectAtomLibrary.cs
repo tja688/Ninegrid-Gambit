@@ -147,7 +147,17 @@ namespace NineGrid.Core.Effects
     [EffectAtom("OnUseHelpCard", EffectAtomKind.Trigger)]
     public sealed class OnUseHelpCardTrigger : TriggerAtomBase
     {
+        private bool mOwnerOnly = true;
+        private bool mExcludeSelf;
+
         public override TriggerPoint Point { get { return TriggerPoint.OnUseHelpCard; } }
+
+        public override void Configure(EffectDslNode config)
+        {
+            base.Configure(config);
+            mOwnerOnly = config.Get("ownerOnly").AsBool(true);
+            mExcludeSelf = config.Get("excludeSelf").AsBool(false);
+        }
 
         public override bool Matches(EffectRuntimeContext context)
         {
@@ -160,7 +170,8 @@ namespace NineGrid.Core.Effects
             for (var i = 0; i < events.Count; i++)
             {
                 if (events[i].Type == CoreEventType.ItemUsed
-                    && (context.OwnerUid == 0 || events[i].CardUid == context.OwnerUid))
+                    && (!mOwnerOnly || context.OwnerUid == 0 || events[i].CardUid == context.OwnerUid)
+                    && (!mExcludeSelf || events[i].CardUid != context.OwnerUid))
                 {
                     return true;
                 }
@@ -1044,9 +1055,40 @@ namespace NineGrid.Core.Effects
 
         public IStatCondition CreateStatCondition(EffectBuildContext context)
         {
+            if (TargetResolver.IsSelfRef(mLeftRef) && string.Equals(mRightRef, "Player", StringComparison.OrdinalIgnoreCase))
+            {
+                var ownerUid = context.Instance == null || context.Instance.Owner == null ? 0 : context.Instance.Owner.OwnerUid;
+                return new SourceAdjacentToUidCondition(ownerUid, context.Architecture.GetModel<BoardModel>().AvatarUid.Value);
+            }
+
             return mFixedSlot != SlotId.None && TargetResolver.IsSelfRef(mLeftRef)
                 ? new AdjacentCondition(mFixedSlot)
                 : null;
+        }
+    }
+
+    [EffectAtom("CardZone", EffectAtomKind.Condition)]
+    public sealed class CardZoneEffectCondition : ICondition
+    {
+        private string mTargetRef = "Self";
+        private ZoneId mZone = ZoneId.None;
+
+        public void Configure(EffectDslNode config)
+        {
+            mTargetRef = config.Get("target").AsString("Self");
+            mZone = config.Get("zone").AsEnum(ZoneId.None);
+        }
+
+        public bool IsMet(EffectRuntimeContext context)
+        {
+            var uid = TargetResolver.ResolveSingleCardRef(context, mTargetRef);
+            CardInstance card;
+            return context.TryGetCard(uid, out card) && (mZone == ZoneId.None || card.Zone.Value == mZone);
+        }
+
+        public IStatCondition CreateStatCondition(EffectBuildContext context)
+        {
+            return TargetResolver.IsSelfRef(mTargetRef) ? new ZoneCondition(mZone) : null;
         }
     }
 
@@ -1998,6 +2040,25 @@ namespace NineGrid.Core.Effects
             }
 
             return result;
+        }
+    }
+
+    [EffectAtom("ReplayHelpCardEffects", EffectAtomKind.Action)]
+    public sealed class ReplayHelpCardEffectsEffectAction : IAction
+    {
+        private CardKind mTargetKind = CardKind.Unknown;
+        private bool mDeactivateSelf;
+
+        public void Configure(EffectDslNode config)
+        {
+            mTargetKind = config.Get("targetKind").AsEnum(CardKind.Unknown);
+            mDeactivateSelf = config.Get("deactivateSelf").AsBool(false);
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            var useItem = context.TriggerContext == null ? null : context.TriggerContext.Action as UseItemAction;
+            return new[] { new ReplayHelpCardEffectsAction(context.OwnerUid, context.Instance.InstanceId, useItem, mTargetKind, mDeactivateSelf) };
         }
     }
 

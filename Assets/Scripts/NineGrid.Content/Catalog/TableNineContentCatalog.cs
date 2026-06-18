@@ -76,6 +76,20 @@ namespace NineGrid.Content
                     "{\"atom\":\"Player\"}",
                     "{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageMultiplier\",\"op\":\"Override\",\"value\":0,\"layer\":\"Temporary\",\"scope\":\"Once\",\"source\":\"help.ward_magic_card\"}"),
                 "[使用时] 下一次玩家受到伤害时，该次伤害变为0"));
+            c.AddEffect(Impl("help.doubling_tower.board_monster", EffectContainerType.HelpCard,
+                Triggered("help.doubling_tower.board_monster", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\",\"ownerOnly\":false,\"excludeSelf\":true}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"ReplayHelpCardEffects\",\"targetKind\":\"Monster\"}",
+                    "[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":1}]"),
+                "[场上] 处于格1时，对怪物卡使用的帮助卡触发两次"));
+            c.AddEffect(Impl("help.doubling_tower.item_player", EffectContainerType.HelpCard,
+                Triggered("help.doubling_tower.item_player", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\",\"ownerOnly\":false,\"excludeSelf\":true}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"ReplayHelpCardEffects\",\"targetKind\":\"Avatar\",\"deactivateSelf\":true}",
+                    "[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"ItemSlots\"}]"),
+                "[道具牌格] 对玩家卡使用的帮助卡生效两次，触发后永久移除本卡"));
 
             c.AddEffect(Impl("help.impact_tutorial.use", EffectContainerType.HelpCard,
                 Triggered("help.impact_tutorial.use", "HelpCard",
@@ -342,6 +356,15 @@ namespace NineGrid.Content
                 Rule("skill.blessing.rule", "MonsterSkill",
                     "{\"rule\":\"DamageMultiplier\",\"target\":\"Self\",\"op\":\"Override\",\"value\":0,\"layer\":\"Temporary\",\"scope\":\"Once\"}"),
                 "下一次受到伤害时，该次伤害变为0"));
+            c.AddEffect(Impl("skill.taunt.rule", EffectContainerType.MonsterSkill,
+                Rule("skill.taunt.rule", "MonsterSkill",
+                    "{\"rule\":\"AttackTargetRestriction\",\"target\":\"Self\",\"op\":\"Override\",\"value\":0,\"layer\":\"Conditional\",\"scope\":\"Permanent\"}",
+                    "[{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"Player\"}]"),
+                "[场上] 处于玩家卡正交相邻格时，玩家只能与本卡战斗"));
+            c.AddEffect(Impl("relic.gold_armor.rule", EffectContainerType.Relic,
+                Rule("relic.gold_armor.rule", "Relic",
+                    "{\"rule\":\"GoldArmorAbsorb\",\"op\":\"Override\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}"),
+                "[受到伤害时] 每5金币抵消1点当前护甲伤害"));
             c.AddEffect(Impl("skill.thief_claims.move", EffectContainerType.MonsterSkill,
                 Triggered("skill.thief_claims.move", "MonsterSkill",
                     "{\"atom\":\"OnSelfMove\",\"every\":3}",
@@ -591,7 +614,7 @@ namespace NineGrid.Content
             Help(c, "help.kidnapping", "绑票", ContentRarity.Blue, 100, "护甲").AddEffect(Pending(c, "help.kidnapping.pending", EffectContainerType.HelpCard, "移除非精英非层主怪物并获得等同于护甲的护甲"));
             Help(c, "help.blue_chest_card", "蓝色宝箱卡", ContentRarity.Gold, 150, "经济").AddEffect("help.blue_chest_card.use");
             Help(c, "help.watchtower", "瞭望塔", ContentRarity.Gold, 150, "直伤").AddEffect(Pending(c, "help.watchtower.pending", EffectContainerType.HelpCard, "场上/道具牌格随机伤害"));
-            Help(c, "help.doubling_tower", "倍增塔", ContentRarity.Gold, 150, "特殊").AddEffect(Pending(c, "help.doubling_tower.pending", EffectContainerType.HelpCard, "帮助卡触发两次"));
+            Help(c, "help.doubling_tower", "倍增塔", ContentRarity.Gold, 150, "特殊").AddEffect("help.doubling_tower.board_monster").AddEffect("help.doubling_tower.item_player");
             Help(c, "help.stat_boost_card", "属性提升卡", ContentRarity.Gold, 100, "特殊").AddEffect("help.stat_boost_card.use");
             Help(c, "help.golden_chest_card", "金色宝箱卡", ContentRarity.Red, 400, "特殊").AddEffect("help.golden_chest_card.use");
             Help(c, "help.flame", "烈焰", ContentRarity.Red, 400, "特殊").AddEffect("help.flame.use");
@@ -612,7 +635,7 @@ namespace NineGrid.Content
             Relic(c, "relic.shield_knife", "打盾刀", ContentRarity.White, "击杀怪物时获得护甲").AddEffect("relic.shield_knife.kill");
             Relic(c, "relic.gold_knife", "打金刀", ContentRarity.White, "击杀怪物时获得2金币").AddEffect("relic.gold_knife.kill");
             Relic(c, "relic.heavy_armor", "重盔甲", ContentRarity.White, "基础护甲+1，按基础护甲补当前护甲").AddEffect(Pending(c, "relic.heavy_armor.pending", EffectContainerType.Relic, "关卡开始按基础护甲获得护甲"));
-            Relic(c, "relic.gold_armor", "金币盔甲", ContentRarity.White, "金币抵消护甲伤害").AddEffect(Pending(c, "relic.gold_armor.pending", EffectContainerType.Relic, "伤害公式金币抵消"));
+            Relic(c, "relic.gold_armor", "金币盔甲", ContentRarity.White, "金币抵消护甲伤害").AddEffect("relic.gold_armor.rule");
             Relic(c, "relic.vitality_amulet", "活力护符", ContentRarity.Blue, "血量上限+6，关卡结束恢复6").AddEffect("relic.vitality_amulet.max_hp").AddEffect("relic.vitality_amulet.node_end");
             Relic(c, "relic.dragon_scale_armor", "龙鳞甲", ContentRarity.Gold, "所有怪物攻击-1").AddEffect("relic.dragon_scale_armor.rule");
             Relic(c, "relic.phoenix_feather", "凤凰羽毛", ContentRarity.Gold, "致命伤害免死").AddEffect("relic.phoenix_feather.fatal");
@@ -652,7 +675,7 @@ namespace NineGrid.Content
             Skill(c, "skill.sharp_stone", "尖石", EffectContainerType.MonsterSkill, "护甲归零时伤害玩家").AddEffect("skill.sharp_stone.armor_break");
             Skill(c, "skill.hard", "坚硬", EffectContainerType.MonsterSkill, "左列战斗时按损失护甲伤害玩家").AddEffect(Pending(c, "skill.hard.pending", EffectContainerType.MonsterSkill, "战斗损失护甲动态伤害"));
             Skill(c, "skill.swallow_stone", "吞石", EffectContainerType.MonsterSkill, "每移动2次吸相邻怪物护甲").AddEffect(Pending(c, "skill.swallow_stone.pending", EffectContainerType.MonsterSkill, "护甲转移"));
-            Skill(c, "skill.taunt", "嘲讽", EffectContainerType.MonsterSkill, "相邻时只能与本卡战斗").AddEffect(Pending(c, "skill.taunt.pending", EffectContainerType.MonsterSkill, "交互合法性规则改写"));
+            Skill(c, "skill.taunt", "嘲讽", EffectContainerType.MonsterSkill, "相邻时只能与本卡战斗").AddEffect("skill.taunt.rule");
             Skill(c, "skill.recombine_head", "重新组合头", EffectContainerType.MonsterSkill, "相邻骷髅头组合").AddEffect("skill.recombine_head.move");
             Skill(c, "skill.recombine_body", "重新组合身", EffectContainerType.MonsterSkill, "相邻无头骷髅组合").AddEffect("skill.recombine_body.move");
             Skill(c, "skill.unstable", "不稳定", EffectContainerType.MonsterSkill, "每移动3次随机交换怪物").AddEffect("skill.unstable.move");

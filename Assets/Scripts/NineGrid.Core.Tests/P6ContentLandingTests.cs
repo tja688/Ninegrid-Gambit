@@ -51,12 +51,12 @@ namespace NineGrid.Core.Tests
             var report = NineGridArchitecture.Current.GetSystem<IContentSystem>().ValidateCatalog();
 
             Assert.IsTrue(report.IsValid, FirstIssue(report));
-            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 81);
-            Assert.LessOrEqual(report.PendingEffectIds.Count, 46);
-            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 8);
-            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.Relic), 2);
+            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 85);
+            Assert.LessOrEqual(report.PendingEffectIds.Count, 43);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 7);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.Relic), 1);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.PlayerSkill), 1);
-            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 35);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 34);
 
             AssertImplemented(catalog, report, "relic.vitality_amulet.max_hp");
             AssertImplemented(catalog, report, "relic.throwing_knife_bag.node_start");
@@ -73,6 +73,10 @@ namespace NineGrid.Core.Tests
             AssertImplemented(catalog, report, "skill.stray_cub.first_strike");
             AssertImplemented(catalog, report, "skill.first_strike.rule");
             AssertImplemented(catalog, report, "skill.blessing.rule");
+            AssertImplemented(catalog, report, "help.doubling_tower.board_monster");
+            AssertImplemented(catalog, report, "help.doubling_tower.item_player");
+            AssertImplemented(catalog, report, "relic.gold_armor.rule");
+            AssertImplemented(catalog, report, "skill.taunt.rule");
             AssertImplemented(catalog, report, "help.common_chest_card.use");
             AssertImplemented(catalog, report, "help.blue_chest_card.use");
             AssertImplemented(catalog, report, "help.golden_chest_card.use");
@@ -372,6 +376,43 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(10, cub.Stats.GetBase(StatId.Hp));
             architecture.GetSystem<IActionPipelineSystem>().Execute(new DealDamageAction(avatar.Uid, cub.Uid, 5));
             Assert.AreEqual(5, cub.Stats.GetBase(StatId.Hp));
+        }
+
+        [Test]
+        public void BatchFourContinuationCatalogRulesCoverTauntGoldArmorAndDoublingTower()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var player = architecture.GetModel<PlayerModel>();
+            var avatar = registry.Get(architecture.GetModel<BoardModel>().AvatarUid.Value);
+            avatar.Stats.SetBase(StatId.Armor, 3);
+            player.AddCoins(15);
+            content.ActivateRelic("relic.gold_armor");
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new DealDamageAction(0, avatar.Uid, 4));
+            Assert.AreEqual(0, player.Coins.Value);
+            Assert.AreEqual(3, avatar.Stats.GetBase(StatId.Armor));
+            Assert.AreEqual(29, avatar.Stats.GetBase(StatId.Hp));
+
+            var taunter = PlaceMonster("monster.skeleton_taunter", 7, SlotId.Board(2));
+            var other = PlaceMonster("monster.taunt.other", 10, SlotId.Board(4));
+            content.ApplyContentToCard(taunter);
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new ChangePhaseAction(GamePhase.InteractionLoop));
+            Assert.IsFalse(architecture.GetSystem<IPhaseSystem>().Attack(other.Slot.Value).Accepted);
+            RemoveFromBoard(taunter);
+            RemoveFromBoard(other);
+
+            var tower = content.CreateDraft("help.doubling_tower").Create(registry);
+            architecture.GetModel<BoardModel>().PlaceCard(tower, SlotId.Board(1));
+            content.ApplyContentToCard(tower);
+            var knife = content.CreateDraft("help.throwing_knife").Create(registry);
+            content.ApplyContentToCard(knife);
+            var target = PlaceMonster("monster.doubling.catalog", 20, SlotId.Board(8));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new UseItemAction(knife.Uid, new[] { target.Uid }));
+
+            Assert.AreEqual(8, target.Stats.GetBase(StatId.Hp));
         }
 
         [Test]

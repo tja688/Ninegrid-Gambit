@@ -308,11 +308,22 @@ namespace NineGrid.Core.Effects
             return new RuleModifier(
                 node.Get("rule").AsEnum(RuleId.RecoveryMultiplier),
                 node.Get("op").AsEnum(ModifierOp.Add),
-                node.Get("value").AsFloat(0f),
+                ResolveRuleModifierValue(instance, node),
                 node.Get("layer").AsEnum(ModifierLayer.Persistent),
                 new ModifierSource(node.Get("source").AsString("effect:" + instance.InstanceId)),
                 node.Get("scope").AsEnum(ModifierScope.Permanent),
                 condition);
+        }
+
+        private static float ResolveRuleModifierValue(EffectInstance instance, EffectDslNode node)
+        {
+            var rule = node.Get("rule").AsEnum(RuleId.RecoveryMultiplier);
+            if (rule == RuleId.AttackTargetRestriction && instance != null && instance.Owner != null && instance.Owner.OwnerUid != 0)
+            {
+                return instance.Owner.OwnerUid;
+            }
+
+            return node.Get("value").AsFloat(0f);
         }
 
         private IStatCondition CreateCompositeStatCondition(EffectInstance instance)
@@ -329,7 +340,7 @@ namespace NineGrid.Core.Effects
 
             var buildContext = new EffectBuildContext(((IBelongToArchitecture)this).GetArchitecture(), instance);
             var conditions = new List<IStatCondition>();
-            if (targetUid != 0)
+            if (targetUid != 0 && !IsAttackTargetRestrictionRule(instance))
             {
                 conditions.Add(new TargetUidCondition(targetUid));
             }
@@ -344,6 +355,15 @@ namespace NineGrid.Core.Effects
             }
 
             return conditions.Count == 0 ? null : new AllStatCondition(conditions);
+        }
+
+        private static bool IsAttackTargetRestrictionRule(EffectInstance instance)
+        {
+            return instance != null
+                && instance.Definition != null
+                && instance.Definition.Kind == EffectKind.RuleModifier
+                && instance.Definition.RuleModifier != null
+                && instance.Definition.RuleModifier.Get("rule").AsEnum(RuleId.RecoveryMultiplier) == RuleId.AttackTargetRestriction;
         }
 
         private int ResolveRuleModifierTargetUid(EffectInstance instance, EffectDslNode node)

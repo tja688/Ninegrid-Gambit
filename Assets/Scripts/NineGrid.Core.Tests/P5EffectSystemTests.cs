@@ -37,6 +37,7 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("AdjacentHasCard"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("EventFilter"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("SelectedOption"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("CardZone"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("RandomMonster"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("FilteredCards"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("AdjacentCard"));
@@ -52,6 +53,7 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("GrantPlayerSkillContent"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("MoveToDrawPile"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("SetBoardMark"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("ReplayHelpCardEffects"));
 
             var invalid = effectSystem.ParseJson(
                 "{"
@@ -918,6 +920,98 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(1, CountEvents(architecture.GetSystem<IActionPipelineSystem>().EventLog, CoreEventType.EffectTriggered));
         }
 
+        [Test]
+        public void GoldArmorRuleSpendsGoldBeforeArmorAndNeverShieldsHpDamage()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var avatar = Avatar();
+            avatar.Stats.SetBase(StatId.Armor, 2);
+            architecture.GetModel<PlayerModel>().AddCoins(50);
+            P5CatalogTestSupport.ActivateCatalogEffect(
+                architecture,
+                "relic.gold_armor.rule",
+                new EffectOwner(EffectContainerType.Relic, "relic.gold_armor", 0));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new DealDamageAction(0, avatar.Uid, 5));
+
+            Assert.AreEqual(40, architecture.GetModel<PlayerModel>().Coins.Value);
+            Assert.AreEqual(2, avatar.Stats.GetBase(StatId.Armor));
+            Assert.AreEqual(27, avatar.Stats.GetBase(StatId.Hp));
+            Assert.IsTrue(architecture.GetSystem<IActionPipelineSystem>().EventLog.Contains(CoreEventType.GoldModified));
+        }
+
+        [Test]
+        public void TauntRuleRejectsOtherAdjacentMonsterUntilTaunterLeavesAdjacency()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var phase = architecture.GetSystem<IPhaseSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var taunter = CreateMonster("monster.taunter", 20, SlotId.Board(2));
+            var other = CreateMonster("monster.other", 20, SlotId.Board(4));
+            P5CatalogTestSupport.ActivateCatalogEffect(
+                architecture,
+                "skill.taunt.rule",
+                new EffectOwner(EffectContainerType.MonsterSkill, "skill.taunt", taunter.Uid));
+            pipeline.Execute(new ChangePhaseAction(GamePhase.InteractionLoop));
+
+            var rejected = phase.Attack(other.Slot.Value);
+            Assert.IsFalse(rejected.Accepted);
+            Assert.AreEqual(20, other.Stats.GetBase(StatId.Hp));
+
+            pipeline.Execute(new MoveCardAction(taunter.Uid, SlotId.Board(1)));
+            var accepted = phase.Attack(other.Slot.Value);
+            Assert.IsTrue(accepted.Accepted);
+            Assert.Less(other.Stats.GetBase(StatId.Hp), 20);
+        }
+
+        [Test]
+        public void DoublingTowerOnBoardReplaysMonsterTargetedHelpCardWithoutRemovingSelf()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var tower = content.CreateDraft("help.doubling_tower").Create(registry);
+            var knife = content.CreateDraft("help.throwing_knife").Create(registry);
+            var monster = CreateMonster("monster.double.target", 20, SlotId.Board(2));
+            board.PlaceCard(tower, SlotId.Board(1));
+            content.ApplyContentToCard(tower);
+            content.ApplyContentToCard(knife);
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new UseItemAction(knife.Uid, new[] { monster.Uid }));
+
+            Assert.AreEqual(8, monster.Stats.GetBase(StatId.Hp));
+            Assert.AreEqual(ZoneId.Board, tower.Zone.Value);
+            Assert.IsTrue(Contains(tower.EffectIds, "help.doubling_tower.board_monster"));
+        }
+
+        [Test]
+        public void DoublingTowerInItemSlotsReplaysPlayerHelpCardOnceThenDeactivates()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var avatar = Avatar();
+            avatar.Stats.SetBase(StatId.Hp, 10);
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new SpawnCardAction("help.doubling_tower", CardKind.HelpCard, ZoneId.ItemSlots, SlotId.None, 1));
+            var tower = FindCardByDef(architecture.GetModel<DeckModel>().ItemSlotUids, registry, "help.doubling_tower");
+            var potion = content.CreateDraft("help.healing_potion").Create(registry);
+            content.ApplyContentToCard(potion);
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new UseItemAction(potion.Uid, new[] { avatar.Uid }));
+
+            Assert.AreEqual(30, avatar.Stats.GetBase(StatId.Hp));
+            Assert.AreEqual(ZoneId.Removed, tower.Zone.Value);
+            Assert.IsFalse(Contains(tower.EffectIds, "help.doubling_tower.item_player"));
+
+            avatar.Stats.SetBase(StatId.Hp, 10);
+            var secondPotion = content.CreateDraft("help.healing_potion").Create(registry);
+            content.ApplyContentToCard(secondPotion);
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new UseItemAction(secondPotion.Uid, new[] { avatar.Uid }));
+            Assert.AreEqual(20, avatar.Stats.GetBase(StatId.Hp));
+        }
+
         private static IEffectSystem Effects()
         {
             return NineGridArchitecture.Current.GetSystem<IEffectSystem>();
@@ -939,6 +1033,21 @@ namespace NineGrid.Core.Tests
             monster.Stats.SetBase(StatId.Hp, hp);
             board.PlaceCard(monster, slot);
             return monster;
+        }
+
+        private static CardInstance FindCardByDef(IReadOnlyList<int> uids, CardRegistry registry, string defId)
+        {
+            for (var i = 0; i < uids.Count; i++)
+            {
+                var card = registry.Get(uids[i]);
+                if (card.DefId == defId)
+                {
+                    return card;
+                }
+            }
+
+            Assert.Fail("Missing card: " + defId);
+            return null;
         }
 
         private static int CountBoardMonsters(IArchitecture architecture)

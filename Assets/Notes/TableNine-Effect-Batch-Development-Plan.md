@@ -338,6 +338,47 @@ MonsterSkill pending, 46:
 
 下一批建议：继续批次4 后续小批，优先做 `skill.taunt.pending` 的交互合法性规则；如果想换能力簇，则进入批次5 处理宝箱/奖励/选择动作。
 
+### 4.1 批次4续落地记录（2026-06-18）
+
+目标：把批次4首轮明确遗留的生命周期、防伤、规则改写内容补完整，收口 `skill.taunt.pending`、`relic.gold_armor.pending`、`help.doubling_tower.pending`。
+
+本批新增能力：
+
+- 新增 `RuleId.AttackTargetRestriction`：攻击入口在排队战斗 Action 前询问规则；嘲讽怪与玩家正交相邻时，攻击其他怪物会被拒绝并写入 `ActionRejected`。
+- 新增 `RuleId.GoldArmorAbsorb`：伤害公式在护甲损失前用金币抵消“本来会打到当前护甲的伤害”，每 5 金币抵消 1 点；血量段伤害不被金币抵消。
+- `Adjacent` 条件在 RuleModifier 构建期可绑定“技能源卡相邻玩家”的 stat condition，避免嘲讽规则错误绑定到当前被评估目标。
+- `OnUseHelpCard` trigger 支持 `ownerOnly=false` / `excludeSelf=true`，让道具位或场上被动帮助卡监听其他帮助卡使用。
+- 新增 `CardZone` condition 与 `ReplayHelpCardEffects` action atom，用于倍增塔区分场上/道具牌格，并重放被使用帮助卡的已实现 DSL；道具牌格倍增塔触发后会移除本卡并注销自身 effect。
+- `EffectAtomSchemas` 增加 `CardZone.zone` 与 `ReplayHelpCardEffects.targetKind` 校验。
+
+本批转换：
+
+- `skill.taunt.rule`：MonsterSkill / RuleModifier / `AttackTargetRestriction`，嘲讽源相邻玩家时只能攻击本卡。
+- `relic.gold_armor.rule`：Relic / RuleModifier / `GoldArmorAbsorb`，玩家受到伤害时每 5 金币抵消 1 点当前护甲伤害。
+- `help.doubling_tower.board_monster`：HelpCard / Triggered / `OnUseHelpCard ownerOnly=false`，倍增塔在格1时，对怪物使用的帮助卡额外生效一次，不移除自身。
+- `help.doubling_tower.item_player`：HelpCard / Triggered / `OnUseHelpCard ownerOnly=false`，倍增塔在道具牌格时，对玩家使用的帮助卡额外生效一次，然后永久移除并注销自身 effect。
+
+批次4续后数量：
+
+| 项目 | 数量 |
+|:--|--:|
+| hardcoded implemented effects | 85 |
+| runtime pending effects | 43 |
+| runtime total effects | 128 |
+| pending HelpCard effects | 7 |
+| pending Relic effects | 1 |
+| pending PlayerSkill effects | 1 |
+| pending MonsterSkill effects | 34 |
+
+验证记录：
+
+- `Assets/Notes/CI/check-core-guards.ps1`：通过。
+- Unity MCP refresh/compile：通过，Console 无编译错误；仅有 Easy Save obsolete warning 与一次 MCP WebSocket warning。
+- `NineGrid.Core.Tests` EditMode 全量：92/92 通过。
+- `Assets/Notes/CI/run-core-tests.ps1`：报告 `NineGrid Core tests passed`；本机已有 Unity Editor 打开项目，batchmode 末尾仍有重复实例提示，最终以 Unity MCP 全量测试为准。
+
+下一批建议：批次4主清单已闭环。若继续处理规则/生命周期同簇，可做 `help.brutality_card.pending` 的一次战斗攻击翻倍和清理；若按路线图推进，优先进入批次6C 的被移除卡属性快照（`skill.absorb_bone.pending`）或批次7B 的 `help.bear_trap.pending`。
+
 ## 5. 批次5落地记录（2026-06-18）
 
 目标：实现奖励、选择、内容动作的最小可验闭环，让效果 DSL 能产出确定性的奖励候选事件，并转换宝箱/轻车熟路/幸运硬币。
@@ -599,7 +640,7 @@ MonsterSkill pending, 46:
 ### 当前还没签收的部分
 
 - `TableNineContentCatalog.cs` 仍是主要内容真源，Luban 只是最小样例，不是生产内容源。
-- hardcoded catalog 预计有 81 个 implemented effect、46 个 runtime pending effect，R4 仍未清零。
+- hardcoded catalog 预计有 85 个 implemented effect、43 个 runtime pending effect，R4 仍未清零。
 - 设计文档里效果总量更大：帮助卡 22 条、遗物 58 条、玩家技能 7 条、怪物技能 81 条。hardcoded catalog 覆盖了帮助卡和玩家技能的大部分，但遗物和怪物技能仍是子集/原型。
 - R5 的全内容回放网、pending 闸门、Luban 全量迁移闸门还没有完成。
 
@@ -782,9 +823,9 @@ MonsterSkill pending, 46:
 
 下一次如果要直接进入实现，建议从：
 
-1. **继续批次4 后续小批**：做 `skill.taunt.pending` 的交互合法性规则，或做 `relic.gold_armor.pending` 的金币抵伤。
-2. **帮助卡长尾小批**：复用 `SelectedCards` / `ValueExpr` 处理 `help.armor_breaking_hammer.pending`、`help.kidnapping.pending` 这类已接近可表达的选择目标效果。
-3. **继续批次6后续小批**：基于 `sourceDefId/cause` 处理被移除卡属性快照，优先收 `skill.absorb_bone.pending`。
+1. **继续批次6后续小批**：基于 `sourceDefId/cause` 处理被移除卡属性快照，优先收 `skill.absorb_bone.pending`。
+2. **继续批次7B**：处理 `help.bear_trap.pending` 的补牌陷阱触发与自移除。
+3. **帮助卡长尾小批**：复用 `SelectedCards` / `ValueExpr` 处理 `help.armor_breaking_hammer.pending`、`help.kidnapping.pending` 这类已接近可表达的选择目标效果。
 
 ## 12. 给后续 AI 的技能入口
 

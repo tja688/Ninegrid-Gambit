@@ -57,8 +57,15 @@ namespace NineGrid.Core
 
             var armor = Math.Max(0, (int)Math.Round(target.Stats.GetBase(StatId.Armor)));
             var hp = Math.Max(0, (int)Math.Round(target.Stats.GetBase(StatId.Hp)));
-            var armorLoss = Math.Min(armor, damage);
-            var hpLoss = Math.Min(hp, damage - armorLoss);
+            var armorDamage = Math.Min(armor, damage);
+            var goldAbsorbed = 0;
+            if (target.Kind == CardKind.Avatar && armor > 0 && damage > 0 && statSystem.EvaluateRule(RuleId.GoldArmorAbsorb, 0f, statContext) > 0f)
+            {
+                goldAbsorbed = AbsorbArmorDamageWithGold(context, armorDamage);
+            }
+
+            var armorLoss = armorDamage - goldAbsorbed;
+            var hpLoss = Math.Min(hp, Math.Max(0, damage - armor));
             var newArmor = armor - armorLoss;
             var newHp = hp - hpLoss;
 
@@ -66,6 +73,18 @@ namespace NineGrid.Core
             target.Stats.SetBase(StatId.Hp, newHp);
 
             var result = new GameActionResult();
+            if (goldAbsorbed > 0)
+            {
+                result.AddEvent(new CoreGameEvent(CoreEventType.GoldModified, context.ActionId, ActionName)
+                    .WithActor(ActorUid)
+                    .WithTarget(TargetUid)
+                    .WithCard(TargetUid)
+                    .WithAmount(context.GetModel<PlayerModel>().Coins.Value)
+                    .WithDelta(-goldAbsorbed * 5)
+                    .WithMessage("goldArmor")
+                    .WithSource(SourceDefId, Cause));
+            }
+
             if (armorLoss > 0)
             {
                 result.AddEvent(new CoreGameEvent(CoreEventType.ArmorChanged, context.ActionId, ActionName)
@@ -103,6 +122,19 @@ namespace NineGrid.Core
             }
 
             return result;
+        }
+
+        private static int AbsorbArmorDamageWithGold(GameActionContext context, int maxArmorDamage)
+        {
+            var player = context.GetModel<PlayerModel>();
+            var goldToSpend = Math.Min(player.Coins.Value / 5, maxArmorDamage);
+            if (goldToSpend <= 0)
+            {
+                return 0;
+            }
+
+            player.AddCoins(-goldToSpend * 5);
+            return goldToSpend;
         }
 
         private static void DeactivateConsumedEffects(GameActionContext context, IReadOnlyList<RuleModifier> consumed)

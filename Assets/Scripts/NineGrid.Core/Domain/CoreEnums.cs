@@ -63,7 +63,9 @@ namespace NineGrid.Core
         EnemyAttackDelta,
         GoldCostOffset,
         DamageMultiplier,
-        FirstStrike
+        FirstStrike,
+        GoldArmorAbsorb,
+        AttackTargetRestriction
     }
 
     public enum BoardMarkId

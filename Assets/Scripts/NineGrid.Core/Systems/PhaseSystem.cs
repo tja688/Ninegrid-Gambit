@@ -98,6 +98,11 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.Attack, "Attack target is outside interaction range.", targetSlot, targetUid);
             }
 
+            if (!CanAttackTargetUnderRules(target))
+            {
+                return Reject(GameCommandKind.Attack, "Attack target is restricted by taunt.", targetSlot, targetUid);
+            }
+
             var avatar = registry.Get(board.AvatarUid.Value);
             var statSystem = this.GetSystem<IStatSystem>();
             var pipeline = this.GetSystem<IActionPipelineSystem>();
@@ -293,6 +298,13 @@ namespace NineGrid.Core.Systems
         private static bool HasFirstStrike(IStatSystem statSystem, CardInstance card)
         {
             return statSystem.EvaluateRule(RuleId.FirstStrike, 0f, statSystem.CreateContext(card)) > 0f;
+        }
+
+        private bool CanAttackTargetUnderRules(CardInstance target)
+        {
+            var statSystem = this.GetSystem<IStatSystem>();
+            var restrictedUid = (int)System.Math.Round(statSystem.EvaluateRule(RuleId.AttackTargetRestriction, 0f, statSystem.CreateContext(target)));
+            return restrictedUid == 0 || restrictedUid == target.Uid;
         }
 
         private static int GetAttackDamage(IStatSystem statSystem, CardInstance card)

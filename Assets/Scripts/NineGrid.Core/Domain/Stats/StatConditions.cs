@@ -91,6 +91,53 @@ namespace NineGrid.Core.Stats
         }
     }
 
+    public sealed class AdjacentToUidCondition : IStatCondition
+    {
+        public AdjacentToUidCondition(int targetUid)
+        {
+            TargetUid = targetUid;
+        }
+
+        public int TargetUid { get; private set; }
+
+        public bool IsMet(StatEvaluationContext context)
+        {
+            if (context == null || context.Owner == null || context.Registry == null)
+            {
+                return false;
+            }
+
+            CardInstance target;
+            return context.Registry.TryGet(TargetUid, out target) && context.OwnerSlot.IsAdjacentTo(target.Slot.Value);
+        }
+    }
+
+    public sealed class SourceAdjacentToUidCondition : IStatCondition
+    {
+        public SourceAdjacentToUidCondition(int sourceUid, int targetUid)
+        {
+            SourceUid = sourceUid;
+            TargetUid = targetUid;
+        }
+
+        public int SourceUid { get; private set; }
+        public int TargetUid { get; private set; }
+
+        public bool IsMet(StatEvaluationContext context)
+        {
+            if (context == null || context.Registry == null)
+            {
+                return false;
+            }
+
+            CardInstance source;
+            CardInstance target;
+            return context.Registry.TryGet(SourceUid, out source)
+                && context.Registry.TryGet(TargetUid, out target)
+                && source.Slot.Value.IsAdjacentTo(target.Slot.Value);
+        }
+    }
+
     public sealed class TargetUidCondition : IStatCondition
     {
         public TargetUidCondition(int targetUid)
@@ -103,6 +150,36 @@ namespace NineGrid.Core.Stats
         public bool IsMet(StatEvaluationContext context)
         {
             return context != null && context.Owner != null && context.Owner.Uid == TargetUid;
+        }
+    }
+
+    public sealed class TargetUidOrZeroCondition : IStatCondition
+    {
+        public TargetUidOrZeroCondition(int targetUid)
+        {
+            TargetUid = targetUid;
+        }
+
+        public int TargetUid { get; private set; }
+
+        public bool IsMet(StatEvaluationContext context)
+        {
+            return TargetUid == 0 || (context != null && context.Owner != null && context.Owner.Uid == TargetUid);
+        }
+    }
+
+    public sealed class ZoneCondition : IStatCondition
+    {
+        public ZoneCondition(ZoneId zone)
+        {
+            Zone = zone;
+        }
+
+        public ZoneId Zone { get; private set; }
+
+        public bool IsMet(StatEvaluationContext context)
+        {
+            return Zone == ZoneId.None || (context != null && context.Owner != null && context.Owner.Zone.Value == Zone);
         }
     }
 }
