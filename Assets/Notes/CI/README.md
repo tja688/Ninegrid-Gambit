@@ -1,8 +1,10 @@
-# NineGrid Core 测试验收（P0）
+# NineGrid Core 测试验收（本地）
 
-## 结论：使用 Unity Test Runner，而非纯 `dotnet test`
+## 结论：Unity EditMode Test Runner（本地验收，无 CI / 无 dotnet test）
 
-P0 规划曾写「纯 C# 测试工程 + `dotnet test`」。当前仓库实际情况：
+项目**不维护**独立 `dotnet test` 工程，**不接入 CI**。Core 验收统一走 Unity EditMode，开发时在编辑器 Test Runner 跑，需要命令行时在本地执行 batchmode 脚本。
+
+当前仓库实际情况：
 
 | 因素 | 说明 |
 |:--|:--|
@@ -11,9 +13,7 @@ P0 规划曾写「纯 C# 测试工程 + `dotnet test`」。当前仓库实际情
 | `QFramework` | 框架源码含 `using UnityEngine`，Core 无法脱离 Unity 程序集单独编译 |
 | 根目录 `*.csproj` / `*.sln` | 由 Unity 按需生成，已在 `.gitignore` 中忽略，不入库 |
 
-因此 **正式验收链路定为 Unity EditMode Test Runner**（编辑器内或 batchmode），不维护独立的 `NineGrid.Core.csproj` / `NineGrid.Core.Tests.csproj`。
-
-若未来抽离不依赖 Unity 的 Core 子集，可再评估 `build/dotnet/` 下的纯 C# 工程。
+因此 **正式验收链路定为 Unity EditMode Test Runner**（编辑器内或本地 batchmode），不维护独立的 `NineGrid.Core.csproj` / `NineGrid.Core.Tests.csproj`，也不做 CI 集成。
 
 ## 覆盖范围
 
@@ -68,7 +68,7 @@ Bash：
 
 或通过 Unity MCP：`run_tests(mode=EditMode, assembly_names=["NineGrid.Core.Tests"])`。
 
-### 方式 B：batchmode（CI / 命令行）
+### 方式 B：batchmode（本地命令行，可选）
 
 **先关闭已打开本工程的 Unity 编辑器**（同一工程不能双开）。
 
@@ -78,7 +78,7 @@ PowerShell（Windows）：
 .\Assets\Notes\CI\run-core-tests.ps1
 ```
 
-Bash（macOS / Linux CI）：
+Bash（macOS / Linux 本地）：
 
 ```bash
 ./Assets/Notes/CI/run-core-tests.sh
@@ -104,22 +104,6 @@ Bash（macOS / Linux CI）：
 | `1` | 脚本/环境错误（找不到 Unity 等） |
 | `2` | 有用例失败 |
 | 其他 | Unity batchmode 原始退出码 |
-
-### 方式 C：`dotnet test`（不作为 P0 验收）
-
-根 solution 由 Unity 生成，且测试程序集为 Editor/TestAssemblies 风格，`dotnet test` **不会**执行 `NineGrid.Core.Tests`。请勿用 solution 级 `dotnet test` 绿灯代替 Core 验收。
-
-## CI 集成示例（GitHub Actions 思路）
-
-```yaml
-- name: Run NineGrid Core EditMode tests
-  shell: bash
-  env:
-    UNITY_PATH: /path/to/Unity/Editor/Unity
-  run: ./Assets/Notes/CI/run-core-tests.sh
-```
-
-需在 runner 上预装与 `ProjectSettings/ProjectVersion.txt` 一致的 Unity 版本（当前：`6000.3.10f1`）。
 
 ## 维护说明
 
