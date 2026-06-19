@@ -39,6 +39,7 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("ActionSource"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("SelectedOption"));
             Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("CardZone"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Conditions.ContainsKey("StatAtLeast"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("RandomMonster"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("FilteredCards"));
             Assert.IsTrue(effectSystem.AtomRegistry.Targets.ContainsKey("AdjacentCard"));
@@ -55,6 +56,10 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("MoveToDrawPile"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("SetBoardMark"));
             Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("ReplayHelpCardEffects"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("TransferArmor"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("ForceBattle"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("ExchangeWithDrawPile"));
+            Assert.IsTrue(effectSystem.AtomRegistry.Actions.ContainsKey("ShuffleRandomContent"));
 
             var invalid = effectSystem.ParseJson(
                 "{"

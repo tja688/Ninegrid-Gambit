@@ -10,8 +10,8 @@
     "def_id": "skill.absorb_stone",
     "display_name": "吸石",
     "container_type": "MonsterSkill",
-    "design_text": "吸石",
-    "effect_ids": "skill.absorb_stone.pending"
+    "design_text": "每次移动吸取相邻怪物全部护甲",
+    "effect_ids": "skill.absorb_stone.move"
   },
   {
     "def_id": "skill.air_strike",
@@ -52,8 +52,8 @@
     "def_id": "skill.bloodthirst",
     "display_name": "嗜血",
     "container_type": "MonsterSkill",
-    "design_text": "嗜血",
-    "effect_ids": "skill.bloodthirst.pending"
+    "design_text": "战斗时每造成2点伤害，本卡攻击+1",
+    "effect_ids": "skill.bloodthirst.damage"
   },
   {
     "def_id": "skill.breathe_fire",
@@ -73,8 +73,8 @@
     "def_id": "skill.delivery",
     "display_name": "快递",
     "container_type": "MonsterSkill",
-    "design_text": "快递",
-    "effect_ids": "skill.delivery.pending"
+    "design_text": "每移动2次，将相邻帮助卡与战斗卡组怪物交换",
+    "effect_ids": "skill.delivery.move"
   },
   {
     "def_id": "skill.devotion",
@@ -115,22 +115,22 @@
     "def_id": "skill.fight_me",
     "display_name": "和我打！",
     "container_type": "MonsterSkill",
-    "design_text": "和我打！",
-    "effect_ids": "skill.fight_me.pending"
+    "design_text": "相邻玩家与其他怪物战斗时改为与本卡战斗",
+    "effect_ids": "skill.fight_me.battle"
   },
   {
     "def_id": "skill.find_weakness",
     "display_name": "发现弱点",
     "container_type": "MonsterSkill",
-    "design_text": "发现弱点",
-    "effect_ids": "skill.find_weakness.pending"
+    "design_text": "福地达到3后下一次移动造成99伤害",
+    "effect_ids": "skill.find_weakness.move"
   },
   {
     "def_id": "skill.fire_power",
     "display_name": "火之力",
     "container_type": "MonsterSkill",
-    "design_text": "火之力",
-    "effect_ids": "skill.fire_power.pending"
+    "design_text": "每有一张烈焰，本卡攻击+2",
+    "effect_ids": "skill.fire_power.aura"
   },
   {
     "def_id": "skill.first_strike",
@@ -150,15 +150,15 @@
     "def_id": "skill.flame_breath",
     "display_name": "烈焰吐息",
     "container_type": "MonsterSkill",
-    "design_text": "烈焰吐息",
-    "effect_ids": "skill.flame_breath.pending"
+    "design_text": "每移动4次移除其他普通怪物并按数量加入烈焰",
+    "effect_ids": "skill.flame_breath.move"
   },
   {
     "def_id": "skill.fracture_fall_apart",
     "display_name": "折损散架",
     "container_type": "MonsterSkill",
-    "design_text": "折损散架",
-    "effect_ids": "skill.fracture_fall_apart.pending"
+    "design_text": "被移除时洗入多骨虫和等级2随机怪物",
+    "effect_ids": "skill.fracture_fall_apart.remove"
   },
   {
     "def_id": "skill.gear_delivery",
@@ -193,7 +193,7 @@
     "display_name": "坚硬",
     "container_type": "MonsterSkill",
     "design_text": "左列战斗时按损失护甲伤害玩家",
-    "effect_ids": "skill.hard.pending"
+    "effect_ids": "skill.hard.slot1|skill.hard.slot4|skill.hard.slot7"
   },
   {
     "def_id": "skill.hard_skin",
@@ -213,8 +213,8 @@
     "def_id": "skill.hot_observation",
     "display_name": "灼热观察",
     "container_type": "MonsterSkill",
-    "design_text": "灼热观察",
-    "effect_ids": "skill.hot_observation.pending"
+    "design_text": "怪物卡因怪物技能位移时伤害玩家",
+    "effect_ids": "skill.hot_observation.observe"
   },
   {
     "def_id": "skill.intense_burning",
@@ -241,8 +241,8 @@
     "def_id": "skill.mixed_bones",
     "display_name": "混合骨头",
     "container_type": "MonsterSkill",
-    "design_text": "混合骨头",
-    "effect_ids": "skill.mixed_bones.pending"
+    "design_text": "每移动5次移除随机两张其他怪物并洗入等级2/3随机怪物",
+    "effect_ids": "skill.mixed_bones.move"
   },
   {
     "def_id": "skill.monster_battle_hardened",
@@ -255,15 +255,15 @@
     "def_id": "skill.orc_tactics",
     "display_name": "兽人战术",
     "container_type": "MonsterSkill",
-    "design_text": "兽人战术",
-    "effect_ids": "skill.orc_tactics.pending"
+    "design_text": "每移动1次，相邻怪物攻击+1",
+    "effect_ids": "skill.orc_tactics.move"
   },
   {
     "def_id": "skill.otherworld_help",
     "display_name": "异界帮助",
     "container_type": "MonsterSkill",
-    "design_text": "异界帮助",
-    "effect_ids": "skill.otherworld_help.pending"
+    "design_text": "每移动9次从其他怪物牌组加入普通怪物",
+    "effect_ids": "skill.otherworld_help.move"
   },
   {
     "def_id": "skill.random_walk",
@@ -283,8 +283,8 @@
     "def_id": "skill.rascality",
     "display_name": "痞气",
     "container_type": "MonsterSkill",
-    "design_text": "痞气",
-    "effect_ids": "skill.rascality.pending"
+    "design_text": "每损失3点护甲，相邻怪物攻击+1",
+    "effect_ids": "skill.rascality.armor_lost"
   },
   {
     "def_id": "skill.recombine_body",
@@ -304,15 +304,15 @@
     "def_id": "skill.relentless_chase",
     "display_name": "不休追击",
     "container_type": "MonsterSkill",
-    "design_text": "不休追击",
-    "effect_ids": "skill.relentless_chase.pending"
+    "design_text": "移动到玩家相邻格时强制战斗",
+    "effect_ids": "skill.relentless_chase.move"
   },
   {
     "def_id": "skill.rolling_crush",
     "display_name": "滚动碾压",
     "container_type": "MonsterSkill",
-    "design_text": "滚动碾压",
-    "effect_ids": "skill.rolling_crush.pending"
+    "design_text": "移动到格3时移除格6帮助卡",
+    "effect_ids": "skill.rolling_crush.slot3"
   },
   {
     "def_id": "skill.rotate_lover",
@@ -325,8 +325,8 @@
     "def_id": "skill.sacrifice",
     "display_name": "献祭",
     "container_type": "MonsterSkill",
-    "design_text": "献祭",
-    "effect_ids": "skill.sacrifice.pending"
+    "design_text": "每移动2次，移除九宫格上所有的龙信徒",
+    "effect_ids": "skill.sacrifice.move"
   },
   {
     "def_id": "skill.sharp_stone",
@@ -339,8 +339,8 @@
     "def_id": "skill.smart",
     "display_name": "大聪明",
     "container_type": "MonsterSkill",
-    "design_text": "大聪明",
-    "effect_ids": "skill.smart.pending"
+    "design_text": "每次获得攻击时，本卡额外攻击+1且不递归",
+    "effect_ids": "skill.smart.gain"
   },
   {
     "def_id": "skill.space_mastery",
@@ -353,8 +353,8 @@
     "def_id": "skill.stocking",
     "display_name": "进货",
     "container_type": "MonsterSkill",
-    "design_text": "进货",
-    "effect_ids": "skill.stocking.pending"
+    "design_text": "累计移动到玩家相邻3次时移除帮助卡并获得护甲",
+    "effect_ids": "skill.stocking.move"
   },
   {
     "def_id": "skill.stone_growth",
@@ -367,15 +367,15 @@
     "def_id": "skill.stone_lover",
     "display_name": "石头爱好者",
     "container_type": "MonsterSkill",
-    "design_text": "石头爱好者",
-    "effect_ids": "skill.stone_lover.pending"
+    "design_text": "玩家卡和怪物卡损失护甲时本卡攻击+1",
+    "effect_ids": "skill.stone_lover.armor_lost"
   },
   {
     "def_id": "skill.stone_shelter",
     "display_name": "石庇护",
     "container_type": "MonsterSkill",
-    "design_text": "石庇护",
-    "effect_ids": "skill.stone_shelter.pending"
+    "design_text": "其他怪物卡受到的伤害减少1点",
+    "effect_ids": "skill.stone_shelter.rule"
   },
   {
     "def_id": "skill.stray_cub",
@@ -395,8 +395,8 @@
     "def_id": "skill.strong_combo",
     "display_name": "强力组合",
     "container_type": "MonsterSkill",
-    "design_text": "强力组合",
-    "effect_ids": "skill.strong_combo.pending"
+    "design_text": "移动时与相邻两张怪物合成为巨大骷髅",
+    "effect_ids": "skill.strong_combo.move"
   },
   {
     "def_id": "skill.survival_wisdom",
@@ -410,7 +410,7 @@
     "display_name": "吞石",
     "container_type": "MonsterSkill",
     "design_text": "每移动2次吸相邻怪物护甲",
-    "effect_ids": "skill.swallow_stone.pending"
+    "effect_ids": "skill.swallow_stone.move"
   },
   {
     "def_id": "skill.taunt",
@@ -437,8 +437,8 @@
     "def_id": "skill.throw_stone",
     "display_name": "丢石头",
     "container_type": "MonsterSkill",
-    "design_text": "丢石头",
-    "effect_ids": "skill.throw_stone.pending"
+    "design_text": "每移动2次消耗本卡2护甲并伤害玩家",
+    "effect_ids": "skill.throw_stone.move"
   },
   {
     "def_id": "skill.tower_child",

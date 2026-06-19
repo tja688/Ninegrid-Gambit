@@ -66,6 +66,11 @@ namespace NineGrid.Core.Effects
             {
                 ValidateNestedActionGraph(atom, node, path, registry, result);
             }
+
+            if (expectedKind == EffectAtomKind.Condition && Same(atom, "TargetCount"))
+            {
+                ValidateNode(node.Get("target"), EffectAtomKind.Target, path + ".target", registry, result);
+            }
         }
 
         private static void ValidateNestedActionGraph(
@@ -155,6 +160,11 @@ namespace NineGrid.Core.Effects
             {
                 result.Add("schema.modifier.value", path + ".value is required.");
             }
+
+            if (node.Has("value") && node.Get("value").IsObject)
+            {
+                EffectValueExpression.Validate(node.Get("value"), path + ".value", result);
+            }
         }
 
         private static void ValidateRuleModifierBlock(EffectDslNode node, string path, EffectValidationResult result)
@@ -217,6 +227,19 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.condition.slot", path + ".slot is required for AtSlot.");
                 }
 
+                if (Same(atom, "StatAtLeast"))
+                {
+                    if (!node.Has("stat"))
+                    {
+                        result.Add("schema.condition.stat", path + ".stat is required for StatAtLeast.");
+                    }
+
+                    if (!node.Has("value"))
+                    {
+                        result.Add("schema.condition.value", path + ".value is required for StatAtLeast.");
+                    }
+                }
+
                 if (Same(atom, "HasCard") && !node.Has("defId") && !node.Has("kind") && !node.Has("zone"))
                 {
                     result.Add("schema.condition.hasCard", path + " requires defId, kind, or zone for HasCard.");
@@ -225,6 +248,16 @@ namespace NineGrid.Core.Effects
                 if (Same(atom, "CardCounter") && !node.Has("key"))
                 {
                     result.Add("schema.condition.key", path + ".key is required for CardCounter.");
+                }
+
+                if (Same(atom, "TargetCount") && !node.Has("target"))
+                {
+                    result.Add("schema.condition.target", path + ".target is required for TargetCount.");
+                }
+
+                if (Same(atom, "BoardMarkCount") && !node.Has("mark"))
+                {
+                    result.Add("schema.condition.mark", path + ".mark is required for BoardMarkCount.");
                 }
 
                 if (Same(atom, "CardZone") && !node.Has("zone"))
@@ -297,6 +330,13 @@ namespace NineGrid.Core.Effects
                     EffectValueExpression.Validate(node.Get("value"), path + ".value", result);
                 }
             }
+            else if (Same(atom, "TransferArmor"))
+            {
+                if (!node.Get("all").AsBool(false) && !node.Has("amount"))
+                {
+                    result.Add("schema.action.amount", path + ".amount is required for TransferArmor unless .all is true.");
+                }
+            }
             else if (Same(atom, "ModifyGold") && !node.Has("delta"))
             {
                 result.Add("schema.action.delta", path + ".delta is required for ModifyGold.");
@@ -341,6 +381,12 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.action.defId", path + ".defId is required for " + atom + ".");
                 }
             }
+            else if ((Same(atom, "ShuffleRandomContent") || Same(atom, "ExchangeWithDrawPile"))
+                && node.Has("kind")
+                && !IsSupportedCardKind(node.Get("kind").AsString(string.Empty)))
+            {
+                result.Add("schema.action.kind", path + ".kind is not supported.");
+            }
             else if (Same(atom, "GrantSkill") && !node.Has("skillDefId"))
             {
                 result.Add("schema.action.skillDefId", path + ".skillDefId is required for GrantSkill.");
@@ -355,6 +401,23 @@ namespace NineGrid.Core.Effects
                 if (!node.Has("value"))
                 {
                     result.Add("schema.action.value", path + ".value is required for AddRuleModifier.");
+                }
+            }
+            else if (Same(atom, "AddModifier"))
+            {
+                if (!node.Has("stat"))
+                {
+                    result.Add("schema.action.stat", path + ".stat is required for AddModifier.");
+                }
+
+                if (!node.Has("value"))
+                {
+                    result.Add("schema.action.value", path + ".value is required for AddModifier.");
+                }
+
+                if (node.Has("value") && node.Get("value").IsObject)
+                {
+                    EffectValueExpression.Validate(node.Get("value"), path + ".value", result);
                 }
             }
             else if (Same(atom, "SetBoardMark"))
@@ -428,6 +491,11 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.range.every", path + ".every must be >= 1.");
                 }
 
+                if (Same(atom, "OnSelfMove") && node.Has("requireAdjacentTo") && string.IsNullOrEmpty(node.Get("requireAdjacentTo").AsString(string.Empty)))
+                {
+                    result.Add("schema.trigger.requireAdjacentTo", path + ".requireAdjacentTo must not be empty.");
+                }
+
                 if (Same(atom, "OnBattle") && node.Has("maxActionDepth") && node.Get("maxActionDepth").AsInt(-1) < 0)
                 {
                     result.Add("schema.range.maxActionDepth", path + ".maxActionDepth must be >= 0.");
@@ -441,6 +509,11 @@ namespace NineGrid.Core.Effects
                 if (Same(atom, "OnCumulative") && node.Has("threshold") && node.Get("threshold").AsInt(1) < 1)
                 {
                     result.Add("schema.range.threshold", path + ".threshold must be >= 1.");
+                }
+
+                if (Same(atom, "OnCumulative") && node.Has("eventType") && !IsSupportedEventType(node.Get("eventType").AsString(string.Empty)))
+                {
+                    result.Add("schema.trigger.eventType", path + ".eventType is not supported.");
                 }
 
                 return;
@@ -462,9 +535,40 @@ namespace NineGrid.Core.Effects
                     }
                 }
 
+                if (Same(atom, "StatAtLeast"))
+                {
+                    if (node.Has("value") && node.Get("value").AsFloat(0f) < 0f)
+                    {
+                        result.Add("schema.range.value", path + ".value must be >= 0.");
+                    }
+
+                    if (node.Has("stat") && !IsSupportedStat(node.Get("stat").AsString(string.Empty)))
+                    {
+                        result.Add("schema.condition.stat", path + ".stat is not supported.");
+                    }
+                }
+
                 if (Same(atom, "CardCounter") && node.Has("min") && node.Get("min").AsInt(1) < 1)
                 {
                     result.Add("schema.range.min", path + ".min must be >= 1.");
+                }
+
+                if (Same(atom, "TargetCount") && node.Has("min") && node.Get("min").AsInt(1) < 0)
+                {
+                    result.Add("schema.range.min", path + ".min must be >= 0.");
+                }
+
+                if (Same(atom, "BoardMarkCount"))
+                {
+                    if (node.Has("min") && node.Get("min").AsInt(1) < 0)
+                    {
+                        result.Add("schema.range.min", path + ".min must be >= 0.");
+                    }
+
+                    if (node.Has("mark") && !IsSupportedBoardMark(node.Get("mark").AsString(string.Empty)))
+                    {
+                        result.Add("schema.condition.mark", path + ".mark is not supported.");
+                    }
                 }
 
                 if (Same(atom, "EventFilter"))
@@ -532,6 +636,30 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.range.count", path + ".count must be >= 0.");
                 }
 
+                if (Same(atom, "FilteredCards"))
+                {
+                    ValidateLevelRange(node, path, result);
+
+                    if (node.Has("kind") && !IsSupportedCardKind(node.Get("kind").AsString(string.Empty)))
+                    {
+                        result.Add("schema.target.kind", path + ".kind is not supported.");
+                    }
+
+                    if (node.Has("zone") && !IsSupportedZone(node.Get("zone").AsString(string.Empty)))
+                    {
+                        result.Add("schema.target.zone", path + ".zone is not supported.");
+                    }
+
+                    var zones = node.Get("zones").AsArray();
+                    for (var i = 0; i < zones.Count; i++)
+                    {
+                        if (!IsSupportedZone(zones[i].AsString(string.Empty)))
+                        {
+                            result.Add("schema.target.zone", path + ".zones[" + i + "] is not supported.");
+                        }
+                    }
+                }
+
                 if (Same(atom, "SelectedCards"))
                 {
                     if (node.Has("count") && node.Get("count").AsInt(0) < 0)
@@ -563,6 +691,11 @@ namespace NineGrid.Core.Effects
                     }
                 }
 
+                if (Same(atom, "SlotCard") && node.Has("kind") && !IsSupportedCardKind(node.Get("kind").AsString(string.Empty)))
+                {
+                    result.Add("schema.target.kind", path + ".kind is not supported.");
+                }
+
                 return;
             }
 
@@ -574,6 +707,29 @@ namespace NineGrid.Core.Effects
             if ((Same(atom, "DealDamage") || Same(atom, "Heal") || Same(atom, "GainArmor"))
                 && node.Has("amount")
                 && node.Get("amount").AsInt(0) < 0)
+            {
+                result.Add("schema.range.amount", path + ".amount must be >= 0.");
+            }
+
+            if (Same(atom, "AddModifier"))
+            {
+                if (node.Has("stat") && !IsSupportedStat(node.Get("stat").AsString(string.Empty)))
+                {
+                    result.Add("schema.action.stat", path + ".stat is not supported.");
+                }
+
+                if (node.Has("value") && node.Get("value").AsFloat(0f) < 0f && !node.Get("value").IsObject)
+                {
+                    result.Add("schema.range.value", path + ".value must be >= 0.");
+                }
+
+                if (node.Has("activeWhileAdjacentTo") && string.IsNullOrEmpty(node.Get("activeWhileAdjacentTo").AsString(string.Empty)))
+                {
+                    result.Add("schema.action.activeWhileAdjacentTo", path + ".activeWhileAdjacentTo must not be empty.");
+                }
+            }
+
+            if (Same(atom, "TransferArmor") && node.Has("amount") && node.Get("amount").AsInt(0) < 0)
             {
                 result.Add("schema.range.amount", path + ".amount must be >= 0.");
             }
@@ -595,6 +751,18 @@ namespace NineGrid.Core.Effects
                 {
                     result.Add("schema.rotate.direction", path + ".direction must be Clockwise or CounterClockwise.");
                 }
+            }
+
+            if ((Same(atom, "ShuffleInto") || Same(atom, "Spawn") || Same(atom, "ShuffleRandomContent"))
+                && node.Has("count")
+                && node.Get("count").AsInt(0) < 0)
+            {
+                result.Add("schema.range.count", path + ".count must be >= 0.");
+            }
+
+            if (Same(atom, "ShuffleRandomContent") || Same(atom, "ExchangeWithDrawPile"))
+            {
+                ValidateLevelRange(node, path, result);
             }
 
             if (Same(atom, "SetBoardMark"))
@@ -683,6 +851,26 @@ namespace NineGrid.Core.Effects
 
             ZoneId ignored;
             return Enum.TryParse(zone, true, out ignored);
+        }
+
+        private static void ValidateLevelRange(EffectDslNode node, string path, EffectValidationResult result)
+        {
+            var min = node.Get("minLevel").AsInt(0);
+            var max = node.Get("maxLevel").AsInt(0);
+            if (node.Has("minLevel") && min < 0)
+            {
+                result.Add("schema.range.minLevel", path + ".minLevel must be >= 0.");
+            }
+
+            if (node.Has("maxLevel") && max < 0)
+            {
+                result.Add("schema.range.maxLevel", path + ".maxLevel must be >= 0.");
+            }
+
+            if (min > 0 && max > 0 && min > max)
+            {
+                result.Add("schema.range.level", path + ".minLevel must be <= maxLevel.");
+            }
         }
 
         private static bool IsSupportedBoardMark(string mark)

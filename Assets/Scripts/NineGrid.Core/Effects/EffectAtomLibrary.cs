@@ -88,7 +88,8 @@ namespace NineGrid.Core.Effects
                 }
             }
 
-            return HasEvent(context, CoreEventType.DamageDealt);
+            return HasEvent(context, CoreEventType.DamageDealt)
+                || HasEvent(context, CoreEventType.ArmorChanged);
         }
 
         private static bool Same(string left, string right)
@@ -210,6 +211,10 @@ namespace NineGrid.Core.Effects
     {
         private int mEvery = 1;
         private string mCounterKey = string.Empty;
+        private string mRequireAdjacentToRef = string.Empty;
+        private string mSourceDefId = string.Empty;
+        private string mExcludeSourceDefId = string.Empty;
+        private string mSourcePrefix = string.Empty;
 
         public override TriggerPoint Point { get { return TriggerPoint.OnMove; } }
 
@@ -218,6 +223,10 @@ namespace NineGrid.Core.Effects
             base.Configure(config);
             mEvery = Math.Max(1, config.Get("every").AsInt(1));
             mCounterKey = config.Get("counterKey").AsString(string.Empty);
+            mRequireAdjacentToRef = config.Get("requireAdjacentTo").AsString(string.Empty);
+            mSourceDefId = config.Get("sourceDefId").AsString(string.Empty);
+            mExcludeSourceDefId = config.Get("excludeSourceDefId").AsString(string.Empty);
+            mSourcePrefix = config.Get("sourcePrefix").AsString(string.Empty);
         }
 
         public override bool Matches(EffectRuntimeContext context)
@@ -230,7 +239,14 @@ namespace NineGrid.Core.Effects
             var events = context.Events;
             for (var i = 0; i < events.Count; i++)
             {
-                if (events[i].Type != CoreEventType.CardMoved || events[i].CardUid != context.OwnerUid)
+                if (events[i].Type != CoreEventType.CardMoved
+                    || events[i].CardUid != context.OwnerUid
+                    || !MatchesSource(context, events[i]))
+                {
+                    continue;
+                }
+
+                if (!IsOwnerAdjacentToRequiredRef(context))
                 {
                     continue;
                 }
@@ -255,6 +271,57 @@ namespace NineGrid.Core.Effects
 
             return false;
         }
+
+        private bool IsOwnerAdjacentToRequiredRef(EffectRuntimeContext context)
+        {
+            if (string.IsNullOrEmpty(mRequireAdjacentToRef))
+            {
+                return true;
+            }
+
+            var otherUid = TargetResolver.ResolveSingleCardRef(context, mRequireAdjacentToRef);
+            CardInstance owner;
+            CardInstance other;
+            return context.TryGetCard(context.OwnerUid, out owner)
+                && context.TryGetCard(otherUid, out other)
+                && owner.Slot.Value.IsAdjacentTo(other.Slot.Value);
+        }
+
+        private bool MatchesSource(EffectRuntimeContext context, CoreGameEvent gameEvent)
+        {
+            var sourceDefId = gameEvent.SourceDefId;
+            if (!string.IsNullOrEmpty(context.EffectId) && Same(gameEvent.Cause, context.EffectId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mSourceDefId) && !Same(sourceDefId, mSourceDefId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mExcludeSourceDefId) && Same(sourceDefId, mExcludeSourceDefId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mSourcePrefix) && !StartsWith(sourceDefId, mSourcePrefix))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool Same(string left, string right)
+        {
+            return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool StartsWith(string value, string prefix)
+        {
+            return value != null && prefix != null && value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     [EffectAtom("OnMoveToSlot", EffectAtomKind.Trigger)]
@@ -262,6 +329,9 @@ namespace NineGrid.Core.Effects
     {
         private SlotId mSlot = SlotId.None;
         private string mTargetRef = "Any";
+        private string mSourceDefId = string.Empty;
+        private string mExcludeSourceDefId = string.Empty;
+        private string mSourcePrefix = string.Empty;
 
         public override TriggerPoint Point { get { return TriggerPoint.OnMoveToSlot; } }
 
@@ -270,6 +340,9 @@ namespace NineGrid.Core.Effects
             base.Configure(config);
             mSlot = SlotId.Board(config.Get("slot").AsInt(1));
             mTargetRef = config.Get("target").AsString("Any");
+            mSourceDefId = config.Get("sourceDefId").AsString(string.Empty);
+            mExcludeSourceDefId = config.Get("excludeSourceDefId").AsString(string.Empty);
+            mSourcePrefix = config.Get("sourcePrefix").AsString(string.Empty);
         }
 
         public override bool Matches(EffectRuntimeContext context)
@@ -285,13 +358,44 @@ namespace NineGrid.Core.Effects
             {
                 if (events[i].Type == CoreEventType.CardMoved
                     && events[i].ToSlot == mSlot
-                    && (expectedUid == 0 || events[i].CardUid == expectedUid))
+                    && (expectedUid == 0 || events[i].CardUid == expectedUid)
+                    && MatchesSource(events[i].SourceDefId))
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        private bool MatchesSource(string sourceDefId)
+        {
+            if (!string.IsNullOrEmpty(mSourceDefId) && !Same(sourceDefId, mSourceDefId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mExcludeSourceDefId) && Same(sourceDefId, mExcludeSourceDefId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mSourcePrefix) && !StartsWith(sourceDefId, mSourcePrefix))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool Same(string left, string right)
+        {
+            return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool StartsWith(string value, string prefix)
+        {
+            return value != null && prefix != null && value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -461,6 +565,16 @@ namespace NineGrid.Core.Effects
         private string mMetric = "armorLost";
         private int mThreshold = 1;
         private string mCounterKey = string.Empty;
+        private CoreEventType mEventType = CoreEventType.ActionStarted;
+        private bool mHasEventType;
+        private string mTargetIsRef = string.Empty;
+        private string mTargetNotRef = string.Empty;
+        private string mActorIsRef = string.Empty;
+        private string mSourceDefId = string.Empty;
+        private string mExcludeSourceDefId = string.Empty;
+        private string mSourcePrefix = string.Empty;
+        private string mCause = string.Empty;
+        private string mExcludeCause = string.Empty;
 
         public override TriggerPoint Point { get { return TriggerPoint.OnCumulative; } }
 
@@ -470,6 +584,16 @@ namespace NineGrid.Core.Effects
             mMetric = config.Get("metric").AsString("armorLost");
             mThreshold = Math.Max(1, config.Get("threshold").AsInt(1));
             mCounterKey = config.Get("counterKey").AsString(string.Empty);
+            mHasEventType = config.Has("eventType");
+            mEventType = config.Get("eventType").AsEnum(CoreEventType.ActionStarted);
+            mTargetIsRef = config.Get("targetIs").AsString(string.Empty);
+            mTargetNotRef = config.Get("targetNot").AsString(string.Empty);
+            mActorIsRef = config.Get("actorIs").AsString(string.Empty);
+            mSourceDefId = config.Get("sourceDefId").AsString(string.Empty);
+            mExcludeSourceDefId = config.Get("excludeSourceDefId").AsString(string.Empty);
+            mSourcePrefix = config.Get("sourcePrefix").AsString(string.Empty);
+            mCause = config.Get("cause").AsString(string.Empty);
+            mExcludeCause = config.Get("excludeCause").AsString(string.Empty);
         }
 
         public override bool Matches(EffectRuntimeContext context)
@@ -510,6 +634,11 @@ namespace NineGrid.Core.Effects
             var events = context.Events;
             for (var i = 0; i < events.Count; i++)
             {
+                if (!MatchesEvent(context, events[i]))
+                {
+                    continue;
+                }
+
                 if (Same(mMetric, "armorLost") && events[i].Type == CoreEventType.ArmorChanged && events[i].Delta < 0)
                 {
                     sum += -events[i].Delta;
@@ -518,14 +647,77 @@ namespace NineGrid.Core.Effects
                 {
                     sum += -events[i].Delta;
                 }
+                else if (Same(mMetric, "damageDealt") && events[i].Type == CoreEventType.DamageDealt && events[i].Delta > 0)
+                {
+                    sum += events[i].Delta;
+                }
             }
 
             return sum;
         }
 
+        private bool MatchesEvent(EffectRuntimeContext context, CoreGameEvent gameEvent)
+        {
+            if (mHasEventType && gameEvent.Type != mEventType)
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mSourceDefId) && !Same(gameEvent.SourceDefId, mSourceDefId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mExcludeSourceDefId) && Same(gameEvent.SourceDefId, mExcludeSourceDefId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mSourcePrefix) && !StartsWith(gameEvent.SourceDefId, mSourcePrefix))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mCause) && !Same(gameEvent.Cause, mCause))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mExcludeCause) && Same(gameEvent.Cause, mExcludeCause))
+            {
+                return false;
+            }
+
+            var expectedTarget = TargetResolver.ResolveSingleCardRef(context, mTargetIsRef);
+            var eventTargetUid = gameEvent.TargetUid != 0 ? gameEvent.TargetUid : gameEvent.CardUid;
+            if (expectedTarget != 0 && eventTargetUid != expectedTarget)
+            {
+                return false;
+            }
+
+            var forbiddenTarget = TargetResolver.ResolveSingleCardRef(context, mTargetNotRef);
+            if (forbiddenTarget != 0 && eventTargetUid == forbiddenTarget)
+            {
+                return false;
+            }
+
+            var expectedActor = TargetResolver.ResolveSingleCardRef(context, mActorIsRef);
+            if (expectedActor != 0 && gameEvent.ActorUid != expectedActor)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         private static bool Same(string left, string right)
         {
             return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool StartsWith(string value, string prefix)
+        {
+            return value != null && prefix != null && value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -648,19 +840,31 @@ namespace NineGrid.Core.Effects
     {
         private readonly List<string> mIncludeRefs = new List<string>();
         private readonly List<string> mExcludeRefs = new List<string>();
+        private readonly List<ZoneId> mZones = new List<ZoneId>();
+        private string mDefId = string.Empty;
         private CardKind mKind = CardKind.Unknown;
         private ZoneId mZone = ZoneId.None;
         private string mAdjacentToRef = string.Empty;
+        private int mMinLevel;
+        private int mMaxLevel;
+        private bool mExcludeElite;
+        private bool mExcludeBoss;
         private bool mRandom;
         private int mCount;
 
         public void Configure(EffectDslNode config)
         {
+            mDefId = config.Get("defId").AsString(string.Empty);
             mKind = config.Get("kind").AsEnum(CardKind.Unknown);
             mZone = config.Get("zone").AsEnum(ZoneId.None);
             mAdjacentToRef = config.Get("adjacentTo").AsString(string.Empty);
+            mMinLevel = Math.Max(0, config.Get("minLevel").AsInt(0));
+            mMaxLevel = Math.Max(0, config.Get("maxLevel").AsInt(0));
+            mExcludeElite = config.Get("excludeElite").AsBool(false);
+            mExcludeBoss = config.Get("excludeBoss").AsBool(false);
             mRandom = config.Get("random").AsBool(false);
             mCount = Math.Max(0, config.Get("count").AsInt(mRandom ? 1 : 0));
+            AddZones(config.Get("zones"));
             AddRefs(config.Get("include"), mIncludeRefs);
             AddRefs(config.Get("exclude"), mExcludeRefs);
         }
@@ -673,7 +877,18 @@ namespace NineGrid.Core.Effects
                 AddUnique(result, TargetResolver.ResolveSingleCardRef(context, mIncludeRefs[i]));
             }
 
-            var candidates = TargetResolver.FilteredCards(context, mKind, mZone, mAdjacentToRef, mExcludeRefs);
+            var candidates = TargetResolver.FilteredCards(
+                context,
+                mDefId,
+                mKind,
+                mZone,
+                mZones,
+                mAdjacentToRef,
+                mMinLevel,
+                mMaxLevel,
+                mExcludeElite,
+                mExcludeBoss,
+                mExcludeRefs);
             for (var i = candidates.Count - 1; i >= 0; i--)
             {
                 if (Contains(result, candidates[i]))
@@ -725,6 +940,25 @@ namespace NineGrid.Core.Effects
             if (!string.IsNullOrEmpty(value))
             {
                 refs.Add(value);
+            }
+        }
+
+        private void AddZones(EffectDslNode node)
+        {
+            mZones.Clear();
+            var values = node.AsArray();
+            for (var i = 0; i < values.Count; i++)
+            {
+                AddZone(values[i].AsString(string.Empty));
+            }
+        }
+
+        private void AddZone(string value)
+        {
+            ZoneId zone;
+            if (!string.IsNullOrEmpty(value) && Enum.TryParse(value, true, out zone) && zone != ZoneId.None)
+            {
+                mZones.Add(zone);
             }
         }
 
@@ -869,15 +1103,24 @@ namespace NineGrid.Core.Effects
     public sealed class SlotCardTarget : ITarget
     {
         private SlotId mSlot = SlotId.None;
+        private CardKind mKind = CardKind.Unknown;
 
         public void Configure(EffectDslNode config)
         {
             mSlot = SlotId.Board(config.Get("slot").AsInt(1));
+            mKind = config.Get("kind").AsEnum(CardKind.Unknown);
         }
 
         public IReadOnlyList<int> Resolve(EffectRuntimeContext context)
         {
-            return TargetResolver.Single(context.Board.GetCardUid(mSlot));
+            var uid = context.Board.GetCardUid(mSlot);
+            CardInstance card;
+            if (mKind != CardKind.Unknown && (!context.TryGetCard(uid, out card) || card.Kind != mKind))
+            {
+                return new int[0];
+            }
+
+            return TargetResolver.Single(uid);
         }
     }
 
@@ -1138,6 +1381,63 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    [EffectAtom("StatAtLeast", EffectAtomKind.Condition)]
+    public sealed class StatAtLeastEffectCondition : ICondition
+    {
+        private string mTargetRef = "Self";
+        private StatId mStat = StatId.Armor;
+        private float mValue;
+
+        public void Configure(EffectDslNode config)
+        {
+            mTargetRef = config.Get("target").AsString("Self");
+            mStat = config.Get("stat").AsEnum(StatId.Armor);
+            mValue = config.Get("value").AsFloat(0f);
+        }
+
+        public bool IsMet(EffectRuntimeContext context)
+        {
+            var uid = TargetResolver.ResolveSingleCardRef(context, mTargetRef);
+            CardInstance card;
+            if (!context.TryGetCard(uid, out card))
+            {
+                return false;
+            }
+
+            var current = mStat == StatId.Hp || mStat == StatId.Armor
+                ? card.Stats.GetBase(mStat)
+                : context.Architecture.GetSystem<IStatSystem>().GetEffectiveValue(card, mStat);
+            return current >= mValue;
+        }
+
+        public IStatCondition CreateStatCondition(EffectBuildContext context)
+        {
+            var uid = ResolveBuildRef(context, mTargetRef);
+            return new StatAtLeastStatCondition(uid, mStat, mValue);
+        }
+
+        private static int ResolveBuildRef(EffectBuildContext context, string reference)
+        {
+            if (context == null || string.IsNullOrEmpty(reference))
+            {
+                return 0;
+            }
+
+            if (string.Equals(reference, "Self", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reference, "Owner", StringComparison.OrdinalIgnoreCase))
+            {
+                return context.Instance == null || context.Instance.Owner == null ? 0 : context.Instance.Owner.OwnerUid;
+            }
+
+            if (string.Equals(reference, "Player", StringComparison.OrdinalIgnoreCase))
+            {
+                return context.Architecture.GetModel<BoardModel>().AvatarUid.Value;
+            }
+
+            return 0;
+        }
+    }
+
     [EffectAtom("HasCard", EffectAtomKind.Condition)]
     public sealed class HasCardEffectCondition : ICondition
     {
@@ -1216,6 +1516,58 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    [EffectAtom("TargetCount", EffectAtomKind.Condition)]
+    public sealed class TargetCountEffectCondition : ICondition
+    {
+        private EffectDslNode mTarget;
+        private int mMin = 1;
+
+        public void Configure(EffectDslNode config)
+        {
+            mTarget = config.Get("target");
+            mMin = Math.Max(0, config.Get("min").AsInt(1));
+        }
+
+        public bool IsMet(EffectRuntimeContext context)
+        {
+            if (context == null || mTarget == null || mTarget.IsNull)
+            {
+                return false;
+            }
+
+            var registry = context.Architecture.GetSystem<IEffectSystem>().AtomRegistry;
+            return registry.CreateTarget(mTarget).Resolve(context).Count >= mMin;
+        }
+
+        public IStatCondition CreateStatCondition(EffectBuildContext context)
+        {
+            return null;
+        }
+    }
+
+    [EffectAtom("BoardMarkCount", EffectAtomKind.Condition)]
+    public sealed class BoardMarkCountEffectCondition : ICondition
+    {
+        private BoardMarkId mMark = BoardMarkId.Blessed;
+        private int mMin = 1;
+
+        public void Configure(EffectDslNode config)
+        {
+            mMark = config.Get("mark").AsEnum(BoardMarkId.Blessed);
+            mMin = Math.Max(0, config.Get("min").AsInt(1));
+        }
+
+        public bool IsMet(EffectRuntimeContext context)
+        {
+            return context != null && mMark != BoardMarkId.None && context.Board.CountMarkedSlots(mMark) >= mMin;
+        }
+
+        public IStatCondition CreateStatCondition(EffectBuildContext context)
+        {
+            return null;
+        }
+    }
+
     [EffectAtom("SelectedOption", EffectAtomKind.Condition)]
     public sealed class SelectedOptionEffectCondition : ICondition
     {
@@ -1245,10 +1597,14 @@ namespace NineGrid.Core.Effects
         private StatId mStat = StatId.Attack;
         private bool mHasStat;
         private int mMinDelta = int.MinValue;
+        private int mMaxDelta = int.MaxValue;
         private CardKind mTargetKind = CardKind.Unknown;
+        private string mTargetIsRef = string.Empty;
         private string mTargetNotRef = string.Empty;
+        private string mActorIsRef = string.Empty;
         private string mSourceDefId = string.Empty;
         private string mExcludeSourceDefId = string.Empty;
+        private string mSourcePrefix = string.Empty;
         private string mCause = string.Empty;
         private string mExcludeCause = string.Empty;
 
@@ -1264,10 +1620,14 @@ namespace NineGrid.Core.Effects
             mHasStat = config.Has("stat");
             mStat = config.Get("stat").AsEnum(StatId.Attack);
             mMinDelta = config.Has("minDelta") ? config.Get("minDelta").AsInt(0) : int.MinValue;
+            mMaxDelta = config.Has("maxDelta") ? config.Get("maxDelta").AsInt(0) : int.MaxValue;
             mTargetKind = config.Get("targetKind").AsEnum(CardKind.Unknown);
+            mTargetIsRef = config.Get("targetIs").AsString(string.Empty);
             mTargetNotRef = config.Get("targetNot").AsString(string.Empty);
+            mActorIsRef = config.Get("actorIs").AsString(string.Empty);
             mSourceDefId = config.Get("sourceDefId").AsString(string.Empty);
             mExcludeSourceDefId = config.Get("excludeSourceDefId").AsString(string.Empty);
+            mSourcePrefix = config.Get("sourcePrefix").AsString(string.Empty);
             mCause = config.Get("cause").AsString(string.Empty);
             mExcludeCause = config.Get("excludeCause").AsString(string.Empty);
         }
@@ -1288,7 +1648,14 @@ namespace NineGrid.Core.Effects
 
         public IStatCondition CreateStatCondition(EffectBuildContext context)
         {
-            return null;
+            return new EventFilterStatCondition(
+                ResolveBuildRef(context, mTargetIsRef),
+                ResolveBuildRef(context, mTargetNotRef),
+                mTargetKind,
+                mSourceDefId,
+                mExcludeSourceDefId,
+                mCause,
+                mExcludeCause);
         }
 
         private bool Matches(EffectRuntimeContext context, CoreGameEvent gameEvent)
@@ -1308,12 +1675,22 @@ namespace NineGrid.Core.Effects
                 return false;
             }
 
+            if (mMaxDelta != int.MaxValue && gameEvent.Delta > mMaxDelta)
+            {
+                return false;
+            }
+
             if (!string.IsNullOrEmpty(mSourceDefId) && !Same(gameEvent.SourceDefId, mSourceDefId))
             {
                 return false;
             }
 
             if (!string.IsNullOrEmpty(mExcludeSourceDefId) && Same(gameEvent.SourceDefId, mExcludeSourceDefId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mSourcePrefix) && !StartsWith(gameEvent.SourceDefId, mSourcePrefix))
             {
                 return false;
             }
@@ -1329,6 +1706,18 @@ namespace NineGrid.Core.Effects
             }
 
             var eventTargetUid = gameEvent.TargetUid != 0 ? gameEvent.TargetUid : gameEvent.CardUid;
+            var expectedUid = TargetResolver.ResolveSingleCardRef(context, mTargetIsRef);
+            if (expectedUid != 0 && eventTargetUid != expectedUid)
+            {
+                return false;
+            }
+
+            var expectedActorUid = TargetResolver.ResolveSingleCardRef(context, mActorIsRef);
+            if (expectedActorUid != 0 && gameEvent.ActorUid != expectedActorUid)
+            {
+                return false;
+            }
+
             if (mTargetKind != CardKind.Unknown)
             {
                 CardInstance target;
@@ -1374,9 +1763,34 @@ namespace NineGrid.Core.Effects
             return false;
         }
 
+        private static int ResolveBuildRef(EffectBuildContext context, string reference)
+        {
+            if (context == null || string.IsNullOrEmpty(reference))
+            {
+                return 0;
+            }
+
+            if (Same(reference, "Self") || Same(reference, "Owner"))
+            {
+                return context.Instance == null || context.Instance.Owner == null ? 0 : context.Instance.Owner.OwnerUid;
+            }
+
+            if (Same(reference, "Player"))
+            {
+                return context.Architecture.GetModel<BoardModel>().AvatarUid.Value;
+            }
+
+            return 0;
+        }
+
         private static bool Same(string left, string right)
         {
             return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool StartsWith(string value, string prefix)
+        {
+            return value != null && prefix != null && value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -1806,6 +2220,44 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    [EffectAtom("TransferArmor", EffectAtomKind.Action)]
+    public sealed class TransferArmorEffectAction : IAction
+    {
+        private int mAmount;
+        private bool mAll;
+        private string mReceiverRef = "Self";
+        private string mCause = string.Empty;
+
+        public void Configure(EffectDslNode config)
+        {
+            mAmount = Math.Max(0, config.Get("amount").AsInt(0));
+            mAll = config.Get("all").AsBool(false);
+            mReceiverRef = config.Get("receiver").AsString("Self");
+            mCause = config.Get("cause").AsString(string.Empty);
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            var result = new List<GameAction>();
+            var receiverUid = TargetResolver.ResolveSingleCardRef(context, mReceiverRef);
+            for (var i = 0; i < targets.Count; i++)
+            {
+                if (targets[i] != 0)
+                {
+                    result.Add(new TransferArmorAction(
+                        targets[i],
+                        receiverUid,
+                        mAmount,
+                        mAll,
+                        context.SourceDefId,
+                        EffectActionSource.CauseOrEffect(context, mCause)));
+                }
+            }
+
+            return result;
+        }
+    }
+
     [EffectAtom("ModifyGold", EffectAtomKind.Action)]
     public sealed class ModifyGoldEffectAction : IAction
     {
@@ -1941,7 +2393,7 @@ namespace NineGrid.Core.Effects
             {
                 if (targets[i] != 0)
                 {
-                    result.Add(new MoveCardAction(targets[i], mToSlot));
+                    result.Add(new MoveCardAction(targets[i], mToSlot, context.SourceDefId, context.EffectId));
                 }
             }
 
@@ -1972,7 +2424,7 @@ namespace NineGrid.Core.Effects
         {
             if (mLeft != SlotId.None && mRight != SlotId.None)
             {
-                return new[] { new SwapBoardSlotsAction(mLeft, mRight) };
+                return new[] { new SwapBoardSlotsAction(mLeft, mRight, context.SourceDefId, context.EffectId) };
             }
 
             if (targets.Count < 2)
@@ -1982,7 +2434,7 @@ namespace NineGrid.Core.Effects
 
             var left = context.Registry.Get(targets[0]).Slot.Value;
             var right = context.Registry.Get(targets[1]).Slot.Value;
-            return new[] { new SwapBoardSlotsAction(left, right) };
+            return new[] { new SwapBoardSlotsAction(left, right, context.SourceDefId, context.EffectId) };
         }
     }
 
@@ -2006,7 +2458,7 @@ namespace NineGrid.Core.Effects
             var result = new List<GameAction>();
             for (var i = 0; i < mCount; i++)
             {
-                result.Add(new RotateBoardClockwiseAction(mClockwise));
+                result.Add(new RotateBoardClockwiseAction(mClockwise, context.SourceDefId, context.EffectId));
             }
 
             return result;
@@ -2020,6 +2472,7 @@ namespace NineGrid.Core.Effects
         private CardKind mKind = CardKind.Monster;
         private int mCount = 1;
         private bool mTop;
+        private bool mPerTarget;
 
         public void Configure(EffectDslNode config)
         {
@@ -2027,11 +2480,13 @@ namespace NineGrid.Core.Effects
             mKind = config.Get("kind").AsEnum(CardKind.Monster);
             mCount = Math.Max(0, config.Get("count").AsInt(1));
             mTop = config.Get("top").AsBool(false);
+            mPerTarget = config.Get("perTarget").AsBool(false);
         }
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
         {
-            return new[] { new ShuffleIntoDrawPileAction(mDefId, mKind, mCount, mTop, context.SourceDefId) };
+            var count = mPerTarget ? mCount * targets.Count : mCount;
+            return new[] { new ShuffleIntoDrawPileAction(mDefId, mKind, count, mTop, context.SourceDefId) };
         }
     }
 
@@ -2068,6 +2523,7 @@ namespace NineGrid.Core.Effects
         private ZoneId mZone = ZoneId.DrawPile;
         private SlotId mSlot = SlotId.None;
         private int mCount = 1;
+        private bool mPerTarget;
 
         public void Configure(EffectDslNode config)
         {
@@ -2075,6 +2531,7 @@ namespace NineGrid.Core.Effects
             mKind = config.Get("kind").AsEnum(CardKind.Monster);
             mZone = config.Get("zone").AsEnum(ZoneId.DrawPile);
             mCount = Math.Max(0, config.Get("count").AsInt(1));
+            mPerTarget = config.Get("perTarget").AsBool(false);
             if (config.Has("slot"))
             {
                 mSlot = SlotId.Board(config.Get("slot").AsInt(1));
@@ -2083,28 +2540,69 @@ namespace NineGrid.Core.Effects
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
         {
-            return new[] { new SpawnCardAction(mDefId, mKind, mZone, mSlot, mCount, context.SourceDefId) };
+            var count = mPerTarget ? mCount * targets.Count : mCount;
+            return new[] { new SpawnCardAction(mDefId, mKind, mZone, mSlot, count, context.SourceDefId) };
         }
     }
 
-    [EffectAtom("AddModifier", EffectAtomKind.Action)]
-    public sealed class AddModifierEffectAction : IAction
+    [EffectAtom("ShuffleRandomContent", EffectAtomKind.Action)]
+    public sealed class ShuffleRandomContentEffectAction : IAction
     {
-        private StatId mStat = StatId.Attack;
-        private ModifierOp mOp = ModifierOp.Add;
-        private float mValue;
-        private ModifierLayer mLayer = ModifierLayer.Temporary;
-        private ModifierScope mScope = ModifierScope.UntilBattleEnds;
-        private string mSource = "effect.action";
+        private CardKind mKind = CardKind.Monster;
+        private int mCount = 1;
+        private bool mTop;
+        private int mMinLevel;
+        private int mMaxLevel;
+        private bool mExcludeElite;
+        private bool mExcludeBoss;
+        private string mExcludeDeckId = string.Empty;
 
         public void Configure(EffectDslNode config)
         {
-            mStat = config.Get("stat").AsEnum(StatId.Attack);
-            mOp = config.Get("op").AsEnum(ModifierOp.Add);
-            mValue = config.Get("value").AsFloat(0f);
-            mLayer = config.Get("layer").AsEnum(ModifierLayer.Temporary);
-            mScope = config.Get("scope").AsEnum(ModifierScope.UntilBattleEnds);
-            mSource = config.Get("source").AsString("effect.action");
+            mKind = config.Get("kind").AsEnum(CardKind.Monster);
+            mCount = Math.Max(0, config.Get("count").AsInt(1));
+            mTop = config.Get("top").AsBool(false);
+            mMinLevel = Math.Max(0, config.Get("minLevel").AsInt(0));
+            mMaxLevel = Math.Max(0, config.Get("maxLevel").AsInt(0));
+            mExcludeElite = config.Get("excludeElite").AsBool(false);
+            mExcludeBoss = config.Get("excludeBoss").AsBool(false);
+            mExcludeDeckId = config.Get("excludeDeckId").AsString(string.Empty);
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            return new[]
+            {
+                new ShuffleRandomContentIntoDrawPileAction(
+                    mKind,
+                    mCount,
+                    mTop,
+                    mMinLevel,
+                    mMaxLevel,
+                    mExcludeElite,
+                    mExcludeBoss,
+                    mExcludeDeckId,
+                    context.SourceDefId)
+            };
+        }
+    }
+
+    [EffectAtom("ExchangeWithDrawPile", EffectAtomKind.Action)]
+    public sealed class ExchangeWithDrawPileEffectAction : IAction
+    {
+        private CardKind mKind = CardKind.Monster;
+        private int mMinLevel;
+        private int mMaxLevel;
+        private bool mExcludeElite;
+        private bool mExcludeBoss;
+
+        public void Configure(EffectDslNode config)
+        {
+            mKind = config.Get("kind").AsEnum(CardKind.Monster);
+            mMinLevel = Math.Max(0, config.Get("minLevel").AsInt(0));
+            mMaxLevel = Math.Max(0, config.Get("maxLevel").AsInt(0));
+            mExcludeElite = config.Get("excludeElite").AsBool(false);
+            mExcludeBoss = config.Get("excludeBoss").AsBool(false);
         }
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
@@ -2114,11 +2612,99 @@ namespace NineGrid.Core.Effects
             {
                 if (targets[i] != 0)
                 {
-                    result.Add(new AddStatModifierAction(targets[i], mStat, mOp, mValue, mLayer, mScope, mSource, context.SourceDefId));
+                    result.Add(new ExchangeWithDrawPileAction(
+                        targets[i],
+                        mKind,
+                        mMinLevel,
+                        mMaxLevel,
+                        mExcludeElite,
+                        mExcludeBoss,
+                        context.SourceDefId));
                 }
             }
 
             return result;
+        }
+    }
+
+    [EffectAtom("ForceBattle", EffectAtomKind.Action)]
+    public sealed class ForceBattleEffectAction : IAction
+    {
+        public void Configure(EffectDslNode config) { }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            var result = new List<GameAction>();
+            for (var i = 0; i < targets.Count; i++)
+            {
+                if (targets[i] != 0)
+                {
+                    result.Add(new ForceBattleAction(targets[i], context.SourceDefId, context.EffectId));
+                }
+            }
+
+            return result;
+        }
+    }
+
+    [EffectAtom("AddModifier", EffectAtomKind.Action)]
+    public sealed class AddModifierEffectAction : IAction
+    {
+        private StatId mStat = StatId.Attack;
+        private ModifierOp mOp = ModifierOp.Add;
+        private float mValue;
+        private EffectValueExpression mValueExpression;
+        private bool mUseValueExpression;
+        private ModifierLayer mLayer = ModifierLayer.Temporary;
+        private ModifierScope mScope = ModifierScope.UntilBattleEnds;
+        private string mSource = "effect.action";
+        private string mActiveWhileAdjacentToRef = string.Empty;
+
+        public void Configure(EffectDslNode config)
+        {
+            mStat = config.Get("stat").AsEnum(StatId.Attack);
+            mOp = config.Get("op").AsEnum(ModifierOp.Add);
+            mValue = config.Get("value").AsFloat(0f);
+            mUseValueExpression = config.Get("value").IsObject;
+            mValueExpression = mUseValueExpression ? EffectValueExpression.FromModifierValue(config) : null;
+            mLayer = config.Get("layer").AsEnum(ModifierLayer.Temporary);
+            mScope = config.Get("scope").AsEnum(ModifierScope.UntilBattleEnds);
+            mSource = config.Get("source").AsString("effect.action");
+            mActiveWhileAdjacentToRef = config.Get("activeWhileAdjacentTo").AsString(string.Empty);
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            var result = new List<GameAction>();
+            for (var i = 0; i < targets.Count; i++)
+            {
+                if (targets[i] != 0)
+                {
+                    result.Add(new AddStatModifierAction(
+                        targets[i],
+                        mStat,
+                        mOp,
+                        mUseValueExpression ? mValueExpression.Evaluate(context, targets[i]) : mValue,
+                        mLayer,
+                        mScope,
+                        mSource,
+                        context.SourceDefId,
+                        CreateActionCondition(context, targets[i])));
+                }
+            }
+
+            return result;
+        }
+
+        private IStatCondition CreateActionCondition(EffectRuntimeContext context, int targetUid)
+        {
+            if (string.IsNullOrEmpty(mActiveWhileAdjacentToRef))
+            {
+                return null;
+            }
+
+            var sourceUid = TargetResolver.ResolveSingleCardRef(context, mActiveWhileAdjacentToRef);
+            return sourceUid == 0 ? null : new SourceAdjacentToUidCondition(sourceUid, targetUid);
         }
     }
 
@@ -2397,9 +2983,15 @@ namespace NineGrid.Core.Effects
 
         public static List<int> FilteredCards(
             EffectRuntimeContext context,
+            string defId,
             CardKind kind,
             ZoneId zone,
+            IReadOnlyList<ZoneId> zones,
             string adjacentToRef,
+            int minLevel,
+            int maxLevel,
+            bool excludeElite,
+            bool excludeBoss,
             IReadOnlyList<string> excludeRefs)
         {
             var result = new List<int>();
@@ -2417,22 +3009,59 @@ namespace NineGrid.Core.Effects
                 return result;
             }
 
-            if (zone == ZoneId.None || zone == ZoneId.Board)
+            if (zones != null && zones.Count > 0)
             {
-                foreach (var uid in context.Board.BoardCardUids())
+                for (var i = 0; i < zones.Count; i++)
                 {
-                    AddIfMatches(context, result, uid, kind, ZoneId.Board, requiresAdjacency, adjacentToCard, excludeRefs);
+                    AddCardsFromZone(context, result, defId, kind, zones[i], requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs);
                 }
 
                 return result;
             }
 
-            foreach (var pair in context.Registry.Cards)
+            if (zone == ZoneId.None || zone == ZoneId.Board)
             {
-                AddIfMatches(context, result, pair.Key, kind, zone, requiresAdjacency, adjacentToCard, excludeRefs);
+                foreach (var uid in context.Board.BoardCardUids())
+                {
+                    AddIfMatches(context, result, uid, defId, kind, ZoneId.Board, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs);
+                }
+
+                return result;
             }
 
+            AddCardsFromZone(context, result, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs);
+
             return result;
+        }
+
+        private static void AddCardsFromZone(
+            EffectRuntimeContext context,
+            List<int> result,
+            string defId,
+            CardKind kind,
+            ZoneId zone,
+            bool requiresAdjacency,
+            CardInstance adjacentToCard,
+            int minLevel,
+            int maxLevel,
+            bool excludeElite,
+            bool excludeBoss,
+            IReadOnlyList<string> excludeRefs)
+        {
+            if (zone == ZoneId.Board)
+            {
+                foreach (var uid in context.Board.BoardCardUids())
+                {
+                    AddIfMatches(context, result, uid, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs);
+                }
+
+                return;
+            }
+
+            foreach (var pair in context.Registry.Cards)
+            {
+                AddIfMatches(context, result, pair.Key, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs);
+            }
         }
 
         public static int ResolveSingleCardRef(EffectRuntimeContext context, string reference)
@@ -2486,14 +3115,24 @@ namespace NineGrid.Core.Effects
             EffectRuntimeContext context,
             List<int> result,
             int uid,
+            string defId,
             CardKind kind,
             ZoneId zone,
             bool requiresAdjacency,
             CardInstance adjacentToCard,
+            int minLevel,
+            int maxLevel,
+            bool excludeElite,
+            bool excludeBoss,
             IReadOnlyList<string> excludeRefs)
         {
             CardInstance card;
             if (!context.TryGetCard(uid, out card))
+            {
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(defId) && card.DefId != defId)
             {
                 return;
             }
@@ -2504,6 +3143,27 @@ namespace NineGrid.Core.Effects
             }
 
             if (zone != ZoneId.None && card.Zone.Value != zone)
+            {
+                return;
+            }
+
+            var level = card.Counters.Get(CoreCounterKeys.Level);
+            if (minLevel > 0 && level < minLevel)
+            {
+                return;
+            }
+
+            if (maxLevel > 0 && level > maxLevel)
+            {
+                return;
+            }
+
+            if (excludeElite && card.Counters.Get(CoreCounterKeys.Elite) > 0)
+            {
+                return;
+            }
+
+            if (excludeBoss && card.Counters.Get(CoreCounterKeys.Boss) > 0)
             {
                 return;
             }
@@ -2580,6 +3240,120 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    internal sealed class StatAtLeastStatCondition : IStatCondition
+    {
+        private readonly int mTargetUid;
+        private readonly StatId mStat;
+        private readonly float mValue;
+
+        public StatAtLeastStatCondition(int targetUid, StatId stat, float value)
+        {
+            mTargetUid = targetUid;
+            mStat = stat;
+            mValue = value;
+        }
+
+        public bool IsMet(StatEvaluationContext context)
+        {
+            if (context == null || context.Registry == null)
+            {
+                return false;
+            }
+
+            var card = context.Owner;
+            if (mTargetUid != 0 && !context.Registry.TryGet(mTargetUid, out card))
+            {
+                return false;
+            }
+
+            if (card == null)
+            {
+                return false;
+            }
+
+            return card.Stats.GetBase(mStat) >= mValue;
+        }
+    }
+
+    internal sealed class EventFilterStatCondition : IStatCondition
+    {
+        private readonly int mTargetIsUid;
+        private readonly int mTargetNotUid;
+        private readonly CardKind mTargetKind;
+        private readonly string mSourceDefId;
+        private readonly string mExcludeSourceDefId;
+        private readonly string mCause;
+        private readonly string mExcludeCause;
+
+        public EventFilterStatCondition(
+            int targetIsUid,
+            int targetNotUid,
+            CardKind targetKind,
+            string sourceDefId,
+            string excludeSourceDefId,
+            string cause,
+            string excludeCause)
+        {
+            mTargetIsUid = targetIsUid;
+            mTargetNotUid = targetNotUid;
+            mTargetKind = targetKind;
+            mSourceDefId = sourceDefId ?? string.Empty;
+            mExcludeSourceDefId = excludeSourceDefId ?? string.Empty;
+            mCause = cause ?? string.Empty;
+            mExcludeCause = excludeCause ?? string.Empty;
+        }
+
+        public bool IsMet(StatEvaluationContext context)
+        {
+            if (context == null || context.Owner == null)
+            {
+                return false;
+            }
+
+            if (mTargetIsUid != 0 && context.Owner.Uid != mTargetIsUid)
+            {
+                return false;
+            }
+
+            if (mTargetNotUid != 0 && context.Owner.Uid == mTargetNotUid)
+            {
+                return false;
+            }
+
+            if (mTargetKind != CardKind.Unknown && context.Owner.Kind != mTargetKind)
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mSourceDefId) && !Same(context.SourceDefId, mSourceDefId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mExcludeSourceDefId) && Same(context.SourceDefId, mExcludeSourceDefId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mCause) && !Same(context.Cause, mCause))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mExcludeCause) && Same(context.Cause, mExcludeCause))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool Same(string left, string right)
+        {
+            return string.Equals(left ?? string.Empty, right ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
     internal sealed class OwnsRelicSetStatCondition : IStatCondition
     {
         private readonly IReadOnlyList<string> mDefIds;
@@ -2635,9 +3409,19 @@ namespace NineGrid.Core.Effects
             return new EffectValueExpression(null, config == null ? 0 : config.Get("amount").AsInt(0), false);
         }
 
+        public static EffectValueExpression FromModifierValue(EffectDslNode config)
+        {
+            return new EffectValueExpression(config == null ? null : config.Get("value"), 0, config != null && config.Has("value"));
+        }
+
         public int Evaluate(EffectRuntimeContext context, int targetUid)
         {
             return Math.Max(0, (int)Math.Round(mUseNode ? EvaluateNode(mNode, context, targetUid) : mFallback));
+        }
+
+        public float Evaluate(StatEvaluationContext context)
+        {
+            return Math.Max(0f, mUseNode ? EvaluateStatNode(mNode, context) : mFallback);
         }
 
         private static float EvaluateNode(EffectDslNode node, EffectRuntimeContext context, int targetUid)
@@ -2711,6 +3495,17 @@ namespace NineGrid.Core.Effects
         private static float EvaluateSource(EffectDslNode node, EffectRuntimeContext context, int targetUid)
         {
             var source = node.Get("source").AsString(string.Empty);
+            if (Same(source, "CardCount"))
+            {
+                return CountCards(context == null ? null : context.Registry, context == null ? null : context.Board, node);
+            }
+
+            if (Same(source, "BoardMarkCount"))
+            {
+                var mark = node.Get("mark").AsEnum(BoardMarkId.Blessed);
+                return context == null || context.Board == null || mark == BoardMarkId.None ? 0f : context.Board.CountMarkedSlots(mark);
+            }
+
             if (Same(source, "Event"))
             {
                 return EvaluateEventField(context, node.Get("field").AsString("Amount"));
@@ -2815,6 +3610,192 @@ namespace NineGrid.Core.Effects
             return null;
         }
 
+        private static float EvaluateStatNode(EffectDslNode node, StatEvaluationContext context)
+        {
+            if (node == null || node.IsNull)
+            {
+                return 0f;
+            }
+
+            if (!node.IsObject)
+            {
+                return node.AsFloat(0f);
+            }
+
+            if (node.Has("constant"))
+            {
+                return node.Get("constant").AsFloat(0f);
+            }
+
+            if (node.Has("op"))
+            {
+                return EvaluateStatOp(node, context);
+            }
+
+            return EvaluateStatSource(node, context);
+        }
+
+        private static float EvaluateStatOp(EffectDslNode node, StatEvaluationContext context)
+        {
+            var values = node.Get("values").AsArray();
+            var op = node.Get("op").AsString(string.Empty);
+            if (values.Count == 0)
+            {
+                return 0f;
+            }
+
+            var current = EvaluateStatNode(values[0], context);
+            if (Same(op, "Negate"))
+            {
+                return -current;
+            }
+
+            for (var i = 1; i < values.Count; i++)
+            {
+                var next = EvaluateStatNode(values[i], context);
+                if (Same(op, "Add"))
+                {
+                    current += next;
+                }
+                else if (Same(op, "Subtract"))
+                {
+                    current -= next;
+                }
+                else if (Same(op, "Multiply"))
+                {
+                    current *= next;
+                }
+                else if (Same(op, "Min"))
+                {
+                    current = Math.Min(current, next);
+                }
+                else if (Same(op, "Max"))
+                {
+                    current = Math.Max(current, next);
+                }
+            }
+
+            return current;
+        }
+
+        private static float EvaluateStatSource(EffectDslNode node, StatEvaluationContext context)
+        {
+            var source = node.Get("source").AsString(string.Empty);
+            if (Same(source, "CardCount"))
+            {
+                return CountCards(context == null ? null : context.Registry, context == null ? null : context.Board, node);
+            }
+
+            if (Same(source, "BoardMarkCount"))
+            {
+                var mark = node.Get("mark").AsEnum(BoardMarkId.Blessed);
+                return context == null || context.Board == null || mark == BoardMarkId.None ? 0f : context.Board.CountMarkedSlots(mark);
+            }
+
+            var card = ResolveStatCard(context, source);
+            if (card == null)
+            {
+                return 0f;
+            }
+
+            var stat = node.Get("stat").AsEnum(StatId.Attack);
+            return card.Stats.GetBase(stat);
+        }
+
+        private static CardInstance ResolveStatCard(StatEvaluationContext context, string source)
+        {
+            if (context == null)
+            {
+                return null;
+            }
+
+            if (Same(source, "Owner") || Same(source, "Self") || Same(source, "Target"))
+            {
+                return context.Owner;
+            }
+
+            if (Same(source, "Player") && context.Board != null && context.Registry != null)
+            {
+                CardInstance avatar;
+                return context.Registry.TryGet(context.Board.AvatarUid.Value, out avatar) ? avatar : null;
+            }
+
+            return null;
+        }
+
+        private static float CountCards(CardRegistry registry, BoardModel board, EffectDslNode node)
+        {
+            if (registry == null || board == null)
+            {
+                return 0f;
+            }
+
+            var defId = node.Get("defId").AsString(string.Empty);
+            var kind = node.Get("kind").AsEnum(CardKind.Unknown);
+            var zone = node.Get("zone").AsEnum(ZoneId.None);
+            var zones = node.Get("zones").AsArray();
+            if (zones.Count > 0)
+            {
+                var total = 0;
+                for (var i = 0; i < zones.Count; i++)
+                {
+                    total += CountCardsInZone(registry, board, defId, kind, zones[i].AsEnum(ZoneId.None));
+                }
+
+                return total;
+            }
+
+            return CountCardsInZone(registry, board, defId, kind, zone);
+        }
+
+        private static int CountCardsInZone(CardRegistry registry, BoardModel board, string defId, CardKind kind, ZoneId zone)
+        {
+            var count = 0;
+            if (zone == ZoneId.None || zone == ZoneId.Board)
+            {
+                foreach (var uid in board.BoardCardUids())
+                {
+                    if (MatchesCard(registry, uid, defId, kind, ZoneId.Board))
+                    {
+                        count++;
+                    }
+                }
+
+                return count;
+            }
+
+            foreach (var pair in registry.Cards)
+            {
+                if (MatchesCard(registry, pair.Key, defId, kind, zone))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static bool MatchesCard(CardRegistry registry, int uid, string defId, CardKind kind, ZoneId zone)
+        {
+            CardInstance card;
+            if (!registry.TryGet(uid, out card))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(defId) && card.DefId != defId)
+            {
+                return false;
+            }
+
+            if (kind != CardKind.Unknown && card.Kind != kind)
+            {
+                return false;
+            }
+
+            return zone == ZoneId.None || card.Zone.Value == zone;
+        }
+
         public static void Validate(EffectDslNode node, string path, EffectValidationResult result)
         {
             if (node == null || node.IsNull || result == null)
@@ -2890,6 +3871,31 @@ namespace NineGrid.Core.Effects
                 return;
             }
 
+            if (Same(source, "CardCount"))
+            {
+                if (!node.Has("defId") && !node.Has("kind"))
+                {
+                    result.Add("schema.value.cardCount", path + " requires defId or kind for CardCount.");
+                }
+
+                ValidateZones(node, path, result);
+                return;
+            }
+
+            if (Same(source, "BoardMarkCount"))
+            {
+                if (node.Has("mark"))
+                {
+                    BoardMarkId parsed;
+                    if (!Enum.TryParse(node.Get("mark").AsString(string.Empty), true, out parsed) || parsed == BoardMarkId.None)
+                    {
+                        result.Add("schema.value.mark", path + ".mark is not supported.");
+                    }
+                }
+
+                return;
+            }
+
             if (!node.Has("stat"))
             {
                 result.Add("schema.value.stat", path + ".stat is required.");
@@ -2911,7 +3917,9 @@ namespace NineGrid.Core.Effects
                 || Same(source, "EventTarget")
                 || Same(source, "EventCard")
                 || Same(source, "Actor")
-                || Same(source, "Event");
+                || Same(source, "Event")
+                || Same(source, "CardCount")
+                || Same(source, "BoardMarkCount");
         }
 
         private static bool IsSupportedStat(string stat)
@@ -2933,6 +3941,34 @@ namespace NineGrid.Core.Effects
                 || Same(field, "RemainingArmor")
                 || Same(field, "RemovedAttack")
                 || Same(field, "RemovedArmor");
+        }
+
+        private static void ValidateZones(EffectDslNode node, string path, EffectValidationResult result)
+        {
+            if (node.Has("zone") && !IsSupportedZone(node.Get("zone").AsString(string.Empty)))
+            {
+                result.Add("schema.value.zone", path + ".zone is not supported.");
+            }
+
+            var zones = node.Get("zones").AsArray();
+            for (var i = 0; i < zones.Count; i++)
+            {
+                if (!IsSupportedZone(zones[i].AsString(string.Empty)))
+                {
+                    result.Add("schema.value.zone", path + ".zones[" + i + "] is not supported.");
+                }
+            }
+        }
+
+        private static bool IsSupportedZone(string zone)
+        {
+            if (string.IsNullOrEmpty(zone))
+            {
+                return false;
+            }
+
+            ZoneId ignored;
+            return Enum.TryParse(zone, true, out ignored);
         }
 
         private static bool IsSupportedOp(string op)

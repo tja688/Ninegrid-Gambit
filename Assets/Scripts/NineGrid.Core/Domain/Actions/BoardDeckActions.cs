@@ -284,11 +284,20 @@ namespace NineGrid.Core
         }
 
         public RotateBoardClockwiseAction(bool clockwise)
+            : this(clockwise, null, null)
+        {
+        }
+
+        public RotateBoardClockwiseAction(bool clockwise, string sourceDefId, string cause)
         {
             Clockwise = clockwise;
+            SourceDefId = sourceDefId ?? string.Empty;
+            Cause = cause ?? string.Empty;
         }
 
         public bool Clockwise { get; private set; }
+        public string SourceDefId { get; private set; }
+        public string Cause { get; private set; }
         public override string ActionName { get { return "RotateBoardClockwise"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -321,12 +330,14 @@ namespace NineGrid.Core
                 board.PlaceCard(registry.Get(uids[i]), toSlot);
                 result.AddEvent(new CoreGameEvent(CoreEventType.CardMoved, context.ActionId, ActionName)
                     .WithCard(uids[i])
-                    .WithSlots(fromSlot, toSlot));
+                    .WithSlots(fromSlot, toSlot)
+                    .WithSource(SourceDefId, Cause));
             }
 
             result.AddEvent(new CoreGameEvent(CoreEventType.BoardRotated, context.ActionId, ActionName)
                 .WithAmount(Clockwise ? 1 : -1)
-                .WithMessage(Clockwise ? "clockwise" : "counterClockwise"));
+                .WithMessage(Clockwise ? "clockwise" : "counterClockwise")
+                .WithSource(SourceDefId, Cause));
             return result;
         }
 
@@ -347,13 +358,22 @@ namespace NineGrid.Core
         };
 
         public SwapBoardSlotsAction(SlotId left, SlotId right)
+            : this(left, right, null, null)
+        {
+        }
+
+        public SwapBoardSlotsAction(SlotId left, SlotId right, string sourceDefId, string cause)
         {
             Left = left;
             Right = right;
+            SourceDefId = sourceDefId ?? string.Empty;
+            Cause = cause ?? string.Empty;
         }
 
         public SlotId Left { get; private set; }
         public SlotId Right { get; private set; }
+        public string SourceDefId { get; private set; }
+        public string Cause { get; private set; }
         public override string ActionName { get { return "SwapBoardSlots"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -365,19 +385,28 @@ namespace NineGrid.Core
             board.ClearSlot(Left);
             board.ClearSlot(Right);
 
+            var result = new GameActionResult();
             if (leftUid != 0)
             {
                 board.PlaceCard(registry.Get(leftUid), Right);
+                result.AddEvent(new CoreGameEvent(CoreEventType.CardMoved, context.ActionId, ActionName)
+                    .WithCard(leftUid)
+                    .WithSlots(Left, Right)
+                    .WithSource(SourceDefId, Cause));
             }
 
             if (rightUid != 0)
             {
                 board.PlaceCard(registry.Get(rightUid), Left);
+                result.AddEvent(new CoreGameEvent(CoreEventType.CardMoved, context.ActionId, ActionName)
+                    .WithCard(rightUid)
+                    .WithSlots(Right, Left)
+                    .WithSource(SourceDefId, Cause));
             }
 
-            return new GameActionResult()
-                .AddEvent(new CoreGameEvent(CoreEventType.CardSwapped, context.ActionId, ActionName)
-                    .WithSlots(Left, Right));
+            return result.AddEvent(new CoreGameEvent(CoreEventType.CardSwapped, context.ActionId, ActionName)
+                    .WithSlots(Left, Right)
+                    .WithSource(SourceDefId, Cause));
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)

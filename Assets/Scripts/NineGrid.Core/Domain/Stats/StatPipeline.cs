@@ -45,7 +45,7 @@ namespace NineGrid.Core.Stats
                     continue;
                 }
 
-                value = ApplyOp(value, modifier.Op, modifier.Value);
+                value = ApplyOp(value, modifier.Op, modifier.EvaluateValue(context));
             }
 
             return value;

@@ -270,6 +270,95 @@ namespace NineGrid.Core
         }
     }
 
+    public sealed class TransferArmorAction : GameAction
+    {
+        private static readonly TriggerPoint[] sPostTriggers =
+        {
+            TriggerPoint.AfterAction,
+            TriggerPoint.OnArmorBreak,
+            TriggerPoint.OnArmorGained,
+            TriggerPoint.OnCumulative
+        };
+
+        public TransferArmorAction(
+            int sourceUid,
+            int receiverUid,
+            int amount,
+            bool transferAll,
+            string sourceDefId = null,
+            string cause = null)
+        {
+            SourceUid = sourceUid;
+            ReceiverUid = receiverUid;
+            Amount = amount;
+            TransferAll = transferAll;
+            SourceDefId = sourceDefId ?? string.Empty;
+            Cause = cause ?? string.Empty;
+        }
+
+        public int SourceUid { get; private set; }
+        public int ReceiverUid { get; private set; }
+        public int Amount { get; private set; }
+        public bool TransferAll { get; private set; }
+        public string SourceDefId { get; private set; }
+        public string Cause { get; private set; }
+        public override string ActionName { get { return "TransferArmor"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var registry = context.GetModel<CardRegistry>();
+            CardInstance source;
+            if (!registry.TryGet(SourceUid, out source))
+            {
+                return GameActionResult.Empty;
+            }
+
+            var sourceArmor = Math.Max(0, (int)Math.Round(source.Stats.GetBase(StatId.Armor)));
+            var requested = TransferAll ? sourceArmor : Math.Max(0, Amount);
+            var delta = Math.Min(sourceArmor, requested);
+            if (delta <= 0)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var sourceHp = Math.Max(0, (int)Math.Round(source.Stats.GetBase(StatId.Hp)));
+            var sourceNewArmor = sourceArmor - delta;
+            source.Stats.SetBase(StatId.Armor, sourceNewArmor);
+
+            var result = new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.ArmorChanged, context.ActionId, ActionName)
+                    .WithActor(ReceiverUid)
+                    .WithTarget(SourceUid)
+                    .WithCard(SourceUid)
+                    .WithDelta(-delta)
+                    .WithRemaining(sourceHp, sourceNewArmor)
+                    .WithSource(SourceDefId, Cause));
+
+            CardInstance receiver;
+            if (ReceiverUid != 0 && registry.TryGet(ReceiverUid, out receiver))
+            {
+                var receiverArmor = Math.Max(0, (int)Math.Round(receiver.Stats.GetBase(StatId.Armor)));
+                var receiverHp = Math.Max(0, (int)Math.Round(receiver.Stats.GetBase(StatId.Hp)));
+                var receiverNewArmor = receiverArmor + delta;
+                receiver.Stats.SetBase(StatId.Armor, receiverNewArmor);
+                result.AddEvent(new CoreGameEvent(CoreEventType.ArmorChanged, context.ActionId, ActionName)
+                    .WithActor(SourceUid)
+                    .WithTarget(ReceiverUid)
+                    .WithCard(ReceiverUid)
+                    .WithDelta(delta)
+                    .WithRemaining(receiverHp, receiverNewArmor)
+                    .WithSource(SourceDefId, Cause));
+            }
+
+            return result;
+        }
+
+        public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
+        {
+            return sPostTriggers;
+        }
+    }
+
     public sealed class ModifyGoldAction : GameAction
     {
         private static readonly TriggerPoint[] sPostTriggers =

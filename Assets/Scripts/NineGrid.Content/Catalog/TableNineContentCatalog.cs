@@ -548,6 +548,74 @@ namespace NineGrid.Content
                     "{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_man\",\"kind\":\"Monster\",\"count\":1,\"top\":false}"),
                 "每累计损失满10点护甲，将一张石人军团怪物洗入战斗卡组"));
 
+            c.AddEffect(Impl("skill.hard.slot1", EffectContainerType.MonsterSkill,
+                Triggered("skill.hard.slot1", "MonsterSkill",
+                    "{\"atom\":\"OnBattle\",\"targetKind\":\"Monster\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]},\"actor\":\"Self\"}",
+                    "[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":1},{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"targetIs\":\"Self\",\"maxDelta\":-1}]"),
+                "[场上] 处于格1时，战斗损失护甲后对玩家造成等同损失护甲的伤害"));
+            c.AddEffect(Impl("skill.hard.slot4", EffectContainerType.MonsterSkill,
+                Triggered("skill.hard.slot4", "MonsterSkill",
+                    "{\"atom\":\"OnBattle\",\"targetKind\":\"Monster\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]},\"actor\":\"Self\"}",
+                    "[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":4},{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"targetIs\":\"Self\",\"maxDelta\":-1}]"),
+                "[场上] 处于格4时，战斗损失护甲后对玩家造成等同损失护甲的伤害"));
+            c.AddEffect(Impl("skill.hard.slot7", EffectContainerType.MonsterSkill,
+                Triggered("skill.hard.slot7", "MonsterSkill",
+                    "{\"atom\":\"OnBattle\",\"targetKind\":\"Monster\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]},\"actor\":\"Self\"}",
+                    "[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":7},{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"targetIs\":\"Self\",\"maxDelta\":-1}]"),
+                "[场上] 处于格7时，战斗损失护甲后对玩家造成等同损失护甲的伤害"));
+            c.AddEffect(Impl("skill.swallow_stone.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.swallow_stone.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":2}",
+                    "{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]}",
+                    "{\"atom\":\"TransferArmor\",\"amount\":1,\"receiver\":\"Self\",\"cause\":\"skill.swallow_stone\"}"),
+                "每移动2次，扣除相邻怪物卡1点护甲并使本卡获得等量护甲"));
+            c.AddEffect(Impl("skill.bloodthirst.damage", EffectContainerType.MonsterSkill,
+                Triggered("skill.bloodthirst.damage", "MonsterSkill",
+                    "{\"atom\":\"OnCumulative\",\"metric\":\"damageDealt\",\"threshold\":2,\"actorIs\":\"Self\",\"targetIs\":\"Player\"}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"skill.bloodthirst\"}"),
+                "[战斗时] 每累计对玩家造成2点伤害，本卡攻击+1"));
+            c.AddEffect(Impl("skill.smart.gain", EffectContainerType.MonsterSkill,
+                Triggered("skill.smart.gain", "MonsterSkill",
+                    "{\"atom\":\"OnEvent\"}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"skill.smart\"}",
+                    "[{\"atom\":\"EventFilter\",\"eventTypes\":[\"BaseStatModified\",\"EffectModifierApplied\"],\"stat\":\"Attack\",\"minDelta\":1,\"targetIs\":\"Self\",\"excludeSourceDefId\":\"skill.smart\"}]"),
+                "每次本卡获得攻击时，本卡额外攻击+1；不响应本效果自身加成"));
+            c.AddEffect(Impl("skill.stone_lover.armor_lost", EffectContainerType.MonsterSkill,
+                Triggered("skill.stone_lover.armor_lost", "MonsterSkill",
+                    "{\"atom\":\"OnEvent\",\"eventType\":\"ArmorChanged\"}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"skill.stone_lover\"}",
+                    "[{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"maxDelta\":-1}]"),
+                "每当玩家卡或怪物卡损失护甲时，本卡攻击+1"));
+            c.AddEffect(Impl("skill.throw_stone.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.throw_stone.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":2}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"StatAtLeast\",\"target\":\"Self\",\"stat\":\"Armor\",\"value\":2},\"action\":{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"TransferArmor\",\"amount\":2,\"receiver\":\"None\",\"cause\":\"skill.throw_stone\"},"
+                    + "{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Self\",\"target\":{\"atom\":\"Player\"}}"
+                    + "]}}"),
+                "每移动2次，若本卡护甲至少2，扣除2点护甲并对玩家造成2点伤害"));
+            c.AddEffect(Impl("skill.stone_shelter.rule", EffectContainerType.MonsterSkill,
+                Rule("skill.stone_shelter.rule", "MonsterSkill",
+                    "{\"rule\":\"DamageFlatDelta\",\"op\":\"Add\",\"value\":-1,\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"skill.stone_shelter\"}",
+                    "[{\"atom\":\"EventFilter\",\"targetKind\":\"Monster\",\"targetNot\":\"Self\"}]"),
+                "[场上] 其他怪物卡受到的伤害减少1点"));
+            c.AddEffect(Impl("skill.absorb_stone.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.absorb_stone.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":1}",
+                    "{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]}",
+                    "{\"atom\":\"TransferArmor\",\"all\":true,\"receiver\":\"Self\",\"cause\":\"skill.absorb_stone\"}"),
+                "[场上] 每次移动时，扣除相邻怪物卡全部护甲并使本卡获得等量护甲"));
+
             c.AddEffect(Impl("skill.learning_growth.gain", EffectContainerType.MonsterSkill,
                 Triggered("skill.learning_growth.gain", "MonsterSkill",
                     "{\"atom\":\"OnEvent\"}",
@@ -644,6 +712,57 @@ namespace NineGrid.Content
                     + "{\"atom\":\"ShuffleInto\",\"defId\":\"monster.headless_skeleton\",\"kind\":\"Monster\",\"count\":1,\"top\":false}"
                     + "]}"),
                 "[场上] [被移除时]，将一张骷髅头和一张无头骷髅洗入战斗卡组"));
+            c.AddEffect(Impl("skill.delivery.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.delivery.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":2}",
+                    "{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"random\":true,\"count\":1}",
+                    "{\"atom\":\"ExchangeWithDrawPile\",\"kind\":\"Monster\"}"),
+                "每移动2次，将相邻格上一张帮助卡与战斗卡组里一张怪物卡交换位置"));
+            c.AddEffect(Impl("skill.hot_observation.observe", EffectContainerType.MonsterSkill,
+                Triggered("skill.hot_observation.observe", "MonsterSkill",
+                    "{\"atom\":\"OnEvent\",\"eventType\":\"CardMoved\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"DealDamage\",\"amount\":1,\"actor\":\"Self\"}",
+                    "[{\"atom\":\"EventFilter\",\"eventType\":\"CardMoved\",\"targetKind\":\"Monster\",\"sourcePrefix\":\"skill.\",\"excludeSourceDefId\":\"skill.hot_observation\"}]"),
+                "怪物卡因怪物技能改变位置时，对玩家造成1点伤害"));
+            c.AddEffect(Impl("skill.relentless_chase.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.relentless_chase.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":1,\"requireAdjacentTo\":\"Player\"}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"ForceBattle\"}"),
+                "[场上] 每次移动到玩家正交相邻格时，与玩家战斗一次"));
+            c.AddEffect(Impl("skill.fight_me.battle", EffectContainerType.MonsterSkill,
+                Triggered("skill.fight_me.battle", "MonsterSkill",
+                    "{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"ForceBattle\"}",
+                    "[{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"Player\"},{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetKind\":\"Monster\",\"targetNot\":\"Self\"}]"),
+                "[场上] 处于玩家正交相邻格时，如果玩家与其他怪物卡战斗，则与本卡战斗一次"));
+            c.AddEffect(Impl("skill.sacrifice.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.sacrifice.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":2}",
+                    "{\"atom\":\"FilteredCards\",\"defId\":\"monster.dragon_follower\",\"kind\":\"Monster\",\"zone\":\"Board\"}",
+                    "{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"skill.sacrifice\"}"),
+                "每移动2次，移除九宫格上所有的龙信徒"));
+            c.AddEffect(Impl("skill.fracture_fall_apart.remove", EffectContainerType.MonsterSkill,
+                Triggered("skill.fracture_fall_apart.remove", "MonsterSkill",
+                    "{\"atom\":\"OnRemove\"}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"ShuffleInto\",\"defId\":\"monster.multi_bone_worm\",\"kind\":\"Monster\",\"count\":1,\"top\":false},"
+                    + "{\"atom\":\"ShuffleRandomContent\",\"kind\":\"Monster\",\"minLevel\":2,\"maxLevel\":2,\"excludeElite\":true,\"excludeBoss\":true,\"count\":1,\"top\":false}"
+                    + "]}"),
+                "[场上] [被移除时]，将一张多骨虫和一张等级2随机怪物卡洗入战斗卡组"));
+            c.AddEffect(Impl("skill.flame_breath.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.flame_breath.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":4}",
+                    "{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"excludeElite\":true,\"excludeBoss\":true}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"skill.flame_breath\"},"
+                    + "{\"atom\":\"ShuffleInto\",\"defId\":\"help.flame\",\"kind\":\"HelpCard\",\"count\":1,\"top\":false,\"perTarget\":true},"
+                    + "{\"atom\":\"Spawn\",\"defId\":\"help.flame\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\",\"count\":1,\"perTarget\":true}"
+                    + "]}"),
+                "每移动4次，移除其他所有非精英非层主怪物卡；每移除一张，洗入一张烈焰并放入一张烈焰到道具牌格"));
             c.AddEffect(Impl("skill.air_strike.slot1", EffectContainerType.MonsterSkill,
                 Triggered("skill.air_strike.slot1", "MonsterSkill",
                     "{\"atom\":\"OnMoveToSlot\",\"slot\":1,\"target\":\"Self\"}",
@@ -674,6 +793,12 @@ namespace NineGrid.Content
                     "{\"atom\":\"Self\"}",
                     "{\"atom\":\"Rotate\",\"count\":1}"),
                 "玩家与本卡战斗后，旋转一次"));
+            c.AddEffect(Impl("skill.otherworld_help.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.otherworld_help.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":9}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"ShuffleRandomContent\",\"kind\":\"Monster\",\"minLevel\":1,\"maxLevel\":3,\"excludeElite\":true,\"excludeBoss\":true,\"excludeDeckId\":\"deck.void\",\"count\":1,\"top\":false}"),
+                "每移动9次，从当前层其余未选中的怪物牌组中随机加入1张普通等级怪物卡到战斗卡组"));
             c.AddEffect(Impl("skill.gear_delivery.move", EffectContainerType.MonsterSkill,
                 Triggered("skill.gear_delivery.move", "MonsterSkill",
                     "{\"atom\":\"OnSelfMove\",\"every\":2}",
@@ -683,6 +808,15 @@ namespace NineGrid.Content
                     + "{\"weight\":1,\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":2,\"reason\":\"skill.gear_delivery\"}}"
                     + "]}"),
                 "每移动2次，使随机一张其他怪物卡攻击+1或者护甲+2"));
+            c.AddEffect(Impl("skill.mixed_bones.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.mixed_bones.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":5}",
+                    "{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":2}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"skill.mixed_bones\"},"
+                    + "{\"atom\":\"ShuffleRandomContent\",\"kind\":\"Monster\",\"minLevel\":2,\"maxLevel\":3,\"excludeElite\":true,\"excludeBoss\":true,\"count\":1,\"top\":false}"
+                    + "]}"),
+                "每移动5次，移除九宫格上除本卡外随机两张怪物卡，将一张等级2或等级3随机怪物卡洗入战斗卡组"));
             c.AddEffect(Impl("skill.stone_growth.slot1", EffectContainerType.MonsterSkill,
                 Triggered("skill.stone_growth.slot1", "MonsterSkill",
                     "{\"atom\":\"OnMoveToSlot\",\"slot\":1,\"target\":\"Self\"}",
@@ -701,6 +835,60 @@ namespace NineGrid.Content
                     "{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]}",
                     "{\"atom\":\"GainArmor\",\"amount\":2}"),
                 "[场上] 移动到格7时，其他怪物获得2点护甲"));
+
+            c.AddEffect(Impl("skill.rascality.armor_lost", EffectContainerType.MonsterSkill,
+                Triggered("skill.rascality.armor_lost", "MonsterSkill",
+                    "{\"atom\":\"OnCumulative\",\"metric\":\"armorLost\",\"threshold\":3,\"targetIs\":\"Self\"}",
+                    "{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]}",
+                    "{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":1,\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"skill.rascality\",\"activeWhileAdjacentTo\":\"Self\"}"),
+                "[场上] 每损失3点护甲，相邻怪物攻击+1；离开相邻格后加成失效"));
+            c.AddEffect(Impl("skill.fire_power.aura", EffectContainerType.MonsterSkill,
+                Modifier("skill.fire_power.aura", "MonsterSkill", "{\"atom\":\"Self\"}", null,
+                    "{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":{\"op\":\"Multiply\",\"values\":[{\"constant\":2},{\"source\":\"CardCount\",\"defId\":\"help.flame\",\"zones\":[\"Board\",\"ItemSlots\"]}]},\"layer\":\"Conditional\",\"scope\":\"Permanent\"}"),
+                "[场上/道具牌格] 每有一张烈焰，本卡攻击+2"));
+            c.AddEffect(Impl("skill.rolling_crush.slot3", EffectContainerType.MonsterSkill,
+                Triggered("skill.rolling_crush.slot3", "MonsterSkill",
+                    "{\"atom\":\"OnMoveToSlot\",\"slot\":3,\"target\":\"Self\"}",
+                    "{\"atom\":\"SlotCard\",\"slot\":6,\"kind\":\"HelpCard\"}",
+                    "{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"skill.rolling_crush\"}"),
+                "[场上] 移动到格3时，若格6为帮助卡，则移除该帮助卡"));
+            c.AddEffect(Impl("skill.strong_combo.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.strong_combo.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":1}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"skill.strong_combo.self\"},"
+                    + "{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"skill.strong_combo.material\",\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"],\"count\":2}},"
+                    + "{\"atom\":\"ShuffleInto\",\"defId\":\"monster.giant_skeleton\",\"kind\":\"Monster\",\"count\":1,\"top\":true}"
+                    + "]}",
+                    "[{\"atom\":\"TargetCount\",\"min\":2,\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]}}]"),
+                "[场上] 每移动1次，若正交相邻有两张怪物，则移除本卡与两张怪物并洗入巨大骷髅"));
+            c.AddEffect(Impl("skill.stocking.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.stocking.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":3,\"requireAdjacentTo\":\"Player\"}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"skill.stocking\",\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"DrawPile\",\"random\":true,\"count\":1}},"
+                    + "{\"atom\":\"GainArmor\",\"amount\":5}"
+                    + "]}",
+                    "[{\"atom\":\"TargetCount\",\"min\":1,\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"DrawPile\"}}]"),
+                "[场上] 累计移动到玩家正交相邻3次时，从战斗卡组移除一张帮助卡并获得5点护甲"));
+            c.AddEffect(Impl("skill.orc_tactics.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.orc_tactics.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":1}",
+                    "{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]}",
+                    "{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":1,\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"skill.orc_tactics\",\"activeWhileAdjacentTo\":\"Self\"}"),
+                "[场上] 每移动1次，相邻怪物攻击+1；离开相邻格后加成失效"));
+            c.AddEffect(Impl("skill.find_weakness.move", EffectContainerType.MonsterSkill,
+                Triggered("skill.find_weakness.move", "MonsterSkill",
+                    "{\"atom\":\"OnSelfMove\",\"every\":1}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"DealDamage\",\"amount\":99,\"actor\":\"Self\"},"
+                    + "{\"atom\":\"DeactivateSelfEffect\"}"
+                    + "]}",
+                    "[{\"atom\":\"BoardMarkCount\",\"mark\":\"Blessed\",\"min\":3}]"),
+                "[场上] 福地数量达到3后，本卡下一次移动对玩家造成99点伤害"));
         }
 
         private static void AddHelpCards(GameContentCatalog c)
@@ -787,8 +975,9 @@ namespace NineGrid.Content
             Skill(c, "skill.love_fire", "恋火", EffectContainerType.MonsterSkill, "有烈焰时攻击+4").AddEffect("skill.love_fire.aura");
             Skill(c, "skill.breathe_fire", "喷火", EffectContainerType.MonsterSkill, "每移动3次放烈焰").AddEffect("skill.breathe_fire.move");
             Skill(c, "skill.sharp_stone", "尖石", EffectContainerType.MonsterSkill, "护甲归零时伤害玩家").AddEffect("skill.sharp_stone.armor_break");
-            Skill(c, "skill.hard", "坚硬", EffectContainerType.MonsterSkill, "左列战斗时按损失护甲伤害玩家").AddEffect(Pending(c, "skill.hard.pending", EffectContainerType.MonsterSkill, "战斗损失护甲动态伤害"));
-            Skill(c, "skill.swallow_stone", "吞石", EffectContainerType.MonsterSkill, "每移动2次吸相邻怪物护甲").AddEffect(Pending(c, "skill.swallow_stone.pending", EffectContainerType.MonsterSkill, "护甲转移"));
+            Skill(c, "skill.hard", "坚硬", EffectContainerType.MonsterSkill, "左列战斗时按损失护甲伤害玩家")
+                .AddEffect("skill.hard.slot1").AddEffect("skill.hard.slot4").AddEffect("skill.hard.slot7");
+            Skill(c, "skill.swallow_stone", "吞石", EffectContainerType.MonsterSkill, "每移动2次吸相邻怪物护甲").AddEffect("skill.swallow_stone.move");
             Skill(c, "skill.taunt", "嘲讽", EffectContainerType.MonsterSkill, "相邻时只能与本卡战斗").AddEffect("skill.taunt.rule");
             Skill(c, "skill.recombine_head", "重新组合头", EffectContainerType.MonsterSkill, "相邻骷髅头组合").AddEffect("skill.recombine_head.move");
             Skill(c, "skill.recombine_body", "重新组合身", EffectContainerType.MonsterSkill, "相邻无头骷髅组合").AddEffect("skill.recombine_body.move");
@@ -802,45 +991,45 @@ namespace NineGrid.Content
             Skill(c, "skill.falling_rocks", "落石", EffectContainerType.MonsterSkill, "累计损失10护甲洗入石人").AddEffect("skill.falling_rocks.cumulative");
 
             Skill(c, "skill.hoodlum", "混的人", EffectContainerType.MonsterSkill, "每次移动到格1时对玩家造成2点伤害").AddEffect("skill.hoodlum.slot1");
-            PendingSkill(c, "skill.rascality", "痞气");
-            PendingSkill(c, "skill.bloodthirst", "嗜血");
-            PendingSkill(c, "skill.smart", "大聪明");
+            Skill(c, "skill.rascality", "痞气", EffectContainerType.MonsterSkill, "每损失3点护甲，相邻怪物攻击+1").AddEffect("skill.rascality.armor_lost");
+            Skill(c, "skill.bloodthirst", "嗜血", EffectContainerType.MonsterSkill, "战斗时每造成2点伤害，本卡攻击+1").AddEffect("skill.bloodthirst.damage");
+            Skill(c, "skill.smart", "大聪明", EffectContainerType.MonsterSkill, "每次获得攻击时，本卡额外攻击+1且不递归").AddEffect("skill.smart.gain");
             Skill(c, "skill.gear_delivery", "发装备了！", EffectContainerType.MonsterSkill, "每移动2次随机强化其他怪物").AddEffect("skill.gear_delivery.move");
-            PendingSkill(c, "skill.fire_power", "火之力");
-            PendingSkill(c, "skill.sacrifice", "献祭");
-            PendingSkill(c, "skill.rolling_crush", "滚动碾压");
-            PendingSkill(c, "skill.stone_lover", "石头爱好者");
-            PendingSkill(c, "skill.throw_stone", "丢石头");
+            Skill(c, "skill.fire_power", "火之力", EffectContainerType.MonsterSkill, "每有一张烈焰，本卡攻击+2").AddEffect("skill.fire_power.aura");
+            Skill(c, "skill.sacrifice", "献祭", EffectContainerType.MonsterSkill, "每移动2次，移除九宫格上所有的龙信徒").AddEffect("skill.sacrifice.move");
+            Skill(c, "skill.rolling_crush", "滚动碾压", EffectContainerType.MonsterSkill, "移动到格3时移除格6帮助卡").AddEffect("skill.rolling_crush.slot3");
+            Skill(c, "skill.stone_lover", "石头爱好者", EffectContainerType.MonsterSkill, "玩家卡和怪物卡损失护甲时本卡攻击+1").AddEffect("skill.stone_lover.armor_lost");
+            Skill(c, "skill.throw_stone", "丢石头", EffectContainerType.MonsterSkill, "每移动2次消耗本卡2护甲并伤害玩家").AddEffect("skill.throw_stone.move");
             Skill(c, "skill.fall_apart", "散架", EffectContainerType.MonsterSkill, "被移除时洗入骷髅头与无头骷髅").AddEffect("skill.fall_apart.remove");
-            PendingSkill(c, "skill.strong_combo", "强力组合");
-            PendingSkill(c, "skill.delivery", "快递");
+            Skill(c, "skill.strong_combo", "强力组合", EffectContainerType.MonsterSkill, "移动时与相邻两张怪物合成为巨大骷髅").AddEffect("skill.strong_combo.move");
+            Skill(c, "skill.delivery", "快递", EffectContainerType.MonsterSkill, "每移动2次，将相邻帮助卡与战斗卡组怪物交换").AddEffect("skill.delivery.move");
             Skill(c, "skill.turn_world", "转动", EffectContainerType.MonsterSkill, "登场旋转一次").AddEffect("skill.turn_world.enter");
-            PendingSkill(c, "skill.hot_observation", "灼热观察");
+            Skill(c, "skill.hot_observation", "灼热观察", EffectContainerType.MonsterSkill, "怪物卡因怪物技能位移时伤害玩家").AddEffect("skill.hot_observation.observe");
             Skill(c, "skill.air_strike", "空中打击", EffectContainerType.MonsterSkill, "移动到角格时对玩家造成2点伤害")
                 .AddEffect("skill.air_strike.slot1").AddEffect("skill.air_strike.slot3").AddEffect("skill.air_strike.slot7").AddEffect("skill.air_strike.slot9");
-            PendingSkill(c, "skill.relentless_chase", "不休追击");
-            PendingSkill(c, "skill.stocking", "进货");
-            PendingSkill(c, "skill.orc_tactics", "兽人战术");
-            PendingSkill(c, "skill.fight_me", "和我打！");
+            Skill(c, "skill.relentless_chase", "不休追击", EffectContainerType.MonsterSkill, "移动到玩家相邻格时强制战斗").AddEffect("skill.relentless_chase.move");
+            Skill(c, "skill.stocking", "进货", EffectContainerType.MonsterSkill, "累计移动到玩家相邻3次时移除帮助卡并获得护甲").AddEffect("skill.stocking.move");
+            Skill(c, "skill.orc_tactics", "兽人战术", EffectContainerType.MonsterSkill, "每移动1次，相邻怪物攻击+1").AddEffect("skill.orc_tactics.move");
+            Skill(c, "skill.fight_me", "和我打！", EffectContainerType.MonsterSkill, "相邻玩家与其他怪物战斗时改为与本卡战斗").AddEffect("skill.fight_me.battle");
             Skill(c, "skill.intense_burning", "剧烈燃烧", EffectContainerType.MonsterSkill, "每有一张烈焰加入战斗卡组，额外加入一张且不递归").AddEffect("skill.intense_burning.flame_deal");
             Skill(c, "skill.stone_growth", "石增长", EffectContainerType.MonsterSkill, "移动到左列时其他怪物获得2点护甲")
                 .AddEffect("skill.stone_growth.slot1").AddEffect("skill.stone_growth.slot4").AddEffect("skill.stone_growth.slot7");
-            PendingSkill(c, "skill.stone_shelter", "石庇护");
-            PendingSkill(c, "skill.fracture_fall_apart", "折损散架");
+            Skill(c, "skill.stone_shelter", "石庇护", EffectContainerType.MonsterSkill, "其他怪物卡受到的伤害减少1点").AddEffect("skill.stone_shelter.rule");
+            Skill(c, "skill.fracture_fall_apart", "折损散架", EffectContainerType.MonsterSkill, "被移除时洗入多骨虫和等级2随机怪物").AddEffect("skill.fracture_fall_apart.remove");
             Skill(c, "skill.range_expand", "范围扩大", EffectContainerType.MonsterSkill, "所有怪物卡视为与本卡正交相邻").AddEffect("skill.range_expand.rule");
-            PendingSkill(c, "skill.flame_breath", "烈焰吐息");
+            Skill(c, "skill.flame_breath", "烈焰吐息", EffectContainerType.MonsterSkill, "每移动4次移除其他普通怪物并按数量加入烈焰").AddEffect("skill.flame_breath.move");
             Skill(c, "skill.flame_boiling", "烈焰沸腾", EffectContainerType.MonsterSkill, "烈焰帮助卡造成的伤害+1").AddEffect("skill.flame_boiling.rule");
             Skill(c, "skill.space_mastery", "空间掌握", EffectContainerType.MonsterSkill, "玩家与本卡战斗后旋转一次").AddEffect("skill.space_mastery.battle");
-            PendingSkill(c, "skill.otherworld_help", "异界帮助");
-            PendingSkill(c, "skill.absorb_stone", "吸石");
+            Skill(c, "skill.otherworld_help", "异界帮助", EffectContainerType.MonsterSkill, "每移动9次从其他怪物牌组加入普通怪物").AddEffect("skill.otherworld_help.move");
+            Skill(c, "skill.absorb_stone", "吸石", EffectContainerType.MonsterSkill, "每次移动吸取相邻怪物全部护甲").AddEffect("skill.absorb_stone.move");
             Skill(c, "skill.guide", "引路", EffectContainerType.MonsterSkill, "每移动3次创建福地，怪物进入福地获得护甲和攻击")
                 .AddEffect("skill.guide.create_blessed")
                 .AddEffect("skill.guide.blessed_enter");
-            PendingSkill(c, "skill.find_weakness", "发现弱点");
+            Skill(c, "skill.find_weakness", "发现弱点", EffectContainerType.MonsterSkill, "福地达到3后下一次移动造成99伤害").AddEffect("skill.find_weakness.move");
             Skill(c, "skill.violence_maniac", "暴力狂", EffectContainerType.MonsterSkill, "每移动2次，移除相邻格子上的怪物卡和帮助卡").AddEffect("skill.violence_maniac.move");
             Skill(c, "skill.violence_nutrition", "暴力即养分", EffectContainerType.MonsterSkill, "依靠暴力狂移除怪物得攻击，移除帮助卡得护甲").AddEffect("skill.violence_nutrition.monster_remove").AddEffect("skill.violence_nutrition.help_remove");
             Skill(c, "skill.absorb_bone", "吸骨", EffectContainerType.MonsterSkill, "相邻怪物被移除时获得其移除前攻击和护甲").AddEffect("skill.absorb_bone.remove");
-            PendingSkill(c, "skill.mixed_bones", "混合骨头");
+            Skill(c, "skill.mixed_bones", "混合骨头", EffectContainerType.MonsterSkill, "每移动5次移除随机两张其他怪物并洗入等级2/3随机怪物").AddEffect("skill.mixed_bones.move");
             Skill(c, "skill.first_strike", "先攻", EffectContainerType.MonsterSkill, "持有先攻技能").AddEffect("skill.first_strike.rule");
             Skill(c, "skill.blessing", "庇佑", EffectContainerType.MonsterSkill, "下一次受到伤害时，该次伤害变为0").AddEffect("skill.blessing.rule");
         }

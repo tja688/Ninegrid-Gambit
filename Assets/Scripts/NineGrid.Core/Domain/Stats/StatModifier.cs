@@ -23,6 +23,19 @@ namespace NineGrid.Core.Stats
             ModifierSource source,
             ModifierScope scope,
             IStatCondition condition)
+            : this(stat, op, value, layer, source, scope, condition, null)
+        {
+        }
+
+        public StatModifier(
+            StatId stat,
+            ModifierOp op,
+            float value,
+            ModifierLayer layer,
+            ModifierSource source,
+            ModifierScope scope,
+            IStatCondition condition,
+            Func<StatEvaluationContext, float> valueProvider)
         {
             Stat = stat;
             Op = op;
@@ -31,6 +44,7 @@ namespace NineGrid.Core.Stats
             Source = source;
             Scope = scope;
             Condition = condition;
+            ValueProvider = valueProvider;
         }
 
         public StatId Stat { get; private set; }
@@ -40,10 +54,16 @@ namespace NineGrid.Core.Stats
         public ModifierSource Source { get; private set; }
         public ModifierScope Scope { get; private set; }
         public IStatCondition Condition { get; private set; }
+        public Func<StatEvaluationContext, float> ValueProvider { get; private set; }
 
         public bool IsActive(StatEvaluationContext context)
         {
             return Condition == null || Condition.IsMet(context);
+        }
+
+        public float EvaluateValue(StatEvaluationContext context)
+        {
+            return ValueProvider == null ? Value : ValueProvider(context);
         }
 
         public override string ToString()

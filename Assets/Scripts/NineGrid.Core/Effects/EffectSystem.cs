@@ -291,6 +291,10 @@ namespace NineGrid.Core.Effects
         {
             var node = instance.Definition.Modifier;
             var condition = CreateCompositeStatCondition(instance);
+            var value = EffectValueExpression.FromModifierValue(node);
+            Func<StatEvaluationContext, float> valueProvider = node.Get("value").IsObject
+                ? (Func<StatEvaluationContext, float>)(context => value.Evaluate(context))
+                : null;
             return new StatModifier(
                 node.Get("stat").AsEnum(StatId.Attack),
                 node.Get("op").AsEnum(ModifierOp.Add),
@@ -298,7 +302,8 @@ namespace NineGrid.Core.Effects
                 node.Get("layer").AsEnum(ModifierLayer.Persistent),
                 new ModifierSource(node.Get("source").AsString("effect:" + instance.InstanceId)),
                 node.Get("scope").AsEnum(ModifierScope.Permanent),
-                condition);
+                condition,
+                valueProvider);
         }
 
         private RuleModifier CreateRuleModifier(EffectInstance instance)

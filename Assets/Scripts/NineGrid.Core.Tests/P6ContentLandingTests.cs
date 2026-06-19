@@ -38,7 +38,6 @@ namespace NineGrid.Core.Tests
             Assert.GreaterOrEqual(catalog.Skills.Count, 50);
             Assert.GreaterOrEqual(catalog.Relics.Count, 15);
             Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 30);
-            Assert.GreaterOrEqual(report.PendingEffectIds.Count, 30);
             Assert.IsTrue(catalog.Rewards.Pools.ContainsKey("kill.elite"));
             Assert.IsTrue(catalog.Rewards.Rooms.ContainsKey(RoomKind.Shop));
             Assert.AreEqual(9, catalog.Rewards.NodeDeckRules.Count);
@@ -51,12 +50,12 @@ namespace NineGrid.Core.Tests
             var report = NineGridArchitecture.Current.GetSystem<IContentSystem>().ValidateCatalog();
 
             Assert.IsTrue(report.IsValid, FirstIssue(report));
-            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 100);
-            Assert.LessOrEqual(report.PendingEffectIds.Count, 32);
+            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 127);
+            Assert.LessOrEqual(report.PendingEffectIds.Count, 8);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.HelpCard), 6);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.Relic), 1);
             Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.PlayerSkill), 1);
-            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 24);
+            Assert.LessOrEqual(CountEffectsByContainer(catalog, report.PendingEffectIds, EffectContainerType.MonsterSkill), 0);
 
             AssertImplemented(catalog, report, "relic.vitality_amulet.max_hp");
             AssertImplemented(catalog, report, "relic.throwing_knife_bag.node_start");
@@ -106,6 +105,32 @@ namespace NineGrid.Core.Tests
             AssertImplemented(catalog, report, "skill.gear_delivery.move");
             AssertImplemented(catalog, report, "skill.stone_growth.slot1");
             AssertImplemented(catalog, report, "skill.space_mastery.battle");
+            AssertImplemented(catalog, report, "skill.hard.slot1");
+            AssertImplemented(catalog, report, "skill.hard.slot4");
+            AssertImplemented(catalog, report, "skill.hard.slot7");
+            AssertImplemented(catalog, report, "skill.swallow_stone.move");
+            AssertImplemented(catalog, report, "skill.bloodthirst.damage");
+            AssertImplemented(catalog, report, "skill.smart.gain");
+            AssertImplemented(catalog, report, "skill.stone_lover.armor_lost");
+            AssertImplemented(catalog, report, "skill.throw_stone.move");
+            AssertImplemented(catalog, report, "skill.stone_shelter.rule");
+            AssertImplemented(catalog, report, "skill.absorb_stone.move");
+            AssertImplemented(catalog, report, "skill.rascality.armor_lost");
+            AssertImplemented(catalog, report, "skill.fire_power.aura");
+            AssertImplemented(catalog, report, "skill.rolling_crush.slot3");
+            AssertImplemented(catalog, report, "skill.strong_combo.move");
+            AssertImplemented(catalog, report, "skill.stocking.move");
+            AssertImplemented(catalog, report, "skill.orc_tactics.move");
+            AssertImplemented(catalog, report, "skill.find_weakness.move");
+            AssertImplemented(catalog, report, "skill.delivery.move");
+            AssertImplemented(catalog, report, "skill.hot_observation.observe");
+            AssertImplemented(catalog, report, "skill.relentless_chase.move");
+            AssertImplemented(catalog, report, "skill.fight_me.battle");
+            AssertImplemented(catalog, report, "skill.sacrifice.move");
+            AssertImplemented(catalog, report, "skill.fracture_fall_apart.remove");
+            AssertImplemented(catalog, report, "skill.flame_breath.move");
+            AssertImplemented(catalog, report, "skill.otherworld_help.move");
+            AssertImplemented(catalog, report, "skill.mixed_bones.move");
         }
 
         [Test]
@@ -130,6 +155,54 @@ namespace NineGrid.Core.Tests
             pipeline.Execute(new RemoveCardAction(skeleton.Uid, ZoneId.Removed, "test", "test"));
             Assert.AreEqual(1, CountCardsByDef(deck.DrawPileUids, registry, "monster.skull_head"));
             Assert.AreEqual(1, CountCardsByDef(deck.DrawPileUids, registry, "monster.headless_skeleton"));
+        }
+
+        [Test]
+        public void MonsterBatchBMovementSourceAndForcedBattleSkillsExecuteFromCatalogDsl()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var deck = architecture.GetModel<DeckModel>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+
+            var courier = PlaceMonster("monster.bone_courier", 20, SlotId.Board(1));
+            content.ApplyContentToCard(courier);
+            var help = PlaceHelpCard("help.delivery.target", SlotId.Board(2));
+            var drawMonster = content.CreateDraft("monster.vagrant").Create(registry);
+            deck.AddToDrawPile(drawMonster, true);
+
+            pipeline.Execute(new MoveCardAction(courier.Uid, SlotId.Board(3)));
+            pipeline.Execute(new MoveCardAction(courier.Uid, SlotId.Board(1)));
+
+            Assert.AreEqual(ZoneId.DrawPile, help.Zone.Value);
+            Assert.AreEqual(drawMonster.Uid, board.GetCardUid(SlotId.Board(2)));
+
+            var observer = PlaceMonster("monster.observer", 20, SlotId.Board(7));
+            content.ApplyContentToCard(observer);
+            var movedBySkill = PlaceMonster("monster.skill.moved", 20, SlotId.Board(8));
+            var hpBeforeSkillMove = avatar.Stats.GetBase(StatId.Hp);
+            pipeline.Execute(new MoveCardAction(movedBySkill.Uid, SlotId.Board(9), "skill.unstable", "test"));
+            Assert.AreEqual(hpBeforeSkillMove - 1, avatar.Stats.GetBase(StatId.Hp));
+
+            var hpBeforeSystemMove = avatar.Stats.GetBase(StatId.Hp);
+            pipeline.Execute(new MoveCardAction(movedBySkill.Uid, SlotId.Board(8)));
+            Assert.AreEqual(hpBeforeSystemMove, avatar.Stats.GetBase(StatId.Hp));
+
+            var killer = PlaceMonster("monster.killer", 20, SlotId.Board(6));
+            content.ApplyContentToCard(killer);
+            var hpBeforeChase = avatar.Stats.GetBase(StatId.Hp);
+            pipeline.Execute(new MoveCardAction(killer.Uid, SlotId.Board(4)));
+            Assert.Less(avatar.Stats.GetBase(StatId.Hp), hpBeforeChase);
+
+            var bigOrc = PlaceMonster("monster.big_orc", 20, SlotId.Board(6));
+            content.ApplyContentToCard(bigOrc);
+            var other = PlaceMonster("monster.fight.other", 20, SlotId.Board(3));
+            var hpBeforeHijack = avatar.Stats.GetBase(StatId.Hp);
+            pipeline.Execute(new DealDamageAction(avatar.Uid, other.Uid, 1));
+            Assert.Less(avatar.Stats.GetBase(StatId.Hp), hpBeforeHijack);
         }
 
         [Test]
@@ -393,6 +466,7 @@ namespace NineGrid.Core.Tests
             var avatar = registry.Get(board.AvatarUid.Value);
             avatar.Stats.SetBase(StatId.Attack, 5);
             var cub = PlaceMonster("monster.wandering_child", 10, SlotId.Board(6));
+            cub.Stats.SetBase(StatId.Armor, 0);
 
             P5CatalogTestSupport.ActivateCatalogEffect(
                 architecture,
@@ -743,6 +817,247 @@ namespace NineGrid.Core.Tests
             Assert.IsFalse(boardSystem.AreAdjacent(mage.Slot.Value, help.Slot.Value));
         }
 
+        [Test]
+        public void BatchEightArmorTransferCatalogDslMovesArmorFromAdjacentMonsters()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+
+            var swallower = PlaceMonster("monster.stone_swallower", 20, SlotId.Board(1));
+            content.ApplyContentToCard(swallower);
+            var swallowDonor = PlaceMonster("monster.swallow.donor", 20, SlotId.Board(2));
+            swallowDonor.Stats.SetBase(StatId.Armor, 3);
+            var swallowerArmor = swallower.Stats.GetBase(StatId.Armor);
+
+            pipeline.Execute(new MoveCardAction(swallower.Uid, SlotId.Board(4)));
+            pipeline.Execute(new MoveCardAction(swallower.Uid, SlotId.Board(1)));
+
+            Assert.AreEqual(2, swallowDonor.Stats.GetBase(StatId.Armor));
+            Assert.AreEqual(swallowerArmor + 1, swallower.Stats.GetBase(StatId.Armor));
+
+            var absorber = PlaceMonster("monster.megalith", 30, SlotId.Board(7));
+            content.ApplyContentToCard(absorber);
+            var absorbDonor = PlaceMonster("monster.absorb.donor", 20, SlotId.Board(8));
+            absorbDonor.Stats.SetBase(StatId.Armor, 5);
+            var absorberArmor = absorber.Stats.GetBase(StatId.Armor);
+
+            pipeline.Execute(new MoveCardAction(absorber.Uid, SlotId.Board(9)));
+
+            Assert.AreEqual(0, absorbDonor.Stats.GetBase(StatId.Armor));
+            Assert.AreEqual(absorberArmor + 5, absorber.Stats.GetBase(StatId.Armor));
+        }
+
+        [Test]
+        public void BatchEightHardAndBloodthirstCatalogDslUseBattleEventValues()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var avatar = registry.Get(architecture.GetModel<BoardModel>().AvatarUid.Value);
+            avatar.Stats.SetBase(StatId.Hp, 30);
+            avatar.Stats.SetBase(StatId.Armor, 0);
+
+            var hard = PlaceMonster("monster.big_stone", 20, SlotId.Board(1));
+            content.ApplyContentToCard(hard);
+            pipeline.Execute(new DealDamageAction(avatar.Uid, hard.Uid, 3));
+
+            Assert.AreEqual(2, hard.Stats.GetBase(StatId.Armor));
+            Assert.AreEqual(27, avatar.Stats.GetBase(StatId.Hp));
+
+            var bloodthirst = PlaceMonster("monster.orc_warrior", 20, SlotId.Board(2));
+            content.ApplyContentToCard(bloodthirst);
+            var initialAttack = bloodthirst.Stats.GetBase(StatId.Attack);
+            pipeline.Execute(new DealDamageAction(bloodthirst.Uid, avatar.Uid, 1));
+            pipeline.Execute(new DealDamageAction(bloodthirst.Uid, avatar.Uid, 1));
+
+            Assert.AreEqual(initialAttack + 1, bloodthirst.Stats.GetBase(StatId.Attack));
+        }
+
+        [Test]
+        public void BatchEightStoneReactiveCatalogDslHandlesArmorLossShelterAndSmartRecursion()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var avatar = architecture.GetModel<CardRegistry>().Get(architecture.GetModel<BoardModel>().AvatarUid.Value);
+
+            var lover = PlaceMonster("monster.stone_shrimp", 20, SlotId.Board(1));
+            content.ApplyContentToCard(lover);
+            var loverAttack = lover.Stats.GetBase(StatId.Attack);
+            var armorTarget = PlaceMonster("monster.armor.loss.target", 20, SlotId.Board(2));
+            armorTarget.Stats.SetBase(StatId.Armor, 4);
+
+            pipeline.Execute(new DealDamageAction(avatar.Uid, armorTarget.Uid, 2));
+
+            Assert.AreEqual(loverAttack + 1, lover.Stats.GetBase(StatId.Attack));
+
+            var shelter = PlaceMonster("monster.shelter_stone", 20, SlotId.Board(3));
+            shelter.Stats.SetBase(StatId.Armor, 0);
+            content.ApplyContentToCard(shelter);
+            var protectedMonster = PlaceMonster("monster.sheltered.target", 20, SlotId.Board(4));
+            pipeline.Execute(new DealDamageAction(avatar.Uid, protectedMonster.Uid, 3));
+            pipeline.Execute(new DealDamageAction(avatar.Uid, shelter.Uid, 3));
+
+            Assert.AreEqual(18, protectedMonster.Stats.GetBase(StatId.Hp));
+            Assert.AreEqual(17, shelter.Stats.GetBase(StatId.Hp));
+
+            var smart = PlaceMonster("monster.smart_orc", 20, SlotId.Board(6));
+            content.ApplyContentToCard(smart);
+            var smartAttack = smart.Stats.GetBase(StatId.Attack);
+            var triggerCount = CountEvents(pipeline.EventLog, CoreEventType.EffectTriggered);
+
+            pipeline.Execute(new ModifyBaseStatAction(smart.Uid, StatId.Attack, 1, "test.smart.buff", "test.smart.buff"));
+
+            Assert.AreEqual(smartAttack + 2, smart.Stats.GetBase(StatId.Attack));
+            Assert.AreEqual(triggerCount + 1, CountEvents(pipeline.EventLog, CoreEventType.EffectTriggered));
+        }
+
+        [Test]
+        public void BatchEightThrowStoneCatalogDslRequiresArmorBeforeDamagingPlayer()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var avatar = architecture.GetModel<CardRegistry>().Get(architecture.GetModel<BoardModel>().AvatarUid.Value);
+            avatar.Stats.SetBase(StatId.Hp, 30);
+            avatar.Stats.SetBase(StatId.Armor, 0);
+
+            var thrower = PlaceMonster("monster.stone_thrower", 20, SlotId.Board(1));
+            content.ApplyContentToCard(thrower);
+
+            pipeline.Execute(new MoveCardAction(thrower.Uid, SlotId.Board(2)));
+            pipeline.Execute(new MoveCardAction(thrower.Uid, SlotId.Board(3)));
+
+            Assert.AreEqual(4, thrower.Stats.GetBase(StatId.Armor));
+            Assert.AreEqual(28, avatar.Stats.GetBase(StatId.Hp));
+
+            thrower.Stats.SetBase(StatId.Armor, 1);
+            pipeline.Execute(new MoveCardAction(thrower.Uid, SlotId.Board(4)));
+            pipeline.Execute(new MoveCardAction(thrower.Uid, SlotId.Board(1)));
+
+            Assert.AreEqual(1, thrower.Stats.GetBase(StatId.Armor));
+            Assert.AreEqual(28, avatar.Stats.GetBase(StatId.Hp));
+        }
+
+        [Test]
+        public void BatchEightCConditionalModifierClusterAppliesCountsAndAdjacency()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var deck = architecture.GetModel<DeckModel>();
+            var statSystem = architecture.GetSystem<IStatSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+
+            var firePriest = content.CreateDraft("monster.fire_priest").Create(registry);
+            board.PlaceCard(firePriest, SlotId.Board(7));
+            content.ApplyContentToCard(firePriest);
+            var boardFlame = content.CreateDraft("help.flame").Create(registry);
+            board.PlaceCard(boardFlame, SlotId.Board(8));
+            var itemFlame = content.CreateDraft("help.flame").Create(registry);
+            deck.AddToItemSlots(itemFlame);
+
+            Assert.AreEqual(4, statSystem.GetEffectiveInt(firePriest, StatId.Attack));
+
+            var commander = content.CreateDraft("monster.orc_commander").Create(registry);
+            board.PlaceCard(commander, SlotId.Board(1));
+            content.ApplyContentToCard(commander);
+            var adjacent = PlaceMonster("monster.orc.tactics.target", 10, SlotId.Board(2));
+            adjacent.Stats.SetBase(StatId.Attack, 2);
+
+            pipeline.Execute(new MoveCardAction(commander.Uid, SlotId.Board(3)));
+
+            Assert.AreEqual(3, statSystem.GetEffectiveInt(adjacent, StatId.Attack));
+
+            pipeline.Execute(new MoveCardAction(adjacent.Uid, SlotId.Board(9)));
+
+            Assert.AreEqual(2, statSystem.GetEffectiveInt(adjacent, StatId.Attack));
+
+            var rogue = content.CreateDraft("monster.rogue").Create(registry);
+            board.PlaceCard(rogue, SlotId.Board(4));
+            content.ApplyContentToCard(rogue);
+            var rascalTarget = PlaceMonster("monster.rascal.target", 10, SlotId.Board(1));
+            rascalTarget.Stats.SetBase(StatId.Attack, 2);
+            var avatar = registry.Get(board.AvatarUid.Value);
+
+            pipeline.Execute(new DealDamageAction(avatar.Uid, rogue.Uid, 3));
+
+            Assert.AreEqual(3, statSystem.GetEffectiveInt(rascalTarget, StatId.Attack));
+        }
+
+        [Test]
+        public void BatchEightCConditionalTriggeredClusterExecutesBoardActions()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var deck = architecture.GetModel<DeckModel>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+
+            var rolling = content.CreateDraft("monster.rolling_stone_man").Create(registry);
+            board.PlaceCard(rolling, SlotId.Board(1));
+            content.ApplyContentToCard(rolling);
+            var crushed = PlaceHelpCard("help.rolling.crush.target", SlotId.Board(6));
+
+            pipeline.Execute(new MoveCardAction(rolling.Uid, SlotId.Board(3)));
+
+            Assert.AreEqual(ZoneId.Removed, crushed.Zone.Value);
+
+            var worm = content.CreateDraft("monster.multi_bone_worm").Create(registry);
+            board.PlaceCard(worm, SlotId.Board(1));
+            content.ApplyContentToCard(worm);
+            var leftBone = PlaceMonster("monster.combo.left", 10, SlotId.Board(4));
+            var rightBone = PlaceMonster("monster.combo.right", 10, SlotId.Board(8));
+
+            pipeline.Execute(new MoveCardAction(worm.Uid, SlotId.Board(7)));
+
+            Assert.AreEqual(ZoneId.Removed, worm.Zone.Value);
+            Assert.AreEqual(ZoneId.Removed, leftBone.Zone.Value);
+            Assert.AreEqual(ZoneId.Removed, rightBone.Zone.Value);
+            Assert.AreEqual(1, CountCardsByDef(deck.DrawPileUids, registry, "monster.giant_skeleton"));
+
+            var smuggler = content.CreateDraft("monster.smuggler").Create(registry);
+            board.PlaceCard(smuggler, SlotId.Board(1));
+            content.ApplyContentToCard(smuggler);
+            var stockedHelp = content.CreateDraft("help.throwing_knife").Create(registry);
+            deck.AddToDrawPile(stockedHelp, false);
+            var armorBefore = smuggler.Stats.GetBase(StatId.Armor);
+
+            pipeline.Execute(new MoveCardAction(smuggler.Uid, SlotId.Board(2)));
+            pipeline.Execute(new MoveCardAction(smuggler.Uid, SlotId.Board(4)));
+            pipeline.Execute(new MoveCardAction(smuggler.Uid, SlotId.Board(2)));
+
+            Assert.AreEqual(ZoneId.Removed, stockedHelp.Zone.Value);
+            Assert.AreEqual(armorBefore + 5, smuggler.Stats.GetBase(StatId.Armor));
+        }
+
+        [Test]
+        public void BatchEightCFindWeaknessConsumesItselfAfterBlessedMoveDamage()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+            var ringleader = content.CreateDraft("monster.ringleader").Create(registry);
+            board.PlaceCard(ringleader, SlotId.Board(1));
+            content.ApplyContentToCard(ringleader);
+
+            pipeline.Execute(new SetBoardMarkAction(SlotId.Board(2), BoardMarkId.Blessed, true, "test", "setup"));
+            pipeline.Execute(new SetBoardMarkAction(SlotId.Board(3), BoardMarkId.Blessed, true, "test", "setup"));
+            pipeline.Execute(new SetBoardMarkAction(SlotId.Board(4), BoardMarkId.Blessed, true, "test", "setup"));
+            pipeline.Execute(new MoveCardAction(ringleader.Uid, SlotId.Board(2)));
+            pipeline.Execute(new MoveCardAction(ringleader.Uid, SlotId.Board(1)));
+
+            Assert.AreEqual(0, avatar.Stats.GetBase(StatId.Hp));
+            Assert.IsFalse(Contains(ringleader.EffectIds, "skill.find_weakness.move"));
+        }
+
         private static bool Contains(IReadOnlyList<string> values, string expected)
         {
             for (var i = 0; i < values.Count; i++)
@@ -818,7 +1133,11 @@ namespace NineGrid.Core.Tests
         {
             var architecture = NineGridArchitecture.Current;
             var registry = architecture.GetModel<CardRegistry>();
-            var monster = registry.Create(defId, CardKind.Monster);
+            var content = architecture.GetSystem<IContentSystem>();
+            CardContentDefinition definition;
+            var monster = content.Catalog != null && content.Catalog.TryGetCard(defId, out definition)
+                ? content.CreateDraft(defId).Create(registry)
+                : registry.Create(defId, CardKind.Monster);
             monster.Stats.SetBase(StatId.MaxHp, hp);
             monster.Stats.SetBase(StatId.Hp, hp);
             architecture.GetModel<BoardModel>().PlaceCard(monster, slot);

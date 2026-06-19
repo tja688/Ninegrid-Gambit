@@ -35,7 +35,7 @@ namespace NineGrid.Core.Tests
 
             var catalog = TableNineLubanCatalogFactory.CreateFromDirectory(dataDirectory);
             Assert.AreEqual(87, catalog.Cards.Count);
-            Assert.AreEqual(133, catalog.Effects.Count);
+            Assert.AreEqual(135, catalog.Effects.Count);
             Assert.AreEqual(68, catalog.Skills.Count);
             Assert.AreEqual(19, catalog.Relics.Count);
             Assert.IsTrue(catalog.Rewards.Pools.ContainsKey("help.choice"));
@@ -50,8 +50,8 @@ namespace NineGrid.Core.Tests
 
             var report = content.ValidateCatalog();
             Assert.IsTrue(report.IsValid, FirstIssue(report));
-            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 100);
-            Assert.LessOrEqual(report.PendingEffectIds.Count, 32);
+            Assert.GreaterOrEqual(report.ImplementedEffectIds.Count, 127);
+            Assert.LessOrEqual(report.PendingEffectIds.Count, 8);
 
             var mage = content.CreateDraft("monster.skeleton_mage");
             Assert.AreEqual(CardKind.Monster, mage.Kind);

@@ -90,15 +90,24 @@ namespace NineGrid.Core
     public sealed class ConditionalDealDamageIfAliveAction : GameAction
     {
         public ConditionalDealDamageIfAliveAction(int actorUid, int targetUid, int amount)
+            : this(actorUid, targetUid, amount, null, null)
+        {
+        }
+
+        public ConditionalDealDamageIfAliveAction(int actorUid, int targetUid, int amount, string sourceDefId, string cause)
         {
             ActorUid = actorUid;
             TargetUid = targetUid;
             Amount = amount;
+            SourceDefId = sourceDefId ?? string.Empty;
+            Cause = cause ?? string.Empty;
         }
 
         public int ActorUid { get; private set; }
         public int TargetUid { get; private set; }
         public int Amount { get; private set; }
+        public string SourceDefId { get; private set; }
+        public string Cause { get; private set; }
         public override string ActionName { get { return "ConditionalDealDamageIfAlive"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -116,7 +125,67 @@ namespace NineGrid.Core
                 return GameActionResult.Empty;
             }
 
-            return new GameActionResult().AddFollowUp(new DealDamageAction(ActorUid, TargetUid, Amount));
+            return new GameActionResult().AddFollowUp(new DealDamageAction(ActorUid, TargetUid, Amount, SourceDefId, Cause));
+        }
+    }
+
+    public sealed class ForceBattleAction : GameAction
+    {
+        public ForceBattleAction(int targetUid, string sourceDefId = null, string cause = null)
+        {
+            TargetUid = targetUid;
+            SourceDefId = sourceDefId ?? string.Empty;
+            Cause = cause ?? string.Empty;
+        }
+
+        public int TargetUid { get; private set; }
+        public string SourceDefId { get; private set; }
+        public string Cause { get; private set; }
+        public override string ActionName { get { return "ForceBattle"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var registry = context.GetModel<CardRegistry>();
+            var board = context.GetModel<BoardModel>();
+            CardInstance avatar;
+            CardInstance target;
+            if (!registry.TryGet(board.AvatarUid.Value, out avatar)
+                || !registry.TryGet(TargetUid, out target)
+                || target.Kind != CardKind.Monster
+                || target.Zone.Value == ZoneId.Graveyard
+                || target.Zone.Value == ZoneId.Removed)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var statSystem = context.GetSystem<IStatSystem>();
+            var avatarDamage = GetAttackDamage(statSystem, avatar);
+            var targetDamage = GetAttackDamage(statSystem, target);
+            var avatarFirstStrike = HasFirstStrike(statSystem, avatar);
+            var targetFirstStrike = HasFirstStrike(statSystem, target);
+            var result = new GameActionResult();
+            if (targetFirstStrike && !avatarFirstStrike)
+            {
+                result.AddFollowUp(new DealDamageAction(target.Uid, avatar.Uid, targetDamage, SourceDefId, Cause));
+                result.AddFollowUp(new ConditionalDealDamageIfAliveAction(avatar.Uid, target.Uid, avatarDamage, SourceDefId, Cause));
+            }
+            else
+            {
+                result.AddFollowUp(new DealDamageAction(avatar.Uid, target.Uid, avatarDamage, SourceDefId, Cause));
+                result.AddFollowUp(new ConditionalDealDamageIfAliveAction(target.Uid, avatar.Uid, targetDamage, SourceDefId, Cause));
+            }
+
+            return result;
+        }
+
+        private static int GetAttackDamage(IStatSystem statSystem, CardInstance card)
+        {
+            return Math.Max(0, statSystem.GetEffectiveInt(card, StatId.Attack));
+        }
+
+        private static bool HasFirstStrike(IStatSystem statSystem, CardInstance card)
+        {
+            return statSystem.EvaluateRule(RuleId.FirstStrike, 0f, statSystem.CreateContext(card)) > 0f;
         }
     }
 
@@ -130,13 +199,22 @@ namespace NineGrid.Core
         };
 
         public MoveCardAction(int cardUid, SlotId toSlot)
+            : this(cardUid, toSlot, null, null)
+        {
+        }
+
+        public MoveCardAction(int cardUid, SlotId toSlot, string sourceDefId, string cause)
         {
             CardUid = cardUid;
             ToSlot = toSlot;
+            SourceDefId = sourceDefId ?? string.Empty;
+            Cause = cause ?? string.Empty;
         }
 
         public int CardUid { get; private set; }
         public SlotId ToSlot { get; private set; }
+        public string SourceDefId { get; private set; }
+        public string Cause { get; private set; }
         public override string ActionName { get { return "MoveCard"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -160,7 +238,8 @@ namespace NineGrid.Core
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.CardMoved, context.ActionId, ActionName)
                     .WithCard(CardUid)
-                    .WithSlots(fromSlot, ToSlot));
+                    .WithSlots(fromSlot, ToSlot)
+                    .WithSource(SourceDefId, Cause));
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
@@ -449,6 +528,295 @@ namespace NineGrid.Core
         }
     }
 
+    public sealed class ShuffleRandomContentIntoDrawPileAction : GameAction
+    {
+        private static readonly TriggerPoint[] sPostTriggers =
+        {
+            TriggerPoint.AfterAction,
+            TriggerPoint.OnDeal
+        };
+
+        public ShuffleRandomContentIntoDrawPileAction(
+            CardKind kind,
+            int count,
+            bool top,
+            int minLevel,
+            int maxLevel,
+            bool excludeElite,
+            bool excludeBoss,
+            string excludeDeckId,
+            string sourceDefId = null)
+        {
+            Kind = kind;
+            Count = Math.Max(0, count);
+            Top = top;
+            MinLevel = minLevel;
+            MaxLevel = maxLevel;
+            ExcludeElite = excludeElite;
+            ExcludeBoss = excludeBoss;
+            ExcludeDeckId = excludeDeckId ?? string.Empty;
+            SourceDefId = sourceDefId ?? string.Empty;
+        }
+
+        public CardKind Kind { get; private set; }
+        public int Count { get; private set; }
+        public bool Top { get; private set; }
+        public int MinLevel { get; private set; }
+        public int MaxLevel { get; private set; }
+        public bool ExcludeElite { get; private set; }
+        public bool ExcludeBoss { get; private set; }
+        public string ExcludeDeckId { get; private set; }
+        public string SourceDefId { get; private set; }
+        public override string ActionName { get { return "ShuffleRandomContentIntoDrawPile"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var content = context.GetSystem<IContentSystem>();
+            var candidates = FindCatalogCandidates(content.Catalog, Kind, MinLevel, MaxLevel, ExcludeElite, ExcludeBoss, ExcludeDeckId);
+            if (candidates.Count == 0 || Count <= 0)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var registry = context.GetModel<CardRegistry>();
+            var deck = context.GetModel<DeckModel>();
+            var rng = context.Architecture.GetUtility<IRngUtility>();
+            var result = new GameActionResult();
+            for (var i = 0; i < Count; i++)
+            {
+                var definition = candidates[rng.Range(0, candidates.Count)];
+                var draft = content.CreateDraft(definition.DefId);
+                var card = draft.Kind == CardKind.Unknown ? registry.Create(definition.DefId, Kind) : draft.Create(registry);
+                content.ApplyContentToCard(card);
+                deck.AddToDrawPile(card, Top);
+                result.AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
+                    .WithCard(card.Uid)
+                    .WithMessage("shuffleRandom:" + definition.DefId)
+                    .WithSource(definition.DefId, SourceDefId));
+            }
+
+            if (!Top)
+            {
+                Shuffle(deck, rng);
+            }
+
+            return result;
+        }
+
+        public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
+        {
+            return sPostTriggers;
+        }
+
+        internal static List<CardContentDefinition> FindCatalogCandidates(
+            GameContentCatalog catalog,
+            CardKind kind,
+            int minLevel,
+            int maxLevel,
+            bool excludeElite,
+            bool excludeBoss,
+            string excludeDeckId)
+        {
+            var result = new List<CardContentDefinition>();
+            if (catalog == null)
+            {
+                return result;
+            }
+
+            foreach (var pair in catalog.Cards)
+            {
+                var card = pair.Value;
+                if (kind != CardKind.Unknown && card.Kind != kind)
+                {
+                    continue;
+                }
+
+                if (minLevel > 0 && card.Level < minLevel)
+                {
+                    continue;
+                }
+
+                if (maxLevel > 0 && card.Level > maxLevel)
+                {
+                    continue;
+                }
+
+                if (excludeElite && card.IsElite)
+                {
+                    continue;
+                }
+
+                if (excludeBoss && card.IsBoss)
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrEmpty(excludeDeckId) && string.Equals(card.DeckId, excludeDeckId, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                result.Add(card);
+            }
+
+            return result;
+        }
+
+        private static void Shuffle(DeckModel deck, IRngUtility rng)
+        {
+            var shuffled = new List<int>(deck.DrawPileUids);
+            for (var i = shuffled.Count - 1; i > 0; i--)
+            {
+                var swapIndex = rng.Range(0, i + 1);
+                var temp = shuffled[i];
+                shuffled[i] = shuffled[swapIndex];
+                shuffled[swapIndex] = temp;
+            }
+
+            deck.ReorderDrawPile(shuffled);
+        }
+    }
+
+    public sealed class ExchangeWithDrawPileAction : GameAction
+    {
+        private static readonly TriggerPoint[] sPostTriggers =
+        {
+            TriggerPoint.AfterAction,
+            TriggerPoint.OnDeal,
+            TriggerPoint.OnEnter
+        };
+
+        public ExchangeWithDrawPileAction(
+            int targetUid,
+            CardKind drawKind,
+            int minLevel,
+            int maxLevel,
+            bool excludeElite,
+            bool excludeBoss,
+            string sourceDefId = null)
+        {
+            TargetUid = targetUid;
+            DrawKind = drawKind;
+            MinLevel = minLevel;
+            MaxLevel = maxLevel;
+            ExcludeElite = excludeElite;
+            ExcludeBoss = excludeBoss;
+            SourceDefId = sourceDefId ?? string.Empty;
+        }
+
+        public int TargetUid { get; private set; }
+        public CardKind DrawKind { get; private set; }
+        public int MinLevel { get; private set; }
+        public int MaxLevel { get; private set; }
+        public bool ExcludeElite { get; private set; }
+        public bool ExcludeBoss { get; private set; }
+        public string SourceDefId { get; private set; }
+        public override string ActionName { get { return "ExchangeWithDrawPile"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var registry = context.GetModel<CardRegistry>();
+            CardInstance target;
+            if (!registry.TryGet(TargetUid, out target) || !target.Slot.Value.IsBoardSlot)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var deck = context.GetModel<DeckModel>();
+            var candidates = FindDrawPileCandidates(deck, registry);
+            if (candidates.Count == 0)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var rng = context.Architecture.GetUtility<IRngUtility>();
+            var drawnUid = candidates[rng.Range(0, candidates.Count)];
+            var drawn = registry.Get(drawnUid);
+            var board = context.GetModel<BoardModel>();
+            var fromSlot = target.Slot.Value;
+
+            board.RemoveCard(target);
+            deck.RemoveUid(drawnUid);
+            board.PlaceCard(drawn, fromSlot);
+            deck.AddToDrawPile(target, false);
+            Shuffle(deck, rng);
+
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
+                    .WithCard(drawn.Uid)
+                    .WithSlots(SlotId.None, fromSlot)
+                    .WithMessage("exchangeDraw:" + drawn.DefId)
+                    .WithSource(drawn.DefId, SourceDefId))
+                .AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
+                    .WithCard(target.Uid)
+                    .WithSlots(fromSlot, SlotId.None)
+                    .WithMessage("exchangeToDraw:" + target.DefId)
+                    .WithSource(target.DefId, SourceDefId));
+        }
+
+        public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
+        {
+            return sPostTriggers;
+        }
+
+        private List<int> FindDrawPileCandidates(DeckModel deck, CardRegistry registry)
+        {
+            var result = new List<int>();
+            for (var i = 0; i < deck.DrawPileUids.Count; i++)
+            {
+                CardInstance card;
+                if (!registry.TryGet(deck.DrawPileUids[i], out card))
+                {
+                    continue;
+                }
+
+                if (DrawKind != CardKind.Unknown && card.Kind != DrawKind)
+                {
+                    continue;
+                }
+
+                var level = card.Counters.Get(CoreCounterKeys.Level);
+                if (MinLevel > 0 && level < MinLevel)
+                {
+                    continue;
+                }
+
+                if (MaxLevel > 0 && level > MaxLevel)
+                {
+                    continue;
+                }
+
+                if (ExcludeElite && card.Counters.Get(CoreCounterKeys.Elite) > 0)
+                {
+                    continue;
+                }
+
+                if (ExcludeBoss && card.Counters.Get(CoreCounterKeys.Boss) > 0)
+                {
+                    continue;
+                }
+
+                result.Add(card.Uid);
+            }
+
+            return result;
+        }
+
+        private static void Shuffle(DeckModel deck, IRngUtility rng)
+        {
+            var shuffled = new List<int>(deck.DrawPileUids);
+            for (var i = shuffled.Count - 1; i > 0; i--)
+            {
+                var swapIndex = rng.Range(0, i + 1);
+                var temp = shuffled[i];
+                shuffled[i] = shuffled[swapIndex];
+                shuffled[swapIndex] = temp;
+            }
+
+            deck.ReorderDrawPile(shuffled);
+        }
+    }
+
     public sealed class AddStatModifierAction : GameAction
     {
         public AddStatModifierAction(
@@ -460,6 +828,20 @@ namespace NineGrid.Core
             ModifierScope scope,
             string source,
             string sourceDefId = null)
+            : this(targetUid, stat, op, value, layer, scope, source, sourceDefId, null)
+        {
+        }
+
+        public AddStatModifierAction(
+            int targetUid,
+            StatId stat,
+            ModifierOp op,
+            float value,
+            ModifierLayer layer,
+            ModifierScope scope,
+            string source,
+            string sourceDefId,
+            IStatCondition condition)
         {
             TargetUid = targetUid;
             Stat = stat;
@@ -469,6 +851,7 @@ namespace NineGrid.Core
             Scope = scope;
             Source = source ?? "effect.action";
             SourceDefId = sourceDefId ?? string.Empty;
+            Condition = condition;
         }
 
         public int TargetUid { get; private set; }
@@ -479,12 +862,13 @@ namespace NineGrid.Core
         public ModifierScope Scope { get; private set; }
         public string Source { get; private set; }
         public string SourceDefId { get; private set; }
+        public IStatCondition Condition { get; private set; }
         public override string ActionName { get { return "AddStatModifier"; } }
 
         public override GameActionResult Apply(GameActionContext context)
         {
             var card = context.GetModel<CardRegistry>().Get(TargetUid);
-            var modifier = new StatModifier(Stat, Op, Value, Layer, new ModifierSource(Source), Scope);
+            var modifier = new StatModifier(Stat, Op, Value, Layer, new ModifierSource(Source), Scope, Condition);
             context.GetSystem<IStatSystem>().AddModifier(card, modifier);
 
             return new GameActionResult()

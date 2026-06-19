@@ -378,11 +378,11 @@
     "design_text": "正交相邻格怪物被移除时，获得该怪物移除前的攻击和护甲"
   },
   {
-    "id": "skill.absorb_stone.pending",
+    "id": "skill.absorb_stone.move",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "吸石"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.absorb_stone.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"TransferArmor\",\"all\":true,\"receiver\":\"Self\",\"cause\":\"skill.absorb_stone\"}}",
+    "design_text": "[场上] 每次移动时，扣除相邻怪物卡全部护甲并使本卡获得等量护甲"
   },
   {
     "id": "skill.air_strike.slot1",
@@ -441,11 +441,11 @@
     "design_text": "下一次受到伤害时，该次伤害变为0"
   },
   {
-    "id": "skill.bloodthirst.pending",
+    "id": "skill.bloodthirst.damage",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "嗜血"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.bloodthirst.damage\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"damageDealt\",\"threshold\":2,\"actorIs\":\"Self\",\"targetIs\":\"Player\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"skill.bloodthirst\"}}",
+    "design_text": "[战斗时] 每累计对玩家造成2点伤害，本卡攻击+1"
   },
   {
     "id": "skill.breathe_fire.move",
@@ -462,11 +462,11 @@
     "design_text": "每移动3次，将一张龙信徒加入战斗卡组"
   },
   {
-    "id": "skill.delivery.pending",
+    "id": "skill.delivery.move",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "快递"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.delivery.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":2},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"random\":true,\"count\":1},\"action\":{\"atom\":\"ExchangeWithDrawPile\",\"kind\":\"Monster\"}}",
+    "design_text": "每移动2次，将相邻格上一张帮助卡与战斗卡组里一张怪物卡交换位置"
   },
   {
     "id": "skill.devotion.remove",
@@ -504,25 +504,25 @@
     "design_text": "每累计损失满10点护甲，将一张石人军团怪物洗入战斗卡组"
   },
   {
-    "id": "skill.fight_me.pending",
+    "id": "skill.fight_me.battle",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "和我打！"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.fight_me.battle\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"Player\"},{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetKind\":\"Monster\",\"targetNot\":\"Self\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ForceBattle\"}}",
+    "design_text": "[场上] 处于玩家正交相邻格时，如果玩家与其他怪物卡战斗，则与本卡战斗一次"
   },
   {
-    "id": "skill.find_weakness.pending",
+    "id": "skill.find_weakness.move",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "发现弱点"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.find_weakness.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"BoardMarkCount\",\"mark\":\"Blessed\",\"min\":3}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"DealDamage\",\"amount\":99,\"actor\":\"Self\"},{\"atom\":\"DeactivateSelfEffect\"}]}}",
+    "design_text": "[场上] 福地数量达到3后，本卡下一次移动对玩家造成99点伤害"
   },
   {
-    "id": "skill.fire_power.pending",
+    "id": "skill.fire_power.aura",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "火之力"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.fire_power.aura\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Modifier\",\"target\":{\"atom\":\"Self\"},\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":{\"op\":\"Multiply\",\"values\":[{\"constant\":2},{\"source\":\"CardCount\",\"defId\":\"help.flame\",\"zones\":[\"Board\",\"ItemSlots\"]}]},\"layer\":\"Conditional\",\"scope\":\"Permanent\"}}",
+    "design_text": "[场上/道具牌格] 每有一张烈焰，本卡攻击+2"
   },
   {
     "id": "skill.first_strike.rule",
@@ -539,18 +539,18 @@
     "design_text": "烈焰帮助卡造成的伤害+1"
   },
   {
-    "id": "skill.flame_breath.pending",
+    "id": "skill.flame_breath.move",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "烈焰吐息"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.flame_breath.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":4},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"excludeElite\":true,\"excludeBoss\":true},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"skill.flame_breath\"},{\"atom\":\"ShuffleInto\",\"defId\":\"help.flame\",\"kind\":\"HelpCard\",\"count\":1,\"top\":false,\"perTarget\":true},{\"atom\":\"Spawn\",\"defId\":\"help.flame\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\",\"count\":1,\"perTarget\":true}]}}",
+    "design_text": "每移动4次，移除其他所有非精英非层主怪物卡；每移除一张，洗入一张烈焰并放入一张烈焰到道具牌格"
   },
   {
-    "id": "skill.fracture_fall_apart.pending",
+    "id": "skill.fracture_fall_apart.remove",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "折损散架"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.fracture_fall_apart.remove\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnRemove\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"ShuffleInto\",\"defId\":\"monster.multi_bone_worm\",\"kind\":\"Monster\",\"count\":1,\"top\":false},{\"atom\":\"ShuffleRandomContent\",\"kind\":\"Monster\",\"minLevel\":2,\"maxLevel\":2,\"excludeElite\":true,\"excludeBoss\":true,\"count\":1,\"top\":false}]}}",
+    "design_text": "[场上] [被移除时]，将一张多骨虫和一张等级2随机怪物卡洗入战斗卡组"
   },
   {
     "id": "skill.gear_delivery.move",
@@ -609,11 +609,25 @@
     "design_text": "每移动3次，在非格5且未标记为福地的格子中随机标记1个福地"
   },
   {
-    "id": "skill.hard.pending",
+    "id": "skill.hard.slot1",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "战斗损失护甲动态伤害"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.hard.slot1\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"targetKind\":\"Monster\"},\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":1},{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"targetIs\":\"Self\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]},\"actor\":\"Self\"}}",
+    "design_text": "[场上] 处于格1时，战斗损失护甲后对玩家造成等同损失护甲的伤害"
+  },
+  {
+    "id": "skill.hard.slot4",
+    "container_type": "MonsterSkill",
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.hard.slot4\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"targetKind\":\"Monster\"},\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":4},{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"targetIs\":\"Self\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]},\"actor\":\"Self\"}}",
+    "design_text": "[场上] 处于格4时，战斗损失护甲后对玩家造成等同损失护甲的伤害"
+  },
+  {
+    "id": "skill.hard.slot7",
+    "container_type": "MonsterSkill",
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.hard.slot7\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"targetKind\":\"Monster\"},\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":7},{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"targetIs\":\"Self\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]},\"actor\":\"Self\"}}",
+    "design_text": "[场上] 处于格7时，战斗损失护甲后对玩家造成等同损失护甲的伤害"
   },
   {
     "id": "skill.hard_skin.max_hp",
@@ -637,11 +651,11 @@
     "design_text": "[场上] 每次移动到格1时，对玩家造成2点伤害"
   },
   {
-    "id": "skill.hot_observation.pending",
+    "id": "skill.hot_observation.observe",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "灼热观察"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.hot_observation.observe\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"CardMoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardMoved\",\"targetKind\":\"Monster\",\"sourcePrefix\":\"skill.\",\"excludeSourceDefId\":\"skill.hot_observation\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":1,\"actor\":\"Self\"}}",
+    "design_text": "怪物卡因怪物技能改变位置时，对玩家造成1点伤害"
   },
   {
     "id": "skill.intense_burning.flame_deal",
@@ -665,11 +679,11 @@
     "design_text": "[场上] 有烈焰时，本卡攻击+4"
   },
   {
-    "id": "skill.mixed_bones.pending",
+    "id": "skill.mixed_bones.move",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "混合骨头"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.mixed_bones.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":5},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":2},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"skill.mixed_bones\"},{\"atom\":\"ShuffleRandomContent\",\"kind\":\"Monster\",\"minLevel\":2,\"maxLevel\":3,\"excludeElite\":true,\"excludeBoss\":true,\"count\":1,\"top\":false}]}}",
+    "design_text": "每移动5次，移除九宫格上除本卡外随机两张怪物卡，将一张等级2或等级3随机怪物卡洗入战斗卡组"
   },
   {
     "id": "skill.monster_battle_hardened.battle",
@@ -679,18 +693,18 @@
     "design_text": "[战斗时] 本卡攻击+2"
   },
   {
-    "id": "skill.orc_tactics.pending",
+    "id": "skill.orc_tactics.move",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "兽人战术"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.orc_tactics.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":1,\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"skill.orc_tactics\",\"activeWhileAdjacentTo\":\"Self\"}}",
+    "design_text": "[场上] 每移动1次，相邻怪物攻击+1；离开相邻格后加成失效"
   },
   {
-    "id": "skill.otherworld_help.pending",
+    "id": "skill.otherworld_help.move",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "异界帮助"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.otherworld_help.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":9},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleRandomContent\",\"kind\":\"Monster\",\"minLevel\":1,\"maxLevel\":3,\"excludeElite\":true,\"excludeBoss\":true,\"excludeDeckId\":\"deck.void\",\"count\":1,\"top\":false}}",
+    "design_text": "每移动9次，从当前层其余未选中的怪物牌组中随机加入1张普通等级怪物卡到战斗卡组"
   },
   {
     "id": "skill.random_walk.move",
@@ -707,11 +721,11 @@
     "design_text": "[场上] 所有怪物卡视为与本卡正交相邻"
   },
   {
-    "id": "skill.rascality.pending",
+    "id": "skill.rascality.armor_lost",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "痞气"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.rascality.armor_lost\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"armorLost\",\"threshold\":3,\"targetIs\":\"Self\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":1,\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"skill.rascality\",\"activeWhileAdjacentTo\":\"Self\"}}",
+    "design_text": "[场上] 每损失3点护甲，相邻怪物攻击+1；离开相邻格后加成失效"
   },
   {
     "id": "skill.recombine_body.move",
@@ -728,18 +742,18 @@
     "design_text": "相邻骷髅头时移除双方并洗入大骷髅"
   },
   {
-    "id": "skill.relentless_chase.pending",
+    "id": "skill.relentless_chase.move",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "不休追击"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.relentless_chase.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1,\"requireAdjacentTo\":\"Player\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ForceBattle\"}}",
+    "design_text": "[场上] 每次移动到玩家正交相邻格时，与玩家战斗一次"
   },
   {
-    "id": "skill.rolling_crush.pending",
+    "id": "skill.rolling_crush.slot3",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "滚动碾压"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.rolling_crush.slot3\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":3,\"target\":\"Self\"},\"target\":{\"atom\":\"SlotCard\",\"slot\":6,\"kind\":\"HelpCard\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"skill.rolling_crush\"}}",
+    "design_text": "[场上] 移动到格3时，若格6为帮助卡，则移除该帮助卡"
   },
   {
     "id": "skill.rotate_lover.move",
@@ -749,11 +763,11 @@
     "design_text": "每移动3次，旋转一次"
   },
   {
-    "id": "skill.sacrifice.pending",
+    "id": "skill.sacrifice.move",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "献祭"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.sacrifice.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":2},\"target\":{\"atom\":\"FilteredCards\",\"defId\":\"monster.dragon_follower\",\"kind\":\"Monster\",\"zone\":\"Board\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"skill.sacrifice\"}}",
+    "design_text": "每移动2次，移除九宫格上所有的龙信徒"
   },
   {
     "id": "skill.sharp_stone.armor_break",
@@ -763,11 +777,11 @@
     "design_text": "当护甲归零时，对玩家造成1点伤害"
   },
   {
-    "id": "skill.smart.pending",
+    "id": "skill.smart.gain",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "大聪明"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.smart.gain\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventTypes\":[\"BaseStatModified\",\"EffectModifierApplied\"],\"stat\":\"Attack\",\"minDelta\":1,\"targetIs\":\"Self\",\"excludeSourceDefId\":\"skill.smart\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"skill.smart\"}}",
+    "design_text": "每次本卡获得攻击时，本卡额外攻击+1；不响应本效果自身加成"
   },
   {
     "id": "skill.space_mastery.battle",
@@ -777,11 +791,11 @@
     "design_text": "玩家与本卡战斗后，旋转一次"
   },
   {
-    "id": "skill.stocking.pending",
+    "id": "skill.stocking.move",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "进货"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.stocking.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":3,\"requireAdjacentTo\":\"Player\"},\"conditions\":[{\"atom\":\"TargetCount\",\"min\":1,\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"DrawPile\"}}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"skill.stocking\",\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"DrawPile\",\"random\":true,\"count\":1}},{\"atom\":\"GainArmor\",\"amount\":5}]}}",
+    "design_text": "[场上] 累计移动到玩家正交相邻3次时，从战斗卡组移除一张帮助卡并获得5点护甲"
   },
   {
     "id": "skill.stone_growth.slot1",
@@ -805,18 +819,18 @@
     "design_text": "[场上] 移动到格7时，其他怪物获得2点护甲"
   },
   {
-    "id": "skill.stone_lover.pending",
+    "id": "skill.stone_lover.armor_lost",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "石头爱好者"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.stone_lover.armor_lost\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"ArmorChanged\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"skill.stone_lover\"}}",
+    "design_text": "每当玩家卡或怪物卡损失护甲时，本卡攻击+1"
   },
   {
-    "id": "skill.stone_shelter.pending",
+    "id": "skill.stone_shelter.rule",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "石庇护"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.stone_shelter.rule\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"RuleModifier\",\"conditions\":[{\"atom\":\"EventFilter\",\"targetKind\":\"Monster\",\"targetNot\":\"Self\"}],\"ruleModifier\":{\"rule\":\"DamageFlatDelta\",\"op\":\"Add\",\"value\":-1,\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"skill.stone_shelter\"}}",
+    "design_text": "[场上] 其他怪物卡受到的伤害减少1点"
   },
   {
     "id": "skill.stray_cub.first_strike",
@@ -840,11 +854,11 @@
     "design_text": "每移动1次，本卡攻击+2"
   },
   {
-    "id": "skill.strong_combo.pending",
+    "id": "skill.strong_combo.move",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "强力组合"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.strong_combo.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"TargetCount\",\"min\":2,\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]}}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"skill.strong_combo.self\"},{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"skill.strong_combo.material\",\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"],\"count\":2}},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.giant_skeleton\",\"kind\":\"Monster\",\"count\":1,\"top\":true}]}}",
+    "design_text": "[场上] 每移动1次，若正交相邻有两张怪物，则移除本卡与两张怪物并洗入巨大骷髅"
   },
   {
     "id": "skill.survival_wisdom.battle",
@@ -854,11 +868,11 @@
     "design_text": "[战斗时] 恢复1点血量，本卡攻击+1"
   },
   {
-    "id": "skill.swallow_stone.pending",
+    "id": "skill.swallow_stone.move",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "护甲转移"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.swallow_stone.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":2},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"TransferArmor\",\"amount\":1,\"receiver\":\"Self\",\"cause\":\"skill.swallow_stone\"}}",
+    "design_text": "每移动2次，扣除相邻怪物卡1点护甲并使本卡获得等量护甲"
   },
   {
     "id": "skill.taunt.rule",
@@ -882,11 +896,11 @@
     "design_text": "[战斗时] 对怪物卡造成等同于该怪物卡攻击的伤害"
   },
   {
-    "id": "skill.throw_stone.pending",
+    "id": "skill.throw_stone.move",
     "container_type": "MonsterSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "丢石头"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.throw_stone.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":2},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"StatAtLeast\",\"target\":\"Self\",\"stat\":\"Armor\",\"value\":2},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"TransferArmor\",\"amount\":2,\"receiver\":\"None\",\"cause\":\"skill.throw_stone\"},{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Self\",\"target\":{\"atom\":\"Player\"}}]}}}",
+    "design_text": "每移动2次，若本卡护甲至少2，扣除2点护甲并对玩家造成2点伤害"
   },
   {
     "id": "skill.tower_child.node_start",
