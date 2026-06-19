@@ -14,6 +14,10 @@ namespace NineGrid.Core.Systems
         CoreCommandResult PickupItem(SlotId targetSlot);
         CoreCommandResult ClickEmpty(SlotId targetSlot);
         CoreCommandResult UseItem(int itemUid);
+        CoreCommandResult SelectReward(int optionIndex);
+        CoreCommandResult SkipHelpChoice();
+        CoreCommandResult SelectRoom(int optionIndex);
+        CoreCommandResult EnterRoom();
     }
 
     public sealed class PhaseSystem : AbstractSystem, IPhaseSystem
@@ -54,6 +58,7 @@ namespace NineGrid.Core.Systems
 
             options = options ?? NodeDeckOptions.CreateDefaultBattle();
             var pipeline = this.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new ClearPendingChoicesAction());
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.BuildEnemyPool));
             pipeline.Enqueue(new SetupNodeDeckAction(options));
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.ResetNode));
@@ -161,10 +166,15 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.PickupItem, "Monsters must be attacked, not picked up.", targetSlot, cardUid);
             }
 
+            var shouldRotate = CurrentPhase == GamePhase.InteractionLoop;
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new PickupCardAction(cardUid));
             var resolved = pipeline.RunToCompletion();
-            resolved += ResolveInteractiveRotation();
+            if (shouldRotate)
+            {
+                resolved += ResolveInteractiveRotation();
+            }
+
             return CoreCommandResult.Accept(resolved);
         }
 
@@ -229,6 +239,99 @@ namespace NineGrid.Core.Systems
             return CoreCommandResult.Accept(resolved);
         }
 
+        public CoreCommandResult SelectReward(int optionIndex)
+        {
+            if (!CanExecute(GameCommandKind.SelectReward))
+            {
+                return Reject(GameCommandKind.SelectReward, "Command is not legal in phase " + CurrentPhase, SlotId.None, 0);
+            }
+
+            var pending = this.GetModel<PendingChoiceModel>();
+            if (pending.Kind.Value != PendingChoiceKind.Reward)
+            {
+                return Reject(GameCommandKind.SelectReward, "No pending reward choice.", SlotId.None, 0);
+            }
+
+            if (optionIndex < 0 || optionIndex >= pending.RewardOptions.Count)
+            {
+                return Reject(GameCommandKind.SelectReward, "Reward option index is out of range.", SlotId.None, 0);
+            }
+
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new GrantRewardChoiceAction(pending.RewardOptions[optionIndex], optionIndex));
+            pipeline.Enqueue(new ClearPendingRewardChoiceAction());
+            pipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomChoice));
+            pipeline.Enqueue(new OfferRoomChoicesAction(RollRoomChoicesOrFallback()));
+            var resolved = pipeline.RunToCompletion();
+            return CoreCommandResult.Accept(resolved);
+        }
+
+        public CoreCommandResult SkipHelpChoice()
+        {
+            if (!CanExecute(GameCommandKind.SkipHelpChoice))
+            {
+                return Reject(GameCommandKind.SkipHelpChoice, "Command is not legal in phase " + CurrentPhase, SlotId.None, 0);
+            }
+
+            var resolved = this.GetSystem<IEconomySystem>().AwardSkipHelpChoice();
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new SkipRewardChoiceAction());
+            pipeline.Enqueue(new ClearPendingRewardChoiceAction());
+            pipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomChoice));
+            pipeline.Enqueue(new OfferRoomChoicesAction(RollRoomChoicesOrFallback()));
+            resolved += pipeline.RunToCompletion();
+            return CoreCommandResult.Accept(resolved);
+        }
+
+        public CoreCommandResult SelectRoom(int optionIndex)
+        {
+            if (!CanExecute(GameCommandKind.SelectRoom))
+            {
+                return Reject(GameCommandKind.SelectRoom, "Command is not legal in phase " + CurrentPhase, SlotId.None, 0);
+            }
+
+            var pending = this.GetModel<PendingChoiceModel>();
+            if (pending.Kind.Value != PendingChoiceKind.Room)
+            {
+                return Reject(GameCommandKind.SelectRoom, "No pending room choice.", SlotId.None, 0);
+            }
+
+            if (optionIndex < 0 || optionIndex >= pending.RoomOptions.Count)
+            {
+                return Reject(GameCommandKind.SelectRoom, "Room option index is out of range.", SlotId.None, 0);
+            }
+
+            var room = pending.RoomOptions[optionIndex];
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new SelectRoomChoiceAction(optionIndex, room));
+            pipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomEvent));
+            var resolved = pipeline.RunToCompletion();
+            resolved += this.GetSystem<IEconomySystem>().SettleUnusedHelpCards();
+            return CoreCommandResult.Accept(resolved);
+        }
+
+        public CoreCommandResult EnterRoom()
+        {
+            if (!CanExecute(GameCommandKind.EnterRoom))
+            {
+                return Reject(GameCommandKind.EnterRoom, "Command is not legal in phase " + CurrentPhase, SlotId.None, 0);
+            }
+
+            var room = this.GetModel<PendingChoiceModel>().SelectedRoom.Value;
+            if (room == RoomKind.None)
+            {
+                return Reject(GameCommandKind.EnterRoom, "No selected room to enter.", SlotId.None, 0);
+            }
+
+            var resolved = this.GetSystem<IRewardSystem>().ResolveRoom(room);
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new ClearPendingChoicesAction());
+            pipeline.Enqueue(new AdvanceNodeAction());
+            pipeline.Enqueue(new ChangePhaseAction(GamePhase.NodeCompleted));
+            resolved += pipeline.RunToCompletion();
+            return CoreCommandResult.Accept(resolved);
+        }
+
         private static bool IsRegisteredInItemSlots(DeckModel deck, int itemUid)
         {
             var itemSlots = deck.ItemSlotUids;
@@ -261,6 +364,11 @@ namespace NineGrid.Core.Systems
 
         private int CompleteNodeIfCleared()
         {
+            if (CurrentPhase != GamePhase.InteractionLoop)
+            {
+                return 0;
+            }
+
             if (!this.GetSystem<IDeckSystem>().IsNodeCleared())
             {
                 return 0;
@@ -271,7 +379,23 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.NodeCompleted));
             pipeline.Enqueue(new NodeCompletedAction());
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.RewardItemChoice));
+            pipeline.Enqueue(new OfferRewardChoiceAction("help.choice", 3));
             return pipeline.RunToCompletion();
+        }
+
+        private IReadOnlyList<RoomKind> RollRoomChoicesOrFallback()
+        {
+            var choices = this.GetSystem<IRewardSystem>().RollRoomChoices(2);
+            if (choices.Count > 0)
+            {
+                return choices;
+            }
+
+            return new[]
+            {
+                RoomKind.Gold,
+                RoomKind.Fountain
+            };
         }
 
         private CoreCommandResult Reject(GameCommandKind command, string reason, SlotId slot, int cardUid)
@@ -326,7 +450,6 @@ namespace NineGrid.Core.Systems
                 case GamePhase.None:
                 case GamePhase.BuildEnemyPool:
                 case GamePhase.NodeCompleted:
-                case GamePhase.RewardItemChoice:
                     mLegalCommands.Add(GameCommandKind.StartNode);
                     break;
                 case GamePhase.InteractionLoop:
@@ -334,6 +457,20 @@ namespace NineGrid.Core.Systems
                     mLegalCommands.Add(GameCommandKind.PickupItem);
                     mLegalCommands.Add(GameCommandKind.ClickEmpty);
                     mLegalCommands.Add(GameCommandKind.UseItem);
+                    break;
+                case GamePhase.RewardItemChoice:
+                    mLegalCommands.Add(GameCommandKind.SelectReward);
+                    mLegalCommands.Add(GameCommandKind.SkipHelpChoice);
+                    mLegalCommands.Add(GameCommandKind.PickupItem);
+                    mLegalCommands.Add(GameCommandKind.UseItem);
+                    break;
+                case GamePhase.RoomChoice:
+                    mLegalCommands.Add(GameCommandKind.SelectRoom);
+                    mLegalCommands.Add(GameCommandKind.PickupItem);
+                    mLegalCommands.Add(GameCommandKind.UseItem);
+                    break;
+                case GamePhase.RoomEvent:
+                    mLegalCommands.Add(GameCommandKind.EnterRoom);
                     break;
             }
         }

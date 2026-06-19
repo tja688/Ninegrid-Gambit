@@ -52,6 +52,7 @@ namespace NineGrid.Core
             var deck = architecture.GetModel<DeckModel>();
             var player = architecture.GetModel<PlayerModel>();
             var run = architecture.GetModel<RunModel>();
+            var pendingChoice = architecture.GetModel<PendingChoiceModel>();
 
             rng.SetSeed(options.Seed);
             registry.Clear();
@@ -59,6 +60,7 @@ namespace NineGrid.Core
             deck.Clear();
             player.Reset();
             run.Reset(options.Seed);
+            pendingChoice.Clear();
 
             var avatar = registry.Create(options.AvatarDefId, CardKind.Avatar);
             avatar.Stats.SetBase(StatId.MaxHp, options.AvatarMaxHp);

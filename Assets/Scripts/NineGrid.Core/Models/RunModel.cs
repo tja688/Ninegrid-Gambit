@@ -40,6 +40,12 @@ namespace NineGrid.Core
             Touch();
         }
 
+        public void AdvanceNode()
+        {
+            NodeIndex.Value++;
+            Touch();
+        }
+
         private void Touch()
         {
             if (Version != null)

@@ -8,24 +8,18 @@ namespace NineGrid.Core.Systems
     {
         int AwardSkipHelpChoice();
         int AwardSkipRelicChoice();
+        int SettleUnusedHelpCards();
         int DeleteHelpCard(int cardUid);
     }
 
     public sealed class EconomySystem : AbstractSystem, IEconomySystem
     {
-        private int mLastNodeEndActionId;
-
         protected override void OnInit()
         {
             this.GetSystem<ITriggerSystem>().Register(
                 TriggerPoint.OnRemove,
                 TriggerTiming.Post,
                 new DelegateTriggerReaction("economy.removeGold", ReactToRemovedCards));
-
-            this.GetSystem<ITriggerSystem>().Register(
-                TriggerPoint.OnNodeEnd,
-                TriggerTiming.Post,
-                new DelegateTriggerReaction("economy.unusedHelpCards", ReactToNodeEnd));
         }
 
         public int AwardSkipHelpChoice()
@@ -48,6 +42,23 @@ namespace NineGrid.Core.Systems
             }
 
             return ExecuteGold(catalog.Economy.SkipRelicChoiceGold, "skipRelicChoice");
+        }
+
+        public int SettleUnusedHelpCards()
+        {
+            var catalog = CatalogOrNull();
+            if (catalog == null || catalog.Economy.UnusedHelpCardGold == 0)
+            {
+                return 0;
+            }
+
+            var count = CountUnusedHelpCards();
+            if (count <= 0)
+            {
+                return 0;
+            }
+
+            return ExecuteGold(count * catalog.Economy.UnusedHelpCardGold, "unusedHelpCards");
         }
 
         public int DeleteHelpCard(int cardUid)
@@ -98,31 +109,6 @@ namespace NineGrid.Core.Systems
             }
 
             return result;
-        }
-
-        private IEnumerable<GameAction> ReactToNodeEnd(TriggerContext context)
-        {
-            var catalog = CatalogOrNull();
-            if (catalog == null
-                || catalog.Economy.UnusedHelpCardGold == 0
-                || context == null
-                || context.ActionContext == null
-                || context.ActionContext.ActionId == mLastNodeEndActionId)
-            {
-                return null;
-            }
-
-            mLastNodeEndActionId = context.ActionContext.ActionId;
-            var count = CountUnusedHelpCards();
-            if (count <= 0)
-            {
-                return null;
-            }
-
-            return new[]
-            {
-                new ModifyGoldAction(count * catalog.Economy.UnusedHelpCardGold, "unusedHelpCards")
-            };
         }
 
         private int CountUnusedHelpCards()

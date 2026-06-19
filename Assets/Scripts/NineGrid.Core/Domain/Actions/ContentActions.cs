@@ -113,34 +113,10 @@ namespace NineGrid.Core
 
             for (var i = 0; i < offered.Count; i++)
             {
-                AddGrantFollowUp(result, offered[i]);
+                RewardGrantActionSupport.AddGrantFollowUp(result, offered[i]);
             }
 
             return result;
-        }
-
-        private static void AddGrantFollowUp(GameActionResult result, RewardEntry entry)
-        {
-            if (entry == null || string.IsNullOrEmpty(entry.DefId))
-            {
-                return;
-            }
-
-            for (var i = 0; i < entry.Count; i++)
-            {
-                if (entry.Kind == CardKind.Relic)
-                {
-                    result.AddFollowUp(new GrantRelicAction(entry.DefId));
-                }
-                else if (entry.Kind == CardKind.HelpCard)
-                {
-                    result.AddFollowUp(new ShuffleIntoDrawPileAction(entry.DefId, entry.Kind, 1, false));
-                }
-                else if (entry.Kind == CardKind.PlayerCard)
-                {
-                    result.AddFollowUp(new GrantPlayerSkillContentAction(entry.DefId));
-                }
-            }
         }
 
         private static string FormatOfferedRewards(string poolId, IReadOnlyList<RewardEntry> offered)
@@ -182,6 +158,7 @@ namespace NineGrid.Core
             var offered = context.GetSystem<IRewardSystem>().RollPool(PoolId);
             var amount = offered.Count > 0 ? offered.Count : OptionCount;
             var message = offered.Count > 0 ? FormatOfferedRewards(PoolId, offered) : PoolId;
+            context.GetModel<PendingChoiceModel>().OfferRewards(PoolId, offered);
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.RewardOffered, context.ActionId, ActionName)
                     .WithAmount(amount)
@@ -210,6 +187,45 @@ namespace NineGrid.Core
         }
     }
 
+    public sealed class GrantRewardChoiceAction : GameAction
+    {
+        public GrantRewardChoiceAction(RewardEntry entry, int optionIndex)
+        {
+            Entry = entry;
+            OptionIndex = optionIndex;
+        }
+
+        public RewardEntry Entry { get; private set; }
+        public int OptionIndex { get; private set; }
+        public override string ActionName { get { return "GrantRewardChoice"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            if (Entry == null)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var result = new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.RewardSelected, context.ActionId, ActionName)
+                    .WithAmount(OptionIndex)
+                    .WithMessage(Entry.DefId + ":" + Entry.Kind + ":" + Entry.Count));
+            RewardGrantActionSupport.AddGrantFollowUp(result, Entry);
+            return result;
+        }
+    }
+
+    public sealed class SkipRewardChoiceAction : GameAction
+    {
+        public override string ActionName { get { return "SkipRewardChoice"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.RewardSkipped, context.ActionId, ActionName));
+        }
+    }
+
     public sealed class ResolveRoomAction : GameAction
     {
         public ResolveRoomAction(RoomKind roomKind, string displayName)
@@ -229,6 +245,33 @@ namespace NineGrid.Core
                 .AddEvent(new CoreGameEvent(CoreEventType.RoomResolved, context.ActionId, ActionName)
                     .WithAmount((int)RoomKind)
                     .WithMessage(DisplayName));
+        }
+    }
+
+    internal static class RewardGrantActionSupport
+    {
+        public static void AddGrantFollowUp(GameActionResult result, RewardEntry entry)
+        {
+            if (entry == null || string.IsNullOrEmpty(entry.DefId))
+            {
+                return;
+            }
+
+            for (var i = 0; i < entry.Count; i++)
+            {
+                if (entry.Kind == CardKind.Relic)
+                {
+                    result.AddFollowUp(new GrantRelicAction(entry.DefId));
+                }
+                else if (entry.Kind == CardKind.HelpCard)
+                {
+                    result.AddFollowUp(new ShuffleIntoDrawPileAction(entry.DefId, entry.Kind, 1, false));
+                }
+                else if (entry.Kind == CardKind.PlayerCard)
+                {
+                    result.AddFollowUp(new GrantPlayerSkillContentAction(entry.DefId));
+                }
+            }
         }
     }
 }

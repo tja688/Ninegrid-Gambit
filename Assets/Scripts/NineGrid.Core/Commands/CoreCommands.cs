@@ -77,4 +77,50 @@ namespace NineGrid.Core.Commands
             return this.GetSystem<IPhaseSystem>().UseItem(mItemUid);
         }
     }
+
+    public sealed class SelectRewardCommand : AbstractCommand<CoreCommandResult>
+    {
+        private readonly int mOptionIndex;
+
+        public SelectRewardCommand(int optionIndex)
+        {
+            mOptionIndex = optionIndex;
+        }
+
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().SelectReward(mOptionIndex);
+        }
+    }
+
+    public sealed class SkipHelpChoiceCommand : AbstractCommand<CoreCommandResult>
+    {
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().SkipHelpChoice();
+        }
+    }
+
+    public sealed class SelectRoomCommand : AbstractCommand<CoreCommandResult>
+    {
+        private readonly int mOptionIndex;
+
+        public SelectRoomCommand(int optionIndex)
+        {
+            mOptionIndex = optionIndex;
+        }
+
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().SelectRoom(mOptionIndex);
+        }
+    }
+
+    public sealed class EnterRoomCommand : AbstractCommand<CoreCommandResult>
+    {
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().EnterRoom();
+        }
+    }
 }

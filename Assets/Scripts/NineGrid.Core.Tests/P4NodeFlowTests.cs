@@ -429,14 +429,17 @@ namespace NineGrid.Core.Tests
             Assert.IsFalse(deckSystem.HasEnemyOnBoard());
             Assert.IsTrue(deckSystem.IsNodeCleared());
             Assert.AreEqual(GamePhase.RewardItemChoice, phaseSystem.CurrentPhase);
-            Assert.IsTrue(phaseSystem.CanExecute(GameCommandKind.StartNode));
+            Assert.IsTrue(phaseSystem.CanExecute(GameCommandKind.SkipHelpChoice));
+            Assert.IsTrue(phaseSystem.CanExecute(GameCommandKind.SelectReward));
+            Assert.IsTrue(phaseSystem.CanExecute(GameCommandKind.PickupItem));
+            Assert.IsTrue(phaseSystem.CanExecute(GameCommandKind.UseItem));
+            Assert.IsFalse(phaseSystem.CanExecute(GameCommandKind.StartNode));
             Assert.IsFalse(phaseSystem.CanExecute(GameCommandKind.Attack));
-            Assert.IsFalse(phaseSystem.CanExecute(GameCommandKind.PickupItem));
             Assert.IsFalse(phaseSystem.CanExecute(GameCommandKind.ClickEmpty));
-            Assert.IsFalse(phaseSystem.CanExecute(GameCommandKind.UseItem));
 
             Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.ActionRejected));
             Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.NodeCompleted));
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.RewardOffered));
             Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.PhaseChanged));
             Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.InteractionChanged));
             Assert.GreaterOrEqual(EventsOfType(pipeline.EventLog, CoreEventType.BoardRotated).Count, 3);
@@ -463,6 +466,101 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(result.Accepted);
             Assert.AreEqual(interactionBefore, player.InteractionCount.Value);
             Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.ItemUsed));
+        }
+
+        [Test]
+        public void NodeTailSkipRewardSelectRoomAndEnterAdvancesNode()
+        {
+            var architecture = NineGridArchitecture.Current;
+            P5CatalogTestSupport.RegisterCatalog(architecture);
+
+            var player = architecture.GetModel<PlayerModel>();
+            var run = architecture.GetModel<RunModel>();
+            var pending = architecture.GetModel<PendingChoiceModel>();
+            var phaseSystem = architecture.GetSystem<IPhaseSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var options = new NodeDeckOptions { PlayerOpeningCount = 0, EnemyOpeningCount = 1 }
+                .AddEnemyCard(new CardDraft("monster.tail", CardKind.Monster)
+                {
+                    MaxHp = 1,
+                    Attack = 0
+                });
+
+            architecture.SendCommand(new StartNodeCommand(options));
+            var attackResult = architecture.SendCommand(new AttackCommand(FindFirstMonsterSlot()));
+            Assert.IsTrue(attackResult.Accepted);
+            Assert.AreEqual(GamePhase.RewardItemChoice, phaseSystem.CurrentPhase);
+            Assert.AreEqual(PendingChoiceKind.Reward, pending.Kind.Value);
+            Assert.AreEqual("help.choice", pending.PoolId.Value);
+            Assert.AreEqual(3, pending.RewardOptions.Count);
+
+            var coinsBeforeSkip = player.Coins.Value;
+            var skipResult = architecture.SendCommand(new SkipHelpChoiceCommand());
+            Assert.IsTrue(skipResult.Accepted);
+            Assert.AreEqual(coinsBeforeSkip + 10, player.Coins.Value);
+            Assert.AreEqual(GamePhase.RoomChoice, phaseSystem.CurrentPhase);
+            Assert.AreEqual(PendingChoiceKind.Room, pending.Kind.Value);
+            Assert.AreEqual(2, pending.RoomOptions.Count);
+            Assert.IsTrue(phaseSystem.CanExecute(GameCommandKind.SelectRoom));
+            Assert.IsFalse(phaseSystem.CanExecute(GameCommandKind.StartNode));
+
+            var selectedRoom = pending.RoomOptions[0];
+            var selectRoomResult = architecture.SendCommand(new SelectRoomCommand(0));
+            Assert.IsTrue(selectRoomResult.Accepted);
+            Assert.AreEqual(GamePhase.RoomEvent, phaseSystem.CurrentPhase);
+            Assert.AreEqual(selectedRoom, pending.SelectedRoom.Value);
+            Assert.IsTrue(phaseSystem.CanExecute(GameCommandKind.EnterRoom));
+
+            var enterRoomResult = architecture.SendCommand(new EnterRoomCommand());
+            Assert.IsTrue(enterRoomResult.Accepted);
+            Assert.AreEqual(GamePhase.NodeCompleted, phaseSystem.CurrentPhase);
+            Assert.AreEqual(1, run.NodeIndex.Value);
+            Assert.AreEqual(PendingChoiceKind.None, pending.Kind.Value);
+            Assert.IsTrue(phaseSystem.CanExecute(GameCommandKind.StartNode));
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.RewardSkipped));
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.RoomChoicesOffered));
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.RoomSelected));
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.RoomResolved));
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.NodeAdvanced));
+        }
+
+        [Test]
+        public void RewardChoiceOverlayStillAllowsBoardPickupWithoutRepeatingCompletion()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var board = architecture.GetModel<BoardModel>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var player = architecture.GetModel<PlayerModel>();
+            var phaseSystem = architecture.GetSystem<IPhaseSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var options = new NodeDeckOptions { PlayerOpeningCount = 0, EnemyOpeningCount = 1 }
+                .AddEnemyCard(new CardDraft("monster.tail", CardKind.Monster)
+                {
+                    MaxHp = 1,
+                    Attack = 0
+                });
+
+            architecture.SendCommand(new StartNodeCommand(options));
+            var attackResult = architecture.SendCommand(new AttackCommand(FindFirstMonsterSlot()));
+            Assert.IsTrue(attackResult.Accepted);
+            Assert.AreEqual(GamePhase.RewardItemChoice, phaseSystem.CurrentPhase);
+            var help = new CardDraft("help.leftover", CardKind.HelpCard) { GoldReward = 3 }.Create(registry);
+            var helpSlot = FindAdjacentSlot(
+                board.AvatarSlot.Value,
+                board,
+                slot => board.IsEmpty(slot),
+                "adjacent slot for post-clear help pickup");
+            board.PlaceCard(help, helpSlot);
+            var rewardOfferCount = EventsOfType(pipeline.EventLog, CoreEventType.RewardOffered).Count;
+            var interactionBefore = player.InteractionCount.Value;
+            var pickupResult = architecture.SendCommand(new PickupItemCommand(helpSlot));
+
+            Assert.IsTrue(pickupResult.Accepted);
+            Assert.AreEqual(GamePhase.RewardItemChoice, phaseSystem.CurrentPhase);
+            Assert.AreEqual(0, board.GetCardUid(helpSlot));
+            Assert.AreEqual(3, player.Coins.Value);
+            Assert.AreEqual(interactionBefore, player.InteractionCount.Value);
+            Assert.AreEqual(rewardOfferCount, EventsOfType(pipeline.EventLog, CoreEventType.RewardOffered).Count);
         }
 
         private static void EnterInteractionLoop(IArchitecture architecture)
@@ -702,5 +800,6 @@ namespace NineGrid.Core.Tests
 
             return SlotId.None;
         }
+
     }
 }

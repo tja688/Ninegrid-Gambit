@@ -157,7 +157,12 @@ namespace NineGrid.Core
         BaseStatModified,
         RelicGranted,
         RewardOffered,
+        RewardSelected,
+        RewardSkipped,
+        RoomChoicesOffered,
+        RoomSelected,
         RoomResolved,
+        NodeAdvanced,
         BoardMarked,
         ContentLoaded
     }
@@ -182,6 +187,17 @@ namespace NineGrid.Core
         Attack,
         PickupItem,
         ClickEmpty,
-        UseItem
+        UseItem,
+        SelectReward,
+        SkipHelpChoice,
+        SelectRoom,
+        EnterRoom
+    }
+
+    public enum PendingChoiceKind
+    {
+        None,
+        Reward,
+        Room
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 
 namespace NineGrid.Core
 {
@@ -67,6 +68,102 @@ namespace NineGrid.Core
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
         {
             return sPostTriggers;
+        }
+    }
+
+    public sealed class AdvanceNodeAction : GameAction
+    {
+        public override string ActionName { get { return "AdvanceNode"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var run = context.GetModel<RunModel>();
+            run.AdvanceNode();
+
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.NodeAdvanced, context.ActionId, ActionName)
+                    .WithAmount(run.NodeIndex.Value));
+        }
+    }
+
+    public sealed class ClearPendingChoicesAction : GameAction
+    {
+        public override string ActionName { get { return "ClearPendingChoices"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            context.GetModel<PendingChoiceModel>().Clear();
+            return GameActionResult.Empty;
+        }
+    }
+
+    public sealed class ClearPendingRewardChoiceAction : GameAction
+    {
+        public override string ActionName { get { return "ClearPendingRewardChoice"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            context.GetModel<PendingChoiceModel>().ClearRewardChoices();
+            return GameActionResult.Empty;
+        }
+    }
+
+    public sealed class OfferRoomChoicesAction : GameAction
+    {
+        public OfferRoomChoicesAction(IReadOnlyList<RoomKind> options)
+        {
+            Options = options == null ? new RoomKind[0] : new List<RoomKind>(options).ToArray();
+        }
+
+        public IReadOnlyList<RoomKind> Options { get; private set; }
+        public override string ActionName { get { return "OfferRoomChoices"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            context.GetModel<PendingChoiceModel>().OfferRooms(Options);
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.RoomChoicesOffered, context.ActionId, ActionName)
+                    .WithAmount(Options.Count)
+                    .WithMessage(FormatRooms(Options)));
+        }
+
+        private static string FormatRooms(IReadOnlyList<RoomKind> options)
+        {
+            var builder = new StringBuilder();
+            for (var i = 0; i < options.Count; i++)
+            {
+                if (i > 0)
+                {
+                    builder.Append(",");
+                }
+
+                builder.Append(options[i]);
+            }
+
+            return builder.ToString();
+        }
+    }
+
+    public sealed class SelectRoomChoiceAction : GameAction
+    {
+        public SelectRoomChoiceAction(int optionIndex, RoomKind roomKind)
+        {
+            OptionIndex = optionIndex;
+            RoomKind = roomKind;
+        }
+
+        public int OptionIndex { get; private set; }
+        public RoomKind RoomKind { get; private set; }
+        public override string ActionName { get { return "SelectRoomChoice"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            context.GetModel<PendingChoiceModel>().SelectRoom(RoomKind);
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.RoomSelected, context.ActionId, ActionName)
+                    .WithAmount((int)RoomKind)
+                    .WithDelta(OptionIndex)
+                    .WithMessage(RoomKind.ToString()));
         }
     }
 
