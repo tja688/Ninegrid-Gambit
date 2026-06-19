@@ -167,6 +167,72 @@ namespace NineGrid.Core
         ContentLoaded
     }
 
+    public enum PresentationEventCategory
+    {
+        ActionLifecycle,
+        Rejection,
+        Damage,
+        Stat,
+        Economy,
+        Remove,
+        Kill,
+        Move,
+        Rotate,
+        Deal,
+        Interaction,
+        Phase,
+        Node,
+        Item,
+        Effect,
+        Reward,
+        Room,
+        Board,
+        Content
+    }
+
+    public enum PresentationInstructionKind
+    {
+        None,
+        MarkActionStarted,
+        MarkActionFinished,
+        ShowRejectedIntent,
+        ShowDamage,
+        UpdateHp,
+        UpdateArmor,
+        UpdateGold,
+        RemoveCard,
+        KillCard,
+        MoveCard,
+        SwapCards,
+        RotateBoard,
+        DealCard,
+        ShowDrawPileExhausted,
+        FillSlots,
+        UpdateInteractionCount,
+        ChangePhase,
+        StartNode,
+        CompleteNode,
+        PickItem,
+        ClickEmpty,
+        UseItem,
+        TriggerEffect,
+        ApplyModifier,
+        DeactivateEffect,
+        SpawnCard,
+        GrantSkill,
+        ModifyBaseStat,
+        GrantRelic,
+        OfferReward,
+        SelectReward,
+        SkipReward,
+        OfferRooms,
+        SelectRoom,
+        ResolveRoom,
+        AdvanceNode,
+        MarkBoard,
+        LoadContent
+    }
+
     public enum GamePhase
     {
         None,
@@ -191,7 +257,8 @@ namespace NineGrid.Core
         SelectReward,
         SkipHelpChoice,
         SelectRoom,
-        EnterRoom
+        EnterRoom,
+        PresentationFinished
     }
 
     public enum PendingChoiceKind

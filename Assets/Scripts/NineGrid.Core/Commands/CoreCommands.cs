@@ -123,4 +123,19 @@ namespace NineGrid.Core.Commands
             return this.GetSystem<IPhaseSystem>().EnterRoom();
         }
     }
+
+    public sealed class PresentationFinishedCommand : AbstractCommand<CoreCommandResult>
+    {
+        private readonly int mBatchId;
+
+        public PresentationFinishedCommand(int batchId)
+        {
+            mBatchId = batchId;
+        }
+
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPresentationSyncSystem>().FinishBatch(mBatchId);
+        }
+    }
 }

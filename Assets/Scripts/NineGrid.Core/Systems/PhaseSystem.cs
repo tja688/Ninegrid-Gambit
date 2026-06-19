@@ -445,6 +445,12 @@ namespace NineGrid.Core.Systems
         private void RefreshLegalCommands()
         {
             mLegalCommands.Clear();
+            if (this.GetSystem<IPresentationSyncSystem>().IsInputLocked)
+            {
+                mLegalCommands.Add(GameCommandKind.PresentationFinished);
+                return;
+            }
+
             switch (CurrentPhase)
             {
                 case GamePhase.None:
