@@ -19,6 +19,13 @@ namespace NineGrid.Core
             ToSlot = gameEvent.ToSlot;
             Amount = gameEvent.Amount;
             Delta = gameEvent.Delta;
+            RemainingHp = gameEvent.RemainingHp;
+            RemainingArmor = gameEvent.RemainingArmor;
+            RemovedAttack = gameEvent.RemovedAttack;
+            RemovedArmor = gameEvent.RemovedArmor;
+            SourceDefId = gameEvent.SourceDefId;
+            Cause = gameEvent.Cause;
+            Message = gameEvent.Message;
             Summary = BuildSummary(gameEvent, mapEntry);
         }
 
@@ -35,6 +42,13 @@ namespace NineGrid.Core
         public SlotId ToSlot { get; private set; }
         public int Amount { get; private set; }
         public int Delta { get; private set; }
+        public int RemainingHp { get; private set; }
+        public int RemainingArmor { get; private set; }
+        public int RemovedAttack { get; private set; }
+        public int RemovedArmor { get; private set; }
+        public string SourceDefId { get; private set; }
+        public string Cause { get; private set; }
+        public string Message { get; private set; }
         public string Summary { get; private set; }
 
         private static string BuildSummary(CoreGameEvent gameEvent, PresentationEventMapEntry mapEntry)
@@ -53,6 +67,11 @@ namespace NineGrid.Core
             if (gameEvent.Amount != 0 || gameEvent.Delta != 0)
             {
                 summary += " amount=" + gameEvent.Amount + " delta=" + gameEvent.Delta;
+            }
+
+            if (!string.IsNullOrEmpty(gameEvent.SourceDefId) || !string.IsNullOrEmpty(gameEvent.Cause))
+            {
+                summary += " source=" + gameEvent.SourceDefId + " cause=" + gameEvent.Cause;
             }
 
             if (!string.IsNullOrEmpty(gameEvent.Message))

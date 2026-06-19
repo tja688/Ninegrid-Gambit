@@ -20,6 +20,7 @@ namespace NineGrid.Core.Systems
         IReadOnlyList<EffectInstance> ActivateCardEffects(CardInstance card);
         IReadOnlyList<EffectInstance> ActivatePlayerSkill(string skillDefId);
         IReadOnlyList<EffectInstance> ActivateRelic(string relicDefId);
+        IReadOnlyList<string> DeactivateRuntimeEffectsByOwner(int ownerUid);
         void ClearRuntimeEffects();
     }
 
@@ -273,6 +274,23 @@ namespace NineGrid.Core.Systems
             mRuntimeEffectInstanceIds.Clear();
         }
 
+        public IReadOnlyList<string> DeactivateRuntimeEffectsByOwner(int ownerUid)
+        {
+            var effectSystem = this.GetSystem<IEffectSystem>();
+            var ids = effectSystem.GetInstanceIdsByOwner(ownerUid);
+            var deactivated = new List<string>();
+            for (var i = 0; i < ids.Count; i++)
+            {
+                if (effectSystem.Deactivate(ids[i]))
+                {
+                    deactivated.Add(ids[i]);
+                }
+            }
+
+            PruneRuntimeEffectInstanceIds(effectSystem);
+            return deactivated;
+        }
+
         private void ValidateEffectDefinitions(ContentValidationReport report)
         {
             var effectSystem = this.GetSystem<IEffectSystem>();
@@ -367,6 +385,18 @@ namespace NineGrid.Core.Systems
                 var instance = effectSystem.Activate(definition, new EffectOwner(containerType, sourceDefId, ownerUid));
                 mRuntimeEffectInstanceIds.Add(instance.InstanceId);
                 result.Add(instance);
+            }
+        }
+
+        private void PruneRuntimeEffectInstanceIds(IEffectSystem effectSystem)
+        {
+            for (var i = mRuntimeEffectInstanceIds.Count - 1; i >= 0; i--)
+            {
+                EffectInstance instance;
+                if (!effectSystem.TryGetInstance(mRuntimeEffectInstanceIds[i], out instance))
+                {
+                    mRuntimeEffectInstanceIds.RemoveAt(i);
+                }
             }
         }
 

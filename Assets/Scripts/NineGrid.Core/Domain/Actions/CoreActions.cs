@@ -443,7 +443,8 @@ namespace NineGrid.Core
                     .WithSlots(fromSlot, SlotId.None)
                     .WithRemovedStats(removedAttack, removedArmor)
                     .WithMessage(Reason)
-                    .WithSource(SourceDefId, Reason));
+                    .WithSource(SourceDefId, Reason))
+                .AddFollowUp(new DeactivateOwnerEffectsAction(CardUid, "remove:" + Reason));
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
@@ -506,6 +507,7 @@ namespace NineGrid.Core
                     .WithMessage("kill"));
 
             var goldReward = target.Counters.Get(CoreCounterKeys.GoldReward);
+            result.AddFollowUp(new DeactivateOwnerEffectsAction(TargetUid, "kill"));
             if (goldReward != 0)
             {
                 result.AddFollowUp(new ModifyGoldAction(goldReward, "kill:" + target.DefId));

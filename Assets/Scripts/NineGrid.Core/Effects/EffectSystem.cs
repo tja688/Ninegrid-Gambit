@@ -14,6 +14,8 @@ namespace NineGrid.Core.Effects
         EffectValidationResult Validate(EffectDefinition definition);
         EffectInstance Activate(EffectDefinition definition, EffectOwner owner);
         bool Deactivate(string instanceId);
+        IReadOnlyList<string> GetInstanceIdsByOwner(int ownerUid);
+        int DeactivateByOwner(int ownerUid);
         bool TryGetInstance(string instanceId, out EffectInstance instance);
         IReadOnlyList<GameAction> BuildTriggeredActions(string instanceId, TriggerContext triggerContext);
         void Clear();
@@ -179,6 +181,40 @@ namespace NineGrid.Core.Effects
 
             mInstances.Remove(instanceId);
             return true;
+        }
+
+        public IReadOnlyList<string> GetInstanceIdsByOwner(int ownerUid)
+        {
+            var ids = new List<string>();
+            if (ownerUid == 0)
+            {
+                return ids;
+            }
+
+            foreach (var pair in mInstances)
+            {
+                if (pair.Value.Owner != null && pair.Value.Owner.OwnerUid == ownerUid)
+                {
+                    ids.Add(pair.Key);
+                }
+            }
+
+            return ids;
+        }
+
+        public int DeactivateByOwner(int ownerUid)
+        {
+            var ids = GetInstanceIdsByOwner(ownerUid);
+            var count = 0;
+            for (var i = 0; i < ids.Count; i++)
+            {
+                if (Deactivate(ids[i]))
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         public bool TryGetInstance(string instanceId, out EffectInstance instance)

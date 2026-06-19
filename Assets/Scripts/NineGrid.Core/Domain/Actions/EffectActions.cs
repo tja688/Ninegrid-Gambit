@@ -1157,4 +1157,37 @@ namespace NineGrid.Core
                     .WithMessage(InstanceId));
         }
     }
+
+    public sealed class DeactivateOwnerEffectsAction : GameAction
+    {
+        public DeactivateOwnerEffectsAction(int ownerUid, string reason)
+        {
+            OwnerUid = ownerUid;
+            Reason = reason ?? string.Empty;
+        }
+
+        public int OwnerUid { get; private set; }
+        public string Reason { get; private set; }
+        public override string ActionName { get { return "DeactivateOwnerEffects"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            if (OwnerUid == 0)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var ids = context.GetSystem<IContentSystem>().DeactivateRuntimeEffectsByOwner(OwnerUid);
+            var result = new GameActionResult();
+            for (var i = 0; i < ids.Count; i++)
+            {
+                result.AddEvent(new CoreGameEvent(CoreEventType.EffectDeactivated, context.ActionId, ActionName)
+                    .WithCard(OwnerUid)
+                    .WithMessage(ids[i])
+                    .WithSource(string.Empty, Reason));
+            }
+
+            return result;
+        }
+    }
 }

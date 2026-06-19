@@ -68,6 +68,52 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void CoreCommandDispatcherBuildsBatchAndPreservesActiveInputLock()
+        {
+            var architecture = NineGridArchitecture.Current;
+            P5CatalogTestSupport.RegisterCatalog(architecture);
+            var dispatcher = new CoreCommandDispatcher(architecture);
+            var sync = architecture.GetSystem<IPresentationSyncSystem>();
+            var options = new NodeDeckOptions { PlayerOpeningCount = 0, EnemyOpeningCount = 1 }
+                .AddEnemyCard(new CardDraft("monster.dispatcher", CardKind.Monster)
+                {
+                    MaxHp = 1,
+                    Attack = 0
+                });
+
+            var started = dispatcher.Send(new StartNodeCommand(options));
+
+            Assert.IsTrue(started.Accepted);
+            Assert.IsTrue(started.BatchOpened);
+            Assert.NotNull(started.Batch);
+            Assert.Greater(started.Batch.Instructions.Count, 0);
+            Assert.IsTrue(sync.IsInputLocked);
+            Assert.AreEqual(started.Batch.BatchId, sync.ActiveBatchId);
+
+            var activeBatchId = sync.ActiveBatchId;
+            var rejectedWhileLocked = dispatcher.Send(new AttackCommand(FindFirstMonsterSlot()));
+
+            Assert.IsFalse(rejectedWhileLocked.Accepted);
+            Assert.IsFalse(rejectedWhileLocked.BatchOpened);
+            Assert.IsTrue(sync.IsInputLocked);
+            Assert.AreEqual(activeBatchId, sync.ActiveBatchId);
+
+            var finished = dispatcher.Send(new PresentationFinishedCommand(activeBatchId));
+
+            Assert.IsTrue(finished.Accepted);
+            Assert.IsFalse(finished.BatchOpened);
+            Assert.IsFalse(sync.IsInputLocked);
+
+            var attacked = dispatcher.Send(new AttackCommand(FindFirstMonsterSlot()));
+
+            Assert.IsTrue(attacked.Accepted);
+            Assert.IsTrue(attacked.BatchOpened);
+            Assert.IsTrue(sync.IsInputLocked);
+            Assert.AreEqual(attacked.Batch.BatchId, sync.ActiveBatchId);
+            Assert.Greater(attacked.Batch.FromSequence, started.Batch.ToSequence);
+        }
+
+        [Test]
         public void MinimalViewSnapshotExposesBoardAndPendingChoice()
         {
             var architecture = NineGridArchitecture.Current;
@@ -127,6 +173,33 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void ActionLogRowsExposeFullEventPayload()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+            var monster = registry.Create("monster.log.payload", CardKind.Monster);
+            monster.Stats.SetBase(StatId.MaxHp, 5);
+            monster.Stats.SetBase(StatId.Hp, 5);
+            monster.Stats.SetBase(StatId.Armor, 1);
+            board.PlaceCard(monster, SlotId.Board(2));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(
+                new DealDamageAction(avatar.Uid, monster.Uid, 2, "test.source", "test.cause"));
+
+            var rows = ActionLogProjector.FromEventLog(architecture.GetSystem<IActionPipelineSystem>().EventLog);
+            var damage = FirstRow(rows, CoreEventType.DamageDealt);
+
+            Assert.NotNull(damage);
+            Assert.AreEqual("test.source", damage.SourceDefId);
+            Assert.AreEqual("test.cause", damage.Cause);
+            Assert.AreEqual(4, damage.RemainingHp);
+            Assert.AreEqual(0, damage.RemainingArmor);
+            Assert.IsTrue(damage.Summary.Contains("source=test.source"));
+        }
+
+        [Test]
         public void LocalReplayFixtureRunnerExecutesNodeTailInCoreTests()
         {
             var fixture = new ReplayFixture(11)
@@ -161,6 +234,19 @@ namespace NineGrid.Core.Tests
             }
 
             return false;
+        }
+
+        private static ActionLogRow FirstRow(System.Collections.Generic.IReadOnlyList<ActionLogRow> rows, CoreEventType type)
+        {
+            for (var i = 0; i < rows.Count; i++)
+            {
+                if (rows[i].EventType == type)
+                {
+                    return rows[i];
+                }
+            }
+
+            return null;
         }
 
         private static SlotId FindFirstMonsterSlot()

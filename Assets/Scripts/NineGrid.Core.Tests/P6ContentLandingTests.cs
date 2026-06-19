@@ -172,6 +172,87 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void RemovedCardEffectsDeactivateAfterOnRemoveResolves()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var effectSystem = architecture.GetSystem<IEffectSystem>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var deck = architecture.GetModel<DeckModel>();
+
+            var skeleton = PlaceMonster("monster.big_skeleton", 20, SlotId.Board(3));
+            content.ApplyContentToCard(skeleton);
+
+            Assert.Greater(effectSystem.GetInstanceIdsByOwner(skeleton.Uid).Count, 0);
+
+            pipeline.Execute(new RemoveCardAction(skeleton.Uid, ZoneId.Removed, "test", "test"));
+
+            Assert.AreEqual(1, CountCardsByDef(deck.DrawPileUids, registry, "monster.skull_head"));
+            Assert.AreEqual(1, CountCardsByDef(deck.DrawPileUids, registry, "monster.headless_skeleton"));
+            Assert.AreEqual(0, effectSystem.GetInstanceIdsByOwner(skeleton.Uid).Count);
+            Assert.IsFalse(Contains(skeleton.EffectIds, "skill.fall_apart.remove"));
+            Assert.IsTrue(HasEvent(pipeline.EventLog, CoreEventType.EffectDeactivated));
+        }
+
+        [Test]
+        public void RemovedOwnerGlobalTriggersDoNotReactAfterCleanup()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+
+            var lover = PlaceMonster("monster.stone_shrimp", 20, SlotId.Board(1));
+            content.ApplyContentToCard(lover);
+            pipeline.Execute(new RemoveCardAction(lover.Uid, ZoneId.Removed, "test"));
+
+            var triggerCount = CountEvents(pipeline.EventLog, CoreEventType.EffectTriggered);
+            var removedAttack = lover.Stats.GetBase(StatId.Attack);
+            var armorTarget = PlaceMonster("monster.armor.cleanup.target", 20, SlotId.Board(2));
+            armorTarget.Stats.SetBase(StatId.Armor, 4);
+
+            pipeline.Execute(new DealDamageAction(avatar.Uid, armorTarget.Uid, 2));
+
+            Assert.AreEqual(removedAttack, lover.Stats.GetBase(StatId.Attack));
+            Assert.AreEqual(triggerCount, CountEvents(pipeline.EventLog, CoreEventType.EffectTriggered));
+        }
+
+        [Test]
+        public void SetupNodeDeckClearsPreviousNonAvatarRuntimeEffects()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var content = architecture.GetSystem<IContentSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var effectSystem = architecture.GetSystem<IEffectSystem>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+
+            var oldMonster = PlaceMonster("monster.stone_shrimp", 20, SlotId.Board(1));
+            content.ApplyContentToCard(oldMonster);
+
+            Assert.Greater(effectSystem.GetInstanceIdsByOwner(oldMonster.Uid).Count, 0);
+
+            pipeline.Execute(new SetupNodeDeckAction(new NodeDeckOptions { PlayerOpeningCount = 0, EnemyOpeningCount = 0 }));
+
+            CardInstance removedCard;
+            Assert.IsFalse(registry.TryGet(oldMonster.Uid, out removedCard));
+            Assert.AreEqual(0, effectSystem.GetInstanceIdsByOwner(oldMonster.Uid).Count);
+            Assert.IsTrue(HasEvent(pipeline.EventLog, CoreEventType.EffectDeactivated));
+
+            var triggerCount = CountEvents(pipeline.EventLog, CoreEventType.EffectTriggered);
+            var armorTarget = PlaceMonster("monster.armor.reset.target", 20, SlotId.Board(2));
+            armorTarget.Stats.SetBase(StatId.Armor, 4);
+
+            pipeline.Execute(new DealDamageAction(avatar.Uid, armorTarget.Uid, 2));
+
+            Assert.AreEqual(triggerCount, CountEvents(pipeline.EventLog, CoreEventType.EffectTriggered));
+        }
+
+        [Test]
         public void MonsterBatchBMovementSourceAndForcedBattleSkillsExecuteFromCatalogDsl()
         {
             var architecture = NineGridArchitecture.Current;

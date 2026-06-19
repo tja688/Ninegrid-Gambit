@@ -20,6 +20,7 @@ namespace NineGrid.Core
             var registry = context.GetModel<CardRegistry>();
             var board = context.GetModel<BoardModel>();
             var deck = context.GetModel<DeckModel>();
+            var deactivatedEffects = DeactivateNonAvatarRuntimeEffects(context, registry);
 
             board.ClearBoardCards();
             deck.Clear();
@@ -35,7 +36,7 @@ namespace NineGrid.Core
                 deck.AddToEnemyCardPool(CreateConfiguredCard(context, Options.EnemyCards[i], registry));
             }
 
-            return GameActionResult.Empty;
+            return BuildDeactivationResult(context, deactivatedEffects);
         }
 
         private static CardInstance CreateConfiguredCard(GameActionContext context, CardDraft draft, CardRegistry registry)
@@ -60,6 +61,58 @@ namespace NineGrid.Core
             {
                 registry.Remove(removeUids[i]);
             }
+        }
+
+        private static List<DeactivatedEffectRecord> DeactivateNonAvatarRuntimeEffects(GameActionContext context, CardRegistry registry)
+        {
+            var result = new List<DeactivatedEffectRecord>();
+            var content = context.GetSystem<IContentSystem>();
+            foreach (var pair in registry.Cards)
+            {
+                if (pair.Value.Kind == CardKind.Avatar)
+                {
+                    continue;
+                }
+
+                var ids = content.DeactivateRuntimeEffectsByOwner(pair.Key);
+                for (var i = 0; i < ids.Count; i++)
+                {
+                    result.Add(new DeactivatedEffectRecord(pair.Key, ids[i]));
+                }
+            }
+
+            return result;
+        }
+
+        private static GameActionResult BuildDeactivationResult(GameActionContext context, IReadOnlyList<DeactivatedEffectRecord> effects)
+        {
+            if (effects == null || effects.Count == 0)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var result = new GameActionResult();
+            for (var i = 0; i < effects.Count; i++)
+            {
+                result.AddEvent(new CoreGameEvent(CoreEventType.EffectDeactivated, context.ActionId, "SetupNodeDeck")
+                    .WithCard(effects[i].OwnerUid)
+                    .WithMessage(effects[i].InstanceId)
+                    .WithSource(string.Empty, "nodeReset"));
+            }
+
+            return result;
+        }
+
+        private sealed class DeactivatedEffectRecord
+        {
+            public DeactivatedEffectRecord(int ownerUid, string instanceId)
+            {
+                OwnerUid = ownerUid;
+                InstanceId = instanceId ?? string.Empty;
+            }
+
+            public int OwnerUid { get; private set; }
+            public string InstanceId { get; private set; }
         }
     }
 

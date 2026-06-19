@@ -238,6 +238,7 @@ namespace NineGrid.Core
                     .WithMessage("pickup"));
 
             var goldReward = card.Counters.Get(CoreCounterKeys.GoldReward);
+            result.AddFollowUp(new DeactivateOwnerEffectsAction(CardUid, "pickup"));
             if (goldReward != 0)
             {
                 result.AddFollowUp(new ModifyGoldAction(goldReward, "pickup:" + card.DefId));
