@@ -244,7 +244,9 @@ namespace NineGrid.Core
         RewardItemChoice,
         RoomChoice,
         RoomEvent,
-        NodeCompleted
+        NodeCompleted,
+        Victory,
+        Defeat
     }
 
     public enum GameCommandKind

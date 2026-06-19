@@ -4,6 +4,9 @@ namespace NineGrid.Core
 {
     public sealed class RunModel : AbstractModel
     {
+        public const int NodesPerFloor = 9;
+        public const int FinalFloor = 3;
+
         public BindableProperty<int> Floor { get; private set; }
         public BindableProperty<int> NodeIndex { get; private set; }
         public BindableProperty<ulong> Seed { get; private set; }
@@ -40,10 +43,27 @@ namespace NineGrid.Core
             Touch();
         }
 
-        public void AdvanceNode()
+        public bool AdvanceNode()
         {
-            NodeIndex.Value++;
+            var nextNodeIndex = NodeIndex.Value + 1;
+            if (nextNodeIndex >= NodesPerFloor)
+            {
+                if (Floor.Value >= FinalFloor)
+                {
+                    NodeIndex.Value = NodesPerFloor;
+                    Touch();
+                    return true;
+                }
+
+                Floor.Value++;
+                NodeIndex.Value = 0;
+                Touch();
+                return false;
+            }
+
+            NodeIndex.Value = nextNodeIndex;
             Touch();
+            return false;
         }
 
         private void Touch()

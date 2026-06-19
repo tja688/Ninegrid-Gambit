@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -78,11 +79,52 @@ namespace NineGrid.Core
         public override GameActionResult Apply(GameActionContext context)
         {
             var run = context.GetModel<RunModel>();
-            run.AdvanceNode();
-
-            return new GameActionResult()
+            var completedCampaign = run.AdvanceNode();
+            var result = new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.NodeAdvanced, context.ActionId, ActionName)
-                    .WithAmount(run.NodeIndex.Value));
+                    .WithAmount(run.NodeIndex.Value)
+                    .WithDelta(run.Floor.Value)
+                    .WithMessage("floor=" + run.Floor.Value + ";node=" + run.NodeIndex.Value));
+
+            if (completedCampaign && run.Phase.Value != GamePhase.Victory)
+            {
+                var previous = run.Phase.Value;
+                run.SetPhase(GamePhase.Victory);
+                result.AddEvent(new CoreGameEvent(CoreEventType.PhaseChanged, context.ActionId, ActionName)
+                    .WithAmount((int)GamePhase.Victory)
+                    .WithDelta((int)previous)
+                    .WithMessage(previous + "->" + GamePhase.Victory));
+            }
+
+            return result;
+        }
+    }
+
+    public sealed class DefeatIfAvatarDeadAction : GameAction
+    {
+        public override string ActionName { get { return "DefeatIfAvatarDead"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var run = context.GetModel<RunModel>();
+            if (run.Phase.Value == GamePhase.Victory || run.Phase.Value == GamePhase.Defeat)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var board = context.GetModel<BoardModel>();
+            CardInstance avatar;
+            if (!context.GetModel<CardRegistry>().TryGet(board.AvatarUid.Value, out avatar))
+            {
+                return GameActionResult.Empty;
+            }
+
+            if ((int)Math.Round(avatar.Stats.GetBase(StatId.Hp)) > 0)
+            {
+                return GameActionResult.Empty;
+            }
+
+            return new GameActionResult().AddFollowUp(new ChangePhaseAction(GamePhase.Defeat));
         }
     }
 

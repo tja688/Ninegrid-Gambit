@@ -327,8 +327,13 @@ namespace NineGrid.Core.Systems
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new ClearPendingChoicesAction());
             pipeline.Enqueue(new AdvanceNodeAction());
-            pipeline.Enqueue(new ChangePhaseAction(GamePhase.NodeCompleted));
             resolved += pipeline.RunToCompletion();
+            if (!IsTerminalPhase(CurrentPhase))
+            {
+                pipeline.Enqueue(new ChangePhaseAction(GamePhase.NodeCompleted));
+                resolved += pipeline.RunToCompletion();
+            }
+
             return CoreCommandResult.Accept(resolved);
         }
 
@@ -353,6 +358,11 @@ namespace NineGrid.Core.Systems
 
         private int ResolveInteractiveRotation()
         {
+            if (IsTerminalPhase(CurrentPhase))
+            {
+                return 0;
+            }
+
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new ModifyInteractionCountAction(1));
             pipeline.Enqueue(new RotateBoardClockwiseAction());
@@ -402,6 +412,11 @@ namespace NineGrid.Core.Systems
         {
             this.GetSystem<IActionPipelineSystem>().RejectCommand(command, reason, slot, cardUid);
             return CoreCommandResult.Reject(reason);
+        }
+
+        private static bool IsTerminalPhase(GamePhase phase)
+        {
+            return phase == GamePhase.Victory || phase == GamePhase.Defeat;
         }
 
         private bool ContainsEventSince(int startIndex, CoreEventType eventType, int cardUid)

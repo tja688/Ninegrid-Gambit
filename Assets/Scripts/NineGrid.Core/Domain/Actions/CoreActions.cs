@@ -120,7 +120,11 @@ namespace NineGrid.Core
                 .WithRemaining(newHp, newArmor)
                 .WithSource(SourceDefId, Cause));
 
-            if (newHp <= 0 && target.Kind != CardKind.Avatar)
+            if (newHp <= 0 && target.Kind == CardKind.Avatar)
+            {
+                result.AddFollowUp(new DefeatIfAvatarDeadAction());
+            }
+            else if (newHp <= 0)
             {
                 result.AddFollowUp(new KillIfDeadAction(ActorUid, TargetUid));
             }
