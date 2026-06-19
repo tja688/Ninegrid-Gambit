@@ -95,7 +95,7 @@
     "display_name": "偶数仇恨",
     "container_type": "PlayerSkill",
     "design_text": "对偶数等级怪物造成双倍伤害",
-    "effect_ids": "skill.even_hatred.pending"
+    "effect_ids": "skill.even_hatred.rule"
   },
   {
     "def_id": "skill.fall_apart",

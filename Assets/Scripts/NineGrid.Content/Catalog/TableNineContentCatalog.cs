@@ -181,6 +181,104 @@ namespace NineGrid.Content
                     "{\"atom\":\"OfferRewardChoice\",\"poolId\":\"relic.golden_chest\"}"),
                 "[使用时] 从三个遗物中选择一个获得"));
 
+            c.AddEffect(Impl("help.brutality_card.use", EffectContainerType.HelpCard,
+                Triggered("help.brutality_card.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"Once\",\"source\":\"help.brutality_card\",\"conditionTarget\":\"None\",\"conditionActor\":\"Player\",\"conditionTargetKind\":\"Monster\"}"),
+                "[使用时] 玩家下一次对怪物造成的战斗伤害翻倍"));
+
+            c.AddEffect(Impl("help.rolling_stone.board_slot3", EffectContainerType.HelpCard,
+                Triggered("help.rolling_stone.board_slot3", "HelpCard",
+                    "{\"atom\":\"OnMoveToSlot\",\"slot\":3,\"target\":\"Self\"}",
+                    "{\"atom\":\"SlotCard\",\"slot\":6,\"kind\":\"Monster\",\"excludeElite\":true,\"excludeBoss\":true}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"help.rolling_stone.target\"},"
+                    + "{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"help.rolling_stone.self\",\"target\":{\"atom\":\"Self\"}},"
+                    + "{\"atom\":\"DeactivateSelfEffect\"}"
+                    + "]}",
+                    "[{\"atom\":\"TargetCount\",\"min\":1,\"target\":{\"atom\":\"SlotCard\",\"slot\":6,\"kind\":\"Monster\",\"excludeElite\":true,\"excludeBoss\":true}}]"),
+                "[场上] 移动到格3时，若格6为非精英非层主怪物，则移除该怪物和本卡"));
+            c.AddEffect(Impl("help.rolling_stone.use", EffectContainerType.HelpCard,
+                Triggered("help.rolling_stone.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"help.rolling_stone.use\"},"
+                    + "{\"atom\":\"DeactivateSelfEffect\"}"
+                    + "]}"),
+                "[使用时] 直接移除本卡，不触发其他效果"));
+
+            c.AddEffect(Impl("help.armor_breaking_hammer.use", EffectContainerType.HelpCard,
+                Triggered("help.armor_breaking_hammer.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":1}",
+                    "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":-10,\"reason\":\"help.armor_breaking_hammer\"}"),
+                "[使用时] 将目标怪物卡护甲降低10点"));
+
+            c.AddEffect(Impl("help.healing_spring.board_adjacent", EffectContainerType.HelpCard,
+                Triggered("help.healing_spring.board_adjacent", "HelpCard",
+                    "{\"atom\":\"OnSelfMove\",\"every\":1,\"requireAdjacentTo\":\"Player\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"Heal\",\"amount\":2,\"actor\":\"Self\"}",
+                    "[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"Board\"}]"),
+                "[场上] 移动到玩家卡正交相邻格时，为玩家恢复2点血量"));
+            c.AddEffect(Impl("help.healing_spring.item_battle", EffectContainerType.HelpCard,
+                Triggered("help.healing_spring.item_battle", "HelpCard",
+                    "{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"Heal\",\"amount\":1,\"actor\":\"Self\"}",
+                    "[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"ItemSlots\"},{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetKind\":\"Monster\"}]"),
+                "[道具牌格] 玩家与怪物战斗时，恢复1点血量"));
+            c.AddEffect(Impl("help.healing_spring.use", EffectContainerType.HelpCard,
+                Triggered("help.healing_spring.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"help.healing_spring.use\"},"
+                    + "{\"atom\":\"DeactivateSelfEffect\"}"
+                    + "]}"),
+                "[使用时] 直接移除本卡，不触发其他效果"));
+
+            c.AddEffect(Impl("help.kidnapping.use", EffectContainerType.HelpCard,
+                Triggered("help.kidnapping.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":1,\"excludeElite\":true,\"excludeBoss\":true}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"TransferArmor\",\"all\":true,\"receiver\":\"Player\",\"cause\":\"help.kidnapping\"},"
+                    + "{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"help.kidnapping\"}"
+                    + "]}"),
+                "[使用时] 移除一张非精英非层主怪物卡，并获得等同于其当前护甲的护甲"));
+
+            c.AddEffect(Impl("help.watchtower.board_corner", EffectContainerType.HelpCard,
+                Triggered("help.watchtower.board_corner", "HelpCard",
+                    "{\"atom\":\"OnMoveToSlot\",\"slots\":[1,3,7,9],\"target\":\"Self\",\"counterKey\":\"help.watchtower.corner\"}",
+                    "{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"random\":true,\"count\":1}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"DealDamage\",\"amount\":3,\"actor\":\"Self\"},"
+                    + "{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"CardCounter\",\"target\":\"Self\",\"key\":\"help.watchtower.corner\",\"min\":4},\"action\":{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"help.watchtower.self\",\"target\":{\"atom\":\"Self\"}},"
+                    + "{\"atom\":\"DeactivateSelfEffect\"}"
+                    + "]}}"
+                    + "]}"),
+                "[场上] 移动到角格时，对随机怪物造成3点伤害；触发4次后移除本卡"));
+            c.AddEffect(Impl("help.watchtower.item_battle", EffectContainerType.HelpCard,
+                Triggered("help.watchtower.item_battle", "HelpCard",
+                    "{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0}",
+                    "{\"atom\":\"RandomMonster\"}",
+                    "{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Self\"}",
+                    "[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"ItemSlots\"},{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetKind\":\"Monster\"}]"),
+                "[道具牌格] 玩家与怪物战斗时，对随机一张怪物卡造成2点伤害"));
+            c.AddEffect(Impl("help.watchtower.use", EffectContainerType.HelpCard,
+                Triggered("help.watchtower.use", "HelpCard",
+                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"Self\"}",
+                    "{\"atom\":\"Sequence\",\"actions\":["
+                    + "{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"help.watchtower.use\"},"
+                    + "{\"atom\":\"DeactivateSelfEffect\"}"
+                    + "]}"),
+                "[使用时] 直接移除本卡，不触发其他效果"));
+
             c.AddEffect(Impl("skill.thorn_skin.battle", EffectContainerType.PlayerSkill,
                 Triggered("skill.thorn_skin.battle", "PlayerSkill",
                     "{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0}",
@@ -250,6 +348,17 @@ namespace NineGrid.Content
                     "{\"atom\":\"ShuffleInto\",\"defId\":\"help.gold_card\",\"kind\":\"HelpCard\",\"count\":1,\"top\":false}",
                     "[{\"atom\":\"CardCounter\",\"target\":\"EventCard\",\"key\":\"boss\"}]"),
                 "[击杀层主时] 将一张金币卡加入战斗卡组"));
+
+            c.AddEffect(Impl("relic.heavy_armor.base", EffectContainerType.Relic,
+                Modifier("relic.heavy_armor.base", "Relic", "{\"atom\":\"Player\"}", null,
+                    "{\"stat\":\"Armor\",\"op\":\"Add\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}"),
+                "基础护甲+1"));
+            c.AddEffect(Impl("relic.heavy_armor.node_start", EffectContainerType.Relic,
+                Triggered("relic.heavy_armor.node_start", "Relic",
+                    "{\"atom\":\"OnNodeStart\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"Player\",\"stat\":\"Armor\",\"effective\":true},{\"constant\":0.5}]}]}}"),
+                "[每关卡开始时] 每有两点基础护甲，额外获得1点当前护甲"));
 
             c.AddEffect(Impl("relic.vitality_amulet.node_end", EffectContainerType.Relic,
                 Triggered("relic.vitality_amulet.node_end", "Relic",
@@ -345,6 +454,11 @@ namespace NineGrid.Content
                     "{\"atom\":\"Player\"}",
                     "{\"atom\":\"Spawn\",\"defId\":\"help.doubling_tower\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}"),
                 "[每关卡开始时] 将一张倍增塔放入道具牌格"));
+            c.AddEffect(Impl("skill.even_hatred.rule", EffectContainerType.PlayerSkill,
+                Rule("skill.even_hatred.rule", "PlayerSkill",
+                    "{\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":2,\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"skill.even_hatred\"}",
+                    "[{\"atom\":\"EventFilter\",\"targetKind\":\"Monster\",\"actorIs\":\"Player\"},{\"atom\":\"LevelParity\",\"target\":\"Self\",\"parity\":\"Even\"}]"),
+                "[战斗时] 若目标怪物卡等级为偶数，玩家造成双倍伤害"));
 
             c.AddEffect(Impl("skill.beggar_bond.move", EffectContainerType.MonsterSkill,
                 Triggered("skill.beggar_bond.move", "MonsterSkill",
@@ -898,11 +1012,11 @@ namespace NineGrid.Content
             Help(c, "help.throwing_knife", "飞刀", ContentRarity.White, 20, "直伤").AddEffect("help.throwing_knife.use");
             Help(c, "help.fireball", "火球术", ContentRarity.White, 30, "直伤").AddEffect("help.fireball.use");
             Help(c, "help.rotation_wheel", "旋转轮", ContentRarity.White, 20, "位移").AddEffect("help.rotation_wheel.use");
-            Help(c, "help.brutality_card", "暴力卡", ContentRarity.White, 30, "攻击").AddEffect(Pending(c, "help.brutality_card.pending", EffectContainerType.HelpCard, "玩家当前总攻击翻倍，战斗一次后复原"));
-            Help(c, "help.rolling_stone", "滚石", ContentRarity.White, 50, "直伤").AddEffect(Pending(c, "help.rolling_stone.pending", EffectContainerType.HelpCard, "移动到格3时移除格6普通怪物和本卡"));
+            Help(c, "help.brutality_card", "暴力卡", ContentRarity.White, 30, "攻击").AddEffect("help.brutality_card.use");
+            Help(c, "help.rolling_stone", "滚石", ContentRarity.White, 50, "直伤").AddEffect("help.rolling_stone.board_slot3").AddEffect("help.rolling_stone.use");
             Help(c, "help.bomb", "爆弹", ContentRarity.White, 50, "直伤").AddEffect("help.bomb.use");
             Help(c, "help.swap_card", "交换卡", ContentRarity.White, 50, "位移").AddEffect("help.swap_card.use");
-            Help(c, "help.armor_breaking_hammer", "破击锤", ContentRarity.White, 50, "直伤").AddEffect(Pending(c, "help.armor_breaking_hammer.pending", EffectContainerType.HelpCard, "将目标怪物卡护甲降低10点"));
+            Help(c, "help.armor_breaking_hammer", "破击锤", ContentRarity.White, 50, "直伤").AddEffect("help.armor_breaking_hammer.use");
             Help(c, "help.sturdy_shield", "耐用盾牌", ContentRarity.White, 50, "护甲").AddEffect("help.sturdy_shield.use");
             Help(c, "help.bear_trap", "捕熊陷阱", ContentRarity.White, 50, "直伤").AddEffect("help.bear_trap.use");
             Help(c, "help.teleport_card", "传送卡", ContentRarity.White, 30, "位移").AddEffect("help.teleport_card.use");
@@ -910,12 +1024,12 @@ namespace NineGrid.Content
             Help(c, "help.gold_card", "金币卡", ContentRarity.Blue, 30, "经济").AddEffect("help.gold_card.use");
             Help(c, "help.food_card", "食品卡", ContentRarity.Blue, 50, "恢复").AddEffect("help.food_card.use");
             Help(c, "help.common_chest_card", "普通宝箱卡", ContentRarity.Blue, 100, "经济").AddEffect("help.common_chest_card.use");
-            Help(c, "help.healing_spring", "治疗泉", ContentRarity.Blue, 80, "恢复").AddEffect(Pending(c, "help.healing_spring.pending", EffectContainerType.HelpCard, "多区域恢复效果"));
+            Help(c, "help.healing_spring", "治疗泉", ContentRarity.Blue, 80, "恢复").AddEffect("help.healing_spring.board_adjacent").AddEffect("help.healing_spring.item_battle").AddEffect("help.healing_spring.use");
             Help(c, "help.impact_tutorial", "撞击教程", ContentRarity.Blue, 80, "血量").AddEffect("help.impact_tutorial.use");
             Help(c, "help.shield_bash_tutorial", "盾击教程", ContentRarity.Blue, 80, "护甲").AddEffect("help.shield_bash_tutorial.use");
-            Help(c, "help.kidnapping", "绑票", ContentRarity.Blue, 100, "护甲").AddEffect(Pending(c, "help.kidnapping.pending", EffectContainerType.HelpCard, "移除非精英非层主怪物并获得等同于护甲的护甲"));
+            Help(c, "help.kidnapping", "绑票", ContentRarity.Blue, 100, "护甲").AddEffect("help.kidnapping.use");
             Help(c, "help.blue_chest_card", "蓝色宝箱卡", ContentRarity.Gold, 150, "经济").AddEffect("help.blue_chest_card.use");
-            Help(c, "help.watchtower", "瞭望塔", ContentRarity.Gold, 150, "直伤").AddEffect(Pending(c, "help.watchtower.pending", EffectContainerType.HelpCard, "场上/道具牌格随机伤害"));
+            Help(c, "help.watchtower", "瞭望塔", ContentRarity.Gold, 150, "直伤").AddEffect("help.watchtower.board_corner").AddEffect("help.watchtower.item_battle").AddEffect("help.watchtower.use");
             Help(c, "help.doubling_tower", "倍增塔", ContentRarity.Gold, 150, "特殊").AddEffect("help.doubling_tower.board_monster").AddEffect("help.doubling_tower.item_player");
             Help(c, "help.stat_boost_card", "属性提升卡", ContentRarity.Gold, 100, "特殊").AddEffect("help.stat_boost_card.use");
             Help(c, "help.golden_chest_card", "金色宝箱卡", ContentRarity.Red, 400, "特殊").AddEffect("help.golden_chest_card.use");
@@ -936,7 +1050,7 @@ namespace NineGrid.Content
             Relic(c, "relic.sling", "弹弓", ContentRarity.White, "击杀怪物时随机伤害").AddEffect("relic.sling.kill");
             Relic(c, "relic.shield_knife", "打盾刀", ContentRarity.White, "击杀怪物时获得护甲").AddEffect("relic.shield_knife.kill");
             Relic(c, "relic.gold_knife", "打金刀", ContentRarity.White, "击杀怪物时获得2金币").AddEffect("relic.gold_knife.kill");
-            Relic(c, "relic.heavy_armor", "重盔甲", ContentRarity.White, "基础护甲+1，按基础护甲补当前护甲").AddEffect(Pending(c, "relic.heavy_armor.pending", EffectContainerType.Relic, "关卡开始按基础护甲获得护甲"));
+            Relic(c, "relic.heavy_armor", "重盔甲", ContentRarity.White, "基础护甲+1，按基础护甲补当前护甲").AddEffect("relic.heavy_armor.base").AddEffect("relic.heavy_armor.node_start");
             Relic(c, "relic.gold_armor", "金币盔甲", ContentRarity.White, "金币抵消护甲伤害").AddEffect("relic.gold_armor.rule");
             Relic(c, "relic.vitality_amulet", "活力护符", ContentRarity.Blue, "血量上限+6，关卡结束恢复6").AddEffect("relic.vitality_amulet.max_hp").AddEffect("relic.vitality_amulet.node_end");
             Relic(c, "relic.dragon_scale_armor", "龙鳞甲", ContentRarity.Gold, "所有怪物攻击-1").AddEffect("relic.dragon_scale_armor.rule");
@@ -956,7 +1070,7 @@ namespace NineGrid.Content
             Skill(c, "skill.arsenal", "军械库", EffectContainerType.PlayerSkill, "关卡结束加入飞刀/爆弹/破击锤之一")
                 .AddEffect("skill.arsenal.node_end");
             Skill(c, "skill.even_hatred", "偶数仇恨", EffectContainerType.PlayerSkill, "对偶数等级怪物造成双倍伤害")
-                .AddEffect(Pending(c, "skill.even_hatred.pending", EffectContainerType.PlayerSkill, "等级奇偶条件伤害倍率"));
+                .AddEffect("skill.even_hatred.rule");
             Skill(c, "skill.tower_child", "塔之子", EffectContainerType.PlayerSkill, "关卡开始放入倍增塔")
                 .AddEffect("skill.tower_child.node_start");
             Skill(c, "skill.easy_road", "轻车熟路", EffectContainerType.PlayerSkill, "关卡结束白色帮助卡三选一")
@@ -1191,12 +1305,6 @@ namespace NineGrid.Content
             return skill;
         }
 
-        private static void PendingSkill(GameContentCatalog c, string id, string name)
-        {
-            Skill(c, id, name, EffectContainerType.MonsterSkill, name)
-                .AddEffect(Pending(c, id + ".pending", EffectContainerType.MonsterSkill, name));
-        }
-
         private static MonsterDeckDefinition Deck(GameContentCatalog c, string id, string name, MonsterDeckKind kind)
         {
             var deck = new MonsterDeckDefinition(id, name, kind);
@@ -1262,12 +1370,6 @@ namespace NineGrid.Content
         private static ContentEffectDefinition Impl(string id, EffectContainerType type, string json, string text)
         {
             return new ContentEffectDefinition(id, type, json, ContentImplementationState.Implemented, text);
-        }
-
-        private static string Pending(GameContentCatalog c, string id, EffectContainerType type, string text)
-        {
-            c.AddEffect(new ContentEffectDefinition(id, type, string.Empty, ContentImplementationState.PendingAtom, text));
-            return id;
         }
 
         private static string Triggered(string id, string container, string trigger, string target, string action)

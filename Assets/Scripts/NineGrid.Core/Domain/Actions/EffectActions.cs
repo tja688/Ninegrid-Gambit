@@ -892,8 +892,26 @@ namespace NineGrid.Core
             ModifierLayer layer,
             ModifierScope scope,
             string source)
+            : this(targetUid, true, 0, CardKind.Unknown, rule, op, value, layer, scope, source)
+        {
+        }
+
+        public AddRuleModifierAction(
+            int targetUid,
+            bool useTargetCondition,
+            int actorUid,
+            CardKind targetKind,
+            RuleId rule,
+            ModifierOp op,
+            float value,
+            ModifierLayer layer,
+            ModifierScope scope,
+            string source)
         {
             TargetUid = targetUid;
+            UseTargetCondition = useTargetCondition;
+            ActorUid = actorUid;
+            TargetKind = targetKind;
             Rule = rule;
             Op = op;
             Value = value;
@@ -903,6 +921,9 @@ namespace NineGrid.Core
         }
 
         public int TargetUid { get; private set; }
+        public bool UseTargetCondition { get; private set; }
+        public int ActorUid { get; private set; }
+        public CardKind TargetKind { get; private set; }
         public RuleId Rule { get; private set; }
         public ModifierOp Op { get; private set; }
         public float Value { get; private set; }
@@ -913,7 +934,25 @@ namespace NineGrid.Core
 
         public override GameActionResult Apply(GameActionContext context)
         {
-            IStatCondition condition = TargetUid == 0 ? null : new TargetUidCondition(TargetUid);
+            var conditions = new List<IStatCondition>();
+            if (UseTargetCondition && TargetUid != 0)
+            {
+                conditions.Add(new TargetUidCondition(TargetUid));
+            }
+
+            if (ActorUid != 0)
+            {
+                conditions.Add(new ActorUidCondition(ActorUid));
+            }
+
+            if (TargetKind != CardKind.Unknown)
+            {
+                conditions.Add(new CardKindCondition(TargetKind));
+            }
+
+            IStatCondition condition = conditions.Count == 0
+                ? null
+                : conditions.Count == 1 ? conditions[0] : new AllStatCondition(conditions);
             var modifier = new RuleModifier(Rule, Op, Value, Layer, new ModifierSource(Source), Scope, condition);
             context.GetSystem<IStatSystem>().RuleModifiers.Add(modifier);
 

@@ -45,7 +45,9 @@ namespace NineGrid.Core
             }
 
             var statSystem = context.GetSystem<IStatSystem>();
-            var statContext = statSystem.CreateContext(target).WithActionSource(ActionName, SourceDefId, Cause);
+            var statContext = statSystem.CreateContext(target)
+                .WithActionSource(ActionName, SourceDefId, Cause)
+                .WithActor(ActorUid);
             var baseDamage = Math.Max(0, Amount);
             var multipliedDamage = Math.Max(0, (int)Math.Round(statSystem.EvaluateRule(RuleId.DamageMultiplier, baseDamage, statContext)));
             var flatDamage = baseDamage > 0 ? (int)Math.Round(statSystem.EvaluateRule(RuleId.DamageFlatDelta, 0f, statContext)) : 0;

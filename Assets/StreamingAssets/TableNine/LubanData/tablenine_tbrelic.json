@@ -37,7 +37,7 @@
     "rarity": "White",
     "design_text": "基础护甲+1，按基础护甲补当前护甲",
     "tags": "",
-    "effect_ids": "relic.heavy_armor.pending"
+    "effect_ids": "relic.heavy_armor.base|relic.heavy_armor.node_start"
   },
   {
     "def_id": "relic.junk_coating",

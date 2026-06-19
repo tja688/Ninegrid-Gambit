@@ -15,7 +15,7 @@
     "armor": 0,
     "recovery": 0,
     "tags": "直伤",
-    "effect_ids": "help.armor_breaking_hammer.pending",
+    "effect_ids": "help.armor_breaking_hammer.use",
     "skill_ids": ""
   },
   {
@@ -110,7 +110,7 @@
     "armor": 0,
     "recovery": 0,
     "tags": "攻击",
-    "effect_ids": "help.brutality_card.pending",
+    "effect_ids": "help.brutality_card.use",
     "skill_ids": ""
   },
   {
@@ -281,7 +281,7 @@
     "armor": 0,
     "recovery": 0,
     "tags": "恢复",
-    "effect_ids": "help.healing_spring.pending",
+    "effect_ids": "help.healing_spring.board_adjacent|help.healing_spring.item_battle|help.healing_spring.use",
     "skill_ids": ""
   },
   {
@@ -319,7 +319,7 @@
     "armor": 0,
     "recovery": 0,
     "tags": "护甲",
-    "effect_ids": "help.kidnapping.pending",
+    "effect_ids": "help.kidnapping.use",
     "skill_ids": ""
   },
   {
@@ -338,7 +338,7 @@
     "armor": 0,
     "recovery": 0,
     "tags": "直伤",
-    "effect_ids": "help.rolling_stone.pending",
+    "effect_ids": "help.rolling_stone.board_slot3|help.rolling_stone.use",
     "skill_ids": ""
   },
   {
@@ -509,7 +509,7 @@
     "armor": 0,
     "recovery": 0,
     "tags": "直伤",
-    "effect_ids": "help.watchtower.pending",
+    "effect_ids": "help.watchtower.board_corner|help.watchtower.item_battle|help.watchtower.use",
     "skill_ids": ""
   },
   {

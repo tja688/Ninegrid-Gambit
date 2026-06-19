@@ -194,9 +194,9 @@ namespace NineGrid.Core.Effects
         {
             if (kind == EffectAtomKind.Trigger)
             {
-                if (Same(atom, "OnMoveToSlot") && !node.Has("slot"))
+                if (Same(atom, "OnMoveToSlot") && !node.Has("slot") && node.Get("slots").AsArray().Count == 0)
                 {
-                    result.Add("schema.trigger.slot", path + ".slot is required for OnMoveToSlot.");
+                    result.Add("schema.trigger.slot", path + ".slot or .slots is required for OnMoveToSlot.");
                 }
 
                 if (Same(atom, "OnMoveToBoardMark") && !node.Has("mark"))
@@ -402,6 +402,11 @@ namespace NineGrid.Core.Effects
                 {
                     result.Add("schema.action.value", path + ".value is required for AddRuleModifier.");
                 }
+
+                if (node.Has("conditionTargetKind") && !IsSupportedCardKind(node.Get("conditionTargetKind").AsString(string.Empty)))
+                {
+                    result.Add("schema.action.conditionTargetKind", path + ".conditionTargetKind is not supported.");
+                }
             }
             else if (Same(atom, "AddModifier"))
             {
@@ -504,6 +509,18 @@ namespace NineGrid.Core.Effects
                 if (Same(atom, "OnMoveToSlot") && node.Has("slot") && !IsBoardSlot(node.Get("slot").AsInt(0)))
                 {
                     result.Add("schema.range.slot", path + ".slot must be between 1 and 9.");
+                }
+
+                if (Same(atom, "OnMoveToSlot"))
+                {
+                    var slots = node.Get("slots").AsArray();
+                    for (var i = 0; i < slots.Count; i++)
+                    {
+                        if (!IsBoardSlot(slots[i].AsInt(0)))
+                        {
+                            result.Add("schema.range.slots", path + ".slots[" + i + "] must be between 1 and 9.");
+                        }
+                    }
                 }
 
                 if (Same(atom, "OnCumulative") && node.Has("threshold") && node.Get("threshold").AsInt(1) < 1)
@@ -662,6 +679,8 @@ namespace NineGrid.Core.Effects
 
                 if (Same(atom, "SelectedCards"))
                 {
+                    ValidateLevelRange(node, path, result);
+
                     if (node.Has("count") && node.Get("count").AsInt(0) < 0)
                     {
                         result.Add("schema.range.count", path + ".count must be >= 0.");
@@ -694,6 +713,11 @@ namespace NineGrid.Core.Effects
                 if (Same(atom, "SlotCard") && node.Has("kind") && !IsSupportedCardKind(node.Get("kind").AsString(string.Empty)))
                 {
                     result.Add("schema.target.kind", path + ".kind is not supported.");
+                }
+
+                if (Same(atom, "SlotCard"))
+                {
+                    ValidateLevelRange(node, path, result);
                 }
 
                 return;

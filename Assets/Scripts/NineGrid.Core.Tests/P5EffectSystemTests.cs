@@ -1060,6 +1060,107 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(20, avatar.Stats.GetBase(StatId.Hp));
         }
 
+        [Test]
+        public void ValueExpressionSupportsFloorAndEffectiveStatReads()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var avatar = Avatar();
+            avatar.Stats.SetBase(StatId.Armor, 1);
+            architecture.GetSystem<IStatSystem>().AddModifier(
+                avatar,
+                new StatModifier(
+                    StatId.Armor,
+                    ModifierOp.Add,
+                    3,
+                    ModifierLayer.Persistent,
+                    new ModifierSource("test.effective"),
+                    ModifierScope.Permanent));
+
+            var definition = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.value.floor.effective\","
+                + "\"typeTag\":\"【类型帮助卡】\","
+                + "\"containerType\":\"HelpCard\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"target\":{\"atom\":\"Player\"},"
+                + "\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"Player\",\"stat\":\"Armor\",\"effective\":true},{\"constant\":0.5}]}]}}"
+                + "}");
+            Assert.IsTrue(Effects().Validate(definition).IsValid, FirstIssue(Effects().Validate(definition)));
+            Effects().Activate(definition, new EffectOwner(EffectContainerType.HelpCard, "test.value.floor.effective", 0));
+
+            architecture.GetSystem<IActionPipelineSystem>().Execute(new UseItemAction(9001));
+
+            Assert.AreEqual(3, avatar.Stats.GetBase(StatId.Armor));
+            Assert.AreEqual(6, architecture.GetSystem<IStatSystem>().GetEffectiveInt(avatar, StatId.Armor));
+        }
+
+        [Test]
+        public void AddRuleModifierAtomCanMatchActorAndTargetKind()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var avatar = Avatar();
+            avatar.Stats.SetBase(StatId.MaxHp, 30);
+            avatar.Stats.SetBase(StatId.Hp, 30);
+            var monster = CreateMonster("monster.rule.kind.target", 20, SlotId.Board(2));
+
+            var definition = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.rule.actor.kind\","
+                + "\"typeTag\":\"【类型帮助卡】\","
+                + "\"containerType\":\"HelpCard\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"target\":{\"atom\":\"Player\"},"
+                + "\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"Once\",\"source\":\"test.rule.actor.kind\",\"conditionTarget\":\"None\",\"conditionActor\":\"Player\",\"conditionTargetKind\":\"Monster\"}"
+                + "}");
+            Assert.IsTrue(Effects().Validate(definition).IsValid, FirstIssue(Effects().Validate(definition)));
+            Effects().Activate(definition, new EffectOwner(EffectContainerType.HelpCard, "test.rule.actor.kind", 0));
+
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            pipeline.Execute(new UseItemAction(9002));
+            pipeline.Execute(new DealDamageAction(monster.Uid, avatar.Uid, 4));
+            pipeline.Execute(new DealDamageAction(avatar.Uid, monster.Uid, 4));
+            pipeline.Execute(new DealDamageAction(avatar.Uid, monster.Uid, 4));
+
+            Assert.AreEqual(26, avatar.Stats.GetBase(StatId.Hp));
+            Assert.AreEqual(8, monster.Stats.GetBase(StatId.Hp));
+        }
+
+        [Test]
+        public void SelectedCardsTargetCanExcludeEliteAndBoss()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var normal = CreateMonster("monster.selected.normal", 10, SlotId.Board(1));
+            var elite = CreateMonster("monster.selected.elite", 10, SlotId.Board(2));
+            var boss = CreateMonster("monster.selected.boss", 10, SlotId.Board(3));
+            elite.Counters.Set(CoreCounterKeys.Elite, 1);
+            boss.Counters.Set(CoreCounterKeys.Elite, 1);
+            boss.Counters.Set(CoreCounterKeys.Boss, 1);
+
+            var definition = Effects().ParseJson(
+                "{"
+                + "\"id\":\"test.selected.exclude.elite.boss\","
+                + "\"typeTag\":\"【类型帮助卡】\","
+                + "\"containerType\":\"HelpCard\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":1,\"excludeElite\":true,\"excludeBoss\":true},"
+                + "\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"test.exclude\"}"
+                + "}");
+            Assert.IsTrue(Effects().Validate(definition).IsValid, FirstIssue(Effects().Validate(definition)));
+            Effects().Activate(definition, new EffectOwner(EffectContainerType.HelpCard, "test.selected.exclude.elite.boss", 0));
+
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            pipeline.Execute(new UseItemAction(9003, new[] { elite.Uid }));
+            pipeline.Execute(new UseItemAction(9003, new[] { boss.Uid }));
+            pipeline.Execute(new UseItemAction(9003, new[] { normal.Uid }));
+
+            Assert.AreEqual(ZoneId.Board, elite.Zone.Value);
+            Assert.AreEqual(ZoneId.Board, boss.Zone.Value);
+            Assert.AreEqual(ZoneId.Removed, normal.Zone.Value);
+        }
+
         private static IEffectSystem Effects()
         {
             return NineGridArchitecture.Current.GetSystem<IEffectSystem>();

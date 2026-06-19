@@ -17,6 +17,7 @@ namespace NineGrid.Core.Stats
             SourceDefId = string.Empty;
             Cause = string.Empty;
             TargetUid = 0;
+            ActorUid = 0;
         }
 
         public CardInstance Owner { get; private set; }
@@ -27,6 +28,7 @@ namespace NineGrid.Core.Stats
         public string SourceDefId { get; private set; }
         public string Cause { get; private set; }
         public int TargetUid { get; private set; }
+        public int ActorUid { get; private set; }
 
         public SlotId OwnerSlot
         {
@@ -44,6 +46,12 @@ namespace NineGrid.Core.Stats
         public StatEvaluationContext WithTarget(int targetUid)
         {
             TargetUid = targetUid;
+            return this;
+        }
+
+        public StatEvaluationContext WithActor(int actorUid)
+        {
+            ActorUid = actorUid;
             return this;
         }
     }
@@ -187,6 +195,36 @@ namespace NineGrid.Core.Stats
         public bool IsMet(StatEvaluationContext context)
         {
             return TargetUid == 0 || (context != null && context.Owner != null && context.Owner.Uid == TargetUid);
+        }
+    }
+
+    public sealed class ActorUidCondition : IStatCondition
+    {
+        public ActorUidCondition(int actorUid)
+        {
+            ActorUid = actorUid;
+        }
+
+        public int ActorUid { get; private set; }
+
+        public bool IsMet(StatEvaluationContext context)
+        {
+            return ActorUid == 0 || (context != null && context.ActorUid == ActorUid);
+        }
+    }
+
+    public sealed class CardKindCondition : IStatCondition
+    {
+        public CardKindCondition(CardKind kind)
+        {
+            Kind = kind;
+        }
+
+        public CardKind Kind { get; private set; }
+
+        public bool IsMet(StatEvaluationContext context)
+        {
+            return Kind == CardKind.Unknown || (context != null && context.Owner != null && context.Owner.Kind == Kind);
         }
     }
 

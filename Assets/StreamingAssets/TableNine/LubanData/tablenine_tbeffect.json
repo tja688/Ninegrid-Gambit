@@ -1,10 +1,10 @@
 [
   {
-    "id": "help.armor_breaking_hammer.pending",
+    "id": "help.armor_breaking_hammer.use",
     "container_type": "HelpCard",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "将目标怪物卡护甲降低10点"
+    "state": "Implemented",
+    "json": "{\"id\":\"help.armor_breaking_hammer.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":1},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":-10,\"reason\":\"help.armor_breaking_hammer\"}}",
+    "design_text": "[使用时] 将目标怪物卡护甲降低10点"
   },
   {
     "id": "help.bear_trap.use",
@@ -35,11 +35,11 @@
     "design_text": "[使用时] 对所有怪物卡造成4点伤害"
   },
   {
-    "id": "help.brutality_card.pending",
+    "id": "help.brutality_card.use",
     "container_type": "HelpCard",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "玩家当前总攻击翻倍，战斗一次后复原"
+    "state": "Implemented",
+    "json": "{\"id\":\"help.brutality_card.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"Once\",\"source\":\"help.brutality_card\",\"conditionTarget\":\"None\",\"conditionActor\":\"Player\",\"conditionTargetKind\":\"Monster\"}}",
+    "design_text": "[使用时] 玩家下一次对怪物造成的战斗伤害翻倍"
   },
   {
     "id": "help.common_chest_card.use",
@@ -105,11 +105,25 @@
     "design_text": "[使用时] 恢复10点血量"
   },
   {
-    "id": "help.healing_spring.pending",
+    "id": "help.healing_spring.board_adjacent",
     "container_type": "HelpCard",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "多区域恢复效果"
+    "state": "Implemented",
+    "json": "{\"id\":\"help.healing_spring.board_adjacent\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1,\"requireAdjacentTo\":\"Player\"},\"conditions\":[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"Board\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":2,\"actor\":\"Self\"}}",
+    "design_text": "[场上] 移动到玩家卡正交相邻格时，为玩家恢复2点血量"
+  },
+  {
+    "id": "help.healing_spring.item_battle",
+    "container_type": "HelpCard",
+    "state": "Implemented",
+    "json": "{\"id\":\"help.healing_spring.item_battle\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"ItemSlots\"},{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":1,\"actor\":\"Self\"}}",
+    "design_text": "[道具牌格] 玩家与怪物战斗时，恢复1点血量"
+  },
+  {
+    "id": "help.healing_spring.use",
+    "container_type": "HelpCard",
+    "state": "Implemented",
+    "json": "{\"id\":\"help.healing_spring.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"help.healing_spring.use\"},{\"atom\":\"DeactivateSelfEffect\"}]}}",
+    "design_text": "[使用时] 直接移除本卡，不触发其他效果"
   },
   {
     "id": "help.impact_tutorial.use",
@@ -119,18 +133,25 @@
     "design_text": "[使用时] 对目标怪物卡造成等同于玩家当前血量的伤害"
   },
   {
-    "id": "help.kidnapping.pending",
+    "id": "help.kidnapping.use",
     "container_type": "HelpCard",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "移除非精英非层主怪物并获得等同于护甲的护甲"
+    "state": "Implemented",
+    "json": "{\"id\":\"help.kidnapping.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":1,\"excludeElite\":true,\"excludeBoss\":true},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"TransferArmor\",\"all\":true,\"receiver\":\"Player\",\"cause\":\"help.kidnapping\"},{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"help.kidnapping\"}]}}",
+    "design_text": "[使用时] 移除一张非精英非层主怪物卡，并获得等同于其当前护甲的护甲"
   },
   {
-    "id": "help.rolling_stone.pending",
+    "id": "help.rolling_stone.board_slot3",
     "container_type": "HelpCard",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "移动到格3时移除格6普通怪物和本卡"
+    "state": "Implemented",
+    "json": "{\"id\":\"help.rolling_stone.board_slot3\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":3,\"target\":\"Self\"},\"conditions\":[{\"atom\":\"TargetCount\",\"min\":1,\"target\":{\"atom\":\"SlotCard\",\"slot\":6,\"kind\":\"Monster\",\"excludeElite\":true,\"excludeBoss\":true}}],\"target\":{\"atom\":\"SlotCard\",\"slot\":6,\"kind\":\"Monster\",\"excludeElite\":true,\"excludeBoss\":true},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"help.rolling_stone.target\"},{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"help.rolling_stone.self\",\"target\":{\"atom\":\"Self\"}},{\"atom\":\"DeactivateSelfEffect\"}]}}",
+    "design_text": "[场上] 移动到格3时，若格6为非精英非层主怪物，则移除该怪物和本卡"
+  },
+  {
+    "id": "help.rolling_stone.use",
+    "container_type": "HelpCard",
+    "state": "Implemented",
+    "json": "{\"id\":\"help.rolling_stone.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"help.rolling_stone.use\"},{\"atom\":\"DeactivateSelfEffect\"}]}}",
+    "design_text": "[使用时] 直接移除本卡，不触发其他效果"
   },
   {
     "id": "help.rotation_wheel.use",
@@ -189,11 +210,25 @@
     "design_text": "[使用时] 下一次玩家受到伤害时，该次伤害变为0"
   },
   {
-    "id": "help.watchtower.pending",
+    "id": "help.watchtower.board_corner",
     "container_type": "HelpCard",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "场上/道具牌格随机伤害"
+    "state": "Implemented",
+    "json": "{\"id\":\"help.watchtower.board_corner\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slots\":[1,3,7,9],\"target\":\"Self\",\"counterKey\":\"help.watchtower.corner\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"random\":true,\"count\":1},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"DealDamage\",\"amount\":3,\"actor\":\"Self\"},{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"CardCounter\",\"target\":\"Self\",\"key\":\"help.watchtower.corner\",\"min\":4},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"help.watchtower.self\",\"target\":{\"atom\":\"Self\"}},{\"atom\":\"DeactivateSelfEffect\"}]}}]}}",
+    "design_text": "[场上] 移动到角格时，对随机怪物造成3点伤害；触发4次后移除本卡"
+  },
+  {
+    "id": "help.watchtower.item_battle",
+    "container_type": "HelpCard",
+    "state": "Implemented",
+    "json": "{\"id\":\"help.watchtower.item_battle\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"ItemSlots\"},{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"RandomMonster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Self\"}}",
+    "design_text": "[道具牌格] 玩家与怪物战斗时，对随机一张怪物卡造成2点伤害"
+  },
+  {
+    "id": "help.watchtower.use",
+    "container_type": "HelpCard",
+    "state": "Implemented",
+    "json": "{\"id\":\"help.watchtower.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"help.watchtower.use\"},{\"atom\":\"DeactivateSelfEffect\"}]}}",
+    "design_text": "[使用时] 直接移除本卡，不触发其他效果"
   },
   {
     "id": "relic.craving.rule",
@@ -224,11 +259,18 @@
     "design_text": "[击杀怪物时] 获得2金币"
   },
   {
-    "id": "relic.heavy_armor.pending",
+    "id": "relic.heavy_armor.base",
     "container_type": "Relic",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "关卡开始按基础护甲获得护甲"
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.heavy_armor.base\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"modifier\":{\"stat\":\"Armor\",\"op\":\"Add\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}",
+    "design_text": "基础护甲+1"
+  },
+  {
+    "id": "relic.heavy_armor.node_start",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.heavy_armor.node_start\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"Player\",\"stat\":\"Armor\",\"effective\":true},{\"constant\":0.5}]}]}}}",
+    "design_text": "[每关卡开始时] 每有两点基础护甲，额外获得1点当前护甲"
   },
   {
     "id": "relic.junk_coating.use",
@@ -483,11 +525,11 @@
     "design_text": "[每关卡结束时] 进行一次白色帮助卡三选一"
   },
   {
-    "id": "skill.even_hatred.pending",
+    "id": "skill.even_hatred.rule",
     "container_type": "PlayerSkill",
-    "state": "PendingAtom",
-    "json": "",
-    "design_text": "等级奇偶条件伤害倍率"
+    "state": "Implemented",
+    "json": "{\"id\":\"skill.even_hatred.rule\",\"typeTag\":\"【类型玩家技能】\",\"containerType\":\"PlayerSkill\",\"kind\":\"RuleModifier\",\"conditions\":[{\"atom\":\"EventFilter\",\"targetKind\":\"Monster\",\"actorIs\":\"Player\"},{\"atom\":\"LevelParity\",\"target\":\"Self\",\"parity\":\"Even\"}],\"ruleModifier\":{\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":2,\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"skill.even_hatred\"}}",
+    "design_text": "[战斗时] 若目标怪物卡等级为偶数，玩家造成双倍伤害"
   },
   {
     "id": "skill.fall_apart.remove",
