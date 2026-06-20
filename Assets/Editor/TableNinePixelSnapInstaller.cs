@@ -63,6 +63,9 @@ public static class TableNinePixelSnapInstaller
         material.shader = shader;
         material.SetVector("_PixelResolution", new Vector4(320f, 180f, 0f, 0f));
         material.SetFloat("_PixelSnap", 1f);
+        material.SetFloat("_ScanlineEnabled", 1f);
+        material.SetFloat("_ScanlineIntensity", 0.12f);
+        material.SetFloat("_ScanlineSpacing", 2f);
         EditorUtility.SetDirty(material);
         return material;
     }
@@ -116,11 +119,16 @@ public static class TableNinePixelSnapInstaller
             return;
         }
 
-        GameObject controllerObject = GameObject.Find("TableNine Pixel Snap");
+        GameObject controllerObject = GameObject.Find("TableNine Post Processing");
         if (controllerObject == null)
         {
-            controllerObject = new GameObject("TableNine Pixel Snap");
-            Undo.RegisterCreatedObjectUndo(controllerObject, "Create TableNine Pixel Snap");
+            controllerObject = GameObject.Find("TableNine Pixel Snap");
+        }
+
+        if (controllerObject == null)
+        {
+            controllerObject = new GameObject("TableNine Post Processing");
+            Undo.RegisterCreatedObjectUndo(controllerObject, "Create TableNine Post Processing");
         }
 
         Component controller = controllerObject.GetComponent(controllerType);
@@ -133,6 +141,9 @@ public static class TableNinePixelSnapInstaller
         SetObject(serializedObject, "postProcessMaterial", material);
         SetVector2Int(serializedObject, "internalResolution", new Vector2Int(320, 180));
         SetBool(serializedObject, "pixelSnap", true);
+        SetBool(serializedObject, "scanlines", true);
+        SetFloat(serializedObject, "scanlineIntensity", 0.12f);
+        SetFloat(serializedObject, "scanlineSpacing", 2f);
         serializedObject.ApplyModifiedPropertiesWithoutUndo();
         controller.SendMessage("ApplyNow", SendMessageOptions.DontRequireReceiver);
     }
@@ -198,6 +209,15 @@ public static class TableNinePixelSnapInstaller
         if (property != null)
         {
             property.vector2IntValue = value;
+        }
+    }
+
+    private static void SetFloat(SerializedObject serializedObject, string propertyName, float value)
+    {
+        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        if (property != null)
+        {
+            property.floatValue = value;
         }
     }
 }
