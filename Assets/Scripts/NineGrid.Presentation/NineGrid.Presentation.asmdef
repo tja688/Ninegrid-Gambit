@@ -5,8 +5,7 @@
         "NineGrid.Core",
         "NineGrid.Content",
         "QFramework",
-        "Unity.RenderPipelines.Core.Runtime",
-        "Unity.RenderPipelines.Universal.Runtime"
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

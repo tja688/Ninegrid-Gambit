@@ -6,7 +6,10 @@ namespace NineGrid.Presentation.Visuals
     public sealed class TableNinePixelSnapController : MonoBehaviour
     {
         [SerializeField] private Material postProcessMaterial;
-        [SerializeField] private Vector2Int internalResolution = new(320, 180);
+        [SerializeField] private Material tmpScanlineMaterial;
+        [SerializeField] private Material tmpBitmapScanlineMaterial;
+        [SerializeField] private Material tmpSdfScanlineMaterial;
+        [SerializeField] private Vector2Int internalResolution = new(480, 270);
         [SerializeField] private bool pixelSnap = true;
 
         [Header("Scanlines")]
@@ -34,14 +37,45 @@ namespace NineGrid.Presentation.Visuals
 
         public void ApplyNow()
         {
-            if (postProcessMaterial == null)
-                return;
+            Vector4 pixelResolution = new Vector4(internalResolution.x, internalResolution.y, 0f, 0f);
+            float scanlineEnabled = scanlines ? 1f : 0f;
 
-            postProcessMaterial.SetVector(PixelResolutionId, new Vector4(internalResolution.x, internalResolution.y, 0f, 0f));
-            postProcessMaterial.SetFloat(PixelSnapId, pixelSnap ? 1f : 0f);
-            postProcessMaterial.SetFloat(ScanlineEnabledId, scanlines ? 1f : 0f);
-            postProcessMaterial.SetFloat(ScanlineIntensityId, scanlineIntensity);
-            postProcessMaterial.SetFloat(ScanlineSpacingId, scanlineSpacing);
+            if (postProcessMaterial != null)
+            {
+                postProcessMaterial.SetVector(PixelResolutionId, pixelResolution);
+                postProcessMaterial.SetFloat(PixelSnapId, pixelSnap ? 1f : 0f);
+                postProcessMaterial.SetFloat(ScanlineEnabledId, scanlineEnabled);
+                postProcessMaterial.SetFloat(ScanlineIntensityId, scanlineIntensity);
+                postProcessMaterial.SetFloat(ScanlineSpacingId, scanlineSpacing);
+            }
+
+            if (tmpScanlineMaterial != null)
+            {
+                ApplyScanlineMaterial(tmpScanlineMaterial, pixelResolution, scanlineEnabled, scanlineIntensity, scanlineSpacing);
+            }
+
+            if (tmpBitmapScanlineMaterial != null)
+            {
+                ApplyScanlineMaterial(tmpBitmapScanlineMaterial, pixelResolution, scanlineEnabled, scanlineIntensity, scanlineSpacing);
+            }
+
+            if (tmpSdfScanlineMaterial != null)
+            {
+                ApplyScanlineMaterial(tmpSdfScanlineMaterial, pixelResolution, scanlineEnabled, scanlineIntensity, scanlineSpacing);
+            }
+        }
+
+        private static void ApplyScanlineMaterial(
+            Material material,
+            Vector4 pixelResolution,
+            float scanlineEnabled,
+            float intensity,
+            float spacing)
+        {
+            material.SetVector(PixelResolutionId, pixelResolution);
+            material.SetFloat(ScanlineEnabledId, scanlineEnabled);
+            material.SetFloat(ScanlineIntensityId, intensity);
+            material.SetFloat(ScanlineSpacingId, spacing);
         }
     }
 }
