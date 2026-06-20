@@ -31,8 +31,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+#if UNITY_5_6_OR_NEWER
 using UnityEngine;
 using UnityEngine.SceneManagement;
+#endif
 
 namespace QFramework
 {
