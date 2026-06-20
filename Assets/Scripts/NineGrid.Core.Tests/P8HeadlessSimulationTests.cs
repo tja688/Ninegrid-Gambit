@@ -1,6 +1,7 @@
 using System.IO;
 using NineGrid.Core.Commands;
 using NineGrid.Core.Content;
+using NineGrid.Core.Effects;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using NineGrid.Core.Tests.Simulation;
@@ -66,6 +67,36 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(3, run.Floor.Value);
             Assert.AreEqual(RunModel.NodesPerFloor, run.NodeIndex.Value);
             Assert.IsFalse(architecture.GetSystem<IPhaseSystem>().CanExecute(GameCommandKind.StartNode));
+        }
+
+        [Test]
+        public void HeadlessInvariantReportsRuntimeEffectOwnedByRemovedCard()
+        {
+            InitialGameFactory.Create(NineGridArchitecture.Current);
+            var architecture = NineGridArchitecture.Current;
+            var registry = architecture.GetModel<CardRegistry>();
+            var effectSystem = architecture.GetSystem<IEffectSystem>();
+            var removed = registry.Create("monster.leak.owner", CardKind.Monster);
+            removed.Zone.Value = ZoneId.Removed;
+
+            var definition = effectSystem.ParseJson(
+                "{"
+                + "\"id\":\"test.runtime.leak\","
+                + "\"typeTag\":\"【类型怪物技能】\","
+                + "\"containerType\":\"MonsterSkill\","
+                + "\"kind\":\"Triggered\","
+                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"target\":{\"atom\":\"Player\"},"
+                + "\"action\":{\"atom\":\"GainArmor\",\"amount\":1}"
+                + "}");
+            effectSystem.Activate(definition, new EffectOwner(EffectContainerType.MonsterSkill, "test.runtime.leak", removed.Uid));
+
+            var checker = new HeadlessInvariantChecker(architecture.GetModel<PlayerModel>().Coins.Value);
+            checker.CheckNewEvents(architecture);
+
+            Assert.AreEqual(1, checker.Issues.Count);
+            StringAssert.Contains("Runtime effect leak", checker.Issues[0].Message);
+            StringAssert.Contains(removed.Uid.ToString(), checker.Issues[0].Message);
         }
 
         [Test]

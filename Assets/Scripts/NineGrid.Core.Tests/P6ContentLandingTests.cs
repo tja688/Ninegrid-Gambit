@@ -439,6 +439,24 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void TargetedDamageHelpCardsHonorSelectedMonsterFromDesignDocs()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+            avatar.Stats.SetBase(StatId.Attack, 5);
+            avatar.Stats.SetBase(StatId.MaxHp, 20);
+            avatar.Stats.SetBase(StatId.Hp, 8);
+            avatar.Stats.SetBase(StatId.Armor, 7);
+
+            AssertSelectedMonsterDamage("help.throwing_knife", 6);
+            AssertSelectedMonsterDamage("help.fireball", 5);
+            AssertSelectedMonsterDamage("help.impact_tutorial", 8);
+            AssertSelectedMonsterDamage("help.shield_bash_tutorial", 7);
+        }
+
+        [Test]
         public void BatchTwoDynamicValueHelpCardsExecuteFromCatalog()
         {
             var architecture = NineGridArchitecture.Current;
@@ -451,17 +469,17 @@ namespace NineGrid.Core.Tests
             avatar.Stats.SetBase(StatId.Armor, 7);
 
             var fireballTarget = PlaceMonster("monster.fireball.target", 20, SlotId.Board(2));
-            UseHelpCard("help.fireball");
+            UseHelpCard("help.fireball", new[] { fireballTarget.Uid }, null);
             Assert.AreEqual(15, fireballTarget.Stats.GetBase(StatId.Hp));
             RemoveFromBoard(fireballTarget);
 
             var impactTarget = PlaceMonster("monster.impact.target", 20, SlotId.Board(2));
-            UseHelpCard("help.impact_tutorial");
+            UseHelpCard("help.impact_tutorial", new[] { impactTarget.Uid }, null);
             Assert.AreEqual(12, impactTarget.Stats.GetBase(StatId.Hp));
             RemoveFromBoard(impactTarget);
 
             var shieldTarget = PlaceMonster("monster.shield.target", 20, SlotId.Board(2));
-            UseHelpCard("help.shield_bash_tutorial");
+            UseHelpCard("help.shield_bash_tutorial", new[] { shieldTarget.Uid }, null);
             Assert.AreEqual(13, shieldTarget.Stats.GetBase(StatId.Hp));
 
             UseHelpCard("help.food_card");
@@ -1412,6 +1430,20 @@ namespace NineGrid.Core.Tests
             var card = content.CreateDraft(defId).Create(registry);
             content.ApplyContentToCard(card);
             architecture.GetSystem<IActionPipelineSystem>().Execute(new UseItemAction(card.Uid, selectedCardUids, selectedOption));
+        }
+
+        private static void AssertSelectedMonsterDamage(string helpDefId, int expectedDamage)
+        {
+            var selected = PlaceMonster(helpDefId + ".selected", 20, SlotId.Board(2));
+            var decoy = PlaceMonster(helpDefId + ".decoy", 20, SlotId.Board(3));
+
+            UseHelpCard(helpDefId, new[] { selected.Uid }, null);
+
+            Assert.AreEqual(20 - expectedDamage, selected.Stats.GetBase(StatId.Hp), helpDefId + " should damage selected target.");
+            Assert.AreEqual(20, decoy.Stats.GetBase(StatId.Hp), helpDefId + " should not damage unselected target.");
+
+            RemoveFromBoard(selected);
+            RemoveFromBoard(decoy);
         }
 
         private static void RemoveFromBoard(CardInstance card)

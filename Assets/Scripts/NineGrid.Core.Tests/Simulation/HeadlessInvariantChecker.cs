@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NineGrid.Core.Effects;
 using NineGrid.Core.Systems;
 using QFramework;
 
@@ -19,6 +20,7 @@ namespace NineGrid.Core.Tests.Simulation
     public sealed class HeadlessInvariantChecker
     {
         private readonly List<HeadlessInvariantIssue> mIssues = new List<HeadlessInvariantIssue>();
+        private readonly HashSet<string> mReportedLeakedEffectIds = new HashSet<string>();
         private int mCheckedEventCount;
         private int mExpectedCoins;
 
@@ -51,6 +53,7 @@ namespace NineGrid.Core.Tests.Simulation
             }
 
             mCheckedEventCount = entries.Count;
+            CheckRuntimeEffectLeaks(architecture, entries.Count == 0 ? 0 : entries[entries.Count - 1].Sequence);
         }
 
         private void Check(CoreGameEvent entry)
@@ -116,6 +119,39 @@ namespace NineGrid.Core.Tests.Simulation
         private void Add(CoreGameEvent entry, string message)
         {
             mIssues.Add(new HeadlessInvariantIssue(entry.Sequence, message));
+        }
+
+        private void Add(long sequence, string message)
+        {
+            mIssues.Add(new HeadlessInvariantIssue(sequence, message));
+        }
+
+        private void CheckRuntimeEffectLeaks(IArchitecture architecture, long sequence)
+        {
+            var registry = architecture.GetModel<CardRegistry>();
+            var effectSystem = architecture.GetSystem<IEffectSystem>();
+            var instances = effectSystem.Instances;
+            for (var i = 0; i < instances.Count; i++)
+            {
+                var instance = instances[i];
+                var ownerUid = instance.Owner == null ? 0 : instance.Owner.OwnerUid;
+                if (ownerUid == 0)
+                {
+                    continue;
+                }
+
+                CardInstance owner;
+                var ownerExists = registry.TryGet(ownerUid, out owner);
+                if (ownerExists && owner.Zone.Value != ZoneId.Removed && owner.Zone.Value != ZoneId.Graveyard)
+                {
+                    continue;
+                }
+
+                if (mReportedLeakedEffectIds.Add(instance.InstanceId))
+                {
+                    Add(sequence, "Runtime effect leak. owner=" + ownerUid + " instance=" + instance.InstanceId);
+                }
+            }
         }
     }
 }

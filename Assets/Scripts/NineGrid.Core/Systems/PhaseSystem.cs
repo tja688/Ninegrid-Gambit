@@ -14,6 +14,7 @@ namespace NineGrid.Core.Systems
         CoreCommandResult PickupItem(SlotId targetSlot);
         CoreCommandResult ClickEmpty(SlotId targetSlot);
         CoreCommandResult UseItem(int itemUid);
+        CoreCommandResult UseItem(int itemUid, IReadOnlyList<int> selectedCardUids, string selectedOption);
         CoreCommandResult SelectReward(int optionIndex);
         CoreCommandResult SkipHelpChoice();
         CoreCommandResult SelectRoom(int optionIndex);
@@ -200,6 +201,11 @@ namespace NineGrid.Core.Systems
 
         public CoreCommandResult UseItem(int itemUid)
         {
+            return UseItem(itemUid, null, null);
+        }
+
+        public CoreCommandResult UseItem(int itemUid, IReadOnlyList<int> selectedCardUids, string selectedOption)
+        {
             if (!CanExecute(GameCommandKind.UseItem))
             {
                 return Reject(GameCommandKind.UseItem, "Command is not legal in phase " + CurrentPhase, SlotId.None, itemUid);
@@ -233,10 +239,25 @@ namespace NineGrid.Core.Systems
             }
 
             var pipeline = this.GetSystem<IActionPipelineSystem>();
-            pipeline.Enqueue(new UseItemAction(itemUid));
+            pipeline.Enqueue(new UseItemAction(itemUid, selectedCardUids, selectedOption));
             var resolved = pipeline.RunToCompletion();
+            resolved += ConsumeUsedItemIfStillInItemSlots(itemUid, card.DefId);
             resolved += CompleteNodeIfCleared();
             return CoreCommandResult.Accept(resolved);
+        }
+
+        private int ConsumeUsedItemIfStillInItemSlots(int itemUid, string sourceDefId)
+        {
+            var registry = this.GetModel<CardRegistry>();
+            CardInstance card;
+            if (!registry.TryGet(itemUid, out card) || card.Zone.Value != ZoneId.ItemSlots)
+            {
+                return 0;
+            }
+
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new RemoveCardAction(itemUid, ZoneId.Removed, "useItem", sourceDefId));
+            return pipeline.RunToCompletion();
         }
 
         public CoreCommandResult SelectReward(int optionIndex)

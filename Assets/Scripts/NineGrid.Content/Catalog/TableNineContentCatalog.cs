@@ -31,14 +31,14 @@ namespace NineGrid.Content
             c.AddEffect(Impl("help.throwing_knife.use", EffectContainerType.HelpCard,
                 Triggered("help.throwing_knife.use", "HelpCard",
                     "{\"atom\":\"OnUseHelpCard\"}",
-                    "{\"atom\":\"RandomMonster\"}",
+                    "{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":1}",
                     "{\"atom\":\"DealDamage\",\"amount\":6,\"actor\":\"Player\"}"),
                 "[使用时] 对目标怪物卡造成6点伤害"));
 
             c.AddEffect(Impl("help.fireball.use", EffectContainerType.HelpCard,
                 Triggered("help.fireball.use", "HelpCard",
                     "{\"atom\":\"OnUseHelpCard\"}",
-                    "{\"atom\":\"RandomMonster\"}",
+                    "{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":1}",
                     "{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Player\",\"stat\":\"Attack\"},\"actor\":\"Player\"}"),
                 "[使用时] 对目标怪物卡造成等同于玩家攻击的伤害"));
 
@@ -108,14 +108,14 @@ namespace NineGrid.Content
             c.AddEffect(Impl("help.impact_tutorial.use", EffectContainerType.HelpCard,
                 Triggered("help.impact_tutorial.use", "HelpCard",
                     "{\"atom\":\"OnUseHelpCard\"}",
-                    "{\"atom\":\"RandomMonster\"}",
+                    "{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":1}",
                     "{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Player\",\"stat\":\"Hp\"},\"actor\":\"Player\"}"),
                 "[使用时] 对目标怪物卡造成等同于玩家当前血量的伤害"));
 
             c.AddEffect(Impl("help.shield_bash_tutorial.use", EffectContainerType.HelpCard,
                 Triggered("help.shield_bash_tutorial.use", "HelpCard",
                     "{\"atom\":\"OnUseHelpCard\"}",
-                    "{\"atom\":\"RandomMonster\"}",
+                    "{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":1}",
                     "{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Player\",\"stat\":\"Armor\"},\"actor\":\"Player\"}"),
                 "[使用时] 对目标怪物卡造成等同于玩家当前护甲的伤害"));
 

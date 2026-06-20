@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NineGrid.Core.Systems;
 using QFramework;
 
@@ -66,15 +67,29 @@ namespace NineGrid.Core.Commands
     public sealed class UseItemCommand : AbstractCommand<CoreCommandResult>
     {
         private readonly int mItemUid;
+        private readonly IReadOnlyList<int> mSelectedCardUids;
+        private readonly string mSelectedOption;
 
         public UseItemCommand(int itemUid)
+            : this(itemUid, null, null)
+        {
+        }
+
+        public UseItemCommand(int itemUid, IReadOnlyList<int> selectedCardUids)
+            : this(itemUid, selectedCardUids, null)
+        {
+        }
+
+        public UseItemCommand(int itemUid, IReadOnlyList<int> selectedCardUids, string selectedOption)
         {
             mItemUid = itemUid;
+            mSelectedCardUids = selectedCardUids == null ? new int[0] : new List<int>(selectedCardUids).ToArray();
+            mSelectedOption = selectedOption ?? string.Empty;
         }
 
         protected override CoreCommandResult OnExecute()
         {
-            return this.GetSystem<IPhaseSystem>().UseItem(mItemUid);
+            return this.GetSystem<IPhaseSystem>().UseItem(mItemUid, mSelectedCardUids, mSelectedOption);
         }
     }
 

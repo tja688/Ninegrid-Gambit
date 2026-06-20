@@ -66,7 +66,7 @@
     "id": "help.fireball.use",
     "container_type": "HelpCard",
     "state": "Implemented",
-    "json": "{\"id\":\"help.fireball.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"RandomMonster\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Player\",\"stat\":\"Attack\"},\"actor\":\"Player\"}}",
+    "json": "{\"id\":\"help.fireball.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":1},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Player\",\"stat\":\"Attack\"},\"actor\":\"Player\"}}",
     "design_text": "[使用时] 对目标怪物卡造成等同于玩家攻击的伤害"
   },
   {
@@ -129,7 +129,7 @@
     "id": "help.impact_tutorial.use",
     "container_type": "HelpCard",
     "state": "Implemented",
-    "json": "{\"id\":\"help.impact_tutorial.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"RandomMonster\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Player\",\"stat\":\"Hp\"},\"actor\":\"Player\"}}",
+    "json": "{\"id\":\"help.impact_tutorial.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":1},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Player\",\"stat\":\"Hp\"},\"actor\":\"Player\"}}",
     "design_text": "[使用时] 对目标怪物卡造成等同于玩家当前血量的伤害"
   },
   {
@@ -164,7 +164,7 @@
     "id": "help.shield_bash_tutorial.use",
     "container_type": "HelpCard",
     "state": "Implemented",
-    "json": "{\"id\":\"help.shield_bash_tutorial.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"RandomMonster\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Player\",\"stat\":\"Armor\"},\"actor\":\"Player\"}}",
+    "json": "{\"id\":\"help.shield_bash_tutorial.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":1},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Player\",\"stat\":\"Armor\"},\"actor\":\"Player\"}}",
     "design_text": "[使用时] 对目标怪物卡造成等同于玩家当前护甲的伤害"
   },
   {
@@ -199,7 +199,7 @@
     "id": "help.throwing_knife.use",
     "container_type": "HelpCard",
     "state": "Implemented",
-    "json": "{\"id\":\"help.throwing_knife.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"RandomMonster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":6,\"actor\":\"Player\"}}",
+    "json": "{\"id\":\"help.throwing_knife.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":1},\"action\":{\"atom\":\"DealDamage\",\"amount\":6,\"actor\":\"Player\"}}",
     "design_text": "[使用时] 对目标怪物卡造成6点伤害"
   },
   {

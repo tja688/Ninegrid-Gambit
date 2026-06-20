@@ -58,12 +58,27 @@ namespace NineGrid.Core.Tests.Simulation
                 architecture => architecture.SendCommand(new ClickEmptyCommand(slot)));
         }
 
-        public static HeadlessCommandDecision UseItem(int uid, string defId)
+        public static HeadlessCommandDecision UseItem(
+            int uid,
+            string defId,
+            IReadOnlyList<int> selectedCardUids,
+            string selectedOption)
         {
+            var description = "UseItem #" + uid + " " + defId;
+            if (selectedCardUids != null && selectedCardUids.Count > 0)
+            {
+                description += " target=" + selectedCardUids[0];
+            }
+
+            if (!string.IsNullOrEmpty(selectedOption))
+            {
+                description += " option=" + selectedOption;
+            }
+
             return new HeadlessCommandDecision(
                 GameCommandKind.UseItem,
-                "UseItem #" + uid + " " + defId,
-                architecture => architecture.SendCommand(new UseItemCommand(uid)));
+                description,
+                architecture => architecture.SendCommand(new UseItemCommand(uid, selectedCardUids, selectedOption)));
         }
 
         public static HeadlessCommandDecision SelectReward(int optionIndex)
@@ -224,11 +239,139 @@ namespace NineGrid.Core.Tests.Simulation
                     continue;
                 }
 
-                candidates.Add(HeadlessCommandDecision.UseItem(uid, card.DefId));
+                HeadlessCommandDecision itemDecision;
+                if (!TryBuildItemDecision(architecture, card, out itemDecision))
+                {
+                    continue;
+                }
+
+                candidates.Add(itemDecision);
                 mUsedItemUids.Add(uid);
             }
 
             return candidates;
+        }
+
+        private bool TryBuildItemDecision(IArchitecture architecture, CardInstance card, out HeadlessCommandDecision decision)
+        {
+            var selectedCards = BuildSelectedCardsForItem(architecture, card.DefId);
+            if (RequiresSelectedCards(card.DefId) && selectedCards.Count == 0)
+            {
+                decision = null;
+                return false;
+            }
+
+            decision = HeadlessCommandDecision.UseItem(
+                card.Uid,
+                card.DefId,
+                selectedCards,
+                BuildSelectedOptionForItem(card.DefId));
+            return true;
+        }
+
+        private IReadOnlyList<int> BuildSelectedCardsForItem(IArchitecture architecture, string defId)
+        {
+            if (defId == "help.swap_card")
+            {
+                return PickBoardCards(architecture, 2, false, false, CardKind.Unknown);
+            }
+
+            if (defId == "help.teleport_card")
+            {
+                return PickBoardCards(architecture, 1, false, false, CardKind.Unknown);
+            }
+
+            if (defId == "help.kidnapping")
+            {
+                return PickBoardCards(architecture, 1, true, true, CardKind.Monster);
+            }
+
+            if (RequiresMonsterTarget(defId))
+            {
+                return PickBoardCards(architecture, 1, false, false, CardKind.Monster);
+            }
+
+            return new int[0];
+        }
+
+        private string BuildSelectedOptionForItem(string defId)
+        {
+            if (defId != "help.stat_boost_card")
+            {
+                return string.Empty;
+            }
+
+            var options = new[] { "Attack", "Armor", "Hp" };
+            return options[mRng.Range(0, options.Length)];
+        }
+
+        private List<int> PickBoardCards(
+            IArchitecture architecture,
+            int count,
+            bool excludeElite,
+            bool excludeBoss,
+            CardKind kind)
+        {
+            var result = new List<int>();
+            var candidates = new List<int>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            foreach (var uid in board.BoardCardUids())
+            {
+                CardInstance card;
+                if (!registry.TryGet(uid, out card) || card.Kind == CardKind.Avatar)
+                {
+                    continue;
+                }
+
+                if (kind != CardKind.Unknown && card.Kind != kind)
+                {
+                    continue;
+                }
+
+                if (excludeElite && card.Counters.Get(CoreCounterKeys.Elite) > 0)
+                {
+                    continue;
+                }
+
+                if (excludeBoss && card.Counters.Get(CoreCounterKeys.Boss) > 0)
+                {
+                    continue;
+                }
+
+                candidates.Add(uid);
+            }
+
+            while (result.Count < count && candidates.Count > 0)
+            {
+                var index = mRng.Range(0, candidates.Count);
+                result.Add(candidates[index]);
+                candidates.RemoveAt(index);
+            }
+
+            if (result.Count != count)
+            {
+                result.Clear();
+            }
+
+            return result;
+        }
+
+        private static bool RequiresSelectedCards(string defId)
+        {
+            return RequiresMonsterTarget(defId)
+                || defId == "help.swap_card"
+                || defId == "help.teleport_card"
+                || defId == "help.kidnapping";
+        }
+
+        private static bool RequiresMonsterTarget(string defId)
+        {
+            return defId == "help.throwing_knife"
+                || defId == "help.fireball"
+                || defId == "help.impact_tutorial"
+                || defId == "help.shield_bash_tutorial"
+                || defId == "help.armor_breaking_hammer";
         }
 
         private bool Pick(IReadOnlyList<HeadlessCommandDecision> candidates, out HeadlessCommandDecision decision)

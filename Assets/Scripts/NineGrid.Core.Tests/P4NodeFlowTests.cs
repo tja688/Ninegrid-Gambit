@@ -469,6 +469,50 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void UseItemCommandPassesSelectionToEffectsAndConsumesItem()
+        {
+            var architecture = NineGridArchitecture.Current;
+            P5CatalogTestSupport.RegisterCatalog(architecture);
+
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var deck = architecture.GetModel<DeckModel>();
+            var content = architecture.GetSystem<IContentSystem>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+            avatar.Stats.SetBase(StatId.Attack, 5);
+            EnterInteractionLoop(architecture);
+
+            var unselectedSlot = FindFirstMonsterSlot();
+            var unselected = registry.Get(board.GetCardUid(unselectedSlot));
+            var selected = registry.Create("monster.command.selected", CardKind.Monster);
+            selected.Stats.SetBase(StatId.MaxHp, 20);
+            selected.Stats.SetBase(StatId.Hp, 20);
+            board.PlaceCard(selected, FindEmptyBoardSlot(board));
+
+            var item = content.CreateDraft("help.fireball").Create(registry);
+            content.ApplyContentToCard(item);
+            deck.AddToItemSlots(item);
+
+            var result = architecture.SendCommand(new UseItemCommand(item.Uid, new[] { selected.Uid }, "Armor"));
+
+            Assert.IsTrue(result.Accepted);
+            Assert.AreEqual(15, selected.Stats.GetBase(StatId.Hp));
+            Assert.AreEqual(5, unselected.Stats.GetBase(StatId.Hp));
+            Assert.AreEqual(ZoneId.Removed, item.Zone.Value);
+            Assert.IsFalse(ContainsUid(deck.ItemSlotUids, item.Uid));
+
+            var itemUsed = LastEventOfType(architecture.GetSystem<IActionPipelineSystem>().EventLog, CoreEventType.ItemUsed);
+            Assert.AreEqual(item.Uid, itemUsed.CardUid);
+            Assert.AreEqual(selected.Uid, itemUsed.TargetUid);
+            StringAssert.Contains("option=Armor", itemUsed.Message);
+            StringAssert.Contains(selected.Uid.ToString(), itemUsed.Message);
+
+            var removed = LastEventOfType(architecture.GetSystem<IActionPipelineSystem>().EventLog, CoreEventType.CardRemoved);
+            Assert.AreEqual(item.Uid, removed.CardUid);
+            Assert.AreEqual("useItem", removed.Message);
+        }
+
+        [Test]
         public void NodeTailSkipRewardSelectRoomAndEnterAdvancesNode()
         {
             var architecture = NineGridArchitecture.Current;
@@ -777,6 +821,48 @@ namespace NineGrid.Core.Tests
             }
 
             return result;
+        }
+
+        private static CoreGameEvent LastEventOfType(EventLog eventLog, CoreEventType type)
+        {
+            for (var i = eventLog.Entries.Count - 1; i >= 0; i--)
+            {
+                if (eventLog.Entries[i].Type == type)
+                {
+                    return eventLog.Entries[i];
+                }
+            }
+
+            Assert.Fail("Missing event: " + type);
+            return null;
+        }
+
+        private static SlotId FindEmptyBoardSlot(BoardModel board)
+        {
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var slot = SlotId.Board(i);
+                if (slot != board.AvatarSlot.Value && board.IsEmpty(slot))
+                {
+                    return slot;
+                }
+            }
+
+            Assert.Fail("Could not find empty board slot.");
+            return SlotId.None;
+        }
+
+        private static bool ContainsUid(IReadOnlyList<int> values, int uid)
+        {
+            for (var i = 0; i < values.Count; i++)
+            {
+                if (values[i] == uid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static SlotId FindFirstMonsterSlot()

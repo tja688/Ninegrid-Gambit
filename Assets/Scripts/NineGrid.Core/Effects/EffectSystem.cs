@@ -10,6 +10,7 @@ namespace NineGrid.Core.Effects
     {
         EffectAtomRegistry AtomRegistry { get; }
         EffectValidator Validator { get; }
+        IReadOnlyList<EffectInstance> Instances { get; }
         EffectDefinition ParseJson(string json);
         EffectValidationResult Validate(EffectDefinition definition);
         EffectInstance Activate(EffectDefinition definition, EffectOwner owner);
@@ -90,6 +91,11 @@ namespace NineGrid.Core.Effects
 
         public EffectAtomRegistry AtomRegistry { get; private set; }
         public EffectValidator Validator { get; private set; }
+
+        public IReadOnlyList<EffectInstance> Instances
+        {
+            get { return new List<EffectInstance>(mInstances.Values); }
+        }
 
         protected override void OnInit()
         {
