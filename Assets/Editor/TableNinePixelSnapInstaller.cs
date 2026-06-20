@@ -33,6 +33,48 @@ public static class TableNinePixelSnapInstaller
         Debug.Log("Installed TableNine pixel snap post process.");
     }
 
+    [InitializeOnLoadMethod]
+    private static void EnsureRendererFeatureActiveOnLoad()
+    {
+        EditorApplication.delayCall += () =>
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                return;
+
+            TryReactivateRendererFeature(logWhenFixed: true);
+        };
+    }
+
+    private static bool TryReactivateRendererFeature(bool logWhenFixed)
+    {
+        ScriptableRendererData rendererData = AssetDatabase.LoadAssetAtPath<ScriptableRendererData>(RendererDataPath);
+        if (rendererData == null)
+            return false;
+
+        foreach (ScriptableRendererFeature rendererFeature in rendererData.rendererFeatures)
+        {
+            if (rendererFeature == null || rendererFeature.name != FeatureName)
+                continue;
+
+            if (rendererFeature.isActive)
+                return false;
+
+            rendererFeature.SetActive(true);
+            EditorUtility.SetDirty(rendererFeature);
+            EditorUtility.SetDirty(rendererData);
+            AssetDatabase.SaveAssets();
+
+            if (logWhenFixed)
+            {
+                Debug.LogWarning("Re-enabled inactive TableNine pixel snap renderer feature after editor load.");
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     private static void EnsureFolder(string parent, string child)
     {
         string path = parent + "/" + child;
