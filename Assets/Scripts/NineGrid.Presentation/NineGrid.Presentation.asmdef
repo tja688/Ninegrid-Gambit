@@ -4,7 +4,9 @@
     "references": [
         "NineGrid.Core",
         "NineGrid.Content",
-        "QFramework"
+        "QFramework",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

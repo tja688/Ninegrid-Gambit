@@ -11,19 +11,24 @@ public static class TableNinePixelSnapInstaller
 {
     private const string RootFolder = "Assets/Arts/VisualProfiles";
     private const string ShaderPath = RootFolder + "/TableNinePixelSnap.shader";
+    private const string MaskShaderPath = RootFolder + "/TableNineNoSnapMask.shader";
     private const string MaterialPath = RootFolder + "/TableNinePixelSnap.mat";
+    private const string MaskMaterialPath = RootFolder + "/TableNineNoSnapMask.mat";
     private const string RendererDataPath = "Assets/Settings/Renderer2D.asset";
     private const string FeatureName = "TableNine Pixel Snap Post";
     private const string ControllerTypeName = "NineGrid.Presentation.Visuals.TableNinePixelSnapController, NineGrid.Presentation";
+    private const string FeatureTypeName = "NineGrid.Presentation.Visuals.TableNinePixelSnapRendererFeature, NineGrid.Presentation";
 
     [MenuItem("Tools/TableNine/Install Pixel Snap Post")]
     public static void Install()
     {
         EnsureFolder("Assets/Arts", "VisualProfiles");
         AssetDatabase.ImportAsset(ShaderPath, ImportAssetOptions.ForceUpdate);
+        AssetDatabase.ImportAsset(MaskShaderPath, ImportAssetOptions.ForceUpdate);
 
         Material postMaterial = EnsurePostMaterial();
-        EnsureFullScreenFeature(postMaterial);
+        Material maskMaterial = EnsureMaskMaterial();
+        EnsurePixelSnapFeature(postMaterial, maskMaterial);
         EnsureSceneController(postMaterial);
         ConfigureMainCamera();
 
@@ -41,8 +46,44 @@ public static class TableNinePixelSnapInstaller
             if (EditorApplication.isPlayingOrWillChangePlaymode)
                 return;
 
+            TryMigrateRendererFeature();
             TryReactivateRendererFeature(logWhenFixed: true);
         };
+    }
+
+    private static void TryMigrateRendererFeature()
+    {
+        ScriptableRendererData rendererData = AssetDatabase.LoadAssetAtPath<ScriptableRendererData>(RendererDataPath);
+        if (rendererData == null)
+            return;
+
+        Type featureType = Type.GetType(FeatureTypeName);
+        if (featureType == null)
+            return;
+
+        bool needsMigration = false;
+        foreach (ScriptableRendererFeature rendererFeature in rendererData.rendererFeatures)
+        {
+            if (rendererFeature == null || rendererFeature.name != FeatureName)
+                continue;
+
+            if (rendererFeature.GetType() != featureType)
+            {
+                needsMigration = true;
+                break;
+            }
+        }
+
+        if (!needsMigration)
+            return;
+
+        Material postMaterial = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
+        if (postMaterial == null)
+            return;
+
+        EnsurePixelSnapFeature(postMaterial, EnsureMaskMaterial());
+        AssetDatabase.SaveAssets();
+        Debug.Log("Migrated TableNine pixel snap renderer feature to support NoSnapping layer mask.");
     }
 
     private static bool TryReactivateRendererFeature(bool logWhenFixed)
@@ -112,7 +153,30 @@ public static class TableNinePixelSnapInstaller
         return material;
     }
 
-    private static void EnsureFullScreenFeature(Material material)
+    private static Material EnsureMaskMaterial()
+    {
+        Shader shader = AssetDatabase.LoadAssetAtPath<Shader>(MaskShaderPath);
+        if (shader == null)
+        {
+            throw new InvalidOperationException("Missing shader at " + MaskShaderPath);
+        }
+
+        Material material = AssetDatabase.LoadAssetAtPath<Material>(MaskMaterialPath);
+        if (material == null)
+        {
+            material = new Material(shader)
+            {
+                name = "TableNineNoSnapMask"
+            };
+            AssetDatabase.CreateAsset(material, MaskMaterialPath);
+        }
+
+        material.shader = shader;
+        EditorUtility.SetDirty(material);
+        return material;
+    }
+
+    private static void EnsurePixelSnapFeature(Material postMaterial, Material maskMaterial)
     {
         ScriptableRendererData rendererData = AssetDatabase.LoadAssetAtPath<ScriptableRendererData>(RendererDataPath);
         if (rendererData == null)
@@ -121,30 +185,48 @@ public static class TableNinePixelSnapInstaller
             return;
         }
 
-        FullScreenPassRendererFeature feature = null;
-        foreach (ScriptableRendererFeature rendererFeature in rendererData.rendererFeatures)
+        Type featureType = Type.GetType(FeatureTypeName);
+        if (featureType == null)
         {
-            if (rendererFeature != null && rendererFeature.name == FeatureName)
+            Debug.LogWarning("Renderer feature type not compiled yet: " + FeatureTypeName);
+            return;
+        }
+
+        ScriptableRendererFeature feature = null;
+        for (int i = rendererData.rendererFeatures.Count - 1; i >= 0; i--)
+        {
+            ScriptableRendererFeature rendererFeature = rendererData.rendererFeatures[i];
+            if (rendererFeature == null)
+                continue;
+
+            if (rendererFeature.name != FeatureName)
+                continue;
+
+            if (rendererFeature.GetType() == featureType)
             {
-                feature = rendererFeature as FullScreenPassRendererFeature;
+                feature = rendererFeature;
                 break;
             }
+
+            rendererData.rendererFeatures.RemoveAt(i);
+            ScriptableObject.DestroyImmediate(rendererFeature, true);
         }
 
         if (feature == null)
         {
-            feature = ScriptableObject.CreateInstance<FullScreenPassRendererFeature>();
+            feature = ScriptableObject.CreateInstance(featureType) as ScriptableRendererFeature;
             feature.name = FeatureName;
             AssetDatabase.AddObjectToAsset(feature, rendererData);
             rendererData.rendererFeatures.Add(feature);
         }
 
-        feature.injectionPoint = FullScreenPassRendererFeature.InjectionPoint.AfterRenderingPostProcessing;
-        feature.requirements = ScriptableRenderPassInput.None;
-        feature.fetchColorBuffer = true;
-        feature.bindDepthStencilAttachment = false;
-        feature.passMaterial = material;
-        feature.passIndex = 0;
+        SerializedObject serializedFeature = new SerializedObject(feature);
+        SetObject(serializedFeature, "passMaterial", postMaterial);
+        SetObject(serializedFeature, "maskMaterial", maskMaterial);
+        SetString(serializedFeature, "noSnapLayerName", "NoSnapping");
+        SetInt(serializedFeature, "injectionPoint", (int)RenderPassEvent.AfterRenderingPostProcessing);
+        serializedFeature.ApplyModifiedPropertiesWithoutUndo();
+
         feature.SetActive(true);
         feature.Create();
 
@@ -260,6 +342,15 @@ public static class TableNinePixelSnapInstaller
         if (property != null)
         {
             property.floatValue = value;
+        }
+    }
+
+    private static void SetString(SerializedObject serializedObject, string propertyName, string value)
+    {
+        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        if (property != null)
+        {
+            property.stringValue = value;
         }
     }
 }
