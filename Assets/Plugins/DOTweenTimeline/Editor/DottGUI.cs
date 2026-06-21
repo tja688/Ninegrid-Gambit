@@ -444,9 +444,8 @@ namespace Dott.Editor
 
         public static bool PlayButton(Rect rect)
         {
+            var buttonRect = GetPlayButtonRect(rect);
             var content = EditorGUIUtility.IconContent("d_PlayButton");
-            var position = rect.position + new Vector2(2, (TIMELINE_HEADER_HEIGHT - PlayButtonSize.y) / 2);
-            var buttonRect = new Rect(position, PlayButtonSize);
             var contentColor = GUI.contentColor;
             GUI.contentColor = Color.cyan;
             var result = GUI.Button(buttonRect, content);
@@ -454,11 +453,31 @@ namespace Dott.Editor
             return result;
         }
 
+        public static bool PlayToEndButton(Rect rect, bool isAtEnd, bool isPlaying)
+        {
+            var playRect = GetPlayButtonRect(rect);
+            var buttonRect = playRect.ShiftX(playRect.width + 2f).SetWidth(PlayButtonSize.x);
+            var content = isAtEnd
+                ? EditorGUIUtility.TrIconContent("Animation.FirstKey", "Return to start")
+                : EditorGUIUtility.TrIconContent("Animation.LastKey", "Play to end and pause");
+            using var disabledScope = new EditorGUI.DisabledScope(isPlaying);
+            var contentColor = GUI.contentColor;
+            GUI.contentColor = isAtEnd ? new Color(1f, 0.85f, 0.4f) : Color.cyan.SetAlpha(0.85f);
+            var result = GUI.Button(buttonRect, content);
+            GUI.contentColor = contentColor;
+            return result;
+        }
+
         public static bool StopButton(Rect rect)
         {
-            var position = rect.position + new Vector2(2, (TIMELINE_HEADER_HEIGHT - PlayButtonSize.y) / 2);
-            var buttonRect = new Rect(position, PlayButtonSize);
+            var buttonRect = GetPlayButtonRect(rect);
             return GUI.Button(buttonRect, "■");
+        }
+
+        private static Rect GetPlayButtonRect(Rect rect)
+        {
+            var position = rect.position + new Vector2(2, (TIMELINE_HEADER_HEIGHT - PlayButtonSize.y) / 2);
+            return new Rect(position, PlayButtonSize);
         }
 
         public static bool LoopToggle(Rect rect, bool value)

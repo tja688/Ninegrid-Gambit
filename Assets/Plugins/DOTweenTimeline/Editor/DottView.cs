@@ -28,13 +28,15 @@ namespace Dott.Editor
         public event Action DuplicateClicked;
         public event Action StopClicked;
         public event Action PlayClicked;
+        public event Action PlayToEndClicked;
+        public event Action ReturnToStartClicked;
         public event Action<bool> LoopToggled;
         public event Action SnapToggled;
         public event Action PreviewDisabled;
         public event Action InspectorUpButtonClicked;
         public event Action InspectorDownButtonClicked;
 
-        public void DrawTimeline(IDOTweenAnimation[] animations, [CanBeNull] IDOTweenAnimation selected, bool isPlaying, float currentPlayingTime, bool isLooping, bool isPaused)
+        public void DrawTimeline(IDOTweenAnimation[] animations, [CanBeNull] IDOTweenAnimation selected, bool isPlaying, float currentPlayingTime, bool isLooping, bool isPaused, bool isAtEnd)
         {
             var rect = DottGUI.GetTimelineControlRect(animations.Length);
 
@@ -107,6 +109,18 @@ namespace Dott.Editor
                 case false when DottGUI.PlayButton(rect):
                     PlayClicked?.Invoke();
                     break;
+            }
+
+            if (DottGUI.PlayToEndButton(rect, isAtEnd, isPlaying))
+            {
+                if (isAtEnd)
+                {
+                    ReturnToStartClicked?.Invoke();
+                }
+                else
+                {
+                    PlayToEndClicked?.Invoke();
+                }
             }
 
             var snapToggle = DottGUI.SnapToggle(rect, IsSnapping);

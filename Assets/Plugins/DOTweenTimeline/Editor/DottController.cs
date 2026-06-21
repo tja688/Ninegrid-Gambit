@@ -12,10 +12,12 @@ namespace Dott.Editor
         private double startTime;
         private IDOTweenAnimation[] currentPlayAnimations;
         private readonly DottDrivenProperties drivenProperties;
+        private bool pauseAtEndOnComplete;
 
         public bool IsPlaying => DottEditorPreview.IsPlaying;
         public float ElapsedTime => (float)(DottEditorPreview.CurrentTime - startTime);
         public bool Paused { get; private set; }
+        public bool IsAtEnd { get; private set; }
 
         public bool Loop
         {
@@ -31,9 +33,40 @@ namespace Dott.Editor
 
         public void Play(IDOTweenAnimation[] animations)
         {
-            currentPlayAnimations = animations;
+            pauseAtEndOnComplete = false;
 
-            var shift = (float)DottEditorPreview.CurrentTime;
+            if (IsAtEnd)
+            {
+                IsAtEnd = false;
+                BeginPlayback(animations, 0f);
+                return;
+            }
+
+            IsAtEnd = false;
+            var shift = Paused ? ElapsedTime : (float)DottEditorPreview.CurrentTime;
+            BeginPlayback(animations, shift);
+        }
+
+        public void PlayToEnd(IDOTweenAnimation[] animations)
+        {
+            pauseAtEndOnComplete = true;
+            IsAtEnd = false;
+            var shift = Paused ? ElapsedTime : 0f;
+            BeginPlayback(animations, shift);
+        }
+
+        public void ReturnToStart(IDOTweenAnimation[] animations)
+        {
+            pauseAtEndOnComplete = false;
+            IsAtEnd = false;
+            currentPlayAnimations = animations;
+            GoTo(animations, 0f);
+            Paused = true;
+        }
+
+        private void BeginPlayback(IDOTweenAnimation[] animations, float shift)
+        {
+            currentPlayAnimations = animations;
             GoTo(animations, shift);
             DottEditorPreview.Start();
             startTime = DottEditorPreview.CurrentTime - shift;
@@ -52,6 +85,8 @@ namespace Dott.Editor
 
         public void Stop()
         {
+            pauseAtEndOnComplete = false;
+            IsAtEnd = false;
             currentPlayAnimations = null;
             Paused = false;
             DottEditorPreview.Stop();
@@ -84,6 +119,15 @@ namespace Dott.Editor
         {
             // Hotfix to prevent exception when two Inspector tabs with a Timeline component are open
             if (currentPlayAnimations == null) { return; }
+
+            if (pauseAtEndOnComplete)
+            {
+                pauseAtEndOnComplete = false;
+                IsAtEnd = true;
+                Paused = true;
+                DottEditorPreview.PauseKeepingState();
+                return;
+            }
 
             if (!Loop)
             {

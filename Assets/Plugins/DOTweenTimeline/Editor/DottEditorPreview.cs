@@ -48,6 +48,18 @@ namespace Dott.Editor
             EditorApplication.update += Update;
         }
 
+        public static void PauseKeepingState()
+        {
+            if (!IsPlaying)
+            {
+                return;
+            }
+
+            IsPlaying = false;
+            EditorApplication.update -= Update;
+            QueuePlayerLoopUpdate();
+        }
+
         public static void Stop()
         {
             IsPlaying = false;

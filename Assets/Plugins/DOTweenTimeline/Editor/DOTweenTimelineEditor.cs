@@ -28,7 +28,7 @@ namespace Dott.Editor
             selection.Validate(animations);
 
             view.DrawTimeline(animations, selection.Animation, controller.IsPlaying, controller.ElapsedTime,
-                controller.Loop, controller.Paused);
+                controller.Loop, controller.Paused, controller.IsAtEnd);
 
             if (selection.Animation != null)
             {
@@ -68,6 +68,8 @@ namespace Dott.Editor
             view.DuplicateClicked += Duplicate;
 
             view.PlayClicked += Play;
+            view.PlayToEndClicked += PlayToEnd;
+            view.ReturnToStartClicked += ReturnToStart;
             view.StopClicked += controller.Stop;
             view.LoopToggled += ToggleLoop;
             view.SnapToggled += ToggleSnap;
@@ -93,6 +95,8 @@ namespace Dott.Editor
             view.DuplicateClicked -= Duplicate;
 
             view.PlayClicked -= Play;
+            view.PlayToEndClicked -= PlayToEnd;
+            view.ReturnToStartClicked -= ReturnToStart;
             view.StopClicked -= controller.Stop;
             view.LoopToggled -= ToggleLoop;
             view.SnapToggled -= ToggleSnap;
@@ -116,6 +120,16 @@ namespace Dott.Editor
         private void Play()
         {
             controller.Play(animations);
+        }
+
+        private void PlayToEnd()
+        {
+            controller.PlayToEnd(animations);
+        }
+
+        private void ReturnToStart()
+        {
+            controller.ReturnToStart(animations);
         }
 
         private void GoTo(float time)
