@@ -6,85 +6,113 @@ namespace Dott.Sample
     public class TimelineTest : MonoBehaviour
     {
         [SerializeField] private DOTweenTimeline timeline;
-        [SerializeField] private DOTweenCallback callback;
 
+        private DOTweenTimeline boundTimeline;
+        private DOTweenCallback boundCallback;
         private Sequence activeSequence;
-        private bool stopAfterCurrentLoop;
-
-        private void Awake()
-        {
-            if (timeline == null)
-                timeline = GetComponent<DOTweenTimeline>();
-
-            if (callback == null && timeline != null)
-                callback = timeline.GetComponent<DOTweenCallback>();
-        }
-
-        private void Start()
-        {
-            if (callback != null)
-                callback.onCallback.AddListener(OnCallbackTriggered);
-        }
-
-        private void OnDestroy()
-        {
-            if (callback != null)
-                callback.onCallback.RemoveListener(OnCallbackTriggered);
-        }
+        private bool isLooping;
 
         private void Update()
         {
             if (timeline == null)
                 return;
 
+            if (timeline != boundTimeline)
+                OnTimelineReferenceChanged();
+
             if (Input.GetKeyDown(KeyCode.Space))
-            {
-                stopAfterCurrentLoop = false;
-                activeSequence = BeginPlayback();
-                if (activeSequence != null)
-                    activeSequence.SetLoops(1);
-            }
+                PlayOnce();
 
-            // 按住第二帧起才切无缝循环，短按仍只播一遍
-            if (Input.GetKey(KeyCode.Space) && !Input.GetKeyDown(KeyCode.Space))
-                EnsureLoopWhileHeld();
-
-            if (Input.GetKeyUp(KeyCode.Space))
-            {
-                stopAfterCurrentLoop = true;
-                FinishAfterCurrentLoop();
-            }
+            if (Input.GetKeyDown(KeyCode.R))
+                ToggleLoop();
         }
 
-        private Sequence BeginPlayback()
+        private void OnTimelineReferenceChanged()
         {
-            if (timeline.Sequence != null && timeline.Sequence.IsActive())
-                return timeline.Restart();
-
-            return timeline.Play();
+            StopPlayback();
+            BindToTimeline(timeline);
         }
 
-        private void EnsureLoopWhileHeld()
+        private void BindToTimeline(DOTweenTimeline target)
         {
-            if (activeSequence == null || !activeSequence.IsActive() || stopAfterCurrentLoop)
+            boundTimeline = target;
+            BindCallback(target != null ? target.GetComponent<DOTweenCallback>() : null);
+        }
+
+        private void BindCallback(DOTweenCallback newCallback)
+        {
+            if (boundCallback == newCallback)
                 return;
 
-            if (activeSequence.Loops() < 0)
+            if (boundCallback != null)
+                boundCallback.onCallback.RemoveListener(OnCallbackTriggered);
+
+            boundCallback = newCallback;
+
+            if (boundCallback != null)
+                boundCallback.onCallback.AddListener(OnCallbackTriggered);
+        }
+
+        private void PlayOnce()
+        {
+            if (timeline == null)
+                return;
+
+            isLooping = false;
+
+            if (boundTimeline != timeline)
+                BindToTimeline(timeline);
+
+            StopCurrentSequence();
+            activeSequence = timeline.Restart();
+            if (activeSequence != null)
+                activeSequence.SetLoops(1);
+        }
+
+        private void ToggleLoop()
+        {
+            if (timeline == null)
+                return;
+
+            if (isLooping)
+            {
+                StopPlayback();
+                return;
+            }
+
+            if (boundTimeline != timeline)
+                BindToTimeline(timeline);
+
+            StopCurrentSequence();
+            activeSequence = timeline.Restart();
+            if (activeSequence == null)
                 return;
 
             activeSequence.SetLoops(-1);
+            isLooping = true;
         }
 
-        private void FinishAfterCurrentLoop()
+        private void StopPlayback()
         {
-            if (activeSequence == null || !activeSequence.IsActive())
-                return;
-
-            if (activeSequence.Loops() < 0)
-                activeSequence.SetLoops((int)activeSequence.CompletedLoops() + 1);
+            isLooping = false;
+            StopCurrentSequence();
         }
 
-        private void OnCallbackTriggered()
+        private void StopCurrentSequence()
+        {
+            if (activeSequence != null && activeSequence.IsActive())
+                activeSequence.Kill();
+
+            activeSequence = null;
+        }
+
+        private void OnDestroy()
+        {
+            if (boundCallback != null)
+                boundCallback.onCallback.RemoveListener(OnCallbackTriggered);
+        }
+
+        private static void OnCallbackTriggered()
         {
             Debug.Log("Callback triggered!");
         }
