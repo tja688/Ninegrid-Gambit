@@ -17,15 +17,11 @@
 
 ## 项目规则
 
-- 开发本项目前，请优先阅读 `rules.md`，其中包含架构规范、渲染配置约定及文件保护规则等全局性约束。
+- 开发本项目前，请优先阅读 `rules.md`，其中包含架构规范以及文件保护规则等全局性约束。
 - 当前处于原型开发期，唯一游戏场景：`Assets/Scenes/MainScene.unity`
 - 项目有 Unity MCP，在落地实现时注意了解功能并辅助使用，如果发现无法使用再回退文件操作形式开发。
 - 请在完成代码落地后主动触发unity mcp 的unity 刷新功能并阅读Console，这可以暴露编译代码的错误并帮助你进行修复。
-- 项目已经初始化 codegraph，CodeGraph 使用提醒：它擅长“符号/类/方法/调用关系/影响面”，不擅长一次性查询混合了批次号、pending ID、设计文档、测试名、Luban 数据的宽泛任务。查询不理想时，先把问题拆成明确符号或代码区域，例如 `UseItemAction`、`EffectAtomLibrary`、`TableNineContentCatalog`、`P6ContentLandingTests`；查具体 pending ID、中文设计文本、JSON 行、计划笔记时优先用 `rg` 精确检索。代码刚改完且 codegraph 可能未同步时，以文件读取和 Unity 编译/测试结果为准。
-
-## 效果落地技能
-
-- 单效果落地、拼装分析、扩原子/RuleModifier 等需求，使用技能 **`table-nine-effect-landing`**（`.cursor/skills/table-nine-effect-landing/`）。
+- 项目已经初始化 codegraph，可以使用codegraph macp来进行代码查询，使用提醒：它擅长“符号/类/方法/调用关系/影响面”，不擅长一次性查询混合了批次号、pending ID、设计文档、测试名、Luban 数据的宽泛任务。查询不理想时，先把问题拆成明确符号或代码区域，例如 `UseItemAction`、`EffectAtomLibrary`、`TableNineContentCatalog`、`P6ContentLandingTests`；查具体 pending ID、中文设计文本、JSON 行、计划笔记时优先用 `rg` 精确检索。代码刚改完且 codegraph 可能未同步时，以文件读取和 Unity 编译/测试结果为准。
 
 ## 协作需求
 
