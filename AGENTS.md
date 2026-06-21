@@ -26,3 +26,4 @@
 ## 协作需求
 
 - 每次完成任务后，将本次改动**全量提交**至 git，提交信息应简洁、准确地概括改动内容与目的。
+- 对于表现层的开发，会有一些要求实现的表现效果小脚本，不需要过多遵从qframework架构要求和约束，以实现功能为目的，并且一般需要暴露出可以被unity event调用的函数、触发入口，统一落地在Assets/Scripts/NineGrid.Presentation/AtomicRepresentationTools。
