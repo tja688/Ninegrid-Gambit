@@ -30,26 +30,44 @@ namespace NineGrid.Presentation.Performance
         [SerializeField] private bool deferPlayOneFrame = true;
         [SerializeField] private bool ignoreTimeScale;
 
-        [Header("Preview (Optional)")]
-        [SerializeField] private Transform[] previewCards;
+        [Header("Preview")]
+        [Tooltip("预览用卡牌模板；为 null 时生成纯色 Sprite 占位。")]
+        [SerializeField] private GameObject cardPreviewPrefab;
+        [Tooltip("动态生成的预览卡父节点；为 null 时使用本物体 Transform。")]
+        [SerializeField] private Transform previewActorsRoot;
+        [Tooltip("预览卡起始位置；为 null 时使用 previewDeckLocalOffset。")]
+        [SerializeField] private Transform previewDeckOrigin;
+        [SerializeField] private Vector3 previewDeckLocalOffset = new(9.4375f, 3f, 0f);
+        [Tooltip("0 = 自动匹配槽位数量。")]
+        [SerializeField, Min(0)] private int previewActorCount;
 
         [Header("Events")]
         [SerializeField] private UnityEvent onComplete;
 
+        private static Sprite fallbackPreviewSprite;
+
         private readonly List<Vector3> baselineWorldPositions = new();
         private readonly List<Transform> activeCards = new();
+        private readonly List<Transform> spawnedPreviewActors = new();
         private Sequence activeSequence;
         private Coroutine playCoroutine;
         private bool isPlaying;
+        private bool previewActorsOwned;
 
         public bool IsPlaying => isPlaying;
         public float TotalDuration => ComputeTotalDuration(activeCards.Count);
 
         private Transform ResolvedSlotRoot => slotRoot != null ? slotRoot : transform;
+        private Transform ResolvedPreviewActorsRoot => previewActorsRoot != null ? previewActorsRoot : transform;
 
         private void OnDisable()
         {
             StopAndRestore();
+        }
+
+        private void OnDestroy()
+        {
+            TeardownPreviewActors();
         }
 
         private void OnValidate()
@@ -61,12 +79,22 @@ namespace NineGrid.Presentation.Performance
         [ContextMenu("Play Preview")]
         public void PlayPreview()
         {
-            Play(previewCards);
-        }
+            if (!isActiveAndEnabled)
+            {
+                return;
+            }
 
-        public void Play()
-        {
-            Play(previewCards);
+            StopAndRestore();
+            IReadOnlyList<Transform> previewActors = EnsurePreviewActors();
+            if (previewActors.Count == 0)
+            {
+                Debug.LogWarning(
+                    $"[{nameof(CardDeckEntryPerformance)}] preview actors could not be created.",
+                    this);
+                return;
+            }
+
+            PlayRuntime(previewActors, null, ownsPreviewActors: true);
         }
 
         public void Play(Transform[] cards)
@@ -80,6 +108,52 @@ namespace NineGrid.Presentation.Performance
         }
 
         public void Play(IReadOnlyList<Transform> cards, IReadOnlyList<Transform> slots)
+        {
+            PlayRuntime(cards, slots, ownsPreviewActors: false);
+        }
+
+        [ContextMenu("Stop And Restore")]
+        public void StopAndRestore()
+        {
+            StopPlaybackOnly();
+
+            if (previewActorsOwned)
+            {
+                TeardownPreviewActors();
+            }
+            else
+            {
+                for (var i = 0; i < activeCards.Count; i++)
+                {
+                    Transform card = activeCards[i];
+                    if (card == null)
+                    {
+                        continue;
+                    }
+
+                    card.position = baselineWorldPositions[i];
+                }
+            }
+
+            activeCards.Clear();
+            baselineWorldPositions.Clear();
+            isPlaying = false;
+        }
+
+        public float ComputeTotalDuration(int cardCount)
+        {
+            if (cardCount <= 0)
+            {
+                return 0f;
+            }
+
+            return (cardCount - 1) * staggerDelay + moveDuration;
+        }
+
+        private void PlayRuntime(
+            IReadOnlyList<Transform> cards,
+            IReadOnlyList<Transform> slots,
+            bool ownsPreviewActors)
         {
             if (!isActiveAndEnabled)
             {
@@ -101,6 +175,7 @@ namespace NineGrid.Presentation.Performance
 
             StopPlaybackOnly();
 
+            previewActorsOwned = ownsPreviewActors;
             activeCards.Clear();
             baselineWorldPositions.Clear();
 
@@ -119,6 +194,7 @@ namespace NineGrid.Presentation.Performance
 
             if (activeCards.Count == 0)
             {
+                previewActorsOwned = false;
                 return;
             }
 
@@ -135,35 +211,105 @@ namespace NineGrid.Presentation.Performance
             }
         }
 
-        [ContextMenu("Stop And Restore")]
-        public void StopAndRestore()
+        private IReadOnlyList<Transform> EnsurePreviewActors()
         {
-            StopPlaybackOnly();
+            TeardownPreviewActors();
 
-            for (var i = 0; i < activeCards.Count; i++)
+            IReadOnlyList<Transform> slots = ResolveSlotAnchors();
+            int actorCount = previewActorCount > 0 ? previewActorCount : slots.Count;
+            if (actorCount <= 0)
             {
-                Transform card = activeCards[i];
-                if (card == null)
+                actorCount = 1;
+            }
+
+            Transform parent = ResolvedPreviewActorsRoot;
+            Vector3 startWorldPosition = ResolvePreviewDeckWorldPosition(parent);
+
+            for (var i = 0; i < actorCount; i++)
+            {
+                Transform actor = CreatePreviewActor(parent, i);
+                if (actor == null)
                 {
                     continue;
                 }
 
-                card.position = baselineWorldPositions[i];
+                actor.position = startWorldPosition;
+                spawnedPreviewActors.Add(actor);
             }
 
-            activeCards.Clear();
-            baselineWorldPositions.Clear();
-            isPlaying = false;
+            return spawnedPreviewActors;
         }
 
-        public float ComputeTotalDuration(int cardCount)
+        private void TeardownPreviewActors()
         {
-            if (cardCount <= 0)
+            for (var i = spawnedPreviewActors.Count - 1; i >= 0; i--)
             {
-                return 0f;
+                Transform actor = spawnedPreviewActors[i];
+                if (actor == null)
+                {
+                    continue;
+                }
+
+                if (Application.isPlaying)
+                {
+                    Destroy(actor.gameObject);
+                }
+                else
+                {
+                    DestroyImmediate(actor.gameObject);
+                }
             }
 
-            return (cardCount - 1) * staggerDelay + moveDuration;
+            spawnedPreviewActors.Clear();
+            previewActorsOwned = false;
+        }
+
+        private Vector3 ResolvePreviewDeckWorldPosition(Transform parent)
+        {
+            if (previewDeckOrigin != null)
+            {
+                return previewDeckOrigin.position;
+            }
+
+            return parent.TransformPoint(previewDeckLocalOffset);
+        }
+
+        private Transform CreatePreviewActor(Transform parent, int index)
+        {
+            if (cardPreviewPrefab != null)
+            {
+                GameObject instance = Instantiate(cardPreviewPrefab, parent);
+                instance.name = $"PreviewCard_{index + 1}";
+                return instance.transform;
+            }
+
+            var stub = new GameObject($"PreviewCard_{index + 1}");
+            stub.transform.SetParent(parent, worldPositionStays: false);
+
+            var spriteRenderer = stub.AddComponent<SpriteRenderer>();
+            spriteRenderer.sprite = GetFallbackPreviewSprite();
+            spriteRenderer.sortingOrder = 3;
+
+            return stub.transform;
+        }
+
+        private static Sprite GetFallbackPreviewSprite()
+        {
+            if (fallbackPreviewSprite != null)
+            {
+                return fallbackPreviewSprite;
+            }
+
+            var texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+            texture.SetPixel(0, 0, new Color(0.82f, 0.76f, 0.66f, 1f));
+            texture.Apply();
+
+            fallbackPreviewSprite = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, 1f, 1f),
+                new Vector2(0.5f, 0.5f),
+                100f);
+            return fallbackPreviewSprite;
         }
 
         private Sequence BuildSequence(IReadOnlyList<Transform> cards, IReadOnlyList<Transform> slots)

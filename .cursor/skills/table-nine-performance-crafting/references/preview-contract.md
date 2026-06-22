@@ -39,6 +39,8 @@ PreviewChannel  — ContextMenu / Inspector 按钮 / previewMode 开关
 
 **上限：** 预览只需「能看懂运动与参数」，不要求复刻正式卡牌美术。避免每个 Performance 膨胀数百行 spawn 逻辑。
 
+Assets/Prefabs/Standard Card.prefab 有最小卡牌模板素材，如果用mcp挂载到场景预览时对卡牌元素有诉求，可以直接关联，但是不在代码中写死查找这个对象，只做场景内的mcp关联可选项
+
 ## 交互预览
 
 需要状态交互的表演（点选方向、拖拽起点终点等）：
