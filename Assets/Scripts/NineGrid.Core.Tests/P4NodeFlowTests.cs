@@ -607,6 +607,51 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(rewardOfferCount, EventsOfType(pipeline.EventLog, CoreEventType.RewardOffered).Count);
         }
 
+        [Test]
+        public void ChestCardMidFightTransitionsToRewardItemChoiceAndAllowsSelection()
+        {
+            var architecture = NineGridArchitecture.Current;
+            P5CatalogTestSupport.RegisterCatalog(architecture);
+
+            var registry = architecture.GetModel<CardRegistry>();
+            var deck = architecture.GetModel<DeckModel>();
+            var content = architecture.GetSystem<IContentSystem>();
+            var pending = architecture.GetModel<PendingChoiceModel>();
+            var phaseSystem = architecture.GetSystem<IPhaseSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var player = architecture.GetModel<PlayerModel>();
+
+            EnterInteractionLoop(architecture);
+            Assert.AreEqual(GamePhase.InteractionLoop, phaseSystem.CurrentPhase);
+
+            var chest = content.CreateDraft("help.common_chest_card").Create(registry);
+            content.ApplyContentToCard(chest);
+            deck.AddToItemSlots(chest);
+
+            var useResult = architecture.SendCommand(new UseItemCommand(chest.Uid));
+            Assert.IsTrue(useResult.Accepted);
+            Assert.AreEqual(GamePhase.RewardItemChoice, phaseSystem.CurrentPhase);
+            Assert.AreEqual(PendingChoiceKind.Reward, pending.Kind.Value);
+            Assert.AreEqual(3, pending.RewardOptions.Count);
+            Assert.IsTrue(phaseSystem.CanExecute(GameCommandKind.SelectReward));
+            Assert.IsTrue(phaseSystem.CanExecute(GameCommandKind.SkipHelpChoice));
+
+            var relicDefId = pending.RewardOptions[0].DefId;
+            var selectResult = architecture.SendCommand(new SelectRewardCommand(0));
+            Assert.IsTrue(selectResult.Accepted);
+            Assert.AreEqual(GamePhase.RoomChoice, phaseSystem.CurrentPhase);
+            Assert.AreEqual(PendingChoiceKind.Room, pending.Kind.Value);
+            var relicGranted = false;
+            var relics = player.RelicDefIds;
+            for (var i = 0; i < relics.Count; i++)
+            {
+                if (relics[i] == relicDefId) { relicGranted = true; break; }
+            }
+            Assert.IsTrue(relicGranted, "Expected relic " + relicDefId + " to be granted.");
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.RewardSelected));
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.RoomChoicesOffered));
+        }
+
         private static void EnterInteractionLoop(IArchitecture architecture)
         {
             var options = new NodeDeckOptions { PlayerOpeningCount = 0, EnemyOpeningCount = 1 }

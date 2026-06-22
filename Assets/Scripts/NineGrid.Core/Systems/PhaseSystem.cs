@@ -24,6 +24,7 @@ namespace NineGrid.Core.Systems
     public sealed class PhaseSystem : AbstractSystem, IPhaseSystem
     {
         private readonly List<GameCommandKind> mLegalCommands = new List<GameCommandKind>();
+        private bool mInRoomRewardContext;
 
         public GamePhase CurrentPhase
         {
@@ -57,6 +58,7 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.StartNode, "Command is not legal in phase " + CurrentPhase, SlotId.None, 0);
             }
 
+            mInRoomRewardContext = false;
             options = options ?? NodeDeckOptions.CreateDefaultBattle();
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new ClearPendingChoicesAction());
@@ -243,6 +245,7 @@ namespace NineGrid.Core.Systems
             var resolved = pipeline.RunToCompletion();
             resolved += ConsumeUsedItemIfStillInItemSlots(itemUid, card.DefId);
             resolved += CompleteNodeIfCleared();
+            resolved += EnterRewardItemChoiceIfPending();
             return CoreCommandResult.Accept(resolved);
         }
 
@@ -281,9 +284,24 @@ namespace NineGrid.Core.Systems
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new GrantRewardChoiceAction(pending.RewardOptions[optionIndex], optionIndex));
             pipeline.Enqueue(new ClearPendingRewardChoiceAction());
-            pipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomChoice));
-            pipeline.Enqueue(new OfferRoomChoicesAction(RollRoomChoicesOrFallback()));
-            var resolved = pipeline.RunToCompletion();
+            int resolved;
+            if (mInRoomRewardContext)
+            {
+                mInRoomRewardContext = false;
+                pipeline.Enqueue(new AdvanceNodeAction());
+                resolved = pipeline.RunToCompletion();
+                if (!IsTerminalPhase(CurrentPhase))
+                {
+                    pipeline.Enqueue(new ChangePhaseAction(GamePhase.NodeCompleted));
+                    resolved += pipeline.RunToCompletion();
+                }
+            }
+            else
+            {
+                pipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomChoice));
+                pipeline.Enqueue(new OfferRoomChoicesAction(RollRoomChoicesOrFallback()));
+                resolved = pipeline.RunToCompletion();
+            }
             return CoreCommandResult.Accept(resolved);
         }
 
@@ -298,9 +316,23 @@ namespace NineGrid.Core.Systems
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new SkipRewardChoiceAction());
             pipeline.Enqueue(new ClearPendingRewardChoiceAction());
-            pipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomChoice));
-            pipeline.Enqueue(new OfferRoomChoicesAction(RollRoomChoicesOrFallback()));
-            resolved += pipeline.RunToCompletion();
+            if (mInRoomRewardContext)
+            {
+                mInRoomRewardContext = false;
+                pipeline.Enqueue(new AdvanceNodeAction());
+                resolved += pipeline.RunToCompletion();
+                if (!IsTerminalPhase(CurrentPhase))
+                {
+                    pipeline.Enqueue(new ChangePhaseAction(GamePhase.NodeCompleted));
+                    resolved += pipeline.RunToCompletion();
+                }
+            }
+            else
+            {
+                pipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomChoice));
+                pipeline.Enqueue(new OfferRoomChoicesAction(RollRoomChoicesOrFallback()));
+                resolved += pipeline.RunToCompletion();
+            }
             return CoreCommandResult.Accept(resolved);
         }
 
@@ -346,6 +378,15 @@ namespace NineGrid.Core.Systems
 
             var resolved = this.GetSystem<IRewardSystem>().ResolveRoom(room);
             var pipeline = this.GetSystem<IActionPipelineSystem>();
+
+            if (this.GetModel<PendingChoiceModel>().Kind.Value == PendingChoiceKind.Reward)
+            {
+                mInRoomRewardContext = true;
+                pipeline.Enqueue(new ChangePhaseAction(GamePhase.RewardItemChoice));
+                resolved += pipeline.RunToCompletion();
+                return CoreCommandResult.Accept(resolved);
+            }
+
             pipeline.Enqueue(new ClearPendingChoicesAction());
             pipeline.Enqueue(new AdvanceNodeAction());
             resolved += pipeline.RunToCompletion();
@@ -411,6 +452,23 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new NodeCompletedAction());
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.RewardItemChoice));
             pipeline.Enqueue(new OfferRewardChoiceAction("help.choice", 3));
+            return pipeline.RunToCompletion();
+        }
+
+        private int EnterRewardItemChoiceIfPending()
+        {
+            if (CurrentPhase != GamePhase.InteractionLoop)
+            {
+                return 0;
+            }
+
+            if (this.GetModel<PendingChoiceModel>().Kind.Value != PendingChoiceKind.Reward)
+            {
+                return 0;
+            }
+
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new ChangePhaseAction(GamePhase.RewardItemChoice));
             return pipeline.RunToCompletion();
         }
 
