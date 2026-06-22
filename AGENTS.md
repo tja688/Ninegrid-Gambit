@@ -14,7 +14,7 @@
 - 游戏设计案统一存放在 `Assets/Docs` 目录下，当某些效果实现、游戏设计细节需要理解时可以进行查阅、参考。
 - 游戏开发进行中过程性笔记：`Assets/Notes`，根据自己需求选择性阅读。如果开发过程中用户要求落地笔记、汇报等需求，统一落地在此目录。
 - 游戏开发架构设计文档见：Assets/Notes/九宫牌局权威顶层架构设计.md ，想要总览游戏架构组织设计理念可以阅读此文档。
-- 表现层四盒子与 AI 协作 Skill：总览见 `Assets/Notes/表现层方法论.md`；表演器制作 `.cursor/skills/table-nine-performance-crafting`（盒子③）、适配器 `.cursor/skills/table-nine-adapter-crafting`（盒子④）。
+- 表现层四盒子与 AI 协作 Skill：总览见 `Assets/Notes/表现层方法论.md`；表演器制作 `.cursor/skills/table-nine-performance-crafting`（盒子③）、交互 FSM + 本地反馈 `.cursor/skills/table-nine-interaction-crafting`（泳道 B）、适配器 `.cursor/skills/table-nine-adapter-crafting`（盒子④）。
 - 对于表现层的开发，C:\Users\jinji\Desktop\文档\MyNote\游戏开发项目\引擎工作区\九宫牌局架构\九宫牌局表现层.canvas 有权威的架构设计，对于全局理解可以查阅，注意上下文较大，有必要的时候才进行理解读取
 
 

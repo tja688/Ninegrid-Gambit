@@ -57,6 +57,8 @@ description: >-
   `TableNineCardDeckAdaptor`）。与盒子③ `Performance/` 严格分离——适配器只调度，
   不含 DOTween 手感编排。表演黑盒制作见
   [`.cursor/skills/table-nine-performance-crafting/SKILL.md`](../table-nine-performance-crafting/SKILL.md)。
+  指针交互/hover/拖拽/Confirm 发 Command 见
+  [`.cursor/skills/table-nine-interaction-crafting/SKILL.md`](../table-nine-interaction-crafting/SKILL.md)。
 - 不手改 `.unity`，相关改动走 Unity MCP。
 - 不自动扩展到人没要求的表演；只接当前这一个作品。
 - 落地后按 AGENTS.md 触发 Unity 刷新、读 Console 排错。

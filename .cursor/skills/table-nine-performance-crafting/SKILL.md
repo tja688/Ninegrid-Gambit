@@ -90,6 +90,7 @@ PreviewChannel  — ContextMenu / Inspector 按钮；表演器自行 EnsurePrevi
 | Skill | 盒子 | 分工 |
 |-------|------|------|
 | **本 skill** | ③ Performance | 视觉复刻 + 参数化 + 预览 |
+| `table-nine-interaction-crafting` | 泳道 B · 交互 FSM | 指针状态 → 直驱 LocalFeedback（hover/选中/拖拽） |
 | `table-nine-adapter-crafting` | ④ Director | 内核事件 → 调 `Performance.Play(真实演员)` |
 | `表现层方法论.md` | ①②③④ 总览 | 锚点/演员/表演/导演四盒子 |
 
