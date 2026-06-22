@@ -8,8 +8,9 @@ description: >-
   angle) to cover all the other cases the human did NOT hand-author. Use when
   the user has手搓好 an atomic 动效/反馈/编排 in DOTween Timeline and asks AI to
   翻译/聚合/烘焙/落地/做成运行时脚本, or mentions 方向路由 / 各个方向 / 黑盒动效脚本
-  / 把 timeline 翻译成纯代码. Engine-general (Unity + DOTween); not tied to any
-  one project.
+  / 把 timeline 翻译成纯代码. Unity + DOTween; 产出落盘
+  Assets/Scripts/NineGrid.Presentation/Performance，命名空间
+  NineGrid.Presentation.Performance，类名后缀 Performance。
 ---
 
 # DOTween 表演烘焙（手搓切片 → 纯代码运行时黑盒）
@@ -85,7 +86,9 @@ DOTween Animation + DOTween Timeline 的可视化编辑器调到爽，并在编�
    方向用"旋转整体"还是"镜像"还是"相对向量"、写死的坐标对应哪个锚点。**多余的剪掉、
    缺的请人补上游。**
 4. **写黑盒**：产出一个纯 DOTween 的运行时调控脚本（形态见下），在基准切片上忠实还原，
-   并把方向/变体做成参数化路由。
+   并把方向/变体做成参数化路由。脚本**统一落在**
+   `Assets/Scripts/NineGrid.Presentation/Performance/`，类名以 `Performance` 结尾
+   （如 `CardHitFlashPerformance`）。
 5. **交付给人验证**：明确告诉人怎么对照——播某个方向应与他手搓那份逐帧一致；非基准
    方向是基准的变换结果。配合人的单元测试。落地后触发引擎刷新、读 Console 排错。
 
@@ -109,6 +112,13 @@ DOTween Animation + DOTween Timeline 的可视化编辑器调到爽，并在编�
 
 ## 黑盒脚本应满足的契约
 
+- **落盘路径与命名（本项目）**：产出脚本一律放在
+  `Assets/Scripts/NineGrid.Presentation/Performance/`；文件名与类名**必须**以
+  `Performance` 为后缀（PascalCase，如 `FooBarPerformance.cs` /
+  `class FooBarPerformance`）；命名空间统一为 `NineGrid.Presentation.Performance`
+  （与 `Visuals/` 子目录对齐 `NineGrid.Presentation.Visuals` 的惯例）。不要放到
+  `AtomicRepresentationTools` 等其他目录，也不要使用 `Tween` / `Effect` / `Player`
+  等替代后缀。
 - 一个挂载式 `MonoBehaviour`（纯表现，不含游戏逻辑）。
 - **对外入口可被代码和 UnityEvent 调用**：如 `Play(Vector2 direction)` /
   `Play(float angleDeg)` / `Play(string variant)` 以及无参/枚举重载，方便接线。
@@ -134,6 +144,6 @@ DOTween Animation + DOTween Timeline 的可视化编辑器调到爽，并在编�
 - 不写死方向数量；不用个例 switch 当唯一路由手段。
 - 不在表现层造假数据；缺的去上游补，歧义用 AskQuestion 问。
 - 不手改 `.unity`，相关改动走引擎的 MCP/正规流程。
-- 保持**项目无关**：脚本不耦合特定游戏的内核类型；要接内核时，方向/触发由外部传入，
-  黑盒只管"按参数还原表演"。这样它能跨项目复用。
+- 脚本**逻辑**不耦合内核类型（方向/触发由外部传入，黑盒只管"按参数还原表演"）；但
+  **文件位置与命名**遵循上节本项目约定，勿散落其他目录。
 - 不自动扩展到人没要求的表演；只接当前这一件作品。

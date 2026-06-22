@@ -1,8 +1,10 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
-namespace NineGrid.Presentation.AtomicRepresentationTools
+namespace NineGrid.Presentation.Performance
 {
+    [MovedFrom("NineGrid.Presentation.AtomicRepresentationTools")]
     [DisallowMultipleComponent]
     public sealed class CardHitFlashPerformance : MonoBehaviour
     {

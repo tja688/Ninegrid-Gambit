@@ -4,13 +4,15 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Scripting.APIUpdating;
 
-namespace NineGrid.Presentation.AtomicRepresentationTools
+namespace NineGrid.Presentation.Performance
 {
     /// <summary>
     /// 牌堆入场：多张卡从当前位置依次滑入槽位锚点。
     /// 烘焙自 CardDeckEntryPerformance Timeline（delay 0.1 递增 × 20，duration 0.3，OutQuint）。
     /// </summary>
+    [MovedFrom("NineGrid.Presentation.AtomicRepresentationTools")]
     [DisallowMultipleComponent]
     public sealed class CardDeckEntryPerformance : MonoBehaviour
     {
