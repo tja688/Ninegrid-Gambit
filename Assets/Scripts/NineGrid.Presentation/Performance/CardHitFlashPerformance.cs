@@ -4,7 +4,7 @@ using UnityEngine;
 namespace NineGrid.Presentation.AtomicRepresentationTools
 {
     [DisallowMultipleComponent]
-    public sealed class TableNineSpriteHitFlashPlayer : MonoBehaviour
+    public sealed class CardHitFlashPerformance : MonoBehaviour
     {
         private static readonly int HitFlashAmountId = Shader.PropertyToID("_HitFlashAmount");
         private static readonly int HitFlashColorId = Shader.PropertyToID("_HitFlashColor");
@@ -203,7 +203,7 @@ namespace NineGrid.Presentation.AtomicRepresentationTools
             if (template == null)
             {
                 Debug.LogWarning(
-                    $"{nameof(TableNineSpriteHitFlashPlayer)} on '{name}' could not resolve flash material.",
+                    $"{nameof(CardHitFlashPerformance)} on '{name}' could not resolve flash material.",
                     this);
                 return;
             }
