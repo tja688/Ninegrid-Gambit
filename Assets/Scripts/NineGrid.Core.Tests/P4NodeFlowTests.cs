@@ -615,14 +615,18 @@ namespace NineGrid.Core.Tests
 
             var registry = architecture.GetModel<CardRegistry>();
             var deck = architecture.GetModel<DeckModel>();
+            var board = architecture.GetModel<BoardModel>();
             var content = architecture.GetSystem<IContentSystem>();
             var pending = architecture.GetModel<PendingChoiceModel>();
             var phaseSystem = architecture.GetSystem<IPhaseSystem>();
+            var deckSystem = architecture.GetSystem<IDeckSystem>();
             var pipeline = architecture.GetSystem<IActionPipelineSystem>();
             var player = architecture.GetModel<PlayerModel>();
 
             EnterInteractionLoop(architecture);
             Assert.AreEqual(GamePhase.InteractionLoop, phaseSystem.CurrentPhase);
+            var monsterSlot = FindFirstMonsterSlot();
+            Assert.AreNotEqual(0, board.GetCardUid(monsterSlot));
 
             var chest = content.CreateDraft("help.common_chest_card").Create(registry);
             content.ApplyContentToCard(chest);
@@ -639,8 +643,11 @@ namespace NineGrid.Core.Tests
             var relicDefId = pending.RewardOptions[0].DefId;
             var selectResult = architecture.SendCommand(new SelectRewardCommand(0));
             Assert.IsTrue(selectResult.Accepted);
-            Assert.AreEqual(GamePhase.RoomChoice, phaseSystem.CurrentPhase);
-            Assert.AreEqual(PendingChoiceKind.Room, pending.Kind.Value);
+            Assert.AreEqual(GamePhase.InteractionLoop, phaseSystem.CurrentPhase);
+            Assert.AreEqual(PendingChoiceKind.None, pending.Kind.Value);
+            Assert.IsFalse(deckSystem.IsNodeCleared());
+            Assert.AreNotEqual(0, board.GetCardUid(monsterSlot));
+            Assert.IsTrue(phaseSystem.CanExecute(GameCommandKind.Attack));
             var relicGranted = false;
             var relics = player.RelicDefIds;
             for (var i = 0; i < relics.Count; i++)
@@ -649,7 +656,98 @@ namespace NineGrid.Core.Tests
             }
             Assert.IsTrue(relicGranted, "Expected relic " + relicDefId + " to be granted.");
             Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.RewardSelected));
-            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.RoomChoicesOffered));
+            Assert.IsFalse(pipeline.EventLog.Contains(CoreEventType.RoomChoicesOffered));
+        }
+
+        [Test]
+        public void ChestCardMidFightSkipHelpChoiceReturnsToInteractionLoop()
+        {
+            var architecture = NineGridArchitecture.Current;
+            P5CatalogTestSupport.RegisterCatalog(architecture);
+
+            var registry = architecture.GetModel<CardRegistry>();
+            var deck = architecture.GetModel<DeckModel>();
+            var board = architecture.GetModel<BoardModel>();
+            var content = architecture.GetSystem<IContentSystem>();
+            var pending = architecture.GetModel<PendingChoiceModel>();
+            var phaseSystem = architecture.GetSystem<IPhaseSystem>();
+            var deckSystem = architecture.GetSystem<IDeckSystem>();
+            var player = architecture.GetModel<PlayerModel>();
+
+            EnterInteractionLoop(architecture);
+            var monsterSlot = FindFirstMonsterSlot();
+            Assert.AreNotEqual(0, board.GetCardUid(monsterSlot));
+
+            var chest = content.CreateDraft("help.common_chest_card").Create(registry);
+            content.ApplyContentToCard(chest);
+            deck.AddToItemSlots(chest);
+
+            var useResult = architecture.SendCommand(new UseItemCommand(chest.Uid));
+            Assert.IsTrue(useResult.Accepted);
+            Assert.AreEqual(GamePhase.RewardItemChoice, phaseSystem.CurrentPhase);
+
+            var coinsBeforeSkip = player.Coins.Value;
+            var skipResult = architecture.SendCommand(new SkipHelpChoiceCommand());
+            Assert.IsTrue(skipResult.Accepted);
+            Assert.AreEqual(coinsBeforeSkip + 10, player.Coins.Value);
+            Assert.AreEqual(GamePhase.InteractionLoop, phaseSystem.CurrentPhase);
+            Assert.AreEqual(PendingChoiceKind.None, pending.Kind.Value);
+            Assert.IsFalse(deckSystem.IsNodeCleared());
+            Assert.AreNotEqual(0, board.GetCardUid(monsterSlot));
+            Assert.IsTrue(phaseSystem.CanExecute(GameCommandKind.Attack));
+        }
+
+        [Test]
+        public void TreasureRoomRewardAdvancesNodeAfterSelection()
+        {
+            var architecture = NineGridArchitecture.Current;
+            P5CatalogTestSupport.RegisterCatalog(architecture);
+
+            var run = architecture.GetModel<RunModel>();
+            var pending = architecture.GetModel<PendingChoiceModel>();
+            var phaseSystem = architecture.GetSystem<IPhaseSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var options = new NodeDeckOptions { PlayerOpeningCount = 0, EnemyOpeningCount = 1 }
+                .AddEnemyCard(new CardDraft("monster.tail", CardKind.Monster)
+                {
+                    MaxHp = 1,
+                    Attack = 0
+                });
+
+            architecture.SendCommand(new StartNodeCommand(options));
+            var attackResult = architecture.SendCommand(new AttackCommand(FindFirstMonsterSlot()));
+            Assert.IsTrue(attackResult.Accepted);
+            Assert.AreEqual(GamePhase.RewardItemChoice, phaseSystem.CurrentPhase);
+
+            var skipResult = architecture.SendCommand(new SkipHelpChoiceCommand());
+            Assert.IsTrue(skipResult.Accepted);
+            Assert.AreEqual(GamePhase.RoomChoice, phaseSystem.CurrentPhase);
+            EnsureRoomChoiceIncludesTreasure(architecture);
+
+            var treasureIndex = FindRoomOptionIndex(pending, RoomKind.Treasure);
+            Assert.GreaterOrEqual(treasureIndex, 0);
+
+            var selectRoomResult = architecture.SendCommand(new SelectRoomCommand(treasureIndex));
+            Assert.IsTrue(selectRoomResult.Accepted);
+            Assert.AreEqual(GamePhase.RoomEvent, phaseSystem.CurrentPhase);
+            Assert.AreEqual(RoomKind.Treasure, pending.SelectedRoom.Value);
+
+            var enterRoomResult = architecture.SendCommand(new EnterRoomCommand());
+            Assert.IsTrue(enterRoomResult.Accepted);
+            Assert.AreEqual(GamePhase.RewardItemChoice, phaseSystem.CurrentPhase);
+            Assert.AreEqual(PendingChoiceKind.Reward, pending.Kind.Value);
+            Assert.AreEqual("relic.common_chest", pending.PoolId.Value);
+
+            var selectRewardResult = architecture.SendCommand(new SelectRewardCommand(0));
+            Assert.IsTrue(selectRewardResult.Accepted);
+            Assert.AreEqual(GamePhase.NodeCompleted, phaseSystem.CurrentPhase);
+            Assert.AreEqual(1, run.NodeIndex.Value);
+            Assert.AreEqual(PendingChoiceKind.None, pending.Kind.Value);
+            Assert.IsTrue(phaseSystem.CanExecute(GameCommandKind.StartNode));
+            Assert.IsFalse(phaseSystem.CanExecute(GameCommandKind.SelectRoom));
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.RoomResolved));
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.RewardSelected));
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.NodeAdvanced));
         }
 
         private static void EnterInteractionLoop(IArchitecture architecture)
@@ -665,6 +763,32 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(
                 GamePhase.InteractionLoop,
                 architecture.GetSystem<IPhaseSystem>().CurrentPhase);
+        }
+
+        private static int FindRoomOptionIndex(PendingChoiceModel pending, RoomKind room)
+        {
+            for (var i = 0; i < pending.RoomOptions.Count; i++)
+            {
+                if (pending.RoomOptions[i] == room)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private static void EnsureRoomChoiceIncludesTreasure(IArchitecture architecture)
+        {
+            var pending = architecture.GetModel<PendingChoiceModel>();
+            if (FindRoomOptionIndex(pending, RoomKind.Treasure) >= 0)
+            {
+                return;
+            }
+
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            pipeline.Execute(new ChangePhaseAction(GamePhase.RoomChoice));
+            pipeline.Execute(new OfferRoomChoicesAction(new[] { RoomKind.Treasure, RoomKind.Gold }));
         }
 
         private static void AssertUseItemRejected(
