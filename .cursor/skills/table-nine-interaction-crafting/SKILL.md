@@ -20,7 +20,7 @@ description: >-
 | **B** Interaction FSM | 指针手势 → 本地反馈；Confirm → Command | **本 skill 主场** |
 | **C** Playback Pipeline | 内核 Batch → 适配器 → 回放表演 | 交给 `table-nine-adapter-crafting` |
 
-权威 canvas：[`九宫牌局表现层.canvas`](file:///C:/Users/jinji/Desktop/文档/MyNote/游戏开发项目/引擎工作区/九宫牌局架构/九宫牌局表现层.canvas)（V0.2 三泳道 + 输入锁脊柱）。
+权威 canvas：[`九宫牌局表现层.canvas`](file:///C:/Users/jinji/Desktop/文档/MyNote/游戏开发项目/引擎工作区/九宫牌局架构/九宫牌局表现层.canvas)（V0.3 道具拖拽指向 + ItemTargetingSession）。落地笔记：[`道具指向交互与场地卡FSM落地指南-2026-06-22.md`](../../../Assets/Notes/道具指向交互与场地卡FSM落地指南-2026-06-22.md)。
 
 ## Required Context
 

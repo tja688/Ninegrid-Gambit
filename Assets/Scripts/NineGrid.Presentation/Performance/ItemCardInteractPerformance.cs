@@ -53,6 +53,8 @@ namespace NineGrid.Presentation.Performance
         private Coroutine deferCoroutine;
         private bool dragTintKnown;
         private bool dragTintInZone;
+        private Vector3 dragPointerOffset;
+        private bool dragPointerOffsetKnown;
 
         private struct ActorVisualState
         {
@@ -105,16 +107,72 @@ namespace NineGrid.Presentation.Performance
                 return;
             }
 
-            KillActorTweens(actor);
-            actorStates.Remove(actor);
-            if (ReferenceEquals(focusedActor, actor))
+            InvalidateActor(actor, killLayoutIfActive: true);
+        }
+
+        /// <summary>
+        /// 手牌突变前（销毁/整手重刷）立即还原所有演员视觉，避免 dim tween 中途被杀后透明度卡住。
+        /// </summary>
+        public void RestoreAllActorsImmediate(Transform except = null)
+        {
+            KillLayoutSequence();
+
+            var actors = new List<Transform>(actorStates.Keys);
+            for (var i = 0; i < actors.Count; i++)
+            {
+                Transform actor = actors[i];
+                if (actor == null || ReferenceEquals(actor, except))
+                {
+                    continue;
+                }
+
+                RestoreActorVisual(actor, 0f);
+            }
+
+            if (except == null || !ReferenceEquals(focusedActor, except))
+            {
+                focusedActor = null;
+            }
+        }
+
+        public void PurgeDestroyedActors()
+        {
+            var stale = new List<Transform>();
+            foreach (Transform actor in actorStates.Keys)
+            {
+                if (actor == null)
+                {
+                    stale.Add(actor);
+                }
+            }
+
+            for (var i = 0; i < stale.Count; i++)
+            {
+                actorStates.Remove(stale[i]);
+            }
+
+            if (focusedActor == null)
+            {
+                focusedActor = null;
+            }
+            else if (!actorStates.ContainsKey(focusedActor))
             {
                 focusedActor = null;
             }
 
-            if (ReferenceEquals(draggingActor, actor))
+            if (draggingActor == null)
             {
                 draggingActor = null;
+                dragTintKnown = false;
+                dragTintInZone = false;
+                dragPointerOffsetKnown = false;
+            }
+            else if (!actorStates.ContainsKey(draggingActor))
+            {
+                draggingActor = null;
+                dragTintKnown = false;
+                dragTintInZone = false;
+                dragPointerOffsetKnown = false;
             }
         }
 
@@ -178,23 +236,26 @@ namespace NineGrid.Presentation.Performance
                 Tween move = actor
                     .DOLocalMove(target.LocalPosition, duration)
                     .SetEase(layoutEase)
-                    .SetTarget(this);
+                    .SetTarget(actor);
 
                 SpriteRenderer renderer = GetPrimaryRenderer(actor);
                 if (renderer != null)
                 {
-                    Tween sort = DOTween
-                        .To(() => renderer.sortingOrder, value => renderer.sortingOrder = value, target.SortingOrder, duration)
-                        .SetEase(layoutEase)
-                        .SetTarget(this);
-
-                    if (ignoreTimeScale)
+                    Tween sort = TweenSortingOrder(renderer, target.SortingOrder, duration, layoutEase);
+                    if (sort != null)
                     {
-                        sort.SetUpdate(true);
-                    }
+                        if (ignoreTimeScale)
+                        {
+                            sort.SetUpdate(true);
+                        }
 
-                    layoutSequence.Join(move);
-                    layoutSequence.Join(sort);
+                        layoutSequence.Join(move);
+                        layoutSequence.Join(sort);
+                    }
+                    else
+                    {
+                        layoutSequence.Join(move);
+                    }
                 }
                 else
                 {
@@ -240,7 +301,7 @@ namespace NineGrid.Presentation.Performance
             Tween move = focused
                 .DOLocalMove(focusPosition, focusDuration)
                 .SetEase(focusEase)
-                .SetTarget(this);
+                .SetTarget(focused);
             ApplyTweenSettings(move);
 
             SpriteRenderer focusedRenderer = GetPrimaryRenderer(focused);
@@ -249,10 +310,7 @@ namespace NineGrid.Presentation.Performance
                 int boostedOrder = Mathf.Max(
                     actorStates[focused].BaselineSortingOrder + focusSortingBoost,
                     focusSortingOrderFloor);
-                Tween sort = DOTween
-                    .To(() => focusedRenderer.sortingOrder, value => focusedRenderer.sortingOrder = value, boostedOrder, focusDuration)
-                    .SetEase(focusEase)
-                    .SetTarget(this);
+                Tween sort = TweenSortingOrder(focusedRenderer, boostedOrder, focusDuration, focusEase);
                 ApplyTweenSettings(sort);
             }
 
@@ -285,12 +343,20 @@ namespace NineGrid.Presentation.Performance
             }
         }
 
-        public void StopFocus(Transform focused, IReadOnlyList<Transform> others, bool immediate = false)
+        public void StopFocus(
+            Transform focused,
+            IReadOnlyList<Transform> others,
+            bool immediate = false,
+            bool restoreFocused = true)
         {
             focusedActor = null;
             float duration = immediate ? 0f : focusDuration;
 
-            RestoreActorVisual(focused, duration);
+            if (restoreFocused)
+            {
+                RestoreActorVisual(focused, duration);
+            }
+
             if (others == null)
             {
                 return;
@@ -302,7 +368,7 @@ namespace NineGrid.Presentation.Performance
             }
         }
 
-        public void BeginDrag(Transform actor)
+        public void BeginDrag(Transform actor, Vector3 pointerWorldPosition)
         {
             if (actor == null)
             {
@@ -312,6 +378,8 @@ namespace NineGrid.Presentation.Performance
             draggingActor = actor;
             dragTintKnown = false;
             dragTintInZone = false;
+            dragPointerOffset = actor.position - pointerWorldPosition + dragWorldOffset;
+            dragPointerOffsetKnown = true;
             EnsureBaseline(actor);
             KillActorTweens(actor);
 
@@ -332,7 +400,7 @@ namespace NineGrid.Presentation.Performance
                 return;
             }
 
-            actor.position = pointerWorldPosition + dragWorldOffset;
+            actor.position = pointerWorldPosition + (dragPointerOffsetKnown ? dragPointerOffset : dragWorldOffset);
 
             SpriteRenderer renderer = GetPrimaryRenderer(actor);
             if (renderer == null)
@@ -364,6 +432,7 @@ namespace NineGrid.Presentation.Performance
             draggingActor = null;
             dragTintKnown = false;
             dragTintInZone = false;
+            dragPointerOffsetKnown = false;
         }
 
         public void PlayReturn(Transform actor, Vector3 targetLocalPosition, int targetSortingOrder, Action onComplete)
@@ -378,7 +447,7 @@ namespace NineGrid.Presentation.Performance
             UpdateBaseline(actor, targetLocalPosition, targetSortingOrder);
 
             Sequence sequence = DOTween.Sequence()
-                .SetTarget(this)
+                .SetTarget(actor)
                 .SetAutoKill(true);
 
             if (ignoreTimeScale)
@@ -389,7 +458,7 @@ namespace NineGrid.Presentation.Performance
             Tween move = actor
                 .DOLocalMove(targetLocalPosition, returnDuration)
                 .SetEase(returnEase)
-                .SetTarget(this);
+                .SetTarget(actor);
             ApplyTweenSettings(move);
             sequence.Append(move);
 
@@ -401,10 +470,7 @@ namespace NineGrid.Presentation.Performance
                 ApplyTweenSettings(color);
                 sequence.Join(color);
 
-                Tween sort = DOTween
-                    .To(() => renderer.sortingOrder, value => renderer.sortingOrder = value, targetSortingOrder, returnDuration)
-                    .SetEase(returnEase)
-                    .SetTarget(this);
+                Tween sort = TweenSortingOrder(renderer, targetSortingOrder, returnDuration, returnEase);
                 ApplyTweenSettings(sort);
                 sequence.Join(sort);
             }
@@ -433,9 +499,22 @@ namespace NineGrid.Presentation.Performance
             Tween punchTween = actor
                 .DOPunchScale(punch, confirmDuration, vibrato: 1, elasticity: 0.5f)
                 .SetEase(confirmEase)
-                .SetTarget(this);
+                .SetTarget(actor);
             ApplyTweenSettings(punchTween);
-            punchTween.OnComplete(() => onComplete?.Invoke());
+
+            var completed = false;
+            void Finish()
+            {
+                if (completed)
+                {
+                    return;
+                }
+
+                completed = true;
+                onComplete?.Invoke();
+            }
+
+            punchTween.OnComplete(Finish);
         }
 
         public void PlayReject(Transform actor)
@@ -450,9 +529,15 @@ namespace NineGrid.Presentation.Performance
 
             Tween shake = actor
                 .DOShakePosition(rejectShakeDuration, rejectShakeStrength, vibrato: 12, randomness: 45f, fadeOut: true)
-                .SetTarget(this);
+                .SetTarget(actor);
             ApplyTweenSettings(shake);
-            shake.OnComplete(() => RestoreActorVisual(actor, 0f));
+            shake.OnComplete(() =>
+            {
+                if (actor != null)
+                {
+                    RestoreActorVisual(actor, 0f);
+                }
+            });
         }
 
         public void StopAndRestore()
@@ -476,6 +561,7 @@ namespace NineGrid.Presentation.Performance
             draggingActor = null;
             dragTintKnown = false;
             dragTintInZone = false;
+            dragPointerOffsetKnown = false;
         }
 
         private void ApplyLayoutInstant(IReadOnlyList<Transform> actors, IReadOnlyList<HandCardLayoutTarget> targets)
@@ -529,7 +615,7 @@ namespace NineGrid.Presentation.Performance
             Tween move = actor
                 .DOLocalMove(state.BaselineLocalPosition, duration)
                 .SetEase(focusEase)
-                .SetTarget(this);
+                .SetTarget(actor);
             ApplyTweenSettings(move);
 
             SpriteRenderer spriteRenderer = GetPrimaryRenderer(actor);
@@ -538,10 +624,7 @@ namespace NineGrid.Presentation.Performance
                 Tween color = TweenSpriteColor(spriteRenderer, state.BaselineColor, duration, focusEase);
                 ApplyTweenSettings(color);
 
-                Tween sort = DOTween
-                    .To(() => spriteRenderer.sortingOrder, value => spriteRenderer.sortingOrder = value, state.BaselineSortingOrder, duration)
-                    .SetEase(focusEase)
-                    .SetTarget(this);
+                Tween sort = TweenSortingOrder(spriteRenderer, state.BaselineSortingOrder, duration, focusEase);
                 ApplyTweenSettings(sort);
             }
         }
@@ -576,6 +659,31 @@ namespace NineGrid.Presentation.Performance
             }
 
             layoutSequence = null;
+        }
+
+        private void InvalidateActor(Transform actor, bool killLayoutIfActive)
+        {
+            KillActorTweens(actor);
+
+            if (killLayoutIfActive && layoutSequence != null && layoutSequence.IsActive())
+            {
+                KillLayoutSequence();
+            }
+
+            actorStates.Remove(actor);
+
+            if (ReferenceEquals(focusedActor, actor))
+            {
+                focusedActor = null;
+            }
+
+            if (ReferenceEquals(draggingActor, actor))
+            {
+                draggingActor = null;
+                dragTintKnown = false;
+                dragTintInZone = false;
+                dragPointerOffsetKnown = false;
+            }
         }
 
         private void KillActorTweens(Transform actor)
@@ -619,10 +727,41 @@ namespace NineGrid.Presentation.Performance
 
         private static Tween TweenSpriteColor(SpriteRenderer renderer, Color endValue, float duration, Ease ease)
         {
+            if (renderer == null)
+            {
+                return null;
+            }
+
             return DOTween
-                .To(() => renderer.color, value => renderer.color = value, endValue, duration)
+                .To(() => renderer != null ? renderer.color : endValue, value =>
+                {
+                    if (renderer != null)
+                    {
+                        renderer.color = value;
+                    }
+                }, endValue, duration)
                 .SetEase(ease)
                 .SetTarget(renderer);
+        }
+
+        private static Tween TweenSortingOrder(SpriteRenderer renderer, int endValue, float duration, Ease ease)
+        {
+            if (renderer == null)
+            {
+                return null;
+            }
+
+            Tween sort = DOTween
+                .To(() => renderer != null ? renderer.sortingOrder : endValue, value =>
+                {
+                    if (renderer != null)
+                    {
+                        renderer.sortingOrder = value;
+                    }
+                }, endValue, duration)
+                .SetEase(ease)
+                .SetTarget(renderer);
+            return sort;
         }
 
         private static SpriteRenderer GetPrimaryRenderer(Transform actor)

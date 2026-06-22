@@ -81,6 +81,7 @@ namespace NineGrid.Presentation.FSM
         private Vector2 pressScreenPosition;
         private bool pointerPressed;
         private bool isWatching;
+        private bool confirmInProgress;
         private int deckVersionSnapshot = -1;
         private CoreCommandDispatcher commandDispatcher;
 
@@ -377,7 +378,7 @@ namespace NineGrid.Presentation.FSM
                 pointerPressed = false;
             }
 
-            if (!pointerPressed && !isWatching)
+            if (!pointerPressed && !isWatching && !confirmInProgress)
             {
                 HandCardEntry hit = ResolveHandCardIntent(Input.mousePosition);
                 if (hit.Actor != null)
@@ -451,8 +452,8 @@ namespace NineGrid.Presentation.FSM
         {
             draggedEntry = entry;
             BuildOthersBuffer(entry.Actor);
-            interactPerformance.StopFocus(entry.Actor, othersBuffer);
-            interactPerformance.BeginDrag(entry.Actor);
+            interactPerformance.StopFocus(entry.Actor, othersBuffer, immediate: true, restoreFocused: false);
+            interactPerformance.BeginDrag(entry.Actor, ScreenToWorld(Input.mousePosition));
             SetState(ItemCardInteractionState.Drag);
         }
 
@@ -503,8 +504,27 @@ namespace NineGrid.Presentation.FSM
                 return;
             }
 
+            if (hoveredEntry.Actor != null && hoveredEntry.Actor != entry.Actor)
+            {
+                ExitHover();
+            }
+
+            interactPerformance.RestoreAllActorsImmediate(except: entry.Actor);
+            interactPerformance.EndDrag();
+            hoveredEntry = default;
+            draggedEntry = default;
+            confirmInProgress = true;
+            SetState(isWatching ? ItemCardInteractionState.Watching : ItemCardInteractionState.Idle);
+
             interactPerformance.PlayConfirm(entry.Actor, () =>
             {
+                confirmInProgress = false;
+
+                if (entry.Actor == null)
+                {
+                    return;
+                }
+
                 if (demoModeEnabled)
                 {
                     DemoConsumeCard(entry);
@@ -517,6 +537,8 @@ namespace NineGrid.Presentation.FSM
 
         private void DemoConsumeCard(HandCardEntry entry)
         {
+            interactPerformance.RestoreAllActorsImmediate();
+
             int index = FindEntryIndex(entry.Actor);
             if (index >= 0)
             {
@@ -529,6 +551,7 @@ namespace NineGrid.Presentation.FSM
                 Destroy(entry.Actor.gameObject);
             }
 
+            interactPerformance.PurgeDestroyedActors();
             interactPerformance.EndDrag();
             draggedEntry = default;
             hoveredEntry = default;
@@ -538,7 +561,7 @@ namespace NineGrid.Presentation.FSM
 
         private void SendUseItemCommand(HandCardEntry entry)
         {
-            if (entry.CardUid == 0)
+            if (entry.CardUid == 0 || entry.Actor == null)
             {
                 return;
             }
@@ -556,10 +579,12 @@ namespace NineGrid.Presentation.FSM
             if (!result.Accepted)
             {
                 onUseItemRejected?.Invoke(result.CommandResult != null ? result.CommandResult.Reason : "Rejected");
+                interactPerformance.RestoreAllActorsImmediate();
                 interactPerformance.PlayReject(entry.Actor);
                 return;
             }
 
+            interactPerformance.RestoreAllActorsImmediate();
             SyncFromDeck(force: true);
         }
 
@@ -721,6 +746,8 @@ namespace NineGrid.Presentation.FSM
 
         private void ClearHandActors()
         {
+            interactPerformance?.RestoreAllActorsImmediate();
+
             for (var i = 0; i < handCards.Count; i++)
             {
                 Transform actor = handCards[i].Actor;
@@ -740,6 +767,7 @@ namespace NineGrid.Presentation.FSM
                 }
             }
 
+            interactPerformance?.PurgeDestroyedActors();
             handCards.Clear();
         }
 
@@ -903,6 +931,7 @@ namespace NineGrid.Presentation.FSM
         private void ClearPointerState()
         {
             pointerPressed = false;
+            confirmInProgress = false;
             hoveredEntry = default;
             draggedEntry = default;
         }
