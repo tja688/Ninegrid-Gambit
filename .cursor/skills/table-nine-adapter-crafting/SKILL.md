@@ -55,7 +55,8 @@ description: >-
   `Assets/Scripts/NineGrid.Presentation/Adaptors/`，命名空间
   `NineGrid.Presentation.Adaptors`，类名以 `Adaptor` 结尾（如
   `TableNineCardDeckAdaptor`）。与盒子③ `Performance/` 严格分离——适配器只调度，
-  不含 DOTween 手感编排。
+  不含 DOTween 手感编排。表演黑盒制作见
+  [`.cursor/skills/table-nine-performance-crafting/SKILL.md`](../table-nine-performance-crafting/SKILL.md)。
 - 不手改 `.unity`，相关改动走 Unity MCP。
 - 不自动扩展到人没要求的表演；只接当前这一个作品。
 - 落地后按 AGENTS.md 触发 Unity 刷新、读 Console 排错。
