@@ -34,6 +34,7 @@ namespace NineGrid.Presentation.FSM
     public sealed class ItemCardInteractionFsm : MonoBehaviour, IController
     {
         private const int MaxHandCards = 5;
+        private const float MaxResponsiveDragThresholdPixels = 2f;
 
         [Header("References")]
         [SerializeField] private ItemCardInteractPerformance interactPerformance;
@@ -48,8 +49,14 @@ namespace NineGrid.Presentation.FSM
         [SerializeField] private HandCardLayoutSolver layoutSolver = new();
 
         [Header("Input")]
-        [SerializeField, Min(0f)] private float dragStartThresholdPixels = 8f;
+        [SerializeField, Min(0f)] private float dragStartThresholdPixels = 1.5f;
         [SerializeField] private bool pointerInputEnabled = true;
+
+        [Header("Hover Intent Proxy")]
+        [SerializeField] private bool useLinearHoverProxy = true;
+        [SerializeField, Min(0.1f)] private float hoverProxyCardHeight = 2.0625f;
+        [SerializeField, Min(0f)] private float hoverProxyHorizontalPadding = 0.08f;
+        [SerializeField, Min(0f)] private float hoverProxyVerticalPadding = 0.35f;
 
         [Header("Formal Mode")]
         [SerializeField] private bool resolveUidsFromDeckOnStart = true;
@@ -328,7 +335,7 @@ namespace NineGrid.Presentation.FSM
                 pressScreenPosition = Input.mousePosition;
                 pointerPressed = true;
 
-                HandCardEntry hit = RaycastHandCard(Input.mousePosition);
+                HandCardEntry hit = ResolveHandCardIntent(Input.mousePosition);
                 if (hit.Actor != null && !isWatching)
                 {
                     hoveredEntry = hit;
@@ -346,16 +353,15 @@ namespace NineGrid.Presentation.FSM
                 if (state == ItemCardInteractionState.Hover && hoveredEntry.Actor != null)
                 {
                     float dragDistance = Vector2.Distance(pressScreenPosition, Input.mousePosition);
-                    if (dragDistance >= dragStartThresholdPixels)
+                    if (dragDistance >= EffectiveDragStartThresholdPixels)
                     {
                         BeginDrag(hoveredEntry);
+                        UpdateDragAtScreenPosition(Input.mousePosition);
                     }
                 }
                 else if (state == ItemCardInteractionState.Drag && draggedEntry.Actor != null)
                 {
-                    Vector3 world = ScreenToWorld(Input.mousePosition);
-                    bool inZone = IsInApplyZone(world);
-                    interactPerformance.UpdateDrag(draggedEntry.Actor, world, inZone);
+                    UpdateDragAtScreenPosition(Input.mousePosition);
                 }
             }
 
@@ -373,12 +379,12 @@ namespace NineGrid.Presentation.FSM
 
             if (!pointerPressed && !isWatching)
             {
-                HandCardEntry hit = RaycastHandCard(Input.mousePosition);
+                HandCardEntry hit = ResolveHandCardIntent(Input.mousePosition);
                 if (hit.Actor != null)
                 {
                     if (hoveredEntry.Actor != hit.Actor)
                     {
-                        if (state == ItemCardInteractionState.Hover)
+                        if (hoveredEntry.Actor != null)
                         {
                             ExitHover();
                         }
@@ -387,7 +393,7 @@ namespace NineGrid.Presentation.FSM
                         EnterHover(hit);
                     }
                 }
-                else if (state == ItemCardInteractionState.Hover)
+                else if (hoveredEntry.Actor != null)
                 {
                     ExitHover();
                     hoveredEntry = default;
@@ -395,12 +401,12 @@ namespace NineGrid.Presentation.FSM
             }
             else if (isWatching)
             {
-                HandCardEntry hit = RaycastHandCard(Input.mousePosition);
+                HandCardEntry hit = ResolveHandCardIntent(Input.mousePosition);
                 if (hit.Actor != null)
                 {
                     if (hoveredEntry.Actor != hit.Actor)
                     {
-                        if (state == ItemCardInteractionState.Hover)
+                        if (hoveredEntry.Actor != null)
                         {
                             ExitHover();
                         }
@@ -409,7 +415,7 @@ namespace NineGrid.Presentation.FSM
                         EnterHover(hit);
                     }
                 }
-                else if (state == ItemCardInteractionState.Hover)
+                else if (hoveredEntry.Actor != null)
                 {
                     ExitHover();
                     hoveredEntry = default;
@@ -448,6 +454,18 @@ namespace NineGrid.Presentation.FSM
             interactPerformance.StopFocus(entry.Actor, othersBuffer);
             interactPerformance.BeginDrag(entry.Actor);
             SetState(ItemCardInteractionState.Drag);
+        }
+
+        private void UpdateDragAtScreenPosition(Vector2 screenPosition)
+        {
+            if (draggedEntry.Actor == null || interactPerformance == null)
+            {
+                return;
+            }
+
+            Vector3 world = ScreenToWorld(screenPosition);
+            bool inZone = IsInApplyZone(world);
+            interactPerformance.UpdateDrag(draggedEntry.Actor, world, inZone);
         }
 
         private void ReleaseDrag(HandCardEntry entry, bool inZone)
@@ -725,6 +743,63 @@ namespace NineGrid.Presentation.FSM
             handCards.Clear();
         }
 
+        private HandCardEntry ResolveHandCardIntent(Vector2 screenPosition)
+        {
+            if (useLinearHoverProxy)
+            {
+                HandCardEntry proxyHit = ResolveLinearHandCardIntent(screenPosition);
+                if (proxyHit.Actor != null)
+                {
+                    return proxyHit;
+                }
+            }
+
+            return RaycastHandCard(screenPosition);
+        }
+
+        private HandCardEntry ResolveLinearHandCardIntent(Vector2 screenPosition)
+        {
+            if (inputCamera == null || actorsRoot == null || handCards.Count == 0)
+            {
+                return default;
+            }
+
+            Vector3 world = ScreenToWorld(screenPosition);
+            Vector3 local = actorsRoot.InverseTransformPoint(world);
+
+            layoutSolver.BuildLayout(handCards.Count, layoutBuffer);
+            if (layoutBuffer.Count == 0)
+            {
+                return default;
+            }
+
+            float centerY = layoutBuffer[0].LocalPosition.y;
+            float halfHeight = hoverProxyCardHeight * 0.5f + hoverProxyVerticalPadding;
+            if (Mathf.Abs(local.y - centerY) > halfHeight)
+            {
+                return default;
+            }
+
+            float halfWidth = layoutSolver.CardWidth * 0.5f;
+            for (var i = 0; i < layoutBuffer.Count && i < handCards.Count; i++)
+            {
+                float currentX = layoutBuffer[i].LocalPosition.x;
+                float leftBoundary = i == 0
+                    ? currentX - halfWidth - hoverProxyHorizontalPadding
+                    : (layoutBuffer[i - 1].LocalPosition.x + currentX) * 0.5f;
+                float rightBoundary = i == layoutBuffer.Count - 1
+                    ? currentX + halfWidth + hoverProxyHorizontalPadding
+                    : (currentX + layoutBuffer[i + 1].LocalPosition.x) * 0.5f;
+
+                if (local.x >= leftBoundary && local.x <= rightBoundary)
+                {
+                    return handCards[i];
+                }
+            }
+
+            return default;
+        }
+
         private HandCardEntry RaycastHandCard(Vector2 screenPosition)
         {
             if (inputCamera == null)
@@ -733,21 +808,40 @@ namespace NineGrid.Presentation.FSM
             }
 
             Vector3 world = ScreenToWorld(screenPosition);
-            Collider2D hit = Physics2D.OverlapPoint(world);
-            if (hit == null)
+            Collider2D[] hits = Physics2D.OverlapPointAll(world);
+            if (hits == null || hits.Length == 0)
             {
                 return default;
             }
 
+            var bestHit = default(HandCardEntry);
+            var bestSortingOrder = int.MinValue;
             for (var i = 0; i < handCards.Count; i++)
             {
-                if (handCards[i].Actor == hit.transform)
+                Transform actor = handCards[i].Actor;
+                if (actor == null)
                 {
-                    return handCards[i];
+                    continue;
+                }
+
+                for (var j = 0; j < hits.Length; j++)
+                {
+                    if (hits[j] == null || hits[j].transform != actor)
+                    {
+                        continue;
+                    }
+
+                    SpriteRenderer renderer = actor.GetComponent<SpriteRenderer>();
+                    int sortingOrder = renderer != null ? renderer.sortingOrder : 0;
+                    if (sortingOrder > bestSortingOrder)
+                    {
+                        bestSortingOrder = sortingOrder;
+                        bestHit = handCards[i];
+                    }
                 }
             }
 
-            return default;
+            return bestHit;
         }
 
         private bool IsInApplyZone(Vector3 worldPosition)
@@ -813,9 +907,16 @@ namespace NineGrid.Presentation.FSM
             draggedEntry = default;
         }
 
+        private float EffectiveDragStartThresholdPixels => Mathf.Min(
+            Mathf.Max(0f, dragStartThresholdPixels),
+            MaxResponsiveDragThresholdPixels);
+
         private void OnValidate()
         {
             dragStartThresholdPixels = Mathf.Max(0f, dragStartThresholdPixels);
+            hoverProxyCardHeight = Mathf.Max(0.1f, hoverProxyCardHeight);
+            hoverProxyHorizontalPadding = Mathf.Max(0f, hoverProxyHorizontalPadding);
+            hoverProxyVerticalPadding = Mathf.Max(0f, hoverProxyVerticalPadding);
             demoMaxCards = Mathf.Clamp(demoMaxCards, 1, MaxHandCards);
             layoutSolver.SetReferenceAnchors(referenceAnchors);
         }

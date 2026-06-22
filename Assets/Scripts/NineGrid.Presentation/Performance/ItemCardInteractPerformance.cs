@@ -19,6 +19,8 @@ namespace NineGrid.Presentation.Performance
         [SerializeField, Min(0f)] private float focusDuration = 0.2f;
         [SerializeField] private Ease focusEase = Ease.OutQuad;
         [SerializeField, Min(0)] private int focusSortingBoost = 10;
+        [SerializeField, Min(0)] private int focusSortingOrderFloor = 1000;
+        [SerializeField, Min(0)] private int dragSortingOrderFloor = 1001;
         [SerializeField, Range(0f, 1f)] private float dimmedAlpha = 0.4f;
 
         [Header("Drag")]
@@ -49,6 +51,8 @@ namespace NineGrid.Presentation.Performance
         private Transform draggingActor;
         private Sequence layoutSequence;
         private Coroutine deferCoroutine;
+        private bool dragTintKnown;
+        private bool dragTintInZone;
 
         private struct ActorVisualState
         {
@@ -67,6 +71,8 @@ namespace NineGrid.Presentation.Performance
         private void OnValidate()
         {
             focusDuration = Mathf.Max(0f, focusDuration);
+            focusSortingOrderFloor = Mathf.Max(0, focusSortingOrderFloor);
+            dragSortingOrderFloor = Mathf.Max(0, dragSortingOrderFloor);
             layoutDuration = Mathf.Max(0f, layoutDuration);
             returnDuration = Mathf.Max(0.01f, returnDuration);
             confirmDuration = Mathf.Max(0.01f, confirmDuration);
@@ -240,7 +246,9 @@ namespace NineGrid.Presentation.Performance
             SpriteRenderer focusedRenderer = GetPrimaryRenderer(focused);
             if (focusedRenderer != null)
             {
-                int boostedOrder = actorStates[focused].BaselineSortingOrder + focusSortingBoost;
+                int boostedOrder = Mathf.Max(
+                    actorStates[focused].BaselineSortingOrder + focusSortingBoost,
+                    focusSortingOrderFloor);
                 Tween sort = DOTween
                     .To(() => focusedRenderer.sortingOrder, value => focusedRenderer.sortingOrder = value, boostedOrder, focusDuration)
                     .SetEase(focusEase)
@@ -302,13 +310,17 @@ namespace NineGrid.Presentation.Performance
             }
 
             draggingActor = actor;
+            dragTintKnown = false;
+            dragTintInZone = false;
             EnsureBaseline(actor);
             KillActorTweens(actor);
 
             SpriteRenderer renderer = GetPrimaryRenderer(actor);
             if (renderer != null)
             {
-                int boostedOrder = actorStates[actor].BaselineSortingOrder + focusSortingBoost + 1;
+                int boostedOrder = Mathf.Max(
+                    actorStates[actor].BaselineSortingOrder + focusSortingBoost + 1,
+                    dragSortingOrderFloor);
                 renderer.sortingOrder = boostedOrder;
             }
         }
@@ -328,6 +340,14 @@ namespace NineGrid.Presentation.Performance
                 return;
             }
 
+            if (dragTintKnown && dragTintInZone == inZone)
+            {
+                return;
+            }
+
+            dragTintKnown = true;
+            dragTintInZone = inZone;
+
             Color targetTint = inZone ? inZoneTint : outOfZoneTint;
             Color baseline = actorStates.TryGetValue(actor, out ActorVisualState state)
                 ? state.BaselineColor
@@ -342,6 +362,8 @@ namespace NineGrid.Presentation.Performance
         public void EndDrag()
         {
             draggingActor = null;
+            dragTintKnown = false;
+            dragTintInZone = false;
         }
 
         public void PlayReturn(Transform actor, Vector3 targetLocalPosition, int targetSortingOrder, Action onComplete)
@@ -452,6 +474,8 @@ namespace NineGrid.Presentation.Performance
 
             focusedActor = null;
             draggingActor = null;
+            dragTintKnown = false;
+            dragTintInZone = false;
         }
 
         private void ApplyLayoutInstant(IReadOnlyList<Transform> actors, IReadOnlyList<HandCardLayoutTarget> targets)

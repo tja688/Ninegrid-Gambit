@@ -12,7 +12,7 @@ namespace NineGrid.Presentation.FSM
     }
 
     /// <summary>
-    /// 手牌数据驱动布局：最左锚点固定，2~5 张间距在最小遮盖与五张预设跨度之间插值。
+    /// 手牌数据驱动布局：最左锚点固定，间距受 5 张预设首末锚点夹制，避免动态排位越界。
     /// </summary>
     [Serializable]
     public sealed class HandCardLayoutSolver
@@ -22,12 +22,15 @@ namespace NineGrid.Presentation.FSM
 
         [Header("Layout")]
         [SerializeField] private Vector3 leftAnchorLocal = new(-1.28125f, 0f, 0f);
+        [SerializeField] private Vector3 rightAnchorLocal = Vector3.zero;
         [SerializeField, Min(0.01f)] private float cardWidth = 1.625f;
         [SerializeField, Range(0f, 0.95f)] private float minOverlapRatio = 1f / 3f;
         [SerializeField, Min(1)] private int maxCardCount = 5;
         [SerializeField] private int baseSortingOrder = 1;
 
         public Vector3 LeftAnchorLocal => leftAnchorLocal;
+        public Vector3 RightAnchorLocal => rightAnchorLocal;
+        public float CardWidth => cardWidth;
 
         public void ResolveFromReferenceAnchors()
         {
@@ -40,6 +43,15 @@ namespace NineGrid.Presentation.FSM
             if (left != null)
             {
                 leftAnchorLocal = left.localPosition;
+            }
+
+            if (referenceAnchors.Length >= maxCardCount)
+            {
+                Transform right = referenceAnchors[maxCardCount - 1];
+                if (right != null)
+                {
+                    rightAnchorLocal = right.localPosition;
+                }
             }
         }
 
@@ -54,18 +66,23 @@ namespace NineGrid.Presentation.FSM
             float spacingAt5 = ResolveSpacingAtMax();
             float spacingAt2 = cardWidth * (1f - minOverlapRatio);
 
+            float spacing;
             if (count <= 2)
             {
-                return spacingAt2;
+                spacing = spacingAt2;
             }
-
-            if (count >= maxCardCount)
+            else if (count >= maxCardCount)
             {
-                return spacingAt5;
+                spacing = spacingAt5;
+            }
+            else
+            {
+                float t = (count - 2f) / Mathf.Max(1f, maxCardCount - 2);
+                spacing = Mathf.Lerp(spacingAt2, spacingAt5, t);
             }
 
-            float t = (count - 2f) / Mathf.Max(1f, maxCardCount - 2);
-            return Mathf.Lerp(spacingAt2, spacingAt5, t);
+            float maxSpacingWithinAnchors = ResolveMaxSpacingWithinAnchors(count);
+            return Mathf.Min(spacing, maxSpacingWithinAnchors);
         }
 
         public void BuildLayout(int count, IList<HandCardLayoutTarget> results)
@@ -119,6 +136,22 @@ namespace NineGrid.Presentation.FSM
             }
 
             return 0.3203125f;
+        }
+
+        private float ResolveMaxSpacingWithinAnchors(int count)
+        {
+            if (count <= 1)
+            {
+                return 0f;
+            }
+
+            float span = rightAnchorLocal.x - leftAnchorLocal.x;
+            if (span <= 0f)
+            {
+                span = ResolveSpacingAtMax() * Mathf.Max(1, maxCardCount - 1);
+            }
+
+            return Mathf.Max(0f, span / (count - 1));
         }
 
         public void SetReferenceAnchors(Transform[] anchors)
