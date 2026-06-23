@@ -18,6 +18,7 @@ namespace NineGrid.Presentation.Adaptors
         [SerializeField] private TableNineBoardAdaptor boardAdaptor;
         [SerializeField] private TableNineCardDeckAdaptor deckAdaptor;
         [SerializeField] private TableNineItemAdaptor itemAdaptor;
+        [SerializeField] private TableNineEffectAdaptor effectAdaptor;
 
         private Coroutine mPlaybackCoroutine;
         private int mLastPlayedBatchId;
@@ -95,6 +96,13 @@ namespace NineGrid.Presentation.Adaptors
                         batch.Instructions,
                         batch.Snapshot);
                 }
+                else if (effectAdaptor != null && effectAdaptor.CanHandle(instruction))
+                {
+                    yield return effectAdaptor.PlayInstruction(
+                        instruction,
+                        batch.Instructions,
+                        batch.Snapshot);
+                }
                 else if (boardAdaptor != null && boardAdaptor.CanHandle(instruction))
                 {
                     yield return boardAdaptor.PlayInstruction(
@@ -143,6 +151,11 @@ namespace NineGrid.Presentation.Adaptors
             if (itemAdaptor == null)
             {
                 itemAdaptor = GetComponent<TableNineItemAdaptor>();
+            }
+
+            if (effectAdaptor == null)
+            {
+                effectAdaptor = GetComponent<TableNineEffectAdaptor>();
             }
 
             if (boardAdaptor != null && viewRegistry != null && boardAdaptor.ViewRegistry == null)
