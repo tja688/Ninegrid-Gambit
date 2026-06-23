@@ -32,7 +32,7 @@ namespace NineGrid.Presentation.FSM
     /// 场地卡交互 FSM：Hover 本地反馈，Confirm 发 Attack/Pickup/ClickEmpty Command。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class BoardInteractionFsm : MonoBehaviour, IController
+    public sealed class BoardInteractionFsm : MonoBehaviour, IController, IFlowShellManagedInteraction
     {
         [Header("References")]
         [SerializeField] private InputLockGate inputLockGate;
@@ -55,6 +55,16 @@ namespace NineGrid.Presentation.FSM
 
         public BoardInteractionState State => state;
         public BoardInteractionSubMode SubMode => subMode;
+
+        public void SetFlowShellInteractionEnabled(bool enabled)
+        {
+            pointerInputEnabled = enabled;
+            if (!enabled)
+            {
+                ClearHover();
+                SetState(BoardInteractionState.Idle);
+            }
+        }
 
         public IArchitecture GetArchitecture()
         {

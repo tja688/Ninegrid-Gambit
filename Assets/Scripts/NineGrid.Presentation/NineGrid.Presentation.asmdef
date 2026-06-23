@@ -5,7 +5,8 @@
         "NineGrid.Core",
         "NineGrid.Content",
         "QFramework",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "DamageNumbersPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

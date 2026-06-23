@@ -30,7 +30,7 @@ namespace NineGrid.Presentation.FSM
     /// 道具卡交互 FSM：Hover/Drag 本地反馈；MVP 不发 UseItemCommand（场地主导 V0.6）。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class ItemCardInteractionFsm : MonoBehaviour, IController
+    public sealed class ItemCardInteractionFsm : MonoBehaviour, IController, IFlowShellManagedInteraction
     {
         private const int MaxHandCards = 5;
         private const float MaxResponsiveDragThresholdPixels = 2f;
@@ -92,6 +92,17 @@ namespace NineGrid.Presentation.FSM
 
         public ItemCardInteractionState State => state;
         public bool DemoModeEnabled => demoModeEnabled;
+
+        public void SetFlowShellInteractionEnabled(bool enabled)
+        {
+            pointerInputEnabled = enabled;
+            if (!enabled)
+            {
+                interactPerformance?.StopAndRestore();
+                SetState(ItemCardInteractionState.Idle);
+                ClearPointerState();
+            }
+        }
 
         public IArchitecture GetArchitecture()
         {
