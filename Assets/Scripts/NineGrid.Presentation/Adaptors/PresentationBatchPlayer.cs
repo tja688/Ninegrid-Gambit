@@ -16,6 +16,7 @@ namespace NineGrid.Presentation.Adaptors
     {
         [SerializeField] private TableNineViewRegistry viewRegistry;
         [SerializeField] private TableNineBoardAdaptor boardAdaptor;
+        [SerializeField] private TableNineCardDeckAdaptor deckAdaptor;
 
         private Coroutine mPlaybackCoroutine;
         private int mLastPlayedBatchId;
@@ -71,23 +72,38 @@ namespace NineGrid.Presentation.Adaptors
             }
 
             mLastPlayedBatchId = batch.BatchId;
-            BoardBatchPlan plan = BoardBatchPlan.Build(batch.Instructions);
+            BoardBatchPlan boardPlan = BoardBatchPlan.Build(batch.Instructions);
+            DeckBatchPlan deckPlan = DeckBatchPlan.Build(batch.Instructions);
 
             for (var i = 0; i < batch.Instructions.Count; i++)
             {
                 PresentationInstruction instruction = batch.Instructions[i];
-                if (boardAdaptor != null && boardAdaptor.CanHandle(instruction))
+                if (deckAdaptor != null && deckAdaptor.CanHandle(instruction))
+                {
+                    yield return deckAdaptor.PlayInstruction(
+                        instruction,
+                        batch.Instructions,
+                        deckPlan,
+                        i,
+                        batch.Snapshot);
+                }
+                else if (boardAdaptor != null && boardAdaptor.CanHandle(instruction))
                 {
                     yield return boardAdaptor.PlayInstruction(
                         instruction,
                         batch.Instructions,
-                        plan,
+                        boardPlan,
                         batch.Snapshot);
                 }
             }
 
             if (viewRegistry != null && batch.Snapshot != null)
             {
+                if (deckAdaptor != null)
+                {
+                    deckAdaptor.AlignDeckFromSnapshot(batch.Snapshot);
+                }
+
                 viewRegistry.AlignBoardFromSnapshot(batch.Snapshot);
             }
 
@@ -109,6 +125,11 @@ namespace NineGrid.Presentation.Adaptors
             if (boardAdaptor == null)
             {
                 boardAdaptor = GetComponent<TableNineBoardAdaptor>();
+            }
+
+            if (deckAdaptor == null)
+            {
+                deckAdaptor = GetComponent<TableNineCardDeckAdaptor>();
             }
 
             if (boardAdaptor != null && viewRegistry != null && boardAdaptor.ViewRegistry == null)

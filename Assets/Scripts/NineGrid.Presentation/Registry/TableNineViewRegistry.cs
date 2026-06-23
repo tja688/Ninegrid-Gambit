@@ -10,6 +10,7 @@ namespace NineGrid.Presentation.Registry
     {
         Board,
         Hand,
+        Deck,
         Other
     }
 
