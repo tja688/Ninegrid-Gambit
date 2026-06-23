@@ -74,9 +74,9 @@ Idle ──enter──► Hover ──press/drag──► Drag ──┬── v
 
 ```text
 正常态 ──IsInputLocked=true──► Watching
-  - 强制退出：Selected / Hold / Drag / TargetingAssist / Confirm 悬停
+  - 强制退出：Hover / Selected / Hold / Drag / TargetingAssist / Confirm 悬停
   - Session.Cancel()
-  - 保持：Hover（只读）
+  - 观演期拒绝一切指针交互（含 Hover）
 Watching ──IsInputLocked=false──► Idle
 ```
 

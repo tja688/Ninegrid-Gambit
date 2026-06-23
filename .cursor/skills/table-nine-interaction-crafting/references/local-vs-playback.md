@@ -26,7 +26,7 @@
 用户 Click        → FSM: Hover→Selected    → LocalFeedback.Play
 用户 Confirm 攻击 → FSM: Selected→Cmd      → SendCommand(Attack)
 内核单帧结算      → Batch 推送             → InputLockGate: locked
-FSM              → Watching               → 吞操作，Hover 仍可用
+FSM              → Watching               → 吞一切指针交互（含 Hover）
 PresentationBatchPlayer 播完             → PresentationFinishedCommand
 InputLockGate    → unlocked               → FSM: Watching→Idle
 ```

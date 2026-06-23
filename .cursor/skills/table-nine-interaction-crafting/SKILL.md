@@ -10,7 +10,7 @@ description: >-
 
 # TableNine 交互 FSM + 本地反馈
 
-**心智模型：泳道 B（交互 FSM）直驱本地反馈；Confirm 才发 Command；输入锁升起时整泳道进 Watching，只留只读 Hover。**
+**心智模型：泳道 B（交互 FSM）直驱本地反馈；Confirm 才发 Command；输入锁升起时整泳道进 Watching，拒绝一切指针交互（含 Hover）。**
 
 表现层三泳道（见 [`Assets/Notes/表现层方法论.md`](Assets/Notes/表现层方法论.md) 与表现层 canvas V0.2）：
 
@@ -41,7 +41,7 @@ description: >-
    - 只是输入反馈？→ 泳道 B 直驱 `*Performance`，**不发 Command**。
    - 需要别的表演"配合"？→ **不存在**；靠输入锁 + 批末快照对齐，不靠 FSM 互等。
 2. **盲目乐观 ≠ 输入锁。** 解锁态：用户 Confirm → 先发 Command，内核裁决；`ActionRejected` → 轻量 `ShowRejectedIntent` 本地反馈。**不要**在发 Command 前用 Query 挡操作。
-3. **锁起进 Watching。** `IPresentationSyncSystem.IsInputLocked == true` 时，交互 FSM 进入观演子态：吞掉一切可改状态的交互（点击攻击、拖拽道具、Confirm），**仅保留只读 Hover**（介绍/高亮）。
+3. **锁起进 Watching。** `IPresentationSyncSystem.IsInputLocked == true` 时，交互 FSM 进入观演子态：吞掉一切指针交互（含 Hover、点击、拖拽、Confirm）；已激活的 Selected/Drag/Hold 本地反馈须 OnExit 还原。
 4. **状态驱动反馈，Confirm 驱动意图。** `Idle→Hover→Selected→Hold/Drag` 每个进入/退出调对应 `LocalFeedbackPerformance`；只有落到 `*Command` 节点时才 `SendCommand`。
 5. **演员按 `CardUid`、锚点按 `SlotId`。** 本地反馈只移动/高亮已有演员，不 reparent、不改 Model。位置是数据，不是父子关系（见表现层方法论 §三）。
 6. **多了吃掉、少了去补、对不上就问。** 交互所需只读信息缺了 → 补 Core Query/Command 字段；**不在 FSM 造假**；映射歧义用 AskQuestion。
@@ -55,7 +55,7 @@ Task Progress:
 - [ ] 3. 对齐 Command：查 Core 已有 Command；Confirm 发什么、带哪些参数
 - [ ] 4. 本地反馈：已有 *Performance 则挂载调用；没有则走 performance-crafting 先烘焙
 - [ ] 5. 写 FSM + InputLockGate 订阅：解锁/锁起、Watching 分支、Rejected 反馈
-- [ ] 6. 验证：解锁态 Confirm→Command→锁起→Watching；批末 Finished→解锁；Hover 全程可用
+- [ ] 6. 验证：解锁态 Confirm→Command→锁起→Watching；批末 Finished→解锁；观演期无 Hover/Click/Drag
 ```
 
 ### Step 1 — 听描述
@@ -106,9 +106,8 @@ Task Progress:
 
 ```text
 IsInputLocked == true:
-  - 忽略：click / drag / confirm / 发 Command
-  - 允许：Hover（只读介绍/高亮）
-  - 本地反馈：仅 Hover 类；Selected/Drag/Hold 若已激活则 OnExit 还原
+  - 忽略：hover / click / drag / confirm / 发 Command
+  - 本地反馈：Selected/Drag/Hold/Hover 若已激活则 OnExit 还原；观演期不再 Play 新反馈
 IsInputLocked == false:
   - 恢复正常 FSM 转移
 ```
@@ -122,7 +121,7 @@ IsInputLocked == false:
 ### Step 6 — 验证
 
 - 解锁：Hover 有反馈；Selected/Hold/Drag 跟手；Confirm 发出正确 Command
-- 锁起：Confirm/Click 无效；Hover 仍可用；无 Command 泄漏
+- 锁起：Confirm/Click/Hover/Drag 均无效；无 Command 泄漏；无本地反馈泄漏
 - Reject：`ActionRejected` 事件 → `ShowRejectedIntent`（轻提示/抖动），FSM 回 Idle 或保持 Selected（按设计）
 - 批末：`PresentationFinishedCommand` → 解锁 → FSM 退出 Watching
 
@@ -155,7 +154,7 @@ IsInputLocked == false:
 - 为动画 reparent 演员到槽位子节点
 - 把内核 Batch 路由逻辑写进交互 FSM（那是 adapter 的事）
 - 每种选择各开一个 FSM（应用 `SelectionOverlayMode` 参数化）
-- 锁起时仍允许 Drag/Confirm
+- 锁起时仍允许 Hover/Drag/Confirm
 
 ## References
 

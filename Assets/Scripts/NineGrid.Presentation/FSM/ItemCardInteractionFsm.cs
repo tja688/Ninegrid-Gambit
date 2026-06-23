@@ -396,28 +396,6 @@ namespace NineGrid.Presentation.FSM
                     hoveredEntry = default;
                 }
             }
-            else if (isWatching)
-            {
-                HandCardEntry hit = ResolveHandCardIntent(Input.mousePosition);
-                if (hit.Actor != null)
-                {
-                    if (hoveredEntry.Actor != hit.Actor)
-                    {
-                        if (hoveredEntry.Actor != null)
-                        {
-                            ExitHover();
-                        }
-
-                        hoveredEntry = hit;
-                        EnterHover(hit);
-                    }
-                }
-                else if (hoveredEntry.Actor != null)
-                {
-                    ExitHover();
-                    hoveredEntry = default;
-                }
-            }
         }
 
         private void EnterHover(HandCardEntry entry)

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace NineGrid.Presentation.FSM
 {
     /// <summary>
-    /// 镜像 <see cref="IPresentationSyncSystem.IsInputLocked"/>，向交互 FSM 广播 Watching 状态。
+    /// 镜像 <see cref="IPresentationSyncSystem.IsInputLocked"/>，向交互 FSM 广播 Watching 状态（观演期拒绝一切指针交互，含 Hover）。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class InputLockGate : MonoBehaviour, IController

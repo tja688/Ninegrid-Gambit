@@ -69,7 +69,7 @@ flowchart TB
 
 ### 现有 ItemFsm 行为要点
 
-- Watching 已实现：Drag 强制回手、Hover 退出，符合 skill 硬约束。
+- Watching 已实现：Drag 强制回手、Hover 退出；观演期拒绝一切指针交互。
 - `ConfirmUse` + `SendUseItemCommand(uid)` 仅支持 ApplyZone 单参，与 V0.6 冲突且 MVP 不需要。
 - 场景 [`MainScene.unity`](Assets/Scenes/MainScene.unity) 已挂 `InputLockGate`、`ItemCardInteractionFsm`、`PresentationBatchPlayer`、`TableNineViewRegistry`、`TableNineBoardAdaptor`。
 
@@ -80,7 +80,7 @@ flowchart TB
 1. **场地**：鼠标悬停场地卡有高亮；单击相邻格发出正确 Command（Monster→`AttackCommand`，其他卡→`PickupItemCommand`，空格→`ClickEmptyCommand`）。
 2. **道具手牌**：Hover/Drag/空白松手回手；**释放区松手也回手**（不发 `UseItemCommand`）。
 3. **互斥**：道具 Drag 期间，场地 FSM 冻结常态 hover/click（对齐 canvas `道具使用 idle ≠ 父 idle`）。
-4. **输入锁**：Command 接受后升锁 → 两 FSM 进 Watching（仅只读 Hover）；`PresentationFinishedCommand` 批末解锁。
+4. **输入锁**：Command 接受后升锁 → 两 FSM 进 Watching（拒绝一切指针交互，含 Hover）；`PresentationFinishedCommand` 批末解锁。
 5. **回放闭环**：Board Command 后 `PresentationBatchPlayer` 播放批次并对齐快照。
 6. **Reject**：`Evt_ActionRejected` 触发轻量抖动（复用 `ItemCardInteractPerformance.PlayReject` 或 `CardShakePerformance`）。
 
@@ -114,7 +114,7 @@ event Action ItemDragEnded;        // return or cancel
 Idle ──pointer enter──► Hover ──click──► SendCommand ──► Idle
   ▲         │                              (立即清理 Selected 类反馈)
   │         └──pointer exit──► Idle
-  └── Watching（InputLockGate）：吞 click；Hover 只读
+  └── Watching（InputLockGate）：吞一切指针交互（含 Hover）
   └── ItemDragActive：抑制 Normal（由 Coordinator 门控）
 ```
 
