@@ -5,17 +5,25 @@ using UnityEngine;
 namespace NineGrid.Presentation.Performance
 {
     /// <summary>
-    /// 场地卡 Hover 本地反馈：Y 偏移 + sorting boost（烘焙自 ItemCardInteract focus 参数）。
+    /// 场地卡 Hover 本地反馈：烘焙自场景 NineGrid PreChoise / NineGrid Deselect Timeline。
+    /// 进入：均匀放大 + Z 轴 wobble（10° → -10° → 基准）；退出：相对缩小 -0.1。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CardHoverPerformance : MonoBehaviour
     {
-        [Header("Focus (Hover)")]
-        [SerializeField] private Vector3 focusLocalOffset = new(0f, 0.3f, 0f);
-        [SerializeField, Min(0f)] private float focusDuration = 0.2f;
+        [Header("Focus Enter (NineGrid PreChoise)")]
+        [SerializeField] private float focusScaleDelta = 0.1f;
+        [SerializeField, Min(0f)] private float focusScaleDuration = 0.3f;
+        [SerializeField, Min(0f)] private float focusWobbleStepDuration = 0.1f;
+        [SerializeField, Min(0f)] private float focusWobbleSecondDelay = 0.1f;
+        [SerializeField, Min(0f)] private float focusWobbleThirdDelay = 0.2f;
+        [SerializeField] private float focusWobbleAngleZ = 10f;
         [SerializeField] private Ease focusEase = Ease.OutQuad;
-        [SerializeField, Min(0)] private int focusSortingBoost = 10;
-        [SerializeField, Min(0)] private int focusSortingOrderFloor = 1000;
+
+        [Header("Focus Exit (NineGrid Deselect)")]
+        [SerializeField] private float deselectScaleDelta = -0.1f;
+        [SerializeField, Min(0f)] private float deselectDuration = 0.1f;
+        [SerializeField] private Ease deselectEase = Ease.OutQuad;
 
         [Header("Reject")]
         [SerializeField, Min(0.01f)] private float rejectShakeDuration = 0.25f;
@@ -24,12 +32,18 @@ namespace NineGrid.Presentation.Performance
         [Header("Playback")]
         [SerializeField] private bool ignoreTimeScale;
 
+        [Header("Preview")]
+        [SerializeField] private Transform previewActor;
+        [SerializeField] private GameObject cardPreviewPrefab;
+
         private readonly Dictionary<Transform, ActorVisualState> actorStates = new();
         private Transform focusedActor;
 
         private struct ActorVisualState
         {
             public Vector3 BaselineLocalPosition;
+            public Vector3 BaselineLocalScale;
+            public Vector3 BaselineLocalEuler;
             public int BaselineSortingOrder;
             public bool HasBaseline;
         }
@@ -41,8 +55,11 @@ namespace NineGrid.Presentation.Performance
 
         private void OnValidate()
         {
-            focusDuration = Mathf.Max(0f, focusDuration);
-            focusSortingOrderFloor = Mathf.Max(0, focusSortingOrderFloor);
+            focusScaleDuration = Mathf.Max(0f, focusScaleDuration);
+            focusWobbleStepDuration = Mathf.Max(0f, focusWobbleStepDuration);
+            focusWobbleSecondDelay = Mathf.Max(0f, focusWobbleSecondDelay);
+            focusWobbleThirdDelay = Mathf.Max(0f, focusWobbleThirdDelay);
+            deselectDuration = Mathf.Max(0f, deselectDuration);
             rejectShakeDuration = Mathf.Max(0.01f, rejectShakeDuration);
         }
 
@@ -53,49 +70,31 @@ namespace NineGrid.Presentation.Performance
                 return;
             }
 
-            StopAndRestore(actor);
-            focusedActor = actor;
-            EnsureBaseline(actor);
             KillActorTweens(actor);
+            EnsureBaseline(actor);
+            SnapActorVisual(actor);
+            focusedActor = actor;
 
-            Vector3 focusPosition = actorStates[actor].BaselineLocalPosition + focusLocalOffset;
-            Tween move = actor
-                .DOLocalMove(focusPosition, focusDuration)
-                .SetEase(focusEase)
-                .SetTarget(actor);
-            ApplyTweenSettings(move);
+            ActorVisualState state = actorStates[actor];
+            Vector3 baselineEuler = state.BaselineLocalEuler;
+            float wobble = focusWobbleAngleZ;
 
-            SpriteRenderer renderer = GetPrimaryRenderer(actor);
-            if (renderer != null)
-            {
-                int boostedOrder = Mathf.Max(
-                    actorStates[actor].BaselineSortingOrder + focusSortingBoost,
-                    focusSortingOrderFloor);
-                Tween sort = TweenSortingOrder(renderer, boostedOrder, focusDuration, focusEase);
-                ApplyTweenSettings(sort);
-            }
+            Sequence sequence = DOTween.Sequence().SetTarget(actor);
+            Tween scaleTween = actor
+                .DOScale(Vector3.one * focusScaleDelta, focusScaleDuration)
+                .SetRelative(true)
+                .SetEase(focusEase);
+            ApplyTweenSettings(scaleTween);
+            sequence.Insert(0f, scaleTween);
+
+            AppendWobbleStep(sequence, actor, baselineEuler + new Vector3(0f, 0f, wobble), 0f);
+            AppendWobbleStep(sequence, actor, baselineEuler + new Vector3(0f, 0f, -wobble), focusWobbleSecondDelay);
+            AppendWobbleStep(sequence, actor, baselineEuler, focusWobbleThirdDelay);
         }
 
         public void StopAndRestore(Transform actor = null)
         {
-            if (actor != null)
-            {
-                RestoreActorVisual(actor, focusDuration);
-                if (ReferenceEquals(focusedActor, actor))
-                {
-                    focusedActor = null;
-                }
-
-                return;
-            }
-
-            var actors = new List<Transform>(actorStates.Keys);
-            for (var i = 0; i < actors.Count; i++)
-            {
-                RestoreActorVisual(actors[i], 0f);
-            }
-
-            focusedActor = null;
+            StopAndRestore(actor, immediate: actor == null);
         }
 
         public void PlayReject(Transform actor)
@@ -116,7 +115,7 @@ namespace NineGrid.Presentation.Performance
             {
                 if (actor != null)
                 {
-                    RestoreActorVisual(actor, 0f);
+                    SnapActorVisual(actor);
                 }
             });
         }
@@ -139,7 +138,102 @@ namespace NineGrid.Presentation.Performance
             actorStates[actor] = state;
         }
 
-        private void RestoreActorVisual(Transform actor, float duration)
+        [ContextMenu("Play Preview Hover")]
+        private void PlayPreviewHover()
+        {
+            Transform actor = EnsurePreviewActor();
+            if (actor == null)
+            {
+                return;
+            }
+
+            Play(actor);
+        }
+
+        [ContextMenu("Play Preview Deselect")]
+        private void PlayPreviewDeselect()
+        {
+            Transform actor = EnsurePreviewActor();
+            if (actor == null)
+            {
+                return;
+            }
+
+            Play(actor);
+            StopAndRestore(actor);
+        }
+
+        private void StopAndRestore(Transform actor, bool immediate)
+        {
+            if (actor != null)
+            {
+                if (immediate)
+                {
+                    SnapActorVisual(actor);
+                }
+                else
+                {
+                    PlayDeselect(actor);
+                }
+
+                if (ReferenceEquals(focusedActor, actor))
+                {
+                    focusedActor = null;
+                }
+
+                return;
+            }
+
+            var actors = new List<Transform>(actorStates.Keys);
+            for (var i = 0; i < actors.Count; i++)
+            {
+                SnapActorVisual(actors[i]);
+            }
+
+            focusedActor = null;
+        }
+
+        private void PlayDeselect(Transform actor)
+        {
+            if (actor == null)
+            {
+                return;
+            }
+
+            KillActorTweens(actor);
+            EnsureBaseline(actor);
+
+            if (deselectDuration <= 0f || Mathf.Approximately(deselectScaleDelta, 0f))
+            {
+                SnapActorVisual(actor);
+                return;
+            }
+
+            Tween scaleTween = actor
+                .DOScale(Vector3.one * deselectScaleDelta, deselectDuration)
+                .SetRelative(true)
+                .SetEase(deselectEase)
+                .SetTarget(actor);
+            ApplyTweenSettings(scaleTween);
+            scaleTween.OnComplete(() =>
+            {
+                if (actor != null)
+                {
+                    SnapActorVisual(actor);
+                }
+            });
+        }
+
+        private void AppendWobbleStep(Sequence sequence, Transform actor, Vector3 targetEuler, float atTime)
+        {
+            Tween rotateTween = actor
+                .DOLocalRotate(targetEuler, focusWobbleStepDuration)
+                .SetEase(focusEase);
+            ApplyTweenSettings(rotateTween);
+            sequence.Insert(atTime, rotateTween);
+        }
+
+        private void SnapActorVisual(Transform actor)
         {
             if (actor == null || !actorStates.TryGetValue(actor, out ActorVisualState state))
             {
@@ -147,30 +241,14 @@ namespace NineGrid.Presentation.Performance
             }
 
             KillActorTweens(actor);
+            actor.localPosition = state.BaselineLocalPosition;
+            actor.localScale = state.BaselineLocalScale;
+            actor.localEulerAngles = state.BaselineLocalEuler;
 
-            if (duration <= 0f)
+            SpriteRenderer renderer = GetPrimaryRenderer(actor);
+            if (renderer != null)
             {
-                actor.localPosition = state.BaselineLocalPosition;
-                SpriteRenderer renderer = GetPrimaryRenderer(actor);
-                if (renderer != null)
-                {
-                    renderer.sortingOrder = state.BaselineSortingOrder;
-                }
-
-                return;
-            }
-
-            Tween move = actor
-                .DOLocalMove(state.BaselineLocalPosition, duration)
-                .SetEase(focusEase)
-                .SetTarget(actor);
-            ApplyTweenSettings(move);
-
-            SpriteRenderer spriteRenderer = GetPrimaryRenderer(actor);
-            if (spriteRenderer != null)
-            {
-                Tween sort = TweenSortingOrder(spriteRenderer, state.BaselineSortingOrder, duration, focusEase);
-                ApplyTweenSettings(sort);
+                renderer.sortingOrder = state.BaselineSortingOrder;
             }
         }
 
@@ -179,6 +257,8 @@ namespace NineGrid.Presentation.Performance
             actorStates[actor] = new ActorVisualState
             {
                 BaselineLocalPosition = baselineLocalPosition,
+                BaselineLocalScale = actor.localScale,
+                BaselineLocalEuler = actor.localEulerAngles,
                 BaselineSortingOrder = baselineSortingOrder,
                 HasBaseline = true,
             };
@@ -192,7 +272,10 @@ namespace NineGrid.Presentation.Performance
             }
 
             SpriteRenderer renderer = GetPrimaryRenderer(actor);
-            RegisterBaseline(actor, actor.localPosition, renderer != null ? renderer.sortingOrder : 0);
+            RegisterBaseline(
+                actor,
+                actor.localPosition,
+                renderer != null ? renderer.sortingOrder : 0);
         }
 
         private void KillActorTweens(Transform actor)
@@ -210,6 +293,25 @@ namespace NineGrid.Presentation.Performance
             }
         }
 
+        private Transform EnsurePreviewActor()
+        {
+            if (previewActor != null)
+            {
+                return previewActor;
+            }
+
+            if (cardPreviewPrefab == null)
+            {
+                Debug.LogWarning($"{nameof(CardHoverPerformance)} preview actor is not assigned.", this);
+                return null;
+            }
+
+            GameObject instance = Instantiate(cardPreviewPrefab, transform);
+            instance.name = $"{cardPreviewPrefab.name} (Hover Preview)";
+            previewActor = instance.transform;
+            return previewActor;
+        }
+
         private void ApplyTweenSettings(Tween tween)
         {
             if (tween == null)
@@ -221,25 +323,6 @@ namespace NineGrid.Presentation.Performance
             {
                 tween.SetUpdate(true);
             }
-        }
-
-        private static Tween TweenSortingOrder(SpriteRenderer renderer, int endValue, float duration, Ease ease)
-        {
-            if (renderer == null)
-            {
-                return null;
-            }
-
-            return DOTween
-                .To(() => renderer != null ? renderer.sortingOrder : endValue, value =>
-                {
-                    if (renderer != null)
-                    {
-                        renderer.sortingOrder = value;
-                    }
-                }, endValue, duration)
-                .SetEase(ease)
-                .SetTarget(renderer);
         }
 
         private static SpriteRenderer GetPrimaryRenderer(Transform actor)
