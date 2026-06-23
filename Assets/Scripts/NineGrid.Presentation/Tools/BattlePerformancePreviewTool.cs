@@ -6,15 +6,17 @@ using UnityEngine;
 namespace NineGrid.Presentation.Tools
 {
     /// <summary>
-    /// 战斗表演预览壳：按 6 触发攻击、按 7 触发击杀；每次按键轮换方向（右→上→左→下）。
-    /// 自动在锚点生成玩家/敌人占位演员并驱动 CardAttack/CardKill Performance。
+    /// 战斗表演预览壳：按 6 玩家攻击、按 7 怪物反击、按 8 怪物击杀玩家、按 9 玩家击杀怪；
+    /// 每次按键轮换方向（右→上→左→下）。自动在锚点生成占位演员并驱动对应 Performance。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BattlePerformancePreviewTool : MonoBehaviour
     {
         [Header("Hotkeys")]
         [SerializeField] private KeyCode attackKey = KeyCode.Alpha6;
-        [SerializeField] private KeyCode killKey = KeyCode.Alpha7;
+        [SerializeField] private KeyCode counterattackKey = KeyCode.Alpha7;
+        [SerializeField] private KeyCode counterattackKillKey = KeyCode.Alpha8;
+        [SerializeField] private KeyCode killKey = KeyCode.Alpha9;
 
         [Header("Stage")]
         [SerializeField] private Transform stageRoot;
@@ -34,10 +36,14 @@ namespace NineGrid.Presentation.Tools
         [Header("Performances")]
         [SerializeField] private CardAttackPerformance attackPerformance;
         [SerializeField] private CardKillPerformance killPerformance;
+        [SerializeField] private CounterattackPerformance counterattackPerformance;
+        [SerializeField] private CounterattackKillPerformance counterattackKillPerformance;
 
         private readonly List<Transform> spawnedActors = new();
         private int attackDirectionCursor;
         private int killDirectionCursor;
+        private int counterattackDirectionCursor;
+        private int counterattackKillDirectionCursor;
 
         private Transform ResolvedStageRoot => stageRoot != null ? stageRoot : transform;
         private Transform ResolvedActorsRoot => previewActorsRoot != null ? previewActorsRoot : ResolvedStageRoot;
@@ -57,6 +63,18 @@ namespace NineGrid.Presentation.Tools
             if (Input.GetKeyDown(attackKey))
             {
                 PlayAttackStep();
+                return;
+            }
+
+            if (Input.GetKeyDown(counterattackKey))
+            {
+                PlayCounterattackStep();
+                return;
+            }
+
+            if (Input.GetKeyDown(counterattackKillKey))
+            {
+                PlayCounterattackKillStep();
                 return;
             }
 
@@ -86,7 +104,7 @@ namespace NineGrid.Presentation.Tools
             attackPerformance.Play(player, enemy, direction);
         }
 
-        [ContextMenu("Play Kill Step (Same As Key 7)")]
+        [ContextMenu("Play Kill Step (Same As Key 9)")]
         public void PlayKillStep()
         {
             if (!Application.isPlaying)
@@ -106,6 +124,46 @@ namespace NineGrid.Presentation.Tools
             killPerformance.Play(player, enemy, direction);
         }
 
+        [ContextMenu("Play Counterattack Step (Same As Key 7)")]
+        public void PlayCounterattackStep()
+        {
+            if (!Application.isPlaying)
+            {
+                Debug.LogWarning($"[{nameof(BattlePerformancePreviewTool)}] Enter Play Mode first.", this);
+                return;
+            }
+
+            if (IsAnyPerformancePlaying())
+            {
+                return;
+            }
+
+            CardBattleDirection direction = CardBattleDirectionUtil.NextInCycle(ref counterattackDirectionCursor);
+            SetupActorsForDirection(direction, out Transform player, out Transform enemy);
+            EnsurePerformanceReferences();
+            counterattackPerformance.Play(enemy, player, direction);
+        }
+
+        [ContextMenu("Play Counterattack Kill Step (Same As Key 8)")]
+        public void PlayCounterattackKillStep()
+        {
+            if (!Application.isPlaying)
+            {
+                Debug.LogWarning($"[{nameof(BattlePerformancePreviewTool)}] Enter Play Mode first.", this);
+                return;
+            }
+
+            if (IsAnyPerformancePlaying())
+            {
+                return;
+            }
+
+            CardBattleDirection direction = CardBattleDirectionUtil.NextInCycle(ref counterattackKillDirectionCursor);
+            SetupActorsForDirection(direction, out Transform player, out Transform enemy);
+            EnsurePerformanceReferences();
+            counterattackKillPerformance.Play(enemy, player, direction);
+        }
+
         [ContextMenu("Clear Preview Actors")]
         public void ClearPreviewActors()
         {
@@ -116,6 +174,8 @@ namespace NineGrid.Presentation.Tools
         {
             attackPerformance?.StopAndRestore();
             killPerformance?.StopAndRestore();
+            counterattackPerformance?.StopAndRestore();
+            counterattackKillPerformance?.StopAndRestore();
 
             SelectionOptionVisual.DestroyActors(spawnedActors);
 
@@ -123,13 +183,17 @@ namespace NineGrid.Presentation.Tools
             {
                 attackDirectionCursor = 0;
                 killDirectionCursor = 0;
+                counterattackDirectionCursor = 0;
+                counterattackKillDirectionCursor = 0;
             }
         }
 
         private bool IsAnyPerformancePlaying()
         {
             return (attackPerformance != null && attackPerformance.IsPlaying)
-                || (killPerformance != null && killPerformance.IsPlaying);
+                || (killPerformance != null && killPerformance.IsPlaying)
+                || (counterattackPerformance != null && counterattackPerformance.IsPlaying)
+                || (counterattackKillPerformance != null && counterattackKillPerformance.IsPlaying);
         }
 
         private void SetupActorsForDirection(
@@ -268,6 +332,26 @@ namespace NineGrid.Presentation.Tools
             {
                 killPerformance = gameObject.AddComponent<CardKillPerformance>();
             }
+
+            if (counterattackPerformance == null)
+            {
+                counterattackPerformance = GetComponent<CounterattackPerformance>();
+            }
+
+            if (counterattackKillPerformance == null)
+            {
+                counterattackKillPerformance = GetComponent<CounterattackKillPerformance>();
+            }
+
+            if (counterattackPerformance == null)
+            {
+                counterattackPerformance = gameObject.AddComponent<CounterattackPerformance>();
+            }
+
+            if (counterattackKillPerformance == null)
+            {
+                counterattackKillPerformance = gameObject.AddComponent<CounterattackKillPerformance>();
+            }
         }
 
         private void OnDestroy()
@@ -281,6 +365,8 @@ namespace NineGrid.Presentation.Tools
             {
                 attackPerformance?.StopAndRestore();
                 killPerformance?.StopAndRestore();
+                counterattackPerformance?.StopAndRestore();
+                counterattackKillPerformance?.StopAndRestore();
             }
         }
     }

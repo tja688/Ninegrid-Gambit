@@ -36,6 +36,28 @@ namespace NineGrid.Presentation.Performance
             return current;
         }
 
+        public static CardBattleDirection Opposite(CardBattleDirection direction)
+        {
+            return direction switch
+            {
+                CardBattleDirection.Right => CardBattleDirection.Left,
+                CardBattleDirection.Left => CardBattleDirection.Right,
+                CardBattleDirection.Up => CardBattleDirection.Down,
+                CardBattleDirection.Down => CardBattleDirection.Up,
+                _ => direction,
+            };
+        }
+
+        public static Vector2 Opposite(Vector2 direction)
+        {
+            if (direction.sqrMagnitude < 0.0001f)
+            {
+                return Vector2.left;
+            }
+
+            return -direction.normalized;
+        }
+
         /// <summary>将「向右」烘焙空间偏移旋转到目标方向。</summary>
         public static Vector2 RotateFromCanonicalRight(Vector2 canonicalOffset, Vector2 direction)
         {
