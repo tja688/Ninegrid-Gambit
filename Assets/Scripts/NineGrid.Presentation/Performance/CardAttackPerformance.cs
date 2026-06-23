@@ -130,7 +130,41 @@ namespace NineGrid.Presentation.Performance
             Transform enemy,
             Vector2 direction,
             Vector3 playerBaselinePosition,
-            Vector3 playerBaselineScale)
+            Vector3 playerBaselineScale,
+            bool includeEnemyReturn = true)
+        {
+            Sequence sequence = DOTween.Sequence()
+                .SetTarget(this)
+                .SetAutoKill(true)
+                .Pause();
+
+            if (ignoreTimeScale)
+            {
+                sequence.SetUpdate(true);
+            }
+
+            InsertStrikeIntoSequence(
+                sequence,
+                player,
+                enemy,
+                direction,
+                playerBaselinePosition,
+                playerBaselineScale,
+                includeEnemyReturn);
+            return sequence;
+        }
+
+        /// <summary>
+        /// 将冲刺段直接插入宿主 Sequence（避免嵌套子序列导致并行淡出失效）。
+        /// </summary>
+        public void InsertStrikeIntoSequence(
+            Sequence sequence,
+            Transform player,
+            Transform enemy,
+            Vector2 direction,
+            Vector3 playerBaselinePosition,
+            Vector3 playerBaselineScale,
+            bool includeEnemyReturn = true)
         {
             Vector2 dir = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector2.right;
             Vector3 prep = CardBattleDirectionUtil.ToVector3(
@@ -141,16 +175,6 @@ namespace NineGrid.Presentation.Performance
                 CardBattleDirectionUtil.RotateFromCanonicalRight(enemyKnockback, dir));
             Vector3 knockReturn = CardBattleDirectionUtil.ToVector3(
                 CardBattleDirectionUtil.RotateFromCanonicalRight(enemyKnockbackReturn, dir));
-
-            Sequence sequence = DOTween.Sequence()
-                .SetTarget(this)
-                .SetAutoKill(true)
-                .Pause();
-
-            if (ignoreTimeScale)
-            {
-                sequence.SetUpdate(true);
-            }
 
             Tween playerPrepMove = player
                 .DOLocalMove(prep, prepDuration)
@@ -191,23 +215,25 @@ namespace NineGrid.Presentation.Performance
                 .SetDelay(knockbackDelay);
             ConfigureTween(enemyKnockTween);
 
-            Tween enemyReturnTween = enemy
-                .DOLocalMove(knockReturn, enemyReturnDuration)
-                .SetRelative(true)
-                .SetEase(Ease.InOutQuad)
-                .SetDelay(enemyReturnDelay);
-            ConfigureTween(enemyReturnTween);
-
             sequence.Insert(0f, playerPrepMove);
             sequence.Insert(0f, playerScalePunch);
             sequence.Insert(0f, playerLungeTween);
             sequence.Insert(0f, playerScaleSnap);
             sequence.Insert(0f, playerReturn);
             sequence.Insert(0f, enemyKnockTween);
-            sequence.Insert(0f, enemyReturnTween);
+
+            if (includeEnemyReturn)
+            {
+                Tween enemyReturnTween = enemy
+                    .DOLocalMove(knockReturn, enemyReturnDuration)
+                    .SetRelative(true)
+                    .SetEase(Ease.InOutQuad)
+                    .SetDelay(enemyReturnDelay);
+                ConfigureTween(enemyReturnTween);
+                sequence.Insert(0f, enemyReturnTween);
+            }
 
             sequence.InsertCallback(hitFlashDelay, () => PlayEnemyHitFlashOn(enemy));
-            return sequence;
         }
 
         private void AttachAttackCallbacks(Sequence sequence)

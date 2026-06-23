@@ -162,12 +162,58 @@ namespace NineGrid.Presentation.Tools
 
         private Vector3 ResolveCenterPosition()
         {
-            if (centerAnchor != null)
+            Transform playerAnchor = ResolvePlayerCenterAnchor();
+            if (playerAnchor != null)
             {
-                return centerAnchor.position;
+                return playerAnchor.position;
             }
 
             return ResolvedStageRoot.position;
+        }
+
+        /// <summary>
+        /// 优先解析九宫格玩家中心锚（slot5_Player）；避免误用外圈 slot 作 centerAnchor。
+        /// </summary>
+        private Transform ResolvePlayerCenterAnchor()
+        {
+            if (centerAnchor != null)
+            {
+                if (IsPlayerCenterSlot(centerAnchor))
+                {
+                    return centerAnchor;
+                }
+
+                Transform ringRoot = centerAnchor.parent;
+                if (ringRoot != null)
+                {
+                    for (int i = 0; i < ringRoot.childCount; i++)
+                    {
+                        Transform child = ringRoot.GetChild(i);
+                        if (IsPlayerCenterSlot(child))
+                        {
+                            return child;
+                        }
+                    }
+                }
+            }
+
+            return centerAnchor;
+        }
+
+        private static bool IsPlayerCenterSlot(Transform slot)
+        {
+            if (slot == null)
+            {
+                return false;
+            }
+
+            string slotName = slot.name;
+            if (slotName.Contains("Player"))
+            {
+                return true;
+            }
+
+            return slotName == "slot5" || slotName.StartsWith("slot5_");
         }
 
         private Vector3 ResolveEnemyOffset(CardBattleDirection direction)

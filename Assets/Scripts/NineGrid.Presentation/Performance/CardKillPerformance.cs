@@ -7,14 +7,14 @@ using UnityEngine.Scripting.APIUpdating;
 namespace NineGrid.Presentation.Performance
 {
     /// <summary>
-    /// 玩家击杀单体：攻击编排 + 敌人淡出消失 + signal 驱动受击闪白。
+    /// 玩家击杀单体：冲刺（无敌人回缩）+ 敌人淡出消失 + signal 驱动受击闪白。
     /// 烘焙自 NineGrid Battle Standard Player Kill Right/Up Timeline。
     /// </summary>
     [MovedFrom("NineGrid.Presentation.AtomicRepresentationTools")]
     [DisallowMultipleComponent]
     public sealed class CardKillPerformance : MonoBehaviour
     {
-        [Header("Attack Block")]
+        [Header("Strike Block")]
         [SerializeField] private CardAttackPerformance attackPerformance;
 
         [Header("Kill Fade (Timeline)")]
@@ -34,8 +34,8 @@ namespace NineGrid.Presentation.Performance
         private Vector3 playerBaselineLocalPosition;
         private Vector3 playerBaselineLocalScale;
         private Vector3 enemyBaselineLocalPosition;
-        private SpriteRenderer enemySpriteRenderer;
-        private Color enemyBaselineColor;
+        private SpriteRenderer[] enemySpriteRenderers = System.Array.Empty<SpriteRenderer>();
+        private Color[] enemyBaselineColors = System.Array.Empty<Color>();
         private bool enemyWasActive;
 
         private Sequence activeSequence;
@@ -101,19 +101,13 @@ namespace NineGrid.Presentation.Performance
             RestoreBaselines();
             activePlayer = null;
             activeEnemy = null;
-            enemySpriteRenderer = null;
+            enemySpriteRenderers = System.Array.Empty<SpriteRenderer>();
+            enemyBaselineColors = System.Array.Empty<Color>();
             isPlaying = false;
         }
 
         private Sequence BuildKillSequence(Transform player, Transform enemy, Vector2 direction)
         {
-            Sequence attackSequence = attackPerformance.BuildAttackSequence(
-                player,
-                enemy,
-                direction,
-                playerBaselineLocalPosition,
-                playerBaselineLocalScale);
-
             Sequence sequence = DOTween.Sequence()
                 .SetTarget(this)
                 .SetAutoKill(true)
@@ -124,24 +118,79 @@ namespace NineGrid.Presentation.Performance
                 sequence.SetUpdate(true);
             }
 
-            sequence.Insert(0f, attackSequence);
+            attackPerformance.InsertStrikeIntoSequence(
+                sequence,
+                player,
+                enemy,
+                direction,
+                playerBaselineLocalPosition,
+                playerBaselineLocalScale,
+                includeEnemyReturn: false);
 
-            if (enemySpriteRenderer != null)
+            if (enemySpriteRenderers.Length > 0)
             {
-                Color targetColor = enemyBaselineColor;
-                targetColor.a = 0f;
-                Tween fadeTween = DOTween
-                    .To(() => enemySpriteRenderer.color, value => enemySpriteRenderer.color = value, targetColor, enemyFadeDuration)
-                    .SetEase(Ease.Linear)
-                    .SetDelay(enemyFadeDelay)
-                    .SetTarget(enemySpriteRenderer);
-                ConfigureTween(fadeTween);
-                sequence.Insert(0f, fadeTween);
+                sequence.InsertCallback(enemyFadeDelay, () => PrepareEnemyForFade(enemy));
+
+                for (int i = 0; i < enemySpriteRenderers.Length; i++)
+                {
+                    SpriteRenderer renderer = enemySpriteRenderers[i];
+                    if (renderer == null)
+                    {
+                        continue;
+                    }
+
+                    int rendererIndex = i;
+                    Tween fadeTween = DOTween
+                        .To(
+                            () => 1f,
+                            alpha => ApplyEnemyFadeAlpha(renderer, rendererIndex, alpha),
+                            0f,
+                            enemyFadeDuration)
+                        .SetEase(Ease.Linear)
+                        .SetTarget(renderer);
+
+                    if (ignoreTimeScale)
+                    {
+                        fadeTween.SetUpdate(true);
+                    }
+
+                    sequence.Insert(enemyFadeDelay, fadeTween);
+                }
             }
 
             sequence.OnComplete(HandleSequenceComplete);
             sequence.OnKill(HandleSequenceKilled);
             return sequence;
+        }
+
+        private void PrepareEnemyForFade(Transform enemy)
+        {
+            ReleaseEnemyFlashEffects(enemy);
+
+            for (int i = 0; i < enemySpriteRenderers.Length; i++)
+            {
+                SpriteRenderer renderer = enemySpriteRenderers[i];
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                ApplyEnemyFadeAlpha(renderer, i, 1f);
+            }
+        }
+
+        private void ApplyEnemyFadeAlpha(SpriteRenderer renderer, int colorIndex, float alpha)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            Color color = colorIndex >= 0 && colorIndex < enemyBaselineColors.Length
+                ? enemyBaselineColors[colorIndex]
+                : renderer.color;
+            color.a = Mathf.Clamp01(alpha);
+            renderer.color = color;
         }
 
         private void CaptureBaselines(Transform player, Transform enemy)
@@ -150,10 +199,12 @@ namespace NineGrid.Presentation.Performance
             playerBaselineLocalScale = player.localScale;
             enemyBaselineLocalPosition = enemy.localPosition;
 
-            enemySpriteRenderer = enemy.GetComponent<SpriteRenderer>();
-            if (enemySpriteRenderer != null)
+            enemySpriteRenderers = enemy.GetComponentsInChildren<SpriteRenderer>(true);
+            enemyBaselineColors = new Color[enemySpriteRenderers.Length];
+            for (int i = 0; i < enemySpriteRenderers.Length; i++)
             {
-                enemyBaselineColor = enemySpriteRenderer.color;
+                SpriteRenderer renderer = enemySpriteRenderers[i];
+                enemyBaselineColors[i] = renderer != null ? renderer.color : Color.white;
             }
 
             enemyWasActive = enemy.gameObject.activeSelf;
@@ -171,29 +222,43 @@ namespace NineGrid.Presentation.Performance
             if (activeEnemy != null)
             {
                 activeEnemy.localPosition = enemyBaselineLocalPosition;
-
-                if (enemySpriteRenderer != null)
-                {
-                    enemySpriteRenderer.color = enemyBaselineColor;
-                }
+                RestoreEnemyVisualState(activeEnemy);
 
                 if (hideEnemyAfterFade)
                 {
                     activeEnemy.gameObject.SetActive(enemyWasActive);
                 }
-
-                CardHitFlashPerformance flash = activeEnemy.GetComponent<CardHitFlashPerformance>();
-                flash?.StopAndRestore();
             }
         }
 
-        private void ConfigureTween(Tween tween)
+        private void RestoreEnemyVisualState(Transform enemy)
         {
-            tween.SetTarget(this);
+            ReleaseEnemyFlashEffects(enemy);
 
-            if (ignoreTimeScale)
+            for (int i = 0; i < enemySpriteRenderers.Length; i++)
             {
-                tween.SetUpdate(true);
+                SpriteRenderer renderer = enemySpriteRenderers[i];
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                Color color = i < enemyBaselineColors.Length ? enemyBaselineColors[i] : Color.white;
+                renderer.color = color;
+            }
+        }
+
+        private static void ReleaseEnemyFlashEffects(Transform enemy)
+        {
+            if (enemy == null)
+            {
+                return;
+            }
+
+            CardHitFlashPerformance[] flashes = enemy.GetComponentsInChildren<CardHitFlashPerformance>(true);
+            for (int i = 0; i < flashes.Length; i++)
+            {
+                flashes[i]?.ReleaseFlashForExternalEffect();
             }
         }
 
@@ -241,6 +306,15 @@ namespace NineGrid.Presentation.Performance
             {
                 DOTween.Kill(activeEnemy);
             }
+
+            for (int i = 0; i < enemySpriteRenderers.Length; i++)
+            {
+                SpriteRenderer renderer = enemySpriteRenderers[i];
+                if (renderer != null)
+                {
+                    DOTween.Kill(renderer);
+                }
+            }
         }
 
         private void HandleSequenceComplete()
@@ -251,6 +325,7 @@ namespace NineGrid.Presentation.Performance
             if (hideEnemyAfterFade && activeEnemy != null)
             {
                 activeEnemy.gameObject.SetActive(false);
+                RestoreEnemyVisualState(activeEnemy);
             }
             else
             {

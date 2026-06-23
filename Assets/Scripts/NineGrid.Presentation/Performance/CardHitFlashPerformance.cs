@@ -54,7 +54,6 @@ namespace NineGrid.Presentation.Performance
         private void OnDisable()
         {
             StopAndRestore();
-            RestoreOriginalMaterials();
         }
 
         private void OnDestroy()
@@ -114,11 +113,26 @@ namespace NineGrid.Presentation.Performance
         public void StopAndRestore()
         {
             StopCurrentRoutine();
+            ClearFlash();
+            RestoreBaseColors();
+            RestoreOriginalMaterials();
+        }
+
+        /// <summary>
+        /// 停止闪白并还原材质，供击杀淡出等外部 tween 接管 SpriteRenderer。
+        /// </summary>
+        public void ReleaseFlashForExternalEffect()
+        {
+            StopCurrentRoutine();
+            ClearFlash();
+            RestoreOriginalMaterials();
             RestoreBaseColors();
         }
 
         public void RebindTargets()
         {
+            StopCurrentRoutine();
+            ClearFlash();
             RestoreOriginalMaterials();
             CacheTargets();
             CaptureBaseColors();
@@ -146,7 +160,9 @@ namespace NineGrid.Presentation.Performance
             }
 
             playRoutine = null;
+            ClearFlash();
             RestoreBaseColors();
+            RestoreOriginalMaterials();
         }
 
         private void CacheTargets()
@@ -272,21 +288,33 @@ namespace NineGrid.Presentation.Performance
                 }
 
                 spriteRenderer.color = cachedBaseColors[i];
-                ApplyFlash(0f);
             }
         }
 
         private void ApplyFlash(float intensity)
         {
             EnsureFlashMaterialsInstalled();
+            SetFlashAmount(intensity);
+        }
 
+        private void ClearFlash()
+        {
+            SetFlashAmount(0f);
+        }
+
+        private void SetFlashAmount(float intensity)
+        {
             float amount = Mathf.Clamp01(intensity);
 
             for (int i = 0; i < cachedTargets.Length; i++)
             {
-                SpriteRenderer spriteRenderer = cachedTargets[i];
+                if (i >= cachedFlashMaterials.Length)
+                {
+                    continue;
+                }
+
                 Material flashMaterial = cachedFlashMaterials[i];
-                if (spriteRenderer == null || flashMaterial == null)
+                if (flashMaterial == null)
                 {
                     continue;
                 }
