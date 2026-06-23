@@ -11,8 +11,8 @@ using UnityEngine;
 namespace NineGrid.Presentation.Adaptors
 {
     /// <summary>
-    /// 场地适配器：认领 Move/Swap/Rotate/Damage/Kill/Remove/Mark/PickItem，
-    /// 调度已落地的棋盘战斗与获取表演黑盒。
+    /// 场地适配器：认领 Move/Swap/Rotate/Damage/Kill/Remove/Mark，
+    /// 调度已落地的棋盘战斗表演黑盒。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class TableNineBoardAdaptor : MonoBehaviour
@@ -26,7 +26,6 @@ namespace NineGrid.Presentation.Adaptors
             PresentationInstructionKind.KillCard,
             PresentationInstructionKind.RemoveCard,
             PresentationInstructionKind.MarkBoard,
-            PresentationInstructionKind.PickItem,
         };
 
         [Header("Registry")]
@@ -38,7 +37,6 @@ namespace NineGrid.Presentation.Adaptors
         [SerializeField] private CardKillPerformance cardKillPerformance;
         [SerializeField] private CounterattackPerformance counterattackPerformance;
         [SerializeField] private CounterattackKillPerformance counterattackKillPerformance;
-        [SerializeField] private CardAcquisitionPerformance cardAcquisitionPerformance;
         [SerializeField] private CardShakePerformance cardShakePerformance;
 
         [Header("Simple Motion")]
@@ -48,9 +46,6 @@ namespace NineGrid.Presentation.Adaptors
 
         private readonly List<Transform> mActorBuffer = new();
         private readonly List<Transform> mTargetBuffer = new();
-        private readonly List<Transform> mHandActorBuffer = new();
-        private readonly List<HandCardLayoutTarget> mHandLayoutBuffer = new();
-
         public TableNineViewRegistry ViewRegistry => viewRegistry;
 
         public bool CanHandle(PresentationInstruction instruction)
@@ -113,9 +108,6 @@ namespace NineGrid.Presentation.Adaptors
                     break;
                 case PresentationInstructionKind.MarkBoard:
                     yield return PlayMarkBoard(evt, snapshot);
-                    break;
-                case PresentationInstructionKind.PickItem:
-                    yield return PlayPickItem(evt, snapshot);
                     break;
             }
         }
@@ -366,49 +358,6 @@ namespace NineGrid.Presentation.Adaptors
             yield break;
         }
 
-        private IEnumerator PlayPickItem(CoreGameEvent evt, CoreViewSnapshot snapshot)
-        {
-            Transform acquiredCard;
-            if (!viewRegistry.TryGetActor(evt.CardUid, out acquiredCard) || acquiredCard == null)
-            {
-                yield break;
-            }
-
-            HandCardLayoutSolver layoutSolver = viewRegistry.HandLayoutSolver;
-            layoutSolver.ResolveFromReferenceAnchors();
-
-            viewRegistry.CollectHandActors(mHandActorBuffer);
-            int totalCount = mHandActorBuffer.Count + 1;
-            layoutSolver.BuildLayout(totalCount, mHandLayoutBuffer);
-
-            if (mHandLayoutBuffer.Count == 0)
-            {
-                yield break;
-            }
-
-            HandCardLayoutTarget acquiredTarget = mHandLayoutBuffer[mHandLayoutBuffer.Count - 1];
-            var existingTargets = new List<HandCardLayoutTarget>(Mathf.Max(0, mHandLayoutBuffer.Count - 1));
-            for (var i = 0; i < mHandLayoutBuffer.Count - 1; i++)
-            {
-                existingTargets.Add(mHandLayoutBuffer[i]);
-            }
-
-            bool completed = false;
-            cardAcquisitionPerformance.Play(
-                acquiredCard,
-                acquiredTarget.LocalPosition,
-                acquiredTarget.SortingOrder,
-                mHandActorBuffer,
-                existingTargets,
-                viewRegistry.HandRoot,
-                () => completed = true);
-
-            yield return WaitUntilOrTimeout(() => completed || !cardAcquisitionPerformance.IsPlaying, cardAcquisitionPerformance.TotalDuration + 0.25f);
-
-            viewRegistry.RegisterActor(evt.CardUid, acquiredCard, ViewActorZone.Hand);
-            viewRegistry.AppendHandCard(evt.CardUid);
-        }
-
         private bool TryResolveCombatPair(
             CoreGameEvent evt,
             CoreViewSnapshot snapshot,
@@ -554,11 +503,6 @@ namespace NineGrid.Presentation.Adaptors
             if (counterattackKillPerformance == null)
             {
                 counterattackKillPerformance = GetComponent<CounterattackKillPerformance>();
-            }
-
-            if (cardAcquisitionPerformance == null)
-            {
-                cardAcquisitionPerformance = GetComponent<CardAcquisitionPerformance>();
             }
         }
 
