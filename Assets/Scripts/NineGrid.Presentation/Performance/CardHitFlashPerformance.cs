@@ -90,6 +90,11 @@ namespace NineGrid.Presentation.Performance
             }
         }
 
+        public void SetFlashMaterialTemplate(Material template)
+        {
+            flashMaterialTemplate = template;
+        }
+
         [ContextMenu("Play Hit Flash")]
         public void PlayHitFlash()
         {
