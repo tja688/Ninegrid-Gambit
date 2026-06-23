@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using NineGrid.Core;
-using NineGrid.Core.Commands;
 using NineGrid.Core.Systems;
 using NineGrid.Presentation.Performance;
 using QFramework;
@@ -28,7 +27,7 @@ namespace NineGrid.Presentation.FSM
     }
 
     /// <summary>
-    /// 道具卡交互 FSM：Hover/Drag/Confirm 本地反馈，Confirm 发 UseItemCommand。
+    /// 道具卡交互 FSM：Hover/Drag 本地反馈；MVP 不发 UseItemCommand（场地主导 V0.6）。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class ItemCardInteractionFsm : MonoBehaviour, IController
@@ -39,6 +38,7 @@ namespace NineGrid.Presentation.FSM
         [Header("References")]
         [SerializeField] private ItemCardInteractPerformance interactPerformance;
         [SerializeField] private InputLockGate inputLockGate;
+        [SerializeField] private BoardItemInteractionCoordinator coordinator;
         [SerializeField] private Camera inputCamera;
         [SerializeField] private Collider applyZoneCollider;
         [SerializeField] private Transform actorsRoot;
@@ -81,9 +81,7 @@ namespace NineGrid.Presentation.FSM
         private Vector2 pressScreenPosition;
         private bool pointerPressed;
         private bool isWatching;
-        private bool confirmInProgress;
         private int deckVersionSnapshot = -1;
-        private CoreCommandDispatcher commandDispatcher;
 
         private struct HandCardEntry
         {
@@ -370,15 +368,13 @@ namespace NineGrid.Presentation.FSM
             {
                 if (pointerPressed && state == ItemCardInteractionState.Drag && draggedEntry.Actor != null && !isWatching)
                 {
-                    Vector3 world = ScreenToWorld(Input.mousePosition);
-                    bool inZone = IsInApplyZone(world);
-                    ReleaseDrag(draggedEntry, inZone);
+                    ReleaseDrag(draggedEntry);
                 }
 
                 pointerPressed = false;
             }
 
-            if (!pointerPressed && !isWatching && !confirmInProgress)
+            if (!pointerPressed && !isWatching)
             {
                 HandCardEntry hit = ResolveHandCardIntent(Input.mousePosition);
                 if (hit.Actor != null)
@@ -454,6 +450,7 @@ namespace NineGrid.Presentation.FSM
             BuildOthersBuffer(entry.Actor);
             interactPerformance.StopFocus(entry.Actor, othersBuffer, immediate: true, restoreFocused: false);
             interactPerformance.BeginDrag(entry.Actor, ScreenToWorld(Input.mousePosition));
+            coordinator?.NotifyDragBegan(entry.CardUid);
             SetState(ItemCardInteractionState.Drag);
         }
 
@@ -469,18 +466,16 @@ namespace NineGrid.Presentation.FSM
             interactPerformance.UpdateDrag(draggedEntry.Actor, world, inZone);
         }
 
-        private void ReleaseDrag(HandCardEntry entry, bool inZone)
+        private void ReleaseDrag(HandCardEntry entry)
         {
-            if (inZone)
-            {
-                ConfirmUse(entry);
-                return;
-            }
+            coordinator?.NotifyDragEnded();
 
             int index = FindEntryIndex(entry.Actor);
             if (index < 0)
             {
                 interactPerformance.EndDrag();
+                draggedEntry = default;
+                hoveredEntry = default;
                 SetState(ItemCardInteractionState.Idle);
                 return;
             }
@@ -495,97 +490,6 @@ namespace NineGrid.Presentation.FSM
                 hoveredEntry = default;
                 SetState(ItemCardInteractionState.Idle);
             });
-        }
-
-        private void ConfirmUse(HandCardEntry entry)
-        {
-            if (entry.Actor == null)
-            {
-                return;
-            }
-
-            if (hoveredEntry.Actor != null && hoveredEntry.Actor != entry.Actor)
-            {
-                ExitHover();
-            }
-
-            interactPerformance.RestoreAllActorsImmediate(except: entry.Actor);
-            interactPerformance.EndDrag();
-            hoveredEntry = default;
-            draggedEntry = default;
-            confirmInProgress = true;
-            SetState(isWatching ? ItemCardInteractionState.Watching : ItemCardInteractionState.Idle);
-
-            interactPerformance.PlayConfirm(entry.Actor, () =>
-            {
-                confirmInProgress = false;
-
-                if (entry.Actor == null)
-                {
-                    return;
-                }
-
-                if (demoModeEnabled)
-                {
-                    DemoConsumeCard(entry);
-                    return;
-                }
-
-                SendUseItemCommand(entry);
-            });
-        }
-
-        private void DemoConsumeCard(HandCardEntry entry)
-        {
-            interactPerformance.RestoreAllActorsImmediate();
-
-            int index = FindEntryIndex(entry.Actor);
-            if (index >= 0)
-            {
-                handCards.RemoveAt(index);
-            }
-
-            if (entry.Actor != null)
-            {
-                interactPerformance.UnregisterActor(entry.Actor);
-                Destroy(entry.Actor.gameObject);
-            }
-
-            interactPerformance.PurgeDestroyedActors();
-            interactPerformance.EndDrag();
-            draggedEntry = default;
-            hoveredEntry = default;
-            SetState(ItemCardInteractionState.Idle);
-            RelayoutHand(instant: false);
-        }
-
-        private void SendUseItemCommand(HandCardEntry entry)
-        {
-            if (entry.CardUid == 0 || entry.Actor == null)
-            {
-                return;
-            }
-
-            commandDispatcher ??= new CoreCommandDispatcher(this.GetArchitecture());
-            var command = new UseItemCommand(entry.CardUid);
-            CoreCommandDispatchResult result = commandDispatcher.Send(command);
-
-            onUseItemRequested?.Invoke(entry.CardUid);
-            interactPerformance.EndDrag();
-            draggedEntry = default;
-            hoveredEntry = default;
-            SetState(isWatching ? ItemCardInteractionState.Watching : ItemCardInteractionState.Idle);
-
-            if (!result.Accepted)
-            {
-                onUseItemRejected?.Invoke(result.CommandResult != null ? result.CommandResult.Reason : "Rejected");
-                interactPerformance.RestoreAllActorsImmediate();
-                interactPerformance.PlayReject(entry.Actor);
-                return;
-            }
-
-            interactPerformance.RestoreAllActorsImmediate();
-            SyncFromDeck(force: true);
         }
 
         private void HandleActionRejected(Evt_ActionRejected evt)
@@ -631,6 +535,7 @@ namespace NineGrid.Presentation.FSM
                     }
 
                     interactPerformance.EndDrag();
+                    coordinator?.NotifyDragEnded();
                     draggedEntry = default;
                 }
 
@@ -931,7 +836,6 @@ namespace NineGrid.Presentation.FSM
         private void ClearPointerState()
         {
             pointerPressed = false;
-            confirmInProgress = false;
             hoveredEntry = default;
             draggedEntry = default;
         }

@@ -96,6 +96,54 @@ namespace NineGrid.Presentation.Registry
             return mActors.TryGetValue(cardUid, out actor);
         }
 
+        /// <summary>
+        /// 从射线命中 Transform 向上解析场地演员或槽位锚点。
+        /// </summary>
+        public bool TryResolveBoardPointerHit(
+            Transform hitTransform,
+            out SlotId slot,
+            out int cardUid,
+            out Transform actor)
+        {
+            slot = SlotId.None;
+            cardUid = 0;
+            actor = null;
+
+            if (hitTransform == null)
+            {
+                return false;
+            }
+
+            Transform current = hitTransform;
+            while (current != null)
+            {
+                foreach (KeyValuePair<int, Transform> entry in mActors)
+                {
+                    Transform registered = entry.Value;
+                    if (registered == null)
+                    {
+                        continue;
+                    }
+
+                    if (current == registered || current.IsChildOf(registered))
+                    {
+                        cardUid = entry.Key;
+                        actor = registered;
+                        return true;
+                    }
+                }
+
+                if (TryGetSlotForAnchorTransform(current, out slot))
+                {
+                    return true;
+                }
+
+                current = current.parent;
+            }
+
+            return false;
+        }
+
         public bool TryGetSlotAnchor(SlotId slot, out Transform anchor)
         {
             anchor = null;
@@ -237,6 +285,80 @@ namespace NineGrid.Presentation.Registry
                 actor.localRotation = anchor.localRotation;
                 mActorZones[slotView.CardUid] = ViewActorZone.Board;
             }
+        }
+
+        private bool TryGetSlotForAnchorTransform(Transform anchorTransform, out SlotId slot)
+        {
+            slot = SlotId.None;
+            if (anchorTransform == null)
+            {
+                return false;
+            }
+
+            if (boardSlotAnchors != null)
+            {
+                for (var i = 0; i < boardSlotAnchors.Length; i++)
+                {
+                    Transform anchor = boardSlotAnchors[i];
+                    if (anchor == null)
+                    {
+                        continue;
+                    }
+
+                    if (anchorTransform == anchor || anchorTransform.IsChildOf(anchor))
+                    {
+                        slot = SlotId.Board(i + 1);
+                        return true;
+                    }
+                }
+            }
+
+            if (boardSlotRoot == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < boardSlotRoot.childCount; i++)
+            {
+                Transform child = boardSlotRoot.GetChild(i);
+                if (child == null)
+                {
+                    continue;
+                }
+
+                if (anchorTransform != child && !anchorTransform.IsChildOf(child))
+                {
+                    continue;
+                }
+
+                if (TryParseSlotName(child.name, out int boardIndex))
+                {
+                    slot = SlotId.Board(boardIndex);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryParseSlotName(string name, out int boardIndex)
+        {
+            boardIndex = 0;
+            if (string.IsNullOrEmpty(name) || !name.StartsWith("slot", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            string suffix = name.Substring(4);
+            int underscore = suffix.IndexOf('_');
+            if (underscore >= 0)
+            {
+                suffix = suffix.Substring(0, underscore);
+            }
+
+            return int.TryParse(suffix, out boardIndex)
+                && boardIndex >= SlotId.MinBoardIndex
+                && boardIndex <= SlotId.MaxBoardIndex;
         }
 
         private void OnValidate()
