@@ -8,7 +8,7 @@ using UnityEngine;
 namespace NineGrid.Presentation.Performance
 {
     /// <summary>
-    /// 场地 Card 状态面板更新：攻击 / 生命滚筒数字 + 护甲块动画。
+    /// 场地 Card 状态面板更新：攻击 / 生命直接跳变 + 护甲块动画。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class StatusPanelUpdatePerformance : MonoBehaviour
@@ -186,15 +186,15 @@ namespace NineGrid.Presentation.Performance
         [SerializeField] private Transform previewCardActor;
 
         [ContextMenu("Preview/Attack 1→7")]
-        private void PreviewAttackRoll()
+        private void PreviewAttackJump()
         {
-            PlayPreviewRoll(isAttack: true, 1, 7);
+            PlayPreviewJump(isAttack: true, 1, 7);
         }
 
         [ContextMenu("Preview/Life 5→2")]
-        private void PreviewLifeRoll()
+        private void PreviewLifeJump()
         {
-            PlayPreviewRoll(isAttack: false, 5, 2);
+            PlayPreviewJump(isAttack: false, 5, 2);
         }
 
         [ContextMenu("Preview/Armor 1→3")]
@@ -206,7 +206,7 @@ namespace NineGrid.Presentation.Performance
             view.PlayArmorTo(3, animate: true);
         }
 
-        private void PlayPreviewRoll(bool isAttack, int from, int to)
+        private void PlayPreviewJump(bool isAttack, int from, int to)
         {
             Transform actor = EnsurePreviewActor();
             TableNineCardStatusView view = EnsureCardView(actor);

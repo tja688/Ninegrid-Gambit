@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using NineGrid.Core;
@@ -6,14 +7,16 @@ using UnityEngine;
 namespace NineGrid.Presentation.Visuals
 {
     /// <summary>
-    /// 场地 Card 模版状态视图：攻击 / 生命（Life）滚筒数字 + 护甲块显隐。
+    /// 场地 Card 模版状态视图：攻击 / 生命直接跳变数字 + 护甲块显隐。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class TableNineCardStatusView : MonoBehaviour
     {
-        [Header("Drum Roll Stats")]
-        [SerializeField] private DrumRollDigitDisplay attackDisplay;
-        [SerializeField] private DrumRollDigitDisplay lifeDisplay;
+        private static readonly Vector3 DefaultArmorBlockScale = new(0.727269411f, 2.9086678f, 1f);
+
+        [Header("Digit Stats")]
+        [SerializeField] private DirectDigitDisplay attackDisplay;
+        [SerializeField] private DirectDigitDisplay lifeDisplay;
 
         [Header("Armor Blocks")]
         [SerializeField] private Transform armorRoot;
@@ -28,13 +31,15 @@ namespace NineGrid.Presentation.Visuals
         private int currentArmor;
         private bool bindingsReady;
         private Sprite[] configuredDigitSprites;
+        private Vector3[] armorBlockRestScales = Array.Empty<Vector3>();
+        private float armorBlockSpacing;
 
         public int CurrentAttack => currentAttack;
         public int CurrentLife => currentLife;
         public int CurrentArmor => currentArmor;
 
-        public DrumRollDigitDisplay AttackDisplay => attackDisplay;
-        public DrumRollDigitDisplay LifeDisplay => lifeDisplay;
+        public DirectDigitDisplay AttackDisplay => attackDisplay;
+        public DirectDigitDisplay LifeDisplay => lifeDisplay;
 
         public void EnsureBindings()
         {
@@ -83,7 +88,30 @@ namespace NineGrid.Presentation.Visuals
                 }
             }
 
+            CaptureArmorLayout();
+
             bindingsReady = true;
+        }
+
+        private void CaptureArmorLayout()
+        {
+            armorBlockRestScales = new Vector3[armorBlocks.Count];
+            for (var i = 0; i < armorBlocks.Count; i++)
+            {
+                SpriteRenderer block = armorBlocks[i];
+                armorBlockRestScales[i] = block != null ? block.transform.localScale : DefaultArmorBlockScale;
+            }
+
+            if (armorBlocks.Count >= 2
+                && armorBlocks[0] != null
+                && armorBlocks[1] != null)
+            {
+                armorBlockSpacing = armorBlocks[1].transform.localPosition.x - armorBlocks[0].transform.localPosition.x;
+            }
+            else
+            {
+                armorBlockSpacing = 0.11363584f;
+            }
         }
 
         public void ConfigureDigitSprites(Sprite[] digitSprites)
@@ -172,11 +200,12 @@ namespace NineGrid.Presentation.Visuals
         {
             EnsureBindings();
             int next = Mathf.Max(0, armor);
+            EnsureArmorBlockCapacity(next);
             float duration = 0f;
 
             if (animate && next > currentArmor)
             {
-                for (int i = currentArmor; i < next && i < armorBlocks.Count; i++)
+                for (int i = currentArmor; i < next; i++)
                 {
                     SpriteRenderer block = armorBlocks[i];
                     if (block == null)
@@ -184,6 +213,7 @@ namespace NineGrid.Presentation.Visuals
                         continue;
                     }
 
+                    Vector3 restScale = GetArmorBlockRestScale(i);
                     block.gameObject.SetActive(true);
                     Transform blockTransform = block.transform;
                     DOTween.Kill(blockTransform);
@@ -191,7 +221,7 @@ namespace NineGrid.Presentation.Visuals
                     duration = Mathf.Max(
                         duration,
                         blockTransform
-                            .DOScale(Vector3.one, armorPopDuration)
+                            .DOScale(restScale, armorPopDuration)
                             .SetEase(armorPopEase)
                             .SetTarget(blockTransform)
                             .Duration());
@@ -260,6 +290,7 @@ namespace NineGrid.Presentation.Visuals
 
         private void SnapArmor(int armor)
         {
+            EnsureArmorBlockCapacity(armor);
             for (var i = 0; i < armorBlocks.Count; i++)
             {
                 SpriteRenderer block = armorBlocks[i];
@@ -273,12 +304,64 @@ namespace NineGrid.Presentation.Visuals
                 if (active)
                 {
                     DOTween.Kill(block.transform);
-                    block.transform.localScale = Vector3.one;
+                    block.transform.localScale = GetArmorBlockRestScale(i);
                 }
             }
         }
 
-        private static float SnapRoll(DrumRollDigitDisplay display, int value)
+        private void EnsureArmorBlockCapacity(int armorCount)
+        {
+            if (armorCount <= armorBlocks.Count || armorBlocks.Count == 0 || armorRoot == null)
+            {
+                return;
+            }
+
+            SpriteRenderer template = armorBlocks[0];
+            if (template == null)
+            {
+                return;
+            }
+
+            Vector3 templatePosition = template.transform.localPosition;
+            Vector3 restScale = GetArmorBlockRestScale(0);
+            while (armorBlocks.Count < armorCount)
+            {
+                int index = armorBlocks.Count;
+                GameObject clone = Instantiate(template.gameObject, armorRoot);
+                clone.name = $"armor value ({index})";
+                Transform cloneTransform = clone.transform;
+                cloneTransform.localPosition = new Vector3(
+                    templatePosition.x + armorBlockSpacing * index,
+                    templatePosition.y,
+                    templatePosition.z);
+                cloneTransform.localScale = restScale;
+
+                SpriteRenderer renderer = clone.GetComponent<SpriteRenderer>();
+                armorBlocks.Add(renderer);
+
+                var scales = new Vector3[armorBlockRestScales.Length + 1];
+                Array.Copy(armorBlockRestScales, scales, armorBlockRestScales.Length);
+                scales[index] = restScale;
+                armorBlockRestScales = scales;
+            }
+        }
+
+        private Vector3 GetArmorBlockRestScale(int index)
+        {
+            if (armorBlockRestScales != null && index >= 0 && index < armorBlockRestScales.Length)
+            {
+                return armorBlockRestScales[index];
+            }
+
+            if (index >= 0 && index < armorBlocks.Count && armorBlocks[index] != null)
+            {
+                return armorBlocks[index].transform.localScale;
+            }
+
+            return DefaultArmorBlockScale;
+        }
+
+        private static float SnapRoll(DirectDigitDisplay display, int value)
         {
             display.SnapTo(value);
             return 0f;
@@ -303,7 +386,7 @@ namespace NineGrid.Presentation.Visuals
             return null;
         }
 
-        private DrumRollDigitDisplay EnsureRollDisplay(string childName)
+        private DirectDigitDisplay EnsureRollDisplay(string childName)
         {
             Transform child = transform.Find(childName);
             if (child == null)
@@ -311,10 +394,16 @@ namespace NineGrid.Presentation.Visuals
                 return null;
             }
 
-            DrumRollDigitDisplay display = child.GetComponent<DrumRollDigitDisplay>();
+            DirectDigitDisplay display = child.GetComponent<DirectDigitDisplay>();
             if (display == null)
             {
-                display = child.gameObject.AddComponent<DrumRollDigitDisplay>();
+                DrumRollDigitDisplay legacy = child.GetComponent<DrumRollDigitDisplay>();
+                if (legacy != null)
+                {
+                    Destroy(legacy);
+                }
+
+                display = child.gameObject.AddComponent<DirectDigitDisplay>();
             }
 
             return display;
