@@ -269,7 +269,7 @@ namespace NineGrid.Presentation.Performance
                 SpriteRenderer renderer = GetPrimaryRenderer(actor);
                 if (renderer != null)
                 {
-                    Tween sort = TweenSortingOrder(renderer, target.SortingOrder, layoutDuration, layoutEase);
+                    Tween sort = SelectionOptionVisual.TweenBaseSortingOrder(actor, target.SortingOrder, layoutDuration, layoutEase);
                     if (sort != null)
                     {
                         ApplyTweenSettings(sort);
@@ -305,7 +305,7 @@ namespace NineGrid.Presentation.Performance
             ApplyTweenSettings(color);
             sequence.Join(color);
 
-            Tween sort = TweenSortingOrder(renderer, targetSortingOrder, returnDuration, returnEase);
+            Tween sort = SelectionOptionVisual.TweenBaseSortingOrder(actor, targetSortingOrder, returnDuration, returnEase);
             ApplyTweenSettings(sort);
             sequence.Join(sort);
         }
@@ -343,7 +343,7 @@ namespace NineGrid.Presentation.Performance
             activeActors.Add(actor);
             baselineLocalPositions.Add(actor.localPosition);
             baselineColors.Add(renderer != null ? renderer.color : Color.white);
-            baselineSortingOrders.Add(renderer != null ? renderer.sortingOrder : 0);
+            baselineSortingOrders.Add(SelectionOptionVisual.GetAnchorSortingOrder(actor));
         }
 
         private Color ResolveBaselineColor(Transform actor, Color fallback)
@@ -365,11 +365,12 @@ namespace NineGrid.Presentation.Performance
                 KillActorTweens(actor);
                 actor.localPosition = baselineLocalPositions[i];
 
+                SelectionOptionVisual.ApplySortingOrder(actor, baselineSortingOrders[i]);
+
                 SpriteRenderer renderer = GetPrimaryRenderer(actor);
                 if (renderer != null)
                 {
                     renderer.color = baselineColors[i];
-                    renderer.sortingOrder = baselineSortingOrders[i];
                 }
             }
         }
@@ -411,11 +412,7 @@ namespace NineGrid.Presentation.Performance
             actor.localRotation = Quaternion.identity;
             actor.localScale = Vector3.one;
 
-            SpriteRenderer renderer = GetPrimaryRenderer(actor);
-            if (renderer != null)
-            {
-                renderer.sortingOrder = sortingOrder;
-            }
+            SelectionOptionVisual.ApplySortingOrder(actor, sortingOrder);
 
             return actor;
         }

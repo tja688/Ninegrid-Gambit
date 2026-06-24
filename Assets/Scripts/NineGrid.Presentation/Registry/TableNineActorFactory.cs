@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using DG.Tweening;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
+using NineGrid.Presentation.Performance;
 using NineGrid.Presentation.Visuals;
 using QFramework;
 using UnityEngine;
@@ -175,6 +176,7 @@ namespace NineGrid.Presentation.Registry
             {
                 var instance = Instantiate(cardActorPrefab, parent);
                 instance.name = BuildActorName(cardUid);
+                EnsureSortingProfile(instance.transform);
                 return instance.transform;
             }
 
@@ -213,6 +215,29 @@ namespace NineGrid.Presentation.Registry
                 color.a = 1f;
                 renderer.color = color;
             }
+
+            CardSortingLayerProfile profile = actor.GetComponent<CardSortingLayerProfile>();
+            if (profile != null)
+            {
+                profile.CaptureIfNeeded();
+                profile.ApplyBaseOrder(0);
+            }
+        }
+
+        private static void EnsureSortingProfile(Transform actor)
+        {
+            if (actor == null)
+            {
+                return;
+            }
+
+            CardSortingLayerProfile profile = actor.GetComponent<CardSortingLayerProfile>();
+            if (profile == null)
+            {
+                profile = actor.gameObject.AddComponent<CardSortingLayerProfile>();
+            }
+
+            profile.CaptureIfNeeded();
         }
 
         private void BindVisuals(Transform actor, int cardUid, IArchitecture architecture)

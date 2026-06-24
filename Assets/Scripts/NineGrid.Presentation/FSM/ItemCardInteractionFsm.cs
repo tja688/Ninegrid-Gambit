@@ -897,13 +897,9 @@ namespace NineGrid.Presentation.FSM
             actor.localPosition = localPosition;
             actor.localRotation = Quaternion.identity;
             actor.localScale = Vector3.one;
+            SelectionOptionVisual.ApplySortingOrder(actor, sortingOrder);
 
             SpriteRenderer spriteRenderer = actor.GetComponent<SpriteRenderer>();
-            if (spriteRenderer != null)
-            {
-                spriteRenderer.sortingOrder = sortingOrder;
-            }
-
             EnsurePickCollider(actor, spriteRenderer);
             return actor;
         }

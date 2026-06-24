@@ -40,6 +40,22 @@ def join_descriptions(parts: list[str]) -> str:
     return "；".join(cleaned)
 
 
+def prepend_name(display_name: str, description: str) -> str:
+    display_name = (display_name or "").strip()
+    description = (description or "").strip()
+    if not display_name:
+        return description
+    if not description:
+        return display_name
+    if description.startswith(display_name):
+        return description
+    for sep in ("：", ":", "—", "-", " "):
+        prefix = f"{display_name}{sep}"
+        if description.startswith(prefix):
+            return description
+    return f"{display_name}：{description}"
+
+
 def main() -> int:
     cards = load_json("cards.json")
     skills = load_json("skills.json")
@@ -74,7 +90,7 @@ def main() -> int:
             (
                 card["def_id"],
                 content_kind,
-                description,
+                prepend_name(card.get("display_name", ""), description),
                 face_key,
                 "",
                 "",
@@ -86,7 +102,7 @@ def main() -> int:
             (
                 relic["def_id"],
                 "Relic",
-                relic.get("design_text", ""),
+                prepend_name(relic.get("display_name", ""), relic.get("design_text", "")),
                 "",
                 "",
                 "",
@@ -105,7 +121,7 @@ def main() -> int:
             (
                 skill["def_id"],
                 content_kind,
-                skill.get("design_text", ""),
+                prepend_name(skill.get("display_name", ""), skill.get("design_text", "")),
                 "",
                 "",
                 "",
@@ -117,7 +133,7 @@ def main() -> int:
             (
                 room["kind"],
                 "Room",
-                room.get("display_name", ""),
+                prepend_name(room.get("display_name", ""), room.get("display_name", "")),
                 "",
                 "",
                 "",
@@ -129,7 +145,7 @@ def main() -> int:
             (
                 deck["id"],
                 "MonsterDeck",
-                deck.get("display_name", ""),
+                prepend_name(deck.get("display_name", ""), deck.get("display_name", "")),
                 "",
                 "",
                 "",

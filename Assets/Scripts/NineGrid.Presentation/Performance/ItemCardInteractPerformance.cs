@@ -239,23 +239,20 @@ namespace NineGrid.Presentation.Performance
                     .SetTarget(actor);
 
                 SpriteRenderer renderer = GetPrimaryRenderer(actor);
-                if (renderer != null)
+                Tween sort = SelectionOptionVisual.TweenBaseSortingOrder(actor, target.SortingOrder, duration, layoutEase);
+                if (sort != null)
                 {
-                    Tween sort = TweenSortingOrder(renderer, target.SortingOrder, duration, layoutEase);
-                    if (sort != null)
+                    if (ignoreTimeScale)
                     {
-                        if (ignoreTimeScale)
-                        {
-                            sort.SetUpdate(true);
-                        }
+                        sort.SetUpdate(true);
+                    }
 
-                        layoutSequence.Join(move);
-                        layoutSequence.Join(sort);
-                    }
-                    else
-                    {
-                        layoutSequence.Join(move);
-                    }
+                    layoutSequence.Join(move);
+                    layoutSequence.Join(sort);
+                }
+                else if (renderer != null)
+                {
+                    layoutSequence.Join(move);
                 }
                 else
                 {
@@ -310,7 +307,7 @@ namespace NineGrid.Presentation.Performance
                 int boostedOrder = Mathf.Max(
                     actorStates[focused].BaselineSortingOrder + focusSortingBoost,
                     focusSortingOrderFloor);
-                Tween sort = TweenSortingOrder(focusedRenderer, boostedOrder, focusDuration, focusEase);
+                Tween sort = SelectionOptionVisual.TweenBaseSortingOrder(focused, boostedOrder, focusDuration, focusEase);
                 ApplyTweenSettings(sort);
             }
 
@@ -383,14 +380,10 @@ namespace NineGrid.Presentation.Performance
             EnsureBaseline(actor);
             KillActorTweens(actor);
 
-            SpriteRenderer renderer = GetPrimaryRenderer(actor);
-            if (renderer != null)
-            {
-                int boostedOrder = Mathf.Max(
-                    actorStates[actor].BaselineSortingOrder + focusSortingBoost + 1,
-                    dragSortingOrderFloor);
-                renderer.sortingOrder = boostedOrder;
-            }
+            int boostedOrder = Mathf.Max(
+                actorStates[actor].BaselineSortingOrder + focusSortingBoost + 1,
+                dragSortingOrderFloor);
+            SelectionOptionVisual.ApplySortingOrder(actor, boostedOrder);
         }
 
         public void UpdateDrag(Transform actor, Vector3 pointerWorldPosition, bool inZone)
@@ -578,11 +571,11 @@ namespace NineGrid.Presentation.Performance
 
                 UpdateBaseline(actor, target.LocalPosition, target.SortingOrder);
                 actor.localPosition = target.LocalPosition;
+                SelectionOptionVisual.ApplySortingOrder(actor, target.SortingOrder);
 
                 SpriteRenderer renderer = GetPrimaryRenderer(actor);
                 if (renderer != null)
                 {
-                    renderer.sortingOrder = target.SortingOrder;
                     renderer.color = actorStates[actor].BaselineColor;
                 }
             }
@@ -601,12 +594,12 @@ namespace NineGrid.Presentation.Performance
             {
                 actor.localPosition = state.BaselineLocalPosition;
                 actor.localScale = state.BaselineLocalScale;
+                SelectionOptionVisual.ApplySortingOrder(actor, state.BaselineSortingOrder);
 
                 SpriteRenderer renderer = GetPrimaryRenderer(actor);
                 if (renderer != null)
                 {
                     renderer.color = state.BaselineColor;
-                    renderer.sortingOrder = state.BaselineSortingOrder;
                 }
 
                 return;
@@ -623,10 +616,10 @@ namespace NineGrid.Presentation.Performance
             {
                 Tween color = TweenSpriteColor(spriteRenderer, state.BaselineColor, duration, focusEase);
                 ApplyTweenSettings(color);
-
-                Tween sort = TweenSortingOrder(spriteRenderer, state.BaselineSortingOrder, duration, focusEase);
-                ApplyTweenSettings(sort);
             }
+
+            Tween sort = SelectionOptionVisual.TweenBaseSortingOrder(actor, state.BaselineSortingOrder, duration, focusEase);
+            ApplyTweenSettings(sort);
         }
 
         private void EnsureBaseline(Transform actor)
@@ -642,7 +635,7 @@ namespace NineGrid.Presentation.Performance
             }
 
             SpriteRenderer renderer = GetPrimaryRenderer(actor);
-            RegisterActor(actor, actor.localPosition, renderer != null ? renderer.sortingOrder : 0);
+            RegisterActor(actor, actor.localPosition, SelectionOptionVisual.GetAnchorSortingOrder(actor));
         }
 
         private void KillLayoutSequence()

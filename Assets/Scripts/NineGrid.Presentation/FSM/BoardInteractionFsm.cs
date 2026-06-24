@@ -393,12 +393,9 @@ namespace NineGrid.Presentation.FSM
                     hoverActor = anchor;
                 }
 
-                int sortingOrder = 0;
-                if (hoverActor != null)
-                {
-                    SpriteRenderer renderer = hoverActor.GetComponent<SpriteRenderer>();
-                    sortingOrder = renderer != null ? renderer.sortingOrder : 0;
-                }
+                int sortingOrder = hoverActor != null
+                    ? SelectionOptionVisual.GetAnchorSortingOrder(hoverActor)
+                    : 0;
 
                 if (sortingOrder >= bestSortingOrder)
                 {

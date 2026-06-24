@@ -18,11 +18,51 @@ namespace NineGrid.Presentation.Performance
                 return;
             }
 
-            var renderers = root.GetComponentsInChildren<SpriteRenderer>(true);
-            for (var i = 0; i < renderers.Length; i++)
+            CardSortingLayerProfile profile = EnsureSortingProfile(root);
+            profile.ApplyBaseOrder(order);
+        }
+
+        public static int GetAnchorSortingOrder(Transform root)
+        {
+            if (root == null)
             {
-                renderers[i].sortingOrder = order;
+                return 0;
             }
+
+            return EnsureSortingProfile(root).GetAnchorSortingOrder();
+        }
+
+        public static Tween TweenBaseSortingOrder(Transform root, int endOrder, float duration, Ease ease)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            CardSortingLayerProfile profile = EnsureSortingProfile(root);
+            int startOrder = profile.GetAnchorSortingOrder();
+            return DOTween
+                .To(() => startOrder, value =>
+                {
+                    if (root != null)
+                    {
+                        profile.ApplyBaseOrder(Mathf.RoundToInt(value));
+                    }
+                }, endOrder, duration)
+                .SetEase(ease)
+                .SetTarget(root);
+        }
+
+        private static CardSortingLayerProfile EnsureSortingProfile(Transform root)
+        {
+            CardSortingLayerProfile profile = root.GetComponent<CardSortingLayerProfile>();
+            if (profile == null)
+            {
+                profile = root.gameObject.AddComponent<CardSortingLayerProfile>();
+            }
+
+            profile.CaptureIfNeeded();
+            return profile;
         }
 
         public static void ApplyLabel(Transform root, string label)

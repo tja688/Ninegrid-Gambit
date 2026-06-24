@@ -36,7 +36,9 @@ namespace NineGrid.Content
                 ContentId = contentId,
                 Kind = visual.Kind,
                 DisplayName = ResolveDisplayName(contentId, visual.Kind, coreCatalog),
-                Description = visual.Description,
+                Description = string.IsNullOrWhiteSpace(visual.Description)
+                    ? ResolveDisplayName(contentId, visual.Kind, coreCatalog)
+                    : visual.Description,
                 IconVisualId = iconVisualId,
                 IconAssetKey = ResolveIconAssetKey(visual.Kind, iconVisualId, contentId),
                 FaceVisualId = faceVisualId,

@@ -244,12 +244,7 @@ namespace NineGrid.Presentation.Performance
             actor.localPosition = state.BaselineLocalPosition;
             actor.localScale = state.BaselineLocalScale;
             actor.localEulerAngles = state.BaselineLocalEuler;
-
-            SpriteRenderer renderer = GetPrimaryRenderer(actor);
-            if (renderer != null)
-            {
-                renderer.sortingOrder = state.BaselineSortingOrder;
-            }
+            SelectionOptionVisual.ApplySortingOrder(actor, state.BaselineSortingOrder);
         }
 
         private void RegisterBaseline(Transform actor, Vector3 baselineLocalPosition, int baselineSortingOrder)
@@ -275,7 +270,7 @@ namespace NineGrid.Presentation.Performance
             RegisterBaseline(
                 actor,
                 actor.localPosition,
-                renderer != null ? renderer.sortingOrder : 0);
+                SelectionOptionVisual.GetAnchorSortingOrder(actor));
         }
 
         private void KillActorTweens(Transform actor)
