@@ -4,5 +4,2171 @@
     "kind": "sprite",
     "asset_key": "content/fallback/missing_card",
     "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.avatar.default",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_7",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.armor_breaking_hammer",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.bear_trap",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.blood_conversion",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.blue_chest_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_1",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.bomb",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_8",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.brutality_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.common_chest_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.doubling_tower",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.fireball",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.flame",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.food_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_1",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.gold_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.golden_chest_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.healing_potion",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.healing_spring",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_4",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.impact_tutorial",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.kidnapping",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.rolling_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.rotation_wheel",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.shield_bash_tutorial",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.stat_boost_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_7",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.sturdy_shield",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.swap_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.teleport_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.throwing_knife",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_4",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.ward_magic_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.help.watchtower",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_8",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.beggar",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_19",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.big_orc",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_128",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.big_skeleton",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_28",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.big_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_99",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.bone_club_skeleton",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_14",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.bone_courier",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_34",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.brainless_orc",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_11",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.dragon_cult_leader",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_128",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.dragon_follower",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_104",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.executioner",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_82",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.fire_bather",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_34",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.fire_cult_leader",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_44",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.fire_dragon",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_39",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.fire_priest",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_67",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.fire_swallower",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.friendly_ancient",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_65",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.giant_skeleton",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_124",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.growing_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_42",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.headless_skeleton",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_47",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.hoodlum",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_34",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.killer",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_46",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.megalith",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_117",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.mist",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_106",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.multi_bone_worm",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_118",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.observer",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_17",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.old_orc",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_12",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.orc_boss",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.orc_commander",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_127",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.orc_quartermaster",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_85",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.orc_warrior",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_80",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.pickpocket",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_85",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.ringleader",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_69",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.rogue",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_78",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.rolling_stone_man",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_60",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.rotating_cub",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_39",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.salamander",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_64",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.sharp_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_77",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.shelter_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_36",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.skeleton_king",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_18",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.skeleton_mage",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.skeleton_taunter",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_106",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.skull_head",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_68",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.sky_eye",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_35",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.smart_orc",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_115",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.smuggler",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_15",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.space_master",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_29",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.stepwalker",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_106",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.stone_golem",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_67",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.stone_man",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_109",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.stone_shrimp",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_65",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.stone_swallower",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_11",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.stone_thrower",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_56",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.thug",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_101",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.vagrant",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_29",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.veteran_orc",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_63",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.void_cub",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_117",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.void_lost",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_124",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.wandering_child",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_70",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.world_turning_hand",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_41",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.monster.young_orc",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_126",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.deck.orc_legion",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_1",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.deck.skeleton_legion",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.deck.stone_legion",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.deck.void",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_8",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.deck.wandering_legion",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.craving",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.dragon_scale_armor",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_4",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.gold_armor",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.gold_knife",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.heavy_armor",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.junk_coating",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.junk_launcher",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.junk_recycler",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.junk_slot_machine",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.lucky_coin",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.phoenix_feather",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_7",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.potion_bag",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.shield_knife",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_7",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.sling",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.throwing_knife_bag",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.vitality_amulet",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.wood_armor",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.wood_shield",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.relic.wood_sword",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.absorb_bone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_8",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.absorb_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_1",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.air_strike",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.arsenal",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.battle_hardened",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_8",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.beggar_bond",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.blessing",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.bloodthirst",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_8",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.breathe_fire",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_8",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.call_followers",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.delivery",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_8",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.devotion",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.easy_road",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_1",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.even_hatred",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_7",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.fall_apart",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.falling_rocks",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_4",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.fight_me",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.find_weakness",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_7",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.fire_power",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_4",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.first_strike",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.flame_boiling",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.flame_breath",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.fracture_fall_apart",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_1",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.gear_delivery",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_8",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.gift",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.give_punch",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_4",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.guide",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.hard",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.hard_skin",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_7",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.hoodlum",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.hot_observation",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.intense_burning",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.learning_growth",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.love_fire",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.mixed_bones",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.monster_battle_hardened",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.orc_tactics",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.otherworld_help",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_8",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.random_walk",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_7",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.range_expand",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.rascality",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.recombine_body",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.recombine_head",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.relentless_chase",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.rolling_crush",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.rotate_lover",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.sacrifice",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_7",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.sharp_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.smart",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_1",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.space_mastery",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.stocking",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.stone_growth",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.stone_lover",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.stone_shelter",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_7",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.stray_cub",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.stroll",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.strong_combo",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.survival_wisdom",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.swallow_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.taunt",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.thief_claims",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.thorn_skin",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_7",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.throw_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.tower_child",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.turn_world",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_4",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.unstable",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.violence_maniac",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.skill.violence_nutrition",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.avatar.default",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/character.png#character",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.armor_breaking_hammer",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/platform.png#platform",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.bear_trap",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/location_enemy.png#location_enemy",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.blood_conversion",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/sword_blood.png#sword_blood",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.blue_chest_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/arrow_blue_first.png#arrow_blue_first",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.bomb",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/bomb.png#bomb",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.brutality_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/voxel_paint.png#voxel_paint",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.common_chest_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/chest.png#chest",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.doubling_tower",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/widget_width.png#widget_width",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.fireball",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/dialogue_page.png#dialogue_page",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.flame",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/keyboard.png#keyboard",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.food_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/light_energy.png#light_energy",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.gold_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/light.png#light",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.golden_chest_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/chest.png#chest",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.healing_potion",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/potion.png#potion",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.healing_spring",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/tree_collapse.png#tree_collapse",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.impact_tutorial",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/clock.png#clock",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.kidnapping",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/terrain_precise.png#terrain_precise",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.rolling_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/portrait_left.png#portrait_left",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.rotation_wheel",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/widget_width.png#widget_width",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.shield_bash_tutorial",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/shield.png#shield",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.stat_boost_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/character_add.png#character_add",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.sturdy_shield",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/shield.png#shield",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.swap_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/mac_logo.png#mac_logo",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.teleport_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/number.png#number",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.throwing_knife",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/widget.png#widget",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.ward_magic_card",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/anim_frame_move_right.png#anim_frame_move_right",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.help.watchtower",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/voxel_outlines.png#voxel_outlines",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.beggar",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.big_orc",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_8",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.big_skeleton",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.big_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_7",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.bone_club_skeleton",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_4",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.bone_courier",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.brainless_orc",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.dragon_cult_leader",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.dragon_follower",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_7",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.executioner",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_8",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.fire_bather",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.fire_cult_leader",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.fire_dragon",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.fire_priest",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.fire_swallower",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.friendly_ancient",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_7",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.giant_skeleton",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_8",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.growing_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.headless_skeleton",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_8",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.hoodlum",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.killer",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.megalith",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.mist",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_8",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.multi_bone_worm",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_1",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.observer",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.old_orc",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_1",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.orc_boss",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_1",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.orc_commander",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.orc_quartermaster",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.orc_warrior",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.pickpocket",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.ringleader",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.rogue",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.rolling_stone_man",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_1",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.rotating_cub",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_4",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.salamander",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_1",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.sharp_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.shelter_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.skeleton_king",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.skeleton_mage",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_7",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.skeleton_taunter",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_8",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.skull_head",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.sky_eye",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_4",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.smart_orc",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.smuggler",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.space_master",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_4",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.stepwalker",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.stone_golem",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.stone_man",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_7",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.stone_shrimp",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.stone_swallower",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.stone_thrower",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_10",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.thug",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.vagrant",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_8",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.veteran_orc",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.void_cub",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_6",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.void_lost",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_2",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.wandering_child",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_3",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.world_turning_hand",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_1",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.monster.young_orc",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_4",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.face.deck.dragon",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_9",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.craving",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/jewel.png#jewel",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.dragon_scale_armor",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/magic_wand.png#magic_wand",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.gold_armor",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/dice.png#dice",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.gold_knife",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/blue_2d/letter_tile.png#letter_tile",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.heavy_armor",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/billiard_rack.png#billiard_rack",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.junk_coating",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/flag_piece.png#flag_piece",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.junk_launcher",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/bowling_pin.png#bowling_pin",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.junk_recycler",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/coins.png#coins",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.junk_slot_machine",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/dice_5.png#dice_5",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.lucky_coin",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/coins.png#coins",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.phoenix_feather",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/coins.png#coins",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.potion_bag",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/connect.png#connect",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.shield_knife",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/card.png#card",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.sling",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/hash.png#hash",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.throwing_knife_bag",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/pound.png#pound",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.vitality_amulet",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/rook.png#rook",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.wood_armor",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/jewel.png#jewel",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.wood_shield",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/blue_2d/billiard_rack.png#billiard_rack",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.relic.wood_sword",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/spade.png#spade",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.Fountain",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/arrow_refresh.png#arrow_refresh",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.Gold",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/wizard.png#wizard",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.Shop",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/anim_frame_delete.png#anim_frame_delete",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.Tavern",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/map.png#map",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.Treasure",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Items/arrow_up_down.png#arrow_up_down",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.absorb_bone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/spinner.png#spinner",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.absorb_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/spade_outline.png#spade_outline",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.air_strike",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/letter_tile.png#letter_tile",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.arsenal",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/rook.png#rook",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.battle_hardened",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/blue_2d/bowling_pins.png#bowling_pins",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.beggar_bond",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/heart_outline.png#heart_outline",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.blessing",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/domino_diagonal.png#domino_diagonal",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.bloodthirst",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/house.png#house",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.breathe_fire",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/dice_1.png#dice_1",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.call_followers",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/blue_2d/magic_wand.png#magic_wand",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.delivery",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/letter_tile.png#letter_tile",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.devotion",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/pawn.png#pawn",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.easy_road",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/yen.png#yen",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.even_hatred",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/seven.png#seven",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.fall_apart",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/dice.png#dice",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.falling_rocks",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/club.png#club",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.fight_me",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/card.png#card",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.find_weakness",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/connect.png#connect",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.fire_power",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/piece.png#piece",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.first_strike",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/cards.png#cards",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.flame_boiling",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/suits.png#suits",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.flame_breath",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/coins.png#coins",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.fracture_fall_apart",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/heart_outline.png#heart_outline",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.gear_delivery",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/deck.png#deck",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.gift",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/blue_2d/mahjong_tiles.png#mahjong_tiles",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.give_punch",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/house.png#house",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.guide",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/heart.png#heart",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.hard",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/yen.png#yen",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.hard_skin",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/spinner.png#spinner",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.hoodlum",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/blue_2d/mahjong_tile.png#mahjong_tile",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.hot_observation",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/blue_2d/billiard_rack.png#billiard_rack",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.intense_burning",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/piece.png#piece",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.learning_growth",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/piece.png#piece",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.love_fire",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/blue_2d/bowling_pins.png#bowling_pins",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.mixed_bones",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/billiard_rack.png#billiard_rack",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.monster_battle_hardened",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/blue_2d/bowling_pins.png#bowling_pins",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.orc_tactics",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/bishop.png#bishop",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.otherworld_help",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/star.png#star",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.random_walk",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/bowling_ball.png#bowling_ball",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.range_expand",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/flag_piece.png#flag_piece",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.rascality",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/club.png#club",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.recombine_body",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/mahjong_tile.png#mahjong_tile",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.recombine_head",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/deck.png#deck",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.relentless_chase",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/billiard.png#billiard",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.rolling_crush",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/knight.png#knight",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.rotate_lover",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/bowling_pin.png#bowling_pin",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.sacrifice",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/mahjong_tile.png#mahjong_tile",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.sharp_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/domino_diagonal.png#domino_diagonal",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.smart",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/blue_2d/bowling_ball.png#bowling_ball",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.space_mastery",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/dominoes.png#dominoes",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.stocking",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/king.png#king",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.stone_growth",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/dice_1.png#dice_1",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.stone_lover",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/joker.png#joker",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.stone_shelter",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/mahjong_tiles.png#mahjong_tiles",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.stray_cub",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/club.png#club",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.stroll",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/piece.png#piece",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.strong_combo",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/blue_2d/domino_diagonal.png#domino_diagonal",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.survival_wisdom",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/deck.png#deck",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.swallow_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/blue_2d/club_outline.png#club_outline",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.taunt",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/blue_2d/flag_piece.png#flag_piece",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.thief_claims",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/domino.png#domino",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.thorn_skin",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/blue_2d/bowling_ball.png#bowling_ball",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.throw_stone",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/seven.png#seven",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.tower_child",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/checkerboard.png#checkerboard",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.turn_world",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/cards.png#cards",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.unstable",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/heart_outline.png#heart_outline",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.violence_maniac",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/blue_2d/mahjong_tiles.png#mahjong_tiles",
+    "fallback_id": ""
+  },
+  {
+    "visual_id": "visual.icon.skill.violence_nutrition",
+    "kind": "sprite",
+    "asset_key": "Assets/Arts/Images/Png/Icons/white_node/spinner.png#spinner",
+    "fallback_id": ""
   }
 ]

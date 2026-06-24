@@ -77,12 +77,42 @@ namespace NineGrid.Presentation.Visuals
                 return true;
             }
 
+            if (TryLoadCatalogLegacyAssetKey(visualId, out sprite))
+            {
+                return true;
+            }
+
             if (!string.IsNullOrEmpty(conventionAssetKey))
             {
+                if (VisualIdNaming.IsLegacyPathKey(conventionAssetKey)
+                    && ContentVisualSpriteKeyCodec.TryDecodeLegacy(conventionAssetKey, out sprite))
+                {
+                    return true;
+                }
+
                 return TryLoadAssetPathInEditor(conventionAssetKey, out sprite);
             }
 
             return false;
+        }
+
+        private static bool TryLoadCatalogLegacyAssetKey(string visualId, out Sprite sprite)
+        {
+            sprite = null;
+            if (sCatalog == null || string.IsNullOrEmpty(visualId))
+            {
+                return false;
+            }
+
+            VisualAssetDefinition definition;
+            if (!sCatalog.TryGet(visualId, out definition)
+                || string.IsNullOrEmpty(definition.AssetKey)
+                || !VisualIdNaming.IsLegacyPathKey(definition.AssetKey))
+            {
+                return false;
+            }
+
+            return ContentVisualSpriteKeyCodec.TryDecodeLegacy(definition.AssetKey, out sprite);
         }
 
         private static bool TryLoadAssetPathInEditor(string assetKey, out Sprite sprite)

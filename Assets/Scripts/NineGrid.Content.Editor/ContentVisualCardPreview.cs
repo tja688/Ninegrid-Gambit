@@ -5,15 +5,13 @@ using UnityEngine;
 
 namespace NineGrid.Content.Editor
 {
+    /// <summary>
+    /// 编辑器内标准卡预览：IMGUI 叠图，避免 PreviewRenderUtility 在 URP 下无法渲染 SpriteRenderer。
+    /// </summary>
     public sealed class ContentVisualCardPreview : System.IDisposable
     {
-        private const string StandardCardPrefabPath = "Assets/Prefabs/Standard Card.prefab";
-        private const string FrameChild = "Card Frame ";
-
-        private PreviewRenderUtility previewUtility;
-        private GameObject previewRoot;
-        private GameObject prefabAsset;
-        private bool disposed;
+        private static readonly Color PanelBg = new Color(0.09f, 0.075f, 0.06f, 1f);
+        private const float CardAspect = 1.625f / 2.0625f;
 
         public void Draw(Rect rect, ContentVisualResolvedView view)
         {
@@ -22,147 +20,124 @@ namespace NineGrid.Content.Editor
                 return;
             }
 
-            EnsurePreviewRoot();
-            ApplyResolvedView(view);
+            EditorGUI.DrawRect(rect, PanelBg);
 
-            previewUtility.BeginPreview(rect, GUIStyle.none);
-            previewUtility.camera.transform.position = new Vector3(0f, 0f, -6f);
-            previewUtility.camera.transform.rotation = Quaternion.identity;
-            previewUtility.camera.orthographic = true;
-            previewUtility.camera.orthographicSize = 2.2f;
-            previewUtility.camera.backgroundColor = new Color(0.09f, 0.075f, 0.06f, 1f);
-            previewUtility.lights[0].intensity = 1.1f;
-            previewUtility.lights[0].transform.rotation = Quaternion.Euler(30f, 30f, 0f);
-            previewUtility.Render();
-            var texture = previewUtility.EndPreview();
-            GUI.DrawTexture(rect, texture, ScaleMode.ScaleToFit, true);
-        }
-
-        public void Dispose()
-        {
-            if (disposed)
+            if (view == null)
             {
-                return;
-            }
-
-            disposed = true;
-            if (previewRoot != null)
-            {
-                Object.DestroyImmediate(previewRoot);
-                previewRoot = null;
-            }
-
-            if (previewUtility != null)
-            {
-                previewUtility.Cleanup();
-                previewUtility = null;
-            }
-        }
-
-        private void EnsurePreviewRoot()
-        {
-            if (previewUtility != null && previewRoot != null)
-            {
-                return;
-            }
-
-            previewUtility = new PreviewRenderUtility();
-            prefabAsset = AssetDatabase.LoadAssetAtPath<GameObject>(StandardCardPrefabPath);
-            if (prefabAsset == null)
-            {
-                return;
-            }
-
-            previewRoot = previewUtility.InstantiatePrefabInScene(prefabAsset);
-            previewRoot.transform.position = Vector3.zero;
-            previewRoot.transform.rotation = Quaternion.identity;
-            previewRoot.hideFlags = HideFlags.HideAndDontSave;
-        }
-
-        private void ApplyResolvedView(ContentVisualResolvedView view)
-        {
-            if (previewRoot == null)
-            {
+                EditorGUI.LabelField(rect, "选择一条内容以预览", EditorStyles.centeredGreyMiniLabel);
                 return;
             }
 
             Sprite iconSprite;
             Sprite faceSprite;
-            ContentVisualSpriteLoader.TryLoad(
-                view?.IconVisualId,
-                view?.IconAssetKey,
-                out iconSprite);
-            ContentVisualSpriteLoader.TryLoad(
-                view?.FaceVisualId,
-                view?.FaceAssetKey,
-                out faceSprite);
+            TryLoadPreviewSprite(view.IconVisualId, view.IconAssetKey, out iconSprite);
+            TryLoadPreviewSprite(view.FaceVisualId, view.FaceAssetKey, out faceSprite);
 
-            SetSpriteOnChild(previewRoot.transform, "MainIcon", iconSprite);
-            SetSpriteOnChild(previewRoot.transform, "Standard Card", faceSprite);
-            SetFrameColor(previewRoot.transform, view != null ? view.FrameColor : ContentColor.White);
-        }
+            var cardRect = FitAspectRect(rect, CardAspect, 0.9f);
+            var frameColor = new Color(view.FrameColor.R, view.FrameColor.G, view.FrameColor.B, view.FrameColor.A);
+            EditorGUI.DrawRect(cardRect, frameColor);
 
-        private static void SetFrameColor(Transform root, ContentColor color)
-        {
-            var child = FindChildRecursive(root, FrameChild);
-            if (child == null)
+            var faceRect = Inset(cardRect, cardRect.width * 0.045f, cardRect.height * 0.045f);
+            if (faceSprite != null)
             {
-                return;
+                DrawSprite(faceRect, faceSprite);
             }
 
-            var renderer = child.GetComponent<SpriteRenderer>();
-            if (renderer == null)
+            if (iconSprite != null)
             {
-                return;
+                var iconSize = cardRect.width * 0.44f;
+                var iconRect = new Rect(
+                    cardRect.x + (cardRect.width - iconSize) * 0.5f,
+                    cardRect.y + cardRect.height * 0.22f,
+                    iconSize,
+                    iconSize);
+                DrawSprite(iconRect, iconSprite);
             }
 
-            renderer.color = new Color(color.R, color.G, color.B, color.A);
-            renderer.enabled = true;
-        }
-
-        private static void SetSpriteOnChild(Transform root, string childName, Sprite sprite)
-        {
-            if (root == null)
+            if (faceSprite == null && iconSprite == null)
             {
-                return;
-            }
-
-            var child = FindChildRecursive(root, childName);
-            if (child == null)
-            {
-                return;
-            }
-
-            var renderer = child.GetComponent<SpriteRenderer>();
-            if (renderer == null)
-            {
-                return;
-            }
-
-            if (sprite != null)
-            {
-                renderer.sprite = sprite;
-                renderer.enabled = true;
+                EditorGUI.LabelField(cardRect, "未能加载预览图", EditorStyles.centeredGreyMiniLabel);
             }
         }
 
-        private static Transform FindChildRecursive(Transform parent, string childName)
+        public void Dispose()
         {
-            if (parent.name == childName)
+        }
+
+        private static bool TryLoadPreviewSprite(string visualId, string conventionAssetKey, out Sprite sprite)
+        {
+            sprite = null;
+            if (ContentVisualSpriteLoader.TryLoad(visualId, conventionAssetKey, out sprite) && sprite != null)
             {
-                return parent;
+                return true;
             }
 
-            for (var i = 0; i < parent.childCount; i++)
+            if (!string.IsNullOrEmpty(visualId)
+                && ContentVisualSpriteKeyCodec.TryDecode(visualId, out sprite)
+                && sprite != null)
             {
-                var match = FindChildRecursive(parent.GetChild(i), childName);
-                if (match != null)
-                {
-                    return match;
-                }
+                return true;
             }
 
-            return null;
+            if (!string.IsNullOrEmpty(conventionAssetKey)
+                && VisualIdNaming.IsLegacyPathKey(conventionAssetKey)
+                && ContentVisualSpriteKeyCodec.TryDecodeLegacy(conventionAssetKey, out sprite)
+                && sprite != null)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static Rect FitAspectRect(Rect outer, float widthOverHeight, float fill)
+        {
+            var maxWidth = outer.width * fill;
+            var maxHeight = outer.height * fill;
+            float width;
+            float height;
+            if (maxWidth / maxHeight > widthOverHeight)
+            {
+                height = maxHeight;
+                width = height * widthOverHeight;
+            }
+            else
+            {
+                width = maxWidth;
+                height = width / widthOverHeight;
+            }
+
+            return new Rect(
+                outer.x + (outer.width - width) * 0.5f,
+                outer.y + (outer.height - height) * 0.5f,
+                width,
+                height);
+        }
+
+        private static Rect Inset(Rect rect, float horizontal, float vertical)
+        {
+            return new Rect(
+                rect.x + horizontal,
+                rect.y + vertical,
+                Mathf.Max(0f, rect.width - horizontal * 2f),
+                Mathf.Max(0f, rect.height - vertical * 2f));
+        }
+
+        private static void DrawSprite(Rect rect, Sprite sprite)
+        {
+            if (sprite == null || sprite.texture == null)
+            {
+                return;
+            }
+
+            var texture = sprite.texture;
+            var textureRect = sprite.textureRect;
+            var uv = new Rect(
+                textureRect.x / texture.width,
+                textureRect.y / texture.height,
+                textureRect.width / texture.width,
+                textureRect.height / texture.height);
+            GUI.DrawTextureWithTexCoords(rect, texture, uv, true);
         }
     }
 }

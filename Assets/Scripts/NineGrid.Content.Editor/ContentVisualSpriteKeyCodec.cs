@@ -95,12 +95,34 @@ namespace NineGrid.Content.Editor
             ContentVisualKind kind,
             Sprite sprite)
         {
+            var editorAssetKey = TryBuildEditorAssetKey(sprite);
+            if (!string.IsNullOrEmpty(editorAssetKey))
+            {
+                return editorAssetKey;
+            }
+
             if (slot == ContentVisualKeySlot.Icon)
             {
                 return VisualAssetKeyNaming.FromConvention(kind, VisualAssetSlot.Icon, contentId);
             }
 
             return VisualAssetKeyNaming.FromConvention(kind, VisualAssetSlot.Face, contentId);
+        }
+
+        private static string TryBuildEditorAssetKey(Sprite sprite)
+        {
+            if (sprite == null)
+            {
+                return string.Empty;
+            }
+
+            var path = AssetDatabase.GetAssetPath(sprite);
+            if (string.IsNullOrEmpty(path))
+            {
+                return string.Empty;
+            }
+
+            return path + "#" + sprite.name;
         }
 
         private static bool TryLoadSubSprite(string assetPath, string spriteName, out Sprite sprite)
