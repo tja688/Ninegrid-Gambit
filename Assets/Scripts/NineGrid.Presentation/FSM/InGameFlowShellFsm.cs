@@ -1,6 +1,7 @@
 using System;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
+using NineGrid.Presentation.Visuals;
 using QFramework;
 using UnityEngine;
 using UnityEngine.Events;
@@ -105,6 +106,7 @@ namespace NineGrid.Presentation.FSM
 
             var options = new InitialGameOptions { Seed = bootSeed };
             InitialGameFactory.Create(GetArchitecture(), options);
+            ContentCatalogRuntimeBootstrap.EnsureLoaded(GetArchitecture());
 
             nodeSessionActive = false;
             bootCompleted = true;

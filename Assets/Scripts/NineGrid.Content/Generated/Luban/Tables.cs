@@ -24,6 +24,7 @@ public partial class Tables
     public tablenine.TbNodeDeckRule TbNodeDeckRule {get; }
     public tablenine.TbRoom TbRoom {get; }
     public tablenine.TbEconomy TbEconomy {get; }
+    public tablenine.TbContentVisual TbContentVisual {get; }
 
     public Tables(System.Func<string, JSONNode> loader)
     {
@@ -37,6 +38,7 @@ public partial class Tables
         TbNodeDeckRule = new tablenine.TbNodeDeckRule(loader("tablenine_tbnodedeckrule"));
         TbRoom = new tablenine.TbRoom(loader("tablenine_tbroom"));
         TbEconomy = new tablenine.TbEconomy(loader("tablenine_tbeconomy"));
+        TbContentVisual = new tablenine.TbContentVisual(loader("tablenine_tbcontentvisual"));
         ResolveRef();
     }
     
@@ -52,6 +54,7 @@ public partial class Tables
         TbNodeDeckRule.ResolveRef(this);
         TbRoom.ResolveRef(this);
         TbEconomy.ResolveRef(this);
+        TbContentVisual.ResolveRef(this);
     }
 }
 

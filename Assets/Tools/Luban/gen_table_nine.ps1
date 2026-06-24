@@ -1,5 +1,6 @@
 param(
-    [string]$LubanExe = $env:LUBAN_EXE
+    [string]$LubanExe = $env:LUBAN_EXE,
+    [switch]$BootstrapVisual
 )
 
 $ErrorActionPreference = "Stop"
@@ -12,6 +13,20 @@ if ([string]::IsNullOrWhiteSpace($LubanExe)) {
 
 if (-not (Test-Path -LiteralPath $LubanExe)) {
     throw "Luban executable was not found. Set LUBAN_EXE or pass -LubanExe. Tried: $LubanExe"
+}
+
+if ($BootstrapVisual) {
+    $venvPython = Join-Path $PSScriptRoot ".venv\Scripts\python.exe"
+    $bootstrapScript = Join-Path $PSScriptRoot "bootstrap_content_visual.py"
+    if (Test-Path -LiteralPath $venvPython) {
+        & $venvPython $bootstrapScript
+    }
+    else {
+        python $bootstrapScript
+    }
+    if ($LASTEXITCODE -ne 0) {
+        throw "content_visual.xlsx bootstrap failed with exit code $LASTEXITCODE"
+    }
 }
 
 $conf = Join-Path $PSScriptRoot "luban.conf"

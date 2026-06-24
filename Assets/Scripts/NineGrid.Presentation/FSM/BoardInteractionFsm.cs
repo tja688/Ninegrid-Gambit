@@ -6,6 +6,7 @@ using NineGrid.Core.Systems;
 using NineGrid.Presentation.Adaptors;
 using NineGrid.Presentation.Performance;
 using NineGrid.Presentation.Registry;
+using NineGrid.Presentation.Visuals;
 using QFramework;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -39,6 +40,7 @@ namespace NineGrid.Presentation.FSM
         [SerializeField] private BoardItemInteractionCoordinator coordinator;
         [SerializeField] private TableNineViewRegistry viewRegistry;
         [SerializeField] private CardHoverPerformance hoverPerformance;
+        [SerializeField] private ContentInfoPresenter infoPresenter;
         [SerializeField] private PresentationBatchPlayer batchPlayer;
         [SerializeField] private Camera inputCamera;
 
@@ -165,7 +167,7 @@ namespace NineGrid.Presentation.FSM
                 if (actor != hoveredActor || slot != hoveredSlot)
                 {
                     ClearHover();
-                    EnterHover(slot, actor);
+                    EnterHover(slot, actor, cardUid);
                 }
             }
 
@@ -199,7 +201,7 @@ namespace NineGrid.Presentation.FSM
             }
         }
 
-        private void EnterHover(SlotId slot, Transform actor)
+        private void EnterHover(SlotId slot, Transform actor, int cardUid)
         {
             hoveredSlot = slot;
             hoveredActor = actor;
@@ -214,6 +216,15 @@ namespace NineGrid.Presentation.FSM
                 hoverPerformance?.Play(hoveredActor);
             }
 
+            if (cardUid > 0)
+            {
+                infoPresenter?.ShowForCardUid(GetArchitecture(), cardUid);
+            }
+            else
+            {
+                infoPresenter?.Clear();
+            }
+
             SetState(isWatching ? BoardInteractionState.Watching : BoardInteractionState.Hover);
         }
 
@@ -223,6 +234,8 @@ namespace NineGrid.Presentation.FSM
             {
                 hoverPerformance?.StopAndRestore(hoveredActor);
             }
+
+            infoPresenter?.Clear();
 
             hoveredActor = null;
             hoveredSlot = SlotId.None;

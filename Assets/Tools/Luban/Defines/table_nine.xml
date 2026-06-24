@@ -100,6 +100,15 @@
     <var name="shop_delete_help_card_gold" type="int"/>
   </bean>
 
+  <bean name="ContentVisualRow">
+    <var name="content_id" type="string"/>
+    <var name="content_kind" type="string"/>
+    <var name="description" type="string"/>
+    <var name="face_key" type="string"/>
+    <var name="frame_key" type="string"/>
+    <var name="icon_key" type="string"/>
+  </bean>
+
   <table name="TbEffect" value="EffectRow" input="*@effects.json" index="id"/>
   <table name="TbCard" value="CardRow" input="*@cards.json" index="def_id"/>
   <table name="TbSkill" value="SkillRow" input="*@skills.json" index="def_id"/>
@@ -110,4 +119,5 @@
   <table name="TbNodeDeckRule" value="NodeDeckRuleRow" input="*@node_deck_rules.json" index="node_index"/>
   <table name="TbRoom" value="RoomRow" input="*@rooms.json" index="kind"/>
   <table name="TbEconomy" value="EconomyRow" input="*@economy.json" index="id"/>
+  <table name="TbContentVisual" value="ContentVisualRow" input="TbContentVisual@content_visual.xlsx" index="content_id"/>
 </module>

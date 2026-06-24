@@ -97,3 +97,6 @@ Thumbs.db
 # Local art staging workspace (not for version control)
 /[Aa]ssets/[Aa]rts/[Ss]taging/
 /[Aa]ssets/[Aa]rts/[Ss]taging.meta
+
+# Luban bootstrap venv
+/[Aa]ssets/[Tt]ools/[Ll]uban/.venv/
