@@ -36,13 +36,11 @@ namespace NineGrid.Presentation.Adaptors
 
         [Header("Registry")]
         [SerializeField] private TableNineViewRegistry viewRegistry;
+        [SerializeField] private TableNineActorFactory actorFactory;
 
         [Header("Layout")]
         [SerializeField] private Transform deckAnchorRoot;
         [SerializeField] private CardDeckLayoutSolver deckLayoutSolver = new();
-
-        [Header("Actors")]
-        [SerializeField] private GameObject cardActorPrefab;
 
         [Header("Performances")]
         [SerializeField] private CardDeckEntryPerformance entryPerformance;
@@ -145,7 +143,7 @@ namespace NineGrid.Presentation.Adaptors
 
             for (var i = 0; i < mDeckCardUids.Count; i++)
             {
-                EnsureDeckActor(mDeckCardUids[i]);
+                EnsureDeckActor(mDeckCardUids[i], snapshot);
             }
 
             if (mDeckCardUids.Count == 0)
@@ -196,7 +194,7 @@ namespace NineGrid.Presentation.Adaptors
                 yield break;
             }
 
-            EnsureDeckActor(evt.CardUid);
+            EnsureDeckActor(evt.CardUid, snapshot);
             if (!mDeckCardUids.Contains(evt.CardUid))
             {
                 mDeckCardUids.Add(evt.CardUid);
@@ -219,7 +217,7 @@ namespace NineGrid.Presentation.Adaptors
             for (var i = 0; i < group.Count; i++)
             {
                 DeckBatchPlan.DealEntry entry = group[i];
-                Transform actor = EnsureDeckActor(entry.CardUid);
+                Transform actor = EnsureDeckActor(entry.CardUid, snapshot);
                 Transform slot;
                 if (!viewRegistry.TryGetSlotAnchor(entry.ToSlot, out slot) || slot == null)
                 {
@@ -256,7 +254,7 @@ namespace NineGrid.Presentation.Adaptors
                 yield break;
             }
 
-            Transform actor = EnsureDeckActor(evt.CardUid);
+            Transform actor = EnsureDeckActor(evt.CardUid, snapshot);
             Transform slot;
             if (!viewRegistry.TryGetSlotAnchor(evt.ToSlot, out slot) || slot == null)
             {
@@ -368,35 +366,42 @@ namespace NineGrid.Presentation.Adaptors
             }
         }
 
-        private Transform EnsureDeckActor(int cardUid)
+        private Transform EnsureDeckActor(int cardUid, CoreViewSnapshot snapshot)
         {
+            EnsureActorFactory();
+            if (actorFactory != null)
+            {
+                return actorFactory.Acquire(cardUid, ViewActorZone.Deck, GetArchitecture(), snapshot);
+            }
+
             Transform actor;
             if (viewRegistry.TryGetActor(cardUid, out actor) && actor != null)
             {
                 return actor;
             }
 
-            Transform parent = viewRegistry.ActorLayer;
-            if (cardActorPrefab != null)
-            {
-                var instance = Instantiate(cardActorPrefab, parent);
-                instance.name = $"DeckCard_{cardUid}";
-                actor = instance.transform;
-            }
-            else
-            {
-                actor = SelectionOptionVisual.CreatePreviewCard(
-                    parent,
-                    mDeckCardUids.Count,
-                    null,
-                    Vector3.zero,
-                    0f,
-                    deckLayoutSolver.BaseSortingOrder);
-                actor.name = $"DeckCard_{cardUid}";
-            }
-
+            actor = SelectionOptionVisual.CreatePreviewCard(
+                viewRegistry.ActorLayer,
+                mDeckCardUids.Count,
+                null,
+                Vector3.zero,
+                0f,
+                deckLayoutSolver.BaseSortingOrder);
+            actor.name = $"DeckCard_{cardUid}";
             viewRegistry.RegisterActor(cardUid, actor, ViewActorZone.Deck);
             return actor;
+        }
+
+        private void EnsureActorFactory()
+        {
+            if (actorFactory == null)
+            {
+                actorFactory = GetComponent<TableNineActorFactory>();
+                if (actorFactory == null)
+                {
+                    actorFactory = GetComponentInParent<TableNineActorFactory>();
+                }
+            }
         }
 
         private void RemoveFromDeck(int cardUid)

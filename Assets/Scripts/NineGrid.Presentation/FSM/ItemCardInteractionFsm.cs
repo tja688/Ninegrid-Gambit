@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
 using NineGrid.Presentation.Performance;
+using NineGrid.Presentation.Registry;
 using QFramework;
 using UnityEngine;
 using UnityEngine.Events;
@@ -43,6 +44,7 @@ namespace NineGrid.Presentation.FSM
         [SerializeField] private Collider applyZoneCollider;
         [SerializeField] private Transform actorsRoot;
         [SerializeField] private GameObject cardPrefab;
+        [SerializeField] private TableNineActorFactory actorFactory;
         [SerializeField] private Transform[] referenceAnchors = Array.Empty<Transform>();
 
         [Header("Layout")]
@@ -570,6 +572,18 @@ namespace NineGrid.Presentation.FSM
 
         private Transform SpawnActor(Vector3 localPosition, int sortingOrder, int cardUid, bool isDemo)
         {
+            Transform actor;
+            if (!isDemo && cardUid > 0 && TrySpawnFromFactory(cardUid, out actor))
+            {
+                actor.SetParent(actorsRoot, false);
+                actor.localPosition = localPosition;
+                actor.localRotation = Quaternion.identity;
+                actor.localScale = Vector3.one;
+                SelectionOptionVisual.ApplySortingOrder(actor, sortingOrder);
+                EnsurePickCollider(actor, actor.GetComponentInChildren<SpriteRenderer>());
+                return actor;
+            }
+
             GameObject instance;
             if (cardPrefab != null)
             {
@@ -583,7 +597,7 @@ namespace NineGrid.Presentation.FSM
                 renderer.sprite = null;
             }
 
-            Transform actor = instance.transform;
+            actor = instance.transform;
             actor.localPosition = localPosition;
             actor.localRotation = Quaternion.identity;
             actor.localScale = Vector3.one;
@@ -596,6 +610,31 @@ namespace NineGrid.Presentation.FSM
 
             EnsurePickCollider(actor, spriteRenderer);
             return actor;
+        }
+
+        private bool TrySpawnFromFactory(int cardUid, out Transform actor)
+        {
+            actor = null;
+            EnsureActorFactory();
+            if (actorFactory == null)
+            {
+                return false;
+            }
+
+            actor = actorFactory.Acquire(cardUid, ViewActorZone.Hand, GetArchitecture());
+            return actor != null;
+        }
+
+        private void EnsureActorFactory()
+        {
+            if (actorFactory == null)
+            {
+                actorFactory = GetComponentInParent<TableNineActorFactory>();
+                if (actorFactory == null)
+                {
+                    actorFactory = FindFirstObjectByType<TableNineActorFactory>();
+                }
+            }
         }
 
         private static void EnsurePickCollider(Transform actor, SpriteRenderer spriteRenderer)
@@ -644,13 +683,24 @@ namespace NineGrid.Presentation.FSM
 
             for (var i = 0; i < handCards.Count; i++)
             {
-                Transform actor = handCards[i].Actor;
+                HandCardEntry entry = handCards[i];
+                Transform actor = entry.Actor;
                 if (actor == null)
                 {
                     continue;
                 }
 
                 interactPerformance?.UnregisterActor(actor);
+                if (!entry.IsDemo && entry.CardUid > 0)
+                {
+                    EnsureActorFactory();
+                    if (actorFactory != null)
+                    {
+                        actorFactory.Release(entry.CardUid);
+                        continue;
+                    }
+                }
+
                 if (Application.isPlaying)
                 {
                     Destroy(actor.gameObject);

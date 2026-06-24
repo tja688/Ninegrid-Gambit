@@ -1,6 +1,7 @@
 using System;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
+using NineGrid.Presentation.Registry;
 using NineGrid.Presentation.Visuals;
 using QFramework;
 using UnityEngine;
@@ -24,6 +25,9 @@ namespace NineGrid.Presentation.FSM
         [SerializeField] private BoardInteractionFsm boardInteractionFsm;
         [SerializeField] private ItemCardInteractionFsm itemCardInteractionFsm;
         [SerializeField] private SelectionOverlayFsm selectionOverlayFsm;
+
+        [Header("Actors")]
+        [SerializeField] private TableNineActorFactory actorFactory;
 
         [Header("Events")]
         [SerializeField] private UnityEvent<FlowShellScreen> onScreenChanged;
@@ -107,6 +111,7 @@ namespace NineGrid.Presentation.FSM
             var options = new InitialGameOptions { Seed = bootSeed };
             InitialGameFactory.Create(GetArchitecture(), options);
             ContentCatalogRuntimeBootstrap.EnsureLoaded(GetArchitecture());
+            EnsureAvatarActor();
 
             nodeSessionActive = false;
             bootCompleted = true;
@@ -125,6 +130,7 @@ namespace NineGrid.Presentation.FSM
         {
             SetAppState(FlowShellAppState.RunSession);
             SubscribePhase();
+            EnsureAvatarActor();
             SyncScreenFromPhase(force: true);
         }
 
@@ -209,6 +215,20 @@ namespace NineGrid.Presentation.FSM
             appState = nextState;
             onAppStateChanged?.Invoke(appState);
             AppStateChanged?.Invoke(appState);
+        }
+
+        private void EnsureAvatarActor()
+        {
+            if (actorFactory == null)
+            {
+                actorFactory = GetComponentInChildren<TableNineActorFactory>(true);
+                if (actorFactory == null)
+                {
+                    actorFactory = FindFirstObjectByType<TableNineActorFactory>();
+                }
+            }
+
+            actorFactory?.EnsureAvatarActor(GetArchitecture());
         }
     }
 }

@@ -30,6 +30,7 @@ namespace NineGrid.Presentation.Adaptors
 
         [Header("Registry")]
         [SerializeField] private TableNineViewRegistry viewRegistry;
+        [SerializeField] private TableNineActorFactory actorFactory;
 
         [Header("Performances")]
         [SerializeField] private BoardRotatePerformance boardRotatePerformance;
@@ -302,7 +303,7 @@ namespace NineGrid.Presentation.Adaptors
                 yield return WaitWhilePlaying(() => cardKillPerformance.IsPlaying, cardKillPerformance.TotalDuration);
             }
 
-            viewRegistry.UnregisterActor(evt.TargetUid);
+            ReleaseActor(evt.TargetUid);
         }
 
         private IEnumerator PlayRemoveCard(CoreGameEvent evt)
@@ -316,8 +317,7 @@ namespace NineGrid.Presentation.Adaptors
             SpriteRenderer[] renderers = actor.GetComponentsInChildren<SpriteRenderer>(true);
             if (renderers.Length == 0)
             {
-                actor.gameObject.SetActive(false);
-                viewRegistry.UnregisterActor(evt.CardUid);
+                ReleaseActor(evt.CardUid);
                 yield break;
             }
 
@@ -347,8 +347,37 @@ namespace NineGrid.Presentation.Adaptors
             }
 
             yield return sequence.WaitForCompletion();
-            actor.gameObject.SetActive(false);
-            viewRegistry.UnregisterActor(evt.CardUid);
+            ReleaseActor(evt.CardUid);
+        }
+
+        private void ReleaseActor(int cardUid)
+        {
+            EnsureActorFactory();
+            if (actorFactory != null)
+            {
+                actorFactory.Release(cardUid);
+                return;
+            }
+
+            Transform actor;
+            if (viewRegistry.TryGetActor(cardUid, out actor) && actor != null)
+            {
+                actor.gameObject.SetActive(false);
+            }
+
+            viewRegistry.UnregisterActor(cardUid);
+        }
+
+        private void EnsureActorFactory()
+        {
+            if (actorFactory == null)
+            {
+                actorFactory = GetComponent<TableNineActorFactory>();
+                if (actorFactory == null)
+                {
+                    actorFactory = GetComponentInParent<TableNineActorFactory>();
+                }
+            }
         }
 
         private IEnumerator PlayMarkBoard(CoreGameEvent evt, CoreViewSnapshot snapshot)
