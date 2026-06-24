@@ -10,8 +10,8 @@ using UnityEngine;
 namespace NineGrid.Presentation.Adaptors
 {
   /// <summary>
-  /// 玩家状态适配器：认领 ShowDamage / UpdateHp / UpdateArmor / UpdateGold / UpdateInteractionCount，
-  /// 调度飘字与 HUD 面板更新表演黑盒。
+  /// 玩家状态适配器：认领 ShowDamage / UpdateHp / UpdateArmor / UpdateGold / UpdateInteractionCount / ModifyBaseStat，
+  /// 调度飘字、HUD 与场地 Card 状态面板表演黑盒。
   /// </summary>
   [DisallowMultipleComponent]
   public sealed class TableNineStatusAdaptor : MonoBehaviour
@@ -23,10 +23,14 @@ namespace NineGrid.Presentation.Adaptors
       PresentationInstructionKind.UpdateArmor,
       PresentationInstructionKind.UpdateGold,
       PresentationInstructionKind.UpdateInteractionCount,
+      PresentationInstructionKind.ModifyBaseStat,
     };
 
     [Header("Registry")]
     [SerializeField] private TableNineViewRegistry viewRegistry;
+
+    [Header("HUD")]
+    [SerializeField] private TableNineStatusPanelView panelView;
 
     [Header("Performances")]
     [SerializeField] private DamagePopupPerformance damagePopupPerformance;
@@ -62,16 +66,31 @@ namespace NineGrid.Presentation.Adaptors
           PlayDamagePopup(evt, snapshot);
           yield break;
         case PresentationInstructionKind.UpdateHp:
-          yield return PlayUpdateHp(evt, snapshot);
+          if (evt.Type == CoreEventType.Healed && evt.Delta > 0)
+          {
+            PlayHealPopup(evt, snapshot);
+          }
+
+          ApplyHudEvent(evt, snapshot);
+          yield return PlayCardStatusUpdate(evt, snapshot);
           break;
         case PresentationInstructionKind.UpdateArmor:
-          yield return PlayUpdateArmor(evt, snapshot);
+          ApplyHudEvent(evt, snapshot);
+          yield return PlayCardStatusUpdate(evt, snapshot);
           break;
         case PresentationInstructionKind.UpdateGold:
-          yield return PlayUpdateGold(evt, snapshot);
-          break;
+          if (evt.Delta != 0)
+          {
+            PlayGoldPopup(evt, snapshot);
+          }
+
+          ApplyHudEvent(evt, snapshot);
+          yield break;
         case PresentationInstructionKind.UpdateInteractionCount:
-          yield return PlayUpdateInteractionCount(evt, snapshot);
+          ApplyHudEvent(evt, snapshot);
+          yield break;
+        case PresentationInstructionKind.ModifyBaseStat:
+          yield return PlayCardStatusUpdate(evt, snapshot);
           break;
       }
     }
@@ -79,46 +98,101 @@ namespace NineGrid.Presentation.Adaptors
     public void AlignFromSnapshot(CoreViewSnapshot snapshot)
     {
       EnsureReferences();
-      statusPanelUpdatePerformance.AlignFromSnapshot(snapshot);
-    }
-
-    private IEnumerator PlayUpdateHp(CoreGameEvent evt, CoreViewSnapshot snapshot)
-    {
-      if (evt.Type == CoreEventType.Healed && evt.Delta > 0)
+      if (panelView != null)
       {
-        PlayHealPopup(evt, snapshot);
+        panelView.ApplySnapshot(snapshot);
       }
 
-      yield return PlayPanelUpdate(evt, snapshot);
+      AlignBoardCardStatuses(snapshot);
     }
 
-    private IEnumerator PlayUpdateArmor(CoreGameEvent evt, CoreViewSnapshot snapshot)
+    private void ApplyHudEvent(CoreGameEvent evt, CoreViewSnapshot snapshot)
     {
-      yield return PlayPanelUpdate(evt, snapshot);
-    }
-
-    private IEnumerator PlayUpdateGold(CoreGameEvent evt, CoreViewSnapshot snapshot)
-    {
-      if (evt.Delta != 0)
+      if (panelView == null)
       {
-        PlayGoldPopup(evt, snapshot);
+        return;
       }
 
-      yield return PlayPanelUpdate(evt, snapshot);
+      panelView.ApplyEvent(evt, snapshot);
     }
 
-    private IEnumerator PlayUpdateInteractionCount(CoreGameEvent evt, CoreViewSnapshot snapshot)
+    private IEnumerator PlayCardStatusUpdate(CoreGameEvent evt, CoreViewSnapshot snapshot)
     {
-      yield return PlayPanelUpdate(evt, snapshot);
-    }
+      if (!ShouldAnimateCardStatus(evt, snapshot))
+      {
+        yield break;
+      }
 
-    private IEnumerator PlayPanelUpdate(CoreGameEvent evt, CoreViewSnapshot snapshot)
-    {
+      Transform cardActor = ResolveCardActor(evt.CardUid);
+      if (cardActor == null)
+      {
+        yield break;
+      }
+
       bool completed = false;
-      statusPanelUpdatePerformance.Play(evt, snapshot, () => completed = true);
+      statusPanelUpdatePerformance.Play(cardActor, evt, snapshot, () => completed = true);
       yield return WaitUntilOrTimeout(
         () => completed || !statusPanelUpdatePerformance.IsPlaying,
-        statusPanelUpdatePerformance.TotalDuration + 0.01f);
+        statusPanelUpdatePerformance.TotalDuration + 0.05f);
+    }
+
+    private void AlignBoardCardStatuses(CoreViewSnapshot snapshot)
+    {
+      if (snapshot == null || viewRegistry == null || statusPanelUpdatePerformance == null)
+      {
+        return;
+      }
+
+      for (var i = 0; i < snapshot.BoardSlots.Count; i++)
+      {
+        BoardSlotView slot = snapshot.BoardSlots[i];
+        if (slot.CardUid <= 0)
+        {
+          continue;
+        }
+
+        Transform actor;
+        if (!viewRegistry.TryGetActor(slot.CardUid, out actor) || actor == null)
+        {
+          continue;
+        }
+
+        statusPanelUpdatePerformance.AlignCard(actor, slot, instant: true);
+      }
+    }
+
+    private static bool ShouldAnimateCardStatus(CoreGameEvent evt, CoreViewSnapshot snapshot)
+    {
+      if (evt == null || snapshot == null || evt.CardUid <= 0)
+      {
+        return false;
+      }
+
+      if (evt.CardUid == snapshot.AvatarUid)
+      {
+        return false;
+      }
+
+      for (var i = 0; i < snapshot.BoardSlots.Count; i++)
+      {
+        if (snapshot.BoardSlots[i].CardUid == evt.CardUid)
+        {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    private Transform ResolveCardActor(int cardUid)
+    {
+      if (viewRegistry == null || cardUid <= 0)
+      {
+        return null;
+      }
+
+      Transform actor;
+      return viewRegistry.TryGetActor(cardUid, out actor) ? actor : null;
     }
 
     private void PlayDamagePopup(CoreGameEvent evt, CoreViewSnapshot snapshot)
@@ -204,6 +278,11 @@ namespace NineGrid.Presentation.Adaptors
       if (viewRegistry == null)
       {
         viewRegistry = GetComponentInParent<TableNineViewRegistry>();
+      }
+
+      if (panelView == null)
+      {
+        panelView = GetComponentInChildren<TableNineStatusPanelView>(true);
       }
 
       if (damagePopupPerformance == null)
