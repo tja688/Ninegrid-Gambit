@@ -82,6 +82,7 @@ namespace NineGrid.Presentation.Registry
             Transform actor;
             if (viewRegistry.TryGetActor(cardUid, out actor) && actor != null)
             {
+                EnsurePickCollider(actor);
                 viewRegistry.RegisterActor(cardUid, actor, zone);
                 return actor;
             }
@@ -91,6 +92,7 @@ namespace NineGrid.Presentation.Registry
 
             BindVisuals(actor, cardUid, architecture);
             BindStats(actor, cardUid, architecture, snapshot);
+            EnsurePickCollider(actor);
 
             viewRegistry.RegisterActor(cardUid, actor, zone);
             return actor;
@@ -301,6 +303,25 @@ namespace NineGrid.Presentation.Registry
         private static string BuildActorName(int cardUid)
         {
             return cardUid > 0 ? $"CardActor_{cardUid}" : "CardActor_Pooled";
+        }
+
+        private static void EnsurePickCollider(Transform actor)
+        {
+            if (actor == null || actor.GetComponent<Collider2D>() != null)
+            {
+                return;
+            }
+
+            SpriteRenderer spriteRenderer = actor.GetComponentInChildren<SpriteRenderer>(true);
+            var box = actor.gameObject.AddComponent<BoxCollider2D>();
+            if (spriteRenderer != null && spriteRenderer.sprite != null)
+            {
+                box.size = spriteRenderer.sprite.bounds.size;
+            }
+            else
+            {
+                box.size = new Vector2(1.625f, 2.0625f);
+            }
         }
 
         private void EnsureReferences()
