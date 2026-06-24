@@ -90,16 +90,35 @@ def patch_visual_keys(path: Path, patches: list[dict]) -> None:
             continue
         excel_row = sheet_row_index + 1
         ws.cell(row=excel_row, column=COL_FACE_KEY + 1, value=patch.get("face_key", "") or "")
-        ws.cell(row=excel_row, column=COL_FRAME_KEY + 1, value=patch.get("frame_key", "") or "")
         ws.cell(row=excel_row, column=COL_ICON_KEY + 1, value=patch.get("icon_key", "") or "")
 
     wb.save(path)
     wb.close()
 
 
+def clear_frame_keys(path: Path) -> int:
+    wb = load_workbook(path)
+    ws = wb[SHEET_NAME] if SHEET_NAME in wb.sheetnames else wb.active
+    cleared = 0
+    for row_index, row in enumerate(ws.iter_rows(values_only=True)):
+        marker = _cell_str(row[COL_MARKER] if len(row) > COL_MARKER else "")
+        if marker.startswith("##"):
+            continue
+        content_id = _cell_str(row[COL_CONTENT_ID] if len(row) > COL_CONTENT_ID else "")
+        if not content_id:
+            continue
+        frame_key = _cell_str(row[COL_FRAME_KEY] if len(row) > COL_FRAME_KEY else "")
+        if frame_key:
+            ws.cell(row=row_index + 1, column=COL_FRAME_KEY + 1, value="")
+            cleared += 1
+    wb.save(path)
+    wb.close()
+    return cleared
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=["read", "patch", "headers"])
+    parser.add_argument("mode", choices=["read", "patch", "headers", "clear_frame_keys"])
     parser.add_argument("--path", required=True)
     parser.add_argument("--patches", default="")
     args = parser.parse_args()
@@ -120,6 +139,11 @@ def main() -> int:
     if args.mode == "patch":
         patches = json.loads(args.patches) if args.patches else []
         patch_visual_keys(path, patches)
+        return 0
+
+    if args.mode == "clear_frame_keys":
+        cleared = clear_frame_keys(path)
+        print(json.dumps({"cleared": cleared}, ensure_ascii=False))
         return 0
 
     return 1

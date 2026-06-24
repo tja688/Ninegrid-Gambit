@@ -1,3 +1,4 @@
+using System;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 
@@ -11,6 +12,7 @@ namespace NineGrid.Content
             string contentId,
             GameContentCatalog coreCatalog,
             ContentVisualCatalog visualCatalog,
+            CardFrameStyleCatalog frameStyleCatalog,
             out ContentVisualResolvedView view)
         {
             view = null;
@@ -25,40 +27,229 @@ namespace NineGrid.Content
                 return false;
             }
 
+            var iconVisualId = ResolveIconVisualId(visual);
+            var faceVisualId = ResolveFaceVisualId(contentId, visual, coreCatalog);
+            var frameStyleId = ResolveFrameStyleId(contentId, visual, coreCatalog);
+
             view = new ContentVisualResolvedView
             {
                 ContentId = contentId,
                 Kind = visual.Kind,
                 DisplayName = ResolveDisplayName(contentId, visual.Kind, coreCatalog),
                 Description = visual.Description,
-                FaceKey = ResolveFaceKey(contentId, visual, coreCatalog),
-                FrameKey = ResolveFrameKey(contentId, visual, coreCatalog),
-                IconKey = ResolveIconKey(visual),
-                IconResourcePath = BuildIconConventionPath(visual.Kind, contentId)
+                IconVisualId = iconVisualId,
+                IconAssetKey = ResolveIconAssetKey(visual.Kind, iconVisualId, contentId),
+                FaceVisualId = faceVisualId,
+                FaceAssetKey = ResolveFaceAssetKey(contentId, visual, coreCatalog, faceVisualId),
+                FrameStyleId = frameStyleId,
+                FrameColor = ResolveFrameColor(frameStyleId, frameStyleCatalog)
             };
             return true;
         }
 
-        public static string ResolveIconKey(ContentVisualDefinition visual)
+        public static string ResolveIconVisualId(ContentVisualDefinition visual)
         {
             if (visual == null)
             {
                 return string.Empty;
             }
 
-            return string.IsNullOrEmpty(visual.IconKey)
-                ? BuildIconConventionPath(visual.Kind, visual.ContentId)
-                : visual.IconKey;
+            if (VisualIdNaming.IsVisualId(visual.IconKey))
+            {
+                return visual.IconKey;
+            }
+
+            if (!string.IsNullOrEmpty(visual.IconKey))
+            {
+                return visual.IconKey;
+            }
+
+            return VisualIdNaming.ForIcon(visual.ContentId);
         }
 
-        public static string BuildIconConventionPath(ContentVisualKind kind, string contentId)
+        public static string ResolveIconAssetKey(ContentVisualKind kind, string iconVisualId, string contentId)
         {
-            if (string.IsNullOrEmpty(contentId) || kind == ContentVisualKind.Unknown)
+            if (string.IsNullOrEmpty(iconVisualId))
             {
                 return string.Empty;
             }
 
-            return IconConventionRoot + "/" + kind + "/" + contentId;
+            return VisualAssetKeyNaming.FromConvention(kind, VisualAssetSlot.Icon, contentId);
+        }
+
+        public static string BuildIconConventionPath(ContentVisualKind kind, string contentId)
+        {
+            return VisualAssetKeyNaming.ToResourcesPath(
+                VisualAssetKeyNaming.FromConvention(kind, VisualAssetSlot.Icon, contentId));
+        }
+
+        public static string ResolveFrameStyleId(
+            string contentId,
+            ContentVisualDefinition visual,
+            GameContentCatalog coreCatalog)
+        {
+            if (visual == null)
+            {
+                return CardFrameStyleCatalog.StyleNormal;
+            }
+
+            switch (visual.Kind)
+            {
+                case ContentVisualKind.HelpCard:
+                    CardContentDefinition helpCard;
+                    if (coreCatalog.Cards.TryGetValue(contentId, out helpCard))
+                    {
+                        return FrameStyleIdFromRarity(helpCard.Rarity);
+                    }
+
+                    break;
+                case ContentVisualKind.Relic:
+                    RelicContentDefinition relic;
+                    if (coreCatalog.Relics.TryGetValue(contentId, out relic))
+                    {
+                        return FrameStyleIdFromRarity(relic.Rarity);
+                    }
+
+                    break;
+                case ContentVisualKind.Monster:
+                    CardContentDefinition monster;
+                    if (coreCatalog.Cards.TryGetValue(contentId, out monster))
+                    {
+                        if (monster.IsBoss)
+                        {
+                            return CardFrameStyleCatalog.StyleBoss;
+                        }
+
+                        if (monster.IsElite)
+                        {
+                            return CardFrameStyleCatalog.StyleElite;
+                        }
+
+                        return CardFrameStyleCatalog.StyleNormal;
+                    }
+
+                    break;
+            }
+
+            return CardFrameStyleCatalog.StyleNormal;
+        }
+
+        public static ContentColor ResolveFrameColor(string frameStyleId, CardFrameStyleCatalog frameStyleCatalog)
+        {
+            if (frameStyleCatalog == null || string.IsNullOrEmpty(frameStyleId))
+            {
+                return ContentColor.White;
+            }
+
+            CardFrameStyleDefinition style;
+            if (frameStyleCatalog.TryGet(frameStyleId, out style))
+            {
+                return style.Color;
+            }
+
+            CardFrameStyleDefinition fallback;
+            if (frameStyleCatalog.TryGet(CardFrameStyleCatalog.StyleNormal, out fallback))
+            {
+                return fallback.Color;
+            }
+
+            return ContentColor.White;
+        }
+
+        private static string ResolveFaceVisualId(
+            string contentId,
+            ContentVisualDefinition visual,
+            GameContentCatalog coreCatalog)
+        {
+            if (visual == null)
+            {
+                return string.Empty;
+            }
+
+            if (VisualIdNaming.IsVisualId(visual.FaceKey))
+            {
+                return visual.FaceKey;
+            }
+
+            if (!string.IsNullOrEmpty(visual.FaceKey))
+            {
+                if (visual.Kind == ContentVisualKind.Monster)
+                {
+                    CardContentDefinition card;
+                    if (coreCatalog.Cards.TryGetValue(contentId, out card)
+                        && string.Equals(visual.FaceKey, card.DeckId, StringComparison.Ordinal))
+                    {
+                        return VisualIdNaming.ForFace(contentId);
+                    }
+                }
+
+                if (VisualIdNaming.IsLegacyPathKey(visual.FaceKey))
+                {
+                    return visual.FaceKey;
+                }
+            }
+
+            if (visual.Kind == ContentVisualKind.Monster)
+            {
+                CardContentDefinition card;
+                if (coreCatalog.Cards.TryGetValue(contentId, out card) && !string.IsNullOrEmpty(card.DeckId))
+                {
+                    return VisualIdNaming.ForFace(contentId);
+                }
+            }
+
+            return VisualIdNaming.ForFace(contentId);
+        }
+
+        private static string ResolveFaceAssetKey(
+            string contentId,
+            ContentVisualDefinition visual,
+            GameContentCatalog coreCatalog,
+            string faceVisualId)
+        {
+            if (string.IsNullOrEmpty(faceVisualId) || visual == null)
+            {
+                return string.Empty;
+            }
+
+            if (visual.Kind == ContentVisualKind.Monster && string.IsNullOrEmpty(visual.FaceKey))
+            {
+                CardContentDefinition card;
+                if (coreCatalog.Cards.TryGetValue(contentId, out card) && !string.IsNullOrEmpty(card.DeckId))
+                {
+                    return VisualAssetKeyNaming.FromConventionFaceDeck(card.DeckId);
+                }
+            }
+
+            if (visual.Kind == ContentVisualKind.Monster)
+            {
+                CardContentDefinition deckCard;
+                if (coreCatalog.Cards.TryGetValue(contentId, out deckCard)
+                    && !string.IsNullOrEmpty(visual.FaceKey)
+                    && string.Equals(visual.FaceKey, deckCard.DeckId, StringComparison.Ordinal))
+                {
+                    return VisualAssetKeyNaming.FromConventionFaceDeck(deckCard.DeckId);
+                }
+            }
+
+            return VisualAssetKeyNaming.FromConvention(visual.Kind, VisualAssetSlot.Face, contentId);
+        }
+
+        private static string FrameStyleIdFromRarity(ContentRarity rarity)
+        {
+            switch (rarity)
+            {
+                case ContentRarity.White:
+                    return CardFrameStyleCatalog.StyleWhite;
+                case ContentRarity.Blue:
+                    return CardFrameStyleCatalog.StyleBlue;
+                case ContentRarity.Gold:
+                    return CardFrameStyleCatalog.StyleGold;
+                case ContentRarity.Red:
+                    return CardFrameStyleCatalog.StyleRed;
+                default:
+                    return CardFrameStyleCatalog.StyleNormal;
+            }
         }
 
         private static string ResolveDisplayName(string contentId, ContentVisualKind kind, GameContentCatalog coreCatalog)
@@ -115,93 +306,6 @@ namespace NineGrid.Content
             }
 
             return contentId;
-        }
-
-        private static string ResolveFaceKey(string contentId, ContentVisualDefinition visual, GameContentCatalog coreCatalog)
-        {
-            if (!string.IsNullOrEmpty(visual.FaceKey))
-            {
-                return visual.FaceKey;
-            }
-
-            if (visual.Kind != ContentVisualKind.Monster)
-            {
-                return string.Empty;
-            }
-
-            CardContentDefinition card;
-            if (coreCatalog.Cards.TryGetValue(contentId, out card) && !string.IsNullOrEmpty(card.DeckId))
-            {
-                return card.DeckId;
-            }
-
-            return string.Empty;
-        }
-
-        private static string ResolveFrameKey(string contentId, ContentVisualDefinition visual, GameContentCatalog coreCatalog)
-        {
-            if (!string.IsNullOrEmpty(visual.FrameKey))
-            {
-                return visual.FrameKey;
-            }
-
-            switch (visual.Kind)
-            {
-                case ContentVisualKind.HelpCard:
-                case ContentVisualKind.Relic:
-                    CardContentDefinition helpCard;
-                    RelicContentDefinition relic;
-                    if (visual.Kind == ContentVisualKind.HelpCard
-                        && coreCatalog.Cards.TryGetValue(contentId, out helpCard))
-                    {
-                        return FrameKeyFromRarity(helpCard.Rarity);
-                    }
-
-                    if (visual.Kind == ContentVisualKind.Relic
-                        && coreCatalog.Relics.TryGetValue(contentId, out relic))
-                    {
-                        return FrameKeyFromRarity(relic.Rarity);
-                    }
-
-                    break;
-                case ContentVisualKind.Monster:
-                    CardContentDefinition monster;
-                    if (coreCatalog.Cards.TryGetValue(contentId, out monster))
-                    {
-                        if (monster.IsBoss)
-                        {
-                            return "boss_frame";
-                        }
-
-                        if (monster.IsElite)
-                        {
-                            return "elite_frame";
-                        }
-
-                        return "normal_frame";
-                    }
-
-                    break;
-            }
-
-            return string.Empty;
-        }
-
-        private static string FrameKeyFromRarity(ContentRarity rarity)
-        {
-            switch (rarity)
-            {
-                case ContentRarity.White:
-                    return "white_frame";
-                case ContentRarity.Blue:
-                    return "blue_frame";
-                case ContentRarity.Gold:
-                    return "gold_frame";
-                case ContentRarity.Red:
-                    return "red_frame";
-                default:
-                    return "normal_frame";
-            }
         }
 
         private static bool TryParseRoomKind(string contentId, out RoomKind roomKind)

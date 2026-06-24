@@ -1,0 +1,8 @@
+[
+  {
+    "visual_id": "visual.missing.sprite",
+    "kind": "sprite",
+    "asset_key": "content/fallback/missing_card",
+    "fallback_id": ""
+  }
+]

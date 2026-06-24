@@ -1,12 +1,14 @@
-using System;
+using NineGrid.Content;
+using NineGrid.Presentation.Visuals;
 using UnityEditor;
 using UnityEngine;
 
 namespace NineGrid.Content.Editor
 {
-    public sealed class ContentVisualCardPreview : IDisposable
+    public sealed class ContentVisualCardPreview : System.IDisposable
     {
         private const string StandardCardPrefabPath = "Assets/Prefabs/Standard Card.prefab";
+        private const string FrameChild = "Card Frame ";
 
         private PreviewRenderUtility previewUtility;
         private GameObject previewRoot;
@@ -46,7 +48,7 @@ namespace NineGrid.Content.Editor
             disposed = true;
             if (previewRoot != null)
             {
-                UnityEngine.Object.DestroyImmediate(previewRoot);
+                Object.DestroyImmediate(previewRoot);
                 previewRoot = null;
             }
 
@@ -86,14 +88,36 @@ namespace NineGrid.Content.Editor
 
             Sprite iconSprite;
             Sprite faceSprite;
-            Sprite frameSprite;
-            ContentVisualSpriteKeyCodec.TryDecode(view?.IconKey, out iconSprite);
-            ContentVisualSpriteKeyCodec.TryDecode(view?.FaceKey, out faceSprite);
-            ContentVisualSpriteKeyCodec.TryDecode(view?.FrameKey, out frameSprite);
+            ContentVisualSpriteLoader.TryLoad(
+                view?.IconVisualId,
+                view?.IconAssetKey,
+                out iconSprite);
+            ContentVisualSpriteLoader.TryLoad(
+                view?.FaceVisualId,
+                view?.FaceAssetKey,
+                out faceSprite);
 
             SetSpriteOnChild(previewRoot.transform, "MainIcon", iconSprite);
             SetSpriteOnChild(previewRoot.transform, "Standard Card", faceSprite);
-            SetSpriteOnChild(previewRoot.transform, "Card Frame ", frameSprite);
+            SetFrameColor(previewRoot.transform, view != null ? view.FrameColor : ContentColor.White);
+        }
+
+        private static void SetFrameColor(Transform root, ContentColor color)
+        {
+            var child = FindChildRecursive(root, FrameChild);
+            if (child == null)
+            {
+                return;
+            }
+
+            var renderer = child.GetComponent<SpriteRenderer>();
+            if (renderer == null)
+            {
+                return;
+            }
+
+            renderer.color = new Color(color.R, color.G, color.B, color.A);
+            renderer.enabled = true;
         }
 
         private static void SetSpriteOnChild(Transform root, string childName, Sprite sprite)

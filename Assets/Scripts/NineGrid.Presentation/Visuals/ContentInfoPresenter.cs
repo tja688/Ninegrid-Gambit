@@ -56,14 +56,20 @@ namespace NineGrid.Presentation.Visuals
 
             var coreCatalog = architecture.GetSystem<IContentSystem>().Catalog;
             var visualCatalog = ContentCatalogRuntimeBootstrap.VisualCatalog;
-            if (coreCatalog == null || visualCatalog == null)
+            var frameStyleCatalog = ContentCatalogRuntimeBootstrap.FrameStyleCatalog;
+            if (coreCatalog == null || visualCatalog == null || frameStyleCatalog == null)
             {
                 Clear();
                 return;
             }
 
             ContentVisualResolvedView view;
-            if (!ContentVisualResolver.TryResolve(contentId, coreCatalog, visualCatalog, out view)
+            if (!ContentVisualResolver.TryResolve(
+                    contentId,
+                    coreCatalog,
+                    visualCatalog,
+                    frameStyleCatalog,
+                    out view)
                 || string.IsNullOrEmpty(view.Description))
             {
                 infoTextView?.Clear();

@@ -12,9 +12,13 @@ namespace NineGrid.Presentation.Visuals
     public static class ContentCatalogRuntimeBootstrap
     {
         private static ContentVisualCatalog sVisualCatalog;
+        private static VisualAssetCatalog sVisualAssetCatalog;
+        private static CardFrameStyleCatalog sFrameStyleCatalog;
         private static bool sCoreLoaded;
 
         public static ContentVisualCatalog VisualCatalog => sVisualCatalog;
+        public static VisualAssetCatalog VisualAssetCatalog => sVisualAssetCatalog;
+        public static CardFrameStyleCatalog FrameStyleCatalog => sFrameStyleCatalog;
 
         public static bool EnsureLoaded(IArchitecture architecture)
         {
@@ -40,22 +44,34 @@ namespace NineGrid.Presentation.Visuals
                 sCoreLoaded = true;
             }
 
-            if (sVisualCatalog == null)
+            if (sVisualCatalog == null || sVisualAssetCatalog == null || sFrameStyleCatalog == null)
             {
+                var directory = ContentVisualBootstrap.ResolveLubanDataDirectory();
                 ContentVisualCatalog visualCatalog;
-                if (ContentVisualBootstrap.TryLoad(ContentVisualBootstrap.ResolveLubanDataDirectory(), out visualCatalog))
+                VisualAssetCatalog visualAssetCatalog;
+                CardFrameStyleCatalog frameStyleCatalog;
+                if (ContentVisualBootstrap.TryLoadAll(directory, out visualCatalog, out visualAssetCatalog, out frameStyleCatalog))
                 {
                     sVisualCatalog = visualCatalog;
+                    sVisualAssetCatalog = visualAssetCatalog;
+                    sFrameStyleCatalog = frameStyleCatalog;
+                    ContentVisualSpriteLoader.Configure(visualAssetCatalog);
                 }
             }
 
-            return sVisualCatalog != null && architecture.GetSystem<IContentSystem>().HasCatalog;
+            return sVisualCatalog != null
+                && sVisualAssetCatalog != null
+                && sFrameStyleCatalog != null
+                && architecture.GetSystem<IContentSystem>().HasCatalog;
         }
 
         public static void ResetForTests()
         {
             sVisualCatalog = null;
+            sVisualAssetCatalog = null;
+            sFrameStyleCatalog = null;
             sCoreLoaded = false;
+            ContentVisualSpriteLoader.Configure(null);
         }
     }
 }

@@ -109,6 +109,21 @@
     <var name="icon_key" type="string"/>
   </bean>
 
+  <bean name="VisualAssetRow">
+    <var name="visual_id" type="string"/>
+    <var name="kind" type="string"/>
+    <var name="asset_key" type="string"/>
+    <var name="fallback_id" type="string"/>
+  </bean>
+
+  <bean name="CardFrameStyleRow">
+    <var name="style_id" type="string"/>
+    <var name="color_r" type="float"/>
+    <var name="color_g" type="float"/>
+    <var name="color_b" type="float"/>
+    <var name="color_a" type="float"/>
+  </bean>
+
   <table name="TbEffect" value="EffectRow" input="*@effects.json" index="id"/>
   <table name="TbCard" value="CardRow" input="*@cards.json" index="def_id"/>
   <table name="TbSkill" value="SkillRow" input="*@skills.json" index="def_id"/>
@@ -120,4 +135,6 @@
   <table name="TbRoom" value="RoomRow" input="*@rooms.json" index="kind"/>
   <table name="TbEconomy" value="EconomyRow" input="*@economy.json" index="id"/>
   <table name="TbContentVisual" value="ContentVisualRow" input="TbContentVisual@content_visual.xlsx" index="content_id"/>
+  <table name="TbVisualAsset" value="VisualAssetRow" input="TbVisualAsset@visual_asset.xlsx" index="visual_id"/>
+  <table name="TbCardFrameStyle" value="CardFrameStyleRow" input="TbCardFrameStyle@card_frame_style.xlsx" index="style_id"/>
 </module>

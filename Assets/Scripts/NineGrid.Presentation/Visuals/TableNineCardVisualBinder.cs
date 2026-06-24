@@ -29,13 +29,19 @@ namespace NineGrid.Presentation.Visuals
 
             var coreCatalog = architecture.GetSystem<IContentSystem>().Catalog;
             var visualCatalog = ContentCatalogRuntimeBootstrap.VisualCatalog;
-            if (coreCatalog == null || visualCatalog == null)
+            var frameStyleCatalog = ContentCatalogRuntimeBootstrap.FrameStyleCatalog;
+            if (coreCatalog == null || visualCatalog == null || frameStyleCatalog == null)
             {
                 return false;
             }
 
             ContentVisualResolvedView view;
-            if (!ContentVisualResolver.TryResolve(defId, coreCatalog, visualCatalog, out view))
+            if (!ContentVisualResolver.TryResolve(
+                    defId,
+                    coreCatalog,
+                    visualCatalog,
+                    frameStyleCatalog,
+                    out view))
             {
                 return false;
             }
@@ -51,14 +57,18 @@ namespace NineGrid.Presentation.Visuals
                 return;
             }
 
-            TryApplyChild(actorRoot, MainIconChild, view.IconKey);
-            TryApplyChild(actorRoot, FaceChild, view.FaceKey);
-            TryApplyChild(actorRoot, FrameChild, view.FrameKey);
+            TryApplySpriteChild(actorRoot, MainIconChild, view.IconVisualId, view.IconAssetKey);
+            TryApplySpriteChild(actorRoot, FaceChild, view.FaceVisualId, view.FaceAssetKey);
+            TryApplyFrameColor(actorRoot, view.FrameColor);
         }
 
-        private static void TryApplyChild(Transform root, string childName, string spriteKey)
+        private static void TryApplySpriteChild(
+            Transform root,
+            string childName,
+            string visualId,
+            string conventionAssetKey)
         {
-            if (string.IsNullOrEmpty(spriteKey))
+            if (string.IsNullOrEmpty(visualId) && string.IsNullOrEmpty(conventionAssetKey))
             {
                 return;
             }
@@ -76,11 +86,29 @@ namespace NineGrid.Presentation.Visuals
             }
 
             Sprite sprite;
-            if (ContentVisualSpriteLoader.TryLoad(spriteKey, out sprite) && sprite != null)
+            if (ContentVisualSpriteLoader.TryLoad(visualId, conventionAssetKey, out sprite) && sprite != null)
             {
                 renderer.sprite = sprite;
                 renderer.enabled = true;
             }
+        }
+
+        private static void TryApplyFrameColor(Transform root, ContentColor color)
+        {
+            Transform child = FindChildRecursive(root, FrameChild);
+            if (child == null)
+            {
+                return;
+            }
+
+            var renderer = child.GetComponent<SpriteRenderer>();
+            if (renderer == null)
+            {
+                return;
+            }
+
+            renderer.color = new Color(color.R, color.G, color.B, color.A);
+            renderer.enabled = true;
         }
 
         private static Transform FindChildRecursive(Transform parent, string childName)

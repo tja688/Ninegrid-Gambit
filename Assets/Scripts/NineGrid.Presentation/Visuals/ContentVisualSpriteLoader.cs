@@ -9,15 +9,115 @@ using UnityEditor;
 namespace NineGrid.Presentation.Visuals
 {
     /// <summary>
-    /// 运行时按视觉表 key 解析 Sprite（编辑器走 AssetDatabase，发布走 Resources 约定路径）。
+    /// 按 visual_id 经注册表解析并加载 Sprite。
     /// </summary>
     public static class ContentVisualSpriteLoader
     {
         public const char SubSpriteSeparator = '#';
 
-        private static readonly Dictionary<string, Sprite> Cache = new();
+        private static VisualAssetCatalog sCatalog;
+        private static IContentVisualLoader sLoader;
+        private static readonly Dictionary<string, Sprite> sEditorCache = new Dictionary<string, Sprite>();
 
-        public static bool TryLoad(string key, out Sprite sprite)
+        public static void Configure(VisualAssetCatalog catalog)
+        {
+            sCatalog = catalog;
+            sLoader = catalog == null ? null : new ResourcesVisualLoader(catalog);
+            ClearCache();
+        }
+
+        public static bool TryLoad(string visualId, string conventionAssetKey, out Sprite sprite)
+        {
+            sprite = null;
+            if (string.IsNullOrEmpty(visualId) && string.IsNullOrEmpty(conventionAssetKey))
+            {
+                return false;
+            }
+
+            var cacheKey = (visualId ?? string.Empty) + "|" + (conventionAssetKey ?? string.Empty);
+#if UNITY_EDITOR
+            if (sEditorCache.TryGetValue(cacheKey, out sprite) && sprite != null)
+            {
+                return true;
+            }
+
+            if (TryLoadEditor(visualId, conventionAssetKey, out sprite))
+            {
+                sEditorCache[cacheKey] = sprite;
+                return true;
+            }
+#endif
+            if (sLoader != null
+                && sLoader.TryLoadSprite(visualId, conventionAssetKey, out sprite)
+                && sprite != null)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public static void ClearCache()
+        {
+            sEditorCache.Clear();
+        }
+
+#if UNITY_EDITOR
+        private static bool TryLoadEditor(string visualId, string conventionAssetKey, out Sprite sprite)
+        {
+            sprite = null;
+            if (VisualIdNaming.IsLegacyPathKey(visualId))
+            {
+                return ContentVisualSpriteKeyCodec.TryDecodeLegacy(visualId, out sprite);
+            }
+
+            var loader = sLoader ?? new ResourcesVisualLoader(sCatalog);
+            if (loader.TryLoadSprite(visualId, conventionAssetKey, out sprite) && sprite != null)
+            {
+                return true;
+            }
+
+            if (!string.IsNullOrEmpty(conventionAssetKey))
+            {
+                return TryLoadAssetPathInEditor(conventionAssetKey, out sprite);
+            }
+
+            return false;
+        }
+
+        private static bool TryLoadAssetPathInEditor(string assetKey, out Sprite sprite)
+        {
+            sprite = null;
+            var resourcesPath = VisualAssetKeyNaming.ToResourcesPath(assetKey);
+            const string resourcesToken = "Resources/";
+            var index = resourcesPath.IndexOf(resourcesToken);
+            if (index < 0)
+            {
+                return false;
+            }
+
+            var relative = resourcesPath.Substring(index + resourcesToken.Length);
+            var guids = AssetDatabase.FindAssets(relative + " t:Sprite");
+            for (var i = 0; i < guids.Length; i++)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guids[i]);
+                var loaded = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                if (loaded != null)
+                {
+                    sprite = loaded;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+#endif
+    }
+
+#if UNITY_EDITOR
+    internal static class ContentVisualSpriteKeyCodec
+    {
+        public static bool TryDecodeLegacy(string key, out Sprite sprite)
         {
             sprite = null;
             if (string.IsNullOrEmpty(key))
@@ -25,46 +125,20 @@ namespace NineGrid.Presentation.Visuals
                 return false;
             }
 
-            if (Cache.TryGetValue(key, out sprite) && sprite != null)
+            var separatorIndex = key.IndexOf(ContentVisualSpriteLoader.SubSpriteSeparator);
+            if (separatorIndex > 0 && separatorIndex < key.Length - 1)
             {
-                return true;
+                var assetPath = key.Substring(0, separatorIndex);
+                var spriteName = key.Substring(separatorIndex + 1);
+                return TryLoadSubSprite(assetPath, spriteName, out sprite);
             }
 
-#if UNITY_EDITOR
-            if (TryLoadFromEncodedAssetPath(key, out sprite)
-                || TryFindSpriteByName(key, out sprite))
-            {
-                Cache[key] = sprite;
-                return true;
-            }
-#else
-            if (TryLoadFromResources(key, out sprite))
-            {
-                Cache[key] = sprite;
-                return true;
-            }
-#endif
-
-            return false;
+            return TryFindSpriteByName(key, out sprite);
         }
 
-        public static void ClearCache()
-        {
-            Cache.Clear();
-        }
-
-#if UNITY_EDITOR
-        private static bool TryLoadFromEncodedAssetPath(string key, out Sprite sprite)
+        private static bool TryLoadSubSprite(string assetPath, string spriteName, out Sprite sprite)
         {
             sprite = null;
-            var separatorIndex = key.IndexOf(SubSpriteSeparator);
-            if (separatorIndex <= 0 || separatorIndex >= key.Length - 1)
-            {
-                return false;
-            }
-
-            var assetPath = key.Substring(0, separatorIndex);
-            var spriteName = key.Substring(separatorIndex + 1);
             var assets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
             for (var i = 0; i < assets.Length; i++)
             {
@@ -100,66 +174,6 @@ namespace NineGrid.Presentation.Visuals
 
             return false;
         }
-#else
-        private static bool TryLoadFromResources(string key, out Sprite sprite)
-        {
-            sprite = null;
-            var separatorIndex = key.IndexOf(SubSpriteSeparator);
-            if (separatorIndex > 0 && separatorIndex < key.Length - 1)
-            {
-                var assetPath = key.Substring(0, separatorIndex);
-                var spriteName = key.Substring(separatorIndex + 1);
-                var resourcesPath = ToResourcesPath(assetPath);
-                if (!string.IsNullOrEmpty(resourcesPath))
-                {
-                    var sprites = Resources.LoadAll<Sprite>(resourcesPath);
-                    for (var i = 0; i < sprites.Length; i++)
-                    {
-                        if (sprites[i] != null && sprites[i].name == spriteName)
-                        {
-                            sprite = sprites[i];
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            string[] candidates =
-            {
-                key,
-                ContentVisualResolver.IconConventionRoot + "/" + key,
-            };
-
-            for (var i = 0; i < candidates.Length; i++)
-            {
-                sprite = Resources.Load<Sprite>(candidates[i]);
-                if (sprite != null)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static string ToResourcesPath(string assetPath)
-        {
-            const string resourcesToken = "/Resources/";
-            int index = assetPath.IndexOf(resourcesToken);
-            if (index < 0)
-            {
-                return string.Empty;
-            }
-
-            string path = assetPath.Substring(index + resourcesToken.Length);
-            int extension = path.LastIndexOf('.');
-            if (extension > 0)
-            {
-                path = path.Substring(0, extension);
-            }
-
-            return path;
-        }
-#endif
     }
+#endif
 }

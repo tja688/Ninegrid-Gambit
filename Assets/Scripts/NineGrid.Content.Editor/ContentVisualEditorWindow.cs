@@ -24,16 +24,14 @@ namespace NineGrid.Content.Editor
         private TextField searchField;
         private Toggle missingIconToggle;
         private Toggle missingFaceToggle;
-        private Toggle missingFrameToggle;
         private Toggle dirtyOnlyToggle;
         private HelpBox statusHelpBox;
+        private Toolbar tabToolbar;
 
         private ObjectField iconField;
         private ObjectField faceField;
-        private ObjectField frameField;
         private ObjectField batchIconField;
         private ObjectField batchFaceField;
-        private ObjectField batchFrameField;
         private IMGUIContainer previewContainer;
 
         public static void ShowWindow()
@@ -75,10 +73,17 @@ namespace NineGrid.Content.Editor
 
             rootElement.Add(ContentVisualWarmConsoleUi.BuildHeader(
                 "表现层配图",
-                "权威源：content_visual.xlsx。文案 description 请在 Excel 编辑；icon/face/frame 在此指派并保存回写。"));
+                "content_visual.xlsx：icon/face visual_id；card_frame_style.xlsx：稀有度卡框配色。"));
+
+            tabToolbar = new Toolbar();
+            var contentTabButton = new ToolbarButton(() => SetActiveTab(0)) { text = "内容配图" };
+            var frameTabButton = new ToolbarButton(() => SetActiveTab(1)) { text = "Card Frame 配色" };
+            tabToolbar.Add(contentTabButton);
+            tabToolbar.Add(frameTabButton);
+            rootElement.Add(tabToolbar);
 
             saveButton = new ToolbarButton(SaveChanges) { text = "保存" };
-            saveButton.tooltip = "将未保存的视觉 key PATCH 回权威 xlsx（不改 description）";
+            saveButton.tooltip = "PATCH content_visual / visual_asset / card_frame_style";
             regenerateButton = new ToolbarButton(RegenerateLuban) { text = "Regenerate Luban" };
             regenerateButton.tooltip = "运行 gen_table_nine.ps1 刷新 StreamingAssets 与 Generated 代码";
 
@@ -147,13 +152,6 @@ namespace NineGrid.Content.Editor
                 RefreshList();
                 RefreshContent();
             });
-            missingFrameToggle = CreateFilterToggle("仅缺 frame", session.FilterMissingFrame, value =>
-            {
-                session.FilterMissingFrame = value;
-                session.SavePreferences();
-                RefreshList();
-                RefreshContent();
-            });
             dirtyOnlyToggle = CreateFilterToggle("仅未保存", session.FilterDirtyOnly, value =>
             {
                 session.FilterDirtyOnly = value;
@@ -164,7 +162,6 @@ namespace NineGrid.Content.Editor
 
             filterWrap.Add(missingIconToggle);
             filterWrap.Add(missingFaceToggle);
-            filterWrap.Add(missingFrameToggle);
             filterWrap.Add(dirtyOnlyToggle);
             sidebar.Add(filterWrap);
 
@@ -228,6 +225,13 @@ namespace NineGrid.Content.Editor
             toggle.style.marginBottom = 4;
             toggle.RegisterValueChangedCallback(evt => onChanged(evt.newValue));
             return toggle;
+        }
+
+        private void SetActiveTab(int tabIndex)
+        {
+            session.ActiveTab = tabIndex;
+            session.SavePreferences();
+            RefreshContent();
         }
 
         private void SetKindFilter(string kind)
@@ -312,7 +316,6 @@ namespace NineGrid.Content.Editor
                 row.ContentKind
                 + "  |  I:" + (row.HasIconKey ? "Y" : "-")
                 + " F:" + (row.HasFaceKey ? "Y" : "-")
-                + " R:" + (row.HasFrameKey ? "Y" : "-")
                 + (row.IsDirty ? "  *未保存" : string.Empty));
             subtitle.style.marginTop = 2;
             body.Add(subtitle);
@@ -342,6 +345,13 @@ namespace NineGrid.Content.Editor
 
             contentRoot.Clear();
             contentRoot.Add(statusHelpBox);
+
+            if (session.ActiveTab == 1)
+            {
+                BuildFrameStyleContent();
+                UpdateToolbarState();
+                return;
+            }
 
             var filteredCount = session.GetFilteredRows().Count();
             var assignedIconCount = session.Rows.Count(row => row.HasIconKey);
@@ -396,7 +406,7 @@ namespace NineGrid.Content.Editor
                         ApplyBatchSprite(checkedRows, ContentVisualKeySlot.Icon, evt.newValue as Sprite));
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
                         "批量 Icon",
-                        "拖入 Sprite → 编码为 Assets/path#name 写入 icon_key",
+                        "拖入 Sprite → 写入 visual.icon.{content_id}",
                         batchIconField));
 
                     batchFaceField = new ObjectField { objectType = typeof(Sprite), allowSceneObjects = false };
@@ -404,21 +414,12 @@ namespace NineGrid.Content.Editor
                         ApplyBatchSprite(checkedRows, ContentVisualKeySlot.Face, evt.newValue as Sprite));
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
                         "批量 Face",
-                        "卡面/阵营底图 key",
+                        "卡面/阵营底图 visual_id",
                         batchFaceField));
-
-                    batchFrameField = new ObjectField { objectType = typeof(Sprite), allowSceneObjects = false };
-                    batchFrameField.RegisterValueChangedCallback(evt =>
-                        ApplyBatchSprite(checkedRows, ContentVisualKeySlot.Frame, evt.newValue as Sprite));
-                    column.Add(ContentVisualWarmConsoleUi.WrapControl(
-                        "批量 Frame",
-                        "卡框皮肤 key",
-                        batchFrameField));
 
                     column.Add(ContentVisualWarmConsoleUi.CreateButtonRow(
                         new Button(() => session.ClearKeyOnRows(checkedRows, ContentVisualKeySlot.Icon)) { text = "清除 Icon" },
-                        new Button(() => session.ClearKeyOnRows(checkedRows, ContentVisualKeySlot.Face)) { text = "清除 Face" },
-                        new Button(() => session.ClearKeyOnRows(checkedRows, ContentVisualKeySlot.Frame)) { text = "清除 Frame" }));
+                        new Button(() => session.ClearKeyOnRows(checkedRows, ContentVisualKeySlot.Face)) { text = "清除 Face" }));
                 }));
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
@@ -465,56 +466,44 @@ namespace NineGrid.Content.Editor
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
                 "视觉 Key",
-                "保存时仅 PATCH 这三列；description 不会被修改。",
+                "保存时 PATCH icon/face visual_id，并 upsert visual_asset.xlsx。",
                 column =>
                 {
+                    ContentVisualKind kind;
+                    Enum.TryParse(row.ContentKind, true, out kind);
+
                     Sprite iconSprite;
                     Sprite faceSprite;
-                    Sprite frameSprite;
                     ContentVisualSpriteKeyCodec.TryDecode(row.IconKey, out iconSprite);
                     ContentVisualSpriteKeyCodec.TryDecode(row.FaceKey, out faceSprite);
-                    ContentVisualSpriteKeyCodec.TryDecode(row.FrameKey, out frameSprite);
 
                     iconField = new ObjectField { objectType = typeof(Sprite), allowSceneObjects = false, value = iconSprite };
                     iconField.RegisterValueChangedCallback(evt =>
                     {
-                        row.IconKey = ContentVisualSpriteKeyCodec.Encode(evt.newValue as Sprite);
+                        session.ApplySpriteToRows(new[] { row }, ContentVisualKeySlot.Icon, evt.newValue as Sprite);
                         RefreshAfterRowEdit();
                     });
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
                         "icon_key",
-                        "核心图标。空则运行时走 Sprites/Content/{kind}/{content_id} 约定。",
+                        "业务 visual_id；空则走约定路径。",
                         iconField));
                     column.Add(ContentVisualWarmConsoleUi.CreateTinyPathLabel("当前：" + (string.IsNullOrEmpty(row.IconKey) ? "(空)" : row.IconKey)));
 
                     faceField = new ObjectField { objectType = typeof(Sprite), allowSceneObjects = false, value = faceSprite };
                     faceField.RegisterValueChangedCallback(evt =>
                     {
-                        row.FaceKey = ContentVisualSpriteKeyCodec.Encode(evt.newValue as Sprite);
+                        session.ApplySpriteToRows(new[] { row }, ContentVisualKeySlot.Face, evt.newValue as Sprite);
                         RefreshAfterRowEdit();
                     });
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
                         "face_key",
-                        "卡面/阵营底图。怪物空值可由 deck_id 推导。",
+                        "卡面/阵营底图 visual_id。",
                         faceField));
                     column.Add(ContentVisualWarmConsoleUi.CreateTinyPathLabel("当前：" + (string.IsNullOrEmpty(row.FaceKey) ? "(空)" : row.FaceKey)));
 
-                    frameField = new ObjectField { objectType = typeof(Sprite), allowSceneObjects = false, value = frameSprite };
-                    frameField.RegisterValueChangedCallback(evt =>
-                    {
-                        row.FrameKey = ContentVisualSpriteKeyCodec.Encode(evt.newValue as Sprite);
-                        RefreshAfterRowEdit();
-                    });
-                    column.Add(ContentVisualWarmConsoleUi.WrapControl(
-                        "frame_key",
-                        "卡框皮肤。空值由 rarity / elite / boss 推导。",
-                        frameField));
-                    column.Add(ContentVisualWarmConsoleUi.CreateTinyPathLabel("当前：" + (string.IsNullOrEmpty(row.FrameKey) ? "(空)" : row.FrameKey)));
-
                     column.Add(ContentVisualWarmConsoleUi.CreateButtonRow(
                         new Button(() => ClearRowKey(row, ContentVisualKeySlot.Icon)) { text = "清空 Icon" },
-                        new Button(() => ClearRowKey(row, ContentVisualKeySlot.Face)) { text = "清空 Face" },
-                        new Button(() => ClearRowKey(row, ContentVisualKeySlot.Frame)) { text = "清空 Frame" }));
+                        new Button(() => ClearRowKey(row, ContentVisualKeySlot.Face)) { text = "清空 Face" }));
                 }));
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
@@ -536,25 +525,85 @@ namespace NineGrid.Content.Editor
                     {
                         column.Add(ContentVisualWarmConsoleUi.WrapControl(
                             "推导 icon",
-                            "icon_key 为空时的 Resolver 结果",
-                            ContentVisualWarmConsoleUi.CreateTinyPathLabel(resolved.IconKey)));
+                            "icon visual_id",
+                            ContentVisualWarmConsoleUi.CreateTinyPathLabel(resolved.IconVisualId)));
                         column.Add(ContentVisualWarmConsoleUi.WrapControl(
                             "推导 face",
-                            "face_key 为空时的 Resolver 结果",
+                            "face visual_id",
                             ContentVisualWarmConsoleUi.CreateTinyPathLabel(
-                                string.IsNullOrEmpty(resolved.FaceKey) ? "(空)" : resolved.FaceKey)));
+                                string.IsNullOrEmpty(resolved.FaceVisualId) ? "(空)" : resolved.FaceVisualId)));
                         column.Add(ContentVisualWarmConsoleUi.WrapControl(
                             "推导 frame",
-                            "frame_key 为空时的 Resolver 结果",
-                            ContentVisualWarmConsoleUi.CreateTinyPathLabel(
-                                string.IsNullOrEmpty(resolved.FrameKey) ? "(空)" : resolved.FrameKey)));
+                            "稀有度/tier → frame_style_id",
+                            ContentVisualWarmConsoleUi.CreateTinyPathLabel(resolved.FrameStyleId)));
+                    }
+                }));
+        }
+
+        private void BuildFrameStyleContent()
+        {
+            contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeader(
+                "Card Frame 配色",
+                "卡框为纯色矩形；稀有度/tier 自动映射到 frame_style_id，运行时只改 SpriteRenderer.color。"));
+
+            contentRoot.Add(ContentVisualWarmConsoleUi.CreateStatsGrid(
+                ("样式数", session.FrameStyleRows.Count.ToString(), "card_frame_style.xlsx"),
+                ("未保存", session.FrameStyleRows.Count(row => row.IsDirty).ToString(), "保存后 PATCH RGBA"),
+                ("", "", ""),
+                ("", "", "")));
+
+            ContentVisualResolvedView previewView = null;
+            var sampleRow = session.GetFocusedRow() ?? session.GetFilteredRows().FirstOrDefault();
+            if (sampleRow != null)
+            {
+                session.TryResolveRow(sampleRow, out previewView);
+            }
+
+            contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
+                "预览样本",
+                sampleRow != null ? sampleRow.ContentId : "在「内容配图」页选择一条内容作为框色预览样本",
+                column =>
+                {
+                    previewContainer = new IMGUIContainer(() =>
+                    {
+                        var rect = GUILayoutUtility.GetRect(280f, 360f, GUILayout.ExpandWidth(true));
+                        cardPreview.Draw(rect, previewView);
+                    });
+                    previewContainer.style.minHeight = 360;
+                    column.Add(previewContainer);
+                }));
+
+            contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
+                "稀有度 / Tier 配色",
+                "保存后写入 card_frame_style.xlsx。",
+                column =>
+                {
+                    for (var i = 0; i < session.FrameStyleRows.Count; i++)
+                    {
+                        var frameRow = session.FrameStyleRows[i];
+                        var field = new ColorField { value = frameRow.Color, showAlpha = true };
+                        var captured = frameRow;
+                        field.RegisterValueChangedCallback(evt =>
+                        {
+                            captured.Color = evt.newValue;
+                            if (previewView != null && sampleRow != null)
+                            {
+                                session.TryResolveRow(sampleRow, out previewView);
+                            }
+
+                            RefreshContent();
+                        });
+                        column.Add(ContentVisualWarmConsoleUi.WrapControl(
+                            frameRow.StyleId,
+                            "frame_style_id",
+                            field));
                     }
                 }));
         }
 
         private void ApplyBatchSprite(List<ContentVisualEditorRowState> rows, ContentVisualKeySlot slot, Sprite sprite)
         {
-            session.ApplyKeyToRows(rows, slot, ContentVisualSpriteKeyCodec.Encode(sprite));
+            session.ApplySpriteToRows(rows, slot, sprite);
             RefreshAfterRowEdit();
         }
 
@@ -572,28 +621,7 @@ namespace NineGrid.Content.Editor
 
         private bool TryBuildPreviewView(ContentVisualEditorRowState row, out ContentVisualResolvedView view)
         {
-            view = null;
-            if (row == null || session.CoreCatalog == null)
-            {
-                return false;
-            }
-
-            ContentVisualKind kind;
-            if (!Enum.TryParse(row.ContentKind, true, out kind))
-            {
-                kind = ContentVisualKind.Unknown;
-            }
-
-            var tempCatalog = new ContentVisualCatalog();
-            tempCatalog.Add(new ContentVisualDefinition(
-                row.ContentId,
-                kind,
-                row.Description,
-                row.FaceKey,
-                row.FrameKey,
-                row.IconKey));
-
-            return ContentVisualResolver.TryResolve(row.ContentId, session.CoreCatalog, tempCatalog, out view);
+            return session.TryResolveRow(row, out view);
         }
 
         private void UpdateToolbarState()
@@ -652,7 +680,7 @@ namespace NineGrid.Content.Editor
 
             session.ReloadCatalogs();
             RefreshAll();
-            ShowNotification(new GUIContent("已保存至 content_visual.xlsx"));
+            ShowNotification(new GUIContent("已保存至 xlsx"));
         }
 
         private void RegenerateLuban()

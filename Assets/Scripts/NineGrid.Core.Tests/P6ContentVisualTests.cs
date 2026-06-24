@@ -33,6 +33,16 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void GeneratedVisualAssetAndFrameStyleTablesLoad()
+        {
+            var assetCatalog = TableNineVisualAssetCatalogFactory.CreateFromDirectory(DataDirectory);
+            var frameCatalog = TableNineCardFrameStyleCatalogFactory.CreateFromDirectory(DataDirectory);
+            Assert.IsTrue(assetCatalog.TryGet(VisualIdNaming.MissingSpriteId, out _));
+            Assert.IsTrue(frameCatalog.TryGet(CardFrameStyleCatalog.StyleGold, out var gold));
+            Assert.Greater(gold.Color.G, 0.9f);
+        }
+
+        [Test]
         public void ProductionContentIdsAreCoveredByVisualTable()
         {
             var core = TableNineLubanCatalogFactory.CreateFromDirectory(DataDirectory);
@@ -92,9 +102,10 @@ namespace NineGrid.Core.Tests
         {
             var core = TableNineLubanCatalogFactory.CreateFromDirectory(DataDirectory);
             var visual = TableNineVisualCatalogFactory.CreateFromDirectory(DataDirectory);
+            var frame = TableNineCardFrameStyleCatalogFactory.CreateFromDirectory(DataDirectory);
 
             ContentVisualResolvedView view;
-            Assert.IsTrue(ContentVisualResolver.TryResolve("help.bomb", core, visual, out view));
+            Assert.IsTrue(ContentVisualResolver.TryResolve("help.bomb", core, visual, frame, out view));
             Assert.AreEqual(core.Cards["help.bomb"].DisplayName, view.DisplayName);
             Assert.IsFalse(string.IsNullOrEmpty(view.Description));
             Assert.AreEqual(ContentVisualKind.HelpCard, view.Kind);
@@ -105,56 +116,76 @@ namespace NineGrid.Core.Tests
         {
             var core = TableNineLubanCatalogFactory.CreateFromDirectory(DataDirectory);
             var visual = TableNineVisualCatalogFactory.CreateFromDirectory(DataDirectory);
+            var frame = TableNineCardFrameStyleCatalogFactory.CreateFromDirectory(DataDirectory);
 
             ContentVisualResolvedView view;
-            Assert.IsTrue(ContentVisualResolver.TryResolve("relic.craving", core, visual, out view));
+            Assert.IsTrue(ContentVisualResolver.TryResolve("relic.craving", core, visual, frame, out view));
+            Assert.AreEqual(VisualIdNaming.ForIcon("relic.craving"), view.IconVisualId);
             Assert.AreEqual(
-                ContentVisualResolver.BuildIconConventionPath(ContentVisualKind.Relic, "relic.craving"),
-                view.IconKey);
-            Assert.AreEqual(view.IconKey, view.IconResourcePath);
+                VisualAssetKeyNaming.FromConvention(ContentVisualKind.Relic, VisualAssetSlot.Icon, "relic.craving"),
+                view.IconAssetKey);
         }
 
         [Test]
-        public void ResolverFallsBackMonsterFaceToDeckId()
+        public void ResolverFallsBackMonsterFaceToDeckConvention()
         {
             var core = TableNineLubanCatalogFactory.CreateFromDirectory(DataDirectory);
             var visual = TableNineVisualCatalogFactory.CreateFromDirectory(DataDirectory);
+            var frame = TableNineCardFrameStyleCatalogFactory.CreateFromDirectory(DataDirectory);
 
             ContentVisualResolvedView view;
-            Assert.IsTrue(ContentVisualResolver.TryResolve("monster.beggar", core, visual, out view));
-            Assert.AreEqual(core.Cards["monster.beggar"].DeckId, view.FaceKey);
+            Assert.IsTrue(ContentVisualResolver.TryResolve("monster.beggar", core, visual, frame, out view));
+            Assert.AreEqual(VisualIdNaming.ForFace("monster.beggar"), view.FaceVisualId);
+            Assert.AreEqual(
+                VisualAssetKeyNaming.FromConventionFaceDeck(core.Cards["monster.beggar"].DeckId),
+                view.FaceAssetKey);
         }
 
         [Test]
-        public void ResolverDerivesFrameFromRarityAndEliteFlags()
+        public void ResolverDerivesFrameStyleFromRarityAndEliteFlags()
         {
             var core = TableNineLubanCatalogFactory.CreateFromDirectory(DataDirectory);
             var visual = TableNineVisualCatalogFactory.CreateFromDirectory(DataDirectory);
+            var frame = TableNineCardFrameStyleCatalogFactory.CreateFromDirectory(DataDirectory);
 
             ContentVisualResolvedView helpView;
-            Assert.IsTrue(ContentVisualResolver.TryResolve("help.bomb", core, visual, out helpView));
-            Assert.AreEqual("white_frame", helpView.FrameKey);
+            Assert.IsTrue(ContentVisualResolver.TryResolve("help.bomb", core, visual, frame, out helpView));
+            Assert.AreEqual(CardFrameStyleCatalog.StyleWhite, helpView.FrameStyleId);
 
             ContentVisualResolvedView relicView;
-            Assert.IsTrue(ContentVisualResolver.TryResolve("relic.craving", core, visual, out relicView));
-            Assert.AreEqual("gold_frame", relicView.FrameKey);
+            Assert.IsTrue(ContentVisualResolver.TryResolve("relic.craving", core, visual, frame, out relicView));
+            Assert.AreEqual(CardFrameStyleCatalog.StyleGold, relicView.FrameStyleId);
 
             ContentVisualResolvedView bossView;
-            Assert.IsTrue(ContentVisualResolver.TryResolve("monster.fire_dragon", core, visual, out bossView));
-            Assert.AreEqual("boss_frame", bossView.FrameKey);
+            Assert.IsTrue(ContentVisualResolver.TryResolve("monster.fire_dragon", core, visual, frame, out bossView));
+            Assert.AreEqual(CardFrameStyleCatalog.StyleBoss, bossView.FrameStyleId);
+            Assert.AreEqual(frame.Entries[CardFrameStyleCatalog.StyleBoss].Color.R, bossView.FrameColor.R, 0.01f);
         }
 
         [Test]
-        public void ContentVisualBootstrapLoadsFromSameDirectoryAsCoreCatalog()
+        public void VisualAssetValidatorPassesForGeneratedTables()
+        {
+            var tables = TableNineVisualCatalogFactory.LoadTables(DataDirectory);
+            var issues = VisualAssetValidator.Validate(tables);
+            var errors = issues.Where(issue => issue.Severity == "error").ToList();
+            Assert.IsEmpty(errors, string.Join("; ", errors.Select(issue => issue.Message)));
+        }
+
+        [Test]
+        public void ContentVisualBootstrapLoadsAllVisualTables()
         {
             var directory = ContentVisualBootstrap.ResolveLubanDataDirectory();
-            ContentVisualCatalog catalog;
-            Assert.IsTrue(ContentVisualBootstrap.TryLoad(directory, out catalog));
-            Assert.Greater(catalog.Entries.Count, 0);
+            ContentVisualCatalog visualCatalog;
+            VisualAssetCatalog assetCatalog;
+            CardFrameStyleCatalog frameCatalog;
+            Assert.IsTrue(ContentVisualBootstrap.TryLoadAll(directory, out visualCatalog, out assetCatalog, out frameCatalog));
+            Assert.Greater(visualCatalog.Entries.Count, 0);
+            Assert.Greater(assetCatalog.Entries.Count, 0);
+            Assert.Greater(frameCatalog.Entries.Count, 0);
         }
 
         [Test]
-        public void SpriteKeyCodec_RoundTripsAssetPathSubsprite()
+        public void SpriteKeyCodec_EncodesVisualId()
         {
             var guids = UnityEditor.AssetDatabase.FindAssets("t:Sprite");
             Assert.IsNotEmpty(guids);
@@ -177,21 +208,25 @@ namespace NineGrid.Core.Tests
 
             Assert.IsNotNull(sprite);
 
-            var encoded = ContentVisualSpriteKeyCodec.Encode(sprite);
-            StringAssert.StartsWith("Assets/", encoded);
-            StringAssert.Contains("#", encoded);
-            StringAssert.EndsWith(sprite.name, encoded);
+            var encoded = ContentVisualSpriteKeyCodec.Encode(
+                ContentVisualKeySlot.Icon,
+                "help.bomb",
+                ContentVisualKind.HelpCard,
+                sprite);
+            Assert.AreEqual(VisualIdNaming.ForIcon("help.bomb"), encoded);
 
-            Sprite decoded;
-            Assert.IsTrue(ContentVisualSpriteKeyCodec.TryDecode(encoded, out decoded));
-            Assert.AreEqual(sprite.name, decoded.name);
-            Assert.AreEqual(
-                UnityEditor.AssetDatabase.GetAssetPath(sprite),
-                UnityEditor.AssetDatabase.GetAssetPath(decoded));
+            var upsert = ContentVisualSpriteKeyCodec.BuildAssetUpsert(
+                ContentVisualKeySlot.Icon,
+                "help.bomb",
+                ContentVisualKind.HelpCard,
+                sprite);
+            Assert.IsNotNull(upsert);
+            Assert.AreEqual(encoded, upsert.VisualId);
+            Assert.IsFalse(string.IsNullOrEmpty(upsert.AssetKey));
         }
 
         [Test]
-        public void XlsxPatch_UpdatesOnlyVisualColumns()
+        public void XlsxPatch_UpdatesOnlyIconFaceColumns()
         {
             var sourcePath = ContentVisualXlsxIO.ResolveAbsolutePath();
             Assert.IsTrue(File.Exists(sourcePath));
@@ -202,7 +237,7 @@ namespace NineGrid.Core.Tests
             var rows = ContentVisualXlsxIO.ReadAll(tempPath);
             var target = rows.First(row => row.ContentId == "help.bomb");
             var originalDescription = target.Description;
-            var patchIcon = "Assets/Test/icon.png#test_icon";
+            var patchIcon = VisualIdNaming.ForIcon("help.bomb");
 
             ContentVisualXlsxIO.PatchVisualKeys(tempPath, new[]
             {
@@ -211,8 +246,7 @@ namespace NineGrid.Core.Tests
                     ContentId = target.ContentId,
                     SheetRowIndex = target.SheetRowIndex,
                     IconKey = patchIcon,
-                    FaceKey = target.FaceKey,
-                    FrameKey = target.FrameKey
+                    FaceKey = target.FaceKey
                 }
             });
 
@@ -243,9 +277,8 @@ namespace NineGrid.Core.Tests
                 {
                     ContentId = target.ContentId,
                     SheetRowIndex = target.SheetRowIndex,
-                    IconKey = "Assets/Test/patch.png#patch",
-                    FaceKey = target.FaceKey,
-                    FrameKey = target.FrameKey
+                    IconKey = VisualIdNaming.ForIcon(target.ContentId),
+                    FaceKey = target.FaceKey
                 }
             });
 

@@ -707,9 +707,9 @@
     "content_id": "deck.dragon",
     "content_kind": "MonsterDeck",
     "description": "巨龙牌组",
-    "face_key": "",
+    "face_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack.png#pixel_art_card_pack_5",
     "frame_key": "",
-    "icon_key": ""
+    "icon_key": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_42"
   },
   {
     "content_id": "deck.orc_legion",

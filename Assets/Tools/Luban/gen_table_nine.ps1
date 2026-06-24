@@ -18,14 +18,17 @@ if (-not (Test-Path -LiteralPath $LubanExe)) {
 if ($BootstrapVisual) {
     $venvPython = Join-Path $PSScriptRoot ".venv\Scripts\python.exe"
     $bootstrapScript = Join-Path $PSScriptRoot "bootstrap_content_visual.py"
+    $bootstrapVisualScript = Join-Path $PSScriptRoot "bootstrap_visual_tables.py"
     if (Test-Path -LiteralPath $venvPython) {
         & $venvPython $bootstrapScript
+        & $venvPython $bootstrapVisualScript
     }
     else {
         python $bootstrapScript
+        python $bootstrapVisualScript
     }
     if ($LASTEXITCODE -ne 0) {
-        throw "content_visual.xlsx bootstrap failed with exit code $LASTEXITCODE"
+        throw "content visual bootstrap failed with exit code $LASTEXITCODE"
     }
 }
 

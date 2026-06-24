@@ -1,4 +1,4 @@
-using System;
+using NineGrid.Content;
 using UnityEditor;
 using UnityEngine;
 
@@ -6,22 +6,47 @@ namespace NineGrid.Content.Editor
 {
     public static class ContentVisualSpriteKeyCodec
     {
-        public const char SubSpriteSeparator = '#';
-
-        public static string Encode(Sprite sprite)
+        public static string EncodeIcon(string contentId, Sprite sprite)
         {
-            if (sprite == null)
+            return Encode(ContentVisualKeySlot.Icon, contentId, ContentVisualKind.Unknown, sprite);
+        }
+
+        public static string EncodeFace(string contentId, ContentVisualKind kind, Sprite sprite)
+        {
+            return Encode(ContentVisualKeySlot.Face, contentId, kind, sprite);
+        }
+
+        public static string Encode(ContentVisualKeySlot slot, string contentId, ContentVisualKind kind, Sprite sprite)
+        {
+            if (sprite == null || string.IsNullOrEmpty(contentId))
             {
                 return string.Empty;
             }
 
-            var assetPath = AssetDatabase.GetAssetPath(sprite);
-            if (string.IsNullOrEmpty(assetPath))
+            return slot == ContentVisualKeySlot.Icon
+                ? VisualIdNaming.ForIcon(contentId)
+                : VisualIdNaming.ForFace(contentId);
+        }
+
+        public static VisualAssetXlsxRow BuildAssetUpsert(
+            ContentVisualKeySlot slot,
+            string contentId,
+            ContentVisualKind kind,
+            Sprite sprite)
+        {
+            if (sprite == null || string.IsNullOrEmpty(contentId))
             {
-                return string.Empty;
+                return null;
             }
 
-            return assetPath + SubSpriteSeparator + sprite.name;
+            var visualId = Encode(slot, contentId, kind, sprite);
+            return new VisualAssetXlsxRow
+            {
+                VisualId = visualId,
+                Kind = "sprite",
+                AssetKey = ResolveAssetKey(slot, contentId, kind, sprite),
+                FallbackId = string.Empty
+            };
         }
 
         public static bool TryDecode(string key, out Sprite sprite)
@@ -32,7 +57,28 @@ namespace NineGrid.Content.Editor
                 return false;
             }
 
-            var separatorIndex = key.IndexOf(SubSpriteSeparator);
+            if (VisualIdNaming.IsLegacyPathKey(key))
+            {
+                return TryDecodeLegacy(key, out sprite);
+            }
+
+            if (VisualIdNaming.IsVisualId(key))
+            {
+                return NineGrid.Presentation.Visuals.ContentVisualSpriteLoader.TryLoad(key, string.Empty, out sprite);
+            }
+
+            return TryFindSpriteByName(key, out sprite);
+        }
+
+        public static bool TryDecodeLegacy(string key, out Sprite sprite)
+        {
+            sprite = null;
+            if (string.IsNullOrEmpty(key))
+            {
+                return false;
+            }
+
+            var separatorIndex = key.IndexOf('#');
             if (separatorIndex > 0 && separatorIndex < key.Length - 1)
             {
                 var assetPath = key.Substring(0, separatorIndex);
@@ -41,6 +87,20 @@ namespace NineGrid.Content.Editor
             }
 
             return TryFindSpriteByName(key, out sprite);
+        }
+
+        private static string ResolveAssetKey(
+            ContentVisualKeySlot slot,
+            string contentId,
+            ContentVisualKind kind,
+            Sprite sprite)
+        {
+            if (slot == ContentVisualKeySlot.Icon)
+            {
+                return VisualAssetKeyNaming.FromConvention(kind, VisualAssetSlot.Icon, contentId);
+            }
+
+            return VisualAssetKeyNaming.FromConvention(kind, VisualAssetSlot.Face, contentId);
         }
 
         private static bool TryLoadSubSprite(string assetPath, string spriteName, out Sprite sprite)

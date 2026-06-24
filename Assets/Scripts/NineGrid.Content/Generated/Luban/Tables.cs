@@ -25,6 +25,8 @@ public partial class Tables
     public tablenine.TbRoom TbRoom {get; }
     public tablenine.TbEconomy TbEconomy {get; }
     public tablenine.TbContentVisual TbContentVisual {get; }
+    public tablenine.TbVisualAsset TbVisualAsset {get; }
+    public tablenine.TbCardFrameStyle TbCardFrameStyle {get; }
 
     public Tables(System.Func<string, JSONNode> loader)
     {
@@ -39,6 +41,8 @@ public partial class Tables
         TbRoom = new tablenine.TbRoom(loader("tablenine_tbroom"));
         TbEconomy = new tablenine.TbEconomy(loader("tablenine_tbeconomy"));
         TbContentVisual = new tablenine.TbContentVisual(loader("tablenine_tbcontentvisual"));
+        TbVisualAsset = new tablenine.TbVisualAsset(loader("tablenine_tbvisualasset"));
+        TbCardFrameStyle = new tablenine.TbCardFrameStyle(loader("tablenine_tbcardframestyle"));
         ResolveRef();
     }
     
@@ -55,6 +59,8 @@ public partial class Tables
         TbRoom.ResolveRef(this);
         TbEconomy.ResolveRef(this);
         TbContentVisual.ResolveRef(this);
+        TbVisualAsset.ResolveRef(this);
+        TbCardFrameStyle.ResolveRef(this);
     }
 }
 

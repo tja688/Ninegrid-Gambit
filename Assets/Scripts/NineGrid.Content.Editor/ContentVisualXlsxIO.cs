@@ -135,8 +135,6 @@ namespace NineGrid.Content.Editor
                 builder.Append("\"sheet_row_index\":").Append(patch.SheetRowIndex).Append(',');
                 AppendJsonString(builder, "face_key", patch.FaceKey ?? string.Empty);
                 builder.Append(',');
-                AppendJsonString(builder, "frame_key", patch.FrameKey ?? string.Empty);
-                builder.Append(',');
                 AppendJsonString(builder, "icon_key", patch.IconKey ?? string.Empty);
                 builder.Append('}');
             }
@@ -161,11 +159,21 @@ namespace NineGrid.Content.Editor
 
         private static string RunPython(string mode, string absolutePath, string patchesJson)
         {
+            return RunPythonScript(RelativeIoScriptPath, mode, absolutePath, patchesJson, "--patches");
+        }
+
+        public static string RunPythonScript(
+            string relativeScriptPath,
+            string mode,
+            string absolutePath,
+            string payloadJson,
+            string payloadFlag)
+        {
             var projectRoot = Directory.GetCurrentDirectory();
-            var scriptPath = Path.Combine(projectRoot, RelativeIoScriptPath);
+            var scriptPath = Path.Combine(projectRoot, relativeScriptPath);
             if (!File.Exists(scriptPath))
             {
-                throw new FileNotFoundException("content_visual xlsx io script not found.", scriptPath);
+                throw new FileNotFoundException("xlsx io script not found.", scriptPath);
             }
 
             var pythonExe = ResolvePythonExecutable(projectRoot);
@@ -173,9 +181,9 @@ namespace NineGrid.Content.Editor
             arguments.Append('"').Append(scriptPath).Append("\" ");
             arguments.Append(mode).Append(' ');
             arguments.Append("--path \"").Append(absolutePath).Append('\"');
-            if (!string.IsNullOrEmpty(patchesJson))
+            if (!string.IsNullOrEmpty(payloadJson))
             {
-                arguments.Append(" --patches \"").Append(EscapeCommandLine(patchesJson)).Append('\"');
+                arguments.Append(' ').Append(payloadFlag).Append(" \"").Append(EscapeCommandLine(payloadJson)).Append('\"');
             }
 
             var startInfo = new ProcessStartInfo
@@ -209,6 +217,11 @@ namespace NineGrid.Content.Editor
 
                 return stdout.Trim();
             }
+        }
+
+        public static void ClearDeprecatedFrameKeys(string absolutePath)
+        {
+            RunPython("clear_frame_keys", absolutePath, null);
         }
 
         private static string ResolvePythonExecutable(string projectRoot)
