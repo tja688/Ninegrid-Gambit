@@ -25,6 +25,39 @@ namespace NineGrid.Presentation.Performance
             }
         }
 
+        public static void ApplyLabel(Transform root, string label)
+        {
+            if (root == null || string.IsNullOrEmpty(label))
+            {
+                return;
+            }
+
+            Transform labelTransform = root.Find("Label");
+            TextMesh textMesh;
+            if (labelTransform == null)
+            {
+                var labelObject = new GameObject("Label");
+                labelObject.transform.SetParent(root, false);
+                labelObject.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+                textMesh = labelObject.AddComponent<TextMesh>();
+                textMesh.anchor = TextAnchor.MiddleCenter;
+                textMesh.alignment = TextAlignment.Center;
+                textMesh.characterSize = 0.08f;
+                textMesh.fontSize = 48;
+                textMesh.color = new Color(0.15f, 0.12f, 0.1f, 1f);
+            }
+            else
+            {
+                textMesh = labelTransform.GetComponent<TextMesh>();
+                if (textMesh == null)
+                {
+                    textMesh = labelTransform.gameObject.AddComponent<TextMesh>();
+                }
+            }
+
+            textMesh.text = label;
+        }
+
         public static Transform CreatePreviewCard(
             Transform parent,
             int index,

@@ -22,6 +22,7 @@ namespace NineGrid.Presentation.FSM
         [Header("Managed Interaction FSMs")]
         [SerializeField] private BoardInteractionFsm boardInteractionFsm;
         [SerializeField] private ItemCardInteractionFsm itemCardInteractionFsm;
+        [SerializeField] private SelectionOverlayFsm selectionOverlayFsm;
 
         [Header("Events")]
         [SerializeField] private UnityEvent<FlowShellScreen> onScreenChanged;
@@ -56,6 +57,7 @@ namespace NineGrid.Presentation.FSM
         {
             boardInteractionFsm?.SetFlowShellInteractionEnabled(false);
             itemCardInteractionFsm?.SetFlowShellInteractionEnabled(false);
+            selectionOverlayFsm?.SetFlowShellInteractionEnabled(false);
         }
 
         private void Start()
@@ -188,12 +190,8 @@ namespace NineGrid.Presentation.FSM
             boardInteractionFsm?.SetFlowShellInteractionEnabled(boardItemEnabled);
             itemCardInteractionFsm?.SetFlowShellInteractionEnabled(boardItemEnabled);
 
-            // Overlay FSM 挂点：Reward/Room 屏启用后由 SelectionOverlayFsm 接入。
             bool overlayEnabled = GamePhaseFlowShellProjection.EnablesOverlayInteraction(screen);
-            if (overlayEnabled)
-            {
-                Debug.Log("[FlowShell] Overlay screen active (" + screen + "); SelectionOverlayFsm not wired yet.");
-            }
+            selectionOverlayFsm?.SetFlowShellInteractionEnabled(overlayEnabled);
 
             onScreenChanged?.Invoke(screen);
             ScreenChanged?.Invoke(screen);

@@ -60,15 +60,20 @@ Idle ──enter──► Hover ──press/drag──► Drag ──┬── v
 
 ## SelectionOverlayMode — 覆盖层 N 选 1
 
-由 `PendingChoiceKind` / `RewardOffered` / `RoomChoicesOffered` 拉起：
+由 `PendingChoiceKind` / `RewardOffered` / `RoomChoicesOffered` 拉起；**★已落地** `SelectionOverlayFsm` + `SelectionOverlayController` + `TableNineOverlayAdaptor`。
 
-- 三选一奖励、房间选择、酒馆、删牌、路线
+- 三选一奖励（**仅**通关帮助卡 `help.*.choice`、宝箱/遗物 `relic.*` 显示最右跳过）、房间二选一、进房确认、道具 stat_boost（攻/甲/血，无跳过）
 - **不含**道具棋盘指向（那是 `ItemTargetingSession`）
 
 ```text
-(内核 PendingChoice) ──► SelectionOverlayMode ──► 选项 Hover/Selected
-                              └── Confirm ──► SelectReward / SelectRoom / EnterRoom / SkipHelpChoice
+(OfferReward|OfferRooms) ──► TableNineOverlayAdaptor 入场
+         └── SelectionOverlayFsm ──► Hover/Confirm
+               └── SelectReward / SkipHelpChoice* / SelectRoom / EnterRoom
+               * Skip 仅 help.*.choice 与 relic.* 池
+(Select*/Skip*) ──► TableNineOverlayAdaptor 退场
 ```
+
+道具 OptionOverlay：`SelectionOverlayFsm.TryUseItemWithOptionOverlay(itemUid, defId)`（`help.stat_boost_card`，三选一无跳过）。
 
 ## Watching 子态（所有 FSM + Session 共有）
 

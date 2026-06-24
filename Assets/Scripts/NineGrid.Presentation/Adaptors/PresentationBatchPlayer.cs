@@ -20,6 +20,7 @@ namespace NineGrid.Presentation.Adaptors
         [SerializeField] private TableNineItemAdaptor itemAdaptor;
         [SerializeField] private TableNineEffectAdaptor effectAdaptor;
         [SerializeField] private TableNineStatusAdaptor statusAdaptor;
+        [SerializeField] private TableNineOverlayAdaptor overlayAdaptor;
 
         private Coroutine mPlaybackCoroutine;
         private int mLastPlayedBatchId;
@@ -89,7 +90,14 @@ namespace NineGrid.Presentation.Adaptors
                         batch.Snapshot);
                 }
 
-                if (deckAdaptor != null && deckAdaptor.CanHandle(instruction))
+                if (overlayAdaptor != null && overlayAdaptor.CanHandle(instruction))
+                {
+                    yield return overlayAdaptor.PlayInstruction(
+                        instruction,
+                        batch.Instructions,
+                        batch.Snapshot);
+                }
+                else if (deckAdaptor != null && deckAdaptor.CanHandle(instruction))
                 {
                     yield return deckAdaptor.PlayInstruction(
                         instruction,
@@ -175,6 +183,11 @@ namespace NineGrid.Presentation.Adaptors
             if (statusAdaptor == null)
             {
                 statusAdaptor = GetComponent<TableNineStatusAdaptor>();
+            }
+
+            if (overlayAdaptor == null)
+            {
+                overlayAdaptor = GetComponent<TableNineOverlayAdaptor>();
             }
 
             if (boardAdaptor != null && viewRegistry != null && boardAdaptor.ViewRegistry == null)
