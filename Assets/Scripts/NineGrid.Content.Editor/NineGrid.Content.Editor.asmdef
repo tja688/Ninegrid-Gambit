@@ -3,7 +3,8 @@
     "rootNamespace": "NineGrid.Content.Editor",
     "references": [
         "NineGrid.Core",
-        "NineGrid.Content"
+        "NineGrid.Content",
+        "Luban.Runtime"
     ],
     "includePlatforms": [
         "Editor"

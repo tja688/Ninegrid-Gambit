@@ -4,6 +4,7 @@
     "references": [
         "NineGrid.Core",
         "NineGrid.Content",
+        "NineGrid.Content.Editor",
         "QFramework"
     ],
     "includePlatforms": [
