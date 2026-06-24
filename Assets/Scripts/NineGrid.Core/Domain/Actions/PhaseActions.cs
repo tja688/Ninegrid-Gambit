@@ -266,6 +266,17 @@ namespace NineGrid.Core
             var card = registry.Get(CardUid);
             var fromSlot = card.Slot.Value;
             board.RemoveCard(card);
+
+            if (ShouldAcquireHelpCardToItemSlots(card))
+            {
+                deck.AddToItemSlots(card);
+
+                return new GameActionResult()
+                    .AddEvent(new CoreGameEvent(CoreEventType.ItemPicked, context.ActionId, ActionName)
+                        .WithCard(CardUid)
+                        .WithSlots(fromSlot, SlotId.None));
+            }
+
             deck.RemoveCard(card);
             card.Zone.Value = ZoneId.Removed;
             card.Slot.Value = SlotId.None;
@@ -287,6 +298,13 @@ namespace NineGrid.Core
             }
 
             return result;
+        }
+
+        private static bool ShouldAcquireHelpCardToItemSlots(CardInstance card)
+        {
+            return card != null
+                && card.Kind == CardKind.HelpCard
+                && card.Counters.Get(CoreCounterKeys.GoldReward) == 0;
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)

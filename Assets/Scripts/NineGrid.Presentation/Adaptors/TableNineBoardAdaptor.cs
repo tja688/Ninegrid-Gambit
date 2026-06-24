@@ -315,6 +315,13 @@ namespace NineGrid.Presentation.Adaptors
                 yield break;
             }
 
+            ViewActorZone zone;
+            if (viewRegistry.TryGetActorZone(evt.CardUid, out zone) && zone == ViewActorZone.Hand)
+            {
+                ReleaseActor(evt.CardUid);
+                yield break;
+            }
+
             SpriteRenderer[] renderers = actor.GetComponentsInChildren<SpriteRenderer>(true);
             if (renderers.Length == 0)
             {
@@ -347,7 +354,10 @@ namespace NineGrid.Presentation.Adaptors
                     cardRemoveFadeDuration));
             }
 
-            yield return sequence.WaitForCompletion();
+            yield return WaitWhilePlaying(
+                () => sequence.IsActive(),
+                cardRemoveFadeDuration + 0.25f,
+                "RemoveCardFade");
             ReleaseActor(evt.CardUid);
         }
 

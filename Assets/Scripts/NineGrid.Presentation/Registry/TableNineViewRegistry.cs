@@ -52,6 +52,44 @@ namespace NineGrid.Presentation.Registry
 
         public IReadOnlyList<SlotId> BoardRingPathSlots => BoardRingPath;
 
+        private void Awake()
+        {
+            EnsureHandLayoutBindings();
+        }
+
+        /// <summary>
+        /// 将手牌布局解析到场景内 HandCardAnchors（Inspector 未绑定时运行时兜底）。
+        /// </summary>
+        public void EnsureHandLayoutBindings()
+        {
+            if (handLayoutSolver == null)
+            {
+                return;
+            }
+
+            Transform resolvedHandRoot;
+            Transform[] referenceAnchors;
+            if (!HandCardLayoutBindingUtility.TryResolve(transform, out resolvedHandRoot, out referenceAnchors))
+            {
+                handLayoutSolver.ResolveFromReferenceAnchors();
+                return;
+            }
+
+            if (handRoot == null)
+            {
+                handRoot = resolvedHandRoot;
+            }
+
+            if (referenceAnchors.Length > 0)
+            {
+                handLayoutSolver.SetReferenceAnchors(referenceAnchors);
+            }
+            else
+            {
+                handLayoutSolver.ResolveFromReferenceAnchors();
+            }
+        }
+
         public void RegisterActor(int cardUid, Transform actor, ViewActorZone zone = ViewActorZone.Board)
         {
             if (cardUid <= 0 || actor == null)
@@ -95,6 +133,11 @@ namespace NineGrid.Presentation.Registry
         public bool TryGetActor(int cardUid, out Transform actor)
         {
             return mActors.TryGetValue(cardUid, out actor);
+        }
+
+        public bool TryGetActorZone(int cardUid, out ViewActorZone zone)
+        {
+            return mActorZones.TryGetValue(cardUid, out zone);
         }
 
         /// <summary>

@@ -28,6 +28,7 @@ namespace NineGrid.Presentation.Adaptors
         [Header("Performances")]
         [SerializeField] private CardAcquisitionPerformance cardAcquisitionPerformance;
         [SerializeField] private ItemUsePerformance itemUsePerformance;
+        [SerializeField] private ItemCardInteractionFsm itemCardInteractionFsm;
 
         private readonly List<Transform> mHandActorBuffer = new();
         private readonly List<HandCardLayoutTarget> mHandLayoutBuffer = new();
@@ -50,6 +51,7 @@ namespace NineGrid.Presentation.Adaptors
             }
 
             EnsureReferences();
+            viewRegistry.EnsureHandLayoutBindings();
             CoreGameEvent evt = instruction.Event;
             if (evt == null)
             {
@@ -110,6 +112,7 @@ namespace NineGrid.Presentation.Adaptors
 
             viewRegistry.RegisterActor(evt.CardUid, acquiredCard, ViewActorZone.Hand);
             viewRegistry.AppendHandCard(evt.CardUid);
+            itemCardInteractionFsm?.RequestDeckSync();
         }
 
         private IEnumerator PlayUseItem(CoreGameEvent evt)
@@ -119,6 +122,7 @@ namespace NineGrid.Presentation.Adaptors
             yield return WaitUntilOrTimeout(
                 () => completed || !itemUsePerformance.IsPlaying,
                 itemUsePerformance.TotalDuration + 0.01f);
+            itemCardInteractionFsm?.RequestDeckSync();
         }
 
         private void EnsureReferences()
@@ -140,6 +144,11 @@ namespace NineGrid.Presentation.Adaptors
                 {
                     itemUsePerformance = gameObject.AddComponent<ItemUsePerformance>();
                 }
+            }
+
+            if (itemCardInteractionFsm == null)
+            {
+                itemCardInteractionFsm = FindFirstObjectByType<ItemCardInteractionFsm>();
             }
         }
 

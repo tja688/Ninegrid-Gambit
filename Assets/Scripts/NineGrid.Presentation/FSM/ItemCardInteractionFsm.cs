@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using NineGrid.Core;
+using NineGrid.Core.Commands;
 using NineGrid.Core.Systems;
+using NineGrid.Presentation.Adaptors;
 using NineGrid.Presentation.Diagnostics;
 using NineGrid.Presentation.Performance;
 using NineGrid.Presentation.Registry;
@@ -29,7 +31,8 @@ namespace NineGrid.Presentation.FSM
     }
 
     /// <summary>
-    /// 道具卡交互 FSM：Hover/Drag 本地反馈；MVP 不发 UseItemCommand（场地主导 V0.6）。
+    /// 道具卡交互 FSM：Hover/Drag 本地反馈；Confirm 发 UseItemCommand。
+    /// 临时路由：HandcardApplyZone 释放区；需选目标时释放区 + 场地点选。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class ItemCardInteractionFsm : MonoBehaviour, IController, IFlowShellManagedInteraction
@@ -46,6 +49,9 @@ namespace NineGrid.Presentation.FSM
         [SerializeField] private Transform actorsRoot;
         [SerializeField] private GameObject cardPrefab;
         [SerializeField] private TableNineActorFactory actorFactory;
+        [SerializeField] private TableNineViewRegistry viewRegistry;
+        [SerializeField] private SelectionOverlayFsm selectionOverlayFsm;
+        [SerializeField] private PresentationBatchPlayer batchPlayer;
         [SerializeField] private Transform[] referenceAnchors = Array.Empty<Transform>();
 
         [Header("Layout")]
@@ -84,7 +90,18 @@ namespace NineGrid.Presentation.FSM
         private Vector2 pressScreenPosition;
         private bool pointerPressed;
         private bool isWatching;
+        private bool pendingDeckSync;
         private int deckVersionSnapshot = -1;
+        private TracedCoreCommandDispatcher commandDispatcher;
+
+        private HandCardLayoutSolver ActiveLayoutSolver
+        {
+            get
+            {
+                EnsureViewRegistry();
+                return viewRegistry != null ? viewRegistry.HandLayoutSolver : layoutSolver;
+            }
+        }
 
         private struct HandCardEntry
         {
@@ -119,7 +136,11 @@ namespace NineGrid.Presentation.FSM
                 actorsRoot = transform;
             }
 
-            layoutSolver.SetReferenceAnchors(referenceAnchors);
+            commandDispatcher = new TracedCoreCommandDispatcher(GetArchitecture(), nameof(ItemCardInteractionFsm));
+            EnsureViewRegistry();
+            EnsureBatchPlayer();
+            EnsureHandLayoutBindings();
+            ActiveLayoutSolver.SetReferenceAnchors(referenceAnchors);
         }
 
         private void OnEnable()
@@ -129,10 +150,25 @@ namespace NineGrid.Presentation.FSM
                 return;
             }
 
+            if (resolveUidsFromDeckOnStart && demoModeEnabled)
+            {
+                demoModeEnabled = false;
+                PresentationTrace.LogFsm(
+                    nameof(ItemCardInteractionFsm),
+                    PresentationTraceLevel.Warn,
+                    "DEMO_MODE_DISABLED",
+                    ("reason", "resolveUidsFromDeckOnStart"));
+            }
+
             if (inputLockGate != null)
             {
                 inputLockGate.OnWatchingChanged += HandleWatchingChanged;
                 HandleWatchingChanged(inputLockGate.IsWatching);
+            }
+
+            if (coordinator != null)
+            {
+                coordinator.ApplyZoneSessionEnded += HandleApplyZoneSessionEnded;
             }
 
             this.RegisterEvent<Evt_ActionRejected>(HandleActionRejected);
@@ -157,6 +193,11 @@ namespace NineGrid.Presentation.FSM
             if (inputLockGate != null)
             {
                 inputLockGate.OnWatchingChanged -= HandleWatchingChanged;
+            }
+
+            if (coordinator != null)
+            {
+                coordinator.ApplyZoneSessionEnded -= HandleApplyZoneSessionEnded;
             }
 
             this.UnRegisterEvent<Evt_ActionRejected>(HandleActionRejected);
@@ -198,6 +239,7 @@ namespace NineGrid.Presentation.FSM
                 return;
             }
 
+            TryFlushPendingDeckSync();
             HandlePointerInput();
         }
 
@@ -228,7 +270,7 @@ namespace NineGrid.Presentation.FSM
 
             ClearHandActors();
             count = Mathf.Clamp(count, 0, demoMaxCards);
-            layoutSolver.BuildLayout(count, layoutBuffer);
+            ActiveLayoutSolver.BuildLayout(count, layoutBuffer);
 
             for (var i = 0; i < count; i++)
             {
@@ -255,7 +297,7 @@ namespace NineGrid.Presentation.FSM
             }
 
             int newCount = handCards.Count + 1;
-            layoutSolver.BuildLayout(newCount, layoutBuffer);
+            ActiveLayoutSolver.BuildLayout(newCount, layoutBuffer);
 
             actorListBuffer.Clear();
             for (var i = 0; i < handCards.Count; i++)
@@ -285,7 +327,44 @@ namespace NineGrid.Presentation.FSM
 
         private void OnDeckVersionChanged(int _)
         {
+            RequestDeckSync();
+        }
+
+        public void RequestDeckSync()
+        {
+            if (demoModeEnabled)
+            {
+                return;
+            }
+
+            pendingDeckSync = true;
+            TryFlushPendingDeckSync();
+        }
+
+        private void TryFlushPendingDeckSync()
+        {
+            if (!pendingDeckSync || demoModeEnabled)
+            {
+                return;
+            }
+
+            if (ShouldDeferDeckSync())
+            {
+                return;
+            }
+
+            pendingDeckSync = false;
             SyncFromDeck(force: false);
+        }
+
+        private bool ShouldDeferDeckSync()
+        {
+            if (inputLockGate != null && inputLockGate.IsWatching)
+            {
+                return true;
+            }
+
+            return this.GetSystem<IPresentationSyncSystem>().IsInputLocked;
         }
 
         public void SyncFromDeck(bool force)
@@ -317,23 +396,113 @@ namespace NineGrid.Presentation.FSM
                 }
             }
 
-            ClearHandActors();
+            ApplyDeckHandLayout(uids);
+        }
 
-            layoutSolver.BuildLayout(uids.Count, layoutBuffer);
+        private void ApplyDeckHandLayout(IReadOnlyList<int> uids)
+        {
+            RemoveStaleHandCards(uids);
+
+            ActiveLayoutSolver.BuildLayout(uids.Count, layoutBuffer);
+            var rebuilt = new List<HandCardEntry>(uids.Count);
             for (var i = 0; i < uids.Count; i++)
             {
+                int uid = uids[i];
                 HandCardLayoutTarget target = layoutBuffer[i];
-                Transform actor = SpawnActor(target.LocalPosition, target.SortingOrder, uids[i], isDemo: false);
-                handCards.Add(new HandCardEntry
+                HandCardEntry existing = FindEntryByUid(uid);
+                Transform actor = existing.Actor != null
+                    ? RepositionExistingHandActor(existing.Actor, uid, target)
+                    : ResolveHandActor(uid, target.LocalPosition, target.SortingOrder);
+                rebuilt.Add(new HandCardEntry
                 {
-                    CardUid = uids[i],
+                    CardUid = uid,
                     Actor = actor,
                     IsDemo = false,
                 });
             }
 
+            handCards.Clear();
+            handCards.AddRange(rebuilt);
             RegisterActorsWithPerformance();
             RelayoutHand(instant: true);
+        }
+
+        private HandCardEntry FindEntryByUid(int cardUid)
+        {
+            for (var i = 0; i < handCards.Count; i++)
+            {
+                if (handCards[i].CardUid == cardUid)
+                {
+                    return handCards[i];
+                }
+            }
+
+            return default;
+        }
+
+        private void RemoveStaleHandCards(IReadOnlyList<int> uids)
+        {
+            for (var i = handCards.Count - 1; i >= 0; i--)
+            {
+                if (!UidListContains(uids, handCards[i].CardUid))
+                {
+                    RemoveSingleHandCardAt(i);
+                }
+            }
+        }
+
+        private static bool UidListContains(IReadOnlyList<int> uids, int cardUid)
+        {
+            for (var i = 0; i < uids.Count; i++)
+            {
+                if (uids[i] == cardUid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private Transform RepositionExistingHandActor(Transform actor, int cardUid, HandCardLayoutTarget target)
+        {
+            Transform resolved;
+            if (TryReuseRegisteredActor(cardUid, target.LocalPosition, target.SortingOrder, out resolved))
+            {
+                return resolved;
+            }
+
+            return actor;
+        }
+
+        private Transform ResolveHandActor(int cardUid, Vector3 localPosition, int sortingOrder)
+        {
+            Transform actor;
+            if (TryReuseRegisteredActor(cardUid, localPosition, sortingOrder, out actor))
+            {
+                return actor;
+            }
+
+            return SpawnActor(localPosition, sortingOrder, cardUid, isDemo: false);
+        }
+
+        private bool TryReuseRegisteredActor(int cardUid, Vector3 localPosition, int sortingOrder, out Transform actor)
+        {
+            actor = null;
+            EnsureViewRegistry();
+            if (viewRegistry == null || !viewRegistry.TryGetActor(cardUid, out actor) || actor == null)
+            {
+                return false;
+            }
+
+            actor.SetParent(actorsRoot, false);
+            actor.localPosition = localPosition;
+            actor.localRotation = Quaternion.identity;
+            actor.localScale = Vector3.one;
+            SelectionOptionVisual.ApplySortingOrder(actor, sortingOrder);
+            EnsurePickCollider(actor, actor.GetComponentInChildren<SpriteRenderer>());
+            viewRegistry.RegisterActor(cardUid, actor, ViewActorZone.Hand);
+            return true;
         }
 
         private void HandlePointerInput()
@@ -460,8 +629,64 @@ namespace NineGrid.Presentation.FSM
 
         private void ReleaseDrag(HandCardEntry entry)
         {
+            Vector3 releaseWorld = ScreenToWorld(Input.mousePosition);
+            bool inZone = IsInApplyZone(releaseWorld);
             coordinator?.NotifyDragEnded();
 
+            if (!demoModeEnabled && inZone && entry.CardUid > 0 && entry.Actor != null)
+            {
+                if (TryHandleApplyZoneRelease(entry))
+                {
+                    return;
+                }
+            }
+
+            ReturnDraggedCardToHand(entry);
+        }
+
+        private bool TryHandleApplyZoneRelease(HandCardEntry entry)
+        {
+            string defId = ResolveDefId(entry.CardUid);
+            ItemUseProfile profile = ItemUseProfileResolver.Resolve(defId);
+
+            switch (profile.Mode)
+            {
+                case ItemUseProfileMode.ApplyZone:
+                    DispatchUseItem(entry.CardUid, null, null);
+                    CompleteDragAfterUse(entry);
+                    return true;
+
+                case ItemUseProfileMode.OptionOverlay:
+                    if (TryBeginOptionOverlay(entry.CardUid, defId))
+                    {
+                        ReturnDraggedCardToHand(entry);
+                        return true;
+                    }
+
+                    DispatchUseItem(entry.CardUid, null, null);
+                    CompleteDragAfterUse(entry);
+                    return true;
+
+                case ItemUseProfileMode.SingleTarget:
+                case ItemUseProfileMode.MultiPick:
+                    coordinator?.BeginApplyZoneTargeting(entry.CardUid, profile);
+                    ReturnDraggedCardToHand(entry);
+                    PresentationTrace.LogFsm(
+                        nameof(ItemCardInteractionFsm),
+                        PresentationTraceLevel.Info,
+                        "APPLY_ZONE_TARGETING",
+                        ("cardUid", entry.CardUid),
+                        ("defId", defId),
+                        ("required", profile.RequiredCount));
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
+        private void ReturnDraggedCardToHand(HandCardEntry entry)
+        {
             int index = FindEntryIndex(entry.Actor);
             if (index < 0)
             {
@@ -472,7 +697,7 @@ namespace NineGrid.Presentation.FSM
                 return;
             }
 
-            layoutSolver.BuildLayout(handCards.Count, layoutBuffer);
+            ActiveLayoutSolver.BuildLayout(handCards.Count, layoutBuffer);
             HandCardLayoutTarget target = layoutBuffer[index];
             interactPerformance.PlayReturn(entry.Actor, target.LocalPosition, target.SortingOrder, () =>
             {
@@ -482,6 +707,68 @@ namespace NineGrid.Presentation.FSM
                 hoveredEntry = default;
                 SetState(ItemCardInteractionState.Idle);
             });
+        }
+
+        private void CompleteDragAfterUse(HandCardEntry entry)
+        {
+            interactPerformance.EndDrag();
+            draggedEntry = default;
+            hoveredEntry = default;
+            pointerPressed = false;
+            SetState(ResolvePostUseInteractionState());
+        }
+
+        private ItemCardInteractionState ResolvePostUseInteractionState()
+        {
+            if (inputLockGate != null && inputLockGate.IsWatching)
+            {
+                return ItemCardInteractionState.Watching;
+            }
+
+            if (this.GetSystem<IPresentationSyncSystem>().IsInputLocked)
+            {
+                return ItemCardInteractionState.Watching;
+            }
+
+            return ItemCardInteractionState.Idle;
+        }
+
+        private bool TryBeginOptionOverlay(int itemUid, string defId)
+        {
+            EnsureSelectionOverlayFsm();
+            return selectionOverlayFsm != null
+                && selectionOverlayFsm.TryUseItemWithOptionOverlay(itemUid, defId);
+        }
+
+        private void DispatchUseItem(int itemUid, IReadOnlyList<int> selectedCardUids, string selectedOption)
+        {
+            onUseItemRequested?.Invoke(itemUid);
+            EnsureBatchPlayer();
+            var command = new UseItemCommand(itemUid, selectedCardUids, selectedOption);
+            CoreCommandDispatchResult result = commandDispatcher.Send(command);
+            batchPlayer?.PlayDispatchResult(result);
+            PresentationTrace.LogFsm(
+                nameof(ItemCardInteractionFsm),
+                PresentationTraceLevel.Info,
+                "USE_ITEM_CMD",
+                ("cardUid", itemUid),
+                ("accepted", result.Accepted));
+        }
+
+        private string ResolveDefId(int cardUid)
+        {
+            if (cardUid <= 0)
+            {
+                return string.Empty;
+            }
+
+            var registry = this.GetModel<CardRegistry>();
+            return registry.TryGet(cardUid, out CardInstance card) ? card.DefId : string.Empty;
+        }
+
+        private void HandleApplyZoneSessionEnded()
+        {
+            SetState(isWatching ? ItemCardInteractionState.Watching : ItemCardInteractionState.Idle);
         }
 
         private void HandleActionRejected(Evt_ActionRejected evt)
@@ -525,7 +812,7 @@ namespace NineGrid.Presentation.FSM
                         int index = FindEntryIndex(draggedEntry.Actor);
                         if (index >= 0)
                         {
-                            layoutSolver.BuildLayout(handCards.Count, layoutBuffer);
+                            ActiveLayoutSolver.BuildLayout(handCards.Count, layoutBuffer);
                             HandCardLayoutTarget target = layoutBuffer[index];
                             draggedEntry.Actor.localPosition = target.LocalPosition;
                             interactPerformance.UpdateBaseline(draggedEntry.Actor, target.LocalPosition, target.SortingOrder);
@@ -551,6 +838,8 @@ namespace NineGrid.Presentation.FSM
             {
                 SetState(ItemCardInteractionState.Idle);
             }
+
+            TryFlushPendingDeckSync();
         }
 
         private void RelayoutHand(bool instant, float durationOverride = -1f)
@@ -560,7 +849,7 @@ namespace NineGrid.Presentation.FSM
                 return;
             }
 
-            layoutSolver.BuildLayout(handCards.Count, layoutBuffer);
+            ActiveLayoutSolver.BuildLayout(handCards.Count, layoutBuffer);
             actorListBuffer.Clear();
             for (var i = 0; i < handCards.Count; i++)
             {
@@ -688,15 +977,26 @@ namespace NineGrid.Presentation.FSM
         {
             interactPerformance?.RestoreAllActorsImmediate();
 
-            for (var i = 0; i < handCards.Count; i++)
+            for (var i = handCards.Count - 1; i >= 0; i--)
             {
-                HandCardEntry entry = handCards[i];
-                Transform actor = entry.Actor;
-                if (actor == null)
-                {
-                    continue;
-                }
+                RemoveSingleHandCardAt(i);
+            }
 
+            interactPerformance?.PurgeDestroyedActors();
+            handCards.Clear();
+        }
+
+        private void RemoveSingleHandCardAt(int index)
+        {
+            if (index < 0 || index >= handCards.Count)
+            {
+                return;
+            }
+
+            HandCardEntry entry = handCards[index];
+            Transform actor = entry.Actor;
+            if (actor != null)
+            {
                 interactPerformance?.UnregisterActor(actor);
                 if (!entry.IsDemo && entry.CardUid > 0)
                 {
@@ -704,7 +1004,8 @@ namespace NineGrid.Presentation.FSM
                     if (actorFactory != null)
                     {
                         actorFactory.Release(entry.CardUid);
-                        continue;
+                        handCards.RemoveAt(index);
+                        return;
                     }
                 }
 
@@ -718,8 +1019,7 @@ namespace NineGrid.Presentation.FSM
                 }
             }
 
-            interactPerformance?.PurgeDestroyedActors();
-            handCards.Clear();
+            handCards.RemoveAt(index);
         }
 
         private HandCardEntry ResolveHandCardIntent(Vector2 screenPosition)
@@ -746,7 +1046,7 @@ namespace NineGrid.Presentation.FSM
             Vector3 world = ScreenToWorld(screenPosition);
             Vector3 local = actorsRoot.InverseTransformPoint(world);
 
-            layoutSolver.BuildLayout(handCards.Count, layoutBuffer);
+            ActiveLayoutSolver.BuildLayout(handCards.Count, layoutBuffer);
             if (layoutBuffer.Count == 0)
             {
                 return default;
@@ -759,7 +1059,7 @@ namespace NineGrid.Presentation.FSM
                 return default;
             }
 
-            float halfWidth = layoutSolver.CardWidth * 0.5f;
+            float halfWidth = ActiveLayoutSolver.CardWidth * 0.5f;
             for (var i = 0; i < layoutBuffer.Count && i < handCards.Count; i++)
             {
                 float currentX = layoutBuffer[i].LocalPosition.x;
@@ -905,7 +1205,73 @@ namespace NineGrid.Presentation.FSM
             hoverProxyHorizontalPadding = Mathf.Max(0f, hoverProxyHorizontalPadding);
             hoverProxyVerticalPadding = Mathf.Max(0f, hoverProxyVerticalPadding);
             demoMaxCards = Mathf.Clamp(demoMaxCards, 1, MaxHandCards);
-            layoutSolver.SetReferenceAnchors(referenceAnchors);
+            EnsureHandLayoutBindings();
+            ActiveLayoutSolver.SetReferenceAnchors(referenceAnchors);
+        }
+
+        private void EnsureViewRegistry()
+        {
+            if (viewRegistry == null)
+            {
+                viewRegistry = GetComponentInParent<TableNineViewRegistry>();
+                if (viewRegistry == null)
+                {
+                    viewRegistry = FindFirstObjectByType<TableNineViewRegistry>();
+                }
+            }
+        }
+
+        private void EnsureHandLayoutBindings()
+        {
+            EnsureViewRegistry();
+            viewRegistry?.EnsureHandLayoutBindings();
+
+            if (referenceAnchors == null || referenceAnchors.Length == 0 || referenceAnchors[0] == null)
+            {
+                Transform handRoot;
+                Transform[] anchors;
+                if (HandCardLayoutBindingUtility.TryResolve(transform, out handRoot, out anchors) && anchors.Length > 0)
+                {
+                    referenceAnchors = anchors;
+                    if (actorsRoot == null || actorsRoot == transform)
+                    {
+                        actorsRoot = handRoot != null ? handRoot : actorsRoot;
+                    }
+                }
+            }
+
+            if (applyZoneCollider == null)
+            {
+                Collider resolvedZone;
+                if (HandCardLayoutBindingUtility.TryResolveApplyZoneCollider(transform, out resolvedZone))
+                {
+                    applyZoneCollider = resolvedZone;
+                }
+            }
+
+            ActiveLayoutSolver.SetReferenceAnchors(referenceAnchors);
+        }
+
+        private void EnsureSelectionOverlayFsm()
+        {
+            if (selectionOverlayFsm == null)
+            {
+                selectionOverlayFsm = FindFirstObjectByType<SelectionOverlayFsm>();
+            }
+        }
+
+        private void EnsureBatchPlayer()
+        {
+            if (batchPlayer != null)
+            {
+                return;
+            }
+
+            batchPlayer = GetComponentInParent<PresentationBatchPlayer>();
+            if (batchPlayer == null)
+            {
+                batchPlayer = FindFirstObjectByType<PresentationBatchPlayer>();
+            }
         }
     }
 }

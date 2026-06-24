@@ -49,14 +49,14 @@ Idle ──enter──► Hover ──press/drag──► Drag ──┬── v
 
 **Confirm 是唯一 Command 出口。** Profile 分支：
 
-| Mode | Confirm 条件 | Command |
+| Mode | Confirm 条件（**临时 2026-06-24**） | Command |
 |------|--------------|---------|
-| ApplyZone | 在释放区内 | `UseItem(uid)` |
-| SingleTarget | 指针在合法目标上 | `UseItem(uid, [target])` |
-| MultiPick | 释放区 + 点满 N 张 | `UseItem(uid, [uids])` |
-| OptionOverlay | 释放区 + 已选 option | `UseItem(uid, null, option)` |
+| ApplyZone | 拖入 `HandcardApplyZone` 松手 | `UseItem(uid)` |
+| SingleTarget | `HandcardApplyZone` 松手 → 点选场上合法目标 | `UseItem(uid, [target])` |
+| MultiPick | `HandcardApplyZone` 松手 → 点满 N 张 | `UseItem(uid, [uids])` |
+| OptionOverlay | `HandcardApplyZone` 松手 → 选项覆盖层 | `UseItem(uid, null, option)` |
 
-★ `ItemCardInteractionFsm` 骨架已落地；待接 Session 与三参数 Command。
+★ `ItemCardInteractionFsm` 已接 **临时** ApplyZone + 点选；完整 `ItemTargetingSession` 待替换。
 
 ## SelectionOverlayMode — 覆盖层 N 选 1
 

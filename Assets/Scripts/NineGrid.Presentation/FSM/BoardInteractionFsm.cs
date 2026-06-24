@@ -99,7 +99,12 @@ namespace NineGrid.Presentation.FSM
             {
                 coordinator.ItemDragBegan += HandleItemDragBegan;
                 coordinator.ItemDragEnded += HandleItemDragEnded;
+                coordinator.ApplyZoneSessionEnded += HandleApplyZoneSessionEnded;
                 itemDragActive = coordinator.IsItemDragActive;
+                if (coordinator.IsApplyZoneTargetingActive)
+                {
+                    subMode = BoardInteractionSubMode.ItemUseAssist;
+                }
             }
 
             this.RegisterEvent<Evt_ActionRejected>(HandleActionRejected);
@@ -116,6 +121,7 @@ namespace NineGrid.Presentation.FSM
             {
                 coordinator.ItemDragBegan -= HandleItemDragBegan;
                 coordinator.ItemDragEnded -= HandleItemDragEnded;
+                coordinator.ApplyZoneSessionEnded -= HandleApplyZoneSessionEnded;
             }
 
             this.UnRegisterEvent<Evt_ActionRejected>(HandleActionRejected);
@@ -157,6 +163,12 @@ namespace NineGrid.Presentation.FSM
                 return;
             }
 
+            if (coordinator != null && coordinator.IsApplyZoneTargetingActive)
+            {
+                HandleApplyZoneTargetingInput();
+                return;
+            }
+
             bool canHover = true;
             bool canClick = !itemDragActive && subMode == BoardInteractionSubMode.Normal;
 
@@ -179,6 +191,78 @@ namespace NineGrid.Presentation.FSM
             {
                 TrySendBoardCommand(slot);
             }
+        }
+
+        private void HandleApplyZoneTargetingInput()
+        {
+            subMode = BoardInteractionSubMode.ItemUseAssist;
+
+            if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.Escape))
+            {
+                coordinator.CancelApplyZoneTargeting();
+                ClearHover();
+                return;
+            }
+
+            if (!TryResolvePointerHit(Input.mousePosition, out _, out int cardUid, out Transform actor))
+            {
+                ClearHover();
+                return;
+            }
+
+            if (actor != hoveredActor)
+            {
+                ClearHover();
+                EnterHover(SlotId.None, actor, cardUid);
+            }
+
+            if (!Input.GetMouseButtonDown(0))
+            {
+                return;
+            }
+
+            if (!coordinator.TryAddApplyZoneTarget(cardUid, out bool readyToConfirm))
+            {
+                if (actor != null)
+                {
+                    hoverPerformance?.PlayReject(actor);
+                }
+
+                return;
+            }
+
+            if (!readyToConfirm)
+            {
+                return;
+            }
+
+            int itemUid = coordinator.ApplyZoneItemUid;
+            var selected = new int[coordinator.ApplyZoneSelectedTargets.Count];
+            for (var i = 0; i < coordinator.ApplyZoneSelectedTargets.Count; i++)
+            {
+                selected[i] = coordinator.ApplyZoneSelectedTargets[i];
+            }
+
+            ClearHover();
+            coordinator.EndApplyZoneTargeting();
+            subMode = BoardInteractionSubMode.Normal;
+
+            var command = new UseItemCommand(itemUid, selected);
+            CoreCommandDispatchResult result = commandDispatcher.Send(command);
+            batchPlayer?.PlayDispatchResult(result);
+            PresentationTrace.LogFsm(
+                nameof(BoardInteractionFsm),
+                PresentationTraceLevel.Info,
+                "USE_ITEM_TARGET_CMD",
+                ("itemUid", itemUid),
+                ("targetCount", selected.Length),
+                ("accepted", result.Accepted));
+        }
+
+        private void HandleApplyZoneSessionEnded()
+        {
+            subMode = BoardInteractionSubMode.Normal;
+            ClearHover();
         }
 
         private void TrySendBoardCommand(SlotId slot)

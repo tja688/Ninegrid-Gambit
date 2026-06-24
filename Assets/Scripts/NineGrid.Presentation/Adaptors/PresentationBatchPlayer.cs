@@ -342,20 +342,37 @@ namespace NineGrid.Presentation.Adaptors
 
         private void OnDisable()
         {
-            if (mPlaybackCoroutine != null)
+            if (mPlaybackCoroutine == null)
             {
-                var sync = this.GetSystem<IPresentationSyncSystem>();
+                return;
+            }
+
+            var sync = this.GetSystem<IPresentationSyncSystem>();
+            int activeBatchId = sync != null ? sync.ActiveBatchId : 0;
+            PresentationTrace.Log(
+                PresentationTraceChannel.Batch,
+                PresentationTraceLevel.Error,
+                "BATCH_PLAY_ABORT",
+                ("reason", "OnDisable"),
+                ("batch", activeBatchId),
+                ("lastPlayed", mLastPlayedBatchId),
+                ("instrIdx", mCurrentInstructionIndex),
+                ("instrKind", mCurrentInstructionKind));
+            StopCoroutine(mPlaybackCoroutine);
+            mPlaybackCoroutine = null;
+
+            if (sync != null
+                && sync.IsInputLocked
+                && activeBatchId > 0
+                && activeBatchId == mLastPlayedBatchId)
+            {
+                this.SendCommand(new PresentationFinishedCommand(activeBatchId));
                 PresentationTrace.Log(
                     PresentationTraceChannel.Batch,
-                    PresentationTraceLevel.Error,
-                    "BATCH_PLAY_ABORT",
-                    ("reason", "OnDisable"),
-                    ("batch", sync != null ? sync.ActiveBatchId : 0),
-                    ("lastPlayed", mLastPlayedBatchId),
-                    ("instrIdx", mCurrentInstructionIndex),
-                    ("instrKind", mCurrentInstructionKind));
-                StopCoroutine(mPlaybackCoroutine);
-                mPlaybackCoroutine = null;
+                    PresentationTraceLevel.Warn,
+                    "BATCH_ACK_EMERGENCY",
+                    ("batch", activeBatchId),
+                    ("reason", "OnDisable"));
             }
         }
     }
