@@ -2,6 +2,7 @@ using System;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
 using NineGrid.Presentation.Registry;
+using NineGrid.Presentation.Diagnostics;
 using NineGrid.Presentation.Visuals;
 using QFramework;
 using UnityEngine;
@@ -28,6 +29,9 @@ namespace NineGrid.Presentation.FSM
 
         [Header("Actors")]
         [SerializeField] private TableNineActorFactory actorFactory;
+
+        [Header("Node Flow")]
+        [SerializeField] private TableNineNodeFlowCoordinator nodeFlowCoordinator;
 
         [Header("Events")]
         [SerializeField] private UnityEvent<FlowShellScreen> onScreenChanged;
@@ -107,6 +111,11 @@ namespace NineGrid.Presentation.FSM
             }
 
             SetAppState(FlowShellAppState.Boot);
+            PresentationTrace.Log(
+                PresentationTraceChannel.Flow,
+                PresentationTraceLevel.Info,
+                "APP_STATE",
+                ("state", FlowShellAppState.Boot));
 
             var options = new InitialGameOptions { Seed = bootSeed };
             InitialGameFactory.Create(GetArchitecture(), options);
@@ -132,6 +141,8 @@ namespace NineGrid.Presentation.FSM
             SubscribePhase();
             EnsureAvatarActor();
             SyncScreenFromPhase(force: true);
+            EnsureNodeFlowCoordinator();
+            nodeFlowCoordinator?.OnRunSessionEntered();
         }
 
         public void NotifyNodeSessionStarted()
@@ -177,6 +188,8 @@ namespace NineGrid.Presentation.FSM
             }
 
             SyncScreenFromPhase();
+            EnsureNodeFlowCoordinator();
+            nodeFlowCoordinator?.OnPhaseChanged(phase);
         }
 
         private void SyncScreenFromPhase(bool force = false)
@@ -193,6 +206,7 @@ namespace NineGrid.Presentation.FSM
                 return;
             }
 
+            var oldScreen = screen;
             screen = nextScreen;
             bool boardItemEnabled = GamePhaseFlowShellProjection.EnablesBoardItemInteraction(screen);
             boardInteractionFsm?.SetFlowShellInteractionEnabled(boardItemEnabled);
@@ -200,6 +214,26 @@ namespace NineGrid.Presentation.FSM
 
             bool overlayEnabled = GamePhaseFlowShellProjection.EnablesOverlayInteraction(screen);
             selectionOverlayFsm?.SetFlowShellInteractionEnabled(overlayEnabled);
+
+            var phase = this.GetModel<RunModel>().Phase.Value;
+            PresentationTrace.SetContext(
+                this.GetSystem<IPresentationSyncSystem>().ActiveBatchId,
+                phase.ToString(),
+                screen.ToString());
+            PresentationTrace.Log(
+                PresentationTraceChannel.Flow,
+                PresentationTraceLevel.Info,
+                "SCREEN_CHANGE",
+                ("from", oldScreen),
+                ("to", nextScreen),
+                ("phase", phase),
+                ("nodeSession", nodeSessionActive));
+            PresentationTrace.Log(
+                PresentationTraceChannel.Flow,
+                PresentationTraceLevel.Trace,
+                "INTERACTION_GATE",
+                ("boardEnabled", boardItemEnabled),
+                ("overlayEnabled", overlayEnabled));
 
             onScreenChanged?.Invoke(screen);
             ScreenChanged?.Invoke(screen);
@@ -212,7 +246,14 @@ namespace NineGrid.Presentation.FSM
                 return;
             }
 
+            var oldState = appState;
             appState = nextState;
+            PresentationTrace.Log(
+                PresentationTraceChannel.Flow,
+                PresentationTraceLevel.Info,
+                "APP_STATE",
+                ("from", oldState),
+                ("to", nextState));
             onAppStateChanged?.Invoke(appState);
             AppStateChanged?.Invoke(appState);
         }
@@ -229,6 +270,18 @@ namespace NineGrid.Presentation.FSM
             }
 
             actorFactory?.EnsureAvatarActor(GetArchitecture());
+        }
+
+        private void EnsureNodeFlowCoordinator()
+        {
+            if (nodeFlowCoordinator == null)
+            {
+                nodeFlowCoordinator = GetComponent<TableNineNodeFlowCoordinator>();
+                if (nodeFlowCoordinator == null)
+                {
+                    nodeFlowCoordinator = FindFirstObjectByType<TableNineNodeFlowCoordinator>();
+                }
+            }
         }
     }
 }

@@ -3,6 +3,7 @@ using QFramework;
 
 namespace NineGrid.Core
 {
+    // Events: Evt_PresentationBatchOpened / Evt_PresentationBatchCleared / Evt_PresentationBatchFinishRejected
     public interface IPresentationSyncSystem : ISystem
     {
         bool IsInputLocked { get; }
@@ -29,6 +30,10 @@ namespace NineGrid.Core
             ActiveBatch = batch;
             ActiveBatchId = batch != null ? batch.BatchId : 0;
             IsInputLocked = batch != null && batch.RequiresAcknowledgement;
+            if (batch != null)
+            {
+                this.SendEvent(new Evt_PresentationBatchOpened(batch));
+            }
         }
 
         public CoreCommandResult FinishBatch(int batchId)
@@ -40,18 +45,30 @@ namespace NineGrid.Core
 
             if (batchId != ActiveBatchId)
             {
-                return CoreCommandResult.Reject("Presentation batch mismatch. Expected " + ActiveBatchId + ", got " + batchId + ".");
+                var reason = "Presentation batch mismatch. Expected " + ActiveBatchId + ", got " + batchId + ".";
+                this.SendEvent(new Evt_PresentationBatchFinishRejected(ActiveBatchId, batchId, reason));
+                return CoreCommandResult.Reject(reason);
             }
 
-            Clear();
+            Clear(acknowledged: true);
             return CoreCommandResult.Accept(0);
         }
 
         public void Clear()
         {
+            Clear(acknowledged: false);
+        }
+
+        private void Clear(bool acknowledged)
+        {
+            var clearedBatchId = ActiveBatchId;
             IsInputLocked = false;
             ActiveBatchId = 0;
             ActiveBatch = null;
+            if (clearedBatchId > 0)
+            {
+                this.SendEvent(new Evt_PresentationBatchCleared(clearedBatchId, acknowledged));
+            }
         }
     }
 }

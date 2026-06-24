@@ -1,6 +1,8 @@
 using System.Collections;
 using NineGrid.Core;
 using NineGrid.Core.Commands;
+using NineGrid.Core.Systems;
+using NineGrid.Presentation.Diagnostics;
 using NineGrid.Presentation.Registry;
 using QFramework;
 using UnityEngine;
@@ -24,6 +26,14 @@ namespace NineGrid.Presentation.Adaptors
 
         private Coroutine mPlaybackCoroutine;
         private int mLastPlayedBatchId;
+        private int mCurrentInstructionIndex = -1;
+        private string mCurrentInstructionKind = string.Empty;
+        private float mBatchPlayStartTime;
+
+        public bool IsPlaybackActive => mPlaybackCoroutine != null;
+        public int LastPlayedBatchId => mLastPlayedBatchId;
+        public int CurrentInstructionIndex => mCurrentInstructionIndex;
+        public string CurrentInstructionKind => mCurrentInstructionKind;
 
         public IArchitecture GetArchitecture()
         {
@@ -65,6 +75,12 @@ namespace NineGrid.Presentation.Adaptors
             }
 
             EnsureReferences();
+            PresentationTrace.Log(
+                PresentationTraceChannel.Batch,
+                PresentationTraceLevel.Info,
+                "BATCH_PLAY_FALLBACK",
+                ("batch", sync.ActiveBatchId),
+                ("lastPlayed", mLastPlayedBatchId));
             mPlaybackCoroutine = StartCoroutine(PlayBatchCoroutine(sync.ActiveBatch));
         }
 
@@ -76,57 +92,117 @@ namespace NineGrid.Presentation.Adaptors
             }
 
             mLastPlayedBatchId = batch.BatchId;
+            mBatchPlayStartTime = Time.realtimeSinceStartup;
+            mCurrentInstructionIndex = -1;
+            mCurrentInstructionKind = string.Empty;
+
+            var phase = this.GetModel<RunModel>().Phase.Value;
+            PresentationTrace.SetContext(batch.BatchId, phase.ToString(), string.Empty);
+            PresentationTrace.Log(
+                PresentationTraceChannel.Batch,
+                PresentationTraceLevel.Info,
+                "BATCH_PLAY_BEGIN",
+                ("batch", batch.BatchId),
+                ("instr", batch.Instructions.Count),
+                ("seqFrom", batch.FromSequence),
+                ("seqTo", batch.ToSequence),
+                ("requiresAck", batch.RequiresAcknowledgement),
+                ("phase", phase));
+
             BoardBatchPlan boardPlan = BoardBatchPlan.Build(batch.Instructions);
             DeckBatchPlan deckPlan = DeckBatchPlan.Build(batch.Instructions);
 
             for (var i = 0; i < batch.Instructions.Count; i++)
             {
                 PresentationInstruction instruction = batch.Instructions[i];
+                mCurrentInstructionIndex = i;
+                mCurrentInstructionKind = instruction.Kind.ToString();
+
+                float instrStart = Time.realtimeSinceStartup;
+                string adaptorName = null;
+                bool handled = false;
+
                 if (statusAdaptor != null && statusAdaptor.CanHandle(instruction))
                 {
+                    adaptorName = "Status";
+                    handled = true;
+                    LogInstrBegin(batch.BatchId, i, batch.Instructions.Count, instruction, adaptorName);
                     yield return statusAdaptor.PlayInstruction(
                         instruction,
                         batch.Instructions,
                         batch.Snapshot);
+                    LogInstrEnd(batch.BatchId, i, batch.Instructions.Count, instruction, adaptorName, instrStart);
                 }
 
                 if (overlayAdaptor != null && overlayAdaptor.CanHandle(instruction))
                 {
+                    adaptorName = "Overlay";
+                    handled = true;
+                    LogInstrBegin(batch.BatchId, i, batch.Instructions.Count, instruction, adaptorName);
                     yield return overlayAdaptor.PlayInstruction(
                         instruction,
                         batch.Instructions,
                         batch.Snapshot);
+                    LogInstrEnd(batch.BatchId, i, batch.Instructions.Count, instruction, adaptorName, instrStart);
                 }
                 else if (deckAdaptor != null && deckAdaptor.CanHandle(instruction))
                 {
+                    adaptorName = "Deck";
+                    handled = true;
+                    LogInstrBegin(batch.BatchId, i, batch.Instructions.Count, instruction, adaptorName);
                     yield return deckAdaptor.PlayInstruction(
                         instruction,
                         batch.Instructions,
                         deckPlan,
                         i,
                         batch.Snapshot);
+                    LogInstrEnd(batch.BatchId, i, batch.Instructions.Count, instruction, adaptorName, instrStart);
                 }
                 else if (itemAdaptor != null && itemAdaptor.CanHandle(instruction))
                 {
+                    adaptorName = "Item";
+                    handled = true;
+                    LogInstrBegin(batch.BatchId, i, batch.Instructions.Count, instruction, adaptorName);
                     yield return itemAdaptor.PlayInstruction(
                         instruction,
                         batch.Instructions,
                         batch.Snapshot);
+                    LogInstrEnd(batch.BatchId, i, batch.Instructions.Count, instruction, adaptorName, instrStart);
                 }
                 else if (effectAdaptor != null && effectAdaptor.CanHandle(instruction))
                 {
+                    adaptorName = "Effect";
+                    handled = true;
+                    LogInstrBegin(batch.BatchId, i, batch.Instructions.Count, instruction, adaptorName);
                     yield return effectAdaptor.PlayInstruction(
                         instruction,
                         batch.Instructions,
                         batch.Snapshot);
+                    LogInstrEnd(batch.BatchId, i, batch.Instructions.Count, instruction, adaptorName, instrStart);
                 }
                 else if (boardAdaptor != null && boardAdaptor.CanHandle(instruction))
                 {
+                    adaptorName = "Board";
+                    handled = true;
+                    LogInstrBegin(batch.BatchId, i, batch.Instructions.Count, instruction, adaptorName);
                     yield return boardAdaptor.PlayInstruction(
                         instruction,
                         batch.Instructions,
                         boardPlan,
                         batch.Snapshot);
+                    LogInstrEnd(batch.BatchId, i, batch.Instructions.Count, instruction, adaptorName, instrStart);
+                }
+
+                if (!handled)
+                {
+                    PresentationTrace.Log(
+                        PresentationTraceChannel.Batch,
+                        PresentationTraceLevel.Warn,
+                        "BATCH_INSTR_UNHANDLED",
+                        ("batch", batch.BatchId),
+                        ("idx", i + 1),
+                        ("kind", instruction.Kind),
+                        ("seq", instruction.Sequence));
                 }
             }
 
@@ -143,14 +219,82 @@ namespace NineGrid.Presentation.Adaptors
                 }
 
                 viewRegistry.AlignBoardFromSnapshot(batch.Snapshot);
+                PresentationTrace.Log(
+                    PresentationTraceChannel.Batch,
+                    PresentationTraceLevel.Trace,
+                    "BATCH_SNAP_ALIGN",
+                    ("batch", batch.BatchId));
             }
 
             if (batch.RequiresAcknowledgement)
             {
                 this.SendCommand(new PresentationFinishedCommand(batch.BatchId));
+                PresentationTrace.Log(
+                    PresentationTraceChannel.Batch,
+                    PresentationTraceLevel.Info,
+                    "BATCH_ACK_SENT",
+                    ("batch", batch.BatchId));
+            }
+            else
+            {
+                PresentationTrace.Log(
+                    PresentationTraceChannel.Batch,
+                    PresentationTraceLevel.Info,
+                    "BATCH_ACK_SKIPPED",
+                    ("batch", batch.BatchId));
             }
 
+            var totalMs = (Time.realtimeSinceStartup - mBatchPlayStartTime) * 1000f;
+            PresentationTrace.Log(
+                PresentationTraceChannel.Batch,
+                PresentationTraceLevel.Info,
+                "BATCH_PLAY_END",
+                ("batch", batch.BatchId),
+                ("totalMs", totalMs.ToString("F0")));
+
+            mCurrentInstructionIndex = -1;
+            mCurrentInstructionKind = string.Empty;
             mPlaybackCoroutine = null;
+        }
+
+        private static void LogInstrBegin(
+            int batchId,
+            int index,
+            int total,
+            PresentationInstruction instruction,
+            string adaptorName)
+        {
+            PresentationTrace.Log(
+                PresentationTraceChannel.Batch,
+                PresentationTraceLevel.Trace,
+                "INSTR_BEGIN",
+                ("batch", batchId),
+                ("idx", index + 1),
+                ("total", total),
+                ("kind", instruction.Kind),
+                ("adaptor", adaptorName),
+                ("seq", instruction.Sequence));
+        }
+
+        private static void LogInstrEnd(
+            int batchId,
+            int index,
+            int total,
+            PresentationInstruction instruction,
+            string adaptorName,
+            float instrStart)
+        {
+            var durationMs = (Time.realtimeSinceStartup - instrStart) * 1000f;
+            PresentationTrace.Log(
+                PresentationTraceChannel.Batch,
+                PresentationTraceLevel.Trace,
+                "INSTR_END",
+                ("batch", batchId),
+                ("idx", index + 1),
+                ("total", total),
+                ("kind", instruction.Kind),
+                ("adaptor", adaptorName),
+                ("durationMs", durationMs.ToString("F0")));
         }
 
         private void EnsureReferences()
@@ -200,6 +344,16 @@ namespace NineGrid.Presentation.Adaptors
         {
             if (mPlaybackCoroutine != null)
             {
+                var sync = this.GetSystem<IPresentationSyncSystem>();
+                PresentationTrace.Log(
+                    PresentationTraceChannel.Batch,
+                    PresentationTraceLevel.Error,
+                    "BATCH_PLAY_ABORT",
+                    ("reason", "OnDisable"),
+                    ("batch", sync != null ? sync.ActiveBatchId : 0),
+                    ("lastPlayed", mLastPlayedBatchId),
+                    ("instrIdx", mCurrentInstructionIndex),
+                    ("instrKind", mCurrentInstructionKind));
                 StopCoroutine(mPlaybackCoroutine);
                 mPlaybackCoroutine = null;
             }

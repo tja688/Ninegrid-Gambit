@@ -4,6 +4,7 @@ using NineGrid.Core;
 using NineGrid.Core.Commands;
 using NineGrid.Core.Systems;
 using NineGrid.Presentation.Adaptors;
+using NineGrid.Presentation.Diagnostics;
 using QFramework;
 using UnityEngine;
 
@@ -24,7 +25,7 @@ namespace NineGrid.Presentation.FSM
         [SerializeField] private InGameFlowShellFsm flowShellFsm;
         [SerializeField] private Camera inputCamera;
 
-        private CoreCommandDispatcher commandDispatcher;
+        private TracedCoreCommandDispatcher commandDispatcher;
         private bool pointerInputEnabled;
         private bool isWatching;
         private bool awaitingKernelDismiss;
@@ -33,6 +34,7 @@ namespace NineGrid.Presentation.FSM
         private Action itemOptionCancelledCallback;
 
         public bool IsPointerInputEnabled => pointerInputEnabled;
+        public bool AwaitingKernelDismiss => awaitingKernelDismiss;
 
         public IArchitecture GetArchitecture()
         {
@@ -41,7 +43,7 @@ namespace NineGrid.Presentation.FSM
 
         private void Awake()
         {
-            commandDispatcher = new CoreCommandDispatcher(GetArchitecture());
+            commandDispatcher = new TracedCoreCommandDispatcher(GetArchitecture(), nameof(SelectionOverlayFsm));
             if (overlayController == null)
             {
                 overlayController = GetComponent<SelectionOverlayController>();
@@ -143,16 +145,31 @@ namespace NineGrid.Presentation.FSM
         public void NotifyKernelOfferStarted()
         {
             awaitingKernelDismiss = false;
+            PresentationTrace.Log(
+                PresentationTraceChannel.Overlay,
+                PresentationTraceLevel.Info,
+                "OVERLAY_SESSION",
+                ("event", "offerStarted"));
         }
 
         public void NotifyKernelDismissStarted()
         {
             awaitingKernelDismiss = true;
+            PresentationTrace.Log(
+                PresentationTraceChannel.Overlay,
+                PresentationTraceLevel.Info,
+                "AWAITING_KERNEL_DISMISS",
+                ("value", true));
         }
 
         public void NotifyKernelDismissFinished()
         {
             awaitingKernelDismiss = false;
+            PresentationTrace.Log(
+                PresentationTraceChannel.Overlay,
+                PresentationTraceLevel.Info,
+                "AWAITING_KERNEL_DISMISS",
+                ("value", false));
         }
 
         public void TryShowEnterRoomIfNeeded()

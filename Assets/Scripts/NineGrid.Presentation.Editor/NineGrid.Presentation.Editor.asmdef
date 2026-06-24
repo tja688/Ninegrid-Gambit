@@ -1,0 +1,19 @@
+{
+    "name": "NineGrid.Presentation.Editor",
+    "rootNamespace": "NineGrid.Presentation.Editor",
+    "references": [
+        "NineGrid.Core",
+        "NineGrid.Presentation"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

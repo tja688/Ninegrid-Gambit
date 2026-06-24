@@ -2,42 +2,76 @@
 
 ## 项目介绍
 
-本项目是一个 `Unity 6.3 LTS` urp 管线开发的 2D 卡牌像素风 Roguelike 游戏，名为 **TableNine**。核心玩法为九宫格棋盘驱动的卡牌战斗。
+**TableNine（九宫牌局）**：Unity 6.3 LTS · URP · 2D 卡牌像素风 Roguelike。核心玩法为九宫格棋盘驱动的卡牌战斗。
 
-## 技术框架
+- **框架**：QFramework
+- **代码入口**：`Assets/Scripts`
+- **唯一游戏场景**：`Assets/Scenes/MainScene.unity`（原型期）
+- **全局约束**：开发前阅读 [`rules.md`](rules.md)（架构分层、禁止手改 `.unity` 等）
 
-- 项目框架采用 `QFramework`。
-- 项目本地代码入口在：`Assets/Scripts`。
+---
 
-## 设计文档
+## 文档地图（按用途选读）
 
-- 游戏设计案统一存放在 `Assets/Docs` 目录下，当某些效果实现、游戏设计细节需要理解时可以进行查阅、参考。
-- 游戏开发进行中过程性笔记：`Assets/Notes`，根据自己需求选择性阅读。如果开发过程中用户要求落地笔记、汇报等需求，统一落地在此目录。
-- 游戏开发架构设计文档见：Assets/Notes/九宫牌局权威顶层架构设计.md ，想要总览游戏架构组织设计理念可以阅读此文档。
-- 表现层四盒子与 AI 协作 Skill：总览见 `Assets/Notes/表现层方法论.md`；表演器制作 `.cursor/skills/table-nine-performance-crafting`（盒子③）、交互 FSM + 本地反馈 `.cursor/skills/table-nine-interaction-crafting`（泳道 B）、适配器 `.cursor/skills/table-nine-adapter-crafting`（盒子④）。
-- 对于表现层的开发，`C:\Users\jinji\Desktop\文档\MyNote\游戏开发项目\引擎工作区\九宫牌局架构\九宫牌局表现层.canvas` 有权威的架构设计，对于全局理解可以查阅，注意上下文较大，有必要的时候才进行理解读取。
-- **表现层蓝图落地对照**：`Assets/Notes/表现层蓝图落地对照表.md`（与蓝图中黄色「★已落地」注释节点同步）。
+### 架构与设计
 
-### 表现层蓝图落地工作流
+| 文档 | 何时读 |
+|------|--------|
+| [`Assets/Notes/九宫牌局权威顶层架构设计.md`](Assets/Notes/九宫牌局权威顶层架构设计.md) | 总览 Core 契约、三窗口、分层 |
+| [`Assets/Notes/表现层方法论.md`](Assets/Notes/表现层方法论.md) | 锚点/演员/表演/导演四盒子、补位与首帧 delta 坑 |
+| [`Assets/Notes/Core表现层Command与Event消费清单-2026-06-20.md`](Assets/Notes/Core表现层Command与Event消费清单-2026-06-20.md) | Command / Event 与表现消费对照 |
+| `Assets/Docs/` | 策划设计案、效果语义 |
+| 表现层蓝图 canvas（工作区外） | 全局表现层规划；上下文大，必要时再读 |
+| [`Assets/Notes/归档/表现层蓝图落地对照表.md`](Assets/Notes/归档/表现层蓝图落地对照表.md) | 蓝图 ↔ 代码「★已落地」同步表 |
 
-表现层实现必须以蓝图为锚，保证「规划 ↔ 代码」可追溯：
+### 开发与冲刺
 
-1. **开工前查蓝图**：在 `九宫牌局表现层.canvas` 中定位对应节点（泳道 A/B/C、脊柱、适配器、表演黑盒）；可同时查阅 `表现层蓝图落地对照表.md`。
-2. **蓝图无对应项**：若用户要求的落地在蓝图中找不到明确节点，**必须先与用户确认**——是描述/命名未对齐，还是设计需要改动；确认后再实现。
-3. **完工后双向同步**：
-   - 在蓝图中新增或更新 **黄色注释节点**（图例 `leg_ann`：`color: "3"`，文本以 `★已落地` 开头），用 **连线指向** 对应规划节点；精炼列出类名/路径与剩余缺口。
-   - 更新 `Assets/Notes/表现层蓝图落地对照表.md` 对应行。
-   - 在蓝图 `updatelog` 节点追加版本摘要。
-4. **粒度约定**：一项落地 = 一条注释（或一组强耦合项合并为一条）；避免回到早期 `c_ann_landed` 式大段堆砌。表演黑盒与适配器分开标注缺口。
+| 文档 | 何时读 |
+|------|--------|
+| [`Assets/Notes/Demo落地冲刺开发计划.md`](Assets/Notes/Demo落地冲刺开发计划.md) | 当前 Demo 阶段任务（P0–P3）与优先级 |
+| [`Assets/Notes/数据表工作流落地.md`](Assets/Notes/数据表工作流落地.md) | Luban / 内容表管线 |
+| [`Assets/Notes/`](Assets/Notes/) | 过程性笔记；用户要求落地汇报统一放此目录 |
 
-## 项目规则
+### 表现层排障（P2 重点）
 
-- 开发本项目前，请优先阅读 `rules.md`，其中包含架构规范以及文件保护规则等全局性约束。
-- 当前处于原型开发期，唯一游戏场景：`Assets/Scenes/MainScene.unity`
-- 项目有 Unity MCP，在落地实现时注意了解功能并辅助使用，如果发现无法使用再回退文件操作形式开发。
-- 请在完成代码落地后主动触发unity mcp 的unity 刷新功能并阅读Console，这可以暴露编译代码的错误并帮助你进行修复。
-- 项目已经初始化 codegraph，可以使用codegraph macp来进行代码查询，使用提醒：它擅长“符号/类/方法/调用关系/影响面”，不擅长一次性查询混合了批次号、pending ID、设计文档、测试名、Luban 数据的宽泛任务。查询不理想时，先把问题拆成明确符号或代码区域，例如 `UseItemAction`、`EffectAtomLibrary`、`TableNineContentCatalog`、`P6ContentLandingTests`；查具体 pending ID、中文设计文本、JSON 行、计划笔记时优先用 `rg` 精确检索。代码刚改完且 codegraph 可能未同步时，以文件读取和 Unity 编译/测试结果为准。
+| 资源 | 何时读 |
+|------|--------|
+| **[`Assets/Notes/表现层流程卡点排查手册.md`](Assets/Notes/表现层流程卡点排查手册.md)** | **流程卡住、点不了、节点不推进、批次锁死** — 首选 |
+| [`Assets/Settings/PresentationTraceConfig.asset`](Assets/Settings/PresentationTraceConfig.asset) | Trace 通道、Watchdog 阈值、Runtime HUD |
+| `Assets/Scripts/NineGrid.Presentation/Diagnostics/` | Trace / Watchdog / 适配器超时埋点实现 |
+| Unity 菜单 **NineGrid → Presentation Trace** | Play Mode 实时 tail、复制 Stall dump |
 
-## 协作需求
+### AI 协作 Skill（表现层落地）
 
-- 每次完成任务后，将本次改动**全量提交**至 git，提交信息应简洁、准确地概括改动内容与目的。
+| Skill | 泳道 / 盒子 |
+|-------|-------------|
+| [`.cursor/skills/table-nine-performance-crafting`](.cursor/skills/table-nine-performance-crafting) | 盒子③ 表演黑盒 |
+| [`.cursor/skills/table-nine-interaction-crafting`](.cursor/skills/table-nine-interaction-crafting) | 泳道 B 交互 FSM |
+| [`.cursor/skills/table-nine-adapter-crafting`](.cursor/skills/table-nine-adapter-crafting) | 盒子④ 适配器 / 批次播放 |
+| [`.cursor/skills/table-nine-effect-landing`](.cursor/skills/table-nine-effect-landing) | 效果 DSL 端到端落地 |
+
+---
+
+## 表现层蓝图落地工作流
+
+实现必须以蓝图为锚，保证「规划 ↔ 代码」可追溯：
+
+1. **开工前查蓝图**：定位泳道 A/B/C、脊柱、适配器、表演黑盒；对照 `表现层蓝图落地对照表.md`。
+2. **蓝图无对应项**：先与用户确认是命名未对齐还是设计变更，再实现。
+3. **完工后双向同步**：蓝图黄色「★已落地」注释 + 对照表更新 + `updatelog` 摘要。
+4. **粒度**：一项落地一条注释；表演黑盒与适配器分开标缺口。
+
+---
+
+## 工具与工作流
+
+- **Unity MCP**：改场景/组件用 MCP，**禁止**手改 `.unity`；改脚本后 `refresh_unity` 并读 Console。
+- **CodeGraph MCP**：查符号、调用链、影响面；混合 pending ID / 设计文案 / JSON 行时用 `rg`。
+- **内核测试**：`NineGrid.Core.Tests`（含 `P7PresentationContractTests` 表现契约）。
+
+---
+
+## 协作约定
+
+- 用户明确要求时再 **git 提交**；提交信息简洁概括目的。
+- 表现层 **流程类 bug** 优先用 Trace 手册 + `PRES` 日志定位，再改代码。

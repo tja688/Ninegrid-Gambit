@@ -1,5 +1,6 @@
 using System;
 using NineGrid.Core;
+using NineGrid.Presentation.Diagnostics;
 using QFramework;
 using UnityEngine;
 
@@ -31,6 +32,10 @@ namespace NineGrid.Presentation.FSM
             if (locked != IsWatching)
             {
                 IsWatching = locked;
+                PresentationTrace.Log(
+                    PresentationTraceChannel.Lock,
+                    PresentationTraceLevel.Info,
+                    locked ? "WATCHING_ON" : "WATCHING_OFF");
                 OnWatchingChanged?.Invoke(IsWatching);
             }
         }
@@ -44,6 +49,10 @@ namespace NineGrid.Presentation.FSM
             }
 
             IsWatching = locked;
+            PresentationTrace.Log(
+                PresentationTraceChannel.Lock,
+                PresentationTraceLevel.Info,
+                locked ? "WATCHING_ON" : "WATCHING_OFF");
             OnWatchingChanged?.Invoke(IsWatching);
         }
     }

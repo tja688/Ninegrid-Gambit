@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
+using NineGrid.Presentation.Diagnostics;
 using NineGrid.Presentation.Performance;
 using NineGrid.Presentation.Registry;
 using QFramework;
@@ -491,6 +492,12 @@ namespace NineGrid.Presentation.FSM
             }
 
             onUseItemRejected?.Invoke(evt.Reason);
+            PresentationTrace.LogFsm(
+                nameof(ItemCardInteractionFsm),
+                PresentationTraceLevel.Warn,
+                "USE_ITEM_REJECT",
+                ("cardUid", evt.CardUid),
+                ("reason", evt.Reason));
 
             for (var i = 0; i < handCards.Count; i++)
             {
@@ -868,7 +875,15 @@ namespace NineGrid.Presentation.FSM
                 return;
             }
 
+            var oldState = state;
             state = newState;
+            PresentationTrace.LogFsm(
+                nameof(ItemCardInteractionFsm),
+                PresentationTraceLevel.Trace,
+                "FSM_STATE",
+                ("from", oldState),
+                ("to", newState),
+                ("watching", isWatching));
             onStateChanged?.Invoke();
         }
 

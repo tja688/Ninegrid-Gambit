@@ -4,6 +4,7 @@ using NineGrid.Core;
 using NineGrid.Core.Commands;
 using NineGrid.Core.Systems;
 using NineGrid.Presentation.Adaptors;
+using NineGrid.Presentation.Diagnostics;
 using NineGrid.Presentation.Performance;
 using NineGrid.Presentation.Registry;
 using NineGrid.Presentation.Visuals;
@@ -53,10 +54,13 @@ namespace NineGrid.Presentation.FSM
         private bool itemDragActive;
         private Transform hoveredActor;
         private SlotId hoveredSlot;
-        private CoreCommandDispatcher commandDispatcher;
+        private TracedCoreCommandDispatcher commandDispatcher;
 
         public BoardInteractionState State => state;
         public BoardInteractionSubMode SubMode => subMode;
+
+        public bool CanAcceptBoardInput() =>
+            pointerInputEnabled && !isWatching && subMode == BoardInteractionSubMode.Normal && !itemDragActive;
 
         public void SetFlowShellInteractionEnabled(bool enabled)
         {
@@ -75,7 +79,7 @@ namespace NineGrid.Presentation.FSM
 
         private void Awake()
         {
-            commandDispatcher = new CoreCommandDispatcher(GetArchitecture());
+            commandDispatcher = new TracedCoreCommandDispatcher(GetArchitecture(), nameof(BoardInteractionFsm));
         }
 
         private void OnEnable()
@@ -189,6 +193,12 @@ namespace NineGrid.Presentation.FSM
 
             if (!BoardInteractionRules.TryResolveBoardCommand(GetArchitecture(), slot, out ICommand<CoreCommandResult> command))
             {
+                PresentationTrace.LogFsm(
+                    nameof(BoardInteractionFsm),
+                    PresentationTraceLevel.Trace,
+                    "CMD_BLOCKED",
+                    ("reason", "rulesResolveFailed"),
+                    ("slot", slot));
                 return;
             }
 
@@ -401,7 +411,15 @@ namespace NineGrid.Presentation.FSM
                 return;
             }
 
+            var oldState = state;
             state = newState;
+            PresentationTrace.LogFsm(
+                nameof(BoardInteractionFsm),
+                PresentationTraceLevel.Trace,
+                "FSM_STATE",
+                ("from", oldState),
+                ("to", newState),
+                ("watching", isWatching));
         }
     }
 }

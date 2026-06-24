@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using NineGrid.Core;
+using NineGrid.Presentation.Diagnostics;
 using NineGrid.Presentation.FSM;
 using NineGrid.Presentation.Performance;
 using NineGrid.Presentation.Registry;
@@ -535,24 +536,22 @@ namespace NineGrid.Presentation.Adaptors
             }
         }
 
-        private static IEnumerator WaitWhilePlaying(Func<bool> isPlaying, float timeoutSeconds)
+        private static IEnumerator WaitWhilePlaying(Func<bool> isPlaying, float timeoutSeconds, string performanceName = "Unknown")
         {
-            float elapsed = 0f;
-            while (isPlaying() && elapsed < timeoutSeconds)
-            {
-                elapsed += Time.deltaTime;
-                yield return null;
-            }
+            return AdaptorPlaybackTrace.WaitWhilePlaying(
+                nameof(TableNineBoardAdaptor),
+                performanceName,
+                isPlaying,
+                timeoutSeconds);
         }
 
-        private static IEnumerator WaitUntilOrTimeout(Func<bool> condition, float timeoutSeconds)
+        private static IEnumerator WaitUntilOrTimeout(Func<bool> condition, float timeoutSeconds, string performanceName = "Unknown")
         {
-            float elapsed = 0f;
-            while (!condition() && elapsed < timeoutSeconds)
-            {
-                elapsed += Time.deltaTime;
-                yield return null;
-            }
+            return AdaptorPlaybackTrace.WaitUntilOrTimeout(
+                nameof(TableNineBoardAdaptor),
+                performanceName,
+                condition,
+                timeoutSeconds);
         }
     }
 }
