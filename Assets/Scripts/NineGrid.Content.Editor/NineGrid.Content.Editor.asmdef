@@ -4,7 +4,7 @@
     "references": [
         "NineGrid.Core",
         "NineGrid.Content",
-        "NineGrid.Presentation",
+        "NineGrid.Presentation.Visuals",
         "Luban.Runtime"
     ],
     "includePlatforms": [

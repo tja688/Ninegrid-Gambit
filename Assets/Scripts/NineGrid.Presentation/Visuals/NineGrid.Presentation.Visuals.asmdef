@@ -1,13 +1,11 @@
 {
-    "name": "NineGrid.Presentation",
-    "rootNamespace": "NineGrid.Presentation",
+    "name": "NineGrid.Presentation.Visuals",
+    "rootNamespace": "NineGrid.Presentation.Visuals",
     "references": [
         "NineGrid.Core",
         "NineGrid.Content",
-        "NineGrid.Presentation.Visuals",
         "QFramework",
-        "Unity.TextMeshPro",
-        "DamageNumbersPro"
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
