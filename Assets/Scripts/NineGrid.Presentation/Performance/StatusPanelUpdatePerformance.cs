@@ -202,7 +202,7 @@ namespace NineGrid.Presentation.Performance
         {
             Transform actor = EnsurePreviewActor();
             TableNineCardStatusView view = EnsureCardView(actor);
-            view.SnapFromSlot(new BoardSlotView(SlotId.Board(1), 1, "preview", CardKind.Monster, 5, 1, 3, false));
+            view.SnapFromSlot(new BoardSlotView(SlotId.Board(1), 1, "preview", CardKind.Monster, 5, 5, 5, 5, 1, 1, 3, 3, false));
             view.PlayArmorTo(3, animate: true);
         }
 
@@ -210,7 +210,7 @@ namespace NineGrid.Presentation.Performance
         {
             Transform actor = EnsurePreviewActor();
             TableNineCardStatusView view = EnsureCardView(actor);
-            var slot = new BoardSlotView(SlotId.Board(1), 1, "preview", CardKind.Monster, 5, 0, from, false);
+            var slot = new BoardSlotView(SlotId.Board(1), 1, "preview", CardKind.Monster, 5, 5, 5, 5, 0, 0, from, from, false);
             view.SnapFromSlot(slot);
             if (isAttack)
             {

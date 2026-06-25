@@ -317,7 +317,12 @@ namespace NineGrid.Presentation.Registry
                     card.DefId,
                     card.Kind,
                     (int)card.Stats.GetBase(StatId.Hp),
+                    (int)card.Stats.GetBase(StatId.Hp),
+                    (int)card.Stats.GetBase(StatId.MaxHp),
+                    (int)card.Stats.GetBase(StatId.MaxHp),
                     (int)card.Stats.GetBase(StatId.Armor),
+                    (int)card.Stats.GetBase(StatId.Armor),
+                    (int)card.Stats.GetBase(StatId.Attack),
                     (int)card.Stats.GetBase(StatId.Attack),
                     board.IsBlessed(slotId));
             }

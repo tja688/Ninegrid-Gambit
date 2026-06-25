@@ -126,23 +126,93 @@ if (result.BatchOpened && result.Batch.RequiresAcknowledgement)
 | `RoomSelected` | `SelectRoom` | `Room` | 是 | `Amount` = option index / room enum，`Message` |
 | `RoomResolved` | `ResolveRoom` | `Room` | 是 | `Amount` = room enum，`Message` |
 
-## CoreViewSnapshot 当前字段
+## CoreViewSnapshot 字段（加厚版）
+
+`CoreViewSnapshotFactory.Capture()` 投影全部 6 个 Model（含 `DeckModel`），并经由 `IStatSystem` 计算 effective stats。批末对齐时以嵌套视图为准；顶层 `Phase`/`Coins`/`BoardSlots` 等旧字段为兼容薄包装，读同一数据源。
+
+### 顶层
 
 | 字段 | 用法 |
 |---|---|
-| `Version` | 快照版本，来自 Board/Registry/Run/Player/PendingChoice 版本求和 |
-| `Phase` | 当前 Core phase |
-| `NodeIndex` | 当前节点索引 |
-| `Coins` | 玩家金币 |
-| `InteractionCount` | 当前互动次数 |
-| `AvatarUid` / `AvatarSlot` | 化身 uid 和槽位 |
-| `PendingChoiceKind` | 无、奖励选择、房间选择 |
-| `BoardSlots` | 9 格视图，含 uid/defId/kind/base hp/base armor/base attack/blessed |
-| `RewardOptions` | 当前待选奖励 |
-| `RoomOptions` | 当前待选房间 |
-| `SelectedRoom` | 已选房间 |
+| `Version` | 快照版本：`Board + Registry + Deck + Run + Player + PendingChoice` 的 `Version` 求和 |
+| `Run` | 跑图元数据 |
+| `Player` | 玩家 HUD + 养成 |
+| `Board` | 棋盘 9 格 + 化身引用 |
+| `Deck` | 牌区有序 uid 列表 |
+| `Choice` | 奖励/房间选择态 |
+| `Cards` | 可见区内卡的 `uid → CardView` 字典 |
+| `TryGetCard(uid)` | 按 uid 查卡视图 |
 
-注意：`BoardSlotView.Attack/Hp/Armor` 当前是 base 值。表现层如果要显示条件光环、RuleModifier 后的有效攻击，应等 Core 补 effective stats，或通过只读 query 获取。
+### `RunView`
+
+| 字段 | 来源 |
+|---|---|
+| `Phase` | `RunModel.Phase` |
+| `NodeIndex` | `RunModel.NodeIndex` |
+| `Floor` | `RunModel.Floor` |
+| `Room` | `RunModel.Room` |
+| `Seed` | `RunModel.Seed` |
+
+### `PlayerView`
+
+| 字段 | 来源 |
+|---|---|
+| `Coins` / `InteractionCount` | `PlayerModel` |
+| `RelicDefIds` / `SkillDefIds` | `PlayerModel` 已获得遗物/技能 |
+| `AvatarStats` | 化身 `CardInstance` + `StatSystem`（base + effective） |
+
+### `BoardView` / `BoardSlotView`
+
+| 字段 | 说明 |
+|---|---|
+| `Slots` | 9 格（index 1–9） |
+| `AvatarUid` / `AvatarSlot` | 化身引用 |
+| 每格 `Hp/Armor/Attack/MaxHp` | **base** 值 |
+| 每格 `EffectiveHp/EffectiveArmor/EffectiveAttack/EffectiveMaxHp` | **effective** 显示值 |
+| `Blessed` | `BoardModel.IsBlessed` |
+
+### `DeckView`
+
+| 字段 | 说明 |
+|---|---|
+| `DrawPileUids` | 抽牌堆（有序，顶 = index 0） |
+| `ItemSlotUids` | 道具手牌槽（有序） |
+| `PlayerCardPoolUids` / `EnemyCardPoolUids` | 节点开局暂存池 |
+
+### `ChoiceView`
+
+| 字段 | 说明 |
+|---|---|
+| `Kind` | `PendingChoiceKind`：None / Reward / Room |
+| `PoolId` | 奖励池 id（`OfferReward` 时写入） |
+| `RewardOptions` / `RoomOptions` / `SelectedRoom` | 待选与已选 |
+
+### `CardView` / `CardStatView`
+
+收录范围：当前棋盘 occupant + `DrawPile` + `ItemSlots` + 两 CardPool 中的卡。
+
+| 字段 | 说明 |
+|---|---|
+| `Uid` / `DefId` / `Kind` | 卡身份 |
+| `Zone` / `Slot` | 区域与棋盘格（非棋盘格 `Slot = None`） |
+| `Stats` | `CardStatView`：六项 stat 的 base + effective 对 |
+| `EffectIds` | 卡上绑定的效果 defId |
+
+### 兼容顶层字段（只读转发）
+
+`Phase`、`NodeIndex`、`Coins`、`InteractionCount`、`AvatarUid`、`AvatarSlot`、`PendingChoiceKind`、`BoardSlots`、`RewardOptions`、`RoomOptions`、`SelectedRoom` — 分别转发自 `Run` / `Player` / `Board` / `Choice`。
+
+### 已知未纳入 Snapshot
+
+| 缺口 | 说明 |
+|---|---|
+| 道具选项覆盖层（如 `stat_boost` 三选一） | Core 无 `PendingItemChoice`；当前由表现层 `SelectionOverlayFsm` 纯本地驱动 |
+| 交互合法性 / 邻接 / 嘲讽 | 仍由 `PhaseSystem` 裁决，不进 Snapshot |
+| `IsInputLocked` / `ActiveBatchId` | 属于 `PresentationSyncSystem`，非游戏显示态 |
+| 活跃 `EffectInstance` 全量 | 卡面 `EffectIds` + effective stats 已够显示对齐；instance 级图标可二期补 |
+| 坟场 / Removed 区 | 不在可见区，不投影 |
+
+表现层批末对齐应优先读 `snapshot.Deck` + `snapshot.Cards` + `snapshot.Board` + `snapshot.Choice`；卡面数字显示优先用 `Effective*` 字段。
 
 ## 表现层使用注意事项
 
