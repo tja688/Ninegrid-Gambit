@@ -20,7 +20,8 @@
 | [`Assets/Notes/九宫牌局权威顶层架构设计.md`](Assets/Notes/九宫牌局权威顶层架构设计.md) | 总览 Core 契约、三窗口、分层 |
 | [`Assets/Notes/Core表现层Command与Event消费清单-2026-06-20.md`](Assets/Notes/Core表现层Command与Event消费清单-2026-06-20.md) | Command / Event 与表现消费对照 |
 | `Assets/Docs/` | 策划设计案、效果语义 |
-| 表现层开发蓝图：`C:\Users\jinji\Desktop\文档\MyNote\游戏开发项目\引擎工作区\九宫牌局架构\九宫牌局表现层.canvas`（工作区外）| 全局表现层规划；上下文大，必要时再读 |
+| `Assets/Notes/` | 进行时过程性开发笔记，归档里面有历史记录 |
+| `C:\Users\jinji\Desktop\文档\MyNote\游戏开发项目\引擎工作区\九宫牌局架构\九宫牌局表现层（第二版）.canvas`| 全局表现层规划蓝图 |
 
 ---
 
@@ -28,7 +29,7 @@
 
 - **Unity MCP**：改场景/组件用 MCP，**禁止**手改 `.unity`；改脚本后 `refresh_unity` 并读 Console。
 - **CodeGraph MCP**：查符号、调用链、影响面；混合 pending ID / 设计文案 / JSON 行时用 `rg`。
-- **内核测试**：`NineGrid.Core.Tests`（含 `P7PresentationContractTests` 表现契约）。
+- **内核测试**：`NineGrid.Core.Tests`。
 
 ---
 
