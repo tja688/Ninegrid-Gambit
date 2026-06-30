@@ -8,7 +8,7 @@ namespace NineGrid.Presentation.Debugging
     public sealed class PerformanceDebugBootstrap : MonoBehaviour
     {
         [SerializeField] private GameObject standardCardPrefab;
-        [SerializeField] private bool showPanelOnStart = true;
+        [SerializeField] private bool showPanelOnStart = false;
         [SerializeField] private KeyCode togglePanelKey = KeyCode.F1;
 
         private PerformanceDebugHarness harness;
@@ -47,7 +47,15 @@ namespace NineGrid.Presentation.Debugging
                 panel = PerformanceDebugPanel.Create(gameObject, harness, catalog, runner);
             }
 
-            harness.Log.Info($"Catalog loaded {catalog.Modules.Count} modules. Press {togglePanelKey} to toggle panel.");
+            PerformanceDebugSession.Register(this);
+            harness.Log.Info(
+                $"Catalog loaded {catalog.Modules.Count} modules. " +
+                $"Use TableNine/表演调试面板 (Editor) or {togglePanelKey} for legacy overlay.");
+        }
+
+        private void OnDestroy()
+        {
+            PerformanceDebugSession.Unregister(this);
         }
 
         private void Update()
