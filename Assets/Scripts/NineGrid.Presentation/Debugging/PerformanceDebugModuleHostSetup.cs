@@ -19,6 +19,7 @@ namespace NineGrid.Presentation.Debugging
         {
             Transform actorsRoot = harness.ActorsRoot;
             Transform nineGrid = harness.NineGridAnchors;
+            Transform deckAnchors = harness.CardDeckAnchors;
             Transform handAnchors = harness.HandCardAnchors;
             Transform handActors = harness.HandActorsRoot;
 
@@ -55,28 +56,56 @@ namespace NineGrid.Presentation.Debugging
             PerformanceDebugSerializationUtil.SetField(damageNumbers, "healPrefab", damagePrefab);
             PerformanceDebugSerializationUtil.SetField(damageNumbers, "goldPrefab", damagePrefab);
 
-            WireDeckFlow(host.GetComponent<CardDeckEntryFlow>(), cardPrefab, actorsRoot, nineGrid);
-            WireDeckFlow(host.GetComponent<CardDeckDealFlow>(), cardPrefab, actorsRoot, nineGrid);
-            WireSubstituteFlow(host.GetComponent<CardDeckSubstituteFlow>(), cardPrefab, actorsRoot, nineGrid);
+            WireDeckEntryFlow(host.GetComponent<CardDeckEntryFlow>(), cardPrefab, actorsRoot, deckAnchors);
+            WireDeckDealFlow(host.GetComponent<CardDeckDealFlow>(), cardPrefab, actorsRoot, nineGrid, deckAnchors);
+            WireSubstituteFlow(host.GetComponent<CardDeckSubstituteFlow>(), cardPrefab, actorsRoot, nineGrid, deckAnchors);
             WireBoardRotate(host.GetComponent<BoardRotateFlow>(), cardPrefab, actorsRoot, nineGrid);
             WireAcquisition(host.GetComponent<CardAcquisitionFlow>(), cardPrefab, handActors, handAnchors, handLayout, handReturn);
             WireHover(host.GetComponent<BoardCardHoverPresenter>(), cardPrefab, actorsRoot);
             WireHandDrag(handDrag, handLayout, host.GetComponent<CardShakeCue>());
         }
 
-        private static void WireDeckFlow(Component flow, GameObject cardPrefab, Transform actorsRoot, Transform slotRoot)
+        private static void WireDeckEntryFlow(
+            CardDeckEntryFlow flow,
+            GameObject cardPrefab,
+            Transform actorsRoot,
+            Transform deckAnchors)
         {
             PerformanceDebugSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
             PerformanceDebugSerializationUtil.SetField(flow, "previewActorsRoot", actorsRoot);
-            PerformanceDebugSerializationUtil.SetField(flow, "slotRoot", slotRoot);
-            PerformanceDebugSerializationUtil.SetField(flow, "ringSlotRoot", slotRoot);
+            PerformanceDebugSerializationUtil.SetField(flow, "slotRoot", deckAnchors);
+            PerformanceDebugSerializationUtil.SetField(flow, "previewDeckOrigin", deckAnchors);
         }
 
-        private static void WireSubstituteFlow(CardDeckSubstituteFlow flow, GameObject cardPrefab, Transform actorsRoot, Transform slotRoot)
+        private static void WireDeckDealFlow(
+            CardDeckDealFlow flow,
+            GameObject cardPrefab,
+            Transform actorsRoot,
+            Transform ringSlotRoot,
+            Transform deckAnchors)
+        {
+            PerformanceDebugSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
+            PerformanceDebugSerializationUtil.SetField(flow, "previewActorsRoot", actorsRoot);
+            PerformanceDebugSerializationUtil.SetField(flow, "ringSlotRoot", ringSlotRoot);
+
+            CardDeckSubstituteFlow substituteFlow = flow.GetComponent<CardDeckSubstituteFlow>();
+            if (substituteFlow != null)
+            {
+                WireSubstituteFlow(substituteFlow, cardPrefab, actorsRoot, ringSlotRoot, deckAnchors);
+            }
+        }
+
+        private static void WireSubstituteFlow(
+            CardDeckSubstituteFlow flow,
+            GameObject cardPrefab,
+            Transform actorsRoot,
+            Transform slotRoot,
+            Transform deckAnchors)
         {
             PerformanceDebugSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
             PerformanceDebugSerializationUtil.SetField(flow, "previewActorsRoot", actorsRoot);
             PerformanceDebugSerializationUtil.SetField(flow, "slotRoot", slotRoot);
+            PerformanceDebugSerializationUtil.SetField(flow, "deckOrigin", deckAnchors);
         }
 
         private static void WireBoardRotate(BoardRotateFlow flow, GameObject cardPrefab, Transform actorsRoot, Transform slotRoot)
@@ -101,14 +130,9 @@ namespace NineGrid.Presentation.Debugging
             PerformanceDebugSerializationUtil.SetField(flow, "returnPresenter", returnPresenter);
 
             var solver = new HandCardLayoutSolver();
-            if (handAnchors != null)
+            Transform[] refs = PerformanceDebugAnchorIndexing.CollectHandCardSlotAnchors(handAnchors);
+            if (refs.Length > 0)
             {
-                var refs = new Transform[Mathf.Min(5, handAnchors.childCount)];
-                for (var i = 0; i < refs.Length; i++)
-                {
-                    refs[i] = handAnchors.GetChild(i);
-                }
-
                 PerformanceDebugSerializationUtil.SetField(solver, "referenceAnchors", refs);
             }
 

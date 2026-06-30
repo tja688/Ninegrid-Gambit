@@ -34,24 +34,36 @@ namespace NineGrid.Presentation.Debugging
         private void Initialize(Transform bootstrapRoot, GameObject cardPrefab)
         {
             this.bootstrapRoot = bootstrapRoot;
-            ActorsRoot = FindChildRecursive(bootstrapRoot.root, "Actors");
-            AnchorsRoot = FindChildRecursive(bootstrapRoot.root, "Anchors");
-            PanelsRoot = FindChildRecursive(bootstrapRoot.root, "Panels");
-            HandActorsRoot = FindChildRecursive(bootstrapRoot.root, "HandCardActors");
-
-            if (AnchorsRoot != null)
-            {
-                NineGridAnchors = AnchorsRoot.Find("NineGridAnchors");
-                HandCardAnchors = AnchorsRoot.Find("HandCardAnchors");
-                CardDeckAnchors = AnchorsRoot.Find("CardDeckAnchors");
-                PanelsAnchor = AnchorsRoot.Find("PanelsAnchor");
-            }
-
+            ResolveSceneRoots();
             ActorFactory = new DebugActorFactory(ActorsRoot, cardPrefab);
             IndexAnchors();
             moduleHost = CreateAndWireModuleHost(bootstrapRoot, cardPrefab);
-            ApplyContextPreset(PerformanceDebugContextPreset.BattlePair);
-            Log.Info("Harness ready.");
+            Log.Info("Harness ready. Stage is empty until Play or Rebuild Context.");
+        }
+
+        private void ResolveSceneRoots()
+        {
+            if (!PerformanceDebugAnchorIndexing.TryResolveStagingRoots(
+                    out Transform anchorsRoot,
+                    out Transform panelsRoot,
+                    out Transform nineGridAnchors,
+                    out Transform cardDeckAnchors,
+                    out Transform handCardAnchors,
+                    out Transform panelsAnchor,
+                    out Transform actorsRoot,
+                    out Transform handActorsRoot))
+            {
+                Log.Warn("Staging roots not found in active scene. Anchor indexing will be empty until reindex.");
+            }
+
+            AnchorsRoot = anchorsRoot;
+            PanelsRoot = panelsRoot;
+            NineGridAnchors = nineGridAnchors;
+            HandCardAnchors = handCardAnchors;
+            CardDeckAnchors = cardDeckAnchors;
+            PanelsAnchor = panelsAnchor;
+            ActorsRoot = actorsRoot;
+            HandActorsRoot = handActorsRoot;
         }
 
         public PerformanceDebugContext CreateContext()
@@ -92,6 +104,7 @@ namespace NineGrid.Presentation.Debugging
 
         public void ReindexAnchors()
         {
+            ResolveSceneRoots();
             IndexAnchors();
             Log.Info($"Anchors reindexed: {Registry.Anchors.Count} entries.");
         }
@@ -218,15 +231,13 @@ namespace NineGrid.Presentation.Debugging
                 return;
             }
 
-            Vector3 deckOrigin = CardDeckAnchors.position + new Vector3(9.4375f, 3f, 0f);
             for (var i = 0; i < CardDeckAnchors.childCount; i++)
             {
                 Transform slot = CardDeckAnchors.GetChild(i);
                 string actorId = $"deck{i + 1}";
-                Transform actor = ActorFactory.Spawn(actorId, deckOrigin, Quaternion.identity);
-                actor.position = deckOrigin + new Vector3(0f, i * 0.02f, 0f);
+                Transform actor = ActorFactory.SpawnAtAnchor(actorId, slot);
                 Registry.RegisterActor(actorId, actor);
-                Registry.RegisterAnchor($"deckSlot{i + 1}", slot);
+                Registry.RegisterAnchor($"deck.{slot.name}", slot);
             }
         }
 
@@ -238,14 +249,10 @@ namespace NineGrid.Presentation.Debugging
                 return;
             }
 
-            for (var i = 0; i < HandCardAnchors.childCount; i++)
+            Transform[] slotAnchors = PerformanceDebugAnchorIndexing.CollectHandCardSlotAnchors(HandCardAnchors);
+            for (var i = 0; i < slotAnchors.Length; i++)
             {
-                Transform anchor = HandCardAnchors.GetChild(i);
-                if (anchor.name == "HandcardApplyZone" || anchor.name == "HandCardActors")
-                {
-                    continue;
-                }
-
+                Transform anchor = slotAnchors[i];
                 string actorId = $"hand{i + 1}";
                 Transform actor = ActorFactory.SpawnAtAnchor(actorId, anchor, useLocalSpace: parent == HandActorsRoot);
                 if (parent == HandActorsRoot)
@@ -298,57 +305,14 @@ namespace NineGrid.Presentation.Debugging
 
         private void IndexAnchors()
         {
-            Registry.ClearAll();
-            IndexRecursive(AnchorsRoot, "Anchors");
-            IndexRecursive(PanelsRoot, "Panels");
-            RegisterScopedGroup(NineGridAnchors, "Anchors/NineGridAnchors", "grid", registerBareNames: true);
-            RegisterScopedGroup(CardDeckAnchors, "Anchors/CardDeckAnchors", "deck", registerBareNames: false);
-            RegisterScopedGroup(HandCardAnchors, "Anchors/HandCardAnchors", "hand", registerBareNames: false);
-            RegisterScopedGroup(PanelsAnchor, "Anchors/PanelsAnchor", "panel", registerBareNames: false);
-        }
-
-        private void RegisterScopedGroup(
-            Transform group,
-            string pathPrefix,
-            string scope,
-            bool registerBareNames)
-        {
-            if (group == null)
-            {
-                return;
-            }
-
-            Registry.RegisterAnchor(pathPrefix, group);
-            Registry.RegisterAnchor(scope, group, overwrite: false);
-
-            for (var i = 0; i < group.childCount; i++)
-            {
-                Transform child = group.GetChild(i);
-                string path = $"{pathPrefix}/{child.name}";
-                Registry.RegisterAnchor(path, child);
-                Registry.RegisterAnchor($"{scope}.{child.name}", child);
-                if (registerBareNames)
-                {
-                    Registry.RegisterAnchor(child.name, child, overwrite: true);
-                }
-            }
-        }
-
-        private void IndexRecursive(Transform root, string prefix)
-        {
-            if (root == null)
-            {
-                return;
-            }
-
-            Registry.RegisterAnchor(prefix, root, overwrite: false);
-            for (var i = 0; i < root.childCount; i++)
-            {
-                Transform child = root.GetChild(i);
-                string childPath = $"{prefix}/{child.name}";
-                Registry.RegisterAnchor(childPath, child, overwrite: false);
-                IndexRecursive(child, childPath);
-            }
+            PerformanceDebugAnchorIndexing.Reindex(
+                Registry,
+                AnchorsRoot,
+                PanelsRoot,
+                NineGridAnchors,
+                CardDeckAnchors,
+                HandCardAnchors,
+                PanelsAnchor);
         }
 
         private static void DestroyAllChildren(Transform root)
@@ -384,26 +348,7 @@ namespace NineGrid.Presentation.Debugging
 
         private static Transform FindChildRecursive(Transform root, string name)
         {
-            if (root == null)
-            {
-                return null;
-            }
-
-            if (root.name == name)
-            {
-                return root;
-            }
-
-            for (var i = 0; i < root.childCount; i++)
-            {
-                Transform found = FindChildRecursive(root.GetChild(i), name);
-                if (found != null)
-                {
-                    return found;
-                }
-            }
-
-            return null;
+            return PerformanceDebugAnchorIndexing.FindChildRecursive(root, name);
         }
     }
 }

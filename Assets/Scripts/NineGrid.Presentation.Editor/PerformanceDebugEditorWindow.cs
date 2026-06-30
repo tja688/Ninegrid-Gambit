@@ -6,6 +6,7 @@ using NineGrid.Presentation.Debugging;
 using NineGrid.Presentation.Editor.Ui;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
@@ -38,6 +39,7 @@ namespace NineGrid.Presentation.Editor
         private int categoryFilterIndex;
         private PerformanceDebugPayload workingPayload;
         private IPerformanceDebugModule selectedModule;
+        private readonly PerformanceDebugViewRegistry editModeAnchorRegistry = new();
 
         [MenuItem("TableNine/表演调试面板")]
         public static void ShowWindow()
@@ -56,6 +58,7 @@ namespace NineGrid.Presentation.Editor
             categoryFilterIndex = EditorPrefs.GetInt(PrefsCategory, 0);
 
             BuildShell();
+            TryRefreshEditModeAnchors();
             RefreshNavigation();
             SelectModuleById(selectedModuleId);
 
@@ -74,10 +77,31 @@ namespace NineGrid.Presentation.Editor
         {
             if (state == PlayModeStateChange.EnteredPlayMode || state == PlayModeStateChange.EnteredEditMode)
             {
+                if (state == PlayModeStateChange.EnteredPlayMode)
+                {
+                    EditorApplication.delayCall += RefreshPlayModeAnchors;
+                }
+
                 RefreshConnectionStatus();
                 RefreshStats();
+                RefreshAnchorList();
                 RefreshLog();
             }
+        }
+
+        private void RefreshPlayModeAnchors()
+        {
+            PerformanceDebugBootstrap bootstrap = PerformanceDebugSession.Current;
+            if (bootstrap == null)
+            {
+                return;
+            }
+
+            bootstrap.Harness.ReindexAnchors();
+            RefreshConnectionStatus();
+            RefreshStats();
+            RefreshAnchorList();
+            RefreshLog();
         }
 
         private void OnEditorUpdate()
@@ -91,11 +115,11 @@ namespace NineGrid.Presentation.Editor
             RefreshLog();
         }
 
-        private static void PingAnchor(string anchorId)
+        private void PingAnchor(string anchorId)
         {
-            PerformanceDebugBootstrap bootstrap = PerformanceDebugSession.Current;
-            if (bootstrap == null
-                || !bootstrap.Harness.Registry.TryGetAnchor(anchorId, out Transform anchor)
+            PerformanceDebugViewRegistry registry = GetAnchorRegistryForDisplay();
+            if (registry == null
+                || !registry.TryGetAnchor(anchorId, out Transform anchor)
                 || anchor == null)
             {
                 return;
@@ -105,26 +129,28 @@ namespace NineGrid.Presentation.Editor
             EditorGUIUtility.PingObject(anchor.gameObject);
         }
 
+        private void OnReindexAnchors()
+        {
+            PerformanceDebugBootstrap bootstrap = PerformanceDebugSession.Current;
+            if (bootstrap != null)
+            {
+                bootstrap.Harness.ReindexAnchors();
+            }
+            else
+            {
+                TryRefreshEditModeAnchors();
+            }
+
+            RefreshAnchorList();
+            RefreshStats();
+            RefreshLog();
+        }
+
         private void OnClearStage()
         {
             GetRunnerOrWarn()?.ClearStage();
             RefreshStats();
             RefreshAnchorList();
-            RefreshLog();
-        }
-
-        private void OnReindexAnchors()
-        {
-            PerformanceDebugBootstrap bootstrap = PerformanceDebugSession.Current;
-            if (bootstrap == null)
-            {
-                EditorUtility.DisplayDialog("未连接", "请先进入 PerformanceTestScene Play Mode。", "确定");
-                return;
-            }
-
-            bootstrap.Harness.ReindexAnchors();
-            RefreshAnchorList();
-            RefreshStats();
             RefreshLog();
         }
 
@@ -138,12 +164,7 @@ namespace NineGrid.Presentation.Editor
                 "表演调试控制台",
                 "在 Editor 窗口配置与触发表演；Game View 保持无遮挡。需 PerformanceTestScene + Play Mode。"));
 
-            rootVisualElement.Add(PerformanceDebugWarmConsoleUi.BuildToolbar(
-                ("运行测试场景", OpenTestSceneAndPlay, "打开 PerformanceTestScene 并进入 Play Mode"),
-                ("打开测试场景", OpenTestSceneOnly, "仅打开场景，不自动 Play"),
-                ("重扫锚点", OnReindexAnchors, "从场景 Anchors 根节点重新索引"),
-                ("刷新连接", RefreshConnectionStatus, "重新检测 PerformanceDebugBootstrap"),
-                ("清空日志", ClearLog, "清空运行时日志缓冲")));
+            rootVisualElement.Add(BuildMainToolbar());
 
             var split = new TwoPaneSplitView(0, 250, TwoPaneSplitViewOrientation.Horizontal);
             split.style.flexGrow = 1;
@@ -153,46 +174,83 @@ namespace NineGrid.Presentation.Editor
             split.Add(BuildContentPane());
         }
 
-        private VisualElement BuildSidebar()
+        private Toolbar BuildMainToolbar()
         {
-            var sidebar = new VisualElement();
-            sidebar.style.flexGrow = 1;
-            sidebar.style.backgroundColor = PerformanceDebugWarmConsoleUi.Theme.SidebarBg;
+            var toolbar = new Toolbar();
+            toolbar.style.height = 34;
+            toolbar.style.paddingLeft = 8;
+            toolbar.style.paddingRight = 8;
+            toolbar.style.backgroundColor = PerformanceDebugWarmConsoleUi.Theme.HeaderBg;
+            toolbar.style.borderBottomWidth = 1;
+            toolbar.style.borderBottomColor = PerformanceDebugWarmConsoleUi.Theme.Divider;
 
-            var filterWrap = new VisualElement();
-            filterWrap.style.paddingLeft = 10;
-            filterWrap.style.paddingRight = 10;
-            filterWrap.style.paddingTop = 10;
-            filterWrap.style.paddingBottom = 8;
-            filterWrap.style.borderBottomWidth = 1;
-            filterWrap.style.borderBottomColor = PerformanceDebugWarmConsoleUi.Theme.Divider;
+            AddToolbarButton(toolbar, "运行测试场景", OpenTestSceneAndPlay, "打开 PerformanceTestScene 并进入 Play Mode");
+            AddToolbarButton(toolbar, "打开测试场景", OpenTestSceneOnly, "仅打开场景，不自动 Play");
+            AddToolbarButton(toolbar, "重扫锚点", OnReindexAnchors, "从场景 Anchors 根节点重新索引");
+            AddToolbarButton(toolbar, "刷新连接", RefreshConnectionStatus, "重新检测 PerformanceDebugBootstrap");
+            AddToolbarButton(toolbar, "清空日志", ClearLog, "清空运行时日志缓冲");
+
+            var spacer = new VisualElement();
+            spacer.style.flexGrow = 1;
+            toolbar.Add(spacer);
 
             searchField = new TextField { value = searchFilter };
+            searchField.style.width = 200;
+            searchField.style.flexShrink = 0;
+            searchField.style.marginRight = 8;
             searchField.RegisterValueChangedCallback(evt =>
             {
                 searchFilter = evt.newValue ?? string.Empty;
                 EditorPrefs.SetString(PrefsSearch, searchFilter);
                 RefreshNavigation();
             });
-            filterWrap.Add(PerformanceDebugWarmConsoleUi.WrapControl(
-                "搜索",
-                "按显示名或模块 ID 过滤",
-                searchField));
+            toolbar.Add(WrapToolbarField("搜索", searchField));
 
             var categoryChoices = BuildCategoryChoices();
-            categoryPopup = new PopupField<string>(categoryChoices, Mathf.Clamp(categoryFilterIndex, 0, categoryChoices.Count - 1));
+            categoryPopup = new PopupField<string>(
+                categoryChoices,
+                Mathf.Clamp(categoryFilterIndex, 0, categoryChoices.Count - 1));
+            categoryPopup.style.width = 130;
+            categoryPopup.style.flexShrink = 0;
             categoryPopup.RegisterValueChangedCallback(_ =>
             {
                 categoryFilterIndex = categoryPopup.index;
                 EditorPrefs.SetInt(PrefsCategory, categoryFilterIndex);
                 RefreshNavigation();
             });
-            filterWrap.Add(PerformanceDebugWarmConsoleUi.WrapControl(
-                "分类",
-                "限制左侧模块列表",
-                categoryPopup));
+            toolbar.Add(WrapToolbarField("分类", categoryPopup));
 
-            sidebar.Add(filterWrap);
+            return toolbar;
+        }
+
+        private static void AddToolbarButton(Toolbar toolbar, string text, Action click, string tooltip)
+        {
+            var btn = new ToolbarButton(click) { text = text };
+            btn.tooltip = tooltip;
+            toolbar.Add(btn);
+        }
+
+        private static VisualElement WrapToolbarField(string label, VisualElement field)
+        {
+            var wrap = new VisualElement();
+            wrap.style.flexDirection = FlexDirection.Row;
+            wrap.style.alignItems = Align.Center;
+            wrap.style.marginRight = 4;
+
+            var title = PerformanceDebugWarmConsoleUi.CreateTitleLabel(
+                label, 11, true, PerformanceDebugWarmConsoleUi.Theme.TextSecondary);
+            title.style.marginRight = 6;
+            title.style.marginBottom = 0;
+            wrap.Add(title);
+            wrap.Add(field);
+            return wrap;
+        }
+
+        private VisualElement BuildSidebar()
+        {
+            var sidebar = new VisualElement();
+            sidebar.style.flexGrow = 1;
+            sidebar.style.backgroundColor = PerformanceDebugWarmConsoleUi.Theme.SidebarBg;
 
             var groupLabel = PerformanceDebugWarmConsoleUi.CreateTitleLabel(
                 "MODULES", 10, true, PerformanceDebugWarmConsoleUi.Theme.TextTertiary);
@@ -460,8 +518,17 @@ namespace NineGrid.Presentation.Editor
             if (!EditorApplication.isPlaying)
             {
                 statusHelpBox.messageType = HelpBoxMessageType.Info;
-                statusHelpBox.text =
-                    "未进入 Play Mode。可在此浏览模块与参数；点击工具栏「运行测试场景」开始测试。";
+                if (SceneManager.GetActiveScene().name == "PerformanceTestScene")
+                {
+                    statusHelpBox.text =
+                        "未进入 Play Mode。已打开测试场景时可预览锚点；点击「运行测试场景」开始播放测试。";
+                }
+                else
+                {
+                    statusHelpBox.text =
+                        "未进入 Play Mode。可浏览模块与参数；点击工具栏「运行测试场景」开始测试。";
+                }
+
                 return;
             }
 
@@ -526,6 +593,11 @@ namespace NineGrid.Presentation.Editor
                     lastError = bootstrap.Runner.LastError;
                 }
             }
+            else if (!EditorApplication.isPlaying && TryRefreshEditModeAnchors())
+            {
+                actorCount = "0";
+                anchorCount = editModeAnchorRegistry.Anchors.Count.ToString();
+            }
 
             statsContainer.Add(PerformanceDebugWarmConsoleUi.CreateStatsGrid(
                 ("模块", moduleCount, "Catalog 自动发现"),
@@ -544,24 +616,23 @@ namespace NineGrid.Presentation.Editor
             anchorListContainer.Clear();
             anchorListContainer.Add(PerformanceDebugWarmConsoleUi.CreateSectionCard(
                 "场景锚点",
-                "锚点来自 PerformanceTestScene 的 Anchors 层级。可在场景中拖动 Transform 后点「重扫锚点」。棋盘格使用 grid.* 前缀。",
+                "锚点来自 PerformanceTestScene 的 Anchors 层级。grid.* 九宫格、deck.* 牌组、hand.* 道具手牌。拖动 Transform 后点「重扫锚点」。",
                 column =>
                 {
-                    PerformanceDebugBootstrap bootstrap = PerformanceDebugSession.Current;
-                    if (bootstrap == null)
+                    PerformanceDebugViewRegistry registry = GetAnchorRegistryForDisplay();
+                    if (registry == null)
                     {
                         column.Add(PerformanceDebugWarmConsoleUi.CreateDescriptionLabel(
-                            "Play Mode 连接后显示锚点列表。"));
+                            "请打开 PerformanceTestScene，或进入 Play Mode 后查看锚点。"));
                         return;
                     }
 
-                    IReadOnlyList<string> keys = bootstrap.Harness.Registry.GetAnchorKeysSorted();
+                    IReadOnlyList<string> keys = registry.GetAnchorKeysSorted();
                     int shown = 0;
                     for (var i = 0; i < keys.Count; i++)
                     {
                         string key = keys[i];
-                        if (!key.StartsWith("grid.", StringComparison.Ordinal)
-                            && !key.StartsWith("Anchors/NineGridAnchors/", StringComparison.Ordinal))
+                        if (!PerformanceDebugAnchorIndexing.ShouldDisplayAnchorKey(key))
                         {
                             continue;
                         }
@@ -570,7 +641,7 @@ namespace NineGrid.Presentation.Editor
                         string capture = key;
                         var row = new Button(() => PingAnchor(capture))
                         {
-                            text = bootstrap.Harness.Registry.DescribeAnchor(key),
+                            text = registry.DescribeAnchor(key),
                         };
                         row.style.height = 24;
                         row.style.marginBottom = 4;
@@ -580,7 +651,7 @@ namespace NineGrid.Presentation.Editor
 
                     if (shown == 0)
                     {
-                        column.Add(PerformanceDebugWarmConsoleUi.CreateDescriptionLabel("未索引到棋盘锚点。"));
+                        column.Add(PerformanceDebugWarmConsoleUi.CreateDescriptionLabel("未索引到锚点。请确认场景含 Anchors 根节点后重扫。"));
                     }
                 }));
         }
@@ -778,6 +849,24 @@ namespace NineGrid.Presentation.Editor
 
         private static string FieldPrefKey(string moduleId, string fieldKey) =>
             $"{PrefsFieldPrefix}{moduleId}.{fieldKey}";
+
+        private bool TryRefreshEditModeAnchors()
+        {
+            return PerformanceDebugAnchorIndexing.TryReindexActiveScene(
+                "PerformanceTestScene",
+                editModeAnchorRegistry);
+        }
+
+        private PerformanceDebugViewRegistry GetAnchorRegistryForDisplay()
+        {
+            PerformanceDebugBootstrap bootstrap = PerformanceDebugSession.Current;
+            if (bootstrap != null)
+            {
+                return bootstrap.Harness.Registry;
+            }
+
+            return TryRefreshEditModeAnchors() ? editModeAnchorRegistry : null;
+        }
 
         private void SavePreferences()
         {
