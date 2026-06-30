@@ -1,0 +1,22 @@
+{
+    "name": "NineGrid.Presentation.Tests",
+    "rootNamespace": "NineGrid.Presentation.Tests",
+    "references": [
+        "NineGrid.Presentation",
+        "NineGrid.Core"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}

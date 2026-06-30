@@ -1,0 +1,137 @@
+using System.Collections.Generic;
+using NineGrid.Presentation.Reactions;
+using UnityEngine;
+
+namespace NineGrid.Presentation.Debugging.Modules
+{
+    public sealed class DamageNumbersDebugModule : PerformanceDebugModuleBase<DamageNumbersReaction>
+    {
+        public override string Id => "reaction.damage-numbers";
+        public override string DisplayName => "伤害数字";
+        public override PerformanceDebugCategory Category => PerformanceDebugCategory.Reaction;
+        public override PerformanceDebugSchema Schema => CreateSchema()
+            .Add("contextPreset", "Context", PerformanceDebugParamKind.ContextPreset,
+                PerformanceDebugContextPreset.BattlePair.ToString(),
+                PerformanceDebugSchemaFactory.EnumNames<PerformanceDebugContextPreset>())
+            .Add("kind", "Kind", PerformanceDebugParamKind.Enum, DamagePopupKind.Damage.ToString(),
+                "Damage", "Heal", "Gold")
+            .Add("amount", "Amount", PerformanceDebugParamKind.Float, "12");
+
+        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, DamageNumbersReaction module, PerformanceDebugPayload payload)
+        {
+            Transform target = context.ResolveActor("enemy") ?? context.ResolveActor("player");
+            if (target == null)
+            {
+                return PerformanceDebugPlayResult.Fail("Missing target actor.");
+            }
+
+            var kind = System.Enum.TryParse(payload.GetString("kind"), true, out DamagePopupKind parsed)
+                ? parsed
+                : DamagePopupKind.Damage;
+            module.Play(target, payload.GetFloat("amount", 12f), kind);
+            return PerformanceDebugPlayResult.Ok(1.5f);
+        }
+    }
+
+    public sealed class EffectTriggerDebugModule : PerformanceDebugModuleBase<EffectTriggerReaction>
+    {
+        public override string Id => "reaction.effect-trigger";
+        public override string DisplayName => "效果触发";
+        public override PerformanceDebugCategory Category => PerformanceDebugCategory.Reaction;
+        public override PerformanceDebugSchema Schema => CreateSchema()
+            .Add("ownerCardUid", "Owner Uid", PerformanceDebugParamKind.Int, "1")
+            .Add("effectId", "Effect Id", PerformanceDebugParamKind.String, "debug_effect");
+
+        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, EffectTriggerReaction module, PerformanceDebugPayload payload)
+        {
+            module.Play(
+                payload.GetInt("ownerCardUid", 1),
+                payload.GetString("effectId", "debug_effect"),
+                "debug_source",
+                "debug");
+            context.Log.Info("EffectTriggerReaction is a placeholder (0s).");
+            return PerformanceDebugPlayResult.Ok(0f);
+        }
+    }
+
+    public sealed class ModifierApplyDebugModule : PerformanceDebugModuleBase<ModifierApplyReaction>
+    {
+        public override string Id => "reaction.modifier-apply";
+        public override string DisplayName => "修饰器应用";
+        public override PerformanceDebugCategory Category => PerformanceDebugCategory.Reaction;
+        public override PerformanceDebugSchema Schema => CreateSchema()
+            .Add("cardUid", "Card Uid", PerformanceDebugParamKind.Int, "1")
+            .Add("delta", "Delta", PerformanceDebugParamKind.Int, "1");
+
+        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, ModifierApplyReaction module, PerformanceDebugPayload payload)
+        {
+            module.Play(payload.GetInt("cardUid", 1), 0, payload.GetInt("delta", 1), "debug");
+            context.Log.Info("ModifierApplyReaction is a placeholder (0s).");
+            return PerformanceDebugPlayResult.Ok(0f);
+        }
+    }
+
+    public sealed class CardAcquisitionDebugModule : PerformanceDebugModuleBase<CardAcquisitionFlow>
+    {
+        public override string Id => "reaction.card-acquisition";
+        public override string DisplayName => "卡牌获得";
+        public override PerformanceDebugCategory Category => PerformanceDebugCategory.Reaction;
+        public override PerformanceDebugSchema Schema => PerformanceDebugSchemaFactory.ContextOnlySchema(PerformanceDebugContextPreset.Hand7);
+
+        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, CardAcquisitionFlow module, PerformanceDebugPayload payload)
+        {
+            module.PlayPreview();
+            return PerformanceDebugPlayResult.Ok(module.TotalDuration);
+        }
+
+        protected override float TryGetCustomExpectedDuration(CardAcquisitionFlow module) => module.TotalDuration;
+
+        protected override bool TryGetCustomIsPlaying(CardAcquisitionFlow module, out bool isPlaying)
+        {
+            isPlaying = module.IsPlaying;
+            return true;
+        }
+    }
+
+    public sealed class SelectionFallOffDebugModule : PerformanceDebugModuleBase<SelectionFallOffFlow>
+    {
+        public override string Id => "reaction.selection-falloff";
+        public override string DisplayName => "选择落下";
+        public override PerformanceDebugCategory Category => PerformanceDebugCategory.Reaction;
+        public override PerformanceDebugSchema Schema => CreateSchema()
+            .Add("contextPreset", "Context", PerformanceDebugParamKind.ContextPreset,
+                PerformanceDebugContextPreset.Selection3.ToString(),
+                PerformanceDebugSchemaFactory.EnumNames<PerformanceDebugContextPreset>())
+            .Add("selectedIndex", "Selected Index", PerformanceDebugParamKind.Int, "1");
+
+        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, SelectionFallOffFlow module, PerformanceDebugPayload payload)
+        {
+            int selectedIndex = payload.GetInt("selectedIndex", 1);
+            Camera camera = context.MainCamera != null ? context.MainCamera : Camera.main;
+            var options = new List<Transform>
+            {
+                context.ResolveActor("option1"),
+                context.ResolveActor("option2"),
+                context.ResolveActor("option3"),
+            };
+
+            for (var i = 0; i < options.Count; i++)
+            {
+                if (i == selectedIndex || options[i] == null)
+                {
+                    continue;
+                }
+
+                module.Play(options[i], i, selectedIndex, options[i].localEulerAngles.z, camera);
+            }
+
+            return PerformanceDebugPlayResult.Ok(1.2f);
+        }
+
+        protected override bool TryGetCustomIsPlaying(SelectionFallOffFlow module, out bool isPlaying)
+        {
+            isPlaying = module.IsPlaying;
+            return true;
+        }
+    }
+}
