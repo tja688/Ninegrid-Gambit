@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
-namespace NineGrid.Presentation.Performance.Layout
+namespace NineGrid.Presentation.Shared
 {
     [Serializable]
     public struct HandCardLayoutTarget
@@ -15,6 +16,7 @@ namespace NineGrid.Presentation.Performance.Layout
     /// 手牌数据驱动布局：最左锚点固定，间距受 5 张预设首末锚点夹制，避免动态排位越界。
     /// </summary>
     [Serializable]
+    [MovedFrom(true, "NineGrid.Presentation.Performance.Layout", null, "HandCardLayoutSolver")]
     public sealed class HandCardLayoutSolver
     {
         [Header("Reference Anchors (5-card preset)")]

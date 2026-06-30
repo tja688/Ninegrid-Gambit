@@ -4,14 +4,16 @@ using DG.Tweening;
 using NineGrid.Core;
 using NineGrid.Presentation.Visuals;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
-namespace NineGrid.Presentation.Performance
+namespace NineGrid.Presentation.Projection
 {
     /// <summary>
-    /// 场地 Card 状态面板更新：攻击 / 生命直接跳变 + 护甲块动画。
+    /// 场面板 / 卡牌状态投影：攻击 / 生命跳变 + 护甲块动画；批末对齐入口。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class StatusPanelUpdatePerformance : MonoBehaviour
+    [MovedFrom(true, "NineGrid.Presentation.Performance", null, "StatusPanelUpdatePerformance")]
+    public sealed class InGameStatusProjection : MonoBehaviour
     {
         [Header("Digit Sprites (0-9)")]
         [SerializeField] private Sprite[] digitSprites = new Sprite[10];
@@ -99,8 +101,6 @@ namespace NineGrid.Presentation.Performance
                 {
                     continue;
                 }
-
-                // 批末对齐由适配器传入演员；此处仅处理已挂载视图。
             }
         }
 

@@ -1,14 +1,17 @@
 using System;
 using NineGrid.Core;
+using NineGrid.Presentation.Contracts;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
-namespace NineGrid.Presentation.Performance
+namespace NineGrid.Presentation.Reactions
 {
     /// <summary>
     /// 修正应用表演占位：无视觉效果，0 秒阻塞；后续替换为真实动效黑盒。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class ModifierApplyPerformance : MonoBehaviour
+    [MovedFrom(true, "NineGrid.Presentation.Performance", null, "ModifierApplyPerformance")]
+    public sealed class ModifierApplyReaction : MonoBehaviour, IPlannedReaction
     {
         public bool IsPlaying => false;
 
@@ -26,6 +29,10 @@ namespace NineGrid.Presentation.Performance
             Action onComplete = null)
         {
             onComplete?.Invoke();
+        }
+
+        public void StopAndRestore()
+        {
         }
     }
 }

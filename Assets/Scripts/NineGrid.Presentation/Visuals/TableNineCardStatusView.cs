@@ -397,12 +397,6 @@ namespace NineGrid.Presentation.Visuals
             DirectDigitDisplay display = child.GetComponent<DirectDigitDisplay>();
             if (display == null)
             {
-                DrumRollDigitDisplay legacy = child.GetComponent<DrumRollDigitDisplay>();
-                if (legacy != null)
-                {
-                    Destroy(legacy);
-                }
-
                 display = child.gameObject.AddComponent<DirectDigitDisplay>();
             }
 

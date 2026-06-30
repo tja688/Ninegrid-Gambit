@@ -1,14 +1,17 @@
 using System;
 using NineGrid.Core;
+using NineGrid.Presentation.Contracts;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
-namespace NineGrid.Presentation.Performance
+namespace NineGrid.Presentation.Reactions
 {
     /// <summary>
     /// 效果触发表演占位：无视觉效果，0 秒阻塞；后续替换为真实动效黑盒。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class EffectTriggerPerformance : MonoBehaviour
+    [MovedFrom(true, "NineGrid.Presentation.Performance", null, "EffectTriggerPerformance")]
+    public sealed class EffectTriggerReaction : MonoBehaviour, IPlannedReaction
     {
         public bool IsPlaying => false;
 
@@ -26,6 +29,10 @@ namespace NineGrid.Presentation.Performance
             Action onComplete = null)
         {
             onComplete?.Invoke();
+        }
+
+        public void StopAndRestore()
+        {
         }
     }
 }

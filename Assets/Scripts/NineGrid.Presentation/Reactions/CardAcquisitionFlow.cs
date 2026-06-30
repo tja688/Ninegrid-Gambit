@@ -2,25 +2,28 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
-using NineGrid.Presentation.Performance.Layout;
+using NineGrid.Core;
+using NineGrid.Presentation.Contracts;
+using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Shared;
+using NineGrid.Presentation.Visuals;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Scripting.APIUpdating;
 
-namespace NineGrid.Presentation.Performance
+namespace NineGrid.Presentation.Reactions
 {
     /// <summary>
     /// 卡牌获取：场上卡飞入手牌槽位；已有手牌同步让位重排。
-    /// 缓动手感对齐 <see cref="ItemCardInteractPerformance"/>（layout/return 0.25s OutQuad，复用拖拽取消回手）。
+    /// 缓动手感委托 <see cref="HandLayoutPresenter"/> / <see cref="HandCardReturnPresenter"/>。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class CardAcquisitionPerformance : MonoBehaviour
+    [MovedFrom(true, "NineGrid.Presentation.Performance", null, "CardAcquisitionPerformance")]
+    public sealed class CardAcquisitionFlow : MonoBehaviour, IPlannedReaction
     {
-        [Header("Layout / Return (ItemCardInteract)")]
-        [SerializeField, Min(0f)] private float layoutDuration = 0.25f;
-        [SerializeField] private Ease layoutEase = Ease.OutQuad;
-        [SerializeField, Min(0.01f)] private float returnDuration = 0.25f;
-        [SerializeField] private Ease returnEase = Ease.OutQuad;
+        [Header("Hand Presenters")]
+        [SerializeField] private HandLayoutPresenter layoutPresenter;
+        [SerializeField] private HandCardReturnPresenter returnPresenter;
 
         [Header("Playback")]
         [SerializeField] private bool ignoreTimeScale;
@@ -46,15 +49,23 @@ namespace NineGrid.Presentation.Performance
         private readonly List<HandCardLayoutTarget> layoutBuffer = new();
         private readonly List<Transform> previewSpawnedActors = new();
 
-        private Sequence activeSequence;
         private Coroutine deferCoroutine;
         private bool isPlaying;
         private bool previewActorsOwned;
 
         public bool IsPlaying => isPlaying;
+
         public float TotalDuration => Mathf.Max(
-            layoutDuration > 0f ? layoutDuration : 0f,
-            returnDuration);
+            layoutPresenter != null ? layoutPresenter.LayoutDuration : 0f,
+            returnPresenter != null ? returnPresenter.ReturnDuration : 0f);
+
+        private HandLayoutPresenter Layout => layoutPresenter != null
+            ? layoutPresenter
+            : layoutPresenter = GetComponent<HandLayoutPresenter>();
+
+        private HandCardReturnPresenter Return => returnPresenter != null
+            ? returnPresenter
+            : returnPresenter = GetComponent<HandCardReturnPresenter>();
 
         private Transform ResolvedHandRoot => handRoot != null ? handRoot : transform;
         private Transform ResolvedPreviewActorsRoot => previewActorsRoot != null ? previewActorsRoot : ResolvedHandRoot;
@@ -71,8 +82,6 @@ namespace NineGrid.Presentation.Performance
 
         private void OnValidate()
         {
-            layoutDuration = Mathf.Max(0f, layoutDuration);
-            returnDuration = Mathf.Max(0.01f, returnDuration);
             previewExistingHandCount = Mathf.Max(0, previewExistingHandCount);
         }
 
@@ -120,22 +129,27 @@ namespace NineGrid.Presentation.Performance
                 acquiredCard.SetParent(reparentUnder, worldPositionStays: true);
             }
 
-            activeSequence = BuildSequence(
-                acquiredCard,
-                targetLocalPosition,
-                targetSortingOrder,
-                existingHandActors,
-                existingLayoutTargets,
-                onComplete);
             isPlaying = true;
 
             if (deferPlayOneFrame)
             {
-                deferCoroutine = StartCoroutine(PlaySequenceNextFrame(activeSequence));
+                deferCoroutine = StartCoroutine(PlayDeferred(
+                    acquiredCard,
+                    targetLocalPosition,
+                    targetSortingOrder,
+                    existingHandActors,
+                    existingLayoutTargets,
+                    onComplete));
             }
             else
             {
-                activeSequence.Restart();
+                PlayImmediate(
+                    acquiredCard,
+                    targetLocalPosition,
+                    targetSortingOrder,
+                    existingHandActors,
+                    existingLayoutTargets,
+                    onComplete);
             }
         }
 
@@ -155,7 +169,7 @@ namespace NineGrid.Presentation.Performance
             layoutSolver.BuildLayout(totalCount, layoutBuffer);
             if (layoutBuffer.Count == 0)
             {
-                Debug.LogWarning($"[{nameof(CardAcquisitionPerformance)}] preview layout is empty.", this);
+                Debug.LogWarning($"[{nameof(CardAcquisitionFlow)}] preview layout is empty.", this);
                 return;
             }
 
@@ -208,7 +222,7 @@ namespace NineGrid.Presentation.Performance
             previewActorsOwned = false;
         }
 
-        private Sequence BuildSequence(
+        private IEnumerator PlayDeferred(
             Transform acquiredCard,
             Vector3 targetLocalPosition,
             int targetSortingOrder,
@@ -216,99 +230,69 @@ namespace NineGrid.Presentation.Performance
             IReadOnlyList<HandCardLayoutTarget> existingLayoutTargets,
             Action onComplete)
         {
-            var sequence = DOTween.Sequence()
-                .SetTarget(this)
-                .SetAutoKill(true)
-                .Pause();
+            yield return null;
+            deferCoroutine = null;
 
-            if (ignoreTimeScale)
+            PlayImmediate(
+                acquiredCard,
+                targetLocalPosition,
+                targetSortingOrder,
+                existingHandActors,
+                existingLayoutTargets,
+                onComplete);
+        }
+
+        private void PlayImmediate(
+            Transform acquiredCard,
+            Vector3 targetLocalPosition,
+            int targetSortingOrder,
+            IReadOnlyList<Transform> existingHandActors,
+            IReadOnlyList<HandCardLayoutTarget> existingLayoutTargets,
+            Action onComplete)
+        {
+            var pending = 0;
+            var completed = false;
+
+            void TryFinish()
             {
-                sequence.SetUpdate(true);
-            }
+                if (completed || pending > 0)
+                {
+                    return;
+                }
 
-            AppendRelayoutTweens(sequence, existingHandActors, existingLayoutTargets);
-            AppendReturnTween(sequence, acquiredCard, targetLocalPosition, targetSortingOrder);
-
-            sequence.OnComplete(() =>
-            {
-                activeSequence = null;
+                completed = true;
                 isPlaying = false;
                 onComplete?.Invoke();
                 this.onComplete?.Invoke();
-            });
-
-            return sequence;
-        }
-
-        private void AppendRelayoutTweens(
-            Sequence sequence,
-            IReadOnlyList<Transform> actors,
-            IReadOnlyList<HandCardLayoutTarget> targets)
-        {
-            if (actors == null || targets == null || actors.Count == 0 || layoutDuration <= 0f)
-            {
-                return;
             }
 
-            int pairCount = Mathf.Min(actors.Count, targets.Count);
-            for (var i = 0; i < pairCount; i++)
+            void BeginTrack()
             {
-                Transform actor = actors[i];
-                HandCardLayoutTarget target = targets[i];
-                if (actor == null)
-                {
-                    continue;
-                }
-
-                Tween move = actor
-                    .DOLocalMove(target.LocalPosition, layoutDuration)
-                    .SetEase(layoutEase)
-                    .SetTarget(actor);
-                ApplyTweenSettings(move);
-                sequence.Join(move);
-
-                SpriteRenderer renderer = GetPrimaryRenderer(actor);
-                if (renderer != null)
-                {
-                    Tween sort = SelectionOptionVisual.TweenBaseSortingOrder(actor, target.SortingOrder, layoutDuration, layoutEase);
-                    if (sort != null)
-                    {
-                        ApplyTweenSettings(sort);
-                        sequence.Join(sort);
-                    }
-                }
-            }
-        }
-
-        private void AppendReturnTween(
-            Sequence sequence,
-            Transform actor,
-            Vector3 targetLocalPosition,
-            int targetSortingOrder)
-        {
-            KillActorTweens(actor);
-
-            Tween move = actor
-                .DOLocalMove(targetLocalPosition, returnDuration)
-                .SetEase(returnEase)
-                .SetTarget(actor);
-            ApplyTweenSettings(move);
-            sequence.Join(move);
-
-            SpriteRenderer renderer = GetPrimaryRenderer(actor);
-            if (renderer == null)
-            {
-                return;
+                pending++;
             }
 
-            Color restoreColor = ResolveBaselineColor(actor, renderer.color);
-            Tween color = TweenSpriteColor(renderer, restoreColor, returnDuration, returnEase);
-            ApplyTweenSettings(color);
-            sequence.Join(color);
+            void EndTrack()
+            {
+                pending--;
+                TryFinish();
+            }
 
-            Tween sort = SelectionOptionVisual.TweenBaseSortingOrder(actor, targetSortingOrder, returnDuration, returnEase);
-            ApplyTweenSettings(sort);
-            sequence.Join(sort);
+            if (existingHandActors != null
+                && existingLayoutTargets != null
+                && existingHandActors.Count > 0
+                && Layout != null)
+            {
+                BeginTrack();
+                Layout.Relayout(existingHandActors, existingLayoutTargets, onComplete: EndTrack);
+            }
+
+            if (Return != null)
+            {
+                BeginTrack();
+                Return.PlayReturn(acquiredCard, targetLocalPosition, targetSortingOrder, EndTrack);
+            }
+
+            TryFinish();
         }
 
         private void CacheActorBaselines(
@@ -347,12 +331,6 @@ namespace NineGrid.Presentation.Performance
             baselineSortingOrders.Add(SelectionOptionVisual.GetAnchorSortingOrder(actor));
         }
 
-        private Color ResolveBaselineColor(Transform actor, Color fallback)
-        {
-            int index = activeActors.IndexOf(actor);
-            return index >= 0 ? baselineColors[index] : fallback;
-        }
-
         private void RestoreBaselines()
         {
             for (var i = 0; i < activeActors.Count; i++)
@@ -365,7 +343,6 @@ namespace NineGrid.Presentation.Performance
 
                 KillActorTweens(actor);
                 actor.localPosition = baselineLocalPositions[i];
-
                 SelectionOptionVisual.ApplySortingOrder(actor, baselineSortingOrders[i]);
 
                 SpriteRenderer renderer = GetPrimaryRenderer(actor);
@@ -412,7 +389,6 @@ namespace NineGrid.Presentation.Performance
             actor.localPosition = localPosition;
             actor.localRotation = Quaternion.identity;
             actor.localScale = Vector3.one;
-
             SelectionOptionVisual.ApplySortingOrder(actor, sortingOrder);
 
             return actor;
@@ -444,12 +420,6 @@ namespace NineGrid.Presentation.Performance
                 deferCoroutine = null;
             }
 
-            if (activeSequence != null && activeSequence.IsActive())
-            {
-                activeSequence.Kill();
-            }
-
-            activeSequence = null;
             DOTween.Kill(this);
 
             for (var i = 0; i < activeActors.Count; i++)
@@ -471,68 +441,6 @@ namespace NineGrid.Presentation.Performance
             {
                 DOTween.Kill(renderer);
             }
-        }
-
-        private IEnumerator PlaySequenceNextFrame(Sequence sequence)
-        {
-            yield return null;
-            deferCoroutine = null;
-
-            if (sequence != null && sequence.IsActive())
-            {
-                sequence.Restart();
-            }
-        }
-
-        private void ApplyTweenSettings(Tween tween)
-        {
-            if (tween == null)
-            {
-                return;
-            }
-
-            if (ignoreTimeScale)
-            {
-                tween.SetUpdate(true);
-            }
-        }
-
-        private static Tween TweenSpriteColor(SpriteRenderer renderer, Color endValue, float duration, Ease ease)
-        {
-            if (renderer == null)
-            {
-                return null;
-            }
-
-            return DOTween
-                .To(() => renderer != null ? renderer.color : endValue, value =>
-                {
-                    if (renderer != null)
-                    {
-                        renderer.color = value;
-                    }
-                }, endValue, duration)
-                .SetEase(ease)
-                .SetTarget(renderer);
-        }
-
-        private static Tween TweenSortingOrder(SpriteRenderer renderer, int endValue, float duration, Ease ease)
-        {
-            if (renderer == null)
-            {
-                return null;
-            }
-
-            return DOTween
-                .To(() => renderer != null ? renderer.sortingOrder : endValue, value =>
-                {
-                    if (renderer != null)
-                    {
-                        renderer.sortingOrder = value;
-                    }
-                }, endValue, duration)
-                .SetEase(ease)
-                .SetTarget(renderer);
         }
 
         private static SpriteRenderer GetPrimaryRenderer(Transform actor)
