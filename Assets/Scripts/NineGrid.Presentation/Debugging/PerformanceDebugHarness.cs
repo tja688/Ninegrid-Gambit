@@ -85,9 +85,53 @@ namespace NineGrid.Presentation.Debugging
 
         public void ApplyContextPreset(PerformanceDebugContextPreset preset)
         {
-            ClearDebugActors();
-            Registry.ClearActors();
+            ClearPerformanceStage();
+            BuildContextPreset(preset);
+            Log.Info($"Context preset applied: {preset}");
+        }
 
+        public void ReindexAnchors()
+        {
+            IndexAnchors();
+            Log.Info($"Anchors reindexed: {Registry.Anchors.Count} entries.");
+        }
+
+        /// <summary>
+        /// 停止模块并销毁 Actors/HandActors 下所有运行时卡牌，不重建预设演员。
+        /// </summary>
+        public void ClearPerformanceStage()
+        {
+            StopAllModules();
+            ActorFactory?.DestroyAll();
+            DestroyAllChildren(ActorsRoot);
+            DestroyAllChildren(HandActorsRoot);
+            Registry.ClearActors();
+        }
+
+        public void ClearDebugActors()
+        {
+            ActorFactory?.DestroyAll();
+            Registry.ClearActors();
+        }
+
+        public Transform ResolveGridAnchor(string slotName)
+        {
+            if (string.IsNullOrEmpty(slotName))
+            {
+                return null;
+            }
+
+            Transform anchor = Registry.ResolveAnchor($"grid.{slotName}");
+            if (anchor != null)
+            {
+                return anchor;
+            }
+
+            return NineGridAnchors != null ? NineGridAnchors.Find(slotName) : null;
+        }
+
+        private void BuildContextPreset(PerformanceDebugContextPreset preset)
+        {
             switch (preset)
             {
                 case PerformanceDebugContextPreset.BattlePair:
@@ -109,14 +153,6 @@ namespace NineGrid.Presentation.Debugging
                     BuildStatusPanel();
                     break;
             }
-
-            Log.Info($"Context preset applied: {preset}");
-        }
-
-        public void ClearDebugActors()
-        {
-            ActorFactory?.DestroyAll();
-            Registry.ClearActors();
         }
 
         public void StopAllModules()
@@ -150,8 +186,13 @@ namespace NineGrid.Presentation.Debugging
 
         private void BuildBattlePair()
         {
-            Transform playerAnchor = Registry.ResolveAnchor("slot5_Player");
-            Transform enemyAnchor = Registry.ResolveAnchor("slot3");
+            Transform playerAnchor = ResolveGridAnchor("slot5_Player") ?? ResolveGridAnchor("slot6");
+            Transform enemyAnchor = ResolveGridAnchor("slot3");
+            if (playerAnchor == null || enemyAnchor == null)
+            {
+                Log.Warn($"BattlePair anchors missing. player={(playerAnchor != null)} enemy={(enemyAnchor != null)}");
+            }
+
             Transform player = ActorFactory.SpawnAtAnchor("player", playerAnchor);
             Transform enemy = ActorFactory.SpawnAtAnchor("enemy", enemyAnchor);
             Registry.RegisterActor("player", player);
@@ -163,7 +204,7 @@ namespace NineGrid.Presentation.Debugging
             for (var i = 1; i <= 9; i++)
             {
                 string slotName = i == 5 ? "slot5_Player" : $"slot{i}";
-                Transform anchor = Registry.ResolveAnchor(slotName);
+                Transform anchor = ResolveGridAnchor(slotName) ?? ResolveGridAnchor($"slot{i}");
                 string actorId = $"board{i}";
                 Transform actor = ActorFactory.SpawnAtAnchor(actorId, anchor);
                 Registry.RegisterActor(actorId, actor);
@@ -231,7 +272,7 @@ namespace NineGrid.Presentation.Debugging
 
         private void BuildStatusPanel()
         {
-            Transform anchor = Registry.ResolveAnchor("slot5_Player");
+            Transform anchor = ResolveGridAnchor("slot5_Player") ?? ResolveGridAnchor("slot6");
             Transform actor = ActorFactory.SpawnAtAnchor("statusCard", anchor);
             EnsureCardStatusView(actor);
             Registry.RegisterActor("statusCard", actor);
@@ -260,6 +301,37 @@ namespace NineGrid.Presentation.Debugging
             Registry.ClearAll();
             IndexRecursive(AnchorsRoot, "Anchors");
             IndexRecursive(PanelsRoot, "Panels");
+            RegisterScopedGroup(NineGridAnchors, "Anchors/NineGridAnchors", "grid", registerBareNames: true);
+            RegisterScopedGroup(CardDeckAnchors, "Anchors/CardDeckAnchors", "deck", registerBareNames: false);
+            RegisterScopedGroup(HandCardAnchors, "Anchors/HandCardAnchors", "hand", registerBareNames: false);
+            RegisterScopedGroup(PanelsAnchor, "Anchors/PanelsAnchor", "panel", registerBareNames: false);
+        }
+
+        private void RegisterScopedGroup(
+            Transform group,
+            string pathPrefix,
+            string scope,
+            bool registerBareNames)
+        {
+            if (group == null)
+            {
+                return;
+            }
+
+            Registry.RegisterAnchor(pathPrefix, group);
+            Registry.RegisterAnchor(scope, group, overwrite: false);
+
+            for (var i = 0; i < group.childCount; i++)
+            {
+                Transform child = group.GetChild(i);
+                string path = $"{pathPrefix}/{child.name}";
+                Registry.RegisterAnchor(path, child);
+                Registry.RegisterAnchor($"{scope}.{child.name}", child);
+                if (registerBareNames)
+                {
+                    Registry.RegisterAnchor(child.name, child, overwrite: true);
+                }
+            }
         }
 
         private void IndexRecursive(Transform root, string prefix)
@@ -269,14 +341,26 @@ namespace NineGrid.Presentation.Debugging
                 return;
             }
 
-            Registry.RegisterAnchor(prefix, root);
+            Registry.RegisterAnchor(prefix, root, overwrite: false);
             for (var i = 0; i < root.childCount; i++)
             {
                 Transform child = root.GetChild(i);
                 string childPath = $"{prefix}/{child.name}";
-                Registry.RegisterAnchor(childPath, child);
-                Registry.RegisterAnchor(child.name, child);
+                Registry.RegisterAnchor(childPath, child, overwrite: false);
                 IndexRecursive(child, childPath);
+            }
+        }
+
+        private static void DestroyAllChildren(Transform root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            for (var i = root.childCount - 1; i >= 0; i--)
+            {
+                Object.Destroy(root.GetChild(i).gameObject);
             }
         }
 

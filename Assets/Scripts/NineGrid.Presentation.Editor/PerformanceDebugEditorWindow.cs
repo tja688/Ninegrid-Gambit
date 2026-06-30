@@ -27,6 +27,7 @@ namespace NineGrid.Presentation.Editor
         private VisualElement contentRoot;
         private VisualElement navListContainer;
         private VisualElement statsContainer;
+        private VisualElement anchorListContainer;
         private HelpBox statusHelpBox;
         private Label logLabel;
         private TextField searchField;
@@ -90,6 +91,43 @@ namespace NineGrid.Presentation.Editor
             RefreshLog();
         }
 
+        private static void PingAnchor(string anchorId)
+        {
+            PerformanceDebugBootstrap bootstrap = PerformanceDebugSession.Current;
+            if (bootstrap == null
+                || !bootstrap.Harness.Registry.TryGetAnchor(anchorId, out Transform anchor)
+                || anchor == null)
+            {
+                return;
+            }
+
+            Selection.activeGameObject = anchor.gameObject;
+            EditorGUIUtility.PingObject(anchor.gameObject);
+        }
+
+        private void OnClearStage()
+        {
+            GetRunnerOrWarn()?.ClearStage();
+            RefreshStats();
+            RefreshAnchorList();
+            RefreshLog();
+        }
+
+        private void OnReindexAnchors()
+        {
+            PerformanceDebugBootstrap bootstrap = PerformanceDebugSession.Current;
+            if (bootstrap == null)
+            {
+                EditorUtility.DisplayDialog("未连接", "请先进入 PerformanceTestScene Play Mode。", "确定");
+                return;
+            }
+
+            bootstrap.Harness.ReindexAnchors();
+            RefreshAnchorList();
+            RefreshStats();
+            RefreshLog();
+        }
+
         private void BuildShell()
         {
             rootVisualElement.Clear();
@@ -103,6 +141,7 @@ namespace NineGrid.Presentation.Editor
             rootVisualElement.Add(PerformanceDebugWarmConsoleUi.BuildToolbar(
                 ("运行测试场景", OpenTestSceneAndPlay, "打开 PerformanceTestScene 并进入 Play Mode"),
                 ("打开测试场景", OpenTestSceneOnly, "仅打开场景，不自动 Play"),
+                ("重扫锚点", OnReindexAnchors, "从场景 Anchors 根节点重新索引"),
                 ("刷新连接", RefreshConnectionStatus, "重新检测 PerformanceDebugBootstrap"),
                 ("清空日志", ClearLog, "清空运行时日志缓冲")));
 
@@ -210,6 +249,10 @@ namespace NineGrid.Presentation.Editor
             contentRoot.Add(statsContainer);
             RefreshStats();
 
+            anchorListContainer = new VisualElement();
+            contentRoot.Add(anchorListContainer);
+            RefreshAnchorList();
+
             if (selectedModule == null)
             {
                 contentRoot.Add(PerformanceDebugWarmConsoleUi.CreatePageHeader(
@@ -235,9 +278,10 @@ namespace NineGrid.Presentation.Editor
                     column.Add(PerformanceDebugWarmConsoleUi.CreateButtonRow(
                         new Button(OnPlay) { text = "Play" },
                         new Button(OnReplay) { text = "Replay" },
+                        new Button(OnClearStage) { text = "清场" },
                         new Button(OnStopCurrent) { text = "Stop" },
                         new Button(OnStopAll) { text = "Stop All" },
-                        new Button(OnResetScene) { text = "Reset Scene" },
+                        new Button(OnResetScene) { text = "重置演员" },
                         new Button(OnRebuildContext) { text = "Rebuild Context" },
                         new Button(OnCopyPayload) { text = "Copy Payload" }));
                 }));
@@ -329,7 +373,7 @@ namespace NineGrid.Presentation.Editor
                 PerformanceDebugParamKind.Float => "浮点数",
                 PerformanceDebugParamKind.Bool => "true / false",
                 PerformanceDebugParamKind.ActorId => "演员 ID，如 player / enemy",
-                PerformanceDebugParamKind.AnchorId => "锚点 ID 或路径",
+                PerformanceDebugParamKind.AnchorId => "锚点 ID：grid.slot3 / deck.slot5 / hand.handcard1",
                 PerformanceDebugParamKind.ContextPreset => "重建场景演员布局",
                 PerformanceDebugParamKind.Enum => "枚举选项",
                 _ => field.Key,
@@ -490,6 +534,57 @@ namespace NineGrid.Presentation.Editor
                 ("状态", playState, string.IsNullOrEmpty(lastError) ? $"当前：{currentModule}" : $"Err: {lastError}")));
         }
 
+        private void RefreshAnchorList()
+        {
+            if (anchorListContainer == null)
+            {
+                return;
+            }
+
+            anchorListContainer.Clear();
+            anchorListContainer.Add(PerformanceDebugWarmConsoleUi.CreateSectionCard(
+                "场景锚点",
+                "锚点来自 PerformanceTestScene 的 Anchors 层级。可在场景中拖动 Transform 后点「重扫锚点」。棋盘格使用 grid.* 前缀。",
+                column =>
+                {
+                    PerformanceDebugBootstrap bootstrap = PerformanceDebugSession.Current;
+                    if (bootstrap == null)
+                    {
+                        column.Add(PerformanceDebugWarmConsoleUi.CreateDescriptionLabel(
+                            "Play Mode 连接后显示锚点列表。"));
+                        return;
+                    }
+
+                    IReadOnlyList<string> keys = bootstrap.Harness.Registry.GetAnchorKeysSorted();
+                    int shown = 0;
+                    for (var i = 0; i < keys.Count; i++)
+                    {
+                        string key = keys[i];
+                        if (!key.StartsWith("grid.", StringComparison.Ordinal)
+                            && !key.StartsWith("Anchors/NineGridAnchors/", StringComparison.Ordinal))
+                        {
+                            continue;
+                        }
+
+                        shown++;
+                        string capture = key;
+                        var row = new Button(() => PingAnchor(capture))
+                        {
+                            text = bootstrap.Harness.Registry.DescribeAnchor(key),
+                        };
+                        row.style.height = 24;
+                        row.style.marginBottom = 4;
+                        row.style.unityTextAlign = TextAnchor.MiddleLeft;
+                        column.Add(row);
+                    }
+
+                    if (shown == 0)
+                    {
+                        column.Add(PerformanceDebugWarmConsoleUi.CreateDescriptionLabel("未索引到棋盘锚点。"));
+                    }
+                }));
+        }
+
         private void RefreshLog()
         {
             if (logLabel == null)
@@ -548,6 +643,7 @@ namespace NineGrid.Presentation.Editor
 
             runner.Play(selectedModule, workingPayload?.Clone());
             RefreshStats();
+            RefreshAnchorList();
             RefreshLog();
         }
 
@@ -561,6 +657,7 @@ namespace NineGrid.Presentation.Editor
 
             runner.Replay();
             RefreshStats();
+            RefreshAnchorList();
             RefreshLog();
         }
 

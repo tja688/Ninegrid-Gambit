@@ -3,18 +3,16 @@ using UnityEngine;
 namespace NineGrid.Presentation.Debugging
 {
     /// <summary>
-    /// PerformanceTestScene 专用入口：初始化 harness、catalog、调试面板。
+    /// PerformanceTestScene 专用入口：初始化 harness、catalog、runner。
+    /// 调试 UI 由 Editor 窗口 <c>TableNine/表演调试面板</c> 提供。
     /// </summary>
     public sealed class PerformanceDebugBootstrap : MonoBehaviour
     {
         [SerializeField] private GameObject standardCardPrefab;
-        [SerializeField] private bool showPanelOnStart = false;
-        [SerializeField] private KeyCode togglePanelKey = KeyCode.F1;
 
         private PerformanceDebugHarness harness;
         private PerformanceDebugCatalog catalog;
         private PerformanceDebugSequenceRunner runner;
-        private PerformanceDebugPanel panel;
 
         public PerformanceDebugHarness Harness => harness;
         public PerformanceDebugCatalog Catalog => catalog;
@@ -42,32 +40,14 @@ namespace NineGrid.Presentation.Debugging
             catalog = PerformanceDebugCatalog.Discover();
             runner = new PerformanceDebugSequenceRunner(catalog, harness, this);
 
-            if (showPanelOnStart)
-            {
-                panel = PerformanceDebugPanel.Create(gameObject, harness, catalog, runner);
-            }
-
             PerformanceDebugSession.Register(this);
             harness.Log.Info(
-                $"Catalog loaded {catalog.Modules.Count} modules. " +
-                $"Use TableNine/表演调试面板 (Editor) or {togglePanelKey} for legacy overlay.");
+                $"Catalog loaded {catalog.Modules.Count} modules. Open TableNine/表演调试面板 in the Editor.");
         }
 
         private void OnDestroy()
         {
             PerformanceDebugSession.Unregister(this);
-        }
-
-        private void Update()
-        {
-            if (panel == null && Input.GetKeyDown(togglePanelKey))
-            {
-                panel = PerformanceDebugPanel.Create(gameObject, harness, catalog, runner);
-            }
-            else if (panel != null && Input.GetKeyDown(togglePanelKey))
-            {
-                panel.ToggleVisible();
-            }
         }
 
         private static bool IsPerformanceTestScene()

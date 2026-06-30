@@ -35,6 +35,7 @@ namespace NineGrid.Presentation.Debugging
         {
             if (anchor == null)
             {
+                Debug.LogWarning($"[PerformanceDebug] Missing anchor for '{debugId}', spawning at origin.");
                 return Spawn(debugId, Vector3.zero, Quaternion.identity);
             }
 

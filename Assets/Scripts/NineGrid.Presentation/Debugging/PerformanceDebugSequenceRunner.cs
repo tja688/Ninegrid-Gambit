@@ -16,11 +16,13 @@ namespace NineGrid.Presentation.Debugging
         private Coroutine playCoroutine;
         private float playStartedAt;
         private string lastError;
+        private PerformanceDebugContextPreset lastContextPreset = PerformanceDebugContextPreset.BattlePair;
 
         public IPerformanceDebugModule CurrentModule => currentModule;
         public PerformanceDebugPayload CurrentPayload => currentPayload;
         public string LastError => lastError;
         public float LastPlayElapsed { get; private set; }
+        public PerformanceDebugContextPreset LastContextPreset => lastContextPreset;
 
         public PerformanceDebugSequenceRunner(
             PerformanceDebugCatalog catalog,
@@ -46,8 +48,8 @@ namespace NineGrid.Presentation.Debugging
             playStartedAt = Time.unscaledTime;
             lastError = null;
 
+            PrepareActorsForPlay(currentPayload);
             PerformanceDebugContext context = harness.CreateContext();
-            MaybeApplyContextPreset(context, currentPayload);
             PerformanceDebugPlayResult result = module.Play(context, currentPayload);
             if (!result.Success)
             {
@@ -91,18 +93,45 @@ namespace NineGrid.Presentation.Debugging
             log.Info("Stopped all modules.");
         }
 
+        /// <summary>
+        /// 清场：停止模块并移除所有测试演员，不自动重建预设。
+        /// </summary>
+        public void ClearStage()
+        {
+            StopCurrent();
+            harness.ClearPerformanceStage();
+            log.Info("Stage cleared.");
+        }
+
         public void ResetScene()
         {
-            StopAll();
-            harness.ClearDebugActors();
-            harness.ApplyContextPreset(PerformanceDebugContextPreset.BattlePair);
-            log.Info("Scene actors reset.");
+            StopCurrent();
+            lastContextPreset = PerformanceDebugContextPreset.BattlePair;
+            harness.ApplyContextPreset(lastContextPreset);
+            log.Info("Scene actors reset to BattlePair.");
         }
 
         public void RebuildContext(PerformanceDebugContextPreset preset)
         {
-            StopAll();
-            harness.ApplyContextPreset(preset);
+            StopCurrent();
+            if (preset != PerformanceDebugContextPreset.None)
+            {
+                lastContextPreset = preset;
+            }
+
+            harness.ApplyContextPreset(lastContextPreset);
+            log.Info($"Context rebuilt: {lastContextPreset}");
+        }
+
+        private void PrepareActorsForPlay(PerformanceDebugPayload payload)
+        {
+            PerformanceDebugContextPreset preset = payload.GetContextPreset("contextPreset");
+            if (preset != PerformanceDebugContextPreset.None)
+            {
+                lastContextPreset = preset;
+            }
+
+            harness.ApplyContextPreset(lastContextPreset);
         }
 
         private IEnumerator TrackPlayback(IPerformanceDebugModule module, float expectedDuration)
@@ -112,15 +141,6 @@ namespace NineGrid.Presentation.Debugging
             LastPlayElapsed = Time.unscaledTime - playStartedAt;
             playCoroutine = null;
             log.Info($"{module.DisplayName} finished (~{LastPlayElapsed:0.00}s)");
-        }
-
-        private static void MaybeApplyContextPreset(PerformanceDebugContext context, PerformanceDebugPayload payload)
-        {
-            PerformanceDebugContextPreset preset = payload.GetContextPreset("contextPreset");
-            if (preset != PerformanceDebugContextPreset.None)
-            {
-                context.Harness.ApplyContextPreset(preset);
-            }
         }
     }
 }

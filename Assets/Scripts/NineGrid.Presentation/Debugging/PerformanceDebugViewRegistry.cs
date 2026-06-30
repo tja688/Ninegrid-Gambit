@@ -5,8 +5,8 @@ namespace NineGrid.Presentation.Debugging
 {
     public sealed class PerformanceDebugViewRegistry
     {
-        private readonly Dictionary<string, Transform> actors = new();
         private readonly Dictionary<string, Transform> anchors = new();
+        private readonly Dictionary<string, Transform> actors = new();
 
         public IReadOnlyDictionary<string, Transform> Actors => actors;
         public IReadOnlyDictionary<string, Transform> Anchors => anchors;
@@ -32,9 +32,14 @@ namespace NineGrid.Presentation.Debugging
             actors[id] = transform;
         }
 
-        public void RegisterAnchor(string id, Transform transform)
+        public void RegisterAnchor(string id, Transform transform, bool overwrite = true)
         {
             if (string.IsNullOrEmpty(id) || transform == null)
+            {
+                return;
+            }
+
+            if (!overwrite && anchors.ContainsKey(id))
             {
                 return;
             }
@@ -59,7 +64,42 @@ namespace NineGrid.Presentation.Debugging
 
         public Transform ResolveAnchor(string id, Transform fallback = null)
         {
-            return TryGetAnchor(id, out Transform anchor) ? anchor : fallback;
+            if (TryGetAnchor(id, out Transform anchor))
+            {
+                return anchor;
+            }
+
+            if (!string.IsNullOrEmpty(id) && !id.Contains("."))
+            {
+                string[] scoped = { $"grid.{id}", $"deck.{id}", $"hand.{id}", $"panel.{id}" };
+                for (var i = 0; i < scoped.Length; i++)
+                {
+                    if (TryGetAnchor(scoped[i], out anchor))
+                    {
+                        return anchor;
+                    }
+                }
+            }
+
+            return fallback;
+        }
+
+        public IReadOnlyList<string> GetAnchorKeysSorted()
+        {
+            var keys = new List<string>(anchors.Keys);
+            keys.Sort();
+            return keys;
+        }
+
+        public string DescribeAnchor(string id)
+        {
+            if (!TryGetAnchor(id, out Transform anchor) || anchor == null)
+            {
+                return id;
+            }
+
+            Vector3 position = anchor.position;
+            return $"{id} @ ({position.x:0.##}, {position.y:0.##})";
         }
 
         public void IndexAnchorsUnder(Transform root, string prefix = null)
