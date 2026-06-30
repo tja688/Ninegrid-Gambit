@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DG.Tweening;
-using NineGrid.Presentation.Performance;
+using NineGrid.Presentation.Flow.Deck;
+using NineGrid.Presentation.Shared;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Tools
@@ -27,8 +28,8 @@ namespace NineGrid.Presentation.Tools
         [SerializeField] private int baseSortingOrder = 6;
 
         [Header("Performances")]
-        [SerializeField] private CardDeckDealCardsPerformance dealPerformance;
-        [SerializeField] private CardDeckSubstitutePerformance substitutePerformance;
+        [SerializeField] private CardDeckDealFlow dealPerformance;
+        [SerializeField] private CardDeckSubstituteFlow substitutePerformance;
 
         private readonly List<Transform> previewActors = new();
         private readonly List<Transform> resolvedRingSlots = new();
@@ -264,22 +265,22 @@ namespace NineGrid.Presentation.Tools
         {
             if (substitutePerformance == null)
             {
-                substitutePerformance = GetComponent<CardDeckSubstitutePerformance>();
+                substitutePerformance = GetComponent<CardDeckSubstituteFlow>();
             }
 
             if (dealPerformance == null)
             {
-                dealPerformance = GetComponent<CardDeckDealCardsPerformance>();
+                dealPerformance = GetComponent<CardDeckDealFlow>();
             }
 
             if (substitutePerformance == null)
             {
-                substitutePerformance = gameObject.AddComponent<CardDeckSubstitutePerformance>();
+                substitutePerformance = gameObject.AddComponent<CardDeckSubstituteFlow>();
             }
 
             if (dealPerformance == null)
             {
-                dealPerformance = gameObject.AddComponent<CardDeckDealCardsPerformance>();
+                dealPerformance = gameObject.AddComponent<CardDeckDealFlow>();
             }
         }
 

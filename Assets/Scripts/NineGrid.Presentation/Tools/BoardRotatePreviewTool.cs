@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DG.Tweening;
-using NineGrid.Presentation.Performance;
+using NineGrid.Presentation.Flow.Board;
+using NineGrid.Presentation.Shared;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Tools
@@ -29,7 +30,7 @@ namespace NineGrid.Presentation.Tools
         [SerializeField] private int baseSortingOrder = 6;
 
         [Header("Performance")]
-        [SerializeField] private BoardRotatePerformance boardRotatePerformance;
+        [SerializeField] private BoardRotateFlow boardRotatePerformance;
 
         private readonly List<Transform> previewActors = new();
         private readonly List<Transform> resolvedRingSlots = new();
@@ -222,12 +223,12 @@ namespace NineGrid.Presentation.Tools
         {
             if (boardRotatePerformance == null)
             {
-                boardRotatePerformance = GetComponent<BoardRotatePerformance>();
+                boardRotatePerformance = GetComponent<BoardRotateFlow>();
             }
 
             if (boardRotatePerformance == null)
             {
-                boardRotatePerformance = gameObject.AddComponent<BoardRotatePerformance>();
+                boardRotatePerformance = gameObject.AddComponent<BoardRotateFlow>();
             }
         }
 

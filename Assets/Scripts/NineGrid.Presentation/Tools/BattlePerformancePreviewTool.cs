@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DG.Tweening;
-using NineGrid.Presentation.Performance;
+using NineGrid.Presentation.Flow.Battle;
+using NineGrid.Presentation.Shared;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Tools
@@ -34,10 +35,10 @@ namespace NineGrid.Presentation.Tools
         [SerializeField] private int enemySortingOrder = 99;
 
         [Header("Performances")]
-        [SerializeField] private CardAttackPerformance attackPerformance;
-        [SerializeField] private CardKillPerformance killPerformance;
-        [SerializeField] private CounterattackPerformance counterattackPerformance;
-        [SerializeField] private CounterattackKillPerformance counterattackKillPerformance;
+        [SerializeField] private CardAttackFlow attackPerformance;
+        [SerializeField] private CardKillFlow killPerformance;
+        [SerializeField] private CounterattackFlow counterattackPerformance;
+        [SerializeField] private CounterattackKillFlow counterattackKillPerformance;
 
         private readonly List<Transform> spawnedActors = new();
         private int attackDirectionCursor;
@@ -315,42 +316,42 @@ namespace NineGrid.Presentation.Tools
         {
             if (attackPerformance == null)
             {
-                attackPerformance = GetComponent<CardAttackPerformance>();
+                attackPerformance = GetComponent<CardAttackFlow>();
             }
 
             if (killPerformance == null)
             {
-                killPerformance = GetComponent<CardKillPerformance>();
+                killPerformance = GetComponent<CardKillFlow>();
             }
 
             if (attackPerformance == null)
             {
-                attackPerformance = gameObject.AddComponent<CardAttackPerformance>();
+                attackPerformance = gameObject.AddComponent<CardAttackFlow>();
             }
 
             if (killPerformance == null)
             {
-                killPerformance = gameObject.AddComponent<CardKillPerformance>();
+                killPerformance = gameObject.AddComponent<CardKillFlow>();
             }
 
             if (counterattackPerformance == null)
             {
-                counterattackPerformance = GetComponent<CounterattackPerformance>();
+                counterattackPerformance = GetComponent<CounterattackFlow>();
             }
 
             if (counterattackKillPerformance == null)
             {
-                counterattackKillPerformance = GetComponent<CounterattackKillPerformance>();
+                counterattackKillPerformance = GetComponent<CounterattackKillFlow>();
             }
 
             if (counterattackPerformance == null)
             {
-                counterattackPerformance = gameObject.AddComponent<CounterattackPerformance>();
+                counterattackPerformance = gameObject.AddComponent<CounterattackFlow>();
             }
 
             if (counterattackKillPerformance == null)
             {
-                counterattackKillPerformance = gameObject.AddComponent<CounterattackKillPerformance>();
+                counterattackKillPerformance = gameObject.AddComponent<CounterattackKillFlow>();
             }
         }
 

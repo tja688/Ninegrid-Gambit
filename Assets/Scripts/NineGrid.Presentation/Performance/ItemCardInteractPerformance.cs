@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using NineGrid.Presentation.Performance.Layout;
+using NineGrid.Presentation.Shared;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Performance
