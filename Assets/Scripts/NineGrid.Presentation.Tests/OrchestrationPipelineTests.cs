@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using NineGrid.Core;
+using NineGrid.Presentation.Debugging;
 using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Shared;
 using NineGrid.Presentation.Tests.Support;
@@ -39,6 +40,30 @@ namespace NineGrid.Presentation.Tests
             AssertContainsFlow(plan, FlowId.BoardRotate);
             AssertContainsFlow(plan, FlowId.MoveCard);
             AssertContainsReaction(plan, ReactionId.ShowDamage, ReactionAnchorKind.StepMarker, FlowMarkers.Impact);
+        }
+
+        [Test]
+        public void BatchHijack_EditorDirection_OverridesBoardDerivedAttackDirection()
+        {
+            var events = new List<CoreGameEvent>
+            {
+                new CoreGameEvent(CoreEventType.DamageDealt, 1, "attack")
+                    .WithActor(PerformanceDebugActorUids.Player)
+                    .WithTarget(PerformanceDebugActorUids.Enemy)
+                    .WithAmount(3),
+                new CoreGameEvent(CoreEventType.CardKilled, 1, "attack")
+                    .WithCard(PerformanceDebugActorUids.Enemy),
+            };
+
+            var batch = PresentationBatchFixture.Create(11, events, OrchestrationTestSnapshots.Minimal());
+            var plan = new PerformancePlanBuilder().Build(batch);
+
+            var payload = new PerformanceDebugPayload();
+            payload.Set("direction", CardBattleDirection.Up.ToString());
+            PerformanceDebugBatchHijack.ApplyEditorOverrides(plan, payload);
+
+            Assert.AreEqual(Vector2.up, FindStepPayload(plan, FlowId.CardAttack).Direction);
+            Assert.AreEqual(Vector2.up, FindStepPayload(plan, FlowId.CardKill).Direction);
         }
 
         [Test]
@@ -160,6 +185,25 @@ namespace NineGrid.Presentation.Tests
             Assert.AreSame(snapshot, reconcilable.LastSnapshot);
             Assert.IsTrue(result.Reconciled);
             Assert.Greater(result.PlayedReactionCount, 0);
+        }
+
+        private static FlowPayload FindStepPayload(PresentationPlan plan, FlowId flowId)
+        {
+            for (var groupIndex = 0; groupIndex < plan.Groups.Count; groupIndex++)
+            {
+                var steps = plan.Groups[groupIndex].Steps;
+                for (var stepIndex = 0; stepIndex < steps.Count; stepIndex++)
+                {
+                    PlanStep step = steps[stepIndex];
+                    if (step.FlowId == flowId)
+                    {
+                        return step.Payload;
+                    }
+                }
+            }
+
+            Assert.Fail("Plan missing flow: " + flowId);
+            return null;
         }
 
         private static void AssertContainsFlow(PresentationPlan plan, FlowId flowId)

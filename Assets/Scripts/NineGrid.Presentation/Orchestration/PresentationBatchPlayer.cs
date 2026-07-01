@@ -68,9 +68,9 @@ namespace NineGrid.Presentation.Orchestration
             return string.Join("\n", lines);
         }
 
-        public PresentationPlanPlayResult PlaySync(PresentationBatch batch)
+        public PresentationPlanPlayResult PlaySync(PresentationBatch batch, PresentationPlan plan = null)
         {
-            var plan = BuildPlan(batch);
+            plan ??= BuildPlan(batch);
             mInputLockGate.Acquire(batch.BatchId);
             try
             {
@@ -82,9 +82,12 @@ namespace NineGrid.Presentation.Orchestration
             }
         }
 
-        public IEnumerator PlayCoroutine(PresentationBatch batch, bool deferParallelStartOneFrame = true)
+        public IEnumerator PlayCoroutine(
+            PresentationBatch batch,
+            PresentationPlan plan = null,
+            bool deferParallelStartOneFrame = true)
         {
-            var plan = BuildPlan(batch);
+            plan ??= BuildPlan(batch);
             mInputLockGate.Acquire(batch.BatchId);
             yield return mExecutor.PlayCoroutine(plan, deferParallelStartOneFrame);
             mInputLockGate.Release(batch.BatchId);

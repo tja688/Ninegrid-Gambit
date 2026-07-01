@@ -24,7 +24,7 @@ namespace NineGrid.Presentation.Debugging
         public static readonly BatchFixtureEntry OpeningDeal = new(
             "batch.opening-deal",
             "开局发牌",
-            PerformanceDebugContextPreset.Board9,
+            PerformanceDebugContextPreset.None,
             CreateOpeningDeal);
 
         public static IReadOnlyList<BatchFixtureEntry> All { get; } = new[]

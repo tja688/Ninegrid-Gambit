@@ -9,7 +9,7 @@ namespace NineGrid.Presentation.Debugging
     public sealed class PerformanceDebugBootstrap : MonoBehaviour
     {
         [SerializeField] private GameObject standardCardPrefab;
-        [SerializeField] private bool playSmokeBatchOnStart = true;
+        [SerializeField] private bool playSmokeBatchOnStart = false;
 
         private PerformanceDebugHarness harness;
         private PerformanceDebugCatalog catalog;

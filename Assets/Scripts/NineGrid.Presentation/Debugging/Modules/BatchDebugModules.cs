@@ -1,6 +1,6 @@
 using System;
 using NineGrid.Presentation.Contracts;
-using UnityEngine;
+using NineGrid.Presentation.Shared;
 
 namespace NineGrid.Presentation.Debugging.Modules
 {
@@ -11,19 +11,29 @@ namespace NineGrid.Presentation.Debugging.Modules
         public BatchFixtureDebugModule(BatchFixtureEntry fixture)
         {
             this.fixture = fixture;
+            Schema = new PerformanceDebugSchema()
+                .Add(
+                    "contextPreset",
+                    "Context",
+                    PerformanceDebugParamKind.ContextPreset,
+                    fixture.Preset.ToString(),
+                    Enum.GetNames(typeof(PerformanceDebugContextPreset)))
+                .Add(
+                    "direction",
+                    "Direction",
+                    PerformanceDebugParamKind.Enum,
+                    CardBattleDirection.Right.ToString(),
+                    "Right",
+                    "Up",
+                    "Left",
+                    "Down");
         }
 
         public string Id => fixture.Id;
         public string DisplayName => fixture.DisplayName;
         public PerformanceDebugCategory Category => PerformanceDebugCategory.Batch;
         public Type RequiredComponentType => null;
-        public PerformanceDebugSchema Schema { get; } = new PerformanceDebugSchema()
-            .Add(
-                "contextPreset",
-                "Context",
-                PerformanceDebugParamKind.ContextPreset,
-                PerformanceDebugContextPreset.BattlePair.ToString(),
-                System.Enum.GetNames(typeof(PerformanceDebugContextPreset)));
+        public PerformanceDebugSchema Schema { get; }
 
         public PerformanceDebugPlayResult Play(PerformanceDebugContext context, PerformanceDebugPayload payload)
         {
@@ -32,7 +42,7 @@ namespace NineGrid.Presentation.Debugging.Modules
                 return PerformanceDebugPlayResult.Fail("Batch runner not ready.");
             }
 
-            context.Harness.BatchRunner.Play(fixture);
+            context.Harness.BatchRunner.Play(fixture, payload);
             return PerformanceDebugPlayResult.Ok(0f);
         }
 

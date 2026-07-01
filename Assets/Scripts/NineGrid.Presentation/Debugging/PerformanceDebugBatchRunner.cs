@@ -30,7 +30,7 @@ namespace NineGrid.Presentation.Debugging
             this.coroutineHost = coroutineHost;
         }
 
-        public void Play(BatchFixtureEntry fixture)
+        public void Play(BatchFixtureEntry fixture, PerformanceDebugPayload payload = null)
         {
             if (fixture == null || harness?.BatchPlayer == null)
             {
@@ -43,14 +43,33 @@ namespace NineGrid.Presentation.Debugging
             currentFixture = fixture;
             lastError = null;
 
-            harness.ApplyContextPreset(fixture.Preset);
+            PerformanceDebugContextPreset preset = ResolvePreset(fixture, payload);
+            harness.ApplyContextPreset(preset);
+
             PresentationBatch batch = fixture.CreateBatch();
             PresentationPlan plan = harness.BatchPlayer.BuildPlan(batch);
+            PerformanceDebugBatchHijack.ApplyEditorOverrides(plan, payload);
             lastPlanDump = harness.BatchPlayer.DumpPlan(plan);
 
             log.Info($"Batch fixture: {fixture.DisplayName}");
             log.Info(lastPlanDump);
             playCoroutine = coroutineHost.StartCoroutine(PlayRoutine(batch, plan));
+        }
+
+        private static PerformanceDebugContextPreset ResolvePreset(
+            BatchFixtureEntry fixture,
+            PerformanceDebugPayload payload)
+        {
+            if (payload != null)
+            {
+                PerformanceDebugContextPreset fromPayload = payload.GetContextPreset("contextPreset");
+                if (fromPayload != PerformanceDebugContextPreset.None)
+                {
+                    return fromPayload;
+                }
+            }
+
+            return fixture.Preset;
         }
 
         public void Stop()
@@ -67,7 +86,7 @@ namespace NineGrid.Presentation.Debugging
         private IEnumerator PlayRoutine(PresentationBatch batch, PresentationPlan plan)
         {
             float startedAt = Time.unscaledTime;
-            yield return harness.BatchPlayer.PlayCoroutine(batch);
+            yield return harness.BatchPlayer.PlayCoroutine(batch, plan);
             playCoroutine = null;
             float elapsed = Time.unscaledTime - startedAt;
             log.Info($"Batch finished (~{elapsed:0.00}s) Batch#{plan.BatchId}");

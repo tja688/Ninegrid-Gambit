@@ -166,7 +166,8 @@ namespace NineGrid.Presentation.Debugging.Modules
         public override string Id => "flow.deck-deal";
         public override string DisplayName => "发牌";
         public override PerformanceDebugCategory Category => PerformanceDebugCategory.Flow;
-        public override PerformanceDebugSchema Schema => PerformanceDebugSchemaFactory.ContextOnlySchema(PerformanceDebugContextPreset.Board9);
+        public override PerformanceDebugSchema Schema =>
+            PerformanceDebugSchemaFactory.ContextOnlySchema(PerformanceDebugContextPreset.None);
 
         protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, CardDeckDealFlow module, PerformanceDebugPayload payload)
         {
