@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using DamageNumbersPro;
+using NineGrid.Core;
 using NineGrid.Presentation.Contracts;
+using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Visuals;
 using UnityEngine;
 
@@ -23,22 +25,49 @@ namespace NineGrid.Presentation.Debugging
         public PerformanceDebugViewRegistry Registry { get; } = new();
         public DebugActorFactory ActorFactory { get; private set; }
         public PerformanceDebugLogBuffer Log { get; } = new();
+        public FlowRegistry FlowRegistry { get; private set; }
+        public ReactionRegistry ReactionRegistry { get; private set; }
+        public PresentationBatchPlayer BatchPlayer { get; private set; }
+        public PerformanceDebugBatchRunner BatchRunner { get; private set; }
 
-        public static PerformanceDebugHarness Create(Transform bootstrapRoot, GameObject cardPrefab)
+        public static PerformanceDebugHarness Create(Transform bootstrapRoot, GameObject cardPrefab, MonoBehaviour coroutineHost = null)
         {
             var harness = new PerformanceDebugHarness();
-            harness.Initialize(bootstrapRoot, cardPrefab);
+            harness.Initialize(bootstrapRoot, cardPrefab, coroutineHost);
             return harness;
         }
 
-        private void Initialize(Transform bootstrapRoot, GameObject cardPrefab)
+        private void Initialize(Transform bootstrapRoot, GameObject cardPrefab, MonoBehaviour coroutineHost)
         {
             this.bootstrapRoot = bootstrapRoot;
             ResolveSceneRoots();
             ActorFactory = new DebugActorFactory(ActorsRoot, cardPrefab);
             IndexAnchors();
             moduleHost = CreateAndWireModuleHost(bootstrapRoot, cardPrefab);
+            WireOrchestration(coroutineHost);
             Log.Info("Harness ready. Stage is empty until Play or Rebuild Context.");
+        }
+
+        private void WireOrchestration(MonoBehaviour coroutineHost)
+        {
+            var services = PerformanceDebugOrchestrationSetup.Install(moduleHost, Registry);
+            FlowRegistry = services.FlowRegistry;
+            ReactionRegistry = services.ReactionRegistry;
+            BatchPlayer = services.BatchPlayer;
+            if (coroutineHost != null)
+            {
+                BatchRunner = new PerformanceDebugBatchRunner(this, coroutineHost);
+            }
+        }
+
+        public IFlowBinding GetFlowBinding(FlowId flowId)
+        {
+            if (FlowRegistry != null && FlowRegistry.TryGet(flowId, out IFlowBinding binding))
+            {
+                return binding;
+            }
+
+            return null;
         }
 
         private void ResolveSceneRoots()
@@ -206,10 +235,21 @@ namespace NineGrid.Presentation.Debugging
                 Log.Warn($"BattlePair anchors missing. player={(playerAnchor != null)} enemy={(enemyAnchor != null)}");
             }
 
-            Transform player = ActorFactory.SpawnAtAnchor("player", playerAnchor);
-            Transform enemy = ActorFactory.SpawnAtAnchor("enemy", enemyAnchor);
+            Transform player = ActorFactory.SpawnAtAnchor("player", PerformanceDebugActorUids.Player, playerAnchor);
+            Transform enemy = ActorFactory.SpawnAtAnchor("enemy", PerformanceDebugActorUids.Enemy, enemyAnchor);
             Registry.RegisterActor("player", player);
             Registry.RegisterActor("enemy", enemy);
+            Registry.RegisterActor(PerformanceDebugActorUids.Player, player);
+            Registry.RegisterActor(PerformanceDebugActorUids.Enemy, enemy);
+            if (playerAnchor != null)
+            {
+                Registry.RegisterAnchor(PerformanceDebugActorUids.PlayerSlot, playerAnchor);
+            }
+
+            if (enemyAnchor != null)
+            {
+                Registry.RegisterAnchor(PerformanceDebugActorUids.EnemySlot, enemyAnchor);
+            }
         }
 
         private void BuildBoard9()
@@ -219,8 +259,14 @@ namespace NineGrid.Presentation.Debugging
                 string slotName = i == 5 ? "slot5_Player" : $"slot{i}";
                 Transform anchor = ResolveGridAnchor(slotName) ?? ResolveGridAnchor($"slot{i}");
                 string actorId = $"board{i}";
-                Transform actor = ActorFactory.SpawnAtAnchor(actorId, anchor);
+                int cardUid = PerformanceDebugActorUids.BoardCard(i);
+                Transform actor = ActorFactory.SpawnAtAnchor(actorId, cardUid, anchor);
                 Registry.RegisterActor(actorId, actor);
+                Registry.RegisterActor(cardUid, actor);
+                if (anchor != null)
+                {
+                    Registry.RegisterAnchor(SlotId.Board(i), anchor);
+                }
             }
         }
 
@@ -313,6 +359,19 @@ namespace NineGrid.Presentation.Debugging
                 CardDeckAnchors,
                 HandCardAnchors,
                 PanelsAnchor);
+            RegisterBoardSlotAnchors();
+        }
+
+        private void RegisterBoardSlotAnchors()
+        {
+            for (var i = 1; i <= 9; i++)
+            {
+                Transform anchor = ResolveGridAnchor(i == 5 ? "slot5_Player" : $"slot{i}");
+                if (anchor != null)
+                {
+                    Registry.RegisterAnchor(SlotId.Board(i), anchor);
+                }
+            }
         }
 
         private static void DestroyAllChildren(Transform root)

@@ -5,6 +5,7 @@ using NineGrid.Presentation.Flow.Board;
 using NineGrid.Presentation.Flow.Deck;
 using NineGrid.Presentation.Flow.Item;
 using NineGrid.Presentation.Flow.Selection;
+using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
 
@@ -36,6 +37,24 @@ namespace NineGrid.Presentation.Debugging.Modules
         private static string DefaultContextField() => PerformanceDebugContextPreset.BattlePair.ToString();
     }
 
+    internal static class FlowBindingPlayHelper
+    {
+        public static PerformanceDebugPlayResult PlayFlow(
+            PerformanceDebugContext context,
+            FlowId flowId,
+            FlowPayload payload)
+        {
+            IFlowBinding binding = context?.Harness?.GetFlowBinding(flowId);
+            if (binding == null)
+            {
+                return PerformanceDebugPlayResult.Fail($"Missing flow binding: {flowId}");
+            }
+
+            FlowHandle handle = binding.Play(context.Registry, payload);
+            return PerformanceDebugPlayResult.Ok(handle.ExpectedDuration);
+        }
+    }
+
     public sealed class CardAttackDebugModule : PerformanceDebugModuleBase<CardAttackFlow>
     {
         public override string Id => "flow.card-attack";
@@ -45,15 +64,13 @@ namespace NineGrid.Presentation.Debugging.Modules
 
         protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, CardAttackFlow module, PerformanceDebugPayload payload)
         {
-            Transform player = context.ResolveActor("player");
-            Transform enemy = context.ResolveActor("enemy");
-            if (player == null || enemy == null)
+            var flowPayload = new FlowPayload
             {
-                return PerformanceDebugPlayResult.Fail("Missing player/enemy actors.");
-            }
-
-            module.Play(player, enemy, payload.GetDirection("direction"));
-            return PerformanceDebugPlayResult.Ok(module.ExpectedDuration);
+                ActorUid = PerformanceDebugActorUids.Player,
+                TargetUid = PerformanceDebugActorUids.Enemy,
+                Direction = CardBattleDirectionUtil.ToVector2(payload.GetDirection("direction")),
+            };
+            return FlowBindingPlayHelper.PlayFlow(context, FlowId.CardAttack, flowPayload);
         }
     }
 
@@ -87,15 +104,13 @@ namespace NineGrid.Presentation.Debugging.Modules
 
         protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, CardKillFlow module, PerformanceDebugPayload payload)
         {
-            Transform player = context.ResolveActor("player");
-            Transform enemy = context.ResolveActor("enemy");
-            if (player == null || enemy == null)
+            var flowPayload = new FlowPayload
             {
-                return PerformanceDebugPlayResult.Fail("Missing player/enemy actors.");
-            }
-
-            module.Play(player, enemy, payload.GetDirection("direction"));
-            return PerformanceDebugPlayResult.Ok(module.ExpectedDuration);
+                ActorUid = PerformanceDebugActorUids.Player,
+                CardUid = PerformanceDebugActorUids.Enemy,
+                Direction = CardBattleDirectionUtil.ToVector2(payload.GetDirection("direction")),
+            };
+            return FlowBindingPlayHelper.PlayFlow(context, FlowId.CardKill, flowPayload);
         }
     }
 
@@ -129,8 +144,7 @@ namespace NineGrid.Presentation.Debugging.Modules
 
         protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, BoardRotateFlow module, PerformanceDebugPayload payload)
         {
-            module.PlayPreview();
-            return PerformanceDebugPlayResult.Ok(module.ExpectedDuration);
+            return FlowBindingPlayHelper.PlayFlow(context, FlowId.BoardRotate, new FlowPayload { Amount = 1 });
         }
     }
 
@@ -143,8 +157,7 @@ namespace NineGrid.Presentation.Debugging.Modules
 
         protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, CardDeckEntryFlow module, PerformanceDebugPayload payload)
         {
-            module.PlayPreview();
-            return PerformanceDebugPlayResult.Ok(module.ExpectedDuration);
+            return FlowBindingPlayHelper.PlayFlow(context, FlowId.CardDeckEntry, new FlowPayload());
         }
     }
 
@@ -157,8 +170,7 @@ namespace NineGrid.Presentation.Debugging.Modules
 
         protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, CardDeckDealFlow module, PerformanceDebugPayload payload)
         {
-            module.PlayPreview();
-            return PerformanceDebugPlayResult.Ok(module.ExpectedDuration);
+            return FlowBindingPlayHelper.PlayFlow(context, FlowId.CardDeal, new FlowPayload());
         }
     }
 
@@ -171,8 +183,7 @@ namespace NineGrid.Presentation.Debugging.Modules
 
         protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, CardDeckSubstituteFlow module, PerformanceDebugPayload payload)
         {
-            module.PlayPreview();
-            return PerformanceDebugPlayResult.Ok(module.ExpectedDuration);
+            return FlowBindingPlayHelper.PlayFlow(context, FlowId.MoveCard, new FlowPayload());
         }
     }
 
@@ -226,9 +237,13 @@ namespace NineGrid.Presentation.Debugging.Modules
 
         protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, ItemUseFlow module, PerformanceDebugPayload payload)
         {
-            module.Play(payload.GetInt("itemCardUid", 1));
+            var flowPayload = new FlowPayload
+            {
+                CardUid = payload.GetInt("itemCardUid", PerformanceDebugActorUids.Player),
+            };
+            var result = FlowBindingPlayHelper.PlayFlow(context, FlowId.UseItem, flowPayload);
             context.Log.Info("ItemUseFlow is a placeholder (0s).");
-            return PerformanceDebugPlayResult.Ok(module.ExpectedDuration);
+            return result;
         }
     }
 }

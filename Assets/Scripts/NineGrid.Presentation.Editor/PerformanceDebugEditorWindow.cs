@@ -31,6 +31,7 @@ namespace NineGrid.Presentation.Editor
         private VisualElement anchorListContainer;
         private HelpBox statusHelpBox;
         private Label logLabel;
+        private Label planDumpLabel;
         private TextField searchField;
         private PopupField<string> categoryPopup;
 
@@ -343,6 +344,20 @@ namespace NineGrid.Presentation.Editor
                         new Button(OnRebuildContext) { text = "Rebuild Context" },
                         new Button(OnCopyPayload) { text = "Copy Payload" }));
                 }));
+
+            if (selectedModule.Category == PerformanceDebugCategory.Batch)
+            {
+                contentRoot.Add(PerformanceDebugWarmConsoleUi.CreateSectionCard(
+                    "Plan 步骤",
+                    "最近一次批次经 PlanBuilder 生成的步骤与反应（timeline 文本种子）。",
+                    column =>
+                    {
+                        planDumpLabel = PerformanceDebugWarmConsoleUi.CreateDescriptionLabel("点击 Play 后显示 Plan dump。");
+                        planDumpLabel.style.whiteSpace = WhiteSpace.Normal;
+                        column.Add(planDumpLabel);
+                    }));
+                RefreshPlanDump();
+            }
 
             contentRoot.Add(PerformanceDebugWarmConsoleUi.CreateSectionCard(
                 "运行日志",
@@ -687,6 +702,21 @@ namespace NineGrid.Presentation.Editor
             }
 
             logLabel.text = builder.ToString();
+            RefreshPlanDump();
+        }
+
+        private void RefreshPlanDump()
+        {
+            if (planDumpLabel == null)
+            {
+                return;
+            }
+
+            PerformanceDebugBootstrap bootstrap = PerformanceDebugSession.Current;
+            string dump = bootstrap?.BatchRunner?.LastPlanDump;
+            planDumpLabel.text = string.IsNullOrEmpty(dump)
+                ? "点击 Play 后显示 Plan dump。"
+                : dump;
         }
 
         private PerformanceDebugSequenceRunner GetRunnerOrWarn()
@@ -735,6 +765,7 @@ namespace NineGrid.Presentation.Editor
         private void OnStopCurrent()
         {
             GetRunnerOrWarn()?.StopCurrent();
+            PerformanceDebugSession.Current?.BatchRunner?.Stop();
             RefreshStats();
             RefreshLog();
         }
@@ -742,6 +773,7 @@ namespace NineGrid.Presentation.Editor
         private void OnStopAll()
         {
             GetRunnerOrWarn()?.StopAll();
+            PerformanceDebugSession.Current?.BatchRunner?.Stop();
             RefreshStats();
             RefreshLog();
         }

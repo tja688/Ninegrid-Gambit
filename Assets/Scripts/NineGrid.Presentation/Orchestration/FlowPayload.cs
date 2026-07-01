@@ -18,6 +18,8 @@ namespace NineGrid.Presentation.Orchestration
         public string SourceDefId { get; set; } = string.Empty;
         public string Cause { get; set; } = string.Empty;
         public string Message { get; set; } = string.Empty;
+        public int RemainingHp { get; set; } = -1;
+        public int RemainingArmor { get; set; } = -1;
 
         public static FlowPayload FromEvent(CoreGameEvent gameEvent)
         {
@@ -35,6 +37,8 @@ namespace NineGrid.Presentation.Orchestration
                 ToSlot = gameEvent.ToSlot,
                 Amount = gameEvent.Amount,
                 Delta = gameEvent.Delta,
+                RemainingHp = gameEvent.RemainingHp,
+                RemainingArmor = gameEvent.RemainingArmor,
                 SourceDefId = gameEvent.SourceDefId,
                 Cause = gameEvent.Cause,
                 Message = gameEvent.Message,

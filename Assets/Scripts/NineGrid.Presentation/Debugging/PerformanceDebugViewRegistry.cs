@@ -1,12 +1,16 @@
 using System.Collections.Generic;
+using NineGrid.Core;
+using NineGrid.Presentation.Orchestration;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Debugging
 {
-    public sealed class PerformanceDebugViewRegistry
+    public sealed class PerformanceDebugViewRegistry : IViewRegistry
     {
         private readonly Dictionary<string, Transform> anchors = new();
         private readonly Dictionary<string, Transform> actors = new();
+        private readonly Dictionary<int, Transform> uidActors = new();
+        private readonly Dictionary<int, Transform> slotAnchors = new();
 
         public IReadOnlyDictionary<string, Transform> Actors => actors;
         public IReadOnlyDictionary<string, Transform> Anchors => anchors;
@@ -14,12 +18,15 @@ namespace NineGrid.Presentation.Debugging
         public void ClearActors()
         {
             actors.Clear();
+            uidActors.Clear();
         }
 
         public void ClearAll()
         {
             actors.Clear();
+            uidActors.Clear();
             anchors.Clear();
+            slotAnchors.Clear();
         }
 
         public void RegisterActor(string id, Transform transform)
@@ -30,6 +37,17 @@ namespace NineGrid.Presentation.Debugging
             }
 
             actors[id] = transform;
+        }
+
+        public void RegisterActor(int cardUid, Transform transform)
+        {
+            if (cardUid <= 0 || transform == null)
+            {
+                return;
+            }
+
+            uidActors[cardUid] = transform;
+            RegisterActor(CardUidKey(cardUid), transform);
         }
 
         public void RegisterAnchor(string id, Transform transform, bool overwrite = true)
@@ -47,14 +65,58 @@ namespace NineGrid.Presentation.Debugging
             anchors[id] = transform;
         }
 
+        public void RegisterAnchor(SlotId slot, Transform anchor)
+        {
+            if (anchor == null || slot.IsNone)
+            {
+                return;
+            }
+
+            slotAnchors[slot.Index] = anchor;
+            if (slot.IsBoardSlot)
+            {
+                RegisterAnchor(BoardSlotAnchorKey(slot.Index), anchor, overwrite: false);
+            }
+        }
+
         public bool TryGetActor(string id, out Transform transform)
         {
             return actors.TryGetValue(id, out transform);
         }
 
+        public bool TryGetActor(int cardUid, out Transform transform)
+        {
+            return uidActors.TryGetValue(cardUid, out transform);
+        }
+
         public bool TryGetAnchor(string id, out Transform transform)
         {
             return anchors.TryGetValue(id, out transform);
+        }
+
+        public Transform ResolveActor(int cardUid)
+        {
+            return uidActors.TryGetValue(cardUid, out Transform actor) ? actor : null;
+        }
+
+        public Transform ResolveAnchor(SlotId slot)
+        {
+            if (slot.IsNone)
+            {
+                return null;
+            }
+
+            if (slotAnchors.TryGetValue(slot.Index, out Transform anchor))
+            {
+                return anchor;
+            }
+
+            if (slot.IsBoardSlot)
+            {
+                return ResolveAnchor(BoardSlotAnchorKey(slot.Index));
+            }
+
+            return null;
         }
 
         public Transform ResolveActor(string id, Transform fallback = null)
@@ -117,5 +179,12 @@ namespace NineGrid.Presentation.Debugging
                 RegisterAnchor(child.name, child);
             }
         }
+
+        public static string BoardSlotAnchorKey(int boardIndex)
+        {
+            return boardIndex == 5 ? "grid.slot5_Player" : $"grid.slot{boardIndex}";
+        }
+
+        private static string CardUidKey(int cardUid) => $"uid:{cardUid}";
     }
 }

@@ -1,13 +1,15 @@
 using System.Collections.Generic;
+using NineGrid.Presentation.Orchestration;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Debugging
 {
-    public sealed class DebugActorFactory
+    public sealed class DebugActorFactory : IActorFactory
     {
         private readonly Transform actorsRoot;
         private readonly GameObject cardPrefab;
         private readonly List<GameObject> spawned = new();
+        private readonly Dictionary<int, Transform> uidActors = new();
         private int spawnCounter;
 
         public DebugActorFactory(Transform actorsRoot, GameObject cardPrefab)
@@ -31,6 +33,13 @@ namespace NineGrid.Presentation.Debugging
             return instance.transform;
         }
 
+        public Transform Spawn(string defId, int cardUid, Transform parent = null)
+        {
+            Transform actor = Spawn(defId ?? $"uid_{cardUid}", Vector3.zero, Quaternion.identity, parent);
+            uidActors[cardUid] = actor;
+            return actor;
+        }
+
         public Transform SpawnAtAnchor(string debugId, Transform anchor, bool useLocalSpace = false)
         {
             if (anchor == null)
@@ -51,6 +60,35 @@ namespace NineGrid.Presentation.Debugging
             return Spawn(debugId, anchor.position, anchor.rotation);
         }
 
+        public Transform SpawnAtAnchor(string debugId, int cardUid, Transform anchor, bool useLocalSpace = false)
+        {
+            Transform actor = SpawnAtAnchor(debugId, anchor, useLocalSpace);
+            uidActors[cardUid] = actor;
+            return actor;
+        }
+
+        public void Despawn(int cardUid)
+        {
+            if (!uidActors.TryGetValue(cardUid, out Transform actor))
+            {
+                return;
+            }
+
+            uidActors.Remove(cardUid);
+            if (actor == null)
+            {
+                return;
+            }
+
+            spawned.Remove(actor.gameObject);
+            Object.Destroy(actor.gameObject);
+        }
+
+        public bool TryGet(int cardUid, out Transform actor)
+        {
+            return uidActors.TryGetValue(cardUid, out actor);
+        }
+
         public void DestroyAll()
         {
             for (var i = spawned.Count - 1; i >= 0; i--)
@@ -63,6 +101,7 @@ namespace NineGrid.Presentation.Debugging
             }
 
             spawned.Clear();
+            uidActors.Clear();
             spawnCounter = 0;
         }
 
