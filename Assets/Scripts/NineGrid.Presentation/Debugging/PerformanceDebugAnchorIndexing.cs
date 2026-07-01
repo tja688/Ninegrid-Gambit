@@ -110,7 +110,23 @@ namespace NineGrid.Presentation.Debugging
                 return null;
             }
 
-            return cardDeckAnchors.Find(childName);
+            Transform direct = cardDeckAnchors.Find(childName);
+            if (direct != null)
+            {
+                return direct;
+            }
+
+            string trimmed = childName.Trim();
+            for (var i = 0; i < cardDeckAnchors.childCount; i++)
+            {
+                Transform child = cardDeckAnchors.GetChild(i);
+                if (string.Equals(child.name.Trim(), trimmed, StringComparison.Ordinal))
+                {
+                    return child;
+                }
+            }
+
+            return null;
         }
 
         public static bool IsDeckPileSlotAnchor(string anchorName)

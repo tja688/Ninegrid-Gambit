@@ -2,7 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using NineGrid.Core;
 using NineGrid.Presentation.Contracts;
+using NineGrid.Presentation.Debugging;
+using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
 using UnityEngine.Events;
@@ -53,6 +56,8 @@ namespace NineGrid.Presentation.Flow.Deck
         private Sequence activeSequence;
         private Coroutine playCoroutine;
         private bool previewActorsOwned;
+        private Transform hiddenVacantActor;
+        private bool hiddenVacantActorWasActive = true;
 
         public bool IsPlaying { get; private set; }
         public float ExpectedDuration => TotalDuration;
@@ -109,6 +114,52 @@ namespace NineGrid.Presentation.Flow.Deck
             PlayRuntime(card, slots[0], ownsPreviewActors: true);
         }
 
+        /// <summary>
+        /// 调试/补位预览：外圈保留已有卡牌，缺位一格，从牌堆飞入补位。
+        /// </summary>
+        public bool TryPlayGapFillPreview(IViewRegistry registry, SlotId vacantSlot)
+        {
+            if (!Application.isPlaying || !isActiveAndEnabled)
+            {
+                return false;
+            }
+
+            SlotId resolvedVacant = vacantSlot.IsBoardSlot ? vacantSlot : SlotId.Board(2);
+            Transform targetSlot = registry != null
+                ? registry.ResolveAnchor(resolvedVacant)
+                : BoardRingPath.ResolveBoardAnchor(slotRoot, resolvedVacant.Index);
+            if (targetSlot == null)
+            {
+                return false;
+            }
+
+            StopAndRestore();
+            RestoreHiddenVacantActor();
+
+            if (registry != null)
+            {
+                hiddenVacantActor = registry.ResolveActor(PerformanceDebugActorUids.BoardCard(resolvedVacant.Index));
+                if (hiddenVacantActor != null)
+                {
+                    hiddenVacantActorWasActive = hiddenVacantActor.gameObject.activeSelf;
+                    hiddenVacantActor.gameObject.SetActive(false);
+                }
+            }
+
+            Transform card = CreatePreviewActor(ResolvedPreviewActorsRoot, 0);
+            if (card == null)
+            {
+                RestoreHiddenVacantActor();
+                return false;
+            }
+
+            spawnedPreviewActors.Add(card);
+            previewActorsOwned = true;
+            card.position = ResolveDeckWorldPosition(ResolvedPreviewActorsRoot);
+            PlayRuntime(card, targetSlot, ownsPreviewActors: true);
+            return true;
+        }
+
         public void Play(Transform card, Transform slot)
         {
             PlayRuntime(card, slot, ownsPreviewActors: false);
@@ -155,6 +206,7 @@ namespace NineGrid.Presentation.Flow.Deck
         public void StopAndRestore()
         {
             StopPlaybackOnly();
+            RestoreHiddenVacantActor();
 
             if (previewActorsOwned)
             {
@@ -341,6 +393,17 @@ namespace NineGrid.Presentation.Flow.Deck
                 baseSortingOrder + index);
             actor.name = $"PreviewSubstitute_{index + 1}";
             return actor;
+        }
+
+        private void RestoreHiddenVacantActor()
+        {
+            if (hiddenVacantActor == null)
+            {
+                return;
+            }
+
+            hiddenVacantActor.gameObject.SetActive(hiddenVacantActorWasActive);
+            hiddenVacantActor = null;
         }
 
         private void TeardownPreviewActors()

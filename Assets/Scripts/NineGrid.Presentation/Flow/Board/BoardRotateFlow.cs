@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using NineGrid.Presentation.Contracts;
+using NineGrid.Presentation.Shared;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Scripting.APIUpdating;
@@ -87,7 +88,12 @@ namespace NineGrid.Presentation.Flow.Board
             }
 
             StopAndRestore();
-            IReadOnlyList<Transform> slots = ResolveSlotAnchors();
+            if (!TryResolveOuterRingAnchors(out List<Transform> slots))
+            {
+                Debug.LogWarning($"[{nameof(BoardRotateFlow)}] outer ring slots could not be resolved.", this);
+                return;
+            }
+
             IReadOnlyList<Transform> previewActors = EnsurePreviewActors(slots);
             if (previewActors.Count == 0)
             {
@@ -95,12 +101,8 @@ namespace NineGrid.Presentation.Flow.Board
                 return;
             }
 
-            var targets = new Transform[previewActors.Count];
-            int ringCount = slots.Count;
-            for (var i = 0; i < previewActors.Count; i++)
-            {
-                targets[i] = slots[(i + 1) % ringCount];
-            }
+            var targets = new List<Transform>(previewActors.Count);
+            BoardRingPath.BuildClockwiseStepTargets(slots, step: 1, targets);
 
             PlayRuntime(previewActors, targets, ownsPreviewActors: true);
         }
@@ -468,6 +470,11 @@ namespace NineGrid.Presentation.Flow.Board
                 return slotAnchors;
             }
 
+            if (TryResolveOuterRingAnchors(out List<Transform> outerRing))
+            {
+                return outerRing;
+            }
+
             Transform root = slotRoot != null ? slotRoot : transform;
             int childCount = root.childCount;
             if (childCount == 0)
@@ -482,6 +489,12 @@ namespace NineGrid.Presentation.Flow.Board
             }
 
             return resolved;
+        }
+
+        private bool TryResolveOuterRingAnchors(out List<Transform> outerRing)
+        {
+            Transform root = slotRoot != null ? slotRoot : transform;
+            return BoardRingPath.TryResolveOuterRingAnchors(root, outerRing = new List<Transform>(8));
         }
     }
 }

@@ -68,11 +68,9 @@ namespace NineGrid.Presentation.Orchestration.Bindings
                 return new FlowHandle(null, onMarker);
             }
 
-            var actors = CollectBoardActors(registry);
-            var slots = CollectBoardSlotAnchors(registry);
-            if (actors.Count >= 2 && slots.Count >= 2)
+            if (TryPlayOuterRingStep(registry, payload, out List<Transform> actors, out List<Transform> targets))
             {
-                mFlow.PlayRingStep(actors, slots, payload.Amount >= 0 ? 1 : -1);
+                mFlow.Play(actors, targets);
                 return new FlowHandle(mFlow, onMarker);
             }
 
@@ -85,44 +83,43 @@ namespace NineGrid.Presentation.Orchestration.Bindings
             mFlow?.StopAndRestore();
         }
 
-        private static List<Transform> CollectBoardActors(IViewRegistry registry)
+        private static bool TryPlayOuterRingStep(
+            IViewRegistry registry,
+            FlowPayload payload,
+            out List<Transform> actors,
+            out List<Transform> targets)
         {
-            var actors = new List<Transform>(9);
+            actors = new List<Transform>(8);
+            targets = new List<Transform>(8);
             if (registry == null)
             {
-                return actors;
+                return false;
             }
 
-            for (var i = 1; i <= 9; i++)
+            IReadOnlyList<SlotId> path = BoardRingPath.ClockwiseOuterRing;
+            for (var i = 0; i < path.Count; i++)
             {
-                Transform actor = registry.ResolveActor(PerformanceDebugActorUids.BoardCard(i));
-                if (actor != null)
+                SlotId slot = path[i];
+                Transform actor = registry.ResolveActor(PerformanceDebugActorUids.BoardCard(slot.Index));
+                Transform anchor = registry.ResolveAnchor(slot);
+                if (actor == null || anchor == null)
                 {
-                    actors.Add(actor);
+                    actors.Clear();
+                    targets.Clear();
+                    return false;
                 }
+
+                actors.Add(actor);
             }
 
-            return actors;
-        }
-
-        private static List<Transform> CollectBoardSlotAnchors(IViewRegistry registry)
-        {
-            var slots = new List<Transform>(9);
-            if (registry == null)
+            var ringAnchors = new List<Transform>(path.Count);
+            for (var i = 0; i < path.Count; i++)
             {
-                return slots;
+                ringAnchors.Add(registry.ResolveAnchor(path[i]));
             }
 
-            for (var i = 1; i <= 9; i++)
-            {
-                Transform slot = registry.ResolveAnchor(SlotId.Board(i));
-                if (slot != null)
-                {
-                    slots.Add(slot);
-                }
-            }
-
-            return slots;
+            BoardRingPath.BuildClockwiseStepTargets(ringAnchors, payload.Amount, targets);
+            return actors.Count >= 2 && targets.Count == actors.Count;
         }
     }
 
@@ -146,13 +143,18 @@ namespace NineGrid.Presentation.Orchestration.Bindings
 
             Transform card = ResolveCard(registry, payload);
             Transform slot = registry != null ? registry.ResolveAnchor(payload.ToSlot) : null;
-            if (card == null || slot == null)
+            if (card != null && slot != null)
             {
-                mFlow.PlayPreview();
+                mFlow.Play(card, slot);
                 return new FlowHandle(mFlow, onMarker);
             }
 
-            mFlow.Play(card, slot);
+            if (mFlow.TryPlayGapFillPreview(registry, payload.ToSlot))
+            {
+                return new FlowHandle(mFlow, onMarker);
+            }
+
+            mFlow.PlayPreview();
             return new FlowHandle(mFlow, onMarker);
         }
 
@@ -242,6 +244,11 @@ namespace NineGrid.Presentation.Orchestration.Bindings
             if (mFlow == null)
             {
                 return new FlowHandle(null, onMarker);
+            }
+
+            if (mFlow.TryPlayGapFillPreview(registry, payload.ToSlot))
+            {
+                return new FlowHandle(mFlow, onMarker);
             }
 
             mFlow.PlayPreview();
