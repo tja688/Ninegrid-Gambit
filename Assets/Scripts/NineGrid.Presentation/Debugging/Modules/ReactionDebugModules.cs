@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using NineGrid.Core;
 using NineGrid.Presentation.Reactions;
+using NineGrid.Presentation.Visuals;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Debugging.Modules
@@ -90,6 +92,59 @@ namespace NineGrid.Presentation.Debugging.Modules
         {
             isPlaying = module.IsPlaying;
             return true;
+        }
+    }
+
+    public sealed class StatusTickDebugModule : PerformanceDebugModuleBase<StatusTickReaction>
+    {
+        public override string Id => "reaction.status-tick";
+        public override string DisplayName => "状态跳变";
+        public override PerformanceDebugCategory Category => PerformanceDebugCategory.Reaction;
+        public override PerformanceDebugSchema Schema => CreateSchema()
+            .Add("contextPreset", "Context", PerformanceDebugParamKind.ContextPreset,
+                PerformanceDebugContextPreset.StatusPanel.ToString(),
+                PerformanceDebugSchemaFactory.EnumNames<PerformanceDebugContextPreset>())
+            .Add("stat", "Stat", PerformanceDebugParamKind.Enum, "Attack", "Attack", "Life", "Armor")
+            .Add("from", "From", PerformanceDebugParamKind.Int, "1")
+            .Add("to", "To", PerformanceDebugParamKind.Int, "7");
+
+        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, StatusTickReaction module, PerformanceDebugPayload payload)
+        {
+            Transform actor = context.ResolveActor("statusCard") ?? context.ResolveActor("player");
+            if (actor == null)
+            {
+                return PerformanceDebugPlayResult.Fail("Missing status card actor.");
+            }
+
+            int from = payload.GetInt("from", 1);
+            int to = payload.GetInt("to", 7);
+            string stat = payload.GetString("stat", "Attack");
+            var slot = new BoardSlotView(SlotId.Board(1), 1, "debug", CardKind.Monster, 5, 5, 5, 5, 0, 0, from, from, false);
+
+            TableNineCardStatusView view = actor.GetComponent<TableNineCardStatusView>();
+            if (view == null)
+            {
+                view = actor.gameObject.AddComponent<TableNineCardStatusView>();
+                view.EnsureBindings();
+                view.ConfigureDigitSprites(TableNineDigitSpriteLibrary.LoadDefaultDigits());
+            }
+
+            view.SnapFromSlot(slot);
+
+            switch (stat)
+            {
+                case "Life":
+                    view.PlayLifeTo(to, animate: true);
+                    break;
+                case "Armor":
+                    view.PlayArmorTo(to, animate: true);
+                    break;
+                default:
+                    view.PlayAttackTo(to, animate: true);
+                    break;
+            }
+
+            return PerformanceDebugPlayResult.Ok(1f);
         }
     }
 

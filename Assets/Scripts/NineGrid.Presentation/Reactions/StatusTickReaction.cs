@@ -2,18 +2,19 @@ using System;
 using System.Collections;
 using DG.Tweening;
 using NineGrid.Core;
+using NineGrid.Presentation.Contracts;
 using NineGrid.Presentation.Visuals;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
-namespace NineGrid.Presentation.Projection
+namespace NineGrid.Presentation.Reactions
 {
     /// <summary>
-    /// 场面板 / 卡牌状态投影：攻击 / 生命跳变 + 护甲块动画；批末对齐入口。
+    /// 批内卡牌状态跳变（HP / 攻击 / 护甲）。批末终态对齐由 BatchPlayer.ReconcileFromSnapshot 走 Visuals。
     /// </summary>
     [DisallowMultipleComponent]
-    [MovedFrom(true, "NineGrid.Presentation.Performance", null, "StatusPanelUpdatePerformance")]
-    public sealed class InGameStatusProjection : MonoBehaviour
+    [MovedFrom(true, "NineGrid.Presentation.Projection", null, "InGameStatusProjection")]
+    public sealed class StatusTickReaction : MonoBehaviour, IPlannedReaction
     {
         [Header("Digit Sprites (0-9)")]
         [SerializeField] private Sprite[] digitSprites = new Sprite[10];
@@ -70,38 +71,11 @@ namespace NineGrid.Presentation.Projection
             PlayImmediate(view, evt, snapshot, onComplete);
         }
 
-        public void AlignCard(Transform cardActor, BoardSlotView slot, bool instant = true)
+        public void StopAndRestore()
         {
-            if (cardActor == null || slot == null)
-            {
-                return;
-            }
-
-            TableNineCardStatusView view = EnsureCardView(cardActor);
-            if (view == null)
-            {
-                return;
-            }
-
-            DOTween.Kill(cardActor);
-            view.SnapFromSlot(slot);
-        }
-
-        public void AlignFromSnapshot(CoreViewSnapshot snapshot)
-        {
-            if (snapshot == null)
-            {
-                return;
-            }
-
-            for (var i = 0; i < snapshot.BoardSlots.Count; i++)
-            {
-                BoardSlotView slot = snapshot.BoardSlots[i];
-                if (slot.CardUid <= 0)
-                {
-                    continue;
-                }
-            }
+            StopAllCoroutines();
+            IsPlaying = false;
+            TotalDuration = 0f;
         }
 
         private IEnumerator PlayDeferred(
@@ -152,16 +126,6 @@ namespace NineGrid.Presentation.Projection
 
             view.ConfigureDigitSprites(ResolveDigitSprites());
             return view;
-        }
-
-        public void ConfigurePreviewView(TableNineCardStatusView view)
-        {
-            if (view == null)
-            {
-                return;
-            }
-
-            view.ConfigureDigitSprites(ResolveDigitSprites());
         }
 
         private Sprite[] ResolveDigitSprites()

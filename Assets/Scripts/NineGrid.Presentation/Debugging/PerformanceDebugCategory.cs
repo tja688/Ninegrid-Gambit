@@ -6,6 +6,5 @@ namespace NineGrid.Presentation.Debugging
         Reaction,
         Cue,
         Interaction,
-        Projection,
     }
 }

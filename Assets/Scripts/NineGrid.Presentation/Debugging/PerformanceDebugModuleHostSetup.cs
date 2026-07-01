@@ -6,7 +6,6 @@ using NineGrid.Presentation.Flow.Deck;
 using NineGrid.Presentation.Flow.Item;
 using NineGrid.Presentation.Flow.Selection;
 using NineGrid.Presentation.Interaction;
-using NineGrid.Presentation.Projection;
 using NineGrid.Presentation.Reactions;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
@@ -40,6 +39,7 @@ namespace NineGrid.Presentation.Debugging
             GetOrAdd<ModifierApplyReaction>(host);
             GetOrAdd<CardAcquisitionFlow>(host);
             GetOrAdd<SelectionFallOffFlow>(host);
+            GetOrAdd<StatusTickReaction>(host);
 
             GetOrAdd<HitFlashCue>(host);
             GetOrAdd<CardShakeCue>(host);
@@ -50,7 +50,6 @@ namespace NineGrid.Presentation.Debugging
             var handDrag = GetOrAdd<HandCardDragPresenter>(host);
             var handReturn = GetOrAdd<HandCardReturnPresenter>(host);
             GetOrAdd<SelectionOptionHoverPresenter>(host);
-            GetOrAdd<InGameStatusProjection>(host);
 
             PerformanceDebugSerializationUtil.SetField(damageNumbers, "damagePrefab", damagePrefab);
             PerformanceDebugSerializationUtil.SetField(damageNumbers, "healPrefab", damagePrefab);
