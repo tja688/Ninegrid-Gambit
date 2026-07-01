@@ -73,7 +73,13 @@ namespace NineGrid.Presentation.Debugging
             PerformanceDebugSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
             PerformanceDebugSerializationUtil.SetField(flow, "previewActorsRoot", actorsRoot);
             PerformanceDebugSerializationUtil.SetField(flow, "slotRoot", deckAnchors);
-            PerformanceDebugSerializationUtil.SetField(flow, "previewDeckOrigin", deckAnchors);
+            Transform preparationSlot = PerformanceDebugAnchorIndexing.FindDeckChild(
+                deckAnchors,
+                PerformanceDebugAnchorIndexing.DeckEntryPreparationSlotName);
+            PerformanceDebugSerializationUtil.SetField(
+                flow,
+                "previewDeckOrigin",
+                preparationSlot != null ? preparationSlot : deckAnchors);
         }
 
         private static void WireDeckDealFlow(
@@ -86,6 +92,7 @@ namespace NineGrid.Presentation.Debugging
             PerformanceDebugSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
             PerformanceDebugSerializationUtil.SetField(flow, "previewActorsRoot", actorsRoot);
             PerformanceDebugSerializationUtil.SetField(flow, "ringSlotRoot", ringSlotRoot);
+            PerformanceDebugSerializationUtil.SetField(flow, "dealSourceRoot", deckAnchors);
 
             CardDeckSubstituteFlow substituteFlow = flow.GetComponent<CardDeckSubstituteFlow>();
             if (substituteFlow != null)
@@ -104,7 +111,13 @@ namespace NineGrid.Presentation.Debugging
             PerformanceDebugSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
             PerformanceDebugSerializationUtil.SetField(flow, "previewActorsRoot", actorsRoot);
             PerformanceDebugSerializationUtil.SetField(flow, "slotRoot", slotRoot);
-            PerformanceDebugSerializationUtil.SetField(flow, "deckOrigin", deckAnchors);
+            Transform dealOrigin = PerformanceDebugAnchorIndexing.FindDeckChild(
+                deckAnchors,
+                PerformanceDebugAnchorIndexing.DeckDealOriginSlotName);
+            PerformanceDebugSerializationUtil.SetField(
+                flow,
+                "deckOrigin",
+                dealOrigin != null ? dealOrigin : deckAnchors);
         }
 
         private static void WireBoardRotate(BoardRotateFlow flow, GameObject cardPrefab, Transform actorsRoot, Transform slotRoot)

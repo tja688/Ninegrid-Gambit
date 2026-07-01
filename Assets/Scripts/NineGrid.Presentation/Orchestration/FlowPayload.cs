@@ -14,7 +14,7 @@ namespace NineGrid.Presentation.Orchestration
         public int Delta { get; set; }
         public int Index { get; set; }
         public int Total { get; set; }
-        public Vector2 Direction { get; set; } = Vector2.right;
+        public Vector2 Direction { get; set; } = Vector2.zero;
         public string SourceDefId { get; set; } = string.Empty;
         public string Cause { get; set; } = string.Empty;
         public string Message { get; set; } = string.Empty;

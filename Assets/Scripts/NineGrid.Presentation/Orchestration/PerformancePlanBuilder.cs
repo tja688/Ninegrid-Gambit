@@ -37,6 +37,11 @@ namespace NineGrid.Presentation.Orchestration
 
                 if (route.Kind == InstructionRouteKind.Flow)
                 {
+                    if (route.FlowId == FlowId.CardKill)
+                    {
+                        AttackDirectionResolver.ApplyBoardDirection(route.Payload, batch.Snapshot);
+                    }
+
                     var step = CreateStep(ref nextStepId, actionId, groupIndex, route.FlowId, route.Payload, source);
                     steps.Add(step);
                     lastStepByAction[actionId] = step.Id;
@@ -46,6 +51,7 @@ namespace NineGrid.Presentation.Orchestration
                 if (route.SynthesizeAttackFlow)
                 {
                     var attackPayload = FlowPayload.FromEvent(instruction.Event);
+                    AttackDirectionResolver.ApplyBoardDirection(attackPayload, batch.Snapshot);
                     var attackStep = CreateStep(
                         ref nextStepId,
                         actionId,

@@ -39,7 +39,7 @@ namespace NineGrid.Presentation.Orchestration.Bindings
                 return new FlowHandle(mFlow, onMarker);
             }
 
-            var direction = payload.Direction.sqrMagnitude > 0.0001f ? payload.Direction : Vector2.right;
+            var direction = AttackDirectionResolver.Resolve(payload, registry);
             mFlow.Play(player, enemy, direction);
             return new FlowHandle(mFlow, onMarker);
         }

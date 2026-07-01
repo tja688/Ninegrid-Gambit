@@ -229,7 +229,7 @@ namespace NineGrid.Presentation.Debugging
         private void BuildBattlePair()
         {
             Transform playerAnchor = ResolveGridAnchor("slot5_Player") ?? ResolveGridAnchor("slot6");
-            Transform enemyAnchor = ResolveGridAnchor("slot3");
+            Transform enemyAnchor = ResolveGridAnchor("slot6");
             if (playerAnchor == null || enemyAnchor == null)
             {
                 Log.Warn($"BattlePair anchors missing. player={(playerAnchor != null)} enemy={(enemyAnchor != null)}");
@@ -268,6 +268,23 @@ namespace NineGrid.Presentation.Debugging
                     Registry.RegisterAnchor(SlotId.Board(i), anchor);
                 }
             }
+
+            RegisterBoardPresetBattleAliases();
+        }
+
+        private void RegisterBoardPresetBattleAliases()
+        {
+            Transform player = Registry.ResolveActor(PerformanceDebugActorUids.BoardCard(5));
+            Transform enemy = Registry.ResolveActor(PerformanceDebugActorUids.BoardCard(6));
+            if (player != null)
+            {
+                Registry.RegisterActor(PerformanceDebugActorUids.Player, player);
+            }
+
+            if (enemy != null)
+            {
+                Registry.RegisterActor(PerformanceDebugActorUids.Enemy, enemy);
+            }
         }
 
         private void BuildDeck20()
@@ -280,7 +297,12 @@ namespace NineGrid.Presentation.Debugging
             for (var i = 0; i < CardDeckAnchors.childCount; i++)
             {
                 Transform slot = CardDeckAnchors.GetChild(i);
-                string actorId = $"deck{i + 1}";
+                if (!PerformanceDebugAnchorIndexing.IsDeckPileSlotAnchor(slot.name))
+                {
+                    continue;
+                }
+
+                string actorId = $"deck{slot.name.Substring(4)}";
                 Transform actor = ActorFactory.SpawnAtAnchor(actorId, slot);
                 Registry.RegisterActor(actorId, actor);
                 Registry.RegisterAnchor($"deck.{slot.name}", slot);

@@ -34,6 +34,7 @@ namespace NineGrid.Presentation.Flow.Deck
 
         [Header("Preview")]
         [SerializeField] private Transform ringSlotRoot;
+        [SerializeField] private Transform dealSourceRoot;
         [SerializeField] private Transform[] ringSlots;
         [SerializeField, Min(1)] private int previewDealCount = 8;
         [SerializeField] private int[] standardBoardRingIndices = { 0, 1, 2, 5, 8, 7, 6, 3 };
@@ -102,7 +103,6 @@ namespace NineGrid.Presentation.Flow.Deck
             var cards = new List<Transform>(dealCount);
             var slots = new List<Transform>(dealCount);
             Transform parent = ResolvedPreviewActorsRoot;
-            Vector3 deckPosition = ResolveDeckWorldPosition(parent);
 
             for (var i = 0; i < dealCount; i++)
             {
@@ -113,7 +113,7 @@ namespace NineGrid.Presentation.Flow.Deck
                 }
 
                 Transform card = CreatePreviewActor(parent, i);
-                card.position = deckPosition;
+                card.position = ResolveDealSourceWorldPosition(i, parent);
                 spawnedPreviewActors.Add(card);
                 cards.Add(card);
                 slots.Add(slot);
@@ -213,7 +213,7 @@ namespace NineGrid.Presentation.Flow.Deck
 
                 activeCards.Add(card);
                 baselineWorldPositions.Add(card.position);
-                substituteFlow.PrepareCardAtDeck(card);
+                PrepareCardAtDealSource(card, i);
             }
 
             if (activeCards.Count == 0)
@@ -296,6 +296,44 @@ namespace NineGrid.Presentation.Flow.Deck
             return substituteFlow != null
                 ? substituteFlow.ResolveDeckWorldPosition(parent)
                 : parent.position;
+        }
+
+        private Vector3 ResolveDealSourceWorldPosition(int dealIndex, Transform fallbackParent)
+        {
+            Transform sourceSlot = ResolveDealSourceSlot(dealIndex);
+            if (sourceSlot != null)
+            {
+                return sourceSlot.position;
+            }
+
+            return ResolveDeckWorldPosition(fallbackParent);
+        }
+
+        private void PrepareCardAtDealSource(Transform card, int dealIndex)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            Transform sourceSlot = ResolveDealSourceSlot(dealIndex);
+            if (sourceSlot != null)
+            {
+                card.position = sourceSlot.position;
+                return;
+            }
+
+            substituteFlow?.PrepareCardAtDeck(card);
+        }
+
+        private Transform ResolveDealSourceSlot(int dealIndex)
+        {
+            if (dealSourceRoot == null || dealIndex < 0)
+            {
+                return null;
+            }
+
+            return dealSourceRoot.Find($"slot{dealIndex + 1}");
         }
 
         private IEnumerator PlayNextFrame(Sequence sequence)

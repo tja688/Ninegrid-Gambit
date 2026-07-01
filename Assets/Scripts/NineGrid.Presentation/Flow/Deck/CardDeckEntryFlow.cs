@@ -434,13 +434,29 @@ namespace NineGrid.Presentation.Flow.Deck
                 return Array.Empty<Transform>();
             }
 
-            var resolved = new Transform[childCount];
+            var resolved = new List<Transform>(childCount);
             for (var i = 0; i < childCount; i++)
             {
-                resolved[i] = root.GetChild(i);
+                Transform child = root.GetChild(i);
+                if (!IsDeckPileSlotAnchor(child.name))
+                {
+                    continue;
+                }
+
+                resolved.Add(child);
             }
 
             return resolved;
+        }
+
+        private static bool IsDeckPileSlotAnchor(string anchorName)
+        {
+            if (string.IsNullOrEmpty(anchorName) || !anchorName.StartsWith("slot", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return int.TryParse(anchorName.Substring(4), out int slotNumber) && slotNumber >= 1;
         }
     }
 }

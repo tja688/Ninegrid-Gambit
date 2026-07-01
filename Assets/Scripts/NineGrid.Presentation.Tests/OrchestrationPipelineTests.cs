@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using NineGrid.Core;
 using NineGrid.Presentation.Orchestration;
+using NineGrid.Presentation.Shared;
 using NineGrid.Presentation.Tests.Support;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace NineGrid.Presentation.Tests
 {
@@ -37,6 +39,39 @@ namespace NineGrid.Presentation.Tests
             AssertContainsFlow(plan, FlowId.BoardRotate);
             AssertContainsFlow(plan, FlowId.MoveCard);
             AssertContainsReaction(plan, ReactionId.ShowDamage, ReactionAnchorKind.StepMarker, FlowMarkers.Impact);
+        }
+
+        [Test]
+        public void AttackDirectionResolver_PlayerToOrthogonalEnemy_UsesRight()
+        {
+            var payload = new FlowPayload
+            {
+                ActorUid = 1,
+                TargetUid = 2,
+            };
+
+            AttackDirectionResolver.ApplyBoardDirection(payload, null);
+
+            Assert.AreEqual(Vector2.right, payload.Direction);
+        }
+
+        [Test]
+        public void CardBattleDirectionUtil_DiagonalSlots_ReturnFalse()
+        {
+            Assert.IsFalse(CardBattleDirectionUtil.TryFromBoardSlots(
+                SlotId.Board(5),
+                SlotId.Board(3),
+                out _));
+        }
+
+        [Test]
+        public void CardBattleDirectionUtil_OrthogonalSlots_ReturnExpectedDirection()
+        {
+            Assert.IsTrue(CardBattleDirectionUtil.TryFromBoardSlots(
+                SlotId.Board(5),
+                SlotId.Board(2),
+                out Vector2 up));
+            Assert.AreEqual(Vector2.up, up);
         }
 
         [Test]

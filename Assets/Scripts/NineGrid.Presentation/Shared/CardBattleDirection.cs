@@ -1,3 +1,4 @@
+using NineGrid.Core;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Shared
@@ -27,6 +28,44 @@ namespace NineGrid.Presentation.Shared
         {
             int index = (int)direction;
             return index >= 0 && index < Cycle.Length ? Cycle[index] : Vector2.right;
+        }
+
+        /// <summary>从棋盘正交相邻槽位推导攻击方向；斜向相邻返回 false。</summary>
+        public static bool TryFromBoardSlots(SlotId from, SlotId to, out Vector2 direction)
+        {
+            direction = Vector2.zero;
+            if (!from.IsBoardSlot || !to.IsBoardSlot)
+            {
+                return false;
+            }
+
+            int deltaRow = to.Row - from.Row;
+            int deltaColumn = to.Column - from.Column;
+            if (deltaRow == 0 && deltaColumn == 1)
+            {
+                direction = Vector2.right;
+                return true;
+            }
+
+            if (deltaRow == 0 && deltaColumn == -1)
+            {
+                direction = Vector2.left;
+                return true;
+            }
+
+            if (deltaRow == -1 && deltaColumn == 0)
+            {
+                direction = Vector2.up;
+                return true;
+            }
+
+            if (deltaRow == 1 && deltaColumn == 0)
+            {
+                direction = Vector2.down;
+                return true;
+            }
+
+            return false;
         }
 
         public static CardBattleDirection NextInCycle(ref int cursor)

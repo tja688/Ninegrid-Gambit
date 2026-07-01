@@ -13,6 +13,6 @@ namespace NineGrid.Presentation.Debugging
         public static int BoardCard(int boardSlotIndex) => 100 + boardSlotIndex;
 
         public static SlotId PlayerSlot => SlotId.Board(5);
-        public static SlotId EnemySlot => SlotId.Board(3);
+        public static SlotId EnemySlot => SlotId.Board(6);
     }
 }

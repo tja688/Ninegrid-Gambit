@@ -99,6 +99,54 @@ namespace NineGrid.Presentation.Debugging
 
             return anchorName.StartsWith("handcard", StringComparison.OrdinalIgnoreCase);
         }
+
+        public const string DeckEntryPreparationSlotName = "DeckEntryPreparationSlot";
+        public const string DeckDealOriginSlotName = "slot1";
+
+        public static Transform FindDeckChild(Transform cardDeckAnchors, string childName)
+        {
+            if (cardDeckAnchors == null || string.IsNullOrEmpty(childName))
+            {
+                return null;
+            }
+
+            return cardDeckAnchors.Find(childName);
+        }
+
+        public static bool IsDeckPileSlotAnchor(string anchorName)
+        {
+            if (string.IsNullOrEmpty(anchorName))
+            {
+                return false;
+            }
+
+            if (!anchorName.StartsWith("slot", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return int.TryParse(anchorName.Substring(4), out int slotNumber) && slotNumber >= 1;
+        }
+
+        public static Transform[] CollectDeckDealSourceSlots(Transform cardDeckAnchors, int maxCount = 8)
+        {
+            if (cardDeckAnchors == null || maxCount <= 0)
+            {
+                return Array.Empty<Transform>();
+            }
+
+            var slots = new List<Transform>(maxCount);
+            for (var slotNumber = 1; slotNumber <= maxCount; slotNumber++)
+            {
+                Transform slot = cardDeckAnchors.Find($"slot{slotNumber}");
+                if (slot != null)
+                {
+                    slots.Add(slot);
+                }
+            }
+
+            return slots.ToArray();
+        }
         public static void Reindex(
             PerformanceDebugViewRegistry registry,
             Transform anchorsRoot,

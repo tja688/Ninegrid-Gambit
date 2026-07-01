@@ -668,7 +668,8 @@ namespace NineGrid.Presentation.Editor
                     {
                         column.Add(PerformanceDebugWarmConsoleUi.CreateDescriptionLabel("未索引到锚点。请确认场景含 Anchors 根节点后重扫。"));
                     }
-                }));
+                },
+                expanded: false));
         }
 
         private void RefreshLog()
