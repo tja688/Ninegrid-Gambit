@@ -10,5 +10,6 @@ namespace NineGrid.Presentation.Debugging
         ActorId,
         AnchorId,
         ContextPreset,
+        Derived,
     }
 }

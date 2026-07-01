@@ -127,13 +127,13 @@ namespace NineGrid.Presentation.Debugging
 
         private void PrepareActorsForPlay(PerformanceDebugPayload payload)
         {
-            PerformanceDebugContextPreset preset = payload.GetContextPreset("contextPreset");
+            PerformanceDebugContextPreset preset = payload.GetContextPreset(PerformanceDebugPayloadKeys.ContextPreset);
             if (preset != PerformanceDebugContextPreset.None)
             {
                 lastContextPreset = preset;
             }
 
-            harness.ApplyContextPreset(lastContextPreset);
+            harness.ApplyContextPreset(lastContextPreset, payload);
         }
 
         private IEnumerator TrackPlayback(IPerformanceDebugModule module, float expectedDuration)

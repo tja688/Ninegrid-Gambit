@@ -35,6 +35,8 @@ namespace NineGrid.Presentation.Editor
         private TextField searchField;
         private PopupField<string> categoryPopup;
 
+        private Label derivedDirectionLabel;
+
         private string selectedModuleId = string.Empty;
         private string searchFilter = string.Empty;
         private int categoryFilterIndex;
@@ -379,6 +381,7 @@ namespace NineGrid.Presentation.Editor
                 return;
             }
 
+            PerformanceDebugLayoutApplier.SyncDerivedDirection(workingPayload);
             IReadOnlyList<PerformanceDebugFieldDef> fields = selectedModule.Schema.Fields;
             for (var i = 0; i < fields.Count; i++)
             {
@@ -386,6 +389,24 @@ namespace NineGrid.Presentation.Editor
                 string current = workingPayload.GetString(field.Key, field.DefaultValue);
                 column.Add(CreateParamRow(field, current));
             }
+        }
+
+        private void OnPayloadFieldChanged(string key, string value)
+        {
+            workingPayload.Set(key, value);
+            SaveFieldPref(selectedModule.Id, key, value);
+            PerformanceDebugLayoutApplier.SyncDerivedDirection(workingPayload);
+            RefreshDerivedDirectionLabel();
+        }
+
+        private void RefreshDerivedDirectionLabel()
+        {
+            if (derivedDirectionLabel == null || workingPayload == null)
+            {
+                return;
+            }
+
+            derivedDirectionLabel.text = PerformanceDebugLayoutApplier.FormatDerivedDirection(workingPayload);
         }
 
         private VisualElement CreateParamRow(PerformanceDebugFieldDef field, string currentValue)
@@ -400,11 +421,16 @@ namespace NineGrid.Presentation.Editor
                     var toggle = new Toggle { value = isOn };
                     toggle.RegisterValueChangedCallback(evt =>
                     {
-                        string value = evt.newValue ? "true" : "false";
-                        workingPayload.Set(field.Key, value);
-                        SaveFieldPref(selectedModule.Id, field.Key, value);
+                        OnPayloadFieldChanged(field.Key, evt.newValue ? "true" : "false");
                     });
                     return PerformanceDebugWarmConsoleUi.WrapControl(field.Label, description, toggle);
+                }
+                case PerformanceDebugParamKind.Derived:
+                {
+                    derivedDirectionLabel = PerformanceDebugWarmConsoleUi.CreateDescriptionLabel(
+                        PerformanceDebugLayoutApplier.FormatDerivedDirection(workingPayload));
+                    derivedDirectionLabel.style.unityFontStyleAndWeight = FontStyle.Italic;
+                    return PerformanceDebugWarmConsoleUi.WrapControl(field.Label, "由 Player/Target Slot 推导（只读）", derivedDirectionLabel);
                 }
                 case PerformanceDebugParamKind.Enum:
                 case PerformanceDebugParamKind.ContextPreset:
@@ -419,8 +445,7 @@ namespace NineGrid.Presentation.Editor
                     var popup = new PopupField<string>(options, index);
                     popup.RegisterValueChangedCallback(evt =>
                     {
-                        workingPayload.Set(field.Key, evt.newValue);
-                        SaveFieldPref(selectedModule.Id, field.Key, evt.newValue);
+                        OnPayloadFieldChanged(field.Key, evt.newValue);
                     });
                     return PerformanceDebugWarmConsoleUi.WrapControl(field.Label, description, popup);
                 }
@@ -429,9 +454,7 @@ namespace NineGrid.Presentation.Editor
                     var textField = new TextField { value = currentValue };
                     textField.RegisterValueChangedCallback(evt =>
                     {
-                        string value = evt.newValue ?? string.Empty;
-                        workingPayload.Set(field.Key, value);
-                        SaveFieldPref(selectedModule.Id, field.Key, value);
+                        OnPayloadFieldChanged(field.Key, evt.newValue ?? string.Empty);
                     });
                     return PerformanceDebugWarmConsoleUi.WrapControl(field.Label, description, textField);
                 }
@@ -449,6 +472,7 @@ namespace NineGrid.Presentation.Editor
                 PerformanceDebugParamKind.AnchorId => "锚点 ID：grid.slot3 / deck.slot5 / hand.handcard1",
                 PerformanceDebugParamKind.ContextPreset => "重建场景演员布局",
                 PerformanceDebugParamKind.Enum => "枚举选项",
+                PerformanceDebugParamKind.Derived => "由槽位几何推导（只读）",
                 _ => field.Key,
             };
         }

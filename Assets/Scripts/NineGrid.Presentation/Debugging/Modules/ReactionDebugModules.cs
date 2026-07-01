@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using NineGrid.Core;
+using NineGrid.Presentation.Debugging;
 using NineGrid.Presentation.Reactions;
 using NineGrid.Presentation.Visuals;
 using UnityEngine;
@@ -12,16 +13,18 @@ namespace NineGrid.Presentation.Debugging.Modules
         public override string DisplayName => "伤害数字";
         public override PerformanceDebugCategory Category => PerformanceDebugCategory.Reaction;
         public override PerformanceDebugSchema Schema => CreateSchema()
-            .Add("contextPreset", "Context", PerformanceDebugParamKind.ContextPreset,
+            .Add(PerformanceDebugPayloadKeys.ContextPreset, "Context", PerformanceDebugParamKind.ContextPreset,
                 PerformanceDebugContextPreset.BattlePair.ToString(),
                 PerformanceDebugSchemaFactory.EnumNames<PerformanceDebugContextPreset>())
+            .Add(PerformanceDebugPayloadKeys.TargetActor, "Target Actor", PerformanceDebugParamKind.ActorId, "enemy")
             .Add("kind", "Kind", PerformanceDebugParamKind.Enum, DamagePopupKind.Damage.ToString(),
                 "Damage", "Heal", "Gold")
-            .Add("amount", "Amount", PerformanceDebugParamKind.Float, "12");
+            .Add(PerformanceDebugPayloadKeys.Amount, "Amount", PerformanceDebugParamKind.Float, "12");
 
         protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, DamageNumbersReaction module, PerformanceDebugPayload payload)
         {
-            Transform target = context.ResolveActor("enemy") ?? context.ResolveActor("player");
+            string targetActorId = payload.GetString(PerformanceDebugPayloadKeys.TargetActor, "enemy");
+            Transform target = context.ResolveActor(targetActorId) ?? context.ResolveActor("enemy") ?? context.ResolveActor("player");
             if (target == null)
             {
                 return PerformanceDebugPlayResult.Fail("Missing target actor.");
@@ -30,7 +33,7 @@ namespace NineGrid.Presentation.Debugging.Modules
             var kind = System.Enum.TryParse(payload.GetString("kind"), true, out DamagePopupKind parsed)
                 ? parsed
                 : DamagePopupKind.Damage;
-            module.Play(target, payload.GetFloat("amount", 12f), kind);
+            module.Play(target, payload.GetFloat(PerformanceDebugPayloadKeys.Amount, 12f), kind);
             return PerformanceDebugPlayResult.Ok(1.5f);
         }
     }

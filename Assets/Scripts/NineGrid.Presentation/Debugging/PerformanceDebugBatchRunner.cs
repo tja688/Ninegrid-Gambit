@@ -44,9 +44,9 @@ namespace NineGrid.Presentation.Debugging
             lastError = null;
 
             PerformanceDebugContextPreset preset = ResolvePreset(fixture, payload);
-            harness.ApplyContextPreset(preset);
+            harness.ApplyContextPreset(preset, payload);
 
-            PresentationBatch batch = fixture.CreateBatch();
+            PresentationBatch batch = fixture.CreateBatch(payload);
             PresentationPlan plan = harness.BatchPlayer.BuildPlan(batch);
             PerformanceDebugBatchHijack.ApplyEditorOverrides(plan, payload);
             lastPlanDump = harness.BatchPlayer.DumpPlan(plan);

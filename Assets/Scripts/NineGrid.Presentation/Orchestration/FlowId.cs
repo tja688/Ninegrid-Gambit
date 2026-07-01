@@ -11,5 +11,7 @@ namespace NineGrid.Presentation.Orchestration
         FillSlots,
         UseItem,
         CardDeckEntry,
+        Counterattack,
+        CounterattackKill,
     }
 }

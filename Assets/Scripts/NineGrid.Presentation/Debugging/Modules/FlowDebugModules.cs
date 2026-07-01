@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using NineGrid.Core;
+using NineGrid.Presentation.Debugging;
 using NineGrid.Presentation.Flow.Battle;
 using NineGrid.Presentation.Flow.Board;
 using NineGrid.Presentation.Flow.Deck;
@@ -13,12 +15,53 @@ namespace NineGrid.Presentation.Debugging.Modules
 {
     internal static class PerformanceDebugSchemaFactory
     {
-        public static PerformanceDebugSchema BattleSchema()
+        public static readonly string[] BoardSlotOptions = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+        public static readonly string[] BoardSlotOptionsWithAuto = { "Auto", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+
+        public static PerformanceDebugSchema BattleEventSchema(
+            PerformanceDebugContextPreset preset = PerformanceDebugContextPreset.BattlePair)
         {
             return CreateSchema()
-                .Add("contextPreset", "Context", PerformanceDebugParamKind.ContextPreset, DefaultContextField(), EnumNames<PerformanceDebugContextPreset>())
-                .Add("direction", "Direction", PerformanceDebugParamKind.Enum, CardBattleDirection.Right.ToString(),
-                    "Right", "Up", "Left", "Down");
+                .Add(PerformanceDebugPayloadKeys.ContextPreset, "Context", PerformanceDebugParamKind.ContextPreset,
+                    preset.ToString(), EnumNames<PerformanceDebugContextPreset>())
+                .Add(PerformanceDebugPayloadKeys.ActorUid, "Actor Uid", PerformanceDebugParamKind.Int, "1")
+                .Add(PerformanceDebugPayloadKeys.TargetUid, "Target Uid", PerformanceDebugParamKind.Int, "2")
+                .Add(PerformanceDebugPayloadKeys.PlayerSlot, "Player Slot", PerformanceDebugParamKind.Enum, "5", BoardSlotOptions)
+                .Add(PerformanceDebugPayloadKeys.TargetSlot, "Target Slot", PerformanceDebugParamKind.Enum, "Auto", BoardSlotOptionsWithAuto)
+                .Add(PerformanceDebugPayloadKeys.Direction, "Direction", PerformanceDebugParamKind.Enum,
+                    CardBattleDirection.Right.ToString(), "Right", "Up", "Left", "Down")
+                .Add(PerformanceDebugPayloadKeys.Amount, "Amount", PerformanceDebugParamKind.Int, "3")
+                .Add(PerformanceDebugPayloadKeys.ForceDirectionOverride, "Force Dir Override", PerformanceDebugParamKind.Bool, "false")
+                .Add("derivedDirection", "Derived Direction", PerformanceDebugParamKind.Derived, CardBattleDirection.Right.ToString());
+        }
+
+        public static PerformanceDebugSchema BattleSchema() => BattleEventSchema();
+
+        public static PerformanceDebugSchema MoveCardSchema()
+        {
+            return CreateSchema()
+                .Add(PerformanceDebugPayloadKeys.ContextPreset, "Context", PerformanceDebugParamKind.ContextPreset,
+                    PerformanceDebugContextPreset.Board9.ToString(), EnumNames<PerformanceDebugContextPreset>())
+                .Add(PerformanceDebugPayloadKeys.FromSlot, "From Slot", PerformanceDebugParamKind.Enum, "1", BoardSlotOptions)
+                .Add(PerformanceDebugPayloadKeys.ToSlot, "To Slot", PerformanceDebugParamKind.Enum, "2", BoardSlotOptions);
+        }
+
+        public static PerformanceDebugSchema BoardRotateSchema()
+        {
+            return CreateSchema()
+                .Add(PerformanceDebugPayloadKeys.ContextPreset, "Context", PerformanceDebugParamKind.ContextPreset,
+                    PerformanceDebugContextPreset.Board9.ToString(), EnumNames<PerformanceDebugContextPreset>())
+                .Add(PerformanceDebugPayloadKeys.RotateAmount, "Rotate Amount", PerformanceDebugParamKind.Int, "1");
+        }
+
+        public static PerformanceDebugSchema SelectionConfirmSchema()
+        {
+            return CreateSchema()
+                .Add(PerformanceDebugPayloadKeys.ContextPreset, "Context", PerformanceDebugParamKind.ContextPreset,
+                    PerformanceDebugContextPreset.Selection3.ToString(), EnumNames<PerformanceDebugContextPreset>())
+                .Add(PerformanceDebugPayloadKeys.SelectedIndex, "Selected Index", PerformanceDebugParamKind.Int, "1")
+                .Add(PerformanceDebugPayloadKeys.Lift, "Lift", PerformanceDebugParamKind.Int, "10")
+                .Add(PerformanceDebugPayloadKeys.Extra, "Extra", PerformanceDebugParamKind.Int, "3");
         }
 
         public static PerformanceDebugSchema ContextOnlySchema(PerformanceDebugContextPreset preset)
@@ -64,13 +107,10 @@ namespace NineGrid.Presentation.Debugging.Modules
 
         protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, CardAttackFlow module, PerformanceDebugPayload payload)
         {
-            var flowPayload = new FlowPayload
-            {
-                ActorUid = PerformanceDebugActorUids.Player,
-                TargetUid = PerformanceDebugActorUids.Enemy,
-                Direction = CardBattleDirectionUtil.ToVector2(payload.GetDirection("direction")),
-            };
-            return FlowBindingPlayHelper.PlayFlow(context, FlowId.CardAttack, flowPayload);
+            return FlowBindingPlayHelper.PlayFlow(
+                context,
+                FlowId.CardAttack,
+                PerformanceDebugFlowPayloadBuilder.BuildBattleFlowPayload(payload));
         }
     }
 
@@ -83,15 +123,10 @@ namespace NineGrid.Presentation.Debugging.Modules
 
         protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, CounterattackFlow module, PerformanceDebugPayload payload)
         {
-            Transform player = context.ResolveActor("player");
-            Transform enemy = context.ResolveActor("enemy");
-            if (player == null || enemy == null)
-            {
-                return PerformanceDebugPlayResult.Fail("Missing player/enemy actors.");
-            }
-
-            module.Play(enemy, player, payload.GetDirection("direction"));
-            return PerformanceDebugPlayResult.Ok(module.ExpectedDuration);
+            return FlowBindingPlayHelper.PlayFlow(
+                context,
+                FlowId.Counterattack,
+                PerformanceDebugFlowPayloadBuilder.BuildBattleFlowPayload(payload));
         }
     }
 
@@ -104,13 +139,10 @@ namespace NineGrid.Presentation.Debugging.Modules
 
         protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, CardKillFlow module, PerformanceDebugPayload payload)
         {
-            var flowPayload = new FlowPayload
-            {
-                ActorUid = PerformanceDebugActorUids.Player,
-                CardUid = PerformanceDebugActorUids.Enemy,
-                Direction = CardBattleDirectionUtil.ToVector2(payload.GetDirection("direction")),
-            };
-            return FlowBindingPlayHelper.PlayFlow(context, FlowId.CardKill, flowPayload);
+            return FlowBindingPlayHelper.PlayFlow(
+                context,
+                FlowId.CardKill,
+                PerformanceDebugFlowPayloadBuilder.BuildBattleFlowPayload(payload));
         }
     }
 
@@ -123,15 +155,10 @@ namespace NineGrid.Presentation.Debugging.Modules
 
         protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, CounterattackKillFlow module, PerformanceDebugPayload payload)
         {
-            Transform player = context.ResolveActor("player");
-            Transform enemy = context.ResolveActor("enemy");
-            if (player == null || enemy == null)
-            {
-                return PerformanceDebugPlayResult.Fail("Missing player/enemy actors.");
-            }
-
-            module.Play(enemy, player, payload.GetDirection("direction"));
-            return PerformanceDebugPlayResult.Ok(module.ExpectedDuration);
+            return FlowBindingPlayHelper.PlayFlow(
+                context,
+                FlowId.CounterattackKill,
+                PerformanceDebugFlowPayloadBuilder.BuildBattleFlowPayload(payload));
         }
     }
 
@@ -140,11 +167,12 @@ namespace NineGrid.Presentation.Debugging.Modules
         public override string Id => "flow.board-rotate";
         public override string DisplayName => "棋盘旋转";
         public override PerformanceDebugCategory Category => PerformanceDebugCategory.Flow;
-        public override PerformanceDebugSchema Schema => PerformanceDebugSchemaFactory.ContextOnlySchema(PerformanceDebugContextPreset.Board9);
+        public override PerformanceDebugSchema Schema => PerformanceDebugSchemaFactory.BoardRotateSchema();
 
         protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, BoardRotateFlow module, PerformanceDebugPayload payload)
         {
-            return FlowBindingPlayHelper.PlayFlow(context, FlowId.BoardRotate, new FlowPayload { Amount = 1 });
+            int amount = payload.GetInt(PerformanceDebugPayloadKeys.RotateAmount, 1);
+            return FlowBindingPlayHelper.PlayFlow(context, FlowId.BoardRotate, new FlowPayload { Amount = amount });
         }
     }
 
@@ -180,11 +208,18 @@ namespace NineGrid.Presentation.Debugging.Modules
         public override string Id => "flow.deck-substitute";
         public override string DisplayName => "替换";
         public override PerformanceDebugCategory Category => PerformanceDebugCategory.Flow;
-        public override PerformanceDebugSchema Schema => PerformanceDebugSchemaFactory.ContextOnlySchema(PerformanceDebugContextPreset.Board9);
+        public override PerformanceDebugSchema Schema => PerformanceDebugSchemaFactory.MoveCardSchema();
 
         protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, CardDeckSubstituteFlow module, PerformanceDebugPayload payload)
         {
-            return FlowBindingPlayHelper.PlayFlow(context, FlowId.MoveCard, new FlowPayload());
+            int fromSlot = payload.GetBoardSlot(PerformanceDebugPayloadKeys.FromSlot, 1);
+            int toSlot = payload.GetBoardSlot(PerformanceDebugPayloadKeys.ToSlot, 2);
+            return FlowBindingPlayHelper.PlayFlow(context, FlowId.MoveCard, new FlowPayload
+            {
+                CardUid = PerformanceDebugActorUids.BoardCard(fromSlot),
+                FromSlot = SlotId.Board(fromSlot),
+                ToSlot = SlotId.Board(toSlot),
+            });
         }
     }
 
@@ -213,17 +248,22 @@ namespace NineGrid.Presentation.Debugging.Modules
         public override string Id => "flow.selection-confirm";
         public override string DisplayName => "选择确认";
         public override PerformanceDebugCategory Category => PerformanceDebugCategory.Flow;
-        public override PerformanceDebugSchema Schema => PerformanceDebugSchemaFactory.ContextOnlySchema(PerformanceDebugContextPreset.Selection3);
+        public override PerformanceDebugSchema Schema => PerformanceDebugSchemaFactory.SelectionConfirmSchema();
 
         protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, SelectionConfirmFlow module, PerformanceDebugPayload payload)
         {
-            Transform selected = context.ResolveActor("option2");
+            int selectedIndex = payload.GetInt(PerformanceDebugPayloadKeys.SelectedIndex, 1);
+            string actorId = $"option{Mathf.Clamp(selectedIndex + 1, 1, 3)}";
+            Transform selected = context.ResolveActor(actorId);
             if (selected == null)
             {
                 return PerformanceDebugPlayResult.Fail("Missing selected option actor.");
             }
 
-            module.PlayLift(selected, 10, 3);
+            module.PlayLift(
+                selected,
+                payload.GetInt(PerformanceDebugPayloadKeys.Lift, 10),
+                payload.GetInt(PerformanceDebugPayloadKeys.Extra, 3));
             return PerformanceDebugPlayResult.Ok(module.ExpectedDuration);
         }
     }

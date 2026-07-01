@@ -118,5 +118,40 @@ namespace NineGrid.Presentation.Shared
         {
             return new Vector3(direction.x, direction.y, 0f);
         }
+
+        /// <summary>从棋盘槽位沿正交方向取邻格；越界或斜向返回 false。</summary>
+        public static bool TryGetOrthogonalNeighbor(SlotId from, Vector2 direction, out SlotId to)
+        {
+            to = SlotId.None;
+            if (!from.IsBoardSlot || direction.sqrMagnitude < 0.0001f)
+            {
+                return false;
+            }
+
+            direction.Normalize();
+            int row = from.Row;
+            int column = from.Column;
+            if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+            {
+                column += direction.x > 0f ? 1 : -1;
+            }
+            else
+            {
+                row += direction.y > 0f ? -1 : 1;
+            }
+
+            if (row < 0 || row > 2 || column < 0 || column > 2)
+            {
+                return false;
+            }
+
+            to = SlotId.Board(row * 3 + column + 1);
+            return true;
+        }
+
+        public static bool TryGetNeighborForDirection(SlotId from, CardBattleDirection direction, out SlotId to)
+        {
+            return TryGetOrthogonalNeighbor(from, ToVector2(direction), out to);
+        }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NineGrid.Core;
 using NineGrid.Core.Content;
@@ -34,56 +35,92 @@ namespace NineGrid.Presentation.Debugging
             OpeningDeal,
         };
 
-        private static PresentationBatch CreateAttackKillRotateFill()
+        private static PresentationBatch CreateAttackKillRotateFill(PerformanceDebugPayload payload)
         {
+            int actorUid = ResolveActorUid(payload);
+            int targetUid = ResolveTargetUid(payload);
+            int amount = ResolveAmount(payload, 3);
+            int fromSlot = payload?.GetBoardSlot(PerformanceDebugPayloadKeys.FromSlot, 1) ?? 1;
+            int toSlot = payload?.GetBoardSlot(PerformanceDebugPayloadKeys.ToSlot, 2) ?? 2;
+            int rotateAmount = payload?.GetInt(PerformanceDebugPayloadKeys.RotateAmount, 1) ?? 1;
+
             var events = new List<CoreGameEvent>
             {
                 new CoreGameEvent(CoreEventType.DamageDealt, 1, "attack")
-                    .WithActor(PerformanceDebugActorUids.Player)
-                    .WithTarget(PerformanceDebugActorUids.Enemy)
-                    .WithAmount(3),
+                    .WithActor(actorUid)
+                    .WithTarget(targetUid)
+                    .WithAmount(amount),
                 new CoreGameEvent(CoreEventType.CardKilled, 1, "attack")
-                    .WithCard(PerformanceDebugActorUids.Enemy),
+                    .WithCard(targetUid),
                 new CoreGameEvent(CoreEventType.BoardRotated, 1, "attack")
-                    .WithAmount(1),
+                    .WithAmount(rotateAmount),
                 new CoreGameEvent(CoreEventType.CardMoved, 1, "attack")
-                    .WithCard(PerformanceDebugActorUids.BoardCard(1))
-                    .WithSlots(SlotId.Board(1), SlotId.Board(2)),
+                    .WithCard(PerformanceDebugActorUids.BoardCard(fromSlot))
+                    .WithSlots(SlotId.Board(fromSlot), SlotId.Board(toSlot)),
             };
 
             return PresentationBatchFixture.Create(101, events, CreateMinimalSnapshot());
         }
 
-        private static PresentationBatch CreateHelpCardChain()
+        private static PresentationBatch CreateHelpCardChain(PerformanceDebugPayload payload)
         {
+            int cardUid = ResolveActorUid(payload);
+            string effectId = payload?.GetString(PerformanceDebugPayloadKeys.EffectId, "relic.chain") ?? "relic.chain";
+
             var events = new List<CoreGameEvent>
             {
                 new CoreGameEvent(CoreEventType.ItemUsed, 5, "help")
-                    .WithCard(PerformanceDebugActorUids.Player),
+                    .WithCard(cardUid),
                 new CoreGameEvent(CoreEventType.EffectTriggered, 5, "help")
-                    .WithSource("relic.chain", "help"),
+                    .WithSource(effectId, "help"),
                 new CoreGameEvent(CoreEventType.EffectModifierApplied, 5, "help")
-                    .WithSource("relic.chain", "modifier"),
+                    .WithSource(effectId, "modifier"),
             };
 
             return PresentationBatchFixture.Create(102, events, CreateMinimalSnapshot());
         }
 
-        private static PresentationBatch CreateOpeningDeal()
+        private static PresentationBatch CreateOpeningDeal(PerformanceDebugPayload payload)
         {
+            int firstSlot = payload?.GetBoardSlot(PerformanceDebugPayloadKeys.ToSlot, 2) ?? 2;
+            int secondSlot = firstSlot == 2 ? 4 : firstSlot + 2;
+
             var events = new List<CoreGameEvent>
             {
                 new CoreGameEvent(CoreEventType.CardDealt, 10, "deal")
                     .WithCard(201)
-                    .WithSlots(SlotId.None, SlotId.Board(2)),
+                    .WithSlots(SlotId.None, SlotId.Board(firstSlot)),
                 new CoreGameEvent(CoreEventType.CardDealt, 10, "deal")
                     .WithCard(202)
-                    .WithSlots(SlotId.None, SlotId.Board(4)),
+                    .WithSlots(SlotId.None, SlotId.Board(secondSlot)),
                 new CoreGameEvent(CoreEventType.SlotsFilled, 10, "deal")
                     .WithAmount(2),
             };
 
             return PresentationBatchFixture.Create(103, events, CreateMinimalSnapshot());
+        }
+
+        private static int ResolveActorUid(PerformanceDebugPayload payload)
+        {
+            return payload?.GetInt(PerformanceDebugPayloadKeys.ActorUid, PerformanceDebugActorUids.Player)
+                ?? PerformanceDebugActorUids.Player;
+        }
+
+        private static int ResolveTargetUid(PerformanceDebugPayload payload)
+        {
+            return payload?.GetInt(PerformanceDebugPayloadKeys.TargetUid, PerformanceDebugActorUids.Enemy)
+                ?? PerformanceDebugActorUids.Enemy;
+        }
+
+        private static int ResolveAmount(PerformanceDebugPayload payload, int fallback)
+        {
+            if (payload == null)
+            {
+                return fallback;
+            }
+
+            int amount = payload.GetInt(PerformanceDebugPayloadKeys.Amount, fallback);
+            return amount > 0 ? amount : fallback;
         }
 
         private static CoreViewSnapshot CreateMinimalSnapshot()
@@ -105,7 +142,7 @@ namespace NineGrid.Presentation.Debugging
             string id,
             string displayName,
             PerformanceDebugContextPreset preset,
-            System.Func<PresentationBatch> createBatch)
+            Func<PerformanceDebugPayload, PresentationBatch> createBatch)
         {
             Id = id;
             DisplayName = displayName;
@@ -116,6 +153,6 @@ namespace NineGrid.Presentation.Debugging
         public string Id { get; }
         public string DisplayName { get; }
         public PerformanceDebugContextPreset Preset { get; }
-        public System.Func<PresentationBatch> CreateBatch { get; }
+        public Func<PerformanceDebugPayload, PresentationBatch> CreateBatch { get; }
     }
 }

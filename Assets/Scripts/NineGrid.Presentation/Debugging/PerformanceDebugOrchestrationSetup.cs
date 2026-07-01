@@ -56,6 +56,8 @@ namespace NineGrid.Presentation.Debugging
             registry.Register(new FillSlotsFlowBinding(substituteFlow));
             registry.Register(new UseItemFlowBinding(moduleHost.GetComponent<ItemUseFlow>()));
             registry.Register(new CardDeckEntryFlowBinding(moduleHost.GetComponent<CardDeckEntryFlow>()));
+            registry.Register(new CounterattackFlowBinding(moduleHost.GetComponent<CounterattackFlow>()));
+            registry.Register(new CounterattackKillFlowBinding(moduleHost.GetComponent<CounterattackKillFlow>()));
         }
 
         private static void RegisterReactions(

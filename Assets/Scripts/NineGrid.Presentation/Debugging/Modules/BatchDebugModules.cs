@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using NineGrid.Presentation.Contracts;
+using NineGrid.Presentation.Debugging;
 using NineGrid.Presentation.Shared;
 
 namespace NineGrid.Presentation.Debugging.Modules
@@ -11,22 +13,7 @@ namespace NineGrid.Presentation.Debugging.Modules
         public BatchFixtureDebugModule(BatchFixtureEntry fixture)
         {
             this.fixture = fixture;
-            Schema = new PerformanceDebugSchema()
-                .Add(
-                    "contextPreset",
-                    "Context",
-                    PerformanceDebugParamKind.ContextPreset,
-                    fixture.Preset.ToString(),
-                    Enum.GetNames(typeof(PerformanceDebugContextPreset)))
-                .Add(
-                    "direction",
-                    "Direction",
-                    PerformanceDebugParamKind.Enum,
-                    CardBattleDirection.Right.ToString(),
-                    "Right",
-                    "Up",
-                    "Left",
-                    "Down");
+            Schema = BuildSchema(fixture);
         }
 
         public string Id => fixture.Id;
@@ -65,6 +52,54 @@ namespace NineGrid.Presentation.Debugging.Modules
         public float TryGetExpectedDuration(PerformanceDebugContext context)
         {
             return 0f;
+        }
+
+        private static PerformanceDebugSchema BuildSchema(BatchFixtureEntry fixture)
+        {
+            if (fixture.Id == PresentationBatchFixtureLibrary.HelpCardChain.Id)
+            {
+                return new PerformanceDebugSchema()
+                    .Add(PerformanceDebugPayloadKeys.ContextPreset, "Context", PerformanceDebugParamKind.ContextPreset,
+                        fixture.Preset.ToString(),
+                        PerformanceDebugSchemaFactory.EnumNames<PerformanceDebugContextPreset>())
+                    .Add(PerformanceDebugPayloadKeys.ActorUid, "Card Uid", PerformanceDebugParamKind.Int, "1")
+                    .Add(PerformanceDebugPayloadKeys.EffectId, "Effect Id", PerformanceDebugParamKind.String, "relic.chain");
+            }
+
+            if (fixture.Id == PresentationBatchFixtureLibrary.OpeningDeal.Id)
+            {
+                return new PerformanceDebugSchema()
+                    .Add(PerformanceDebugPayloadKeys.ContextPreset, "Context", PerformanceDebugParamKind.ContextPreset,
+                        fixture.Preset.ToString(),
+                        PerformanceDebugSchemaFactory.EnumNames<PerformanceDebugContextPreset>())
+                    .Add(PerformanceDebugPayloadKeys.ToSlot, "First Deal Slot", PerformanceDebugParamKind.Enum, "2",
+                        PerformanceDebugSchemaFactory.BoardSlotOptions);
+            }
+
+            if (fixture.Id == PresentationBatchFixtureLibrary.AttackKillRotateFill.Id)
+            {
+                return AppendMoveAndRotateFields(PerformanceDebugSchemaFactory.BattleEventSchema(fixture.Preset));
+            }
+
+            return PerformanceDebugSchemaFactory.BattleEventSchema(fixture.Preset);
+        }
+
+        private static PerformanceDebugSchema AppendMoveAndRotateFields(PerformanceDebugSchema baseSchema)
+        {
+            var schema = new PerformanceDebugSchema();
+            IReadOnlyList<PerformanceDebugFieldDef> fields = baseSchema.Fields;
+            for (var i = 0; i < fields.Count; i++)
+            {
+                PerformanceDebugFieldDef field = fields[i];
+                schema.Add(field.Key, field.Label, field.Kind, field.DefaultValue, field.EnumOptions);
+            }
+
+            schema.Add(PerformanceDebugPayloadKeys.FromSlot, "Move From Slot", PerformanceDebugParamKind.Enum, "1",
+                PerformanceDebugSchemaFactory.BoardSlotOptions);
+            schema.Add(PerformanceDebugPayloadKeys.ToSlot, "Move To Slot", PerformanceDebugParamKind.Enum, "2",
+                PerformanceDebugSchemaFactory.BoardSlotOptions);
+            schema.Add(PerformanceDebugPayloadKeys.RotateAmount, "Rotate Amount", PerformanceDebugParamKind.Int, "1");
+            return schema;
         }
     }
 }

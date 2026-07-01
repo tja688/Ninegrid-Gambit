@@ -59,7 +59,8 @@ namespace NineGrid.Presentation.Tests
             var plan = new PerformancePlanBuilder().Build(batch);
 
             var payload = new PerformanceDebugPayload();
-            payload.Set("direction", CardBattleDirection.Up.ToString());
+            payload.Set(PerformanceDebugPayloadKeys.Direction, CardBattleDirection.Up.ToString());
+            payload.Set(PerformanceDebugPayloadKeys.ForceDirectionOverride, "true");
             PerformanceDebugBatchHijack.ApplyEditorOverrides(plan, payload);
 
             Assert.AreEqual(Vector2.up, FindStepPayload(plan, FlowId.CardAttack).Direction);

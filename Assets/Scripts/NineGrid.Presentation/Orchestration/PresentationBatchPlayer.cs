@@ -50,7 +50,11 @@ namespace NineGrid.Presentation.Orchestration
                 for (var stepIndex = 0; stepIndex < group.Steps.Count; stepIndex++)
                 {
                     var step = group.Steps[stepIndex];
-                    lines.Add("    " + step.Id + " Flow=" + step.FlowId + " card=" + step.Payload.CardUid);
+                    FlowPayload flowPayload = step.Payload;
+                    lines.Add(
+                        "    " + step.Id
+                        + " Flow=" + step.FlowId
+                        + " " + FormatFlowPayload(flowPayload));
                 }
             }
 
@@ -62,10 +66,37 @@ namespace NineGrid.Presentation.Orchestration
                     "  Reaction " + reaction.ReactionId
                     + " anchor=" + anchor.Kind
                     + " step=" + anchor.StepId
-                    + " marker=" + anchor.Marker);
+                    + " marker=" + anchor.Marker
+                    + " " + FormatFlowPayload(reaction.Payload));
             }
 
             return string.Join("\n", lines);
+        }
+
+        private static string FormatFlowPayload(FlowPayload payload)
+        {
+            if (payload == null)
+            {
+                return "payload=null";
+            }
+
+            return "actor=" + payload.ActorUid
+                + " target=" + payload.TargetUid
+                + " card=" + payload.CardUid
+                + " from=" + payload.FromSlot
+                + " to=" + payload.ToSlot
+                + " amount=" + payload.Amount
+                + " dir=" + FormatDirection(payload.Direction);
+        }
+
+        private static string FormatDirection(UnityEngine.Vector2 direction)
+        {
+            if (direction.sqrMagnitude < 0.0001f)
+            {
+                return "auto";
+            }
+
+            return direction.x.ToString("0.##") + "," + direction.y.ToString("0.##");
         }
 
         public PresentationPlanPlayResult PlaySync(PresentationBatch batch, PresentationPlan plan = null)

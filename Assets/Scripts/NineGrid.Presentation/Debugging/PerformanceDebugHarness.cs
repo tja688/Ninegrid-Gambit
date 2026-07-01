@@ -131,6 +131,64 @@ namespace NineGrid.Presentation.Debugging
             Log.Info($"Context preset applied: {preset}");
         }
 
+        public void ApplyContextPreset(PerformanceDebugContextPreset preset, PerformanceDebugPayload payload)
+        {
+            ClearPerformanceStage();
+            BuildContextPreset(preset);
+            if (payload != null)
+            {
+                PerformanceDebugLayoutApplier.Apply(this, preset, payload);
+            }
+
+            Log.Info($"Context preset applied: {preset}");
+        }
+
+        /// <summary>
+        /// 按棋盘槽位摆放战斗演员并更新 PlayerSlot/EnemySlot 注册。
+        /// </summary>
+        public void ApplyBattleSlots(int playerSlotIndex, int targetSlotIndex, int actorUid, int targetUid)
+        {
+            Transform playerAnchor = ResolveBoardSlotAnchor(playerSlotIndex);
+            Transform targetAnchor = ResolveBoardSlotAnchor(targetSlotIndex);
+            if (playerAnchor != null)
+            {
+                Registry.RegisterAnchor(PerformanceDebugActorUids.PlayerSlot, playerAnchor);
+                Registry.RegisterAnchor(SlotId.Board(playerSlotIndex), playerAnchor);
+            }
+
+            if (targetAnchor != null)
+            {
+                Registry.RegisterAnchor(PerformanceDebugActorUids.EnemySlot, targetAnchor);
+                Registry.RegisterAnchor(SlotId.Board(targetSlotIndex), targetAnchor);
+            }
+
+            Transform player = ResolveBattleActor(actorUid, "player", playerSlotIndex);
+            Transform target = ResolveBattleActor(targetUid, "enemy", targetSlotIndex);
+            if (player != null && playerAnchor != null)
+            {
+                MoveActorToAnchor(player, playerAnchor);
+            }
+
+            if (target != null && targetAnchor != null)
+            {
+                MoveActorToAnchor(target, targetAnchor);
+            }
+
+            if (player != null)
+            {
+                Registry.RegisterActor("player", player);
+                Registry.RegisterActor(actorUid, player);
+                Registry.RegisterActor(PerformanceDebugActorUids.Player, player);
+            }
+
+            if (target != null)
+            {
+                Registry.RegisterActor("enemy", target);
+                Registry.RegisterActor(targetUid, target);
+                Registry.RegisterActor(PerformanceDebugActorUids.Enemy, target);
+            }
+        }
+
         public void ReindexAnchors()
         {
             ResolveSceneRoots();
@@ -228,28 +286,11 @@ namespace NineGrid.Presentation.Debugging
 
         private void BuildBattlePair()
         {
-            Transform playerAnchor = ResolveGridAnchor("slot5_Player") ?? ResolveGridAnchor("slot6");
-            Transform enemyAnchor = ResolveGridAnchor("slot6");
-            if (playerAnchor == null || enemyAnchor == null)
-            {
-                Log.Warn($"BattlePair anchors missing. player={(playerAnchor != null)} enemy={(enemyAnchor != null)}");
-            }
-
-            Transform player = ActorFactory.SpawnAtAnchor("player", PerformanceDebugActorUids.Player, playerAnchor);
-            Transform enemy = ActorFactory.SpawnAtAnchor("enemy", PerformanceDebugActorUids.Enemy, enemyAnchor);
-            Registry.RegisterActor("player", player);
-            Registry.RegisterActor("enemy", enemy);
-            Registry.RegisterActor(PerformanceDebugActorUids.Player, player);
-            Registry.RegisterActor(PerformanceDebugActorUids.Enemy, enemy);
-            if (playerAnchor != null)
-            {
-                Registry.RegisterAnchor(PerformanceDebugActorUids.PlayerSlot, playerAnchor);
-            }
-
-            if (enemyAnchor != null)
-            {
-                Registry.RegisterAnchor(PerformanceDebugActorUids.EnemySlot, enemyAnchor);
-            }
+            ApplyBattleSlots(
+                5,
+                6,
+                PerformanceDebugActorUids.Player,
+                PerformanceDebugActorUids.Enemy);
         }
 
         private void BuildBoard9()
@@ -430,6 +471,52 @@ namespace NineGrid.Presentation.Debugging
         private static Transform FindChildRecursive(Transform root, string name)
         {
             return PerformanceDebugAnchorIndexing.FindChildRecursive(root, name);
+        }
+
+        private Transform ResolveBoardSlotAnchor(int boardSlotIndex)
+        {
+            string slotName = boardSlotIndex == 5 ? "slot5_Player" : $"slot{boardSlotIndex}";
+            return ResolveGridAnchor(slotName) ?? ResolveGridAnchor($"slot{boardSlotIndex}");
+        }
+
+        private Transform ResolveBattleActor(int cardUid, string debugId, int boardSlotIndex)
+        {
+            Transform actor = Registry.ResolveActor(cardUid);
+            if (actor != null)
+            {
+                return actor;
+            }
+
+            actor = Registry.ResolveActor(debugId);
+            if (actor != null)
+            {
+                return actor;
+            }
+
+            actor = Registry.ResolveActor(PerformanceDebugActorUids.BoardCard(boardSlotIndex));
+            if (actor != null)
+            {
+                return actor;
+            }
+
+            Transform anchor = ResolveBoardSlotAnchor(boardSlotIndex);
+            if (anchor == null)
+            {
+                Log.Warn($"Battle slot anchor missing: {boardSlotIndex}");
+                return null;
+            }
+
+            return ActorFactory.SpawnAtAnchor(debugId, cardUid, anchor);
+        }
+
+        private static void MoveActorToAnchor(Transform actor, Transform anchor)
+        {
+            if (actor == null || anchor == null)
+            {
+                return;
+            }
+
+            actor.SetPositionAndRotation(anchor.position, anchor.rotation);
         }
     }
 }

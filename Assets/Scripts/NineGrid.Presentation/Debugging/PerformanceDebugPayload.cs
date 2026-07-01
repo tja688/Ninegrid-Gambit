@@ -62,6 +62,21 @@ namespace NineGrid.Presentation.Debugging
                 : PerformanceDebugContextPreset.None;
         }
 
+        public int GetBoardSlot(string key, int fallback = 5)
+        {
+            string raw = GetString(key);
+            if (string.IsNullOrEmpty(raw))
+            {
+                return fallback;
+            }
+
+            return int.TryParse(raw, out int parsed)
+                   && parsed >= NineGrid.Core.SlotId.MinBoardIndex
+                   && parsed <= NineGrid.Core.SlotId.MaxBoardIndex
+                ? parsed
+                : fallback;
+        }
+
         public PerformanceDebugPayload Clone()
         {
             var clone = new PerformanceDebugPayload();

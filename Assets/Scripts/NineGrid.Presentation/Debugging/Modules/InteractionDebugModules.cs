@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NineGrid.Presentation.Debugging;
 using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
@@ -58,12 +59,17 @@ namespace NineGrid.Presentation.Debugging.Modules
         public override string Id => "interaction.hand-drag";
         public override string DisplayName => "手牌拖拽";
         public override PerformanceDebugCategory Category => PerformanceDebugCategory.Interaction;
-        public override PerformanceDebugSchema Schema => PerformanceDebugSchemaFactory.ContextOnlySchema(PerformanceDebugContextPreset.Hand7);
+        public override PerformanceDebugSchema Schema => CreateSchema()
+            .Add(PerformanceDebugPayloadKeys.ContextPreset, "Context", PerformanceDebugParamKind.ContextPreset,
+                PerformanceDebugContextPreset.Hand7.ToString(),
+                PerformanceDebugSchemaFactory.EnumNames<PerformanceDebugContextPreset>())
+            .Add(PerformanceDebugPayloadKeys.HandFocusIndex, "Focus Hand Index", PerformanceDebugParamKind.Int, "3");
 
         protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, HandCardDragPresenter module, PerformanceDebugPayload payload)
         {
+            int focusIndex = Mathf.Clamp(payload.GetInt(PerformanceDebugPayloadKeys.HandFocusIndex, 3), 0, 6);
             var others = new List<Transform>();
-            Transform focused = context.ResolveActor("hand4");
+            Transform focused = context.ResolveActor($"hand{focusIndex + 1}");
             for (var i = 1; i <= 7; i++)
             {
                 Transform actor = context.ResolveActor($"hand{i}");
