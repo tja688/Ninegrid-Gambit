@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using NineGrid.Presentation.Debugging;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -38,6 +39,35 @@ namespace NineGrid.Presentation.Editor.Ui
 
             public static readonly Color PageTitle = new Color(0.95f, 0.90f, 0.80f);
             public static readonly Color PageDesc = new Color(0.80f, 0.74f, 0.67f);
+
+            public static readonly Color PoolFlow = new Color(0.86f, 0.64f, 0.28f);
+            public static readonly Color PoolReaction = new Color(0.72f, 0.45f, 0.38f);
+            public static readonly Color PoolCue = new Color(0.45f, 0.68f, 0.55f);
+            public static readonly Color PoolInteraction = new Color(0.55f, 0.58f, 0.82f);
+        }
+
+        public static Color GetPoolAccent(PerformanceDebugCategory category)
+        {
+            return category switch
+            {
+                PerformanceDebugCategory.Flow => Theme.PoolFlow,
+                PerformanceDebugCategory.Reaction => Theme.PoolReaction,
+                PerformanceDebugCategory.Cue => Theme.PoolCue,
+                PerformanceDebugCategory.Interaction => Theme.PoolInteraction,
+                _ => Theme.AccentMid,
+            };
+        }
+
+        public static string GetPoolDisplayName(PerformanceDebugCategory category)
+        {
+            return category switch
+            {
+                PerformanceDebugCategory.Flow => "Flow 池",
+                PerformanceDebugCategory.Reaction => "Reaction 池",
+                PerformanceDebugCategory.Cue => "Feedback(Cue) 池",
+                PerformanceDebugCategory.Interaction => "Interaction 池",
+                _ => category.ToString(),
+            };
         }
 
         public struct NavEntry

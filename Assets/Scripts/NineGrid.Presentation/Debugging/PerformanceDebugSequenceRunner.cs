@@ -84,8 +84,6 @@ namespace NineGrid.Presentation.Debugging
             {
                 currentModule.Stop(harness.CreateContext());
             }
-
-            harness.BatchRunner?.Stop();
         }
 
         public void StopAll()

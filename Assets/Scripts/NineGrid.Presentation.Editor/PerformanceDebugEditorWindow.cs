@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using NineGrid.Presentation.Debugging;
+using NineGrid.Presentation.Debugging.Timeline;
 using NineGrid.Presentation.Editor.Ui;
+using NineGrid.Presentation.Editor.Ui.Timeline;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.UIElements;
@@ -18,11 +20,18 @@ namespace NineGrid.Presentation.Editor
         private const string TestScenePath = "Assets/Scenes/PerformanceTestScene.unity";
         private const string PrefsSelectedModule = "NineGrid.PerfDebug.SelectedModuleId";
         private const string PrefsSearch = "NineGrid.PerfDebug.Search";
-        private const string PrefsCategory = "NineGrid.PerfDebug.Category";
+        private const string PrefsViewMode = "NineGrid.PerfDebug.ViewMode";
         private const string PrefsFieldPrefix = "NineGrid.PerfDebug.Field.";
+        private const string TimelineNavKey = "__timeline__";
+
+        private enum PerfDebugViewMode
+        {
+            Module,
+            Timeline,
+        }
 
         private readonly List<PerformanceDebugWarmConsoleUi.NavEntry> navEntries = new();
-        private readonly List<IPerformanceDebugModule> filteredModules = new();
+        private readonly List<PerformanceDebugWarmConsoleUi.NavEntry> timelineNavEntries = new();
 
         private PerformanceDebugCatalog catalog;
         private VisualElement contentRoot;
@@ -31,18 +40,15 @@ namespace NineGrid.Presentation.Editor
         private VisualElement anchorListContainer;
         private HelpBox statusHelpBox;
         private Label logLabel;
-        private Label planDumpLabel;
         private TextField searchField;
-        private PopupField<string> categoryPopup;
-
-        private Label derivedDirectionLabel;
 
         private string selectedModuleId = string.Empty;
         private string searchFilter = string.Empty;
-        private int categoryFilterIndex;
+        private PerfDebugViewMode viewMode;
         private PerformanceDebugPayload workingPayload;
         private IPerformanceDebugModule selectedModule;
         private readonly PerformanceDebugViewRegistry editModeAnchorRegistry = new();
+        private PerformanceDebugTimelineEditorPage timelinePage;
 
         [MenuItem("TableNine/表演调试面板")]
         public static void ShowWindow()
@@ -58,12 +64,20 @@ namespace NineGrid.Presentation.Editor
             catalog = PerformanceDebugCatalog.Discover();
             selectedModuleId = EditorPrefs.GetString(PrefsSelectedModule, string.Empty);
             searchFilter = EditorPrefs.GetString(PrefsSearch, string.Empty);
-            categoryFilterIndex = EditorPrefs.GetInt(PrefsCategory, 0);
+            viewMode = (PerfDebugViewMode)EditorPrefs.GetInt(PrefsViewMode, (int)PerfDebugViewMode.Module);
 
             BuildShell();
             TryRefreshEditModeAnchors();
             RefreshNavigation();
-            SelectModuleById(selectedModuleId);
+
+            if (viewMode == PerfDebugViewMode.Timeline)
+            {
+                SelectTimelineView();
+            }
+            else
+            {
+                SelectModuleById(selectedModuleId);
+            }
 
             EditorApplication.update += OnEditorUpdate;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
@@ -116,6 +130,7 @@ namespace NineGrid.Presentation.Editor
 
             RefreshStats();
             RefreshLog();
+            timelinePage?.OnEditorUpdate();
         }
 
         private void PingAnchor(string anchorId)
@@ -206,22 +221,13 @@ namespace NineGrid.Presentation.Editor
                 searchFilter = evt.newValue ?? string.Empty;
                 EditorPrefs.SetString(PrefsSearch, searchFilter);
                 RefreshNavigation();
+                timelinePage?.SetSearchFilter(searchFilter);
+                if (viewMode == PerfDebugViewMode.Timeline)
+                {
+                    RebuildDetailPage();
+                }
             });
             toolbar.Add(WrapToolbarField("搜索", searchField));
-
-            var categoryChoices = BuildCategoryChoices();
-            categoryPopup = new PopupField<string>(
-                categoryChoices,
-                Mathf.Clamp(categoryFilterIndex, 0, categoryChoices.Count - 1));
-            categoryPopup.style.width = 130;
-            categoryPopup.style.flexShrink = 0;
-            categoryPopup.RegisterValueChangedCallback(_ =>
-            {
-                categoryFilterIndex = categoryPopup.index;
-                EditorPrefs.SetInt(PrefsCategory, categoryFilterIndex);
-                RefreshNavigation();
-            });
-            toolbar.Add(WrapToolbarField("分类", categoryPopup));
 
             return toolbar;
         }
@@ -256,7 +262,7 @@ namespace NineGrid.Presentation.Editor
             sidebar.style.backgroundColor = PerformanceDebugWarmConsoleUi.Theme.SidebarBg;
 
             var groupLabel = PerformanceDebugWarmConsoleUi.CreateTitleLabel(
-                "MODULES", 10, true, PerformanceDebugWarmConsoleUi.Theme.TextTertiary);
+                "NAVIGATION", 10, true, PerformanceDebugWarmConsoleUi.Theme.TextTertiary);
             groupLabel.style.paddingLeft = 12;
             groupLabel.style.paddingTop = 10;
             groupLabel.style.paddingBottom = 4;
@@ -314,6 +320,14 @@ namespace NineGrid.Presentation.Editor
             contentRoot.Add(anchorListContainer);
             RefreshAnchorList();
 
+            if (viewMode == PerfDebugViewMode.Timeline)
+            {
+                EnsureTimelinePage();
+                timelinePage.SetSearchFilter(searchFilter);
+                timelinePage.Build(contentRoot);
+                return;
+            }
+
             if (selectedModule == null)
             {
                 contentRoot.Add(PerformanceDebugWarmConsoleUi.CreatePageHeader(
@@ -347,20 +361,6 @@ namespace NineGrid.Presentation.Editor
                         new Button(OnCopyPayload) { text = "Copy Payload" }));
                 }));
 
-            if (selectedModule.Category == PerformanceDebugCategory.Batch)
-            {
-                contentRoot.Add(PerformanceDebugWarmConsoleUi.CreateSectionCard(
-                    "Plan 步骤",
-                    "最近一次批次经 PlanBuilder 生成的步骤与反应（timeline 文本种子）。",
-                    column =>
-                    {
-                        planDumpLabel = PerformanceDebugWarmConsoleUi.CreateDescriptionLabel("点击 Play 后显示 Plan dump。");
-                        planDumpLabel.style.whiteSpace = WhiteSpace.Normal;
-                        column.Add(planDumpLabel);
-                    }));
-                RefreshPlanDump();
-            }
-
             contentRoot.Add(PerformanceDebugWarmConsoleUi.CreateSectionCard(
                 "运行日志",
                 "来自 PerformanceDebugLogBuffer，最近条目。",
@@ -372,6 +372,15 @@ namespace NineGrid.Presentation.Editor
                 }));
 
             RefreshLog();
+        }
+
+        private void EnsureTimelinePage()
+        {
+            timelinePage ??= new PerformanceDebugTimelineEditorPage(
+                catalog,
+                GetTimelineRunnerOrNull,
+                null,
+                searchFilter);
         }
 
         private void BuildParamFields(VisualElement column)
@@ -387,7 +396,12 @@ namespace NineGrid.Presentation.Editor
             {
                 PerformanceDebugFieldDef field = fields[i];
                 string current = workingPayload.GetString(field.Key, field.DefaultValue);
-                column.Add(CreateParamRow(field, current));
+                column.Add(PerformanceDebugFieldRowFactory.CreateParamRow(
+                    field,
+                    current,
+                    workingPayload,
+                    OnPayloadFieldChanged,
+                    RefreshDerivedDirectionInParamCard));
             }
         }
 
@@ -396,139 +410,154 @@ namespace NineGrid.Presentation.Editor
             workingPayload.Set(key, value);
             SaveFieldPref(selectedModule.Id, key, value);
             PerformanceDebugLayoutApplier.SyncDerivedDirection(workingPayload);
-            RefreshDerivedDirectionLabel();
         }
 
-        private void RefreshDerivedDirectionLabel()
+        private void RefreshDerivedDirectionInParamCard()
         {
-            if (derivedDirectionLabel == null || workingPayload == null)
+            if (contentRoot == null || workingPayload == null)
             {
                 return;
             }
 
-            derivedDirectionLabel.text = PerformanceDebugLayoutApplier.FormatDerivedDirection(workingPayload);
-        }
-
-        private VisualElement CreateParamRow(PerformanceDebugFieldDef field, string currentValue)
-        {
-            string description = DescribeField(field);
-
-            switch (field.Kind)
-            {
-                case PerformanceDebugParamKind.Bool:
-                {
-                    bool isOn = currentValue is "1" or "true" or "True" or "yes" or "Yes";
-                    var toggle = new Toggle { value = isOn };
-                    toggle.RegisterValueChangedCallback(evt =>
-                    {
-                        OnPayloadFieldChanged(field.Key, evt.newValue ? "true" : "false");
-                    });
-                    return PerformanceDebugWarmConsoleUi.WrapControl(field.Label, description, toggle);
-                }
-                case PerformanceDebugParamKind.Derived:
-                {
-                    derivedDirectionLabel = PerformanceDebugWarmConsoleUi.CreateDescriptionLabel(
-                        PerformanceDebugLayoutApplier.FormatDerivedDirection(workingPayload));
-                    derivedDirectionLabel.style.unityFontStyleAndWeight = FontStyle.Italic;
-                    return PerformanceDebugWarmConsoleUi.WrapControl(field.Label, "由 Player/Target Slot 推导（只读）", derivedDirectionLabel);
-                }
-                case PerformanceDebugParamKind.Enum:
-                case PerformanceDebugParamKind.ContextPreset:
-                {
-                    var options = new List<string>(field.EnumOptions);
-                    if (options.Count == 0)
-                    {
-                        options.Add(currentValue);
-                    }
-
-                    int index = Mathf.Max(0, options.IndexOf(currentValue));
-                    var popup = new PopupField<string>(options, index);
-                    popup.RegisterValueChangedCallback(evt =>
-                    {
-                        OnPayloadFieldChanged(field.Key, evt.newValue);
-                    });
-                    return PerformanceDebugWarmConsoleUi.WrapControl(field.Label, description, popup);
-                }
-                default:
-                {
-                    var textField = new TextField { value = currentValue };
-                    textField.RegisterValueChangedCallback(evt =>
-                    {
-                        OnPayloadFieldChanged(field.Key, evt.newValue ?? string.Empty);
-                    });
-                    return PerformanceDebugWarmConsoleUi.WrapControl(field.Label, description, textField);
-                }
-            }
-        }
-
-        private static string DescribeField(PerformanceDebugFieldDef field)
-        {
-            return field.Kind switch
-            {
-                PerformanceDebugParamKind.Int => "整数",
-                PerformanceDebugParamKind.Float => "浮点数",
-                PerformanceDebugParamKind.Bool => "true / false",
-                PerformanceDebugParamKind.ActorId => "演员 ID，如 player / enemy",
-                PerformanceDebugParamKind.AnchorId => "锚点 ID：grid.slot3 / deck.slot5 / hand.handcard1",
-                PerformanceDebugParamKind.ContextPreset => "重建场景演员布局",
-                PerformanceDebugParamKind.Enum => "枚举选项",
-                PerformanceDebugParamKind.Derived => "由槽位几何推导（只读）",
-                _ => field.Key,
-            };
+            PerformanceDebugFieldRowFactory.RefreshDerivedLabels(contentRoot, workingPayload);
         }
 
         private void RefreshNavigation()
         {
             navEntries.Clear();
-            filteredModules.Clear();
+            timelineNavEntries.Clear();
             navListContainer.Clear();
 
-            PerformanceDebugCategory? category = GetCategoryFilter();
-            for (var i = 0; i < catalog.Modules.Count; i++)
+            var timelineBtn = PerformanceDebugWarmConsoleUi.CreateNavButton(
+                "时间轴编排",
+                "拖拽编排多段表演批次",
+                TimelineNavKey,
+                SelectTimelineView,
+                timelineNavEntries);
+            timelineBtn.style.marginBottom = 12;
+            navListContainer.Add(timelineBtn);
+
+            AddPoolFoldout(PerformanceDebugCategory.Flow);
+            AddPoolFoldout(PerformanceDebugCategory.Reaction);
+            AddPoolFoldout(PerformanceDebugCategory.Cue);
+            AddPoolFoldout(PerformanceDebugCategory.Interaction);
+
+            string activeKey = viewMode == PerfDebugViewMode.Timeline ? TimelineNavKey : selectedModuleId;
+            PerformanceDebugWarmConsoleUi.UpdateNavigationStyles(navEntries, activeKey);
+            PerformanceDebugWarmConsoleUi.UpdateNavigationStyles(timelineNavEntries, activeKey);
+
+            if (viewMode == PerfDebugViewMode.Module
+                && selectedModule == null
+                && !string.IsNullOrEmpty(selectedModuleId))
             {
-                IPerformanceDebugModule module = catalog.Modules[i];
-                if (category.HasValue && module.Category != category.Value)
+                selectedModule = catalog.FindById(selectedModuleId);
+            }
+
+            if (viewMode == PerfDebugViewMode.Module
+                && selectedModule == null
+                && catalog.Modules.Count > 0)
+            {
+                for (var c = 0; c < 4; c++)
                 {
-                    continue;
+                    var category = (PerformanceDebugCategory)c;
+                    IReadOnlyList<IPerformanceDebugModule> pool = catalog.GetByCategory(category);
+                    for (var i = 0; i < pool.Count; i++)
+                    {
+                        if (MatchesSearch(pool[i]))
+                        {
+                            SelectModuleById(pool[i].Id);
+                            return;
+                        }
+                    }
                 }
+            }
+        }
 
-                if (!string.IsNullOrEmpty(searchFilter)
-                    && module.DisplayName.IndexOf(searchFilter, StringComparison.OrdinalIgnoreCase) < 0
-                    && module.Id.IndexOf(searchFilter, StringComparison.OrdinalIgnoreCase) < 0)
+        private void AddPoolFoldout(PerformanceDebugCategory category)
+        {
+            IReadOnlyList<IPerformanceDebugModule> allInCategory = catalog.GetByCategory(category);
+            var visible = new List<IPerformanceDebugModule>();
+            for (var i = 0; i < allInCategory.Count; i++)
+            {
+                IPerformanceDebugModule module = allInCategory[i];
+                if (MatchesSearch(module))
                 {
-                    continue;
+                    visible.Add(module);
                 }
-
-                filteredModules.Add(module);
             }
 
-            for (var i = 0; i < filteredModules.Count; i++)
+            if (visible.Count == 0 && !string.IsNullOrEmpty(searchFilter))
             {
-                IPerformanceDebugModule module = filteredModules[i];
-                string key = module.Id;
-                navListContainer.Add(PerformanceDebugWarmConsoleUi.CreateNavButton(
-                    module.DisplayName,
-                    $"{module.Category} · {module.Id}",
-                    key,
-                    () => SelectModuleById(key),
-                    navEntries));
+                return;
             }
 
-            PerformanceDebugWarmConsoleUi.UpdateNavigationStyles(navEntries, selectedModuleId);
+            bool expanded = EditorPrefs.GetBool(PoolExpandedKey(category), true);
+            var foldout = new Foldout
+            {
+                text = $"{PerformanceDebugWarmConsoleUi.GetPoolDisplayName(category)} ({visible.Count})",
+                value = expanded,
+            };
+            foldout.style.color = PerformanceDebugWarmConsoleUi.Theme.TextPrimary;
+            foldout.style.marginBottom = 6;
+            foldout.style.unityFontStyleAndWeight = FontStyle.Bold;
+            foldout.RegisterValueChangedCallback(evt =>
+            {
+                EditorPrefs.SetBool(PoolExpandedKey(category), evt.newValue);
+            });
 
-            if (filteredModules.Count == 0)
+            var stripe = new VisualElement();
+            stripe.style.width = 3;
+            stripe.style.height = 14;
+            stripe.style.backgroundColor = PerformanceDebugWarmConsoleUi.GetPoolAccent(category);
+            stripe.style.marginRight = 4;
+            stripe.style.alignSelf = Align.Center;
+
+            if (visible.Count == 0)
             {
-                navListContainer.Add(PerformanceDebugWarmConsoleUi.CreateDescriptionLabel("无匹配模块。"));
+                foldout.Add(PerformanceDebugWarmConsoleUi.CreateDescriptionLabel("无匹配模块。"));
             }
-            else if (string.IsNullOrEmpty(selectedModuleId)
-                     || filteredModules.Find(m => m.Id == selectedModuleId) == null)
+            else
             {
-                SelectModuleById(filteredModules[0].Id);
+                for (var i = 0; i < visible.Count; i++)
+                {
+                    IPerformanceDebugModule module = visible[i];
+                    string key = module.Id;
+                    foldout.Add(PerformanceDebugWarmConsoleUi.CreateNavButton(
+                        module.DisplayName,
+                        module.Id,
+                        key,
+                        () => SelectModuleById(key),
+                        navEntries));
+                }
             }
+
+            navListContainer.Add(foldout);
+        }
+
+        private bool MatchesSearch(IPerformanceDebugModule module)
+        {
+            if (string.IsNullOrEmpty(searchFilter))
+            {
+                return true;
+            }
+
+            return module.DisplayName.IndexOf(searchFilter, StringComparison.OrdinalIgnoreCase) >= 0
+                   || module.Id.IndexOf(searchFilter, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private void SelectTimelineView()
+        {
+            viewMode = PerfDebugViewMode.Timeline;
+            EditorPrefs.SetInt(PrefsViewMode, (int)viewMode);
+            PerformanceDebugWarmConsoleUi.UpdateNavigationStyles(navEntries, TimelineNavKey);
+            PerformanceDebugWarmConsoleUi.UpdateNavigationStyles(timelineNavEntries, TimelineNavKey);
+            RebuildDetailPage();
         }
 
         private void SelectModuleById(string moduleId)
         {
+            viewMode = PerfDebugViewMode.Module;
+            EditorPrefs.SetInt(PrefsViewMode, (int)viewMode);
             selectedModuleId = moduleId ?? string.Empty;
             EditorPrefs.SetString(PrefsSelectedModule, selectedModuleId);
             selectedModule = catalog.FindById(selectedModuleId);
@@ -544,6 +573,7 @@ namespace NineGrid.Presentation.Editor
             }
 
             PerformanceDebugWarmConsoleUi.UpdateNavigationStyles(navEntries, selectedModuleId);
+            PerformanceDebugWarmConsoleUi.UpdateNavigationStyles(timelineNavEntries, string.Empty);
             RebuildDetailPage();
         }
 
@@ -613,7 +643,12 @@ namespace NineGrid.Presentation.Editor
             {
                 actorCount = bootstrap.Harness.Registry.Actors.Count.ToString();
                 anchorCount = bootstrap.Harness.Registry.Anchors.Count.ToString();
-                if (bootstrap.Runner.CurrentModule != null)
+
+                if (bootstrap.TimelineRunner?.IsPlaying == true)
+                {
+                    playState = $"Timeline {bootstrap.TimelineRunner.PlayheadTime:0.0}s";
+                }
+                else if (bootstrap.Runner.CurrentModule != null)
                 {
                     currentModule = bootstrap.Runner.CurrentModule.DisplayName;
                     PerformanceDebugContext context = bootstrap.Harness.CreateContext();
@@ -727,21 +762,6 @@ namespace NineGrid.Presentation.Editor
             }
 
             logLabel.text = builder.ToString();
-            RefreshPlanDump();
-        }
-
-        private void RefreshPlanDump()
-        {
-            if (planDumpLabel == null)
-            {
-                return;
-            }
-
-            PerformanceDebugBootstrap bootstrap = PerformanceDebugSession.Current;
-            string dump = bootstrap?.BatchRunner?.LastPlanDump;
-            planDumpLabel.text = string.IsNullOrEmpty(dump)
-                ? "点击 Play 后显示 Plan dump。"
-                : dump;
         }
 
         private PerformanceDebugSequenceRunner GetRunnerOrWarn()
@@ -757,6 +777,11 @@ namespace NineGrid.Presentation.Editor
             }
 
             return bootstrap.Runner;
+        }
+
+        private PerformanceDebugTimelineRunner GetTimelineRunnerOrNull()
+        {
+            return PerformanceDebugSession.Current?.TimelineRunner;
         }
 
         private void OnPlay()
@@ -790,7 +815,7 @@ namespace NineGrid.Presentation.Editor
         private void OnStopCurrent()
         {
             GetRunnerOrWarn()?.StopCurrent();
-            PerformanceDebugSession.Current?.BatchRunner?.Stop();
+            PerformanceDebugSession.Current?.TimelineRunner?.Stop();
             RefreshStats();
             RefreshLog();
         }
@@ -798,7 +823,7 @@ namespace NineGrid.Presentation.Editor
         private void OnStopAll()
         {
             GetRunnerOrWarn()?.StopAll();
-            PerformanceDebugSession.Current?.BatchRunner?.Stop();
+            PerformanceDebugSession.Current?.TimelineRunner?.Stop();
             RefreshStats();
             RefreshLog();
         }
@@ -863,28 +888,6 @@ namespace NineGrid.Presentation.Editor
             EditorApplication.isPlaying = true;
         }
 
-        private List<string> BuildCategoryChoices()
-        {
-            var choices = new List<string> { "All" };
-            foreach (PerformanceDebugCategory category in Enum.GetValues(typeof(PerformanceDebugCategory)))
-            {
-                choices.Add(category.ToString());
-            }
-
-            return choices;
-        }
-
-        private PerformanceDebugCategory? GetCategoryFilter()
-        {
-            if (categoryPopup == null || categoryPopup.index <= 0)
-            {
-                return null;
-            }
-
-            string label = categoryPopup.value;
-            return Enum.TryParse(label, out PerformanceDebugCategory category) ? category : null;
-        }
-
         private void LoadPayloadPrefs(IPerformanceDebugModule module)
         {
             IReadOnlyList<PerformanceDebugFieldDef> fields = module.Schema.Fields;
@@ -906,6 +909,9 @@ namespace NineGrid.Presentation.Editor
 
         private static string FieldPrefKey(string moduleId, string fieldKey) =>
             $"{PrefsFieldPrefix}{moduleId}.{fieldKey}";
+
+        private static string PoolExpandedKey(PerformanceDebugCategory category) =>
+            $"NineGrid.PerfDebug.PoolExpanded.{category}";
 
         private bool TryRefreshEditModeAnchors()
         {
@@ -929,10 +935,7 @@ namespace NineGrid.Presentation.Editor
         {
             EditorPrefs.SetString(PrefsSelectedModule, selectedModuleId ?? string.Empty);
             EditorPrefs.SetString(PrefsSearch, searchFilter ?? string.Empty);
-            if (categoryPopup != null)
-            {
-                EditorPrefs.SetInt(PrefsCategory, categoryPopup.index);
-            }
+            EditorPrefs.SetInt(PrefsViewMode, (int)viewMode);
         }
     }
 }

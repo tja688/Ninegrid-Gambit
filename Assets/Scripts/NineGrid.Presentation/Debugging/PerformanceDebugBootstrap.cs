@@ -1,24 +1,25 @@
+using NineGrid.Presentation.Debugging.Timeline;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Debugging
 {
     /// <summary>
-    /// PerformanceTestScene 专用入口：初始化 harness、catalog、runner、批次编排。
+    /// PerformanceTestScene 专用入口：初始化 harness、catalog、runner、timeline 编排。
     /// 调试 UI 由 Editor 窗口 <c>TableNine/表演调试面板</c> 提供。
     /// </summary>
     public sealed class PerformanceDebugBootstrap : MonoBehaviour
     {
         [SerializeField] private GameObject standardCardPrefab;
-        [SerializeField] private bool playSmokeBatchOnStart = false;
 
         private PerformanceDebugHarness harness;
         private PerformanceDebugCatalog catalog;
         private PerformanceDebugSequenceRunner runner;
+        private PerformanceDebugTimelineRunner timelineRunner;
 
         public PerformanceDebugHarness Harness => harness;
         public PerformanceDebugCatalog Catalog => catalog;
         public PerformanceDebugSequenceRunner Runner => runner;
-        public PerformanceDebugBatchRunner BatchRunner => harness?.BatchRunner;
+        public PerformanceDebugTimelineRunner TimelineRunner => timelineRunner;
 
         private void Awake()
         {
@@ -41,15 +42,11 @@ namespace NineGrid.Presentation.Debugging
             harness = PerformanceDebugHarness.Create(transform, standardCardPrefab, this);
             catalog = PerformanceDebugCatalog.Discover();
             runner = new PerformanceDebugSequenceRunner(catalog, harness, this);
+            timelineRunner = new PerformanceDebugTimelineRunner(catalog, harness, this);
 
             PerformanceDebugSession.Register(this);
             harness.Log.Info(
                 $"Catalog loaded {catalog.Modules.Count} modules. Open TableNine/表演调试面板 in the Editor.");
-
-            if (playSmokeBatchOnStart && harness.BatchRunner != null)
-            {
-                harness.BatchRunner.Play(PresentationBatchFixtureLibrary.AttackKillRotateFill);
-            }
         }
 
         private void OnDestroy()

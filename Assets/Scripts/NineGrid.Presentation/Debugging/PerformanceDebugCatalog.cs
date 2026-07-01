@@ -17,7 +17,6 @@ namespace NineGrid.Presentation.Debugging
         {
             var catalog = new PerformanceDebugCatalog();
             catalog.LoadFromAssembly(typeof(PerformanceDebugCatalog).Assembly);
-            catalog.RegisterBatchFixtures();
             return catalog;
         }
 
@@ -75,19 +74,5 @@ namespace NineGrid.Presentation.Debugging
             return modules.Where(module => module.Category == category).ToList();
         }
 
-        public void RegisterBatchFixtures()
-        {
-            IReadOnlyList<BatchFixtureEntry> fixtures = PresentationBatchFixtureLibrary.All;
-            for (var i = 0; i < fixtures.Count; i++)
-            {
-                modules.Add(new Modules.BatchFixtureDebugModule(fixtures[i]));
-            }
-
-            modules.Sort((a, b) =>
-            {
-                int category = a.Category.CompareTo(b.Category);
-                return category != 0 ? category : string.Compare(a.DisplayName, b.DisplayName, StringComparison.Ordinal);
-            });
-        }
     }
 }

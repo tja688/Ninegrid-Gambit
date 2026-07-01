@@ -28,7 +28,6 @@ namespace NineGrid.Presentation.Debugging
         public FlowRegistry FlowRegistry { get; private set; }
         public ReactionRegistry ReactionRegistry { get; private set; }
         public PresentationBatchPlayer BatchPlayer { get; private set; }
-        public PerformanceDebugBatchRunner BatchRunner { get; private set; }
 
         public static PerformanceDebugHarness Create(Transform bootstrapRoot, GameObject cardPrefab, MonoBehaviour coroutineHost = null)
         {
@@ -54,10 +53,6 @@ namespace NineGrid.Presentation.Debugging
             FlowRegistry = services.FlowRegistry;
             ReactionRegistry = services.ReactionRegistry;
             BatchPlayer = services.BatchPlayer;
-            if (coroutineHost != null)
-            {
-                BatchRunner = new PerformanceDebugBatchRunner(this, coroutineHost);
-            }
         }
 
         public IFlowBinding GetFlowBinding(FlowId flowId)
