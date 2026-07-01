@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NineGrid.Core.Commands;
 using NineGrid.Core.Systems;
 using NUnit.Framework;
@@ -18,6 +19,33 @@ namespace NineGrid.Core.Tests
         public void TearDown()
         {
             NineGridArchitecture.ResetForTests();
+        }
+
+        [Test]
+        public void PresentationBatchFixture_AssignsSequenceAndFiltersPlaybackInstructions()
+        {
+            var events = new List<CoreGameEvent>
+            {
+                new CoreGameEvent(CoreEventType.ActionStarted, 1, "attack"),
+                new CoreGameEvent(CoreEventType.DamageDealt, 1, "attack")
+                    .WithActor(1)
+                    .WithTarget(2)
+                    .WithAmount(2),
+                new CoreGameEvent(CoreEventType.ActionFinished, 1, "attack"),
+            };
+
+            var batch = PresentationBatchFixture.Create(
+                5,
+                events,
+                CoreViewSnapshotFactory.Capture(NineGridArchitecture.Current),
+                sequenceStart: 10L);
+
+            Assert.AreEqual(5, batch.BatchId);
+            Assert.AreEqual(1, batch.Instructions.Count);
+            Assert.AreEqual(PresentationInstructionKind.ShowDamage, batch.Instructions[0].Kind);
+            Assert.AreEqual(11L, batch.FromSequence);
+            Assert.AreEqual(11L, batch.ToSequence);
+            Assert.AreEqual(12L, events[2].Sequence);
         }
 
         [Test]

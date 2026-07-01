@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using DG.Tweening;
 using NineGrid.Presentation.Contracts;
 using NineGrid.Presentation.Feedback;
+using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
 using UnityEngine.Events;
@@ -57,6 +59,7 @@ namespace NineGrid.Presentation.Flow.Battle
 
         private Sequence activeSequence;
         private Coroutine playCoroutine;
+        private Action<string> activeMarkerCallback;
 
         public bool IsPlaying { get; private set; }
         public float ExpectedDuration => TotalDuration;
@@ -78,12 +81,12 @@ namespace NineGrid.Presentation.Flow.Battle
             scalePunchAmount = Mathf.Max(0f, scalePunchAmount);
         }
 
-        public void Play(Transform player, Transform enemy, CardBattleDirection direction)
+        public void Play(Transform player, Transform enemy, CardBattleDirection direction, Action<string> onMarker = null)
         {
-            Play(player, enemy, CardBattleDirectionUtil.ToVector2(direction));
+            Play(player, enemy, CardBattleDirectionUtil.ToVector2(direction), onMarker);
         }
 
-        public void Play(Transform player, Transform enemy, Vector2 direction)
+        public void Play(Transform player, Transform enemy, Vector2 direction, Action<string> onMarker = null)
         {
             if (!isActiveAndEnabled || player == null || enemy == null)
             {
@@ -91,6 +94,7 @@ namespace NineGrid.Presentation.Flow.Battle
             }
 
             StopPlaybackOnly();
+            activeMarkerCallback = onMarker;
             activePlayer = player;
             activeEnemy = enemy;
             CaptureBaselines(player, enemy);
@@ -122,6 +126,7 @@ namespace NineGrid.Presentation.Flow.Battle
             RestoreBaselines();
             activePlayer = null;
             activeEnemy = null;
+            activeMarkerCallback = null;
             IsPlaying = false;
         }
 
@@ -236,7 +241,11 @@ namespace NineGrid.Presentation.Flow.Battle
                 sequence.Insert(0f, enemyReturnTween);
             }
 
-            sequence.InsertCallback(hitFlashDelay, () => PlayEnemyHitFlashOn(enemy));
+            sequence.InsertCallback(hitFlashDelay, () =>
+            {
+                activeMarkerCallback?.Invoke(FlowMarkers.Impact);
+                PlayEnemyHitFlashOn(enemy);
+            });
         }
 
         private void AttachAttackCallbacks(Sequence sequence)
