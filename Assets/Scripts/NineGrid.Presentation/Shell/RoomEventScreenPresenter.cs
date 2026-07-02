@@ -1,3 +1,4 @@
+using NineGrid.Presentation.Bridge;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Shell
@@ -12,11 +13,13 @@ namespace NineGrid.Presentation.Shell
         [SerializeField] private Collider2D fullScreenClickCollider;
 
         private MainFlowFsm flowFsm;
+        private ShellCommandRouter commandRouter;
         private bool clickEnabled;
 
-        public void Bind(MainFlowFsm fsm)
+        public void Bind(MainFlowFsm fsm, ShellCommandRouter router = null)
         {
             flowFsm = fsm;
+            commandRouter = router;
         }
 
         public void OnScreenEntered()
@@ -51,8 +54,21 @@ namespace NineGrid.Presentation.Shell
             }
 
             clickEnabled = false;
+
+            if (UseProductionCommands)
+            {
+                commandRouter.SendEnterRoom();
+                return;
+            }
+
             flowFsm.RequestTransition(MainFlowTransition.RoomEventClicked);
         }
+
+        private bool UseProductionCommands =>
+            commandRouter != null
+            && commandRouter.IsProduction
+            && flowFsm != null
+            && !flowFsm.IsHarnessMode;
 
         public void NotifyClicked()
         {

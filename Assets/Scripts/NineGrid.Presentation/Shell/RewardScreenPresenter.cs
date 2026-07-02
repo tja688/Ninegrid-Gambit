@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using NineGrid.Core;
+using NineGrid.Presentation.Bridge;
 using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
@@ -38,10 +40,12 @@ namespace NineGrid.Presentation.Shell
         private MainFlowFsm flowFsm;
         private SelectionFsm selectionFsm;
         private SelectionPresentation presentation;
+        private ShellCommandRouter commandRouter;
         private RewardScreenSubState subState = RewardScreenSubState.Hidden;
         private readonly List<Transform> spawnedOptions = new();
         private int pendingSelectedIndex = -1;
         private int fallOffPending;
+        private CoreViewSnapshot choiceSnapshot;
 
         public RewardScreenSubState SubState => subState;
         public int LastSelectedIndex => pendingSelectedIndex;
@@ -51,11 +55,13 @@ namespace NineGrid.Presentation.Shell
         public void Bind(
             MainFlowFsm fsm,
             SelectionFsm selection,
-            SelectionPresentation selectionPresentation)
+            SelectionPresentation selectionPresentation,
+            ShellCommandRouter router = null)
         {
             flowFsm = fsm;
             selectionFsm = selection;
             presentation = selectionPresentation ?? selectionOwner?.Presentation;
+            commandRouter = router;
             selectionOwner?.Bind(selectionFsm);
         }
 
@@ -70,6 +76,7 @@ namespace NineGrid.Presentation.Shell
             selectionFsm?.ActivateChannel(SelectionChannel.General);
             selectionFsm.InputLocked = true;
 
+            choiceSnapshot = commandRouter?.CaptureSnapshot();
             ClearSpawnedOptions();
             BuildOptions();
             WireGeneralOptions();
@@ -141,7 +148,7 @@ namespace NineGrid.Presentation.Shell
                     10 + i);
 
                 string label = i < RewardOptionCount
-                    ? HarnessRewardLabels[i]
+                    ? ResolveRewardLabel(i)
                     : PassLabel;
                 SelectionOptionVisual.ApplyLabel(actor, label);
                 spawnedOptions.Add(actor);
@@ -245,9 +252,48 @@ namespace NineGrid.Presentation.Shell
             }
         }
 
+        private string ResolveRewardLabel(int index)
+        {
+            var rewards = choiceSnapshot?.RewardOptions;
+            if (rewards != null && index >= 0 && index < rewards.Count)
+            {
+                return ShellChoiceLabelResolver.ResolveRewardLabel(
+                    commandRouter?.Architecture,
+                    rewards[index]);
+            }
+
+            if (flowFsm != null && flowFsm.IsHarnessMode && index < HarnessRewardLabels.Length)
+            {
+                return HarnessRewardLabels[index];
+            }
+
+            return $"选项 {index + 1}";
+        }
+
+        private bool UseProductionCommands =>
+            commandRouter != null
+            && commandRouter.IsProduction
+            && flowFsm != null
+            && !flowFsm.IsHarnessMode;
+
         private void OnConfirmComplete()
         {
             subState = RewardScreenSubState.Done;
+
+            if (UseProductionCommands)
+            {
+                if (LastSelectionWasPass)
+                {
+                    commandRouter.SendSkipHelpChoice();
+                }
+                else
+                {
+                    commandRouter.SendSelectReward(pendingSelectedIndex);
+                }
+
+                return;
+            }
+
             flowFsm?.RequestTransition(MainFlowTransition.ConfirmReward);
         }
 
@@ -258,4 +304,4 @@ namespace NineGrid.Presentation.Shell
         }
     }
 }
-
+

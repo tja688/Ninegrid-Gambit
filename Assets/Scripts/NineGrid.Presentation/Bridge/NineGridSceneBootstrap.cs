@@ -1,6 +1,9 @@
 using DamageNumbersPro;
 using NineGrid.Core;
+using NineGrid.Presentation.Bridge;
+using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Orchestration;
+using NineGrid.Presentation.Shell;
 using NineGrid.Presentation.Visuals;
 using QFramework;
 using UnityEngine;
@@ -21,8 +24,10 @@ namespace NineGrid.Presentation.Bridge
 
         private GameObject mModuleHost;
         private CoreCommandDispatcher mDispatcher;
+        private HandItemsReconcilable mHandItemsReconcilable;
 
         public CommandGateway Gateway { get; private set; }
+        public InGameInteractionCoordinator InteractionCoordinator { get; private set; }
         public TableNineViewRegistry ViewRegistry { get; private set; }
         public TableNineActorFactory ActorFactory { get; private set; }
         public PresentationBatchPlayer BatchPlayer { get; private set; }
@@ -94,12 +99,31 @@ namespace NineGrid.Presentation.Bridge
 
             FlowRegistry = services.FlowRegistry;
             BatchPlayer = services.BatchPlayer;
+            mHandItemsReconcilable = services.HandItemsReconcilable;
 
             mDispatcher = new CoreCommandDispatcher(Architecture);
             Gateway = new CommandGateway(this, Architecture, mDispatcher, BatchPlayer);
 
+            InteractionCoordinator = InGameInteractionSetup.Install(
+                this,
+                mModuleHost,
+                roots,
+                Gateway,
+                ViewRegistry,
+                ActorFactory,
+                services.HandItemsReconcilable);
+
             ReconcileInitialSnapshot();
+            WireShellBridge();
             Debug.Log("[NineGridSceneBootstrap] Production bridge ready.");
+        }
+
+        private void WireShellBridge()
+        {
+            if (MainFlowDirector.Current != null)
+            {
+                MainFlowDirector.Current.WireProductionBridge(Gateway, Architecture);
+            }
         }
 
         public void ReconcileInitialSnapshot()
@@ -107,6 +131,7 @@ namespace NineGrid.Presentation.Bridge
             var snapshot = CoreViewSnapshotFactory.Capture(Architecture);
             var reconcilable = new BoardCardsReconcilable(ViewRegistry, ActorFactory);
             reconcilable.ApplySnapshot(snapshot);
+            mHandItemsReconcilable?.ApplySnapshot(snapshot);
 
             TableNineStatusPanelView statusPanel = FindObjectOfType<TableNineStatusPanelView>();
             statusPanel?.ApplySnapshot(snapshot);

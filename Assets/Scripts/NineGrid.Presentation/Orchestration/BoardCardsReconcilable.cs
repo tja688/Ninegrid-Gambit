@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using NineGrid.Core;
+using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Visuals;
 using UnityEngine;
 
@@ -66,6 +67,20 @@ namespace NineGrid.Presentation.Orchestration
 
             mViewRegistry.RegisterActor(uid, actor);
             ApplyCardStatus(actor, slotView);
+            EnsureBoardRelay(actor);
+        }
+
+        private static void EnsureBoardRelay(Transform actor)
+        {
+            if (actor == null)
+            {
+                return;
+            }
+
+            if (actor.GetComponent<BoardCardInputRelay>() == null)
+            {
+                actor.gameObject.AddComponent<BoardCardInputRelay>();
+            }
         }
 
         private static void ApplyCardStatus(Transform actor, BoardSlotView slotView)

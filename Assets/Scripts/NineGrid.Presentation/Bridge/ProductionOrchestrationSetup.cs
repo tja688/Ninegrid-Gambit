@@ -6,6 +6,7 @@ using NineGrid.Presentation.Flow.Board;
 using NineGrid.Presentation.Flow.Core;
 using NineGrid.Presentation.Flow.Deck;
 using NineGrid.Presentation.Flow.Item;
+using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Orchestration.Bindings;
 using NineGrid.Presentation.Reactions;
@@ -20,6 +21,7 @@ namespace NineGrid.Presentation.Bridge
         {
             public FlowRegistry FlowRegistry { get; set; }
             public PresentationBatchPlayer BatchPlayer { get; set; }
+            public HandItemsReconcilable HandItemsReconcilable { get; set; }
         }
 
         public static OrchestrationServices Install(
@@ -32,10 +34,16 @@ namespace NineGrid.Presentation.Bridge
         {
             ProductionModuleHostSetup.Install(moduleHost, roots, cardPrefab, damagePrefab);
 
+            HandItemsReconcilable handItemsReconcilable = InGameInteractionSetup.CreateHandItemsReconcilable(
+                roots,
+                viewRegistry,
+                actorFactory,
+                moduleHost.GetComponent<HandLayoutPresenter>());
+
             var flowRegistry = new FlowRegistry();
             var reconcilables = new List<IReconcilable>();
             RegisterFlows(moduleHost, flowRegistry);
-            RegisterReconcilables(reconcilables, actorFactory, viewRegistry);
+            RegisterReconcilables(reconcilables, actorFactory, viewRegistry, handItemsReconcilable);
 
             var inputGate = new CoreSyncInputLockGate(
                 NineGridArchitecture.Current.GetSystem<IPresentationSyncSystem>());
@@ -49,6 +57,7 @@ namespace NineGrid.Presentation.Bridge
             {
                 FlowRegistry = flowRegistry,
                 BatchPlayer = batchPlayer,
+                HandItemsReconcilable = handItemsReconcilable,
             };
         }
 
@@ -74,9 +83,14 @@ namespace NineGrid.Presentation.Bridge
         private static void RegisterReconcilables(
             List<IReconcilable> reconcilables,
             TableNineActorFactory actorFactory,
-            TableNineViewRegistry viewRegistry)
+            TableNineViewRegistry viewRegistry,
+            HandItemsReconcilable handItemsReconcilable)
         {
             reconcilables.Add(new BoardCardsReconcilable(viewRegistry, actorFactory));
+            if (handItemsReconcilable != null)
+            {
+                reconcilables.Add(handItemsReconcilable);
+            }
 
             TableNineStatusPanelView statusPanel = Object.FindObjectOfType<TableNineStatusPanelView>();
             if (statusPanel != null)

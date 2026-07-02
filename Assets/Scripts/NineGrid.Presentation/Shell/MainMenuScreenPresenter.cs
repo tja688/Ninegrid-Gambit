@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NineGrid.Presentation.Bridge;
 using NineGrid.Presentation.Interaction;
 using UnityEngine;
 
@@ -16,11 +17,20 @@ namespace NineGrid.Presentation.Shell
 
         private MainFlowFsm flowFsm;
         private SelectionPresentation presentation;
+        private ShellCommandRouter commandRouter;
+        private GamePhaseFlowShellProjection phaseProjection;
 
-        public void Bind(MainFlowFsm fsm, SelectionFsm selectionFsm, SelectionPresentation selectionPresentation)
+        public void Bind(
+            MainFlowFsm fsm,
+            SelectionFsm selectionFsm,
+            SelectionPresentation selectionPresentation,
+            ShellCommandRouter router = null,
+            GamePhaseFlowShellProjection projection = null)
         {
             flowFsm = fsm;
             presentation = selectionPresentation ?? selectionOwner?.Presentation;
+            commandRouter = router;
+            phaseProjection = projection;
             selectionOwner?.Bind(selectionFsm);
             WireGeneralOptions();
         }
@@ -72,6 +82,13 @@ namespace NineGrid.Presentation.Shell
         {
             if (index == 0)
             {
+                if (UseProductionCommands)
+                {
+                    phaseProjection?.NotifyRunStarted();
+                    commandRouter.SendStartNode();
+                    return;
+                }
+
                 flowFsm?.RequestTransition(MainFlowTransition.StartRun);
                 return;
             }
@@ -81,6 +98,12 @@ namespace NineGrid.Presentation.Shell
                 QuitGame();
             }
         }
+
+        private bool UseProductionCommands =>
+            commandRouter != null
+            && commandRouter.IsProduction
+            && flowFsm != null
+            && !flowFsm.IsHarnessMode;
 
         public void HandleOptionHovered(int index)
         {

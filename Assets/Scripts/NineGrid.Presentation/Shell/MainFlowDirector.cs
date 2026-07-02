@@ -1,4 +1,6 @@
 using System.Collections;
+using NineGrid.Core;
+using NineGrid.Presentation.Bridge;
 using NineGrid.Presentation.Interaction;
 using UnityEngine;
 
@@ -23,6 +25,7 @@ namespace NineGrid.Presentation.Shell
         [SerializeField] private TableNineTextOverlayGate textOverlayGate;
         [SerializeField] private RunOutcomeInfoPresenter outcomePresenter;
         [SerializeField] private GamePhaseFlowShellProjection phaseProjection;
+        [SerializeField] private ActionRejectedNoticePresenter actionRejectedPresenter;
 
         [Header("Presenters")]
         [SerializeField] private MainMenuScreenPresenter mainMenuPresenter;
@@ -36,9 +39,12 @@ namespace NineGrid.Presentation.Shell
         private readonly MainFlowFsm flowFsm = new();
         private readonly SelectionFsm selectionFsm = new();
         private Coroutine bootCoroutine;
+        private ShellCommandRouter commandRouter;
 
         public MainFlowFsm FlowFsm => flowFsm;
         public SelectionFsm SelectionFsm => selectionFsm;
+        public ShellCommandRouter CommandRouter => commandRouter;
+        public GamePhaseFlowShellProjection PhaseProjection => phaseProjection;
         public SelectionPresentation SelectionPresentation => selectionFsmOwner != null
             ? selectionFsmOwner.Presentation
             : null;
@@ -60,11 +66,72 @@ namespace NineGrid.Presentation.Shell
 
         private void Start()
         {
+            TryWireProductionBridge();
+
             if (flowFsm.CurrentScreen == MainFlowScreen.Boot)
             {
                 bootCoroutine = StartCoroutine(BootToMainMenu());
             }
         }
+
+        public void WireProductionBridge(CommandGateway gateway, QFramework.IArchitecture architecture)
+        {
+            if (gateway == null || architecture == null)
+            {
+                return;
+            }
+
+            commandRouter = new ShellCommandRouter(gateway, architecture);
+            EnsureActionRejectedPresenter();
+            EnsurePhaseProjection();
+            phaseProjection?.WireProduction(commandRouter, architecture);
+            actionRejectedPresenter?.Bind(architecture);
+
+            mainMenuPresenter?.Bind(flowFsm, selectionFsm, SelectionPresentation, commandRouter, phaseProjection);
+            rewardPresenter?.Bind(flowFsm, selectionFsm, SelectionPresentation, commandRouter);
+            roomChoicePresenter?.Bind(flowFsm, selectionFsm, SelectionPresentation, commandRouter);
+            roomEventPresenter?.Bind(flowFsm, commandRouter);
+        }
+
+        private void EnsurePhaseProjection()
+        {
+            if (phaseProjection == null)
+            {
+                phaseProjection = GetComponent<GamePhaseFlowShellProjection>();
+            }
+
+            if (phaseProjection == null)
+            {
+                phaseProjection = gameObject.AddComponent<GamePhaseFlowShellProjection>();
+            }
+
+            phaseProjection.Bind(this);
+        }
+
+        private void EnsureActionRejectedPresenter()
+        {
+            if (actionRejectedPresenter == null)
+            {
+                actionRejectedPresenter = GetComponent<ActionRejectedNoticePresenter>();
+            }
+
+            if (actionRejectedPresenter == null)
+            {
+                actionRejectedPresenter = gameObject.AddComponent<ActionRejectedNoticePresenter>();
+            }
+        }
+
+        private void TryWireProductionBridge()
+        {
+            var bootstrap = NineGridSceneBootstrap.Current;
+            if (bootstrap?.Gateway != null && bootstrap.Architecture != null)
+            {
+                WireProductionBridge(bootstrap.Gateway, bootstrap.Architecture);
+            }
+        }
+
+        public bool IsProductionShellActive =>
+            commandRouter != null && commandRouter.IsProduction && !IsTestFlowActive;
 
         private void OnDestroy()
         {
@@ -107,10 +174,10 @@ namespace NineGrid.Presentation.Shell
             var presentation = SelectionPresentation;
             selectionFsm.BindPresentation(presentation);
 
-            mainMenuPresenter?.Bind(flowFsm, selectionFsm, presentation);
-            rewardPresenter?.Bind(flowFsm, selectionFsm, presentation);
-            roomChoicePresenter?.Bind(flowFsm, selectionFsm, presentation);
-            roomEventPresenter?.Bind(flowFsm);
+            mainMenuPresenter?.Bind(flowFsm, selectionFsm, SelectionPresentation, commandRouter, phaseProjection);
+            rewardPresenter?.Bind(flowFsm, selectionFsm, SelectionPresentation, commandRouter);
+            roomChoicePresenter?.Bind(flowFsm, selectionFsm, SelectionPresentation, commandRouter);
+            roomEventPresenter?.Bind(flowFsm, commandRouter);
             outcomePresenter?.Bind(flowFsm);
             harnessDriver?.Bind(this, flowFsm);
             phaseProjection?.Bind(this);
@@ -165,6 +232,17 @@ namespace NineGrid.Presentation.Shell
             {
                 selectionFsm.InputLocked = false;
                 selectionFsm.ActivateChannel(SelectionChannel.General);
+
+                if (IsProductionShellActive && (previous == MainFlowScreen.Victory || previous == MainFlowScreen.Defeat))
+                {
+                    phaseProjection?.NotifyReturnedToMainMenu();
+                    var bootstrap = NineGridSceneBootstrap.Current;
+                    if (bootstrap?.Architecture != null)
+                    {
+                        InitialGameFactory.Create(bootstrap.Architecture);
+                        bootstrap.ReconcileInitialSnapshot();
+                    }
+                }
             }
             else if (current == MainFlowScreen.RewardScreen)
             {
@@ -177,7 +255,14 @@ namespace NineGrid.Presentation.Shell
 
             if (current == MainFlowScreen.NodeAdvance)
             {
-                flowFsm.RequestTransition(MainFlowTransition.NodeAdvanceDone);
+                if (IsProductionShellActive)
+                {
+                    commandRouter?.SendStartNode();
+                }
+                else
+                {
+                    flowFsm.RequestTransition(MainFlowTransition.NodeAdvanceDone);
+                }
             }
         }
 

@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using NineGrid.Core;
+using NineGrid.Presentation.Bridge;
 using NineGrid.Presentation.Interaction;
+using NineGrid.Presentation.Shared;
 using NineGrid.Presentation.Visuals;
 using UnityEngine;
 
@@ -45,10 +47,12 @@ namespace NineGrid.Presentation.Shell
         private MainFlowFsm flowFsm;
         private SelectionFsm selectionFsm;
         private SelectionPresentation presentation;
+        private ShellCommandRouter commandRouter;
         private RoomChoiceSubState subState = RoomChoiceSubState.Hidden;
         private int pendingSelectedIndex = -1;
         private Vector3 room1HomeWorld;
         private Vector3 room2HomeWorld;
+        private CoreViewSnapshot choiceSnapshot;
 
         public RoomChoiceSubState SubState => subState;
         public event Action<int, RoomKind> RoomChosen;
@@ -69,11 +73,13 @@ namespace NineGrid.Presentation.Shell
         public void Bind(
             MainFlowFsm fsm,
             SelectionFsm selection,
-            SelectionPresentation selectionPresentation)
+            SelectionPresentation selectionPresentation,
+            ShellCommandRouter router = null)
         {
             flowFsm = fsm;
             selectionFsm = selection;
             presentation = selectionPresentation ?? selectionOwner?.Presentation;
+            commandRouter = router;
             selectionOwner?.Bind(selectionFsm);
             WireRoomOptions();
         }
@@ -88,6 +94,9 @@ namespace NineGrid.Presentation.Shell
             subState = RoomChoiceSubState.Entering;
             selectionFsm?.ActivateChannel(SelectionChannel.RoomChoice);
             selectionFsm.InputLocked = true;
+
+            choiceSnapshot = commandRouter?.CaptureSnapshot();
+            ApplyRoomLabels();
 
             presentation?.PlayRoomEntrance(
                 new[]
@@ -148,8 +157,41 @@ namespace NineGrid.Presentation.Shell
             int index = pendingSelectedIndex;
             RoomKind kind = ResolveRoomKind(index);
             RoomChosen?.Invoke(index, kind);
+
+            if (UseProductionCommands)
+            {
+                commandRouter.SendSelectRoom(index);
+                return;
+            }
+
             flowFsm?.RequestTransition(MainFlowTransition.RoomSelected);
         }
+
+        private void ApplyRoomLabels()
+        {
+            var rooms = choiceSnapshot?.RoomOptions;
+            if (room1Card != null)
+            {
+                RoomKind kind = rooms != null && rooms.Count > 0 ? rooms[0] : harnessRoom1;
+                SelectionOptionVisual.ApplyLabel(
+                    room1Card,
+                    ShellChoiceLabelResolver.ResolveRoomLabel(commandRouter?.Architecture, kind));
+            }
+
+            if (room2Card != null)
+            {
+                RoomKind kind = rooms != null && rooms.Count > 1 ? rooms[1] : harnessRoom2;
+                SelectionOptionVisual.ApplyLabel(
+                    room2Card,
+                    ShellChoiceLabelResolver.ResolveRoomLabel(commandRouter?.Architecture, kind));
+            }
+        }
+
+        private bool UseProductionCommands =>
+            commandRouter != null
+            && commandRouter.IsProduction
+            && flowFsm != null
+            && !flowFsm.IsHarnessMode;
 
         private void WireRoomOptions()
         {
@@ -180,6 +222,12 @@ namespace NineGrid.Presentation.Shell
 
         private RoomKind ResolveRoomKind(int index)
         {
+            var rooms = choiceSnapshot?.RoomOptions;
+            if (rooms != null && index >= 0 && index < rooms.Count)
+            {
+                return rooms[index];
+            }
+
             return index == 0 ? harnessRoom1 : harnessRoom2;
         }
 

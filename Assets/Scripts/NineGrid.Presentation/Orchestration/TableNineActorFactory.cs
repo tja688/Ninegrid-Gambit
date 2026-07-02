@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using NineGrid.Core;
+using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Visuals;
 using QFramework;
 using UnityEngine;
@@ -42,6 +43,7 @@ namespace NineGrid.Presentation.Orchestration
 
             ApplyVisual(instance.transform, defId);
             EnsureCardStatusView(instance.transform);
+            EnsureActorBinding(instance, cardUid);
 
             mUidActors[cardUid] = instance.transform;
             mViewRegistry?.RegisterActor(cardUid, instance.transform);
@@ -111,6 +113,11 @@ namespace NineGrid.Presentation.Orchestration
                     }
                 }
 
+                if (!shouldKeep && IsHandItemActor(pair.Value))
+                {
+                    continue;
+                }
+
                 if (!shouldKeep)
                 {
                     toRemove.Add(pair.Key);
@@ -121,6 +128,17 @@ namespace NineGrid.Presentation.Orchestration
             {
                 Despawn(toRemove[i]);
             }
+        }
+
+        private static bool IsHandItemActor(Transform actor)
+        {
+            if (actor == null)
+            {
+                return false;
+            }
+
+            TableNineActorBinding binding = actor.GetComponent<TableNineActorBinding>();
+            return binding != null && binding.IsHandItem;
         }
 
         public bool TryGet(int cardUid, out Transform actor)
@@ -207,6 +225,23 @@ namespace NineGrid.Presentation.Orchestration
 
             view.EnsureBindings();
             view.ConfigureDigitSprites(TableNineDigitSpriteLibrary.LoadDefaultDigits());
+        }
+
+        private static void EnsureActorBinding(GameObject instance, int cardUid)
+        {
+            if (instance == null || cardUid <= 0)
+            {
+                return;
+            }
+
+            TableNineActorBinding binding = instance.GetComponent<TableNineActorBinding>();
+            if (binding == null)
+            {
+                binding = instance.AddComponent<TableNineActorBinding>();
+            }
+
+            binding.Bind(cardUid);
+            Interaction.InteractionColliderUtility.EnsureCollider2D(instance);
         }
 
         private static GameObject CreateFallbackCard(Transform parent, int counter)
