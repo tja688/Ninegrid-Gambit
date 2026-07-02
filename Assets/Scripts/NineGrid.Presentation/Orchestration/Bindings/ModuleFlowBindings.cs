@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NineGrid.Core;
-using NineGrid.Presentation.Debugging;
+using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Flow.Battle;
 using NineGrid.Presentation.Flow.Board;
 using NineGrid.Presentation.Contracts;
@@ -31,7 +31,7 @@ namespace NineGrid.Presentation.Orchestration.Bindings
                 return new FlowHandle(null, onMarker);
             }
 
-            int attackerUid = payload.ActorUid > 0 ? payload.ActorUid : PerformanceDebugActorUids.Player;
+            int attackerUid = payload.ActorUid > 0 ? payload.ActorUid : PresentationFallbackActorUids.Player;
             int targetUid = payload.CardUid > 0 ? payload.CardUid : payload.TargetUid;
             var player = registry?.ResolveActor(attackerUid);
             var enemy = registry?.ResolveActor(targetUid);
@@ -111,7 +111,7 @@ namespace NineGrid.Presentation.Orchestration.Bindings
             for (var i = 0; i < path.Count; i++)
             {
                 SlotId slot = path[i];
-                Transform actor = registry.ResolveActor(PerformanceDebugActorUids.BoardCard(slot.Index));
+                Transform actor = registry.ResolveActor(PresentationFallbackActorUids.BoardCard(slot.Index));
                 Transform anchor = registry.ResolveAnchor(slot);
                 if (actor == null || anchor == null)
                 {
@@ -208,7 +208,7 @@ namespace NineGrid.Presentation.Orchestration.Bindings
                     }
                 }
 
-                return registry.ResolveActor(PerformanceDebugActorUids.BoardCard(payload.FromSlot.Index));
+                return registry.ResolveActor(PresentationFallbackActorUids.BoardCard(payload.FromSlot.Index));
             }
 
             return null;

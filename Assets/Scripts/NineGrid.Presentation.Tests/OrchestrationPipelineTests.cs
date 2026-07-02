@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using NineGrid.Core;
-using NineGrid.Presentation.Debugging;
+using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Shared;
 using NineGrid.Presentation.Tests.Support;
@@ -39,31 +39,6 @@ namespace NineGrid.Presentation.Tests
             AssertContainsFlow(plan, FlowId.CardKill);
             AssertContainsFlow(plan, FlowId.BoardRotate);
             AssertContainsFlow(plan, FlowId.MoveCard);
-        }
-
-        [Test]
-        public void BatchHijack_EditorDirection_OverridesBoardDerivedAttackDirection()
-        {
-            var events = new List<CoreGameEvent>
-            {
-                new CoreGameEvent(CoreEventType.DamageDealt, 1, "attack")
-                    .WithActor(PerformanceDebugActorUids.Player)
-                    .WithTarget(PerformanceDebugActorUids.Enemy)
-                    .WithAmount(3),
-                new CoreGameEvent(CoreEventType.CardKilled, 1, "attack")
-                    .WithCard(PerformanceDebugActorUids.Enemy),
-            };
-
-            var batch = PresentationBatchFixture.Create(11, events, OrchestrationTestSnapshots.Minimal());
-            var plan = new PerformancePlanBuilder().Build(batch);
-
-            var payload = new PerformanceDebugPayload();
-            payload.Set(PerformanceDebugPayloadKeys.Direction, CardBattleDirection.Up.ToString());
-            payload.Set(PerformanceDebugPayloadKeys.ForceDirectionOverride, "true");
-            PerformanceDebugBatchHijack.ApplyEditorOverrides(plan, payload);
-
-            Assert.AreEqual(Vector2.up, FindStepPayload(plan, FlowId.CardAttack).Direction);
-            Assert.AreEqual(Vector2.up, FindStepPayload(plan, FlowId.CardKill).Direction);
         }
 
         [Test]

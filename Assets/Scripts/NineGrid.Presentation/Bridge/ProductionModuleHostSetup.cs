@@ -1,5 +1,4 @@
 using DamageNumbersPro;
-using NineGrid.Presentation.Debugging;
 using NineGrid.Presentation.Feedback;
 using NineGrid.Presentation.Flow.Battle;
 using NineGrid.Presentation.Flow.Board;
@@ -97,9 +96,9 @@ namespace NineGrid.Presentation.Bridge
             PresentationSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
             PresentationSerializationUtil.SetField(flow, "previewActorsRoot", actorsRoot);
             PresentationSerializationUtil.SetField(flow, "slotRoot", deckAnchors);
-            Transform preparationSlot = PerformanceDebugAnchorIndexing.FindDeckChild(
+            Transform preparationSlot = SceneStagingAnchorUtil.FindDeckChild(
                 deckAnchors,
-                PerformanceDebugAnchorIndexing.DeckEntryPreparationSlotName);
+                SceneStagingAnchorUtil.DeckEntryPreparationSlotName);
             PresentationSerializationUtil.SetField(
                 flow,
                 "previewDeckOrigin",
@@ -135,9 +134,9 @@ namespace NineGrid.Presentation.Bridge
             PresentationSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
             PresentationSerializationUtil.SetField(flow, "previewActorsRoot", actorsRoot);
             PresentationSerializationUtil.SetField(flow, "slotRoot", slotRoot);
-            Transform dealOrigin = PerformanceDebugAnchorIndexing.FindDeckChild(
+            Transform dealOrigin = SceneStagingAnchorUtil.FindDeckChild(
                 deckAnchors,
-                PerformanceDebugAnchorIndexing.DeckDealOriginSlotName);
+                SceneStagingAnchorUtil.DeckDealOriginSlotName);
             PresentationSerializationUtil.SetField(
                 flow,
                 "deckOrigin",
@@ -166,7 +165,7 @@ namespace NineGrid.Presentation.Bridge
             PresentationSerializationUtil.SetField(flow, "returnPresenter", returnPresenter);
 
             var solver = new HandCardLayoutSolver();
-            Transform[] refs = PerformanceDebugAnchorIndexing.CollectHandCardSlotAnchors(handAnchors);
+            Transform[] refs = SceneStagingAnchorUtil.CollectHandCardSlotAnchors(handAnchors);
             if (refs.Length > 0)
             {
                 PresentationSerializationUtil.SetField(solver, "referenceAnchors", refs);

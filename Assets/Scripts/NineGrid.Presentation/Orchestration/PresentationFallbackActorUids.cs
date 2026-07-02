@@ -1,11 +1,11 @@
 using NineGrid.Core;
 
-namespace NineGrid.Presentation.Debugging
+namespace NineGrid.Presentation.Orchestration
 {
     /// <summary>
-    /// 调试场景与手搓批次对齐的 CardUid / 槽位约定。
+    /// Flow 绑定在事件未携带 uid 时的棋盘演员回退约定（与测试夹具对齐）。
     /// </summary>
-    public static class PerformanceDebugActorUids
+    public static class PresentationFallbackActorUids
     {
         public const int Player = 1;
         public const int Enemy = 2;

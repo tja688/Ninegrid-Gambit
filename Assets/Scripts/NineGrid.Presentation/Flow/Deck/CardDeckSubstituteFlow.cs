@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using DG.Tweening;
 using NineGrid.Core;
 using NineGrid.Presentation.Contracts;
-using NineGrid.Presentation.Debugging;
 using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
@@ -138,7 +137,7 @@ namespace NineGrid.Presentation.Flow.Deck
 
             if (registry != null)
             {
-                hiddenVacantActor = registry.ResolveActor(PerformanceDebugActorUids.BoardCard(resolvedVacant.Index));
+                hiddenVacantActor = registry.ResolveActor(PresentationFallbackActorUids.BoardCard(resolvedVacant.Index));
                 if (hiddenVacantActor != null)
                 {
                     hiddenVacantActorWasActive = hiddenVacantActor.gameObject.activeSelf;

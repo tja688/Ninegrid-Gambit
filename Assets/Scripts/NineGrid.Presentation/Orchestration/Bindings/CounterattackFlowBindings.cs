@@ -24,8 +24,8 @@ namespace NineGrid.Presentation.Orchestration.Bindings
                 return new FlowHandle(null, onMarker);
             }
 
-            int playerUid = payload.ActorUid > 0 ? payload.ActorUid : Debugging.PerformanceDebugActorUids.Player;
-            int enemyUid = payload.TargetUid > 0 ? payload.TargetUid : Debugging.PerformanceDebugActorUids.Enemy;
+            int playerUid = payload.ActorUid > 0 ? payload.ActorUid : PresentationFallbackActorUids.Player;
+            int enemyUid = payload.TargetUid > 0 ? payload.TargetUid : PresentationFallbackActorUids.Enemy;
             var player = registry?.ResolveActor(playerUid);
             var enemy = registry?.ResolveActor(enemyUid);
             if (player == null || enemy == null)
@@ -62,12 +62,12 @@ namespace NineGrid.Presentation.Orchestration.Bindings
                 return new FlowHandle(null, onMarker);
             }
 
-            int playerUid = payload.ActorUid > 0 ? payload.ActorUid : Debugging.PerformanceDebugActorUids.Player;
+            int playerUid = payload.ActorUid > 0 ? payload.ActorUid : PresentationFallbackActorUids.Player;
             int enemyUid = payload.CardUid > 0
                 ? payload.CardUid
                 : payload.TargetUid > 0
                     ? payload.TargetUid
-                    : Debugging.PerformanceDebugActorUids.Enemy;
+                    : PresentationFallbackActorUids.Enemy;
             var player = registry?.ResolveActor(playerUid);
             var enemy = registry?.ResolveActor(enemyUid);
             if (player == null || enemy == null)

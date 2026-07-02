@@ -1,6 +1,5 @@
 using NineGrid.Core;
 using NineGrid.Presentation.Contracts;
-using NineGrid.Presentation.Debugging;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
 
@@ -59,7 +58,7 @@ namespace NineGrid.Presentation.Orchestration
                 return false;
             }
 
-            SlotId fromSlot = ResolveActorSlot(payload.ActorUid, snapshot, registry, PerformanceDebugActorUids.PlayerSlot);
+            SlotId fromSlot = ResolveActorSlot(payload.ActorUid, snapshot, registry, PresentationFallbackActorUids.PlayerSlot);
             SlotId toSlot = ResolveTargetSlot(payload, snapshot, registry);
             if (fromSlot.IsNone || toSlot.IsNone)
             {
@@ -86,9 +85,9 @@ namespace NineGrid.Presentation.Orchestration
                 return slot;
             }
 
-            if (targetUid == PerformanceDebugActorUids.Enemy)
+            if (targetUid == PresentationFallbackActorUids.Enemy)
             {
-                return PerformanceDebugActorUids.EnemySlot;
+                return PresentationFallbackActorUids.EnemySlot;
             }
 
             return SlotId.None;
@@ -105,18 +104,18 @@ namespace NineGrid.Presentation.Orchestration
                 return card.Slot;
             }
 
-            if (cardUid == PerformanceDebugActorUids.Player)
+            if (cardUid == PresentationFallbackActorUids.Player)
             {
-                return PerformanceDebugActorUids.PlayerSlot;
+                return PresentationFallbackActorUids.PlayerSlot;
             }
 
-            if (cardUid == PerformanceDebugActorUids.Enemy)
+            if (cardUid == PresentationFallbackActorUids.Enemy)
             {
-                return PerformanceDebugActorUids.EnemySlot;
+                return PresentationFallbackActorUids.EnemySlot;
             }
 
-            if (cardUid >= PerformanceDebugActorUids.BoardCard(1)
-                && cardUid <= PerformanceDebugActorUids.BoardCard(9))
+            if (cardUid >= PresentationFallbackActorUids.BoardCard(1)
+                && cardUid <= PresentationFallbackActorUids.BoardCard(9))
             {
                 return SlotId.Board(cardUid - 100);
             }

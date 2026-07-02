@@ -84,7 +84,7 @@ namespace NineGrid.Presentation.Shell
             ResetSelectionInputIfOnMainMenu();
         }
 
-        /// <summary>兼容表演调试模块的旧入口。</summary>
+        /// <summary>Shell 测试流程入口别名。</summary>
         public void StartHarness()
         {
             EnableTestFlow();

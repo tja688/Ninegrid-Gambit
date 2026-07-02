@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using NineGrid.Core;
-using NineGrid.Presentation.Debugging;
+using NineGrid.Presentation.Bridge;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
 
@@ -209,7 +209,7 @@ namespace NineGrid.Presentation.Orchestration
 
         private static Transform ResolveDeckEntryOrigin(IViewRegistry registry)
         {
-            return ResolveNamedAnchor(registry, $"deck.{PerformanceDebugAnchorIndexing.DeckEntryPreparationSlotName}")
+            return ResolveNamedAnchor(registry, $"deck.{SceneStagingAnchorUtil.DeckEntryPreparationSlotName}")
                 ?? ResolveNamedAnchor(registry, "deck");
         }
 
@@ -224,7 +224,7 @@ namespace NineGrid.Presentation.Orchestration
 
         private static Transform ResolveDeckOrigin(IViewRegistry registry)
         {
-            return ResolveNamedAnchor(registry, $"deck.{PerformanceDebugAnchorIndexing.DeckDealOriginSlotName}")
+            return ResolveNamedAnchor(registry, $"deck.{SceneStagingAnchorUtil.DeckDealOriginSlotName}")
                 ?? ResolveNamedAnchor(registry, "deck");
         }
     }

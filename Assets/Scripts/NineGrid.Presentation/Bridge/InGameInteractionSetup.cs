@@ -1,5 +1,4 @@
 using NineGrid.Core;
-using NineGrid.Presentation.Debugging;
 using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Shared;
@@ -101,7 +100,7 @@ namespace NineGrid.Presentation.Bridge
             HandLayoutPresenter layoutPresenter)
         {
             var solver = new HandCardLayoutSolver();
-            Transform[] refs = PerformanceDebugAnchorIndexing.CollectHandCardSlotAnchors(roots?.HandCardAnchors);
+            Transform[] refs = SceneStagingAnchorUtil.CollectHandCardSlotAnchors(roots?.HandCardAnchors);
             if (refs.Length > 0)
             {
                 PresentationSerializationUtil.SetField(solver, "referenceAnchors", refs);
