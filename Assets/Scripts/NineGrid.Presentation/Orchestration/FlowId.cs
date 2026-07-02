@@ -15,5 +15,6 @@ namespace NineGrid.Presentation.Orchestration
         CounterattackKill,
         RoomChoiceIn,
         RoomChoiceOut,
+        SnapshotAlign,
     }
 }

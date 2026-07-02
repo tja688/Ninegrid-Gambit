@@ -12,7 +12,7 @@ namespace NineGrid.Presentation.Tests
     public sealed class OrchestrationPipelineTests
     {
         [Test]
-        public void PlanBuilder_AttackKillRotateFill_BuildsExpectedStepsAndReactions()
+        public void PlanBuilder_AttackKillRotateFill_BuildsExpectedFlowSteps()
         {
             var events = new List<CoreGameEvent>
             {
@@ -39,7 +39,6 @@ namespace NineGrid.Presentation.Tests
             AssertContainsFlow(plan, FlowId.CardKill);
             AssertContainsFlow(plan, FlowId.BoardRotate);
             AssertContainsFlow(plan, FlowId.MoveCard);
-            AssertContainsReaction(plan, ReactionId.ShowDamage, ReactionAnchorKind.StepMarker, FlowMarkers.Impact);
         }
 
         [Test]
@@ -125,7 +124,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void PlanBuilder_HelpCardChain_BuildsUseItemAndReactions()
+        public void PlanBuilder_HelpCardChain_BuildsUseItemAndSnapshotAlignSteps()
         {
             var events = new List<CoreGameEvent>
             {
@@ -141,12 +140,35 @@ namespace NineGrid.Presentation.Tests
             var plan = new PerformancePlanBuilder().Build(batch);
 
             AssertContainsFlow(plan, FlowId.UseItem);
-            AssertContainsReaction(plan, ReactionId.TriggerEffect, ReactionAnchorKind.StepEnd, string.Empty);
-            AssertContainsReaction(plan, ReactionId.ApplyModifier, ReactionAnchorKind.Immediate, string.Empty);
+            Assert.AreEqual(2, CountFlow(plan, FlowId.SnapshotAlign));
         }
 
         [Test]
-        public void BatchPlayer_PlaySync_InvokesFlowsReactionsAndReconcile()
+        public void PlanBuilder_RequiresPlaybackEvents_AllHaveFlowRoutes()
+        {
+            var routedKinds = new HashSet<PresentationInstructionKind>();
+            foreach (var entry in PresentationEventMap.Entries)
+            {
+                if (!entry.RequiresPlayback)
+                {
+                    continue;
+                }
+
+                var instruction = new PresentationInstruction(
+                    new CoreGameEvent(entry.EventType, 1, "test"),
+                    entry);
+                Assert.IsTrue(
+                    InstructionKindFlowRouter.TryRoute(instruction, out var route),
+                    "Missing route for " + entry.InstructionKind);
+                Assert.AreEqual(InstructionRouteKind.Flow, route.Kind);
+                routedKinds.Add(entry.InstructionKind);
+            }
+
+            Assert.Greater(routedKinds.Count, 20);
+        }
+
+        [Test]
+        public void BatchPlayer_PlaySync_InvokesFlowsAndReconcile()
         {
             var events = new List<CoreGameEvent>
             {
@@ -159,19 +181,15 @@ namespace NineGrid.Presentation.Tests
             var batch = PresentationBatchFixture.Create(9, events, snapshot);
 
             var attackFlow = new RecordingFlowBinding(FlowId.CardAttack, invokeImpactMarker: true);
-            var damageReaction = new RecordingReactionBinding(ReactionId.ShowDamage);
             var reconcilable = new RecordingReconcilable();
             var inputLock = new LocalInputLockGate();
 
             var flowRegistry = new FlowRegistry();
             flowRegistry.Register(attackFlow);
-            var reactionRegistry = new ReactionRegistry();
-            reactionRegistry.Register(damageReaction);
 
             var player = new PresentationBatchPlayer(
                 new NullViewRegistry(),
                 flowRegistry,
-                reactionRegistry,
                 new IReconcilable[] { reconcilable },
                 inputLock);
 
@@ -180,12 +198,11 @@ namespace NineGrid.Presentation.Tests
 
             Assert.IsFalse(inputLock.IsLocked);
             Assert.AreEqual(1, attackFlow.PlayCount);
-            Assert.AreEqual(1, damageReaction.PlayCount);
-            Assert.AreEqual(4, damageReaction.LastPayload.Amount);
+            Assert.AreEqual(4, attackFlow.LastPayload.Amount);
             Assert.AreEqual(1, reconcilable.ApplyCount);
             Assert.AreSame(snapshot, reconcilable.LastSnapshot);
             Assert.IsTrue(result.Reconciled);
-            Assert.Greater(result.PlayedReactionCount, 0);
+            Assert.AreEqual(1, result.PlayedFlowCount);
         }
 
         private static FlowPayload FindStepPayload(PresentationPlan plan, FlowId flowId)
@@ -209,6 +226,12 @@ namespace NineGrid.Presentation.Tests
 
         private static void AssertContainsFlow(PresentationPlan plan, FlowId flowId)
         {
+            Assert.Greater(CountFlow(plan, flowId), 0, "Plan missing flow: " + flowId);
+        }
+
+        private static int CountFlow(PresentationPlan plan, FlowId flowId)
+        {
+            var count = 0;
             for (var groupIndex = 0; groupIndex < plan.Groups.Count; groupIndex++)
             {
                 var steps = plan.Groups[groupIndex].Steps;
@@ -216,36 +239,12 @@ namespace NineGrid.Presentation.Tests
                 {
                     if (steps[stepIndex].FlowId == flowId)
                     {
-                        return;
+                        count++;
                     }
                 }
             }
 
-            Assert.Fail("Plan missing flow: " + flowId);
-        }
-
-        private static void AssertContainsReaction(
-            PresentationPlan plan,
-            ReactionId reactionId,
-            ReactionAnchorKind anchorKind,
-            string marker)
-        {
-            for (var i = 0; i < plan.Reactions.Count; i++)
-            {
-                var reaction = plan.Reactions[i];
-                if (reaction.ReactionId != reactionId)
-                {
-                    continue;
-                }
-
-                if (reaction.Anchor.Kind == anchorKind
-                    && (string.IsNullOrEmpty(marker) || reaction.Anchor.Marker == marker))
-                {
-                    return;
-                }
-            }
-
-            Assert.Fail("Plan missing reaction: " + reactionId + " @" + anchorKind);
+            return count;
         }
     }
 }

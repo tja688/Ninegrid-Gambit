@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using NineGrid.Presentation.Flow.Battle;
 using NineGrid.Presentation.Flow.Board;
+using NineGrid.Presentation.Flow.Core;
 using NineGrid.Presentation.Flow.Deck;
 using NineGrid.Presentation.Flow.Item;
 using NineGrid.Presentation.Orchestration;
@@ -16,37 +17,34 @@ namespace NineGrid.Presentation.Debugging
         public sealed class OrchestrationServices
         {
             public FlowRegistry FlowRegistry { get; set; }
-            public ReactionRegistry ReactionRegistry { get; set; }
             public PresentationBatchPlayer BatchPlayer { get; set; }
         }
 
         public static OrchestrationServices Install(GameObject moduleHost, PerformanceDebugViewRegistry viewRegistry)
         {
             var flowRegistry = new FlowRegistry();
-            var reactionRegistry = new ReactionRegistry();
             var reconcilables = new List<IReconcilable>();
 
             RegisterFlows(moduleHost, flowRegistry);
-            RegisterReactions(moduleHost, reactionRegistry, reconcilables);
+            RegisterReconcilables(reconcilables);
 
             var batchPlayer = new PresentationBatchPlayer(
                 viewRegistry,
                 flowRegistry,
-                reactionRegistry,
                 reconcilables,
                 new LocalInputLockGate());
 
             return new OrchestrationServices
             {
                 FlowRegistry = flowRegistry,
-                ReactionRegistry = reactionRegistry,
                 BatchPlayer = batchPlayer,
             };
         }
 
         private static void RegisterFlows(GameObject moduleHost, FlowRegistry registry)
         {
-            registry.Register(new CardAttackFlowBinding(moduleHost.GetComponent<CardAttackFlow>()));
+            var damageNumbers = moduleHost.GetComponent<DamageNumbersReaction>();
+            registry.Register(new CardAttackFlowBinding(moduleHost.GetComponent<CardAttackFlow>(), damageNumbers));
             registry.Register(new CardKillFlowBinding(moduleHost.GetComponent<CardKillFlow>()));
             registry.Register(new BoardRotateFlowBinding(moduleHost.GetComponent<BoardRotateFlow>()));
 
@@ -58,23 +56,15 @@ namespace NineGrid.Presentation.Debugging
             registry.Register(new CardDeckEntryFlowBinding(moduleHost.GetComponent<CardDeckEntryFlow>()));
             registry.Register(new CounterattackFlowBinding(moduleHost.GetComponent<CounterattackFlow>()));
             registry.Register(new CounterattackKillFlowBinding(moduleHost.GetComponent<CounterattackKillFlow>()));
+            registry.Register(new SnapshotAlignFlowBinding(moduleHost.GetComponent<SnapshotAlignFlow>()
+                ?? moduleHost.AddComponent<SnapshotAlignFlow>()));
         }
 
-        private static void RegisterReactions(
-            GameObject moduleHost,
-            ReactionRegistry registry,
-            List<IReconcilable> reconcilables)
+        private static void RegisterReconcilables(List<IReconcilable> reconcilables)
         {
-            registry.Register(new ShowDamageReactionBinding(moduleHost.GetComponent<DamageNumbersReaction>()));
-            registry.Register(new TriggerEffectReactionBinding(moduleHost.GetComponent<EffectTriggerReaction>()));
-            registry.Register(new ApplyModifierReactionBinding(moduleHost.GetComponent<ModifierApplyReaction>()));
-            registry.Register(new StatusTickReactionBinding(moduleHost.GetComponent<StatusTickReaction>()));
-
             TableNineStatusPanelView statusPanel = Object.FindObjectOfType<TableNineStatusPanelView>();
             if (statusPanel != null)
             {
-                registry.Register(new UpdateHpReactionBinding(statusPanel));
-                registry.Register(new UpdateArmorReactionBinding(statusPanel));
                 reconcilables.Add(new StatusPanelReconcilable(statusPanel));
             }
         }

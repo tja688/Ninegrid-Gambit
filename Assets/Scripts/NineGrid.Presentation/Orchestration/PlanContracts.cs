@@ -29,24 +29,6 @@ namespace NineGrid.Presentation.Orchestration
         public PresentationInstructionKind InstructionKind { get; }
     }
 
-    public enum ReactionAnchorKind
-    {
-        Immediate,
-        BatchStart,
-        BatchEnd,
-        StepStart,
-        StepEnd,
-        StepMarker,
-    }
-
-    public sealed class ReactionAnchor
-    {
-        public ReactionAnchorKind Kind { get; set; } = ReactionAnchorKind.Immediate;
-        public PlanStepId StepId { get; set; }
-        public string Marker { get; set; } = string.Empty;
-        public float OffsetSeconds { get; set; }
-    }
-
     public sealed class PlanStep
     {
         public PlanStepId Id { get; set; }
@@ -54,14 +36,6 @@ namespace NineGrid.Presentation.Orchestration
         public int GroupIndex { get; set; }
         public FlowId FlowId { get; set; }
         public FlowPayload Payload { get; set; }
-        public SourceRef Source { get; set; }
-    }
-
-    public sealed class PlannedReaction
-    {
-        public ReactionId ReactionId { get; set; }
-        public FlowPayload Payload { get; set; }
-        public ReactionAnchor Anchor { get; set; } = new ReactionAnchor();
         public SourceRef Source { get; set; }
     }
 
@@ -82,18 +56,15 @@ namespace NineGrid.Presentation.Orchestration
         public PresentationPlan(
             int batchId,
             IReadOnlyList<ActionPlanGroup> groups,
-            IReadOnlyList<PlannedReaction> reactions,
             CoreViewSnapshot snapshot)
         {
             BatchId = batchId;
             Groups = groups ?? new ActionPlanGroup[0];
-            Reactions = reactions ?? new PlannedReaction[0];
             Snapshot = snapshot;
         }
 
         public int BatchId { get; }
         public IReadOnlyList<ActionPlanGroup> Groups { get; }
-        public IReadOnlyList<PlannedReaction> Reactions { get; }
         public CoreViewSnapshot Snapshot { get; }
     }
 }

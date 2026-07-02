@@ -7,7 +7,7 @@ using UnityEngine;
 namespace NineGrid.Presentation.Debugging
 {
     /// <summary>
-    /// 编辑器参数劫持：在 Plan 生成后、导演播放前，将控制台 payload 写入批次步骤与反应。
+    /// 编辑器参数劫持：在 Plan 生成后、导演播放前，将控制台 payload 写入批次步骤。
     /// </summary>
     public static class PerformanceDebugBatchHijack
     {
@@ -41,11 +41,6 @@ namespace NineGrid.Presentation.Debugging
                         forceDirection,
                         directionOverride);
                 }
-            }
-
-            for (var reactionIndex = 0; reactionIndex < plan.Reactions.Count; reactionIndex++)
-            {
-                ApplyReactionPayload(plan.Reactions[reactionIndex]?.Payload, actorUid, targetUid, amount);
             }
         }
 
@@ -87,33 +82,6 @@ namespace NineGrid.Presentation.Debugging
                 && (flowId == FlowId.CardAttack || flowId == FlowId.CardKill))
             {
                 payload.Direction = directionOverride;
-            }
-        }
-
-        private static void ApplyReactionPayload(
-            FlowPayload payload,
-            int actorUid,
-            int targetUid,
-            int amount)
-        {
-            if (payload == null)
-            {
-                return;
-            }
-
-            if (actorUid > 0)
-            {
-                payload.ActorUid = actorUid;
-            }
-
-            if (targetUid > 0)
-            {
-                payload.TargetUid = targetUid;
-            }
-
-            if (amount >= 0)
-            {
-                payload.Amount = amount;
             }
         }
     }

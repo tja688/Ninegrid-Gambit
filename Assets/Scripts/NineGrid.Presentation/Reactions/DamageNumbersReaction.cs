@@ -1,5 +1,4 @@
 using DamageNumbersPro;
-using NineGrid.Presentation.Contracts;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
@@ -13,11 +12,11 @@ namespace NineGrid.Presentation.Reactions
     }
 
     /// <summary>
-    /// 伤害/治疗/金币飘字（Planned Reaction）：复刻 DNP_2D 示例的 Spawn + Follow 手感。
+    /// 伤害/治疗/金币飘字：由战斗 Flow 在 Impact 时刻调用。
     /// </summary>
     [DisallowMultipleComponent]
     [MovedFrom(true, "NineGrid.Presentation.Performance", null, "DamagePopupPerformance")]
-    public sealed class DamageNumbersReaction : MonoBehaviour, IPlannedReaction
+    public sealed class DamageNumbersReaction : MonoBehaviour
     {
         [Header("Templates (DNP_2D)")]
         [SerializeField] private DamageNumber damagePrefab;
@@ -27,10 +26,6 @@ namespace NineGrid.Presentation.Reactions
         [Header("Placement")]
         [SerializeField] private Vector3 worldOffset = new(0f, 0.75f, 0f);
         [SerializeField] private bool followTarget = true;
-
-        public bool IsPlaying => false;
-
-        public float TotalDuration => 0f;
 
         public void Play(Transform target, float amount, DamagePopupKind kind)
         {
@@ -60,10 +55,6 @@ namespace NineGrid.Presentation.Reactions
             {
                 spawned.SetFollowedTarget(follow);
             }
-        }
-
-        public void StopAndRestore()
-        {
         }
 
         private DamageNumber ResolveTemplate(DamagePopupKind kind)

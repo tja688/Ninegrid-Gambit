@@ -77,7 +77,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void BatchHijack_Amount_OverridesReactionPayload()
+        public void BatchHijack_Amount_OverridesFlowPayload()
         {
             var events = new List<CoreGameEvent>
             {
@@ -94,7 +94,25 @@ namespace NineGrid.Presentation.Tests
             payload.Set(PerformanceDebugPayloadKeys.Amount, "9");
             PerformanceDebugBatchHijack.ApplyEditorOverrides(plan, payload);
 
-            Assert.AreEqual(9, plan.Reactions[0].Payload.Amount);
+            Assert.AreEqual(9, FindStepPayload(plan, FlowId.CardAttack).Amount);
+        }
+
+        private static FlowPayload FindStepPayload(PresentationPlan plan, FlowId flowId)
+        {
+            for (var groupIndex = 0; groupIndex < plan.Groups.Count; groupIndex++)
+            {
+                var steps = plan.Groups[groupIndex].Steps;
+                for (var stepIndex = 0; stepIndex < steps.Count; stepIndex++)
+                {
+                    if (steps[stepIndex].FlowId == flowId)
+                    {
+                        return steps[stepIndex].Payload;
+                    }
+                }
+            }
+
+            Assert.Fail("Plan missing flow: " + flowId);
+            return null;
         }
     }
 }

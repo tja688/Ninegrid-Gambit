@@ -5,7 +5,7 @@ using NineGrid.Core;
 namespace NineGrid.Presentation.Orchestration
 {
     /// <summary>
-    /// 共享接缝：<see cref="Play"/> 消费真实 <see cref="PresentationBatch"/>，经 PlanBuilder → 四池 → Reconcile。
+    /// 共享接缝：<see cref="Play"/> 消费真实 <see cref="PresentationBatch"/>，经 PlanBuilder → Flow → 批末 Reconcile。
     /// </summary>
     public sealed class PresentationBatchPlayer
     {
@@ -16,11 +16,10 @@ namespace NineGrid.Presentation.Orchestration
         public PresentationBatchPlayer(
             IViewRegistry viewRegistry,
             FlowRegistry flowRegistry,
-            ReactionRegistry reactionRegistry,
             IReadOnlyList<IReconcilable> reconcilables,
             IInputLockGate inputLockGate = null)
         {
-            mExecutor = new PresentationPlanExecutor(viewRegistry, flowRegistry, reactionRegistry, reconcilables);
+            mExecutor = new PresentationPlanExecutor(viewRegistry, flowRegistry, reconcilables);
             mInputLockGate = inputLockGate ?? new LocalInputLockGate();
         }
 
@@ -56,18 +55,6 @@ namespace NineGrid.Presentation.Orchestration
                         + " Flow=" + step.FlowId
                         + " " + FormatFlowPayload(flowPayload));
                 }
-            }
-
-            for (var reactionIndex = 0; reactionIndex < plan.Reactions.Count; reactionIndex++)
-            {
-                var reaction = plan.Reactions[reactionIndex];
-                var anchor = reaction.Anchor;
-                lines.Add(
-                    "  Reaction " + reaction.ReactionId
-                    + " anchor=" + anchor.Kind
-                    + " step=" + anchor.StepId
-                    + " marker=" + anchor.Marker
-                    + " " + FormatFlowPayload(reaction.Payload));
             }
 
             return string.Join("\n", lines);

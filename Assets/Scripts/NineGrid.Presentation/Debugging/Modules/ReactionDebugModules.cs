@@ -39,44 +39,6 @@ namespace NineGrid.Presentation.Debugging.Modules
         }
     }
 
-    public sealed class EffectTriggerDebugModule : PerformanceDebugModuleBase<EffectTriggerReaction>
-    {
-        public override string Id => "reaction.effect-trigger";
-        public override string DisplayName => "效果触发";
-        public override PerformanceDebugCategory Category => PerformanceDebugCategory.Reaction;
-        public override PerformanceDebugSchema Schema => CreateSchema()
-            .Add("ownerCardUid", "Owner Uid", PerformanceDebugParamKind.Int, "1")
-            .Add("effectId", "Effect Id", PerformanceDebugParamKind.String, "debug_effect");
-
-        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, EffectTriggerReaction module, PerformanceDebugPayload payload)
-        {
-            module.Play(
-                payload.GetInt("ownerCardUid", 1),
-                payload.GetString("effectId", "debug_effect"),
-                "debug_source",
-                "debug");
-            context.Log.Info("EffectTriggerReaction is a placeholder (0s).");
-            return PerformanceDebugPlayResult.Ok(0f);
-        }
-    }
-
-    public sealed class ModifierApplyDebugModule : PerformanceDebugModuleBase<ModifierApplyReaction>
-    {
-        public override string Id => "reaction.modifier-apply";
-        public override string DisplayName => "修饰器应用";
-        public override PerformanceDebugCategory Category => PerformanceDebugCategory.Reaction;
-        public override PerformanceDebugSchema Schema => CreateSchema()
-            .Add("cardUid", "Card Uid", PerformanceDebugParamKind.Int, "1")
-            .Add("delta", "Delta", PerformanceDebugParamKind.Int, "1");
-
-        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, ModifierApplyReaction module, PerformanceDebugPayload payload)
-        {
-            module.Play(payload.GetInt("cardUid", 1), 0, payload.GetInt("delta", 1), "debug");
-            context.Log.Info("ModifierApplyReaction is a placeholder (0s).");
-            return PerformanceDebugPlayResult.Ok(0f);
-        }
-    }
-
     public sealed class CardAcquisitionDebugModule : PerformanceDebugModuleBase<CardAcquisitionFlow>
     {
         public override string Id => "reaction.card-acquisition";
@@ -99,7 +61,7 @@ namespace NineGrid.Presentation.Debugging.Modules
         }
     }
 
-    public sealed class StatusTickDebugModule : PerformanceDebugModuleBase<StatusTickReaction>
+    public sealed class StatusTickDebugModule : PerformanceDebugModuleBase<DamageNumbersReaction>
     {
         public override string Id => "reaction.status-tick";
         public override string DisplayName => "状态跳变";
@@ -112,7 +74,10 @@ namespace NineGrid.Presentation.Debugging.Modules
             .Add("from", "From", PerformanceDebugParamKind.Int, "1")
             .Add("to", "To", PerformanceDebugParamKind.Int, "7");
 
-        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, StatusTickReaction module, PerformanceDebugPayload payload)
+        protected override PerformanceDebugPlayResult PlayModule(
+            PerformanceDebugContext context,
+            DamageNumbersReaction module,
+            PerformanceDebugPayload payload)
         {
             Transform actor = context.ResolveActor("statusCard") ?? context.ResolveActor("player");
             if (actor == null)

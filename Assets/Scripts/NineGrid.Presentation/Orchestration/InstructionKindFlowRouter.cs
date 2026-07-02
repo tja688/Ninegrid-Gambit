@@ -6,22 +6,18 @@ namespace NineGrid.Presentation.Orchestration
     {
         None,
         Flow,
-        Reaction,
     }
 
     public sealed class InstructionRoute
     {
         public InstructionRouteKind Kind { get; set; } = InstructionRouteKind.None;
         public FlowId FlowId { get; set; }
-        public ReactionId ReactionId { get; set; }
         public FlowPayload Payload { get; set; }
-        public ReactionAnchor SuggestedAnchor { get; set; }
-        public bool SynthesizeAttackFlow { get; set; }
     }
 
     /// <summary>
-    /// 将 <see cref="PresentationInstructionKind"/> 语义路由为 Flow / Reaction，并从 <see cref="CoreGameEvent"/> 抽取 payload。
-    /// 首版覆盖攻击击杀旋转补位 / 开局发牌 / 帮助卡道具参考场景。
+    /// 将 <see cref="PresentationInstructionKind"/> 语义路由为 Flow，并从 <see cref="CoreGameEvent"/> 抽取 payload。
+    /// 暂无专属动效的事件路由到 <see cref="FlowId.SnapshotAlign"/>，由批末 Reconcile 对齐终态。
     /// </summary>
     public static class InstructionKindFlowRouter
     {
@@ -34,122 +30,84 @@ namespace NineGrid.Presentation.Orchestration
             }
 
             var payload = FlowPayload.FromEvent(instruction.Event);
-            var source = new SourceRef(instruction.Sequence, instruction.Event.ActionId, instruction.Kind);
 
             switch (instruction.Kind)
             {
                 case PresentationInstructionKind.ShowDamage:
-                    route = new InstructionRoute
-                    {
-                        Kind = InstructionRouteKind.Reaction,
-                        ReactionId = ReactionId.ShowDamage,
-                        Payload = payload,
-                        SuggestedAnchor = new ReactionAnchor
-                        {
-                            Kind = ReactionAnchorKind.StepMarker,
-                            Marker = FlowMarkers.Impact,
-                        },
-                        SynthesizeAttackFlow = ShouldSynthesizeAttackFlow(instruction.Event),
-                    };
+                    route = FlowRoute(
+                        ShouldSynthesizeAttackFlow(instruction.Event) ? FlowId.CardAttack : FlowId.SnapshotAlign,
+                        payload);
                     return true;
 
                 case PresentationInstructionKind.KillCard:
-                    route = new InstructionRoute
-                    {
-                        Kind = InstructionRouteKind.Flow,
-                        FlowId = FlowId.CardKill,
-                        Payload = payload,
-                    };
+                    route = FlowRoute(FlowId.CardKill, payload);
                     return true;
 
                 case PresentationInstructionKind.RotateBoard:
-                    route = new InstructionRoute
-                    {
-                        Kind = InstructionRouteKind.Flow,
-                        FlowId = FlowId.BoardRotate,
-                        Payload = payload,
-                    };
+                    route = FlowRoute(FlowId.BoardRotate, payload);
                     return true;
 
                 case PresentationInstructionKind.MoveCard:
-                    route = new InstructionRoute
-                    {
-                        Kind = InstructionRouteKind.Flow,
-                        FlowId = FlowId.MoveCard,
-                        Payload = payload,
-                    };
+                    route = FlowRoute(FlowId.MoveCard, payload);
                     return true;
 
                 case PresentationInstructionKind.DealCard:
-                    route = new InstructionRoute
-                    {
-                        Kind = InstructionRouteKind.Flow,
-                        FlowId = FlowId.CardDeal,
-                        Payload = payload,
-                    };
+                case PresentationInstructionKind.SpawnCard:
+                    route = FlowRoute(FlowId.CardDeal, payload);
                     return true;
 
                 case PresentationInstructionKind.FillSlots:
-                    route = new InstructionRoute
-                    {
-                        Kind = InstructionRouteKind.Flow,
-                        FlowId = FlowId.FillSlots,
-                        Payload = payload,
-                    };
+                    route = FlowRoute(FlowId.FillSlots, payload);
                     return true;
 
                 case PresentationInstructionKind.UseItem:
-                    route = new InstructionRoute
-                    {
-                        Kind = InstructionRouteKind.Flow,
-                        FlowId = FlowId.UseItem,
-                        Payload = payload,
-                    };
+                    route = FlowRoute(FlowId.UseItem, payload);
                     return true;
 
-                case PresentationInstructionKind.TriggerEffect:
-                    route = new InstructionRoute
-                    {
-                        Kind = InstructionRouteKind.Reaction,
-                        ReactionId = ReactionId.TriggerEffect,
-                        Payload = payload,
-                        SuggestedAnchor = new ReactionAnchor { Kind = ReactionAnchorKind.StepEnd },
-                    };
-                    return true;
-
-                case PresentationInstructionKind.ApplyModifier:
-                    route = new InstructionRoute
-                    {
-                        Kind = InstructionRouteKind.Reaction,
-                        ReactionId = ReactionId.ApplyModifier,
-                        Payload = payload,
-                        SuggestedAnchor = new ReactionAnchor { Kind = ReactionAnchorKind.Immediate },
-                    };
-                    return true;
-
+                case PresentationInstructionKind.ShowRejectedIntent:
                 case PresentationInstructionKind.UpdateHp:
-                    route = new InstructionRoute
-                    {
-                        Kind = InstructionRouteKind.Reaction,
-                        ReactionId = ReactionId.UpdateHp,
-                        Payload = payload,
-                        SuggestedAnchor = new ReactionAnchor { Kind = ReactionAnchorKind.BatchEnd },
-                    };
-                    return true;
-
                 case PresentationInstructionKind.UpdateArmor:
-                    route = new InstructionRoute
-                    {
-                        Kind = InstructionRouteKind.Reaction,
-                        ReactionId = ReactionId.UpdateArmor,
-                        Payload = payload,
-                        SuggestedAnchor = new ReactionAnchor { Kind = ReactionAnchorKind.BatchEnd },
-                    };
+                case PresentationInstructionKind.UpdateGold:
+                case PresentationInstructionKind.RemoveCard:
+                case PresentationInstructionKind.SwapCards:
+                case PresentationInstructionKind.ShowDrawPileExhausted:
+                case PresentationInstructionKind.UpdateInteractionCount:
+                case PresentationInstructionKind.ChangePhase:
+                case PresentationInstructionKind.StartNode:
+                case PresentationInstructionKind.CompleteNode:
+                case PresentationInstructionKind.PickItem:
+                case PresentationInstructionKind.ClickEmpty:
+                case PresentationInstructionKind.TriggerEffect:
+                case PresentationInstructionKind.ApplyModifier:
+                case PresentationInstructionKind.DeactivateEffect:
+                case PresentationInstructionKind.GrantSkill:
+                case PresentationInstructionKind.ModifyBaseStat:
+                case PresentationInstructionKind.GrantRelic:
+                case PresentationInstructionKind.OfferReward:
+                case PresentationInstructionKind.SelectReward:
+                case PresentationInstructionKind.SkipReward:
+                case PresentationInstructionKind.OfferRooms:
+                case PresentationInstructionKind.SelectRoom:
+                case PresentationInstructionKind.ResolveRoom:
+                case PresentationInstructionKind.AdvanceNode:
+                case PresentationInstructionKind.MarkBoard:
+                case PresentationInstructionKind.LoadContent:
+                    route = FlowRoute(FlowId.SnapshotAlign, payload);
                     return true;
 
                 default:
                     return false;
             }
+        }
+
+        private static InstructionRoute FlowRoute(FlowId flowId, FlowPayload payload)
+        {
+            return new InstructionRoute
+            {
+                Kind = InstructionRouteKind.Flow,
+                FlowId = flowId,
+                Payload = payload,
+            };
         }
 
         private static bool ShouldSynthesizeAttackFlow(CoreGameEvent gameEvent)

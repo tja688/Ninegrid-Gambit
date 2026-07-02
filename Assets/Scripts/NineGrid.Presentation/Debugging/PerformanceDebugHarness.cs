@@ -27,7 +27,6 @@ namespace NineGrid.Presentation.Debugging
         public DebugActorFactory ActorFactory { get; private set; }
         public PerformanceDebugLogBuffer Log { get; } = new();
         public FlowRegistry FlowRegistry { get; private set; }
-        public ReactionRegistry ReactionRegistry { get; private set; }
         public PresentationBatchPlayer BatchPlayer { get; private set; }
 
         public static PerformanceDebugHarness Create(
@@ -75,7 +74,6 @@ namespace NineGrid.Presentation.Debugging
         {
             var services = PerformanceDebugOrchestrationSetup.Install(moduleHost, Registry);
             FlowRegistry = services.FlowRegistry;
-            ReactionRegistry = services.ReactionRegistry;
             BatchPlayer = services.BatchPlayer;
         }
 

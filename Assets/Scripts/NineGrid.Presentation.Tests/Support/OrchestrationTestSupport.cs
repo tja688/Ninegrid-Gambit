@@ -51,26 +51,6 @@ namespace NineGrid.Presentation.Tests.Support
         }
     }
 
-    internal sealed class RecordingReactionBinding : IReactionBinding
-    {
-        public RecordingReactionBinding(ReactionId id)
-        {
-            Id = id;
-        }
-
-        public ReactionId Id { get; }
-        public int PlayCount { get; private set; }
-        public FlowPayload LastPayload { get; private set; }
-
-        public void Play(IViewRegistry registry, FlowPayload payload)
-        {
-            PlayCount++;
-            LastPayload = payload;
-        }
-
-        public void Stop() { }
-    }
-
     internal sealed class RecordingReconcilable : IReconcilable
     {
         public int ApplyCount { get; private set; }

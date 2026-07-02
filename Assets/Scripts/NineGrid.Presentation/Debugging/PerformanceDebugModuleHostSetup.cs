@@ -5,6 +5,7 @@ using NineGrid.Presentation.Flow.Board;
 using NineGrid.Presentation.Flow.Deck;
 using NineGrid.Presentation.Flow.Item;
 using NineGrid.Presentation.Interaction;
+using NineGrid.Presentation.Flow.Core;
 using NineGrid.Presentation.Reactions;
 using NineGrid.Presentation.Shell;
 using NineGrid.Presentation.Shared;
@@ -32,12 +33,10 @@ namespace NineGrid.Presentation.Debugging
             GetOrAdd<CardDeckSubstituteFlow>(host);
             GetOrAdd<SelectionPresentation>(host);
             GetOrAdd<ItemUseFlow>(host);
+            GetOrAdd<SnapshotAlignFlow>(host);
 
             var damageNumbers = GetOrAdd<DamageNumbersReaction>(host);
-            GetOrAdd<EffectTriggerReaction>(host);
-            GetOrAdd<ModifierApplyReaction>(host);
             GetOrAdd<CardAcquisitionFlow>(host);
-            GetOrAdd<StatusTickReaction>(host);
 
             GetOrAdd<HitFlashCue>(host);
             GetOrAdd<CardShakeCue>(host);
