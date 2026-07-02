@@ -6,6 +6,7 @@ using NineGrid.Presentation.Flow.Deck;
 using NineGrid.Presentation.Flow.Item;
 using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Flow.Core;
+using NineGrid.Presentation.Flow.Hand;
 using NineGrid.Presentation.Reactions;
 using NineGrid.Presentation.Shell;
 using NineGrid.Presentation.Shared;

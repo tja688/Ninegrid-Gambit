@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using NineGrid.Core;
-using NineGrid.Presentation.Contracts;
 using NineGrid.Presentation.Debugging;
 using NineGrid.Presentation.Flow.Battle;
 using NineGrid.Presentation.Flow.Board;
+using NineGrid.Presentation.Contracts;
+using NineGrid.Presentation.Flow.Core;
 using NineGrid.Presentation.Flow.Deck;
 using NineGrid.Presentation.Flow.Item;
 using NineGrid.Presentation.Shared;
@@ -74,8 +75,7 @@ namespace NineGrid.Presentation.Orchestration.Bindings
                 return new FlowHandle(mFlow, onMarker);
             }
 
-            mFlow.PlayPreview();
-            return new FlowHandle(mFlow, onMarker);
+            return FlowBindingFallback.SnapshotHandle(onMarker);
         }
 
         public void Stop()
@@ -94,6 +94,17 @@ namespace NineGrid.Presentation.Orchestration.Bindings
             if (registry == null)
             {
                 return false;
+            }
+
+            FlowPlaybackScope scope = FlowPlaybackScope.Current;
+            if (scope?.Snapshot != null)
+            {
+                var snapshotRingAnchors = new List<Transform>(8);
+                if (DeckFlowActorResolver.TryResolveBoardRingActors(registry, scope.Snapshot, actors, snapshotRingAnchors))
+                {
+                    BoardRingPath.BuildClockwiseStepTargets(snapshotRingAnchors, payload.Amount, targets);
+                    return actors.Count >= 2 && targets.Count == actors.Count;
+                }
             }
 
             IReadOnlyList<SlotId> path = BoardRingPath.ClockwiseOuterRing;
@@ -141,21 +152,23 @@ namespace NineGrid.Presentation.Orchestration.Bindings
                 return new FlowHandle(null, onMarker);
             }
 
-            Transform card = ResolveCard(registry, payload);
-            Transform slot = registry != null ? registry.ResolveAnchor(payload.ToSlot) : null;
-            if (card != null && slot != null)
+            if (DeckFlowActorResolver.TryResolveCardAndSlot(registry, payload, out Transform card, out Transform slot))
             {
                 mFlow.Play(card, slot);
                 return new FlowHandle(mFlow, onMarker);
             }
 
-            if (mFlow.TryPlayGapFillPreview(registry, payload.ToSlot))
+            Transform fallbackCard = ResolveCard(registry, payload);
+            Transform fallbackSlot = registry != null && payload.ToSlot.IsBoardSlot
+                ? registry.ResolveAnchor(payload.ToSlot)
+                : null;
+            if (fallbackCard != null && fallbackSlot != null)
             {
+                mFlow.Play(fallbackCard, fallbackSlot);
                 return new FlowHandle(mFlow, onMarker);
             }
 
-            mFlow.PlayPreview();
-            return new FlowHandle(mFlow, onMarker);
+            return FlowBindingFallback.SnapshotHandle(onMarker);
         }
 
         public void Stop()
@@ -181,6 +194,20 @@ namespace NineGrid.Presentation.Orchestration.Bindings
 
             if (payload.FromSlot.IsBoardSlot)
             {
+                FlowPlaybackScope scope = FlowPlaybackScope.Current;
+                if (scope?.Snapshot != null)
+                {
+                    IReadOnlyList<BoardSlotView> slots = scope.Snapshot.Board.Slots;
+                    for (var i = 0; i < slots.Count; i++)
+                    {
+                        BoardSlotView slotView = slots[i];
+                        if (slotView.Slot == payload.FromSlot)
+                        {
+                            return registry.ResolveActor(slotView.CardUid);
+                        }
+                    }
+                }
+
                 return registry.ResolveActor(PerformanceDebugActorUids.BoardCard(payload.FromSlot.Index));
             }
 
@@ -208,15 +235,20 @@ namespace NineGrid.Presentation.Orchestration.Bindings
                 return new FlowHandle(null, onMarker);
             }
 
-            Transform card = payload.CardUid > 0 ? registry?.ResolveActor(payload.CardUid) : null;
-            Transform slot = registry != null ? registry.ResolveAnchor(payload.ToSlot) : null;
-            if (card != null && slot != null && mSubstituteFlow != null)
+            if (DeckFlowActorResolver.TryResolveCardAndSlot(registry, payload, out Transform card, out Transform slot)
+                && mSubstituteFlow != null)
             {
                 mSubstituteFlow.Play(card, slot);
                 return new FlowHandle(mSubstituteFlow, onMarker);
             }
 
-            mDealFlow?.PlayPreview();
+            if (mDealFlow != null
+                && DeckFlowActorResolver.TryBuildDeckEntry(registry, payload, out List<Transform> cards, out List<Transform> slots))
+            {
+                mDealFlow.Play(cards, slots);
+                return new FlowHandle(mDealFlow, onMarker);
+            }
+
             IDirectedFlow directed = mDealFlow != null ? mDealFlow : mSubstituteFlow;
             return new FlowHandle(directed, onMarker);
         }
@@ -246,13 +278,20 @@ namespace NineGrid.Presentation.Orchestration.Bindings
                 return new FlowHandle(null, onMarker);
             }
 
-            if (mFlow.TryPlayGapFillPreview(registry, payload.ToSlot))
+            var dealPayload = new FlowPayload
             {
+                CardUid = payload?.CardUid ?? 0,
+                ToSlot = payload?.ToSlot ?? SlotId.None,
+                Amount = payload?.Amount ?? 0,
+            };
+
+            if (DeckFlowActorResolver.TryResolveCardAndSlot(registry, dealPayload, out Transform card, out Transform slot))
+            {
+                mFlow.Play(card, slot);
                 return new FlowHandle(mFlow, onMarker);
             }
 
-            mFlow.PlayPreview();
-            return new FlowHandle(mFlow, onMarker);
+            return FlowBindingFallback.SnapshotHandle(onMarker);
         }
 
         public void Stop()
@@ -280,7 +319,13 @@ namespace NineGrid.Presentation.Orchestration.Bindings
             }
 
             int itemUid = payload.CardUid > 0 ? payload.CardUid : payload.ActorUid;
-            mFlow.Play(itemUid);
+            Transform actor = itemUid > 0 ? registry?.ResolveActor(itemUid) : null;
+            if (actor == null)
+            {
+                return FlowBindingFallback.SnapshotHandle(onMarker);
+            }
+
+            mFlow.Play(actor);
             return new FlowHandle(mFlow, onMarker);
         }
 
@@ -308,13 +353,34 @@ namespace NineGrid.Presentation.Orchestration.Bindings
                 return new FlowHandle(null, onMarker);
             }
 
-            mFlow.PlayPreview();
-            return new FlowHandle(mFlow, onMarker);
+            if (DeckFlowActorResolver.TryBuildDeckEntry(registry, payload, out List<Transform> cards, out List<Transform> slots))
+            {
+                mFlow.Play(cards, slots);
+                return new FlowHandle(mFlow, onMarker);
+            }
+
+            return FlowBindingFallback.SnapshotHandle(onMarker);
         }
 
         public void Stop()
         {
             mFlow?.StopAndRestore();
+        }
+    }
+
+    internal static class FlowBindingFallback
+    {
+        public static FlowHandle SnapshotHandle(Action<string> onMarker)
+        {
+            return new FlowHandle(InstantAlignFlow.Instance, onMarker);
+        }
+
+        private sealed class InstantAlignFlow : IDirectedFlow
+        {
+            public static readonly InstantAlignFlow Instance = new InstantAlignFlow();
+            public bool IsPlaying => false;
+            public float ExpectedDuration => 0f;
+            public void StopAndRestore() { }
         }
     }
 }

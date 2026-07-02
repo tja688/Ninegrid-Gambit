@@ -17,9 +17,10 @@ namespace NineGrid.Presentation.Orchestration
             IViewRegistry viewRegistry,
             FlowRegistry flowRegistry,
             IReadOnlyList<IReconcilable> reconcilables,
-            IInputLockGate inputLockGate = null)
+            IInputLockGate inputLockGate = null,
+            TableNineActorFactory actorFactory = null)
         {
-            mExecutor = new PresentationPlanExecutor(viewRegistry, flowRegistry, reconcilables);
+            mExecutor = new PresentationPlanExecutor(viewRegistry, flowRegistry, reconcilables, actorFactory);
             mInputLockGate = inputLockGate ?? new LocalInputLockGate();
         }
 

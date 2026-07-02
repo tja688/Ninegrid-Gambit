@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using NineGrid.Core;
 using NineGrid.Presentation.Bridge;
+using NineGrid.Presentation.Flow.Shell;
 using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Shared;
 using NineGrid.Presentation.Visuals;
@@ -57,6 +58,34 @@ namespace NineGrid.Presentation.Shell
         public RoomChoiceSubState SubState => subState;
         public event Action<int, RoomKind> RoomChosen;
 
+        public bool TryBuildEntranceMoves(out List<SelectionPresentation.RoomMove> moves)
+        {
+            moves = new List<SelectionPresentation.RoomMove>(2);
+            if (room1Card != null)
+            {
+                moves.Add(new SelectionPresentation.RoomMove(room1Card, room1Start, room1HomeWorld));
+            }
+
+            if (room2Card != null)
+            {
+                moves.Add(new SelectionPresentation.RoomMove(room2Card, room2Start, room2HomeWorld));
+            }
+
+            return moves.Count > 0;
+        }
+
+        public bool TryBuildExitActors(
+            int selectedIndex,
+            out Transform selectedCard,
+            out Transform selectedEnd,
+            out Transform unselectedCard)
+        {
+            selectedCard = selectedIndex == 0 ? room1Card : room2Card;
+            selectedEnd = selectedIndex == 0 ? room1End : room2End;
+            unselectedCard = selectedIndex == 0 ? room2Card : room1Card;
+            return selectedCard != null && selectedEnd != null;
+        }
+
         private void Awake()
         {
             if (room1Card != null)
@@ -97,6 +126,13 @@ namespace NineGrid.Presentation.Shell
 
             choiceSnapshot = commandRouter?.CaptureSnapshot();
             ApplyRoomLabels();
+
+            RoomChoiceFlow batchFlow = FindObjectOfType<RoomChoiceFlow>();
+            if (batchFlow != null && batchFlow.EntrancePlayed)
+            {
+                OnEnterComplete();
+                return;
+            }
 
             presentation?.PlayRoomEntrance(
                 new[]

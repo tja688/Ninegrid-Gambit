@@ -11,10 +11,13 @@ namespace NineGrid.Presentation.Orchestration
         FillSlots,
         UseItem,
         CardDeckEntry,
+        CardAcquisition,
         Counterattack,
         CounterattackKill,
         RoomChoiceIn,
         RoomChoiceOut,
+        InGameUiEntrance,
+        InGameUiExit,
         SnapshotAlign,
     }
 }

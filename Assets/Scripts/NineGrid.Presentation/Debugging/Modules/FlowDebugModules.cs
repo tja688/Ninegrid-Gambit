@@ -284,7 +284,6 @@ namespace NineGrid.Presentation.Debugging.Modules
                 CardUid = payload.GetInt("itemCardUid", PerformanceDebugActorUids.Player),
             };
             var result = FlowBindingPlayHelper.PlayFlow(context, FlowId.UseItem, flowPayload);
-            context.Log.Info("ItemUseFlow is a placeholder (0s).");
             return result;
         }
     }

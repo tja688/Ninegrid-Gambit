@@ -5,7 +5,9 @@ using NineGrid.Presentation.Flow.Battle;
 using NineGrid.Presentation.Flow.Board;
 using NineGrid.Presentation.Flow.Core;
 using NineGrid.Presentation.Flow.Deck;
+using NineGrid.Presentation.Flow.Hand;
 using NineGrid.Presentation.Flow.Item;
+using NineGrid.Presentation.Flow.Shell;
 using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Reactions;
 using NineGrid.Presentation.Shared;
@@ -38,6 +40,8 @@ namespace NineGrid.Presentation.Bridge
             GetOrAdd<CardDeckSubstituteFlow>(host);
             GetOrAdd<SelectionPresentation>(host);
             GetOrAdd<ItemUseFlow>(host);
+            GetOrAdd<InGameUiFlow>(host);
+            GetOrAdd<RoomChoiceFlow>(host);
             GetOrAdd<SnapshotAlignFlow>(host);
 
             var damageNumbers = GetOrAdd<DamageNumbersReaction>(host);
@@ -63,6 +67,26 @@ namespace NineGrid.Presentation.Bridge
             WireAcquisition(host.GetComponent<CardAcquisitionFlow>(), cardPrefab, handActors, handAnchors, handLayout, handReturn);
             WireHover(host.GetComponent<BoardCardHoverPresenter>(), cardPrefab, actorsRoot);
             WireHandDrag(handDrag, handLayout, host.GetComponent<CardShakeCue>());
+            WireItemUse(host.GetComponent<ItemUseFlow>(), handReturn);
+            WireShellFlows(
+                host.GetComponent<SelectionPresentation>(),
+                host.GetComponent<RoomChoiceFlow>());
+        }
+
+        private static void WireItemUse(ItemUseFlow flow, HandCardReturnPresenter returnPresenter)
+        {
+            if (flow != null)
+            {
+                flow.Configure(returnPresenter);
+            }
+        }
+
+        private static void WireShellFlows(SelectionPresentation selection, RoomChoiceFlow roomChoiceFlow)
+        {
+            if (roomChoiceFlow != null)
+            {
+                roomChoiceFlow.Configure(selection);
+            }
         }
 
         private static void WireDeckEntryFlow(

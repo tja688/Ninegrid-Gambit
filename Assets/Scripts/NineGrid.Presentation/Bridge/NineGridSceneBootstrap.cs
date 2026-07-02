@@ -114,7 +114,7 @@ namespace NineGrid.Presentation.Bridge
                 ActorFactory,
                 services.HandItemsReconcilable);
 
-            HudBinder = HudDirectBindingSetup.Install(Architecture, transform);
+            HudBinder = HudDirectBindingSetup.Install(Architecture, transform, services.InGameUiFlow);
             ReconcileInitialSnapshot();
             WireShellBridge();
             Debug.Log("[NineGridSceneBootstrap] Production bridge ready.");

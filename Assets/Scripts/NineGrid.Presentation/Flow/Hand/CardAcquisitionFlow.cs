@@ -11,7 +11,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Scripting.APIUpdating;
 
-namespace NineGrid.Presentation.Reactions
+namespace NineGrid.Presentation.Flow.Hand
 {
     /// <summary>
     /// 卡牌获取：场上卡飞入手牌槽位；已有手牌同步让位重排。
@@ -19,7 +19,7 @@ namespace NineGrid.Presentation.Reactions
     /// </summary>
     [DisallowMultipleComponent]
     [MovedFrom(true, "NineGrid.Presentation.Performance", null, "CardAcquisitionPerformance")]
-    public sealed class CardAcquisitionFlow : MonoBehaviour, IPlannedReaction
+    public sealed class CardAcquisitionFlow : MonoBehaviour, IDirectedFlow
     {
         [Header("Hand Presenters")]
         [SerializeField] private HandLayoutPresenter layoutPresenter;
@@ -54,6 +54,8 @@ namespace NineGrid.Presentation.Reactions
         private bool previewActorsOwned;
 
         public bool IsPlaying => isPlaying;
+
+        public float ExpectedDuration => TotalDuration;
 
         public float TotalDuration => Mathf.Max(
             layoutPresenter != null ? layoutPresenter.LayoutDuration : 0f,

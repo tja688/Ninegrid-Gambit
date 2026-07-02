@@ -1,4 +1,5 @@
 using NineGrid.Core;
+using NineGrid.Presentation.Flow.Shell;
 using NineGrid.Presentation.Visuals;
 using QFramework;
 using UnityEngine;
@@ -10,7 +11,10 @@ namespace NineGrid.Presentation.Bridge
     /// </summary>
     internal static class HudDirectBindingSetup
     {
-        public static TableNineHudModelBinder Install(IArchitecture architecture, Transform bootstrapRoot)
+        public static TableNineHudModelBinder Install(
+            IArchitecture architecture,
+            Transform bootstrapRoot,
+            InGameUiFlow inGameUiFlow = null)
         {
             if (architecture == null)
             {
@@ -22,6 +26,10 @@ namespace NineGrid.Presentation.Bridge
             TableNineContentIconStripView skillStrip = ResolveIconStrip("PlayerSkillPanel");
 
             var hudRoots = CollectHudRoots(statusPanel, relicStrip, skillStrip);
+            RunModel run = architecture.GetModel<RunModel>();
+            inGameUiFlow?.Configure(hudRoots);
+            inGameUiFlow?.ApplyImmediateVisibility(
+                InGameHudPhasePolicy.ShouldShowGameplayHud(run?.Phase?.Value ?? GamePhase.None));
             var host = new GameObject("TableNineHudModelBinder");
             if (bootstrapRoot != null)
             {

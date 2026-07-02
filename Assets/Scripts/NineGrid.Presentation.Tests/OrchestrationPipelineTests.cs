@@ -168,7 +168,70 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void BatchPlayer_PlaySync_InvokesFlowsAndReconcile()
+        public void PlanBuilder_OpeningDeal_RoutesDeckEntry()
+        {
+            var events = new List<CoreGameEvent>
+            {
+                new CoreGameEvent(CoreEventType.CardDealt, 10, "deal")
+                    .WithAmount(5)
+                    .WithMessage("opening"),
+            };
+
+            var batch = PresentationBatchFixture.Create(4, events, OrchestrationTestSnapshots.Minimal());
+            var plan = new PerformancePlanBuilder().Build(batch);
+
+            AssertContainsFlow(plan, FlowId.CardDeckEntry);
+        }
+
+        [Test]
+        public void PlanBuilder_PhaseEnterGameplay_RoutesInGameUiEntrance()
+        {
+            var events = new List<CoreGameEvent>
+            {
+                new CoreGameEvent(CoreEventType.PhaseChanged, 1, "ChangePhase")
+                    .WithAmount((int)GamePhase.InteractionLoop)
+                    .WithDelta((int)GamePhase.RewardItemChoice),
+            };
+
+            var batch = PresentationBatchFixture.Create(5, events, OrchestrationTestSnapshots.Minimal());
+            var plan = new PerformancePlanBuilder().Build(batch);
+
+            AssertContainsFlow(plan, FlowId.InGameUiEntrance);
+        }
+
+        [Test]
+        public void PlanBuilder_PhaseLeaveGameplay_RoutesInGameUiExit()
+        {
+            var events = new List<CoreGameEvent>
+            {
+                new CoreGameEvent(CoreEventType.PhaseChanged, 1, "ChangePhase")
+                    .WithAmount((int)GamePhase.RewardItemChoice)
+                    .WithDelta((int)GamePhase.InteractionLoop),
+            };
+
+            var batch = PresentationBatchFixture.Create(6, events, OrchestrationTestSnapshots.Minimal());
+            var plan = new PerformancePlanBuilder().Build(batch);
+
+            AssertContainsFlow(plan, FlowId.InGameUiExit);
+        }
+
+        [Test]
+        public void PlanBuilder_PickItem_RoutesCardAcquisition()
+        {
+            var events = new List<CoreGameEvent>
+            {
+                new CoreGameEvent(CoreEventType.ItemPicked, 2, "pick")
+                    .WithCard(42),
+            };
+
+            var batch = PresentationBatchFixture.Create(8, events, OrchestrationTestSnapshots.Minimal());
+            var plan = new PerformancePlanBuilder().Build(batch);
+
+            AssertContainsFlow(plan, FlowId.CardAcquisition);
+        }
+
+        [Test]
+        public void BatchPlayer_AttackThenReconcile_ReleasesInputLock()
         {
             var events = new List<CoreGameEvent>
             {

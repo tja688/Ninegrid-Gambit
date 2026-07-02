@@ -1,4 +1,5 @@
 using NineGrid.Core;
+using NineGrid.Presentation.Visuals;
 
 namespace NineGrid.Presentation.Orchestration
 {
@@ -53,7 +54,7 @@ namespace NineGrid.Presentation.Orchestration
 
                 case PresentationInstructionKind.DealCard:
                 case PresentationInstructionKind.SpawnCard:
-                    route = FlowRoute(FlowId.CardDeal, payload);
+                    route = FlowRoute(ResolveDealFlowId(payload), payload);
                     return true;
 
                 case PresentationInstructionKind.FillSlots:
@@ -64,6 +65,22 @@ namespace NineGrid.Presentation.Orchestration
                     route = FlowRoute(FlowId.UseItem, payload);
                     return true;
 
+                case PresentationInstructionKind.PickItem:
+                    route = FlowRoute(FlowId.CardAcquisition, payload);
+                    return true;
+
+                case PresentationInstructionKind.ChangePhase:
+                    route = FlowRoute(ResolvePhaseChangeFlowId(payload), payload);
+                    return true;
+
+                case PresentationInstructionKind.OfferRooms:
+                    route = FlowRoute(FlowId.RoomChoiceIn, payload);
+                    return true;
+
+                case PresentationInstructionKind.SelectRoom:
+                    route = FlowRoute(FlowId.RoomChoiceOut, payload);
+                    return true;
+
                 case PresentationInstructionKind.ShowRejectedIntent:
                 case PresentationInstructionKind.UpdateHp:
                 case PresentationInstructionKind.UpdateArmor:
@@ -72,10 +89,8 @@ namespace NineGrid.Presentation.Orchestration
                 case PresentationInstructionKind.SwapCards:
                 case PresentationInstructionKind.ShowDrawPileExhausted:
                 case PresentationInstructionKind.UpdateInteractionCount:
-                case PresentationInstructionKind.ChangePhase:
                 case PresentationInstructionKind.StartNode:
                 case PresentationInstructionKind.CompleteNode:
-                case PresentationInstructionKind.PickItem:
                 case PresentationInstructionKind.ClickEmpty:
                 case PresentationInstructionKind.TriggerEffect:
                 case PresentationInstructionKind.ApplyModifier:
@@ -86,8 +101,6 @@ namespace NineGrid.Presentation.Orchestration
                 case PresentationInstructionKind.OfferReward:
                 case PresentationInstructionKind.SelectReward:
                 case PresentationInstructionKind.SkipReward:
-                case PresentationInstructionKind.OfferRooms:
-                case PresentationInstructionKind.SelectRoom:
                 case PresentationInstructionKind.ResolveRoom:
                 case PresentationInstructionKind.AdvanceNode:
                 case PresentationInstructionKind.MarkBoard:
@@ -98,6 +111,49 @@ namespace NineGrid.Presentation.Orchestration
                 default:
                     return false;
             }
+        }
+
+        private static FlowId ResolveDealFlowId(FlowPayload payload)
+        {
+            if (payload != null
+                && payload.CardUid <= 0
+                && payload.Amount > 0
+                && IsOpeningDeal(payload))
+            {
+                return FlowId.CardDeckEntry;
+            }
+
+            return FlowId.CardDeal;
+        }
+
+        private static FlowId ResolvePhaseChangeFlowId(FlowPayload payload)
+        {
+            if (payload == null)
+            {
+                return FlowId.SnapshotAlign;
+            }
+
+            var next = (GamePhase)payload.Amount;
+            var previous = (GamePhase)payload.Delta;
+            bool showNext = InGameHudPhasePolicy.ShouldShowGameplayHud(next);
+            bool showPrevious = InGameHudPhasePolicy.ShouldShowGameplayHud(previous);
+            if (showNext && !showPrevious)
+            {
+                return FlowId.InGameUiEntrance;
+            }
+
+            if (!showNext && showPrevious)
+            {
+                return FlowId.InGameUiExit;
+            }
+
+            return FlowId.SnapshotAlign;
+        }
+
+        private static bool IsOpeningDeal(FlowPayload payload)
+        {
+            return string.Equals(payload.Message, "opening", System.StringComparison.Ordinal)
+                || string.Equals(payload.Cause, "opening", System.StringComparison.Ordinal);
         }
 
         private static InstructionRoute FlowRoute(FlowId flowId, FlowPayload payload)

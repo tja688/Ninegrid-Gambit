@@ -16,7 +16,6 @@ namespace NineGrid.Presentation.Bridge
         [SerializeField] private TableNineStatusPanelView statusPanel;
         [SerializeField] private TableNineContentIconStripView relicStrip;
         [SerializeField] private TableNineContentIconStripView skillStrip;
-        [SerializeField] private GameObject[] hudVisibilityRoots;
 
         private IArchitecture mArchitecture;
         private readonly List<IUnRegister> mUnregisters = new();
@@ -33,7 +32,6 @@ namespace NineGrid.Presentation.Bridge
             statusPanel = panel;
             relicStrip = relicView;
             skillStrip = skillView;
-            hudVisibilityRoots = visibilityRoots;
             Bind();
         }
 
@@ -50,7 +48,6 @@ namespace NineGrid.Presentation.Bridge
             }
 
             PlayerModel player = mArchitecture.GetModel<PlayerModel>();
-            RunModel run = mArchitecture.GetModel<RunModel>();
             if (player == null)
             {
                 return;
@@ -59,11 +56,6 @@ namespace NineGrid.Presentation.Bridge
             Track(player.Coins.RegisterWithInitValue(OnCoinsChanged));
             Track(player.InteractionCount.RegisterWithInitValue(OnInteractionCountChanged));
             Track(player.Version.RegisterWithInitValue(_ => RefreshContentStrips()));
-
-            if (run?.Phase != null)
-            {
-                Track(run.Phase.RegisterWithInitValue(OnPhaseChanged));
-            }
 
             RefreshContentStrips();
         }
@@ -95,24 +87,6 @@ namespace NineGrid.Presentation.Bridge
         private void OnInteractionCountChanged(int count)
         {
             statusPanel?.SetInteractionCount(count);
-        }
-
-        private void OnPhaseChanged(GamePhase phase)
-        {
-            bool visible = InGameHudPhasePolicy.ShouldShowGameplayHud(phase);
-            if (hudVisibilityRoots == null)
-            {
-                return;
-            }
-
-            for (var i = 0; i < hudVisibilityRoots.Length; i++)
-            {
-                GameObject root = hudVisibilityRoots[i];
-                if (root != null)
-                {
-                    root.SetActive(visible);
-                }
-            }
         }
 
         private void RefreshContentStrips()
