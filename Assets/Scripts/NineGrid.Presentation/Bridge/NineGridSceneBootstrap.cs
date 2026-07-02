@@ -33,6 +33,7 @@ namespace NineGrid.Presentation.Bridge
         public PresentationBatchPlayer BatchPlayer { get; private set; }
         public FlowRegistry FlowRegistry { get; private set; }
         public SceneStagingRoots StagingRoots { get; private set; }
+        public TableNineHudModelBinder HudBinder { get; private set; }
         public IArchitecture Architecture { get; private set; }
 
         private void Awake()
@@ -113,6 +114,7 @@ namespace NineGrid.Presentation.Bridge
                 ActorFactory,
                 services.HandItemsReconcilable);
 
+            HudBinder = HudDirectBindingSetup.Install(Architecture, transform);
             ReconcileInitialSnapshot();
             WireShellBridge();
             Debug.Log("[NineGridSceneBootstrap] Production bridge ready.");
@@ -134,7 +136,7 @@ namespace NineGrid.Presentation.Bridge
             mHandItemsReconcilable?.ApplySnapshot(snapshot);
 
             TableNineStatusPanelView statusPanel = FindObjectOfType<TableNineStatusPanelView>();
-            statusPanel?.ApplySnapshot(snapshot);
+            statusPanel?.ApplyAvatarCombatStats(snapshot);
         }
 
         private void EnsureStandardCardPrefab()

@@ -5,7 +5,7 @@ using UnityEngine;
 namespace NineGrid.Presentation.Visuals
 {
     /// <summary>
-    /// 玩家状态 HUD 视图绑定：HP / 护甲 / 金币 / 互动次数。
+    /// 玩家状态 HUD 视图：金币/互动次数由 Model 直连；HP/护甲由战斗 Flow + 批末 Reconcile 驱动。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class TableNineStatusPanelView : MonoBehaviour
@@ -15,6 +15,29 @@ namespace NineGrid.Presentation.Visuals
         [SerializeField] private TMP_Text armorText;
         [SerializeField] private TMP_Text goldText;
         [SerializeField] private TMP_Text interactionText;
+
+        public void TryWireFromHierarchy()
+        {
+            if (hpText == null)
+            {
+                hpText = FindTmpChild("HpText");
+            }
+
+            if (armorText == null)
+            {
+                armorText = FindTmpChild("ArmorText");
+            }
+
+            if (goldText == null)
+            {
+                goldText = FindTmpChild("GoldText");
+            }
+
+            if (interactionText == null)
+            {
+                interactionText = FindTmpChild("InteractionText");
+            }
+        }
 
         public void SetHp(int hp)
         {
@@ -48,15 +71,15 @@ namespace NineGrid.Presentation.Visuals
             }
         }
 
-        public void ApplySnapshot(CoreViewSnapshot snapshot)
+        /// <summary>
+        /// 批末兜底：仅同步玩家化身 HP/护甲，不含金币与互动次数。
+        /// </summary>
+        public void ApplyAvatarCombatStats(CoreViewSnapshot snapshot)
         {
             if (snapshot == null)
             {
                 return;
             }
-
-            SetGold(snapshot.Coins);
-            SetInteractionCount(snapshot.InteractionCount);
 
             BoardSlotView avatarSlot = snapshot.GetSlot(snapshot.AvatarSlot);
             if (avatarSlot != null && avatarSlot.CardUid == snapshot.AvatarUid)
@@ -90,13 +113,13 @@ namespace NineGrid.Presentation.Visuals
                     }
 
                     break;
-                case CoreEventType.GoldModified:
-                    SetGold(evt.Amount);
-                    break;
-                case CoreEventType.InteractionChanged:
-                    SetInteractionCount(evt.Amount);
-                    break;
             }
+        }
+
+        private TMP_Text FindTmpChild(string childName)
+        {
+            Transform child = transform.Find(childName);
+            return child != null ? child.GetComponentInChildren<TMP_Text>(true) : null;
         }
 
         private static bool IsAvatarCard(CoreGameEvent evt, CoreViewSnapshot snapshot)

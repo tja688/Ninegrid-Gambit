@@ -3,6 +3,9 @@ using NineGrid.Presentation.Visuals;
 
 namespace NineGrid.Presentation.Orchestration
 {
+    /// <summary>
+    /// 批末仅对齐玩家化身 HP/护甲；金币与互动次数走 HUD Model 直连。
+    /// </summary>
     public sealed class StatusPanelReconcilable : IReconcilable
     {
         private readonly TableNineStatusPanelView mStatusPanel;
@@ -14,7 +17,7 @@ namespace NineGrid.Presentation.Orchestration
 
         public void ApplySnapshot(CoreViewSnapshot snapshot)
         {
-            mStatusPanel?.ApplySnapshot(snapshot);
+            mStatusPanel?.ApplyAvatarCombatStats(snapshot);
         }
     }
 }

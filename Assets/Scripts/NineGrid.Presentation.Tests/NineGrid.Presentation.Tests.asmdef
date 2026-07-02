@@ -3,7 +3,10 @@
     "rootNamespace": "NineGrid.Presentation.Tests",
     "references": [
         "NineGrid.Presentation",
-        "NineGrid.Core"
+        "NineGrid.Presentation.Visuals",
+        "NineGrid.Core",
+        "QFramework",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"
