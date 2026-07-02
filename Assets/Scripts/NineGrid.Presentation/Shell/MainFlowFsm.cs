@@ -29,7 +29,7 @@ namespace NineGrid.Presentation.Shell
         public event Action<MainFlowScreen, MainFlowScreen> ScreenChanged;
 
         public MainFlowScreen CurrentScreen { get; private set; } = MainFlowScreen.Boot;
-        public bool IsHarnessMode { get; set; } = true;
+        public bool IsHarnessMode { get; set; }
 
         public void Enter(MainFlowScreen screen)
         {

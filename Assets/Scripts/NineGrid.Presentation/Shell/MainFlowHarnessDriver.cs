@@ -1,29 +1,37 @@
 using System.Collections;
+using NineGrid.Core;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Shell
 {
     /// <summary>
-    /// Harness 模式假推进：不订阅 Core PhaseChanged。
+    /// 主流程测试劫持：运行时开启后自动推进节点；右房走事件+一轮节点后跳过奖励直接结局。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class MainFlowHarnessDriver : MonoBehaviour
     {
-        [SerializeField, Min(0f)] private float rewardAutoAdvanceDelay = 0f;
-        [SerializeField, Min(0)] private int autoVictoryAfterNodeCycles = 0;
+        [SerializeField, Min(0f)] private float nodeAutoCompleteDelay = 1f;
+        [SerializeField] private RunOutcome testOutcomeOnRightRoom = RunOutcome.Victory;
+
+        public bool IsActive { get; private set; }
+        public float NodeAutoCompleteDelay => nodeAutoCompleteDelay;
+        public RunOutcome TestOutcomeOnRightRoom => testOutcomeOnRightRoom;
 
         private MainFlowFsm flowFsm;
         private MainFlowDirector director;
-        private int nodeCycleCount;
-        private Coroutine rewardCoroutine;
+        private RoomChoiceScreenPresenter roomChoicePresenter;
+        private Coroutine nodeCompleteCoroutine;
+        private bool pendingOutcomeAfterNode;
 
         public void Bind(MainFlowDirector owner, MainFlowFsm fsm)
         {
             director = owner;
             flowFsm = fsm;
+            roomChoicePresenter = owner?.RoomChoicePresenter;
+
             if (flowFsm != null)
             {
-                flowFsm.IsHarnessMode = true;
+                flowFsm.ScreenChanged -= OnScreenChanged;
                 flowFsm.ScreenChanged += OnScreenChanged;
             }
         }
@@ -34,16 +42,62 @@ namespace NineGrid.Presentation.Shell
             {
                 flowFsm.ScreenChanged -= OnScreenChanged;
             }
+
+            UnhookRoomChoice();
+            CancelNodeComplete();
         }
 
+        public void EnableTestFlow()
+        {
+            if (IsActive)
+            {
+                return;
+            }
+
+            IsActive = true;
+            pendingOutcomeAfterNode = false;
+            if (flowFsm != null)
+            {
+                flowFsm.IsHarnessMode = true;
+            }
+
+            HookRoomChoice();
+            director?.InitializeToMainMenu();
+        }
+
+        public void DisableTestFlow()
+        {
+            if (!IsActive)
+            {
+                return;
+            }
+
+            IsActive = false;
+            pendingOutcomeAfterNode = false;
+            if (flowFsm != null)
+            {
+                flowFsm.IsHarnessMode = false;
+            }
+
+            UnhookRoomChoice();
+            CancelNodeComplete();
+        }
+
+        /// <summary>兼容表演调试模块的旧入口。</summary>
         public void StartHarness()
         {
-            nodeCycleCount = 0;
-            director?.InitializeToMainMenu();
+            EnableTestFlow();
         }
 
         public void NotifyNodeComplete()
         {
+            if (pendingOutcomeAfterNode)
+            {
+                pendingOutcomeAfterNode = false;
+                flowFsm?.ShowOutcome(testOutcomeOnRightRoom);
+                return;
+            }
+
             flowFsm?.RequestTransition(MainFlowTransition.NodeComplete);
         }
 
@@ -69,51 +123,86 @@ namespace NineGrid.Presentation.Shell
 
         private void OnScreenChanged(MainFlowScreen previous, MainFlowScreen current)
         {
+            if (!IsActive)
+            {
+                return;
+            }
+
             if (current == MainFlowScreen.RunSession)
             {
                 flowFsm?.RequestTransition(MainFlowTransition.BeginNode);
                 return;
             }
 
-            if (current == MainFlowScreen.RewardScreen)
+            if (current == MainFlowScreen.NodePlaying)
             {
-                ScheduleRewardAdvance();
+                ScheduleNodeComplete();
                 return;
             }
 
-            if (current == MainFlowScreen.NodePlaying && previous == MainFlowScreen.NodeAdvance)
+            if (current != MainFlowScreen.NodePlaying)
             {
-                nodeCycleCount++;
-                if (autoVictoryAfterNodeCycles > 0 && nodeCycleCount >= autoVictoryAfterNodeCycles)
-                {
-                    TriggerVictory();
-                }
+                CancelNodeComplete();
             }
         }
 
-        private void ScheduleRewardAdvance()
+        private void HookRoomChoice()
         {
-            if (rewardCoroutine != null)
-            {
-                StopCoroutine(rewardCoroutine);
-                rewardCoroutine = null;
-            }
-
-            if (rewardAutoAdvanceDelay <= 0f)
+            if (roomChoicePresenter == null)
             {
                 return;
             }
 
-            rewardCoroutine = StartCoroutine(AutoConfirmReward());
+            roomChoicePresenter.RoomChosen -= OnRoomChosen;
+            roomChoicePresenter.RoomChosen += OnRoomChosen;
         }
 
-        private IEnumerator AutoConfirmReward()
+        private void UnhookRoomChoice()
         {
-            yield return new WaitForSeconds(rewardAutoAdvanceDelay);
-            rewardCoroutine = null;
-            if (flowFsm != null && flowFsm.CurrentScreen == MainFlowScreen.RewardScreen)
+            if (roomChoicePresenter != null)
             {
-                ConfirmReward();
+                roomChoicePresenter.RoomChosen -= OnRoomChosen;
+            }
+
+            pendingOutcomeAfterNode = false;
+        }
+
+        private void OnRoomChosen(int index, RoomKind kind)
+        {
+            if (!IsActive)
+            {
+                return;
+            }
+
+            pendingOutcomeAfterNode = index == 1;
+        }
+
+        private void ScheduleNodeComplete()
+        {
+            CancelNodeComplete();
+            nodeCompleteCoroutine = StartCoroutine(AutoNodeComplete());
+        }
+
+        private void CancelNodeComplete()
+        {
+            if (nodeCompleteCoroutine != null)
+            {
+                StopCoroutine(nodeCompleteCoroutine);
+                nodeCompleteCoroutine = null;
+            }
+        }
+
+        private IEnumerator AutoNodeComplete()
+        {
+            if (nodeAutoCompleteDelay > 0f)
+            {
+                yield return new WaitForSeconds(nodeAutoCompleteDelay);
+            }
+
+            nodeCompleteCoroutine = null;
+            if (IsActive && flowFsm != null && flowFsm.CurrentScreen == MainFlowScreen.NodePlaying)
+            {
+                NotifyNodeComplete();
             }
         }
     }

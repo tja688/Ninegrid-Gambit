@@ -180,7 +180,7 @@ namespace NineGrid.Presentation.Editor
 
             rootVisualElement.Add(PerformanceDebugWarmConsoleUi.BuildHeader(
                 "表演调试控制台",
-                "Flow / Shell / Interaction 模块调试。主流程 Harness 请用 TableNine/主流程控制台。"));
+                "Flow / Shell / Interaction 模块调试。主流程测试请用 MainFlowHarnessDriver 组件。"));
 
             rootVisualElement.Add(BuildMainToolbar());
 
