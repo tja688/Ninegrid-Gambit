@@ -90,17 +90,6 @@ namespace NineGrid.Presentation.Visuals
             ShowForContentId(architecture, entry.DefId);
         }
 
-        public void ShowForRoomKind(IArchitecture architecture, RoomKind roomKind)
-        {
-            if (roomKind == RoomKind.None)
-            {
-                Clear();
-                return;
-            }
-
-            ShowForContentId(architecture, roomKind.ToString());
-        }
-
         public void Clear()
         {
             infoTextView?.Clear();

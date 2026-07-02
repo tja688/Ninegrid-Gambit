@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using NineGrid.Core;
 using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Visuals;
-using QFramework;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Shell
@@ -39,10 +38,6 @@ namespace NineGrid.Presentation.Shell
         [Header("Selection")]
         [SerializeField] private SelectionFsmOwner selectionOwner;
 
-        [Header("Info")]
-        [SerializeField] private ContentInfoPresenter roomInfoPresenter;
-        [SerializeField] private TableNineTextOverlayGate overlayGate;
-
         [Header("Harness Rooms")]
         [SerializeField] private RoomKind harnessRoom1 = RoomKind.Battle;
         [SerializeField] private RoomKind harnessRoom2 = RoomKind.Shop;
@@ -50,7 +45,6 @@ namespace NineGrid.Presentation.Shell
         private MainFlowFsm flowFsm;
         private SelectionFsm selectionFsm;
         private SelectionPresentation presentation;
-        private IArchitecture architecture;
         private RoomChoiceSubState subState = RoomChoiceSubState.Hidden;
         private int pendingSelectedIndex = -1;
         private Vector3 room1HomeWorld;
@@ -75,13 +69,11 @@ namespace NineGrid.Presentation.Shell
         public void Bind(
             MainFlowFsm fsm,
             SelectionFsm selection,
-            SelectionPresentation selectionPresentation,
-            IArchitecture arch = null)
+            SelectionPresentation selectionPresentation)
         {
             flowFsm = fsm;
             selectionFsm = selection;
             presentation = selectionPresentation ?? selectionOwner?.Presentation;
-            architecture = arch;
             selectionOwner?.Bind(selectionFsm);
             WireRoomOptions();
         }
@@ -96,7 +88,6 @@ namespace NineGrid.Presentation.Shell
             subState = RoomChoiceSubState.Entering;
             selectionFsm?.ActivateChannel(SelectionChannel.RoomChoice);
             selectionFsm.InputLocked = true;
-            overlayGate?.ShowRoomInfo(false);
 
             presentation?.PlayRoomEntrance(
                 new[]
@@ -113,8 +104,6 @@ namespace NineGrid.Presentation.Shell
             selectionFsm?.Deactivate();
             selectionFsm?.ForceReset();
             presentation?.ForceRoomReset();
-            overlayGate?.ShowRoomInfo(false);
-            roomInfoPresenter?.Clear();
 
             if (roomChoicePanel != null)
             {
@@ -122,22 +111,6 @@ namespace NineGrid.Presentation.Shell
             }
 
             ResetCardVisibility();
-        }
-
-        public void HandleOptionHovered(int index)
-        {
-            if (subState != RoomChoiceSubState.Ready)
-            {
-                return;
-            }
-
-            RoomKind kind = ResolveRoomKind(index);
-            if (architecture != null)
-            {
-                roomInfoPresenter?.ShowForRoomKind(architecture, kind);
-            }
-
-            overlayGate?.ShowRoomInfo(true);
         }
 
         public void HandleOptionConfirmed(int index)
@@ -165,15 +138,12 @@ namespace NineGrid.Presentation.Shell
                 selectionFsm.InputLocked = false;
             }
 
-            overlayGate?.ShowRoomInfo(false);
             WireRoomOptions();
         }
 
         private void OnExitComplete()
         {
             subState = RoomChoiceSubState.Done;
-            overlayGate?.ShowRoomInfo(false);
-            roomInfoPresenter?.Clear();
 
             int index = pendingSelectedIndex;
             RoomKind kind = ResolveRoomKind(index);
@@ -227,4 +197,3 @@ namespace NineGrid.Presentation.Shell
         }
     }
 }
-

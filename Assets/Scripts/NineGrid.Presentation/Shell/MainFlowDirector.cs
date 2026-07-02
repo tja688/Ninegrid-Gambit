@@ -109,7 +109,7 @@ namespace NineGrid.Presentation.Shell
 
             mainMenuPresenter?.Bind(flowFsm, selectionFsm, presentation);
             rewardPresenter?.Bind(flowFsm, selectionFsm, presentation);
-            roomChoicePresenter?.Bind(flowFsm, selectionFsm, presentation, null);
+            roomChoicePresenter?.Bind(flowFsm, selectionFsm, presentation);
             roomEventPresenter?.Bind(flowFsm);
             outcomePresenter?.Bind(flowFsm);
             harnessDriver?.Bind(this, flowFsm);
@@ -249,14 +249,9 @@ namespace NineGrid.Presentation.Shell
 
         private void OnSelectionHovered(int index)
         {
-            switch (flowFsm.CurrentScreen)
+            if (flowFsm.CurrentScreen == MainFlowScreen.MainMenu)
             {
-                case MainFlowScreen.MainMenu:
-                    mainMenuPresenter?.HandleOptionHovered(index);
-                    break;
-                case MainFlowScreen.RoomChoiceScreen:
-                    roomChoicePresenter?.HandleOptionHovered(index);
-                    break;
+                mainMenuPresenter?.HandleOptionHovered(index);
             }
         }
 

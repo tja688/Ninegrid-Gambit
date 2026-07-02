@@ -11,28 +11,20 @@ namespace NineGrid.Presentation.Tests
         {
             var root = new GameObject("overlay-root");
             var inGame = new GameObject("in-game");
-            var room = new GameObject("room");
             var notice = new GameObject("notice");
             inGame.transform.SetParent(root.transform);
-            room.transform.SetParent(root.transform);
             notice.transform.SetParent(root.transform);
 
             var gate = root.AddComponent<TableNineTextOverlayGate>();
             SetPrivateField(gate, "inGameInfoRoot", inGame);
-            SetPrivateField(gate, "roomInfoRoot", room);
             SetPrivateField(gate, "noticeRoot", notice);
 
             gate.ApplyForScreen(MainFlowScreen.NodePlaying);
             Assert.IsTrue(inGame.activeSelf);
-            Assert.IsFalse(room.activeSelf);
             Assert.IsFalse(notice.activeSelf);
-
-            gate.ShowRoomInfo(true);
-            Assert.IsTrue(room.activeSelf);
 
             gate.ApplyForScreen(MainFlowScreen.Victory);
             Assert.IsFalse(inGame.activeSelf);
-            Assert.IsFalse(room.activeSelf);
             Assert.IsTrue(notice.activeSelf);
 
             Object.DestroyImmediate(root);

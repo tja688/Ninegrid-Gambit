@@ -154,23 +154,4 @@ namespace NineGrid.Presentation.Debugging.Modules
             return PerformanceDebugPlayResult.Ok(module.ExpectedDuration);
         }
     }
-
-    public sealed class RoomChoiceHoverShellDebugModule : PerformanceDebugModuleBase<SelectionPresentation>
-    {
-        public override string Id => "interaction.room-choice-hover";
-        public override string DisplayName => "房间 Hover";
-        public override PerformanceDebugCategory Category => PerformanceDebugCategory.Shell;
-        public override PerformanceDebugSchema Schema => CreateSchema()
-            .Add("hoverIndex", "Hover Index", PerformanceDebugParamKind.Int, "0");
-
-        protected override PerformanceDebugPlayResult PlayModule(
-            PerformanceDebugContext context,
-            SelectionPresentation module,
-            PerformanceDebugPayload payload)
-        {
-            MainFlowDirector director = MainFlowDirector.Current;
-            director?.RoomChoicePresenter?.HandleOptionHovered(payload.GetInt("hoverIndex", 0));
-            return PerformanceDebugPlayResult.Ok(0.35f);
-        }
-    }
 }
