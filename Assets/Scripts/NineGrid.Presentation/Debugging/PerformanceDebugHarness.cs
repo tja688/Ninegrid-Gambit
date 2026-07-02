@@ -3,6 +3,7 @@ using DamageNumbersPro;
 using NineGrid.Core;
 using NineGrid.Presentation.Contracts;
 using NineGrid.Presentation.Orchestration;
+using NineGrid.Presentation.Shell;
 using NineGrid.Presentation.Visuals;
 using UnityEngine;
 
@@ -29,22 +30,45 @@ namespace NineGrid.Presentation.Debugging
         public ReactionRegistry ReactionRegistry { get; private set; }
         public PresentationBatchPlayer BatchPlayer { get; private set; }
 
-        public static PerformanceDebugHarness Create(Transform bootstrapRoot, GameObject cardPrefab, MonoBehaviour coroutineHost = null)
+        public static PerformanceDebugHarness Create(
+            Transform bootstrapRoot,
+            GameObject cardPrefab,
+            MonoBehaviour coroutineHost = null,
+            bool shellSceneMode = false)
         {
             var harness = new PerformanceDebugHarness();
-            harness.Initialize(bootstrapRoot, cardPrefab, coroutineHost);
+            harness.Initialize(bootstrapRoot, cardPrefab, coroutineHost, shellSceneMode);
             return harness;
         }
 
-        private void Initialize(Transform bootstrapRoot, GameObject cardPrefab, MonoBehaviour coroutineHost)
+        private void Initialize(
+            Transform bootstrapRoot,
+            GameObject cardPrefab,
+            MonoBehaviour coroutineHost,
+            bool shellSceneMode)
         {
             this.bootstrapRoot = bootstrapRoot;
             ResolveSceneRoots();
-            ActorFactory = new DebugActorFactory(ActorsRoot, cardPrefab);
+            if (!shellSceneMode)
+            {
+                ActorFactory = new DebugActorFactory(ActorsRoot, cardPrefab);
+            }
+
             IndexAnchors();
-            moduleHost = CreateAndWireModuleHost(bootstrapRoot, cardPrefab);
-            WireOrchestration(coroutineHost);
-            Log.Info("Harness ready. Stage is empty until Play or Rebuild Context.");
+            if (!shellSceneMode)
+            {
+                moduleHost = CreateAndWireModuleHost(bootstrapRoot, cardPrefab);
+                WireOrchestration(coroutineHost);
+            }
+            else
+            {
+                moduleHost = bootstrapRoot.gameObject;
+                Log.Info("Shell scene mode: MainScene panels preserved; use MainFlowDirector for harness.");
+            }
+
+            Log.Info(shellSceneMode
+                ? "Harness ready (Shell). Main flow via MainFlowDirector."
+                : "Harness ready. Stage is empty until Play or Rebuild Context.");
         }
 
         private void WireOrchestration(MonoBehaviour coroutineHost)
@@ -111,6 +135,10 @@ namespace NineGrid.Presentation.Debugging
             }
 
             T found = moduleHost != null ? moduleHost.GetComponentInChildren<T>(true) : null;
+            if (found == null && MainFlowDirector.Current != null)
+            {
+                found = MainFlowDirector.Current.GetComponentInChildren<T>(true);
+            }
             if (found != null)
             {
                 moduleCache[type] = found;

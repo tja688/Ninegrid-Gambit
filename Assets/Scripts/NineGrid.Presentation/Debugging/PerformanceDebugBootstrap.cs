@@ -1,10 +1,11 @@
 using NineGrid.Presentation.Debugging.Timeline;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace NineGrid.Presentation.Debugging
 {
     /// <summary>
-    /// PerformanceTestScene 专用入口：初始化 harness、catalog、runner、timeline 编排。
+    /// PerformanceTestScene / MainScene 入口：初始化 harness、catalog、runner、timeline 编排。
     /// 调试 UI 由 Editor 窗口 <c>TableNine/表演调试面板</c> 提供。
     /// </summary>
     public sealed class PerformanceDebugBootstrap : MonoBehaviour
@@ -15,15 +16,17 @@ namespace NineGrid.Presentation.Debugging
         private PerformanceDebugCatalog catalog;
         private PerformanceDebugSequenceRunner runner;
         private PerformanceDebugTimelineRunner timelineRunner;
+        private bool shellSceneMode;
 
         public PerformanceDebugHarness Harness => harness;
         public PerformanceDebugCatalog Catalog => catalog;
         public PerformanceDebugSequenceRunner Runner => runner;
         public PerformanceDebugTimelineRunner TimelineRunner => timelineRunner;
+        public bool ShellSceneMode => shellSceneMode;
 
         private void Awake()
         {
-            if (!IsPerformanceTestScene())
+            if (!TryResolveSceneMode(out shellSceneMode))
             {
                 enabled = false;
                 return;
@@ -34,19 +37,20 @@ namespace NineGrid.Presentation.Debugging
                 return;
             }
 
-            if (standardCardPrefab == null)
+            if (!shellSceneMode && standardCardPrefab == null)
             {
                 standardCardPrefab = LoadStandardCardPrefab();
             }
 
-            harness = PerformanceDebugHarness.Create(transform, standardCardPrefab, this);
+            harness = PerformanceDebugHarness.Create(transform, standardCardPrefab, this, shellSceneMode);
             catalog = PerformanceDebugCatalog.Discover();
             runner = new PerformanceDebugSequenceRunner(catalog, harness, this);
             timelineRunner = new PerformanceDebugTimelineRunner(catalog, harness, this);
 
             PerformanceDebugSession.Register(this);
+            string sceneLabel = shellSceneMode ? "MainScene Shell Harness" : "PerformanceTestScene";
             harness.Log.Info(
-                $"Catalog loaded {catalog.Modules.Count} modules. Open TableNine/表演调试面板 in the Editor.");
+                $"Catalog loaded {catalog.Modules.Count} modules ({sceneLabel}). Open TableNine/表演调试面板 in the Editor.");
         }
 
         private void OnDestroy()
@@ -54,9 +58,16 @@ namespace NineGrid.Presentation.Debugging
             PerformanceDebugSession.Unregister(this);
         }
 
-        private static bool IsPerformanceTestScene()
+        private static bool TryResolveSceneMode(out bool shellMode)
         {
-            string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            string sceneName = SceneManager.GetActiveScene().name;
+            if (sceneName == "MainScene")
+            {
+                shellMode = true;
+                return true;
+            }
+
+            shellMode = false;
             return sceneName == "PerformanceTestScene";
         }
 

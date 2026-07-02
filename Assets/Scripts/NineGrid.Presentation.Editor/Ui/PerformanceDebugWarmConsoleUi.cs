@@ -44,6 +44,7 @@ namespace NineGrid.Presentation.Editor.Ui
             public static readonly Color PoolReaction = new Color(0.72f, 0.45f, 0.38f);
             public static readonly Color PoolCue = new Color(0.45f, 0.68f, 0.55f);
             public static readonly Color PoolInteraction = new Color(0.55f, 0.58f, 0.82f);
+            public static readonly Color PoolShell = new Color(0.78f, 0.58f, 0.42f);
         }
 
         public static Color GetPoolAccent(PerformanceDebugCategory category)
@@ -54,6 +55,7 @@ namespace NineGrid.Presentation.Editor.Ui
                 PerformanceDebugCategory.Reaction => Theme.PoolReaction,
                 PerformanceDebugCategory.Cue => Theme.PoolCue,
                 PerformanceDebugCategory.Interaction => Theme.PoolInteraction,
+                PerformanceDebugCategory.Shell => Theme.PoolShell,
                 _ => Theme.AccentMid,
             };
         }
@@ -66,6 +68,7 @@ namespace NineGrid.Presentation.Editor.Ui
                 PerformanceDebugCategory.Reaction => "Reaction 池",
                 PerformanceDebugCategory.Cue => "Feedback(Cue) 池",
                 PerformanceDebugCategory.Interaction => "Interaction 池",
+                PerformanceDebugCategory.Shell => "Shell 池",
                 _ => category.ToString(),
             };
         }
@@ -96,6 +99,13 @@ namespace NineGrid.Presentation.Editor.Ui
 
         public static Label CreateTinyPathLabel(string text) =>
             CreateTitleLabel(text, 11, false, Theme.TextPath);
+
+        public static Label CreateChecklistLabel(string text)
+        {
+            var label = CreateDescriptionLabel("• " + text);
+            label.style.marginBottom = 4;
+            return label;
+        }
 
         public static VisualElement WrapControl(string label, string description, VisualElement field)
         {
@@ -318,20 +328,42 @@ namespace NineGrid.Presentation.Editor.Ui
 
         public static VisualElement BuildHeader(string title, string subtitle)
         {
+            return BuildHeader(title, subtitle, null);
+        }
+
+        public static VisualElement BuildHeader(string title, string subtitle, Action<DropdownMenu> populateOverflow)
+        {
             var header = new VisualElement();
+            header.style.flexDirection = FlexDirection.Row;
+            header.style.alignItems = Align.Center;
             header.style.backgroundColor = Theme.HeaderBg;
             header.style.paddingLeft = 16;
-            header.style.paddingRight = 16;
+            header.style.paddingRight = 12;
             header.style.paddingTop = 14;
             header.style.paddingBottom = 10;
             header.style.borderBottomWidth = 1;
             header.style.borderBottomColor = Theme.Divider;
 
-            header.Add(CreateTitleLabel(title, 22, true, Theme.TextPrimary));
+            var textColumn = new VisualElement();
+            textColumn.style.flexGrow = 1;
+            textColumn.Add(CreateTitleLabel(title, 22, true, Theme.TextPrimary));
             var sub = CreateTitleLabel(subtitle, 12, false, Theme.TextSecondary);
             sub.style.marginTop = 6;
             sub.style.whiteSpace = WhiteSpace.Normal;
-            header.Add(sub);
+            textColumn.Add(sub);
+            header.Add(textColumn);
+
+            if (populateOverflow != null)
+            {
+                var overflow = new ToolbarMenu { text = "⋮" };
+                overflow.style.width = 36;
+                overflow.style.height = 28;
+                overflow.style.flexShrink = 0;
+                overflow.tooltip = "更多操作";
+                populateOverflow.Invoke(overflow.menu);
+                header.Add(overflow);
+            }
+
             return header;
         }
 

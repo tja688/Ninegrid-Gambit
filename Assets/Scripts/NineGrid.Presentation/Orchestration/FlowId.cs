@@ -13,5 +13,7 @@ namespace NineGrid.Presentation.Orchestration
         CardDeckEntry,
         Counterattack,
         CounterattackKill,
+        RoomChoiceIn,
+        RoomChoiceOut,
     }
 }

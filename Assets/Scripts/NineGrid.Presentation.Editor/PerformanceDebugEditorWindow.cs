@@ -50,7 +50,7 @@ namespace NineGrid.Presentation.Editor
         private readonly PerformanceDebugViewRegistry editModeAnchorRegistry = new();
         private PerformanceDebugTimelineEditorPage timelinePage;
 
-        [MenuItem("TableNine/表演调试面板")]
+        [MenuItem("TableNine/表演调试面板", priority = 20)]
         public static void ShowWindow()
         {
             var window = GetWindow<PerformanceDebugEditorWindow>();
@@ -180,7 +180,7 @@ namespace NineGrid.Presentation.Editor
 
             rootVisualElement.Add(PerformanceDebugWarmConsoleUi.BuildHeader(
                 "表演调试控制台",
-                "在 Editor 窗口配置与触发表演；Game View 保持无遮挡。需 PerformanceTestScene + Play Mode。"));
+                "Flow / Shell / Interaction 模块调试。主流程 Harness 请用 TableNine/主流程控制台。"));
 
             rootVisualElement.Add(BuildMainToolbar());
 
@@ -441,6 +441,7 @@ namespace NineGrid.Presentation.Editor
             AddPoolFoldout(PerformanceDebugCategory.Reaction);
             AddPoolFoldout(PerformanceDebugCategory.Cue);
             AddPoolFoldout(PerformanceDebugCategory.Interaction);
+            AddPoolFoldout(PerformanceDebugCategory.Shell);
 
             string activeKey = viewMode == PerfDebugViewMode.Timeline ? TimelineNavKey : selectedModuleId;
             PerformanceDebugWarmConsoleUi.UpdateNavigationStyles(navEntries, activeKey);
@@ -587,10 +588,11 @@ namespace NineGrid.Presentation.Editor
             if (!EditorApplication.isPlaying)
             {
                 statusHelpBox.messageType = HelpBoxMessageType.Info;
-                if (SceneManager.GetActiveScene().name == "PerformanceTestScene")
+                if (SceneManager.GetActiveScene().name == "PerformanceTestScene"
+                    || SceneManager.GetActiveScene().name == "MainScene")
                 {
                     statusHelpBox.text =
-                        "未进入 Play Mode。已打开测试场景时可预览锚点；点击「运行测试场景」开始播放测试。";
+                        "未进入 Play Mode。已打开支持场景时可预览锚点；进入 Play 后连接 Harness。";
                 }
                 else
                 {
@@ -602,11 +604,26 @@ namespace NineGrid.Presentation.Editor
             }
 
             string sceneName = SceneManager.GetActiveScene().name;
+            if (sceneName == "MainScene")
+            {
+                if (!PerformanceDebugSession.IsConnected)
+                {
+                    statusHelpBox.messageType = HelpBoxMessageType.Warning;
+                    statusHelpBox.text =
+                        "Play Mode 中未找到 PerformanceDebugBootstrap。请确认场景 Directors 下已挂 Bootstrap。";
+                    return;
+                }
+
+                statusHelpBox.messageType = HelpBoxMessageType.Info;
+                statusHelpBox.text = "已连接 MainScene · Shell Harness。使用 shell.* 模块驱动主流程。";
+                return;
+            }
+
             if (sceneName != "PerformanceTestScene")
             {
                 statusHelpBox.messageType = HelpBoxMessageType.Warning;
                 statusHelpBox.text =
-                    $"当前场景为 {sceneName}，不是 PerformanceTestScene。请打开测试场景后再 Play。";
+                    $"当前场景为 {sceneName}，不是 PerformanceTestScene 或 MainScene。请打开支持的场景后再 Play。";
                 return;
             }
 
