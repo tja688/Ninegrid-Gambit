@@ -21,6 +21,7 @@ namespace NineGrid.Presentation.Bridge
         [Header("Prefabs")]
         [SerializeField] private GameObject standardCardPrefab;
         [SerializeField] private DamageNumber damageNumberPrefab;
+        [SerializeField] private GameObject itemUseOptionPrefab;
 
         private GameObject mModuleHost;
         private CoreCommandDispatcher mDispatcher;
@@ -122,10 +123,34 @@ namespace NineGrid.Presentation.Bridge
 
         private void WireShellBridge()
         {
-            if (MainFlowDirector.Current != null)
+            MainFlowDirector director = MainFlowDirector.Current;
+            if (director == null)
             {
-                MainFlowDirector.Current.WireProductionBridge(Gateway, Architecture);
+                return;
             }
+
+            director.WireProductionBridge(Gateway, Architecture);
+            EnsureItemUseOptionPrefab();
+            InGameInteractionSetup.WireItemUseSelection(
+                InteractionCoordinator,
+                StagingRoots,
+                director.SelectionFsm,
+                director.SelectionPresentation,
+                director.GetComponent<SelectionFsmOwner>(),
+                itemUseOptionPrefab);
+        }
+
+        private void EnsureItemUseOptionPrefab()
+        {
+            if (itemUseOptionPrefab != null)
+            {
+                return;
+            }
+
+#if UNITY_EDITOR
+            itemUseOptionPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/Prefabs/StandUISelection.prefab");
+#endif
         }
 
         public void ReconcileInitialSnapshot()

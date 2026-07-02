@@ -3,6 +3,7 @@ using NineGrid.Presentation.Debugging;
 using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Shared;
+using NineGrid.Presentation.Shell;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Bridge
@@ -48,6 +49,49 @@ namespace NineGrid.Presentation.Bridge
             }
 
             return coordinator;
+        }
+
+        public static void WireItemUseSelection(
+            InGameInteractionCoordinator coordinator,
+            SceneStagingRoots roots,
+            SelectionFsm selectionFsm,
+            SelectionPresentation presentation,
+            SelectionFsmOwner selectionOwner,
+            GameObject optionPrefab)
+        {
+            if (coordinator == null)
+            {
+                return;
+            }
+
+            Transform optionRoot = EnsureItemOptionRoot(roots);
+            coordinator.InstallItemUseSelection(
+                selectionFsm,
+                presentation,
+                selectionOwner,
+                optionRoot,
+                optionPrefab);
+        }
+
+        private static Transform EnsureItemOptionRoot(SceneStagingRoots roots)
+        {
+            Transform parent = roots?.PanelsAnchor ?? roots?.NineGridAnchors ?? roots?.AnchorsRoot;
+            if (parent == null)
+            {
+                return null;
+            }
+
+            const string rootName = "ItemUseOptionRoot";
+            Transform existing = parent.Find(rootName);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            var rootObject = new GameObject(rootName);
+            rootObject.transform.SetParent(parent, false);
+            rootObject.transform.localPosition = Vector3.zero;
+            return rootObject.transform;
         }
 
         public static HandItemsReconcilable CreateHandItemsReconcilable(

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using NineGrid.Core;
 using NineGrid.Core.Commands;
 using NineGrid.Core.Systems;
@@ -15,35 +16,151 @@ namespace NineGrid.Presentation.Interaction
     public sealed class BoardInteractionFsm
     {
         public event Action<SlotId> CommandDispatched;
+        public event Action<int, IReadOnlyList<int>> ItemTargetsConfirmed;
+        public event Action ItemTargetCancelled;
 
         public BoardInteractionState State { get; private set; } = BoardInteractionState.Idle;
         public bool InputLocked { get; set; }
         public int HoveredCardUid { get; private set; }
         public SlotId HoveredSlot { get; private set; } = SlotId.None;
+        public int PendingItemUid { get; private set; }
+        public IReadOnlyList<int> SelectedTargetUids => mItemTargetSelected;
 
         private BoardCardHoverPresenter mHoverPresenter;
         private CommandGateway mGateway;
         private IArchitecture mArchitecture;
         private TableNineViewRegistry mViewRegistry;
         private Func<bool> mIsInputAllowed;
+        private Func<bool> mIsItemTargetInputAllowed;
+        private ItemUseRequirement mItemTargetRequirement;
 
         private Transform mHoveredActor;
         private Transform mDragActor;
         private SlotId mDragSlot = SlotId.None;
         private int mDragCardUid;
+        private readonly List<int> mItemTargetSelected = new();
+        private readonly List<Transform> mItemTargetActors = new();
 
         public void Bind(
             BoardCardHoverPresenter hoverPresenter,
             CommandGateway gateway,
             IArchitecture architecture,
             TableNineViewRegistry viewRegistry,
-            Func<bool> isInputAllowed)
+            Func<bool> isInputAllowed,
+            Func<bool> isItemTargetInputAllowed = null)
         {
             mHoverPresenter = hoverPresenter;
             mGateway = gateway;
             mArchitecture = architecture;
             mViewRegistry = viewRegistry;
             mIsInputAllowed = isInputAllowed;
+            mIsItemTargetInputAllowed = isItemTargetInputAllowed;
+        }
+
+        public void BeginItemTargetSelection(int itemUid, ItemUseRequirement requirement)
+        {
+            ForceReset();
+            PendingItemUid = itemUid;
+            mItemTargetRequirement = requirement;
+            mItemTargetSelected.Clear();
+            mItemTargetActors.Clear();
+            State = BoardInteractionState.ItemTargetSelect;
+        }
+
+        public void CancelItemTargetSelection()
+        {
+            if (State != BoardInteractionState.ItemTargetSelect)
+            {
+                return;
+            }
+
+            ClearItemTargetVisuals();
+            PendingItemUid = 0;
+            mItemTargetRequirement = null;
+            mItemTargetSelected.Clear();
+            mItemTargetActors.Clear();
+            State = BoardInteractionState.Idle;
+            ItemTargetCancelled?.Invoke();
+        }
+
+        public void NotifyItemTargetHover(int cardUid, Transform actor)
+        {
+            if (!CanAcceptItemTargetInput() || cardUid <= 0 || actor == null)
+            {
+                return;
+            }
+
+            if (!ItemUseTargetValidator.IsValidBoardTarget(mArchitecture, cardUid, mItemTargetRequirement))
+            {
+                return;
+            }
+
+            if (State == BoardInteractionState.ItemTargetSelect
+                && HoveredCardUid == cardUid
+                && mHoveredActor == actor)
+            {
+                return;
+            }
+
+            ClearHoverVisual();
+            HoveredCardUid = cardUid;
+            mHoveredActor = actor;
+            mHoverPresenter?.Play(actor);
+        }
+
+        public void NotifyItemTargetHoverExit(int cardUid)
+        {
+            if (!CanAcceptItemTargetInput() || HoveredCardUid != cardUid)
+            {
+                return;
+            }
+
+            ClearHoverVisual();
+            HoveredCardUid = 0;
+            mHoveredActor = null;
+        }
+
+        public void NotifyItemTargetPress(int cardUid, Transform actor)
+        {
+            if (!CanAcceptItemTargetInput() || cardUid <= 0 || actor == null)
+            {
+                return;
+            }
+
+            if (State != BoardInteractionState.ItemTargetSelect || mItemTargetRequirement == null)
+            {
+                return;
+            }
+
+            if (!ItemUseTargetValidator.IsValidBoardTarget(mArchitecture, cardUid, mItemTargetRequirement))
+            {
+                PlayReject(actor);
+                return;
+            }
+
+            if (mItemTargetSelected.Contains(cardUid))
+            {
+                return;
+            }
+
+            mItemTargetSelected.Add(cardUid);
+            mItemTargetActors.Add(actor);
+            mHoverPresenter?.Play(actor);
+
+            if (mItemTargetSelected.Count < mItemTargetRequirement.TargetCount)
+            {
+                return;
+            }
+
+            int itemUid = PendingItemUid;
+            var selected = new List<int>(mItemTargetSelected);
+            ClearItemTargetVisuals();
+            PendingItemUid = 0;
+            mItemTargetRequirement = null;
+            mItemTargetSelected.Clear();
+            mItemTargetActors.Clear();
+            State = BoardInteractionState.Idle;
+            ItemTargetsConfirmed?.Invoke(itemUid, selected);
         }
 
         public void NotifyCardHover(int cardUid, Transform actor)
@@ -201,6 +318,12 @@ namespace NineGrid.Presentation.Interaction
 
         public void ForceReset()
         {
+            if (State == BoardInteractionState.ItemTargetSelect)
+            {
+                CancelItemTargetSelection();
+                return;
+            }
+
             ClearHoverVisual();
             ResetHoverState();
             mDragActor = null;
@@ -350,6 +473,29 @@ namespace NineGrid.Presentation.Interaction
             }
 
             return mIsInputAllowed == null || mIsInputAllowed();
+        }
+
+        private bool CanAcceptItemTargetInput()
+        {
+            if (InputLocked || State != BoardInteractionState.ItemTargetSelect)
+            {
+                return false;
+            }
+
+            return mIsItemTargetInputAllowed == null || mIsItemTargetInputAllowed();
+        }
+
+        private void ClearItemTargetVisuals()
+        {
+            ClearHoverVisual();
+            for (var i = 0; i < mItemTargetActors.Count; i++)
+            {
+                Transform actor = mItemTargetActors[i];
+                if (actor != null)
+                {
+                    mHoverPresenter?.StopAndRestore(actor);
+                }
+            }
         }
 
         private void ClearHoverVisual()

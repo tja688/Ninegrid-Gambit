@@ -5,6 +5,7 @@ namespace NineGrid.Presentation.Interaction
         Idle = 0,
         Hover,
         Drag,
+        ItemTargetSelect,
     }
 
     public enum HandInteractionState
@@ -21,5 +22,7 @@ namespace NineGrid.Presentation.Interaction
     {
         Board = 0,
         HandItem,
+        ItemBoardTarget,
+        ItemOption,
     }
 }

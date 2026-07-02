@@ -26,7 +26,19 @@ namespace NineGrid.Presentation.Interaction
                 return;
             }
 
-            ResolveCoordinator()?.Board.NotifyCardHover(cardUid, transform);
+            InGameInteractionCoordinator owner = ResolveCoordinator();
+            if (owner == null)
+            {
+                return;
+            }
+
+            if (owner.Mode == InGameInteractionMode.ItemBoardTarget)
+            {
+                owner.Board.NotifyItemTargetHover(cardUid, transform);
+                return;
+            }
+
+            owner.Board.NotifyCardHover(cardUid, transform);
         }
 
         private void OnMouseExit()
@@ -36,7 +48,19 @@ namespace NineGrid.Presentation.Interaction
                 return;
             }
 
-            ResolveCoordinator()?.Board.NotifyCardHoverExit(cardUid);
+            InGameInteractionCoordinator owner = ResolveCoordinator();
+            if (owner == null)
+            {
+                return;
+            }
+
+            if (owner.Mode == InGameInteractionMode.ItemBoardTarget)
+            {
+                owner.Board.NotifyItemTargetHoverExit(cardUid);
+                return;
+            }
+
+            owner.Board.NotifyCardHoverExit(cardUid);
         }
 
         private void OnMouseDown()
@@ -46,17 +70,41 @@ namespace NineGrid.Presentation.Interaction
                 return;
             }
 
-            ResolveCoordinator()?.Board.NotifyPress(cardUid, transform);
+            InGameInteractionCoordinator owner = ResolveCoordinator();
+            if (owner == null)
+            {
+                return;
+            }
+
+            if (owner.Mode == InGameInteractionMode.ItemBoardTarget)
+            {
+                owner.Board.NotifyItemTargetPress(cardUid, transform);
+                return;
+            }
+
+            owner.Board.NotifyPress(cardUid, transform);
         }
 
         private void OnMouseDrag()
         {
-            ResolveCoordinator()?.Board.NotifyDrag(GetPointerWorldPosition());
+            InGameInteractionCoordinator owner = ResolveCoordinator();
+            if (owner == null || owner.Mode == InGameInteractionMode.ItemBoardTarget)
+            {
+                return;
+            }
+
+            owner.Board.NotifyDrag(GetPointerWorldPosition());
         }
 
         private void OnMouseUp()
         {
-            ResolveCoordinator()?.Board.NotifyRelease();
+            InGameInteractionCoordinator owner = ResolveCoordinator();
+            if (owner == null || owner.Mode == InGameInteractionMode.ItemBoardTarget)
+            {
+                return;
+            }
+
+            owner.Board.NotifyRelease();
         }
 
         private bool TryResolveCardUid(out int cardUid)

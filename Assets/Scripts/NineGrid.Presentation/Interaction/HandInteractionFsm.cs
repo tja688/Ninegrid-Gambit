@@ -16,7 +16,7 @@ namespace NineGrid.Presentation.Interaction
     /// </summary>
     public sealed class HandInteractionFsm
     {
-        public event Action<int> ItemUseDispatched;
+        public event Action<int> ItemUseRequested;
 
         public HandInteractionState State { get; private set; } = HandInteractionState.Idle;
         public bool InputLocked { get; set; }
@@ -139,8 +139,7 @@ namespace NineGrid.Presentation.Interaction
 
             if (inZone && itemUid > 0 && CanUseItem(itemUid))
             {
-                mGateway?.Send(new UseItemCommand(itemUid));
-                ItemUseDispatched?.Invoke(itemUid);
+                ItemUseRequested?.Invoke(itemUid);
             }
             else if (inZone)
             {
