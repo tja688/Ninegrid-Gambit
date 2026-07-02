@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using DamageNumbersPro;
 using NineGrid.Core;
+using NineGrid.Presentation.Debugging;
+using NineGrid.Presentation.Feedback;
 using NineGrid.Presentation.Flow.Battle;
 using NineGrid.Presentation.Flow.Board;
 using NineGrid.Presentation.Flow.Core;
@@ -11,8 +13,6 @@ using NineGrid.Presentation.Flow.Shell;
 using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Orchestration.Bindings;
-using NineGrid.Presentation.Reactions;
-using NineGrid.Presentation.Debugging;
 using NineGrid.Presentation.Shared;
 using NineGrid.Presentation.Shell;
 using NineGrid.Presentation.Visuals;
@@ -88,7 +88,7 @@ namespace NineGrid.Presentation.Bridge
             RoomChoiceScreenPresenter roomPresenter,
             HandItemsReconcilable handItemsReconcilable)
         {
-            var damageNumbers = moduleHost.GetComponent<DamageNumbersReaction>();
+            var damageNumbers = moduleHost.GetComponent<DamageNumberFeedback>();
             registry.Register(new CardAttackFlowBinding(moduleHost.GetComponent<CardAttackFlow>(), damageNumbers));
             registry.Register(new CardKillFlowBinding(moduleHost.GetComponent<CardKillFlow>()));
             registry.Register(new BoardRotateFlowBinding(moduleHost.GetComponent<BoardRotateFlow>()));
@@ -114,7 +114,7 @@ namespace NineGrid.Presentation.Bridge
             Transform[] handRefs = PerformanceDebugAnchorIndexing.CollectHandCardSlotAnchors(roots.HandCardAnchors);
             if (handRefs.Length > 0)
             {
-                PerformanceDebugSerializationUtil.SetField(layoutSolver, "referenceAnchors", handRefs);
+                PresentationSerializationUtil.SetField(layoutSolver, "referenceAnchors", handRefs);
             }
 
             registry.Register(new CardAcquisitionFlowBinding(

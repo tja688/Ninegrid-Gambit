@@ -83,7 +83,7 @@ namespace NineGrid.Presentation.Editor.Ui.Timeline
         private static IEnumerable<PerformanceDebugCategory> GetPoolCategories()
         {
             yield return PerformanceDebugCategory.Flow;
-            yield return PerformanceDebugCategory.Reaction;
+            yield return PerformanceDebugCategory.Feedback;
             yield return PerformanceDebugCategory.Cue;
             yield return PerformanceDebugCategory.Interaction;
         }

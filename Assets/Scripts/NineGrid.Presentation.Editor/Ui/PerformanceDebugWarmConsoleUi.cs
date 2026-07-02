@@ -52,7 +52,7 @@ namespace NineGrid.Presentation.Editor.Ui
             return category switch
             {
                 PerformanceDebugCategory.Flow => Theme.PoolFlow,
-                PerformanceDebugCategory.Reaction => Theme.PoolReaction,
+                PerformanceDebugCategory.Feedback => Theme.PoolReaction,
                 PerformanceDebugCategory.Cue => Theme.PoolCue,
                 PerformanceDebugCategory.Interaction => Theme.PoolInteraction,
                 PerformanceDebugCategory.Shell => Theme.PoolShell,
@@ -65,7 +65,7 @@ namespace NineGrid.Presentation.Editor.Ui
             return category switch
             {
                 PerformanceDebugCategory.Flow => "Flow 池",
-                PerformanceDebugCategory.Reaction => "Reaction 池",
+                PerformanceDebugCategory.Feedback => "Feedback 池",
                 PerformanceDebugCategory.Cue => "Feedback(Cue) 池",
                 PerformanceDebugCategory.Interaction => "Interaction 池",
                 PerformanceDebugCategory.Shell => "Shell 池",

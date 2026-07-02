@@ -20,7 +20,7 @@ namespace NineGrid.Presentation.Shell
         [SerializeField] private GameObject rewardPanel;
         [SerializeField] private GameObject infoPanel;
 
-        [Header("Shell")]
+        [Header("Shell (Harness 仅编辑器手动挂载，生产路径不依赖)")]
         [SerializeField] private MainFlowHarnessDriver harnessDriver;
         [SerializeField] private TableNineTextOverlayGate textOverlayGate;
         [SerializeField] private RunOutcomeInfoPresenter outcomePresenter;
@@ -179,7 +179,11 @@ namespace NineGrid.Presentation.Shell
             roomChoicePresenter?.Bind(flowFsm, selectionFsm, SelectionPresentation, commandRouter);
             roomEventPresenter?.Bind(flowFsm, commandRouter);
             outcomePresenter?.Bind(flowFsm);
-            harnessDriver?.Bind(this, flowFsm);
+            if (harnessDriver != null)
+            {
+                harnessDriver.Bind(this, flowFsm);
+            }
+
             phaseProjection?.Bind(this);
         }
 

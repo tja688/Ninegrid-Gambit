@@ -1,26 +1,17 @@
-using System.Reflection;
-using UnityEngine;
+using NineGrid.Presentation.Shared;
 
 namespace NineGrid.Presentation.Debugging
 {
     internal static class PerformanceDebugSerializationUtil
     {
-        public static void SetField(Component component, string fieldName, object value)
+        public static void SetField(UnityEngine.Component component, string fieldName, object value)
         {
-            SetField((object)component, fieldName, value);
+            PresentationSerializationUtil.SetField(component, fieldName, value);
         }
 
         public static void SetField(object target, string fieldName, object value)
         {
-            if (target == null || string.IsNullOrEmpty(fieldName))
-            {
-                return;
-            }
-
-            FieldInfo field = target.GetType().GetField(
-                fieldName,
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            field?.SetValue(target, value);
+            PresentationSerializationUtil.SetField(target, fieldName, value);
         }
     }
 }

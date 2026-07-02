@@ -63,9 +63,6 @@ namespace NineGrid.Presentation.Debugging
                 case IDirectedFlow flow:
                     isPlaying = flow.IsPlaying;
                     return true;
-                case IPlannedReaction reaction:
-                    isPlaying = reaction.IsPlaying;
-                    return true;
             }
 
             return TryGetCustomIsPlaying(module, out isPlaying);
@@ -99,9 +96,6 @@ namespace NineGrid.Presentation.Debugging
             {
                 case IDirectedFlow flow:
                     flow.StopAndRestore();
-                    break;
-                case IPlannedReaction reaction:
-                    reaction.StopAndRestore();
                     break;
                 case ILocalCue cue:
                     cue.StopAndRestore();

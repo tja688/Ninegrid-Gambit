@@ -2,7 +2,7 @@ using DamageNumbersPro;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
-namespace NineGrid.Presentation.Reactions
+namespace NineGrid.Presentation.Feedback
 {
     public enum DamagePopupKind
     {
@@ -15,8 +15,8 @@ namespace NineGrid.Presentation.Reactions
     /// 伤害/治疗/金币飘字：由战斗 Flow 在 Impact 时刻调用。
     /// </summary>
     [DisallowMultipleComponent]
-    [MovedFrom(true, "NineGrid.Presentation.Performance", null, "DamagePopupPerformance")]
-    public sealed class DamageNumbersReaction : MonoBehaviour
+    [MovedFrom(true, "NineGrid.Presentation.Reactions", null, "DamageNumbersReaction")]
+    public sealed class DamageNumberFeedback : MonoBehaviour
     {
         [Header("Templates (DNP_2D)")]
         [SerializeField] private DamageNumber damagePrefab;

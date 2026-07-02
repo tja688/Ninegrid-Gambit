@@ -1,5 +1,4 @@
 using NineGrid.Presentation.Orchestration;
-using NineGrid.Presentation.Reactions;
 using NineGrid.Presentation.Visuals;
 using UnityEngine;
 
@@ -13,7 +12,7 @@ namespace NineGrid.Presentation.Feedback
         public static void PlayAtImpact(
             IViewRegistry registry,
             FlowPayload payload,
-            DamageNumbersReaction damageNumbers)
+            DamageNumberFeedback damageNumbers)
         {
             if (payload == null)
             {

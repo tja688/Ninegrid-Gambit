@@ -9,7 +9,6 @@ using NineGrid.Presentation.Flow.Hand;
 using NineGrid.Presentation.Flow.Item;
 using NineGrid.Presentation.Flow.Shell;
 using NineGrid.Presentation.Interaction;
-using NineGrid.Presentation.Reactions;
 using NineGrid.Presentation.Shared;
 using NineGrid.Presentation.Shell;
 using UnityEngine;
@@ -44,7 +43,7 @@ namespace NineGrid.Presentation.Bridge
             GetOrAdd<RoomChoiceFlow>(host);
             GetOrAdd<SnapshotAlignFlow>(host);
 
-            var damageNumbers = GetOrAdd<DamageNumbersReaction>(host);
+            var damageNumbers = GetOrAdd<DamageNumberFeedback>(host);
             GetOrAdd<CardAcquisitionFlow>(host);
 
             GetOrAdd<HitFlashCue>(host);
@@ -56,9 +55,9 @@ namespace NineGrid.Presentation.Bridge
             var handDrag = GetOrAdd<HandCardDragPresenter>(host);
             var handReturn = GetOrAdd<HandCardReturnPresenter>(host);
 
-            PerformanceDebugSerializationUtil.SetField(damageNumbers, "damagePrefab", damagePrefab);
-            PerformanceDebugSerializationUtil.SetField(damageNumbers, "healPrefab", damagePrefab);
-            PerformanceDebugSerializationUtil.SetField(damageNumbers, "goldPrefab", damagePrefab);
+            PresentationSerializationUtil.SetField(damageNumbers, "damagePrefab", damagePrefab);
+            PresentationSerializationUtil.SetField(damageNumbers, "healPrefab", damagePrefab);
+            PresentationSerializationUtil.SetField(damageNumbers, "goldPrefab", damagePrefab);
 
             WireDeckEntryFlow(host.GetComponent<CardDeckEntryFlow>(), cardPrefab, actorsRoot, deckAnchors);
             WireDeckDealFlow(host.GetComponent<CardDeckDealFlow>(), cardPrefab, actorsRoot, nineGrid, deckAnchors);
@@ -95,13 +94,13 @@ namespace NineGrid.Presentation.Bridge
             Transform actorsRoot,
             Transform deckAnchors)
         {
-            PerformanceDebugSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
-            PerformanceDebugSerializationUtil.SetField(flow, "previewActorsRoot", actorsRoot);
-            PerformanceDebugSerializationUtil.SetField(flow, "slotRoot", deckAnchors);
+            PresentationSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
+            PresentationSerializationUtil.SetField(flow, "previewActorsRoot", actorsRoot);
+            PresentationSerializationUtil.SetField(flow, "slotRoot", deckAnchors);
             Transform preparationSlot = PerformanceDebugAnchorIndexing.FindDeckChild(
                 deckAnchors,
                 PerformanceDebugAnchorIndexing.DeckEntryPreparationSlotName);
-            PerformanceDebugSerializationUtil.SetField(
+            PresentationSerializationUtil.SetField(
                 flow,
                 "previewDeckOrigin",
                 preparationSlot != null ? preparationSlot : deckAnchors);
@@ -114,10 +113,10 @@ namespace NineGrid.Presentation.Bridge
             Transform ringSlotRoot,
             Transform deckAnchors)
         {
-            PerformanceDebugSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
-            PerformanceDebugSerializationUtil.SetField(flow, "previewActorsRoot", actorsRoot);
-            PerformanceDebugSerializationUtil.SetField(flow, "ringSlotRoot", ringSlotRoot);
-            PerformanceDebugSerializationUtil.SetField(flow, "dealSourceRoot", deckAnchors);
+            PresentationSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
+            PresentationSerializationUtil.SetField(flow, "previewActorsRoot", actorsRoot);
+            PresentationSerializationUtil.SetField(flow, "ringSlotRoot", ringSlotRoot);
+            PresentationSerializationUtil.SetField(flow, "dealSourceRoot", deckAnchors);
 
             CardDeckSubstituteFlow substituteFlow = flow.GetComponent<CardDeckSubstituteFlow>();
             if (substituteFlow != null)
@@ -133,13 +132,13 @@ namespace NineGrid.Presentation.Bridge
             Transform slotRoot,
             Transform deckAnchors)
         {
-            PerformanceDebugSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
-            PerformanceDebugSerializationUtil.SetField(flow, "previewActorsRoot", actorsRoot);
-            PerformanceDebugSerializationUtil.SetField(flow, "slotRoot", slotRoot);
+            PresentationSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
+            PresentationSerializationUtil.SetField(flow, "previewActorsRoot", actorsRoot);
+            PresentationSerializationUtil.SetField(flow, "slotRoot", slotRoot);
             Transform dealOrigin = PerformanceDebugAnchorIndexing.FindDeckChild(
                 deckAnchors,
                 PerformanceDebugAnchorIndexing.DeckDealOriginSlotName);
-            PerformanceDebugSerializationUtil.SetField(
+            PresentationSerializationUtil.SetField(
                 flow,
                 "deckOrigin",
                 dealOrigin != null ? dealOrigin : deckAnchors);
@@ -147,9 +146,9 @@ namespace NineGrid.Presentation.Bridge
 
         private static void WireBoardRotate(BoardRotateFlow flow, GameObject cardPrefab, Transform actorsRoot, Transform slotRoot)
         {
-            PerformanceDebugSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
-            PerformanceDebugSerializationUtil.SetField(flow, "previewActorsRoot", actorsRoot);
-            PerformanceDebugSerializationUtil.SetField(flow, "slotRoot", slotRoot);
+            PresentationSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
+            PresentationSerializationUtil.SetField(flow, "previewActorsRoot", actorsRoot);
+            PresentationSerializationUtil.SetField(flow, "slotRoot", slotRoot);
         }
 
         private static void WireAcquisition(
@@ -160,32 +159,32 @@ namespace NineGrid.Presentation.Bridge
             HandLayoutPresenter layout,
             HandCardReturnPresenter returnPresenter)
         {
-            PerformanceDebugSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
-            PerformanceDebugSerializationUtil.SetField(flow, "previewActorsRoot", handActors != null ? handActors : handAnchors);
-            PerformanceDebugSerializationUtil.SetField(flow, "handRoot", handActors != null ? handActors : handAnchors);
-            PerformanceDebugSerializationUtil.SetField(flow, "layoutPresenter", layout);
-            PerformanceDebugSerializationUtil.SetField(flow, "returnPresenter", returnPresenter);
+            PresentationSerializationUtil.SetField(flow, "cardPreviewPrefab", cardPrefab);
+            PresentationSerializationUtil.SetField(flow, "previewActorsRoot", handActors != null ? handActors : handAnchors);
+            PresentationSerializationUtil.SetField(flow, "handRoot", handActors != null ? handActors : handAnchors);
+            PresentationSerializationUtil.SetField(flow, "layoutPresenter", layout);
+            PresentationSerializationUtil.SetField(flow, "returnPresenter", returnPresenter);
 
             var solver = new HandCardLayoutSolver();
             Transform[] refs = PerformanceDebugAnchorIndexing.CollectHandCardSlotAnchors(handAnchors);
             if (refs.Length > 0)
             {
-                PerformanceDebugSerializationUtil.SetField(solver, "referenceAnchors", refs);
+                PresentationSerializationUtil.SetField(solver, "referenceAnchors", refs);
             }
 
-            PerformanceDebugSerializationUtil.SetField(flow, "layoutSolver", solver);
+            PresentationSerializationUtil.SetField(flow, "layoutSolver", solver);
         }
 
         private static void WireHover(BoardCardHoverPresenter presenter, GameObject cardPrefab, Transform actorsRoot)
         {
-            PerformanceDebugSerializationUtil.SetField(presenter, "cardPreviewPrefab", cardPrefab);
-            PerformanceDebugSerializationUtil.SetField(presenter, "previewActorsRoot", actorsRoot);
+            PresentationSerializationUtil.SetField(presenter, "cardPreviewPrefab", cardPrefab);
+            PresentationSerializationUtil.SetField(presenter, "previewActorsRoot", actorsRoot);
         }
 
         private static void WireHandDrag(HandCardDragPresenter drag, HandLayoutPresenter layout, CardShakeCue rejectCue)
         {
-            PerformanceDebugSerializationUtil.SetField(drag, "layoutPresenter", layout);
-            PerformanceDebugSerializationUtil.SetField(drag, "rejectCue", rejectCue);
+            PresentationSerializationUtil.SetField(drag, "layoutPresenter", layout);
+            PresentationSerializationUtil.SetField(drag, "rejectCue", rejectCue);
         }
 
         private static T GetOrAdd<T>(GameObject host) where T : Component

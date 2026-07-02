@@ -60,7 +60,7 @@ namespace NineGrid.Presentation.Bridge
             Transform[] refs = PerformanceDebugAnchorIndexing.CollectHandCardSlotAnchors(roots?.HandCardAnchors);
             if (refs.Length > 0)
             {
-                PerformanceDebugSerializationUtil.SetField(solver, "referenceAnchors", refs);
+                PresentationSerializationUtil.SetField(solver, "referenceAnchors", refs);
             }
 
             return new HandItemsReconcilable(

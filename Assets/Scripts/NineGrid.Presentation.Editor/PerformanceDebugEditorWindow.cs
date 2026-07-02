@@ -438,7 +438,7 @@ namespace NineGrid.Presentation.Editor
             navListContainer.Add(timelineBtn);
 
             AddPoolFoldout(PerformanceDebugCategory.Flow);
-            AddPoolFoldout(PerformanceDebugCategory.Reaction);
+            AddPoolFoldout(PerformanceDebugCategory.Feedback);
             AddPoolFoldout(PerformanceDebugCategory.Cue);
             AddPoolFoldout(PerformanceDebugCategory.Interaction);
             AddPoolFoldout(PerformanceDebugCategory.Shell);

@@ -3,7 +3,7 @@ namespace NineGrid.Presentation.Debugging
     public enum PerformanceDebugCategory
     {
         Flow,
-        Reaction,
+        Feedback,
         Cue,
         Interaction,
         Shell,

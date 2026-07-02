@@ -292,9 +292,6 @@ namespace NineGrid.Presentation.Debugging
                     case IDirectedFlow flow:
                         flow.StopAndRestore();
                         break;
-                    case IPlannedReaction reaction:
-                        reaction.StopAndRestore();
-                        break;
                     case ILocalCue cue:
                         cue.StopAndRestore();
                         break;

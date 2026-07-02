@@ -1,19 +1,19 @@
 using System.Collections.Generic;
 using NineGrid.Core;
 using NineGrid.Presentation.Debugging;
+using NineGrid.Presentation.Feedback;
 using NineGrid.Presentation.Flow.Hand;
-using NineGrid.Presentation.Reactions;
 using NineGrid.Presentation.Shell;
 using NineGrid.Presentation.Visuals;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Debugging.Modules
 {
-    public sealed class DamageNumbersDebugModule : PerformanceDebugModuleBase<DamageNumbersReaction>
+    public sealed class DamageNumberFeedbackDebugModule : PerformanceDebugModuleBase<DamageNumberFeedback>
     {
-        public override string Id => "reaction.damage-numbers";
+        public override string Id => "feedback.damage-numbers";
         public override string DisplayName => "伤害数字";
-        public override PerformanceDebugCategory Category => PerformanceDebugCategory.Reaction;
+        public override PerformanceDebugCategory Category => PerformanceDebugCategory.Feedback;
         public override PerformanceDebugSchema Schema => CreateSchema()
             .Add(PerformanceDebugPayloadKeys.ContextPreset, "Context", PerformanceDebugParamKind.ContextPreset,
                 PerformanceDebugContextPreset.BattlePair.ToString(),
@@ -23,7 +23,10 @@ namespace NineGrid.Presentation.Debugging.Modules
                 "Damage", "Heal", "Gold")
             .Add(PerformanceDebugPayloadKeys.Amount, "Amount", PerformanceDebugParamKind.Float, "12");
 
-        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, DamageNumbersReaction module, PerformanceDebugPayload payload)
+        protected override PerformanceDebugPlayResult PlayModule(
+            PerformanceDebugContext context,
+            DamageNumberFeedback module,
+            PerformanceDebugPayload payload)
         {
             string targetActorId = payload.GetString(PerformanceDebugPayloadKeys.TargetActor, "enemy");
             Transform target = context.ResolveActor(targetActorId) ?? context.ResolveActor("enemy") ?? context.ResolveActor("player");
@@ -42,12 +45,15 @@ namespace NineGrid.Presentation.Debugging.Modules
 
     public sealed class CardAcquisitionDebugModule : PerformanceDebugModuleBase<CardAcquisitionFlow>
     {
-        public override string Id => "reaction.card-acquisition";
+        public override string Id => "feedback.card-acquisition";
         public override string DisplayName => "卡牌获得";
-        public override PerformanceDebugCategory Category => PerformanceDebugCategory.Reaction;
+        public override PerformanceDebugCategory Category => PerformanceDebugCategory.Feedback;
         public override PerformanceDebugSchema Schema => PerformanceDebugSchemaFactory.ContextOnlySchema(PerformanceDebugContextPreset.Hand7);
 
-        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, CardAcquisitionFlow module, PerformanceDebugPayload payload)
+        protected override PerformanceDebugPlayResult PlayModule(
+            PerformanceDebugContext context,
+            CardAcquisitionFlow module,
+            PerformanceDebugPayload payload)
         {
             module.PlayPreview();
             return PerformanceDebugPlayResult.Ok(module.TotalDuration);
@@ -62,11 +68,11 @@ namespace NineGrid.Presentation.Debugging.Modules
         }
     }
 
-    public sealed class StatusTickDebugModule : PerformanceDebugModuleBase<DamageNumbersReaction>
+    public sealed class StatusTickDebugModule : PerformanceDebugModuleBase<TableNineCardStatusView>
     {
-        public override string Id => "reaction.status-tick";
+        public override string Id => "feedback.status-tick";
         public override string DisplayName => "状态跳变";
-        public override PerformanceDebugCategory Category => PerformanceDebugCategory.Reaction;
+        public override PerformanceDebugCategory Category => PerformanceDebugCategory.Feedback;
         public override PerformanceDebugSchema Schema => CreateSchema()
             .Add("contextPreset", "Context", PerformanceDebugParamKind.ContextPreset,
                 PerformanceDebugContextPreset.StatusPanel.ToString(),
@@ -77,7 +83,7 @@ namespace NineGrid.Presentation.Debugging.Modules
 
         protected override PerformanceDebugPlayResult PlayModule(
             PerformanceDebugContext context,
-            DamageNumbersReaction module,
+            TableNineCardStatusView module,
             PerformanceDebugPayload payload)
         {
             Transform actor = context.ResolveActor("statusCard") ?? context.ResolveActor("player");
@@ -120,16 +126,19 @@ namespace NineGrid.Presentation.Debugging.Modules
 
     public sealed class SelectionFallOffDebugModule : PerformanceDebugModuleBase<SelectionPresentation>
     {
-        public override string Id => "reaction.selection-falloff";
+        public override string Id => "feedback.selection-falloff";
         public override string DisplayName => "选择落下";
-        public override PerformanceDebugCategory Category => PerformanceDebugCategory.Reaction;
+        public override PerformanceDebugCategory Category => PerformanceDebugCategory.Feedback;
         public override PerformanceDebugSchema Schema => CreateSchema()
             .Add("contextPreset", "Context", PerformanceDebugParamKind.ContextPreset,
                 PerformanceDebugContextPreset.Selection3.ToString(),
                 PerformanceDebugSchemaFactory.EnumNames<PerformanceDebugContextPreset>())
             .Add("selectedIndex", "Selected Index", PerformanceDebugParamKind.Int, "1");
 
-        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, SelectionPresentation module, PerformanceDebugPayload payload)
+        protected override PerformanceDebugPlayResult PlayModule(
+            PerformanceDebugContext context,
+            SelectionPresentation module,
+            PerformanceDebugPayload payload)
         {
             int selectedIndex = payload.GetInt("selectedIndex", 1);
             var options = new List<Transform>

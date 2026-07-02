@@ -6,8 +6,8 @@ using NineGrid.Presentation.Flow.Deck;
 using NineGrid.Presentation.Flow.Item;
 using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Orchestration.Bindings;
+using NineGrid.Presentation.Feedback;
 using NineGrid.Presentation.Flow.Hand;
-using NineGrid.Presentation.Reactions;
 using NineGrid.Presentation.Visuals;
 using UnityEngine;
 
@@ -44,7 +44,7 @@ namespace NineGrid.Presentation.Debugging
 
         private static void RegisterFlows(GameObject moduleHost, FlowRegistry registry)
         {
-            var damageNumbers = moduleHost.GetComponent<DamageNumbersReaction>();
+            var damageNumbers = moduleHost.GetComponent<DamageNumberFeedback>();
             registry.Register(new CardAttackFlowBinding(moduleHost.GetComponent<CardAttackFlow>(), damageNumbers));
             registry.Register(new CardKillFlowBinding(moduleHost.GetComponent<CardKillFlow>()));
             registry.Register(new BoardRotateFlowBinding(moduleHost.GetComponent<BoardRotateFlow>()));

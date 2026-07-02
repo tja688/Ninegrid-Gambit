@@ -7,7 +7,6 @@ using NineGrid.Presentation.Flow.Item;
 using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Flow.Core;
 using NineGrid.Presentation.Flow.Hand;
-using NineGrid.Presentation.Reactions;
 using NineGrid.Presentation.Shell;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
@@ -36,7 +35,7 @@ namespace NineGrid.Presentation.Debugging
             GetOrAdd<ItemUseFlow>(host);
             GetOrAdd<SnapshotAlignFlow>(host);
 
-            var damageNumbers = GetOrAdd<DamageNumbersReaction>(host);
+            var damageNumbers = GetOrAdd<DamageNumberFeedback>(host);
             GetOrAdd<CardAcquisitionFlow>(host);
 
             GetOrAdd<HitFlashCue>(host);

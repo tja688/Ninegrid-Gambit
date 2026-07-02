@@ -1,7 +1,6 @@
 using System;
 using NineGrid.Presentation.Feedback;
 using NineGrid.Presentation.Flow.Battle;
-using NineGrid.Presentation.Reactions;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
 
@@ -10,9 +9,9 @@ namespace NineGrid.Presentation.Orchestration.Bindings
     public sealed class CardAttackFlowBinding : IFlowBinding
     {
         private readonly CardAttackFlow mFlow;
-        private readonly DamageNumbersReaction mDamageNumbers;
+        private readonly DamageNumberFeedback mDamageNumbers;
 
-        public CardAttackFlowBinding(CardAttackFlow flow, DamageNumbersReaction damageNumbers = null)
+        public CardAttackFlowBinding(CardAttackFlow flow, DamageNumberFeedback damageNumbers = null)
         {
             mFlow = flow;
             mDamageNumbers = damageNumbers;
