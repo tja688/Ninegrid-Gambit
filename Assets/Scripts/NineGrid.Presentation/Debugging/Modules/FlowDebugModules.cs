@@ -6,8 +6,8 @@ using NineGrid.Presentation.Flow.Battle;
 using NineGrid.Presentation.Flow.Board;
 using NineGrid.Presentation.Flow.Deck;
 using NineGrid.Presentation.Flow.Item;
-using NineGrid.Presentation.Flow.Selection;
 using NineGrid.Presentation.Orchestration;
+using NineGrid.Presentation.Shell;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
 
@@ -223,14 +223,14 @@ namespace NineGrid.Presentation.Debugging.Modules
         }
     }
 
-    public sealed class SelectionEntranceDebugModule : PerformanceDebugModuleBase<SelectionEntranceFlow>
+    public sealed class SelectionEntranceDebugModule : PerformanceDebugModuleBase<SelectionPresentation>
     {
         public override string Id => "flow.selection-entrance";
         public override string DisplayName => "选择入场";
         public override PerformanceDebugCategory Category => PerformanceDebugCategory.Flow;
         public override PerformanceDebugSchema Schema => PerformanceDebugSchemaFactory.ContextOnlySchema(PerformanceDebugContextPreset.Selection3);
 
-        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, SelectionEntranceFlow module, PerformanceDebugPayload payload)
+        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, SelectionPresentation module, PerformanceDebugPayload payload)
         {
             var options = new List<Transform>
             {
@@ -238,19 +238,19 @@ namespace NineGrid.Presentation.Debugging.Modules
                 context.ResolveActor("option2"),
                 context.ResolveActor("option3"),
             };
-            module.Play(options);
+            module.PlayGeneralEntrance(options);
             return PerformanceDebugPlayResult.Ok(module.ExpectedDuration);
         }
     }
 
-    public sealed class SelectionConfirmDebugModule : PerformanceDebugModuleBase<SelectionConfirmFlow>
+    public sealed class SelectionConfirmDebugModule : PerformanceDebugModuleBase<SelectionPresentation>
     {
         public override string Id => "flow.selection-confirm";
         public override string DisplayName => "选择确认";
         public override PerformanceDebugCategory Category => PerformanceDebugCategory.Flow;
         public override PerformanceDebugSchema Schema => PerformanceDebugSchemaFactory.SelectionConfirmSchema();
 
-        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, SelectionConfirmFlow module, PerformanceDebugPayload payload)
+        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, SelectionPresentation module, PerformanceDebugPayload payload)
         {
             int selectedIndex = payload.GetInt(PerformanceDebugPayloadKeys.SelectedIndex, 1);
             string actorId = $"option{Mathf.Clamp(selectedIndex + 1, 1, 3)}";
@@ -260,11 +260,12 @@ namespace NineGrid.Presentation.Debugging.Modules
                 return PerformanceDebugPlayResult.Fail("Missing selected option actor.");
             }
 
-            module.PlayLift(
+            module.PlayGeneralConfirm(
                 selected,
+                null,
                 payload.GetInt(PerformanceDebugPayloadKeys.Lift, 10),
                 payload.GetInt(PerformanceDebugPayloadKeys.Extra, 3));
-            return PerformanceDebugPlayResult.Ok(module.ExpectedDuration);
+            return PerformanceDebugPlayResult.Ok(1.12f);
         }
     }
 

@@ -1,5 +1,4 @@
 using NineGrid.Presentation.Debugging;
-using NineGrid.Presentation.Flow.Room;
 using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Shell;
 using UnityEngine;
@@ -107,7 +106,7 @@ namespace NineGrid.Presentation.Debugging.Modules
         }
     }
 
-    public sealed class RoomChoiceInShellDebugModule : PerformanceDebugModuleBase<RoomChoiseInFlow>
+    public sealed class RoomChoiceInShellDebugModule : PerformanceDebugModuleBase<SelectionPresentation>
     {
         public override string Id => "flow.room-choice-in";
         public override string DisplayName => "房间入场";
@@ -117,14 +116,14 @@ namespace NineGrid.Presentation.Debugging.Modules
 
         protected override PerformanceDebugPlayResult PlayModule(
             PerformanceDebugContext context,
-            RoomChoiseInFlow module,
+            SelectionPresentation module,
             PerformanceDebugPayload payload)
         {
             MainFlowDirector director = MainFlowDirector.Current;
             RoomChoiceScreenPresenter presenter = director?.RoomChoicePresenter;
             if (module == null || presenter == null)
             {
-                return PerformanceDebugPlayResult.Fail("Room choice flow/presenter missing.");
+                return PerformanceDebugPlayResult.Fail("Room choice presentation/presenter missing.");
             }
 
             presenter.OnScreenEntered();
@@ -132,7 +131,7 @@ namespace NineGrid.Presentation.Debugging.Modules
         }
     }
 
-    public sealed class RoomChoiceOutShellDebugModule : PerformanceDebugModuleBase<RoomChoiseOutFlow>
+    public sealed class RoomChoiceOutShellDebugModule : PerformanceDebugModuleBase<SelectionPresentation>
     {
         public override string Id => "flow.room-choice-out";
         public override string DisplayName => "房间离场";
@@ -142,13 +141,13 @@ namespace NineGrid.Presentation.Debugging.Modules
 
         protected override PerformanceDebugPlayResult PlayModule(
             PerformanceDebugContext context,
-            RoomChoiseOutFlow module,
+            SelectionPresentation module,
             PerformanceDebugPayload payload)
         {
             MainFlowDirector director = MainFlowDirector.Current;
             if (director?.RoomChoicePresenter == null || module == null)
             {
-                return PerformanceDebugPlayResult.Fail("Room choice out flow missing.");
+                return PerformanceDebugPlayResult.Fail("Room choice presentation missing.");
             }
 
             director.RoomChoicePresenter.HandleOptionConfirmed(payload.GetInt("selectedIndex", 0));
@@ -156,7 +155,7 @@ namespace NineGrid.Presentation.Debugging.Modules
         }
     }
 
-    public sealed class RoomChoiceHoverShellDebugModule : PerformanceDebugModuleBase<RoomChoiseOptionHoverPresenter>
+    public sealed class RoomChoiceHoverShellDebugModule : PerformanceDebugModuleBase<SelectionPresentation>
     {
         public override string Id => "interaction.room-choice-hover";
         public override string DisplayName => "房间 Hover";
@@ -166,7 +165,7 @@ namespace NineGrid.Presentation.Debugging.Modules
 
         protected override PerformanceDebugPlayResult PlayModule(
             PerformanceDebugContext context,
-            RoomChoiseOptionHoverPresenter module,
+            SelectionPresentation module,
             PerformanceDebugPayload payload)
         {
             MainFlowDirector director = MainFlowDirector.Current;

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using NineGrid.Presentation.Debugging;
 using NineGrid.Presentation.Interaction;
+using NineGrid.Presentation.Shell;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
 
@@ -115,7 +116,7 @@ namespace NineGrid.Presentation.Debugging.Modules
         protected override float TryGetCustomExpectedDuration(HandCardReturnPresenter module) => module.ReturnDuration;
     }
 
-    public sealed class SelectionOptionHoverDebugModule : PerformanceDebugModuleBase<SelectionOptionHoverPresenter>
+    public sealed class SelectionOptionHoverDebugModule : PerformanceDebugModuleBase<SelectionPresentation>
     {
         public override string Id => "interaction.selection-hover";
         public override string DisplayName => "选择项 Hover";
@@ -126,9 +127,9 @@ namespace NineGrid.Presentation.Debugging.Modules
                 PerformanceDebugSchemaFactory.EnumNames<PerformanceDebugContextPreset>())
             .Add("hoverIndex", "Hover Index", PerformanceDebugParamKind.Int, "1");
 
-        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, SelectionOptionHoverPresenter module, PerformanceDebugPayload payload)
+        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, SelectionPresentation module, PerformanceDebugPayload payload)
         {
-            var optionActors = new List<SelectionOptionHoverPresenter.OptionActor>();
+            var optionActors = new List<SelectionPresentation.GeneralOption>();
             for (var i = 1; i <= 3; i++)
             {
                 Transform actor = context.ResolveActor($"option{i}");
@@ -137,15 +138,15 @@ namespace NineGrid.Presentation.Debugging.Modules
                     continue;
                 }
 
-                optionActors.Add(new SelectionOptionHoverPresenter.OptionActor(
+                optionActors.Add(new SelectionPresentation.GeneralOption(
                     actor,
                     actor.localPosition,
                     actor.localEulerAngles.z,
                     10 + i));
             }
 
-            module.SetOptions(optionActors);
-            module.PlayHover(payload.GetInt("hoverIndex", 1));
+            module.SetGeneralOptions(optionActors);
+            module.PlayGeneralHover(payload.GetInt("hoverIndex", 1));
             return PerformanceDebugPlayResult.Ok(0.5f);
         }
     }

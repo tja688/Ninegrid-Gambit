@@ -4,9 +4,9 @@ using NineGrid.Presentation.Flow.Battle;
 using NineGrid.Presentation.Flow.Board;
 using NineGrid.Presentation.Flow.Deck;
 using NineGrid.Presentation.Flow.Item;
-using NineGrid.Presentation.Flow.Selection;
 using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Reactions;
+using NineGrid.Presentation.Shell;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
 
@@ -30,15 +30,13 @@ namespace NineGrid.Presentation.Debugging
             GetOrAdd<CardDeckEntryFlow>(host);
             GetOrAdd<CardDeckDealFlow>(host);
             GetOrAdd<CardDeckSubstituteFlow>(host);
-            GetOrAdd<SelectionEntranceFlow>(host);
-            GetOrAdd<SelectionConfirmFlow>(host);
+            GetOrAdd<SelectionPresentation>(host);
             GetOrAdd<ItemUseFlow>(host);
 
             var damageNumbers = GetOrAdd<DamageNumbersReaction>(host);
             GetOrAdd<EffectTriggerReaction>(host);
             GetOrAdd<ModifierApplyReaction>(host);
             GetOrAdd<CardAcquisitionFlow>(host);
-            GetOrAdd<SelectionFallOffFlow>(host);
             GetOrAdd<StatusTickReaction>(host);
 
             GetOrAdd<HitFlashCue>(host);
@@ -49,7 +47,6 @@ namespace NineGrid.Presentation.Debugging
             var handLayout = GetOrAdd<HandLayoutPresenter>(host);
             var handDrag = GetOrAdd<HandCardDragPresenter>(host);
             var handReturn = GetOrAdd<HandCardReturnPresenter>(host);
-            GetOrAdd<SelectionOptionHoverPresenter>(host);
 
             PerformanceDebugSerializationUtil.SetField(damageNumbers, "damagePrefab", damagePrefab);
             PerformanceDebugSerializationUtil.SetField(damageNumbers, "healPrefab", damagePrefab);

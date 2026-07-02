@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using NineGrid.Core;
 using NineGrid.Presentation.Debugging;
 using NineGrid.Presentation.Reactions;
+using NineGrid.Presentation.Shell;
 using NineGrid.Presentation.Visuals;
 using UnityEngine;
 
@@ -151,7 +152,7 @@ namespace NineGrid.Presentation.Debugging.Modules
         }
     }
 
-    public sealed class SelectionFallOffDebugModule : PerformanceDebugModuleBase<SelectionFallOffFlow>
+    public sealed class SelectionFallOffDebugModule : PerformanceDebugModuleBase<SelectionPresentation>
     {
         public override string Id => "reaction.selection-falloff";
         public override string DisplayName => "选择落下";
@@ -162,10 +163,9 @@ namespace NineGrid.Presentation.Debugging.Modules
                 PerformanceDebugSchemaFactory.EnumNames<PerformanceDebugContextPreset>())
             .Add("selectedIndex", "Selected Index", PerformanceDebugParamKind.Int, "1");
 
-        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, SelectionFallOffFlow module, PerformanceDebugPayload payload)
+        protected override PerformanceDebugPlayResult PlayModule(PerformanceDebugContext context, SelectionPresentation module, PerformanceDebugPayload payload)
         {
             int selectedIndex = payload.GetInt("selectedIndex", 1);
-            Camera camera = context.MainCamera != null ? context.MainCamera : Camera.main;
             var options = new List<Transform>
             {
                 context.ResolveActor("option1"),
@@ -180,13 +180,13 @@ namespace NineGrid.Presentation.Debugging.Modules
                     continue;
                 }
 
-                module.Play(options[i], i, selectedIndex, options[i].localEulerAngles.z, camera);
+                module.PlayGeneralFallOff(options[i], i, selectedIndex, options[i].localEulerAngles.z);
             }
 
             return PerformanceDebugPlayResult.Ok(1.2f);
         }
 
-        protected override bool TryGetCustomIsPlaying(SelectionFallOffFlow module, out bool isPlaying)
+        protected override bool TryGetCustomIsPlaying(SelectionPresentation module, out bool isPlaying)
         {
             isPlaying = module.IsPlaying;
             return true;
