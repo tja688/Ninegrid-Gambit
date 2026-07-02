@@ -161,7 +161,12 @@ namespace NineGrid.Presentation.Shell
             textOverlayGate?.ApplyForScreen(current);
             InvokeScreenPresenter(current, previous);
 
-            if (current == MainFlowScreen.MainMenu || current == MainFlowScreen.RewardScreen)
+            if (current == MainFlowScreen.MainMenu)
+            {
+                selectionFsm.InputLocked = false;
+                selectionFsm.ActivateChannel(SelectionChannel.General);
+            }
+            else if (current == MainFlowScreen.RewardScreen)
             {
                 selectionFsm.ActivateChannel(SelectionChannel.General);
             }

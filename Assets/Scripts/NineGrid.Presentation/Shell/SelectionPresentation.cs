@@ -27,12 +27,14 @@ namespace NineGrid.Presentation.Shell
                 BaseLocalPosition = baseLocalPosition;
                 BaseLocalRotationZ = baseLocalRotationZ;
                 BaselineSortingOrder = baselineSortingOrder;
+                BaseLocalScale = transform != null ? transform.localScale : Vector3.one;
             }
 
             public Transform Transform { get; }
             public Vector3 BaseLocalPosition { get; }
             public float BaseLocalRotationZ { get; }
             public int BaselineSortingOrder { get; }
+            public Vector3 BaseLocalScale { get; }
         }
 
         public readonly struct RoomOption
@@ -62,6 +64,11 @@ namespace NineGrid.Presentation.Shell
             public Transform Start { get; }
             public Vector3 HomeWorldPosition { get; }
         }
+
+        [Header("General Simple Hover")]
+        [SerializeField, Min(1f)] private float generalSimpleHoverScale = 1.2f;
+        [SerializeField, Min(0.05f)] private float generalSimpleHoverDuration = 0.25f;
+        [SerializeField] private Ease generalSimpleHoverEase = Ease.OutQuad;
 
         [Header("General Hover")]
         [SerializeField, Min(0f)] private float generalPushOffset = 1.6f;
@@ -126,6 +133,7 @@ namespace NineGrid.Presentation.Shell
         private readonly List<Tween> activeFallTweens = new();
 
         private int generalHoveredIndex = -1;
+        private bool generalSimpleHover;
         private int roomHoveredIndex = -1;
         private Sequence activeSequence;
         private Coroutine deferCoroutine;
@@ -136,6 +144,11 @@ namespace NineGrid.Presentation.Shell
         private void OnDisable()
         {
             StopAllPlayback();
+        }
+
+        public void SetGeneralSimpleHover(bool enabled)
+        {
+            generalSimpleHover = enabled;
         }
 
         public void SetGeneralOptions(IReadOnlyList<GeneralOption> options)
@@ -183,6 +196,12 @@ namespace NineGrid.Presentation.Shell
 
             generalHoveredIndex = index;
             KillActiveTweens();
+
+            if (generalSimpleHover)
+            {
+                PlaySimpleGeneralHover(index);
+                return;
+            }
 
             for (var i = 0; i < generalOptions.Count; i++)
             {
@@ -233,6 +252,12 @@ namespace NineGrid.Presentation.Shell
             generalHoveredIndex = -1;
             KillActiveTweens();
 
+            if (generalSimpleHover)
+            {
+                PlaySimpleGeneralReset();
+                return;
+            }
+
             for (var i = 0; i < generalOptions.Count; i++)
             {
                 GeneralOption actor = generalOptions[i];
@@ -266,7 +291,44 @@ namespace NineGrid.Presentation.Shell
 
                 actor.Transform.localPosition = actor.BaseLocalPosition;
                 actor.Transform.localRotation = Quaternion.Euler(0f, 0f, actor.BaseLocalRotationZ);
+                actor.Transform.localScale = actor.BaseLocalScale;
                 SelectionOptionVisual.ApplySortingOrder(actor.Transform, actor.BaselineSortingOrder);
+            }
+        }
+
+        private void PlaySimpleGeneralHover(int index)
+        {
+            Vector3 hoverScale = Vector3.one * generalSimpleHoverScale;
+            for (var i = 0; i < generalOptions.Count; i++)
+            {
+                GeneralOption actor = generalOptions[i];
+                if (actor.Transform == null)
+                {
+                    continue;
+                }
+
+                Vector3 targetScale = i == index
+                    ? Vector3.Scale(actor.BaseLocalScale, hoverScale)
+                    : actor.BaseLocalScale;
+                TrackTween(actor.Transform
+                    .DOScale(targetScale, generalSimpleHoverDuration)
+                    .SetEase(generalSimpleHoverEase));
+            }
+        }
+
+        private void PlaySimpleGeneralReset()
+        {
+            for (var i = 0; i < generalOptions.Count; i++)
+            {
+                GeneralOption actor = generalOptions[i];
+                if (actor.Transform == null)
+                {
+                    continue;
+                }
+
+                TrackTween(actor.Transform
+                    .DOScale(actor.BaseLocalScale, generalSimpleHoverDuration)
+                    .SetEase(generalSimpleHoverEase));
             }
         }
 

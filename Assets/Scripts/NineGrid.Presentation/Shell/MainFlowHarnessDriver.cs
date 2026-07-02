@@ -81,6 +81,7 @@ namespace NineGrid.Presentation.Shell
 
             UnhookRoomChoice();
             CancelNodeComplete();
+            ResetSelectionInputIfOnMainMenu();
         }
 
         /// <summary>兼容表演调试模块的旧入口。</summary>
@@ -203,6 +204,21 @@ namespace NineGrid.Presentation.Shell
             if (IsActive && flowFsm != null && flowFsm.CurrentScreen == MainFlowScreen.NodePlaying)
             {
                 NotifyNodeComplete();
+            }
+        }
+
+        private void ResetSelectionInputIfOnMainMenu()
+        {
+            if (director?.SelectionFsm == null)
+            {
+                return;
+            }
+
+            director.SelectionFsm.Deactivate();
+            if (flowFsm != null && flowFsm.CurrentScreen == MainFlowScreen.MainMenu)
+            {
+                director.SelectionFsm.InputLocked = false;
+                director.SelectionFsm.ActivateChannel(SelectionChannel.General);
             }
         }
     }
