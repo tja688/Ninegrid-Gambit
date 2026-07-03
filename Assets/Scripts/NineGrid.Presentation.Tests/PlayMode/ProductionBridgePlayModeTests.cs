@@ -1,9 +1,12 @@
 using System.Collections;
 using NineGrid.Core;
 using NineGrid.Core.Commands;
+using NineGrid.Core.Systems;
 using NineGrid.Presentation.Bridge;
+using NineGrid.Presentation.Debugging.Slices;
 using NineGrid.Presentation.Tests.Support;
 using NUnit.Framework;
+using QFramework;
 using UnityEngine.TestTools;
 
 namespace NineGrid.Presentation.Tests
@@ -62,6 +65,75 @@ namespace NineGrid.Presentation.Tests
 
             yield return PlayModeTestSupport.WaitForInputUnlock(gateway, 45f);
             Assert.IsFalse(gateway.IsInputLocked, "Attack playback should finish and unlock input.");
+        }
+
+        [UnityTest]
+        public IEnumerator MinimalCatalogDeck_StartNodeAndClearNode_CompletesNodeCompletedBatch()
+        {
+            var bootstrap = NineGridSceneBootstrap.Current;
+            Assert.IsNotNull(bootstrap);
+
+            var architecture = bootstrap.Architecture;
+            var gateway = bootstrap.Gateway;
+            var deckSystem = architecture.GetSystem<IDeckSystem>();
+            var rewardSystem = architecture.GetSystem<IRewardSystem>();
+
+            var catalogOptions = rewardSystem.BuildNodeDeckOptions(1, BattleSessionDriver.DefaultMonsterDeckId);
+            Assert.IsTrue(BattleSessionDeckOptions.UsesCatalogMonsterDefIds(catalogOptions));
+            Assert.Greater(catalogOptions.EnemyCards.Count, 0);
+
+            var startOptions = BattleSessionDeckOptions.BuildMinimalClearDeck(
+                architecture,
+                catalogOptions,
+                monsterCount: 1);
+            Assert.AreEqual(1, startOptions.EnemyCards.Count);
+            Assert.IsTrue(BattleSessionDeckOptions.UsesCatalogMonsterDefIds(startOptions));
+
+            var startResult = gateway.Send(new StartNodeCommand(startOptions));
+            Assert.IsTrue(startResult.Accepted);
+            Assert.IsTrue(startResult.BatchOpened);
+            yield return PlayModeTestSupport.WaitForInputUnlock(gateway, 60f);
+
+            var attempts = 0;
+            const int maxAttempts = 60;
+            while (!deckSystem.IsNodeCleared() && attempts < maxAttempts)
+            {
+                var targetSlot = PlayModeTestSupport.FindFirstAdjacentMonsterSlot(architecture);
+                if (!targetSlot.IsNone)
+                {
+                    var attackResult = gateway.Send(new AttackCommand(targetSlot));
+                    if (!attackResult.Accepted)
+                    {
+                        break;
+                    }
+
+                    yield return PlayModeTestSupport.WaitForInputUnlock(gateway, 60f);
+                    attempts++;
+                    continue;
+                }
+
+                var emptySlot = PlayModeTestSupport.FindFirstAdjacentEmptySlot(architecture);
+                if (!emptySlot.IsNone)
+                {
+                    var clickResult = gateway.Send(new ClickEmptyCommand(emptySlot));
+                    if (!clickResult.Accepted)
+                    {
+                        break;
+                    }
+
+                    yield return PlayModeTestSupport.WaitForInputUnlock(gateway, 60f);
+                    attempts++;
+                    continue;
+                }
+
+                break;
+            }
+
+            Assert.IsTrue(deckSystem.IsNodeCleared(), "Minimal catalog deck should be cleared.");
+            Assert.IsTrue(
+                PlayModeTestSupport.EventLogContains(architecture, CoreEventType.NodeCompleted),
+                "Clearing the node should emit NodeCompleted.");
+            Assert.IsFalse(gateway.IsInputLocked, "NodeCompleted batch should unlock input.");
         }
     }
 }

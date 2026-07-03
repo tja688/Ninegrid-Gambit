@@ -33,12 +33,11 @@ namespace NineGrid.Presentation.Tests
             var plan = new PerformancePlanBuilder().Build(batch);
 
             Assert.AreEqual(7, plan.BatchId);
-            Assert.AreEqual(1, plan.Groups.Count);
-            Assert.AreEqual(4, plan.Groups[0].Steps.Count);
+            Assert.AreEqual(3, plan.Groups.Count);
             AssertContainsFlow(plan, FlowId.CardAttack);
             AssertContainsFlow(plan, FlowId.CardKill);
             AssertContainsFlow(plan, FlowId.BoardRotate);
-            AssertContainsFlow(plan, FlowId.MoveCard);
+            Assert.AreEqual(0, CountFlow(plan, FlowId.MoveCard));
         }
 
         [Test]
@@ -241,6 +240,72 @@ namespace NineGrid.Presentation.Tests
             Assert.AreSame(snapshot, reconcilable.LastSnapshot);
             Assert.IsTrue(result.Reconciled);
             Assert.AreEqual(1, result.PlayedFlowCount);
+        }
+
+        [Test]
+        public void PlanBuilder_RotateGroup_SuppressesMoveCardWhenBoardRotatePresent()
+        {
+            var events = new List<CoreGameEvent>
+            {
+                new CoreGameEvent(CoreEventType.CardMoved, 3, "RotateBoardClockwise")
+                    .WithCard(101)
+                    .WithSlots(SlotId.Board(1), SlotId.Board(2)),
+                new CoreGameEvent(CoreEventType.CardMoved, 3, "RotateBoardClockwise")
+                    .WithCard(102)
+                    .WithSlots(SlotId.Board(2), SlotId.Board(3)),
+                new CoreGameEvent(CoreEventType.BoardRotated, 3, "RotateBoardClockwise")
+                    .WithAmount(1),
+            };
+
+            var batch = PresentationBatchFixture.Create(10, events, OrchestrationTestSnapshots.Minimal());
+            var plan = new PerformancePlanBuilder().Build(batch);
+
+            Assert.AreEqual(1, plan.Groups.Count);
+            Assert.AreEqual(1, plan.Groups[0].Steps.Count);
+            Assert.AreEqual(FlowId.BoardRotate, plan.Groups[0].Steps[0].FlowId);
+        }
+
+        [Test]
+        public void PlanBuilder_MonsterCounterDamage_RoutesCounterattackFlow()
+        {
+            var events = new List<CoreGameEvent>
+            {
+                new CoreGameEvent(CoreEventType.DamageDealt, 2, "DealDamage")
+                    .WithActor(2)
+                    .WithTarget(1)
+                    .WithAmount(2),
+            };
+
+            var snapshot = OrchestrationTestSnapshots.WithBoardCombatants();
+            var batch = PresentationBatchFixture.Create(11, events, snapshot);
+            var plan = new PerformancePlanBuilder().Build(batch);
+
+            AssertContainsFlow(plan, FlowId.Counterattack);
+            Assert.AreEqual(0, CountFlow(plan, FlowId.CardAttack));
+        }
+
+        [Test]
+        public void PlanBuilder_AttackAndCounterInSameAction_SplitIntoSerialGroups()
+        {
+            var events = new List<CoreGameEvent>
+            {
+                new CoreGameEvent(CoreEventType.DamageDealt, 4, "DealDamage")
+                    .WithActor(1)
+                    .WithTarget(2)
+                    .WithAmount(1),
+                new CoreGameEvent(CoreEventType.DamageDealt, 4, "DealDamage")
+                    .WithActor(2)
+                    .WithTarget(1)
+                    .WithAmount(1),
+            };
+
+            var snapshot = OrchestrationTestSnapshots.WithBoardCombatants();
+            var batch = PresentationBatchFixture.Create(12, events, snapshot);
+            var plan = new PerformancePlanBuilder().Build(batch);
+
+            Assert.AreEqual(2, plan.Groups.Count);
+            Assert.AreEqual(FlowId.CardAttack, plan.Groups[0].Steps[0].FlowId);
+            Assert.AreEqual(FlowId.Counterattack, plan.Groups[1].Steps[0].FlowId);
         }
 
         private static FlowPayload FindStepPayload(PresentationPlan plan, FlowId flowId)

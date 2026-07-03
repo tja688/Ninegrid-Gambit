@@ -10,6 +10,8 @@ namespace NineGrid.Presentation.Bridge
     /// </summary>
     public sealed class ShellCommandRouter
     {
+        public const string DefaultMonsterDeckId = "deck.wandering_legion";
+
         public ShellCommandRouter(CommandGateway gateway, IArchitecture architecture)
         {
             Gateway = gateway;
@@ -35,7 +37,8 @@ namespace NineGrid.Presentation.Bridge
 
             var run = Architecture.GetModel<RunModel>();
             var rewardSystem = Architecture.GetSystem<IRewardSystem>();
-            var options = rewardSystem.BuildNodeDeckOptions(run.NodeIndex.Value, string.Empty);
+            var catalogNodeIndex = run.NodeIndex.Value + 1;
+            var options = rewardSystem.BuildNodeDeckOptions(catalogNodeIndex, DefaultMonsterDeckId);
             return Gateway.Send(new StartNodeCommand(options));
         }
 

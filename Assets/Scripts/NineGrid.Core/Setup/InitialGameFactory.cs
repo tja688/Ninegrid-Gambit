@@ -1,4 +1,5 @@
 using System.Text;
+using NineGrid.Core.Systems;
 using NineGrid.Core.Utilities;
 using QFramework;
 
@@ -62,11 +63,7 @@ namespace NineGrid.Core
             run.Reset(options.Seed);
             pendingChoice.Clear();
 
-            var avatar = registry.Create(options.AvatarDefId, CardKind.Avatar);
-            avatar.Stats.SetBase(StatId.MaxHp, options.AvatarMaxHp);
-            avatar.Stats.SetBase(StatId.Hp, options.AvatarMaxHp);
-            avatar.Stats.SetBase(StatId.Attack, options.AvatarAttack);
-            avatar.Stats.SetBase(StatId.Recovery, options.AvatarRecovery);
+            var avatar = CreateAvatar(architecture, options, registry);
             avatar.Stats.SetBase(StatId.InteractionRange, 1);
 
             board.SetAvatar(avatar, SlotId.Board(5));
@@ -98,6 +95,26 @@ namespace NineGrid.Core
             builder.AppendLine("EnemyPool: " + deck.EnemyCardPoolUids.Count);
             builder.AppendLine("ItemSlots: " + deck.ItemSlotUids.Count);
             return builder.ToString();
+        }
+
+        private static CardInstance CreateAvatar(IArchitecture architecture, InitialGameOptions options, CardRegistry registry)
+        {
+            var content = architecture.GetSystem<IContentSystem>();
+            var draft = content.CreateDraft(options.AvatarDefId);
+            CardInstance avatar;
+            if (draft.Kind != CardKind.Unknown)
+            {
+                avatar = draft.Create(registry);
+                content.ApplyContentToCard(avatar);
+                return avatar;
+            }
+
+            avatar = registry.Create(options.AvatarDefId, CardKind.Avatar);
+            avatar.Stats.SetBase(StatId.MaxHp, options.AvatarMaxHp);
+            avatar.Stats.SetBase(StatId.Hp, options.AvatarMaxHp);
+            avatar.Stats.SetBase(StatId.Attack, options.AvatarAttack);
+            avatar.Stats.SetBase(StatId.Recovery, options.AvatarRecovery);
+            return avatar;
         }
 
         private static bool HasBoardCards(BoardModel board)

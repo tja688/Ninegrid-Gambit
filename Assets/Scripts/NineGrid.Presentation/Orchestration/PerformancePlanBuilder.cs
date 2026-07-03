@@ -33,7 +33,11 @@ namespace NineGrid.Presentation.Orchestration
                 }
 
                 var source = new SourceRef(instruction.Sequence, actionId, instruction.Kind);
-                if (route.FlowId == FlowId.CardAttack || route.FlowId == FlowId.CardKill)
+                route.FlowId = ResolvePlaybackFlow(route.FlowId, route.Payload, batch.Snapshot);
+                if (route.FlowId == FlowId.CardAttack
+                    || route.FlowId == FlowId.Counterattack
+                    || route.FlowId == FlowId.CardKill
+                    || route.FlowId == FlowId.CounterattackKill)
                 {
                     AttackDirectionResolver.ApplyBoardDirection(route.Payload, batch.Snapshot);
                 }
@@ -49,7 +53,21 @@ namespace NineGrid.Presentation.Orchestration
             }
 
             groups.Sort((left, right) => left.ActionId.CompareTo(right.ActionId));
+            groups = PlanGroupNormalizer.Normalize(groups);
             return new PresentationPlan(batch.BatchId, groups, batch.Snapshot);
+        }
+
+        private static FlowId ResolvePlaybackFlow(FlowId flowId, FlowPayload payload, CoreViewSnapshot snapshot)
+        {
+            switch (flowId)
+            {
+                case FlowId.CardAttack:
+                    return AttackFlowResolver.ResolveDamageFlow(payload, snapshot);
+                case FlowId.CardKill:
+                    return AttackFlowResolver.ResolveKillFlow(payload, snapshot);
+                default:
+                    return flowId;
+            }
         }
 
         private static PlanStep CreateStep(

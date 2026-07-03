@@ -76,5 +76,67 @@ namespace NineGrid.Presentation.Tests.Support
                 new ChoiceView(PendingChoiceKind.None, string.Empty, new RewardEntry[0], new RoomKind[0], RoomKind.None),
                 new Dictionary<int, CardView>());
         }
+
+        public static CoreViewSnapshot WithBoardCombatants(int avatarUid = 1, int monsterUid = 2, SlotId monsterSlot = default)
+        {
+            if (monsterSlot.IsNone)
+            {
+                monsterSlot = SlotId.Board(2);
+            }
+
+            var cards = new Dictionary<int, CardView>
+            {
+                {
+                    avatarUid,
+                    new CardView(
+                        avatarUid,
+                        "avatar.default",
+                        CardKind.Avatar,
+                        ZoneId.Avatar,
+                        SlotId.Avatar,
+                        CardStatView.Empty,
+                        new string[0])
+                },
+                {
+                    monsterUid,
+                    new CardView(
+                        monsterUid,
+                        "monster.pickpocket",
+                        CardKind.Monster,
+                        ZoneId.Board,
+                        monsterSlot,
+                        CardStatView.Empty,
+                        new string[0])
+                },
+            };
+
+            return new CoreViewSnapshot(
+                1,
+                new RunView(GamePhase.InteractionLoop, 0, 1, RoomKind.None, 0UL),
+                new PlayerView(0, 3, new string[0], new string[0], CardStatView.Empty),
+                new BoardView(
+                    new[]
+                    {
+                        new BoardSlotView(
+                            monsterSlot,
+                            monsterUid,
+                            "monster.pickpocket",
+                            CardKind.Monster,
+                            1,
+                            1,
+                            1,
+                            1,
+                            0,
+                            0,
+                            0,
+                            0,
+                            false),
+                    },
+                    avatarUid,
+                    SlotId.Avatar),
+                new DeckView(new int[0], new int[0], new int[0], new int[0]),
+                new ChoiceView(PendingChoiceKind.None, string.Empty, new RewardEntry[0], new RoomKind[0], RoomKind.None),
+                cards);
+        }
     }
 }

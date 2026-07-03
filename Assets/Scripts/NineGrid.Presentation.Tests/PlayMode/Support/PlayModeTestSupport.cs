@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using NineGrid.Core;
+using NineGrid.Core.Systems;
 using NineGrid.Presentation.Bridge;
 using QFramework;
 using UnityEngine;
@@ -68,6 +69,68 @@ namespace NineGrid.Presentation.Tests.Support
             }
 
             throw new InvalidOperationException("Could not find monster slot.");
+        }
+
+        public static SlotId FindFirstAdjacentMonsterSlot(IArchitecture architecture)
+        {
+            var registry = architecture.GetModel<CardRegistry>();
+            var board = architecture.GetModel<BoardModel>();
+            var boardSystem = architecture.GetSystem<IBoardSystem>();
+            var avatarSlot = board.AvatarSlot.Value;
+
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var slot = SlotId.Board(i);
+                var uid = board.GetCardUid(slot);
+                if (uid == 0 || !boardSystem.AreAdjacent(avatarSlot, slot))
+                {
+                    continue;
+                }
+
+                if (registry.Get(uid).Kind == CardKind.Monster)
+                {
+                    return slot;
+                }
+            }
+
+            return SlotId.None;
+        }
+
+        public static bool EventLogContains(IArchitecture architecture, CoreEventType eventType)
+        {
+            var log = architecture.GetSystem<IActionPipelineSystem>().EventLog;
+            for (var i = 0; i < log.Entries.Count; i++)
+            {
+                if (log.Entries[i].Type == eventType)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static SlotId FindFirstAdjacentEmptySlot(IArchitecture architecture)
+        {
+            var board = architecture.GetModel<BoardModel>();
+            var boardSystem = architecture.GetSystem<IBoardSystem>();
+            var avatarSlot = board.AvatarSlot.Value;
+
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var slot = SlotId.Board(i);
+                if (slot == avatarSlot || board.GetCardUid(slot) != 0)
+                {
+                    continue;
+                }
+
+                if (boardSystem.AreAdjacent(avatarSlot, slot))
+                {
+                    return slot;
+                }
+            }
+
+            return SlotId.None;
         }
 
         public static void CleanupPlayMode()

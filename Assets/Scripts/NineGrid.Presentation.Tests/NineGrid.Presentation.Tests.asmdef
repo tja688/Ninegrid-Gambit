@@ -5,6 +5,7 @@
         "NineGrid.Presentation",
         "NineGrid.Presentation.Visuals",
         "NineGrid.Core",
+        "NineGrid.Content",
         "QFramework",
         "Unity.TextMeshPro"
     ],
