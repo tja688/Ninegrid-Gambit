@@ -99,12 +99,9 @@ namespace NineGrid.Presentation.Bridge
             TableNineActorFactory actorFactory,
             HandLayoutPresenter layoutPresenter)
         {
-            var solver = new HandCardLayoutSolver();
-            Transform[] refs = SceneStagingAnchorUtil.CollectHandCardSlotAnchors(roots?.HandCardAnchors);
-            if (refs.Length > 0)
-            {
-                PresentationSerializationUtil.SetField(solver, "referenceAnchors", refs);
-            }
+            var solver = SceneStagingAnchorUtil.CreateHandLayoutSolver(
+                roots?.HandCardAnchors,
+                roots?.HandActorsRoot ?? roots?.HandCardAnchors);
 
             return new HandItemsPresenter(
                 viewRegistry,

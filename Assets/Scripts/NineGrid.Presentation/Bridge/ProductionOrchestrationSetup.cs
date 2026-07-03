@@ -108,12 +108,9 @@ namespace NineGrid.Presentation.Bridge
 
             var acquisitionFlow = moduleHost.GetComponent<CardAcquisitionFlow>();
             var layoutPresenter = moduleHost.GetComponent<HandLayoutPresenter>();
-            var layoutSolver = new HandCardLayoutSolver();
-            Transform[] handRefs = SceneStagingAnchorUtil.CollectHandCardSlotAnchors(roots.HandCardAnchors);
-            if (handRefs.Length > 0)
-            {
-                PresentationSerializationUtil.SetField(layoutSolver, "referenceAnchors", handRefs);
-            }
+            var layoutSolver = SceneStagingAnchorUtil.CreateHandLayoutSolver(
+                roots.HandCardAnchors,
+                roots.HandActorsRoot);
 
             registry.Register(new CardAcquisitionFlowBinding(
                 acquisitionFlow,

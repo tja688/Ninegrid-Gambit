@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NineGrid.Presentation.Shared;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Bridge
@@ -32,6 +33,18 @@ namespace NineGrid.Presentation.Bridge
             }
 
             return slots.ToArray();
+        }
+
+        public static HandCardLayoutSolver CreateHandLayoutSolver(Transform handCardAnchors, Transform layoutRoot)
+        {
+            var solver = new HandCardLayoutSolver();
+            Transform[] refs = CollectHandCardSlotAnchors(handCardAnchors);
+            if (refs.Length > 0)
+            {
+                solver.SetReferenceAnchors(refs, layoutRoot);
+            }
+
+            return solver;
         }
 
         public static bool IsHandCardSlotAnchor(string anchorName)

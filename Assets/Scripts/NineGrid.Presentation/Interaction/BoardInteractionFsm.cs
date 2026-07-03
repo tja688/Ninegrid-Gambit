@@ -175,7 +175,7 @@ namespace NineGrid.Presentation.Interaction
                 return;
             }
 
-            if (!TryResolveInteractableSlotForCard(cardUid, out SlotId slot, out BoardSlotView slotView))
+            if (!TryResolveBoardSlotForCard(cardUid, out SlotId slot, out _))
             {
                 return;
             }
@@ -265,7 +265,7 @@ namespace NineGrid.Presentation.Interaction
 
             if (cardUid > 0)
             {
-                if (!TryResolveInteractableSlotForCard(cardUid, out SlotId slot, out _))
+                if (!TryResolveBoardSlotForCard(cardUid, out SlotId slot, out _))
                 {
                     return;
                 }
@@ -324,7 +324,7 @@ namespace NineGrid.Presentation.Interaction
                 return;
             }
 
-            ClearHoverVisual();
+            ClearHoverVisualImmediate();
             ResetHoverState();
             mDragActor = null;
             mDragSlot = SlotId.None;
@@ -363,6 +363,12 @@ namespace NineGrid.Presentation.Interaction
 
             if (slotView.CardUid > 0)
             {
+                if (!IsPlayerReachableSlot(snapshot, mDragSlot))
+                {
+                    PlayReject(mDragActor);
+                    return;
+                }
+
                 if (slotView.Kind == CardKind.Monster)
                 {
                     if (phase.CanExecute(GameCommandKind.Attack))
@@ -388,11 +394,12 @@ namespace NineGrid.Presentation.Interaction
 
         private void Dispatch(ICommand<CoreCommandResult> command, SlotId slot)
         {
+            ClearHoverVisualImmediate();
             mGateway.Send(command);
             CommandDispatched?.Invoke(slot);
         }
 
-        private bool TryResolveInteractableSlotForCard(int cardUid, out SlotId slot, out BoardSlotView slotView)
+        private bool TryResolveBoardSlotForCard(int cardUid, out SlotId slot, out BoardSlotView slotView)
         {
             slot = SlotId.None;
             slotView = null;
@@ -402,12 +409,18 @@ namespace NineGrid.Presentation.Interaction
             }
 
             CoreViewSnapshot snapshot = CoreViewSnapshotFactory.Capture(mArchitecture);
-            if (!TryFindBoardSlot(snapshot, cardUid, out slot, out slotView))
+            return TryFindBoardSlot(snapshot, cardUid, out slot, out slotView);
+        }
+
+        private bool IsPlayerReachableSlot(CoreViewSnapshot snapshot, SlotId slot)
+        {
+            if (snapshot == null || slot.IsNone || mArchitecture == null)
             {
                 return false;
             }
 
-            return IsAdjacentToAvatar(snapshot, slot);
+            IBoardSystem boardSystem = mArchitecture.GetSystem<IBoardSystem>();
+            return boardSystem.AreAdjacent(snapshot.AvatarSlot, slot);
         }
 
         private bool IsInteractableEmptySlot(SlotId slot)
@@ -424,7 +437,7 @@ namespace NineGrid.Presentation.Interaction
                 return false;
             }
 
-            return IsAdjacentToAvatar(snapshot, slot);
+            return IsPlayerReachableSlot(snapshot, slot);
         }
 
         private static bool TryFindBoardSlot(
@@ -454,17 +467,6 @@ namespace NineGrid.Presentation.Interaction
             return false;
         }
 
-        private bool IsAdjacentToAvatar(CoreViewSnapshot snapshot, SlotId slot)
-        {
-            if (snapshot == null || slot.IsNone)
-            {
-                return false;
-            }
-
-            IBoardSystem boardSystem = mArchitecture.GetSystem<IBoardSystem>();
-            return boardSystem.AreAdjacent(snapshot.AvatarSlot, slot);
-        }
-
         private bool CanAcceptInput()
         {
             if (InputLocked)
@@ -487,15 +489,7 @@ namespace NineGrid.Presentation.Interaction
 
         private void ClearItemTargetVisuals()
         {
-            ClearHoverVisual();
-            for (var i = 0; i < mItemTargetActors.Count; i++)
-            {
-                Transform actor = mItemTargetActors[i];
-                if (actor != null)
-                {
-                    mHoverPresenter?.StopAndRestore(actor);
-                }
-            }
+            ClearHoverVisualImmediate();
         }
 
         private void ClearHoverVisual()
@@ -504,6 +498,11 @@ namespace NineGrid.Presentation.Interaction
             {
                 mHoverPresenter?.StopAndRestore(mHoveredActor);
             }
+        }
+
+        private void ClearHoverVisualImmediate()
+        {
+            mHoverPresenter?.ForceReset();
         }
 
         private void ResetHoverState()

@@ -165,14 +165,10 @@ namespace NineGrid.Presentation.Bridge
             PresentationSerializationUtil.SetField(flow, "layoutPresenter", layout);
             PresentationSerializationUtil.SetField(flow, "returnPresenter", returnPresenter);
 
-            var solver = new HandCardLayoutSolver();
-            Transform[] refs = SceneStagingAnchorUtil.CollectHandCardSlotAnchors(handAnchors);
-            if (refs.Length > 0)
-            {
-                PresentationSerializationUtil.SetField(solver, "referenceAnchors", refs);
-            }
-
-            PresentationSerializationUtil.SetField(flow, "layoutSolver", solver);
+            PresentationSerializationUtil.SetField(
+                flow,
+                "layoutSolver",
+                SceneStagingAnchorUtil.CreateHandLayoutSolver(handAnchors, handActors));
         }
 
         private static void WireHover(BoardCardHoverPresenter presenter, GameObject cardPrefab, Transform actorsRoot)

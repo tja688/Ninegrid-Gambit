@@ -30,8 +30,8 @@ namespace NineGrid.Presentation.Interaction
         [SerializeField] private Ease deselectEase = Ease.OutQuad;
 
         [Header("Reject")]
-        [SerializeField, Min(0.01f)] private float rejectShakeDuration = 0.25f;
-        [SerializeField] private Vector3 rejectShakeStrength = new(0.08f, 0.08f, 0f);
+        [SerializeField, Min(0.01f)] private float rejectSwayDuration = 0.24f;
+        [SerializeField, Min(0f)] private float rejectSwayDistance = 0.05f;
 
         [Header("Playback")]
         [SerializeField] private bool ignoreTimeScale;
@@ -64,7 +64,8 @@ namespace NineGrid.Presentation.Interaction
             focusWobbleSecondDelay = Mathf.Max(0f, focusWobbleSecondDelay);
             focusWobbleThirdDelay = Mathf.Max(0f, focusWobbleThirdDelay);
             deselectDuration = Mathf.Max(0f, deselectDuration);
-            rejectShakeDuration = Mathf.Max(0.01f, rejectShakeDuration);
+            rejectSwayDuration = Mathf.Max(0.01f, rejectSwayDuration);
+            rejectSwayDistance = Mathf.Max(0f, rejectSwayDistance);
         }
 
         public void Enter()
@@ -136,11 +137,27 @@ namespace NineGrid.Presentation.Interaction
             KillActorTweens(actor);
             EnsureBaseline(actor);
 
-            Tween shake = actor
-                .DOShakePosition(rejectShakeDuration, rejectShakeStrength, vibrato: 12, randomness: 45f, fadeOut: true)
-                .SetTarget(actor);
-            ApplyTweenSettings(shake);
-            shake.OnComplete(() =>
+            if (rejectSwayDistance <= 0f)
+            {
+                SnapActorVisual(actor);
+                return;
+            }
+
+            ActorVisualState state = actorStates[actor];
+            Vector3 basePos = state.BaselineLocalPosition;
+            float step = rejectSwayDuration / 3f;
+
+            Sequence sway = DOTween.Sequence().SetTarget(actor);
+            Tween left = actor.DOLocalMove(basePos + Vector3.left * rejectSwayDistance, step).SetEase(Ease.OutQuad);
+            Tween right = actor.DOLocalMove(basePos + Vector3.right * rejectSwayDistance, step).SetEase(Ease.InOutSine);
+            Tween center = actor.DOLocalMove(basePos, step).SetEase(Ease.OutQuad);
+            ApplyTweenSettings(left);
+            ApplyTweenSettings(right);
+            ApplyTweenSettings(center);
+            sway.Append(left);
+            sway.Append(right);
+            sway.Append(center);
+            sway.OnComplete(() =>
             {
                 if (actor != null)
                 {
@@ -231,6 +248,11 @@ namespace NineGrid.Presentation.Interaction
 
             KillActorTweens(actor);
             EnsureBaseline(actor);
+
+            ActorVisualState state = actorStates[actor];
+            actor.localPosition = state.BaselineLocalPosition;
+            actor.localEulerAngles = state.BaselineLocalEuler;
+            SelectionOptionVisual.ApplySortingOrder(actor, state.BaselineSortingOrder);
 
             if (deselectDuration <= 0f || Mathf.Approximately(deselectScaleDelta, 0f))
             {

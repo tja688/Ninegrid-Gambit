@@ -21,6 +21,7 @@ namespace NineGrid.Presentation.Shared
     {
         [Header("Reference Anchors (5-card preset)")]
         [SerializeField] private Transform[] referenceAnchors = Array.Empty<Transform>();
+        [SerializeField] private Transform layoutRoot;
 
         [Header("Layout")]
         [SerializeField] private Vector3 leftAnchorLocal = new(-1.28125f, 0f, 0f);
@@ -44,7 +45,7 @@ namespace NineGrid.Presentation.Shared
             Transform left = referenceAnchors[0];
             if (left != null)
             {
-                leftAnchorLocal = left.localPosition;
+                leftAnchorLocal = AnchorToLayoutLocal(left);
             }
 
             if (referenceAnchors.Length >= maxCardCount)
@@ -52,7 +53,7 @@ namespace NineGrid.Presentation.Shared
                 Transform right = referenceAnchors[maxCardCount - 1];
                 if (right != null)
                 {
-                    rightAnchorLocal = right.localPosition;
+                    rightAnchorLocal = AnchorToLayoutLocal(right);
                 }
             }
         }
@@ -133,11 +134,28 @@ namespace NineGrid.Presentation.Shared
                 Transform right = referenceAnchors[maxCardCount - 1];
                 if (left != null && right != null && maxCardCount > 1)
                 {
-                    return (right.localPosition.x - left.localPosition.x) / (maxCardCount - 1);
+                    Vector3 leftLocal = AnchorToLayoutLocal(left);
+                    Vector3 rightLocal = AnchorToLayoutLocal(right);
+                    return (rightLocal.x - leftLocal.x) / (maxCardCount - 1);
                 }
             }
 
             return 0.3203125f;
+        }
+
+        private Vector3 AnchorToLayoutLocal(Transform anchor)
+        {
+            if (anchor == null)
+            {
+                return Vector3.zero;
+            }
+
+            if (layoutRoot != null)
+            {
+                return layoutRoot.InverseTransformPoint(anchor.position);
+            }
+
+            return anchor.localPosition;
         }
 
         private float ResolveMaxSpacingWithinAnchors(int count)
@@ -156,9 +174,14 @@ namespace NineGrid.Presentation.Shared
             return Mathf.Max(0f, span / (count - 1));
         }
 
-        public void SetReferenceAnchors(Transform[] anchors)
+        public void SetReferenceAnchors(Transform[] anchors, Transform root = null)
         {
             referenceAnchors = anchors ?? Array.Empty<Transform>();
+            if (root != null)
+            {
+                layoutRoot = root;
+            }
+
             ResolveFromReferenceAnchors();
         }
     }
