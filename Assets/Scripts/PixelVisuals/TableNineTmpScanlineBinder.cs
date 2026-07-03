@@ -56,6 +56,22 @@ namespace NineGrid.Presentation.Visuals
             }
 
             SyncScanlineParamsFromPreset();
+            SyncOutlineParams();
+        }
+
+        private static readonly int OutlineColorId = Shader.PropertyToID("_OutlineColor");
+        private static readonly int OutlineWidthId = Shader.PropertyToID("_OutlineWidth");
+
+        private void SyncOutlineParams()
+        {
+            if (runtimeMaterial == null || text == null)
+                return;
+
+            if (!runtimeMaterial.HasProperty(OutlineWidthId))
+                return;
+
+            runtimeMaterial.SetFloat(OutlineWidthId, text.outlineWidth);
+            runtimeMaterial.SetColor(OutlineColorId, text.outlineColor);
         }
 
         private void SyncScanlineParamsFromPreset()
@@ -101,6 +117,7 @@ namespace NineGrid.Presentation.Visuals
             TableNineTmpScanlineUtility.CopyFontMaterial(text.font, runtimeMaterial);
             text.fontSharedMaterial = runtimeMaterial;
             boundFont = text.font;
+            SyncOutlineParams();
         }
 
         private Material ResolvePreset(TMP_FontAsset font)
@@ -181,6 +198,12 @@ namespace NineGrid.Presentation.Visuals
             CopyFloat(source, target, ScaleRatioAId);
             CopyFloat(source, target, ScaleRatioBId);
             CopyFloat(source, target, ScaleRatioCId);
+
+            if (font.atlasTexture != null)
+            {
+                target.SetFloat(TextureWidthId, font.atlasTexture.width);
+                target.SetFloat(TextureHeightId, font.atlasTexture.height);
+            }
         }
 
         private static void CopyTexture(Material source, Material target, int propertyId)

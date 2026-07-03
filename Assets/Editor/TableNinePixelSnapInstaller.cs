@@ -364,6 +364,8 @@ public static class TableNinePixelSnapInstaller
             text.fontSize = 32;
             text.alignment = TextAlignmentOptions.Center;
             text.textWrappingMode = TextWrappingModes.Normal;
+            text.outlineWidth = 1f;
+            text.outlineColor = Color.black;
 
             RectTransform rectTransform = textObject.GetComponent<RectTransform>();
             rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
