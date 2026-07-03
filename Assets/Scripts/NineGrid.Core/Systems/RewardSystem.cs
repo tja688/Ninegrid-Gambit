@@ -204,17 +204,15 @@ namespace NineGrid.Core.Systems
 
         private void AddDefaultPlayerCards(GameContentCatalog catalog, NodeDeckOptions options)
         {
-            AddPlayerCardIfExists(catalog, options, "help.throwing_knife");
-            AddPlayerCardIfExists(catalog, options, "help.healing_potion");
-            AddPlayerCardIfExists(catalog, options, "help.sturdy_shield");
-        }
-
-        private void AddPlayerCardIfExists(GameContentCatalog catalog, NodeDeckOptions options, string defId)
-        {
-            if (catalog.Cards.ContainsKey(defId))
-            {
-                options.AddPlayerCard(this.GetSystem<IContentSystem>().CreateDraft(defId));
-            }
+            var player = this.GetModel<PlayerModel>();
+            var professionId = string.IsNullOrEmpty(player.ProfessionId.Value)
+                ? ProfessionCatalog.Default.DefId
+                : player.ProfessionId.Value;
+            ProfessionCatalog.AppendInitialPlayerCards(
+                this.GetSystem<IContentSystem>(),
+                catalog,
+                options,
+                professionId);
         }
 
         private int AddLevelCards(

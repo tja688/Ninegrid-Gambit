@@ -17,6 +17,7 @@ namespace NineGrid.Core
         public StatBlock Stats { get; private set; }
         public BindableProperty<int> Coins { get; private set; }
         public BindableProperty<int> InteractionCount { get; private set; }
+        public BindableProperty<string> ProfessionId { get; private set; }
         public BindableProperty<int> Version { get; private set; }
 
         public IReadOnlyList<string> RelicDefIds
@@ -35,8 +36,15 @@ namespace NineGrid.Core
             {
                 Coins = new BindableProperty<int>(0);
                 InteractionCount = new BindableProperty<int>(0);
+                ProfessionId = new BindableProperty<string>(string.Empty);
                 Version = new BindableProperty<int>(0);
             }
+        }
+
+        public void SetProfession(string defId)
+        {
+            ProfessionId.Value = defId ?? string.Empty;
+            Touch();
         }
 
         public void AddCoins(int delta)
@@ -96,6 +104,7 @@ namespace NineGrid.Core
             Stats.Clear();
             Coins.Value = 0;
             InteractionCount.Value = 0;
+            ProfessionId.Value = string.Empty;
             mRelicDefIds.Clear();
             mSkillDefIds.Clear();
             Touch();

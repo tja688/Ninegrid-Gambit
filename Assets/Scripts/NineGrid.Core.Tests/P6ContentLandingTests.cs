@@ -386,7 +386,7 @@ namespace NineGrid.Core.Tests
             var reward = architecture.GetSystem<IRewardSystem>();
             var options = reward.BuildNodeDeckOptions(3, "deck.wandering_legion");
 
-            Assert.AreEqual(3, options.PlayerCards.Count);
+            Assert.AreEqual(8, options.PlayerCards.Count);
             Assert.AreEqual(13, options.EnemyCards.Count);
             Assert.IsTrue(options.RequireElite);
 

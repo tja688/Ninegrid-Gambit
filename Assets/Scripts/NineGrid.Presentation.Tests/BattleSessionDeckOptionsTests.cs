@@ -30,7 +30,7 @@ namespace NineGrid.Presentation.Tests
 
             Assert.Greater(options.EnemyCards.Count, 0);
             Assert.IsTrue(BattleSessionDeckOptions.UsesCatalogMonsterDefIds(options));
-            Assert.AreEqual(3, options.PlayerCards.Count);
+            Assert.AreEqual(8, options.PlayerCards.Count);
         }
 
         [Test]
@@ -41,7 +41,7 @@ namespace NineGrid.Presentation.Tests
             var source = reward.BuildNodeDeckOptions(1, BattleSessionDriver.DefaultMonsterDeckId);
             var minimal = BattleSessionDeckOptions.BuildMinimalClearDeck(architecture, source);
 
-            Assert.AreEqual(3, minimal.PlayerCards.Count);
+            Assert.AreEqual(8, minimal.PlayerCards.Count);
             Assert.AreEqual(3, minimal.EnemyCards.Count);
             Assert.IsTrue(BattleSessionDeckOptions.UsesCatalogMonsterDefIds(minimal));
         }

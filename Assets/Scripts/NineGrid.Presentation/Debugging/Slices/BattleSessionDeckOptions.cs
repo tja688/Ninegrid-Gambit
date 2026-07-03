@@ -40,7 +40,11 @@ namespace NineGrid.Presentation.Debugging.Slices
             }
             else
             {
-                AddDefaultPlayerCards(content, options);
+                var player = architecture.GetModel<PlayerModel>();
+                var professionId = string.IsNullOrEmpty(player.ProfessionId.Value)
+                    ? ProfessionCatalog.Default.DefId
+                    : player.ProfessionId.Value;
+                ProfessionCatalog.AppendInitialPlayerCards(content, content.Catalog, options, professionId);
             }
 
             var added = 0;
@@ -73,6 +77,25 @@ namespace NineGrid.Presentation.Debugging.Slices
             return options;
         }
 
+        public static int CountPlayerCardsByDef(NodeDeckOptions options, string defId)
+        {
+            if (options == null || string.IsNullOrEmpty(defId))
+            {
+                return 0;
+            }
+
+            var count = 0;
+            for (var i = 0; i < options.PlayerCards.Count; i++)
+            {
+                if (options.PlayerCards[i].DefId == defId)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
         public static bool UsesCatalogMonsterDefIds(NodeDeckOptions options)
         {
             if (options == null || options.EnemyCards.Count == 0)
@@ -82,30 +105,14 @@ namespace NineGrid.Presentation.Debugging.Slices
 
             for (var i = 0; i < options.EnemyCards.Count; i++)
             {
-                string defId = options.EnemyCards[i].DefId;
-                if (string.IsNullOrEmpty(defId) || defId.StartsWith("monster.slice", System.StringComparison.Ordinal))
+                string enemyDefId = options.EnemyCards[i].DefId;
+                if (string.IsNullOrEmpty(enemyDefId) || enemyDefId.StartsWith("monster.slice", System.StringComparison.Ordinal))
                 {
                     return false;
                 }
             }
 
             return true;
-        }
-
-        private static void AddDefaultPlayerCards(IContentSystem content, NodeDeckOptions options)
-        {
-            AddPlayerCardIfExists(content, options, "help.throwing_knife");
-            AddPlayerCardIfExists(content, options, "help.healing_potion");
-            AddPlayerCardIfExists(content, options, "help.sturdy_shield");
-        }
-
-        private static void AddPlayerCardIfExists(IContentSystem content, NodeDeckOptions options, string defId)
-        {
-            CardDraft draft = content.CreateDraft(defId);
-            if (draft.Kind != CardKind.Unknown)
-            {
-                options.AddPlayerCard(draft);
-            }
         }
     }
 }

@@ -10,16 +10,20 @@ namespace NineGrid.Core
         public InitialGameOptions()
         {
             Seed = 1UL;
+            ProfessionId = ProfessionCatalog.Jester;
             AvatarDefId = "avatar.default";
-            AvatarMaxHp = 30;
-            AvatarAttack = 1;
-            AvatarRecovery = 1;
+            AvatarMaxHp = ProfessionCatalog.Default.MaxHp;
+            AvatarAttack = ProfessionCatalog.Default.Attack;
+            AvatarArmor = ProfessionCatalog.Default.Armor;
+            AvatarRecovery = ProfessionCatalog.Default.Recovery;
         }
 
         public ulong Seed { get; set; }
+        public string ProfessionId { get; set; }
         public string AvatarDefId { get; set; }
         public int AvatarMaxHp { get; set; }
         public int AvatarAttack { get; set; }
+        public int AvatarArmor { get; set; }
         public int AvatarRecovery { get; set; }
     }
 
@@ -67,6 +71,7 @@ namespace NineGrid.Core
             avatar.Stats.SetBase(StatId.InteractionRange, 1);
 
             board.SetAvatar(avatar, SlotId.Board(5));
+            ApplyProfession(architecture, options, avatar);
 
             var snapshot = new InitialGameSnapshot
             {
@@ -110,11 +115,35 @@ namespace NineGrid.Core
             }
 
             avatar = registry.Create(options.AvatarDefId, CardKind.Avatar);
+            ApplyAvatarStats(avatar, options);
+            return avatar;
+        }
+
+        private static void ApplyAvatarStats(CardInstance avatar, InitialGameOptions options)
+        {
             avatar.Stats.SetBase(StatId.MaxHp, options.AvatarMaxHp);
             avatar.Stats.SetBase(StatId.Hp, options.AvatarMaxHp);
             avatar.Stats.SetBase(StatId.Attack, options.AvatarAttack);
+            avatar.Stats.SetBase(StatId.Armor, options.AvatarArmor);
             avatar.Stats.SetBase(StatId.Recovery, options.AvatarRecovery);
-            return avatar;
+        }
+
+        private static void ApplyProfession(IArchitecture architecture, InitialGameOptions options, CardInstance avatar)
+        {
+            var profession = ProfessionCatalog.Get(options.ProfessionId);
+            var player = architecture.GetModel<PlayerModel>();
+            var content = architecture.GetSystem<IContentSystem>();
+
+            player.SetProfession(profession.DefId);
+            ApplyAvatarStats(avatar, options);
+
+            if (string.IsNullOrEmpty(profession.InitialSkillDefId))
+            {
+                return;
+            }
+
+            player.AddSkill(profession.InitialSkillDefId);
+            content.ActivatePlayerSkill(profession.InitialSkillDefId);
         }
 
         private static bool HasBoardCards(BoardModel board)
