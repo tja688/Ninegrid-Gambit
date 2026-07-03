@@ -22,6 +22,9 @@ namespace NineGrid.Presentation.Orchestration
         public int RemainingHp { get; set; } = -1;
         public int RemainingArmor { get; set; } = -1;
 
+        /// <summary>Kill Flow 是否包含冲刺段；false 时仅播受击/淡出（DeathOnly）。</summary>
+        public bool IncludeStrike { get; set; } = true;
+
         /// <summary>同 Action 组合并的多张发牌 payload（按事件顺序）。</summary>
         public IReadOnlyList<FlowPayload> BatchedDeals { get; set; }
 

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using NineGrid.Core;
+using NineGrid.Presentation.Orchestration.Combat;
 
 namespace NineGrid.Presentation.Orchestration
 {
@@ -12,49 +13,132 @@ namespace NineGrid.Presentation.Orchestration
                 return new PresentationPlan(0, new ActionPlanGroup[0], null, new PresentationInstruction[0]);
             }
 
-            var groupedSteps = new Dictionary<int, List<PlanStep>>();
+            var outputGroups = new List<ActionPlanGroup>();
+            var combatSegment = new List<RoutedCombatInstruction>();
+            var pendingNonCombatSteps = new List<PlanStep>();
+            var pendingNonCombatActionId = -1;
             var nextStepId = 1;
             var groupIndex = 0;
 
             for (var i = 0; i < batch.Instructions.Count; i++)
             {
-                var instruction = batch.Instructions[i];
-                if (!InstructionKindFlowRouter.TryRoute(instruction, out var route)
-                    || route.Kind != InstructionRouteKind.Flow)
+                PresentationInstruction instruction = batch.Instructions[i];
+                if (!TryCreateRoute(instruction, batch.Snapshot, out InstructionRoute route))
                 {
                     continue;
                 }
 
-                var actionId = instruction.Event.ActionId;
-                if (!groupedSteps.TryGetValue(actionId, out var steps))
+                if (CombatExchangeFolder.IsCombatInstruction(instruction, route, batch.Snapshot))
                 {
-                    steps = new List<PlanStep>();
-                    groupedSteps.Add(actionId, steps);
+                    FlushPendingNonCombat(outputGroups, pendingNonCombatSteps, ref pendingNonCombatActionId);
+
+                    var source = new SourceRef(instruction.Sequence, instruction.Event.ActionId, instruction.Kind);
+                    combatSegment.Add(new RoutedCombatInstruction(instruction, route, source));
+                    continue;
                 }
 
-                var source = new SourceRef(instruction.Sequence, actionId, instruction.Kind);
-                route.FlowId = ResolvePlaybackFlow(route.FlowId, route.Payload, batch.Snapshot);
-                if (route.FlowId == FlowId.CardAttack
-                    || route.FlowId == FlowId.Counterattack
-                    || route.FlowId == FlowId.CardKill
-                    || route.FlowId == FlowId.CounterattackKill)
+                if (combatSegment.Count > 0)
                 {
-                    AttackDirectionResolver.ApplyBoardDirection(route.Payload, batch.Snapshot);
+                    FlushCombatSegment(combatSegment, batch.Snapshot, outputGroups, ref nextStepId, ref groupIndex);
+                    combatSegment.Clear();
                 }
 
-                steps.Add(CreateStep(ref nextStepId, actionId, groupIndex, route.FlowId, route.Payload, source));
+                AppendNonCombatStep(
+                    outputGroups,
+                    pendingNonCombatSteps,
+                    ref pendingNonCombatActionId,
+                    instruction,
+                    route,
+                    ref nextStepId,
+                    groupIndex);
             }
 
-            var groups = new List<ActionPlanGroup>();
-            foreach (var pair in groupedSteps)
+            if (combatSegment.Count > 0)
             {
-                groups.Add(new ActionPlanGroup(pair.Key, pair.Value));
-                groupIndex++;
+                FlushCombatSegment(combatSegment, batch.Snapshot, outputGroups, ref nextStepId, ref groupIndex);
             }
 
-            groups.Sort((left, right) => left.ActionId.CompareTo(right.ActionId));
-            groups = PlanGroupNormalizer.Normalize(groups);
+            FlushPendingNonCombat(outputGroups, pendingNonCombatSteps, ref pendingNonCombatActionId);
+
+            var groups = PlanGroupNormalizer.Normalize(outputGroups);
             return new PresentationPlan(batch.BatchId, groups, batch.Snapshot, batch.Instructions);
+        }
+
+        private static void FlushCombatSegment(
+            List<RoutedCombatInstruction> segment,
+            CoreViewSnapshot snapshot,
+            List<ActionPlanGroup> outputGroups,
+            ref int nextStepId,
+            ref int groupIndex)
+        {
+            CombatExchange exchange = CombatExchangeFolder.Fold(segment, snapshot);
+            outputGroups.AddRange(StrikeFlowResolver.ResolveGroups(exchange, ref nextStepId, ref groupIndex));
+        }
+
+        private static void AppendNonCombatStep(
+            List<ActionPlanGroup> outputGroups,
+            List<PlanStep> pendingSteps,
+            ref int pendingActionId,
+            PresentationInstruction instruction,
+            InstructionRoute route,
+            ref int nextStepId,
+            int groupIndex)
+        {
+            int actionId = instruction.Event.ActionId;
+            if (pendingSteps.Count > 0 && pendingActionId != actionId)
+            {
+                FlushPendingNonCombat(outputGroups, pendingSteps, ref pendingActionId);
+            }
+
+            if (pendingSteps.Count == 0)
+            {
+                pendingActionId = actionId;
+            }
+
+            var source = new SourceRef(instruction.Sequence, actionId, instruction.Kind);
+            pendingSteps.Add(CreateStep(
+                ref nextStepId,
+                actionId,
+                groupIndex,
+                route.FlowId,
+                route.Payload,
+                source));
+        }
+
+        private static void FlushPendingNonCombat(
+            List<ActionPlanGroup> outputGroups,
+            List<PlanStep> pendingSteps,
+            ref int pendingActionId)
+        {
+            if (pendingSteps.Count == 0 || pendingActionId < 0)
+            {
+                return;
+            }
+
+            outputGroups.Add(new ActionPlanGroup(pendingActionId, pendingSteps.ToArray()));
+            pendingSteps.Clear();
+            pendingActionId = -1;
+        }
+
+        private static bool TryCreateRoute(
+            PresentationInstruction instruction,
+            CoreViewSnapshot snapshot,
+            out InstructionRoute route)
+        {
+            route = null;
+            if (!InstructionKindFlowRouter.TryRoute(instruction, out route)
+                || route.Kind != InstructionRouteKind.Flow)
+            {
+                return false;
+            }
+
+            route.FlowId = ResolvePlaybackFlow(route.FlowId, route.Payload, snapshot);
+            if (IsBattleFlow(route.FlowId))
+            {
+                AttackDirectionResolver.ApplyBoardDirection(route.Payload, snapshot);
+            }
+
+            return true;
         }
 
         private static FlowId ResolvePlaybackFlow(FlowId flowId, FlowPayload payload, CoreViewSnapshot snapshot)
@@ -68,6 +152,14 @@ namespace NineGrid.Presentation.Orchestration
                 default:
                     return flowId;
             }
+        }
+
+        private static bool IsBattleFlow(FlowId flowId)
+        {
+            return flowId == FlowId.CardAttack
+                   || flowId == FlowId.Counterattack
+                   || flowId == FlowId.CardKill
+                   || flowId == FlowId.CounterattackKill;
         }
 
         private static PlanStep CreateStep(

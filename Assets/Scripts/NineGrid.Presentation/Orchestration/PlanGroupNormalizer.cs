@@ -19,7 +19,10 @@ namespace NineGrid.Presentation.Orchestration
             {
                 ActionPlanGroup group = groups[groupIndex];
                 var steps = CoalesceCardDealSteps(SuppressRotationMoveSteps(group.Steps));
-                AppendSplitBattleGroups(normalized, group.ActionId, steps);
+                if (steps.Count > 0)
+                {
+                    normalized.Add(new ActionPlanGroup(group.ActionId, steps));
+                }
             }
 
             return normalized;
@@ -144,64 +147,6 @@ namespace NineGrid.Presentation.Orchestration
                 Payload = mergedPayload,
                 Source = first.Source,
             };
-        }
-
-        private static void AppendSplitBattleGroups(
-            List<ActionPlanGroup> output,
-            int actionId,
-            IReadOnlyList<PlanStep> steps)
-        {
-            if (steps == null || steps.Count == 0)
-            {
-                return;
-            }
-
-            var exclusiveCount = 0;
-            for (var i = 0; i < steps.Count; i++)
-            {
-                if (IsExclusiveBattleFlow(steps[i].FlowId))
-                {
-                    exclusiveCount++;
-                }
-            }
-
-            if (exclusiveCount <= 1)
-            {
-                output.Add(new ActionPlanGroup(actionId, steps));
-                return;
-            }
-
-            var current = new List<PlanStep>();
-            for (var i = 0; i < steps.Count; i++)
-            {
-                PlanStep step = steps[i];
-                if (IsExclusiveBattleFlow(step.FlowId))
-                {
-                    if (current.Count > 0)
-                    {
-                        output.Add(new ActionPlanGroup(actionId, current));
-                        current = new List<PlanStep>();
-                    }
-
-                    output.Add(new ActionPlanGroup(actionId, new[] { step }));
-                    continue;
-                }
-
-                current.Add(step);
-            }
-
-            if (current.Count > 0)
-            {
-                output.Add(new ActionPlanGroup(actionId, current));
-            }
-        }
-
-        private static bool IsExclusiveBattleFlow(FlowId flowId)
-        {
-            return flowId == FlowId.CardAttack
-                   || flowId == FlowId.Counterattack
-                   || flowId == FlowId.CardKill
-                   || flowId == FlowId.CounterattackKill;
         }
     }
 }

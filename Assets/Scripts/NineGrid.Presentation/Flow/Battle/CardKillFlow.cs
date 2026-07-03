@@ -43,12 +43,20 @@ namespace NineGrid.Presentation.Flow.Battle
 
         private Sequence activeSequence;
         private Coroutine playCoroutine;
+        private bool includeStrikeInPlayback = true;
 
         public bool IsPlaying { get; private set; }
         public float ExpectedDuration => TotalDuration;
-        public float TotalDuration => Mathf.Max(
-            attackFlow != null ? attackFlow.TotalDuration : 0f,
-            enemyFadeDelay + enemyFadeDuration);
+        public float TotalDuration
+        {
+            get
+            {
+                float strikeDuration = includeStrikeInPlayback && attackFlow != null
+                    ? attackFlow.TotalDuration
+                    : 0f;
+                return Mathf.Max(strikeDuration, enemyFadeDelay + enemyFadeDuration);
+            }
+        }
 
         private void Awake()
         {
@@ -70,7 +78,7 @@ namespace NineGrid.Presentation.Flow.Battle
             Play(player, enemy, CardBattleDirectionUtil.ToVector2(direction));
         }
 
-        public void Play(Transform player, Transform enemy, Vector2 direction)
+        public void Play(Transform player, Transform enemy, Vector2 direction, bool includeStrike = true)
         {
             if (!isActiveAndEnabled || player == null || enemy == null)
             {
@@ -80,6 +88,7 @@ namespace NineGrid.Presentation.Flow.Battle
             EnsureAttackFlowReference();
             StopPlaybackOnly();
 
+            includeStrikeInPlayback = includeStrike;
             activePlayer = player;
             activeEnemy = enemy;
             CaptureBaselines(player, enemy);
@@ -121,14 +130,17 @@ namespace NineGrid.Presentation.Flow.Battle
                 sequence.SetUpdate(true);
             }
 
-            attackFlow.InsertStrikeIntoSequence(
-                sequence,
-                player,
-                enemy,
-                direction,
-                playerBaselineLocalPosition,
-                playerBaselineLocalScale,
-                includeEnemyReturn: false);
+            if (includeStrikeInPlayback)
+            {
+                attackFlow.InsertStrikeIntoSequence(
+                    sequence,
+                    player,
+                    enemy,
+                    direction,
+                    playerBaselineLocalPosition,
+                    playerBaselineLocalScale,
+                    includeEnemyReturn: false);
+            }
 
             if (enemySpriteRenderers.Length > 0)
             {

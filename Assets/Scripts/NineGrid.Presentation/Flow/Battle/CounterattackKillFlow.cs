@@ -34,7 +34,7 @@ namespace NineGrid.Presentation.Flow.Battle
         }
 
         /// <param name="boardDirection">怪物相对玩家的棋盘方位（与玩家攻击时一致，如怪物在右侧则为 Right）。</param>
-        public void Play(Transform enemy, Transform player, Vector2 boardDirection)
+        public void Play(Transform enemy, Transform player, Vector2 boardDirection, bool includeStrike = true)
         {
             if (!isActiveAndEnabled || enemy == null || player == null)
             {
@@ -43,7 +43,7 @@ namespace NineGrid.Presentation.Flow.Battle
 
             EnsureKillFlowReference();
             Vector2 strikeDirection = CardBattleDirectionUtil.Opposite(boardDirection);
-            killFlow.Play(enemy, player, strikeDirection);
+            killFlow.Play(enemy, player, strikeDirection, includeStrike);
         }
 
         [ContextMenu("Stop And Restore")]

@@ -33,11 +33,68 @@ namespace NineGrid.Presentation.Tests
             var plan = new PerformancePlanBuilder().Build(batch);
 
             Assert.AreEqual(7, plan.BatchId);
-            Assert.AreEqual(3, plan.Groups.Count);
-            AssertContainsFlow(plan, FlowId.CardAttack);
+            Assert.AreEqual(2, plan.Groups.Count);
+            Assert.AreEqual(0, CountFlow(plan, FlowId.CardAttack));
             AssertContainsFlow(plan, FlowId.CardKill);
             AssertContainsFlow(plan, FlowId.BoardRotate);
             Assert.AreEqual(0, CountFlow(plan, FlowId.MoveCard));
+        }
+
+        [Test]
+        public void PlanBuilder_AttackCounterNoKill_BuildsSerialAttackThenCounter()
+        {
+            var events = new List<CoreGameEvent>
+            {
+                new CoreGameEvent(CoreEventType.DamageDealt, 1, "DealDamage")
+                    .WithActor(1)
+                    .WithTarget(2)
+                    .WithAmount(1),
+                new CoreGameEvent(CoreEventType.DamageDealt, 2, "DealDamage")
+                    .WithActor(2)
+                    .WithTarget(1)
+                    .WithAmount(1),
+            };
+
+            var snapshot = OrchestrationTestSnapshots.WithBoardCombatants();
+            var batch = PresentationBatchFixture.Create(15, events, snapshot);
+            var plan = new PerformancePlanBuilder().Build(batch);
+
+            Assert.AreEqual(2, plan.Groups.Count);
+            Assert.AreEqual(FlowId.CardAttack, plan.Groups[0].Steps[0].FlowId);
+            Assert.AreEqual(FlowId.Counterattack, plan.Groups[1].Steps[0].FlowId);
+            Assert.AreEqual(1, CountFlow(plan, FlowId.CardAttack));
+            Assert.AreEqual(1, CountFlow(plan, FlowId.Counterattack));
+        }
+
+        [Test]
+        public void PlanBuilder_CounterKillPlayer_BuildsCounterThenDeathOnlyKill()
+        {
+            var events = new List<CoreGameEvent>
+            {
+                new CoreGameEvent(CoreEventType.DamageDealt, 1, "DealDamage")
+                    .WithActor(1)
+                    .WithTarget(2)
+                    .WithAmount(5),
+                new CoreGameEvent(CoreEventType.DamageDealt, 2, "DealDamage")
+                    .WithActor(2)
+                    .WithTarget(1)
+                    .WithAmount(99),
+                new CoreGameEvent(CoreEventType.CardKilled, 3, "Kill")
+                    .WithActor(2)
+                    .WithTarget(1)
+                    .WithCard(1),
+            };
+
+            var snapshot = OrchestrationTestSnapshots.WithBoardCombatants();
+            var batch = PresentationBatchFixture.Create(16, events, snapshot);
+            var plan = new PerformancePlanBuilder().Build(batch);
+
+            Assert.AreEqual(3, plan.Groups.Count);
+            Assert.AreEqual(FlowId.CardAttack, plan.Groups[0].Steps[0].FlowId);
+            Assert.AreEqual(FlowId.Counterattack, plan.Groups[1].Steps[0].FlowId);
+            Assert.AreEqual(FlowId.CounterattackKill, plan.Groups[2].Steps[0].FlowId);
+            Assert.IsFalse(plan.Groups[2].Steps[0].Payload.IncludeStrike);
+            Assert.AreEqual(1, CountFlow(plan, FlowId.CardAttack));
         }
 
         [Test]

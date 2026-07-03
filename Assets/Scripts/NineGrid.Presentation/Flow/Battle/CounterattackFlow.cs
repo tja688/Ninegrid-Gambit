@@ -1,3 +1,4 @@
+using System;
 using NineGrid.Presentation.Contracts;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
@@ -28,13 +29,13 @@ namespace NineGrid.Presentation.Flow.Battle
             StopAndRestore();
         }
 
-        public void Play(Transform enemy, Transform player, CardBattleDirection boardDirection)
+        public void Play(Transform enemy, Transform player, CardBattleDirection boardDirection, Action<string> onMarker = null)
         {
-            Play(enemy, player, CardBattleDirectionUtil.ToVector2(boardDirection));
+            Play(enemy, player, CardBattleDirectionUtil.ToVector2(boardDirection), onMarker);
         }
 
         /// <param name="boardDirection">怪物相对玩家的棋盘方位（与玩家攻击时一致，如怪物在右侧则为 Right）。</param>
-        public void Play(Transform enemy, Transform player, Vector2 boardDirection)
+        public void Play(Transform enemy, Transform player, Vector2 boardDirection, Action<string> onMarker = null)
         {
             if (!isActiveAndEnabled || enemy == null || player == null)
             {
@@ -43,7 +44,7 @@ namespace NineGrid.Presentation.Flow.Battle
 
             EnsureAttackFlowReference();
             Vector2 strikeDirection = CardBattleDirectionUtil.Opposite(boardDirection);
-            attackFlow.Play(enemy, player, strikeDirection);
+            attackFlow.Play(enemy, player, strikeDirection, onMarker);
         }
 
         [ContextMenu("Stop And Restore")]

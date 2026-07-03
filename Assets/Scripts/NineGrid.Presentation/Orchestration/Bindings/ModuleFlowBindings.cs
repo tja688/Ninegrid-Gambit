@@ -41,7 +41,8 @@ namespace NineGrid.Presentation.Orchestration.Bindings
             }
 
             var direction = AttackDirectionResolver.Resolve(payload, registry);
-            mFlow.Play(player, enemy, direction);
+            bool includeStrike = payload?.IncludeStrike ?? true;
+            mFlow.Play(player, enemy, direction, includeStrike);
             return new FlowHandle(mFlow, onMarker);
         }
 

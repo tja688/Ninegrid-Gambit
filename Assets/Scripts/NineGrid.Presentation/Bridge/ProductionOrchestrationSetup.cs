@@ -97,7 +97,7 @@ namespace NineGrid.Presentation.Bridge
             registry.Register(new UseItemFlowBinding(moduleHost.GetComponent<ItemUseFlow>()));
             registry.Register(new CardDeckEntryFlowBinding(moduleHost.GetComponent<CardDeckEntryFlow>()));
             registry.Register(new PlayerAppearFlowBinding(moduleHost.GetComponent<PlayerAppearFlow>()));
-            registry.Register(new CounterattackFlowBinding(moduleHost.GetComponent<CounterattackFlow>()));
+            registry.Register(new CounterattackFlowBinding(moduleHost.GetComponent<CounterattackFlow>(), damageNumbers));
             registry.Register(new CounterattackKillFlowBinding(moduleHost.GetComponent<CounterattackKillFlow>()));
             registry.Register(new SnapshotAlignFlowBinding(moduleHost.GetComponent<SnapshotAlignFlow>()
                 ?? moduleHost.AddComponent<SnapshotAlignFlow>()));

@@ -1,4 +1,5 @@
 using System;
+using NineGrid.Presentation.Feedback;
 using NineGrid.Presentation.Flow.Battle;
 using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Shared;
@@ -9,10 +10,12 @@ namespace NineGrid.Presentation.Orchestration.Bindings
     public sealed class CounterattackFlowBinding : IFlowBinding
     {
         private readonly CounterattackFlow mFlow;
+        private readonly DamageNumberFeedback mDamageNumbers;
 
-        public CounterattackFlowBinding(CounterattackFlow flow)
+        public CounterattackFlowBinding(CounterattackFlow flow, DamageNumberFeedback damageNumbers = null)
         {
             mFlow = flow;
+            mDamageNumbers = damageNumbers;
         }
 
         public FlowId Id => FlowId.Counterattack;
@@ -24,18 +27,26 @@ namespace NineGrid.Presentation.Orchestration.Bindings
                 return new FlowHandle(null, onMarker);
             }
 
-            int playerUid = payload.ActorUid > 0 ? payload.ActorUid : PresentationFallbackActorUids.Player;
-            int enemyUid = payload.TargetUid > 0 ? payload.TargetUid : PresentationFallbackActorUids.Enemy;
-            var player = registry?.ResolveActor(playerUid);
-            var enemy = registry?.ResolveActor(enemyUid);
-            if (player == null || enemy == null)
+            var attacker = registry != null ? registry.ResolveActor(payload.ActorUid) : null;
+            var target = registry != null ? registry.ResolveActor(payload.TargetUid) : null;
+            if (attacker == null || target == null)
             {
                 return new FlowHandle(mFlow, onMarker);
             }
 
             Vector2 boardDirection = AttackDirectionResolver.Resolve(payload, registry);
-            mFlow.Play(enemy, player, boardDirection);
-            return new FlowHandle(mFlow, onMarker);
+            Action<string> wrappedMarker = marker =>
+            {
+                if (string.Equals(marker, FlowMarkers.Impact, StringComparison.Ordinal))
+                {
+                    CombatImpactFeedback.PlayAtImpact(registry, payload, mDamageNumbers);
+                }
+
+                onMarker?.Invoke(marker);
+            };
+
+            mFlow.Play(attacker, target, boardDirection, wrappedMarker);
+            return new FlowHandle(mFlow, wrappedMarker);
         }
 
         public void Stop()
@@ -62,21 +73,22 @@ namespace NineGrid.Presentation.Orchestration.Bindings
                 return new FlowHandle(null, onMarker);
             }
 
-            int playerUid = payload.ActorUid > 0 ? payload.ActorUid : PresentationFallbackActorUids.Player;
-            int enemyUid = payload.CardUid > 0
+            int attackerUid = payload.ActorUid > 0 ? payload.ActorUid : PresentationFallbackActorUids.Enemy;
+            int targetUid = payload.CardUid > 0
                 ? payload.CardUid
                 : payload.TargetUid > 0
                     ? payload.TargetUid
-                    : PresentationFallbackActorUids.Enemy;
-            var player = registry?.ResolveActor(playerUid);
-            var enemy = registry?.ResolveActor(enemyUid);
-            if (player == null || enemy == null)
+                    : PresentationFallbackActorUids.Player;
+            var attacker = registry?.ResolveActor(attackerUid);
+            var target = registry?.ResolveActor(targetUid);
+            if (attacker == null || target == null)
             {
                 return new FlowHandle(mFlow, onMarker);
             }
 
             Vector2 boardDirection = AttackDirectionResolver.Resolve(payload, registry);
-            mFlow.Play(enemy, player, boardDirection);
+            bool includeStrike = payload?.IncludeStrike ?? false;
+            mFlow.Play(attacker, target, boardDirection, includeStrike);
             return new FlowHandle(mFlow, onMarker);
         }
 
