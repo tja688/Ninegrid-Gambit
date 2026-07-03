@@ -8,7 +8,7 @@ using UnityEngine.Scripting.APIUpdating;
 namespace NineGrid.Presentation.Flow.Item
 {
     /// <summary>
-    /// 道具使用：确认脉冲后淡出，批末 Reconcile 回收演员。
+    /// 道具使用：确认脉冲后淡出；演员回收待 <see cref="Orchestration.StructuralFlowGaps"/> 补 despawn Flow。
     /// </summary>
     [DisallowMultipleComponent]
     [MovedFrom(true, "NineGrid.Presentation.Performance", null, "ItemUsePerformance")]

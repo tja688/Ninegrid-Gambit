@@ -51,18 +51,6 @@ namespace NineGrid.Presentation.Tests.Support
         }
     }
 
-    internal sealed class RecordingReconcilable : IReconcilable
-    {
-        public int ApplyCount { get; private set; }
-        public CoreViewSnapshot LastSnapshot { get; private set; }
-
-        public void ApplySnapshot(CoreViewSnapshot snapshot)
-        {
-            ApplyCount++;
-            LastSnapshot = snapshot;
-        }
-    }
-
     internal static class OrchestrationTestSnapshots
     {
         public static CoreViewSnapshot Minimal(int avatarUid = 1)

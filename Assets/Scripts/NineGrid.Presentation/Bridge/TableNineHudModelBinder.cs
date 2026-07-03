@@ -8,7 +8,7 @@ namespace NineGrid.Presentation.Bridge
 {
     /// <summary>
     /// HUD 被动视图：直连 <see cref="PlayerModel"/> / <see cref="RunModel"/> BindableProperty，不经 Batch 时间线。
-    /// 卡面 HP/护甲仍由战斗 Flow + 批末 Reconcile 驱动。
+    /// 卡面 HP/护甲由战斗 Flow Impact + <see cref="Orchestration.StatEventProjection"/> 驱动。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class TableNineHudModelBinder : MonoBehaviour

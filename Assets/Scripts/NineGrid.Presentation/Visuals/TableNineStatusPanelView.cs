@@ -5,7 +5,7 @@ using UnityEngine;
 namespace NineGrid.Presentation.Visuals
 {
     /// <summary>
-    /// 玩家状态 HUD 视图：金币/互动次数由 Model 直连；HP/护甲由战斗 Flow + 批末 Reconcile 驱动。
+    /// 玩家状态 HUD 视图：金币/互动次数由 Model 直连；HP/护甲由战斗 Flow + Stat 事件投影驱动。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class TableNineStatusPanelView : MonoBehaviour
@@ -72,7 +72,7 @@ namespace NineGrid.Presentation.Visuals
         }
 
         /// <summary>
-        /// 批末兜底：仅同步玩家化身 HP/护甲，不含金币与互动次数。
+        /// 开局/按需：仅同步玩家化身 HP/护甲，不含金币与互动次数。
         /// </summary>
         public void ApplyAvatarCombatStats(CoreViewSnapshot snapshot)
         {

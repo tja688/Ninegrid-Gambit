@@ -108,7 +108,7 @@ namespace NineGrid.Presentation.Debugging.Slices
             bootstrap.ActorFactory?.DestroyAll();
             bootstrap.ViewRegistry?.ClearActors();
             InitialGameFactory.Create(Architecture, new InitialGameOptions { Seed = seed });
-            bootstrap.ReconcileInitialSnapshot();
+            bootstrap.BuildInitialActors();
             mFlowTraceRecorder = null;
         }
 

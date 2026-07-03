@@ -7,22 +7,16 @@ using UnityEngine;
 namespace NineGrid.Presentation.Orchestration
 {
     /// <summary>
-    /// 批末对齐棋盘卡演员：按 <see cref="CoreViewSnapshot"/> 生成/回收/落位。
+    /// 开局一次性铺场：棋盘卡 spawn + 落位 + 初始数值（非批末兜底）。
     /// </summary>
-    public sealed class BoardCardsReconcilable : IReconcilable
+    public static class InitialActorsBuilder
     {
-        private readonly TableNineViewRegistry mViewRegistry;
-        private readonly TableNineActorFactory mActorFactory;
-
-        public BoardCardsReconcilable(TableNineViewRegistry viewRegistry, TableNineActorFactory actorFactory)
+        public static void BuildBoardCards(
+            CoreViewSnapshot snapshot,
+            TableNineViewRegistry viewRegistry,
+            TableNineActorFactory actorFactory)
         {
-            mViewRegistry = viewRegistry;
-            mActorFactory = actorFactory;
-        }
-
-        public void ApplySnapshot(CoreViewSnapshot snapshot)
-        {
-            if (snapshot?.Board == null || mViewRegistry == null || mActorFactory == null)
+            if (snapshot?.Board == null || viewRegistry == null || actorFactory == null)
             {
                 return;
             }
@@ -38,13 +32,17 @@ namespace NineGrid.Presentation.Orchestration
                 }
 
                 liveUids.Add(slotView.CardUid);
-                EnsureBoardCard(slotView, snapshot.Cards);
+                EnsureBoardCard(slotView, snapshot.Cards, viewRegistry, actorFactory);
             }
 
-            mActorFactory.DespawnExcept(liveUids);
+            actorFactory.DespawnExcept(liveUids);
         }
 
-        private void EnsureBoardCard(BoardSlotView slotView, IReadOnlyDictionary<int, CardView> cards)
+        private static void EnsureBoardCard(
+            BoardSlotView slotView,
+            IReadOnlyDictionary<int, CardView> cards,
+            TableNineViewRegistry viewRegistry,
+            TableNineActorFactory actorFactory)
         {
             int uid = slotView.CardUid;
             string defId = slotView.DefId;
@@ -53,11 +51,11 @@ namespace NineGrid.Presentation.Orchestration
                 defId = cardView.DefId;
             }
 
-            Transform anchor = mViewRegistry.ResolveAnchor(slotView.Slot);
+            Transform anchor = viewRegistry.ResolveAnchor(slotView.Slot);
             Transform actor;
-            if (!mActorFactory.TryGet(uid, out actor) || actor == null)
+            if (!actorFactory.TryGet(uid, out actor) || actor == null)
             {
-                actor = mActorFactory.Spawn(defId, uid);
+                actor = actorFactory.Spawn(defId, uid);
             }
 
             if (anchor != null)
@@ -65,7 +63,7 @@ namespace NineGrid.Presentation.Orchestration
                 TableNineActorFactory.PlaceAtAnchor(actor, anchor);
             }
 
-            mViewRegistry.RegisterActor(uid, actor);
+            viewRegistry.RegisterActor(uid, actor);
             ApplyCardStatus(actor, slotView);
             EnsureBoardRelay(actor);
         }

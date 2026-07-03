@@ -244,7 +244,7 @@ namespace NineGrid.Presentation.Shell
                     if (bootstrap?.Architecture != null)
                     {
                         InitialGameFactory.Create(bootstrap.Architecture);
-                        bootstrap.ReconcileInitialSnapshot();
+                        bootstrap.BuildInitialActors();
                     }
                 }
             }

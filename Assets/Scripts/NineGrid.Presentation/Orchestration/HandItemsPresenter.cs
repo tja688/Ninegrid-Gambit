@@ -7,9 +7,9 @@ using UnityEngine;
 namespace NineGrid.Presentation.Orchestration
 {
     /// <summary>
-    /// 批末对齐手牌道具演员：布局 + 输入中继注册。
+    /// 手牌道具演员：一次性 spawn + 扇形布局 + 输入中继注册（非批末兜底）。
     /// </summary>
-    public sealed class HandItemsReconcilable : IReconcilable
+    public sealed class HandItemsPresenter
     {
         private readonly TableNineViewRegistry mViewRegistry;
         private readonly TableNineActorFactory mActorFactory;
@@ -18,7 +18,7 @@ namespace NineGrid.Presentation.Orchestration
         private readonly HandCardLayoutSolver mLayoutSolver;
         private InGameInteractionCoordinator mCoordinator;
 
-        public HandItemsReconcilable(
+        public HandItemsPresenter(
             TableNineViewRegistry viewRegistry,
             TableNineActorFactory actorFactory,
             Transform handActorsRoot,
@@ -37,7 +37,7 @@ namespace NineGrid.Presentation.Orchestration
             mCoordinator = coordinator;
         }
 
-        public void ApplySnapshot(CoreViewSnapshot snapshot)
+        public void BuildInitialHandItems(CoreViewSnapshot snapshot)
         {
             if (snapshot?.Deck == null || mActorFactory == null || mViewRegistry == null)
             {
@@ -47,7 +47,6 @@ namespace NineGrid.Presentation.Orchestration
             IReadOnlyList<int> itemUids = snapshot.Deck.ItemSlotUids;
             var actors = new List<Transform>(itemUids.Count);
             var targets = new List<HandCardLayoutTarget>(itemUids.Count);
-            var liveUids = new HashSet<int>();
 
             for (var i = 0; i < itemUids.Count; i++)
             {
@@ -57,7 +56,6 @@ namespace NineGrid.Presentation.Orchestration
                     continue;
                 }
 
-                liveUids.Add(uid);
                 string defId = ResolveDefId(snapshot, uid);
                 Transform actor = EnsureHandActor(uid, defId);
                 if (actor != null)
@@ -78,12 +76,7 @@ namespace NineGrid.Presentation.Orchestration
                 mLayoutPresenter.Relayout(actors, targets, durationOverride: 0f);
             }
 
-            IReadOnlyList<Transform> previousHandActors = mCoordinator != null
-                ? mCoordinator.HandActors
-                : null;
-
             mCoordinator?.SetHandActors(actors);
-            DespawnRemovedHandItems(liveUids, previousHandActors);
         }
 
         private Transform EnsureHandActor(int uid, string defId)
@@ -138,31 +131,6 @@ namespace NineGrid.Presentation.Orchestration
 
             return string.Empty;
         }
-
-        private void DespawnRemovedHandItems(HashSet<int> liveUids, IReadOnlyList<Transform> previousHandActors)
-        {
-            if (previousHandActors == null)
-            {
-                return;
-            }
-
-            for (var i = 0; i < previousHandActors.Count; i++)
-            {
-                Transform actor = previousHandActors[i];
-                if (actor == null)
-                {
-                    continue;
-                }
-
-                TableNineActorBinding binding = actor.GetComponent<TableNineActorBinding>();
-                if (binding != null
-                    && binding.IsHandItem
-                    && binding.CardUid > 0
-                    && !liveUids.Contains(binding.CardUid))
-                {
-                    mActorFactory.Despawn(binding.CardUid);
-                }
-            }
-        }
     }
+
 }

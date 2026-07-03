@@ -370,6 +370,7 @@ namespace NineGrid.Presentation.Orchestration.Bindings
 
     internal static class FlowBindingFallback
     {
+        /// <summary>no-op 占位：表演不到位即无视觉，不再批末强铺终态。</summary>
         public static FlowHandle SnapshotHandle(Action<string> onMarker)
         {
             return new FlowHandle(InstantAlignFlow.Instance, onMarker);

@@ -128,7 +128,7 @@ if (result.BatchOpened && result.Batch.RequiresAcknowledgement)
 
 ## CoreViewSnapshot 字段（加厚版）
 
-`CoreViewSnapshotFactory.Capture()` 投影全部 6 个 Model（含 `DeckModel`），并经由 `IStatSystem` 计算 effective stats。批末对齐时以嵌套视图为准；顶层 `Phase`/`Coins`/`BoardSlots` 等旧字段为兼容薄包装，读同一数据源。
+`CoreViewSnapshotFactory.Capture()` 投影全部 6 个 Model（含 `DeckModel`），并经由 `IStatSystem` 计算 effective stats。Flow 播放时以 `FlowPlaybackScope.Snapshot` 只读解析；卡面数字显示优先用 `Effective*` 字段；顶层 `Phase`/`Coins`/`BoardSlots` 等旧字段为兼容薄包装，读同一数据源。
 
 ### 顶层
 
@@ -212,7 +212,7 @@ if (result.BatchOpened && result.Batch.RequiresAcknowledgement)
 | 活跃 `EffectInstance` 全量 | 卡面 `EffectIds` + effective stats 已够显示对齐；instance 级图标可二期补 |
 | 坟场 / Removed 区 | 不在可见区，不投影 |
 
-表现层批末对齐应优先读 `snapshot.Deck` + `snapshot.Cards` + `snapshot.Board` + `snapshot.Choice`；卡面数字显示优先用 `Effective*` 字段。
+表现层终态由 **Flow 独占**（spawn/despawn/落位）+ **`StatEventProjection`**（批内 Stat 事件直连 `ApplyEvent` 刷数值）承担；开局一次性 `BuildInitialActors` 铺场。FSM/Shell 按需 `Capture` 查询。读 `snapshot.Deck` + `snapshot.Cards` + `snapshot.Board` + `snapshot.Choice`；卡面数字优先 `Effective*`。
 
 ## 表现层使用注意事项
 

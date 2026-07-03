@@ -16,7 +16,7 @@ namespace NineGrid.Presentation.Bridge
             CommandGateway gateway,
             TableNineViewRegistry viewRegistry,
             TableNineActorFactory actorFactory,
-            HandItemsReconcilable handItemsReconcilable)
+            HandItemsPresenter handItemsPresenter)
         {
             if (bootstrap == null || gateway == null || moduleHost == null)
             {
@@ -42,9 +42,9 @@ namespace NineGrid.Presentation.Bridge
                 viewRegistry,
                 useZone);
 
-            if (handItemsReconcilable != null)
+            if (handItemsPresenter != null)
             {
-                handItemsReconcilable.BindCoordinator(coordinator);
+                handItemsPresenter.BindCoordinator(coordinator);
             }
 
             return coordinator;
@@ -93,7 +93,7 @@ namespace NineGrid.Presentation.Bridge
             return rootObject.transform;
         }
 
-        public static HandItemsReconcilable CreateHandItemsReconcilable(
+        public static HandItemsPresenter CreateHandItemsPresenter(
             SceneStagingRoots roots,
             TableNineViewRegistry viewRegistry,
             TableNineActorFactory actorFactory,
@@ -106,7 +106,7 @@ namespace NineGrid.Presentation.Bridge
                 PresentationSerializationUtil.SetField(solver, "referenceAnchors", refs);
             }
 
-            return new HandItemsReconcilable(
+            return new HandItemsPresenter(
                 viewRegistry,
                 actorFactory,
                 roots?.HandActorsRoot ?? roots?.HandCardAnchors,

@@ -50,7 +50,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void StatusPanelReconcile_OnlyAppliesAvatarCombatStats()
+        public void StatusPanelApplyAvatarCombatStats_OnlyAppliesAvatarCombatStats()
         {
             var statusHost = CreateStatusPanelHost();
             var panel = statusHost.GetComponent<TableNineStatusPanelView>();

@@ -56,15 +56,18 @@ namespace NineGrid.Presentation.Orchestration
         public PresentationPlan(
             int batchId,
             IReadOnlyList<ActionPlanGroup> groups,
-            CoreViewSnapshot snapshot)
+            CoreViewSnapshot snapshot,
+            IReadOnlyList<PresentationInstruction> instructions = null)
         {
             BatchId = batchId;
             Groups = groups ?? new ActionPlanGroup[0];
             Snapshot = snapshot;
+            Instructions = instructions ?? new PresentationInstruction[0];
         }
 
         public int BatchId { get; }
         public IReadOnlyList<ActionPlanGroup> Groups { get; }
         public CoreViewSnapshot Snapshot { get; }
+        public IReadOnlyList<PresentationInstruction> Instructions { get; }
     }
 }

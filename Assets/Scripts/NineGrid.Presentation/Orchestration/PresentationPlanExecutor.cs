@@ -8,43 +8,40 @@ namespace NineGrid.Presentation.Orchestration
     {
         public PresentationPlanPlayResult(
             PresentationPlan plan,
-            int playedFlowCount,
-            bool reconciled)
+            int playedFlowCount)
         {
             Plan = plan;
             PlayedFlowCount = playedFlowCount;
-            Reconciled = reconciled;
         }
 
         public PresentationPlan Plan { get; }
         public int PlayedFlowCount { get; }
-        public bool Reconciled { get; }
     }
 
     public sealed class PresentationPlanExecutor
     {
         private readonly IViewRegistry mViewRegistry;
         private readonly FlowRegistry mFlowRegistry;
-        private readonly IReadOnlyList<IReconcilable> mReconcilables;
         private readonly TableNineActorFactory mActorFactory;
+        private readonly StatEventProjection mStatEventProjection;
 
         public PresentationPlanExecutor(
             IViewRegistry viewRegistry,
             FlowRegistry flowRegistry,
-            IReadOnlyList<IReconcilable> reconcilables,
-            TableNineActorFactory actorFactory = null)
+            TableNineActorFactory actorFactory = null,
+            StatEventProjection statEventProjection = null)
         {
             mViewRegistry = viewRegistry;
             mFlowRegistry = flowRegistry;
-            mReconcilables = reconcilables ?? new IReconcilable[0];
             mActorFactory = actorFactory;
+            mStatEventProjection = statEventProjection;
         }
 
         public PresentationPlanPlayResult PlaySync(PresentationPlan plan)
         {
             if (plan == null)
             {
-                return new PresentationPlanPlayResult(null, 0, false);
+                return new PresentationPlanPlayResult(null, 0);
             }
 
             using (CreatePlaybackScope(plan))
@@ -73,8 +70,8 @@ namespace NineGrid.Presentation.Orchestration
                     }
                 }
 
-                Reconcile(plan);
-                return new PresentationPlanPlayResult(plan, playedFlows, true);
+                ProjectStatEvents(plan);
+                return new PresentationPlanPlayResult(plan, playedFlows);
             }
         }
 
@@ -115,21 +112,13 @@ namespace NineGrid.Presentation.Orchestration
                     }
                 }
 
-                Reconcile(plan);
+                ProjectStatEvents(plan);
             }
         }
 
-        public void Reconcile(PresentationPlan plan)
+        private void ProjectStatEvents(PresentationPlan plan)
         {
-            if (plan?.Snapshot == null)
-            {
-                return;
-            }
-
-            for (var i = 0; i < mReconcilables.Count; i++)
-            {
-                mReconcilables[i]?.ApplySnapshot(plan.Snapshot);
-            }
+            mStatEventProjection?.Apply(plan.Instructions, plan.Snapshot);
         }
 
         private static bool IsAnyPlaying(IReadOnlyList<FlowHandle> handles)

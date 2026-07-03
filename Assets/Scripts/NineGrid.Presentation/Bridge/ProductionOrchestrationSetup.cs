@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using DamageNumbersPro;
 using NineGrid.Core;
 using NineGrid.Presentation.Feedback;
@@ -25,7 +24,7 @@ namespace NineGrid.Presentation.Bridge
         {
             public FlowRegistry FlowRegistry { get; set; }
             public PresentationBatchPlayer BatchPlayer { get; set; }
-            public HandItemsReconcilable HandItemsReconcilable { get; set; }
+            public HandItemsPresenter HandItemsPresenter { get; set; }
             public InGameUiFlow InGameUiFlow { get; set; }
         }
 
@@ -39,14 +38,13 @@ namespace NineGrid.Presentation.Bridge
         {
             ProductionModuleHostSetup.Install(moduleHost, roots, cardPrefab, damagePrefab);
 
-            HandItemsReconcilable handItemsReconcilable = InGameInteractionSetup.CreateHandItemsReconcilable(
+            HandItemsPresenter handItemsPresenter = InGameInteractionSetup.CreateHandItemsPresenter(
                 roots,
                 viewRegistry,
                 actorFactory,
                 moduleHost.GetComponent<HandLayoutPresenter>());
 
             var flowRegistry = new FlowRegistry();
-            var reconcilables = new List<IReconcilable>();
             InGameUiFlow inGameUiFlow = moduleHost.GetComponent<InGameUiFlow>();
             RoomChoiceFlow roomChoiceFlow = moduleHost.GetComponent<RoomChoiceFlow>();
             RoomChoiceScreenPresenter roomPresenter = Object.FindObjectOfType<RoomChoiceScreenPresenter>();
@@ -56,24 +54,24 @@ namespace NineGrid.Presentation.Bridge
                 roots,
                 inGameUiFlow,
                 roomChoiceFlow,
-                roomPresenter,
-                handItemsReconcilable);
-            RegisterReconcilables(reconcilables, actorFactory, viewRegistry, handItemsReconcilable);
+                roomPresenter);
 
+            TableNineStatusPanelView statusPanel = Object.FindObjectOfType<TableNineStatusPanelView>();
+            var statProjection = new StatEventProjection(viewRegistry, statusPanel);
             var inputGate = new CoreSyncInputLockGate(
                 NineGridArchitecture.Current.GetSystem<IPresentationSyncSystem>());
             var batchPlayer = new PresentationBatchPlayer(
                 viewRegistry,
                 flowRegistry,
-                reconcilables,
                 inputGate,
-                actorFactory);
+                actorFactory,
+                statProjection);
 
             return new OrchestrationServices
             {
                 FlowRegistry = flowRegistry,
                 BatchPlayer = batchPlayer,
-                HandItemsReconcilable = handItemsReconcilable,
+                HandItemsPresenter = handItemsPresenter,
                 InGameUiFlow = inGameUiFlow,
             };
         }
@@ -84,8 +82,7 @@ namespace NineGrid.Presentation.Bridge
             SceneStagingRoots roots,
             InGameUiFlow inGameUiFlow,
             RoomChoiceFlow roomChoiceFlow,
-            RoomChoiceScreenPresenter roomPresenter,
-            HandItemsReconcilable handItemsReconcilable)
+            RoomChoiceScreenPresenter roomPresenter)
         {
             var damageNumbers = moduleHost.GetComponent<DamageNumberFeedback>();
             registry.Register(new CardAttackFlowBinding(moduleHost.GetComponent<CardAttackFlow>(), damageNumbers));
@@ -121,25 +118,6 @@ namespace NineGrid.Presentation.Bridge
                 layoutPresenter,
                 layoutSolver,
                 roots.HandActorsRoot));
-        }
-
-        private static void RegisterReconcilables(
-            List<IReconcilable> reconcilables,
-            TableNineActorFactory actorFactory,
-            TableNineViewRegistry viewRegistry,
-            HandItemsReconcilable handItemsReconcilable)
-        {
-            reconcilables.Add(new BoardCardsReconcilable(viewRegistry, actorFactory));
-            if (handItemsReconcilable != null)
-            {
-                reconcilables.Add(handItemsReconcilable);
-            }
-
-            TableNineStatusPanelView statusPanel = Object.FindObjectOfType<TableNineStatusPanelView>();
-            if (statusPanel != null)
-            {
-                reconcilables.Add(new StatusPanelReconcilable(statusPanel));
-            }
         }
     }
 }

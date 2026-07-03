@@ -5,7 +5,7 @@ using NineGrid.Core;
 namespace NineGrid.Presentation.Orchestration
 {
     /// <summary>
-    /// 共享接缝：<see cref="Play"/> 消费真实 <see cref="PresentationBatch"/>，经 PlanBuilder → Flow → 批末 Reconcile。
+    /// 共享接缝：<see cref="Play"/> 消费真实 <see cref="PresentationBatch"/>，经 PlanBuilder → Flow → 数值投影。
     /// </summary>
     public sealed class PresentationBatchPlayer
     {
@@ -16,11 +16,11 @@ namespace NineGrid.Presentation.Orchestration
         public PresentationBatchPlayer(
             IViewRegistry viewRegistry,
             FlowRegistry flowRegistry,
-            IReadOnlyList<IReconcilable> reconcilables,
             IInputLockGate inputLockGate = null,
-            TableNineActorFactory actorFactory = null)
+            TableNineActorFactory actorFactory = null,
+            StatEventProjection statEventProjection = null)
         {
-            mExecutor = new PresentationPlanExecutor(viewRegistry, flowRegistry, reconcilables, actorFactory);
+            mExecutor = new PresentationPlanExecutor(viewRegistry, flowRegistry, actorFactory, statEventProjection);
             mInputLockGate = inputLockGate ?? new LocalInputLockGate();
         }
 

@@ -25,7 +25,7 @@ namespace NineGrid.Presentation.Bridge
 
         private GameObject mModuleHost;
         private CoreCommandDispatcher mDispatcher;
-        private HandItemsReconcilable mHandItemsReconcilable;
+        private HandItemsPresenter mHandItemsPresenter;
 
         public CommandGateway Gateway { get; private set; }
         public InGameInteractionCoordinator InteractionCoordinator { get; private set; }
@@ -101,7 +101,7 @@ namespace NineGrid.Presentation.Bridge
 
             FlowRegistry = services.FlowRegistry;
             BatchPlayer = services.BatchPlayer;
-            mHandItemsReconcilable = services.HandItemsReconcilable;
+            mHandItemsPresenter = services.HandItemsPresenter;
 
             mDispatcher = new CoreCommandDispatcher(Architecture);
             Gateway = new CommandGateway(this, Architecture, mDispatcher, BatchPlayer);
@@ -113,10 +113,10 @@ namespace NineGrid.Presentation.Bridge
                 Gateway,
                 ViewRegistry,
                 ActorFactory,
-                services.HandItemsReconcilable);
+                services.HandItemsPresenter);
 
             HudBinder = HudDirectBindingSetup.Install(Architecture, transform, services.InGameUiFlow);
-            ReconcileInitialSnapshot();
+            BuildInitialActors();
             WireShellBridge();
             Debug.Log("[NineGridSceneBootstrap] Production bridge ready.");
         }
@@ -153,12 +153,11 @@ namespace NineGrid.Presentation.Bridge
 #endif
         }
 
-        public void ReconcileInitialSnapshot()
+        public void BuildInitialActors()
         {
             var snapshot = CoreViewSnapshotFactory.Capture(Architecture);
-            var reconcilable = new BoardCardsReconcilable(ViewRegistry, ActorFactory);
-            reconcilable.ApplySnapshot(snapshot);
-            mHandItemsReconcilable?.ApplySnapshot(snapshot);
+            InitialActorsBuilder.BuildBoardCards(snapshot, ViewRegistry, ActorFactory);
+            mHandItemsPresenter?.BuildInitialHandItems(snapshot);
 
             TableNineStatusPanelView statusPanel = FindObjectOfType<TableNineStatusPanelView>();
             statusPanel?.ApplyAvatarCombatStats(snapshot);

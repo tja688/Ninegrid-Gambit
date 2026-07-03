@@ -9,7 +9,7 @@ namespace NineGrid.Presentation.Orchestration
         {
             if (batch == null)
             {
-                return new PresentationPlan(0, new ActionPlanGroup[0], null);
+                return new PresentationPlan(0, new ActionPlanGroup[0], null, new PresentationInstruction[0]);
             }
 
             var groupedSteps = new Dictionary<int, List<PlanStep>>();
@@ -54,7 +54,7 @@ namespace NineGrid.Presentation.Orchestration
 
             groups.Sort((left, right) => left.ActionId.CompareTo(right.ActionId));
             groups = PlanGroupNormalizer.Normalize(groups);
-            return new PresentationPlan(batch.BatchId, groups, batch.Snapshot);
+            return new PresentationPlan(batch.BatchId, groups, batch.Snapshot, batch.Instructions);
         }
 
         private static FlowId ResolvePlaybackFlow(FlowId flowId, FlowPayload payload, CoreViewSnapshot snapshot)

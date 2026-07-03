@@ -205,7 +205,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void BatchPlayer_AttackThenReconcile_ReleasesInputLock()
+        public void BatchPlayer_Attack_ReleasesInputLock()
         {
             var events = new List<CoreGameEvent>
             {
@@ -218,7 +218,6 @@ namespace NineGrid.Presentation.Tests
             var batch = PresentationBatchFixture.Create(9, events, snapshot);
 
             var attackFlow = new RecordingFlowBinding(FlowId.CardAttack, invokeImpactMarker: true);
-            var reconcilable = new RecordingReconcilable();
             var inputLock = new LocalInputLockGate();
 
             var flowRegistry = new FlowRegistry();
@@ -227,7 +226,6 @@ namespace NineGrid.Presentation.Tests
             var player = new PresentationBatchPlayer(
                 new NullViewRegistry(),
                 flowRegistry,
-                new IReconcilable[] { reconcilable },
                 inputLock);
 
             Assert.IsFalse(inputLock.IsLocked);
@@ -236,10 +234,29 @@ namespace NineGrid.Presentation.Tests
             Assert.IsFalse(inputLock.IsLocked);
             Assert.AreEqual(1, attackFlow.PlayCount);
             Assert.AreEqual(4, attackFlow.LastPayload.Amount);
-            Assert.AreEqual(1, reconcilable.ApplyCount);
-            Assert.AreSame(snapshot, reconcilable.LastSnapshot);
-            Assert.IsTrue(result.Reconciled);
             Assert.AreEqual(1, result.PlayedFlowCount);
+        }
+
+        [Test]
+        public void StatEventProjection_SkipsHpChangedCollateralToCardAttack()
+        {
+            var attackTargets = new HashSet<(int, int)> { (1, 2) };
+            var hpChanged = new CoreGameEvent(CoreEventType.HpChanged, 1, "attack")
+                .WithCard(2)
+                .WithDelta(-3);
+
+            Assert.IsTrue(StatEventProjection.ShouldSkipForAttackImpact(hpChanged, attackTargets));
+        }
+
+        [Test]
+        public void StatEventProjection_AppliesNonDamageStatEvents()
+        {
+            var healed = new CoreGameEvent(CoreEventType.Healed, 2, "buff")
+                .WithCard(3)
+                .WithRemaining(5, 0);
+
+            Assert.IsTrue(StatEventProjection.IsStatEvent(healed.Type));
+            Assert.IsFalse(StatEventProjection.ShouldSkipForAttackImpact(healed, new HashSet<(int, int)>()));
         }
 
         [Test]

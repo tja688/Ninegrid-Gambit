@@ -18,7 +18,8 @@ namespace NineGrid.Presentation.Orchestration
 
     /// <summary>
     /// 将 <see cref="PresentationInstructionKind"/> 语义路由为 Flow，并从 <see cref="CoreGameEvent"/> 抽取 payload。
-    /// 暂无专属动效的事件路由到 <see cref="FlowId.SnapshotAlign"/>，由批末 Reconcile 对齐终态。
+    /// 暂无专属动效的事件路由到 <see cref="FlowId.SnapshotAlign"/>（no-op 占位，终态由专属 Flow 或数值投影承担）。
+    /// 结构性缺口见 <see cref="StructuralFlowGaps"/>。
     /// </summary>
     public static class InstructionKindFlowRouter
     {
@@ -166,7 +167,7 @@ namespace NineGrid.Presentation.Orchestration
             };
         }
 
-        private static bool ShouldSynthesizeAttackFlow(CoreGameEvent gameEvent)
+        internal static bool ShouldSynthesizeAttackFlow(CoreGameEvent gameEvent)
         {
             return gameEvent.ActorUid > 0
                    && gameEvent.TargetUid > 0
