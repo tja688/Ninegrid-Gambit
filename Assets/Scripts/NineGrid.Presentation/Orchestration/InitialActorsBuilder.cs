@@ -65,24 +65,11 @@ namespace NineGrid.Presentation.Orchestration
 
             viewRegistry.RegisterActor(uid, actor);
             ApplyCardStatus(actor, slotView);
-            EnsureBoardRelay(actor);
+            BoardInteractionActorWiring.EnsureBoardRelay(actor);
 
             if (slotView.Kind == CardKind.Avatar)
             {
                 actor.localScale = Vector3.zero;
-            }
-        }
-
-        private static void EnsureBoardRelay(Transform actor)
-        {
-            if (actor == null)
-            {
-                return;
-            }
-
-            if (actor.GetComponent<BoardCardInputRelay>() == null)
-            {
-                actor.gameObject.AddComponent<BoardCardInputRelay>();
             }
         }
 

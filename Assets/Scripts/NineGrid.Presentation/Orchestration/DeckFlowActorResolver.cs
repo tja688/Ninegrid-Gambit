@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using NineGrid.Core;
 using NineGrid.Presentation.Bridge;
+using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
 
@@ -46,6 +47,7 @@ namespace NineGrid.Presentation.Orchestration
             {
                 card = scope.ActorFactory.Spawn(cardView.DefId, payload.CardUid);
                 PlaceAtDeckOrigin(registry, card);
+                BoardInteractionActorWiring.EnsureBoardRelay(card);
             }
 
             return card != null && slot != null;
@@ -199,6 +201,7 @@ namespace NineGrid.Presentation.Orchestration
 
             actor.localScale = Vector3.zero;
             registry.RegisterActor(uid, actor);
+            BoardInteractionActorWiring.EnsureBoardRelay(actor);
             return true;
         }
 
@@ -237,6 +240,7 @@ namespace NineGrid.Presentation.Orchestration
                     {
                         actor = scope.ActorFactory.Spawn(cardView.DefId, uid);
                         registry.RegisterActor(uid, actor);
+                        BoardInteractionActorWiring.EnsureBoardRelay(actor);
                     }
                 }
 

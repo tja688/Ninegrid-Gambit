@@ -7,6 +7,7 @@ namespace NineGrid.Presentation.Orchestration
     /// <item><description><c>SwapCards</c>：两卡落位交换或瞬移</description></item>
     /// <item><description><c>FillSlots</c>：payload 不完整时的补 spawn</description></item>
     /// <item><description>道具用后 despawn：<c>ItemUseFlow</c> 淡出后回收手牌演员（当前仅 SetActive false）</description></item>
+    /// <item><description>棋盘输入中继：由 <c>BoardInteractionActorWiring</c> 在 Flow spawn 与批播放后补齐（取代已删的 <c>BoardCardsReconcilable</c>）</description></item>
     /// </list>
     /// </summary>
     internal static class StructuralFlowGaps

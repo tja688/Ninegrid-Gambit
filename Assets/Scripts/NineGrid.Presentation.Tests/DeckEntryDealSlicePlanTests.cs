@@ -26,9 +26,16 @@ namespace NineGrid.Presentation.Tests
             Assert.IsNotNull(result.Batch);
 
             var plan = new PerformancePlanBuilder().Build(result.Batch);
-            Assert.Greater(CountFlow(plan, FlowId.PlayerAppear), 0, "StartNode should reveal avatar before deal.");
+            Assert.Greater(CountFlow(plan, FlowId.PlayerAppear), 0, "StartNode should reveal avatar during opening deal.");
             Assert.Greater(CountFlow(plan, FlowId.CardDeckEntry), 0, "Opening deal should route deck entry.");
             Assert.Greater(CountFlow(plan, FlowId.CardDeal), 0, "Fill slots should route card deal.");
+            Assert.IsTrue(
+                ShareActionGroup(plan, FlowId.PlayerAppear, FlowId.CardDeal),
+                "Player appear should play in parallel with opening card deal.");
+            Assert.Less(
+                FindFirstGroupIndex(plan, FlowId.CardDeckEntry),
+                FindFirstGroupIndex(plan, FlowId.PlayerAppear),
+                "Deck entry should finish before player appear + deal.");
         }
 
         [Test]
@@ -123,6 +130,28 @@ namespace NineGrid.Presentation.Tests
             }
 
             return null;
+        }
+
+        private static bool ShareActionGroup(PresentationPlan plan, FlowId left, FlowId right)
+        {
+            return FindFirstGroupIndex(plan, left) == FindFirstGroupIndex(plan, right);
+        }
+
+        private static int FindFirstGroupIndex(PresentationPlan plan, FlowId flowId)
+        {
+            for (var groupIndex = 0; groupIndex < plan.Groups.Count; groupIndex++)
+            {
+                IReadOnlyList<PlanStep> steps = plan.Groups[groupIndex].Steps;
+                for (var stepIndex = 0; stepIndex < steps.Count; stepIndex++)
+                {
+                    if (steps[stepIndex].FlowId == flowId)
+                    {
+                        return groupIndex;
+                    }
+                }
+            }
+
+            return -1;
         }
     }
 }

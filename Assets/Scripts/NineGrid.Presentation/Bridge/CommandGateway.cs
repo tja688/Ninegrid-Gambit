@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using NineGrid.Core;
 using NineGrid.Core.Commands;
@@ -16,18 +17,21 @@ namespace NineGrid.Presentation.Bridge
         private readonly CoreCommandDispatcher mDispatcher;
         private readonly PresentationBatchPlayer mBatchPlayer;
         private readonly IPresentationSyncSystem mSync;
+        private readonly Action<PresentationBatch> mOnPlaybackComplete;
         private Coroutine mActivePlayback;
 
         public CommandGateway(
             MonoBehaviour coroutineHost,
             IArchitecture architecture,
             CoreCommandDispatcher dispatcher,
-            PresentationBatchPlayer batchPlayer)
+            PresentationBatchPlayer batchPlayer,
+            Action<PresentationBatch> onPlaybackComplete = null)
         {
             mCoroutineHost = coroutineHost;
             mDispatcher = dispatcher;
             mBatchPlayer = batchPlayer;
             mSync = architecture.GetSystem<IPresentationSyncSystem>();
+            mOnPlaybackComplete = onPlaybackComplete;
         }
 
         public IInputLockGate InputLockGate => mBatchPlayer?.InputLockGate;
@@ -65,6 +69,7 @@ namespace NineGrid.Presentation.Bridge
         private IEnumerator PlayBatchAndFinish(PresentationBatch batch)
         {
             yield return mBatchPlayer.PlayCoroutine(batch);
+            mOnPlaybackComplete?.Invoke(batch);
             mDispatcher.Send(new PresentationFinishedCommand(batch.BatchId));
             mActivePlayback = null;
         }

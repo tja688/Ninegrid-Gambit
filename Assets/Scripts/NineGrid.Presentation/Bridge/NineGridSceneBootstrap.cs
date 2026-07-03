@@ -104,7 +104,7 @@ namespace NineGrid.Presentation.Bridge
             mHandItemsPresenter = services.HandItemsPresenter;
 
             mDispatcher = new CoreCommandDispatcher(Architecture);
-            Gateway = new CommandGateway(this, Architecture, mDispatcher, BatchPlayer);
+            Gateway = new CommandGateway(this, Architecture, mDispatcher, BatchPlayer, OnBatchPlaybackComplete);
 
             InteractionCoordinator = InGameInteractionSetup.Install(
                 this,
@@ -161,6 +161,17 @@ namespace NineGrid.Presentation.Bridge
 
             TableNineStatusPanelView statusPanel = FindObjectOfType<TableNineStatusPanelView>();
             statusPanel?.ApplyAvatarCombatStats(snapshot);
+        }
+
+        private void OnBatchPlaybackComplete(PresentationBatch batch)
+        {
+            if (batch == null)
+            {
+                return;
+            }
+
+            var snapshot = CoreViewSnapshotFactory.Capture(Architecture);
+            BoardInteractionActorWiring.WireAllBoardActors(ViewRegistry, snapshot);
         }
 
         private void EnsureStandardCardPrefab()

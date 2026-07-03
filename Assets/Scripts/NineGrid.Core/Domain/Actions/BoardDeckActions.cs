@@ -247,9 +247,17 @@ namespace NineGrid.Core
             var registry = context.GetModel<CardRegistry>();
             var board = context.GetModel<BoardModel>();
             var deck = context.GetModel<DeckModel>();
+            var run = context.GetModel<RunModel>();
             var result = new GameActionResult();
             var filled = 0;
             IReadOnlyList<SlotId> fillOrder = RotateBoardClockwiseAction.ClockwisePath;
+
+            if (run.Phase.Value == GamePhase.DealOpeningCards && board.AvatarUid.Value > 0)
+            {
+                result.AddEvent(new CoreGameEvent(CoreEventType.AvatarAppeared, context.ActionId, ActionName)
+                    .WithCard(board.AvatarUid.Value)
+                    .WithSlots(SlotId.None, board.AvatarSlot.Value));
+            }
 
             for (var i = 0; i < fillOrder.Count; i++)
             {
