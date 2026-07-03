@@ -235,18 +235,21 @@ namespace NineGrid.Presentation.Orchestration.Bindings
                 return new FlowHandle(null, onMarker);
             }
 
+            IReadOnlyList<FlowPayload> batchedDeals = payload?.BatchedDeals;
+            if (batchedDeals != null
+                && batchedDeals.Count > 1
+                && mDealFlow != null
+                && DeckFlowActorResolver.TryBuildBoardDeal(registry, batchedDeals, out List<Transform> cards, out List<Transform> slots))
+            {
+                mDealFlow.Play(cards, slots);
+                return new FlowHandle(mDealFlow, onMarker);
+            }
+
             if (DeckFlowActorResolver.TryResolveCardAndSlot(registry, payload, out Transform card, out Transform slot)
                 && mSubstituteFlow != null)
             {
                 mSubstituteFlow.Play(card, slot);
                 return new FlowHandle(mSubstituteFlow, onMarker);
-            }
-
-            if (mDealFlow != null
-                && DeckFlowActorResolver.TryBuildDeckEntry(registry, payload, out List<Transform> cards, out List<Transform> slots))
-            {
-                mDealFlow.Play(cards, slots);
-                return new FlowHandle(mDealFlow, onMarker);
             }
 
             IDirectedFlow directed = mDealFlow != null ? mDealFlow : mSubstituteFlow;
@@ -327,6 +330,39 @@ namespace NineGrid.Presentation.Orchestration.Bindings
 
             mFlow.Play(actor);
             return new FlowHandle(mFlow, onMarker);
+        }
+
+        public void Stop()
+        {
+            mFlow?.StopAndRestore();
+        }
+    }
+
+    public sealed class PlayerAppearFlowBinding : IFlowBinding
+    {
+        private readonly PlayerAppearFlow mFlow;
+
+        public PlayerAppearFlowBinding(PlayerAppearFlow flow)
+        {
+            mFlow = flow;
+        }
+
+        public FlowId Id => FlowId.PlayerAppear;
+
+        public FlowHandle Play(IViewRegistry registry, FlowPayload payload, Action<string> onMarker = null)
+        {
+            if (mFlow == null)
+            {
+                return new FlowHandle(null, onMarker);
+            }
+
+            if (DeckFlowActorResolver.TryResolveAvatarActor(registry, payload, out Transform actor))
+            {
+                mFlow.Play(actor);
+                return new FlowHandle(mFlow, onMarker);
+            }
+
+            return FlowBindingFallback.SnapshotHandle(onMarker);
         }
 
         public void Stop()

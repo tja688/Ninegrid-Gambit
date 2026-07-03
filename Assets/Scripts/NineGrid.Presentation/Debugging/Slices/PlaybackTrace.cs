@@ -28,6 +28,7 @@ namespace NineGrid.Presentation.Debugging.Slices
             FlowId.RoomChoiceOut,
             FlowId.InGameUiEntrance,
             FlowId.InGameUiExit,
+            FlowId.PlayerAppear,
         };
 
         public static string Dump(PresentationBatch batch, bool logParallelWarnings = true)

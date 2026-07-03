@@ -33,6 +33,7 @@ namespace NineGrid.Presentation.Bridge
             GetOrAdd<CardKillFlow>(host);
             GetOrAdd<CounterattackKillFlow>(host);
             GetOrAdd<BoardRotateFlow>(host);
+            GetOrAdd<PlayerAppearFlow>(host);
             GetOrAdd<CardDeckEntryFlow>(host);
             GetOrAdd<CardDeckDealFlow>(host);
             GetOrAdd<CardDeckSubstituteFlow>(host);

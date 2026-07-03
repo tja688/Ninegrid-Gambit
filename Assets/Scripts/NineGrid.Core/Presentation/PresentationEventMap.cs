@@ -60,6 +60,7 @@ namespace NineGrid.Core
             Entry(CoreEventType.EffectModifierApplied, PresentationInstructionKind.ApplyModifier, PresentationEventCategory.Effect, true, false, "Effect modifier applied"),
             Entry(CoreEventType.EffectDeactivated, PresentationInstructionKind.DeactivateEffect, PresentationEventCategory.Effect, true, false, "Effect deactivated"),
             Entry(CoreEventType.CardSpawned, PresentationInstructionKind.SpawnCard, PresentationEventCategory.Deal, true, true, "Card spawned"),
+            Entry(CoreEventType.AvatarAppeared, PresentationInstructionKind.ShowAvatar, PresentationEventCategory.Node, true, true, "Avatar appeared"),
             Entry(CoreEventType.SkillGranted, PresentationInstructionKind.GrantSkill, PresentationEventCategory.Content, true, false, "Skill granted"),
             Entry(CoreEventType.BaseStatModified, PresentationInstructionKind.ModifyBaseStat, PresentationEventCategory.Stat, true, true, "Base stat modified"),
             Entry(CoreEventType.RelicGranted, PresentationInstructionKind.GrantRelic, PresentationEventCategory.Content, true, false, "Relic granted"),

@@ -233,18 +233,6 @@ namespace NineGrid.Core
 
     public sealed class FillEmptySlotsAction : GameAction
     {
-        private static readonly SlotId[] sFillOrder =
-        {
-            SlotId.Board(2),
-            SlotId.Board(4),
-            SlotId.Board(6),
-            SlotId.Board(8),
-            SlotId.Board(1),
-            SlotId.Board(3),
-            SlotId.Board(7),
-            SlotId.Board(9)
-        };
-
         private static readonly TriggerPoint[] sPostTriggers =
         {
             TriggerPoint.AfterAction,
@@ -261,10 +249,11 @@ namespace NineGrid.Core
             var deck = context.GetModel<DeckModel>();
             var result = new GameActionResult();
             var filled = 0;
+            IReadOnlyList<SlotId> fillOrder = RotateBoardClockwiseAction.ClockwisePath;
 
-            for (var i = 0; i < sFillOrder.Length; i++)
+            for (var i = 0; i < fillOrder.Count; i++)
             {
-                var slot = sFillOrder[i];
+                var slot = fillOrder[i];
                 if (slot == board.AvatarSlot.Value || !board.IsEmpty(slot))
                 {
                     continue;

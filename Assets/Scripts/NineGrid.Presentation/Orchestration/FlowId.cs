@@ -18,6 +18,7 @@ namespace NineGrid.Presentation.Orchestration
         RoomChoiceOut,
         InGameUiEntrance,
         InGameUiExit,
+        PlayerAppear,
         SnapshotAlign,
     }
 }

@@ -38,13 +38,13 @@ namespace NineGrid.Core.Tests
 
             boardSystem.FillEmptySlots();
 
-            Assert.AreEqual(first.Uid, board.GetCardUid(SlotId.Board(2)));
-            Assert.AreEqual(second.Uid, board.GetCardUid(SlotId.Board(4)));
+            Assert.AreEqual(first.Uid, board.GetCardUid(SlotId.Board(1)));
+            Assert.AreEqual(second.Uid, board.GetCardUid(SlotId.Board(2)));
 
             boardSystem.RotateClockwise();
 
-            Assert.AreEqual(first.Uid, board.GetCardUid(SlotId.Board(3)));
-            Assert.AreEqual(second.Uid, board.GetCardUid(SlotId.Board(1)));
+            Assert.AreEqual(first.Uid, board.GetCardUid(SlotId.Board(2)));
+            Assert.AreEqual(second.Uid, board.GetCardUid(SlotId.Board(3)));
         }
 
         [Test]
@@ -160,6 +160,20 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(startResult.Accepted);
             Assert.AreEqual(0, deck.PlayerCardPoolUids.Count);
             Assert.AreEqual(0, deck.EnemyCardPoolUids.Count);
+        }
+
+        [Test]
+        public void StartNode_EmitsAvatarAppearedForPresentation()
+        {
+            var architecture = NineGridArchitecture.Current;
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var options = new NodeDeckOptions { PlayerOpeningCount = 0, EnemyOpeningCount = 1 }
+                .AddEnemyCard(new CardDraft("monster.appear", CardKind.Monster) { MaxHp = 1, Attack = 0 });
+
+            var startResult = architecture.SendCommand(new StartNodeCommand(options));
+
+            Assert.IsTrue(startResult.Accepted);
+            Assert.IsTrue(pipeline.EventLog.Contains(CoreEventType.AvatarAppeared));
         }
 
         [Test]

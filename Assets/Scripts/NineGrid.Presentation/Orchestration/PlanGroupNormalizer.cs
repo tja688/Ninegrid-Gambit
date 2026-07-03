@@ -18,7 +18,7 @@ namespace NineGrid.Presentation.Orchestration
             for (var groupIndex = 0; groupIndex < groups.Count; groupIndex++)
             {
                 ActionPlanGroup group = groups[groupIndex];
-                var steps = SuppressRotationMoveSteps(group.Steps);
+                var steps = CoalesceCardDealSteps(SuppressRotationMoveSteps(group.Steps));
                 AppendSplitBattleGroups(normalized, group.ActionId, steps);
             }
 
@@ -58,6 +58,92 @@ namespace NineGrid.Presentation.Orchestration
             }
 
             return filtered;
+        }
+
+        private static List<PlanStep> CoalesceCardDealSteps(IReadOnlyList<PlanStep> steps)
+        {
+            if (steps == null || steps.Count == 0)
+            {
+                return new List<PlanStep>();
+            }
+
+            var normalized = new List<PlanStep>(steps.Count);
+            var pendingDeals = new List<PlanStep>();
+
+            for (var i = 0; i < steps.Count; i++)
+            {
+                PlanStep step = steps[i];
+                if (step.FlowId == FlowId.CardDeal)
+                {
+                    pendingDeals.Add(step);
+                    continue;
+                }
+
+                FlushPendingCardDeals(normalized, pendingDeals);
+                normalized.Add(step);
+            }
+
+            FlushPendingCardDeals(normalized, pendingDeals);
+            return normalized;
+        }
+
+        private static void FlushPendingCardDeals(List<PlanStep> output, List<PlanStep> pendingDeals)
+        {
+            if (pendingDeals.Count == 0)
+            {
+                return;
+            }
+
+            if (pendingDeals.Count == 1)
+            {
+                output.Add(pendingDeals[0]);
+            }
+            else
+            {
+                output.Add(MergeCardDealSteps(pendingDeals));
+            }
+
+            pendingDeals.Clear();
+        }
+
+        private static PlanStep MergeCardDealSteps(IReadOnlyList<PlanStep> dealSteps)
+        {
+            PlanStep first = dealSteps[0];
+            var batchedPayloads = new List<FlowPayload>(dealSteps.Count);
+            for (var i = 0; i < dealSteps.Count; i++)
+            {
+                FlowPayload payload = dealSteps[i].Payload;
+                if (payload != null)
+                {
+                    batchedPayloads.Add(payload);
+                }
+            }
+
+            var mergedPayload = new FlowPayload
+            {
+                Amount = batchedPayloads.Count,
+                BatchedDeals = batchedPayloads,
+            };
+
+            if (batchedPayloads.Count > 0)
+            {
+                FlowPayload lead = batchedPayloads[0];
+                mergedPayload.CardUid = lead.CardUid;
+                mergedPayload.ToSlot = lead.ToSlot;
+                mergedPayload.FromSlot = lead.FromSlot;
+                mergedPayload.Message = lead.Message;
+                mergedPayload.Cause = lead.Cause;
+            }
+
+            return new PlanStep
+            {
+                Id = first.Id,
+                ActionId = first.ActionId,
+                GroupIndex = first.GroupIndex,
+                FlowId = FlowId.CardDeal,
+                Payload = mergedPayload,
+                Source = first.Source,
+            };
         }
 
         private static void AppendSplitBattleGroups(

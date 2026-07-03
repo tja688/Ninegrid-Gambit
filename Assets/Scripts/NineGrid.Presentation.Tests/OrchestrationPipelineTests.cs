@@ -92,9 +92,54 @@ namespace NineGrid.Presentation.Tests
             var plan = new PerformancePlanBuilder().Build(batch);
 
             Assert.AreEqual(1, plan.Groups.Count);
-            Assert.AreEqual(3, plan.Groups[0].Steps.Count);
+            Assert.AreEqual(2, plan.Groups[0].Steps.Count);
             AssertContainsFlow(plan, FlowId.CardDeal);
             AssertContainsFlow(plan, FlowId.FillSlots);
+
+            FlowPayload batchedPayload = FindStepPayload(plan, FlowId.CardDeal);
+            Assert.IsNotNull(batchedPayload.BatchedDeals);
+            Assert.AreEqual(2, batchedPayload.BatchedDeals.Count);
+            Assert.AreEqual(101, batchedPayload.BatchedDeals[0].CardUid);
+            Assert.AreEqual(102, batchedPayload.BatchedDeals[1].CardUid);
+        }
+
+        [Test]
+        public void PlanBuilder_FillEmptySlots_CoalescesEightCardDeals()
+        {
+            var events = BuildFillEmptySlotsEvents(10, 8);
+            var batch = PresentationBatchFixture.Create(13, events, OrchestrationTestSnapshots.Minimal());
+            var plan = new PerformancePlanBuilder().Build(batch);
+
+            Assert.AreEqual(1, plan.Groups.Count);
+            Assert.AreEqual(2, plan.Groups[0].Steps.Count);
+            Assert.AreEqual(1, CountFlow(plan, FlowId.CardDeal));
+
+            FlowPayload batchedPayload = FindStepPayload(plan, FlowId.CardDeal);
+            Assert.IsNotNull(batchedPayload.BatchedDeals);
+            Assert.AreEqual(8, batchedPayload.BatchedDeals.Count);
+            Assert.AreEqual(SlotId.Board(1), batchedPayload.BatchedDeals[0].ToSlot);
+            Assert.AreEqual(SlotId.Board(4), batchedPayload.BatchedDeals[7].ToSlot);
+        }
+
+        [Test]
+        public void PlanBuilder_SingleCardDeal_HasNoBatchedDeals()
+        {
+            var events = new List<CoreGameEvent>
+            {
+                new CoreGameEvent(CoreEventType.CardDealt, 11, "FillEmptySlots")
+                    .WithCard(201)
+                    .WithSlots(SlotId.None, SlotId.Board(2))
+                    .WithAmount(1),
+            };
+
+            var batch = PresentationBatchFixture.Create(14, events, OrchestrationTestSnapshots.Minimal());
+            var plan = new PerformancePlanBuilder().Build(batch);
+
+            Assert.AreEqual(1, plan.Groups.Count);
+            Assert.AreEqual(1, plan.Groups[0].Steps.Count);
+            FlowPayload payload = plan.Groups[0].Steps[0].Payload;
+            Assert.IsNull(payload.BatchedDeals);
+            Assert.AreEqual(201, payload.CardUid);
         }
 
         [Test]
@@ -365,6 +410,23 @@ namespace NineGrid.Presentation.Tests
             }
 
             return count;
+        }
+
+        private static List<CoreGameEvent> BuildFillEmptySlotsEvents(int actionId, int dealCount)
+        {
+            IReadOnlyList<SlotId> fillOrder = RotateBoardClockwiseAction.ClockwisePath;
+            var events = new List<CoreGameEvent>(dealCount + 1);
+            for (var i = 0; i < dealCount; i++)
+            {
+                events.Add(new CoreGameEvent(CoreEventType.CardDealt, actionId, "FillEmptySlots")
+                    .WithCard(100 + i)
+                    .WithSlots(SlotId.None, fillOrder[i])
+                    .WithAmount(i + 1));
+            }
+
+            events.Add(new CoreGameEvent(CoreEventType.SlotsFilled, actionId, "FillEmptySlots")
+                .WithAmount(dealCount));
+            return events;
         }
     }
 }

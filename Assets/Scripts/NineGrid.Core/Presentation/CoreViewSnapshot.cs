@@ -399,6 +399,13 @@ namespace NineGrid.Core
             {
                 var slot = SlotId.Board(i);
                 var uid = board.GetCardUid(slot);
+                if (uid == 0
+                    && slot == board.AvatarSlot.Value
+                    && board.AvatarUid.Value > 0)
+                {
+                    uid = board.AvatarUid.Value;
+                }
+
                 if (uid == 0)
                 {
                     slots.Add(new BoardSlotView(

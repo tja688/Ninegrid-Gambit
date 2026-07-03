@@ -66,6 +66,7 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new SetupNodeDeckAction(options));
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.ResetNode));
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.DealOpeningCards));
+            pipeline.Enqueue(new RevealAvatarAction());
             pipeline.Enqueue(new OpeningDealAction(options));
             pipeline.Enqueue(new FillEmptySlotsAction());
             pipeline.Enqueue(new NodeStartedAction());

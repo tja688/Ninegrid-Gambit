@@ -58,6 +58,10 @@ namespace NineGrid.Presentation.Orchestration
                     route = FlowRoute(ResolveDealFlowId(payload), payload);
                     return true;
 
+                case PresentationInstructionKind.ShowAvatar:
+                    route = FlowRoute(FlowId.PlayerAppear, payload);
+                    return true;
+
                 case PresentationInstructionKind.FillSlots:
                     route = FlowRoute(FlowId.FillSlots, payload);
                     return true;

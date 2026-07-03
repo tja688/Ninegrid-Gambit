@@ -26,8 +26,32 @@ namespace NineGrid.Presentation.Tests
             Assert.IsNotNull(result.Batch);
 
             var plan = new PerformancePlanBuilder().Build(result.Batch);
+            Assert.Greater(CountFlow(plan, FlowId.PlayerAppear), 0, "StartNode should reveal avatar before deal.");
             Assert.Greater(CountFlow(plan, FlowId.CardDeckEntry), 0, "Opening deal should route deck entry.");
             Assert.Greater(CountFlow(plan, FlowId.CardDeal), 0, "Fill slots should route card deal.");
+        }
+
+        [Test]
+        public void StartNodeBatch_CoalescesFillEmptySlotsIntoSingleBatchedCardDeal()
+        {
+            NineGridArchitecture.ResetForTests();
+            InitialGameFactory.Create(NineGridArchitecture.Current);
+
+            var architecture = NineGridArchitecture.Current;
+            var dispatcher = new CoreCommandDispatcher(architecture);
+            var options = BuildSliceDeck(20);
+
+            var result = dispatcher.Send(new NineGrid.Core.Commands.StartNodeCommand(options));
+            Assert.IsTrue(result.Accepted);
+            Assert.IsNotNull(result.Batch);
+
+            var plan = new PerformancePlanBuilder().Build(result.Batch);
+            int cardDealSteps = CountFlow(plan, FlowId.CardDeal);
+            Assert.AreEqual(1, cardDealSteps, "Eight parallel deals should coalesce into one batched CardDeal step.");
+
+            FlowPayload batchedPayload = FindBatchedCardDealPayload(plan);
+            Assert.IsNotNull(batchedPayload?.BatchedDeals);
+            Assert.AreEqual(8, batchedPayload.BatchedDeals.Count);
         }
 
         [Test]
@@ -42,6 +66,7 @@ namespace NineGrid.Presentation.Tests
 
             string trace = PlaybackTrace.Dump(result.Batch, logParallelWarnings: false);
             Assert.IsTrue(trace.Contains("CardDeckEntry"));
+            Assert.IsTrue(trace.Contains("PlayerAppear"));
         }
 
         private static NodeDeckOptions BuildSliceDeck(int count)
@@ -80,6 +105,24 @@ namespace NineGrid.Presentation.Tests
             }
 
             return total;
+        }
+
+        private static FlowPayload FindBatchedCardDealPayload(PresentationPlan plan)
+        {
+            for (var groupIndex = 0; groupIndex < plan.Groups.Count; groupIndex++)
+            {
+                IReadOnlyList<PlanStep> steps = plan.Groups[groupIndex].Steps;
+                for (var stepIndex = 0; stepIndex < steps.Count; stepIndex++)
+                {
+                    PlanStep step = steps[stepIndex];
+                    if (step.FlowId == FlowId.CardDeal && step.Payload?.BatchedDeals != null)
+                    {
+                        return step.Payload;
+                    }
+                }
+            }
+
+            return null;
         }
     }
 }

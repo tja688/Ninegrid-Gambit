@@ -38,6 +38,19 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void Snapshot_ExposesAvatarAtCenterSlot()
+        {
+            var architecture = NineGridArchitecture.Current;
+            InitialGameFactory.Create(architecture, new InitialGameOptions { Seed = 7UL });
+            var snapshot = CoreViewSnapshotFactory.Capture(architecture);
+
+            BoardSlotView avatarSlot = snapshot.GetSlot(snapshot.AvatarSlot);
+            Assert.NotNull(avatarSlot);
+            Assert.AreEqual(snapshot.AvatarUid, avatarSlot.CardUid);
+            Assert.AreEqual(CardKind.Avatar, avatarSlot.Kind);
+        }
+
+        [Test]
         public void CardMigratesFromDrawPileToBoardSlot()
         {
             var architecture = NineGridArchitecture.Current;

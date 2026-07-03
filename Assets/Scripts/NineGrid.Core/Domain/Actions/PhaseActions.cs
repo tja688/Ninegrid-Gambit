@@ -28,6 +28,26 @@ namespace NineGrid.Core
         }
     }
 
+    public sealed class RevealAvatarAction : GameAction
+    {
+        public override string ActionName { get { return "RevealAvatar"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var board = context.GetModel<BoardModel>();
+            int avatarUid = board.AvatarUid.Value;
+            if (avatarUid <= 0)
+            {
+                return GameActionResult.Empty;
+            }
+
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.AvatarAppeared, context.ActionId, ActionName)
+                    .WithCard(avatarUid)
+                    .WithSlots(SlotId.None, board.AvatarSlot.Value));
+        }
+    }
+
     public sealed class NodeStartedAction : GameAction
     {
         private static readonly TriggerPoint[] sPostTriggers =

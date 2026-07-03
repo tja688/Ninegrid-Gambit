@@ -4,6 +4,7 @@ using NineGrid.Presentation.Feedback;
 using NineGrid.Presentation.Flow.Battle;
 using NineGrid.Presentation.Flow.Board;
 using NineGrid.Presentation.Flow.Core;
+using NineGrid.Presentation.Flow.Board;
 using NineGrid.Presentation.Flow.Deck;
 using NineGrid.Presentation.Flow.Hand;
 using NineGrid.Presentation.Flow.Item;
@@ -95,6 +96,7 @@ namespace NineGrid.Presentation.Bridge
             registry.Register(new FillSlotsFlowBinding(substituteFlow));
             registry.Register(new UseItemFlowBinding(moduleHost.GetComponent<ItemUseFlow>()));
             registry.Register(new CardDeckEntryFlowBinding(moduleHost.GetComponent<CardDeckEntryFlow>()));
+            registry.Register(new PlayerAppearFlowBinding(moduleHost.GetComponent<PlayerAppearFlow>()));
             registry.Register(new CounterattackFlowBinding(moduleHost.GetComponent<CounterattackFlow>()));
             registry.Register(new CounterattackKillFlowBinding(moduleHost.GetComponent<CounterattackKillFlow>()));
             registry.Register(new SnapshotAlignFlowBinding(moduleHost.GetComponent<SnapshotAlignFlow>()

@@ -51,6 +51,37 @@ namespace NineGrid.Presentation.Orchestration
             return card != null && slot != null;
         }
 
+        public static bool TryBuildBoardDeal(
+            IViewRegistry registry,
+            IReadOnlyList<FlowPayload> deals,
+            out List<Transform> cards,
+            out List<Transform> slots)
+        {
+            cards = new List<Transform>();
+            slots = new List<Transform>();
+            if (registry == null || deals == null || deals.Count == 0)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < deals.Count; i++)
+            {
+                FlowPayload deal = deals[i];
+                if (deal == null || !TryResolveCardAndSlot(registry, deal, out Transform card, out Transform slot))
+                {
+                    cards.Clear();
+                    slots.Clear();
+                    return false;
+                }
+
+                PlaceAtDealSource(registry, card, i);
+                cards.Add(card);
+                slots.Add(slot);
+            }
+
+            return cards.Count > 0;
+        }
+
         public static bool TryBuildDeckEntry(
             IViewRegistry registry,
             FlowPayload payload,
@@ -117,6 +148,58 @@ namespace NineGrid.Presentation.Orchestration
             }
 
             return cards.Count > 0;
+        }
+
+        public static bool TryResolveAvatarActor(
+            IViewRegistry registry,
+            FlowPayload payload,
+            out Transform actor)
+        {
+            actor = null;
+            if (registry == null)
+            {
+                return false;
+            }
+
+            int uid = payload != null && payload.CardUid > 0
+                ? payload.CardUid
+                : payload?.ActorUid ?? 0;
+
+            FlowPlaybackScope scope = FlowPlaybackScope.Current;
+            if (uid <= 0 && scope?.Snapshot != null)
+            {
+                uid = scope.Snapshot.AvatarUid;
+            }
+
+            if (uid <= 0)
+            {
+                return false;
+            }
+
+            actor = registry.ResolveActor(uid);
+            if (actor != null)
+            {
+                return true;
+            }
+
+            if (scope?.ActorFactory == null || scope.Snapshot == null)
+            {
+                return false;
+            }
+
+            string defId = scope.Snapshot.TryGetCard(uid, out CardView cardView)
+                ? cardView.DefId
+                : string.Empty;
+            actor = scope.ActorFactory.Spawn(defId, uid);
+            Transform anchor = registry.ResolveAnchor(scope.Snapshot.AvatarSlot);
+            if (anchor != null)
+            {
+                TableNineActorFactory.PlaceAtAnchor(actor, anchor);
+            }
+
+            actor.localScale = Vector3.zero;
+            registry.RegisterActor(uid, actor);
+            return true;
         }
 
         public static bool TryResolveBoardRingActors(
@@ -220,6 +303,23 @@ namespace NineGrid.Presentation.Orchestration
             {
                 card.position = origin.position;
             }
+        }
+
+        private static void PlaceAtDealSource(IViewRegistry registry, Transform card, int dealIndex)
+        {
+            if (card == null || dealIndex < 0)
+            {
+                return;
+            }
+
+            Transform sourceSlot = ResolveNamedAnchor(registry, $"deck.slot{dealIndex + 1}");
+            if (sourceSlot != null)
+            {
+                card.position = sourceSlot.position;
+                return;
+            }
+
+            PlaceAtDeckOrigin(registry, card);
         }
 
         private static Transform ResolveDeckOrigin(IViewRegistry registry)

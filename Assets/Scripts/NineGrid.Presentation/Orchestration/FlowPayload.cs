@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NineGrid.Core;
 using UnityEngine;
 
@@ -20,6 +21,9 @@ namespace NineGrid.Presentation.Orchestration
         public string Message { get; set; } = string.Empty;
         public int RemainingHp { get; set; } = -1;
         public int RemainingArmor { get; set; } = -1;
+
+        /// <summary>同 Action 组合并的多张发牌 payload（按事件顺序）。</summary>
+        public IReadOnlyList<FlowPayload> BatchedDeals { get; set; }
 
         public static FlowPayload FromEvent(CoreGameEvent gameEvent)
         {
