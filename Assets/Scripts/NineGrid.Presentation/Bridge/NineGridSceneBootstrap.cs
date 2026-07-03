@@ -172,6 +172,7 @@ namespace NineGrid.Presentation.Bridge
 
             var snapshot = CoreViewSnapshotFactory.Capture(Architecture);
             BoardInteractionActorWiring.WireAllBoardActors(ViewRegistry, snapshot);
+            HandInteractionActorWiring.WireAllHandActors(ViewRegistry, snapshot, InteractionCoordinator);
         }
 
         private void EnsureStandardCardPrefab()

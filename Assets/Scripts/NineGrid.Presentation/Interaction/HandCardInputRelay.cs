@@ -57,12 +57,15 @@ namespace NineGrid.Presentation.Interaction
 
         private void OnMouseDrag()
         {
-            ResolveCoordinator()?.Hand.NotifyDrag(GetPointerWorldPosition());
+            InGameInteractionCoordinator owner = ResolveCoordinator();
+            owner?.NotifyHandEngaged();
+            owner?.Hand.NotifyDrag(GetPointerWorldPosition());
         }
 
         private void OnMouseUp()
         {
             InGameInteractionCoordinator owner = ResolveCoordinator();
+            owner?.NotifyHandEngaged();
             owner?.Hand.NotifyRelease(GetPointerWorldPosition());
             owner?.TryReleaseHandMode();
         }

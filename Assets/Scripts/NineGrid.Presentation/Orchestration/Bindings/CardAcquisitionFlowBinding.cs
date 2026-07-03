@@ -15,17 +15,20 @@ namespace NineGrid.Presentation.Orchestration.Bindings
         private readonly HandLayoutPresenter mLayoutPresenter;
         private readonly HandCardLayoutSolver mLayoutSolver;
         private readonly Transform mHandActorsRoot;
+        private readonly HandItemsPresenter mHandItemsPresenter;
 
         public CardAcquisitionFlowBinding(
             CardAcquisitionFlow flow,
             HandLayoutPresenter layoutPresenter,
             HandCardLayoutSolver layoutSolver,
-            Transform handActorsRoot)
+            Transform handActorsRoot,
+            HandItemsPresenter handItemsPresenter = null)
         {
             mFlow = flow;
             mLayoutPresenter = layoutPresenter;
             mLayoutSolver = layoutSolver;
             mHandActorsRoot = handActorsRoot;
+            mHandItemsPresenter = handItemsPresenter;
         }
 
         public FlowId Id => FlowId.CardAcquisition;
@@ -44,6 +47,12 @@ namespace NineGrid.Presentation.Orchestration.Bindings
             {
                 acquired = scope.ActorFactory.Spawn(cardView.DefId, payload.CardUid, mHandActorsRoot);
                 registry.RegisterActor(payload.CardUid, acquired);
+            }
+
+            if (acquired != null)
+            {
+                HandInteractionActorWiring.EnsureHandRelay(acquired, payload.CardUid);
+                mHandItemsPresenter?.RefreshHandActors(scope?.Snapshot);
             }
 
             if (acquired == null || mLayoutPresenter == null || mLayoutSolver == null)

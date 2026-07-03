@@ -53,6 +53,7 @@ namespace NineGrid.Presentation.Bridge
                 moduleHost,
                 flowRegistry,
                 roots,
+                handItemsPresenter,
                 inGameUiFlow,
                 roomChoiceFlow,
                 roomPresenter);
@@ -81,6 +82,7 @@ namespace NineGrid.Presentation.Bridge
             GameObject moduleHost,
             FlowRegistry registry,
             SceneStagingRoots roots,
+            HandItemsPresenter handItemsPresenter,
             InGameUiFlow inGameUiFlow,
             RoomChoiceFlow roomChoiceFlow,
             RoomChoiceScreenPresenter roomPresenter)
@@ -116,7 +118,8 @@ namespace NineGrid.Presentation.Bridge
                 acquisitionFlow,
                 layoutPresenter,
                 layoutSolver,
-                roots.HandActorsRoot));
+                roots.HandActorsRoot,
+                handItemsPresenter));
         }
     }
 }

@@ -76,6 +76,41 @@ namespace NineGrid.Presentation.Orchestration
                 mLayoutPresenter.Relayout(actors, targets, durationOverride: 0f);
             }
 
+            PublishHandActors(actors);
+        }
+
+        public void RefreshHandActors(CoreViewSnapshot snapshot)
+        {
+            if (snapshot?.Deck == null || mViewRegistry == null)
+            {
+                return;
+            }
+
+            var actors = new List<Transform>();
+            IReadOnlyList<int> itemUids = snapshot.Deck.ItemSlotUids;
+            for (var i = 0; i < itemUids.Count; i++)
+            {
+                int uid = itemUids[i];
+                if (uid <= 0)
+                {
+                    continue;
+                }
+
+                Transform actor = mViewRegistry.ResolveActor(uid);
+                if (actor == null)
+                {
+                    continue;
+                }
+
+                HandInteractionActorWiring.EnsureHandRelay(actor, uid);
+                actors.Add(actor);
+            }
+
+            PublishHandActors(actors);
+        }
+
+        private void PublishHandActors(IReadOnlyList<Transform> actors)
+        {
             mCoordinator?.SetHandActors(actors);
         }
 
@@ -96,30 +131,8 @@ namespace NineGrid.Presentation.Orchestration
             }
 
             mViewRegistry.RegisterActor(uid, actor);
-            EnsureHandRelay(actor, uid);
+            HandInteractionActorWiring.EnsureHandRelay(actor, uid);
             return actor;
-        }
-
-        private static void EnsureHandRelay(Transform actor, int uid)
-        {
-            if (actor == null)
-            {
-                return;
-            }
-
-            TableNineActorBinding binding = actor.GetComponent<TableNineActorBinding>();
-            if (binding == null)
-            {
-                binding = actor.gameObject.AddComponent<TableNineActorBinding>();
-            }
-
-            binding.Bind(uid, handItem: true);
-            InteractionColliderUtility.EnsureCollider2D(actor.gameObject);
-
-            if (actor.GetComponent<HandCardInputRelay>() == null)
-            {
-                actor.gameObject.AddComponent<HandCardInputRelay>();
-            }
         }
 
         private static string ResolveDefId(CoreViewSnapshot snapshot, int uid)
