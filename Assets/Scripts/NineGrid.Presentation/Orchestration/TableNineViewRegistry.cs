@@ -70,6 +70,32 @@ namespace NineGrid.Presentation.Orchestration
             return mUidActors.TryGetValue(cardUid, out Transform actor) ? actor : null;
         }
 
+        public void CopyRegisteredUids(List<int> output)
+        {
+            if (output == null)
+            {
+                return;
+            }
+
+            foreach (int uid in mUidActors.Keys)
+            {
+                output.Add(uid);
+            }
+        }
+
+        public void ForEachActor(System.Action<int, Transform> visitor)
+        {
+            if (visitor == null)
+            {
+                return;
+            }
+
+            foreach (var pair in mUidActors)
+            {
+                visitor(pair.Key, pair.Value);
+            }
+        }
+
         public Transform ResolveAnchor(SlotId slot)
         {
             if (slot.IsNone)

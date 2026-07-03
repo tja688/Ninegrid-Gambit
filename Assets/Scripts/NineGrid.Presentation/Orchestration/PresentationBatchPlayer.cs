@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using NineGrid.Core;
+using NineGrid.Presentation.Debugging.Trace;
 
 namespace NineGrid.Presentation.Orchestration
 {
@@ -107,9 +108,11 @@ namespace NineGrid.Presentation.Orchestration
             bool deferParallelStartOneFrame = true)
         {
             plan ??= BuildPlan(batch);
+            BattleTraceHooks.OnBatchStart(batch, plan);
             mInputLockGate.Acquire(batch.BatchId);
             yield return mExecutor.PlayCoroutine(plan, deferParallelStartOneFrame);
             mInputLockGate.Release(batch.BatchId);
+            BattleTraceHooks.OnBatchEnd(batch);
         }
     }
 }

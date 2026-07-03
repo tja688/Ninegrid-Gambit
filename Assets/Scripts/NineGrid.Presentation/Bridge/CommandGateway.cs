@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using NineGrid.Core;
 using NineGrid.Core.Commands;
+using NineGrid.Presentation.Debugging.Trace;
 using NineGrid.Presentation.Orchestration;
 using QFramework;
 using UnityEngine;
@@ -42,7 +43,15 @@ namespace NineGrid.Presentation.Bridge
 
         public CoreCommandDispatchResult Send(ICommand<CoreCommandResult> command)
         {
+            bool inputLockedBefore = IsInputLocked;
             var result = mDispatcher.Send(command);
+            bool inputLockedAfter = IsInputLocked;
+            BattleTraceHooks.RecordCommand(
+                command?.GetType().Name ?? "UnknownCommand",
+                result.BatchOpened,
+                inputLockedBefore,
+                inputLockedAfter);
+
             if (result.BatchOpened && result.Batch != null)
             {
                 StartPlayback(result.Batch);

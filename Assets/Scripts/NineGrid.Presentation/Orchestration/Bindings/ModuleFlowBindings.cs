@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NineGrid.Core;
+using NineGrid.Presentation.Debugging.Trace;
 using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Flow.Battle;
 using NineGrid.Presentation.Flow.Board;
@@ -253,6 +254,12 @@ namespace NineGrid.Presentation.Orchestration.Bindings
                 return new FlowHandle(mSubstituteFlow, onMarker);
             }
 
+            BattleTraceHooks.RecordFlowResolve(
+                Id,
+                "resolve_failed",
+                "TryResolveCardAndSlot failed",
+                payload,
+                0);
             IDirectedFlow directed = mDealFlow != null ? mDealFlow : mSubstituteFlow;
             return new FlowHandle(directed, onMarker);
         }
@@ -411,6 +418,11 @@ namespace NineGrid.Presentation.Orchestration.Bindings
         public static FlowHandle SnapshotHandle(Action<string> onMarker)
         {
             return new FlowHandle(InstantAlignFlow.Instance, onMarker);
+        }
+
+        public static bool IsSilentFallback(FlowHandle handle)
+        {
+            return handle != null && ReferenceEquals(handle.DirectedFlow, InstantAlignFlow.Instance);
         }
 
         private sealed class InstantAlignFlow : IDirectedFlow

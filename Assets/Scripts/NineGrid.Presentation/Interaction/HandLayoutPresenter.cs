@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using NineGrid.Presentation.Contracts;
+using NineGrid.Presentation.Debugging.Trace;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
@@ -87,6 +88,8 @@ namespace NineGrid.Presentation.Interaction
                 BaselineSortingOrder = baselineSortingOrder,
                 HasBaseline = true,
             };
+
+            TraceActorOp("RegisterActor", actor);
         }
 
         public void UnregisterActor(Transform actor)
@@ -170,6 +173,7 @@ namespace NineGrid.Presentation.Interaction
 
             float duration = durationOverride >= 0f ? durationOverride : layoutDuration;
             KillLayoutSequence();
+            TraceRelayout(actors, duration, "Relayout", DraggingActor != null);
 
             if (duration <= 0f)
             {
@@ -334,6 +338,45 @@ namespace NineGrid.Presentation.Interaction
 
         internal float LayoutDuration => layoutDuration;
 
+        private static void TraceRelayout(IReadOnlyList<Transform> actors, float duration, string op, bool draggingExcluded)
+        {
+            if (!BattleTraceSession.IsActive)
+            {
+                return;
+            }
+
+            var uids = new List<int>();
+            if (actors != null)
+            {
+                for (var i = 0; i < actors.Count; i++)
+                {
+                    int uid = ZoneSnapshotCapture.ResolveUid(actors[i]);
+                    if (uid > 0)
+                    {
+                        uids.Add(uid);
+                    }
+                }
+            }
+
+            BattleTraceHooks.RecordLayout(op, nameof(HandLayoutPresenter), uids, duration, draggingExcluded);
+        }
+
+        private static void TraceActorOp(string op, Transform actor)
+        {
+            if (!BattleTraceSession.IsActive || actor == null)
+            {
+                return;
+            }
+
+            int uid = ZoneSnapshotCapture.ResolveUid(actor);
+            if (uid <= 0)
+            {
+                return;
+            }
+
+            BattleTraceHooks.RecordLayout(op, nameof(HandLayoutPresenter), new[] { uid }, 0f, false);
+        }
+
         private void ApplyLayoutInstant(IReadOnlyList<Transform> actors, IReadOnlyList<HandCardLayoutTarget> targets)
         {
             int pairCount = Mathf.Min(actors.Count, targets.Count);
@@ -373,6 +416,8 @@ namespace NineGrid.Presentation.Interaction
             {
                 DraggingActor = null;
             }
+
+            TraceActorOp("UnregisterActor", actor);
         }
 
         private void KillLayoutSequence()

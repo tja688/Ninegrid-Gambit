@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using NineGrid.Core;
+using NineGrid.Presentation.Debugging.Trace;
 using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Visuals;
 using QFramework;
@@ -52,6 +53,7 @@ namespace NineGrid.Presentation.Orchestration
                 mActiveInstances.Add(instance);
             }
 
+            BattleTraceHooks.RecordActorSpawn(cardUid, defId, parentTransform.name);
             return instance.transform;
         }
 
@@ -94,6 +96,7 @@ namespace NineGrid.Presentation.Orchestration
                 return;
             }
 
+            BattleTraceHooks.RecordActorDespawn(cardUid, "Despawn");
             ReleaseInstance(actor.gameObject);
         }
 

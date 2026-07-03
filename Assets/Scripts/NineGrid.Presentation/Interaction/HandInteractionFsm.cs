@@ -4,6 +4,7 @@ using NineGrid.Core;
 using NineGrid.Core.Commands;
 using NineGrid.Core.Systems;
 using NineGrid.Presentation.Bridge;
+using NineGrid.Presentation.Debugging.Trace;
 using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Shared;
 using QFramework;
@@ -79,6 +80,7 @@ namespace NineGrid.Presentation.Interaction
             mHoveredActor = actor;
             State = HandInteractionState.Hover;
             mDragPresenter?.PlayFocus(actor, CollectOtherActors(actor));
+            BattleTraceHooks.RecordInteraction("HoverEnter", itemUid, State.ToString(), InputLocked, actor);
         }
 
         public void NotifyHoverExit(int itemUid)
@@ -93,8 +95,10 @@ namespace NineGrid.Presentation.Interaction
                 return;
             }
 
+            Transform actor = mHoveredActor;
             StopHoverVisual(restoreFocused: true);
             ResetHoverState();
+            BattleTraceHooks.RecordInteraction("HoverExit", itemUid, State.ToString(), InputLocked, actor);
         }
 
         public void NotifyPress(int itemUid, Transform actor, Vector3 pointerWorldPosition)
@@ -111,6 +115,7 @@ namespace NineGrid.Presentation.Interaction
             State = HandInteractionState.Drag;
             RememberDragHome(actor);
             mDragPresenter?.BeginDrag(actor, pointerWorldPosition);
+            BattleTraceHooks.RecordInteraction("Press", itemUid, State.ToString(), InputLocked, actor);
         }
 
         public void NotifyDrag(Vector3 pointerWorldPosition)
@@ -154,6 +159,7 @@ namespace NineGrid.Presentation.Interaction
             ResetDragState();
             ResetHoverState();
             State = HandInteractionState.Idle;
+            BattleTraceHooks.RecordInteraction("Release", itemUid, State.ToString(), InputLocked, actor);
         }
 
         public void ForceReset()

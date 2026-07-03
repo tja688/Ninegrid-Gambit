@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DG.Tweening;
 using NineGrid.Presentation.Contracts;
+using NineGrid.Presentation.Debugging.Trace;
 using NineGrid.Presentation.Feedback;
 using NineGrid.Presentation.Shared;
 using UnityEngine;
@@ -97,6 +98,7 @@ namespace NineGrid.Presentation.Interaction
             StopFocus(focused, others, immediate: true);
             focusedActor = focused;
             Layout.EnsureBaseline(focused);
+            TraceInteraction("PlayFocus", focused);
 
             if (!Layout.TryGetState(focused, out HandLayoutPresenter.ActorVisualState state))
             {
@@ -174,6 +176,8 @@ namespace NineGrid.Presentation.Interaction
             {
                 Layout.RestoreActorVisual(others[i], duration);
             }
+
+            TraceInteraction("StopFocus", focused);
         }
 
         public void BeginDrag(Transform actor, Vector3 pointerWorldPosition)
@@ -198,6 +202,8 @@ namespace NineGrid.Presentation.Interaction
                     dragSortingOrderFloor);
                 SelectionOptionVisual.ApplySortingOrder(actor, boostedOrder);
             }
+
+            TraceInteraction("BeginDrag", actor);
         }
 
         public void UpdateDrag(Transform actor, Vector3 pointerWorldPosition, bool inZone)
@@ -285,6 +291,17 @@ namespace NineGrid.Presentation.Interaction
         private static SpriteRenderer GetPrimaryRenderer(Transform actor)
         {
             return actor != null ? actor.GetComponent<SpriteRenderer>() : null;
+        }
+
+        private static void TraceInteraction(string eventName, Transform actor)
+        {
+            if (!BattleTraceSession.IsActive || !BattleTraceSession.ActiveIncludeInteraction || actor == null)
+            {
+                return;
+            }
+
+            int uid = ZoneSnapshotCapture.ResolveUid(actor);
+            BattleTraceHooks.RecordInteraction(eventName, uid, "DragPresenter", false, actor);
         }
     }
 }

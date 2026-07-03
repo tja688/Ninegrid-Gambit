@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using NineGrid.Presentation.Debugging.Trace;
 
 namespace NineGrid.Presentation.Orchestration
 {
@@ -63,6 +64,7 @@ namespace NineGrid.Presentation.Orchestration
                         var handle = binding.Play(mViewRegistry, step.Payload);
                         handles.Add(handle);
                         playedFlows++;
+                        BattleTraceHooks.RecordFlowResolve(step.FlowId, handle, step.Payload, step.ActionId);
                     }
 
                     while (IsAnyPlaying(handles))
@@ -104,6 +106,7 @@ namespace NineGrid.Presentation.Orchestration
 
                         var handle = binding.Play(mViewRegistry, step.Payload);
                         handles.Add(handle);
+                        BattleTraceHooks.RecordFlowResolve(step.FlowId, handle, step.Payload, step.ActionId);
                     }
 
                     while (IsAnyPlaying(handles))

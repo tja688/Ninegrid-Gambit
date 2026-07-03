@@ -31,5 +31,23 @@ namespace NineGrid.Presentation.Orchestration
 
             return binding;
         }
+
+        public void WrapAll(System.Func<IFlowBinding, IFlowBinding> wrapper)
+        {
+            if (wrapper == null)
+            {
+                return;
+            }
+
+            var keys = new List<FlowId>(mBindings.Keys);
+            for (var i = 0; i < keys.Count; i++)
+            {
+                FlowId flowId = keys[i];
+                if (mBindings.TryGetValue(flowId, out IFlowBinding binding))
+                {
+                    mBindings[flowId] = wrapper(binding);
+                }
+            }
+        }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NineGrid.Core;
+using NineGrid.Presentation.Debugging.Trace;
 using NineGrid.Presentation.Flow.Hand;
 using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Orchestration;
@@ -37,6 +38,7 @@ namespace NineGrid.Presentation.Orchestration.Bindings
         {
             if (mFlow == null || registry == null || payload == null || payload.CardUid <= 0)
             {
+                BattleTraceHooks.RecordFlowResolve(Id, "invalid_payload", "missing flow/registry/payload/cardUid", payload);
                 return new FlowHandle(mFlow, onMarker);
             }
 
@@ -57,6 +59,11 @@ namespace NineGrid.Presentation.Orchestration.Bindings
 
             if (acquired == null || mLayoutPresenter == null || mLayoutSolver == null)
             {
+                BattleTraceHooks.RecordFlowResolve(
+                    Id,
+                    acquired == null ? "missing_actor" : "missing_layout",
+                    acquired == null ? "ResolveActor/spawn failed" : "Hand layout presenter/solver missing",
+                    payload);
                 return new FlowHandle(mFlow, onMarker);
             }
 
@@ -85,6 +92,7 @@ namespace NineGrid.Presentation.Orchestration.Bindings
             mLayoutSolver.BuildLayout(totalCount, targets);
             if (targets.Count == 0)
             {
+                BattleTraceHooks.RecordFlowResolve(Id, "layout_empty", "HandCardLayoutSolver returned no targets", payload);
                 return new FlowHandle(mFlow, onMarker);
             }
 

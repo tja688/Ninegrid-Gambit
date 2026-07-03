@@ -1,6 +1,7 @@
 using DamageNumbersPro;
 using NineGrid.Core;
 using NineGrid.Presentation.Bridge;
+using NineGrid.Presentation.Debugging.Trace;
 using NineGrid.Presentation.Interaction;
 using NineGrid.Presentation.Orchestration;
 using NineGrid.Presentation.Shell;
@@ -118,7 +119,19 @@ namespace NineGrid.Presentation.Bridge
             HudBinder = HudDirectBindingSetup.Install(Architecture, transform, services.InGameUiFlow);
             BuildInitialActors();
             WireShellBridge();
+            EnsureBattleTrace();
             Debug.Log("[NineGridSceneBootstrap] Production bridge ready.");
+        }
+
+        private void EnsureBattleTrace()
+        {
+            var trace = GetComponent<BattleTraceController>();
+            if (trace == null)
+            {
+                trace = gameObject.AddComponent<BattleTraceController>();
+            }
+
+            trace.InitializeAfterBootstrap(this);
         }
 
         private void WireShellBridge()
@@ -173,6 +186,7 @@ namespace NineGrid.Presentation.Bridge
             var snapshot = CoreViewSnapshotFactory.Capture(Architecture);
             BoardInteractionActorWiring.WireAllBoardActors(ViewRegistry, snapshot);
             HandInteractionActorWiring.WireAllHandActors(ViewRegistry, snapshot, InteractionCoordinator);
+            BattleTraceHooks.OnBatchPlaybackSettled(batch.BatchId);
         }
 
         private void EnsureStandardCardPrefab()
