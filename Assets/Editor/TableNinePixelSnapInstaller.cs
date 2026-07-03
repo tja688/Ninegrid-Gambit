@@ -21,8 +21,8 @@ public static class TableNinePixelSnapInstaller
     private const string RendererDataPath = "Assets/Settings/Renderer2D.asset";
     private const string FeatureName = "TableNine Pixel Snap Post";
     private const string OverlayCanvasName = "TableNine Overlay UI";
-    private const string ControllerTypeName = "NineGrid.Presentation.Visuals.TableNinePixelSnapController, NineGrid.Presentation";
-    private const string BinderTypeName = "NineGrid.Presentation.Visuals.TableNineTmpScanlineBinder, NineGrid.Presentation";
+    private const string ControllerTypeName = "NineGrid.Presentation.Visuals.TableNinePixelSnapController, PixelVisuals";
+    private const string BinderTypeName = "NineGrid.Presentation.Visuals.TableNineTmpScanlineBinder, PixelVisuals";
 
     private static readonly Vector2Int InternalResolution = new(480, 270);
 
