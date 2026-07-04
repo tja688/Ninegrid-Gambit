@@ -59,12 +59,24 @@ namespace NinegridGambit.Grapple
         public float tautLengthRatio = 1.0f;
 
         [Header("演示控制")]
-        public bool autoFireOnStart = true;
+        [Tooltip("是否允许空格等测试键触发；正式流程请走 Fire()")]
+        public bool allowTestInput = true;
+        public bool autoFireOnStart = false;
         public float autoFireDelay = 1.0f;
-        [Tooltip("命中绷直后是否自动复位、循环演示")]
-        public bool loop = true;
+        [Tooltip("命中绷直后是否自动复位并再发射（循环演示）")]
+        public bool loop = false;
         public float loopInterval = 2.5f;
         public KeyCode fireKey = KeyCode.Space;
+
+        /// <summary>当前阶段，供外部查询。</summary>
+        public Phase CurrentPhase => _phase;
+
+        /// <summary>飞行/收绳中为 true，此时 <see cref="Fire"/> 会拒绝。</summary>
+        public bool IsBusy =>
+            _phase == Phase.Flying || _phase == Phase.Settling || _phase == Phase.Tightening;
+
+        /// <summary>是否可发射（已构建且不在忙碌阶段）。Idle / Attached 均可再发一轮。</summary>
+        public bool CanFire => _built && !IsBusy;
 
         // ---- 运行时内部状态 ----
         Vector2[] _pos;
@@ -144,7 +156,8 @@ namespace NinegridGambit.Grapple
 
             float dt = Mathf.Min(Time.deltaTime, 0.02f);
 
-            if (_phase == Phase.Idle && FirePressed()) Fire();
+            // 测试键：仅空格（或 fireKey），一轮结束后 Idle/Attached 可再按；正统入口是 Fire()
+            if (allowTestInput && CanFire && FirePressed()) Fire();
 
             switch (_phase)
             {
@@ -189,6 +202,7 @@ namespace NinegridGambit.Grapple
                     break;
 
                 case Phase.Attached:
+                    // loop 时自动复位并再发；否则停在 Attached，等下一次 Fire() / 测试键
                     if (loop)
                     {
                         _timer += dt;
@@ -204,11 +218,15 @@ namespace NinegridGambit.Grapple
             }
         }
 
-        /// <summary>发射：初始化链条质点并进入飞行阶段。</summary>
-        public void Fire()
+        /// <summary>
+        /// 正统发射入口（供外部程序 / 玩法逻辑调用）。
+        /// Idle 或 Attached 时启动一轮；飞行/收绳中拒绝并返回 false。
+        /// </summary>
+        public bool Fire()
         {
-            if (!_built) return;
+            if (!CanFire) return false;
 
+            _autoPending = false;
             _launchStart = firePoint.position;
             _hitPos = (Vector2)target.position + targetOffset;
             _flightRopeLen = slackFactor * Vector2.Distance(_launchStart, _hitPos);
@@ -227,16 +245,26 @@ namespace NinegridGambit.Grapple
             SetVisible(true);
             _phase = Phase.Flying;
             _timer = 0f;
+            return true;
+        }
+
+        /// <summary>强制复位到 Idle（隐藏链条），不自动再发。</summary>
+        public void ResetToIdle()
+        {
+            if (!_built) return;
+            _phase = Phase.Idle;
+            _timer = 0f;
+            _autoPending = false;
+            SetVisible(false);
+            anchorTransform.position = new Vector3(firePoint.position.x, firePoint.position.y, _chainZ);
         }
 
         void ResetDemo()
         {
-            _phase = Phase.Idle;
-            _timer = 0f;
-            SetVisible(false);
-            anchorTransform.position = new Vector3(firePoint.position.x, firePoint.position.y, _chainZ);
+            ResetToIdle();
+            // 仅 loop / autoFireOnStart 时排队自动再发
             _autoPending = autoFireOnStart || loop;
-            _idleTimer = 0.5f;
+            _idleTimer = loop ? loopInterval : autoFireDelay;
         }
 
         Vector2 Parabola(float t)
@@ -337,13 +365,12 @@ namespace NinegridGambit.Grapple
         {
 #if ENABLE_INPUT_SYSTEM
             var kb = Keyboard.current;
-            var mouse = Mouse.current;
-            bool k = kb != null && kb.spaceKey.wasPressedThisFrame;
-            bool m = mouse != null && mouse.leftButton.wasPressedThisFrame;
-            return k || m;
-#else
-            return Input.GetKeyDown(fireKey) || Input.GetMouseButtonDown(0);
+            if (kb == null) return false;
+            // 测试默认空格；其它 KeyCode 走旧 Input 兜底（编辑器里改 fireKey 时）
+            if (fireKey == KeyCode.Space)
+                return kb.spaceKey.wasPressedThisFrame;
 #endif
+            return Input.GetKeyDown(fireKey);
         }
     }
 }
