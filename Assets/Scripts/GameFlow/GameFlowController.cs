@@ -1,13 +1,12 @@
 using System;
 using QFramework;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace NineGrid.GameFlow
 {
     /// <summary>
     /// 跨场景全局唯一的主流程状态机。
-    /// 负责战役节点推进、场景切换占位，以及序章仅首次进入的分流。
+    /// 挂在场景中配置；不自动切场景，场景跳转由外部在需要时申请。
     /// </summary>
     public sealed class GameFlowController : PersistentMonoSingleton<GameFlowController>
     {
@@ -48,29 +47,28 @@ namespace NineGrid.GameFlow
             GameFlowState.VictorySettlement,
         };
 
+        [Header("开局")]
+        [Tooltip("勾选：开局进入序章。取消勾选：开局进入战斗0（已历序章通道）。")]
+        [SerializeField] bool enterPrologueOnStart = true;
+
         readonly FSM<GameFlowState> _fsm = new();
 
         bool _booted;
-        bool _isTransitioning;
 
         public GameFlowState CurrentState =>
             _fsm.CurrentState != null ? _fsm.CurrentStateId : GameFlowState.MainMenu;
 
         public GameFlowState PreviousState =>
             _fsm.CurrentState != null ? _fsm.PreviousStateId : GameFlowState.MainMenu;
+
+        public bool EnterPrologueOnStart => enterPrologueOnStart;
         public bool HasCompletedPrologue => GameFlowProgress.HasCompletedPrologue;
         public bool IsInBattle => GameFlowScenes.IsBattleState(CurrentState);
         public bool IsInIsland => GameFlowScenes.IsIslandState(CurrentState);
         public bool IsPrologueRun => CurrentState == GameFlowState.Prologue;
 
-        /// <summary>状态切换后回调（previous, next）。</summary>
+        /// <summary>状态切换后回调（previous, next）。不自动加载场景。</summary>
         public event Action<GameFlowState, GameFlowState> StateChanged;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        static void Bootstrap()
-        {
-            _ = Instance;
-        }
 
         protected override void Awake()
         {
@@ -118,7 +116,7 @@ namespace NineGrid.GameFlow
                 : GameFlowState.Prologue);
         }
 
-        /// <summary>推进到战役下一节点。胜利结算后回到主菜单。</summary>
+        /// <summary>推进到战役下一节点。胜利结算后回到主菜单。不自动切场景。</summary>
         public void Advance()
         {
             if (!_booted)
@@ -169,13 +167,13 @@ namespace NineGrid.GameFlow
             EnterState(CampaignSequence[index + 1]);
         }
 
-        /// <summary>中途暴毙：回主菜单。</summary>
+        /// <summary>中途暴毙：回主菜单状态（不自动切场景）。</summary>
         public void NotifyPlayerDefeated()
         {
             GoToMainMenu();
         }
 
-        /// <summary>胜利结算完成：回主菜单。</summary>
+        /// <summary>胜利结算完成：回主菜单状态（不自动切场景）。</summary>
         public void NotifyVictorySettled()
         {
             GoToMainMenu();
@@ -194,13 +192,21 @@ namespace NineGrid.GameFlow
 
         void Boot()
         {
-            var initial = GameFlowProgress.HasCompletedPrologue
-                ? GameFlowState.MainMenu
-                : GameFlowState.Prologue;
+            GameFlowState initial;
+            if (enterPrologueOnStart)
+            {
+                initial = GameFlowState.Prologue;
+            }
+            else
+            {
+                // 取消勾选：走已历序章通道，直接战斗0。
+                MarkPrologueCompleted();
+                initial = GameFlowState.Battle0;
+            }
 
             _booted = true;
             _fsm.StartState(initial);
-            Debug.Log($"[GameFlow] Boot → {initial} (prologueDone={GameFlowProgress.HasCompletedPrologue})");
+            Debug.Log($"[GameFlow] Boot → {initial} (enterPrologueOnStart={enterPrologueOnStart})");
         }
 
         void BuildFsm()
@@ -238,15 +244,9 @@ namespace NineGrid.GameFlow
 
         void OnEnterState(GameFlowState state)
         {
-            ApplyStateEnter(state, reloadScene: true);
-        }
-
-        void ApplyStateEnter(GameFlowState state, bool reloadScene)
-        {
-            // 占位：后续在此挂战斗初始化、岛屿 UI、事件表等。
+            // 占位：后续在此挂战斗初始化、岛屿 UI、事件表等。不自动切场景。
             if (state == GameFlowState.Prologue)
             {
-                // 序章演出：播放对话池中的 prologue_intro，结束后推进主流程。
                 var ui = NineGrid.UI.UiSystem.Instance;
                 if (ui != null && ui.Dialogue != null)
                 {
@@ -279,37 +279,6 @@ namespace NineGrid.GameFlow
             {
                 // 占位：胜利结算
             }
-
-            if (reloadScene)
-            {
-                LoadSceneForState(state);
-            }
-        }
-
-        void LoadSceneForState(GameFlowState state)
-        {
-            var targetScene = GameFlowScenes.GetSceneName(state);
-            var active = SceneManager.GetActiveScene();
-            if (active.IsValid() && active.name == targetScene)
-            {
-                return;
-            }
-
-            if (_isTransitioning)
-            {
-                return;
-            }
-
-            _isTransitioning = true;
-            var op = SceneManager.LoadSceneAsync(targetScene);
-            if (op == null)
-            {
-                _isTransitioning = false;
-                Debug.LogError($"[GameFlow] 无法加载场景: {targetScene}（是否已加入 Build Settings？）");
-                return;
-            }
-
-            op.completed += _ => _isTransitioning = false;
         }
 
         void MarkPrologueCompleted()
