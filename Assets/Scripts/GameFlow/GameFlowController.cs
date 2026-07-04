@@ -246,7 +246,22 @@ namespace NineGrid.GameFlow
             // 占位：后续在此挂战斗初始化、岛屿 UI、事件表等。
             if (state == GameFlowState.Prologue)
             {
-                // 占位：序章教学逻辑
+                // 序章演出：播放对话池中的 prologue_intro，结束后推进主流程。
+                var ui = NineGrid.UI.UiSystem.Instance;
+                if (ui != null && ui.Dialogue != null)
+                {
+                    void OnPrologueDialogueDone()
+                    {
+                        ui.Dialogue.SequenceCompleted -= OnPrologueDialogueDone;
+                        if (CurrentState == GameFlowState.Prologue)
+                        {
+                            Advance();
+                        }
+                    }
+
+                    ui.Dialogue.SequenceCompleted += OnPrologueDialogueDone;
+                    ui.Dialogue.Play("prologue_intro");
+                }
             }
             else if (GameFlowScenes.IsBattleState(state))
             {

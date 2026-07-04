@@ -48,4 +48,4 @@
 - `ForceState(state)` — 调试跳转
 - `StateChanged` — `(previous, next)` 事件
 
-各状态 `OnEnter` 内仅占位注释，战斗初始化、岛屿 UI、事件表等后续按状态补。
+`Prologue` 进入时播放 `DialoguePool` 的 `prologue_intro`，对话结束后自动 `Advance()`。其余状态 `OnEnter` 仍为占位，战斗初始化、岛屿 UI、事件表等后续按状态补。详见 `UiDialogueNotice.md`。
