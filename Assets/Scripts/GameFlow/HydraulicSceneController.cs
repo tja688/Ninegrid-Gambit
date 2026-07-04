@@ -82,6 +82,9 @@ namespace NineGrid.GameFlow
 
         public bool IsActive => _state == HydraulicSceneState.Active;
 
+        /// <summary>入场协程刚启动（宿主已激活，视觉尚未就位）。</summary>
+        public event Action EnterStarted;
+
         /// <summary>常规入场完成，停留在 stay。</summary>
         public event Action EnterCompleted;
 
@@ -165,6 +168,7 @@ namespace NineGrid.GameFlow
             CacheStayPositions();
             KillMotion();
             _state = HydraulicSceneState.Entering;
+            EnterStarted?.Invoke();
             _routine = StartCoroutine(EnterRoutine());
             return true;
         }

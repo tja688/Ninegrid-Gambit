@@ -19,6 +19,22 @@ public static class StripSpriteAnimationBuilder
         @"^(?<prefix>.+)_strip(?<count>\d+)$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    /// <summary>
+    /// Multi-frame sheets already sliced as <c>{name}_0</c>… but not named <c>*_stripN</c>.
+    /// </summary>
+    private static readonly HashSet<string> ExplicitStripSheetNames = new HashSet<string>
+    {
+        "wheels",
+    };
+
+    /// <summary>
+    /// Sheets that interleave two facing directions; keep only odd frame indices (1,3,5…).
+    /// </summary>
+    private static readonly HashSet<string> OddFrameOnlySheetNames = new HashSet<string>
+    {
+        "wheels",
+    };
+
     [MenuItem("NineGrid/Build Strip Sprite Animations")]
     public static void BuildFromMenu()
     {
@@ -44,12 +60,13 @@ public static class StripSpriteAnimationBuilder
         {
             var texturePath = AssetDatabase.GUIDToAssetPath(guid);
             var textureName = Path.GetFileNameWithoutExtension(texturePath);
-            if (!StripNamePattern.IsMatch(textureName))
+            var sprites = LoadOrderedSprites(texturePath, textureName);
+            if (!IsProcessableStripSheet(textureName, sprites))
             {
                 continue;
             }
 
-            var sprites = LoadOrderedSprites(texturePath, textureName);
+            sprites = FilterSpritesForSheet(textureName, sprites);
             if (sprites.Count == 0)
             {
                 Debug.LogWarning("[StripSpriteAnimationBuilder] No sprites found for " + texturePath);
@@ -82,11 +99,76 @@ public static class StripSpriteAnimationBuilder
 
         serializedCatalog.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(catalog);
+
+        var keepIds = new HashSet<string>();
+        for (var i = 0; i < generatedEntries.Count; i++)
+        {
+            keepIds.Add(generatedEntries[i].Id);
+        }
+
+        DeleteOrphanedAssets(ClipFolder, "_idle.anim", keepIds);
+        DeleteOrphanedAssets(ControllerFolder, ".controller", keepIds);
+
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
 
         Debug.Log("[StripSpriteAnimationBuilder] Built " + generatedEntries.Count + " strip sprite visuals.");
         return catalog;
+    }
+
+    private static void DeleteOrphanedAssets(string folder, string suffix, HashSet<string> keepIds)
+    {
+        var guids = AssetDatabase.FindAssets(string.Empty, new[] { folder });
+        for (var i = 0; i < guids.Length; i++)
+        {
+            var path = AssetDatabase.GUIDToAssetPath(guids[i]);
+            if (!path.EndsWith(suffix, System.StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var fileName = Path.GetFileName(path);
+            var id = fileName.Substring(0, fileName.Length - suffix.Length);
+            if (keepIds.Contains(id))
+            {
+                continue;
+            }
+
+            AssetDatabase.DeleteAsset(path);
+        }
+    }
+
+    /// <summary>
+    /// Accepts <c>*_stripN</c> sheets, or names listed in <see cref="ExplicitStripSheetNames"/>
+    /// that are already sliced as <c>{name}_0</c>, <c>{name}_1</c>, ...
+    /// </summary>
+    private static bool IsProcessableStripSheet(string textureName, IList<Sprite> sprites)
+    {
+        var isExplicit = ExplicitStripSheetNames.Contains(textureName);
+        if (!StripNamePattern.IsMatch(textureName) && !isExplicit)
+        {
+            return false;
+        }
+
+        if (!isExplicit)
+        {
+            return true;
+        }
+
+        if (sprites == null || sprites.Count < 2)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < sprites.Count; i++)
+        {
+            if (ParseFrameIndex(sprites[i].name, textureName) == int.MaxValue)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static List<Sprite> LoadOrderedSprites(string texturePath, string textureName)
@@ -109,6 +191,31 @@ public static class StripSpriteAnimationBuilder
         });
 
         return sprites;
+    }
+
+    /// <summary>
+    /// <c>wheels</c> interleaves left/right facings; keep odd indices only (left-facing).
+    /// </summary>
+    private static List<Sprite> FilterSpritesForSheet(string textureName, List<Sprite> sprites)
+    {
+        if (!OddFrameOnlySheetNames.Contains(textureName))
+        {
+            return sprites;
+        }
+
+        var filtered = new List<Sprite>(sprites.Count / 2 + 1);
+        for (var i = 0; i < sprites.Count; i++)
+        {
+            var index = ParseFrameIndex(sprites[i].name, textureName);
+            if (index == int.MaxValue || (index & 1) == 0)
+            {
+                continue;
+            }
+
+            filtered.Add(sprites[i]);
+        }
+
+        return filtered;
     }
 
     private static int ParseFrameIndex(string spriteName, string textureName)

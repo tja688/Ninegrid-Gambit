@@ -1,89 +1,161 @@
 # 战斗环节（Battle）
 
-独立状态机：`NineGrid.GameFlow.BattleController`，挂在 MainScene 的 `GameFlow` 上，由主流程 `GameFlowController.BeginBattlePhase()` 拉起。
+独立状态机：`NineGrid.GameFlow.BattleController`，挂在 MainScene `GameFlow` 上。  
+由主流程 `GameFlowController.BeginBattlePhase()` 拉起（序章演出结束 / `Battle0` 就位 / 其他战斗节点占位）。
 
-当前不完善，大量子玩法留位；先保证序章入场后能进战斗、权限开关、敌人信息面板与调试退场。
+> 当前为 jam 骨架：权限、面板、锻造入口、抛锚试射、调试退场已通。胜负、互撞、主流程衔接等见文末缺口。
 
-## 触发
+---
+
+## 流程总览
+
+```
+主流程 BeginBattlePhase
+        │
+        ▼
+   EnterBattle()
+        │
+        ▼
+ ┌── Entering ──────────────────────────────┐
+ │  UnlockPermissions                       │
+ │  Enemy Info Panel 缓动入场 + 默认介绍文字 │
+ └──────────────────┬───────────────────────┘
+                    ▼
+ ┌── Active ────────────────────────────────┐
+ │  点玩家 → 锻造（液压子场景）             │
+ │  点敌人 → 抛锚准备（播完后取消，占位）   │
+ │  Hover 船 → outline 高亮                 │
+ │  小键盘 4 → ExitBattle                   │
+ └──────────────────┬───────────────────────┘
+                    ▼
+ ┌── Exiting ───────────────────────────────┐
+ │  LockPermissions                         │
+ │  若锻造开着 → 液压常规退场               │
+ │  Enemy Info Panel 缓动退场 + 藏文字      │
+ │  玩家缓动到 player exit                  │
+ │  （不 Advance 主流程）                   │
+ └──────────────────┬───────────────────────┘
+                    ▼
+                  Idle
+```
+
+状态枚举：`BattlePhaseState` = `Idle | Entering | Active | Exiting`。
+
+---
+
+## 触发与主流程关系
 
 | 时机 | 行为 |
 |------|------|
-| 序章 `ProloguePerformance.Completed` | `GameFlowController` → `BeginBattlePhase()` → `BattleController.EnterBattle()` |
-| `Battle0`（已历序章） | 双方就位后同样 `BeginBattlePhase()` |
-| 其他战斗节点 | 同上（遭遇配置仍占位） |
-| 后续细化 | 等主流程给出更精确的触发时机再接线 |
+| `Prologue` 演出 `Completed` | `BeginBattlePhase()` → `EnterBattle()` |
+| `Battle0`（已历序章） | 双方就位后 `BeginBattlePhase()` |
+| 其他 `IsBattleState` 节点 | 同上（遭遇配置 **缺口**） |
+| 战斗结束 | **不**调用 `GameFlow.Advance()`（**缺口**：接岛屿 / 下一节点） |
 
-**不**在战斗结束后调用 `GameFlow.Advance()`；完善战斗后再接下一节点。
+后续若主流程给出更精确触发点，只改 `GameFlowController.BeginBattlePhase` 的调用时机即可，不必动战斗内部状态机。
 
-## 状态
+---
 
-```
-Idle → Entering → Active → Exiting → Idle
-```
+## 战斗开始（Entering）
 
-- **Entering**：解锁权限 + 敌人信息面板入场（介绍文字默认显示）
-- **Active**：点玩家锻造 / 点敌人抛锚准备 / hover 仅高亮
-- **Exiting**：收权限、退面板与文字、玩家走到 `player exit`
+| 步骤 | 实现 | 备注 |
+|------|------|------|
+| 解锁玩家 hover / 点击 | `SelectableSceneElement.enabled = true` | 序章期间默认 disabled |
+| 解锁敌人 hover / 点击 | 同上 | 点击进抛锚，非锻造 |
+| `CanEnterForgeMode` | `true` | |
+| `CanEnterAnchorMode` | `true` | |
+| Enemy Info Panel 入场 | `EnemyIntroducePanelController.RequestShow()` | stay + TextAnimator 介绍文字 |
 
-## 战斗开始解锁
+---
 
-| 项 | 状态 |
-|----|------|
-| 玩家船 hover + outline，可点击 | 启用 `player` 上 `SelectableSceneElement`；点击进锻造 |
-| 敌方船 hover + outline，可点击 | 启用 `enemy` 上 `SelectableSceneElement`；点击抛锚准备 |
-| 可进入锻造模式 | `CanEnterForgeMode` → `HydraulicSceneController.Enter()`（宿主可默认失活，Enter 时拉起） |
-| 可进入抛锚互撞 | `CanEnterAnchorMode` → `TryEnterAnchorMode()`：`Fire()` 后立刻 `ResetToIdle()`（测试占位） |
-| 演出：Enemy Info Panel 入场 | `EnemyIntroducePanelController.RequestShow()`，战斗中保持显示 |
+## 战斗中（Active）
 
-序章演出期间双方 `SelectableSceneElement` 保持 **disabled**，避免提前高亮。
+### 锻造模式（液压子场景）
 
-## 战斗中
+- 入口：点击玩家 / 小键盘 **1**（调试）→ `HydraulicSceneController.Enter()`
+- 宿主 `液压场景` **默认可失活**；`Enter()` 先激活再跑协程，退场结束后再失活
+- **开启瞬间**：`EnterStarted` → `EnemyInfo.SuspendImmediate()`（面板 + 文字瞬间消失）
+- **退出瞬间**：`ExitCompleted` / `HydraulicCompleted` → `ResumeImmediate()`（瞬间回到 stay + 文字）
+- 战斗已进入 `Exiting` 时不 `Resume`，避免退场闪一下再藏
 
-1. **点击玩家** → `TryEnterForgeMode()` → 液压锻造子状态机
-2. **Hover 敌人** → 仅 outline 高亮（面板不随 hover 显隐）
-3. **点击敌人** → `AnchorChainLauncher.Fire()` 后立刻取消（抛锚互撞子状态机 TODO）
+液压自身：入场 / 常规退场（小键盘 1）/ 锤击完成退场（小键盘 2）。锤击与卡牌结算 **缺口**。
 
-## 敌人信息面板（UI）
+### 抛锚（占位）
 
-`NineGrid.UI.EnemyIntroducePanelController`，挂在 UI 根，由 `UiSystem.EnemyInfo` 暴露。
+- 入口：点击敌人 → `TryEnterAnchorMode()`
+- 现况：`AnchorChainLauncher.Fire()`，等到 `Attached` 后 `ResetToIdle()` 取消
+- **缺口**：互撞子状态机（拉近、结算、失败/成功分支等）
 
-只保留 **Enemy Info Panel** 一套（不再区分 Info / Introduce 两套行为）：
+### 敌人信息面板
+
+组件：`EnemyIntroducePanelController`（`UiSystem.EnemyInfo`）。
 
 | 对象 | 作用 |
 |------|------|
-| `Enemy Info Panel` | 面板本体（stay 位） |
-| `Enemy Info Panel in` / `Enemy Introduce Panel in` | 入场前待命 / 退场终点 |
-| `Enemy Info Text` / `Enemy Introduce Text` | TextAnimator 文案，面板就位后播放 |
+| `Enemy Info Panel` | 面板 stay |
+| `Enemy Info Panel in` / `Enemy Introduce Panel in` | 入/出场待命点 |
+| `Enemy Info Text` / `Enemy Introduce Text` | 介绍文案 + TextAnimator |
 
-- 战斗开始：缓动入场 + 默认显示介绍文字
-- 战斗结束：收起文字与面板
+| API | 用途 |
+|-----|------|
+| `RequestShow` / `RequestHide` | 战斗开始入场 / 结束退场（缓动） |
+| `HideImmediate` | 立即清掉（开战前、强制重置） |
+| `SuspendImmediate` / `ResumeImmediate` | 锻造开关时瞬间藏/恢复 |
 
-API：`RequestShow(text?)` / `RequestHide()` / `HideImmediate()`。
+战斗中面板默认保持显示，**不**随 hover 显隐。
 
-## 战斗结束
+---
 
-| 项 | 状态 |
-|----|------|
-| 胜负条件（敌/我死亡） | `NotifyCombatantDefeated(bool playerDied)` 占位 |
-| 退场 Enemy Info Panel + 文字 | `RequestHide()` |
-| 收回开始时解锁的权限 | `LockPermissions()` |
-| 玩家缓动到 `player exit` | DOTween |
-| 接主流程下一节点 | **不做** |
+## 战斗结束（Exiting）
 
-### 调试（`DebugHotkeyInput`：新 Input System 优先，旧 Input 兜底；挂在始终激活的 `BattleController`）
+| 步骤 | 现况 |
+|------|------|
+| 胜负条件 | **缺口**：`NotifyCombatantDefeated(bool playerDied)` 仅占位 |
+| 收权限 | `LockPermissions()` |
+| 关锻造 | 若液压 `Active` 则 `Exit()` |
+| 退 Enemy Info | `RequestHide()` |
+| 玩家出场 | DOTween → `player exit` |
+| 接主流程 | **缺口**：不 `Advance()` |
+
+调试：小键盘 **4** → `ExitBattle()`（仅 `Active`）。
+
+---
+
+## 调试热键
+
+监听挂在始终激活的 `BattleController`（`DebugHotkeyInput`：新 Input System 优先，旧 Input 兜底）。  
+液压宿主失活时自身 `Update` 不跑，故小键盘不依赖液压对象。
 
 | 键 | 行为 |
 |----|------|
-| 小键盘 **1** | 液压入场 / 常规退场（宿主可失活，由此拉起） |
+| 小键盘 **1** | 液压入场 / 常规退场 |
 | 小键盘 **2** | 液压完成退场 |
-| 小键盘 **4** | 结束战斗（仅 `Active`） |
+| 小键盘 **4** | 结束战斗 |
 
-液压宿主默认失活时自身 `Update` 不跑，因此小键盘统一由 `BattleController` 监听。仅走旧 `Input.GetKeyDown(Keypad*)` 在本项目里经常收不到键。
+---
 
 ## 场景挂载
 
-- `GameFlow`：`GameFlowController` + `SceneElementPointerSelector` + `BattleController`
-- `player` / `enemy`：`SelectableSceneElement`（默认 disabled，战斗时启用）
-- `液压场景`：默认 **失活**，`HydraulicSceneController.Enter()` 外部拉起，退场后再失活
-- `AnchorChainSystem`：`AnchorChainLauncher`
-- `UI`：`UiSystem` + `EnemyIntroducePanelController`
+| 对象 | 组件 |
+|------|------|
+| `GameFlow` | `GameFlowController`、`SceneElementPointerSelector`、`BattleController` |
+| `player` / `enemy` | `SelectableSceneElement`（默认 disabled） |
+| `液压场景` | `HydraulicSceneController`（默认可失活） |
+| `AnchorChainSystem` | `AnchorChainLauncher` |
+| `UI` | `UiSystem`、`EnemyIntroducePanelController` |
+| `player exit` | 出场点位 |
+
+---
+
+## 后续缺口（按优先级随手补）
+
+1. **胜负**：HP / 死亡 → `NotifyCombatantDefeated`，胜负演出分支  
+2. **抛锚互撞子状态机**：Fire 之后不 Cancel，接拉近、结算、回到 Active  
+3. **锻造玩法**：液压 Active 时的卡牌 / 锤击与战斗数值挂钩  
+4. **主流程衔接**：`ExitCompleted` 后按胜负 `Advance()` 或回菜单  
+5. **遭遇配置**：按 `GameFlowState` 换敌人、文案、船锚目标  
+6. **多敌 / 多面板**：当前单敌人、单 Info Panel  
+7. **输入**：正式操作键位（非小键盘）、手柄  
+8. **音效 / 镜头**：入场、锻造、抛锚、退场  
+
+相关笔记：`GameFlow.md`、`UiDialogueNotice.md`、`SceneElementSelection.md`。

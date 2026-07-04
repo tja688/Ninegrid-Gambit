@@ -54,6 +54,7 @@ namespace NineGrid.GameFlow
         Coroutine _anchorRoutine;
         Tween _playerExitTween;
         BattlePhaseState _state = BattlePhaseState.Idle;
+        bool _hydraulicEventsBound;
 
         public BattlePhaseState State => _state;
         public bool IsBusy =>
@@ -83,12 +84,15 @@ namespace NineGrid.GameFlow
 
             Instance = this;
             ResolveRefs();
+            BindHydraulicEvents();
             LockPermissions();
             enemyInfoPanel?.HideImmediate();
         }
 
         void OnDestroy()
         {
+            UnbindHydraulicEvents();
+
             if (Instance == this)
             {
                 Instance = null;
@@ -426,6 +430,66 @@ namespace NineGrid.GameFlow
             }
         }
 
+        void BindHydraulicEvents()
+        {
+            if (_hydraulicEventsBound)
+            {
+                return;
+            }
+
+            if (hydraulicScene == null)
+            {
+                hydraulicScene = HydraulicSceneController.Instance
+                    ?? FindFirstObjectByType<HydraulicSceneController>(FindObjectsInactive.Include);
+            }
+
+            if (hydraulicScene == null)
+            {
+                return;
+            }
+
+            hydraulicScene.EnterStarted += OnForgeEnterStarted;
+            hydraulicScene.ExitCompleted += OnForgeExitCompleted;
+            hydraulicScene.HydraulicCompleted += OnForgeExitCompleted;
+            _hydraulicEventsBound = true;
+        }
+
+        void UnbindHydraulicEvents()
+        {
+            if (!_hydraulicEventsBound || hydraulicScene == null)
+            {
+                _hydraulicEventsBound = false;
+                return;
+            }
+
+            hydraulicScene.EnterStarted -= OnForgeEnterStarted;
+            hydraulicScene.ExitCompleted -= OnForgeExitCompleted;
+            hydraulicScene.HydraulicCompleted -= OnForgeExitCompleted;
+            _hydraulicEventsBound = false;
+        }
+
+        /// <summary>锻造开启：瞬间藏起敌人信息面板与文字。</summary>
+        void OnForgeEnterStarted()
+        {
+            if (_state != BattlePhaseState.Active && _state != BattlePhaseState.Entering)
+            {
+                return;
+            }
+
+            enemyInfoPanel?.SuspendImmediate();
+        }
+
+        /// <summary>锻造退出：瞬间恢复敌人信息（战斗已结束则不恢复）。</summary>
+        void OnForgeExitCompleted()
+        {
+            if (_state != BattlePhaseState.Active)
+            {
+                return;
+            }
+
+            enemyInfoPanel?.ResumeImmediate();
+        }
+
         void UnlockPermissions()
         {
             SetSelectableEnabled(playerSelectable, true);
@@ -555,6 +619,12 @@ namespace NineGrid.GameFlow
                 // 液压场景默认失活，需包含未激活对象。
                 hydraulicScene = HydraulicSceneController.Instance
                     ?? FindFirstObjectByType<HydraulicSceneController>(FindObjectsInactive.Include);
+            }
+
+            // 引用晚到时补绑锻造进出事件。
+            if (hydraulicScene != null && !_hydraulicEventsBound)
+            {
+                BindHydraulicEvents();
             }
 
             if (enemyInfoPanel == null)

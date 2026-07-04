@@ -43,6 +43,8 @@ namespace NineGrid.UI
         Vector3 _stayPosition;
         bool _stayCached;
         bool _wantVisible;
+        bool _suspended;
+        bool _resumeAfterSuspend;
         string _pendingText;
         Tween _moveTween;
         EnemyIntroducePanelState _state = EnemyIntroducePanelState.Hidden;
@@ -53,6 +55,7 @@ namespace NineGrid.UI
             || _state == EnemyIntroducePanelState.Exiting;
         public bool IsShown => _state == EnemyIntroducePanelState.Shown;
         public bool WantVisible => _wantVisible;
+        public bool IsSuspended => _suspended;
 
         public event Action EnterCompleted;
         public event Action ExitCompleted;
@@ -91,6 +94,14 @@ namespace NineGrid.UI
             }
 
             _wantVisible = true;
+
+            // 锻造挂起期间只记意图，退出锻造时 ResumeImmediate 再亮。
+            if (_suspended)
+            {
+                _resumeAfterSuspend = true;
+                return;
+            }
+
             if (_state == EnemyIntroducePanelState.Hidden
                 || _state == EnemyIntroducePanelState.Exiting)
             {
@@ -101,6 +112,7 @@ namespace NineGrid.UI
         /// <summary>申请退场。可在入场中途打断。</summary>
         public void RequestHide()
         {
+            ClearSuspendFlags();
             _wantVisible = false;
             if (_state == EnemyIntroducePanelState.Shown
                 || _state == EnemyIntroducePanelState.Entering)
@@ -112,8 +124,69 @@ namespace NineGrid.UI
         /// <summary>立即隐藏，无缓动。</summary>
         public void HideImmediate()
         {
+            ClearSuspendFlags();
             _wantVisible = false;
             ApplyHiddenImmediate();
+        }
+
+        /// <summary>
+        /// 锻造等子模式：瞬间藏起面板与文字，保留「战斗中应显示」意图。
+        /// </summary>
+        public void SuspendImmediate()
+        {
+            ResolveRefs();
+            CacheStayPosition();
+
+            if (_suspended)
+            {
+                return;
+            }
+
+            _suspended = true;
+            _resumeAfterSuspend = _wantVisible
+                                  || _state == EnemyIntroducePanelState.Shown
+                                  || _state == EnemyIntroducePanelState.Entering;
+
+            KillMotion();
+            HideTextVisual();
+            SetPanelActive(false);
+        }
+
+        /// <summary>退出子模式后瞬间恢复面板与文字（无缓动）。</summary>
+        public void ResumeImmediate()
+        {
+            if (!_suspended)
+            {
+                return;
+            }
+
+            var shouldShow = _resumeAfterSuspend;
+            ClearSuspendFlags();
+
+            if (!shouldShow)
+            {
+                return;
+            }
+
+            ResolveRefs();
+            CacheStayPosition();
+            KillMotion();
+
+            if (panel != null)
+            {
+                panel.position = _stayPosition;
+            }
+
+            SetPanelActive(true);
+            _wantVisible = true;
+            _state = EnemyIntroducePanelState.Shown;
+            PresentText(_pendingText);
+        }
+
+        void ClearSuspendFlags()
+        {
+            _suspended = false;
+            _resumeAfterSuspend = false;
         }
 
         void BeginEnter()
@@ -303,6 +376,7 @@ namespace NineGrid.UI
         void ApplyHiddenImmediate()
         {
             KillMotion();
+            ClearSuspendFlags();
             _wantVisible = false;
             _state = EnemyIntroducePanelState.Hidden;
             PlaceAt(panel, panelIn);
