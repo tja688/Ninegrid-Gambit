@@ -1,56 +1,59 @@
 using System.Collections.Generic;
 using DG.Tweening;
+using NineGrid.Presentation.Visuals;
 using UnityEngine;
 
 namespace NineGrid.GameFlow
 {
     /// <summary>
-    /// 液压场景材料滑道：从管道倾倒到桌面平台，缓动落位后静止。
-    /// 管道遮盖图转为不可见 SpriteMask，材料在管内被裁切、滑出后可见。
+    /// 液压场景材料滑道：管道倾倒、10 桌面槽位、材料池。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class HydraulicMaterialLane : MonoBehaviour
     {
-        enum MaterialState
-        {
-            Idle = 0,
-            Sliding = 1,
-            Settled = 2,
-        }
+        public const int TableSlotCount = 10;
 
         [Header("Refs")]
         [SerializeField] Transform sceneRoot;
         [SerializeField] Transform pipeMask;
         [SerializeField] Transform spawnPoint;
         [SerializeField] Transform pipeExitPoint;
-        [SerializeField] Transform[] materials;
-        [SerializeField] Transform[] slotPoints;
+        [SerializeField] Transform slotStart;
+        [SerializeField] Transform slotEnd;
+        [SerializeField] Transform materialsRoot;
+        [SerializeField] HydraulicMaterialPiece[] pieces;
+        [SerializeField] Sprite[] materialSprites;
+        [SerializeField] Material outlineMaterial;
 
         [Header("Motion")]
         [SerializeField] float pipeSlideDuration = 0.55f;
         [SerializeField] float platformSlideDuration = 0.7f;
         [SerializeField] Ease pipeSlideEase = Ease.InQuad;
         [SerializeField] Ease platformSlideEase = Ease.OutCubic;
-        [SerializeField] Vector3 materialScale = new Vector3(0.25f, 0.25f, 0.25f);
+        [SerializeField] Vector3 tableScale = new Vector3(0.325f, 0.325f, 0.325f);
+        [SerializeField] Vector3 anvilScale = new Vector3(0.21f, 0.21f, 0.21f);
 
-        readonly List<Tween> _activeTweens = new List<Tween>(4);
-        MaterialState[] _states;
+        [Header("Visual")]
+        [SerializeField] string sortingLayerName = "Factory";
+        [SerializeField] int sortingOrder = 2;
+        [SerializeField] Color materialTint = new Color(0.635f, 0.506f, 0.435f, 1f);
+
+        readonly List<Tween> _activeTweens = new List<Tween>(8);
+        readonly bool[] _tableOccupied = new bool[TableSlotCount];
         Vector3[] _slotPositions;
         bool _laneReady;
 
-        public int SettledCount
+        public Vector3 TableScale => tableScale;
+        public Vector3 AnvilScale => anvilScale;
+
+        public int SettledOnTableCount
         {
             get
             {
-                if (_states == null)
-                {
-                    return 0;
-                }
-
                 var count = 0;
-                for (var i = 0; i < _states.Length; i++)
+                for (var i = 0; i < _tableOccupied.Length; i++)
                 {
-                    if (_states[i] == MaterialState.Settled || _states[i] == MaterialState.Sliding)
+                    if (_tableOccupied[i])
                     {
                         count++;
                     }
@@ -60,26 +63,16 @@ namespace NineGrid.GameFlow
             }
         }
 
-        public int Capacity => materials != null ? materials.Length : 0;
-
         public bool CanDeliver
         {
             get
             {
-                if (!_laneReady || materials == null)
+                if (!_laneReady || pieces == null)
                 {
                     return false;
                 }
 
-                for (var i = 0; i < _states.Length; i++)
-                {
-                    if (_states[i] == MaterialState.Idle)
-                    {
-                        return true;
-                    }
-                }
-
-                return false;
+                return FindFreePieceIndex() >= 0 && FindFreeTableSlot() >= 0;
             }
         }
 
@@ -88,7 +81,7 @@ namespace NineGrid.GameFlow
             ResolveRefs();
             SetupPipeMask();
             CacheSlots();
-            PrepareMaterials();
+            EnsurePiecePool();
             _laneReady = true;
             ResetLane();
         }
@@ -98,102 +91,177 @@ namespace NineGrid.GameFlow
             KillTweens();
         }
 
-        /// <summary>液压场景入场完成 / 退场时调用，清空桌面材料。</summary>
         public void ResetLane()
         {
             KillTweens();
 
-            if (materials == null || _states == null)
+            for (var i = 0; i < _tableOccupied.Length; i++)
+            {
+                _tableOccupied[i] = false;
+            }
+
+            if (pieces == null)
             {
                 return;
             }
 
-            for (var i = 0; i < materials.Length; i++)
+            for (var i = 0; i < pieces.Length; i++)
             {
-                var mat = materials[i];
-                if (mat == null)
+                if (pieces[i] != null)
                 {
-                    continue;
+                    pieces[i].SetPoolHidden(tableScale);
                 }
-
-                mat.DOKill();
-                mat.gameObject.SetActive(false);
-                mat.localScale = materialScale;
-                mat.localRotation = Quaternion.identity;
-                _states[i] = MaterialState.Idle;
             }
         }
 
-        /// <summary>发射下一份材料：沿管道滑出 → 桌面缓动落位。</summary>
         public bool TryDeliver()
         {
-            if (!_laneReady)
-            {
-                ResolveRefs();
-                SetupPipeMask();
-                CacheSlots();
-                PrepareMaterials();
-                _laneReady = true;
-            }
+            EnsureReady();
 
-            if (materials == null || _states == null || spawnPoint == null || pipeExitPoint == null)
+            if (spawnPoint == null || pipeExitPoint == null || pieces == null)
             {
                 return false;
             }
 
-            var index = -1;
-            for (var i = 0; i < _states.Length; i++)
-            {
-                if (_states[i] == MaterialState.Idle)
-                {
-                    index = i;
-                    break;
-                }
-            }
-
-            if (index < 0)
+            var pieceIndex = FindFreePieceIndex();
+            var slotIndex = FindFreeTableSlot();
+            if (pieceIndex < 0 || slotIndex < 0)
             {
                 return false;
             }
 
-            var mat = materials[index];
-            if (mat == null)
+            var piece = pieces[pieceIndex];
+            if (piece == null)
             {
                 return false;
             }
 
-            var slot = GetSlotPosition(index);
-            _states[index] = MaterialState.Sliding;
+            var slot = GetSlotPosition(slotIndex);
+            _tableOccupied[slotIndex] = true;
 
-            mat.DOKill();
-            mat.position = spawnPoint.position;
-            mat.localScale = materialScale;
-            mat.localRotation = Quaternion.identity;
-            mat.gameObject.SetActive(true);
-            ApplyMaskInteraction(mat, SpriteMaskInteraction.VisibleOutsideMask);
+            piece.BeginSlide(spawnPoint.position, tableScale);
+            piece.SetMaskInteraction(SpriteMaskInteraction.VisibleOutsideMask);
 
-            var captured = mat;
-            var capturedIndex = index;
+            var captured = piece;
+            var capturedSlot = slotIndex;
             var sequence = DOTween.Sequence().SetUpdate(true);
-            sequence.Append(captured.DOMove(pipeExitPoint.position, pipeSlideDuration).SetEase(pipeSlideEase));
-            sequence.Append(captured.DOMove(slot, platformSlideDuration).SetEase(platformSlideEase));
-            sequence.OnComplete(() =>
+            sequence.Append(captured.transform.DOMove(pipeExitPoint.position, pipeSlideDuration).SetEase(pipeSlideEase));
+            sequence.AppendCallback(() =>
             {
                 if (captured != null)
                 {
-                    captured.position = slot;
-                    // 落位后不再受遮罩影响，避免边缘闪烁。
-                    ApplyMaskInteraction(captured, SpriteMaskInteraction.None);
+                    captured.SetMaskInteraction(SpriteMaskInteraction.None);
+                }
+            });
+            sequence.Append(captured.transform.DOMove(slot, platformSlideDuration).SetEase(platformSlideEase));
+            sequence.OnComplete(() =>
+            {
+                if (captured == null)
+                {
+                    return;
                 }
 
-                if (_states != null && capturedIndex >= 0 && capturedIndex < _states.Length)
-                {
-                    _states[capturedIndex] = MaterialState.Settled;
-                }
+                captured.SnapToTable(capturedSlot, slot, tableScale);
+                captured.SetMaskInteraction(SpriteMaskInteraction.None);
             });
 
             _activeTweens.Add(sequence);
             return true;
+        }
+
+        public HydraulicMaterialPiece FindInteractableAt(Vector2 worldPoint)
+        {
+            if (pieces == null)
+            {
+                return null;
+            }
+
+            HydraulicMaterialPiece best = null;
+            var bestOrder = int.MinValue;
+
+            for (var i = 0; i < pieces.Length; i++)
+            {
+                var piece = pieces[i];
+                if (piece == null || !piece.isActiveAndEnabled || !piece.IsInteractable)
+                {
+                    continue;
+                }
+
+                var selectable = piece.Selectable;
+                if (selectable == null || !selectable.ContainsWorldPoint(worldPoint))
+                {
+                    var col = piece.GetComponent<Collider2D>();
+                    if (col == null || !col.OverlapPoint(worldPoint))
+                    {
+                        continue;
+                    }
+                }
+
+                var order = piece.SpriteRenderer != null ? piece.SpriteRenderer.sortingOrder : 0;
+                if (best == null || order >= bestOrder)
+                {
+                    best = piece;
+                    bestOrder = order;
+                }
+            }
+
+            return best;
+        }
+
+        public void ReleaseTableSlot(int slotIndex)
+        {
+            if (slotIndex >= 0 && slotIndex < _tableOccupied.Length)
+            {
+                _tableOccupied[slotIndex] = false;
+            }
+        }
+
+        public bool TryPlaceOnFreeTableSlot(HydraulicMaterialPiece piece)
+        {
+            var slot = FindFreeTableSlot();
+            return slot >= 0 && TryPlaceOnTableSlot(piece, slot);
+        }
+
+        public bool TryPlaceOnTableSlot(HydraulicMaterialPiece piece, int slotIndex)
+        {
+            if (piece == null || slotIndex < 0 || slotIndex >= TableSlotCount)
+            {
+                return false;
+            }
+
+            if (_tableOccupied[slotIndex])
+            {
+                return false;
+            }
+
+            _tableOccupied[slotIndex] = true;
+            piece.SettleOnTable(slotIndex, GetSlotPosition(slotIndex), tableScale, 0.22f, Ease.OutCubic);
+            piece.SetMaskInteraction(SpriteMaskInteraction.None);
+            return true;
+        }
+
+        public Vector3 GetSlotPosition(int index)
+        {
+            if (_slotPositions != null && index >= 0 && index < _slotPositions.Length)
+            {
+                return _slotPositions[index];
+            }
+
+            return pipeExitPoint != null ? pipeExitPoint.position : Vector3.zero;
+        }
+
+        void EnsureReady()
+        {
+            if (_laneReady)
+            {
+                return;
+            }
+
+            ResolveRefs();
+            SetupPipeMask();
+            CacheSlots();
+            EnsurePiecePool();
+            _laneReady = true;
         }
 
         void ResolveRefs()
@@ -218,25 +286,248 @@ namespace NineGrid.GameFlow
                 pipeExitPoint = FindDeepChild(sceneRoot, "MaterialPipeExit");
             }
 
-            if (NeedsResolve(materials))
+            if (slotStart == null)
             {
-                materials = new[]
-                {
-                    FindDeepChild(sceneRoot, "material"),
-                    FindDeepChild(sceneRoot, "material (1)"),
-                    FindDeepChild(sceneRoot, "material (2)"),
-                };
+                slotStart = FindDeepChild(sceneRoot, "MaterialSlot_0");
             }
 
-            if (NeedsResolve(slotPoints))
+            if (slotEnd == null)
             {
-                slotPoints = new[]
-                {
-                    FindDeepChild(sceneRoot, "MaterialSlot_0"),
-                    FindDeepChild(sceneRoot, "MaterialSlot_1"),
-                    FindDeepChild(sceneRoot, "MaterialSlot_2"),
-                };
+                slotEnd = FindDeepChild(sceneRoot, "MaterialSlot_9");
             }
+
+            if (materialsRoot == null)
+            {
+                var existing = FindDeepChild(sceneRoot, "Materials");
+                if (existing != null)
+                {
+                    materialsRoot = existing;
+                }
+                else
+                {
+                    var go = new GameObject("Materials");
+                    go.transform.SetParent(sceneRoot, false);
+                    materialsRoot = go.transform;
+                }
+            }
+        }
+
+        void CacheSlots()
+        {
+            _slotPositions = new Vector3[TableSlotCount];
+            var start = slotStart != null
+                ? slotStart.position
+                : new Vector3(-3.9375f, -3.47f, 0f);
+            var end = slotEnd != null
+                ? slotEnd.position
+                : new Vector3(3.4375f, -3.47f, 0f);
+
+            for (var i = 0; i < TableSlotCount; i++)
+            {
+                var t = TableSlotCount == 1 ? 0f : i / (float)(TableSlotCount - 1);
+                _slotPositions[i] = Vector3.Lerp(start, end, t);
+            }
+
+            // 同步中间槽位标记，便于 Scene 里预览。
+            SyncSlotMarkers(start, end);
+        }
+
+        void SyncSlotMarkers(Vector3 start, Vector3 end)
+        {
+            for (var i = 0; i < TableSlotCount; i++)
+            {
+                var name = $"MaterialSlot_{i}";
+                var marker = FindDeepChild(sceneRoot, name);
+                if (marker == null)
+                {
+                    var go = new GameObject(name);
+                    go.transform.SetParent(sceneRoot, false);
+                    marker = go.transform;
+                }
+
+                var t = TableSlotCount == 1 ? 0f : i / (float)(TableSlotCount - 1);
+                marker.position = Vector3.Lerp(start, end, t);
+            }
+        }
+
+        void EnsurePiecePool()
+        {
+            if (pieces != null && pieces.Length == TableSlotCount && !HasNullPiece())
+            {
+                for (var i = 0; i < pieces.Length; i++)
+                {
+                    ConfigurePiece(pieces[i], i);
+                }
+
+                return;
+            }
+
+            var list = new List<HydraulicMaterialPiece>(TableSlotCount);
+            if (pieces != null)
+            {
+                for (var i = 0; i < pieces.Length; i++)
+                {
+                    if (pieces[i] != null)
+                    {
+                        list.Add(pieces[i]);
+                    }
+                }
+            }
+
+            // 回收旧 material 命名物体。
+            CollectLegacyMaterials(list);
+
+            while (list.Count < TableSlotCount)
+            {
+                list.Add(CreatePiece(list.Count));
+            }
+
+            pieces = list.ToArray();
+            for (var i = 0; i < pieces.Length; i++)
+            {
+                ConfigurePiece(pieces[i], i);
+            }
+        }
+
+        bool HasNullPiece()
+        {
+            for (var i = 0; i < pieces.Length; i++)
+            {
+                if (pieces[i] == null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        void CollectLegacyMaterials(List<HydraulicMaterialPiece> list)
+        {
+            if (sceneRoot == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < sceneRoot.childCount; i++)
+            {
+                var child = sceneRoot.GetChild(i);
+                if (child == null || !child.name.StartsWith("material"))
+                {
+                    continue;
+                }
+
+                var piece = child.GetComponent<HydraulicMaterialPiece>();
+                if (piece == null)
+                {
+                    piece = child.gameObject.AddComponent<HydraulicMaterialPiece>();
+                }
+
+                if (!list.Contains(piece))
+                {
+                    list.Add(piece);
+                }
+            }
+        }
+
+        HydraulicMaterialPiece CreatePiece(int index)
+        {
+            var go = new GameObject($"material_{index}");
+            go.transform.SetParent(materialsRoot != null ? materialsRoot : sceneRoot, false);
+
+            var renderer = go.AddComponent<SpriteRenderer>();
+            renderer.sprite = ResolveSprite(index);
+            renderer.color = materialTint;
+            renderer.sortingLayerName = sortingLayerName;
+            renderer.sortingOrder = sortingOrder;
+
+            var piece = go.AddComponent<HydraulicMaterialPiece>();
+            return piece;
+        }
+
+        void ConfigurePiece(HydraulicMaterialPiece piece, int index)
+        {
+            if (piece == null)
+            {
+                return;
+            }
+
+            piece.transform.SetParent(materialsRoot != null ? materialsRoot : sceneRoot, true);
+            piece.name = $"material_{index}";
+            piece.ConfigureSelectable();
+
+            var renderer = piece.SpriteRenderer;
+            if (renderer != null)
+            {
+                if (renderer.sprite == null)
+                {
+                    renderer.sprite = ResolveSprite(index);
+                }
+
+                renderer.color = materialTint;
+                renderer.sortingLayerName = sortingLayerName;
+                renderer.sortingOrder = sortingOrder;
+            }
+
+            var selectable = piece.Selectable;
+            if (selectable != null)
+            {
+                selectable.ConfigureOutline(outlineMaterial, widthPixels: 2);
+            }
+        }
+
+        Sprite ResolveSprite(int index)
+        {
+            if (materialSprites != null && materialSprites.Length > 0)
+            {
+                return materialSprites[index % materialSprites.Length];
+            }
+
+            // 回退：尝试从已有 SpriteRenderer 上拿。
+            if (pieces != null)
+            {
+                for (var i = 0; i < pieces.Length; i++)
+                {
+                    if (pieces[i] != null && pieces[i].SpriteRenderer != null && pieces[i].SpriteRenderer.sprite != null)
+                    {
+                        return pieces[i].SpriteRenderer.sprite;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        int FindFreePieceIndex()
+        {
+            if (pieces == null)
+            {
+                return -1;
+            }
+
+            for (var i = 0; i < pieces.Length; i++)
+            {
+                var piece = pieces[i];
+                if (piece != null && piece.Home == HydraulicMaterialHome.Pool)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        int FindFreeTableSlot()
+        {
+            for (var i = 0; i < _tableOccupied.Length; i++)
+            {
+                if (!_tableOccupied[i])
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         void SetupPipeMask()
@@ -251,7 +542,6 @@ namespace NineGrid.GameFlow
             if (renderer != null)
             {
                 maskSprite = renderer.sprite;
-                // 遮盖图只参与裁切，不渲染给玩家看。
                 renderer.enabled = false;
             }
 
@@ -268,62 +558,8 @@ namespace NineGrid.GameFlow
 
             mask.alphaCutoff = 0.2f;
             mask.isCustomRangeActive = false;
-            mask.frontSortingLayerID = SortingLayer.NameToID("Factory");
-            mask.backSortingLayerID = SortingLayer.NameToID("Factory");
-        }
-
-        void CacheSlots()
-        {
-            var count = materials != null ? materials.Length : 0;
-            _slotPositions = new Vector3[count];
-            _states = new MaterialState[count];
-
-            for (var i = 0; i < count; i++)
-            {
-                if (slotPoints != null && i < slotPoints.Length && slotPoints[i] != null)
-                {
-                    _slotPositions[i] = slotPoints[i].position;
-                }
-                else if (materials[i] != null)
-                {
-                    // 无槽位标记时，沿桌面从左往右排布。
-                    var basePos = materials[0] != null
-                        ? new Vector3(materials[0].position.x, materials[0].position.y, 0f)
-                        : new Vector3(-2.9f, -3.47f, 0f);
-                    _slotPositions[i] = basePos + new Vector3(i * 1.1f, 0f, 0f);
-                }
-            }
-        }
-
-        void PrepareMaterials()
-        {
-            if (materials == null)
-            {
-                return;
-            }
-
-            for (var i = 0; i < materials.Length; i++)
-            {
-                var mat = materials[i];
-                if (mat == null)
-                {
-                    continue;
-                }
-
-                mat.localScale = materialScale;
-                mat.localRotation = Quaternion.identity;
-                ApplyMaskInteraction(mat, SpriteMaskInteraction.VisibleOutsideMask);
-            }
-        }
-
-        Vector3 GetSlotPosition(int index)
-        {
-            if (_slotPositions != null && index >= 0 && index < _slotPositions.Length)
-            {
-                return _slotPositions[index];
-            }
-
-            return pipeExitPoint != null ? pipeExitPoint.position : Vector3.zero;
+            mask.frontSortingLayerID = SortingLayer.NameToID(sortingLayerName);
+            mask.backSortingLayerID = SortingLayer.NameToID(sortingLayerName);
         }
 
         void KillTweens()
@@ -339,50 +575,15 @@ namespace NineGrid.GameFlow
 
             _activeTweens.Clear();
 
-            if (materials == null)
+            if (pieces == null)
             {
                 return;
             }
 
-            for (var i = 0; i < materials.Length; i++)
+            for (var i = 0; i < pieces.Length; i++)
             {
-                if (materials[i] != null)
-                {
-                    materials[i].DOKill();
-                }
+                pieces[i]?.KillMotion();
             }
-        }
-
-        static void ApplyMaskInteraction(Transform target, SpriteMaskInteraction interaction)
-        {
-            if (target == null)
-            {
-                return;
-            }
-
-            var renderer = target.GetComponent<SpriteRenderer>();
-            if (renderer != null)
-            {
-                renderer.maskInteraction = interaction;
-            }
-        }
-
-        static bool NeedsResolve(Transform[] targets)
-        {
-            if (targets == null || targets.Length == 0)
-            {
-                return true;
-            }
-
-            for (var i = 0; i < targets.Length; i++)
-            {
-                if (targets[i] == null)
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         static Transform FindDeepChild(Transform root, string childName)

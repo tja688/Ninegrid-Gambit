@@ -47,6 +47,7 @@ namespace NineGrid.GameFlow
 
         [Header("Materials")]
         [SerializeField] HydraulicMaterialLane materialLane;
+        [SerializeField] HydraulicMaterialBoard materialBoard;
 
         [Header("Enter / Exit Timing")]
         [SerializeField] float moveDuration = 0.45f;
@@ -110,7 +111,7 @@ namespace NineGrid.GameFlow
             CacheStayPositions();
             EnsureBgRayBlocker();
             ApplyHiddenImmediate();
-            materialLane?.ResetLane();
+            ResetMaterials();
         }
 
         void OnDestroy()
@@ -251,7 +252,7 @@ namespace NineGrid.GameFlow
             PlaceAtWorld(display, _displayStay);
             PlaceAtWorld(pipe, _pipeStay);
             SetBgRayBlockEnabled(true);
-            materialLane?.ResetLane();
+            ResetMaterials();
 
             _activeTween = null;
             _routine = null;
@@ -386,8 +387,14 @@ namespace NineGrid.GameFlow
             SetVisualActive(pipe, false);
             SetVisualActive(hammer, false);
             SetOtherVisualsActive(false);
-            materialLane?.ResetLane();
+            ResetMaterials();
             // 不在此处失活宿主：Awake / Enter 过程中宿主必须保持激活才能跑协程。
+        }
+
+        void ResetMaterials()
+        {
+            materialBoard?.ResetBoard();
+            materialLane?.ResetLane();
         }
 
         void EnsureHostActive()
@@ -546,6 +553,12 @@ namespace NineGrid.GameFlow
             {
                 materialLane = GetComponent<HydraulicMaterialLane>()
                     ?? GetComponentInChildren<HydraulicMaterialLane>(true);
+            }
+
+            if (materialBoard == null)
+            {
+                materialBoard = GetComponent<HydraulicMaterialBoard>()
+                    ?? GetComponentInChildren<HydraulicMaterialBoard>(true);
             }
         }
 

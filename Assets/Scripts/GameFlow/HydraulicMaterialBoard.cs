@@ -1,0 +1,531 @@
+using System.Collections.Generic;
+using DG.Tweening;
+using UnityEngine;
+using UnityEngine.EventSystems;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
+
+namespace NineGrid.GameFlow
+{
+    /// <summary>
+    /// 锻造台材料布置：拖拽、三台磁悬浮堆叠、桌面取回。
+    /// </summary>
+    [DisallowMultipleComponent]
+    public sealed class HydraulicMaterialBoard : MonoBehaviour
+    {
+        const int MaxPerAnvil = 10;
+
+        [System.Serializable]
+        sealed class AnvilStation
+        {
+            public Transform surface;
+            public Collider2D zone;
+            [System.NonSerialized] public List<HydraulicMaterialPiece> stack;
+
+            public List<HydraulicMaterialPiece> Stack =>
+                stack ??= new List<HydraulicMaterialPiece>(MaxPerAnvil);
+        }
+
+        [Header("Refs")]
+        [SerializeField] HydraulicMaterialLane lane;
+        [SerializeField] Transform sceneRoot;
+        [SerializeField] Camera worldCamera;
+        [SerializeField] AnvilStation[] anvils = new AnvilStation[3];
+
+        [Header("Layout")]
+        [SerializeField] float anvilBaseLift = 0.35f;
+        [SerializeField] float anvilTopPadding = 0.2f;
+        [SerializeField] float preferredStackSpacing = 0.28f;
+        [SerializeField] float rearrangeDuration = 0.28f;
+        [SerializeField] Ease rearrangeEase = Ease.OutCubic;
+        [SerializeField] int dragSortingOrder = 40;
+
+        [Header("Input")]
+        [SerializeField] bool ignoreWhenPointerOverUi = true;
+
+        HydraulicMaterialPiece _dragged;
+        HydraulicMaterialHome _dragOriginHome;
+        int _dragOriginTableSlot = -1;
+        int _dragOriginAnvil = -1;
+        int _dragOriginStack = -1;
+        Vector3 _dragOriginPosition;
+        Vector3 _dragOriginScale;
+        Vector3 _dragOffset;
+
+        public bool IsDragging => _dragged != null;
+
+        void Awake()
+        {
+            ResolveRefs();
+        }
+
+        void Update()
+        {
+            var scene = HydraulicSceneController.Instance;
+            if (scene == null || !scene.IsActive)
+            {
+                if (_dragged != null)
+                {
+                    CancelDragToOrigin();
+                }
+
+                return;
+            }
+
+            if (_dragged != null)
+            {
+                TickDrag();
+                if (WasPointerReleased())
+                {
+                    EndDrag();
+                }
+
+                return;
+            }
+
+            if (WasPointerPressed() && TryGetPointerWorld(out var world))
+            {
+                if (ignoreWhenPointerOverUi && IsPointerOverUi())
+                {
+                    return;
+                }
+
+                var piece = lane != null ? lane.FindInteractableAt(world) : null;
+                if (piece != null)
+                {
+                    BeginDrag(piece, world);
+                }
+            }
+        }
+
+        void LateUpdate()
+        {
+            // 压过 SceneElementPointerSelector，拖拽中保持 outline。
+            if (_dragged != null)
+            {
+                _dragged.SetSelected(true);
+            }
+        }
+
+        void OnDestroy()
+        {
+            if (_dragged != null)
+            {
+                _dragged.KillMotion();
+                _dragged = null;
+            }
+        }
+
+        public void ResetBoard()
+        {
+            if (_dragged != null)
+            {
+                _dragged.KillMotion();
+                _dragged = null;
+            }
+
+            if (anvils == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < anvils.Length; i++)
+            {
+                anvils[i]?.Stack.Clear();
+            }
+        }
+
+        void BeginDrag(HydraulicMaterialPiece piece, Vector3 pointerWorld)
+        {
+            _dragged = piece;
+            _dragOriginHome = piece.Home;
+            _dragOriginTableSlot = piece.TableSlot;
+            _dragOriginAnvil = piece.AnvilIndex;
+            _dragOriginStack = piece.StackIndex;
+            _dragOriginPosition = piece.RestPosition;
+            _dragOriginScale = piece.transform.localScale;
+            _dragOffset = piece.transform.position - pointerWorld;
+
+            if (piece.Home == HydraulicMaterialHome.Table)
+            {
+                lane.ReleaseTableSlot(piece.TableSlot);
+            }
+            else if (piece.Home == HydraulicMaterialHome.Anvil)
+            {
+                RemoveFromAnvil(piece.AnvilIndex, piece);
+                RelayoutAnvil(piece.AnvilIndex, animate: true);
+            }
+
+            piece.BeginDrag(dragSortingOrder);
+        }
+
+        void TickDrag()
+        {
+            if (_dragged == null || !TryGetPointerWorld(out var world))
+            {
+                return;
+            }
+
+            _dragged.FollowPointer(world + _dragOffset);
+            _dragged.SetSelected(true);
+        }
+
+        void EndDrag()
+        {
+            if (_dragged == null)
+            {
+                return;
+            }
+
+            var piece = _dragged;
+            _dragged = null;
+            piece.SetSelected(false);
+
+            if (!TryGetPointerWorld(out var world))
+            {
+                world = piece.transform.position;
+            }
+
+            var dropPoint = world + _dragOffset;
+            var anvilIndex = FindAnvilAt(dropPoint);
+
+            if (anvilIndex >= 0)
+            {
+                if (TryPlaceOnAnvil(piece, anvilIndex, dropPoint.y))
+                {
+                    return;
+                }
+
+                // 目标台已满：若来自该台则插回，否则回原位。
+                ReturnToOrigin(piece);
+                return;
+            }
+
+            // 未落在锻造台：尝试回桌面。
+            if (lane != null && lane.TryPlaceOnFreeTableSlot(piece))
+            {
+                return;
+            }
+
+            ReturnToOrigin(piece);
+        }
+
+        void CancelDragToOrigin()
+        {
+            if (_dragged == null)
+            {
+                return;
+            }
+
+            var piece = _dragged;
+            _dragged = null;
+            piece.SetSelected(false);
+            ReturnToOrigin(piece);
+        }
+
+        void ReturnToOrigin(HydraulicMaterialPiece piece)
+        {
+            if (piece == null)
+            {
+                return;
+            }
+
+            if (_dragOriginHome == HydraulicMaterialHome.Anvil && _dragOriginAnvil >= 0)
+            {
+                if (TryPlaceOnAnvil(piece, _dragOriginAnvil, _dragOriginPosition.y))
+                {
+                    return;
+                }
+            }
+
+            if (_dragOriginHome == HydraulicMaterialHome.Table && lane != null)
+            {
+                if (_dragOriginTableSlot >= 0 && lane.TryPlaceOnTableSlot(piece, _dragOriginTableSlot))
+                {
+                    return;
+                }
+
+                if (lane.TryPlaceOnFreeTableSlot(piece))
+                {
+                    return;
+                }
+            }
+
+            // 兜底：尽量回锻造台原位，否则藏回池。
+            if (_dragOriginAnvil >= 0 && TryPlaceOnAnvil(piece, _dragOriginAnvil, _dragOriginPosition.y))
+            {
+                return;
+            }
+
+            piece.SetPoolHidden(lane != null ? lane.TableScale : _dragOriginScale);
+        }
+
+        bool TryPlaceOnAnvil(HydraulicMaterialPiece piece, int anvilIndex, float dropY)
+        {
+            if (piece == null || anvils == null || anvilIndex < 0 || anvilIndex >= anvils.Length)
+            {
+                return false;
+            }
+
+            var anvil = anvils[anvilIndex];
+            if (anvil == null || anvil.surface == null)
+            {
+                return false;
+            }
+
+            var stack = anvil.Stack;
+
+            // 已在该台列表中则先移除再插入。
+            stack.Remove(piece);
+
+            if (stack.Count >= MaxPerAnvil)
+            {
+                return false;
+            }
+
+            var insertAt = stack.Count;
+            for (var i = 0; i < stack.Count; i++)
+            {
+                var other = stack[i];
+                if (other != null && dropY < other.RestPosition.y)
+                {
+                    insertAt = i;
+                    break;
+                }
+            }
+
+            stack.Insert(insertAt, piece);
+            RelayoutAnvil(anvilIndex, animate: true);
+            return true;
+        }
+
+        void RemoveFromAnvil(int anvilIndex, HydraulicMaterialPiece piece)
+        {
+            if (anvils == null || anvilIndex < 0 || anvilIndex >= anvils.Length)
+            {
+                return;
+            }
+
+            anvils[anvilIndex]?.Stack.Remove(piece);
+        }
+
+        void RelayoutAnvil(int anvilIndex, bool animate)
+        {
+            if (anvils == null || anvilIndex < 0 || anvilIndex >= anvils.Length)
+            {
+                return;
+            }
+
+            var anvil = anvils[anvilIndex];
+            if (anvil == null || anvil.surface == null)
+            {
+                return;
+            }
+
+            var stack = anvil.Stack;
+
+            // 清掉空引用。
+            for (var i = stack.Count - 1; i >= 0; i--)
+            {
+                if (stack[i] == null)
+                {
+                    stack.RemoveAt(i);
+                }
+            }
+
+            var count = stack.Count;
+            if (count == 0)
+            {
+                return;
+            }
+
+            var minY = anvil.surface.position.y + anvilBaseLift;
+            var maxY = minY + preferredStackSpacing * (MaxPerAnvil - 1);
+            if (anvil.zone != null)
+            {
+                maxY = anvil.zone.bounds.max.y - anvilTopPadding;
+            }
+
+            var span = Mathf.Max(0.01f, maxY - minY);
+            var spacing = count <= 1
+                ? 0f
+                : Mathf.Min(preferredStackSpacing, span / (count - 1));
+
+            var anvilScale = lane != null ? lane.AnvilScale : Vector3.one * 0.2f;
+            var duration = animate ? rearrangeDuration : 0f;
+
+            for (var i = 0; i < count; i++)
+            {
+                var piece = stack[i];
+                if (piece == null)
+                {
+                    continue;
+                }
+
+                var rest = new Vector3(anvil.surface.position.x, minY + spacing * i, 0f);
+                piece.PlaceOnAnvil(anvilIndex, i, rest, anvilScale, duration, rearrangeEase, enableBob: true);
+            }
+        }
+
+        int FindAnvilAt(Vector2 worldPoint)
+        {
+            if (anvils == null)
+            {
+                return -1;
+            }
+
+            for (var i = 0; i < anvils.Length; i++)
+            {
+                var anvil = anvils[i];
+                if (anvil?.zone != null && anvil.zone.enabled && anvil.zone.OverlapPoint(worldPoint))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        void ResolveRefs()
+        {
+            if (sceneRoot == null)
+            {
+                sceneRoot = transform;
+            }
+
+            if (lane == null)
+            {
+                lane = GetComponent<HydraulicMaterialLane>()
+                    ?? GetComponentInChildren<HydraulicMaterialLane>(true);
+            }
+
+            if (worldCamera == null)
+            {
+                worldCamera = Camera.main;
+            }
+
+            EnsureAnvil(0, "锻造台台面左");
+            EnsureAnvil(1, "锻造台台面中");
+            EnsureAnvil(2, "锻造台台面右");
+        }
+
+        void EnsureAnvil(int index, string objectName)
+        {
+            if (anvils == null || anvils.Length < 3)
+            {
+                anvils = new AnvilStation[3];
+            }
+
+            if (anvils[index] == null)
+            {
+                anvils[index] = new AnvilStation();
+            }
+
+            if (anvils[index].surface == null)
+            {
+                anvils[index].surface = FindDeepChild(sceneRoot, objectName);
+            }
+
+            if (anvils[index].zone == null && anvils[index].surface != null)
+            {
+                anvils[index].zone = anvils[index].surface.GetComponent<Collider2D>();
+            }
+        }
+
+        bool TryGetPointerWorld(out Vector3 world)
+        {
+            if (worldCamera == null)
+            {
+                worldCamera = Camera.main;
+            }
+
+            if (worldCamera == null)
+            {
+                world = default;
+                return false;
+            }
+
+            var screen = GetPointerScreenPosition();
+            if (float.IsNaN(screen.x) || float.IsNaN(screen.y))
+            {
+                world = default;
+                return false;
+            }
+
+            var depth = Mathf.Abs(worldCamera.transform.position.z);
+            world = worldCamera.ScreenToWorldPoint(new Vector3(screen.x, screen.y, depth));
+            world.z = 0f;
+            return true;
+        }
+
+        static Vector2 GetPointerScreenPosition()
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (Mouse.current != null)
+            {
+                return Mouse.current.position.ReadValue();
+            }
+#endif
+            return Input.mousePosition;
+        }
+
+        static bool WasPointerPressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (Mouse.current != null)
+            {
+                return Mouse.current.leftButton.wasPressedThisFrame;
+            }
+#endif
+            return Input.GetMouseButtonDown(0);
+        }
+
+        static bool WasPointerReleased()
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (Mouse.current != null)
+            {
+                return Mouse.current.leftButton.wasReleasedThisFrame;
+            }
+#endif
+            return Input.GetMouseButtonUp(0);
+        }
+
+        static bool IsPointerOverUi()
+        {
+            return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+        }
+
+        static Transform FindDeepChild(Transform root, string childName)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            var direct = root.Find(childName);
+            if (direct != null)
+            {
+                return direct;
+            }
+
+            for (var i = 0; i < root.childCount; i++)
+            {
+                var child = root.GetChild(i);
+                if (child.name == childName)
+                {
+                    return child;
+                }
+
+                var nested = FindDeepChild(child, childName);
+                if (nested != null)
+                {
+                    return nested;
+                }
+            }
+
+            return null;
+        }
+    }
+}

@@ -129,6 +129,22 @@ namespace NineGrid.Presentation.Visuals
             ApplyVisual();
         }
 
+        /// <summary>运行时配置选中描边（材料拖拽等动态生成物体用）。</summary>
+        public void ConfigureOutline(Material silhouetteMaterial, int widthPixels = 2)
+        {
+            visualMode = SelectionVisualMode.Outline;
+            outlineWidthPixels = Mathf.Clamp(widthPixels, 1, 3);
+            if (silhouetteMaterial != null)
+            {
+                outlineMaterial = silhouetteMaterial;
+            }
+
+            CacheComponents();
+            EnsureHitCollider();
+            EnsureOutlineRenderers();
+            ApplyVisual();
+        }
+
         public bool ContainsWorldPoint(Vector2 worldPoint)
         {
             if (hitCollider == null)
