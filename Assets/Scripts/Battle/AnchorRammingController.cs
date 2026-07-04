@@ -37,42 +37,48 @@ namespace NineGrid.Battle
         [SerializeField] CameraJuice cameraJuice;
 
         [Header("拉近 / 双向奔赴")]
-        [Tooltip("完全不点、绞盘自动慢搅时的拉近速度（进度/秒）。")]
-        public float minApproachRate = 0.12f;
+        [Tooltip("绞劲很低时的拉近速度（进度/秒）。故意极慢，逼玩家狂点。")]
+        public float minApproachRate = 0.02f;
         [Tooltip("狂点顶满时的拉近速度（进度/秒）。")]
-        public float maxApproachRate = 0.95f;
-        [Tooltip("对撞瞬间两船“中心距离”。越小两船越贴。")]
-        public float collisionGap = 3.0f;
-        [Tooltip("位置插值缓动：InCubic = 起步慢、临撞前加速冲刺。")]
-        public Ease approachEase = Ease.InCubic;
-        [Tooltip("拉近过程中船体抖动峰值（世界单位，乘以当前绞劲）。")]
-        public float shipShakeMax = 0.14f;
+        public float maxApproachRate = 1.55f;
+        [Tooltip("绞劲→拉近的幂次。>1 时低强度几乎不动，逼近满劲才缓慢启动再猛加速。")]
+        [Range(1f, 4f)] public float approachIntensityPower = 2.4f;
+        [Tooltip("对撞瞬间两船“中心距离”。越小越脸贴脸。")]
+        public float collisionGap = 1.0f;
+        [Tooltip("位置插值缓动：InQuart = 前半艰难、中后段越来越快。")]
+        public Ease approachEase = Ease.InQuart;
+        [Tooltip("拉近过程中船体抖动峰值（世界单位）。")]
+        public float shipShakeMax = 0.28f;
+        [Tooltip("临撞冲刺阶段船体抖动倍率。")]
+        public float preImpactShipShakeMul = 1.8f;
 
         [Header("对撞前演出（时间缓速 + 镜头放大 · 可开关对比）")]
         [Tooltip("总开关：觉得效果不好就关掉，只保留干脆的对撞。")]
         public bool enableSlowMoZoom = true;
         [Tooltip("拉近进度到达该值时进入“临撞committed”阶段（必定完成对撞）。")]
-        [Range(0.5f, 0.98f)] public float preImpactApproach = 0.8f;
+        [Range(0.5f, 0.98f)] public float preImpactApproach = 0.72f;
         [Tooltip("临撞committed后，用固定时长把剩余进度推满（缩放时间秒）。")]
-        public float finalRushDuration = 0.4f;
+        public float finalRushDuration = 0.55f;
+        [Tooltip("终段冲刺缓动：慢启动再加速撞上。")]
+        public Ease finalRushEase = Ease.InCubic;
         [Tooltip("缓速目标 timeScale。")]
-        [Range(0.05f, 1f)] public float slowMoTimeScale = 0.3f;
+        [Range(0.05f, 1f)] public float slowMoTimeScale = 0.18f;
         [Tooltip("进入缓速的过渡时间（真实秒）。")]
-        public float slowMoRampDuration = 0.1f;
+        public float slowMoRampDuration = 0.15f;
         [Tooltip("镜头放大倍率（正交尺寸乘数，<1 为拉近）。")]
-        [Range(0.3f, 1f)] public float zoomSizeMultiplier = 0.75f;
+        [Range(0.3f, 1f)] public float zoomSizeMultiplier = 0.62f;
         [Tooltip("对撞后镜头拉回时间（真实秒）。")]
-        public float zoomOutDuration = 0.25f;
+        public float zoomOutDuration = 0.35f;
 
         [Header("对撞反馈")]
         [Tooltip("命中冻结时长（真实秒），0 = 不冻结。")]
-        public float hitStopDuration = 0.06f;
+        public float hitStopDuration = 0.1f;
         [Tooltip("最弱对撞的震屏幅度。")]
-        public float impactShakeMin = 0.25f;
+        public float impactShakeMin = 0.5f;
         [Tooltip("最猛对撞的震屏幅度。")]
-        public float impactShakeMax = 0.9f;
-        public float impactShakeDuration = 0.4f;
-        public float impactShakeFrequency = 26f;
+        public float impactShakeMax = 1.8f;
+        public float impactShakeDuration = 0.8f;
+        public float impactShakeFrequency = 32f;
         [Tooltip("对撞力度下限，保证再弱也有反馈。")]
         [Range(0f, 1f)] public float minImpactPower = 0.25f;
         [Tooltip("对撞力度的衰减：反映“临撞前一段时间的狂点峰值”。")]
@@ -80,11 +86,11 @@ namespace NineGrid.Battle
 
         [Header("弹开回位")]
         [Tooltip("满力度时，弹开越过基础点位的额外距离。")]
-        public float bounceOvershoot = 1.0f;
+        public float bounceOvershoot = 1.8f;
         [Tooltip("弹开（向外冲）的时长（真实秒）。")]
-        public float bounceOutDuration = 0.12f;
+        public float bounceOutDuration = 0.16f;
         [Tooltip("回落到基础点位的时长（真实秒）。")]
-        public float settleDuration = 0.55f;
+        public float settleDuration = 0.6f;
         public Ease settleEase = Ease.OutBack;
 
         [Header("其它")]
@@ -223,7 +229,8 @@ namespace NineGrid.Battle
             float approach = 0f;
             float impactPower = 0f;
             bool committed = false;
-            float finalRushRate = 0f;
+            float committedStart = 0f;
+            float rushElapsed = 0f;
 
             while (approach < 1f)
             {
@@ -235,14 +242,17 @@ namespace NineGrid.Battle
                     // 力度 = 临撞前一段时间的狂点峰值（松手会掉）。
                     impactPower = Mathf.Max(impactPower - impactPowerDecay * Time.unscaledDeltaTime, intensity);
 
-                    float rate = Mathf.Lerp(minApproachRate, maxApproachRate, intensity);
+                    // 低绞劲几乎不动；逼近满劲才缓慢启动，再猛加速。
+                    float pull = Mathf.Pow(Mathf.Clamp01(intensity), approachIntensityPower);
+                    float rate = Mathf.Lerp(minApproachRate, maxApproachRate, pull);
                     approach = Mathf.Min(1f, approach + rate * dt);
 
                     if (approach >= preImpactApproach)
                     {
                         committed = true;
+                        committedStart = approach;
+                        rushElapsed = 0f;
                         _phase = RamPhase.PreImpact;
-                        finalRushRate = (1f - approach) / Mathf.Max(0.01f, finalRushDuration);
                         onPreImpact?.Invoke();
 
                         if (enableSlowMoZoom)
@@ -258,13 +268,23 @@ namespace NineGrid.Battle
                 }
                 else
                 {
-                    approach = Mathf.Min(1f, approach + finalRushRate * dt);
+                    // 终段：慢启动 → 加速撞上（缩放时间下更有速度感）。
+                    rushElapsed += dt;
+                    float u = Mathf.Clamp01(rushElapsed / Mathf.Max(0.01f, finalRushDuration));
+                    float easedU = DOVirtual.EasedValue(0f, 1f, u, finalRushEase);
+                    approach = Mathf.Lerp(committedStart, 1f, easedU);
                 }
 
                 float eased = DOVirtual.EasedValue(0f, 1f, approach, approachEase);
-                float jitter = shipShakeMax * (committed ? 1f : intensity);
-                player.position = Vector3.Lerp(pHome, pContact, eased) + Jitter(jitter, 1.1f);
-                enemy.position = Vector3.Lerp(eHome, eContact, eased) + Jitter(jitter, 5.7f);
+                // 越近抖越狠，体现速度感；临撞再加一档。
+                float speedFeel = DOVirtual.EasedValue(0f, 1f, approach, Ease.InQuad);
+                float jitterBase = committed
+                    ? shipShakeMax * preImpactShipShakeMul
+                    : shipShakeMax * Mathf.Lerp(0.2f, 1f, intensity);
+                float jitter = jitterBase * (0.3f + 0.7f * speedFeel);
+                float jitterHz = committed ? 58f : Mathf.Lerp(28f, 48f, intensity);
+                player.position = Vector3.Lerp(pHome, pContact, eased) + Jitter(jitter, 1.1f, jitterHz);
+                enemy.position = Vector3.Lerp(eHome, eContact, eased) + Jitter(jitter, 5.7f, jitterHz);
                 UpdateChainTracking();
 
                 yield return null;
@@ -385,10 +405,10 @@ namespace NineGrid.Battle
             _timeTween = null;
         }
 
-        static Vector3 Jitter(float amp, float seed)
+        static Vector3 Jitter(float amp, float seed, float hz = 40f)
         {
             if (amp <= 0f) return Vector3.zero;
-            float t = Time.unscaledTime * 40f;
+            float t = Time.unscaledTime * hz;
             float x = (Mathf.PerlinNoise(seed, t) - 0.5f) * 2f * amp;
             float y = (Mathf.PerlinNoise(t, seed + 3.1f) - 0.5f) * 2f * amp;
             return new Vector3(x, y, 0f);

@@ -23,12 +23,12 @@ namespace NineGrid.Battle
         [SerializeField] Camera inputCamera;
 
         [Header("点击频率 → 强度")]
-        [Tooltip("每次点击增加的强度。")]
-        [Range(0.02f, 0.5f)] public float clickGain = 0.16f;
+        [Tooltip("每次点击增加的强度。偏小 = 起步更艰难，要狂点。")]
+        [Range(0.02f, 0.5f)] public float clickGain = 0.12f;
         [Tooltip("基础衰减（每秒）。")]
-        [Range(0f, 3f)] public float decayBase = 0.5f;
+        [Range(0f, 3f)] public float decayBase = 0.52f;
         [Tooltip("额外衰减：强度越高衰减越猛（每秒，乘以当前强度）。越大越难顶满 = 越有挑战。")]
-        [Range(0f, 4f)] public float decayIntensityScale = 0.85f;
+        [Range(0f, 4f)] public float decayIntensityScale = 1.1f;
         [Tooltip("显示强度向目标强度平滑的速度。")]
         [Range(1f, 30f)] public float intensitySmooth = 14f;
         [Tooltip("点击判定的额外外扩（世界单位），让高速点击更跟手。")]

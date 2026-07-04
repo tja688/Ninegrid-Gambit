@@ -20,9 +20,9 @@ namespace NineGrid.Battle
         [SerializeField] bool suspendPixelPerfectDuringEffects = true;
 
         [Header("抖动默认值")]
-        [SerializeField] float defaultShakeFrequency = 26f;
+        [SerializeField] float defaultShakeFrequency = 32f;
         [Tooltip("抖动是否也带一点点旋转（roll），更有冲击感。")]
-        [SerializeField] float shakeRollDegrees = 1.2f;
+        [SerializeField] float shakeRollDegrees = 2.8f;
 
         Behaviour _pixelPerfect;
         Vector3 _baseLocalPos;
