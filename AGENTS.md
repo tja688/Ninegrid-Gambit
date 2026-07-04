@@ -2,11 +2,10 @@
 
 ## 项目介绍
 
-嗨哟，收绞盘！（Heave and Paul!）， Unity 6.3 LTS · URP · 2D 像素风，24hgamejam 作品，在设计系统和落地实现时注意以快速出效果为第一要务。
+嗨哟，收绞盘！（Heave and Paul!）， Unity 6.3 LTS · URP · 2D 像素风，24h gamejam 作品，在设计系统和落地实现时注意以快速出效果为第一要务。
 
 - **框架**：QFramework
 - **代码入口**：`Assets/Scripts`
-- **唯一游戏场景**：`Assets/Scenes/MainScene.unity`
 - **全局约束**：开发前阅读 [`rules.md`](rules.md)
 
 ---
