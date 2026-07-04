@@ -1,0 +1,624 @@
+fileFormatVersion: 2
+guid: a7b0f96484245a9488e67b7880f546b6
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 1598615004482679480
+    second: bore_head_0
+  - first:
+      213: -7130019743447287101
+    second: bore_head_1
+  - first:
+      213: -7335514421697064220
+    second: bore_head_2
+  - first:
+      213: -4896766628479167071
+    second: bore_head_3
+  - first:
+      213: 7167278329959985165
+    second: bore_head_4
+  - first:
+      213: -560147246965612298
+    second: bore_head_5
+  - first:
+      213: 5719236238262779366
+    second: bore_head_6
+  - first:
+      213: 7095590004523941378
+    second: bore_head_7
+  - first:
+      213: -6855269069827909745
+    second: bore_head_8
+  - first:
+      213: -1126128827131311793
+    second: bore_head_9
+  - first:
+      213: 392147033949793820
+    second: bore_head_10
+  - first:
+      213: -7222448458108854599
+    second: bore_head_11
+  - first:
+      213: -5558143622528019212
+    second: bore_head_12
+  - first:
+      213: -8513471731503217921
+    second: bore_head_13
+  - first:
+      213: 7207565510813769681
+    second: bore_head_14
+  - first:
+      213: 8639526924073091171
+    second: bore_head_15
+  - first:
+      213: 6032242969822262844
+    second: bore_head_16
+  - first:
+      213: 2219735502228556861
+    second: bore_head_17
+  - first:
+      213: 7745403610950255239
+    second: bore_head_18
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: 4
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: bore_head_0
+      rect:
+        serializedVersion: 2
+        x: 26
+        y: 337
+        width: 28
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b2bcc270eb6f2610800000000000000
+      internalID: 1598615004482679480
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_1
+      rect:
+        serializedVersion: 2
+        x: 106
+        y: 337
+        width: 28
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ca7d4ed1d41d0d90800000000000000
+      internalID: -7130019743447287101
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_2
+      rect:
+        serializedVersion: 2
+        x: 186
+        y: 337
+        width: 28
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e2ddf9af74033a90800000000000000
+      internalID: -7335514421697064220
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_3
+      rect:
+        serializedVersion: 2
+        x: 266
+        y: 337
+        width: 28
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1a5138112b03b0cb0800000000000000
+      internalID: -4896766628479167071
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_4
+      rect:
+        serializedVersion: 2
+        x: 347
+        y: 337
+        width: 26
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d00be9fcaa9477360800000000000000
+      internalID: 7167278329959985165
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_5
+      rect:
+        serializedVersion: 2
+        x: 27
+        y: 257
+        width: 26
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6f0a3b2fb05f938f0800000000000000
+      internalID: -560147246965612298
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_6
+      rect:
+        serializedVersion: 2
+        x: 107
+        y: 257
+        width: 26
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6edb1309e0fce5f40800000000000000
+      internalID: 5719236238262779366
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_7
+      rect:
+        serializedVersion: 2
+        x: 188
+        y: 257
+        width: 24
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 20e367bd389987260800000000000000
+      internalID: 7095590004523941378
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_8
+      rect:
+        serializedVersion: 2
+        x: 269
+        y: 257
+        width: 22
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f875f2d0a113dd0a0800000000000000
+      internalID: -6855269069827909745
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_9
+      rect:
+        serializedVersion: 2
+        x: 349
+        y: 257
+        width: 22
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f49c2875ccf2f50f0800000000000000
+      internalID: -1126128827131311793
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_10
+      rect:
+        serializedVersion: 2
+        x: 30
+        y: 177
+        width: 20
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c1eec4256af217500800000000000000
+      internalID: 392147033949793820
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_11
+      rect:
+        serializedVersion: 2
+        x: 109
+        y: 177
+        width: 22
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9be9addb465b4cb90800000000000000
+      internalID: -7222448458108854599
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_12
+      rect:
+        serializedVersion: 2
+        x: 189
+        y: 177
+        width: 22
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4f45d98d2d18dd2b0800000000000000
+      internalID: -5558143622528019212
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_13
+      rect:
+        serializedVersion: 2
+        x: 268
+        y: 177
+        width: 24
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ff2cb6601921ad980800000000000000
+      internalID: -8513471731503217921
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_14
+      rect:
+        serializedVersion: 2
+        x: 347
+        y: 177
+        width: 26
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1df596f05aa660460800000000000000
+      internalID: 7207565510813769681
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_15
+      rect:
+        serializedVersion: 2
+        x: 27
+        y: 97
+        width: 26
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 360ccc896f3c5e770800000000000000
+      internalID: 8639526924073091171
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_16
+      rect:
+        serializedVersion: 2
+        x: 107
+        y: 97
+        width: 26
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c367a175505d6b350800000000000000
+      internalID: 6032242969822262844
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_17
+      rect:
+        serializedVersion: 2
+        x: 186
+        y: 97
+        width: 28
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d3c08a9bda51ece10800000000000000
+      internalID: 2219735502228556861
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bore_head_18
+      rect:
+        serializedVersion: 2
+        x: 266
+        y: 97
+        width: 28
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 782c7b81c833d7b60800000000000000
+      internalID: 7745403610950255239
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      bore_head_0: 1598615004482679480
+      bore_head_1: -7130019743447287101
+      bore_head_10: 392147033949793820
+      bore_head_11: -7222448458108854599
+      bore_head_12: -5558143622528019212
+      bore_head_13: -8513471731503217921
+      bore_head_14: 7207565510813769681
+      bore_head_15: 8639526924073091171
+      bore_head_16: 6032242969822262844
+      bore_head_17: 2219735502228556861
+      bore_head_18: 7745403610950255239
+      bore_head_2: -7335514421697064220
+      bore_head_3: -4896766628479167071
+      bore_head_4: 7167278329959985165
+      bore_head_5: -560147246965612298
+      bore_head_6: 5719236238262779366
+      bore_head_7: 7095590004523941378
+      bore_head_8: -6855269069827909745
+      bore_head_9: -1126128827131311793
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: PIXEL_ART_IMAGE_PROCESSED_V1_PPU_32
+  assetBundleName: 
+  assetBundleVariant: 
