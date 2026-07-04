@@ -72,13 +72,15 @@
 
 ### 锻造模式（液压子场景）
 
+专文：`HydraulicForge.md`（出料、桌面 10 槽、三台拖拽堆叠、遮罩与调参）。
+
 - 入口：点击玩家 / 小键盘 **1**（调试）→ `HydraulicSceneController.Enter()`
 - 宿主 `液压场景` **默认可失活**；`Enter()` 先激活再跑协程，退场结束后再失活
 - **开启瞬间**：`EnterStarted` → `EnemyInfo.SuspendImmediate()`（面板 + 文字瞬间消失）
 - **退出瞬间**：`ExitCompleted` / `HydraulicCompleted` → `ResumeImmediate()`（瞬间回到 stay + 文字）
 - 战斗已进入 `Exiting` 时不 `Resume`，避免退场闪一下再藏
 
-液压自身：入场 / 常规退场（小键盘 1）/ 锤击完成退场（小键盘 2）。锤击与卡牌结算 **缺口**。
+液压自身：入场 / 常规退场（小键盘 1）/ 锤击完成退场（小键盘 2）/ 出料（小键盘 5）。锤击读台结算与战斗数值挂钩仍为 **缺口**。
 
 ### 抛锚（占位）
 
@@ -131,6 +133,7 @@
 | 小键盘 **1** | 液压入场 / 常规退场 |
 | 小键盘 **2** | 液压完成退场 |
 | 小键盘 **4** | 结束战斗 |
+| 小键盘 **5** | 液压 Active 时管道出一份材料 |
 
 ---
 
@@ -140,7 +143,7 @@
 |------|------|
 | `GameFlow` | `GameFlowController`、`SceneElementPointerSelector`、`BattleController` |
 | `player` / `enemy` | `SelectableSceneElement`（默认 disabled） |
-| `液压场景` | `HydraulicSceneController`（默认可失活） |
+| `液压场景` | `HydraulicSceneController`、`HydraulicMaterialLane`、`HydraulicMaterialBoard`（默认可失活） |
 | `AnchorChainSystem` | `AnchorChainLauncher` |
 | `UI` | `UiSystem`、`EnemyIntroducePanelController` |
 | `player exit` | 出场点位 |
@@ -151,7 +154,7 @@
 
 1. **胜负**：HP / 死亡 → `NotifyCombatantDefeated`，胜负演出分支  
 2. **抛锚互撞子状态机**：Fire 之后不 Cancel，接拉近、结算、回到 Active  
-3. **锻造玩法**：液压 Active 时的卡牌 / 锤击与战斗数值挂钩  
+3. **锻造结算**：锤击时读取三台材料堆叠 → 战斗数值 / 卡牌（布置与拖拽见 `HydraulicForge.md`）  
 4. **主流程衔接**：`ExitCompleted` 后按胜负 `Advance()` 或回菜单  
 5. **遭遇配置**：按 `GameFlowState` 换敌人、文案、船锚目标  
 6. **多敌 / 多面板**：当前单敌人、单 Info Panel  
