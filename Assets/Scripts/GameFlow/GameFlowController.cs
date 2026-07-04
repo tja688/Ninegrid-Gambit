@@ -247,25 +247,23 @@ namespace NineGrid.GameFlow
             // 占位：后续在此挂战斗初始化、岛屿 UI、事件表等。不自动切场景。
             if (state == GameFlowState.Prologue)
             {
-                var ui = NineGrid.UI.UiSystem.Instance;
-                if (ui != null && ui.Dialogue != null)
+                StartProloguePerformance();
+            }
+            else if (state == GameFlowState.Battle0)
+            {
+                // 已历序章：跳过演出，双方直接就位后进入战斗环节。
+                var performance = ProloguePerformance.Instance;
+                if (performance != null)
                 {
-                    void OnPrologueDialogueDone()
-                    {
-                        ui.Dialogue.SequenceCompleted -= OnPrologueDialogueDone;
-                        if (CurrentState == GameFlowState.Prologue)
-                        {
-                            Advance();
-                        }
-                    }
-
-                    ui.Dialogue.SequenceCompleted += OnPrologueDialogueDone;
-                    ui.Dialogue.Play("prologue_intro");
+                    performance.PrepareIdleBattleFormation();
                 }
+
+                BeginBattlePhase();
             }
             else if (GameFlowScenes.IsBattleState(state))
             {
                 // 占位：按 state 配置遭遇战
+                BeginBattlePhase();
             }
             else if (GameFlowScenes.IsIslandState(state))
             {
@@ -279,6 +277,40 @@ namespace NineGrid.GameFlow
             {
                 // 占位：胜利结算
             }
+        }
+
+        void StartProloguePerformance()
+        {
+            var performance = ProloguePerformance.Instance;
+            if (performance == null)
+            {
+                performance = FindFirstObjectByType<ProloguePerformance>();
+            }
+
+            if (performance == null)
+            {
+                Debug.LogWarning("[GameFlow] 场景中没有 ProloguePerformance，直接进入战斗环节。");
+                BeginBattlePhase();
+                return;
+            }
+
+            void OnPerformanceCompleted()
+            {
+                performance.Completed -= OnPerformanceCompleted;
+                if (CurrentState == GameFlowState.Prologue)
+                {
+                    BeginBattlePhase();
+                }
+            }
+
+            performance.Completed += OnPerformanceCompleted;
+            performance.Play();
+        }
+
+        /// <summary>战斗环节入口。序章演出结束后 / 战斗0 直进时调用；当前为空实现。</summary>
+        void BeginBattlePhase()
+        {
+            Debug.Log($"[GameFlow] 进入战斗环节（占位） state={CurrentState}");
         }
 
         void MarkPrologueCompleted()
