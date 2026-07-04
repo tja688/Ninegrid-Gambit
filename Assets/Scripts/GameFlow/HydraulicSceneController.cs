@@ -16,7 +16,7 @@ namespace NineGrid.GameFlow
 
     /// <summary>
     /// 液压子场景独立状态机：入场 / 常规退场 / 液压完成退场。
-    /// 暂不接入战斗环节，仅提供 API 与小键盘测试入口。
+    /// 战斗中由 <see cref="BattleController.TryEnterForgeMode"/> 拉起；亦保留小键盘测试入口。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class HydraulicSceneController : MonoBehaviour
@@ -60,6 +60,7 @@ namespace NineGrid.GameFlow
         [SerializeField] Ease hammerRiseEase = Ease.InCubic;
 
         [Header("Debug Input")]
+        [Tooltip("宿主失活时 Update 不会跑；战斗侧 BattleController 也会监听小键盘1/2。")]
         [SerializeField] bool enableDebugHotkeys = true;
         [SerializeField] KeyCode toggleEnterExitKey = KeyCode.Keypad1;
         [SerializeField] KeyCode hydraulicKey = KeyCode.Keypad2;
@@ -122,7 +123,8 @@ namespace NineGrid.GameFlow
                 return;
             }
 
-            if (Input.GetKeyDown(toggleEnterExitKey))
+            // 宿主激活时自听；默认失活时由 BattleController 代听（同一套 DebugHotkeyInput）。
+            if (DebugHotkeyInput.WasPressedThisFrame(toggleEnterExitKey))
             {
                 if (_state == HydraulicSceneState.Hidden)
                 {
@@ -134,15 +136,26 @@ namespace NineGrid.GameFlow
                 }
             }
 
-            if (Input.GetKeyDown(hydraulicKey))
+            if (DebugHotkeyInput.WasPressedThisFrame(hydraulicKey))
             {
                 PlayHydraulic();
             }
         }
 
-        /// <summary>入场：BG → 显示屏 → 管道，轻微错峰。</summary>
+        /// <summary>
+        /// 入场：BG → 显示屏 → 管道，轻微错峰。
+        /// 宿主 GameObject 可默认失活；外部拉起时会先激活再跑协程，退场结束后再失活。
+        /// </summary>
         public bool Enter()
         {
+            if (_state != HydraulicSceneState.Hidden)
+            {
+                return false;
+            }
+
+            // 失活对象无法 StartCoroutine；先激活宿主（首次会跑 Awake）。
+            EnsureHostActive();
+
             if (_state != HydraulicSceneState.Hidden)
             {
                 return false;
@@ -252,6 +265,9 @@ namespace NineGrid.GameFlow
             {
                 ExitCompleted?.Invoke();
             }
+
+            // 退场完成后失活宿主，保持「默认失活、外部拉起」。
+            DeactivateHost();
         }
 
         IEnumerator HydraulicRoutine()
@@ -306,6 +322,7 @@ namespace NineGrid.GameFlow
             _routine = null;
             _state = HydraulicSceneState.Hidden;
             HydraulicCompleted?.Invoke();
+            DeactivateHost();
         }
 
         Coroutine _otherExitRoutine;
@@ -348,6 +365,23 @@ namespace NineGrid.GameFlow
             SetVisualActive(pipe, false);
             SetVisualActive(hammer, false);
             SetOtherVisualsActive(false);
+            // 不在此处失活宿主：Awake / Enter 过程中宿主必须保持激活才能跑协程。
+        }
+
+        void EnsureHostActive()
+        {
+            if (!gameObject.activeSelf)
+            {
+                gameObject.SetActive(true);
+            }
+        }
+
+        void DeactivateHost()
+        {
+            if (gameObject.activeSelf)
+            {
+                gameObject.SetActive(false);
+            }
         }
 
         void KillMotion()

@@ -307,10 +307,28 @@ namespace NineGrid.GameFlow
             performance.Play();
         }
 
-        /// <summary>战斗环节入口。序章演出结束后 / 战斗0 直进时调用；当前为空实现。</summary>
+        /// <summary>战斗环节入口。序章演出结束后 / 战斗0 直进时调用，转交 <see cref="BattleController"/>。</summary>
         void BeginBattlePhase()
         {
-            Debug.Log($"[GameFlow] 进入战斗环节（占位） state={CurrentState}");
+            var battle = BattleController.Instance;
+            if (battle == null)
+            {
+                battle = FindFirstObjectByType<BattleController>();
+            }
+
+            if (battle == null)
+            {
+                Debug.LogWarning($"[GameFlow] 场景中没有 BattleController，战斗环节未启动。state={CurrentState}");
+                return;
+            }
+
+            if (!battle.EnterBattle())
+            {
+                Debug.LogWarning($"[GameFlow] BattleController.EnterBattle 失败，state={CurrentState} battle={battle.State}");
+                return;
+            }
+
+            Debug.Log($"[GameFlow] 进入战斗环节 state={CurrentState}");
         }
 
         void MarkPrologueCompleted()

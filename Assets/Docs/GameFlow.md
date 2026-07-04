@@ -30,3 +30,9 @@ Inspector 字段 **Enter Prologue On Start**（`enterPrologueOnStart`，默认�
 - `StateChanged` — `(previous, next)`，**不含**场景加载
 
 场景映射约定仍见 `GameFlowScenes`（供后续手动跳转使用）。UI/对话见 `UiDialogueNotice.md`。
+
+## 战斗环节
+
+序章演出结束 / `Battle0` 就位后，`BeginBattlePhase()` 转交 `BattleController`（独立状态机，挂在 MainScene `GameFlow`）。详见 `Battle.md`。
+
+战斗结束暂不 `Advance()`。

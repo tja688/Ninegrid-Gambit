@@ -26,9 +26,13 @@ namespace NineGrid.UI
         [Header("Systems")]
         [SerializeField] DialogueSystem dialogueSystem;
         [SerializeField] NoticeSystem noticeSystem;
+        [SerializeField] EnemyIntroducePanelController enemyIntroducePanel;
 
         public DialogueSystem Dialogue => dialogueSystem;
         public NoticeSystem Notice => noticeSystem;
+        /// <summary>敌人信息面板（Enemy Info Panel）。</summary>
+        public EnemyIntroducePanelController EnemyInfo => enemyIntroducePanel;
+        public EnemyIntroducePanelController EnemyIntroduce => enemyIntroducePanel;
         public SpriteRenderer Portrait => portraitRenderer;
         public SpriteRenderer DialogBox => dialogBoxRenderer;
         public GameObject OverlayRoot => overlayRoot;
@@ -190,6 +194,11 @@ namespace NineGrid.UI
             if (noticeSystem == null)
             {
                 noticeSystem = GetComponent<NoticeSystem>();
+            }
+
+            if (enemyIntroducePanel == null)
+            {
+                enemyIntroducePanel = GetComponent<EnemyIntroducePanelController>();
             }
         }
 

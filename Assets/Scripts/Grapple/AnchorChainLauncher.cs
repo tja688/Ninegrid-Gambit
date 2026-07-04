@@ -224,6 +224,11 @@ namespace NinegridGambit.Grapple
         /// </summary>
         public bool Fire()
         {
+            if (!_built)
+            {
+                Build();
+            }
+
             if (!CanFire) return false;
 
             _autoPending = false;

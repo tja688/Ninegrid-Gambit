@@ -1,0 +1,441 @@
+using System;
+using DG.Tweening;
+using Febucci.TextAnimatorForUnity.TextMeshPro;
+using TMPro;
+using UnityEngine;
+
+namespace NineGrid.UI
+{
+    public enum EnemyIntroducePanelState
+    {
+        Hidden = 0,
+        Entering = 1,
+        Shown = 2,
+        Exiting = 3,
+    }
+
+    /// <summary>
+    /// 敌人信息面板（Enemy Info Panel）：战斗开始入场并默认显示介绍文字，
+    /// 战斗结束退场收起。从 <c>Enemy Info Panel in</c> 缓动入/出，就位后播 TextAnimator。
+    /// </summary>
+    [DisallowMultipleComponent]
+    public sealed class EnemyIntroducePanelController : MonoBehaviour
+    {
+        [Header("Panel")]
+        [SerializeField] Transform panel;
+        [SerializeField] Transform panelIn;
+
+        [Header("Text")]
+        [SerializeField] GameObject textObject;
+        [SerializeField] TextAnimator_TMP textAnimator;
+        [SerializeField] TextMeshProUGUI textMesh;
+        [SerializeField] UiSystem ui;
+
+        [Header("Motion")]
+        [SerializeField] float moveDuration = 0.4f;
+        [SerializeField] Ease enterEase = Ease.OutCubic;
+        [SerializeField] Ease exitEase = Ease.InCubic;
+
+        [Header("Content")]
+        [Tooltip("为空时使用 TextMesh 上已有文案。")]
+        [SerializeField] [TextArea(2, 8)] string defaultText;
+
+        Vector3 _stayPosition;
+        bool _stayCached;
+        bool _wantVisible;
+        string _pendingText;
+        Tween _moveTween;
+        EnemyIntroducePanelState _state = EnemyIntroducePanelState.Hidden;
+
+        public EnemyIntroducePanelState State => _state;
+        public bool IsBusy =>
+            _state == EnemyIntroducePanelState.Entering
+            || _state == EnemyIntroducePanelState.Exiting;
+        public bool IsShown => _state == EnemyIntroducePanelState.Shown;
+        public bool WantVisible => _wantVisible;
+
+        public event Action EnterCompleted;
+        public event Action ExitCompleted;
+
+        void Awake()
+        {
+            ResolveRefs();
+            CacheStayPosition();
+            // 先缓存文案，再隐藏；隐藏时不得对未激活 TMP 调 SetText。
+            if (string.IsNullOrEmpty(_pendingText))
+            {
+                _pendingText = ResolveDefaultText();
+            }
+
+            ApplyHiddenImmediate();
+        }
+
+        void OnDestroy()
+        {
+            KillMotion();
+        }
+
+        /// <summary>申请入场。可在退场中途打断并重入。</summary>
+        public void RequestShow(string text = null)
+        {
+            ResolveRefs();
+            CacheStayPosition();
+
+            if (!string.IsNullOrEmpty(text))
+            {
+                _pendingText = text;
+            }
+            else if (string.IsNullOrEmpty(_pendingText))
+            {
+                _pendingText = ResolveDefaultText();
+            }
+
+            _wantVisible = true;
+            if (_state == EnemyIntroducePanelState.Hidden
+                || _state == EnemyIntroducePanelState.Exiting)
+            {
+                BeginEnter();
+            }
+        }
+
+        /// <summary>申请退场。可在入场中途打断。</summary>
+        public void RequestHide()
+        {
+            _wantVisible = false;
+            if (_state == EnemyIntroducePanelState.Shown
+                || _state == EnemyIntroducePanelState.Entering)
+            {
+                BeginExit();
+            }
+        }
+
+        /// <summary>立即隐藏，无缓动。</summary>
+        public void HideImmediate()
+        {
+            _wantVisible = false;
+            ApplyHiddenImmediate();
+        }
+
+        void BeginEnter()
+        {
+            KillMotion();
+            SetPanelActive(true);
+            HideTextVisual();
+
+            if (_state == EnemyIntroducePanelState.Hidden)
+            {
+                PlaceAt(panel, panelIn);
+            }
+
+            _state = EnemyIntroducePanelState.Entering;
+
+            if (panel == null)
+            {
+                FinishEnter();
+                return;
+            }
+
+            if (moveDuration <= 0f)
+            {
+                panel.position = _stayPosition;
+                FinishEnter();
+                return;
+            }
+
+            _moveTween = panel
+                .DOMove(_stayPosition, moveDuration)
+                .SetEase(enterEase)
+                .SetUpdate(true)
+                .OnComplete(FinishEnter);
+        }
+
+        void FinishEnter()
+        {
+            _moveTween = null;
+            if (panel != null)
+            {
+                panel.position = _stayPosition;
+            }
+
+            _state = EnemyIntroducePanelState.Shown;
+
+            if (!_wantVisible)
+            {
+                BeginExit();
+                return;
+            }
+
+            PresentText(_pendingText);
+            EnterCompleted?.Invoke();
+        }
+
+        void BeginExit()
+        {
+            KillMotion();
+            HideTextVisual();
+            _state = EnemyIntroducePanelState.Exiting;
+
+            if (panel == null)
+            {
+                FinishExit();
+                return;
+            }
+
+            var end = panelIn != null ? panelIn.position : _stayPosition;
+            if (moveDuration <= 0f)
+            {
+                panel.position = end;
+                FinishExit();
+                return;
+            }
+
+            _moveTween = panel
+                .DOMove(end, moveDuration)
+                .SetEase(exitEase)
+                .SetUpdate(true)
+                .OnComplete(FinishExit);
+        }
+
+        void FinishExit()
+        {
+            _moveTween = null;
+            SetPanelActive(false);
+            HideTextVisual();
+            _state = EnemyIntroducePanelState.Hidden;
+            ExitCompleted?.Invoke();
+
+            if (_wantVisible)
+            {
+                BeginEnter();
+            }
+        }
+
+        void PresentText(string text)
+        {
+            EnsureTextHierarchyActive();
+
+            if (textAnimator == null && textObject != null)
+            {
+                textAnimator = textObject.GetComponent<TextAnimator_TMP>();
+            }
+
+            var content = text ?? string.Empty;
+            if (textAnimator != null && IsTextReadyForAnimator())
+            {
+                textAnimator.SetText(content, hideText: true);
+                textAnimator.SetVisibilityEntireText(true, canPlayEffects: true);
+                return;
+            }
+
+            if (textMesh != null)
+            {
+                textMesh.text = content;
+            }
+        }
+
+        /// <summary>
+        /// 仅在文字层级已激活时清 TextAnimator。
+        /// 未激活的 TMP 调 SetText 会在 ClearMesh 处 NRE。
+        /// </summary>
+        void ClearTextAnimatorIfReady()
+        {
+            if (!IsTextReadyForAnimator())
+            {
+                return;
+            }
+
+            if (textAnimator != null)
+            {
+                textAnimator.SetText(string.Empty);
+            }
+        }
+
+        void HideTextVisual()
+        {
+            ClearTextAnimatorIfReady();
+            SetTextActive(false);
+            ReleaseOverlayIfUnused();
+        }
+
+        void EnsureTextHierarchyActive()
+        {
+            if (ui == null)
+            {
+                ui = UiSystem.Instance;
+            }
+
+            // Enemy Info Text 挂在 Overlay 下，父级未激活时 TMP mesh 不可用。
+            ui?.SetOverlayActive(true);
+            SetTextActive(true);
+        }
+
+        bool IsTextReadyForAnimator()
+        {
+            return textObject != null
+                   && textObject.activeInHierarchy
+                   && textAnimator != null;
+        }
+
+        void ReleaseOverlayIfUnused()
+        {
+            if (ui == null)
+            {
+                ui = UiSystem.Instance;
+            }
+
+            if (ui == null)
+            {
+                return;
+            }
+
+            var dialogueBusy = ui.Dialogue != null && ui.Dialogue.IsBusy;
+            var noticeShowing = ui.Notice != null && ui.Notice.IsShowing;
+            var dialogTextOn = ui.DialogTextObject != null && ui.DialogTextObject.activeSelf;
+            var noticeTextOn = ui.NoticeTextObject != null && ui.NoticeTextObject.activeSelf;
+            var factoryTextOn = ui.FactoryTextObject != null && ui.FactoryTextObject.activeSelf;
+
+            if (!dialogueBusy && !noticeShowing && !dialogTextOn && !noticeTextOn && !factoryTextOn)
+            {
+                ui.SetOverlayActive(false);
+            }
+        }
+
+        void ApplyHiddenImmediate()
+        {
+            KillMotion();
+            _wantVisible = false;
+            _state = EnemyIntroducePanelState.Hidden;
+            PlaceAt(panel, panelIn);
+            HideTextVisual();
+            SetPanelActive(false);
+        }
+
+        void KillMotion()
+        {
+            if (_moveTween != null && _moveTween.IsActive())
+            {
+                _moveTween.Kill();
+            }
+
+            _moveTween = null;
+
+            if (panel != null)
+            {
+                panel.DOKill();
+            }
+        }
+
+        void CacheStayPosition()
+        {
+            if (_stayCached || panel == null)
+            {
+                return;
+            }
+
+            // 场景里面板默认摆在 stay；in 点仅作入场待命。
+            _stayPosition = panel.position;
+            _stayCached = true;
+        }
+
+        string ResolveDefaultText()
+        {
+            if (!string.IsNullOrEmpty(defaultText))
+            {
+                return defaultText;
+            }
+
+            if (textMesh != null && !string.IsNullOrEmpty(textMesh.text))
+            {
+                return textMesh.text;
+            }
+
+            if (textAnimator != null && !string.IsNullOrEmpty(textAnimator.textFull))
+            {
+                return textAnimator.textFull;
+            }
+
+            return string.Empty;
+        }
+
+        void ResolveRefs()
+        {
+            if (ui == null)
+            {
+                ui = UiSystem.Instance != null ? UiSystem.Instance : GetComponent<UiSystem>();
+            }
+
+            if (panel == null)
+            {
+                panel = FindChildTransform("Enemy Info Panel")
+                        ?? FindChildTransform("Enemy Introduce Panel");
+            }
+
+            if (panelIn == null)
+            {
+                panelIn = FindChildTransform("Enemy Info Panel in")
+                          ?? FindChildTransform("Enemy Introduce Panel in");
+            }
+
+            if (textObject == null)
+            {
+                var textTransform = FindChildTransform("Enemy Info Text")
+                                   ?? FindChildTransform("Enemy Introduce Text");
+                textObject = textTransform != null ? textTransform.gameObject : null;
+            }
+
+            if (textObject != null)
+            {
+                if (textAnimator == null)
+                {
+                    textAnimator = textObject.GetComponent<TextAnimator_TMP>();
+                }
+
+                if (textMesh == null)
+                {
+                    textMesh = textObject.GetComponent<TextMeshProUGUI>();
+                }
+            }
+        }
+
+        Transform FindChildTransform(string trimmedName)
+        {
+            var transforms = GetComponentsInChildren<Transform>(true);
+            for (var i = 0; i < transforms.Length; i++)
+            {
+                var t = transforms[i];
+                if (t != null && t.name.Trim() == trimmedName)
+                {
+                    return t;
+                }
+            }
+
+            return null;
+        }
+
+        void SetPanelActive(bool active)
+        {
+            if (panel != null)
+            {
+                panel.gameObject.SetActive(active);
+            }
+        }
+
+        void SetTextActive(bool active)
+        {
+            if (textObject != null)
+            {
+                textObject.SetActive(active);
+            }
+        }
+
+        static void PlaceAt(Transform target, Transform marker)
+        {
+            if (target == null || marker == null)
+            {
+                return;
+            }
+
+            target.position = marker.position;
+        }
+    }
+}

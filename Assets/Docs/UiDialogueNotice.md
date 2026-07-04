@@ -40,3 +40,7 @@ UiSystem.Instance.Dialogue.Play("prologue_intro");
 ```csharp
 UiSystem.Instance.Notice.Show("notice_sample");
 ```
+
+## 敌人信息面板
+
+`UiSystem.Instance.EnemyInfo`（`EnemyIntroducePanelController`）。战斗开始入场并默认显示介绍文字，战斗结束收起，详见 `Battle.md`。
