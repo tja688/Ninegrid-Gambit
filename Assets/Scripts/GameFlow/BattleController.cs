@@ -154,6 +154,20 @@ namespace NineGrid.GameFlow
                 }
             }
 
+            // Keypad5：沿管道倾倒一份材料到桌面
+            if (DebugHotkeyInput.WasPressedThisFrame(KeyCode.Keypad5))
+            {
+                ResolveRefs();
+                if (hydraulicScene == null)
+                {
+                    Debug.LogWarning("[Battle] 找不到液压场景，无法响应小键盘5。");
+                }
+                else
+                {
+                    hydraulicScene.TryDeliverMaterial();
+                }
+            }
+
             // Keypad3：抛锚互撞（仅 Active，等价于点击敌人）
             if (_state == BattlePhaseState.Active && !_ramming
                 && DebugHotkeyInput.WasPressedThisFrame(anchorRamKey))

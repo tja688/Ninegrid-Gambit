@@ -45,6 +45,9 @@ namespace NineGrid.GameFlow
         [Header("Other Visuals")]
         [SerializeField] Transform[] otherVisuals;
 
+        [Header("Materials")]
+        [SerializeField] HydraulicMaterialLane materialLane;
+
         [Header("Enter / Exit Timing")]
         [SerializeField] float moveDuration = 0.45f;
         [SerializeField] float enterStagger = 0.12f;
@@ -107,6 +110,7 @@ namespace NineGrid.GameFlow
             CacheStayPositions();
             EnsureBgRayBlocker();
             ApplyHiddenImmediate();
+            materialLane?.ResetLane();
         }
 
         void OnDestroy()
@@ -143,6 +147,18 @@ namespace NineGrid.GameFlow
             {
                 PlayHydraulic();
             }
+        }
+
+        /// <summary>沿管道倾倒一份材料到桌面（小键盘5 / 外部调用）。</summary>
+        public bool TryDeliverMaterial()
+        {
+            if (_state != HydraulicSceneState.Active)
+            {
+                return false;
+            }
+
+            ResolveRefs();
+            return materialLane != null && materialLane.TryDeliver();
         }
 
         /// <summary>
@@ -235,6 +251,7 @@ namespace NineGrid.GameFlow
             PlaceAtWorld(display, _displayStay);
             PlaceAtWorld(pipe, _pipeStay);
             SetBgRayBlockEnabled(true);
+            materialLane?.ResetLane();
 
             _activeTween = null;
             _routine = null;
@@ -369,6 +386,7 @@ namespace NineGrid.GameFlow
             SetVisualActive(pipe, false);
             SetVisualActive(hammer, false);
             SetOtherVisualsActive(false);
+            materialLane?.ResetLane();
             // 不在此处失活宿主：Awake / Enter 过程中宿主必须保持激活才能跑协程。
         }
 
@@ -521,12 +539,13 @@ namespace NineGrid.GameFlow
 
             if (NeedsResolve(otherVisuals))
             {
-                otherVisuals = new[]
-                {
-                    FindChild("material"),
-                    FindChild("material (1)"),
-                    FindChild("material (2)"),
-                };
+                otherVisuals = System.Array.Empty<Transform>();
+            }
+
+            if (materialLane == null)
+            {
+                materialLane = GetComponent<HydraulicMaterialLane>()
+                    ?? GetComponentInChildren<HydraulicMaterialLane>(true);
             }
         }
 
