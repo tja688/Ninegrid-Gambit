@@ -15,6 +15,7 @@ namespace NineGrid.Presentation.Visuals
         private TextMeshProUGUI text;
         private Material runtimeMaterial;
         private TMP_FontAsset boundFont;
+        private Material boundPreset;
 
         private void OnEnable()
         {
@@ -30,6 +31,14 @@ namespace NineGrid.Presentation.Visuals
 
         private void OnDisable()
         {
+            if (Application.isPlaying)
+            {
+                CleanupRuntimeMaterial();
+            }
+        }
+
+        private void OnDestroy()
+        {
             CleanupRuntimeMaterial();
         }
 
@@ -40,7 +49,7 @@ namespace NineGrid.Presentation.Visuals
                 text = GetComponent<TextMeshProUGUI>();
             }
 
-            RefreshMaterial(forceRebuild: true);
+            RefreshMaterial(forceRebuild: false);
             controller?.ApplyNow();
         }
 
@@ -100,23 +109,40 @@ namespace NineGrid.Presentation.Visuals
             if (text == null)
                 return;
 
-            Material preset = ResolvePreset(text.font);
-            if (preset == null)
+            Material activePreset = ResolvePreset(text.font);
+            if (activePreset == null)
                 return;
 
-            if (!forceRebuild && runtimeMaterial != null && boundFont == text.font && text.fontSharedMaterial == runtimeMaterial)
-                return;
+            RepairBrokenTextMaterialReference(activePreset);
 
-            CleanupRuntimeMaterial();
-
-            runtimeMaterial = new Material(preset)
+            if (!forceRebuild)
             {
-                name = preset.name + " (Instance)"
+                forceRebuild = ShouldReplaceSharedMaterial(activePreset);
+            }
+
+            if (!forceRebuild
+                && runtimeMaterial != null
+                && boundFont == text.font
+                && boundPreset == activePreset
+                && text.fontSharedMaterial == runtimeMaterial)
+            {
+                return;
+            }
+
+            Material staleSharedMaterial = text.fontSharedMaterial;
+            CleanupRuntimeMaterial();
+            DetachStaleSharedMaterial(staleSharedMaterial, activePreset);
+
+            runtimeMaterial = new Material(activePreset)
+            {
+                name = activePreset.name + " (Instance)",
+                hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild
             };
 
             TableNineTmpScanlineUtility.CopyFontMaterial(text.font, runtimeMaterial);
             text.fontSharedMaterial = runtimeMaterial;
             boundFont = text.font;
+            boundPreset = activePreset;
             SyncOutlineParams();
         }
 
@@ -136,6 +162,8 @@ namespace NineGrid.Presentation.Visuals
             if (runtimeMaterial == null)
                 return;
 
+            RestoreTextMaterialReference();
+
             if (Application.isPlaying)
             {
                 Destroy(runtimeMaterial);
@@ -147,6 +175,76 @@ namespace NineGrid.Presentation.Visuals
 
             runtimeMaterial = null;
             boundFont = null;
+            boundPreset = null;
+        }
+
+        private void RestoreTextMaterialReference()
+        {
+            if (text == null || text.fontSharedMaterial != runtimeMaterial)
+                return;
+
+            Material fallback = boundPreset ?? ResolvePreset(boundFont ?? text.font);
+            if (fallback == null && text.font != null)
+            {
+                fallback = text.font.material;
+            }
+
+            if (fallback != null && fallback != runtimeMaterial)
+            {
+                text.fontSharedMaterial = fallback;
+            }
+        }
+
+        private void RepairBrokenTextMaterialReference(Material activePreset)
+        {
+            if (text == null)
+                return;
+
+            if (text.fontSharedMaterial != null)
+                return;
+
+            if (activePreset != null)
+            {
+                text.fontSharedMaterial = activePreset;
+                return;
+            }
+
+            if (text.font != null && text.font.material != null)
+            {
+                text.fontSharedMaterial = text.font.material;
+            }
+        }
+
+        private bool ShouldReplaceSharedMaterial(Material activePreset)
+        {
+            Material shared = text.fontSharedMaterial;
+            if (shared == null)
+                return true;
+
+            if (shared == runtimeMaterial || shared == activePreset)
+                return false;
+
+            if (shared == bitmapScanlinePreset || shared == sdfScanlinePreset)
+                return true;
+
+            return shared.name.Contains("(Instance)");
+        }
+
+        private void DetachStaleSharedMaterial(Material staleSharedMaterial, Material activePreset)
+        {
+            if (text == null || staleSharedMaterial == null || staleSharedMaterial == activePreset)
+                return;
+
+            if (staleSharedMaterial == bitmapScanlinePreset || staleSharedMaterial == sdfScanlinePreset)
+                return;
+
+            if (staleSharedMaterial == runtimeMaterial)
+                return;
+
+            if (!staleSharedMaterial.name.Contains("(Instance)"))
+                return;
+
+            text.fontSharedMaterial = activePreset;
         }
     }
 
