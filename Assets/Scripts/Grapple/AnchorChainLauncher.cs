@@ -253,6 +253,20 @@ namespace NinegridGambit.Grapple
             return true;
         }
 
+        /// <summary>
+        /// 命中后由外部（互撞流程）每帧调用：把绳长收成当前直线距离，使锁链保持绷直并随两船靠近而缩短。
+        /// 端点跟随 <see cref="firePoint"/> / <see cref="anchorTransform"/>，外部只需移动这两个 Transform 即可。
+        /// 仅在 Attached 阶段生效。
+        /// </summary>
+        public void HoldTaut()
+        {
+            if (!_built || _phase != Phase.Attached) return;
+            if (firePoint == null || anchorTransform == null) return;
+
+            float dist = Vector2.Distance(firePoint.position, anchorTransform.position);
+            _restLen = dist / Mathf.Max(1, segmentCount);
+        }
+
         /// <summary>强制复位到 Idle（隐藏链条），不自动再发。</summary>
         public void ResetToIdle()
         {

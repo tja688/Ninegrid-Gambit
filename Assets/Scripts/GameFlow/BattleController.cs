@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using DG.Tweening;
+using NineGrid.Battle;
 using NineGrid.Presentation.Visuals;
 using NineGrid.UI;
 using NinegridGambit.Grapple;
@@ -41,6 +42,7 @@ namespace NineGrid.GameFlow
         [FormerlySerializedAs("enemyIntroducePanel")]
         [SerializeField] EnemyIntroducePanelController enemyInfoPanel;
         [SerializeField] AnchorChainLauncher anchorChain;
+        [SerializeField] AnchorRammingController anchorRam;
 
         [Header("Exit Motion")]
         [SerializeField] float playerExitDuration = 1f;
@@ -49,12 +51,14 @@ namespace NineGrid.GameFlow
         [Header("Debug Input")]
         [SerializeField] bool enableDebugHotkeys = true;
         [SerializeField] KeyCode endBattleKey = KeyCode.Keypad4;
+        [SerializeField] KeyCode anchorRamKey = KeyCode.Keypad3;
 
         Coroutine _routine;
         Coroutine _anchorRoutine;
         Tween _playerExitTween;
         BattlePhaseState _state = BattlePhaseState.Idle;
         bool _hydraulicEventsBound;
+        bool _ramming;
 
         public BattlePhaseState State => _state;
         public bool IsBusy =>
@@ -150,6 +154,13 @@ namespace NineGrid.GameFlow
                 }
             }
 
+            // Keypad3：抛锚互撞（仅 Active，等价于点击敌人）
+            if (_state == BattlePhaseState.Active && !_ramming
+                && DebugHotkeyInput.WasPressedThisFrame(anchorRamKey))
+            {
+                TryEnterAnchorMode();
+            }
+
             // Keypad4：结束战斗（仅 Active）
             if (_state == BattlePhaseState.Active && DebugHotkeyInput.WasPressedThisFrame(endBattleKey))
             {
@@ -223,11 +234,11 @@ namespace NineGrid.GameFlow
         }
 
         /// <summary>
-        /// 点击敌人：抛锚准备。测试阶段完整播完抛锚后取消，后续接互撞子状态机。
+        /// 点击敌人：抛锚 → 命中绷直后进入「抛锚互撞」子流程（绞盘狂点拉近 → 对撞 → 弹开回位）。
         /// </summary>
         public bool TryEnterAnchorMode()
         {
-            if (!CanEnterAnchorMode || _state != BattlePhaseState.Active)
+            if (!CanEnterAnchorMode || _state != BattlePhaseState.Active || _ramming)
             {
                 return false;
             }
@@ -244,7 +255,7 @@ namespace NineGrid.GameFlow
                 return false;
             }
 
-            // 扔出船锚准备（等飞出+收绳完成后再取消，避免同帧 Reset 看不见）。
+            // 扔出船锚。命中(Attached)后由互撞子流程接管。
             if (!anchorChain.Fire())
             {
                 Debug.LogWarning(
@@ -257,26 +268,62 @@ namespace NineGrid.GameFlow
                 StopCoroutine(_anchorRoutine);
             }
 
-            _anchorRoutine = StartCoroutine(AnchorPrepareThenCancelRoutine());
+            _anchorRoutine = StartCoroutine(AnchorRamRoutine());
             return true;
         }
 
-        IEnumerator AnchorPrepareThenCancelRoutine()
+        /// <summary>
+        /// 抛锚互撞子流程：等命中 → 交给 <see cref="AnchorRammingController"/> 跑完整套演出 → 回到 Active。
+        /// 找不到互撞控制器时回退为「命中后复位」，避免卡死。
+        /// </summary>
+        IEnumerator AnchorRamRoutine()
         {
-            // 等抛锚飞出并收绳到 Attached，便于测试看见完整抛锚。
-            var timeoutAt = Time.unscaledTime + 5f;
-            yield return new WaitUntil(() =>
-                anchorChain == null
-                || anchorChain.CurrentPhase == AnchorChainLauncher.Phase.Attached
-                || Time.unscaledTime >= timeoutAt);
+            ResolveRefs();
 
-            // TODO: 抛锚互撞子状态机 — 命中后双方拉近、结算等。
-            // 测试阶段先做到「发射准备」这一步，随后取消并隐藏锚链。
-            if (anchorChain != null)
+            if (anchorRam == null)
             {
-                anchorChain.ResetToIdle();
+                Debug.LogWarning("[Battle] 未找到 AnchorRammingController，回退为命中后复位。");
+                var timeoutAt = Time.unscaledTime + 5f;
+                yield return new WaitUntil(() =>
+                    anchorChain == null
+                    || anchorChain.CurrentPhase == AnchorChainLauncher.Phase.Attached
+                    || Time.unscaledTime >= timeoutAt);
+                if (anchorChain != null)
+                {
+                    anchorChain.ResetToIdle();
+                }
+                _anchorRoutine = null;
+                yield break;
             }
 
+            _ramming = true;
+
+            var done = false;
+            void OnRamCompleted()
+            {
+                anchorRam.Completed -= OnRamCompleted;
+                done = true;
+            }
+
+            anchorRam.Completed += OnRamCompleted;
+
+            if (!anchorRam.Begin())
+            {
+                anchorRam.Completed -= OnRamCompleted;
+                _ramming = false;
+                if (anchorChain != null)
+                {
+                    anchorChain.ResetToIdle();
+                }
+                _anchorRoutine = null;
+                yield break;
+            }
+
+            // 互撞跑完或战斗被退出时收尾。
+            yield return new WaitUntil(() => done || _state != BattlePhaseState.Active);
+
+            anchorRam.Completed -= OnRamCompleted;
+            _ramming = false;
             _anchorRoutine = null;
         }
 
@@ -407,6 +454,12 @@ namespace NineGrid.GameFlow
 
         void UpdateActiveCombat()
         {
+            // 互撞演出进行时，绞盘由 WinchCrankController 独占鼠标；此处不再处理选船点击。
+            if (_ramming)
+            {
+                return;
+            }
+
             if (!WasPrimaryClickPressedThisFrame())
             {
                 return;
@@ -565,6 +618,13 @@ namespace NineGrid.GameFlow
                 _anchorRoutine = null;
             }
 
+            if (anchorRam != null && anchorRam.IsRunning)
+            {
+                anchorRam.ForceStop();
+            }
+
+            _ramming = false;
+
             if (anchorChain != null && anchorChain.IsBusy)
             {
                 anchorChain.ResetToIdle();
@@ -637,6 +697,11 @@ namespace NineGrid.GameFlow
             if (anchorChain == null)
             {
                 anchorChain = FindFirstObjectByType<AnchorChainLauncher>(FindObjectsInactive.Include);
+            }
+
+            if (anchorRam == null)
+            {
+                anchorRam = FindFirstObjectByType<AnchorRammingController>(FindObjectsInactive.Include);
             }
         }
 

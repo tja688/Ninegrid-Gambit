@@ -55,8 +55,13 @@ namespace NineGrid.Presentation.Visuals
             }
 
             animator.runtimeAnimatorController = entry.AnimatorController;
-            animator.Rebind();
-            animator.Update(0f);
+
+            // Rebind/Update 只能在激活对象上调用（绞盘等默认失活对象会在激活时经 Awake 再次 ApplyVisual）。
+            if (animator.isActiveAndEnabled)
+            {
+                animator.Rebind();
+                animator.Update(0f);
+            }
 
             if (entry.PreviewSprite != null)
             {
