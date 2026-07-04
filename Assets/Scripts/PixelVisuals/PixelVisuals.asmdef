@@ -2,7 +2,8 @@
     "name": "PixelVisuals",
     "rootNamespace": "NineGrid.Presentation.Visuals",
     "references": [
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
