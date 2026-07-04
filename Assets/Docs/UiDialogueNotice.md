@@ -55,3 +55,4 @@ UiSystem.Instance.Notice.Show(NoticeChannel.Notice, "自定义文案", duration:
 
 - 对话池加序列：Inspector 里往 `DialoguePool.sequences` 追加
 - 通知加通道：扩展 `NoticeChannel` + `UiSystem.GetNoticeChannelObject`
+- https://docs.febucci.com/text-animator-unity/3.x-zh text-animator文档
