@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 3162f74763a1ec843aca28a4e91dc103
+guid: 294e178422dbba34395b76d8d9bc16aa
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7489537298234546349
-    second: Attacking_000_0
+      213: -7778107730443416998
+    second: ComfyUI_temp_pnmxr_00001__0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Attacking_000_0
+      name: ComfyUI_temp_pnmxr_00001__0
       rect:
         serializedVersion: 2
-        x: 122
-        y: 37
-        width: 272
-        height: 306
+        x: 185
+        y: 79
+        width: 104
+        height: 316
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 357e0be2281df0890800000000000000
-      internalID: -7489537298234546349
+      spriteID: a5a4336ba3c9e0490800000000000000
+      internalID: -7778107730443416998
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Attacking_000_0: -7489537298234546349
+      ComfyUI_temp_pnmxr_00001__0: -7778107730443416998
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: PIXEL_ART_IMAGE_PROCESSED_V1_PPU_32
