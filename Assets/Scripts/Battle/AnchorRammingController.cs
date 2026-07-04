@@ -35,6 +35,8 @@ namespace NineGrid.Battle
         [SerializeField] AnchorChainLauncher anchorChain;
         [SerializeField] WinchCrankController winch;
         [SerializeField] CameraJuice cameraJuice;
+        [Tooltip("互撞命中时的屏幕震动（可复用的独立效果）。")]
+        [SerializeField] ScreenShakeEffect impactShake;
 
         [Header("拉近 / 双向奔赴")]
         [Tooltip("绞劲很低时的拉近速度（进度/秒）。与 maxApproachRate 一起决定拉近总时长（非固定秒数，随狂点变化）。")]
@@ -71,12 +73,6 @@ namespace NineGrid.Battle
         [Header("对撞反馈")]
         [Tooltip("命中冻结时长（真实秒），0 = 不冻结。")]
         public float hitStopDuration = 0.1f;
-        [Tooltip("最弱对撞的震屏幅度。")]
-        public float impactShakeMin = 0.5f;
-        [Tooltip("最猛对撞的震屏幅度。")]
-        public float impactShakeMax = 1.8f;
-        public float impactShakeDuration = 0.8f;
-        public float impactShakeFrequency = 32f;
         [Tooltip("对撞力度下限，保证再弱也有反馈。")]
         [Range(0f, 1f)] public float minImpactPower = 0.25f;
         [Tooltip("对撞力度的衰减：反映“临撞前一段时间的狂点峰值”。")]
@@ -306,13 +302,7 @@ namespace NineGrid.Battle
             onImpact?.Invoke();
 
             float power = Mathf.Clamp01(Mathf.Max(impactPower, minImpactPower));
-            if (cameraJuice != null)
-            {
-                cameraJuice.Shake(
-                    Mathf.Lerp(impactShakeMin, impactShakeMax, power),
-                    impactShakeDuration,
-                    impactShakeFrequency);
-            }
+            if (impactShake != null) impactShake.Play(power);
 
             if (hitStopDuration > 0f)
             {
@@ -449,9 +439,12 @@ namespace NineGrid.Battle
             if (winch == null)
                 winch = FindFirstObjectByType<WinchCrankController>(FindObjectsInactive.Include);
             if (cameraJuice == null)
-                cameraJuice = CameraJuice.Instance != null
-                    ? CameraJuice.Instance
-                    : FindFirstObjectByType<CameraJuice>(FindObjectsInactive.Include);
+                cameraJuice = CameraJuice.Resolve();
+            if (impactShake == null)
+            {
+                impactShake = GetComponent<ScreenShakeEffect>()
+                    ?? GetComponentInChildren<ScreenShakeEffect>(true);
+            }
         }
 
         static Transform FindByName(string objectName)

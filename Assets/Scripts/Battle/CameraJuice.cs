@@ -89,6 +89,25 @@ namespace NineGrid.Battle
             transform.localRotation = _baseLocalRot * Quaternion.Euler(0f, 0f, roll);
         }
 
+        /// <summary>解析场景中的 CameraJuice（优先 Instance）。</summary>
+        public static CameraJuice Resolve()
+        {
+            if (Instance != null) return Instance;
+            return FindFirstObjectByType<CameraJuice>(FindObjectsInactive.Include);
+        }
+
+        /// <summary>
+        /// 静态入口：任意处触发屏幕震动。无 CameraJuice 时返回 false。
+        /// amplitude 为世界单位位移峰值；frequency &lt;= 0 用默认频率。
+        /// </summary>
+        public static bool TryShake(float amplitude, float duration, float frequency = -1f)
+        {
+            var juice = Resolve();
+            if (juice == null) return false;
+            juice.Shake(amplitude, duration, frequency);
+            return true;
+        }
+
         /// <summary>屏幕抖动。amplitude 为世界单位位移峰值。</summary>
         public void Shake(float amplitude, float duration, float frequency = -1f)
         {
