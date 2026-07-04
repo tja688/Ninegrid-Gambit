@@ -55,6 +55,64 @@ namespace NineGrid.GameFlow
 
         public bool IsDragging => _dragged != null;
 
+        /// <summary>锻造台数量（通常 3：左/中/右）。</summary>
+        public int AnvilCount => anvils != null ? anvils.Length : 0;
+
+        /// <summary>指定锻造台上的材料数量。</summary>
+        public int GetPieceCount(int anvilIndex)
+        {
+            if (anvils == null || anvilIndex < 0 || anvilIndex >= anvils.Length)
+            {
+                return 0;
+            }
+
+            return anvils[anvilIndex]?.Stack.Count ?? 0;
+        }
+
+        /// <summary>任一锻造台上是否有材料（决定「开始锻造」是否可点）。</summary>
+        public bool HasAnyMaterial()
+        {
+            if (anvils == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < anvils.Length; i++)
+            {
+                if (GetPieceCount(i) > 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 填充各锻造台是否有材料的占用表（长度不足时按能填的填），返回占用的锻造台数量。
+        /// 供铸造完成后按台亮出对应钻头。
+        /// </summary>
+        public int GetOccupancy(bool[] result)
+        {
+            if (result == null)
+            {
+                return 0;
+            }
+
+            var occupied = 0;
+            for (var i = 0; i < result.Length; i++)
+            {
+                var has = GetPieceCount(i) > 0;
+                result[i] = has;
+                if (has)
+                {
+                    occupied++;
+                }
+            }
+
+            return occupied;
+        }
+
         void Awake()
         {
             ResolveRefs();

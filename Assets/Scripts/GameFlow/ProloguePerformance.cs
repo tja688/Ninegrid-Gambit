@@ -37,6 +37,7 @@ namespace NineGrid.GameFlow
         Coroutine _routine;
         Tween _sailTween;
         bool _isPlaying;
+        bool _includeDialogue = true;
 
         public bool IsPlaying => _isPlaying;
 
@@ -76,8 +77,14 @@ namespace NineGrid.GameFlow
             SetShipActive(enemy, true);
         }
 
-        /// <summary>播放完整序章演出。</summary>
-        public void Play()
+        /// <summary>播放完整序章演出（含对话）。</summary>
+        public void Play() => PlayEntrance(includeDialogue: true);
+
+        /// <summary>
+        /// 通用入场演出：玩家入镜 → stay →（可选对话）→ 敌方入镜 → stay → Completed。
+        /// 非序章战斗调 <c>PlayEntrance(false)</c>：玩家进位、敌人跟来，无对话。
+        /// </summary>
+        public void PlayEntrance(bool includeDialogue)
         {
             if (_isPlaying)
             {
@@ -87,6 +94,7 @@ namespace NineGrid.GameFlow
 
             ResolveRefs();
             StopPerformance(invokeCompleted: false);
+            _includeDialogue = includeDialogue;
             _isPlaying = true;
             _routine = StartCoroutine(RunRoutine());
         }
@@ -99,14 +107,17 @@ namespace NineGrid.GameFlow
 
             if (initialSeaHold > 0f)
             {
-                yield return new WaitForSeconds(initialSeaHold);
+                yield return new WaitForSecondsRealtime(initialSeaHold);
             }
 
             // 玩家入镜 → stay
             yield return SailIn(player, playerStart, playerStay);
 
-            // 停稳后对话
-            yield return PlayDialogue();
+            // 停稳后对话（非序章战斗跳过）
+            if (_includeDialogue)
+            {
+                yield return PlayDialogue();
+            }
 
             // 敌方入镜 → stay
             yield return SailIn(enemy, enemyStart, enemyStay);

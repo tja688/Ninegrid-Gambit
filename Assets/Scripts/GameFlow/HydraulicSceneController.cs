@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using DG.Tweening;
+using NineGrid.Battle;
 using UnityEngine;
 
 namespace NineGrid.GameFlow
@@ -49,6 +50,10 @@ namespace NineGrid.GameFlow
         [SerializeField] HydraulicMaterialLane materialLane;
         [SerializeField] HydraulicMaterialBoard materialBoard;
 
+        [Header("Hammer Impact")]
+        [Tooltip("锤头下压落点瞬间触发的屏幕震动（留空则用默认参数静态触发）。")]
+        [SerializeField] ScreenShakeEffect hammerImpactShake;
+
         [Header("Enter / Exit Timing")]
         [SerializeField] float moveDuration = 0.45f;
         [SerializeField] float enterStagger = 0.12f;
@@ -86,6 +91,18 @@ namespace NineGrid.GameFlow
 
         public bool IsActive => _state == HydraulicSceneState.Active;
 
+        /// <summary>锻造台材料布置（供伤害预览 / 钻头亮起查询）。</summary>
+        public HydraulicMaterialBoard MaterialBoard => materialBoard;
+
+        /// <summary>材料滑道（供发牌 / 桌面状态查询）。</summary>
+        public HydraulicMaterialLane MaterialLane => materialLane;
+
+        /// <summary>
+        /// 铸造提交（锤头开始下压前触发），携带各锻造台是否有材料的占用表（长度 3）。
+        /// 供战斗侧据此在外面亮出对应钻头。此刻材料尚未被消耗。
+        /// </summary>
+        public event Action<bool[]> ForgeCommitted;
+
         /// <summary>入场协程刚启动（宿主已激活，视觉尚未就位）。</summary>
         public event Action EnterStarted;
 
@@ -111,6 +128,7 @@ namespace NineGrid.GameFlow
             CacheStayPositions();
             EnsureBgRayBlocker();
             ApplyHiddenImmediate();
+            // 开局清空一次；此后常规进出保留桌面 / 锻造台状态，仅铸造完成后清空。
             ResetMaterials();
         }
 
@@ -252,7 +270,7 @@ namespace NineGrid.GameFlow
             PlaceAtWorld(display, _displayStay);
             PlaceAtWorld(pipe, _pipeStay);
             SetBgRayBlockEnabled(true);
-            ResetMaterials();
+            // 常规入场不清空材料：保留上次「退出锻造看对面」时的桌面 / 锻造台状态。
 
             _activeTween = null;
             _routine = null;
@@ -294,9 +312,13 @@ namespace NineGrid.GameFlow
 
         IEnumerator HydraulicRoutine()
         {
+            // 铸造提交：锤头下压前，先播报各锻造台占用情况（此刻材料尚未消耗）。
+            NotifyForgeCommitted();
+
             if (hammer == null)
             {
                 yield return ExitRoutine(invokeExitCompleted: false);
+                ResetMaterials();
                 HydraulicCompleted?.Invoke();
                 yield break;
             }
@@ -314,6 +336,9 @@ namespace NineGrid.GameFlow
             yield return new WaitUntil(() => dropCompleted);
             _activeTween = null;
             PlaceAtWorld(hammer, GetPressPosition());
+
+            // 锤头落位瞬间：屏幕震动。
+            PlayHammerShake();
 
             // 锤头完整落位后，其他元素立刻退场（与抬起并行）。
             _otherExitRoutine = StartCoroutine(ExitOthersRoutine());
@@ -341,10 +366,31 @@ namespace NineGrid.GameFlow
             }
 
             ApplyHiddenImmediate();
+            // 铸造完成：材料被消耗，清空桌面 / 锻造台。
+            ResetMaterials();
             _routine = null;
             _state = HydraulicSceneState.Hidden;
             HydraulicCompleted?.Invoke();
             DeactivateHost();
+        }
+
+        void NotifyForgeCommitted()
+        {
+            var occupancy = new bool[BoreManager.BoreCount];
+            materialBoard?.GetOccupancy(occupancy);
+            ForgeCommitted?.Invoke(occupancy);
+        }
+
+        void PlayHammerShake()
+        {
+            if (hammerImpactShake != null)
+            {
+                hammerImpactShake.Play();
+                return;
+            }
+
+            // 未配置专用效果时，用一组稳妥的默认参数触发一次。
+            ScreenShakeEffect.Trigger(0.6f, 0.35f, 34f);
         }
 
         Coroutine _otherExitRoutine;
@@ -387,8 +433,14 @@ namespace NineGrid.GameFlow
             SetVisualActive(pipe, false);
             SetVisualActive(hammer, false);
             SetOtherVisualsActive(false);
-            ResetMaterials();
+            // 不在此处清空材料：常规退场需保留桌面 / 锻造台状态；清空由 Awake / 铸造完成 / ResetForgeState 显式触发。
             // 不在此处失活宿主：Awake / Enter 过程中宿主必须保持激活才能跑协程。
+        }
+
+        /// <summary>显式清空桌面与锻造台材料（新战斗开始等场景）。</summary>
+        public void ResetForgeState()
+        {
+            ResetMaterials();
         }
 
         void ResetMaterials()

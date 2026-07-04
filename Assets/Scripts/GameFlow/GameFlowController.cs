@@ -55,6 +55,15 @@ namespace NineGrid.GameFlow
 
         bool _booted;
 
+        /// <summary>
+        /// 由 <see cref="SceneFlowDirector"/> 置真：节点进入动作（序章演出 / 开打）改为在场景加载完成后由 Director 调
+        /// <see cref="RunNodeEntry(GameFlowState)"/>，避免场景未就位就在旧场景残留对象上触发战斗。
+        /// </summary>
+        public static bool DeferNodeEntry { get; set; }
+
+        /// <summary>是否已 Boot（FSM 已进入初始状态）。未 Boot 时 <see cref="CurrentState"/> 只是占位默认值。</summary>
+        public bool IsBooted => _booted;
+
         public GameFlowState CurrentState =>
             _fsm.CurrentState != null ? _fsm.CurrentStateId : GameFlowState.MainMenu;
 
@@ -206,6 +215,13 @@ namespace NineGrid.GameFlow
 
             _booted = true;
             _fsm.StartState(initial);
+
+            // FSM.StartState 不触发 OnStateChanged；开局也补发一次，让 SceneFlowDirector 能接管首节点。
+            if (DeferNodeEntry)
+            {
+                StateChanged?.Invoke(initial, initial);
+            }
+
             Debug.Log($"[GameFlow] Boot → {initial} (enterPrologueOnStart={enterPrologueOnStart})");
         }
 
@@ -244,42 +260,39 @@ namespace NineGrid.GameFlow
 
         void OnEnterState(GameFlowState state)
         {
-            // 占位：后续在此挂战斗初始化、岛屿 UI、事件表等。不自动切场景。
+            // 有 SceneFlowDirector 时，节点进入动作交给它在场景加载完成后驱动。
+            if (DeferNodeEntry)
+            {
+                return;
+            }
+
+            RunNodeEntry(state);
+        }
+
+        /// <summary>按当前状态执行节点进入动作。</summary>
+        public void RunNodeEntry() => RunNodeEntry(CurrentState);
+
+        /// <summary>
+        /// 执行某节点的进入动作（序章演出 / 战斗入场）。岛屿 / 路线 / 主菜单 / 胜利由各自场景控制器接管。
+        /// SceneFlowDirector 在目标场景加载完成后调用本方法。
+        /// </summary>
+        public void RunNodeEntry(GameFlowState state)
+        {
             if (state == GameFlowState.Prologue)
             {
-                StartProloguePerformance();
-            }
-            else if (state == GameFlowState.Battle0)
-            {
-                // 已历序章：跳过演出，双方直接就位后进入战斗环节。
-                var performance = ProloguePerformance.Instance;
-                if (performance != null)
-                {
-                    performance.PrepareIdleBattleFormation();
-                }
-
-                BeginBattlePhase();
+                // 序章：含教学对话的完整入场。
+                StartBattleEntrance(includeDialogue: true);
             }
             else if (GameFlowScenes.IsBattleState(state))
             {
-                // 占位：按 state 配置遭遇战
-                BeginBattlePhase();
+                // 其余战斗：玩家进位、敌人跟来，无对话。
+                StartBattleEntrance(includeDialogue: false);
             }
-            else if (GameFlowScenes.IsIslandState(state))
-            {
-                // 占位：岛屿休整 / 精英奖励
-            }
-            else if (state == GameFlowState.MainMenu)
-            {
-                // 占位：主菜单
-            }
-            else if (state == GameFlowState.VictorySettlement)
-            {
-                // 占位：胜利结算
-            }
+            // 岛屿 / 路线 / 主菜单 / 胜利：由场景内控制器在加载后自初始化。
         }
 
-        void StartProloguePerformance()
+        /// <summary>入场演出（可选对话）跑完后进入战斗环节；找不到演出组件则直接开打。</summary>
+        void StartBattleEntrance(bool includeDialogue)
         {
             var performance = ProloguePerformance.Instance;
             if (performance == null)
@@ -294,17 +307,19 @@ namespace NineGrid.GameFlow
                 return;
             }
 
+            var entranceState = CurrentState;
+
             void OnPerformanceCompleted()
             {
                 performance.Completed -= OnPerformanceCompleted;
-                if (CurrentState == GameFlowState.Prologue)
+                if (CurrentState == entranceState)
                 {
                     BeginBattlePhase();
                 }
             }
 
             performance.Completed += OnPerformanceCompleted;
-            performance.Play();
+            performance.PlayEntrance(includeDialogue);
         }
 
         /// <summary>战斗环节入口。序章演出结束后 / 战斗0 直进时调用，转交 <see cref="BattleController"/>。</summary>

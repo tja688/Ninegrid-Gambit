@@ -2,7 +2,7 @@
 
 跨场景全局唯一，入口：`NineGrid.GameFlow.GameFlowController`（`PersistentMonoSingleton`，挂在 MainScene，`DontDestroyOnLoad`）。
 
-**不自动加载场景**；状态推进只改 `CurrentState`，场景跳转由外部在需要时申请。
+`GameFlowController` 本身**只管状态**（`Advance()` 只改 `CurrentState`）。真实的**场景加载 + 过渡蒙版 + 节点入场**由常驻编导 `SceneFlowDirector` 监听 `StateChanged` 驱动（自举，无需手动挂）。详见 `全流程接线交接笔记.md`。
 
 ## 开局
 
@@ -35,4 +35,4 @@ Inspector 字段 **Enter Prologue On Start**（`enterPrologueOnStart`，默认�
 
 序章演出结束 / `Battle0` 就位后，`BeginBattlePhase()` 转交 `BattleController`（独立状态机，挂在 MainScene `GameFlow`）。详见 `Battle.md`。
 
-战斗结束暂不 `Advance()`。
+战斗结束触发 `BattleController.BattleFinished`，由 `SceneFlowDirector` 接住并自动 `Advance()`（当前不分胜负，真实胜负判定见 `全流程接线交接笔记.md`）。

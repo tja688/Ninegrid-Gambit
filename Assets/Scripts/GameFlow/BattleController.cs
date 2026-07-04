@@ -43,6 +43,15 @@ namespace NineGrid.GameFlow
         [SerializeField] EnemyIntroducePanelController enemyInfoPanel;
         [SerializeField] AnchorChainLauncher anchorChain;
         [SerializeField] AnchorRammingController anchorRam;
+        [SerializeField] BoreManager bores;
+        [SerializeField] AnchorHpTracker anchorHp;
+
+        [Header("Flow (占位数值)")]
+        [Tooltip("船锚余量组件缺失时的兜底撞击次数：撞满该次数即算打完本场。")]
+        [SerializeField] int fallbackRamsToWin = 3;
+        [Tooltip("未铸造钻头就点敌人时的提示文案。")]
+        [TextArea(1, 3)]
+        [SerializeField] string forgeFirstNotice = "先点玩家船体铸造钻头，再抛锚撞击。";
 
         [Header("Exit Motion")]
         [SerializeField] float playerExitDuration = 1f;
@@ -59,6 +68,11 @@ namespace NineGrid.GameFlow
         BattlePhaseState _state = BattlePhaseState.Idle;
         bool _hydraulicEventsBound;
         bool _ramming;
+        bool _hasForgedBore;
+        bool _anchorWarned;
+        int _ramsCompleted;
+        bool _won;
+        readonly bool[] _pendingBoreOccupancy = new bool[BoreManager.BoreCount];
 
         public BattlePhaseState State => _state;
         public bool IsBusy =>
@@ -77,6 +91,9 @@ namespace NineGrid.GameFlow
 
         /// <summary>战斗退场完成。暂不推进主流程下一节点。</summary>
         public event Action ExitCompleted;
+
+        /// <summary>战斗结束（含胜负标记）。SceneFlowDirector 据此推进主流程下一节点。</summary>
+        public event Action<bool> BattleFinished;
 
         void Awake()
         {
@@ -193,9 +210,23 @@ namespace NineGrid.GameFlow
 
             ResolveRefs();
             KillMotion();
+            ResetBattleState();
             _state = BattlePhaseState.Entering;
             _routine = StartCoroutine(EnterRoutine());
             return true;
+        }
+
+        /// <summary>重置本场战斗的流程状态：钻头、船锚余量、锻造材料、撞击计数。</summary>
+        void ResetBattleState()
+        {
+            _hasForgedBore = false;
+            _anchorWarned = false;
+            _ramsCompleted = 0;
+            _won = false;
+
+            bores?.HideAll();
+            anchorHp?.ResetFull();
+            hydraulicScene?.ResetForgeState();
         }
 
         /// <summary>结束战斗（调试热键 / 后续胜负条件）。</summary>
@@ -339,6 +370,33 @@ namespace NineGrid.GameFlow
             anchorRam.Completed -= OnRamCompleted;
             _ramming = false;
             _anchorRoutine = null;
+
+            if (done && _state == BattlePhaseState.Active)
+            {
+                OnRamSucceeded();
+            }
+        }
+
+        /// <summary>一次撞击成功：消耗船锚余量；余量归零即算打完本场（当前无真实数值）。</summary>
+        void OnRamSucceeded()
+        {
+            _ramsCompleted++;
+
+            bool depleted;
+            if (anchorHp != null && anchorHp.Capacity > 0)
+            {
+                depleted = anchorHp.ConsumeOne();
+            }
+            else
+            {
+                depleted = _ramsCompleted >= Mathf.Max(1, fallbackRamsToWin);
+            }
+
+            if (depleted)
+            {
+                _won = true;
+                ExitBattle();
+            }
         }
 
         IEnumerator EnterRoutine()
@@ -463,7 +521,8 @@ namespace NineGrid.GameFlow
             _routine = null;
             _state = BattlePhaseState.Idle;
             ExitCompleted?.Invoke();
-            Debug.Log("[Battle] Idle（未推进主流程下一节点）");
+            BattleFinished?.Invoke(_won);
+            Debug.Log($"[Battle] Idle（won={_won}）→ 交由 SceneFlowDirector 推进主流程");
         }
 
         void UpdateActiveCombat()
@@ -493,8 +552,22 @@ namespace NineGrid.GameFlow
 
             if (hovered == enemySelectable)
             {
+                // 未铸造钻头就点敌人：先拦截一次并弹提示；玩家坚持再点则放任其空抛锚。
+                if (!_hasForgedBore && !_anchorWarned)
+                {
+                    _anchorWarned = true;
+                    ShowNotice(forgeFirstNotice);
+                    return;
+                }
+
                 TryEnterAnchorMode();
             }
+        }
+
+        void ShowNotice(string text)
+        {
+            var notice = UiSystem.Instance != null ? UiSystem.Instance.Notice : null;
+            notice?.Show(NoticeChannel.Notice, text, 2.2f);
         }
 
         void BindHydraulicEvents()
@@ -517,7 +590,8 @@ namespace NineGrid.GameFlow
 
             hydraulicScene.EnterStarted += OnForgeEnterStarted;
             hydraulicScene.ExitCompleted += OnForgeExitCompleted;
-            hydraulicScene.HydraulicCompleted += OnForgeExitCompleted;
+            hydraulicScene.HydraulicCompleted += OnForgeHydraulicCompleted;
+            hydraulicScene.ForgeCommitted += OnForgeCommitted;
             _hydraulicEventsBound = true;
         }
 
@@ -531,8 +605,38 @@ namespace NineGrid.GameFlow
 
             hydraulicScene.EnterStarted -= OnForgeEnterStarted;
             hydraulicScene.ExitCompleted -= OnForgeExitCompleted;
-            hydraulicScene.HydraulicCompleted -= OnForgeExitCompleted;
+            hydraulicScene.HydraulicCompleted -= OnForgeHydraulicCompleted;
+            hydraulicScene.ForgeCommitted -= OnForgeCommitted;
             _hydraulicEventsBound = false;
+        }
+
+        /// <summary>铸造提交：记录哪些锻造台有料、解除「先铸造」限制。</summary>
+        void OnForgeCommitted(bool[] occupancy)
+        {
+            if (occupancy == null)
+            {
+                return;
+            }
+
+            var any = false;
+            for (var i = 0; i < _pendingBoreOccupancy.Length; i++)
+            {
+                var has = i < occupancy.Length && occupancy[i];
+                _pendingBoreOccupancy[i] = has;
+                any |= has;
+            }
+
+            if (any)
+            {
+                _hasForgedBore = true;
+            }
+        }
+
+        /// <summary>铸造完成（锤头砸下、场景退场）：按提交时的占用亮出对应钻头，并恢复敌人信息。</summary>
+        void OnForgeHydraulicCompleted()
+        {
+            bores?.ShowBores(_pendingBoreOccupancy);
+            OnForgeExitCompleted();
         }
 
         /// <summary>锻造开启：瞬间藏起敌人信息面板与文字。</summary>
@@ -716,6 +820,16 @@ namespace NineGrid.GameFlow
             if (anchorRam == null)
             {
                 anchorRam = FindFirstObjectByType<AnchorRammingController>(FindObjectsInactive.Include);
+            }
+
+            if (bores == null)
+            {
+                bores = FindFirstObjectByType<BoreManager>(FindObjectsInactive.Include);
+            }
+
+            if (anchorHp == null)
+            {
+                anchorHp = FindFirstObjectByType<AnchorHpTracker>(FindObjectsInactive.Include);
             }
         }
 
