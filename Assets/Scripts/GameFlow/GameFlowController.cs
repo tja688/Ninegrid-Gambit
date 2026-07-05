@@ -183,6 +183,35 @@ namespace NineGrid.GameFlow
             EnterState(CampaignSequence[index + 1]);
         }
 
+        /// <summary>
+        /// Route* 节点已在 <see cref="RouteController"/> 完成事件选择后调用。
+        /// 跳过线性序列中的 Event* 跳板，直接进入对应 Battle*。
+        /// </summary>
+        public void AdvanceFromRouteAfterEvent()
+        {
+            if (!_booted)
+            {
+                Boot();
+            }
+
+            var current = CurrentState;
+            if (current < GameFlowState.Route1 || current > GameFlowState.Route6)
+            {
+                Advance();
+                return;
+            }
+
+            var index = IndexOf(current);
+            if (index < 0 || index + 2 >= CampaignSequence.Length)
+            {
+                Debug.LogWarning($"[GameFlow] AdvanceFromRouteAfterEvent: 无法从 {current} 跳到战斗，回退 Advance。");
+                Advance();
+                return;
+            }
+
+            EnterState(CampaignSequence[index + 2]);
+        }
+
         /// <summary>中途暴毙：回主菜单状态（不自动切场景）。</summary>
         public void NotifyPlayerDefeated()
         {
@@ -320,6 +349,10 @@ namespace NineGrid.GameFlow
             {
                 PlayerRunHudController.Instance?.Suppress(PlayerRunHudSuppressReason.PrologueOpening);
             }
+            else
+            {
+                PlayerRunHudController.Instance?.Release(PlayerRunHudSuppressReason.PrologueOpening);
+            }
 
             var entranceState = CurrentState;
 
@@ -339,6 +372,8 @@ namespace NineGrid.GameFlow
         /// <summary>战斗环节入口。序章演出结束后 / 战斗0 直进时调用，转交 <see cref="BattleController"/>。</summary>
         void BeginBattlePhase()
         {
+            PlayerRunHudController.Instance?.Release(PlayerRunHudSuppressReason.PrologueOpening);
+
             var battle = BattleController.Instance;
             if (battle == null)
             {

@@ -23,7 +23,7 @@ namespace NineGrid.GameFlow
             new() { Flag = OreTrait.Quench2, Label = "淬火2", Effect = "摆下时本矿石永久+2点" },
             new() { Flag = OreTrait.Quench, Label = "淬火", Effect = "摆下时本矿石永久+1点" },
             new() { Flag = OreTrait.Station, Label = "驻台", Effect = "抛锚撞击后本矿石不移入矿渣堆，下回合开始时移除本矿石驻台特性" },
-            new() { Flag = OreTrait.Debris, Label = "碎屑", Effect = "摆下时在精炼盘生成1块0点矿渣" },
+            new() { Flag = OreTrait.Debris, Label = "碎屑", Effect = "摆下时在铸造台生成1块0点矿渣" },
             new() { Flag = OreTrait.Twin, Label = "双晶", Effect = "摆下时在精炼盘复制1块与自身相同的矿石" },
             new() { Flag = OreTrait.Preheat, Label = "预热", Effect = "本铸造台上下一块投入的本矿石获得上方预热矿半数点数（向下取整）" },
             new() { Flag = OreTrait.Symbiosis2, Label = "共生2", Effect = "摆下时从矿舱抽2块矿石入精炼盘" },

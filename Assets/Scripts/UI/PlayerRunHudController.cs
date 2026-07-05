@@ -39,6 +39,7 @@ namespace NineGrid.UI
         HullModSlotsController _hullModSlots;
 
         bool _inRun;
+        bool _flowHooked;
 
         /// <summary>跑局 HUD 需要 Overlay 根保持激活（供商店等逻辑参考）。</summary>
         public bool WantsOverlayActive => _inRun && _suppressions.Count == 0;
@@ -58,7 +59,7 @@ namespace NineGrid.UI
         void OnDestroy()
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
-            UnsubscribeFlow();
+            UnhookFlow();
 
             if (Instance == this)
             {
@@ -69,35 +70,56 @@ namespace NineGrid.UI
         void Start()
         {
             ResolveGoldRefs();
-            ResolveBattleRefs();
-            SubscribeFlow();
+            ResolveHudRefs();
+            TryHookFlow(forceApply: true);
+        }
+
+        void Update()
+        {
+            if (!_flowHooked)
+            {
+                TryHookFlow(forceApply: true);
+            }
+        }
+
+        void TryHookFlow(bool forceApply)
+        {
+            var flow = GameFlowController.Instance;
+            if (flow == null || !flow.IsBooted)
+            {
+                return;
+            }
+
+            if (!_flowHooked)
+            {
+                flow.StateChanged += OnFlowStateChanged;
+                flow.RunStarted += OnRunStarted;
+                _flowHooked = true;
+            }
+
             SyncRunState();
-            RefreshGold();
-            ApplyVisibility();
+            if (forceApply)
+            {
+                RefreshGold();
+                ApplyVisibility();
+            }
         }
 
-        void SubscribeFlow()
+        void UnhookFlow()
         {
-            var flow = GameFlowController.Instance;
-            if (flow == null)
+            if (!_flowHooked)
             {
                 return;
             }
 
-            flow.StateChanged += OnFlowStateChanged;
-            flow.RunStarted += OnRunStarted;
-        }
-
-        void UnsubscribeFlow()
-        {
             var flow = GameFlowController.Instance;
-            if (flow == null)
+            if (flow != null)
             {
-                return;
+                flow.StateChanged -= OnFlowStateChanged;
+                flow.RunStarted -= OnRunStarted;
             }
 
-            flow.StateChanged -= OnFlowStateChanged;
-            flow.RunStarted -= OnRunStarted;
+            _flowHooked = false;
         }
 
         void OnRunStarted()
@@ -116,16 +138,19 @@ namespace NineGrid.UI
 
         void SyncRunState(GameFlowState? state = null)
         {
+            var flow = GameFlowController.Instance;
             var next = state
-                ?? (GameFlowController.Instance != null
-                    ? GameFlowController.Instance.CurrentState
+                ?? (flow != null && flow.IsBooted
+                    ? flow.CurrentState
                     : GameFlowState.MainMenu);
             _inRun = next != GameFlowState.MainMenu;
         }
 
         void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            ResolveBattleRefs();
+            ResolveGoldRefs();
+            ResolveHudRefs();
+            SyncRunState();
             RefreshGold();
             ApplyVisibility();
         }
@@ -173,16 +198,17 @@ namespace NineGrid.UI
         {
             var visible = _inRun && _suppressions.Count == 0;
 
+            if (visible)
+            {
+                UiSystem.Instance?.SetOverlayActive(true);
+            }
+
             SetRootActive(goldCountRoot, visible);
             SetRootActive(goldIconRoot, visible);
             _anchorHp?.SetVisible(visible);
             _hullModSlots?.SetVisible(visible);
 
-            if (visible)
-            {
-                UiSystem.Instance?.SetOverlayActive(true);
-            }
-            else
+            if (!visible)
             {
                 TryReleaseOverlay();
             }
@@ -224,7 +250,10 @@ namespace NineGrid.UI
 
             if (goldIconRoot == null)
             {
-                goldIconRoot = FindDeepChild(uiRoot, "金币图标")?.gameObject;
+                var overlay = UiSystem.Instance != null ? UiSystem.Instance.OverlayRoot : null;
+                var iconScope = overlay != null ? overlay.transform : uiRoot;
+                goldIconRoot = FindDeepChild(iconScope, "金币图标")?.gameObject
+                    ?? FindDeepChild(uiRoot, "金币图标")?.gameObject;
             }
 
             if (goldCountRoot != null && _goldText == null)
@@ -240,17 +269,16 @@ namespace NineGrid.UI
             }
         }
 
-        void ResolveBattleRefs()
+        void ResolveHudRefs()
         {
-            if (!string.Equals(SceneManager.GetActiveScene().name, GameFlowScenes.Main, System.StringComparison.Ordinal))
+            var ui = UiSystem.Instance;
+            if (ui == null)
             {
-                _anchorHp = null;
-                _hullModSlots = null;
                 return;
             }
 
-            _anchorHp = FindFirstObjectByType<AnchorHpTracker>(FindObjectsInactive.Include);
-            _hullModSlots = FindFirstObjectByType<HullModSlotsController>(FindObjectsInactive.Include);
+            _anchorHp ??= ui.GetComponentInChildren<AnchorHpTracker>(true);
+            _hullModSlots ??= ui.GetComponentInChildren<HullModSlotsController>(true);
         }
 
         static Transform FindDeepChild(Transform parent, string trimmedName)

@@ -83,6 +83,7 @@ namespace NineGrid.GameFlow
         BattlePhaseState _state = BattlePhaseState.Idle;
         bool _hydraulicEventsBound;
         HydraulicSceneController _boundHydraulicScene;
+        HydraulicMaterialBoard _boundMaterialBoard;
         bool _ramming;
         bool _hasForgedBore;
         bool _anchorWarned;
@@ -823,6 +824,14 @@ namespace NineGrid.GameFlow
             hydraulicScene.ExitCompleted += OnForgeExitCompleted;
             hydraulicScene.HydraulicCompleted += OnForgeHydraulicCompleted;
             hydraulicScene.ForgeCommitted += OnForgeCommitted;
+
+            var board = hydraulicScene.MaterialBoard;
+            if (board != null)
+            {
+                board.PlacedOnAnvil += OnMaterialPlacedOnAnvil;
+                _boundMaterialBoard = board;
+            }
+
             _hydraulicEventsBound = true;
             _boundHydraulicScene = hydraulicScene;
         }
@@ -840,8 +849,39 @@ namespace NineGrid.GameFlow
                 target.ForgeCommitted -= OnForgeCommitted;
             }
 
+            if (_boundMaterialBoard != null)
+            {
+                _boundMaterialBoard.PlacedOnAnvil -= OnMaterialPlacedOnAnvil;
+                _boundMaterialBoard = null;
+            }
+
             _hydraulicEventsBound = false;
             _boundHydraulicScene = null;
+        }
+
+        void OnMaterialPlacedOnAnvil(CardInstance card, int anvilIndex)
+        {
+            if (_combat == null || card == null)
+            {
+                return;
+            }
+
+            var slag = _combat.OnPiecePlacedOnAnvil(card, anvilIndex);
+            if (slag == null)
+            {
+                return;
+            }
+
+            var board = hydraulicScene?.MaterialBoard;
+            if (board == null)
+            {
+                return;
+            }
+
+            if (!board.TrySpawnDerivedOnAnvil(slag, anvilIndex))
+            {
+                Debug.LogWarning("[Battle] 碎屑矿渣生成失败（材料池已满或铸造台已满）。");
+            }
         }
 
         void ResolveHydraulicSceneRef()

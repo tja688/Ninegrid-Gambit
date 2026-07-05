@@ -29,7 +29,11 @@ namespace NineGrid.Battle.Combat
     /// </summary>
     public sealed class CombatModel
     {
+        const string SlagOreId = "ore_kuangzha";
+
         public CombatState State { get; } = new();
+
+        OreCatalog _catalog;
 
         public event System.Action<int, int> EnemyHpChanged;
         public event System.Action<int, int> PlayerHpChanged;
@@ -49,6 +53,8 @@ namespace NineGrid.Battle.Combat
             int[] slotMultipliers = null,
             string[] enemySkills = null)
         {
+            _catalog = catalog;
+
             // 清空状态
             State.Deck.Clear();
             State.Discard.Clear();
@@ -352,10 +358,11 @@ namespace NineGrid.Battle.Combat
         /// 矿石放置到铸造台时触发（对应 web ON_PLAY）。
         /// 处理：淬火、首矿追踪、敌舰技能（center_grow/first_card_discard）、遗物（first_card_remain/slot_grow）、
         /// Twin/Symbiosis/Debris、play_diffusion_every_3。
+        /// 返回碎屑生成的矿渣（需由表现层直接放到对应铸造台）。
         /// </summary>
-        public void OnPiecePlacedOnAnvil(CardInstance card, int slotIndex)
+        public CardInstance OnPiecePlacedOnAnvil(CardInstance card, int slotIndex)
         {
-            if (card == null) return;
+            if (card == null) return null;
 
             // 敌舰技能：首矿直接弃置（铁甲护卫舰 first_card_discard）
             if (!State.FirstCardPlayedThisTurn && State.HasEnemySkill("first_card_discard"))
@@ -368,7 +375,7 @@ namespace NineGrid.Battle.Combat
                 State.FirstCardPlayedThisBattle = true;
                 State.CardsPlayedThisTurn++;
                 Debug.Log("[Combat] 首矿被敌舰弃置（first_card_discard）");
-                return;
+                return null;
             }
 
             // 首矿追踪
@@ -433,20 +440,33 @@ namespace NineGrid.Battle.Combat
                     DrawOre();
             }
 
-            // 碎屑 Debris：生成一块0点矿渣到精炼盘
+            // 碎屑 Debris：生成一块0点矿渣到同一铸造台（表现层直接放置，不走管道）
             if (card.HasTrait(OreTrait.Debris))
             {
-                var debris = new CardInstance("debris", "矿渣", 0, true);
-                State.Hand.Add(debris);
+                return CreateSlagCard();
             }
 
             // 敌舰技能：孢雾号 play_diffusion_every_3 — 每投3块矿，投入1块矿渣到随机台
             if (State.HasEnemySkill("play_diffusion_every_3") && State.CardsPlayedThisTurn % 3 == 0)
             {
                 var junkSlot = Random.Range(0, CombatCalculator.SlotCount);
-                var junk = new CardInstance("diffusion_junk", "扩散矿渣", 0, true);
-                State.Slots[junkSlot].Cards.Add(junk);
+                State.Slots[junkSlot].Cards.Add(CreateSlagCard());
             }
+
+            return null;
+        }
+
+        CardInstance CreateSlagCard()
+        {
+            if (_catalog != null && _catalog.TryGet(SlagOreId, out var entry))
+            {
+                var card = new CardInstance(entry);
+                card.IsDerived = true;
+                return card;
+            }
+
+            Debug.LogWarning($"[Combat] OreCatalog 缺少 {SlagOreId}，使用占位矿渣数据。");
+            return new CardInstance(SlagOreId, "矿渣", 0, true);
         }
 
         // ===== 锻造提交（算伤害 + 消耗） =====

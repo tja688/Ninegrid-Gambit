@@ -560,6 +560,13 @@ namespace NineGrid.GameFlow
             return -1;
         }
 
+        /// <summary>从材料池取一块未使用的 visual piece（供碎屑矿渣等衍生物直接上砧）。</summary>
+        public HydraulicMaterialPiece TryTakePooledPiece()
+        {
+            var index = FindFreePieceIndex();
+            return index >= 0 ? pieces[index] : null;
+        }
+
         int FindFreeTableSlot()
         {
             for (var i = 0; i < _tableOccupied.Length; i++)

@@ -231,7 +231,7 @@ namespace NineGrid.Audio
             if (board != null)
             {
                 board.DragBegun += () => PlayCue(AudioKey.BoardBeginDrag);
-                board.PlacedOnAnvil += () => PlayCue(AudioKey.BoardPlaceOnAnvil);
+                board.PlacedOnAnvil += (_, __) => PlayCue(AudioKey.BoardPlaceOnAnvil);
                 board.AnvilRelayouted += () => PlayCue(AudioKey.BoardRelayoutAnvil);
                 board.PlacedOnTable += () => PlayCue(AudioKey.BoardPlaceOnTable);
                 board.DragCancelled += () => PlayCue(AudioKey.BoardCancelDrag);

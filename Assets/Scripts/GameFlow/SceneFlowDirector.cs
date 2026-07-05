@@ -37,6 +37,7 @@ namespace NineGrid.GameFlow
 
         GameFlowState? _handledState;
         bool _subscribed;
+        bool _bootstrapComplete;
 
         /// <summary>确保 GameFlow 在任何场景 Awake 之前就转为「延迟节点入口」，交由本编导驱动。</summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -73,15 +74,47 @@ namespace NineGrid.GameFlow
                 return;
             }
 
-            EnsureSubscribed();
-            // 处理开局状态（GameFlow 可能已在自己的 Start 里 Boot 并发过一次事件）。
-            SyncToCurrentState();
+            StartCoroutine(BootstrapRoutine());
+        }
+
+        void Update()
+        {
+            if (!mEnabled)
+            {
+                return;
+            }
+
+            if (!_subscribed)
+            {
+                EnsureSubscribed();
+                if (_subscribed)
+                {
+                    SyncToCurrentState();
+                }
+            }
+
+            if (_bootstrapComplete)
+            {
+                TryReconcileScene();
+            }
         }
 
         void OnDestroy()
         {
             Unsubscribe();
             UnbindBattle();
+        }
+
+        IEnumerator BootstrapRoutine()
+        {
+            while (GameFlowController.Instance == null)
+            {
+                yield return null;
+            }
+
+            EnsureSubscribed();
+            SyncToCurrentState();
+            _bootstrapComplete = true;
         }
 
         void EnsureSubscribed()
@@ -159,6 +192,57 @@ namespace NineGrid.GameFlow
             _routine = StartCoroutine(TransitionRoutine(state));
         }
 
+        void TryReconcileScene()
+        {
+            if (_routine != null)
+            {
+                return;
+            }
+
+            var flow = GameFlowController.Instance;
+            if (flow == null || !flow.IsBooted)
+            {
+                return;
+            }
+
+            var state = flow.CurrentState;
+            if (state == GameFlowState.MainMenu || state == GameFlowState.VictorySettlement)
+            {
+                return;
+            }
+
+            var expected = ResolveExpectedSceneName(state);
+            if (string.IsNullOrEmpty(expected))
+            {
+                return;
+            }
+
+            var active = SceneManager.GetActiveScene().name;
+            if (string.Equals(expected, active, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            Debug.LogWarning(
+                $"[SceneFlow] 场景与状态不一致 state={state} active={active} expected={expected}，重新过渡。");
+            RouteTo(state);
+        }
+
+        static string ResolveExpectedSceneName(GameFlowState state)
+        {
+            if (state >= GameFlowState.Event1 && state <= GameFlowState.Event6)
+            {
+                return GameFlowScenes.Route;
+            }
+
+            if (GameFlowScenes.IsBattleState(state))
+            {
+                return GameFlowScenes.Main;
+            }
+
+            return GameFlowScenes.GetSceneName(state);
+        }
+
         IEnumerator TransitionRoutine(GameFlowState state)
         {
             // 事件状态：复用 RouteScene（RouteController 已在 Route* 展示事件；Event* 可能仅作跳板）
@@ -202,6 +286,7 @@ namespace NineGrid.GameFlow
 
             if (needLoad)
             {
+                Debug.Log($"[SceneFlow] {activeScene} → {targetScene} (state={state})");
                 yield return Fade(0f, 1f);
                 yield return LoadSceneSingle(targetScene);
                 yield return null;

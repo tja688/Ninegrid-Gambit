@@ -58,7 +58,7 @@ namespace NineGrid.GameFlow
         Vector3 _dragOffset;
 
         public event Action DragBegun;
-        public event Action PlacedOnAnvil;
+        public event Action<CardInstance, int> PlacedOnAnvil;
         public event Action AnvilRelayouted;
         public event Action PlacedOnTable;
         public event Action DragCancelled;
@@ -455,9 +455,39 @@ namespace NineGrid.GameFlow
             }
 
             stack.Insert(insertAt, piece);
-            piece.Card?.OnPlacedOnAnvil(anvilIndex);
+            PlacedOnAnvil?.Invoke(piece.Card, anvilIndex);
             RelayoutAnvil(anvilIndex, animate: true);
-            PlacedOnAnvil?.Invoke();
+            return true;
+        }
+
+        /// <summary>衍生物（碎屑矿渣等）直接叠放到指定铸造台顶，不走管道。</summary>
+        public bool TrySpawnDerivedOnAnvil(CardInstance card, int anvilIndex)
+        {
+            if (card == null || anvils == null || anvilIndex < 0 || anvilIndex >= anvils.Length)
+            {
+                return false;
+            }
+
+            var anvil = anvils[anvilIndex];
+            if (anvil == null || anvil.surface == null || lane == null)
+            {
+                return false;
+            }
+
+            var stack = anvil.Stack;
+            if (stack.Count >= MaxPerAnvil)
+            {
+                return false;
+            }
+
+            var piece = lane.TryTakePooledPiece();
+            if (piece == null)
+            {
+                return false;
+            }
+
+            piece.BindCard(card);
+            stack.Add(piece);
             return true;
         }
 

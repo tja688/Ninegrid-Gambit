@@ -316,21 +316,16 @@ namespace NineGrid.GameFlow
                 return;
             }
 
-            var fromRoute = IsRouteState(flow.CurrentState);
-            if (fromRoute)
-            {
-                run.SkipNextEventPresentation = true;
-            }
-
             RunData.Save();
             EventSelected?.Invoke();
-            flow.Advance();
 
-            if (fromRoute && IsEventState(flow.CurrentState))
+            if (IsRouteState(flow.CurrentState))
             {
-                // Route* 已完成真实事件选择；Event* 只作为线性状态机中的跳板，立即进入下一场战斗。
-                run.SkipNextEventPresentation = false;
-                RunData.Save();
+                // Route* 已完成真实事件；跳过 Event* 跳板，一次进入下一场战斗。
+                flow.AdvanceFromRouteAfterEvent();
+            }
+            else
+            {
                 flow.Advance();
             }
         }

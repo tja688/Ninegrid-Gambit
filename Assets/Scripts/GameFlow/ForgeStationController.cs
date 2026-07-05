@@ -12,7 +12,7 @@ namespace NineGrid.GameFlow
     /// - 开始锻造：锻造台有料才可点，触发锤头下压铸造（PlayHydraulic）。
     /// - 退出锻造：常规退场看对面，保留桌面 / 锻造台材料。
     /// - 查看矿石库：开合矿仓小面板。
-    /// Factory Text（<=51 字）：拖拽或悬停矿石时显示其信息；无聚焦时显示前/中/后钻头预计伤害与合计。
+    /// Factory Text（<=51 字）：拖拽或悬停矿石时显示其信息；无聚焦时轮播伤害预览、熔炼加成现状与叠矿规则。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class ForgeStationController : MonoBehaviour
@@ -38,7 +38,13 @@ namespace NineGrid.GameFlow
         int _oreDisplaySegmentIndex;
         float _oreDisplayCarouselTimer;
 
+        List<string> _idleDisplaySegments;
+        int _idleDisplaySegmentIndex;
+        float _idleDisplayCarouselTimer;
+        string _idleDisplaySignature;
+
         const float OreDisplayCarouselInterval = 2.4f;
+        const float IdleDisplayCarouselInterval = 3.2f;
 
         public event Action ForgeRequested;
         public event Action ForgeExited;
@@ -160,24 +166,7 @@ namespace NineGrid.GameFlow
             else
             {
                 ClearOreDisplayState();
-                // 非聚焦：显示前/中/后各台伤害 + 合计（真实数值）
-                var combat = BattleController.Instance != null ? BattleController.Instance.Combat : null;
-                if (combat != null)
-                {
-                    var anvilStacks = board.GetAnvilStacks();
-                    var total = combat.PreviewDamage(anvilStacks);
-                    var f = combat.GetSlotDamage(0);
-                    var m = combat.GetSlotDamage(1);
-                    var r = combat.GetSlotDamage(2);
-                    text = $"\u524D{f} \u4E2D{m} \u540E{r} | \u5408\u8BA1{total}";
-                }
-                else
-                {
-                    var f = board.GetPieceCount(0);
-                    var m = board.GetPieceCount(1);
-                    var r = board.GetPieceCount(2);
-                    text = $"\u524D{f} \u4E2D{m} \u540E{r} | \u5F85\u63A5\u5165";
-                }
+                text = GetIdleDisplayText(board);
             }
 
             SetFactoryText(text);
@@ -193,6 +182,7 @@ namespace NineGrid.GameFlow
 
             if (_oreDisplayCard != card)
             {
+                ClearIdleDisplayState();
                 _oreDisplayCard = card;
                 _oreDisplaySegments = OreDisplayFormatter.BuildForgeSegments(card);
                 _oreDisplaySegmentIndex = 0;
@@ -225,6 +215,70 @@ namespace NineGrid.GameFlow
             _oreDisplaySegments = null;
             _oreDisplaySegmentIndex = 0;
             _oreDisplayCarouselTimer = 0f;
+        }
+
+        string GetIdleDisplayText(HydraulicMaterialBoard board)
+        {
+            var combat = BattleController.Instance != null ? BattleController.Instance.Combat : null;
+            var combatReady = combat != null;
+
+            var frontSmelt = OreDisplayFormatter.GetSmeltCycleCount(board.GetPieceCount(0));
+            var midSmelt = OreDisplayFormatter.GetSmeltCycleCount(board.GetPieceCount(1));
+            var backSmelt = OreDisplayFormatter.GetSmeltCycleCount(board.GetPieceCount(2));
+
+            int frontDamage;
+            int midDamage;
+            int backDamage;
+            int totalDamage;
+            if (combatReady)
+            {
+                var anvilStacks = board.GetAnvilStacks();
+                totalDamage = combat.PreviewDamage(anvilStacks);
+                frontDamage = combat.GetSlotDamage(0);
+                midDamage = combat.GetSlotDamage(1);
+                backDamage = combat.GetSlotDamage(2);
+            }
+            else
+            {
+                frontDamage = board.GetPieceCount(0);
+                midDamage = board.GetPieceCount(1);
+                backDamage = board.GetPieceCount(2);
+                totalDamage = 0;
+            }
+
+            var signature =
+                $"{frontDamage}|{midDamage}|{backDamage}|{totalDamage}|{frontSmelt}|{midSmelt}|{backSmelt}|{combatReady}";
+            if (_idleDisplaySegments == null || signature != _idleDisplaySignature)
+            {
+                _idleDisplaySegments = OreDisplayFormatter.BuildIdleForgeSegments(
+                    frontDamage, midDamage, backDamage, totalDamage,
+                    frontSmelt, midSmelt, backSmelt, combatReady);
+                _idleDisplaySignature = signature;
+                _idleDisplaySegmentIndex = 0;
+                _idleDisplayCarouselTimer = 0f;
+            }
+
+            if (_idleDisplaySegments.Count <= 1)
+            {
+                return _idleDisplaySegments[0];
+            }
+
+            _idleDisplayCarouselTimer += Time.unscaledDeltaTime;
+            if (_idleDisplayCarouselTimer >= IdleDisplayCarouselInterval)
+            {
+                _idleDisplayCarouselTimer = 0f;
+                _idleDisplaySegmentIndex = (_idleDisplaySegmentIndex + 1) % _idleDisplaySegments.Count;
+            }
+
+            return _idleDisplaySegments[_idleDisplaySegmentIndex];
+        }
+
+        void ClearIdleDisplayState()
+        {
+            _idleDisplaySegments = null;
+            _idleDisplaySegmentIndex = 0;
+            _idleDisplayCarouselTimer = 0f;
+            _idleDisplaySignature = null;
         }
 
         void SetFactoryText(string text)
@@ -264,6 +318,7 @@ namespace NineGrid.GameFlow
         void HideFactoryText()
         {
             ClearOreDisplayState();
+            ClearIdleDisplayState();
             _lastFactoryText = null;
             var notice = UiSystem.Instance != null ? UiSystem.Instance.Notice : null;
             if (notice != null && notice.IsShowing && notice.ActiveChannel == NoticeChannel.Factory)
