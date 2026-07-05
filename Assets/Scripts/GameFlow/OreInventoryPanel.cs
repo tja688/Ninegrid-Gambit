@@ -1,4 +1,7 @@
+using System.Collections.Generic;
+using NineGrid.Battle.Combat;
 using UnityEngine;
+using TMPro;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -7,7 +10,7 @@ namespace NineGrid.GameFlow
 {
     /// <summary>
     /// 矿石库（矿仓）小面板：由「查看矿石库」按钮开启，点面板外部自动关闭。
-    /// 槽位里的玩家持有矿石图 + 悬停信息尚未接入真实仓库数据；先做开合与外部点击关闭。
+    /// 面板内 TMP_Text 展示当前矿舱（牌库）的矿石列表与数量。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class OreInventoryPanel : MonoBehaviour
@@ -18,6 +21,8 @@ namespace NineGrid.GameFlow
         [Tooltip("用于判断点击是否落在面板内的碰撞盒（可选）。留空则按任意外部点击关闭。")]
         [SerializeField] Collider2D panelBounds;
         [SerializeField] Camera worldCamera;
+        [Tooltip("矿仓矿石列表文本（留空时自动查找子级 TMP_Text）。")]
+        [SerializeField] TMP_Text oreListText;
 
         int _openedFrame = -1;
 
@@ -58,7 +63,50 @@ namespace NineGrid.GameFlow
         public void Open()
         {
             _openedFrame = Time.frameCount;
+            PopulateOreList();
             SetActive(true);
+        }
+
+        /// <summary>从战斗模型读取矿舱（牌库）内容，刷新面板文本。</summary>
+        void PopulateOreList()
+        {
+            if (oreListText == null)
+            {
+                oreListText = GetComponentInChildren<TMP_Text>(true);
+            }
+
+            if (oreListText == null) return;
+
+            var combat = BattleController.Instance != null ? BattleController.Instance.Combat : null;
+            if (combat == null)
+            {
+                oreListText.text = "\u6218\u6597\u672A\u5F00\u59CB";
+                return;
+            }
+
+            var deck = combat.State.Deck;
+            if (deck.Count == 0)
+            {
+                oreListText.text = "\u77FF\u8231\u7A7A\u7A7A";
+                return;
+            }
+
+            // 按矿石名分组计数
+            var counts = new Dictionary<string, int>();
+            foreach (var card in deck)
+            {
+                var name = card.DisplayName;
+                counts[name] = counts.TryGetValue(name, out var c) ? c + 1 : 1;
+            }
+
+            var sb = new System.Text.StringBuilder();
+            sb.Append("\u77FF\u8231\uFF08").Append(deck.Count).Append("\uFF09\n");
+            foreach (var kv in counts)
+            {
+                sb.Append(kv.Key).Append(" x").Append(kv.Value).Append('\n');
+            }
+
+            oreListText.text = sb.ToString();
         }
 
         public void Close()

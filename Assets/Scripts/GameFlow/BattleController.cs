@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using DG.Tweening;
 using NineGrid.Battle;
+using NineGrid.Battle.Combat;
+using NineGrid.Data;
 using NineGrid.Presentation.Visuals;
 using NineGrid.UI;
 using NinegridGambit.Grapple;
@@ -54,6 +56,14 @@ namespace NineGrid.GameFlow
         [TextArea(1, 3)]
         [SerializeField] string forgeFirstNotice = "先点玩家船体铸造钻头，再抛锚撞击。";
 
+        [Header("Combat (真实战斗)")]
+        [Tooltip("矿石目录 SO（留空时编辑器自动从 Assets/ScriptableObjects/Data/OreCatalog.asset 加载）。")]
+        [SerializeField] OreCatalog oreCatalog;
+        [Tooltip("敌舰装甲值（HP）。默认藤蔓号 200。")]
+        [SerializeField] int enemyMaxHp = 200;
+        [Tooltip("敌舰显示名。")]
+        [SerializeField] string enemyDisplayName = "\u85E4\u8513\u53F7";
+
         [Header("Exit Motion")]
         [SerializeField] float playerExitDuration = 1f;
         [SerializeField] Ease playerExitEase = Ease.InCubic;
@@ -73,6 +83,7 @@ namespace NineGrid.GameFlow
         bool _anchorWarned;
         int _ramsCompleted;
         bool _won;
+        CombatModel _combat;
         bool _enemyDescVisible;
         readonly bool[] _pendingBoreOccupancy = new bool[BoreManager.BoreCount];
 
@@ -87,6 +98,15 @@ namespace NineGrid.GameFlow
 
         /// <summary>战斗中可点击敌人触发抛锚准备（子状态机尚未落地）。</summary>
         public bool CanEnterAnchorMode { get; private set; }
+
+        /// <summary>战斗模型（牌库/伤害/血量）。战斗开始后非空。</summary>
+        public CombatModel Combat => _combat;
+
+        /// <summary>敌舰血量变化（current, max）。供未来血条 UI 订阅。</summary>
+        public event Action<int, int> EnemyHpChanged;
+
+        /// <summary>造成伤害时触发（damage）。</summary>
+        public event Action<int> DamageDealt;
 
         /// <summary>战斗入场完成（权限已开，敌人信息面板入场结束，进入 Active）。</summary>
         public event Action EnterCompleted;
@@ -220,13 +240,23 @@ namespace NineGrid.GameFlow
             return true;
         }
 
-        /// <summary>重置本场战斗的流程状态：钻头、船锚余量、锻造材料、撞击计数。</summary>
+        /// <summary>重置本场战斗的流程状态：钻头、船锚余量、锻造材料、撞击计数、战斗模型。</summary>
         void ResetBattleState()
         {
             _hasForgedBore = false;
             _anchorWarned = false;
             _ramsCompleted = 0;
             _won = false;
+
+            // 初始化战斗模型（牌库 / 敌我血量 / 伤害公式）
+            ResolveOreCatalog();
+            _combat = new CombatModel();
+            var playerHp = anchorHp != null && anchorHp.Capacity > 0
+                ? anchorHp.Capacity
+                : Mathf.Max(1, fallbackRamsToWin);
+            _combat.InitBattle(oreCatalog, enemyMaxHp, playerHp);
+            _combat.EnemyHpChanged += (cur, max) => EnemyHpChanged?.Invoke(cur, max);
+            _combat.DamageDealt += dmg => DamageDealt?.Invoke(dmg);
 
             bores?.HideAll();
             anchorHp?.ResetFull();
@@ -250,11 +280,11 @@ namespace NineGrid.GameFlow
             return true;
         }
 
-        /// <summary>占位：敌人/玩家死亡时结束战斗。当前未接线。</summary>
+        /// <summary>敌人/玩家死亡时结束战斗（外部调用入口）。</summary>
         public void NotifyCombatantDefeated(bool playerDied)
         {
-            // TODO: 接入 HP / 胜负后在此调用 ExitBattle，并区分胜负演出。
-            Debug.Log($"[Battle] NotifyCombatantDefeated 占位 playerDied={playerDied}");
+            _won = !playerDied;
+            Debug.Log($"[Battle] NotifyCombatantDefeated playerDied={playerDied} won={_won}");
             if (_state == BattlePhaseState.Active)
             {
                 ExitBattle();
@@ -383,25 +413,58 @@ namespace NineGrid.GameFlow
             }
         }
 
-        /// <summary>一次撞击成功：消耗船锚余量；余量归零即算打完本场（当前无真实数值）。</summary>
+        /// <summary>一次撞击成功：应用真实伤害到敌舰 → 判胜负 → 玩家挨打 → 下回合。</summary>
         void OnRamSucceeded()
         {
             _ramsCompleted++;
 
-            bool depleted;
-            if (anchorHp != null && anchorHp.Capacity > 0)
+            if (_combat == null)
             {
-                depleted = anchorHp.ConsumeOne();
+                // 兜底：无战斗模型时走旧的次数判定
+                bool depleted;
+                if (anchorHp != null && anchorHp.Capacity > 0)
+                {
+                    depleted = anchorHp.ConsumeOne();
+                }
+                else
+                {
+                    depleted = _ramsCompleted >= Mathf.Max(1, fallbackRamsToWin);
+                }
+
+                if (depleted)
+                {
+                    _won = true;
+                    ExitBattle();
+                }
+
+                return;
+            }
+
+            // 应用撞击伤害（敌舰扣血 → 判死 → 玩家挨 1 点 → 判死 → 回合清理）
+            var result = _combat.ApplyRam();
+            Debug.Log($"[Battle] 撞击结算：伤害 {result.Damage}，敌舰剩余 {_combat.State.EnemyHp}/{_combat.State.EnemyMaxHp}" +
+                      $"，玩家剩余 {_combat.State.PlayerHp}/{_combat.State.PlayerMaxHp}");
+
+            // 玩家挨打时同步船锚余量视觉（敌舰存活 → 玩家 -1）
+            if (!result.EnemyDead)
+            {
+                anchorHp?.ConsumeOne();
+            }
+
+            if (result.EnemyDead || result.PlayerDead)
+            {
+                _won = result.EnemyDead;
+                ExitBattle();
             }
             else
             {
-                depleted = _ramsCompleted >= Mathf.Max(1, fallbackRamsToWin);
-            }
-
-            if (depleted)
-            {
-                _won = true;
-                ExitBattle();
+                // 战斗继续：钻头已用完，下回合重新锻造
+                bores?.HideAll();
+                _hasForgedBore = false;
+                for (var i = 0; i < _pendingBoreOccupancy.Length; i++)
+                {
+                    _pendingBoreOccupancy[i] = false;
+                }
             }
         }
 
@@ -660,6 +723,7 @@ namespace NineGrid.GameFlow
             }
 
             hydraulicScene.EnterStarted += OnForgeEnterStarted;
+            hydraulicScene.EnterCompleted += OnForgeEnterCompleted;
             hydraulicScene.ExitCompleted += OnForgeExitCompleted;
             hydraulicScene.HydraulicCompleted += OnForgeHydraulicCompleted;
             hydraulicScene.ForgeCommitted += OnForgeCommitted;
@@ -675,31 +739,41 @@ namespace NineGrid.GameFlow
             }
 
             hydraulicScene.EnterStarted -= OnForgeEnterStarted;
+            hydraulicScene.EnterCompleted -= OnForgeEnterCompleted;
             hydraulicScene.ExitCompleted -= OnForgeExitCompleted;
             hydraulicScene.HydraulicCompleted -= OnForgeHydraulicCompleted;
             hydraulicScene.ForgeCommitted -= OnForgeCommitted;
             _hydraulicEventsBound = false;
         }
 
-        /// <summary>铸造提交：记录哪些锻造台有料、解除「先铸造」限制。</summary>
+        /// <summary>铸造提交：记录钻头占用 + 用真实矿石数据计算伤害并存为待应用撞击伤害。</summary>
         void OnForgeCommitted(bool[] occupancy)
         {
-            if (occupancy == null)
+            // 记录钻头占用（视觉用）
+            if (occupancy != null)
             {
-                return;
+                var any = false;
+                for (var i = 0; i < _pendingBoreOccupancy.Length; i++)
+                {
+                    var has = i < occupancy.Length && occupancy[i];
+                    _pendingBoreOccupancy[i] = has;
+                    any |= has;
+                }
+
+                if (any)
+                {
+                    _hasForgedBore = true;
+                }
             }
 
-            var any = false;
-            for (var i = 0; i < _pendingBoreOccupancy.Length; i++)
+            // 真实伤害计算：从砧台读矿石数据 → CombatModel.CommitForge
+            var board = hydraulicScene?.MaterialBoard;
+            if (board != null && _combat != null)
             {
-                var has = i < occupancy.Length && occupancy[i];
-                _pendingBoreOccupancy[i] = has;
-                any |= has;
-            }
-
-            if (any)
-            {
-                _hasForgedBore = true;
+                var anvilStacks = board.GetAnvilStacks();
+                var tableCards = board.GetTableCards();
+                var damage = _combat.CommitForge(anvilStacks, tableCards);
+                Debug.Log($"[Battle] 锻造提交：预计撞击伤害 {damage}（敌舰剩余 {_combat.State.EnemyHp}/{_combat.State.EnemyMaxHp}）");
             }
         }
 
@@ -720,6 +794,17 @@ namespace NineGrid.GameFlow
 
             HideEnemyDescription();
             enemyInfoPanel?.SuspendImmediate();
+        }
+
+        /// <summary>锻造入场完成：自动出货 5 块矿石（对应 web drawCards(DRAW_COUNT=5)）。</summary>
+        void OnForgeEnterCompleted()
+        {
+            if (_state != BattlePhaseState.Active) return;
+            var lane = hydraulicScene?.MaterialLane;
+            if (lane == null) return;
+            // 桌面有遗留矿石时不重复抽卡（玩家退出锻造看对面后重入时保留）。
+            if (lane.SettledOnTableCount > 0) return;
+            lane.AutoDeliver(CombatCalculator.DrawCount, 0.18f);
         }
 
         /// <summary>锻造退出：瞬间恢复敌人信息（战斗已结束则不恢复）。</summary>
@@ -908,6 +993,21 @@ namespace NineGrid.GameFlow
             if (hullModSlots == null)
             {
                 hullModSlots = FindFirstObjectByType<HullModSlotsController>(FindObjectsInactive.Include);
+            }
+        }
+
+        /// <summary>编辑器下自动加载 OreCatalog（未在 Inspector 指定时）。</summary>
+        void ResolveOreCatalog()
+        {
+            if (oreCatalog != null) return;
+#if UNITY_EDITOR
+            oreCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<OreCatalog>(
+                "Assets/ScriptableObjects/Data/OreCatalog.asset");
+#endif
+            if (oreCatalog == null)
+            {
+                Debug.LogWarning("[Battle] OreCatalog 未指定，战斗模型将无法构建牌库。" +
+                                  "请在 Inspector 指定或确认 Assets/ScriptableObjects/Data/OreCatalog.asset 存在。");
             }
         }
 

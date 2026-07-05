@@ -1,5 +1,7 @@
+using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using NineGrid.Battle.Combat;
 using NineGrid.Presentation.Visuals;
 using UnityEngine;
 
@@ -45,6 +47,9 @@ namespace NineGrid.GameFlow
 
         public Vector3 TableScale => tableScale;
         public Vector3 AnvilScale => anvilScale;
+
+        /// <summary>材料池（含池中未激活件），供 board 遍历桌面件用。</summary>
+        public IReadOnlyList<HydraulicMaterialPiece> Pieces => pieces;
 
         public int SettledOnTableCount
         {
@@ -130,6 +135,13 @@ namespace NineGrid.GameFlow
                 return false;
             }
 
+            // 从战斗模型抽卡（矿舱→精炼盘）。容量确认后再抽，避免丢牌。
+            var card = BattleController.Instance != null ? BattleController.Instance.Combat?.DrawOre() : null;
+            if (card == null)
+            {
+                return false;
+            }
+
             var piece = pieces[pieceIndex];
             if (piece == null)
             {
@@ -139,6 +151,7 @@ namespace NineGrid.GameFlow
             var slot = GetSlotPosition(slotIndex);
             _tableOccupied[slotIndex] = true;
 
+            piece.BindCard(card);
             piece.BeginSlide(spawnPoint.position, tableScale);
             piece.SetMaskInteraction(SpriteMaskInteraction.VisibleOutsideMask);
 
@@ -167,6 +180,28 @@ namespace NineGrid.GameFlow
 
             _activeTweens.Add(sequence);
             return true;
+        }
+
+        /// <summary>
+        /// 自动出货：按间隔依次倾倒 count 份材料。对应 web drawCards(DRAW_COUNT=5)。
+        /// 由 BattleController 在锻造入场完成时调用。
+        /// </summary>
+        public void AutoDeliver(int count, float interval = 0.18f)
+        {
+            if (count <= 0) return;
+            StartCoroutine(AutoDeliverRoutine(count, interval));
+        }
+
+        IEnumerator AutoDeliverRoutine(int count, float interval)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                TryDeliver();
+                if (i < count - 1 && interval > 0f)
+                {
+                    yield return new WaitForSecondsRealtime(interval);
+                }
+            }
         }
 
         public HydraulicMaterialPiece FindInteractableAt(Vector2 worldPoint)

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DG.Tweening;
+using NineGrid.Battle.Combat;
 using UnityEngine;
 using UnityEngine.EventSystems;
 #if ENABLE_INPUT_SYSTEM
@@ -54,6 +55,46 @@ namespace NineGrid.GameFlow
         Vector3 _dragOffset;
 
         public bool IsDragging => _dragged != null;
+
+        /// <summary>当前被拖拽的矿石数据（null=未拖拽）。</summary>
+        public CardInstance DraggedCard => _dragged?.Card;
+
+        /// <summary>获取三个砧台上的矿石牌组（按堆叠顺序，底→顶）。供伤害计算读取。</summary>
+        public List<CardInstance>[] GetAnvilStacks()
+        {
+            var result = new List<CardInstance>[anvils != null ? anvils.Length : 0];
+            for (var i = 0; i < result.Length; i++)
+            {
+                var list = new List<CardInstance>();
+                var stack = anvils[i]?.Stack;
+                if (stack != null)
+                {
+                    for (var j = 0; j < stack.Count; j++)
+                    {
+                        if (stack[j] != null && stack[j].Card != null)
+                            list.Add(stack[j].Card);
+                    }
+                }
+                result[i] = list;
+            }
+            return result;
+        }
+
+        /// <summary>获取桌面未上砧的矿石列表。供锻造提交时一并消耗。</summary>
+        public List<CardInstance> GetTableCards()
+        {
+            var result = new List<CardInstance>();
+            if (lane == null) return result;
+            var pieces = lane.Pieces;
+            if (pieces == null) return result;
+            for (var i = 0; i < pieces.Count; i++)
+            {
+                var p = pieces[i];
+                if (p != null && p.Home == HydraulicMaterialHome.Table && p.Card != null)
+                    result.Add(p.Card);
+            }
+            return result;
+        }
 
         /// <summary>锻造台数量（通常 3：左/中/右）。</summary>
         public int AnvilCount => anvils != null ? anvils.Length : 0;
@@ -354,6 +395,7 @@ namespace NineGrid.GameFlow
             }
 
             stack.Insert(insertAt, piece);
+            piece.Card?.OnPlacedOnAnvil(anvilIndex);
             RelayoutAnvil(anvilIndex, animate: true);
             return true;
         }

@@ -1,4 +1,5 @@
 using DG.Tweening;
+using NineGrid.Battle.Combat;
 using NineGrid.Presentation.Visuals;
 using UnityEngine;
 
@@ -41,6 +42,26 @@ namespace NineGrid.GameFlow
 
         public SpriteRenderer SpriteRenderer => spriteRenderer;
         public SelectableSceneElement Selectable => selectable;
+
+        /// <summary>绑定的矿石运行时数据（null=未绑定，纯视觉占位件）。</summary>
+        public CardInstance Card { get; private set; }
+
+        /// <summary>绑定矿石身份并切换贴图为矿石 SO 图标。</summary>
+        public void BindCard(CardInstance card)
+        {
+            Card = card;
+            if (spriteRenderer != null && card != null && card.Icon != null)
+            {
+                spriteRenderer.sprite = card.Icon;
+                spriteRenderer.color = Color.white;
+            }
+        }
+
+        /// <summary>解除矿石身份绑定（回池时调用）。</summary>
+        public void UnbindCard()
+        {
+            Card = null;
+        }
 
         void Awake()
         {
@@ -87,6 +108,7 @@ namespace NineGrid.GameFlow
         public void SetPoolHidden(Vector3 tableScale)
         {
             KillMotion();
+            UnbindCard();
             Home = HydraulicMaterialHome.Pool;
             TableSlot = -1;
             AnvilIndex = -1;
