@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NineGrid.Battle.Combat;
 using NineGrid.Data;
 using UnityEngine;
 using TMPro;
@@ -40,6 +41,36 @@ namespace NineGrid.GameFlow
 
         public bool IsOpen => panelRoot != null && panelRoot.activeSelf;
         public bool IsSelectionMode => _selectionMode;
+
+        /// <summary>悬停槽位时返回矿舱 deck 索引；未悬停或槽位为空时返回 false。</summary>
+        public bool TryGetHoveredDeckIndex(out int deckIndex)
+        {
+            deckIndex = -1;
+            if (!IsOpen || !TryGetPointerWorldPosition(out var worldPoint))
+            {
+                return false;
+            }
+
+            CacheSlots();
+            for (var i = 0; i < _slots.Count; i++)
+            {
+                var (_, _, collider) = _slots[i];
+                if (collider == null || !collider.enabled || !collider.OverlapPoint(worldPoint))
+                {
+                    continue;
+                }
+
+                if (i >= _slotDeckIndices.Count)
+                {
+                    return false;
+                }
+
+                deckIndex = _slotDeckIndices[i];
+                return true;
+            }
+
+            return false;
+        }
 
         void Awake()
         {
@@ -132,7 +163,7 @@ namespace NineGrid.GameFlow
             if (combat != null)
             {
                 PopulateGroupedText(combat.State.Deck.Count, GroupCombatDeck(combat));
-                ClearSlotSprites();
+                PopulateCombatDeckSlots(combat);
                 return;
             }
 
@@ -229,39 +260,91 @@ namespace NineGrid.GameFlow
                 {
                     var entry = run.Deck[i];
                     _slotDeckIndices.Add(i);
-                    if (renderer != null)
-                    {
-                        renderer.enabled = true;
-                        if (catalog != null && catalog.TryGet(entry.OreId, out var ore) && ore.Icon != null)
-                        {
-                            renderer.sprite = ore.Icon;
-                            renderer.color = Color.white;
-                        }
-                        else
-                        {
-                            renderer.sprite = null;
-                            renderer.color = new Color(0.6f, 0.5f, 0.4f, 1f);
-                        }
-                    }
-
-                    if (collider != null)
-                    {
-                        collider.enabled = _selectionMode;
-                    }
+                    ApplySlotVisual(renderer, ResolveOreIcon(catalog, entry.OreId));
+                    SetSlotCollider(collider, _selectionMode);
                 }
                 else
                 {
-                    if (renderer != null)
-                    {
-                        renderer.enabled = false;
-                        renderer.sprite = null;
-                    }
-
-                    if (collider != null)
-                    {
-                        collider.enabled = false;
-                    }
+                    ClearSlot(i);
                 }
+            }
+        }
+
+        void PopulateCombatDeckSlots(CombatModel combat)
+        {
+            CacheSlots();
+            _slotDeckIndices.Clear();
+            var deck = combat.State.Deck;
+
+            for (var i = 0; i < _slots.Count; i++)
+            {
+                var (_, renderer, collider) = _slots[i];
+                if (i < deck.Count)
+                {
+                    var card = deck[i];
+                    _slotDeckIndices.Add(i);
+                    ApplySlotVisual(renderer, card?.Icon);
+                    SetSlotCollider(collider, _selectionMode);
+                }
+                else
+                {
+                    ClearSlot(i);
+                }
+            }
+        }
+
+        static void ApplySlotVisual(SpriteRenderer renderer, Sprite icon)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            renderer.enabled = true;
+            if (icon != null)
+            {
+                renderer.sprite = icon;
+                renderer.color = Color.white;
+            }
+            else
+            {
+                renderer.sprite = null;
+                renderer.color = new Color(0.6f, 0.5f, 0.4f, 1f);
+            }
+        }
+
+        static Sprite ResolveOreIcon(OreCatalog catalog, string oreId)
+        {
+            if (catalog != null && catalog.TryGet(oreId, out var ore))
+            {
+                return ore.Icon;
+            }
+
+            return null;
+        }
+
+        void ClearSlot(int slotIndex)
+        {
+            if (slotIndex < 0 || slotIndex >= _slots.Count)
+            {
+                return;
+            }
+
+            var (_, renderer, collider) = _slots[slotIndex];
+            if (renderer != null)
+            {
+                renderer.enabled = false;
+                renderer.sprite = null;
+            }
+
+            SetSlotCollider(collider, false);
+        }
+
+        static void SetSlotCollider(BoxCollider2D collider, bool enabled)
+        {
+            if (collider != null)
+            {
+                collider.enabled = enabled;
             }
         }
 

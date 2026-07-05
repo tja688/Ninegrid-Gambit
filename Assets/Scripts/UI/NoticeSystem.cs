@@ -108,6 +108,35 @@ namespace NineGrid.UI
             return true;
         }
 
+        /// <summary>已在显示指定通道时原地刷新文案（用于锻造屏等实时数值）。</summary>
+        public bool TryUpdateActiveText(NoticeChannel channel, string text)
+        {
+            if (!_isShowing || _activeChannel != channel || ui == null)
+            {
+                return false;
+            }
+
+            CacheAnimators();
+            var animator = GetAnimator(channel);
+            var textObject = ui.GetNoticeChannelObject(channel);
+
+            if (animator != null)
+            {
+                animator.SetText(text ?? string.Empty, hideText: false);
+                animator.SetVisibilityEntireText(true, canPlayEffects: false);
+            }
+            else if (textObject != null && textObject.TryGetComponent<TMP_Text>(out var tmp))
+            {
+                tmp.text = text ?? string.Empty;
+            }
+            else
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public void Hide()
         {
             CancelAutoHide();

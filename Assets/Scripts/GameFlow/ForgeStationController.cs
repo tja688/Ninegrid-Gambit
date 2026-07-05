@@ -215,9 +215,9 @@ namespace NineGrid.GameFlow
             var combat = BattleController.Instance != null ? BattleController.Instance.Combat : null;
             var combatReady = combat != null;
 
-            var frontSmelt = OreDisplayFormatter.GetSmeltCycleCount(board.GetPieceCount(0));
-            var midSmelt = OreDisplayFormatter.GetSmeltCycleCount(board.GetPieceCount(1));
-            var backSmelt = OreDisplayFormatter.GetSmeltCycleCount(board.GetPieceCount(2));
+            var frontSmelt = OreDisplayFormatter.GetAnvilOreCount(board, 0);
+            var midSmelt = OreDisplayFormatter.GetAnvilOreCount(board, 1);
+            var backSmelt = OreDisplayFormatter.GetAnvilOreCount(board, 2);
 
             int frontDamage;
             int midDamage;
@@ -257,9 +257,17 @@ namespace NineGrid.GameFlow
                 text = text.Substring(0, maxChars);
             }
 
-            // 其他系统可能会直接把 FactoryText 关掉；相同文案也要允许重新点亮。
+            // 相同文案也要允许重新点亮；已在显示时须强制刷新（TextAnimator hideText 首次后不再更新）。
             if (text == _lastFactoryText && IsFactoryTextVisible(notice))
             {
+                return;
+            }
+
+            if (IsFactoryTextVisible(notice)
+                && notice.ActiveChannel == NoticeChannel.Factory
+                && notice.TryUpdateActiveText(NoticeChannel.Factory, text))
+            {
+                _lastFactoryText = text;
                 return;
             }
 

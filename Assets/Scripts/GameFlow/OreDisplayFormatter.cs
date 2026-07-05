@@ -11,7 +11,7 @@ namespace NineGrid.GameFlow
         public const int MaxChars = 51;
         public const int MaxIdleChars = 256;
 
-        /// <summary>无聚焦时单行展示完整文案（不截断）。</summary>
+        /// <summary>无聚焦时单行展示完整文案。</summary>
         public static string BuildIdleForgeText(
             int frontDamage, int midDamage, int backDamage, int totalDamage,
             int frontSmelt, int midSmelt, int backSmelt,
@@ -24,14 +24,28 @@ namespace NineGrid.GameFlow
             return
                 $"\u9884\u8BA1\u4F24\u5BB3\uFF1A\u524D{frontDamage} \u4E2D{midDamage} \u540E{backDamage}|{totalPart}\u3002" +
                 $"\u7194\u70BC\u52A0\u6210\uFF1A\u5F53\u524D\u7194\u70BC{frontSmelt}-{midSmelt}-{backSmelt}\uFF0C" +
-                "\u5F53\u67D0\u94F8\u9020\u53F0\u7194\u70BC\u4E00\u5B9A\u6570\u662F\u77FF\u77F3\u540E\uFF1A" +
-                "2\u5757\uFF1A\u672C\u94F8\u9020\u53F0\u500D\u7387+1\uFF0C" +
-                "4\u5757\uFF1A\u672C\u53F0\u6240\u6709\u77FF\u77F3\u57FA\u7840\u6570\u503C+1\uFF0C" +
-                "\u4EE5\u6B64\u7C7B\u63A8\u3002\u3002\u3002";
+                "\u5F53\u67D0\u94F8\u9020\u53F0\u7194\u70BC\uFF1A" +
+                "2\u5757\u77FF\u77F3\uFF1A\u94BB\u5934\u4F24\u5BB3\u500D\u7387+1\uFF0C" +
+                "4\u5757\u77FF\u77F3\uFF1A\u672C\u53F0\u6240\u6709\u77FF\u77F3\u57FA\u7840\u4F24\u5BB3\u6570\u503C+1\uFF0C" +
+                "\u4EE5\u6B64\u7C7B\u63A8";
         }
 
-        /// <summary>砧台矿石数对应的熔炼周期（每 2 块解锁一层叠矿加成）。</summary>
-        public static int GetSmeltCycleCount(int oreCount) => oreCount / 2;
+        /// <summary>指定砧台当前矿石块数（与伤害预览同源）。</summary>
+        public static int GetAnvilOreCount(HydraulicMaterialBoard board, int anvilIndex)
+        {
+            if (board == null)
+            {
+                return 0;
+            }
+
+            var stacks = board.GetAnvilStacks();
+            if (stacks == null || anvilIndex < 0 || anvilIndex >= stacks.Length || stacks[anvilIndex] == null)
+            {
+                return 0;
+            }
+
+            return stacks[anvilIndex].Count;
+        }
 
         /// <summary>生成锻造显示屏轮播段（每段 ≤51 字）。</summary>
         public static List<string> BuildForgeSegments(CardInstance card)

@@ -87,6 +87,7 @@ namespace NineGrid.GameFlow
         readonly List<(Transform slot, SpriteRenderer renderer)> _refineryOreSlots = new List<(Transform, SpriteRenderer)>(5);
         readonly List<SpriteRenderer> _shipyardRelicSlots = new List<SpriteRenderer>(3);
         PanelTarget _hoveredPanelTarget;
+        int _hoveredOreDeckIndex = -1;
         bool _shopInitialized;
         bool _panelBindingsReady;
         bool _left;
@@ -185,6 +186,7 @@ namespace NineGrid.GameFlow
 
             if (inOreSelection)
             {
+                HandleOreInventorySelectionHover();
                 return;
             }
 
@@ -667,6 +669,40 @@ namespace NineGrid.GameFlow
         void ClearPanelHover()
         {
             _hoveredPanelTarget = null;
+            _hoveredOreDeckIndex = -1;
+        }
+
+        void HandleOreInventorySelectionHover()
+        {
+            if (oreInventoryPanel == null || !oreInventoryPanel.IsOpen)
+            {
+                return;
+            }
+
+            if (oreInventoryPanel.TryGetHoveredDeckIndex(out var deckIndex))
+            {
+                if (_hoveredOreDeckIndex == deckIndex)
+                {
+                    return;
+                }
+
+                _hoveredOreDeckIndex = deckIndex;
+                var text = _shop?.GetDeckOreHoverText(deckIndex);
+                if (!string.IsNullOrEmpty(text))
+                {
+                    ShowShopDescription(text);
+                }
+
+                return;
+            }
+
+            if (_hoveredOreDeckIndex < 0)
+            {
+                return;
+            }
+
+            _hoveredOreDeckIndex = -1;
+            ShowDefaultShopDescription();
         }
 
         void HandlePanelClicks(List<PanelTarget> targets, ServicePanel panelState)

@@ -2,9 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using AMPInternal.Coroutines.SFX;
 using NineGrid.GameFlow;
 using NineGrid.Battle;
+using NineGrid.Battle.Combat;
 using NineGrid.UI;
 using NineGrid.Presentation.Visuals;
 using NinegridGambit.Grapple;
@@ -40,6 +42,35 @@ namespace NineGrid.Audio
         AnchorChainLauncher.Phase _lastChainPhase = AnchorChainLauncher.Phase.Idle;
         bool _forgeAmbientPlaying = false;
         float _lastWinchChainCueTime = float.NegativeInfinity;
+        bool _forgeAudioBound;
+        HydraulicSceneController _boundHydraulic;
+        HydraulicMaterialBoard _boundBoard;
+        HydraulicMaterialLane _boundLane;
+        ForgeStationController _boundForgeStation;
+
+        // Persistent / scene-bound subscription tracking (MainScene 重载后必须重绑)
+        GameFlowController _boundFlow;
+        bool _persistentSubscribed;
+        Coroutine _rebindRoutine;
+
+        BattleController _boundBattle;
+        AnchorRammingController _boundAnchorRam;
+        WinchCrankController _boundWinch;
+        AnchorChainLauncher _boundChain;
+        AnchorHpTracker _boundAnchorHp;
+        BoreManager _boundBores;
+        ScreenShakeEffect _boundShake;
+        CameraJuice _boundJuice;
+        ProloguePerformance _boundPrologue;
+        DialogueSystem _boundDialogue;
+        NoticeSystem _boundNotice;
+        EnemyIntroducePanelController _boundEnemyPanel;
+        IslandController _boundIsland;
+        RouteController _boundRoute;
+        MainMenuController _boundMenu;
+        OreInventoryPanel _boundOreInv;
+        HoverNoticePresenter _boundHover;
+        readonly List<SelectableSceneElement> _boundSelectables = new();
 
         /// <summary>Static access for other scripts to trigger audio cues by key.</summary>
         public static GameAudioService Instance { get; private set; }
@@ -66,287 +97,797 @@ namespace NineGrid.Audio
                 gameObject.AddComponent<GameAudioDebugPanel>();
         }
 
+        void OnEnable()
+        {
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        void OnDisable()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            if (_rebindRoutine != null)
+            {
+                StopCoroutine(_rebindRoutine);
+                _rebindRoutine = null;
+            }
+        }
+
         IEnumerator Start()
         {
             // Wait one frame so singletons (GameFlowController, BattleController, etc.) are initialized
             yield return null;
-            SubscribeAll();
+            SubscribePersistent();
+            SubscribeScene();
             StartEnvironmentAudio();
         }
 
         void OnDestroy()
         {
+            UnsubscribeScene();
+            UnsubscribePersistent();
+            UnbindForgeAudio();
             Instance = null;
+        }
+
+        void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (_rebindRoutine != null)
+            {
+                StopCoroutine(_rebindRoutine);
+            }
+
+            _rebindRoutine = StartCoroutine(RebindSceneAfterLoad());
+        }
+
+        IEnumerator RebindSceneAfterLoad()
+        {
+            UnsubscribeScene();
+            UnbindForgeAudio();
+            _lastChainPhase = AnchorChainLauncher.Phase.Idle;
+            StopLoop(AudioKey.LoopChainTaut);
+
+            // 等一帧，确保新场景 Awake/单例就绪（与 BattleController 重绑时机对齐）
+            yield return null;
+            SubscribePersistentUi();
+            SubscribeScene();
+            _rebindRoutine = null;
         }
 
         // ===== Subscription =====
 
-        void SubscribeAll()
+        void SubscribePersistent()
         {
+            if (_persistentSubscribed)
+            {
+                return;
+            }
+
             SubscribeGameFlow();
+            SubscribePersistentUi();
+            _persistentSubscribed = true;
+        }
+
+        void UnsubscribePersistent()
+        {
+            if (!_persistentSubscribed)
+            {
+                return;
+            }
+
+            if (_boundFlow != null)
+            {
+                _boundFlow.StateChanged -= OnGameFlowStateChanged;
+                _boundFlow.RunStarted -= OnRunStarted;
+                _boundFlow.PlayerDefeated -= OnPlayerDefeated;
+                _boundFlow.VictorySettled -= OnVictorySettled;
+                _boundFlow = null;
+            }
+
+            UnbindDialogue();
+            UnbindNotice();
+            _persistentSubscribed = false;
+        }
+
+        void SubscribeScene()
+        {
             SubscribeBattle();
             SubscribeForge();
             SubscribePrologue();
-            SubscribeUI();
+            SubscribeSceneUi();
             SubscribeSelection();
+        }
+
+        void UnsubscribeScene()
+        {
+            UnbindBattle();
+            UnbindCombatActors();
+            UnbindPrologue();
+            UnbindSceneUi();
+            UnbindSelection();
         }
 
         void SubscribeGameFlow()
         {
             var flow = GameFlowController.Instance;
-            if (flow != null)
+            if (flow == null || flow == _boundFlow)
             {
-                flow.StateChanged += (prev, next) =>
-                {
-                    PlayCue(AudioKey.SceneStateChanged);
-                    HandleStateChangeForBgm(prev, next);
-                };
-
-                // StartNewRun, NotifyPlayerDefeated, NotifyVictorySettled
-                // These will use the minimal event Actions added to GameFlowController
-                flow.RunStarted += () => PlayCue(AudioKey.RunStarted);
-                flow.PlayerDefeated += () => PlayCue(AudioKey.PlayerDefeated);
-                flow.VictorySettled += () => PlayCue(AudioKey.VictorySettled);
+                return;
             }
 
-            // SceneFlowDirector transitions - subscribe via GameFlowController.StateChanged (already done above)
-            // Transition fade out/in are tied to state changes
+            _boundFlow = flow;
+            _boundFlow.StateChanged += OnGameFlowStateChanged;
+            _boundFlow.RunStarted += OnRunStarted;
+            _boundFlow.PlayerDefeated += OnPlayerDefeated;
+            _boundFlow.VictorySettled += OnVictorySettled;
         }
+
+        void OnGameFlowStateChanged(NineGrid.GameFlow.GameFlowState prev, NineGrid.GameFlow.GameFlowState next)
+        {
+            PlayCue(AudioKey.SceneStateChanged);
+            HandleStateChangeForBgm(prev, next);
+        }
+
+        void OnRunStarted() => PlayCue(AudioKey.RunStarted);
+        void OnPlayerDefeated() => PlayCue(AudioKey.PlayerDefeated);
+        void OnVictorySettled() => PlayCue(AudioKey.VictorySettled);
+
+        void SubscribePersistentUi()
+        {
+            var ui = UiSystem.Instance;
+            var dialogue = ui != null ? ui.Dialogue : FindFirstObjectByType<DialogueSystem>(FindObjectsInactive.Include);
+            if (dialogue != null && dialogue != _boundDialogue)
+            {
+                UnbindDialogue();
+                _boundDialogue = dialogue;
+                _boundDialogue.DialogueOpened += OnDialogueOpened;
+                _boundDialogue.LineStarted += OnDialogueLineStarted;
+                _boundDialogue.DialogueClosed += OnDialogueClosed;
+                _boundDialogue.SequenceCompleted += OnDialogueSequenceCompleted;
+            }
+
+            var notice = ui != null ? ui.Notice : FindFirstObjectByType<NoticeSystem>(FindObjectsInactive.Include);
+            if (notice != null && notice != _boundNotice)
+            {
+                UnbindNotice();
+                _boundNotice = notice;
+                _boundNotice.NoticeShown += OnNoticeShown;
+                _boundNotice.NoticeHidden += OnNoticeHidden;
+            }
+        }
+
+        void UnbindDialogue()
+        {
+            if (_boundDialogue == null)
+            {
+                return;
+            }
+
+            _boundDialogue.DialogueOpened -= OnDialogueOpened;
+            _boundDialogue.LineStarted -= OnDialogueLineStarted;
+            _boundDialogue.DialogueClosed -= OnDialogueClosed;
+            _boundDialogue.SequenceCompleted -= OnDialogueSequenceCompleted;
+            _boundDialogue = null;
+        }
+
+        void UnbindNotice()
+        {
+            if (_boundNotice == null)
+            {
+                return;
+            }
+
+            _boundNotice.NoticeShown -= OnNoticeShown;
+            _boundNotice.NoticeHidden -= OnNoticeHidden;
+            _boundNotice = null;
+        }
+
+        void OnDialogueOpened() => PlayCue(AudioKey.DialogueOpen);
+        void OnDialogueLineStarted(DialogueLine _) => PlayCue(AudioKey.DialogueTextTyping);
+        void OnDialogueClosed() => PlayCue(AudioKey.DialogueClose);
+        void OnDialogueSequenceCompleted() => PlayCue(AudioKey.DialogueSequenceComplete);
+        void OnNoticeShown(NoticeMessage _) => PlayCue(AudioKey.NoticeShown);
+        void OnNoticeHidden() => PlayCue(AudioKey.NoticeHidden);
 
         void SubscribeBattle()
         {
             var battle = BattleController.Instance;
-            if (battle != null)
+            if (battle == null)
             {
-                battle.ExitCompleted += () => PlayCue(AudioKey.BattleExit);
-                battle.BattleFinished += won => PlayCue(AudioKey.BattleFinished);
-                battle.DamageDealt += dmg => PlayCue(AudioKey.RamSucceeded);
-
-                // Events added to BattleController
-                battle.ForgeModeEntered += () => PlayCue(AudioKey.EnterForgeMode);
-                battle.AnchorModeEntered += () => PlayCue(AudioKey.EnterAnchorMode);
-                battle.RamSucceeded += () => PlayCue(AudioKey.RamSucceeded);
+                return;
             }
 
-            // AnchorRammingController - 6 UnityEvents + Completed
-            var anchorRam = FindObjectOfType<AnchorRammingController>();
+            if (battle != _boundBattle)
+            {
+                UnbindBattle();
+                _boundBattle = battle;
+                _boundBattle.ExitCompleted += OnBattleExitCompleted;
+                _boundBattle.BattleFinished += OnBattleFinished;
+                _boundBattle.DamageDealt += OnDamageDealt;
+                _boundBattle.ForgeModeEntered += OnEnterForgeMode;
+                _boundBattle.AnchorModeEntered += OnEnterAnchorMode;
+                _boundBattle.RamSucceeded += OnRamSucceeded;
+                _boundBattle.ForgeModeEntered += TryBindForgeAudio;
+            }
+
+            // BattleController 常驻，但撞击/绞盘等战斗组件随 MainScene 重载换新，必须每次重绑。
+            BindCombatActors();
+        }
+
+        void UnbindBattle()
+        {
+            if (_boundBattle == null)
+            {
+                return;
+            }
+
+            _boundBattle.ExitCompleted -= OnBattleExitCompleted;
+            _boundBattle.BattleFinished -= OnBattleFinished;
+            _boundBattle.DamageDealt -= OnDamageDealt;
+            _boundBattle.ForgeModeEntered -= OnEnterForgeMode;
+            _boundBattle.AnchorModeEntered -= OnEnterAnchorMode;
+            _boundBattle.RamSucceeded -= OnRamSucceeded;
+            _boundBattle.ForgeModeEntered -= TryBindForgeAudio;
+            _boundBattle = null;
+        }
+
+        void OnBattleExitCompleted() => PlayCue(AudioKey.BattleExit);
+        void OnBattleFinished(bool won) => PlayCue(AudioKey.BattleFinished);
+        void OnDamageDealt(int dmg) => PlayCue(AudioKey.RamSucceeded);
+        void OnEnterForgeMode() => PlayCue(AudioKey.EnterForgeMode);
+        void OnEnterAnchorMode() => PlayCue(AudioKey.EnterAnchorMode);
+        void OnRamSucceeded() => PlayCue(AudioKey.RamSucceeded);
+
+        void BindCombatActors()
+        {
+            UnbindCombatActors();
+
+            var anchorRam = FindFirstObjectByType<AnchorRammingController>(FindObjectsInactive.Include);
             if (anchorRam != null)
             {
-                anchorRam.onRamBegin.AddListener(() => PlayCue(AudioKey.RamBegin));
-                anchorRam.onCrankBegin.AddListener(() => PlayCue(AudioKey.CrankBegin));
-                anchorRam.onPreImpact.AddListener(() => PlayCue(AudioKey.PreImpact));
-                anchorRam.onImpact.AddListener(() => PlayCue(AudioKey.Impact));
-                anchorRam.onBounce.AddListener(() => PlayCue(AudioKey.Bounce));
-                anchorRam.onRamEnd.AddListener(() => PlayCue(AudioKey.RamEnd));
+                _boundAnchorRam = anchorRam;
+                _boundAnchorRam.onRamBegin.AddListener(OnRamBegin);
+                _boundAnchorRam.onCrankBegin.AddListener(OnCrankBegin);
+                _boundAnchorRam.onPreImpact.AddListener(OnPreImpact);
+                _boundAnchorRam.onImpact.AddListener(OnImpact);
+                _boundAnchorRam.onBounce.AddListener(OnBounce);
+                _boundAnchorRam.onRamEnd.AddListener(OnRamEnd);
             }
 
-            // WinchCrankController - dynamic pitch/volume based on Intensity01
-            var winch = FindObjectOfType<WinchCrankController>();
+            var winch = FindFirstObjectByType<WinchCrankController>(FindObjectsInactive.Include);
             if (winch != null)
             {
-                winch.Clicked += () =>
-                {
-                    float now = Time.unscaledTime;
-                    if (now - _lastWinchChainCueTime < winchChainMinInterval) return;
-                    _lastWinchChainCueTime = now;
-
-                    float intensity = winch.Intensity01;
-                    float vol = Mathf.Lerp(0.35f, 1f, intensity);
-                    float pitch = Mathf.Lerp(0.85f, 1.35f, intensity);
-                    PlayCue(AudioKey.WinchClicked, vol, pitch);
-                };
-
-                // Events added to WinchCrankController
-                winch.CrankBegun += () => PlayCue(AudioKey.WinchBeginCrank);
-                winch.CrankEnded += () => PlayCue(AudioKey.WinchEndCrank);
+                _boundWinch = winch;
+                _boundWinch.Clicked += OnWinchClicked;
+                _boundWinch.CrankBegun += OnWinchBeginCrank;
+                _boundWinch.CrankEnded += OnWinchEndCrank;
             }
 
-            // AnchorChainLauncher - phase polling for chain sounds
-            // Fire() event added to AnchorChainLauncher
-            var chain = FindObjectOfType<AnchorChainLauncher>();
+            var chain = FindFirstObjectByType<AnchorChainLauncher>(FindObjectsInactive.Include);
             if (chain != null)
             {
-                chain.ChainFired += () => PlayCue(AudioKey.ChainFire);
-                chain.ChainReset += () => PlayCue(AudioKey.ChainReset);
+                _boundChain = chain;
+                _boundChain.ChainFired += OnChainFire;
+                _boundChain.ChainReset += OnChainReset;
             }
 
-            // AnchorHpTracker
-            var anchorHp = FindObjectOfType<AnchorHpTracker>();
+            var anchorHp = FindFirstObjectByType<AnchorHpTracker>(FindObjectsInactive.Include);
             if (anchorHp != null)
             {
-                anchorHp.AnchorReset += () => PlayCue(AudioKey.AnchorHpResetFull);
-                anchorHp.AnchorConsumed += () => PlayCue(AudioKey.AnchorHpConsume);
-                anchorHp.AnchorDepleted += () => PlayCue(AudioKey.AnchorHpEmpty);
+                _boundAnchorHp = anchorHp;
+                _boundAnchorHp.AnchorReset += OnAnchorHpResetFull;
+                _boundAnchorHp.AnchorConsumed += OnAnchorHpConsume;
+                _boundAnchorHp.AnchorDepleted += OnAnchorHpEmpty;
             }
 
-            // BoreManager
-            var bores = FindObjectOfType<BoreManager>();
+            var bores = FindFirstObjectByType<BoreManager>(FindObjectsInactive.Include);
             if (bores != null)
             {
-                bores.BoreShown += slot => PlayCue(AudioKey.BoreShow);
-                bores.BoresHidden += () => PlayCue(AudioKey.BoreHideAll);
+                _boundBores = bores;
+                _boundBores.BoreShown += OnBoreShow;
+                _boundBores.BoresHidden += OnBoreHideAll;
             }
 
-            // ScreenShakeEffect
-            var shake = FindObjectOfType<ScreenShakeEffect>();
+            var shake = FindFirstObjectByType<ScreenShakeEffect>(FindObjectsInactive.Include);
             if (shake != null)
             {
-                shake.ShakePlayed += () => PlayCue(AudioKey.ScreenShakePlay);
+                _boundShake = shake;
+                _boundShake.ShakePlayed += OnScreenShakePlay;
             }
 
-            // CameraJuice
             var juice = CameraJuice.Resolve();
             if (juice != null)
             {
-                juice.ZoomBegun += () => PlayCue(AudioKey.CameraZoomBegin);
+                _boundJuice = juice;
+                _boundJuice.ZoomBegun += OnCameraZoomBegin;
             }
         }
 
+        void UnbindCombatActors()
+        {
+            if (_boundAnchorRam != null)
+            {
+                _boundAnchorRam.onRamBegin.RemoveListener(OnRamBegin);
+                _boundAnchorRam.onCrankBegin.RemoveListener(OnCrankBegin);
+                _boundAnchorRam.onPreImpact.RemoveListener(OnPreImpact);
+                _boundAnchorRam.onImpact.RemoveListener(OnImpact);
+                _boundAnchorRam.onBounce.RemoveListener(OnBounce);
+                _boundAnchorRam.onRamEnd.RemoveListener(OnRamEnd);
+                _boundAnchorRam = null;
+            }
+
+            if (_boundWinch != null)
+            {
+                _boundWinch.Clicked -= OnWinchClicked;
+                _boundWinch.CrankBegun -= OnWinchBeginCrank;
+                _boundWinch.CrankEnded -= OnWinchEndCrank;
+                _boundWinch = null;
+            }
+
+            if (_boundChain != null)
+            {
+                _boundChain.ChainFired -= OnChainFire;
+                _boundChain.ChainReset -= OnChainReset;
+                _boundChain = null;
+            }
+
+            if (_boundAnchorHp != null)
+            {
+                _boundAnchorHp.AnchorReset -= OnAnchorHpResetFull;
+                _boundAnchorHp.AnchorConsumed -= OnAnchorHpConsume;
+                _boundAnchorHp.AnchorDepleted -= OnAnchorHpEmpty;
+                _boundAnchorHp = null;
+            }
+
+            if (_boundBores != null)
+            {
+                _boundBores.BoreShown -= OnBoreShow;
+                _boundBores.BoresHidden -= OnBoreHideAll;
+                _boundBores = null;
+            }
+
+            if (_boundShake != null)
+            {
+                _boundShake.ShakePlayed -= OnScreenShakePlay;
+                _boundShake = null;
+            }
+
+            if (_boundJuice != null)
+            {
+                _boundJuice.ZoomBegun -= OnCameraZoomBegin;
+                _boundJuice = null;
+            }
+        }
+
+        void OnRamBegin() => PlayCue(AudioKey.RamBegin);
+        void OnCrankBegin() => PlayCue(AudioKey.CrankBegin);
+        void OnPreImpact() => PlayCue(AudioKey.PreImpact);
+        void OnImpact() => PlayCue(AudioKey.Impact);
+        void OnBounce() => PlayCue(AudioKey.Bounce);
+        void OnRamEnd() => PlayCue(AudioKey.RamEnd);
+
+        void OnWinchClicked()
+        {
+            if (_boundWinch == null)
+            {
+                return;
+            }
+
+            float now = Time.unscaledTime;
+            if (now - _lastWinchChainCueTime < winchChainMinInterval)
+            {
+                return;
+            }
+
+            _lastWinchChainCueTime = now;
+            float intensity = _boundWinch.Intensity01;
+            float vol = Mathf.Lerp(0.35f, 1f, intensity);
+            float pitch = Mathf.Lerp(0.85f, 1.35f, intensity);
+            PlayCue(AudioKey.WinchClicked, vol, pitch);
+        }
+
+        void OnWinchBeginCrank() => PlayCue(AudioKey.WinchBeginCrank);
+        void OnWinchEndCrank() => PlayCue(AudioKey.WinchEndCrank);
+        void OnChainFire() => PlayCue(AudioKey.ChainFire);
+        void OnChainReset() => PlayCue(AudioKey.ChainReset);
+        void OnAnchorHpResetFull() => PlayCue(AudioKey.AnchorHpResetFull);
+        void OnAnchorHpConsume() => PlayCue(AudioKey.AnchorHpConsume);
+        void OnAnchorHpEmpty() => PlayCue(AudioKey.AnchorHpEmpty);
+        void OnBoreShow(int slot) => PlayCue(AudioKey.BoreShow);
+        void OnBoreHideAll() => PlayCue(AudioKey.BoreHideAll);
+        void OnScreenShakePlay() => PlayCue(AudioKey.ScreenShakePlay);
+        void OnCameraZoomBegin() => PlayCue(AudioKey.CameraZoomBegin);
+
         void SubscribeForge()
         {
-            var hydraulic = HydraulicSceneController.Instance;
-            if (hydraulic != null)
+            TryBindForgeAudio();
+        }
+
+        void TryBindForgeAudio()
+        {
+            var hydraulic = HydraulicSceneController.Instance
+                ?? FindFirstObjectByType<HydraulicSceneController>(FindObjectsInactive.Include);
+            if (hydraulic == null)
             {
-                hydraulic.EnterStarted += () =>
-                {
-                    PlayCue(AudioKey.HydraulicEnterStart);
-                    StartForgeAmbient();
-                };
-                hydraulic.EnterCompleted += () => PlayCue(AudioKey.HydraulicEnterComplete);
-                hydraulic.ExitCompleted += () =>
-                {
-                    PlayCue(AudioKey.HydraulicExit);
-                    StopForgeAmbient();
-                };
-                hydraulic.ForgeCommitted += _ => PlayCue(AudioKey.HydraulicPreForge);
-                hydraulic.HydraulicCompleted += () => PlayCue(AudioKey.HydraulicCompleted);
-                hydraulic.HammerFallStarted += () => PlayCue(AudioKey.HydraulicHammerFall);
-                hydraulic.HammerImpacted += () => PlayCue(AudioKey.HydraulicHammerImpact);
-                hydraulic.HammerHoldStarted += () => PlayCue(AudioKey.HydraulicHammerHold);
-                hydraulic.HammerRiseStarted += () => PlayCue(AudioKey.HydraulicHammerRise);
+                return;
             }
 
-            // HydraulicMaterialLane
-            var lane = FindObjectOfType<HydraulicMaterialLane>();
+            if (_forgeAudioBound && _boundHydraulic == hydraulic)
+            {
+                return;
+            }
+
+            UnbindForgeAudio();
+            _boundHydraulic = hydraulic;
+
+            hydraulic.EnterStarted += OnHydraulicEnterStarted;
+            hydraulic.EnterCompleted += OnHydraulicEnterCompleted;
+            hydraulic.ExitCompleted += OnHydraulicExitCompleted;
+            hydraulic.ForgeCommitted += OnHydraulicForgeCommitted;
+            hydraulic.HydraulicCompleted += OnHydraulicCompleted;
+            hydraulic.HammerFallStarted += OnHydraulicHammerFallStarted;
+            hydraulic.HammerImpacted += OnHydraulicHammerImpacted;
+            hydraulic.HammerHoldStarted += OnHydraulicHammerHoldStarted;
+            hydraulic.HammerRiseStarted += OnHydraulicHammerRiseStarted;
+
+            var lane = hydraulic.MaterialLane
+                ?? FindFirstObjectByType<HydraulicMaterialLane>(FindObjectsInactive.Include);
             if (lane != null)
             {
-                lane.Delivered += () => PlayCue(AudioKey.LaneDeliver);
-                lane.DeliverLanded += () => PlayCue(AudioKey.LaneDeliverLand);
-                lane.LaneReset += () => PlayCue(AudioKey.LaneReset);
+                _boundLane = lane;
+                lane.Delivered += OnLaneDelivered;
+                lane.DeliverLanded += OnLaneDeliverLanded;
+                lane.LaneReset += OnLaneReset;
             }
 
-            // HydraulicMaterialBoard
-            var board = FindObjectOfType<HydraulicMaterialBoard>();
+            var board = hydraulic.MaterialBoard
+                ?? FindFirstObjectByType<HydraulicMaterialBoard>(FindObjectsInactive.Include);
             if (board != null)
             {
-                board.DragBegun += () => PlayCue(AudioKey.BoardBeginDrag);
-                board.PlacedOnAnvil += (_, __) => PlayCue(AudioKey.BoardPlaceOnAnvil);
-                board.AnvilRelayouted += () => PlayCue(AudioKey.BoardRelayoutAnvil);
-                board.PlacedOnTable += () => PlayCue(AudioKey.BoardPlaceOnTable);
-                board.DragCancelled += () => PlayCue(AudioKey.BoardCancelDrag);
-                board.AnvilFullRejected += () => PlayCue(AudioKey.BoardAnvilFull);
+                _boundBoard = board;
+                board.DragBegun += OnBoardDragBegun;
+                board.PlacedOnAnvil += OnBoardPlacedOnAnvil;
+                board.AnvilRelayouted += OnBoardAnvilRelayouted;
+                board.PlacedOnTable += OnBoardPlacedOnTable;
+                board.DragCancelled += OnBoardDragCancelled;
+                board.AnvilFullRejected += OnBoardAnvilFullRejected;
             }
 
-            // ForgeStationController
-            var forge = FindObjectOfType<ForgeStationController>();
+            var forge = FindFirstObjectByType<ForgeStationController>(FindObjectsInactive.Include);
             if (forge != null)
             {
-                forge.ForgeRequested += () => PlayCue(AudioKey.ForgeTryForge);
-                forge.ForgeExited += () => PlayCue(AudioKey.ForgeExit);
-                forge.EmptyWarningShown += () => PlayCue(AudioKey.ForgeEmptyWarning);
+                _boundForgeStation = forge;
+                forge.ForgeRequested += OnForgeRequested;
+                forge.ForgeExited += OnForgeExited;
+                forge.EmptyWarningShown += OnForgeEmptyWarningShown;
             }
+
+            _forgeAudioBound = true;
+        }
+
+        void UnbindForgeAudio()
+        {
+            if (_boundHydraulic != null)
+            {
+                _boundHydraulic.EnterStarted -= OnHydraulicEnterStarted;
+                _boundHydraulic.EnterCompleted -= OnHydraulicEnterCompleted;
+                _boundHydraulic.ExitCompleted -= OnHydraulicExitCompleted;
+                _boundHydraulic.ForgeCommitted -= OnHydraulicForgeCommitted;
+                _boundHydraulic.HydraulicCompleted -= OnHydraulicCompleted;
+                _boundHydraulic.HammerFallStarted -= OnHydraulicHammerFallStarted;
+                _boundHydraulic.HammerImpacted -= OnHydraulicHammerImpacted;
+                _boundHydraulic.HammerHoldStarted -= OnHydraulicHammerHoldStarted;
+                _boundHydraulic.HammerRiseStarted -= OnHydraulicHammerRiseStarted;
+            }
+
+            if (_boundLane != null)
+            {
+                _boundLane.Delivered -= OnLaneDelivered;
+                _boundLane.DeliverLanded -= OnLaneDeliverLanded;
+                _boundLane.LaneReset -= OnLaneReset;
+            }
+
+            if (_boundBoard != null)
+            {
+                _boundBoard.DragBegun -= OnBoardDragBegun;
+                _boundBoard.PlacedOnAnvil -= OnBoardPlacedOnAnvil;
+                _boundBoard.AnvilRelayouted -= OnBoardAnvilRelayouted;
+                _boundBoard.PlacedOnTable -= OnBoardPlacedOnTable;
+                _boundBoard.DragCancelled -= OnBoardDragCancelled;
+                _boundBoard.AnvilFullRejected -= OnBoardAnvilFullRejected;
+            }
+
+            if (_boundForgeStation != null)
+            {
+                _boundForgeStation.ForgeRequested -= OnForgeRequested;
+                _boundForgeStation.ForgeExited -= OnForgeExited;
+                _boundForgeStation.EmptyWarningShown -= OnForgeEmptyWarningShown;
+            }
+
+            _boundHydraulic = null;
+            _boundLane = null;
+            _boundBoard = null;
+            _boundForgeStation = null;
+            _forgeAudioBound = false;
+        }
+
+        void OnHydraulicEnterStarted()
+        {
+            PlayCue(AudioKey.HydraulicEnterStart);
+            StartForgeAmbient();
+        }
+
+        void OnHydraulicEnterCompleted() => PlayCue(AudioKey.HydraulicEnterComplete);
+
+        void OnHydraulicExitCompleted()
+        {
+            PlayCue(AudioKey.HydraulicExit);
+            StopForgeAmbient();
+        }
+
+        void OnHydraulicForgeCommitted(bool[] _) => PlayCue(AudioKey.HydraulicPreForge);
+
+        void OnHydraulicCompleted() => PlayCue(AudioKey.HydraulicCompleted);
+
+        void OnHydraulicHammerFallStarted() => PlayCue(AudioKey.HydraulicHammerFall);
+
+        void OnHydraulicHammerImpacted() => PlayCue(AudioKey.HydraulicHammerImpact, 1f, 0.92f);
+
+        void OnHydraulicHammerHoldStarted() => PlayCue(AudioKey.HydraulicHammerHold);
+
+        void OnHydraulicHammerRiseStarted() => PlayCue(AudioKey.HydraulicHammerRise);
+
+        void OnLaneDelivered() => PlayCue(AudioKey.LaneDeliver);
+
+        void OnLaneDeliverLanded() => PlayForgeMetalCue(AudioKey.LaneDeliverLand, 0.72f, 1.02f);
+
+        void OnLaneReset() => PlayCue(AudioKey.LaneReset);
+
+        void OnBoardDragBegun() => PlayForgeMetalCue(AudioKey.BoardBeginDrag, 0.58f, 1.08f);
+
+        void OnBoardPlacedOnAnvil(CardInstance _, int __) =>
+            PlayForgeMetalCue(AudioKey.BoardPlaceOnAnvil, 0.88f, 0.96f);
+
+        void OnBoardAnvilRelayouted() => PlayForgeMetalCue(AudioKey.BoardRelayoutAnvil, 0.5f, 1.12f);
+
+        void OnBoardPlacedOnTable() => PlayForgeMetalCue(AudioKey.BoardPlaceOnTable, 0.76f, 1f);
+
+        void OnBoardDragCancelled() => PlayForgeMetalCue(AudioKey.BoardCancelDrag, 0.45f, 0.9f);
+
+        void OnBoardAnvilFullRejected() => PlayForgeMetalCue(AudioKey.BoardAnvilFull, 0.95f, 0.82f);
+
+        void OnForgeRequested() => PlayCue(AudioKey.ForgeTryForge);
+
+        void OnForgeExited() => PlayCue(AudioKey.ForgeExit);
+
+        void OnForgeEmptyWarningShown() => PlayCue(AudioKey.ForgeEmptyWarning);
+
+        void PlayForgeMetalCue(AudioKey key, float volume, float pitch)
+        {
+            float jitter = UnityEngine.Random.Range(-0.05f, 0.05f);
+            PlayCue(key, volume, pitch + jitter);
         }
 
         void SubscribePrologue()
         {
-            var prologue = FindObjectOfType<ProloguePerformance>();
-            if (prologue != null)
+            var prologue = FindFirstObjectByType<ProloguePerformance>(FindObjectsInactive.Include);
+            if (prologue == null || prologue == _boundPrologue)
             {
-                prologue.SeaHoldStarted += () => PlayCue(AudioKey.PrologueSeaHold);
-                prologue.PlayerSailedIn += () => PlayCue(AudioKey.ProloguePlayerSailIn);
-                prologue.EnemySailedIn += () => PlayCue(AudioKey.PrologueEnemySailIn);
-                prologue.DialogueStarted += () => PlayCue(AudioKey.PrologueDialogueStart);
+                return;
             }
 
-            // DialogueSystem
-            var dialogue = FindObjectOfType<DialogueSystem>();
-            if (dialogue != null)
-            {
-                dialogue.DialogueOpened += () => PlayCue(AudioKey.DialogueOpen);
-                dialogue.LineStarted += _ => PlayCue(AudioKey.DialogueTextTyping);
-                dialogue.DialogueClosed += () => PlayCue(AudioKey.DialogueClose);
-                dialogue.SequenceCompleted += () => PlayCue(AudioKey.DialogueSequenceComplete);
-            }
-
-            // NoticeSystem
-            var notice = FindObjectOfType<NoticeSystem>();
-            if (notice != null)
-            {
-                notice.NoticeShown += _ => PlayCue(AudioKey.NoticeShown);
-                notice.NoticeHidden += () => PlayCue(AudioKey.NoticeHidden);
-            }
+            UnbindPrologue();
+            _boundPrologue = prologue;
+            _boundPrologue.SeaHoldStarted += OnPrologueSeaHold;
+            _boundPrologue.PlayerSailedIn += OnProloguePlayerSailIn;
+            _boundPrologue.EnemySailedIn += OnPrologueEnemySailIn;
+            _boundPrologue.DialogueStarted += OnPrologueDialogueStart;
         }
 
-        void SubscribeUI()
+        void UnbindPrologue()
         {
-            // EnemyIntroducePanelController
-            var enemyPanel = FindObjectOfType<EnemyIntroducePanelController>();
-            if (enemyPanel != null)
+            if (_boundPrologue == null)
             {
-                enemyPanel.EnterCompleted += () => PlayCue(AudioKey.EnemyPanelShow);
-                enemyPanel.ExitCompleted += () => PlayCue(AudioKey.EnemyPanelHide);
+                return;
             }
 
-            // IslandController
-            var island = FindObjectOfType<IslandController>();
-            if (island != null)
+            _boundPrologue.SeaHoldStarted -= OnPrologueSeaHold;
+            _boundPrologue.PlayerSailedIn -= OnProloguePlayerSailIn;
+            _boundPrologue.EnemySailedIn -= OnPrologueEnemySailIn;
+            _boundPrologue.DialogueStarted -= OnPrologueDialogueStart;
+            _boundPrologue = null;
+        }
+
+        void OnPrologueSeaHold() => PlayCue(AudioKey.PrologueSeaHold);
+        void OnProloguePlayerSailIn() => PlayCue(AudioKey.ProloguePlayerSailIn);
+        void OnPrologueEnemySailIn() => PlayCue(AudioKey.PrologueEnemySailIn);
+        void OnPrologueDialogueStart() => PlayCue(AudioKey.PrologueDialogueStart);
+
+        void SubscribeSceneUi()
+        {
+            var ui = UiSystem.Instance;
+            var enemyPanel = ui != null ? ui.EnemyInfo : FindFirstObjectByType<EnemyIntroducePanelController>(FindObjectsInactive.Include);
+            if (enemyPanel != null && enemyPanel != _boundEnemyPanel)
             {
-                island.RefineryOpened += () => PlayCue(AudioKey.IslandOpenRefinery);
-                island.ShipyardOpened += () => PlayCue(AudioKey.IslandOpenShipyard);
-                island.PanelSwitched += () => PlayCue(AudioKey.IslandPanelSwitch);
-                island.Left += () => PlayCue(AudioKey.IslandLeave);
+                UnbindEnemyPanel();
+                _boundEnemyPanel = enemyPanel;
+                _boundEnemyPanel.EnterCompleted += OnEnemyPanelShow;
+                _boundEnemyPanel.ExitCompleted += OnEnemyPanelHide;
             }
 
-            // RouteController
-            var route = FindObjectOfType<RouteController>();
-            if (route != null)
+            var island = FindFirstObjectByType<IslandController>(FindObjectsInactive.Include);
+            if (island != null && island != _boundIsland)
             {
-                route.EventSelected += () => PlayCue(AudioKey.RouteSelect);
+                UnbindIsland();
+                _boundIsland = island;
+                _boundIsland.RefineryOpened += OnIslandOpenRefinery;
+                _boundIsland.ShipyardOpened += OnIslandOpenShipyard;
+                _boundIsland.PanelSwitched += OnIslandPanelSwitch;
+                _boundIsland.Left += OnIslandLeave;
             }
 
-            // MainMenuController
-            var menu = FindObjectOfType<MainMenuController>();
-            if (menu != null)
+            var route = FindFirstObjectByType<RouteController>(FindObjectsInactive.Include);
+            if (route != null && route != _boundRoute)
             {
-                menu.GameStarted += () => PlayCue(AudioKey.MainMenuStart);
+                UnbindRoute();
+                _boundRoute = route;
+                _boundRoute.EventSelected += OnRouteSelect;
             }
 
-            // OreInventoryPanel
-            var inv = FindObjectOfType<OreInventoryPanel>();
-            if (inv != null)
+            var menu = FindFirstObjectByType<MainMenuController>(FindObjectsInactive.Include);
+            if (menu != null && menu != _boundMenu)
             {
-                inv.Opened += () => PlayCue(AudioKey.OreInventoryOpen);
-                inv.Closed += () => PlayCue(AudioKey.OreInventoryClose);
+                UnbindMenu();
+                _boundMenu = menu;
+                _boundMenu.GameStarted += OnMainMenuStart;
             }
 
-            // HoverNoticePresenter - search by type name since it may not be in a known namespace
-            var hoverNotice = FindObjectOfType<HoverNoticePresenter>();
-            if (hoverNotice != null)
+            var inv = FindFirstObjectByType<OreInventoryPanel>(FindObjectsInactive.Include);
+            if (inv != null && inv != _boundOreInv)
             {
-                hoverNotice.HoverNoticeShown += () => PlayCue(AudioKey.HoverNoticeShow);
+                UnbindOreInventory();
+                _boundOreInv = inv;
+                _boundOreInv.Opened += OnOreInventoryOpen;
+                _boundOreInv.Closed += OnOreInventoryClose;
+            }
+
+            var hoverNotice = FindFirstObjectByType<HoverNoticePresenter>(FindObjectsInactive.Include);
+            if (hoverNotice != null && hoverNotice != _boundHover)
+            {
+                UnbindHoverNotice();
+                _boundHover = hoverNotice;
+                _boundHover.HoverNoticeShown += OnHoverNoticeShow;
             }
         }
+
+        void UnbindSceneUi()
+        {
+            UnbindEnemyPanel();
+            UnbindIsland();
+            UnbindRoute();
+            UnbindMenu();
+            UnbindOreInventory();
+            UnbindHoverNotice();
+        }
+
+        void UnbindEnemyPanel()
+        {
+            if (_boundEnemyPanel == null)
+            {
+                return;
+            }
+
+            _boundEnemyPanel.EnterCompleted -= OnEnemyPanelShow;
+            _boundEnemyPanel.ExitCompleted -= OnEnemyPanelHide;
+            _boundEnemyPanel = null;
+        }
+
+        void UnbindIsland()
+        {
+            if (_boundIsland == null)
+            {
+                return;
+            }
+
+            _boundIsland.RefineryOpened -= OnIslandOpenRefinery;
+            _boundIsland.ShipyardOpened -= OnIslandOpenShipyard;
+            _boundIsland.PanelSwitched -= OnIslandPanelSwitch;
+            _boundIsland.Left -= OnIslandLeave;
+            _boundIsland = null;
+        }
+
+        void UnbindRoute()
+        {
+            if (_boundRoute == null)
+            {
+                return;
+            }
+
+            _boundRoute.EventSelected -= OnRouteSelect;
+            _boundRoute = null;
+        }
+
+        void UnbindMenu()
+        {
+            if (_boundMenu == null)
+            {
+                return;
+            }
+
+            _boundMenu.GameStarted -= OnMainMenuStart;
+            _boundMenu = null;
+        }
+
+        void UnbindOreInventory()
+        {
+            if (_boundOreInv == null)
+            {
+                return;
+            }
+
+            _boundOreInv.Opened -= OnOreInventoryOpen;
+            _boundOreInv.Closed -= OnOreInventoryClose;
+            _boundOreInv = null;
+        }
+
+        void UnbindHoverNotice()
+        {
+            if (_boundHover == null)
+            {
+                return;
+            }
+
+            _boundHover.HoverNoticeShown -= OnHoverNoticeShow;
+            _boundHover = null;
+        }
+
+        void OnEnemyPanelShow() => PlayCue(AudioKey.EnemyPanelShow);
+        void OnEnemyPanelHide() => PlayCue(AudioKey.EnemyPanelHide);
+        void OnIslandOpenRefinery() => PlayCue(AudioKey.IslandOpenRefinery);
+        void OnIslandOpenShipyard() => PlayCue(AudioKey.IslandOpenShipyard);
+        void OnIslandPanelSwitch() => PlayCue(AudioKey.IslandPanelSwitch);
+        void OnIslandLeave() => PlayCue(AudioKey.IslandLeave);
+        void OnRouteSelect() => PlayCue(AudioKey.RouteSelect);
+        void OnMainMenuStart() => PlayCue(AudioKey.MainMenuStart);
+        void OnOreInventoryOpen() => PlayCue(AudioKey.OreInventoryOpen);
+        void OnOreInventoryClose() => PlayCue(AudioKey.OreInventoryClose);
+        void OnHoverNoticeShow() => PlayCue(AudioKey.HoverNoticeShow);
 
         void SubscribeSelection()
         {
-            // SelectableSceneElement - multiple instances exist, subscribe to each
-            var selectables = FindObjectsOfType<SelectableSceneElement>();
-            foreach (var sel in selectables)
+            var selectables = FindObjectsByType<SelectableSceneElement>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < selectables.Length; i++)
             {
-                sel.HoverEntered += () => PlayCue(AudioKey.SelectableHoverEnter);
-                sel.HoverExited += () => PlayCue(AudioKey.SelectableHoverExit);
+                var sel = selectables[i];
+                if (sel == null || _boundSelectables.Contains(sel))
+                {
+                    continue;
+                }
+
+                sel.HoverEntered += OnSelectableHoverEnter;
+                sel.HoverExited += OnSelectableHoverExit;
+                _boundSelectables.Add(sel);
             }
         }
+
+        void UnbindSelection()
+        {
+            for (int i = 0; i < _boundSelectables.Count; i++)
+            {
+                var sel = _boundSelectables[i];
+                if (sel == null)
+                {
+                    continue;
+                }
+
+                sel.HoverEntered -= OnSelectableHoverEnter;
+                sel.HoverExited -= OnSelectableHoverExit;
+            }
+
+            _boundSelectables.Clear();
+        }
+
+        void OnSelectableHoverEnter() => PlayCue(AudioKey.SelectableHoverEnter);
+        void OnSelectableHoverExit() => PlayCue(AudioKey.SelectableHoverExit);
 
         // ===== Environment Audio =====
 
@@ -423,8 +964,13 @@ namespace NineGrid.Audio
 
         void UpdateChainPhase()
         {
-            var chain = FindObjectOfType<AnchorChainLauncher>();
-            if (chain == null) return;
+            var chain = _boundChain != null
+                ? _boundChain
+                : FindFirstObjectByType<AnchorChainLauncher>(FindObjectsInactive.Include);
+            if (chain == null)
+            {
+                return;
+            }
 
             var phase = chain.CurrentPhase;
             if (phase == _lastChainPhase) return;

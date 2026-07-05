@@ -396,6 +396,39 @@ namespace NineGrid.GameFlow
             return sb.ToString().TrimEnd();
         }
 
+        public string GetDeckOreHoverText(int deckIndex)
+        {
+            if (deckIndex < 0 || deckIndex >= _run.Deck.Count)
+            {
+                return string.Empty;
+            }
+
+            var entry = _run.Deck[deckIndex];
+            var ore = _oreCatalog?.Get(entry.OreId);
+            var name = ore?.DisplayName ?? entry.OreId;
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine(name);
+
+            if (ore != null)
+            {
+                var traits = ore.Traits;
+                if (entry.TraitsInt != 0)
+                {
+                    traits |= (OreTrait)entry.TraitsInt;
+                }
+
+                var points = ore.BasePoints + entry.PermanentBonus;
+                sb.AppendLine(OreMechanicalText.Build(entry.OreId, name, points, traits));
+            }
+            else if (entry.PermanentBonus > 0)
+            {
+                sb.AppendLine($"淬火永久 +{entry.PermanentBonus}");
+            }
+
+            sb.AppendLine("点击确认选择。");
+            return sb.ToString().TrimEnd();
+        }
+
         public string GetRemoveOreHoverText()
             => $"删除矿石服务\n费用：{_run.ShopRemoveCost} 银元\n从矿舱移除一块矿石。\n点击后打开矿舱选择。";
 

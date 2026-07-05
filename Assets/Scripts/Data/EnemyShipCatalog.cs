@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using NineGrid.Presentation.Visuals;
 using UnityEngine;
 
@@ -37,6 +38,63 @@ namespace NineGrid.Data
         public string IntroDescription => introDescription;
         public StripSpriteVisualCatalog VisualCatalog => visualCatalog;
         public string VisualId => visualId;
+
+        /// <summary>将目录中的动画条目应用到场景敌舰视觉组件。</summary>
+        public void ApplyVisual(StripSpriteCharacterVisual visual)
+        {
+            if (visual == null)
+            {
+                return;
+            }
+
+            if (visualCatalog != null)
+            {
+                visual.SetCatalog(visualCatalog);
+            }
+
+            if (!string.IsNullOrEmpty(visualId))
+            {
+                visual.SetVisual(visualId);
+            }
+        }
+
+        /// <summary>敌人信息面板 hover 文案。</summary>
+        public string BuildIntroText()
+        {
+            if (!string.IsNullOrWhiteSpace(introDescription))
+            {
+                return introDescription.Trim();
+            }
+
+            var sb = new StringBuilder();
+            sb.Append(displayName);
+            if (!string.IsNullOrEmpty(legacyName))
+            {
+                sb.Append("（前：").Append(legacyName).Append('）');
+            }
+
+            sb.Append("\n装甲值 ").Append(armorValue);
+
+            if (artilleries != null)
+            {
+                for (var i = 0; i < artilleries.Length; i++)
+                {
+                    var entry = artilleries[i];
+                    if (entry == null || string.IsNullOrEmpty(entry.DisplayName))
+                    {
+                        continue;
+                    }
+
+                    sb.Append("\n· ").Append(entry.DisplayName);
+                    if (!string.IsNullOrEmpty(entry.Description))
+                    {
+                        sb.Append('：').Append(entry.Description);
+                    }
+                }
+            }
+
+            return sb.ToString();
+        }
     }
 
     /// <summary>敌舰目录 —— 持有第一航段全部敌舰数据。</summary>

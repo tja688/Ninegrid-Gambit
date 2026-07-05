@@ -65,8 +65,9 @@ namespace NineGrid.GameFlow
         [SerializeField] EnemyShipCatalog enemyCatalog;
         [Tooltip("船体改造目录 SO（留空时编辑器自动加载）。")]
         [SerializeField] HullModCatalog hullModCatalog;
-        [Tooltip("本场敌舰数据 SO（留空时按 GameFlowState 对应节点自动选择）。")]
-        [SerializeField] EnemyShipDataSO currentEnemy;
+
+        /// <summary>本场敌舰数据（每场战斗按 GameFlowState 对应节点重新解析）。</summary>
+        EnemyShipDataEntry _currentEnemy;
 
         [Header("Exit Motion")]
         [SerializeField] float playerExitDuration = 1f;
@@ -305,7 +306,7 @@ namespace NineGrid.GameFlow
                 playerHp += run.NextBattleHeartBonus;
                 run.NextBattleHeartBonus = 0;
             }
-            var enemyArmor = currentEnemy != null ? currentEnemy.ArmorValue : 200;
+            var enemyArmor = _currentEnemy != null ? _currentEnemy.ArmorValue : 200;
             // 应用顺风波及事件惩罚
             if (run.NextMonsterHpPenalty > 0)
             {
@@ -571,7 +572,7 @@ namespace NineGrid.GameFlow
                 enemyInfoPanel.EnterCompleted += OnEnterCompleted;
                 try
                 {
-                    enemyInfoPanel.RequestShow(currentEnemy != null ? currentEnemy.BuildIntroText() : null);
+                    enemyInfoPanel.RequestShow(_currentEnemy != null ? _currentEnemy.BuildIntroText() : null);
                 }
                 catch (Exception ex)
                 {
@@ -1178,68 +1179,62 @@ namespace NineGrid.GameFlow
 
         void ResolveCurrentEnemy()
         {
-            if (currentEnemy != null)
-            {
-                return;
-            }
+            _currentEnemy = null;
 
-            // 按 GameFlowState 对应的节点选敌舰
             var flowState = GameFlowController.Instance != null
                 ? GameFlowController.Instance.CurrentState
                 : GameFlowState.Battle0;
             var stageKey = RunData.GetStageKey(flowState);
-            var stageConfig = WebGameData.GetStage(stageKey);
-            string targetDisplayName = null;
-            int targetHp = 200;
 
-            if (stageConfig != null && stageConfig.MonsterPool.Length > 0)
+            ResolveEnemyCatalog();
+
+            // 优先：EnemyShipCatalog 按 routeNode 精确匹配当前战斗节点
+            if (enemyCatalog != null)
             {
-                var monsterId = WebGameData.PickRandomMonster(stageConfig.MonsterPool);
-                var enemyDef = WebGameData.GetEnemy(monsterId);
-                if (enemyDef != null)
+                _currentEnemy = enemyCatalog.GetByRouteNode(stageKey);
+            }
+
+            // 兜底：WebGameData 怪物池 → 按中文名在目录中查找
+            if (_currentEnemy == null && enemyCatalog != null)
+            {
+                var stageConfig = WebGameData.GetStage(stageKey);
+                if (stageConfig != null && stageConfig.MonsterPool.Length > 0)
                 {
-                    targetDisplayName = enemyDef.DisplayName;
-                    targetHp = enemyDef.Hp;
+                    var monsterId = WebGameData.PickRandomMonster(stageConfig.MonsterPool);
+                    var enemyDef = WebGameData.GetEnemy(monsterId);
+                    if (enemyDef != null)
+                    {
+                        _currentEnemy = FindCatalogEntryByDisplayName(enemyDef.DisplayName);
+                    }
                 }
             }
 
-            // 从 EnemyShips 文件夹加载所有敌舰 SO，按名字匹配
-            if (!string.IsNullOrEmpty(targetDisplayName))
+            if (_currentEnemy == null)
             {
-                currentEnemy = FindEnemySOByName(targetDisplayName);
+                Debug.LogWarning($"[Battle] 节点 {stageKey} 未找到敌舰配置，使用默认装甲值。");
             }
-
-#if UNITY_EDITOR
-            if (currentEnemy == null)
+            else
             {
-                currentEnemy = UnityEditor.AssetDatabase.LoadAssetAtPath<EnemyShipDataSO>(
-                    "Assets/ScriptableObjects/Data/EnemyShips/enemy_tengmanhao.asset");
+                Debug.Log($"[Battle] 选定敌舰：{_currentEnemy.DisplayName}（节点：{stageKey}，HP={_currentEnemy.ArmorValue}）");
             }
-#endif
-
-            if (currentEnemy == null)
-            {
-                currentEnemy = ScriptableObject.CreateInstance<EnemyShipDataSO>();
-            }
-
-            Debug.Log($"[Battle] 选定敌舰：{currentEnemy?.DisplayName ?? "?"}（目标：{targetDisplayName ?? "?"}，HP={targetHp}）");
         }
 
-        /// <summary>按名字从 EnemyShips 文件夹查找敌舰 SO。</summary>
-        EnemyShipDataSO FindEnemySOByName(string displayName)
+        EnemyShipDataEntry FindCatalogEntryByDisplayName(string displayName)
         {
-            if (string.IsNullOrEmpty(displayName)) return null;
-#if UNITY_EDITOR
-            var guids = UnityEditor.AssetDatabase.FindAssets("t:EnemyShipDataSO",
-                new[] { "Assets/ScriptableObjects/Data/EnemyShips" });
-            foreach (var guid in guids)
+            if (enemyCatalog == null || string.IsNullOrEmpty(displayName))
             {
-                var path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
-                var so = UnityEditor.AssetDatabase.LoadAssetAtPath<EnemyShipDataSO>(path);
-                if (so != null && so.DisplayName == displayName)
-                    return so;
+                return null;
             }
-#endif
+
+            var entries = enemyCatalog.Entries;
+            for (var i = 0; i < entries.Count; i++)
+            {
+                if (entries[i].DisplayName == displayName)
+                {
+                    return entries[i];
+                }
+            }
+
             return null;
         }
 
@@ -1277,7 +1272,7 @@ namespace NineGrid.GameFlow
 
         void ApplyCurrentEnemyPresentation()
         {
-            if (currentEnemy == null)
+            if (_currentEnemy == null)
             {
                 return;
             }
@@ -1289,7 +1284,7 @@ namespace NineGrid.GameFlow
             }
 
             var visual = enemy.GetComponent<StripSpriteCharacterVisual>();
-            currentEnemy.ApplyVisual(visual);
+            _currentEnemy.ApplyVisual(visual);
         }
 
         static Transform FindByName(string objectName)
