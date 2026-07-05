@@ -8,9 +8,8 @@ using UnityEngine;
 namespace NineGrid.GameFlow
 {
     /// <summary>
-    /// 锻造台三按钮 + 显示屏 Factory Text。
+    /// 锻造台按钮 + 显示屏 Factory Text。
     /// - 开始锻造：锻造台有料才可点，触发锤头下压铸造（PlayHydraulic）。
-    /// - 退出锻造：常规退场看对面，保留桌面 / 锻造台材料。
     /// - 查看矿石库：开合矿仓小面板。
     /// Factory Text：拖拽或悬停矿石时显示其信息（≤51 字）；无聚焦时单行展示完整预计伤害与熔炼加成说明。
     /// </summary>
@@ -34,6 +33,7 @@ namespace NineGrid.GameFlow
         string _lastFactoryText;
 
         CardInstance _oreDisplayCard;
+        int _inventoryDisplayDeckIndex = -1;
         List<string> _oreDisplaySegments;
         int _oreDisplaySegmentIndex;
         float _oreDisplayCarouselTimer;
@@ -51,7 +51,7 @@ namespace NineGrid.GameFlow
 
         void Update()
         {
-            if (hydraulicScene == null || forgeButton == null || exitButton == null
+            if (hydraulicScene == null || forgeButton == null
                 || inventoryButton == null || inventoryPanel == null)
             {
                 ResolveRefs();
@@ -108,7 +108,7 @@ namespace NineGrid.GameFlow
             {
                 TryForge();
             }
-            else if (hovered == exitButton)
+            else if (exitButton != null && hovered == exitButton)
             {
                 ForgeExited?.Invoke();
                 hydraulicScene.Exit();
@@ -141,6 +141,18 @@ namespace NineGrid.GameFlow
                 return;
             }
 
+            if (inventoryPanel != null && inventoryPanel.IsOpen
+                && inventoryPanel.TryGetHoveredDeckIndex(out var deckIndex))
+            {
+                SetFactoryText(GetInventoryOreDisplayText(deckIndex), OreDisplayFormatter.MaxChars);
+                return;
+            }
+
+            if (_inventoryDisplayDeckIndex >= 0)
+            {
+                ClearInventoryDisplayState();
+            }
+
             string text;
             CardInstance focusCard = null;
 
@@ -164,6 +176,45 @@ namespace NineGrid.GameFlow
             }
 
             SetFactoryText(text, focusCard != null ? OreDisplayFormatter.MaxChars : OreDisplayFormatter.MaxIdleChars);
+        }
+
+        string GetInventoryOreDisplayText(int deckIndex)
+        {
+            if (_inventoryDisplayDeckIndex != deckIndex)
+            {
+                _inventoryDisplayDeckIndex = deckIndex;
+                _oreDisplayCard = null;
+                _oreDisplaySegments = OreDisplayFormatter.BuildInventoryForgeSegments(deckIndex);
+                _oreDisplaySegmentIndex = 0;
+                _oreDisplayCarouselTimer = 0f;
+            }
+            else if (_oreDisplaySegments == null || _oreDisplaySegments.Count == 0)
+            {
+                _oreDisplaySegments = OreDisplayFormatter.BuildInventoryForgeSegments(deckIndex);
+                _oreDisplaySegmentIndex = 0;
+            }
+
+            if (_oreDisplaySegments.Count <= 1)
+            {
+                return _oreDisplaySegments[0];
+            }
+
+            _oreDisplayCarouselTimer += Time.unscaledDeltaTime;
+            if (_oreDisplayCarouselTimer >= OreDisplayCarouselInterval)
+            {
+                _oreDisplayCarouselTimer = 0f;
+                _oreDisplaySegmentIndex = (_oreDisplaySegmentIndex + 1) % _oreDisplaySegments.Count;
+            }
+
+            return _oreDisplaySegments[_oreDisplaySegmentIndex];
+        }
+
+        void ClearInventoryDisplayState()
+        {
+            _inventoryDisplayDeckIndex = -1;
+            _oreDisplaySegments = null;
+            _oreDisplaySegmentIndex = 0;
+            _oreDisplayCarouselTimer = 0f;
         }
 
         string GetOreDisplayText(CardInstance card)
@@ -205,6 +256,7 @@ namespace NineGrid.GameFlow
         void ClearOreDisplayState()
         {
             _oreDisplayCard = null;
+            _inventoryDisplayDeckIndex = -1;
             _oreDisplaySegments = null;
             _oreDisplaySegmentIndex = 0;
             _oreDisplayCarouselTimer = 0f;
@@ -312,7 +364,14 @@ namespace NineGrid.GameFlow
 
             if (hydraulicScene.IsActive)
             {
-                pointerSelector.ApplyInteractionScope(this, forgeButton, exitButton, inventoryButton);
+                if (exitButton != null)
+                {
+                    pointerSelector.ApplyInteractionScope(this, forgeButton, exitButton, inventoryButton);
+                }
+                else
+                {
+                    pointerSelector.ApplyInteractionScope(this, forgeButton, inventoryButton);
+                }
             }
             else
             {

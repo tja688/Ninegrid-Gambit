@@ -24,6 +24,12 @@ namespace NineGrid.GameFlow
         Exiting = 3,
     }
 
+    enum BattleTurnPhase
+    {
+        NeedForge = 0,
+        ReadyToRam = 1,
+    }
+
     /// <summary>
     /// 战斗环节独立状态机：由 <see cref="GameFlowController"/> 在序章/战斗节点就绪后拉起。
     /// 负责权限解锁、敌人信息面板、锻造 / 抛锚入口；胜负结算留位。
@@ -55,9 +61,6 @@ namespace NineGrid.GameFlow
         [Header("Flow (占位数值)")]
         [Tooltip("船锚余量组件缺失时的兜底撞击次数：撞满该次数即算打完本场。")]
         [SerializeField] int fallbackRamsToWin = 3;
-        [Tooltip("未铸造钻头就点敌人时的提示文案。")]
-        [TextArea(1, 3)]
-        [SerializeField] string forgeFirstNotice = "先点玩家船体铸造钻头，再抛锚撞击。";
 
         [Header("Combat (真实战斗)")]
         [Tooltip("矿石目录 SO（留空时编辑器自动从 Assets/ScriptableObjects/Data/OreCatalog.asset 加载）。")]
@@ -88,7 +91,6 @@ namespace NineGrid.GameFlow
         HydraulicMaterialBoard _boundMaterialBoard;
         bool _ramming;
         bool _hasForgedBore;
-        bool _anchorWarned;
         int _ramsCompleted;
         bool _won;
         CombatModel _combat;
@@ -252,7 +254,8 @@ namespace NineGrid.GameFlow
                 {
                     hydraulicScene.Enter();
                 }
-                else if (hydraulicScene.State == HydraulicSceneState.Active)
+                else if (hydraulicScene.State == HydraulicSceneState.Active
+                         && _state != BattlePhaseState.Active)
                 {
                     hydraulicScene.Exit();
                 }
@@ -323,7 +326,6 @@ namespace NineGrid.GameFlow
         void ResetBattleState()
         {
             _hasForgedBore = false;
-            _anchorWarned = false;
             _ramsCompleted = 0;
             _won = false;
 
@@ -600,12 +602,14 @@ namespace NineGrid.GameFlow
                 {
                     _pendingBoreOccupancy[i] = false;
                 }
+
+                ApplyTurnPermissions(BattleTurnPhase.NeedForge);
             }
         }
 
         IEnumerator EnterRoutine()
         {
-            UnlockPermissions();
+            ApplyTurnPermissions(BattleTurnPhase.NeedForge);
             PlayerRunHudController.Instance?.Release(PlayerRunHudSuppressReason.PrologueOpening);
             enemyHpBar?.Reveal();
 
@@ -785,11 +789,8 @@ namespace NineGrid.GameFlow
 
             if (hovered == enemySelectable)
             {
-                // 未铸造钻头就点敌人：先拦截一次并弹提示；玩家坚持再点则放任其空抛锚。
-                if (!_hasForgedBore && !_anchorWarned)
+                if (!CanEnterAnchorMode)
                 {
-                    _anchorWarned = true;
-                    ShowNotice(forgeFirstNotice);
                     return;
                 }
 
@@ -843,12 +844,6 @@ namespace NineGrid.GameFlow
 
             enemyInfoPanel?.HideDescriptionImmediate();
             _enemyDescVisible = false;
-        }
-
-        void ShowNotice(string text)
-        {
-            var notice = UiSystem.Instance != null ? UiSystem.Instance.Notice : null;
-            notice?.Show(NoticeChannel.Notice, text, 2.2f);
         }
 
         void BindHydraulicEvents(bool forceRebind = false)
@@ -983,6 +978,7 @@ namespace NineGrid.GameFlow
         {
             bores?.ShowBores(_pendingBoreOccupancy);
             OnForgeExitCompleted();
+            ApplyTurnPermissions(BattleTurnPhase.ReadyToRam);
         }
 
         /// <summary>锻造开启：瞬间藏起敌人信息面板与文字。</summary>
@@ -1018,7 +1014,7 @@ namespace NineGrid.GameFlow
                 return;
             }
 
-            // 桌面有遗留矿石时不重复抽卡（玩家退出锻造看对面后重入时保留）。
+            // 桌面有遗留矿石时不重复抽卡。
             if (lane.SettledOnTableCount > 0)
             {
                 return;
@@ -1040,12 +1036,27 @@ namespace NineGrid.GameFlow
             enemyHpBar?.ResumeImmediate();
         }
 
-        void UnlockPermissions()
+        void ApplyTurnPermissions(BattleTurnPhase phase)
         {
-            SetSelectableEnabled(playerSelectable, true);
-            SetSelectableEnabled(enemySelectable, true);
-            CanEnterForgeMode = true;
-            CanEnterAnchorMode = true;
+            switch (phase)
+            {
+                case BattleTurnPhase.NeedForge:
+                    CanEnterForgeMode = true;
+                    CanEnterAnchorMode = false;
+                    SetSelectableEnabled(playerSelectable, true);
+                    SetSelectableEnabled(enemySelectable, true);
+                    break;
+                case BattleTurnPhase.ReadyToRam:
+                    CanEnterForgeMode = false;
+                    CanEnterAnchorMode = true;
+                    SetSelectableEnabled(playerSelectable, false);
+                    SetSelectableEnabled(enemySelectable, true);
+                    if (playerSelectable != null)
+                    {
+                        playerSelectable.SetHovered(false);
+                    }
+                    break;
+            }
         }
 
         void LockPermissions()

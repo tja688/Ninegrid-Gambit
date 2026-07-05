@@ -161,7 +161,8 @@ namespace NineGrid.GameFlow
                 {
                     Enter();
                 }
-                else if (_state == HydraulicSceneState.Active)
+                else if (_state == HydraulicSceneState.Active
+                         && (BattleController.Instance == null || !BattleController.Instance.IsActive))
                 {
                     Exit();
                 }
@@ -221,6 +222,11 @@ namespace NineGrid.GameFlow
                 return false;
             }
 
+            if (BattleController.Instance != null && BattleController.Instance.IsActive)
+            {
+                return false;
+            }
+
             KillMotion();
             _state = HydraulicSceneState.Exiting;
             SetBgRayBlockEnabled(false);
@@ -275,7 +281,7 @@ namespace NineGrid.GameFlow
             PlaceAtWorld(display, _displayStay);
             PlaceAtWorld(pipe, _pipeStay);
             SetBgRayBlockEnabled(true);
-            // 常规入场不清空材料：保留上次「退出锻造看对面」时的桌面 / 锻造台状态。
+            // 常规入场不清空材料：保留桌面 / 锻造台状态。
 
             _activeTween = null;
             _routine = null;

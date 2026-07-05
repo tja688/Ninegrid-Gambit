@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Text;
 using NineGrid.Battle.Combat;
+using NineGrid.Data;
 
 namespace NineGrid.GameFlow
 {
@@ -163,6 +165,121 @@ namespace NineGrid.GameFlow
             }
 
             return text.Substring(0, MaxChars);
+        }
+
+        /// <summary>矿仓槽位悬停文案（Notice 通道：事件/商店选矿）。</summary>
+        public static string BuildDeckHoverText(int deckIndex, bool includeSelectHint = false)
+        {
+            var combat = BattleController.Instance != null ? BattleController.Instance.Combat : null;
+            if (combat != null)
+            {
+                var deck = combat.State.Deck;
+                if (deckIndex >= 0 && deckIndex < deck.Count)
+                {
+                    return FormatHoverText(deck[deckIndex].DisplayName, OreMechanicalText.Build(deck[deckIndex]), includeSelectHint);
+                }
+            }
+
+            var run = RunData.Ensure();
+            if (deckIndex < 0 || deckIndex >= run.Deck.Count)
+            {
+                return string.Empty;
+            }
+
+            return FormatHoverText(run.Deck[deckIndex], includeSelectHint);
+        }
+
+        /// <summary>矿仓槽位悬停轮播段（Factory 通道：锻造场景）。</summary>
+        public static List<string> BuildInventoryForgeSegments(int deckIndex)
+        {
+            var combat = BattleController.Instance != null ? BattleController.Instance.Combat : null;
+            if (combat != null)
+            {
+                var deck = combat.State.Deck;
+                if (deckIndex >= 0 && deckIndex < deck.Count)
+                {
+                    return BuildForgeSegments(deck[deckIndex]);
+                }
+            }
+
+            var run = RunData.Ensure();
+            if (deckIndex < 0 || deckIndex >= run.Deck.Count)
+            {
+                return new List<string> { "矿石信息：未知" };
+            }
+
+            var entry = run.Deck[deckIndex];
+            var catalog = GameDataCatalogs.Ore;
+            OreDataEntry oreEntry = null;
+            if (catalog != null)
+            {
+                catalog.TryGet(entry.OreId, out oreEntry);
+            }
+
+            var name = oreEntry?.DisplayName ?? entry.OreId;
+            var traits = oreEntry != null ? oreEntry.Traits | (OreTrait)entry.TraitsInt : (OreTrait)entry.TraitsInt;
+            var points = (oreEntry?.BasePoints ?? 0) + entry.PermanentBonus;
+            var fullText = OreMechanicalText.Build(entry.OreId, name, points, traits);
+
+            var segments = new List<string>(6);
+            AppendDescriptionChunks(segments, fullText);
+            if (segments.Count == 0)
+            {
+                segments.Add(Truncate(fullText));
+            }
+
+            return segments;
+        }
+
+        static string FormatHoverText(DeckEntry entry, bool includeSelectHint)
+        {
+            var catalog = GameDataCatalogs.Ore;
+            OreDataEntry oreEntry = null;
+            if (catalog != null)
+            {
+                catalog.TryGet(entry.OreId, out oreEntry);
+            }
+
+            var name = oreEntry?.DisplayName ?? entry.OreId;
+            string mechanical;
+            if (oreEntry != null)
+            {
+                var traits = oreEntry.Traits;
+                if (entry.TraitsInt != 0)
+                {
+                    traits |= (OreTrait)entry.TraitsInt;
+                }
+
+                var points = oreEntry.BasePoints + entry.PermanentBonus;
+                mechanical = OreMechanicalText.Build(entry.OreId, name, points, traits);
+            }
+            else if (entry.PermanentBonus > 0)
+            {
+                mechanical = $"淬火永久 +{entry.PermanentBonus}";
+            }
+            else
+            {
+                mechanical = string.Empty;
+            }
+
+            return FormatHoverText(name, mechanical, includeSelectHint);
+        }
+
+        static string FormatHoverText(string displayName, string mechanicalText, bool includeSelectHint)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine(displayName);
+            if (!string.IsNullOrEmpty(mechanicalText))
+            {
+                sb.AppendLine(mechanicalText);
+            }
+
+            if (includeSelectHint)
+            {
+                sb.AppendLine("点击确认选择。");
+            }
+
+            return sb.ToString().TrimEnd();
         }
     }
 }

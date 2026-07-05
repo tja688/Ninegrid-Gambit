@@ -45,6 +45,7 @@ namespace NineGrid.GameFlow
         Phase _phase = Phase.Idle;
         bool _eventFlowActive;
         int _hoveredOptionIndex = -1;
+        int _hoveredOreDeckIndex = -1;
         List<EventDef> _eventOptions = new();
         EventDef _pendingOreEvent;
         Coroutine _resultRoutine;
@@ -185,7 +186,53 @@ namespace NineGrid.GameFlow
                 {
                     OnOreSelectionCancelled();
                 }
+
+                return;
             }
+
+            HandleOreInventorySelectionHover();
+        }
+
+        void HandleOreInventorySelectionHover()
+        {
+            if (oreInventoryPanel.TryGetHoveredDeckIndex(out var deckIndex))
+            {
+                if (_hoveredOreDeckIndex == deckIndex)
+                {
+                    return;
+                }
+
+                _hoveredOreDeckIndex = deckIndex;
+                var text = OreDisplayFormatter.BuildDeckHoverText(deckIndex, includeSelectHint: true);
+                if (!string.IsNullOrEmpty(text))
+                {
+                    var notice = UiSystem.Instance != null ? UiSystem.Instance.Notice : null;
+                    notice?.Show(NoticeChannel.Notice, text, 0f);
+                }
+
+                return;
+            }
+
+            if (_hoveredOreDeckIndex < 0)
+            {
+                return;
+            }
+
+            _hoveredOreDeckIndex = -1;
+            RestoreOreSelectionPrompt();
+        }
+
+        void RestoreOreSelectionPrompt()
+        {
+            var ev = _pendingOreEvent;
+            if (ev == null)
+            {
+                HideDescription();
+                return;
+            }
+
+            var notice = UiSystem.Instance != null ? UiSystem.Instance.Notice : null;
+            notice?.Show(NoticeChannel.Notice, $"{ev.Name}\n{ev.Desc}\n点击矿舱中的一块矿石。", 0f);
         }
 
         void UpdateEventChoice()
@@ -538,12 +585,14 @@ namespace NineGrid.GameFlow
             _eventOptions.Clear();
             _pendingOreEvent = null;
             _hoveredOptionIndex = -1;
+            _hoveredOreDeckIndex = -1;
             UpdateMarkerVisibility(0);
         }
 
         void HideDescription()
         {
             _hoveredOptionIndex = -1;
+            _hoveredOreDeckIndex = -1;
             var notice = UiSystem.Instance != null ? UiSystem.Instance.Notice : null;
             if (notice != null && notice.IsShowing && notice.ActiveChannel == NoticeChannel.Notice)
             {

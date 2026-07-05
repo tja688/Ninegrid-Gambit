@@ -297,7 +297,7 @@ namespace NineGrid.GameFlow
                     var entry = run.Deck[i];
                     _slotDeckIndices.Add(i);
                     ApplySlotVisual(renderer, ResolveOreIcon(catalog, entry.OreId));
-                    SetSlotCollider(collider, _selectionMode);
+                    SetSlotCollider(collider, true);
                 }
                 else
                 {
@@ -320,7 +320,7 @@ namespace NineGrid.GameFlow
                     var card = deck[i];
                     _slotDeckIndices.Add(i);
                     ApplySlotVisual(renderer, card?.Icon);
-                    SetSlotCollider(collider, _selectionMode);
+                    SetSlotCollider(collider, true);
                 }
                 else
                 {
