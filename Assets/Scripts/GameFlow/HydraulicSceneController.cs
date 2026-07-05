@@ -115,6 +115,11 @@ namespace NineGrid.GameFlow
         /// <summary>液压流程完成并整场景退场完毕。</summary>
         public event Action HydraulicCompleted;
 
+        public event Action HammerFallStarted;
+        public event Action HammerImpacted;
+        public event Action HammerHoldStarted;
+        public event Action HammerRiseStarted;
+
         void Awake()
         {
             if (Instance != null && Instance != this)
@@ -327,6 +332,7 @@ namespace NineGrid.GameFlow
             SetBgRayBlockEnabled(false);
 
             var dropCompleted = false;
+            HammerFallStarted?.Invoke();
             _activeTween = hammer
                 .DOMove(GetPressPosition(), hammerDropDuration)
                 .SetEase(hammerDropEase)
@@ -338,17 +344,20 @@ namespace NineGrid.GameFlow
             PlaceAtWorld(hammer, GetPressPosition());
 
             // 锤头落位瞬间：屏幕震动。
+            HammerImpacted?.Invoke();
             PlayHammerShake();
 
             // 锤头完整落位后，其他元素立刻退场（与抬起并行）。
             _otherExitRoutine = StartCoroutine(ExitOthersRoutine());
 
+            HammerHoldStarted?.Invoke();
             if (hammerHoldDuration > 0f)
             {
                 yield return new WaitForSecondsRealtime(hammerHoldDuration);
             }
 
             var riseCompleted = false;
+            HammerRiseStarted?.Invoke();
             _activeTween = hammer
                 .DOMove(_hammerStay, hammerRiseDuration)
                 .SetEase(hammerRiseEase)

@@ -1,3 +1,4 @@
+using System;
 using NineGrid.Presentation.Visuals;
 using UnityEngine;
 
@@ -20,6 +21,8 @@ namespace NineGrid.GameFlow
         [SerializeField] bool startOnAnyClickFallback = true;
 
         bool _started;
+
+        public event Action GameStarted;
 
         void Start()
         {
@@ -59,6 +62,7 @@ namespace NineGrid.GameFlow
             }
 
             _started = true;
+            GameStarted?.Invoke();
             var flow = GameFlowController.Instance;
             if (flow == null)
             {

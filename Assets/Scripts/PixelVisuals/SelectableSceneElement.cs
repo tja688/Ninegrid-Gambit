@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -66,6 +67,9 @@ namespace NineGrid.Presentation.Visuals
         public int SortingOrder => spriteRenderer != null ? spriteRenderer.sortingOrder : 0;
         public bool IsHovered => hovered;
 
+        public event Action HoverEntered;
+        public event Action HoverExited;
+
         void Awake()
         {
             CacheComponents();
@@ -123,7 +127,12 @@ namespace NineGrid.Presentation.Visuals
             hovered = value;
             if (hovered)
             {
+                HoverEntered?.Invoke();
                 pulseTime = 0f;
+            }
+            else
+            {
+                HoverExited?.Invoke();
             }
 
             ApplyVisual();

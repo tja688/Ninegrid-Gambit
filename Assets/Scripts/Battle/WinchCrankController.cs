@@ -60,6 +60,8 @@ namespace NineGrid.Battle
 
         /// <summary>玩家点击绞盘时触发（用于挂音效 / 特效）。</summary>
         public event Action Clicked;
+        public event Action CrankBegun;
+        public event Action CrankEnded;
 
         /// <summary>0..1 的绞劲强度（已平滑）。</summary>
         public float Intensity01 => _intensityVisual;
@@ -104,6 +106,7 @@ namespace NineGrid.Battle
             if (!gameObject.activeSelf) gameObject.SetActive(true);
 
             ApplyVisual(0f);
+            CrankBegun?.Invoke();
         }
 
         /// <summary>停止狂点并复位绞盘视觉，随后失活自身。</summary>
@@ -122,6 +125,7 @@ namespace NineGrid.Battle
 
             if (animator != null) animator.speed = idleAnimSpeed;
             if (deactivate && gameObject.activeSelf) gameObject.SetActive(false);
+            CrankEnded?.Invoke();
         }
 
         void Update()

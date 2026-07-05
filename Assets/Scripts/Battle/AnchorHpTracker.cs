@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace NineGrid.Battle
@@ -21,6 +22,10 @@ namespace NineGrid.Battle
         public int Remaining => _remaining;
         public int Capacity => icons != null ? icons.Length : 0;
         public bool IsEmpty => _remaining <= 0;
+
+        public event Action AnchorReset;
+        public event Action AnchorConsumed;
+        public event Action AnchorDepleted;
 
         void Awake()
         {
@@ -58,6 +63,7 @@ namespace NineGrid.Battle
             }
 
             _remaining = icons.Length;
+            AnchorReset?.Invoke();
         }
 
         /// <summary>消耗一次余量并熄灭一个图标；返回消耗后是否已归零。</summary>
@@ -79,6 +85,13 @@ namespace NineGrid.Battle
                 {
                     icon.SetActive(false);
                 }
+            }
+
+            AnchorConsumed?.Invoke();
+
+            if (_remaining <= 0)
+            {
+                AnchorDepleted?.Invoke();
             }
 
             return _remaining <= 0;

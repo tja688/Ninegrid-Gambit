@@ -78,6 +78,9 @@ namespace NineGrid.GameFlow
 
         /// <summary>状态切换后回调（previous, next）。不自动加载场景。</summary>
         public event Action<GameFlowState, GameFlowState> StateChanged;
+        public event Action RunStarted;
+        public event Action PlayerDefeated;
+        public event Action VictorySettled;
 
         protected override void Awake()
         {
@@ -120,9 +123,12 @@ namespace NineGrid.GameFlow
         /// <summary>从主菜单开始一局。首次进序章，之后进战斗0。</summary>
         public void StartNewRun()
         {
+            // 初始化 run 级持久化数据（金币/牌库/改造列表）
+            RunData.StartNewRun();
             EnterState(GameFlowProgress.HasCompletedPrologue
                 ? GameFlowState.Battle0
                 : GameFlowState.Prologue);
+            RunStarted?.Invoke();
         }
 
         /// <summary>推进到战役下一节点。胜利结算后回到主菜单。不自动切场景。</summary>
@@ -180,12 +186,14 @@ namespace NineGrid.GameFlow
         public void NotifyPlayerDefeated()
         {
             GoToMainMenu();
+            PlayerDefeated?.Invoke();
         }
 
         /// <summary>胜利结算完成：回主菜单状态（不自动切场景）。</summary>
         public void NotifyVictorySettled()
         {
             GoToMainMenu();
+            VictorySettled?.Invoke();
         }
 
         public void GoToMainMenu()

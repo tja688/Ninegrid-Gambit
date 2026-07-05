@@ -1,3 +1,4 @@
+using System;
 using NineGrid.Presentation.Visuals;
 using UnityEngine;
 
@@ -19,6 +20,8 @@ namespace NineGrid.UI
         [SerializeField] string message = "船体强化槽位（空）";
 
         bool _showing;
+
+        public event Action HoverNoticeShown;
 
         void Awake()
         {
@@ -63,6 +66,7 @@ namespace NineGrid.UI
             if (notice.Show(channel, message, 0f))
             {
                 _showing = true;
+                HoverNoticeShown?.Invoke();
             }
         }
 

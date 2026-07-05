@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NineGrid.Battle.Combat;
 using UnityEngine;
@@ -25,6 +26,9 @@ namespace NineGrid.GameFlow
         [SerializeField] TMP_Text oreListText;
 
         int _openedFrame = -1;
+
+        public event Action Opened;
+        public event Action Closed;
 
         public bool IsOpen => panelRoot != null && panelRoot.activeSelf;
 
@@ -65,6 +69,7 @@ namespace NineGrid.GameFlow
             _openedFrame = Time.frameCount;
             PopulateOreList();
             SetActive(true);
+            Opened?.Invoke();
         }
 
         /// <summary>从战斗模型读取矿舱（牌库）内容，刷新面板文本。</summary>
@@ -112,6 +117,7 @@ namespace NineGrid.GameFlow
         public void Close()
         {
             SetActive(false);
+            Closed?.Invoke();
         }
 
         void Update()

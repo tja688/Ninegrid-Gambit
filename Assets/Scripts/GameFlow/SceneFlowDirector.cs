@@ -161,10 +161,46 @@ namespace NineGrid.GameFlow
 
         IEnumerator TransitionRoutine(GameFlowState state)
         {
-            // 过场节点：不驻留、不加载专属场景。
-            if (IsPassThrough(state))
+            // 事件状态：不加载场景，由 EventController 处理
+            if (state >= GameFlowState.Event1 && state <= GameFlowState.Event6)
             {
-                yield return RunPassThrough(state);
+                // 短暂黑场过渡
+                yield return Fade(0f, 1f);
+                yield return new WaitForSecondsRealtime(0.3f);
+                EventController.Instance?.ShowEvent(state);
+                yield return Fade(1f, 0f);
+                _routine = null;
+                yield break;
+            }
+
+            // 胜利结算：BOSS改造三选一 → 传说事件 → 回主菜单
+            if (state == GameFlowState.VictorySettlement)
+            {
+                yield return Fade(0f, 1f);
+                yield return new WaitForSecondsRealtime(0.3f);
+
+                // BOSS改造选择
+                EventController.Instance?.ShowBossRelicSelection();
+
+                // 等待 EventController 完成（它会调用 Advance）
+                // 但 VictorySettlement 是最终节点，Advance 会回主菜单
+                // EventController 完成后会 Advance，此时状态变为 MainMenu
+                yield return new WaitUntil(() =>
+                    GameFlowController.Instance == null
+                    || GameFlowController.Instance.CurrentState != GameFlowState.VictorySettlement
+                    || (EventController.Instance != null && !EventController.Instance.IsPanelActive));
+
+                // 如果还没切换状态，显示通关提示
+                if (GameFlowController.Instance != null
+                    && GameFlowController.Instance.CurrentState == GameFlowState.VictorySettlement)
+                {
+                    var ui = UiSystem.Instance;
+                    ui?.Notice?.Show(NoticeChannel.Notice, "航线终末——你活着回来了。", victoryHold);
+                    yield return new WaitForSecondsRealtime(Mathf.Max(0.1f, victoryHold));
+                    GameFlowController.Instance?.Advance();
+                }
+
+                yield return Fade(1f, 0f);
                 _routine = null;
                 yield break;
             }
@@ -227,19 +263,8 @@ namespace NineGrid.GameFlow
 
         static bool IsPassThrough(GameFlowState state)
         {
-            switch (state)
-            {
-                case GameFlowState.Event1:
-                case GameFlowState.Event2:
-                case GameFlowState.Event3:
-                case GameFlowState.Event4:
-                case GameFlowState.Event5:
-                case GameFlowState.Event6:
-                case GameFlowState.VictorySettlement:
-                    return true;
-                default:
-                    return false;
-            }
+            // Event1-6 和 VictorySettlement 不再是空过场：由 EventController 处理真实事件。
+            return false;
         }
 
         void BindBattleFinish()
@@ -277,8 +302,17 @@ namespace NineGrid.GameFlow
         void OnBattleFinished(bool won)
         {
             UnbindBattle();
-            // 目前无真实胜负：一律推进主流程下一节点。
-            GameFlowController.Instance?.Advance();
+            if (won)
+            {
+                // 胜利：推进到下一节点（岛屿/事件/下一场战斗）
+                GameFlowController.Instance?.Advance();
+            }
+            else
+            {
+                // 失败：回主菜单，清除存档
+                Debug.Log("[SceneFlow] 战斗失败，回主菜单");
+                GameFlowController.Instance?.NotifyPlayerDefeated();
+            }
         }
 
         void BuildOverlay()

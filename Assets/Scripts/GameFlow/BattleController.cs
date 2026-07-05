@@ -60,7 +60,11 @@ namespace NineGrid.GameFlow
         [Header("Combat (真实战斗)")]
         [Tooltip("矿石目录 SO（留空时编辑器自动从 Assets/ScriptableObjects/Data/OreCatalog.asset 加载）。")]
         [SerializeField] OreCatalog oreCatalog;
-        [Tooltip("本场敌舰数据 SO（留空时编辑器自动加载藤蔓号）。")]
+        [Tooltip("敌舰目录 SO（留空时编辑器自动加载）。")]
+        [SerializeField] EnemyShipCatalog enemyCatalog;
+        [Tooltip("船体改造目录 SO（留空时编辑器自动加载）。")]
+        [SerializeField] HullModCatalog hullModCatalog;
+        [Tooltip("本场敌舰数据 SO（留空时按 GameFlowState 对应节点自动选择）。")]
         [SerializeField] EnemyShipDataSO currentEnemy;
 
         [Header("Exit Motion")]
@@ -116,6 +120,9 @@ namespace NineGrid.GameFlow
 
         /// <summary>战斗结束（含胜负标记）。SceneFlowDirector 据此推进主流程下一节点。</summary>
         public event Action<bool> BattleFinished;
+        public event Action ForgeModeEntered;
+        public event Action AnchorModeEntered;
+        public event Action RamSucceeded;
 
         void Awake()
         {
@@ -273,15 +280,50 @@ namespace NineGrid.GameFlow
             _ramsCompleted = 0;
             _won = false;
 
+            // 确保 RunData 存在（首次战斗或新 run 时初始化）
+            var run = RunData.Ensure();
+            if (run.Deck.Count == 0)
+            {
+                RunData.StartNewRun();
+                run = RunData.Ensure();
+            }
+
             // 初始化战斗模型（牌库 / 敌我血量 / 伤害公式）
             ResolveOreCatalog();
+            ResolveEnemyCatalog();
+            ResolveHullModCatalog();
             ResolveCurrentEnemy();
+
             _combat = new CombatModel();
             var playerHp = anchorHp != null && anchorHp.Capacity > 0
                 ? anchorHp.Capacity
                 : Mathf.Max(1, fallbackRamsToWin);
+            // 应用临时心值加成
+            if (run.NextBattleHeartBonus > 0)
+            {
+                playerHp += run.NextBattleHeartBonus;
+                run.NextBattleHeartBonus = 0;
+            }
             var enemyArmor = currentEnemy != null ? currentEnemy.ArmorValue : 200;
-            _combat.InitBattle(oreCatalog, enemyArmor, playerHp);
+            // 应用顺风波及事件惩罚
+            if (run.NextMonsterHpPenalty > 0)
+            {
+                enemyArmor = Mathf.Max(1, enemyArmor - run.NextMonsterHpPenalty);
+                run.NextMonsterHpPenalty = 0;
+            }
+
+            // 从 RunData 构建持久牌库
+            var persistentDeck = run.BuildCombatDeck(oreCatalog);
+            // 获取遗物定义列表
+            var relics = run.GetActiveRelics();
+            // 获取铸台倍率（含 slotUpgrades + 冲击龙骨遗物）
+            var slotMultipliers = run.GetEffectiveSlotMultipliers();
+            // 获取敌舰技能
+            var enemySkills = ResolveEnemySkills();
+
+            _combat.InitBattle(oreCatalog, enemyArmor, playerHp,
+                persistentDeck, relics, slotMultipliers, enemySkills);
+            _combat.GoldChanged += OnCombatGoldChanged;
             ApplyCurrentEnemyPresentation();
             _combat.EnemyHpChanged += (cur, max) => EnemyHpChanged?.Invoke(cur, max);
             _combat.DamageDealt += dmg => DamageDealt?.Invoke(dmg);
@@ -291,6 +333,15 @@ namespace NineGrid.GameFlow
             anchorHp?.SetVisible(false);
             hullModSlots?.SetVisible(false);
             hydraulicScene?.ResetForgeState();
+        }
+
+        void OnCombatGoldChanged(int delta)
+        {
+            var run = RunData.Ensure();
+            run.Gold += delta;
+            RunData.Save();
+            if (delta != 0)
+                Debug.Log($"[Battle] 金币变化：{delta:+#;-#}（当前{run.Gold}）");
         }
 
         /// <summary>结束战斗（调试热键 / 后续胜负条件）。</summary>
@@ -339,6 +390,7 @@ namespace NineGrid.GameFlow
                 return false;
             }
 
+            ForgeModeEntered?.Invoke();
             return hydraulicScene.Enter();
         }
 
@@ -378,6 +430,7 @@ namespace NineGrid.GameFlow
             }
 
             _anchorRoutine = StartCoroutine(AnchorRamRoutine());
+            AnchorModeEntered?.Invoke();
             return true;
         }
 
@@ -445,6 +498,7 @@ namespace NineGrid.GameFlow
         void OnRamSucceeded()
         {
             _ramsCompleted++;
+            RamSucceeded?.Invoke();
 
             if (_combat == null)
             {
@@ -621,6 +675,23 @@ namespace NineGrid.GameFlow
             _routine = null;
             _state = BattlePhaseState.Idle;
             ExitCompleted?.Invoke();
+
+            // 战后结算：保存牌库、发放金币奖励
+            if (_won && _combat != null)
+            {
+                var run = RunData.Ensure();
+                var allCards = _combat.GetAllCards();
+                run.SyncDeckFromCombat(allCards);
+                var flowState = GameFlowController.Instance?.CurrentState ?? GameFlowState.Battle0;
+                run.ResolveBattleWin(flowState, _combat.State.Turn, firstTurnKill: _combat.State.Turn == 1);
+                Debug.Log($"[Battle] 战后结算完成：金币{run.Gold}，矿舱{run.Deck.Count}块");
+            }
+            else if (!_won)
+            {
+                RunData.ResolveDefeat();
+                Debug.Log("[Battle] 战败，存档已清除");
+            }
+
             BattleFinished?.Invoke(_won);
             Debug.Log($"[Battle] Idle（won={_won}）→ 交由 SceneFlowDirector 推进主流程");
         }
@@ -857,7 +928,8 @@ namespace NineGrid.GameFlow
                 return;
             }
 
-            lane.AutoDeliver(CombatCalculator.DrawCount, 0.18f);
+            var drawCount = _combat != null ? _combat.GetDrawCount() : CombatCalculator.DrawCount;
+            lane.AutoDeliver(drawCount, 0.18f);
         }
 
         /// <summary>锻造退出：瞬间恢复敌人信息（战斗已结束则不恢复）。</summary>
@@ -1061,15 +1133,96 @@ namespace NineGrid.GameFlow
                 return;
             }
 
+            // 按 GameFlowState 对应的节点选敌舰
+            var flowState = GameFlowController.Instance != null
+                ? GameFlowController.Instance.CurrentState
+                : GameFlowState.Battle0;
+            var stageKey = RunData.GetStageKey(flowState);
+            var stageConfig = WebGameData.GetStage(stageKey);
+            string targetDisplayName = null;
+            int targetHp = 200;
+
+            if (stageConfig != null && stageConfig.MonsterPool.Length > 0)
+            {
+                var monsterId = WebGameData.PickRandomMonster(stageConfig.MonsterPool);
+                var enemyDef = WebGameData.GetEnemy(monsterId);
+                if (enemyDef != null)
+                {
+                    targetDisplayName = enemyDef.DisplayName;
+                    targetHp = enemyDef.Hp;
+                }
+            }
+
+            // 从 EnemyShips 文件夹加载所有敌舰 SO，按名字匹配
+            if (!string.IsNullOrEmpty(targetDisplayName))
+            {
+                currentEnemy = FindEnemySOByName(targetDisplayName);
+            }
+
 #if UNITY_EDITOR
-            currentEnemy = UnityEditor.AssetDatabase.LoadAssetAtPath<EnemyShipDataSO>(
-                "Assets/ScriptableObjects/Data/EnemyShips/enemy_tengmanhao.asset");
-#endif
             if (currentEnemy == null)
             {
-                Debug.LogWarning("[Battle] currentEnemy 未指定且自动加载失败。" +
-                                  "请在 Inspector 指定敌舰 SO。");
+                currentEnemy = UnityEditor.AssetDatabase.LoadAssetAtPath<EnemyShipDataSO>(
+                    "Assets/ScriptableObjects/Data/EnemyShips/enemy_tengmanhao.asset");
             }
+#endif
+
+            if (currentEnemy == null)
+            {
+                currentEnemy = ScriptableObject.CreateInstance<EnemyShipDataSO>();
+            }
+
+            Debug.Log($"[Battle] 选定敌舰：{currentEnemy?.DisplayName ?? "?"}（目标：{targetDisplayName ?? "?"}，HP={targetHp}）");
+        }
+
+        /// <summary>按名字从 EnemyShips 文件夹查找敌舰 SO。</summary>
+        EnemyShipDataSO FindEnemySOByName(string displayName)
+        {
+            if (string.IsNullOrEmpty(displayName)) return null;
+#if UNITY_EDITOR
+            var guids = UnityEditor.AssetDatabase.FindAssets("t:EnemyShipDataSO",
+                new[] { "Assets/ScriptableObjects/Data/EnemyShips" });
+            foreach (var guid in guids)
+            {
+                var path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+                var so = UnityEditor.AssetDatabase.LoadAssetAtPath<EnemyShipDataSO>(path);
+                if (so != null && so.DisplayName == displayName)
+                    return so;
+            }
+#endif
+            return null;
+        }
+
+        /// <summary>获取本场敌舰的技能关键词列表。</summary>
+        string[] ResolveEnemySkills()
+        {
+            var flowState = GameFlowController.Instance != null
+                ? GameFlowController.Instance.CurrentState
+                : GameFlowState.Battle0;
+            var stageKey = RunData.GetStageKey(flowState);
+            var stageConfig = WebGameData.GetStage(stageKey);
+            if (stageConfig == null || stageConfig.MonsterPool.Length == 0) return null;
+            var monsterId = stageConfig.MonsterPool[0]; // 简化：取池中第一个
+            var enemyDef = WebGameData.GetEnemy(monsterId);
+            return enemyDef?.Keywords;
+        }
+
+        void ResolveEnemyCatalog()
+        {
+            if (enemyCatalog != null) return;
+#if UNITY_EDITOR
+            enemyCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<EnemyShipCatalog>(
+                "Assets/ScriptableObjects/Data/EnemyShipCatalog.asset");
+#endif
+        }
+
+        void ResolveHullModCatalog()
+        {
+            if (hullModCatalog != null) return;
+#if UNITY_EDITOR
+            hullModCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<HullModCatalog>(
+                "Assets/ScriptableObjects/Data/HullModCatalog.asset");
+#endif
         }
 
         void ApplyCurrentEnemyPresentation()

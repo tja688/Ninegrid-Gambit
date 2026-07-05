@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using NineGrid.Battle.Combat;
@@ -53,6 +54,13 @@ namespace NineGrid.GameFlow
         Vector3 _dragOriginPosition;
         Vector3 _dragOriginScale;
         Vector3 _dragOffset;
+
+        public event Action DragBegun;
+        public event Action PlacedOnAnvil;
+        public event Action AnvilRelayouted;
+        public event Action PlacedOnTable;
+        public event Action DragCancelled;
+        public event Action AnvilFullRejected;
 
         public bool IsDragging => _dragged != null;
 
@@ -237,6 +245,7 @@ namespace NineGrid.GameFlow
 
         void BeginDrag(HydraulicMaterialPiece piece, Vector3 pointerWorld)
         {
+            DragBegun?.Invoke();
             _dragged = piece;
             _dragOriginHome = piece.Home;
             _dragOriginTableSlot = piece.TableSlot;
@@ -304,6 +313,7 @@ namespace NineGrid.GameFlow
             // 未落在锻造台：尝试回桌面。
             if (lane != null && lane.TryPlaceOnFreeTableSlot(piece))
             {
+                PlacedOnTable?.Invoke();
                 return;
             }
 
@@ -320,6 +330,7 @@ namespace NineGrid.GameFlow
             var piece = _dragged;
             _dragged = null;
             piece.SetSelected(false);
+            DragCancelled?.Invoke();
             ReturnToOrigin(piece);
         }
 
@@ -380,6 +391,7 @@ namespace NineGrid.GameFlow
 
             if (stack.Count >= MaxPerAnvil)
             {
+                AnvilFullRejected?.Invoke();
                 return false;
             }
 
@@ -397,6 +409,7 @@ namespace NineGrid.GameFlow
             stack.Insert(insertAt, piece);
             piece.Card?.OnPlacedOnAnvil(anvilIndex);
             RelayoutAnvil(anvilIndex, animate: true);
+            PlacedOnAnvil?.Invoke();
             return true;
         }
 
@@ -466,6 +479,8 @@ namespace NineGrid.GameFlow
                 var rest = new Vector3(anvil.surface.position.x, minY + spacing * i, 0f);
                 piece.PlaceOnAnvil(anvilIndex, i, rest, anvilScale, duration, rearrangeEase, enableBob: true);
             }
+
+            AnvilRelayouted?.Invoke();
         }
 
         int FindAnvilAt(Vector2 worldPoint)

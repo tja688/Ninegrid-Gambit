@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
@@ -44,6 +45,10 @@ namespace NineGrid.GameFlow
         readonly bool[] _tableOccupied = new bool[TableSlotCount];
         Vector3[] _slotPositions;
         bool _laneReady;
+
+        public event Action Delivered;
+        public event Action DeliverLanded;
+        public event Action LaneReset;
 
         public Vector3 TableScale => tableScale;
         public Vector3 AnvilScale => anvilScale;
@@ -99,6 +104,7 @@ namespace NineGrid.GameFlow
         public void ResetLane()
         {
             KillTweens();
+            LaneReset?.Invoke();
 
             for (var i = 0; i < _tableOccupied.Length; i++)
             {
@@ -151,6 +157,7 @@ namespace NineGrid.GameFlow
             var slot = GetSlotPosition(slotIndex);
             _tableOccupied[slotIndex] = true;
 
+            Delivered?.Invoke();
             piece.BindCard(card);
             piece.BeginSlide(spawnPoint.position, tableScale);
             piece.SetMaskInteraction(SpriteMaskInteraction.VisibleOutsideMask);
@@ -176,6 +183,7 @@ namespace NineGrid.GameFlow
 
                 captured.SnapToTable(capturedSlot, slot, tableScale);
                 captured.SetMaskInteraction(SpriteMaskInteraction.None);
+                DeliverLanded?.Invoke();
             });
 
             _activeTweens.Add(sequence);

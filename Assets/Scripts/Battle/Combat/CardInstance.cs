@@ -68,7 +68,24 @@ namespace NineGrid.Battle.Combat
             GrowAmount = (Traits & OreTrait.Quench2) != 0 ? 2 : 1;
         }
 
+        /// <summary>构造衍生物（碎屑矿渣等）。baseValue=0, IsDerived=true。</summary>
+        public CardInstance(string oreId, string displayName, int baseValue, bool isDerived)
+        {
+            Uuid = "c_" + (++s_nextId);
+            OreId = oreId;
+            DisplayName = displayName;
+            Description = "";
+            BaseValue = baseValue;
+            IsDerived = isDerived;
+        }
+
         public bool HasTrait(OreTrait t) => (Traits & t) != 0;
+
+        /// <summary>添加一条特性（用于事件附魔、敌舰赋词条等）。</summary>
+        public void AddTrait(OreTrait t) => Traits |= t;
+
+        /// <summary>移除一条特性。</summary>
+        public void RemoveTrait(OreTrait t) => Traits &= ~t;
 
         /// <summary>基础点数 = baseValue + permanentBonus + battleBonus + tempBonus。对应 web getCardBaseValue。</summary>
         public int GetBaseValue() => BaseValue + PermanentBonus + BattleBonus + TempBonus;
@@ -78,15 +95,29 @@ namespace NineGrid.Battle.Combat
 
         /// <summary>
         /// 投矿到铸造台时触发（对应 web ON_PLAY）。
-        /// 当前实现：淬火（grow）→ PermanentBonus += GrowAmount。
-        /// 简化：不含猛淬火/批量淬火/锻痕等高级联动。
+        /// 只处理矿石自身的淬火；Twin/Symbiosis/Debris 等需要操作牌库的效果由 CombatModel.OnPiecePlacedOnAnvil 处理。
         /// </summary>
         public void OnPlacedOnAnvil(int slotIndex)
         {
             _slotIndex = slotIndex;
             if (HasTrait(OreTrait.Quench) || HasTrait(OreTrait.Quench2))
             {
+                var grow = GrowAmount;
+                // 淬火炉心：淬火多触发一次
+                // 由 CombatModel 调用时传入额外标记，这里不直接访问 state
+                PermanentBonus += grow;
+            }
+        }
+
+        /// <summary>投矿到铸造台时触发（含淬火炉心判定）。</summary>
+        public void OnPlacedOnAnvil(int slotIndex, bool growDouble)
+        {
+            _slotIndex = slotIndex;
+            if (HasTrait(OreTrait.Quench) || HasTrait(OreTrait.Quench2))
+            {
                 PermanentBonus += GrowAmount;
+                if (growDouble)
+                    PermanentBonus += GrowAmount;
             }
         }
 

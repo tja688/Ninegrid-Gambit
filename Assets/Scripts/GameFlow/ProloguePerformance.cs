@@ -43,6 +43,10 @@ namespace NineGrid.GameFlow
 
         /// <summary>演出全部完成（双方已就位），可进入战斗环节。</summary>
         public event Action Completed;
+        public event Action SeaHoldStarted;
+        public event Action PlayerSailedIn;
+        public event Action EnemySailedIn;
+        public event Action DialogueStarted;
 
         void Awake()
         {
@@ -107,10 +111,12 @@ namespace NineGrid.GameFlow
 
             if (initialSeaHold > 0f)
             {
+                SeaHoldStarted?.Invoke();
                 yield return new WaitForSecondsRealtime(initialSeaHold);
             }
 
             // 玩家入镜 → stay
+            PlayerSailedIn?.Invoke();
             yield return SailIn(player, playerStart, playerStay);
 
             // 停稳后对话（非序章战斗跳过）
@@ -120,6 +126,7 @@ namespace NineGrid.GameFlow
             }
 
             // 敌方入镜 → stay
+            EnemySailedIn?.Invoke();
             yield return SailIn(enemy, enemyStart, enemyStay);
 
             _isPlaying = false;
@@ -157,6 +164,7 @@ namespace NineGrid.GameFlow
 
         IEnumerator PlayDialogue()
         {
+            DialogueStarted?.Invoke();
             var system = dialogue != null ? dialogue : UiSystem.Instance != null ? UiSystem.Instance.Dialogue : null;
             if (system == null)
             {

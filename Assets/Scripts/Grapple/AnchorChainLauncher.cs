@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -70,6 +71,9 @@ namespace NinegridGambit.Grapple
 
         /// <summary>当前阶段，供外部查询。</summary>
         public Phase CurrentPhase => _phase;
+
+        public event Action ChainFired;
+        public event Action ChainReset;
 
         /// <summary>飞行/收绳中为 true，此时 <see cref="Fire"/> 会拒绝。</summary>
         public bool IsBusy =>
@@ -231,6 +235,8 @@ namespace NinegridGambit.Grapple
 
             if (!CanFire) return false;
 
+            ChainFired?.Invoke();
+
             _autoPending = false;
             _launchStart = firePoint.position;
             _hitPos = (Vector2)target.position + targetOffset;
@@ -276,6 +282,7 @@ namespace NinegridGambit.Grapple
             _autoPending = false;
             SetVisible(false);
             anchorTransform.position = new Vector3(firePoint.position.x, firePoint.position.y, _chainZ);
+            ChainReset?.Invoke();
         }
 
         void ResetDemo()

@@ -1,3 +1,5 @@
+using System;
+using NineGrid.Data;
 using NineGrid.Presentation.Visuals;
 using NineGrid.UI;
 using UnityEngine;
@@ -24,6 +26,8 @@ namespace NineGrid.GameFlow
 
         bool _picked;
         bool _hovering;
+
+        public event Action EventSelected;
 
         void Start()
         {
@@ -85,14 +89,57 @@ namespace NineGrid.GameFlow
             }
 
             _picked = true;
+            EventSelected?.Invoke();
             HideDescription();
             GameFlowController.Instance?.Advance();
         }
 
         void ShowDescription()
         {
+            var run = RunData.Ensure();
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("前方海雾弥漫……");
+
+            // 显示待处理的事件选项
+            if (run.PendingEventNames != null && run.PendingEventNames.Count > 0)
+            {
+                sb.AppendLine("可能遭遇：");
+                for (var i = 0; i < run.PendingEventNames.Count; i++)
+                {
+                    var name = run.PendingEventNames[i];
+                    sb.AppendLine($"  · {name}");
+                }
+            }
+            else
+            {
+                // 生成预览
+                var flowState = GameFlowController.Instance?.CurrentState ?? GameFlowState.Route1;
+                var eventState = GetCorrespondingEventState(flowState);
+                var poolType = RunData.GetEventPoolType(eventState);
+                var preview = WebGameData.GeneratePostBattleEvents(poolType);
+                sb.AppendLine("可能遭遇：");
+                for (var i = 0; i < preview.Count; i++)
+                {
+                    sb.AppendLine($"  · {preview[i].Name}");
+                }
+            }
+
             var notice = UiSystem.Instance != null ? UiSystem.Instance.Notice : null;
-            notice?.Show(NoticeChannel.Notice, eventDescription, 0f);
+            notice?.Show(NoticeChannel.Notice, sb.ToString(), 0f);
+        }
+
+        GameFlowState GetCorrespondingEventState(GameFlowState routeState)
+        {
+            return routeState switch
+            {
+                GameFlowState.Route1 => GameFlowState.Event1,
+                GameFlowState.Route2 => GameFlowState.Event2,
+                GameFlowState.Route3 => GameFlowState.Event3,
+                GameFlowState.Route4 => GameFlowState.Event4,
+                GameFlowState.Route5 => GameFlowState.Event5,
+                GameFlowState.Route6 => GameFlowState.Event6,
+                _ => GameFlowState.Event1,
+            };
         }
 
         void HideDescription()

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using DG.Tweening;
 
@@ -13,6 +14,8 @@ namespace NineGrid.Battle
     public sealed class CameraJuice : MonoBehaviour
     {
         public static CameraJuice Instance { get; private set; }
+
+        public event Action ZoomBegun;
 
         [Header("引用")]
         [SerializeField] Camera cam;
@@ -119,7 +122,7 @@ namespace NineGrid.Battle
             _shakeDuration = duration;
             _shakeTimer = duration;
             _shakeFreq = frequency > 0f ? frequency : defaultShakeFrequency;
-            _shakeSeed = Random.value * 100f;
+            _shakeSeed = UnityEngine.Random.value * 100f;
             _shaking = true;
         }
 
@@ -128,6 +131,7 @@ namespace NineGrid.Battle
         {
             if (cam == null) return;
             KillZoom();
+            ZoomBegun?.Invoke();
             if (!_zoomActive) PushEffect();
             _zoomActive = true;
 

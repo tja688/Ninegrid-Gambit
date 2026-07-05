@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace NineGrid.Battle
@@ -22,6 +23,8 @@ namespace NineGrid.Battle
         [Tooltip("true：Play(power) 在 min/max 间插值；false：始终用 amplitude。")]
         public bool scaleAmplitudeByPower = true;
 
+        public event Action ShakePlayed;
+
         /// <summary>按预设固定幅度触发。</summary>
         public void Play() => Trigger(amplitude, duration, frequency);
 
@@ -32,6 +35,7 @@ namespace NineGrid.Battle
                 ? Mathf.Lerp(amplitudeMin, amplitudeMax, Mathf.Clamp01(power01))
                 : amplitude;
             Trigger(amp, duration, frequency);
+            ShakePlayed?.Invoke();
         }
 
         [ContextMenu("Play Screen Shake")]

@@ -1,16 +1,18 @@
+using System;
 using DG.Tweening;
+using NineGrid.Data;
 using NineGrid.Presentation.Visuals;
 using NineGrid.UI;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace NineGrid.GameFlow
 {
     /// <summary>
-    /// 岛屿场景（IslandScene，对应 Web 精炼厂节点）：两个可悬停对象「精炼厂」「船坞」。
-    /// 点选某个 → 对应面板从入场点位（左侧）缓动弹出到预设位置；点另一个 → 切换面板，旧面板原路收起。
-    /// 场景中的「离开」按钮 → 推进主流程回到地图（下一路线）。
-    ///
-    /// 服务（删除矿石 / 强化 +5 / 刷新等）暂为占位，仅弹提示；叠牌等级提升按要求先不做。
+    /// 岛屿场景（IslandScene）：精炼厂 / 船坞面板。
+    /// 精炼厂：买矿石/遗物、删矿、强化矿、刷新。
+    /// 船坞：铸造台强化、附魔、刷新。
+    /// 离开 → 推进主流程。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class IslandController : MonoBehaviour
@@ -54,7 +56,18 @@ namespace NineGrid.GameFlow
         [Tooltip("入场点位未指定时，展开位置向左偏移量（世界单位）。")]
         [SerializeField] float offscreenLeftOffset = 12f;
 
+        // 商店系统
+        ShopController _shop;
+        Text _refineryText;
+        Text _shipyardText;
+        bool _shopInitialized;
+
         bool _left;
+
+        public event Action RefineryOpened;
+        public event Action ShipyardOpened;
+        public event Action PanelSwitched;
+        public event Action Left;
 
         void Start()
         {
@@ -62,6 +75,80 @@ namespace NineGrid.GameFlow
             ResolveRefs();
             InitPanel(refinery);
             InitPanel(shipyard);
+            InitShop();
+        }
+
+        void InitShop()
+        {
+            if (_shopInitialized) return;
+            _shopInitialized = true;
+
+            var run = RunData.Ensure();
+            var oreCatalog = LoadOreCatalog();
+            var hullModCatalog = LoadHullModCatalog();
+            _shop = new ShopController(run, oreCatalog, hullModCatalog);
+
+            // 为面板创建文本组件
+            _refineryText = EnsureTextComponent(refinery.panel, "ShopText");
+            _shipyardText = EnsureTextComponent(shipyard.panel, "ShopText");
+
+            // 判断当前岛屿类型并生成库存
+            var flowState = GameFlowController.Instance?.CurrentState ?? GameFlowState.Island1;
+            var isRefinery = RunData.IsRefinery(flowState);
+            if (isRefinery)
+            {
+                if (run.ShopOres.Count == 0)
+                    _shop.GenerateRefineryStock();
+            }
+            else
+            {
+                if (run.EnchantOptions.Count == 0)
+                    _shop.GenerateShipyardStock();
+            }
+        }
+
+        OreCatalog _cachedOreCatalog;
+        OreCatalog LoadOreCatalog()
+        {
+            if (_cachedOreCatalog != null) return _cachedOreCatalog;
+#if UNITY_EDITOR
+            _cachedOreCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<OreCatalog>(
+                "Assets/ScriptableObjects/Data/OreCatalog.asset");
+#endif
+            return _cachedOreCatalog;
+        }
+
+        HullModCatalog _cachedHullModCatalog;
+        HullModCatalog LoadHullModCatalog()
+        {
+            if (_cachedHullModCatalog != null) return _cachedHullModCatalog;
+#if UNITY_EDITOR
+            _cachedHullModCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<HullModCatalog>(
+                "Assets/ScriptableObjects/Data/HullModCatalog.asset");
+#endif
+            return _cachedHullModCatalog;
+        }
+
+        Text EnsureTextComponent(Transform panel, string childName)
+        {
+            if (panel == null) return null;
+            // 查找现有
+            var existing = panel.Find(childName);
+            if (existing != null) return existing.GetComponent<Text>();
+            // 创建新文本
+            var go = new GameObject(childName);
+            go.transform.SetParent(panel, false);
+            var text = go.AddComponent<Text>();
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.fontSize = 18;
+            text.color = new Color(0.95f, 0.9f, 0.8f);
+            text.supportRichText = true;
+            var rect = text.rectTransform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = new Vector2(10, 10);
+            rect.offsetMax = new Vector2(-10, -10);
+            return text;
         }
 
         void Update()
@@ -70,6 +157,9 @@ namespace NineGrid.GameFlow
             {
                 return;
             }
+
+            // 商店键盘输入（面板打开时）
+            HandleShopInput();
 
             var clicked = FlowInput.PrimaryClickThisFrame();
             var hovered = pointerSelector.Hovered;
@@ -97,10 +187,20 @@ namespace NineGrid.GameFlow
         }
 
         /// <summary>供 uGUI Button 调用。</summary>
-        public void OpenRefinery() => SwitchTo(refinery, shipyard);
+        public void OpenRefinery()
+        {
+            RefineryOpened?.Invoke();
+            PanelSwitched?.Invoke();
+            SwitchTo(refinery, shipyard);
+        }
 
         /// <summary>供 uGUI Button 调用。</summary>
-        public void OpenShipyard() => SwitchTo(shipyard, refinery);
+        public void OpenShipyard()
+        {
+            ShipyardOpened?.Invoke();
+            PanelSwitched?.Invoke();
+            SwitchTo(shipyard, refinery);
+        }
 
         /// <summary>供 uGUI Button 调用：离开岛屿，推进主流程。</summary>
         public void Leave()
@@ -111,6 +211,7 @@ namespace NineGrid.GameFlow
             }
 
             _left = true;
+            Left?.Invoke();
             HideNotice();
 
             // 面板挂在持久化 UI 上，离开前收起并隐藏，避免带到后续场景。
@@ -196,6 +297,8 @@ namespace NineGrid.GameFlow
             {
                 sp.panel.position = sp.EntryPos;
                 sp.panel.gameObject.SetActive(true);
+                // 更新面板文本
+                UpdatePanelText(sp);
             }
 
             if (slideDuration <= 0f)
@@ -213,6 +316,93 @@ namespace NineGrid.GameFlow
             {
                 var panelGo = sp.panel.gameObject;
                 tween.OnComplete(() => panelGo.SetActive(false));
+            }
+        }
+
+        void UpdatePanelText(ServicePanel sp)
+        {
+            if (_shop == null) return;
+            var text = sp == refinery ? _refineryText : _shipyardText;
+            if (text == null) return;
+
+            var flowState = GameFlowController.Instance?.CurrentState ?? GameFlowState.Island1;
+            var isRefinery = RunData.IsRefinery(flowState);
+
+            if (sp == refinery && isRefinery)
+            {
+                text.text = _shop.GetRefineryText();
+            }
+            else if (sp == shipyard && !isRefinery)
+            {
+                text.text = _shop.GetShipyardText();
+            }
+            else if (sp == refinery && !isRefinery)
+            {
+                text.text = "本岛屿为船坞，请前往船坞面板。";
+            }
+            else if (sp == shipyard && isRefinery)
+            {
+                text.text = "本岛屿为精炼厂，请前往精炼厂面板。";
+            }
+        }
+
+        void HandleShopInput()
+        {
+            if (_shop == null) return;
+
+            var flowState = GameFlowController.Instance?.CurrentState ?? GameFlowState.Island1;
+            var isRefinery = RunData.IsRefinery(flowState);
+
+            // 精炼厂键盘
+            if (isRefinery && refinery.Open)
+            {
+                // 1-5: 买矿石
+                for (var i = 0; i < 5; i++)
+                {
+                    if (Input.GetKeyDown(KeyCode.Alpha1 + i) || Input.GetKeyDown(KeyCode.Keypad1 + i))
+                    {
+                        if (_shop.BuyOre(i)) UpdatePanelText(refinery);
+                        return;
+                    }
+                }
+                // 6-8: 买遗物
+                for (var i = 0; i < 3; i++)
+                {
+                    if (Input.GetKeyDown(KeyCode.Alpha6 + i) || Input.GetKeyDown(KeyCode.Keypad6 + i))
+                    {
+                        if (_shop.BuyRelic(i)) UpdatePanelText(refinery);
+                        return;
+                    }
+                }
+                if (Input.GetKeyDown(KeyCode.R))
+                {
+                    if (_shop.RefreshRefinery()) UpdatePanelText(refinery);
+                }
+            }
+
+            // 船坞键盘
+            if (!isRefinery && shipyard.Open)
+            {
+                // S: 铸造台强化
+                if (Input.GetKeyDown(KeyCode.S))
+                {
+                    if (_shop.UpgradeSlot()) UpdatePanelText(shipyard);
+                    return;
+                }
+                // 1-2: 附魔
+                for (var i = 0; i < 2; i++)
+                {
+                    if (Input.GetKeyDown(KeyCode.Alpha1 + i) || Input.GetKeyDown(KeyCode.Keypad1 + i))
+                    {
+                        // 简化：附魔第一块矿
+                        if (_shop.EnchantOre(0, i)) UpdatePanelText(shipyard);
+                        return;
+                    }
+                }
+                if (Input.GetKeyDown(KeyCode.R))
+                {
+                    if (_shop.RefreshShipyard()) UpdatePanelText(shipyard);
+                }
             }
         }
 

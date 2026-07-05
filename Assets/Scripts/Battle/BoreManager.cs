@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace NineGrid.Battle
@@ -20,6 +21,9 @@ namespace NineGrid.Battle
 
         readonly bool[] _lit = new bool[BoreCount];
         bool _resolved;
+
+        public event Action<int> BoreShown;
+        public event Action BoresHidden;
 
         public bool HasAnyBore
         {
@@ -52,6 +56,8 @@ namespace NineGrid.Battle
                 _lit[i] = false;
                 SetBoreActive(i, false);
             }
+
+            BoresHidden?.Invoke();
         }
 
         /// <summary>按锻造台占用情况亮出对应钻头（true 的位置亮起，累加不清除既有）。</summary>
@@ -83,6 +89,7 @@ namespace NineGrid.Battle
 
             _lit[index] = true;
             SetBoreActive(index, true);
+            BoreShown?.Invoke(index);
         }
 
         void SetBoreActive(int index, bool active)

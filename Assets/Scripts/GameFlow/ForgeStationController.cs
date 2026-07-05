@@ -1,3 +1,4 @@
+using System;
 using NineGrid.Battle.Combat;
 using NineGrid.Data;
 using NineGrid.Presentation.Visuals;
@@ -30,6 +31,10 @@ namespace NineGrid.GameFlow
 
         bool _wasActive;
         string _lastFactoryText;
+
+        public event Action ForgeRequested;
+        public event Action ForgeExited;
+        public event Action EmptyWarningShown;
 
         void Start()
         {
@@ -85,6 +90,7 @@ namespace NineGrid.GameFlow
             }
             else if (hovered == exitButton)
             {
+                ForgeExited?.Invoke();
                 hydraulicScene.Exit();
             }
             else if (hovered == inventoryButton)
@@ -95,10 +101,12 @@ namespace NineGrid.GameFlow
 
         void TryForge()
         {
+            ForgeRequested?.Invoke();
             var board = hydraulicScene.MaterialBoard;
             if (board == null || !board.HasAnyMaterial())
             {
                 SetFactoryText(emptyForgeNotice);
+                EmptyWarningShown?.Invoke();
                 return;
             }
 
