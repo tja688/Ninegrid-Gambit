@@ -1,17 +1,21 @@
 using System;
+using System.Collections.Generic;
 using DG.Tweening;
 using NineGrid.Data;
 using NineGrid.Presentation.Visuals;
 using NineGrid.UI;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace NineGrid.GameFlow
 {
     /// <summary>
     /// 岛屿场景（IslandScene）：精炼厂 / 船坞面板。
-    /// 精炼厂：买矿石/遗物、删矿、强化矿、刷新。
-    /// 船坞：铸造台强化、附魔、刷新。
+    /// 精炼厂：买矿石、删矿、强化矿、刷新。
+    /// 船坞：船体改造、铸造台强化、附魔、刷新。
     /// 离开 → 推进主流程。
     /// </summary>
     [DisallowMultipleComponent]
@@ -38,6 +42,12 @@ namespace NineGrid.GameFlow
             [System.NonSerialized] public bool Hovering;
         }
 
+        sealed class PanelClickTarget
+        {
+            public Collider2D Collider;
+            public Action OnClick;
+        }
+
         [Header("服务面板（精炼厂 / 船坞）")]
         [SerializeField] ServicePanel refinery = new ServicePanel { hoverNotice = "精炼厂：买矿石、精炼服务。" };
         [SerializeField] ServicePanel shipyard = new ServicePanel { hoverNotice = "船坞：船体改造与修整。" };
@@ -48,6 +58,7 @@ namespace NineGrid.GameFlow
 
         [Header("引用 / 参数")]
         [SerializeField] SceneElementPointerSelector pointerSelector;
+        [SerializeField] Camera worldCamera;
         [Tooltip("面板入场点位（收起处，通常屏幕左外），两个面板共用；留空时按名字「panel 入场点位」查找。")]
         [SerializeField] Transform sharedEntryPoint;
         [SerializeField] float slideDuration = 0.4f;
@@ -56,12 +67,14 @@ namespace NineGrid.GameFlow
         [Tooltip("入场点位未指定时，展开位置向左偏移量（世界单位）。")]
         [SerializeField] float offscreenLeftOffset = 12f;
 
-        // 商店系统
         ShopController _shop;
-        Text _refineryText;
-        Text _shipyardText;
+        TMP_Text _shopDescriptionText;
+        readonly List<PanelClickTarget> _refineryClickTargets = new List<PanelClickTarget>(8);
+        readonly List<PanelClickTarget> _shipyardClickTargets = new List<PanelClickTarget>(4);
+        readonly List<(Transform slot, SpriteRenderer renderer)> _refineryOreSlots = new List<(Transform, SpriteRenderer)>(5);
+        readonly List<SpriteRenderer> _shipyardRelicSlots = new List<SpriteRenderer>(3);
         bool _shopInitialized;
-
+        bool _panelBindingsReady;
         bool _left;
 
         public event Action RefineryOpened;
@@ -71,11 +84,11 @@ namespace NineGrid.GameFlow
 
         void Start()
         {
-            // 在 Start 解析：此时持久化 UiSystem 已把本场景重复的 UI 根清掉，面板取自持久化 UI。
             ResolveRefs();
             InitPanel(refinery);
             InitPanel(shipyard);
             InitShop();
+            BindPanelClickTargets();
         }
 
         void InitShop()
@@ -88,22 +101,14 @@ namespace NineGrid.GameFlow
             var hullModCatalog = LoadHullModCatalog();
             _shop = new ShopController(run, oreCatalog, hullModCatalog);
 
-            // 为面板创建文本组件
-            _refineryText = EnsureTextComponent(refinery.panel, "ShopText");
-            _shipyardText = EnsureTextComponent(shipyard.panel, "ShopText");
-
-            // 判断当前岛屿类型并生成库存
-            var flowState = GameFlowController.Instance?.CurrentState ?? GameFlowState.Island1;
-            var isRefinery = RunData.IsRefinery(flowState);
-            if (isRefinery)
+            if (run.ShopOres.Count == 0)
             {
-                if (run.ShopOres.Count == 0)
-                    _shop.GenerateRefineryStock();
+                _shop.GenerateRefineryStock();
             }
-            else
+
+            if (run.ShopRelics.Count == 0 || run.EnchantOptions.Count == 0)
             {
-                if (run.EnchantOptions.Count == 0)
-                    _shop.GenerateShipyardStock();
+                _shop.GenerateShipyardStock();
             }
         }
 
@@ -129,37 +134,37 @@ namespace NineGrid.GameFlow
             return _cachedHullModCatalog;
         }
 
-        Text EnsureTextComponent(Transform panel, string childName)
-        {
-            if (panel == null) return null;
-            // 查找现有
-            var existing = panel.Find(childName);
-            if (existing != null) return existing.GetComponent<Text>();
-            // 创建新文本
-            var go = new GameObject(childName);
-            go.transform.SetParent(panel, false);
-            var text = go.AddComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = 18;
-            text.color = new Color(0.95f, 0.9f, 0.8f);
-            text.supportRichText = true;
-            var rect = text.rectTransform;
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = new Vector2(10, 10);
-            rect.offsetMax = new Vector2(-10, -10);
-            return text;
-        }
-
         void Update()
         {
-            if (_left || pointerSelector == null)
+            if (_left)
             {
                 return;
             }
 
-            // 商店键盘输入（面板打开时）
+            if (pointerSelector == null)
+            {
+                ResolveRefs();
+                if (pointerSelector == null)
+                {
+                    return;
+                }
+            }
+
+            if (!_panelBindingsReady)
+            {
+                TryBindPanelClickTargets();
+            }
+
             HandleShopInput();
+
+            if (refinery.Open)
+            {
+                HandlePanelClicks(_refineryClickTargets, refinery);
+            }
+            else if (shipyard.Open)
+            {
+                HandlePanelClicks(_shipyardClickTargets, shipyard);
+            }
 
             var clicked = FlowInput.PrimaryClickThisFrame();
             var hovered = pointerSelector.Hovered;
@@ -186,7 +191,6 @@ namespace NineGrid.GameFlow
             }
         }
 
-        /// <summary>供 uGUI Button 调用。</summary>
         public void OpenRefinery()
         {
             RefineryOpened?.Invoke();
@@ -194,7 +198,6 @@ namespace NineGrid.GameFlow
             SwitchTo(refinery, shipyard);
         }
 
-        /// <summary>供 uGUI Button 调用。</summary>
         public void OpenShipyard()
         {
             ShipyardOpened?.Invoke();
@@ -202,7 +205,6 @@ namespace NineGrid.GameFlow
             SwitchTo(shipyard, refinery);
         }
 
-        /// <summary>供 uGUI Button 调用：离开岛屿，推进主流程。</summary>
         public void Leave()
         {
             if (_left)
@@ -213,8 +215,8 @@ namespace NineGrid.GameFlow
             _left = true;
             Left?.Invoke();
             HideNotice();
+            HideShopDescription();
 
-            // 面板挂在持久化 UI 上，离开前收起并隐藏，避免带到后续场景。
             HidePanelImmediate(refinery);
             HidePanelImmediate(shipyard);
 
@@ -246,7 +248,18 @@ namespace NineGrid.GameFlow
 
         void HandleHover(ServicePanel sp, SelectableSceneElement hovered)
         {
-            var isHover = sp.trigger != null && hovered == sp.trigger;
+            if (sp.trigger == null || sp.Open)
+            {
+                if (sp.Hovering)
+                {
+                    sp.Hovering = false;
+                    HideNotice();
+                }
+
+                return;
+            }
+
+            var isHover = hovered == sp.trigger;
             if (isHover == sp.Hovering)
             {
                 return;
@@ -270,7 +283,6 @@ namespace NineGrid.GameFlow
                 return;
             }
 
-            // 面板默认关闭（inactive），其当前 position 即预制体作者摆好的「展开位置」。
             sp.ShownPos = sp.shownPoint != null ? sp.shownPoint.position : sp.panel.position;
             sp.EntryPos = sp.entryPoint != null
                 ? sp.entryPoint.position
@@ -297,8 +309,11 @@ namespace NineGrid.GameFlow
             {
                 sp.panel.position = sp.EntryPos;
                 sp.panel.gameObject.SetActive(true);
-                // 更新面板文本
-                UpdatePanelText(sp);
+                RefreshPanelPresentation(sp);
+            }
+            else
+            {
+                HideShopDescription();
             }
 
             if (slideDuration <= 0f)
@@ -308,6 +323,7 @@ namespace NineGrid.GameFlow
                 {
                     sp.panel.gameObject.SetActive(false);
                 }
+
                 return;
             }
 
@@ -319,89 +335,283 @@ namespace NineGrid.GameFlow
             }
         }
 
-        void UpdatePanelText(ServicePanel sp)
+        void RefreshPanelPresentation(ServicePanel sp)
         {
-            if (_shop == null) return;
-            var text = sp == refinery ? _refineryText : _shipyardText;
-            if (text == null) return;
+            if (_shop == null)
+            {
+                return;
+            }
 
-            var flowState = GameFlowController.Instance?.CurrentState ?? GameFlowState.Island1;
-            var isRefinery = RunData.IsRefinery(flowState);
+            if (sp == refinery)
+            {
+                RefreshRefineryVisuals();
+                ShowShopDescription(_shop.GetRefineryText());
+            }
+            else if (sp == shipyard)
+            {
+                RefreshShipyardVisuals();
+                ShowShopDescription(_shop.GetShipyardText());
+            }
+        }
 
-            if (sp == refinery && isRefinery)
+        void RefreshRefineryVisuals()
+        {
+            for (var i = 0; i < _refineryOreSlots.Count; i++)
             {
-                text.text = _shop.GetRefineryText();
+                var (slot, renderer) = _refineryOreSlots[i];
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                if (i >= RunData.Ensure().ShopOres.Count)
+                {
+                    slot.gameObject.SetActive(false);
+                    continue;
+                }
+
+                slot.gameObject.SetActive(true);
+                var item = RunData.Ensure().ShopOres[i];
+                var ore = LoadOreCatalog()?.Get(item.OreId);
+                if (ore?.Icon != null)
+                {
+                    renderer.sprite = ore.Icon;
+                }
+
+                renderer.color = item.Bought ? new Color(0.45f, 0.45f, 0.45f, 0.55f) : Color.white;
             }
-            else if (sp == shipyard && !isRefinery)
+        }
+
+        void RefreshShipyardVisuals()
+        {
+            for (var i = 0; i < _shipyardRelicSlots.Count; i++)
             {
-                text.text = _shop.GetShipyardText();
+                var renderer = _shipyardRelicSlots[i];
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                if (i >= RunData.Ensure().ShopRelics.Count)
+                {
+                    renderer.gameObject.SetActive(false);
+                    continue;
+                }
+
+                renderer.gameObject.SetActive(true);
+                var item = RunData.Ensure().ShopRelics[i];
+                renderer.color = item.Bought ? new Color(0.45f, 0.45f, 0.45f, 0.55f) : Color.white;
             }
-            else if (sp == refinery && !isRefinery)
+        }
+
+        void BindPanelClickTargets()
+        {
+            TryBindPanelClickTargets();
+        }
+
+        void TryBindPanelClickTargets()
+        {
+            if (_panelBindingsReady || refinery.panel == null || shipyard.panel == null)
             {
-                text.text = "本岛屿为船坞，请前往船坞面板。";
+                return;
             }
-            else if (sp == shipyard && isRefinery)
+
+            _refineryClickTargets.Clear();
+            _shipyardClickTargets.Clear();
+            _refineryOreSlots.Clear();
+            _shipyardRelicSlots.Clear();
+
+            CacheRefineryOreSlots();
+            CacheShipyardRelicSlots();
+
+            for (var i = 0; i < _refineryOreSlots.Count; i++)
             {
-                text.text = "本岛屿为精炼厂，请前往精炼厂面板。";
+                var index = i;
+                AddClickTarget(_refineryClickTargets, _refineryOreSlots[i].slot, () =>
+                {
+                    if (_shop.BuyOre(index))
+                    {
+                        RefreshPanelPresentation(refinery);
+                    }
+                });
+            }
+
+            AddClickTarget(_refineryClickTargets, FindDeepChild(refinery.panel, "删除矿物"), () =>
+            {
+                var deck = RunData.Ensure().Deck;
+                if (deck.Count == 0)
+                {
+                    ShowNotice("矿舱已空，无法删除。");
+                    return;
+                }
+
+                if (_shop.RemoveOre(deck.Count - 1))
+                {
+                    RefreshPanelPresentation(refinery);
+                }
+            });
+
+            AddClickTarget(_refineryClickTargets, FindDeepChild(refinery.panel, "矿物强化"), () =>
+            {
+                var deck = RunData.Ensure().Deck;
+                if (deck.Count == 0)
+                {
+                    ShowNotice("矿舱已空，无法强化。");
+                    return;
+                }
+
+                if (_shop.UpgradeOre(0))
+                {
+                    RefreshPanelPresentation(refinery);
+                }
+            });
+
+            AddClickTarget(_refineryClickTargets, FindDeepChild(refinery.panel, "刷新商店"), () =>
+            {
+                if (_shop.RefreshRefinery())
+                {
+                    RefreshPanelPresentation(refinery);
+                }
+            });
+
+            for (var i = 0; i < _shipyardRelicSlots.Count; i++)
+            {
+                var index = i;
+                AddClickTarget(_shipyardClickTargets, _shipyardRelicSlots[i].transform, () =>
+                {
+                    if (_shop.BuyRelic(index))
+                    {
+                        RefreshPanelPresentation(shipyard);
+                    }
+                });
+            }
+
+            _panelBindingsReady = _refineryClickTargets.Count > 0 || _shipyardClickTargets.Count > 0;
+        }
+
+        void CacheRefineryOreSlots()
+        {
+            var slotsRoot = FindDeepChild(refinery.panel, "商品栏位");
+            if (slotsRoot == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < slotsRoot.childCount; i++)
+            {
+                var child = slotsRoot.GetChild(i);
+                var renderer = child.GetComponent<SpriteRenderer>();
+                _refineryOreSlots.Add((child, renderer));
+            }
+        }
+
+        void CacheShipyardRelicSlots()
+        {
+            if (shipyard.panel == null)
+            {
+                return;
+            }
+
+            for (var i = 1; i <= 3; i++)
+            {
+                var slot = FindDeepChild(shipyard.panel, $"遗物{i}");
+                if (slot == null)
+                {
+                    continue;
+                }
+
+                _shipyardRelicSlots.Add(slot.GetComponent<SpriteRenderer>());
+            }
+        }
+
+        static void AddClickTarget(List<PanelClickTarget> targets, Transform transform, Action onClick)
+        {
+            if (transform == null || onClick == null)
+            {
+                return;
+            }
+
+            var collider = transform.GetComponent<Collider2D>();
+            if (collider == null)
+            {
+                return;
+            }
+
+            targets.Add(new PanelClickTarget { Collider = collider, OnClick = onClick });
+        }
+
+        void HandlePanelClicks(List<PanelClickTarget> targets, ServicePanel panelState)
+        {
+            if (!panelState.Open || !FlowInput.PrimaryClickThisFrame() || targets.Count == 0)
+            {
+                return;
+            }
+
+            if (!TryGetPointerWorldPosition(out var worldPoint))
+            {
+                return;
+            }
+
+            for (var i = 0; i < targets.Count; i++)
+            {
+                var target = targets[i];
+                if (target.Collider != null && target.Collider.enabled && target.Collider.OverlapPoint(worldPoint))
+                {
+                    target.OnClick?.Invoke();
+                    return;
+                }
             }
         }
 
         void HandleShopInput()
         {
-            if (_shop == null) return;
-
-            var flowState = GameFlowController.Instance?.CurrentState ?? GameFlowState.Island1;
-            var isRefinery = RunData.IsRefinery(flowState);
-
-            // 精炼厂键盘
-            if (isRefinery && refinery.Open)
+            if (_shop == null)
             {
-                // 1-5: 买矿石
-                for (var i = 0; i < 5; i++)
-                {
-                    if (Input.GetKeyDown(KeyCode.Alpha1 + i) || Input.GetKeyDown(KeyCode.Keypad1 + i))
-                    {
-                        if (_shop.BuyOre(i)) UpdatePanelText(refinery);
-                        return;
-                    }
-                }
-                // 6-8: 买遗物
-                for (var i = 0; i < 3; i++)
-                {
-                    if (Input.GetKeyDown(KeyCode.Alpha6 + i) || Input.GetKeyDown(KeyCode.Keypad6 + i))
-                    {
-                        if (_shop.BuyRelic(i)) UpdatePanelText(refinery);
-                        return;
-                    }
-                }
+                return;
+            }
+
+            if (refinery.Open)
+            {
                 if (Input.GetKeyDown(KeyCode.R))
                 {
-                    if (_shop.RefreshRefinery()) UpdatePanelText(refinery);
+                    if (_shop.RefreshRefinery())
+                    {
+                        RefreshPanelPresentation(refinery);
+                    }
                 }
             }
 
-            // 船坞键盘
-            if (!isRefinery && shipyard.Open)
+            if (shipyard.Open)
             {
-                // S: 铸造台强化
                 if (Input.GetKeyDown(KeyCode.S))
                 {
-                    if (_shop.UpgradeSlot()) UpdatePanelText(shipyard);
+                    if (_shop.UpgradeSlot())
+                    {
+                        RefreshPanelPresentation(shipyard);
+                    }
+
                     return;
                 }
-                // 1-2: 附魔
+
                 for (var i = 0; i < 2; i++)
                 {
                     if (Input.GetKeyDown(KeyCode.Alpha1 + i) || Input.GetKeyDown(KeyCode.Keypad1 + i))
                     {
-                        // 简化：附魔第一块矿
-                        if (_shop.EnchantOre(0, i)) UpdatePanelText(shipyard);
+                        if (_shop.EnchantOre(0, i))
+                        {
+                            RefreshPanelPresentation(shipyard);
+                        }
+
                         return;
                     }
                 }
+
                 if (Input.GetKeyDown(KeyCode.R))
                 {
-                    if (_shop.RefreshShipyard()) UpdatePanelText(shipyard);
+                    if (_shop.RefreshShipyard())
+                    {
+                        RefreshPanelPresentation(shipyard);
+                    }
                 }
             }
         }
@@ -421,11 +631,84 @@ namespace NineGrid.GameFlow
             }
         }
 
+        void ShowShopDescription(string text)
+        {
+            CacheShopDescriptionText();
+            if (_shopDescriptionText == null)
+            {
+                return;
+            }
+
+            _shopDescriptionText.gameObject.SetActive(true);
+            _shopDescriptionText.text = text;
+        }
+
+        void HideShopDescription()
+        {
+            if (_shopDescriptionText != null)
+            {
+                _shopDescriptionText.gameObject.SetActive(false);
+            }
+        }
+
+        void CacheShopDescriptionText()
+        {
+            if (_shopDescriptionText != null)
+            {
+                return;
+            }
+
+            var uiRoot = UiSystem.Instance != null ? UiSystem.Instance.transform : null;
+            if (uiRoot == null)
+            {
+                return;
+            }
+
+            var found = FindDeepChild(uiRoot, "精炼厂/船坞通用介绍文字框");
+            _shopDescriptionText = found != null ? found.GetComponent<TMP_Text>() : null;
+        }
+
+        bool TryGetPointerWorldPosition(out Vector2 worldPoint)
+        {
+            if (worldCamera == null)
+            {
+                worldCamera = Camera.main;
+            }
+
+            if (worldCamera == null)
+            {
+                worldPoint = default;
+                return false;
+            }
+
+            var screenPoint = PointerScreenPosition();
+            var depth = Mathf.Abs(worldCamera.transform.position.z);
+            var world = worldCamera.ScreenToWorldPoint(new Vector3(screenPoint.x, screenPoint.y, depth));
+            worldPoint = world;
+            return true;
+        }
+
+        static Vector2 PointerScreenPosition()
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (Mouse.current != null)
+            {
+                return Mouse.current.position.ReadValue();
+            }
+#endif
+            return Input.mousePosition;
+        }
+
         void ResolveRefs()
         {
             if (pointerSelector == null)
             {
                 pointerSelector = FindFirstObjectByType<SceneElementPointerSelector>();
+            }
+
+            if (worldCamera == null)
+            {
+                worldCamera = Camera.main;
             }
 
             if (refinery.trigger == null)
@@ -438,7 +721,6 @@ namespace NineGrid.GameFlow
                 shipyard.trigger = FindSelectable("船坞");
             }
 
-            // 面板位于（持久化的）UI 预制体内、且默认关闭（inactive），需连非激活对象一起深搜。
             if (refinery.panel == null)
             {
                 refinery.panel = FindPanel("精炼厂panel");
@@ -484,13 +766,12 @@ namespace NineGrid.GameFlow
             return go != null ? go.transform : null;
         }
 
-        /// <summary>在持久化 UI 根下深搜（含未激活）指定名字的面板；找不到再退回全场景查找。</summary>
         static Transform FindPanel(string objectName)
         {
             var uiRoot = UiSystem.Instance != null ? UiSystem.Instance.transform : null;
             if (uiRoot != null)
             {
-                var found = FindInChildrenIncludingInactive(uiRoot, objectName);
+                var found = FindDeepChild(uiRoot, objectName);
                 if (found != null)
                 {
                     return found;
@@ -500,15 +781,20 @@ namespace NineGrid.GameFlow
             return FindTransform(objectName);
         }
 
-        static Transform FindInChildrenIncludingInactive(Transform root, string objectName)
+        static Transform FindDeepChild(Transform root, string objectName)
         {
             if (root == null)
             {
                 return null;
             }
 
+            if (root.name == objectName)
+            {
+                return root;
+            }
+
             var all = root.GetComponentsInChildren<Transform>(includeInactive: true);
-            for (int i = 0; i < all.Length; i++)
+            for (var i = 0; i < all.Length; i++)
             {
                 if (all[i].name == objectName)
                 {

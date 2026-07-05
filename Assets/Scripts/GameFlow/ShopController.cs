@@ -25,11 +25,10 @@ namespace NineGrid.GameFlow
 
         // ===== 精炼厂（Refinery）=====
 
-        /// <summary>生成精炼厂库存：5个矿石 + 3件船体改造。</summary>
+        /// <summary>生成精炼厂库存：5 个矿石（船体改造在船坞面板）。</summary>
         public void GenerateRefineryStock()
         {
             _run.ShopOres.Clear();
-            _run.ShopRelics.Clear();
 
             if (_oreCatalog != null)
             {
@@ -47,7 +46,15 @@ namespace NineGrid.GameFlow
                 }
             }
 
-            // 3件船体改造（排除boss稀有度和已拥有的）
+            _run.ShopFirstRefreshUsed = false;
+            RunData.Save();
+        }
+
+        /// <summary>生成船坞船体改造库存：3 件可选改造。</summary>
+        public void GenerateShipyardRelicStock()
+        {
+            _run.ShopRelics.Clear();
+
             var relicPool = new List<RelicDef>();
             foreach (var r in WebGameData.Relics)
             {
@@ -55,12 +62,13 @@ namespace NineGrid.GameFlow
                 if (_run.Relics.Contains(r.DisplayName)) continue;
                 relicPool.Add(r);
             }
-            // shuffle
+
             for (var i = relicPool.Count - 1; i > 0; i--)
             {
                 var j = Random.Range(0, i + 1);
                 (relicPool[i], relicPool[j]) = (relicPool[j], relicPool[i]);
             }
+
             for (var i = 0; i < Mathf.Min(3, relicPool.Count); i++)
             {
                 var r = relicPool[i];
@@ -71,7 +79,6 @@ namespace NineGrid.GameFlow
                 });
             }
 
-            _run.ShopFirstRefreshUsed = false;
             RunData.Save();
         }
 
@@ -182,9 +189,10 @@ namespace NineGrid.GameFlow
 
         // ===== 船坞（Shipyard）=====
 
-        /// <summary>生成船坞库存：2个附魔词条 + 铸造台强化可用性。</summary>
+        /// <summary>生成船坞库存：3 件船体改造 + 2 个附魔词条。</summary>
         public void GenerateShipyardStock()
         {
+            GenerateShipyardRelicStock();
             _run.EnchantOptions.Clear();
             var traits = new[] { "Station", "Debris", "Quench", "Ember", "Sociable", "Unity", "Preheat", "Symbiosis", "Twin", "Core" };
             var prices = new Dictionary<string, int>
@@ -336,23 +344,17 @@ namespace NineGrid.GameFlow
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("== 精炼厂 ==");
             sb.AppendLine($"银元: {_run.Gold}");
-            sb.AppendLine("\n[矿石]");
+            sb.AppendLine("\n[矿石] 点击栏位购买");
             for (var i = 0; i < _run.ShopOres.Count; i++)
             {
                 var item = _run.ShopOres[i];
                 var name = _oreCatalog?.Get(item.OreId)?.DisplayName ?? item.OreId;
-                sb.AppendLine($"  {i + 1}. {name} ({item.Price}银) {(item.Bought ? "[已购]" : "")}");
+                sb.AppendLine($"  · {name} ({item.Price}银) {(item.Bought ? "[已购]" : "")}");
             }
-            sb.AppendLine("\n[船体改造]");
-            for (var i = 0; i < _run.ShopRelics.Count; i++)
-            {
-                var item = _run.ShopRelics[i];
-                sb.AppendLine($"  {i + 6}. {item.DisplayName} ({item.Price}银) {(item.Bought ? "[已购]" : "")}");
-            }
-            sb.AppendLine($"\n[R] 刷新 ({_run.ShopRefreshCost}银)");
-            sb.AppendLine($"[D] 删除矿 ({_run.ShopRemoveCost}银)");
-            sb.AppendLine($"[U] 强化矿+5 (2银起)");
-            sb.AppendLine("[ESC] 离开");
+            sb.AppendLine("\n[服务] 点击对应按钮");
+            sb.AppendLine($"  · 删除矿物 ({_run.ShopRemoveCost}银)");
+            sb.AppendLine("  · 矿物强化+5 (2银起)");
+            sb.AppendLine($"  · 刷新商店 ({_run.ShopRefreshCost}银)");
             return sb.ToString();
         }
 
@@ -362,16 +364,21 @@ namespace NineGrid.GameFlow
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("== 船坞 ==");
             sb.AppendLine($"银元: {_run.Gold}");
-            sb.AppendLine("\n[铸造台强化]");
-            sb.AppendLine($"  [S] 随机铸造台倍率+1 (4银) {(_run.BlacksmithSlotUpgraded ? "[已用]" : "")}");
-            sb.AppendLine("\n[附魔]");
+            sb.AppendLine("\n[船体改造] 点击栏位购买");
+            for (var i = 0; i < _run.ShopRelics.Count; i++)
+            {
+                var item = _run.ShopRelics[i];
+                sb.AppendLine($"  · {item.DisplayName} ({item.Price}银) {(item.Bought ? "[已购]" : "")}");
+            }
+            sb.AppendLine("\n[服务] 键盘 S=铸造台+1");
+            sb.AppendLine($"  · 随机铸造台倍率+1 (4银) {(_run.BlacksmithSlotUpgraded ? "[已用]" : "")}");
+            sb.AppendLine("\n[附魔] 键盘 1-2");
             for (var i = 0; i < _run.EnchantOptions.Count; i++)
             {
                 var opt = _run.EnchantOptions[i];
-                sb.AppendLine($"  {i + 1}. {opt.TraitName} ({opt.Price}银) {(opt.Used ? "[已用]" : "")}");
+                sb.AppendLine($"  · {opt.TraitName} ({opt.Price}银) {(opt.Used ? "[已用]" : "")}");
             }
             sb.AppendLine($"\n[R] 刷新 ({_run.BlacksmithRefreshCost}银)");
-            sb.AppendLine("[ESC] 离开");
             return sb.ToString();
         }
     }

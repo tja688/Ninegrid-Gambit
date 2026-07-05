@@ -161,44 +161,46 @@ namespace NineGrid.GameFlow
 
         IEnumerator TransitionRoutine(GameFlowState state)
         {
-            // 事件状态：不加载场景，由 EventController 处理
+            // 事件状态：复用 RouteScene，由 RouteController 在场景内处理选项与矿仓选矿。
             if (state >= GameFlowState.Event1 && state <= GameFlowState.Event6)
             {
-                // 短暂黑场过渡
-                yield return Fade(0f, 1f);
-                yield return new WaitForSecondsRealtime(0.3f);
-                EventController.Instance?.ShowEvent(state);
-                yield return Fade(1f, 0f);
+                var routeScene = GameFlowScenes.Route;
+                var currentScene = SceneManager.GetActiveScene().name;
+                if (!string.Equals(routeScene, currentScene, StringComparison.Ordinal))
+                {
+                    yield return Fade(0f, 1f);
+                    var op = SceneManager.LoadSceneAsync(routeScene, LoadSceneMode.Single);
+                    if (op != null)
+                    {
+                        while (!op.isDone)
+                        {
+                            yield return null;
+                        }
+                    }
+
+                    yield return null;
+                    yield return null;
+                    yield return Fade(1f, 0f);
+                }
+
                 _routine = null;
                 yield break;
             }
 
-            // 胜利结算：BOSS改造三选一 → 传说事件 → 回主菜单
+            // 胜利结算：旗舰改造（简化为自动领取）→ 通关提示 → 主菜单
             if (state == GameFlowState.VictorySettlement)
             {
                 yield return Fade(0f, 1f);
                 yield return new WaitForSecondsRealtime(0.3f);
 
-                // BOSS改造选择
-                EventController.Instance?.ShowBossRelicSelection();
+                var relicMsg = EventController.ApplyBossRelicChoice(0);
+                var ui = UiSystem.Instance;
+                ui?.Notice?.Show(NoticeChannel.Notice, relicMsg, victoryHold);
+                yield return new WaitForSecondsRealtime(Mathf.Max(0.1f, victoryHold));
 
-                // 等待 EventController 完成（它会调用 Advance）
-                // 但 VictorySettlement 是最终节点，Advance 会回主菜单
-                // EventController 完成后会 Advance，此时状态变为 MainMenu
-                yield return new WaitUntil(() =>
-                    GameFlowController.Instance == null
-                    || GameFlowController.Instance.CurrentState != GameFlowState.VictorySettlement
-                    || (EventController.Instance != null && !EventController.Instance.IsPanelActive));
-
-                // 如果还没切换状态，显示通关提示
-                if (GameFlowController.Instance != null
-                    && GameFlowController.Instance.CurrentState == GameFlowState.VictorySettlement)
-                {
-                    var ui = UiSystem.Instance;
-                    ui?.Notice?.Show(NoticeChannel.Notice, "航线终末——你活着回来了。", victoryHold);
-                    yield return new WaitForSecondsRealtime(Mathf.Max(0.1f, victoryHold));
-                    GameFlowController.Instance?.Advance();
-                }
+                ui?.Notice?.Show(NoticeChannel.Notice, "航线终末——你活着回来了。", victoryHold);
+                yield return new WaitForSecondsRealtime(Mathf.Max(0.1f, victoryHold));
+                GameFlowController.Instance?.Advance();
 
                 yield return Fade(1f, 0f);
                 _routine = null;

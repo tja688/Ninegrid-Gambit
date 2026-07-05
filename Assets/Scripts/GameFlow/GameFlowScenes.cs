@@ -52,6 +52,8 @@ namespace NineGrid.GameFlow
                 case GameFlowState.Event4:
                 case GameFlowState.Event5:
                 case GameFlowState.Event6:
+                    return Route;
+
                 case GameFlowState.VictorySettlement:
                     return Transitional;
 
