@@ -161,28 +161,10 @@ namespace NineGrid.GameFlow
 
         IEnumerator TransitionRoutine(GameFlowState state)
         {
-            // 事件状态：复用 RouteScene，由 RouteController 在场景内处理选项与矿仓选矿。
+            // 事件状态：复用 RouteScene（RouteController 已在 Route* 展示事件；Event* 可能仅作跳板）
             if (state >= GameFlowState.Event1 && state <= GameFlowState.Event6)
             {
-                var routeScene = GameFlowScenes.Route;
-                var currentScene = SceneManager.GetActiveScene().name;
-                if (!string.Equals(routeScene, currentScene, StringComparison.Ordinal))
-                {
-                    yield return Fade(0f, 1f);
-                    var op = SceneManager.LoadSceneAsync(routeScene, LoadSceneMode.Single);
-                    if (op != null)
-                    {
-                        while (!op.isDone)
-                        {
-                            yield return null;
-                        }
-                    }
-
-                    yield return null;
-                    yield return null;
-                    yield return Fade(1f, 0f);
-                }
-
+                yield return EnsureRouteSceneLoaded();
                 _routine = null;
                 yield break;
             }
@@ -211,25 +193,21 @@ namespace NineGrid.GameFlow
             var activeScene = SceneManager.GetActiveScene().name;
             var needLoad = !string.Equals(targetScene, activeScene, StringComparison.Ordinal);
 
+            // 战斗态：必须切到 MainScene，BGM 变了但场景没换时这里兜底。
+            if (GameFlowScenes.IsBattleState(state))
+            {
+                needLoad = !string.Equals(GameFlowScenes.Main, activeScene, StringComparison.Ordinal);
+                targetScene = GameFlowScenes.Main;
+            }
+
             if (needLoad)
             {
                 yield return Fade(0f, 1f);
-
-                var op = SceneManager.LoadSceneAsync(targetScene, LoadSceneMode.Single);
-                if (op != null)
-                {
-                    while (!op.isDone)
-                    {
-                        yield return null;
-                    }
-                }
-
-                // 等 Awake/Start 落定，场景内控制器完成自解析。
+                yield return LoadSceneSingle(targetScene);
                 yield return null;
                 yield return null;
             }
 
-            // 触发节点进入动作（序章演出 / 战斗入场；岛屿/路线/主菜单为 no-op，由场景控制器自处理）。
             var flow = GameFlowController.Instance;
             flow?.RunNodeEntry(state);
 
@@ -244,6 +222,39 @@ namespace NineGrid.GameFlow
             }
 
             _routine = null;
+        }
+
+        IEnumerator EnsureRouteSceneLoaded()
+        {
+            var routeScene = GameFlowScenes.Route;
+            var currentScene = SceneManager.GetActiveScene().name;
+            if (string.Equals(routeScene, currentScene, StringComparison.Ordinal))
+            {
+                yield break;
+            }
+
+            yield return Fade(0f, 1f);
+            yield return LoadSceneSingle(routeScene);
+            yield return null;
+            yield return null;
+            yield return Fade(1f, 0f);
+        }
+
+        IEnumerator LoadSceneSingle(string sceneName)
+        {
+            var op = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+            if (op != null)
+            {
+                while (!op.isDone)
+                {
+                    yield return null;
+                }
+
+                yield break;
+            }
+
+            Debug.LogWarning($"[SceneFlow] LoadSceneAsync 失败，同步加载 {sceneName}");
+            SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
         }
 
         IEnumerator RunPassThrough(GameFlowState state)

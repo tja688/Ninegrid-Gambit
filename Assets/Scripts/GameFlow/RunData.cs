@@ -85,6 +85,8 @@ namespace NineGrid.GameFlow
         public int PendingEventCount;
         public List<string> PendingEventNames = new(); // 已生成的事件选项名
         public List<string> BossRelicOptions = new();  // BOSS改造三选一 displayName
+        /// <summary>Route 节点已选完事件，进入 Event* 时自动跳过展示。</summary>
+        [NonSerialized] public bool SkipNextEventPresentation;
 
         [Header("临时修正")]
         public int NextMonsterHpPenalty;

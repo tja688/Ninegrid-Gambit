@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using NineGrid.Data;
 using NineGrid.Presentation.Visuals;
@@ -8,7 +9,7 @@ using UnityEngine;
 namespace NineGrid.GameFlow
 {
     /// <summary>
-    /// 路线场景（RouteScene）：Route* 阶段点击浮标进入事件；Event* 阶段在场景内点选事件并结算。
+    /// 路线场景（RouteScene）：浮标即事件选项，悬停看详情，点击选择并结算，完成后进入战斗。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RouteController : MonoBehaviour
@@ -16,32 +17,29 @@ namespace NineGrid.GameFlow
         enum Phase
         {
             Idle,
-            RouteTravel,
             EventChoice,
             OrePick,
             Result,
         }
 
-        [Header("事件选择（世界物体）")]
-        [Tooltip("留空时按名字「事件1」「事件2」「事件3」查找。")]
+        [Header("事件浮标（事件1/2/3…）")]
         [SerializeField] SelectableSceneElement[] eventElements;
         [SerializeField] SceneElementPointerSelector pointerSelector;
         [SerializeField] OreInventoryPanel oreInventoryPanel;
 
-        [Header("事件描述")]
-        [TextArea(2, 4)]
-        [SerializeField] string routeTravelNotice = "前方海雾弥漫……点击浮标继续航行。";
+        [Header("结算")]
+        [SerializeField] float resultAutoContinueSeconds = 1.2f;
 
         Phase _phase = Phase.Idle;
-        bool _routeCommitted;
         bool _eventFlowActive;
         int _hoveredOptionIndex = -1;
         List<EventDef> _eventOptions = new();
         EventDef _pendingOreEvent;
+        Coroutine _resultRoutine;
+        Coroutine _deferAdvanceRoutine;
 
         public static RouteController Instance { get; private set; }
 
-        /// <summary>Event* 节点是否仍在等待玩家完成（供 SceneFlowDirector 可选检查）。</summary>
         public bool IsEventFlowActive => _eventFlowActive;
 
         public event Action EventSelected;
@@ -84,55 +82,55 @@ namespace NineGrid.GameFlow
 
         void SyncPhase(GameFlowState state)
         {
+            CancelDeferredWork();
             HideDescription();
-
-            if (IsEventState(state))
-            {
-                BeginEventPhase(state);
-                return;
-            }
 
             if (IsRouteState(state))
             {
-                BeginRoutePhase();
+                BeginEventSelectionPhase(MapRouteToEventState(state));
                 return;
             }
 
+            if (IsEventState(state))
+            {
+                var run = RunData.Ensure();
+                if (run.SkipNextEventPresentation)
+                {
+                    run.SkipNextEventPresentation = false;
+                    RunData.Save();
+                    ResetEventUi();
+                    _phase = Phase.Idle;
+                    _eventFlowActive = false;
+                    _deferAdvanceRoutine = StartCoroutine(DeferAdvanceNextFrame());
+                    return;
+                }
+
+                BeginEventSelectionPhase(state);
+                return;
+            }
+
+            ResetEventUi();
             _phase = Phase.Idle;
             _eventFlowActive = false;
         }
 
-        void BeginRoutePhase()
-        {
-            _phase = Phase.RouteTravel;
-            _routeCommitted = false;
-            _eventFlowActive = false;
-            _eventOptions.Clear();
-            EnsurePendingEventsForNextNode();
-            UpdateMarkerVisibility(-1);
-        }
-
-        void BeginEventPhase(GameFlowState state)
+        void BeginEventSelectionPhase(GameFlowState eventState)
         {
             _phase = Phase.EventChoice;
             _eventFlowActive = true;
-            _routeCommitted = true;
-            _eventOptions = EventController.PrepareOptions(state);
+            _eventOptions = EventController.PrepareOptions(eventState);
             UpdateMarkerVisibility(_eventOptions.Count);
         }
 
         void Update()
         {
-            if (pointerSelector == null)
+            if (pointerSelector == null || _phase == Phase.Idle)
             {
                 return;
             }
 
             switch (_phase)
             {
-                case Phase.RouteTravel:
-                    UpdateRouteTravel();
-                    break;
                 case Phase.EventChoice:
                     UpdateEventChoice();
                     break;
@@ -145,26 +143,10 @@ namespace NineGrid.GameFlow
             }
         }
 
-        void UpdateRouteTravel()
-        {
-            if (_routeCommitted)
-            {
-                return;
-            }
-
-            var hoveredIndex = GetHoveredOptionIndex();
-            UpdateHoverNotice(hoveredIndex, buildRouteNotice: true);
-
-            if (hoveredIndex >= 0 && FlowInput.PrimaryClickThisFrame())
-            {
-                CommitRouteTravel();
-            }
-        }
-
         void UpdateEventChoice()
         {
             var hoveredIndex = GetHoveredOptionIndex();
-            UpdateHoverNotice(hoveredIndex, buildRouteNotice: false);
+            UpdateHoverNotice(hoveredIndex);
 
             if (hoveredIndex < 0 || !FlowInput.PrimaryClickThisFrame())
             {
@@ -177,41 +159,6 @@ namespace NineGrid.GameFlow
             }
 
             SelectEventOption(hoveredIndex);
-        }
-
-        void CommitRouteTravel()
-        {
-            if (_routeCommitted)
-            {
-                return;
-            }
-
-            _routeCommitted = true;
-            EnsurePendingEventsForNextNode();
-            HideDescription();
-            EventSelected?.Invoke();
-            GameFlowController.Instance?.Advance();
-        }
-
-        void EnsurePendingEventsForNextNode()
-        {
-            var run = RunData.Ensure();
-            if (run.PendingEventNames != null && run.PendingEventNames.Count > 0)
-            {
-                return;
-            }
-
-            var flowState = GameFlowController.Instance?.CurrentState ?? GameFlowState.Route1;
-            var eventState = MapRouteToEventState(flowState);
-            var poolType = RunData.GetEventPoolType(eventState);
-            var preview = WebGameData.GeneratePostBattleEvents(poolType);
-            run.PendingEventNames.Clear();
-            foreach (var e in preview)
-            {
-                run.PendingEventNames.Add(e.Name);
-            }
-
-            RunData.Save();
         }
 
         void SelectEventOption(int index)
@@ -242,6 +189,7 @@ namespace NineGrid.GameFlow
         {
             _pendingOreEvent = ev;
             _phase = Phase.OrePick;
+            UpdateMarkerVisibility(0);
 
             if (oreInventoryPanel == null)
             {
@@ -259,6 +207,7 @@ namespace NineGrid.GameFlow
         {
             var ev = _pendingOreEvent;
             _pendingOreEvent = null;
+            UpdateMarkerVisibility(_eventOptions.Count);
             var message = ev != null ? EventController.ApplyEffect(ev, deckIndex) : "选择完成。";
             ShowResult(message);
         }
@@ -267,27 +216,85 @@ namespace NineGrid.GameFlow
         {
             _pendingOreEvent = null;
             _phase = Phase.EventChoice;
+            UpdateMarkerVisibility(_eventOptions.Count);
         }
 
         void ShowResult(string message)
         {
             _phase = Phase.Result;
             var notice = UiSystem.Instance != null ? UiSystem.Instance.Notice : null;
-            notice?.Show(NoticeChannel.Notice, message, 0f);
+            notice?.Show(NoticeChannel.Notice, message + "\n\n点击继续…", 0f);
+
+            CancelResultRoutine();
+            if (resultAutoContinueSeconds > 0f)
+            {
+                _resultRoutine = StartCoroutine(AutoCompleteAfterResult());
+            }
+        }
+
+        IEnumerator AutoCompleteAfterResult()
+        {
+            yield return new WaitForSecondsRealtime(resultAutoContinueSeconds);
+            if (_phase == Phase.Result)
+            {
+                CompleteEventFlow();
+            }
         }
 
         void CompleteEventFlow()
         {
+            CancelDeferredWork();
             HideDescription();
-            _eventOptions.Clear();
+            ResetEventUi();
+
             _eventFlowActive = false;
             _phase = Phase.Idle;
 
             var run = RunData.Ensure();
             run.PendingEventNames.Clear();
-            RunData.Save();
 
+            var flow = GameFlowController.Instance;
+            if (flow == null)
+            {
+                Debug.LogWarning("[Route] CompleteEventFlow: GameFlowController 不存在。");
+                return;
+            }
+
+            var fromRoute = IsRouteState(flow.CurrentState);
+            if (fromRoute)
+            {
+                run.SkipNextEventPresentation = true;
+            }
+
+            RunData.Save();
+            EventSelected?.Invoke();
+            flow.Advance();
+        }
+
+        IEnumerator DeferAdvanceNextFrame()
+        {
+            yield return null;
+            _deferAdvanceRoutine = null;
             GameFlowController.Instance?.Advance();
+        }
+
+        void CancelDeferredWork()
+        {
+            CancelResultRoutine();
+            if (_deferAdvanceRoutine != null)
+            {
+                StopCoroutine(_deferAdvanceRoutine);
+                _deferAdvanceRoutine = null;
+            }
+        }
+
+        void CancelResultRoutine()
+        {
+            if (_resultRoutine != null)
+            {
+                StopCoroutine(_resultRoutine);
+                _resultRoutine = null;
+            }
         }
 
         int GetHoveredOptionIndex()
@@ -300,7 +307,7 @@ namespace NineGrid.GameFlow
             var current = pointerSelector.Hovered;
             for (var i = 0; i < eventElements.Length; i++)
             {
-                if (eventElements[i] != null && current == eventElements[i])
+                if (eventElements[i] != null && eventElements[i].gameObject.activeSelf && current == eventElements[i])
                 {
                     return i;
                 }
@@ -309,7 +316,7 @@ namespace NineGrid.GameFlow
             return -1;
         }
 
-        void UpdateHoverNotice(int hoveredIndex, bool buildRouteNotice)
+        void UpdateHoverNotice(int hoveredIndex)
         {
             if (hoveredIndex == _hoveredOptionIndex)
             {
@@ -323,50 +330,13 @@ namespace NineGrid.GameFlow
                 return;
             }
 
+            if (hoveredIndex >= _eventOptions.Count)
+            {
+                return;
+            }
+
             var notice = UiSystem.Instance != null ? UiSystem.Instance.Notice : null;
-            if (notice == null)
-            {
-                return;
-            }
-
-            if (buildRouteNotice)
-            {
-                notice.Show(NoticeChannel.Notice, BuildRoutePreviewNotice(), 0f);
-                return;
-            }
-
-            if (hoveredIndex < _eventOptions.Count)
-            {
-                var ev = _eventOptions[hoveredIndex];
-                notice.Show(NoticeChannel.Notice, $"{ev.Name}\n{ev.Desc}", 0f);
-            }
-        }
-
-        string BuildRoutePreviewNotice()
-        {
-            var run = RunData.Ensure();
-            var sb = new System.Text.StringBuilder();
-            sb.AppendLine(routeTravelNotice);
-
-            if (run.PendingEventNames != null && run.PendingEventNames.Count > 0)
-            {
-                sb.AppendLine("可能遭遇：");
-                for (var i = 0; i < run.PendingEventNames.Count; i++)
-                {
-                    sb.AppendLine($"  · {run.PendingEventNames[i]}");
-                }
-            }
-            else
-            {
-                sb.AppendLine("可能遭遇：");
-                for (var i = 0; i < run.PendingEventNames.Count; i++)
-                {
-                    sb.AppendLine($"  · {run.PendingEventNames[i]}");
-                }
-            }
-
-            sb.AppendLine("点击浮标确认。");
-            return sb.ToString();
+            notice?.Show(NoticeChannel.Notice, EventController.BuildHoverText(_eventOptions[hoveredIndex]), 0f);
         }
 
         void UpdateMarkerVisibility(int activeOptionCount)
@@ -383,9 +353,17 @@ namespace NineGrid.GameFlow
                     continue;
                 }
 
-                var show = activeOptionCount < 0 || i < activeOptionCount;
+                var show = activeOptionCount > 0 && i < activeOptionCount;
                 eventElements[i].gameObject.SetActive(show);
             }
+        }
+
+        void ResetEventUi()
+        {
+            _eventOptions.Clear();
+            _pendingOreEvent = null;
+            _hoveredOptionIndex = -1;
+            UpdateMarkerVisibility(0);
         }
 
         void HideDescription()
@@ -416,16 +394,19 @@ namespace NineGrid.GameFlow
                 AddIfFound(found, "事件1");
                 AddIfFound(found, "事件2");
                 AddIfFound(found, "事件3");
-                AddIfFound(found, "事件");
-                AddIfFound(found, "事件选择");
                 eventElements = found.ToArray();
             }
         }
 
-        /// <summary>供 uGUI Button 或世界点击调用。</summary>
+        /// <summary>供 uGUI Button 调用（兼容旧接线）。</summary>
         public void SelectEvent()
         {
-            CommitRouteTravel();
+            if (_phase != Phase.EventChoice || _eventOptions.Count == 0)
+            {
+                return;
+            }
+
+            SelectEventOption(0);
         }
 
         static bool IsRouteState(GameFlowState state)

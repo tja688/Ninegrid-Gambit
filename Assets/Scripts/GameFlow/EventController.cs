@@ -52,6 +52,75 @@ namespace NineGrid.GameFlow
                 || effect == "duplicate_card" || effect == "transform_card" || effect == "free_remove_card";
         }
 
+        /// <summary>悬停浮标时显示的完整说明（名称 / 描述 / 效果后果）。</summary>
+        public static string BuildHoverText(EventDef ev)
+        {
+            if (ev == null)
+            {
+                return string.Empty;
+            }
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine(ev.Name);
+            sb.AppendLine(ev.Desc);
+            var outcome = DescribeEffectOutcome(ev);
+            if (!string.IsNullOrEmpty(outcome))
+            {
+                sb.AppendLine(outcome);
+            }
+
+            sb.Append("点击选择");
+            return sb.ToString();
+        }
+
+        static string DescribeEffectOutcome(EventDef ev)
+        {
+            switch (ev.Effect)
+            {
+                case "gain_gold":
+                    return $"→ 获得 {ev.ParamInt} 银元";
+                case "random_strategy_level":
+                    return "→ 获得 1 银元";
+                case "buff_card":
+                    return $"→ 选 1 块矿，强度 +{ev.ParamInt}";
+                case "self_blacksmith":
+                    return $"→ 消耗 {ev.ParamInt} 银元，随机砧台倍率 +1";
+                case "card_pick_three":
+                    return "→ 三选一矿石（随机获得其一）";
+                case "free_remove_card":
+                    return "→ 选 1 块矿免费移除";
+                case "buy_random_relic":
+                    return $"→ 消耗 {ev.ParamInt} 银元，随机获得船体改造";
+                case "pick_rare_relic":
+                    return "→ 随机获得 1 件中阶船体改造";
+                case "gain_specific_card":
+                    return $"→ 获得矿石 {ResolveOreName(!string.IsNullOrEmpty(ev.ParamStr) ? ev.ParamStr : ev.Name)}";
+                case "next_monster_hp_down":
+                    return $"→ 下一场敌舰装甲 -{ev.ParamInt}";
+                case "next_battle_hearts_plus":
+                    return $"→ 下一场备用锚 +{ev.ParamInt}";
+                case "max_hearts_plus":
+                    return "→ 本局备用锚上限 +1";
+                case "enchant_mighty":
+                    return "→ 选 1 块矿获得熔核";
+                case "enchant_spread":
+                    return "→ 选 1 块矿获得碎屑";
+                case "duplicate_card":
+                    return "→ 选 1 块矿复制入矿舱";
+                case "transform_card":
+                    return "→ 选 1 块矿随机转化";
+                case "grow_cards_twice":
+                    return "→ 矿舱所有矿石强度 +2";
+                case "fight_monster":
+                case "fight_elite":
+                    return "→ 遭遇战（暂未接入，直接继续）";
+                case "next_shop_system":
+                    return "→ 下次精炼厂矿脉锁定（占位）";
+                default:
+                    return string.Empty;
+            }
+        }
+
         /// <summary>应用事件效果，返回结果提示文案。</summary>
         public static string ApplyEffect(EventDef ev, int oreIndex = -1)
         {
