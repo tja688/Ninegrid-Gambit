@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
@@ -80,12 +81,10 @@ namespace NineGrid.Audio.Editor
                 enabled = true,
             };
 
-            if (!GameAudioCueDefaults.ClipFileMap.TryGetValue(def.Key, out var clipStem))
-                return entry;
-
-            if (!clipCache.TryGetValue(clipStem, out var clip) || clip == null)
+            var clip = ResolveClip(def.Key, clipCache);
+            if (clip == null)
             {
-                entry.notes = $"待关联素材：{clipStem}（文件未找到）";
+                entry.notes = $"待关联素材：{def.Key}（未找到 *_{{id}}_{def.Key} 或 ClipFileMap 条目）";
                 return entry;
             }
 
@@ -174,6 +173,41 @@ namespace NineGrid.Audio.Editor
 
             cache[key] = track;
             return track;
+        }
+
+        /// <summary>
+        /// Resolve clip for an AudioKey: ClipFileMap override → *_AudioKey numbered staging file → exact stem.
+        /// </summary>
+        static AudioClip ResolveClip(AudioKey key, Dictionary<string, AudioClip> clipCache)
+        {
+            if (GameAudioCueDefaults.ClipFileMap.TryGetValue(key, out var mappedStem)
+                && clipCache.TryGetValue(mappedStem, out var mappedClip))
+                return mappedClip;
+
+            var suffix = "_" + key;
+            AudioClip numbered = null;
+            AudioClip fallback = null;
+            foreach (var kv in clipCache)
+            {
+                if (!kv.Key.EndsWith(suffix, StringComparison.Ordinal)) continue;
+                if (IsNumberedStagingStem(kv.Key, key))
+                    numbered = kv.Value;
+                else
+                    fallback ??= kv.Value;
+            }
+            if (numbered != null) return numbered;
+            if (fallback != null) return fallback;
+
+            return clipCache.TryGetValue(key.ToString(), out var exact) ? exact : null;
+        }
+
+        static bool IsNumberedStagingStem(string stem, AudioKey key)
+        {
+            var expected = key.ToString();
+            if (stem.Length != 4 + expected.Length) return false;
+            if (stem[3] != '_') return false;
+            return char.IsDigit(stem[0]) && char.IsDigit(stem[1]) && char.IsDigit(stem[2])
+                   && stem.EndsWith("_" + expected, StringComparison.Ordinal);
         }
 
         static Dictionary<string, AudioClip> BuildClipCache()

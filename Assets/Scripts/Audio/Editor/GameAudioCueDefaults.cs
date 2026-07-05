@@ -29,17 +29,11 @@ namespace NineGrid.Audio.Editor
             }
         }
 
-        /// <summary>Maps AudioKey to audio file name (without extension) under Assets/Arts/Audios/.</summary>
+        /// <summary>Maps AudioKey to audio file name (without extension) under Assets/Arts/Audios/. Optional overrides only.</summary>
         internal static readonly Dictionary<AudioKey, string> ClipFileMap = new()
         {
-            { AudioKey.BgmBattle, "常规战斗配乐" },
-            { AudioKey.BgmBoss, "Boss战斗配乐" },
-            { AudioKey.BgmRoute, "路线选择音乐" },
-            { AudioKey.BgmIsland, "平稳的海量音效" },
-            { AudioKey.ChainSettling, "巨锚命中敌方" },
-            { AudioKey.Impact, "猛烈的撞击" },
-            { AudioKey.BoreShow, "电钻就绪" },
-            { AudioKey.AmbientOcean, "平稳的海量音效" },
+            // Staging files use {id:000}_{AudioKey} naming; ResolveClip auto-discovers them.
+            // Add manual overrides here only when a cue must point at a non-standard clip stem.
         };
 
         internal static readonly Def[] All =
