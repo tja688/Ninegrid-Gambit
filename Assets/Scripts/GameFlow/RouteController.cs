@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using NineGrid.Data;
 using NineGrid.Presentation.Visuals;
 using NineGrid.UI;
@@ -18,6 +19,7 @@ namespace NineGrid.GameFlow
         {
             Idle,
             EventChoice,
+            ShipSail,
             OrePick,
             Result,
         }
@@ -26,6 +28,14 @@ namespace NineGrid.GameFlow
         [SerializeField] SelectableSceneElement[] eventElements;
         [SerializeField] SceneElementPointerSelector pointerSelector;
         [SerializeField] OreInventoryPanel oreInventoryPanel;
+
+        [Header("船只驶向事件")]
+        [Tooltip("留空时按名字「player」查找。")]
+        [SerializeField] Transform playerShip;
+        [SerializeField] float sailDuration = 0.85f;
+        [SerializeField] Ease sailEase = Ease.OutCubic;
+        [Tooltip("相对事件浮标的世界坐标偏移（如略停在浮标下方）。")]
+        [SerializeField] Vector3 sailTargetOffset = new Vector3(0f, -0.35f, 0f);
 
         [Header("结算")]
         [SerializeField] float resultAutoContinueSeconds = 1.2f;
@@ -37,6 +47,10 @@ namespace NineGrid.GameFlow
         EventDef _pendingOreEvent;
         Coroutine _resultRoutine;
         Coroutine _deferAdvanceRoutine;
+        Coroutine _sailRoutine;
+        Tween _sailTween;
+        Vector3 _playerHomePosition;
+        bool _playerHomeCaptured;
 
         public static RouteController Instance { get; private set; }
 
@@ -47,10 +61,12 @@ namespace NineGrid.GameFlow
         void Awake()
         {
             Instance = this;
+            CapturePlayerHome();
         }
 
         void OnDestroy()
         {
+            KillSailTween();
             if (Instance == this)
             {
                 Instance = null;
@@ -119,6 +135,7 @@ namespace NineGrid.GameFlow
             _phase = Phase.EventChoice;
             _eventFlowActive = true;
             _eventOptions = EventController.PrepareOptions(eventState);
+            ResetPlayerToHome();
             UpdateMarkerVisibility(_eventOptions.Count);
         }
 
@@ -163,14 +180,43 @@ namespace NineGrid.GameFlow
 
         void SelectEventOption(int index)
         {
-            if (index < 0 || index >= _eventOptions.Count)
+            if (index < 0 || index >= _eventOptions.Count || _phase == Phase.ShipSail)
             {
                 return;
             }
 
             var ev = _eventOptions[index];
             HideDescription();
+            _phase = Phase.ShipSail;
+            CancelSailRoutine();
+            _sailRoutine = StartCoroutine(SailThenResolve(index, ev));
+        }
 
+        IEnumerator SailThenResolve(int index, EventDef ev)
+        {
+            if (playerShip != null && sailDuration > 0f)
+            {
+                var target = GetEventSailTarget(index);
+                var completed = false;
+                KillSailTween();
+                _sailTween = playerShip
+                    .DOMove(target, sailDuration)
+                    .SetEase(sailEase)
+                    .SetUpdate(true)
+                    .OnComplete(() => completed = true)
+                    .OnKill(() => completed = true);
+
+                yield return new WaitUntil(() => completed);
+                KillSailTween();
+                playerShip.position = target;
+            }
+
+            _sailRoutine = null;
+            ResolveSelectedEvent(ev);
+        }
+
+        void ResolveSelectedEvent(EventDef ev)
+        {
             var run = RunData.Ensure();
             run.PendingEventNames.Remove(ev.Name);
             RunData.Save();
@@ -183,6 +229,16 @@ namespace NineGrid.GameFlow
 
             var message = EventController.ApplyEffect(ev);
             ShowResult(message);
+        }
+
+        Vector3 GetEventSailTarget(int index)
+        {
+            if (eventElements != null && index >= 0 && index < eventElements.Length && eventElements[index] != null)
+            {
+                return eventElements[index].transform.position + sailTargetOffset;
+            }
+
+            return playerShip != null ? playerShip.position : Vector3.zero;
         }
 
         void BeginOreSelection(EventDef ev)
@@ -281,10 +337,64 @@ namespace NineGrid.GameFlow
         void CancelDeferredWork()
         {
             CancelResultRoutine();
+            CancelSailRoutine();
             if (_deferAdvanceRoutine != null)
             {
                 StopCoroutine(_deferAdvanceRoutine);
                 _deferAdvanceRoutine = null;
+            }
+        }
+
+        void CancelSailRoutine()
+        {
+            if (_sailRoutine != null)
+            {
+                StopCoroutine(_sailRoutine);
+                _sailRoutine = null;
+            }
+
+            KillSailTween();
+        }
+
+        void KillSailTween()
+        {
+            if (_sailTween != null && _sailTween.IsActive())
+            {
+                _sailTween.Kill();
+            }
+
+            _sailTween = null;
+        }
+
+        void CapturePlayerHome()
+        {
+            if (playerShip == null)
+            {
+                var go = GameObject.Find("player");
+                if (go != null)
+                {
+                    playerShip = go.transform;
+                }
+            }
+
+            if (playerShip != null)
+            {
+                _playerHomePosition = playerShip.position;
+                _playerHomeCaptured = true;
+            }
+        }
+
+        void ResetPlayerToHome()
+        {
+            if (playerShip == null)
+            {
+                CapturePlayerHome();
+            }
+
+            if (playerShip != null && _playerHomeCaptured)
+            {
+                KillSailTween();
+                playerShip.position = _playerHomePosition;
             }
         }
 
@@ -386,6 +496,20 @@ namespace NineGrid.GameFlow
             if (oreInventoryPanel == null)
             {
                 oreInventoryPanel = FindFirstObjectByType<OreInventoryPanel>(FindObjectsInactive.Include);
+            }
+
+            if (playerShip == null)
+            {
+                var go = GameObject.Find("player");
+                if (go != null)
+                {
+                    playerShip = go.transform;
+                }
+            }
+
+            if (!_playerHomeCaptured)
+            {
+                CapturePlayerHome();
             }
 
             if (eventElements == null || eventElements.Length == 0 || AllNull(eventElements))

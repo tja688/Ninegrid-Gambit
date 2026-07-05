@@ -358,9 +358,9 @@ namespace NineGrid.GameFlow
             var sb = new System.Text.StringBuilder();
             sb.AppendLine(name);
             sb.AppendLine(item.Bought ? "已购买" : $"价格：{price} 银元");
-            if (!string.IsNullOrEmpty(ore?.Description))
+            if (ore != null)
             {
-                sb.AppendLine(ore.Description);
+                sb.AppendLine(OreMechanicalText.Build(ore));
             }
 
             if (!item.Bought)

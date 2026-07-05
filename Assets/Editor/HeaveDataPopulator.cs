@@ -305,6 +305,7 @@ namespace NineGrid.Editor
             int pts, int price, OreTrait traits, string desc, string spriteFile)
         {
             var so = CreateOrLoad<OreDataSO>(OreDir + "/" + id);
+            var mechanicalDesc = NineGrid.GameFlow.OreMechanicalText.Build(id, name, pts, traits);
             SetField(so, "oreId",       id);
             SetField(so, "displayName", name);
             SetField(so, "tier",        tier);
@@ -312,7 +313,7 @@ namespace NineGrid.Editor
             SetField(so, "basePoints",  pts);
             SetField(so, "price",       price);
             SetField(so, "traits",      traits);
-            SetField(so, "description", desc);
+            SetField(so, "description", mechanicalDesc);
             SetField(so, "icon",        LoadSprite(OreSpritePrefix + spriteFile));
             EditorUtility.SetDirty(so);
             return so;
