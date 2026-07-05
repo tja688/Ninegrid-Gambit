@@ -29,12 +29,17 @@ namespace NineGrid.Audio
         [Header("Debug")]
         [SerializeField] bool logMissingCues = false;
 
+        [Header("Winch Chain Click")]
+        [Tooltip("绞盘点击锁链音效的最小间隔（秒），限制最高播放频率。")]
+        [SerializeField] float winchChainMinInterval = 0.08f;
+
         // Active loop tracking
         readonly Dictionary<AudioKey, AMPAudioSource> _activeLoops = new();
         readonly Dictionary<int, AudioKey> _loopKeyBySourceId = new();
         AudioKey? _currentBgmKey;
         AnchorChainLauncher.Phase _lastChainPhase = AnchorChainLauncher.Phase.Idle;
         bool _forgeAmbientPlaying = false;
+        float _lastWinchChainCueTime = float.NegativeInfinity;
 
         /// <summary>Static access for other scripts to trigger audio cues by key.</summary>
         public static GameAudioService Instance { get; private set; }
@@ -141,9 +146,13 @@ namespace NineGrid.Audio
             {
                 winch.Clicked += () =>
                 {
+                    float now = Time.unscaledTime;
+                    if (now - _lastWinchChainCueTime < winchChainMinInterval) return;
+                    _lastWinchChainCueTime = now;
+
                     float intensity = winch.Intensity01;
-                    float vol = Mathf.Lerp(0.3f, 1f, intensity);
-                    float pitch = Mathf.Lerp(0.8f, 1.5f, intensity);
+                    float vol = Mathf.Lerp(0.35f, 1f, intensity);
+                    float pitch = Mathf.Lerp(0.85f, 1.35f, intensity);
                     PlayCue(AudioKey.WinchClicked, vol, pitch);
                 };
 

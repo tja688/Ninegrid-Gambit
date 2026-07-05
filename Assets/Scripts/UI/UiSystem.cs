@@ -91,16 +91,11 @@ namespace NineGrid.UI
         }
 
         /// <summary>
-        /// 是否有系统仍需要 Overlay 保持激活（跑局 HUD、通知、对话等）。
-        /// 所有 <see cref="SetOverlayActive"/> false 调用都会先过此检查。
+        /// 是否有系统仍需要 Overlay 保持激活（通知、对话等）。
+        /// 跑局 HUD 已迁至独立 RunHud，不在此列。
         /// </summary>
         public bool ShouldKeepOverlayActive()
         {
-            if (PlayerRunHudController.Instance != null && PlayerRunHudController.Instance.WantsOverlayActive)
-            {
-                return true;
-            }
-
             if (Notice != null && Notice.IsShowing)
             {
                 return true;

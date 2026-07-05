@@ -12,7 +12,7 @@ namespace NineGrid.GameFlow
     /// - 开始锻造：锻造台有料才可点，触发锤头下压铸造（PlayHydraulic）。
     /// - 退出锻造：常规退场看对面，保留桌面 / 锻造台材料。
     /// - 查看矿石库：开合矿仓小面板。
-    /// Factory Text：拖拽或悬停矿石时显示其信息（≤51 字轮播）；无聚焦时一次性展示伤害预览、熔炼加成与规则说明。
+    /// Factory Text：拖拽或悬停矿石时显示其信息（≤51 字）；无聚焦时单行展示完整预计伤害与熔炼加成说明。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class ForgeStationController : MonoBehaviour

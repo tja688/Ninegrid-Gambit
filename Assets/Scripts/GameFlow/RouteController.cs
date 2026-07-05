@@ -51,6 +51,7 @@ namespace NineGrid.GameFlow
         Tween _sailTween;
         Vector3 _playerHomePosition;
         bool _playerHomeCaptured;
+        bool _resultFinalized;
 
         public static RouteController Instance { get; private set; }
 
@@ -101,13 +102,13 @@ namespace NineGrid.GameFlow
             CancelDeferredWork();
             HideDescription();
 
-            if (IsRouteState(state))
+            if (GameFlowScenes.IsRouteState(state))
             {
                 BeginEventSelectionPhase(MapRouteToEventState(state));
                 return;
             }
 
-            if (IsEventState(state))
+            if (GameFlowScenes.IsEventState(state))
             {
                 var run = RunData.Ensure();
                 if (run.SkipNextEventPresentation)
@@ -132,6 +133,7 @@ namespace NineGrid.GameFlow
 
         void BeginEventSelectionPhase(GameFlowState eventState)
         {
+            _resultFinalized = false;
             _phase = Phase.EventChoice;
             _eventFlowActive = true;
             _eventOptions = EventController.PrepareOptions(eventState);
@@ -277,6 +279,7 @@ namespace NineGrid.GameFlow
 
         void ShowResult(string message)
         {
+            _resultFinalized = false;
             _phase = Phase.Result;
             var notice = UiSystem.Instance != null ? UiSystem.Instance.Notice : null;
             notice?.Show(NoticeChannel.Notice, message + "\n\n点击继续…", 0f);
@@ -299,6 +302,12 @@ namespace NineGrid.GameFlow
 
         void CompleteEventFlow()
         {
+            if (_phase != Phase.Result || _resultFinalized)
+            {
+                return;
+            }
+
+            _resultFinalized = true;
             CancelDeferredWork();
             HideDescription();
             ResetEventUi();
@@ -316,18 +325,17 @@ namespace NineGrid.GameFlow
                 return;
             }
 
+            if (!GameFlowScenes.IsRouteState(flow.CurrentState))
+            {
+                Debug.LogWarning(
+                    $"[Route] CompleteEventFlow: 当前 {flow.CurrentState} 不是 Route*，忽略重复结算。");
+                return;
+            }
+
             RunData.Save();
             EventSelected?.Invoke();
-
-            if (IsRouteState(flow.CurrentState))
-            {
-                // Route* 已完成真实事件；跳过 Event* 跳板，一次进入下一场战斗。
-                flow.AdvanceFromRouteAfterEvent();
-            }
-            else
-            {
-                flow.Advance();
-            }
+            // Route* 已完成真实事件；跳过 Event* 跳板，一次进入下一场战斗。
+            flow.AdvanceFromRouteAfterEvent();
         }
 
         IEnumerator DeferAdvanceNextFrame()
@@ -534,16 +542,6 @@ namespace NineGrid.GameFlow
             }
 
             SelectEventOption(0);
-        }
-
-        static bool IsRouteState(GameFlowState state)
-        {
-            return state >= GameFlowState.Route1 && state <= GameFlowState.Route6;
-        }
-
-        static bool IsEventState(GameFlowState state)
-        {
-            return state >= GameFlowState.Event1 && state <= GameFlowState.Event6;
         }
 
         static GameFlowState MapRouteToEventState(GameFlowState routeState)

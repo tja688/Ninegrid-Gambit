@@ -201,9 +201,10 @@ namespace NineGrid.GameFlow
             }
 
             var current = CurrentState;
-            if (current < GameFlowState.Route1 || current > GameFlowState.Route6)
+            if (!GameFlowScenes.IsRouteState(current))
             {
-                Advance();
+                Debug.LogWarning(
+                    $"[GameFlow] AdvanceFromRouteAfterEvent: 当前 {current} 不是 Route*，忽略。");
                 return;
             }
 

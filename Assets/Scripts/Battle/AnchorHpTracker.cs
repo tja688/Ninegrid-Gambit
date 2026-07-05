@@ -1,4 +1,5 @@
 using System;
+using NineGrid.UI;
 using UnityEngine;
 
 namespace NineGrid.Battle
@@ -33,9 +34,15 @@ namespace NineGrid.Battle
             ResetFull();
         }
 
-        /// <summary>控制整组余量 UI 显隐（由 <see cref="PlayerRunHudController"/> 统一管理）。</summary>
+        /// <summary>整组余量图标显隐由 <see cref="NineGrid.UI.PlayerRunHudController"/> 通过 RunHud 根节点统一管理；此处保留供特殊场景单独调用。</summary>
         public void SetVisible(bool visible)
         {
+            // 跑局 HUD 已收拢到 RunHud 根，避免与 PlayerRunHudController 抢控制权。
+            if (PlayerRunHudController.Instance != null)
+            {
+                return;
+            }
+
             ResolveRefs();
             if (iconsRoot != null)
             {

@@ -224,7 +224,7 @@ namespace NineGrid.GameFlow
 
         void OnStateChanged(GameFlowState previous, GameFlowState next)
         {
-            RouteTo(next);
+            // 场景切换由 GameFlowController FSM 回调 HandleStateChanged 驱动，避免重复 RouteTo。
         }
 
         void RouteTo(GameFlowState state)
@@ -295,7 +295,7 @@ namespace NineGrid.GameFlow
 
         static string ResolveExpectedSceneName(GameFlowState state)
         {
-            if (state >= GameFlowState.Event1 && state <= GameFlowState.Event6)
+            if (GameFlowScenes.IsEventState(state))
             {
                 return GameFlowScenes.Route;
             }
@@ -311,7 +311,7 @@ namespace NineGrid.GameFlow
         IEnumerator TransitionRoutine(GameFlowState state)
         {
             // 事件状态：复用 RouteScene（RouteController 已在 Route* 展示事件；Event* 可能仅作跳板）
-            if (state >= GameFlowState.Event1 && state <= GameFlowState.Event6)
+            if (GameFlowScenes.IsEventState(state))
             {
                 yield return EnsureRouteSceneLoaded();
                 _routine = null;

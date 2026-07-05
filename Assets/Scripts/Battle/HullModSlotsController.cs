@@ -35,9 +35,14 @@ namespace NineGrid.Battle
             EnsureSlots();
         }
 
-        /// <summary>控制槽位组显隐（由 <see cref="PlayerRunHudController"/> 统一管理）。</summary>
+        /// <summary>槽位组显隐由 <see cref="NineGrid.UI.PlayerRunHudController"/> 通过 RunHud 根节点统一管理。</summary>
         public void SetVisible(bool visible)
         {
+            if (PlayerRunHudController.Instance != null)
+            {
+                return;
+            }
+
             if (slotsRoot == null)
             {
                 slotsRoot = transform;
