@@ -113,7 +113,6 @@ namespace NineGrid.Audio
             var battle = BattleController.Instance;
             if (battle != null)
             {
-                battle.EnterCompleted += () => PlayCue(AudioKey.BattleEnter);
                 battle.ExitCompleted += () => PlayCue(AudioKey.BattleExit);
                 battle.BattleFinished += won => PlayCue(AudioKey.BattleFinished);
                 battle.DamageDealt += dmg => PlayCue(AudioKey.RamSucceeded);
