@@ -95,5 +95,29 @@ namespace NineGrid.GameFlow
                     return false;
             }
         }
+
+        /// <summary>TransitionalScene：路线选择、事件、胜利结算等过场场景。</summary>
+        public static bool IsTransitionalState(GameFlowState state)
+        {
+            switch (state)
+            {
+                case GameFlowState.Route1:
+                case GameFlowState.Route2:
+                case GameFlowState.Route3:
+                case GameFlowState.Route4:
+                case GameFlowState.Route5:
+                case GameFlowState.Route6:
+                case GameFlowState.Event1:
+                case GameFlowState.Event2:
+                case GameFlowState.Event3:
+                case GameFlowState.Event4:
+                case GameFlowState.Event5:
+                case GameFlowState.Event6:
+                case GameFlowState.VictorySettlement:
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 }

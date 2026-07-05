@@ -19,7 +19,7 @@ namespace NineGrid.Audio.Editor
 
         static readonly HashSet<AudioKey> BgmKeys = new()
         {
-            AudioKey.BgmBattle, AudioKey.BgmIsland, AudioKey.BgmRoute, AudioKey.BgmMainMenu,
+            AudioKey.BgmBattle, AudioKey.BgmBoss, AudioKey.BgmRoute, AudioKey.BgmMainMenu,
         };
 
         [MenuItem("NineGrid/Audio/Rebuild Cue Database")]

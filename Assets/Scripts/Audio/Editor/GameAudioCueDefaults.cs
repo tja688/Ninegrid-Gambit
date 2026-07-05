@@ -33,7 +33,9 @@ namespace NineGrid.Audio.Editor
         internal static readonly Dictionary<AudioKey, string> ClipFileMap = new()
         {
             { AudioKey.BgmBattle, "常规战斗配乐" },
+            { AudioKey.BgmBoss, "Boss战斗配乐" },
             { AudioKey.BgmRoute, "路线选择音乐" },
+            { AudioKey.BgmIsland, "平稳的海量音效" },
             { AudioKey.ChainSettling, "巨锚命中敌方" },
             { AudioKey.Impact, "猛烈的撞击" },
             { AudioKey.BoreShow, "电钻就绪" },
@@ -181,7 +183,8 @@ namespace NineGrid.Audio.Editor
             // ===== 环境音 & BGM (#91-98) =====
             new(AudioKey.BgmBattle, "战斗 BGM", "战斗场景期间循环播放。现有素材：常规战斗配乐.mp3 / Boss战斗配乐.mp3。", AudioPriority.S, AudioCategory.Environment, LoopMode.Loop),
             new(AudioKey.AmbientBattle, "战斗环境音", "战斗场景海洋+风声 loop 叠加在 BGM 下层。", AudioPriority.A, AudioCategory.Environment, LoopMode.Loop),
-            new(AudioKey.BgmIsland, "岛屿 BGM", "岛屿界面期间 loop。", AudioPriority.A, AudioCategory.Environment, LoopMode.Loop),
+            new(AudioKey.BgmIsland, "岛屿环境循环", "IslandScene 期间循环。素材：平稳的海量音效.mp3。", AudioPriority.A, AudioCategory.Environment, LoopMode.Loop),
+            new(AudioKey.BgmBoss, "Boss 战 BGM", "MainScene BossBattle 状态专属。素材：Boss战斗配乐.mp3。", AudioPriority.S, AudioCategory.Environment, LoopMode.Loop),
             new(AudioKey.BgmRoute, "路线选择 BGM", "路线选择期间 loop。现有素材：路线选择音乐.mp3。", AudioPriority.B, AudioCategory.Environment, LoopMode.Loop),
             new(AudioKey.BgmMainMenu, "主菜单 BGM", "主菜单期间 loop。", AudioPriority.A, AudioCategory.Environment, LoopMode.Loop),
             new(AudioKey.AmbientForge, "锻造环境音", "锻造 Active 期间蒸汽/机械嗡鸣 loop。", AudioPriority.A, AudioCategory.Environment, LoopMode.Loop),

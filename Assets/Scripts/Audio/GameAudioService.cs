@@ -41,7 +41,14 @@ namespace NineGrid.Audio
 
         void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
             Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
 
         IEnumerator Start()
@@ -327,44 +334,51 @@ namespace NineGrid.Audio
 
         void StartEnvironmentAudio()
         {
-            // Start ocean ambient always
-            StartLoop(AudioKey.AmbientOcean);
-
-            // Play BGM based on current game state
             var flow = GameFlowController.Instance;
             if (flow != null)
-            {
                 HandleStateChangeForBgm(flow.PreviousState, flow.CurrentState);
-            }
         }
 
         void HandleStateChangeForBgm(NineGrid.GameFlow.GameFlowState prev, NineGrid.GameFlow.GameFlowState next)
         {
-            // Stop previous BGM
-            if (MusicManager.Main != null && MusicManager.Main.IsPlaying())
+            StopSceneMusicAndLoops();
+
+            if (next == NineGrid.GameFlow.GameFlowState.BossBattle)
             {
-                MusicManager.Main.Stop(0.5f);
+                PlayCue(AudioKey.BgmBoss);
+                return;
             }
 
-            // Start new BGM based on state
             if (NineGrid.GameFlow.GameFlowScenes.IsBattleState(next))
             {
                 PlayCue(AudioKey.BgmBattle);
-                StartLoop(AudioKey.AmbientBattle);
+                return;
             }
-            else if (NineGrid.GameFlow.GameFlowScenes.IsIslandState(next))
+
+            if (NineGrid.GameFlow.GameFlowScenes.IsIslandState(next))
             {
-                PlayCue(AudioKey.BgmIsland);
+                StartLoop(AudioKey.BgmIsland);
+                return;
             }
-            else if (next == NineGrid.GameFlow.GameFlowState.MainMenu)
+
+            if (NineGrid.GameFlow.GameFlowScenes.IsTransitionalState(next))
             {
-                PlayCue(AudioKey.BgmMainMenu);
-            }
-            else
-            {
-                // Route or other states - play route BGM
                 PlayCue(AudioKey.BgmRoute);
+                return;
             }
+
+            if (next == NineGrid.GameFlow.GameFlowState.MainMenu)
+                PlayCue(AudioKey.BgmMainMenu);
+        }
+
+        void StopSceneMusicAndLoops()
+        {
+            if (MusicManager.Main != null && MusicManager.Main.IsPlaying())
+                MusicManager.Main.Stop(0.5f);
+
+            StopLoop(AudioKey.AmbientBattle);
+            StopLoop(AudioKey.AmbientOcean);
+            StopLoop(AudioKey.BgmIsland);
         }
 
         void StartForgeAmbient()

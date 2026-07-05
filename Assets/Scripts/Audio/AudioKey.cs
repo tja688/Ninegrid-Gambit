@@ -151,6 +151,7 @@ namespace NineGrid.Audio
         AmbientForge = 96,
         LoopChainTaut = 97,
         AmbientOcean = 98,
+        BgmBoss = 107,
 
         // ===== 数据驱动 - 未来接入 (#99-106) =====
         OreTraitTriggered = 99,
