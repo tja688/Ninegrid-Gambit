@@ -407,19 +407,6 @@ namespace NineGrid.GameFlow
             return oreId;
         }
 
-        static OreCatalog _cachedCatalog;
-        static OreCatalog LoadOreCatalog()
-        {
-            if (_cachedCatalog != null)
-            {
-                return _cachedCatalog;
-            }
-
-#if UNITY_EDITOR
-            _cachedCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<OreCatalog>(
-                "Assets/ScriptableObjects/Data/OreCatalog.asset");
-#endif
-            return _cachedCatalog;
-        }
+        static OreCatalog LoadOreCatalog() => GameDataCatalogs.Ore;
     }
 }

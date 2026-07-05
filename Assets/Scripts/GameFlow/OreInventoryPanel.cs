@@ -121,6 +121,23 @@ namespace NineGrid.GameFlow
         /// <summary>事件选矿：点击槽位后回调 deck 索引。</summary>
         public void BeginSelection(Action<int> onSelected, Action onCancelled = null, string prompt = null)
         {
+            TryBeginSelection(onSelected, onCancelled, prompt);
+        }
+
+        /// <summary>进入选矿模式；矿舱为空或无可点槽位时返回 false。</summary>
+        public bool TryBeginSelection(Action<int> onSelected, Action onCancelled = null, string prompt = null)
+        {
+            if (onSelected == null)
+            {
+                return false;
+            }
+
+            var run = RunData.Ensure();
+            if (run.Deck.Count == 0)
+            {
+                return false;
+            }
+
             _selectionMode = true;
             _allowOutsideClose = onCancelled != null;
             _onOreSelected = onSelected;
@@ -132,6 +149,25 @@ namespace NineGrid.GameFlow
             }
 
             OpenInternal(PopulateForSelection);
+
+            if (_slotDeckIndices.Count == 0)
+            {
+                AbortSelectionSilently();
+                return false;
+            }
+
+            return IsOpen && IsSelectionMode;
+        }
+
+        /// <summary>强制关闭选矿面板，不触发取消回调（调试 PASS 等）。</summary>
+        public void AbortSelectionSilently()
+        {
+            _selectionMode = false;
+            _allowOutsideClose = true;
+            _onOreSelected = null;
+            _onSelectionCancelled = null;
+            SetActive(false);
+            Closed?.Invoke();
         }
 
         public void Close()
@@ -521,19 +557,6 @@ namespace NineGrid.GameFlow
             return oreId;
         }
 
-        static OreCatalog _cachedCatalog;
-        static OreCatalog LoadOreCatalog()
-        {
-            if (_cachedCatalog != null)
-            {
-                return _cachedCatalog;
-            }
-
-#if UNITY_EDITOR
-            _cachedCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<OreCatalog>(
-                "Assets/ScriptableObjects/Data/OreCatalog.asset");
-#endif
-            return _cachedCatalog;
-        }
+        static OreCatalog LoadOreCatalog() => GameDataCatalogs.Ore;
     }
 }

@@ -28,6 +28,8 @@ namespace NineGrid.GameFlow
         [SerializeField] SelectableSceneElement[] eventElements;
         [SerializeField] SceneElementPointerSelector pointerSelector;
         [SerializeField] OreInventoryPanel oreInventoryPanel;
+        [Tooltip("留空时按名字「PASS」查找；事件流程中点击直接跳过进入下一场战斗。")]
+        [SerializeField] SelectableSceneElement passElement;
 
         [Header("船只驶向事件")]
         [Tooltip("留空时按名字「player」查找。")]
@@ -143,7 +145,17 @@ namespace NineGrid.GameFlow
 
         void Update()
         {
-            if (pointerSelector == null || _phase == Phase.Idle)
+            if (pointerSelector == null)
+            {
+                return;
+            }
+
+            if (_eventFlowActive && FlowInput.PrimaryClickThisFrame() && TryHandlePassClick())
+            {
+                return;
+            }
+
+            if (_phase == Phase.Idle)
             {
                 return;
             }
@@ -153,12 +165,26 @@ namespace NineGrid.GameFlow
                 case Phase.EventChoice:
                     UpdateEventChoice();
                     break;
+                case Phase.OrePick:
+                    UpdateOrePick();
+                    break;
                 case Phase.Result:
                     if (FlowInput.PrimaryClickThisFrame())
                     {
                         CompleteEventFlow();
                     }
                     break;
+            }
+        }
+
+        void UpdateOrePick()
+        {
+            if (oreInventoryPanel == null || !oreInventoryPanel.IsSelectionMode)
+            {
+                if (_pendingOreEvent != null)
+                {
+                    OnOreSelectionCancelled();
+                }
             }
         }
 
@@ -219,18 +245,32 @@ namespace NineGrid.GameFlow
 
         void ResolveSelectedEvent(EventDef ev)
         {
-            var run = RunData.Ensure();
-            run.PendingEventNames.Remove(ev.Name);
-            RunData.Save();
-
             if (EventController.NeedsOreSelection(ev.Effect))
             {
                 BeginOreSelection(ev);
                 return;
             }
 
-            var message = EventController.ApplyEffect(ev);
+            ApplyEventAndShowResult(ev);
+        }
+
+        void ApplyEventAndShowResult(EventDef ev, int oreIndex = -1)
+        {
+            var message = EventController.ApplyEffect(ev, oreIndex);
+            ConsumePendingEvent(ev);
             ShowResult(message);
+        }
+
+        void ConsumePendingEvent(EventDef ev)
+        {
+            if (ev == null)
+            {
+                return;
+            }
+
+            var run = RunData.Ensure();
+            run.PendingEventNames.Remove(ev.Name);
+            RunData.Save();
         }
 
         Vector3 GetEventSailTarget(int index)
@@ -246,19 +286,28 @@ namespace NineGrid.GameFlow
         void BeginOreSelection(EventDef ev)
         {
             _pendingOreEvent = ev;
-            _phase = Phase.OrePick;
-            UpdateMarkerVisibility(0);
 
             if (oreInventoryPanel == null)
             {
-                ShowResult(EventController.ApplyEffect(ev));
+                oreInventoryPanel = FindFirstObjectByType<OreInventoryPanel>(FindObjectsInactive.Include);
+            }
+
+            var run = RunData.Ensure();
+            if (run.Deck.Count == 0
+                || oreInventoryPanel == null
+                || !oreInventoryPanel.TryBeginSelection(
+                    OnOrePicked,
+                    OnOreSelectionCancelled,
+                    $"{ev.Name}\n{ev.Desc}\n点击矿舱中的一块矿石。"))
+            {
+                _pendingOreEvent = null;
+                ApplyEventAndShowResult(ev);
                 return;
             }
 
-            oreInventoryPanel.BeginSelection(
-                OnOrePicked,
-                OnOreSelectionCancelled,
-                $"{ev.Name}\n{ev.Desc}\n点击矿舱中的一块矿石。");
+            _phase = Phase.OrePick;
+            UpdateMarkerVisibility(0);
+            HideDescription();
         }
 
         void OnOrePicked(int deckIndex)
@@ -266,8 +315,13 @@ namespace NineGrid.GameFlow
             var ev = _pendingOreEvent;
             _pendingOreEvent = null;
             UpdateMarkerVisibility(_eventOptions.Count);
-            var message = ev != null ? EventController.ApplyEffect(ev, deckIndex) : "选择完成。";
-            ShowResult(message);
+            if (ev == null)
+            {
+                ShowResult("选择完成。");
+                return;
+            }
+
+            ApplyEventAndShowResult(ev, deckIndex);
         }
 
         void OnOreSelectionCancelled()
@@ -531,6 +585,49 @@ namespace NineGrid.GameFlow
                 AddIfFound(found, "事件3");
                 eventElements = found.ToArray();
             }
+
+            if (passElement == null)
+            {
+                passElement = FindPassElement();
+            }
+        }
+
+        /// <summary>场景 PASS 按钮：跳过当前事件流程，直接进入下一场战斗。</summary>
+        public void ForcePassToNextBattle()
+        {
+            if (!_eventFlowActive)
+            {
+                return;
+            }
+
+            oreInventoryPanel?.AbortSelectionSilently();
+            _pendingOreEvent = null;
+            CancelDeferredWork();
+            HideDescription();
+
+            var run = RunData.Ensure();
+            run.PendingEventNames.Clear();
+            RunData.Save();
+
+            ResetEventUi();
+            _eventFlowActive = false;
+            _phase = Phase.Idle;
+
+            var flow = GameFlowController.Instance;
+            if (flow == null)
+            {
+                Debug.LogWarning("[Route] ForcePass: GameFlowController 不存在。");
+                return;
+            }
+
+            if (!GameFlowScenes.IsRouteState(flow.CurrentState))
+            {
+                flow.Advance();
+                return;
+            }
+
+            EventSelected?.Invoke();
+            flow.AdvanceFromRouteAfterEvent();
         }
 
         /// <summary>供 uGUI Button 调用（兼容旧接线）。</summary>
@@ -542,6 +639,29 @@ namespace NineGrid.GameFlow
             }
 
             SelectEventOption(0);
+        }
+
+        bool TryHandlePassClick()
+        {
+            var pass = passElement ?? FindPassElement();
+            if (pass == null || !pass.gameObject.activeInHierarchy)
+            {
+                return false;
+            }
+
+            if (pointerSelector.Hovered != pass)
+            {
+                return false;
+            }
+
+            ForcePassToNextBattle();
+            return true;
+        }
+
+        static SelectableSceneElement FindPassElement()
+        {
+            var go = GameObject.Find("PASS");
+            return go != null ? go.GetComponent<SelectableSceneElement>() : null;
         }
 
         static GameFlowState MapRouteToEventState(GameFlowState routeState)
