@@ -47,6 +47,8 @@ namespace NineGrid.GameFlow
         [SerializeField] bool ignoreWhenPointerOverUi = true;
 
         HydraulicMaterialPiece _dragged;
+        HydraulicMaterialPiece _hovered;
+        HydraulicMaterialPiece _hoverVisualPiece;
         HydraulicMaterialHome _dragOriginHome;
         int _dragOriginTableSlot = -1;
         int _dragOriginAnvil = -1;
@@ -66,6 +68,9 @@ namespace NineGrid.GameFlow
 
         /// <summary>当前被拖拽的矿石数据（null=未拖拽）。</summary>
         public CardInstance DraggedCard => _dragged?.Card;
+
+        /// <summary>鼠标悬停的可交互矿石（未拖拽时）。</summary>
+        public HydraulicMaterialPiece HoveredPiece => _hovered;
 
         /// <summary>获取三个砧台上的矿石牌组（按堆叠顺序，底→顶）。供伤害计算读取。</summary>
         public List<CardInstance>[] GetAnvilStacks()
@@ -182,6 +187,7 @@ namespace NineGrid.GameFlow
 
             if (_dragged != null)
             {
+                _hovered = null;
                 TickDrag();
                 if (WasPointerReleased())
                 {
@@ -190,6 +196,8 @@ namespace NineGrid.GameFlow
 
                 return;
             }
+
+            UpdateHoveredPiece();
 
             if (WasPointerPressed() && TryGetPointerWorld(out var world))
             {
@@ -240,6 +248,46 @@ namespace NineGrid.GameFlow
             for (var i = 0; i < anvils.Length; i++)
             {
                 anvils[i]?.Stack.Clear();
+            }
+        }
+
+        void UpdateHoveredPiece()
+        {
+            if (ignoreWhenPointerOverUi && IsPointerOverUi())
+            {
+                SetHoverVisual(null);
+                _hovered = null;
+                return;
+            }
+
+            if (!TryGetPointerWorld(out var world))
+            {
+                SetHoverVisual(null);
+                _hovered = null;
+                return;
+            }
+
+            _hovered = lane != null ? lane.FindInteractableAt(world) : null;
+            SetHoverVisual(_hovered);
+        }
+
+        void SetHoverVisual(HydraulicMaterialPiece piece)
+        {
+            if (_hoverVisualPiece == piece)
+            {
+                return;
+            }
+
+            if (_hoverVisualPiece != null && _hoverVisualPiece != _dragged)
+            {
+                _hoverVisualPiece.SetSelected(false);
+            }
+
+            _hoverVisualPiece = piece;
+
+            if (_hoverVisualPiece != null && _hoverVisualPiece != _dragged)
+            {
+                _hoverVisualPiece.SetSelected(true);
             }
         }
 

@@ -17,8 +17,55 @@ namespace NineGrid.Presentation.Visuals
         [SerializeField] bool ignoreWhenPointerOverUi = true;
 
         SelectableSceneElement hovered;
+        Object interactionScopeOwner;
+        readonly HashSet<SelectableSceneElement> interactionWhitelist = new HashSet<SelectableSceneElement>();
 
         public SelectableSceneElement Hovered => hovered;
+
+        /// <summary>
+        /// 为当前世界点击选择器设置一层“只允许这些场景元素被命中”的作用域。
+        /// 传入空白名单即可在作用域期间阻断所有世界物体命中。
+        /// </summary>
+        public void ApplyInteractionScope(Object owner, params SelectableSceneElement[] allowedElements)
+        {
+            if (owner == null)
+            {
+                Debug.LogWarning("[SceneElementPointerSelector] ApplyInteractionScope 需要非空 owner。");
+                return;
+            }
+
+            interactionScopeOwner = owner;
+            interactionWhitelist.Clear();
+
+            if (allowedElements != null)
+            {
+                for (var i = 0; i < allowedElements.Length; i++)
+                {
+                    var element = allowedElements[i];
+                    if (element != null)
+                    {
+                        interactionWhitelist.Add(element);
+                    }
+                }
+            }
+
+            if (hovered != null && !IsAllowedByScope(hovered))
+            {
+                SetHovered(null);
+            }
+        }
+
+        public void ClearInteractionScope(Object owner)
+        {
+            if (owner == null || interactionScopeOwner != owner)
+            {
+                return;
+            }
+
+            interactionScopeOwner = null;
+            interactionWhitelist.Clear();
+            SetHovered(null);
+        }
 
         public static void Register(SelectableSceneElement element)
         {
@@ -99,13 +146,18 @@ namespace NineGrid.Presentation.Visuals
             }
         }
 
-        static SelectableSceneElement FindTopmostAt(Vector2 worldPoint)
+        SelectableSceneElement FindTopmostAt(Vector2 worldPoint)
         {
             HitBuffer.Clear();
             for (int i = 0; i < Registered.Count; i++)
             {
                 SelectableSceneElement element = Registered[i];
                 if (element == null || !element.isActiveAndEnabled)
+                {
+                    continue;
+                }
+
+                if (!IsAllowedByScope(element))
                 {
                     continue;
                 }
@@ -139,6 +191,11 @@ namespace NineGrid.Presentation.Visuals
             }
 
             return top;
+        }
+
+        bool IsAllowedByScope(SelectableSceneElement element)
+        {
+            return interactionScopeOwner == null || interactionWhitelist.Contains(element);
         }
 
         bool TryGetPointerWorldPosition(out Vector2 worldPoint)

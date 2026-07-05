@@ -338,48 +338,128 @@ namespace NineGrid.GameFlow
             };
         }
 
-        /// <summary>获取精炼厂库存文本（供 UI 显示）。</summary>
-        public string GetRefineryText()
+        public string GetRefineryPanelHint()
+            => "精炼厂：悬停商品或服务查看详情，点击购买或办理。";
+
+        public string GetShipyardPanelHint()
+            => "船坞：悬停改造查看详情；附魔/铸造台强化可用键盘 S、1、2。";
+
+        public string GetOreHoverText(int index)
         {
-            var sb = new System.Text.StringBuilder();
-            sb.AppendLine("== 精炼厂 ==");
-            sb.AppendLine($"银元: {_run.Gold}");
-            sb.AppendLine("\n[矿石] 点击栏位购买");
-            for (var i = 0; i < _run.ShopOres.Count; i++)
+            if (index < 0 || index >= _run.ShopOres.Count)
             {
-                var item = _run.ShopOres[i];
-                var name = _oreCatalog?.Get(item.OreId)?.DisplayName ?? item.OreId;
-                sb.AppendLine($"  · {name} ({item.Price}银) {(item.Bought ? "[已购]" : "")}");
+                return string.Empty;
             }
-            sb.AppendLine("\n[服务] 点击对应按钮");
-            sb.AppendLine($"  · 删除矿物 ({_run.ShopRemoveCost}银)");
-            sb.AppendLine("  · 矿物强化+5 (2银起)");
-            sb.AppendLine($"  · 刷新商店 ({_run.ShopRefreshCost}银)");
-            return sb.ToString();
+
+            var item = _run.ShopOres[index];
+            var ore = _oreCatalog?.Get(item.OreId);
+            var name = ore?.DisplayName ?? item.OreId;
+            var price = _run.HasFreeCardPurchase ? 0 : item.Price;
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine(name);
+            sb.AppendLine(item.Bought ? "已购买" : $"价格：{price} 银元");
+            if (!string.IsNullOrEmpty(ore?.Description))
+            {
+                sb.AppendLine(ore.Description);
+            }
+
+            if (!item.Bought)
+            {
+                sb.AppendLine("点击购买并加入矿舱。");
+            }
+
+            return sb.ToString().TrimEnd();
         }
 
-        /// <summary>获取船坞库存文本。</summary>
-        public string GetShipyardText()
+        public string GetRelicHoverText(int index)
         {
+            if (index < 0 || index >= _run.ShopRelics.Count)
+            {
+                return string.Empty;
+            }
+
+            var item = _run.ShopRelics[index];
+            var def = WebGameData.GetRelicByName(item.DisplayName);
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("== 船坞 ==");
-            sb.AppendLine($"银元: {_run.Gold}");
-            sb.AppendLine("\n[船体改造] 点击栏位购买");
-            for (var i = 0; i < _run.ShopRelics.Count; i++)
+            sb.AppendLine(item.DisplayName);
+            sb.AppendLine(item.Bought ? "已购买" : $"价格：{item.Price} 银元");
+            if (!string.IsNullOrEmpty(def?.Desc))
             {
-                var item = _run.ShopRelics[i];
-                sb.AppendLine($"  · {item.DisplayName} ({item.Price}银) {(item.Bought ? "[已购]" : "")}");
+                sb.AppendLine(def.Desc);
             }
-            sb.AppendLine("\n[服务] 键盘 S=铸造台+1");
-            sb.AppendLine($"  · 随机铸造台倍率+1 (4银) {(_run.BlacksmithSlotUpgraded ? "[已用]" : "")}");
-            sb.AppendLine("\n[附魔] 键盘 1-2");
-            for (var i = 0; i < _run.EnchantOptions.Count; i++)
+
+            if (!item.Bought)
             {
-                var opt = _run.EnchantOptions[i];
-                sb.AppendLine($"  · {opt.TraitName} ({opt.Price}银) {(opt.Used ? "[已用]" : "")}");
+                sb.AppendLine("点击购买船体改造。");
             }
-            sb.AppendLine($"\n[R] 刷新 ({_run.BlacksmithRefreshCost}银)");
-            return sb.ToString();
+
+            return sb.ToString().TrimEnd();
+        }
+
+        public string GetRemoveOreHoverText()
+            => $"删除矿石服务\n费用：{_run.ShopRemoveCost} 银元\n从矿舱移除一块矿石。\n点击后打开矿舱选择。";
+
+        public string GetUpgradeOreHoverText(int deckIndex)
+        {
+            if (deckIndex < 0 || deckIndex >= _run.Deck.Count)
+            {
+                return "矿物强化 +5\n费用：2 银元起\n点击后打开矿舱选择要强化的矿石。";
+            }
+
+            var entry = _run.Deck[deckIndex];
+            var costKey = entry.OreId + "_" + deckIndex;
+            if (!_run.ShopUpgradeCosts.ContainsKey(costKey))
+            {
+                _run.ShopUpgradeCosts[costKey] = 2;
+            }
+
+            var cost = _run.ShopUpgradeCosts[costKey];
+            var ore = _oreCatalog?.Get(entry.OreId);
+            var name = ore?.DisplayName ?? entry.OreId;
+            return $"矿物强化 +5\n目标：{name}\n费用：{cost} 银元\n永久 +5 强度。";
+        }
+
+        public string GetRefreshRefineryHoverText()
+        {
+            var cost = _run.ShopRefreshCost;
+            if (_run.HasFirstRefreshFree && !_run.ShopFirstRefreshUsed)
+            {
+                cost = 0;
+            }
+
+            return cost <= 0
+                ? "刷新精炼厂\n老主顾：本次免费\n重新生成商品栏。"
+                : $"刷新精炼厂\n费用：{cost} 银元\n重新生成商品栏。";
+        }
+
+        public string GetRefreshShipyardHoverText()
+        {
+            var cost = _run.BlacksmithRefreshCost;
+            return $"刷新船坞\n费用：{cost} 银元\n重新生成改造与附魔选项。";
+        }
+
+        public string GetUpgradeSlotHoverText()
+            => _run.BlacksmithSlotUpgraded
+                ? "铸造台强化\n本船坞已使用过。"
+                : "铸造台强化\n费用：4 银元\n随机一座铸造台倍率 +1。\n键盘 S 确认。";
+
+        public string GetEnchantHoverText(int index)
+        {
+            if (index < 0 || index >= _run.EnchantOptions.Count)
+            {
+                return string.Empty;
+            }
+
+            var opt = _run.EnchantOptions[index];
+            var cost = opt.Price;
+            if (_run.BlacksmithFirstEnchantFree && !_run.BlacksmithFirstEnchantUsed)
+            {
+                cost = 0;
+            }
+
+            return opt.Used
+                ? $"{opt.TraitName}\n已使用。"
+                : $"{opt.TraitName}\n费用：{cost} 银元\n为矿舱首块矿石附加词条。\n键盘 {index + 1} 确认。";
         }
     }
 }

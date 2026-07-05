@@ -700,6 +700,11 @@ namespace NineGrid.GameFlow
         {
             UpdateEnemyDescriptionHover();
 
+            if (hydraulicScene != null && (hydraulicScene.IsActive || hydraulicScene.IsBusy))
+            {
+                return;
+            }
+
             // 互撞演出进行时，绞盘由 WinchCrankController 独占鼠标；此处不再处理选船点击。
             if (_ramming)
             {

@@ -42,9 +42,10 @@ namespace NineGrid.GameFlow
             [System.NonSerialized] public bool Hovering;
         }
 
-        sealed class PanelClickTarget
+        sealed class PanelTarget
         {
             public Collider2D Collider;
+            public Func<string> GetHoverText;
             public Action OnClick;
         }
 
@@ -67,12 +68,19 @@ namespace NineGrid.GameFlow
         [Tooltip("入场点位未指定时，展开位置向左偏移量（世界单位）。")]
         [SerializeField] float offscreenLeftOffset = 12f;
 
+        [Header("矿石库 / 金币")]
+        [SerializeField] OreInventoryPanel oreInventoryPanel;
+
         ShopController _shop;
         TMP_Text _shopDescriptionText;
-        readonly List<PanelClickTarget> _refineryClickTargets = new List<PanelClickTarget>(8);
-        readonly List<PanelClickTarget> _shipyardClickTargets = new List<PanelClickTarget>(4);
+        TMP_Text _goldCountText;
+        Transform _refineryGoldIcon;
+        Transform _shipyardGoldIcon;
+        readonly List<PanelTarget> _refineryPanelTargets = new List<PanelTarget>(8);
+        readonly List<PanelTarget> _shipyardPanelTargets = new List<PanelTarget>(4);
         readonly List<(Transform slot, SpriteRenderer renderer)> _refineryOreSlots = new List<(Transform, SpriteRenderer)>(5);
         readonly List<SpriteRenderer> _shipyardRelicSlots = new List<SpriteRenderer>(3);
+        PanelTarget _hoveredPanelTarget;
         bool _shopInitialized;
         bool _panelBindingsReady;
         bool _left;
@@ -157,13 +165,20 @@ namespace NineGrid.GameFlow
 
             HandleShopInput();
 
+            if (oreInventoryPanel != null && oreInventoryPanel.IsSelectionMode)
+            {
+                return;
+            }
+
             if (refinery.Open)
             {
-                HandlePanelClicks(_refineryClickTargets, refinery);
+                HandlePanelHover(_refineryPanelTargets);
+                HandlePanelClicks(_refineryPanelTargets, refinery);
             }
             else if (shipyard.Open)
             {
-                HandlePanelClicks(_shipyardClickTargets, shipyard);
+                HandlePanelHover(_shipyardPanelTargets);
+                HandlePanelClicks(_shipyardPanelTargets, shipyard);
             }
 
             var clicked = FlowInput.PrimaryClickThisFrame();
@@ -215,7 +230,9 @@ namespace NineGrid.GameFlow
             _left = true;
             Left?.Invoke();
             HideNotice();
-            HideShopDescription();
+            HideShopHud();
+
+            oreInventoryPanel?.Close();
 
             HidePanelImmediate(refinery);
             HidePanelImmediate(shipyard);
@@ -313,6 +330,7 @@ namespace NineGrid.GameFlow
             }
             else
             {
+                ClearPanelHover();
                 HideShopDescription();
             }
 
@@ -342,15 +360,18 @@ namespace NineGrid.GameFlow
                 return;
             }
 
+            RefreshGoldDisplay();
+            ShowShopHud();
+
             if (sp == refinery)
             {
                 RefreshRefineryVisuals();
-                ShowShopDescription(_shop.GetRefineryText());
+                ShowShopDescription(_shop.GetRefineryPanelHint());
             }
             else if (sp == shipyard)
             {
                 RefreshShipyardVisuals();
-                ShowShopDescription(_shop.GetShipyardText());
+                ShowShopDescription(_shop.GetShipyardPanelHint());
             }
         }
 
@@ -416,8 +437,8 @@ namespace NineGrid.GameFlow
                 return;
             }
 
-            _refineryClickTargets.Clear();
-            _shipyardClickTargets.Clear();
+            _refineryPanelTargets.Clear();
+            _shipyardPanelTargets.Clear();
             _refineryOreSlots.Clear();
             _shipyardRelicSlots.Clear();
 
@@ -427,66 +448,104 @@ namespace NineGrid.GameFlow
             for (var i = 0; i < _refineryOreSlots.Count; i++)
             {
                 var index = i;
-                AddClickTarget(_refineryClickTargets, _refineryOreSlots[i].slot, () =>
+                AddPanelTarget(_refineryPanelTargets, _refineryOreSlots[i].slot,
+                    () => _shop.GetOreHoverText(index),
+                    () =>
+                    {
+                        if (_shop.BuyOre(index))
+                        {
+                            RefreshPanelPresentation(refinery);
+                        }
+                    });
+            }
+
+            AddPanelTarget(_refineryPanelTargets, FindDeepChild(refinery.panel, "删除矿物"),
+                () => _shop.GetRemoveOreHoverText(),
+                BeginRemoveOreSelection);
+
+            AddPanelTarget(_refineryPanelTargets, FindDeepChild(refinery.panel, "矿物强化"),
+                () => _shop.GetUpgradeOreHoverText(-1),
+                BeginUpgradeOreSelection);
+
+            AddPanelTarget(_refineryPanelTargets, FindDeepChild(refinery.panel, "刷新商店"),
+                () => _shop.GetRefreshRefineryHoverText(),
+                () =>
                 {
-                    if (_shop.BuyOre(index))
+                    if (_shop.RefreshRefinery())
                     {
                         RefreshPanelPresentation(refinery);
                     }
                 });
-            }
-
-            AddClickTarget(_refineryClickTargets, FindDeepChild(refinery.panel, "删除矿物"), () =>
-            {
-                var deck = RunData.Ensure().Deck;
-                if (deck.Count == 0)
-                {
-                    ShowNotice("矿舱已空，无法删除。");
-                    return;
-                }
-
-                if (_shop.RemoveOre(deck.Count - 1))
-                {
-                    RefreshPanelPresentation(refinery);
-                }
-            });
-
-            AddClickTarget(_refineryClickTargets, FindDeepChild(refinery.panel, "矿物强化"), () =>
-            {
-                var deck = RunData.Ensure().Deck;
-                if (deck.Count == 0)
-                {
-                    ShowNotice("矿舱已空，无法强化。");
-                    return;
-                }
-
-                if (_shop.UpgradeOre(0))
-                {
-                    RefreshPanelPresentation(refinery);
-                }
-            });
-
-            AddClickTarget(_refineryClickTargets, FindDeepChild(refinery.panel, "刷新商店"), () =>
-            {
-                if (_shop.RefreshRefinery())
-                {
-                    RefreshPanelPresentation(refinery);
-                }
-            });
 
             for (var i = 0; i < _shipyardRelicSlots.Count; i++)
             {
                 var index = i;
-                AddClickTarget(_shipyardClickTargets, _shipyardRelicSlots[i].transform, () =>
-                {
-                    if (_shop.BuyRelic(index))
+                AddPanelTarget(_shipyardPanelTargets, _shipyardRelicSlots[i].transform,
+                    () => _shop.GetRelicHoverText(index),
+                    () =>
                     {
-                        RefreshPanelPresentation(shipyard);
-                    }
-                });
+                        if (_shop.BuyRelic(index))
+                        {
+                            RefreshPanelPresentation(shipyard);
+                        }
+                    });
             }
 
-            _panelBindingsReady = _refineryClickTargets.Count > 0 || _shipyardClickTargets.Count > 0;
+            _panelBindingsReady = _refineryPanelTargets.Count > 0 || _shipyardPanelTargets.Count > 0;
+        }
+
+        void BeginRemoveOreSelection()
+        {
+            if (oreInventoryPanel == null)
+            {
+                ShowNotice("未找到矿石库面板。");
+                return;
+            }
+
+            var deck = RunData.Ensure().Deck;
+            if (deck.Count == 0)
+            {
+                ShowNotice("矿舱已空，无法删除。");
+                return;
+            }
+
+            oreInventoryPanel.BeginSelection(
+                deckIndex =>
+                {
+                    if (_shop.RemoveOre(deckIndex))
+                    {
+                        RefreshPanelPresentation(refinery);
+                    }
+                },
+                () => RefreshPanelPresentation(refinery),
+                $"选择要删除的矿石（费用 {RunData.Ensure().ShopRemoveCost} 银元）");
+        }
+
+        void BeginUpgradeOreSelection()
+        {
+            if (oreInventoryPanel == null)
+            {
+                ShowNotice("未找到矿石库面板。");
+                return;
+            }
+
+            var deck = RunData.Ensure().Deck;
+            if (deck.Count == 0)
+            {
+                ShowNotice("矿舱已空，无法强化。");
+                return;
+            }
+
+            oreInventoryPanel.BeginSelection(
+                deckIndex =>
+                {
+                    if (_shop.UpgradeOre(deckIndex))
+                    {
+                        RefreshPanelPresentation(refinery);
+                    }
+                },
+                () => RefreshPanelPresentation(refinery),
+                "选择要强化的矿石（+5 强度，费用递增）");
         }
 
         void CacheRefineryOreSlots()
@@ -524,7 +583,7 @@ namespace NineGrid.GameFlow
             }
         }
 
-        static void AddClickTarget(List<PanelClickTarget> targets, Transform transform, Action onClick)
+        static void AddPanelTarget(List<PanelTarget> targets, Transform transform, Func<string> getHoverText, Action onClick)
         {
             if (transform == null || onClick == null)
             {
@@ -537,10 +596,67 @@ namespace NineGrid.GameFlow
                 return;
             }
 
-            targets.Add(new PanelClickTarget { Collider = collider, OnClick = onClick });
+            targets.Add(new PanelTarget
+            {
+                Collider = collider,
+                GetHoverText = getHoverText,
+                OnClick = onClick,
+            });
         }
 
-        void HandlePanelClicks(List<PanelClickTarget> targets, ServicePanel panelState)
+        void HandlePanelHover(List<PanelTarget> targets)
+        {
+            if (targets.Count == 0 || !TryGetPointerWorldPosition(out var worldPoint))
+            {
+                ClearPanelHover();
+                return;
+            }
+
+            PanelTarget hit = null;
+            for (var i = 0; i < targets.Count; i++)
+            {
+                var target = targets[i];
+                if (target.Collider != null && target.Collider.enabled && target.Collider.OverlapPoint(worldPoint))
+                {
+                    hit = target;
+                    break;
+                }
+            }
+
+            if (hit == null)
+            {
+                ClearPanelHover();
+                if (refinery.Open)
+                {
+                    ShowShopDescription(_shop.GetRefineryPanelHint());
+                }
+                else if (shipyard.Open)
+                {
+                    ShowShopDescription(_shop.GetShipyardPanelHint());
+                }
+
+                return;
+            }
+
+            if (_hoveredPanelTarget == hit)
+            {
+                return;
+            }
+
+            _hoveredPanelTarget = hit;
+            var text = hit.GetHoverText?.Invoke();
+            if (!string.IsNullOrEmpty(text))
+            {
+                ShowShopDescription(text);
+            }
+        }
+
+        void ClearPanelHover()
+        {
+            _hoveredPanelTarget = null;
+        }
+
+        void HandlePanelClicks(List<PanelTarget> targets, ServicePanel panelState)
         {
             if (!panelState.Open || !FlowInput.PrimaryClickThisFrame() || targets.Count == 0)
             {
@@ -633,7 +749,7 @@ namespace NineGrid.GameFlow
 
         void ShowShopDescription(string text)
         {
-            CacheShopDescriptionText();
+            CacheShopUi();
             if (_shopDescriptionText == null)
             {
                 return;
@@ -651,9 +767,43 @@ namespace NineGrid.GameFlow
             }
         }
 
+        void ShowShopHud()
+        {
+            CacheShopUi();
+            RefreshGoldDisplay();
+            if (_goldCountText != null)
+            {
+                _goldCountText.gameObject.SetActive(true);
+            }
+        }
+
+        void HideShopHud()
+        {
+            HideShopDescription();
+            ClearPanelHover();
+            if (_goldCountText != null)
+            {
+                _goldCountText.gameObject.SetActive(false);
+            }
+        }
+
+        void RefreshGoldDisplay()
+        {
+            CacheShopUi();
+            if (_goldCountText != null)
+            {
+                _goldCountText.text = RunData.Ensure().Gold.ToString();
+            }
+        }
+
         void CacheShopDescriptionText()
         {
-            if (_shopDescriptionText != null)
+            CacheShopUi();
+        }
+
+        void CacheShopUi()
+        {
+            if (_shopDescriptionText != null && _goldCountText != null)
             {
                 return;
             }
@@ -664,8 +814,27 @@ namespace NineGrid.GameFlow
                 return;
             }
 
-            var found = FindDeepChild(uiRoot, "精炼厂/船坞通用介绍文字框");
-            _shopDescriptionText = found != null ? found.GetComponent<TMP_Text>() : null;
+            if (_shopDescriptionText == null)
+            {
+                var desc = FindDeepChild(uiRoot, "精炼厂/船坞通用介绍文字框");
+                _shopDescriptionText = desc != null ? desc.GetComponent<TMP_Text>() : null;
+            }
+
+            if (_goldCountText == null)
+            {
+                var gold = FindDeepChild(uiRoot, "金币数量");
+                _goldCountText = gold != null ? gold.GetComponent<TMP_Text>() : null;
+            }
+
+            if (_refineryGoldIcon == null && refinery.panel != null)
+            {
+                _refineryGoldIcon = FindDeepChild(refinery.panel, "金币图标");
+            }
+
+            if (_shipyardGoldIcon == null && shipyard.panel != null)
+            {
+                _shipyardGoldIcon = FindDeepChild(shipyard.panel, "金币图标");
+            }
         }
 
         bool TryGetPointerWorldPosition(out Vector2 worldPoint)
@@ -752,6 +921,13 @@ namespace NineGrid.GameFlow
                     ?? FindSelectable("离开")
                     ?? FindSelectable("返回地图");
             }
+
+            if (oreInventoryPanel == null)
+            {
+                oreInventoryPanel = FindFirstObjectByType<OreInventoryPanel>(FindObjectsInactive.Include);
+            }
+
+            CacheShopUi();
         }
 
         static SelectableSceneElement FindSelectable(string objectName)
