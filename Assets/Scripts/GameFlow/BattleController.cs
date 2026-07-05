@@ -37,6 +37,8 @@ namespace NineGrid.GameFlow
     [DisallowMultipleComponent]
     public sealed class BattleController : MonoBehaviour
     {
+        const int PrologueTutorialRamsToWin = 2;
+
         public static BattleController Instance { get; private set; }
 
         [Header("Ships")]
@@ -355,6 +357,12 @@ namespace NineGrid.GameFlow
             var playerHp = anchorHp != null && anchorHp.Capacity > 0
                 ? anchorHp.Capacity
                 : Mathf.Max(1, fallbackRamsToWin);
+            if (IsPrologueTutorialBattle())
+            {
+                // 教学关：保证两次完整撞击后玩家仍存活。
+                playerHp = Mathf.Max(playerHp, PrologueTutorialRamsToWin + 1);
+            }
+
             // 应用临时心值加成
             if (run.NextBattleHeartBonus > 0)
             {
@@ -558,9 +566,27 @@ namespace NineGrid.GameFlow
             _ramsCompleted++;
             RamSucceeded?.Invoke();
 
+            var prologueTutorial = IsPrologueTutorialBattle();
+
             if (_combat == null)
             {
                 // 兜底：无战斗模型时走旧的次数判定
+                if (prologueTutorial)
+                {
+                    if (_ramsCompleted >= PrologueTutorialRamsToWin)
+                    {
+                        _won = true;
+                        HideEnemyShipForDefeat();
+                        ExitBattle();
+                    }
+                    else if (anchorHp != null && anchorHp.Capacity > 0)
+                    {
+                        anchorHp.ConsumeOne();
+                    }
+
+                    return;
+                }
+
                 bool depleted;
                 if (anchorHp != null && anchorHp.Capacity > 0)
                 {
@@ -580,10 +606,21 @@ namespace NineGrid.GameFlow
                 return;
             }
 
+            if (prologueTutorial)
+            {
+                ApplyPrologueTutorialRamRules();
+            }
+
             // 应用撞击伤害（敌舰扣血 → 判死 → 玩家挨 1 点 → 判死 → 回合清理）
             var result = _combat.ApplyRam();
             Debug.Log($"[Battle] 撞击结算：伤害 {result.Damage}，敌舰剩余 {_combat.State.EnemyHp}/{_combat.State.EnemyMaxHp}" +
                       $"，玩家剩余 {_combat.State.PlayerHp}/{_combat.State.PlayerMaxHp}");
+
+            if (prologueTutorial && result.PlayerDead)
+            {
+                RestorePrologueTutorialPlayerAlive();
+                result.PlayerDead = false;
+            }
 
             // 玩家挨打时同步船锚余量视觉（敌舰存活 → 玩家 -1）
             if (!result.EnemyDead)
@@ -613,6 +650,51 @@ namespace NineGrid.GameFlow
 
                 ApplyTurnPermissions(BattleTurnPhase.NeedForge);
             }
+        }
+
+        bool IsPrologueTutorialBattle()
+        {
+            var flow = GameFlowController.Instance;
+            return flow != null && flow.IsPrologueRun;
+        }
+
+        /// <summary>序章教学关：首撞不击沉，第二撞必击杀。</summary>
+        void ApplyPrologueTutorialRamRules()
+        {
+            if (_combat == null)
+            {
+                return;
+            }
+
+            if (_ramsCompleted < PrologueTutorialRamsToWin)
+            {
+                var maxDamage = Mathf.Max(0, _combat.State.EnemyHp - 1);
+                if (_combat.State.PendingRamDamage > maxDamage)
+                {
+                    _combat.State.PendingRamDamage = maxDamage;
+                }
+
+                return;
+            }
+
+            if (_combat.State.EnemyHp > 0)
+            {
+                _combat.State.PendingRamDamage = Mathf.Max(
+                    _combat.State.PendingRamDamage,
+                    _combat.State.EnemyHp);
+            }
+        }
+
+        void RestorePrologueTutorialPlayerAlive()
+        {
+            if (_combat == null)
+            {
+                return;
+            }
+
+            _combat.State.PlayerHp = Mathf.Max(1, _combat.State.PlayerHp);
+            _combat.State.IsEnded = false;
+            _combat.State.PlayerWon = false;
         }
 
         IEnumerator EnterRoutine()

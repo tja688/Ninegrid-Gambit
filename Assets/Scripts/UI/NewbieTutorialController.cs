@@ -29,7 +29,7 @@ namespace NineGrid.UI
                 "钻头是你的核心武器，点击玩家舰船开始钻头锻造"),
             new(
                 new Vector3(-6.39935684f, -2.50688601f, 0f),
-                NoticeChannel.Notice,
+                NoticeChannel.Factory,
                 "抓取矿石放置于锻造台上，巧妙组合矿石和锻造台来获取最大化的伤害，完成后点击锻造按钮完成锻造"),
             new(
                 new Vector3(-5.53402567f, 1.06432343f, 0f),
@@ -41,7 +41,7 @@ namespace NineGrid.UI
                 "用你最快的速度点击绞盘！点的越快撞得越猛！"),
             new(
                 new Vector3(-5.36588907f, 1.11132264f, 0f),
-                NoticeChannel.Notice,
+                NoticeChannel.Factory,
                 "当一个锻造台摆了至少两个矿石，则该台对应矿石数值会变2倍，是聚力一击还是分散攻击，要根据敌人和持有矿石的特性谨慎抉择"),
             new(
                 new Vector3(-4.40975046f, 0.0141148567f, 0f),
@@ -395,20 +395,44 @@ namespace NineGrid.UI
             ui?.SetContinueArrowActive(true);
             ui?.SetOverlayActive(true);
 
-            var body = beat.Text + "\n\n点击继续…";
+            var body = stepIndex == 0 ? beat.Text + "\n\n点击继续…" : beat.Text;
+            var holdsChannel = false;
             if (notice == null)
             {
                 Debug.LogWarning("[NewbieTutorial] NoticeSystem 缺失，无法显示教程。");
             }
             else
             {
-                notice.Show(beat.Channel, body, 0f);
+                if (beat.Channel == NoticeChannel.Factory)
+                {
+                    notice.AcquireChannel(NoticeChannel.Factory, this);
+                    holdsChannel = true;
+                    notice.ShowHeld(NoticeChannel.Factory, body, this, 0f);
+                }
+                else
+                {
+                    notice.Show(beat.Channel, body, 0f);
+                }
             }
 
             Debug.Log($"[NewbieTutorial] 显示步骤 {stepIndex + 1}/{StepCount}：{beat.Text}");
 
             _awaitingDismiss = true;
-            yield return new WaitUntil(() => !_awaitingDismiss);
+            while (_awaitingDismiss)
+            {
+                if (holdsChannel && notice != null)
+                {
+                    notice.ShowHeld(NoticeChannel.Factory, body, this, 0f);
+                }
+
+                TryConsumeDismissClick();
+                yield return null;
+            }
+
+            if (holdsChannel && notice != null)
+            {
+                notice.ReleaseChannel(this);
+            }
 
             notice?.Hide();
             ui?.SetContinueArrowActive(false);
@@ -440,7 +464,9 @@ namespace NineGrid.UI
 
             _showing = false;
             _awaitingDismiss = false;
-            UiSystem.Instance?.Notice?.Hide();
+            var notice = UiSystem.Instance?.Notice;
+            notice?.ReleaseChannel(this);
+            notice?.Hide();
             UiSystem.Instance?.SetContinueArrowActive(false);
             RestoreArrowPosition();
             ClearPointerBlock();

@@ -304,6 +304,11 @@ namespace NineGrid.GameFlow
                 return;
             }
 
+            if (notice.IsChannelHeld(NoticeChannel.Factory))
+            {
+                return;
+            }
+
             if (text.Length > maxChars)
             {
                 text = text.Substring(0, maxChars);
@@ -343,6 +348,11 @@ namespace NineGrid.GameFlow
             ClearOreDisplayState();
             _lastFactoryText = null;
             var notice = UiSystem.Instance != null ? UiSystem.Instance.Notice : null;
+            if (notice != null && notice.IsChannelHeld(NoticeChannel.Factory))
+            {
+                return;
+            }
+
             if (notice != null && notice.IsShowing && notice.ActiveChannel == NoticeChannel.Factory)
             {
                 notice.Hide();

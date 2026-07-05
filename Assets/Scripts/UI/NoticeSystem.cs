@@ -20,9 +20,15 @@ namespace NineGrid.UI
         Coroutine _hideRoutine;
         NoticeChannel _activeChannel;
         bool _isShowing;
+        object _heldChannelOwner;
+        NoticeChannel? _heldChannel;
 
         public bool IsShowing => _isShowing;
         public NoticeChannel ActiveChannel => _activeChannel;
+
+        /// <summary>指定通道正被外部独占（如新手教程），其他来源不得写入。</summary>
+        public bool IsChannelHeld(NoticeChannel channel) =>
+            _heldChannel == channel && _heldChannelOwner != null;
         public event Action<NoticeMessage> NoticeShown;
         public event Action NoticeHidden;
 
@@ -66,6 +72,80 @@ namespace NineGrid.UI
         }
 
         public bool Show(NoticeChannel channel, string text, float duration = 2f, NoticeMessage source = null)
+        {
+            if (IsChannelHeld(channel))
+            {
+                return false;
+            }
+
+            return ApplyShow(channel, text, duration, source);
+        }
+
+        /// <summary>独占通道后由持有者强制写入（每帧刷新，压制锻造屏默认文案）。</summary>
+        public bool ShowHeld(NoticeChannel channel, string text, object owner, float duration = 0f)
+        {
+            if (!ReferenceEquals(_heldChannelOwner, owner) || _heldChannel != channel)
+            {
+                return false;
+            }
+
+            if (_isShowing && _activeChannel == channel)
+            {
+                return ApplyHeldRefresh(channel, text);
+            }
+
+            return ApplyShow(channel, text, duration);
+        }
+
+        bool ApplyHeldRefresh(NoticeChannel channel, string text)
+        {
+            if (ui == null)
+            {
+                return false;
+            }
+
+            CacheAnimators();
+            ui.SetOverlayActive(true);
+            ui.SetNoticeTextActive(channel == NoticeChannel.Notice);
+            ui.SetFactoryTextActive(channel == NoticeChannel.Factory);
+
+            var animator = GetAnimator(channel);
+            var textObject = ui.GetNoticeChannelObject(channel);
+
+            if (animator != null)
+            {
+                animator.SetText(text ?? string.Empty, hideText: false);
+                animator.SetVisibilityEntireText(true, canPlayEffects: false);
+            }
+            else if (textObject != null && textObject.TryGetComponent<TMP_Text>(out var tmp))
+            {
+                tmp.text = text ?? string.Empty;
+            }
+            else
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public void AcquireChannel(NoticeChannel channel, object owner)
+        {
+            _heldChannel = channel;
+            _heldChannelOwner = owner;
+            CancelAutoHide();
+        }
+
+        public void ReleaseChannel(object owner)
+        {
+            if (ReferenceEquals(_heldChannelOwner, owner))
+            {
+                _heldChannelOwner = null;
+                _heldChannel = null;
+            }
+        }
+
+        bool ApplyShow(NoticeChannel channel, string text, float duration, NoticeMessage source = null)
         {
             if (ui == null)
             {
@@ -111,6 +191,11 @@ namespace NineGrid.UI
         /// <summary>已在显示指定通道时原地刷新文案（用于锻造屏等实时数值）。</summary>
         public bool TryUpdateActiveText(NoticeChannel channel, string text)
         {
+            if (IsChannelHeld(channel))
+            {
+                return false;
+            }
+
             if (!_isShowing || _activeChannel != channel || ui == null)
             {
                 return false;
