@@ -48,6 +48,7 @@ namespace NineGrid.GameFlow
         [SerializeField] AnchorRammingController anchorRam;
         [SerializeField] BoreManager bores;
         [SerializeField] AnchorHpTracker anchorHp;
+        [SerializeField] EnemyHpBarController enemyHpBar;
         [SerializeField] HullModSlotsController hullModSlots;
 
         [Header("Flow (占位数值)")]
@@ -137,6 +138,7 @@ namespace NineGrid.GameFlow
             BindHydraulicEvents(forceRebind: true);
             LockPermissions();
             anchorHp?.SetVisible(false);
+            enemyHpBar?.HideImmediate();
             hullModSlots?.SetVisible(false);
             enemyInfoPanel?.HideImmediate();
         }
@@ -331,6 +333,8 @@ namespace NineGrid.GameFlow
             bores?.HideAll();
             anchorHp?.ResetFull();
             anchorHp?.SetVisible(false);
+            enemyHpBar?.PrepareForBattle();
+            enemyHpBar?.SyncFromCombat(_combat);
             hullModSlots?.SetVisible(false);
             hydraulicScene?.ResetForgeState();
         }
@@ -554,6 +558,7 @@ namespace NineGrid.GameFlow
         {
             UnlockPermissions();
             ShowBattleHud();
+            enemyHpBar?.Reveal();
 
             // 战斗开始：敌人信息面板入场；介绍文字改由 hover 敌人时瞬间显示。
             if (enemyInfoPanel != null)
@@ -799,6 +804,7 @@ namespace NineGrid.GameFlow
         void HideBattleHud()
         {
             anchorHp?.SetVisible(false);
+            enemyHpBar?.HideImmediate();
             hullModSlots?.SetVisible(false);
         }
 
@@ -911,6 +917,7 @@ namespace NineGrid.GameFlow
 
             HideEnemyDescription();
             enemyInfoPanel?.SuspendImmediate();
+            enemyHpBar?.SuspendImmediate();
         }
 
         /// <summary>锻造入场完成：自动出货 5 块矿石（对应 web drawCards(DRAW_COUNT=5)）。</summary>
@@ -946,6 +953,7 @@ namespace NineGrid.GameFlow
             }
 
             enemyInfoPanel?.ResumeImmediate();
+            enemyHpBar?.ResumeImmediate();
         }
 
         void UnlockPermissions()
@@ -1113,6 +1121,11 @@ namespace NineGrid.GameFlow
             if (hullModSlots == null)
             {
                 hullModSlots = FindFirstObjectByType<HullModSlotsController>(FindObjectsInactive.Include);
+            }
+
+            if (enemyHpBar == null)
+            {
+                enemyHpBar = FindFirstObjectByType<EnemyHpBarController>(FindObjectsInactive.Include);
             }
         }
 

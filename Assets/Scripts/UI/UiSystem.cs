@@ -1,3 +1,4 @@
+using NineGrid.Battle;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -27,12 +28,14 @@ namespace NineGrid.UI
         [SerializeField] DialogueSystem dialogueSystem;
         [SerializeField] NoticeSystem noticeSystem;
         [SerializeField] EnemyIntroducePanelController enemyIntroducePanel;
+        [SerializeField] EnemyHpBarController enemyHpBar;
 
         public DialogueSystem Dialogue => dialogueSystem;
         public NoticeSystem Notice => noticeSystem;
         /// <summary>敌人信息面板（Enemy Info Panel）。</summary>
         public EnemyIntroducePanelController EnemyInfo => enemyIntroducePanel;
         public EnemyIntroducePanelController EnemyIntroduce => enemyIntroducePanel;
+        public EnemyHpBarController EnemyHp => enemyHpBar;
         public SpriteRenderer Portrait => portraitRenderer;
         public SpriteRenderer DialogBox => dialogBoxRenderer;
         public GameObject OverlayRoot => overlayRoot;
@@ -199,6 +202,11 @@ namespace NineGrid.UI
             if (enemyIntroducePanel == null)
             {
                 enemyIntroducePanel = GetComponent<EnemyIntroducePanelController>();
+            }
+
+            if (enemyHpBar == null)
+            {
+                enemyHpBar = GetComponentInChildren<EnemyHpBarController>(true);
             }
         }
 
