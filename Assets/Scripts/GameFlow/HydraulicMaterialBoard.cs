@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using NineGrid.Battle.Combat;
+using NineGrid.GameFlow;
+using NineGrid.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 #if ENABLE_INPUT_SYSTEM
@@ -199,7 +201,7 @@ namespace NineGrid.GameFlow
 
             UpdateHoveredPiece();
 
-            if (WasPointerPressed() && TryGetPointerWorld(out var world))
+            if (FlowInput.TryGameplayClick() && TryGetPointerWorld(out var world))
             {
                 if (ignoreWhenPointerOverUi && IsPointerOverUi())
                 {

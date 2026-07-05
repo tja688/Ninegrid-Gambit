@@ -131,6 +131,7 @@ namespace NineGrid.GameFlow
         /// <summary>从主菜单开始一局：始终从序章进入。</summary>
         public void StartNewRun()
         {
+            NewbieTutorialController.SetSessionEligible(false);
             RunData.StartNewRun();
             EnterState(GameFlowState.Prologue);
             RunStarted?.Invoke();
@@ -233,6 +234,7 @@ namespace NineGrid.GameFlow
 
         public void GoToMainMenu()
         {
+            NewbieTutorialController.SetSessionEligible(false);
             RunData.ClearSave();
             EnterState(GameFlowState.MainMenu);
         }
@@ -250,15 +252,18 @@ namespace NineGrid.GameFlow
             if (string.Equals(activeScene, GameFlowScenes.MainPanel, StringComparison.Ordinal))
             {
                 initial = GameFlowState.MainMenu;
+                NewbieTutorialController.SetSessionEligible(false);
             }
             else if (enterPrologueOnStart)
             {
                 initial = GameFlowState.Prologue;
+                NewbieTutorialController.SetSessionEligible(true);
             }
             else
             {
                 MarkPrologueCompleted();
                 initial = GameFlowState.Battle0;
+                NewbieTutorialController.SetSessionEligible(false);
             }
 
             _booted = true;

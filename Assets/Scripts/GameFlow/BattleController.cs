@@ -657,6 +657,7 @@ namespace NineGrid.GameFlow
             _routine = null;
             _state = BattlePhaseState.Active;
             EnterCompleted?.Invoke();
+            NewbieTutorialController.NotifyBattleEnterCompleted();
             Debug.Log("[Battle] Active");
         }
 
@@ -770,7 +771,7 @@ namespace NineGrid.GameFlow
                 return;
             }
 
-            if (!WasPrimaryClickPressedThisFrame())
+            if (!FlowInput.TryGameplayClick())
             {
                 return;
             }
@@ -1348,24 +1349,6 @@ namespace NineGrid.GameFlow
         {
             var go = GameObject.Find(objectName);
             return go != null ? go.transform : null;
-        }
-
-        static bool WasPrimaryClickPressedThisFrame()
-        {
-            // 鼠标点击：旧 Input 优先，新 Input System 兜底。
-            if (Input.GetMouseButtonDown(0))
-            {
-                return true;
-            }
-
-#if ENABLE_INPUT_SYSTEM
-            var mouse = Mouse.current;
-            if (mouse != null && mouse.leftButton.wasPressedThisFrame)
-            {
-                return true;
-            }
-#endif
-            return false;
         }
     }
 }

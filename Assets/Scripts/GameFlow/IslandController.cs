@@ -101,6 +101,8 @@ namespace NineGrid.GameFlow
         public event Action ShipyardOpened;
         public event Action PanelSwitched;
         public event Action Left;
+        /// <summary>岛屿场景就绪（面板初始化完成）。</summary>
+        public event Action VisitPrepared;
 
         void OnEnable()
         {
@@ -169,6 +171,7 @@ namespace NineGrid.GameFlow
             _refineryBindingsReady = false;
             _shipyardBindingsReady = false;
             BindPanelClickTargets();
+            VisitPrepared?.Invoke();
         }
 
         void InitShop()

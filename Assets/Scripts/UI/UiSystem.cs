@@ -56,6 +56,7 @@ namespace NineGrid.UI
             DontDestroyOnLoad(gameObject);
             EnsureEventSystemPersists();
             EnsureRunHudController();
+            EnsureNewbieTutorialController();
             CacheReferencesIfNeeded();
             HideAllImmediate();
             SceneManager.sceneLoaded += OnSceneLoaded;
@@ -190,6 +191,14 @@ namespace NineGrid.UI
                 NoticeChannel.Factory => factoryTextObject,
                 _ => noticeTextObject,
             };
+        }
+
+        static void EnsureNewbieTutorialController()
+        {
+            if (Instance != null && Instance.GetComponent<NewbieTutorialController>() == null)
+            {
+                Instance.gameObject.AddComponent<NewbieTutorialController>();
+            }
         }
 
         static void EnsureRunHudController()

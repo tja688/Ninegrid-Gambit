@@ -1,4 +1,5 @@
 using System;
+using NineGrid.GameFlow;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -134,7 +135,7 @@ namespace NineGrid.Battle
 
             float dt = Time.unscaledDeltaTime;
 
-            if (WasClickThisFrame() && HitTestPointer())
+            if (FlowInput.TryGameplayClick() && HitTestPointer())
             {
                 _intensityRaw = Mathf.Min(1f, _intensityRaw + clickGain);
                 Clicked?.Invoke();
