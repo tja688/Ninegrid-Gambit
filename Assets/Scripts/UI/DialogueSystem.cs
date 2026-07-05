@@ -323,7 +323,8 @@ namespace NineGrid.UI
 
             ui.SetOverlayActive(true);
             ui.SetDialogTextActive(true);
-            ui.SetContinueArrowActive(true);
+            // 指向箭头由教学/提醒脚本显式控制，对话默认不弹出。
+            ui.SetContinueArrowActive(false);
 
             if (dialogAnimator == null)
             {

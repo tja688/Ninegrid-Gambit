@@ -45,6 +45,7 @@ namespace NineGrid.GameFlow
         [SerializeField] AnchorRammingController anchorRam;
         [SerializeField] BoreManager bores;
         [SerializeField] AnchorHpTracker anchorHp;
+        [SerializeField] HullModSlotsController hullModSlots;
 
         [Header("Flow (占位数值)")]
         [Tooltip("船锚余量组件缺失时的兜底撞击次数：撞满该次数即算打完本场。")]
@@ -72,6 +73,7 @@ namespace NineGrid.GameFlow
         bool _anchorWarned;
         int _ramsCompleted;
         bool _won;
+        bool _enemyDescVisible;
         readonly bool[] _pendingBoreOccupancy = new bool[BoreManager.BoreCount];
 
         public BattlePhaseState State => _state;
@@ -107,6 +109,8 @@ namespace NineGrid.GameFlow
             ResolveRefs();
             BindHydraulicEvents();
             LockPermissions();
+            anchorHp?.SetVisible(false);
+            hullModSlots?.SetVisible(false);
             enemyInfoPanel?.HideImmediate();
         }
 
@@ -226,6 +230,8 @@ namespace NineGrid.GameFlow
 
             bores?.HideAll();
             anchorHp?.ResetFull();
+            anchorHp?.SetVisible(false);
+            hullModSlots?.SetVisible(false);
             hydraulicScene?.ResetForgeState();
         }
 
@@ -402,8 +408,9 @@ namespace NineGrid.GameFlow
         IEnumerator EnterRoutine()
         {
             UnlockPermissions();
+            ShowBattleHud();
 
-            // 战斗开始：敌人信息面板入场，介绍文字默认显示，战斗中保持。
+            // 战斗开始：敌人信息面板入场；介绍文字改由 hover 敌人时瞬间显示。
             if (enemyInfoPanel != null)
             {
                 var enterDone = false;
@@ -453,6 +460,8 @@ namespace NineGrid.GameFlow
         IEnumerator ExitRoutine()
         {
             LockPermissions();
+            HideBattleHud();
+            HideEnemyDescription();
 
             // 若锻造子场景开着，先常规退场。
             if (hydraulicScene != null
@@ -527,6 +536,8 @@ namespace NineGrid.GameFlow
 
         void UpdateActiveCombat()
         {
+            UpdateEnemyDescriptionHover();
+
             // 互撞演出进行时，绞盘由 WinchCrankController 独占鼠标；此处不再处理选船点击。
             if (_ramming)
             {
@@ -562,6 +573,66 @@ namespace NineGrid.GameFlow
 
                 TryEnterAnchorMode();
             }
+        }
+
+        void UpdateEnemyDescriptionHover()
+        {
+            if (enemyInfoPanel == null || enemySelectable == null)
+            {
+                return;
+            }
+
+            // 锻造子场景开启时不显示敌人描述。
+            if (hydraulicScene != null && (hydraulicScene.IsActive || hydraulicScene.IsBusy))
+            {
+                HideEnemyDescription();
+                return;
+            }
+
+            var hovered = pointerSelector != null ? pointerSelector.Hovered : null;
+            var onEnemy = hovered == enemySelectable;
+            if (onEnemy)
+            {
+                ShowEnemyDescription();
+            }
+            else
+            {
+                HideEnemyDescription();
+            }
+        }
+
+        void ShowEnemyDescription()
+        {
+            if (_enemyDescVisible || enemyInfoPanel == null || !enemyInfoPanel.IsShown)
+            {
+                return;
+            }
+
+            enemyInfoPanel.ShowDescriptionImmediate();
+            _enemyDescVisible = true;
+        }
+
+        void HideEnemyDescription()
+        {
+            if (!_enemyDescVisible)
+            {
+                return;
+            }
+
+            enemyInfoPanel?.HideDescriptionImmediate();
+            _enemyDescVisible = false;
+        }
+
+        void ShowBattleHud()
+        {
+            anchorHp?.SetVisible(true);
+            hullModSlots?.SetVisible(true);
+        }
+
+        void HideBattleHud()
+        {
+            anchorHp?.SetVisible(false);
+            hullModSlots?.SetVisible(false);
         }
 
         void ShowNotice(string text)
@@ -647,6 +718,7 @@ namespace NineGrid.GameFlow
                 return;
             }
 
+            HideEnemyDescription();
             enemyInfoPanel?.SuspendImmediate();
         }
 
@@ -673,6 +745,7 @@ namespace NineGrid.GameFlow
         {
             CanEnterForgeMode = false;
             CanEnterAnchorMode = false;
+            HideEnemyDescription();
             SetSelectableEnabled(playerSelectable, false);
             SetSelectableEnabled(enemySelectable, false);
 
@@ -830,6 +903,11 @@ namespace NineGrid.GameFlow
             if (anchorHp == null)
             {
                 anchorHp = FindFirstObjectByType<AnchorHpTracker>(FindObjectsInactive.Include);
+            }
+
+            if (hullModSlots == null)
+            {
+                hullModSlots = FindFirstObjectByType<HullModSlotsController>(FindObjectsInactive.Include);
             }
         }
 

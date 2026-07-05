@@ -26,6 +26,17 @@ namespace NineGrid.Battle
         {
             ResolveRefs();
             ResetFull();
+            SetVisible(false);
+        }
+
+        /// <summary>控制整组余量 UI 显隐（非战斗阶段隐藏）。</summary>
+        public void SetVisible(bool visible)
+        {
+            ResolveRefs();
+            if (iconsRoot != null)
+            {
+                iconsRoot.gameObject.SetActive(visible);
+            }
         }
 
         /// <summary>点亮全部图标，余量拉满。</summary>

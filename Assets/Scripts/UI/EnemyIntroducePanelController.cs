@@ -180,7 +180,24 @@ namespace NineGrid.UI
             SetPanelActive(true);
             _wantVisible = true;
             _state = EnemyIntroducePanelState.Shown;
-            PresentText(_pendingText);
+            HideTextVisual();
+        }
+
+        /// <summary>瞬间显示介绍文字（不改变面板状态，无 TextAnimator 入场）。</summary>
+        public void ShowDescriptionImmediate()
+        {
+            if (_suspended || _state != EnemyIntroducePanelState.Shown)
+            {
+                return;
+            }
+
+            PresentTextInstant(_pendingText);
+        }
+
+        /// <summary>瞬间隐藏介绍文字（不改变面板状态）。</summary>
+        public void HideDescriptionImmediate()
+        {
+            HideTextVisual();
         }
 
         void ClearSuspendFlags()
@@ -238,7 +255,8 @@ namespace NineGrid.UI
                 return;
             }
 
-            PresentText(_pendingText);
+            // 介绍文字改由战斗 hover 控制；面板入场时不自动亮字。
+            HideTextVisual();
             EnterCompleted?.Invoke();
         }
 
@@ -304,6 +322,31 @@ namespace NineGrid.UI
             {
                 textMesh.text = content;
             }
+        }
+
+        void PresentTextInstant(string text)
+        {
+            EnsureTextHierarchyActive();
+
+            if (textAnimator == null && textObject != null)
+            {
+                textAnimator = textObject.GetComponent<TextAnimator_TMP>();
+            }
+
+            var content = text ?? string.Empty;
+            if (textMesh != null)
+            {
+                textMesh.text = content;
+            }
+
+            if (textAnimator != null && IsTextReadyForAnimator())
+            {
+                textAnimator.SetText(content, hideText: false);
+                textAnimator.SetVisibilityEntireText(true, canPlayEffects: false);
+                return;
+            }
+
+            SetTextActive(true);
         }
 
         /// <summary>
