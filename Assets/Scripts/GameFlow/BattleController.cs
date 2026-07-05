@@ -137,9 +137,7 @@ namespace NineGrid.GameFlow
             ResolveRefs();
             BindHydraulicEvents(forceRebind: true);
             LockPermissions();
-            anchorHp?.SetVisible(false);
             enemyHpBar?.HideImmediate();
-            hullModSlots?.SetVisible(false);
             enemyInfoPanel?.HideImmediate();
         }
 
@@ -332,10 +330,8 @@ namespace NineGrid.GameFlow
 
             bores?.HideAll();
             anchorHp?.ResetFull();
-            anchorHp?.SetVisible(false);
             enemyHpBar?.PrepareForBattle();
             enemyHpBar?.SyncFromCombat(_combat);
-            hullModSlots?.SetVisible(false);
             hydraulicScene?.ResetForgeState();
         }
 
@@ -344,6 +340,7 @@ namespace NineGrid.GameFlow
             var run = RunData.Ensure();
             run.Gold += delta;
             RunData.Save();
+            PlayerRunHudController.Instance?.RefreshGold();
             if (delta != 0)
                 Debug.Log($"[Battle] 金币变化：{delta:+#;-#}（当前{run.Gold}）");
         }
@@ -557,7 +554,7 @@ namespace NineGrid.GameFlow
         IEnumerator EnterRoutine()
         {
             UnlockPermissions();
-            ShowBattleHud();
+            PlayerRunHudController.Instance?.Release(PlayerRunHudSuppressReason.PrologueOpening);
             enemyHpBar?.Reveal();
 
             // 战斗开始：敌人信息面板入场；介绍文字改由 hover 敌人时瞬间显示。
@@ -610,7 +607,6 @@ namespace NineGrid.GameFlow
         IEnumerator ExitRoutine()
         {
             LockPermissions();
-            HideBattleHud();
             HideEnemyDescription();
 
             // 若锻造子场景开着，先常规退场。
@@ -689,6 +685,7 @@ namespace NineGrid.GameFlow
                 run.SyncDeckFromCombat(allCards);
                 var flowState = GameFlowController.Instance?.CurrentState ?? GameFlowState.Battle0;
                 run.ResolveBattleWin(flowState, _combat.State.Turn, firstTurnKill: _combat.State.Turn == 1);
+                PlayerRunHudController.Instance?.RefreshGold();
                 Debug.Log($"[Battle] 战后结算完成：金币{run.Gold}，矿舱{run.Deck.Count}块");
             }
             else if (!_won)
@@ -795,19 +792,6 @@ namespace NineGrid.GameFlow
             _enemyDescVisible = false;
         }
 
-        void ShowBattleHud()
-        {
-            anchorHp?.SetVisible(true);
-            hullModSlots?.SetVisible(true);
-        }
-
-        void HideBattleHud()
-        {
-            anchorHp?.SetVisible(false);
-            enemyHpBar?.HideImmediate();
-            hullModSlots?.SetVisible(false);
-        }
-
         void ShowNotice(string text)
         {
             var notice = UiSystem.Instance != null ? UiSystem.Instance.Notice : null;
@@ -835,6 +819,7 @@ namespace NineGrid.GameFlow
 
             hydraulicScene.EnterStarted += OnForgeEnterStarted;
             hydraulicScene.EnterCompleted += OnForgeEnterCompleted;
+            hydraulicScene.ExitCompleted += OnForgeSceneFullyExited;
             hydraulicScene.ExitCompleted += OnForgeExitCompleted;
             hydraulicScene.HydraulicCompleted += OnForgeHydraulicCompleted;
             hydraulicScene.ForgeCommitted += OnForgeCommitted;
@@ -849,6 +834,7 @@ namespace NineGrid.GameFlow
             {
                 target.EnterStarted -= OnForgeEnterStarted;
                 target.EnterCompleted -= OnForgeEnterCompleted;
+                target.ExitCompleted -= OnForgeSceneFullyExited;
                 target.ExitCompleted -= OnForgeExitCompleted;
                 target.HydraulicCompleted -= OnForgeHydraulicCompleted;
                 target.ForgeCommitted -= OnForgeCommitted;
@@ -915,9 +901,15 @@ namespace NineGrid.GameFlow
                 return;
             }
 
+            PlayerRunHudController.Instance?.Suppress(PlayerRunHudSuppressReason.ForgeScene);
             HideEnemyDescription();
             enemyInfoPanel?.SuspendImmediate();
             enemyHpBar?.SuspendImmediate();
+        }
+
+        void OnForgeSceneFullyExited()
+        {
+            PlayerRunHudController.Instance?.Release(PlayerRunHudSuppressReason.ForgeScene);
         }
 
         /// <summary>锻造入场完成：自动出货 5 块矿石（对应 web drawCards(DRAW_COUNT=5)）。</summary>

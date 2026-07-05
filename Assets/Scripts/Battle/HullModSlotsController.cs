@@ -33,10 +33,9 @@ namespace NineGrid.Battle
             }
 
             EnsureSlots();
-            SetVisible(false);
         }
 
-        /// <summary>控制槽位组显隐（非战斗阶段隐藏）。</summary>
+        /// <summary>控制槽位组显隐（由 <see cref="PlayerRunHudController"/> 统一管理）。</summary>
         public void SetVisible(bool visible)
         {
             if (slotsRoot == null)

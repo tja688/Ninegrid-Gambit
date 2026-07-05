@@ -1,22 +1,10 @@
-using UnityEngine;
-
 namespace NineGrid.GameFlow
 {
     /// <summary>
-    /// 跨局持久进度（PlayerPrefs 占位，后续可换存档系统）。
+    /// 本局流程进度（存档接线已断开：仅内存态）。
     /// </summary>
     public static class GameFlowProgress
     {
-        const string PrologueCompletedKey = "NineGrid.GameFlow.PrologueCompleted";
-
-        public static bool HasCompletedPrologue
-        {
-            get => PlayerPrefs.GetInt(PrologueCompletedKey, 0) == 1;
-            set
-            {
-                PlayerPrefs.SetInt(PrologueCompletedKey, value ? 1 : 0);
-                PlayerPrefs.Save();
-            }
-        }
+        public static bool HasCompletedPrologue { get; set; }
     }
 }

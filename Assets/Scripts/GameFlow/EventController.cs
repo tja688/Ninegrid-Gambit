@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NineGrid.Data;
+using NineGrid.UI;
 using UnityEngine;
 
 namespace NineGrid.GameFlow
@@ -136,11 +137,13 @@ namespace NineGrid.GameFlow
                 case "gain_gold":
                     run.Gold += ev.ParamInt;
                     RunData.Save();
+                    PlayerRunHudController.Instance?.RefreshGold();
                     return $"获得 {ev.ParamInt} 银元（当前 {run.Gold}）。";
 
                 case "random_strategy_level":
                     run.Gold += 1;
                     RunData.Save();
+                    PlayerRunHudController.Instance?.RefreshGold();
                     return "获得 1 银元。";
 
                 case "buff_card":

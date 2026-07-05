@@ -31,10 +31,9 @@ namespace NineGrid.Battle
         {
             ResolveRefs();
             ResetFull();
-            SetVisible(false);
         }
 
-        /// <summary>控制整组余量 UI 显隐（非战斗阶段隐藏）。</summary>
+        /// <summary>控制整组余量 UI 显隐（由 <see cref="PlayerRunHudController"/> 统一管理）。</summary>
         public void SetVisible(bool visible)
         {
             ResolveRefs();

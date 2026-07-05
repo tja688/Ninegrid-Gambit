@@ -51,8 +51,8 @@ namespace NineGrid.GameFlow
     }
 
     /// <summary>
-    /// 一次 run 的全部持久化状态。跨战斗保留金币、矿舱、船体改造、铸造台升级。
-    /// 存档用 ES3（已安装）；找不到 ES3 时回退 JsonUtility+PlayerPrefs。
+    /// 一次 run 的全部运行时状态。跨战斗保留金币、矿舱、船体改造、铸造台升级。
+    /// 存档接线已断开：仅内存态，不写 PlayerPrefs。
     /// </summary>
     [Serializable]
     public sealed class RunData
@@ -114,7 +114,7 @@ namespace NineGrid.GameFlow
         {
             if (Current == null)
             {
-                Current = Load();
+                Current = new RunData();
             }
             return Current;
         }
@@ -137,55 +137,21 @@ namespace NineGrid.GameFlow
             Deck.Add(new DeckEntry("ore_laobing"));
         }
 
-        // ===== 存档 =====
-
-        const string SaveKey = "NinegridRunData";
+        // ===== 存档（已断开，保留 API 供调用点兼容） =====
 
         public static void Save()
         {
-            if (Current == null) return;
-            try
-            {
-                var json = JsonUtility.ToJson(Current);
-                PlayerPrefs.SetString(SaveKey, json);
-                PlayerPrefs.Save();
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning($"[RunData] 存档失败：{e.Message}");
-            }
+            // 存档接线已断开：保留调用点，不写盘。
         }
 
         public static RunData Load()
         {
-            try
-            {
-                if (PlayerPrefs.HasKey(SaveKey))
-                {
-                    var json = PlayerPrefs.GetString(SaveKey);
-                    var data = JsonUtility.FromJson<RunData>(json);
-                    if (data != null)
-                    {
-                        // 字典不被 JsonUtility 序列化，重建
-                        if (data.ShopUpgradeCosts == null) data.ShopUpgradeCosts = new();
-                        Debug.Log($"[RunData] 读档成功：金币={data.Gold} 矿舱={data.Deck?.Count ?? 0}块 改造={data.Relics?.Count ?? 0}件");
-                        return data;
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning($"[RunData] 读档失败：{e.Message}");
-            }
             return new RunData();
         }
 
         public static void ClearSave()
         {
-            PlayerPrefs.DeleteKey(SaveKey);
-            PlayerPrefs.Save();
             Current = null;
-            Debug.Log("[RunData] 存档已清除");
         }
 
         // ===== GameFlowState → 节点映射 =====

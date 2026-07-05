@@ -1,4 +1,5 @@
 using System;
+using NineGrid.UI;
 using QFramework;
 using UnityEngine;
 
@@ -313,6 +314,11 @@ namespace NineGrid.GameFlow
                 Debug.LogWarning("[GameFlow] 场景中没有 ProloguePerformance，直接进入战斗环节。");
                 BeginBattlePhase();
                 return;
+            }
+
+            if (includeDialogue)
+            {
+                PlayerRunHudController.Instance?.Suppress(PlayerRunHudSuppressReason.PrologueOpening);
             }
 
             var entranceState = CurrentState;

@@ -802,11 +802,6 @@ namespace NineGrid.GameFlow
             CacheShopUi();
             EnsureShopOverlayActive();
             RefreshGoldDisplay();
-            if (_goldCountObject != null)
-            {
-                _goldCountObject.SetActive(true);
-            }
-
             _shopHudVisible = true;
         }
 
@@ -814,19 +809,13 @@ namespace NineGrid.GameFlow
         {
             HideShopDescription();
             ClearPanelHover();
-            if (_goldCountObject != null)
-            {
-                _goldCountObject.SetActive(false);
-            }
-
             _shopHudVisible = false;
             TryReleaseShopOverlay();
         }
 
         void RefreshGoldDisplay()
         {
-            CacheShopUi();
-            ApplyOverlayText(_goldCountObject, _goldCountText, _goldCountAnimator, RunData.Ensure().Gold.ToString());
+            PlayerRunHudController.Instance?.RefreshGold();
         }
 
         void EnsureShopOverlayActive()
@@ -850,7 +839,8 @@ namespace NineGrid.GameFlow
             var noticeOpen = ui.Notice != null && ui.Notice.IsShowing;
             var dialogueOpen = ui.Dialogue != null && ui.Dialogue.IsOpen;
             var enemyInfoOpen = ui.EnemyInfo != null && ui.EnemyInfo.IsShown;
-            if (!noticeOpen && !dialogueOpen && !enemyInfoOpen)
+            var runHudOpen = PlayerRunHudController.Instance != null && PlayerRunHudController.Instance.WantsOverlayActive;
+            if (!noticeOpen && !dialogueOpen && !enemyInfoOpen && !runHudOpen)
             {
                 ui.SetOverlayActive(false);
             }

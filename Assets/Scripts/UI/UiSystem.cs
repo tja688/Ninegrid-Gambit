@@ -55,6 +55,7 @@ namespace NineGrid.UI
             Instance = this;
             DontDestroyOnLoad(gameObject);
             EnsureEventSystemPersists();
+            EnsureRunHudController();
             CacheReferencesIfNeeded();
             HideAllImmediate();
             SceneManager.sceneLoaded += OnSceneLoaded;
@@ -150,6 +151,14 @@ namespace NineGrid.UI
                 NoticeChannel.Factory => factoryTextObject,
                 _ => noticeTextObject,
             };
+        }
+
+        static void EnsureRunHudController()
+        {
+            if (Instance != null && Instance.GetComponent<PlayerRunHudController>() == null)
+            {
+                Instance.gameObject.AddComponent<PlayerRunHudController>();
+            }
         }
 
         void CacheReferencesIfNeeded()
