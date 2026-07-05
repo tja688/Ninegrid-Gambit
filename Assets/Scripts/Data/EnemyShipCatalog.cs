@@ -68,11 +68,6 @@ namespace NineGrid.Data
 
             var sb = new StringBuilder();
             sb.Append(displayName);
-            if (!string.IsNullOrEmpty(legacyName))
-            {
-                sb.Append("（前：").Append(legacyName).Append('）');
-            }
-
             sb.Append("\n装甲值 ").Append(armorValue);
 
             if (artilleries != null)

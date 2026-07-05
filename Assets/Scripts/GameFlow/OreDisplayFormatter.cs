@@ -24,8 +24,8 @@ namespace NineGrid.GameFlow
                 : "\u5408\u8BA1\u5F85\u63A5\u5165";
 
             return
-                $"\u9884\u8BA1\u4F24\u5BB3\uFF1A\u524D{frontDamage} \u4E2D{midDamage} \u540E{backDamage}|{totalPart}\u3002" +
-                $"\u7194\u70BC\u52A0\u6210\uFF1A\u5F53\u524D\u7194\u70BC{frontSmelt}-{midSmelt}-{backSmelt}\uFF0C" +
+                $"\u9884\u8BA1\u4F24\u5BB3\uFF1A\u5DE6\u8237{frontDamage} \u8239\u9996{midDamage} \u53F3\u8237{backDamage}|{totalPart}\u3002" +
+                $"\u7194\u70BC\u52A0\u6210\uFF1A\u5DE6\u8237\u7194\u70BC{frontSmelt}-\u8239\u9996\u7194\u70BC{midSmelt}-\u53F3\u8237\u7194\u70BC{backSmelt}\uFF0C" +
                 "\u5F53\u67D0\u94F8\u9020\u53F0\u7194\u70BC\uFF1A" +
                 "2\u5757\u77FF\u77F3\uFF1A\u94BB\u5934\u4F24\u5BB3\u500D\u7387+1\uFF0C" +
                 "4\u5757\u77FF\u77F3\uFF1A\u672C\u53F0\u6240\u6709\u77FF\u77F3\u57FA\u7840\u4F24\u5BB3\u6570\u503C+1\uFF0C" +
