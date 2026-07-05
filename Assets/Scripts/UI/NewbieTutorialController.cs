@@ -29,7 +29,7 @@ namespace NineGrid.UI
                 "钻头是你的核心武器，点击玩家舰船开始钻头锻造"),
             new(
                 new Vector3(-6.39935684f, -2.50688601f, 0f),
-                NoticeChannel.Factory,
+                NoticeChannel.Notice,
                 "抓取矿石放置于锻造台上，巧妙组合矿石和锻造台来获取最大化的伤害，完成后点击锻造按钮完成锻造"),
             new(
                 new Vector3(-5.53402567f, 1.06432343f, 0f),
@@ -41,7 +41,7 @@ namespace NineGrid.UI
                 "用你最快的速度点击绞盘！点的越快撞得越猛！"),
             new(
                 new Vector3(-5.36588907f, 1.11132264f, 0f),
-                NoticeChannel.Factory,
+                NoticeChannel.Notice,
                 "当一个锻造台摆了至少两个矿石，则该台对应矿石数值会变2倍，是聚力一击还是分散攻击，要根据敌人和持有矿石的特性谨慎抉择"),
             new(
                 new Vector3(-4.40975046f, 0.0141148567f, 0f),

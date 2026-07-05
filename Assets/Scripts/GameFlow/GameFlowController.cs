@@ -372,17 +372,36 @@ namespace NineGrid.GameFlow
 
             var entranceState = CurrentState;
 
+            void OnEnemySailedIn()
+            {
+                performance.EnemySailedIn -= OnEnemySailedIn;
+                ApplyEnemyPresentationForEntrance();
+            }
+
             void OnPerformanceCompleted()
             {
                 performance.Completed -= OnPerformanceCompleted;
+                performance.EnemySailedIn -= OnEnemySailedIn;
                 if (CurrentState == entranceState)
                 {
                     BeginBattlePhase();
                 }
             }
 
+            performance.EnemySailedIn += OnEnemySailedIn;
             performance.Completed += OnPerformanceCompleted;
             performance.PlayEntrance(includeDialogue);
+        }
+
+        void ApplyEnemyPresentationForEntrance()
+        {
+            var battle = BattleController.Instance;
+            if (battle == null)
+            {
+                battle = FindFirstObjectByType<BattleController>();
+            }
+
+            battle?.PrepareEnemyPresentationForEntrance();
         }
 
         /// <summary>战斗环节入口。序章演出结束后 / 战斗0 直进时调用，转交 <see cref="BattleController"/>。</summary>

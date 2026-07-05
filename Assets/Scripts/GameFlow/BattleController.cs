@@ -303,6 +303,14 @@ namespace NineGrid.GameFlow
             }
         }
 
+        /// <summary>入场演出中敌方开进前切换为本场敌舰外观（不等 stay / EnterBattle）。</summary>
+        public void PrepareEnemyPresentationForEntrance()
+        {
+            ResolveEnemyCatalog();
+            ResolveCurrentEnemy();
+            ApplyCurrentEnemyPresentation();
+        }
+
         /// <summary>主流程钩子：进入战斗环节。</summary>
         public bool EnterBattle()
         {
