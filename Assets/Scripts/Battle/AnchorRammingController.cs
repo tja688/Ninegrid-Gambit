@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using DG.Tweening;
 using NinegridGambit.Grapple;
+using NineGrid.Presentation.Visuals;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -37,6 +38,8 @@ namespace NineGrid.Battle
         [SerializeField] CameraJuice cameraJuice;
         [Tooltip("互撞命中时的屏幕震动（可复用的独立效果）。")]
         [SerializeField] ScreenShakeEffect impactShake;
+        [Tooltip("敌舰受击闪白（留空则从 enemy 上找 SpriteImpactFlashEffect）。")]
+        [SerializeField] SpriteImpactFlashEffect enemyImpactFlash;
 
         [Header("拉近 / 双向奔赴")]
         [Tooltip("绞劲很低时的拉近速度（进度/秒）。与 maxApproachRate 一起决定拉近总时长（非固定秒数，随狂点变化）。")]
@@ -299,6 +302,7 @@ namespace NineGrid.Battle
             // ---- Impact：对撞反馈 ----
             _phase = RamPhase.Impact;
             KillTimeTween();
+            enemyImpactFlash?.Play();
             onImpact?.Invoke();
 
             float power = Mathf.Clamp01(Mathf.Max(impactPower, minImpactPower));
@@ -444,6 +448,11 @@ namespace NineGrid.Battle
             {
                 impactShake = GetComponent<ScreenShakeEffect>()
                     ?? GetComponentInChildren<ScreenShakeEffect>(true);
+            }
+
+            if (enemyImpactFlash == null && enemy != null)
+            {
+                enemyImpactFlash = enemy.GetComponent<SpriteImpactFlashEffect>();
             }
         }
 
