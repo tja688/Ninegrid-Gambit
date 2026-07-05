@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Febucci.TextAnimatorForUnity.TextMeshPro;
 using NineGrid.Battle;
@@ -40,8 +41,9 @@ namespace NineGrid.UI
 
         bool _inRun;
         bool _flowHooked;
+        Coroutine _reapplyRoutine;
 
-        /// <summary>跑局 HUD 需要 Overlay 根保持激活（供商店等逻辑参考）。</summary>
+        /// <summary>跑局 HUD 需要 Overlay 根保持激活（供 UiSystem.ShouldKeepOverlayActive 参考）。</summary>
         public bool WantsOverlayActive => _inRun && _suppressions.Count == 0;
 
         void Awake()
@@ -60,6 +62,12 @@ namespace NineGrid.UI
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
             UnhookFlow();
+
+            if (_reapplyRoutine != null)
+            {
+                StopCoroutine(_reapplyRoutine);
+                _reapplyRoutine = null;
+            }
 
             if (Instance == this)
             {
@@ -80,6 +88,16 @@ namespace NineGrid.UI
             {
                 TryHookFlow(forceApply: true);
             }
+        }
+
+        void LateUpdate()
+        {
+            if (!WantsOverlayActive)
+            {
+                return;
+            }
+
+            MaintainVisibility();
         }
 
         void TryHookFlow(bool forceApply)
@@ -134,6 +152,7 @@ namespace NineGrid.UI
         {
             SyncRunState(next);
             ApplyVisibility();
+            ScheduleReapply();
         }
 
         void SyncRunState(GameFlowState? state = null)
@@ -150,6 +169,30 @@ namespace NineGrid.UI
         {
             ResolveGoldRefs();
             ResolveHudRefs();
+            SyncRunState();
+            RefreshGold();
+            ApplyVisibility();
+            ScheduleReapply();
+        }
+
+        void ScheduleReapply()
+        {
+            if (_reapplyRoutine != null)
+            {
+                StopCoroutine(_reapplyRoutine);
+            }
+
+            _reapplyRoutine = StartCoroutine(ReapplyAfterSceneSettle());
+        }
+
+        IEnumerator ReapplyAfterSceneSettle()
+        {
+            // 等一帧：让 SceneFlowDirector 淡入淡出、敌人面板退场等异步逻辑先跑完。
+            yield return null;
+            yield return null;
+            yield return new WaitForEndOfFrame();
+
+            _reapplyRoutine = null;
             SyncRunState();
             RefreshGold();
             ApplyVisibility();
@@ -196,7 +239,7 @@ namespace NineGrid.UI
 
         void ApplyVisibility()
         {
-            var visible = _inRun && _suppressions.Count == 0;
+            var visible = WantsOverlayActive;
 
             if (visible)
             {
@@ -210,25 +253,20 @@ namespace NineGrid.UI
 
             if (!visible)
             {
-                TryReleaseOverlay();
+                UiSystem.Instance?.SetOverlayActive(false);
             }
         }
 
-        void TryReleaseOverlay()
+        void MaintainVisibility()
         {
-            var ui = UiSystem.Instance;
-            if (ui == null)
-            {
-                return;
-            }
+            ResolveGoldRefs();
+            ResolveHudRefs();
 
-            var noticeOpen = ui.Notice != null && ui.Notice.IsShowing;
-            var dialogueOpen = ui.Dialogue != null && ui.Dialogue.IsOpen;
-            var enemyInfoOpen = ui.EnemyInfo != null && ui.EnemyInfo.IsShown;
-            if (!noticeOpen && !dialogueOpen && !enemyInfoOpen)
-            {
-                ui.SetOverlayActive(false);
-            }
+            UiSystem.Instance?.SetOverlayActive(true);
+            SetRootActive(goldCountRoot, true);
+            SetRootActive(goldIconRoot, true);
+            _anchorHp?.SetVisible(true);
+            _hullModSlots?.SetVisible(true);
         }
 
         static void SetRootActive(GameObject go, bool active)
@@ -250,10 +288,7 @@ namespace NineGrid.UI
 
             if (goldIconRoot == null)
             {
-                var overlay = UiSystem.Instance != null ? UiSystem.Instance.OverlayRoot : null;
-                var iconScope = overlay != null ? overlay.transform : uiRoot;
-                goldIconRoot = FindDeepChild(iconScope, "金币图标")?.gameObject
-                    ?? FindDeepChild(uiRoot, "金币图标")?.gameObject;
+                goldIconRoot = FindDeepChild(uiRoot, "金币图标")?.gameObject;
             }
 
             if (goldCountRoot != null && _goldText == null)

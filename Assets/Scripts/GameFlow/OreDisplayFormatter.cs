@@ -4,33 +4,27 @@ using NineGrid.Battle.Combat;
 namespace NineGrid.GameFlow
 {
     /// <summary>
-    /// 锻造显示屏（≤51 字）矿石信息 / 空闲预览格式化：机制描述分段轮播。
+    /// 锻造显示屏格式化：矿石信息（≤51 字轮播）；空闲态一次性展示伤害与熔炼说明。
     /// </summary>
     public static class OreDisplayFormatter
     {
         public const int MaxChars = 51;
+        public const int MaxIdleChars = 200;
 
-        /// <summary>无聚焦时轮播段：伤害预览、熔炼加成现状、叠矿规则说明。</summary>
-        public static List<string> BuildIdleForgeSegments(
+        /// <summary>无聚焦时整段展示：伤害预览 + 熔炼加成现状 + 叠矿规则。</summary>
+        public static string BuildIdleForgeText(
             int frontDamage, int midDamage, int backDamage, int totalDamage,
             int frontSmelt, int midSmelt, int backSmelt,
             bool combatReady)
         {
-            var segments = new List<string>(4);
-            if (combatReady)
-            {
-                AddSegment(segments, $"\u524D{frontDamage} \u4E2D{midDamage} \u540E{backDamage} | \u5408\u8BA1{totalDamage}");
-            }
-            else
-            {
-                AddSegment(segments, $"\u524D{frontDamage} \u4E2D{midDamage} \u540E{backDamage} | \u5F85\u63A5\u5165");
-            }
+            var damageLine = combatReady
+                ? $"\u524D{frontDamage} \u4E2D{midDamage} \u540E{backDamage} | \u5408\u8BA1{totalDamage}"
+                : $"\u524D{frontDamage} \u4E2D{midDamage} \u540E{backDamage} | \u5F85\u63A5\u5165";
 
-            AddSegment(segments,
-                $"\u7194\u70BC\u52A0\u6210\uFF0C\u5F53\u524D\u7194\u70BC{frontSmelt}-{midSmelt}-{backSmelt}");
-            AddSegment(segments, "\u6BCF\u53F02\u5757\uFF1A\u5947\u6570\u5C42\u672C\u53F0\u500D\u7387+1");
-            AddSegment(segments, "\u5076\u6570\u5C42\u672C\u53F0\u6240\u6709\u77FF\u77F3\u57FA\u7840+1");
-            return segments;
+            return
+                $"{damageLine}\n" +
+                $"\u7194\u70BC\u52A0\u6210\uFF0C\u5F53\u524D\u7194\u70BC{frontSmelt}-{midSmelt}-{backSmelt}\n" +
+                "\u6BCF\u53F02\u5757\uFF1A\u5947\u6570\u5C42\u672C\u53F0\u500D\u7387+1\uFF0C\u5076\u6570\u5C42\u672C\u53F0\u77FF\u77F3\u57FA\u7840+1\uFF0C\u4EE5\u6B64\u7C7B\u63A8";
         }
 
         /// <summary>砧台矿石数对应的熔炼周期（每 2 块解锁一层叠矿加成）。</summary>

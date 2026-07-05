@@ -404,16 +404,7 @@ namespace NineGrid.UI
                 return;
             }
 
-            var dialogueBusy = ui.Dialogue != null && ui.Dialogue.IsBusy;
-            var noticeShowing = ui.Notice != null && ui.Notice.IsShowing;
-            var dialogTextOn = ui.DialogTextObject != null && ui.DialogTextObject.activeSelf;
-            var noticeTextOn = ui.NoticeTextObject != null && ui.NoticeTextObject.activeSelf;
-            var factoryTextOn = ui.FactoryTextObject != null && ui.FactoryTextObject.activeSelf;
-
-            if (!dialogueBusy && !noticeShowing && !dialogTextOn && !noticeTextOn && !factoryTextOn)
-            {
-                ui.SetOverlayActive(false);
-            }
+            ui.SetOverlayActive(false);
         }
 
         void ApplyHiddenImmediate()

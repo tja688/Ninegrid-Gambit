@@ -38,6 +38,8 @@ namespace NineGrid.GameFlow
         GameFlowState? _handledState;
         bool _subscribed;
         bool _bootstrapComplete;
+        GameFlowController _boundFlow;
+        static SceneFlowDirector s_active;
 
         /// <summary>确保 GameFlow 在任何场景 Awake 之前就转为「延迟节点入口」，交由本编导驱动。</summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -57,11 +59,18 @@ namespace NineGrid.GameFlow
         protected override void Awake()
         {
             base.Awake();
+            // Instance getter 可能在 Awake 前写入 mInstance，导致 base 未置 mEnabled。
+            if (mInstance == this)
+            {
+                mEnabled = true;
+            }
+
             if (!mEnabled)
             {
                 return;
             }
 
+            s_active = this;
             gameObject.name = "[SceneFlowDirector]";
             GameFlowController.DeferNodeEntry = true;
             BuildOverlay();
@@ -101,8 +110,36 @@ namespace NineGrid.GameFlow
 
         void OnDestroy()
         {
+            if (s_active == this)
+            {
+                s_active = null;
+            }
+
             Unsubscribe();
             UnbindBattle();
+        }
+
+        /// <summary>由 <see cref="GameFlowController"/> 在 FSM 切换时直接调用，不依赖 event 订阅时序。</summary>
+        internal static void HandleStateChanged(GameFlowState state)
+        {
+            EnsureActiveDirector();
+            if (s_active == null)
+            {
+                Debug.LogError("[SceneFlow] SceneFlowDirector 未就绪，无法切换场景。");
+                return;
+            }
+
+            s_active.RouteTo(state);
+        }
+
+        static void EnsureActiveDirector()
+        {
+            if (s_active != null)
+            {
+                return;
+            }
+
+            _ = Instance;
         }
 
         IEnumerator BootstrapRoutine()
@@ -130,7 +167,19 @@ namespace NineGrid.GameFlow
                 return;
             }
 
-            flow.StateChanged += OnStateChanged;
+            if (_boundFlow != null && _boundFlow != flow)
+            {
+                _boundFlow.StateChanged -= OnStateChanged;
+                _subscribed = false;
+            }
+
+            if (_subscribed)
+            {
+                return;
+            }
+
+            _boundFlow = flow;
+            _boundFlow.StateChanged += OnStateChanged;
             _subscribed = true;
         }
 
@@ -141,11 +190,12 @@ namespace NineGrid.GameFlow
                 return;
             }
 
-            if (GameFlowController.Instance != null)
+            if (_boundFlow != null)
             {
-                GameFlowController.Instance.StateChanged -= OnStateChanged;
+                _boundFlow.StateChanged -= OnStateChanged;
             }
 
+            _boundFlow = null;
             _subscribed = false;
         }
 
@@ -181,15 +231,30 @@ namespace NineGrid.GameFlow
         {
             _handledState = state;
 
+            Debug.Log(
+                $"[SceneFlow] RouteTo {state} active={SceneManager.GetActiveScene().name}");
+
             UnbindBattle();
 
             if (_routine != null)
             {
-                StopCoroutine(_routine);
+                var host = ResolveCoroutineHost();
+                host.StopCoroutine(_routine);
                 _routine = null;
             }
 
-            _routine = StartCoroutine(TransitionRoutine(state));
+            _routine = ResolveCoroutineHost().StartCoroutine(TransitionRoutine(state));
+        }
+
+        MonoBehaviour ResolveCoroutineHost()
+        {
+            var flow = GameFlowController.Instance;
+            if (flow != null && flow.isActiveAndEnabled)
+            {
+                return flow;
+            }
+
+            return this;
         }
 
         void TryReconcileScene()

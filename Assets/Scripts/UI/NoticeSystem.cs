@@ -127,11 +127,7 @@ namespace NineGrid.UI
             ui.SetNoticeTextActive(false);
             ui.SetFactoryTextActive(false);
 
-            var dialogueOpen = ui.Dialogue != null && ui.Dialogue.IsOpen;
-            if (!dialogueOpen)
-            {
-                ui.SetOverlayActive(false);
-            }
+            ui.SetOverlayActive(false);
 
             _isShowing = false;
             NoticeHidden?.Invoke();

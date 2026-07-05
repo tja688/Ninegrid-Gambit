@@ -86,6 +86,12 @@ namespace NineGrid.GameFlow
         protected override void Awake()
         {
             base.Awake();
+            // Instance getter 可能在 Awake 前写入 mInstance，导致 base 未置 mEnabled。
+            if (mInstance == this)
+            {
+                mEnabled = true;
+            }
+
             if (!mEnabled)
             {
                 return;
@@ -276,6 +282,7 @@ namespace NineGrid.GameFlow
             {
                 StateChanged?.Invoke(previous, next);
                 Debug.Log($"[GameFlow] {previous} → {next}");
+                SceneFlowDirector.HandleStateChanged(next);
             });
         }
 

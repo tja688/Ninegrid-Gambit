@@ -79,10 +79,54 @@ namespace NineGrid.UI
 
         public void SetOverlayActive(bool active)
         {
+            if (!active && ShouldKeepOverlayActive())
+            {
+                return;
+            }
+
             if (overlayRoot != null)
             {
                 overlayRoot.SetActive(active);
             }
+        }
+
+        /// <summary>
+        /// 是否有系统仍需要 Overlay 保持激活（跑局 HUD、通知、对话等）。
+        /// 所有 <see cref="SetOverlayActive"/> false 调用都会先过此检查。
+        /// </summary>
+        public bool ShouldKeepOverlayActive()
+        {
+            if (PlayerRunHudController.Instance != null && PlayerRunHudController.Instance.WantsOverlayActive)
+            {
+                return true;
+            }
+
+            if (Notice != null && Notice.IsShowing)
+            {
+                return true;
+            }
+
+            if (Dialogue != null && Dialogue.IsBusy)
+            {
+                return true;
+            }
+
+            if (dialogTextObject != null && dialogTextObject.activeSelf)
+            {
+                return true;
+            }
+
+            if (noticeTextObject != null && noticeTextObject.activeSelf)
+            {
+                return true;
+            }
+
+            if (factoryTextObject != null && factoryTextObject.activeSelf)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         public void SetPortraitActive(bool active)

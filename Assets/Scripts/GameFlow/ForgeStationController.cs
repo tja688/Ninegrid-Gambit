@@ -12,7 +12,7 @@ namespace NineGrid.GameFlow
     /// - 开始锻造：锻造台有料才可点，触发锤头下压铸造（PlayHydraulic）。
     /// - 退出锻造：常规退场看对面，保留桌面 / 锻造台材料。
     /// - 查看矿石库：开合矿仓小面板。
-    /// Factory Text（<=51 字）：拖拽或悬停矿石时显示其信息；无聚焦时轮播伤害预览、熔炼加成现状与叠矿规则。
+    /// Factory Text：拖拽或悬停矿石时显示其信息（≤51 字轮播）；无聚焦时一次性展示伤害预览、熔炼加成与规则说明。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class ForgeStationController : MonoBehaviour
@@ -38,13 +38,7 @@ namespace NineGrid.GameFlow
         int _oreDisplaySegmentIndex;
         float _oreDisplayCarouselTimer;
 
-        List<string> _idleDisplaySegments;
-        int _idleDisplaySegmentIndex;
-        float _idleDisplayCarouselTimer;
-        string _idleDisplaySignature;
-
         const float OreDisplayCarouselInterval = 2.4f;
-        const float IdleDisplayCarouselInterval = 3.2f;
 
         public event Action ForgeRequested;
         public event Action ForgeExited;
@@ -169,7 +163,7 @@ namespace NineGrid.GameFlow
                 text = GetIdleDisplayText(board);
             }
 
-            SetFactoryText(text);
+            SetFactoryText(text, focusCard != null ? OreDisplayFormatter.MaxChars : OreDisplayFormatter.MaxIdleChars);
         }
 
         string GetOreDisplayText(CardInstance card)
@@ -182,7 +176,6 @@ namespace NineGrid.GameFlow
 
             if (_oreDisplayCard != card)
             {
-                ClearIdleDisplayState();
                 _oreDisplayCard = card;
                 _oreDisplaySegments = OreDisplayFormatter.BuildForgeSegments(card);
                 _oreDisplaySegmentIndex = 0;
@@ -246,42 +239,12 @@ namespace NineGrid.GameFlow
                 totalDamage = 0;
             }
 
-            var signature =
-                $"{frontDamage}|{midDamage}|{backDamage}|{totalDamage}|{frontSmelt}|{midSmelt}|{backSmelt}|{combatReady}";
-            if (_idleDisplaySegments == null || signature != _idleDisplaySignature)
-            {
-                _idleDisplaySegments = OreDisplayFormatter.BuildIdleForgeSegments(
-                    frontDamage, midDamage, backDamage, totalDamage,
-                    frontSmelt, midSmelt, backSmelt, combatReady);
-                _idleDisplaySignature = signature;
-                _idleDisplaySegmentIndex = 0;
-                _idleDisplayCarouselTimer = 0f;
-            }
-
-            if (_idleDisplaySegments.Count <= 1)
-            {
-                return _idleDisplaySegments[0];
-            }
-
-            _idleDisplayCarouselTimer += Time.unscaledDeltaTime;
-            if (_idleDisplayCarouselTimer >= IdleDisplayCarouselInterval)
-            {
-                _idleDisplayCarouselTimer = 0f;
-                _idleDisplaySegmentIndex = (_idleDisplaySegmentIndex + 1) % _idleDisplaySegments.Count;
-            }
-
-            return _idleDisplaySegments[_idleDisplaySegmentIndex];
+            return OreDisplayFormatter.BuildIdleForgeText(
+                frontDamage, midDamage, backDamage, totalDamage,
+                frontSmelt, midSmelt, backSmelt, combatReady);
         }
 
-        void ClearIdleDisplayState()
-        {
-            _idleDisplaySegments = null;
-            _idleDisplaySegmentIndex = 0;
-            _idleDisplayCarouselTimer = 0f;
-            _idleDisplaySignature = null;
-        }
-
-        void SetFactoryText(string text)
+        void SetFactoryText(string text, int maxChars = OreDisplayFormatter.MaxChars)
         {
             var notice = UiSystem.Instance != null ? UiSystem.Instance.Notice : null;
             if (notice == null)
@@ -289,9 +252,9 @@ namespace NineGrid.GameFlow
                 return;
             }
 
-            if (text.Length > OreDisplayFormatter.MaxChars)
+            if (text.Length > maxChars)
             {
-                text = text.Substring(0, OreDisplayFormatter.MaxChars);
+                text = text.Substring(0, maxChars);
             }
 
             // 其他系统可能会直接把 FactoryText 关掉；相同文案也要允许重新点亮。
@@ -318,7 +281,6 @@ namespace NineGrid.GameFlow
         void HideFactoryText()
         {
             ClearOreDisplayState();
-            ClearIdleDisplayState();
             _lastFactoryText = null;
             var notice = UiSystem.Instance != null ? UiSystem.Instance.Notice : null;
             if (notice != null && notice.IsShowing && notice.ActiveChannel == NoticeChannel.Factory)

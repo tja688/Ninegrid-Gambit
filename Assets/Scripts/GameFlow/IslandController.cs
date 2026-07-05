@@ -836,14 +836,7 @@ namespace NineGrid.GameFlow
                 return;
             }
 
-            var noticeOpen = ui.Notice != null && ui.Notice.IsShowing;
-            var dialogueOpen = ui.Dialogue != null && ui.Dialogue.IsOpen;
-            var enemyInfoOpen = ui.EnemyInfo != null && ui.EnemyInfo.IsShown;
-            var runHudOpen = PlayerRunHudController.Instance != null && PlayerRunHudController.Instance.WantsOverlayActive;
-            if (!noticeOpen && !dialogueOpen && !enemyInfoOpen && !runHudOpen)
-            {
-                ui.SetOverlayActive(false);
-            }
+            ui.SetOverlayActive(false);
         }
 
         static void ApplyOverlayText(
