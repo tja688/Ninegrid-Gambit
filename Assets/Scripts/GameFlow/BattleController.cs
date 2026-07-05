@@ -8,6 +8,7 @@ using NineGrid.Presentation.Visuals;
 using NineGrid.UI;
 using NinegridGambit.Grapple;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -59,10 +60,8 @@ namespace NineGrid.GameFlow
         [Header("Combat (真实战斗)")]
         [Tooltip("矿石目录 SO（留空时编辑器自动从 Assets/ScriptableObjects/Data/OreCatalog.asset 加载）。")]
         [SerializeField] OreCatalog oreCatalog;
-        [Tooltip("敌舰装甲值（HP）。默认藤蔓号 200。")]
-        [SerializeField] int enemyMaxHp = 200;
-        [Tooltip("敌舰显示名。")]
-        [SerializeField] string enemyDisplayName = "\u85E4\u8513\u53F7";
+        [Tooltip("本场敌舰数据 SO（留空时编辑器自动加载藤蔓号）。")]
+        [SerializeField] EnemyShipDataSO currentEnemy;
 
         [Header("Exit Motion")]
         [SerializeField] float playerExitDuration = 1f;
@@ -78,6 +77,7 @@ namespace NineGrid.GameFlow
         Tween _playerExitTween;
         BattlePhaseState _state = BattlePhaseState.Idle;
         bool _hydraulicEventsBound;
+        HydraulicSceneController _boundHydraulicScene;
         bool _ramming;
         bool _hasForgedBore;
         bool _anchorWarned;
@@ -127,11 +127,21 @@ namespace NineGrid.GameFlow
 
             Instance = this;
             ResolveRefs();
-            BindHydraulicEvents();
+            BindHydraulicEvents(forceRebind: true);
             LockPermissions();
             anchorHp?.SetVisible(false);
             hullModSlots?.SetVisible(false);
             enemyInfoPanel?.HideImmediate();
+        }
+
+        void OnEnable()
+        {
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        void OnDisable()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
         void OnDestroy()
@@ -144,6 +154,20 @@ namespace NineGrid.GameFlow
             }
 
             KillMotion();
+        }
+
+        /// <summary>
+        /// GameFlow 常驻、MainScene 重载时液压场景是新实例；旧订阅会失效，需在此重绑。
+        /// </summary>
+        void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (!string.Equals(scene.name, GameFlowScenes.Main, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            ResolveRefs();
+            BindHydraulicEvents(forceRebind: true);
         }
 
         void Update()
@@ -233,6 +257,7 @@ namespace NineGrid.GameFlow
             }
 
             ResolveRefs();
+            BindHydraulicEvents(forceRebind: true);
             KillMotion();
             ResetBattleState();
             _state = BattlePhaseState.Entering;
@@ -250,11 +275,14 @@ namespace NineGrid.GameFlow
 
             // 初始化战斗模型（牌库 / 敌我血量 / 伤害公式）
             ResolveOreCatalog();
+            ResolveCurrentEnemy();
             _combat = new CombatModel();
             var playerHp = anchorHp != null && anchorHp.Capacity > 0
                 ? anchorHp.Capacity
                 : Mathf.Max(1, fallbackRamsToWin);
-            _combat.InitBattle(oreCatalog, enemyMaxHp, playerHp);
+            var enemyArmor = currentEnemy != null ? currentEnemy.ArmorValue : 200;
+            _combat.InitBattle(oreCatalog, enemyArmor, playerHp);
+            ApplyCurrentEnemyPresentation();
             _combat.EnemyHpChanged += (cur, max) => EnemyHpChanged?.Invoke(cur, max);
             _combat.DamageDealt += dmg => DamageDealt?.Invoke(dmg);
 
@@ -486,7 +514,7 @@ namespace NineGrid.GameFlow
                 enemyInfoPanel.EnterCompleted += OnEnterCompleted;
                 try
                 {
-                    enemyInfoPanel.RequestShow();
+                    enemyInfoPanel.RequestShow(currentEnemy != null ? currentEnemy.BuildIntroText() : null);
                 }
                 catch (Exception ex)
                 {
@@ -704,23 +732,24 @@ namespace NineGrid.GameFlow
             notice?.Show(NoticeChannel.Notice, text, 2.2f);
         }
 
-        void BindHydraulicEvents()
+        void BindHydraulicEvents(bool forceRebind = false)
         {
-            if (_hydraulicEventsBound)
+            ResolveHydraulicSceneRef();
+
+            if (hydraulicScene == null)
+            {
+                UnbindHydraulicEvents();
+                return;
+            }
+
+            if (!forceRebind
+                && _hydraulicEventsBound
+                && _boundHydraulicScene == hydraulicScene)
             {
                 return;
             }
 
-            if (hydraulicScene == null)
-            {
-                hydraulicScene = HydraulicSceneController.Instance
-                    ?? FindFirstObjectByType<HydraulicSceneController>(FindObjectsInactive.Include);
-            }
-
-            if (hydraulicScene == null)
-            {
-                return;
-            }
+            UnbindHydraulicEvents();
 
             hydraulicScene.EnterStarted += OnForgeEnterStarted;
             hydraulicScene.EnterCompleted += OnForgeEnterCompleted;
@@ -728,22 +757,34 @@ namespace NineGrid.GameFlow
             hydraulicScene.HydraulicCompleted += OnForgeHydraulicCompleted;
             hydraulicScene.ForgeCommitted += OnForgeCommitted;
             _hydraulicEventsBound = true;
+            _boundHydraulicScene = hydraulicScene;
         }
 
         void UnbindHydraulicEvents()
         {
-            if (!_hydraulicEventsBound || hydraulicScene == null)
+            var target = _boundHydraulicScene != null ? _boundHydraulicScene : hydraulicScene;
+            if (target != null)
             {
-                _hydraulicEventsBound = false;
-                return;
+                target.EnterStarted -= OnForgeEnterStarted;
+                target.EnterCompleted -= OnForgeEnterCompleted;
+                target.ExitCompleted -= OnForgeExitCompleted;
+                target.HydraulicCompleted -= OnForgeHydraulicCompleted;
+                target.ForgeCommitted -= OnForgeCommitted;
             }
 
-            hydraulicScene.EnterStarted -= OnForgeEnterStarted;
-            hydraulicScene.EnterCompleted -= OnForgeEnterCompleted;
-            hydraulicScene.ExitCompleted -= OnForgeExitCompleted;
-            hydraulicScene.HydraulicCompleted -= OnForgeHydraulicCompleted;
-            hydraulicScene.ForgeCommitted -= OnForgeCommitted;
             _hydraulicEventsBound = false;
+            _boundHydraulicScene = null;
+        }
+
+        void ResolveHydraulicSceneRef()
+        {
+            var current = HydraulicSceneController.Instance
+                ?? FindFirstObjectByType<HydraulicSceneController>(FindObjectsInactive.Include);
+
+            if (current != null)
+            {
+                hydraulicScene = current;
+            }
         }
 
         /// <summary>铸造提交：记录钻头占用 + 用真实矿石数据计算伤害并存为待应用撞击伤害。</summary>
@@ -799,11 +840,23 @@ namespace NineGrid.GameFlow
         /// <summary>锻造入场完成：自动出货 5 块矿石（对应 web drawCards(DRAW_COUNT=5)）。</summary>
         void OnForgeEnterCompleted()
         {
-            if (_state != BattlePhaseState.Active) return;
+            if (_state != BattlePhaseState.Active && _state != BattlePhaseState.Entering)
+            {
+                return;
+            }
+
             var lane = hydraulicScene?.MaterialLane;
-            if (lane == null) return;
+            if (lane == null)
+            {
+                return;
+            }
+
             // 桌面有遗留矿石时不重复抽卡（玩家退出锻造看对面后重入时保留）。
-            if (lane.SettledOnTableCount > 0) return;
+            if (lane.SettledOnTableCount > 0)
+            {
+                return;
+            }
+
             lane.AutoDeliver(CombatCalculator.DrawCount, 0.18f);
         }
 
@@ -950,18 +1003,8 @@ namespace NineGrid.GameFlow
                 pointerSelector = FindFirstObjectByType<SceneElementPointerSelector>();
             }
 
-            if (hydraulicScene == null)
-            {
-                // 液压场景默认失活，需包含未激活对象。
-                hydraulicScene = HydraulicSceneController.Instance
-                    ?? FindFirstObjectByType<HydraulicSceneController>(FindObjectsInactive.Include);
-            }
-
-            // 引用晚到时补绑锻造进出事件。
-            if (hydraulicScene != null && !_hydraulicEventsBound)
-            {
-                BindHydraulicEvents();
-            }
+            ResolveHydraulicSceneRef();
+            BindHydraulicEvents();
 
             if (enemyInfoPanel == null)
             {
@@ -1006,9 +1049,44 @@ namespace NineGrid.GameFlow
 #endif
             if (oreCatalog == null)
             {
-                Debug.LogWarning("[Battle] OreCatalog 未指定，战斗模型将无法构建牌库。" +
+                Debug.LogWarning("[Battle] OreCatalog 未指定且自动加载失败。" +
                                   "请在 Inspector 指定或确认 Assets/ScriptableObjects/Data/OreCatalog.asset 存在。");
             }
+        }
+
+        void ResolveCurrentEnemy()
+        {
+            if (currentEnemy != null)
+            {
+                return;
+            }
+
+#if UNITY_EDITOR
+            currentEnemy = UnityEditor.AssetDatabase.LoadAssetAtPath<EnemyShipDataSO>(
+                "Assets/ScriptableObjects/Data/EnemyShips/enemy_tengmanhao.asset");
+#endif
+            if (currentEnemy == null)
+            {
+                Debug.LogWarning("[Battle] currentEnemy 未指定且自动加载失败。" +
+                                  "请在 Inspector 指定敌舰 SO。");
+            }
+        }
+
+        void ApplyCurrentEnemyPresentation()
+        {
+            if (currentEnemy == null)
+            {
+                return;
+            }
+
+            var enemy = FindByName("enemy");
+            if (enemy == null)
+            {
+                return;
+            }
+
+            var visual = enemy.GetComponent<StripSpriteCharacterVisual>();
+            currentEnemy.ApplyVisual(visual);
         }
 
         static Transform FindByName(string objectName)

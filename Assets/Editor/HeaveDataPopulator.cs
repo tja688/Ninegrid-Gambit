@@ -1,9 +1,11 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using NineGrid.Data;
+using NineGrid.Presentation.Visuals;
 
 namespace NineGrid.Editor
 {
@@ -13,12 +15,17 @@ namespace NineGrid.Editor
     /// </summary>
     public static class HeaveDataPopulator
     {
-        const string OreDir      = "Assets/ScriptableObjects/Data/Ores";
-        const string HullModDir  = "Assets/ScriptableObjects/Data/HullMods";
-        const string CatalogDir  = "Assets/ScriptableObjects/Data";
+        const string OreDir         = "Assets/ScriptableObjects/Data/Ores";
+        const string HullModDir     = "Assets/ScriptableObjects/Data/HullMods";
+        const string EnemyShipDir   = "Assets/ScriptableObjects/Data/EnemyShips";
+        const string EventDir       = "Assets/ScriptableObjects/Data/Events";
+        const string CatalogDir     = "Assets/ScriptableObjects/Data";
+        const string VisualCatalogPath = "Assets/Arts/Animations/StripSprites/StripSpriteVisualCatalog.asset";
 
         const string OreSpritePrefix = "Assets/Arts/Images/Png/separate_2x/";
         const string IconPrefix      = "Assets/Arts/Images/Png/Icons/";
+        const string ItemIconPrefix  = "Assets/Arts/Images/Png/Items/";
+        const string DefaultEventIconPath = EventDataSO.DefaultIconPath;
 
         [MenuItem("NineGrid/Tools/Populate Game Data")]
         public static void Populate()
@@ -135,16 +142,146 @@ namespace NineGrid.Editor
             Debug.Log($"[HeaveDataPopulator] 完成：{oreSOs.Count} 矿石 + {hmSOs.Count} 船体改造");
         }
 
+        [MenuItem("NineGrid/Tools/Populate Enemy Ships")]
+        public static void PopulateEnemyShips()
+        {
+            EnsureFolder(EnemyShipDir);
+            var visualCatalog = AssetDatabase.LoadAssetAtPath<StripSpriteVisualCatalog>(VisualCatalogPath);
+            if (visualCatalog == null)
+            {
+                Debug.LogError($"[HeaveDataPopulator] 未找到 StripSpriteVisualCatalog: {VisualCatalogPath}");
+                return;
+            }
+
+            var enemySOs = new List<EnemyShipDataSO>();
+            enemySOs.Add(MakeEnemy("enemy_tengmanhao", "藤蔓号", "人面草", EnemyShipTier.Normal, "1-1", 200, "spr_ship_1_strip9", visualCatalog,
+                Art("art_chanhaizao", "缠海藻", "抛向我方船首撞击位的钻头，其矿石淬火 1（船首部位长满海藻，擦过去就淬火）。"),
+                Art("art_chansuo", "缠索", "玩家每回合少抽一块矿石（敌舰抛出绳索缠住甲板，行动不便）。")));
+            enemySOs.Add(MakeEnemy("enemy_suixianhao", "碎舷号", "独臂巨人", EnemyShipTier.Normal, "1-2", 500, "spr_ship_2_strip9", visualCatalog,
+                Art("art_zuoxianboruo", "左舷薄弱", "该敌舰左舷船壳薄，我方左舷撞击位冲击力 +1。"),
+                Art("art_chuanshouzhongjia", "船首重甲", "该敌舰船首覆盖重甲，伸向船首撞击位的我方矿石点数 -5。")));
+            enemySOs.Add(MakeEnemy("enemy_kuanglanghao", "狂浪号", "怪奇舞者", EnemyShipTier.Normal, "1-3", 400, "spr_ship_3_strip9", visualCatalog,
+                Art("art_dianlang", "颠浪", "每回合摆下的第一块矿石被浪头颠簸随机落到任一铸造台，并使该矿石留场。"),
+                Art("art_zhanwu", "战舞", "该敌舰装甲对没和第一块矿石同铸造台的其他钻头更硬——那些钻头矿石点数 -5。")));
+            enemySOs.Add(MakeEnemy("enemy_tiejiasiluejian", "铁甲私掠舰", "骷髅骑士", EnemyShipTier.Privateer, "1-4", 500, "spr_ship_4_strip9", visualCatalog,
+                Art("art_tiejia", "铁甲", "整舰重甲覆盖，我方所有钻头矿石点数 -2。"),
+                Art("art_pozhenhaojiao", "破阵号角", "如果我方有任何铸造台为空，敌舰全体装甲再强化 = 所有撞击位冲击力 -10。"),
+                Art("art_wuji", "武技", "如果我方有铸造台叠牌达到 3 层或以上，敌舰针对性加固 = 所有撞击位冲击力 -5。")));
+            enemySOs.Add(MakeEnemy("enemy_miwuhao", "迷雾号", "梦中的你", EnemyShipTier.Normal, "1-5", 600, "spr_ship_5_strip9", visualCatalog,
+                Art("art_mihunwu", "迷魂雾", "回合开始从精炼盘随机挑一块矿石被迷雾笼罩，赋予余烬特性但该矿石本回合无法使用。"),
+                Art("art_emeng", "噩梦", "敌舰识破玩家叠牌最多的铸造台，针对性加固 = 该铸造台的叠牌加成失效。")));
+            enemySOs.Add(MakeEnemy("enemy_baowuhao", "孢雾号", "蘑菇儿子", EnemyShipTier.Normal, "1-6", 1000, "spr_ship_6_strip9", visualCatalog,
+                Art("art_yanmudan", "烟幕弹", "每摆下三块矿石，敌舰向我方任一铸造台抛掷一块矿渣（堵住铸造台）。"),
+                Art("art_huixiu", "回修", "每回合敌舰装甲值自我回修 100。")));
+            enemySOs.Add(MakeEnemy("enemy_jieluehao", "劫掠号", "盗贼", EnemyShipTier.Normal, "1-7", 1400, "spr_ship_7_strip9", visualCatalog,
+                Art("art_pohuailansheng", "破坏缆绳", "敌舰钩子手专挑我方改造件下手，随机一件船体改造失效。"),
+                Art("art_pachuanfanji", "扒船反击", "敌舰每回合偷走我方 1 银元。")));
+            enemySOs.Add(MakeEnemy("enemy_jinwangqijian", "金王旗舰", "黄色君王", EnemyShipTier.Flagship, "1-8", 1800, "spr_ship_8_strip9", visualCatalog,
+                Art("art_jinwangzuzhou", "金王诅咒", "我方所有预热特性失效（旗舰诅咒我方钻头的导热机制）。"),
+                Art("art_huangjinlingyu", "黄金领域", "敌舰装甲带诅咒——所有无预热特性的我方矿石，获得「伸到同一撞击位的下一块矿石点数减去本矿石一半点数」。"),
+                Art("art_jinwangzhixin", "金王之心", "旗舰每回合随机赋予我方精炼盘一块矿石预热特性（试图用诅咒改造我方矿舱）。")));
+
+            BuildEnemyShipCatalog(enemySOs);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log($"[HeaveDataPopulator] 完成：{enemySOs.Count} 敌舰");
+        }
+
+        [MenuItem("NineGrid/Tools/Populate Events")]
+        public static void PopulateEvents()
+        {
+            EnsureFolder(EventDir);
+            var eventSOs = new List<EventDataSO>();
+
+            // ---- 常见事件 12 ----
+            eventSOs.Add(MakeEvent("evt_piaoliuyinxiang", "漂流银箱", EventTier.Common, EventChoiceKind.None,
+                "海面上漂来一只钉死的木箱，撬开一看，是某艘倒霉商船的军饷。",
+                "玩家获得 4 银元。", "coins.png"));
+            eventSOs.Add(MakeEvent("evt_haizhantucanjuan", "海战图残卷", EventTier.Common, EventChoiceKind.None,
+                "从一艘搁浅的军船里捡到半卷海战图，工程师说能看出点门道。",
+                "获得一次随机熔炼加成强化（在船坞熔炼升级时效果更强）。", "map.png"));
+            eventSOs.Add(MakeEvent("evt_chuanshouxianghuajia", "船首像画家", EventTier.Common, EventChoiceKind.PickOre,
+                "锚岛上一位老画家专门给船首像涂颜色。「选一块你心爱的矿石，我给它画一笔。」",
+                "所选矿石 +5 点数。", "portrait.png"));
+            eventSOs.Add(MakeEvent("evt_zizhuchuanwu", "自助船坞", EventTier.Common, EventChoiceKind.PickForgingStation,
+                "一座漂在海上的自助修船平台，工具齐全但没人看管。",
+                "玩家 -2 银元，所选铸造台强度 +1。", "anvil_in.png"));
+            eventSOs.Add(MakeEvent("evt_jishidebangzhu", "及时的帮助", EventTier.Common, EventChoiceKind.None,
+                "一位友善的岛民划着小艇过来：「我这里有几块矿石，你挑一块吧。」",
+                "获得一次三选一矿石的机会。", "hand_add.png"));
+            eventSOs.Add(MakeEvent("evt_qiukuangqigai", "求矿乞丐", EventTier.Common, EventChoiceKind.None,
+                "一个落魄的海盗：「大哥，行行好，把你不要的矿渣给我吧……」",
+                "获得一次免费清仓（删矿）机会。", null));
+            eventSOs.Add(MakeEvent("evt_heishiqingke", "黑市掮客", EventTier.Common, EventChoiceKind.None,
+                "戴兜帽的掮客从小艇上递来一只布包：「四银元，随便拿一件，保你不亏。」",
+                "玩家 -4 银元，随机获得一件船体改造。", "chest.png"));
+            eventSOs.Add(MakeEvent("evt_zousidafu", "走私大副", EventTier.Common, EventChoiceKind.None,
+                "一位膀大腰圆的大副从黑市船上丢下一块矿石：「何需谋略？撞就完了。」",
+                "获得一块「何需谋略？」矿石。", null));
+            eventSOs.Add(MakeEvent("evt_tuyashuishou", "涂鸦水手", EventTier.Common, EventChoiceKind.PickOre,
+                "一个喝醉的水手在你的矿石上乱涂了一通，居然激活了什么奇怪反应。",
+                "所选矿石随机转换为另一块随机矿石。", "pencil.png"));
+            eventSOs.Add(MakeEvent("evt_cuishulu", "催熟炉", EventTier.Common, EventChoiceKind.None,
+                "锚岛工程师带来一桶激素淬火液，「倒下去，你舱里所有带淬火的矿石立刻硬两次。」",
+                "矿舱内的淬火矿石立刻淬火 2 次。", "hourglass.png"));
+            eventSOs.Add(MakeEvent("evt_anjiaokuieng", "暗礁馈赠", EventTier.Common, EventChoiceKind.PickOre,
+                "船底擦过一片暗礁，居然刮下来一块奇怪的藤壶矿石，「这玩意儿一砸就崩碎屑。」",
+                "所选矿石获得碎屑特性。", "terrain_smooth_curve.png"));
+            eventSOs.Add(MakeEvent("evt_shunfengboji", "顺风波及", EventTier.Common, EventChoiceKind.None,
+                "起航前岛民来送行：「顺风，下一艘敌舰的船体我帮你凿了两百。」",
+                "下一场战斗，敌舰船体值 -200。", "weather_sun.png"));
+
+            // ---- 稀有事件 6 ----
+            eventSOs.Add(MakeEvent("evt_zaoyuxunluojian", "遭遇巡逻舰", EventTier.Rare, EventChoiceKind.None,
+                "一支海军巡逻舰从雾里冲了出来，不得不提前交战。",
+                "玩家立刻与 1-7 的任意一艘敌舰进行战斗。", "enemy.png"));
+            eventSOs.Add(MakeEvent("evt_chenchuanbaozang", "沉船宝藏", EventTier.Rare, EventChoiceKind.None,
+                "海面下露出一艘沉船的桅杆，潜水员从船长室捞出一箱改造件。",
+                "获得一次三选一中阶改造的机会（按高阶改造刷新概率，有概率替换为中阶）。", "chest.png"));
+            eventSOs.Add(MakeEvent("evt_canpokelongjing", "残破克隆镜", EventTier.Rare, EventChoiceKind.None,
+                "从黑市买来的「克隆镜」碎了一半，但还能用一次——它能临时复制一整艘船。",
+                "下一场战斗，备用锚数量 +1。", "eye.png"));
+            eventSOs.Add(MakeEvent("evt_zousiqingke", "走私掮客", EventTier.Rare, EventChoiceKind.PickVein,
+                "掮客拍胸脯：「下一座老巢精炼厂，我保证都是某一脉的矿石，你选哪一脉？」",
+                "下一次老巢刷新矿石均为所选矿脉矿石。", "dialogue.png"));
+            eventSOs.Add(MakeEvent("evt_yanpingongjiang", "赝品工匠", EventTier.Rare, EventChoiceKind.PickOre,
+                "一位手艺高超的赝品工匠：「把你的宝贝矿石给我，我能给你做一块一模一样的。」",
+                "将所选矿石的复制品加入矿舱。", "character_add.png"));
+            eventSOs.Add(MakeEvent("evt_haidaozangkuan", "海盗赃款", EventTier.Rare, EventChoiceKind.None,
+                "一艘海盗船被打劫后遗落了一只铁壶，里面沉甸甸装了八枚银元。",
+                "玩家获得 8 银元。", "coins.png"));
+
+            // ---- 传说事件 3 ----
+            eventSOs.Add(MakeEvent("evt_haishenyiwu", "海神遗物", EventTier.Legendary, EventChoiceKind.None,
+                "潜水员从海底神殿里捞出一件海神遗物——据说它能祝福一艘船永不沉没。",
+                "玩家在本局中备用锚数量 +1（永久保留）。", "star.png"));
+            eventSOs.Add(MakeEvent("evt_guzhuzhufu", "古锚祝福", EventTier.Legendary, EventChoiceKind.PickOre,
+                "一座海底露出的古锚发出低语，祝福了你矿舱里最珍爱的一块矿石。",
+                "所选矿石获得熔核特性。", "link.png"));
+            eventSOs.Add(MakeEvent("evt_xuanshangsiluejian", "悬赏私掠舰", EventTier.Legendary, EventChoiceKind.None,
+                "港口悬赏单上出现了一艘高价值私掠舰。「敢去吗？」",
+                "玩家立刻与本航段任意私掠舰进行战斗。", "skull.png"));
+
+            BuildEventCatalog(eventSOs);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log($"[HeaveDataPopulator] 完成：{eventSOs.Count} 航行事件");
+        }
+
         [MenuItem("NineGrid/Tools/Rebuild Catalogs")]
         public static void RebuildCatalogs()
         {
             var oreSOs = LoadAllInFolder<OreDataSO>(OreDir);
             var hmSOs  = LoadAllInFolder<HullModDataSO>(HullModDir);
+            var enemySOs = LoadAllInFolder<EnemyShipDataSO>(EnemyShipDir);
+            var eventSOs = LoadAllInFolder<EventDataSO>(EventDir);
             BuildOreCatalog(oreSOs);
             BuildHullModCatalog(hmSOs);
+            BuildEnemyShipCatalog(enemySOs);
+            BuildEventCatalog(eventSOs);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log($"[HeaveDataPopulator] 汇总完成：{oreSOs.Count} 矿石 + {hmSOs.Count} 船体改造");
+            Debug.Log($"[HeaveDataPopulator] 汇总完成：{oreSOs.Count} 矿石 + {hmSOs.Count} 船体改造 + {enemySOs.Count} 敌舰 + {eventSOs.Count} 事件");
         }
 
         static List<T> LoadAllInFolder<T>(string folder) where T : ScriptableObject
@@ -206,7 +343,12 @@ namespace NineGrid.Editor
             return so;
         }
 
-        static void SetField(Object target, string fieldName, object value)
+        static void SetField(UnityEngine.Object target, string fieldName, object value)
+        {
+            SetMember(target, fieldName, value);
+        }
+
+        static void SetMember(object target, string fieldName, object value)
         {
             var type = target.GetType();
             var fi = type.GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -293,6 +435,182 @@ namespace NineGrid.Editor
                 var dst = dstType.GetField(f, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
                 if (src != null && dst != null) dst.SetValue(entry, src.GetValue(so));
             }
+        }
+
+        static EnemyArtilleryEntry Art(string id, string name, string desc)
+        {
+            var entry = new EnemyArtilleryEntry();
+            SetMember(entry, "artilleryId", id);
+            SetMember(entry, "displayName", name);
+            SetMember(entry, "description", desc);
+            return entry;
+        }
+
+        static EnemyShipDataSO MakeEnemy(
+            string id, string name, string legacy, EnemyShipTier tier, string routeNode, int armor,
+            string visualId, StripSpriteVisualCatalog visualCatalog, params EnemyArtilleryEntry[] artilleries)
+        {
+            var so = CreateOrLoad<EnemyShipDataSO>(EnemyShipDir + "/" + id);
+            SetField(so, "enemyId", id);
+            SetField(so, "displayName", name);
+            SetField(so, "legacyName", legacy);
+            SetField(so, "tier", tier);
+            SetField(so, "routeNode", routeNode);
+            SetField(so, "armorValue", armor);
+            SetField(so, "artilleries", artilleries);
+            SetField(so, "introDescription", string.Empty);
+            SetField(so, "visualCatalog", visualCatalog);
+            SetField(so, "visualId", visualId);
+            EditorUtility.SetDirty(so);
+            return so;
+        }
+
+        static void BuildEnemyShipCatalog(List<EnemyShipDataSO> enemySOs)
+        {
+            var catalogPath = CatalogDir + "/EnemyShipCatalog.asset";
+            var catalog = AssetDatabase.LoadAssetAtPath<EnemyShipCatalog>(catalogPath);
+            if (catalog == null)
+            {
+                catalog = ScriptableObject.CreateInstance<EnemyShipCatalog>();
+                AssetDatabase.CreateAsset(catalog, catalogPath);
+            }
+
+            var list = new List<EnemyShipDataEntry>();
+            foreach (var so in enemySOs)
+            {
+                var entry = new EnemyShipDataEntry();
+                CopyEnemyFields(so, entry);
+                list.Add(entry);
+            }
+
+            typeof(EnemyShipCatalog)
+                .GetField("entries", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                ?.SetValue(catalog, list);
+            EditorUtility.SetDirty(catalog);
+        }
+
+        static void CopyEnemyFields(EnemyShipDataSO so, EnemyShipDataEntry entry)
+        {
+            var srcType = typeof(EnemyShipDataSO);
+            var dstType = typeof(EnemyShipDataEntry);
+            string[] fields =
+            {
+                "enemyId", "displayName", "legacyName", "tier", "routeNode", "armorValue",
+                "artilleries", "introDescription", "visualCatalog", "visualId"
+            };
+            foreach (var f in fields)
+            {
+                var src = srcType.GetField(f, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                var dst = dstType.GetField(f, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                if (src != null && dst != null)
+                {
+                    SetMember(entry, f, src.GetValue(so));
+                }
+            }
+        }
+
+        static EventDataSO MakeEvent(
+            string id, string name, EventTier tier, EventChoiceKind choiceKind,
+            string narrative, string effect, string iconFile)
+        {
+            var so = CreateOrLoad<EventDataSO>(EventDir + "/" + id);
+            SetField(so, "eventId", id);
+            SetField(so, "displayName", name);
+            SetField(so, "tier", tier);
+            SetField(so, "choiceKind", choiceKind);
+            SetField(so, "narrative", narrative);
+            SetField(so, "effectDescription", effect);
+            SetField(so, "icon", string.IsNullOrEmpty(iconFile) ? null : LoadSprite(ItemIconPrefix + iconFile));
+            EditorUtility.SetDirty(so);
+            return so;
+        }
+
+        static void BuildEventCatalog(List<EventDataSO> eventSOs)
+        {
+            var catalogPath = CatalogDir + "/EventCatalog.asset";
+            var catalog = AssetDatabase.LoadAssetAtPath<EventCatalog>(catalogPath);
+            if (catalog == null)
+            {
+                catalog = ScriptableObject.CreateInstance<EventCatalog>();
+                AssetDatabase.CreateAsset(catalog, catalogPath);
+            }
+
+            var list = new List<EventDataEntry>();
+            foreach (var so in eventSOs)
+            {
+                var entry = new EventDataEntry();
+                CopyEventFields(so, entry);
+                list.Add(entry);
+            }
+
+            typeof(EventCatalog).GetField("defaultIcon", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                ?.SetValue(catalog, LoadSprite(DefaultEventIconPath));
+            typeof(EventCatalog).GetField("entries", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                ?.SetValue(catalog, list);
+            typeof(EventCatalog).GetField("poolWeights", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                ?.SetValue(catalog, BuildDefaultPoolWeights());
+            typeof(EventCatalog).GetField("routeBindings", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                ?.SetValue(catalog, BuildDefaultRouteBindings());
+            EditorUtility.SetDirty(catalog);
+        }
+
+        static void CopyEventFields(EventDataSO so, EventDataEntry entry)
+        {
+            var srcType = typeof(EventDataSO);
+            var dstType = typeof(EventDataEntry);
+            string[] fields = { "eventId", "displayName", "tier", "choiceKind", "narrative", "effectDescription", "icon" };
+            foreach (var f in fields)
+            {
+                var src = srcType.GetField(f, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                var dst = dstType.GetField(f, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                if (src != null && dst != null)
+                {
+                    dst.SetValue(entry, src.GetValue(so));
+                }
+            }
+        }
+
+        static List<EventPoolWeights> BuildDefaultPoolWeights()
+        {
+            return new List<EventPoolWeights>
+            {
+                MakePoolWeights(EventPoolKind.HighCommon, 90, 10, 0),
+                MakePoolWeights(EventPoolKind.MidRare, 49, 50, 1),
+                MakePoolWeights(EventPoolKind.LowRare, 80, 20, 0),
+                MakePoolWeights(EventPoolKind.LowLegendary, 0, 90, 10),
+            };
+        }
+
+        static EventPoolWeights MakePoolWeights(EventPoolKind kind, int common, int rare, int legendary)
+        {
+            var weights = new EventPoolWeights();
+            SetMember(weights, "poolKind", kind);
+            SetMember(weights, "commonPercent", common);
+            SetMember(weights, "rarePercent", rare);
+            SetMember(weights, "legendaryPercent", legendary);
+            return weights;
+        }
+
+        static List<RouteEventPoolBinding> BuildDefaultRouteBindings()
+        {
+            return new List<RouteEventPoolBinding>
+            {
+                MakeRouteBinding("1-1", EventPoolKind.HighCommon),
+                MakeRouteBinding("1-2", EventPoolKind.HighCommon),
+                MakeRouteBinding("1-3", EventPoolKind.HighCommon),
+                MakeRouteBinding("1-4", EventPoolKind.MidRare),
+                MakeRouteBinding("1-5", EventPoolKind.LowRare),
+                MakeRouteBinding("1-6", EventPoolKind.LowRare),
+                MakeRouteBinding("1-7", EventPoolKind.LowRare),
+            };
+        }
+
+        static RouteEventPoolBinding MakeRouteBinding(string routeNode, EventPoolKind poolKind)
+        {
+            var binding = new RouteEventPoolBinding();
+            SetMember(binding, "routeNode", routeNode);
+            SetMember(binding, "poolKind", poolKind);
+            return binding;
         }
 
         static void EnsureFolder(string path)
