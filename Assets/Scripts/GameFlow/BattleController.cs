@@ -1202,7 +1202,9 @@ namespace NineGrid.GameFlow
 
             if (enemyHpBar == null)
             {
-                enemyHpBar = FindFirstObjectByType<EnemyHpBarController>(FindObjectsInactive.Include);
+                enemyHpBar = UiSystem.Instance != null
+                    ? UiSystem.Instance.EnemyHp
+                    : FindFirstObjectByType<EnemyHpBarController>(FindObjectsInactive.Include);
             }
         }
 

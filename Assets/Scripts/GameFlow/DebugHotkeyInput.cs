@@ -19,6 +19,11 @@ namespace NineGrid.GameFlow
             var kb = Keyboard.current;
             if (kb != null)
             {
+                if (key == KeyCode.Escape && kb.escapeKey.wasPressedThisFrame)
+                {
+                    return true;
+                }
+
                 var control = ResolveNumpad(kb, key);
                 if (control != null && control.wasPressedThisFrame)
                 {

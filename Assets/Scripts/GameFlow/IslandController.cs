@@ -92,6 +92,8 @@ namespace NineGrid.GameFlow
         int _hoveredOreDeckIndex = -1;
         bool _shopInitialized;
         bool _panelBindingsReady;
+        bool _refineryBindingsReady;
+        bool _shipyardBindingsReady;
         bool _left;
         Coroutine _prepareRoutine;
 
@@ -164,6 +166,8 @@ namespace NineGrid.GameFlow
             InitPanel(shipyard);
             InitShop();
             _panelBindingsReady = false;
+            _refineryBindingsReady = false;
+            _shipyardBindingsReady = false;
             BindPanelClickTargets();
         }
 
@@ -173,8 +177,8 @@ namespace NineGrid.GameFlow
             _shopInitialized = true;
 
             var run = RunData.Ensure();
-            var oreCatalog = LoadOreCatalog();
-            var hullModCatalog = LoadHullModCatalog();
+            var oreCatalog = GameDataCatalogs.Ore;
+            var hullModCatalog = GameDataCatalogs.HullMod;
             _shop = new ShopController(run, oreCatalog, hullModCatalog);
 
             if (run.ShopOres.Count == 0)
@@ -186,28 +190,11 @@ namespace NineGrid.GameFlow
             {
                 _shop.GenerateShipyardStock();
             }
-        }
 
-        OreCatalog _cachedOreCatalog;
-        OreCatalog LoadOreCatalog()
-        {
-            if (_cachedOreCatalog != null) return _cachedOreCatalog;
-#if UNITY_EDITOR
-            _cachedOreCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<OreCatalog>(
-                "Assets/ScriptableObjects/Data/OreCatalog.asset");
-#endif
-            return _cachedOreCatalog;
-        }
-
-        HullModCatalog _cachedHullModCatalog;
-        HullModCatalog LoadHullModCatalog()
-        {
-            if (_cachedHullModCatalog != null) return _cachedHullModCatalog;
-#if UNITY_EDITOR
-            _cachedHullModCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<HullModCatalog>(
-                "Assets/ScriptableObjects/Data/HullModCatalog.asset");
-#endif
-            return _cachedHullModCatalog;
+            if (run.ShopOres.Count == 0)
+            {
+                Debug.LogWarning("[Island] 精炼厂库存为空，请确认 OreCatalog 已配置且含矿石条目。");
+            }
         }
 
         void Update()
@@ -376,6 +363,13 @@ namespace NineGrid.GameFlow
             }
         }
 
+        // 面板挂在常驻 UI（DontDestroyOnLoad）上，世界坐标会跨场景 / 跨次进岛保留；
+        // 而 IslandController 每次进岛随场景重建。若把面板「当前位置」当展开位，
+        // 上次离岛已把面板挪到入场点（屏幕外），二次进岛就会把展开位误存成屏外入场点，
+        // 导致面板打开后仍停在屏外，表现为「点击没反应、面板打不开」。故用静态缓存记真实展开位。
+        static Vector3? s_refineryShownPos;
+        static Vector3? s_shipyardShownPos;
+
         void InitPanel(ServicePanel sp)
         {
             if (sp?.panel == null)
@@ -383,14 +377,64 @@ namespace NineGrid.GameFlow
                 return;
             }
 
-            sp.ShownPos = sp.shownPoint != null ? sp.shownPoint.position : sp.panel.position;
             sp.EntryPos = sp.entryPoint != null
                 ? sp.entryPoint.position
-                : sp.ShownPos + Vector3.left * offscreenLeftOffset;
+                : sp.panel.position + Vector3.left * offscreenLeftOffset;
+
+            sp.ShownPos = ResolveShownPos(sp);
 
             sp.panel.position = sp.EntryPos;
             sp.panel.gameObject.SetActive(false);
             sp.Open = false;
+        }
+
+        Vector3 ResolveShownPos(ServicePanel sp)
+        {
+            if (sp.shownPoint != null)
+            {
+                var explicitPos = sp.shownPoint.position;
+                StoreShownPos(sp, explicitPos);
+                return explicitPos;
+            }
+
+            var cached = GetCachedShownPos(sp);
+            var current = sp.panel.position;
+            // 面板已被移到入场点（屏幕外）时当前位置不可信，改用首次进岛缓存的真实展开位。
+            var atEntry = (current - sp.EntryPos).sqrMagnitude < 1e-4f;
+            if (cached.HasValue && atEntry)
+            {
+                return cached.Value;
+            }
+
+            if (atEntry)
+            {
+                // 无缓存且已在入场点：不应把屏外位置记成展开位。
+                var fallback = sp.EntryPos + Vector3.right * offscreenLeftOffset;
+                StoreShownPos(sp, fallback);
+                return fallback;
+            }
+
+            StoreShownPos(sp, current);
+            return current;
+        }
+
+        Vector3? GetCachedShownPos(ServicePanel sp)
+        {
+            if (sp == refinery) return s_refineryShownPos;
+            if (sp == shipyard) return s_shipyardShownPos;
+            return null;
+        }
+
+        void StoreShownPos(ServicePanel sp, Vector3 pos)
+        {
+            if (sp == refinery)
+            {
+                s_refineryShownPos = pos;
+            }
+            else if (sp == shipyard)
+            {
+                s_shipyardShownPos = pos;
+            }
         }
 
         void SetPanelOpen(ServicePanel sp, bool open)
@@ -476,7 +520,7 @@ namespace NineGrid.GameFlow
 
                 slot.gameObject.SetActive(true);
                 var item = RunData.Ensure().ShopOres[i];
-                var ore = LoadOreCatalog()?.Get(item.OreId);
+                var ore = GameDataCatalogs.Ore?.Get(item.OreId);
                 if (ore?.Icon != null)
                 {
                     renderer.sprite = ore.Icon;
@@ -515,18 +559,26 @@ namespace NineGrid.GameFlow
 
         void TryBindPanelClickTargets()
         {
-            if (_panelBindingsReady || refinery.panel == null || shipyard.panel == null)
+            if (_panelBindingsReady || _shop == null)
+            {
+                return;
+            }
+
+            TryBindRefineryPanelTargets();
+            TryBindShipyardPanelTargets();
+            _panelBindingsReady = _refineryBindingsReady && _shipyardBindingsReady;
+        }
+
+        void TryBindRefineryPanelTargets()
+        {
+            if (_refineryBindingsReady || refinery.panel == null)
             {
                 return;
             }
 
             _refineryPanelTargets.Clear();
-            _shipyardPanelTargets.Clear();
             _refineryOreSlots.Clear();
-            _shipyardRelicSlots.Clear();
-
             CacheRefineryOreSlots();
-            CacheShipyardRelicSlots();
 
             for (var i = 0; i < _refineryOreSlots.Count; i++)
             {
@@ -560,6 +612,20 @@ namespace NineGrid.GameFlow
                     }
                 });
 
+            _refineryBindingsReady = true;
+        }
+
+        void TryBindShipyardPanelTargets()
+        {
+            if (_shipyardBindingsReady || shipyard.panel == null)
+            {
+                return;
+            }
+
+            _shipyardPanelTargets.Clear();
+            _shipyardRelicSlots.Clear();
+            CacheShipyardRelicSlots();
+
             for (var i = 0; i < _shipyardRelicSlots.Count; i++)
             {
                 var index = i;
@@ -574,7 +640,7 @@ namespace NineGrid.GameFlow
                     });
             }
 
-            _panelBindingsReady = _refineryPanelTargets.Count > 0 || _shipyardPanelTargets.Count > 0;
+            _shipyardBindingsReady = true;
         }
 
         void BeginRemoveOreSelection()

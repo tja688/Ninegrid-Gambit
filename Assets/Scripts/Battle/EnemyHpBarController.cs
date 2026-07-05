@@ -59,7 +59,7 @@ namespace NineGrid.Battle
             _resolved = false;
             _canvas = null;
             ResolveRefs();
-            EnsureCanvasCamera();
+            EnsureCanvasRoot();
             if (IsVisible)
             {
                 ApplyLayout();
@@ -70,7 +70,7 @@ namespace NineGrid.Battle
         public void Reveal()
         {
             ResolveRefs();
-            EnsureCanvasCamera();
+            EnsureCanvasRoot();
             _wantVisible = true;
 
             if (_suspended)
@@ -89,7 +89,7 @@ namespace NineGrid.Battle
             UnbindBattle();
             _resolved = false;
             _canvas = null;
-            EnsureCanvasCamera();
+            EnsureCanvasRoot();
             ApplyLayout();
         }
 
@@ -224,7 +224,7 @@ namespace NineGrid.Battle
                 return;
             }
 
-            EnsureCanvasCamera();
+            EnsureCanvasRoot();
             barRoot.localRotation = Quaternion.identity;
             barRoot.localScale = Vector3.one;
 
@@ -245,7 +245,7 @@ namespace NineGrid.Battle
             _hasDefaultAnchoredPosition = true;
         }
 
-        void EnsureCanvasCamera()
+        void EnsureCanvasRoot()
         {
             if (barRoot == null)
             {
@@ -257,7 +257,18 @@ namespace NineGrid.Battle
                 _canvas = barRoot.GetComponentInParent<Canvas>();
             }
 
-            if (_canvas == null || _canvas.renderMode != RenderMode.ScreenSpaceCamera)
+            if (_canvas == null)
+            {
+                return;
+            }
+
+            var canvasTransform = _canvas.transform as RectTransform;
+            if (canvasTransform != null && canvasTransform.localScale.sqrMagnitude < 0.001f)
+            {
+                canvasTransform.localScale = Vector3.one;
+            }
+
+            if (_canvas.renderMode != RenderMode.ScreenSpaceCamera)
             {
                 return;
             }
