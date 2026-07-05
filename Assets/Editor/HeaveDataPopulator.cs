@@ -28,8 +28,6 @@ namespace NineGrid.Editor
 
             // ========== 矿石 47 ==========
             var oreSOs = new List<OreDataSO>();
-
-            // ---- 通用矿脉 22 ----
             oreSOs.Add(MakeOre("ore_chutie",        "粗铁",       OreTier.Crude,   OreVein.Universal, 15, 2, OreTrait.None,      "从锚岛表层矿坑随手刨出来的粗铁块，杂质多、形状歪，但胜在沉。",                          "001_iron_ingot_1x.png"));
             oreSOs.Add(MakeOre("ore_duyin",          "镀银",       OreTier.Crude,   OreVein.Universal, 10, 2, OreTrait.None,      "工匠在粗铁外层薄薄镀了一层银。卖相好，撞击时还能溅出漂亮的火花——可惜火花不伤人。",       "005_silver_ingot_1x.png"));
             oreSOs.Add(MakeOre("ore_dianhou",        "殿后矿",     OreTier.Crude,   OreVein.Universal, 10, 2, OreTrait.None,      "船舱最深处压着的压舱矿料。平时没人动它，等主钻头都铸完了，这块才被翻出来补最后一层。",    "012_weathered_lead_ingot_1x.png"));
@@ -137,6 +135,31 @@ namespace NineGrid.Editor
             Debug.Log($"[HeaveDataPopulator] 完成：{oreSOs.Count} 矿石 + {hmSOs.Count} 船体改造");
         }
 
+        [MenuItem("NineGrid/Tools/Rebuild Catalogs")]
+        public static void RebuildCatalogs()
+        {
+            var oreSOs = LoadAllInFolder<OreDataSO>(OreDir);
+            var hmSOs  = LoadAllInFolder<HullModDataSO>(HullModDir);
+            BuildOreCatalog(oreSOs);
+            BuildHullModCatalog(hmSOs);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log($"[HeaveDataPopulator] 汇总完成：{oreSOs.Count} 矿石 + {hmSOs.Count} 船体改造");
+        }
+
+        static List<T> LoadAllInFolder<T>(string folder) where T : ScriptableObject
+        {
+            var result = new List<T>();
+            foreach (var guid in AssetDatabase.FindAssets($"t:{typeof(T).Name}", new[] { folder }))
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var asset = AssetDatabase.LoadAssetAtPath<T>(path);
+                if (asset != null) result.Add(asset);
+            }
+            result.Sort((a, b) => string.Compare(a.name, b.name, System.StringComparison.Ordinal));
+            return result;
+        }
+
         // ---------------------------------------------------------------
         //  Helpers
         // ---------------------------------------------------------------
@@ -200,11 +223,13 @@ namespace NineGrid.Editor
 
         static void BuildOreCatalog(List<OreDataSO> oreSOs)
         {
-            var catalog = CreateOrLoad<OreCatalog>(CatalogDir + "/OreCatalog");
-            // OreCatalog stores OreDataEntry list — rebuild from individual SOs
-            var entryListType = typeof(OreCatalog)
-                .GetField("entries", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-            if (entryListType == null) return;
+            var catalogPath = CatalogDir + "/OreCatalog.asset";
+            var catalog = AssetDatabase.LoadAssetAtPath<OreCatalog>(catalogPath);
+            if (catalog == null)
+            {
+                catalog = ScriptableObject.CreateInstance<OreCatalog>();
+                AssetDatabase.CreateAsset(catalog, catalogPath);
+            }
 
             var list = new List<OreDataEntry>();
             foreach (var so in oreSOs)
@@ -213,7 +238,10 @@ namespace NineGrid.Editor
                 CopyOreFields(so, entry);
                 list.Add(entry);
             }
-            entryListType.SetValue(catalog, list);
+
+            typeof(OreCatalog)
+                .GetField("entries", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                ?.SetValue(catalog, list);
             EditorUtility.SetDirty(catalog);
         }
 
@@ -232,10 +260,13 @@ namespace NineGrid.Editor
 
         static void BuildHullModCatalog(List<HullModDataSO> hmSOs)
         {
-            var catalog = CreateOrLoad<HullModCatalog>(CatalogDir + "/HullModCatalog");
-            var entryListType = typeof(HullModCatalog)
-                .GetField("entries", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-            if (entryListType == null) return;
+            var catalogPath = CatalogDir + "/HullModCatalog.asset";
+            var catalog = AssetDatabase.LoadAssetAtPath<HullModCatalog>(catalogPath);
+            if (catalog == null)
+            {
+                catalog = ScriptableObject.CreateInstance<HullModCatalog>();
+                AssetDatabase.CreateAsset(catalog, catalogPath);
+            }
 
             var list = new List<HullModDataEntry>();
             foreach (var so in hmSOs)
@@ -244,7 +275,10 @@ namespace NineGrid.Editor
                 CopyHMFields(so, entry);
                 list.Add(entry);
             }
-            entryListType.SetValue(catalog, list);
+
+            typeof(HullModCatalog)
+                .GetField("entries", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                ?.SetValue(catalog, list);
             EditorUtility.SetDirty(catalog);
         }
 
