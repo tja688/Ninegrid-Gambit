@@ -31,6 +31,8 @@ namespace NineGrid.Audio
 
         // Active loop tracking
         readonly Dictionary<AudioKey, AMPAudioSource> _activeLoops = new();
+        readonly Dictionary<int, AudioKey> _loopKeyBySourceId = new();
+        AudioKey? _currentBgmKey;
         AnchorChainLauncher.Phase _lastChainPhase = AnchorChainLauncher.Phase.Idle;
         bool _forgeAmbientPlaying = false;
 
@@ -38,6 +40,12 @@ namespace NineGrid.Audio
         public static GameAudioService Instance { get; private set; }
 
         public GameAudioCueSO Database => cueDatabase;
+
+        /// <summary>GameAudioService 认为当前应播放的 BGM 键（MusicManager 路由）。</summary>
+        public AudioKey? CurrentBgmKey => _currentBgmKey;
+
+        /// <summary>当前由 GameAudioService 管理的循环音。</summary>
+        public IReadOnlyDictionary<AudioKey, AMPAudioSource> ActiveLoops => _activeLoops;
 
         void Awake()
         {
@@ -49,6 +57,8 @@ namespace NineGrid.Audio
 
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            if (GetComponent<GameAudioDebugPanel>() == null)
+                gameObject.AddComponent<GameAudioDebugPanel>();
         }
 
         IEnumerator Start()
@@ -376,6 +386,7 @@ namespace NineGrid.Audio
             if (MusicManager.Main != null && MusicManager.Main.IsPlaying())
                 MusicManager.Main.Stop(0.5f);
 
+            _currentBgmKey = null;
             StopLoop(AudioKey.AmbientBattle);
             StopLoop(AudioKey.AmbientOcean);
             StopLoop(AudioKey.BgmIsland);
@@ -460,7 +471,7 @@ namespace NineGrid.Audio
             // Route to the appropriate player
             if (entry.musicTrack != null)
             {
-                PlayMusic(entry);
+                PlayMusic(key, entry);
             }
             else if (entry.loopMode != LoopMode.None || entry.loopClip != null)
             {
@@ -490,9 +501,10 @@ namespace NineGrid.Audio
             SFXManager.Main.Play(entry.sfxObject, 0f, vol, pitch);
         }
 
-        void PlayMusic(AudioCueEntry entry)
+        void PlayMusic(AudioKey key, AudioCueEntry entry)
         {
             if (MusicManager.Main == null) return;
+            _currentBgmKey = key;
             MusicManager.Main.Play(entry.musicTrack, 0f, 0.5f);
         }
 
@@ -526,6 +538,7 @@ namespace NineGrid.Audio
             if (source != null)
             {
                 _activeLoops[key] = source;
+                _loopKeyBySourceId[source.GetInstanceID()] = key;
 
                 // Auto-stop after duration if configured
                 if (entry.loopMode == LoopMode.LoopWithDuration && entry.loopDuration > 0f)
@@ -539,9 +552,13 @@ namespace NineGrid.Audio
         {
             if (_activeLoops.TryGetValue(key, out var source))
             {
-                if (source != null && SFXLoopManager.Main != null)
+                if (source != null)
                 {
-                    SFXLoopManager.Main.Stop(source, 0.3f);
+                    _loopKeyBySourceId.Remove(source.GetInstanceID());
+                    if (SFXLoopManager.Main != null)
+                    {
+                        SFXLoopManager.Main.Stop(source, 0.3f);
+                    }
                 }
                 _activeLoops.Remove(key);
             }
@@ -563,6 +580,106 @@ namespace NineGrid.Audio
             {
                 StopLoop(key);
             }
+        }
+
+        /// <summary>调试面板：显示名。</summary>
+        public string GetCueDisplayName(AudioKey key)
+        {
+            if (cueDatabase != null && cueDatabase.TryGetCue(key, out var entry) && entry != null)
+                return entry.displayName;
+            return key.ToString();
+        }
+
+        /// <summary>调试面板：尝试把正在播放的 AudioSource 映射回 AudioKey。</summary>
+        public bool TryResolvePlayingSource(
+            AudioSource source,
+            GameAudioMonitor.AudioChannel channel,
+            out AudioKey? key,
+            out string displayName)
+        {
+            key = null;
+            displayName = null;
+            if (source == null || cueDatabase == null) return false;
+
+            if (channel == GameAudioMonitor.AudioChannel.Loop
+                && _loopKeyBySourceId.TryGetValue(source.GetInstanceID(), out var loopKey))
+            {
+                key = loopKey;
+                displayName = GetCueDisplayName(loopKey);
+                return true;
+            }
+
+            if (channel == GameAudioMonitor.AudioChannel.Music && _currentBgmKey.HasValue)
+            {
+                key = _currentBgmKey;
+                displayName = GetCueDisplayName(_currentBgmKey.Value);
+                return true;
+            }
+
+            if (source.clip != null && TryResolveCueByClip(source.clip, out var clipKey, out var clipName))
+            {
+                key = clipKey;
+                displayName = clipName;
+                return true;
+            }
+
+            return false;
+        }
+
+        bool TryResolveCueByClip(AudioClip clip, out AudioKey key, out string displayName)
+        {
+            key = default;
+            displayName = null;
+            if (clip == null || cueDatabase?.cues == null) return false;
+
+            for (int i = 0; i < cueDatabase.cues.Length; i++)
+            {
+                var entry = cueDatabase.cues[i];
+                if (entry == null || !entry.enabled) continue;
+
+                if (entry.loopClip == clip)
+                {
+                    key = entry.key;
+                    displayName = entry.displayName;
+                    return true;
+                }
+
+                if (entry.musicTrack != null && TrackUsesClip(entry.musicTrack, clip))
+                {
+                    key = entry.key;
+                    displayName = entry.displayName;
+                    return true;
+                }
+
+                if (entry.sfxObject != null && entry.sfxObject.SFXLayers != null)
+                {
+                    for (int j = 0; j < entry.sfxObject.SFXLayers.Length; j++)
+                    {
+                        if (entry.sfxObject.SFXLayers[j].SFX == clip)
+                        {
+                            key = entry.key;
+                            displayName = entry.displayName;
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        static bool TrackUsesClip(Track track, AudioClip clip)
+        {
+            if (track == null || clip == null) return false;
+            if (track.Intro == clip) return true;
+            if (track.Editions == null) return false;
+            for (int i = 0; i < track.Editions.Length; i++)
+            {
+                var edition = track.Editions[i];
+                if (edition.Soundtrack == clip || edition.TransitionSound == clip)
+                    return true;
+            }
+            return false;
         }
     }
 }
