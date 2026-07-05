@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DG.Tweening;
+using Febucci.TextAnimatorForUnity.TextMeshPro;
 using NineGrid.Data;
 using NineGrid.Presentation.Visuals;
 using NineGrid.UI;
@@ -72,10 +73,15 @@ namespace NineGrid.GameFlow
         [SerializeField] OreInventoryPanel oreInventoryPanel;
 
         ShopController _shop;
+        GameObject _shopDescriptionObject;
+        GameObject _goldCountObject;
         TMP_Text _shopDescriptionText;
         TMP_Text _goldCountText;
+        TextAnimator_TMP _shopDescriptionAnimator;
+        TextAnimator_TMP _goldCountAnimator;
         Transform _refineryGoldIcon;
         Transform _shipyardGoldIcon;
+        bool _shopHudVisible;
         readonly List<PanelTarget> _refineryPanelTargets = new List<PanelTarget>(8);
         readonly List<PanelTarget> _shipyardPanelTargets = new List<PanelTarget>(4);
         readonly List<(Transform slot, SpriteRenderer renderer)> _refineryOreSlots = new List<(Transform, SpriteRenderer)>(5);
@@ -165,7 +171,19 @@ namespace NineGrid.GameFlow
 
             HandleShopInput();
 
-            if (oreInventoryPanel != null && oreInventoryPanel.IsSelectionMode)
+            var clicked = FlowInput.PrimaryClickThisFrame();
+            var hovered = pointerSelector.Hovered;
+            var inOreSelection = oreInventoryPanel != null && oreInventoryPanel.IsSelectionMode;
+
+            HandleHover(refinery, hovered);
+            HandleHover(shipyard, hovered);
+
+            if (clicked && TryHandleSceneNavigation(hovered))
+            {
+                return;
+            }
+
+            if (inOreSelection)
             {
                 return;
             }
@@ -180,30 +198,29 @@ namespace NineGrid.GameFlow
                 HandlePanelHover(_shipyardPanelTargets);
                 HandlePanelClicks(_shipyardPanelTargets, shipyard);
             }
+        }
 
-            var clicked = FlowInput.PrimaryClickThisFrame();
-            var hovered = pointerSelector.Hovered;
-
-            HandleHover(refinery, hovered);
-            HandleHover(shipyard, hovered);
-
-            if (!clicked)
-            {
-                return;
-            }
-
-            if (hovered != null && hovered == refinery.trigger)
-            {
-                OpenRefinery();
-            }
-            else if (hovered != null && hovered == shipyard.trigger)
-            {
-                OpenShipyard();
-            }
-            else if (leaveElement != null && hovered == leaveElement)
+        bool TryHandleSceneNavigation(SelectableSceneElement hovered)
+        {
+            if (leaveElement != null && hovered == leaveElement)
             {
                 Leave();
+                return true;
             }
+
+            if (hovered == shipyard.trigger)
+            {
+                OpenShipyard();
+                return true;
+            }
+
+            if (hovered == refinery.trigger)
+            {
+                OpenRefinery();
+                return true;
+            }
+
+            return false;
         }
 
         public void OpenRefinery()
@@ -625,14 +642,10 @@ namespace NineGrid.GameFlow
 
             if (hit == null)
             {
-                ClearPanelHover();
-                if (refinery.Open)
+                if (_hoveredPanelTarget != null)
                 {
-                    ShowShopDescription(_shop.GetRefineryPanelHint());
-                }
-                else if (shipyard.Open)
-                {
-                    ShowShopDescription(_shop.GetShipyardPanelHint());
+                    _hoveredPanelTarget = null;
+                    ShowDefaultShopDescription();
                 }
 
                 return;
@@ -747,63 +760,146 @@ namespace NineGrid.GameFlow
             }
         }
 
-        void ShowShopDescription(string text)
+        void ShowDefaultShopDescription()
         {
-            CacheShopUi();
-            if (_shopDescriptionText == null)
+            if (_shop == null)
             {
                 return;
             }
 
-            _shopDescriptionText.gameObject.SetActive(true);
-            _shopDescriptionText.text = text;
+            if (refinery.Open)
+            {
+                ShowShopDescription(_shop.GetRefineryPanelHint());
+            }
+            else if (shipyard.Open)
+            {
+                ShowShopDescription(_shop.GetShipyardPanelHint());
+            }
+        }
+
+        void ShowShopDescription(string text)
+        {
+            CacheShopUi();
+            if (_shopDescriptionObject == null)
+            {
+                return;
+            }
+
+            EnsureShopOverlayActive();
+            ApplyOverlayText(_shopDescriptionObject, _shopDescriptionText, _shopDescriptionAnimator, text);
         }
 
         void HideShopDescription()
         {
-            if (_shopDescriptionText != null)
+            if (_shopDescriptionObject != null)
             {
-                _shopDescriptionText.gameObject.SetActive(false);
+                _shopDescriptionObject.SetActive(false);
             }
         }
 
         void ShowShopHud()
         {
             CacheShopUi();
+            EnsureShopOverlayActive();
             RefreshGoldDisplay();
-            if (_goldCountText != null)
+            if (_goldCountObject != null)
             {
-                _goldCountText.gameObject.SetActive(true);
+                _goldCountObject.SetActive(true);
             }
+
+            _shopHudVisible = true;
         }
 
         void HideShopHud()
         {
             HideShopDescription();
             ClearPanelHover();
-            if (_goldCountText != null)
+            if (_goldCountObject != null)
             {
-                _goldCountText.gameObject.SetActive(false);
+                _goldCountObject.SetActive(false);
             }
+
+            _shopHudVisible = false;
+            TryReleaseShopOverlay();
         }
 
         void RefreshGoldDisplay()
         {
             CacheShopUi();
-            if (_goldCountText != null)
+            ApplyOverlayText(_goldCountObject, _goldCountText, _goldCountAnimator, RunData.Ensure().Gold.ToString());
+        }
+
+        void EnsureShopOverlayActive()
+        {
+            UiSystem.Instance?.SetOverlayActive(true);
+        }
+
+        void TryReleaseShopOverlay()
+        {
+            if (_shopHudVisible || refinery.Open || shipyard.Open)
             {
-                _goldCountText.text = RunData.Ensure().Gold.ToString();
+                return;
+            }
+
+            var ui = UiSystem.Instance;
+            if (ui == null)
+            {
+                return;
+            }
+
+            var noticeOpen = ui.Notice != null && ui.Notice.IsShowing;
+            var dialogueOpen = ui.Dialogue != null && ui.Dialogue.IsOpen;
+            var enemyInfoOpen = ui.EnemyInfo != null && ui.EnemyInfo.IsShown;
+            if (!noticeOpen && !dialogueOpen && !enemyInfoOpen)
+            {
+                ui.SetOverlayActive(false);
             }
         }
 
-        void CacheShopDescriptionText()
+        static void ApplyOverlayText(
+            GameObject textObject,
+            TMP_Text tmp,
+            TextAnimator_TMP animator,
+            string text)
         {
-            CacheShopUi();
+            if (textObject == null)
+            {
+                return;
+            }
+
+            textObject.SetActive(true);
+
+            var content = text ?? string.Empty;
+            if (animator != null && textObject.activeInHierarchy)
+            {
+                animator.SetText(content, hideText: false);
+                animator.SetVisibilityEntireText(true, canPlayEffects: false);
+                return;
+            }
+
+            if (tmp != null)
+            {
+                tmp.text = content;
+            }
+        }
+
+        static void DisableRaycastOnOverlayText(GameObject textObject)
+        {
+            if (textObject == null)
+            {
+                return;
+            }
+
+            var graphics = textObject.GetComponentsInChildren<UnityEngine.UI.Graphic>(true);
+            for (var i = 0; i < graphics.Length; i++)
+            {
+                graphics[i].raycastTarget = false;
+            }
         }
 
         void CacheShopUi()
         {
-            if (_shopDescriptionText != null && _goldCountText != null)
+            if (_shopDescriptionObject != null && _goldCountObject != null)
             {
                 return;
             }
@@ -814,16 +910,28 @@ namespace NineGrid.GameFlow
                 return;
             }
 
-            if (_shopDescriptionText == null)
+            if (_shopDescriptionObject == null)
             {
                 var desc = FindDeepChild(uiRoot, "精炼厂/船坞通用介绍文字框");
-                _shopDescriptionText = desc != null ? desc.GetComponent<TMP_Text>() : null;
+                if (desc != null)
+                {
+                    _shopDescriptionObject = desc.gameObject;
+                    _shopDescriptionText = desc.GetComponent<TMP_Text>();
+                    _shopDescriptionAnimator = desc.GetComponent<TextAnimator_TMP>();
+                    DisableRaycastOnOverlayText(_shopDescriptionObject);
+                }
             }
 
-            if (_goldCountText == null)
+            if (_goldCountObject == null)
             {
                 var gold = FindDeepChild(uiRoot, "金币数量");
-                _goldCountText = gold != null ? gold.GetComponent<TMP_Text>() : null;
+                if (gold != null)
+                {
+                    _goldCountObject = gold.gameObject;
+                    _goldCountText = gold.GetComponent<TMP_Text>();
+                    _goldCountAnimator = gold.GetComponent<TextAnimator_TMP>();
+                    DisableRaycastOnOverlayText(_goldCountObject);
+                }
             }
 
             if (_refineryGoldIcon == null && refinery.panel != null)

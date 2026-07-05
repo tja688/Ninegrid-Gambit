@@ -181,12 +181,14 @@ namespace NineGrid.UI
 
             if (noticeTextObject == null)
             {
-                noticeTextObject = FindChild("NoticeText")?.gameObject;
+                noticeTextObject = FindChild("Notice Text")?.gameObject
+                    ?? FindChild("NoticeText")?.gameObject;
             }
 
             if (factoryTextObject == null)
             {
-                factoryTextObject = FindChild("FactoryText")?.gameObject;
+                factoryTextObject = FindChild("Factory Text")?.gameObject
+                    ?? FindChild("FactoryText")?.gameObject;
             }
 
             if (dialogueSystem == null)

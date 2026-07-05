@@ -229,11 +229,6 @@ namespace NineGrid.GameFlow
 
         void SetFactoryText(string text)
         {
-            if (text == _lastFactoryText)
-            {
-                return;
-            }
-
             var notice = UiSystem.Instance != null ? UiSystem.Instance.Notice : null;
             if (notice == null)
             {
@@ -245,8 +240,25 @@ namespace NineGrid.GameFlow
                 text = text.Substring(0, OreDisplayFormatter.MaxChars);
             }
 
+            // 其他系统可能会直接把 FactoryText 关掉；相同文案也要允许重新点亮。
+            if (text == _lastFactoryText && IsFactoryTextVisible(notice))
+            {
+                return;
+            }
+
             notice.Show(NoticeChannel.Factory, text, 0f);
             _lastFactoryText = text;
+        }
+
+        static bool IsFactoryTextVisible(NoticeSystem notice)
+        {
+            if (notice == null || !notice.IsShowing || notice.ActiveChannel != NoticeChannel.Factory)
+            {
+                return false;
+            }
+
+            var ui = UiSystem.Instance;
+            return ui != null && ui.FactoryTextObject != null && ui.FactoryTextObject.activeSelf;
         }
 
         void HideFactoryText()
