@@ -7,10 +7,10 @@ namespace NineGrid.GameFlow
     {
         MainMenu = 0,
 
-        /// <summary>序章教学（战斗0，仅首次经历）。</summary>
+        /// <summary>序章教学（含对话的完整入场）。</summary>
         Prologue,
 
-        /// <summary>重开后的战斗0（无教学）。</summary>
+        /// <summary>无教学对话的战斗0（调试 / 特殊入口）。</summary>
         Battle0,
 
         Island1,

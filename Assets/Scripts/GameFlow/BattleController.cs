@@ -37,6 +37,7 @@ namespace NineGrid.GameFlow
         [SerializeField] SelectableSceneElement playerSelectable;
         [SerializeField] SelectableSceneElement enemySelectable;
         [SerializeField] Transform player;
+        [SerializeField] Transform enemyShip;
         [SerializeField] Transform playerExit;
 
         [Header("Systems")]
@@ -175,8 +176,51 @@ namespace NineGrid.GameFlow
                 return;
             }
 
+            enemyShip = null;
+            enemySelectable = null;
             ResolveRefs();
             BindHydraulicEvents(forceRebind: true);
+            EnsureEnemyShipVisible();
+        }
+
+        void EnsureEnemyShipVisible()
+        {
+            ResolveEnemyShip();
+            if (enemyShip == null)
+            {
+                return;
+            }
+
+            if (!enemyShip.gameObject.activeSelf)
+            {
+                enemyShip.gameObject.SetActive(true);
+            }
+        }
+
+        void HideEnemyShipForDefeat()
+        {
+            ResolveEnemyShip();
+            if (enemyShip == null)
+            {
+                return;
+            }
+
+            enemyShip.gameObject.SetActive(false);
+            SetSelectableEnabled(enemySelectable, false);
+        }
+
+        void ResolveEnemyShip()
+        {
+            if (enemyShip != null)
+            {
+                return;
+            }
+
+            enemyShip = FindByName("enemy");
+            if (enemySelectable == null && enemyShip != null)
+            {
+                enemySelectable = enemyShip.GetComponent<SelectableSceneElement>();
+            }
         }
 
         void Update()
@@ -268,6 +312,7 @@ namespace NineGrid.GameFlow
             ResolveRefs();
             BindHydraulicEvents(forceRebind: true);
             KillMotion();
+            EnsureEnemyShipVisible();
             ResetBattleState();
             _state = BattlePhaseState.Entering;
             _routine = StartCoroutine(EnterRoutine());
@@ -539,6 +584,11 @@ namespace NineGrid.GameFlow
             if (result.EnemyDead || result.PlayerDead)
             {
                 _won = result.EnemyDead;
+                if (result.EnemyDead)
+                {
+                    HideEnemyShipForDefeat();
+                }
+
                 ExitBattle();
             }
             else
@@ -1108,14 +1158,7 @@ namespace NineGrid.GameFlow
                 playerSelectable = player.GetComponent<SelectableSceneElement>();
             }
 
-            if (enemySelectable == null)
-            {
-                var enemy = FindByName("enemy");
-                if (enemy != null)
-                {
-                    enemySelectable = enemy.GetComponent<SelectableSceneElement>();
-                }
-            }
+            ResolveEnemyShip();
 
             if (pointerSelector == null)
             {

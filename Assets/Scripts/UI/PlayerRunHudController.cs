@@ -261,9 +261,9 @@ namespace NineGrid.UI
         bool IsRunActive()
         {
             var flow = GameFlowController.Instance;
-            if (flow != null && flow.IsBooted && flow.CurrentState != GameFlowState.MainMenu)
+            if (flow != null && flow.IsBooted)
             {
-                return true;
+                return flow.CurrentState != GameFlowState.MainMenu;
             }
 
             return RunData.Current != null;

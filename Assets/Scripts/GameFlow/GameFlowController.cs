@@ -2,6 +2,7 @@ using System;
 using NineGrid.UI;
 using QFramework;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace NineGrid.GameFlow
 {
@@ -49,7 +50,7 @@ namespace NineGrid.GameFlow
         };
 
         [Header("开局")]
-        [Tooltip("勾选：开局进入序章。取消勾选：开局进入战斗0（已历序章通道）。")]
+        [Tooltip("勾选：从 MainScene 启动时直接进入序章。MainPanelScene 启动时始终进主菜单。")]
         [SerializeField] bool enterPrologueOnStart = true;
 
         readonly FSM<GameFlowState> _fsm = new();
@@ -127,14 +128,11 @@ namespace NineGrid.GameFlow
             }
         }
 
-        /// <summary>从主菜单开始一局。首次进序章，之后进战斗0。</summary>
+        /// <summary>从主菜单开始一局：始终从序章进入。</summary>
         public void StartNewRun()
         {
-            // 初始化 run 级持久化数据（金币/牌库/改造列表）
             RunData.StartNewRun();
-            EnterState(GameFlowProgress.HasCompletedPrologue
-                ? GameFlowState.Battle0
-                : GameFlowState.Prologue);
+            EnterState(GameFlowState.Prologue);
             RunStarted?.Invoke();
         }
 
@@ -235,6 +233,7 @@ namespace NineGrid.GameFlow
 
         public void GoToMainMenu()
         {
+            RunData.ClearSave();
             EnterState(GameFlowState.MainMenu);
         }
 
@@ -247,13 +246,17 @@ namespace NineGrid.GameFlow
         void Boot()
         {
             GameFlowState initial;
-            if (enterPrologueOnStart)
+            var activeScene = SceneManager.GetActiveScene().name;
+            if (string.Equals(activeScene, GameFlowScenes.MainPanel, StringComparison.Ordinal))
+            {
+                initial = GameFlowState.MainMenu;
+            }
+            else if (enterPrologueOnStart)
             {
                 initial = GameFlowState.Prologue;
             }
             else
             {
-                // 取消勾选：走已历序章通道，直接战斗0。
                 MarkPrologueCompleted();
                 initial = GameFlowState.Battle0;
             }
@@ -411,7 +414,7 @@ namespace NineGrid.GameFlow
             }
 
             GameFlowProgress.HasCompletedPrologue = true;
-            Debug.Log("[GameFlow] 序章教学已完成，后续开局将跳过序章。");
+            Debug.Log("[GameFlow] 序章教学已完成。");
         }
 
         static int IndexOf(GameFlowState state)
