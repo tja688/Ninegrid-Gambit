@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using Febucci.TextAnimatorForUnity.TextMeshPro;
@@ -7,6 +8,7 @@ using NineGrid.Presentation.Visuals;
 using NineGrid.UI;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -91,18 +93,77 @@ namespace NineGrid.GameFlow
         bool _shopInitialized;
         bool _panelBindingsReady;
         bool _left;
+        Coroutine _prepareRoutine;
 
         public event Action RefineryOpened;
         public event Action ShipyardOpened;
         public event Action PanelSwitched;
         public event Action Left;
 
+        void OnEnable()
+        {
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            SchedulePrepareVisit();
+        }
+
+        void OnDisable()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            if (_prepareRoutine != null)
+            {
+                StopCoroutine(_prepareRoutine);
+                _prepareRoutine = null;
+            }
+        }
+
         void Start()
         {
-            ResolveRefs();
+            SchedulePrepareVisit();
+        }
+
+        void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (!string.Equals(scene.name, GameFlowScenes.Island, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            SchedulePrepareVisit();
+        }
+
+        void SchedulePrepareVisit()
+        {
+            if (!isActiveAndEnabled)
+            {
+                return;
+            }
+
+            if (_prepareRoutine != null)
+            {
+                StopCoroutine(_prepareRoutine);
+            }
+
+            _prepareRoutine = StartCoroutine(PrepareVisitRoutine());
+        }
+
+        IEnumerator PrepareVisitRoutine()
+        {
+            _left = false;
+            yield return null;
+            yield return null;
+
+            _prepareRoutine = null;
+            PrepareVisit();
+        }
+
+        void PrepareVisit()
+        {
+            _left = false;
+            ResolveRefs(forceRefresh: true);
             InitPanel(refinery);
             InitPanel(shipyard);
             InitShop();
+            _panelBindingsReady = false;
             BindPanelClickTargets();
         }
 
@@ -210,13 +271,13 @@ namespace NineGrid.GameFlow
                 return true;
             }
 
-            if (hovered == shipyard.trigger)
+            if (IsShipyardTrigger(hovered))
             {
                 OpenShipyard();
                 return true;
             }
 
-            if (hovered == refinery.trigger)
+            if (IsRefineryTrigger(hovered))
             {
                 OpenRefinery();
                 return true;
@@ -249,12 +310,13 @@ namespace NineGrid.GameFlow
             _left = true;
             Left?.Invoke();
             HideNotice();
-            HideShopHud();
 
             oreInventoryPanel?.Close();
 
             HidePanelImmediate(refinery);
             HidePanelImmediate(shipyard);
+            HideShopHud();
+            TryReleaseShopOverlay();
 
             GameFlowController.Instance?.Advance();
         }
@@ -295,7 +357,9 @@ namespace NineGrid.GameFlow
                 return;
             }
 
-            var isHover = hovered == sp.trigger;
+            var isHover = sp == refinery
+                ? IsRefineryTrigger(hovered)
+                : IsShipyardTrigger(hovered);
             if (isHover == sp.Hovering)
             {
                 return;
@@ -995,9 +1059,9 @@ namespace NineGrid.GameFlow
             return Input.mousePosition;
         }
 
-        void ResolveRefs()
+        void ResolveRefs(bool forceRefresh = false)
         {
-            if (pointerSelector == null)
+            if (forceRefresh || pointerSelector == null)
             {
                 pointerSelector = FindFirstObjectByType<SceneElementPointerSelector>();
             }
@@ -1007,54 +1071,111 @@ namespace NineGrid.GameFlow
                 worldCamera = Camera.main;
             }
 
-            if (refinery.trigger == null)
+            if (forceRefresh || refinery.trigger == null)
             {
                 refinery.trigger = FindSelectable("精炼厂");
             }
 
-            if (shipyard.trigger == null)
+            if (forceRefresh || shipyard.trigger == null)
             {
                 shipyard.trigger = FindSelectable("船坞");
             }
 
-            if (refinery.panel == null)
+            if (forceRefresh || refinery.panel == null)
             {
                 refinery.panel = FindPanel("精炼厂panel");
             }
 
-            if (shipyard.panel == null)
+            if (forceRefresh || shipyard.panel == null)
             {
                 shipyard.panel = FindPanel("船坞panel");
             }
 
-            if (sharedEntryPoint == null)
+            if (forceRefresh || sharedEntryPoint == null)
             {
                 sharedEntryPoint = FindTransform("panel 入场点位");
             }
 
-            if (refinery.entryPoint == null)
+            if (forceRefresh || refinery.entryPoint == null)
             {
                 refinery.entryPoint = sharedEntryPoint;
             }
 
-            if (shipyard.entryPoint == null)
+            if (forceRefresh || shipyard.entryPoint == null)
             {
                 shipyard.entryPoint = sharedEntryPoint;
             }
 
-            if (leaveElement == null)
+            if (forceRefresh || leaveElement == null)
             {
                 leaveElement = FindSelectable("离开按钮")
                     ?? FindSelectable("离开")
                     ?? FindSelectable("返回地图");
             }
 
-            if (oreInventoryPanel == null)
+            if (forceRefresh || oreInventoryPanel == null)
             {
                 oreInventoryPanel = FindFirstObjectByType<OreInventoryPanel>(FindObjectsInactive.Include);
             }
 
+            if (forceRefresh)
+            {
+                _shopDescriptionObject = null;
+                _goldCountObject = null;
+                _shopDescriptionText = null;
+                _goldCountText = null;
+                _shopDescriptionAnimator = null;
+                _goldCountAnimator = null;
+                _refineryGoldIcon = null;
+                _shipyardGoldIcon = null;
+            }
+
             CacheShopUi();
+        }
+
+        bool IsRefineryTrigger(SelectableSceneElement hovered)
+        {
+            if (hovered == null)
+            {
+                return false;
+            }
+
+            if (refinery.trigger != null && hovered == refinery.trigger)
+            {
+                return true;
+            }
+
+            return MatchesServiceTrigger(hovered, "精炼厂", "factory");
+        }
+
+        bool IsShipyardTrigger(SelectableSceneElement hovered)
+        {
+            if (hovered == null)
+            {
+                return false;
+            }
+
+            if (shipyard.trigger != null && hovered == shipyard.trigger)
+            {
+                return true;
+            }
+
+            return MatchesServiceTrigger(hovered, "船坞", "dockyard");
+        }
+
+        static bool MatchesServiceTrigger(SelectableSceneElement hovered, string objectName, string elementId)
+        {
+            if (hovered == null)
+            {
+                return false;
+            }
+
+            if (string.Equals(hovered.ElementId, elementId, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return string.Equals(hovered.name.Trim(), objectName, StringComparison.Ordinal);
         }
 
         static SelectableSceneElement FindSelectable(string objectName)

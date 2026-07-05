@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 
 namespace NineGrid.Presentation.Visuals
 {
@@ -85,6 +86,18 @@ namespace NineGrid.Presentation.Visuals
             }
 
             Registered.Remove(element);
+            PruneDestroyedEntries();
+        }
+
+        static void PruneDestroyedEntries()
+        {
+            for (var i = Registered.Count - 1; i >= 0; i--)
+            {
+                if (Registered[i] == null)
+                {
+                    Registered.RemoveAt(i);
+                }
+            }
         }
 
         void Awake()
@@ -149,10 +162,18 @@ namespace NineGrid.Presentation.Visuals
         SelectableSceneElement FindTopmostAt(Vector2 worldPoint)
         {
             HitBuffer.Clear();
+            var activeScene = SceneManager.GetActiveScene();
+            var restrictToActiveScene = string.Equals(activeScene.name, "IslandScene", System.StringComparison.Ordinal);
+
             for (int i = 0; i < Registered.Count; i++)
             {
                 SelectableSceneElement element = Registered[i];
                 if (element == null || !element.isActiveAndEnabled)
+                {
+                    continue;
+                }
+
+                if (restrictToActiveScene && element.gameObject.scene != activeScene)
                 {
                     continue;
                 }

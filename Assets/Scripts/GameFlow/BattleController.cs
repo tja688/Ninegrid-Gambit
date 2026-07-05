@@ -610,6 +610,7 @@ namespace NineGrid.GameFlow
         {
             LockPermissions();
             HideEnemyDescription();
+            enemyHpBar?.HideImmediate();
 
             // 若锻造子场景开着，先常规退场。
             if (hydraulicScene != null

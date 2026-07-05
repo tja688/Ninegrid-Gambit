@@ -241,6 +241,7 @@ namespace NineGrid.GameFlow
                 var host = ResolveCoroutineHost();
                 host.StopCoroutine(_routine);
                 _routine = null;
+                EnsureOverlayHidden();
             }
 
             _routine = ResolveCoroutineHost().StartCoroutine(TransitionRoutine(state));
@@ -558,6 +559,16 @@ namespace NineGrid.GameFlow
             {
                 _overlayCanvas.gameObject.SetActive(active);
             }
+        }
+
+        void EnsureOverlayHidden()
+        {
+            if (_fadeImage != null)
+            {
+                _fadeImage.color = WithAlpha(fadeColor, 0f);
+            }
+
+            SetOverlayActive(false);
         }
 
         static Color WithAlpha(Color color, float alpha)

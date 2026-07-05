@@ -95,6 +95,10 @@ namespace NineGrid.Audio
             DontDestroyOnLoad(gameObject);
             if (GetComponent<GameAudioDebugPanel>() == null)
                 gameObject.AddComponent<GameAudioDebugPanel>();
+            if (GetComponent<GameAudioVolumeController>() == null)
+                gameObject.AddComponent<GameAudioVolumeController>();
+            if (GetComponent<GameAudioVolumeUi>() == null)
+                gameObject.AddComponent<GameAudioVolumeUi>();
         }
 
         void OnEnable()

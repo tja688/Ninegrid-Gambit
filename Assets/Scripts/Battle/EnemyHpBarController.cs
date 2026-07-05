@@ -13,10 +13,16 @@ namespace NineGrid.Battle
     [DisallowMultipleComponent]
     public sealed class EnemyHpBarController : MonoBehaviour
     {
+        const float StayPoseEpsilon = 0.15f;
+
         [Header("引用（留空自动解析）")]
         [SerializeField] RectTransform barRoot;
         [SerializeField] MMProgressBar progressBar;
         [SerializeField] Transform enemy;
+
+        [Header("跟随")]
+        [Tooltip("敌舰尚未就位时使用的世界偏移；就位后会按预制体锚点重新校准。")]
+        [SerializeField] Vector3 fallbackWorldOffset = new Vector3(0f, 1.5f, 0f);
 
         bool _resolved;
         bool _wantVisible;
@@ -25,6 +31,9 @@ namespace NineGrid.Battle
         bool _battleBound;
         Vector3 _worldOffset;
         bool _offsetCached;
+        Vector2 _defaultAnchoredPosition;
+        bool _hasDefaultAnchoredPosition;
+        Canvas _canvas;
         BattleController _battle;
 
         public bool IsVisible => _wantVisible && !_suspended;
@@ -32,6 +41,7 @@ namespace NineGrid.Battle
         void Awake()
         {
             ResolveRefs();
+            CaptureDefaultAnchoredPosition();
             ConfigureProgressBarText();
             HideImmediate();
         }
@@ -58,8 +68,11 @@ namespace NineGrid.Battle
 
             _resolved = false;
             enemy = null;
+            _offsetCached = false;
+            _canvas = null;
             UnbindPerformance();
             ResolveRefs();
+            EnsureCanvasCamera();
             if (IsVisible)
             {
                 CacheWorldOffset();
@@ -90,12 +103,15 @@ namespace NineGrid.Battle
             }
 
             ApplyVisible(true);
+            SyncWorldPosition();
         }
 
         /// <summary>新战斗开始前：解绑上一场战斗事件。</summary>
         public void PrepareForBattle()
         {
             UnbindBattle();
+            _offsetCached = false;
+            EnsureCanvasCamera();
         }
 
         /// <summary>战斗模型就绪后同步当前血量（无动画，避免入场闪条）。</summary>
@@ -115,6 +131,7 @@ namespace NineGrid.Battle
         {
             _wantVisible = false;
             _resumeAfterSuspend = false;
+            _offsetCached = false;
             ApplyVisible(false);
         }
 
@@ -262,19 +279,125 @@ namespace NineGrid.Battle
                 return;
             }
 
-            barRoot.position = enemy.position + _worldOffset;
+            EnsureCanvasCamera();
+            var targetWorld = enemy.position + _worldOffset;
+
+            if (_canvas != null
+                && _canvas.renderMode == RenderMode.ScreenSpaceCamera
+                && _canvas.worldCamera != null)
+            {
+                var canvasRect = _canvas.transform as RectTransform;
+                var screenPoint = _canvas.worldCamera.WorldToScreenPoint(targetWorld);
+                if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                        canvasRect,
+                        screenPoint,
+                        _canvas.worldCamera,
+                        out var localPoint))
+                {
+                    ResetBarVisualTransform();
+                    barRoot.anchoredPosition = localPoint;
+                }
+
+                return;
+            }
+
+            ResetBarVisualTransform();
+            barRoot.position = targetWorld;
         }
 
         void CacheWorldOffset()
         {
             ResolveRefs();
-            if (barRoot == null || enemy == null)
+            if (enemy == null)
             {
                 return;
             }
 
+            if (TryCalibrateOffsetFromStayPose())
+            {
+                return;
+            }
+
+            _worldOffset = fallbackWorldOffset;
+            _offsetCached = true;
+        }
+
+        bool TryCalibrateOffsetFromStayPose()
+        {
+            if (barRoot == null || enemy == null || !IsEnemyAtStayPose())
+            {
+                return false;
+            }
+
+            EnsureCanvasCamera();
+            ResetBarVisualTransform();
+
+            if (_hasDefaultAnchoredPosition)
+            {
+                barRoot.anchoredPosition = _defaultAnchoredPosition;
+            }
+
             _worldOffset = barRoot.position - enemy.position;
             _offsetCached = true;
+            return true;
+        }
+
+        bool IsEnemyAtStayPose()
+        {
+            if (enemy == null)
+            {
+                return false;
+            }
+
+            var stay = GameObject.Find("enemy stay");
+            return stay != null
+                && Vector3.Distance(enemy.position, stay.transform.position) <= StayPoseEpsilon;
+        }
+
+        void CaptureDefaultAnchoredPosition()
+        {
+            if (barRoot == null)
+            {
+                return;
+            }
+
+            _defaultAnchoredPosition = barRoot.anchoredPosition;
+            _hasDefaultAnchoredPosition = true;
+        }
+
+        void EnsureCanvasCamera()
+        {
+            if (barRoot == null)
+            {
+                return;
+            }
+
+            if (_canvas == null)
+            {
+                _canvas = barRoot.GetComponentInParent<Canvas>();
+            }
+
+            if (_canvas == null || _canvas.renderMode != RenderMode.ScreenSpaceCamera)
+            {
+                return;
+            }
+
+            var mainCamera = Camera.main;
+            if (mainCamera != null && _canvas.worldCamera != mainCamera)
+            {
+                _canvas.worldCamera = mainCamera;
+            }
+        }
+
+        void ResetBarVisualTransform()
+        {
+            if (barRoot == null)
+            {
+                return;
+            }
+
+            barRoot.localRotation = Quaternion.identity;
+            barRoot.localScale = Vector3.one;
         }
 
         void ConfigureProgressBarText()
@@ -301,6 +424,7 @@ namespace NineGrid.Battle
             if (barRoot == null)
             {
                 barRoot = transform as RectTransform;
+                CaptureDefaultAnchoredPosition();
             }
 
             if (progressBar == null)
