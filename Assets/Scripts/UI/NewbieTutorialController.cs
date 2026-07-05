@@ -96,7 +96,6 @@ namespace NineGrid.UI
         void Awake()
         {
             sInstance = this;
-            ApplySessionEligible(PendingSessionEligible);
             CacheArrowHome();
         }
 
@@ -130,18 +129,33 @@ namespace NineGrid.UI
 
         void ApplySessionEligible(bool eligible)
         {
-            _sessionEligible = eligible;
-            if (!eligible)
+            if (eligible)
             {
-                CancelShowing();
-                _nextStep = StepCount;
-                UnhookAll();
+                _sessionEligible = true;
+                _nextStep = 0;
+                _forgeEnterCount = 0;
+                HookAll();
+                TryCatchUpMissedSteps();
+                Debug.Log($"[NewbieTutorial] 会话已启用，nextStep={_nextStep}");
                 return;
             }
 
-            HookAll();
-            TryCatchUpMissedSteps();
-            Debug.Log($"[NewbieTutorial] 会话已启用，nextStep={_nextStep}");
+            if (_sessionEligible)
+            {
+                CancelShowing();
+                UnhookAll();
+            }
+
+            _sessionEligible = false;
+            _nextStep = StepCount;
+        }
+
+        void Update()
+        {
+            if (_awaitingDismiss)
+            {
+                TryConsumeDismissClick();
+            }
         }
 
         void Start()
