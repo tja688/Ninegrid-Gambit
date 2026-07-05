@@ -11,6 +11,7 @@
 - **Unity MCP**：改场景/组件用 MCP，**禁止**手改 `.unity`；改脚本后 `refresh_unity` 并读 Console。
 - **CodeGraph MCP**：查符号、调用链、影响面。
 - **游戏开发笔记**：Assets/Docs。维护力度不太足，仅供参考。
+- **游戏音频**：Assets/Arts/Audios/Data/GameAudioCueDatabase.asset。
 
 ---
 
