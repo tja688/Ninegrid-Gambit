@@ -9,6 +9,7 @@ namespace NineGrid.Presentation.Cards
         private readonly Transform _anchor;
         private readonly PixelCardPackSpriteLibrary _library;
         private readonly float _spacing;
+        private readonly int _sortingLayerId;
         private readonly int _sortingOrder;
         private readonly MonoBehaviour _runner;
         private readonly List<SpriteRenderer> _renderers = new();
@@ -19,12 +20,14 @@ namespace NineGrid.Presentation.Cards
             Transform anchor,
             PixelCardPackSpriteLibrary library,
             float spacing,
+            int sortingLayerId,
             int sortingOrder,
             MonoBehaviour runner)
         {
             _anchor = anchor;
             _library = library;
             _spacing = spacing;
+            _sortingLayerId = sortingLayerId;
             _sortingOrder = sortingOrder;
             _runner = runner;
         }
@@ -102,6 +105,7 @@ namespace NineGrid.Presentation.Cards
                 var child = new GameObject($"Digit_{index}");
                 child.transform.SetParent(_anchor, false);
                 var renderer = child.AddComponent<SpriteRenderer>();
+                renderer.sortingLayerID = _sortingLayerId;
                 renderer.sortingOrder = _sortingOrder;
                 _renderers.Add(renderer);
             }

@@ -10,6 +10,7 @@ namespace NineGrid.Presentation.Cards
         private readonly PixelCardPackSpriteLibrary _library;
         private readonly Vector3 _blockScale;
         private readonly float _spacing;
+        private readonly int _sortingLayerId;
         private readonly int _sortingOrder;
         private readonly MonoBehaviour _runner;
         private readonly List<BlockEntry> _blocks = new();
@@ -28,6 +29,7 @@ namespace NineGrid.Presentation.Cards
             PixelCardPackSpriteLibrary library,
             Vector3 blockScale,
             float spacing,
+            int sortingLayerId,
             int sortingOrder,
             MonoBehaviour runner)
         {
@@ -35,6 +37,7 @@ namespace NineGrid.Presentation.Cards
             _library = library;
             _blockScale = blockScale;
             _spacing = spacing;
+            _sortingLayerId = sortingLayerId;
             _sortingOrder = sortingOrder;
             _runner = runner;
         }
@@ -114,6 +117,7 @@ namespace NineGrid.Presentation.Cards
                 var child = new GameObject($"ArmorBlock_{_blocks.Count}");
                 child.transform.SetParent(_anchor, false);
                 var renderer = child.AddComponent<SpriteRenderer>();
+                renderer.sortingLayerID = _sortingLayerId;
                 renderer.sortingOrder = _sortingOrder;
                 _blocks.Add(new BlockEntry
                 {

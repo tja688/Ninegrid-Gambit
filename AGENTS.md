@@ -28,6 +28,7 @@
 - **Unity MCP**：改场景/组件用 MCP，**禁止**手改 `.unity`；改脚本后 `refresh_unity` 并读 Console。
 - **CodeGraph MCP**：查符号、调用链、影响面；混合 pending ID / 设计文案 / JSON 行时用 `rg`。
 - **内核测试**：`NineGrid.Core.Tests`。
+- **开发测试（DevTest）**：`Assets/Scripts/NineGrid.DevTest`（仅 Editor / Development Build）。用户要求用小键盘做临时验收或调试时，统一通过 `TestKeyModuleBehaviour` 注册到 `TestKeyManager`，勿在业务代码里散落 `Input` 监听。
 
 ---
 

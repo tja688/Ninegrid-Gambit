@@ -122,10 +122,11 @@ namespace NineGrid.Presentation.Cards
                 return;
             }
 
-            _attackDigits = new PixelDigitDisplay(attackAnchor, spriteLibrary, digitSpacing, statSortingOrder, this);
-            _lifeDigits = new PixelDigitDisplay(lifeAnchor, spriteLibrary, digitSpacing, statSortingOrder, this);
-            _armorValueDigits = new PixelDigitDisplay(armorValueAnchor, spriteLibrary, digitSpacing, armorSortingOrder, this);
-            _armorBlocks = new ArmorBlockDisplay(armorBlocksAnchor, spriteLibrary, armorBlockScale, armorBlockSpacing, armorSortingOrder, this);
+            var sortingLayerId = ResolveSortingLayerId();
+            _attackDigits = new PixelDigitDisplay(attackAnchor, spriteLibrary, digitSpacing, sortingLayerId, statSortingOrder, this);
+            _lifeDigits = new PixelDigitDisplay(lifeAnchor, spriteLibrary, digitSpacing, sortingLayerId, statSortingOrder, this);
+            _armorValueDigits = new PixelDigitDisplay(armorValueAnchor, spriteLibrary, digitSpacing, sortingLayerId, armorSortingOrder, this);
+            _armorBlocks = new ArmorBlockDisplay(armorBlocksAnchor, spriteLibrary, armorBlockScale, armorBlockSpacing, sortingLayerId, armorSortingOrder, this);
         }
 
         private void RefreshAll(bool animate)
@@ -208,6 +209,27 @@ namespace NineGrid.Presentation.Cards
             {
                 renderer.enabled = false;
             }
+        }
+
+        private int ResolveSortingLayerId()
+        {
+            if (_sortingGroup != null)
+            {
+                return _sortingGroup.sortingLayerID;
+            }
+
+            if (mainIconRenderer != null)
+            {
+                return mainIconRenderer.sortingLayerID;
+            }
+
+            if (cardFrameRenderer != null)
+            {
+                return cardFrameRenderer.sortingLayerID;
+            }
+
+            var background = cardBackgroundRenderer ?? GetComponent<SpriteRenderer>();
+            return background != null ? background.sortingLayerID : 0;
         }
 
         private void ApplySortingOrders()
