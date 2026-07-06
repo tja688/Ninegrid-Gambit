@@ -1,5 +1,15 @@
 # rules.md
 
 ## 文件保护规则
-
 - **严禁改动 .unity 文件**：在任何情况、以任何理由直接修改 `.unity` 后缀的场景文件。相关改动需求应通过 Unity MCP 进行落地，不得手动或通过文本方式编辑 `.unity` 文件。
+
+## 工程提交规则
+- 每次开发任务完成后，必须全量进行**git 提交**；提交信息简洁概括目的。
+
+## 代码维护规则
+- 所有内核core的代码维护和开发必须使用**框架**：QFramework。
+- 所有非内核core的代码维护和开发不可使用**框架**：QFramework。
+- **框架**：QFramework为内核专属，整个内被视为黑盒，开发、维护有专门的技能支持，除非明确要求不随手改core，在开发、维护其他层代码时，除非明确要求，否则不关注core实现，节省上下文。
+
+## 开发测试按键注册规则
+- 开发测试（DevTest）：`Assets/Scripts/NineGrid.DevTest`（仅 Editor / Development Build）。用户要求用小键盘做临时验收或调试时，统一通过 `TestKeyModuleBehaviour` 注册到 `TestKeyManager`，勿在业务代码里散落 `Input` 监听。
