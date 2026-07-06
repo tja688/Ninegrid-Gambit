@@ -12,6 +12,7 @@ alwaysApply: true
 ## 工程提交规则
 
 - 每次开发任务完成后，必须全量进行 **git 提交**；提交信息简洁概括目的。
+- 提交 git **前**，必须先执行一次 Unity MCP 的 `refresh_unity` 刷新动作，并检查 Console 是否有新增错误。若 Unity MCP 未连接或不可用，则跳过此步。
 
 ## 代码维护规则
 
