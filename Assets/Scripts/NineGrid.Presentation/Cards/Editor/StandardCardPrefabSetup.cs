@@ -41,8 +41,8 @@ namespace NineGrid.Presentation.Cards.Editor
 
             var attack = EnsureChild(root.transform, "Attack", new Vector3(-0.5939188f, 0.7503282f, 0f));
             var life = EnsureChild(root.transform, "Life", new Vector3(0.5935812f, 0.7503282f, 0f));
-            var armorBlocks = EnsureChild(root.transform, "ArmorBlocks", new Vector3(0.021987915f, -0.73784775f, 0f));
-            var armorValue = EnsureChild(root.transform, "ArmorValue", new Vector3(0.021987915f, -0.73784775f, 0f));
+            var armorBlocks = EnsureChild(root.transform, "ArmorBlocks", new Vector3(-0.5388546f, -0.6682327f, 0f));
+            var armorValue = EnsureChild(root.transform, "ArmorValue", new Vector3(0.5861454f, -0.7307327f, 0f));
 
             CaptureArmorLayout(root.transform, out var blockScale, out var blockSpacing);
             blockScale = Vector3.one;
@@ -84,6 +84,10 @@ namespace NineGrid.Presentation.Cards.Editor
                 FindRenderer(cardView.transform, "Card Frame");
             serialized.FindProperty("mainIconRenderer").objectReferenceValue = FindRenderer(cardView.transform, "MainIcon");
             serialized.FindProperty("armorBlockScale").vector3Value = blockScale;
+            serialized.FindProperty("digitSpacing").floatValue = 0.04f;
+            serialized.FindProperty("armorDigitSpacing").floatValue = 0.25f;
+            serialized.FindProperty("armorDigitScale").vector3Value = Vector3.one;
+            serialized.FindProperty("armorDigitColor").colorValue = new Color(249f / 255f, 194f / 255f, 43f / 255f, 1f);
             serialized.FindProperty("armorBlockSpacing").floatValue = blockSpacing;
             serialized.FindProperty("frameSortingOrder").intValue = -10;
             serialized.FindProperty("backgroundSortingOrder").intValue = -9;

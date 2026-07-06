@@ -137,11 +137,9 @@ namespace NineGrid.Presentation.Cards
                 return;
             }
 
-            var totalWidth = (count - 1) * _spacing;
-            var startX = -totalWidth * 0.5f;
             for (var i = 0; i < count && i < _blocks.Count; i++)
             {
-                _blocks[i].Transform.localPosition = new Vector3(startX + i * _spacing, 0f, 0f);
+                _blocks[i].Transform.localPosition = new Vector3(i * _spacing, 0f, 0f);
             }
         }
 

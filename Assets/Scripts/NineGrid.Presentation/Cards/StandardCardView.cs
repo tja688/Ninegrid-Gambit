@@ -7,7 +7,16 @@ namespace NineGrid.Presentation.Cards
     [RequireComponent(typeof(SortingGroup))]
     public sealed class StandardCardView : MonoBehaviour
     {
+        private const int ArmorDigitSlotCount = 3;
+        private static readonly float[] ArmorDigitSlotX =
+        {
+            0.0861454f,
+            0.3361454f,
+            0.5861454f,
+        };
+
         private const int ArmorValueThreshold = 7;
+        private const int MaxArmor = 999;
 
         [Header("Sprite Library")]
         [SerializeField] private PixelCardPackSpriteLibrary spriteLibrary;
@@ -25,6 +34,9 @@ namespace NineGrid.Presentation.Cards
 
         [Header("Layout")]
         [SerializeField] private float digitSpacing = 0.04f;
+        [SerializeField] private float armorDigitSpacing = 0.25f;
+        [SerializeField] private Vector3 armorDigitScale = Vector3.one;
+        [SerializeField] private Color armorDigitColor = new(249f / 255f, 194f / 255f, 43f / 255f, 1f);
         [SerializeField] private float armorBlockSpacing = 0.156f;
         [SerializeField] private Vector3 armorBlockScale = new(1f, 1f, 1f);
 
@@ -79,7 +91,7 @@ namespace NineGrid.Presentation.Cards
 
         public void SetArmor(int value, bool animate = true)
         {
-            armor = Mathf.Max(0, value);
+            armor = Mathf.Clamp(value, 0, MaxArmor);
             RefreshArmorDisplay(animate);
         }
 
@@ -125,7 +137,18 @@ namespace NineGrid.Presentation.Cards
             var sortingLayerId = ResolveSortingLayerId();
             _attackDigits = new PixelDigitDisplay(attackAnchor, spriteLibrary, digitSpacing, sortingLayerId, statSortingOrder, this);
             _lifeDigits = new PixelDigitDisplay(lifeAnchor, spriteLibrary, digitSpacing, sortingLayerId, statSortingOrder, this);
-            _armorValueDigits = new PixelDigitDisplay(armorValueAnchor, spriteLibrary, digitSpacing, sortingLayerId, armorSortingOrder, this);
+            var armorDigitSlotOffsets = BuildArmorDigitSlotOffsets();
+            _armorValueDigits = new PixelDigitDisplay(
+                armorValueAnchor,
+                spriteLibrary,
+                armorDigitSpacing,
+                sortingLayerId,
+                armorSortingOrder,
+                this,
+                DigitAlignment.FixedSlotsOnesRight,
+                armorDigitSlotOffsets,
+                armorDigitScale,
+                armorDigitColor);
             _armorBlocks = new ArmorBlockDisplay(armorBlocksAnchor, spriteLibrary, armorBlockScale, armorBlockSpacing, sortingLayerId, armorSortingOrder, this);
         }
 
@@ -182,12 +205,12 @@ namespace NineGrid.Presentation.Cards
 
             if (armorBlocksAnchor == null)
             {
-                armorBlocksAnchor = CreateAnchor("ArmorBlocks", new Vector3(0.021987915f, -0.73784775f, 0f));
+                armorBlocksAnchor = CreateAnchor("ArmorBlocks", new Vector3(-0.5388546f, -0.6682327f, 0f));
             }
 
             if (armorValueAnchor == null)
             {
-                armorValueAnchor = CreateAnchor("ArmorValue", new Vector3(0.021987915f, -0.73784775f, 0f));
+                armorValueAnchor = CreateAnchor("ArmorValue", new Vector3(ArmorDigitSlotX[2], -0.7307327f, 0f));
             }
         }
 
@@ -209,6 +232,21 @@ namespace NineGrid.Presentation.Cards
             {
                 renderer.enabled = false;
             }
+        }
+
+        private float[] BuildArmorDigitSlotOffsets()
+        {
+            var onesX = armorValueAnchor != null ? armorValueAnchor.localPosition.x : ArmorDigitSlotX[2];
+            var offsets = new float[ArmorDigitSlotCount];
+            for (var i = 0; i < ArmorDigitSlotCount; i++)
+            {
+                var slotX = i < ArmorDigitSlotX.Length
+                    ? ArmorDigitSlotX[i]
+                    : onesX + (i - (ArmorDigitSlotCount - 1)) * armorDigitSpacing;
+                offsets[i] = slotX - onesX;
+            }
+
+            return offsets;
         }
 
         private int ResolveSortingLayerId()

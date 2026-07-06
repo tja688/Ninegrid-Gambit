@@ -4,11 +4,22 @@ using UnityEngine;
 
 namespace NineGrid.Presentation.Cards
 {
+    internal enum DigitAlignment
+    {
+        Center,
+        /// <summary>百十个固定槽位，个位始终在最右槽。</summary>
+        FixedSlotsOnesRight,
+    }
+
     internal sealed class PixelDigitDisplay
     {
         private readonly Transform _anchor;
         private readonly PixelCardPackSpriteLibrary _library;
         private readonly float _spacing;
+        private readonly DigitAlignment _alignment;
+        private readonly float[] _fixedSlotOffsetsFromOnes;
+        private readonly Vector3 _digitScale;
+        private readonly Color _digitColor;
         private readonly int _sortingLayerId;
         private readonly int _sortingOrder;
         private readonly MonoBehaviour _runner;
@@ -22,11 +33,19 @@ namespace NineGrid.Presentation.Cards
             float spacing,
             int sortingLayerId,
             int sortingOrder,
-            MonoBehaviour runner)
+            MonoBehaviour runner,
+            DigitAlignment alignment = DigitAlignment.Center,
+            float[] fixedSlotOffsetsFromOnes = null,
+            Vector3? digitScale = null,
+            Color? digitColor = null)
         {
             _anchor = anchor;
             _library = library;
             _spacing = spacing;
+            _alignment = alignment;
+            _fixedSlotOffsetsFromOnes = fixedSlotOffsetsFromOnes;
+            _digitScale = digitScale ?? Vector3.one;
+            _digitColor = digitColor ?? Color.white;
             _sortingLayerId = sortingLayerId;
             _sortingOrder = sortingOrder;
             _runner = runner;
@@ -67,10 +86,6 @@ namespace NineGrid.Presentation.Cards
             var digits = BuildDigits(value);
             EnsureRendererCount(digits.Count);
 
-            var spacing = ResolveSpacing();
-            var totalWidth = digits.Count > 0 ? (digits.Count - 1) * spacing : 0f;
-            var startX = -totalWidth * 0.5f;
-
             for (var i = 0; i < _renderers.Count; i++)
             {
                 var renderer = _renderers[i];
@@ -82,8 +97,30 @@ namespace NineGrid.Presentation.Cards
                 }
 
                 renderer.sprite = _library.GetDigit(digits[i]);
-                renderer.transform.localPosition = new Vector3(startX + i * spacing, 0f, 0f);
+                renderer.color = _digitColor;
+                renderer.transform.localPosition = new Vector3(ResolveDigitX(i, digits.Count), 0f, 0f);
+                renderer.transform.localScale = _digitScale;
             }
+        }
+
+        private float ResolveDigitX(int digitIndex, int digitCount)
+        {
+            if (_alignment == DigitAlignment.FixedSlotsOnesRight)
+            {
+                var slotCount = _fixedSlotOffsetsFromOnes?.Length ?? 0;
+                if (slotCount == 0)
+                {
+                    return 0f;
+                }
+
+                var slotIndex = slotCount - digitCount + digitIndex;
+                return _fixedSlotOffsetsFromOnes[Mathf.Clamp(slotIndex, 0, slotCount - 1)];
+            }
+
+            var spacing = ResolveSpacing();
+            var totalWidth = digitCount > 0 ? (digitCount - 1) * spacing : 0f;
+            var startX = -totalWidth * 0.5f;
+            return startX + digitIndex * spacing;
         }
 
         private float ResolveSpacing()
@@ -107,6 +144,8 @@ namespace NineGrid.Presentation.Cards
                 var renderer = child.AddComponent<SpriteRenderer>();
                 renderer.sortingLayerID = _sortingLayerId;
                 renderer.sortingOrder = _sortingOrder;
+                renderer.color = _digitColor;
+                child.transform.localScale = _digitScale;
                 _renderers.Add(renderer);
             }
         }
