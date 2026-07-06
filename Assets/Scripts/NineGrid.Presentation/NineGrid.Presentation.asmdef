@@ -1,9 +1,7 @@
 {
-    "name": "NineGrid.DevTest",
-    "rootNamespace": "NineGrid.DevTest",
-    "references": [
-        "NineGrid.Presentation"
-    ],
+    "name": "NineGrid.Presentation",
+    "rootNamespace": "NineGrid.Presentation",
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
