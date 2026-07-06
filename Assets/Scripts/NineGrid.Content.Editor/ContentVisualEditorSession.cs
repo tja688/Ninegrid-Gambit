@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using NineGrid.Content;
 using NineGrid.Core.Content;
-using NineGrid.Presentation.Visuals;
 using UnityEditor;
 using UnityEngine;
 

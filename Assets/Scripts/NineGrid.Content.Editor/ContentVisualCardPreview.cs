@@ -1,5 +1,4 @@
 using NineGrid.Content;
-using NineGrid.Presentation.Visuals;
 using UnityEditor;
 using UnityEngine;
 

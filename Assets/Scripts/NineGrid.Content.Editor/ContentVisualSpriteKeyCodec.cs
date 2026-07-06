@@ -64,7 +64,7 @@ namespace NineGrid.Content.Editor
 
             if (VisualIdNaming.IsVisualId(key))
             {
-                return NineGrid.Presentation.Visuals.ContentVisualSpriteLoader.TryLoad(key, string.Empty, out sprite);
+                return ContentVisualSpriteLoader.TryLoad(key, string.Empty, out sprite);
             }
 
             return TryFindSpriteByName(key, out sprite);

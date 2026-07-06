@@ -4,10 +4,9 @@
 
 **TableNine（九宫牌局）**：Unity 6.3 LTS · URP · 2D 卡牌像素风 Roguelike。核心玩法为九宫格棋盘驱动的卡牌战斗。
 
-- **框架**：QFramework
 - **代码入口**：`Assets/Scripts`
-- **唯一游戏场景**：`Assets/Scenes/MainScene.unity`（原型期）
-- **全局约束**：开发前阅读 [`rules.md`](rules.md)（架构分层、禁止手改 `.unity` 等）
+- **唯一游戏场景**：`Assets/Scenes/MainScene.unity`
+- **全局约束**：开发前阅读 [`rules.md`](rules.md)
 
 ---
 
@@ -21,7 +20,6 @@
 | [`Assets/Notes/Core表现层Command与Event消费清单-2026-06-20.md`](Assets/Notes/Core表现层Command与Event消费清单-2026-06-20.md) | Command / Event 与表现消费对照 |
 | `Assets/Docs/` | 策划设计案、效果语义 |
 | `Assets/Notes/` | 进行时过程性开发笔记，归档里面有历史记录 |
-| `C:\Users\jinji\Desktop\文档\MyNote\游戏开发项目\引擎工作区\九宫牌局架构\九宫牌局表现层（第二版）.canvas`| 全局表现层规划蓝图 |
 
 ---
 
@@ -36,3 +34,4 @@
 ## 协作约定
 
 - 用户明确要求时再 **git 提交**；提交信息简洁概括目的。
+- 内核代码维护必须使用**框架**：QFramework，其他代码不受框架约束。根据用户需求进行代码开发即可。
