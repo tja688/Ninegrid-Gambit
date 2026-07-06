@@ -1,6 +1,6 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 
-using NineGrid.Presentation.Cards;
+using NineGrid.Cards;
 using UnityEngine;
 
 namespace NineGrid.DevTest.Cards

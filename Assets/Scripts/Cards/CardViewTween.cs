@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace NineGrid.Presentation.Cards
+namespace NineGrid.Cards
 {
     internal static class CardViewTween
     {

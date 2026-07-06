@@ -2,7 +2,7 @@
     "name": "NineGrid.DevTest",
     "rootNamespace": "NineGrid.DevTest",
     "references": [
-        "NineGrid.Presentation"
+        "NineGrid.Cards"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

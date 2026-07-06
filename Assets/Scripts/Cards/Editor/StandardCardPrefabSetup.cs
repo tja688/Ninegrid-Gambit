@@ -3,12 +3,12 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace NineGrid.Presentation.Cards.Editor
+namespace NineGrid.Cards.Editor
 {
     public static class StandardCardPrefabSetup
     {
         private const string PrefabPath = "Assets/Prefabs/Standard Card.prefab";
-        private const string LibraryPath = "Assets/Scripts/NineGrid.Presentation/Cards/PixelCardPackSpriteLibrary.asset";
+        private const string LibraryPath = "Assets/Scripts/Cards/PixelCardPackSpriteLibrary.asset";
 
         [MenuItem("NineGrid/Cards/Setup Standard Card Prefab")]
         public static void SetupPrefab()

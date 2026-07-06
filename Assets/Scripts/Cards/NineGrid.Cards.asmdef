@@ -1,6 +1,6 @@
 {
-    "name": "NineGrid.Presentation",
-    "rootNamespace": "NineGrid.Presentation",
+    "name": "NineGrid.Cards",
+    "rootNamespace": "NineGrid.Cards",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -25,7 +25,7 @@ Every landing task should produce:
 
 Before landing or analyzing:
 
-1. Read `rules.md`; never hand-edit `.unity` files.
+1. Follow project rules in `.cursor/rules/`; never hand-edit `.unity` files.
 2. Read `references/baseline-snapshot.md` and refresh pending/atom counts if the task touches catalog.
 3. Read `references/effect-taxonomy.md` before classifying or choosing atoms.
 4. Read `references/landing-workflow.md` (full stack) or `references/compose-analysis.md` (analysis only).

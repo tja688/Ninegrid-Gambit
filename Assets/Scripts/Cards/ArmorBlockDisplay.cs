@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace NineGrid.Presentation.Cards
+namespace NineGrid.Cards
 {
     internal sealed class ArmorBlockDisplay
     {

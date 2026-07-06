@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace NineGrid.Presentation.Cards
+namespace NineGrid.Cards
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(SortingGroup))]
@@ -199,7 +199,7 @@ namespace NineGrid.Presentation.Cards
             if (spriteLibrary == null)
             {
                 spriteLibrary = UnityEditor.AssetDatabase.LoadAssetAtPath<PixelCardPackSpriteLibrary>(
-                    "Assets/Scripts/NineGrid.Presentation/Cards/PixelCardPackSpriteLibrary.asset");
+                    "Assets/Scripts/Cards/PixelCardPackSpriteLibrary.asset");
             }
 #endif
 

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NineGrid.Presentation.Cards
+namespace NineGrid.Cards
 {
     [CreateAssetMenu(fileName = "PixelCardPackSpriteLibrary", menuName = "NineGrid/Cards/Pixel Card Pack Sprites")]
     public sealed class PixelCardPackSpriteLibrary : ScriptableObject
