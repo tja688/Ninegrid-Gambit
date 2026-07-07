@@ -31,7 +31,6 @@ namespace NineGrid.Cards
         [SerializeField] private CardDeckLayoutSettings layoutSettings = new();
 
         private readonly List<ManagedCard> _pendingEntryCards = new();
-        private readonly Dictionary<int, int> _dealtToGround = new();
         private CardDeckSlotContainer _slotContainer;
         private List<Transform> _deckAnchors = new();
         private List<Transform> _addAnchors = new();
@@ -91,7 +90,7 @@ namespace NineGrid.Cards
 
             _pendingEntryCards.Clear();
             _slotContainer.Clear();
-            _dealtToGround.Clear();
+            ResolveFieldManager()?.ClearField();
 
             if (cardsInOrder == null || cardsInOrder.Count == 0)
             {
@@ -127,27 +126,27 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 从指定卡组槽发一张牌到 Ground 槽位（仅 InGame）。
+        /// 从指定卡组槽发一张牌到 Ground 格位（1-based，仅 InGame）。
         /// </summary>
-        public void DealCard(int deckSlotIndex, int groundSlotIndex)
+        public void DealCard(int deckSlotIndex, int groundSlot)
         {
-            TryDealCard(deckSlotIndex, groundSlotIndex);
+            TryDealCard(deckSlotIndex, groundSlot);
         }
 
         /// <summary>
-        /// 从卡组最左侧（槽位 0）发一张牌到 Ground 槽位（仅 InGame）。
+        /// 从卡组最左侧（槽位 0）发一张牌到 Ground 格位（1-based，仅 InGame）。
         /// </summary>
-        public bool DealFirstCard(int groundSlotIndex)
+        public bool DealFirstCard(int groundSlot)
         {
-            return TryDealCard(0, groundSlotIndex);
+            return TryDealCard(0, groundSlot);
         }
 
         /// <summary>
-        /// 批量发牌：按 groundSlotIndices 顺序，每次从卡组最左侧连续取牌（仅 InGame）。
+        /// 批量发牌：按 groundSlots 顺序，每次从卡组最左侧连续取牌（1-based，仅 InGame）。
         /// </summary>
-        public void DealCards(IReadOnlyList<int> groundSlotIndices)
+        public void DealCards(IReadOnlyList<int> groundSlots)
         {
-            DealCardsInternal(groundSlotIndices).Forget();
+            DealCardsInternal(groundSlots).Forget();
         }
 
         /// <summary>
@@ -167,16 +166,11 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 清理 Ground 上已发卡牌并释放槽位占用（测试/重置用）。
+        /// 清理 Ground 上已发卡牌并释放槽位占用（测试/重置用）。委托 GroundFieldManagerSingleton。
         /// </summary>
         public void ClearGround()
         {
-            foreach (var pair in _dealtToGround)
-            {
-                CardManagerSingleton.Instance.Release(pair.Value);
-            }
-
-            _dealtToGround.Clear();
+            ResolveFieldManager()?.ClearField();
         }
 
         public bool TryGetFirstDeckSlot(out int deckSlotIndex)
@@ -191,19 +185,23 @@ namespace NineGrid.Cards
             return true;
         }
 
-        public bool TryGetFirstEmptyGroundSlot(out int groundSlotIndex)
+        public bool TryGetFirstEmptyGroundSlot(out int groundSlot)
         {
-            groundSlotIndex = -1;
-            for (var i = 0; i < _groundAnchors.Count; i++)
+            groundSlot = -1;
+            var field = ResolveFieldManager();
+            if (field == null)
             {
-                if (!_dealtToGround.ContainsKey(i) && CardSlotAnchorUtility.IsDealableGroundSlotIndex(i))
-                {
-                    groundSlotIndex = i;
-                    return true;
-                }
+                return false;
             }
 
-            return false;
+            var emptySlots = field.GetEmptyPlaceableSlots();
+            if (emptySlots.Count == 0)
+            {
+                return false;
+            }
+
+            groundSlot = emptySlots[0];
+            return true;
         }
 
         public bool TryGetRandomDeckSlot(out int deckSlotIndex)
@@ -227,24 +225,22 @@ namespace NineGrid.Cards
             return true;
         }
 
-        public bool TryGetRandomEmptyGroundSlot(out int groundSlotIndex)
+        public bool TryGetRandomEmptyGroundSlot(out int groundSlot)
         {
-            groundSlotIndex = -1;
-            var candidates = new List<int>();
-            for (var i = 0; i < _groundAnchors.Count; i++)
-            {
-                if (!_dealtToGround.ContainsKey(i) && CardSlotAnchorUtility.IsDealableGroundSlotIndex(i))
-                {
-                    candidates.Add(i);
-                }
-            }
-
-            if (candidates.Count == 0)
+            groundSlot = -1;
+            var field = ResolveFieldManager();
+            if (field == null)
             {
                 return false;
             }
 
-            groundSlotIndex = candidates[UnityEngine.Random.Range(0, candidates.Count)];
+            var emptySlots = field.GetEmptyPlaceableSlots();
+            if (emptySlots.Count == 0)
+            {
+                return false;
+            }
+
+            groundSlot = emptySlots[UnityEngine.Random.Range(0, emptySlots.Count)];
             return true;
         }
 
@@ -341,22 +337,29 @@ namespace NineGrid.Cards
             await CardDeckTween.MoveRippleAsync(moves, layoutSettings.moveDuration, cancellationToken);
         }
 
-        private bool TryDealCard(int deckSlotIndex, int groundSlotIndex)
+        private bool TryDealCard(int deckSlotIndex, int groundSlot)
         {
             if (!EnsureInGameForDeal())
             {
                 return false;
             }
 
-            if (!IsValidGroundSlot(groundSlotIndex))
+            var field = ResolveFieldManager();
+            if (field == null)
             {
-                Debug.LogWarning($"[CardDeckManager] Ground 槽位无效或禁止发牌: {groundSlotIndex}");
+                Debug.LogWarning("[CardDeckManager] 未找到 GroundFieldManagerSingleton。");
                 return false;
             }
 
-            if (_dealtToGround.ContainsKey(groundSlotIndex))
+            if (!IsValidGroundSlot(groundSlot))
             {
-                Debug.LogWarning($"[CardDeckManager] Ground 槽位已占用: {groundSlotIndex}");
+                Debug.LogWarning($"[CardDeckManager] Ground 格位无效或禁止发牌: {groundSlot}");
+                return false;
+            }
+
+            if (!field.IsPlaceable(groundSlot))
+            {
+                Debug.LogWarning($"[CardDeckManager] Ground 格位已占用: {groundSlot}");
                 return false;
             }
 
@@ -371,10 +374,13 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            var groundAnchor = _groundAnchors[groundSlotIndex];
+            var anchorIndex = CardSlotAnchorUtility.SlotToAnchorIndex(groundSlot);
+            var groundAnchor = anchorIndex >= 0 && anchorIndex < _groundAnchors.Count
+                ? _groundAnchors[anchorIndex]
+                : null;
             if (groundAnchor == null)
             {
-                Debug.LogWarning($"[CardDeckManager] Ground 锚点缺失: {groundSlotIndex}");
+                Debug.LogWarning($"[CardDeckManager] Ground 锚点缺失: slot={groundSlot}");
                 if (!_slotContainer.TryInsertAt(deckSlotIndex, removed, out var rollbackRipple))
                 {
                     CardManagerSingleton.Instance.Release(removed);
@@ -396,21 +402,21 @@ namespace NineGrid.Cards
                 groundAnchor.position,
                 layoutSettings.moveDuration,
                 onComplete: () => cardManager.RefreshDisplayMode(removed));
-            RegisterDealtToGround(removed, groundSlotIndex);
+            field.RequestPlaceCard(groundSlot, removed);
             return true;
         }
 
-        private async UniTask DealCardsInternal(IReadOnlyList<int> groundSlotIndices)
+        private async UniTask DealCardsInternal(IReadOnlyList<int> groundSlots)
         {
-            if (groundSlotIndices == null)
+            if (groundSlots == null)
             {
                 return;
             }
 
-            for (var i = 0; i < groundSlotIndices.Count; i++)
+            for (var i = 0; i < groundSlots.Count; i++)
             {
-                TryDealCard(0, groundSlotIndices[i]);
-                if (i < groundSlotIndices.Count - 1)
+                TryDealCard(0, groundSlots[i]);
+                if (i < groundSlots.Count - 1)
                 {
                     await UniTask.Delay(TimeSpan.FromSeconds(layoutSettings.dealInterval));
                 }
@@ -424,11 +430,17 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var ringIndices = CardSlotAnchorUtility.GetOpeningRingSlotIndices();
-            for (var i = 0; i < ringIndices.Count; i++)
+            var field = ResolveFieldManager();
+            if (field == null)
             {
-                var groundIndex = ringIndices[i];
-                if (_dealtToGround.ContainsKey(groundIndex))
+                return;
+            }
+
+            var ringSlots = CardSlotAnchorUtility.GetOpeningRingSlotIndices();
+            for (var i = 0; i < ringSlots.Count; i++)
+            {
+                var groundSlot = ringSlots[i];
+                if (!field.IsPlaceable(groundSlot))
                 {
                     continue;
                 }
@@ -438,8 +450,8 @@ namespace NineGrid.Cards
                     break;
                 }
 
-                TryDealCard(0, groundIndex);
-                if (i < ringIndices.Count - 1)
+                TryDealCard(0, groundSlot);
+                if (i < ringSlots.Count - 1)
                 {
                     await UniTask.Delay(TimeSpan.FromSeconds(layoutSettings.dealInterval));
                 }
@@ -484,10 +496,22 @@ namespace NineGrid.Cards
             }
         }
 
-        private void RegisterDealtToGround(ManagedCard card, int groundSlotIndex)
+        private bool IsValidGroundSlot(int groundSlot)
         {
-            // TODO: GroundFieldManager — 登记卡牌 uid 与 groundSlotIndex 的占用关系，并由场地系统接管后续生命周期。
-            _dealtToGround[groundSlotIndex] = card.Uid;
+            if (!CardSlotAnchorUtility.IsPlaceableGroundSlot(groundSlot))
+            {
+                return false;
+            }
+
+            var anchorIndex = CardSlotAnchorUtility.SlotToAnchorIndex(groundSlot);
+            return anchorIndex >= 0
+                   && anchorIndex < _groundAnchors.Count
+                   && _groundAnchors[anchorIndex] != null;
+        }
+
+        private static GroundFieldManagerSingleton ResolveFieldManager()
+        {
+            return GroundFieldManagerSingleton.Instance;
         }
 
         private void PlaceCardInStandby(ManagedCard card, int stackIndex)
@@ -513,13 +537,6 @@ namespace NineGrid.Cards
             }
 
             return true;
-        }
-
-        private bool IsValidGroundSlot(int groundSlotIndex)
-        {
-            return groundSlotIndex >= 0 && groundSlotIndex < _groundAnchors.Count &&
-                   _groundAnchors[groundSlotIndex] != null &&
-                   CardSlotAnchorUtility.IsDealableGroundSlotIndex(groundSlotIndex);
         }
 
         private Transform GetDeckAnchor(int index)

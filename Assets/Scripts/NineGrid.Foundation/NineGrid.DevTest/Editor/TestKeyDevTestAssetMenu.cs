@@ -56,6 +56,23 @@ namespace NineGrid.DevTest.Editor
             }
         }
 
+        [MenuItem("NineGrid/DevTest/Create Ground Field Manager Test Layer")]
+        public static void CreateGroundFieldManagerLayer()
+        {
+            CreateOrUpdateLayerAsHighestPriority(
+                $"{Root}/Layer_GroundFieldManager.asset",
+                "ground-field-manager",
+                "场地卡管理器测试",
+                new[]
+                {
+                    (KeyCode.Keypad4, "外圈全体顺时针旋转"),
+                    (KeyCode.Keypad5, "随机移除场中1张"),
+                });
+
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<TestKeyLayerProfileSO>(
+                $"{Root}/Layer_GroundFieldManager.asset");
+        }
+
         [MenuItem("NineGrid/DevTest/Create Default Test Key Stack Assets")]
         public static void CreateDefaultAssets()
         {
@@ -69,7 +86,7 @@ namespace NineGrid.DevTest.Editor
                 new[]
                 {
                     (KeyCode.Keypad1, "卡组入场+开局发牌"),
-                    (KeyCode.Keypad2, "随机发牌到Ground"),
+                    (KeyCode.Keypad2, "清场+随机发1张"),
                     (KeyCode.Keypad3, "随机槽位增卡"),
                 });
 

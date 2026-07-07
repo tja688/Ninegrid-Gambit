@@ -77,24 +77,31 @@ namespace NineGrid.Cards
         /// <summary>
         /// 禁止发牌的目标 Ground 槽位（1-based 编号，如 slot5 = 5）。
         /// </summary>
-        public const int ForbiddenGroundDealSlotNumber = 5;
+        public const int ForbiddenGroundDealSlotNumber = GroundSlotTopology.AvatarReservedSlot;
 
         /// <summary>
-        /// 禁止发牌的目标 Ground 槽位（0-based 列表索引）。
+        /// 1-based 格位编号转为 GroundAnchors 列表索引（0-based）。
         /// </summary>
-        public const int ForbiddenGroundDealSlotIndex = ForbiddenGroundDealSlotNumber - 1;
-
-        public static bool IsDealableGroundSlotIndex(int zeroBasedIndex)
+        public static int SlotToAnchorIndex(int slotNumber)
         {
-            return zeroBasedIndex != ForbiddenGroundDealSlotIndex;
+            return slotNumber - 1;
         }
 
         /// <summary>
-        /// 按 Ground 开局发牌顺序（1,2,3,6,9,8,7,4）返回 0-based 槽位索引列表；不含 slot5。
+        /// 格位是否允许放置卡牌（1-based；格 5 为 Avatar 保留位）。
         /// </summary>
-        public static IReadOnlyList<int> GetOpeningRingSlotIndices(int maxSlots = 9)
+        public static bool IsPlaceableGroundSlot(int slotNumber)
         {
-            return new[] { 0, 1, 2, 5, 8, 7, 6, 3 };
+            return GroundSlotTopology.IsValidSlot(slotNumber)
+                   && !GroundSlotTopology.IsAvatarReserved(slotNumber);
+        }
+
+        /// <summary>
+        /// 按 Ground 开局发牌顺序（1,2,3,6,9,8,7,4）返回 1-based 格位列表；不含 slot5。
+        /// </summary>
+        public static IReadOnlyList<int> GetOpeningRingSlotIndices()
+        {
+            return GroundSlotTopology.ClockwiseRing;
         }
 
         public static bool TryParseSlotIndex(string nodeName, out int slotIndex)
