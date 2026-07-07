@@ -48,6 +48,11 @@ namespace NineGrid.Cards
                 _transform = transform;
             }
 
+            if (_currentTarget == target)
+            {
+                return;
+            }
+
             _currentTarget = target;
             KillFeedbackMotion();
 

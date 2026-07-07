@@ -46,8 +46,25 @@ namespace NineGrid.Cards
         private CardHandSlotContainer _slotContainer;
         private DragSession _dragSession;
         private ManagedCard _hoveredCard;
+        private readonly List<HandHoverCandidate> _hoverCandidates = new();
         private bool _isBusy;
         private CancellationTokenSource _dragLoopCts;
+
+        private readonly struct HandHoverCandidate
+        {
+            public readonly int SlotIndex;
+            public readonly ManagedCard Card;
+            public readonly float LayoutX;
+            public readonly float LayoutY;
+
+            public HandHoverCandidate(int slotIndex, ManagedCard card, float layoutX, float layoutY)
+            {
+                SlotIndex = slotIndex;
+                Card = card;
+                LayoutX = layoutX;
+                LayoutY = layoutY;
+            }
+        }
 
         /// <summary>
         /// TODO: Core 逻辑层注入 — 校验手牌释放（目标格位、费用、效果等）。返回 true 表示释放成功。
@@ -101,6 +118,11 @@ namespace NineGrid.Cards
             {
                 _instance = null;
             }
+        }
+
+        private void Update()
+        {
+            TickHandHover();
         }
 
         public async UniTask<bool> PullFromGroundAsync(
@@ -219,49 +241,177 @@ namespace NineGrid.Cards
             return true;
         }
 
-        public void OnHandCardHoverEnter(ManagedCard card)
+        private void TickHandHover()
         {
-            if (card == null || IsBusy || IsDragging)
+            if (IsBusy || IsDragging || _slotContainer == null)
             {
                 return;
             }
 
-            if (card.DisplayMode != CardDisplayMode.HandCardMode)
+            var camera = Camera.main;
+            if (camera == null)
             {
                 return;
             }
 
-            if (_hoveredCard != null && _hoveredCard != card)
+            var pointerWorld = ScreenToWorldOnPlane(
+                Input.mousePosition,
+                camera,
+                ResolveHandHoverPlaneZ());
+            var resolved = ResolveHandHoverTarget(pointerWorld.x, pointerWorld.y);
+            ApplyHandHoverTarget(resolved);
+        }
+
+        private float ResolveHandHoverPlaneZ()
+        {
+            if (_handAnchors.Count > 0 && _handAnchors[0] != null)
+            {
+                return _handAnchors[0].position.z;
+            }
+
+            return handAnchorsRoot != null ? handAnchorsRoot.position.z : 0f;
+        }
+
+        private ManagedCard ResolveHandHoverTarget(float pointerX, float pointerY)
+        {
+            CollectHandHoverCandidates(pointerX, pointerY);
+            if (_hoverCandidates.Count == 0)
+            {
+                return null;
+            }
+
+            if (_hoverCandidates.Count == 1)
+            {
+                return _hoverCandidates[0].Card;
+            }
+
+            var rawTarget = ResolveHandHoverBySlotBands(pointerX);
+            if (_hoveredCard == null || rawTarget == _hoveredCard)
+            {
+                return rawTarget;
+            }
+
+            return ShouldKeepCurrentHover(pointerX, rawTarget) ? _hoveredCard : rawTarget;
+        }
+
+        private void CollectHandHoverCandidates(float pointerX, float pointerY)
+        {
+            _hoverCandidates.Clear();
+
+            var halfHeight = layoutSettings.handHitBoxSize.y * 0.5f;
+            for (var i = 0; i < layoutSettings.maxSlots; i++)
+            {
+                if (!_slotContainer.TryGetCardAt(i, out var card) || card == null)
+                {
+                    continue;
+                }
+
+                if (card.DisplayMode != CardDisplayMode.HandCardMode)
+                {
+                    continue;
+                }
+
+                var layoutPosition = _slotContainer.GetLayoutPosition(i);
+                if (pointerY < layoutPosition.y - halfHeight || pointerY > layoutPosition.y + halfHeight)
+                {
+                    continue;
+                }
+
+                var halfWidth = layoutSettings.handHitBoxSize.x * 0.5f;
+                if (pointerX < layoutPosition.x - halfWidth || pointerX > layoutPosition.x + halfWidth)
+                {
+                    continue;
+                }
+
+                _hoverCandidates.Add(new HandHoverCandidate(i, card, layoutPosition.x, layoutPosition.y));
+            }
+
+            _hoverCandidates.Sort(static (a, b) => a.LayoutX.CompareTo(b.LayoutX));
+        }
+
+        private ManagedCard ResolveHandHoverBySlotBands(float pointerX)
+        {
+            var count = _hoverCandidates.Count;
+            for (var i = 0; i < count; i++)
+            {
+                var leftBound = i == 0
+                    ? float.NegativeInfinity
+                    : (_hoverCandidates[i - 1].LayoutX + _hoverCandidates[i].LayoutX) * 0.5f;
+                var rightBound = i == count - 1
+                    ? float.PositiveInfinity
+                    : (_hoverCandidates[i].LayoutX + _hoverCandidates[i + 1].LayoutX) * 0.5f;
+
+                if (pointerX >= leftBound && pointerX < rightBound)
+                {
+                    return _hoverCandidates[i].Card;
+                }
+            }
+
+            return _hoverCandidates[count - 1].Card;
+        }
+
+        private bool ShouldKeepCurrentHover(float pointerX, ManagedCard rawTarget)
+        {
+            if (!TryGetHoverCandidate(_hoveredCard, out var current) ||
+                !TryGetHoverCandidate(rawTarget, out var next))
+            {
+                return false;
+            }
+
+            if (current.SlotIndex == next.SlotIndex)
+            {
+                return true;
+            }
+
+            var midpoint = (current.LayoutX + next.LayoutX) * 0.5f;
+            var hysteresis = Mathf.Max(0f, layoutSettings.hoverSwitchHysteresis);
+
+            if (next.LayoutX > current.LayoutX)
+            {
+                return pointerX < midpoint + hysteresis;
+            }
+
+            return pointerX > midpoint - hysteresis;
+        }
+
+        private bool TryGetHoverCandidate(ManagedCard card, out HandHoverCandidate candidate)
+        {
+            for (var i = 0; i < _hoverCandidates.Count; i++)
+            {
+                if (_hoverCandidates[i].Card == card)
+                {
+                    candidate = _hoverCandidates[i];
+                    return true;
+                }
+            }
+
+            candidate = default;
+            return false;
+        }
+
+        private void ApplyHandHoverTarget(ManagedCard card)
+        {
+            if (_hoveredCard == card)
+            {
+                return;
+            }
+
+            if (_hoveredCard != null)
             {
                 ResetHandCardHoverVisual(_hoveredCard);
             }
 
             _hoveredCard = card;
-            var driver = card.View?.GetComponent<CardVisualDriver>();
-            driver?.SetTarget(CardVisualTarget.Hover);
-            BoostHandCardHoverSorting(card);
-
-            DimNonHoveredHandCards(card);
-        }
-
-        public void OnHandCardHoverExit(ManagedCard card)
-        {
-            if (card == null || IsDragging)
+            if (card == null)
             {
+                ResetAllHandAlphas();
                 return;
             }
 
             var driver = card.View?.GetComponent<CardVisualDriver>();
-            if (driver != null && driver.CurrentTarget == CardVisualTarget.Hover)
-            {
-                ResetHandCardHoverVisual(card);
-            }
-
-            if (_hoveredCard == card)
-            {
-                _hoveredCard = null;
-                ResetAllHandAlphas();
-            }
+            driver?.SetTarget(CardVisualTarget.Hover);
+            BoostHandCardHoverSorting(card);
+            DimNonHoveredHandCards(card);
         }
 
         /// <summary>

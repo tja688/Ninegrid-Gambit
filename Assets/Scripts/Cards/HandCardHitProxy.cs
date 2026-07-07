@@ -3,7 +3,7 @@ using UnityEngine;
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 手牌 hover / 拖拽命中代理：挂在 Standard Card 根节点。
+    /// 手牌拖拽命中代理：挂在 Standard Card 根节点；hover 由 CardHandManagerSingleton 集中解析。
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(BoxCollider2D))]
@@ -37,28 +37,6 @@ namespace NineGrid.Cards
             _collider.isTrigger = false;
         }
 
-        private void OnMouseEnter()
-        {
-            if (!CanRespond())
-            {
-                return;
-            }
-
-            var manager = CardHandManagerSingleton.Instance;
-            manager?.OnHandCardHoverEnter(_driver.BoundCard);
-        }
-
-        private void OnMouseExit()
-        {
-            if (!CanRespondToExit())
-            {
-                return;
-            }
-
-            var manager = CardHandManagerSingleton.Instance;
-            manager?.OnHandCardHoverExit(_driver.BoundCard);
-        }
-
         private void OnMouseDown()
         {
             if (!CanRespond())
@@ -74,17 +52,6 @@ namespace NineGrid.Cards
         {
             var manager = CardHandManagerSingleton.Instance;
             if (manager == null || manager.IsBusy || manager.IsDragging)
-            {
-                return false;
-            }
-
-            _driver ??= GetComponent<CardVisualDriver>();
-            return _driver != null && _driver.IsHandHoverEligible;
-        }
-
-        private bool CanRespondToExit()
-        {
-            if (CardHandManagerSingleton.Instance?.IsDragging == true)
             {
                 return false;
             }

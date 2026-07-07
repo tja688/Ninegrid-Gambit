@@ -31,6 +31,12 @@ namespace NineGrid.Cards
         public int hoverSortingBoost = 15;
 
         [Header("Hover")]
+        [Tooltip("手牌 hover 命中区世界尺寸（以槽位锚点为心，不随抽出动效移动）。")]
+        public Vector2 handHitBoxSize = new(1.6f, 2.2f);
+
+        [Tooltip("越过相邻槽位中点后，额外需要的 X 位移才切换 hover，抑制边界抖动。")]
+        public float hoverSwitchHysteresis = 0.05f;
+
         [Tooltip("手牌 hover 时相对锚点的世界 Y 抬升量（抽出感）。")]
         public float hoverPopYOffset = 0.35f;
 
