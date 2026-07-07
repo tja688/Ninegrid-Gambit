@@ -51,12 +51,6 @@ namespace NineGrid.DevTest.Cards
                 return;
             }
 
-            if (!field.HasFullOpeningRing())
-            {
-                Debug.LogWarning("[GroundFieldManagerDevKeys] 外圈未完整发牌，请先按 Keypad1 完成开局发牌。");
-                return;
-            }
-
             await field.RotateOuterRingClockwiseAsync();
         }
 

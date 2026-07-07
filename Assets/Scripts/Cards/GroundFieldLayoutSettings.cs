@@ -6,16 +6,41 @@ namespace NineGrid.Cards
     [Serializable]
     public sealed class GroundFieldLayoutSettings
     {
-        [Tooltip("场地卡牌移动/旋转换位时长（秒）。")]
+        [Tooltip("场地卡牌跳跃换位总时长（秒）。")]
         public float moveDuration = 0.35f;
 
-        [Tooltip("旋转/移动前轻微放大强度（相对 localScale）。")]
-        public float punchScaleIntensity = 0.18f;
+        [Tooltip("跳跃弧顶相对起终点连线的世界 Y 抬升量（仅做轻微起跳感，不往棋盘中心拉拢）。")]
+        public float hopArcHeight = 0.28f;
 
-        [Tooltip("轻微放大动效时长（秒）。")]
-        public float punchScaleDuration = 0.22f;
+        [Tooltip("跳跃弧顶 localScale 相对基准的放大增量（如 0.06 表示弧顶约为 1.06 倍，模拟「高」）。")]
+        public float hopPeakScaleIntensity = 0.06f;
+
+        [Tooltip("落点 localScale 相对基准的缩小增量（如 0.04 表示落地瞬间约为 0.96 倍，模拟「矮」）。")]
+        public float hopLandScaleIntensity = 0.04f;
+
+        [Tooltip("场上无卡时外圈空转的表现时长（秒）。")]
+        public float emptyRotateDuration = 0.2f;
+
+        [Tooltip("移除卡牌时缩小消失时长（秒）。")]
+        public float removeDisappearDuration = 0.18f;
 
         [Tooltip("空槽点击 BoxCollider2D 尺寸（世界单位）。")]
         public Vector2 slotHitBoxSize = new(1.6f, 2.2f);
+
+        [Header("Hover")]
+        [Tooltip("场地卡 hover 时 localScale 相对基准的放大增量（如 0.05 表示约为 1.05 倍）。")]
+        public float hoverScaleIntensity = 0.05f;
+
+        [Tooltip("场地卡 hover 时 Z 轴摇晃角度（度）。")]
+        public float hoverPunchAngle = 4f;
+
+        [Tooltip("场地卡 hover 进入动效时长（秒）。")]
+        public float hoverEnterDuration = 0.14f;
+
+        [Tooltip("场地卡 hover 退出缩回基准的时长（秒）。")]
+        public float hoverExitDuration = 0.1f;
+
+        [Tooltip("场地卡 hover 摇晃振动次数感（DOPunchRotation vibrato）。")]
+        public int hoverPunchVibrato = 6;
     }
 }

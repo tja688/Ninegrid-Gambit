@@ -14,6 +14,7 @@ namespace NineGrid.Cards
         HandCardMode = 1,
         GroundCardMode = 2,
         RemovedMode = 3,
+        DragCardMode = 4,
     }
 
     /// <summary>
@@ -160,6 +161,21 @@ namespace NineGrid.Cards
 
             var card = new ManagedCard(uid, defId, view);
             _cardsByUid[uid] = card;
+
+            var driver = instance.GetComponent<CardVisualDriver>();
+            if (driver == null)
+            {
+                driver = instance.AddComponent<CardVisualDriver>();
+            }
+
+            driver.Bind(card);
+
+            var hitProxy = instance.GetComponent<GroundCardHitProxy>();
+            if (hitProxy != null)
+            {
+                hitProxy.ApplyColliderSize();
+            }
+
             ApplyDisplayMode(card, initialMode);
             return card;
         }
@@ -325,32 +341,12 @@ namespace NineGrid.Cards
             var cardTransform = card.View.transform;
             var sortingGroup = card.View.GetComponent<SortingGroup>();
 
-            switch (mode)
-            {
-                case CardDisplayMode.CardDeckMode:
-                    cardTransform.localScale = Vector3.one * 0.55f;
-                    cardTransform.localRotation = Quaternion.identity;
-                    SetSortingOrder(sortingGroup, -30);
-                    break;
+            cardTransform.localScale = CardDisplayModeVisuals.GetBaseLocalScale(mode);
+            cardTransform.localRotation = Quaternion.identity;
+            SetSortingOrder(sortingGroup, CardDisplayModeVisuals.GetSortingOrder(mode));
 
-                case CardDisplayMode.HandCardMode:
-                    cardTransform.localScale = Vector3.one;
-                    cardTransform.localRotation = Quaternion.identity;
-                    SetSortingOrder(sortingGroup, 0);
-                    break;
-
-                case CardDisplayMode.GroundCardMode:
-                    cardTransform.localScale = Vector3.one;
-                    cardTransform.localRotation = Quaternion.identity;
-                    SetSortingOrder(sortingGroup, -10);
-                    break;
-
-                case CardDisplayMode.RemovedMode:
-                    cardTransform.localScale = Vector3.one * 1.08f;
-                    cardTransform.localRotation = Quaternion.identity;
-                    SetSortingOrder(sortingGroup, 20);
-                    break;
-            }
+            var driver = card.View.GetComponent<CardVisualDriver>();
+            driver?.SnapToDisplayMode();
         }
 
         private static void SetSortingOrder(SortingGroup sortingGroup, int sortingOrder)

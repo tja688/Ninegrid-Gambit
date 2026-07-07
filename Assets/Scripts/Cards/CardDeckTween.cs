@@ -114,6 +114,59 @@ namespace NineGrid.Cards
                 cancellationToken: cancellationToken);
         }
 
+        public static async UniTask MoveHopToWorldAsync(
+            Transform target,
+            Vector3 worldStart,
+            Vector3 worldMid,
+            Vector3 worldEnd,
+            float duration,
+            float peakScaleIntensity,
+            float landScaleIntensity,
+            CancellationToken cancellationToken = default,
+            TweenCallback onComplete = null)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            KillMotion(target);
+            target.position = worldStart;
+
+            var baseScale = target.localScale;
+            var peakScale = baseScale * (1f + peakScaleIntensity);
+            var landScale = baseScale * (1f - landScaleIntensity);
+            var halfDuration = duration * 0.5f;
+            var landDuration = halfDuration * 0.72f;
+            var settleDuration = halfDuration - landDuration;
+
+            var sequence = DOTween.Sequence()
+                .SetLink(target.gameObject, LinkBehaviour.KillOnDestroy);
+
+            sequence.Append(target.DOMove(worldMid, halfDuration).SetEase(Ease.OutQuad));
+            sequence.Join(target.DOScale(peakScale, halfDuration).SetEase(Ease.OutSine));
+            sequence.Append(target.DOMove(worldEnd, halfDuration).SetEase(Ease.InQuad));
+            sequence.Join(
+                DOTween.Sequence()
+                    .Append(target.DOScale(landScale, landDuration).SetEase(Ease.InQuad))
+                    .Append(target.DOScale(baseScale, settleDuration).SetEase(Ease.OutSine)));
+
+            var completed = false;
+            sequence.OnComplete(() =>
+            {
+                completed = true;
+                if (target == null)
+                {
+                    return;
+                }
+
+                target.localScale = baseScale;
+                onComplete?.Invoke();
+            });
+            sequence.OnKill(() => completed = true);
+            await UniTask.WaitUntil(() => completed, cancellationToken: cancellationToken);
+        }
+
         public static async UniTask WaitOneFrameAsync(CancellationToken cancellationToken = default)
         {
             await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);

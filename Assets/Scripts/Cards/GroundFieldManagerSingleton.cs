@@ -43,6 +43,8 @@ namespace NineGrid.Cards
 
         public bool IsBusy => _isBusy;
 
+        public GroundFieldLayoutSettings LayoutSettings => layoutSettings;
+
         public event Action<int> EmptySlotClicked;
 
         private void Awake()
@@ -222,7 +224,7 @@ namespace NineGrid.Cards
 
             if (animate)
             {
-                MoveCardAnimatedAsync(card, toSlot, CancellationToken.None).Forget();
+                MoveCardAnimatedAsync(card, fromSlot, toSlot, CancellationToken.None).Forget();
             }
             else if (TryGetAnchor(toSlot, out var anchor))
             {
@@ -256,14 +258,17 @@ namespace NineGrid.Cards
             }
 
             UnregisterCardAtSlot(slot);
-            CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.RemovedMode);
+            RefreshSlotHitCollider(slot);
 
             if (animate)
             {
                 RemoveCardAnimatedAsync(card, CancellationToken.None).Forget();
             }
+            else
+            {
+                CardManagerSingleton.Instance.Release(uid);
+            }
 
-            RefreshSlotHitCollider(slot);
             return true;
         }
 
@@ -330,10 +335,16 @@ namespace NineGrid.Cards
 
                 for (var i = 0; i < ring.Count; i++)
                 {
-                    _uidBySlot[ring[i]] = 0;
+                    var slot = ring[i];
+                    var uid = _uidBySlot[slot];
+                    if (uid != 0)
+                    {
+                        _slotByUid.Remove(uid);
+                    }
+
+                    _uidBySlot[slot] = 0;
                 }
 
-                _slotByUid.Clear();
                 for (var i = 0; i < ring.Count; i++)
                 {
                     if (uids[i] == 0)
@@ -367,12 +378,19 @@ namespace NineGrid.Cards
                         continue;
                     }
 
-                    moveTasks.Add(AnimateCardToSlotAsync(card, toSlot, cancellationToken));
+                    var fromSlot = ring[i];
+                    moveTasks.Add(AnimateCardHopToSlotAsync(card, fromSlot, toSlot, cancellationToken));
                 }
 
                 if (moveTasks.Count > 0)
                 {
                     await UniTask.WhenAll(moveTasks);
+                }
+                else
+                {
+                    await UniTask.Delay(
+                        TimeSpan.FromSeconds(layoutSettings.emptyRotateDuration),
+                        cancellationToken: cancellationToken);
                 }
 
                 RefreshAllSlotHitColliders();
@@ -383,52 +401,73 @@ namespace NineGrid.Cards
             }
         }
 
-        private async UniTask AnimateCardToSlotAsync(ManagedCard card, int slot, CancellationToken cancellationToken)
+        private async UniTask AnimateCardHopToSlotAsync(
+            ManagedCard card,
+            int fromSlot,
+            int toSlot,
+            CancellationToken cancellationToken)
         {
-            if (card?.Transform == null || !TryGetAnchor(slot, out var anchor))
+            if (card?.Transform == null
+                || !TryGetAnchor(fromSlot, out var fromAnchor)
+                || !TryGetAnchor(toSlot, out var toAnchor))
             {
                 return;
             }
 
-            await RunViewTweenAsync(
-                CardViewTween.PunchScale(
-                    card.Transform,
-                    layoutSettings.punchScaleIntensity,
-                    layoutSettings.punchScaleDuration),
-                cancellationToken);
+            CardManagerSingleton.Instance.RefreshDisplayMode(card);
+            var start = fromAnchor.position;
+            var end = toAnchor.position;
+            var mid = ComputeHopMidpoint(start, end);
 
-            var moveComplete = false;
-            CardDeckTween.MoveToWorld(
+            await CardDeckTween.MoveHopToWorldAsync(
                 card.Transform,
-                anchor.position,
+                start,
+                mid,
+                end,
                 layoutSettings.moveDuration,
-                onComplete: () =>
-                {
-                    moveComplete = true;
-                    CardManagerSingleton.Instance.RefreshDisplayMode(card);
-                });
-
-            await UniTask.WaitUntil(() => moveComplete, cancellationToken: cancellationToken);
+                layoutSettings.hopPeakScaleIntensity,
+                layoutSettings.hopLandScaleIntensity,
+                cancellationToken,
+                onComplete: () => CardManagerSingleton.Instance.RefreshDisplayMode(card));
         }
 
-        private UniTask MoveCardAnimatedAsync(ManagedCard card, int slot, CancellationToken cancellationToken)
+        private Vector3 ComputeHopMidpoint(Vector3 start, Vector3 end)
         {
-            return AnimateCardToSlotAsync(card, slot, cancellationToken);
+            var linearMid = Vector3.Lerp(start, end, 0.5f);
+            if (layoutSettings.hopArcHeight <= 0f)
+            {
+                return linearMid;
+            }
+
+            return linearMid + Vector3.up * layoutSettings.hopArcHeight;
+        }
+
+        private UniTask MoveCardAnimatedAsync(
+            ManagedCard card,
+            int fromSlot,
+            int toSlot,
+            CancellationToken cancellationToken)
+        {
+            return AnimateCardHopToSlotAsync(card, fromSlot, toSlot, cancellationToken);
         }
 
         private async UniTask RemoveCardAnimatedAsync(ManagedCard card, CancellationToken cancellationToken)
         {
             if (card?.Transform == null)
             {
+                CardManagerSingleton.Instance.Release(card.Uid);
                 return;
             }
 
+            var initialScale = card.Transform.localScale;
             await RunViewTweenAsync(
-                CardViewTween.PunchScale(
+                CardViewTween.ScaleDisappear(
                     card.Transform,
-                    layoutSettings.punchScaleIntensity,
-                    layoutSettings.punchScaleDuration),
+                    initialScale,
+                    layoutSettings.removeDisappearDuration),
                 cancellationToken);
+
+            CardManagerSingleton.Instance.Release(card.Uid);
         }
 
         private static async UniTask RunViewTweenAsync(IEnumerator routine, CancellationToken cancellationToken)

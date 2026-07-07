@@ -57,10 +57,21 @@ namespace NineGrid.Cards.Editor
             MoveFrameToBottom(root.transform);
 
             AssignCardView(cardView, library, attack, life, armorBlocks, armorValue, blockScale, blockSpacing);
+            SetupInteractionComponents(root);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             GetOrAddComponentByTypeName(root, "NineGrid.DevTest.Cards.StandardCardViewDevKeys, NineGrid.DevTest");
 #endif
+        }
+
+        private static void SetupInteractionComponents(GameObject root)
+        {
+            var collider = GetOrAdd<BoxCollider2D>(root);
+            collider.size = new Vector2(1.6f, 2.2f);
+            collider.isTrigger = false;
+
+            GetOrAdd<CardVisualDriver>(root);
+            GetOrAdd<GroundCardHitProxy>(root);
         }
 
         private static void AssignCardView(
