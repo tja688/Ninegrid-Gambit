@@ -27,6 +27,12 @@ namespace NineGrid.Cards
         [Tooltip("是否支持按 CardBoardDirection 做方向变体（元数据，供编排参考）。")]
         [SerializeField] private bool supportsDirectionVariants;
 
+        [Tooltip("普通攻击组合编排延迟（秒）；基础攻击与左右受击 SO 适用，由编排层在攻击→受击间 await。")]
+        [SerializeField] private float orchestrationDelay;
+
+        [Tooltip("是否参与普通攻击组合的受击同步延迟（基础攻击 + 左右受击）。")]
+        [SerializeField] private bool usesBasicAttackComboDelay;
+
         public string EffectId => string.IsNullOrWhiteSpace(effectId) ? name : effectId;
 
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
@@ -39,7 +45,16 @@ namespace NineGrid.Cards
 
         public bool SupportsDirectionVariants => supportsDirectionVariants;
 
+        public float OrchestrationDelay => Mathf.Max(0f, orchestrationDelay);
+
+        public bool UsesBasicAttackComboDelay => usesBasicAttackComboDelay;
+
         public abstract UniTask PlayAsync(CardEffectPlayContext context);
+
+        protected void SetEstimatedDuration(float value)
+        {
+            estimatedDuration = Mathf.Max(0f, value);
+        }
 
         public virtual void Stop(CardEffectPlayContext context)
         {

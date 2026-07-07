@@ -1,4 +1,6 @@
 #if UNITY_EDITOR
+using System.Collections.Generic;
+using DG.Tweening;
 using UnityEditor;
 using UnityEngine;
 
@@ -41,6 +43,32 @@ namespace NineGrid.Cards.Editor
             Debug.Log("[CardEffectAssetMenu] Default effect assets ready in " + DefaultsFolder);
         }
 
+        [MenuItem("NineGrid/Cards/Effects/Create Basic Attack/Hit Sequence Assets")]
+        public static void CreateBasicAttackHitSequenceAssets()
+        {
+            EnsureFolder(DefaultsFolder);
+
+            var attack = CreateOrLoadSequence(
+                $"{DefaultsFolder}/CardBasicAttackTimelineEffect.asset",
+                "CardBasicAttackTimelineEffect",
+                CardEffectKind.Attack,
+                BuildBasicAttackClips(),
+                orchestrationDelay: 0.4f,
+                usesBasicAttackComboDelay: true);
+            var hit = CreateOrLoadSequence(
+                $"{DefaultsFolder}/CardBasicHitTimelineEffect.asset",
+                "CardBasicHitTimelineEffect",
+                CardEffectKind.Hit,
+                BuildBasicHitClips(),
+                orchestrationDelay: 0.4f,
+                usesBasicAttackComboDelay: true);
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log(
+                $"[CardEffectAssetMenu] Basic sequence assets ready: {attack.name}, {hit.name}");
+        }
+
         public static void EnsureDefaultAssetsExist()
         {
             if (!AssetDatabase.IsValidFolder("Assets/Scripts/Cards/Effects"))
@@ -79,6 +107,93 @@ namespace NineGrid.Cards.Editor
                 $"{DefaultsFolder}/CardAttackLungeEffect.asset");
         }
 
+        public static CardDOTweenSequenceEffectSO LoadBasicAttackSequenceEffect()
+        {
+            return AssetDatabase.LoadAssetAtPath<CardDOTweenSequenceEffectSO>(
+                $"{DefaultsFolder}/CardBasicAttackTimelineEffect.asset");
+        }
+
+        public static CardDOTweenSequenceEffectSO LoadBasicHitSequenceEffect()
+        {
+            return AssetDatabase.LoadAssetAtPath<CardDOTweenSequenceEffectSO>(
+                $"{DefaultsFolder}/CardBasicHitTimelineEffect.asset");
+        }
+
+        private static List<CardTweenClip> BuildBasicAttackClips()
+        {
+            return new List<CardTweenClip>
+            {
+                new()
+                {
+                    delay = 0.1f,
+                    duration = 0.3f,
+                    ease = Ease.OutQuad,
+                    type = CardTweenClipType.LocalMove,
+                    endValue = new Vector3(1.0625f, 0f, 0f),
+                    isRelative = false,
+                },
+                new()
+                {
+                    delay = 0f,
+                    duration = 0.1f,
+                    ease = Ease.InQuad,
+                    type = CardTweenClipType.LocalMove,
+                    endValue = new Vector3(-0.1f, 0f, 0f),
+                    isRelative = false,
+                },
+            };
+        }
+
+        private static List<CardTweenClip> BuildBasicHitClips()
+        {
+            return new List<CardTweenClip>
+            {
+                new()
+                {
+                    delay = 0f,
+                    duration = 0.3f,
+                    ease = Ease.OutBack,
+                    type = CardTweenClipType.LocalMove,
+                    endValue = new Vector3(3f, 0f, 0f),
+                    isRelative = false,
+                },
+            };
+        }
+
+        private static CardDOTweenSequenceEffectSO CreateOrLoadSequence(
+            string path,
+            string assetName,
+            CardEffectKind kind,
+            List<CardTweenClip> clips,
+            float orchestrationDelay,
+            bool usesBasicAttackComboDelay)
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<CardDOTweenSequenceEffectSO>(path);
+            if (existing != null)
+            {
+                existing.EditorSetClips(clips);
+                ApplySequenceMetadata(
+                    existing,
+                    kind,
+                    CardDOTweenSequenceEffectSO.ComputeEstimatedDuration(clips),
+                    orchestrationDelay,
+                    usesBasicAttackComboDelay);
+                return existing;
+            }
+
+            var asset = ScriptableObject.CreateInstance<CardDOTweenSequenceEffectSO>();
+            asset.name = assetName;
+            asset.EditorSetClips(clips);
+            ApplySequenceMetadata(
+                asset,
+                kind,
+                CardDOTweenSequenceEffectSO.ComputeEstimatedDuration(clips),
+                orchestrationDelay,
+                usesBasicAttackComboDelay);
+            AssetDatabase.CreateAsset(asset, path);
+            return asset;
+        }
+
         private static T CreateOrLoad<T>(
             string path,
             string assetName,
@@ -110,6 +225,24 @@ namespace NineGrid.Cards.Editor
             serialized.FindProperty("kind").enumValueIndex = (int)kind;
             serialized.FindProperty("estimatedDuration").floatValue = estimatedDuration;
             serialized.FindProperty("supportsDirectionVariants").boolValue = supportsDirectionVariants;
+            serialized.FindProperty("displayName").stringValue = asset.name;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+        }
+
+        private static void ApplySequenceMetadata(
+            CardDOTweenSequenceEffectSO asset,
+            CardEffectKind kind,
+            float estimatedDuration,
+            float orchestrationDelay,
+            bool usesBasicAttackComboDelay)
+        {
+            var serialized = new SerializedObject(asset);
+            serialized.FindProperty("kind").enumValueIndex = (int)kind;
+            serialized.FindProperty("estimatedDuration").floatValue = estimatedDuration;
+            serialized.FindProperty("supportsDirectionVariants").boolValue = true;
+            serialized.FindProperty("orchestrationDelay").floatValue = orchestrationDelay;
+            serialized.FindProperty("usesBasicAttackComboDelay").boolValue = usesBasicAttackComboDelay;
             serialized.FindProperty("displayName").stringValue = asset.name;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);

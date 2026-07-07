@@ -260,8 +260,8 @@ namespace NineGrid.Cards
 
 #if UNITY_EDITOR
         [FoldoutGroup("Debug")]
-        [Tooltip("Odin 调试：模拟本卡表演八向。")]
-        [SerializeField] private CardBoardDirection debugSelfDirection = CardBoardDirection.Up;
+        [Tooltip("Odin 调试：模拟本卡表演方向（左右点测用 Right/Left）。")]
+        [SerializeField] private CardBoardDirection debugSelfDirection = CardBoardDirection.Right;
 
         [FoldoutGroup("Debug")]
         [Tooltip("Odin 调试：模拟自身格位（1~9）。")]
@@ -279,16 +279,14 @@ namespace NineGrid.Cards
         [Button("播放攻击", ButtonSizes.Medium)]
         private void DebugPlayAttack()
         {
-            PlayAttackAsync(debugSelfDirection, debugSelfSlot, debugOtherSlot > 0 ? debugOtherSlot : null)
-                .Forget();
+            PlayAsync(BuildDebugInvoke(CardEffectKind.Attack)).Forget();
         }
 
         [FoldoutGroup("Debug")]
         [Button("播放受击", ButtonSizes.Medium)]
         private void DebugPlayHit()
         {
-            PlayHitAsync(debugSelfDirection, debugSelfSlot, debugOtherSlot > 0 ? debugOtherSlot : null)
-                .Forget();
+            PlayAsync(BuildDebugInvoke(CardEffectKind.Hit)).Forget();
         }
 
         [FoldoutGroup("Debug")]
@@ -310,6 +308,25 @@ namespace NineGrid.Cards
         private void DebugStopCurrent()
         {
             StopCurrent();
+        }
+
+        private CardEffectInvokeContext BuildDebugInvoke(CardEffectKind kind)
+        {
+            var otherSlot = debugOtherSlot > 0 ? debugOtherSlot : (int?)null;
+            return kind switch
+            {
+                CardEffectKind.Attack => CardEffectInvokeContext.ForAttack(
+                    debugSelfDirection,
+                    debugSelfSlot,
+                    otherSlot,
+                    isOrchestrated: false),
+                CardEffectKind.Hit => CardEffectInvokeContext.ForHit(
+                    debugSelfDirection,
+                    debugSelfSlot,
+                    otherSlot,
+                    isOrchestrated: false),
+                _ => new CardEffectInvokeContext(kind, debugSelfDirection, debugSelfSlot, isOrchestrated: false),
+            };
         }
 #endif
     }

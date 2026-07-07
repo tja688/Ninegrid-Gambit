@@ -13,7 +13,9 @@ namespace NineGrid.Cards
             int? sourceUid = null,
             int? targetUid = null,
             float magnitude = 0f,
-            CardDisplayMode displayMode = CardDisplayMode.GroundCardMode)
+            CardDisplayMode displayMode = CardDisplayMode.GroundCardMode,
+            bool isOrchestrated = false,
+            CardAttackPresentationKind presentationKind = CardAttackPresentationKind.None)
         {
             Kind = kind;
             SelfDirection = selfDirection;
@@ -23,6 +25,8 @@ namespace NineGrid.Cards
             TargetUid = targetUid;
             Magnitude = magnitude;
             DisplayMode = displayMode;
+            IsOrchestrated = isOrchestrated;
+            PresentationKind = presentationKind;
         }
 
         public CardEffectKind Kind { get; }
@@ -41,6 +45,10 @@ namespace NineGrid.Cards
 
         public CardDisplayMode DisplayMode { get; }
 
+        public bool IsOrchestrated { get; }
+
+        public CardAttackPresentationKind PresentationKind { get; }
+
         public static CardEffectInvokeContext ForAttack(
             CardBoardDirection selfDirection,
             int selfSlot = 0,
@@ -48,7 +56,9 @@ namespace NineGrid.Cards
             int? sourceUid = null,
             int? targetUid = null,
             float magnitude = 0f,
-            CardDisplayMode displayMode = CardDisplayMode.GroundCardMode)
+            CardDisplayMode displayMode = CardDisplayMode.GroundCardMode,
+            bool isOrchestrated = false,
+            CardAttackPresentationKind presentationKind = CardAttackPresentationKind.None)
         {
             return new CardEffectInvokeContext(
                 CardEffectKind.Attack,
@@ -58,7 +68,9 @@ namespace NineGrid.Cards
                 sourceUid,
                 targetUid,
                 magnitude,
-                displayMode);
+                displayMode,
+                isOrchestrated,
+                presentationKind);
         }
 
         public static CardEffectInvokeContext ForHit(
@@ -68,7 +80,9 @@ namespace NineGrid.Cards
             int? sourceUid = null,
             int? targetUid = null,
             float magnitude = 0f,
-            CardDisplayMode displayMode = CardDisplayMode.GroundCardMode)
+            CardDisplayMode displayMode = CardDisplayMode.GroundCardMode,
+            bool isOrchestrated = false,
+            CardAttackPresentationKind presentationKind = CardAttackPresentationKind.None)
         {
             return new CardEffectInvokeContext(
                 CardEffectKind.Hit,
@@ -78,29 +92,35 @@ namespace NineGrid.Cards
                 sourceUid,
                 targetUid,
                 magnitude,
-                displayMode);
+                displayMode,
+                isOrchestrated,
+                presentationKind);
         }
 
         public static CardEffectInvokeContext ForDeath(
             int selfSlot = 0,
             CardBoardDirection selfDirection = CardBoardDirection.None,
-            CardDisplayMode displayMode = CardDisplayMode.GroundCardMode)
+            CardDisplayMode displayMode = CardDisplayMode.GroundCardMode,
+            bool isOrchestrated = false)
         {
             return new CardEffectInvokeContext(
                 CardEffectKind.Death,
                 selfDirection,
                 selfSlot,
-                displayMode: displayMode);
+                displayMode: displayMode,
+                isOrchestrated: isOrchestrated);
         }
 
         public static CardEffectInvokeContext ForUse(
             CardBoardDirection selfDirection = CardBoardDirection.None,
-            CardDisplayMode displayMode = CardDisplayMode.HandCardMode)
+            CardDisplayMode displayMode = CardDisplayMode.HandCardMode,
+            bool isOrchestrated = false)
         {
             return new CardEffectInvokeContext(
                 CardEffectKind.Use,
                 selfDirection,
-                displayMode: displayMode);
+                displayMode: displayMode,
+                isOrchestrated: isOrchestrated);
         }
     }
 }
