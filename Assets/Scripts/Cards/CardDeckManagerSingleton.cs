@@ -135,11 +135,19 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 批量发牌，deckSlotIndices 与 groundSlotIndices 等长。
+        /// 从卡组最左侧（槽位 0）发一张牌到 Ground 槽位（仅 InGame）。
         /// </summary>
-        public void DealCards(IReadOnlyList<int> deckSlotIndices, IReadOnlyList<int> groundSlotIndices)
+        public bool DealFirstCard(int groundSlotIndex)
         {
-            DealCardsInternal(deckSlotIndices, groundSlotIndices).Forget();
+            return TryDealCard(0, groundSlotIndex);
+        }
+
+        /// <summary>
+        /// 批量发牌：按 groundSlotIndices 顺序，每次从卡组最左侧连续取牌（仅 InGame）。
+        /// </summary>
+        public void DealCards(IReadOnlyList<int> groundSlotIndices)
+        {
+            DealCardsInternal(groundSlotIndices).Forget();
         }
 
         /// <summary>
@@ -169,6 +177,33 @@ namespace NineGrid.Cards
             }
 
             _dealtToGround.Clear();
+        }
+
+        public bool TryGetFirstDeckSlot(out int deckSlotIndex)
+        {
+            deckSlotIndex = -1;
+            if (!_slotContainer.TryGetCardAt(0, out _))
+            {
+                return false;
+            }
+
+            deckSlotIndex = 0;
+            return true;
+        }
+
+        public bool TryGetFirstEmptyGroundSlot(out int groundSlotIndex)
+        {
+            groundSlotIndex = -1;
+            for (var i = 0; i < _groundAnchors.Count; i++)
+            {
+                if (!_dealtToGround.ContainsKey(i) && CardSlotAnchorUtility.IsDealableGroundSlotIndex(i))
+                {
+                    groundSlotIndex = i;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public bool TryGetRandomDeckSlot(out int deckSlotIndex)
@@ -365,23 +400,17 @@ namespace NineGrid.Cards
             return true;
         }
 
-        private async UniTask DealCardsInternal(IReadOnlyList<int> deckSlotIndices, IReadOnlyList<int> groundSlotIndices)
+        private async UniTask DealCardsInternal(IReadOnlyList<int> groundSlotIndices)
         {
-            if (deckSlotIndices == null || groundSlotIndices == null)
+            if (groundSlotIndices == null)
             {
                 return;
             }
 
-            if (deckSlotIndices.Count != groundSlotIndices.Count)
+            for (var i = 0; i < groundSlotIndices.Count; i++)
             {
-                Debug.LogWarning("[CardDeckManager] DealCards 参数长度不一致。");
-                return;
-            }
-
-            for (var i = 0; i < deckSlotIndices.Count; i++)
-            {
-                TryDealCard(deckSlotIndices[i], groundSlotIndices[i]);
-                if (i < deckSlotIndices.Count - 1)
+                TryDealCard(0, groundSlotIndices[i]);
+                if (i < groundSlotIndices.Count - 1)
                 {
                     await UniTask.Delay(TimeSpan.FromSeconds(layoutSettings.dealInterval));
                 }

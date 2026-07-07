@@ -36,7 +36,7 @@ namespace NineGrid.DevTest.Cards
         {
             builder
                 .Bind(KeyCode.Keypad1, "卡组入场+开局发牌", () => RunEntryAndOpeningDealAsync().Forget())
-                .Bind(KeyCode.Keypad2, "随机发牌到Ground", () => RunRandomDealAsync().Forget())
+                .Bind(KeyCode.Keypad2, "首张卡组牌→随机Ground槽", () => RunSingleDealAsync().Forget())
                 .Bind(KeyCode.Keypad3, "随机槽位增卡", () => RunRandomAddCardAsync().Forget());
         }
 
@@ -58,7 +58,7 @@ namespace NineGrid.DevTest.Cards
             manager.DealOpeningRing();
         }
 
-        private async UniTaskVoid RunRandomDealAsync()
+        private async UniTaskVoid RunSingleDealAsync()
         {
             var manager = ResolveDeckManager();
             if (manager == null)
@@ -68,14 +68,14 @@ namespace NineGrid.DevTest.Cards
 
             manager.ClearGround();
 
-            if (!manager.TryGetRandomDeckSlot(out var deckSlot) ||
+            if (!manager.TryGetFirstDeckSlot(out _) ||
                 !manager.TryGetRandomEmptyGroundSlot(out var groundSlot))
             {
-                Debug.LogWarning("[CardDeckManagerDevKeys] 无可用卡组槽或 Ground 空槽。");
+                Debug.LogWarning("[CardDeckManagerDevKeys] 无可用卡组牌或 Ground 空槽。");
                 return;
             }
 
-            manager.DealCard(deckSlot, groundSlot);
+            manager.DealFirstCard(groundSlot);
             await UniTask.CompletedTask;
         }
 

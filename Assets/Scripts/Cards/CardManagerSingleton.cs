@@ -340,7 +340,7 @@ namespace NineGrid.Cards
                     break;
 
                 case CardDisplayMode.GroundCardMode:
-                    cardTransform.localScale = Vector3.one * 0.92f;
+                    cardTransform.localScale = Vector3.one;
                     cardTransform.localRotation = Quaternion.identity;
                     SetSortingOrder(sortingGroup, -10);
                     break;
