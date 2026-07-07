@@ -13,7 +13,7 @@ namespace NineGrid.Cards
         CardDeckMode = 0,
         HandCardMode = 1,
         GroundCardMode = 2,
-        CardChoiseMode = 3,
+        RemovedMode = 3,
     }
 
     /// <summary>
@@ -345,7 +345,7 @@ namespace NineGrid.Cards
                     SetSortingOrder(sortingGroup, -10);
                     break;
 
-                case CardDisplayMode.CardChoiseMode:
+                case CardDisplayMode.RemovedMode:
                     cardTransform.localScale = Vector3.one * 1.08f;
                     cardTransform.localRotation = Quaternion.identity;
                     SetSortingOrder(sortingGroup, 20);
