@@ -31,5 +31,17 @@ namespace NineGrid.Cards
             await manager.PlayAsync(invoke, cancellationToken);
             return true;
         }
+
+        public static async UniTask<bool> TryPlayHitFlashAsync(
+            this ManagedCard card,
+            CardBoardDirection selfDirection = CardBoardDirection.None,
+            int selfSlot = 0,
+            int? otherSlot = null,
+            CancellationToken cancellationToken = default)
+        {
+            return await card.TryPlayAsync(
+                CardEffectInvokeContext.ForHitFlash(selfDirection, selfSlot, otherSlot),
+                cancellationToken);
+        }
     }
 }

@@ -13,13 +13,14 @@ namespace NineGrid.Cards
     [RequireComponent(typeof(StandardCardView))]
     public sealed class CardEffectManager : MonoBehaviour
     {
-        [Tooltip("四类效果 SO 装配；每项 kind 对应 Attack/Hit/Death/Use。")]
+        [Tooltip("五类效果 SO 装配；每项 kind 对应 Attack/Hit/Death/Use/HitFlash。")]
         [SerializeField] private List<CardEffectBinding> bindings = new()
         {
             new CardEffectBinding { kind = CardEffectKind.Attack },
             new CardEffectBinding { kind = CardEffectKind.Hit },
             new CardEffectBinding { kind = CardEffectKind.Death },
             new CardEffectBinding { kind = CardEffectKind.Use },
+            new CardEffectBinding { kind = CardEffectKind.HitFlash },
         };
 
         private StandardCardView _view;
@@ -94,6 +95,40 @@ namespace NineGrid.Cards
                 cancellationToken);
         }
 
+        public UniTask PlayHitFlashAsync(
+            CardBoardDirection selfDirection = CardBoardDirection.None,
+            int selfSlot = 0,
+            int? otherSlot = null,
+            CancellationToken cancellationToken = default)
+        {
+            return PlayAsync(
+                CardEffectInvokeContext.ForHitFlash(selfDirection, selfSlot, otherSlot),
+                cancellationToken);
+        }
+
+        /// <summary>
+        /// Timeline / DOTweenCallback / Animation Event 回调：播放受击闪白。
+        /// 供 UnityEvent 下拉绑定（须为 public void、无 UniTask 返回值）。
+        /// </summary>
+        public void CallbackPlayHitFlash()
+        {
+            PlayHitFlashAsync(LastResolvedDirection).Forget();
+        }
+
+        /// <summary>
+        /// Timeline 回调：按枚举整型传入 <see cref="CardBoardDirection"/> 后播放闪白。
+        /// </summary>
+        public void CallbackPlayHitFlashDirection(int selfDirection)
+        {
+            PlayHitFlashAsync((CardBoardDirection)selfDirection).Forget();
+        }
+
+        /// <summary>Timeline 回调：立即停止闪白。</summary>
+        public void CallbackStopHitFlash()
+        {
+            StopOverlayFlash();
+        }
+
         public void StopCurrent()
         {
             _playCts?.Cancel();
@@ -105,9 +140,20 @@ namespace NineGrid.Cards
                 _currentEffect.Stop(_currentPlayContext);
             }
 
+            StopOverlayFlash();
+
             _currentEffect = null;
             _isPlaying = false;
             _suppressHover = false;
+        }
+
+        private void StopOverlayFlash()
+        {
+            if (_view != null
+                && _view.TryGetComponent<CardSpriteHitFlashExecutor>(out var executor))
+            {
+                executor.Stop();
+            }
         }
 
         public bool TryConsumeHoverSuppression()
@@ -133,6 +179,12 @@ namespace NineGrid.Cards
                 Debug.LogWarning(
                     $"[CardEffectManager] 未配置 {invoke.Kind} 效果 SO（方向={invoke.SelfDirection}），跳过。",
                     this);
+                return;
+            }
+
+            if (invoke.Kind == CardEffectKind.HitFlash)
+            {
+                await PlayHitFlashOverlayAsync(effect, invoke, cancellationToken);
                 return;
             }
 
@@ -178,6 +230,24 @@ namespace NineGrid.Cards
                 {
                     CardManagerSingleton.Instance.RefreshDisplayMode(card);
                 }
+            }
+        }
+
+        private async UniTask PlayHitFlashOverlayAsync(
+            CardEffectSO effect,
+            CardEffectInvokeContext invoke,
+            CancellationToken cancellationToken)
+        {
+            var card = ResolveManagedCard();
+            var playContext = BuildPlayContext(card, invoke, cancellationToken);
+
+            try
+            {
+                await effect.PlayAsync(playContext);
+            }
+            catch (System.OperationCanceledException)
+            {
+                effect.Stop(playContext);
             }
         }
 
@@ -304,6 +374,13 @@ namespace NineGrid.Cards
         }
 
         [FoldoutGroup("Debug")]
+        [Button("播放闪白", ButtonSizes.Medium)]
+        private void DebugPlayHitFlash()
+        {
+            PlayHitFlashAsync(debugSelfDirection, debugSelfSlot).Forget();
+        }
+
+        [FoldoutGroup("Debug")]
         [Button("停止当前", ButtonSizes.Small)]
         private void DebugStopCurrent()
         {
@@ -321,6 +398,11 @@ namespace NineGrid.Cards
                     otherSlot,
                     isOrchestrated: false),
                 CardEffectKind.Hit => CardEffectInvokeContext.ForHit(
+                    debugSelfDirection,
+                    debugSelfSlot,
+                    otherSlot,
+                    isOrchestrated: false),
+                CardEffectKind.HitFlash => CardEffectInvokeContext.ForHitFlash(
                     debugSelfDirection,
                     debugSelfSlot,
                     otherSlot,

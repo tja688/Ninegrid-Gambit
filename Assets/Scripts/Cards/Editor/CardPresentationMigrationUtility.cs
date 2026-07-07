@@ -2,10 +2,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEditor;
-using UnityEditor.Events;
 using UnityEditorInternal;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace NineGrid.Cards.Editor
 {
@@ -19,7 +17,6 @@ namespace NineGrid.Cards.Editor
             "DG.Tweening.DOTweenAnimation",
             "Dott.DOTweenLink",
             "Dott.DOTweenCallback",
-            "NineGrid.Cards.CardSpriteHitFlash",
         };
 
         [MenuItem("NineGrid/Cards/Migrate Presentation Timeline To Child")]
@@ -87,9 +84,7 @@ namespace NineGrid.Cards.Editor
             timelineProperty.objectReferenceValue = victimTimeline;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(link);
-
-            WireHitFlashCallback(victimPresentation.gameObject);
-            Debug.Log("[CardPresentationMigration] 已修复攻击卡 DOTweenLink 与受击卡闪白回调。");
+            Debug.Log("[CardPresentationMigration] 已修复攻击卡 DOTweenLink。");
         }
 
         public static GameObject MigrateCardRoot(GameObject cardRoot)
@@ -128,7 +123,6 @@ namespace NineGrid.Cards.Editor
             }
 
             RetargetDotweenAnimations(presentation, cardRoot.transform);
-            WireHitFlashCallback(presentation);
             EditorUtility.SetDirty(cardRoot);
             Undo.CollapseUndoOperations(undoGroup);
 
@@ -212,48 +206,6 @@ namespace NineGrid.Cards.Editor
                 targetGo.objectReferenceValue = cardRoot.gameObject;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
             }
-        }
-
-        private static void WireHitFlashCallback(GameObject presentation)
-        {
-            var flash = presentation.GetComponent<CardSpriteHitFlash>();
-            if (flash == null)
-            {
-                return;
-            }
-
-            var callbackType = ResolveTypeByName("Dott.DOTweenCallback");
-            if (callbackType == null)
-            {
-                return;
-            }
-
-            var callback = presentation.GetComponent(callbackType);
-            if (callback == null)
-            {
-                callback = Undo.AddComponent(presentation, callbackType);
-            }
-
-            var delayProperty = new SerializedObject(callback).FindProperty("delay");
-            if (delayProperty != null)
-            {
-                delayProperty.floatValue = 0f;
-                delayProperty.serializedObject.ApplyModifiedPropertiesWithoutUndo();
-            }
-
-            var onCallbackField = callbackType.GetField("onCallback");
-            if (onCallbackField?.GetValue(callback) is not UnityEvent unityEvent)
-            {
-                return;
-            }
-
-            for (var i = unityEvent.GetPersistentEventCount() - 1; i >= 0; i--)
-            {
-                UnityEventTools.RemovePersistentListener(unityEvent, i);
-            }
-
-            UnityEventTools.AddPersistentListener(unityEvent, flash.PlayHitFlash);
-            EditorUtility.SetDirty(callback);
         }
 
         private static Type ResolveTypeByName(string fullName)

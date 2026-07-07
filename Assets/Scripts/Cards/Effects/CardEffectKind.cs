@@ -9,5 +9,6 @@ namespace NineGrid.Cards
         Hit = 1,
         Death = 2,
         Use = 3,
+        HitFlash = 4,
     }
 }

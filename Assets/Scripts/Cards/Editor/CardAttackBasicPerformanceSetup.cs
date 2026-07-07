@@ -2,9 +2,7 @@
 using System;
 using System.Reflection;
 using UnityEditor;
-using UnityEditor.Events;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace NineGrid.Cards.Editor
 {
@@ -17,7 +15,6 @@ namespace NineGrid.Cards.Editor
         private const string VictimCardName = "Standard Card (1)";
         private const string PresentationChildName = "Presentation";
         private const float OrchestrationDelay = 0.4f;
-        private const string HitFlashMaterialPath = "Assets/Arts/VisualProfiles/TableNineSpriteHitFlash.mat";
 
         private static readonly ClipSpec RightWindup = new(0f, 0.1f, 15, new Vector3(-0.1f, 0f, 0f));
         private static readonly ClipSpec RightLunge = new(0.1f, 0.3f, 23, new Vector3(1.0625f, 0f, 0f));
@@ -52,7 +49,7 @@ namespace NineGrid.Cards.Editor
 
             Selection.activeGameObject = right;
             Undo.CollapseUndoOperations(undoGroup);
-            Debug.Log("[CardAttackBasicPerformanceSetup] CardAttackBasic Left/Right 表演 rig 已就绪。");
+            Debug.Log("[CardAttackBasicPerformanceSetup] CardAttackBasic Left/Right 表演 rig 已就绪（闪白请通过 CardEffectManager.PlayHitFlashAsync 调用）。");
         }
 
         private static void BuildRig(
@@ -66,19 +63,9 @@ namespace NineGrid.Cards.Editor
             var timeline = GetOrAddComponent(rig, "Dott.DOTweenTimeline");
             GetOrAddComponent<CardPerformanceTimelinePlayer>(rig);
 
-            var flash = GetOrAddComponent<CardSpriteHitFlash>(rig);
-            var flashSerialized = new SerializedObject(flash);
-            flashSerialized.FindProperty("rendererSearchRoot").objectReferenceValue = victim;
-            flashSerialized.FindProperty("hitFlashMaterialTemplate").objectReferenceValue =
-                AssetDatabase.LoadAssetAtPath<Material>(HitFlashMaterialPath);
-            flashSerialized.ApplyModifiedPropertiesWithoutUndo();
-
             AddMoveTween(rig, attacker.gameObject, ApplyDirection(RightWindup, direction, victim, false));
             AddMoveTween(rig, attacker.gameObject, ApplyDirection(RightLunge, direction, victim, false));
             AddMoveTween(rig, victim.gameObject, ApplyDirection(RightHit, direction, victim, true));
-
-            var callback = GetOrAddComponent(rig, "Dott.DOTweenCallback");
-            WireFlashCallback(callback, flash, OrchestrationDelay);
 
             var player = rig.GetComponent<CardPerformanceTimelinePlayer>();
             if (player != null)
@@ -133,28 +120,6 @@ namespace NineGrid.Cards.Editor
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        private static void WireFlashCallback(Component callback, CardSpriteHitFlash flash, float delay)
-        {
-            var serialized = new SerializedObject(callback);
-            serialized.FindProperty("delay").floatValue = delay;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-
-            var callbackType = callback.GetType();
-            var onCallbackField = callbackType.GetField("onCallback", BindingFlags.Instance | BindingFlags.Public);
-            if (onCallbackField?.GetValue(callback) is not UnityEvent unityEvent)
-            {
-                return;
-            }
-
-            for (var i = unityEvent.GetPersistentEventCount() - 1; i >= 0; i--)
-            {
-                UnityEventTools.RemovePersistentListener(unityEvent, i);
-            }
-
-            UnityEventTools.AddPersistentListener(unityEvent, flash.PlayHitFlash);
-            EditorUtility.SetDirty(callback);
-        }
-
         private static void RemovePresentationChild(GameObject cardRoot)
         {
             var presentation = cardRoot.transform.Find(PresentationChildName);
@@ -170,7 +135,7 @@ namespace NineGrid.Cards.Editor
             RemoveComponentsByTypeName(rig, "DG.Tweening.DOTweenAnimation");
             RemoveComponentsByTypeName(rig, "Dott.DOTweenLink");
             RemoveComponentsByTypeName(rig, "Dott.DOTweenCallback");
-            RemoveComponents<CardSpriteHitFlash>(rig);
+            RemoveComponents<CardSpriteHitFlashExecutor>(rig);
             RemoveComponents<CardPerformanceTimelinePlayer>(rig);
         }
 

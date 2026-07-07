@@ -83,6 +83,7 @@ namespace NineGrid.Cards.Editor
             var death = CardEffectAssetMenu.LoadDeathEffect();
             var use = CardEffectAssetMenu.LoadUseEffect();
             var hit = CardEffectAssetMenu.LoadHitEffect();
+            var hitFlash = CardEffectAssetMenu.LoadHitFlashEffect();
             var attack = CardEffectAssetMenu.LoadAttackEffect();
 
             var serialized = new SerializedObject(effectManager);
@@ -93,6 +94,7 @@ namespace NineGrid.Cards.Editor
                 AssignBinding(bindings, 1, CardEffectKind.Hit, hit);
                 AssignBinding(bindings, 2, CardEffectKind.Death, death);
                 AssignBinding(bindings, 3, CardEffectKind.Use, use);
+                AssignBinding(bindings, 4, CardEffectKind.HitFlash, hitFlash);
             }
 
             serialized.ApplyModifiedPropertiesWithoutUndo();

@@ -31,6 +31,9 @@ namespace NineGrid.Cards.Editor
                 CardEffectKind.Hit,
                 0.24f,
                 supportsDirectionVariants: true);
+            var hitFlash = CreateOrLoadHitFlash(
+                $"{DefaultsFolder}/CardHitFlashEffect.asset",
+                "CardHitFlashEffect");
             var attack = CreateOrLoad<CardTweenDirectionalLungeEffectSO>(
                 $"{DefaultsFolder}/CardAttackLungeEffect.asset",
                 "CardAttackLungeEffect",
@@ -99,6 +102,12 @@ namespace NineGrid.Cards.Editor
         {
             return AssetDatabase.LoadAssetAtPath<CardTweenDirectionalPunchEffectSO>(
                 $"{DefaultsFolder}/CardHitPunchEffect.asset");
+        }
+
+        public static CardSpriteHitFlashEffectSO LoadHitFlashEffect()
+        {
+            return AssetDatabase.LoadAssetAtPath<CardSpriteHitFlashEffectSO>(
+                $"{DefaultsFolder}/CardHitFlashEffect.asset");
         }
 
         public static CardTweenDirectionalLungeEffectSO LoadAttackEffect()
@@ -192,6 +201,36 @@ namespace NineGrid.Cards.Editor
                 usesBasicAttackComboDelay);
             AssetDatabase.CreateAsset(asset, path);
             return asset;
+        }
+
+        private static CardSpriteHitFlashEffectSO CreateOrLoadHitFlash(string path, string assetName)
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<CardSpriteHitFlashEffectSO>(path);
+            if (existing != null)
+            {
+                ApplyHitFlashMetadata(existing);
+                return existing;
+            }
+
+            var asset = ScriptableObject.CreateInstance<CardSpriteHitFlashEffectSO>();
+            asset.name = assetName;
+            ApplyHitFlashMetadata(asset);
+            AssetDatabase.CreateAsset(asset, path);
+            return asset;
+        }
+
+        private static void ApplyHitFlashMetadata(CardSpriteHitFlashEffectSO asset)
+        {
+            var serialized = new SerializedObject(asset);
+            serialized.FindProperty("kind").enumValueIndex = (int)CardEffectKind.HitFlash;
+            serialized.FindProperty("displayName").stringValue = asset.name;
+            serialized.FindProperty("estimatedDuration").floatValue = 0.45f;
+            serialized.FindProperty("supportsDirectionVariants").boolValue = false;
+            serialized.FindProperty("hitFlashMaterialTemplate").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<Material>(
+                    "Assets/Arts/VisualProfiles/TableNineSpriteHitFlash.mat");
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
         }
 
         private static T CreateOrLoad<T>(

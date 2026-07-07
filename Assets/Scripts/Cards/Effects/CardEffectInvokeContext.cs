@@ -122,5 +122,29 @@ namespace NineGrid.Cards
                 displayMode: displayMode,
                 isOrchestrated: isOrchestrated);
         }
+
+        public static CardEffectInvokeContext ForHitFlash(
+            CardBoardDirection selfDirection = CardBoardDirection.None,
+            int selfSlot = 0,
+            int? otherSlot = null,
+            int? sourceUid = null,
+            int? targetUid = null,
+            float magnitude = 0f,
+            CardDisplayMode displayMode = CardDisplayMode.GroundCardMode,
+            bool isOrchestrated = false,
+            CardAttackPresentationKind presentationKind = CardAttackPresentationKind.None)
+        {
+            return new CardEffectInvokeContext(
+                CardEffectKind.HitFlash,
+                selfDirection,
+                selfSlot,
+                otherSlot,
+                sourceUid,
+                targetUid,
+                magnitude,
+                displayMode,
+                isOrchestrated,
+                presentationKind);
+        }
     }
 }
