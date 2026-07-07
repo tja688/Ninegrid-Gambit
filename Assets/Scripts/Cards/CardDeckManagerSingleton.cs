@@ -198,7 +198,7 @@ namespace NineGrid.Cards
             var candidates = new List<int>();
             for (var i = 0; i < _groundAnchors.Count; i++)
             {
-                if (!_dealtToGround.ContainsKey(i))
+                if (!_dealtToGround.ContainsKey(i) && CardSlotAnchorUtility.IsDealableGroundSlotIndex(i))
                 {
                     candidates.Add(i);
                 }
@@ -315,7 +315,7 @@ namespace NineGrid.Cards
 
             if (!IsValidGroundSlot(groundSlotIndex))
             {
-                Debug.LogWarning($"[CardDeckManager] Ground 槽位无效: {groundSlotIndex}");
+                Debug.LogWarning($"[CardDeckManager] Ground 槽位无效或禁止发牌: {groundSlotIndex}");
                 return false;
             }
 
@@ -336,20 +336,31 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration).Forget();
-
             var groundAnchor = _groundAnchors[groundSlotIndex];
             if (groundAnchor == null)
             {
                 Debug.LogWarning($"[CardDeckManager] Ground 锚点缺失: {groundSlotIndex}");
+                if (!_slotContainer.TryInsertAt(deckSlotIndex, removed, out var rollbackRipple))
+                {
+                    CardManagerSingleton.Instance.Release(removed);
+                }
+                else
+                {
+                    CardDeckTween.MoveRippleAsync(rollbackRipple, layoutSettings.moveDuration).Forget();
+                }
+
                 return false;
             }
 
-            CardManagerSingleton.Instance.SetDisplayMode(removed, CardDisplayMode.GroundCardMode);
+            CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration).Forget();
+
+            var cardManager = CardManagerSingleton.Instance;
+            cardManager.SetDisplayMode(removed, CardDisplayMode.GroundCardMode);
             CardDeckTween.MoveToWorld(
                 removed.Transform,
                 groundAnchor.position,
-                layoutSettings.moveDuration);
+                layoutSettings.moveDuration,
+                onComplete: () => cardManager.RefreshDisplayMode(removed));
             RegisterDealtToGround(removed, groundSlotIndex);
             return true;
         }
@@ -478,7 +489,8 @@ namespace NineGrid.Cards
         private bool IsValidGroundSlot(int groundSlotIndex)
         {
             return groundSlotIndex >= 0 && groundSlotIndex < _groundAnchors.Count &&
-                   _groundAnchors[groundSlotIndex] != null;
+                   _groundAnchors[groundSlotIndex] != null &&
+                   CardSlotAnchorUtility.IsDealableGroundSlotIndex(groundSlotIndex);
         }
 
         private Transform GetDeckAnchor(int index)

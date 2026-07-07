@@ -180,7 +180,7 @@ namespace NineGrid.Cards
         /// </summary>
         public void ApplySortingOrder(ManagedCard card, int slotIndex)
         {
-            if (card?.View == null)
+            if (card?.View == null || card.DisplayMode != CardDisplayMode.CardDeckMode)
             {
                 return;
             }

@@ -218,6 +218,7 @@ namespace NineGrid.Cards
 
             if (card.View != null)
             {
+                CardDeckTween.KillMotion(card.Transform);
                 Destroy(card.View.gameObject);
             }
 
@@ -257,6 +258,19 @@ namespace NineGrid.Cards
             }
 
             ApplyDisplayMode(card, mode);
+        }
+
+        /// <summary>
+        /// 按当前 DisplayMode 重新应用缩放与 sorting，用于动效结束后校正表现。
+        /// </summary>
+        public void RefreshDisplayMode(ManagedCard card)
+        {
+            if (card?.View == null)
+            {
+                return;
+            }
+
+            ApplyDisplayMode(card, card.DisplayMode);
         }
 
         private void TrackUid(int uid)

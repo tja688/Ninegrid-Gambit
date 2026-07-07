@@ -75,7 +75,22 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 按 Ground 开局发牌顺序（1,2,3,6,9,8,7,4）返回 0-based 槽位索引列表。
+        /// 禁止发牌的目标 Ground 槽位（1-based 编号，如 slot5 = 5）。
+        /// </summary>
+        public const int ForbiddenGroundDealSlotNumber = 5;
+
+        /// <summary>
+        /// 禁止发牌的目标 Ground 槽位（0-based 列表索引）。
+        /// </summary>
+        public const int ForbiddenGroundDealSlotIndex = ForbiddenGroundDealSlotNumber - 1;
+
+        public static bool IsDealableGroundSlotIndex(int zeroBasedIndex)
+        {
+            return zeroBasedIndex != ForbiddenGroundDealSlotIndex;
+        }
+
+        /// <summary>
+        /// 按 Ground 开局发牌顺序（1,2,3,6,9,8,7,4）返回 0-based 槽位索引列表；不含 slot5。
         /// </summary>
         public static IReadOnlyList<int> GetOpeningRingSlotIndices(int maxSlots = 9)
         {

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -11,17 +12,50 @@ namespace NineGrid.Cards
     /// </summary>
     public static class CardDeckTween
     {
-        public static Tween MoveToWorld(Transform target, Vector3 worldPosition, float duration, float delay = 0f)
+        public static void KillMotion(Transform target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            target.DOKill(complete: false);
+        }
+
+        public static Tween MoveToWorld(
+            Transform target,
+            Vector3 worldPosition,
+            float duration,
+            float delay = 0f,
+            TweenCallback onComplete = null)
         {
             if (target == null)
             {
                 return null;
             }
 
-            return target
+            KillMotion(target);
+
+            var tween = target
                 .DOMove(worldPosition, duration)
                 .SetDelay(delay)
-                .SetEase(Ease.OutCubic);
+                .SetEase(Ease.OutCubic)
+                .SetLink(target.gameObject, LinkBehaviour.KillOnDestroy);
+
+            if (onComplete != null)
+            {
+                tween.OnComplete(() =>
+                {
+                    if (target == null)
+                    {
+                        return;
+                    }
+
+                    onComplete();
+                });
+            }
+
+            return tween;
         }
 
         public static async UniTask MoveRippleAsync(
