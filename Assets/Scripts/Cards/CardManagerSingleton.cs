@@ -6,6 +6,36 @@ using UnityEngine.Rendering;
 namespace NineGrid.Cards
 {
     /// <summary>
+    /// 与 Core <see cref="NineGrid.Core.CardKind"/> 数值对齐，便于后续桥接。
+    /// </summary>
+    public enum ManagedCardKind
+    {
+        Unknown = 0,
+        Avatar = 1,
+        Monster = 2,
+        PlayerCard = 3,
+        Relic = 4,
+        HelpCard = 5,
+        Item = 6,
+    }
+
+    /// <summary>
+    /// 与 Core <see cref="NineGrid.Core.ZoneId"/> 数值对齐，便于后续桥接。
+    /// </summary>
+    public enum ManagedZoneId
+    {
+        None = 0,
+        Avatar = 1,
+        Board = 2,
+        DrawPile = 3,
+        PlayerCardPool = 4,
+        EnemyCardPool = 5,
+        ItemSlots = 6,
+        Graveyard = 7,
+        Removed = 8,
+    }
+
+    /// <summary>
     /// 卡牌表现状态模式，由卡牌管理器统一装配与切换。
     /// </summary>
     public enum CardDisplayMode
@@ -26,24 +56,56 @@ namespace NineGrid.Cards
     }
 
     /// <summary>
-    /// 由卡牌管理器托管的卡牌实例句柄。
+    /// 表现层卡牌 Uid 约定，与 Core 一致：0 表示无效。
+    /// </summary>
+    public static class ManagedCardUid
+    {
+        public const int None = 0;
+    }
+
+    /// <summary>
+    /// 槽位索引约定，与 Core <c>SlotId.Index</c> 对齐。
+    /// </summary>
+    public static class ManagedSlotIndex
+    {
+        public const int None = -1;
+        public const int Avatar = 0;
+        public const int MinBoard = 1;
+        public const int MaxBoard = 9;
+    }
+
+    /// <summary>
+    /// 由卡牌管理器托管的卡牌记录，对应 Core <see cref="NineGrid.Core.CardInstance"/> 的身份字段。
     /// </summary>
     public sealed class ManagedCard
     {
-        internal ManagedCard(int instanceId, string templateId, StandardCardView view)
+        internal ManagedCard(int uid, string defId, ManagedCardKind kind)
         {
-            InstanceId = instanceId;
-            TemplateId = templateId;
-            View = view;
+            Uid = uid;
+            DefId = defId ?? string.Empty;
+            Kind = kind;
+            Zone = ManagedZoneId.None;
+            SlotIndex = ManagedSlotIndex.None;
             LifecycleState = CardLifecycleState.Active;
             DisplayMode = CardDisplayMode.HandCardMode;
         }
 
-        public int InstanceId { get; }
+        /// <summary>运行时唯一卡牌 ID，与 Core CardInstance.Uid 同语义。</summary>
+        public int Uid { get; }
 
-        public string TemplateId { get; }
+        /// <summary>内容定义 ID，与 Core CardInstance.DefId 同语义。</summary>
+        public string DefId { get; }
 
-        public StandardCardView View { get; }
+        /// <summary>卡牌种类，与 Core CardInstance.Kind 同语义。</summary>
+        public ManagedCardKind Kind { get; internal set; }
+
+        /// <summary>所在区域，与 Core CardInstance.Zone 同语义。</summary>
+        public ManagedZoneId Zone { get; internal set; }
+
+        /// <summary>所在槽位索引，与 Core SlotId.Index 同语义。</summary>
+        public int SlotIndex { get; internal set; }
+
+        public StandardCardView View { get; private set; }
 
         public GameObject GameObject => View != null ? View.gameObject : null;
 
@@ -53,15 +115,113 @@ namespace NineGrid.Cards
 
         public CardDisplayMode DisplayMode { get; internal set; }
 
-        public bool IsActive => LifecycleState == CardLifecycleState.Active && View != null;
+        public bool HasView => View != null;
+
+        public bool IsActive => LifecycleState == CardLifecycleState.Active;
+
+        internal void BindView(StandardCardView view)
+        {
+            View = view;
+        }
+
+        internal void ClearView()
+        {
+            View = null;
+        }
     }
 
     /// <summary>
-    /// 卡牌管理器单例：按模板生产卡牌、管理生命周期与表现状态，供外部查询与切换。
+    /// 表现层卡牌 Uid 注册表，对应 Core <see cref="NineGrid.Core.CardRegistry"/>。
+    /// </summary>
+    public sealed class ManagedCardRegistry
+    {
+        private readonly Dictionary<int, ManagedCard> _cards = new();
+        private int _nextUid = 1;
+
+        public int Version { get; private set; }
+
+        public IReadOnlyDictionary<int, ManagedCard> Cards => _cards;
+
+        public ManagedCard Create(string defId, ManagedCardKind kind)
+        {
+            var card = new ManagedCard(_nextUid++, defId, kind);
+            _cards.Add(card.Uid, card);
+            Touch();
+            return card;
+        }
+
+        public bool TryRegister(int uid, string defId, ManagedCardKind kind, out ManagedCard card)
+        {
+            card = null;
+            if (uid <= ManagedCardUid.None || _cards.ContainsKey(uid))
+            {
+                return false;
+            }
+
+            card = new ManagedCard(uid, defId, kind);
+            _cards.Add(uid, card);
+            if (uid >= _nextUid)
+            {
+                _nextUid = uid + 1;
+            }
+
+            Touch();
+            return true;
+        }
+
+        public ManagedCard Get(int uid)
+        {
+            if (!_cards.TryGetValue(uid, out var card))
+            {
+                throw new KeyNotFoundException("Card uid not found: " + uid);
+            }
+
+            return card;
+        }
+
+        public bool TryGet(int uid, out ManagedCard card)
+        {
+            return _cards.TryGetValue(uid, out card);
+        }
+
+        public void MoveCard(int uid, ManagedZoneId zone, int slotIndex)
+        {
+            var card = Get(uid);
+            card.Zone = zone;
+            card.SlotIndex = slotIndex;
+            Touch();
+        }
+
+        public bool Remove(int uid)
+        {
+            var removed = _cards.Remove(uid);
+            if (removed)
+            {
+                Touch();
+            }
+
+            return removed;
+        }
+
+        public void Clear()
+        {
+            _cards.Clear();
+            _nextUid = 1;
+            Touch();
+        }
+
+        private void Touch()
+        {
+            Version++;
+        }
+    }
+
+    /// <summary>
+    /// 卡牌管理器单例：Uid 注册、视图生产、生命周期与表现状态管理。
     /// </summary>
     public sealed class CardManagerSingleton : MonoBehaviour
     {
-        public const string StandardTemplateId = "standard";
+        public const string StandardDefId = "standard";
 
         private const string StandardCardPrefabAssetPath = "Assets/Prefabs/Standard Card.prefab";
 
@@ -70,10 +230,8 @@ namespace NineGrid.Cards
         [SerializeField] private Transform cardRoot;
         [SerializeField] private GameObject standardCardPrefab;
 
-        private readonly Dictionary<string, GameObject> _templatePrefabs = new(StringComparer.Ordinal);
-        private readonly Dictionary<int, ManagedCard> _activeCards = new();
-        private readonly List<ManagedCard> _activeCardList = new();
-        private int _nextInstanceId = 1;
+        private readonly ManagedCardRegistry _registry = new();
+        private readonly Dictionary<string, GameObject> _defPrefabs = new(StringComparer.Ordinal);
 
         public static CardManagerSingleton Instance
         {
@@ -93,7 +251,11 @@ namespace NineGrid.Cards
             }
         }
 
-        public IReadOnlyList<ManagedCard> ActiveCards => _activeCardList;
+        public ManagedCardRegistry Registry => _registry;
+
+        public int RegistryVersion => _registry.Version;
+
+        public IReadOnlyDictionary<int, ManagedCard> Cards => _registry.Cards;
 
         private void Awake()
         {
@@ -106,7 +268,7 @@ namespace NineGrid.Cards
             _instance = this;
             DontDestroyOnLoad(gameObject);
             EnsureCardRoot();
-            BootstrapTemplates();
+            BootstrapPrefabs();
         }
 
         private void OnDestroy()
@@ -117,62 +279,84 @@ namespace NineGrid.Cards
             }
         }
 
-        /// <summary>
-        /// 注册卡牌模板，后续可用 templateId 批量生产。
-        /// </summary>
-        public void RegisterTemplate(string templateId, GameObject prefab)
+        public void RegisterPrefab(string defId, GameObject prefab)
         {
-            if (string.IsNullOrWhiteSpace(templateId) || prefab == null)
+            if (string.IsNullOrWhiteSpace(defId) || prefab == null)
             {
                 return;
             }
 
-            _templatePrefabs[templateId] = prefab;
+            _defPrefabs[defId] = prefab;
+        }
+
+        public bool HasPrefab(string defId)
+        {
+            return _defPrefabs.ContainsKey(defId);
         }
 
         /// <summary>
-        /// 生产一张指定模板的卡牌。
+        /// 仅登记 Uid 记录，不生成视图。供后续 Core 下发 Uid 时预注册。
+        /// </summary>
+        public bool TryRegisterCard(int uid, string defId, ManagedCardKind kind, out ManagedCard card)
+        {
+            return _registry.TryRegister(uid, defId, kind, out card);
+        }
+
+        /// <summary>
+        /// 创建卡牌记录并生成视图。
         /// </summary>
         public ManagedCard Spawn(
-            string templateId,
+            string defId,
+            ManagedCardKind kind = ManagedCardKind.PlayerCard,
             Transform parent = null,
-            CardDisplayMode initialMode = CardDisplayMode.HandCardMode)
+            CardDisplayMode initialMode = CardDisplayMode.HandCardMode,
+            ManagedZoneId zone = ManagedZoneId.None,
+            int slotIndex = ManagedSlotIndex.None)
         {
-            if (!_templatePrefabs.TryGetValue(templateId, out var prefab) || prefab == null)
+            var card = _registry.Create(defId, kind);
+            if (zone != ManagedZoneId.None || slotIndex != ManagedSlotIndex.None)
             {
-                Debug.LogError($"[CardManagerSingleton] 未找到模板: {templateId}");
+                _registry.MoveCard(card.Uid, zone, slotIndex);
+            }
+
+            if (!TrySpawnView(card, parent, initialMode))
+            {
+                _registry.Remove(card.Uid);
                 return null;
             }
 
-            var instance = Instantiate(prefab, parent != null ? parent : cardRoot);
-            instance.name = $"{prefab.name} ({_nextInstanceId})";
-
-            var view = instance.GetComponent<StandardCardView>();
-            if (view == null)
-            {
-                Debug.LogWarning($"[CardManagerSingleton] 模板 {templateId} 未挂载 StandardCardView。");
-            }
-
-            var card = new ManagedCard(_nextInstanceId++, templateId, view);
-            _activeCards[card.InstanceId] = card;
-            _activeCardList.Add(card);
-            ApplyDisplayMode(card, initialMode);
             return card;
         }
 
         /// <summary>
-        /// 批量生产指定模板的卡牌。
+        /// 为已存在的 Uid 记录补齐视图。
         /// </summary>
-        public List<ManagedCard> SpawnMany(
-            string templateId,
-            int count,
+        public bool EnsureView(
+            int uid,
             Transform parent = null,
             CardDisplayMode initialMode = CardDisplayMode.HandCardMode)
+        {
+            if (!_registry.TryGet(uid, out var card) || !card.IsActive || card.HasView)
+            {
+                return card is { HasView: true };
+            }
+
+            return TrySpawnView(card, parent, initialMode);
+        }
+
+        public List<ManagedCard> SpawnMany(
+            string defId,
+            int count,
+            ManagedCardKind kind = ManagedCardKind.PlayerCard,
+            Transform parent = null,
+            CardDisplayMode initialMode = CardDisplayMode.HandCardMode,
+            ManagedZoneId zone = ManagedZoneId.None,
+            int slotIndex = ManagedSlotIndex.None)
         {
             var result = new List<ManagedCard>(Mathf.Max(0, count));
             for (var i = 0; i < count; i++)
             {
-                var card = Spawn(templateId, parent, initialMode);
+                var card = Spawn(defId, kind, parent, initialMode, zone, slotIndex);
                 if (card != null)
                 {
                     result.Add(card);
@@ -182,43 +366,74 @@ namespace NineGrid.Cards
             return result;
         }
 
-        /// <summary>
-        /// 释放卡牌并销毁其 GameObject。
-        /// </summary>
+        public void MoveCard(int uid, ManagedZoneId zone, int slotIndex)
+        {
+            _registry.MoveCard(uid, zone, slotIndex);
+        }
+
+        public ManagedCard Get(int uid)
+        {
+            return _registry.Get(uid);
+        }
+
+        public bool TryGet(int uid, out ManagedCard card)
+        {
+            return _registry.TryGet(uid, out card);
+        }
+
+        public bool IsValidUid(int uid)
+        {
+            return uid > ManagedCardUid.None && _registry.TryGet(uid, out var card) && card.IsActive;
+        }
+
+        public void Release(int uid)
+        {
+            if (!_registry.TryGet(uid, out var card) || !card.IsActive)
+            {
+                return;
+            }
+
+            Release(card);
+        }
+
         public void Release(ManagedCard card)
         {
-            if (card == null || card.LifecycleState == CardLifecycleState.Released)
+            if (card == null || !card.IsActive)
             {
                 return;
             }
 
             card.LifecycleState = CardLifecycleState.Released;
-            _activeCards.Remove(card.InstanceId);
-            _activeCardList.Remove(card);
 
             if (card.View != null)
             {
                 Destroy(card.View.gameObject);
+                card.ClearView();
             }
+
+            _registry.Remove(card.Uid);
         }
 
-        /// <summary>
-        /// 释放全部活跃卡牌。
-        /// </summary>
         public void ReleaseAll()
         {
-            for (var i = _activeCardList.Count - 1; i >= 0; i--)
+            var uids = new List<int>(_registry.Cards.Keys);
+            for (var i = uids.Count - 1; i >= 0; i--)
             {
-                Release(_activeCardList[i]);
+                Release(uids[i]);
             }
         }
 
-        /// <summary>
-        /// 切换卡牌表现状态模式。
-        /// </summary>
+        public void SetDisplayMode(int uid, CardDisplayMode mode)
+        {
+            if (_registry.TryGet(uid, out var card))
+            {
+                SetDisplayMode(card, mode);
+            }
+        }
+
         public void SetDisplayMode(ManagedCard card, CardDisplayMode mode)
         {
-            if (card == null || !card.IsActive)
+            if (card == null || !card.IsActive || !card.HasView)
             {
                 return;
             }
@@ -226,18 +441,43 @@ namespace NineGrid.Cards
             ApplyDisplayMode(card, mode);
         }
 
-        public bool TryGetCard(int instanceId, out ManagedCard card)
-        {
-            return _activeCards.TryGetValue(instanceId, out card);
-        }
-
-        public List<ManagedCard> GetCardsByTemplate(string templateId)
+        public List<ManagedCard> GetCardsByDefId(string defId)
         {
             var result = new List<ManagedCard>();
-            for (var i = 0; i < _activeCardList.Count; i++)
+            foreach (var pair in _registry.Cards)
             {
-                var card = _activeCardList[i];
-                if (card.IsActive && string.Equals(card.TemplateId, templateId, StringComparison.Ordinal))
+                var card = pair.Value;
+                if (card.IsActive && string.Equals(card.DefId, defId, StringComparison.Ordinal))
+                {
+                    result.Add(card);
+                }
+            }
+
+            return result;
+        }
+
+        public List<ManagedCard> GetCardsByKind(ManagedCardKind kind)
+        {
+            var result = new List<ManagedCard>();
+            foreach (var pair in _registry.Cards)
+            {
+                var card = pair.Value;
+                if (card.IsActive && card.Kind == kind)
+                {
+                    result.Add(card);
+                }
+            }
+
+            return result;
+        }
+
+        public List<ManagedCard> GetCardsByZone(ManagedZoneId zone)
+        {
+            var result = new List<ManagedCard>();
+            foreach (var pair in _registry.Cards)
+            {
+                var card = pair.Value;
+                if (card.IsActive && card.Zone == zone)
                 {
                     result.Add(card);
                 }
@@ -249,10 +489,10 @@ namespace NineGrid.Cards
         public List<ManagedCard> GetCardsByDisplayMode(CardDisplayMode mode)
         {
             var result = new List<ManagedCard>();
-            for (var i = 0; i < _activeCardList.Count; i++)
+            foreach (var pair in _registry.Cards)
             {
-                var card = _activeCardList[i];
-                if (card.IsActive && card.DisplayMode == mode)
+                var card = pair.Value;
+                if (card.IsActive && card.HasView && card.DisplayMode == mode)
                 {
                     result.Add(card);
                 }
@@ -261,9 +501,19 @@ namespace NineGrid.Cards
             return result;
         }
 
-        public bool HasTemplate(string templateId)
+        public List<ManagedCard> GetCardsWithView()
         {
-            return _templatePrefabs.ContainsKey(templateId);
+            var result = new List<ManagedCard>();
+            foreach (var pair in _registry.Cards)
+            {
+                var card = pair.Value;
+                if (card.IsActive && card.HasView)
+                {
+                    result.Add(card);
+                }
+            }
+
+            return result;
         }
 
         private void EnsureCardRoot()
@@ -278,7 +528,7 @@ namespace NineGrid.Cards
             cardRoot = rootObject.transform;
         }
 
-        private void BootstrapTemplates()
+        private void BootstrapPrefabs()
         {
             if (standardCardPrefab == null)
             {
@@ -289,13 +539,40 @@ namespace NineGrid.Cards
 
             if (standardCardPrefab != null)
             {
-                RegisterTemplate(StandardTemplateId, standardCardPrefab);
+                RegisterPrefab(StandardDefId, standardCardPrefab);
             }
             else
             {
                 Debug.LogWarning(
                     $"[CardManagerSingleton] 未配置 Standard Card 预制体，请赋值或通过路径 {StandardCardPrefabAssetPath} 提供。");
             }
+        }
+
+        private bool TrySpawnView(ManagedCard card, Transform parent, CardDisplayMode initialMode)
+        {
+            if (card == null || card.HasView)
+            {
+                return false;
+            }
+
+            if (!_defPrefabs.TryGetValue(card.DefId, out var prefab) || prefab == null)
+            {
+                Debug.LogError($"[CardManagerSingleton] 未找到 DefId 对应预制体: {card.DefId}");
+                return false;
+            }
+
+            var instance = Instantiate(prefab, parent != null ? parent : cardRoot);
+            instance.name = $"{prefab.name} (#{card.Uid})";
+
+            var view = instance.GetComponent<StandardCardView>();
+            if (view == null)
+            {
+                Debug.LogWarning($"[CardManagerSingleton] DefId {card.DefId} 未挂载 StandardCardView。");
+            }
+
+            card.BindView(view);
+            ApplyDisplayMode(card, initialMode);
+            return true;
         }
 
         private static void ApplyDisplayMode(ManagedCard card, CardDisplayMode mode)

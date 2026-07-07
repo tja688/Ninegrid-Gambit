@@ -1,5 +1,5 @@
 ---
-description: TableNine 项目全局约束（文件保护、提交、Core 分层、DevTest）
+description: TableNine 项目全局约束（文件保护、提交、Core 分层、DevTest、Inspector 装配注释）
 alwaysApply: true
 ---
 
@@ -23,3 +23,10 @@ alwaysApply: true
 ## 开发测试按键注册规则
 
 - 开发测试（DevTest）：`Assets/Scripts/NineGrid.DevTest`（仅 Editor / Development Build）。用户要求用小键盘做临时验收或调试时，统一通过 `TestKeyModuleBehaviour` 注册到 `TestKeyManager`，勿在业务代码里散落 `Input` 监听。
+
+## Inspector 装配注释约定
+
+凡 `MonoBehaviour` 上**暴露在外部、需在 Inspector 手动拖拽/装配**的序列化字段（`[SerializeField]`、`public` 字段等），**必须**加 `[Tooltip("…")]`，使鼠标悬停即可看到说明。
+
+- **手动装配**：说明用途、装配对象/路径、留空时的行为（若会报错也要写清）。
+- **运行时自动装配**：注释中**必须注明**「运行时自动查找/装配」，并简要说明查找方式（如 `Awake` 中 `GetComponent`、`Find`、`transform.Find` 等）及留空是否可接受。
