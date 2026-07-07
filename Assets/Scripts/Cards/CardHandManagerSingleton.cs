@@ -393,6 +393,11 @@ namespace NineGrid.Cards
         {
             if (_hoveredCard == card)
             {
+                if (card != null)
+                {
+                    RefreshHandHoverAlphas(card);
+                }
+
                 return;
             }
 
@@ -411,7 +416,7 @@ namespace NineGrid.Cards
             var driver = card.View?.GetComponent<CardVisualDriver>();
             driver?.SetTarget(CardVisualTarget.Hover);
             BoostHandCardHoverSorting(card);
-            DimNonHoveredHandCards(card);
+            RefreshHandHoverAlphas(card);
         }
 
         /// <summary>
@@ -819,8 +824,10 @@ namespace NineGrid.Cards
             ResetAllHandAlphas();
         }
 
-        private void DimNonHoveredHandCards(ManagedCard hovered)
+        private void RefreshHandHoverAlphas(ManagedCard hovered)
         {
+            CardOpacityUtility.ResetAlpha(hovered);
+
             for (var i = 0; i < layoutSettings.maxSlots; i++)
             {
                 if (!_slotContainer.TryGetCardAt(i, out var card) || card == null || card == hovered)
