@@ -12,6 +12,16 @@ namespace NineGrid.DevTest
     {
         private static TestKeyInputPoller _instance;
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void BootstrapStack()
+        {
+            var stack = Resources.Load<TestKeyStackConfigSO>("DevTest/TestKeyStack");
+            if (stack != null)
+            {
+                TestKeyManager.Instance.SetStack(stack);
+            }
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void EnsureInstance()
         {

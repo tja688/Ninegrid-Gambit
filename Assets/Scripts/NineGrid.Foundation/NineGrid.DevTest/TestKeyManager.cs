@@ -7,34 +7,76 @@ using UnityEngine;
 namespace NineGrid.DevTest
 {
     /// <summary>
-    /// 开发测试按键管理器：维护全局生效表与模块注册历史，支持抢占与手动激活恢复。
+    /// 开发测试按键管理器：基于 SO 级联栈，自栈底（列表末项）向上溢出解析按键归属。
     /// </summary>
     public sealed class TestKeyManager
     {
         private static TestKeyManager _instance;
 
         private readonly Dictionary<KeyCode, ActiveTestKeyBinding> _activeBindings = new();
-        private readonly Dictionary<string, TestKeyModuleData> _modules = new(StringComparer.Ordinal);
-        private readonly List<string> _moduleOrder = new();
+        private readonly Dictionary<string, TestKeyLayerRuntimeState> _layers = new(StringComparer.Ordinal);
+        private readonly List<string> _stackOrder = new();
+        private readonly HashSet<string> _configLayerIds = new(StringComparer.Ordinal);
+
+        private TestKeyStackConfigSO _stackConfig;
 
         public static TestKeyManager Instance => _instance ??= new TestKeyManager();
 
         public event Action Changed;
 
+        public TestKeyStackConfigSO StackConfig => _stackConfig;
+
         public IReadOnlyDictionary<KeyCode, ActiveTestKeyBinding> ActiveBindings => _activeBindings;
 
-        public IReadOnlyDictionary<string, TestKeyModuleData> Modules => _modules;
+        public IReadOnlyList<string> StackOrder => _stackOrder;
 
-        public IReadOnlyList<string> ModuleOrder => _moduleOrder;
+        public IReadOnlyDictionary<string, TestKeyLayerRuntimeState> Layers => _layers;
 
         /// <summary>
-        /// 注册或更新模块按键。新注册的键会直接写入全局表，抢占其他模块的冲突键。
+        /// 载入 SO 级联栈，初始化层顺序（列表末项 = 最高优先级）。
         /// </summary>
-        public void Register(string moduleId, IReadOnlyDictionary<KeyCode, TestKeyBinding> bindings, string displayName = null)
+        public void SetStack(TestKeyStackConfigSO stackConfig)
         {
-            if (string.IsNullOrWhiteSpace(moduleId))
+            _stackConfig = stackConfig;
+            _stackOrder.Clear();
+            _configLayerIds.Clear();
+
+            if (stackConfig?.Layers != null)
             {
-                throw new ArgumentException("Module id is required.", nameof(moduleId));
+                for (var i = 0; i < stackConfig.Layers.Count; i++)
+                {
+                    var profile = stackConfig.Layers[i];
+                    if (profile == null || string.IsNullOrWhiteSpace(profile.LayerId))
+                    {
+                        continue;
+                    }
+
+                    EnsureLayerState(profile.LayerId, profile.DisplayName, profile);
+                    if (!_stackOrder.Contains(profile.LayerId))
+                    {
+                        _stackOrder.Add(profile.LayerId);
+                    }
+
+                    _configLayerIds.Add(profile.LayerId);
+                }
+            }
+
+            RebuildCascade();
+        }
+
+        /// <summary>
+        /// 挂载一层运行时回调。新层默认追加到栈底（最高优先级）。
+        /// </summary>
+        public void AttachLayer(
+            string layerId,
+            IReadOnlyDictionary<KeyCode, TestKeyBinding> bindings,
+            string displayName = null,
+            TestKeyLayerProfileSO profile = null,
+            bool appendToBottom = true)
+        {
+            if (string.IsNullOrWhiteSpace(layerId))
+            {
+                throw new ArgumentException("Layer id is required.", nameof(layerId));
             }
 
             if (bindings == null || bindings.Count == 0)
@@ -42,91 +84,136 @@ namespace NineGrid.DevTest
                 throw new ArgumentException("At least one binding is required.", nameof(bindings));
             }
 
-            var moduleData = new TestKeyModuleData(moduleId, displayName, bindings);
-            var isNewModule = !_modules.ContainsKey(moduleId);
-            _modules[moduleId] = moduleData;
+            EnsureLayerState(layerId, displayName, profile);
+            _layers[layerId] = _layers[layerId].WithBindings(bindings);
 
-            if (isNewModule)
+            if (appendToBottom)
             {
-                _moduleOrder.Add(moduleId);
+                MoveLayerToBottom(layerId);
+            }
+            else if (!_stackOrder.Contains(layerId))
+            {
+                _stackOrder.Insert(0, layerId);
             }
 
-            ApplyModuleBindingsToGlobal(moduleId, moduleData.Bindings);
-            RaiseChanged();
+            RebuildCascade();
         }
 
         /// <summary>
-        /// 手动激活指定模块：将其历史按键重新写入全局表，覆盖冲突键。
-        /// 未声明的键保持当前拥有者不变。
+        /// 卸载一层运行时回调。动态层会同时移出栈。
         /// </summary>
-        public bool ActivateModule(string moduleId)
+        public void DetachLayer(string layerId)
         {
-            if (!_modules.TryGetValue(moduleId, out var moduleData))
+            if (string.IsNullOrWhiteSpace(layerId) || !_layers.ContainsKey(layerId))
+            {
+                return;
+            }
+
+            _layers.Remove(layerId);
+
+            if (!_configLayerIds.Contains(layerId))
+            {
+                _stackOrder.Remove(layerId);
+            }
+
+            RebuildCascade();
+        }
+
+        /// <summary>
+        /// 将指定层移到栈底（列表末项），使其成为最高优先级。
+        /// </summary>
+        public bool PromoteLayerToTop(string layerId)
+        {
+            if (string.IsNullOrWhiteSpace(layerId) || !_stackOrder.Contains(layerId))
             {
                 return false;
             }
 
-            ApplyModuleBindingsToGlobal(moduleId, moduleData.Bindings);
-            RaiseChanged();
+            MoveLayerToBottom(layerId);
+
+#if UNITY_EDITOR
+            if (_stackConfig != null && _configLayerIds.Contains(layerId))
+            {
+                _stackConfig.PromoteLayerById(layerId);
+            }
+#endif
+
+            RebuildCascade();
             return true;
         }
 
         /// <summary>
-        /// 注销模块并按注册顺序重建全局表（同键后注册者优先）。
+        /// 兼容旧 API：等同于 PromoteLayerToTop。
+        /// </summary>
+        public bool ActivateModule(string moduleId) => PromoteLayerToTop(moduleId);
+
+        /// <summary>
+        /// 兼容旧 API：挂载层并追加到栈底。
+        /// </summary>
+        public void Register(string moduleId, IReadOnlyDictionary<KeyCode, TestKeyBinding> bindings, string displayName = null)
+        {
+            AttachLayer(moduleId, bindings, displayName, profile: null, appendToBottom: true);
+        }
+
+        /// <summary>
+        /// 兼容旧 API：卸载层。
         /// </summary>
         public bool UnregisterModule(string moduleId)
         {
-            if (!_modules.Remove(moduleId))
+            if (!_layers.ContainsKey(moduleId))
             {
                 return false;
             }
 
-            _moduleOrder.Remove(moduleId);
-            RebuildActiveBindings();
-            RaiseChanged();
+            DetachLayer(moduleId);
             return true;
         }
 
-        /// <summary>
-        /// 查询某键当前由哪个模块拥有。
-        /// </summary>
-        public bool TryGetOwner(KeyCode key, out string moduleId)
+        public bool TryGetOwner(KeyCode key, out string layerId)
         {
             if (_activeBindings.TryGetValue(key, out var binding))
             {
-                moduleId = binding.ModuleId;
+                layerId = binding.LayerId;
                 return true;
             }
 
-            moduleId = null;
+            layerId = null;
             return false;
         }
 
-        /// <summary>
-        /// 查询模块声明过但当前未生效的按键。
-        /// </summary>
-        public IReadOnlyList<KeyCode> GetInactiveKeys(string moduleId)
+        public IReadOnlyList<KeyCode> GetActiveKeysForLayer(string layerId)
         {
-            if (!_modules.TryGetValue(moduleId, out var moduleData))
+            var result = new List<KeyCode>();
+            foreach (var pair in _activeBindings)
             {
-                return Array.Empty<KeyCode>();
-            }
-
-            var inactive = new List<KeyCode>();
-            foreach (var key in moduleData.Bindings.Keys)
-            {
-                if (!_activeBindings.TryGetValue(key, out var active) || active.ModuleId != moduleId)
+                if (pair.Value.LayerId == layerId)
                 {
-                    inactive.Add(key);
+                    result.Add(pair.Key);
                 }
             }
 
-            return inactive;
+            return result;
         }
 
-        /// <summary>
-        /// 轮询输入并触发当前全局表中的按键回调。
-        /// </summary>
+        public IReadOnlyList<KeyCode> GetOverflowKeysForLayer(string layerId)
+        {
+            var result = new List<KeyCode>();
+            if (!_layers.TryGetValue(layerId, out var state))
+            {
+                return result;
+            }
+
+            foreach (var pair in state.Bindings)
+            {
+                if (_activeBindings.TryGetValue(pair.Key, out var active) && active.LayerId != layerId)
+                {
+                    result.Add(pair.Key);
+                }
+            }
+
+            return result;
+        }
+
         public void PollInput()
         {
             if (_activeBindings.Count == 0)
@@ -143,48 +230,65 @@ namespace NineGrid.DevTest
             }
         }
 
-        /// <summary>
-        /// 清空全部模块与全局表，仅用于测试或域重载。
-        /// </summary>
         public void Reset()
         {
             _activeBindings.Clear();
-            _modules.Clear();
-            _moduleOrder.Clear();
+            _layers.Clear();
+            _stackOrder.Clear();
+            _configLayerIds.Clear();
+            _stackConfig = null;
             RaiseChanged();
         }
 
 #if UNITY_EDITOR
-        /// <summary>
-        /// 仅用于 EditMode 测试重置单例。
-        /// </summary>
         public static void ResetSingletonForTests()
         {
             _instance = null;
         }
 #endif
 
-        private void ApplyModuleBindingsToGlobal(string moduleId, IReadOnlyDictionary<KeyCode, TestKeyBinding> bindings)
+        private void EnsureLayerState(string layerId, string displayName, TestKeyLayerProfileSO profile)
         {
-            foreach (var pair in bindings)
+            if (_layers.TryGetValue(layerId, out var existing))
             {
-                _activeBindings[pair.Key] = new ActiveTestKeyBinding(moduleId, pair.Key, pair.Value);
+                _layers[layerId] = existing.WithDisplayName(displayName, profile);
+                return;
             }
+
+            _layers[layerId] = new TestKeyLayerRuntimeState(layerId, displayName, profile);
         }
 
-        private void RebuildActiveBindings()
+        private void MoveLayerToBottom(string layerId)
+        {
+            _stackOrder.Remove(layerId);
+            _stackOrder.Add(layerId);
+        }
+
+        private void RebuildCascade()
         {
             _activeBindings.Clear();
+            var claimed = new HashSet<KeyCode>();
 
-            foreach (var moduleId in _moduleOrder)
+            for (var i = _stackOrder.Count - 1; i >= 0; i--)
             {
-                if (!_modules.TryGetValue(moduleId, out var moduleData))
+                var layerId = _stackOrder[i];
+                if (!_layers.TryGetValue(layerId, out var state))
                 {
                     continue;
                 }
 
-                ApplyModuleBindingsToGlobal(moduleId, moduleData.Bindings);
+                foreach (var pair in state.Bindings)
+                {
+                    if (!claimed.Add(pair.Key))
+                    {
+                        continue;
+                    }
+
+                    _activeBindings[pair.Key] = new ActiveTestKeyBinding(layerId, pair.Key, pair.Value);
+                }
             }
+
+            RaiseChanged();
         }
 
         private void RaiseChanged()

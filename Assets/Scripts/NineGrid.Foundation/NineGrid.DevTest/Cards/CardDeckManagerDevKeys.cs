@@ -2,12 +2,12 @@
 
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
+using NineGrid.DevTest;
 using UnityEngine;
 
 namespace NineGrid.DevTest.Cards
 {
     [DisallowMultipleComponent]
-    [DefaultExecutionOrder(10000)]
     public sealed class CardDeckManagerDevKeys : TestKeyModuleBehaviour
     {
         private const int DefaultEntryCardCount = 15;
@@ -16,8 +16,6 @@ namespace NineGrid.DevTest.Cards
         [SerializeField] private CardDeckManagerSingleton deckManager;
 
         protected override string ModuleId => "card-deck-manager";
-
-        protected override string DisplayName => "牌组管理器测试";
 
         protected override void OnEnable()
         {
@@ -32,12 +30,6 @@ namespace NineGrid.DevTest.Cards
             }
 
             base.OnEnable();
-        }
-
-        private void Start()
-        {
-            // 晚于场景中 StandardCardViewDevKeys 的 OnEnable，夺回小键盘 1/2/3 绑定权。
-            ActivateThisModule();
         }
 
         protected override void ConfigureBindings(TestKeyRegistrationBuilder builder)
@@ -60,9 +52,6 @@ namespace NineGrid.DevTest.Cards
                 CardManagerSingleton.StandardDefId,
                 DefaultEntryCardCount,
                 initialMode: CardDisplayMode.CardDeckMode);
-
-            // Spawn 会启用带 StandardCardViewDevKeys 的卡牌，抢注同键后需重新激活本模块。
-            ActivateThisModule();
 
             manager.InjectDeck(cards);
             await manager.BeginEntryAsync();
@@ -105,8 +94,6 @@ namespace NineGrid.DevTest.Cards
             var card = CardManagerSingleton.Instance.Spawn(
                 CardManagerSingleton.StandardDefId,
                 initialMode: CardDisplayMode.CardDeckMode);
-
-            ActivateThisModule();
 
             var slotIndex = Random.Range(0, Mathf.Max(1, manager.DeckCount + 1));
             await manager.AddCardAtAsync(slotIndex, card);

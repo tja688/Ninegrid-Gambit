@@ -36,13 +36,21 @@ namespace NineGrid.DevTest
     }
 
     /// <summary>
-    /// MonoBehaviour 模块基类：OnEnable 注册、OnDisable 注销。
+    /// MonoBehaviour 模块基类：OnEnable 挂载到 SO 级联栈，OnDisable 卸载。
+    /// 新挂载层默认追加到栈底（最高优先级）；同键冲突由栈底向上溢出解析。
     /// </summary>
     public abstract class TestKeyModuleBehaviour : MonoBehaviour
     {
+        [Tooltip("关联的层配置 SO。留空时使用 ModuleId 作为动态层。")]
+        [SerializeField] protected TestKeyLayerProfileSO layerProfile;
+
         protected abstract string ModuleId { get; }
 
-        protected virtual string DisplayName => ModuleId;
+        protected virtual string DisplayName => LayerProfile != null ? LayerProfile.DisplayName : ModuleId;
+
+        protected virtual TestKeyLayerProfileSO LayerProfile => layerProfile;
+
+        protected virtual string LayerId => LayerProfile != null ? LayerProfile.LayerId : ModuleId;
 
         protected abstract void ConfigureBindings(TestKeyRegistrationBuilder builder);
 
@@ -50,18 +58,29 @@ namespace NineGrid.DevTest
         {
             var builder = new TestKeyRegistrationBuilder();
             ConfigureBindings(builder);
-            TestKeyManager.Instance.Register(ModuleId, builder.Build(), DisplayName);
+            TestKeyManager.Instance.AttachLayer(
+                LayerId,
+                builder.Build(),
+                DisplayName,
+                LayerProfile,
+                appendToBottom: true);
         }
 
         protected virtual void OnDisable()
         {
-            TestKeyManager.Instance.UnregisterModule(ModuleId);
+            TestKeyManager.Instance.DetachLayer(LayerId);
         }
 
-        protected void ActivateThisModule()
+        /// <summary>
+        /// 将本层移到栈底，成为最高优先级（等同把 SO 拖到底部）。
+        /// </summary>
+        protected void PromoteThisLayer()
         {
-            TestKeyManager.Instance.ActivateModule(ModuleId);
+            TestKeyManager.Instance.PromoteLayerToTop(LayerId);
         }
+
+        /// <summary>兼容旧 API。</summary>
+        protected void ActivateThisModule() => PromoteThisLayer();
     }
 }
 

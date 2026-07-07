@@ -32,18 +32,21 @@ namespace NineGrid.DevTest
     }
 
     /// <summary>
-    /// 全局表中生效的按键条目，包含当前拥有者与原始绑定。
+    /// 全局表中生效的按键条目，包含当前拥有层与原始绑定。
     /// </summary>
     public readonly struct ActiveTestKeyBinding
     {
-        public ActiveTestKeyBinding(string moduleId, KeyCode key, TestKeyBinding binding)
+        public ActiveTestKeyBinding(string layerId, KeyCode key, TestKeyBinding binding)
         {
-            ModuleId = moduleId ?? throw new ArgumentNullException(nameof(moduleId));
+            LayerId = layerId ?? throw new ArgumentNullException(nameof(layerId));
             Key = key;
             Binding = binding;
         }
 
-        public string ModuleId { get; }
+        public string LayerId { get; }
+
+        /// <summary>兼容旧字段名。</summary>
+        public string ModuleId => LayerId;
 
         public KeyCode Key { get; }
 

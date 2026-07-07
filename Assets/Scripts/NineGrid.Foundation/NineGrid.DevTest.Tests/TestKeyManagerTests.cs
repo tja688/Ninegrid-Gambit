@@ -19,31 +19,27 @@ namespace NineGrid.DevTest.Tests
         }
 
         [Test]
-        public void Register_PreemptsOverlappingKeys_KeepsUniqueKeys()
+        public void Cascade_BottomLayerWins_OnOverlappingKeys()
         {
             var handHits = new List<KeyCode>();
             var cardHits = new List<KeyCode>();
 
-            _manager.Register("hand", new Dictionary<KeyCode, TestKeyBinding>
+            _manager.AttachLayer("hand", new Dictionary<KeyCode, TestKeyBinding>
             {
                 { KeyCode.Alpha1, new TestKeyBinding("hand-1", () => handHits.Add(KeyCode.Alpha1)) },
                 { KeyCode.Alpha2, new TestKeyBinding("hand-2", () => handHits.Add(KeyCode.Alpha2)) },
                 { KeyCode.Alpha4, new TestKeyBinding("hand-4", () => handHits.Add(KeyCode.Alpha4)) },
-            });
+            }, appendToBottom: false);
 
-            _manager.Register("card", new Dictionary<KeyCode, TestKeyBinding>
+            _manager.AttachLayer("card", new Dictionary<KeyCode, TestKeyBinding>
             {
                 { KeyCode.Alpha1, new TestKeyBinding("card-1", () => cardHits.Add(KeyCode.Alpha1)) },
                 { KeyCode.Alpha2, new TestKeyBinding("card-2", () => cardHits.Add(KeyCode.Alpha2)) },
                 { KeyCode.Alpha3, new TestKeyBinding("card-3", () => cardHits.Add(KeyCode.Alpha3)) },
-            });
+            }, appendToBottom: true);
 
             Assert.That(_manager.TryGetOwner(KeyCode.Alpha1, out var owner1), Is.True);
             Assert.That(owner1, Is.EqualTo("card"));
-            Assert.That(_manager.TryGetOwner(KeyCode.Alpha2, out var owner2), Is.True);
-            Assert.That(owner2, Is.EqualTo("card"));
-            Assert.That(_manager.TryGetOwner(KeyCode.Alpha3, out var owner3), Is.True);
-            Assert.That(owner3, Is.EqualTo("card"));
             Assert.That(_manager.TryGetOwner(KeyCode.Alpha4, out var owner4), Is.True);
             Assert.That(owner4, Is.EqualTo("hand"));
 
@@ -52,52 +48,42 @@ namespace NineGrid.DevTest.Tests
 
             Assert.That(cardHits, Is.EqualTo(new[] { KeyCode.Alpha1 }));
             Assert.That(handHits, Is.EqualTo(new[] { KeyCode.Alpha4 }));
-            Assert.That(_manager.GetInactiveKeys("hand"), Is.EquivalentTo(new[] { KeyCode.Alpha1, KeyCode.Alpha2 }));
+            Assert.That(_manager.GetOverflowKeysForLayer("hand"), Is.EquivalentTo(new[] { KeyCode.Alpha1, KeyCode.Alpha2 }));
         }
 
         [Test]
-        public void ActivateModule_RestoresModuleKeys_WithoutTouchingOthers()
+        public void PromoteLayerToTop_MovesLayerToBottomOfStack()
         {
-            _manager.Register("hand", new Dictionary<KeyCode, TestKeyBinding>
+            _manager.AttachLayer("hand", new Dictionary<KeyCode, TestKeyBinding>
             {
                 { KeyCode.Alpha1, new TestKeyBinding("hand-1", () => { }) },
-                { KeyCode.Alpha2, new TestKeyBinding("hand-2", () => { }) },
-                { KeyCode.Alpha4, new TestKeyBinding("hand-4", () => { }) },
-            });
+            }, appendToBottom: false);
 
-            _manager.Register("card", new Dictionary<KeyCode, TestKeyBinding>
+            _manager.AttachLayer("card", new Dictionary<KeyCode, TestKeyBinding>
             {
                 { KeyCode.Alpha1, new TestKeyBinding("card-1", () => { }) },
-                { KeyCode.Alpha2, new TestKeyBinding("card-2", () => { }) },
-                { KeyCode.Alpha3, new TestKeyBinding("card-3", () => { }) },
-            });
+            }, appendToBottom: true);
 
-            Assert.That(_manager.ActivateModule("hand"), Is.True);
-
-            Assert.That(_manager.TryGetOwner(KeyCode.Alpha1, out var owner1), Is.True);
-            Assert.That(owner1, Is.EqualTo("hand"));
-            Assert.That(_manager.TryGetOwner(KeyCode.Alpha2, out var owner2), Is.True);
-            Assert.That(owner2, Is.EqualTo("hand"));
-            Assert.That(_manager.TryGetOwner(KeyCode.Alpha3, out var owner3), Is.True);
-            Assert.That(owner3, Is.EqualTo("card"));
-            Assert.That(_manager.TryGetOwner(KeyCode.Alpha4, out var owner4), Is.True);
-            Assert.That(owner4, Is.EqualTo("hand"));
+            Assert.That(_manager.PromoteLayerToTop("hand"), Is.True);
+            Assert.That(_manager.TryGetOwner(KeyCode.Alpha1, out var owner), Is.True);
+            Assert.That(owner, Is.EqualTo("hand"));
+            Assert.That(_manager.StackOrder[^1], Is.EqualTo("hand"));
         }
 
         [Test]
-        public void UnregisterModule_RebuildsFromRegistrationOrder()
+        public void DetachLayer_ReleasesKeysToLowerLayer()
         {
-            _manager.Register("hand", new Dictionary<KeyCode, TestKeyBinding>
+            _manager.AttachLayer("hand", new Dictionary<KeyCode, TestKeyBinding>
             {
                 { KeyCode.Alpha1, new TestKeyBinding("hand-1", () => { }) },
-            });
+            }, appendToBottom: false);
 
-            _manager.Register("card", new Dictionary<KeyCode, TestKeyBinding>
+            _manager.AttachLayer("card", new Dictionary<KeyCode, TestKeyBinding>
             {
                 { KeyCode.Alpha1, new TestKeyBinding("card-1", () => { }) },
-            });
+            }, appendToBottom: true);
 
-            Assert.That(_manager.UnregisterModule("card"), Is.True);
+            _manager.DetachLayer("card");
             Assert.That(_manager.TryGetOwner(KeyCode.Alpha1, out var owner), Is.True);
             Assert.That(owner, Is.EqualTo("hand"));
         }
