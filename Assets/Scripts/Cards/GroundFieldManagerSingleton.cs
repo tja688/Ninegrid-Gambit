@@ -237,6 +237,35 @@ namespace NineGrid.Cards
             return true;
         }
 
+        /// <summary>
+        /// 将卡从场地表移除但不销毁视图，供手牌管理器接管。
+        /// </summary>
+        public bool TryTakeCardFromField(int uid, out ManagedCard card)
+        {
+            card = null;
+            if (_isBusy)
+            {
+                Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法取走卡牌。");
+                return false;
+            }
+
+            if (!_slotByUid.TryGetValue(uid, out var slot))
+            {
+                return false;
+            }
+
+            if (!CardManagerSingleton.Instance.TryGet(uid, out card))
+            {
+                UnregisterCardAtSlot(slot);
+                RefreshSlotHitCollider(slot);
+                return false;
+            }
+
+            UnregisterCardAtSlot(slot);
+            RefreshSlotHitCollider(slot);
+            return true;
+        }
+
         public bool RequestRemoveFromField(int uid, bool animate)
         {
             if (_isBusy)

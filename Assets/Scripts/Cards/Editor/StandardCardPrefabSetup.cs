@@ -72,6 +72,7 @@ namespace NineGrid.Cards.Editor
 
             GetOrAdd<CardVisualDriver>(root);
             GetOrAdd<GroundCardHitProxy>(root);
+            GetOrAdd<HandCardHitProxy>(root);
         }
 
         private static void AssignCardView(

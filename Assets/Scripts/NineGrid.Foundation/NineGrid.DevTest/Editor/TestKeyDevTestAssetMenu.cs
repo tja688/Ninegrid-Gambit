@@ -73,6 +73,22 @@ namespace NineGrid.DevTest.Editor
                 $"{Root}/Layer_GroundFieldManager.asset");
         }
 
+        [MenuItem("NineGrid/DevTest/Create Card Hand Manager Test Layer")]
+        public static void CreateCardHandManagerLayer()
+        {
+            CreateOrUpdateLayerAsHighestPriority(
+                $"{Root}/Layer_CardHandManager.asset",
+                "card-hand-manager",
+                "手牌管理器测试",
+                new[]
+                {
+                    (KeyCode.Keypad7, "随机抓取场地卡入手"),
+                });
+
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<TestKeyLayerProfileSO>(
+                $"{Root}/Layer_CardHandManager.asset");
+        }
+
         [MenuItem("NineGrid/DevTest/Create Default Test Key Stack Assets")]
         public static void CreateDefaultAssets()
         {

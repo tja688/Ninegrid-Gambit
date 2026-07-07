@@ -3,12 +3,12 @@ using UnityEngine;
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 场地卡牌 hover 命中代理：挂在 Standard Card 根节点，由预制体或运行时装配。
+    /// 手牌 hover / 拖拽命中代理：挂在 Standard Card 根节点。
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(BoxCollider2D))]
     [RequireComponent(typeof(CardVisualDriver))]
-    public sealed class GroundCardHitProxy : MonoBehaviour
+    public sealed class HandCardHitProxy : MonoBehaviour
     {
         private BoxCollider2D _collider;
         private CardVisualDriver _driver;
@@ -39,77 +39,58 @@ namespace NineGrid.Cards
 
         private void OnMouseEnter()
         {
-            if (!CanRespondToHover())
+            if (!CanRespond())
             {
                 return;
             }
 
-            _driver ??= GetComponent<CardVisualDriver>();
-            _driver?.SetTarget(CardVisualTarget.Hover);
+            var manager = CardHandManagerSingleton.Instance;
+            manager?.OnHandCardHoverEnter(_driver.BoundCard);
         }
 
         private void OnMouseExit()
         {
-            if (!CanRespondToHover())
+            if (!CanRespondToExit())
             {
                 return;
             }
 
-            _driver ??= GetComponent<CardVisualDriver>();
-            _driver?.SetTarget(CardVisualTarget.Base);
+            var manager = CardHandManagerSingleton.Instance;
+            manager?.OnHandCardHoverExit(_driver.BoundCard);
         }
 
         private void OnMouseDown()
         {
-            if (!CanRespondToPickup())
+            if (!CanRespond())
             {
                 return;
             }
 
-            _driver ??= GetComponent<CardVisualDriver>();
-            var card = _driver?.BoundCard;
-            if (card == null)
-            {
-                return;
-            }
-
-            CardHandManagerSingleton.Instance?.TryBeginDragFromGround(card);
+            var manager = CardHandManagerSingleton.Instance;
+            manager?.TryBeginDragFromHand(_driver.BoundCard);
         }
 
-        private bool CanRespondToHover()
+        private bool CanRespond()
         {
-            var hand = CardHandManagerSingleton.Instance;
-            if (hand != null && (hand.IsBusy || hand.IsDragging))
-            {
-                return false;
-            }
-
-            var field = GroundFieldManagerSingleton.Instance;
-            if (field != null && field.IsBusy)
+            var manager = CardHandManagerSingleton.Instance;
+            if (manager == null || manager.IsBusy || manager.IsDragging)
             {
                 return false;
             }
 
             _driver ??= GetComponent<CardVisualDriver>();
-            return _driver != null && _driver.IsGroundHoverEligible;
+            return _driver != null && _driver.IsHandHoverEligible;
         }
 
-        private bool CanRespondToPickup()
+        private bool CanRespondToExit()
         {
-            var hand = CardHandManagerSingleton.Instance;
-            if (hand == null || !hand.CanAcceptCard || hand.IsDragging)
-            {
-                return false;
-            }
-
-            var field = GroundFieldManagerSingleton.Instance;
-            if (field != null && field.IsBusy)
+            if (CardHandManagerSingleton.Instance?.IsDragging == true)
             {
                 return false;
             }
 
             _driver ??= GetComponent<CardVisualDriver>();
-            return _driver != null && _driver.IsGroundHoverEligible;
+            return _driver != null && _driver.IsHandHoverEligible;
         }
     }
 }

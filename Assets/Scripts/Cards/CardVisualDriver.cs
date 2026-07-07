@@ -19,6 +19,7 @@ namespace NineGrid.Cards
         private Transform _transform;
         private Sequence _feedbackSequence;
         private CardVisualTarget _currentTarget = CardVisualTarget.Base;
+        private Vector3 _handHoverBaseWorldPosition;
 
         public CardVisualTarget CurrentTarget => _currentTarget;
 
@@ -26,6 +27,9 @@ namespace NineGrid.Cards
 
         public bool IsGroundHoverEligible =>
             _card != null && _card.DisplayMode == CardDisplayMode.GroundCardMode;
+
+        public bool IsHandHoverEligible =>
+            _card != null && _card.DisplayMode == CardDisplayMode.HandCardMode;
 
         private void Awake()
         {
@@ -72,11 +76,28 @@ namespace NineGrid.Cards
             var mode = _card?.DisplayMode ?? CardDisplayMode.HandCardMode;
             _transform.localScale = CardDisplayModeVisuals.GetBaseLocalScale(mode);
             _transform.localRotation = Quaternion.identity;
+
+            if (mode == CardDisplayMode.HandCardMode && TryResolveHandLayoutPosition(out var layoutPosition))
+            {
+                _handHoverBaseWorldPosition = layoutPosition;
+                _transform.position = layoutPosition;
+            }
         }
 
         private void PlayHover()
         {
-            var settings = ResolveLayoutSettings();
+            if (_card?.DisplayMode == CardDisplayMode.HandCardMode)
+            {
+                PlayHandHover();
+                return;
+            }
+
+            PlayGroundHover();
+        }
+
+        private void PlayGroundHover()
+        {
+            var settings = ResolveGroundLayoutSettings();
             var baseScale = GetBaseScale();
             var hoverScale = baseScale * (1f + settings.hoverScaleIntensity);
 
@@ -100,9 +121,61 @@ namespace NineGrid.Cards
             _feedbackSequence = sequence;
         }
 
+        private void PlayHandHover()
+        {
+            var settings = ResolveHandLayoutSettings();
+            var baseScale = GetBaseScale();
+            var hoverScale = baseScale * (1f + settings.hoverScaleIntensity);
+
+            if (!TryResolveHandLayoutPosition(out _handHoverBaseWorldPosition))
+            {
+                _handHoverBaseWorldPosition = _transform.position;
+            }
+            else
+            {
+                _transform.position = _handHoverBaseWorldPosition;
+            }
+
+            var hoverPosition = _handHoverBaseWorldPosition + Vector3.up * settings.hoverPopYOffset;
+
+            _transform.localRotation = Quaternion.identity;
+
+            var sequence = DOTween.Sequence()
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
+
+            sequence.Join(
+                _transform
+                    .DOMove(hoverPosition, settings.hoverEnterDuration)
+                    .SetEase(Ease.OutBack));
+            sequence.Join(
+                _transform
+                    .DOScale(hoverScale, settings.hoverEnterDuration)
+                    .SetEase(Ease.OutBack));
+            sequence.Join(
+                _transform
+                    .DOPunchRotation(
+                        new Vector3(0f, 0f, settings.hoverPunchAngle),
+                        settings.hoverEnterDuration,
+                        settings.hoverPunchVibrato,
+                        0.5f));
+
+            _feedbackSequence = sequence;
+        }
+
         private void PlayBase()
         {
-            var settings = ResolveLayoutSettings();
+            if (_card?.DisplayMode == CardDisplayMode.HandCardMode)
+            {
+                PlayHandBase();
+                return;
+            }
+
+            PlayGroundBase();
+        }
+
+        private void PlayGroundBase()
+        {
+            var settings = ResolveGroundLayoutSettings();
             var baseScale = GetBaseScale();
 
             _transform.localRotation = Quaternion.identity;
@@ -112,6 +185,41 @@ namespace NineGrid.Cards
                 _transform
                     .DOScale(baseScale, settings.hoverExitDuration)
                     .SetEase(Ease.OutQuad));
+        }
+
+        private void PlayHandBase()
+        {
+            var settings = ResolveHandLayoutSettings();
+            var baseScale = GetBaseScale();
+
+            if (!TryResolveHandLayoutPosition(out _handHoverBaseWorldPosition))
+            {
+                _handHoverBaseWorldPosition = _transform.position;
+            }
+
+            _transform.localRotation = Quaternion.identity;
+            _feedbackSequence = DOTween.Sequence()
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
+            _feedbackSequence.Join(
+                _transform
+                    .DOMove(_handHoverBaseWorldPosition, settings.hoverExitDuration)
+                    .SetEase(Ease.OutQuad));
+            _feedbackSequence.Join(
+                _transform
+                    .DOScale(baseScale, settings.hoverExitDuration)
+                    .SetEase(Ease.OutQuad));
+        }
+
+        private bool TryResolveHandLayoutPosition(out Vector3 layoutPosition)
+        {
+            layoutPosition = default;
+            if (_card == null)
+            {
+                return false;
+            }
+
+            var hand = CardHandManagerSingleton.Instance;
+            return hand != null && hand.TryGetHandLayoutWorldPosition(_card, out layoutPosition);
         }
 
         private void KillFeedbackMotion()
@@ -130,10 +238,16 @@ namespace NineGrid.Cards
             return CardDisplayModeVisuals.GetBaseLocalScale(mode);
         }
 
-        private static GroundFieldLayoutSettings ResolveLayoutSettings()
+        private static GroundFieldLayoutSettings ResolveGroundLayoutSettings()
         {
             var field = GroundFieldManagerSingleton.Instance;
             return field != null ? field.LayoutSettings : new GroundFieldLayoutSettings();
+        }
+
+        private static CardHandLayoutSettings ResolveHandLayoutSettings()
+        {
+            var hand = CardHandManagerSingleton.Instance;
+            return hand != null ? hand.LayoutSettings : new CardHandLayoutSettings();
         }
     }
 

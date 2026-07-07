@@ -176,6 +176,12 @@ namespace NineGrid.Cards
                 hitProxy.ApplyColliderSize();
             }
 
+            var handHitProxy = instance.GetComponent<HandCardHitProxy>();
+            if (handHitProxy != null)
+            {
+                handHitProxy.ApplyColliderSize();
+            }
+
             ApplyDisplayMode(card, initialMode);
             return card;
         }
