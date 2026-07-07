@@ -42,6 +42,9 @@ namespace NineGrid.Cards
         [Tooltip("闪白消退时长（秒）。")]
         [SerializeField] private float flashOutDuration = 0.12f;
 
+        [Tooltip("单次受击闪白次数。")]
+        [SerializeField, Min(1)] private int flashCount = 3;
+
         [Tooltip("当前闪白强度；可由 Timeline Animation 轨道关键帧，或代码/回调修改。")]
         [SerializeField, Range(0f, 1f)] private float flashAmount;
 
@@ -69,22 +72,29 @@ namespace NineGrid.Cards
         /// <summary>Timeline Signal / 回调：播放默认受击闪白。</summary>
         public void PlayHitFlash()
         {
-            PlayHitFlash(flashInDuration, flashOutDuration, flashPeakAmount);
+            PlayHitFlash(flashInDuration, flashOutDuration, flashPeakAmount, flashCount);
         }
 
-        /// <summary>Timeline Signal / 回调：自定义时长与峰值。</summary>
-        public void PlayHitFlash(float inDuration, float outDuration, float peakAmount = 1f)
+        /// <summary>Timeline Signal / 回调：自定义时长、峰值与次数。</summary>
+        public void PlayHitFlash(float inDuration, float outDuration, float peakAmount = 1f, int count = -1)
         {
             EnsureInitialized();
             _activeTween?.Kill();
 
             var peak = Mathf.Clamp01(peakAmount);
+            var loops = count > 0 ? count : flashCount;
+            loops = Mathf.Max(1, loops);
             SetFlashAmount(0f);
 
             var sequence = DOTween.Sequence()
-                .SetLink(gameObject, LinkBehaviour.KillOnDestroy)
-                .Append(DOTween.To(() => flashAmount, SetFlashAmount, peak, Mathf.Max(0f, inDuration)))
-                .Append(DOTween.To(() => flashAmount, SetFlashAmount, 0f, Mathf.Max(0f, outDuration)));
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
+
+            for (var i = 0; i < loops; i++)
+            {
+                sequence
+                    .Append(DOTween.To(() => flashAmount, SetFlashAmount, peak, Mathf.Max(0f, inDuration)))
+                    .Append(DOTween.To(() => flashAmount, SetFlashAmount, 0f, Mathf.Max(0f, outDuration)));
+            }
 
             _activeTween = sequence;
         }
