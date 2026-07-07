@@ -53,7 +53,7 @@ namespace NineGrid.DevTest.Editor
 
         private void DrawStack(TestKeyManager manager)
         {
-            EditorGUILayout.LabelField("级联栈（下 = 高优先级）", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("级联栈（下 = 高优先级；顺序以 TestKeyStackConfigSO 为准）", EditorStyles.boldLabel);
 
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
 
@@ -74,7 +74,7 @@ namespace NineGrid.DevTest.Editor
 
                     EditorGUILayout.LabelField($"[{i}] {state?.DisplayName ?? layerId}{suffix}", style);
 
-                    if (state != null && GUILayout.Button("置顶（移到底部）", GUILayout.Width(140f)))
+                    if (state != null && GUILayout.Button("写入 SO 并置顶", GUILayout.Width(140f)))
                     {
                         manager.PromoteLayerToTop(layerId);
                     }

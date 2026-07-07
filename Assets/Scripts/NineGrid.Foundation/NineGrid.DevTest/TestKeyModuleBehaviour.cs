@@ -36,8 +36,7 @@ namespace NineGrid.DevTest
     }
 
     /// <summary>
-    /// MonoBehaviour 模块基类：OnEnable 挂载到 SO 级联栈，OnDisable 卸载。
-    /// 新挂载层默认追加到栈底（最高优先级）；同键冲突由栈底向上溢出解析。
+    /// MonoBehaviour 模块基类：OnEnable 向 SO 级联栈挂载回调，OnDisable 卸载。优先级由 TestKeyStackConfigSO 唯一决定。
     /// </summary>
     public abstract class TestKeyModuleBehaviour : MonoBehaviour
     {
@@ -62,25 +61,13 @@ namespace NineGrid.DevTest
                 LayerId,
                 builder.Build(),
                 DisplayName,
-                LayerProfile,
-                appendToBottom: true);
+                LayerProfile);
         }
 
         protected virtual void OnDisable()
         {
             TestKeyManager.Instance.DetachLayer(LayerId);
         }
-
-        /// <summary>
-        /// 将本层移到栈底，成为最高优先级（等同把 SO 拖到底部）。
-        /// </summary>
-        protected void PromoteThisLayer()
-        {
-            TestKeyManager.Instance.PromoteLayerToTop(LayerId);
-        }
-
-        /// <summary>兼容旧 API。</summary>
-        protected void ActivateThisModule() => PromoteThisLayer();
     }
 }
 

@@ -1,5 +1,5 @@
 ---
-description: TableNine 项目全局约束（文件保护、提交、Core 分层、DevTest、Inspector 装配注释）
+description: TableNine 项目全局约束（文件保护、提交、Core 分层、Inspector 装配注释）
 alwaysApply: true
 ---
 
@@ -19,10 +19,6 @@ alwaysApply: true
 - 所有内核 core 的代码维护和开发必须使用 **框架**：QFramework。
 - 所有非内核 core 的代码维护和开发不可使用 **框架**：QFramework。
 - **框架**：QFramework 为内核专属，整个内核被视为黑盒，开发、维护有专门的技能支持；除非明确要求，不随手改 core。在开发、维护其他层代码时，除非明确要求，否则不关注 core 实现，节省上下文。
-
-## 开发测试按键注册规则
-
-- 开发测试（DevTest）：`Assets/Scripts/NineGrid.DevTest`（仅 Editor / Development Build）。用户要求用小键盘做临时验收或调试时，统一通过 `TestKeyModuleBehaviour` 注册到 `TestKeyManager`，勿在业务代码里散落 `Input` 监听。
 
 ## Inspector 装配注释约定
 

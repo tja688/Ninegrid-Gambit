@@ -53,6 +53,11 @@ namespace NineGrid.DevTest
                 }
             }
         }
+
+        /// <summary>
+        /// 将层注册到栈底（最高优先级）。层不在列表中时追加；已存在时移到底部。
+        /// </summary>
+        public void RegisterLayerAsHighestPriority(TestKeyLayerProfileSO profile) => PromoteLayer(profile);
     }
 }
 

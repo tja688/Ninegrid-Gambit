@@ -8,6 +8,53 @@ namespace NineGrid.DevTest.Editor
     public static class TestKeyDevTestAssetMenu
     {
         private const string Root = "Assets/Resources/DevTest";
+        private const string StackPath = Root + "/TestKeyStack.asset";
+
+        /// <summary>
+        /// 将层 Profile 写入 TestKeyStack 栈底（最高优先级）。新建层与置顶均走此入口。
+        /// </summary>
+        public static bool RegisterLayerAsHighestPriority(TestKeyLayerProfileSO profile)
+        {
+            if (profile == null)
+            {
+                return false;
+            }
+
+            EnsureFolder("Assets/Resources");
+            EnsureFolder(Root);
+
+            var stack = AssetDatabase.LoadAssetAtPath<TestKeyStackConfigSO>(StackPath);
+            if (stack == null)
+            {
+                stack = ScriptableObject.CreateInstance<TestKeyStackConfigSO>();
+                AssetDatabase.CreateAsset(stack, StackPath);
+            }
+
+            Undo.RecordObject(stack, "Register Test Key Layer As Highest Priority");
+            stack.RegisterLayerAsHighestPriority(profile);
+            EditorUtility.SetDirty(stack);
+            AssetDatabase.SaveAssets();
+            return true;
+        }
+
+        [MenuItem("NineGrid/DevTest/Register Selected Layer As Highest Priority")]
+        public static void RegisterSelectedLayerAsHighestPriority()
+        {
+            var profile = Selection.activeObject as TestKeyLayerProfileSO;
+            if (profile == null)
+            {
+                EditorUtility.DisplayDialog(
+                    "Test Key Stack",
+                    "请在 Project 窗口选中一个 TestKeyLayerProfileSO。",
+                    "OK");
+                return;
+            }
+
+            if (RegisterLayerAsHighestPriority(profile))
+            {
+                Selection.activeObject = AssetDatabase.LoadAssetAtPath<TestKeyStackConfigSO>(StackPath);
+            }
+        }
 
         [MenuItem("NineGrid/DevTest/Create Default Test Key Stack Assets")]
         public static void CreateDefaultAssets()
@@ -37,7 +84,7 @@ namespace NineGrid.DevTest.Editor
                     (KeyCode.Keypad3, "加攻血"),
                 });
 
-            var stackPath = $"{Root}/TestKeyStack.asset";
+            var stackPath = StackPath;
             var stack = AssetDatabase.LoadAssetAtPath<TestKeyStackConfigSO>(stackPath);
             if (stack == null)
             {
@@ -91,6 +138,20 @@ namespace NineGrid.DevTest.Editor
 
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(layer);
+            return layer;
+        }
+
+        /// <summary>
+        /// 创建或更新层 Profile，并注册为栈底最高优先级。
+        /// </summary>
+        public static TestKeyLayerProfileSO CreateOrUpdateLayerAsHighestPriority(
+            string assetPath,
+            string layerId,
+            string displayName,
+            (KeyCode key, string label)[] bindings)
+        {
+            var layer = LoadOrCreateLayer(assetPath, layerId, displayName, bindings);
+            RegisterLayerAsHighestPriority(layer);
             return layer;
         }
 

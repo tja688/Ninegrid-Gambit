@@ -33,7 +33,7 @@ namespace NineGrid.DevTest
         public IReadOnlyDictionary<string, TestKeyLayerRuntimeState> Layers => _layers;
 
         /// <summary>
-        /// 载入 SO 级联栈，初始化层顺序（列表末项 = 最高优先级）。
+        /// 载入 SO 级联栈，初始化层顺序（列表末项 = 最高优先级）。运行时优先级的唯一权威来源。
         /// </summary>
         public void SetStack(TestKeyStackConfigSO stackConfig)
         {
@@ -65,14 +65,13 @@ namespace NineGrid.DevTest
         }
 
         /// <summary>
-        /// 挂载一层运行时回调。新层默认追加到栈底（最高优先级）。
+        /// 挂载一层运行时回调。不改变 SO 已定义的栈顺序；未在 SO 中声明的动态层默认插入栈顶（最低优先级）。
         /// </summary>
         public void AttachLayer(
             string layerId,
             IReadOnlyDictionary<KeyCode, TestKeyBinding> bindings,
             string displayName = null,
-            TestKeyLayerProfileSO profile = null,
-            bool appendToBottom = true)
+            TestKeyLayerProfileSO profile = null)
         {
             if (string.IsNullOrWhiteSpace(layerId))
             {
@@ -87,13 +86,18 @@ namespace NineGrid.DevTest
             EnsureLayerState(layerId, displayName, profile);
             _layers[layerId] = _layers[layerId].WithBindings(bindings);
 
-            if (appendToBottom)
+            if (!_stackOrder.Contains(layerId))
             {
-                MoveLayerToBottom(layerId);
-            }
-            else if (!_stackOrder.Contains(layerId))
-            {
-                _stackOrder.Insert(0, layerId);
+                if (_configLayerIds.Contains(layerId))
+                {
+                    _stackOrder.Add(layerId);
+                }
+                else
+                {
+                    _stackOrder.Insert(0, layerId);
+                    Debug.LogWarning(
+                        $"[TestKeyManager] 层「{layerId}」未在 TestKeyStackConfigSO 中声明，已以最低优先级挂载。请将该层加入 SO 以控制优先级。");
+                }
             }
 
             RebuildCascade();
@@ -119,40 +123,30 @@ namespace NineGrid.DevTest
             RebuildCascade();
         }
 
+#if UNITY_EDITOR
         /// <summary>
-        /// 将指定层移到栈底（列表末项），使其成为最高优先级。
+        /// 将指定层写入 SO 栈底（最高优先级）并重新载入。仅编辑器下调试使用；运行时优先级以 SO 为准。
         /// </summary>
         public bool PromoteLayerToTop(string layerId)
         {
-            if (string.IsNullOrWhiteSpace(layerId) || !_stackOrder.Contains(layerId))
+            if (_stackConfig == null || string.IsNullOrWhiteSpace(layerId))
             {
                 return false;
             }
 
-            MoveLayerToBottom(layerId);
-
-#if UNITY_EDITOR
-            if (_stackConfig != null && _configLayerIds.Contains(layerId))
-            {
-                _stackConfig.PromoteLayerById(layerId);
-            }
+            _stackConfig.PromoteLayerById(layerId);
+            UnityEditor.EditorUtility.SetDirty(_stackConfig);
+            SetStack(_stackConfig);
+            return _stackOrder.Count > 0 && _stackOrder[^1] == layerId;
+        }
 #endif
 
-            RebuildCascade();
-            return true;
-        }
-
         /// <summary>
-        /// 兼容旧 API：等同于 PromoteLayerToTop。
-        /// </summary>
-        public bool ActivateModule(string moduleId) => PromoteLayerToTop(moduleId);
-
-        /// <summary>
-        /// 兼容旧 API：挂载层并追加到栈底。
+        /// 兼容旧 API：挂载层，不改变 SO 栈顺序。
         /// </summary>
         public void Register(string moduleId, IReadOnlyDictionary<KeyCode, TestKeyBinding> bindings, string displayName = null)
         {
-            AttachLayer(moduleId, bindings, displayName, profile: null, appendToBottom: true);
+            AttachLayer(moduleId, bindings, displayName, profile: null);
         }
 
         /// <summary>
@@ -256,12 +250,6 @@ namespace NineGrid.DevTest
             }
 
             _layers[layerId] = new TestKeyLayerRuntimeState(layerId, displayName, profile);
-        }
-
-        private void MoveLayerToBottom(string layerId)
-        {
-            _stackOrder.Remove(layerId);
-            _stackOrder.Add(layerId);
         }
 
         private void RebuildCascade()

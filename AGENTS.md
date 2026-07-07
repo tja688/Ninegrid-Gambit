@@ -26,5 +26,6 @@
 
 - **Unity MCP**：改场景/组件用 MCP，**禁止**手改 `.unity`；改脚本后 `refresh_unity` 并读 Console。
 - **CodeGraph MCP**：查符号、调用链、影响面；混合 pending ID / 设计文案 / JSON 行时用 `rg`。
+- **DevTest 小键盘测试**：见项目 skill `.cursor/skills/table-nine-devtest-keys/`（接入、置顶、优先级以 `TestKeyStack` SO 为准）。
 
 ---

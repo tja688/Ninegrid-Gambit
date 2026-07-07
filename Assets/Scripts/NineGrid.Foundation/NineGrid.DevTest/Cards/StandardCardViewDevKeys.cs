@@ -10,12 +10,10 @@ namespace NineGrid.DevTest.Cards
     [RequireComponent(typeof(StandardCardView))]
     public sealed class StandardCardViewDevKeys : TestKeyModuleBehaviour
     {
-        protected override string ModuleId => layerProfile != null
-            ? $"{layerProfile.LayerId}::{GetInstanceID()}"
-            : $"standard-card::{GetInstanceID()}";
+        protected override string ModuleId => "standard-card";
 
-        protected override string DisplayName => layerProfile != null
-            ? $"{layerProfile.DisplayName}::{gameObject.name}"
+        protected override string DisplayName => LayerProfile != null
+            ? $"{LayerProfile.DisplayName}::{gameObject.name}"
             : $"卡牌测试::{gameObject.name}";
 
         protected override void ConfigureBindings(TestKeyRegistrationBuilder builder)
