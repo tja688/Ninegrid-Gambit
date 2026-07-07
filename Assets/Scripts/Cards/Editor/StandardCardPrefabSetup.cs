@@ -58,6 +58,7 @@ namespace NineGrid.Cards.Editor
 
             AssignCardView(cardView, library, attack, life, armorBlocks, armorValue, blockScale, blockSpacing);
             SetupInteractionComponents(root);
+            SetupEffectManager(root);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             GetOrAddComponentByTypeName(root, "NineGrid.DevTest.Cards.StandardCardViewDevKeys, NineGrid.DevTest");
@@ -73,6 +74,44 @@ namespace NineGrid.Cards.Editor
             GetOrAdd<CardVisualDriver>(root);
             GetOrAdd<GroundCardHitProxy>(root);
             GetOrAdd<HandCardHitProxy>(root);
+        }
+
+        private static void SetupEffectManager(GameObject root)
+        {
+            CardEffectAssetMenu.EnsureDefaultAssetsExist();
+            var effectManager = GetOrAdd<CardEffectManager>(root);
+            var death = CardEffectAssetMenu.LoadDeathEffect();
+            var use = CardEffectAssetMenu.LoadUseEffect();
+            var hit = CardEffectAssetMenu.LoadHitEffect();
+            var attack = CardEffectAssetMenu.LoadAttackEffect();
+
+            var serialized = new SerializedObject(effectManager);
+            var bindings = serialized.FindProperty("bindings");
+            if (bindings != null && bindings.isArray)
+            {
+                AssignBinding(bindings, 0, CardEffectKind.Attack, attack);
+                AssignBinding(bindings, 1, CardEffectKind.Hit, hit);
+                AssignBinding(bindings, 2, CardEffectKind.Death, death);
+                AssignBinding(bindings, 3, CardEffectKind.Use, use);
+            }
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void AssignBinding(
+            SerializedProperty bindings,
+            int index,
+            CardEffectKind kind,
+            CardEffectSO effect)
+        {
+            while (bindings.arraySize <= index)
+            {
+                bindings.InsertArrayElementAtIndex(bindings.arraySize);
+            }
+
+            var element = bindings.GetArrayElementAtIndex(index);
+            element.FindPropertyRelative("kind").enumValueIndex = (int)kind;
+            element.FindPropertyRelative("defaultEffect").objectReferenceValue = effect;
         }
 
         private static void AssignCardView(

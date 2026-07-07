@@ -653,13 +653,20 @@ namespace NineGrid.Cards
             try
             {
                 CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.RemovedMode);
-                var initialScale = card.Transform.localScale;
-                await RunViewTweenAsync(
-                    CardViewTween.ScaleDisappear(
-                        card.Transform,
-                        initialScale,
-                        layoutSettings.applyVanishDuration),
-                    CancellationToken.None);
+                if (card.TryGetEffectManager(out var effectManager))
+                {
+                    await effectManager.PlayUseAsync(CardBoardDirection.None, CancellationToken.None);
+                }
+                else
+                {
+                    var initialScale = card.Transform.localScale;
+                    await RunViewTweenAsync(
+                        CardViewTween.ScaleDisappear(
+                            card.Transform,
+                            initialScale,
+                            layoutSettings.applyVanishDuration),
+                        CancellationToken.None);
+                }
                 CardOpacityUtility.ClearCache(card.Uid);
                 CardManagerSingleton.Instance.Release(card);
             }

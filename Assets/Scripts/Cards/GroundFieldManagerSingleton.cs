@@ -291,7 +291,7 @@ namespace NineGrid.Cards
 
             if (animate)
             {
-                RemoveCardAnimatedAsync(card, CancellationToken.None).Forget();
+                RemoveCardAnimatedAsync(card, slot, CancellationToken.None).Forget();
             }
             else
             {
@@ -480,7 +480,7 @@ namespace NineGrid.Cards
             return AnimateCardHopToSlotAsync(card, fromSlot, toSlot, cancellationToken);
         }
 
-        private async UniTask RemoveCardAnimatedAsync(ManagedCard card, CancellationToken cancellationToken)
+        private async UniTask RemoveCardAnimatedAsync(ManagedCard card, int slot, CancellationToken cancellationToken)
         {
             if (card?.Transform == null)
             {
@@ -488,13 +488,20 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var initialScale = card.Transform.localScale;
-            await RunViewTweenAsync(
-                CardViewTween.ScaleDisappear(
-                    card.Transform,
-                    initialScale,
-                    layoutSettings.removeDisappearDuration),
-                cancellationToken);
+            if (card.TryGetEffectManager(out var effectManager))
+            {
+                await effectManager.PlayDeathAsync(slot, cancellationToken: cancellationToken);
+            }
+            else
+            {
+                var initialScale = card.Transform.localScale;
+                await RunViewTweenAsync(
+                    CardViewTween.ScaleDisappear(
+                        card.Transform,
+                        initialScale,
+                        layoutSettings.removeDisappearDuration),
+                    cancellationToken);
+            }
 
             CardManagerSingleton.Instance.Release(card.Uid);
         }

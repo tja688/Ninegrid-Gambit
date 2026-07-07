@@ -41,11 +41,21 @@ namespace NineGrid.Cards
             _card = card;
         }
 
+        public void InterruptFeedbackMotion()
+        {
+            KillFeedbackMotion();
+        }
+
         public void SetTarget(CardVisualTarget target)
         {
             if (_transform == null)
             {
                 _transform = transform;
+            }
+
+            if (ShouldSuppressHover(target))
+            {
+                return;
             }
 
             if (_currentTarget == target)
@@ -225,6 +235,17 @@ namespace NineGrid.Cards
 
             var hand = CardHandManagerSingleton.Instance;
             return hand != null && hand.TryGetHandLayoutWorldPosition(_card, out layoutPosition);
+        }
+
+        private bool ShouldSuppressHover(CardVisualTarget target)
+        {
+            if (target != CardVisualTarget.Hover)
+            {
+                return false;
+            }
+
+            var effectManager = GetComponent<CardEffectManager>();
+            return effectManager != null && effectManager.TryConsumeHoverSuppression();
         }
 
         private void KillFeedbackMotion()

@@ -170,6 +170,11 @@ namespace NineGrid.Cards
 
             driver.Bind(card);
 
+            if (instance.GetComponent<CardEffectManager>() == null)
+            {
+                instance.AddComponent<CardEffectManager>();
+            }
+
             var hitProxy = instance.GetComponent<GroundCardHitProxy>();
             if (hitProxy != null)
             {
