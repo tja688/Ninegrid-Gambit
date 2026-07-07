@@ -264,7 +264,7 @@ namespace NineGrid.Cards
         {
             return mode switch
             {
-                CardDisplayMode.CardDeckMode => Vector3.one * 0.55f,
+                CardDisplayMode.CardDeckMode => Vector3.one,
                 CardDisplayMode.HandCardMode => Vector3.one,
                 CardDisplayMode.GroundCardMode => Vector3.one,
                 CardDisplayMode.RemovedMode => Vector3.one * 1.08f,
