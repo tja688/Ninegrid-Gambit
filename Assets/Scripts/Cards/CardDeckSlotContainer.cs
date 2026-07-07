@@ -33,6 +33,7 @@ namespace NineGrid.Cards
     {
         private readonly ManagedCard[] _slots;
         private readonly CardDeckLayoutSettings _settings;
+        private Vector3[] _layoutAnchorPositions;
         private float _layoutLeftX;
         private float _layoutBaseY;
         private float _layoutBaseZ;
@@ -68,6 +69,25 @@ namespace NineGrid.Cards
             _layoutLeftX = leftX;
             _layoutBaseY = baseY;
             _layoutBaseZ = baseZ;
+        }
+
+        /// <summary>
+        /// 注入场景 CardDeckAnchors 槽位世界坐标；动态布局优先使用锚点以实现部分遮挡间距。
+        /// </summary>
+        public void SetLayoutAnchorPositions(IReadOnlyList<Transform> anchors)
+        {
+            if (anchors == null || anchors.Count == 0)
+            {
+                _layoutAnchorPositions = null;
+                return;
+            }
+
+            _layoutAnchorPositions = new Vector3[anchors.Count];
+            for (var i = 0; i < anchors.Count; i++)
+            {
+                var anchor = anchors[i];
+                _layoutAnchorPositions[i] = anchor != null ? anchor.position : Vector3.zero;
+            }
         }
 
         public void Clear()
@@ -123,6 +143,13 @@ namespace NineGrid.Cards
 
         public Vector3 GetLayoutPosition(int slotIndex)
         {
+            if (_layoutAnchorPositions != null &&
+                slotIndex >= 0 &&
+                slotIndex < _layoutAnchorPositions.Length)
+            {
+                return _layoutAnchorPositions[slotIndex];
+            }
+
             return new Vector3(
                 _layoutLeftX + slotIndex * _settings.cardSpacing,
                 _layoutBaseY,
@@ -144,17 +171,24 @@ namespace NineGrid.Cards
         {
             for (var i = 0; i < _slots.Length; i++)
             {
-                var card = _slots[i];
-                if (card?.View == null)
-                {
-                    continue;
-                }
+                ApplySortingOrder(_slots[i], i);
+            }
+        }
 
-                var sortingGroup = card.View.GetComponent<SortingGroup>();
-                if (sortingGroup != null)
-                {
-                    sortingGroup.sortingOrder = _settings.sortingOrderBase - i * _settings.sortingOrderStep;
-                }
+        /// <summary>
+        /// 按槽位索引设置单卡 sortingOrder：左起（索引小）更高，右下更低。
+        /// </summary>
+        public void ApplySortingOrder(ManagedCard card, int slotIndex)
+        {
+            if (card?.View == null)
+            {
+                return;
+            }
+
+            var sortingGroup = card.View.GetComponent<SortingGroup>();
+            if (sortingGroup != null)
+            {
+                sortingGroup.sortingOrder = _settings.sortingOrderBase - slotIndex * _settings.sortingOrderStep;
             }
         }
 

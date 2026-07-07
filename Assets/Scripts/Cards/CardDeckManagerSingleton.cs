@@ -131,7 +131,7 @@ namespace NineGrid.Cards
         /// </summary>
         public void DealCard(int deckSlotIndex, int groundSlotIndex)
         {
-            DealCardInternal(deckSlotIndex, groundSlotIndex).Forget();
+            TryDealCard(deckSlotIndex, groundSlotIndex);
         }
 
         /// <summary>
@@ -156,6 +156,19 @@ namespace NineGrid.Cards
         public UniTask AddCardAtAsync(int slotIndex, ManagedCard card, CancellationToken cancellationToken = default)
         {
             return AddCardAtInternalAsync(slotIndex, card, cancellationToken);
+        }
+
+        /// <summary>
+        /// 清理 Ground 上已发卡牌并释放槽位占用（测试/重置用）。
+        /// </summary>
+        public void ClearGround()
+        {
+            foreach (var pair in _dealtToGround)
+            {
+                CardManagerSingleton.Instance.Release(pair.Value);
+            }
+
+            _dealtToGround.Clear();
         }
 
         public bool TryGetRandomDeckSlot(out int deckSlotIndex)
@@ -220,6 +233,11 @@ namespace NineGrid.Cards
             try
             {
                 await CardDeckTween.WaitOneFrameAsync(cancellationToken);
+
+                for (var i = 0; i < _pendingEntryCards.Count; i++)
+                {
+                    _slotContainer.ApplySortingOrder(_pendingEntryCards[i], i);
+                }
 
                 for (var i = 0; i < _pendingEntryCards.Count; i++)
                 {
@@ -288,67 +306,52 @@ namespace NineGrid.Cards
             await CardDeckTween.MoveRippleAsync(moves, layoutSettings.moveDuration, cancellationToken);
         }
 
-        private async UniTask DealCardInternal(int deckSlotIndex, int groundSlotIndex)
+        private bool TryDealCard(int deckSlotIndex, int groundSlotIndex)
         {
             if (!EnsureInGameForDeal())
             {
-                return;
-            }
-
-            if (_isBusy)
-            {
-                Debug.LogWarning("[CardDeckManager] 当前忙碌，无法发牌。");
-                return;
+                return false;
             }
 
             if (!IsValidGroundSlot(groundSlotIndex))
             {
                 Debug.LogWarning($"[CardDeckManager] Ground 槽位无效: {groundSlotIndex}");
-                return;
+                return false;
             }
 
             if (_dealtToGround.ContainsKey(groundSlotIndex))
             {
                 Debug.LogWarning($"[CardDeckManager] Ground 槽位已占用: {groundSlotIndex}");
-                return;
+                return false;
             }
 
             if (!_slotContainer.TryGetCardAt(deckSlotIndex, out var card) || card == null)
             {
                 Debug.LogWarning($"[CardDeckManager] 卡组槽位为空: {deckSlotIndex}");
-                return;
+                return false;
             }
 
-            _isBusy = true;
-            try
+            if (!_slotContainer.TryRemoveAt(deckSlotIndex, out var removed, out var rippleMoves))
             {
-                if (!_slotContainer.TryRemoveAt(deckSlotIndex, out var removed, out var rippleMoves))
-                {
-                    return;
-                }
-
-                await CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration);
-
-                var groundAnchor = _groundAnchors[groundSlotIndex];
-                if (groundAnchor == null)
-                {
-                    Debug.LogWarning($"[CardDeckManager] Ground 锚点缺失: {groundSlotIndex}");
-                    return;
-                }
-
-                CardManagerSingleton.Instance.SetDisplayMode(removed, CardDisplayMode.GroundCardMode);
-                CardDeckTween.MoveToWorld(
-                    removed.Transform,
-                    groundAnchor.position,
-                    layoutSettings.moveDuration);
-                await UniTask.Delay(TimeSpan.FromSeconds(layoutSettings.moveDuration));
-
-                RegisterDealtToGround(removed, groundSlotIndex);
+                return false;
             }
-            finally
+
+            CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration).Forget();
+
+            var groundAnchor = _groundAnchors[groundSlotIndex];
+            if (groundAnchor == null)
             {
-                _isBusy = false;
+                Debug.LogWarning($"[CardDeckManager] Ground 锚点缺失: {groundSlotIndex}");
+                return false;
             }
+
+            CardManagerSingleton.Instance.SetDisplayMode(removed, CardDisplayMode.GroundCardMode);
+            CardDeckTween.MoveToWorld(
+                removed.Transform,
+                groundAnchor.position,
+                layoutSettings.moveDuration);
+            RegisterDealtToGround(removed, groundSlotIndex);
+            return true;
         }
 
         private async UniTask DealCardsInternal(IReadOnlyList<int> deckSlotIndices, IReadOnlyList<int> groundSlotIndices)
@@ -366,7 +369,7 @@ namespace NineGrid.Cards
 
             for (var i = 0; i < deckSlotIndices.Count; i++)
             {
-                await DealCardInternal(deckSlotIndices[i], groundSlotIndices[i]);
+                TryDealCard(deckSlotIndices[i], groundSlotIndices[i]);
                 if (i < deckSlotIndices.Count - 1)
                 {
                     await UniTask.Delay(TimeSpan.FromSeconds(layoutSettings.dealInterval));
@@ -395,7 +398,7 @@ namespace NineGrid.Cards
                     break;
                 }
 
-                await DealCardInternal(0, groundIndex);
+                TryDealCard(0, groundIndex);
                 if (i < ringIndices.Count - 1)
                 {
                     await UniTask.Delay(TimeSpan.FromSeconds(layoutSettings.dealInterval));
@@ -524,6 +527,7 @@ namespace NineGrid.Cards
             _deckAnchors = CardSlotAnchorUtility.GetSortedSlotTransforms(deckAnchorsRoot, layoutSettings.maxSlots);
             _addAnchors = CardSlotAnchorUtility.GetSortedSlotTransforms(addAnchorsRoot, layoutSettings.maxSlots);
             _groundAnchors = CardSlotAnchorUtility.GetSortedSlotTransforms(groundAnchorsRoot, 9);
+            _slotContainer.SetLayoutAnchorPositions(_deckAnchors);
         }
 
         private void InitializeLayoutOrigin()

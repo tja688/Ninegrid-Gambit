@@ -12,7 +12,7 @@ namespace NineGrid.Cards
         [Tooltip("卡组最大槽位数。")]
         public int maxSlots = 20;
 
-        [Tooltip("InGame 模式下相邻卡牌的世界空间水平间距。")]
+        [Tooltip("InGame 无场景锚点时的相邻卡牌水平间距回退值；有 CardDeckAnchors 时以锚点为准。")]
         public float cardSpacing = 1.05f;
 
         [Tooltip("InGame 左对齐布局的基准 Y（世界坐标）。为 0 时由运行时从锚点或容器推导。")]
@@ -24,8 +24,8 @@ namespace NineGrid.Cards
         [Tooltip("Entry 模式逐张发牌到卡组槽的间隔（秒）。")]
         public float entryDealInterval = 0.06f;
 
-        [Tooltip("发到 Ground 时多张牌的间隔（秒）。")]
-        public float dealInterval = 0.08f;
+        [Tooltip("发到 Ground 时连续发牌的起始间隔（秒）；不等待上一张动画结束。")]
+        public float dealInterval = 0.06f;
 
         [Tooltip("Ripple 动效中，每远离变化点一个槽位增加的延迟（秒）。")]
         public float rippleDelayPerSlot = 0.04f;

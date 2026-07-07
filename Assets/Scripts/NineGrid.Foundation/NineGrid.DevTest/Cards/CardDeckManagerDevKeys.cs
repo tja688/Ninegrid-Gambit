@@ -66,6 +66,8 @@ namespace NineGrid.DevTest.Cards
                 return;
             }
 
+            manager.ClearGround();
+
             if (!manager.TryGetRandomDeckSlot(out var deckSlot) ||
                 !manager.TryGetRandomEmptyGroundSlot(out var groundSlot))
             {

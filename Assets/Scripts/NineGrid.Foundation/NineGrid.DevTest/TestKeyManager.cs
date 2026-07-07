@@ -215,8 +215,16 @@ namespace NineGrid.DevTest
                 return;
             }
 
+            // 回调可能触发 Attach/Detach 并修改 _activeBindings，先快照再轮询。
+            var snapshot = new List<KeyValuePair<KeyCode, ActiveTestKeyBinding>>(_activeBindings.Count);
             foreach (var pair in _activeBindings)
             {
+                snapshot.Add(pair);
+            }
+
+            for (var i = 0; i < snapshot.Count; i++)
+            {
+                var pair = snapshot[i];
                 if (Input.GetKeyDown(pair.Key))
                 {
                     pair.Value.Invoke();
