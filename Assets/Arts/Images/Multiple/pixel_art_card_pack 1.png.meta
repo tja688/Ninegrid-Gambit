@@ -456,7 +456,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 8192
+    maxTextureSize: 4096
     resizeAlgorithm: 0
     textureFormat: 4
     textureCompression: 0
@@ -3479,6 +3479,6 @@ TextureImporter:
       pixel_art_card_pack 1_99: -5229560470200427890
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  userData: 
+  userData: PIXEL_ART_IMAGE_PROCESSED_V1_PPU_32
   assetBundleName: 
   assetBundleVariant: 
