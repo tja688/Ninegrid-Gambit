@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bootstrap visual_asset.xlsx and card_frame_style.xlsx for Phase A visual pipeline."""
+"""Bootstrap card_frame_style.xlsx for content visual pipeline."""
 
 from __future__ import annotations
 
@@ -14,7 +14,6 @@ except ImportError:
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DATAS_DIR = SCRIPT_DIR / "Datas"
-VISUAL_ASSET_OUTPUT = DATAS_DIR / "visual_asset.xlsx"
 FRAME_STYLE_OUTPUT = DATAS_DIR / "card_frame_style.xlsx"
 
 FRAME_STYLES = [
@@ -26,23 +25,6 @@ FRAME_STYLES = [
     ("frame.elite", 0.55, 0.35, 0.85, 1.0),
     ("frame.boss", 0.85, 0.15, 0.15, 1.0),
 ]
-
-VISUAL_ASSETS = [
-    ("visual.missing.sprite", "sprite", "content/fallback/missing_card", ""),
-]
-
-
-def write_visual_asset_xlsx() -> None:
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "TbVisualAsset"
-    ws.append(["##var", "visual_id", "kind", "asset_key", "fallback_id"])
-    ws.append(["##type", "string", "string", "string", "string"])
-    for row in VISUAL_ASSETS:
-        ws.append(["", *row])
-    DATAS_DIR.mkdir(parents=True, exist_ok=True)
-    wb.save(VISUAL_ASSET_OUTPUT)
-    print(f"Wrote {len(VISUAL_ASSETS)} rows to {VISUAL_ASSET_OUTPUT}")
 
 
 def write_card_frame_style_xlsx() -> None:
@@ -59,7 +41,6 @@ def write_card_frame_style_xlsx() -> None:
 
 
 def main() -> int:
-    write_visual_asset_xlsx()
     write_card_frame_style_xlsx()
     return 0
 

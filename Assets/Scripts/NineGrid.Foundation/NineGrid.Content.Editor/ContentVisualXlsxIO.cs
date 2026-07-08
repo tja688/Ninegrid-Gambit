@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using Luban.SimpleJSON;
-using UnityEngine;
 
 namespace NineGrid.Content.Editor
 {
@@ -13,9 +12,6 @@ namespace NineGrid.Content.Editor
         public string ContentId { get; set; }
         public string ContentKind { get; set; }
         public string Description { get; set; }
-        public string FaceKey { get; set; }
-        public string FrameKey { get; set; }
-        public string IconKey { get; set; }
         public int SheetRowIndex { get; set; } = -1;
     }
 
@@ -71,18 +67,6 @@ namespace NineGrid.Content.Editor
             return ParseRows(json);
         }
 
-        public static void PatchVisualKeys(string absolutePath, IReadOnlyList<ContentVisualXlsxRow> patches)
-        {
-            string error;
-            if (!CanWrite(absolutePath, out error))
-            {
-                throw new IOException(error);
-            }
-
-            var payload = BuildPatchJson(patches);
-            RunPython("patch", absolutePath, payload);
-        }
-
         public static (string varRow, string typeRow) ReadHeaderRows(string absolutePath)
         {
             var json = RunPython("headers", absolutePath, null);
@@ -102,59 +86,11 @@ namespace NineGrid.Content.Editor
                     ContentId = node["content_id"].Value,
                     ContentKind = node["content_kind"].Value,
                     Description = node["description"].Value,
-                    FaceKey = node["face_key"].Value,
-                    FrameKey = node["frame_key"].Value,
-                    IconKey = node["icon_key"].Value,
                     SheetRowIndex = node["sheet_row_index"].AsInt
                 });
             }
 
             return rows;
-        }
-
-        private static string BuildPatchJson(IReadOnlyList<ContentVisualXlsxRow> patches)
-        {
-            var builder = new StringBuilder();
-            builder.Append('[');
-            for (var i = 0; i < patches.Count; i++)
-            {
-                var patch = patches[i];
-                if (patch == null || string.IsNullOrEmpty(patch.ContentId))
-                {
-                    continue;
-                }
-
-                if (builder.Length > 1)
-                {
-                    builder.Append(',');
-                }
-
-                builder.Append('{');
-                AppendJsonString(builder, "content_id", patch.ContentId);
-                builder.Append(',');
-                builder.Append("\"sheet_row_index\":").Append(patch.SheetRowIndex).Append(',');
-                AppendJsonString(builder, "face_key", patch.FaceKey ?? string.Empty);
-                builder.Append(',');
-                AppendJsonString(builder, "icon_key", patch.IconKey ?? string.Empty);
-                builder.Append('}');
-            }
-
-            builder.Append(']');
-            return builder.ToString();
-        }
-
-        private static void AppendJsonString(StringBuilder builder, string key, string value)
-        {
-            builder.Append('\"').Append(key).Append("\":\"").Append(EscapeJson(value)).Append('\"');
-        }
-
-        private static string EscapeJson(string value)
-        {
-            return (value ?? string.Empty)
-                .Replace("\\", "\\\\")
-                .Replace("\"", "\\\"")
-                .Replace("\n", "\\n")
-                .Replace("\r", "\\r");
         }
 
         private static string RunPython(string mode, string absolutePath, string patchesJson)
@@ -217,11 +153,6 @@ namespace NineGrid.Content.Editor
 
                 return stdout.Trim();
             }
-        }
-
-        public static void ClearDeprecatedFrameKeys(string absolutePath)
-        {
-            RunPython("clear_frame_keys", absolutePath, null);
         }
 
         private static string ResolvePythonExecutable(string projectRoot)

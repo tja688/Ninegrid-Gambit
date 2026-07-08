@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bootstrap content_visual.xlsx from existing Luban JSON sources (one-time / regen)."""
+"""Bootstrap content_visual.xlsx from existing Luban JSON sources (text-only)."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 DATAS_DIR = SCRIPT_DIR / "Datas"
 OUTPUT = DATAS_DIR / "content_visual.xlsx"
 
-HEADERS = ("content_id", "content_kind", "description", "face_key", "frame_key", "icon_key")
+HEADERS = ("content_id", "content_kind", "description")
 
 
 def load_json(name: str):
@@ -67,7 +67,7 @@ def main() -> int:
     effect_by_id = {row["id"]: row.get("design_text", "") for row in effects}
     skill_by_id = {row["def_id"]: row.get("design_text", "") for row in skills}
 
-    rows: list[tuple[str, str, str, str, str, str]] = []
+    rows: list[tuple[str, str, str]] = []
 
     for card in cards:
         kind = card["kind"]
@@ -76,13 +76,11 @@ def main() -> int:
             effect_ids = split_tokens(card.get("effect_ids", ""))
             desc_parts = [effect_by_id.get(eid, "") for eid in effect_ids]
             description = join_descriptions(desc_parts)
-            face_key = ""
         elif kind == "Monster":
             content_kind = "Monster"
             skill_ids = split_tokens(card.get("skill_ids", ""))
             desc_parts = [skill_by_id.get(sid, "") for sid in skill_ids]
             description = join_descriptions(desc_parts)
-            face_key = card.get("deck_id", "") or ""
         else:
             continue
 
@@ -91,9 +89,6 @@ def main() -> int:
                 card["def_id"],
                 content_kind,
                 prepend_name(card.get("display_name", ""), description),
-                face_key,
-                "",
-                "",
             )
         )
 
@@ -103,28 +98,15 @@ def main() -> int:
                 relic["def_id"],
                 "Relic",
                 prepend_name(relic.get("display_name", ""), relic.get("design_text", "")),
-                "",
-                "",
-                "",
             )
         )
 
     for skill in skills:
-        container = skill.get("container_type", "")
-        if container == "PlayerSkill":
-            content_kind = "Skill"
-        elif container == "MonsterSkill":
-            content_kind = "Skill"
-        else:
-            content_kind = "Skill"
         rows.append(
             (
                 skill["def_id"],
-                content_kind,
+                "Skill",
                 prepend_name(skill.get("display_name", ""), skill.get("design_text", "")),
-                "",
-                "",
-                "",
             )
         )
 
@@ -134,9 +116,6 @@ def main() -> int:
                 room["kind"],
                 "Room",
                 prepend_name(room.get("display_name", ""), room.get("display_name", "")),
-                "",
-                "",
-                "",
             )
         )
 
@@ -146,13 +125,10 @@ def main() -> int:
                 deck["id"],
                 "MonsterDeck",
                 prepend_name(deck.get("display_name", ""), deck.get("display_name", "")),
-                "",
-                "",
-                "",
             )
         )
 
-    rows.append(("avatar.default", "Avatar", "玩家化身", "", "", ""))
+    rows.append(("avatar.default", "Avatar", "玩家化身"))
 
     rows.sort(key=lambda r: (r[1], r[0]))
 
@@ -160,7 +136,7 @@ def main() -> int:
     ws = wb.active
     ws.title = "TbContentVisual"
     ws.append(["##var", *HEADERS])
-    ws.append(["##type", "string", "string", "string", "string", "string", "string"])
+    ws.append(["##type", "string", "string", "string"])
     for row in rows:
         ws.append(["", *row])
 

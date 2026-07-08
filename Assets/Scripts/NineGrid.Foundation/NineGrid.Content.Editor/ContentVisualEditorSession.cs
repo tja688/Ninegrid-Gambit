@@ -17,44 +17,30 @@ namespace NineGrid.Content.Editor
     public sealed class ContentVisualEditorRowState
     {
         public ContentVisualXlsxRow Source { get; set; }
-        public string SavedFaceKey { get; set; } = string.Empty;
-        public string SavedIconKey { get; set; } = string.Empty;
-        public string FaceKey { get; set; } = string.Empty;
-        public string IconKey { get; set; } = string.Empty;
+        public Sprite SavedIcon { get; set; }
+        public Sprite SavedFace { get; set; }
+        public Sprite Icon { get; set; }
+        public Sprite Face { get; set; }
         public bool IsChecked { get; set; }
 
         public string ContentId => Source?.ContentId ?? string.Empty;
         public string ContentKind => Source?.ContentKind ?? string.Empty;
         public string Description => Source?.Description ?? string.Empty;
 
-        public bool IsDirty =>
-            !string.Equals(FaceKey, SavedFaceKey, StringComparison.Ordinal)
-            || !string.Equals(IconKey, SavedIconKey, StringComparison.Ordinal);
-
-        public bool HasIconKey => !string.IsNullOrEmpty(IconKey);
-        public bool HasFaceKey => !string.IsNullOrEmpty(FaceKey);
+        public bool IsDirty => Icon != SavedIcon || Face != SavedFace;
+        public bool HasIcon => Icon != null;
+        public bool HasFace => Face != null;
 
         public void Revert()
         {
-            FaceKey = SavedFaceKey;
-            IconKey = SavedIconKey;
+            Icon = SavedIcon;
+            Face = SavedFace;
         }
 
         public void MarkSaved()
         {
-            SavedFaceKey = FaceKey ?? string.Empty;
-            SavedIconKey = IconKey ?? string.Empty;
-        }
-
-        public ContentVisualXlsxRow ToPatchRow()
-        {
-            return new ContentVisualXlsxRow
-            {
-                ContentId = ContentId,
-                SheetRowIndex = Source.SheetRowIndex,
-                FaceKey = FaceKey ?? string.Empty,
-                IconKey = IconKey ?? string.Empty
-            };
+            SavedIcon = Icon;
+            SavedFace = Face;
         }
     }
 
@@ -88,6 +74,8 @@ namespace NineGrid.Content.Editor
 
     public sealed class ContentVisualEditorSession
     {
+        public const string CatalogAssetFolder = "Assets/Arts/ContentVisual";
+
         private const string PrefKindFilter = "NineGrid.ContentVisualEditor.KindFilter";
         private const string PrefSearch = "NineGrid.ContentVisualEditor.Search";
         private const string PrefMissingIcon = "NineGrid.ContentVisualEditor.MissingIcon";
@@ -103,8 +91,8 @@ namespace NineGrid.Content.Editor
         public IReadOnlyList<CardFrameStyleEditorRowState> FrameStyleRows => frameStyleRows;
         public GameContentCatalog CoreCatalog { get; private set; }
         public ContentVisualCatalog VisualCatalog { get; private set; }
-        public VisualAssetCatalog VisualAssetCatalog { get; private set; }
         public CardFrameStyleCatalog FrameStyleCatalog { get; private set; }
+        public ContentVisualSpriteCatalogSet SpriteCatalogs { get; private set; }
         public string XlsxPath { get; private set; }
         public string FrameStyleXlsxPath { get; private set; }
         public string KindFilter { get; set; } = "All";
@@ -113,6 +101,7 @@ namespace NineGrid.Content.Editor
         public bool FilterMissingFace { get; set; }
         public bool FilterDirtyOnly { get; set; }
         public int ActiveTab { get; set; }
+
         public string FocusedContentId
         {
             get => focusedContentId;
@@ -121,8 +110,9 @@ namespace NineGrid.Content.Editor
 
         public int DirtyCount =>
             rows.Count(row => row.IsDirty) + frameStyleRows.Count(row => row.IsDirty);
-        public int MissingIconCount => rows.Count(row => !row.HasIconKey);
-        public int MissingFaceCount => rows.Count(row => !row.HasFaceKey);
+
+        public int MissingIconCount => rows.Count(row => !row.HasIcon);
+        public int MissingFaceCount => rows.Count(row => !row.HasFace);
 
         public void LoadPreferences()
         {
@@ -148,17 +138,33 @@ namespace NineGrid.Content.Editor
         {
             XlsxPath = ContentVisualXlsxIO.ResolveAbsolutePath();
             FrameStyleXlsxPath = CardFrameStyleXlsxIO.ResolveAbsolutePath();
+            SpriteCatalogs = LoadOrCreateCatalogSet();
+
             var xlsxRows = ContentVisualXlsxIO.ReadAll(XlsxPath);
             rows.Clear();
-
             for (var i = 0; i < xlsxRows.Count; i++)
             {
                 var source = xlsxRows[i];
+                ContentVisualKind kind;
+                if (!Enum.TryParse(source.ContentKind, true, out kind))
+                {
+                    kind = ContentVisualKind.Unknown;
+                }
+
+                Sprite icon = null;
+                Sprite face = null;
+                var catalog = SpriteCatalogs.ResolveCatalog(kind);
+                if (catalog != null)
+                {
+                    catalog.EnsureEntry(source.ContentId);
+                    catalog.TryGet(source.ContentId, out icon, out face);
+                }
+
                 var state = new ContentVisualEditorRowState
                 {
                     Source = source,
-                    FaceKey = source.FaceKey ?? string.Empty,
-                    IconKey = source.IconKey ?? string.Empty
+                    Icon = icon,
+                    Face = face
                 };
                 state.MarkSaved();
                 rows.Add(state);
@@ -191,9 +197,7 @@ namespace NineGrid.Content.Editor
             var dataDirectory = ContentVisualBootstrap.ResolveLubanDataDirectory();
             CoreCatalog = TableNineLubanCatalogFactory.CreateFromDirectory(dataDirectory);
             VisualCatalog = TableNineVisualCatalogFactory.CreateFromDirectory(dataDirectory);
-            VisualAssetCatalog = TableNineVisualAssetCatalogFactory.CreateFromDirectory(dataDirectory);
             FrameStyleCatalog = TableNineCardFrameStyleCatalogFactory.CreateFromDirectory(dataDirectory);
-            ContentVisualSpriteLoader.Configure(VisualAssetCatalog);
         }
 
         public IEnumerable<ContentVisualEditorRowState> GetFilteredRows()
@@ -207,12 +211,12 @@ namespace NineGrid.Content.Editor
                     continue;
                 }
 
-                if (FilterMissingIcon && row.HasIconKey)
+                if (FilterMissingIcon && row.HasIcon)
                 {
                     continue;
                 }
 
-                if (FilterMissingFace && row.HasFaceKey)
+                if (FilterMissingFace && row.HasFace)
                 {
                     continue;
                 }
@@ -278,20 +282,13 @@ namespace NineGrid.Content.Editor
         {
             foreach (var row in targets)
             {
-                ContentVisualKind kind;
-                if (!Enum.TryParse(row.ContentKind, true, out kind))
-                {
-                    kind = ContentVisualKind.Unknown;
-                }
-
-                var key = ContentVisualSpriteKeyCodec.Encode(slot, row.ContentId, kind, sprite);
                 if (slot == ContentVisualKeySlot.Icon)
                 {
-                    row.IconKey = key;
+                    row.Icon = sprite;
                 }
                 else
                 {
-                    row.FaceKey = key;
+                    row.Face = sprite;
                 }
             }
         }
@@ -302,11 +299,11 @@ namespace NineGrid.Content.Editor
             {
                 if (slot == ContentVisualKeySlot.Icon)
                 {
-                    row.IconKey = string.Empty;
+                    row.Icon = null;
                 }
                 else
                 {
-                    row.FaceKey = string.Empty;
+                    row.Face = null;
                 }
             }
         }
@@ -314,17 +311,12 @@ namespace NineGrid.Content.Editor
         public bool TrySave(out string error)
         {
             error = null;
-            if (!ContentVisualXlsxIO.CanWrite(XlsxPath, out error))
-            {
-                return false;
-            }
-
             if (!ContentVisualXlsxIO.CanWrite(FrameStyleXlsxPath, out error))
             {
                 return false;
             }
 
-            var dirtyRows = rows.Where(row => row.IsDirty).Select(row => row.ToPatchRow()).ToList();
+            var dirtyRows = rows.Where(row => row.IsDirty).ToList();
             var dirtyFrameRows = frameStyleRows.Where(row => row.IsDirty).Select(row => row.ToPatchRow()).ToList();
             if (dirtyRows.Count == 0 && dirtyFrameRows.Count == 0)
             {
@@ -333,22 +325,29 @@ namespace NineGrid.Content.Editor
 
             try
             {
-                if (dirtyRows.Count > 0)
+                for (var i = 0; i < dirtyRows.Count; i++)
                 {
-                    ContentVisualXlsxIO.PatchVisualKeys(XlsxPath, dirtyRows);
-                    var assetUpserts = BuildAssetUpsertsForDirtyRows();
-                    if (assetUpserts.Count > 0)
+                    var row = dirtyRows[i];
+                    ContentVisualKind kind;
+                    if (!Enum.TryParse(row.ContentKind, true, out kind))
                     {
-                        VisualAssetXlsxIO.UpsertRows(VisualAssetXlsxIO.ResolveAbsolutePath(), assetUpserts);
+                        kind = ContentVisualKind.Unknown;
                     }
 
-                    for (var i = 0; i < rows.Count; i++)
+                    var catalog = SpriteCatalogs.ResolveCatalog(kind);
+                    if (catalog == null)
                     {
-                        if (rows[i].IsDirty)
-                        {
-                            rows[i].MarkSaved();
-                        }
+                        continue;
                     }
+
+                    catalog.SetSprites(row.ContentId, row.Icon, row.Face);
+                    EditorUtility.SetDirty(catalog);
+                    row.MarkSaved();
+                }
+
+                if (dirtyRows.Count > 0)
+                {
+                    AssetDatabase.SaveAssets();
                 }
 
                 if (dirtyFrameRows.Count > 0)
@@ -385,6 +384,7 @@ namespace NineGrid.Content.Editor
                 CoreCatalog,
                 VisualCatalog,
                 FrameStyleCatalog,
+                SpriteCatalogs,
                 out view);
         }
 
@@ -406,17 +406,16 @@ namespace NineGrid.Content.Editor
             tempCatalog.Add(new ContentVisualDefinition(
                 row.ContentId,
                 kind,
-                row.Description,
-                row.FaceKey,
-                string.Empty,
-                row.IconKey));
+                row.Description));
 
+            var provider = new SessionSpriteOverrideProvider(SpriteCatalogs, row);
             var frameCatalog = BuildSessionFrameStyleCatalog();
             return ContentVisualResolver.TryResolve(
                 row.ContentId,
                 CoreCatalog,
                 tempCatalog,
                 frameCatalog,
+                provider,
                 out view);
         }
 
@@ -443,62 +442,75 @@ namespace NineGrid.Content.Editor
             return contentId;
         }
 
-        private List<VisualAssetXlsxRow> BuildAssetUpsertsForDirtyRows()
+        public static ContentVisualSpriteCatalogSet LoadOrCreateCatalogSet()
         {
-            var upserts = new List<VisualAssetXlsxRow>();
-            var seen = new HashSet<string>();
-            for (var i = 0; i < rows.Count; i++)
+            EnsureFolder(CatalogAssetFolder);
+            return new ContentVisualSpriteCatalogSet
             {
-                var row = rows[i];
-                if (!row.IsDirty)
-                {
-                    continue;
-                }
-
-                ContentVisualKind kind;
-                if (!Enum.TryParse(row.ContentKind, true, out kind))
-                {
-                    kind = ContentVisualKind.Unknown;
-                }
-
-                TryAddAssetUpsert(upserts, seen, row, ContentVisualKeySlot.Icon, kind);
-                TryAddAssetUpsert(upserts, seen, row, ContentVisualKeySlot.Face, kind);
-            }
-
-            return upserts;
+                helpCards = LoadOrCreate<HelpCardVisualCatalogSO>(CatalogAssetFolder + "/HelpCardVisualCatalog.asset"),
+                monsters = LoadOrCreate<MonsterVisualCatalogSO>(CatalogAssetFolder + "/MonsterVisualCatalog.asset"),
+                relics = LoadOrCreate<RelicVisualCatalogSO>(CatalogAssetFolder + "/RelicVisualCatalog.asset"),
+                skills = LoadOrCreate<SkillVisualCatalogSO>(CatalogAssetFolder + "/SkillVisualCatalog.asset"),
+                misc = LoadOrCreate<MiscVisualCatalogSO>(CatalogAssetFolder + "/MiscVisualCatalog.asset")
+            };
         }
 
-        private static void TryAddAssetUpsert(
-            List<VisualAssetXlsxRow> upserts,
-            HashSet<string> seen,
-            ContentVisualEditorRowState row,
-            ContentVisualKeySlot slot,
-            ContentVisualKind kind)
+        private static T LoadOrCreate<T>(string assetPath) where T : ScriptableObject
         {
-            var key = slot == ContentVisualKeySlot.Icon ? row.IconKey : row.FaceKey;
-            if (string.IsNullOrEmpty(key) || !VisualIdNaming.IsVisualId(key) || !seen.Add(key))
+            var existing = AssetDatabase.LoadAssetAtPath<T>(assetPath);
+            if (existing != null)
+            {
+                EnsureScriptReference(existing);
+                return existing;
+            }
+
+            var created = ScriptableObject.CreateInstance<T>();
+            AssetDatabase.CreateAsset(created, assetPath);
+            EnsureScriptReference(created);
+            return created;
+        }
+
+        private static void EnsureScriptReference(ScriptableObject asset)
+        {
+            if (asset == null)
             {
                 return;
             }
 
-            Sprite sprite;
-            if (!ContentVisualSpriteKeyCodec.TryDecode(key, out sprite) && !ContentVisualSpriteKeyCodec.TryDecodeLegacy(key, out sprite))
+            var monoScript = MonoScript.FromScriptableObject(asset);
+            if (monoScript == null)
             {
-                upserts.Add(new VisualAssetXlsxRow
+                return;
+            }
+
+            var serialized = new SerializedObject(asset);
+            var scriptProperty = serialized.FindProperty("m_Script");
+            if (scriptProperty != null && scriptProperty.objectReferenceValue != monoScript)
+            {
+                scriptProperty.objectReferenceValue = monoScript;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(asset);
+            }
+        }
+
+        private static void EnsureFolder(string assetFolder)
+        {
+            if (AssetDatabase.IsValidFolder(assetFolder))
+            {
+                return;
+            }
+
+            var parts = assetFolder.Split('/');
+            var current = parts[0];
+            for (var i = 1; i < parts.Length; i++)
+            {
+                var next = current + "/" + parts[i];
+                if (!AssetDatabase.IsValidFolder(next))
                 {
-                    VisualId = key,
-                    Kind = "sprite",
-                    AssetKey = slot == ContentVisualKeySlot.Icon
-                        ? VisualAssetKeyNaming.FromConvention(kind, VisualAssetSlot.Icon, row.ContentId)
-                        : VisualAssetKeyNaming.FromConvention(kind, VisualAssetSlot.Face, row.ContentId)
-                });
-                return;
-            }
+                    AssetDatabase.CreateFolder(current, parts[i]);
+                }
 
-            var upsert = ContentVisualSpriteKeyCodec.BuildAssetUpsert(slot, row.ContentId, kind, sprite);
-            if (upsert != null)
-            {
-                upserts.Add(upsert);
+                current = next;
             }
         }
 
@@ -524,12 +536,6 @@ namespace NineGrid.Content.Editor
                 return true;
             }
 
-            if (row.FaceKey.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0
-                || row.IconKey.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                return true;
-            }
-
             var displayName = GetDisplayName(row.ContentId, row.ContentKind);
             return displayName.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
         }
@@ -537,6 +543,40 @@ namespace NineGrid.Content.Editor
         private static ContentColor ToContentColor(Color color)
         {
             return new ContentColor(color.r, color.g, color.b, color.a);
+        }
+
+        private sealed class SessionSpriteOverrideProvider : IContentVisualSpriteProvider
+        {
+            private readonly ContentVisualSpriteCatalogSet mFallback;
+            private readonly ContentVisualEditorRowState mOverride;
+
+            public SessionSpriteOverrideProvider(
+                ContentVisualSpriteCatalogSet fallback,
+                ContentVisualEditorRowState rowOverride)
+            {
+                mFallback = fallback;
+                mOverride = rowOverride;
+            }
+
+            public bool TryGet(ContentVisualKind kind, string contentId, out Sprite icon, out Sprite face)
+            {
+                if (mOverride != null
+                    && string.Equals(mOverride.ContentId, contentId, StringComparison.Ordinal))
+                {
+                    icon = mOverride.Icon;
+                    face = mOverride.Face;
+                    return icon != null || face != null;
+                }
+
+                if (mFallback != null)
+                {
+                    return mFallback.TryGet(kind, contentId, out icon, out face);
+                }
+
+                icon = null;
+                face = null;
+                return false;
+            }
         }
     }
 }

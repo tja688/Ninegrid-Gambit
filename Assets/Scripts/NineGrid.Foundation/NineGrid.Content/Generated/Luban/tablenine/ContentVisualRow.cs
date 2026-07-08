@@ -20,9 +20,6 @@ public sealed partial class ContentVisualRow : Luban.BeanBase
         { if(!_buf["content_id"].IsString) { throw new SerializationException(); }  ContentId = _buf["content_id"]; }
         { if(!_buf["content_kind"].IsString) { throw new SerializationException(); }  ContentKind = _buf["content_kind"]; }
         { if(!_buf["description"].IsString) { throw new SerializationException(); }  Description = _buf["description"]; }
-        { if(!_buf["face_key"].IsString) { throw new SerializationException(); }  FaceKey = _buf["face_key"]; }
-        { if(!_buf["frame_key"].IsString) { throw new SerializationException(); }  FrameKey = _buf["frame_key"]; }
-        { if(!_buf["icon_key"].IsString) { throw new SerializationException(); }  IconKey = _buf["icon_key"]; }
     }
 
     public static ContentVisualRow DeserializeContentVisualRow(JSONNode _buf)
@@ -33,9 +30,6 @@ public sealed partial class ContentVisualRow : Luban.BeanBase
     public readonly string ContentId;
     public readonly string ContentKind;
     public readonly string Description;
-    public readonly string FaceKey;
-    public readonly string FrameKey;
-    public readonly string IconKey;
    
     public const int __ID__ = 1795616975;
     public override int GetTypeId() => __ID__;
@@ -50,9 +44,6 @@ public sealed partial class ContentVisualRow : Luban.BeanBase
         + "contentId:" + ContentId + ","
         + "contentKind:" + ContentKind + ","
         + "description:" + Description + ","
-        + "faceKey:" + FaceKey + ","
-        + "frameKey:" + FrameKey + ","
-        + "iconKey:" + IconKey + ","
         + "}";
     }
 }

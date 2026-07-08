@@ -73,7 +73,7 @@ namespace NineGrid.Content.Editor
 
             rootElement.Add(ContentVisualWarmConsoleUi.BuildHeader(
                 "表现层配图",
-                "content_visual.xlsx：icon/face visual_id；card_frame_style.xlsx：稀有度卡框配色。"));
+                "content_visual.xlsx：纯文本 description；图标/卡面写入 Catalog SO；card_frame_style：框色。"));
 
             tabToolbar = new Toolbar();
             var contentTabButton = new ToolbarButton(() => SetActiveTab(0)) { text = "内容配图" };
@@ -83,7 +83,7 @@ namespace NineGrid.Content.Editor
             rootElement.Add(tabToolbar);
 
             saveButton = new ToolbarButton(SaveChanges) { text = "保存" };
-            saveButton.tooltip = "PATCH content_visual / visual_asset / card_frame_style";
+            saveButton.tooltip = "保存 Catalog SO 图引用 + PATCH card_frame_style";
             regenerateButton = new ToolbarButton(RegenerateLuban) { text = "Regenerate Luban" };
             regenerateButton.tooltip = "运行 gen_table_nine.ps1 刷新 StreamingAssets 与 Generated 代码";
 
@@ -126,7 +126,7 @@ namespace NineGrid.Content.Editor
             });
             searchWrap.Add(ContentVisualWarmConsoleUi.WrapControl(
                 "搜索",
-                "匹配 content_id、display_name、description 或 key",
+                "匹配 content_id、display_name、description",
                 searchField));
             sidebar.Add(searchWrap);
 
@@ -214,7 +214,7 @@ namespace NineGrid.Content.Editor
         {
             var scroll = ContentVisualWarmConsoleUi.CreateContentScroll(out contentRoot);
             statusHelpBox = ContentVisualWarmConsoleUi.CreateStatusHelpBox(
-                "description 请在 Excel 修改；配图保存后可用 Regenerate Luban 刷新运行时 JSON。");
+                "description 在 Excel 维护；图标/卡面写入 Assets/Arts/ContentVisual/*.asset；框色仍走 card_frame_style.xlsx。");
             contentRoot.Add(statusHelpBox);
             return scroll;
         }
@@ -314,8 +314,8 @@ namespace NineGrid.Content.Editor
 
             var subtitle = ContentVisualWarmConsoleUi.CreateTinyPathLabel(
                 row.ContentKind
-                + "  |  I:" + (row.HasIconKey ? "Y" : "-")
-                + " F:" + (row.HasFaceKey ? "Y" : "-")
+                + "  |  I:" + (row.HasIcon ? "Y" : "-")
+                + " F:" + (row.HasFace ? "Y" : "-")
                 + (row.IsDirty ? "  *未保存" : string.Empty));
             subtitle.style.marginTop = 2;
             body.Add(subtitle);
@@ -354,12 +354,12 @@ namespace NineGrid.Content.Editor
             }
 
             var filteredCount = session.GetFilteredRows().Count();
-            var assignedIconCount = session.Rows.Count(row => row.HasIconKey);
+            var assignedIconCount = session.Rows.Count(row => row.HasIcon);
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateStatsGrid(
                 ("筛选结果", filteredCount.ToString(), "当前列表可见条目"),
-                ("已设 icon", assignedIconCount.ToString(), "icon_key 非空"),
+                ("已设 icon", assignedIconCount.ToString(), "Catalog SO 已挂 icon"),
                 ("缺 icon", session.MissingIconCount.ToString(), "可配合左侧过滤"),
-                ("未保存", session.DirtyCount.ToString(), "保存后写入 xlsx")));
+                ("未保存", session.DirtyCount.ToString(), "保存后写入 Catalog SO / 框色 xlsx")));
 
             var checkedRows = session.GetCheckedRows();
             var focused = session.GetFocusedRow();
@@ -394,11 +394,11 @@ namespace NineGrid.Content.Editor
         {
             contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeader(
                 "已选 " + checkedRows.Count + " 条",
-                "批量指派将写入会话；点击保存后 PATCH 回权威 xlsx。"));
+                "批量指派写入会话；点击保存后写入对应 Kind 的 Catalog SO。"));
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
                 "批量操作",
-                "对当前勾选条目统一设置或清空视觉 key。",
+                "对当前勾选条目统一设置或清空 Sprite。",
                 column =>
                 {
                     batchIconField = new ObjectField { objectType = typeof(Sprite), allowSceneObjects = false };
@@ -406,7 +406,7 @@ namespace NineGrid.Content.Editor
                         ApplyBatchSprite(checkedRows, ContentVisualKeySlot.Icon, evt.newValue as Sprite));
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
                         "批量 Icon",
-                        "拖入 Sprite → 写入 visual.icon.{content_id}",
+                        "拖入 Sprite → 按 contentId 写入 Catalog SO",
                         batchIconField));
 
                     batchFaceField = new ObjectField { objectType = typeof(Sprite), allowSceneObjects = false };
@@ -414,12 +414,22 @@ namespace NineGrid.Content.Editor
                         ApplyBatchSprite(checkedRows, ContentVisualKeySlot.Face, evt.newValue as Sprite));
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
                         "批量 Face",
-                        "卡面/阵营底图 visual_id",
+                        "卡面/立绘 Sprite",
                         batchFaceField));
 
                     column.Add(ContentVisualWarmConsoleUi.CreateButtonRow(
-                        new Button(() => session.ClearKeyOnRows(checkedRows, ContentVisualKeySlot.Icon)) { text = "清除 Icon" },
-                        new Button(() => session.ClearKeyOnRows(checkedRows, ContentVisualKeySlot.Face)) { text = "清除 Face" }));
+                        new Button(() =>
+                        {
+                            session.ClearKeyOnRows(checkedRows, ContentVisualKeySlot.Icon);
+                            RefreshAfterRowEdit();
+                        })
+                        { text = "清除 Icon" },
+                        new Button(() =>
+                        {
+                            session.ClearKeyOnRows(checkedRows, ContentVisualKeySlot.Face);
+                            RefreshAfterRowEdit();
+                        })
+                        { text = "清除 Face" }));
                 }));
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
@@ -452,7 +462,7 @@ namespace NineGrid.Content.Editor
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
                 "标准卡预览",
-                "基于当前会话中的 key（含未保存）与 Resolver 推导。",
+                "基于当前会话 Sprite（含未保存）与 Resolver。",
                 column =>
                 {
                     previewContainer = new IMGUIContainer(() =>
@@ -465,41 +475,45 @@ namespace NineGrid.Content.Editor
                 }));
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
-                "视觉 Key",
-                "保存时 PATCH icon/face visual_id，并 upsert visual_asset.xlsx。",
+                "Catalog SO 配图",
+                "保存时按 contentId 写入对应 Kind 的 Catalog SO。",
                 column =>
                 {
-                    ContentVisualKind kind;
-                    Enum.TryParse(row.ContentKind, true, out kind);
-
-                    Sprite iconSprite;
-                    Sprite faceSprite;
-                    ContentVisualSpriteKeyCodec.TryDecode(row.IconKey, out iconSprite);
-                    ContentVisualSpriteKeyCodec.TryDecode(row.FaceKey, out faceSprite);
-
-                    iconField = new ObjectField { objectType = typeof(Sprite), allowSceneObjects = false, value = iconSprite };
+                    iconField = new ObjectField
+                    {
+                        objectType = typeof(Sprite),
+                        allowSceneObjects = false,
+                        value = row.Icon
+                    };
                     iconField.RegisterValueChangedCallback(evt =>
                     {
                         session.ApplySpriteToRows(new[] { row }, ContentVisualKeySlot.Icon, evt.newValue as Sprite);
                         RefreshAfterRowEdit();
                     });
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
-                        "icon_key",
-                        "业务 visual_id；空则走约定路径。",
+                        "Icon",
+                        "主图标 Sprite；contentId = Core defId",
                         iconField));
-                    column.Add(ContentVisualWarmConsoleUi.CreateTinyPathLabel("当前：" + (string.IsNullOrEmpty(row.IconKey) ? "(空)" : row.IconKey)));
+                    column.Add(ContentVisualWarmConsoleUi.CreateTinyPathLabel(
+                        "当前：" + (row.Icon != null ? row.Icon.name : "(空)")));
 
-                    faceField = new ObjectField { objectType = typeof(Sprite), allowSceneObjects = false, value = faceSprite };
+                    faceField = new ObjectField
+                    {
+                        objectType = typeof(Sprite),
+                        allowSceneObjects = false,
+                        value = row.Face
+                    };
                     faceField.RegisterValueChangedCallback(evt =>
                     {
                         session.ApplySpriteToRows(new[] { row }, ContentVisualKeySlot.Face, evt.newValue as Sprite);
                         RefreshAfterRowEdit();
                     });
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
-                        "face_key",
-                        "卡面/阵营底图 visual_id。",
+                        "Face",
+                        "卡面/立绘 Sprite",
                         faceField));
-                    column.Add(ContentVisualWarmConsoleUi.CreateTinyPathLabel("当前：" + (string.IsNullOrEmpty(row.FaceKey) ? "(空)" : row.FaceKey)));
+                    column.Add(ContentVisualWarmConsoleUi.CreateTinyPathLabel(
+                        "当前：" + (row.Face != null ? row.Face.name : "(空)")));
 
                     column.Add(ContentVisualWarmConsoleUi.CreateButtonRow(
                         new Button(() => ClearRowKey(row, ContentVisualKeySlot.Icon)) { text = "清空 Icon" },
@@ -524,16 +538,7 @@ namespace NineGrid.Content.Editor
                     if (resolved != null)
                     {
                         column.Add(ContentVisualWarmConsoleUi.WrapControl(
-                            "推导 icon",
-                            "icon visual_id",
-                            ContentVisualWarmConsoleUi.CreateTinyPathLabel(resolved.IconVisualId)));
-                        column.Add(ContentVisualWarmConsoleUi.WrapControl(
-                            "推导 face",
-                            "face visual_id",
-                            ContentVisualWarmConsoleUi.CreateTinyPathLabel(
-                                string.IsNullOrEmpty(resolved.FaceVisualId) ? "(空)" : resolved.FaceVisualId)));
-                        column.Add(ContentVisualWarmConsoleUi.WrapControl(
-                            "推导 frame",
+                            "frame_style",
                             "稀有度/tier → frame_style_id",
                             ContentVisualWarmConsoleUi.CreateTinyPathLabel(resolved.FrameStyleId)));
                     }
@@ -669,7 +674,7 @@ namespace NineGrid.Content.Editor
             }
         }
 
-        private void SaveChanges()
+        private new void SaveChanges()
         {
             string error;
             if (!session.TrySave(out error))
@@ -680,7 +685,7 @@ namespace NineGrid.Content.Editor
 
             session.ReloadCatalogs();
             RefreshAll();
-            ShowNotification(new GUIContent("已保存至 xlsx"));
+            ShowNotification(new GUIContent("已保存 Catalog SO / 框色表"));
         }
 
         private void RegenerateLuban()
@@ -689,7 +694,7 @@ namespace NineGrid.Content.Editor
             {
                 EditorUtility.DisplayDialog(
                     "请先保存",
-                    "存在未保存的视觉 key 改动，请先保存后再运行 Luban。",
+                    "存在未保存的配图/框色改动，请先保存后再运行 Luban。",
                     "确定");
                 return;
             }

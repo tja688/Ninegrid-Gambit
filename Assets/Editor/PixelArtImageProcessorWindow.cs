@@ -18,11 +18,20 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
 
     private Vector2 scrollPosition;
     private readonly List<string> logs = new();
+    private bool isProcessing;
 
     [MenuItem("Tools/Pixel Art/Image Import Processor")]
     public static void Open()
     {
-        GetWindow<PixelArtImageProcessorWindow>("Pixel Art Processor");
+        PixelArtImageProcessorWindow window = GetWindow<PixelArtImageProcessorWindow>();
+        window.titleContent = new GUIContent("Pixel Art Processor");
+        window.Show();
+        window.Focus();
+    }
+
+    private void OnEnable()
+    {
+        titleContent = new GUIContent("Pixel Art Processor");
     }
 
     private void OnGUI()
@@ -46,9 +55,15 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
 
         using (new EditorGUILayout.HorizontalScope())
         {
-            if (GUILayout.Button("扫描并处理", GUILayout.Height(36)))
+            using (new EditorGUI.DisabledScope(isProcessing))
             {
-                ProcessAll();
+                if (GUILayout.Button(isProcessing ? "处理中…" : "扫描并处理", GUILayout.Height(36)))
+                {
+                    // 禁止在 OnGUI 栈内直接 Refresh / SaveAndReimport，否则会偶发
+                    // Invalid editor window of type: PixelArtImageProcessorWindow。
+                    EditorApplication.delayCall -= ProcessAllDeferred;
+                    EditorApplication.delayCall += ProcessAllDeferred;
+                }
             }
 
             if (GUILayout.Button("清空日志", GUILayout.Height(36)))
@@ -69,6 +84,26 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         }
 
         EditorGUILayout.EndScrollView();
+    }
+
+    private void ProcessAllDeferred()
+    {
+        if (this == null || isProcessing)
+            return;
+
+        isProcessing = true;
+
+        try
+        {
+            ProcessAll();
+        }
+        finally
+        {
+            isProcessing = false;
+
+            if (this != null)
+                Repaint();
+        }
     }
 
     private static void DrawFolderInfo(string label, string folder, string rule)
@@ -92,6 +127,7 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         int warnings = 0;
         int errors = 0;
 
+        // StartAssetEditing 内调用 SaveAndReimport 会延迟到 Stop，避免递归导入。
         AssetDatabase.StartAssetEditing();
 
         try
@@ -127,7 +163,6 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         {
             AssetDatabase.StopAssetEditing();
             AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
         }
 
         AddLog("");
@@ -208,14 +243,6 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
 
             if (success)
             {
-                importer = AssetImporter.GetAtPath(assetPath);
-
-                if (importer != null)
-                {
-                    importer.userData = ProcessMark;
-                    importer.SaveAndReimport();
-                }
-
                 processed++;
                 AddLog($"[处理] {assetPath}");
             }
@@ -250,6 +277,7 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         defaultSettings.format = TextureImporterFormat.RGBA32;
         importer.SetPlatformTextureSettings(defaultSettings);
 
+        importer.userData = ProcessMark;
         importer.SaveAndReimport();
         return true;
     }
@@ -281,6 +309,7 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
 
         TryApplyAsepritePlatformSettings(importer);
 
+        importer.userData = ProcessMark;
         importer.SaveAndReimport();
         return true;
     }
@@ -389,6 +418,9 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
 
     private void AddLog(string message)
     {
+        if (this == null)
+            return;
+
         logs.Add(message);
         Debug.Log(message);
     }

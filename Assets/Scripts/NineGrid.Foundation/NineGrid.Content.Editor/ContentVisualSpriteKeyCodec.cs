@@ -1,75 +1,13 @@
-using NineGrid.Content;
 using UnityEditor;
 using UnityEngine;
 
 namespace NineGrid.Content.Editor
 {
+    /// <summary>
+    /// 仅保留 legacy Assets/...#spriteName 解码，供 Catalog SO 一次性迁移使用。
+    /// </summary>
     public static class ContentVisualSpriteKeyCodec
     {
-        public static string EncodeIcon(string contentId, Sprite sprite)
-        {
-            return Encode(ContentVisualKeySlot.Icon, contentId, ContentVisualKind.Unknown, sprite);
-        }
-
-        public static string EncodeFace(string contentId, ContentVisualKind kind, Sprite sprite)
-        {
-            return Encode(ContentVisualKeySlot.Face, contentId, kind, sprite);
-        }
-
-        public static string Encode(ContentVisualKeySlot slot, string contentId, ContentVisualKind kind, Sprite sprite)
-        {
-            if (sprite == null || string.IsNullOrEmpty(contentId))
-            {
-                return string.Empty;
-            }
-
-            return slot == ContentVisualKeySlot.Icon
-                ? VisualIdNaming.ForIcon(contentId)
-                : VisualIdNaming.ForFace(contentId);
-        }
-
-        public static VisualAssetXlsxRow BuildAssetUpsert(
-            ContentVisualKeySlot slot,
-            string contentId,
-            ContentVisualKind kind,
-            Sprite sprite)
-        {
-            if (sprite == null || string.IsNullOrEmpty(contentId))
-            {
-                return null;
-            }
-
-            var visualId = Encode(slot, contentId, kind, sprite);
-            return new VisualAssetXlsxRow
-            {
-                VisualId = visualId,
-                Kind = "sprite",
-                AssetKey = ResolveAssetKey(slot, contentId, kind, sprite),
-                FallbackId = string.Empty
-            };
-        }
-
-        public static bool TryDecode(string key, out Sprite sprite)
-        {
-            sprite = null;
-            if (string.IsNullOrEmpty(key))
-            {
-                return false;
-            }
-
-            if (VisualIdNaming.IsLegacyPathKey(key))
-            {
-                return TryDecodeLegacy(key, out sprite);
-            }
-
-            if (VisualIdNaming.IsVisualId(key))
-            {
-                return ContentVisualSpriteLoader.TryLoad(key, string.Empty, out sprite);
-            }
-
-            return TryFindSpriteByName(key, out sprite);
-        }
-
         public static bool TryDecodeLegacy(string key, out Sprite sprite)
         {
             sprite = null;
@@ -89,40 +27,9 @@ namespace NineGrid.Content.Editor
             return TryFindSpriteByName(key, out sprite);
         }
 
-        private static string ResolveAssetKey(
-            ContentVisualKeySlot slot,
-            string contentId,
-            ContentVisualKind kind,
-            Sprite sprite)
+        public static bool TryDecode(string key, out Sprite sprite)
         {
-            var editorAssetKey = TryBuildEditorAssetKey(sprite);
-            if (!string.IsNullOrEmpty(editorAssetKey))
-            {
-                return editorAssetKey;
-            }
-
-            if (slot == ContentVisualKeySlot.Icon)
-            {
-                return VisualAssetKeyNaming.FromConvention(kind, VisualAssetSlot.Icon, contentId);
-            }
-
-            return VisualAssetKeyNaming.FromConvention(kind, VisualAssetSlot.Face, contentId);
-        }
-
-        private static string TryBuildEditorAssetKey(Sprite sprite)
-        {
-            if (sprite == null)
-            {
-                return string.Empty;
-            }
-
-            var path = AssetDatabase.GetAssetPath(sprite);
-            if (string.IsNullOrEmpty(path))
-            {
-                return string.Empty;
-            }
-
-            return path + "#" + sprite.name;
+            return TryDecodeLegacy(key, out sprite);
         }
 
         private static bool TryLoadSubSprite(string assetPath, string spriteName, out Sprite sprite)

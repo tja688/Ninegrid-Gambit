@@ -33,7 +33,7 @@ if ($BootstrapVisual) {
 }
 
 $conf = Join-Path $PSScriptRoot "luban.conf"
-$codeDir = Join-Path $projectRoot "Assets\Scripts\NineGrid.Content\Generated\Luban"
+$codeDir = Join-Path $projectRoot "Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Generated\Luban"
 $dataDir = Join-Path $projectRoot "Assets\StreamingAssets\TableNine\LubanData"
 
 & $LubanExe `

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read / patch content_visual.xlsx for Unity ContentVisualEditor."""
+"""Read content_visual.xlsx for Unity ContentVisualEditor (text-only columns)."""
 
 from __future__ import annotations
 
@@ -19,9 +19,6 @@ COL_MARKER = 0
 COL_CONTENT_ID = 1
 COL_CONTENT_KIND = 2
 COL_DESCRIPTION = 3
-COL_FACE_KEY = 4
-COL_FRAME_KEY = 5
-COL_ICON_KEY = 6
 
 
 def _cell_str(value) -> str:
@@ -46,9 +43,6 @@ def read_all(path: Path) -> list[dict]:
                 "content_id": content_id,
                 "content_kind": _cell_str(row[COL_CONTENT_KIND] if len(row) > COL_CONTENT_KIND else ""),
                 "description": _cell_str(row[COL_DESCRIPTION] if len(row) > COL_DESCRIPTION else ""),
-                "face_key": _cell_str(row[COL_FACE_KEY] if len(row) > COL_FACE_KEY else ""),
-                "frame_key": _cell_str(row[COL_FRAME_KEY] if len(row) > COL_FRAME_KEY else ""),
-                "icon_key": _cell_str(row[COL_ICON_KEY] if len(row) > COL_ICON_KEY else ""),
                 "sheet_row_index": row_index,
             }
         )
@@ -61,66 +55,40 @@ def read_header_rows(path: Path) -> tuple[str, str]:
     ws = wb[SHEET_NAME] if SHEET_NAME in wb.sheetnames else wb.active
     var_row = ws[1]
     type_row = ws[2]
-    var_parts = [_cell_str(var_row[i].value if i < len(var_row) else "") for i in range(COL_ICON_KEY + 1)]
-    type_parts = [_cell_str(type_row[i].value if i < len(type_row) else "") for i in range(COL_ICON_KEY + 1)]
+    var_parts = [_cell_str(var_row[i].value if i < len(var_row) else "") for i in range(COL_DESCRIPTION + 1)]
+    type_parts = [_cell_str(type_row[i].value if i < len(type_row) else "") for i in range(COL_DESCRIPTION + 1)]
     wb.close()
     return "|".join(var_parts), "|".join(type_parts)
 
 
-def patch_visual_keys(path: Path, patches: list[dict]) -> None:
+def strip_visual_key_columns(path: Path) -> dict:
+    """Drop face_key/frame_key/icon_key columns if present; keep text-only schema."""
     wb = load_workbook(path)
     ws = wb[SHEET_NAME] if SHEET_NAME in wb.sheetnames else wb.active
-    row_by_id: dict[str, int] = {}
-    for row_index, row in enumerate(ws.iter_rows(values_only=True)):
-        marker = _cell_str(row[COL_MARKER] if len(row) > COL_MARKER else "")
-        if marker.startswith("##"):
-            continue
-        content_id = _cell_str(row[COL_CONTENT_ID] if len(row) > COL_CONTENT_ID else "")
-        if content_id:
-            row_by_id[content_id] = row_index
+    max_col = ws.max_column or 0
+    removed = 0
+    # Delete columns from right to left so indices stay stable.
+    for col in range(max_col, COL_DESCRIPTION + 1, -1):
+        ws.delete_cols(col)
+        removed += 1
 
-    for patch in patches:
-        content_id = patch.get("content_id", "")
-        if not content_id:
-            continue
-        sheet_row_index = patch.get("sheet_row_index", -1)
-        if sheet_row_index < 0:
-            sheet_row_index = row_by_id.get(content_id, -1)
-        if sheet_row_index < 0:
-            continue
-        excel_row = sheet_row_index + 1
-        ws.cell(row=excel_row, column=COL_FACE_KEY + 1, value=patch.get("face_key", "") or "")
-        ws.cell(row=excel_row, column=COL_ICON_KEY + 1, value=patch.get("icon_key", "") or "")
+    # Rewrite header rows to known text-only schema.
+    headers = ("##var", "content_id", "content_kind", "description")
+    types = ("##type", "string", "string", "string")
+    for index, value in enumerate(headers, start=1):
+        ws.cell(row=1, column=index, value=value)
+    for index, value in enumerate(types, start=1):
+        ws.cell(row=2, column=index, value=value)
 
     wb.save(path)
     wb.close()
-
-
-def clear_frame_keys(path: Path) -> int:
-    wb = load_workbook(path)
-    ws = wb[SHEET_NAME] if SHEET_NAME in wb.sheetnames else wb.active
-    cleared = 0
-    for row_index, row in enumerate(ws.iter_rows(values_only=True)):
-        marker = _cell_str(row[COL_MARKER] if len(row) > COL_MARKER else "")
-        if marker.startswith("##"):
-            continue
-        content_id = _cell_str(row[COL_CONTENT_ID] if len(row) > COL_CONTENT_ID else "")
-        if not content_id:
-            continue
-        frame_key = _cell_str(row[COL_FRAME_KEY] if len(row) > COL_FRAME_KEY else "")
-        if frame_key:
-            ws.cell(row=row_index + 1, column=COL_FRAME_KEY + 1, value="")
-            cleared += 1
-    wb.save(path)
-    wb.close()
-    return cleared
+    return {"removed_columns": removed}
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=["read", "patch", "headers", "clear_frame_keys"])
+    parser.add_argument("mode", choices=["read", "headers", "strip_visual_keys"])
     parser.add_argument("--path", required=True)
-    parser.add_argument("--patches", default="")
     args = parser.parse_args()
     path = Path(args.path)
     if not path.exists():
@@ -136,14 +104,9 @@ def main() -> int:
         print(json.dumps({"var_row": var_row, "type_row": type_row}, ensure_ascii=False))
         return 0
 
-    if args.mode == "patch":
-        patches = json.loads(args.patches) if args.patches else []
-        patch_visual_keys(path, patches)
-        return 0
-
-    if args.mode == "clear_frame_keys":
-        cleared = clear_frame_keys(path)
-        print(json.dumps({"cleared": cleared}, ensure_ascii=False))
+    if args.mode == "strip_visual_keys":
+        result = strip_visual_key_columns(path)
+        print(json.dumps(result, ensure_ascii=False))
         return 0
 
     return 1

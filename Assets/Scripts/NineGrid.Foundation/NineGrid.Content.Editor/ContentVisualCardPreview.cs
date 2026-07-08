@@ -5,7 +5,7 @@ using UnityEngine;
 namespace NineGrid.Content.Editor
 {
     /// <summary>
-    /// 编辑器内标准卡预览：IMGUI 叠图，避免 PreviewRenderUtility 在 URP 下无法渲染 SpriteRenderer。
+    /// 编辑器内标准卡预览：IMGUI 叠图，直接使用 ResolvedView 上的 Sprite。
     /// </summary>
     public sealed class ContentVisualCardPreview : System.IDisposable
     {
@@ -27,11 +27,8 @@ namespace NineGrid.Content.Editor
                 return;
             }
 
-            Sprite iconSprite;
-            Sprite faceSprite;
-            TryLoadPreviewSprite(view.IconVisualId, view.IconAssetKey, out iconSprite);
-            TryLoadPreviewSprite(view.FaceVisualId, view.FaceAssetKey, out faceSprite);
-
+            var iconSprite = view.Icon;
+            var faceSprite = view.Face;
             var cardRect = FitAspectRect(rect, CardAspect, 0.9f);
             var frameColor = new Color(view.FrameColor.R, view.FrameColor.G, view.FrameColor.B, view.FrameColor.A);
             EditorGUI.DrawRect(cardRect, frameColor);
@@ -61,32 +58,6 @@ namespace NineGrid.Content.Editor
 
         public void Dispose()
         {
-        }
-
-        private static bool TryLoadPreviewSprite(string visualId, string conventionAssetKey, out Sprite sprite)
-        {
-            sprite = null;
-            if (ContentVisualSpriteLoader.TryLoad(visualId, conventionAssetKey, out sprite) && sprite != null)
-            {
-                return true;
-            }
-
-            if (!string.IsNullOrEmpty(visualId)
-                && ContentVisualSpriteKeyCodec.TryDecode(visualId, out sprite)
-                && sprite != null)
-            {
-                return true;
-            }
-
-            if (!string.IsNullOrEmpty(conventionAssetKey)
-                && VisualIdNaming.IsLegacyPathKey(conventionAssetKey)
-                && ContentVisualSpriteKeyCodec.TryDecodeLegacy(conventionAssetKey, out sprite)
-                && sprite != null)
-            {
-                return true;
-            }
-
-            return false;
         }
 
         private static Rect FitAspectRect(Rect outer, float widthOverHeight, float fill)

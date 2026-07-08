@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using Luban.SimpleJSON;
-using NineGrid.Core.Content;
 
 namespace NineGrid.Content
 {
@@ -31,10 +30,7 @@ namespace NineGrid.Content
                 catalog.Add(new ContentVisualDefinition(
                     row.ContentId,
                     ParseKind(row.ContentKind),
-                    row.Description,
-                    row.FaceKey,
-                    row.FrameKey,
-                    row.IconKey));
+                    row.Description));
             }
 
             return catalog;
