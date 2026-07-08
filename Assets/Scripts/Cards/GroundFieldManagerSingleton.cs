@@ -22,6 +22,10 @@ namespace NineGrid.Cards
         [Tooltip("场地布局与动效参数。")]
         [SerializeField] private GroundFieldLayoutSettings layoutSettings = new();
 
+        [Header("Battle Presentation")]
+        [Tooltip("CardAttack 节点上的基础交战适配器；留空时 Awake 在子节点 Performance/CardAttack 自动查找。")]
+        [SerializeField] private CardAttackBasicAdapter attackAdapter;
+
         private readonly int[] _uidBySlot = new int[GroundSlotTopology.MaxSlot + 1];
         private readonly Dictionary<int, int> _slotByUid = new();
         private readonly List<Transform> _groundAnchors = new();
@@ -58,6 +62,7 @@ namespace NineGrid.Cards
             _instance = this;
             ClearSlotTable();
             ResolveSceneReferences();
+            ResolveAttackAdapter();
             CacheAnchors();
             EnsureSlotHitProxies();
             RefreshAllSlotHitColliders();
@@ -334,6 +339,47 @@ namespace NineGrid.Cards
             EmptySlotClicked?.Invoke(slot);
         }
 
+        public CardAttackBasicAdapter AttackAdapter => attackAdapter;
+
+        public bool IsAvatarOrthogonalBattleSlot(int slot)
+        {
+            return GroundSlotTopology.AreOrthogonal(slot, GroundSlotTopology.AvatarReservedSlot);
+        }
+
+        public void ArmNextLethalAttack(bool armed = true)
+        {
+            attackAdapter?.ArmNextLethalAttack(armed);
+        }
+
+        public bool TryHandleBattleClick(ManagedCard card)
+        {
+            if (card == null || _isBusy || attackAdapter == null)
+            {
+                return false;
+            }
+
+            if (card.IsFieldDead)
+            {
+                return false;
+            }
+
+            if (!TryGetSlotOf(card.Uid, out var slot) || !IsAvatarOrthogonalBattleSlot(slot))
+            {
+                return false;
+            }
+
+            RequestBasicAttackAtSlotAsync(slot).Forget();
+            return true;
+        }
+
+        public UniTask RequestBasicAttackAtSlotAsync(
+            int victimSlot,
+            bool? lethalOverride = null,
+            CancellationToken cancellationToken = default)
+        {
+            return RequestBasicAttackInternalAsync(victimSlot, lethalOverride, cancellationToken);
+        }
+
         public UniTask RotateOuterRingClockwiseAsync(CancellationToken cancellationToken = default)
         {
             return RotateOuterRingInternalAsync(true, cancellationToken);
@@ -344,15 +390,22 @@ namespace NineGrid.Cards
             return TryGetAnchor(slot, out var anchor) ? anchor : null;
         }
 
-        private async UniTask RotateOuterRingInternalAsync(bool clockwise, CancellationToken cancellationToken)
+        private async UniTask RotateOuterRingInternalAsync(
+            bool clockwise,
+            CancellationToken cancellationToken,
+            bool skipBusyGuard = false)
         {
-            if (_isBusy)
+            if (!skipBusyGuard && _isBusy)
             {
                 Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法旋转。");
                 return;
             }
 
-            _isBusy = true;
+            if (!skipBusyGuard)
+            {
+                _isBusy = true;
+            }
+
             try
             {
                 var ring = GroundSlotTopology.ClockwiseRing;
@@ -426,7 +479,10 @@ namespace NineGrid.Cards
             }
             finally
             {
-                _isBusy = false;
+                if (!skipBusyGuard)
+                {
+                    _isBusy = false;
+                }
             }
         }
 
@@ -615,6 +671,53 @@ namespace NineGrid.Cards
             return GroundSlotTopology.IsValidSlot(slot);
         }
 
+        private async UniTask RequestBasicAttackInternalAsync(
+            int victimSlot,
+            bool? lethalOverride,
+            CancellationToken cancellationToken)
+        {
+            if (_isBusy)
+            {
+                Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法触发交战。");
+                return;
+            }
+
+            if (attackAdapter == null)
+            {
+                Debug.LogWarning("[GroundFieldManager] 未配置 CardAttackBasicAdapter。");
+                return;
+            }
+
+            if (!IsAvatarOrthogonalBattleSlot(victimSlot) || !TryGetCardAt(victimSlot, out var victim))
+            {
+                Debug.LogWarning($"[GroundFieldManager] 格位 {victimSlot} 不可触发 Avatar 四向交战。");
+                return;
+            }
+
+            if (victim.IsFieldDead)
+            {
+                Debug.LogWarning($"[GroundFieldManager] 格位 {victimSlot} 卡牌已死亡。");
+                return;
+            }
+
+            var lethal = lethalOverride ?? attackAdapter.ConsumeNextLethalArmed();
+            _isBusy = true;
+            try
+            {
+                await attackAdapter.PlayBasicAttackAsync(victim, lethal, cancellationToken);
+                if (lethal)
+                {
+                    CardManagerSingleton.Instance.MarkFieldDead(victim);
+                }
+
+                await RotateOuterRingInternalAsync(true, cancellationToken, skipBusyGuard: true);
+            }
+            finally
+            {
+                _isBusy = false;
+            }
+        }
+
         private void ResolveSceneReferences()
         {
             if (groundAnchorsRoot != null)
@@ -627,6 +730,16 @@ namespace NineGrid.Cards
             {
                 groundAnchorsRoot = anchors.transform.Find("GroundAnchors");
             }
+        }
+
+        private void ResolveAttackAdapter()
+        {
+            if (attackAdapter != null)
+            {
+                return;
+            }
+
+            attackAdapter = GetComponentInChildren<CardAttackBasicAdapter>(true);
         }
 
         private void CacheAnchors()

@@ -34,7 +34,8 @@ namespace NineGrid.DevTest.Cards
         {
             builder
                 .Bind(KeyCode.Keypad4, "外圈全体顺时针旋转", () => RunRotateOuterRingAsync().Forget())
-                .Bind(KeyCode.Keypad5, "随机移除场中1张", () => RunRandomRemoveAsync().Forget());
+                .Bind(KeyCode.Keypad5, "随机移除场中1张", () => RunRandomRemoveAsync().Forget())
+                .Bind(KeyCode.Keypad8, "下一次交战即死", ArmNextLethalAttack);
         }
 
         private async UniTaskVoid RunRotateOuterRingAsync()
@@ -52,6 +53,18 @@ namespace NineGrid.DevTest.Cards
             }
 
             await field.RotateOuterRingClockwiseAsync();
+        }
+
+        private void ArmNextLethalAttack()
+        {
+            var field = ResolveFieldManager();
+            if (field == null)
+            {
+                return;
+            }
+
+            field.ArmNextLethalAttack(true);
+            Debug.Log("[GroundFieldManagerDevKeys] 已武装下一次交战为即死效果。");
         }
 
         private async UniTaskVoid RunRandomRemoveAsync()

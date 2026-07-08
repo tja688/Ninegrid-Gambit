@@ -61,14 +61,20 @@ namespace NineGrid.Cards
 
         private void OnMouseDown()
         {
-            if (!CanRespondToPickup())
+            _driver ??= GetComponent<CardVisualDriver>();
+            var card = _driver?.BoundCard;
+            if (card == null)
             {
                 return;
             }
 
-            _driver ??= GetComponent<CardVisualDriver>();
-            var card = _driver?.BoundCard;
-            if (card == null)
+            var field = GroundFieldManagerSingleton.Instance;
+            if (field != null && field.TryHandleBattleClick(card))
+            {
+                return;
+            }
+
+            if (!CanRespondToPickup())
             {
                 return;
             }

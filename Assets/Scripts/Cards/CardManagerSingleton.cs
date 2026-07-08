@@ -43,6 +43,9 @@ namespace NineGrid.Cards
         public Transform Transform => View != null ? View.transform : null;
 
         public CardDisplayMode DisplayMode { get; internal set; }
+
+        /// <summary>场地交战即死后标记；仍占格直至外圈旋转或移除。</summary>
+        public bool IsFieldDead { get; internal set; }
     }
 
     /// <summary>
@@ -298,6 +301,20 @@ namespace NineGrid.Cards
             }
 
             ApplyDisplayMode(card, card.DisplayMode);
+        }
+
+        public void MarkFieldDead(ManagedCard card)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            card.IsFieldDead = true;
+            if (card.View != null)
+            {
+                card.View.SetHealth(0, animate: false);
+            }
         }
 
         private void TrackUid(int uid)
