@@ -19,7 +19,7 @@ namespace NineGrid.Cards
         [SerializeField] private List<CardAttackBasicDirectionRig> directionRigs = new();
 
         [Header("Attacker")]
-        [Tooltip("默认攻击者 Transform；留空时使用 AttackerProxy（运行时自动创建在 Avatar 格位锚点）。")]
+        [Tooltip("攻击者兜底 Transform。正常优先使用场地格5入场的 Avatar 卡；两者皆空时用 AttackerProxy（运行时创建在 Avatar 格位锚点）。")]
         [SerializeField] private Transform defaultAttacker;
 
         private readonly Dictionary<CardBoardDirection, CardAttackBasicDirectionRig> _rigByDirection = new();
@@ -91,7 +91,12 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var attacker = ResolveAttackerTransform(field);
+            if (!TryResolveAttacker(field, out var attackerCard, out var attacker))
+            {
+                Debug.LogWarning("[CardAttackBasicAdapter] 未找到 Avatar 攻击者，跳过交战。");
+                return;
+            }
+
             var victimTransform = victim.Transform;
             victim.TryGetEffectManager(out var victimEffects);
 
@@ -106,18 +111,42 @@ namespace NineGrid.Cards
             finally
             {
                 rig.ResetParticipantMotion(attacker, lethal ? null : victimTransform);
+                var cardManager = CardManagerSingleton.Instance;
+                if (attackerCard != null)
+                {
+                    cardManager?.RefreshDisplayMode(attackerCard);
+                }
+
                 if (!lethal)
                 {
-                    CardManagerSingleton.Instance?.RefreshDisplayMode(victim);
+                    cardManager?.RefreshDisplayMode(victim);
                 }
             }
         }
 
-        private Transform ResolveAttackerTransform(GroundFieldManagerSingleton field)
+        /// <summary>
+        /// 优先取场地格5入场的 Avatar 卡；否则用 Inspector defaultAttacker / AttackerProxy 兜底。
+        /// </summary>
+        private bool TryResolveAttacker(
+            GroundFieldManagerSingleton field,
+            out ManagedCard attackerCard,
+            out Transform attacker)
         {
+            attackerCard = null;
+            attacker = null;
+
+            if (field != null
+                && field.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out attackerCard)
+                && attackerCard?.Transform != null)
+            {
+                attacker = attackerCard.Transform;
+                return true;
+            }
+
             if (defaultAttacker != null)
             {
-                return defaultAttacker;
+                attacker = defaultAttacker;
+                return true;
             }
 
             EnsureAttackerProxy();
@@ -130,7 +159,8 @@ namespace NineGrid.Cards
                 }
             }
 
-            return _attackerProxy;
+            attacker = _attackerProxy;
+            return attacker != null;
         }
 
         private static void PrepareAttackerAtAvatarAnchor(
