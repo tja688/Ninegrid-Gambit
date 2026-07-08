@@ -90,6 +90,19 @@ namespace NineGrid.Cards
             }
         }
 
+        /// <summary>
+        /// 仅查找，不创建。销毁/卸载期释放卡视图时必须走此入口，避免 OnDestroy 里 Spawn 残留对象。
+        /// </summary>
+        public static CardManagerSingleton TryGetInstance()
+        {
+            if (_instance != null)
+            {
+                return _instance;
+            }
+
+            return FindFirstObjectByType<CardManagerSingleton>();
+        }
+
         public IReadOnlyDictionary<int, ManagedCard> CardsByUid => _cardsByUid;
 
         private void Awake()

@@ -6,7 +6,8 @@
         "NineGrid.Content",
         "NineGrid.Core",
         "QFramework",
-        "UniTask"
+        "UniTask",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

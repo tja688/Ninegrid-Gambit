@@ -89,6 +89,22 @@ namespace NineGrid.DevTest.Editor
                 $"{Root}/Layer_SelectorManager.asset");
         }
 
+        [MenuItem("NineGrid/DevTest/Create Main Game Loop Test Layer")]
+        public static void CreateMainGameLoopLayer()
+        {
+            CreateOrUpdateLayerAsHighestPriority(
+                $"{Root}/Layer_MainGameLoop.asset",
+                "main-game-loop",
+                "主游戏循环测试",
+                new[]
+                {
+                    (KeyCode.Keypad0, "进入主游戏循环测试"),
+                });
+
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<TestKeyLayerProfileSO>(
+                $"{Root}/Layer_MainGameLoop.asset");
+        }
+
         [MenuItem("NineGrid/DevTest/Create Ground Field Manager Test Layer")]
         public static void CreateGroundFieldManagerLayer()
         {

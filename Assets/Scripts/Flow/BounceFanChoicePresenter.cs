@@ -14,7 +14,8 @@ namespace NineGrid.Flow
     [DisallowMultipleComponent]
     public sealed class BounceFanChoicePresenter : MonoBehaviour
     {
-        private const int BaseSortingOrder = 420;
+        private const string ChoiceSortingLayerName = "UI";
+        private const int BaseSortingOrder = 6;
 
         [Header("Layout")]
         [Tooltip("选项容器相对本物体的本地偏移。")]
@@ -246,7 +247,7 @@ namespace NineGrid.Flow
                 var sorting = BaseSortingOrder + i;
                 if (sortingGroup != null)
                 {
-                    sortingGroup.sortingOrder = sorting;
+                    ApplySorting(sortingGroup, sorting);
                 }
 
                 var collider = managed.View.GetComponent<Collider2D>();
@@ -543,13 +544,20 @@ namespace NineGrid.Flow
             var sortingGroup = entry.Card.View.GetComponent<SortingGroup>();
             if (sortingGroup != null)
             {
-                sortingGroup.sortingOrder = order;
+                ApplySorting(sortingGroup, order);
             }
+        }
+
+        private static void ApplySorting(SortingGroup sortingGroup, int order)
+        {
+            sortingGroup.sortingLayerName = ChoiceSortingLayerName;
+            sortingGroup.sortingOrder = order;
         }
 
         private void ReleaseAllEntries()
         {
-            var cardManager = CardManagerSingleton.Instance;
+            // 销毁/卸场景时绝不可走 Instance（会新建残留 CardManagerSingleton）。
+            var cardManager = CardManagerSingleton.TryGetInstance();
             for (var i = 0; i < _entries.Count; i++)
             {
                 var entry = _entries[i];
