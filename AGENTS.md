@@ -19,6 +19,8 @@
 | [`Assets/Notes/Core表现层Command与Event消费清单-2026-06-20.md`](Assets/Notes/Core表现层Command与Event消费清单-2026-06-20.md) | Command / Event 与表现消费对照 |
 | `Assets/Docs/` | 策划设计案、效果语义 |
 | `Assets/Notes/` | 进行时过程性开发笔记，归档里面有历史记录 |
+| `C:/Users/jinji/Desktop/文档/MyNote/游戏开发项目/引擎工作区/新表现层笔记.canvas` | 表现层开发蓝图 |
+
 
 ---
 
