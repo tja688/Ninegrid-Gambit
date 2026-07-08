@@ -107,26 +107,114 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// Timeline / DOTweenCallback / Animation Event 回调：播放受击闪白。
-        /// 供 UnityEvent 下拉绑定（须为 public void、无 UniTask 返回值）。
+        /// Timeline / DOTween / Animation Event / UnityEvent 统一回调入口（整型）。
+        /// <see cref="CardEffectCallbackAction"/> 的 Play 段与 <see cref="CardEffectKind"/> 数值一致；
+        /// 未传方向时使用 <see cref="LastResolvedDirection"/>。
         /// </summary>
-        public void CallbackPlayHitFlash()
+        public void Callback(int action)
         {
-            PlayHitFlashAsync(LastResolvedDirection).Forget();
+            if (!CardEffectCallbackActionUtility.TryParse(action, out var parsed))
+            {
+                Debug.LogWarning(
+                    $"[CardEffectManager] 未知回调动作 id={action}，已忽略。",
+                    this);
+                return;
+            }
+
+            DispatchCallback(parsed, null);
         }
 
         /// <summary>
-        /// Timeline 回调：按枚举整型传入 <see cref="CardBoardDirection"/> 后播放闪白。
+        /// 统一回调入口（整型 + 方向）。
+        /// <paramref name="selfDirection"/> 为 <see cref="CardBoardDirection"/> 枚举整型值。
+        /// </summary>
+        public void Callback(int action, int selfDirection)
+        {
+            if (!CardEffectCallbackActionUtility.TryParse(action, out var parsed))
+            {
+                Debug.LogWarning(
+                    $"[CardEffectManager] 未知回调动作 id={action}，已忽略。",
+                    this);
+                return;
+            }
+
+            DispatchCallback(parsed, (CardBoardDirection)selfDirection);
+        }
+
+        /// <summary>
+        /// 统一回调入口（名称）。
+        /// 支持枚举名、别名（如 HitFlash / flash / 闪白）及 Stop 类动作。
+        /// </summary>
+        public void Callback(string actionName)
+        {
+            if (!CardEffectCallbackActionUtility.TryParse(actionName, out var parsed))
+            {
+                Debug.LogWarning(
+                    $"[CardEffectManager] 未知回调动作 name='{actionName}'，已忽略。",
+                    this);
+                return;
+            }
+
+            DispatchCallback(parsed, null);
+        }
+
+        /// <summary>
+        /// 兼容旧绑定：播放受击闪白（等价于 <c>Callback(4)</c>）。
+        /// </summary>
+        public void CallbackPlayHitFlash()
+        {
+            Callback((int)CardEffectCallbackAction.PlayHitFlash);
+        }
+
+        /// <summary>
+        /// 兼容旧绑定：按方向播放闪白（等价于 <c>Callback(4, selfDirection)</c>）。
         /// </summary>
         public void CallbackPlayHitFlashDirection(int selfDirection)
         {
-            PlayHitFlashAsync((CardBoardDirection)selfDirection).Forget();
+            Callback((int)CardEffectCallbackAction.PlayHitFlash, selfDirection);
         }
 
-        /// <summary>Timeline 回调：立即停止闪白。</summary>
+        /// <summary>兼容旧绑定：停止闪白（等价于 <c>Callback(101)</c>）。</summary>
         public void CallbackStopHitFlash()
         {
-            StopOverlayFlash();
+            Callback((int)CardEffectCallbackAction.StopHitFlash);
+        }
+
+        private void DispatchCallback(CardEffectCallbackAction action, CardBoardDirection? directionOverride)
+        {
+            switch (action)
+            {
+                case CardEffectCallbackAction.StopCurrent:
+                    StopCurrent();
+                    return;
+                case CardEffectCallbackAction.StopHitFlash:
+                    StopOverlayFlash();
+                    return;
+            }
+
+            if (!CardEffectCallbackActionUtility.IsPlayAction(action))
+            {
+                Debug.LogWarning(
+                    $"[CardEffectManager] 未处理的回调动作 {action}，已忽略。",
+                    this);
+                return;
+            }
+
+            var direction = directionOverride ?? LastResolvedDirection;
+            PlayCallbackEffectAsync(CardEffectCallbackActionUtility.ToPlayKind(action), direction).Forget();
+        }
+
+        private UniTask PlayCallbackEffectAsync(CardEffectKind kind, CardBoardDirection direction)
+        {
+            return kind switch
+            {
+                CardEffectKind.Attack => PlayAttackAsync(direction),
+                CardEffectKind.Hit => PlayHitAsync(direction),
+                CardEffectKind.Death => PlayDeathAsync(selfDirection: direction),
+                CardEffectKind.Use => PlayUseAsync(direction),
+                CardEffectKind.HitFlash => PlayHitFlashAsync(direction),
+                _ => UniTask.CompletedTask,
+            };
         }
 
         public void StopCurrent()
