@@ -54,6 +54,8 @@ namespace NineGrid.Cards
 
         public int DeckCount => _slotContainer?.Count ?? _pendingEntryCards.Count;
 
+        public CardDeckLayoutSettings LayoutSettings => layoutSettings;
+
         private void Awake()
         {
             if (_instance != null && _instance != this)
@@ -242,6 +244,42 @@ namespace NineGrid.Cards
 
             groundSlot = emptySlots[UnityEngine.Random.Range(0, emptySlots.Count)];
             return true;
+        }
+
+        /// <summary>
+        /// 从卡组最左侧取牌，不占 Ground 格位（供空牌位探求使用，仅 InGame）。
+        /// </summary>
+        public bool TryWithdrawFirstCard(out ManagedCard card, out IReadOnlyList<CardDeckRippleMove> rippleMoves)
+        {
+            card = null;
+            rippleMoves = Array.Empty<CardDeckRippleMove>();
+            if (!EnsureInGameForDeal())
+            {
+                return false;
+            }
+
+            if (!_slotContainer.TryRemoveAt(0, out var removed, out rippleMoves))
+            {
+                return false;
+            }
+
+            card = removed;
+            return card != null;
+        }
+
+        /// <summary>
+        /// 将卡牌退回卡组最左侧（探求失败回滚，仅 InGame）。
+        /// </summary>
+        public bool TryReturnCardToDeckFront(ManagedCard card, out IReadOnlyList<CardDeckRippleMove> rippleMoves)
+        {
+            rippleMoves = Array.Empty<CardDeckRippleMove>();
+            if (!EnsureInGameForDeal() || card == null)
+            {
+                return false;
+            }
+
+            CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
+            return _slotContainer.TryInsertAt(0, card, out rippleMoves);
         }
 
         private async UniTask BeginEntryInternalAsync(CancellationToken cancellationToken)

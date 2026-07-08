@@ -27,6 +27,16 @@ namespace NineGrid.Cards
         [Tooltip("空槽点击 BoxCollider2D 尺寸（世界单位）。")]
         public Vector2 slotHitBoxSize = new(1.6f, 2.2f);
 
+        [Header("Empty Slot Explore")]
+        [Tooltip("空牌位探求追锚点移动速度（世界单位/秒）。")]
+        public float exploreMoveSpeed = 12f;
+
+        [Tooltip("空牌位探求就位判定距离（世界单位）。")]
+        public float exploreArriveThreshold = 0.08f;
+
+        [Tooltip("多条探求依次启动的最小间隔（秒），贴近补牌防抖。")]
+        public float exploreDealInterval = 0.06f;
+
         [Header("Hover")]
         [Tooltip("场地卡 hover 时 localScale 相对基准的放大增量（如 0.05 表示约为 1.05 倍）。")]
         public float hoverScaleIntensity = 0.05f;

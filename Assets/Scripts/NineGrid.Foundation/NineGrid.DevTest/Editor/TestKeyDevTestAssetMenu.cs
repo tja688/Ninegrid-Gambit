@@ -67,6 +67,9 @@ namespace NineGrid.DevTest.Editor
                 {
                     (KeyCode.Keypad4, "外圈全体顺时针旋转"),
                     (KeyCode.Keypad5, "随机移除场中1张"),
+                    (KeyCode.Keypad6, "即死击杀相邻怪"),
+                    (KeyCode.Keypad7, "移除1张并立即旋转"),
+                    (KeyCode.Keypad8, "下一次交战即死"),
                 });
 
             Selection.activeObject = AssetDatabase.LoadAssetAtPath<TestKeyLayerProfileSO>(

@@ -30,6 +30,7 @@ namespace NineGrid.Cards
         private readonly Dictionary<int, int> _slotByUid = new();
         private readonly List<Transform> _groundAnchors = new();
         private readonly GroundSlotHitProxy[] _slotHitProxies = new GroundSlotHitProxy[GroundSlotTopology.MaxSlot + 1];
+        private GroundEmptySlotExploreRunner _exploreRunner;
         private bool _isBusy;
 
         public static GroundFieldManagerSingleton Instance
@@ -66,6 +67,7 @@ namespace NineGrid.Cards
             CacheAnchors();
             EnsureSlotHitProxies();
             RefreshAllSlotHitColliders();
+            _exploreRunner = new GroundEmptySlotExploreRunner(this, this.GetCancellationTokenOnDestroy());
         }
 
         private void OnDestroy()
@@ -263,11 +265,11 @@ namespace NineGrid.Cards
             {
                 UnregisterCardAtSlot(slot);
                 RefreshSlotHitCollider(slot);
+                _exploreRunner?.StartExplore(slot);
                 return false;
             }
 
-            UnregisterCardAtSlot(slot);
-            RefreshSlotHitCollider(slot);
+            VacateSlotForExplore(slot, card, playRemoveAnim: false);
             return true;
         }
 
@@ -288,21 +290,69 @@ namespace NineGrid.Cards
             {
                 UnregisterCardAtSlot(slot);
                 RefreshSlotHitCollider(slot);
+                _exploreRunner?.StartExplore(slot);
                 return false;
             }
 
-            UnregisterCardAtSlot(slot);
-            RefreshSlotHitCollider(slot);
-
-            if (animate)
-            {
-                RemoveCardAnimatedAsync(card, slot, CancellationToken.None).Forget();
-            }
-            else
+            VacateSlotForExplore(slot, card, animate);
+            if (!animate)
             {
                 CardManagerSingleton.Instance.Release(uid);
             }
 
+            return true;
+        }
+
+        internal void VacateSlotForExplore(int slot, ManagedCard card, bool playRemoveAnim, bool skipBusyGuard = false)
+        {
+            if (!skipBusyGuard && _isBusy)
+            {
+                Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法清格探求。");
+                return;
+            }
+
+            if (!IsValidSlot(slot) || _uidBySlot[slot] == 0)
+            {
+                return;
+            }
+
+            UnregisterCardAtSlot(slot);
+            RefreshSlotHitCollider(slot);
+            _exploreRunner?.StartExplore(slot);
+
+            if (card == null)
+            {
+                return;
+            }
+
+            if (playRemoveAnim)
+            {
+                RemoveCardAnimatedAsync(card, slot, CancellationToken.None).Forget();
+            }
+        }
+
+        internal bool PlaceForExplore(int slot, ManagedCard card)
+        {
+            if (card == null || !IsPlaceable(slot))
+            {
+                return false;
+            }
+
+            RegisterCardAtSlot(slot, card.Uid);
+            CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.GroundCardMode);
+            RefreshSlotHitCollider(slot);
+            return true;
+        }
+
+        internal bool TryGetExploreAnchorPosition(int slot, out Vector3 position)
+        {
+            position = default;
+            if (!TryGetAnchor(slot, out var anchor) || anchor == null)
+            {
+                return false;
+            }
+
+            position = anchor.position;
             return true;
         }
 
@@ -313,6 +363,8 @@ namespace NineGrid.Cards
                 Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法清场。");
                 return;
             }
+
+            _exploreRunner?.CancelAll();
 
             var cardManager = CardManagerSingleton.Instance;
             for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
@@ -330,13 +382,25 @@ namespace NineGrid.Cards
 
         public void OnEmptySlotClicked(int slot)
         {
-            if (!IsEmpty(slot))
+            TryHandleEmptySlotClick(slot);
+        }
+
+        public bool TryHandleEmptySlotClick(int slot)
+        {
+            if (_isBusy)
             {
-                return;
+                return false;
             }
 
-            Debug.Log($"[GroundFieldManager] 空槽点击: slot={slot}");
+            if (!IsEmpty(slot) || !IsAvatarOrthogonalBattleSlot(slot))
+            {
+                return false;
+            }
+
+            Debug.Log($"[GroundFieldManager] 空槽点击旋转: slot={slot}");
             EmptySlotClicked?.Invoke(slot);
+            RotateOuterRingClockwiseAsync().Forget();
+            return true;
         }
 
         public CardAttackBasicAdapter AttackAdapter => attackAdapter;
@@ -440,6 +504,8 @@ namespace NineGrid.Cards
                     var toSlot = ring[toIndex];
                     RegisterCardAtSlot(toSlot, uids[i]);
                 }
+
+                _exploreRunner?.OnRingShifted(clockwise);
 
                 var moveTasks = new List<UniTask>();
                 for (var i = 0; i < ring.Count; i++)
@@ -645,7 +711,10 @@ namespace NineGrid.Cards
                 return;
             }
 
-            proxy.SetHitEnabled(IsEmpty(slot) && !GroundSlotTopology.IsAvatarReserved(slot));
+            proxy.SetHitEnabled(
+                IsEmpty(slot)
+                && !GroundSlotTopology.IsAvatarReserved(slot)
+                && IsAvatarOrthogonalBattleSlot(slot));
         }
 
         private bool TryGetAnchor(int slot, out Transform anchor)
@@ -708,9 +777,9 @@ namespace NineGrid.Cards
                 if (lethal)
                 {
                     CardManagerSingleton.Instance.MarkFieldDead(victim);
+                    VacateSlotForExplore(victimSlot, victim, playRemoveAnim: true, skipBusyGuard: true);
+                    await RotateOuterRingInternalAsync(true, cancellationToken, skipBusyGuard: true);
                 }
-
-                await RotateOuterRingInternalAsync(true, cancellationToken, skipBusyGuard: true);
             }
             finally
             {

@@ -171,5 +171,52 @@ namespace NineGrid.Cards
         {
             await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
         }
+
+        /// <summary>
+        /// 每帧追可变锚点，直到进入就位阈值或 shouldContinue 返回 false。
+        /// </summary>
+        public static async UniTask ChaseAnchorAsync(
+            Transform target,
+            Func<Vector3> getTarget,
+            float moveSpeed,
+            float arriveThreshold,
+            CancellationToken cancellationToken = default,
+            Func<bool> shouldContinue = null)
+        {
+            if (target == null || getTarget == null)
+            {
+                return;
+            }
+
+            KillMotion(target);
+
+            var thresholdSqr = arriveThreshold * arriveThreshold;
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                if (target == null)
+                {
+                    return;
+                }
+
+                if (shouldContinue != null && !shouldContinue())
+                {
+                    return;
+                }
+
+                var destination = getTarget();
+                var current = target.position;
+                if ((current - destination).sqrMagnitude <= thresholdSqr)
+                {
+                    target.position = destination;
+                    return;
+                }
+
+                target.position = Vector3.MoveTowards(
+                    current,
+                    destination,
+                    moveSpeed * Time.deltaTime);
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+            }
+        }
     }
 }

@@ -35,6 +35,8 @@ namespace NineGrid.DevTest.Cards
             builder
                 .Bind(KeyCode.Keypad4, "外圈全体顺时针旋转", () => RunRotateOuterRingAsync().Forget())
                 .Bind(KeyCode.Keypad5, "随机移除场中1张", () => RunRandomRemoveAsync().Forget())
+                .Bind(KeyCode.Keypad6, "即死击杀相邻怪", () => RunLethalAttackAdjacentAsync().Forget())
+                .Bind(KeyCode.Keypad7, "移除1张并立即旋转", () => RunRemoveAndRotateAsync().Forget())
                 .Bind(KeyCode.Keypad8, "下一次交战即死", ArmNextLethalAttack);
         }
 
@@ -89,6 +91,63 @@ namespace NineGrid.DevTest.Cards
 
             field.RequestRemoveFromField(card.Uid, animate: true);
             await UniTask.CompletedTask;
+        }
+
+        private async UniTaskVoid RunLethalAttackAdjacentAsync()
+        {
+            var field = ResolveFieldManager();
+            if (field == null)
+            {
+                return;
+            }
+
+            if (field.IsBusy)
+            {
+                Debug.LogWarning("[GroundFieldManagerDevKeys] 场地管理器忙碌，请稍后再试。");
+                return;
+            }
+
+            field.ArmNextLethalAttack(true);
+
+            var avatarSlot = GroundSlotTopology.AvatarReservedSlot;
+            var neighbors = GroundSlotTopology.GetNeighbors(avatarSlot, GroundSlotRelation.Orthogonal);
+            for (var i = 0; i < neighbors.Count; i++)
+            {
+                var slot = neighbors[i];
+                if (!field.TryGetCardAt(slot, out var card) || card.IsFieldDead)
+                {
+                    continue;
+                }
+
+                await field.RequestBasicAttackAtSlotAsync(slot);
+                return;
+            }
+
+            Debug.LogWarning("[GroundFieldManagerDevKeys] Avatar 四向相邻格无可用交战目标。");
+        }
+
+        private async UniTaskVoid RunRemoveAndRotateAsync()
+        {
+            var field = ResolveFieldManager();
+            if (field == null)
+            {
+                return;
+            }
+
+            if (field.IsBusy)
+            {
+                Debug.LogWarning("[GroundFieldManagerDevKeys] 场地管理器忙碌，请稍后再试。");
+                return;
+            }
+
+            if (!field.TryGetRandomOccupiedCard(out var card))
+            {
+                Debug.LogWarning("[GroundFieldManagerDevKeys] 场上无卡牌可移除。");
+                return;
+            }
+
+            field.RequestRemoveFromField(card.Uid, animate: true);
+            await field.RotateOuterRingClockwiseAsync();
         }
 
         private GroundFieldManagerSingleton ResolveFieldManager()

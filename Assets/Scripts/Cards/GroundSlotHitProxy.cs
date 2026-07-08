@@ -55,7 +55,13 @@ namespace NineGrid.Cards
             }
 
             var field = GroundFieldManagerSingleton.Instance;
-            if (field == null)
+            if (field == null || field.IsBusy)
+            {
+                return;
+            }
+
+            var hand = CardHandManagerSingleton.Instance;
+            if (hand != null && (hand.IsBusy || hand.IsDragging))
             {
                 return;
             }
