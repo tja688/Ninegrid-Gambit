@@ -3,6 +3,7 @@
     "rootNamespace": "NineGrid.Flow",
     "references": [
         "NineGrid.Cards",
+        "NineGrid.Content",
         "NineGrid.Core",
         "QFramework",
         "UniTask"
@@ -10,8 +11,10 @@
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "DOTween.dll"
+    ],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],

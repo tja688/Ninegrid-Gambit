@@ -73,6 +73,22 @@ namespace NineGrid.DevTest.Editor
                 $"{Root}/Layer_InBattleManager.asset");
         }
 
+        [MenuItem("NineGrid/DevTest/Create Selector Manager Test Layer")]
+        public static void CreateSelectorManagerLayer()
+        {
+            CreateOrUpdateLayerAsHighestPriority(
+                $"{Root}/Layer_SelectorManager.asset",
+                "selector-manager",
+                "选择器管理器测试",
+                new[]
+                {
+                    (KeyCode.Keypad9, "弹出Bounce三选一"),
+                });
+
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<TestKeyLayerProfileSO>(
+                $"{Root}/Layer_SelectorManager.asset");
+        }
+
         [MenuItem("NineGrid/DevTest/Create Ground Field Manager Test Layer")]
         public static void CreateGroundFieldManagerLayer()
         {

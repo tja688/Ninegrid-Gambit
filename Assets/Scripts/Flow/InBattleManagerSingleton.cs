@@ -27,6 +27,12 @@ namespace NineGrid.Flow
         [Tooltip("运行时自动查找 GroundFieldManagerSingleton.Instance；也可手动拖入覆盖。")]
         [SerializeField] private GroundFieldManagerSingleton fieldManager;
 
+        [Tooltip("运行时自动查找 RelicManagerSingleton.Instance；也可手动拖入覆盖。")]
+        [SerializeField] private RelicManagerSingleton relicManager;
+
+        [Tooltip("运行时自动查找 PlayerSkillManagerSingleton.Instance；也可手动拖入覆盖。")]
+        [SerializeField] private PlayerSkillManagerSingleton skillManager;
+
         private bool _isBusy;
         private bool _settlementRaised;
         private bool _fieldSignalSubscribed;
@@ -86,6 +92,7 @@ namespace NineGrid.Flow
                 ? InitialGameFactory.Create(arch, options)
                 : InitialGameFactory.Create(arch);
 
+            SyncContentPanels();
             _settlementRaised = false;
             Debug.Log($"[InBattleManager] BootstrapRun 完成 avatar=#{snapshot.AvatarUid} @{snapshot.AvatarSlot}");
             return snapshot;
@@ -179,6 +186,7 @@ namespace NineGrid.Flow
                 ResetPresentationSurface();
                 var plan = CaptureOpeningPresentationPlan(arch);
                 await PresentOpeningAsync(plan, cancellationToken);
+                SyncContentPanels();
 
                 TryEnterNodeSettlement();
             }
@@ -384,6 +392,15 @@ namespace NineGrid.Flow
             deckManager?.ResetToStandby();
             fieldManager?.ClearField();
             cardManager?.ReleaseAll();
+            relicManager?.Clear();
+            skillManager?.Clear();
+        }
+
+        private void SyncContentPanels()
+        {
+            ResolveManagers();
+            relicManager?.SyncFromCore();
+            skillManager?.SyncFromCore();
         }
 
         private void ResolveManagers()
@@ -401,6 +418,16 @@ namespace NineGrid.Flow
             if (fieldManager == null)
             {
                 fieldManager = GroundFieldManagerSingleton.Instance;
+            }
+
+            if (relicManager == null)
+            {
+                relicManager = RelicManagerSingleton.Instance;
+            }
+
+            if (skillManager == null)
+            {
+                skillManager = PlayerSkillManagerSingleton.Instance;
             }
         }
 
