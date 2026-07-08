@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -147,6 +148,62 @@ namespace NineGrid.DevTest.Tests
             _manager.DetachLayer("card");
             Assert.That(_manager.TryGetOwner(KeyCode.Alpha1, out var owner), Is.True);
             Assert.That(owner, Is.EqualTo("hand"));
+        }
+
+        [Test]
+        public void GetAllRegisteredActions_IncludesOverflowBindings()
+        {
+            var stack = CreateStack(
+                CreateLayerProfile("hand", "hand"),
+                CreateLayerProfile("card", "card"));
+            _manager.SetStack(stack);
+
+            _manager.AttachLayer("hand", new Dictionary<KeyCode, TestKeyBinding>
+            {
+                { KeyCode.Alpha1, new TestKeyBinding("hand-1", () => { }) },
+                { KeyCode.Alpha2, new TestKeyBinding("hand-2", () => { }) },
+            });
+
+            _manager.AttachLayer("card", new Dictionary<KeyCode, TestKeyBinding>
+            {
+                { KeyCode.Alpha1, new TestKeyBinding("card-1", () => { }) },
+            });
+
+            var actions = _manager.GetAllRegisteredActions();
+
+            Assert.That(actions.Count, Is.EqualTo(3));
+            Assert.That(actions.Any(action => action.LayerId == "hand" && action.Key == KeyCode.Alpha1 && !action.IsKeypadActive), Is.True);
+            Assert.That(actions.Any(action => action.LayerId == "card" && action.Key == KeyCode.Alpha1 && action.IsKeypadActive), Is.True);
+        }
+
+        [Test]
+        public void TryInvokeRegisteredAction_InvokesOverflowBinding()
+        {
+            var handHits = 0;
+            var cardHits = 0;
+
+            var stack = CreateStack(
+                CreateLayerProfile("hand", "hand"),
+                CreateLayerProfile("card", "card"));
+            _manager.SetStack(stack);
+
+            _manager.AttachLayer("hand", new Dictionary<KeyCode, TestKeyBinding>
+            {
+                { KeyCode.Alpha1, new TestKeyBinding("hand-1", () => handHits++) },
+            });
+
+            _manager.AttachLayer("card", new Dictionary<KeyCode, TestKeyBinding>
+            {
+                { KeyCode.Alpha1, new TestKeyBinding("card-1", () => cardHits++) },
+            });
+
+            Assert.That(_manager.TryInvokeRegisteredAction("hand", KeyCode.Alpha1), Is.True);
+            Assert.That(handHits, Is.EqualTo(1));
+            Assert.That(cardHits, Is.EqualTo(0));
+
+            _manager.ActiveBindings[KeyCode.Alpha1].Invoke();
+            Assert.That(cardHits, Is.EqualTo(1));
+            Assert.That(handHits, Is.EqualTo(1));
         }
 
         private static TestKeyLayerProfileSO CreateLayerProfile(string layerId, string displayName)

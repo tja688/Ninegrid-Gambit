@@ -208,6 +208,54 @@ namespace NineGrid.DevTest
             return result;
         }
 
+        /// <summary>
+        /// 列出所有已挂载层的测试动作（含小键盘溢出项）。顺序与级联栈一致。
+        /// </summary>
+        public IReadOnlyList<TestKeyRegisteredAction> GetAllRegisteredActions()
+        {
+            var result = new List<TestKeyRegisteredAction>();
+            var visited = new HashSet<string>(StringComparer.Ordinal);
+
+            AppendLayerActions(result, visited, _stackOrder);
+
+            foreach (var pair in _layers)
+            {
+                if (visited.Add(pair.Key))
+                {
+                    AppendLayerActions(result, pair.Key, pair.Value);
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 直接触发指定层的测试动作，不受小键盘级联与键位冲突限制。
+        /// </summary>
+        public bool TryInvokeRegisteredAction(string layerId, KeyCode key)
+        {
+            if (!_layers.TryGetValue(layerId, out var state))
+            {
+                return false;
+            }
+
+            if (!state.Bindings.TryGetValue(key, out var binding))
+            {
+                return false;
+            }
+
+            try
+            {
+                binding.Invoke();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                return false;
+            }
+        }
+
         public void PollInput()
         {
             if (_activeBindings.Count == 0)
@@ -290,6 +338,43 @@ namespace NineGrid.DevTest
         private void RaiseChanged()
         {
             Changed?.Invoke();
+        }
+
+        private void AppendLayerActions(
+            List<TestKeyRegisteredAction> result,
+            HashSet<string> visited,
+            IReadOnlyList<string> layerIds)
+        {
+            for (var i = 0; i < layerIds.Count; i++)
+            {
+                var layerId = layerIds[i];
+                if (!visited.Add(layerId))
+                {
+                    continue;
+                }
+
+                if (_layers.TryGetValue(layerId, out var state))
+                {
+                    AppendLayerActions(result, layerId, state);
+                }
+            }
+        }
+
+        private void AppendLayerActions(
+            List<TestKeyRegisteredAction> result,
+            string layerId,
+            TestKeyLayerRuntimeState state)
+        {
+            foreach (var pair in state.Bindings)
+            {
+                var isActive = _activeBindings.TryGetValue(pair.Key, out var active) && active.LayerId == layerId;
+                result.Add(new TestKeyRegisteredAction(
+                    layerId,
+                    state.DisplayName,
+                    pair.Key,
+                    pair.Value.Label,
+                    isActive));
+            }
         }
     }
 }
