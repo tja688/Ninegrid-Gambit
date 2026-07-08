@@ -28,14 +28,17 @@ namespace NineGrid.Cards
         public Vector2 slotHitBoxSize = new(1.6f, 2.2f);
 
         [Header("Empty Slot Explore")]
-        [Tooltip("空牌位探求追锚点移动速度（世界单位/秒）。")]
-        public float exploreMoveSpeed = 12f;
+        [Tooltip("空牌位探求指数追锚响应强度（1/秒）。越大越快；约 20–28 对应先快后慢、总时约为线性 12u/s 的 1/2～1/3。旋转跳变锚点时会自动再加速。")]
+        public float exploreChaseResponsiveness = 24f;
 
-        [Tooltip("空牌位探求就位判定距离（世界单位）。")]
-        public float exploreArriveThreshold = 0.08f;
+        [Tooltip("空牌位探求单帧最大位移（世界单位）。≤0 表示不封顶，仅走指数缓动。")]
+        public float exploreChaseMaxStep = 0f;
+
+        [Tooltip("空牌位探求就位判定距离（世界单位）；到达后贴齐锚点。")]
+        public float exploreArriveThreshold = 0.04f;
 
         [Tooltip("多条探求依次启动的最小间隔（秒），贴近补牌防抖。")]
-        public float exploreDealInterval = 0.06f;
+        public float exploreDealInterval = 0.04f;
 
         [Header("Hover")]
         [Tooltip("场地卡 hover 时 localScale 相对基准的放大增量（如 0.05 表示约为 1.05 倍）。")]

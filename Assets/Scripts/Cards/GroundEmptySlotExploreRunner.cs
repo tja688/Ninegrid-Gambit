@@ -101,10 +101,11 @@ namespace NineGrid.Cards
                 await CardDeckTween.ChaseAnchorAsync(
                     card.Transform,
                     () => _field.TryGetExploreAnchorPosition(probe.TrackedSlot, out var pos) ? pos : card.Transform.position,
-                    settings.exploreMoveSpeed,
+                    settings.exploreChaseResponsiveness,
                     settings.exploreArriveThreshold,
                     token,
-                    () => probe.Card != null && _field.IsPlaceable(probe.TrackedSlot));
+                    () => probe.Card != null && _field.IsPlaceable(probe.TrackedSlot),
+                    settings.exploreChaseMaxStep);
 
                 if (token.IsCancellationRequested || probe.Card == null)
                 {

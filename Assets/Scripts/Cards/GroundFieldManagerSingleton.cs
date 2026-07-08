@@ -628,6 +628,56 @@ namespace NineGrid.Cards
             CardManagerSingleton.Instance.Release(card.Uid);
         }
 
+        /// <summary>
+        /// 即死交战已在 rig 时间轴内触发死亡特效，此处仅等待播完再 Release，避免重复播死亡或 Refresh 诈尸。
+        /// </summary>
+        private async UniTask FinalizeLethalVictimAsync(ManagedCard card, CancellationToken cancellationToken)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            if (card.TryGetEffectManager(out var effectManager))
+            {
+                await WaitForEffectIdleAsync(effectManager, cancellationToken);
+            }
+            else if (card.Transform != null)
+            {
+                var initialScale = card.Transform.localScale;
+                await RunViewTweenAsync(
+                    CardViewTween.ScaleDisappear(
+                        card.Transform,
+                        initialScale,
+                        layoutSettings.removeDisappearDuration),
+                    cancellationToken);
+            }
+
+            if (card.Transform != null)
+            {
+                CardManagerSingleton.Instance.Release(card.Uid);
+            }
+        }
+
+        private static async UniTask WaitForEffectIdleAsync(
+            CardEffectManager effectManager,
+            CancellationToken cancellationToken)
+        {
+            const float startupGraceSeconds = 0.15f;
+            var deadline = Time.time + startupGraceSeconds;
+            while (!effectManager.IsPlaying && Time.time < deadline)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+            }
+
+            while (effectManager.IsPlaying)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+            }
+        }
+
         private static async UniTask RunViewTweenAsync(IEnumerator routine, CancellationToken cancellationToken)
         {
             if (routine == null)
@@ -777,9 +827,11 @@ namespace NineGrid.Cards
                 if (lethal)
                 {
                     CardManagerSingleton.Instance.MarkFieldDead(victim);
-                    VacateSlotForExplore(victimSlot, victim, playRemoveAnim: true, skipBusyGuard: true);
-                    await RotateOuterRingInternalAsync(true, cancellationToken, skipBusyGuard: true);
+                    VacateSlotForExplore(victimSlot, victim, playRemoveAnim: false, skipBusyGuard: true);
+                    FinalizeLethalVictimAsync(victim, cancellationToken).Forget();
                 }
+
+                await RotateOuterRingInternalAsync(true, cancellationToken, skipBusyGuard: true);
             }
             finally
             {

@@ -105,8 +105,11 @@ namespace NineGrid.Cards
             }
             finally
             {
-                rig.ResetParticipantMotion(attacker, victimTransform);
-                CardManagerSingleton.Instance?.RefreshDisplayMode(victim);
+                rig.ResetParticipantMotion(attacker, lethal ? null : victimTransform);
+                if (!lethal)
+                {
+                    CardManagerSingleton.Instance?.RefreshDisplayMode(victim);
+                }
             }
         }
 

@@ -173,15 +173,17 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 每帧追可变锚点，直到进入就位阈值或 shouldContinue 返回 false。
+        /// 指数缓动追可变锚点：远时快、近时慢（OutCubic 手感）；锚点跳变后会自动再加速。
+        /// 位移公式：pos = Lerp(pos, dest, 1 - exp(-responsiveness * dt))。
         /// </summary>
         public static async UniTask ChaseAnchorAsync(
             Transform target,
             Func<Vector3> getTarget,
-            float moveSpeed,
+            float responsiveness,
             float arriveThreshold,
             CancellationToken cancellationToken = default,
-            Func<bool> shouldContinue = null)
+            Func<bool> shouldContinue = null,
+            float maxStep = 0f)
         {
             if (target == null || getTarget == null)
             {
@@ -191,6 +193,7 @@ namespace NineGrid.Cards
             KillMotion(target);
 
             var thresholdSqr = arriveThreshold * arriveThreshold;
+            var lambda = Mathf.Max(0.01f, responsiveness);
             while (!cancellationToken.IsCancellationRequested)
             {
                 if (target == null)
@@ -205,16 +208,25 @@ namespace NineGrid.Cards
 
                 var destination = getTarget();
                 var current = target.position;
-                if ((current - destination).sqrMagnitude <= thresholdSqr)
+                var delta = destination - current;
+                if (delta.sqrMagnitude <= thresholdSqr)
                 {
                     target.position = destination;
                     return;
                 }
 
-                target.position = Vector3.MoveTowards(
-                    current,
-                    destination,
-                    moveSpeed * Time.deltaTime);
+                var t = 1f - Mathf.Exp(-lambda * Time.deltaTime);
+                var step = delta * Mathf.Clamp01(t);
+                if (maxStep > 0f)
+                {
+                    var stepLen = step.magnitude;
+                    if (stepLen > maxStep)
+                    {
+                        step *= maxStep / stepLen;
+                    }
+                }
+
+                target.position = current + step;
                 await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
             }
         }
