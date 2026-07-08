@@ -48,13 +48,29 @@ namespace NineGrid.DevTest.Cards
                 return;
             }
 
-            var cards = CardManagerSingleton.Instance.SpawnMany(
+            var cardManager = CardManagerSingleton.Instance;
+            var cards = cardManager.SpawnMany(
                 CardManagerSingleton.StandardDefId,
                 DefaultEntryCardCount,
                 initialMode: CardDisplayMode.CardDeckMode);
 
             manager.InjectDeck(cards);
             await manager.BeginEntryAsync();
+
+            var avatar = cardManager.Spawn(
+                CardManagerSingleton.StandardDefId,
+                initialMode: CardDisplayMode.GroundCardMode);
+            var field = GroundFieldManagerSingleton.Instance;
+            if (field != null)
+            {
+                field.RequestRevealAvatarAsync(avatar).Forget();
+            }
+            else
+            {
+                Debug.LogWarning("[CardDeckManagerDevKeys] 未找到 GroundFieldManagerSingleton，跳过 Avatar 入场。");
+                cardManager.Release(avatar);
+            }
+
             manager.DealOpeningRing();
         }
 

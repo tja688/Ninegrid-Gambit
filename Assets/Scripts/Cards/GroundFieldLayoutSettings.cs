@@ -24,6 +24,9 @@ namespace NineGrid.Cards
         [Tooltip("移除卡牌时缩小消失时长（秒）。")]
         public float removeDisappearDuration = 0.18f;
 
+        [Tooltip("Avatar（格5）入场缩放出现时长（秒）。与开局外圈发牌并行时建议与牌组 moveDuration 同量级。")]
+        public float avatarRevealDuration = 0.28f;
+
         [Tooltip("空槽点击 BoxCollider2D 尺寸（世界单位）。")]
         public Vector2 slotHitBoxSize = new(1.6f, 2.2f);
 

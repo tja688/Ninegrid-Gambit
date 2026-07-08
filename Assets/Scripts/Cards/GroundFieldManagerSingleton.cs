@@ -202,6 +202,75 @@ namespace NineGrid.Cards
             return true;
         }
 
+        /// <summary>
+        /// Avatar 专用入场：登记到格5并播缩放出现。不走 <see cref="IsPlaceable"/>，不锁 busy，便于与开局外圈发牌并行。
+        /// </summary>
+        public UniTask RequestRevealAvatarAsync(ManagedCard avatar, CancellationToken cancellationToken = default)
+        {
+            return RequestRevealAvatarInternalAsync(avatar, cancellationToken);
+        }
+
+        private async UniTask RequestRevealAvatarInternalAsync(
+            ManagedCard avatar,
+            CancellationToken cancellationToken)
+        {
+            if (_isBusy)
+            {
+                Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法揭示 Avatar。");
+                return;
+            }
+
+            if (avatar == null)
+            {
+                Debug.LogWarning("[GroundFieldManager] Avatar 卡为空，无法揭示。");
+                return;
+            }
+
+            var slot = GroundSlotTopology.AvatarReservedSlot;
+            if (!IsEmpty(slot))
+            {
+                Debug.LogWarning($"[GroundFieldManager] Avatar 格位已被占用: slot={slot}");
+                return;
+            }
+
+            if (!TryGetAnchor(slot, out var anchor) || anchor == null)
+            {
+                Debug.LogWarning($"[GroundFieldManager] Avatar 锚点缺失: slot={slot}");
+                return;
+            }
+
+            RegisterCardAtSlot(slot, avatar.Uid);
+            var cardManager = CardManagerSingleton.Instance;
+            cardManager.SetDisplayMode(avatar, CardDisplayMode.GroundCardMode);
+            avatar.Transform.position = anchor.position;
+            RefreshSlotHitCollider(slot);
+
+            var finalScale = CardDisplayModeVisuals.GetBaseLocalScale(CardDisplayMode.GroundCardMode);
+            avatar.Transform.localScale = Vector3.zero;
+
+            var duration = layoutSettings != null ? layoutSettings.avatarRevealDuration : 0.28f;
+            try
+            {
+                await RunViewTweenAsync(
+                    CardViewTween.ScaleAppear(avatar.Transform, finalScale, duration),
+                    cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                if (avatar.Transform != null)
+                {
+                    avatar.Transform.localScale = finalScale;
+                }
+
+                throw;
+            }
+
+            if (avatar.Transform != null)
+            {
+                cardManager.RefreshDisplayMode(avatar);
+            }
+        }
+
         public bool RequestMoveCard(int fromSlot, int toSlot, bool animate)
         {
             if (_isBusy)
