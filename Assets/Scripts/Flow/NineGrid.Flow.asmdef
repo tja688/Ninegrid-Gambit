@@ -1,10 +1,10 @@
 {
-    "name": "NineGrid.DevTest",
-    "rootNamespace": "NineGrid.DevTest",
+    "name": "NineGrid.Flow",
+    "rootNamespace": "NineGrid.Flow",
     "references": [
         "NineGrid.Cards",
         "NineGrid.Core",
-        "NineGrid.Flow",
+        "QFramework",
         "UniTask"
     ],
     "includePlatforms": [],

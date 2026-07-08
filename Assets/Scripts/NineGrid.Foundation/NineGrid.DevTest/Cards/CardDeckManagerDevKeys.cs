@@ -35,7 +35,7 @@ namespace NineGrid.DevTest.Cards
         protected override void ConfigureBindings(TestKeyRegistrationBuilder builder)
         {
             builder
-                .Bind(KeyCode.Keypad1, "卡组入场+开局发牌", () => RunEntryAndOpeningDealAsync().Forget())
+                .Bind(KeyCode.Keypad1, "纯表现入场+开局发牌", () => RunEntryAndOpeningDealAsync().Forget())
                 .Bind(KeyCode.Keypad2, "清场+随机发1张", () => RunSingleDealAsync().Forget())
                 .Bind(KeyCode.Keypad3, "随机槽位增卡", () => RunRandomAddCardAsync().Forget());
         }

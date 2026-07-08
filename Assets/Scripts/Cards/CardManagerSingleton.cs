@@ -147,8 +147,14 @@ namespace NineGrid.Cards
 
             if (!_defPrefabs.TryGetValue(defId, out var prefab) || prefab == null)
             {
-                Debug.LogError($"[CardManagerSingleton] 未找到 DefId 对应预制体: {defId}");
-                return null;
+                if (!_defPrefabs.TryGetValue(StandardDefId, out prefab) || prefab == null)
+                {
+                    Debug.LogError($"[CardManagerSingleton] 未找到 DefId 对应预制体: {defId}");
+                    return null;
+                }
+
+                Debug.LogWarning(
+                    $"[CardManagerSingleton] DefId {defId} 无专用预制体，回退 Standard Card。");
             }
 
             TrackUid(uid);

@@ -144,6 +144,39 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 按 Uid 从卡组取出并放到指定 Ground 格（1-based，仅 InGame）。对齐内核盘面就位用。
+        /// </summary>
+        public bool DealCardByUid(int uid, int groundSlot)
+        {
+            if (!EnsureInGameForDeal())
+            {
+                return false;
+            }
+
+            for (var i = 0; i < layoutSettings.maxSlots; i++)
+            {
+                if (_slotContainer.TryGetCardAt(i, out var card) && card != null && card.Uid == uid)
+                {
+                    return TryDealCard(i, groundSlot);
+                }
+            }
+
+            Debug.LogError($"[CardDeckManager] 卡组中未找到 Uid={uid}，无法就位到格 {groundSlot}。");
+            return false;
+        }
+
+        /// <summary>
+        /// 清卡组槽并回到 Standby，供局内重新开局前复位。不销毁卡视图（由 CardManager 统一释放）。
+        /// </summary>
+        public void ResetToStandby()
+        {
+            _pendingEntryCards.Clear();
+            _slotContainer.Clear();
+            CurrentMode = CardDeckMode.Standby;
+            _isBusy = false;
+        }
+
+        /// <summary>
         /// 批量发牌：按 groundSlots 顺序，每次从卡组最左侧连续取牌（1-based，仅 InGame）。
         /// </summary>
         public void DealCards(IReadOnlyList<int> groundSlots)

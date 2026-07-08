@@ -56,6 +56,23 @@ namespace NineGrid.DevTest.Editor
             }
         }
 
+        [MenuItem("NineGrid/DevTest/Create In Battle Manager Test Layer")]
+        public static void CreateInBattleManagerLayer()
+        {
+            CreateOrUpdateLayerAsHighestPriority(
+                $"{Root}/Layer_InBattleManager.asset",
+                "in-battle-manager",
+                "局内管理器测试",
+                new[]
+                {
+                    (KeyCode.Keypad1, "真实局内入场"),
+                    (KeyCode.Keypad2, "探测节点结算"),
+                });
+
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<TestKeyLayerProfileSO>(
+                $"{Root}/Layer_InBattleManager.asset");
+        }
+
         [MenuItem("NineGrid/DevTest/Create Ground Field Manager Test Layer")]
         public static void CreateGroundFieldManagerLayer()
         {

@@ -52,6 +52,11 @@ namespace NineGrid.Cards
 
         public event Action<int> EmptySlotClicked;
 
+        /// <summary>
+        /// 表现侧：非 Avatar 格上已无存活牌时抛出（不引用 Flow/Core；由局内管理器订阅并核对内核通关）。
+        /// </summary>
+        public event Action FieldMaybeClearSignal;
+
         private void Awake()
         {
             if (_instance != null && _instance != this)
@@ -776,6 +781,47 @@ namespace NineGrid.Cards
             }
 
             _uidBySlot[slot] = 0;
+            TryRaiseFieldMaybeClearSignal();
+        }
+
+        private void TryRaiseFieldMaybeClearSignal()
+        {
+            if (HasLivingNonAvatarCard())
+            {
+                return;
+            }
+
+            FieldMaybeClearSignal?.Invoke();
+        }
+
+        private bool HasLivingNonAvatarCard()
+        {
+            var cardManager = CardManagerSingleton.Instance;
+            for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
+            {
+                if (slot == GroundSlotTopology.AvatarReservedSlot)
+                {
+                    continue;
+                }
+
+                var uid = _uidBySlot[slot];
+                if (uid == 0)
+                {
+                    continue;
+                }
+
+                if (cardManager != null &&
+                    cardManager.TryGet(uid, out var card) &&
+                    card != null &&
+                    card.IsFieldDead)
+                {
+                    continue;
+                }
+
+                return true;
+            }
+
+            return false;
         }
 
         private void ClearSlotTable()
