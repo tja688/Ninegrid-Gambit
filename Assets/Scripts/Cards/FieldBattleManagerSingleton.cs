@@ -7,8 +7,9 @@ namespace NineGrid.Cards
 {
     /// <summary>
     /// 场地交战管理器单例：Intent → Catalog 路由 → Adapter 播 Rig → 终态 Guard。
+    /// 点击默认编排为「玩家进攻 →（未击杀则）怪物反击」，复用四项基础 Profile，不另建组合 Intent。
     /// 场地占用与旋转仍由 GroundFieldManagerSingleton 负责。
-    /// LEGACY：攻击后旋转等伪规则行为本轮保留，正式规则以未来 Core Batch 为准。
+    /// LEGACY：仅击杀后外圈旋转；正式规则以未来 Core Batch 为准。
     /// </summary>
     public sealed class FieldBattleManagerSingleton : MonoBehaviour
     {
@@ -98,6 +99,9 @@ namespace NineGrid.Cards
             return true;
         }
 
+        /// <summary>
+        /// 玩家进攻编排：播 Attack(/Lethal) Profile；未击杀则接播 CounterAttack Profile；仅击杀后外圈旋转。
+        /// </summary>
         public UniTask RequestBasicAttackAtSlotAsync(
             int victimSlot,
             bool? lethalOverride = null,
@@ -106,6 +110,9 @@ namespace NineGrid.Cards
             return RequestBasicAttackInternalAsync(victimSlot, lethalOverride, cancellationToken);
         }
 
+        /// <summary>
+        /// 仅怪物反击（DevTest Keypad1 等）。点击交战请走 <see cref="RequestBasicAttackAtSlotAsync"/>。
+        /// </summary>
         public UniTask RequestBasicCounterAttackAtSlotAsync(
             int attackerSlot,
             bool? lethalOverride = null,
@@ -154,22 +161,27 @@ namespace NineGrid.Cards
             }
 
             var lethal = lethalOverride ?? attackAdapter.ConsumeNextLethalArmed();
-            var intent = BattleIntentUtility.FromFlags(counter: false, lethal);
-            var bind = ResolveBindParams(intent, victim, out _);
+            var attackIntent = BattleIntentUtility.FromFlags(counter: false, lethal);
+            var attackBind = ResolveBindParams(attackIntent, victim, out _);
 
             _isBusy = true;
             try
             {
-                await attackAdapter.PlayBasicAttackAsync(victim, bind, cancellationToken);
+                await attackAdapter.PlayBasicAttackAsync(victim, attackBind, cancellationToken);
+
                 if (lethal)
                 {
                     CardManagerSingleton.Instance.MarkFieldDead(victim);
                     fieldManager.VacateSlotForExplore(victimSlot, victim, playRemoveAnim: false, skipBusyGuard: true);
                     FinalizeLethalVictimAsync(victim, cancellationToken).Forget();
+
+                    // LEGACY：仅击杀后旋转腾格；未击杀保留场上卡，正式规则待 Core Batch。
+                    await fieldManager.RotateOuterRingClockwiseWhileBusyAsync(cancellationToken);
+                    return;
                 }
 
-                // LEGACY：伪战斗路径攻击后几乎总旋转；正式规则应由 Core Batch 驱动。
-                await fieldManager.RotateOuterRingClockwiseWhileBusyAsync(cancellationToken);
+                // 复用独立 Counter Profile：后续调反击手感/变体时，点击交战自动吃到。
+                await PlayCounterAttackCoreAsync(victimSlot, lethal: false, cancellationToken);
             }
             finally
             {
@@ -191,51 +203,81 @@ namespace NineGrid.Cards
                 return;
             }
 
+            if (!TryValidateCounterParticipants(attackerSlot, out _))
+            {
+                return;
+            }
+
+            var lethal = lethalOverride ?? false;
+
+            _isBusy = true;
+            try
+            {
+                await PlayCounterAttackCoreAsync(attackerSlot, lethal, cancellationToken);
+            }
+            finally
+            {
+                _isBusy = false;
+            }
+        }
+
+        /// <summary>
+        /// 播反击 Rig；调用方负责忙碌锁。进攻编排在未击杀分支内复用本方法。
+        /// </summary>
+        private async UniTask PlayCounterAttackCoreAsync(
+            int attackerSlot,
+            bool lethal,
+            CancellationToken cancellationToken)
+        {
+            if (!TryValidateCounterParticipants(attackerSlot, out var attacker))
+            {
+                return;
+            }
+
+            var intent = BattleIntentUtility.FromFlags(counter: true, lethal);
+            var bind = ResolveBindParams(intent, attacker, out _);
+            await attackAdapter.PlayBasicCounterAttackAsync(attacker, bind, cancellationToken);
+        }
+
+        private bool TryValidateCounterParticipants(int attackerSlot, out ManagedCard attacker)
+        {
+            attacker = null;
+            ResolveFieldManager();
+            ResolveAttackAdapter();
+
             if (attackAdapter == null)
             {
                 Debug.LogWarning("[FieldBattleManager] 未配置 CardAttackBasicAdapter。");
-                return;
+                return false;
             }
 
             if (fieldManager == null)
             {
                 Debug.LogWarning("[FieldBattleManager] 未找到 GroundFieldManagerSingleton。");
-                return;
+                return false;
             }
 
             if (!fieldManager.IsAvatarOrthogonalBattleSlot(attackerSlot)
-                || !fieldManager.TryGetCardAt(attackerSlot, out var attacker))
+                || !fieldManager.TryGetCardAt(attackerSlot, out attacker))
             {
                 Debug.LogWarning($"[FieldBattleManager] 格位 {attackerSlot} 不可触发怪物反击。");
-                return;
+                return false;
             }
 
             if (attacker.IsFieldDead)
             {
                 Debug.LogWarning($"[FieldBattleManager] 格位 {attackerSlot} 卡牌已死亡。");
-                return;
+                return false;
             }
 
             if (!fieldManager.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
                 || avatar.IsFieldDead)
             {
                 Debug.LogWarning("[FieldBattleManager] Avatar 不可用，无法触发反击。");
-                return;
+                return false;
             }
 
-            var lethal = lethalOverride ?? false;
-            var intent = BattleIntentUtility.FromFlags(counter: true, lethal);
-            var bind = ResolveBindParams(intent, attacker, out _);
-
-            _isBusy = true;
-            try
-            {
-                await attackAdapter.PlayBasicCounterAttackAsync(attacker, bind, cancellationToken);
-            }
-            finally
-            {
-                _isBusy = false;
-            }
+            return true;
         }
 
         private BattleBindParams ResolveBindParams(
