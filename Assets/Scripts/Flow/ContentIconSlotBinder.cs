@@ -76,6 +76,7 @@ namespace NineGrid.Flow
 
                 slot.sprite = sprite;
                 slot.enabled = true;
+                BindHitProxy(slot, defIds[i]);
             }
         }
 
@@ -99,6 +100,23 @@ namespace NineGrid.Flow
         {
             slot.sprite = null;
             slot.enabled = false;
+            BindHitProxy(slot, string.Empty);
+        }
+
+        private static void BindHitProxy(SpriteRenderer slot, string defId)
+        {
+            if (slot == null)
+            {
+                return;
+            }
+
+            var proxy = slot.GetComponent<ContentIconSlotHitProxy>();
+            if (proxy == null)
+            {
+                return;
+            }
+
+            proxy.DefId = defId ?? string.Empty;
         }
     }
 }

@@ -4,7 +4,6 @@ using NineGrid.Core;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using QFramework;
-using TMPro;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -104,33 +103,9 @@ namespace NineGrid.Flow
 
         public static void UpdateAvatarDebugText(UiPanelRouter router)
         {
-            if (router == null)
-            {
-                return;
-            }
-
-            router.EnsureBindings();
-            var root = router.InGameInfoText;
-            if (root == null)
-            {
-                return;
-            }
-
-            var text = root.GetComponentInChildren<TextMeshProUGUI>(true);
-            if (text == null)
-            {
-                return;
-            }
-
-            var arch = NineGridArchitecture.Current;
-            var avatarUid = arch.GetModel<BoardModel>().AvatarUid.Value;
-            if (avatarUid <= 0 || !TryRead(avatarUid, out var read))
-            {
-                text.text = string.Empty;
-                return;
-            }
-
-            text.text = $"Avatar HP {read.Hp} / Armor {read.Armor}";
+            // Card Info Text 已专用于悬停描述；不再向 InGameInfoText 子 TMP 写入 Avatar 调试串。
+            // 玩家数值由 PlayerInfoText 下 HpText / AttackText 等正式 UI 负责。
+            _ = router;
         }
 
         private static void ApplyVisuals(StandardCardView view, string defId, CardPresentationKind kind)

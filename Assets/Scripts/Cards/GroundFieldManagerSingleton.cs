@@ -9,6 +9,7 @@ namespace NineGrid.Cards
 {
     /// <summary>
     /// 场地卡管理器单例：9 格占用权威、放置申请、外圈旋转表演、方位查询与空槽点击。
+    /// 基础交战编排已抽至 <see cref="FieldBattleManagerSingleton"/>。
     /// </summary>
     public sealed class GroundFieldManagerSingleton : MonoBehaviour
     {
@@ -21,10 +22,6 @@ namespace NineGrid.Cards
         [Header("Layout")]
         [Tooltip("场地布局与动效参数。")]
         [SerializeField] private GroundFieldLayoutSettings layoutSettings = new();
-
-        [Header("Battle Presentation")]
-        [Tooltip("CardAttack 节点上的基础交战适配器；留空时 Awake 在子节点 Performance/CardAttack 自动查找。")]
-        [SerializeField] private CardAttackBasicAdapter attackAdapter;
 
         private readonly int[] _uidBySlot = new int[GroundSlotTopology.MaxSlot + 1];
         private readonly Dictionary<int, int> _slotByUid = new();
@@ -46,7 +43,22 @@ namespace NineGrid.Cards
             }
         }
 
-        public bool IsBusy => _isBusy;
+        /// <summary>
+        /// 场地自身忙碌，或交战管理器忙碌（保持原有 IsBusy 语义，供 hover/点击门禁使用）。
+        /// </summary>
+        public bool IsBusy
+        {
+            get
+            {
+                var battle = FieldBattleManagerSingleton.Instance;
+                return _isBusy || (battle != null && battle.IsBusy);
+            }
+        }
+
+        /// <summary>
+        /// 仅场地自身忙碌（不含交战），供交战管理器判断是否可开打。
+        /// </summary>
+        public bool IsFieldBusy => _isBusy;
 
         public GroundFieldLayoutSettings LayoutSettings => layoutSettings;
 
@@ -68,7 +80,6 @@ namespace NineGrid.Cards
             _instance = this;
             ClearSlotTable();
             ResolveSceneReferences();
-            ResolveAttackAdapter();
             CacheAnchors();
             EnsureSlotHitProxies();
             RefreshAllSlotHitColliders();
@@ -184,7 +195,7 @@ namespace NineGrid.Cards
 
         public bool RequestPlaceCard(int slot, ManagedCard card)
         {
-            if (_isBusy)
+            if (IsBusy)
             {
                 Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法接受放置申请。");
                 return false;
@@ -219,7 +230,7 @@ namespace NineGrid.Cards
             ManagedCard avatar,
             CancellationToken cancellationToken)
         {
-            if (_isBusy)
+            if (IsBusy)
             {
                 Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法揭示 Avatar。");
                 return;
@@ -278,7 +289,7 @@ namespace NineGrid.Cards
 
         public bool RequestMoveCard(int fromSlot, int toSlot, bool animate)
         {
-            if (_isBusy)
+            if (IsBusy)
             {
                 Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法移动卡牌。");
                 return false;
@@ -324,7 +335,7 @@ namespace NineGrid.Cards
         public bool TryTakeCardFromField(int uid, out ManagedCard card)
         {
             card = null;
-            if (_isBusy)
+            if (IsBusy)
             {
                 Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法取走卡牌。");
                 return false;
@@ -349,7 +360,7 @@ namespace NineGrid.Cards
 
         public bool RequestRemoveFromField(int uid, bool animate)
         {
-            if (_isBusy)
+            if (IsBusy)
             {
                 Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法移除卡牌。");
                 return false;
@@ -379,7 +390,7 @@ namespace NineGrid.Cards
 
         internal void VacateSlotForExplore(int slot, ManagedCard card, bool playRemoveAnim, bool skipBusyGuard = false)
         {
-            if (!skipBusyGuard && _isBusy)
+            if (!skipBusyGuard && IsBusy)
             {
                 Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法清格探求。");
                 return;
@@ -432,7 +443,7 @@ namespace NineGrid.Cards
 
         public void ClearField()
         {
-            if (_isBusy)
+            if (IsBusy)
             {
                 Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法清场。");
                 return;
@@ -461,7 +472,7 @@ namespace NineGrid.Cards
 
         public bool TryHandleEmptySlotClick(int slot)
         {
-            if (_isBusy)
+            if (IsBusy)
             {
                 return false;
             }
@@ -477,53 +488,9 @@ namespace NineGrid.Cards
             return true;
         }
 
-        public CardAttackBasicAdapter AttackAdapter => attackAdapter;
-
         public bool IsAvatarOrthogonalBattleSlot(int slot)
         {
             return GroundSlotTopology.AreOrthogonal(slot, GroundSlotTopology.AvatarReservedSlot);
-        }
-
-        public void ArmNextLethalAttack(bool armed = true)
-        {
-            attackAdapter?.ArmNextLethalAttack(armed);
-        }
-
-        public bool TryHandleBattleClick(ManagedCard card)
-        {
-            if (card == null || _isBusy || attackAdapter == null)
-            {
-                return false;
-            }
-
-            if (card.IsFieldDead)
-            {
-                return false;
-            }
-
-            if (!TryGetSlotOf(card.Uid, out var slot) || !IsAvatarOrthogonalBattleSlot(slot))
-            {
-                return false;
-            }
-
-            RequestBasicAttackAtSlotAsync(slot).Forget();
-            return true;
-        }
-
-        public UniTask RequestBasicAttackAtSlotAsync(
-            int victimSlot,
-            bool? lethalOverride = null,
-            CancellationToken cancellationToken = default)
-        {
-            return RequestBasicAttackInternalAsync(victimSlot, lethalOverride, cancellationToken);
-        }
-
-        public UniTask RequestBasicCounterAttackAtSlotAsync(
-            int attackerSlot,
-            bool? lethalOverride = null,
-            CancellationToken cancellationToken = default)
-        {
-            return RequestBasicCounterAttackInternalAsync(attackerSlot, lethalOverride, cancellationToken);
         }
 
         /// <summary>
@@ -562,6 +529,14 @@ namespace NineGrid.Cards
             return RotateOuterRingInternalAsync(true, cancellationToken);
         }
 
+        /// <summary>
+        /// 交战流程内嵌套旋转：跳过场地忙碌门禁（由交战管理器持有外层忙碌锁）。
+        /// </summary>
+        internal UniTask RotateOuterRingClockwiseWhileBusyAsync(CancellationToken cancellationToken = default)
+        {
+            return RotateOuterRingInternalAsync(true, cancellationToken, skipBusyGuard: true);
+        }
+
         public Transform GetGroundAnchor(int slot)
         {
             return TryGetAnchor(slot, out var anchor) ? anchor : null;
@@ -572,7 +547,7 @@ namespace NineGrid.Cards
             CancellationToken cancellationToken,
             bool skipBusyGuard = false)
         {
-            if (!skipBusyGuard && _isBusy)
+            if (!skipBusyGuard && IsBusy)
             {
                 Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法旋转。");
                 return;
@@ -741,56 +716,6 @@ namespace NineGrid.Cards
             CardManagerSingleton.Instance.Release(card.Uid);
         }
 
-        /// <summary>
-        /// 即死交战已在 rig 时间轴内触发死亡特效，此处仅等待播完再 Release，避免重复播死亡或 Refresh 诈尸。
-        /// </summary>
-        private async UniTask FinalizeLethalVictimAsync(ManagedCard card, CancellationToken cancellationToken)
-        {
-            if (card == null)
-            {
-                return;
-            }
-
-            if (card.TryGetEffectManager(out var effectManager))
-            {
-                await WaitForEffectIdleAsync(effectManager, cancellationToken);
-            }
-            else if (card.Transform != null)
-            {
-                var initialScale = card.Transform.localScale;
-                await RunViewTweenAsync(
-                    CardViewTween.ScaleDisappear(
-                        card.Transform,
-                        initialScale,
-                        layoutSettings.removeDisappearDuration),
-                    cancellationToken);
-            }
-
-            if (card.Transform != null)
-            {
-                CardManagerSingleton.Instance.Release(card.Uid);
-            }
-        }
-
-        private static async UniTask WaitForEffectIdleAsync(
-            CardEffectManager effectManager,
-            CancellationToken cancellationToken)
-        {
-            const float startupGraceSeconds = 0.15f;
-            var deadline = Time.time + startupGraceSeconds;
-            while (!effectManager.IsPlaying && Time.time < deadline)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
-            }
-
-            while (effectManager.IsPlaying)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
-            }
-        }
-
         private static async UniTask RunViewTweenAsync(IEnumerator routine, CancellationToken cancellationToken)
         {
             if (routine == null)
@@ -944,102 +869,6 @@ namespace NineGrid.Cards
             return GroundSlotTopology.IsValidSlot(slot);
         }
 
-        private async UniTask RequestBasicAttackInternalAsync(
-            int victimSlot,
-            bool? lethalOverride,
-            CancellationToken cancellationToken)
-        {
-            if (_isBusy)
-            {
-                Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法触发交战。");
-                return;
-            }
-
-            if (attackAdapter == null)
-            {
-                Debug.LogWarning("[GroundFieldManager] 未配置 CardAttackBasicAdapter。");
-                return;
-            }
-
-            if (!IsAvatarOrthogonalBattleSlot(victimSlot) || !TryGetCardAt(victimSlot, out var victim))
-            {
-                Debug.LogWarning($"[GroundFieldManager] 格位 {victimSlot} 不可触发 Avatar 四向交战。");
-                return;
-            }
-
-            if (victim.IsFieldDead)
-            {
-                Debug.LogWarning($"[GroundFieldManager] 格位 {victimSlot} 卡牌已死亡。");
-                return;
-            }
-
-            var lethal = lethalOverride ?? attackAdapter.ConsumeNextLethalArmed();
-            _isBusy = true;
-            try
-            {
-                await attackAdapter.PlayBasicAttackAsync(victim, lethal, cancellationToken);
-                if (lethal)
-                {
-                    CardManagerSingleton.Instance.MarkFieldDead(victim);
-                    VacateSlotForExplore(victimSlot, victim, playRemoveAnim: false, skipBusyGuard: true);
-                    FinalizeLethalVictimAsync(victim, cancellationToken).Forget();
-                }
-
-                await RotateOuterRingInternalAsync(true, cancellationToken, skipBusyGuard: true);
-            }
-            finally
-            {
-                _isBusy = false;
-            }
-        }
-
-        private async UniTask RequestBasicCounterAttackInternalAsync(
-            int attackerSlot,
-            bool? lethalOverride,
-            CancellationToken cancellationToken)
-        {
-            if (_isBusy)
-            {
-                Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法触发反击。");
-                return;
-            }
-
-            if (attackAdapter == null)
-            {
-                Debug.LogWarning("[GroundFieldManager] 未配置 CardAttackBasicAdapter。");
-                return;
-            }
-
-            if (!IsAvatarOrthogonalBattleSlot(attackerSlot) || !TryGetCardAt(attackerSlot, out var attacker))
-            {
-                Debug.LogWarning($"[GroundFieldManager] 格位 {attackerSlot} 不可触发怪物反击。");
-                return;
-            }
-
-            if (attacker.IsFieldDead)
-            {
-                Debug.LogWarning($"[GroundFieldManager] 格位 {attackerSlot} 卡牌已死亡。");
-                return;
-            }
-
-            if (!TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar) || avatar.IsFieldDead)
-            {
-                Debug.LogWarning("[GroundFieldManager] Avatar 不可用，无法触发反击。");
-                return;
-            }
-
-            var lethal = lethalOverride ?? false;
-            _isBusy = true;
-            try
-            {
-                await attackAdapter.PlayBasicCounterAttackAsync(attacker, lethal, cancellationToken);
-            }
-            finally
-            {
-                _isBusy = false;
-            }
-        }
-
         private void ResolveSceneReferences()
         {
             if (groundAnchorsRoot != null)
@@ -1052,16 +881,6 @@ namespace NineGrid.Cards
             {
                 groundAnchorsRoot = anchors.transform.Find("GroundAnchors");
             }
-        }
-
-        private void ResolveAttackAdapter()
-        {
-            if (attackAdapter != null)
-            {
-                return;
-            }
-
-            attackAdapter = GetComponentInChildren<CardAttackBasicAdapter>(true);
         }
 
         private void CacheAnchors()

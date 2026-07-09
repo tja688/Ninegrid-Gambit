@@ -13,6 +13,9 @@ namespace NineGrid.DevTest.Cards
         [Tooltip("运行时自动查找 GroundFieldManagerSingleton.Instance；也可手动拖入覆盖。")]
         [SerializeField] private GroundFieldManagerSingleton fieldManager;
 
+        [Tooltip("运行时自动查找 FieldBattleManagerSingleton.Instance；也可手动拖入覆盖。")]
+        [SerializeField] private FieldBattleManagerSingleton battleManager;
+
         protected override string ModuleId => "ground-field-manager";
 
         protected override void OnEnable()
@@ -25,6 +28,11 @@ namespace NineGrid.DevTest.Cards
             if (fieldManager == null)
             {
                 fieldManager = GroundFieldManagerSingleton.Instance;
+            }
+
+            if (battleManager == null)
+            {
+                battleManager = FieldBattleManagerSingleton.Instance;
             }
 
             base.OnEnable();
@@ -44,7 +52,8 @@ namespace NineGrid.DevTest.Cards
         private async UniTaskVoid RunRandomCounterAttackAsync()
         {
             var field = ResolveFieldManager();
-            if (field == null)
+            var battle = ResolveBattleManager();
+            if (field == null || battle == null)
             {
                 return;
             }
@@ -62,7 +71,7 @@ namespace NineGrid.DevTest.Cards
             }
 
             Debug.Log($"[GroundFieldManagerDevKeys] 触发怪物反击: slot={slot} uid={attacker.Uid}");
-            await field.RequestBasicCounterAttackAtSlotAsync(slot);
+            await battle.RequestBasicCounterAttackAtSlotAsync(slot);
         }
 
         private async UniTaskVoid RunRotateOuterRingAsync()
@@ -84,13 +93,13 @@ namespace NineGrid.DevTest.Cards
 
         private void ArmNextLethalAttack()
         {
-            var field = ResolveFieldManager();
-            if (field == null)
+            var battle = ResolveBattleManager();
+            if (battle == null)
             {
                 return;
             }
 
-            field.ArmNextLethalAttack(true);
+            battle.ArmNextLethalAttack(true);
             Debug.Log("[GroundFieldManagerDevKeys] 已武装下一次交战为即死效果。");
         }
 
@@ -121,7 +130,8 @@ namespace NineGrid.DevTest.Cards
         private async UniTaskVoid RunLethalAttackAdjacentAsync()
         {
             var field = ResolveFieldManager();
-            if (field == null)
+            var battle = ResolveBattleManager();
+            if (field == null || battle == null)
             {
                 return;
             }
@@ -132,7 +142,7 @@ namespace NineGrid.DevTest.Cards
                 return;
             }
 
-            field.ArmNextLethalAttack(true);
+            battle.ArmNextLethalAttack(true);
 
             var avatarSlot = GroundSlotTopology.AvatarReservedSlot;
             var neighbors = GroundSlotTopology.GetNeighbors(avatarSlot, GroundSlotRelation.Orthogonal);
@@ -144,7 +154,7 @@ namespace NineGrid.DevTest.Cards
                     continue;
                 }
 
-                await field.RequestBasicAttackAtSlotAsync(slot);
+                await battle.RequestBasicAttackAtSlotAsync(slot);
                 return;
             }
 
@@ -189,6 +199,22 @@ namespace NineGrid.DevTest.Cards
             }
 
             return fieldManager;
+        }
+
+        private FieldBattleManagerSingleton ResolveBattleManager()
+        {
+            if (battleManager != null)
+            {
+                return battleManager;
+            }
+
+            battleManager = FieldBattleManagerSingleton.Instance;
+            if (battleManager == null)
+            {
+                Debug.LogWarning("[GroundFieldManagerDevKeys] 未找到 FieldBattleManagerSingleton。");
+            }
+
+            return battleManager;
         }
     }
 }

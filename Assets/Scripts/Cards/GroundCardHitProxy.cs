@@ -46,10 +46,18 @@ namespace NineGrid.Cards
 
             _driver ??= GetComponent<CardVisualDriver>();
             _driver?.SetTarget(CardVisualTarget.Hover);
+
+            var defId = _driver?.BoundCard?.DefId;
+            if (!string.IsNullOrEmpty(defId))
+            {
+                DescriptionHoverSink.RequestShow(defId);
+            }
         }
 
         private void OnMouseExit()
         {
+            DescriptionHoverSink.RequestClear();
+
             if (!CanRespondToHover())
             {
                 return;
@@ -75,10 +83,9 @@ namespace NineGrid.Cards
                     return;
             }
 
-            var field = GroundFieldManagerSingleton.Instance;
             if (card.CoreKind == CardPresentationKind.Monster)
             {
-                field?.TryHandleBattleClick(card);
+                FieldBattleManagerSingleton.Instance?.TryHandleBattleClick(card);
                 return;
             }
 

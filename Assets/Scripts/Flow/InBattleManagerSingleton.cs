@@ -420,6 +420,7 @@ namespace NineGrid.Flow
             cardManager?.ReleaseAll();
             relicManager?.Clear();
             skillManager?.Clear();
+            DescriptionManagerSingleton.TryGetInstance()?.Clear();
         }
 
         private void SyncContentPanels()

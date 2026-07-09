@@ -410,6 +410,7 @@ namespace NineGrid.Cards
             if (card == null)
             {
                 ResetAllHandAlphas();
+                DescriptionHoverSink.RequestClear();
                 return;
             }
 
@@ -417,6 +418,7 @@ namespace NineGrid.Cards
             driver?.SetTarget(CardVisualTarget.Hover);
             BoostHandCardHoverSorting(card);
             RefreshHandHoverAlphas(card);
+            DescriptionHoverSink.RequestShow(card.DefId);
         }
 
         /// <summary>
@@ -826,6 +828,7 @@ namespace NineGrid.Cards
             if (_hoveredCard == card)
             {
                 _hoveredCard = null;
+                DescriptionHoverSink.RequestClear();
             }
 
             ResetAllHandAlphas();
