@@ -85,7 +85,7 @@ namespace NineGrid.Flow
             card.View.SetAttack(read.Attack, animate);
             card.View.SetHealth(read.Hp, animate);
             card.View.SetArmor(read.Armor, animate);
-            ApplyVisuals(card.View, read.DefId);
+            ApplyVisuals(card.View, read.DefId, read.Kind);
         }
 
         public static void SyncAllSpawnedCards()
@@ -133,7 +133,7 @@ namespace NineGrid.Flow
             text.text = $"Avatar HP {read.Hp} / Armor {read.Armor}";
         }
 
-        private static void ApplyVisuals(StandardCardView view, string defId)
+        private static void ApplyVisuals(StandardCardView view, string defId, CardPresentationKind kind)
         {
             if (view == null || string.IsNullOrEmpty(defId))
             {
@@ -141,14 +141,17 @@ namespace NineGrid.Flow
             }
 
             EnsureVisualsLoaded();
+
+            Sprite icon = null;
+            Sprite face = null;
+            var frameColor = ContentColor.White;
+            var hasVisual = false;
+
             var arch = NineGridArchitecture.Current;
             var content = arch.GetSystem<IContentSystem>();
-            if (!content.HasCatalog || _visualCatalog == null)
-            {
-                return;
-            }
-
-            if (!ContentVisualResolver.TryResolve(
+            if (content.HasCatalog
+                && _visualCatalog != null
+                && ContentVisualResolver.TryResolve(
                     defId,
                     content.Catalog,
                     _visualCatalog,
@@ -156,17 +159,127 @@ namespace NineGrid.Flow
                     _spriteCatalogs,
                     out var resolved))
             {
+                icon = resolved.Icon;
+                face = resolved.Face;
+                frameColor = resolved.FrameColor;
+                hasVisual = true;
+            }
+
+            if (!hasVisual && TryGetSpritesDirect(defId, kind, out var directIcon, out var directFace))
+            {
+                icon = directIcon;
+                face = directFace;
+                hasVisual = true;
+                frameColor = ResolveFrameColorFallback(defId, kind, content);
+            }
+
+            if (!hasVisual)
+            {
                 return;
             }
 
-            var icon = resolved.Icon ?? resolved.Face;
+            if (face != null)
+            {
+                view.SetCardFace(face);
+            }
+
             if (icon != null)
             {
                 view.SetMainIcon(icon);
             }
+            else
+            {
+                view.SetMainIcon(null);
+            }
 
-            var frameColor = resolved.FrameColor;
-            view.SetFrameColor(new Color(frameColor.R, frameColor.G, frameColor.B, frameColor.A));
+            var color = frameColor;
+            view.SetFrameColor(new Color(color.R, color.G, color.B, color.A));
+        }
+
+        private static bool TryGetSpritesDirect(
+            string defId,
+            CardPresentationKind kind,
+            out Sprite icon,
+            out Sprite face)
+        {
+            icon = null;
+            face = null;
+            if (_spriteCatalogs == null)
+            {
+                return false;
+            }
+
+            var visualKind = InferVisualKind(defId, kind);
+            return _spriteCatalogs.TryGet(visualKind, defId, out icon, out face);
+        }
+
+        private static ContentColor ResolveFrameColorFallback(
+            string defId,
+            CardPresentationKind kind,
+            IContentSystem content)
+        {
+            if (!content.HasCatalog || _frameStyleCatalog == null)
+            {
+                return ContentColor.White;
+            }
+
+            var visualKind = InferVisualKind(defId, kind);
+            ContentVisualDefinition visual = null;
+            if (_visualCatalog != null)
+            {
+                _visualCatalog.TryGet(defId, out visual);
+            }
+
+            if (visual == null)
+            {
+                visual = new ContentVisualDefinition(defId, visualKind, string.Empty);
+            }
+
+            var frameStyleId = ContentVisualResolver.ResolveFrameStyleId(
+                defId,
+                visual,
+                content.Catalog);
+            return ContentVisualResolver.ResolveFrameColor(frameStyleId, _frameStyleCatalog);
+        }
+
+        private static ContentVisualKind InferVisualKind(string defId, CardPresentationKind kind)
+        {
+            if (!string.IsNullOrEmpty(defId))
+            {
+                if (defId.StartsWith("monster.", System.StringComparison.Ordinal))
+                {
+                    return ContentVisualKind.Monster;
+                }
+
+                if (defId.StartsWith("help.", System.StringComparison.Ordinal))
+                {
+                    return ContentVisualKind.HelpCard;
+                }
+
+                if (defId.StartsWith("player.", System.StringComparison.Ordinal))
+                {
+                    return ContentVisualKind.HelpCard;
+                }
+
+                if (defId.StartsWith("avatar.", System.StringComparison.Ordinal))
+                {
+                    return ContentVisualKind.Avatar;
+                }
+            }
+
+            switch (kind)
+            {
+                case CardPresentationKind.Monster:
+                    return ContentVisualKind.Monster;
+                case CardPresentationKind.HelpCard:
+                case CardPresentationKind.PlayerCard:
+                case CardPresentationKind.Item:
+                    return ContentVisualKind.HelpCard;
+                case CardPresentationKind.Avatar:
+                    return ContentVisualKind.Avatar;
+                default:
+                    return ContentVisualKind.Unknown;
+            }
         }
 
         private static void EnsureVisualsLoaded()

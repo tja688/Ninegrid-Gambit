@@ -29,6 +29,21 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 正交四向取反（用于怪物反击：攻击格与玩家格互换后选用反向 rig）。
+        /// </summary>
+        public static CardBoardDirection GetOrthogonalOpposite(CardBoardDirection direction)
+        {
+            return direction switch
+            {
+                CardBoardDirection.Up => CardBoardDirection.Down,
+                CardBoardDirection.Down => CardBoardDirection.Up,
+                CardBoardDirection.Left => CardBoardDirection.Right,
+                CardBoardDirection.Right => CardBoardDirection.Left,
+                _ => CardBoardDirection.None,
+            };
+        }
+
+        /// <summary>
         /// 将八向转换为局部 XY 偏移（Y 向上为正），长度为 distance。
         /// </summary>
         public static Vector3 ToLocalOffset(CardBoardDirection direction, float distance)

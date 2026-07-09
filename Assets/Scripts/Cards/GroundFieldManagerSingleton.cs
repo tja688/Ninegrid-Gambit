@@ -518,6 +518,45 @@ namespace NineGrid.Cards
             return RequestBasicAttackInternalAsync(victimSlot, lethalOverride, cancellationToken);
         }
 
+        public UniTask RequestBasicCounterAttackAtSlotAsync(
+            int attackerSlot,
+            bool? lethalOverride = null,
+            CancellationToken cancellationToken = default)
+        {
+            return RequestBasicCounterAttackInternalAsync(attackerSlot, lethalOverride, cancellationToken);
+        }
+
+        /// <summary>
+        /// 在 Avatar 四向相邻格中随机挑选一张存活卡牌（用于怪物反击测试）。
+        /// </summary>
+        public bool TryGetRandomAvatarOrthogonalMonsterSlot(out int slot, out ManagedCard card)
+        {
+            slot = 0;
+            card = null;
+
+            var avatarSlot = GroundSlotTopology.AvatarReservedSlot;
+            var neighbors = GroundSlotTopology.GetNeighbors(avatarSlot, GroundSlotRelation.Orthogonal);
+            var candidates = new List<int>(neighbors.Count);
+            for (var i = 0; i < neighbors.Count; i++)
+            {
+                var neighborSlot = neighbors[i];
+                if (!TryGetCardAt(neighborSlot, out var neighborCard) || neighborCard.IsFieldDead)
+                {
+                    continue;
+                }
+
+                candidates.Add(neighborSlot);
+            }
+
+            if (candidates.Count == 0)
+            {
+                return false;
+            }
+
+            slot = candidates[UnityEngine.Random.Range(0, candidates.Count)];
+            return TryGetCardAt(slot, out card);
+        }
+
         public UniTask RotateOuterRingClockwiseAsync(CancellationToken cancellationToken = default)
         {
             return RotateOuterRingInternalAsync(true, cancellationToken);
@@ -947,6 +986,53 @@ namespace NineGrid.Cards
                 }
 
                 await RotateOuterRingInternalAsync(true, cancellationToken, skipBusyGuard: true);
+            }
+            finally
+            {
+                _isBusy = false;
+            }
+        }
+
+        private async UniTask RequestBasicCounterAttackInternalAsync(
+            int attackerSlot,
+            bool? lethalOverride,
+            CancellationToken cancellationToken)
+        {
+            if (_isBusy)
+            {
+                Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法触发反击。");
+                return;
+            }
+
+            if (attackAdapter == null)
+            {
+                Debug.LogWarning("[GroundFieldManager] 未配置 CardAttackBasicAdapter。");
+                return;
+            }
+
+            if (!IsAvatarOrthogonalBattleSlot(attackerSlot) || !TryGetCardAt(attackerSlot, out var attacker))
+            {
+                Debug.LogWarning($"[GroundFieldManager] 格位 {attackerSlot} 不可触发怪物反击。");
+                return;
+            }
+
+            if (attacker.IsFieldDead)
+            {
+                Debug.LogWarning($"[GroundFieldManager] 格位 {attackerSlot} 卡牌已死亡。");
+                return;
+            }
+
+            if (!TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar) || avatar.IsFieldDead)
+            {
+                Debug.LogWarning("[GroundFieldManager] Avatar 不可用，无法触发反击。");
+                return;
+            }
+
+            var lethal = lethalOverride ?? false;
+            _isBusy = true;
+            try
+            {
+                await attackAdapter.PlayBasicCounterAttackAsync(attacker, lethal, cancellationToken);
             }
             finally
             {

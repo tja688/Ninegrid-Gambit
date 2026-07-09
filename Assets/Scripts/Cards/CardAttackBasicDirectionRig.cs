@@ -488,29 +488,39 @@ namespace NineGrid.Cards
             return null;
         }
 
-        private CardBoardDirection ResolveDirectionFromName()
+        public static CardBoardDirection ResolveDirectionFromName(string rigName)
         {
-            if (name.Contains("Up"))
+            if (string.IsNullOrEmpty(rigName))
+            {
+                return CardBoardDirection.None;
+            }
+
+            if (rigName.Contains("Up"))
             {
                 return CardBoardDirection.Up;
             }
 
-            if (name.Contains("Down"))
+            if (rigName.Contains("Down"))
             {
                 return CardBoardDirection.Down;
             }
 
-            if (name.Contains("Left"))
+            if (rigName.Contains("Left"))
             {
                 return CardBoardDirection.Left;
             }
 
-            if (name.Contains("Right"))
+            if (rigName.Contains("Right"))
             {
                 return CardBoardDirection.Right;
             }
 
             return CardBoardDirection.None;
+        }
+
+        private CardBoardDirection ResolveDirectionFromName()
+        {
+            return ResolveDirectionFromName(name);
         }
 
 #if UNITY_EDITOR

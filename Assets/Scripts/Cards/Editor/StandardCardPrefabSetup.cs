@@ -132,7 +132,8 @@ namespace NineGrid.Cards.Editor
             serialized.FindProperty("lifeAnchor").objectReferenceValue = life;
             serialized.FindProperty("armorBlocksAnchor").objectReferenceValue = armorBlocks;
             serialized.FindProperty("armorValueAnchor").objectReferenceValue = armorValue;
-            serialized.FindProperty("cardBackgroundRenderer").objectReferenceValue = cardView.GetComponent<SpriteRenderer>();
+            serialized.FindProperty("cardBackgroundRenderer").objectReferenceValue =
+                FindRenderer(cardView.transform, "Card Background");
             serialized.FindProperty("cardFrameRenderer").objectReferenceValue =
                 FindRenderer(cardView.transform, "Card Frame");
             serialized.FindProperty("mainIconRenderer").objectReferenceValue = FindRenderer(cardView.transform, "MainIcon");

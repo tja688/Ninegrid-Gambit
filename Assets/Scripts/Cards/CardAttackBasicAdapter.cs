@@ -31,8 +31,12 @@ namespace NineGrid.Cards
         private void Awake()
         {
             ResolveRigsRoot();
-            CollectDirectionRigs();
             EnsureAttackerProxy();
+        }
+
+        private void Start()
+        {
+            CollectDirectionRigs();
         }
 
         public void ArmNextLethalAttack(bool armed = true)
@@ -63,6 +67,21 @@ namespace NineGrid.Cards
             direction = CardBoardDirectionUtility.ComputeSelfDirection(
                 victimSlot,
                 GroundSlotTopology.AvatarReservedSlot);
+            return direction != CardBoardDirection.None && _rigByDirection.ContainsKey(direction);
+        }
+
+        /// <summary>
+        /// 怪物反击玩家：攻击格与 Avatar 正交相邻时，选用与玩家进攻相反方向的 rig，并互换攻击者/受击者绑定。
+        /// </summary>
+        public bool TryResolveCounterAttackDirectionForAttackerSlot(int attackerSlot, out CardBoardDirection direction)
+        {
+            direction = CardBoardDirection.None;
+            if (!TryResolveDirectionForVictimSlot(attackerSlot, out var avatarToMonster))
+            {
+                return false;
+            }
+
+            direction = CardBoardDirectionUtility.GetOrthogonalOpposite(avatarToMonster);
             return direction != CardBoardDirection.None && _rigByDirection.ContainsKey(direction);
         }
 
@@ -104,6 +123,75 @@ namespace NineGrid.Cards
             rig.ResetParticipantMotion(attacker, victimTransform);
             rig.BindParticipants(attacker, victimTransform, victimEffects, lethal);
 
+            await PlayBoundRigAsync(
+                rig,
+                attacker,
+                attackerCard,
+                victim,
+                victimTransform,
+                lethal,
+                cancellationToken);
+        }
+
+        public async UniTask PlayBasicCounterAttackAsync(
+            ManagedCard attacker,
+            bool lethal,
+            CancellationToken cancellationToken = default)
+        {
+            if (attacker?.Transform == null)
+            {
+                Debug.LogWarning("[CardAttackBasicAdapter] 反击攻击者无效，跳过交战。");
+                return;
+            }
+
+            var field = GroundFieldManagerSingleton.Instance;
+            if (field == null || !field.TryGetSlotOf(attacker.Uid, out var attackerSlot))
+            {
+                Debug.LogWarning("[CardAttackBasicAdapter] 反击攻击者不在场地中，跳过交战。");
+                return;
+            }
+
+            if (!TryResolveCounterAttackDirectionForAttackerSlot(attackerSlot, out var direction)
+                || !_rigByDirection.TryGetValue(direction, out var rig))
+            {
+                Debug.LogWarning($"[CardAttackBasicAdapter] 格位 {attackerSlot} 无可用反击 rig。", this);
+                return;
+            }
+
+            if (!field.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var victim)
+                || victim?.Transform == null)
+            {
+                Debug.LogWarning("[CardAttackBasicAdapter] 未找到 Avatar 受击者，跳过反击。");
+                return;
+            }
+
+            var attackerTransform = attacker.Transform;
+            var victimTransform = victim.Transform;
+            victim.TryGetEffectManager(out var victimEffects);
+
+            PrepareAttackerAtSlotAnchor(field, attackerTransform, attackerSlot, victimTransform);
+            rig.ResetParticipantMotion(attackerTransform, victimTransform);
+            rig.BindParticipants(attackerTransform, victimTransform, victimEffects, lethal);
+
+            await PlayBoundRigAsync(
+                rig,
+                attackerTransform,
+                attacker,
+                victim,
+                victimTransform,
+                lethal,
+                cancellationToken);
+        }
+
+        private async UniTask PlayBoundRigAsync(
+            CardAttackBasicDirectionRig rig,
+            Transform attacker,
+            ManagedCard attackerCard,
+            ManagedCard victim,
+            Transform victimTransform,
+            bool lethal,
+            CancellationToken cancellationToken)
+        {
             try
             {
                 await rig.PlayAsync(cancellationToken);
@@ -168,12 +256,25 @@ namespace NineGrid.Cards
             Transform attacker,
             Transform victim)
         {
+            PrepareAttackerAtSlotAnchor(
+                field,
+                attacker,
+                GroundSlotTopology.AvatarReservedSlot,
+                victim);
+        }
+
+        private static void PrepareAttackerAtSlotAnchor(
+            GroundFieldManagerSingleton field,
+            Transform attacker,
+            int attackerSlot,
+            Transform victim)
+        {
             if (attacker == null || field == null)
             {
                 return;
             }
 
-            var anchor = field.GetGroundAnchor(GroundSlotTopology.AvatarReservedSlot);
+            var anchor = field.GetGroundAnchor(attackerSlot);
             if (anchor == null)
             {
                 return;
@@ -181,11 +282,13 @@ namespace NineGrid.Cards
 
             attacker.position = anchor.position;
 
-            var direction = victim.position - attacker.position;
-            if (direction.sqrMagnitude > 0.0001f)
+            if (victim != null)
             {
-                var flat = new Vector3(direction.x, direction.y, 0f);
-                attacker.rotation = Quaternion.identity;
+                var direction = victim.position - attacker.position;
+                if (direction.sqrMagnitude > 0.0001f)
+                {
+                    attacker.rotation = Quaternion.identity;
+                }
             }
         }
 
@@ -234,12 +337,20 @@ namespace NineGrid.Cards
             for (var i = 0; i < directionRigs.Count; i++)
             {
                 var rig = directionRigs[i];
-                if (rig == null || rig.Direction == CardBoardDirection.None)
+                if (rig == null)
                 {
                     continue;
                 }
 
-                _rigByDirection[rig.Direction] = rig;
+                var direction = rig.Direction != CardBoardDirection.None
+                    ? rig.Direction
+                    : CardAttackBasicDirectionRig.ResolveDirectionFromName(rig.name);
+                if (direction == CardBoardDirection.None)
+                {
+                    continue;
+                }
+
+                _rigByDirection[direction] = rig;
             }
         }
     }

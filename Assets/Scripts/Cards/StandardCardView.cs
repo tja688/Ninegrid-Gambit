@@ -115,6 +115,17 @@ namespace NineGrid.Cards
             if (mainIconRenderer != null)
             {
                 mainIconRenderer.sprite = sprite;
+                mainIconRenderer.enabled = sprite != null;
+            }
+        }
+
+        public void SetCardFace(Sprite sprite)
+        {
+            EnsureBackgroundRenderer();
+            if (cardBackgroundRenderer != null)
+            {
+                cardBackgroundRenderer.sprite = sprite;
+                cardBackgroundRenderer.enabled = sprite != null;
             }
         }
 
@@ -193,7 +204,7 @@ namespace NineGrid.Cards
             armorValueAnchor ??= FindChild("ArmorValue");
             cardFrameRenderer ??= FindRenderer("Card Frame");
             mainIconRenderer ??= FindRenderer("MainIcon");
-            cardBackgroundRenderer ??= GetComponent<SpriteRenderer>();
+            EnsureBackgroundRenderer();
 
 #if UNITY_EDITOR
             if (spriteLibrary == null)
@@ -286,6 +297,17 @@ namespace NineGrid.Cards
             {
                 mainIconRenderer.sortingOrder = mainIconSortingOrder;
             }
+        }
+
+        private void EnsureBackgroundRenderer()
+        {
+            if (cardBackgroundRenderer != null)
+            {
+                return;
+            }
+
+            cardBackgroundRenderer = FindRenderer("Card Background");
+            cardBackgroundRenderer ??= GetComponent<SpriteRenderer>();
         }
 
         private Transform FindChild(string childName)

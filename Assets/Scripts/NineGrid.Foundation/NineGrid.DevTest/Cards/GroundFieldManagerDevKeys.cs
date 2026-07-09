@@ -33,11 +33,36 @@ namespace NineGrid.DevTest.Cards
         protected override void ConfigureBindings(TestKeyRegistrationBuilder builder)
         {
             builder
+                .Bind(KeyCode.Keypad1, "随机相邻怪反击玩家", () => RunRandomCounterAttackAsync().Forget())
                 .Bind(KeyCode.Keypad4, "外圈全体顺时针旋转", () => RunRotateOuterRingAsync().Forget())
                 .Bind(KeyCode.Keypad5, "随机移除场中1张", () => RunRandomRemoveAsync().Forget())
                 .Bind(KeyCode.Keypad6, "即死击杀相邻怪", () => RunLethalAttackAdjacentAsync().Forget())
                 .Bind(KeyCode.Keypad7, "移除1张并立即旋转", () => RunRemoveAndRotateAsync().Forget())
                 .Bind(KeyCode.Keypad8, "下一次交战即死", ArmNextLethalAttack);
+        }
+
+        private async UniTaskVoid RunRandomCounterAttackAsync()
+        {
+            var field = ResolveFieldManager();
+            if (field == null)
+            {
+                return;
+            }
+
+            if (field.IsBusy)
+            {
+                Debug.LogWarning("[GroundFieldManagerDevKeys] 场地管理器忙碌，请稍后再试。");
+                return;
+            }
+
+            if (!field.TryGetRandomAvatarOrthogonalMonsterSlot(out var slot, out var attacker))
+            {
+                Debug.LogWarning("[GroundFieldManagerDevKeys] Avatar 四向相邻格无可用怪物。");
+                return;
+            }
+
+            Debug.Log($"[GroundFieldManagerDevKeys] 触发怪物反击: slot={slot} uid={attacker.Uid}");
+            await field.RequestBasicCounterAttackAtSlotAsync(slot);
         }
 
         private async UniTaskVoid RunRotateOuterRingAsync()
