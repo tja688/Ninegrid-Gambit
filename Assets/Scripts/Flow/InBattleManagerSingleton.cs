@@ -33,6 +33,9 @@ namespace NineGrid.Flow
         [Tooltip("运行时自动查找 PlayerSkillManagerSingleton.Instance；也可手动拖入覆盖。")]
         [SerializeField] private PlayerSkillManagerSingleton skillManager;
 
+        [Tooltip("面板路由；留空则运行时在同物体或场景中查找 UiPanelRouter。")]
+        [SerializeField] private UiPanelRouter panelRouter;
+
         private bool _isBusy;
         private bool _settlementRaised;
         private bool _fieldSignalSubscribed;
@@ -86,6 +89,7 @@ namespace NineGrid.Flow
         {
             ResolveManagers();
             ResetPresentationSurface();
+            CoreCardPresentationMapper.EnsureContentCatalogLoaded();
 
             var arch = NineGridArchitecture.Current;
             var snapshot = options != null
@@ -269,6 +273,7 @@ namespace NineGrid.Flow
                 if (view != null)
                 {
                     plan.DeckCards.Add(view);
+                    CoreCardPresentationMapper.ApplyToManagedCard(view);
                 }
             }
 
@@ -298,6 +303,7 @@ namespace NineGrid.Flow
                 if (view != null)
                 {
                     plan.DeckCards.Add(view);
+                    CoreCardPresentationMapper.ApplyToManagedCard(view);
                 }
             }
 
@@ -317,6 +323,7 @@ namespace NineGrid.Flow
                 if (view != null)
                 {
                     plan.DeckCards.Add(view);
+                    CoreCardPresentationMapper.ApplyToManagedCard(view);
                 }
             }
 
@@ -345,6 +352,7 @@ namespace NineGrid.Flow
 
                 if (avatar != null)
                 {
+                    CoreCardPresentationMapper.ApplyToManagedCard(avatar);
                     await fieldManager.RequestRevealAvatarAsync(avatar, cancellationToken);
                 }
             }
@@ -384,6 +392,24 @@ namespace NineGrid.Flow
                         cancellationToken: cancellationToken);
                 }
             }
+
+            CoreCardPresentationMapper.SyncAllSpawnedCards();
+            UpdateAvatarDebugText();
+        }
+
+        private void UpdateAvatarDebugText()
+        {
+            ResolveManagers();
+            if (panelRouter == null)
+            {
+                panelRouter = GetComponent<UiPanelRouter>();
+                if (panelRouter == null)
+                {
+                    panelRouter = FindFirstObjectByType<UiPanelRouter>();
+                }
+            }
+
+            CoreCardPresentationMapper.UpdateAvatarDebugText(panelRouter);
         }
 
         private void ResetPresentationSurface()

@@ -1,6 +1,9 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using NineGrid.Core;
+using NineGrid.Core.Systems;
+using QFramework;
 using TMPro;
 using UnityEngine;
 
@@ -11,7 +14,7 @@ using UnityEditor;
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 主游戏流程壳状态机（不接内核）：主菜单 → 局内占位 → 帮助卡选择 → 房间二选一 → 房间事件 → 下一节点。
+    /// 主游戏流程壳状态机：主菜单 → 真实局内入场 → （奖励/房间待结算接线）。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class MainGameLoopManagerSingleton : MonoBehaviour
@@ -37,6 +40,9 @@ namespace NineGrid.Flow
 
         [Tooltip("选择器管理；留空则运行时取 SelectorManagerSingleton.Instance。")]
         [SerializeField] private SelectorManagerSingleton selectorManager;
+
+        [Tooltip("局内管理；留空则运行时取 InBattleManagerSingleton.Instance。")]
+        [SerializeField] private InBattleManagerSingleton inBattleManager;
 
         [Tooltip("主菜单「开始」按钮；留空则运行时查找 MainPanel/StartRun。")]
         [SerializeField] private Collider2D startRunHit;
@@ -185,12 +191,16 @@ namespace NineGrid.Flow
                 while (!ct.IsCancellationRequested)
                 {
                     _nodeIndex++;
-                    await PlayBattleStubAsync(ct);
+                    await PlayRealBattleAsync(ct);
                     if (ct.IsCancellationRequested)
                     {
                         return;
                     }
 
+                    // TODO: 节点结算就绪后再进入奖励
+                    return;
+
+#if false // 奖励/房间链路待节点结算接线后恢复
                     if (_testMode && _winAfterNextBattle)
                     {
                         await ShowVictoryAndReturnAsync(ct);
@@ -220,6 +230,7 @@ namespace NineGrid.Flow
                     {
                         return;
                     }
+#endif
 
                     // 继续下一节点
                 }
@@ -234,15 +245,41 @@ namespace NineGrid.Flow
             }
         }
 
-        private async UniTask PlayBattleStubAsync(CancellationToken ct)
+        private async UniTask PlayRealBattleAsync(CancellationToken ct)
         {
             SetState(LoopState.BattleStub);
             EnsureBindings();
             panelRouter.ShowInRunShell(inBattle: true);
-            Debug.Log($"[MainGameLoop] 节点 {_nodeIndex} 局内占位 {battleStubSeconds:0.##}s");
-            await UniTask.Delay(
-                TimeSpan.FromSeconds(Mathf.Max(0.05f, battleStubSeconds)),
-                cancellationToken: ct);
+
+            if (inBattleManager == null)
+            {
+                inBattleManager = InBattleManagerSingleton.Instance;
+            }
+
+            if (inBattleManager == null)
+            {
+                Debug.LogError("[MainGameLoop] 未找到 InBattleManagerSingleton，无法入场。");
+                return;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            var phase = arch.GetSystem<IPhaseSystem>();
+            if (_nodeIndex <= 1 || !phase.CanExecute(GameCommandKind.StartNode))
+            {
+                inBattleManager.BootstrapRun();
+            }
+
+            CoreCardPresentationMapper.EnsureContentCatalogLoaded();
+
+            var options = arch.GetSystem<IRewardSystem>().BuildNodeDeckOptions(_nodeIndex, monsterDeckId: null);
+            if (options == null)
+            {
+                options = NodeDeckOptions.CreateDefaultBattle();
+            }
+
+            Debug.Log($"[MainGameLoop] 节点 {_nodeIndex} 真实局内入场");
+            await inBattleManager.StartBattleNodeAsync(options, ct);
+            Debug.Log($"[MainGameLoop] 节点 {_nodeIndex} 真实局内已入场，等待后续结算接线");
         }
 
         private async UniTask PlayRewardChoiceAsync(CancellationToken ct)
@@ -415,6 +452,11 @@ namespace NineGrid.Flow
             if (selectorManager == null)
             {
                 selectorManager = SelectorManagerSingleton.Instance;
+            }
+
+            if (inBattleManager == null)
+            {
+                inBattleManager = InBattleManagerSingleton.Instance;
             }
 
             worldCamera = WorldPointerUtility.ResolveCamera(worldCamera);

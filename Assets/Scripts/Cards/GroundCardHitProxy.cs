@@ -68,9 +68,17 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var field = GroundFieldManagerSingleton.Instance;
-            if (field != null && field.TryHandleBattleClick(card))
+            switch (card.CoreKind)
             {
+                case CardPresentationKind.Avatar:
+                case CardPresentationKind.Unknown:
+                    return;
+            }
+
+            var field = GroundFieldManagerSingleton.Instance;
+            if (card.CoreKind == CardPresentationKind.Monster)
+            {
+                field?.TryHandleBattleClick(card);
                 return;
             }
 

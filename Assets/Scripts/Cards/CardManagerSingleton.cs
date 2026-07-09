@@ -46,6 +46,9 @@ namespace NineGrid.Cards
 
         /// <summary>场地交战即死后标记；仍占格直至外圈旋转或移除。</summary>
         public bool IsFieldDead { get; internal set; }
+
+        /// <summary>由 Flow 映射层写入的 Core 卡牌种类，Cards 程序集不直接引用 Core。</summary>
+        public CardPresentationKind CoreKind { get; set; }
     }
 
     /// <summary>
