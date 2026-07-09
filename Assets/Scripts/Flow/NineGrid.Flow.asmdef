@@ -2,6 +2,7 @@
     "name": "NineGrid.Flow",
     "rootNamespace": "NineGrid.Flow",
     "references": [
+        "DamageNumbersPro",
         "NineGrid.Cards",
         "NineGrid.Content",
         "NineGrid.Core",

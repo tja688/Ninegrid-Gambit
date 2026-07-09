@@ -2,6 +2,7 @@
     "name": "NineGrid.DevTest",
     "rootNamespace": "NineGrid.DevTest",
     "references": [
+        "DamageNumbersPro",
         "NineGrid.Cards",
         "NineGrid.Core",
         "NineGrid.Flow",

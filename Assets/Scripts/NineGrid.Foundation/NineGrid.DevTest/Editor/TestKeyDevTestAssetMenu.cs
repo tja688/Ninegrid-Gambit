@@ -56,6 +56,22 @@ namespace NineGrid.DevTest.Editor
             }
         }
 
+        [MenuItem("NineGrid/DevTest/Create Damage Number Manager Test Layer")]
+        public static void CreateDamageNumberManagerLayer()
+        {
+            CreateOrUpdateLayerAsHighestPriority(
+                $"{Root}/Layer_DamageNumberManager.asset",
+                "damage-number-manager",
+                "伤害数字测试",
+                new[]
+                {
+                    (KeyCode.Alpha2, "屏幕中心随机伤害数字"),
+                });
+
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<TestKeyLayerProfileSO>(
+                $"{Root}/Layer_DamageNumberManager.asset");
+        }
+
         [MenuItem("NineGrid/DevTest/Create In Battle Manager Test Layer")]
         public static void CreateInBattleManagerLayer()
         {
