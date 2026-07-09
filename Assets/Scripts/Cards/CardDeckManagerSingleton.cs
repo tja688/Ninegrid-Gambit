@@ -235,7 +235,7 @@ namespace NineGrid.Cards
         public void ResetToStandby()
         {
             _pendingEntryCards.Clear();
-            _slotContainer.Clear();
+            _slotContainer?.Clear();
             CurrentMode = CardDeckMode.Standby;
             _isBusy = false;
         }

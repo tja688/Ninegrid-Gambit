@@ -40,6 +40,7 @@ namespace NineGrid.Flow
         private bool _isBusy;
         private bool _settlementRaised;
         private bool _fieldSignalSubscribed;
+        private CancellationTokenSource _presentationCts;
 
         public static InBattleManagerSingleton Instance
         {
@@ -77,6 +78,7 @@ namespace NineGrid.Flow
 
         private void OnDestroy()
         {
+            CancelPresentationWork();
             UnsubscribeFieldSignal();
             UnregisterCombatHitSink();
             if (_instance == this)
@@ -91,6 +93,7 @@ namespace NineGrid.Flow
         public InitialGameSnapshot BootstrapRun(InitialGameOptions options = null)
         {
             ResolveManagers();
+            CancelPresentationWork();
             ResetPresentationSurface();
             CoreCardPresentationMapper.EnsureContentCatalogLoaded();
 
@@ -110,9 +113,11 @@ namespace NineGrid.Flow
         /// </summary>
         public void ClearPresentationSurface()
         {
+            CancelPresentationWork();
             FieldBattleManagerSingleton.Instance?.CancelBattleWork();
             ResetPresentationSurface();
             _settlementRaised = false;
+            _isBusy = false;
         }
 
         /// <summary>
@@ -179,6 +184,7 @@ namespace NineGrid.Flow
 
             _isBusy = true;
             _settlementRaised = false;
+            CancelPresentationWork();
 
             try
             {
@@ -202,7 +208,11 @@ namespace NineGrid.Flow
                 // StartNode 后、Spawn 前彻底清表现，避免与新 uid 冲突。
                 ResetPresentationSurface();
                 var plan = CaptureOpeningPresentationPlan(arch);
-                await PresentOpeningAsync(plan, cancellationToken);
+                var presentationCt = RenewPresentationToken();
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                    cancellationToken,
+                    presentationCt);
+                await PresentOpeningAsync(plan, linkedCts.Token);
                 SyncContentPanels();
 
                 TryEnterNodeSettlement();
@@ -453,12 +463,45 @@ namespace NineGrid.Flow
         private void ResetPresentationSurface()
         {
             ResolveManagers();
+            // 先取消交战/手牌异步，再强制清占格与手牌槽，最后统一 Release 视图。
+            FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+            CardHandManagerSingleton.Instance?.ClearHand();
             deckManager?.ResetToStandby();
-            fieldManager?.ClearField();
+            fieldManager?.ClearField(force: true);
             cardManager?.ReleaseAll();
             relicManager?.Clear();
             skillManager?.Clear();
             DescriptionManagerSingleton.TryGetInstance()?.Clear();
+            _isBusy = false;
+        }
+
+        private void CancelPresentationWork()
+        {
+            if (_presentationCts == null)
+            {
+                return;
+            }
+
+            _presentationCts.Cancel();
+            _presentationCts.Dispose();
+            _presentationCts = null;
+        }
+
+        private CancellationToken RenewPresentationToken()
+        {
+            CancelPresentationWork();
+            _presentationCts = new CancellationTokenSource();
+            return _presentationCts.Token;
+        }
+
+        private CancellationToken EnsurePresentationToken()
+        {
+            if (_presentationCts == null)
+            {
+                _presentationCts = new CancellationTokenSource();
+            }
+
+            return _presentationCts.Token;
         }
 
         private void SyncContentPanels()
@@ -714,6 +757,12 @@ namespace NineGrid.Flow
                 return;
             }
 
+            // 生命周期清场会 CancelPresentationWork；未传可取消 token 时挂到局内 CTS。
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                EnsurePresentationToken(),
+                cancellationToken.CanBeCanceled ? cancellationToken : CancellationToken.None);
+            var ct = linkedCts.Token;
+
             ResolveManagers();
             if (fieldManager == null || cardManager == null || deckManager == null)
             {
@@ -725,7 +774,7 @@ namespace NineGrid.Flow
             {
                 await fieldManager.ApplyBoardMovesAndHopAsync(
                     result.Moves,
-                    cancellationToken,
+                    ct,
                     skipBusyGuard: true);
             }
 
@@ -741,7 +790,7 @@ namespace NineGrid.Flow
 
                 for (var i = 0; i < result.Deals.Length; i++)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
+                    ct.ThrowIfCancellationRequested();
                     var deal = result.Deals[i];
                     if (deal.Uid <= 0 || deal.Slot <= 0)
                     {
@@ -772,7 +821,7 @@ namespace NineGrid.Flow
                         ensureCard: ensureCard,
                         skipBusyGuard: true,
                         awaitMove: false,
-                        cancellationToken: cancellationToken);
+                        cancellationToken: ct);
                     if (ok)
                     {
                         dealtAny = true;
@@ -791,7 +840,7 @@ namespace NineGrid.Flow
                     {
                         await UniTask.Delay(
                             TimeSpan.FromSeconds(dealInterval),
-                            cancellationToken: cancellationToken);
+                            cancellationToken: ct);
                     }
                 }
 
@@ -800,7 +849,7 @@ namespace NineGrid.Flow
                 {
                     await UniTask.Delay(
                         TimeSpan.FromSeconds(moveDuration),
-                        cancellationToken: cancellationToken);
+                        cancellationToken: ct);
                 }
             }
 
@@ -1052,7 +1101,7 @@ namespace NineGrid.Flow
                     && ((useResult.PostKillBoard.Moves != null && useResult.PostKillBoard.Moves.Length > 0)
                         || (useResult.PostKillBoard.Deals != null && useResult.PostKillBoard.Deals.Length > 0)))
                 {
-                    await DrainPostKillBoardAsync(useResult.PostKillBoard, CancellationToken.None);
+                    await DrainPostKillBoardAsync(useResult.PostKillBoard, EnsurePresentationToken());
                 }
                 else if (useResult.TargetKilled)
                 {
@@ -1082,6 +1131,9 @@ namespace NineGrid.Flow
                 {
                     CombatHitSink.RequestBattleEnded(victory: true);
                 }
+            }
+            catch (OperationCanceledException)
+            {
             }
             catch (Exception ex)
             {

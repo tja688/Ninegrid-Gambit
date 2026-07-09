@@ -41,6 +41,7 @@ namespace NineGrid.Cards
         private readonly List<HandHoverCandidate> _hoverCandidates = new();
         private bool _isBusy;
         private CancellationTokenSource _dragLoopCts;
+        private CancellationTokenSource _handWorkCts;
 
         private readonly struct HandHoverCandidate
         {
@@ -103,13 +104,55 @@ namespace NineGrid.Cards
 
         private void OnDestroy()
         {
-            _dragLoopCts?.Cancel();
-            _dragLoopCts?.Dispose();
+            CancelHandWork();
 
             if (_instance == this)
             {
                 _instance = null;
             }
+        }
+
+        /// <summary>
+        /// 强制清空手牌槽与拖拽/忙碌态。不销毁卡视图（由 CardManager 统一释放）。
+        /// 回主菜单 / 重开局前必须调用，否则幽灵 uid 会挡住拿卡与补牌。
+        /// </summary>
+        public void ClearHand()
+        {
+            CancelHandWork();
+            ClearDragSession();
+            ClearHandHoverState(_hoveredCard);
+            _hoveredCard = null;
+            _slotContainer?.Clear();
+            _isBusy = false;
+        }
+
+        private void CancelHandWork()
+        {
+            if (_dragLoopCts != null)
+            {
+                _dragLoopCts.Cancel();
+                _dragLoopCts.Dispose();
+                _dragLoopCts = null;
+            }
+
+            if (_handWorkCts != null)
+            {
+                _handWorkCts.Cancel();
+                _handWorkCts.Dispose();
+                _handWorkCts = null;
+            }
+        }
+
+        private CancellationToken RenewHandWorkToken()
+        {
+            if (_handWorkCts != null)
+            {
+                _handWorkCts.Cancel();
+                _handWorkCts.Dispose();
+            }
+
+            _handWorkCts = new CancellationTokenSource();
+            return _handWorkCts.Token;
         }
 
         private void Update()
@@ -188,6 +231,11 @@ namespace NineGrid.Cards
                 return false;
             }
 
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                RenewHandWorkToken(),
+                cancellationToken.CanBeCanceled ? cancellationToken : CancellationToken.None);
+            var ct = linkedCts.Token;
+
             _isBusy = true;
             try
             {
@@ -201,10 +249,15 @@ namespace NineGrid.Cards
                     return false;
                 }
 
-                await CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration, cancellationToken);
+                await CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration, ct);
+                ct.ThrowIfCancellationRequested();
                 RefreshHandCardDisplay(card);
                 SnapHandCardToLayout(card);
                 return true;
+            }
+            catch (OperationCanceledException)
+            {
+                return false;
             }
             finally
             {
@@ -327,22 +380,34 @@ namespace NineGrid.Cards
             ManagedCard card,
             PickupItemPresentationResult pickup)
         {
-            var success = await PullFromGroundAsync(card);
-            if (!success)
+            try
             {
-                Debug.LogWarning("[CardHandManager] 场地卡点击入手失败，已释放卡牌。");
-                CardManagerSingleton.Instance.Release(card);
-                return;
-            }
-
-            await CombatHitSink.RequestDrainPostKillBoard(
-                new PostKillBoardPresentationResult
+                var success = await PullFromGroundAsync(card);
+                if (!success)
                 {
-                    Accepted = true,
-                    Moves = pickup.Moves,
-                    Deals = pickup.Deals,
-                    NodeClearedOrRewardPhase = pickup.NodeClearedOrRewardPhase,
-                });
+                    // 清场取消时卡视图会由 ReleaseAll 统一释放，勿二次 Release。
+                    var cm = CardManagerSingleton.TryGetInstance();
+                    if (card != null && cm != null && cm.TryGet(card.Uid, out _))
+                    {
+                        Debug.LogWarning("[CardHandManager] 场地卡点击入手失败，已释放卡牌。");
+                        cm.Release(card);
+                    }
+
+                    return;
+                }
+
+                await CombatHitSink.RequestDrainPostKillBoard(
+                    new PostKillBoardPresentationResult
+                    {
+                        Accepted = true,
+                        Moves = pickup.Moves,
+                        Deals = pickup.Deals,
+                        NodeClearedOrRewardPhase = pickup.NodeClearedOrRewardPhase,
+                    });
+            }
+            catch (OperationCanceledException)
+            {
+            }
         }
 
         private void TickHandHover()

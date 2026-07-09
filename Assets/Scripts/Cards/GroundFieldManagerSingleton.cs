@@ -29,6 +29,7 @@ namespace NineGrid.Cards
         private readonly GroundSlotHitProxy[] _slotHitProxies = new GroundSlotHitProxy[GroundSlotTopology.MaxSlot + 1];
         private GroundEmptySlotExploreRunner _exploreRunner;
         private bool _isBusy;
+        private CancellationTokenSource _fieldAnimCts;
 
         public static GroundFieldManagerSingleton Instance
         {
@@ -88,6 +89,7 @@ namespace NineGrid.Cards
 
         private void OnDestroy()
         {
+            CancelFieldAnimations();
             if (_instance == this)
             {
                 _instance = null;
@@ -419,7 +421,7 @@ namespace NineGrid.Cards
 
             if (animate)
             {
-                MoveCardAnimatedAsync(card, fromSlot, toSlot, CancellationToken.None).Forget();
+                MoveCardAnimatedAsync(card, fromSlot, toSlot, EnsureFieldAnimToken()).Forget();
             }
             else if (TryGetAnchor(toSlot, out var anchor))
             {
@@ -535,7 +537,7 @@ namespace NineGrid.Cards
 
             if (playRemoveAnim)
             {
-                RemoveCardAnimatedAsync(card, slot, CancellationToken.None).Forget();
+                RemoveCardAnimatedAsync(card, slot, EnsureFieldAnimToken()).Forget();
             }
         }
 
@@ -564,28 +566,68 @@ namespace NineGrid.Cards
             return true;
         }
 
-        public void ClearField()
+        /// <summary>
+        /// 清场。生命周期清理（回主菜单/重开）应传 <paramref name="force"/>，
+        /// 否则忙碌态会直接放弃，留下占格与 _isBusy 残留。
+        /// </summary>
+        public void ClearField(bool force = false)
         {
-            if (IsBusy)
+            if (!force && IsBusy)
             {
                 Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法清场。");
                 return;
             }
 
+            if (force)
+            {
+                FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+                CancelFieldAnimations();
+                _isBusy = false;
+            }
+
             _exploreRunner?.CancelAll();
 
-            var cardManager = CardManagerSingleton.Instance;
-            for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
+            // 强制清场时只清占格表，卡视图交给外层 ReleaseAll，避免与手牌/卡组重复 Release。
+            if (!force)
             {
-                var uid = _uidBySlot[slot];
-                if (uid != 0)
+                var cardManager = CardManagerSingleton.TryGetInstance();
+                if (cardManager != null)
                 {
-                    cardManager.Release(uid);
+                    for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
+                    {
+                        var uid = _uidBySlot[slot];
+                        if (uid != 0)
+                        {
+                            cardManager.Release(uid);
+                        }
+                    }
                 }
             }
 
             ClearSlotTable();
             RefreshAllSlotHitColliders();
+        }
+
+        private void CancelFieldAnimations()
+        {
+            if (_fieldAnimCts == null)
+            {
+                return;
+            }
+
+            _fieldAnimCts.Cancel();
+            _fieldAnimCts.Dispose();
+            _fieldAnimCts = null;
+        }
+
+        private CancellationToken EnsureFieldAnimToken()
+        {
+            if (_fieldAnimCts == null)
+            {
+                _fieldAnimCts = new CancellationTokenSource();
+            }
+
+            return _fieldAnimCts.Token;
         }
 
         public void OnEmptySlotClicked(int slot)
@@ -908,28 +950,39 @@ namespace NineGrid.Cards
 
         private async UniTask RemoveCardAnimatedAsync(ManagedCard card, int slot, CancellationToken cancellationToken)
         {
-            if (card?.Transform == null)
+            try
             {
-                CardManagerSingleton.Instance.Release(card.Uid);
-                return;
-            }
+                if (card?.Transform == null)
+                {
+                    if (card != null)
+                    {
+                        CardManagerSingleton.TryGetInstance()?.Release(card.Uid);
+                    }
 
-            if (card.TryGetEffectManager(out var effectManager))
-            {
-                await effectManager.PlayDeathAsync(slot, cancellationToken: cancellationToken);
-            }
-            else
-            {
-                var initialScale = card.Transform.localScale;
-                await RunViewTweenAsync(
-                    CardViewTween.ScaleDisappear(
-                        card.Transform,
-                        initialScale,
-                        layoutSettings.removeDisappearDuration),
-                    cancellationToken);
-            }
+                    return;
+                }
 
-            CardManagerSingleton.Instance.Release(card.Uid);
+                if (card.TryGetEffectManager(out var effectManager))
+                {
+                    await effectManager.PlayDeathAsync(slot, cancellationToken: cancellationToken);
+                }
+                else
+                {
+                    var initialScale = card.Transform.localScale;
+                    await RunViewTweenAsync(
+                        CardViewTween.ScaleDisappear(
+                            card.Transform,
+                            initialScale,
+                            layoutSettings.removeDisappearDuration),
+                        cancellationToken);
+                }
+
+                CardManagerSingleton.TryGetInstance()?.Release(card.Uid);
+            }
+            catch (OperationCanceledException)
+            {
+                // 清场取消：视图由外层 ReleaseAll 处理。
+            }
         }
 
         private static async UniTask RunViewTweenAsync(IEnumerator routine, CancellationToken cancellationToken)

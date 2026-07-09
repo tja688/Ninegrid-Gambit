@@ -411,6 +411,15 @@ namespace NineGrid.Flow
         private async UniTask ShowBattleEndAndReturnAsync(bool victory, CancellationToken ct)
         {
             CancelLoopWork();
+            // 立刻掐断局内补牌/入场异步，避免 Notice 等待期间继续改盘面。
+            if (inBattleManager == null)
+            {
+                inBattleManager = InBattleManagerSingleton.Instance;
+            }
+
+            inBattleManager?.ClearPresentationSurface();
+            FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+
             SetState(victory ? LoopState.VictoryNotice : LoopState.DefeatNotice);
             EnsureBindings();
             panelRouter.ShowInRunShell(inBattle: false);
@@ -432,8 +441,9 @@ namespace NineGrid.Flow
         {
             EnsureBindings();
             HideNotice();
-            inBattleManager?.ClearPresentationSurface();
+            // 先取消交战，再清表现面，避免 ClearField 被 IsBusy 挡住。
             FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+            inBattleManager?.ClearPresentationSurface();
             panelRouter.ShowMainMenu();
             SetState(LoopState.MainMenu);
             _winAfterNextBattle = false;
