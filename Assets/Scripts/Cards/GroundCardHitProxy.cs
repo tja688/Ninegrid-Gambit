@@ -50,13 +50,14 @@ namespace NineGrid.Cards
             var defId = _driver?.BoundCard?.DefId;
             if (!string.IsNullOrEmpty(defId))
             {
-                DescriptionHoverSink.RequestShow(defId);
+                DescriptionHoverSink.RequestShow(defId, DescriptionShowRoute.Hover);
             }
         }
 
         private void OnMouseExit()
         {
-            DescriptionHoverSink.RequestClear();
+            // 仅清 Hover 路由，避免拖拽中的 Drag 描述被场地卡 Exit 踩掉
+            DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
 
             if (!CanRespondToHover())
             {
@@ -94,7 +95,8 @@ namespace NineGrid.Cards
                 return;
             }
 
-            CardHandManagerSingleton.Instance?.TryBeginDragFromGround(card);
+            // 道具卡 / 帮助卡等：场地仅允许点击入手，禁止拖拽
+            CardHandManagerSingleton.Instance?.TryPickupFromGround(card);
         }
 
         private bool CanRespondToHover()

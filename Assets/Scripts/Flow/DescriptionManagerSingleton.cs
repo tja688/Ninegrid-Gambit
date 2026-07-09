@@ -1,3 +1,4 @@
+using NineGrid.Cards;
 using NineGrid.Content;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
@@ -7,20 +8,22 @@ using UnityEngine;
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 局内描述管理单例：合法 hover 对象时，把 ContentVisual 描述写入 Card Info Text。
+    /// 局内描述管理单例：合法 hover/drag 对象时，把 ContentVisual 描述写入 Card Info Text。
     /// </summary>
     public sealed class DescriptionManagerSingleton : MonoBehaviour
     {
         public const int MaxDescriptionChars = 45;
-        private const string DefaultInfoRootName = "InGameInfo Text";
+        private const string DefaultInfoRootName = "InGameInfoText";
         private const string DefaultCardInfoTextName = "Card Info Text";
 
         private static DescriptionManagerSingleton _instance;
 
-        [Tooltip("局内描述 TMP；留空则运行时在 InGameInfo Text 下按名查找 Card Info Text。")]
+        [Tooltip("局内描述 TMP；留空则运行时在 InGameInfoText 下按名查找 Card Info Text。")]
         [SerializeField] private TextMeshProUGUI cardInfoText;
 
         private int _generation;
+        private DescriptionShowRoute _activeRoute = DescriptionShowRoute.Hover;
+        private string _activeDefId = string.Empty;
         private ContentVisualCatalog _visualCatalog;
         private CardFrameStyleCatalog _frameStyleCatalog;
         private bool _visualsResolved;
@@ -82,33 +85,54 @@ namespace NineGrid.Flow
 
         /// <summary>
         /// 显示 defId 对应描述；返回 generation，exit 时带同值 Clear 可防竞态。
+        /// Drag 路由目前默认走与 Hover 相同的 ContentVisual 描述，后续可在此分支专属文案。
+        /// Drag 优先于 Hover：拖拽中忽略 Hover 的 Show，避免被其它槽位悬停盖掉。
         /// </summary>
-        public int Show(string defId)
+        public int Show(string defId, DescriptionShowRoute route = DescriptionShowRoute.Hover)
         {
             EnsureBindings();
-            _generation++;
-            var gen = _generation;
 
             if (cardInfoText == null)
             {
-                return gen;
+                _generation++;
+                return _generation;
+            }
+
+            // 拖拽描述占用中时，Hover 不得抢占；返回 -1 避免调用方 Clear(token) 误清 Drag
+            if (route == DescriptionShowRoute.Hover
+                && !string.IsNullOrEmpty(_activeDefId)
+                && _activeRoute == DescriptionShowRoute.Drag)
+            {
+                return -1;
             }
 
             if (string.IsNullOrEmpty(defId))
             {
-                cardInfoText.text = string.Empty;
-                return gen;
+                return ClearActiveAndBump();
             }
 
-            if (!TryResolveDescription(defId, out var description))
+            // 同 defId + 同路由已在展示时不 bump generation，避免每帧重申把外部 Clear(token) 弄失效
+            if (_activeDefId == defId
+                && _activeRoute == route
+                && !string.IsNullOrEmpty(cardInfoText.text))
             {
-                cardInfoText.text = string.Empty;
-                return gen;
+                return _generation;
             }
 
+            if (!TryResolveDescription(defId, route, out var description))
+            {
+                return ClearActiveAndBump();
+            }
+
+            _generation++;
+            _activeDefId = defId;
+            _activeRoute = route;
             cardInfoText.text = ClampDescription(description, MaxDescriptionChars);
-            return gen;
+            return _generation;
         }
+
+        /// <summary>兼容旧调用：按 defId 走 Hover 路由。</summary>
+        public int Show(string defId) => Show(defId, DescriptionShowRoute.Hover);
 
         public void Clear()
         {
@@ -123,34 +147,59 @@ namespace NineGrid.Flow
             }
 
             EnsureBindings();
+            _activeDefId = string.Empty;
+            _activeRoute = DescriptionShowRoute.Hover;
             if (cardInfoText != null)
             {
                 cardInfoText.text = string.Empty;
             }
         }
 
+        /// <summary>仅当当前展示路由匹配时清空，避免 hover/drag 互相踩。</summary>
+        public void ClearRoute(DescriptionShowRoute route)
+        {
+            if (string.IsNullOrEmpty(_activeDefId) || _activeRoute != route)
+            {
+                return;
+            }
+
+            Clear(_generation);
+        }
+
+        private int ClearActiveAndBump()
+        {
+            _generation++;
+            _activeDefId = string.Empty;
+            if (cardInfoText != null)
+            {
+                cardInfoText.text = string.Empty;
+            }
+
+            return _generation;
+        }
+
         private void RegisterHoverSink()
         {
-            Cards.DescriptionHoverSink.Show = ShowFromSink;
-            Cards.DescriptionHoverSink.Clear = ClearFromSink;
+            DescriptionHoverSink.Show = ShowFromSink;
+            DescriptionHoverSink.Clear = ClearFromSink;
         }
 
         private void UnregisterHoverSink()
         {
-            if (Cards.DescriptionHoverSink.Show == ShowFromSink)
+            if (DescriptionHoverSink.Show == ShowFromSink)
             {
-                Cards.DescriptionHoverSink.Show = null;
+                DescriptionHoverSink.Show = null;
             }
 
-            if (Cards.DescriptionHoverSink.Clear == ClearFromSink)
+            if (DescriptionHoverSink.Clear == ClearFromSink)
             {
-                Cards.DescriptionHoverSink.Clear = null;
+                DescriptionHoverSink.Clear = null;
             }
         }
 
-        private void ShowFromSink(string defId) => Show(defId);
+        private void ShowFromSink(string defId, DescriptionShowRoute route) => Show(defId, route);
 
-        private void ClearFromSink() => Clear();
+        private void ClearFromSink(DescriptionShowRoute route) => ClearRoute(route);
 
         private void EnsureBindings()
         {
@@ -195,9 +244,16 @@ namespace NineGrid.Flow
             }
         }
 
-        private bool TryResolveDescription(string defId, out string description)
+        private bool TryResolveDescription(
+            string defId,
+            DescriptionShowRoute route,
+            out string description)
         {
             description = string.Empty;
+
+            // Drag 专属描述路由预留：当前与 Hover 相同，后续可在此分支替换文案来源。
+            _ = route;
+
             EnsureVisualsLoaded();
             CoreCardPresentationMapper.EnsureContentCatalogLoaded();
 

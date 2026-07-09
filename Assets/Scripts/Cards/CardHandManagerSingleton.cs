@@ -13,18 +13,10 @@ namespace NineGrid.Cards
     /// </summary>
     public sealed class CardHandManagerSingleton : MonoBehaviour
     {
-        private enum DragSource
-        {
-            Hand = 0,
-            Ground = 1,
-        }
-
         private sealed class DragSession
         {
             public ManagedCard Card;
-            public DragSource Source;
             public int OriginHandSlot = -1;
-            public int OriginGroundSlot = -1;
             public bool WasHovering;
             public bool PointerReleasedInZone;
         }
@@ -190,16 +182,19 @@ namespace NineGrid.Cards
             _dragSession = new DragSession
             {
                 Card = removed,
-                Source = DragSource.Hand,
                 OriginHandSlot = slotIndex,
                 WasHovering = wasHovering,
             };
 
+            DescriptionHoverSink.RequestShow(removed.DefId, DescriptionShowRoute.Drag);
             BeginDragLoop();
             return true;
         }
 
-        public bool TryBeginDragFromGround(ManagedCard card)
+        /// <summary>
+        /// 场地卡点击入手：道具卡 / 帮助卡等不可从场地拖拽，只能点击直接入手牌。
+        /// </summary>
+        public bool TryPickupFromGround(ManagedCard card)
         {
             if (card == null || IsBusy || IsDragging || !CanAcceptCard)
             {
@@ -217,11 +212,6 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (!field.TryGetSlotOf(card.Uid, out var groundSlot))
-            {
-                return false;
-            }
-
             if (!field.TryTakeCardFromField(card.Uid, out var taken) || taken != card)
             {
                 return false;
@@ -229,16 +219,20 @@ namespace NineGrid.Cards
 
             var driver = card.View?.GetComponent<CardVisualDriver>();
             driver?.SetTarget(CardVisualTarget.Base);
+            DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
 
-            _dragSession = new DragSession
-            {
-                Card = card,
-                Source = DragSource.Ground,
-                OriginGroundSlot = groundSlot,
-            };
-
-            BeginDragLoop();
+            RunPickupFromGroundAsync(card).Forget();
             return true;
+        }
+
+        private async UniTaskVoid RunPickupFromGroundAsync(ManagedCard card)
+        {
+            var success = await PullFromGroundAsync(card);
+            if (!success)
+            {
+                Debug.LogWarning("[CardHandManager] 场地卡点击入手失败，已释放卡牌。");
+                CardManagerSingleton.Instance.Release(card);
+            }
         }
 
         private void TickHandHover()
@@ -396,6 +390,8 @@ namespace NineGrid.Cards
                 if (card != null)
                 {
                     RefreshHandHoverAlphas(card);
+                    // 每帧重申：防止场地卡 OnMouseExit 等把 Hover 描述清掉后不再恢复
+                    DescriptionHoverSink.RequestShow(card.DefId, DescriptionShowRoute.Hover);
                 }
 
                 return;
@@ -410,7 +406,7 @@ namespace NineGrid.Cards
             if (card == null)
             {
                 ResetAllHandAlphas();
-                DescriptionHoverSink.RequestClear();
+                DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
                 return;
             }
 
@@ -418,7 +414,7 @@ namespace NineGrid.Cards
             driver?.SetTarget(CardVisualTarget.Hover);
             BoostHandCardHoverSorting(card);
             RefreshHandHoverAlphas(card);
-            DescriptionHoverSink.RequestShow(card.DefId);
+            DescriptionHoverSink.RequestShow(card.DefId, DescriptionShowRoute.Hover);
         }
 
         /// <summary>
@@ -493,7 +489,7 @@ namespace NineGrid.Cards
 
         public bool TryCompleteDragApply()
         {
-            if (_dragSession?.Card == null || _dragSession.Source != DragSource.Hand)
+            if (_dragSession?.Card == null)
             {
                 return false;
             }
@@ -563,35 +559,22 @@ namespace NineGrid.Cards
                         card,
                         overGround ? layoutSettings.dragAlphaWhenOverGround : 1f);
 
+                    // 拖拽期间每帧重申 Drag 描述，防止被其它 Clear/Show 冲掉
+                    DescriptionHoverSink.RequestShow(card.DefId, DescriptionShowRoute.Drag);
+
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                 }
 
                 var releaseWorld = ScreenToWorldOnPlane(Input.mousePosition, camera, dragZ);
                 session.PointerReleasedInZone = IsPointInApplyZone(releaseWorld);
 
-                if (session.Source == DragSource.Hand)
+                if (!session.PointerReleasedInZone)
                 {
-                    if (!session.PointerReleasedInZone)
-                    {
-                        await FinishDragWithReturnAsync(session);
-                        return;
-                    }
-
-                    await CompleteDragApplyInternalAsync(session);
+                    await FinishDragWithReturnAsync(session);
                     return;
                 }
 
-                if (session.Source == DragSource.Ground)
-                {
-                    if (session.PointerReleasedInZone)
-                    {
-                        await FinishGroundDragToHandAsync(session);
-                    }
-                    else
-                    {
-                        await FinishGroundDragWithReturnAsync(session);
-                    }
-                }
+                await CompleteDragApplyInternalAsync(session);
             }
             catch (OperationCanceledException)
             {
@@ -621,7 +604,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            _dragSession = null;
+            ClearDragSession();
             CardOpacityUtility.ResetAlpha(card);
             await VanishCardAfterApplyAsync(card);
         }
@@ -741,80 +724,16 @@ namespace NineGrid.Cards
             }
 
             _dragLoopCts?.Cancel();
-
-            if (session.Source == DragSource.Hand)
-            {
-                await FinishDragWithReturnAsync(session);
-                return;
-            }
-
-            await FinishGroundDragWithReturnAsync(session);
-        }
-
-        private async UniTask FinishGroundDragToHandAsync(DragSession session)
-        {
-            var card = session?.Card;
-            if (card == null)
-            {
-                ClearDragSession();
-                return;
-            }
-
-            _dragSession = null;
-            CardOpacityUtility.ResetAlpha(card);
-            await PullFromGroundAsync(card);
-        }
-
-        private async UniTask FinishGroundDragWithReturnAsync(DragSession session)
-        {
-            var card = session?.Card;
-            if (card == null)
-            {
-                ClearDragSession();
-                return;
-            }
-
-            _isBusy = true;
-            try
-            {
-                CardOpacityUtility.ResetAlpha(card);
-                var field = GroundFieldManagerSingleton.Instance;
-                var cardManager = CardManagerSingleton.Instance;
-                cardManager.SetDisplayMode(card, CardDisplayMode.GroundCardMode);
-
-                var targetSlot = session.OriginGroundSlot;
-                if (field != null && field.IsPlaceable(targetSlot))
-                {
-                    var anchor = field.GetGroundAnchor(targetSlot);
-                    if (anchor != null)
-                    {
-                        CardDeckTween.MoveToWorld(
-                            card.Transform,
-                            anchor.position,
-                            layoutSettings.moveDuration);
-                        await UniTask.Delay(
-                            TimeSpan.FromSeconds(layoutSettings.moveDuration),
-                            cancellationToken: CancellationToken.None);
-                    }
-
-                    field.RequestPlaceCard(targetSlot, card);
-                }
-                else
-                {
-                    CardManagerSingleton.Instance.Release(card);
-                }
-
-                cardManager.RefreshDisplayMode(card);
-            }
-            finally
-            {
-                _isBusy = false;
-                ClearDragSession();
-            }
+            await FinishDragWithReturnAsync(session);
         }
 
         private void ClearDragSession()
         {
+            if (_dragSession != null)
+            {
+                DescriptionHoverSink.RequestClear(DescriptionShowRoute.Drag);
+            }
+
             _dragSession = null;
         }
 
@@ -828,7 +747,7 @@ namespace NineGrid.Cards
             if (_hoveredCard == card)
             {
                 _hoveredCard = null;
-                DescriptionHoverSink.RequestClear();
+                DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
             }
 
             ResetAllHandAlphas();
