@@ -255,6 +255,8 @@ namespace NineGrid.Core
     {
         StartNode,
         Attack,
+        CombatHit,
+        ResolvePostKillBoard,
         PickupItem,
         ClickEmpty,
         UseItem,

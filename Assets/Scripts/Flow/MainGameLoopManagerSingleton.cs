@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
 using QFramework;
@@ -27,6 +28,7 @@ namespace NineGrid.Flow
             RoomChoice,
             RoomEvent,
             VictoryNotice,
+            DefeatNotice,
         }
 
         private const string LeftRoomId = "room_left";
@@ -64,10 +66,16 @@ namespace NineGrid.Flow
         [SerializeField] private float roomEventStubSeconds = 0.6f;
 
         [Tooltip("胜利 Notice 展示时长（秒）后回主菜单。")]
-        [SerializeField] private float victoryNoticeSeconds = 1.6f;
+        [SerializeField] private float victoryNoticeSeconds = 1f;
+
+        [Tooltip("失败 Notice 展示时长（秒）后回主菜单。")]
+        [SerializeField] private float defeatNoticeSeconds = 1f;
 
         [Tooltip("胜利文案。")]
         [SerializeField] private string victoryMessage = "胜利";
+
+        [Tooltip("失败文案。")]
+        [SerializeField] private string defeatMessage = "失败";
 
         private LoopState _state = LoopState.MainMenu;
         private bool _isBusy;
@@ -75,6 +83,7 @@ namespace NineGrid.Flow
         private bool _winAfterNextBattle;
         private int _nodeIndex;
         private CancellationTokenSource _loopCts;
+        private CancellationTokenSource _battleEndCts;
 
         public static MainGameLoopManagerSingleton Instance
         {
@@ -175,12 +184,29 @@ namespace NineGrid.Flow
         public void ReturnToMainMenu()
         {
             CancelLoopWork();
+            CancelBattleEndWork();
             if (selectorManager != null && selectorManager.IsChoiceActive)
             {
                 selectorManager.HideChoice();
             }
 
             EnterMainMenuImmediate();
+        }
+
+        /// <summary>
+        /// 清场胜利：Notice → 等待 → 回主菜单。
+        /// </summary>
+        public void NotifyBattleVictory()
+        {
+            ShowBattleEndAndReturnAsync(victory: true).Forget();
+        }
+
+        /// <summary>
+        /// 玩家战败：Notice → 等待 → 回主菜单。
+        /// </summary>
+        public void NotifyBattleDefeat()
+        {
+            ShowBattleEndAndReturnAsync(victory: false).Forget();
         }
 
         private async UniTaskVoid RunNodeCycleAsync(CancellationToken ct)
@@ -366,14 +392,39 @@ namespace NineGrid.Flow
 
         private async UniTask ShowVictoryAndReturnAsync(CancellationToken ct)
         {
-            SetState(LoopState.VictoryNotice);
+            await ShowBattleEndAndReturnAsync(victory: true, ct);
+        }
+
+        private async UniTaskVoid ShowBattleEndAndReturnAsync(bool victory)
+        {
+            CancelBattleEndWork();
+            _battleEndCts = new CancellationTokenSource();
+            try
+            {
+                await ShowBattleEndAndReturnAsync(victory, _battleEndCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
+        private async UniTask ShowBattleEndAndReturnAsync(bool victory, CancellationToken ct)
+        {
+            CancelLoopWork();
+            SetState(victory ? LoopState.VictoryNotice : LoopState.DefeatNotice);
             EnsureBindings();
             panelRouter.ShowInRunShell(inBattle: false);
-            ShowNotice(string.IsNullOrWhiteSpace(victoryMessage) ? "胜利" : victoryMessage);
-            Debug.Log("[MainGameLoop] 测试胜利，准备回主菜单。");
-            await UniTask.Delay(
-                TimeSpan.FromSeconds(Mathf.Max(0.2f, victoryNoticeSeconds)),
-                cancellationToken: ct);
+            var message = victory
+                ? (string.IsNullOrWhiteSpace(victoryMessage) ? "胜利" : victoryMessage)
+                : (string.IsNullOrWhiteSpace(defeatMessage) ? "失败" : defeatMessage);
+            ShowNotice(message);
+            Debug.Log(victory
+                ? "[MainGameLoop] 战斗胜利，准备回主菜单。"
+                : "[MainGameLoop] 战斗失败，准备回主菜单。");
+            var seconds = victory
+                ? Mathf.Max(0.2f, victoryNoticeSeconds)
+                : Mathf.Max(0.2f, defeatNoticeSeconds);
+            await UniTask.Delay(TimeSpan.FromSeconds(seconds), cancellationToken: ct);
             EnterMainMenuImmediate();
         }
 
@@ -381,12 +432,26 @@ namespace NineGrid.Flow
         {
             EnsureBindings();
             HideNotice();
+            inBattleManager?.ClearPresentationSurface();
+            FieldBattleManagerSingleton.Instance?.CancelBattleWork();
             panelRouter.ShowMainMenu();
             SetState(LoopState.MainMenu);
             _winAfterNextBattle = false;
             _testMode = false;
             _nodeIndex = 0;
             _isBusy = false;
+        }
+
+        private void CancelBattleEndWork()
+        {
+            if (_battleEndCts == null)
+            {
+                return;
+            }
+
+            _battleEndCts.Cancel();
+            _battleEndCts.Dispose();
+            _battleEndCts = null;
         }
 
         private void ShowNotice(string message)

@@ -1,0 +1,148 @@
+using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using UnityEngine;
+
+namespace NineGrid.Cards
+{
+    /// <summary>
+    /// 一次可信命中结算后的表现侧摘要（由 Flow 桥填充；Cards 不引用 Core）。
+    /// </summary>
+    public struct CombatHitPresentationResult
+    {
+        public bool Accepted;
+        public int DamageAmount;
+        public int RemainingHp;
+        public int RemainingArmor;
+        public bool TargetKilled;
+        public bool AvatarDefeated;
+        public bool NodeClearedOrRewardPhase;
+    }
+
+    /// <summary>
+    /// 击杀后盘面：一张卡从 from→to（对应 Core CardMoved）。
+    /// </summary>
+    public struct PostKillCardMove
+    {
+        public int Uid;
+        public int FromSlot;
+        public int ToSlot;
+    }
+
+    /// <summary>
+    /// 击杀后盘面：一张新牌落到 slot（对应 Core CardDealt）。
+    /// </summary>
+    public struct PostKillCardDeal
+    {
+        public int Uid;
+        public int Slot;
+        public string DefId;
+    }
+
+    /// <summary>
+    /// 击杀后盘面结算摘要（Core 一次算完的结果，供表现缓冲缓释）。
+    /// </summary>
+    public struct PostKillBoardPresentationResult
+    {
+        public bool Accepted;
+        public bool NodeClearedOrRewardPhase;
+        public bool AvatarDefeated;
+        public PostKillCardMove[] Moves;
+        public PostKillCardDeal[] Deals;
+    }
+
+    /// <summary>
+    /// Cards → Flow 交战结算桥：Cards 不引用 Core/Flow，由 InBattleManager 在 Awake 注册。
+    /// </summary>
+    public static class CombatHitSink
+    {
+        /// <summary>ApplyCombatHit(attackerUid, targetUid) → 摘要。</summary>
+        public static Func<int, int, CombatHitPresentationResult> ApplyCombatHit;
+
+        /// <summary>ResolvePostKillBoard() → 摘要（含 Moved/Dealt）。</summary>
+        public static Func<PostKillBoardPresentationResult> ResolvePostKillBoard;
+
+        /// <summary>预估 attacker 对 target 是否足以击杀（选 Lethal Profile 用）。</summary>
+        public static Func<int, int, bool> EstimateWillKill;
+
+        /// <summary>命中后刷受击卡数值。</summary>
+        public static Action<ManagedCard> SyncCardPresentation;
+
+        /// <summary>世界坐标飘字。</summary>
+        public static Action<Vector3, int> SpawnDamageNumber;
+
+        /// <summary>击杀后按 Core Board 最小同步表现占格（安全网，非主路径）。</summary>
+        public static Action SyncBoardFromCore;
+
+        /// <summary>缓释击杀后盘面摘要：hop 已有卡 + 发新牌 + 软对齐。</summary>
+        public static Func<PostKillBoardPresentationResult, CancellationToken, UniTask> DrainPostKillBoard;
+
+        /// <summary>清场胜利 / 玩家战败 → Notice + 回主菜单。</summary>
+        public static Action<bool> NotifyBattleEnded;
+
+        public static CombatHitPresentationResult RequestCombatHit(int attackerUid, int targetUid)
+        {
+            if (ApplyCombatHit == null)
+            {
+                Debug.LogWarning("[CombatHitSink] ApplyCombatHit 未注册。");
+                return default;
+            }
+
+            return ApplyCombatHit(attackerUid, targetUid);
+        }
+
+        public static PostKillBoardPresentationResult RequestPostKillBoard()
+        {
+            if (ResolvePostKillBoard == null)
+            {
+                Debug.LogWarning("[CombatHitSink] ResolvePostKillBoard 未注册。");
+                return default;
+            }
+
+            return ResolvePostKillBoard();
+        }
+
+        public static bool RequestEstimateWillKill(int attackerUid, int targetUid)
+        {
+            return EstimateWillKill != null && EstimateWillKill(attackerUid, targetUid);
+        }
+
+        public static void RequestSyncCard(ManagedCard card)
+        {
+            SyncCardPresentation?.Invoke(card);
+        }
+
+        public static void RequestDamageNumber(Vector3 worldPosition, int amount)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            SpawnDamageNumber?.Invoke(worldPosition, amount);
+        }
+
+        public static void RequestSyncBoardFromCore()
+        {
+            SyncBoardFromCore?.Invoke();
+        }
+
+        public static UniTask RequestDrainPostKillBoard(
+            PostKillBoardPresentationResult result,
+            CancellationToken cancellationToken = default)
+        {
+            if (DrainPostKillBoard == null)
+            {
+                Debug.LogWarning("[CombatHitSink] DrainPostKillBoard 未注册。");
+                return UniTask.CompletedTask;
+            }
+
+            return DrainPostKillBoard(result, cancellationToken);
+        }
+
+        public static void RequestBattleEnded(bool victory)
+        {
+            NotifyBattleEnded?.Invoke(victory);
+        }
+    }
+}

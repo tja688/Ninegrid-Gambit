@@ -1,5 +1,5 @@
 ---
-description: TableNine 项目全局约束（文件保护、提交、Core 分层、Inspector 装配注释）
+description: TableNine 项目全局约束（文件保护、Core 分层、Inspector 装配注释）
 alwaysApply: true
 ---
 
@@ -8,11 +8,6 @@ alwaysApply: true
 ## 文件保护规则
 
 - **严禁改动 .unity 文件**：在任何情况、以任何理由直接修改 `.unity` 后缀的场景文件。相关改动需求应通过 Unity MCP 进行落地，不得手动或通过文本方式编辑 `.unity` 文件。
-
-## 工程提交规则
-
-- 每次开发任务完成后，必须全量进行 **git 提交**；提交信息简洁概括目的。
-- 提交 git **前**，必须先执行一次 Unity MCP 的 `refresh_unity` 刷新动作，并检查 Console 是否有新增错误。若 Unity MCP 未连接或不可用，则跳过此步。
 
 ## 代码维护规则
 

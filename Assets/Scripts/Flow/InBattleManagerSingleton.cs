@@ -4,6 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
 using NineGrid.Core;
+using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using QFramework;
 using UnityEngine;
@@ -71,11 +72,13 @@ namespace NineGrid.Flow
             _instance = this;
             ResolveManagers();
             SubscribeFieldSignal();
+            RegisterCombatHitSink();
         }
 
         private void OnDestroy()
         {
             UnsubscribeFieldSignal();
+            UnregisterCombatHitSink();
             if (_instance == this)
             {
                 _instance = null;
@@ -100,6 +103,16 @@ namespace NineGrid.Flow
             _settlementRaised = false;
             Debug.Log($"[InBattleManager] BootstrapRun 完成 avatar=#{snapshot.AvatarUid} @{snapshot.AvatarSlot}");
             return snapshot;
+        }
+
+        /// <summary>
+        /// 公开清场：回主菜单等生命周期清理用。
+        /// </summary>
+        public void ClearPresentationSurface()
+        {
+            FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+            ResetPresentationSurface();
+            _settlementRaised = false;
         }
 
         /// <summary>
@@ -488,6 +501,532 @@ namespace NineGrid.Flow
         private void OnFieldMaybeClearSignal()
         {
             NotifyPresentationBoardMayBeClear();
+        }
+
+        private void RegisterCombatHitSink()
+        {
+            CombatHitSink.ApplyCombatHit = ApplyCombatHitFromCore;
+            CombatHitSink.ResolvePostKillBoard = ResolvePostKillBoardFromCore;
+            CombatHitSink.EstimateWillKill = EstimateWillKillFromCore;
+            CombatHitSink.SyncCardPresentation = SyncManagedCardPresentation;
+            CombatHitSink.SpawnDamageNumber = SpawnDamageNumberAt;
+            CombatHitSink.SyncBoardFromCore = SyncBoardOccupancyFromCore;
+            CombatHitSink.DrainPostKillBoard = DrainPostKillBoardAsync;
+            CombatHitSink.NotifyBattleEnded = OnBattleEndedFromCombat;
+        }
+
+        private void UnregisterCombatHitSink()
+        {
+            if (CombatHitSink.ApplyCombatHit == ApplyCombatHitFromCore)
+            {
+                CombatHitSink.ApplyCombatHit = null;
+            }
+
+            if (CombatHitSink.ResolvePostKillBoard == ResolvePostKillBoardFromCore)
+            {
+                CombatHitSink.ResolvePostKillBoard = null;
+            }
+
+            if (CombatHitSink.EstimateWillKill == EstimateWillKillFromCore)
+            {
+                CombatHitSink.EstimateWillKill = null;
+            }
+
+            if (CombatHitSink.SyncCardPresentation == SyncManagedCardPresentation)
+            {
+                CombatHitSink.SyncCardPresentation = null;
+            }
+
+            if (CombatHitSink.SpawnDamageNumber == SpawnDamageNumberAt)
+            {
+                CombatHitSink.SpawnDamageNumber = null;
+            }
+
+            if (CombatHitSink.SyncBoardFromCore == SyncBoardOccupancyFromCore)
+            {
+                CombatHitSink.SyncBoardFromCore = null;
+            }
+
+            if (CombatHitSink.DrainPostKillBoard == DrainPostKillBoardAsync)
+            {
+                CombatHitSink.DrainPostKillBoard = null;
+            }
+
+            if (CombatHitSink.NotifyBattleEnded == OnBattleEndedFromCombat)
+            {
+                CombatHitSink.NotifyBattleEnded = null;
+            }
+        }
+
+        private static CombatHitPresentationResult ApplyCombatHitFromCore(int attackerUid, int targetUid)
+        {
+            var arch = NineGridArchitecture.Current;
+            var pipeline = arch.GetSystem<IActionPipelineSystem>();
+            var startIndex = pipeline.EventLog.Entries.Count;
+            var result = arch.GetSystem<IPhaseSystem>().ApplyCombatHit(attackerUid, targetUid);
+            var summary = new CombatHitPresentationResult { Accepted = result.Accepted };
+            if (!result.Accepted)
+            {
+                Debug.LogWarning($"[InBattleManager] CombatHit 被拒: {result.Reason}");
+                return summary;
+            }
+
+            var entries = pipeline.EventLog.Entries;
+            for (var i = startIndex; i < entries.Count; i++)
+            {
+                var e = entries[i];
+                if (e.Type == CoreEventType.DamageDealt && e.TargetUid == targetUid)
+                {
+                    summary.DamageAmount = e.Amount;
+                    summary.RemainingHp = e.RemainingHp;
+                    summary.RemainingArmor = e.RemainingArmor;
+                }
+
+                if (e.Type == CoreEventType.CardKilled && e.CardUid == targetUid)
+                {
+                    summary.TargetKilled = true;
+                }
+            }
+
+            if (!summary.TargetKilled
+                && arch.GetModel<CardRegistry>().TryGet(targetUid, out var target)
+                && (target.Zone.Value == ZoneId.Graveyard || target.Zone.Value == ZoneId.Removed
+                    || arch.GetSystem<IStatSystem>().GetEffectiveInt(target, StatId.Hp) <= 0))
+            {
+                summary.TargetKilled = target.Kind != CardKind.Avatar;
+            }
+
+            var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
+            summary.AvatarDefeated = phase == GamePhase.Defeat;
+            summary.NodeClearedOrRewardPhase =
+                phase == GamePhase.RewardItemChoice
+                || phase == GamePhase.ClearCheck
+                || phase == GamePhase.NodeCompleted
+                || arch.GetSystem<IDeckSystem>().IsNodeCleared();
+            return summary;
+        }
+
+        private static PostKillBoardPresentationResult ResolvePostKillBoardFromCore()
+        {
+            var arch = NineGridArchitecture.Current;
+            var pipeline = arch.GetSystem<IActionPipelineSystem>();
+            var startIndex = pipeline.EventLog.Entries.Count;
+            var result = arch.GetSystem<IPhaseSystem>().ResolvePostKillBoard();
+            var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
+            var summary = new PostKillBoardPresentationResult
+            {
+                Accepted = result.Accepted,
+                AvatarDefeated = phase == GamePhase.Defeat,
+                NodeClearedOrRewardPhase =
+                    phase == GamePhase.RewardItemChoice
+                    || phase == GamePhase.ClearCheck
+                    || phase == GamePhase.NodeCompleted
+                    || arch.GetSystem<IDeckSystem>().IsNodeCleared(),
+            };
+
+            if (!result.Accepted)
+            {
+                Debug.LogWarning($"[InBattleManager] ResolvePostKillBoard 被拒: {result.Reason}");
+                summary.Moves = Array.Empty<PostKillCardMove>();
+                summary.Deals = Array.Empty<PostKillCardDeal>();
+                return summary;
+            }
+
+            var moves = new List<PostKillCardMove>(8);
+            var deals = new List<PostKillCardDeal>(8);
+            var registry = arch.GetModel<CardRegistry>();
+            var entries = pipeline.EventLog.Entries;
+            for (var i = startIndex; i < entries.Count; i++)
+            {
+                var e = entries[i];
+                if (e.Type == CoreEventType.CardMoved
+                    && e.CardUid > 0
+                    && e.FromSlot.IsBoardSlot
+                    && e.ToSlot.IsBoardSlot)
+                {
+                    moves.Add(new PostKillCardMove
+                    {
+                        Uid = e.CardUid,
+                        FromSlot = e.FromSlot.Index,
+                        ToSlot = e.ToSlot.Index,
+                    });
+                }
+                else if (e.Type == CoreEventType.CardDealt
+                         && e.CardUid > 0
+                         && e.ToSlot.IsBoardSlot)
+                {
+                    var defId = string.Empty;
+                    if (registry.TryGet(e.CardUid, out var coreCard))
+                    {
+                        defId = coreCard.DefId;
+                    }
+
+                    deals.Add(new PostKillCardDeal
+                    {
+                        Uid = e.CardUid,
+                        Slot = e.ToSlot.Index,
+                        DefId = defId,
+                    });
+                }
+            }
+
+            summary.Moves = moves.ToArray();
+            summary.Deals = deals.ToArray();
+            return summary;
+        }
+
+        /// <summary>
+        /// 表现缓冲缓释：按 Core 返回的 Moved/Dealt 播 hop + 发牌，末尾安全网对齐。
+        /// </summary>
+        private async UniTask DrainPostKillBoardAsync(
+            PostKillBoardPresentationResult result,
+            CancellationToken cancellationToken)
+        {
+            if (!result.Accepted)
+            {
+                return;
+            }
+
+            ResolveManagers();
+            if (fieldManager == null || cardManager == null || deckManager == null)
+            {
+                Debug.LogError("[InBattleManager] DrainPostKillBoard 缺少 Card/Deck/Field 管理器。");
+                return;
+            }
+
+            if (result.Moves != null && result.Moves.Length > 0)
+            {
+                await fieldManager.ApplyBoardMovesAndHopAsync(
+                    result.Moves,
+                    cancellationToken,
+                    skipBusyGuard: true);
+            }
+
+            if (result.Deals != null && result.Deals.Length > 0)
+            {
+                var dealInterval = deckManager.LayoutSettings != null
+                    ? deckManager.LayoutSettings.dealInterval
+                    : 0.05f;
+
+                for (var i = 0; i < result.Deals.Length; i++)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var deal = result.Deals[i];
+                    if (deal.Uid <= 0 || deal.Slot <= 0)
+                    {
+                        continue;
+                    }
+
+                    if (fieldManager.TryGetCardAt(deal.Slot, out var already)
+                        && already != null
+                        && already.Uid == deal.Uid)
+                    {
+                        CoreCardPresentationMapper.ApplyToManagedCard(already);
+                        continue;
+                    }
+
+                    if (!deckManager.DealCardByUid(deal.Uid, deal.Slot, skipBusyGuard: true))
+                    {
+                        PlaceDealtCardFallback(deal);
+                    }
+                    else if (cardManager.TryGet(deal.Uid, out var dealt))
+                    {
+                        CoreCardPresentationMapper.ApplyToManagedCard(dealt);
+                    }
+
+                    if (i < result.Deals.Length - 1 && dealInterval > 0f)
+                    {
+                        await UniTask.Delay(
+                            TimeSpan.FromSeconds(dealInterval),
+                            cancellationToken: cancellationToken);
+                    }
+                }
+            }
+
+            SoftAlignBoardAnchorsToCore();
+            SyncBoardOccupancyFromCore();
+        }
+
+        private void PlaceDealtCardFallback(PostKillCardDeal deal)
+        {
+            ResolveManagers();
+            if (cardManager == null || fieldManager == null)
+            {
+                return;
+            }
+
+            if (!cardManager.TryGet(deal.Uid, out var view) || view == null)
+            {
+                var defId = string.IsNullOrEmpty(deal.DefId)
+                    ? CardManagerSingleton.StandardDefId
+                    : deal.DefId;
+                view = cardManager.SpawnView(deal.Uid, defId, initialMode: CardDisplayMode.GroundCardMode);
+            }
+
+            if (view == null)
+            {
+                Debug.LogError($"[InBattleManager] 补牌兜底失败 uid={deal.Uid} slot={deal.Slot}");
+                return;
+            }
+
+            if (fieldManager.TryGetSlotOf(view.Uid, out var currentSlot) && currentSlot != deal.Slot)
+            {
+                fieldManager.RequestRelocateOccupancy(
+                    view.Uid,
+                    deal.Slot,
+                    snapToAnchor: true,
+                    skipBusyGuard: true);
+            }
+            else if (!fieldManager.TryGetSlotOf(view.Uid, out _))
+            {
+                fieldManager.RequestPlaceCardAtAnchor(
+                    deal.Slot,
+                    view,
+                    skipBusyGuard: true,
+                    snapToAnchor: true);
+            }
+
+            CoreCardPresentationMapper.ApplyToManagedCard(view);
+        }
+
+        /// <summary>
+        /// 占格已与 Core 一致时，把 Transform 软对齐到锚点（不 Release）。
+        /// </summary>
+        private void SoftAlignBoardAnchorsToCore()
+        {
+            ResolveManagers();
+            if (fieldManager == null || cardManager == null)
+            {
+                return;
+            }
+
+            var board = NineGridArchitecture.Current.GetModel<BoardModel>();
+            var avatarUid = board.AvatarUid.Value;
+            for (var slot = SlotId.MinBoardIndex; slot <= SlotId.MaxBoardIndex; slot++)
+            {
+                if (slot == GroundSlotTopology.AvatarReservedSlot)
+                {
+                    continue;
+                }
+
+                var uid = board.GetCardUid(SlotId.Board(slot));
+                if (uid <= 0 || uid == avatarUid)
+                {
+                    continue;
+                }
+
+                if (!fieldManager.TryGetCardAt(slot, out var card)
+                    || card?.Transform == null
+                    || card.Uid != uid)
+                {
+                    continue;
+                }
+
+                var anchor = fieldManager.GetGroundAnchor(slot);
+                if (anchor == null)
+                {
+                    continue;
+                }
+
+                if ((card.Transform.position - anchor.position).sqrMagnitude > 0.0001f)
+                {
+                    CardDeckTween.KillMotion(card.Transform);
+                    card.Transform.position = anchor.position;
+                    cardManager.RefreshDisplayMode(card);
+                }
+            }
+        }
+
+        private static bool EstimateWillKillFromCore(int attackerUid, int targetUid)
+        {
+            var arch = NineGridArchitecture.Current;
+            var registry = arch.GetModel<CardRegistry>();
+            if (!registry.TryGet(attackerUid, out var attacker) || !registry.TryGet(targetUid, out var target))
+            {
+                return false;
+            }
+
+            var stats = arch.GetSystem<IStatSystem>();
+            var attack = Math.Max(0, stats.GetEffectiveInt(attacker, StatId.Attack));
+            if (attacker.Kind == CardKind.Monster)
+            {
+                attack += (int)Math.Round(stats.EvaluateRule(RuleId.EnemyAttackDelta, 0f, stats.CreateContext(attacker)));
+            }
+
+            var armor = Math.Max(0, stats.GetEffectiveInt(target, StatId.Armor));
+            var hp = Math.Max(0, stats.GetEffectiveInt(target, StatId.Hp));
+            var hpLoss = Math.Min(hp, Math.Max(0, attack - armor));
+            return hp - hpLoss <= 0;
+        }
+
+        private static void SyncManagedCardPresentation(ManagedCard card)
+        {
+            CoreCardPresentationMapper.ApplyToManagedCard(card);
+        }
+
+        private static void SpawnDamageNumberAt(Vector3 worldPosition, int amount)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            if (DamageNumberManagerSingleton.TryGetInstance(out var manager))
+            {
+                manager.SpawnAtWorldPosition(worldPosition, amount);
+            }
+        }
+
+        /// <summary>
+        /// 安全网：对齐 Core 占格。错位迁移动画/瞬移，禁止 Release+Spawn 主路径；放置必落锚点。
+        /// </summary>
+        private void SyncBoardOccupancyFromCore()
+        {
+            ResolveManagers();
+            if (cardManager == null || fieldManager == null)
+            {
+                return;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            var board = arch.GetModel<BoardModel>();
+            var registry = arch.GetModel<CardRegistry>();
+            var avatarUid = board.AvatarUid.Value;
+
+            // 表现有、Core 该格不是这张（且 uid 也不在 Core 盘面）→ 移除。
+            var snapshot = fieldManager.GetSnapshot();
+            for (var i = 0; i < snapshot.Slots.Length; i++)
+            {
+                var occ = snapshot.Slots[i];
+                if (occ.IsEmpty || occ.Uid == avatarUid || occ.IsAvatarReserved)
+                {
+                    continue;
+                }
+
+                var coreSlotUid = board.GetCardUid(SlotId.Board(occ.Slot));
+                if (coreSlotUid == occ.Uid)
+                {
+                    continue;
+                }
+
+                // uid 仍在 Core 其它格：留给下方迁移，不销毁。
+                var stillOnBoard = false;
+                for (var s = SlotId.MinBoardIndex; s <= SlotId.MaxBoardIndex; s++)
+                {
+                    if (board.GetCardUid(SlotId.Board(s)) == occ.Uid)
+                    {
+                        stillOnBoard = true;
+                        break;
+                    }
+                }
+
+                if (stillOnBoard)
+                {
+                    continue;
+                }
+
+                fieldManager.RequestRemoveFromField(
+                    occ.Uid,
+                    animate: false,
+                    skipBusyGuard: true,
+                    startExplore: false);
+            }
+
+            for (var slot = SlotId.MinBoardIndex; slot <= SlotId.MaxBoardIndex; slot++)
+            {
+                if (slot == GroundSlotTopology.AvatarReservedSlot)
+                {
+                    continue;
+                }
+
+                var uid = board.GetCardUid(SlotId.Board(slot));
+                if (uid <= 0 || uid == avatarUid)
+                {
+                    continue;
+                }
+
+                if (fieldManager.TryGetCardAt(slot, out var existing) && existing != null && existing.Uid == uid)
+                {
+                    CoreCardPresentationMapper.ApplyToManagedCard(existing);
+                    var anchor = fieldManager.GetGroundAnchor(slot);
+                    if (existing.Transform != null
+                        && anchor != null
+                        && (existing.Transform.position - anchor.position).sqrMagnitude > 0.0001f)
+                    {
+                        CardDeckTween.KillMotion(existing.Transform);
+                        existing.Transform.position = anchor.position;
+                        cardManager.RefreshDisplayMode(existing);
+                    }
+
+                    continue;
+                }
+
+                if (!registry.TryGet(uid, out var coreCard))
+                {
+                    continue;
+                }
+
+                if (cardManager.TryGet(uid, out var view) && view != null)
+                {
+                    CoreCardPresentationMapper.ApplyToManagedCard(view);
+                    if (fieldManager.TryGetSlotOf(view.Uid, out var currentSlot))
+                    {
+                        if (currentSlot != slot)
+                        {
+                            fieldManager.RequestRelocateOccupancy(
+                                view.Uid,
+                                slot,
+                                snapToAnchor: true,
+                                skipBusyGuard: true);
+                        }
+                    }
+                    else
+                    {
+                        fieldManager.RequestPlaceCardAtAnchor(
+                            slot,
+                            view,
+                            skipBusyGuard: true,
+                            snapToAnchor: true);
+                    }
+
+                    continue;
+                }
+
+                // 视图缺失：Spawn 后必须落锚点（不再只登记占格）。
+                view = cardManager.SpawnView(uid, coreCard.DefId, initialMode: CardDisplayMode.GroundCardMode);
+                if (view == null)
+                {
+                    continue;
+                }
+
+                CoreCardPresentationMapper.ApplyToManagedCard(view);
+                fieldManager.RequestPlaceCardAtAnchor(
+                    slot,
+                    view,
+                    skipBusyGuard: true,
+                    snapToAnchor: true);
+            }
+
+            CoreCardPresentationMapper.SyncAllSpawnedCards();
+        }
+
+        private static void OnBattleEndedFromCombat(bool victory)
+        {
+            var loop = MainGameLoopManagerSingleton.Instance;
+            if (loop == null)
+            {
+                Debug.LogWarning("[InBattleManager] 战斗结束但未找到 MainGameLoop。");
+                return;
+            }
+
+            if (victory)
+            {
+                loop.NotifyBattleVictory();
+            }
+            else
+            {
+                loop.NotifyBattleDefeat();
+            }
         }
     }
 }

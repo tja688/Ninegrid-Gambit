@@ -34,6 +34,37 @@ namespace NineGrid.Core.Commands
         }
     }
 
+    /// <summary>
+    /// 表现层可信命中：一段伤害，无交互门禁。
+    /// </summary>
+    public sealed class CombatHitCommand : AbstractCommand<CoreCommandResult>
+    {
+        private readonly int mAttackerUid;
+        private readonly int mTargetUid;
+
+        public CombatHitCommand(int attackerUid, int targetUid)
+        {
+            mAttackerUid = attackerUid;
+            mTargetUid = targetUid;
+        }
+
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().ApplyCombatHit(mAttackerUid, mTargetUid);
+        }
+    }
+
+    /// <summary>
+    /// 击杀后盘面结算：旋转 + 补牌 + 清场判定。
+    /// </summary>
+    public sealed class ResolvePostKillBoardCommand : AbstractCommand<CoreCommandResult>
+    {
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().ResolvePostKillBoard();
+        }
+    }
+
     public sealed class PickupItemCommand : AbstractCommand<CoreCommandResult>
     {
         private readonly SlotId mTargetSlot;

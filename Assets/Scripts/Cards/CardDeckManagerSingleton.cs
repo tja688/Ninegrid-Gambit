@@ -146,7 +146,7 @@ namespace NineGrid.Cards
         /// <summary>
         /// 按 Uid 从卡组取出并放到指定 Ground 格（1-based，仅 InGame）。对齐内核盘面就位用。
         /// </summary>
-        public bool DealCardByUid(int uid, int groundSlot)
+        public bool DealCardByUid(int uid, int groundSlot, bool skipBusyGuard = false)
         {
             if (!EnsureInGameForDeal())
             {
@@ -157,7 +157,7 @@ namespace NineGrid.Cards
             {
                 if (_slotContainer.TryGetCardAt(i, out var card) && card != null && card.Uid == uid)
                 {
-                    return TryDealCard(i, groundSlot);
+                    return TryDealCard(i, groundSlot, skipBusyGuard);
                 }
             }
 
@@ -408,7 +408,7 @@ namespace NineGrid.Cards
             await CardDeckTween.MoveRippleAsync(moves, layoutSettings.moveDuration, cancellationToken);
         }
 
-        private bool TryDealCard(int deckSlotIndex, int groundSlot)
+        private bool TryDealCard(int deckSlotIndex, int groundSlot, bool skipBusyGuard = false)
         {
             if (!EnsureInGameForDeal())
             {
@@ -473,7 +473,7 @@ namespace NineGrid.Cards
                 groundAnchor.position,
                 layoutSettings.moveDuration,
                 onComplete: () => cardManager.RefreshDisplayMode(removed));
-            field.RequestPlaceCard(groundSlot, removed);
+            field.RequestPlaceCard(groundSlot, removed, skipBusyGuard);
             return true;
         }
 

@@ -193,9 +193,9 @@ namespace NineGrid.Cards
             return CardManagerSingleton.Instance.TryGet(uid, out card);
         }
 
-        public bool RequestPlaceCard(int slot, ManagedCard card)
+        public bool RequestPlaceCard(int slot, ManagedCard card, bool skipBusyGuard = false)
         {
-            if (IsBusy)
+            if (!skipBusyGuard && IsBusy)
             {
                 Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法接受放置申请。");
                 return false;
@@ -216,6 +216,109 @@ namespace NineGrid.Cards
             CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.GroundCardMode);
             RefreshSlotHitCollider(slot);
             return true;
+        }
+
+        /// <summary>
+        /// 登记到格位并把 Transform 落到锚点（战后 Sync / 补牌兜底用）。不播移动动画。
+        /// </summary>
+        public bool RequestPlaceCardAtAnchor(
+            int slot,
+            ManagedCard card,
+            bool skipBusyGuard = false,
+            bool snapToAnchor = true)
+        {
+            if (!RequestPlaceCard(slot, card, skipBusyGuard))
+            {
+                return false;
+            }
+
+            if (snapToAnchor
+                && card?.Transform != null
+                && TryGetAnchor(slot, out var anchor)
+                && anchor != null)
+            {
+                CardDeckTween.KillMotion(card.Transform);
+                card.Transform.position = anchor.position;
+                CardManagerSingleton.Instance.RefreshDisplayMode(card);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 仅迁移占格（不销毁视图）：从当前格挪到目标格，可选瞬移到锚点。战后 Sync 安全网用。
+        /// </summary>
+        public bool RequestRelocateOccupancy(
+            int uid,
+            int toSlot,
+            bool snapToAnchor,
+            bool skipBusyGuard = false)
+        {
+            if (!skipBusyGuard && IsBusy)
+            {
+                Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法迁移占格。");
+                return false;
+            }
+
+            if (!IsValidSlot(toSlot) || GroundSlotTopology.IsAvatarReserved(toSlot))
+            {
+                return false;
+            }
+
+            if (!_slotByUid.TryGetValue(uid, out var fromSlot))
+            {
+                return false;
+            }
+
+            if (fromSlot == toSlot)
+            {
+                if (snapToAnchor
+                    && CardManagerSingleton.Instance.TryGet(uid, out var same)
+                    && same?.Transform != null
+                    && TryGetAnchor(toSlot, out var sameAnchor)
+                    && sameAnchor != null)
+                {
+                    CardDeckTween.KillMotion(same.Transform);
+                    same.Transform.position = sameAnchor.position;
+                }
+
+                return true;
+            }
+
+            if (!IsEmpty(toSlot))
+            {
+                Debug.LogWarning($"[GroundFieldManager] 目标格已占用，无法迁移 uid={uid} → slot={toSlot}");
+                return false;
+            }
+
+            UnregisterCardAtSlot(fromSlot);
+            RegisterCardAtSlot(toSlot, uid);
+            RefreshSlotHitCollider(fromSlot);
+            RefreshSlotHitCollider(toSlot);
+
+            if (snapToAnchor
+                && CardManagerSingleton.Instance.TryGet(uid, out var card)
+                && card?.Transform != null
+                && TryGetAnchor(toSlot, out var anchor)
+                && anchor != null)
+            {
+                CardDeckTween.KillMotion(card.Transform);
+                card.Transform.position = anchor.position;
+                CardManagerSingleton.Instance.RefreshDisplayMode(card);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 按 Core CardMoved 列表更新占格并并行 hop（不整圈盲转）。交战忙碌时可 skipBusyGuard。
+        /// </summary>
+        public UniTask ApplyBoardMovesAndHopAsync(
+            IReadOnlyList<PostKillCardMove> moves,
+            CancellationToken cancellationToken = default,
+            bool skipBusyGuard = false)
+        {
+            return ApplyBoardMovesAndHopInternalAsync(moves, cancellationToken, skipBusyGuard);
         }
 
         /// <summary>
@@ -358,9 +461,13 @@ namespace NineGrid.Cards
             return true;
         }
 
-        public bool RequestRemoveFromField(int uid, bool animate)
+        public bool RequestRemoveFromField(
+            int uid,
+            bool animate,
+            bool skipBusyGuard = false,
+            bool startExplore = true)
         {
-            if (IsBusy)
+            if (!skipBusyGuard && IsBusy)
             {
                 Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法移除卡牌。");
                 return false;
@@ -375,11 +482,15 @@ namespace NineGrid.Cards
             {
                 UnregisterCardAtSlot(slot);
                 RefreshSlotHitCollider(slot);
-                _exploreRunner?.StartExplore(slot);
+                if (startExplore)
+                {
+                    _exploreRunner?.StartExplore(slot);
+                }
+
                 return false;
             }
 
-            VacateSlotForExplore(slot, card, animate);
+            VacateSlotForExplore(slot, card, animate, skipBusyGuard, startExplore);
             if (!animate)
             {
                 CardManagerSingleton.Instance.Release(uid);
@@ -388,7 +499,12 @@ namespace NineGrid.Cards
             return true;
         }
 
-        internal void VacateSlotForExplore(int slot, ManagedCard card, bool playRemoveAnim, bool skipBusyGuard = false)
+        internal void VacateSlotForExplore(
+            int slot,
+            ManagedCard card,
+            bool playRemoveAnim,
+            bool skipBusyGuard = false,
+            bool startExplore = true)
         {
             if (!skipBusyGuard && IsBusy)
             {
@@ -403,7 +519,10 @@ namespace NineGrid.Cards
 
             UnregisterCardAtSlot(slot);
             RefreshSlotHitCollider(slot);
-            _exploreRunner?.StartExplore(slot);
+            if (startExplore)
+            {
+                _exploreRunner?.StartExplore(slot);
+            }
 
             if (card == null)
             {
@@ -540,6 +659,99 @@ namespace NineGrid.Cards
         public Transform GetGroundAnchor(int slot)
         {
             return TryGetAnchor(slot, out var anchor) ? anchor : null;
+        }
+
+        private async UniTask ApplyBoardMovesAndHopInternalAsync(
+            IReadOnlyList<PostKillCardMove> moves,
+            CancellationToken cancellationToken,
+            bool skipBusyGuard)
+        {
+            if (!skipBusyGuard && IsBusy)
+            {
+                Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法应用盘面移动。");
+                return;
+            }
+
+            if (moves == null || moves.Count == 0)
+            {
+                return;
+            }
+
+            if (!skipBusyGuard)
+            {
+                _isBusy = true;
+            }
+
+            try
+            {
+                var cardManager = CardManagerSingleton.Instance;
+                var hopPlans = new List<(ManagedCard card, int fromSlot, int toSlot)>(moves.Count);
+
+                // 先收集可播 hop 的计划（死者已 Vacate 的 uid 跳过）。
+                for (var i = 0; i < moves.Count; i++)
+                {
+                    var move = moves[i];
+                    if (move.Uid <= 0
+                        || !IsValidSlot(move.FromSlot)
+                        || !IsValidSlot(move.ToSlot)
+                        || move.FromSlot == move.ToSlot)
+                    {
+                        continue;
+                    }
+
+                    if (!cardManager.TryGet(move.Uid, out var card) || card?.Transform == null)
+                    {
+                        continue;
+                    }
+
+                    // 表现侧已无此 uid 占格（击杀 Vacate）→ 跳过。
+                    if (!_slotByUid.ContainsKey(move.Uid))
+                    {
+                        continue;
+                    }
+
+                    hopPlans.Add((card, move.FromSlot, move.ToSlot));
+                }
+
+                if (hopPlans.Count == 0)
+                {
+                    return;
+                }
+
+                // 整圈同时换格：先全部清占格，再登记目标，避免目标格仍被旧卡占用。
+                for (var i = 0; i < hopPlans.Count; i++)
+                {
+                    var uid = hopPlans[i].card.Uid;
+                    if (_slotByUid.TryGetValue(uid, out var occupied))
+                    {
+                        UnregisterCardAtSlot(occupied);
+                    }
+                }
+
+                for (var i = 0; i < hopPlans.Count; i++)
+                {
+                    var plan = hopPlans[i];
+                    RegisterCardAtSlot(plan.toSlot, plan.card.Uid);
+                }
+
+                var moveTasks = new List<UniTask>(hopPlans.Count);
+                for (var i = 0; i < hopPlans.Count; i++)
+                {
+                    var plan = hopPlans[i];
+                    moveTasks.Add(
+                        AnimateCardHopToSlotAsync(plan.card, plan.fromSlot, plan.toSlot, cancellationToken));
+                }
+
+                await UniTask.WhenAll(moveTasks);
+                RefreshAllSlotHitColliders();
+            }
+            finally
+            {
+                if (!skipBusyGuard)
+                {
+                    _isBusy = false;
+                }
+            }
         }
 
         private async UniTask RotateOuterRingInternalAsync(

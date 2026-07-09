@@ -6,10 +6,9 @@ using UnityEngine;
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 场地交战管理器单例：Intent → Catalog 路由 → Adapter 播 Rig → 终态 Guard。
-    /// 点击默认编排为「玩家进攻 →（未击杀则）怪物反击」，复用四项基础 Profile，不另建组合 Intent。
-    /// 场地占用与旋转仍由 GroundFieldManagerSingleton 负责。
-    /// LEGACY：仅击杀后外圈旋转；正式规则以未来 Core Batch 为准。
+    /// 场地交战管理器单例：Intent → Catalog 路由 → Adapter 播 Rig；
+    /// 命中帧经 CombatHitSink 写 Core，再抓 Model 刷血/飘字；
+    /// 击杀后 Core 一次结算，表现缓冲按 Moved/Dealt 缓释。
     /// </summary>
     public sealed class FieldBattleManagerSingleton : MonoBehaviour
     {
@@ -26,6 +25,7 @@ namespace NineGrid.Cards
         [SerializeField] private BattleEncounterCatalogSO encounterCatalog;
 
         private bool _isBusy;
+        private CancellationTokenSource _battleCts;
 
         public static FieldBattleManagerSingleton Instance
         {
@@ -61,10 +61,26 @@ namespace NineGrid.Cards
 
         private void OnDestroy()
         {
+            CancelBattleWork();
             if (_instance == this)
             {
                 _instance = null;
             }
+        }
+
+        /// <summary>
+        /// 取消进行中的交战编排（回主菜单等生命周期清理）。
+        /// </summary>
+        public void CancelBattleWork()
+        {
+            if (_battleCts != null)
+            {
+                _battleCts.Cancel();
+                _battleCts.Dispose();
+                _battleCts = null;
+            }
+
+            _isBusy = false;
         }
 
         public void ArmNextLethalAttack(bool armed = true)
@@ -100,7 +116,7 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 玩家进攻编排：播 Attack(/Lethal) Profile；未击杀则接播 CounterAttack Profile；仅击杀后外圈旋转。
+        /// 玩家进攻编排：命中帧写 Core；击杀则清格+Core 旋转；未击杀则接播反击。
         /// </summary>
         public UniTask RequestBasicAttackAtSlotAsync(
             int victimSlot,
@@ -160,32 +176,84 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var lethal = lethalOverride ?? attackAdapter.ConsumeNextLethalArmed();
-            var attackIntent = BattleIntentUtility.FromFlags(counter: false, lethal);
+            if (!fieldManager.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+                || avatar == null)
+            {
+                Debug.LogWarning("[FieldBattleManager] Avatar 不可用，无法进攻。");
+                return;
+            }
+
+            var linkedCts = CreateLinkedBattleCts(cancellationToken);
+            var ct = linkedCts.Token;
+
+            var willKill = lethalOverride
+                ?? attackAdapter.ConsumeNextLethalArmed()
+                || CombatHitSink.RequestEstimateWillKill(avatar.Uid, victim.Uid);
+            var attackIntent = BattleIntentUtility.FromFlags(counter: false, willKill);
             var attackBind = ResolveBindParams(attackIntent, victim, out _);
+
+            CombatHitPresentationResult hitResult = default;
+            var hitApplied = false;
 
             _isBusy = true;
             try
             {
-                await attackAdapter.PlayBasicAttackAsync(victim, attackBind, cancellationToken);
+                await attackAdapter.PlayBasicAttackAsync(
+                    victim,
+                    attackBind,
+                    () =>
+                    {
+                        if (hitApplied)
+                        {
+                            return;
+                        }
 
-                if (lethal)
+                        hitApplied = true;
+                        hitResult = ApplyHitPresentation(avatar, victim);
+                    },
+                    ct);
+
+                if (!hitApplied)
+                {
+                    // Timeline 未打到命中回调时兜底结算，避免动画播完无数据。
+                    hitResult = ApplyHitPresentation(avatar, victim);
+                    hitApplied = true;
+                }
+
+                if (hitResult.TargetKilled)
                 {
                     CardManagerSingleton.Instance.MarkFieldDead(victim);
-                    fieldManager.VacateSlotForExplore(victimSlot, victim, playRemoveAnim: false, skipBusyGuard: true);
-                    FinalizeLethalVictimAsync(victim, cancellationToken).Forget();
+                    // 真交战击杀后由 Core 旋转补牌，不走空槽探求。
+                    fieldManager.VacateSlotForExplore(
+                        victimSlot,
+                        victim,
+                        playRemoveAnim: false,
+                        skipBusyGuard: true,
+                        startExplore: false);
+                    FinalizeLethalVictimAsync(victim, ct).Forget();
 
-                    // LEGACY：仅击杀后旋转腾格；未击杀保留场上卡，正式规则待 Core Batch。
-                    await fieldManager.RotateOuterRingClockwiseWhileBusyAsync(cancellationToken);
+                    // Core 一次算完；表现缓冲按 Moved/Dealt 缓释（不再盲转 + Sync）。
+                    var postKill = CombatHitSink.RequestPostKillBoard();
+                    await CombatHitSink.RequestDrainPostKillBoard(postKill, ct);
+
+                    if (postKill.NodeClearedOrRewardPhase || hitResult.NodeClearedOrRewardPhase)
+                    {
+                        CombatHitSink.RequestBattleEnded(victory: true);
+                    }
+
                     return;
                 }
 
-                // 复用独立 Counter Profile：后续调反击手感/变体时，点击交战自动吃到。
-                await PlayCounterAttackCoreAsync(victimSlot, lethal: false, cancellationToken);
+                await PlayCounterAttackCoreAsync(victimSlot, lethal: false, ct);
+            }
+            catch (System.OperationCanceledException)
+            {
+                // 回主菜单等取消路径
             }
             finally
             {
                 _isBusy = false;
+                DisposeBattleCts(linkedCts);
             }
         }
 
@@ -209,15 +277,21 @@ namespace NineGrid.Cards
             }
 
             var lethal = lethalOverride ?? false;
+            var linkedCts = CreateLinkedBattleCts(cancellationToken);
+            var ct = linkedCts.Token;
 
             _isBusy = true;
             try
             {
-                await PlayCounterAttackCoreAsync(attackerSlot, lethal, cancellationToken);
+                await PlayCounterAttackCoreAsync(attackerSlot, lethal, ct);
+            }
+            catch (System.OperationCanceledException)
+            {
             }
             finally
             {
                 _isBusy = false;
+                DisposeBattleCts(linkedCts);
             }
         }
 
@@ -234,9 +308,65 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var intent = BattleIntentUtility.FromFlags(counter: true, lethal);
+            if (!fieldManager.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+                || avatar == null)
+            {
+                return;
+            }
+
+            var willKill = lethal || CombatHitSink.RequestEstimateWillKill(attacker.Uid, avatar.Uid);
+            var intent = BattleIntentUtility.FromFlags(counter: true, willKill);
             var bind = ResolveBindParams(intent, attacker, out _);
-            await attackAdapter.PlayBasicCounterAttackAsync(attacker, bind, cancellationToken);
+
+            CombatHitPresentationResult hitResult = default;
+            var hitApplied = false;
+
+            await attackAdapter.PlayBasicCounterAttackAsync(
+                attacker,
+                bind,
+                () =>
+                {
+                    if (hitApplied)
+                    {
+                        return;
+                    }
+
+                    hitApplied = true;
+                    hitResult = ApplyHitPresentation(attacker, avatar);
+                },
+                cancellationToken);
+
+            if (!hitApplied)
+            {
+                hitResult = ApplyHitPresentation(attacker, avatar);
+            }
+
+            if (hitResult.AvatarDefeated)
+            {
+                CombatHitSink.RequestBattleEnded(victory: false);
+            }
+        }
+
+        private static CombatHitPresentationResult ApplyHitPresentation(ManagedCard attacker, ManagedCard victim)
+        {
+            if (attacker == null || victim == null)
+            {
+                return default;
+            }
+
+            var result = CombatHitSink.RequestCombatHit(attacker.Uid, victim.Uid);
+            if (!result.Accepted)
+            {
+                return result;
+            }
+
+            CombatHitSink.RequestSyncCard(victim);
+            if (victim.Transform != null)
+            {
+                CombatHitSink.RequestDamageNumber(victim.Transform.position, result.DamageAmount);
+            }
+
+            return result;
         }
 
         private bool TryValidateCounterParticipants(int attackerSlot, out ManagedCard attacker)
@@ -374,6 +504,34 @@ namespace NineGrid.Cards
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+            }
+        }
+
+        private CancellationTokenSource CreateLinkedBattleCts(CancellationToken external)
+        {
+            if (_battleCts != null)
+            {
+                _battleCts.Cancel();
+                _battleCts.Dispose();
+                _battleCts = null;
+            }
+
+            _battleCts = new CancellationTokenSource();
+            if (external.CanBeCanceled)
+            {
+                return CancellationTokenSource.CreateLinkedTokenSource(_battleCts.Token, external);
+            }
+
+            return CancellationTokenSource.CreateLinkedTokenSource(_battleCts.Token);
+        }
+
+        private void DisposeBattleCts(CancellationTokenSource linked)
+        {
+            linked?.Dispose();
+            if (_battleCts != null)
+            {
+                _battleCts.Dispose();
+                _battleCts = null;
             }
         }
 

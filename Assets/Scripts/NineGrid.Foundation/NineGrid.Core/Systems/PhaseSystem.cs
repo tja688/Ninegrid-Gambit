@@ -4,22 +4,30 @@ using QFramework;
 
 namespace NineGrid.Core.Systems
 {
-    public interface IPhaseSystem : ISystem
-    {
-        GamePhase CurrentPhase { get; }
-        IReadOnlyList<GameCommandKind> LegalCommands { get; }
-        bool CanExecute(GameCommandKind command);
-        CoreCommandResult StartNode(NodeDeckOptions options);
-        CoreCommandResult Attack(SlotId targetSlot);
-        CoreCommandResult PickupItem(SlotId targetSlot);
-        CoreCommandResult ClickEmpty(SlotId targetSlot);
-        CoreCommandResult UseItem(int itemUid);
-        CoreCommandResult UseItem(int itemUid, IReadOnlyList<int> selectedCardUids, string selectedOption);
-        CoreCommandResult SelectReward(int optionIndex);
-        CoreCommandResult SkipHelpChoice();
-        CoreCommandResult SelectRoom(int optionIndex);
-        CoreCommandResult EnterRoom();
-    }
+        public interface IPhaseSystem : ISystem
+        {
+            GamePhase CurrentPhase { get; }
+            IReadOnlyList<GameCommandKind> LegalCommands { get; }
+            bool CanExecute(GameCommandKind command);
+            CoreCommandResult StartNode(NodeDeckOptions options);
+            CoreCommandResult Attack(SlotId targetSlot);
+            /// <summary>
+            /// 表现层可信命中：仅一段伤害（含致死 Kill/Defeat），无门禁、无反击、无旋转。
+            /// </summary>
+            CoreCommandResult ApplyCombatHit(int attackerUid, int targetUid);
+            /// <summary>
+            /// 击杀后盘面：交互计数 + 旋转 + 补牌 + 清场判定。
+            /// </summary>
+            CoreCommandResult ResolvePostKillBoard();
+            CoreCommandResult PickupItem(SlotId targetSlot);
+            CoreCommandResult ClickEmpty(SlotId targetSlot);
+            CoreCommandResult UseItem(int itemUid);
+            CoreCommandResult UseItem(int itemUid, IReadOnlyList<int> selectedCardUids, string selectedOption);
+            CoreCommandResult SelectReward(int optionIndex);
+            CoreCommandResult SkipHelpChoice();
+            CoreCommandResult SelectRoom(int optionIndex);
+            CoreCommandResult EnterRoom();
+        }
 
     public sealed class PhaseSystem : AbstractSystem, IPhaseSystem
     {
@@ -136,6 +144,36 @@ namespace NineGrid.Core.Systems
             }
 
             return CoreCommandResult.Accept(resolved);
+        }
+
+        public CoreCommandResult ApplyCombatHit(int attackerUid, int targetUid)
+        {
+            var registry = this.GetModel<CardRegistry>();
+            if (attackerUid <= 0 || !registry.TryGet(attackerUid, out var attacker))
+            {
+                return CoreCommandResult.Reject("Combat hit attacker uid is invalid.");
+            }
+
+            if (targetUid <= 0 || !registry.TryGet(targetUid, out var target))
+            {
+                return CoreCommandResult.Reject("Combat hit target uid is invalid.");
+            }
+
+            if (target.Zone.Value == ZoneId.Graveyard || target.Zone.Value == ZoneId.Removed)
+            {
+                return CoreCommandResult.Reject("Combat hit target is already removed.");
+            }
+
+            var statSystem = this.GetSystem<IStatSystem>();
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new DealDamageAction(attackerUid, targetUid, GetAttackDamage(statSystem, attacker)));
+            var resolved = pipeline.RunToCompletion();
+            return CoreCommandResult.Accept(resolved);
+        }
+
+        public CoreCommandResult ResolvePostKillBoard()
+        {
+            return CoreCommandResult.Accept(ResolveInteractiveRotation());
         }
 
         public CoreCommandResult PickupItem(SlotId targetSlot)

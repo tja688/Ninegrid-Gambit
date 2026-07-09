@@ -99,6 +99,19 @@ namespace NineGrid.Cards
         /// </summary>
         public void BindParticipants(Transform attacker, Transform victim, CardEffectManager victimEffects, in BattleBindParams bind)
         {
+            BindParticipants(attacker, victim, victimEffects, in bind, onCombatHit: null);
+        }
+
+        /// <summary>
+        /// 按战斗编排绑参重绑，并在命中帧额外触发 <paramref name="onCombatHit"/>（与闪白同帧）。
+        /// </summary>
+        public void BindParticipants(
+            Transform attacker,
+            Transform victim,
+            CardEffectManager victimEffects,
+            in BattleBindParams bind,
+            Action onCombatHit)
+        {
             BindParticipants(
                 attacker,
                 victim,
@@ -109,7 +122,8 @@ namespace NineGrid.Cards
                 bind.VictimKnockbackCoefficient,
                 bind.HitFlashTimingPolicy,
                 bind.HitFlashCallbackDelay,
-                bind.DeathCallbackDelay);
+                bind.DeathCallbackDelay,
+                onCombatHit);
         }
 
         public void BindParticipants(
@@ -117,12 +131,13 @@ namespace NineGrid.Cards
             Transform victim,
             CardEffectManager victimEffects,
             bool bindDeathCallback,
-            bool relativeAttackerMotion,
-            bool relativeVictimKnockback,
-            float victimKnockbackCoefficient,
-            BattleHitFlashTimingPolicy hitFlashTimingPolicy,
-            float hitFlashCallbackDelay,
-            float deathCallbackDelay)
+            bool relativeAttackerMotion = false,
+            bool relativeVictimKnockback = false,
+            float victimKnockbackCoefficient = 1f,
+            BattleHitFlashTimingPolicy hitFlashTimingPolicy = BattleHitFlashTimingPolicy.Heuristic,
+            float hitFlashCallbackDelay = 0f,
+            float deathCallbackDelay = 0f,
+            Action onCombatHit = null)
         {
             BuildRoleMapIfNeeded();
             CacheBakedClipValuesIfNeeded();
@@ -162,7 +177,7 @@ namespace NineGrid.Cards
                 ApplyExplicitCallbackDelays(hitFlashCallbackDelay, bindDeathCallback ? deathCallbackDelay : 0f);
             }
 
-            ConfigureHitFlashCallback(victimEffects);
+            ConfigureHitFlashCallback(victimEffects, onCombatHit);
             ConfigureDeathCallback(victimEffects, bindDeathCallback);
         }
 
@@ -669,14 +684,29 @@ namespace NineGrid.Cards
             return _targetGoField?.GetValue(animation) as GameObject;
         }
 
-        private void ConfigureHitFlashCallback(CardEffectManager victimEffects)
+        private void ConfigureHitFlashCallback(CardEffectManager victimEffects, Action onCombatHit)
         {
-            if (hitFlashCallback == null || victimEffects == null)
+            if (hitFlashCallback == null)
             {
                 return;
             }
 
-            ReplaceCallbackListeners(hitFlashCallback, victimEffects.CallbackPlayHitFlash);
+            var unityEvent = ReadCallbackEvent(hitFlashCallback);
+            if (unityEvent == null)
+            {
+                return;
+            }
+
+            unityEvent.RemoveAllListeners();
+            if (victimEffects != null)
+            {
+                unityEvent.AddListener(victimEffects.CallbackPlayHitFlash);
+            }
+
+            if (onCombatHit != null)
+            {
+                unityEvent.AddListener(() => onCombatHit());
+            }
         }
 
         private void ConfigureDeathCallback(CardEffectManager victimEffects, bool bindDeathCallback)

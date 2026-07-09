@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading;
+using System;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -103,6 +104,15 @@ namespace NineGrid.Cards
             BattleBindParams bind,
             CancellationToken cancellationToken = default)
         {
+            await PlayBasicAttackAsync(victim, bind, onCombatHit: null, cancellationToken);
+        }
+
+        public async UniTask PlayBasicAttackAsync(
+            ManagedCard victim,
+            BattleBindParams bind,
+            Action onCombatHit,
+            CancellationToken cancellationToken = default)
+        {
             if (victim?.Transform == null)
             {
                 Debug.LogWarning("[CardAttackBasicAdapter] 受击卡无效，跳过交战。");
@@ -148,7 +158,7 @@ namespace NineGrid.Cards
 
             PrepareAttackerAtAvatarAnchor(field, attacker, victimTransform);
             rig.ResetParticipantMotion(attacker, victimTransform);
-            rig.BindParticipants(attacker, victimTransform, victimEffects, in bind);
+            rig.BindParticipants(attacker, victimTransform, victimEffects, in bind, onCombatHit);
 
             await PlayBoundRigAsync(
                 rig,
@@ -174,6 +184,15 @@ namespace NineGrid.Cards
         public async UniTask PlayBasicCounterAttackAsync(
             ManagedCard attacker,
             BattleBindParams bind,
+            CancellationToken cancellationToken = default)
+        {
+            await PlayBasicCounterAttackAsync(attacker, bind, onCombatHit: null, cancellationToken);
+        }
+
+        public async UniTask PlayBasicCounterAttackAsync(
+            ManagedCard attacker,
+            BattleBindParams bind,
+            Action onCombatHit,
             CancellationToken cancellationToken = default)
         {
             if (attacker?.Transform == null)
@@ -223,7 +242,7 @@ namespace NineGrid.Cards
 
             PrepareAttackerAtSlotAnchor(field, attackerTransform, attackerSlot, victimTransform);
             rig.ResetParticipantMotion(attackerTransform, victimTransform);
-            rig.BindParticipants(attackerTransform, victimTransform, victimEffects, in bind);
+            rig.BindParticipants(attackerTransform, victimTransform, victimEffects, in bind, onCombatHit);
 
             await PlayBoundRigAsync(
                 rig,
