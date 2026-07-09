@@ -81,6 +81,49 @@ namespace NineGrid.Cards
             bool relativeVictimKnockback = false,
             float victimKnockbackCoefficient = 1f)
         {
+            BindParticipants(
+                attacker,
+                victim,
+                victimEffects,
+                bindDeathCallback,
+                relativeAttackerMotion,
+                relativeVictimKnockback,
+                victimKnockbackCoefficient,
+                BattleHitFlashTimingPolicy.Heuristic,
+                hitFlashCallbackDelay: 0f,
+                deathCallbackDelay: 0f);
+        }
+
+        /// <summary>
+        /// 按战斗编排绑参重绑参战双方与 Timeline 回调。
+        /// </summary>
+        public void BindParticipants(Transform attacker, Transform victim, CardEffectManager victimEffects, in BattleBindParams bind)
+        {
+            BindParticipants(
+                attacker,
+                victim,
+                victimEffects,
+                bind.BindDeathCallback,
+                bind.UseRelativeAttackerMotion,
+                bind.UseRelativeVictimKnockback,
+                bind.VictimKnockbackCoefficient,
+                bind.HitFlashTimingPolicy,
+                bind.HitFlashCallbackDelay,
+                bind.DeathCallbackDelay);
+        }
+
+        public void BindParticipants(
+            Transform attacker,
+            Transform victim,
+            CardEffectManager victimEffects,
+            bool bindDeathCallback,
+            bool relativeAttackerMotion,
+            bool relativeVictimKnockback,
+            float victimKnockbackCoefficient,
+            BattleHitFlashTimingPolicy hitFlashTimingPolicy,
+            float hitFlashCallbackDelay,
+            float deathCallbackDelay)
+        {
             BuildRoleMapIfNeeded();
             CacheBakedClipValuesIfNeeded();
 
@@ -89,6 +132,11 @@ namespace NineGrid.Cards
                 Debug.LogWarning($"[{nameof(CardAttackBasicDirectionRig)}] {name} 绑定失败：攻击者或受击者为空。", this);
                 return;
             }
+
+            // 相对位移会原地改写 DOTweenAnimation.endValueV3；每次绑定必须先回到场景烘焙值，
+            // 否则 Absolute 路径会继承上一场 Relative（如反击）留下的世界坐标局部化结果 → 隔空击打。
+            RestoreBakedEndValues(attackerAnimations);
+            RestoreBakedEndValues(victimAnimations);
 
             if (relativeAttackerMotion)
             {
@@ -106,6 +154,12 @@ namespace NineGrid.Cards
             else
             {
                 RebindAnimations(victimAnimations, victim);
+                ScaleVictimKnockbackEndValues(victimKnockbackCoefficient);
+            }
+
+            if (hitFlashTimingPolicy == BattleHitFlashTimingPolicy.Explicit)
+            {
+                ApplyExplicitCallbackDelays(hitFlashCallbackDelay, bindDeathCallback ? deathCallbackDelay : 0f);
             }
 
             ConfigureHitFlashCallback(victimEffects);
@@ -545,6 +599,57 @@ namespace NineGrid.Cards
             }
         }
 
+        /// <summary>
+        /// 将动画 endValue 恢复为 Awake 时缓存的场景烘焙值。
+        /// BindParticipants 的 Absolute / Relative 分支都假定从此干净起点出发。
+        /// </summary>
+        private void RestoreBakedEndValues(IReadOnlyList<Component> animations)
+        {
+            CacheBakedClipValuesIfNeeded();
+            if (animations == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < animations.Count; i++)
+            {
+                var animation = animations[i];
+                if (animation == null)
+                {
+                    continue;
+                }
+
+                WriteEndValueV3(animation, GetBakedEndValue(animation));
+            }
+        }
+
+        /// <summary>
+        /// 绝对位移路径下按系数缩放受击动画 endValue（相对路径由 RebindVictimKnockbackFromAttacker 处理）。
+        /// 系数 1 保持场景烘焙手感；越界值应由 Profile clamp 后再传入。
+        /// 调用前 BindParticipants 已 RestoreBakedEndValues，此处仍从烘焙字典重算以免系数残留。
+        /// </summary>
+        private void ScaleVictimKnockbackEndValues(float knockbackCoefficient)
+        {
+            CacheBakedClipValuesIfNeeded();
+            if (victimAnimations == null)
+            {
+                return;
+            }
+
+            var scale = Mathf.Max(0f, knockbackCoefficient);
+            for (var i = 0; i < victimAnimations.Count; i++)
+            {
+                var animation = victimAnimations[i];
+                if (animation == null)
+                {
+                    continue;
+                }
+
+                var baked = GetBakedEndValue(animation);
+                WriteEndValueV3(animation, baked * scale);
+            }
+        }
+
         private static void WriteAnimationTarget(Component animation, GameObject targetObject, Transform targetTransform)
         {
             if (animation == null || targetObject == null || targetTransform == null)
@@ -625,6 +730,20 @@ namespace NineGrid.Cards
             return field?.GetValue(callbackComponent) as UnityEvent;
         }
 
+        private void ApplyExplicitCallbackDelays(float hitFlashDelay, float deathDelay)
+        {
+            CacheCallbacksIfNeeded();
+            if (hitFlashCallback != null && hitFlashDelay > 0f)
+            {
+                WriteCallbackDelay(hitFlashCallback, hitFlashDelay);
+            }
+
+            if (deathCallback != null && deathDelay > 0f)
+            {
+                WriteCallbackDelay(deathCallback, deathDelay);
+            }
+        }
+
         private static float ReadCallbackDelay(Component callbackComponent)
         {
             if (callbackComponent == null)
@@ -636,6 +755,24 @@ namespace NineGrid.Cards
                 "delay",
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             return field != null ? Convert.ToSingle(field.GetValue(callbackComponent)) : 0f;
+        }
+
+        private static void WriteCallbackDelay(Component callbackComponent, float delay)
+        {
+            if (callbackComponent == null)
+            {
+                return;
+            }
+
+            var field = callbackComponent.GetType().GetField(
+                "delay",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (field == null)
+            {
+                return;
+            }
+
+            field.SetValue(callbackComponent, Mathf.Max(0f, delay));
         }
 
         private static Sequence ResolveSequence(Component timelineComponent)

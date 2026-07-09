@@ -1,20 +1,17 @@
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DG.Tweening;
 using UnityEngine;
 
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 场地级 CardAttackBasic 编排适配器：统一管理四向交战 rig、动态对象绑定与即死变体。
+    /// 场地级 CardAttackBasic 执行器：管理四向交战 rig，按 BattleBindParams 绑参播放。
+    /// 编排路由由 FieldBattleManager + Catalog 负责，本类不决定变体语义。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CardAttackBasicAdapter : MonoBehaviour
     {
-        private const float EnemyVictimKnockbackCoefficient = 1f;
-        private const float PlayerVictimKnockbackCoefficient = 0.5f;
-
         [Header("Rigs")]
         [Tooltip("CardAttackBasic 根节点；留空时 Awake 按子节点名 CardAttackBasic 查找。")]
         [SerializeField] private Transform rigsRoot;
@@ -89,15 +86,34 @@ namespace NineGrid.Cards
             return direction != CardBoardDirection.None && _rigByDirection.ContainsKey(direction);
         }
 
-        public async UniTask PlayBasicAttackAsync(
+        /// <summary>
+        /// 兼容旧调用：按 lethal 构造默认绑参后播放基础进攻。
+        /// </summary>
+        public UniTask PlayBasicAttackAsync(
             ManagedCard victim,
             bool lethal,
+            CancellationToken cancellationToken = default)
+        {
+            var intent = BattleIntentUtility.FromFlags(counter: false, lethal);
+            return PlayBasicAttackAsync(victim, BattleBindParams.CreateSafeFallback(intent), cancellationToken);
+        }
+
+        public async UniTask PlayBasicAttackAsync(
+            ManagedCard victim,
+            BattleBindParams bind,
             CancellationToken cancellationToken = default)
         {
             if (victim?.Transform == null)
             {
                 Debug.LogWarning("[CardAttackBasicAdapter] 受击卡无效，跳过交战。");
                 return;
+            }
+
+            if (!string.Equals(bind.RigFamily, BattleEncounterProfileSO.DefaultRigFamily, System.StringComparison.Ordinal))
+            {
+                Debug.LogWarning(
+                    $"[CardAttackBasicAdapter] 暂不支持 RigFamily='{bind.RigFamily}'，回退 {BattleEncounterProfileSO.DefaultRigFamily}。",
+                    this);
             }
 
             var field = GroundFieldManagerSingleton.Instance;
@@ -107,6 +123,7 @@ namespace NineGrid.Cards
                 return;
             }
 
+            EnsureRigsCollected();
             if (!TryResolveDirectionForVictimSlot(victimSlot, out var direction)
                 || !_rigByDirection.TryGetValue(direction, out var rig))
             {
@@ -123,30 +140,53 @@ namespace NineGrid.Cards
             var victimTransform = victim.Transform;
             victim.TryGetEffectManager(out var victimEffects);
 
+            var attackerSnapshot = BattleFinalStateGuard.Capture(
+                attackerCard,
+                field,
+                GroundSlotTopology.AvatarReservedSlot);
+            var victimSnapshot = BattleFinalStateGuard.Capture(victim, field, victimSlot);
+
             PrepareAttackerAtAvatarAnchor(field, attacker, victimTransform);
             rig.ResetParticipantMotion(attacker, victimTransform);
-            rig.BindParticipants(attacker, victimTransform, victimEffects, lethal,
-                victimKnockbackCoefficient: EnemyVictimKnockbackCoefficient);
+            rig.BindParticipants(attacker, victimTransform, victimEffects, in bind);
 
             await PlayBoundRigAsync(
                 rig,
                 attacker,
-                attackerCard,
-                victim,
-                victimTransform,
-                lethal,
+                attackerSnapshot,
+                victimSnapshot,
+                bind,
                 cancellationToken);
+        }
+
+        /// <summary>
+        /// 兼容旧调用：按 lethal 构造默认绑参后播放反击。
+        /// </summary>
+        public UniTask PlayBasicCounterAttackAsync(
+            ManagedCard attacker,
+            bool lethal,
+            CancellationToken cancellationToken = default)
+        {
+            var intent = BattleIntentUtility.FromFlags(counter: true, lethal);
+            return PlayBasicCounterAttackAsync(attacker, BattleBindParams.CreateSafeFallback(intent), cancellationToken);
         }
 
         public async UniTask PlayBasicCounterAttackAsync(
             ManagedCard attacker,
-            bool lethal,
+            BattleBindParams bind,
             CancellationToken cancellationToken = default)
         {
             if (attacker?.Transform == null)
             {
                 Debug.LogWarning("[CardAttackBasicAdapter] 反击攻击者无效，跳过交战。");
                 return;
+            }
+
+            if (!string.Equals(bind.RigFamily, BattleEncounterProfileSO.DefaultRigFamily, System.StringComparison.Ordinal))
+            {
+                Debug.LogWarning(
+                    $"[CardAttackBasicAdapter] 暂不支持 RigFamily='{bind.RigFamily}'，回退 {BattleEncounterProfileSO.DefaultRigFamily}。",
+                    this);
             }
 
             var field = GroundFieldManagerSingleton.Instance;
@@ -156,6 +196,7 @@ namespace NineGrid.Cards
                 return;
             }
 
+            EnsureRigsCollected();
             if (!TryResolveCounterAttackDirectionForAttackerSlot(attackerSlot, out var direction)
                 || !_rigByDirection.TryGetValue(direction, out var rig))
             {
@@ -174,107 +215,49 @@ namespace NineGrid.Cards
             var victimTransform = victim.Transform;
             victim.TryGetEffectManager(out var victimEffects);
 
+            var attackerSnapshot = BattleFinalStateGuard.Capture(attacker, field, attackerSlot);
+            var victimSnapshot = BattleFinalStateGuard.Capture(
+                victim,
+                field,
+                GroundSlotTopology.AvatarReservedSlot);
+
             PrepareAttackerAtSlotAnchor(field, attackerTransform, attackerSlot, victimTransform);
             rig.ResetParticipantMotion(attackerTransform, victimTransform);
-            rig.BindParticipants(
-                attackerTransform,
-                victimTransform,
-                victimEffects,
-                lethal,
-                relativeAttackerMotion: true,
-                relativeVictimKnockback: true,
-                victimKnockbackCoefficient: PlayerVictimKnockbackCoefficient);
+            rig.BindParticipants(attackerTransform, victimTransform, victimEffects, in bind);
 
             await PlayBoundRigAsync(
                 rig,
                 attackerTransform,
-                attacker,
-                victim,
-                victimTransform,
-                lethal,
-                cancellationToken,
-                restoreAttackerSlot: attackerSlot,
-                restoreVictimSlot: GroundSlotTopology.AvatarReservedSlot);
+                attackerSnapshot,
+                victimSnapshot,
+                bind,
+                cancellationToken);
         }
 
         private async UniTask PlayBoundRigAsync(
             CardAttackBasicDirectionRig rig,
             Transform attacker,
-            ManagedCard attackerCard,
-            ManagedCard victim,
-            Transform victimTransform,
-            bool lethal,
-            CancellationToken cancellationToken,
-            int? restoreAttackerSlot = null,
-            int? restoreVictimSlot = null)
+            BattleFinalStateGuard.ParticipantSnapshot attackerSnapshot,
+            BattleFinalStateGuard.ParticipantSnapshot victimSnapshot,
+            BattleBindParams bind,
+            CancellationToken cancellationToken)
         {
             var field = GroundFieldManagerSingleton.Instance;
+            var victimTransform = victimSnapshot.Transform;
             try
             {
                 await rig.PlayAsync(cancellationToken);
             }
             finally
             {
-                rig.ResetParticipantMotion(attacker, lethal ? null : victimTransform);
-                await RestoreCardAtSlotIfNeededAsync(field, attackerCard, restoreAttackerSlot, cancellationToken);
-                await RestoreCardAtSlotIfNeededAsync(field, victim, restoreVictimSlot, cancellationToken);
-
-                var cardManager = CardManagerSingleton.Instance;
-                if (attackerCard != null)
-                {
-                    cardManager?.RefreshDisplayMode(attackerCard);
-                }
-
-                if (!lethal)
-                {
-                    cardManager?.RefreshDisplayMode(victim);
-                }
+                rig.ResetParticipantMotion(attacker, bind.IsLethal ? null : victimTransform);
+                await BattleFinalStateGuard.RestorePairAsync(
+                    attackerSnapshot,
+                    victimSnapshot,
+                    field,
+                    bind,
+                    CancellationToken.None);
             }
-        }
-
-        private static async UniTask RestoreCardAtSlotIfNeededAsync(
-            GroundFieldManagerSingleton field,
-            ManagedCard card,
-            int? slot,
-            CancellationToken cancellationToken)
-        {
-            if (!slot.HasValue || card?.Transform == null || field == null)
-            {
-                return;
-            }
-
-            var anchor = field.GetGroundAnchor(slot.Value);
-            if (anchor == null)
-            {
-                return;
-            }
-
-            var transform = card.Transform;
-            CardDeckTween.KillMotion(transform);
-
-            var distance = Vector3.Distance(transform.position, anchor.position);
-            if (distance > 0.02f)
-            {
-                var completed = false;
-                transform
-                    .DOMove(anchor.position, 0.12f)
-                    .SetEase(Ease.OutCubic)
-                    .SetLink(transform.gameObject, LinkBehaviour.KillOnDestroy)
-                    .OnComplete(() => completed = true)
-                    .OnKill(() => completed = true);
-
-                while (!completed)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
-                }
-            }
-            else
-            {
-                transform.position = anchor.position;
-            }
-
-            transform.rotation = Quaternion.identity;
         }
 
         /// <summary>
@@ -390,11 +373,26 @@ namespace NineGrid.Cards
             }
         }
 
+        private void EnsureRigsCollected()
+        {
+            if (_rigByDirection.Count > 0)
+            {
+                return;
+            }
+
+            CollectDirectionRigs();
+        }
+
         private void CollectDirectionRigs()
         {
             _rigByDirection.Clear();
             if (directionRigs == null || directionRigs.Count == 0)
             {
+                if (rigsRoot == null)
+                {
+                    ResolveRigsRoot();
+                }
+
                 directionRigs = new List<CardAttackBasicDirectionRig>(
                     rigsRoot.GetComponentsInChildren<CardAttackBasicDirectionRig>(true));
             }

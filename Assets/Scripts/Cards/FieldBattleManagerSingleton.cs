@@ -6,8 +6,9 @@ using UnityEngine;
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 场地交战管理器单例：基础进攻/反击编排、即死收尾与交战忙碌锁。
+    /// 场地交战管理器单例：Intent → Catalog 路由 → Adapter 播 Rig → 终态 Guard。
     /// 场地占用与旋转仍由 GroundFieldManagerSingleton 负责。
+    /// LEGACY：攻击后旋转等伪规则行为本轮保留，正式规则以未来 Core Batch 为准。
     /// </summary>
     public sealed class FieldBattleManagerSingleton : MonoBehaviour
     {
@@ -19,6 +20,9 @@ namespace NineGrid.Cards
         [Header("Battle Presentation")]
         [Tooltip("CardAttack 节点上的基础交战适配器；留空时 Awake 在场地管理器子节点或场景中自动查找。")]
         [SerializeField] private CardAttackBasicAdapter attackAdapter;
+
+        [Tooltip("战斗编排 Catalog（Intent×参战双方 → Encounter Profile）。必填；留空时仅走 SafeFallback 绑参。")]
+        [SerializeField] private BattleEncounterCatalogSO encounterCatalog;
 
         private bool _isBusy;
 
@@ -38,6 +42,8 @@ namespace NineGrid.Cards
         public bool IsBusy => _isBusy;
 
         public CardAttackBasicAdapter AttackAdapter => attackAdapter;
+
+        public BattleEncounterCatalogSO EncounterCatalog => encounterCatalog;
 
         private void Awake()
         {
@@ -148,10 +154,13 @@ namespace NineGrid.Cards
             }
 
             var lethal = lethalOverride ?? attackAdapter.ConsumeNextLethalArmed();
+            var intent = BattleIntentUtility.FromFlags(counter: false, lethal);
+            var bind = ResolveBindParams(intent, victim, out _);
+
             _isBusy = true;
             try
             {
-                await attackAdapter.PlayBasicAttackAsync(victim, lethal, cancellationToken);
+                await attackAdapter.PlayBasicAttackAsync(victim, bind, cancellationToken);
                 if (lethal)
                 {
                     CardManagerSingleton.Instance.MarkFieldDead(victim);
@@ -159,6 +168,7 @@ namespace NineGrid.Cards
                     FinalizeLethalVictimAsync(victim, cancellationToken).Forget();
                 }
 
+                // LEGACY：伪战斗路径攻击后几乎总旋转；正式规则应由 Core Batch 驱动。
                 await fieldManager.RotateOuterRingClockwiseWhileBusyAsync(cancellationToken);
             }
             finally
@@ -214,15 +224,48 @@ namespace NineGrid.Cards
             }
 
             var lethal = lethalOverride ?? false;
+            var intent = BattleIntentUtility.FromFlags(counter: true, lethal);
+            var bind = ResolveBindParams(intent, attacker, out _);
+
             _isBusy = true;
             try
             {
-                await attackAdapter.PlayBasicCounterAttackAsync(attacker, lethal, cancellationToken);
+                await attackAdapter.PlayBasicCounterAttackAsync(attacker, bind, cancellationToken);
             }
             finally
             {
                 _isBusy = false;
             }
+        }
+
+        private BattleBindParams ResolveBindParams(
+            BattleIntent intent,
+            ManagedCard monsterCard,
+            out BattleEncounterProfileSO profile)
+        {
+            var playerId = ResolveAvatarDefId();
+            var monsterId = monsterCard != null ? monsterCard.DefId : BattleParticipantIds.Wildcard;
+            return BattlePresentationRouter.ResolveBindParams(
+                encounterCatalog,
+                intent,
+                playerId,
+                monsterId,
+                out profile,
+                out _);
+        }
+
+        private string ResolveAvatarDefId()
+        {
+            ResolveFieldManager();
+            if (fieldManager != null
+                && fieldManager.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+                && avatar != null
+                && !string.IsNullOrWhiteSpace(avatar.DefId))
+            {
+                return avatar.DefId;
+            }
+
+            return BattleParticipantIds.Wildcard;
         }
 
         /// <summary>
