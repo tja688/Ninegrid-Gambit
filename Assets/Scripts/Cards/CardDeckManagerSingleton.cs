@@ -153,16 +153,80 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            for (var i = 0; i < layoutSettings.maxSlots; i++)
+            if (!TryFindDeckSlotByUid(uid, out var deckSlot))
             {
-                if (_slotContainer.TryGetCardAt(i, out var card) && card != null && card.Uid == uid)
+                Debug.LogWarning($"[CardDeckManager] 卡组中未找到 Uid={uid}，无法就位到格 {groundSlot}（将走兜底放置）。");
+                return false;
+            }
+
+            return TryDealCard(deckSlot, groundSlot, skipBusyGuard);
+        }
+
+        /// <summary>
+        /// 按 Uid 发牌到 Ground。若卡不在组内且提供了 <paramref name="ensureCard"/>，
+        /// 先经 CardDeckAddAnchors 入组（完整入组缓动），再走与 <see cref="DealCard"/> 相同的飞入轨迹。
+        /// </summary>
+        /// <param name="awaitMove">为 true 时等到本张 moveDuration 结束；批量交错发牌时应传 false，由调用方在末张后再等一次。</param>
+        public async UniTask<bool> DealCardByUidAsync(
+            int uid,
+            int groundSlot,
+            ManagedCard ensureCard = null,
+            bool skipBusyGuard = false,
+            bool awaitMove = true,
+            CancellationToken cancellationToken = default)
+        {
+            if (!EnsureInGameForDeal())
+            {
+                return false;
+            }
+
+            if (!TryFindDeckSlotByUid(uid, out var deckSlot))
+            {
+                if (ensureCard == null || ensureCard.Uid != uid)
                 {
-                    return TryDealCard(i, groundSlot, skipBusyGuard);
+                    Debug.LogWarning(
+                        $"[CardDeckManager] 卡组中未找到 Uid={uid}，且无 ensureCard，无法就位到格 {groundSlot}。");
+                    return false;
+                }
+
+                var field = ResolveFieldManager();
+                if (field != null && field.TryGetSlotOf(uid, out _))
+                {
+                    Debug.LogWarning(
+                        $"[CardDeckManager] Uid={uid} 已在场地，跳过入组发牌到格 {groundSlot}。");
+                    return false;
+                }
+
+                await AddCardAtInternalAsync(0, ensureCard, cancellationToken);
+                if (!TryFindDeckSlotByUid(uid, out deckSlot))
+                {
+                    Debug.LogWarning(
+                        $"[CardDeckManager] 入组后仍未找到 Uid={uid}，无法就位到格 {groundSlot}。");
+                    return false;
                 }
             }
 
-            Debug.LogWarning($"[CardDeckManager] 卡组中未找到 Uid={uid}，无法就位到格 {groundSlot}（将走兜底放置）。");
-            return false;
+            if (!TryDealCard(deckSlot, groundSlot, skipBusyGuard))
+            {
+                return false;
+            }
+
+            if (awaitMove && layoutSettings != null && layoutSettings.moveDuration > 0f)
+            {
+                await UniTask.Delay(
+                    TimeSpan.FromSeconds(layoutSettings.moveDuration),
+                    cancellationToken: cancellationToken);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 卡组槽中是否已有指定 Uid。
+        /// </summary>
+        public bool ContainsUid(int uid)
+        {
+            return TryFindDeckSlotByUid(uid, out _);
         }
 
         /// <summary>
@@ -608,6 +672,26 @@ namespace NineGrid.Cards
             }
 
             return true;
+        }
+
+        private bool TryFindDeckSlotByUid(int uid, out int deckSlotIndex)
+        {
+            deckSlotIndex = -1;
+            if (uid <= 0 || _slotContainer == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < layoutSettings.maxSlots; i++)
+            {
+                if (_slotContainer.TryGetCardAt(i, out var card) && card != null && card.Uid == uid)
+                {
+                    deckSlotIndex = i;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private Transform GetDeckAnchor(int index)

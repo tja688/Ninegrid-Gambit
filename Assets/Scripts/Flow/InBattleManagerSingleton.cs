@@ -370,8 +370,16 @@ namespace NineGrid.Flow
                 }
             }
 
-            // 按内核盘面 uid→slot 就位（环序演出，但不盲发 DealOpeningRing）
+            // 按内核盘面 uid→slot 就位：走卡组管理器完整发牌缓动（与 DealOpeningRing 同轨迹）。
             var ring = GroundSlotTopology.ClockwiseRing;
+            var dealInterval = deckManager.LayoutSettings != null
+                ? deckManager.LayoutSettings.dealInterval
+                : 0.06f;
+            var moveDuration = deckManager.LayoutSettings != null
+                ? deckManager.LayoutSettings.moveDuration
+                : 0.28f;
+            var dealtAny = false;
+
             for (var i = 0; i < ring.Count; i++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -391,19 +399,36 @@ namespace NineGrid.Flow
                     continue;
                 }
 
-                if (!deckManager.DealCardByUid(placement.Uid, placement.GroundSlot))
+                // 交错启动：不等单张 moveDuration，只隔 dealInterval（与 DealOpeningRingInternal 一致）。
+                var ok = await deckManager.DealCardByUidAsync(
+                    placement.Uid,
+                    placement.GroundSlot,
+                    ensureCard: null,
+                    skipBusyGuard: false,
+                    awaitMove: false,
+                    cancellationToken: cancellationToken);
+                if (!ok)
                 {
                     Debug.LogError(
                         $"[InBattleManager] 就位失败 uid={placement.Uid} slot={placement.GroundSlot}，中止后续发牌。");
                     return;
                 }
 
-                if (i < ring.Count - 1)
+                dealtAny = true;
+                if (i < ring.Count - 1 && dealInterval > 0f)
                 {
                     await UniTask.Delay(
-                        TimeSpan.FromSeconds(deckManager.LayoutSettings.dealInterval),
+                        TimeSpan.FromSeconds(dealInterval),
                         cancellationToken: cancellationToken);
                 }
+            }
+
+            // 末张飞入播完后再刷数值，避免 SoftAlign/Sync 掐掉轨迹。
+            if (dealtAny && moveDuration > 0f)
+            {
+                await UniTask.Delay(
+                    TimeSpan.FromSeconds(moveDuration),
+                    cancellationToken: cancellationToken);
             }
 
             CoreCardPresentationMapper.SyncAllSpawnedCards();
@@ -709,6 +734,10 @@ namespace NineGrid.Flow
                 var dealInterval = deckManager.LayoutSettings != null
                     ? deckManager.LayoutSettings.dealInterval
                     : 0.05f;
+                var moveDuration = deckManager.LayoutSettings != null
+                    ? deckManager.LayoutSettings.moveDuration
+                    : 0.28f;
+                var dealtAny = false;
 
                 for (var i = 0; i < result.Deals.Length; i++)
                 {
@@ -735,13 +764,27 @@ namespace NineGrid.Flow
                         continue;
                     }
 
-                    if (!deckManager.DealCardByUid(deal.Uid, deal.Slot, skipBusyGuard: true))
+                    // 缺牌时先入组再发，始终走卡组完整缓动；禁止瞬移落锚兜底。
+                    var ensureCard = ResolveOrSpawnDeckCardForDeal(deal);
+                    var ok = await deckManager.DealCardByUidAsync(
+                        deal.Uid,
+                        deal.Slot,
+                        ensureCard: ensureCard,
+                        skipBusyGuard: true,
+                        awaitMove: false,
+                        cancellationToken: cancellationToken);
+                    if (ok)
                     {
-                        PlaceDealtCardFallback(deal);
+                        dealtAny = true;
+                        if (cardManager.TryGet(deal.Uid, out var dealt))
+                        {
+                            CoreCardPresentationMapper.ApplyToManagedCard(dealt);
+                        }
                     }
-                    else if (cardManager.TryGet(deal.Uid, out var dealt))
+                    else
                     {
-                        CoreCardPresentationMapper.ApplyToManagedCard(dealt);
+                        Debug.LogWarning(
+                            $"[InBattleManager] 补牌发牌失败 uid={deal.Uid} slot={deal.Slot}，留给安全网对齐。");
                     }
 
                     if (i < result.Deals.Length - 1 && dealInterval > 0f)
@@ -751,77 +794,51 @@ namespace NineGrid.Flow
                             cancellationToken: cancellationToken);
                     }
                 }
+
+                // 末张飞入播完后再 SoftAlign/Sync，避免 KillMotion 掐掉轨迹。
+                if (dealtAny && moveDuration > 0f)
+                {
+                    await UniTask.Delay(
+                        TimeSpan.FromSeconds(moveDuration),
+                        cancellationToken: cancellationToken);
+                }
             }
 
             SoftAlignBoardAnchorsToCore();
             SyncBoardOccupancyFromCore();
         }
 
-        private void PlaceDealtCardFallback(PostKillCardDeal deal)
+        /// <summary>
+        /// 为补牌准备可入组的视图：已在卡组则返回 null；否则复用游离视图或 Spawn 新视图（CardDeckMode）。
+        /// </summary>
+        private ManagedCard ResolveOrSpawnDeckCardForDeal(PostKillCardDeal deal)
         {
             ResolveManagers();
-            if (cardManager == null || fieldManager == null)
+            if (deckManager != null && deckManager.ContainsUid(deal.Uid))
             {
-                return;
+                return null;
             }
 
-            var hand = CardHandManagerSingleton.Instance;
-            if (hand != null && hand.ContainsUid(deal.Uid))
+            if (cardManager != null && cardManager.TryGet(deal.Uid, out var existing) && existing != null)
             {
-                // 视图已在手牌：禁止拽回场地。Spawn 会因 uid 冲突失败，只能跳过并依赖安全网/日志。
-                Debug.LogWarning(
-                    $"[InBattleManager] 补牌 uid={deal.Uid} 已在手牌，跳过场地放置（Core/表现可能曾 desync）。");
-                return;
+                return existing;
             }
 
-            if (fieldManager.TryGetSlotOf(deal.Uid, out var occupiedSlot))
+            if (cardManager == null)
             {
-                if (occupiedSlot != deal.Slot)
-                {
-                    fieldManager.RequestRelocateOccupancy(
-                        deal.Uid,
-                        deal.Slot,
-                        snapToAnchor: true,
-                        skipBusyGuard: true);
-                }
-
-                if (cardManager.TryGet(deal.Uid, out var relocated))
-                {
-                    CoreCardPresentationMapper.ApplyToManagedCard(relocated);
-                }
-
-                return;
-            }
-
-            ManagedCard view = null;
-            if (cardManager.TryGet(deal.Uid, out view) && view != null)
-            {
-                // 已有视图但不在手牌/场地：落到目标格锚点。
-                CoreCardPresentationMapper.ApplyToManagedCard(view);
-                fieldManager.RequestPlaceCardAtAnchor(
-                    deal.Slot,
-                    view,
-                    skipBusyGuard: true,
-                    snapToAnchor: true);
-                return;
+                return null;
             }
 
             var defId = string.IsNullOrEmpty(deal.DefId)
                 ? CardManagerSingleton.StandardDefId
                 : deal.DefId;
-            view = cardManager.SpawnView(deal.Uid, defId, initialMode: CardDisplayMode.GroundCardMode);
-            if (view == null)
+            var view = cardManager.SpawnView(deal.Uid, defId, initialMode: CardDisplayMode.CardDeckMode);
+            if (view != null)
             {
-                Debug.LogWarning($"[InBattleManager] 补牌兜底 Spawn 失败 uid={deal.Uid} slot={deal.Slot}");
-                return;
+                CoreCardPresentationMapper.ApplyToManagedCard(view);
             }
 
-            CoreCardPresentationMapper.ApplyToManagedCard(view);
-            fieldManager.RequestPlaceCardAtAnchor(
-                deal.Slot,
-                view,
-                skipBusyGuard: true,
-                snapToAnchor: true);
+            return view;
         }
 
         private static PickupItemPresentationResult ApplyPickupItemFromCore(int groundSlot)
