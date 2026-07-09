@@ -435,7 +435,7 @@ namespace NineGrid.Cards
         /// <summary>
         /// 将卡从场地表移除但不销毁视图，供手牌管理器接管。
         /// </summary>
-        public bool TryTakeCardFromField(int uid, out ManagedCard card)
+        public bool TryTakeCardFromField(int uid, out ManagedCard card, bool startExplore = false)
         {
             card = null;
             if (IsBusy)
@@ -453,11 +453,15 @@ namespace NineGrid.Cards
             {
                 UnregisterCardAtSlot(slot);
                 RefreshSlotHitCollider(slot);
-                _exploreRunner?.StartExplore(slot);
+                if (startExplore)
+                {
+                    _exploreRunner?.StartExplore(slot);
+                }
+
                 return false;
             }
 
-            VacateSlotForExplore(slot, card, playRemoveAnim: false);
+            VacateSlotForExplore(slot, card, playRemoveAnim: false, skipBusyGuard: false, startExplore: startExplore);
             return true;
         }
 

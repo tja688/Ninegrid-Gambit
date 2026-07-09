@@ -512,7 +512,10 @@ namespace NineGrid.Flow
             CombatHitSink.SpawnDamageNumber = SpawnDamageNumberAt;
             CombatHitSink.SyncBoardFromCore = SyncBoardOccupancyFromCore;
             CombatHitSink.DrainPostKillBoard = DrainPostKillBoardAsync;
+            CombatHitSink.ApplyPickupItem = ApplyPickupItemFromCore;
+            CombatHitSink.ApplyUseItem = ApplyUseItemFromCore;
             CombatHitSink.NotifyBattleEnded = OnBattleEndedFromCombat;
+            RegisterHandBridge();
         }
 
         private void UnregisterCombatHitSink()
@@ -552,10 +555,46 @@ namespace NineGrid.Flow
                 CombatHitSink.DrainPostKillBoard = null;
             }
 
+            if (CombatHitSink.ApplyPickupItem == ApplyPickupItemFromCore)
+            {
+                CombatHitSink.ApplyPickupItem = null;
+            }
+
+            if (CombatHitSink.ApplyUseItem == ApplyUseItemFromCore)
+            {
+                CombatHitSink.ApplyUseItem = null;
+            }
+
             if (CombatHitSink.NotifyBattleEnded == OnBattleEndedFromCombat)
             {
                 CombatHitSink.NotifyBattleEnded = null;
             }
+
+            UnregisterHandBridge();
+        }
+
+        private void RegisterHandBridge()
+        {
+            var hand = CardHandManagerSingleton.Instance
+                       ?? FindFirstObjectByType<CardHandManagerSingleton>();
+            if (hand == null)
+            {
+                return;
+            }
+
+            hand.DragApplyValidator -= ValidateHandDragApplyAsync;
+            hand.DragApplyValidator += ValidateHandDragApplyAsync;
+        }
+
+        private void UnregisterHandBridge()
+        {
+            var hand = CardHandManagerSingleton.Instance;
+            if (hand == null)
+            {
+                return;
+            }
+
+            hand.DragApplyValidator -= ValidateHandDragApplyAsync;
         }
 
         private static CombatHitPresentationResult ApplyCombatHitFromCore(int attackerUid, int targetUid)
@@ -632,46 +671,9 @@ namespace NineGrid.Flow
                 return summary;
             }
 
-            var moves = new List<PostKillCardMove>(8);
-            var deals = new List<PostKillCardDeal>(8);
-            var registry = arch.GetModel<CardRegistry>();
-            var entries = pipeline.EventLog.Entries;
-            for (var i = startIndex; i < entries.Count; i++)
-            {
-                var e = entries[i];
-                if (e.Type == CoreEventType.CardMoved
-                    && e.CardUid > 0
-                    && e.FromSlot.IsBoardSlot
-                    && e.ToSlot.IsBoardSlot)
-                {
-                    moves.Add(new PostKillCardMove
-                    {
-                        Uid = e.CardUid,
-                        FromSlot = e.FromSlot.Index,
-                        ToSlot = e.ToSlot.Index,
-                    });
-                }
-                else if (e.Type == CoreEventType.CardDealt
-                         && e.CardUid > 0
-                         && e.ToSlot.IsBoardSlot)
-                {
-                    var defId = string.Empty;
-                    if (registry.TryGet(e.CardUid, out var coreCard))
-                    {
-                        defId = coreCard.DefId;
-                    }
-
-                    deals.Add(new PostKillCardDeal
-                    {
-                        Uid = e.CardUid,
-                        Slot = e.ToSlot.Index,
-                        DefId = defId,
-                    });
-                }
-            }
-
-            summary.Moves = moves.ToArray();
-            summary.Deals = deals.ToArray();
+            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _);
+            summary.Moves = moves;
+            summary.Deals = deals;
             return summary;
         }
 
@@ -725,6 +727,14 @@ namespace NineGrid.Flow
                         continue;
                     }
 
+                    var hand = CardHandManagerSingleton.Instance;
+                    if (hand != null && hand.ContainsUid(deal.Uid))
+                    {
+                        Debug.LogWarning(
+                            $"[InBattleManager] Drain 跳过补牌：uid={deal.Uid} 已在手牌，目标格 {deal.Slot}");
+                        continue;
+                    }
+
                     if (!deckManager.DealCardByUid(deal.Uid, deal.Slot, skipBusyGuard: true))
                     {
                         PlaceDealtCardFallback(deal);
@@ -755,38 +765,382 @@ namespace NineGrid.Flow
                 return;
             }
 
-            if (!cardManager.TryGet(deal.Uid, out var view) || view == null)
+            var hand = CardHandManagerSingleton.Instance;
+            if (hand != null && hand.ContainsUid(deal.Uid))
             {
-                var defId = string.IsNullOrEmpty(deal.DefId)
-                    ? CardManagerSingleton.StandardDefId
-                    : deal.DefId;
-                view = cardManager.SpawnView(deal.Uid, defId, initialMode: CardDisplayMode.GroundCardMode);
-            }
-
-            if (view == null)
-            {
-                Debug.LogError($"[InBattleManager] 补牌兜底失败 uid={deal.Uid} slot={deal.Slot}");
+                // 视图已在手牌：禁止拽回场地。Spawn 会因 uid 冲突失败，只能跳过并依赖安全网/日志。
+                Debug.LogWarning(
+                    $"[InBattleManager] 补牌 uid={deal.Uid} 已在手牌，跳过场地放置（Core/表现可能曾 desync）。");
                 return;
             }
 
-            if (fieldManager.TryGetSlotOf(view.Uid, out var currentSlot) && currentSlot != deal.Slot)
+            if (fieldManager.TryGetSlotOf(deal.Uid, out var occupiedSlot))
             {
-                fieldManager.RequestRelocateOccupancy(
-                    view.Uid,
-                    deal.Slot,
-                    snapToAnchor: true,
-                    skipBusyGuard: true);
+                if (occupiedSlot != deal.Slot)
+                {
+                    fieldManager.RequestRelocateOccupancy(
+                        deal.Uid,
+                        deal.Slot,
+                        snapToAnchor: true,
+                        skipBusyGuard: true);
+                }
+
+                if (cardManager.TryGet(deal.Uid, out var relocated))
+                {
+                    CoreCardPresentationMapper.ApplyToManagedCard(relocated);
+                }
+
+                return;
             }
-            else if (!fieldManager.TryGetSlotOf(view.Uid, out _))
+
+            ManagedCard view = null;
+            if (cardManager.TryGet(deal.Uid, out view) && view != null)
             {
+                // 已有视图但不在手牌/场地：落到目标格锚点。
+                CoreCardPresentationMapper.ApplyToManagedCard(view);
                 fieldManager.RequestPlaceCardAtAnchor(
                     deal.Slot,
                     view,
                     skipBusyGuard: true,
                     snapToAnchor: true);
+                return;
+            }
+
+            var defId = string.IsNullOrEmpty(deal.DefId)
+                ? CardManagerSingleton.StandardDefId
+                : deal.DefId;
+            view = cardManager.SpawnView(deal.Uid, defId, initialMode: CardDisplayMode.GroundCardMode);
+            if (view == null)
+            {
+                Debug.LogWarning($"[InBattleManager] 补牌兜底 Spawn 失败 uid={deal.Uid} slot={deal.Slot}");
+                return;
             }
 
             CoreCardPresentationMapper.ApplyToManagedCard(view);
+            fieldManager.RequestPlaceCardAtAnchor(
+                deal.Slot,
+                view,
+                skipBusyGuard: true,
+                snapToAnchor: true);
+        }
+
+        private static PickupItemPresentationResult ApplyPickupItemFromCore(int groundSlot)
+        {
+            var arch = NineGridArchitecture.Current;
+            var pipeline = arch.GetSystem<IActionPipelineSystem>();
+            var startIndex = pipeline.EventLog.Entries.Count;
+            var result = arch.GetSystem<IPhaseSystem>().ApplyPickupItem(SlotId.Board(groundSlot));
+            var summary = new PickupItemPresentationResult { Accepted = result.Accepted };
+            if (!result.Accepted)
+            {
+                Debug.LogWarning($"[InBattleManager] PickupItem 被拒: {result.Reason}");
+                summary.Moves = Array.Empty<PostKillCardMove>();
+                summary.Deals = Array.Empty<PostKillCardDeal>();
+                return summary;
+            }
+
+            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out var pickedUid);
+            summary.CardUid = pickedUid;
+            summary.Moves = moves;
+            summary.Deals = deals;
+
+            if (pickedUid > 0
+                && arch.GetModel<CardRegistry>().TryGet(pickedUid, out var card))
+            {
+                summary.AcquiredToHand = card.Zone.Value == ZoneId.ItemSlots;
+                summary.RemovedWithoutHand = card.Zone.Value == ZoneId.Removed;
+            }
+
+            var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
+            summary.NodeClearedOrRewardPhase =
+                phase == GamePhase.RewardItemChoice
+                || phase == GamePhase.ClearCheck
+                || phase == GamePhase.NodeCompleted
+                || arch.GetSystem<IDeckSystem>().IsNodeCleared();
+            return summary;
+        }
+
+        private static UseItemPresentationResult ApplyUseItemFromCore(int itemUid, int? targetCardUid)
+        {
+            var arch = NineGridArchitecture.Current;
+            var pipeline = arch.GetSystem<IActionPipelineSystem>();
+            var startIndex = pipeline.EventLog.Entries.Count;
+            int[] selected = null;
+            if (targetCardUid.HasValue && targetCardUid.Value > 0)
+            {
+                selected = new[] { targetCardUid.Value };
+            }
+
+            var result = arch.GetSystem<IPhaseSystem>().ApplyUseItem(itemUid, selected, null);
+            var summary = new UseItemPresentationResult { Accepted = result.Accepted };
+            if (!result.Accepted)
+            {
+                Debug.LogWarning($"[InBattleManager] UseItem 被拒: {result.Reason}");
+                return summary;
+            }
+
+            var entries = pipeline.EventLog.Entries;
+            for (var i = startIndex; i < entries.Count; i++)
+            {
+                var e = entries[i];
+                if (e.Type == CoreEventType.CardKilled)
+                {
+                    summary.TargetKilled = true;
+                }
+            }
+
+            var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
+            summary.AvatarDefeated = phase == GamePhase.Defeat;
+            summary.RewardChoicePending =
+                phase == GamePhase.RewardItemChoice
+                || arch.GetModel<PendingChoiceModel>().Kind.Value == PendingChoiceKind.Reward;
+            summary.NodeClearedOrRewardPhase =
+                summary.RewardChoicePending
+                || phase == GamePhase.ClearCheck
+                || phase == GamePhase.NodeCompleted
+                || arch.GetSystem<IDeckSystem>().IsNodeCleared();
+
+            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _);
+            if ((moves != null && moves.Length > 0) || (deals != null && deals.Length > 0) || summary.TargetKilled)
+            {
+                summary.PostKillBoard = new PostKillBoardPresentationResult
+                {
+                    Accepted = true,
+                    Moves = moves ?? Array.Empty<PostKillCardMove>(),
+                    Deals = deals ?? Array.Empty<PostKillCardDeal>(),
+                    NodeClearedOrRewardPhase = summary.NodeClearedOrRewardPhase,
+                    AvatarDefeated = summary.AvatarDefeated,
+                };
+            }
+
+            return summary;
+        }
+
+        private static void FillBoardDeltaFromEventLog(
+            IActionPipelineSystem pipeline,
+            int startIndex,
+            out PostKillCardMove[] moves,
+            out PostKillCardDeal[] deals,
+            out int pickedUid)
+        {
+            var moveList = new List<PostKillCardMove>(8);
+            var dealList = new List<PostKillCardDeal>(8);
+            pickedUid = 0;
+            var registry = NineGridArchitecture.Current.GetModel<CardRegistry>();
+            var entries = pipeline.EventLog.Entries;
+            for (var i = startIndex; i < entries.Count; i++)
+            {
+                var e = entries[i];
+                if (e.Type == CoreEventType.ItemPicked && e.CardUid > 0 && pickedUid == 0)
+                {
+                    pickedUid = e.CardUid;
+                }
+
+                if (e.Type == CoreEventType.CardMoved
+                    && e.CardUid > 0
+                    && e.FromSlot.IsBoardSlot
+                    && e.ToSlot.IsBoardSlot)
+                {
+                    moveList.Add(new PostKillCardMove
+                    {
+                        Uid = e.CardUid,
+                        FromSlot = e.FromSlot.Index,
+                        ToSlot = e.ToSlot.Index,
+                    });
+                }
+                else if (e.Type == CoreEventType.CardDealt
+                         && e.CardUid > 0
+                         && e.ToSlot.IsBoardSlot)
+                {
+                    var defId = string.Empty;
+                    if (registry.TryGet(e.CardUid, out var coreCard))
+                    {
+                        defId = coreCard.DefId;
+                    }
+
+                    dealList.Add(new PostKillCardDeal
+                    {
+                        Uid = e.CardUid,
+                        Slot = e.ToSlot.Index,
+                        DefId = defId,
+                    });
+                }
+            }
+
+            moves = moveList.ToArray();
+            deals = dealList.ToArray();
+        }
+
+        private async UniTask<bool> ValidateHandDragApplyAsync(ManagedCard card, int? targetGroundSlot)
+        {
+            if (card == null)
+            {
+                return false;
+            }
+
+            ResolveManagers();
+            int? targetUid = null;
+            ManagedCard targetCard = null;
+            if (targetGroundSlot.HasValue
+                && fieldManager != null
+                && fieldManager.TryGetCardAt(targetGroundSlot.Value, out targetCard)
+                && targetCard != null)
+            {
+                if (targetCard.CoreKind != CardPresentationKind.Monster
+                    && HelpCardNeedsMonsterTarget(card.DefId))
+                {
+                    return false;
+                }
+
+                targetUid = targetCard.Uid;
+            }
+            else if (HelpCardNeedsMonsterTarget(card.DefId))
+            {
+                // 飞刀等：必须落到怪物上方，否则回手。
+                return false;
+            }
+
+            var useResult = ApplyUseItemFromCore(card.Uid, targetUid);
+            if (!useResult.Accepted)
+            {
+                return false;
+            }
+
+            PresentUseItemEffectsAsync(useResult).Forget();
+            await UniTask.CompletedTask;
+            return true;
+        }
+
+        private static bool HelpCardNeedsMonsterTarget(string defId)
+        {
+            if (string.IsNullOrEmpty(defId))
+            {
+                return false;
+            }
+
+            return defId.IndexOf("throwing_knife", StringComparison.OrdinalIgnoreCase) >= 0
+                   || defId.IndexOf("fireball", StringComparison.OrdinalIgnoreCase) >= 0
+                   || defId.IndexOf("impact_tutorial", StringComparison.OrdinalIgnoreCase) >= 0
+                   || defId.IndexOf("shield_bash", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private async UniTaskVoid PresentUseItemEffectsAsync(UseItemPresentationResult useResult)
+        {
+            try
+            {
+                CoreCardPresentationMapper.SyncAllSpawnedCards();
+                SpawnRecentDamageNumbers();
+
+                if (useResult.PostKillBoard.Accepted
+                    && ((useResult.PostKillBoard.Moves != null && useResult.PostKillBoard.Moves.Length > 0)
+                        || (useResult.PostKillBoard.Deals != null && useResult.PostKillBoard.Deals.Length > 0)))
+                {
+                    await DrainPostKillBoardAsync(useResult.PostKillBoard, CancellationToken.None);
+                }
+                else if (useResult.TargetKilled)
+                {
+                    // 击杀已在 ApplyUseItem 内 ResolvePostKillBoard；再切一次 EventLog 尾部可能已含 Moved/Dealt。
+                    SoftAlignBoardAnchorsToCore();
+                    SyncBoardOccupancyFromCore();
+                }
+                else
+                {
+                    SoftAlignBoardAnchorsToCore();
+                    SyncBoardOccupancyFromCore();
+                }
+
+                if (useResult.AvatarDefeated)
+                {
+                    CombatHitSink.RequestBattleEnded(victory: false);
+                    return;
+                }
+
+                if (useResult.RewardChoicePending)
+                {
+                    await PresentRewardChoiceFromCoreAsync();
+                    return;
+                }
+
+                if (useResult.NodeClearedOrRewardPhase)
+                {
+                    CombatHitSink.RequestBattleEnded(victory: true);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+            }
+        }
+
+        private void SpawnRecentDamageNumbers()
+        {
+            // 最近一次 UseItem/Combat 的 DamageDealt：对仍在场上的目标飘字。
+            var arch = NineGridArchitecture.Current;
+            var entries = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
+            var start = Math.Max(0, entries.Count - 32);
+            for (var i = start; i < entries.Count; i++)
+            {
+                var e = entries[i];
+                if (e.Type != CoreEventType.DamageDealt || e.Amount <= 0 || e.TargetUid <= 0)
+                {
+                    continue;
+                }
+
+                if (cardManager != null
+                    && cardManager.TryGet(e.TargetUid, out var view)
+                    && view?.Transform != null)
+                {
+                    SpawnDamageNumberAt(view.Transform.position, e.Amount);
+                }
+            }
+        }
+
+        private async UniTask PresentRewardChoiceFromCoreAsync()
+        {
+            var selector = SelectorManagerSingleton.Instance;
+            if (selector == null)
+            {
+                Debug.LogWarning("[InBattleManager] 奖励相位但无 SelectorManager。");
+                return;
+            }
+
+            var pending = NineGridArchitecture.Current.GetModel<PendingChoiceModel>();
+            var options = pending.RewardOptions;
+            if (options == null || options.Count == 0)
+            {
+                Debug.LogWarning("[InBattleManager] 奖励选项为空。");
+                return;
+            }
+
+            var defIds = new string[options.Count];
+            for (var i = 0; i < options.Count; i++)
+            {
+                defIds[i] = options[i].DefId;
+            }
+
+            var picked = -1;
+            var finished = false;
+            selector.BeginBounceChoice(
+                defIds,
+                (index, _) => { picked = index; },
+                () => { finished = true; });
+
+            await UniTask.WaitUntil(() => finished);
+            if (picked < 0)
+            {
+                return;
+            }
+
+            var result = NineGridArchitecture.Current.GetSystem<IPhaseSystem>().SelectReward(picked);
+            if (!result.Accepted)
+            {
+                Debug.LogWarning($"[InBattleManager] SelectReward 被拒: {result.Reason}");
+                return;
+            }
+
+            CoreCardPresentationMapper.SyncAllSpawnedCards();
+            SoftAlignBoardAnchorsToCore();
+            SyncBoardOccupancyFromCore();
         }
 
         /// <summary>
@@ -894,6 +1248,8 @@ namespace NineGrid.Flow
             var avatarUid = board.AvatarUid.Value;
 
             // 表现有、Core 该格不是这张（且 uid 也不在 Core 盘面）→ 移除。
+            // 手牌中的视图绝不能被 Sync 拽回场地。
+            var hand = CardHandManagerSingleton.Instance;
             var snapshot = fieldManager.GetSnapshot();
             for (var i = 0; i < snapshot.Slots.Length; i++)
             {
@@ -942,6 +1298,13 @@ namespace NineGrid.Flow
                 var uid = board.GetCardUid(SlotId.Board(slot));
                 if (uid <= 0 || uid == avatarUid)
                 {
+                    continue;
+                }
+
+                if (hand != null && hand.ContainsUid(uid))
+                {
+                    Debug.LogWarning(
+                        $"[InBattleManager] Sync 跳过：uid={uid} 在手牌，Core 却要求场地格 {slot}");
                     continue;
                 }
 

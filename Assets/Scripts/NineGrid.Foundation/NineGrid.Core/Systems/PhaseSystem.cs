@@ -20,6 +20,14 @@ namespace NineGrid.Core.Systems
             /// </summary>
             CoreCommandResult ResolvePostKillBoard();
             CoreCommandResult PickupItem(SlotId targetSlot);
+            /// <summary>
+            /// 表现层可信拾取：无相邻门禁；InteractionLoop 下仍会旋转补牌。
+            /// </summary>
+            CoreCommandResult ApplyPickupItem(SlotId targetSlot);
+            /// <summary>
+            /// 表现层可信使用道具：无相位门禁（仍校验 ItemSlots / 种类）。
+            /// </summary>
+            CoreCommandResult ApplyUseItem(int itemUid, IReadOnlyList<int> selectedCardUids, string selectedOption);
             CoreCommandResult ClickEmpty(SlotId targetSlot);
             CoreCommandResult UseItem(int itemUid);
             CoreCommandResult UseItem(int itemUid, IReadOnlyList<int> selectedCardUids, string selectedOption);
@@ -183,7 +191,6 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.PickupItem, "Command is not legal in phase " + CurrentPhase, targetSlot, 0);
             }
 
-            var registry = this.GetModel<CardRegistry>();
             var board = this.GetModel<BoardModel>();
             if (!targetSlot.IsBoardSlot || targetSlot == board.AvatarSlot.Value)
             {
@@ -195,6 +202,56 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.PickupItem, "Pickup target is outside interaction range.", targetSlot, 0);
             }
 
+            return ExecutePickupItem(targetSlot, requireInteractionLoopRotate: true);
+        }
+
+        public CoreCommandResult ApplyPickupItem(SlotId targetSlot)
+        {
+            var board = this.GetModel<BoardModel>();
+            if (!targetSlot.IsBoardSlot || targetSlot == board.AvatarSlot.Value)
+            {
+                return Reject(GameCommandKind.PickupItem, "Pickup target is not a board card slot.", targetSlot, 0);
+            }
+
+            return ExecutePickupItem(targetSlot, requireInteractionLoopRotate: true);
+        }
+
+        public CoreCommandResult ApplyUseItem(int itemUid, IReadOnlyList<int> selectedCardUids, string selectedOption)
+        {
+            if (itemUid <= 0)
+            {
+                return Reject(GameCommandKind.UseItem, "Item uid is invalid.", SlotId.None, itemUid);
+            }
+
+            var registry = this.GetModel<CardRegistry>();
+            CardInstance card;
+            if (!registry.TryGet(itemUid, out card))
+            {
+                return Reject(GameCommandKind.UseItem, "Item card uid does not exist.", SlotId.None, itemUid);
+            }
+
+            if (card.Zone.Value != ZoneId.ItemSlots)
+            {
+                return Reject(GameCommandKind.UseItem, "Item is not in item slots.", SlotId.None, itemUid);
+            }
+
+            if (!IsRegisteredInItemSlots(this.GetModel<DeckModel>(), itemUid))
+            {
+                return Reject(GameCommandKind.UseItem, "Item is not registered in item slots.", SlotId.None, itemUid);
+            }
+
+            if (!IsUsableItemKind(card.Kind))
+            {
+                return Reject(GameCommandKind.UseItem, "Card is not a usable item.", SlotId.None, itemUid);
+            }
+
+            return ExecuteUseItem(itemUid, card, selectedCardUids, selectedOption);
+        }
+
+        private CoreCommandResult ExecutePickupItem(SlotId targetSlot, bool requireInteractionLoopRotate)
+        {
+            var registry = this.GetModel<CardRegistry>();
+            var board = this.GetModel<BoardModel>();
             var cardUid = board.GetCardUid(targetSlot);
             if (cardUid == 0)
             {
@@ -207,7 +264,7 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.PickupItem, "Monsters must be attacked, not picked up.", targetSlot, cardUid);
             }
 
-            var shouldRotate = CurrentPhase == GamePhase.InteractionLoop;
+            var shouldRotate = requireInteractionLoopRotate && CurrentPhase == GamePhase.InteractionLoop;
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new PickupCardAction(cardUid));
             var resolved = pipeline.RunToCompletion();
@@ -278,10 +335,27 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.UseItem, "Card is not a usable item.", SlotId.None, itemUid);
             }
 
+            return ExecuteUseItem(itemUid, card, selectedCardUids, selectedOption);
+        }
+
+        private CoreCommandResult ExecuteUseItem(
+            int itemUid,
+            CardInstance card,
+            IReadOnlyList<int> selectedCardUids,
+            string selectedOption)
+        {
             var pipeline = this.GetSystem<IActionPipelineSystem>();
+            var startIndex = pipeline.EventLog.Entries.Count;
             pipeline.Enqueue(new UseItemAction(itemUid, selectedCardUids, selectedOption));
             var resolved = pipeline.RunToCompletion();
             resolved += ConsumeUsedItemIfStillInItemSlots(itemUid, card.DefId);
+
+            if (ContainsAnyEventSince(startIndex, CoreEventType.CardKilled)
+                && CurrentPhase == GamePhase.InteractionLoop)
+            {
+                resolved += ResolveInteractiveRotation();
+            }
+
             resolved += CompleteNodeIfCleared();
             resolved += EnterRewardItemChoiceIfPending();
             return CoreCommandResult.Accept(resolved);
@@ -537,6 +611,20 @@ namespace NineGrid.Core.Systems
             {
                 var entry = entries[i];
                 if (entry.Type == eventType && entry.CardUid == cardUid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool ContainsAnyEventSince(int startIndex, CoreEventType eventType)
+        {
+            var entries = this.GetSystem<IActionPipelineSystem>().EventLog.Entries;
+            for (var i = startIndex; i < entries.Count; i++)
+            {
+                if (entries[i].Type == eventType)
                 {
                     return true;
                 }

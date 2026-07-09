@@ -161,7 +161,7 @@ namespace NineGrid.Cards
                 }
             }
 
-            Debug.LogError($"[CardDeckManager] 卡组中未找到 Uid={uid}，无法就位到格 {groundSlot}。");
+            Debug.LogWarning($"[CardDeckManager] 卡组中未找到 Uid={uid}，无法就位到格 {groundSlot}（将走兜底放置）。");
             return false;
         }
 

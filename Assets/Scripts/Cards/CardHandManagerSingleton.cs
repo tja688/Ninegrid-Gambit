@@ -117,6 +117,67 @@ namespace NineGrid.Cards
             TickHandHover();
         }
 
+        /// <summary>
+        /// 手牌是否持有该 uid（含拖拽中）。
+        /// </summary>
+        public bool ContainsUid(int uid)
+        {
+            if (uid <= 0)
+            {
+                return false;
+            }
+
+            if (_dragSession?.Card != null && _dragSession.Card.Uid == uid)
+            {
+                return true;
+            }
+
+            if (_slotContainer == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < layoutSettings.maxSlots; i++)
+            {
+                if (_slotContainer.TryGetCardAt(i, out var card) && card != null && card.Uid == uid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 从手牌槽移除但不销毁视图（供异常对齐用）。拖拽中不可用。
+        /// </summary>
+        public bool TryRemoveFromHand(int uid, out ManagedCard card)
+        {
+            card = null;
+            if (uid <= 0 || IsBusy || IsDragging || _slotContainer == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < layoutSettings.maxSlots; i++)
+            {
+                if (!_slotContainer.TryGetCardAt(i, out var found) || found == null || found.Uid != uid)
+                {
+                    continue;
+                }
+
+                if (!_slotContainer.TryRemoveAt(i, out card, out var rippleMoves))
+                {
+                    return false;
+                }
+
+                CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration).Forget();
+                return card != null;
+            }
+
+            return false;
+        }
+
         public async UniTask<bool> PullFromGroundAsync(
             ManagedCard card,
             int? insertSlot = null,
@@ -193,6 +254,7 @@ namespace NineGrid.Cards
 
         /// <summary>
         /// 场地卡点击入手：道具卡 / 帮助卡等不可从场地拖拽，只能点击直接入手牌。
+        /// 先写 Core Pickup，再播表现；拾取后的转/补由 Core 结果缓冲缓释。
         /// </summary>
         public bool TryPickupFromGround(ManagedCard card)
         {
@@ -212,7 +274,43 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (!field.TryTakeCardFromField(card.Uid, out var taken) || taken != card)
+            if (!field.TryGetSlotOf(card.Uid, out var groundSlot))
+            {
+                return false;
+            }
+
+            var pickup = CombatHitSink.RequestPickupItem(groundSlot);
+            if (!pickup.Accepted)
+            {
+                return false;
+            }
+
+            if (pickup.RemovedWithoutHand)
+            {
+                // 金币等：Core 已移除，表现清格并销毁，再缓释转/补。
+                field.RequestRemoveFromField(
+                    card.Uid,
+                    animate: true,
+                    skipBusyGuard: true,
+                    startExplore: false);
+                CombatHitSink.RequestDrainPostKillBoard(
+                    new PostKillBoardPresentationResult
+                    {
+                        Accepted = true,
+                        Moves = pickup.Moves,
+                        Deals = pickup.Deals,
+                        NodeClearedOrRewardPhase = pickup.NodeClearedOrRewardPhase,
+                    }).Forget();
+                return true;
+            }
+
+            if (!pickup.AcquiredToHand)
+            {
+                Debug.LogWarning($"[CardHandManager] Pickup 已接受但未入手 uid={card.Uid}");
+                return false;
+            }
+
+            if (!field.TryTakeCardFromField(card.Uid, out var taken, startExplore: false) || taken != card)
             {
                 return false;
             }
@@ -221,18 +319,30 @@ namespace NineGrid.Cards
             driver?.SetTarget(CardVisualTarget.Base);
             DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
 
-            RunPickupFromGroundAsync(card).Forget();
+            RunPickupFromGroundAsync(card, pickup).Forget();
             return true;
         }
 
-        private async UniTaskVoid RunPickupFromGroundAsync(ManagedCard card)
+        private async UniTaskVoid RunPickupFromGroundAsync(
+            ManagedCard card,
+            PickupItemPresentationResult pickup)
         {
             var success = await PullFromGroundAsync(card);
             if (!success)
             {
                 Debug.LogWarning("[CardHandManager] 场地卡点击入手失败，已释放卡牌。");
                 CardManagerSingleton.Instance.Release(card);
+                return;
             }
+
+            await CombatHitSink.RequestDrainPostKillBoard(
+                new PostKillBoardPresentationResult
+                {
+                    Accepted = true,
+                    Moves = pickup.Moves,
+                    Deals = pickup.Deals,
+                    NodeClearedOrRewardPhase = pickup.NodeClearedOrRewardPhase,
+                });
         }
 
         private void TickHandHover()

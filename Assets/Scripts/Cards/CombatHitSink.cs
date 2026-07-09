@@ -52,7 +52,34 @@ namespace NineGrid.Cards
     }
 
     /// <summary>
-    /// Cards → Flow 交战结算桥：Cards 不引用 Core/Flow，由 InBattleManager 在 Awake 注册。
+    /// 场地拾取帮助卡/道具后的摘要。
+    /// </summary>
+    public struct PickupItemPresentationResult
+    {
+        public bool Accepted;
+        public int CardUid;
+        public bool AcquiredToHand;
+        public bool RemovedWithoutHand;
+        public PostKillCardMove[] Moves;
+        public PostKillCardDeal[] Deals;
+        public bool NodeClearedOrRewardPhase;
+    }
+
+    /// <summary>
+    /// 手牌打出后的摘要。
+    /// </summary>
+    public struct UseItemPresentationResult
+    {
+        public bool Accepted;
+        public bool TargetKilled;
+        public bool NodeClearedOrRewardPhase;
+        public bool AvatarDefeated;
+        public bool RewardChoicePending;
+        public PostKillBoardPresentationResult PostKillBoard;
+    }
+
+    /// <summary>
+    /// Cards → Flow 交战/手牌结算桥：Cards 不引用 Core/Flow，由 InBattleManager 在 Awake 注册。
     /// </summary>
     public static class CombatHitSink
     {
@@ -76,6 +103,12 @@ namespace NineGrid.Cards
 
         /// <summary>缓释击杀后盘面摘要：hop 已有卡 + 发新牌 + 软对齐。</summary>
         public static Func<PostKillBoardPresentationResult, CancellationToken, UniTask> DrainPostKillBoard;
+
+        /// <summary>场地拾取：ApplyPickupItem(groundSlot) → 摘要。</summary>
+        public static Func<int, PickupItemPresentationResult> ApplyPickupItem;
+
+        /// <summary>手牌打出：ApplyUseItem(itemUid, optionalTargetUid) → 摘要。</summary>
+        public static Func<int, int?, UseItemPresentationResult> ApplyUseItem;
 
         /// <summary>清场胜利 / 玩家战败 → Notice + 回主菜单。</summary>
         public static Action<bool> NotifyBattleEnded;
@@ -138,6 +171,28 @@ namespace NineGrid.Cards
             }
 
             return DrainPostKillBoard(result, cancellationToken);
+        }
+
+        public static PickupItemPresentationResult RequestPickupItem(int groundSlot)
+        {
+            if (ApplyPickupItem == null)
+            {
+                Debug.LogWarning("[CombatHitSink] ApplyPickupItem 未注册。");
+                return default;
+            }
+
+            return ApplyPickupItem(groundSlot);
+        }
+
+        public static UseItemPresentationResult RequestUseItem(int itemUid, int? targetCardUid)
+        {
+            if (ApplyUseItem == null)
+            {
+                Debug.LogWarning("[CombatHitSink] ApplyUseItem 未注册。");
+                return default;
+            }
+
+            return ApplyUseItem(itemUid, targetCardUid);
         }
 
         public static void RequestBattleEnded(bool victory)
