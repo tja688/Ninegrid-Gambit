@@ -45,6 +45,9 @@ namespace NineGrid.Cards
         private static FieldInfo _targetIsSelfField;
         private static FieldInfo _targetGoField;
         private static FieldInfo _targetField;
+        private static FieldInfo _endValueV3Field;
+
+        private const float DefaultVictimKnockbackDistance = 3f;
 
         private bool _roleMapBuilt;
 
@@ -64,7 +67,8 @@ namespace NineGrid.Cards
             Transform attacker,
             Transform victim,
             CardEffectManager victimEffects,
-            bool bindDeathCallback)
+            bool bindDeathCallback,
+            bool relativeVictimKnockback = false)
         {
             BuildRoleMapIfNeeded();
 
@@ -75,7 +79,15 @@ namespace NineGrid.Cards
             }
 
             RebindAnimations(attackerAnimations, attacker);
-            RebindAnimations(victimAnimations, victim);
+            if (relativeVictimKnockback)
+            {
+                RebindVictimKnockbackFromAttacker(victim, attacker);
+            }
+            else
+            {
+                RebindAnimations(victimAnimations, victim);
+            }
+
             ConfigureHitFlashCallback(victimEffects);
             ConfigureDeathCallback(victimEffects, bindDeathCallback);
         }
@@ -301,6 +313,69 @@ namespace NineGrid.Cards
             return GetComponents(_dotweenAnimationType);
         }
 
+        private void RebindVictimKnockbackFromAttacker(Transform victim, Transform attacker)
+        {
+            if (victimAnimations == null || victimAnimations.Count == 0)
+            {
+                return;
+            }
+
+            var away = victim.position - attacker.position;
+            var flatAway = new Vector3(away.x, away.y, 0f);
+            if (flatAway.sqrMagnitude < 0.0001f)
+            {
+                flatAway = Vector3.right;
+            }
+            else
+            {
+                flatAway.Normalize();
+            }
+
+            for (var i = 0; i < victimAnimations.Count; i++)
+            {
+                var animation = victimAnimations[i];
+                if (animation == null)
+                {
+                    continue;
+                }
+
+                WriteAnimationTarget(animation, victim.gameObject, victim);
+
+                var magnitude = ReadKnockbackMagnitude(animation);
+                var knockbackWorld = victim.position + flatAway * magnitude;
+                var localEnd = victim.parent != null
+                    ? victim.parent.InverseTransformPoint(knockbackWorld)
+                    : knockbackWorld;
+                WriteEndValueV3(
+                    animation,
+                    new Vector3(localEnd.x, localEnd.y, victim.localPosition.z));
+            }
+        }
+
+        private static float ReadKnockbackMagnitude(Component animation)
+        {
+            var endValue = ReadEndValueV3(animation);
+            var magnitude = Mathf.Max(Mathf.Abs(endValue.x), Mathf.Abs(endValue.y));
+            return magnitude > 0.01f ? magnitude : DefaultVictimKnockbackDistance;
+        }
+
+        private static Vector3 ReadEndValueV3(Component animation)
+        {
+            EnsureDotweenReflection();
+            if (animation == null || _endValueV3Field == null)
+            {
+                return Vector3.zero;
+            }
+
+            return _endValueV3Field.GetValue(animation) is Vector3 value ? value : Vector3.zero;
+        }
+
+        private static void WriteEndValueV3(Component animation, Vector3 endValue)
+        {
+            EnsureDotweenReflection();
+            _endValueV3Field?.SetValue(animation, endValue);
+        }
+
         private static void RebindAnimations(IReadOnlyList<Component> animations, Transform target)
         {
             if (animations == null || target == null)
@@ -459,6 +534,7 @@ namespace NineGrid.Cards
             _targetIsSelfField = _dotweenAnimationType.GetField("targetIsSelf", flags);
             _targetGoField = _dotweenAnimationType.GetField("targetGO", flags);
             _targetField = _dotweenAnimationType.GetField("target", flags);
+            _endValueV3Field = _dotweenAnimationType.GetField("endValueV3", flags);
         }
 
         private static Type ResolveType(string fullName)

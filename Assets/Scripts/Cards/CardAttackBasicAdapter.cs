@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using UnityEngine;
 
 namespace NineGrid.Cards
@@ -171,7 +172,12 @@ namespace NineGrid.Cards
 
             PrepareAttackerAtSlotAnchor(field, attackerTransform, attackerSlot, victimTransform);
             rig.ResetParticipantMotion(attackerTransform, victimTransform);
-            rig.BindParticipants(attackerTransform, victimTransform, victimEffects, lethal);
+            rig.BindParticipants(
+                attackerTransform,
+                victimTransform,
+                victimEffects,
+                lethal,
+                relativeVictimKnockback: true);
 
             await PlayBoundRigAsync(
                 rig,
@@ -180,7 +186,9 @@ namespace NineGrid.Cards
                 victim,
                 victimTransform,
                 lethal,
-                cancellationToken);
+                cancellationToken,
+                restoreAttackerSlot: attackerSlot,
+                restoreVictimSlot: GroundSlotTopology.AvatarReservedSlot);
         }
 
         private async UniTask PlayBoundRigAsync(
@@ -190,8 +198,11 @@ namespace NineGrid.Cards
             ManagedCard victim,
             Transform victimTransform,
             bool lethal,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            int? restoreAttackerSlot = null,
+            int? restoreVictimSlot = null)
         {
+            var field = GroundFieldManagerSingleton.Instance;
             try
             {
                 await rig.PlayAsync(cancellationToken);
@@ -199,6 +210,9 @@ namespace NineGrid.Cards
             finally
             {
                 rig.ResetParticipantMotion(attacker, lethal ? null : victimTransform);
+                await RestoreCardAtSlotIfNeededAsync(field, attackerCard, restoreAttackerSlot, cancellationToken);
+                await RestoreCardAtSlotIfNeededAsync(field, victim, restoreVictimSlot, cancellationToken);
+
                 var cardManager = CardManagerSingleton.Instance;
                 if (attackerCard != null)
                 {
@@ -210,6 +224,51 @@ namespace NineGrid.Cards
                     cardManager?.RefreshDisplayMode(victim);
                 }
             }
+        }
+
+        private static async UniTask RestoreCardAtSlotIfNeededAsync(
+            GroundFieldManagerSingleton field,
+            ManagedCard card,
+            int? slot,
+            CancellationToken cancellationToken)
+        {
+            if (!slot.HasValue || card?.Transform == null || field == null)
+            {
+                return;
+            }
+
+            var anchor = field.GetGroundAnchor(slot.Value);
+            if (anchor == null)
+            {
+                return;
+            }
+
+            var transform = card.Transform;
+            CardDeckTween.KillMotion(transform);
+
+            var distance = Vector3.Distance(transform.position, anchor.position);
+            if (distance > 0.02f)
+            {
+                var completed = false;
+                transform
+                    .DOMove(anchor.position, 0.12f)
+                    .SetEase(Ease.OutCubic)
+                    .SetLink(transform.gameObject, LinkBehaviour.KillOnDestroy)
+                    .OnComplete(() => completed = true)
+                    .OnKill(() => completed = true);
+
+                while (!completed)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                }
+            }
+            else
+            {
+                transform.position = anchor.position;
+            }
+
+            transform.rotation = Quaternion.identity;
         }
 
         /// <summary>
