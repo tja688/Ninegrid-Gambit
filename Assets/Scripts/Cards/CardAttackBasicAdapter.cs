@@ -12,6 +12,9 @@ namespace NineGrid.Cards
     [DisallowMultipleComponent]
     public sealed class CardAttackBasicAdapter : MonoBehaviour
     {
+        private const float EnemyVictimKnockbackCoefficient = 1f;
+        private const float PlayerVictimKnockbackCoefficient = 0.5f;
+
         [Header("Rigs")]
         [Tooltip("CardAttackBasic 根节点；留空时 Awake 按子节点名 CardAttackBasic 查找。")]
         [SerializeField] private Transform rigsRoot;
@@ -122,7 +125,8 @@ namespace NineGrid.Cards
 
             PrepareAttackerAtAvatarAnchor(field, attacker, victimTransform);
             rig.ResetParticipantMotion(attacker, victimTransform);
-            rig.BindParticipants(attacker, victimTransform, victimEffects, lethal);
+            rig.BindParticipants(attacker, victimTransform, victimEffects, lethal,
+                victimKnockbackCoefficient: EnemyVictimKnockbackCoefficient);
 
             await PlayBoundRigAsync(
                 rig,
@@ -177,7 +181,9 @@ namespace NineGrid.Cards
                 victimTransform,
                 victimEffects,
                 lethal,
-                relativeVictimKnockback: true);
+                relativeAttackerMotion: true,
+                relativeVictimKnockback: true,
+                victimKnockbackCoefficient: PlayerVictimKnockbackCoefficient);
 
             await PlayBoundRigAsync(
                 rig,

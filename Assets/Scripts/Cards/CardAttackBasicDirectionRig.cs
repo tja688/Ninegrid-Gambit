@@ -46,10 +46,18 @@ namespace NineGrid.Cards
         private static FieldInfo _targetGoField;
         private static FieldInfo _targetField;
         private static FieldInfo _endValueV3Field;
+        private static FieldInfo _delayField;
 
         private const float DefaultVictimKnockbackDistance = 3f;
+        private const float WindupDelayMax = 0.05f;
+        private const float LungeDelayMax = 0.35f;
+        private const float KnockbackDelayMin = 0.35f;
+        private const float KnockbackDelayMax = 0.55f;
+        private const float ReturnDelayMin = 0.65f;
 
         private bool _roleMapBuilt;
+        private bool _bakedClipValuesCached;
+        private readonly Dictionary<int, Vector3> _bakedEndValuesByAnimId = new();
 
         public CardBoardDirection Direction { get; private set; }
 
@@ -61,6 +69,7 @@ namespace NineGrid.Cards
             dotweenTimeline ??= FindTimelineOn(gameObject);
             BuildRoleMapIfNeeded();
             CacheCallbacksIfNeeded();
+            CacheBakedClipValuesIfNeeded();
         }
 
         public void BindParticipants(
@@ -68,9 +77,12 @@ namespace NineGrid.Cards
             Transform victim,
             CardEffectManager victimEffects,
             bool bindDeathCallback,
-            bool relativeVictimKnockback = false)
+            bool relativeAttackerMotion = false,
+            bool relativeVictimKnockback = false,
+            float victimKnockbackCoefficient = 1f)
         {
             BuildRoleMapIfNeeded();
+            CacheBakedClipValuesIfNeeded();
 
             if (attacker == null || victim == null)
             {
@@ -78,10 +90,18 @@ namespace NineGrid.Cards
                 return;
             }
 
-            RebindAnimations(attackerAnimations, attacker);
+            if (relativeAttackerMotion)
+            {
+                RebindAttackerMotionFromVictim(attacker, victim);
+            }
+            else
+            {
+                RebindAnimations(attackerAnimations, attacker);
+            }
+
             if (relativeVictimKnockback)
             {
-                RebindVictimKnockbackFromAttacker(victim, attacker);
+                RebindVictimKnockbackFromAttacker(victim, attacker, victimKnockbackCoefficient);
             }
             else
             {
@@ -313,13 +333,70 @@ namespace NineGrid.Cards
             return GetComponents(_dotweenAnimationType);
         }
 
-        private void RebindVictimKnockbackFromAttacker(Transform victim, Transform attacker)
+        private void RebindAttackerMotionFromVictim(Transform attacker, Transform victim)
+        {
+            if (attackerAnimations == null || attackerAnimations.Count == 0)
+            {
+                return;
+            }
+
+            var homeWorld = attacker.position;
+            var towardVictim = victim.position - homeWorld;
+            var flatToward = new Vector3(towardVictim.x, towardVictim.y, 0f);
+            if (flatToward.sqrMagnitude < 0.0001f)
+            {
+                flatToward = Vector3.right;
+            }
+            else
+            {
+                flatToward.Normalize();
+            }
+
+            var awayFromVictim = -flatToward;
+            var homeBaked = Vector3.zero;
+
+            for (var i = 0; i < attackerAnimations.Count; i++)
+            {
+                var animation = attackerAnimations[i];
+                if (animation == null)
+                {
+                    continue;
+                }
+
+                WriteAnimationTarget(animation, attacker.gameObject, attacker);
+
+                var bakedEnd = GetBakedEndValue(animation);
+                var delay = ReadDelay(animation);
+                var axisMagnitude = ExtractAxisMagnitude(bakedEnd - homeBaked);
+                Vector3 worldEnd;
+                if (delay <= WindupDelayMax)
+                {
+                    worldEnd = homeWorld + awayFromVictim * axisMagnitude;
+                }
+                else if (delay <= LungeDelayMax)
+                {
+                    worldEnd = homeWorld + flatToward * axisMagnitude;
+                }
+                else
+                {
+                    worldEnd = homeWorld;
+                }
+
+                WriteWorldEndAsLocal(animation, attacker, worldEnd);
+            }
+        }
+
+        private void RebindVictimKnockbackFromAttacker(
+            Transform victim,
+            Transform attacker,
+            float knockbackCoefficient)
         {
             if (victimAnimations == null || victimAnimations.Count == 0)
             {
                 return;
             }
 
+            var homeWorld = victim.position;
             var away = victim.position - attacker.position;
             var flatAway = new Vector3(away.x, away.y, 0f);
             if (flatAway.sqrMagnitude < 0.0001f)
@@ -331,6 +408,8 @@ namespace NineGrid.Cards
                 flatAway.Normalize();
             }
 
+            var coefficient = Mathf.Max(0f, knockbackCoefficient);
+
             for (var i = 0; i < victimAnimations.Count; i++)
             {
                 var animation = victimAnimations[i];
@@ -341,22 +420,98 @@ namespace NineGrid.Cards
 
                 WriteAnimationTarget(animation, victim.gameObject, victim);
 
-                var magnitude = ReadKnockbackMagnitude(animation);
-                var knockbackWorld = victim.position + flatAway * magnitude;
-                var localEnd = victim.parent != null
-                    ? victim.parent.InverseTransformPoint(knockbackWorld)
-                    : knockbackWorld;
-                WriteEndValueV3(
-                    animation,
-                    new Vector3(localEnd.x, localEnd.y, victim.localPosition.z));
+                var delay = ReadDelay(animation);
+                var bakedEnd = GetBakedEndValue(animation);
+                var axisMagnitude = ExtractAxisMagnitude(bakedEnd);
+                var scale = coefficient;
+                if (delay >= KnockbackDelayMin && delay <= KnockbackDelayMax)
+                {
+                    axisMagnitude = ReadBakedKnockbackMagnitude(animation) * scale;
+                }
+                else if (delay >= ReturnDelayMin)
+                {
+                    axisMagnitude *= scale;
+                }
+
+                var knockbackWorld = delay >= ReturnDelayMin && axisMagnitude <= 0.001f
+                    ? homeWorld
+                    : homeWorld + flatAway * axisMagnitude;
+                WriteWorldEndAsLocal(animation, victim, knockbackWorld);
             }
         }
 
-        private static float ReadKnockbackMagnitude(Component animation)
+        private static void WriteWorldEndAsLocal(Component animation, Transform target, Vector3 worldEnd)
         {
-            var endValue = ReadEndValueV3(animation);
-            var magnitude = Mathf.Max(Mathf.Abs(endValue.x), Mathf.Abs(endValue.y));
+            var localEnd = target.parent != null
+                ? target.parent.InverseTransformPoint(worldEnd)
+                : worldEnd;
+            WriteEndValueV3(
+                animation,
+                new Vector3(localEnd.x, localEnd.y, target.localPosition.z));
+        }
+
+        private void CacheBakedClipValuesIfNeeded()
+        {
+            if (_bakedClipValuesCached)
+            {
+                return;
+            }
+
+            EnsureDotweenReflection();
+            var animations = GetDotweenAnimations();
+            for (var i = 0; i < animations.Length; i++)
+            {
+                var animation = animations[i];
+                if (animation == null)
+                {
+                    continue;
+                }
+
+                _bakedEndValuesByAnimId[animation.GetInstanceID()] = ReadEndValueV3(animation);
+            }
+
+            _bakedClipValuesCached = true;
+        }
+
+        private void InvalidateBakedClipValueCache()
+        {
+            _bakedClipValuesCached = false;
+            _bakedEndValuesByAnimId.Clear();
+        }
+
+        private Vector3 GetBakedEndValue(Component animation)
+        {
+            CacheBakedClipValuesIfNeeded();
+            if (animation != null
+                && _bakedEndValuesByAnimId.TryGetValue(animation.GetInstanceID(), out var baked))
+            {
+                return baked;
+            }
+
+            return ReadEndValueV3(animation);
+        }
+
+        private static float ExtractAxisMagnitude(Vector3 delta)
+        {
+            return Mathf.Max(Mathf.Abs(delta.x), Mathf.Abs(delta.y), Mathf.Abs(delta.z));
+        }
+
+        private float ReadBakedKnockbackMagnitude(Component animation)
+        {
+            var endValue = GetBakedEndValue(animation);
+            var magnitude = ExtractAxisMagnitude(endValue);
             return magnitude > 0.01f ? magnitude : DefaultVictimKnockbackDistance;
+        }
+
+        private static float ReadDelay(Component animation)
+        {
+            EnsureDotweenReflection();
+            if (animation == null || _delayField == null)
+            {
+                return 0f;
+            }
+
+            return Convert.ToSingle(_delayField.GetValue(animation));
         }
 
         private static Vector3 ReadEndValueV3(Component animation)
@@ -535,6 +690,7 @@ namespace NineGrid.Cards
             _targetGoField = _dotweenAnimationType.GetField("targetGO", flags);
             _targetField = _dotweenAnimationType.GetField("target", flags);
             _endValueV3Field = _dotweenAnimationType.GetField("endValueV3", flags);
+            _delayField = _dotweenAnimationType.GetField("delay", flags);
         }
 
         private static Type ResolveType(string fullName)
@@ -603,10 +759,12 @@ namespace NineGrid.Cards
         private void OnValidate()
         {
             _roleMapBuilt = false;
+            InvalidateBakedClipValueCache();
             if (!Application.isPlaying)
             {
                 BuildRoleMapIfNeeded();
                 CacheCallbacksIfNeeded();
+                CacheBakedClipValuesIfNeeded();
             }
         }
 #endif
