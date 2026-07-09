@@ -294,13 +294,26 @@ namespace NineGrid.Cards
             };
         }
 
+        /// <summary>场地普通卡默认 order。</summary>
+        public const int GroundCardSortingOrder = -10;
+
+        /// <summary>Avatar 相对场地其他卡默认高一层，交战重叠时压在邻格之上。</summary>
+        public const int GroundAvatarSortingOrder = GroundCardSortingOrder + 1;
+
         public static int GetSortingOrder(CardDisplayMode mode)
+        {
+            return GetSortingOrder(mode, CardPresentationKind.Unknown);
+        }
+
+        public static int GetSortingOrder(CardDisplayMode mode, CardPresentationKind kind)
         {
             return mode switch
             {
                 CardDisplayMode.CardDeckMode => -30,
                 CardDisplayMode.HandCardMode => 0,
-                CardDisplayMode.GroundCardMode => -10,
+                CardDisplayMode.GroundCardMode => kind == CardPresentationKind.Avatar
+                    ? GroundAvatarSortingOrder
+                    : GroundCardSortingOrder,
                 CardDisplayMode.RemovedMode => 20,
                 CardDisplayMode.DragCardMode => 30,
                 _ => 0,
