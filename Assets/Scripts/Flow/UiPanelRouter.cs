@@ -29,7 +29,7 @@ namespace NineGrid.Flow
         [Tooltip("主菜单背景；留空则运行时按名查找 Panels/MainBG。")]
         [SerializeField] private GameObject mainBackground;
 
-        [Tooltip("局内对战信息文字根；留空则运行时按名查找 TableNine Text Overlay UI/InGameInfoText。仅局内对战态显示，主菜单/奖励/房间等均隐藏。")]
+        [Tooltip("局内对战信息文字根；留空则运行时按名查找 TableNine Text Overlay UI/InGameInfo Text。局内对战与选择叠层时显示，主菜单隐藏。")]
         [SerializeField] private GameObject inGameInfoText;
 
         public GameObject MainPanel => mainPanel;
@@ -49,7 +49,7 @@ namespace NineGrid.Flow
             roomEventPanel ??= FindByPath("Panels/RoomEventPanel");
             infoPanel ??= FindByPath("Panels/InfoPanel");
             mainBackground ??= FindByPath("Panels/MainBG");
-            inGameInfoText ??= FindByPath("TableNine Text Overlay UI/InGameInfoText");
+            inGameInfoText ??= FindByPath("TableNine Text Overlay UI/InGameInfo Text");
         }
 
         public void ShowMainMenu()
@@ -63,7 +63,7 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 局内壳（对战视角）。<paramref name="inBattle"/> 为 true 时才显示 InGameInfoText。
+        /// 局内壳（对战视角）。<paramref name="inBattle"/> 为 true 时才显示 InGameInfo Text。
         /// </summary>
         public void ShowInRunShell(bool inBattle = true)
         {
@@ -80,7 +80,8 @@ namespace NineGrid.Flow
             EnsureBindings();
             SetActiveSafe(mainPanel, false);
             SetActiveSafe(inGamePanels, true);
-            SetInGameInfoTextVisible(false);
+            // 奖励选择需悬停写 Card Info Text，保持信息栏可见。
+            SetInGameInfoTextVisible(true);
             SetActiveSafe(rewardPanel, true);
             SetActiveSafe(roomChoicePanel, false);
             SetActiveSafe(roomEventPanel, false);
@@ -92,7 +93,8 @@ namespace NineGrid.Flow
             EnsureBindings();
             SetActiveSafe(mainPanel, false);
             SetActiveSafe(inGamePanels, true);
-            SetInGameInfoTextVisible(false);
+            // 房间选择需悬停写 Card Info Text，保持信息栏可见。
+            SetInGameInfoTextVisible(true);
             SetActiveSafe(rewardPanel, false);
             SetActiveSafe(roomChoicePanel, true);
             SetActiveSafe(roomEventPanel, false);

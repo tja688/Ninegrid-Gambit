@@ -96,6 +96,7 @@ namespace NineGrid.Flow
         private Transform _cardsContainer;
         private Action<int, string> _onPicked;
         private int _hoveredIndex = -1;
+        private int _descriptionGeneration = -1;
         private float _entryBlockRemaining;
         private bool _selectionLocked;
         private bool _sessionLive;
@@ -143,10 +144,12 @@ namespace NineGrid.Flow
             _hoveredIndex = hovered;
             if (hovered < 0)
             {
+                ClearHoverDescription();
                 AnimateReset();
             }
             else
             {
+                ShowHoverDescription(_entries[hovered].DefId);
                 AnimateHover(hovered);
             }
         }
@@ -186,6 +189,7 @@ namespace NineGrid.Flow
             _entryBlockRemaining = 0f;
             _onPicked = null;
             _pendingFallCount = 0;
+            ClearHoverDescription();
             KillHoverTweens();
             ReleaseAllEntries();
         }
@@ -382,6 +386,7 @@ namespace NineGrid.Flow
 
             _selectionLocked = true;
             _hoveredIndex = -1;
+            ClearHoverDescription();
             KillHoverTweens();
 
             var selected = _entries[selectedIndex];
@@ -592,6 +597,29 @@ namespace NineGrid.Flow
             }
 
             _hoverTweens.Add(tween);
+        }
+
+        private void ShowHoverDescription(string defId)
+        {
+            var mgr = DescriptionManagerSingleton.TryGetInstance();
+            if (mgr == null)
+            {
+                return;
+            }
+
+            _descriptionGeneration = mgr.Show(defId);
+        }
+
+        private void ClearHoverDescription()
+        {
+            if (_descriptionGeneration < 0)
+            {
+                return;
+            }
+
+            var mgr = DescriptionManagerSingleton.TryGetInstance();
+            mgr?.Clear(_descriptionGeneration);
+            _descriptionGeneration = -1;
         }
 
         private void KillHoverTweens()

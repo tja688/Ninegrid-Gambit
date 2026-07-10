@@ -101,11 +101,12 @@ namespace NineGrid.Flow
             }
         }
 
-        public static void UpdateAvatarDebugText(UiPanelRouter router)
+        public static void UpdateAvatarDebugText(UiPanelRouter router, bool animate = true)
         {
-            // Card Info Text 已专用于悬停描述；不再向 InGameInfoText 子 TMP 写入 Avatar 调试串。
-            // 玩家数值由 PlayerInfoText 下 HpText / AttackText 等正式 UI 负责。
+            // Card Info Text 已专用于悬停描述；玩家数值走 PlayerInfoText（Hp/Attack/Armor/Gold/Name）。
             _ = router;
+            var hud = PlayerInfoHudPresenter.TryGetInstance() ?? PlayerInfoHudPresenter.Instance;
+            hud.SyncFromCore(animate);
         }
 
         private static void ApplyVisuals(StandardCardView view, string defId, CardPresentationKind kind)

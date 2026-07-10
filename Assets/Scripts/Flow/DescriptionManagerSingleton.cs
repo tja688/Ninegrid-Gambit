@@ -1,6 +1,8 @@
 using NineGrid.Cards;
 using NineGrid.Content;
 using NineGrid.Core;
+using NineGrid.Core.Content;
+using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using TMPro;
 using UnityEngine;
@@ -12,8 +14,8 @@ namespace NineGrid.Flow
     /// </summary>
     public sealed class DescriptionManagerSingleton : MonoBehaviour
     {
-        public const int MaxDescriptionChars = 45;
-        private const string DefaultInfoRootName = "InGameInfoText";
+        public const int MaxDescriptionChars = 72;
+        private const string DefaultInfoRootName = "InGameInfo Text";
         private const string DefaultCardInfoTextName = "Card Info Text";
 
         private static DescriptionManagerSingleton _instance;
@@ -254,6 +256,11 @@ namespace NineGrid.Flow
             // Drag 专属描述路由预留：当前与 Hover 相同，后续可在此分支替换文案来源。
             _ = route;
 
+            if (TryResolveChoiceOptionDescription(defId, out description))
+            {
+                return true;
+            }
+
             EnsureVisualsLoaded();
             CoreCardPresentationMapper.EnsureContentCatalogLoaded();
 
@@ -281,7 +288,148 @@ namespace NineGrid.Flow
             }
 
             description = resolved.Description ?? string.Empty;
+            TryAppendAvatarRuntimeDescription(defId, content.Catalog, ref description);
             return !string.IsNullOrWhiteSpace(description);
+        }
+
+        /// <summary>
+        /// 场地玩家卡悬停：在 ContentVisual 描述后追加当前血量上限与持有技能名。
+        /// </summary>
+        private static bool TryAppendAvatarRuntimeDescription(
+            string defId,
+            GameContentCatalog catalog,
+            ref string description)
+        {
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return false;
+            }
+
+            var board = arch.GetModel<BoardModel>();
+            var avatarUid = board.AvatarUid != null ? board.AvatarUid.Value : 0;
+            if (avatarUid <= 0 || !arch.GetModel<CardRegistry>().TryGet(avatarUid, out var avatar))
+            {
+                return false;
+            }
+
+            if (!string.Equals(avatar.DefId, defId, System.StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            var stats = arch.GetSystem<IStatSystem>();
+            var maxHp = Mathf.Max(0, stats.GetEffectiveInt(avatar, StatId.MaxHp));
+            var player = arch.GetModel<PlayerModel>();
+            var skillNames = ResolveSkillDisplayNames(player.SkillDefIds, catalog);
+
+            var builder = new System.Text.StringBuilder();
+            if (!string.IsNullOrWhiteSpace(description))
+            {
+                builder.Append(description.Trim());
+            }
+
+            if (maxHp > 0)
+            {
+                if (builder.Length > 0)
+                {
+                    builder.Append(' ');
+                }
+
+                builder.Append("血量上限").Append(maxHp);
+            }
+
+            if (skillNames.Count > 0)
+            {
+                if (builder.Length > 0)
+                {
+                    builder.Append(' ');
+                }
+
+                builder.Append("技能:");
+                for (var i = 0; i < skillNames.Count; i++)
+                {
+                    if (i > 0)
+                    {
+                        builder.Append('、');
+                    }
+
+                    builder.Append(skillNames[i]);
+                }
+            }
+
+            if (builder.Length == 0)
+            {
+                return false;
+            }
+
+            description = builder.ToString();
+            return true;
+        }
+
+        private static System.Collections.Generic.List<string> ResolveSkillDisplayNames(
+            System.Collections.Generic.IReadOnlyList<string> skillDefIds,
+            GameContentCatalog catalog)
+        {
+            var names = new System.Collections.Generic.List<string>();
+            if (skillDefIds == null || catalog == null)
+            {
+                return names;
+            }
+
+            for (var i = 0; i < skillDefIds.Count; i++)
+            {
+                var skillId = skillDefIds[i];
+                if (string.IsNullOrEmpty(skillId))
+                {
+                    continue;
+                }
+
+                if (catalog.Skills.TryGetValue(skillId, out var skill)
+                    && !string.IsNullOrWhiteSpace(skill.DisplayName))
+                {
+                    names.Add(skill.DisplayName);
+                }
+                else
+                {
+                    names.Add(skillId);
+                }
+            }
+
+            return names;
+        }
+
+        /// <summary>
+        /// 属性提升等非 ContentVisual 选项（Attack/Armor/Hp）的局内选择描述回退。
+        /// </summary>
+        private static bool TryResolveChoiceOptionDescription(string defId, out string description)
+        {
+            description = string.Empty;
+            if (string.IsNullOrWhiteSpace(defId))
+            {
+                return false;
+            }
+
+            switch (defId.Trim())
+            {
+                case "Attack":
+                    description = "攻击+1";
+                    return true;
+                case "Armor":
+                    description = "护甲+1";
+                    return true;
+                case "Hp":
+                    description = "血量上限与当前血量+2";
+                    return true;
+                case "room_left":
+                    description = "左侧房间";
+                    return true;
+                case "room_right":
+                    description = "右侧房间";
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         private void EnsureVisualsLoaded()

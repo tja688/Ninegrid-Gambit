@@ -57,6 +57,8 @@ namespace NineGrid.Flow
         private float _inputBlockRemaining;
         private string _leftOptionId = "room_left";
         private string _rightOptionId = "room_right";
+        private int _hoveredSide = -1;
+        private int _descriptionGeneration = -1;
 
         public bool IsSessionLive => _sessionLive;
 
@@ -84,6 +86,8 @@ namespace NineGrid.Flow
                 _inputBlockRemaining = Mathf.Max(0f, _inputBlockRemaining - Time.unscaledDeltaTime);
                 return;
             }
+
+            UpdateHoverDescription();
 
             if (!WorldPointerUtility.WasPrimaryPressedThisFrame())
             {
@@ -156,8 +160,10 @@ namespace NineGrid.Flow
             _sessionLive = false;
             _selectionLocked = false;
             _inputBlockRemaining = 0f;
+            _hoveredSide = -1;
             _onPicked = null;
             _onSessionFinished = null;
+            ClearHoverDescription();
 
             if (leftRoom != null)
             {
@@ -178,11 +184,63 @@ namespace NineGrid.Flow
             }
 
             _selectionLocked = true;
+            _hoveredSide = -1;
+            ClearHoverDescription();
             var callback = _onPicked;
             _onPicked = null;
             callback?.Invoke(index, optionId);
 
             PlayExit(index);
+        }
+
+        private void UpdateHoverDescription()
+        {
+            var side = -1;
+            if (WorldPointerUtility.TryPickCollider(worldCamera, _leftCollider))
+            {
+                side = 0;
+            }
+            else if (WorldPointerUtility.TryPickCollider(worldCamera, _rightCollider))
+            {
+                side = 1;
+            }
+
+            if (side == _hoveredSide)
+            {
+                return;
+            }
+
+            _hoveredSide = side;
+            if (side < 0)
+            {
+                ClearHoverDescription();
+                return;
+            }
+
+            ShowHoverDescription(side == 0 ? _leftOptionId : _rightOptionId);
+        }
+
+        private void ShowHoverDescription(string defId)
+        {
+            var mgr = DescriptionManagerSingleton.TryGetInstance();
+            if (mgr == null)
+            {
+                return;
+            }
+
+            _descriptionGeneration = mgr.Show(defId);
+        }
+
+        private void ClearHoverDescription()
+        {
+            if (_descriptionGeneration < 0)
+            {
+                return;
+            }
+
+            var mgr = DescriptionManagerSingleton.TryGetInstance();
+            mgr?.Clear(_descriptionGeneration);
+            _descriptionGeneration = -1;
         }
 
         private void PlayExit(int selectedIndex)

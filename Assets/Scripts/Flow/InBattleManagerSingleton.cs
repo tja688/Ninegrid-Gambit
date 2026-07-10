@@ -551,6 +551,7 @@ namespace NineGrid.Flow
             relicManager?.Clear();
             skillManager?.Clear();
             DescriptionManagerSingleton.TryGetInstance()?.Clear();
+            PlayerInfoHudPresenter.TryGetInstance()?.ClearSnapshot();
             _isBusy = false;
         }
 
@@ -1026,6 +1027,7 @@ namespace NineGrid.Flow
             SoftAlignBoardAnchorsToCore();
             SyncBoardOccupancyFromCore();
             SpawnDamagePopups(result.DamagePopups);
+            UpdateAvatarDebugText();
         }
 
         private static CombatDamagePopup[] CollectDamagePopups(
@@ -1216,6 +1218,9 @@ namespace NineGrid.Flow
                 || phase == GamePhase.ClearCheck
                 || phase == GamePhase.NodeCompleted
                 || arch.GetSystem<IDeckSystem>().IsNodeCleared();
+
+            // 金币卡等即时改 Coins / Avatar 数值：拾取接受后立刻刷 HUD。
+            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
             return summary;
         }
 
@@ -1501,6 +1506,7 @@ namespace NineGrid.Flow
             {
                 var ct = EnsurePresentationToken();
                 CoreCardPresentationMapper.SyncAllSpawnedCards();
+                UpdateAvatarDebugText();
                 SpawnRecentDamageNumbers();
 
                 // 击杀必须先 Vacate 尸体，再 Drain/Sync；否则 Register 会静默挤占格留下钉住幽灵。
@@ -1686,6 +1692,7 @@ namespace NineGrid.Flow
                 else
                 {
                     CoreCardPresentationMapper.SyncAllSpawnedCards();
+                    UpdateAvatarDebugText();
                     SoftAlignBoardAnchorsToCore();
                     SyncBoardOccupancyFromCore();
                 }
@@ -1862,7 +1869,19 @@ namespace NineGrid.Flow
 
         private static void SyncManagedCardPresentation(ManagedCard card)
         {
-            CoreCardPresentationMapper.ApplyToManagedCard(card);
+            CoreCardPresentationMapper.ApplyToManagedCard(card, animate: true);
+
+            var arch = NineGridArchitecture.Current;
+            if (arch == null || card == null)
+            {
+                return;
+            }
+
+            var avatarUid = arch.GetModel<BoardModel>().AvatarUid.Value;
+            if (avatarUid > 0 && card.Uid == avatarUid)
+            {
+                PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
+            }
         }
 
         private static void SpawnDamageNumberAt(Vector3 worldPosition, int amount)
@@ -2031,6 +2050,7 @@ namespace NineGrid.Flow
 
             SweepOrphanCardViews(avatarUid, hand);
             CoreCardPresentationMapper.SyncAllSpawnedCards();
+            UpdateAvatarDebugText();
         }
 
         /// <summary>
