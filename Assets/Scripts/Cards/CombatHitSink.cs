@@ -87,6 +87,12 @@ namespace NineGrid.Cards
         public bool TargetKilled;
         /// <summary>本段 UseItem EventLog 中 CardKilled 的 uid（供表现侧 Vacate 尸体）。</summary>
         public int[] KilledTargetUids;
+        /// <summary>本段所有 amount&gt;0 的 DamageDealt（飞刀等直伤）；可多条。</summary>
+        public CombatDamagePopup[] DamagePopups;
+        /// <summary>主目标（选定怪）上的伤害合计兜底；EventLog 漏 DamageDealt 时仍可飘字。</summary>
+        public int DamageAmount;
+        /// <summary>拖放选定的主目标 uid；与 DamageAmount 配对做强兜底。</summary>
+        public int PrimaryTargetUid;
         public bool NodeClearedOrRewardPhase;
         public bool AvatarDefeated;
         public bool RewardChoicePending;

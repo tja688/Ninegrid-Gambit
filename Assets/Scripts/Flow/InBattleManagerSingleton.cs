@@ -1026,7 +1026,7 @@ namespace NineGrid.Flow
 
             SoftAlignBoardAnchorsToCore();
             SyncBoardOccupancyFromCore();
-            SpawnDamagePopups(result.DamagePopups);
+            SpawnDamagePopups(result.DamagePopups, fallbackVictim: null, fallbackAmount: 0);
             UpdateAvatarDebugText();
         }
 
@@ -1052,28 +1052,51 @@ namespace NineGrid.Flow
             return popups.Count > 0 ? popups.ToArray() : Array.Empty<CombatDamagePopup>();
         }
 
-        private void SpawnDamagePopups(CombatDamagePopup[] popups)
+        /// <summary>
+        /// 按 DamageDealt 事件序分别飘字；无 popups 时回退主目标 DamageAmount（对齐 FieldBattle 强兜底）。
+        /// </summary>
+        private void SpawnDamagePopups(
+            CombatDamagePopup[] popups,
+            ManagedCard fallbackVictim,
+            int fallbackAmount)
         {
-            if (popups == null || popups.Length == 0)
+            ResolveManagers();
+            if (popups != null && popups.Length > 0)
             {
+                for (var i = 0; i < popups.Length; i++)
+                {
+                    var popup = popups[i];
+                    if (popup.Amount <= 0 || popup.TargetUid <= 0)
+                    {
+                        continue;
+                    }
+
+                    Vector3? pos = null;
+                    if (cardManager != null
+                        && cardManager.TryGet(popup.TargetUid, out var view)
+                        && view?.Transform != null)
+                    {
+                        pos = view.Transform.position;
+                    }
+                    else if (fallbackVictim != null
+                             && fallbackVictim.Uid == popup.TargetUid
+                             && fallbackVictim.Transform != null)
+                    {
+                        pos = fallbackVictim.Transform.position;
+                    }
+
+                    if (pos.HasValue)
+                    {
+                        SpawnDamageNumberAt(pos.Value, popup.Amount);
+                    }
+                }
+
                 return;
             }
 
-            ResolveManagers();
-            for (var i = 0; i < popups.Length; i++)
+            if (fallbackAmount > 0 && fallbackVictim?.Transform != null)
             {
-                var popup = popups[i];
-                if (popup.Amount <= 0 || popup.TargetUid <= 0)
-                {
-                    continue;
-                }
-
-                if (cardManager != null
-                    && cardManager.TryGet(popup.TargetUid, out var view)
-                    && view?.Transform != null)
-                {
-                    SpawnDamageNumberAt(view.Transform.position, popup.Amount);
-                }
+                SpawnDamageNumberAt(fallbackVictim.Transform.position, fallbackAmount);
             }
         }
 
@@ -1273,7 +1296,12 @@ namespace NineGrid.Flow
             }
 
             var result = arch.GetSystem<IPhaseSystem>().ApplyUseItem(itemUid, selected, selectedOption);
-            var summary = new UseItemPresentationResult { Accepted = result.Accepted };
+            var summary = new UseItemPresentationResult
+            {
+                Accepted = result.Accepted,
+                DamagePopups = Array.Empty<CombatDamagePopup>(),
+                PrimaryTargetUid = targetCardUid.GetValueOrDefault(),
+            };
             if (!result.Accepted)
             {
                 Debug.LogWarning($"[InBattleManager] UseItem 被拒: {result.Reason}");
@@ -1282,6 +1310,7 @@ namespace NineGrid.Flow
 
             var killedUids = new List<int>(2);
             var entries = pipeline.EventLog.Entries;
+            var primaryUid = summary.PrimaryTargetUid;
             for (var i = startIndex; i < entries.Count; i++)
             {
                 var e = entries[i];
@@ -1293,25 +1322,34 @@ namespace NineGrid.Flow
                         killedUids.Add(e.CardUid);
                     }
                 }
+
+                // 主目标伤害标量：与 CombatHit 一致，取本段最后一次命中主目标的 DamageDealt。
+                if (e.Type == CoreEventType.DamageDealt
+                    && e.Amount > 0
+                    && primaryUid > 0
+                    && e.TargetUid == primaryUid)
+                {
+                    summary.DamageAmount = e.Amount;
+                }
             }
 
             // 飞刀等：EventLog 偶发漏 CardKilled 时，用选定目标的 Graveyard/Removed/Hp 兜底。
             if (!summary.TargetKilled
-                && targetCardUid.HasValue
-                && targetCardUid.Value > 0
-                && arch.GetModel<CardRegistry>().TryGet(targetCardUid.Value, out var target)
+                && primaryUid > 0
+                && arch.GetModel<CardRegistry>().TryGet(primaryUid, out var target)
                 && (target.Zone.Value == ZoneId.Graveyard
                     || target.Zone.Value == ZoneId.Removed
                     || arch.GetSystem<IStatSystem>().GetEffectiveInt(target, StatId.Hp) <= 0)
                 && target.Kind != CardKind.Avatar)
             {
                 summary.TargetKilled = true;
-                killedUids.Add(targetCardUid.Value);
+                killedUids.Add(primaryUid);
             }
 
             summary.KilledTargetUids = killedUids.Count > 0
                 ? killedUids.ToArray()
                 : Array.Empty<int>();
+            summary.DamagePopups = CollectDamagePopups(entries, startIndex);
 
             var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
             summary.AvatarDefeated = phase == GamePhase.Defeat;
@@ -1328,7 +1366,7 @@ namespace NineGrid.Flow
             FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _);
             if ((moves != null && moves.Length > 0) || (deals != null && deals.Length > 0) || summary.TargetKilled)
             {
-                // DamagePopups 留空：PresentUseItemEffectsAsync 已用 SpawnRecentDamageNumbers 覆盖本段伤害。
+                // 飘字由 PresentUseItemEffectsAsync 用 summary.DamagePopups 强兜底；此处不重复塞。
                 summary.PostKillBoard = new PostKillBoardPresentationResult
                 {
                     Accepted = true,
@@ -1505,9 +1543,22 @@ namespace NineGrid.Flow
             try
             {
                 var ct = EnsurePresentationToken();
+                ResolveManagers();
                 CoreCardPresentationMapper.SyncAllSpawnedCards();
                 UpdateAvatarDebugText();
-                SpawnRecentDamageNumbers();
+
+                // 飞刀等 UseItem 直伤：对齐 FieldBattle 强兜底（本段 popups + 主目标 DamageAmount）。
+                // 必须在 Vacate 尸体之前飘字，否则目标 Transform 可能已卸。
+                ManagedCard fallbackVictim = null;
+                if (useResult.PrimaryTargetUid > 0
+                    && cardManager != null
+                    && cardManager.TryGet(useResult.PrimaryTargetUid, out var primary)
+                    && primary != null)
+                {
+                    fallbackVictim = primary;
+                }
+
+                SpawnDamagePopups(useResult.DamagePopups, fallbackVictim, useResult.DamageAmount);
 
                 // 击杀必须先 Vacate 尸体，再 Drain/Sync；否则 Register 会静默挤占格留下钉住幽灵。
                 if (useResult.TargetKilled)
@@ -1581,29 +1632,6 @@ namespace NineGrid.Flow
                 }
 
                 battle.TryBeginLethalVictimPresentation(victim, cancellationToken);
-            }
-        }
-
-        private void SpawnRecentDamageNumbers()
-        {
-            // 最近一次 UseItem/Combat 的 DamageDealt：对仍在场上的目标飘字。
-            var arch = NineGridArchitecture.Current;
-            var entries = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
-            var start = Math.Max(0, entries.Count - 32);
-            for (var i = start; i < entries.Count; i++)
-            {
-                var e = entries[i];
-                if (e.Type != CoreEventType.DamageDealt || e.Amount <= 0 || e.TargetUid <= 0)
-                {
-                    continue;
-                }
-
-                if (cardManager != null
-                    && cardManager.TryGet(e.TargetUid, out var view)
-                    && view?.Transform != null)
-                {
-                    SpawnDamageNumberAt(view.Transform.position, e.Amount);
-                }
             }
         }
 
