@@ -115,6 +115,62 @@ namespace NineGrid.Cards
         /// </summary>
         public static bool ChoiceOverlayActive;
 
+        /// <summary>
+        /// 表现层单输入锁：一次玩家操作（写 Core → Drain 播完）期间为 true。
+        /// Cards 侧 IsBusy 聚合读取，不引用 Flow。
+        /// </summary>
+        public static bool PresentationLocked { get; private set; }
+
+        /// <summary>
+        /// 尝试获取表现锁。已锁时返回 false（防重入）。
+        /// </summary>
+        public static bool TryBeginPresentationLock(string reason = null)
+        {
+            if (PresentationLocked)
+            {
+                return false;
+            }
+
+            PresentationLocked = true;
+            if (!string.IsNullOrEmpty(reason))
+            {
+                Debug.Log($"[CombatHitSink] PresentationLocked begin: {reason}");
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 释放表现锁。未持锁时为 no-op。
+        /// </summary>
+        public static void EndPresentationLock(string reason = null)
+        {
+            if (!PresentationLocked)
+            {
+                return;
+            }
+
+            PresentationLocked = false;
+            if (!string.IsNullOrEmpty(reason))
+            {
+                Debug.Log($"[CombatHitSink] PresentationLocked end: {reason}");
+            }
+        }
+
+        /// <summary>
+        /// 生命周期清场强制解锁（取消/回主菜单）。
+        /// </summary>
+        public static void ForceEndPresentationLock(string reason = null)
+        {
+            if (!PresentationLocked)
+            {
+                return;
+            }
+
+            PresentationLocked = false;
+            Debug.Log($"[CombatHitSink] PresentationLocked force-end: {reason ?? "clear"}");
+        }
+
         /// <summary>ApplyCombatHit(attackerUid, targetUid) → 摘要。</summary>
         public static Func<int, int, CombatHitPresentationResult> ApplyCombatHit;
 

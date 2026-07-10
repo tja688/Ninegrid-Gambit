@@ -51,7 +51,7 @@ namespace NineGrid.Cards
         {
             get
             {
-                if (CombatHitSink.ChoiceOverlayActive)
+                if (CombatHitSink.ChoiceOverlayActive || CombatHitSink.PresentationLocked)
                 {
                     return true;
                 }
@@ -461,10 +461,14 @@ namespace NineGrid.Cards
         /// <summary>
         /// 将卡从场地表移除但不销毁视图，供手牌管理器接管。
         /// </summary>
-        public bool TryTakeCardFromField(int uid, out ManagedCard card, bool startExplore = false)
+        public bool TryTakeCardFromField(
+            int uid,
+            out ManagedCard card,
+            bool startExplore = false,
+            bool skipBusyGuard = false)
         {
             card = null;
-            if (IsBusy)
+            if (!skipBusyGuard && IsBusy)
             {
                 Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法取走卡牌。");
                 return false;
@@ -487,7 +491,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            VacateSlotForExplore(slot, card, playRemoveAnim: false, skipBusyGuard: false, startExplore: startExplore);
+            VacateSlotForExplore(slot, card, playRemoveAnim: false, skipBusyGuard: true, startExplore: startExplore);
             return true;
         }
 
@@ -675,17 +679,38 @@ namespace NineGrid.Cards
                 return false;
             }
 
+            if (!CombatHitSink.TryBeginPresentationLock("ClickEmpty"))
+            {
+                return false;
+            }
+
             Debug.Log($"[GroundFieldManager] 空槽点击 → Core ClickEmpty: slot={slot}");
             EmptySlotClicked?.Invoke(slot);
 
             var postKill = CombatHitSink.RequestClickEmpty(slot);
             if (!postKill.Accepted)
             {
+                CombatHitSink.EndPresentationLock("ClickEmpty-rejected");
                 return false;
             }
 
-            CombatHitSink.RequestDrainPostKillBoard(postKill).Forget();
+            RunEmptySlotDrainAsync(postKill).Forget();
             return true;
+        }
+
+        private async UniTaskVoid RunEmptySlotDrainAsync(PostKillBoardPresentationResult postKill)
+        {
+            try
+            {
+                await CombatHitSink.RequestDrainPostKillBoard(postKill);
+            }
+            catch (System.OperationCanceledException)
+            {
+            }
+            finally
+            {
+                CombatHitSink.EndPresentationLock("ClickEmpty-drain");
+            }
         }
 
         /// <summary>

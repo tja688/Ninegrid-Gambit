@@ -81,7 +81,21 @@ namespace NineGrid.Cards
 
         public int HandCount => _slotContainer?.Count ?? 0;
 
-        public bool IsBusy => _isBusy || CombatHitSink.ChoiceOverlayActive;
+        public bool IsBusy
+        {
+            get
+            {
+                if (_isBusy
+                    || CombatHitSink.ChoiceOverlayActive
+                    || CombatHitSink.PresentationLocked)
+                {
+                    return true;
+                }
+
+                var field = GroundFieldManagerSingleton.Instance;
+                return field != null && field.IsBusy;
+            }
+        }
 
         public bool IsDragging => _dragSession != null;
 
@@ -226,9 +240,23 @@ namespace NineGrid.Cards
             int? insertSlot = null,
             CancellationToken cancellationToken = default)
         {
-            if (card == null || !CanAcceptCard)
+            // PresentationLocked 时本路径已持单输入锁，勿用完整 IsBusy/CanAcceptCard 自拒。
+            if (card == null
+                || IsDragging
+                || HandCount >= layoutSettings.maxSlots
+                || _isBusy
+                || CombatHitSink.ChoiceOverlayActive)
             {
                 return false;
+            }
+
+            if (!CombatHitSink.PresentationLocked)
+            {
+                var field = GroundFieldManagerSingleton.Instance;
+                if (field != null && field.IsBusy)
+                {
+                    return false;
+                }
             }
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
@@ -340,9 +368,15 @@ namespace NineGrid.Cards
                 return false;
             }
 
+            if (!CombatHitSink.TryBeginPresentationLock("Pickup"))
+            {
+                return false;
+            }
+
             var pickup = CombatHitSink.RequestPickupItem(groundSlot);
             if (!pickup.Accepted)
             {
+                CombatHitSink.EndPresentationLock("Pickup-rejected");
                 return false;
             }
 
@@ -354,7 +388,7 @@ namespace NineGrid.Cards
                     animate: true,
                     skipBusyGuard: true,
                     startExplore: false);
-                CombatHitSink.RequestDrainPostKillBoard(
+                RunPickupDrainAsync(
                     new PostKillBoardPresentationResult
                     {
                         Accepted = true,
@@ -368,11 +402,14 @@ namespace NineGrid.Cards
             if (!pickup.AcquiredToHand)
             {
                 Debug.LogWarning($"[CardHandManager] Pickup 已接受但未入手 uid={card.Uid}");
+                CombatHitSink.EndPresentationLock("Pickup-no-hand");
                 return false;
             }
 
-            if (!field.TryTakeCardFromField(card.Uid, out var taken, startExplore: false) || taken != card)
+            if (!field.TryTakeCardFromField(card.Uid, out var taken, startExplore: false, skipBusyGuard: true)
+                || taken != card)
             {
+                CombatHitSink.EndPresentationLock("Pickup-take-failed");
                 return false;
             }
 
@@ -382,6 +419,21 @@ namespace NineGrid.Cards
 
             RunPickupFromGroundAsync(card, pickup).Forget();
             return true;
+        }
+
+        private async UniTaskVoid RunPickupDrainAsync(PostKillBoardPresentationResult postKill)
+        {
+            try
+            {
+                await CombatHitSink.RequestDrainPostKillBoard(postKill);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                CombatHitSink.EndPresentationLock("Pickup-drain");
+            }
         }
 
         private async UniTaskVoid RunPickupFromGroundAsync(
@@ -415,6 +467,10 @@ namespace NineGrid.Cards
             }
             catch (OperationCanceledException)
             {
+            }
+            finally
+            {
+                CombatHitSink.EndPresentationLock("Pickup-from-ground");
             }
         }
 

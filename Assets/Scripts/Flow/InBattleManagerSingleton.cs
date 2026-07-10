@@ -44,6 +44,7 @@ namespace NineGrid.Flow
         private bool _isBusy;
         private bool _settlementRaised;
         private bool _fieldSignalSubscribed;
+        private bool _drainInFlight;
         private CancellationTokenSource _presentationCts;
 
         public static InBattleManagerSingleton Instance
@@ -169,6 +170,8 @@ namespace NineGrid.Flow
         {
             CancelPresentationWork();
             FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+            CombatHitSink.ForceEndPresentationLock("ClearPresentationSurface");
+            _drainInFlight = false;
             ResetPresentationSurface();
             _settlementRaised = false;
             _isBusy = false;
@@ -565,6 +568,8 @@ namespace NineGrid.Flow
             _presentationCts.Cancel();
             _presentationCts.Dispose();
             _presentationCts = null;
+            CombatHitSink.ForceEndPresentationLock("CancelPresentationWork");
+            _drainInFlight = false;
         }
 
         private CancellationToken RenewPresentationToken()
@@ -703,6 +708,9 @@ namespace NineGrid.Flow
             {
                 CombatHitSink.DrainPostKillBoard = null;
             }
+
+            CombatHitSink.ForceEndPresentationLock("UnregisterCombatHitSink");
+            _drainInFlight = false;
 
             if (CombatHitSink.ApplyPickupItem == ApplyPickupItemFromCore)
             {
@@ -990,6 +998,7 @@ namespace NineGrid.Flow
 
         /// <summary>
         /// 表现缓冲缓释：R1 先补牌再旋转（Deals → Moves），末尾两阶段 Sync 安全网。
+        /// 若外层已持 PresentationLocked 则不重复加解锁；否则本方法自持锁。
         /// </summary>
         private async UniTask DrainPostKillBoardAsync(
             PostKillBoardPresentationResult result,
@@ -1000,37 +1009,68 @@ namespace NineGrid.Flow
                 return;
             }
 
-            // 生命周期清场会 CancelPresentationWork；未传可取消 token 时挂到局内 CTS。
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-                EnsurePresentationToken(),
-                cancellationToken.CanBeCanceled ? cancellationToken : CancellationToken.None);
-            var ct = linkedCts.Token;
-
-            ResolveManagers();
-            if (fieldManager == null || cardManager == null || deckManager == null)
+            if (_drainInFlight)
             {
-                Debug.LogError("[InBattleManager] DrainPostKillBoard 缺少 Card/Deck/Field 管理器。");
+                Debug.LogWarning("[InBattleManager] DrainPostKillBoard 已在进行，拒绝并发缓释。");
                 return;
             }
 
-            // R1：先补牌（CardDealt），再旋转 hop（CardMoved）。
-            if (result.Deals != null && result.Deals.Length > 0)
+            var ownedByCaller = CombatHitSink.PresentationLocked;
+            var acquiredHere = false;
+            if (!ownedByCaller)
             {
-                await DrainDealsAsync(result.Deals, ct);
+                if (!CombatHitSink.TryBeginPresentationLock("Drain"))
+                {
+                    Debug.LogWarning("[InBattleManager] DrainPostKillBoard 无法获取表现锁，跳过。");
+                    return;
+                }
+
+                acquiredHere = true;
             }
 
-            if (result.Moves != null && result.Moves.Length > 0)
+            _drainInFlight = true;
+            try
             {
-                await fieldManager.ApplyBoardMovesAndHopAsync(
-                    result.Moves,
-                    ct,
-                    skipBusyGuard: true);
-            }
+                // 生命周期清场会 CancelPresentationWork；未传可取消 token 时挂到局内 CTS。
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                    EnsurePresentationToken(),
+                    cancellationToken.CanBeCanceled ? cancellationToken : CancellationToken.None);
+                var ct = linkedCts.Token;
 
-            SoftAlignBoardAnchorsToCore();
-            SyncBoardOccupancyFromCore();
-            SpawnDamagePopups(result.DamagePopups, fallbackVictim: null, fallbackAmount: 0);
-            UpdateAvatarDebugText();
+                ResolveManagers();
+                if (fieldManager == null || cardManager == null || deckManager == null)
+                {
+                    Debug.LogError("[InBattleManager] DrainPostKillBoard 缺少 Card/Deck/Field 管理器。");
+                    return;
+                }
+
+                // R1：先补牌（CardDealt），再旋转 hop（CardMoved）。
+                if (result.Deals != null && result.Deals.Length > 0)
+                {
+                    await DrainDealsAsync(result.Deals, ct);
+                }
+
+                if (result.Moves != null && result.Moves.Length > 0)
+                {
+                    await fieldManager.ApplyBoardMovesAndHopAsync(
+                        result.Moves,
+                        ct,
+                        skipBusyGuard: true);
+                }
+
+                SoftAlignBoardAnchorsToCore();
+                SyncBoardOccupancyFromCore();
+                SpawnDamagePopups(result.DamagePopups, fallbackVictim: null, fallbackAmount: 0);
+                UpdateAvatarDebugText();
+            }
+            finally
+            {
+                _drainInFlight = false;
+                if (acquiredHere)
+                {
+                    CombatHitSink.EndPresentationLock("Drain");
+                }
+            }
         }
 
         private static CombatDamagePopup[] CollectDamagePopups(
@@ -1451,7 +1491,7 @@ namespace NineGrid.Flow
                 return false;
             }
 
-            if (CombatHitSink.ChoiceOverlayActive)
+            if (CombatHitSink.ChoiceOverlayActive || CombatHitSink.PresentationLocked)
             {
                 return false;
             }
@@ -1491,9 +1531,20 @@ namespace NineGrid.Flow
                 }
             }
 
+            if (!CombatHitSink.TryBeginPresentationLock("UseItem"))
+            {
+                if (IsStatBoostCard(card.DefId))
+                {
+                    RestoreHandCardAfterChoiceCancel(card);
+                }
+
+                return false;
+            }
+
             var useResult = ApplyUseItemFromCore(card.Uid, targetUid, selectedOption);
             if (!useResult.Accepted)
             {
+                CombatHitSink.EndPresentationLock("UseItem-rejected");
                 if (IsStatBoostCard(card.DefId))
                 {
                     RestoreHandCardAfterChoiceCancel(card);
@@ -1610,6 +1661,10 @@ namespace NineGrid.Flow
             {
                 Debug.LogException(ex);
             }
+            finally
+            {
+                CombatHitSink.EndPresentationLock("UseItem-effects");
+            }
         }
 
         /// <summary>
@@ -1700,57 +1755,67 @@ namespace NineGrid.Flow
                     }
                 }
 
-                // 选完立刻解锁战场；盘面/遗物同步不阻塞输入。
+                // 选完关闭覆盖层；Drain 期间由 PresentationLocked 挡输入（外层已持锁则复用）。
+                var acquiredDrainLock = CombatHitSink.TryBeginPresentationLock("RewardDrain");
                 CombatHitSink.ChoiceOverlayActive = false;
-
-                FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _);
-                PresentGoldGainsFromEventLog(startIndex);
-                var phase = phaseSystem.CurrentPhase;
-                var boardDelta = new PostKillBoardPresentationResult
+                try
                 {
-                    Accepted = true,
-                    Moves = moves ?? Array.Empty<PostKillCardMove>(),
-                    Deals = deals ?? Array.Empty<PostKillCardDeal>(),
-                    DamagePopups = Array.Empty<CombatDamagePopup>(),
-                    NodeClearedOrRewardPhase =
-                        phase == GamePhase.RewardItemChoice
-                        || phase == GamePhase.ClearCheck
+                    FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _);
+                    PresentGoldGainsFromEventLog(startIndex);
+                    var phase = phaseSystem.CurrentPhase;
+                    var boardDelta = new PostKillBoardPresentationResult
+                    {
+                        Accepted = true,
+                        Moves = moves ?? Array.Empty<PostKillCardMove>(),
+                        Deals = deals ?? Array.Empty<PostKillCardDeal>(),
+                        DamagePopups = Array.Empty<CombatDamagePopup>(),
+                        NodeClearedOrRewardPhase =
+                            phase == GamePhase.RewardItemChoice
+                            || phase == GamePhase.ClearCheck
+                            || phase == GamePhase.NodeCompleted
+                            || phase == GamePhase.RoomChoice
+                            || arch.GetSystem<IDeckSystem>().IsNodeCleared(),
+                        AvatarDefeated = phase == GamePhase.Defeat,
+                    };
+
+                    if ((boardDelta.Moves != null && boardDelta.Moves.Length > 0)
+                        || (boardDelta.Deals != null && boardDelta.Deals.Length > 0))
+                    {
+                        await DrainPostKillBoardAsync(boardDelta, EnsurePresentationToken());
+                    }
+                    else
+                    {
+                        CoreCardPresentationMapper.SyncAllSpawnedCards();
+                        UpdateAvatarDebugText();
+                        SoftAlignBoardAnchorsToCore();
+                        SyncBoardOccupancyFromCore();
+                    }
+
+                    if (relicManager != null)
+                    {
+                        relicManager.SyncFromCore();
+                    }
+
+                    if (boardDelta.AvatarDefeated)
+                    {
+                        CombatHitSink.RequestBattleEnded(victory: false);
+                        return;
+                    }
+
+                    // 通关奖励选完后进入 RoomChoice / NodeCompleted：交主循环；局内宝箱回 InteractionLoop。
+                    if (phase == GamePhase.RoomChoice
                         || phase == GamePhase.NodeCompleted
-                        || phase == GamePhase.RoomChoice
-                        || arch.GetSystem<IDeckSystem>().IsNodeCleared(),
-                    AvatarDefeated = phase == GamePhase.Defeat,
-                };
-
-                if ((boardDelta.Moves != null && boardDelta.Moves.Length > 0)
-                    || (boardDelta.Deals != null && boardDelta.Deals.Length > 0))
-                {
-                    await DrainPostKillBoardAsync(boardDelta, EnsurePresentationToken());
+                        || phase == GamePhase.Victory)
+                    {
+                        CombatHitSink.RequestBattleEnded(victory: true);
+                    }
                 }
-                else
+                finally
                 {
-                    CoreCardPresentationMapper.SyncAllSpawnedCards();
-                    UpdateAvatarDebugText();
-                    SoftAlignBoardAnchorsToCore();
-                    SyncBoardOccupancyFromCore();
-                }
-
-                if (relicManager != null)
-                {
-                    relicManager.SyncFromCore();
-                }
-
-                if (boardDelta.AvatarDefeated)
-                {
-                    CombatHitSink.RequestBattleEnded(victory: false);
-                    return;
-                }
-
-                // 通关奖励选完后进入 RoomChoice / NodeCompleted：交主循环；局内宝箱回 InteractionLoop。
-                if (phase == GamePhase.RoomChoice
-                    || phase == GamePhase.NodeCompleted
-                    || phase == GamePhase.Victory)
-                {
-                    CombatHitSink.RequestBattleEnded(victory: true);
+                    if (acquiredDrainLock)
+                    {
+                        CombatHitSink.EndPresentationLock("RewardDrain");
+                    }
                 }
             }
             finally
