@@ -835,6 +835,8 @@ namespace NineGrid.Flow
 
             summary.DamagePopups = popups.Count > 0 ? popups.ToArray() : Array.Empty<CombatDamagePopup>();
 
+            PresentGoldGainsFromEventLog(startIndex, ResolveCardWorldPosition(targetUid));
+
             if (!summary.TargetKilled
                 && arch.GetModel<CardRegistry>().TryGet(targetUid, out var target)
                 && (target.Zone.Value == ZoneId.Graveyard || target.Zone.Value == ZoneId.Removed
@@ -949,6 +951,7 @@ namespace NineGrid.Flow
             summary.Moves = moves;
             summary.Deals = deals;
             summary.DamagePopups = CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
+            PresentGoldGainsFromEventLog(startIndex);
 
             try
             {
@@ -1242,7 +1245,8 @@ namespace NineGrid.Flow
                 || phase == GamePhase.NodeCompleted
                 || arch.GetSystem<IDeckSystem>().IsNodeCleared();
 
-            // 金币卡等即时改 Coins / Avatar 数值：拾取接受后立刻刷 HUD。
+            // 金币卡等即时改 Coins：先按事件带出生点开演，再刷 HUD（HUD 增益交给 GoldFx 缓冲）。
+            PresentGoldGainsFromEventLog(startIndex, ResolveCardWorldPosition(pickedUid));
             PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
             return summary;
         }
@@ -1278,6 +1282,7 @@ namespace NineGrid.Flow
             summary.Moves = moves;
             summary.Deals = deals;
             summary.DamagePopups = CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
+            PresentGoldGainsFromEventLog(startIndex, ResolveBoardSlotWorldPosition(groundSlot));
             return summary;
         }
 
@@ -1350,6 +1355,9 @@ namespace NineGrid.Flow
                 ? killedUids.ToArray()
                 : Array.Empty<int>();
             summary.DamagePopups = CollectDamagePopups(entries, startIndex);
+            PresentGoldGainsFromEventLog(
+                startIndex,
+                ResolveCardWorldPosition(summary.PrimaryTargetUid));
 
             var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
             summary.AvatarDefeated = phase == GamePhase.Defeat;
@@ -1696,6 +1704,7 @@ namespace NineGrid.Flow
                 CombatHitSink.ChoiceOverlayActive = false;
 
                 FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _);
+                PresentGoldGainsFromEventLog(startIndex);
                 var phase = phaseSystem.CurrentPhase;
                 var boardDelta = new PostKillBoardPresentationResult
                 {
@@ -1923,6 +1932,92 @@ namespace NineGrid.Flow
             {
                 manager.SpawnAtWorldPosition(worldPosition, amount);
             }
+        }
+
+        /// <summary>
+        /// 扫描 EventLog 中的 GoldModified（正 delta），按可配置出生点播放飞入—吞噬—数值缓冲。
+        /// </summary>
+        private static void PresentGoldGainsFromEventLog(int startIndex, Vector3? originWorld = null)
+        {
+            if (!GoldGainFxManagerSingleton.TryGetInstance(out var goldFx))
+            {
+                return;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return;
+            }
+
+            var entries = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
+            if (entries == null || startIndex >= entries.Count)
+            {
+                return;
+            }
+
+            for (var i = Math.Max(0, startIndex); i < entries.Count; i++)
+            {
+                var e = entries[i];
+                if (e.Type != CoreEventType.GoldModified || e.Delta <= 0)
+                {
+                    continue;
+                }
+
+                var origin = originWorld;
+                if (!origin.HasValue && e.CardUid > 0)
+                {
+                    origin = ResolveCardWorldPosition(e.CardUid);
+                }
+
+                if (!origin.HasValue && e.TargetUid > 0)
+                {
+                    origin = ResolveCardWorldPosition(e.TargetUid);
+                }
+
+                goldFx.PlayGain(e.Delta, e.Amount, origin);
+            }
+        }
+
+        private static Vector3? ResolveCardWorldPosition(int cardUid)
+        {
+            if (cardUid <= 0)
+            {
+                return null;
+            }
+
+            var cards = CardManagerSingleton.TryGetInstance();
+            if (cards != null
+                && cards.TryGet(cardUid, out var view)
+                && view?.Transform != null)
+            {
+                return view.Transform.position;
+            }
+
+            return null;
+        }
+
+        private static Vector3? ResolveBoardSlotWorldPosition(int groundSlot)
+        {
+            var field = GroundFieldManagerSingleton.Instance;
+            if (field == null)
+            {
+                return null;
+            }
+
+            if (field.TryGetCardAt(groundSlot, out var card) && card?.Transform != null)
+            {
+                return card.Transform.position;
+            }
+
+            // 空格探求：尽量用格锚点；无则交给 GoldFx 默认屏幕中心。
+            var anchor = field.GetGroundAnchor(groundSlot);
+            if (anchor != null)
+            {
+                return anchor.position;
+            }
+
+            return null;
         }
 
         /// <summary>

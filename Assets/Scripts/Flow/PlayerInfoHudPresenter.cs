@@ -115,7 +115,7 @@ namespace NineGrid.Flow
             ApplyHp(hp, maxHp, shouldAnimate);
             ApplyIntStat(_attack, attackText, attack, attack.ToString(), shouldAnimate);
             ApplyIntStat(_armor, armorText, armor, armor.ToString(), shouldAnimate);
-            ApplyIntStat(_gold, goldText, gold, gold.ToString(), shouldAnimate);
+            ApplyGold(gold, shouldAnimate);
 
             if (nameText != null && displayName != _lastName)
             {
@@ -133,6 +133,10 @@ namespace NineGrid.Flow
             _armor.Reset();
             _gold.Reset();
             _wasAtMaxHp = false;
+            if (GoldGainFxManagerSingleton.TryGetInstance(out var goldFx))
+            {
+                goldFx.SnapToCore(0);
+            }
         }
 
         private void EnsureBindings()
@@ -304,6 +308,20 @@ namespace NineGrid.Flow
             {
                 _hp.PunchRoutine = StartCoroutine(FlashColor(hpText, _hp, targetColor));
             }
+        }
+
+        private void ApplyGold(int gold, bool animate)
+        {
+            // 增益演出由 GoldGainFx 缓冲驱动文本；本处只同步槽位，避免瞬间跳变抢戏。
+            if (GoldGainFxManagerSingleton.TryGetInstance(out var goldFx)
+                && goldFx.TryHandleGoldSync(gold, animate))
+            {
+                _gold.Value = gold;
+                _gold.HasValue = true;
+                return;
+            }
+
+            ApplyIntStat(_gold, goldText, gold, gold.ToString(), animate);
         }
 
         private void ApplyIntStat(
