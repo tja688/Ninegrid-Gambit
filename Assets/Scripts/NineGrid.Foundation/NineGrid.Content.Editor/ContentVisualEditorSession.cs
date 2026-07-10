@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using NineGrid.Content;
 using NineGrid.Core.Content;
 using UnityEditor;
@@ -442,6 +444,234 @@ namespace NineGrid.Content.Editor
             return contentId;
         }
 
+        public ContentVisualSpriteCatalogSO ResolveCatalogForKindFilter(string kindFilter)
+        {
+            if (SpriteCatalogs == null
+                || string.IsNullOrEmpty(kindFilter)
+                || kindFilter == "All")
+            {
+                return null;
+            }
+
+            ContentVisualKind kind;
+            if (!Enum.TryParse(kindFilter, true, out kind))
+            {
+                return null;
+            }
+
+            return SpriteCatalogs.ResolveCatalog(kind);
+        }
+
+        /// <summary>
+        /// 一次性把类型 DefaultFace 写入该类型全部会话行的 face（初始化，非持续覆盖）。
+        /// </summary>
+        public int ApplyKindDefaultFaceToSession(string kindFilter)
+        {
+            var catalog = ResolveCatalogForKindFilter(kindFilter);
+            if (catalog == null || catalog.DefaultFace == null)
+            {
+                return 0;
+            }
+
+            var face = catalog.DefaultFace;
+            var count = 0;
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (!string.Equals(row.ContentKind, kindFilter, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                row.Face = face;
+                count++;
+            }
+
+            return count;
+        }
+
+        public bool TryPersistKindDefaults(string kindFilter, Sprite defaultFace, Sprite fallbackIcon, out string error)
+        {
+            error = null;
+            var catalog = ResolveCatalogForKindFilter(kindFilter);
+            if (catalog == null)
+            {
+                error = "当前类型没有对应 Catalog SO。";
+                return false;
+            }
+
+            catalog.DefaultFace = defaultFace;
+            catalog.FallbackIcon = fallbackIcon;
+            EditorUtility.SetDirty(catalog);
+            AssetDatabase.SaveAssets();
+            return true;
+        }
+
+        /// <summary>
+        /// 导出全部卡图关联到语义化 JSON（便于日后分析还原，非强类型容器）。
+        /// </summary>
+        public bool TryExportCardSpriteManifest(string assetFolder, out string absolutePath, out string error)
+        {
+            absolutePath = null;
+            error = null;
+            if (SpriteCatalogs == null)
+            {
+                error = "Catalog SO 未加载。";
+                return false;
+            }
+
+            EnsureFolder(assetFolder);
+            var stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+            var relativePath = assetFolder.TrimEnd('/') + "/card-sprite-manifest-" + stamp + ".json";
+            absolutePath = Path.Combine(Directory.GetCurrentDirectory(), relativePath.Replace('/', Path.DirectorySeparatorChar));
+
+            try
+            {
+                var sb = new StringBuilder(8192);
+                sb.AppendLine("{");
+                sb.AppendLine("  \"schema\": \"table-nine.card-sprite-manifest.v1\",");
+                sb.AppendLine("  \"exportedAt\": \"" + DateTime.Now.ToString("o") + "\",");
+                sb.AppendLine("  \"note\": \"语义化卡图关联快照：用 contentId/displayName/kind 识别卡，而非内部编码。后期容器改版可用分析方式还原。\",");
+                sb.AppendLine("  \"entries\": [");
+
+                var first = true;
+                for (var i = 0; i < rows.Count; i++)
+                {
+                    var row = rows[i];
+                    ContentVisualKind kind;
+                    if (!Enum.TryParse(row.ContentKind, true, out kind))
+                    {
+                        kind = ContentVisualKind.Unknown;
+                    }
+
+                    var catalog = SpriteCatalogs.ResolveCatalog(kind);
+                    Sprite icon = row.Icon;
+                    Sprite face = row.Face;
+                    if (catalog != null)
+                    {
+                        Sprite catalogIcon;
+                        Sprite catalogFace;
+                        if (catalog.TryGet(row.ContentId, out catalogIcon, out catalogFace))
+                        {
+                            if (icon == null)
+                            {
+                                icon = catalogIcon;
+                            }
+
+                            if (face == null)
+                            {
+                                face = catalogFace;
+                            }
+                        }
+                    }
+
+                    if (icon == null && face == null)
+                    {
+                        continue;
+                    }
+
+                    if (!first)
+                    {
+                        sb.AppendLine(",");
+                    }
+
+                    first = false;
+                    var displayName = GetDisplayName(row.ContentId, row.ContentKind);
+                    sb.AppendLine("    {");
+                    sb.AppendLine("      \"contentId\": " + JsonString(row.ContentId) + ",");
+                    sb.AppendLine("      \"displayName\": " + JsonString(displayName) + ",");
+                    sb.AppendLine("      \"contentKind\": " + JsonString(row.ContentKind) + ",");
+                    sb.AppendLine("      \"description\": " + JsonString(row.Description) + ",");
+                    sb.AppendLine("      \"icon\": " + SpriteRefJson(icon) + ",");
+                    sb.Append("      \"face\": " + SpriteRefJson(face));
+                    sb.AppendLine();
+                    sb.Append("    }");
+                }
+
+                sb.AppendLine();
+                sb.AppendLine("  ],");
+                sb.AppendLine("  \"kindDefaults\": [");
+                AppendKindDefaultJson(sb, "HelpCard", SpriteCatalogs.helpCards, true);
+                AppendKindDefaultJson(sb, "Monster", SpriteCatalogs.monsters, false);
+                AppendKindDefaultJson(sb, "Relic", SpriteCatalogs.relics, false);
+                AppendKindDefaultJson(sb, "Skill", SpriteCatalogs.skills, false);
+                AppendKindDefaultJson(sb, "Misc(Avatar/Room/MonsterDeck)", SpriteCatalogs.misc, false);
+                AppendKindDefaultJson(sb, "ChoiceOption", SpriteCatalogs.choiceOptions, false);
+                sb.AppendLine();
+                sb.AppendLine("  ]");
+                sb.AppendLine("}");
+
+                File.WriteAllText(absolutePath, sb.ToString(), Encoding.UTF8);
+                AssetDatabase.Refresh();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                error = ex.Message;
+                return false;
+            }
+        }
+
+        private static void AppendKindDefaultJson(
+            StringBuilder sb,
+            string label,
+            ContentVisualSpriteCatalogSO catalog,
+            bool first)
+        {
+            if (!first)
+            {
+                sb.AppendLine(",");
+            }
+
+            sb.AppendLine("    {");
+            sb.AppendLine("      \"kind\": " + JsonString(label) + ",");
+            if (catalog == null)
+            {
+                sb.AppendLine("      \"defaultFace\": null,");
+                sb.AppendLine("      \"fallbackIcon\": null");
+            }
+            else
+            {
+                sb.AppendLine("      \"defaultFace\": " + SpriteRefJson(catalog.DefaultFace) + ",");
+                sb.AppendLine("      \"fallbackIcon\": " + SpriteRefJson(catalog.FallbackIcon));
+            }
+
+            sb.Append("    }");
+        }
+
+        private static string SpriteRefJson(Sprite sprite)
+        {
+            if (sprite == null)
+            {
+                return "null";
+            }
+
+            var path = AssetDatabase.GetAssetPath(sprite) ?? string.Empty;
+            var guid = string.IsNullOrEmpty(path)
+                ? string.Empty
+                : AssetDatabase.AssetPathToGUID(path);
+            return "{"
+                   + "\"name\":" + JsonString(sprite.name)
+                   + ",\"assetPath\":" + JsonString(path)
+                   + ",\"guid\":" + JsonString(guid)
+                   + "}";
+        }
+
+        private static string JsonString(string value)
+        {
+            if (value == null)
+            {
+                return "\"\"";
+            }
+
+            return "\"" + value
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"")
+                .Replace("\r", "\\r")
+                .Replace("\n", "\\n")
+                .Replace("\t", "\\t") + "\"";
+        }
+
         public static ContentVisualSpriteCatalogSet LoadOrCreateCatalogSet()
         {
             EnsureFolder(CatalogAssetFolder);
@@ -451,7 +681,9 @@ namespace NineGrid.Content.Editor
                 monsters = LoadOrCreate<MonsterVisualCatalogSO>(CatalogAssetFolder + "/MonsterVisualCatalog.asset"),
                 relics = LoadOrCreate<RelicVisualCatalogSO>(CatalogAssetFolder + "/RelicVisualCatalog.asset"),
                 skills = LoadOrCreate<SkillVisualCatalogSO>(CatalogAssetFolder + "/SkillVisualCatalog.asset"),
-                misc = LoadOrCreate<MiscVisualCatalogSO>(CatalogAssetFolder + "/MiscVisualCatalog.asset")
+                misc = LoadOrCreate<MiscVisualCatalogSO>(CatalogAssetFolder + "/MiscVisualCatalog.asset"),
+                choiceOptions = LoadOrCreate<ChoiceOptionVisualCatalogSO>(
+                    CatalogAssetFolder + "/ChoiceOptionVisualCatalog.asset")
             };
         }
 

@@ -1,0 +1,1527 @@
+﻿{
+  "schema": "table-nine.card-sprite-manifest.v1",
+  "exportedAt": "2026-07-10T11:25:08.4233348+08:00",
+  "note": "语义化卡图关联快照：用 contentId/displayName/kind 识别卡，而非内部编码。后期容器改版可用分析方式还原。",
+  "entries": [
+    {
+      "contentId": "avatar.default",
+      "displayName": "玩家",
+      "contentKind": "Avatar",
+      "description": "��һ���",
+      "icon": {"name":"character","assetPath":"Assets/Arts/Images/Png/Items/character.png","guid":"a8fe5a7c742d8ee42abf6452be3b9bba"},
+      "face": {"name":"pixel_art_card_pack_7","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.armor_breaking_hammer",
+      "displayName": "破击锤",
+      "contentKind": "HelpCard",
+      "description": "�ƻ�����[ʹ��ʱ] ��Ŀ����￨���׽���10��",
+      "icon": {"name":"platform","assetPath":"Assets/Arts/Images/Png/Items/platform.png","guid":"ddcd66a5a419b634a8f1a2702a562e64"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.bear_trap",
+      "displayName": "捕熊陷阱",
+      "contentKind": "HelpCard",
+      "description": "�������壺[����] ���������ڸ���Ϊ���￨ʱ���������10���˺���֮���Ƴ�����",
+      "icon": {"name":"location_enemy","assetPath":"Assets/Arts/Images/Png/Items/location_enemy.png","guid":"3a6139d50faff3649a0af8af69a6e49b"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.blood_conversion",
+      "displayName": "血液转换",
+      "contentKind": "HelpCard",
+      "description": "ѪҺת����[ʹ��ʱ] �۳�5��Ѫ�����޲������ù���+1������+1��50��һ��������",
+      "icon": {"name":"sword_blood","assetPath":"Assets/Arts/Images/Png/Items/sword_blood.png","guid":"957e582b51545234c84c39219dbd3885"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.blue_chest_card",
+      "displayName": "蓝色宝箱卡",
+      "contentKind": "HelpCard",
+      "description": "��ɫ���俨��[ʹ��ʱ] ������������ѡ��һ�����",
+      "icon": {"name":"arrow_blue_first","assetPath":"Assets/Arts/Images/Png/Items/arrow_blue_first.png","guid":"95d126c9c404bc249845a452da7f4be0"},
+      "face": {"name":"pixel_art_card_pack_1","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.bomb",
+      "displayName": "爆弹",
+      "contentKind": "HelpCard",
+      "description": "������[ʹ��ʱ] �����й��￨���4���˺�",
+      "icon": {"name":"bomb","assetPath":"Assets/Arts/Images/Png/Items/bomb.png","guid":"f3ff7ccfc974c8f44a7c4d7cb6d16502"},
+      "face": {"name":"pixel_art_card_pack_8","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.brutality_card",
+      "displayName": "暴力卡",
+      "contentKind": "HelpCard",
+      "description": "��������[ʹ��ʱ] �����һ�ζԹ�����ɵ�ս���˺�����",
+      "icon": {"name":"voxel_paint","assetPath":"Assets/Arts/Images/Png/Items/voxel_paint.png","guid":"013a7ac84c062854e9b03daf77d892c0"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.common_chest_card",
+      "displayName": "普通宝箱卡",
+      "contentKind": "HelpCard",
+      "description": "��ͨ���俨��[ʹ��ʱ] ������������ѡ��һ�����",
+      "icon": {"name":"chest","assetPath":"Assets/Arts/Images/Png/Items/chest.png","guid":"1531a2582e194e54f841a09675995da2"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.doubling_tower",
+      "displayName": "倍增塔",
+      "contentKind": "HelpCard",
+      "description": "��������[����] ���ڸ�1ʱ���Թ��￨ʹ�õİ������������Σ�[�����Ƹ�] ����ҿ�ʹ�õİ�������Ч���Σ������������Ƴ�����",
+      "icon": {"name":"widget_width","assetPath":"Assets/Arts/Images/Png/Items/widget_width.png","guid":"5b0d6487d26a22c4f80b9b6d55410849"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.fireball",
+      "displayName": "火球术",
+      "contentKind": "HelpCard",
+      "description": "��������[ʹ��ʱ] ��Ŀ����￨��ɵ�ͬ����ҹ������˺�",
+      "icon": {"name":"dialogue_page","assetPath":"Assets/Arts/Images/Png/Items/dialogue_page.png","guid":"a1be726482be17d4cac8e2bcae4a1920"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.flame",
+      "displayName": "烈焰",
+      "contentKind": "HelpCard",
+      "description": "���棺[ʹ��ʱ] ��������4���˺��������Ƴ�����",
+      "icon": {"name":"keyboard","assetPath":"Assets/Arts/Images/Png/Items/keyboard.png","guid":"280c300896bb34145a4b72028ab85da3"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.food_card",
+      "displayName": "食品卡",
+      "contentKind": "HelpCard",
+      "description": "ʳƷ����[ʹ��ʱ] ����ҿ�Ѫ������",
+      "icon": {"name":"light_energy","assetPath":"Assets/Arts/Images/Png/Items/light_energy.png","guid":"f53ff36c820ef1a4cb0a55a223950cee"},
+      "face": {"name":"pixel_art_card_pack_1","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.gold_card",
+      "displayName": "金币卡",
+      "contentKind": "HelpCard",
+      "description": "��ҿ���[ʹ��ʱ] Ϊ����ṩ50���",
+      "icon": {"name":"light","assetPath":"Assets/Arts/Images/Png/Items/light.png","guid":"955fc41d5f552b043ade625b95225b3e"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.golden_chest_card",
+      "displayName": "金色宝箱卡",
+      "contentKind": "HelpCard",
+      "description": "��ɫ���俨��[ʹ��ʱ] ������������ѡ��һ�����",
+      "icon": {"name":"chest","assetPath":"Assets/Arts/Images/Png/Items/chest.png","guid":"1531a2582e194e54f841a09675995da2"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.healing_potion",
+      "displayName": "恢复药水",
+      "contentKind": "HelpCard",
+      "description": "�ָ�ҩˮ��[ʹ��ʱ] �ָ�10��Ѫ��",
+      "icon": {"name":"potion","assetPath":"Assets/Arts/Images/Png/Items/potion.png","guid":"ec7eff76ed2845f40a637ccb786a89a8"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.healing_spring",
+      "displayName": "治疗泉",
+      "contentKind": "HelpCard",
+      "description": "����Ȫ��[����] �ƶ�����ҿ��������ڸ�ʱ��Ϊ��һָ�2��Ѫ����[�����Ƹ�] ��������ս��ʱ���ָ�1��Ѫ����[ʹ��ʱ] ֱ���Ƴ�����������������Ч��",
+      "icon": {"name":"tree_collapse","assetPath":"Assets/Arts/Images/Png/Items/tree_collapse.png","guid":"7fc4621f043eda3418b3bad3f81f0e7c"},
+      "face": {"name":"pixel_art_card_pack_4","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.impact_tutorial",
+      "displayName": "撞击教程",
+      "contentKind": "HelpCard",
+      "description": "ײ���̳̣�[ʹ��ʱ] ��Ŀ����￨��ɵ�ͬ����ҵ�ǰѪ�����˺�",
+      "icon": {"name":"clock","assetPath":"Assets/Arts/Images/Png/Items/clock.png","guid":"3a5c8db55bf3a3342bb8a2201de861d8"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.kidnapping",
+      "displayName": "绑票",
+      "contentKind": "HelpCard",
+      "description": "��Ʊ��[ʹ��ʱ] �Ƴ�һ�ŷǾ�Ӣ�ǲ������￨������õ�ͬ���䵱ǰ���׵Ļ���",
+      "icon": {"name":"terrain_precise","assetPath":"Assets/Arts/Images/Png/Items/terrain_precise.png","guid":"508d0919fc8389d48b64e5cbf76ff5bd"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.rolling_stone",
+      "displayName": "滚石",
+      "contentKind": "HelpCard",
+      "description": "��ʯ��[����] �ƶ�����3ʱ�����6Ϊ�Ǿ�Ӣ�ǲ���������Ƴ��ù���ͱ�����[ʹ��ʱ] ֱ���Ƴ�����������������Ч��",
+      "icon": {"name":"portrait_left","assetPath":"Assets/Arts/Images/Png/Items/portrait_left.png","guid":"c23c48a5661a68849ac024bb37434a7e"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.rotation_wheel",
+      "displayName": "旋转轮",
+      "contentKind": "HelpCard",
+      "description": "��ת�֣�[ʹ��ʱ] ��ʱ����תһ��",
+      "icon": {"name":"widget_width","assetPath":"Assets/Arts/Images/Png/Items/widget_width.png","guid":"5b0d6487d26a22c4f80b9b6d55410849"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.shield_bash_tutorial",
+      "displayName": "盾击教程",
+      "contentKind": "HelpCard",
+      "description": "�ܻ��̳̣�[ʹ��ʱ] ��Ŀ����￨��ɵ�ͬ����ҵ�ǰ���׵��˺�",
+      "icon": {"name":"shield","assetPath":"Assets/Arts/Images/Png/Items/shield.png","guid":"eb7cdd9de38cce249b43c695a8f77bfe"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.stat_boost_card",
+      "displayName": "属性提升卡",
+      "contentKind": "HelpCard",
+      "description": "������������[ʹ��ʱ] ѡ�񹥻�+1������+1��Ѫ�������뵱ǰѪ��+2",
+      "icon": {"name":"character_add","assetPath":"Assets/Arts/Images/Png/Items/character_add.png","guid":"0359f67994ebb5e44a565a358918ce56"},
+      "face": {"name":"pixel_art_card_pack_7","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.sturdy_shield",
+      "displayName": "耐用盾牌",
+      "contentKind": "HelpCard",
+      "description": "���ö��ƣ�[ʹ��ʱ] ��һ��5�㻤��",
+      "icon": {"name":"shield","assetPath":"Assets/Arts/Images/Png/Items/shield.png","guid":"eb7cdd9de38cce249b43c695a8f77bfe"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.swap_card",
+      "displayName": "交换卡",
+      "contentKind": "HelpCard",
+      "description": "��������[ʹ��ʱ] ѡ�����ҿ�������ſ��ƻ������ڸ���λ��",
+      "icon": {"name":"mac_logo","assetPath":"Assets/Arts/Images/Png/Items/mac_logo.png","guid":"0aa84f3370cfc17429a7d4ee5497eff9"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.teleport_card",
+      "displayName": "传送卡",
+      "contentKind": "HelpCard",
+      "description": "���Ϳ���[ʹ��ʱ] ѡ�����ҿ����һ�ſ���ϴ��ս������",
+      "icon": {"name":"number","assetPath":"Assets/Arts/Images/Png/Items/number.png","guid":"7635a8350ca8e8e4ba5435acc01ce04a"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.throwing_knife",
+      "displayName": "飞刀",
+      "contentKind": "HelpCard",
+      "description": "�ɵ���[ʹ��ʱ] ��Ŀ����￨���6���˺�",
+      "icon": {"name":"widget","assetPath":"Assets/Arts/Images/Png/Items/widget.png","guid":"4b462608190cadb40a36d034bab1fa95"},
+      "face": {"name":"pixel_art_card_pack_4","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.ward_magic_card",
+      "displayName": "庇佑魔法卡",
+      "contentKind": "HelpCard",
+      "description": "����ħ������[ʹ��ʱ] ��һ������ܵ��˺�ʱ���ô��˺���Ϊ0",
+      "icon": {"name":"anim_frame_move_right","assetPath":"Assets/Arts/Images/Png/Items/anim_frame_move_right.png","guid":"a605de077e17b9a41922d26195cddee7"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "help.watchtower",
+      "displayName": "瞭望塔",
+      "contentKind": "HelpCard",
+      "description": "�t������[����] �ƶ����Ǹ�ʱ��������������3���˺�������4�κ��Ƴ�������[�����Ƹ�] ��������ս��ʱ�������һ�Ź��￨���2���˺���[ʹ��ʱ] ֱ���Ƴ�����������������Ч��",
+      "icon": {"name":"voxel_outlines","assetPath":"Assets/Arts/Images/Png/Items/voxel_outlines.png","guid":"8cb05c0f66ebbc34993cb86935ab4b51"},
+      "face": {"name":"pixel_art_card_pack_8","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.beggar",
+      "displayName": "乞丐",
+      "contentKind": "Monster",
+      "description": "��ؤ��ÿ�ƶ�5��ϴ����ؤ",
+      "icon": {"name":"pixel_art_card_pack 1_19","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.big_orc",
+      "displayName": "兽人大只佬",
+      "contentKind": "Monster",
+      "description": "���˴�ֻ�У������������������ս��ʱ��Ϊ�뱾��ս��",
+      "icon": {"name":"pixel_art_card_pack 1_128","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_8","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.big_skeleton",
+      "displayName": "大骷髅",
+      "contentKind": "Monster",
+      "description": "�����ã����Ƴ�ʱϴ������ͷ����ͷ����",
+      "icon": {"name":"pixel_art_card_pack 1_28","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.big_stone",
+      "displayName": "大石头",
+      "contentKind": "Monster",
+      "description": "��ʯͷ������ս��ʱ����ʧ�����˺����",
+      "icon": {"name":"pixel_art_card_pack 1_99","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_7","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.bone_club_skeleton",
+      "displayName": "骨棒骷髅",
+      "contentKind": "Monster",
+      "description": "�ǰ�����",
+      "icon": {"name":"pixel_art_card_pack 1_14","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_4","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.bone_courier",
+      "displayName": "骨头快递员",
+      "contentKind": "Monster",
+      "description": "��ͷ���Ա��ÿ�ƶ�2�Σ������ڰ�������ս��������ｻ��",
+      "icon": {"name":"pixel_art_card_pack 1_34","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.brainless_orc",
+      "displayName": "无脑兽人",
+      "contentKind": "Monster",
+      "description": "�������ˣ�ս��ʱ��������+2",
+      "icon": {"name":"pixel_art_card_pack 1_11","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.dragon_cult_leader",
+      "displayName": "龙教主",
+      "contentKind": "Monster",
+      "description": "��������ÿ�ƶ�3�μ�������ͽ",
+      "icon": {"name":"pixel_art_card_pack 1_128","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.dragon_follower",
+      "displayName": "龙信徒",
+      "contentKind": "Monster",
+      "description": "����ͽ�����Ƴ�ʱ��������",
+      "icon": {"name":"pixel_art_card_pack 1_104","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_7","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.executioner",
+      "displayName": "刽子手",
+      "contentKind": "Monster",
+      "description": "�����֣�ÿ�ƶ�2�Σ��Ƴ��Ź��������е�����ͽ",
+      "icon": {"name":"pixel_art_card_pack 1_82","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_8","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.fire_bather",
+      "displayName": "浴火者",
+      "contentKind": "Monster",
+      "description": "ԡ���ߣ�������ʱ����+4",
+      "icon": {"name":"pixel_art_card_pack 1_34","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.fire_cult_leader",
+      "displayName": "火教主",
+      "contentKind": "Monster",
+      "description": "�������ÿ��һ���������ս�����飬�������һ���Ҳ��ݹ�",
+      "icon": {"name":"pixel_art_card_pack 1_44","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.fire_dragon",
+      "displayName": "火龙",
+      "contentKind": "Monster",
+      "description": "������ÿ�ƶ�4���Ƴ�������ͨ���ﲢ�������������棻�����������ɵ��˺�+1",
+      "icon": {"name":"pixel_art_card_pack 1_39","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.fire_priest",
+      "displayName": "火焰祭司",
+      "contentKind": "Monster",
+      "description": "�����˾��ÿ��һ�����棬��������+2",
+      "icon": {"name":"pixel_art_card_pack 1_67","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.fire_swallower",
+      "displayName": "吞火者",
+      "contentKind": "Monster",
+      "description": "�̻��ߣ�����ս��ʱ����ʧ�����˺����",
+      "icon": {"name":"pixel_art_card_pack 1_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.friendly_ancient",
+      "displayName": "友好的远古生物",
+      "contentKind": "Monster",
+      "description": "�Ѻõ�Զ�����ÿ�ƶ�3�η���ת��",
+      "icon": {"name":"pixel_art_card_pack 1_65","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_7","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.giant_skeleton",
+      "displayName": "巨大骷髅",
+      "contentKind": "Monster",
+      "description": "�޴����ã����Ƴ�ʱϴ���ǳ�͵ȼ�2�������",
+      "icon": {"name":"pixel_art_card_pack 1_124","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_8","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.growing_stone",
+      "displayName": "增生石块",
+      "contentKind": "Monster",
+      "description": "����ʯ�飺�ƶ�������ʱ����������2�㻤��",
+      "icon": {"name":"pixel_art_card_pack 1_42","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.headless_skeleton",
+      "displayName": "无头骷髅",
+      "contentKind": "Monster",
+      "description": "��ͷ���ã���������ͷ���",
+      "icon": {"name":"pixel_art_card_pack 1_47","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_8","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.hoodlum",
+      "displayName": "混混",
+      "contentKind": "Monster",
+      "description": "��죺ÿ���ƶ�����1ʱ��������2���˺�",
+      "icon": {"name":"pixel_art_card_pack 1_34","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.killer",
+      "displayName": "杀手",
+      "contentKind": "Monster",
+      "description": "ɱ�֣��ƶ���������ڸ�ʱǿ��ս��",
+      "icon": {"name":"pixel_art_card_pack 1_46","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.megalith",
+      "displayName": "巨石人",
+      "contentKind": "Monster",
+      "description": "��ʯ�ˣ�ÿ���ƶ���ȡ���ڹ���ȫ�����ף��ۼ���ʧ10����ϴ��ʯ��",
+      "icon": {"name":"pixel_art_card_pack 1_117","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.mist",
+      "displayName": "迷雾",
+      "contentKind": "Monster",
+      "description": "�����ÿ�ƶ�1�ι���+2",
+      "icon": {"name":"pixel_art_card_pack 1_106","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_8","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.multi_bone_worm",
+      "displayName": "多骨虫",
+      "contentKind": "Monster",
+      "description": "��ǳ棺�ƶ�ʱ���������Ź���ϳ�Ϊ�޴�����",
+      "icon": {"name":"pixel_art_card_pack 1_118","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_1","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.observer",
+      "displayName": "观察者",
+      "contentKind": "Monster",
+      "description": "�۲��ߣ����￨����＼��λ��ʱ�˺����",
+      "icon": {"name":"pixel_art_card_pack 1_17","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.old_orc",
+      "displayName": "年迈兽人",
+      "contentKind": "Monster",
+      "description": "�������ˣ�ս��ʱ�ָ�1�ҹ���+1",
+      "icon": {"name":"pixel_art_card_pack 1_12","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_1","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.orc_boss",
+      "displayName": "兽人老大",
+      "contentKind": "Monster",
+      "description": "�����ϴ�ÿ�ƶ�2�Σ��Ƴ����ڸ����ϵĹ��￨�Ͱ������������������Ƴ�����ù������Ƴ��������û���",
+      "icon": {"name":"pixel_art_card_pack 1_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_1","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.orc_commander",
+      "displayName": "兽人指挥官",
+      "contentKind": "Monster",
+      "description": "����ָ�ӹ٣�ÿ�ƶ�1�Σ����ڹ��﹥��+1",
+      "icon": {"name":"pixel_art_card_pack 1_127","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.orc_quartermaster",
+      "displayName": "兽人军需官",
+      "contentKind": "Monster",
+      "description": "���˾���٣�ÿ�ƶ�2�����ǿ����������",
+      "icon": {"name":"pixel_art_card_pack 1_85","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.orc_warrior",
+      "displayName": "兽人战士",
+      "contentKind": "Monster",
+      "description": "����սʿ��ս��ʱÿ���2���˺�����������+1",
+      "icon": {"name":"pixel_art_card_pack 1_80","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.pickpocket",
+      "displayName": "扒手",
+      "contentKind": "Monster",
+      "description": "���֣�ÿ�ƶ�3���Ƴ����ڰ�����",
+      "icon": {"name":"pixel_art_card_pack 1_85","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.ringleader",
+      "displayName": "领头人",
+      "contentKind": "Monster",
+      "description": "��ͷ�ˣ�ÿ�ƶ�3�δ������أ�������븣�ػ�û��׺͹��������شﵽ3����һ���ƶ����99�˺�",
+      "icon": {"name":"pixel_art_card_pack 1_69","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.rogue",
+      "displayName": "流氓",
+      "contentKind": "Monster",
+      "description": "��å��ÿ��ʧ3�㻤�ף����ڹ��﹥��+1",
+      "icon": {"name":"pixel_art_card_pack 1_78","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.rolling_stone_man",
+      "displayName": "滚石人",
+      "contentKind": "Monster",
+      "description": "��ʯ�ˣ��ƶ�����3ʱ�Ƴ���6������",
+      "icon": {"name":"pixel_art_card_pack 1_60","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_1","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.rotating_cub",
+      "displayName": "旋转幼崽",
+      "contentKind": "Monster",
+      "description": "��ת���̣�ÿ�ƶ�3����ת",
+      "icon": {"name":"pixel_art_card_pack 1_39","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_4","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.salamander",
+      "displayName": "火蜥蜴",
+      "contentKind": "Monster",
+      "description": "�����棺ÿ�ƶ�3�η�����",
+      "icon": {"name":"pixel_art_card_pack 1_64","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_1","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.sharp_stone",
+      "displayName": "尖石",
+      "contentKind": "Monster",
+      "description": "��ʯ�����׹���ʱ�˺����",
+      "icon": {"name":"pixel_art_card_pack 1_77","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.shelter_stone",
+      "displayName": "庇护石",
+      "contentKind": "Monster",
+      "description": "�ӻ�ʯ���������￨�ܵ����˺�����1��",
+      "icon": {"name":"pixel_art_card_pack 1_36","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.skeleton_king",
+      "displayName": "骷髅王",
+      "contentKind": "Monster",
+      "description": "�����������ڹ��ﱻ�Ƴ�ʱ������Ƴ�ǰ�����ͻ��ף�ÿ�ƶ�5���Ƴ���������������ﲢϴ��ȼ�2/3�������",
+      "icon": {"name":"pixel_art_card_pack 1_18","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.skeleton_mage",
+      "displayName": "骷髅法师",
+      "contentKind": "Monster",
+      "description": "���÷�ʦ�����й��￨��Ϊ�뱾����������",
+      "icon": {"name":"pixel_art_card_pack 1_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_7","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.skeleton_taunter",
+      "displayName": "骷髅嘲讽子",
+      "contentKind": "Monster",
+      "description": "���ó����ӣ�����ʱֻ���뱾��ս��",
+      "icon": {"name":"pixel_art_card_pack 1_106","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_8","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.skull_head",
+      "displayName": "骷髅头",
+      "contentKind": "Monster",
+      "description": "����ͷ��������ͷ�������",
+      "icon": {"name":"pixel_art_card_pack 1_68","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.sky_eye",
+      "displayName": "空中巨眼",
+      "contentKind": "Monster",
+      "description": "���о��ۣ��ƶ����Ǹ�ʱ��������2���˺�",
+      "icon": {"name":"pixel_art_card_pack 1_35","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_4","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.smart_orc",
+      "displayName": "聪明兽人",
+      "contentKind": "Monster",
+      "description": "�������ˣ�ÿ�λ�ù���ʱ���������⹥��+1�Ҳ��ݹ�",
+      "icon": {"name":"pixel_art_card_pack 1_115","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.smuggler",
+      "displayName": "走私者",
+      "contentKind": "Monster",
+      "description": "��˽�ߣ��ۼ��ƶ����������3��ʱ�Ƴ�����������û���",
+      "icon": {"name":"pixel_art_card_pack 1_15","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.space_master",
+      "displayName": "空间大师",
+      "contentKind": "Monster",
+      "description": "�ռ��ʦ������뱾��ս������תһ�Σ�ÿ�ƶ�9�δ������������������ͨ����",
+      "icon": {"name":"pixel_art_card_pack 1_29","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_4","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.stepwalker",
+      "displayName": "踏步行者",
+      "contentKind": "Monster",
+      "description": "̤�����ߣ�ÿ�ƶ�3�����������������",
+      "icon": {"name":"pixel_art_card_pack 1_106","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.stone_golem",
+      "displayName": "石傀儡",
+      "contentKind": "Monster",
+      "description": "ʯ����",
+      "icon": {"name":"pixel_art_card_pack 1_67","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.stone_man",
+      "displayName": "石头人",
+      "contentKind": "Monster",
+      "description": "ʯͷ��",
+      "icon": {"name":"pixel_art_card_pack 1_109","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_7","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.stone_shrimp",
+      "displayName": "石虾",
+      "contentKind": "Monster",
+      "description": "ʯϺ����ҿ��͹��￨��ʧ����ʱ��������+1",
+      "icon": {"name":"pixel_art_card_pack 1_65","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.stone_swallower",
+      "displayName": "吞石者",
+      "contentKind": "Monster",
+      "description": "��ʯ�ߣ�ÿ�ƶ�2�������ڹ��ﻤ��",
+      "icon": {"name":"pixel_art_card_pack 1_11","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.stone_thrower",
+      "displayName": "丢石人",
+      "contentKind": "Monster",
+      "description": "��ʯ�ˣ�ÿ�ƶ�2�����ı���2���ײ��˺����",
+      "icon": {"name":"pixel_art_card_pack 1_56","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.thug",
+      "displayName": "打手",
+      "contentKind": "Monster",
+      "description": "���֣��ǳ���ż����λʱ�˺����",
+      "icon": {"name":"pixel_art_card_pack 1_101","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.vagrant",
+      "displayName": "流浪汉",
+      "contentKind": "Monster",
+      "description": "���˺�",
+      "icon": {"name":"pixel_art_card_pack 1_29","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_8","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.veteran_orc",
+      "displayName": "历战兽人",
+      "contentKind": "Monster",
+      "description": "��ս����",
+      "icon": {"name":"pixel_art_card_pack 1_63","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.void_cub",
+      "displayName": "虚空幼崽",
+      "contentKind": "Monster",
+      "description": "������̣�ÿ�ƶ�3�������������",
+      "icon": {"name":"pixel_art_card_pack 1_117","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.void_lost",
+      "displayName": "误入虚空者",
+      "contentKind": "Monster",
+      "description": "���������",
+      "icon": {"name":"pixel_art_card_pack 1_124","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.wandering_child",
+      "displayName": "流浪孩童",
+      "contentKind": "Monster",
+      "description": "���˺�ͯ����6����+2������ȹ�",
+      "icon": {"name":"pixel_art_card_pack 1_70","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.world_turning_hand",
+      "displayName": "转动世界的手",
+      "contentKind": "Monster",
+      "description": "ת��������֣��ǳ���תһ��",
+      "icon": {"name":"pixel_art_card_pack 1_41","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_1","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "monster.young_orc",
+      "displayName": "年轻兽人",
+      "contentKind": "Monster",
+      "description": "�������ˣ����������ù���ʱ��������+1",
+      "icon": {"name":"pixel_art_card_pack 1_126","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_4","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "deck.dragon",
+      "displayName": "巨龙牌组",
+      "contentKind": "MonsterDeck",
+      "description": "��������",
+      "icon": {"name":"pixel_art_card_pack 1_42","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "deck.orc_legion",
+      "displayName": "兽人军团牌组",
+      "contentKind": "MonsterDeck",
+      "description": "���˾�������",
+      "icon": null,
+      "face": {"name":"pixel_art_card_pack_1","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "deck.skeleton_legion",
+      "displayName": "骷髅军团牌组",
+      "contentKind": "MonsterDeck",
+      "description": "���þ�������",
+      "icon": null,
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "deck.stone_legion",
+      "displayName": "石人军团牌组",
+      "contentKind": "MonsterDeck",
+      "description": "ʯ�˾�������",
+      "icon": null,
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "deck.void",
+      "displayName": "虚空牌组",
+      "contentKind": "MonsterDeck",
+      "description": "�������",
+      "icon": null,
+      "face": {"name":"pixel_art_card_pack_8","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "deck.wandering_legion",
+      "displayName": "流浪军团牌组",
+      "contentKind": "MonsterDeck",
+      "description": "���˾�������",
+      "icon": null,
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.craving",
+      "displayName": "渴望",
+      "contentKind": "Relic",
+      "description": "���������лָ�Ѫ��Ч������",
+      "icon": {"name":"jewel","assetPath":"Assets/Arts/Images/Png/Icons/white_node/jewel.png","guid":"f122477c82d66c140bb44aa522aa1d4b"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.dragon_scale_armor",
+      "displayName": "龙鳞甲",
+      "contentKind": "Relic",
+      "description": "���ۼף����й��﹥��-1",
+      "icon": {"name":"magic_wand","assetPath":"Assets/Arts/Images/Png/Icons/white_node/magic_wand.png","guid":"4effba4779c799d489095da7a2f82204"},
+      "face": {"name":"pixel_art_card_pack_4","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.gold_armor",
+      "displayName": "金币盔甲",
+      "contentKind": "Relic",
+      "description": "��ҿ��ף���ҵ��������˺�",
+      "icon": {"name":"dice","assetPath":"Assets/Arts/Images/Png/Icons/white_node/dice.png","guid":"5a432d2ac2417844f805794e1c3c041d"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.gold_knife",
+      "displayName": "打金刀",
+      "contentKind": "Relic",
+      "description": "��𵶣���ɱ����ʱ���2���",
+      "icon": {"name":"letter_tile","assetPath":"Assets/Arts/Images/Png/Icons/blue_2d/letter_tile.png","guid":"347295a233ed8d947aa6d94df4221780"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.heavy_armor",
+      "displayName": "重盔甲",
+      "contentKind": "Relic",
+      "description": "�ؿ��ף���������+1�����������ײ���ǰ����",
+      "icon": {"name":"billiard_rack","assetPath":"Assets/Arts/Images/Png/Icons/white_node/billiard_rack.png","guid":"80d55afd4e0d2fe43bb74ad66887ff92"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.junk_coating",
+      "displayName": "废物涂层",
+      "contentKind": "Relic",
+      "description": "����Ϳ�㣺ʹ�ð�����ʱ��û���",
+      "icon": {"name":"flag_piece","assetPath":"Assets/Arts/Images/Png/Icons/white_node/flag_piece.png","guid":"e1db479ba23375f4f81c2d11faab2a25"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.junk_launcher",
+      "displayName": "废物发射器",
+      "contentKind": "Relic",
+      "description": "���﷢������ʹ�ð�����ʱ����˺�",
+      "icon": {"name":"bowling_pin","assetPath":"Assets/Arts/Images/Png/Icons/white_node/bowling_pin.png","guid":"8a283bd50456b994aa841d7b1f0c2d8d"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.junk_recycler",
+      "displayName": "废物利用机",
+      "contentKind": "Relic",
+      "description": "�������û���ʹ�ð�����ʱ�ָ�2��Ѫ��",
+      "icon": {"name":"coins","assetPath":"Assets/Arts/Images/Png/Icons/white_node/coins.png","guid":"91c628bceac1f2a4daf988958994b357"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.junk_slot_machine",
+      "displayName": "废物老虎机",
+      "contentKind": "Relic",
+      "description": "�����ϻ�����ʹ�ð�����ʱ���������ѡһ",
+      "icon": {"name":"dice_5","assetPath":"Assets/Arts/Images/Png/Icons/white_node/dice_5.png","guid":"497f9084920ccd54cbfaf44565596cd2"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.lucky_coin",
+      "displayName": "幸运硬币",
+      "contentKind": "Relic",
+      "description": "����Ӳ�ң���ɱ��Ӣ/����ʱ�����ҿ�",
+      "icon": {"name":"coins","assetPath":"Assets/Arts/Images/Png/Icons/white_node/coins.png","guid":"91c628bceac1f2a4daf988958994b357"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.phoenix_feather",
+      "displayName": "凤凰羽毛",
+      "contentKind": "Relic",
+      "description": "�����ë�������˺�����",
+      "icon": {"name":"coins","assetPath":"Assets/Arts/Images/Png/Icons/white_node/coins.png","guid":"91c628bceac1f2a4daf988958994b357"},
+      "face": {"name":"pixel_art_card_pack_7","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.potion_bag",
+      "displayName": "药水袋",
+      "contentKind": "Relic",
+      "description": "ҩˮ����ÿ�ؿ���ʼ�������Żָ�ҩˮ",
+      "icon": {"name":"connect","assetPath":"Assets/Arts/Images/Png/Icons/white_node/connect.png","guid":"5bc72317b018a7f47aa052f7b738b2bc"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.shield_knife",
+      "displayName": "打盾刀",
+      "contentKind": "Relic",
+      "description": "��ܵ�����ɱ����ʱ��û���",
+      "icon": {"name":"card","assetPath":"Assets/Arts/Images/Png/Icons/white_node/card.png","guid":"663ff9081c98a6e4f82864e8cda679e5"},
+      "face": {"name":"pixel_art_card_pack_7","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.sling",
+      "displayName": "弹弓",
+      "contentKind": "Relic",
+      "description": "��������ɱ����ʱ����˺�",
+      "icon": {"name":"hash","assetPath":"Assets/Arts/Images/Png/Icons/white_node/hash.png","guid":"0bc1bacc254332d4a88c8b941e14d158"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.throwing_knife_bag",
+      "displayName": "飞刀袋",
+      "contentKind": "Relic",
+      "description": "�ɵ�����ÿ�ؿ���ʼ�������ŷɵ�",
+      "icon": {"name":"pound","assetPath":"Assets/Arts/Images/Png/Icons/white_node/pound.png","guid":"2246ab4426630614ba8bb9221adde926"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.vitality_amulet",
+      "displayName": "活力护符",
+      "contentKind": "Relic",
+      "description": "����������Ѫ������+6���ؿ������ָ�6",
+      "icon": {"name":"rook","assetPath":"Assets/Arts/Images/Png/Icons/white_node/rook.png","guid":"33f4bf60b3ea9e6448c7641524ad6439"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.wood_armor",
+      "displayName": "木甲",
+      "contentKind": "Relic",
+      "description": "ľ�ף�Ѫ������+2��ľ��װ����+8",
+      "icon": {"name":"jewel","assetPath":"Assets/Arts/Images/Png/Icons/white_node/jewel.png","guid":"f122477c82d66c140bb44aa522aa1d4b"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.wood_shield",
+      "displayName": "木盾",
+      "contentKind": "Relic",
+      "description": "ľ�ܣ���������+1��ľ��װ����+2",
+      "icon": {"name":"billiard_rack","assetPath":"Assets/Arts/Images/Png/Icons/blue_2d/billiard_rack.png","guid":"5621c58ec7eaafe458aa675b9a9421d3"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "relic.wood_sword",
+      "displayName": "木剑",
+      "contentKind": "Relic",
+      "description": "ľ��������+1��ľ��װ����+2",
+      "icon": {"name":"spade","assetPath":"Assets/Arts/Images/Png/Icons/white_node/spade.png","guid":"6e05fa8550fb9154681ee2188df5ce9e"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "Fountain",
+      "displayName": "温泉房",
+      "contentKind": "Room",
+      "description": "��Ȫ��",
+      "icon": {"name":"arrow_refresh","assetPath":"Assets/Arts/Images/Png/Items/arrow_refresh.png","guid":"8bd3162ba6bd1af4fa542bdcec9bff4b"},
+      "face": null
+    },
+    {
+      "contentId": "Gold",
+      "displayName": "金币房",
+      "contentKind": "Room",
+      "description": "��ҷ�",
+      "icon": {"name":"wizard","assetPath":"Assets/Arts/Images/Png/Items/wizard.png","guid":"54baf469234c171489674165e95a6433"},
+      "face": null
+    },
+    {
+      "contentId": "Shop",
+      "displayName": "商店",
+      "contentKind": "Room",
+      "description": "�̵�",
+      "icon": {"name":"anim_frame_delete","assetPath":"Assets/Arts/Images/Png/Items/anim_frame_delete.png","guid":"e62ba84f517274c40bce821f6cb326b8"},
+      "face": null
+    },
+    {
+      "contentId": "Tavern",
+      "displayName": "酒馆",
+      "contentKind": "Room",
+      "description": "�ƹ�",
+      "icon": {"name":"map","assetPath":"Assets/Arts/Images/Png/Items/map.png","guid":"262ad96d3d9862842aa7b22538fc6f29"},
+      "face": null
+    },
+    {
+      "contentId": "Treasure",
+      "displayName": "宝箱房",
+      "contentKind": "Room",
+      "description": "���䷿",
+      "icon": {"name":"arrow_up_down","assetPath":"Assets/Arts/Images/Png/Items/arrow_up_down.png","guid":"6e2a68b3b770d4f4c858a7ec5eea8a6c"},
+      "face": null
+    },
+    {
+      "contentId": "skill.absorb_bone",
+      "displayName": "吸骨",
+      "contentKind": "Skill",
+      "description": "���ǣ����ڹ��ﱻ�Ƴ�ʱ������Ƴ�ǰ�����ͻ���",
+      "icon": {"name":"spinner","assetPath":"Assets/Arts/Images/Png/Icons/white_node/spinner.png","guid":"33b55cfee70a6f64a87ca16cefe78a42"},
+      "face": {"name":"pixel_art_card_pack_8","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.absorb_stone",
+      "displayName": "吸石",
+      "contentKind": "Skill",
+      "description": "��ʯ��ÿ���ƶ���ȡ���ڹ���ȫ������",
+      "icon": {"name":"spade_outline","assetPath":"Assets/Arts/Images/Png/Icons/white_node/spade_outline.png","guid":"47b67ba5cf62b3044823ee5602830f74"},
+      "face": {"name":"pixel_art_card_pack_1","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.air_strike",
+      "displayName": "空中打击",
+      "contentKind": "Skill",
+      "description": "���д�����ƶ����Ǹ�ʱ��������2���˺�",
+      "icon": {"name":"letter_tile","assetPath":"Assets/Arts/Images/Png/Icons/white_node/letter_tile.png","guid":"0f7405daa638640449053e1a2c1614f2"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.arsenal",
+      "displayName": "军械库",
+      "contentKind": "Skill",
+      "description": "��е�⣺�ؿ���������ɵ�/����/�ƻ���֮һ",
+      "icon": {"name":"rook","assetPath":"Assets/Arts/Images/Png/Icons/white_node/rook.png","guid":"33f4bf60b3ea9e6448c7641524ad6439"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.battle_hardened",
+      "displayName": "历战",
+      "contentKind": "Skill",
+      "description": "��ս��ս��ʱ����+2�����и�ԭ",
+      "icon": {"name":"bowling_pins","assetPath":"Assets/Arts/Images/Png/Icons/blue_2d/bowling_pins.png","guid":"b43c57b1e9e52164291d3190b6512b55"},
+      "face": {"name":"pixel_art_card_pack_8","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.beggar_bond",
+      "displayName": "丐帮同心",
+      "contentKind": "Skill",
+      "description": "ؤ��ͬ�ģ�ÿ�ƶ�5��ϴ����ؤ",
+      "icon": {"name":"heart_outline","assetPath":"Assets/Arts/Images/Png/Icons/white_node/heart_outline.png","guid":"e72e62c8ec4205a4389110e18a422a3c"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.blessing",
+      "displayName": "庇佑",
+      "contentKind": "Skill",
+      "description": "���ӣ���һ���ܵ��˺�ʱ���ô��˺���Ϊ0",
+      "icon": {"name":"domino_diagonal","assetPath":"Assets/Arts/Images/Png/Icons/white_node/domino_diagonal.png","guid":"f7074574d28166a4e9573fb89a42bc29"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.bloodthirst",
+      "displayName": "嗜血",
+      "contentKind": "Skill",
+      "description": "��Ѫ��ս��ʱÿ���2���˺�����������+1",
+      "icon": {"name":"house","assetPath":"Assets/Arts/Images/Png/Icons/white_node/house.png","guid":"5613ea9895eabfa4ab07cc7761d2beae"},
+      "face": {"name":"pixel_art_card_pack_8","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.breathe_fire",
+      "displayName": "喷火",
+      "contentKind": "Skill",
+      "description": "���ÿ�ƶ�3�η�����",
+      "icon": {"name":"dice_1","assetPath":"Assets/Arts/Images/Png/Icons/white_node/dice_1.png","guid":"8fd0d6895d763eb4f8d44928122db4a0"},
+      "face": {"name":"pixel_art_card_pack_8","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.call_followers",
+      "displayName": "呼唤信徒",
+      "contentKind": "Skill",
+      "description": "�����ͽ��ÿ�ƶ�3�μ�������ͽ",
+      "icon": {"name":"magic_wand","assetPath":"Assets/Arts/Images/Png/Icons/blue_2d/magic_wand.png","guid":"355f8ba4d7082d34083cf965bae757af"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.delivery",
+      "displayName": "快递",
+      "contentKind": "Skill",
+      "description": "��ݣ�ÿ�ƶ�2�Σ������ڰ�������ս��������ｻ��",
+      "icon": {"name":"letter_tile","assetPath":"Assets/Arts/Images/Png/Icons/white_node/letter_tile.png","guid":"0f7405daa638640449053e1a2c1614f2"},
+      "face": {"name":"pixel_art_card_pack_8","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.devotion",
+      "displayName": "献身",
+      "contentKind": "Skill",
+      "description": "��������Ƴ�ʱ��������",
+      "icon": {"name":"pawn","assetPath":"Assets/Arts/Images/Png/Icons/white_node/pawn.png","guid":"e81b36e4461ccbc41b228a89820f77f7"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.easy_road",
+      "displayName": "轻车熟路",
+      "contentKind": "Skill",
+      "description": "�ᳵ��·���ؿ�������ɫ��������ѡһ",
+      "icon": {"name":"yen","assetPath":"Assets/Arts/Images/Png/Icons/white_node/yen.png","guid":"56a08acbdeb298f4ba7bc1d7ab6857a1"},
+      "face": {"name":"pixel_art_card_pack_1","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.even_hatred",
+      "displayName": "偶数仇恨",
+      "contentKind": "Skill",
+      "description": "ż����ޣ���ż���ȼ��������˫���˺�",
+      "icon": {"name":"seven","assetPath":"Assets/Arts/Images/Png/Icons/white_node/seven.png","guid":"c5c8aa4ee63b51f448ccd061524defe7"},
+      "face": {"name":"pixel_art_card_pack_7","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.fall_apart",
+      "displayName": "散架",
+      "contentKind": "Skill",
+      "description": "ɢ�ܣ����Ƴ�ʱϴ������ͷ����ͷ����",
+      "icon": {"name":"dice","assetPath":"Assets/Arts/Images/Png/Icons/white_node/dice.png","guid":"5a432d2ac2417844f805794e1c3c041d"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.falling_rocks",
+      "displayName": "落石",
+      "contentKind": "Skill",
+      "description": "��ʯ���ۼ���ʧ10����ϴ��ʯ��",
+      "icon": {"name":"club","assetPath":"Assets/Arts/Images/Png/Icons/white_node/club.png","guid":"96210c2c26bb6d74c81153310481011c"},
+      "face": {"name":"pixel_art_card_pack_4","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.fight_me",
+      "displayName": "和我打！",
+      "contentKind": "Skill",
+      "description": "���Ҵ򣡣������������������ս��ʱ��Ϊ�뱾��ս��",
+      "icon": {"name":"card","assetPath":"Assets/Arts/Images/Png/Icons/white_node/card.png","guid":"663ff9081c98a6e4f82864e8cda679e5"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.find_weakness",
+      "displayName": "发现弱点",
+      "contentKind": "Skill",
+      "description": "�������㣺���شﵽ3����һ���ƶ����99�˺�",
+      "icon": {"name":"connect","assetPath":"Assets/Arts/Images/Png/Icons/white_node/connect.png","guid":"5bc72317b018a7f47aa052f7b738b2bc"},
+      "face": {"name":"pixel_art_card_pack_7","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.fire_power",
+      "displayName": "火之力",
+      "contentKind": "Skill",
+      "description": "��֮����ÿ��һ�����棬��������+2",
+      "icon": {"name":"piece","assetPath":"Assets/Arts/Images/Png/Icons/white_node/piece.png","guid":"a6e8f6a3c2ebc28488eb78ff8a31aca2"},
+      "face": {"name":"pixel_art_card_pack_4","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.first_strike",
+      "displayName": "先攻",
+      "contentKind": "Skill",
+      "description": "�ȹ��������ȹ�����",
+      "icon": {"name":"cards","assetPath":"Assets/Arts/Images/Png/Icons/white_node/cards.png","guid":"94c80bf2d97fe78469d8c8a5275c01bf"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.flame_boiling",
+      "displayName": "烈焰沸腾",
+      "contentKind": "Skill",
+      "description": "������ڣ������������ɵ��˺�+1",
+      "icon": {"name":"suits","assetPath":"Assets/Arts/Images/Png/Icons/white_node/suits.png","guid":"f0e8d5000d9bef248ad84b376018e7c9"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.flame_breath",
+      "displayName": "烈焰吐息",
+      "contentKind": "Skill",
+      "description": "������Ϣ��ÿ�ƶ�4���Ƴ�������ͨ���ﲢ��������������",
+      "icon": {"name":"coins","assetPath":"Assets/Arts/Images/Png/Icons/white_node/coins.png","guid":"91c628bceac1f2a4daf988958994b357"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.fracture_fall_apart",
+      "displayName": "折损散架",
+      "contentKind": "Skill",
+      "description": "����ɢ�ܣ����Ƴ�ʱϴ���ǳ�͵ȼ�2�������",
+      "icon": {"name":"heart_outline","assetPath":"Assets/Arts/Images/Png/Icons/white_node/heart_outline.png","guid":"e72e62c8ec4205a4389110e18a422a3c"},
+      "face": {"name":"pixel_art_card_pack_1","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.gear_delivery",
+      "displayName": "发装备了！",
+      "contentKind": "Skill",
+      "description": "��װ���ˣ���ÿ�ƶ�2�����ǿ����������",
+      "icon": {"name":"deck","assetPath":"Assets/Arts/Images/Png/Icons/white_node/deck.png","guid":"e20954fcca43ea6449922f1ba142d7a6"},
+      "face": {"name":"pixel_art_card_pack_8","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.gift",
+      "displayName": "礼物",
+      "contentKind": "Skill",
+      "description": "���ÿ�ƶ�3�η���ת��",
+      "icon": {"name":"mahjong_tiles","assetPath":"Assets/Arts/Images/Png/Icons/blue_2d/mahjong_tiles.png","guid":"c01e32f8f7d55a04f8a6a6e3be390ed3"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.give_punch",
+      "displayName": "给你一拳",
+      "contentKind": "Skill",
+      "description": "����һȭ���ǳ���ż����λʱ�˺����",
+      "icon": {"name":"house","assetPath":"Assets/Arts/Images/Png/Icons/white_node/house.png","guid":"5613ea9895eabfa4ab07cc7761d2beae"},
+      "face": {"name":"pixel_art_card_pack_4","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.guide",
+      "displayName": "引路",
+      "contentKind": "Skill",
+      "description": "��·��ÿ�ƶ�3�δ������أ�������븣�ػ�û��׺͹���",
+      "icon": {"name":"heart","assetPath":"Assets/Arts/Images/Png/Icons/white_node/heart.png","guid":"72296af35aa834e4fabc24ed4e8bb2ef"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.hard",
+      "displayName": "坚硬",
+      "contentKind": "Skill",
+      "description": "��Ӳ������ս��ʱ����ʧ�����˺����",
+      "icon": {"name":"yen","assetPath":"Assets/Arts/Images/Png/Icons/white_node/yen.png","guid":"56a08acbdeb298f4ba7bc1d7ab6857a1"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.hard_skin",
+      "displayName": "硬皮",
+      "contentKind": "Skill",
+      "description": "ӲƤ��Ѫ������+10���ؿ������ָ�10",
+      "icon": {"name":"spinner","assetPath":"Assets/Arts/Images/Png/Icons/white_node/spinner.png","guid":"33b55cfee70a6f64a87ca16cefe78a42"},
+      "face": {"name":"pixel_art_card_pack_7","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.hoodlum",
+      "displayName": "混的人",
+      "contentKind": "Skill",
+      "description": "����ˣ�ÿ���ƶ�����1ʱ��������2���˺�",
+      "icon": {"name":"mahjong_tile","assetPath":"Assets/Arts/Images/Png/Icons/blue_2d/mahjong_tile.png","guid":"3ffa5529ff05df64ea5aee5792680a5a"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.hot_observation",
+      "displayName": "灼热观察",
+      "contentKind": "Skill",
+      "description": "���ȹ۲죺���￨����＼��λ��ʱ�˺����",
+      "icon": {"name":"billiard_rack","assetPath":"Assets/Arts/Images/Png/Icons/blue_2d/billiard_rack.png","guid":"5621c58ec7eaafe458aa675b9a9421d3"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.intense_burning",
+      "displayName": "剧烈燃烧",
+      "contentKind": "Skill",
+      "description": "����ȼ�գ�ÿ��һ���������ս�����飬�������һ���Ҳ��ݹ�",
+      "icon": {"name":"piece","assetPath":"Assets/Arts/Images/Png/Icons/white_node/piece.png","guid":"a6e8f6a3c2ebc28488eb78ff8a31aca2"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.learning_growth",
+      "displayName": "学习成长",
+      "contentKind": "Skill",
+      "description": "ѧϰ�ɳ������������ù���ʱ��������+1",
+      "icon": {"name":"piece","assetPath":"Assets/Arts/Images/Png/Icons/white_node/piece.png","guid":"a6e8f6a3c2ebc28488eb78ff8a31aca2"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.love_fire",
+      "displayName": "恋火",
+      "contentKind": "Skill",
+      "description": "����������ʱ����+4",
+      "icon": {"name":"bowling_pins","assetPath":"Assets/Arts/Images/Png/Icons/blue_2d/bowling_pins.png","guid":"b43c57b1e9e52164291d3190b6512b55"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.mixed_bones",
+      "displayName": "混合骨头",
+      "contentKind": "Skill",
+      "description": "��Ϲ�ͷ��ÿ�ƶ�5���Ƴ���������������ﲢϴ��ȼ�2/3�������",
+      "icon": {"name":"billiard_rack","assetPath":"Assets/Arts/Images/Png/Icons/white_node/billiard_rack.png","guid":"80d55afd4e0d2fe43bb74ad66887ff92"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.monster_battle_hardened",
+      "displayName": "历战怪物",
+      "contentKind": "Skill",
+      "description": "��ս���ս��ʱ��������+2",
+      "icon": {"name":"bowling_pins","assetPath":"Assets/Arts/Images/Png/Icons/blue_2d/bowling_pins.png","guid":"b43c57b1e9e52164291d3190b6512b55"},
+      "face": {"name":"pixel_art_card_pack_9","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.orc_tactics",
+      "displayName": "兽人战术",
+      "contentKind": "Skill",
+      "description": "����ս����ÿ�ƶ�1�Σ����ڹ��﹥��+1",
+      "icon": {"name":"bishop","assetPath":"Assets/Arts/Images/Png/Icons/white_node/bishop.png","guid":"743c945a57bdeee488010ead4450a23f"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.otherworld_help",
+      "displayName": "异界帮助",
+      "contentKind": "Skill",
+      "description": "��������ÿ�ƶ�9�δ������������������ͨ����",
+      "icon": {"name":"star","assetPath":"Assets/Arts/Images/Png/Icons/white_node/star.png","guid":"7fd6c37c4f7f46f43a9b4965de5d2324"},
+      "face": {"name":"pixel_art_card_pack_8","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.random_walk",
+      "displayName": "乱步",
+      "contentKind": "Skill",
+      "description": "�Ҳ���ÿ�ƶ�3�����������������",
+      "icon": {"name":"bowling_ball","assetPath":"Assets/Arts/Images/Png/Icons/white_node/bowling_ball.png","guid":"e88e2a98b2e28ef4c892db38e4d5c725"},
+      "face": {"name":"pixel_art_card_pack_7","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.range_expand",
+      "displayName": "范围扩大",
+      "contentKind": "Skill",
+      "description": "��Χ�������й��￨��Ϊ�뱾����������",
+      "icon": {"name":"flag_piece","assetPath":"Assets/Arts/Images/Png/Icons/white_node/flag_piece.png","guid":"e1db479ba23375f4f81c2d11faab2a25"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.rascality",
+      "displayName": "痞气",
+      "contentKind": "Skill",
+      "description": "Ʀ����ÿ��ʧ3�㻤�ף����ڹ��﹥��+1",
+      "icon": {"name":"club","assetPath":"Assets/Arts/Images/Png/Icons/white_node/club.png","guid":"96210c2c26bb6d74c81153310481011c"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.recombine_body",
+      "displayName": "重新组合身",
+      "contentKind": "Skill",
+      "description": "����������������ͷ�������",
+      "icon": {"name":"mahjong_tile","assetPath":"Assets/Arts/Images/Png/Icons/white_node/mahjong_tile.png","guid":"70e7ea988e749c14290b0cca652d3f6f"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.recombine_head",
+      "displayName": "重新组合头",
+      "contentKind": "Skill",
+      "description": "�������ͷ����������ͷ���",
+      "icon": {"name":"deck","assetPath":"Assets/Arts/Images/Png/Icons/white_node/deck.png","guid":"e20954fcca43ea6449922f1ba142d7a6"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.relentless_chase",
+      "displayName": "不休追击",
+      "contentKind": "Skill",
+      "description": "����׷�����ƶ���������ڸ�ʱǿ��ս��",
+      "icon": {"name":"billiard","assetPath":"Assets/Arts/Images/Png/Icons/white_node/billiard.png","guid":"a19554cc0ee7f3a4aa7431b1905e10f2"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.rolling_crush",
+      "displayName": "滚动碾压",
+      "contentKind": "Skill",
+      "description": "������ѹ���ƶ�����3ʱ�Ƴ���6������",
+      "icon": {"name":"knight","assetPath":"Assets/Arts/Images/Png/Icons/white_node/knight.png","guid":"8ffe0a396474e2245adcd93e006dca84"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.rotate_lover",
+      "displayName": "爱好旋转",
+      "contentKind": "Skill",
+      "description": "������ת��ÿ�ƶ�3����ת",
+      "icon": {"name":"bowling_pin","assetPath":"Assets/Arts/Images/Png/Icons/white_node/bowling_pin.png","guid":"8a283bd50456b994aa841d7b1f0c2d8d"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.sacrifice",
+      "displayName": "献祭",
+      "contentKind": "Skill",
+      "description": "�׼���ÿ�ƶ�2�Σ��Ƴ��Ź��������е�����ͽ",
+      "icon": {"name":"mahjong_tile","assetPath":"Assets/Arts/Images/Png/Icons/white_node/mahjong_tile.png","guid":"70e7ea988e749c14290b0cca652d3f6f"},
+      "face": {"name":"pixel_art_card_pack_7","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.sharp_stone",
+      "displayName": "尖石",
+      "contentKind": "Skill",
+      "description": "��ʯ�����׹���ʱ�˺����",
+      "icon": {"name":"domino_diagonal","assetPath":"Assets/Arts/Images/Png/Icons/white_node/domino_diagonal.png","guid":"f7074574d28166a4e9573fb89a42bc29"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.smart",
+      "displayName": "大聪明",
+      "contentKind": "Skill",
+      "description": "�������ÿ�λ�ù���ʱ���������⹥��+1�Ҳ��ݹ�",
+      "icon": {"name":"bowling_ball","assetPath":"Assets/Arts/Images/Png/Icons/blue_2d/bowling_ball.png","guid":"2c2eb84df8a63164b9b960495cc09101"},
+      "face": {"name":"pixel_art_card_pack_1","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.space_mastery",
+      "displayName": "空间掌握",
+      "contentKind": "Skill",
+      "description": "�ռ����գ�����뱾��ս������תһ��",
+      "icon": {"name":"dominoes","assetPath":"Assets/Arts/Images/Png/Icons/white_node/dominoes.png","guid":"c4c0ada64167fce4584f80736dd740c7"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.stocking",
+      "displayName": "进货",
+      "contentKind": "Skill",
+      "description": "�������ۼ��ƶ����������3��ʱ�Ƴ�����������û���",
+      "icon": {"name":"king","assetPath":"Assets/Arts/Images/Png/Icons/white_node/king.png","guid":"267e8b528bc64e14cb24f34f7a48208f"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.stone_growth",
+      "displayName": "石增长",
+      "contentKind": "Skill",
+      "description": "ʯ�������ƶ�������ʱ����������2�㻤��",
+      "icon": {"name":"dice_1","assetPath":"Assets/Arts/Images/Png/Icons/white_node/dice_1.png","guid":"8fd0d6895d763eb4f8d44928122db4a0"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.stone_lover",
+      "displayName": "石头爱好者",
+      "contentKind": "Skill",
+      "description": "ʯͷ�����ߣ���ҿ��͹��￨��ʧ����ʱ��������+1",
+      "icon": {"name":"joker","assetPath":"Assets/Arts/Images/Png/Icons/white_node/joker.png","guid":"6389eb0e19f32cf46a47e2db0766eaaa"},
+      "face": {"name":"pixel_art_card_pack_10","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.stone_shelter",
+      "displayName": "石庇护",
+      "contentKind": "Skill",
+      "description": "ʯ�ӻ����������￨�ܵ����˺�����1��",
+      "icon": {"name":"mahjong_tiles","assetPath":"Assets/Arts/Images/Png/Icons/white_node/mahjong_tiles.png","guid":"381e32a744ff18540a68f62f3f92ce91"},
+      "face": {"name":"pixel_art_card_pack_7","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.stray_cub",
+      "displayName": "流浪幼崽",
+      "contentKind": "Skill",
+      "description": "�������̣���6����+2������ȹ�",
+      "icon": {"name":"club","assetPath":"Assets/Arts/Images/Png/Icons/white_node/club.png","guid":"96210c2c26bb6d74c81153310481011c"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.stroll",
+      "displayName": "漫步",
+      "contentKind": "Skill",
+      "description": "������ÿ�ƶ�1�ι���+2",
+      "icon": {"name":"piece","assetPath":"Assets/Arts/Images/Png/Icons/white_node/piece.png","guid":"a6e8f6a3c2ebc28488eb78ff8a31aca2"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.strong_combo",
+      "displayName": "强力组合",
+      "contentKind": "Skill",
+      "description": "ǿ����ϣ��ƶ�ʱ���������Ź���ϳ�Ϊ�޴�����",
+      "icon": {"name":"domino_diagonal","assetPath":"Assets/Arts/Images/Png/Icons/blue_2d/domino_diagonal.png","guid":"8790e7ef574b03a42834ab6e70ea6e74"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.survival_wisdom",
+      "displayName": "生存智慧",
+      "contentKind": "Skill",
+      "description": "�����ǻۣ�ս��ʱ�ָ�1�ҹ���+1",
+      "icon": {"name":"deck","assetPath":"Assets/Arts/Images/Png/Icons/white_node/deck.png","guid":"e20954fcca43ea6449922f1ba142d7a6"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.swallow_stone",
+      "displayName": "吞石",
+      "contentKind": "Skill",
+      "description": "��ʯ��ÿ�ƶ�2�������ڹ��ﻤ��",
+      "icon": {"name":"club_outline","assetPath":"Assets/Arts/Images/Png/Icons/blue_2d/club_outline.png","guid":"7e8cd20e30134c343983546d41760559"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.taunt",
+      "displayName": "嘲讽",
+      "contentKind": "Skill",
+      "description": "���������ʱֻ���뱾��ս��",
+      "icon": {"name":"flag_piece","assetPath":"Assets/Arts/Images/Png/Icons/blue_2d/flag_piece.png","guid":"e18f577fa856f0e4b9a5e0ab378a09a3"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.thief_claims",
+      "displayName": "东西归我了！",
+      "contentKind": "Skill",
+      "description": "���������ˣ���ÿ�ƶ�3���Ƴ����ڰ�����",
+      "icon": {"name":"domino","assetPath":"Assets/Arts/Images/Png/Icons/white_node/domino.png","guid":"aeb72172d9f22304f8fcc29a2abd641a"},
+      "face": {"name":"pixel_art_card_pack_6","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.thorn_skin",
+      "displayName": "刺皮",
+      "contentKind": "Skill",
+      "description": "��Ƥ��ս��ʱ�Թ�����ɵ�ͬ�乥�����˺�",
+      "icon": {"name":"bowling_ball","assetPath":"Assets/Arts/Images/Png/Icons/blue_2d/bowling_ball.png","guid":"2c2eb84df8a63164b9b960495cc09101"},
+      "face": {"name":"pixel_art_card_pack_7","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.throw_stone",
+      "displayName": "丢石头",
+      "contentKind": "Skill",
+      "description": "��ʯͷ��ÿ�ƶ�2�����ı���2���ײ��˺����",
+      "icon": {"name":"seven","assetPath":"Assets/Arts/Images/Png/Icons/white_node/seven.png","guid":"c5c8aa4ee63b51f448ccd061524defe7"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.tower_child",
+      "displayName": "塔之子",
+      "contentKind": "Skill",
+      "description": "��֮�ӣ��ؿ���ʼ���뱶����",
+      "icon": {"name":"checkerboard","assetPath":"Assets/Arts/Images/Png/Icons/white_node/checkerboard.png","guid":"15e0cf6002a5a894c8230e4de2ec6ed0"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.turn_world",
+      "displayName": "转动",
+      "contentKind": "Skill",
+      "description": "ת�����ǳ���תһ��",
+      "icon": {"name":"cards","assetPath":"Assets/Arts/Images/Png/Icons/white_node/cards.png","guid":"94c80bf2d97fe78469d8c8a5275c01bf"},
+      "face": {"name":"pixel_art_card_pack_4","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.unstable",
+      "displayName": "不稳定",
+      "contentKind": "Skill",
+      "description": "���ȶ���ÿ�ƶ�3�������������",
+      "icon": {"name":"heart_outline","assetPath":"Assets/Arts/Images/Png/Icons/white_node/heart_outline.png","guid":"e72e62c8ec4205a4389110e18a422a3c"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.violence_maniac",
+      "displayName": "暴力狂",
+      "contentKind": "Skill",
+      "description": "������ÿ�ƶ�2�Σ��Ƴ����ڸ����ϵĹ��￨�Ͱ�����",
+      "icon": {"name":"mahjong_tiles","assetPath":"Assets/Arts/Images/Png/Icons/blue_2d/mahjong_tiles.png","guid":"c01e32f8f7d55a04f8a6a6e3be390ed3"},
+      "face": {"name":"pixel_art_card_pack_5","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
+      "contentId": "skill.violence_nutrition",
+      "displayName": "暴力即养分",
+      "contentKind": "Skill",
+      "description": "���������֣������������Ƴ�����ù������Ƴ��������û���",
+      "icon": {"name":"spinner","assetPath":"Assets/Arts/Images/Png/Icons/white_node/spinner.png","guid":"33b55cfee70a6f64a87ca16cefe78a42"},
+      "face": {"name":"pixel_art_card_pack_2","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    }
+  ],
+  "kindDefaults": [
+    {
+      "kind": "HelpCard",
+      "defaultFace": null,
+      "fallbackIcon": null
+    },
+    {
+      "kind": "Monster",
+      "defaultFace": null,
+      "fallbackIcon": null
+    },
+    {
+      "kind": "Relic",
+      "defaultFace": null,
+      "fallbackIcon": null
+    },
+    {
+      "kind": "Skill",
+      "defaultFace": null,
+      "fallbackIcon": null
+    },
+    {
+      "kind": "Misc(Avatar/Room/MonsterDeck)",
+      "defaultFace": null,
+      "fallbackIcon": null
+    },
+    {
+      "kind": "ChoiceOption",
+      "defaultFace": null,
+      "fallbackIcon": null
+    }
+  ]
+}

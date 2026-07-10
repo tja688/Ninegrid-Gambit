@@ -928,5 +928,20 @@
     "content_id": "skill.violence_nutrition",
     "content_kind": "Skill",
     "description": "暴力即养分：依靠暴力狂移除怪物得攻击，移除帮助卡得护甲"
+  },
+  {
+    "content_id": "Attack",
+    "content_kind": "ChoiceOption",
+    "description": "攻击+1"
+  },
+  {
+    "content_id": "Armor",
+    "content_kind": "ChoiceOption",
+    "description": "护甲+1"
+  },
+  {
+    "content_id": "Hp",
+    "content_kind": "ChoiceOption",
+    "description": "血量上限与当前血量+2"
   }
 ]

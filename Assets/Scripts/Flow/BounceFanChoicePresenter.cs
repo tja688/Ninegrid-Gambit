@@ -247,6 +247,12 @@ namespace NineGrid.Flow
                 managed.View.transform.localPosition = Vector3.zero;
                 managed.View.transform.localRotation = Quaternion.identity;
 
+                // Bounce 选项无 Core uid：按 defId 套 ContentVisual（遗物 / 属性三选一等）。
+                CoreCardPresentationMapper.ApplyVisualsByDefId(
+                    managed,
+                    InferChoicePresentationKind(defId),
+                    clearCombatStats: true);
+
                 var sortingGroup = managed.View.GetComponent<SortingGroup>();
                 var sorting = BaseSortingOrder + i;
                 if (sortingGroup != null)
@@ -634,6 +640,39 @@ namespace NineGrid.Flow
             }
 
             _hoverTweens.Clear();
+        }
+
+        private static CardPresentationKind InferChoicePresentationKind(string defId)
+        {
+            if (string.IsNullOrEmpty(defId))
+            {
+                return CardPresentationKind.Unknown;
+            }
+
+            if (defId.StartsWith("relic.", StringComparison.OrdinalIgnoreCase))
+            {
+                return CardPresentationKind.Relic;
+            }
+
+            if (defId.StartsWith("help.", StringComparison.OrdinalIgnoreCase)
+                || defId.StartsWith("player.", StringComparison.OrdinalIgnoreCase))
+            {
+                return CardPresentationKind.HelpCard;
+            }
+
+            if (defId.StartsWith("monster.", StringComparison.OrdinalIgnoreCase))
+            {
+                return CardPresentationKind.Monster;
+            }
+
+            if (string.Equals(defId, "Attack", StringComparison.Ordinal)
+                || string.Equals(defId, "Armor", StringComparison.Ordinal)
+                || string.Equals(defId, "Hp", StringComparison.Ordinal))
+            {
+                return CardPresentationKind.Item;
+            }
+
+            return CardPresentationKind.Unknown;
         }
 
         private sealed class BounceEntry

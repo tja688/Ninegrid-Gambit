@@ -87,6 +87,38 @@ namespace NineGrid.Flow
             ApplyVisuals(card.View, read.DefId, read.Kind);
         }
 
+        /// <summary>
+        /// 按 defId 套用 ContentVisual（Bounce 选卡 / 无 Core uid 的展示卡）。
+        /// </summary>
+        public static void ApplyVisualsByDefId(
+            ManagedCard card,
+            CardPresentationKind kindHint = CardPresentationKind.Unknown,
+            bool clearCombatStats = false)
+        {
+            if (card?.View == null || string.IsNullOrEmpty(card.DefId))
+            {
+                return;
+            }
+
+            if (kindHint != CardPresentationKind.Unknown)
+            {
+                card.CoreKind = kindHint;
+            }
+            else
+            {
+                card.CoreKind = InferPresentationKind(card.DefId);
+            }
+
+            if (clearCombatStats)
+            {
+                card.View.SetAttack(0, animate: false);
+                card.View.SetHealth(0, animate: false);
+                card.View.SetArmor(0, animate: false);
+            }
+
+            ApplyVisuals(card.View, card.DefId, card.CoreKind);
+        }
+
         public static void SyncAllSpawnedCards()
         {
             var cardManager = CardManagerSingleton.TryGetInstance();
@@ -237,9 +269,24 @@ namespace NineGrid.Flow
                     return ContentVisualKind.HelpCard;
                 }
 
+                if (defId.StartsWith("relic.", System.StringComparison.Ordinal))
+                {
+                    return ContentVisualKind.Relic;
+                }
+
+                if (defId.StartsWith("skill.", System.StringComparison.Ordinal))
+                {
+                    return ContentVisualKind.Skill;
+                }
+
                 if (defId.StartsWith("avatar.", System.StringComparison.Ordinal))
                 {
                     return ContentVisualKind.Avatar;
+                }
+
+                if (IsChoiceOptionDefId(defId))
+                {
+                    return ContentVisualKind.ChoiceOption;
                 }
             }
 
@@ -251,11 +298,40 @@ namespace NineGrid.Flow
                 case CardPresentationKind.PlayerCard:
                 case CardPresentationKind.Item:
                     return ContentVisualKind.HelpCard;
+                case CardPresentationKind.Relic:
+                    return ContentVisualKind.Relic;
                 case CardPresentationKind.Avatar:
                     return ContentVisualKind.Avatar;
                 default:
                     return ContentVisualKind.Unknown;
             }
+        }
+
+        private static CardPresentationKind InferPresentationKind(string defId)
+        {
+            var visualKind = InferVisualKind(defId, CardPresentationKind.Unknown);
+            switch (visualKind)
+            {
+                case ContentVisualKind.Monster:
+                    return CardPresentationKind.Monster;
+                case ContentVisualKind.HelpCard:
+                    return CardPresentationKind.HelpCard;
+                case ContentVisualKind.Relic:
+                    return CardPresentationKind.Relic;
+                case ContentVisualKind.Avatar:
+                    return CardPresentationKind.Avatar;
+                case ContentVisualKind.ChoiceOption:
+                    return CardPresentationKind.Item;
+                default:
+                    return CardPresentationKind.Unknown;
+            }
+        }
+
+        private static bool IsChoiceOptionDefId(string defId)
+        {
+            return string.Equals(defId, "Attack", System.StringComparison.Ordinal)
+                   || string.Equals(defId, "Armor", System.StringComparison.Ordinal)
+                   || string.Equals(defId, "Hp", System.StringComparison.Ordinal);
         }
 
         private static void EnsureVisualsLoaded()
@@ -266,7 +342,10 @@ namespace NineGrid.Flow
             }
 
             _visualsResolved = true;
-            ContentVisualBootstrap.TryLoad(null, out _visualCatalog, out _frameStyleCatalog);
+            ContentVisualBootstrap.TryLoad(
+                ContentVisualBootstrap.ResolveLubanDataDirectory(),
+                out _visualCatalog,
+                out _frameStyleCatalog);
 
 #if UNITY_EDITOR
             _spriteCatalogs = new ContentVisualSpriteCatalogSet
@@ -281,6 +360,8 @@ namespace NineGrid.Flow
                     VisualAssetFolder + "SkillVisualCatalog.asset"),
                 misc = AssetDatabase.LoadAssetAtPath<MiscVisualCatalogSO>(
                     VisualAssetFolder + "MiscVisualCatalog.asset"),
+                choiceOptions = AssetDatabase.LoadAssetAtPath<ChoiceOptionVisualCatalogSO>(
+                    VisualAssetFolder + "ChoiceOptionVisualCatalog.asset"),
             };
 #endif
         }

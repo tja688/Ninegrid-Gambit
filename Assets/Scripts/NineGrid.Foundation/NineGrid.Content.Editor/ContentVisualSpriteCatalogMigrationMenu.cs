@@ -49,7 +49,8 @@ namespace NineGrid.Content.Editor
                          AssetFolder + "/MonsterVisualCatalog.asset",
                          AssetFolder + "/RelicVisualCatalog.asset",
                          AssetFolder + "/SkillVisualCatalog.asset",
-                         AssetFolder + "/MiscVisualCatalog.asset"
+                         AssetFolder + "/MiscVisualCatalog.asset",
+                         AssetFolder + "/ChoiceOptionVisualCatalog.asset"
                      })
             {
                 if (AssetDatabase.LoadAssetAtPath<ScriptableObject>(path) != null
@@ -143,7 +144,9 @@ namespace NineGrid.Content.Editor
                 monsters = LoadOrCreate<MonsterVisualCatalogSO>(AssetFolder + "/MonsterVisualCatalog.asset"),
                 relics = LoadOrCreate<RelicVisualCatalogSO>(AssetFolder + "/RelicVisualCatalog.asset"),
                 skills = LoadOrCreate<SkillVisualCatalogSO>(AssetFolder + "/SkillVisualCatalog.asset"),
-                misc = LoadOrCreate<MiscVisualCatalogSO>(AssetFolder + "/MiscVisualCatalog.asset")
+                misc = LoadOrCreate<MiscVisualCatalogSO>(AssetFolder + "/MiscVisualCatalog.asset"),
+                choiceOptions = LoadOrCreate<ChoiceOptionVisualCatalogSO>(
+                    AssetFolder + "/ChoiceOptionVisualCatalog.asset")
             };
         }
 

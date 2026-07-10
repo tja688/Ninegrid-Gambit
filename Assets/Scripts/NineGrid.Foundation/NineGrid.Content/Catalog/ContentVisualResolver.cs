@@ -191,9 +191,26 @@ namespace NineGrid.Content
                     break;
                 case ContentVisualKind.Avatar:
                     return "玩家";
+                case ContentVisualKind.ChoiceOption:
+                    return ResolveChoiceOptionDisplayName(contentId);
             }
 
             return contentId;
+        }
+
+        private static string ResolveChoiceOptionDisplayName(string contentId)
+        {
+            switch (contentId)
+            {
+                case "Attack":
+                    return "攻击+1";
+                case "Armor":
+                    return "护甲+1";
+                case "Hp":
+                    return "血量+2";
+                default:
+                    return contentId;
+            }
         }
 
         private static bool TryParseRoomKind(string contentId, out RoomKind roomKind)

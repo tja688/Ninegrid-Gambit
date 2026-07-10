@@ -32,7 +32,11 @@ namespace NineGrid.Content.Editor
         private ObjectField faceField;
         private ObjectField batchIconField;
         private ObjectField batchFaceField;
+        private ObjectField kindDefaultFaceField;
+        private ObjectField kindFallbackIconField;
         private IMGUIContainer previewContainer;
+
+        private const string CardSpriteExportFolder = "Assets/Notes/CardSprite";
 
         public static void ShowWindow()
         {
@@ -91,6 +95,7 @@ namespace NineGrid.Content.Editor
                 ("保存", SaveChanges, saveButton.tooltip),
                 ("重新加载", ReloadFromDisk, "丢弃未保存改动并从 xlsx 重读"),
                 ("Regenerate Luban", RegenerateLuban, regenerateButton.tooltip),
+                ("导出卡图关联", ExportCardSpriteManifest, "一键保存到 Assets/Notes/CardSprite（语义化 JSON）"),
                 ("全选", SelectAllFiltered, "勾选当前筛选结果"),
                 ("全部取消", DeselectAll, "取消所有勾选")));
 
@@ -361,13 +366,15 @@ namespace NineGrid.Content.Editor
                 ("缺 icon", session.MissingIconCount.ToString(), "可配合左侧过滤"),
                 ("未保存", session.DirtyCount.ToString(), "保存后写入 Catalog SO / 框色 xlsx")));
 
+            BuildKindDefaultsSection();
+
             var checkedRows = session.GetCheckedRows();
             var focused = session.GetFocusedRow();
             if (focused == null && checkedRows.Count == 0)
             {
                 contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeader(
                     "选择内容",
-                    "在左侧勾选多条进行批量操作，或点击单条查看详情与预览。"));
+                    "在左侧勾选多条进行批量操作，或点击单条查看详情与预览。左侧点类型可编辑该类型默认卡面/图标回退。"));
                 UpdateToolbarState();
                 return;
             }
@@ -388,6 +395,101 @@ namespace NineGrid.Content.Editor
             }
 
             UpdateToolbarState();
+        }
+
+        private void BuildKindDefaultsSection()
+        {
+            var kind = session.KindFilter;
+            if (string.IsNullOrEmpty(kind) || kind == "All")
+            {
+                return;
+            }
+
+            var catalog = session.ResolveCatalogForKindFilter(kind);
+            if (catalog == null)
+            {
+                return;
+            }
+
+            contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
+                kind + " · 类型默认设置",
+                "点击左侧类型时显示。默认卡面仅作「覆盖应用」源；缺失主图标时运行时回退 Fallback Icon。",
+                column =>
+                {
+                    kindDefaultFaceField = new ObjectField
+                    {
+                        objectType = typeof(Sprite),
+                        allowSceneObjects = false,
+                        value = catalog.DefaultFace
+                    };
+                    column.Add(ContentVisualWarmConsoleUi.WrapControl(
+                        "默认卡面 DefaultFace",
+                        "不持续覆盖条目；点下方按钮可一次性写入本类型全部 face",
+                        kindDefaultFaceField));
+
+                    kindFallbackIconField = new ObjectField
+                    {
+                        objectType = typeof(Sprite),
+                        allowSceneObjects = false,
+                        value = catalog.FallbackIcon
+                    };
+                    column.Add(ContentVisualWarmConsoleUi.WrapControl(
+                        "缺失主图标回退 FallbackIcon",
+                        "条目 icon 为空时运行时使用此 Sprite",
+                        kindFallbackIconField));
+
+                    column.Add(ContentVisualWarmConsoleUi.CreateButtonRow(
+                        new Button(() => PersistKindDefaults(kind))
+                        {
+                            text = "保存类型默认"
+                        },
+                        new Button(() => ApplyKindDefaultFaceOnce(kind))
+                        {
+                            text = "覆盖应用默认卡面"
+                        }));
+                    column.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel(
+                        "「覆盖应用」= 一次性把 DefaultFace 写入本类型全部条目 face（初始化），不是持续绑定。"));
+                }));
+        }
+
+        private void PersistKindDefaults(string kind)
+        {
+            var defaultFace = kindDefaultFaceField != null ? kindDefaultFaceField.value as Sprite : null;
+            var fallbackIcon = kindFallbackIconField != null ? kindFallbackIconField.value as Sprite : null;
+            string error;
+            if (!session.TryPersistKindDefaults(kind, defaultFace, fallbackIcon, out error))
+            {
+                EditorUtility.DisplayDialog("保存失败", error ?? "未知错误", "确定");
+                return;
+            }
+
+            ShowNotification(new GUIContent("已保存 " + kind + " 类型默认"));
+            RefreshContent();
+        }
+
+        private void ApplyKindDefaultFaceOnce(string kind)
+        {
+            // 先把当前 ObjectField 写回 SO，再一次性覆盖会话 face。
+            PersistKindDefaults(kind);
+            var catalog = session.ResolveCatalogForKindFilter(kind);
+            if (catalog == null || catalog.DefaultFace == null)
+            {
+                EditorUtility.DisplayDialog("无法覆盖", "请先指定默认卡面 DefaultFace。", "确定");
+                return;
+            }
+
+            if (!EditorUtility.DisplayDialog(
+                    "覆盖应用默认卡面",
+                    "将把 " + kind + " 的 DefaultFace 一次性写入该类型全部条目的 face（可再单独改）。继续？",
+                    "覆盖应用",
+                    "取消"))
+            {
+                return;
+            }
+
+            var count = session.ApplyKindDefaultFaceToSession(kind);
+            RefreshAfterRowEdit();
+            ShowNotification(new GUIContent("已覆盖 " + count + " 条 face（未点保存前仅在会话）"));
         }
 
         private void BuildMultiSelectionContent(List<ContentVisualEditorRowState> checkedRows)
@@ -702,6 +804,21 @@ namespace NineGrid.Content.Editor
             ContentVisualLubanMenu.RegenerateLuban();
             session.ReloadCatalogs();
             RefreshAll();
+        }
+
+        private void ExportCardSpriteManifest()
+        {
+            string absolutePath;
+            string error;
+            if (!session.TryExportCardSpriteManifest(CardSpriteExportFolder, out absolutePath, out error))
+            {
+                EditorUtility.DisplayDialog("导出失败", error ?? "未知错误", "确定");
+                return;
+            }
+
+            ShowNotification(new GUIContent("已导出卡图关联"));
+            Debug.Log("[ContentVisual] Card sprite manifest → " + absolutePath);
+            EditorUtility.RevealInFinder(absolutePath);
         }
     }
 }
