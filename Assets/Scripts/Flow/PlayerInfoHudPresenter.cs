@@ -15,8 +15,6 @@ namespace NineGrid.Flow
     {
         private const string DefaultInfoRootName = "InGameInfo Text";
         private const string DefaultPlayerInfoName = "PlayerInfoText";
-        private const float PunchIntensity = 0.22f;
-        private const float PunchDuration = 0.22f;
         private const float FlashDuration = 0.18f;
         private const float MaxHpFlashHalfPeriod = 0.12f;
         private const int MaxHpFlashPulses = 2;
@@ -287,11 +285,7 @@ namespace NineGrid.Flow
 
             hpText.text = text;
 
-            if (_hp.PunchRoutine != null)
-            {
-                StopCoroutine(_hp.PunchRoutine);
-                _hp.PunchRoutine = null;
-            }
+            StopPunch(_hp, hpText);
 
             if (!animate)
             {
@@ -308,7 +302,7 @@ namespace NineGrid.Flow
             hpText.color = targetColor;
             if (valueChanged)
             {
-                _hp.PunchRoutine = StartCoroutine(PunchAndFlash(hpText, _hp, targetColor));
+                _hp.PunchRoutine = StartCoroutine(FlashColor(hpText, _hp, targetColor));
             }
         }
 
@@ -338,53 +332,71 @@ namespace NineGrid.Flow
                 return;
             }
 
+            StopPunch(slot, label);
+            slot.PunchRoutine = StartCoroutine(FlashColor(label, slot, label.color));
+        }
+
+        private void StopPunch(StatSlot slot, TextMeshProUGUI label)
+        {
             if (slot.PunchRoutine != null)
             {
                 StopCoroutine(slot.PunchRoutine);
+                slot.PunchRoutine = null;
             }
 
-            slot.PunchRoutine = StartCoroutine(PunchAndFlash(label, slot, label.color));
+            // 左对齐 + 中心 pivot：缩放残留会把字形左缘往右推，停动画时必须还原。
+            if (label != null)
+            {
+                EnsureBaseScale(slot, label);
+                label.rectTransform.localScale = slot.BaseScale;
+            }
         }
 
-        private static IEnumerator PunchAndFlash(TextMeshProUGUI label, StatSlot slot, Color settleColor)
+        private static void EnsureBaseScale(StatSlot slot, TextMeshProUGUI label)
+        {
+            if (slot.HasBaseScale || label == null)
+            {
+                return;
+            }
+
+            slot.BaseScale = label.rectTransform.localScale;
+            slot.HasBaseScale = true;
+        }
+
+        private IEnumerator FlashColor(TextMeshProUGUI label, StatSlot slot, Color settleColor)
         {
             if (label == null)
             {
                 yield break;
             }
 
-            var rect = label.rectTransform;
-            var baseScale = rect.localScale;
+            EnsureBaseScale(slot, label);
+            label.rectTransform.localScale = slot.BaseScale;
+
             var flashColor = Color.Lerp(settleColor, Color.white, 0.55f);
             var elapsed = 0f;
-            var duration = Mathf.Max(PunchDuration, FlashDuration);
-
-            while (elapsed < duration)
+            while (elapsed < FlashDuration)
             {
                 elapsed += Time.unscaledDeltaTime;
-                var t = Mathf.Clamp01(elapsed / PunchDuration);
-                var punch = 1f + PunchIntensity * (1f - EaseOutBack(t));
-                rect.localScale = baseScale * punch;
-
                 var flashT = Mathf.Clamp01(elapsed / FlashDuration);
                 label.color = Color.Lerp(flashColor, settleColor, flashT);
                 yield return null;
             }
 
-            rect.localScale = baseScale;
             label.color = settleColor;
+            label.rectTransform.localScale = slot.BaseScale;
             slot.PunchRoutine = null;
         }
 
-        private static IEnumerator FlashMaxHp(TextMeshProUGUI label, StatSlot slot, Color settleColor)
+        private IEnumerator FlashMaxHp(TextMeshProUGUI label, StatSlot slot, Color settleColor)
         {
             if (label == null)
             {
                 yield break;
             }
 
-            var rect = label.rectTransform;
-            var baseScale = rect.localScale;
+            EnsureBaseScale(slot, label);
+            label.rectTransform.localScale = slot.BaseScale;
             var white = Color.white;
 
             for (var pulse = 0; pulse < MaxHpFlashPulses; pulse++)
@@ -400,34 +412,29 @@ namespace NineGrid.Flow
                         : Mathf.Clamp01((elapsed - half) / half);
                     var blend = rising ? t : 1f - t;
                     label.color = Color.Lerp(settleColor, white, blend);
-                    var punch = 1f + PunchIntensity * 0.65f * blend;
-                    rect.localScale = baseScale * punch;
                     yield return null;
                 }
             }
 
-            rect.localScale = baseScale;
             label.color = settleColor;
+            label.rectTransform.localScale = slot.BaseScale;
             slot.PunchRoutine = null;
-        }
-
-        private static float EaseOutBack(float t)
-        {
-            const float c1 = 1.70158f;
-            const float c3 = c1 + 1f;
-            return 1f + c3 * Mathf.Pow(t - 1f, 3f) + c1 * Mathf.Pow(t - 1f, 2f);
         }
 
         private sealed class StatSlot
         {
             public int Value;
             public bool HasValue;
+            public bool HasBaseScale;
+            public Vector3 BaseScale = Vector3.one;
             public Coroutine PunchRoutine;
 
             public void Reset()
             {
                 Value = 0;
                 HasValue = false;
+                HasBaseScale = false;
+                BaseScale = Vector3.one;
                 PunchRoutine = null;
             }
         }
