@@ -38,6 +38,9 @@ namespace NineGrid.Flow
         [Tooltip("面板路由；留空则运行时在同物体或场景中查找 UiPanelRouter。")]
         [SerializeField] private UiPanelRouter panelRouter;
 
+        private const string StatBoostCardDefId = "help.stat_boost_card";
+        private static readonly string[] StatBoostOptions = { "Attack", "Armor", "Hp" };
+
         private bool _isBusy;
         private bool _settlementRaised;
         private bool _fieldSignalSubscribed;
@@ -1250,7 +1253,10 @@ namespace NineGrid.Flow
             return summary;
         }
 
-        private static UseItemPresentationResult ApplyUseItemFromCore(int itemUid, int? targetCardUid)
+        private static UseItemPresentationResult ApplyUseItemFromCore(
+            int itemUid,
+            int? targetCardUid,
+            string selectedOption = null)
         {
             var arch = NineGridArchitecture.Current;
             var pipeline = arch.GetSystem<IActionPipelineSystem>();
@@ -1261,7 +1267,7 @@ namespace NineGrid.Flow
                 selected = new[] { targetCardUid.Value };
             }
 
-            var result = arch.GetSystem<IPhaseSystem>().ApplyUseItem(itemUid, selected, null);
+            var result = arch.GetSystem<IPhaseSystem>().ApplyUseItem(itemUid, selected, selectedOption);
             var summary = new UseItemPresentationResult { Accepted = result.Accepted };
             if (!result.Accepted)
             {
@@ -1304,13 +1310,14 @@ namespace NineGrid.Flow
 
             var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
             summary.AvatarDefeated = phase == GamePhase.Defeat;
+            // 局内宝箱：PendingChoice + InteractionLoop；通关奖励：RewardItemChoice。
             summary.RewardChoicePending =
-                phase == GamePhase.RewardItemChoice
-                || arch.GetModel<PendingChoiceModel>().Kind.Value == PendingChoiceKind.Reward;
+                arch.GetModel<PendingChoiceModel>().Kind.Value == PendingChoiceKind.Reward;
             summary.NodeClearedOrRewardPhase =
-                summary.RewardChoicePending
+                phase == GamePhase.RewardItemChoice
                 || phase == GamePhase.ClearCheck
                 || phase == GamePhase.NodeCompleted
+                || phase == GamePhase.RoomChoice
                 || arch.GetSystem<IDeckSystem>().IsNodeCleared();
 
             FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _);
@@ -1393,6 +1400,11 @@ namespace NineGrid.Flow
                 return false;
             }
 
+            if (CombatHitSink.ChoiceOverlayActive)
+            {
+                return false;
+            }
+
             ResolveManagers();
             int? targetUid = null;
             ManagedCard targetCard = null;
@@ -1415,15 +1427,30 @@ namespace NineGrid.Flow
                 return false;
             }
 
-            var useResult = ApplyUseItemFromCore(card.Uid, targetUid);
+            string selectedOption = null;
+            if (IsStatBoostCard(card.DefId))
+            {
+                selectedOption = await PresentStatBoostChoiceAsync();
+                if (string.IsNullOrEmpty(selectedOption))
+                {
+                    return false;
+                }
+            }
+
+            var useResult = ApplyUseItemFromCore(card.Uid, targetUid, selectedOption);
             if (!useResult.Accepted)
             {
                 return false;
             }
 
             PresentUseItemEffectsAsync(useResult).Forget();
-            await UniTask.CompletedTask;
             return true;
+        }
+
+        private static bool IsStatBoostCard(string defId)
+        {
+            return !string.IsNullOrEmpty(defId)
+                   && string.Equals(defId, StatBoostCardDefId, StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool HelpCardNeedsMonsterTarget(string defId)
@@ -1554,7 +1581,8 @@ namespace NineGrid.Flow
                 return;
             }
 
-            var pending = NineGridArchitecture.Current.GetModel<PendingChoiceModel>();
+            var arch = NineGridArchitecture.Current;
+            var pending = arch.GetModel<PendingChoiceModel>();
             var options = pending.RewardOptions;
             if (options == null || options.Count == 0)
             {
@@ -1568,29 +1596,142 @@ namespace NineGrid.Flow
                 defIds[i] = options[i].DefId;
             }
 
-            var picked = -1;
-            var finished = false;
-            selector.BeginBounceChoice(
-                defIds,
-                (index, _) => { picked = index; },
-                () => { finished = true; });
-
-            await UniTask.WaitUntil(() => finished);
-            if (picked < 0)
+            CombatHitSink.ChoiceOverlayActive = true;
+            try
             {
-                return;
+                var picked = -1;
+                var finished = false;
+                var skipRequested = false;
+                selector.BeginBounceChoice(
+                    defIds,
+                    (index, _) => { picked = index; },
+                    () => { finished = true; });
+
+                while (!finished)
+                {
+                    // Both / Old Input：Esc 跳过宝箱（+SkipHelpChoiceGold）。
+                    if (Input.GetKeyDown(KeyCode.Escape))
+                    {
+                        skipRequested = true;
+                        selector.HideChoice();
+                        finished = true;
+                        break;
+                    }
+
+                    await UniTask.Yield();
+                }
+
+                var pipeline = arch.GetSystem<IActionPipelineSystem>();
+                var startIndex = pipeline.EventLog.Entries.Count;
+                var phaseSystem = arch.GetSystem<IPhaseSystem>();
+                CoreCommandResult result;
+                if (skipRequested || picked < 0)
+                {
+                    result = phaseSystem.SkipHelpChoice();
+                    if (!result.Accepted)
+                    {
+                        Debug.LogWarning($"[InBattleManager] SkipHelpChoice 被拒: {result.Reason}");
+                        return;
+                    }
+                }
+                else
+                {
+                    result = phaseSystem.SelectReward(picked);
+                    if (!result.Accepted)
+                    {
+                        Debug.LogWarning($"[InBattleManager] SelectReward 被拒: {result.Reason}");
+                        return;
+                    }
+                }
+
+                FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _);
+                var phase = phaseSystem.CurrentPhase;
+                var boardDelta = new PostKillBoardPresentationResult
+                {
+                    Accepted = true,
+                    Moves = moves ?? Array.Empty<PostKillCardMove>(),
+                    Deals = deals ?? Array.Empty<PostKillCardDeal>(),
+                    DamagePopups = Array.Empty<CombatDamagePopup>(),
+                    NodeClearedOrRewardPhase =
+                        phase == GamePhase.RewardItemChoice
+                        || phase == GamePhase.ClearCheck
+                        || phase == GamePhase.NodeCompleted
+                        || phase == GamePhase.RoomChoice
+                        || arch.GetSystem<IDeckSystem>().IsNodeCleared(),
+                    AvatarDefeated = phase == GamePhase.Defeat,
+                };
+
+                if ((boardDelta.Moves != null && boardDelta.Moves.Length > 0)
+                    || (boardDelta.Deals != null && boardDelta.Deals.Length > 0))
+                {
+                    await DrainPostKillBoardAsync(boardDelta, EnsurePresentationToken());
+                }
+                else
+                {
+                    CoreCardPresentationMapper.SyncAllSpawnedCards();
+                    SoftAlignBoardAnchorsToCore();
+                    SyncBoardOccupancyFromCore();
+                }
+
+                if (relicManager != null)
+                {
+                    relicManager.SyncFromCore();
+                }
+
+                if (boardDelta.AvatarDefeated)
+                {
+                    CombatHitSink.RequestBattleEnded(victory: false);
+                    return;
+                }
+
+                // 通关奖励选完后进入 RoomChoice / NodeCompleted：交主循环；局内宝箱回 InteractionLoop。
+                if (phase == GamePhase.RoomChoice
+                    || phase == GamePhase.NodeCompleted
+                    || phase == GamePhase.Victory)
+                {
+                    CombatHitSink.RequestBattleEnded(victory: true);
+                }
+            }
+            finally
+            {
+                CombatHitSink.ChoiceOverlayActive = false;
+            }
+        }
+
+        /// <summary>
+        /// 属性提升：UseItem 前 Bounce 三选一，回传 Attack / Armor / Hp。
+        /// </summary>
+        private async UniTask<string> PresentStatBoostChoiceAsync()
+        {
+            var selector = SelectorManagerSingleton.Instance;
+            if (selector == null)
+            {
+                Debug.LogWarning("[InBattleManager] 属性提升选择缺少 SelectorManager。");
+                return null;
             }
 
-            var result = NineGridArchitecture.Current.GetSystem<IPhaseSystem>().SelectReward(picked);
-            if (!result.Accepted)
+            CombatHitSink.ChoiceOverlayActive = true;
+            try
             {
-                Debug.LogWarning($"[InBattleManager] SelectReward 被拒: {result.Reason}");
-                return;
-            }
+                var picked = -1;
+                var finished = false;
+                selector.BeginBounceChoice(
+                    StatBoostOptions.Length,
+                    (index, _) => { picked = index; },
+                    () => { finished = true; });
 
-            CoreCardPresentationMapper.SyncAllSpawnedCards();
-            SoftAlignBoardAnchorsToCore();
-            SyncBoardOccupancyFromCore();
+                await UniTask.WaitUntil(() => finished);
+                if (picked < 0 || picked >= StatBoostOptions.Length)
+                {
+                    return null;
+                }
+
+                return StatBoostOptions[picked];
+            }
+            finally
+            {
+                CombatHitSink.ChoiceOverlayActive = false;
+            }
         }
 
         /// <summary>

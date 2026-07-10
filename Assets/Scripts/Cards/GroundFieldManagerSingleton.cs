@@ -51,6 +51,11 @@ namespace NineGrid.Cards
         {
             get
             {
+                if (CombatHitSink.ChoiceOverlayActive)
+                {
+                    return true;
+                }
+
                 var battle = FieldBattleManagerSingleton.Instance;
                 return _isBusy || (battle != null && battle.IsBusy);
             }

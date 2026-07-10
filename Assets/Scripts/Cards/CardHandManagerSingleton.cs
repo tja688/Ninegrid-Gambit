@@ -81,7 +81,7 @@ namespace NineGrid.Cards
 
         public int HandCount => _slotContainer?.Count ?? 0;
 
-        public bool IsBusy => _isBusy;
+        public bool IsBusy => _isBusy || CombatHitSink.ChoiceOverlayActive;
 
         public bool IsDragging => _dragSession != null;
 

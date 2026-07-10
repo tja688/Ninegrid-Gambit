@@ -104,6 +104,11 @@ namespace NineGrid.Cards
         /// </summary>
         public static string PendingTraceReason;
 
+        /// <summary>
+        /// 局内选择覆盖层（宝箱/属性提升三选一）激活时为 true；Cards 侧 IsBusy/点击门禁读取，不引用 Flow。
+        /// </summary>
+        public static bool ChoiceOverlayActive;
+
         /// <summary>ApplyCombatHit(attackerUid, targetUid) → 摘要。</summary>
         public static Func<int, int, CombatHitPresentationResult> ApplyCombatHit;
 
@@ -131,8 +136,8 @@ namespace NineGrid.Cards
         /// <summary>空槽点击：ClickEmpty(groundSlot) → 摘要（含 Moved/Dealt）。</summary>
         public static Func<int, PostKillBoardPresentationResult> ApplyClickEmpty;
 
-        /// <summary>手牌打出：ApplyUseItem(itemUid, optionalTargetUid) → 摘要。</summary>
-        public static Func<int, int?, UseItemPresentationResult> ApplyUseItem;
+        /// <summary>手牌打出：ApplyUseItem(itemUid, optionalTargetUid, selectedOption) → 摘要。</summary>
+        public static Func<int, int?, string, UseItemPresentationResult> ApplyUseItem;
 
         /// <summary>清场胜利 / 玩家战败 → Notice + 回主菜单。</summary>
         public static Action<bool> NotifyBattleEnded;
@@ -219,7 +224,10 @@ namespace NineGrid.Cards
             return ApplyClickEmpty(groundSlot);
         }
 
-        public static UseItemPresentationResult RequestUseItem(int itemUid, int? targetCardUid)
+        public static UseItemPresentationResult RequestUseItem(
+            int itemUid,
+            int? targetCardUid,
+            string selectedOption = null)
         {
             if (ApplyUseItem == null)
             {
@@ -227,7 +235,7 @@ namespace NineGrid.Cards
                 return default;
             }
 
-            return ApplyUseItem(itemUid, targetCardUid);
+            return ApplyUseItem(itemUid, targetCardUid, selectedOption);
         }
 
         public static void RequestBattleEnded(bool victory)

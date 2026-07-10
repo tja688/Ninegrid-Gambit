@@ -361,8 +361,9 @@ namespace NineGrid.Core.Systems
                 resolved += ResolveInteractiveRotation();
             }
 
+            // 局内 OfferRewardChoice（宝箱等）只写 PendingChoice，保持 InteractionLoop；
+            // 通关奖励仍由 CompleteNodeIfCleared 进入 RewardItemChoice。
             resolved += CompleteNodeIfCleared();
-            resolved += EnterRewardItemChoiceIfPending();
             return CoreCommandResult.Accept(resolved);
         }
 
@@ -540,23 +541,6 @@ namespace NineGrid.Core.Systems
             return pipeline.RunToCompletion();
         }
 
-        private int EnterRewardItemChoiceIfPending()
-        {
-            if (CurrentPhase != GamePhase.InteractionLoop)
-            {
-                return 0;
-            }
-
-            if (this.GetModel<PendingChoiceModel>().Kind.Value != PendingChoiceKind.Reward)
-            {
-                return 0;
-            }
-
-            var pipeline = this.GetSystem<IActionPipelineSystem>();
-            pipeline.Enqueue(new ChangePhaseAction(GamePhase.RewardItemChoice));
-            return pipeline.RunToCompletion();
-        }
-
         private int ResolvePostRewardChoiceFlow(IActionPipelineSystem pipeline, int resolvedSoFar)
         {
             if (mInRoomRewardContext)
@@ -679,16 +663,24 @@ namespace NineGrid.Core.Systems
                     mLegalCommands.Add(GameCommandKind.StartNode);
                     break;
                 case GamePhase.InteractionLoop:
-                    mLegalCommands.Add(GameCommandKind.Attack);
-                    mLegalCommands.Add(GameCommandKind.PickupItem);
-                    mLegalCommands.Add(GameCommandKind.ClickEmpty);
-                    mLegalCommands.Add(GameCommandKind.UseItem);
+                    if (this.GetModel<PendingChoiceModel>().Kind.Value == PendingChoiceKind.Reward)
+                    {
+                        // 局内宝箱等：覆盖层待选，锁死战场交互。
+                        mLegalCommands.Add(GameCommandKind.SelectReward);
+                        mLegalCommands.Add(GameCommandKind.SkipHelpChoice);
+                    }
+                    else
+                    {
+                        mLegalCommands.Add(GameCommandKind.Attack);
+                        mLegalCommands.Add(GameCommandKind.PickupItem);
+                        mLegalCommands.Add(GameCommandKind.ClickEmpty);
+                        mLegalCommands.Add(GameCommandKind.UseItem);
+                    }
+
                     break;
                 case GamePhase.RewardItemChoice:
                     mLegalCommands.Add(GameCommandKind.SelectReward);
                     mLegalCommands.Add(GameCommandKind.SkipHelpChoice);
-                    mLegalCommands.Add(GameCommandKind.PickupItem);
-                    mLegalCommands.Add(GameCommandKind.UseItem);
                     break;
                 case GamePhase.RoomChoice:
                     mLegalCommands.Add(GameCommandKind.SelectRoom);
