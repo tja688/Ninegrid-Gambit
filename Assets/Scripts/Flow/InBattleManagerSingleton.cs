@@ -1269,15 +1269,38 @@ namespace NineGrid.Flow
                 return summary;
             }
 
+            var killedUids = new List<int>(2);
             var entries = pipeline.EventLog.Entries;
             for (var i = startIndex; i < entries.Count; i++)
             {
                 var e = entries[i];
-                if (e.Type == CoreEventType.CardKilled)
+                if (e.Type == CoreEventType.CardKilled && e.CardUid > 0)
                 {
                     summary.TargetKilled = true;
+                    if (!killedUids.Contains(e.CardUid))
+                    {
+                        killedUids.Add(e.CardUid);
+                    }
                 }
             }
+
+            // 飞刀等：EventLog 偶发漏 CardKilled 时，用选定目标的 Graveyard/Removed/Hp 兜底。
+            if (!summary.TargetKilled
+                && targetCardUid.HasValue
+                && targetCardUid.Value > 0
+                && arch.GetModel<CardRegistry>().TryGet(targetCardUid.Value, out var target)
+                && (target.Zone.Value == ZoneId.Graveyard
+                    || target.Zone.Value == ZoneId.Removed
+                    || arch.GetSystem<IStatSystem>().GetEffectiveInt(target, StatId.Hp) <= 0)
+                && target.Kind != CardKind.Avatar)
+            {
+                summary.TargetKilled = true;
+                killedUids.Add(targetCardUid.Value);
+            }
+
+            summary.KilledTargetUids = killedUids.Count > 0
+                ? killedUids.ToArray()
+                : Array.Empty<int>();
 
             var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
             summary.AvatarDefeated = phase == GamePhase.Defeat;
@@ -1420,20 +1443,21 @@ namespace NineGrid.Flow
         {
             try
             {
+                var ct = EnsurePresentationToken();
                 CoreCardPresentationMapper.SyncAllSpawnedCards();
                 SpawnRecentDamageNumbers();
+
+                // 击杀必须先 Vacate 尸体，再 Drain/Sync；否则 Register 会静默挤占格留下钉住幽灵。
+                if (useResult.TargetKilled)
+                {
+                    BeginUseItemLethalVictims(useResult, ct);
+                }
 
                 if (useResult.PostKillBoard.Accepted
                     && ((useResult.PostKillBoard.Moves != null && useResult.PostKillBoard.Moves.Length > 0)
                         || (useResult.PostKillBoard.Deals != null && useResult.PostKillBoard.Deals.Length > 0)))
                 {
-                    await DrainPostKillBoardAsync(useResult.PostKillBoard, EnsurePresentationToken());
-                }
-                else if (useResult.TargetKilled)
-                {
-                    // 击杀已在 ApplyUseItem 内 ResolvePostKillBoard；再切一次 EventLog 尾部可能已含 Moved/Dealt。
-                    SoftAlignBoardAnchorsToCore();
-                    SyncBoardOccupancyFromCore();
+                    await DrainPostKillBoardAsync(useResult.PostKillBoard, ct);
                 }
                 else
                 {
@@ -1464,6 +1488,37 @@ namespace NineGrid.Flow
             catch (Exception ex)
             {
                 Debug.LogException(ex);
+            }
+        }
+
+        /// <summary>
+        /// UseItem 击杀：对齐 FieldBattle 卸尸（MarkFieldDead → Vacate → 异步 Release）。
+        /// </summary>
+        private void BeginUseItemLethalVictims(UseItemPresentationResult useResult, CancellationToken cancellationToken)
+        {
+            ResolveManagers();
+            var battle = FieldBattleManagerSingleton.Instance;
+            if (battle == null || cardManager == null)
+            {
+                Debug.LogWarning("[InBattleManager] UseItem 击杀卸尸缺少 FieldBattle/CardManager。");
+                return;
+            }
+
+            var killed = useResult.KilledTargetUids;
+            if (killed == null || killed.Length == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < killed.Length; i++)
+            {
+                var uid = killed[i];
+                if (uid <= 0 || !cardManager.TryGet(uid, out var victim) || victim == null)
+                {
+                    continue;
+                }
+
+                battle.TryBeginLethalVictimPresentation(victim, cancellationToken);
             }
         }
 
@@ -1777,7 +1832,76 @@ namespace NineGrid.Flow
                     snapToAnchor: true);
             }
 
+            SweepOrphanCardViews(avatarUid, hand);
             CoreCardPresentationMapper.SyncAllSpawnedCards();
+        }
+
+        /// <summary>
+        /// 清扫已不在手牌/卡组/场地占格、且 Core 为 Graveyard/Removed（或 registry 无）的游离视图。
+        /// 堵住「Register 挤占后 Sync 只扫占格表」漏掉的尸体钉住。
+        /// </summary>
+        private void SweepOrphanCardViews(int avatarUid, CardHandManagerSingleton hand)
+        {
+            ResolveManagers();
+            if (cardManager == null || fieldManager == null)
+            {
+                return;
+            }
+
+            var registry = NineGridArchitecture.Current.GetModel<CardRegistry>();
+            var deck = deckManager;
+            var toRelease = new List<int>(4);
+
+            foreach (var pair in cardManager.CardsByUid)
+            {
+                var uid = pair.Key;
+                var view = pair.Value;
+                if (uid <= 0 || uid == avatarUid || view == null)
+                {
+                    continue;
+                }
+
+                // 打出消失 / 拖拽中：生命周期由手牌路径负责，勿抢 Release。
+                if (view.DisplayMode == CardDisplayMode.RemovedMode
+                    || view.DisplayMode == CardDisplayMode.DragCardMode)
+                {
+                    continue;
+                }
+
+                if (hand != null && hand.ContainsUid(uid))
+                {
+                    continue;
+                }
+
+                if (deck != null && deck.ContainsUid(uid))
+                {
+                    continue;
+                }
+
+                if (fieldManager.TryGetSlotOf(uid, out _))
+                {
+                    continue;
+                }
+
+                if (registry.TryGet(uid, out var coreCard))
+                {
+                    if (coreCard.Zone.Value != ZoneId.Graveyard
+                        && coreCard.Zone.Value != ZoneId.Removed)
+                    {
+                        continue;
+                    }
+                }
+
+                toRelease.Add(uid);
+            }
+
+            for (var i = 0; i < toRelease.Count; i++)
+            {
+                var uid = toRelease[i];
+                Debug.LogWarning(
+                    $"[InBattleManager] 清扫游离卡视图 uid={uid}（Core 已离场且不在手牌/卡组/占格）。");
+                cardManager.Release(uid);
+            }
         }
 
         private static void OnBattleEndedFromCombat(bool victory)

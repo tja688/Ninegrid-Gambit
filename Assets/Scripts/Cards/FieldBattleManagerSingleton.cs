@@ -497,6 +497,45 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// UseItem / 非交战击杀：对齐真交战卸尸契约。
+        /// MarkFieldDead → Vacate（不探求）→ 异步播死并 Release。必须在 Drain/Sync 之前调用 Vacate。
+        /// </summary>
+        public bool TryBeginLethalVictimPresentation(
+            ManagedCard victim,
+            CancellationToken cancellationToken = default)
+        {
+            ResolveFieldManager();
+            if (victim == null || fieldManager == null)
+            {
+                return false;
+            }
+
+            var hadSlot = fieldManager.TryGetSlotOf(victim.Uid, out var victimSlot);
+            CardManagerSingleton.Instance?.MarkFieldDead(victim);
+
+            if (hadSlot)
+            {
+                fieldManager.VacateSlotForExplore(
+                    victimSlot,
+                    victim,
+                    playRemoveAnim: false,
+                    skipBusyGuard: true,
+                    startExplore: false);
+            }
+
+            // UseItem 无交战时间轴：若尚未在播死亡，主动开播，再由 Finalize 等闲后 Release。
+            if (victim.TryGetEffectManager(out var effectManager) && !effectManager.IsPlaying)
+            {
+                effectManager.PlayDeathAsync(
+                    hadSlot ? victimSlot : 0,
+                    cancellationToken: cancellationToken).Forget();
+            }
+
+            FinalizeLethalVictimAsync(victim, cancellationToken).Forget();
+            return true;
+        }
+
+        /// <summary>
         /// 即死交战已在 rig 时间轴内触发死亡特效，此处仅等待播完再 Release，避免重复播死亡或 Refresh 诈尸。
         /// </summary>
         private async UniTask FinalizeLethalVictimAsync(ManagedCard card, CancellationToken cancellationToken)

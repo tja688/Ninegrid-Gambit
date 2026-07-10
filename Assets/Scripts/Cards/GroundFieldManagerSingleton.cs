@@ -214,7 +214,11 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            RegisterCardAtSlot(slot, card.Uid);
+            if (!TryRegisterCardAtSlot(slot, card.Uid))
+            {
+                return false;
+            }
+
             CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.GroundCardMode);
             RefreshSlotHitCollider(slot);
             return true;
@@ -294,7 +298,13 @@ namespace NineGrid.Cards
             }
 
             UnregisterCardAtSlot(fromSlot);
-            RegisterCardAtSlot(toSlot, uid);
+            if (!TryRegisterCardAtSlot(toSlot, uid))
+            {
+                // 回滚：目标格被占时恢复原格，避免 uid 从占格表消失却留下视图。
+                TryRegisterCardAtSlot(fromSlot, uid);
+                return false;
+            }
+
             RefreshSlotHitCollider(fromSlot);
             RefreshSlotHitCollider(toSlot);
 
@@ -360,7 +370,12 @@ namespace NineGrid.Cards
                 return;
             }
 
-            RegisterCardAtSlot(slot, avatar.Uid);
+            if (!TryRegisterCardAtSlot(slot, avatar.Uid))
+            {
+                Debug.LogWarning($"[GroundFieldManager] Avatar 登记失败: slot={slot}");
+                return;
+            }
+
             var cardManager = CardManagerSingleton.Instance;
             cardManager.SetDisplayMode(avatar, CardDisplayMode.GroundCardMode);
             avatar.Transform.position = anchor.position;
@@ -417,7 +432,11 @@ namespace NineGrid.Cards
             }
 
             UnregisterCardAtSlot(fromSlot);
-            RegisterCardAtSlot(toSlot, uid);
+            if (!TryRegisterCardAtSlot(toSlot, uid))
+            {
+                TryRegisterCardAtSlot(fromSlot, uid);
+                return false;
+            }
 
             if (animate)
             {
@@ -548,7 +567,11 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            RegisterCardAtSlot(slot, card.Uid);
+            if (!TryRegisterCardAtSlot(slot, card.Uid))
+            {
+                return false;
+            }
+
             CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.GroundCardMode);
             RefreshSlotHitCollider(slot);
             return true;
@@ -805,7 +828,11 @@ namespace NineGrid.Cards
                 for (var i = 0; i < hopPlans.Count; i++)
                 {
                     var plan = hopPlans[i];
-                    RegisterCardAtSlot(plan.toSlot, plan.card.Uid);
+                    if (!TryRegisterCardAtSlot(plan.toSlot, plan.card.Uid))
+                    {
+                        Debug.LogError(
+                            $"[GroundFieldManager] 盘面 hop 登记失败 uid={plan.card.Uid} → slot={plan.toSlot}");
+                    }
                 }
 
                 var moveTasks = new List<UniTask>(hopPlans.Count);
@@ -876,7 +903,11 @@ namespace NineGrid.Cards
                         ? (i + 1) % ring.Count
                         : (i + ring.Count - 1) % ring.Count;
                     var toSlot = ring[toIndex];
-                    RegisterCardAtSlot(toSlot, uids[i]);
+                    if (!TryRegisterCardAtSlot(toSlot, uids[i]))
+                    {
+                        Debug.LogError(
+                            $"[GroundFieldManager] 外圈旋转登记失败 uid={uids[i]} → slot={toSlot}");
+                    }
                 }
 
                 _exploreRunner?.OnRingShifted(clockwise);
@@ -1027,12 +1058,24 @@ namespace NineGrid.Cards
             }
         }
 
-        private void RegisterCardAtSlot(int slot, int uid)
+        /// <summary>
+        /// 登记占格。目标格已有其他 uid 时失败并告警，禁止静默挤占留下游离视图。
+        /// 同 uid 迁格：先清旧格再写新格。
+        /// </summary>
+        private bool TryRegisterCardAtSlot(int slot, int uid)
         {
+            if (!IsValidSlot(slot) || uid <= 0)
+            {
+                return false;
+            }
+
             var previousUid = _uidBySlot[slot];
             if (previousUid != 0 && previousUid != uid)
             {
-                _slotByUid.Remove(previousUid);
+                Debug.LogError(
+                    $"[GroundFieldManager] 禁止静默挤占：slot={slot} 已有 uid={previousUid}，拒绝登记 uid={uid}。"
+                    + " 调用方须先 Vacate/Clear 旧占格。");
+                return false;
             }
 
             if (_slotByUid.TryGetValue(uid, out var previousSlot) && previousSlot != slot)
@@ -1042,6 +1085,7 @@ namespace NineGrid.Cards
 
             _uidBySlot[slot] = uid;
             _slotByUid[uid] = slot;
+            return true;
         }
 
         private void UnregisterCardAtSlot(int slot)

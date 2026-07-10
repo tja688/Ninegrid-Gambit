@@ -85,6 +85,8 @@ namespace NineGrid.Cards
     {
         public bool Accepted;
         public bool TargetKilled;
+        /// <summary>本段 UseItem EventLog 中 CardKilled 的 uid（供表现侧 Vacate 尸体）。</summary>
+        public int[] KilledTargetUids;
         public bool NodeClearedOrRewardPhase;
         public bool AvatarDefeated;
         public bool RewardChoicePending;
