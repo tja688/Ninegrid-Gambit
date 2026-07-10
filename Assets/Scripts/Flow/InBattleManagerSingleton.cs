@@ -1430,9 +1430,12 @@ namespace NineGrid.Flow
             string selectedOption = null;
             if (IsStatBoostCard(card.DefId))
             {
+                // 先藏起本体，避免三选一期间手牌卡仍停在拖放位置。
+                HideHandCardForChoice(card);
                 selectedOption = await PresentStatBoostChoiceAsync();
                 if (string.IsNullOrEmpty(selectedOption))
                 {
+                    RestoreHandCardAfterChoiceCancel(card);
                     return false;
                 }
             }
@@ -1440,11 +1443,37 @@ namespace NineGrid.Flow
             var useResult = ApplyUseItemFromCore(card.Uid, targetUid, selectedOption);
             if (!useResult.Accepted)
             {
+                if (IsStatBoostCard(card.DefId))
+                {
+                    RestoreHandCardAfterChoiceCancel(card);
+                }
+
                 return false;
             }
 
             PresentUseItemEffectsAsync(useResult).Forget();
             return true;
+        }
+
+        private static void HideHandCardForChoice(ManagedCard card)
+        {
+            if (card?.Transform == null)
+            {
+                return;
+            }
+
+            CardDeckTween.KillMotion(card.Transform);
+            card.Transform.localScale = Vector3.zero;
+        }
+
+        private static void RestoreHandCardAfterChoiceCancel(ManagedCard card)
+        {
+            if (card?.Transform == null)
+            {
+                return;
+            }
+
+            card.Transform.localScale = Vector3.one;
         }
 
         private static bool IsStatBoostCard(string defId)
@@ -1599,33 +1628,18 @@ namespace NineGrid.Flow
             CombatHitSink.ChoiceOverlayActive = true;
             try
             {
-                var picked = -1;
-                var finished = false;
-                var skipRequested = false;
-                selector.BeginBounceChoice(
-                    defIds,
-                    (index, _) => { picked = index; },
-                    () => { finished = true; });
-
-                while (!finished)
+                // 点选即推进 Core；退场动画（约 5s 掉落）在后台播，不再锁输入。
+                var pick = await WaitBouncePickAsync(selector, defIds, allowEscapeSkip: true);
+                if (pick.Cancelled)
                 {
-                    // Both / Old Input：Esc 跳过宝箱（+SkipHelpChoiceGold）。
-                    if (Input.GetKeyDown(KeyCode.Escape))
-                    {
-                        skipRequested = true;
-                        selector.HideChoice();
-                        finished = true;
-                        break;
-                    }
-
-                    await UniTask.Yield();
+                    return;
                 }
 
                 var pipeline = arch.GetSystem<IActionPipelineSystem>();
                 var startIndex = pipeline.EventLog.Entries.Count;
                 var phaseSystem = arch.GetSystem<IPhaseSystem>();
                 CoreCommandResult result;
-                if (skipRequested || picked < 0)
+                if (pick.SkipRequested || pick.Index < 0)
                 {
                     result = phaseSystem.SkipHelpChoice();
                     if (!result.Accepted)
@@ -1636,13 +1650,16 @@ namespace NineGrid.Flow
                 }
                 else
                 {
-                    result = phaseSystem.SelectReward(picked);
+                    result = phaseSystem.SelectReward(pick.Index);
                     if (!result.Accepted)
                     {
                         Debug.LogWarning($"[InBattleManager] SelectReward 被拒: {result.Reason}");
                         return;
                     }
                 }
+
+                // 选完立刻解锁战场；盘面/遗物同步不阻塞输入。
+                CombatHitSink.ChoiceOverlayActive = false;
 
                 FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _);
                 var phase = phaseSystem.CurrentPhase;
@@ -1713,25 +1730,64 @@ namespace NineGrid.Flow
             CombatHitSink.ChoiceOverlayActive = true;
             try
             {
-                var picked = -1;
-                var finished = false;
-                selector.BeginBounceChoice(
-                    StatBoostOptions.Length,
-                    (index, _) => { picked = index; },
-                    () => { finished = true; });
-
-                await UniTask.WaitUntil(() => finished);
-                if (picked < 0 || picked >= StatBoostOptions.Length)
+                var pick = await WaitBouncePickAsync(selector, StatBoostOptions, allowEscapeSkip: false);
+                if (pick.Cancelled || pick.Index < 0 || pick.Index >= StatBoostOptions.Length)
                 {
                     return null;
                 }
 
-                return StatBoostOptions[picked];
+                return StatBoostOptions[pick.Index];
             }
             finally
             {
                 CombatHitSink.ChoiceOverlayActive = false;
             }
+        }
+
+        private readonly struct BouncePickResult
+        {
+            public readonly int Index;
+            public readonly bool SkipRequested;
+            public readonly bool Cancelled;
+
+            public BouncePickResult(int index, bool skipRequested, bool cancelled)
+            {
+                Index = index;
+                SkipRequested = skipRequested;
+                Cancelled = cancelled;
+            }
+        }
+
+        /// <summary>
+        /// 等玩家点选（onPicked），不等退场动画（onFinished），避免 fallDuration≈5s 锁死输入。
+        /// </summary>
+        private static async UniTask<BouncePickResult> WaitBouncePickAsync(
+            SelectorManagerSingleton selector,
+            IReadOnlyList<string> optionDefIds,
+            bool allowEscapeSkip)
+        {
+            var picked = -1;
+            var pickedDone = false;
+            selector.BeginBounceChoice(
+                optionDefIds,
+                (index, _) =>
+                {
+                    picked = index;
+                    pickedDone = true;
+                });
+
+            while (!pickedDone)
+            {
+                if (allowEscapeSkip && Input.GetKeyDown(KeyCode.Escape))
+                {
+                    selector.HideChoice();
+                    return new BouncePickResult(-1, skipRequested: true, cancelled: false);
+                }
+
+                await UniTask.Yield();
+            }
+
+            return new BouncePickResult(picked, skipRequested: false, cancelled: false);
         }
 
         /// <summary>
