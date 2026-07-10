@@ -369,12 +369,60 @@ namespace NineGrid.Cards
             }
 
             CombatHitSink.RequestSyncCard(victim);
-            if (victim.Transform != null)
+            SpawnDamagePopups(result.DamagePopups, victim, result.DamageAmount);
+            return result;
+        }
+
+        /// <summary>
+        /// 按 DamageDealt 事件序分别飘字；反伤等可落在非主目标上。无 popups 时回退主目标 DamageAmount。
+        /// </summary>
+        private static void SpawnDamagePopups(
+            CombatDamagePopup[] popups,
+            ManagedCard fallbackVictim,
+            int fallbackAmount)
+        {
+            var cards = CardManagerSingleton.Instance;
+            if (popups != null && popups.Length > 0)
             {
-                CombatHitSink.RequestDamageNumber(victim.Transform.position, result.DamageAmount);
+                for (var i = 0; i < popups.Length; i++)
+                {
+                    var popup = popups[i];
+                    if (popup.Amount <= 0)
+                    {
+                        continue;
+                    }
+
+                    Vector3? pos = null;
+                    if (cards != null
+                        && cards.TryGet(popup.TargetUid, out var target)
+                        && target?.Transform != null)
+                    {
+                        pos = target.Transform.position;
+                        if (fallbackVictim == null || target.Uid != fallbackVictim.Uid)
+                        {
+                            CombatHitSink.RequestSyncCard(target);
+                        }
+                    }
+                    else if (fallbackVictim != null
+                             && fallbackVictim.Uid == popup.TargetUid
+                             && fallbackVictim.Transform != null)
+                    {
+                        pos = fallbackVictim.Transform.position;
+                    }
+
+                    if (pos.HasValue)
+                    {
+                        CombatHitSink.RequestDamageNumber(pos.Value, popup.Amount);
+                    }
+                }
+
+                return;
             }
 
-            return result;
+            if (fallbackAmount > 0 && fallbackVictim?.Transform != null)
+            {
+                CombatHitSink.RequestDamageNumber(fallbackVictim.Transform.position, fallbackAmount);
+            }
         }
 
         private bool TryValidateCounterParticipants(int attackerSlot, out ManagedCard attacker)

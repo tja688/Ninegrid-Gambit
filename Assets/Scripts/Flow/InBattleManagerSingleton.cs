@@ -808,14 +808,19 @@ namespace NineGrid.Flow
             }
 
             var entries = pipeline.EventLog.Entries;
+            var popups = new List<CombatDamagePopup>(4);
             for (var i = startIndex; i < entries.Count; i++)
             {
                 var e = entries[i];
-                if (e.Type == CoreEventType.DamageDealt && e.TargetUid == targetUid)
+                if (e.Type == CoreEventType.DamageDealt && e.Amount > 0 && e.TargetUid > 0)
                 {
-                    summary.DamageAmount = e.Amount;
-                    summary.RemainingHp = e.RemainingHp;
-                    summary.RemainingArmor = e.RemainingArmor;
+                    popups.Add(new CombatDamagePopup { TargetUid = e.TargetUid, Amount = e.Amount });
+                    if (e.TargetUid == targetUid)
+                    {
+                        summary.DamageAmount = e.Amount;
+                        summary.RemainingHp = e.RemainingHp;
+                        summary.RemainingArmor = e.RemainingArmor;
+                    }
                 }
 
                 if (e.Type == CoreEventType.CardKilled && e.CardUid == targetUid)
@@ -823,6 +828,8 @@ namespace NineGrid.Flow
                     summary.TargetKilled = true;
                 }
             }
+
+            summary.DamagePopups = popups.Count > 0 ? popups.ToArray() : Array.Empty<CombatDamagePopup>();
 
             if (!summary.TargetKilled
                 && arch.GetModel<CardRegistry>().TryGet(targetUid, out var target)
@@ -904,6 +911,7 @@ namespace NineGrid.Flow
                 Debug.LogWarning($"[InBattleManager] ResolvePostKillBoard 被拒: {result.Reason}");
                 summary.Moves = Array.Empty<PostKillCardMove>();
                 summary.Deals = Array.Empty<PostKillCardDeal>();
+                summary.DamagePopups = Array.Empty<CombatDamagePopup>();
                 try
                 {
                     if (BattleTraceRecorder.Enabled)
@@ -936,6 +944,7 @@ namespace NineGrid.Flow
             FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _);
             summary.Moves = moves;
             summary.Deals = deals;
+            summary.DamagePopups = CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
 
             try
             {
@@ -1013,6 +1022,54 @@ namespace NineGrid.Flow
 
             SoftAlignBoardAnchorsToCore();
             SyncBoardOccupancyFromCore();
+            SpawnDamagePopups(result.DamagePopups);
+        }
+
+        private static CombatDamagePopup[] CollectDamagePopups(
+            IReadOnlyList<CoreGameEvent> entries,
+            int startIndex)
+        {
+            if (entries == null || startIndex >= entries.Count)
+            {
+                return Array.Empty<CombatDamagePopup>();
+            }
+
+            var popups = new List<CombatDamagePopup>(4);
+            for (var i = Math.Max(0, startIndex); i < entries.Count; i++)
+            {
+                var e = entries[i];
+                if (e.Type == CoreEventType.DamageDealt && e.Amount > 0 && e.TargetUid > 0)
+                {
+                    popups.Add(new CombatDamagePopup { TargetUid = e.TargetUid, Amount = e.Amount });
+                }
+            }
+
+            return popups.Count > 0 ? popups.ToArray() : Array.Empty<CombatDamagePopup>();
+        }
+
+        private void SpawnDamagePopups(CombatDamagePopup[] popups)
+        {
+            if (popups == null || popups.Length == 0)
+            {
+                return;
+            }
+
+            ResolveManagers();
+            for (var i = 0; i < popups.Length; i++)
+            {
+                var popup = popups[i];
+                if (popup.Amount <= 0 || popup.TargetUid <= 0)
+                {
+                    continue;
+                }
+
+                if (cardManager != null
+                    && cardManager.TryGet(popup.TargetUid, out var view)
+                    && view?.Transform != null)
+                {
+                    SpawnDamageNumberAt(view.Transform.position, popup.Amount);
+                }
+            }
         }
 
         private async UniTask DrainDealsAsync(PostKillCardDeal[] deals, CancellationToken ct)
@@ -1182,12 +1239,14 @@ namespace NineGrid.Flow
                 Debug.LogWarning($"[InBattleManager] ClickEmpty 被拒: {result.Reason}");
                 summary.Moves = Array.Empty<PostKillCardMove>();
                 summary.Deals = Array.Empty<PostKillCardDeal>();
+                summary.DamagePopups = Array.Empty<CombatDamagePopup>();
                 return summary;
             }
 
             FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _);
             summary.Moves = moves;
             summary.Deals = deals;
+            summary.DamagePopups = CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
             return summary;
         }
 
@@ -1234,11 +1293,13 @@ namespace NineGrid.Flow
             FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _);
             if ((moves != null && moves.Length > 0) || (deals != null && deals.Length > 0) || summary.TargetKilled)
             {
+                // DamagePopups 留空：PresentUseItemEffectsAsync 已用 SpawnRecentDamageNumbers 覆盖本段伤害。
                 summary.PostKillBoard = new PostKillBoardPresentationResult
                 {
                     Accepted = true,
                     Moves = moves ?? Array.Empty<PostKillCardMove>(),
                     Deals = deals ?? Array.Empty<PostKillCardDeal>(),
+                    DamagePopups = Array.Empty<CombatDamagePopup>(),
                     NodeClearedOrRewardPhase = summary.NodeClearedOrRewardPhase,
                     AvatarDefeated = summary.AvatarDefeated,
                 };

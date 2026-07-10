@@ -6,6 +6,15 @@ using UnityEngine;
 namespace NineGrid.Cards
 {
     /// <summary>
+    /// 一次 DamageDealt 对应的飘字（可落在主目标或同段反伤目标上）。
+    /// </summary>
+    public struct CombatDamagePopup
+    {
+        public int TargetUid;
+        public int Amount;
+    }
+
+    /// <summary>
     /// 一次可信命中结算后的表现侧摘要（由 Flow 桥填充；Cards 不引用 Core）。
     /// </summary>
     public struct CombatHitPresentationResult
@@ -17,6 +26,8 @@ namespace NineGrid.Cards
         public bool TargetKilled;
         public bool AvatarDefeated;
         public bool NodeClearedOrRewardPhase;
+        /// <summary>本段所有 amount&gt;0 的 DamageDealt，按事件序；可多条（主伤+反伤）。</summary>
+        public CombatDamagePopup[] DamagePopups;
     }
 
     /// <summary>
@@ -49,6 +60,8 @@ namespace NineGrid.Cards
         public bool AvatarDefeated;
         public PostKillCardMove[] Moves;
         public PostKillCardDeal[] Deals;
+        /// <summary>旋转/移动技能等造成的 DamageDealt 飘字（如投石）。</summary>
+        public CombatDamagePopup[] DamagePopups;
     }
 
     /// <summary>

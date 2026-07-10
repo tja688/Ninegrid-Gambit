@@ -539,7 +539,8 @@ namespace NineGrid.Core.Effects
 
         public override bool Matches(EffectRuntimeContext context)
         {
-            if (!base.Matches(context))
+            // 仅本卡护甲归零：场上其他卡碎甲 / 反伤打掉玩家甲 不得误触发。
+            if (!base.Matches(context) || context.OwnerUid == 0)
             {
                 return false;
             }
@@ -547,7 +548,10 @@ namespace NineGrid.Core.Effects
             var events = context.Events;
             for (var i = 0; i < events.Count; i++)
             {
-                if (events[i].Type == CoreEventType.ArmorChanged && events[i].Delta < 0 && events[i].RemainingArmor <= 0)
+                if (events[i].Type == CoreEventType.ArmorChanged
+                    && events[i].CardUid == context.OwnerUid
+                    && events[i].Delta < 0
+                    && events[i].RemainingArmor <= 0)
                 {
                     return true;
                 }
