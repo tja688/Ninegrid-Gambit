@@ -83,6 +83,12 @@ namespace NineGrid.Cards
     /// </summary>
     public static class CombatHitSink
     {
+        /// <summary>
+        /// 下一次 RequestCombatHit 的 BattleTrace reason（环境变量式传递，不改委托签名）。
+        /// Field 写入，Flow 的 ApplyCombatHitFromCore 读取并清空。例：PlayerAttack / CounterAttack。
+        /// </summary>
+        public static string PendingTraceReason;
+
         /// <summary>ApplyCombatHit(attackerUid, targetUid) → 摘要。</summary>
         public static Func<int, int, CombatHitPresentationResult> ApplyCombatHit;
 
@@ -106,6 +112,9 @@ namespace NineGrid.Cards
 
         /// <summary>场地拾取：ApplyPickupItem(groundSlot) → 摘要。</summary>
         public static Func<int, PickupItemPresentationResult> ApplyPickupItem;
+
+        /// <summary>空槽点击：ClickEmpty(groundSlot) → 摘要（含 Moved/Dealt）。</summary>
+        public static Func<int, PostKillBoardPresentationResult> ApplyClickEmpty;
 
         /// <summary>手牌打出：ApplyUseItem(itemUid, optionalTargetUid) → 摘要。</summary>
         public static Func<int, int?, UseItemPresentationResult> ApplyUseItem;
@@ -182,6 +191,17 @@ namespace NineGrid.Cards
             }
 
             return ApplyPickupItem(groundSlot);
+        }
+
+        public static PostKillBoardPresentationResult RequestClickEmpty(int groundSlot)
+        {
+            if (ApplyClickEmpty == null)
+            {
+                Debug.LogWarning("[CombatHitSink] ApplyClickEmpty 未注册。");
+                return default;
+            }
+
+            return ApplyClickEmpty(groundSlot);
         }
 
         public static UseItemPresentationResult RequestUseItem(int itemUid, int? targetCardUid)

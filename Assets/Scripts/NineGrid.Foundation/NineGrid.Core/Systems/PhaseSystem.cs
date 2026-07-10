@@ -289,6 +289,11 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.ClickEmpty, "Clicked slot is not empty.", targetSlot, 0);
             }
 
+            if (!this.GetSystem<IBoardSystem>().AreAdjacent(board.AvatarSlot.Value, targetSlot))
+            {
+                return Reject(GameCommandKind.ClickEmpty, "Clicked slot is outside interaction range.", targetSlot, 0);
+            }
+
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new ClickEmptySlotAction(targetSlot));
             var resolved = pipeline.RunToCompletion();
@@ -504,10 +509,11 @@ namespace NineGrid.Core.Systems
                 return 0;
             }
 
+            // R1：先补牌再旋转（Fill → Rotate）。
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new ModifyInteractionCountAction(1));
-            pipeline.Enqueue(new RotateBoardClockwiseAction());
             pipeline.Enqueue(new FillEmptySlotsAction());
+            pipeline.Enqueue(new RotateBoardClockwiseAction());
             var resolved = pipeline.RunToCompletion();
             resolved += CompleteNodeIfCleared();
             return resolved;

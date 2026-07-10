@@ -209,14 +209,14 @@ namespace NineGrid.Cards
                         }
 
                         hitApplied = true;
-                        hitResult = ApplyHitPresentation(avatar, victim);
+                        hitResult = ApplyHitPresentation(avatar, victim, "PlayerAttack");
                     },
                     ct);
 
                 if (!hitApplied)
                 {
                     // Timeline 未打到命中回调时兜底结算，避免动画播完无数据。
-                    hitResult = ApplyHitPresentation(avatar, victim);
+                    hitResult = ApplyHitPresentation(avatar, victim, "PlayerAttack");
                     hitApplied = true;
                 }
 
@@ -332,13 +332,13 @@ namespace NineGrid.Cards
                     }
 
                     hitApplied = true;
-                    hitResult = ApplyHitPresentation(attacker, avatar);
+                    hitResult = ApplyHitPresentation(attacker, avatar, "CounterAttack");
                 },
                 cancellationToken);
 
             if (!hitApplied)
             {
-                hitResult = ApplyHitPresentation(attacker, avatar);
+                hitResult = ApplyHitPresentation(attacker, avatar, "CounterAttack");
             }
 
             if (hitResult.AvatarDefeated)
@@ -347,11 +347,19 @@ namespace NineGrid.Cards
             }
         }
 
-        private static CombatHitPresentationResult ApplyHitPresentation(ManagedCard attacker, ManagedCard victim)
+        private static CombatHitPresentationResult ApplyHitPresentation(
+            ManagedCard attacker,
+            ManagedCard victim,
+            string traceReason)
         {
             if (attacker == null || victim == null)
             {
                 return default;
+            }
+
+            if (!string.IsNullOrEmpty(traceReason))
+            {
+                CombatHitSink.PendingTraceReason = traceReason;
             }
 
             var result = CombatHitSink.RequestCombatHit(attacker.Uid, victim.Uid);

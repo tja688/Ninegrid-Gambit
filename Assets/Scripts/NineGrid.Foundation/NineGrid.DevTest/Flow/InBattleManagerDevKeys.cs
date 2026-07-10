@@ -2,6 +2,7 @@
 
 using Cysharp.Threading.Tasks;
 using NineGrid.Flow;
+using NineGrid.Flow.Diagnostics;
 using UnityEngine;
 
 namespace NineGrid.DevTest.Flow
@@ -9,6 +10,8 @@ namespace NineGrid.DevTest.Flow
     [DisallowMultipleComponent]
     public sealed class InBattleManagerDevKeys : TestKeyModuleBehaviour
     {
+        private const int CheatAvatarHp = 99;
+
         [Tooltip("运行时自动查找 InBattleManagerSingleton.Instance；也可手动拖入覆盖。")]
         [SerializeField] private InBattleManagerSingleton inBattleManager;
 
@@ -33,7 +36,10 @@ namespace NineGrid.DevTest.Flow
         {
             builder
                 .Bind(KeyCode.Keypad1, "真实局内入场", () => RunRealBattleEntryAsync().Forget())
-                .Bind(KeyCode.Keypad2, "探测节点结算", () => TrySettlement());
+                .Bind(KeyCode.Keypad2, "探测节点结算", () => TrySettlement())
+                .Bind(KeyCode.Keypad3, "玩家血量=99", CheatAvatarHpTo99)
+                .Bind(KeyCode.Keypad4, "导出 BattleTrace", ExportBattleTrace)
+                .Bind(KeyCode.Keypad5, "开关 BattleTrace", ToggleBattleTrace);
         }
 
         private async UniTaskVoid RunRealBattleEntryAsync()
@@ -60,6 +66,35 @@ namespace NineGrid.DevTest.Flow
             {
                 Debug.Log("[InBattleManagerDevKeys] 内核尚未确认通关，未进入结算。");
             }
+        }
+
+        private void CheatAvatarHpTo99()
+        {
+            var manager = ResolveManager();
+            if (manager == null)
+            {
+                return;
+            }
+
+            if (!manager.TryCheatSetAvatarHp(CheatAvatarHp))
+            {
+                Debug.LogWarning("[InBattleManagerDevKeys] 改血失败：请先进入正式对局。");
+            }
+        }
+
+        private static void ExportBattleTrace()
+        {
+            var path = BattleTraceRecorder.ExportJson();
+            if (string.IsNullOrEmpty(path))
+            {
+                Debug.LogWarning("[InBattleManagerDevKeys] BattleTrace 导出失败或无数据。");
+            }
+        }
+
+        private static void ToggleBattleTrace()
+        {
+            BattleTraceRecorder.Enabled = !BattleTraceRecorder.Enabled;
+            Debug.Log("[InBattleManagerDevKeys] BattleTrace.Enabled = " + BattleTraceRecorder.Enabled);
         }
 
         private InBattleManagerSingleton ResolveManager()

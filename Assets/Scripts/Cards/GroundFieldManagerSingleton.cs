@@ -647,9 +647,37 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            Debug.Log($"[GroundFieldManager] 空槽点击旋转: slot={slot}");
+            Debug.Log($"[GroundFieldManager] 空槽点击 → Core ClickEmpty: slot={slot}");
             EmptySlotClicked?.Invoke(slot);
-            RotateOuterRingClockwiseAsync().Forget();
+
+            var postKill = CombatHitSink.RequestClickEmpty(slot);
+            if (!postKill.Accepted)
+            {
+                return false;
+            }
+
+            CombatHitSink.RequestDrainPostKillBoard(postKill).Forget();
+            return true;
+        }
+
+        /// <summary>
+        /// 仅清占格登记，不销毁视图、不启动探求。Sync 两阶段卸格用。
+        /// </summary>
+        public bool ClearSlotOccupancy(int slot, bool skipBusyGuard = false)
+        {
+            if (!skipBusyGuard && IsBusy)
+            {
+                Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法清占格。");
+                return false;
+            }
+
+            if (!IsValidSlot(slot) || _uidBySlot[slot] == 0)
+            {
+                return false;
+            }
+
+            UnregisterCardAtSlot(slot);
+            RefreshSlotHitCollider(slot);
             return true;
         }
 
@@ -764,7 +792,7 @@ namespace NineGrid.Cards
                     return;
                 }
 
-                // 整圈同时换格：先全部清占格，再登记目标，避免目标格仍被旧卡占用。
+                // 原子换格：先清本批所有占格，再登记目标，避免环上目标格仍被旧卡占用。
                 for (var i = 0; i < hopPlans.Count; i++)
                 {
                     var uid = hopPlans[i].card.Uid;
@@ -1001,6 +1029,17 @@ namespace NineGrid.Cards
 
         private void RegisterCardAtSlot(int slot, int uid)
         {
+            var previousUid = _uidBySlot[slot];
+            if (previousUid != 0 && previousUid != uid)
+            {
+                _slotByUid.Remove(previousUid);
+            }
+
+            if (_slotByUid.TryGetValue(uid, out var previousSlot) && previousSlot != slot)
+            {
+                _uidBySlot[previousSlot] = 0;
+            }
+
             _uidBySlot[slot] = uid;
             _slotByUid[uid] = slot;
         }
