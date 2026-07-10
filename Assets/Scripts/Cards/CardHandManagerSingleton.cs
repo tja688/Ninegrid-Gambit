@@ -308,6 +308,8 @@ namespace NineGrid.Cards
         /// <summary>
         /// 场地卡点击入手：道具卡 / 帮助卡等不可从场地拖拽，只能点击直接入手牌。
         /// 先写 Core Pickup，再播表现；拾取后的转/补由 Core 结果缓冲缓释。
+        /// 互动范围：目前硬编码 Avatar 格5四向正交（IsAvatarOrthogonalBattleSlot）；
+        /// 后续职业互动范围应与 Core AreAdjacent / InteractionRange 共用同一判定源，勿再分叉。
         /// </summary>
         public bool TryPickupFromGround(ManagedCard card)
         {
@@ -328,6 +330,12 @@ namespace NineGrid.Cards
             }
 
             if (!field.TryGetSlotOf(card.Uid, out var groundSlot))
+            {
+                return false;
+            }
+
+            // 与攻击侧 TryHandleBattleClick 对称：非正交邻接格不打 Core。
+            if (!field.IsAvatarOrthogonalBattleSlot(groundSlot))
             {
                 return false;
             }

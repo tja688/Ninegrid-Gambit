@@ -184,6 +184,8 @@ namespace NineGrid.Core.Systems
             return CoreCommandResult.Accept(ResolveInteractiveRotation());
         }
 
+        // 九宫格互动范围：当前 = Avatar 槽正交邻接（IBoardSystem.AreAdjacent）。
+        // StatId.InteractionRange / 职业范围尚未接入；多职业时从此处与表现层共用判定源扩展。
         public CoreCommandResult PickupItem(SlotId targetSlot)
         {
             if (!CanExecute(GameCommandKind.PickupItem))
@@ -205,12 +207,18 @@ namespace NineGrid.Core.Systems
             return ExecutePickupItem(targetSlot, requireInteractionLoopRotate: true);
         }
 
+        // 表现可信拾取入口：邻接规则与 PickupItem 一致（见上互动范围备注）。
         public CoreCommandResult ApplyPickupItem(SlotId targetSlot)
         {
             var board = this.GetModel<BoardModel>();
             if (!targetSlot.IsBoardSlot || targetSlot == board.AvatarSlot.Value)
             {
                 return Reject(GameCommandKind.PickupItem, "Pickup target is not a board card slot.", targetSlot, 0);
+            }
+
+            if (!this.GetSystem<IBoardSystem>().AreAdjacent(board.AvatarSlot.Value, targetSlot))
+            {
+                return Reject(GameCommandKind.PickupItem, "Pickup target is outside interaction range.", targetSlot, 0);
             }
 
             return ExecutePickupItem(targetSlot, requireInteractionLoopRotate: true);
