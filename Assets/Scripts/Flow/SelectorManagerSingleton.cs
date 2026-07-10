@@ -84,7 +84,11 @@ namespace NineGrid.Flow
         /// <summary>
         /// 打开 Bounce 扇形选择；数量默认 3，选项 DefId 使用 placeholderDefId 填充。
         /// </summary>
-        public void BeginBounceChoice(int count, Action<int, string> onPicked, Action onFinished = null)
+        public void BeginBounceChoice(
+            int count,
+            Action<int, string> onPicked,
+            Action onFinished = null,
+            bool hoverOnNotice = false)
         {
             count = Mathf.Max(1, count);
             var defId = string.IsNullOrWhiteSpace(placeholderDefId)
@@ -96,7 +100,7 @@ namespace NineGrid.Flow
                 options[i] = defId;
             }
 
-            BeginBounceChoice(options, onPicked, onFinished);
+            BeginBounceChoice(options, onPicked, onFinished, hoverOnNotice);
         }
 
         /// <summary>
@@ -105,7 +109,8 @@ namespace NineGrid.Flow
         public void BeginBounceChoice(
             IReadOnlyList<string> optionDefIds,
             Action<int, string> onPicked,
-            Action onFinished = null)
+            Action onFinished = null,
+            bool hoverOnNotice = false)
         {
             if (optionDefIds == null || optionDefIds.Count == 0)
             {
@@ -134,15 +139,18 @@ namespace NineGrid.Flow
             _onFinished = onFinished;
             _sessionActive = true;
             _activeKind = ChoiceKind.Bounce;
-            bouncePresenter.Begin(optionDefIds, OnPresenterPicked);
+            bouncePresenter.Begin(optionDefIds, OnPresenterPicked, hoverOnNotice);
         }
 
         /// <summary>
         /// 打开房间二选一；默认 optionIds 为 room_left / room_right。
         /// </summary>
-        public void BeginRoomChoice(Action<int, string> onPicked, Action onFinished = null)
+        public void BeginRoomChoice(
+            Action<int, string> onPicked,
+            Action onFinished = null,
+            bool hoverOnNotice = false)
         {
-            BeginRoomChoice("room_left", "room_right", onPicked, onFinished);
+            BeginRoomChoice("room_left", "room_right", onPicked, onFinished, hoverOnNotice);
         }
 
         /// <summary>
@@ -152,7 +160,8 @@ namespace NineGrid.Flow
             string leftOptionId,
             string rightOptionId,
             Action<int, string> onPicked,
-            Action onFinished = null)
+            Action onFinished = null,
+            bool hoverOnNotice = false)
         {
             EnsureRoomPresenter();
             if (roomChoicePresenter == null)
@@ -170,7 +179,12 @@ namespace NineGrid.Flow
             _onFinished = onFinished;
             _sessionActive = true;
             _activeKind = ChoiceKind.Room;
-            roomChoicePresenter.Begin(leftOptionId, rightOptionId, OnPresenterPicked, NotifySessionFinished);
+            roomChoicePresenter.Begin(
+                leftOptionId,
+                rightOptionId,
+                OnPresenterPicked,
+                NotifySessionFinished,
+                hoverOnNotice);
         }
 
         /// <summary>

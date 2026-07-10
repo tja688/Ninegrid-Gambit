@@ -100,6 +100,7 @@ namespace NineGrid.Flow
         private float _entryBlockRemaining;
         private bool _selectionLocked;
         private bool _sessionLive;
+        private bool _hoverOnNotice;
         private int _pendingFallCount;
 
         private void Awake()
@@ -154,7 +155,10 @@ namespace NineGrid.Flow
             }
         }
 
-        public void Begin(IReadOnlyList<string> optionDefIds, Action<int, string> onPicked)
+        public void Begin(
+            IReadOnlyList<string> optionDefIds,
+            Action<int, string> onPicked,
+            bool hoverOnNotice = false)
         {
             Teardown();
 
@@ -175,6 +179,7 @@ namespace NineGrid.Flow
             _hoveredIndex = -1;
             _entryBlockRemaining = 0f;
             _pendingFallCount = 0;
+            _hoverOnNotice = hoverOnNotice;
             _sessionLive = true;
 
             BuildEntries(optionDefIds);
@@ -189,6 +194,7 @@ namespace NineGrid.Flow
             _entryBlockRemaining = 0f;
             _onPicked = null;
             _pendingFallCount = 0;
+            _hoverOnNotice = false;
             ClearHoverDescription();
             KillHoverTweens();
             ReleaseAllEntries();
@@ -613,7 +619,9 @@ namespace NineGrid.Flow
                 return;
             }
 
-            _descriptionGeneration = mgr.Show(defId);
+            _descriptionGeneration = _hoverOnNotice
+                ? mgr.ShowOnNotice(defId)
+                : mgr.Show(defId);
         }
 
         private void ClearHoverDescription()
@@ -624,7 +632,15 @@ namespace NineGrid.Flow
             }
 
             var mgr = DescriptionManagerSingleton.TryGetInstance();
-            mgr?.Clear(_descriptionGeneration);
+            if (_hoverOnNotice)
+            {
+                mgr?.ClearNotice(_descriptionGeneration);
+            }
+            else
+            {
+                mgr?.Clear(_descriptionGeneration);
+            }
+
             _descriptionGeneration = -1;
         }
 

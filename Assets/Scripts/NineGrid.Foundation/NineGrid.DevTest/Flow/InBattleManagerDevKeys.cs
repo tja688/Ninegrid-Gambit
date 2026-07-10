@@ -39,7 +39,22 @@ namespace NineGrid.DevTest.Flow
                 .Bind(KeyCode.Keypad2, "探测节点结算", () => TrySettlement())
                 .Bind(KeyCode.Keypad3, "玩家血量=99", CheatAvatarHpTo99)
                 .Bind(KeyCode.Keypad4, "立即导出 BattleLog", ExportBattleTrace)
-                .Bind(KeyCode.Keypad5, "开关 BattleTrace", ToggleBattleTrace);
+                .Bind(KeyCode.Keypad5, "开关 BattleTrace", ToggleBattleTrace)
+                .Bind(KeyCode.Keypad6, "强制本局胜利", CheatForceNodeVictory);
+        }
+
+        private void CheatForceNodeVictory()
+        {
+            var manager = ResolveManager();
+            if (manager == null)
+            {
+                return;
+            }
+
+            if (!manager.TryCheatForceNodeVictory())
+            {
+                Debug.LogWarning("[InBattleManagerDevKeys] 强制胜利失败：请先进入正式对局（InteractionLoop）。");
+            }
         }
 
         private async UniTaskVoid RunRealBattleEntryAsync()

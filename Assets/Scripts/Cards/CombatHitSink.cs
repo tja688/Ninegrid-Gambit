@@ -304,5 +304,15 @@ namespace NineGrid.Cards
         {
             NotifyBattleEnded?.Invoke(victory);
         }
+
+        /// <summary>
+        /// 节点通关结算就绪（奖励/房间），非整局胜负。由 InBattleManager 注册。
+        /// </summary>
+        public static Action NotifyNodeSettlementReady;
+
+        public static void RequestNodeSettlement()
+        {
+            NotifyNodeSettlementReady?.Invoke();
+        }
     }
 }

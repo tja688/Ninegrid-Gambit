@@ -1,4 +1,5 @@
 using System.Text;
+using NineGrid.Core.Effects;
 using NineGrid.Core.Systems;
 using NineGrid.Core.Utilities;
 using QFramework;
@@ -58,6 +59,13 @@ namespace NineGrid.Core
             var player = architecture.GetModel<PlayerModel>();
             var run = architecture.GetModel<RunModel>();
             var pendingChoice = architecture.GetModel<PendingChoiceModel>();
+
+            // Bootstrap / 失败重开会 registry.Clear 并重用 uid；若不先清效果运行时，
+            // 上一局 Trigger 会挂到同 uid 新卡上，导致坚硬等 OnBattle 效果叠乘秒杀。
+            architecture.GetSystem<IContentSystem>().ClearRuntimeEffects();
+            architecture.GetSystem<IEffectSystem>().Clear();
+            architecture.GetSystem<ITriggerSystem>().Clear();
+            architecture.GetSystem<IActionPipelineSystem>().Clear();
 
             rng.SetSeed(options.Seed);
             registry.Clear();

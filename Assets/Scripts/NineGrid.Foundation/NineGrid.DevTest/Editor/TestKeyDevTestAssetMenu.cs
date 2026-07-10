@@ -86,6 +86,7 @@ namespace NineGrid.DevTest.Editor
                     (KeyCode.Keypad3, "玩家血量=99"),
                     (KeyCode.Keypad4, "立即导出 BattleLog"),
                     (KeyCode.Keypad5, "开关 BattleTrace"),
+                    (KeyCode.Keypad6, "强制本局胜利"),
                 });
 
             Selection.activeObject = AssetDatabase.LoadAssetAtPath<TestKeyLayerProfileSO>(

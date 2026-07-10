@@ -40,6 +40,70 @@
     "count": 1
   },
   {
+    "id": "shop.helpCards.00.help_healing_potion",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.healing_potion",
+    "kind": "HelpCard",
+    "weight": 20,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.01.help_throwing_knife",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.throwing_knife",
+    "kind": "HelpCard",
+    "weight": 20,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.02.help_sturdy_shield",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.sturdy_shield",
+    "kind": "HelpCard",
+    "weight": 20,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.03.help_bomb",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.bomb",
+    "kind": "HelpCard",
+    "weight": 8,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.04.help_gold_card",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.gold_card",
+    "kind": "HelpCard",
+    "weight": 5,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.05.help_ward_magic_card",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.ward_magic_card",
+    "kind": "HelpCard",
+    "weight": 20,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.06.help_fireball",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.fireball",
+    "kind": "HelpCard",
+    "weight": 20,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.07.help_rotation_wheel",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.rotation_wheel",
+    "kind": "HelpCard",
+    "weight": 20,
+    "count": 1
+  },
+  {
     "id": "help.white.choice.00.help_healing_potion",
     "pool_id": "help.white.choice",
     "def_id": "help.healing_potion",

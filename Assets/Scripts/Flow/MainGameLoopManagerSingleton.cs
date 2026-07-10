@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
 using NineGrid.Core;
+using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using QFramework;
 using TMPro;
@@ -15,7 +16,7 @@ using UnityEditor;
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 主游戏流程壳状态机：主菜单 → 真实局内入场 → （奖励/房间待结算接线）。
+    /// 主游戏流程壳状态机：主菜单 → 局内 → 通关奖励 → 房间二选一 → 房间事件 → 下一节点。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class MainGameLoopManagerSingleton : MonoBehaviour
@@ -30,9 +31,6 @@ namespace NineGrid.Flow
             VictoryNotice,
             DefeatNotice,
         }
-
-        private const string LeftRoomId = "room_left";
-        private const string RightRoomId = "room_right";
 
         private static MainGameLoopManagerSingleton _instance;
 
@@ -59,10 +57,7 @@ namespace NineGrid.Flow
         [SerializeField] private Camera worldCamera;
 
         [Header("Timing")]
-        [Tooltip("局内占位等待时长（秒）；到点即视为对战结束。")]
-        [SerializeField] private float battleStubSeconds = 1f;
-
-        [Tooltip("房间事件占位展示时长（秒）。")]
+        [Tooltip("房间事件即时结算 Notice 展示时长（秒）。")]
         [SerializeField] private float roomEventStubSeconds = 0.6f;
 
         [Tooltip("胜利 Notice 展示时长（秒）后回主菜单。")]
@@ -80,10 +75,11 @@ namespace NineGrid.Flow
         private LoopState _state = LoopState.MainMenu;
         private bool _isBusy;
         private bool _testMode;
-        private bool _winAfterNextBattle;
         private int _nodeIndex;
         private CancellationTokenSource _loopCts;
         private CancellationTokenSource _battleEndCts;
+        private UniTaskCompletionSource _settlementTcs;
+        private bool _subscribedSettlement;
 
         public static MainGameLoopManagerSingleton Instance
         {
@@ -117,11 +113,13 @@ namespace NineGrid.Flow
 
             _instance = this;
             EnsureBindings();
+            SubscribeSettlement();
             EnterMainMenuImmediate();
         }
 
         private void OnDestroy()
         {
+            UnsubscribeSettlement();
             CancelLoopWork();
             if (_instance == this)
             {
@@ -166,14 +164,13 @@ namespace NineGrid.Flow
             }
 
             EnsureBindings();
+            SubscribeSettlement();
             CancelLoopWork();
             _loopCts = new CancellationTokenSource();
 
             _testMode = testMode;
-            _winAfterNextBattle = false;
             _nodeIndex = 0;
             HideNotice();
-            // 进循环后立刻进入局内对战占位；此处先出壳即可。
             panelRouter.ShowInRunShell(inBattle: true);
             RunNodeCycleAsync(_loopCts.Token).Forget();
         }
@@ -194,7 +191,7 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 清场胜利：Notice → 等待 → 回主菜单。
+        /// 整局胜利：Notice → 等待 → 回主菜单。
         /// </summary>
         public void NotifyBattleVictory()
         {
@@ -223,32 +220,16 @@ namespace NineGrid.Flow
                         return;
                     }
 
-                    // TODO: 节点结算就绪后再进入奖励
-                    return;
-
-#if false // 奖励/房间链路待节点结算接线后恢复
-                    if (_testMode && _winAfterNextBattle)
-                    {
-                        await ShowVictoryAndReturnAsync(ct);
-                        return;
-                    }
-
                     await PlayRewardChoiceAsync(ct);
                     if (ct.IsCancellationRequested)
                     {
                         return;
                     }
 
-                    var roomIndex = await PlayRoomChoiceAsync(ct);
+                    await PlayRoomChoiceAsync(ct);
                     if (ct.IsCancellationRequested)
                     {
                         return;
-                    }
-
-                    if (_testMode)
-                    {
-                        // 左：无限循环；右：下一轮对战结束后宣告胜利
-                        _winAfterNextBattle = roomIndex == 1;
                     }
 
                     await PlayRoomEventAsync(ct);
@@ -256,9 +237,15 @@ namespace NineGrid.Flow
                     {
                         return;
                     }
-#endif
 
-                    // 继续下一节点
+                    var phase = NineGridArchitecture.Current.GetSystem<IPhaseSystem>().CurrentPhase;
+                    if (phase == GamePhase.Victory)
+                    {
+                        await ShowVictoryAndReturnAsync(ct);
+                        return;
+                    }
+
+                    // 继续下一节点（Core 已 AdvanceNode → NodeCompleted）
                 }
             }
             catch (OperationCanceledException)
@@ -288,6 +275,9 @@ namespace NineGrid.Flow
                 return;
             }
 
+            SubscribeSettlement();
+            _settlementTcs = new UniTaskCompletionSource();
+
             var arch = NineGridArchitecture.Current;
             var phase = arch.GetSystem<IPhaseSystem>();
             if (_nodeIndex <= 1 || !phase.CanExecute(GameCommandKind.StartNode))
@@ -305,89 +295,206 @@ namespace NineGrid.Flow
 
             Debug.Log($"[MainGameLoop] 节点 {_nodeIndex} 真实局内入场");
             await inBattleManager.StartBattleNodeAsync(options, ct);
-            Debug.Log($"[MainGameLoop] 节点 {_nodeIndex} 真实局内已入场，等待后续结算接线");
+            if (ct.IsCancellationRequested)
+            {
+                return;
+            }
+
+            // 开局即空怪时 StartBattleNode 内可能已 Raise 结算；补一次探测。
+            inBattleManager.TryEnterNodeSettlement();
+
+            Debug.Log($"[MainGameLoop] 节点 {_nodeIndex} 已入场，等待节点结算");
+            await _settlementTcs.Task.AttachExternalCancellation(ct);
+            Debug.Log($"[MainGameLoop] 节点 {_nodeIndex} 结算就绪，进入奖励");
         }
 
         private async UniTask PlayRewardChoiceAsync(CancellationToken ct)
         {
             SetState(LoopState.RewardChoice);
             EnsureBindings();
-            panelRouter.ShowRewardOverlay();
 
-            var picked = false;
-            var finished = false;
-            int pickIndex = -1;
-            string pickId = null;
-
-            selectorManager.BeginBounceChoice(
-                3,
-                (index, defId) =>
-                {
-                    picked = true;
-                    pickIndex = index;
-                    pickId = defId;
-                    Debug.Log($"[MainGameLoop] 奖励已选 index={index} defId={defId}");
-                },
-                () => { finished = true; });
-
-            await UniTask.WaitUntil(() => finished || ct.IsCancellationRequested, cancellationToken: ct);
-            if (ct.IsCancellationRequested)
+            var arch = NineGridArchitecture.Current;
+            var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
+            var pending = arch.GetModel<PendingChoiceModel>();
+            if (phase != GamePhase.RewardItemChoice
+                || pending.Kind.Value != PendingChoiceKind.Reward
+                || pending.RewardOptions == null
+                || pending.RewardOptions.Count == 0)
             {
+                Debug.LogWarning(
+                    $"[MainGameLoop] 跳过通关奖励 phase={phase} pending={pending.Kind.Value}");
                 return;
             }
 
-            if (!picked)
+            panelRouter.ShowRewardOverlay();
+            CombatHitSink.ChoiceOverlayActive = true;
+            try
             {
-                Debug.LogWarning("[MainGameLoop] 奖励选择未产生结果，继续流程。");
+                await inBattleManager.PresentRewardChoiceFromCoreAsync(hoverOnNotice: true);
             }
-            else
+            finally
             {
-                Debug.Log($"[MainGameLoop] 奖励会话结束 pick={pickIndex}:{pickId}");
+                CombatHitSink.ChoiceOverlayActive = false;
+                panelRouter.HideAllOverlays();
             }
 
-            panelRouter.HideAllOverlays();
+            await UniTask.Yield(cancellationToken: ct);
         }
 
-        private async UniTask<int> PlayRoomChoiceAsync(CancellationToken ct)
+        private async UniTask PlayRoomChoiceAsync(CancellationToken ct)
         {
             SetState(LoopState.RoomChoice);
             EnsureBindings();
+
+            var arch = NineGridArchitecture.Current;
+            var phaseSystem = arch.GetSystem<IPhaseSystem>();
+            var pending = arch.GetModel<PendingChoiceModel>();
+            if (phaseSystem.CurrentPhase != GamePhase.RoomChoice
+                || pending.Kind.Value != PendingChoiceKind.Room
+                || pending.RoomOptions == null
+                || pending.RoomOptions.Count < 2)
+            {
+                Debug.LogWarning(
+                    $"[MainGameLoop] 跳过房间选择 phase={phaseSystem.CurrentPhase} pending={pending.Kind.Value}");
+                return;
+            }
+
+            var left = pending.RoomOptions[0];
+            var right = pending.RoomOptions[1];
             panelRouter.ShowRoomChoiceOverlay();
 
             var pickedIndex = -1;
             var finished = false;
+            CombatHitSink.ChoiceOverlayActive = true;
+            try
+            {
+                selectorManager.BeginRoomChoice(
+                    left.ToString(),
+                    right.ToString(),
+                    (index, optionId) =>
+                    {
+                        pickedIndex = index;
+                        Debug.Log($"[MainGameLoop] 房间已选 index={index} id={optionId}");
+                    },
+                    () => { finished = true; },
+                    hoverOnNotice: true);
 
-            selectorManager.BeginRoomChoice(
-                LeftRoomId,
-                RightRoomId,
-                (index, optionId) =>
-                {
-                    pickedIndex = index;
-                    Debug.Log($"[MainGameLoop] 房间已选 index={index} id={optionId}");
-                },
-                () => { finished = true; });
+                await UniTask.WaitUntil(() => finished || ct.IsCancellationRequested, cancellationToken: ct);
+            }
+            finally
+            {
+                CombatHitSink.ChoiceOverlayActive = false;
+                panelRouter.HideAllOverlays();
+            }
 
-            await UniTask.WaitUntil(() => finished || ct.IsCancellationRequested, cancellationToken: ct);
-            panelRouter.HideAllOverlays();
+            if (ct.IsCancellationRequested)
+            {
+                return;
+            }
 
             if (pickedIndex < 0)
             {
                 pickedIndex = 0;
             }
 
-            return pickedIndex;
+            var result = phaseSystem.SelectRoom(pickedIndex);
+            if (!result.Accepted)
+            {
+                Debug.LogWarning($"[MainGameLoop] SelectRoom 被拒: {result.Reason}");
+            }
+
+            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
         }
 
         private async UniTask PlayRoomEventAsync(CancellationToken ct)
         {
             SetState(LoopState.RoomEvent);
             EnsureBindings();
+
+            var arch = NineGridArchitecture.Current;
+            var phaseSystem = arch.GetSystem<IPhaseSystem>();
+            if (phaseSystem.CurrentPhase != GamePhase.RoomEvent)
+            {
+                Debug.LogWarning($"[MainGameLoop] 跳过房间事件 phase={phaseSystem.CurrentPhase}");
+                return;
+            }
+
+            var selectedRoom = arch.GetModel<PendingChoiceModel>().SelectedRoom.Value;
             panelRouter.ShowRoomEventOverlay();
-            Debug.Log($"[MainGameLoop] 房间事件占位 {roomEventStubSeconds:0.##}s");
-            await UniTask.Delay(
-                TimeSpan.FromSeconds(Mathf.Max(0.05f, roomEventStubSeconds)),
-                cancellationToken: ct);
+
+            var enter = phaseSystem.EnterRoom();
+            if (!enter.Accepted)
+            {
+                Debug.LogWarning($"[MainGameLoop] EnterRoom 被拒: {enter.Reason}");
+                panelRouter.HideAllOverlays();
+                return;
+            }
+
+            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
+
+            var pending = arch.GetModel<PendingChoiceModel>();
+            if (pending.Kind.Value == PendingChoiceKind.Reward
+                && pending.RewardOptions != null
+                && pending.RewardOptions.Count > 0)
+            {
+                // 商店 / 宝箱房：复用 Bounce 默认选择器。
+                panelRouter.ShowRewardOverlay();
+                CombatHitSink.ChoiceOverlayActive = true;
+                try
+                {
+                    await inBattleManager.PresentRewardChoiceFromCoreAsync(hoverOnNotice: true);
+                }
+                finally
+                {
+                    CombatHitSink.ChoiceOverlayActive = false;
+                }
+            }
+            else
+            {
+                var message = BuildRoomResolvedNotice(selectedRoom);
+                if (!string.IsNullOrEmpty(message))
+                {
+                    ShowNotice(message);
+                    await UniTask.Delay(
+                        TimeSpan.FromSeconds(Mathf.Max(0.05f, roomEventStubSeconds)),
+                        cancellationToken: ct);
+                    HideNotice();
+                }
+            }
+
             panelRouter.HideAllOverlays();
+            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
+        }
+
+        private static string BuildRoomResolvedNotice(RoomKind room)
+        {
+            CoreCardPresentationMapper.EnsureContentCatalogLoaded();
+            var arch = NineGridArchitecture.Current;
+            if (arch != null)
+            {
+                var content = arch.GetSystem<IContentSystem>();
+                if (content != null
+                    && content.HasCatalog
+                    && content.Catalog.Rewards.TryGetRoom(room, out var def)
+                    && !string.IsNullOrWhiteSpace(def.DisplayName))
+                {
+                    if (def.GoldDelta != 0)
+                    {
+                        return $"{def.DisplayName}：金币{(def.GoldDelta > 0 ? "+" : string.Empty)}{def.GoldDelta}";
+                    }
+
+                    if (def.MaxHpDelta != 0 || def.HealToFull)
+                    {
+                        return def.HealToFull
+                            ? $"{def.DisplayName}：血量上限+{def.MaxHpDelta}，已回满"
+                            : $"{def.DisplayName}：血量上限+{def.MaxHpDelta}";
+                    }
+
+                    return def.DisplayName;
+                }
+            }
+
+            return room == RoomKind.None ? string.Empty : room.ToString();
         }
 
         private async UniTask ShowVictoryAndReturnAsync(CancellationToken ct)
@@ -411,7 +518,6 @@ namespace NineGrid.Flow
         private async UniTask ShowBattleEndAndReturnAsync(bool victory, CancellationToken ct)
         {
             CancelLoopWork();
-            // 立刻掐断局内补牌/入场异步，避免 Notice 等待期间继续改盘面。
             if (inBattleManager == null)
             {
                 inBattleManager = InBattleManagerSingleton.Instance;
@@ -428,7 +534,7 @@ namespace NineGrid.Flow
                 : (string.IsNullOrWhiteSpace(defeatMessage) ? "失败" : defeatMessage);
             ShowNotice(message);
             Debug.Log(victory
-                ? "[MainGameLoop] 战斗胜利，准备回主菜单。"
+                ? "[MainGameLoop] 整局胜利，准备回主菜单。"
                 : "[MainGameLoop] 战斗失败，准备回主菜单。");
             var seconds = victory
                 ? Mathf.Max(0.2f, victoryNoticeSeconds)
@@ -441,15 +547,47 @@ namespace NineGrid.Flow
         {
             EnsureBindings();
             HideNotice();
-            // 先取消交战，再清表现面，避免 ClearField 被 IsBusy 挡住。
             FieldBattleManagerSingleton.Instance?.CancelBattleWork();
             inBattleManager?.ClearPresentationSurface();
             panelRouter.ShowMainMenu();
             SetState(LoopState.MainMenu);
-            _winAfterNextBattle = false;
             _testMode = false;
             _nodeIndex = 0;
             _isBusy = false;
+            _settlementTcs = null;
+        }
+
+        private void SubscribeSettlement()
+        {
+            EnsureBindings();
+            if (inBattleManager == null)
+            {
+                inBattleManager = InBattleManagerSingleton.Instance;
+            }
+
+            if (inBattleManager == null || _subscribedSettlement)
+            {
+                return;
+            }
+
+            inBattleManager.OnNodeSettlementReady += OnNodeSettlementReady;
+            _subscribedSettlement = true;
+        }
+
+        private void UnsubscribeSettlement()
+        {
+            if (!_subscribedSettlement || inBattleManager == null)
+            {
+                return;
+            }
+
+            inBattleManager.OnNodeSettlementReady -= OnNodeSettlementReady;
+            _subscribedSettlement = false;
+        }
+
+        private void OnNodeSettlementReady()
+        {
+            _settlementTcs?.TrySetResult();
         }
 
         private void CancelBattleEndWork()
@@ -501,6 +639,9 @@ namespace NineGrid.Flow
 
         private void CancelLoopWork()
         {
+            _settlementTcs?.TrySetCanceled();
+            _settlementTcs = null;
+
             if (_loopCts == null)
             {
                 return;

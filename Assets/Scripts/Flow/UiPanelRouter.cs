@@ -106,7 +106,8 @@ namespace NineGrid.Flow
             EnsureBindings();
             SetActiveSafe(mainPanel, false);
             SetActiveSafe(inGamePanels, true);
-            SetInGameInfoTextVisible(false);
+            // 主流程叠层与玩家信息面板互不影响，保持 InGameInfoText 可见。
+            SetInGameInfoTextVisible(true);
             SetActiveSafe(rewardPanel, false);
             SetActiveSafe(roomChoicePanel, false);
             SetActiveSafe(roomEventPanel, true);

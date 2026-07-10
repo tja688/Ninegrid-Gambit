@@ -133,6 +133,104 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
+        /// DevTest：强制判定本节点胜利，写入通关奖励相位并触发结算推进（纯流程测试）。
+        /// </summary>
+        public bool TryCheatForceNodeVictory()
+        {
+            if (_settlementRaised)
+            {
+                Debug.LogWarning("[InBattleManager] 强制胜利跳过：本节点已结算。");
+                return false;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
+            if (phase == GamePhase.RewardItemChoice)
+            {
+                _settlementRaised = true;
+                Debug.Log("[InBattleManager] DevTest 强制胜利：已在奖励相位，直接推进结算。");
+                OnNodeSettlementReady?.Invoke();
+                return true;
+            }
+
+            if (phase != GamePhase.InteractionLoop)
+            {
+                Debug.LogWarning($"[InBattleManager] 强制胜利失败：phase={phase}（需 InteractionLoop）。");
+                return false;
+            }
+
+            CheatMakeNodeCleared(arch);
+
+            FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+            CombatHitSink.ForceEndPresentationLock("CheatForceNodeVictory");
+            CancelPresentationWork();
+
+            var pipeline = arch.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new ChangePhaseAction(GamePhase.ClearCheck));
+            pipeline.Enqueue(new ChangePhaseAction(GamePhase.NodeCompleted));
+            pipeline.Enqueue(new NodeCompletedAction());
+            pipeline.Enqueue(new ChangePhaseAction(GamePhase.RewardItemChoice));
+            pipeline.Enqueue(new OfferRewardChoiceAction("help.choice", 3));
+            pipeline.RunToCompletion();
+
+            _settlementRaised = true;
+            Debug.Log("[InBattleManager] DevTest 强制节点胜利 → RewardItemChoice");
+            OnNodeSettlementReady?.Invoke();
+            return true;
+        }
+
+        private void CheatMakeNodeCleared(IArchitecture arch)
+        {
+            var registry = arch.GetModel<CardRegistry>();
+            var board = arch.GetModel<BoardModel>();
+            var deck = arch.GetModel<DeckModel>();
+
+            ResolveManagers();
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var slot = SlotId.Board(i);
+                var uid = board.GetCardUid(slot);
+                if (uid <= 0
+                    || !registry.TryGet(uid, out var card)
+                    || card.Kind != CardKind.Monster)
+                {
+                    continue;
+                }
+
+                board.ClearSlot(slot);
+                card.Zone.Value = ZoneId.None;
+                card.Slot.Value = SlotId.None;
+                fieldManager?.RequestRemoveFromField(uid, animate: false, skipBusyGuard: true);
+            }
+
+            var drawUids = new List<int>(deck.DrawPileUids);
+            for (var i = 0; i < drawUids.Count; i++)
+            {
+                if (registry.TryGet(drawUids[i], out var card))
+                {
+                    deck.RemoveCard(card);
+                }
+                else
+                {
+                    deck.RemoveUid(drawUids[i]);
+                }
+            }
+
+            var enemyPoolUids = new List<int>(deck.EnemyCardPoolUids);
+            for (var i = 0; i < enemyPoolUids.Count; i++)
+            {
+                if (registry.TryGet(enemyPoolUids[i], out var card))
+                {
+                    deck.RemoveCard(card);
+                }
+                else
+                {
+                    deck.RemoveUid(enemyPoolUids[i]);
+                }
+            }
+        }
+
+        /// <summary>
         /// 建跑并复位表现侧卡视图/卡组/场地。
         /// </summary>
         public InitialGameSnapshot BootstrapRun(InitialGameOptions options = null)
@@ -217,7 +315,7 @@ namespace NineGrid.Flow
 
             _settlementRaised = true;
             Debug.Log(
-                $"[InBattleManager] 节点结算就绪 phase={phase} isNodeCleared={cleared}（UI 尚未接入，仅事件）");
+                $"[InBattleManager] 节点结算就绪 phase={phase} isNodeCleared={cleared}");
             OnNodeSettlementReady?.Invoke();
             return true;
         }
@@ -669,6 +767,7 @@ namespace NineGrid.Flow
             CombatHitSink.ApplyClickEmpty = ApplyClickEmptyFromCore;
             CombatHitSink.ApplyUseItem = ApplyUseItemFromCore;
             CombatHitSink.NotifyBattleEnded = OnBattleEndedFromCombat;
+            CombatHitSink.NotifyNodeSettlementReady = OnNodeSettlementFromCombat;
             RegisterHandBridge();
         }
 
@@ -730,6 +829,11 @@ namespace NineGrid.Flow
             if (CombatHitSink.NotifyBattleEnded == OnBattleEndedFromCombat)
             {
                 CombatHitSink.NotifyBattleEnded = null;
+            }
+
+            if (CombatHitSink.NotifyNodeSettlementReady == OnNodeSettlementFromCombat)
+            {
+                CombatHitSink.NotifyNodeSettlementReady = null;
             }
 
             UnregisterHandBridge();
@@ -1062,6 +1166,11 @@ namespace NineGrid.Flow
                 SyncBoardOccupancyFromCore();
                 SpawnDamagePopups(result.DamagePopups, fallbackVictim: null, fallbackAmount: 0);
                 UpdateAvatarDebugText();
+
+                if (result.NodeClearedOrRewardPhase)
+                {
+                    TryEnterNodeSettlement();
+                }
             }
             finally
             {
@@ -1645,13 +1754,23 @@ namespace NineGrid.Flow
 
                 if (useResult.RewardChoicePending)
                 {
-                    await PresentRewardChoiceFromCoreAsync();
+                    // 局内宝箱等：仍在 InteractionLoop，当场 Bounce；通关奖励由主循环接 OnNodeSettlementReady。
+                    var phase = NineGridArchitecture.Current.GetSystem<IPhaseSystem>().CurrentPhase;
+                    if (phase == GamePhase.RewardItemChoice)
+                    {
+                        TryEnterNodeSettlement();
+                    }
+                    else
+                    {
+                        await PresentRewardChoiceFromCoreAsync(hoverOnNotice: false);
+                    }
+
                     return;
                 }
 
                 if (useResult.NodeClearedOrRewardPhase)
                 {
-                    CombatHitSink.RequestBattleEnded(victory: true);
+                    TryEnterNodeSettlement();
                 }
             }
             catch (OperationCanceledException)
@@ -1698,7 +1817,10 @@ namespace NineGrid.Flow
             }
         }
 
-        private async UniTask PresentRewardChoiceFromCoreAsync()
+        /// <summary>
+        /// 展示 Core PendingChoice 奖励 Bounce；主流程传 <paramref name="hoverOnNotice"/> 写 NoticeText。
+        /// </summary>
+        public async UniTask PresentRewardChoiceFromCoreAsync(bool hoverOnNotice = false)
         {
             var selector = SelectorManagerSingleton.Instance;
             if (selector == null)
@@ -1726,7 +1848,11 @@ namespace NineGrid.Flow
             try
             {
                 // 点选即推进 Core；退场动画（约 5s 掉落）在后台播，不再锁输入。
-                var pick = await WaitBouncePickAsync(selector, defIds, allowEscapeSkip: true);
+                var pick = await WaitBouncePickAsync(
+                    selector,
+                    defIds,
+                    allowEscapeSkip: true,
+                    hoverOnNotice: hoverOnNotice);
                 if (pick.Cancelled)
                 {
                     return;
@@ -1796,16 +1922,16 @@ namespace NineGrid.Flow
                         relicManager.SyncFromCore();
                     }
 
+                    PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
+
                     if (boardDelta.AvatarDefeated)
                     {
                         CombatHitSink.RequestBattleEnded(victory: false);
                         return;
                     }
 
-                    // 通关奖励选完后进入 RoomChoice / NodeCompleted：交主循环；局内宝箱回 InteractionLoop。
-                    if (phase == GamePhase.RoomChoice
-                        || phase == GamePhase.NodeCompleted
-                        || phase == GamePhase.Victory)
+                    // 整局通关：回主菜单。RoomChoice / NodeCompleted 交主循环继续，不在此宣告胜利。
+                    if (phase == GamePhase.Victory)
                     {
                         CombatHitSink.RequestBattleEnded(victory: true);
                     }
@@ -1873,7 +1999,8 @@ namespace NineGrid.Flow
         private static async UniTask<BouncePickResult> WaitBouncePickAsync(
             SelectorManagerSingleton selector,
             IReadOnlyList<string> optionDefIds,
-            bool allowEscapeSkip)
+            bool allowEscapeSkip,
+            bool hoverOnNotice = false)
         {
             var picked = -1;
             var pickedDone = false;
@@ -1883,7 +2010,9 @@ namespace NineGrid.Flow
                 {
                     picked = index;
                     pickedDone = true;
-                });
+                },
+                onFinished: null,
+                hoverOnNotice: hoverOnNotice);
 
             while (!pickedDone)
             {
@@ -2307,6 +2436,11 @@ namespace NineGrid.Flow
                     $"[InBattleManager] 清扫游离卡视图 uid={uid}（Core 已离场且不在手牌/卡组/占格）。");
                 cardManager.Release(uid);
             }
+        }
+
+        private static void OnNodeSettlementFromCombat()
+        {
+            Instance?.TryEnterNodeSettlement();
         }
 
         private static void OnBattleEndedFromCombat(bool victory)

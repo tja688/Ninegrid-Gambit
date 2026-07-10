@@ -10,22 +10,29 @@ using UnityEngine;
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 局内描述管理单例：合法 hover/drag 对象时，把 ContentVisual 描述写入 Card Info Text。
+    /// 局内描述管理单例：合法 hover/drag 对象时，把 ContentVisual 描述写入 Card Info Text；
+    /// 主流程选择悬停可写入 Notice Text。
     /// </summary>
     public sealed class DescriptionManagerSingleton : MonoBehaviour
     {
         public const int MaxDescriptionChars = 72;
         private const string DefaultInfoRootName = "InGameInfo Text";
         private const string DefaultCardInfoTextName = "Card Info Text";
+        private const string DefaultNoticeTextName = "Notice Text";
 
         private static DescriptionManagerSingleton _instance;
 
         [Tooltip("局内描述 TMP；留空则运行时在 InGameInfoText 下按名查找 Card Info Text。")]
         [SerializeField] private TextMeshProUGUI cardInfoText;
 
+        [Tooltip("主流程选择悬停 / 公告 TMP；留空则运行时查找 TableNine Text Overlay UI/Notice Text。")]
+        [SerializeField] private TextMeshProUGUI noticeText;
+
         private int _generation;
         private DescriptionShowRoute _activeRoute = DescriptionShowRoute.Hover;
         private string _activeDefId = string.Empty;
+        private int _noticeGeneration;
+        private string _activeNoticeDefId = string.Empty;
         private ContentVisualCatalog _visualCatalog;
         private CardFrameStyleCatalog _frameStyleCatalog;
         private bool _visualsResolved;
@@ -136,9 +143,63 @@ namespace NineGrid.Flow
         /// <summary>兼容旧调用：按 defId 走 Hover 路由。</summary>
         public int Show(string defId) => Show(defId, DescriptionShowRoute.Hover);
 
+        /// <summary>
+        /// 主流程选择悬停：写入 Notice Text（与 Card Info Text 独立 generation）。
+        /// </summary>
+        public int ShowOnNotice(string defId)
+        {
+            EnsureBindings();
+            if (noticeText == null)
+            {
+                _noticeGeneration++;
+                return _noticeGeneration;
+            }
+
+            if (string.IsNullOrEmpty(defId))
+            {
+                return ClearNoticeActiveAndBump();
+            }
+
+            if (_activeNoticeDefId == defId && !string.IsNullOrEmpty(noticeText.text))
+            {
+                return _noticeGeneration;
+            }
+
+            if (!TryResolveDescription(defId, DescriptionShowRoute.Hover, out var description))
+            {
+                return ClearNoticeActiveAndBump();
+            }
+
+            _noticeGeneration++;
+            _activeNoticeDefId = defId;
+            noticeText.text = ClampDescription(description, MaxDescriptionChars);
+            if (!noticeText.gameObject.activeSelf)
+            {
+                noticeText.gameObject.SetActive(true);
+            }
+
+            return _noticeGeneration;
+        }
+
+        public void ClearNotice(int generation)
+        {
+            if (generation != _noticeGeneration)
+            {
+                return;
+            }
+
+            EnsureBindings();
+            _activeNoticeDefId = string.Empty;
+            if (noticeText != null)
+            {
+                noticeText.text = string.Empty;
+            }
+        }
+
         public void Clear()
         {
             Clear(_generation);
+            ClearNotice(_noticeGeneration);
         }
 
         public void Clear(int generation)
@@ -180,6 +241,18 @@ namespace NineGrid.Flow
             return _generation;
         }
 
+        private int ClearNoticeActiveAndBump()
+        {
+            _noticeGeneration++;
+            _activeNoticeDefId = string.Empty;
+            if (noticeText != null)
+            {
+                noticeText.text = string.Empty;
+            }
+
+            return _noticeGeneration;
+        }
+
         private void RegisterHoverSink()
         {
             DescriptionHoverSink.Show = ShowFromSink;
@@ -205,43 +278,77 @@ namespace NineGrid.Flow
 
         private void EnsureBindings()
         {
-            if (cardInfoText != null)
+            if (cardInfoText == null)
             {
-                return;
-            }
-
-            var root = GameObject.Find(DefaultInfoRootName);
-            if (root == null)
-            {
-                var overlay = GameObject.Find("TableNine Text Overlay UI");
-                if (overlay != null)
+                var root = GameObject.Find(DefaultInfoRootName);
+                if (root == null)
                 {
-                    var t = overlay.transform.Find(DefaultInfoRootName);
-                    if (t != null)
+                    var overlay = GameObject.Find("TableNine Text Overlay UI");
+                    if (overlay != null)
                     {
-                        root = t.gameObject;
+                        var t = overlay.transform.Find(DefaultInfoRootName);
+                        if (t != null)
+                        {
+                            root = t.gameObject;
+                        }
+                    }
+                }
+
+                if (root != null)
+                {
+                    var child = root.transform.Find(DefaultCardInfoTextName);
+                    if (child != null)
+                    {
+                        cardInfoText = child.GetComponent<TextMeshProUGUI>();
+                    }
+
+                    if (cardInfoText == null)
+                    {
+                        cardInfoText = root.GetComponentInChildren<TextMeshProUGUI>(true);
+                        if (cardInfoText != null && cardInfoText.gameObject.name != DefaultCardInfoTextName)
+                        {
+                            // 避免误绑到 PlayerInfoText 子节点；仅接受具名 Card Info Text
+                            cardInfoText = null;
+                        }
                     }
                 }
             }
 
-            if (root == null)
+            if (noticeText == null)
             {
-                return;
-            }
-
-            var child = root.transform.Find(DefaultCardInfoTextName);
-            if (child != null)
-            {
-                cardInfoText = child.GetComponent<TextMeshProUGUI>();
-            }
-
-            if (cardInfoText == null)
-            {
-                cardInfoText = root.GetComponentInChildren<TextMeshProUGUI>(true);
-                if (cardInfoText != null && cardInfoText.gameObject.name != DefaultCardInfoTextName)
+                var noticeGo = GameObject.Find(DefaultNoticeTextName);
+                if (noticeGo == null)
                 {
-                    // 避免误绑到 PlayerInfoText 子节点；仅接受具名 Card Info Text
-                    cardInfoText = null;
+                    var overlay = GameObject.Find("TableNine Text Overlay UI");
+                    if (overlay != null)
+                    {
+                        var t = overlay.transform.Find(DefaultNoticeTextName);
+                        if (t != null)
+                        {
+                            noticeGo = t.gameObject;
+                        }
+                    }
+                }
+
+                if (noticeGo == null)
+                {
+                    var all = Resources.FindObjectsOfTypeAll<Transform>();
+                    for (var i = 0; i < all.Length; i++)
+                    {
+                        var tr = all[i];
+                        if (tr != null
+                            && tr.name == DefaultNoticeTextName
+                            && tr.gameObject.scene.IsValid())
+                        {
+                            noticeGo = tr.gameObject;
+                            break;
+                        }
+                    }
+                }
+
+                if (noticeGo != null)
+                {
+                    noticeText = noticeGo.GetComponent<TextMeshProUGUI>();
                 }
             }
         }
@@ -400,7 +507,7 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 属性提升等非 ContentVisual 选项（Attack/Armor/Hp）的局内选择描述回退。
+        /// 属性提升 / 房间 RoomKind 等非 ContentVisual 选项的描述回退。
         /// </summary>
         private static bool TryResolveChoiceOptionDescription(string defId, out string description)
         {
@@ -410,7 +517,8 @@ namespace NineGrid.Flow
                 return false;
             }
 
-            switch (defId.Trim())
+            var key = defId.Trim();
+            switch (key)
             {
                 case "Attack":
                     description = "攻击+1";
@@ -427,9 +535,90 @@ namespace NineGrid.Flow
                 case "room_right":
                     description = "右侧房间";
                     return true;
-                default:
-                    return false;
             }
+
+            if (TryResolveRoomKindDescription(key, out description))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryResolveRoomKindDescription(string key, out string description)
+        {
+            description = string.Empty;
+            if (!System.Enum.TryParse(key, ignoreCase: true, out RoomKind roomKind)
+                || roomKind == RoomKind.None)
+            {
+                return false;
+            }
+
+            CoreCardPresentationMapper.EnsureContentCatalogLoaded();
+            var arch = NineGridArchitecture.Current;
+            if (arch != null)
+            {
+                var content = arch.GetSystem<IContentSystem>();
+                if (content != null
+                    && content.HasCatalog
+                    && content.Catalog.Rewards.TryGetRoom(roomKind, out var room)
+                    && !string.IsNullOrWhiteSpace(room.DisplayName))
+                {
+                    description = BuildRoomDescription(room);
+                    return true;
+                }
+            }
+
+            description = roomKind switch
+            {
+                RoomKind.Shop => "商店：挑选帮助卡",
+                RoomKind.Gold => "金币房：获得金币",
+                RoomKind.Treasure => "宝箱房：挑选遗物",
+                RoomKind.Fountain => "温泉房：提升血量上限并回满",
+                RoomKind.Tavern => "酒馆",
+                RoomKind.Event => "事件房",
+                RoomKind.Battle => "战斗房",
+                RoomKind.Elite => "精英房",
+                RoomKind.Boss => "Boss 房",
+                _ => roomKind.ToString(),
+            };
+            return true;
+        }
+
+        private static string BuildRoomDescription(RoomDefinition room)
+        {
+            if (room.ShopOfferCount > 0)
+            {
+                return $"{room.DisplayName}：挑选帮助卡";
+            }
+
+            if (room.GoldDelta != 0)
+            {
+                return $"{room.DisplayName}：金币{(room.GoldDelta > 0 ? "+" : string.Empty)}{room.GoldDelta}";
+            }
+
+            if (room.MaxHpDelta != 0 || room.HealToFull)
+            {
+                var parts = new System.Collections.Generic.List<string>(2);
+                if (room.MaxHpDelta != 0)
+                {
+                    parts.Add($"血量上限+{room.MaxHpDelta}");
+                }
+
+                if (room.HealToFull)
+                {
+                    parts.Add("回满血");
+                }
+
+                return $"{room.DisplayName}：{string.Join("，", parts)}";
+            }
+
+            if (!string.IsNullOrEmpty(room.RewardPoolId))
+            {
+                return $"{room.DisplayName}：挑选奖励";
+            }
+
+            return room.DisplayName;
         }
 
         private void EnsureVisualsLoaded()

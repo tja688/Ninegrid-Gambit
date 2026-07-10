@@ -59,6 +59,7 @@ namespace NineGrid.Flow
         private string _rightOptionId = "room_right";
         private int _hoveredSide = -1;
         private int _descriptionGeneration = -1;
+        private bool _hoverOnNotice;
 
         public bool IsSessionLive => _sessionLive;
 
@@ -113,7 +114,8 @@ namespace NineGrid.Flow
             string leftOptionId,
             string rightOptionId,
             Action<int, string> onPicked,
-            Action onSessionFinished)
+            Action onSessionFinished,
+            bool hoverOnNotice = false)
         {
             Teardown();
             EnsureBindings();
@@ -130,6 +132,7 @@ namespace NineGrid.Flow
             _onPicked = onPicked;
             _onSessionFinished = onSessionFinished;
             _selectionLocked = false;
+            _hoverOnNotice = hoverOnNotice;
             _sessionLive = true;
             worldCamera = WorldPointerUtility.ResolveCamera(worldCamera);
 
@@ -164,6 +167,7 @@ namespace NineGrid.Flow
             _onPicked = null;
             _onSessionFinished = null;
             ClearHoverDescription();
+            _hoverOnNotice = false;
 
             if (leftRoom != null)
             {
@@ -228,7 +232,9 @@ namespace NineGrid.Flow
                 return;
             }
 
-            _descriptionGeneration = mgr.Show(defId);
+            _descriptionGeneration = _hoverOnNotice
+                ? mgr.ShowOnNotice(defId)
+                : mgr.Show(defId);
         }
 
         private void ClearHoverDescription()
@@ -239,7 +245,15 @@ namespace NineGrid.Flow
             }
 
             var mgr = DescriptionManagerSingleton.TryGetInstance();
-            mgr?.Clear(_descriptionGeneration);
+            if (_hoverOnNotice)
+            {
+                mgr?.ClearNotice(_descriptionGeneration);
+            }
+            else
+            {
+                mgr?.Clear(_descriptionGeneration);
+            }
+
             _descriptionGeneration = -1;
         }
 

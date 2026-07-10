@@ -243,7 +243,8 @@ namespace NineGrid.Cards
 
                     if (postKill.NodeClearedOrRewardPhase || hitResult.NodeClearedOrRewardPhase)
                     {
-                        CombatHitSink.RequestBattleEnded(victory: true);
+                        // 节点通关 → 主循环结算（奖励/房间），非整局胜利。
+                        CombatHitSink.RequestNodeSettlement();
                     }
 
                     return;
