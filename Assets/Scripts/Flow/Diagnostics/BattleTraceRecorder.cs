@@ -17,6 +17,7 @@ namespace NineGrid.Flow.Diagnostics
     public static class BattleTraceRecorder
     {
         private static BattleTraceSession sSession;
+        private static bool sExportedThisPlayExit;
         private static bool sEnabled =
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             true;
@@ -31,6 +32,14 @@ namespace NineGrid.Flow.Diagnostics
         }
 
         public static BattleTraceSession CurrentSession => sSession;
+
+        /// <summary>
+        /// 进入 Play 时复位「本局已导出」标记，供 Editor 钩子调用。
+        /// </summary>
+        public static void NotifyEnteredPlayMode()
+        {
+            sExportedThisPlayExit = false;
+        }
 
         public static void Clear()
         {
@@ -272,6 +281,9 @@ namespace NineGrid.Flow.Diagnostics
             return hints;
         }
 
+        /// <summary>
+        /// 导出当前局战斗日志。Editor 写入 Assets/Notes/BattleLog；非 Editor 回退 persistentDataPath。
+        /// </summary>
         public static string ExportJson()
         {
             try
@@ -283,9 +295,13 @@ namespace NineGrid.Flow.Diagnostics
                 }
 
                 var json = BattleTraceJson.Serialize(sSession);
-                var dir = Path.Combine(Application.persistentDataPath, "BattleTraces");
+                var dir = ResolveExportDirectory();
                 Directory.CreateDirectory(dir);
-                var fileName = "trace-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".json";
+                var sessionId = string.IsNullOrEmpty(sSession.sessionId)
+                    ? DateTime.Now.ToString("yyyyMMdd-HHmmss")
+                    : sSession.sessionId;
+                var seed = string.IsNullOrEmpty(sSession.seed) ? "0" : sSession.seed;
+                var fileName = "battlelog-" + sessionId + "-seed" + seed + ".json";
                 var path = Path.Combine(dir, fileName);
                 File.WriteAllText(path, json, Encoding.UTF8);
 
@@ -298,6 +314,62 @@ namespace NineGrid.Flow.Diagnostics
                 Debug.LogWarning("[BattleTrace] ExportJson failed: " + ex.Message);
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Play 结束时调用：有 ops 则导出，无数据则静默跳过。同一次退出只导出一次。
+        /// </summary>
+        public static string ExportJsonIfAny()
+        {
+            return ExportOnPlayExit("ExportJsonIfAny");
+        }
+
+        /// <summary>
+        /// Play 退出导出入口（OnDestroy / ExitingPlayMode 共用，去重）。
+        /// </summary>
+        public static string ExportOnPlayExit(string source)
+        {
+            try
+            {
+                if (sExportedThisPlayExit)
+                {
+                    return null;
+                }
+
+                if (!sEnabled)
+                {
+                    return null;
+                }
+
+                if (sSession == null || sSession.ops == null || sSession.ops.Count == 0)
+                {
+                    return null;
+                }
+
+                var path = ExportJson();
+                if (!string.IsNullOrEmpty(path))
+                {
+                    sExportedThisPlayExit = true;
+                    Debug.Log("[BattleTrace] Play 结束已导出战斗日志（" + source + "）：" + path);
+                }
+
+                return path;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[BattleTrace] ExportOnPlayExit failed: " + ex.Message);
+                return null;
+            }
+        }
+
+        public static string ResolveExportDirectory()
+        {
+#if UNITY_EDITOR
+            // Application.dataPath = <Project>/Assets
+            return Path.Combine(Application.dataPath, "Notes", "BattleLog");
+#else
+            return Path.Combine(Application.persistentDataPath, "BattleLog");
+#endif
         }
 
         public static string ConsumePendingReason(string fallback = "CombatHit")

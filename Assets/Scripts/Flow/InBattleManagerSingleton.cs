@@ -82,6 +82,10 @@ namespace NineGrid.Flow
             CancelPresentationWork();
             UnsubscribeFieldSignal();
             UnregisterCombatHitSink();
+#if UNITY_EDITOR
+            // Play 退出时先于域重载导出，避免静态会话被清掉。
+            BattleTraceRecorder.ExportOnPlayExit("OnDestroy");
+#endif
             if (_instance == this)
             {
                 _instance = null;
@@ -865,11 +869,6 @@ namespace NineGrid.Flow
                         verdictHints = BattleTraceRecorder.BuildVerdictHints(
                             events, summary.TargetKilled, summary.AvatarDefeated),
                     });
-
-                    if (summary.AvatarDefeated)
-                    {
-                        BattleTraceRecorder.ExportJson();
-                    }
                 }
             }
             catch (Exception ex)

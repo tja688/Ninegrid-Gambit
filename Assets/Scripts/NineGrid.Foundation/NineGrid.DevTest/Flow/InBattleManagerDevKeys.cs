@@ -38,7 +38,7 @@ namespace NineGrid.DevTest.Flow
                 .Bind(KeyCode.Keypad1, "真实局内入场", () => RunRealBattleEntryAsync().Forget())
                 .Bind(KeyCode.Keypad2, "探测节点结算", () => TrySettlement())
                 .Bind(KeyCode.Keypad3, "玩家血量=99", CheatAvatarHpTo99)
-                .Bind(KeyCode.Keypad4, "导出 BattleTrace", ExportBattleTrace)
+                .Bind(KeyCode.Keypad4, "立即导出 BattleLog", ExportBattleTrace)
                 .Bind(KeyCode.Keypad5, "开关 BattleTrace", ToggleBattleTrace);
         }
 

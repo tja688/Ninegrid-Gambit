@@ -84,7 +84,7 @@ namespace NineGrid.DevTest.Editor
                     (KeyCode.Keypad1, "真实局内入场"),
                     (KeyCode.Keypad2, "探测节点结算"),
                     (KeyCode.Keypad3, "玩家血量=99"),
-                    (KeyCode.Keypad4, "导出 BattleTrace"),
+                    (KeyCode.Keypad4, "立即导出 BattleLog"),
                     (KeyCode.Keypad5, "开关 BattleTrace"),
                 });
 
