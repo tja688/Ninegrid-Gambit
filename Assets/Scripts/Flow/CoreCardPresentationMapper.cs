@@ -67,7 +67,7 @@ namespace NineGrid.Flow
                 Kind = ToPresentationKind(card.Kind),
                 Attack = statSystem.GetEffectiveInt(card, StatId.Attack),
                 Hp = statSystem.GetEffectiveInt(card, StatId.Hp),
-                Armor = statSystem.GetEffectiveInt(card, StatId.Armor),
+                Armor = StatArmorUtility.GetCurrentArmor(card),
                 DefId = card.DefId ?? string.Empty,
             };
             return true;

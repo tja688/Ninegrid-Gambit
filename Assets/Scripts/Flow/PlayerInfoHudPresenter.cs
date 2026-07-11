@@ -235,7 +235,7 @@ namespace NineGrid.Flow
             hp = Mathf.Max(0, stats.GetEffectiveInt(avatar, StatId.Hp));
             maxHp = Mathf.Max(hp, stats.GetEffectiveInt(avatar, StatId.MaxHp));
             attack = Mathf.Max(0, stats.GetEffectiveInt(avatar, StatId.Attack));
-            armor = Mathf.Max(0, stats.GetEffectiveInt(avatar, StatId.Armor));
+            armor = StatArmorUtility.GetCurrentArmor(avatar);
             displayName = ResolveAvatarDisplayName(avatar.DefId);
             return true;
         }
