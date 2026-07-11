@@ -161,8 +161,11 @@ namespace NineGrid.Cards
             ParticipantSnapshot victim,
             GroundFieldManagerSingleton field,
             BattleBindParams bind,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            bool? restoreVictimOverride = null)
         {
+            var restoreVictim = restoreVictimOverride ?? bind.RestoreVictimToSlot;
+
             if (!bind.RequireFinalStateGuard)
             {
                 if (bind.RestoreAttackerToSlot)
@@ -170,7 +173,7 @@ namespace NineGrid.Cards
                     await RestoreAsync(attacker, field, restoreToSlot: true, allowSoftTween: true, strictWarn: false, cancellationToken);
                 }
 
-                if (bind.RestoreVictimToSlot)
+                if (restoreVictim)
                 {
                     await RestoreAsync(victim, field, restoreToSlot: true, allowSoftTween: true, strictWarn: false, cancellationToken);
                 }
@@ -189,7 +192,7 @@ namespace NineGrid.Cards
             await RestoreAsync(
                 victim,
                 field,
-                restoreToSlot: bind.RestoreVictimToSlot,
+                restoreToSlot: restoreVictim,
                 allowSoftTween: true,
                 strictWarn: true,
                 cancellationToken);

@@ -84,6 +84,8 @@ namespace NineGrid.Flow.Diagnostics
         public const string OpeningDealProgress = "OpeningDealProgress";
         public const string HandAcquire = "HandAcquire";
         public const string HandRelease = "HandRelease";
+        public const string OccupancyVacate = "OccupancyVacate";
+        public const string RegistryAudit = "RegistryAudit";
     }
 
     /// <summary>

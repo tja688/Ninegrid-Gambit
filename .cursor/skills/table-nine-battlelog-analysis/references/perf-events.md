@@ -30,6 +30,10 @@
 |------|------|----------------|
 | `BeatOpen` / `BeatClose` | 与流程同拍 | `beatKind`, `nodeIndex`；Close 含 `anomalyCount` |
 | `Spawn` / `Despawn` | 创建/回收视图 | `defId`, `slot`, `parent` / `reason` |
+| `RegistryMiss` | CardManager TryGet 失败 | `detail`（含 slot/caller） |
+| `Vacate` | 场地占格注销 | `slot`, `caller` |
+| `RingShift` | 外圈旋转计划/阶段 | `phase`=`plan\|vacated\|registered`, `plan` |
+| `RegistryAudit` | 注册表完整性快照 | `registryCount`, `fieldCount`, `ghosts`, `orphans`, `trigger` |
 | `MotionPlan` | Hop 等已知 from→to | `fromSlot`,`toSlot`,`fromX/Y`,`toX/Y`,`reason`,`expectMs` |
 | `MotionBegin` | tween 启动 | `motionId`, from/to, `reason` |
 | `MotionEnd` | complete / kill | `motionId`, `endHow`, `x/y`, `killedBySite` |
@@ -65,6 +69,8 @@
 | `SlotWorldMismatch` | 登记 slot 锚点与世界坐标偏离 |
 | `OrphanAtWrongAnchor` | 空槽锚点上贴了别的 uid |
 | `MissingMotionEnd` | BeatClose 时 motion 未收尾 |
+| `FieldOccupancyWithoutView` | 占格有 uid，CardManager 无视图（缺卡主嫌疑） |
+| `ViewWithoutFieldOccupancy` | 有 GroundCardMode 视图，占格无登记 |
 
 ## 常用 site
 
@@ -74,6 +80,8 @@
 | `DeckTween.Move` / `DeckTween.Hop` / `DeckTween.Kill` | CardDeckTween |
 | `FinalStateGuard.SoftSnap` / `HardSnap` | 战斗终态守卫 |
 | `Card.DisplayMode` / `Card.Spawn` / `Card.Release` | CardManager |
+| `Ground.TryGetCardAt` / `Ground.Vacate` / `Ground.RingShift` | 占格查询/注销/旋转 |
+| `Card.RegistryAudit` | 注册表审计 |
 | `Ground.HopPlan` | hop MotionPlan |
 | `DiagBeat` / `BoardSnap.Capture` / `Anomaly.Detect` | 记录器自身 |
 

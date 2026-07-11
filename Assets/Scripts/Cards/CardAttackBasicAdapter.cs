@@ -272,14 +272,40 @@ namespace NineGrid.Cards
             finally
             {
                 EndAttackerSortBoost(sortBoost);
-                rig.ResetParticipantMotion(attacker, bind.IsLethal ? null : victimTransform);
+
+                var victimKilled = bind.IsLethal && rig.LastHitConfirmedKill;
+                rig.ResetParticipantMotion(attacker, victimKilled ? null : victimTransform);
+
+                var restoreVictim = bind.RestoreVictimToSlot;
+                if (bind.IsLethal && !rig.LastHitConfirmedKill)
+                {
+                    restoreVictim = true;
+                    StopSpuriousDeathEffect(victimSnapshot.Card);
+                }
+
                 await BattleFinalStateGuard.RestorePairAsync(
                     attackerSnapshot,
                     victimSnapshot,
                     field,
                     bind,
-                    CancellationToken.None);
+                    CancellationToken.None,
+                    restoreVictimOverride: restoreVictim);
             }
+        }
+
+        private static void StopSpuriousDeathEffect(ManagedCard victim)
+        {
+            if (victim == null)
+            {
+                return;
+            }
+
+            if (victim.TryGetEffectManager(out var effectManager))
+            {
+                effectManager.StopCurrent();
+            }
+
+            CardManagerSingleton.Instance?.RefreshDisplayMode(victim);
         }
 
         private readonly struct AttackerSortBoost

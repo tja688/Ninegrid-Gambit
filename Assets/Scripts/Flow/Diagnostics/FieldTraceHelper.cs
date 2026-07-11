@@ -35,6 +35,8 @@ namespace NineGrid.Flow.Diagnostics
             FlowFieldTraceSink.HopPlan = OnHopPlan;
             FlowFieldTraceSink.DealResult = OnDealResult;
             FlowFieldTraceSink.HandLifecycle = OnHandLifecycle;
+            FlowFieldTraceSink.OccupancyVacate = OnOccupancyVacate;
+            FlowFieldTraceSink.RegistryAudit = OnRegistryAudit;
         }
 
         public static void UnregisterSinkHandlers()
@@ -399,6 +401,42 @@ namespace NineGrid.Flow.Diagnostics
                     { "handContains", handContains ? "true" : "false" },
                     { "displayMode", displayMode ?? string.Empty },
                 });
+        }
+
+        private static void OnOccupancyVacate(int slot, int uid, string caller)
+        {
+            Record(
+                FlowTraceCategory.Field,
+                FlowTraceNames.OccupancyVacate,
+                new Dictionary<string, string>
+                {
+                    { "slot", slot.ToString() },
+                    { "uid", uid.ToString() },
+                    { "caller", caller ?? string.Empty },
+                });
+        }
+
+        private static void OnRegistryAudit(
+            string trigger,
+            int registryCount,
+            int fieldCount,
+            string ghosts,
+            string orphans)
+        {
+            var hasGhosts = !string.IsNullOrEmpty(ghosts);
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.RegistryAudit,
+                new Dictionary<string, string>
+                {
+                    { "trigger", trigger ?? string.Empty },
+                    { "registryCount", registryCount.ToString() },
+                    { "fieldCount", fieldCount.ToString() },
+                    { "ghosts", ghosts ?? string.Empty },
+                    { "orphans", orphans ?? string.Empty },
+                    { "hasGhosts", hasGhosts ? "true" : "false" },
+                },
+                accepted: !hasGhosts && string.IsNullOrEmpty(orphans));
         }
 
         private static void EnrichCommon(Dictionary<string, string> payload)

@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -43,6 +45,17 @@ namespace NineGrid.Cards
 
                 return _instance;
             }
+        }
+
+        /// <summary>仅查找，不创建。审计/销毁期用。</summary>
+        public static GroundFieldManagerSingleton TryGetInstance()
+        {
+            if (_instance != null)
+            {
+                return _instance;
+            }
+
+            return FindFirstObjectByType<GroundFieldManagerSingleton>();
         }
 
         /// <summary>
@@ -133,7 +146,18 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            return CardManagerSingleton.Instance.TryGet(_uidBySlot[slot], out card);
+            var uid = _uidBySlot[slot];
+            if (CardManagerSingleton.Instance.TryGet(uid, out card))
+            {
+                return true;
+            }
+
+            CardPresentationProbe.RegistryMiss(
+                uid,
+                "Ground.TryGetCardAt",
+                "slot=" + slot.ToString(CultureInfo.InvariantCulture));
+            CardManagerSingleton.Instance?.AuditRegistryIntegrity("Ground.TryGetCardAt");
+            return false;
         }
 
         public bool TryGetSlotOf(int uid, out int slot)
@@ -198,7 +222,12 @@ namespace NineGrid.Cards
             }
 
             var uid = candidates[UnityEngine.Random.Range(0, candidates.Count)];
-            return CardManagerSingleton.Instance.TryGet(uid, out card);
+            if (!CardManagerSingleton.Instance.TryGetTracked(uid, "Ground.TryGetRandomOccupiedCard", out card))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public bool RequestPlaceCard(int slot, ManagedCard card, bool skipBusyGuard = false)
@@ -453,7 +482,12 @@ namespace NineGrid.Cards
             }
 
             var uid = _uidBySlot[fromSlot];
-            if (!CardManagerSingleton.Instance.TryGet(uid, out var card) || card?.Transform == null)
+            if (!CardManagerSingleton.Instance.TryGetTracked(
+                    uid,
+                    "Ground.RequestMoveCard",
+                    out var card,
+                    "fromSlot=" + fromSlot.ToString(CultureInfo.InvariantCulture))
+                || card?.Transform == null)
             {
                 return false;
             }
@@ -503,7 +537,11 @@ namespace NineGrid.Cards
 
             if (!CardManagerSingleton.Instance.TryGet(uid, out card))
             {
-                UnregisterCardAtSlot(slot);
+                CardPresentationProbe.RegistryMiss(
+                    uid,
+                    "Ground.TryTakeCardFromField",
+                    "slot=" + slot.ToString(CultureInfo.InvariantCulture) + ",healVacate=1");
+                UnregisterCardAtSlot(slot, "TryTakeCardFromField.missView");
                 RefreshSlotHitCollider(slot);
                 if (startExplore)
                 {
@@ -536,7 +574,11 @@ namespace NineGrid.Cards
 
             if (!CardManagerSingleton.Instance.TryGet(uid, out var card))
             {
-                UnregisterCardAtSlot(slot);
+                CardPresentationProbe.RegistryMiss(
+                    uid,
+                    "Ground.RequestRemoveFromField",
+                    "slot=" + slot.ToString(CultureInfo.InvariantCulture) + ",healVacate=1");
+                UnregisterCardAtSlot(slot, "RequestRemoveFromField.missView");
                 RefreshSlotHitCollider(slot);
                 if (startExplore)
                 {
@@ -1070,10 +1112,31 @@ namespace NineGrid.Cards
             {
                 var ring = GroundSlotTopology.ClockwiseRing;
                 var uids = new int[ring.Count];
+                var planSb = new StringBuilder(ring.Count * 16);
                 for (var i = 0; i < ring.Count; i++)
                 {
                     uids[i] = _uidBySlot[ring[i]];
+                    if (uids[i] == 0)
+                    {
+                        continue;
+                    }
+
+                    var toIndex = clockwise
+                        ? (i + 1) % ring.Count
+                        : (i + ring.Count - 1) % ring.Count;
+                    if (planSb.Length > 0)
+                    {
+                        planSb.Append(';');
+                    }
+
+                    planSb.Append(uids[i])
+                        .Append(':')
+                        .Append(ring[i])
+                        .Append('\u2192')
+                        .Append(ring[toIndex]);
                 }
+
+                CardPresentationProbe.RingShift("plan", planSb.ToString(), "Ground.RingShift");
 
                 for (var i = 0; i < ring.Count; i++)
                 {
@@ -1086,6 +1149,8 @@ namespace NineGrid.Cards
 
                     _uidBySlot[slot] = 0;
                 }
+
+                CardPresentationProbe.RingShift("vacated", planSb.ToString(), "Ground.RingShift");
 
                 for (var i = 0; i < ring.Count; i++)
                 {
@@ -1102,8 +1167,14 @@ namespace NineGrid.Cards
                     {
                         Debug.LogError(
                             $"[GroundFieldManager] 外圈旋转登记失败 uid={uids[i]} → slot={toSlot}");
+                        CardPresentationProbe.RegistryMiss(
+                            uids[i],
+                            "Ground.RingShift.RegisterFail",
+                            "toSlot=" + toSlot.ToString(CultureInfo.InvariantCulture));
                     }
                 }
+
+                CardPresentationProbe.RingShift("registered", planSb.ToString(), "Ground.RingShift");
 
                 _exploreRunner?.OnRingShifted(clockwise);
 
@@ -1118,6 +1189,10 @@ namespace NineGrid.Cards
 
                     if (!CardManagerSingleton.Instance.TryGet(uid, out var card) || card?.Transform == null)
                     {
+                        CardPresentationProbe.RegistryMiss(
+                            uid,
+                            "Ground.RingShift.AnimateSkip",
+                            "fromSlot=" + ring[i].ToString(CultureInfo.InvariantCulture));
                         continue;
                     }
 
@@ -1142,6 +1217,7 @@ namespace NineGrid.Cards
                 }
 
                 RefreshAllSlotHitColliders();
+                CardManagerSingleton.Instance?.AuditRegistryIntegrity("Ground.RingRotate.End");
             }
             finally
             {
@@ -1297,11 +1373,21 @@ namespace NineGrid.Cards
             return true;
         }
 
-        private void UnregisterCardAtSlot(int slot)
+        private void UnregisterCardAtSlot(int slot, string caller = null)
         {
             var uid = _uidBySlot[slot];
             if (uid != 0)
             {
+                CardPresentationProbe.Vacate(uid, slot, "Ground.Vacate", caller);
+                try
+                {
+                    FlowFieldTraceSink.OccupancyVacate?.Invoke(slot, uid, caller ?? "UnregisterCardAtSlot");
+                }
+                catch
+                {
+                    // ignore
+                }
+
                 _slotByUid.Remove(uid);
             }
 

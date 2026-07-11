@@ -63,6 +63,14 @@ namespace NineGrid.Cards
         private int _attackerMotionId;
         private int _victimMotionId;
         private bool _combatRigMotionProbed;
+        private bool _bindDeathCallbackRequested;
+        private bool _hitConfirmedKill;
+
+        /// <summary>命中帧后是否已确认受击者被击杀（用于门控 Timeline 死亡回调）。</summary>
+        public bool LastHitConfirmedKill => _hitConfirmedKill;
+
+        /// <summary>本场绑了死亡回调但命中未击杀（疑似误走死亡链路的信号）。</summary>
+        public bool LastDeathCallbackSkipped => _bindDeathCallbackRequested && !_hitConfirmedKill;
 
         public CardBoardDirection Direction { get; private set; }
 
@@ -184,6 +192,8 @@ namespace NineGrid.Cards
 
             _boundAttacker = attacker;
             _boundVictim = victim;
+            _bindDeathCallbackRequested = bindDeathCallback;
+            _hitConfirmedKill = false;
 
             ConfigureHitFlashCallback(victimEffects, onCombatHit);
             ConfigureDeathCallback(victimEffects, bindDeathCallback);
@@ -937,7 +947,9 @@ namespace NineGrid.Cards
             {
                 ProbeCombatHitFrame();
                 victimEffects?.CallbackPlayHitFlash();
+                _hitConfirmedKill = false;
                 onCombatHit?.Invoke();
+                _hitConfirmedKill = TryReadVictimConfirmedKill(_boundVictim);
             });
         }
 
@@ -956,7 +968,84 @@ namespace NineGrid.Cards
 
             ReplaceCallbackListeners(
                 deathCallback,
-                () => victimEffects.Callback((int)CardEffectCallbackAction.PlayDeath));
+                () =>
+                {
+                    var victimUid = TryResolveUid(_boundVictim);
+                    if (!_hitConfirmedKill)
+                    {
+                        if (victimUid > 0)
+                        {
+                            CardPresentationProbe.DeathCallback(
+                                victimUid,
+                                "Combat.DeathCallback",
+                                "skipped",
+                                armed: true,
+                                confirmedKill: false);
+                        }
+
+                        Debug.LogWarning(
+                            $"[{nameof(CardAttackBasicDirectionRig)}] {name} 死亡回调已跳过：命中帧未确认击杀"
+                            + (victimUid > 0 ? $" victimUid={victimUid}" : string.Empty)
+                            + "。疑似 Lethal Profile 预估偏差导致误走死亡链路。",
+                            this);
+                        return;
+                    }
+
+                    if (victimUid > 0)
+                    {
+                        CardPresentationProbe.DeathCallback(
+                            victimUid,
+                            "Combat.DeathCallback",
+                            "fired",
+                            armed: true,
+                            confirmedKill: true);
+                    }
+
+                    victimEffects.Callback((int)CardEffectCallbackAction.PlayDeath);
+                });
+        }
+
+        private static int TryResolveUid(Transform transform)
+        {
+            if (transform == null
+                || CardManagerSingleton.Instance == null
+                || !CardManagerSingleton.Instance.TryResolveUid(transform, out var uid))
+            {
+                return 0;
+            }
+
+            return uid;
+        }
+
+        /// <summary>
+        /// 命中帧 onCombatHit 已写 Core 并 SyncCard；以 View.Health 判断是否真击杀。
+        /// </summary>
+        private static bool TryReadVictimConfirmedKill(Transform victimTransform)
+        {
+            if (victimTransform == null
+                || CardManagerSingleton.Instance == null
+                || !CardManagerSingleton.Instance.TryResolveUid(victimTransform, out var uid)
+                || uid <= 0)
+            {
+                return false;
+            }
+
+            if (CardManagerSingleton.Instance.CardsByUid != null
+                && CardManagerSingleton.Instance.CardsByUid.TryGetValue(uid, out var card)
+                && card != null)
+            {
+                if (card.IsFieldDead)
+                {
+                    return true;
+                }
+
+                if (card.View != null && card.View.Health <= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void ReplaceCallbackListeners(Component callbackComponent, UnityAction action)

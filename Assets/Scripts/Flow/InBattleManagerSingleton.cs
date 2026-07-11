@@ -3048,6 +3048,7 @@ namespace NineGrid.Flow
             }
 
             FieldTraceHelper.RecordOccupancySnapshot("syncBefore");
+            cardManager?.AuditRegistryIntegrity("Sync.Before");
 
             var vacated = 0;
             var placed = 0;
@@ -3267,6 +3268,7 @@ namespace NineGrid.Flow
                 string.Join(",", spawnedUids),
                 string.Join(",", sweptUids));
             FieldTraceHelper.RecordOccupancySnapshot("syncAfter");
+            cardManager?.AuditRegistryIntegrity("Sync.After");
 
             if (openedSyncBeat)
             {

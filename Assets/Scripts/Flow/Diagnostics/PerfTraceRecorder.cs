@@ -571,6 +571,50 @@ namespace NineGrid.Flow.Diagnostics
                         ev.index);
                 }
             }
+            else if (ev.kind == PerfTraceKinds.DeathCallback
+                && ev.uid > 0
+                && ev.payload != null)
+            {
+                if (ev.payload.TryGetValue("outcome", out var outcome)
+                    && outcome == "fired"
+                    && ev.payload.TryGetValue("confirmedKill", out var confirmed)
+                    && confirmed == "0")
+                {
+                    EmitAnomaly(
+                        PerfTraceAnomalyCodes.DeathCallbackOnSurvivor,
+                        ev.uid,
+                        "death callback fired without confirmed kill site=" + ev.site,
+                        ev.index);
+                }
+                else if (ev.payload.TryGetValue("outcome", out var skippedOutcome)
+                    && skippedOutcome == "skipped"
+                    && DiagBeatClock.CurrentBeatKind == DiagBeatKinds.CombatHit
+                    && ev.payload.TryGetValue("armed", out var armed)
+                    && armed == "1")
+                {
+                    EmitAnomaly(
+                        PerfTraceAnomalyCodes.LethalEstimateMismatch,
+                        ev.uid,
+                        "armed death callback skipped at site=" + ev.site,
+                        ev.index);
+                }
+            }
+            else if (ev.kind == PerfTraceKinds.BattleBind
+                && ev.payload != null
+                && ev.payload.TryGetValue("estKill", out var estKill)
+                && estKill == "1"
+                && ev.payload.TryGetValue("bindDeath", out var bindDeath)
+                && bindDeath == "1"
+                && ev.payload.TryGetValue("counter", out var counterFlag)
+                && counterFlag == "1")
+            {
+                ev.payload.TryGetValue("profileId", out var profileId);
+                EmitAnomaly(
+                    PerfTraceAnomalyCodes.LethalEstimateMismatch,
+                    ev.uid,
+                    "counter routed with lethal/death bind profile=" + (profileId ?? string.Empty),
+                    ev.index);
+            }
             else if (ev.uid > 0
                 && sCombatantUids.Contains(ev.uid)
                 && DiagBeatClock.CurrentBeatKind == DiagBeatKinds.CombatHit
@@ -767,6 +811,49 @@ namespace NineGrid.Flow.Diagnostics
                         "slot=" + c.Slot + " xy=" + CmToStr(c.XCm) + "," + CmToStr(c.YCm)
                         + " anchor=" + CmToStr(ax) + "," + CmToStr(ay),
                         -1);
+                }
+            }
+
+            // FieldOccupancyWithoutView / ViewWithoutFieldOccupancy
+            var cardManager = CardManagerSingleton.Instance;
+            if (cardManager != null)
+            {
+                var snap = field.GetSnapshot();
+                for (var i = 0; i < snap.Slots.Length; i++)
+                {
+                    var occ = snap.Slots[i];
+                    if (occ.IsEmpty || occ.IsAvatarReserved)
+                    {
+                        continue;
+                    }
+
+                    if (!cardManager.TryGet(occ.Uid, out _))
+                    {
+                        EmitAnomaly(
+                            PerfTraceAnomalyCodes.FieldOccupancyWithoutView,
+                            occ.Uid,
+                            "slot=" + occ.Slot + " fieldHasUid viewMissing",
+                            -1);
+                    }
+                }
+
+                foreach (var card in cardManager.EnumerateCards())
+                {
+                    if (card == null
+                        || card.IsFieldDead
+                        || card.DisplayMode != CardDisplayMode.GroundCardMode)
+                    {
+                        continue;
+                    }
+
+                    if (!field.TryGetSlotOf(card.Uid, out _))
+                    {
+                        EmitAnomaly(
+                            PerfTraceAnomalyCodes.ViewWithoutFieldOccupancy,
+                            card.Uid,
+                            "mode=" + card.DisplayMode + " noFieldSlot",
+                            -1);
+                    }
                 }
             }
 

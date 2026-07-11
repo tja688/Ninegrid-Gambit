@@ -23,12 +23,20 @@ namespace NineGrid.Cards
         /// <summary>uid, phase, handContains, displayMode</summary>
         public static Action<int, string, bool, string> HandLifecycle;
 
+        /// <summary>slot, uid, caller</summary>
+        public static Action<int, int, string> OccupancyVacate;
+
+        /// <summary>trigger, registryCount, fieldCount, ghosts, orphans</summary>
+        public static Action<string, int, int, string, string> RegistryAudit;
+
         public static void ClearHandlers()
         {
             OccupancyConflict = null;
             HopPlan = null;
             DealResult = null;
             HandLifecycle = null;
+            OccupancyVacate = null;
+            RegistryAudit = null;
             CurrentBatchTag = string.Empty;
         }
     }

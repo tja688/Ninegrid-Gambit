@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -256,6 +257,110 @@ namespace NineGrid.Cards
             return _cardsByUid.TryGetValue(uid, out card);
         }
 
+        /// <summary>
+        /// 带 PerfLog 的 TryGet：失败时记 RegistryMiss，便于抓「占格有 uid 无视图」。
+        /// </summary>
+        public bool TryGetTracked(int uid, string site, out ManagedCard card, string detail = null)
+        {
+            if (_cardsByUid.TryGetValue(uid, out card))
+            {
+                return true;
+            }
+
+            CardPresentationProbe.RegistryMiss(uid, site ?? "Card.TryGetTracked", detail);
+            return false;
+        }
+
+        /// <summary>
+        /// 对比 CardManager 注册表与场地占格，输出 ghosts/orphans 到 PerfLog + CoreLog。
+        /// 在旋转结束、Sync 后、或 RegistryMiss 时调用。
+        /// </summary>
+        public void AuditRegistryIntegrity(string triggerSite)
+        {
+            try
+            {
+                var field = GroundFieldManagerSingleton.TryGetInstance();
+                if (field == null)
+                {
+                    return;
+                }
+
+                var ghostSb = new StringBuilder(32);
+                var orphanSb = new StringBuilder(32);
+                var fieldCount = 0;
+
+                var snap = field.GetSnapshot();
+                for (var i = 0; i < snap.Slots.Length; i++)
+                {
+                    var occ = snap.Slots[i];
+                    if (occ.IsEmpty || occ.IsAvatarReserved)
+                    {
+                        continue;
+                    }
+
+                    fieldCount++;
+                    if (!_cardsByUid.ContainsKey(occ.Uid))
+                    {
+                        if (ghostSb.Length > 0)
+                        {
+                            ghostSb.Append(';');
+                        }
+
+                        ghostSb.Append(occ.Uid).Append('@').Append(occ.Slot);
+                    }
+                }
+
+                foreach (var pair in _cardsByUid)
+                {
+                    var card = pair.Value;
+                    if (card == null
+                        || card.DisplayMode != CardDisplayMode.GroundCardMode
+                        || card.IsFieldDead)
+                    {
+                        continue;
+                    }
+
+                    if (!field.TryGetSlotOf(pair.Key, out _))
+                    {
+                        if (orphanSb.Length > 0)
+                        {
+                            orphanSb.Append(';');
+                        }
+
+                        orphanSb.Append(pair.Key);
+                    }
+                }
+
+                var ghosts = ghostSb.ToString();
+                var orphans = orphanSb.ToString();
+                CardPresentationProbe.RegistryAudit(
+                    "Card.RegistryAudit",
+                    _cardsByUid.Count,
+                    fieldCount,
+                    ghosts,
+                    orphans,
+                    trigger: triggerSite);
+
+                try
+                {
+                    FlowFieldTraceSink.RegistryAudit?.Invoke(
+                        triggerSite ?? string.Empty,
+                        _cardsByUid.Count,
+                        fieldCount,
+                        ghosts,
+                        orphans);
+                }
+                catch
+                {
+                    // ignore
+                }
+            }
+            catch
+            {
+                // swallow
+            }
+        }
+
         public IEnumerable<ManagedCard> EnumerateCards()
         {
             return _cardsByUid.Values;
@@ -296,6 +401,10 @@ namespace NineGrid.Cards
         {
             if (!_cardsByUid.TryGetValue(uid, out var card))
             {
+                CardPresentationProbe.RegistryMiss(
+                    uid,
+                    "Card.Release",
+                    "releaseOnMissing");
                 return;
             }
 

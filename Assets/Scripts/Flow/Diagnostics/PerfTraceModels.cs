@@ -43,6 +43,16 @@ namespace NineGrid.Flow.Diagnostics
         public const string Anomaly = "Anomaly";
         /// <summary>战斗 Timeline 命中帧：参战方 world xy / sorting / renderOn。</summary>
         public const string CombatHitFrame = "CombatHitFrame";
+        public const string BattleBind = "BattleBind";
+        public const string DeathCallback = "DeathCallback";
+        /// <summary>CardManager TryGet 失败：占格/Core 仍引用该 uid。</summary>
+        public const string RegistryMiss = "RegistryMiss";
+        /// <summary>场地占格注销（未必 Despawn）。</summary>
+        public const string Vacate = "Vacate";
+        /// <summary>外圈旋转 Vacate/重登记计划。</summary>
+        public const string RingShift = "RingShift";
+        /// <summary>CardManager ↔ 场地占格完整性快照。</summary>
+        public const string RegistryAudit = "RegistryAudit";
     }
 
     public static class PerfTraceSites
@@ -62,9 +72,14 @@ namespace NineGrid.Flow.Diagnostics
         public const string CombatRigLungeVictim = "CombatRig.Lunge.Victim";
         public const string CombatRigHitFrameAttacker = "CombatRig.HitFrame.Attacker";
         public const string CombatRigHitFrameVictim = "CombatRig.HitFrame.Victim";
+        public const string CombatBindResolve = "Combat.BindResolve";
+        public const string CombatDeathCallback = "Combat.DeathCallback";
         public const string BeatClock = "DiagBeat";
         public const string BoardSnapCapture = "BoardSnap.Capture";
         public const string AnomalyDetect = "Anomaly.Detect";
+        public const string CardRegistryMiss = "Card.RegistryMiss";
+        public const string GroundRingShift = "Ground.RingShift";
+        public const string CardRegistryAudit = "Card.RegistryAudit";
     }
 
     public static class PerfTraceAnomalyCodes
@@ -77,5 +92,11 @@ namespace NineGrid.Flow.Diagnostics
         public const string DeadCorpseAtVacatedSlot = "DeadCorpseAtVacatedSlot";
         public const string MissingMotionEnd = "MissingMotionEnd";
         public const string CombatantOffscreenWhileHit = "CombatantOffscreenWhileHit";
+        public const string DeathCallbackOnSurvivor = "DeathCallbackOnSurvivor";
+        public const string LethalEstimateMismatch = "LethalEstimateMismatch";
+        /// <summary>场地占格有 uid，CardManager 无对应视图（缺卡主嫌疑）。</summary>
+        public const string FieldOccupancyWithoutView = "FieldOccupancyWithoutView";
+        /// <summary>CardManager 有 GroundCardMode 视图，场地占格无登记。</summary>
+        public const string ViewWithoutFieldOccupancy = "ViewWithoutFieldOccupancy";
     }
 }

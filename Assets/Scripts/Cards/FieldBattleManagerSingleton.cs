@@ -195,7 +195,8 @@ namespace NineGrid.Cards
                 ?? attackAdapter.ConsumeNextLethalArmed()
                 || CombatHitSink.RequestEstimateWillKill(avatar.Uid, victim.Uid);
             var attackIntent = BattleIntentUtility.FromFlags(counter: false, willKill);
-            var attackBind = ResolveBindParams(attackIntent, victim, out _);
+            var attackBind = ResolveBindParams(attackIntent, victim, out var attackProfile);
+            LogBattleBindResolve(avatar.Uid, victim.Uid, attackBind, attackProfile, willKill, isCounter: false);
 
             CombatHitPresentationResult hitResult = default;
             var hitApplied = false;
@@ -264,6 +265,17 @@ namespace NineGrid.Cards
                     }
 
                     return;
+                }
+
+                if (attackBind.BindDeathCallback || attackBind.IsLethal)
+                {
+                    RecoverSurvivingVictimAfterLethalMismatch(
+                        avatar.Uid,
+                        victim,
+                        victimSlot,
+                        attackBind,
+                        willKill,
+                        hitResult.TargetKilled);
                 }
 
                 await PlayCounterAttackCoreAsync(victimSlot, lethal: false, ct);
@@ -350,7 +362,8 @@ namespace NineGrid.Cards
 
             var willKill = lethal || CombatHitSink.RequestEstimateWillKill(attacker.Uid, avatar.Uid);
             var intent = BattleIntentUtility.FromFlags(counter: true, willKill);
-            var bind = ResolveBindParams(intent, attacker, out _);
+            var bind = ResolveBindParams(intent, attacker, out var profile);
+            LogBattleBindResolve(attacker.Uid, avatar.Uid, bind, profile, willKill, isCounter: true);
 
             CombatHitPresentationResult hitResult = default;
             var hitApplied = false;
@@ -515,6 +528,82 @@ namespace NineGrid.Cards
             }
 
             return true;
+        }
+
+        private static void LogBattleBindResolve(
+            int attackerUid,
+            int victimUid,
+            BattleBindParams bind,
+            BattleEncounterProfileSO profile,
+            bool estimatedWillKill,
+            bool isCounter)
+        {
+            var profileId = profile != null ? profile.ProfileId : bind.ProfileId;
+            CardPresentationProbe.BattleBindResolve(
+                attackerUid,
+                victimUid,
+                "Combat.BindResolve",
+                bind.Intent.ToString(),
+                profileId,
+                bind.BindDeathCallback,
+                estimatedWillKill,
+                isCounter);
+
+            Debug.Log(
+                $"[FieldBattleManager] 路由 intent={bind.Intent} profile={profileId}"
+                + $" bindDeath={bind.BindDeathCallback} estKill={estimatedWillKill}"
+                + $" counter={isCounter} attacker={attackerUid} victim={victimUid}");
+        }
+
+        /// <summary>
+        /// Lethal Profile 预估击杀但实际存活：清死亡残留、强制回锚，避免接反击时「尸体隐身打人」。
+        /// </summary>
+        private void RecoverSurvivingVictimAfterLethalMismatch(
+            int attackerUid,
+            ManagedCard victim,
+            int victimSlot,
+            BattleBindParams bind,
+            bool estimatedWillKill,
+            bool actualKilled)
+        {
+            if (actualKilled || victim == null)
+            {
+                return;
+            }
+
+            if (!estimatedWillKill && !bind.BindDeathCallback)
+            {
+                return;
+            }
+
+            Debug.LogWarning(
+                $"[FieldBattleManager] Lethal 预估偏差：uid={victim.Uid} estKill={estimatedWillKill}"
+                + $" actualKill={actualKilled} profile={bind.ProfileId}，清理死亡残留后接反击。");
+
+            CardPresentationProbe.DeathCallback(
+                victim.Uid,
+                "Combat.LethalMismatchRecover",
+                "recover",
+                armed: bind.BindDeathCallback,
+                confirmedKill: false,
+                attackerUid: attackerUid);
+
+            if (victim.TryGetEffectManager(out var effectManager))
+            {
+                effectManager.StopCurrent();
+            }
+
+            CardManagerSingleton.Instance?.RefreshDisplayMode(victim);
+
+            ResolveFieldManager();
+            if (fieldManager != null && victim.Transform != null)
+            {
+                var anchor = fieldManager.GetGroundAnchor(victimSlot);
+                if (anchor != null)
+                {
+                    BattleFinalStateGuard.SnapImmediate(victim.Transform, anchor.position);
+                }
+            }
         }
 
         private BattleBindParams ResolveBindParams(
