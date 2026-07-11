@@ -519,6 +519,8 @@ namespace NineGrid.Flow
             }
 
             var phaseBeforeSelect = phaseSystem.CurrentPhase.ToString();
+            var pipeline = arch.GetSystem<IActionPipelineSystem>();
+            var goldEventStart = pipeline.EventLog.Entries.Count;
             var result = phaseSystem.SelectRoom(pickedIndex);
             if (!result.Accepted)
             {
@@ -547,7 +549,9 @@ namespace NineGrid.Flow
                 Debug.LogWarning("[MainGameLoop] FlowTrace RoomChosen: " + ex.Message);
             }
 
-            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
+            // 未使用帮助卡结算等：先按 EventLog 开演，再静默对齐 HUD。
+            InBattleManagerSingleton.PresentGoldGainsFromEventLog(goldEventStart);
+            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
         }
 
         private async UniTask PlayRoomEventAsync(CancellationToken ct)

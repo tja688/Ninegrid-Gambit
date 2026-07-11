@@ -133,10 +133,8 @@ namespace NineGrid.Flow
             _armor.Reset();
             _gold.Reset();
             _wasAtMaxHp = false;
-            if (GoldGainFxManagerSingleton.TryGetInstance(out var goldFx))
-            {
-                goldFx.SnapToCore(0);
-            }
+            // 清场只丢 HUD 缓存，不把金币显示 Snap 到 0（跨关 Opening 期间会闪零再暴涨）。
+            // 保留 GoldGainFx 当前显示；Opening / SyncFromCore 再对齐 Core。
         }
 
         private void EnsureBindings()

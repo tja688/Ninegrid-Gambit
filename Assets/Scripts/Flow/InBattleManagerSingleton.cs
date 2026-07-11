@@ -2482,8 +2482,8 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 扫描 EventLog 中的 GoldModified（正 delta），按可配置出生点播放飞入—吞噬—数值缓冲，
-        /// 并写入 FlowTrace Economy/GoldGained 打点。
+        /// 扫描 EventLog 中的 GoldModified：正 delta 飞币演出，负 delta 静默对齐 HUD，
+        /// 并写入 FlowTrace Economy/GoldGained 或 GoldSpent。
         /// </summary>
         public static void PresentGoldGainsFromEventLog(int startIndex, Vector3? originWorld = null)
         {
@@ -2504,8 +2504,21 @@ namespace NineGrid.Flow
             for (var i = Math.Max(0, startIndex); i < entries.Count; i++)
             {
                 var e = entries[i];
-                if (e.Type != CoreEventType.GoldModified || e.Delta <= 0)
+                if (e.Type != CoreEventType.GoldModified || e.Delta == 0)
                 {
+                    continue;
+                }
+
+                if (e.Delta < 0)
+                {
+                    goldFx?.SnapToCore(e.Amount);
+                    RecordGoldChangedFlow(
+                        FlowTraceNames.GoldSpent,
+                        e.Delta,
+                        e.Amount,
+                        e.Message,
+                        e.SourceDefId,
+                        e.ActionName);
                     continue;
                 }
 
@@ -2521,11 +2534,18 @@ namespace NineGrid.Flow
                 }
 
                 goldFx?.PlayGain(e.Delta, e.Amount, origin);
-                RecordGoldGainedFlow(e.Delta, e.Amount, e.Message, e.SourceDefId, e.ActionName);
+                RecordGoldChangedFlow(
+                    FlowTraceNames.GoldGained,
+                    e.Delta,
+                    e.Amount,
+                    e.Message,
+                    e.SourceDefId,
+                    e.ActionName);
             }
         }
 
-        private static void RecordGoldGainedFlow(
+        private static void RecordGoldChangedFlow(
+            string eventName,
             int delta,
             int amountAfter,
             string reason,
@@ -2542,7 +2562,7 @@ namespace NineGrid.Flow
                 FlowTraceRecorder.BeginSessionIfNeeded();
                 FlowTraceRecorder.Record(
                     FlowTraceCategory.Economy,
-                    FlowTraceNames.GoldGained,
+                    eventName,
                     new Dictionary<string, string>
                     {
                         { "delta", delta.ToString() },
@@ -2555,7 +2575,7 @@ namespace NineGrid.Flow
             }
             catch (Exception ex)
             {
-                Debug.LogWarning("[InBattleManager] FlowTrace GoldGained: " + ex.Message);
+                Debug.LogWarning("[InBattleManager] FlowTrace " + eventName + ": " + ex.Message);
             }
         }
 

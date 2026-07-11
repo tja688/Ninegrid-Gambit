@@ -69,6 +69,7 @@ namespace NineGrid.Flow.Diagnostics
         public const string Victory = "Victory";
         public const string Defeat = "Defeat";
         public const string GoldGained = "GoldGained";
+        public const string GoldSpent = "GoldSpent";
 
         // V2 Field / Presentation / Hand
         public const string DrainBegin = "DrainBegin";

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NineGrid.Core.Content;
 using NineGrid.Core.Stats;
 using QFramework;
 
@@ -407,8 +408,34 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.SelectReward, "Reward option index is out of range.", SlotId.None, 0);
             }
 
+            var entry = pending.RewardOptions[optionIndex];
+            var poolId = pending.PoolId.Value ?? string.Empty;
             var pipeline = this.GetSystem<IActionPipelineSystem>();
-            pipeline.Enqueue(new GrantRewardChoiceAction(pending.RewardOptions[optionIndex], optionIndex));
+
+            // 商店购买：按卡牌 Price 扣金；通关/宝箱等免费池不扣。
+            if (poolId == ShopHelpCardsPoolId)
+            {
+                var price = ResolveShopPrice(entry != null ? entry.DefId : null);
+                if (price > 0)
+                {
+                    var coins = this.GetModel<PlayerModel>().Coins.Value;
+                    if (coins < price)
+                    {
+                        return Reject(
+                            GameCommandKind.SelectReward,
+                            "Not enough gold",
+                            SlotId.None,
+                            0);
+                    }
+
+                    pipeline.Enqueue(new ModifyGoldAction(
+                        -price,
+                        "shopBuy:" + (entry.DefId ?? string.Empty),
+                        entry.DefId));
+                }
+            }
+
+            pipeline.Enqueue(new GrantRewardChoiceAction(entry, optionIndex));
             pipeline.Enqueue(new ClearPendingRewardChoiceAction());
             var resolved = ResolvePostRewardChoiceFlow(pipeline, 0);
             return CoreCommandResult.Accept(resolved);
@@ -421,7 +448,10 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.SkipHelpChoice, "Command is not legal in phase " + CurrentPhase, SlotId.None, 0);
             }
 
-            var resolved = this.GetSystem<IEconomySystem>().AwardSkipHelpChoice();
+            var pending = this.GetModel<PendingChoiceModel>();
+            var isShop = (pending.PoolId.Value ?? string.Empty) == ShopHelpCardsPoolId;
+            // 商店离开：不发跳过帮助卡选择的 +金币；通关帮助三选一跳过仍发。
+            var resolved = isShop ? 0 : this.GetSystem<IEconomySystem>().AwardSkipHelpChoice();
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new SkipRewardChoiceAction());
             pipeline.Enqueue(new ClearPendingRewardChoiceAction());
@@ -547,6 +577,31 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.RewardItemChoice));
             pipeline.Enqueue(new OfferRewardChoiceAction("help.choice", 3));
             return pipeline.RunToCompletion();
+        }
+
+        private const string ShopHelpCardsPoolId = "shop.helpCards";
+
+        private int ResolveShopPrice(string defId)
+        {
+            if (string.IsNullOrEmpty(defId))
+            {
+                return 0;
+            }
+
+            var content = this.GetSystem<IContentSystem>();
+            content.TryReloadFromConfig();
+            if (!content.HasCatalog)
+            {
+                return 0;
+            }
+
+            CardContentDefinition card;
+            if (!content.Catalog.Cards.TryGetValue(defId, out card) || card == null)
+            {
+                return 0;
+            }
+
+            return card.Price > 0 ? card.Price : 0;
         }
 
         private int ResolvePostRewardChoiceFlow(IActionPipelineSystem pipeline, int resolvedSoFar)
