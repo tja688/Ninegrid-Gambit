@@ -56,6 +56,7 @@ namespace NineGrid.Core
             if (Armor != 0)
             {
                 card.Stats.SetBase(StatId.Armor, Armor);
+                card.Stats.SetBase(StatId.CurrentArmor, Armor);
             }
 
             if (Recovery != 0)

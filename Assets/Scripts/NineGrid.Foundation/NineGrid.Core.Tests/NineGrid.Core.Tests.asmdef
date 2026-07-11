@@ -3,6 +3,7 @@
     "rootNamespace": "NineGrid.Core.Tests",
     "references": [
         "NineGrid.Core",
+        "NineGrid.Content",
         "QFramework",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"

@@ -59,7 +59,7 @@ namespace NineGrid.Core
                 DeactivateConsumedEffects(context, consumed);
             }
 
-            var armor = Math.Max(0, (int)Math.Round(target.Stats.GetBase(StatId.Armor)));
+            var armor = StatArmorUtility.GetCurrentArmor(target);
             var hp = Math.Max(0, (int)Math.Round(target.Stats.GetBase(StatId.Hp)));
             var armorDamage = Math.Min(armor, damage);
             var goldAbsorbed = 0;
@@ -73,7 +73,7 @@ namespace NineGrid.Core
             var newArmor = armor - armorLoss;
             var newHp = hp - hpLoss;
 
-            target.Stats.SetBase(StatId.Armor, newArmor);
+            StatArmorUtility.SetCurrentArmor(target, newArmor);
             target.Stats.SetBase(StatId.Hp, newHp);
 
             var result = new GameActionResult();
@@ -200,7 +200,7 @@ namespace NineGrid.Core
             var registry = context.GetModel<CardRegistry>();
             var statSystem = context.GetSystem<IStatSystem>();
             var target = registry.Get(TargetUid);
-            var maxHp = Math.Max(0, (int)Math.Round(target.Stats.GetBase(StatId.MaxHp)));
+            var maxHp = Math.Max(0, (int)Math.Round(statSystem.GetEffectiveValue(target, StatId.MaxHp)));
             var hp = Math.Max(0, (int)Math.Round(target.Stats.GetBase(StatId.Hp)));
             var modifiedAmount = (int)Math.Round(statSystem.EvaluateRule(RuleId.RecoveryMultiplier, Math.Max(0, Amount), statSystem.CreateContext(target)));
             var healed = Math.Max(0, Math.Min(modifiedAmount, maxHp - hp));
@@ -214,14 +214,14 @@ namespace NineGrid.Core
                     .WithCard(TargetUid)
                     .WithAmount(modifiedAmount)
                     .WithDelta(healed)
-                    .WithRemaining(newHp, (int)Math.Round(target.Stats.GetBase(StatId.Armor)))
+                    .WithRemaining(newHp, StatArmorUtility.GetCurrentArmor(target))
                     .WithSource(SourceDefId, Cause))
                 .AddEvent(new CoreGameEvent(CoreEventType.HpChanged, context.ActionId, ActionName)
                     .WithActor(ActorUid)
                     .WithTarget(TargetUid)
                     .WithCard(TargetUid)
                     .WithDelta(healed)
-                    .WithRemaining(newHp, (int)Math.Round(target.Stats.GetBase(StatId.Armor)))
+                    .WithRemaining(newHp, StatArmorUtility.GetCurrentArmor(target))
                     .WithSource(SourceDefId, Cause));
         }
 
@@ -256,10 +256,10 @@ namespace NineGrid.Core
         public override GameActionResult Apply(GameActionContext context)
         {
             var target = context.GetModel<CardRegistry>().Get(TargetUid);
-            var armor = Math.Max(0, (int)Math.Round(target.Stats.GetBase(StatId.Armor)));
+            var armor = StatArmorUtility.GetCurrentArmor(target);
             var delta = Math.Max(0, Amount);
             var newArmor = armor + delta;
-            target.Stats.SetBase(StatId.Armor, newArmor);
+            StatArmorUtility.SetCurrentArmor(target, newArmor);
 
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.ArmorChanged, context.ActionId, ActionName)
@@ -319,7 +319,7 @@ namespace NineGrid.Core
                 return GameActionResult.Empty;
             }
 
-            var sourceArmor = Math.Max(0, (int)Math.Round(source.Stats.GetBase(StatId.Armor)));
+            var sourceArmor = StatArmorUtility.GetCurrentArmor(source);
             var requested = TransferAll ? sourceArmor : Math.Max(0, Amount);
             var delta = Math.Min(sourceArmor, requested);
             if (delta <= 0)
@@ -329,7 +329,7 @@ namespace NineGrid.Core
 
             var sourceHp = Math.Max(0, (int)Math.Round(source.Stats.GetBase(StatId.Hp)));
             var sourceNewArmor = sourceArmor - delta;
-            source.Stats.SetBase(StatId.Armor, sourceNewArmor);
+            StatArmorUtility.SetCurrentArmor(source, sourceNewArmor);
 
             var result = new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.ArmorChanged, context.ActionId, ActionName)
@@ -343,10 +343,10 @@ namespace NineGrid.Core
             CardInstance receiver;
             if (ReceiverUid != 0 && registry.TryGet(ReceiverUid, out receiver))
             {
-                var receiverArmor = Math.Max(0, (int)Math.Round(receiver.Stats.GetBase(StatId.Armor)));
+                var receiverArmor = StatArmorUtility.GetCurrentArmor(receiver);
                 var receiverHp = Math.Max(0, (int)Math.Round(receiver.Stats.GetBase(StatId.Hp)));
                 var receiverNewArmor = receiverArmor + delta;
-                receiver.Stats.SetBase(StatId.Armor, receiverNewArmor);
+                StatArmorUtility.SetCurrentArmor(receiver, receiverNewArmor);
                 result.AddEvent(new CoreGameEvent(CoreEventType.ArmorChanged, context.ActionId, ActionName)
                     .WithActor(SourceUid)
                     .WithTarget(ReceiverUid)
@@ -434,7 +434,7 @@ namespace NineGrid.Core
             var card = registry.Get(CardUid);
             var fromSlot = card.Slot.Value;
             var removedAttack = (int)Math.Round(card.Stats.GetBase(StatId.Attack));
-            var removedArmor = (int)Math.Round(card.Stats.GetBase(StatId.Armor));
+            var removedArmor = StatArmorUtility.GetCurrentArmor(card);
 
             board.RemoveCard(card);
             deck.RemoveCard(card);
@@ -489,7 +489,7 @@ namespace NineGrid.Core
 
             var fromSlot = target.Slot.Value;
             var removedAttack = (int)Math.Round(target.Stats.GetBase(StatId.Attack));
-            var removedArmor = (int)Math.Round(target.Stats.GetBase(StatId.Armor));
+            var removedArmor = StatArmorUtility.GetCurrentArmor(target);
             target.Stats.SetBase(StatId.Hp, 0);
             board.RemoveCard(target);
             deck.RemoveCard(target);

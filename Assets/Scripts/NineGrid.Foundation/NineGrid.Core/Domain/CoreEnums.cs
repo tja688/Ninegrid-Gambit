@@ -30,6 +30,7 @@ namespace NineGrid.Core
         Hp,
         Attack,
         Armor,
+        CurrentArmor,
         Recovery,
         InteractionRange
     }
@@ -119,6 +120,7 @@ namespace NineGrid.Core
         OnDamageTaken,
         OnFatalDamage,
         OnCumulative,
+        OnActivate,
         OnNodeStart,
         OnNodeEnd,
         OnActionRejected

@@ -531,7 +531,7 @@ namespace NineGrid.Core
                 statSystem.GetEffectiveInt(card, StatId.MaxHp),
                 (int)card.Stats.GetBase(StatId.Hp),
                 statSystem.GetEffectiveInt(card, StatId.Hp),
-                (int)card.Stats.GetBase(StatId.Armor),
+                StatArmorUtility.GetCurrentArmor(card),
                 statSystem.GetEffectiveInt(card, StatId.Armor),
                 (int)card.Stats.GetBase(StatId.Attack),
                 statSystem.GetEffectiveInt(card, StatId.Attack),

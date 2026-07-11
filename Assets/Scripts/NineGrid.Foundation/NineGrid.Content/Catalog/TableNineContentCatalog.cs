@@ -185,7 +185,7 @@ namespace NineGrid.Content
                 Triggered("help.brutality_card.use", "HelpCard",
                     "{\"atom\":\"OnUseHelpCard\"}",
                     "{\"atom\":\"Player\"}",
-                    "{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"Once\",\"source\":\"help.brutality_card\",\"conditionTarget\":\"None\",\"conditionActor\":\"Player\",\"conditionTargetKind\":\"Monster\"}"),
+                    "{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"Once\",\"source\":\"help.brutality_card\",\"conditionTarget\":\"None\",\"conditionActor\":\"Player\",\"conditionTargetKind\":\"Monster\",\"sourceAction\":\"DealDamage\",\"excludeSourcePrefix\":\"help.\"}"),
                 "[使用时] 玩家下一次对怪物造成的战斗伤害翻倍"));
 
             c.AddEffect(Impl("help.rolling_stone.board_slot3", EffectContainerType.HelpCard,
@@ -357,7 +357,7 @@ namespace NineGrid.Content
                 Triggered("relic.heavy_armor.node_start", "Relic",
                     "{\"atom\":\"OnNodeStart\"}",
                     "{\"atom\":\"Player\"}",
-                    "{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"Player\",\"stat\":\"Armor\",\"effective\":true},{\"constant\":0.5}]}]}}"),
+                    "{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"Player\",\"stat\":\"Armor\"},{\"constant\":0.5}]}]}}"),
                 "[每关卡开始时] 每有两点基础护甲，额外获得1点当前护甲"));
 
             c.AddEffect(Impl("relic.vitality_amulet.node_end", EffectContainerType.Relic,
@@ -367,10 +367,22 @@ namespace NineGrid.Content
                     "{\"atom\":\"Heal\",\"amount\":6,\"actor\":\"Player\"}"),
                 "[每关卡结束时] 恢复6点血量"));
             c.AddEffect(Impl("relic.vitality_amulet.max_hp", EffectContainerType.Relic,
-                Modifier("relic.vitality_amulet.max_hp", "Relic", "{\"atom\":\"Player\"}", null,
-                    "{\"stat\":\"MaxHp\",\"op\":\"Add\",\"value\":6,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}"),
+                Triggered("relic.vitality_amulet.max_hp", "Relic",
+                    "{\"atom\":\"OnActivate\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":6,\"reason\":\"relic.vitality_amulet.max_hp\"}"),
                 "血量上限+6"));
 
+            c.AddEffect(Impl("relic.dragon_scale_armor.base", EffectContainerType.Relic,
+                Modifier("relic.dragon_scale_armor.base", "Relic", "{\"atom\":\"Player\"}", null,
+                    "{\"stat\":\"Armor\",\"op\":\"Add\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}"),
+                "基础护甲+1"));
+            c.AddEffect(Impl("relic.dragon_scale_armor.max_hp", EffectContainerType.Relic,
+                Triggered("relic.dragon_scale_armor.max_hp", "Relic",
+                    "{\"atom\":\"OnActivate\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":6,\"reason\":\"relic.dragon_scale_armor.max_hp\"}"),
+                "血量上限+6"));
             c.AddEffect(Impl("relic.dragon_scale_armor.rule", EffectContainerType.Relic,
                 Rule("relic.dragon_scale_armor.rule", "Relic",
                     "{\"rule\":\"EnemyAttackDelta\",\"op\":\"Add\",\"value\":-1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}"),
@@ -381,11 +393,17 @@ namespace NineGrid.Content
                     "{\"rule\":\"RecoveryMultiplier\",\"op\":\"Multiply\",\"value\":2,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}"),
                 "所有恢复血量效果翻倍"));
 
+            c.AddEffect(Impl("relic.phoenix_feather.max_hp", EffectContainerType.Relic,
+                Triggered("relic.phoenix_feather.max_hp", "Relic",
+                    "{\"atom\":\"OnActivate\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":8,\"reason\":\"relic.phoenix_feather.max_hp\"}"),
+                "血量上限+8"));
             c.AddEffect(Impl("relic.phoenix_feather.fatal", EffectContainerType.Relic,
                 Triggered("relic.phoenix_feather.fatal", "Relic",
                     "{\"atom\":\"OnFatalDamage\",\"target\":\"Player\"}",
                     "{\"atom\":\"Player\"}",
-                    "{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Heal\",\"amount\":15,\"actor\":\"Player\"},{\"atom\":\"DeactivateSelfEffect\"}]}"),
+                    "{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Heal\",\"amount\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"Player\",\"stat\":\"MaxHp\",\"effective\":true},{\"constant\":0.5}]}]},\"actor\":\"Player\"},{\"atom\":\"DeactivateSelfEffect\"}]}"),
                 "[受到致命伤害时] 恢复50%血量并永久移除本遗物"));
 
             c.AddEffect(Impl("relic.wood_shield.base", EffectContainerType.Relic,
@@ -418,8 +436,10 @@ namespace NineGrid.Content
                 "木甲套装血量额外+8"));
 
             c.AddEffect(Impl("skill.hard_skin.max_hp", EffectContainerType.PlayerSkill,
-                Modifier("skill.hard_skin.max_hp", "PlayerSkill", "{\"atom\":\"Player\"}", null,
-                    "{\"stat\":\"MaxHp\",\"op\":\"Add\",\"value\":10,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}"),
+                Triggered("skill.hard_skin.max_hp", "PlayerSkill",
+                    "{\"atom\":\"OnActivate\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":10,\"reason\":\"skill.hard_skin.max_hp\"}"),
                 "获得本技能时血量上限+10"));
             c.AddEffect(Impl("skill.hard_skin.node_end", EffectContainerType.PlayerSkill,
                 Triggered("skill.hard_skin.node_end", "PlayerSkill",
@@ -429,9 +449,10 @@ namespace NineGrid.Content
                 "[每关卡结束时] 恢复10点血量"));
             c.AddEffect(Impl("skill.battle_hardened.battle", EffectContainerType.PlayerSkill,
                 Triggered("skill.battle_hardened.battle", "PlayerSkill",
-                    "{\"atom\":\"OnBattle\"}",
+                    "{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0}",
                     "{\"atom\":\"Player\"}",
-                    "{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"UntilEnemyChanges\",\"source\":\"skill.battle_hardened\"}"),
+                    "{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"UntilEnemyChanges\",\"source\":\"skill.battle_hardened\"}",
+                    "[{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetKind\":\"Monster\"}]"),
                 "[战斗时] 攻击+2（仅对当前敌人有效）"));
             c.AddEffect(Impl("skill.arsenal.node_end", EffectContainerType.PlayerSkill,
                 Triggered("skill.arsenal.node_end", "PlayerSkill",
@@ -505,15 +526,17 @@ namespace NineGrid.Content
                 "每移动3次，移除正交相邻帮助卡"));
             c.AddEffect(Impl("skill.monster_battle_hardened.battle", EffectContainerType.MonsterSkill,
                 Triggered("skill.monster_battle_hardened.battle", "MonsterSkill",
-                    "{\"atom\":\"OnBattle\"}",
+                    "{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0}",
                     "{\"atom\":\"Self\"}",
-                    "{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"UntilBattleEnds\",\"source\":\"skill.monster_battle_hardened\"}"),
+                    "{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"UntilBattleEnds\",\"source\":\"skill.monster_battle_hardened\"}",
+                    "[{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetIs\":\"Self\"}]"),
                 "[战斗时] 本卡攻击+2"));
             c.AddEffect(Impl("skill.survival_wisdom.battle", EffectContainerType.MonsterSkill,
                 Triggered("skill.survival_wisdom.battle", "MonsterSkill",
-                    "{\"atom\":\"OnBattle\"}",
+                    "{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0}",
                     "{\"atom\":\"Self\"}",
-                    "{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Heal\",\"amount\":1,\"actor\":\"Self\"},{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"skill.survival_wisdom\"}]}"),
+                    "{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Heal\",\"amount\":1,\"actor\":\"Self\"},{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"skill.survival_wisdom\"}]}",
+                    "[{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetIs\":\"Self\"}]"),
                 "[战斗时] 恢复1点血量，本卡攻击+1"));
             c.AddEffect(Impl("skill.devotion.remove", EffectContainerType.MonsterSkill,
                 Triggered("skill.devotion.remove", "MonsterSkill",
@@ -660,7 +683,17 @@ namespace NineGrid.Content
                 Triggered("skill.falling_rocks.cumulative", "MonsterSkill",
                     "{\"atom\":\"OnCumulative\",\"metric\":\"armorLost\",\"threshold\":10,\"targetIs\":\"Self\"}",
                     "{\"atom\":\"Player\"}",
-                    "{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_man\",\"kind\":\"Monster\",\"count\":1,\"top\":false}",
+                    "{\"atom\":\"WeightedRandom\",\"choices\":["
+                    + "{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.sharp_stone\",\"kind\":\"Monster\",\"count\":1,\"top\":false}},"
+                    + "{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_stone\",\"kind\":\"Monster\",\"count\":1,\"top\":false}},"
+                    + "{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_swallower\",\"kind\":\"Monster\",\"count\":1,\"top\":false}},"
+                    + "{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_man\",\"kind\":\"Monster\",\"count\":1,\"top\":false}},"
+                    + "{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.rolling_stone_man\",\"kind\":\"Monster\",\"count\":1,\"top\":false}},"
+                    + "{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_shrimp\",\"kind\":\"Monster\",\"count\":1,\"top\":false}},"
+                    + "{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_thrower\",\"kind\":\"Monster\",\"count\":1,\"top\":false}},"
+                    + "{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.growing_stone\",\"kind\":\"Monster\",\"count\":1,\"top\":false}},"
+                    + "{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.shelter_stone\",\"kind\":\"Monster\",\"count\":1,\"top\":false}}"
+                    + "]}",
                     "[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"Board\"}]"),
                 "[场上] 本卡每累计损失满10点护甲，将一张石人军团怪物洗入战斗卡组"));
 
@@ -905,9 +938,10 @@ namespace NineGrid.Content
                 "[场上] 移动到格9时对玩家造成2点伤害"));
             c.AddEffect(Impl("skill.space_mastery.battle", EffectContainerType.MonsterSkill,
                 Triggered("skill.space_mastery.battle", "MonsterSkill",
-                    "{\"atom\":\"OnBattle\"}",
+                    "{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0}",
                     "{\"atom\":\"Self\"}",
-                    "{\"atom\":\"Rotate\",\"count\":1}"),
+                    "{\"atom\":\"Rotate\",\"count\":1}",
+                    "[{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetIs\":\"Self\"}]"),
                 "玩家与本卡战斗后，旋转一次"));
             c.AddEffect(Impl("skill.otherworld_help.move", EffectContainerType.MonsterSkill,
                 Triggered("skill.otherworld_help.move", "MonsterSkill",
@@ -1055,8 +1089,10 @@ namespace NineGrid.Content
             Relic(c, "relic.heavy_armor", "重盔甲", ContentRarity.White, "基础护甲+1，按基础护甲补当前护甲").AddEffect("relic.heavy_armor.base").AddEffect("relic.heavy_armor.node_start");
             Relic(c, "relic.gold_armor", "金币盔甲", ContentRarity.White, "金币抵消护甲伤害").AddEffect("relic.gold_armor.rule");
             Relic(c, "relic.vitality_amulet", "活力护符", ContentRarity.Blue, "血量上限+6，关卡结束恢复6").AddEffect("relic.vitality_amulet.max_hp").AddEffect("relic.vitality_amulet.node_end");
-            Relic(c, "relic.dragon_scale_armor", "龙鳞甲", ContentRarity.Gold, "所有怪物攻击-1").AddEffect("relic.dragon_scale_armor.rule");
-            Relic(c, "relic.phoenix_feather", "凤凰羽毛", ContentRarity.Gold, "致命伤害免死").AddEffect("relic.phoenix_feather.fatal");
+            Relic(c, "relic.dragon_scale_armor", "龙鳞甲", ContentRarity.Gold, "基础护甲+1，血量上限+6，怪物攻击-1")
+                .AddEffect("relic.dragon_scale_armor.base").AddEffect("relic.dragon_scale_armor.max_hp").AddEffect("relic.dragon_scale_armor.rule");
+            Relic(c, "relic.phoenix_feather", "凤凰羽毛", ContentRarity.Gold, "血量上限+8，致命伤害免死")
+                .AddEffect("relic.phoenix_feather.max_hp").AddEffect("relic.phoenix_feather.fatal");
             Relic(c, "relic.craving", "渴望", ContentRarity.Gold, "所有恢复血量效果翻倍").AddEffect("relic.craving.rule");
             Relic(c, "relic.junk_slot_machine", "废物老虎机", ContentRarity.Gold, "使用帮助卡时随机触发九选一").AddEffect("relic.junk_slot_machine.use");
         }

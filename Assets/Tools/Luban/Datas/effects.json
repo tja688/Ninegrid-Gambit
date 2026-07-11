@@ -38,7 +38,7 @@
     "id": "help.brutality_card.use",
     "container_type": "HelpCard",
     "state": "Implemented",
-    "json": "{\"id\":\"help.brutality_card.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"Once\",\"source\":\"help.brutality_card\",\"conditionTarget\":\"None\",\"conditionActor\":\"Player\",\"conditionTargetKind\":\"Monster\"}}",
+    "json": "{\"id\":\"help.brutality_card.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"Once\",\"source\":\"help.brutality_card\",\"conditionTarget\":\"None\",\"conditionActor\":\"Player\",\"conditionTargetKind\":\"Monster\",\"sourceAction\":\"DealDamage\",\"excludeSourcePrefix\":\"help.\"}}",
     "design_text": "[使用时] 玩家下一次对怪物造成的战斗伤害翻倍"
   },
   {
@@ -238,6 +238,20 @@
     "design_text": "所有恢复血量效果翻倍"
   },
   {
+    "id": "relic.dragon_scale_armor.base",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.dragon_scale_armor.base\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"modifier\":{\"stat\":\"Armor\",\"op\":\"Add\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}",
+    "design_text": "基础护甲+1"
+  },
+  {
+    "id": "relic.dragon_scale_armor.max_hp",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.dragon_scale_armor.max_hp\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":6,\"reason\":\"relic.dragon_scale_armor.max_hp\"}}",
+    "design_text": "血量上限+6"
+  },
+  {
     "id": "relic.dragon_scale_armor.rule",
     "container_type": "Relic",
     "state": "Implemented",
@@ -269,7 +283,7 @@
     "id": "relic.heavy_armor.node_start",
     "container_type": "Relic",
     "state": "Implemented",
-    "json": "{\"id\":\"relic.heavy_armor.node_start\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"Player\",\"stat\":\"Armor\",\"effective\":true},{\"constant\":0.5}]}]}}}",
+    "json": "{\"id\":\"relic.heavy_armor.node_start\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"Player\",\"stat\":\"Armor\"},{\"constant\":0.5}]}]}}}",
     "design_text": "[每关卡开始时] 每有两点基础护甲，额外获得1点当前护甲"
   },
   {
@@ -325,8 +339,15 @@
     "id": "relic.phoenix_feather.fatal",
     "container_type": "Relic",
     "state": "Implemented",
-    "json": "{\"id\":\"relic.phoenix_feather.fatal\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnFatalDamage\",\"target\":\"Player\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Heal\",\"amount\":15,\"actor\":\"Player\"},{\"atom\":\"DeactivateSelfEffect\"}]}}",
+    "json": "{\"id\":\"relic.phoenix_feather.fatal\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnFatalDamage\",\"target\":\"Player\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Heal\",\"amount\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"Player\",\"stat\":\"MaxHp\",\"effective\":true},{\"constant\":0.5}]}]},\"actor\":\"Player\"},{\"atom\":\"DeactivateSelfEffect\"}]}}",
     "design_text": "[受到致命伤害时] 恢复50%血量并永久移除本遗物"
+  },
+  {
+    "id": "relic.phoenix_feather.max_hp",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.phoenix_feather.max_hp\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":8,\"reason\":\"relic.phoenix_feather.max_hp\"}}",
+    "design_text": "血量上限+8"
   },
   {
     "id": "relic.potion_bag.node_start",
@@ -360,7 +381,7 @@
     "id": "relic.vitality_amulet.max_hp",
     "container_type": "Relic",
     "state": "Implemented",
-    "json": "{\"id\":\"relic.vitality_amulet.max_hp\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"modifier\":{\"stat\":\"MaxHp\",\"op\":\"Add\",\"value\":6,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}",
+    "json": "{\"id\":\"relic.vitality_amulet.max_hp\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":6,\"reason\":\"relic.vitality_amulet.max_hp\"}}",
     "design_text": "血量上限+6"
   },
   {
@@ -465,7 +486,7 @@
     "id": "skill.battle_hardened.battle",
     "container_type": "PlayerSkill",
     "state": "Implemented",
-    "json": "{\"id\":\"skill.battle_hardened.battle\",\"typeTag\":\"【类型玩家技能】\",\"containerType\":\"PlayerSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"UntilEnemyChanges\",\"source\":\"skill.battle_hardened\"}}",
+    "json": "{\"id\":\"skill.battle_hardened.battle\",\"typeTag\":\"【类型玩家技能】\",\"containerType\":\"PlayerSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"UntilEnemyChanges\",\"source\":\"skill.battle_hardened\"}}",
     "design_text": "[战斗时] 攻击+2（仅对当前敌人有效）"
   },
   {
@@ -542,7 +563,7 @@
     "id": "skill.falling_rocks.cumulative",
     "container_type": "MonsterSkill",
     "state": "Implemented",
-    "json": "{\"id\":\"skill.falling_rocks.cumulative\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"armorLost\",\"threshold\":10,\"targetIs\":\"Self\"},\"conditions\":[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"Board\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_man\",\"kind\":\"Monster\",\"count\":1,\"top\":false}}",
+    "json": "{\"id\":\"skill.falling_rocks.cumulative\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"armorLost\",\"threshold\":10,\"targetIs\":\"Self\"},\"conditions\":[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"Board\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"WeightedRandom\",\"choices\":[{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.sharp_stone\",\"kind\":\"Monster\",\"count\":1,\"top\":false}},{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_stone\",\"kind\":\"Monster\",\"count\":1,\"top\":false}},{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_swallower\",\"kind\":\"Monster\",\"count\":1,\"top\":false}},{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_man\",\"kind\":\"Monster\",\"count\":1,\"top\":false}},{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.rolling_stone_man\",\"kind\":\"Monster\",\"count\":1,\"top\":false}},{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_shrimp\",\"kind\":\"Monster\",\"count\":1,\"top\":false}},{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_thrower\",\"kind\":\"Monster\",\"count\":1,\"top\":false}},{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.growing_stone\",\"kind\":\"Monster\",\"count\":1,\"top\":false}},{\"weight\":1,\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.shelter_stone\",\"kind\":\"Monster\",\"count\":1,\"top\":false}}]}}",
     "design_text": "[场上] 本卡每累计损失满10点护甲，将一张石人军团怪物洗入战斗卡组"
   },
   {
@@ -675,7 +696,7 @@
     "id": "skill.hard_skin.max_hp",
     "container_type": "PlayerSkill",
     "state": "Implemented",
-    "json": "{\"id\":\"skill.hard_skin.max_hp\",\"typeTag\":\"【类型玩家技能】\",\"containerType\":\"PlayerSkill\",\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"modifier\":{\"stat\":\"MaxHp\",\"op\":\"Add\",\"value\":10,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}",
+    "json": "{\"id\":\"skill.hard_skin.max_hp\",\"typeTag\":\"【类型玩家技能】\",\"containerType\":\"PlayerSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":10,\"reason\":\"skill.hard_skin.max_hp\"}}",
     "design_text": "获得本技能时血量上限+10"
   },
   {
@@ -731,7 +752,7 @@
     "id": "skill.monster_battle_hardened.battle",
     "container_type": "MonsterSkill",
     "state": "Implemented",
-    "json": "{\"id\":\"skill.monster_battle_hardened.battle\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"UntilBattleEnds\",\"source\":\"skill.monster_battle_hardened\"}}",
+    "json": "{\"id\":\"skill.monster_battle_hardened.battle\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetIs\":\"Self\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"UntilBattleEnds\",\"source\":\"skill.monster_battle_hardened\"}}",
     "design_text": "[战斗时] 本卡攻击+2"
   },
   {
@@ -829,7 +850,7 @@
     "id": "skill.space_mastery.battle",
     "container_type": "MonsterSkill",
     "state": "Implemented",
-    "json": "{\"id\":\"skill.space_mastery.battle\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Rotate\",\"count\":1}}",
+    "json": "{\"id\":\"skill.space_mastery.battle\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetIs\":\"Self\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Rotate\",\"count\":1}}",
     "design_text": "玩家与本卡战斗后，旋转一次"
   },
   {
@@ -906,7 +927,7 @@
     "id": "skill.survival_wisdom.battle",
     "container_type": "MonsterSkill",
     "state": "Implemented",
-    "json": "{\"id\":\"skill.survival_wisdom.battle\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Heal\",\"amount\":1,\"actor\":\"Self\"},{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"skill.survival_wisdom\"}]}}",
+    "json": "{\"id\":\"skill.survival_wisdom.battle\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetIs\":\"Self\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Heal\",\"amount\":1,\"actor\":\"Self\"},{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"skill.survival_wisdom\"}]}}",
     "design_text": "[战斗时] 恢复1点血量，本卡攻击+1"
   },
   {

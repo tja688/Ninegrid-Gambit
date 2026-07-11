@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using NineGrid.Core.Stats;
+using NineGrid.Core.Systems;
 
 namespace NineGrid.Core
 {
@@ -45,6 +47,26 @@ namespace NineGrid.Core
                 .AddEvent(new CoreGameEvent(CoreEventType.AvatarAppeared, context.ActionId, ActionName)
                     .WithCard(avatarUid)
                     .WithSlots(SlotId.None, board.AvatarSlot.Value));
+        }
+    }
+
+    public sealed class ResetCurrentArmorAction : GameAction
+    {
+        public override string ActionName { get { return "ResetCurrentArmor"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var registry = context.GetModel<CardRegistry>();
+            var board = context.GetModel<BoardModel>();
+            var statSystem = context.GetSystem<IStatSystem>();
+            var avatarUid = board.AvatarUid.Value;
+            CardInstance avatar;
+            if (avatarUid > 0 && registry.TryGet(avatarUid, out avatar))
+            {
+                StatArmorUtility.ResetCurrentToEffective(statSystem, avatar);
+            }
+
+            return GameActionResult.Empty;
         }
     }
 

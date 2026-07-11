@@ -18,9 +18,11 @@ namespace NineGrid.Core
             RegisterModel(new DeckModel());
             RegisterModel(new PlayerModel());
             RegisterModel(new RunModel());
+            RegisterModel(new BattleContextModel());
             RegisterModel(new PendingChoiceModel());
 
             RegisterSystem<IStatSystem>(new StatSystem());
+            RegisterSystem<IBattleScopeSystem>(new BattleScopeSystem());
             RegisterSystem<ITriggerSystem>(new TriggerSystem());
             RegisterSystem<IContentSystem>(new ContentSystem());
             RegisterSystem<IEffectSystem>(new EffectSystem());

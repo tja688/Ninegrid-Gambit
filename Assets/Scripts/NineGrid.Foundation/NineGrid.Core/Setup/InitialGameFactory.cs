@@ -78,6 +78,7 @@ namespace NineGrid.Core
             player.Reset();
             run.Reset(options.Seed);
             pendingChoice.Clear();
+            architecture.GetModel<BattleContextModel>().Reset();
 
             var avatar = CreateAvatar(architecture, options, registry);
             avatar.Stats.SetBase(StatId.InteractionRange, 1);
@@ -137,6 +138,7 @@ namespace NineGrid.Core
             avatar.Stats.SetBase(StatId.Hp, options.AvatarMaxHp);
             avatar.Stats.SetBase(StatId.Attack, options.AvatarAttack);
             avatar.Stats.SetBase(StatId.Armor, options.AvatarArmor);
+            avatar.Stats.SetBase(StatId.CurrentArmor, options.AvatarArmor);
             avatar.Stats.SetBase(StatId.Recovery, options.AvatarRecovery);
         }
 

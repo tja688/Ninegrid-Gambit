@@ -305,4 +305,25 @@ namespace NineGrid.Core.Stats
             return string.Equals(left ?? string.Empty, right ?? string.Empty, System.StringComparison.OrdinalIgnoreCase);
         }
     }
+
+    public sealed class ExcludeSourcePrefixCondition : IStatCondition
+    {
+        public ExcludeSourcePrefixCondition(string prefix)
+        {
+            Prefix = prefix ?? string.Empty;
+        }
+
+        public string Prefix { get; private set; }
+
+        public bool IsMet(StatEvaluationContext context)
+        {
+            if (context == null || string.IsNullOrEmpty(Prefix))
+            {
+                return true;
+            }
+
+            var sourceDefId = context.SourceDefId ?? string.Empty;
+            return !sourceDefId.StartsWith(Prefix, System.StringComparison.OrdinalIgnoreCase);
+        }
+    }
 }

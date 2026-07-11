@@ -85,6 +85,7 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.DealOpeningCards));
             pipeline.Enqueue(new OpeningDealAction(options));
             pipeline.Enqueue(new FillEmptySlotsAction());
+            pipeline.Enqueue(new ResetCurrentArmorAction());
             pipeline.Enqueue(new NodeStartedAction());
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.InteractionLoop));
             var resolved = pipeline.RunToCompletion();
@@ -132,6 +133,7 @@ namespace NineGrid.Core.Systems
             var statSystem = this.GetSystem<IStatSystem>();
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             var startIndex = pipeline.EventLog.Entries.Count;
+            pipeline.Enqueue(new BeginPlayerMonsterEngagementAction(targetUid));
             var avatarFirstStrike = HasFirstStrike(statSystem, avatar);
             var targetFirstStrike = HasFirstStrike(statSystem, target);
             if (targetFirstStrike && !avatarFirstStrike)
@@ -145,6 +147,7 @@ namespace NineGrid.Core.Systems
                 pipeline.Enqueue(new ConditionalDealDamageIfAliveAction(target.Uid, avatar.Uid, GetAttackDamage(statSystem, target)));
             }
 
+            pipeline.Enqueue(new EndBattleScopeCleanupAction());
             var resolved = pipeline.RunToCompletion();
 
             if (ContainsEventSince(startIndex, CoreEventType.CardKilled, targetUid))
@@ -175,7 +178,18 @@ namespace NineGrid.Core.Systems
 
             var statSystem = this.GetSystem<IStatSystem>();
             var pipeline = this.GetSystem<IActionPipelineSystem>();
+            var engagedMonsterUid = 0;
+            if (TryGetPlayerMonsterEngagement(registry, attackerUid, targetUid, out engagedMonsterUid))
+            {
+                pipeline.Enqueue(new BeginPlayerMonsterEngagementAction(engagedMonsterUid));
+            }
+
             pipeline.Enqueue(new DealDamageAction(attackerUid, targetUid, GetAttackDamage(statSystem, attacker)));
+            if (engagedMonsterUid > 0)
+            {
+                pipeline.Enqueue(new EndBattleScopeCleanupAction());
+            }
+
             var resolved = pipeline.RunToCompletion();
             return CoreCommandResult.Accept(resolved);
         }
@@ -707,6 +721,29 @@ namespace NineGrid.Core.Systems
             }
 
             return System.Math.Max(0, damage);
+        }
+
+        private static bool TryGetPlayerMonsterEngagement(
+            CardRegistry registry,
+            int attackerUid,
+            int targetUid,
+            out int monsterUid)
+        {
+            monsterUid = 0;
+            CardInstance attacker;
+            CardInstance target;
+            if (!registry.TryGet(attackerUid, out attacker) || !registry.TryGet(targetUid, out target))
+            {
+                return false;
+            }
+
+            if (attacker.Kind != CardKind.Avatar || target.Kind != CardKind.Monster)
+            {
+                return false;
+            }
+
+            monsterUid = targetUid;
+            return true;
         }
 
         private void RefreshLegalCommands()

@@ -11,9 +11,9 @@
     "def_id": "relic.dragon_scale_armor",
     "display_name": "龙鳞甲",
     "rarity": "Gold",
-    "design_text": "所有怪物攻击-1",
+    "design_text": "基础护甲+1，血量上限+6，怪物攻击-1",
     "tags": "",
-    "effect_ids": "relic.dragon_scale_armor.rule"
+    "effect_ids": "relic.dragon_scale_armor.base|relic.dragon_scale_armor.max_hp|relic.dragon_scale_armor.rule"
   },
   {
     "def_id": "relic.gold_armor",
@@ -83,9 +83,9 @@
     "def_id": "relic.phoenix_feather",
     "display_name": "凤凰羽毛",
     "rarity": "Gold",
-    "design_text": "致命伤害免死",
+    "design_text": "血量上限+8，致命伤害免死",
     "tags": "",
-    "effect_ids": "relic.phoenix_feather.fatal"
+    "effect_ids": "relic.phoenix_feather.max_hp|relic.phoenix_feather.fatal"
   },
   {
     "def_id": "relic.potion_bag",

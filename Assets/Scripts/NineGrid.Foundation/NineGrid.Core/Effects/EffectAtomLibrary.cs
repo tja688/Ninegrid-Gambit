@@ -182,6 +182,17 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    [EffectAtom("OnActivate", EffectAtomKind.Trigger)]
+    public sealed class OnActivateTrigger : TriggerAtomBase
+    {
+        public override TriggerPoint Point { get { return TriggerPoint.OnActivate; } }
+
+        public override bool Matches(EffectRuntimeContext context)
+        {
+            return context != null;
+        }
+    }
+
     [EffectAtom("OnNodeStart", EffectAtomKind.Trigger)]
     public sealed class OnNodeStartTrigger : TriggerAtomBase
     {
@@ -1537,7 +1548,9 @@ namespace NineGrid.Core.Effects
                 return false;
             }
 
-            var current = mStat == StatId.Hp || mStat == StatId.Armor
+            var current = mStat == StatId.CurrentArmor || mStat == StatId.Armor
+                ? StatArmorUtility.GetCurrentArmor(card)
+                : mStat == StatId.Hp
                 ? card.Stats.GetBase(mStat)
                 : context.Architecture.GetSystem<IStatSystem>().GetEffectiveValue(card, mStat);
             return current >= mValue;
@@ -2855,6 +2868,8 @@ namespace NineGrid.Core.Effects
         private string mConditionTarget = "ActionTarget";
         private string mConditionActorRef = string.Empty;
         private CardKind mConditionTargetKind = CardKind.Unknown;
+        private string mSourceAction = string.Empty;
+        private string mExcludeSourcePrefix = string.Empty;
 
         public void Configure(EffectDslNode config)
         {
@@ -2867,6 +2882,8 @@ namespace NineGrid.Core.Effects
             mConditionTarget = config.Get("conditionTarget").AsString("ActionTarget");
             mConditionActorRef = config.Get("conditionActor").AsString(string.Empty);
             mConditionTargetKind = config.Get("conditionTargetKind").AsEnum(CardKind.Unknown);
+            mSourceAction = config.Get("sourceAction").AsString(string.Empty);
+            mExcludeSourcePrefix = config.Get("excludeSourcePrefix").AsString(string.Empty);
         }
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
@@ -2888,7 +2905,9 @@ namespace NineGrid.Core.Effects
                         mValue,
                         mLayer,
                         mScope,
-                        mSource));
+                        mSource,
+                        mSourceAction,
+                        mExcludeSourcePrefix));
                 }
             }
 
@@ -3424,7 +3443,9 @@ namespace NineGrid.Core.Effects
                 return false;
             }
 
-            return card.Stats.GetBase(mStat) >= mValue;
+            return mStat == StatId.CurrentArmor || mStat == StatId.Armor
+                ? StatArmorUtility.GetCurrentArmor(card) >= mValue
+                : card.Stats.GetBase(mStat) >= mValue;
         }
     }
 
@@ -3697,6 +3718,11 @@ namespace NineGrid.Core.Effects
             }
 
             var stat = node.Get("stat").AsEnum(StatId.Attack);
+            if (stat == StatId.CurrentArmor)
+            {
+                return StatArmorUtility.GetCurrentArmor(card);
+            }
+
             if (node.Get("effective").AsBool(false))
             {
                 return context.Architecture.GetSystem<IStatSystem>().GetEffectiveValue(card, stat);

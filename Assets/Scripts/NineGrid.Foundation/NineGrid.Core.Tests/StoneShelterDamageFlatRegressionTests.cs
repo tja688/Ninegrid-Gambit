@@ -1,4 +1,5 @@
 using NineGrid.Core;
+using NineGrid.Core.Stats;
 using NineGrid.Core.Effects;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
@@ -75,7 +76,7 @@ namespace NineGrid.Core.Tests
                 damage,
                 "单庇护石应对其他怪物 DamageFlatDelta=-1：4 攻 → amount=3（若为 2 则疑似双算）");
             Assert.AreEqual(1, (int)shrimp.Stats.GetBase(StatId.Hp), "3 伤破甲 2 后应剩 1 血");
-            Assert.AreEqual(0, (int)shrimp.Stats.GetBase(StatId.Armor));
+            Assert.AreEqual(0, StatArmorUtility.GetCurrentArmor(shrimp));
             Assert.AreNotEqual(ZoneId.Graveyard, shrimp.Zone.Value, "未击杀，不应进坟场");
         }
 

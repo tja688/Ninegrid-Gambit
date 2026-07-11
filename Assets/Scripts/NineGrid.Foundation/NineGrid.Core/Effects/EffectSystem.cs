@@ -269,9 +269,36 @@ namespace NineGrid.Core.Effects
             instance.Target = AtomRegistry.CreateTarget(instance.Definition.Target);
             instance.Action = AtomRegistry.CreateAction(instance.Definition.Action);
 
+            if (instance.Trigger.Point == TriggerPoint.OnActivate)
+            {
+                EnqueueActivateActions(instance);
+                return;
+            }
+
             var reaction = new EffectTriggerReaction(instance.InstanceId, this);
             var unRegister = this.GetSystem<ITriggerSystem>().Register(instance.Trigger.Point, instance.Trigger.Timing, reaction);
             instance.Unregisters.Add(unRegister);
+        }
+
+        private void EnqueueActivateActions(EffectInstance instance)
+        {
+            var runtime = new EffectRuntimeContext(((IBelongToArchitecture)this).GetArchitecture(), instance, null);
+            if (!CanTrigger(instance, runtime))
+            {
+                return;
+            }
+
+            var actions = BuildActionsForMatchedInstance(instance, runtime);
+            if (actions == null || actions.Count == 0)
+            {
+                return;
+            }
+
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            for (var i = 0; i < actions.Count; i++)
+            {
+                pipeline.Enqueue(actions[i]);
+            }
         }
 
         private void ActivateModifier(EffectInstance instance)

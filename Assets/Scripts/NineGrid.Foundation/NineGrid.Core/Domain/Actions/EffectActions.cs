@@ -892,7 +892,7 @@ namespace NineGrid.Core
             ModifierLayer layer,
             ModifierScope scope,
             string source)
-            : this(targetUid, true, 0, CardKind.Unknown, rule, op, value, layer, scope, source)
+            : this(targetUid, true, 0, CardKind.Unknown, rule, op, value, layer, scope, source, string.Empty, string.Empty)
         {
         }
 
@@ -907,6 +907,23 @@ namespace NineGrid.Core
             ModifierLayer layer,
             ModifierScope scope,
             string source)
+            : this(targetUid, useTargetCondition, actorUid, targetKind, rule, op, value, layer, scope, source, string.Empty, string.Empty)
+        {
+        }
+
+        public AddRuleModifierAction(
+            int targetUid,
+            bool useTargetCondition,
+            int actorUid,
+            CardKind targetKind,
+            RuleId rule,
+            ModifierOp op,
+            float value,
+            ModifierLayer layer,
+            ModifierScope scope,
+            string source,
+            string sourceAction,
+            string excludeSourcePrefix)
         {
             TargetUid = targetUid;
             UseTargetCondition = useTargetCondition;
@@ -918,6 +935,8 @@ namespace NineGrid.Core
             Layer = layer;
             Scope = scope;
             Source = source ?? "effect.action.rule";
+            SourceAction = sourceAction ?? string.Empty;
+            ExcludeSourcePrefix = excludeSourcePrefix ?? string.Empty;
         }
 
         public int TargetUid { get; private set; }
@@ -930,6 +949,8 @@ namespace NineGrid.Core
         public ModifierLayer Layer { get; private set; }
         public ModifierScope Scope { get; private set; }
         public string Source { get; private set; }
+        public string SourceAction { get; private set; }
+        public string ExcludeSourcePrefix { get; private set; }
         public override string ActionName { get { return "AddRuleModifier"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -948,6 +969,16 @@ namespace NineGrid.Core
             if (TargetKind != CardKind.Unknown)
             {
                 conditions.Add(new CardKindCondition(TargetKind));
+            }
+
+            if (!string.IsNullOrEmpty(SourceAction))
+            {
+                conditions.Add(new ActionSourceCondition(SourceAction, string.Empty, string.Empty, string.Empty, string.Empty));
+            }
+
+            if (!string.IsNullOrEmpty(ExcludeSourcePrefix))
+            {
+                conditions.Add(new ExcludeSourcePrefixCondition(ExcludeSourcePrefix));
             }
 
             IStatCondition condition = conditions.Count == 0

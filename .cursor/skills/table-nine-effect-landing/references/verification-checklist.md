@@ -7,12 +7,12 @@ Run after every full-stack landing. Check boxes in order; stop and fix on first 
 - [ ] Unity MCP: refresh / import assets, wait for compile
 - [ ] `read_console` — no errors (obsolete warnings OK if pre-existing)
 
-If Unity MCP unavailable: `.\Assets\Notes\CI\run-core-tests.ps1` will surface compile failures.
+If Unity MCP unavailable: run `NineGrid.Core.Tests` EditMode in Unity Test Runner.
 
 ## 2. Schema / Catalog Validity
 
-- [ ] `ContentSystem.ValidateCatalog()` passes (see `P6ContentLandingTests.DefaultCatalogValidatesImplementedDslAndTracksLongTailAtoms`)
-- [ ] New effect JSON uses only known atoms (`EffectValidator` / `P5EffectSystemTests`)
+- [ ] `ContentSystem.ValidateCatalog()` passes (see `ContentCatalogValidationTests.DefaultCatalog_ValidateCatalog_IsValidWithNoPendingEffects`)
+- [ ] New effect JSON uses only known atoms (`EffectValidator` via `ValidateCatalog` or narrow regression test)
 - [ ] No `PendingAtom` row marked `Implemented` with empty JSON
 
 Quick manual:
@@ -20,6 +20,7 @@ Quick manual:
 ```csharp
 var report = content.ValidateCatalog();
 Assert.IsTrue(report.IsValid, ...);
+Assert.AreEqual(0, report.PendingEffectIds.Count);
 ```
 
 ## 3. Narrow Behavior Test
@@ -29,42 +30,40 @@ Assert.IsTrue(report.IsValid, ...);
 
 | Change type | Preferred test file |
 |:--|:--|
-| Catalog DSL only | `P6ContentLandingTests` |
-| Atom / validator | `P5EffectSystemTests` |
-| Stat / modifier | `P2StatPipelineTests` |
-| GameAction / pipeline | `P3ActionPipelineTests` |
+| Catalog DSL only | `ContentCatalogValidationTests` + effect-specific regression (e.g. `OnBattleFilterRegressionTests`) |
+| Atom / validator | Narrow test in `NineGrid.Core.Tests` targeting the atom |
+| Stat / modifier | Stat pipeline regression in `NineGrid.Core.Tests` |
+| GameAction / pipeline | Action/pipeline regression in `NineGrid.Core.Tests` |
 
 Patterns:
 
-- `P5CatalogTestSupport.RequireEffectJson(id)` — schema + implemented gate
-- `ActivateCatalogEffect` + pipeline `RunToCompletion` — runtime behavior
+- `ContentCatalogValidationTests` — full catalog `ValidateCatalog()` gate
+- `OnBattleFilterRegressionTests` / `FallingRocksDeckGateRegressionTests` — BattleLog or catalog JSON → EditMode integration
 - Seeded RNG when random targets involved
 
 ## 4. Content Gates
 
 After catalog change:
 
-- [ ] `P6ContentLandingTests.DefaultCatalogKeepsBatchSevenPendingGateAndConvertedEffectsImplemented`
-- [ ] Converted ids appear in `AssertImplemented` list if gate should track them
-- [ ] `PendingEffectIds.Count` ≤ gate threshold (32 at batch-8 closeout, lower after conversions)
+- [ ] `ContentCatalogValidationTests` green (`IsValid && PendingEffectIds.Count == 0`)
+- [ ] Converted ids appear in catalog as `Implemented` with non-empty JSON
 
 ## 5. Luban Parity (catalog changed)
 
 - [ ] Export hardcoded → `Assets/Tools/Luban/Datas`
 - [ ] `.\Assets\Tools\Luban\gen_table_nine.ps1` succeeds
-- [ ] `P6LubanContentTests.GeneratedLubanTablesCanFeedContentSystem`
-- [ ] `P6LubanContentTests.BatchEightGeneratedLubanCatalogMatchesHardcodedDefaultCatalog`
+- [ ] StreamingAssets `tablenine_tbeffect.json` matches changed rows
 
 ## 6. Architecture Guards (Core changed)
 
-- [ ] `.\Assets\Notes\CI\check-core-guards.ps1` passes
+- [ ] `.\Assets\Notes\CI\check-core-guards.ps1` passes (if present)
 
 ## 7. Full EditMode Suite (Core or pipeline changed)
 
 - [ ] Unity MCP: run `NineGrid.Core.Tests` EditMode — all green
-- [ ] Or: `.\Assets\Notes\CI\run-core-tests.ps1`
+- [ ] Or: Unity Test Runner → NineGrid.Core.Tests
 
-Catalog-only changes: narrow P6 + full suite still recommended if time permits.
+Catalog-only changes: `ContentCatalogValidationTests` + narrow regression + full suite recommended.
 
 ---
 
@@ -92,12 +91,10 @@ flowchart TD
 ## Commands Summary
 
 ```powershell
-.\Assets\Notes\CI\check-core-guards.ps1
 .\Assets\Tools\Luban\gen_table_nine.ps1
-.\Assets\Notes\CI\run-core-tests.ps1
 ```
 
-Unity MCP preferred when editor is open.
+Unity MCP preferred when editor is open: `refresh_unity` → `read_console` → `run_tests` (NineGrid.Core.Tests EditMode).
 
 ## Done Criteria
 
