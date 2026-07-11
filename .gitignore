@@ -98,7 +98,9 @@ Thumbs.db
 /[Aa]ssets/[Aa]rts/[Ss]taging/
 /[Aa]ssets/[Aa]rts/[Ss]taging.meta
 
-# Battle play-end export logs (local only)
+# Play-end diagnostic export logs (local only)
+/[Aa]ssets/[Nn]otes/[Ll]ogs/
+/[Aa]ssets/[Nn]otes/[Ll]ogs.meta
 /[Aa]ssets/[Nn]otes/[Bb]attle[Ll]og/
 /[Aa]ssets/[Nn]otes/[Bb]attle[Ll]og.meta
 
