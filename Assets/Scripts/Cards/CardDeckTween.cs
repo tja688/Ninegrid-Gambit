@@ -12,11 +12,28 @@ namespace NineGrid.Cards
     /// </summary>
     public static class CardDeckTween
     {
-        public static void KillMotion(Transform target)
+        public static void KillMotion(Transform target, string site = null, int uid = 0)
         {
             if (target == null)
             {
                 return;
+            }
+
+            var resolvedUid = uid;
+            if (resolvedUid <= 0)
+            {
+                CardManagerSingleton.Instance?.TryResolveUid(target, out resolvedUid);
+            }
+
+            if (resolvedUid > 0 && DOTween.IsTweening(target))
+            {
+                CardPresentationProbe.MotionEnd(
+                    resolvedUid,
+                    motionId: 0,
+                    at: target.position,
+                    endHow: "kill",
+                    site: site ?? "DeckTween.Kill",
+                    killedBySite: site ?? "DeckTween.Kill");
             }
 
             target.DOKill(complete: false);
@@ -27,14 +44,37 @@ namespace NineGrid.Cards
             Vector3 worldPosition,
             float duration,
             float delay = 0f,
-            TweenCallback onComplete = null)
+            TweenCallback onComplete = null,
+            int uid = 0,
+            string reason = null)
         {
             if (target == null)
             {
                 return null;
             }
 
-            KillMotion(target);
+            var resolvedUid = uid;
+            if (resolvedUid <= 0)
+            {
+                CardManagerSingleton.Instance?.TryResolveUid(target, out resolvedUid);
+            }
+
+            KillMotion(target, "DeckTween.Move", resolvedUid);
+
+            var motionId = 0;
+            var from = target.position;
+            if (resolvedUid > 0)
+            {
+                motionId = CardPresentationProbe.NextMotionId();
+                CardPresentationProbe.MotionBegin(
+                    resolvedUid,
+                    motionId,
+                    from,
+                    worldPosition,
+                    "DeckTween.Move",
+                    reason: reason,
+                    expectMs: duration);
+            }
 
             var tween = target
                 .DOMove(worldPosition, duration)
@@ -42,18 +82,25 @@ namespace NineGrid.Cards
                 .SetEase(Ease.OutCubic)
                 .SetLink(target.gameObject, LinkBehaviour.KillOnDestroy);
 
-            if (onComplete != null)
+            tween.OnComplete(() =>
             {
-                tween.OnComplete(() =>
+                if (target == null)
                 {
-                    if (target == null)
-                    {
-                        return;
-                    }
+                    return;
+                }
 
-                    onComplete();
-                });
-            }
+                if (resolvedUid > 0)
+                {
+                    CardPresentationProbe.MotionEnd(
+                        resolvedUid,
+                        motionId,
+                        target.position,
+                        "complete",
+                        "DeckTween.Move");
+                }
+
+                onComplete?.Invoke();
+            });
 
             return tween;
         }
@@ -130,8 +177,24 @@ namespace NineGrid.Cards
                 return;
             }
 
-            KillMotion(target);
+            KillMotion(target, "DeckTween.Hop");
             target.position = worldStart;
+
+            var resolvedUid = 0;
+            CardManagerSingleton.Instance?.TryResolveUid(target, out resolvedUid);
+            var motionId = 0;
+            if (resolvedUid > 0)
+            {
+                motionId = CardPresentationProbe.NextMotionId();
+                CardPresentationProbe.MotionBegin(
+                    resolvedUid,
+                    motionId,
+                    worldStart,
+                    worldEnd,
+                    "DeckTween.Hop",
+                    reason: "hop",
+                    expectMs: duration);
+            }
 
             var baseScale = target.localScale;
             var peakScale = baseScale * (1f + peakScaleIntensity);
@@ -152,6 +215,7 @@ namespace NineGrid.Cards
                     .Append(target.DOScale(baseScale, settleDuration).SetEase(Ease.OutSine)));
 
             var completed = false;
+            var endHow = "complete";
             sequence.OnComplete(() =>
             {
                 completed = true;
@@ -161,9 +225,33 @@ namespace NineGrid.Cards
                 }
 
                 target.localScale = baseScale;
+                if (resolvedUid > 0)
+                {
+                    CardPresentationProbe.MotionEnd(
+                        resolvedUid,
+                        motionId,
+                        target.position,
+                        endHow,
+                        "DeckTween.Hop");
+                }
+
                 onComplete?.Invoke();
             });
-            sequence.OnKill(() => completed = true);
+            sequence.OnKill(() =>
+            {
+                endHow = "kill";
+                completed = true;
+                if (resolvedUid > 0 && target != null)
+                {
+                    CardPresentationProbe.MotionEnd(
+                        resolvedUid,
+                        motionId,
+                        target.position,
+                        "kill",
+                        "DeckTween.Hop",
+                        killedBySite: "DeckTween.Kill");
+                }
+            });
             await UniTask.WaitUntil(() => completed, cancellationToken: cancellationToken);
         }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Stats;
@@ -419,9 +420,19 @@ namespace NineGrid.Flow
                     cancellationToken,
                     presentationCt);
                 FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.Opening);
-                await PresentOpeningAsync(plan, linkedCts.Token);
-                FieldTraceHelper.RecordOccupancySnapshot("startNodeAfter", FlowTraceBatchTags.StartNode);
-                FieldTraceHelper.ClearBatchTag();
+                var openingNode = 0;
+                int.TryParse(FieldTraceHelper.ResolveNodeIndex(), out openingNode);
+                PerfTraceRecorder.OpenBeat(DiagBeatKinds.OpeningDeal, openingNode);
+                try
+                {
+                    await PresentOpeningAsync(plan, linkedCts.Token);
+                    FieldTraceHelper.RecordOccupancySnapshot("startNodeAfter", FlowTraceBatchTags.StartNode);
+                }
+                finally
+                {
+                    PerfTraceRecorder.CloseBeat();
+                    FieldTraceHelper.ClearBatchTag();
+                }
                 SyncContentPanels();
 
                 // 开局即空怪：IsNodeCleared 但尚未 OfferReward，先走 PostKill→CompleteNodeIfCleared。
@@ -861,12 +872,14 @@ namespace NineGrid.Flow
             CombatHitSink.NotifyBattleEnded = OnBattleEndedFromCombat;
             CombatHitSink.NotifyNodeSettlementReady = OnNodeSettlementFromCombat;
             FieldTraceHelper.RegisterSinkHandlers();
+            PerfTraceRecorder.RegisterSinkHandlers();
             RegisterHandBridge();
         }
 
         private void UnregisterCombatHitSink()
         {
             FieldTraceHelper.UnregisterSinkHandlers();
+            PerfTraceRecorder.UnregisterSinkHandlers();
             if (CombatHitSink.ApplyCombatHit == ApplyCombatHitFromCore)
             {
                 CombatHitSink.ApplyCombatHit = null;
@@ -1397,6 +1410,9 @@ namespace NineGrid.Flow
             var moveCount = result.Moves?.Length ?? 0;
             var dealCount = result.Deals?.Length ?? 0;
             FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.PostKill);
+            var drainNode = 0;
+            int.TryParse(FieldTraceHelper.ResolveNodeIndex(), out drainNode);
+            PerfTraceRecorder.OpenBeat(DiagBeatKinds.PostKillDrain, drainNode);
             try
             {
                 // 生命周期清场会 CancelPresentationWork；未传可取消 token 时挂到局内 CTS。
@@ -1462,6 +1478,7 @@ namespace NineGrid.Flow
             finally
             {
                 _drainInFlight = false;
+                PerfTraceRecorder.CloseBeat();
                 FieldTraceHelper.ClearBatchTag();
                 if (acquiredHere)
                 {
@@ -2481,11 +2498,76 @@ namespace NineGrid.Flow
             }
         }
 
+        private const string UnusedHelpCardsGoldReason = "unusedHelpCards";
+        private const float UnusedHelpCardVanishDuration = 0.18f;
+        private const float UnusedHelpCardStaggerSeconds = 0.07f;
+
+        /// <summary>
+        /// 选房后未用帮助卡结算演出：场上/手牌/卡组中的剩余帮助卡逐张退场并飞币，
+        /// 再处理 EventLog 中其余金币事件（跳过已演过的 unusedHelpCards，避免与房间金币糊成双飞）。
+        /// </summary>
+        public async UniTask PresentUnusedHelpCardSettlementFromEventLogAsync(
+            int startIndex,
+            CancellationToken cancellationToken = default)
+        {
+            ResolveManagers();
+
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return;
+            }
+
+            var entries = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
+            var unusedDelta = 0;
+            var unusedAfter = 0;
+            if (entries != null)
+            {
+                for (var i = Math.Max(0, startIndex); i < entries.Count; i++)
+                {
+                    var e = entries[i];
+                    if (e.Type != CoreEventType.GoldModified
+                        || e.Delta <= 0
+                        || !string.Equals(e.Message, UnusedHelpCardsGoldReason, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    unusedDelta = e.Delta;
+                    unusedAfter = e.Amount;
+                    break;
+                }
+            }
+
+            if (unusedDelta > 0)
+            {
+                await PresentUnusedHelpCardsToGoldAsync(unusedDelta, unusedAfter, cancellationToken);
+                RecordGoldChangedFlow(
+                    FlowTraceNames.GoldGained,
+                    unusedDelta,
+                    unusedAfter,
+                    UnusedHelpCardsGoldReason,
+                    string.Empty,
+                    "ModifyGold");
+            }
+            else
+            {
+                // 无金币时仍清掉表现侧残留帮助卡（含手牌），避免下一关前幽灵牌。
+                await SweepRemainingHelpCardViewsAsync(cancellationToken);
+            }
+
+            PresentGoldGainsFromEventLog(startIndex, skipReason: UnusedHelpCardsGoldReason);
+        }
+
         /// <summary>
         /// 扫描 EventLog 中的 GoldModified：正 delta 飞币演出，负 delta 静默对齐 HUD，
         /// 并写入 FlowTrace Economy/GoldGained 或 GoldSpent。
         /// </summary>
-        public static void PresentGoldGainsFromEventLog(int startIndex, Vector3? originWorld = null)
+        /// <param name="skipReason">若与事件 Message 相同则跳过（已由专用演出处理）。</param>
+        public static void PresentGoldGainsFromEventLog(
+            int startIndex,
+            Vector3? originWorld = null,
+            string skipReason = null)
         {
             var arch = NineGridArchitecture.Current;
             if (arch == null)
@@ -2505,6 +2587,12 @@ namespace NineGrid.Flow
             {
                 var e = entries[i];
                 if (e.Type != CoreEventType.GoldModified || e.Delta == 0)
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrEmpty(skipReason)
+                    && string.Equals(e.Message, skipReason, StringComparison.Ordinal))
                 {
                     continue;
                 }
@@ -2542,6 +2630,321 @@ namespace NineGrid.Flow
                     e.SourceDefId,
                     e.ActionName);
             }
+        }
+
+        private async UniTask PresentUnusedHelpCardsToGoldAsync(
+            int totalDelta,
+            int amountAfter,
+            CancellationToken cancellationToken)
+        {
+            var uids = CollectUnusedHelpCardUidsFromCore();
+            AppendPresentationHelpCardUids(uids);
+
+            var goldPerCard = ResolveUnusedHelpCardGoldPerCard();
+            if (goldPerCard <= 0 && uids.Count > 0)
+            {
+                goldPerCard = Math.Max(1, totalDelta / uids.Count);
+            }
+
+            var snapshots = new List<(ManagedCard card, Vector3 origin)>(uids.Count);
+            if (cardManager != null)
+            {
+                for (var i = 0; i < uids.Count; i++)
+                {
+                    if (!cardManager.TryGet(uids[i], out var card)
+                        || card?.Transform == null
+                        || card.DisplayMode == CardDisplayMode.RemovedMode)
+                    {
+                        continue;
+                    }
+
+                    snapshots.Add((card, card.Transform.position));
+                }
+            }
+
+            // 先卸占位（手牌整清，保证手牌中的也退场），再逐张退场飞币。
+            CardHandManagerSingleton.Instance?.ClearHand();
+            for (var i = 0; i < snapshots.Count; i++)
+            {
+                var card = snapshots[i].card;
+                fieldManager?.RequestRemoveFromField(
+                    card.Uid,
+                    animate: false,
+                    skipBusyGuard: true,
+                    startExplore: false);
+                deckManager?.TryDetachByUid(card.Uid, out _);
+            }
+
+            GoldGainFxManagerSingleton.TryGetInstance(out var goldFx);
+            var before = Math.Max(0, amountAfter - totalDelta);
+            var credited = 0;
+
+            for (var i = 0; i < snapshots.Count; i++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var (card, origin) = snapshots[i];
+                var remaining = totalDelta - credited;
+                var slice = remaining <= 0
+                    ? 0
+                    : Math.Min(goldPerCard > 0 ? goldPerCard : remaining, remaining);
+                credited += slice;
+                if (slice > 0)
+                {
+                    goldFx?.PlayGain(slice, before + credited, origin);
+                }
+
+                await VanishAndReleaseHelpCardAsync(card, cancellationToken);
+
+                if (i < snapshots.Count - 1 && UnusedHelpCardStaggerSeconds > 0f)
+                {
+                    await UniTask.Delay(
+                        TimeSpan.FromSeconds(UnusedHelpCardStaggerSeconds),
+                        cancellationToken: cancellationToken);
+                }
+            }
+
+            if (credited < totalDelta)
+            {
+                goldFx?.PlayGain(totalDelta - credited, amountAfter, ResolveDeckGoldOriginWorld());
+            }
+
+            await SweepRemainingHelpCardViewsAsync(cancellationToken);
+        }
+
+        private async UniTask SweepRemainingHelpCardViewsAsync(CancellationToken cancellationToken)
+        {
+            if (cardManager == null)
+            {
+                CardHandManagerSingleton.Instance?.ClearHand();
+                return;
+            }
+
+            CardHandManagerSingleton.Instance?.ClearHand();
+
+            var leftovers = new List<ManagedCard>();
+            foreach (var card in cardManager.EnumerateCards())
+            {
+                if (card == null || !IsPresentationHelpCard(card))
+                {
+                    continue;
+                }
+
+                if (card.DisplayMode == CardDisplayMode.RemovedMode || card.Transform == null)
+                {
+                    continue;
+                }
+
+                leftovers.Add(card);
+            }
+
+            for (var i = 0; i < leftovers.Count; i++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var card = leftovers[i];
+                fieldManager?.RequestRemoveFromField(
+                    card.Uid,
+                    animate: false,
+                    skipBusyGuard: true,
+                    startExplore: false);
+                deckManager?.TryDetachByUid(card.Uid, out _);
+                await VanishAndReleaseHelpCardAsync(card, cancellationToken);
+            }
+        }
+
+        private async UniTask VanishAndReleaseHelpCardAsync(
+            ManagedCard card,
+            CancellationToken cancellationToken)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            var uid = card.Uid;
+            if (card.Transform == null)
+            {
+                cardManager?.Release(uid);
+                return;
+            }
+
+            cardManager?.SetDisplayMode(card, CardDisplayMode.RemovedMode);
+            CardDeckTween.KillMotion(card.Transform);
+
+            var transform = card.Transform;
+            Tween tween = null;
+            try
+            {
+                var completed = false;
+                tween = transform
+                    .DOScale(Vector3.zero, UnusedHelpCardVanishDuration)
+                    .SetEase(Ease.InBack)
+                    .SetLink(transform.gameObject, LinkBehaviour.KillOnDestroy)
+                    .OnComplete(() => completed = true)
+                    .OnKill(() => completed = true);
+
+                while (!completed)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
+                    await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // 取消路径仍 Release，避免幽灵视图。
+            }
+            finally
+            {
+                if (tween != null && tween.IsActive())
+                {
+                    tween.Kill();
+                }
+
+                CardOpacityUtility.ClearCache(uid);
+                cardManager?.Release(uid);
+            }
+        }
+
+        private static List<int> CollectUnusedHelpCardUidsFromCore()
+        {
+            var result = new List<int>();
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return result;
+            }
+
+            var registry = arch.GetModel<CardRegistry>();
+            var board = arch.GetModel<BoardModel>();
+            var deck = arch.GetModel<DeckModel>();
+            var seen = new HashSet<int>();
+
+            AddHelpCardUids(registry, deck.DrawPileUids, seen, result);
+            AddHelpCardUids(registry, deck.PlayerCardPoolUids, seen, result);
+            AddHelpCardUids(registry, deck.ItemSlotUids, seen, result);
+            foreach (var uid in board.BoardCardUids())
+            {
+                AddHelpCardUid(registry, uid, seen, result);
+            }
+
+            return result;
+        }
+
+        private void AppendPresentationHelpCardUids(List<int> uids)
+        {
+            if (uids == null || cardManager == null)
+            {
+                return;
+            }
+
+            var seen = new HashSet<int>(uids);
+            foreach (var card in cardManager.EnumerateCards())
+            {
+                if (card == null || !IsPresentationHelpCard(card) || !seen.Add(card.Uid))
+                {
+                    continue;
+                }
+
+                if (card.DisplayMode == CardDisplayMode.HandCardMode
+                    || card.DisplayMode == CardDisplayMode.GroundCardMode
+                    || card.DisplayMode == CardDisplayMode.CardDeckMode
+                    || card.DisplayMode == CardDisplayMode.DragCardMode)
+                {
+                    uids.Add(card.Uid);
+                }
+            }
+        }
+
+        private static void AddHelpCardUids(
+            CardRegistry registry,
+            IReadOnlyList<int> source,
+            HashSet<int> seen,
+            List<int> result)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < source.Count; i++)
+            {
+                AddHelpCardUid(registry, source[i], seen, result);
+            }
+        }
+
+        private static void AddHelpCardUid(
+            CardRegistry registry,
+            int uid,
+            HashSet<int> seen,
+            List<int> result)
+        {
+            if (uid == 0 || registry == null || !seen.Add(uid))
+            {
+                return;
+            }
+
+            if (!registry.TryGet(uid, out var card) || card.Kind != CardKind.HelpCard)
+            {
+                seen.Remove(uid);
+                return;
+            }
+
+            result.Add(uid);
+        }
+
+        private static bool IsPresentationHelpCard(ManagedCard card)
+        {
+            if (card == null)
+            {
+                return false;
+            }
+
+            if (card.CoreKind == CardPresentationKind.HelpCard)
+            {
+                return true;
+            }
+
+            return !string.IsNullOrEmpty(card.DefId)
+                && card.DefId.StartsWith("help.", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static int ResolveUnusedHelpCardGoldPerCard()
+        {
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return 0;
+            }
+
+            var content = arch.GetSystem<IContentSystem>();
+            content?.TryReloadFromConfig();
+            if (content == null || !content.HasCatalog)
+            {
+                return 0;
+            }
+
+            return Math.Max(0, content.Catalog.Economy.UnusedHelpCardGold);
+        }
+
+        private Vector3? ResolveDeckGoldOriginWorld()
+        {
+            if (cardManager == null)
+            {
+                return null;
+            }
+
+            foreach (var card in cardManager.EnumerateCards())
+            {
+                if (card?.Transform != null && card.DisplayMode == CardDisplayMode.CardDeckMode)
+                {
+                    return card.Transform.position;
+                }
+            }
+
+            return null;
         }
 
         private static void RecordGoldChangedFlow(
@@ -2634,9 +3037,14 @@ namespace NineGrid.Flow
             }
 
             var previousBatch = FieldTraceHelper.CurrentBatchTag;
+            var openedSyncBeat = false;
             if (string.IsNullOrEmpty(previousBatch))
             {
                 FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.Sync);
+                var syncNode = 0;
+                int.TryParse(FieldTraceHelper.ResolveNodeIndex(), out syncNode);
+                PerfTraceRecorder.OpenBeat(DiagBeatKinds.SyncBoard, syncNode);
+                openedSyncBeat = true;
             }
 
             FieldTraceHelper.RecordOccupancySnapshot("syncBefore");
@@ -2859,6 +3267,11 @@ namespace NineGrid.Flow
                 string.Join(",", spawnedUids),
                 string.Join(",", sweptUids));
             FieldTraceHelper.RecordOccupancySnapshot("syncAfter");
+
+            if (openedSyncBeat)
+            {
+                PerfTraceRecorder.CloseBeat();
+            }
 
             if (string.IsNullOrEmpty(previousBatch))
             {

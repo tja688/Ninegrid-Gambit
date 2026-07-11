@@ -24,6 +24,8 @@ namespace NineGrid.Flow.Editor
                 BattleTraceRecorder.NotifyEnteredPlayMode();
                 BattleTraceRecorder.Clear();
                 FlowTraceRecorder.Clear();
+                PerfTraceRecorder.Clear();
+                DiagBeatClock.Reset();
                 return;
             }
 
@@ -33,9 +35,10 @@ namespace NineGrid.Flow.Editor
             }
 
             var battlePath = BattleTraceRecorder.ExportOnPlayExit("ExitingPlayMode");
-            // Flow 已在 ExportOnPlayExit 内一并尝试
+            // CoreLog / PerfLog 已在 ExportOnPlayExit 内一并尝试
             if (!string.IsNullOrEmpty(battlePath)
-                || FlowTraceRecorder.CurrentSession != null)
+                || FlowTraceRecorder.CurrentSession != null
+                || PerfTraceRecorder.CurrentSession != null)
             {
                 AssetDatabase.Refresh();
             }

@@ -226,6 +226,33 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 按 Uid 从卡组槽卸下视图，不 Release（供未用帮助卡结算等外层自行退场）。
+        /// </summary>
+        public bool TryDetachByUid(int uid, out ManagedCard card)
+        {
+            card = null;
+            if (!TryFindDeckSlotByUid(uid, out var deckSlot) || _slotContainer == null)
+            {
+                // Standby 待入场列表也可能持有该 uid。
+                for (var i = _pendingEntryCards.Count - 1; i >= 0; i--)
+                {
+                    if (_pendingEntryCards[i] == null || _pendingEntryCards[i].Uid != uid)
+                    {
+                        continue;
+                    }
+
+                    card = _pendingEntryCards[i];
+                    _pendingEntryCards.RemoveAt(i);
+                    return card != null;
+                }
+
+                return false;
+            }
+
+            return _slotContainer.TryRemoveAt(deckSlot, out card, out _);
+        }
+
+        /// <summary>
         /// 清卡组槽并回到 Standby，供局内重新开局前复位。不销毁卡视图（由 CardManager 统一释放）。
         /// </summary>
         public void ResetToStandby()

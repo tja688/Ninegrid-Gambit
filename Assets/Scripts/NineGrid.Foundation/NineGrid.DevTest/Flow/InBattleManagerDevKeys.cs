@@ -106,9 +106,12 @@ namespace NineGrid.DevTest.Flow
             var flowOk = FlowTraceRecorder.CurrentSession != null
                 && FlowTraceRecorder.CurrentSession.events != null
                 && FlowTraceRecorder.CurrentSession.events.Count > 0;
-            if (!battleOk && !flowOk)
+            var perfOk = PerfTraceRecorder.CurrentSession != null
+                && PerfTraceRecorder.CurrentSession.events != null
+                && PerfTraceRecorder.CurrentSession.events.Count > 0;
+            if (!battleOk && !flowOk && !perfOk)
             {
-                Debug.LogWarning("[InBattleManagerDevKeys] Battle/FlowTrace 导出失败或无数据。");
+                Debug.LogWarning("[InBattleManagerDevKeys] Battle/Core/Perf Trace 导出失败或无数据。");
             }
         }
 
@@ -116,11 +119,14 @@ namespace NineGrid.DevTest.Flow
         {
             BattleTraceRecorder.Enabled = !BattleTraceRecorder.Enabled;
             FlowTraceRecorder.Enabled = BattleTraceRecorder.Enabled;
+            PerfTraceRecorder.Enabled = BattleTraceRecorder.Enabled;
             Debug.Log(
                 "[InBattleManagerDevKeys] BattleTrace.Enabled = "
                 + BattleTraceRecorder.Enabled
                 + ", FlowTrace.Enabled = "
-                + FlowTraceRecorder.Enabled);
+                + FlowTraceRecorder.Enabled
+                + ", PerfTrace.Enabled = "
+                + PerfTraceRecorder.Enabled);
         }
 
         private InBattleManagerSingleton ResolveManager()

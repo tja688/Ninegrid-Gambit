@@ -61,20 +61,26 @@ namespace NineGrid.Flow.Diagnostics
         {
             try
             {
-                var shouldRotate = HasOps || FlowTraceRecorder.HasPriorRunMarker();
+                var shouldRotate = HasOps
+                    || FlowTraceRecorder.HasPriorRunMarker()
+                    || PerfTraceRecorder.HasEvents;
                 if (!shouldRotate)
                 {
                     BeginSessionIfNeeded(seed);
                     FlowTraceRecorder.BeginSessionIfNeeded(seed);
+                    PerfTraceRecorder.BeginSessionIfNeeded(seed);
                     return;
                 }
 
                 ExportBothNow(silentIfEmpty: true);
                 Clear();
                 FlowTraceRecorder.Clear();
+                PerfTraceRecorder.Clear();
+                DiagBeatClock.Reset();
                 DiagTraceShared.ForceNewSessionIdentity(seed);
                 BeginSessionIfNeeded(seed);
                 FlowTraceRecorder.BeginSessionIfNeeded(seed);
+                PerfTraceRecorder.BeginSessionIfNeeded(seed);
                 Debug.Log(
                     "[BattleTrace] 新开局已轮转诊断会话 sessionId="
                     + DiagTraceShared.CurrentSessionId
@@ -330,7 +336,7 @@ namespace NineGrid.Flow.Diagnostics
         }
 
         /// <summary>
-        /// 导出当前局战斗日志。Editor 写入 Assets/Notes/BattleLog；非 Editor 回退 persistentDataPath。
+        /// 导出当前局战斗日志。Editor → Assets/Notes/Logs/OtherLog/BattleLog。
         /// </summary>
         /// <param name="silentIfEmpty">无数据时不打 Warning。</param>
         public static string ExportJson(bool silentIfEmpty = false)
@@ -348,7 +354,7 @@ namespace NineGrid.Flow.Diagnostics
                 }
 
                 var json = BattleTraceJson.Serialize(sSession);
-                var dir = DiagTraceShared.ResolveNotesDir("BattleLog");
+                var dir = DiagTraceShared.ResolveNotesDir("Logs/OtherLog/BattleLog");
                 var fileName = DiagTraceShared.BuildFileName(
                     "battlelog",
                     sSession.sessionId,
@@ -403,6 +409,7 @@ namespace NineGrid.Flow.Diagnostics
                 }
 
                 FlowTraceRecorder.ExportOnPlayExit(source);
+                PerfTraceRecorder.ExportOnPlayExit(source);
                 DiagTraceShared.MarkExportedThisPlayExit();
                 return battlePath;
             }
@@ -414,7 +421,7 @@ namespace NineGrid.Flow.Diagnostics
         }
 
         /// <summary>
-        /// 立即导出 Battle + Flow（DevKeys / 胜负落盘 / 重开轮转）。不受 Play 退出去重影响。
+        /// 立即导出 Battle + CoreLog + PerfLog（DevKeys / 胜负落盘 / 重开轮转）。不受 Play 退出去重影响。
         /// </summary>
         public static void ExportBothNow(bool silentIfEmpty = false)
         {
@@ -435,11 +442,20 @@ namespace NineGrid.Flow.Diagnostics
             {
                 Debug.LogWarning("[BattleTrace] ExportBothNow flow: " + ex.Message);
             }
+
+            try
+            {
+                PerfTraceRecorder.ExportJson(silentIfEmpty);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[BattleTrace] ExportBothNow perf: " + ex.Message);
+            }
         }
 
         public static string ResolveExportDirectory()
         {
-            return DiagTraceShared.ResolveNotesDir("BattleLog");
+            return DiagTraceShared.ResolveNotesDir("Logs/OtherLog/BattleLog");
         }
 
         public static string ConsumePendingReason(string fallback = "CombatHit")

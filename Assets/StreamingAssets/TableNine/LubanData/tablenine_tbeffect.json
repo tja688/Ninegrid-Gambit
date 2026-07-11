@@ -542,8 +542,8 @@
     "id": "skill.falling_rocks.cumulative",
     "container_type": "MonsterSkill",
     "state": "Implemented",
-    "json": "{\"id\":\"skill.falling_rocks.cumulative\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"armorLost\",\"threshold\":10},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_man\",\"kind\":\"Monster\",\"count\":1,\"top\":false}}",
-    "design_text": "每累计损失满10点护甲，将一张石人军团怪物洗入战斗卡组"
+    "json": "{\"id\":\"skill.falling_rocks.cumulative\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"armorLost\",\"threshold\":10,\"targetIs\":\"Self\"},\"conditions\":[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"Board\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_man\",\"kind\":\"Monster\",\"count\":1,\"top\":false}}",
+    "design_text": "[场上] 本卡每累计损失满10点护甲，将一张石人军团怪物洗入战斗卡组"
   },
   {
     "id": "skill.fight_me.battle",

@@ -113,10 +113,23 @@ namespace NineGrid.Cards
             if (distance > AlignDistanceThreshold && allowSoftTween)
             {
                 await SoftMoveOrSnapAsync(transform, targetPosition, cancellationToken);
+                CardPresentationProbe.SnapSet(
+                    card.Uid,
+                    transform.position,
+                    "FinalStateGuard.SoftSnap",
+                    slot: snapshot.SlotId,
+                    reason: "restoreSoft");
             }
             else
             {
                 transform.position = targetPosition;
+                CardPresentationProbe.SnapSet(
+                    card.Uid,
+                    targetPosition,
+                    "FinalStateGuard.HardSnap",
+                    slot: snapshot.SlotId,
+                    killedTween: true,
+                    reason: "restoreHard");
             }
 
             transform.rotation = Quaternion.identity;
@@ -125,6 +138,13 @@ namespace NineGrid.Cards
             if (distance > AlignDistanceThreshold)
             {
                 transform.position = targetPosition;
+                CardPresentationProbe.SnapSet(
+                    card.Uid,
+                    targetPosition,
+                    "FinalStateGuard.HardSnap",
+                    slot: snapshot.SlotId,
+                    killedTween: true,
+                    reason: "restoreForce");
                 if (strictWarn)
                 {
                     Debug.LogWarning(
@@ -193,6 +213,18 @@ namespace NineGrid.Cards
             if (resetRotation)
             {
                 transform.rotation = Quaternion.identity;
+            }
+
+            if (CardManagerSingleton.Instance != null
+                && CardManagerSingleton.Instance.TryResolveUid(transform, out var uid)
+                && uid > 0)
+            {
+                CardPresentationProbe.SnapSet(
+                    uid,
+                    targetPosition,
+                    "FinalStateGuard.HardSnap",
+                    killedTween: true,
+                    reason: "snapImmediate");
             }
         }
 

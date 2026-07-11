@@ -249,8 +249,15 @@ namespace NineGrid.Cards
                 && TryGetAnchor(slot, out var anchor)
                 && anchor != null)
             {
-                CardDeckTween.KillMotion(card.Transform);
+                CardDeckTween.KillMotion(card.Transform, "Ground.Place.Snap", card.Uid);
                 card.Transform.position = anchor.position;
+                CardPresentationProbe.SnapSet(
+                    card.Uid,
+                    anchor.position,
+                    "Ground.Place.Snap",
+                    slot: slot,
+                    killedTween: true,
+                    reason: "placeAtAnchor");
                 CardManagerSingleton.Instance.RefreshDisplayMode(card);
             }
 
@@ -290,8 +297,15 @@ namespace NineGrid.Cards
                     && TryGetAnchor(toSlot, out var sameAnchor)
                     && sameAnchor != null)
                 {
-                    CardDeckTween.KillMotion(same.Transform);
+                    CardDeckTween.KillMotion(same.Transform, "Ground.Relocate.Snap", uid);
                     same.Transform.position = sameAnchor.position;
+                    CardPresentationProbe.SnapSet(
+                        uid,
+                        sameAnchor.position,
+                        "Ground.Relocate.Snap",
+                        slot: toSlot,
+                        killedTween: true,
+                        reason: "relocateSameSlot");
                 }
 
                 return true;
@@ -320,8 +334,15 @@ namespace NineGrid.Cards
                 && TryGetAnchor(toSlot, out var anchor)
                 && anchor != null)
             {
-                CardDeckTween.KillMotion(card.Transform);
+                CardDeckTween.KillMotion(card.Transform, "Ground.Relocate.Snap", uid);
                 card.Transform.position = anchor.position;
+                CardPresentationProbe.SnapSet(
+                    uid,
+                    anchor.position,
+                    "Ground.Relocate.Snap",
+                    slot: toSlot,
+                    killedTween: true,
+                    reason: "relocate");
                 CardManagerSingleton.Instance.RefreshDisplayMode(card);
             }
 
@@ -893,6 +914,22 @@ namespace NineGrid.Cards
                 catch
                 {
                     // ignore
+                }
+
+                for (var i = 0; i < hopPlans.Count; i++)
+                {
+                    var p = hopPlans[i];
+                    var fromPos = p.card.Transform != null ? p.card.Transform.position : Vector3.zero;
+                    var toAnchor = GetGroundAnchor(p.toSlot);
+                    var toPos = toAnchor != null ? toAnchor.position : fromPos;
+                    CardPresentationProbe.MotionPlan(
+                        p.card.Uid,
+                        p.fromSlot,
+                        p.toSlot,
+                        fromPos,
+                        toPos,
+                        "Ground.HopPlan",
+                        reason: "hop");
                 }
 
                 var incomplete = hopPlans.Count < expectedMoveCount;

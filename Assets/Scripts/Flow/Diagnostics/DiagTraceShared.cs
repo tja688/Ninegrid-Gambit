@@ -24,6 +24,7 @@ namespace NineGrid.Flow.Diagnostics
             sExportedThisPlayExit = false;
             sSessionId = string.Empty;
             sSeed = "0";
+            DiagBeatClock.Reset();
         }
 
         public static bool AlreadyExportedThisPlayExit => sExportedThisPlayExit;
@@ -98,13 +99,26 @@ namespace NineGrid.Flow.Diagnostics
             }
         }
 
+        /// <summary>
+        /// 解析 Notes 子目录。支持嵌套，如 <c>Logs/CoreLog</c>、<c>Logs/OtherLog/BattleLog</c>。
+        /// </summary>
         public static string ResolveNotesDir(string subfolder)
         {
+            var parts = string.IsNullOrEmpty(subfolder)
+                ? Array.Empty<string>()
+                : subfolder.Replace('\\', '/').Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+
 #if UNITY_EDITOR
-            return Path.Combine(Application.dataPath, "Notes", subfolder);
+            var path = Path.Combine(Application.dataPath, "Notes");
 #else
-            return Path.Combine(Application.persistentDataPath, subfolder);
+            var path = Application.persistentDataPath;
 #endif
+            for (var i = 0; i < parts.Length; i++)
+            {
+                path = Path.Combine(path, parts[i]);
+            }
+
+            return path;
         }
 
         /// <summary>

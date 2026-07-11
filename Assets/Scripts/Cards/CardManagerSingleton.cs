@@ -44,7 +44,7 @@ namespace NineGrid.Cards
 
         public CardDisplayMode DisplayMode { get; internal set; }
 
-        /// <summary>场地交战即死后标记；仍占格直至外圈旋转或移除。</summary>
+        /// <summary>场地交战即死后标记；Vacate 后应立刻离锚点，待死亡特效结束再 Release。</summary>
         public bool IsFieldDead { get; internal set; }
 
         /// <summary>由 Flow 映射层写入的 Core 卡牌种类，Cards 程序集不直接引用 Core。</summary>
@@ -213,6 +213,11 @@ namespace NineGrid.Cards
             }
 
             ApplyDisplayMode(card, initialMode);
+            CardPresentationProbe.Spawn(
+                card.Uid,
+                card.DefId,
+                "Card.Spawn",
+                parent: parent != null ? parent.name : (cardRoot != null ? cardRoot.name : string.Empty));
             return card;
         }
 
@@ -251,6 +256,32 @@ namespace NineGrid.Cards
             return _cardsByUid.TryGetValue(uid, out card);
         }
 
+        public IEnumerable<ManagedCard> EnumerateCards()
+        {
+            return _cardsByUid.Values;
+        }
+
+        public bool TryResolveUid(Transform transform, out int uid)
+        {
+            uid = InvalidUid;
+            if (transform == null)
+            {
+                return false;
+            }
+
+            foreach (var kv in _cardsByUid)
+            {
+                var card = kv.Value;
+                if (card?.Transform == transform)
+                {
+                    uid = card.Uid;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public ManagedCard Get(int uid)
         {
             if (!_cardsByUid.TryGetValue(uid, out var card))
@@ -267,6 +298,8 @@ namespace NineGrid.Cards
             {
                 return;
             }
+
+            CardPresentationProbe.Despawn(uid, "Card.Release");
 
             if (card.View != null)
             {
@@ -340,6 +373,34 @@ namespace NineGrid.Cards
             }
         }
 
+        /// <summary>
+        /// 击杀 Vacate 后立刻把尸体移出格锚点并切 RemovedMode，
+        /// 避免 PostKill Drain hop 与尸体叠在同一世界坐标造成「凭空消失+出现」。
+        /// 不 SetActive(false)，以便死亡特效与 FinalizeLethal 等待逻辑继续。
+        /// </summary>
+        public void StageFieldDeadCorpseOffAnchor(ManagedCard card)
+        {
+            if (card?.Transform == null || !card.IsFieldDead)
+            {
+                return;
+            }
+
+            CardDeckTween.KillMotion(card.Transform);
+
+            // 先离锚再切模式，避免 RemovedMode 缩放在空槽上闪一帧。
+            var t = card.Transform;
+            t.position = new Vector3(t.position.x, t.position.y - 80f, t.position.z);
+            SetDisplayMode(card, CardDisplayMode.RemovedMode);
+
+            var go = card.GameObject;
+            CardPresentationProbe.VisChange(
+                card.Uid,
+                "Card.StageFieldDead",
+                active: go != null && go.activeInHierarchy,
+                mode: CardDisplayMode.RemovedMode.ToString(),
+                renderOn: true);
+        }
+
         private void TrackUid(int uid)
         {
             if (uid >= _nextUid)
@@ -387,6 +448,7 @@ namespace NineGrid.Cards
                 return;
             }
 
+            var modeChanged = card.DisplayMode != mode;
             card.DisplayMode = mode;
 
             var cardTransform = card.View.transform;
@@ -398,6 +460,31 @@ namespace NineGrid.Cards
 
             var driver = card.View.GetComponent<CardVisualDriver>();
             driver?.SnapToDisplayMode();
+
+            if (modeChanged)
+            {
+                var go = card.GameObject;
+                var renderOn = false;
+                if (go != null)
+                {
+                    var renderers = go.GetComponentsInChildren<Renderer>(true);
+                    for (var i = 0; i < renderers.Length; i++)
+                    {
+                        if (renderers[i] != null && renderers[i].enabled)
+                        {
+                            renderOn = true;
+                            break;
+                        }
+                    }
+                }
+
+                CardPresentationProbe.VisChange(
+                    card.Uid,
+                    "Card.DisplayMode",
+                    active: go != null && go.activeInHierarchy,
+                    mode: mode.ToString(),
+                    renderOn: renderOn);
+            }
         }
 
         private static void SetSortingOrder(SortingGroup sortingGroup, int sortingOrder)

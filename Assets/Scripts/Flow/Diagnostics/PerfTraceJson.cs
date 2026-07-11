@@ -5,18 +5,18 @@ using System.Text;
 namespace NineGrid.Flow.Diagnostics
 {
     /// <summary>
-    /// FlowTrace 手写 JSON（零第三方依赖）。
+    /// PerfTrace 手写 JSON（零第三方依赖）。
     /// </summary>
-    public static class FlowTraceJson
+    public static class PerfTraceJson
     {
-        public static string Serialize(FlowTraceSession session)
+        public static string Serialize(PerfTraceSession session)
         {
             if (session == null)
             {
                 return "{}";
             }
 
-            var sb = new StringBuilder(2048);
+            var sb = new StringBuilder(4096);
             sb.Append('{');
             AppendNumber(sb, "schemaVersion", session.schemaVersion);
             sb.Append(',');
@@ -43,7 +43,7 @@ namespace NineGrid.Flow.Diagnostics
             return sb.ToString();
         }
 
-        private static void AppendEvent(StringBuilder sb, FlowTraceEvent e)
+        private static void AppendEvent(StringBuilder sb, PerfTraceEvent e)
         {
             if (e == null)
             {
@@ -56,19 +56,13 @@ namespace NineGrid.Flow.Diagnostics
             sb.Append(',');
             AppendNumber(sb, "beatId", e.beatId);
             sb.Append(',');
-            AppendString(sb, "category", e.category);
+            AppendNumber(sb, "tMs", e.tMs);
             sb.Append(',');
-            AppendString(sb, "name", e.name);
+            AppendString(sb, "kind", e.kind);
             sb.Append(',');
-            AppendString(sb, "loopState", e.loopState);
+            AppendNumber(sb, "uid", e.uid);
             sb.Append(',');
-            AppendString(sb, "phaseBefore", e.phaseBefore);
-            sb.Append(',');
-            AppendString(sb, "phaseAfter", e.phaseAfter);
-            sb.Append(',');
-            AppendBool(sb, "accepted", e.accepted);
-            sb.Append(',');
-            AppendNumber(sb, "refBattleOpIndex", e.refBattleOpIndex);
+            AppendString(sb, "site", e.site);
             sb.Append(',');
             sb.Append("\"payload\":{");
             AppendPayload(sb, e.payload);
@@ -110,14 +104,6 @@ namespace NineGrid.Flow.Diagnostics
             sb.Append(key);
             sb.Append("\":");
             sb.Append(value.ToString(CultureInfo.InvariantCulture));
-        }
-
-        private static void AppendBool(StringBuilder sb, string key, bool value)
-        {
-            sb.Append('"');
-            sb.Append(key);
-            sb.Append("\":");
-            sb.Append(value ? "true" : "false");
         }
 
         private static string Escape(string value)

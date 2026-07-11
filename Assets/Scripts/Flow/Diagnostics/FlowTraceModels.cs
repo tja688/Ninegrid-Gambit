@@ -4,13 +4,13 @@ using System.Collections.Generic;
 namespace NineGrid.Flow.Diagnostics
 {
     /// <summary>
-    /// 一局 FlowTrace 会话：全流程事件时间线，与 BattleTrace 共享 sessionId/seed。
-    /// schemaVersion 2：新增 Field / Presentation / Hand 占格与表现诊断事件。
+    /// 一局 CoreLog（FlowTrace）会话：全流程事件时间线，与 Battle/Perf 共享 sessionId/seed。
+    /// schemaVersion 3：新增 beatId，落盘目录 Assets/Notes/Logs/CoreLog。
     /// </summary>
     [Serializable]
     public sealed class FlowTraceSession
     {
-        public int schemaVersion = 2;
+        public int schemaVersion = 3;
         public string seed = "0";
         public string sessionId = string.Empty;
         public List<FlowTraceEvent> events = new List<FlowTraceEvent>();
@@ -23,6 +23,7 @@ namespace NineGrid.Flow.Diagnostics
     public sealed class FlowTraceEvent
     {
         public int index;
+        public int beatId;
         public string category = string.Empty;
         public string name = string.Empty;
         public string loopState = string.Empty;

@@ -28,6 +28,6 @@
 
 - **Unity MCP**：改场景/组件用 MCP，**禁止**手改 `.unity`；改脚本后 `refresh_unity` 并读 Console。
 - **DevTest 小键盘测试**：见项目 skill `.cursor/skills/table-nine-devtest-keys/`（接入、置顶、优先级以 `TestKeyStack` SO 为准）。
-- **战斗日志分析**：Play 结束导出 `Assets/Notes/BattleLog/`；分析对照 Docs+Core 见 `.cursor/skills/table-nine-battlelog-analysis/`。
+- **战斗 / 流程 / 表现日志分析**：Play 结束导出至 `Assets/Notes/Logs/`（`CoreLog` / `PerfLog` / `OtherLog/BattleLog`）；分析见 `.cursor/skills/table-nine-battlelog-analysis/`。
 
 ---

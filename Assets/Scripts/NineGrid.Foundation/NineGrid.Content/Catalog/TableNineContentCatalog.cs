@@ -658,9 +658,11 @@ namespace NineGrid.Content
 
             c.AddEffect(Impl("skill.falling_rocks.cumulative", EffectContainerType.MonsterSkill,
                 Triggered("skill.falling_rocks.cumulative", "MonsterSkill",
-                    "{\"atom\":\"OnCumulative\",\"metric\":\"armorLost\",\"threshold\":10}", "{\"atom\":\"Player\"}",
-                    "{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_man\",\"kind\":\"Monster\",\"count\":1,\"top\":false}"),
-                "每累计损失满10点护甲，将一张石人军团怪物洗入战斗卡组"));
+                    "{\"atom\":\"OnCumulative\",\"metric\":\"armorLost\",\"threshold\":10,\"targetIs\":\"Self\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_man\",\"kind\":\"Monster\",\"count\":1,\"top\":false}",
+                    "[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"Board\"}]"),
+                "[场上] 本卡每累计损失满10点护甲，将一张石人军团怪物洗入战斗卡组"));
 
             c.AddEffect(Impl("skill.hard.slot1", EffectContainerType.MonsterSkill,
                 Triggered("skill.hard.slot1", "MonsterSkill",

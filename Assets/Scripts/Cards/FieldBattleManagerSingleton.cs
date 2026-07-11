@@ -203,6 +203,16 @@ namespace NineGrid.Cards
             _isBusy = true;
             try
             {
+                try
+                {
+                    PerfTraceSink.OpenBeat?.Invoke("CombatHit", 0);
+                    PerfTraceSink.SetCombatants?.Invoke(avatar.Uid, victim.Uid);
+                }
+                catch
+                {
+                    // ignore
+                }
+
                 await attackAdapter.PlayBasicAttackAsync(
                     victim,
                     attackBind,
@@ -240,6 +250,8 @@ namespace NineGrid.Cards
                         playRemoveAnim: false,
                         skipBusyGuard: true,
                         startExplore: false);
+                    // Drain 前必须离锚点，否则 hop 会与尸体叠位闪现。
+                    CardManagerSingleton.Instance.StageFieldDeadCorpseOffAnchor(victim);
                     FinalizeLethalVictimAsync(victim, ct).Forget();
 
                     await CombatHitSink.RequestDrainPostKillBoard(postKill, ct);
@@ -262,6 +274,15 @@ namespace NineGrid.Cards
             }
             finally
             {
+                try
+                {
+                    PerfTraceSink.CloseBeat?.Invoke();
+                }
+                catch
+                {
+                    // ignore
+                }
+
                 _isBusy = false;
                 DisposeBattleCts(linkedCts);
             }
@@ -334,29 +355,46 @@ namespace NineGrid.Cards
             CombatHitPresentationResult hitResult = default;
             var hitApplied = false;
 
-            await attackAdapter.PlayBasicCounterAttackAsync(
-                attacker,
-                bind,
-                () =>
-                {
-                    if (hitApplied)
+            try
+            {
+                PerfTraceSink.OpenBeat?.Invoke("CombatHit", 0);
+                PerfTraceSink.SetCombatants?.Invoke(attacker.Uid, avatar.Uid);
+
+                await attackAdapter.PlayBasicCounterAttackAsync(
+                    attacker,
+                    bind,
+                    () =>
                     {
-                        return;
-                    }
+                        if (hitApplied)
+                        {
+                            return;
+                        }
 
-                    hitApplied = true;
+                        hitApplied = true;
+                        hitResult = ApplyHitPresentation(attacker, avatar, "CounterAttack");
+                    },
+                    cancellationToken);
+
+                if (!hitApplied)
+                {
                     hitResult = ApplyHitPresentation(attacker, avatar, "CounterAttack");
-                },
-                cancellationToken);
+                }
 
-            if (!hitApplied)
-            {
-                hitResult = ApplyHitPresentation(attacker, avatar, "CounterAttack");
+                if (hitResult.AvatarDefeated)
+                {
+                    CombatHitSink.RequestBattleEnded(victory: false);
+                }
             }
-
-            if (hitResult.AvatarDefeated)
+            finally
             {
-                CombatHitSink.RequestBattleEnded(victory: false);
+                try
+                {
+                    PerfTraceSink.CloseBeat?.Invoke();
+                }
+                catch
+                {
+                    // ignore
+                }
             }
         }
 
@@ -535,6 +573,9 @@ namespace NineGrid.Cards
                     skipBusyGuard: true,
                     startExplore: false);
             }
+
+            // 与真交战一致：Vacate 后立刻离锚，避免后续 Drain/Sync 叠位。
+            CardManagerSingleton.Instance?.StageFieldDeadCorpseOffAnchor(victim);
 
             // UseItem 无交战时间轴：若尚未在播死亡，主动开播，再由 Finalize 等闲后 Release。
             if (victim.TryGetEffectManager(out var effectManager) && !effectManager.IsPlaying)

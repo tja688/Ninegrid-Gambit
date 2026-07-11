@@ -90,7 +90,7 @@ namespace NineGrid.Flow.Diagnostics
 
                 sSession = new FlowTraceSession
                 {
-                    schemaVersion = 2,
+                    schemaVersion = 3,
                     seed = DiagTraceShared.CurrentSeed,
                     sessionId = DiagTraceShared.CurrentSessionId,
                     events = new List<FlowTraceEvent>(),
@@ -131,6 +131,7 @@ namespace NineGrid.Flow.Diagnostics
                 var ev = new FlowTraceEvent
                 {
                     index = sSession.events.Count,
+                    beatId = DiagBeatClock.ResolveBeatIdForEvent(),
                     category = category ?? string.Empty,
                     name = name ?? string.Empty,
                     loopState = loopState ?? string.Empty,
@@ -151,7 +152,7 @@ namespace NineGrid.Flow.Diagnostics
         }
 
         /// <summary>
-        /// 导出当前局流程日志。Editor → Assets/Notes/FlowLog。
+        /// 导出当前局 CoreLog。Editor → Assets/Notes/Logs/CoreLog。
         /// </summary>
         /// <param name="silentIfEmpty">无数据时不打 Warning（轮转/一并导出用）。</param>
         public static string ExportJson(bool silentIfEmpty = false)
@@ -169,15 +170,15 @@ namespace NineGrid.Flow.Diagnostics
                 }
 
                 var json = FlowTraceJson.Serialize(sSession);
-                var dir = DiagTraceShared.ResolveNotesDir("FlowLog");
+                var dir = DiagTraceShared.ResolveNotesDir("Logs/CoreLog");
                 var fileName = DiagTraceShared.BuildFileName(
-                    "flowlog",
+                    "corelog",
                     sSession.sessionId,
                     sSession.seed);
                 var path = DiagTraceShared.WriteUtf8File(dir, fileName, json);
                 if (!string.IsNullOrEmpty(path))
                 {
-                    Debug.Log("[FlowTrace] Exported: " + path + "\n" + BuildTailSummary(sSession));
+                    Debug.Log("[FlowTrace] Exported CoreLog: " + path + "\n" + BuildTailSummary(sSession));
                 }
 
                 return path;
@@ -224,7 +225,7 @@ namespace NineGrid.Flow.Diagnostics
 
         public static string ResolveExportDirectory()
         {
-            return DiagTraceShared.ResolveNotesDir("FlowLog");
+            return DiagTraceShared.ResolveNotesDir("Logs/CoreLog");
         }
 
         private static string BuildTailSummary(FlowTraceSession session)
