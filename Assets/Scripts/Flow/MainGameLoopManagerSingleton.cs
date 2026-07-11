@@ -567,6 +567,8 @@ namespace NineGrid.Flow
             panelRouter.ShowRoomEventOverlay();
 
             var phaseBeforeEnter = phaseSystem.CurrentPhase.ToString();
+            var pipeline = arch.GetSystem<IActionPipelineSystem>();
+            var goldEventStart = pipeline.EventLog.Entries.Count;
             var enter = phaseSystem.EnterRoom();
             if (!enter.Accepted)
             {
@@ -616,7 +618,9 @@ namespace NineGrid.Flow
                 Debug.LogWarning("[MainGameLoop] FlowTrace EnterRoom: " + ex.Message);
             }
 
-            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
+            // 房间金币等：先按 EventLog 开演，再静默对齐 HUD，避免二次 Sync 抢戏跳变。
+            InBattleManagerSingleton.PresentGoldGainsFromEventLog(goldEventStart);
+            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
 
             var pending = arch.GetModel<PendingChoiceModel>();
             if (pending.Kind.Value == PendingChoiceKind.Reward
@@ -676,7 +680,7 @@ namespace NineGrid.Flow
             }
 
             panelRouter.HideAllOverlays();
-            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
+            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
         }
 
         private static string BuildRoomResolvedNotice(RoomKind room)

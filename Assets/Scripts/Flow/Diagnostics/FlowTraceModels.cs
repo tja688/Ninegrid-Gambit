@@ -42,6 +42,7 @@ namespace NineGrid.Flow.Diagnostics
         public const string CoreGate = "CoreGate";
         public const string CombatSummary = "CombatSummary";
         public const string Deck = "Deck";
+        public const string Economy = "Economy";
     }
 
     /// <summary>
@@ -63,5 +64,6 @@ namespace NineGrid.Flow.Diagnostics
         public const string PostKillBoard = "PostKillBoard";
         public const string Victory = "Victory";
         public const string Defeat = "Defeat";
+        public const string GoldGained = "GoldGained";
     }
 }

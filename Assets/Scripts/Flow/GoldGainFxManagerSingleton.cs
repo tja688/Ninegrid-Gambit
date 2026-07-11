@@ -157,20 +157,41 @@ namespace NineGrid.Flow
                 return goldText != null;
             }
 
-            if (!animate || coreGold <= _displayedGold)
+            var presenting = IsPresenting || _queue.Count > 0;
+
+            // 静默 Sync：演出中只抬目标，避免 Snap 抢戏造成瞬间跳变。
+            if (!animate)
+            {
+                if (presenting && coreGold >= _displayedGold)
+                {
+                    _targetGold = Mathf.Max(_targetGold, coreGold);
+                    return true;
+                }
+
+                SnapDisplay(coreGold);
+                return true;
+            }
+
+            if (coreGold <= _displayedGold)
             {
                 SnapDisplay(coreGold);
                 return true;
             }
 
-            // 已有更高/相同目标在追赶时，只抬目标，避免重复开演。
-            if (IsPresenting && coreGold <= _targetGold)
+            // 已有更高/相同目标在追赶，或队列已覆盖该目标时，只抬目标，避免重复开演。
+            if (coreGold <= _targetGold && presenting)
             {
                 _targetGold = Mathf.Max(_targetGold, coreGold);
                 return true;
             }
 
-            var delta = coreGold - _displayedGold;
+            var delta = coreGold - Mathf.Max(_displayedGold, _targetGold);
+            if (delta <= 0)
+            {
+                _targetGold = Mathf.Max(_targetGold, coreGold);
+                return true;
+            }
+
             PlayGain(delta, coreGold, ResolveDefaultOriginWorld());
             return true;
         }
@@ -202,13 +223,21 @@ namespace NineGrid.Flow
                 return;
             }
 
-            _targetGold = Mathf.Max(_targetGold, targetCoins);
+            // 只入队「相对当前目标」的新增量，避免 PresentGold + HUD Sync 双通道重复飞币。
+            var raise = targetCoins - _targetGold;
+            if (raise <= 0)
+            {
+                _targetGold = Mathf.Max(_targetGold, targetCoins);
+                return;
+            }
+
+            _targetGold = targetCoins;
             var origin = originWorld ?? ResolveDefaultOriginWorld();
             origin.z = spawnWorldZ;
 
             _queue.Enqueue(new PendingGain
             {
-                Delta = delta,
+                Delta = raise,
                 TargetCoins = targetCoins,
                 OriginWorld = origin,
             });

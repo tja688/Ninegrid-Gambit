@@ -10,13 +10,31 @@ namespace NineGrid.Core.Systems
         int AwardSkipRelicChoice();
         int SettleUnusedHelpCards();
         int DeleteHelpCard(int cardUid);
+
+        /// <summary>
+        /// 重绑系统级 Trigger（InitialGameFactory 若 Clear 了 TriggerSystem 后必须调用）。
+        /// </summary>
+        void RebindSystemTriggers();
     }
 
     public sealed class EconomySystem : AbstractSystem, IEconomySystem
     {
+        private IUnRegister mRemoveGoldUnregister;
+
         protected override void OnInit()
         {
-            this.GetSystem<ITriggerSystem>().Register(
+            RebindSystemTriggers();
+        }
+
+        public void RebindSystemTriggers()
+        {
+            if (mRemoveGoldUnregister != null)
+            {
+                mRemoveGoldUnregister.UnRegister();
+                mRemoveGoldUnregister = null;
+            }
+
+            mRemoveGoldUnregister = this.GetSystem<ITriggerSystem>().Register(
                 TriggerPoint.OnRemove,
                 TriggerTiming.Post,
                 new DelegateTriggerReaction("economy.removeGold", ReactToRemovedCards));

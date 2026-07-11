@@ -1588,9 +1588,9 @@ namespace NineGrid.Flow
                 || phase == GamePhase.NodeCompleted
                 || arch.GetSystem<IDeckSystem>().IsNodeCleared();
 
-            // 金币卡等即时改 Coins：先按事件带出生点开演，再刷 HUD（HUD 增益交给 GoldFx 缓冲）。
+            // 金币卡等即时改 Coins：先按事件带出生点开演，再静默刷 HUD（避免二次开演/跳变）。
             PresentGoldGainsFromEventLog(startIndex, ResolveCardWorldPosition(pickedUid));
-            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
+            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
             return summary;
         }
 
@@ -2150,7 +2150,7 @@ namespace NineGrid.Flow
                         relicManager.SyncFromCore();
                     }
 
-                    PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
+                    PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
 
                     if (boardDelta.AvatarDefeated)
                     {
@@ -2388,15 +2388,11 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 扫描 EventLog 中的 GoldModified（正 delta），按可配置出生点播放飞入—吞噬—数值缓冲。
+        /// 扫描 EventLog 中的 GoldModified（正 delta），按可配置出生点播放飞入—吞噬—数值缓冲，
+        /// 并写入 FlowTrace Economy/GoldGained 打点。
         /// </summary>
-        private static void PresentGoldGainsFromEventLog(int startIndex, Vector3? originWorld = null)
+        public static void PresentGoldGainsFromEventLog(int startIndex, Vector3? originWorld = null)
         {
-            if (!GoldGainFxManagerSingleton.TryGetInstance(out var goldFx))
-            {
-                return;
-            }
-
             var arch = NineGridArchitecture.Current;
             if (arch == null)
             {
@@ -2408,6 +2404,8 @@ namespace NineGrid.Flow
             {
                 return;
             }
+
+            GoldGainFxManagerSingleton.TryGetInstance(out var goldFx);
 
             for (var i = Math.Max(0, startIndex); i < entries.Count; i++)
             {
@@ -2428,7 +2426,42 @@ namespace NineGrid.Flow
                     origin = ResolveCardWorldPosition(e.TargetUid);
                 }
 
-                goldFx.PlayGain(e.Delta, e.Amount, origin);
+                goldFx?.PlayGain(e.Delta, e.Amount, origin);
+                RecordGoldGainedFlow(e.Delta, e.Amount, e.Message, e.SourceDefId, e.ActionName);
+            }
+        }
+
+        private static void RecordGoldGainedFlow(
+            int delta,
+            int amountAfter,
+            string reason,
+            string sourceDefId,
+            string actionName)
+        {
+            try
+            {
+                if (!FlowTraceRecorder.Enabled)
+                {
+                    return;
+                }
+
+                FlowTraceRecorder.BeginSessionIfNeeded();
+                FlowTraceRecorder.Record(
+                    FlowTraceCategory.Economy,
+                    FlowTraceNames.GoldGained,
+                    new Dictionary<string, string>
+                    {
+                        { "delta", delta.ToString() },
+                        { "amountAfter", amountAfter.ToString() },
+                        { "reason", reason ?? string.Empty },
+                        { "sourceDefId", sourceDefId ?? string.Empty },
+                        { "action", actionName ?? string.Empty },
+                    },
+                    refBattleOpIndex: BattleTraceRecorder.LastOpIndex);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[InBattleManager] FlowTrace GoldGained: " + ex.Message);
             }
         }
 

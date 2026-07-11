@@ -12,6 +12,7 @@
 | `CoreGate` | Core 门禁 / 选择结果 |
 | `CombatSummary` | 战斗摘要（细节在 BattleLog） |
 | `Deck` | 发牌 / 牌组空 |
+| `Economy` | 金币等经济变动（表现侧消费 EventLog 时打点） |
 
 ## name → 挂点
 
@@ -30,6 +31,7 @@
 | `CombatHitSummary` | CombatSummary | `ApplyCombatHitFromCore`；`refBattleOpIndex` → BattleLog |
 | `PostKillBoard` | Deck | `ResolvePostKillBoardFromCore`；`deckEmpty`=抽牌堆空；`enemyDrawEmpty`=无怪可抽 |
 | `Victory` / `Defeat` | Loop | `ShowBattleEndAndReturnAsync` |
+| `GoldGained` | Economy | `InBattleManagerSingleton.PresentGoldGainsFromEventLog`；payload: `delta` / `amountAfter` / `reason` / `sourceDefId` / `action` |
 
 ## 插桩
 

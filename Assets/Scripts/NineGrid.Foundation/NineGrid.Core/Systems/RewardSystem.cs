@@ -11,13 +11,31 @@ namespace NineGrid.Core.Systems
         IReadOnlyList<RoomKind> RollRoomChoices(int count);
         NodeDeckOptions BuildNodeDeckOptions(int nodeIndex, string monsterDeckId);
         int ResolveRoom(RoomKind roomKind);
+
+        /// <summary>
+        /// 重绑系统级 Trigger（InitialGameFactory 若 Clear 了 TriggerSystem 后必须调用）。
+        /// </summary>
+        void RebindSystemTriggers();
     }
 
     public sealed class RewardSystem : AbstractSystem, IRewardSystem
     {
+        private IUnRegister mKillRewardUnregister;
+
         protected override void OnInit()
         {
-            this.GetSystem<ITriggerSystem>().Register(
+            RebindSystemTriggers();
+        }
+
+        public void RebindSystemTriggers()
+        {
+            if (mKillRewardUnregister != null)
+            {
+                mKillRewardUnregister.UnRegister();
+                mKillRewardUnregister = null;
+            }
+
+            mKillRewardUnregister = this.GetSystem<ITriggerSystem>().Register(
                 TriggerPoint.OnKill,
                 TriggerTiming.Post,
                 new DelegateTriggerReaction("reward.killRewards", ReactToKill));

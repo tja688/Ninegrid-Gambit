@@ -62,9 +62,13 @@ namespace NineGrid.Core
 
             // Bootstrap / 失败重开会 registry.Clear 并重用 uid；若不先清效果运行时，
             // 上一局 Trigger 会挂到同 uid 新卡上，导致坚硬等 OnBattle 效果叠乘秒杀。
+            // EffectSystem.Clear 会按实例 UnRegister 效果 Trigger；TriggerSystem.Clear 是兜底，
+            // 但会一并清掉 Economy/Reward 等系统级反应，故 Clear 后必须 Rebind。
             architecture.GetSystem<IContentSystem>().ClearRuntimeEffects();
             architecture.GetSystem<IEffectSystem>().Clear();
             architecture.GetSystem<ITriggerSystem>().Clear();
+            architecture.GetSystem<IEconomySystem>().RebindSystemTriggers();
+            architecture.GetSystem<IRewardSystem>().RebindSystemTriggers();
             architecture.GetSystem<IActionPipelineSystem>().Clear();
 
             rng.SetSeed(options.Seed);
