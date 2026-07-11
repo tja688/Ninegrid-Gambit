@@ -47,6 +47,7 @@ namespace NineGrid.Flow
         private bool _fieldSignalSubscribed;
         private bool _drainInFlight;
         private CancellationTokenSource _presentationCts;
+        private int _nodeEventLogStart;
 
         public static InBattleManagerSingleton Instance
         {
@@ -148,9 +149,8 @@ namespace NineGrid.Flow
             var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
             if (phase == GamePhase.RewardItemChoice)
             {
-                _settlementRaised = true;
                 Debug.Log("[InBattleManager] DevTest 强制胜利：已在奖励相位，直接推进结算。");
-                OnNodeSettlementReady?.Invoke();
+                RaiseSettlementReady();
                 return true;
             }
 
@@ -170,13 +170,15 @@ namespace NineGrid.Flow
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.ClearCheck));
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.NodeCompleted));
             pipeline.Enqueue(new NodeCompletedAction());
+            pipeline.RunToCompletion();
+            // 与正常通关路径一致：进入奖励相位前结算残留帮助卡。
+            arch.GetSystem<IEconomySystem>().SettleUnusedHelpCards();
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.RewardItemChoice));
             pipeline.Enqueue(new OfferRewardChoiceAction("help.choice", 3));
             pipeline.RunToCompletion();
 
-            _settlementRaised = true;
             Debug.Log("[InBattleManager] DevTest 强制节点胜利 → RewardItemChoice");
-            OnNodeSettlementReady?.Invoke();
+            RaiseSettlementReady();
             return true;
         }
 
@@ -248,6 +250,7 @@ namespace NineGrid.Flow
 
             SyncContentPanels();
             _settlementRaised = false;
+            _nodeEventLogStart = 0;
             try
             {
                 BattleTraceRecorder.Clear();
@@ -322,11 +325,41 @@ namespace NineGrid.Flow
                 return false;
             }
 
-            _settlementRaised = true;
             Debug.Log(
                 $"[InBattleManager] 节点结算就绪 phase={phase} pending={pending.Kind.Value}");
-            OnNodeSettlementReady?.Invoke();
+            RaiseSettlementReady();
             return true;
+        }
+
+        /// <summary>
+        /// 节点结算就绪：立刻并行启动残留帮助卡结算演出（不阻塞主循环推进奖励/房间），
+        /// 再通知主循环。内核金币已在通关判定当拍一次性入账（CompleteNodeIfCleared）。
+        /// </summary>
+        private void RaiseSettlementReady()
+        {
+            _settlementRaised = true;
+            RunUnusedHelpCardSettlementPresentationAsync(
+                _nodeEventLogStart,
+                EnsurePresentationToken()).Forget();
+            OnNodeSettlementReady?.Invoke();
+        }
+
+        private async UniTaskVoid RunUnusedHelpCardSettlementPresentationAsync(
+            int startIndex,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await PresentUnusedHelpCardSettlementFromEventLogAsync(startIndex, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                // 清场/跨关取消：视图由 ResetPresentationSurface 兜底回收。
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[InBattleManager] 残留帮助卡结算演出异常: " + ex.Message);
+            }
         }
 
         private async UniTask StartBattleNodeInternalAsync(
@@ -367,6 +400,8 @@ namespace NineGrid.Flow
                 }
 
                 options ??= NodeDeckOptions.CreateDefaultBattle();
+                // 记录本节点 EventLog 起点：结算演出据此定位 unusedHelpCards 金币事件。
+                _nodeEventLogStart = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries.Count;
                 var result = phase.StartNode(options);
                 if (!result.Accepted)
                 {
@@ -2503,8 +2538,9 @@ namespace NineGrid.Flow
         private const float UnusedHelpCardStaggerSeconds = 0.07f;
 
         /// <summary>
-        /// 选房后未用帮助卡结算演出：场上/手牌/卡组中的剩余帮助卡逐张退场并飞币，
-        /// 再处理 EventLog 中其余金币事件（跳过已演过的 unusedHelpCards，避免与房间金币糊成双飞）。
+        /// 对局结束（通关判定）当拍启动的残留帮助卡结算演出：场上/手牌/卡组中的剩余帮助卡
+        /// 逐张错峰并行退场并飞币，不阻塞主循环推进奖励三选一/房间选择。
+        /// 结算集合在进入时快照，之后（奖励三选一）新获得的帮助卡视图不会被误清。
         /// </summary>
         public async UniTask PresentUnusedHelpCardSettlementFromEventLogAsync(
             int startIndex,
@@ -2539,9 +2575,30 @@ namespace NineGrid.Flow
                 }
             }
 
+            // 快照本拍应结算的帮助卡（内核区域 + 表现侧手牌/场牌/牌堆/拖拽视图）。
+            var settledUids = CollectUnusedHelpCardUidsFromCore();
+            AppendPresentationHelpCardUids(settledUids);
+            var sweepSet = new HashSet<int>(settledUids);
+            if (cardManager != null)
+            {
+                foreach (var card in cardManager.EnumerateCards())
+                {
+                    if (card != null
+                        && IsPresentationHelpCard(card)
+                        && card.DisplayMode != CardDisplayMode.RemovedMode)
+                    {
+                        sweepSet.Add(card.Uid);
+                    }
+                }
+            }
+
             if (unusedDelta > 0)
             {
-                await PresentUnusedHelpCardsToGoldAsync(unusedDelta, unusedAfter, cancellationToken);
+                await PresentUnusedHelpCardsToGoldAsync(
+                    settledUids,
+                    unusedDelta,
+                    unusedAfter,
+                    cancellationToken);
                 RecordGoldChangedFlow(
                     FlowTraceNames.GoldGained,
                     unusedDelta,
@@ -2550,13 +2607,9 @@ namespace NineGrid.Flow
                     string.Empty,
                     "ModifyGold");
             }
-            else
-            {
-                // 无金币时仍清掉表现侧残留帮助卡（含手牌），避免下一关前幽灵牌。
-                await SweepRemainingHelpCardViewsAsync(cancellationToken);
-            }
 
-            PresentGoldGainsFromEventLog(startIndex, skipReason: UnusedHelpCardsGoldReason);
+            // 兜底清掉快照集合中仍存活的帮助卡视图（含手牌），避免下一关前幽灵牌。
+            await SweepRemainingHelpCardViewsAsync(sweepSet, cancellationToken);
         }
 
         /// <summary>
@@ -2587,6 +2640,12 @@ namespace NineGrid.Flow
             {
                 var e = entries[i];
                 if (e.Type != CoreEventType.GoldModified || e.Delta == 0)
+                {
+                    continue;
+                }
+
+                // 残留帮助卡金币由通关当拍的专用逐张演出接管，通用扫描一律跳过，避免双飞/抢占目标值。
+                if (string.Equals(e.Message, UnusedHelpCardsGoldReason, StringComparison.Ordinal))
                 {
                     continue;
                 }
@@ -2633,13 +2692,11 @@ namespace NineGrid.Flow
         }
 
         private async UniTask PresentUnusedHelpCardsToGoldAsync(
+            List<int> uids,
             int totalDelta,
             int amountAfter,
             CancellationToken cancellationToken)
         {
-            var uids = CollectUnusedHelpCardUidsFromCore();
-            AppendPresentationHelpCardUids(uids);
-
             var goldPerCard = ResolveUnusedHelpCardGoldPerCard();
             if (goldPerCard <= 0 && uids.Count > 0)
             {
@@ -2662,7 +2719,7 @@ namespace NineGrid.Flow
                 }
             }
 
-            // 先卸占位（手牌整清，保证手牌中的也退场），再逐张退场飞币。
+            // 先卸占位（手牌整清，保证手牌中的也退场），再并行退场飞币。
             CardHandManagerSingleton.Instance?.ClearHand();
             for (var i = 0; i < snapshots.Count; i++)
             {
@@ -2675,47 +2732,67 @@ namespace NineGrid.Flow
             var before = Math.Max(0, amountAfter - totalDelta);
             var credited = 0;
 
+            // 并行结算：每张卡仅错峰起始（轻微先后顺序），不再串行等待上一张退场完成。
+            var tasks = new List<UniTask>(snapshots.Count);
             for (var i = 0; i < snapshots.Count; i++)
             {
-                cancellationToken.ThrowIfCancellationRequested();
                 var (card, origin) = snapshots[i];
                 var remaining = totalDelta - credited;
                 var slice = remaining <= 0
                     ? 0
                     : Math.Min(goldPerCard > 0 ? goldPerCard : remaining, remaining);
                 credited += slice;
-                if (slice > 0)
-                {
-                    goldFx?.PlayGain(slice, before + credited, origin);
-                }
-
-                await VanishAndReleaseHelpCardAsync(card, cancellationToken);
-
-                if (i < snapshots.Count - 1 && UnusedHelpCardStaggerSeconds > 0f)
-                {
-                    await UniTask.Delay(
-                        TimeSpan.FromSeconds(UnusedHelpCardStaggerSeconds),
-                        cancellationToken: cancellationToken);
-                }
+                tasks.Add(VanishHelpCardWithGoldAsync(
+                    card,
+                    origin,
+                    slice,
+                    before + credited,
+                    UnusedHelpCardStaggerSeconds * i,
+                    goldFx,
+                    cancellationToken));
             }
+
+            await UniTask.WhenAll(tasks);
 
             if (credited < totalDelta)
             {
                 goldFx?.PlayGain(totalDelta - credited, amountAfter, ResolveDeckGoldOriginWorld());
             }
-
-            await SweepRemainingHelpCardViewsAsync(cancellationToken);
         }
 
-        private async UniTask SweepRemainingHelpCardViewsAsync(CancellationToken cancellationToken)
+        private async UniTask VanishHelpCardWithGoldAsync(
+            ManagedCard card,
+            Vector3 origin,
+            int goldSlice,
+            int goldTargetAfterSlice,
+            float startDelaySeconds,
+            GoldGainFxManagerSingleton goldFx,
+            CancellationToken cancellationToken)
         {
-            if (cardManager == null)
+            if (startDelaySeconds > 0f)
             {
-                CardHandManagerSingleton.Instance?.ClearHand();
-                return;
+                await UniTask.Delay(
+                    TimeSpan.FromSeconds(startDelaySeconds),
+                    cancellationToken: cancellationToken);
             }
 
+            if (goldSlice > 0)
+            {
+                goldFx?.PlayGain(goldSlice, goldTargetAfterSlice, origin);
+            }
+
+            await VanishAndReleaseHelpCardAsync(card, cancellationToken);
+        }
+
+        private async UniTask SweepRemainingHelpCardViewsAsync(
+            HashSet<int> restrictToUids,
+            CancellationToken cancellationToken)
+        {
             CardHandManagerSingleton.Instance?.ClearHand();
+            if (cardManager == null)
+            {
+                return;
+            }
 
             var leftovers = new List<ManagedCard>();
             foreach (var card in cardManager.EnumerateCards())
@@ -2726,6 +2803,12 @@ namespace NineGrid.Flow
                 }
 
                 if (card.DisplayMode == CardDisplayMode.RemovedMode || card.Transform == null)
+                {
+                    continue;
+                }
+
+                // 只清结算快照内的卡：奖励三选一新获得的帮助卡视图不受影响。
+                if (restrictToUids != null && !restrictToUids.Contains(card.Uid))
                 {
                     continue;
                 }

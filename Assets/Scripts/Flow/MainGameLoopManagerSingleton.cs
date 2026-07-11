@@ -549,21 +549,9 @@ namespace NineGrid.Flow
                 Debug.LogWarning("[MainGameLoop] FlowTrace RoomChosen: " + ex.Message);
             }
 
-            // 未用帮助卡：逐张退场飞币（含手牌），再静默对齐 HUD；避免与房间金币同拍糊成「加了两次」。
-            if (inBattleManager == null)
-            {
-                inBattleManager = InBattleManagerSingleton.Instance;
-            }
-
-            if (inBattleManager != null)
-            {
-                await inBattleManager.PresentUnusedHelpCardSettlementFromEventLogAsync(goldEventStart, ct);
-            }
-            else
-            {
-                InBattleManagerSingleton.PresentGoldGainsFromEventLog(goldEventStart);
-            }
-
+            // 残留帮助卡结算已在通关判定当拍由 InBattleManager 并行演出（不阻塞此处）；
+            // 这里仅兜底呈现选房本身产生的其他金币事件，并静默对齐 HUD。
+            InBattleManagerSingleton.PresentGoldGainsFromEventLog(goldEventStart);
             PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
         }
 

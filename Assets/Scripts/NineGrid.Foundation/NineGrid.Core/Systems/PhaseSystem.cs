@@ -496,7 +496,6 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new SelectRoomChoiceAction(optionIndex, room));
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomEvent));
             var resolved = pipeline.RunToCompletion();
-            resolved += this.GetSystem<IEconomySystem>().SettleUnusedHelpCards();
             return CoreCommandResult.Accept(resolved);
         }
 
@@ -588,9 +587,13 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.ClearCheck));
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.NodeCompleted));
             pipeline.Enqueue(new NodeCompletedAction());
+            var resolved = pipeline.RunToCompletion();
+            // 对局结束（通关判定成立）当拍立即结算残留帮助卡；
+            // 先结算再 OfferReward，三选一新获得的帮助卡不参与本次结算。
+            resolved += this.GetSystem<IEconomySystem>().SettleUnusedHelpCards();
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.RewardItemChoice));
             pipeline.Enqueue(new OfferRewardChoiceAction("help.choice", 3));
-            return pipeline.RunToCompletion();
+            return resolved + pipeline.RunToCompletion();
         }
 
         private const string ShopHelpCardsPoolId = "shop.helpCards";
