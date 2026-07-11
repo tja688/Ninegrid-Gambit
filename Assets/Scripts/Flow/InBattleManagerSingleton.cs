@@ -289,7 +289,8 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 表现侧板面可能已无敌时回调；内部仍以内核 IsNodeCleared / 相位为准。
+        /// 表现侧板面可能已无敌时回调；仅在内核已进入奖励相位（或 pending Reward）时推进结算。
+        /// 不可单靠 IsNodeCleared：击杀当下 cleared 已为 true，但 OfferReward 须等 ResolvePostKillBoard。
         /// </summary>
         public void NotifyPresentationBoardMayBeClear()
         {
@@ -297,7 +298,8 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 若内核确认通关（或已落在奖励相位），触发结算推进事件（UI stub）。
+        /// 若内核已落在奖励相位（或 pending Reward），触发结算推进事件（UI stub）。
+        /// 不单独用 IsNodeCleared 放行，避免 Vacate 抢在 PostKill 前推进主循环。
         /// </summary>
         public bool TryEnterNodeSettlement()
         {
@@ -308,17 +310,20 @@ namespace NineGrid.Flow
 
             var arch = NineGridArchitecture.Current;
             var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
-            var cleared = arch.GetSystem<IDeckSystem>().IsNodeCleared();
-            var inReward = phase == GamePhase.RewardItemChoice;
+            var pending = arch.GetModel<PendingChoiceModel>();
+            var inReward = phase == GamePhase.RewardItemChoice
+                || (pending.Kind.Value == PendingChoiceKind.Reward
+                    && pending.RewardOptions != null
+                    && pending.RewardOptions.Count > 0);
 
-            if (!cleared && !inReward)
+            if (!inReward)
             {
                 return false;
             }
 
             _settlementRaised = true;
             Debug.Log(
-                $"[InBattleManager] 节点结算就绪 phase={phase} isNodeCleared={cleared}");
+                $"[InBattleManager] 节点结算就绪 phase={phase} pending={pending.Kind.Value}");
             OnNodeSettlementReady?.Invoke();
             return true;
         }
@@ -409,6 +414,13 @@ namespace NineGrid.Flow
                     presentationCt);
                 await PresentOpeningAsync(plan, linkedCts.Token);
                 SyncContentPanels();
+
+                // 开局即空怪：IsNodeCleared 但尚未 OfferReward，先走 PostKill→CompleteNodeIfCleared。
+                if (phase.CurrentPhase == GamePhase.InteractionLoop
+                    && arch.GetSystem<IDeckSystem>().IsNodeCleared())
+                {
+                    ResolvePostKillBoardFromCore();
+                }
 
                 TryEnterNodeSettlement();
             }

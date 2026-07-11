@@ -228,6 +228,11 @@ namespace NineGrid.Cards
                 if (hitResult.TargetKilled)
                 {
                     CardManagerSingleton.Instance.MarkFieldDead(victim);
+
+                    // Core 须在 Vacate 之前结算：否则 FieldMaybeClearSignal 会在
+                    // OfferReward 前用 IsNodeCleared 抢跑主循环。
+                    var postKill = CombatHitSink.RequestPostKillBoard();
+
                     // 真交战击杀后由 Core 旋转补牌，不走空槽探求。
                     fieldManager.VacateSlotForExplore(
                         victimSlot,
@@ -237,11 +242,10 @@ namespace NineGrid.Cards
                         startExplore: false);
                     FinalizeLethalVictimAsync(victim, ct).Forget();
 
-                    // Core 一次算完；表现缓冲按 Moved/Dealt 缓释（不再盲转 + Sync）。
-                    var postKill = CombatHitSink.RequestPostKillBoard();
                     await CombatHitSink.RequestDrainPostKillBoard(postKill, ct);
 
-                    if (postKill.NodeClearedOrRewardPhase || hitResult.NodeClearedOrRewardPhase)
+                    // 只认 PostKill 结果，不用 hitResult.NodeCleared（击杀当下即可 true）。
+                    if (postKill.NodeClearedOrRewardPhase)
                     {
                         // 节点通关 → 主循环结算（奖励/房间），非整局胜利。
                         CombatHitSink.RequestNodeSettlement();
