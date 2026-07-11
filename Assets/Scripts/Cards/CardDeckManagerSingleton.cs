@@ -528,16 +528,31 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration).Forget();
-
             var cardManager = CardManagerSingleton.Instance;
             cardManager.SetDisplayMode(removed, CardDisplayMode.GroundCardMode);
+            if (!field.RequestPlaceCard(groundSlot, removed, skipBusyGuard))
+            {
+                Debug.LogWarning(
+                    $"[CardDeckManager] 场地拒收发牌 uid={removed.Uid} slot={groundSlot}，回滚入组。");
+                if (!_slotContainer.TryInsertAt(deckSlotIndex, removed, out var rollbackRipple))
+                {
+                    CardManagerSingleton.Instance.Release(removed);
+                }
+                else
+                {
+                    CardManagerSingleton.Instance.SetDisplayMode(removed, CardDisplayMode.CardDeckMode);
+                    CardDeckTween.MoveRippleAsync(rollbackRipple, layoutSettings.moveDuration).Forget();
+                }
+
+                return false;
+            }
+
+            CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration).Forget();
             CardDeckTween.MoveToWorld(
                 removed.Transform,
                 groundAnchor.position,
                 layoutSettings.moveDuration,
                 onComplete: () => cardManager.RefreshDisplayMode(removed));
-            field.RequestPlaceCard(groundSlot, removed, skipBusyGuard);
             return true;
         }
 

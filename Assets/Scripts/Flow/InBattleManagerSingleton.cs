@@ -490,23 +490,8 @@ namespace NineGrid.Flow
 
             plan.BoardPlacements.AddRange(boardPlacements);
 
-            // 视觉卡组顺序：抽牌堆剩余在前，再按开局环序拼接已上板非 Avatar（便于 Entry 演出）。
-            for (var i = 0; i < deck.DrawPileUids.Count; i++)
-            {
-                var uid = deck.DrawPileUids[i];
-                if (!registry.TryGet(uid, out var card))
-                {
-                    continue;
-                }
-
-                var view = cardManager.SpawnView(uid, card.DefId, initialMode: CardDisplayMode.CardDeckMode);
-                if (view != null)
-                {
-                    plan.DeckCards.Add(view);
-                    CoreCardPresentationMapper.ApplyToManagedCard(view);
-                }
-            }
-
+            // 视觉卡组顺序：开局环板上牌优先（避免 InjectDeck maxSlots 截断丢掉末格，
+            // ClockwiseRing 末位是 slot4），再拼抽牌堆剩余。
             var ring = GroundSlotTopology.ClockwiseRing;
             for (var i = 0; i < ring.Count; i++)
             {
@@ -557,6 +542,22 @@ namespace NineGrid.Flow
                 }
             }
 
+            for (var i = 0; i < deck.DrawPileUids.Count; i++)
+            {
+                var uid = deck.DrawPileUids[i];
+                if (!registry.TryGet(uid, out var card))
+                {
+                    continue;
+                }
+
+                var view = cardManager.SpawnView(uid, card.DefId, initialMode: CardDisplayMode.CardDeckMode);
+                if (view != null)
+                {
+                    plan.DeckCards.Add(view);
+                    CoreCardPresentationMapper.ApplyToManagedCard(view);
+                }
+            }
+
             return plan;
         }
 
@@ -597,59 +598,70 @@ namespace NineGrid.Flow
                 : 0.28f;
             var dealtAny = false;
 
-            for (var i = 0; i < ring.Count; i++)
+            try
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                var groundSlot = ring[i];
-                BoardPlacement placement = null;
-                for (var p = 0; p < plan.BoardPlacements.Count; p++)
+                for (var i = 0; i < ring.Count; i++)
                 {
-                    if (plan.BoardPlacements[p].GroundSlot == groundSlot)
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var groundSlot = ring[i];
+                    BoardPlacement placement = null;
+                    for (var p = 0; p < plan.BoardPlacements.Count; p++)
                     {
-                        placement = plan.BoardPlacements[p];
-                        break;
+                        if (plan.BoardPlacements[p].GroundSlot == groundSlot)
+                        {
+                            placement = plan.BoardPlacements[p];
+                            break;
+                        }
+                    }
+
+                    if (placement == null)
+                    {
+                        continue;
+                    }
+
+                    // 开局在 InBattle 忙碌期内；与 DrainDeals 一致跳过场地忙锁。
+                    // ensureCard：InjectDeck 截断或入组失败时仍可补入再发。
+                    cardManager.TryGet(placement.Uid, out var ensureCard);
+                    var ok = await deckManager.DealCardByUidAsync(
+                        placement.Uid,
+                        placement.GroundSlot,
+                        ensureCard: ensureCard,
+                        skipBusyGuard: true,
+                        awaitMove: false,
+                        cancellationToken: cancellationToken);
+                    if (!ok)
+                    {
+                        Debug.LogWarning(
+                            $"[InBattleManager] 就位失败 uid={placement.Uid} slot={placement.GroundSlot}，继续其余格并由 Sync 兜底。");
+                        continue;
+                    }
+
+                    dealtAny = true;
+                    if (i < ring.Count - 1 && dealInterval > 0f)
+                    {
+                        await UniTask.Delay(
+                            TimeSpan.FromSeconds(dealInterval),
+                            cancellationToken: cancellationToken);
                     }
                 }
 
-                if (placement == null)
-                {
-                    continue;
-                }
-
-                // 交错启动：不等单张 moveDuration，只隔 dealInterval（与 DealOpeningRingInternal 一致）。
-                var ok = await deckManager.DealCardByUidAsync(
-                    placement.Uid,
-                    placement.GroundSlot,
-                    ensureCard: null,
-                    skipBusyGuard: false,
-                    awaitMove: false,
-                    cancellationToken: cancellationToken);
-                if (!ok)
-                {
-                    Debug.LogError(
-                        $"[InBattleManager] 就位失败 uid={placement.Uid} slot={placement.GroundSlot}，中止后续发牌。");
-                    return;
-                }
-
-                dealtAny = true;
-                if (i < ring.Count - 1 && dealInterval > 0f)
+                // 末张飞入播完后再 SoftAlign/Sync，避免 KillMotion 掐掉轨迹。
+                if (dealtAny && moveDuration > 0f)
                 {
                     await UniTask.Delay(
-                        TimeSpan.FromSeconds(dealInterval),
+                        TimeSpan.FromSeconds(moveDuration),
                         cancellationToken: cancellationToken);
                 }
             }
-
-            // 末张飞入播完后再刷数值，避免 SoftAlign/Sync 掐掉轨迹。
-            if (dealtAny && moveDuration > 0f)
+            finally
             {
-                await UniTask.Delay(
-                    TimeSpan.FromSeconds(moveDuration),
-                    cancellationToken: cancellationToken);
+                // 与 Drain/UseItem 对齐：开局发牌后必须 Sync，否则会出现
+                // 表现空槽可点、Core 非空拒 ClickEmpty（道具旋转 Sync 后“自愈”）。
+                SoftAlignBoardAnchorsToCore();
+                SyncBoardOccupancyFromCore();
+                CoreCardPresentationMapper.SyncAllSpawnedCards();
+                UpdateAvatarDebugText();
             }
-
-            CoreCardPresentationMapper.SyncAllSpawnedCards();
-            UpdateAvatarDebugText();
         }
 
         private void UpdateAvatarDebugText()

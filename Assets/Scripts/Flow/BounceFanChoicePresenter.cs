@@ -102,6 +102,9 @@ namespace NineGrid.Flow
         private bool _sessionLive;
         private bool _hoverOnNotice;
         private int _pendingFallCount;
+        /// <summary>每次 Begin 递增；点选后 DelayedCall 必须校验，避免通关奖励退场回调拆掉下一轮（宝箱房）选项。</summary>
+        private int _sessionId;
+        private Tween _finishSessionTween;
 
         private void Awake()
         {
@@ -180,6 +183,7 @@ namespace NineGrid.Flow
             _entryBlockRemaining = 0f;
             _pendingFallCount = 0;
             _hoverOnNotice = hoverOnNotice;
+            _sessionId++;
             _sessionLive = true;
 
             BuildEntries(optionDefIds);
@@ -196,6 +200,7 @@ namespace NineGrid.Flow
             _pendingFallCount = 0;
             _hoverOnNotice = false;
             ClearHoverDescription();
+            KillFinishSessionTween();
             KillHoverTweens();
             ReleaseAllEntries();
         }
@@ -449,13 +454,19 @@ namespace NineGrid.Flow
                 + Mathf.Max(0f, fallStaggerStep) * Mathf.Max(0, _entries.Count - 1);
             var selectedExitDuration = safeSelectedLift * 0.35f + safeSelectedShrink;
             var finishDelay = Mathf.Max(fallExitDuration, selectedExitDuration, finishDelayAfterPick);
-            DOVirtual.DelayedCall(finishDelay, FinishSessionAfterPick)
+            var sessionIdAtPick = _sessionId;
+            KillFinishSessionTween();
+            _finishSessionTween = DOVirtual.DelayedCall(
+                    finishDelay,
+                    () => FinishSessionAfterPick(sessionIdAtPick))
                 .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
         }
 
-        private void FinishSessionAfterPick()
+        private void FinishSessionAfterPick(int sessionIdAtPick)
         {
-            if (!_sessionLive)
+            _finishSessionTween = null;
+            // 通关奖励点选后 Present 立即返回；约 5s 退场 DelayedCall 可能落在宝箱房新会话上。
+            if (!_sessionLive || sessionIdAtPick != _sessionId)
             {
                 return;
             }
@@ -469,6 +480,21 @@ namespace NineGrid.Flow
             {
                 Teardown();
             }
+        }
+
+        private void KillFinishSessionTween()
+        {
+            if (_finishSessionTween == null)
+            {
+                return;
+            }
+
+            if (_finishSessionTween.IsActive())
+            {
+                _finishSessionTween.Kill(false);
+            }
+
+            _finishSessionTween = null;
         }
 
         private void AnimateFallOff(int index, int selectedIndex, Action onComplete)
