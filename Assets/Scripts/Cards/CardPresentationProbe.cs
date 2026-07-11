@@ -1,5 +1,6 @@
 using System.Globalization;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace NineGrid.Cards
 {
@@ -111,7 +112,8 @@ namespace NineGrid.Cards
             bool? active = null,
             float? alpha = null,
             string mode = null,
-            bool? renderOn = null)
+            bool? renderOn = null,
+            int? sortOrder = null)
         {
             Emit(
                 "VisChange",
@@ -120,7 +122,57 @@ namespace NineGrid.Cards
                 "active", active.HasValue ? (active.Value ? "1" : "0") : string.Empty,
                 "alpha", alpha.HasValue ? alpha.Value.ToString("0.###", CultureInfo.InvariantCulture) : string.Empty,
                 "mode", mode ?? string.Empty,
-                "renderOn", renderOn.HasValue ? (renderOn.Value ? "1" : "0") : string.Empty);
+                "renderOn", renderOn.HasValue ? (renderOn.Value ? "1" : "0") : string.Empty,
+                "sortOrder", sortOrder.HasValue ? sortOrder.Value.ToString(CultureInfo.InvariantCulture) : string.Empty);
+        }
+
+        /// <summary>Timeline 命中帧采样：world 坐标 + SortingGroup + renderer 状态。</summary>
+        public static void CombatHitFrame(int uid, string site, Transform transform)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            var pos = transform.position;
+            Emit(
+                "CombatHitFrame",
+                uid,
+                site,
+                "x", FormatXy(pos.x),
+                "y", FormatXy(pos.y),
+                "sortOrder", ReadSortingOrder(transform).ToString(CultureInfo.InvariantCulture),
+                "renderOn", HasEnabledRenderer(transform.gameObject) ? "1" : "0");
+        }
+
+        public static int ReadSortingOrder(Transform transform)
+        {
+            if (transform == null)
+            {
+                return 0;
+            }
+
+            var sortingGroup = transform.GetComponent<SortingGroup>();
+            return sortingGroup != null ? sortingGroup.sortingOrder : 0;
+        }
+
+        public static bool HasEnabledRenderer(GameObject go)
+        {
+            if (go == null)
+            {
+                return false;
+            }
+
+            var renderers = go.GetComponentsInChildren<Renderer>(true);
+            for (var i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] != null && renderers[i].enabled)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public static void Spawn(int uid, string defId, string site, int? slot = null, string parent = null)

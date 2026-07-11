@@ -13,6 +13,7 @@ namespace NineGrid.Flow.Diagnostics
     public static class PerfTraceRecorder
     {
         private const float SlotMismatchThreshold = 0.35f;
+        private const float CombatBoardMargin = 6f;
 
         private static PerfTraceSession sSession;
         private static float sSessionStartRealtime;
@@ -534,21 +535,177 @@ namespace NineGrid.Flow.Diagnostics
             {
                 if (sCombatantUids.Contains(ev.uid)
                     && DiagBeatClock.CurrentBeatKind == DiagBeatKinds.CombatHit
-                    && ev.payload != null
-                    && ev.payload.TryGetValue("active", out var active)
-                    && active == "0")
+                    && ev.payload != null)
+                {
+                    if (ev.payload.TryGetValue("active", out var active) && active == "0")
+                    {
+                        EmitAnomaly(
+                            PerfTraceAnomalyCodes.VisOffWhileCombatant,
+                            ev.uid,
+                            "combatant active=0 site=" + ev.site,
+                            ev.index);
+                    }
+                    else if (ev.payload.TryGetValue("renderOn", out var renderOn) && renderOn == "0")
+                    {
+                        EmitAnomaly(
+                            PerfTraceAnomalyCodes.VisOffWhileCombatant,
+                            ev.uid,
+                            "combatant renderOn=0 site=" + ev.site,
+                            ev.index);
+                    }
+                }
+            }
+            else if (ev.kind == PerfTraceKinds.CombatHitFrame
+                && ev.uid > 0
+                && sCombatantUids.Contains(ev.uid)
+                && DiagBeatClock.CurrentBeatKind == DiagBeatKinds.CombatHit
+                && ev.payload != null
+                && !ShouldIgnoreOffscreenCombatant(ev.uid))
+            {
+                if (ev.payload.TryGetValue("renderOn", out var hitRenderOn) && hitRenderOn == "0")
                 {
                     EmitAnomaly(
                         PerfTraceAnomalyCodes.VisOffWhileCombatant,
                         ev.uid,
-                        "combatant active=0 site=" + ev.site,
+                        "combatant renderOn=0 at hit frame site=" + ev.site,
                         ev.index);
                 }
+            }
+            else if (ev.uid > 0
+                && sCombatantUids.Contains(ev.uid)
+                && DiagBeatClock.CurrentBeatKind == DiagBeatKinds.CombatHit
+                && (ev.kind == PerfTraceKinds.MotionEnd
+                    || ev.kind == PerfTraceKinds.SnapSet
+                    || ev.kind == PerfTraceKinds.CombatHitFrame))
+            {
+                TryDetectCombatantOffscreen(ev);
+            }
+        }
+
+        private static bool ShouldIgnoreOffscreenCombatant(int uid)
+        {
+            var cards = CardManagerSingleton.Instance;
+            if (cards?.CardsByUid == null || !cards.CardsByUid.TryGetValue(uid, out var card))
+            {
+                return false;
+            }
+
+            return card.IsFieldDead || card.DisplayMode == CardDisplayMode.RemovedMode;
+        }
+
+        private static void TryDetectCombatantOffscreen(PerfTraceEvent ev)
+        {
+            if (ev?.payload == null || ShouldIgnoreOffscreenCombatant(ev.uid))
+            {
+                return;
+            }
+
+            if (!ev.payload.TryGetValue("x", out var xRaw)
+                || !ev.payload.TryGetValue("y", out var yRaw)
+                || !float.TryParse(xRaw, NumberStyles.Float, CultureInfo.InvariantCulture, out var x)
+                || !float.TryParse(yRaw, NumberStyles.Float, CultureInfo.InvariantCulture, out var y))
+            {
+                return;
+            }
+
+            if (IsWithinCombatBoardBounds(x, y))
+            {
+                return;
+            }
+
+            var phase = ev.kind == PerfTraceKinds.CombatHitFrame ? " at hit frame" : string.Empty;
+            EmitAnomaly(
+                PerfTraceAnomalyCodes.CombatantOffscreenWhileHit,
+                ev.uid,
+                "xy=" + xRaw + "," + yRaw + " site=" + ev.site + phase,
+                ev.index);
+        }
+
+        private static bool IsWithinCombatBoardBounds(float x, float y)
+        {
+            var field = GroundFieldManagerSingleton.Instance;
+            if (field == null)
+            {
+                return Mathf.Abs(x) <= 15f && y >= -8f && y <= 15f;
+            }
+
+            var minX = float.MaxValue;
+            var maxX = float.MinValue;
+            var minY = float.MaxValue;
+            var maxY = float.MinValue;
+            var hasAnchor = false;
+            for (var slot = 1; slot <= 9; slot++)
+            {
+                var anchor = field.GetGroundAnchor(slot);
+                if (anchor == null)
+                {
+                    continue;
+                }
+
+                hasAnchor = true;
+                minX = Mathf.Min(minX, anchor.position.x);
+                maxX = Mathf.Max(maxX, anchor.position.x);
+                minY = Mathf.Min(minY, anchor.position.y);
+                maxY = Mathf.Max(maxY, anchor.position.y);
+            }
+
+            if (!hasAnchor)
+            {
+                return Mathf.Abs(x) <= 15f && y >= -8f && y <= 15f;
+            }
+
+            return x >= minX - CombatBoardMargin
+                && x <= maxX + CombatBoardMargin
+                && y >= minY - CombatBoardMargin
+                && y <= maxY + CombatBoardMargin;
+        }
+
+        private static void DetectCombatantOffscreenAtBeatClose()
+        {
+            if (DiagBeatClock.CurrentBeatKind != DiagBeatKinds.CombatHit || sCombatantUids.Count == 0)
+            {
+                return;
+            }
+
+            var cards = CardManagerSingleton.Instance;
+            if (cards == null)
+            {
+                return;
+            }
+
+            foreach (var uid in sCombatantUids)
+            {
+                if (ShouldIgnoreOffscreenCombatant(uid))
+                {
+                    continue;
+                }
+
+                if (cards.CardsByUid == null
+                    || !cards.CardsByUid.TryGetValue(uid, out var card)
+                    || card?.Transform == null)
+                {
+                    continue;
+                }
+
+                var pos = card.Transform.position;
+                if (IsWithinCombatBoardBounds(pos.x, pos.y))
+                {
+                    continue;
+                }
+
+                EmitAnomaly(
+                    PerfTraceAnomalyCodes.CombatantOffscreenWhileHit,
+                    uid,
+                    "xy=" + CardPresentationProbe.FormatXy(pos.x) + ","
+                    + CardPresentationProbe.FormatXy(pos.y) + " at beat close",
+                    -1);
             }
         }
 
         private static void DetectBeatCloseAnomalies()
         {
+            DetectCombatantOffscreenAtBeatClose();
+
             foreach (var kv in sOpenMotions)
             {
                 EmitAnomaly(

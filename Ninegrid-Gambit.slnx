@@ -37,11 +37,11 @@
   <Project Path="Febucci.TextAnimatorForUnity.Input.Runtime.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="Lofelt.NiceVibrations.csproj" />
+  <Project Path="NineGrid.Cards.Tests.csproj" />
   <Project Path="UniTask.Editor.csproj" />
   <Project Path="Sirenix.OdinInspector.Modules.UnityMathematics.csproj" />
   <Project Path="UniTask.DOTween.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
-  <Project Path="NineGrid.Cards.Tests.csproj" />
   <Project Path="NineGrid.DevTest.Tests.csproj" />
   <Project Path="QFramework.csproj" />
 </Solution>

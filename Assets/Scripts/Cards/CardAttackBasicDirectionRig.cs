@@ -58,6 +58,11 @@ namespace NineGrid.Cards
         private bool _roleMapBuilt;
         private bool _bakedClipValuesCached;
         private readonly Dictionary<int, Vector3> _bakedEndValuesByAnimId = new();
+        private Transform _boundAttacker;
+        private Transform _boundVictim;
+        private int _attackerMotionId;
+        private int _victimMotionId;
+        private bool _combatRigMotionProbed;
 
         public CardBoardDirection Direction { get; private set; }
 
@@ -177,6 +182,9 @@ namespace NineGrid.Cards
                 ApplyExplicitCallbackDelays(hitFlashCallbackDelay, bindDeathCallback ? deathCallbackDelay : 0f);
             }
 
+            _boundAttacker = attacker;
+            _boundVictim = victim;
+
             ConfigureHitFlashCallback(victimEffects, onCombatHit);
             ConfigureDeathCallback(victimEffects, bindDeathCallback);
         }
@@ -196,16 +204,63 @@ namespace NineGrid.Cards
                 return;
             }
 
+            // 上一场若被 KillMotion/取消打断，DOTweenTimeline 仍缓存陈旧 Sequence，
+            // Restart 会忽略本场 BindParticipants 重绑 → 反击偶发甩出屏外。必须先 Kill 再 Restart。
+            InvalidateCachedTimelineSequence(timeline);
             timelinePlayer.RestartTimeline();
 
             var sequence = ResolveSequence(timeline);
-            if (sequence == null || !sequence.IsActive())
+            ProbeCombatRigMotionBegin();
+            try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(0.9f), cancellationToken: cancellationToken);
+                if (sequence == null || !sequence.IsActive())
+                {
+                    await UniTask.Delay(TimeSpan.FromSeconds(0.9f), cancellationToken: cancellationToken);
+                    ProbeCombatRigMotionEnd("fallback");
+                    return;
+                }
+
+                await WaitForSequenceAsync(sequence, cancellationToken);
+                ProbeCombatRigMotionEnd("complete");
+            }
+            catch (OperationCanceledException)
+            {
+                ProbeCombatRigMotionEnd("kill");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 清掉 DOTweenTimeline 缓存的 Sequence，迫使 Restart 用当前 target/endValue 全量重建。
+        /// 仅 Kill tween 不够：被 KillMotion 打断后 Sequence 引用常仍非 null，TryGenerateSequence 会直接 return。
+        /// </summary>
+        public static void InvalidateCachedTimelineSequence(Component timeline)
+        {
+            if (timeline == null)
+            {
                 return;
             }
 
-            await WaitForSequenceAsync(sequence, cancellationToken);
+            var sequence = ResolveSequence(timeline);
+            if (sequence != null)
+            {
+                sequence.Kill(complete: false);
+            }
+
+            ClearCachedSequenceProperty(timeline);
+        }
+
+        private static void ClearCachedSequenceProperty(Component timeline)
+        {
+            var property = timeline.GetType().GetProperty(
+                "Sequence",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (property == null || !property.CanWrite)
+            {
+                return;
+            }
+
+            property.SetValue(timeline, null);
         }
 
         private static async UniTask WaitForSequenceAsync(Sequence sequence, CancellationToken cancellationToken)
@@ -220,6 +275,186 @@ namespace NineGrid.Cards
                 cancellationToken.ThrowIfCancellationRequested();
                 await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
             }
+        }
+
+        private void ProbeCombatRigMotionBegin()
+        {
+            _combatRigMotionProbed = false;
+            _attackerMotionId = CardPresentationProbe.NextMotionId();
+            _victimMotionId = CardPresentationProbe.NextMotionId();
+            var attackerPlannedEnd = ResolvePlannedLungeWorldEnd(_boundAttacker, attackerAnimations);
+            var victimPlannedEnd = ResolvePlannedKnockbackWorldEnd(_boundVictim, victimAnimations);
+            _combatRigMotionProbed = ProbeParticipantMotionBegin(
+                    _boundAttacker,
+                    _attackerMotionId,
+                    "CombatRig.Lunge.Attacker",
+                    attackerPlannedEnd)
+                | ProbeParticipantMotionBegin(
+                    _boundVictim,
+                    _victimMotionId,
+                    "CombatRig.Lunge.Victim",
+                    victimPlannedEnd);
+        }
+
+        private void ProbeCombatRigMotionEnd(string endHow)
+        {
+            if (!_combatRigMotionProbed)
+            {
+                return;
+            }
+
+            ProbeParticipantMotionEnd(_boundAttacker, _attackerMotionId, "CombatRig.Lunge.Attacker", endHow);
+            ProbeParticipantMotionEnd(_boundVictim, _victimMotionId, "CombatRig.Lunge.Victim", endHow);
+            _combatRigMotionProbed = false;
+        }
+
+        private static bool ProbeParticipantMotionBegin(
+            Transform transform,
+            int motionId,
+            string site,
+            Vector3 plannedWorldEnd)
+        {
+            if (transform == null)
+            {
+                return false;
+            }
+
+            if (CardManagerSingleton.Instance == null
+                || !CardManagerSingleton.Instance.TryResolveUid(transform, out var uid)
+                || uid <= 0)
+            {
+                return false;
+            }
+
+            var pos = transform.position;
+            CardPresentationProbe.MotionBegin(
+                uid,
+                motionId,
+                pos,
+                plannedWorldEnd,
+                site,
+                reason: "combatRig");
+            return true;
+        }
+
+        private void ProbeCombatHitFrame()
+        {
+            ProbeParticipantHitFrame(_boundAttacker, "CombatRig.HitFrame.Attacker");
+            ProbeParticipantHitFrame(_boundVictim, "CombatRig.HitFrame.Victim");
+        }
+
+        private static void ProbeParticipantHitFrame(Transform transform, string site)
+        {
+            if (transform == null
+                || CardManagerSingleton.Instance == null
+                || !CardManagerSingleton.Instance.TryResolveUid(transform, out var uid)
+                || uid <= 0)
+            {
+                return;
+            }
+
+            CardPresentationProbe.CombatHitFrame(uid, site, transform);
+        }
+
+        private Vector3 ResolvePlannedLungeWorldEnd(Transform transform, IReadOnlyList<Component> animations)
+        {
+            return ResolvePlannedWorldEndInDelayWindow(
+                transform,
+                animations,
+                delayMinInclusive: WindupDelayMax,
+                delayMaxInclusive: LungeDelayMax);
+        }
+
+        private Vector3 ResolvePlannedKnockbackWorldEnd(Transform transform, IReadOnlyList<Component> animations)
+        {
+            return ResolvePlannedWorldEndInDelayWindow(
+                transform,
+                animations,
+                delayMinInclusive: KnockbackDelayMin,
+                delayMaxInclusive: KnockbackDelayMax);
+        }
+
+        private Vector3 ResolvePlannedWorldEndInDelayWindow(
+            Transform transform,
+            IReadOnlyList<Component> animations,
+            float delayMinInclusive,
+            float delayMaxInclusive)
+        {
+            if (transform == null)
+            {
+                return Vector3.zero;
+            }
+
+            if (animations == null || animations.Count == 0)
+            {
+                return transform.position;
+            }
+
+            Component bestAnimation = null;
+            var bestDelay = float.MinValue;
+            for (var i = 0; i < animations.Count; i++)
+            {
+                var animation = animations[i];
+                if (animation == null)
+                {
+                    continue;
+                }
+
+                var delay = ReadDelay(animation);
+                if (delay < delayMinInclusive || delay > delayMaxInclusive)
+                {
+                    continue;
+                }
+
+                if (delay > bestDelay)
+                {
+                    bestDelay = delay;
+                    bestAnimation = animation;
+                }
+            }
+
+            if (bestAnimation == null)
+            {
+                return transform.position;
+            }
+
+            return LocalEndToWorld(transform, ReadEndValueV3(bestAnimation));
+        }
+
+        private static Vector3 LocalEndToWorld(Transform transform, Vector3 localEnd)
+        {
+            if (transform.parent != null)
+            {
+                return transform.parent.TransformPoint(new Vector3(localEnd.x, localEnd.y, transform.localPosition.z));
+            }
+
+            return new Vector3(localEnd.x, localEnd.y, transform.position.z);
+        }
+
+        private static void ProbeParticipantMotionEnd(
+            Transform transform,
+            int motionId,
+            string site,
+            string endHow)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            if (CardManagerSingleton.Instance == null
+                || !CardManagerSingleton.Instance.TryResolveUid(transform, out var uid)
+                || uid <= 0)
+            {
+                return;
+            }
+
+            CardPresentationProbe.MotionEnd(
+                uid,
+                motionId,
+                transform.position,
+                endHow,
+                site);
         }
 
         public void ResetParticipantMotion(Transform attacker, Transform victim)
@@ -698,15 +933,12 @@ namespace NineGrid.Cards
             }
 
             unityEvent.RemoveAllListeners();
-            if (victimEffects != null)
+            unityEvent.AddListener(() =>
             {
-                unityEvent.AddListener(victimEffects.CallbackPlayHitFlash);
-            }
-
-            if (onCombatHit != null)
-            {
-                unityEvent.AddListener(() => onCombatHit());
-            }
+                ProbeCombatHitFrame();
+                victimEffects?.CallbackPlayHitFlash();
+                onCombatHit?.Invoke();
+            });
         }
 
         private void ConfigureDeathCallback(CardEffectManager victimEffects, bool bindDeathCallback)

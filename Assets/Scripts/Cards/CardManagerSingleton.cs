@@ -393,12 +393,14 @@ namespace NineGrid.Cards
             SetDisplayMode(card, CardDisplayMode.RemovedMode);
 
             var go = card.GameObject;
+            var sortingGroup = card.View?.GetComponent<SortingGroup>();
             CardPresentationProbe.VisChange(
                 card.Uid,
                 "Card.StageFieldDead",
                 active: go != null && go.activeInHierarchy,
                 mode: CardDisplayMode.RemovedMode.ToString(),
-                renderOn: true);
+                renderOn: CardPresentationProbe.HasEnabledRenderer(go),
+                sortOrder: sortingGroup != null ? sortingGroup.sortingOrder : (int?)null);
         }
 
         private void TrackUid(int uid)
@@ -464,26 +466,14 @@ namespace NineGrid.Cards
             if (modeChanged)
             {
                 var go = card.GameObject;
-                var renderOn = false;
-                if (go != null)
-                {
-                    var renderers = go.GetComponentsInChildren<Renderer>(true);
-                    for (var i = 0; i < renderers.Length; i++)
-                    {
-                        if (renderers[i] != null && renderers[i].enabled)
-                        {
-                            renderOn = true;
-                            break;
-                        }
-                    }
-                }
-
+                var sortOrder = sortingGroup != null ? sortingGroup.sortingOrder : (int?)null;
                 CardPresentationProbe.VisChange(
                     card.Uid,
                     "Card.DisplayMode",
                     active: go != null && go.activeInHierarchy,
                     mode: mode.ToString(),
-                    renderOn: renderOn);
+                    renderOn: CardPresentationProbe.HasEnabledRenderer(go),
+                    sortOrder: sortOrder);
             }
         }
 

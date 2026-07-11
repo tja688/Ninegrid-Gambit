@@ -41,6 +41,8 @@ namespace NineGrid.Flow.Diagnostics
         public const string ParentChange = "ParentChange";
         public const string BoardSnap = "BoardSnap";
         public const string Anomaly = "Anomaly";
+        /// <summary>战斗 Timeline 命中帧：参战方 world xy / sorting / renderOn。</summary>
+        public const string CombatHitFrame = "CombatHitFrame";
     }
 
     public static class PerfTraceSites
@@ -56,6 +58,10 @@ namespace NineGrid.Flow.Diagnostics
         public const string CardDisplayMode = "Card.DisplayMode";
         public const string CardStageFieldDead = "Card.StageFieldDead";
         public const string CardActive = "Card.SetActive";
+        public const string CombatRigLungeAttacker = "CombatRig.Lunge.Attacker";
+        public const string CombatRigLungeVictim = "CombatRig.Lunge.Victim";
+        public const string CombatRigHitFrameAttacker = "CombatRig.HitFrame.Attacker";
+        public const string CombatRigHitFrameVictim = "CombatRig.HitFrame.Victim";
         public const string BeatClock = "DiagBeat";
         public const string BoardSnapCapture = "BoardSnap.Capture";
         public const string AnomalyDetect = "Anomaly.Detect";
@@ -70,5 +76,6 @@ namespace NineGrid.Flow.Diagnostics
         public const string OrphanAtWrongAnchor = "OrphanAtWrongAnchor";
         public const string DeadCorpseAtVacatedSlot = "DeadCorpseAtVacatedSlot";
         public const string MissingMotionEnd = "MissingMotionEnd";
+        public const string CombatantOffscreenWhileHit = "CombatantOffscreenWhileHit";
     }
 }
