@@ -2667,11 +2667,7 @@ namespace NineGrid.Flow
             for (var i = 0; i < snapshots.Count; i++)
             {
                 var card = snapshots[i].card;
-                fieldManager?.RequestRemoveFromField(
-                    card.Uid,
-                    animate: false,
-                    skipBusyGuard: true,
-                    startExplore: false);
+                fieldManager?.TryClearOccupancyForUid(card.Uid, skipBusyGuard: true);
                 deckManager?.TryDetachByUid(card.Uid, out _);
             }
 
@@ -2741,11 +2737,7 @@ namespace NineGrid.Flow
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var card = leftovers[i];
-                fieldManager?.RequestRemoveFromField(
-                    card.Uid,
-                    animate: false,
-                    skipBusyGuard: true,
-                    startExplore: false);
+                fieldManager?.TryClearOccupancyForUid(card.Uid, skipBusyGuard: true);
                 deckManager?.TryDetachByUid(card.Uid, out _);
                 await VanishAndReleaseHelpCardAsync(card, cancellationToken);
             }
@@ -2761,9 +2753,14 @@ namespace NineGrid.Flow
             }
 
             var uid = card.Uid;
+            if (cardManager == null || !cardManager.TryGet(uid, out card))
+            {
+                return;
+            }
+
             if (card.Transform == null)
             {
-                cardManager?.Release(uid);
+                cardManager.Release(uid);
                 return;
             }
 

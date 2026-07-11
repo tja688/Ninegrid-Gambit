@@ -165,6 +165,49 @@ namespace NineGrid.Cards
             return _slotByUid.TryGetValue(uid, out slot);
         }
 
+        /// <summary>
+        /// 查找 uid 占用的场地格（含 _slotByUid/_uidBySlot 短暂不一致时的自愈扫描）。
+        /// </summary>
+        public bool TryFindOccupiedSlotForUid(int uid, out int slot)
+        {
+            slot = 0;
+            if (uid <= 0)
+            {
+                return false;
+            }
+
+            if (TryGetSlotOf(uid, out slot))
+            {
+                return true;
+            }
+
+            for (var s = GroundSlotTopology.MinSlot; s <= GroundSlotTopology.MaxSlot; s++)
+            {
+                if (_uidBySlot[s] != uid)
+                {
+                    continue;
+                }
+
+                slot = s;
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 按 uid 清占格（不 Release 视图）。Release 前守卫用，避免「占格在、视图无」幽灵格。
+        /// </summary>
+        public bool TryClearOccupancyForUid(int uid, bool skipBusyGuard = false)
+        {
+            if (!TryFindOccupiedSlotForUid(uid, out var slot))
+            {
+                return false;
+            }
+
+            return ClearSlotOccupancy(slot, skipBusyGuard);
+        }
+
         public bool IsEmpty(int slot)
         {
             return IsValidSlot(slot) && _uidBySlot[slot] == 0;
@@ -683,7 +726,7 @@ namespace NineGrid.Cards
 
             _exploreRunner?.CancelAll();
 
-            // 强制清场时只清占格表，卡视图交给外层 ReleaseAll，避免与手牌/卡组重复 Release。
+            // 非 force：先 Vacate 再 Release，与 RequestRemoveFromField 契约一致，避免幽灵占格。
             if (!force)
             {
                 var cardManager = CardManagerSingleton.TryGetInstance();
@@ -692,10 +735,13 @@ namespace NineGrid.Cards
                     for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
                     {
                         var uid = _uidBySlot[slot];
-                        if (uid != 0)
+                        if (uid == 0)
                         {
-                            cardManager.Release(uid);
+                            continue;
                         }
+
+                        UnregisterCardAtSlot(slot, "ClearField");
+                        cardManager.Release(uid);
                     }
                 }
             }

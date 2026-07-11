@@ -408,6 +408,8 @@ namespace NineGrid.Cards
                 return;
             }
 
+            TryVacateFieldOccupancyBeforeRelease(uid);
+
             CardPresentationProbe.Despawn(uid, "Card.Release");
 
             if (card.View != null)
@@ -425,6 +427,28 @@ namespace NineGrid.Cards
             if (card != null)
             {
                 Release(card.Uid);
+            }
+        }
+
+        /// <summary>
+        /// Release 前卸场地占格，防止「CardManager 已 Despawn 但 _uidBySlot 仍登记」的缺卡幽灵格。
+        /// </summary>
+        private static void TryVacateFieldOccupancyBeforeRelease(int uid)
+        {
+            if (uid <= 0)
+            {
+                return;
+            }
+
+            try
+            {
+                GroundFieldManagerSingleton.TryGetInstance()?.TryClearOccupancyForUid(
+                    uid,
+                    skipBusyGuard: true);
+            }
+            catch
+            {
+                // swallow
             }
         }
 
