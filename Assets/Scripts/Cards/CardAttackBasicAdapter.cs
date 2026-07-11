@@ -3,6 +3,7 @@ using System.Threading;
 using System;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace NineGrid.Cards
 {
@@ -263,12 +264,14 @@ namespace NineGrid.Cards
         {
             var field = GroundFieldManagerSingleton.Instance;
             var victimTransform = victimSnapshot.Transform;
+            var sortBoost = BeginAttackerSortBoost(attackerSnapshot, victimSnapshot);
             try
             {
                 await rig.PlayAsync(cancellationToken);
             }
             finally
             {
+                EndAttackerSortBoost(sortBoost);
                 rig.ResetParticipantMotion(attacker, bind.IsLethal ? null : victimTransform);
                 await BattleFinalStateGuard.RestorePairAsync(
                     attackerSnapshot,
@@ -277,6 +280,61 @@ namespace NineGrid.Cards
                     bind,
                     CancellationToken.None);
             }
+        }
+
+        private readonly struct AttackerSortBoost
+        {
+            public AttackerSortBoost(SortingGroup group, int originalOrder)
+            {
+                Group = group;
+                OriginalOrder = originalOrder;
+            }
+
+            public SortingGroup Group { get; }
+
+            public int OriginalOrder { get; }
+        }
+
+        /// <summary>
+        /// 交战期间攻击方必须压在受击方之上渲染。
+        /// Avatar 常驻高一层（-9 vs -10），怪物反击冲脸时若不抬层会整张被 Avatar 卡挡住 → 「隐身打人」。
+        /// </summary>
+        private static AttackerSortBoost BeginAttackerSortBoost(
+            in BattleFinalStateGuard.ParticipantSnapshot attackerSnapshot,
+            in BattleFinalStateGuard.ParticipantSnapshot victimSnapshot)
+        {
+            var attackerView = attackerSnapshot.Card?.View;
+            var victimView = victimSnapshot.Card?.View;
+            if (attackerView == null || victimView == null)
+            {
+                return default;
+            }
+
+            var attackerGroup = attackerView.GetComponent<SortingGroup>();
+            var victimGroup = victimView.GetComponent<SortingGroup>();
+            if (attackerGroup == null || victimGroup == null
+                || attackerGroup.sortingOrder > victimGroup.sortingOrder)
+            {
+                return default;
+            }
+
+            var originalOrder = attackerGroup.sortingOrder;
+            attackerGroup.sortingOrder = victimGroup.sortingOrder + 1;
+            CardPresentationProbe.VisChange(
+                attackerSnapshot.Card.Uid,
+                "Combat.SortBoost",
+                sortOrder: attackerGroup.sortingOrder);
+            return new AttackerSortBoost(attackerGroup, originalOrder);
+        }
+
+        private static void EndAttackerSortBoost(in AttackerSortBoost boost)
+        {
+            if (boost.Group == null)
+            {
+                return;
+            }
+
+            boost.Group.sortingOrder = boost.OriginalOrder;
         }
 
         /// <summary>
