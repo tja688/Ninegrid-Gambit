@@ -38,8 +38,8 @@ namespace NineGrid.DevTest.Flow
                 .Bind(KeyCode.Keypad1, "真实局内入场", () => RunRealBattleEntryAsync().Forget())
                 .Bind(KeyCode.Keypad2, "探测节点结算", () => TrySettlement())
                 .Bind(KeyCode.Keypad3, "玩家血量=99", CheatAvatarHpTo99)
-                .Bind(KeyCode.Keypad4, "立即导出 BattleLog", ExportBattleTrace)
-                .Bind(KeyCode.Keypad5, "开关 BattleTrace", ToggleBattleTrace)
+                .Bind(KeyCode.Keypad4, "立即导出 Battle+FlowLog", ExportBattleAndFlowTrace)
+                .Bind(KeyCode.Keypad5, "开关 Battle/FlowTrace", ToggleBattleTrace)
                 .Bind(KeyCode.Keypad6, "强制本局胜利", CheatForceNodeVictory);
         }
 
@@ -97,19 +97,30 @@ namespace NineGrid.DevTest.Flow
             }
         }
 
-        private static void ExportBattleTrace()
+        private static void ExportBattleAndFlowTrace()
         {
-            var path = BattleTraceRecorder.ExportJson();
-            if (string.IsNullOrEmpty(path))
+            BattleTraceRecorder.ExportBothNow();
+            var battleOk = BattleTraceRecorder.CurrentSession != null
+                && BattleTraceRecorder.CurrentSession.ops != null
+                && BattleTraceRecorder.CurrentSession.ops.Count > 0;
+            var flowOk = FlowTraceRecorder.CurrentSession != null
+                && FlowTraceRecorder.CurrentSession.events != null
+                && FlowTraceRecorder.CurrentSession.events.Count > 0;
+            if (!battleOk && !flowOk)
             {
-                Debug.LogWarning("[InBattleManagerDevKeys] BattleTrace 导出失败或无数据。");
+                Debug.LogWarning("[InBattleManagerDevKeys] Battle/FlowTrace 导出失败或无数据。");
             }
         }
 
         private static void ToggleBattleTrace()
         {
             BattleTraceRecorder.Enabled = !BattleTraceRecorder.Enabled;
-            Debug.Log("[InBattleManagerDevKeys] BattleTrace.Enabled = " + BattleTraceRecorder.Enabled);
+            FlowTraceRecorder.Enabled = BattleTraceRecorder.Enabled;
+            Debug.Log(
+                "[InBattleManagerDevKeys] BattleTrace.Enabled = "
+                + BattleTraceRecorder.Enabled
+                + ", FlowTrace.Enabled = "
+                + FlowTraceRecorder.Enabled);
         }
 
         private InBattleManagerSingleton ResolveManager()

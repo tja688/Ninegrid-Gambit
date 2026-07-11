@@ -250,7 +250,10 @@ namespace NineGrid.Flow
             try
             {
                 BattleTraceRecorder.Clear();
+                DiagTraceShared.EnsureSessionIdentity(snapshot.Seed);
                 BattleTraceRecorder.BeginSessionIfNeeded(snapshot.Seed);
+                // FlowTrace 不清空：同局 StartRun 等流程事件保留；失败重开由 BeginRun.RotateSessionForNewRun 处理。
+                FlowTraceRecorder.BeginSessionIfNeeded(snapshot.Seed);
             }
             catch (Exception ex)
             {
@@ -364,6 +367,7 @@ namespace NineGrid.Flow
                 {
                     var board = arch.GetModel<BoardModel>();
                     BattleTraceRecorder.BeginSessionIfNeeded(arch.GetModel<RunModel>().Seed.Value);
+                    FlowTraceRecorder.BeginSessionIfNeeded(arch.GetModel<RunModel>().Seed.Value);
                     BattleTraceRecorder.RecordOp(new BattleTraceOp
                     {
                         opKind = "StartNode",
@@ -379,6 +383,17 @@ namespace NineGrid.Flow
                         presentation = new BattleTracePresentation { accepted = true },
                         verdictHints = new BattleTraceVerdictHints(),
                     });
+                    FlowTraceRecorder.Record(
+                        FlowTraceCategory.CoreGate,
+                        FlowTraceNames.StartNode,
+                        new Dictionary<string, string>
+                        {
+                            { "avatarUid", board.AvatarUid.Value.ToString() },
+                        },
+                        phaseBefore: GamePhase.None.ToString(),
+                        phaseAfter: phase.CurrentPhase.ToString(),
+                        accepted: true,
+                        refBattleOpIndex: BattleTraceRecorder.LastOpIndex);
                 }
                 catch (Exception ex)
                 {
@@ -875,7 +890,7 @@ namespace NineGrid.Flow
             BattleTraceCardSnap targetSnap = null;
             try
             {
-                if (BattleTraceRecorder.Enabled)
+                if (BattleTraceRecorder.Enabled || FlowTraceRecorder.Enabled)
                 {
                     BattleTraceRecorder.BeginSessionIfNeeded();
                     attackerSnap = BattleTraceRecorder.TryCaptureCard(attackerUid);
@@ -913,6 +928,17 @@ namespace NineGrid.Flow
                             presentation = new BattleTracePresentation { accepted = false },
                             verdictHints = BattleTraceRecorder.BuildVerdictHints(events, false, false),
                         });
+                        RecordCombatHitFlowSummary(
+                            reason,
+                            attackerSnap,
+                            targetSnap,
+                            phaseBefore,
+                            phaseSystem.CurrentPhase.ToString(),
+                            accepted: false,
+                            damageAmount: 0,
+                            targetKilled: false,
+                            avatarDefeated: false,
+                            avatarHpAfter: targetSnap != null ? targetSnap.hp : -1);
                     }
                 }
                 catch (Exception ex)
@@ -967,33 +993,48 @@ namespace NineGrid.Flow
 
             try
             {
-                if (BattleTraceRecorder.Enabled)
+                if (BattleTraceRecorder.Enabled || FlowTraceRecorder.Enabled)
                 {
                     var endIndex = entries.Count;
-                    var events = BattleTraceRecorder.SliceEvents(startIndex, endIndex);
-                    BattleTraceRecorder.RecordOp(new BattleTraceOp
+                    if (BattleTraceRecorder.Enabled)
                     {
-                        opKind = "CombatHit",
-                        reason = reason,
-                        apiPath = "PhaseSystem.ApplyCombatHit",
-                        phaseBefore = phaseBefore,
-                        phaseAfter = phase.ToString(),
-                        attacker = attackerSnap,
-                        target = targetSnap,
-                        eventStartIndex = startIndex,
-                        eventEndIndex = endIndex,
-                        events = events,
-                        presentation = new BattleTracePresentation
+                        var events = BattleTraceRecorder.SliceEvents(startIndex, endIndex);
+                        BattleTraceRecorder.RecordOp(new BattleTraceOp
                         {
-                            accepted = summary.Accepted,
-                            damageAmount = summary.DamageAmount,
-                            targetKilled = summary.TargetKilled,
-                            avatarDefeated = summary.AvatarDefeated,
-                            nodeClearedOrRewardPhase = summary.NodeClearedOrRewardPhase,
-                        },
-                        verdictHints = BattleTraceRecorder.BuildVerdictHints(
-                            events, summary.TargetKilled, summary.AvatarDefeated),
-                    });
+                            opKind = "CombatHit",
+                            reason = reason,
+                            apiPath = "PhaseSystem.ApplyCombatHit",
+                            phaseBefore = phaseBefore,
+                            phaseAfter = phase.ToString(),
+                            attacker = attackerSnap,
+                            target = targetSnap,
+                            eventStartIndex = startIndex,
+                            eventEndIndex = endIndex,
+                            events = events,
+                            presentation = new BattleTracePresentation
+                            {
+                                accepted = summary.Accepted,
+                                damageAmount = summary.DamageAmount,
+                                targetKilled = summary.TargetKilled,
+                                avatarDefeated = summary.AvatarDefeated,
+                                nodeClearedOrRewardPhase = summary.NodeClearedOrRewardPhase,
+                            },
+                            verdictHints = BattleTraceRecorder.BuildVerdictHints(
+                                events, summary.TargetKilled, summary.AvatarDefeated),
+                        });
+                    }
+
+                    RecordCombatHitFlowSummary(
+                        reason,
+                        attackerSnap,
+                        targetSnap,
+                        phaseBefore,
+                        phase.ToString(),
+                        accepted: true,
+                        damageAmount: summary.DamageAmount,
+                        targetKilled: summary.TargetKilled,
+                        avatarDefeated: summary.AvatarDefeated,
+                        avatarHpAfter: ResolveAvatarHpAfterHit(arch, targetUid, summary));
                 }
             }
             catch (Exception ex)
@@ -1002,6 +1043,80 @@ namespace NineGrid.Flow
             }
 
             return summary;
+        }
+
+        private static int ResolveAvatarHpAfterHit(
+            IArchitecture arch,
+            int targetUid,
+            CombatHitPresentationResult summary)
+        {
+            try
+            {
+                var board = arch.GetModel<BoardModel>();
+                var avatarUid = board.AvatarUid.Value;
+                // 始终读打后有效 HP；勿信 summary.RemainingHp（0 伤时常为默认 0）。
+                if (arch.GetModel<CardRegistry>().TryGet(avatarUid, out var avatar) && avatar != null)
+                {
+                    return arch.GetSystem<IStatSystem>().GetEffectiveInt(avatar, StatId.Hp);
+                }
+
+                if (targetUid == avatarUid && summary.DamageAmount > 0)
+                {
+                    return summary.RemainingHp;
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+
+            return -1;
+        }
+
+        private static void RecordCombatHitFlowSummary(
+            string reason,
+            BattleTraceCardSnap attackerSnap,
+            BattleTraceCardSnap targetSnap,
+            string phaseBefore,
+            string phaseAfter,
+            bool accepted,
+            int damageAmount,
+            bool targetKilled,
+            bool avatarDefeated,
+            int avatarHpAfter)
+        {
+            try
+            {
+                if (!FlowTraceRecorder.Enabled)
+                {
+                    return;
+                }
+
+                FlowTraceRecorder.BeginSessionIfNeeded();
+                FlowTraceRecorder.Record(
+                    FlowTraceCategory.CombatSummary,
+                    FlowTraceNames.CombatHitSummary,
+                    new Dictionary<string, string>
+                    {
+                        { "reason", reason ?? string.Empty },
+                        { "attackerDefId", attackerSnap != null ? attackerSnap.defId : string.Empty },
+                        { "targetDefId", targetSnap != null ? targetSnap.defId : string.Empty },
+                        { "attackerUid", attackerSnap != null ? attackerSnap.uid.ToString() : "0" },
+                        { "targetUid", targetSnap != null ? targetSnap.uid.ToString() : "0" },
+                        { "damage", damageAmount.ToString() },
+                        { "targetKilled", targetKilled ? "true" : "false" },
+                        { "avatarDefeated", avatarDefeated ? "true" : "false" },
+                        { "avatarHpAfter", avatarHpAfter.ToString() },
+                    },
+                    phaseBefore: phaseBefore,
+                    phaseAfter: phaseAfter,
+                    accepted: accepted,
+                    refBattleOpIndex: BattleTraceRecorder.LastOpIndex);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[InBattleManager] FlowTrace CombatHitSummary: " + ex.Message);
+            }
         }
 
         private static PostKillBoardPresentationResult ResolvePostKillBoardFromCore()
@@ -1049,6 +1164,13 @@ namespace NineGrid.Flow
                             presentation = new BattleTracePresentation { accepted = false },
                             verdictHints = BattleTraceRecorder.BuildVerdictHints(events, false, false),
                         });
+                        RecordPostKillFlowSummary(
+                            arch,
+                            phaseBefore,
+                            phase.ToString(),
+                            accepted: false,
+                            moveCount: 0,
+                            dealCount: 0);
                     }
                 }
                 catch (Exception ex)
@@ -1090,6 +1212,13 @@ namespace NineGrid.Flow
                         verdictHints = BattleTraceRecorder.BuildVerdictHints(
                             events, false, summary.AvatarDefeated),
                     });
+                    RecordPostKillFlowSummary(
+                        arch,
+                        phaseBefore,
+                        phase.ToString(),
+                        accepted: true,
+                        moveCount: moves != null ? moves.Length : 0,
+                        dealCount: deals != null ? deals.Length : 0);
                 }
             }
             catch (Exception ex)
@@ -1098,6 +1227,59 @@ namespace NineGrid.Flow
             }
 
             return summary;
+        }
+
+        private static void RecordPostKillFlowSummary(
+            IArchitecture arch,
+            string phaseBefore,
+            string phaseAfter,
+            bool accepted,
+            int moveCount,
+            int dealCount)
+        {
+            try
+            {
+                if (!FlowTraceRecorder.Enabled)
+                {
+                    return;
+                }
+
+                var deckEmpty = true;
+                var enemyDrawEmpty = true;
+                var drawPileCount = 0;
+                try
+                {
+                    var deck = arch.GetModel<DeckModel>();
+                    drawPileCount = deck.DrawPileUids.Count;
+                    deckEmpty = drawPileCount == 0;
+                    enemyDrawEmpty = !arch.GetSystem<IDeckSystem>().HasEnemyInDrawPile();
+                }
+                catch
+                {
+                    // ignore
+                }
+
+                FlowTraceRecorder.BeginSessionIfNeeded();
+                FlowTraceRecorder.Record(
+                    FlowTraceCategory.Deck,
+                    FlowTraceNames.PostKillBoard,
+                    new Dictionary<string, string>
+                    {
+                        { "moveCount", moveCount.ToString() },
+                        { "dealCount", dealCount.ToString() },
+                        { "drawPileCount", drawPileCount.ToString() },
+                        { "deckEmpty", deckEmpty ? "true" : "false" },
+                        { "enemyDrawEmpty", enemyDrawEmpty ? "true" : "false" },
+                    },
+                    phaseBefore: phaseBefore,
+                    phaseAfter: phaseAfter,
+                    accepted: accepted,
+                    refBattleOpIndex: BattleTraceRecorder.LastOpIndex);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[InBattleManager] FlowTrace PostKillBoard: " + ex.Message);
+            }
         }
 
         /// <summary>
@@ -1861,25 +2043,59 @@ namespace NineGrid.Flow
                 var pipeline = arch.GetSystem<IActionPipelineSystem>();
                 var startIndex = pipeline.EventLog.Entries.Count;
                 var phaseSystem = arch.GetSystem<IPhaseSystem>();
+                var phaseBefore = phaseSystem.CurrentPhase.ToString();
                 CoreCommandResult result;
+                string chosenDefId;
+                string choiceKind;
                 if (pick.SkipRequested || pick.Index < 0)
                 {
+                    chosenDefId = string.Empty;
+                    choiceKind = "skip";
                     result = phaseSystem.SkipHelpChoice();
                     if (!result.Accepted)
                     {
                         Debug.LogWarning($"[InBattleManager] SkipHelpChoice 被拒: {result.Reason}");
+                        RecordRewardChosenFlow(
+                            choiceKind,
+                            chosenDefId,
+                            -1,
+                            phaseBefore,
+                            phaseSystem.CurrentPhase.ToString(),
+                            accepted: false,
+                            reason: result.Reason);
                         return;
                     }
                 }
                 else
                 {
+                    chosenDefId = pick.Index >= 0 && pick.Index < defIds.Length
+                        ? defIds[pick.Index]
+                        : string.Empty;
+                    choiceKind = "select";
                     result = phaseSystem.SelectReward(pick.Index);
                     if (!result.Accepted)
                     {
                         Debug.LogWarning($"[InBattleManager] SelectReward 被拒: {result.Reason}");
+                        RecordRewardChosenFlow(
+                            choiceKind,
+                            chosenDefId,
+                            pick.Index,
+                            phaseBefore,
+                            phaseSystem.CurrentPhase.ToString(),
+                            accepted: false,
+                            reason: result.Reason);
                         return;
                     }
                 }
+
+                RecordRewardChosenFlow(
+                    choiceKind,
+                    chosenDefId,
+                    pick.Index,
+                    phaseBefore,
+                    phaseSystem.CurrentPhase.ToString(),
+                    accepted: true,
+                    reason: string.Empty);
 
                 // 选完关闭覆盖层；Drain 期间由 PresentationLocked 挡输入（外层已持锁则复用）。
                 var acquiredDrainLock = CombatHitSink.TryBeginPresentationLock("RewardDrain");
@@ -1947,6 +2163,37 @@ namespace NineGrid.Flow
             finally
             {
                 CombatHitSink.ChoiceOverlayActive = false;
+            }
+        }
+
+        private static void RecordRewardChosenFlow(
+            string choiceKind,
+            string chosenDefId,
+            int index,
+            string phaseBefore,
+            string phaseAfter,
+            bool accepted,
+            string reason)
+        {
+            try
+            {
+                FlowTraceRecorder.Record(
+                    FlowTraceCategory.CoreGate,
+                    FlowTraceNames.RewardChosen,
+                    new Dictionary<string, string>
+                    {
+                        { "kind", choiceKind ?? string.Empty },
+                        { "defId", chosenDefId ?? string.Empty },
+                        { "index", index.ToString() },
+                        { "reason", reason ?? string.Empty },
+                    },
+                    phaseBefore: phaseBefore,
+                    phaseAfter: phaseAfter,
+                    accepted: accepted);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[InBattleManager] FlowTrace RewardChosen: " + ex.Message);
             }
         }
 

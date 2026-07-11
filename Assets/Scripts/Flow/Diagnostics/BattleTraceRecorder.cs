@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using NineGrid.Cards;
 using NineGrid.Core;
@@ -17,7 +16,6 @@ namespace NineGrid.Flow.Diagnostics
     public static class BattleTraceRecorder
     {
         private static BattleTraceSession sSession;
-        private static bool sExportedThisPlayExit;
         private static bool sEnabled =
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             true;
@@ -33,12 +31,15 @@ namespace NineGrid.Flow.Diagnostics
 
         public static BattleTraceSession CurrentSession => sSession;
 
+        public static bool HasOps =>
+            sSession != null && sSession.ops != null && sSession.ops.Count > 0;
+
         /// <summary>
         /// 进入 Play 时复位「本局已导出」标记，供 Editor 钩子调用。
         /// </summary>
         public static void NotifyEnteredPlayMode()
         {
-            sExportedThisPlayExit = false;
+            DiagTraceShared.NotifyEnteredPlayMode();
         }
 
         public static void Clear()
@@ -53,6 +54,39 @@ namespace NineGrid.Flow.Diagnostics
             }
         }
 
+        /// <summary>
+        /// 失败重开 / 再点开始：若已有上一局内容则先落盘，再强制新 sessionId，两边清空对齐。
+        /// </summary>
+        public static void RotateSessionForNewRun(ulong seed = 0UL)
+        {
+            try
+            {
+                var shouldRotate = HasOps || FlowTraceRecorder.HasPriorRunMarker();
+                if (!shouldRotate)
+                {
+                    BeginSessionIfNeeded(seed);
+                    FlowTraceRecorder.BeginSessionIfNeeded(seed);
+                    return;
+                }
+
+                ExportBothNow(silentIfEmpty: true);
+                Clear();
+                FlowTraceRecorder.Clear();
+                DiagTraceShared.ForceNewSessionIdentity(seed);
+                BeginSessionIfNeeded(seed);
+                FlowTraceRecorder.BeginSessionIfNeeded(seed);
+                Debug.Log(
+                    "[BattleTrace] 新开局已轮转诊断会话 sessionId="
+                    + DiagTraceShared.CurrentSessionId
+                    + " seed="
+                    + DiagTraceShared.CurrentSeed);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[BattleTrace] RotateSessionForNewRun failed: " + ex.Message);
+            }
+        }
+
         public static void BeginSessionIfNeeded(ulong seed = 0UL)
         {
             if (!sEnabled)
@@ -62,21 +96,19 @@ namespace NineGrid.Flow.Diagnostics
 
             try
             {
+                DiagTraceShared.EnsureSessionIdentity(seed);
                 if (sSession != null)
                 {
+                    sSession.sessionId = DiagTraceShared.CurrentSessionId;
+                    sSession.seed = DiagTraceShared.CurrentSeed;
                     return;
-                }
-
-                if (seed == 0UL)
-                {
-                    seed = TryReadSeed();
                 }
 
                 sSession = new BattleTraceSession
                 {
                     schemaVersion = 1,
-                    seed = seed.ToString(),
-                    sessionId = DateTime.Now.ToString("yyyyMMdd-HHmmss"),
+                    seed = DiagTraceShared.CurrentSeed,
+                    sessionId = DiagTraceShared.CurrentSessionId,
                     ops = new List<BattleTraceOp>(),
                 };
             }
@@ -107,6 +139,22 @@ namespace NineGrid.Flow.Diagnostics
             catch (Exception ex)
             {
                 Debug.LogWarning("[BattleTrace] RecordOp failed: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 最近一条已记录 Op 的 opIndex；无会话返回 -1。
+        /// </summary>
+        public static int LastOpIndex
+        {
+            get
+            {
+                if (sSession == null || sSession.ops == null || sSession.ops.Count == 0)
+                {
+                    return -1;
+                }
+
+                return sSession.ops.Count - 1;
             }
         }
 
@@ -284,29 +332,33 @@ namespace NineGrid.Flow.Diagnostics
         /// <summary>
         /// 导出当前局战斗日志。Editor 写入 Assets/Notes/BattleLog；非 Editor 回退 persistentDataPath。
         /// </summary>
-        public static string ExportJson()
+        /// <param name="silentIfEmpty">无数据时不打 Warning。</param>
+        public static string ExportJson(bool silentIfEmpty = false)
         {
             try
             {
                 if (sSession == null || sSession.ops == null || sSession.ops.Count == 0)
                 {
-                    Debug.LogWarning("[BattleTrace] ExportJson: 无会话或无 ops。");
+                    if (!silentIfEmpty)
+                    {
+                        Debug.LogWarning("[BattleTrace] ExportJson: 无会话或无 ops。");
+                    }
+
                     return null;
                 }
 
                 var json = BattleTraceJson.Serialize(sSession);
-                var dir = ResolveExportDirectory();
-                Directory.CreateDirectory(dir);
-                var sessionId = string.IsNullOrEmpty(sSession.sessionId)
-                    ? DateTime.Now.ToString("yyyyMMdd-HHmmss")
-                    : sSession.sessionId;
-                var seed = string.IsNullOrEmpty(sSession.seed) ? "0" : sSession.seed;
-                var fileName = "battlelog-" + sessionId + "-seed" + seed + ".json";
-                var path = Path.Combine(dir, fileName);
-                File.WriteAllText(path, json, Encoding.UTF8);
+                var dir = DiagTraceShared.ResolveNotesDir("BattleLog");
+                var fileName = DiagTraceShared.BuildFileName(
+                    "battlelog",
+                    sSession.sessionId,
+                    sSession.seed);
+                var path = DiagTraceShared.WriteUtf8File(dir, fileName, json);
+                if (!string.IsNullOrEmpty(path))
+                {
+                    Debug.Log("[BattleTrace] Exported: " + path + "\n" + BuildTailSummary(sSession));
+                }
 
-                var summary = BuildTailSummary(sSession);
-                Debug.Log("[BattleTrace] Exported: " + path + "\n" + summary);
                 return path;
             }
             catch (Exception ex)
@@ -326,34 +378,33 @@ namespace NineGrid.Flow.Diagnostics
 
         /// <summary>
         /// Play 退出导出入口（OnDestroy / ExitingPlayMode 共用，去重）。
+        /// 同时尝试导出 FlowTrace。
         /// </summary>
         public static string ExportOnPlayExit(string source)
         {
             try
             {
-                if (sExportedThisPlayExit)
+                if (DiagTraceShared.AlreadyExportedThisPlayExit)
                 {
                     return null;
                 }
 
-                if (!sEnabled)
+                string battlePath = null;
+                if (sEnabled
+                    && sSession != null
+                    && sSession.ops != null
+                    && sSession.ops.Count > 0)
                 {
-                    return null;
+                    battlePath = ExportJson();
+                    if (!string.IsNullOrEmpty(battlePath))
+                    {
+                        Debug.Log("[BattleTrace] Play 结束已导出战斗日志（" + source + "）：" + battlePath);
+                    }
                 }
 
-                if (sSession == null || sSession.ops == null || sSession.ops.Count == 0)
-                {
-                    return null;
-                }
-
-                var path = ExportJson();
-                if (!string.IsNullOrEmpty(path))
-                {
-                    sExportedThisPlayExit = true;
-                    Debug.Log("[BattleTrace] Play 结束已导出战斗日志（" + source + "）：" + path);
-                }
-
-                return path;
+                FlowTraceRecorder.ExportOnPlayExit(source);
+                DiagTraceShared.MarkExportedThisPlayExit();
+                return battlePath;
             }
             catch (Exception ex)
             {
@@ -362,14 +413,33 @@ namespace NineGrid.Flow.Diagnostics
             }
         }
 
+        /// <summary>
+        /// 立即导出 Battle + Flow（DevKeys / 胜负落盘 / 重开轮转）。不受 Play 退出去重影响。
+        /// </summary>
+        public static void ExportBothNow(bool silentIfEmpty = false)
+        {
+            try
+            {
+                ExportJson(silentIfEmpty);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[BattleTrace] ExportBothNow battle: " + ex.Message);
+            }
+
+            try
+            {
+                FlowTraceRecorder.ExportJson(silentIfEmpty);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[BattleTrace] ExportBothNow flow: " + ex.Message);
+            }
+        }
+
         public static string ResolveExportDirectory()
         {
-#if UNITY_EDITOR
-            // Application.dataPath = <Project>/Assets
-            return Path.Combine(Application.dataPath, "Notes", "BattleLog");
-#else
-            return Path.Combine(Application.persistentDataPath, "BattleLog");
-#endif
+            return DiagTraceShared.ResolveNotesDir("BattleLog");
         }
 
         public static string ConsumePendingReason(string fallback = "CombatHit")
@@ -395,18 +465,6 @@ namespace NineGrid.Flow.Diagnostics
             catch
             {
                 return string.Empty;
-            }
-        }
-
-        private static ulong TryReadSeed()
-        {
-            try
-            {
-                return NineGridArchitecture.Current.GetModel<RunModel>().Seed.Value;
-            }
-            catch
-            {
-                return 0UL;
             }
         }
 

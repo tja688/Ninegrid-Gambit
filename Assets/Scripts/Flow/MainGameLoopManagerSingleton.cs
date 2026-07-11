@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
+using NineGrid.Flow.Diagnostics;
 using QFramework;
 using TMPro;
 using UnityEngine;
@@ -172,6 +174,24 @@ namespace NineGrid.Flow
             _nodeIndex = 0;
             HideNotice();
             panelRouter.ShowInRunShell(inBattle: true);
+            try
+            {
+                // 失败重开：先落盘上一局，再开新 session，避免 Flow 粘连 / Battle 被 Bootstrap 清掉后对不上。
+                BattleTraceRecorder.RotateSessionForNewRun();
+                FlowTraceRecorder.Record(
+                    FlowTraceCategory.UI,
+                    FlowTraceNames.StartRun,
+                    new Dictionary<string, string>
+                    {
+                        { "testMode", testMode ? "true" : "false" },
+                    },
+                    loopState: _state.ToString());
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[MainGameLoop] FlowTrace StartRun: " + ex.Message);
+            }
+
             RunNodeCycleAsync(_loopCts.Token).Forget();
         }
 
@@ -185,6 +205,18 @@ namespace NineGrid.Flow
             if (selectorManager != null && selectorManager.IsChoiceActive)
             {
                 selectorManager.HideChoice();
+            }
+
+            try
+            {
+                FlowTraceRecorder.Record(
+                    FlowTraceCategory.UI,
+                    FlowTraceNames.ReturnMainMenu,
+                    loopState: _state.ToString());
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[MainGameLoop] FlowTrace ReturnMainMenu: " + ex.Message);
             }
 
             EnterMainMenuImmediate();
@@ -323,7 +355,54 @@ namespace NineGrid.Flow
             {
                 Debug.LogWarning(
                     $"[MainGameLoop] 跳过通关奖励 phase={phase} pending={pending.Kind.Value}");
+                try
+                {
+                    FlowTraceRecorder.Record(
+                        FlowTraceCategory.CoreGate,
+                        FlowTraceNames.RewardPresented,
+                        new Dictionary<string, string>
+                        {
+                            { "skipped", "true" },
+                            { "phase", phase.ToString() },
+                            { "pending", pending.Kind.Value.ToString() },
+                            { "nodeIndex", _nodeIndex.ToString() },
+                        },
+                        loopState: _state.ToString(),
+                        phaseBefore: phase.ToString(),
+                        accepted: false);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[MainGameLoop] FlowTrace RewardSkipped: " + ex.Message);
+                }
+
                 return;
+            }
+
+            try
+            {
+                var optionIds = new List<string>(pending.RewardOptions.Count);
+                for (var i = 0; i < pending.RewardOptions.Count; i++)
+                {
+                    optionIds.Add(pending.RewardOptions[i].DefId ?? string.Empty);
+                }
+
+                FlowTraceRecorder.Record(
+                    FlowTraceCategory.CoreGate,
+                    FlowTraceNames.RewardPresented,
+                    new Dictionary<string, string>
+                    {
+                        { "optionCount", pending.RewardOptions.Count.ToString() },
+                        { "options", string.Join(",", optionIds) },
+                        { "nodeIndex", _nodeIndex.ToString() },
+                        { "source", "nodeClear" },
+                    },
+                    loopState: _state.ToString(),
+                    phaseBefore: phase.ToString());
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[MainGameLoop] FlowTrace RewardPresented: " + ex.Message);
             }
 
             panelRouter.ShowRewardOverlay();
@@ -356,14 +435,55 @@ namespace NineGrid.Flow
             {
                 Debug.LogWarning(
                     $"[MainGameLoop] 跳过房间选择 phase={phaseSystem.CurrentPhase} pending={pending.Kind.Value}");
+                try
+                {
+                    FlowTraceRecorder.Record(
+                        FlowTraceCategory.CoreGate,
+                        FlowTraceNames.RoomPresented,
+                        new Dictionary<string, string>
+                        {
+                            { "skipped", "true" },
+                            { "phase", phaseSystem.CurrentPhase.ToString() },
+                            { "pending", pending.Kind.Value.ToString() },
+                            { "nodeIndex", _nodeIndex.ToString() },
+                        },
+                        loopState: _state.ToString(),
+                        phaseBefore: phaseSystem.CurrentPhase.ToString(),
+                        accepted: false);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[MainGameLoop] FlowTrace RoomSkipped: " + ex.Message);
+                }
+
                 return;
             }
 
             var left = pending.RoomOptions[0];
             var right = pending.RoomOptions[1];
+            try
+            {
+                FlowTraceRecorder.Record(
+                    FlowTraceCategory.CoreGate,
+                    FlowTraceNames.RoomPresented,
+                    new Dictionary<string, string>
+                    {
+                        { "left", left.ToString() },
+                        { "right", right.ToString() },
+                        { "nodeIndex", _nodeIndex.ToString() },
+                    },
+                    loopState: _state.ToString(),
+                    phaseBefore: phaseSystem.CurrentPhase.ToString());
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[MainGameLoop] FlowTrace RoomPresented: " + ex.Message);
+            }
+
             panelRouter.ShowRoomChoiceOverlay();
 
             var pickedIndex = -1;
+            var pickedId = string.Empty;
             var finished = false;
             CombatHitSink.ChoiceOverlayActive = true;
             try
@@ -374,6 +494,7 @@ namespace NineGrid.Flow
                     (index, optionId) =>
                     {
                         pickedIndex = index;
+                        pickedId = optionId ?? string.Empty;
                         Debug.Log($"[MainGameLoop] 房间已选 index={index} id={optionId}");
                     },
                     () => { finished = true; },
@@ -397,10 +518,33 @@ namespace NineGrid.Flow
                 pickedIndex = 0;
             }
 
+            var phaseBeforeSelect = phaseSystem.CurrentPhase.ToString();
             var result = phaseSystem.SelectRoom(pickedIndex);
             if (!result.Accepted)
             {
                 Debug.LogWarning($"[MainGameLoop] SelectRoom 被拒: {result.Reason}");
+            }
+
+            try
+            {
+                FlowTraceRecorder.Record(
+                    FlowTraceCategory.CoreGate,
+                    FlowTraceNames.RoomChosen,
+                    new Dictionary<string, string>
+                    {
+                        { "index", pickedIndex.ToString() },
+                        { "optionId", string.IsNullOrEmpty(pickedId) ? pickedIndex.ToString() : pickedId },
+                        { "reason", result.Reason ?? string.Empty },
+                        { "nodeIndex", _nodeIndex.ToString() },
+                    },
+                    loopState: _state.ToString(),
+                    phaseBefore: phaseBeforeSelect,
+                    phaseAfter: phaseSystem.CurrentPhase.ToString(),
+                    accepted: result.Accepted);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[MainGameLoop] FlowTrace RoomChosen: " + ex.Message);
             }
 
             PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
@@ -422,12 +566,54 @@ namespace NineGrid.Flow
             var selectedRoom = arch.GetModel<PendingChoiceModel>().SelectedRoom.Value;
             panelRouter.ShowRoomEventOverlay();
 
+            var phaseBeforeEnter = phaseSystem.CurrentPhase.ToString();
             var enter = phaseSystem.EnterRoom();
             if (!enter.Accepted)
             {
                 Debug.LogWarning($"[MainGameLoop] EnterRoom 被拒: {enter.Reason}");
+                try
+                {
+                    FlowTraceRecorder.Record(
+                        FlowTraceCategory.CoreGate,
+                        FlowTraceNames.EnterRoom,
+                        new Dictionary<string, string>
+                        {
+                            { "room", selectedRoom.ToString() },
+                            { "reason", enter.Reason ?? string.Empty },
+                            { "nodeIndex", _nodeIndex.ToString() },
+                        },
+                        loopState: _state.ToString(),
+                        phaseBefore: phaseBeforeEnter,
+                        phaseAfter: phaseSystem.CurrentPhase.ToString(),
+                        accepted: false);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[MainGameLoop] FlowTrace EnterRoom reject: " + ex.Message);
+                }
+
                 panelRouter.HideAllOverlays();
                 return;
+            }
+
+            try
+            {
+                FlowTraceRecorder.Record(
+                    FlowTraceCategory.CoreGate,
+                    FlowTraceNames.EnterRoom,
+                    new Dictionary<string, string>
+                    {
+                        { "room", selectedRoom.ToString() },
+                        { "nodeIndex", _nodeIndex.ToString() },
+                    },
+                    loopState: _state.ToString(),
+                    phaseBefore: phaseBeforeEnter,
+                    phaseAfter: phaseSystem.CurrentPhase.ToString(),
+                    accepted: true);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[MainGameLoop] FlowTrace EnterRoom: " + ex.Message);
             }
 
             PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
@@ -437,6 +623,33 @@ namespace NineGrid.Flow
                 && pending.RewardOptions != null
                 && pending.RewardOptions.Count > 0)
             {
+                try
+                {
+                    var optionIds = new List<string>(pending.RewardOptions.Count);
+                    for (var i = 0; i < pending.RewardOptions.Count; i++)
+                    {
+                        optionIds.Add(pending.RewardOptions[i].DefId ?? string.Empty);
+                    }
+
+                    FlowTraceRecorder.Record(
+                        FlowTraceCategory.CoreGate,
+                        FlowTraceNames.RewardPresented,
+                        new Dictionary<string, string>
+                        {
+                            { "optionCount", pending.RewardOptions.Count.ToString() },
+                            { "options", string.Join(",", optionIds) },
+                            { "nodeIndex", _nodeIndex.ToString() },
+                            { "source", "roomEvent" },
+                            { "room", selectedRoom.ToString() },
+                        },
+                        loopState: _state.ToString(),
+                        phaseBefore: phaseSystem.CurrentPhase.ToString());
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[MainGameLoop] FlowTrace RoomRewardPresented: " + ex.Message);
+                }
+
                 // 商店 / 宝箱房：复用 Bounce 默认选择器。
                 panelRouter.ShowRewardOverlay();
                 CombatHitSink.ChoiceOverlayActive = true;
@@ -533,6 +746,25 @@ namespace NineGrid.Flow
                 ? (string.IsNullOrWhiteSpace(victoryMessage) ? "胜利" : victoryMessage)
                 : (string.IsNullOrWhiteSpace(defeatMessage) ? "失败" : defeatMessage);
             ShowNotice(message);
+            try
+            {
+                FlowTraceRecorder.Record(
+                    FlowTraceCategory.Loop,
+                    victory ? FlowTraceNames.Victory : FlowTraceNames.Defeat,
+                    new Dictionary<string, string>
+                    {
+                        { "message", message },
+                        { "nodeIndex", _nodeIndex.ToString() },
+                    },
+                    loopState: _state.ToString());
+                // 胜负当场落盘，避免未点「再开始」就退出 Play 时只靠退出钩子、或重开粘连。
+                BattleTraceRecorder.ExportBothNow(silentIfEmpty: true);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[MainGameLoop] FlowTrace Victory/Defeat: " + ex.Message);
+            }
+
             Debug.Log(victory
                 ? "[MainGameLoop] 整局胜利，准备回主菜单。"
                 : "[MainGameLoop] 战斗失败，准备回主菜单。");
@@ -551,6 +783,19 @@ namespace NineGrid.Flow
             inBattleManager?.ClearPresentationSurface();
             panelRouter.ShowMainMenu();
             SetState(LoopState.MainMenu);
+            try
+            {
+                FlowTraceRecorder.BeginSessionIfNeeded();
+                FlowTraceRecorder.Record(
+                    FlowTraceCategory.Loop,
+                    FlowTraceNames.EnterMainMenu,
+                    loopState: LoopState.MainMenu.ToString());
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[MainGameLoop] FlowTrace EnterMainMenu: " + ex.Message);
+            }
+
             _testMode = false;
             _nodeIndex = 0;
             _isBusy = false;
@@ -634,7 +879,30 @@ namespace NineGrid.Flow
 
         private void SetState(LoopState next)
         {
+            var from = _state;
             _state = next;
+            if (from == next)
+            {
+                return;
+            }
+
+            try
+            {
+                FlowTraceRecorder.Record(
+                    FlowTraceCategory.Loop,
+                    FlowTraceNames.SetState,
+                    new Dictionary<string, string>
+                    {
+                        { "from", from.ToString() },
+                        { "to", next.ToString() },
+                        { "nodeIndex", _nodeIndex.ToString() },
+                    },
+                    loopState: next.ToString());
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[MainGameLoop] FlowTrace SetState: " + ex.Message);
+            }
         }
 
         private void CancelLoopWork()

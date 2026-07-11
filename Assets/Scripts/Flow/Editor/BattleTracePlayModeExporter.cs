@@ -6,8 +6,8 @@ using UnityEditor;
 namespace NineGrid.Flow.Editor
 {
     /// <summary>
-    /// Play 结束时自动把本局 BattleTrace 导出到 Assets/Notes/BattleLog。
-    /// 与 InBattleManager.OnDestroy 双保险；Recorder 内去重。
+    /// Play 结束时自动导出 BattleTrace + FlowTrace。
+    /// 与 InBattleManager.OnDestroy 双保险；DiagTraceShared 内去重。
     /// </summary>
     [InitializeOnLoad]
     public static class BattleTracePlayModeExporter
@@ -22,6 +22,8 @@ namespace NineGrid.Flow.Editor
             if (state == PlayModeStateChange.EnteredPlayMode)
             {
                 BattleTraceRecorder.NotifyEnteredPlayMode();
+                BattleTraceRecorder.Clear();
+                FlowTraceRecorder.Clear();
                 return;
             }
 
@@ -30,8 +32,10 @@ namespace NineGrid.Flow.Editor
                 return;
             }
 
-            var path = BattleTraceRecorder.ExportOnPlayExit("ExitingPlayMode");
-            if (!string.IsNullOrEmpty(path))
+            var battlePath = BattleTraceRecorder.ExportOnPlayExit("ExitingPlayMode");
+            // Flow 已在 ExportOnPlayExit 内一并尝试
+            if (!string.IsNullOrEmpty(battlePath)
+                || FlowTraceRecorder.CurrentSession != null)
             {
                 AssetDatabase.Refresh();
             }
