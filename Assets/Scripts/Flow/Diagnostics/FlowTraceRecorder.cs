@@ -90,7 +90,7 @@ namespace NineGrid.Flow.Diagnostics
 
                 sSession = new FlowTraceSession
                 {
-                    schemaVersion = 1,
+                    schemaVersion = 2,
                     seed = DiagTraceShared.CurrentSeed,
                     sessionId = DiagTraceShared.CurrentSessionId,
                     events = new List<FlowTraceEvent>(),

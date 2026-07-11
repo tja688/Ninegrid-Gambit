@@ -275,6 +275,7 @@ namespace NineGrid.Cards
             }
 
             _cardsByUid.Remove(uid);
+            CardHandManagerSingleton.Instance?.NotifyCardReleased(uid);
         }
 
         public void Release(ManagedCard card)

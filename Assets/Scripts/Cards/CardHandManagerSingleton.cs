@@ -281,6 +281,19 @@ namespace NineGrid.Cards
                 ct.ThrowIfCancellationRequested();
                 RefreshHandCardDisplay(card);
                 SnapHandCardToLayout(card);
+                try
+                {
+                    FlowFieldTraceSink.HandLifecycle?.Invoke(
+                        card.Uid,
+                        "acquire",
+                        true,
+                        card.DisplayMode.ToString());
+                }
+                catch
+                {
+                    // ignore
+                }
+
                 return true;
             }
             catch (OperationCanceledException)
@@ -450,6 +463,19 @@ namespace NineGrid.Cards
                     if (card != null && cm != null && cm.TryGet(card.Uid, out _))
                     {
                         Debug.LogWarning("[CardHandManager] 场地卡点击入手失败，已释放卡牌。");
+                        try
+                        {
+                            FlowFieldTraceSink.HandLifecycle?.Invoke(
+                                card.Uid,
+                                "release-pickup-fail",
+                                false,
+                                card.DisplayMode.ToString());
+                        }
+                        catch
+                        {
+                            // ignore
+                        }
+
                         cm.Release(card);
                     }
 
@@ -464,6 +490,30 @@ namespace NineGrid.Cards
                         Deals = pickup.Deals,
                         NodeClearedOrRewardPhase = pickup.NodeClearedOrRewardPhase,
                     });
+
+                // Drain 内已 Sync；若仍有占格冲突残留，再强制对齐，避免手牌/场视图半残。
+                var field = GroundFieldManagerSingleton.Instance;
+                if (field != null && field.ConsumeOccupancyConflictFlag())
+                {
+                    CombatHitSink.RequestSyncBoardFromCore();
+                    if (card != null && ContainsUid(card.Uid))
+                    {
+                        var cm = CardManagerSingleton.TryGetInstance();
+                        cm?.SetDisplayMode(card, CardDisplayMode.HandCardMode);
+                        try
+                        {
+                            FlowFieldTraceSink.HandLifecycle?.Invoke(
+                                card.Uid,
+                                "reaffirm-hand-after-conflict",
+                                true,
+                                card.DisplayMode.ToString());
+                        }
+                        catch
+                        {
+                            // ignore
+                        }
+                    }
+                }
             }
             catch (OperationCanceledException)
             {
@@ -479,6 +529,13 @@ namespace NineGrid.Cards
             if (IsBusy || IsDragging || _slotContainer == null)
             {
                 return;
+            }
+
+            // Unity destroyed：清掉悬空 hover，避免每帧 MissingReferenceException。
+            if (_hoveredCard != null && !IsLiveHandCard(_hoveredCard))
+            {
+                ClearHandHoverState(_hoveredCard);
+                _hoveredCard = null;
             }
 
             var camera = Camera.main;
@@ -535,6 +592,11 @@ namespace NineGrid.Cards
             for (var i = 0; i < layoutSettings.maxSlots; i++)
             {
                 if (!_slotContainer.TryGetCardAt(i, out var card) || card == null)
+                {
+                    continue;
+                }
+
+                if (!IsLiveHandCard(card))
                 {
                     continue;
                 }
@@ -624,6 +686,17 @@ namespace NineGrid.Cards
 
         private void ApplyHandHoverTarget(ManagedCard card)
         {
+            if (card != null && !IsLiveHandCard(card))
+            {
+                card = null;
+            }
+
+            if (_hoveredCard != null && !IsLiveHandCard(_hoveredCard))
+            {
+                _hoveredCard = null;
+                DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
+            }
+
             if (_hoveredCard == card)
             {
                 if (card != null)
@@ -649,11 +722,40 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var driver = card.View?.GetComponent<CardVisualDriver>();
+            var view = card.View;
+            if (view == null)
+            {
+                _hoveredCard = null;
+                ResetAllHandAlphas();
+                DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
+                return;
+            }
+
+            var driver = view.GetComponent<CardVisualDriver>();
             driver?.SetTarget(CardVisualTarget.Hover);
             BoostHandCardHoverSorting(card);
             RefreshHandHoverAlphas(card);
             DescriptionHoverSink.RequestShow(card.DefId, DescriptionShowRoute.Hover);
+        }
+
+        /// <summary>
+        /// CardManager.Release 后清 hover，避免 Update 仍持已 Destroy 的 View。
+        /// </summary>
+        public void NotifyCardReleased(int uid)
+        {
+            if (_hoveredCard == null || _hoveredCard.Uid != uid)
+            {
+                return;
+            }
+
+            ClearHandHoverState(_hoveredCard);
+            _hoveredCard = null;
+        }
+
+        private static bool IsLiveHandCard(ManagedCard card)
+        {
+            // Unity 假 null：destroyed View 必须用 == null，不能靠 ?. 短路。
+            return card != null && card.View != null;
         }
 
         /// <summary>
@@ -678,7 +780,7 @@ namespace NineGrid.Cards
 
         internal void ResetHandCardHoverVisual(ManagedCard card)
         {
-            if (card?.View == null)
+            if (!IsLiveHandCard(card))
             {
                 return;
             }

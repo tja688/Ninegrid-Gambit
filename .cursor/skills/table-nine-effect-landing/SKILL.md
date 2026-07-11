@@ -29,7 +29,7 @@ Before landing or analyzing:
 2. Read `references/baseline-snapshot.md` and refresh pending/atom counts if the task touches catalog.
 3. Read `references/effect-taxonomy.md` before classifying or choosing atoms.
 4. Read `references/landing-workflow.md` (full stack) or `references/compose-analysis.md` (analysis only).
-5. Use CodeGraph for symbol/architecture lookup. Use `rg` for pending IDs, design text, catalog rows.
+5. Use `rg` for pending IDs, design text, catalog rows, and symbol/architecture lookup as needed.
 
 Consult only as needed:
 

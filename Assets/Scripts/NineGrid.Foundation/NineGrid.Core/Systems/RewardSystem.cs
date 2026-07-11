@@ -21,6 +21,8 @@ namespace NineGrid.Core.Systems
     public sealed class RewardSystem : AbstractSystem, IRewardSystem
     {
         private IUnRegister mKillRewardUnregister;
+        private readonly Dictionary<string, string> mFloorMonsterDeckCache = new Dictionary<string, string>();
+        private ulong mFloorMonsterDeckCacheSeed = ulong.MaxValue;
 
         protected override void OnInit()
         {
@@ -50,9 +52,14 @@ namespace NineGrid.Core.Systems
                 return new RewardEntry[0];
             }
 
-            var result = new List<RewardEntry>();
             var candidates = new List<RewardEntry>(pool.Entries);
             var count = pool.PickCount;
+            if (TryGetRarityWeights(poolId, out var white, out var blue, out var gold, out var red))
+            {
+                return RollPoolByRarity(catalog, candidates, count, white, blue, gold, red);
+            }
+
+            var result = new List<RewardEntry>();
             for (var i = 0; i < count && candidates.Count > 0; i++)
             {
                 var index = RollWeightedIndex(candidates);
@@ -347,15 +354,250 @@ namespace NineGrid.Core.Systems
                 return deck;
             }
 
+            EnsureFloorMonsterDeckCache();
+            var run = this.GetModel<RunModel>();
+            var cacheKey = run.Floor.Value + ":" + ((int)kind).ToString();
+            string cachedId;
+            if (mFloorMonsterDeckCache.TryGetValue(cacheKey, out cachedId)
+                && catalog.MonsterDecks.TryGetValue(cachedId, out deck))
+            {
+                return deck;
+            }
+
+            var matches = new List<MonsterDeckDefinition>();
             foreach (var pair in catalog.MonsterDecks)
             {
                 if (pair.Value.Kind == kind)
                 {
-                    return pair.Value;
+                    matches.Add(pair.Value);
                 }
             }
 
-            return null;
+            if (matches.Count == 0)
+            {
+                return null;
+            }
+
+            var pick = matches[this.GetUtility<IRngUtility>().Range(0, matches.Count)];
+            mFloorMonsterDeckCache[cacheKey] = pick.Id;
+            return pick;
+        }
+
+        private void EnsureFloorMonsterDeckCache()
+        {
+            var seed = this.GetModel<RunModel>().Seed.Value;
+            if (seed == mFloorMonsterDeckCacheSeed)
+            {
+                return;
+            }
+
+            mFloorMonsterDeckCache.Clear();
+            mFloorMonsterDeckCacheSeed = seed;
+        }
+
+        /// <summary>
+        /// 设计品质表：通关/商店帮助卡白65蓝30金5；普通箱/血液转换同；蓝箱白40蓝50金10；金箱蓝50金50。
+        /// </summary>
+        private static bool TryGetRarityWeights(
+            string poolId,
+            out int white,
+            out int blue,
+            out int gold,
+            out int red)
+        {
+            white = 0;
+            blue = 0;
+            gold = 0;
+            red = 0;
+            if (string.IsNullOrEmpty(poolId))
+            {
+                return false;
+            }
+
+            if (poolId == "help.choice" || poolId == "shop.helpCards")
+            {
+                white = 65;
+                blue = 30;
+                gold = 5;
+                return true;
+            }
+
+            if (poolId == "help.white.choice")
+            {
+                white = 100;
+                return true;
+            }
+
+            if (poolId == "relic.common_chest" || poolId == "relic.blood_conversion")
+            {
+                white = 65;
+                blue = 30;
+                gold = 5;
+                return true;
+            }
+
+            if (poolId == "relic.blue_chest")
+            {
+                white = 40;
+                blue = 50;
+                gold = 10;
+                return true;
+            }
+
+            if (poolId == "relic.golden_chest")
+            {
+                blue = 50;
+                gold = 50;
+                return true;
+            }
+
+            return false;
+        }
+
+        private IReadOnlyList<RewardEntry> RollPoolByRarity(
+            GameContentCatalog catalog,
+            List<RewardEntry> candidates,
+            int count,
+            int whiteWeight,
+            int blueWeight,
+            int goldWeight,
+            int redWeight)
+        {
+            var result = new List<RewardEntry>();
+            for (var i = 0; i < count && candidates.Count > 0; i++)
+            {
+                var rarity = RollAvailableRarity(
+                    catalog,
+                    candidates,
+                    whiteWeight,
+                    blueWeight,
+                    goldWeight,
+                    redWeight);
+                var ofRarity = new List<RewardEntry>();
+                for (var c = 0; c < candidates.Count; c++)
+                {
+                    if (ResolveEntryRarity(catalog, candidates[c]) == rarity)
+                    {
+                        ofRarity.Add(candidates[c]);
+                    }
+                }
+
+                if (ofRarity.Count == 0)
+                {
+                    ofRarity.AddRange(candidates);
+                }
+
+                var index = RollWeightedIndex(ofRarity);
+                var picked = ofRarity[index];
+                result.Add(picked);
+                candidates.Remove(picked);
+            }
+
+            return result;
+        }
+
+        private ContentRarity RollAvailableRarity(
+            GameContentCatalog catalog,
+            List<RewardEntry> candidates,
+            int whiteWeight,
+            int blueWeight,
+            int goldWeight,
+            int redWeight)
+        {
+            var hasWhite = false;
+            var hasBlue = false;
+            var hasGold = false;
+            var hasRed = false;
+            for (var i = 0; i < candidates.Count; i++)
+            {
+                switch (ResolveEntryRarity(catalog, candidates[i]))
+                {
+                    case ContentRarity.White:
+                        hasWhite = true;
+                        break;
+                    case ContentRarity.Blue:
+                        hasBlue = true;
+                        break;
+                    case ContentRarity.Gold:
+                        hasGold = true;
+                        break;
+                    case ContentRarity.Red:
+                        hasRed = true;
+                        break;
+                }
+            }
+
+            var w = hasWhite ? whiteWeight : 0;
+            var b = hasBlue ? blueWeight : 0;
+            var g = hasGold ? goldWeight : 0;
+            var r = hasRed ? redWeight : 0;
+            var total = w + b + g + r;
+            if (total <= 0)
+            {
+                if (hasWhite)
+                {
+                    return ContentRarity.White;
+                }
+
+                if (hasBlue)
+                {
+                    return ContentRarity.Blue;
+                }
+
+                if (hasGold)
+                {
+                    return ContentRarity.Gold;
+                }
+
+                return ContentRarity.Red;
+            }
+
+            var roll = this.GetUtility<IRngUtility>().Range(0, total);
+            if (roll < w)
+            {
+                return ContentRarity.White;
+            }
+
+            roll -= w;
+            if (roll < b)
+            {
+                return ContentRarity.Blue;
+            }
+
+            roll -= b;
+            if (roll < g)
+            {
+                return ContentRarity.Gold;
+            }
+
+            return ContentRarity.Red;
+        }
+
+        private static ContentRarity ResolveEntryRarity(GameContentCatalog catalog, RewardEntry entry)
+        {
+            if (entry == null || catalog == null)
+            {
+                return ContentRarity.None;
+            }
+
+            if (entry.Kind == CardKind.Relic)
+            {
+                RelicContentDefinition relic;
+                if (catalog.Relics.TryGetValue(entry.DefId, out relic))
+                {
+                    return relic.Rarity;
+                }
+
+                return ContentRarity.None;
+            }
+
+            CardContentDefinition card;
+            if (catalog.Cards.TryGetValue(entry.DefId, out card))
+            {
+                return card.Rarity;
+            }
+
+            return ContentRarity.None;
         }
 
         private int RollRange(int min, int max)
@@ -383,7 +625,7 @@ namespace NineGrid.Core.Systems
 
             if (total <= 0)
             {
-                return 0;
+                return this.GetUtility<IRngUtility>().Range(0, entries.Count);
             }
 
             var roll = this.GetUtility<IRngUtility>().Range(0, total);

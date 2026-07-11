@@ -5,18 +5,19 @@ namespace NineGrid.Flow.Diagnostics
 {
     /// <summary>
     /// 一局 FlowTrace 会话：全流程事件时间线，与 BattleTrace 共享 sessionId/seed。
+    /// schemaVersion 2：新增 Field / Presentation / Hand 占格与表现诊断事件。
     /// </summary>
     [Serializable]
     public sealed class FlowTraceSession
     {
-        public int schemaVersion = 1;
+        public int schemaVersion = 2;
         public string seed = "0";
         public string sessionId = string.Empty;
         public List<FlowTraceEvent> events = new List<FlowTraceEvent>();
     }
 
     /// <summary>
-    /// 一条流程事件（Loop / UI / CoreGate / CombatSummary / Deck）。
+    /// 一条流程事件（Loop / UI / CoreGate / CombatSummary / Deck / Field / Presentation / Hand）。
     /// </summary>
     [Serializable]
     public sealed class FlowTraceEvent
@@ -33,7 +34,7 @@ namespace NineGrid.Flow.Diagnostics
     }
 
     /// <summary>
-    /// V1 稳定 category 常量。
+    /// 稳定 category 常量（V1 + V2）。
     /// </summary>
     public static class FlowTraceCategory
     {
@@ -43,10 +44,13 @@ namespace NineGrid.Flow.Diagnostics
         public const string CombatSummary = "CombatSummary";
         public const string Deck = "Deck";
         public const string Economy = "Economy";
+        public const string Field = "Field";
+        public const string Presentation = "Presentation";
+        public const string Hand = "Hand";
     }
 
     /// <summary>
-    /// V1 稳定 name 常量，便于 skill 检索。
+    /// 稳定 name 常量，便于 skill 检索。
     /// </summary>
     public static class FlowTraceNames
     {
@@ -65,5 +69,32 @@ namespace NineGrid.Flow.Diagnostics
         public const string Victory = "Victory";
         public const string Defeat = "Defeat";
         public const string GoldGained = "GoldGained";
+
+        // V2 Field / Presentation / Hand
+        public const string DrainBegin = "DrainBegin";
+        public const string DrainEnd = "DrainEnd";
+        public const string DealAttempt = "DealAttempt";
+        public const string DealResult = "DealResult";
+        public const string HopPlan = "HopPlan";
+        public const string OccupancyConflict = "OccupancyConflict";
+        public const string OccupancySnapshot = "OccupancySnapshot";
+        public const string SyncDiff = "SyncDiff";
+        public const string OpeningDealProgress = "OpeningDealProgress";
+        public const string HandAcquire = "HandAcquire";
+        public const string HandRelease = "HandRelease";
+    }
+
+    /// <summary>
+    /// V2 batchTag 约定，便于按阶段过滤。
+    /// </summary>
+    public static class FlowTraceBatchTags
+    {
+        public const string PostKill = "postKill";
+        public const string Opening = "opening";
+        public const string Sync = "sync";
+        public const string StartNode = "startNode";
+        public const string Pickup = "pickup";
+        public const string Hop = "hop";
+        public const string Deal = "deal";
     }
 }

@@ -61,7 +61,7 @@ Schema 要点（每条 Op）：
 2 数值维度（必做）：Docs 意图 ↔ Luban/Catalog 基础 ↔ Trace 有效值 + DamageDealt
    → 详见 references/numeric-tables.md
 3 对照 Docs 规则（先手/反击/旋转）写出「机制期望」
-4 CodeGraph / 读 ApplyCombatHit、DealDamage、Attack，写出「Core 实际」
+4 读 ApplyCombatHit、DealDamage、Attack，写出「Core 实际」
 5 定性：数值？机制 Docs↔Core？日志是否符合 Core？
 6 有 Core/公式疑点 → EditMode 复测（references/test-harness.md）
 7 Core 绿且数值自洽 → 再查表现接线（FieldBattle / reason / 命中帧）
@@ -154,7 +154,7 @@ Schema 要点（每条 Event）：
 
 | 字段 | 用途 |
 |------|------|
-| `category` | `Loop` / `UI` / `CoreGate` / `CombatSummary` / `Deck` |
+| `category` | `Loop` / `UI` / `CoreGate` / `CombatSummary` / `Deck` / `Economy` / `Field` / `Presentation` / `Hand` |
 | `name` | 稳定短名，见 [`references/flow-events.md`](references/flow-events.md) |
 | `loopState` | 当时 `MainGameLoop.LoopState` |
 | `phaseBefore`→`phaseAfter` | Core 门相位 |
@@ -183,8 +183,9 @@ Schema 要点（每条 Event）：
 | 有 `RewardPresented` 无 `RewardChosen` | 选择器未完成 / 提前取消 |
 | 无 `RoomPresented` 或 skipped | phase≠RoomChoice / 选项不足 2 |
 | `EnterRoom` accepted=false | payload.reason |
-| `PostKillBoard` deckEmpty=true 后异常 | 发牌/清场逻辑 |
+| `PostKillBoard` deckEmpty=true 后异常 | 发牌/清场逻辑；查 V2 `OccupancyConflict` / `DealResult` / `OccupancySnapshot.hasDiff` |
 | 有战斗无 `CombatHitSummary` | FlowTrace 未启用 / 门禁未走桥 |
+| 乱飘/缺牌/占格冲突 | `OccupancyConflict`、`DrainBegin→HopPlan→DealResult→DrainEnd`、`SyncDiff`；跨关查 `StartNode.nodeIndex` + `OpeningDealProgress` |
 
 ## 汇报模板（流程溯源）
 

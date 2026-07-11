@@ -1225,6 +1225,25 @@ namespace NineGrid.Content
 
         private static void AddRewardsAndRooms(GameContentCatalog c)
         {
+            // 帮助卡池：白/蓝/金全量进池（红品质仅遗物/技能效果加入，不进常规池）。
+            // 实际抽取由 RewardSystem 按池品质表分层（通关/商店 白65蓝30金5）。
+            var helpChoice = new RewardPoolDefinition("help.choice", 3);
+            AddAllNonRedHelpCards(helpChoice);
+            var shopHelp = new RewardPoolDefinition("shop.helpCards", 6);
+            AddAllNonRedHelpCards(shopHelp);
+            var helpWhite = new RewardPoolDefinition("help.white.choice", 3);
+            AddWhiteHelpCards(helpWhite);
+
+            // 遗物池：已实现遗物全量进池；品质分布由 RewardSystem 按宝箱表分层。
+            var relicCommon = new RewardPoolDefinition("relic.common_chest", 3);
+            AddAllRelics(relicCommon);
+            var relicBlue = new RewardPoolDefinition("relic.blue_chest", 3);
+            AddAllRelics(relicBlue);
+            var relicGolden = new RewardPoolDefinition("relic.golden_chest", 3);
+            AddBlueAndGoldRelics(relicGolden);
+            var relicBlood = new RewardPoolDefinition("relic.blood_conversion", 1);
+            AddAllRelics(relicBlood);
+
             c.Rewards
                 .AddPool(new RewardPoolDefinition("kill.elite", 3)
                     .Add("help.blue_chest_card", CardKind.HelpCard, 1)
@@ -1234,45 +1253,13 @@ namespace NineGrid.Content
                     .Add("help.golden_chest_card", CardKind.HelpCard, 1)
                     .Add("help.gold_card", CardKind.HelpCard, 1, 2)
                     .Add("help.stat_boost_card", CardKind.HelpCard, 1))
-                .AddPool(new RewardPoolDefinition("help.choice", 3)
-                    .Add("help.healing_potion", CardKind.HelpCard, 20)
-                    .Add("help.throwing_knife", CardKind.HelpCard, 20)
-                    .Add("help.sturdy_shield", CardKind.HelpCard, 20)
-                    .Add("help.bomb", CardKind.HelpCard, 8)
-                    .Add("help.gold_card", CardKind.HelpCard, 5))
-                .AddPool(new RewardPoolDefinition("shop.helpCards", 6)
-                    .Add("help.healing_potion", CardKind.HelpCard, 20)
-                    .Add("help.throwing_knife", CardKind.HelpCard, 20)
-                    .Add("help.sturdy_shield", CardKind.HelpCard, 20)
-                    .Add("help.bomb", CardKind.HelpCard, 8)
-                    .Add("help.gold_card", CardKind.HelpCard, 5)
-                    .Add("help.ward_magic_card", CardKind.HelpCard, 20)
-                    .Add("help.fireball", CardKind.HelpCard, 20)
-                    .Add("help.rotation_wheel", CardKind.HelpCard, 20))
-                .AddPool(new RewardPoolDefinition("help.white.choice", 3)
-                    .Add("help.healing_potion", CardKind.HelpCard, 20)
-                    .Add("help.ward_magic_card", CardKind.HelpCard, 20)
-                    .Add("help.throwing_knife", CardKind.HelpCard, 20)
-                    .Add("help.fireball", CardKind.HelpCard, 20)
-                    .Add("help.rotation_wheel", CardKind.HelpCard, 20)
-                    .Add("help.bomb", CardKind.HelpCard, 8)
-                    .Add("help.sturdy_shield", CardKind.HelpCard, 20))
-                .AddPool(new RewardPoolDefinition("relic.common_chest", 3)
-                    .Add("relic.wood_shield", CardKind.Relic, 65)
-                    .Add("relic.vitality_amulet", CardKind.Relic, 30)
-                    .Add("relic.dragon_scale_armor", CardKind.Relic, 5))
-                .AddPool(new RewardPoolDefinition("relic.blue_chest", 3)
-                    .Add("relic.wood_shield", CardKind.Relic, 40)
-                    .Add("relic.vitality_amulet", CardKind.Relic, 50)
-                    .Add("relic.dragon_scale_armor", CardKind.Relic, 10))
-                .AddPool(new RewardPoolDefinition("relic.golden_chest", 3)
-                    .Add("relic.vitality_amulet", CardKind.Relic, 50)
-                    .Add("relic.dragon_scale_armor", CardKind.Relic, 50)
-                    .Add("relic.phoenix_feather", CardKind.Relic, 50))
-                .AddPool(new RewardPoolDefinition("relic.blood_conversion", 1)
-                    .Add("relic.wood_shield", CardKind.Relic, 65)
-                    .Add("relic.vitality_amulet", CardKind.Relic, 30)
-                    .Add("relic.dragon_scale_armor", CardKind.Relic, 5))
+                .AddPool(helpChoice)
+                .AddPool(shopHelp)
+                .AddPool(helpWhite)
+                .AddPool(relicCommon)
+                .AddPool(relicBlue)
+                .AddPool(relicGolden)
+                .AddPool(relicBlood)
                 .AddRoom(new RoomDefinition(RoomKind.Shop, "商店") { Weight = 25, ShopOfferCount = 6 })
                 .AddRoom(new RoomDefinition(RoomKind.Gold, "金币房") { Weight = 20, GoldDelta = 50 })
                 .AddRoom(new RoomDefinition(RoomKind.Treasure, "宝箱房") { Weight = 20, RewardPoolId = "relic.common_chest" })
@@ -1288,6 +1275,94 @@ namespace NineGrid.Content
             AddNodeRule(c, 7, 14, 8, 9, 5, 6, 0, 0, 0, 0, MonsterDeckKind.Boss);
             AddNodeRule(c, 8, 15, 6, 7, 6, 7, 1, 3, 0, 0, MonsterDeckKind.Boss);
             AddNodeRule(c, 9, 16, 4, 5, 7, 8, 3, 5, 0, 1, MonsterDeckKind.Boss);
+        }
+
+        /// <summary>
+        /// 通关/商店帮助卡池：白+蓝+金（红品质排除）。条目权重均为 1，稀有度由抽取层分层。
+        /// </summary>
+        private static void AddAllNonRedHelpCards(RewardPoolDefinition pool)
+        {
+            // White
+            pool.Add("help.healing_potion", CardKind.HelpCard, 1);
+            pool.Add("help.ward_magic_card", CardKind.HelpCard, 1);
+            pool.Add("help.throwing_knife", CardKind.HelpCard, 1);
+            pool.Add("help.fireball", CardKind.HelpCard, 1);
+            pool.Add("help.rotation_wheel", CardKind.HelpCard, 1);
+            pool.Add("help.brutality_card", CardKind.HelpCard, 1);
+            pool.Add("help.rolling_stone", CardKind.HelpCard, 1);
+            pool.Add("help.bomb", CardKind.HelpCard, 1);
+            pool.Add("help.swap_card", CardKind.HelpCard, 1);
+            pool.Add("help.armor_breaking_hammer", CardKind.HelpCard, 1);
+            pool.Add("help.sturdy_shield", CardKind.HelpCard, 1);
+            pool.Add("help.bear_trap", CardKind.HelpCard, 1);
+            pool.Add("help.teleport_card", CardKind.HelpCard, 1);
+            pool.Add("help.blood_conversion", CardKind.HelpCard, 1);
+            // Blue
+            pool.Add("help.gold_card", CardKind.HelpCard, 1);
+            pool.Add("help.food_card", CardKind.HelpCard, 1);
+            pool.Add("help.common_chest_card", CardKind.HelpCard, 1);
+            pool.Add("help.healing_spring", CardKind.HelpCard, 1);
+            pool.Add("help.impact_tutorial", CardKind.HelpCard, 1);
+            pool.Add("help.shield_bash_tutorial", CardKind.HelpCard, 1);
+            pool.Add("help.kidnapping", CardKind.HelpCard, 1);
+            // Gold
+            pool.Add("help.blue_chest_card", CardKind.HelpCard, 1);
+            pool.Add("help.watchtower", CardKind.HelpCard, 1);
+            pool.Add("help.doubling_tower", CardKind.HelpCard, 1);
+            pool.Add("help.stat_boost_card", CardKind.HelpCard, 1);
+        }
+
+        private static void AddWhiteHelpCards(RewardPoolDefinition pool)
+        {
+            pool.Add("help.healing_potion", CardKind.HelpCard, 1);
+            pool.Add("help.ward_magic_card", CardKind.HelpCard, 1);
+            pool.Add("help.throwing_knife", CardKind.HelpCard, 1);
+            pool.Add("help.fireball", CardKind.HelpCard, 1);
+            pool.Add("help.rotation_wheel", CardKind.HelpCard, 1);
+            pool.Add("help.brutality_card", CardKind.HelpCard, 1);
+            pool.Add("help.rolling_stone", CardKind.HelpCard, 1);
+            pool.Add("help.bomb", CardKind.HelpCard, 1);
+            pool.Add("help.swap_card", CardKind.HelpCard, 1);
+            pool.Add("help.armor_breaking_hammer", CardKind.HelpCard, 1);
+            pool.Add("help.sturdy_shield", CardKind.HelpCard, 1);
+            pool.Add("help.bear_trap", CardKind.HelpCard, 1);
+            pool.Add("help.teleport_card", CardKind.HelpCard, 1);
+            pool.Add("help.blood_conversion", CardKind.HelpCard, 1);
+        }
+
+        private static void AddAllRelics(RewardPoolDefinition pool)
+        {
+            // White
+            pool.Add("relic.junk_recycler", CardKind.Relic, 1);
+            pool.Add("relic.wood_shield", CardKind.Relic, 1);
+            pool.Add("relic.wood_sword", CardKind.Relic, 1);
+            pool.Add("relic.wood_armor", CardKind.Relic, 1);
+            pool.Add("relic.lucky_coin", CardKind.Relic, 1);
+            pool.Add("relic.throwing_knife_bag", CardKind.Relic, 1);
+            pool.Add("relic.potion_bag", CardKind.Relic, 1);
+            pool.Add("relic.junk_launcher", CardKind.Relic, 1);
+            pool.Add("relic.junk_coating", CardKind.Relic, 1);
+            pool.Add("relic.sling", CardKind.Relic, 1);
+            pool.Add("relic.shield_knife", CardKind.Relic, 1);
+            pool.Add("relic.gold_knife", CardKind.Relic, 1);
+            pool.Add("relic.heavy_armor", CardKind.Relic, 1);
+            pool.Add("relic.gold_armor", CardKind.Relic, 1);
+            // Blue
+            pool.Add("relic.vitality_amulet", CardKind.Relic, 1);
+            // Gold
+            pool.Add("relic.dragon_scale_armor", CardKind.Relic, 1);
+            pool.Add("relic.phoenix_feather", CardKind.Relic, 1);
+            pool.Add("relic.craving", CardKind.Relic, 1);
+            pool.Add("relic.junk_slot_machine", CardKind.Relic, 1);
+        }
+
+        private static void AddBlueAndGoldRelics(RewardPoolDefinition pool)
+        {
+            pool.Add("relic.vitality_amulet", CardKind.Relic, 1);
+            pool.Add("relic.dragon_scale_armor", CardKind.Relic, 1);
+            pool.Add("relic.phoenix_feather", CardKind.Relic, 1);
+            pool.Add("relic.craving", CardKind.Relic, 1);
+            pool.Add("relic.junk_slot_machine", CardKind.Relic, 1);
         }
 
         private static CardContentDefinition Help(GameContentCatalog c, string id, string name, ContentRarity rarity, int price, string tag)

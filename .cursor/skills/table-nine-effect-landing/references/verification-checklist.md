@@ -77,7 +77,7 @@ flowchart TD
     schema -->|no| activate{Activate/parse error?}
     activate -->|yes| fixDef[Fix EffectDefinition shape]
     activate -->|no| runtime{Pipeline assertion?}
-    runtime -->|yes| trace[CodeGraph trace Action/Trigger path]
+    runtime -->|yes| trace[Trace Action/Trigger path]
     runtime -->|no| luban{Luban parity?}
     luban -->|yes| reexport[Re-export catalog + regen]
     luban -->|no| guards[check-core-guards output]

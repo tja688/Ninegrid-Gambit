@@ -28,11 +28,13 @@ namespace NineGrid.Cards
 
     /// <summary>
     /// InGame 卡槽容器：维护左侧致密的卡牌列表，计算布局与 ripple 移动计划。
+    /// 视觉槽位受 maxSlots 限制；超出部分叠在末位，逻辑上不截断。
     /// </summary>
     public sealed class CardDeckSlotContainer
     {
-        private readonly ManagedCard[] _slots;
+        private readonly List<ManagedCard> _slots = new();
         private readonly CardDeckLayoutSettings _settings;
+        private readonly int _maxSlots;
         private Vector3[] _layoutAnchorPositions;
         private float _layoutLeftX;
         private float _layoutBaseY;
@@ -41,28 +43,13 @@ namespace NineGrid.Cards
         public CardDeckSlotContainer(CardDeckLayoutSettings settings)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
-            var maxSlots = Mathf.Max(1, settings.maxSlots);
-            _slots = new ManagedCard[maxSlots];
+            _maxSlots = Mathf.Max(1, settings.maxSlots);
         }
 
-        public int MaxSlots => _slots.Length;
+        /// <summary>视觉槽位上限（场景锚点数），不是逻辑容量上限。</summary>
+        public int MaxSlots => _maxSlots;
 
-        public int Count
-        {
-            get
-            {
-                var count = 0;
-                for (var i = 0; i < _slots.Length; i++)
-                {
-                    if (_slots[i] != null)
-                    {
-                        count++;
-                    }
-                }
-
-                return count;
-            }
-        }
+        public int Count => _slots.Count;
 
         public void SetLayoutOrigin(float leftX, float baseY, float baseZ)
         {
@@ -92,12 +79,12 @@ namespace NineGrid.Cards
 
         public void Clear()
         {
-            Array.Clear(_slots, 0, _slots.Length);
+            _slots.Clear();
         }
 
         public bool TryGetCardAt(int slotIndex, out ManagedCard card)
         {
-            if (!IsValidSlot(slotIndex))
+            if (!IsOccupiedSlot(slotIndex))
             {
                 card = null;
                 return false;
@@ -109,7 +96,7 @@ namespace NineGrid.Cards
 
         public ManagedCard GetCardAt(int slotIndex)
         {
-            return IsValidSlot(slotIndex) ? _slots[slotIndex] : null;
+            return IsOccupiedSlot(slotIndex) ? _slots[slotIndex] : null;
         }
 
         public void SetCardsDense(IReadOnlyList<ManagedCard> cards)
@@ -120,40 +107,34 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var limit = Mathf.Min(cards.Count, _slots.Length);
-            for (var i = 0; i < limit; i++)
+            for (var i = 0; i < cards.Count; i++)
             {
-                _slots[i] = cards[i];
+                if (cards[i] != null)
+                {
+                    _slots.Add(cards[i]);
+                }
             }
         }
 
         public IReadOnlyList<ManagedCard> SnapshotCards()
         {
-            var list = new List<ManagedCard>(Count);
-            for (var i = 0; i < _slots.Length; i++)
-            {
-                if (_slots[i] != null)
-                {
-                    list.Add(_slots[i]);
-                }
-            }
-
-            return list;
+            return new List<ManagedCard>(_slots);
         }
 
         public Vector3 GetLayoutPosition(int slotIndex)
         {
-            if (_layoutAnchorPositions != null &&
-                slotIndex >= 0 &&
-                slotIndex < _layoutAnchorPositions.Length)
+            var layoutIndex = Mathf.Clamp(slotIndex, 0, _maxSlots - 1);
+            var basePosition = GetBaseLayoutPosition(layoutIndex);
+            if (slotIndex <= _maxSlots - 1)
             {
-                return _layoutAnchorPositions[slotIndex];
+                return basePosition;
             }
 
+            var overflowDepth = slotIndex - (_maxSlots - 1);
             return new Vector3(
-                _layoutLeftX + slotIndex * _settings.cardSpacing,
-                _layoutBaseY,
-                _layoutBaseZ);
+                basePosition.x,
+                basePosition.y,
+                basePosition.z + overflowDepth * _settings.overflowStackZStep);
         }
 
         public IReadOnlyList<Vector3> ComputeLayoutPositions(int count)
@@ -169,7 +150,7 @@ namespace NineGrid.Cards
 
         public void ApplySortingOrders()
         {
-            for (var i = 0; i < _slots.Length; i++)
+            for (var i = 0; i < _slots.Count; i++)
             {
                 ApplySortingOrder(_slots[i], i);
             }
@@ -197,13 +178,13 @@ namespace NineGrid.Cards
             removed = null;
             rippleMoves = Array.Empty<CardDeckRippleMove>();
 
-            if (!IsValidSlot(slotIndex) || _slots[slotIndex] == null)
+            if (!IsOccupiedSlot(slotIndex))
             {
                 return false;
             }
 
             removed = _slots[slotIndex];
-            CompactFrom(slotIndex);
+            _slots.RemoveAt(slotIndex);
             rippleMoves = BuildRippleMoves(pivotSlot: slotIndex);
             ApplySortingOrders();
             return true;
@@ -213,48 +194,37 @@ namespace NineGrid.Cards
         {
             rippleMoves = Array.Empty<CardDeckRippleMove>();
 
-            if (card == null || !IsValidSlot(slotIndex))
+            if (card == null || slotIndex < 0)
             {
                 return false;
             }
 
-            if (Count >= _slots.Length)
-            {
-                return false;
-            }
-
-            var clampedSlot = Mathf.Clamp(slotIndex, 0, Count);
-            ExpandFrom(clampedSlot);
-            _slots[clampedSlot] = card;
+            var clampedSlot = Mathf.Clamp(slotIndex, 0, _slots.Count);
+            _slots.Insert(clampedSlot, card);
             rippleMoves = BuildRippleMoves(pivotSlot: clampedSlot);
             ApplySortingOrders();
             return true;
         }
 
-        private void CompactFrom(int removedSlot)
+        private Vector3 GetBaseLayoutPosition(int layoutIndex)
         {
-            for (var i = removedSlot; i < _slots.Length - 1; i++)
+            if (_layoutAnchorPositions != null &&
+                layoutIndex >= 0 &&
+                layoutIndex < _layoutAnchorPositions.Length)
             {
-                _slots[i] = _slots[i + 1];
+                return _layoutAnchorPositions[layoutIndex];
             }
 
-            _slots[_slots.Length - 1] = null;
-        }
-
-        private void ExpandFrom(int insertSlot)
-        {
-            for (var i = _slots.Length - 1; i > insertSlot; i--)
-            {
-                _slots[i] = _slots[i - 1];
-            }
-
-            _slots[insertSlot] = null;
+            return new Vector3(
+                _layoutLeftX + layoutIndex * _settings.cardSpacing,
+                _layoutBaseY,
+                _layoutBaseZ);
         }
 
         private List<CardDeckRippleMove> BuildRippleMoves(int pivotSlot)
         {
             var moves = new List<CardDeckRippleMove>();
-            for (var i = 0; i < _slots.Length; i++)
+            for (var i = 0; i < _slots.Count; i++)
             {
                 var card = _slots[i];
                 if (card?.Transform == null)
@@ -276,9 +246,9 @@ namespace NineGrid.Cards
             return moves;
         }
 
-        private bool IsValidSlot(int slotIndex)
+        private bool IsOccupiedSlot(int slotIndex)
         {
-            return slotIndex >= 0 && slotIndex < _slots.Length;
+            return slotIndex >= 0 && slotIndex < _slots.Count && _slots[slotIndex] != null;
         }
     }
 }

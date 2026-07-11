@@ -54,6 +54,8 @@ namespace NineGrid.Cards
 
         public int DeckCount => _slotContainer?.Count ?? _pendingEntryCards.Count;
 
+        public bool IsBusy => _isBusy;
+
         public CardDeckLayoutSettings LayoutSettings => layoutSettings;
 
         private void Awake()
@@ -99,13 +101,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var limit = Mathf.Min(cardsInOrder.Count, layoutSettings.maxSlots);
-            if (cardsInOrder.Count > limit)
-            {
-                Debug.LogWarning($"[CardDeckManager] 注入卡牌超过上限 {layoutSettings.maxSlots}，已截断。");
-            }
-
-            for (var i = 0; i < limit; i++)
+            for (var i = 0; i < cardsInOrder.Count; i++)
             {
                 var card = cardsInOrder[i];
                 if (card == null)
@@ -114,7 +110,7 @@ namespace NineGrid.Cards
                 }
 
                 _pendingEntryCards.Add(card);
-                PlaceCardInStandby(card, i);
+                PlaceCardInStandby(card, _pendingEntryCards.Count - 1);
                 CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
             }
         }
@@ -306,21 +302,13 @@ namespace NineGrid.Cards
         public bool TryGetRandomDeckSlot(out int deckSlotIndex)
         {
             deckSlotIndex = -1;
-            var candidates = new List<int>();
-            for (var i = 0; i < layoutSettings.maxSlots; i++)
-            {
-                if (_slotContainer.TryGetCardAt(i, out _))
-                {
-                    candidates.Add(i);
-                }
-            }
-
-            if (candidates.Count == 0)
+            var count = _slotContainer?.Count ?? 0;
+            if (count == 0)
             {
                 return false;
             }
 
-            deckSlotIndex = candidates[UnityEngine.Random.Range(0, candidates.Count)];
+            deckSlotIndex = UnityEngine.Random.Range(0, count);
             return true;
         }
 
@@ -415,16 +403,16 @@ namespace NineGrid.Cards
                         continue;
                     }
 
-                    var anchor = GetDeckAnchor(i);
-                    if (anchor == null)
+                    var target = ResolveEntryTargetPosition(i);
+                    if (!target.HasValue)
                     {
-                        Debug.LogWarning($"[CardDeckManager] 缺少 Entry 锚点 index={i}");
+                        Debug.LogWarning($"[CardDeckManager] 缺少 Entry 锚点（视觉槽位上限={layoutSettings.maxSlots}）");
                         continue;
                     }
 
                     CardDeckTween.MoveToWorld(
                         card.Transform,
-                        anchor.position,
+                        target.Value,
                         layoutSettings.moveDuration);
 
                     if (i < _pendingEntryCards.Count - 1)
@@ -453,7 +441,8 @@ namespace NineGrid.Cards
         private async UniTask SwitchToDynamicLayoutAsync(CancellationToken cancellationToken)
         {
             var moves = new List<CardDeckRippleMove>();
-            for (var i = 0; i < layoutSettings.maxSlots; i++)
+            var count = _slotContainer.Count;
+            for (var i = 0; i < count; i++)
             {
                 if (!_slotContainer.TryGetCardAt(i, out var card) || card?.Transform == null)
                 {
@@ -492,9 +481,11 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (!field.IsPlaceable(groundSlot))
+            var placeable = field.IsPlaceable(groundSlot);
+            if (!placeable)
             {
                 Debug.LogWarning($"[CardDeckManager] Ground 格位已占用: {groundSlot}");
+                ReportDealTrace(uid: 0, groundSlot, placeable: false, ok: false, rollback: false);
                 return false;
             }
 
@@ -504,6 +495,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
+            var dealUid = card.Uid;
             if (!_slotContainer.TryRemoveAt(deckSlotIndex, out var removed, out var rippleMoves))
             {
                 return false;
@@ -525,6 +517,7 @@ namespace NineGrid.Cards
                     CardDeckTween.MoveRippleAsync(rollbackRipple, layoutSettings.moveDuration).Forget();
                 }
 
+                ReportDealTrace(dealUid, groundSlot, placeable: true, ok: false, rollback: true);
                 return false;
             }
 
@@ -544,6 +537,7 @@ namespace NineGrid.Cards
                     CardDeckTween.MoveRippleAsync(rollbackRipple, layoutSettings.moveDuration).Forget();
                 }
 
+                ReportDealTrace(dealUid, groundSlot, placeable: true, ok: false, rollback: true);
                 return false;
             }
 
@@ -553,7 +547,26 @@ namespace NineGrid.Cards
                 groundAnchor.position,
                 layoutSettings.moveDuration,
                 onComplete: () => cardManager.RefreshDisplayMode(removed));
+            ReportDealTrace(dealUid, groundSlot, placeable: true, ok: true, rollback: false);
             return true;
+        }
+
+        private static void ReportDealTrace(int uid, int slot, bool placeable, bool ok, bool rollback)
+        {
+            try
+            {
+                FlowFieldTraceSink.DealResult?.Invoke(
+                    uid,
+                    slot,
+                    placeable,
+                    ok,
+                    rollback,
+                    "TryDealCard");
+            }
+            catch
+            {
+                // ignore
+            }
         }
 
         private async UniTask DealCardsInternal(IReadOnlyList<int> groundSlots)
@@ -626,7 +639,7 @@ namespace NineGrid.Cards
             {
                 CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
 
-                var addAnchor = GetAddAnchor(slotIndex);
+                var addAnchor = GetAddAnchor(Mathf.Clamp(slotIndex, 0, Mathf.Max(0, layoutSettings.maxSlots - 1)));
                 if (addAnchor != null && card.Transform != null)
                 {
                     card.Transform.position = addAnchor.position;
@@ -634,7 +647,7 @@ namespace NineGrid.Cards
 
                 if (!_slotContainer.TryInsertAt(slotIndex, card, out var rippleMoves))
                 {
-                    Debug.LogWarning("[CardDeckManager] 插入卡牌失败，可能已满。");
+                    Debug.LogWarning("[CardDeckManager] 插入卡牌失败（卡牌无效或索引非法）。");
                     return;
                 }
 
@@ -697,7 +710,8 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            for (var i = 0; i < layoutSettings.maxSlots; i++)
+            var count = _slotContainer.Count;
+            for (var i = 0; i < count; i++)
             {
                 if (_slotContainer.TryGetCardAt(i, out var card) && card != null && card.Uid == uid)
                 {
@@ -707,6 +721,29 @@ namespace NineGrid.Cards
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Entry 目标：前 maxSlots 张各占锚点；超出叠在末锚点并加 Z 步进。
+        /// </summary>
+        private Vector3? ResolveEntryTargetPosition(int cardIndex)
+        {
+            var maxSlots = Mathf.Max(1, layoutSettings.maxSlots);
+            var layoutIndex = Mathf.Min(cardIndex, maxSlots - 1);
+            var anchor = GetDeckAnchor(layoutIndex);
+            if (anchor == null)
+            {
+                return null;
+            }
+
+            var position = anchor.position;
+            if (cardIndex > maxSlots - 1)
+            {
+                var overflowDepth = cardIndex - (maxSlots - 1);
+                position.z += overflowDepth * layoutSettings.overflowStackZStep;
+            }
+
+            return position;
         }
 
         private Transform GetDeckAnchor(int index)

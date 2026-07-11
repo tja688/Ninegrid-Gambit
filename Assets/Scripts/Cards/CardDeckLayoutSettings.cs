@@ -9,7 +9,7 @@ namespace NineGrid.Cards
     [Serializable]
     public sealed class CardDeckLayoutSettings
     {
-        [Tooltip("卡组最大槽位数。")]
+        [Tooltip("视觉槽位上限（场景锚点数）；超出叠在末位，不截断逻辑牌数。")]
         public int maxSlots = 20;
 
         [Tooltip("InGame 无场景锚点时的相邻卡牌水平间距回退值；有 CardDeckAnchors 时以锚点为准。")]
@@ -35,6 +35,9 @@ namespace NineGrid.Cards
 
         [Tooltip("Standby 待命区堆叠时的 Z 轴步进，避免同深度闪烁。")]
         public float standbyStackZStep = 0.01f;
+
+        [Tooltip("超过视觉槽位上限时，末位溢出叠层的 Z 轴步进。")]
+        public float overflowStackZStep = 0.01f;
 
         [Tooltip("左起第一张卡的 SortingGroup 基准 order；索引越大 order 越低。")]
         public int sortingOrderBase = 10;

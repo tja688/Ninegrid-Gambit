@@ -33,7 +33,7 @@ rg -n "skill\.example|help\.example" Assets/Scripts/NineGrid.Content/Catalog/Tab
 rg -n "效果【类型" Assets/Docs/九宫牌局 -g "*.md"
 ```
 
-5. CodeGraph: `EffectAtomLibrary`, existing similar effects, related `GameAction`, `RuleModifier` consumers.
+5. Lookup: `EffectAtomLibrary`, existing similar effects, related `GameAction`, `RuleModifier` consumers.
 
 ---
 

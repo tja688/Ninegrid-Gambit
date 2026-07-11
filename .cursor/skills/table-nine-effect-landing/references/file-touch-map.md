@@ -101,7 +101,7 @@ Edit order: **always catalog first**, then export, then gen.
 - Hand-editing `Generated/Luban` — regenerate instead
 - Weakening `P6ContentLandingTests` pending gates without user intent
 
-## CodeGraph Entry Points
+## Useful Entry Points
 
 Useful symbols for impact analysis:
 

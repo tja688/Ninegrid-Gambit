@@ -347,10 +347,15 @@ namespace NineGrid.Flow
 
             _isBusy = true;
             _settlementRaised = false;
-            CancelPresentationWork();
 
             try
             {
+                // 跨关前等前关 Drain/tween 收束，避免与 Opening 发牌交错。
+                await WaitPresentationIdleAsync(cancellationToken);
+                CancelPresentationWork();
+                // StartNode 前清零表现占格，避免跨关残留（presOccupantCount>0）污染开局发牌与 Trace。
+                ResetPresentationSurface();
+
                 var arch = NineGridArchitecture.Current;
                 var phase = arch.GetSystem<IPhaseSystem>();
                 if (!phase.CanExecute(GameCommandKind.StartNode))
@@ -388,13 +393,16 @@ namespace NineGrid.Flow
                         presentation = new BattleTracePresentation { accepted = true },
                         verdictHints = new BattleTraceVerdictHints(),
                     });
+                    FieldTraceHelper.CountBoardOccupants(out var boardOcc, out var presOcc);
+                    var deckCount = arch.GetModel<DeckModel>().DrawPileUids.Count;
                     FlowTraceRecorder.Record(
                         FlowTraceCategory.CoreGate,
                         FlowTraceNames.StartNode,
-                        new Dictionary<string, string>
-                        {
-                            { "avatarUid", board.AvatarUid.Value.ToString() },
-                        },
+                        FieldTraceHelper.BuildStartNodePayload(
+                            board.AvatarUid.Value,
+                            deckCount,
+                            boardOcc,
+                            presOcc),
                         phaseBefore: GamePhase.None.ToString(),
                         phaseAfter: phase.CurrentPhase.ToString(),
                         accepted: true,
@@ -405,14 +413,15 @@ namespace NineGrid.Flow
                     Debug.LogWarning("[InBattleManager] BattleTrace StartNode: " + ex.Message);
                 }
 
-                // StartNode 后、Spawn 前彻底清表现，避免与新 uid 冲突。
-                ResetPresentationSurface();
                 var plan = CaptureOpeningPresentationPlan(arch);
                 var presentationCt = RenewPresentationToken();
                 using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
                     cancellationToken,
                     presentationCt);
+                FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.Opening);
                 await PresentOpeningAsync(plan, linkedCts.Token);
+                FieldTraceHelper.RecordOccupancySnapshot("startNodeAfter", FlowTraceBatchTags.StartNode);
+                FieldTraceHelper.ClearBatchTag();
                 SyncContentPanels();
 
                 // 开局即空怪：IsNodeCleared 但尚未 OfferReward，先走 PostKill→CompleteNodeIfCleared。
@@ -490,8 +499,8 @@ namespace NineGrid.Flow
 
             plan.BoardPlacements.AddRange(boardPlacements);
 
-            // 视觉卡组顺序：开局环板上牌优先（避免 InjectDeck maxSlots 截断丢掉末格，
-            // ClockwiseRing 末位是 slot4），再拼抽牌堆剩余。
+            // 视觉卡组顺序：开局环板上牌优先（ClockwiseRing 末位是 slot4，便于开局就位），
+            // 再拼抽牌堆剩余。
             var ring = GroundSlotTopology.ClockwiseRing;
             for (var i = 0; i < ring.Count; i++)
             {
@@ -620,7 +629,7 @@ namespace NineGrid.Flow
                     }
 
                     // 开局在 InBattle 忙碌期内；与 DrainDeals 一致跳过场地忙锁。
-                    // ensureCard：InjectDeck 截断或入组失败时仍可补入再发。
+                    // ensureCard：卡不在组内时兜底补入再发。
                     cardManager.TryGet(placement.Uid, out var ensureCard);
                     var ok = await deckManager.DealCardByUidAsync(
                         placement.Uid,
@@ -629,6 +638,11 @@ namespace NineGrid.Flow
                         skipBusyGuard: true,
                         awaitMove: false,
                         cancellationToken: cancellationToken);
+                    FieldTraceHelper.RecordOpeningDealProgress(
+                        placement.Uid,
+                        placement.GroundSlot,
+                        ok,
+                        i);
                     if (!ok)
                     {
                         Debug.LogWarning(
@@ -695,16 +709,55 @@ namespace NineGrid.Flow
             _isBusy = false;
         }
 
-        private void CancelPresentationWork()
+        /// <summary>
+        /// 等待 Drain / 场地 / 手牌 / 卡组 / 交战 tween 收束，避免跨关清场与开局发牌交错。
+        /// 超时后打 Warn 并继续（由后续 Cancel + Reset 硬清）。
+        /// </summary>
+        private async UniTask WaitPresentationIdleAsync(
+            CancellationToken cancellationToken,
+            float timeoutSeconds = 2f)
         {
-            if (_presentationCts == null)
+            ResolveManagers();
+            var deadline = Time.realtimeSinceStartup + Mathf.Max(0.1f, timeoutSeconds);
+            while (Time.realtimeSinceStartup < deadline)
             {
-                return;
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var fieldBusy = fieldManager != null && fieldManager.IsFieldBusy;
+                var hand = CardHandManagerSingleton.Instance;
+                var handBusy = hand != null && hand.IsBusy;
+                var deckBusy = deckManager != null && deckManager.IsBusy;
+                var battle = FieldBattleManagerSingleton.Instance;
+                var battleBusy = battle != null && battle.IsBusy;
+
+                if (!_drainInFlight
+                    && !fieldBusy
+                    && !handBusy
+                    && !deckBusy
+                    && !battleBusy
+                    && !CombatHitSink.PresentationLocked)
+                {
+                    return;
+                }
+
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
             }
 
-            _presentationCts.Cancel();
-            _presentationCts.Dispose();
-            _presentationCts = null;
+            Debug.LogWarning(
+                $"[InBattleManager] WaitPresentationIdle 超时({timeoutSeconds:0.##}s)：drain={_drainInFlight} " +
+                $"fieldBusy={fieldManager != null && fieldManager.IsFieldBusy} " +
+                $"presentationLocked={CombatHitSink.PresentationLocked}，继续清场。");
+        }
+
+        private void CancelPresentationWork()
+        {
+            if (_presentationCts != null)
+            {
+                _presentationCts.Cancel();
+                _presentationCts.Dispose();
+                _presentationCts = null;
+            }
+
             CombatHitSink.ForceEndPresentationLock("CancelPresentationWork");
             _drainInFlight = false;
         }
@@ -807,11 +860,13 @@ namespace NineGrid.Flow
             CombatHitSink.ApplyUseItem = ApplyUseItemFromCore;
             CombatHitSink.NotifyBattleEnded = OnBattleEndedFromCombat;
             CombatHitSink.NotifyNodeSettlementReady = OnNodeSettlementFromCombat;
+            FieldTraceHelper.RegisterSinkHandlers();
             RegisterHandBridge();
         }
 
         private void UnregisterCombatHitSink()
         {
+            FieldTraceHelper.UnregisterSinkHandlers();
             if (CombatHitSink.ApplyCombatHit == ApplyCombatHitFromCore)
             {
                 CombatHitSink.ApplyCombatHit = null;
@@ -1307,7 +1362,7 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 表现缓冲缓释：R1 先补牌再旋转（Deals → Moves），末尾两阶段 Sync 安全网。
+        /// 表现缓冲缓释：先补牌再旋转 hop（Deals → Moves，对齐 Core Fill→Rotate），末尾两阶段 Sync 安全网。
         /// 若外层已持 PresentationLocked 则不重复加解锁；否则本方法自持锁。
         /// </summary>
         private async UniTask DrainPostKillBoardAsync(
@@ -1339,6 +1394,9 @@ namespace NineGrid.Flow
             }
 
             _drainInFlight = true;
+            var moveCount = result.Moves?.Length ?? 0;
+            var dealCount = result.Deals?.Length ?? 0;
+            FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.PostKill);
             try
             {
                 // 生命周期清场会 CancelPresentationWork；未传可取消 token 时挂到局内 CTS。
@@ -1354,7 +1412,16 @@ namespace NineGrid.Flow
                     return;
                 }
 
-                // R1：先补牌（CardDealt），再旋转 hop（CardMoved）。
+                FieldTraceHelper.RecordDrainBegin(
+                    moveCount,
+                    dealCount,
+                    drainInFlight: true,
+                    fieldBusy: fieldManager.IsBusy,
+                    presentationLocked: CombatHitSink.PresentationLocked);
+                FieldTraceHelper.RecordOccupancySnapshot("drainBefore");
+                fieldManager.ClearOccupancyConflictFlag();
+
+                // 对齐 Core Fill→Rotate / EventLog：先补牌（CardDealt），再 hop（CardMoved，含新牌）。
                 if (result.Deals != null && result.Deals.Length > 0)
                 {
                     await DrainDealsAsync(result.Deals, ct);
@@ -1370,6 +1437,20 @@ namespace NineGrid.Flow
 
                 SoftAlignBoardAnchorsToCore();
                 SyncBoardOccupancyFromCore();
+                if (fieldManager.HasOccupancyConflictSinceClear)
+                {
+                    Debug.LogWarning(
+                        "[InBattleManager] Drain 期间发生 OccupancyConflict，再次强制 SyncBoardOccupancyFromCore。");
+                    SyncBoardOccupancyFromCore();
+                }
+
+                FieldTraceHelper.RecordOccupancySnapshot("drainAfter");
+                FieldTraceHelper.RecordDrainEnd(
+                    moveCount,
+                    dealCount,
+                    drainInFlight: true,
+                    fieldBusy: fieldManager.IsBusy,
+                    presentationLocked: CombatHitSink.PresentationLocked);
                 SpawnDamagePopups(result.DamagePopups, fallbackVictim: null, fallbackAmount: 0);
                 UpdateAvatarDebugText();
 
@@ -1381,6 +1462,7 @@ namespace NineGrid.Flow
             finally
             {
                 _drainInFlight = false;
+                FieldTraceHelper.ClearBatchTag();
                 if (acquiredHere)
                 {
                     CombatHitSink.EndPresentationLock("Drain");
@@ -2531,6 +2613,22 @@ namespace NineGrid.Flow
                 return;
             }
 
+            var previousBatch = FieldTraceHelper.CurrentBatchTag;
+            if (string.IsNullOrEmpty(previousBatch))
+            {
+                FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.Sync);
+            }
+
+            FieldTraceHelper.RecordOccupancySnapshot("syncBefore");
+
+            var vacated = 0;
+            var placed = 0;
+            var spawned = 0;
+            var vacatedUids = new List<int>(4);
+            var placedUids = new List<int>(4);
+            var spawnedUids = new List<int>(4);
+            var sweptUids = new List<int>(4);
+
             var arch = NineGridArchitecture.Current;
             var board = arch.GetModel<BoardModel>();
             var registry = arch.GetModel<CardRegistry>();
@@ -2557,6 +2655,8 @@ namespace NineGrid.Flow
                 if (hand != null && hand.ContainsUid(occ.Uid))
                 {
                     fieldManager.ClearSlotOccupancy(occ.Slot, skipBusyGuard: true);
+                    vacated++;
+                    vacatedUids.Add(occ.Uid);
                     continue;
                 }
 
@@ -2574,6 +2674,8 @@ namespace NineGrid.Flow
                 {
                     // 错位：只清占格，保留视图供 Phase 2 落锚。
                     fieldManager.ClearSlotOccupancy(occ.Slot, skipBusyGuard: true);
+                    vacated++;
+                    vacatedUids.Add(occ.Uid);
                 }
                 else
                 {
@@ -2582,6 +2684,8 @@ namespace NineGrid.Flow
                         animate: false,
                         skipBusyGuard: true,
                         startExplore: false);
+                    vacated++;
+                    vacatedUids.Add(occ.Uid);
                 }
             }
 
@@ -2606,52 +2710,100 @@ namespace NineGrid.Flow
                     continue;
                 }
 
-                if (fieldManager.TryGetCardAt(slot, out var existing) && existing != null && existing.Uid == uid)
-                {
-                    CoreCardPresentationMapper.ApplyToManagedCard(existing);
-                    var anchor = fieldManager.GetGroundAnchor(slot);
-                    if (existing.Transform != null
-                        && anchor != null
-                        && (existing.Transform.position - anchor.position).sqrMagnitude > 0.0001f)
-                    {
-                        CardDeckTween.KillMotion(existing.Transform);
-                        existing.Transform.position = anchor.position;
-                        cardManager.RefreshDisplayMode(existing);
-                    }
-
-                    continue;
-                }
-
                 if (!registry.TryGet(uid, out var coreCard))
                 {
                     continue;
                 }
 
+                // Core 已离场：禁止 Spawn 幽灵视图。
+                if (coreCard.Zone.Value == ZoneId.Graveyard
+                    || coreCard.Zone.Value == ZoneId.Removed)
+                {
+                    Debug.LogWarning(
+                        $"[InBattleManager] Sync 跳过 Spawn：uid={uid} zone={coreCard.Zone.Value}（Board 占格与 Zone 不一致）");
+                    continue;
+                }
+
+                if (fieldManager.TryGetCardAt(slot, out var existing) && existing != null && existing.Uid == uid)
+                {
+                    if (existing.IsFieldDead)
+                    {
+                        fieldManager.ClearSlotOccupancy(slot, skipBusyGuard: true);
+                        cardManager.Release(existing);
+                        vacated++;
+                        vacatedUids.Add(uid);
+                    }
+                    else
+                    {
+                        CoreCardPresentationMapper.ApplyToManagedCard(existing);
+                        var anchor = fieldManager.GetGroundAnchor(slot);
+                        if (existing.Transform != null
+                            && anchor != null
+                            && (existing.Transform.position - anchor.position).sqrMagnitude > 0.0001f)
+                        {
+                            CardDeckTween.KillMotion(existing.Transform);
+                            existing.Transform.position = anchor.position;
+                            cardManager.RefreshDisplayMode(existing);
+                        }
+
+                        continue;
+                    }
+                }
+
                 if (cardManager.TryGet(uid, out var view) && view != null)
                 {
-                    CoreCardPresentationMapper.ApplyToManagedCard(view);
-                    if (fieldManager.TryGetSlotOf(view.Uid, out var currentSlot))
+                    // 已标死的视图禁止复用落锚，先 Release 再走下方 Spawn。
+                    if (view.IsFieldDead)
                     {
-                        if (currentSlot != slot)
+                        if (fieldManager.TryGetSlotOf(view.Uid, out var deadSlot))
                         {
-                            fieldManager.ClearSlotOccupancy(currentSlot, skipBusyGuard: true);
+                            fieldManager.ClearSlotOccupancy(deadSlot, skipBusyGuard: true);
+                        }
+
+                        cardManager.Release(view);
+                    }
+                    else
+                    {
+                        CoreCardPresentationMapper.ApplyToManagedCard(view);
+                        if (fieldManager.TryGetSlotOf(view.Uid, out var currentSlot))
+                        {
+                            if (currentSlot != slot)
+                            {
+                                fieldManager.ClearSlotOccupancy(currentSlot, skipBusyGuard: true);
+                                fieldManager.RequestPlaceCardAtAnchor(
+                                    slot,
+                                    view,
+                                    skipBusyGuard: true,
+                                    snapToAnchor: true);
+                                placed++;
+                                placedUids.Add(uid);
+                            }
+                            else
+                            {
+                                var anchor = fieldManager.GetGroundAnchor(slot);
+                                if (view.Transform != null
+                                    && anchor != null
+                                    && (view.Transform.position - anchor.position).sqrMagnitude > 0.0001f)
+                                {
+                                    CardDeckTween.KillMotion(view.Transform);
+                                    view.Transform.position = anchor.position;
+                                    cardManager.RefreshDisplayMode(view);
+                                }
+                            }
+                        }
+                        else
+                        {
                             fieldManager.RequestPlaceCardAtAnchor(
                                 slot,
                                 view,
                                 skipBusyGuard: true,
                                 snapToAnchor: true);
+                            placed++;
+                            placedUids.Add(uid);
                         }
-                    }
-                    else
-                    {
-                        fieldManager.RequestPlaceCardAtAnchor(
-                            slot,
-                            view,
-                            skipBusyGuard: true,
-                            snapToAnchor: true);
-                    }
 
-                    continue;
+                        continue;
+                    }
                 }
 
                 // 视图缺失：Spawn 后必须落锚点（不再只登记占格）。
@@ -2667,23 +2819,46 @@ namespace NineGrid.Flow
                     view,
                     skipBusyGuard: true,
                     snapToAnchor: true);
+                spawned++;
+                spawnedUids.Add(uid);
+                placed++;
+                placedUids.Add(uid);
             }
 
-            SweepOrphanCardViews(avatarUid, hand);
+            var swept = SweepOrphanCardViews(avatarUid, hand, sweptUids);
             CoreCardPresentationMapper.SyncAllSpawnedCards();
             UpdateAvatarDebugText();
+
+            FieldTraceHelper.RecordSyncDiff(
+                vacated,
+                placed,
+                spawned,
+                swept,
+                string.Join(",", vacatedUids),
+                string.Join(",", placedUids),
+                string.Join(",", spawnedUids),
+                string.Join(",", sweptUids));
+            FieldTraceHelper.RecordOccupancySnapshot("syncAfter");
+
+            if (string.IsNullOrEmpty(previousBatch))
+            {
+                FieldTraceHelper.ClearBatchTag();
+            }
         }
 
         /// <summary>
         /// 清扫已不在手牌/卡组/场地占格、且 Core 为 Graveyard/Removed（或 registry 无）的游离视图。
         /// 堵住「Register 挤占后 Sync 只扫占格表」漏掉的尸体钉住。
         /// </summary>
-        private void SweepOrphanCardViews(int avatarUid, CardHandManagerSingleton hand)
+        private int SweepOrphanCardViews(
+            int avatarUid,
+            CardHandManagerSingleton hand,
+            List<int> sweptUids = null)
         {
             ResolveManagers();
             if (cardManager == null || fieldManager == null)
             {
-                return;
+                return 0;
             }
 
             var registry = NineGridArchitecture.Current.GetModel<CardRegistry>();
@@ -2707,6 +2882,14 @@ namespace NineGrid.Flow
                 }
 
                 if (hand != null && hand.ContainsUid(uid))
+                {
+                    continue;
+                }
+
+                // Pickup 进行中：手牌尚未 ContainsUid 的窗口，勿误 Sweep。
+                if (hand != null
+                    && hand.IsBusy
+                    && view.DisplayMode == CardDisplayMode.HandCardMode)
                 {
                     continue;
                 }
@@ -2739,7 +2922,10 @@ namespace NineGrid.Flow
                 Debug.LogWarning(
                     $"[InBattleManager] 清扫游离卡视图 uid={uid}（Core 已离场且不在手牌/卡组/占格）。");
                 cardManager.Release(uid);
+                sweptUids?.Add(uid);
             }
+
+            return toRelease.Count;
         }
 
         private static void OnNodeSettlementFromCombat()
