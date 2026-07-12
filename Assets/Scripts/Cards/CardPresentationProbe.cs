@@ -186,13 +186,48 @@ namespace NineGrid.Cards
                 "parent", parent ?? string.Empty);
         }
 
-        public static void Despawn(int uid, string site, string reason = null)
+        public static void Despawn(int uid, string site, string reason = null, string caller = null)
         {
             Emit(
                 "Despawn",
                 uid,
                 site,
-                "reason", reason ?? string.Empty);
+                "reason", reason ?? string.Empty,
+                "caller", caller ?? string.Empty);
+        }
+
+        /// <summary>CardManager 注册表增删：op=add|remove。</summary>
+        public static void RegistryDelta(
+            int uid,
+            string op,
+            int countBefore,
+            int countAfter,
+            string site,
+            string reason = null,
+            string caller = null,
+            string defId = null)
+        {
+            Emit(
+                "RegistryDelta",
+                uid,
+                site,
+                "op", op ?? string.Empty,
+                "countBefore", countBefore.ToString(CultureInfo.InvariantCulture),
+                "countAfter", countAfter.ToString(CultureInfo.InvariantCulture),
+                "reason", reason ?? string.Empty,
+                "caller", caller ?? string.Empty,
+                "defId", defId ?? string.Empty);
+        }
+
+        /// <summary>用户/DevTest 现场戳点。</summary>
+        public static void UserMark(string label, int registryCount)
+        {
+            Emit(
+                "UserMark",
+                -1,
+                "UserMark",
+                "label", label ?? string.Empty,
+                "registryCount", registryCount.ToString(CultureInfo.InvariantCulture));
         }
 
         /// <summary>占格表有 uid 但 CardManager 查无视图（幽灵占格）。</summary>

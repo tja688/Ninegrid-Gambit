@@ -736,7 +736,7 @@ namespace NineGrid.Cards
 
             if (victim.Transform != null)
             {
-                CardManagerSingleton.Instance?.Release(victim.Uid);
+                CardManagerSingleton.Instance?.Release(victim.Uid, "Combat.CompleteRemoveVictim");
             }
         }
 
@@ -770,7 +770,7 @@ namespace NineGrid.Cards
 
             if (card.Transform != null)
             {
-                CardManagerSingleton.Instance.Release(card.Uid);
+                CardManagerSingleton.Instance.Release(card.Uid, "Combat.FinalizeLethal");
             }
         }
 

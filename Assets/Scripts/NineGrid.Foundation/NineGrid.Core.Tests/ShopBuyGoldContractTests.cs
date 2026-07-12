@@ -68,7 +68,7 @@ namespace NineGrid.Core.Tests
             }
 
             Assert.IsTrue(sawSpend, "EventLog 应有商店扣金 GoldModified");
-            Assert.IsTrue(HasCardDefInDeck(ShopItemDefId), "购买后应获得帮助卡");
+            Assert.IsTrue(HasCardInPlayerSideDeck(ShopItemDefId), "购买后应写入玩家侧 run 卡组");
         }
 
         [Test]
@@ -121,6 +121,51 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(ShopItemDefId, pending.RewardOptions[0].DefId);
         }
 
+        [Test]
+        public void SelectReward_Shop_PersistsAcrossNextNode()
+        {
+            EnterShop();
+            var player = mArch.GetModel<PlayerModel>();
+            player.AddCoins(100);
+            Assert.IsTrue(mPhase.SelectReward(0).Accepted);
+            Assert.GreaterOrEqual(player.CountHelpCardsByDefId(ShopItemDefId), 1);
+            Assert.AreEqual(GamePhase.NodeCompleted, mPhase.CurrentPhase);
+
+            var options = mArch.GetSystem<IRewardSystem>().BuildNodeDeckOptions(1, null);
+            options.AddEnemyCard(new CardDraft("monster.hold", CardKind.Monster) { MaxHp = 20, Attack = 0 });
+            options.EnemyOpeningCount = 1;
+            Assert.IsTrue(mPhase.StartNode(options).Accepted);
+            Assert.AreEqual(GamePhase.InteractionLoop, mPhase.CurrentPhase);
+            Assert.IsTrue(HasHelpCardInBattleDeck(ShopItemDefId), "商店购买卡下一节点应可见");
+        }
+
+        private bool HasCardInPlayerSideDeck(string defId)
+        {
+            return mArch.GetModel<PlayerModel>().CountHelpCardsByDefId(defId) > 0;
+        }
+
+        private bool HasHelpCardInBattleDeck(string defId)
+        {
+            var registry = mArch.GetModel<CardRegistry>();
+            var deck = mArch.GetModel<DeckModel>();
+            var board = mArch.GetModel<BoardModel>();
+            if (HasCardDefInDeck(defId))
+            {
+                return true;
+            }
+
+            foreach (var uid in board.BoardCardUids())
+            {
+                CardInstance card;
+                if (registry.TryGet(uid, out card) && card != null && card.DefId == defId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private bool HasCardDefInDeck(string defId)
         {
             var registry = mArch.GetModel<CardRegistry>();
@@ -158,6 +203,7 @@ namespace NineGrid.Core.Tests
             catalog.AddCard(new CardContentDefinition(ShopItemDefId, "店货", CardKind.HelpCard)
                 .WithRarity(ContentRarity.White)
                 .WithPrice(ShopItemPrice));
+            catalog.AddCard(new CardContentDefinition("monster.hold", "占位怪", CardKind.Monster));
             catalog.Rewards
                 .AddPool(new RewardPoolDefinition("shop.helpCards", 1)
                     .Add(ShopItemDefId, CardKind.HelpCard, 1))

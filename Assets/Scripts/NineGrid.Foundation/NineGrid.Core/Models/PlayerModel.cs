@@ -8,6 +8,7 @@ namespace NineGrid.Core
     {
         private readonly List<string> mRelicDefIds = new List<string>();
         private readonly List<string> mSkillDefIds = new List<string>();
+        private readonly List<HelpCardStackEntry> mHelpCardStacks = new List<HelpCardStackEntry>();
 
         public PlayerModel()
         {
@@ -28,6 +29,11 @@ namespace NineGrid.Core
         public IReadOnlyList<string> SkillDefIds
         {
             get { return mSkillDefIds; }
+        }
+
+        public IReadOnlyList<HelpCardStackEntry> HelpCardStacks
+        {
+            get { return mHelpCardStacks; }
         }
 
         protected override void OnInit()
@@ -99,6 +105,107 @@ namespace NineGrid.Core
             return removed;
         }
 
+        public void AddHelpCard(string defId, int count = 1)
+        {
+            if (string.IsNullOrEmpty(defId) || count <= 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < mHelpCardStacks.Count; i++)
+            {
+                if (mHelpCardStacks[i].DefId != defId)
+                {
+                    continue;
+                }
+
+                mHelpCardStacks[i] = new HelpCardStackEntry(defId, mHelpCardStacks[i].Count + count);
+                Touch();
+                return;
+            }
+
+            mHelpCardStacks.Add(new HelpCardStackEntry(defId, count));
+            Touch();
+        }
+
+        public bool TryRemoveHelpCard(string defId, int count = 1)
+        {
+            if (string.IsNullOrEmpty(defId) || count <= 0)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < mHelpCardStacks.Count; i++)
+            {
+                if (mHelpCardStacks[i].DefId != defId)
+                {
+                    continue;
+                }
+
+                var next = mHelpCardStacks[i].Count - count;
+                if (next > 0)
+                {
+                    mHelpCardStacks[i] = new HelpCardStackEntry(defId, next);
+                }
+                else
+                {
+                    mHelpCardStacks.RemoveAt(i);
+                }
+
+                Touch();
+                return true;
+            }
+
+            return false;
+        }
+
+        public int CountHelpCardsByDefId(string defId)
+        {
+            if (string.IsNullOrEmpty(defId))
+            {
+                return 0;
+            }
+
+            for (var i = 0; i < mHelpCardStacks.Count; i++)
+            {
+                if (mHelpCardStacks[i].DefId == defId)
+                {
+                    return mHelpCardStacks[i].Count;
+                }
+            }
+
+            return 0;
+        }
+
+        public int TotalHelpCardCount()
+        {
+            var total = 0;
+            for (var i = 0; i < mHelpCardStacks.Count; i++)
+            {
+                total += mHelpCardStacks[i].Count;
+            }
+
+            return total;
+        }
+
+        public List<HelpCardStackEntry> ConsumeHelpCardStacksForNode()
+        {
+            if (mHelpCardStacks.Count == 0)
+            {
+                return new List<HelpCardStackEntry>();
+            }
+
+            var consumed = new List<HelpCardStackEntry>(mHelpCardStacks.Count);
+            for (var i = 0; i < mHelpCardStacks.Count; i++)
+            {
+                consumed.Add(mHelpCardStacks[i]);
+            }
+
+            mHelpCardStacks.Clear();
+            Touch();
+            return consumed;
+        }
+
         public void Reset()
         {
             Stats.Clear();
@@ -107,6 +214,7 @@ namespace NineGrid.Core
             ProfessionId.Value = string.Empty;
             mRelicDefIds.Clear();
             mSkillDefIds.Clear();
+            mHelpCardStacks.Clear();
             Touch();
         }
 

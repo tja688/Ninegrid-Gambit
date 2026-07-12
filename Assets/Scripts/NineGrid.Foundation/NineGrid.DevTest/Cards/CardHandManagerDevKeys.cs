@@ -81,7 +81,7 @@ namespace NineGrid.DevTest.Cards
             if (!success)
             {
                 Debug.LogWarning("[CardHandManagerDevKeys] 入手牌失败，已释放卡牌。");
-                CardManagerSingleton.Instance.Release(taken);
+                CardManagerSingleton.Instance.Release(taken, "DevTest.HandPickup");
             }
         }
 

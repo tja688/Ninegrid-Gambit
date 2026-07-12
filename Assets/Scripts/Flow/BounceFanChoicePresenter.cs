@@ -611,10 +611,15 @@ namespace NineGrid.Flow
 
                 if (entry.Card != null && cardManager != null)
                 {
-                    cardManager.Release(entry.Card);
+                    cardManager.Release(entry.Card, "BounceFan.ReleaseEntry");
                 }
                 else if (entry.Card?.View != null)
                 {
+                    CardPresentationProbe.Despawn(
+                        entry.Card.Uid,
+                        "BounceFan.DestroyBypass",
+                        reason: "cardManagerNull",
+                        caller: nameof(ReleaseAllEntries));
                     Destroy(entry.Card.View.gameObject);
                 }
 

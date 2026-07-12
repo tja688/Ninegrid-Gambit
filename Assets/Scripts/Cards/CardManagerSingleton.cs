@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -186,7 +187,16 @@ namespace NineGrid.Cards
             }
 
             var card = new ManagedCard(uid, defId, view);
+            var countBefore = _cardsByUid.Count;
             _cardsByUid[uid] = card;
+            CardPresentationProbe.RegistryDelta(
+                uid,
+                "add",
+                countBefore,
+                _cardsByUid.Count,
+                "Card.Spawn",
+                reason: "SpawnView",
+                defId: card.DefId);
 
             var driver = instance.GetComponent<CardVisualDriver>();
             if (driver == null)
@@ -397,20 +407,21 @@ namespace NineGrid.Cards
             return card;
         }
 
-        public void Release(int uid)
+        public void Release(int uid, string reason, [CallerMemberName] string caller = "")
         {
             if (!_cardsByUid.TryGetValue(uid, out var card))
             {
                 CardPresentationProbe.RegistryMiss(
                     uid,
                     "Card.Release",
-                    "releaseOnMissing");
+                    "releaseOnMissing;reason=" + (reason ?? string.Empty));
                 return;
             }
 
             TryVacateFieldOccupancyBeforeRelease(uid);
 
-            CardPresentationProbe.Despawn(uid, "Card.Release");
+            var countBefore = _cardsByUid.Count;
+            CardPresentationProbe.Despawn(uid, "Card.Release", reason: reason, caller: caller);
 
             if (card.View != null)
             {
@@ -419,14 +430,23 @@ namespace NineGrid.Cards
             }
 
             _cardsByUid.Remove(uid);
+            CardPresentationProbe.RegistryDelta(
+                uid,
+                "remove",
+                countBefore,
+                _cardsByUid.Count,
+                "Card.Release",
+                reason: reason,
+                caller: caller,
+                defId: card.DefId);
             CardHandManagerSingleton.Instance?.NotifyCardReleased(uid);
         }
 
-        public void Release(ManagedCard card)
+        public void Release(ManagedCard card, string reason, [CallerMemberName] string caller = "")
         {
             if (card != null)
             {
-                Release(card.Uid);
+                Release(card.Uid, reason, caller);
             }
         }
 
@@ -452,12 +472,12 @@ namespace NineGrid.Cards
             }
         }
 
-        public void ReleaseAll()
+        public void ReleaseAll(string reason, [CallerMemberName] string caller = "")
         {
             var uids = new List<int>(_cardsByUid.Keys);
             for (var i = uids.Count - 1; i >= 0; i--)
             {
-                Release(uids[i]);
+                Release(uids[i], reason, caller);
             }
         }
 

@@ -165,7 +165,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            CardManagerSingleton.Instance.Release(card.Uid);
+            CardManagerSingleton.Instance.Release(card.Uid, "Explore.Complete");
         }
     }
 }

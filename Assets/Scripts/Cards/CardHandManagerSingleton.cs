@@ -476,7 +476,7 @@ namespace NineGrid.Cards
                             // ignore
                         }
 
-                        cm.Release(card);
+                        cm.Release(card, "Hand.PickupFail");
                     }
 
                     return;
@@ -972,7 +972,7 @@ namespace NineGrid.Cards
         {
             if (card?.Transform == null)
             {
-                CardManagerSingleton.Instance.Release(card);
+                CardManagerSingleton.Instance.Release(card, "Hand.VanishNoTransform");
                 return;
             }
 
@@ -995,7 +995,7 @@ namespace NineGrid.Cards
                         CancellationToken.None);
                 }
                 CardOpacityUtility.ClearCache(card.Uid);
-                CardManagerSingleton.Instance.Release(card);
+                CardManagerSingleton.Instance.Release(card, "Hand.VanishAfterApply");
             }
             finally
             {
@@ -1022,7 +1022,7 @@ namespace NineGrid.Cards
                 if (!_slotContainer.TryInsertAt(slot, card, out var rippleMoves))
                 {
                     Debug.LogWarning("[CardHandManager] 回手失败，手牌已满。");
-                    CardManagerSingleton.Instance.Release(card);
+                    CardManagerSingleton.Instance.Release(card, "Hand.DragReturnFail");
                     ClearDragSession();
                     return;
                 }

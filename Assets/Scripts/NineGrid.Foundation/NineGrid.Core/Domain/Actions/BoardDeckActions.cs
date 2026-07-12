@@ -28,7 +28,13 @@ namespace NineGrid.Core
 
             for (var i = 0; i < Options.PlayerCards.Count; i++)
             {
-                deck.AddToPlayerCardPool(CreateConfiguredCard(context, Options.PlayerCards[i], registry));
+                var card = CreateConfiguredCard(context, Options.PlayerCards[i], registry);
+                if (card.Kind == CardKind.HelpCard)
+                {
+                    card.Counters.Set(CoreCounterKeys.PlayerSideDeck, 1);
+                }
+
+                deck.AddToPlayerCardPool(card);
             }
 
             for (var i = 0; i < Options.EnemyCards.Count; i++)

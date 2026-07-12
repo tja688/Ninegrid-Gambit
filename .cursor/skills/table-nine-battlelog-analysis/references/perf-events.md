@@ -29,11 +29,13 @@
 | kind | 何时 | 关键 payload |
 |------|------|----------------|
 | `BeatOpen` / `BeatClose` | 与流程同拍 | `beatKind`, `nodeIndex`；Close 含 `anomalyCount` |
-| `Spawn` / `Despawn` | 创建/回收视图 | `defId`, `slot`, `parent` / `reason` |
+| `Spawn` / `Despawn` | 创建/回收视图 | `defId`, `slot`, `parent` / `reason`, `caller` |
 | `RegistryMiss` | CardManager TryGet 失败 | `detail`（含 slot/caller） |
 | `Vacate` | 场地占格注销 | `slot`, `caller` |
 | `RingShift` | 外圈旋转计划/阶段 | `phase`=`plan\|vacated\|registered`, `plan` |
 | `RegistryAudit` | 注册表完整性快照 | `registryCount`, `fieldCount`, `ghosts`, `orphans`, `trigger` |
+| `RegistryDelta` | CardManager `_cardsByUid` 增删 | `op`, `countBefore`, `countAfter`, `reason`, `caller`, `defId` |
+| `UserMark` | 用户/DevTest 现场戳点 | `label`, `registryCount` |
 | `MotionPlan` | Hop 等已知 from→to | `fromSlot`,`toSlot`,`fromX/Y`,`toX/Y`,`reason`,`expectMs` |
 | `MotionBegin` | tween 启动 | `motionId`, from/to, `reason` |
 | `MotionEnd` | complete / kill | `motionId`, `endHow`, `x/y`, `killedBySite` |

@@ -58,7 +58,6 @@ namespace NineGrid.Flow
 
             _instance = this;
             EnsureBindings();
-            Clear();
         }
 
         private void OnDestroy()

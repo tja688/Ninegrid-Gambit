@@ -68,7 +68,7 @@ namespace NineGrid.DevTest.Cards
             else
             {
                 Debug.LogWarning("[CardDeckManagerDevKeys] 未找到 GroundFieldManagerSingleton，跳过 Avatar 入场。");
-                cardManager.Release(avatar);
+                cardManager.Release(avatar, "DevTest.DeckAvatar");
             }
 
             manager.DealOpeningRing();

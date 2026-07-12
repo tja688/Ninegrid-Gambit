@@ -109,13 +109,17 @@ namespace NineGrid.Core.Systems
             var rule = FindNodeRule(catalog, nodeIndex);
             if (rule == null)
             {
-                return NodeDeckOptions.CreateDefaultBattle();
+                var fallback = new NodeDeckOptions();
+                AddRunPlayerSideCards(catalog, fallback);
+                return fallback;
             }
 
             MonsterDeckDefinition deck = FindMonsterDeck(catalog, monsterDeckId, rule.DeckKind);
             if (deck == null)
             {
-                return NodeDeckOptions.CreateDefaultBattle();
+                var fallback = new NodeDeckOptions();
+                AddRunPlayerSideCards(catalog, fallback);
+                return fallback;
             }
 
             var options = new NodeDeckOptions
@@ -125,7 +129,7 @@ namespace NineGrid.Core.Systems
                 RequireElite = rule.EliteCount > 0 || rule.BossCount > 0
             };
 
-            AddDefaultPlayerCards(catalog, options);
+            AddRunPlayerSideCards(catalog, options);
 
             var selectedNormalCount = 0;
             selectedNormalCount += AddLevelCards(catalog, deck, options, 1, RollRange(rule.Level1Min, rule.Level1Max));
@@ -227,17 +231,24 @@ namespace NineGrid.Core.Systems
             return result;
         }
 
-        private void AddDefaultPlayerCards(GameContentCatalog catalog, NodeDeckOptions options)
+        private void AddRunPlayerSideCards(GameContentCatalog catalog, NodeDeckOptions options)
         {
             var player = this.GetModel<PlayerModel>();
-            var professionId = string.IsNullOrEmpty(player.ProfessionId.Value)
-                ? ProfessionCatalog.Default.DefId
-                : player.ProfessionId.Value;
-            ProfessionCatalog.AppendInitialPlayerCards(
-                this.GetSystem<IContentSystem>(),
-                catalog,
-                options,
-                professionId);
+            var content = this.GetSystem<IContentSystem>();
+            var stacks = player.ConsumeHelpCardStacksForNode();
+            for (var i = 0; i < stacks.Count; i++)
+            {
+                var stack = stacks[i];
+                if (string.IsNullOrEmpty(stack.DefId) || !catalog.Cards.ContainsKey(stack.DefId))
+                {
+                    continue;
+                }
+
+                for (var count = 0; count < stack.Count; count++)
+                {
+                    options.AddPlayerCard(content.CreateDraft(stack.DefId));
+                }
+            }
         }
 
         private int AddLevelCards(

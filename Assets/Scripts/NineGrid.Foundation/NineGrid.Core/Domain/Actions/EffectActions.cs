@@ -471,6 +471,17 @@ namespace NineGrid.Core
 
             for (var i = 0; i < Count; i++)
             {
+                if (Zone == ZoneId.PlayerCardPool
+                    && Kind == CardKind.HelpCard
+                    && HelpCardGrantRouting.ShouldGrantToPlayerSideDeck(context))
+                {
+                    context.GetModel<PlayerModel>().AddHelpCard(DefId, 1);
+                    result.AddEvent(new CoreGameEvent(CoreEventType.CardSpawned, context.ActionId, ActionName)
+                        .WithMessage(DefId)
+                        .WithSource(DefId, Cause));
+                    continue;
+                }
+
                 var card = CreateConfiguredCard(context, registry, DefId, Kind);
                 Place(card, board, deck);
                 result.AddEvent(new CoreGameEvent(CoreEventType.CardSpawned, context.ActionId, ActionName)

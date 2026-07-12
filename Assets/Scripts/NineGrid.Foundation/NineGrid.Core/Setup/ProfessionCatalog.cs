@@ -116,5 +116,28 @@ namespace NineGrid.Core
                 }
             }
         }
+
+        /// <summary>
+        /// 开局一次性写入玩家侧 run 卡组（职业初始牌组）。
+        /// </summary>
+        public static void SeedPlayerSideDeck(PlayerModel player, string professionId)
+        {
+            if (player == null)
+            {
+                return;
+            }
+
+            var profession = Get(professionId);
+            for (var i = 0; i < profession.InitialCards.Count; i++)
+            {
+                var entry = profession.InitialCards[i];
+                if (string.IsNullOrEmpty(entry.DefId))
+                {
+                    continue;
+                }
+
+                player.AddHelpCard(entry.DefId, entry.Count);
+            }
+        }
     }
 }

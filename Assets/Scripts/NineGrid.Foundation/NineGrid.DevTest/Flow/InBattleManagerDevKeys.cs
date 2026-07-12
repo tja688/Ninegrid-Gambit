@@ -40,7 +40,13 @@ namespace NineGrid.DevTest.Flow
                 .Bind(KeyCode.Keypad3, "玩家血量=99", CheatAvatarHpTo99)
                 .Bind(KeyCode.Keypad4, "立即导出 Battle+FlowLog", ExportBattleAndFlowTrace)
                 .Bind(KeyCode.Keypad5, "开关 Battle/FlowTrace", ToggleBattleTrace)
-                .Bind(KeyCode.Keypad6, "强制本局胜利", CheatForceNodeVictory);
+                .Bind(KeyCode.Keypad6, "强制本局胜利", CheatForceNodeVictory)
+                .Bind(KeyCode.Keypad7, "BUG现场戳点", StampBugScene);
+        }
+
+        private static void StampBugScene()
+        {
+            PerfTraceRecorder.StampUserObservation("BugScene");
         }
 
         private void CheatForceNodeVictory()

@@ -65,13 +65,15 @@ namespace NineGrid.Core.Systems
         public int SettleUnusedHelpCards()
         {
             var catalog = CatalogOrNull();
-            if (catalog == null || catalog.Economy.UnusedHelpCardGold == 0)
+            if (catalog == null)
             {
                 return 0;
             }
 
             var count = CountUnusedHelpCards();
-            if (count <= 0)
+            ReturnPlayerSideHelpCardsToRunDeck();
+
+            if (count <= 0 || catalog.Economy.UnusedHelpCardGold == 0)
             {
                 return 0;
             }
@@ -127,6 +129,82 @@ namespace NineGrid.Core.Systems
             }
 
             return result;
+        }
+
+        private void ReturnPlayerSideHelpCardsToRunDeck()
+        {
+            var registry = this.GetModel<CardRegistry>();
+            var board = this.GetModel<BoardModel>();
+            var deck = this.GetModel<DeckModel>();
+            var player = this.GetModel<PlayerModel>();
+            var seen = new HashSet<int>();
+            var returnTargets = new List<ReturnedHelpCard>();
+
+            CollectPlayerSideHelpCards(registry, deck.DrawPileUids, seen, returnTargets);
+            CollectPlayerSideHelpCards(registry, deck.PlayerCardPoolUids, seen, returnTargets);
+            CollectPlayerSideHelpCards(registry, deck.ItemSlotUids, seen, returnTargets);
+            foreach (var uid in board.BoardCardUids())
+            {
+                CollectPlayerSideHelpCard(registry, uid, seen, returnTargets);
+            }
+
+            if (returnTargets.Count == 0)
+            {
+                return;
+            }
+
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            for (var i = 0; i < returnTargets.Count; i++)
+            {
+                var target = returnTargets[i];
+                player.AddHelpCard(target.DefId, 1);
+                pipeline.Enqueue(new RemoveCardAction(target.Uid, ZoneId.Removed, "settleReturn"));
+            }
+
+            pipeline.RunToCompletion();
+        }
+
+        private static void CollectPlayerSideHelpCards(
+            CardRegistry registry,
+            IReadOnlyList<int> uids,
+            HashSet<int> seen,
+            List<ReturnedHelpCard> returnTargets)
+        {
+            for (var i = 0; i < uids.Count; i++)
+            {
+                CollectPlayerSideHelpCard(registry, uids[i], seen, returnTargets);
+            }
+        }
+
+        private static void CollectPlayerSideHelpCard(
+            CardRegistry registry,
+            int uid,
+            HashSet<int> seen,
+            List<ReturnedHelpCard> returnTargets)
+        {
+            CardInstance card;
+            if (uid == 0
+                || !seen.Add(uid)
+                || !registry.TryGet(uid, out card)
+                || card.Kind != CardKind.HelpCard
+                || card.Counters.Get(CoreCounterKeys.PlayerSideDeck) <= 0)
+            {
+                return;
+            }
+
+            returnTargets.Add(new ReturnedHelpCard(uid, card.DefId));
+        }
+
+        private sealed class ReturnedHelpCard
+        {
+            public ReturnedHelpCard(int uid, string defId)
+            {
+                Uid = uid;
+                DefId = defId ?? string.Empty;
+            }
+
+            public int Uid { get; private set; }
+            public string DefId { get; private set; }
         }
 
         private int CountUnusedHelpCards()

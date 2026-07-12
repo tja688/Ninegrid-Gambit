@@ -537,7 +537,7 @@ namespace NineGrid.Cards
                 Debug.LogWarning($"[CardDeckManager] Ground 锚点缺失: slot={groundSlot}");
                 if (!_slotContainer.TryInsertAt(deckSlotIndex, removed, out var rollbackRipple))
                 {
-                    CardManagerSingleton.Instance.Release(removed);
+                    CardManagerSingleton.Instance.Release(removed, "Deck.DealRollbackNoAnchor");
                 }
                 else
                 {
@@ -556,7 +556,7 @@ namespace NineGrid.Cards
                     $"[CardDeckManager] 场地拒收发牌 uid={removed.Uid} slot={groundSlot}，回滚入组。");
                 if (!_slotContainer.TryInsertAt(deckSlotIndex, removed, out var rollbackRipple))
                 {
-                    CardManagerSingleton.Instance.Release(removed);
+                    CardManagerSingleton.Instance.Release(removed, "Deck.DealRollbackPlaceDenied");
                 }
                 else
                 {

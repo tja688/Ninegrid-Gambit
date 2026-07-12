@@ -93,6 +93,28 @@ namespace NineGrid.Core
         }
     }
 
+    public sealed class GrantHelpCardToPlayerSideDeckAction : GameAction
+    {
+        public GrantHelpCardToPlayerSideDeckAction(string defId, int count = 1)
+        {
+            DefId = defId ?? string.Empty;
+            Count = count < 1 ? 1 : count;
+        }
+
+        public string DefId { get; private set; }
+        public int Count { get; private set; }
+        public override string ActionName { get { return "GrantHelpCardToPlayerSideDeck"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            context.GetModel<PlayerModel>().AddHelpCard(DefId, Count);
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.RewardSelected, context.ActionId, ActionName)
+                    .WithAmount(Count)
+                    .WithMessage(DefId + ":HelpCard:" + Count));
+        }
+    }
+
     public sealed class GrantRewardFromPoolAction : GameAction
     {
         public GrantRewardFromPoolAction(string poolId)
@@ -111,9 +133,10 @@ namespace NineGrid.Core
                     .WithAmount(offered.Count)
                     .WithMessage(FormatOfferedRewards(PoolId, offered)));
 
+            var toPlayerSideDeck = HelpCardGrantRouting.ShouldGrantToPlayerSideDeck(context);
             for (var i = 0; i < offered.Count; i++)
             {
-                RewardGrantActionSupport.AddGrantFollowUp(result, offered[i]);
+                RewardGrantActionSupport.AddGrantFollowUp(result, offered[i], toPlayerSideDeck);
             }
 
             return result;
@@ -210,7 +233,10 @@ namespace NineGrid.Core
                 .AddEvent(new CoreGameEvent(CoreEventType.RewardSelected, context.ActionId, ActionName)
                     .WithAmount(OptionIndex)
                     .WithMessage(Entry.DefId + ":" + Entry.Kind + ":" + Entry.Count));
-            RewardGrantActionSupport.AddGrantFollowUp(result, Entry);
+            RewardGrantActionSupport.AddGrantFollowUp(
+                result,
+                Entry,
+                HelpCardGrantRouting.ShouldGrantToPlayerSideDeck(context));
             return result;
         }
     }
@@ -248,9 +274,21 @@ namespace NineGrid.Core
         }
     }
 
+    internal static class HelpCardGrantRouting
+    {
+        /// <summary>
+        /// 局内（InteractionLoop / 开局发牌）帮助卡进战斗卡组；通关/商店/节点末进玩家侧 run 卡组。
+        /// </summary>
+        public static bool ShouldGrantToPlayerSideDeck(GameActionContext context)
+        {
+            var phase = context.GetModel<RunModel>().Phase.Value;
+            return phase != GamePhase.InteractionLoop && phase != GamePhase.DealOpeningCards;
+        }
+    }
+
     internal static class RewardGrantActionSupport
     {
-        public static void AddGrantFollowUp(GameActionResult result, RewardEntry entry)
+        public static void AddGrantFollowUp(GameActionResult result, RewardEntry entry, bool toPlayerSideDeck)
         {
             if (entry == null || string.IsNullOrEmpty(entry.DefId))
             {
@@ -265,7 +303,17 @@ namespace NineGrid.Core
                 }
                 else if (entry.Kind == CardKind.HelpCard)
                 {
-                    result.AddFollowUp(new ShuffleIntoDrawPileAction(entry.DefId, entry.Kind, 1, false));
+                    if (toPlayerSideDeck)
+                    {
+                        if (i == 0)
+                        {
+                            result.AddFollowUp(new GrantHelpCardToPlayerSideDeckAction(entry.DefId, entry.Count));
+                        }
+                    }
+                    else
+                    {
+                        result.AddFollowUp(new ShuffleIntoDrawPileAction(entry.DefId, entry.Kind, 1, false));
+                    }
                 }
                 else if (entry.Kind == CardKind.PlayerCard)
                 {

@@ -634,7 +634,7 @@ namespace NineGrid.Cards
             VacateSlotForExplore(slot, card, animate, skipBusyGuard, startExplore);
             if (!animate)
             {
-                CardManagerSingleton.Instance.Release(uid);
+                CardManagerSingleton.Instance.Release(uid, "Ground.RemoveImmediate");
             }
 
             return true;
@@ -741,7 +741,7 @@ namespace NineGrid.Cards
                         }
 
                         UnregisterCardAtSlot(slot, "ClearField");
-                        cardManager.Release(uid);
+                        cardManager.Release(uid, "Ground.ClearField");
                     }
                 }
             }
@@ -1332,7 +1332,7 @@ namespace NineGrid.Cards
                 {
                     if (card != null)
                     {
-                        CardManagerSingleton.TryGetInstance()?.Release(card.Uid);
+                        CardManagerSingleton.TryGetInstance()?.Release(card.Uid, "Ground.RemoveAnimatedNoTransform");
                     }
 
                     return;
@@ -1353,7 +1353,7 @@ namespace NineGrid.Cards
                         cancellationToken);
                 }
 
-                CardManagerSingleton.TryGetInstance()?.Release(card.Uid);
+                CardManagerSingleton.TryGetInstance()?.Release(card.Uid, "Ground.RemoveAnimatedComplete");
             }
             catch (OperationCanceledException)
             {

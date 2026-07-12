@@ -283,6 +283,32 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
+        /// 仅清卡牌/场地表现，保留遗物/技能/PlayerInfo 等持久 HUD（节点切换、胜负公告用）。
+        /// </summary>
+        public void ClearCardPresentationSurface()
+        {
+            CancelPresentationWork();
+            FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+            CombatHitSink.ForceEndPresentationLock("ClearCardPresentationSurface");
+            _drainInFlight = false;
+            ResetCardPresentationSurface();
+            _settlementRaised = false;
+            _isBusy = false;
+        }
+
+        /// <summary>
+        /// 局内持久 HUD 统一兜底刷新：遗物/技能栏 + PlayerInfo 数值。
+        /// 节点开始、节点结束领奖后、房间事件收益后调用。
+        /// </summary>
+        public void RefreshPersistentInBattleUi(bool animate = false)
+        {
+            ResolveManagers();
+            relicManager?.SyncFromCore();
+            skillManager?.SyncFromCore();
+            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate);
+        }
+
+        /// <summary>
         /// StartNode → 取真实 uid/defId → 正式牌组入场并按内核盘面就位。
         /// </summary>
         public UniTask StartBattleNodeAsync(
@@ -387,8 +413,8 @@ namespace NineGrid.Flow
                 // 跨关前等前关 Drain/tween 收束，避免与 Opening 发牌交错。
                 await WaitPresentationIdleAsync(cancellationToken);
                 CancelPresentationWork();
-                // StartNode 前清零表现占格，避免跨关残留（presOccupantCount>0）污染开局发牌与 Trace。
-                ResetPresentationSurface();
+                // StartNode 前清零卡牌占格，保留遗物/技能/PlayerInfo 持久 HUD。
+                ResetCardPresentationSurface();
 
                 var arch = NineGridArchitecture.Current;
                 var phase = arch.GetSystem<IPhaseSystem>();
@@ -408,6 +434,9 @@ namespace NineGrid.Flow
                     Debug.LogError($"[InBattleManager] StartNode 被拒: {result.Reason}");
                     return;
                 }
+
+                // StartNode 后立即对齐持久 HUD，避免 Opening 期间遗物/技能/数值栏断口。
+                RefreshPersistentInBattleUi(animate: false);
 
                 try
                 {
@@ -468,7 +497,14 @@ namespace NineGrid.Flow
                     PerfTraceRecorder.CloseBeat();
                     FieldTraceHelper.ClearBatchTag();
                 }
-                SyncContentPanels();
+
+                cardManager?.AuditRegistryIntegrity("Opening.Settled");
+                if (phase.CurrentPhase == GamePhase.InteractionLoop)
+                {
+                    cardManager?.AuditRegistryIntegrity("InteractionLoop.Idle");
+                }
+
+                RefreshPersistentInBattleUi(animate: false);
 
                 // 开局即空怪：IsNodeCleared 但尚未 OfferReward，先走 PostKill→CompleteNodeIfCleared。
                 if (phase.CurrentPhase == GamePhase.InteractionLoop
@@ -741,18 +777,29 @@ namespace NineGrid.Flow
 
         private void ResetPresentationSurface()
         {
+            ResetCardPresentationSurface();
+            ClearPersistentInBattleHud();
+        }
+
+        private void ResetCardPresentationSurface()
+        {
             ResolveManagers();
             // 先取消交战/手牌异步，再强制清占格与手牌槽，最后统一 Release 视图。
             FieldBattleManagerSingleton.Instance?.CancelBattleWork();
             CardHandManagerSingleton.Instance?.ClearHand();
             deckManager?.ResetToStandby();
             fieldManager?.ClearField(force: true);
-            cardManager?.ReleaseAll();
+            cardManager?.ReleaseAll("Presentation.ResetCardSurface");
+            DescriptionManagerSingleton.TryGetInstance()?.Clear();
+            _isBusy = false;
+        }
+
+        private void ClearPersistentInBattleHud()
+        {
+            ResolveManagers();
             relicManager?.Clear();
             skillManager?.Clear();
-            DescriptionManagerSingleton.TryGetInstance()?.Clear();
             PlayerInfoHudPresenter.TryGetInstance()?.ClearSnapshot();
-            _isBusy = false;
         }
 
         /// <summary>
@@ -827,9 +874,7 @@ namespace NineGrid.Flow
 
         private void SyncContentPanels()
         {
-            ResolveManagers();
-            relicManager?.SyncFromCore();
-            skillManager?.SyncFromCore();
+            RefreshPersistentInBattleUi(animate: false);
         }
 
         private void ResolveManagers()
@@ -2532,12 +2577,7 @@ namespace NineGrid.Flow
                         SyncBoardOccupancyFromCore();
                     }
 
-                    if (relicManager != null)
-                    {
-                        relicManager.SyncFromCore();
-                    }
-
-                    PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
+                    RefreshPersistentInBattleUi(animate: false);
 
                     if (boardDelta.AvatarDefeated)
                     {
@@ -3084,7 +3124,7 @@ namespace NineGrid.Flow
 
             if (card.Transform == null)
             {
-                cardManager.Release(uid);
+                cardManager.Release(uid, "HelpCard.VanishNoTransform");
                 return;
             }
 
@@ -3125,7 +3165,7 @@ namespace NineGrid.Flow
                 }
 
                 CardOpacityUtility.ClearCache(uid);
-                cardManager?.Release(uid);
+                cardManager?.Release(uid, "HelpCard.VanishComplete");
             }
         }
 
@@ -3479,7 +3519,7 @@ namespace NineGrid.Flow
                     if (existing.IsFieldDead)
                     {
                         fieldManager.ClearSlotOccupancy(slot, skipBusyGuard: true);
-                        cardManager.Release(existing);
+                        cardManager.Release(existing, "Sync.FieldDeadOnSlot");
                         vacated++;
                         vacatedUids.Add(uid);
                     }
@@ -3510,7 +3550,7 @@ namespace NineGrid.Flow
                             fieldManager.ClearSlotOccupancy(deadSlot, skipBusyGuard: true);
                         }
 
-                        cardManager.Release(view);
+                        cardManager.Release(view, "Sync.FieldDeadReuse");
                     }
                     else
                     {
@@ -3677,7 +3717,7 @@ namespace NineGrid.Flow
                 var uid = toRelease[i];
                 Debug.LogWarning(
                     $"[InBattleManager] 清扫游离卡视图 uid={uid}（Core 已离场且不在手牌/卡组/占格）。");
-                cardManager.Release(uid);
+                cardManager.Release(uid, "Sync.SweepOrphan");
                 sweptUids?.Add(uid);
             }
 

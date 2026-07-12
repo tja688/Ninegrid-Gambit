@@ -99,7 +99,8 @@ namespace NineGrid.Flow
         private static void ClearSlot(SpriteRenderer slot)
         {
             slot.sprite = null;
-            slot.enabled = false;
+            // 空槽保持 enabled，避免 Sync 间隙出现图标栏“断口”。
+            slot.enabled = true;
             BindHitProxy(slot, string.Empty);
         }
 

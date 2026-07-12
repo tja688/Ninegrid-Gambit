@@ -450,6 +450,34 @@ namespace NineGrid.Flow.Diagnostics
             }
         }
 
+        /// <summary>
+        /// 用户/DevTest 现场戳点：RegistryAudit + 全量 BoardSnap + UserMark。
+        /// 复现「卡从 CardManager 消失」时在交互修复前按下。
+        /// </summary>
+        public static void StampUserObservation(string label = "BugScene")
+        {
+            try
+            {
+                var safeLabel = string.IsNullOrWhiteSpace(label) ? "BugScene" : label.Trim();
+                var cardManager = CardManagerSingleton.TryGetInstance();
+                var registryCount = cardManager != null ? cardManager.CardsByUid.Count : 0;
+                cardManager?.AuditRegistryIntegrity("UserMark." + safeLabel);
+                RecordBoardSnap("userMark:" + safeLabel, full: true);
+                CardPresentationProbe.UserMark(safeLabel, registryCount);
+                Debug.Log(
+                    "[PerfTrace] UserMark label="
+                    + safeLabel
+                    + " registryCount="
+                    + registryCount
+                    + " beatId="
+                    + DiagBeatClock.ResolveBeatIdForEvent());
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[PerfTrace] StampUserObservation failed: " + ex.Message);
+            }
+        }
+
         public static string ResolveExportDirectory()
         {
             return DiagTraceShared.ResolveNotesDir("Logs/PerfLog");

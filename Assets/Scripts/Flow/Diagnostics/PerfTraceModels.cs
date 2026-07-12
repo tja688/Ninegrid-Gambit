@@ -53,6 +53,10 @@ namespace NineGrid.Flow.Diagnostics
         public const string RingShift = "RingShift";
         /// <summary>CardManager ↔ 场地占格完整性快照。</summary>
         public const string RegistryAudit = "RegistryAudit";
+        /// <summary>CardManager _cardsByUid 增删（每次 Spawn/Release）。</summary>
+        public const string RegistryDelta = "RegistryDelta";
+        /// <summary>用户/DevTest 现场戳点（BUG 复现瞬间）。</summary>
+        public const string UserMark = "UserMark";
     }
 
     public static class PerfTraceSites

@@ -63,15 +63,17 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 局内壳（对战视角）。<paramref name="inBattle"/> 为 true 时才显示 InGameInfo Text。
+        /// 局内壳（对战视角）。InGameInfo Text 在局内全程持久显示，叠层靠排序遮挡而非 SetActive 隐藏。
+        /// <paramref name="inBattle"/> 保留兼容，不再用于隐藏信息栏。
         /// </summary>
         public void ShowInRunShell(bool inBattle = true)
         {
+            _ = inBattle;
             EnsureBindings();
             SetActiveSafe(mainBackground, true);
             SetActiveSafe(mainPanel, false);
             SetActiveSafe(inGamePanels, true);
-            SetInGameInfoTextVisible(inBattle);
+            SetInGameInfoTextVisible(true);
             HideAllOverlays();
         }
 
