@@ -115,9 +115,12 @@ namespace NineGrid.DevTest.Flow
             var perfOk = PerfTraceRecorder.CurrentSession != null
                 && PerfTraceRecorder.CurrentSession.events != null
                 && PerfTraceRecorder.CurrentSession.events.Count > 0;
-            if (!battleOk && !flowOk && !perfOk)
+            var registryOk = RegistryTraceRecorder.CurrentSession != null
+                && RegistryTraceRecorder.CurrentSession.events != null
+                && RegistryTraceRecorder.CurrentSession.events.Count > 0;
+            if (!battleOk && !flowOk && !perfOk && !registryOk)
             {
-                Debug.LogWarning("[InBattleManagerDevKeys] Battle/Core/Perf Trace 导出失败或无数据。");
+                Debug.LogWarning("[InBattleManagerDevKeys] Battle/Core/Perf/Registry Trace 导出失败或无数据。");
             }
         }
 
@@ -126,13 +129,16 @@ namespace NineGrid.DevTest.Flow
             BattleTraceRecorder.Enabled = !BattleTraceRecorder.Enabled;
             FlowTraceRecorder.Enabled = BattleTraceRecorder.Enabled;
             PerfTraceRecorder.Enabled = BattleTraceRecorder.Enabled;
+            RegistryTraceRecorder.Enabled = BattleTraceRecorder.Enabled;
             Debug.Log(
                 "[InBattleManagerDevKeys] BattleTrace.Enabled = "
                 + BattleTraceRecorder.Enabled
                 + ", FlowTrace.Enabled = "
                 + FlowTraceRecorder.Enabled
                 + ", PerfTrace.Enabled = "
-                + PerfTraceRecorder.Enabled);
+                + PerfTraceRecorder.Enabled
+                + ", RegistryTrace.Enabled = "
+                + RegistryTraceRecorder.Enabled);
         }
 
         private InBattleManagerSingleton ResolveManager()

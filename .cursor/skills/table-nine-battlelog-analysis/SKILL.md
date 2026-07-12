@@ -19,6 +19,7 @@ Session 根：`sessionId` + `seed`（`DiagTraceShared`）。
 |----|--------------|------|
 | **CoreLog** | `Assets/Notes/Logs/CoreLog/corelog-*.json` | 流程 / 门禁 / 逻辑占格（原 FlowLog） |
 | **PerfLog** | `Assets/Notes/Logs/PerfLog/perflog-*.json` | 卡牌世界坐标 / 显隐 / tween / BoardSnap |
+| **RegistryLog** | `Assets/Notes/Logs/OtherLog/RegistryLog/registrylog-*.json` | CardManager 注册表专项：Delta/Audit/Checkpoint/IdleWatch |
 | **Battle Probe** | `Assets/Notes/Logs/OtherLog/BattleLog/battlelog-*.json` | 战斗门禁 Op 深挖 |
 
 旧顶层 `Assets/Notes/FlowLog/`、`Assets/Notes/BattleLog/` **仅历史归档**；最新以 `Logs/` 为准。  
@@ -32,11 +33,11 @@ Session 根：`sessionId` + `seed`（`DiagTraceShared`）。
 |----------|------|--------|
 | 伤害/反击/数值对不对 | **A 战斗分析** | BattleLog；需节奏时同 `beatId` 看 CoreLog |
 | 跳过环节/房间/流程缺步 | **B 流程溯源** | CoreLog；需画面时同 `beatId` 开 PerfLog |
-| 错位/空位有牌/瞬移补位/怪闪消失/消失还能打 | **C 表现溯源** | **PerfLog 为主**；同 `beatId` 对照 CoreLog 占格/意图；伤害细节回 Battle |
+| 错位/空位有牌/瞬移补位/怪闪消失/消失还能打 / CardManager actor 变少 | **C 表现溯源** | **PerfLog + RegistryLog 为主**；同 `beatId` 对照 CoreLog 占格/意图；伤害细节回 Battle |
 
 **硬区分**：`OccupancySnapshot`（CoreLog）= 逻辑占格登记，**不是**世界坐标。画面位置只信 PerfLog。`site` 是追责主键；无 site 的坐标变化视为插桩缺口，不臆测 Core。
 
-导出：Play 退出 / 胜负 Notice / DevTest Keypad4 → 三件套同 session；Keypad5 同步开关三轨 Enabled。
+导出：Play 退出 / 胜负 Notice / DevTest Keypad4 → 四件套同 session（含 RegistryLog）；Keypad5 同步开关四轨 Enabled。RegistryLog 在 Opening.Settled / InteractionLoop.Idle 及 2s/5s/10s IdleWatch 自动打 Checkpoint+BoardSnap，无需 Keypad7。
 
 ---
 
@@ -95,20 +96,35 @@ Schema（schemaVersion **3**）：每条含 `beatId`；`category` / `name` / `lo
 
 ---
 
-# 模式 C：表现溯源（新）
+# 模式 C：表现溯源
 
 精炼流程：
 
 ```
-1 取最新或指定 perflog-*.json，记下 sessionId/seed
-2 先扫 Anomaly；无则按现象选 uid 或 beatKind（OpeningDeal / PostKillDrain / CombatHit / SyncBoard）
-3 按 uid 滤：Motion* / SnapSet / VisChange，盯 site + beatId
-4 同 beatId 打开 CoreLog：HopPlan / OccupancySnapshot / SyncDiff / Drain*
-5 比该 Beat 的 BoardSnap Open vs Close
-6 定性：表现接线 / 与 Core 占格不一致 / 合理（如 FinalStateGuard 硬 Snap）
+1 取最新或指定四件套（同 sessionId/seed），缺卡 bug 优先 registrylog-*.json
+2 RegistryLog：按 trigger 筛 Checkpoint（Opening.Settled → IdleWatch.*）比 registryCount / BoardSnap
+3 RegistryLog：筛 RegistryDelta op=remove / Despawn，记 uid、reason、caller、tMs
+4 同 beatId/tMs 开 CoreLog：OccupancySnapshot / SyncDiff / Vacate
+5 画面/显隐疑点回 PerfLog：VisChange / ParentChange / Motion* / Anomaly
+6 定性：Release 调用方 / 非 Release 显隐 / Core↔注册表不同步
 ```
 
-kind / Anomaly / site：[`references/perf-events.md`](references/perf-events.md)。
+kind / Anomaly / site：[`references/perf-events.md`](references/perf-events.md)。  
+RegistryLog 专表：[`references/registry-events.md`](references/registry-events.md)。
+
+### CardManager actor 变少（开局 idle 缺卡）专查
+
+| 步骤 | RegistryLog 优先 | 回落 |
+|------|------------------|------|
+| 1 | 筛 `Checkpoint` trigger=`Opening.Settled`…`IdleWatch.10s`，比相邻 `registryCount` 与 `BoardSnap.cards` | 无 RegistryLog 时用 PerfLog `RegistryAudit` |
+| 2 | 首条 `CombatHit`/`SyncBoard` 前：筛 `RegistryDelta op=remove` 或 `Despawn` | 有=真实 Release；无=查 B 类 |
+| 3 | 每条 remove：`reason`+`caller` 反查 call site | Sync.SweepOrphan / Ground.* / Combat.* |
+| 4 | 同 beatId CoreLog：`OccupancySnapshot` / `SyncDiff` / `Vacate` | Core 是否同时卸占格 |
+| 5 | `RegistryAudit` ghosts vs orphans | ghosts=占格有 uid 无视图；orphans=有视图无占格 |
+| 6 | remove=0 但 Checkpoint 间 `registryCount` 降或 BoardSnap 缺 uid | bypass / 非 Release（Vis/Parent/scale） |
+
+自动锚点（无需 Keypad7）：`Opening.Settled`、`InteractionLoop.Idle`、`IdleWatch.2s/5s/10s`。  
+Keypad7 `UserMark` 仍可用作可选加强，非必需。
 
 ### 三类痛点速查
 
@@ -124,26 +140,30 @@ kind / Anomaly / site：[`references/perf-events.md`](references/perf-events.md)
 2. 同 **beatId** 打开 CoreLog → 意图槽位 / HopPlan / OccupancySnapshot
 3. 比 BoardSnap Open vs Close；有 `Anomaly` 直接当索引
 
-### 汇报模板（表现）
+### 汇报模板（表现 / 缺卡）
 
 ```markdown
 ## 表现溯源结论
-- 日志：`Assets/Notes/Logs/PerfLog/...`（sessionId / seed）
-- beatId=… beatKind=… uid=…
+- Registry：`Assets/Notes/Logs/OtherLog/RegistryLog/registrylog-…`（sessionId / seed）
+- Perf：`Assets/Notes/Logs/PerfLog/perflog-…`（若有画面疑点）
+- Core：`Assets/Notes/Logs/CoreLog/corelog-…`
+- trigger=… / beatId=… / uid=…
 
-## Anomaly
-- code=… detail=…（或无）
-
-## 证据（site）
-- SnapSet/Motion/Vis：…
+## Registry 证据
+- Checkpoint 序列：Opening.Settled → IdleWatch.*（registryCount 变化）
+- remove：#n reason=… caller=… uid=…（或无）
+- Audit：ghosts=… orphans=…
 
 ## Core 对照（同 beatId）
-- Occupancy / HopPlan：…
+- Occupancy / SyncDiff / Vacate：…
 
 ## 判定
-- [ ] 表现接线 / [ ] Core↔表现占格不一致 / [ ] 插桩缺口 / [ ] 合理
+- [ ] A 意外 Release（沿 reason+caller 修调用方）
+- [ ] B 非 Release（显隐/reparent/tween）
+- [ ] C Release 有但 Core 占格仍在
+- [ ] 合理 / 插桩缺口
 
-## 建议下一步
+## 建议改层
 - …
 ```
 
@@ -162,6 +182,7 @@ kind / Anomaly / site：[`references/perf-events.md`](references/perf-events.md)
 
 - Core 事件：[`references/flow-events.md`](references/flow-events.md)
 - Perf 事件：[`references/perf-events.md`](references/perf-events.md)
+- Registry 事件：[`references/registry-events.md`](references/registry-events.md)
 - 数值查表：[`references/numeric-tables.md`](references/numeric-tables.md)
 - EditMode：[`references/test-harness.md`](references/test-harness.md)
 - 产出代码：`DiagBeatClock` / `PerfTraceRecorder` / `FlowTraceRecorder` / `BattleTraceRecorder` / `CardPresentationProbe`

@@ -63,12 +63,14 @@ namespace NineGrid.Flow.Diagnostics
             {
                 var shouldRotate = HasOps
                     || FlowTraceRecorder.HasPriorRunMarker()
-                    || PerfTraceRecorder.HasEvents;
+                    || PerfTraceRecorder.HasEvents
+                    || RegistryTraceRecorder.HasEvents;
                 if (!shouldRotate)
                 {
                     BeginSessionIfNeeded(seed);
                     FlowTraceRecorder.BeginSessionIfNeeded(seed);
                     PerfTraceRecorder.BeginSessionIfNeeded(seed);
+                    RegistryTraceRecorder.BeginSessionIfNeeded(seed);
                     return;
                 }
 
@@ -76,11 +78,13 @@ namespace NineGrid.Flow.Diagnostics
                 Clear();
                 FlowTraceRecorder.Clear();
                 PerfTraceRecorder.Clear();
+                RegistryTraceRecorder.Clear();
                 DiagBeatClock.Reset();
                 DiagTraceShared.ForceNewSessionIdentity(seed);
                 BeginSessionIfNeeded(seed);
                 FlowTraceRecorder.BeginSessionIfNeeded(seed);
                 PerfTraceRecorder.BeginSessionIfNeeded(seed);
+                RegistryTraceRecorder.BeginSessionIfNeeded(seed);
                 Debug.Log(
                     "[BattleTrace] 新开局已轮转诊断会话 sessionId="
                     + DiagTraceShared.CurrentSessionId
@@ -410,6 +414,7 @@ namespace NineGrid.Flow.Diagnostics
 
                 FlowTraceRecorder.ExportOnPlayExit(source);
                 PerfTraceRecorder.ExportOnPlayExit(source);
+                RegistryTraceRecorder.ExportJson(silentIfEmpty: true);
                 DiagTraceShared.MarkExportedThisPlayExit();
                 return battlePath;
             }
@@ -450,6 +455,15 @@ namespace NineGrid.Flow.Diagnostics
             catch (Exception ex)
             {
                 Debug.LogWarning("[BattleTrace] ExportBothNow perf: " + ex.Message);
+            }
+
+            try
+            {
+                RegistryTraceRecorder.ExportJson(silentIfEmpty);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[BattleTrace] ExportBothNow registry: " + ex.Message);
             }
         }
 

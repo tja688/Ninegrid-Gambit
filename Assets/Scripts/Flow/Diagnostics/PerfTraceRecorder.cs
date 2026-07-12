@@ -274,6 +274,7 @@ namespace NineGrid.Flow.Diagnostics
                 };
                 sSession.events.Add(ev);
                 TrackAfterRecord(ev);
+                RegistryTraceRecorder.MirrorFromPerf(ev);
             }
             catch (Exception ex)
             {

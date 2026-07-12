@@ -25,6 +25,7 @@ namespace NineGrid.Flow.Editor
                 BattleTraceRecorder.Clear();
                 FlowTraceRecorder.Clear();
                 PerfTraceRecorder.Clear();
+                RegistryTraceRecorder.Clear();
                 DiagBeatClock.Reset();
                 return;
             }
@@ -38,7 +39,8 @@ namespace NineGrid.Flow.Editor
             // CoreLog / PerfLog 已在 ExportOnPlayExit 内一并尝试
             if (!string.IsNullOrEmpty(battlePath)
                 || FlowTraceRecorder.CurrentSession != null
-                || PerfTraceRecorder.CurrentSession != null)
+                || PerfTraceRecorder.CurrentSession != null
+                || RegistryTraceRecorder.CurrentSession != null)
             {
                 AssetDatabase.Refresh();
             }

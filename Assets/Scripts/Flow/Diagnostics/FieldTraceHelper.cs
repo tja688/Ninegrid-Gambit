@@ -437,6 +437,13 @@ namespace NineGrid.Flow.Diagnostics
                     { "hasGhosts", hasGhosts ? "true" : "false" },
                 },
                 accepted: !hasGhosts && string.IsNullOrEmpty(orphans));
+
+            RegistryTraceRecorder.OnAuditCompleted(
+                trigger,
+                registryCount,
+                fieldCount,
+                ghosts,
+                orphans);
         }
 
         private static void EnrichCommon(Dictionary<string, string> payload)

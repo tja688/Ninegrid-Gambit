@@ -502,6 +502,7 @@ namespace NineGrid.Flow
                 if (phase.CurrentPhase == GamePhase.InteractionLoop)
                 {
                     cardManager?.AuditRegistryIntegrity("InteractionLoop.Idle");
+                    RegistryTraceRecorder.BeginIdleWatch(linkedCts.Token);
                 }
 
                 RefreshPersistentInBattleUi(animate: false);
