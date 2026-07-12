@@ -19,9 +19,9 @@
     "def_id": "relic.gold_armor",
     "display_name": "金币盔甲",
     "rarity": "White",
-    "design_text": "金币抵消护甲伤害",
+    "design_text": "基础护甲+1，金币抵消护甲伤害",
     "tags": "",
-    "effect_ids": "relic.gold_armor.rule"
+    "effect_ids": "relic.gold_armor.base|relic.gold_armor.rule"
   },
   {
     "def_id": "relic.gold_knife",

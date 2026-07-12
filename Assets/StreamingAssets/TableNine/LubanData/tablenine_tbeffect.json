@@ -259,6 +259,13 @@
     "design_text": "所有怪物卡的攻击-1"
   },
   {
+    "id": "relic.gold_armor.base",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.gold_armor.base\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"modifier\":{\"stat\":\"Armor\",\"op\":\"Add\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}",
+    "design_text": "基础护甲+1"
+  },
+  {
     "id": "relic.gold_armor.rule",
     "container_type": "Relic",
     "state": "Implemented",
@@ -278,13 +285,6 @@
     "state": "Implemented",
     "json": "{\"id\":\"relic.heavy_armor.base\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"modifier\":{\"stat\":\"Armor\",\"op\":\"Add\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}",
     "design_text": "基础护甲+1"
-  },
-  {
-    "id": "relic.heavy_armor.node_start",
-    "container_type": "Relic",
-    "state": "Implemented",
-    "json": "{\"id\":\"relic.heavy_armor.node_start\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"Player\",\"stat\":\"Armor\"},{\"constant\":0.5}]}]}}}",
-    "design_text": "[每关卡开始时] 每有两点基础护甲，额外获得1点当前护甲"
   },
   {
     "id": "relic.junk_coating.use",
@@ -437,7 +437,7 @@
     "id": "skill.absorb_bone.remove",
     "container_type": "MonsterSkill",
     "state": "Implemented",
-    "json": "{\"id\":\"skill.absorb_bone.remove\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnRemove\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"targetKind\":\"Monster\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"EventCard\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"value\":{\"source\":\"Event\",\"field\":\"RemovedAttack\"},\"reason\":\"skill.absorb_bone.attack\"},{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"value\":{\"source\":\"Event\",\"field\":\"RemovedArmor\"},\"reason\":\"skill.absorb_bone.armor\"}]}}",
+    "json": "{\"id\":\"skill.absorb_bone.remove\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnRemove\",\"ownerOnly\":false},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"targetKind\":\"Monster\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"EventCard\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"value\":{\"source\":\"Event\",\"field\":\"RemovedAttack\"},\"reason\":\"skill.absorb_bone.attack\"},{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"value\":{\"source\":\"Event\",\"field\":\"RemovedArmor\"},\"reason\":\"skill.absorb_bone.armor\"}]}}",
     "design_text": "正交相邻格怪物被移除时，获得该怪物移除前的攻击和护甲"
   },
   {
@@ -997,14 +997,14 @@
     "id": "skill.violence_nutrition.help_remove",
     "container_type": "MonsterSkill",
     "state": "Implemented",
-    "json": "{\"id\":\"skill.violence_nutrition.help_remove\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnRemove\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"sourceDefId\":\"skill.violence_maniac\",\"targetKind\":\"HelpCard\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":5,\"reason\":\"skill.violence_nutrition\"}}",
+    "json": "{\"id\":\"skill.violence_nutrition.help_remove\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnRemove\",\"ownerOnly\":false},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"sourceDefId\":\"skill.violence_maniac\",\"targetKind\":\"HelpCard\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":5,\"reason\":\"skill.violence_nutrition\"}}",
     "design_text": "每依靠暴力狂移除一张帮助卡，本卡护甲+5"
   },
   {
     "id": "skill.violence_nutrition.monster_remove",
     "container_type": "MonsterSkill",
     "state": "Implemented",
-    "json": "{\"id\":\"skill.violence_nutrition.monster_remove\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnRemove\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"sourceDefId\":\"skill.violence_maniac\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":3,\"reason\":\"skill.violence_nutrition\"}}",
+    "json": "{\"id\":\"skill.violence_nutrition.monster_remove\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnRemove\",\"ownerOnly\":false},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"sourceDefId\":\"skill.violence_maniac\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":3,\"reason\":\"skill.violence_nutrition\"}}",
     "design_text": "每依靠暴力狂移除一张怪物卡，本卡攻击+3"
   }
 ]

@@ -395,7 +395,7 @@ namespace NineGrid.Core.Effects
             var zone = ownerCard.Zone.Value;
             if (zone == ZoneId.Graveyard || zone == ZoneId.Removed || zone == ZoneId.DrawPile)
             {
-                return false;
+                return IsOwnerSelfRemoveTrigger(instance, runtime);
             }
 
             if (zone == ZoneId.Board)
@@ -406,6 +406,34 @@ namespace NineGrid.Core.Effects
             if (zone == ZoneId.ItemSlots && container == EffectContainerType.HelpCard)
             {
                 return IsHelpCardItemSlotTriggerable(instance);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// [被移除时] 类效果：Kill/Remove 后 owner 已进入坟场，仍须允许本帧 OnRemove 触发。
+        /// </summary>
+        private static bool IsOwnerSelfRemoveTrigger(EffectInstance instance, EffectRuntimeContext runtime)
+        {
+            if (instance?.Trigger == null || instance.Trigger.Point != TriggerPoint.OnRemove)
+            {
+                return false;
+            }
+
+            var ownerUid = instance.Owner == null ? 0 : instance.Owner.OwnerUid;
+            if (ownerUid == 0)
+            {
+                return false;
+            }
+
+            var events = runtime.Events;
+            for (var i = 0; i < events.Count; i++)
+            {
+                if (events[i].Type == CoreEventType.CardRemoved && events[i].CardUid == ownerUid)
+                {
+                    return true;
+                }
             }
 
             return false;

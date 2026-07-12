@@ -22,12 +22,17 @@ namespace NineGrid.Cards
 
         public static int ItemUid => _itemUid;
 
+        public static string ItemDefId => _itemDefId;
+
         public static int RequiredCount => _requiredCount;
 
         public static IReadOnlyList<int> SelectedUidsReadOnly => SelectedUids;
 
         /// <summary>选满 N 张后触发；由 Flow 注册并完成 Core 写入与表现。</summary>
         public static event Func<int, int[], UniTask> SelectionCompletedAsync;
+
+        /// <summary>提交失败且未执行 UseItem 时触发；由 Flow 注册并回手兜底。</summary>
+        public static event Func<int, string, string, UniTask> SelectionAbortedAsync;
 
         public static bool Begin(int itemUid, string itemDefId, int requiredCount)
         {
@@ -47,6 +52,7 @@ namespace NineGrid.Cards
             SelectedUids.Clear();
             _active = true;
             CombatHitSink.BoardSelectModeActive = true;
+            RegistryTraceSink.NotifyUserInteraction?.Invoke("BoardSelectBegin");
             Debug.Log(
                 $"[BoardCardSelectMode] Begin itemUid={itemUid} defId={_itemDefId} required={requiredCount}");
             return true;
@@ -115,7 +121,9 @@ namespace NineGrid.Cards
                 driver?.SetTarget(CardVisualTarget.Base);
                 if (SelectedUids.Count == 0)
                 {
-                    End();
+                    RegistryTraceSink.NotifyUserInteraction?.Invoke("BoardSelectDeselectAll");
+                    Debug.Log(
+                        $"[BoardCardSelectMode] deselect-all-remain-active itemUid={_itemUid} defId={_itemDefId}");
                 }
 
                 return true;
@@ -131,29 +139,27 @@ namespace NineGrid.Cards
 
             if (SelectedUids.Count >= _requiredCount)
             {
-                CommitSelectionAsync().Forget();
+                _committing = true;
+                var itemUid = _itemUid;
+                var itemDefId = _itemDefId;
+                var selected = SelectedUids.ToArray();
+                _active = false;
+                RegistryTraceSink.NotifyUserInteraction?.Invoke("BoardSelectCommit");
+                Debug.Log(
+                    $"[BoardCardSelectMode] Commit itemUid={itemUid} defId={itemDefId} selected={string.Join(",", selected)}");
+                CommitSelectionAsync(itemUid, itemDefId, selected).Forget();
             }
 
             return true;
         }
 
-        private static async UniTaskVoid CommitSelectionAsync()
+        private static async UniTaskVoid CommitSelectionAsync(int itemUid, string itemDefId, int[] selected)
         {
-            if (!_active || _committing || SelectedUids.Count < _requiredCount)
-            {
-                return;
-            }
-
-            _committing = true;
-            var itemUid = _itemUid;
-            var selected = SelectedUids.ToArray();
-            _active = false;
-            CombatHitSink.BoardSelectModeActive = false;
-
             var handler = SelectionCompletedAsync;
             if (handler == null)
             {
                 Debug.LogWarning("[BoardCardSelectMode] SelectionCompletedAsync 未注册，选卡结果丢弃。");
+                await InvokeSelectionAbortedAsync(itemUid, itemDefId, "handler-missing");
                 End();
                 return;
             }
@@ -165,10 +171,32 @@ namespace NineGrid.Cards
             catch (Exception ex)
             {
                 Debug.LogException(ex);
+                await InvokeSelectionAbortedAsync(itemUid, itemDefId, "handler-exception");
             }
             finally
             {
-                End();
+                if (BoardCardSelectModeController.IsActive || _committing)
+                {
+                    End();
+                }
+            }
+        }
+
+        private static async UniTask InvokeSelectionAbortedAsync(int itemUid, string itemDefId, string reason)
+        {
+            var aborter = SelectionAbortedAsync;
+            if (aborter == null)
+            {
+                return;
+            }
+
+            try
+            {
+                await aborter(itemUid, itemDefId, reason);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
             }
         }
 

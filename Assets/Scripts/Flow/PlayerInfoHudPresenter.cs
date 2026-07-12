@@ -8,7 +8,8 @@ using UnityEngine;
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 局内 PlayerInfo Text：从内核 Avatar / Coins 刷血攻甲金与名称，数值变化时做轻量跳变。
+    /// 局内 PlayerInfo Text：从内核 Avatar / Coins 刷血攻防金与名称，数值变化时做轻量跳变。
+    /// 防御栏显示有效护甲（基础护甲 + 遗物/套装等修正）；中央玩家卡面显示当前护甲（本关临时资源）。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PlayerInfoHudPresenter : MonoBehaviour
@@ -30,7 +31,7 @@ namespace NineGrid.Flow
         [Tooltip("攻击 TMP；留空则运行时在 PlayerInfo Text 下按名查找 AttackText。")]
         [SerializeField] private TextMeshProUGUI attackText;
 
-        [Tooltip("护甲 TMP；留空则运行时在 PlayerInfo Text 下按名查找 ArmorText。")]
+        [Tooltip("防御（有效护甲）TMP；留空则运行时在 PlayerInfo Text 下按名查找 ArmorText。")]
         [SerializeField] private TextMeshProUGUI armorText;
 
         [Tooltip("金币 TMP；留空则运行时在 PlayerInfo Text 下按名查找 GoldText。")]
@@ -235,7 +236,7 @@ namespace NineGrid.Flow
             hp = Mathf.Max(0, stats.GetEffectiveInt(avatar, StatId.Hp));
             maxHp = Mathf.Max(hp, stats.GetEffectiveInt(avatar, StatId.MaxHp));
             attack = Mathf.Max(0, stats.GetEffectiveInt(avatar, StatId.Attack));
-            armor = StatArmorUtility.GetCurrentArmor(avatar);
+            armor = StatArmorUtility.GetEffectiveArmor(stats, avatar);
             displayName = ResolveAvatarDisplayName(avatar.DefId);
             return true;
         }

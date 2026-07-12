@@ -141,8 +141,39 @@ namespace NineGrid.Core.Effects
     [EffectAtom("OnRemove", EffectAtomKind.Trigger)]
     public sealed class OnRemoveTrigger : TriggerAtomBase
     {
+        private bool mOwnerOnly = true;
+
         public override TriggerPoint Point { get { return TriggerPoint.OnRemove; } }
-        public override bool Matches(EffectRuntimeContext context) { return base.Matches(context) && HasEvent(context, CoreEventType.CardRemoved); }
+
+        public override void Configure(EffectDslNode config)
+        {
+            base.Configure(config);
+            mOwnerOnly = config.Get("ownerOnly").AsBool(true);
+        }
+
+        public override bool Matches(EffectRuntimeContext context)
+        {
+            if (!base.Matches(context))
+            {
+                return false;
+            }
+
+            var events = context.Events;
+            for (var i = 0; i < events.Count; i++)
+            {
+                if (events[i].Type != CoreEventType.CardRemoved)
+                {
+                    continue;
+                }
+
+                if (!mOwnerOnly || context.OwnerUid == 0 || events[i].CardUid == context.OwnerUid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 
     [EffectAtom("OnUseHelpCard", EffectAtomKind.Trigger)]

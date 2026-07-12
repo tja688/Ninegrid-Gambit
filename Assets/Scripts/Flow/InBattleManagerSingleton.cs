@@ -40,6 +40,7 @@ namespace NineGrid.Flow
         [SerializeField] private UiPanelRouter panelRouter;
 
         private const string StatBoostCardDefId = "help.stat_boost_card";
+        private const int BoardSelectLockWaitMs = 3000;
         private static readonly string[] StatBoostOptions = { "Attack", "Armor", "Hp" };
 
         private bool _isBusy;
@@ -1044,6 +1045,8 @@ namespace NineGrid.Flow
 
             BoardCardSelectModeController.SelectionCompletedAsync -= OnBoardSelectionCompletedAsync;
             BoardCardSelectModeController.SelectionCompletedAsync += OnBoardSelectionCompletedAsync;
+            BoardCardSelectModeController.SelectionAbortedAsync -= OnBoardSelectionAbortedAsync;
+            BoardCardSelectModeController.SelectionAbortedAsync += OnBoardSelectionAbortedAsync;
         }
 
         private void UnregisterHandBridge()
@@ -1056,6 +1059,7 @@ namespace NineGrid.Flow
 
             hand.DragApplyValidator -= ValidateHandDragApplyAsync;
             BoardCardSelectModeController.SelectionCompletedAsync -= OnBoardSelectionCompletedAsync;
+            BoardCardSelectModeController.SelectionAbortedAsync -= OnBoardSelectionAbortedAsync;
             BoardCardSelectModeController.End();
         }
 
@@ -2321,18 +2325,28 @@ namespace NineGrid.Flow
 
         private async UniTask OnBoardSelectionCompletedAsync(int itemUid, int[] selectedUids)
         {
+            var defId = BoardCardSelectModeController.ItemDefId;
+            var requiredCount = BoardCardSelectModeController.RequiredCount;
             if (itemUid <= 0 || selectedUids == null || selectedUids.Length == 0)
             {
+                await RestoreBoardSelectItemToHandAsync(itemUid, defId, "invalid-selection");
                 return;
             }
 
-            if (CombatHitSink.ChoiceOverlayActive || CombatHitSink.PresentationLocked)
+            SoftAlignBoardAnchorsToCore();
+            SyncBoardOccupancyFromCore();
+
+            if (!TryValidateBoardSelectTargets(selectedUids, requiredCount, out var validateReason))
             {
+                Debug.LogWarning(
+                    $"[InBattleManager] BoardSelect 目标校验失败 itemUid={itemUid} reason={validateReason} uids={string.Join(",", selectedUids)}");
+                await RestoreBoardSelectItemToHandAsync(itemUid, defId, $"invalid-targets:{validateReason}");
                 return;
             }
 
-            if (!CombatHitSink.TryBeginPresentationLock("UseItem"))
+            if (!await TryAcquirePresentationLockForBoardSelectAsync("UseItem"))
             {
+                await RestoreBoardSelectItemToHandAsync(itemUid, defId, "lock-timeout");
                 return;
             }
 
@@ -2340,11 +2354,208 @@ namespace NineGrid.Flow
             if (!useResult.Accepted)
             {
                 CombatHitSink.EndPresentationLock("UseItem-rejected");
+                await RestoreBoardSelectItemToHandAsync(itemUid, defId, "use-rejected");
                 return;
             }
 
+            RegistryTraceSink.NotifyUserInteraction?.Invoke("BoardSelectUseItemAccepted");
             PresentUseItemEffectsAsync(useResult).Forget();
             await UniTask.CompletedTask;
+        }
+
+        private UniTask OnBoardSelectionAbortedAsync(int itemUid, string defId, string reason)
+        {
+            return RestoreBoardSelectItemToHandAsync(itemUid, defId, reason);
+        }
+
+        private static async UniTask<bool> TryAcquirePresentationLockForBoardSelectAsync(string reason)
+        {
+            const int stepMs = 50;
+            var elapsed = 0;
+            while (elapsed < BoardSelectLockWaitMs)
+            {
+                if (!CombatHitSink.ChoiceOverlayActive
+                    && !CombatHitSink.PresentationLocked
+                    && CombatHitSink.TryBeginPresentationLock(reason))
+                {
+                    return true;
+                }
+
+                await UniTask.Delay(stepMs);
+                elapsed += stepMs;
+            }
+
+            return false;
+        }
+
+        private static bool TryValidateBoardSelectTargets(int[] selectedUids, int requiredCount, out string failReason)
+        {
+            failReason = null;
+            if (selectedUids == null || selectedUids.Length == 0)
+            {
+                failReason = "empty";
+                return false;
+            }
+
+            if (requiredCount > 0 && selectedUids.Length != requiredCount)
+            {
+                failReason = "count-mismatch";
+                return false;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                failReason = "no-arch";
+                return false;
+            }
+
+            var registry = arch.GetModel<CardRegistry>();
+            var board = arch.GetModel<BoardModel>();
+            for (var i = 0; i < selectedUids.Length; i++)
+            {
+                var uid = selectedUids[i];
+                if (uid <= 0 || !registry.TryGet(uid, out var card) || card == null)
+                {
+                    failReason = $"missing-uid:{uid}";
+                    return false;
+                }
+
+                if (card.Kind == CardKind.Avatar)
+                {
+                    failReason = $"avatar-uid:{uid}";
+                    return false;
+                }
+
+                if (card.Zone.Value != ZoneId.Board)
+                {
+                    failReason = $"zone-{card.Zone.Value}-uid:{uid}";
+                    return false;
+                }
+
+                var slot = card.Slot.Value;
+                if (!slot.IsBoardSlot || board.GetCardUid(slot) != uid)
+                {
+                    failReason = $"slot-mismatch-uid:{uid}";
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static async UniTask<bool> WaitForHandReadyForRestoreAsync(CardHandManagerSingleton hand)
+        {
+            if (hand == null)
+            {
+                return false;
+            }
+
+            const int stepMs = 50;
+            var elapsed = 0;
+            while (elapsed < BoardSelectLockWaitMs)
+            {
+                if (!hand.IsDragging && hand.CanAcceptCard)
+                {
+                    return true;
+                }
+
+                await UniTask.Delay(stepMs);
+                elapsed += stepMs;
+            }
+
+            return !hand.IsDragging && hand.CanAcceptCard;
+        }
+
+        private async UniTask RestoreBoardSelectItemToHandAsync(int itemUid, string defId, string reason)
+        {
+            if (itemUid <= 0)
+            {
+                return;
+            }
+
+            Debug.LogWarning(
+                $"[InBattleManager] BoardSelectAbort itemUid={itemUid} defId={defId ?? "?"} reason={reason ?? "unknown"}");
+            RegistryTraceSink.NotifyUserInteraction?.Invoke($"BoardSelectAbort:{reason}");
+
+            BoardCardSelectModeController.End();
+
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return;
+            }
+
+            var registry = arch.GetModel<CardRegistry>();
+            if (!registry.TryGet(itemUid, out var coreCard)
+                || coreCard.Zone.Value != ZoneId.ItemSlots)
+            {
+                Debug.LogWarning(
+                    $"[InBattleManager] BoardSelectAbort skip restore: item not in ItemSlots uid={itemUid}");
+                return;
+            }
+
+            var deck = arch.GetModel<DeckModel>();
+            var inSlots = false;
+            for (var i = 0; i < deck.ItemSlotUids.Count; i++)
+            {
+                if (deck.ItemSlotUids[i] == itemUid)
+                {
+                    inSlots = true;
+                    break;
+                }
+            }
+
+            if (!inSlots)
+            {
+                return;
+            }
+
+            defId = string.IsNullOrEmpty(defId) ? coreCard.DefId : defId;
+            ResolveManagers();
+            if (cardManager == null)
+            {
+                return;
+            }
+
+            if (!cardManager.TryGet(itemUid, out var card) || card == null)
+            {
+                card = cardManager.SpawnView(itemUid, defId, initialMode: CardDisplayMode.HandCardMode);
+                if (card != null)
+                {
+                    CoreCardPresentationMapper.ApplyToManagedCard(card);
+                }
+            }
+            else
+            {
+                cardManager.SetDisplayMode(card, CardDisplayMode.HandCardMode);
+                CardOpacityUtility.ResetAlpha(card);
+            }
+
+            if (card == null)
+            {
+                return;
+            }
+
+            var hand = CardHandManagerSingleton.Instance;
+            if (hand == null)
+            {
+                return;
+            }
+
+            if (!await WaitForHandReadyForRestoreAsync(hand))
+            {
+                Debug.LogWarning(
+                    $"[InBattleManager] BoardSelectAbort restore hand busy timeout itemUid={itemUid}");
+                return;
+            }
+
+            var restored = await hand.PullFromGroundAsync(card);
+            if (!restored)
+            {
+                Debug.LogWarning(
+                    $"[InBattleManager] BoardSelectAbort PullFromGround failed itemUid={itemUid}");
+            }
         }
 
         private static void HideHandCardForChoice(ManagedCard card)

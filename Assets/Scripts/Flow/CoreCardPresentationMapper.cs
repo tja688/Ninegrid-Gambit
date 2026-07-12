@@ -67,6 +67,7 @@ namespace NineGrid.Flow
                 Kind = ToPresentationKind(card.Kind),
                 Attack = statSystem.GetEffectiveInt(card, StatId.Attack),
                 Hp = statSystem.GetEffectiveInt(card, StatId.Hp),
+                // 卡面护甲 = 当前护甲（本关临时资源）；PlayerInfoText 防御栏走有效护甲。
                 Armor = StatArmorUtility.GetCurrentArmor(card),
                 DefId = card.DefId ?? string.Empty,
             };
@@ -135,7 +136,7 @@ namespace NineGrid.Flow
 
         public static void UpdateAvatarDebugText(UiPanelRouter router, bool animate = true)
         {
-            // Card Info Text 已专用于悬停描述；玩家数值走 PlayerInfoText（Hp/Attack/Armor/Gold/Name）。
+            // Card Info Text 已专用于悬停描述；玩家数值走 PlayerInfoText（Hp/Attack/防御=有效护甲/Gold/Name）。
             _ = router;
             var hud = PlayerInfoHudPresenter.TryGetInstance() ?? PlayerInfoHudPresenter.Instance;
             hud.SyncFromCore(animate);

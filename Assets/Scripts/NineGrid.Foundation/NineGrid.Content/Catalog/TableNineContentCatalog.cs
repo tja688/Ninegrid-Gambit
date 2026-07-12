@@ -353,6 +353,10 @@ namespace NineGrid.Content
                 Modifier("relic.heavy_armor.base", "Relic", "{\"atom\":\"Player\"}", null,
                     "{\"stat\":\"Armor\",\"op\":\"Add\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}"),
                 "基础护甲+1"));
+            c.AddEffect(Impl("relic.gold_armor.base", EffectContainerType.Relic,
+                Modifier("relic.gold_armor.base", "Relic", "{\"atom\":\"Player\"}", null,
+                    "{\"stat\":\"Armor\",\"op\":\"Add\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}"),
+                "基础护甲+1"));
             c.AddEffect(Impl("relic.heavy_armor.node_start", EffectContainerType.Relic,
                 Triggered("relic.heavy_armor.node_start", "Relic",
                     "{\"atom\":\"OnNodeStart\"}",
@@ -799,7 +803,7 @@ namespace NineGrid.Content
 
             c.AddEffect(Impl("skill.violence_nutrition.monster_remove", EffectContainerType.MonsterSkill,
                 Triggered("skill.violence_nutrition.monster_remove", "MonsterSkill",
-                    "{\"atom\":\"OnRemove\"}",
+                    "{\"atom\":\"OnRemove\",\"ownerOnly\":false}",
                     "{\"atom\":\"Self\"}",
                     "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":3,\"reason\":\"skill.violence_nutrition\"}",
                     "[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"sourceDefId\":\"skill.violence_maniac\",\"targetKind\":\"Monster\"}]"),
@@ -807,7 +811,7 @@ namespace NineGrid.Content
 
             c.AddEffect(Impl("skill.violence_nutrition.help_remove", EffectContainerType.MonsterSkill,
                 Triggered("skill.violence_nutrition.help_remove", "MonsterSkill",
-                    "{\"atom\":\"OnRemove\"}",
+                    "{\"atom\":\"OnRemove\",\"ownerOnly\":false}",
                     "{\"atom\":\"Self\"}",
                     "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":5,\"reason\":\"skill.violence_nutrition\"}",
                     "[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"sourceDefId\":\"skill.violence_maniac\",\"targetKind\":\"HelpCard\"}]"),
@@ -815,7 +819,7 @@ namespace NineGrid.Content
 
             c.AddEffect(Impl("skill.absorb_bone.remove", EffectContainerType.MonsterSkill,
                 Triggered("skill.absorb_bone.remove", "MonsterSkill",
-                    "{\"atom\":\"OnRemove\"}",
+                    "{\"atom\":\"OnRemove\",\"ownerOnly\":false}",
                     "{\"atom\":\"Self\"}",
                     "{\"atom\":\"Sequence\",\"actions\":["
                     + "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"value\":{\"source\":\"Event\",\"field\":\"RemovedAttack\"},\"reason\":\"skill.absorb_bone.attack\"},"
@@ -1087,7 +1091,8 @@ namespace NineGrid.Content
             Relic(c, "relic.shield_knife", "打盾刀", ContentRarity.White, "击杀怪物时获得护甲").AddEffect("relic.shield_knife.kill");
             Relic(c, "relic.gold_knife", "打金刀", ContentRarity.White, "击杀怪物时获得2金币").AddEffect("relic.gold_knife.kill");
             Relic(c, "relic.heavy_armor", "重盔甲", ContentRarity.White, "基础护甲+1，按基础护甲补当前护甲").AddEffect("relic.heavy_armor.base").AddEffect("relic.heavy_armor.node_start");
-            Relic(c, "relic.gold_armor", "金币盔甲", ContentRarity.White, "金币抵消护甲伤害").AddEffect("relic.gold_armor.rule");
+            Relic(c, "relic.gold_armor", "金币盔甲", ContentRarity.White, "基础护甲+1，金币抵消护甲伤害")
+                .AddEffect("relic.gold_armor.base").AddEffect("relic.gold_armor.rule");
             Relic(c, "relic.vitality_amulet", "活力护符", ContentRarity.Blue, "血量上限+6，关卡结束恢复6").AddEffect("relic.vitality_amulet.max_hp").AddEffect("relic.vitality_amulet.node_end");
             Relic(c, "relic.dragon_scale_armor", "龙鳞甲", ContentRarity.Gold, "基础护甲+1，血量上限+6，怪物攻击-1")
                 .AddEffect("relic.dragon_scale_armor.base").AddEffect("relic.dragon_scale_armor.max_hp").AddEffect("relic.dragon_scale_armor.rule");
