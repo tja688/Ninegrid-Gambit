@@ -535,8 +535,8 @@ namespace NineGrid.Content
                 Triggered("skill.survival_wisdom.battle", "MonsterSkill",
                     "{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0}",
                     "{\"atom\":\"Self\"}",
-                    "{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Heal\",\"amount\":1,\"actor\":\"Self\"},{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"skill.survival_wisdom\"}]}",
-                    "[{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetIs\":\"Self\"}]"),
+                    "{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Heal\",\"amount\":1,\"actor\":\"Self\"},{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":1,\"layer\":\"Temporary\",\"scope\":\"UntilBattleEnds\",\"source\":\"skill.survival_wisdom\"}]}",
+                    "[{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetIs\":\"Self\"},{\"atom\":\"StatAtLeast\",\"target\":\"Self\",\"stat\":\"Hp\",\"value\":1}]"),
                 "[战斗时] 恢复1点血量，本卡攻击+1"));
             c.AddEffect(Impl("skill.devotion.remove", EffectContainerType.MonsterSkill,
                 Triggered("skill.devotion.remove", "MonsterSkill",
