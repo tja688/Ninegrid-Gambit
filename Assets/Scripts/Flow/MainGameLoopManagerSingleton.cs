@@ -552,7 +552,7 @@ namespace NineGrid.Flow
             // 残留帮助卡结算已在通关判定当拍由 InBattleManager 并行演出（不阻塞此处）；
             // 这里仅兜底呈现选房本身产生的其他金币事件，并静默对齐 HUD。
             InBattleManagerSingleton.PresentGoldGainsFromEventLog(goldEventStart);
-            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
+            inBattleManager?.RefreshPersistentInBattleUi(animate: false);
         }
 
         private async UniTask PlayRoomEventAsync(CancellationToken ct)
@@ -625,7 +625,7 @@ namespace NineGrid.Flow
 
             // 房间金币等：先按 EventLog 开演，再静默对齐 HUD，避免二次 Sync 抢戏跳变。
             InBattleManagerSingleton.PresentGoldGainsFromEventLog(goldEventStart);
-            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
+            inBattleManager?.RefreshPersistentInBattleUi(animate: false);
 
             var pending = arch.GetModel<PendingChoiceModel>();
             if (pending.Kind.Value == PendingChoiceKind.Reward
@@ -685,7 +685,7 @@ namespace NineGrid.Flow
             }
 
             panelRouter.HideAllOverlays();
-            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
+            inBattleManager?.RefreshPersistentInBattleUi(animate: false);
         }
 
         private static string BuildRoomResolvedNotice(RoomKind room)
@@ -745,12 +745,13 @@ namespace NineGrid.Flow
                 inBattleManager = InBattleManagerSingleton.Instance;
             }
 
-            inBattleManager?.ClearPresentationSurface();
+            inBattleManager?.ClearCardPresentationSurface();
+            inBattleManager?.RefreshPersistentInBattleUi(animate: false);
             FieldBattleManagerSingleton.Instance?.CancelBattleWork();
 
             SetState(victory ? LoopState.VictoryNotice : LoopState.DefeatNotice);
             EnsureBindings();
-            panelRouter.ShowInRunShell(inBattle: false);
+            panelRouter.ShowInRunShell();
             var message = victory
                 ? (string.IsNullOrWhiteSpace(victoryMessage) ? "胜利" : victoryMessage)
                 : (string.IsNullOrWhiteSpace(defeatMessage) ? "失败" : defeatMessage);
