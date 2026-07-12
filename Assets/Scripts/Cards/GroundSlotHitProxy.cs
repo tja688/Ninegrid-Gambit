@@ -49,6 +49,11 @@ namespace NineGrid.Cards
 
         private void OnMouseDown()
         {
+            if (CombatHitSink.BoardSelectModeActive)
+            {
+                return;
+            }
+
             if (slotNumber < GroundSlotTopology.MinSlot || slotNumber > GroundSlotTopology.MaxSlot)
             {
                 return;

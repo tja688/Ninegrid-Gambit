@@ -9,6 +9,9 @@ namespace NineGrid.Cards
         [Tooltip("场地卡牌跳跃换位总时长（秒）。")]
         public float moveDuration = 0.35f;
 
+        [Tooltip("双卡直线换位时长（秒）；先快后慢 OutCubic。")]
+        public float swapMoveDuration = 0.3f;
+
         [Tooltip("跳跃弧顶相对起终点连线的世界 Y 抬升量（仅做轻微起跳感，不往棋盘中心拉拢）。")]
         public float hopArcHeight = 0.28f;
 

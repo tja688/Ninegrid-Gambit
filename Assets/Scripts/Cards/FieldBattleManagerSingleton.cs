@@ -94,6 +94,7 @@ namespace NineGrid.Cards
             if (card == null
                 || _isBusy
                 || CombatHitSink.ChoiceOverlayActive
+                || CombatHitSink.BoardSelectModeActive
                 || CombatHitSink.PresentationLocked
                 || attackAdapter == null
                 || fieldManager == null

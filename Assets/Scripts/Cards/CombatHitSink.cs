@@ -122,6 +122,11 @@ namespace NineGrid.Cards
         public static bool ChoiceOverlayActive;
 
         /// <summary>
+        /// 场地多选选卡模式激活时为 true；允许场地卡点击 toggle，但阻断攻击/空槽/手牌拖拽。
+        /// </summary>
+        public static bool BoardSelectModeActive;
+
+        /// <summary>
         /// 表现层单输入锁：一次玩家操作（写 Core → Drain 播完）期间为 true。
         /// Cards 侧 IsBusy 聚合读取，不引用 Flow。
         /// </summary>
@@ -204,8 +209,8 @@ namespace NineGrid.Cards
         /// <summary>空槽点击：ClickEmpty(groundSlot) → 摘要（含 Moved/Dealt）。</summary>
         public static Func<int, PostKillBoardPresentationResult> ApplyClickEmpty;
 
-        /// <summary>手牌打出：ApplyUseItem(itemUid, optionalTargetUid, selectedOption) → 摘要。</summary>
-        public static Func<int, int?, string, UseItemPresentationResult> ApplyUseItem;
+        /// <summary>手牌打出：ApplyUseItem(itemUid, selectedCardUids, selectedOption) → 摘要。</summary>
+        public static Func<int, int[], string, UseItemPresentationResult> ApplyUseItem;
 
         /// <summary>清场胜利 / 玩家战败 → Notice + 回主菜单。</summary>
         public static Action<bool> NotifyBattleEnded;
@@ -294,7 +299,7 @@ namespace NineGrid.Cards
 
         public static UseItemPresentationResult RequestUseItem(
             int itemUid,
-            int? targetCardUid,
+            int[] selectedCardUids,
             string selectedOption = null)
         {
             if (ApplyUseItem == null)
@@ -303,7 +308,21 @@ namespace NineGrid.Cards
                 return default;
             }
 
-            return ApplyUseItem(itemUid, targetCardUid, selectedOption);
+            return ApplyUseItem(itemUid, selectedCardUids, selectedOption);
+        }
+
+        public static UseItemPresentationResult RequestUseItem(
+            int itemUid,
+            int? targetCardUid,
+            string selectedOption = null)
+        {
+            int[] selected = null;
+            if (targetCardUid.HasValue && targetCardUid.Value > 0)
+            {
+                selected = new[] { targetCardUid.Value };
+            }
+
+            return RequestUseItem(itemUid, selected, selectedOption);
         }
 
         public static void RequestBattleEnded(bool victory)

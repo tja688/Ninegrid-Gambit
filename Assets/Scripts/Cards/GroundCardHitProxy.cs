@@ -39,12 +39,22 @@ namespace NineGrid.Cards
 
         private void OnMouseEnter()
         {
+            if (CombatHitSink.BoardSelectModeActive)
+            {
+                return;
+            }
+
             if (!CanRespondToHover())
             {
                 return;
             }
 
             _driver ??= GetComponent<CardVisualDriver>();
+            if (_driver != null && _driver.IsSelectedVisual)
+            {
+                return;
+            }
+
             _driver?.SetTarget(CardVisualTarget.Hover);
 
             var defId = _driver?.BoundCard?.DefId;
@@ -56,8 +66,12 @@ namespace NineGrid.Cards
 
         private void OnMouseExit()
         {
-            // 仅清 Hover 路由，避免拖拽中的 Drag 描述被场地卡 Exit 踩掉
             DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
+
+            if (CombatHitSink.BoardSelectModeActive)
+            {
+                return;
+            }
 
             if (!CanRespondToHover())
             {
@@ -65,6 +79,11 @@ namespace NineGrid.Cards
             }
 
             _driver ??= GetComponent<CardVisualDriver>();
+            if (_driver != null && _driver.IsSelectedVisual)
+            {
+                return;
+            }
+
             _driver?.SetTarget(CardVisualTarget.Base);
         }
 
@@ -74,6 +93,12 @@ namespace NineGrid.Cards
             var card = _driver?.BoundCard;
             if (card == null)
             {
+                return;
+            }
+
+            if (CombatHitSink.BoardSelectModeActive)
+            {
+                BoardCardSelectModeController.TryToggleSelection(card);
                 return;
             }
 

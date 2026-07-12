@@ -1038,6 +1038,9 @@ namespace NineGrid.Flow
 
             hand.DragApplyValidator -= ValidateHandDragApplyAsync;
             hand.DragApplyValidator += ValidateHandDragApplyAsync;
+
+            BoardCardSelectModeController.SelectionCompletedAsync -= OnBoardSelectionCompletedAsync;
+            BoardCardSelectModeController.SelectionCompletedAsync += OnBoardSelectionCompletedAsync;
         }
 
         private void UnregisterHandBridge()
@@ -1049,6 +1052,8 @@ namespace NineGrid.Flow
             }
 
             hand.DragApplyValidator -= ValidateHandDragApplyAsync;
+            BoardCardSelectModeController.SelectionCompletedAsync -= OnBoardSelectionCompletedAsync;
+            BoardCardSelectModeController.End();
         }
 
         private static CombatHitPresentationResult ApplyCombatHitFromCore(int attackerUid, int targetUid)
@@ -1845,16 +1850,16 @@ namespace NineGrid.Flow
 
         private static UseItemPresentationResult ApplyUseItemFromCore(
             int itemUid,
-            int? targetCardUid,
+            int[] selectedCardUids,
             string selectedOption = null)
         {
             var arch = NineGridArchitecture.Current;
             var pipeline = arch.GetSystem<IActionPipelineSystem>();
             var startIndex = pipeline.EventLog.Entries.Count;
             int[] selected = null;
-            if (targetCardUid.HasValue && targetCardUid.Value > 0)
+            if (selectedCardUids != null && selectedCardUids.Length > 0)
             {
-                selected = new[] { targetCardUid.Value };
+                selected = selectedCardUids;
             }
 
             var result = arch.GetSystem<IPhaseSystem>().ApplyUseItem(itemUid, selected, selectedOption);
@@ -1862,7 +1867,7 @@ namespace NineGrid.Flow
             {
                 Accepted = result.Accepted,
                 DamagePopups = Array.Empty<CombatDamagePopup>(),
-                PrimaryTargetUid = targetCardUid.GetValueOrDefault(),
+                PrimaryTargetUid = selected != null && selected.Length > 0 ? selected[0] : 0,
             };
             if (!result.Accepted)
             {
@@ -2264,6 +2269,21 @@ namespace NineGrid.Flow
                 }
             }
 
+            if (HelpCardBoardSelectResolver.TryGetRequiredBoardSelectCount(card.DefId, out var boardSelectCount))
+            {
+                if (!BoardCardSelectModeController.Begin(card.Uid, card.DefId, boardSelectCount))
+                {
+                    if (IsStatBoostCard(card.DefId))
+                    {
+                        RestoreHandCardAfterChoiceCancel(card);
+                    }
+
+                    return false;
+                }
+
+                return true;
+            }
+
             if (!CombatHitSink.TryBeginPresentationLock("UseItem"))
             {
                 if (IsStatBoostCard(card.DefId))
@@ -2274,7 +2294,13 @@ namespace NineGrid.Flow
                 return false;
             }
 
-            var useResult = ApplyUseItemFromCore(card.Uid, targetUid, selectedOption);
+            int[] selectedUids = null;
+            if (targetUid.HasValue && targetUid.Value > 0)
+            {
+                selectedUids = new[] { targetUid.Value };
+            }
+
+            var useResult = ApplyUseItemFromCore(card.Uid, selectedUids, selectedOption);
             if (!useResult.Accepted)
             {
                 CombatHitSink.EndPresentationLock("UseItem-rejected");
@@ -2288,6 +2314,34 @@ namespace NineGrid.Flow
 
             PresentUseItemEffectsAsync(useResult).Forget();
             return true;
+        }
+
+        private async UniTask OnBoardSelectionCompletedAsync(int itemUid, int[] selectedUids)
+        {
+            if (itemUid <= 0 || selectedUids == null || selectedUids.Length == 0)
+            {
+                return;
+            }
+
+            if (CombatHitSink.ChoiceOverlayActive || CombatHitSink.PresentationLocked)
+            {
+                return;
+            }
+
+            if (!CombatHitSink.TryBeginPresentationLock("UseItem"))
+            {
+                return;
+            }
+
+            var useResult = ApplyUseItemFromCore(itemUid, selectedUids, null);
+            if (!useResult.Accepted)
+            {
+                CombatHitSink.EndPresentationLock("UseItem-rejected");
+                return;
+            }
+
+            PresentUseItemEffectsAsync(useResult).Forget();
+            await UniTask.CompletedTask;
         }
 
         private static void HideHandCardForChoice(ManagedCard card)

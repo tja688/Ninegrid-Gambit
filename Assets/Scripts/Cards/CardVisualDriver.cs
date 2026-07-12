@@ -7,6 +7,7 @@ namespace NineGrid.Cards
     {
         Base = 0,
         Hover = 1,
+        Selected = 2,
     }
 
     /// <summary>
@@ -72,11 +73,17 @@ namespace NineGrid.Cards
                     PlayHover();
                     break;
 
+                case CardVisualTarget.Selected:
+                    PlaySelected();
+                    break;
+
                 case CardVisualTarget.Base:
                     PlayBase();
                     break;
             }
         }
+
+        public bool IsSelectedVisual => _currentTarget == CardVisualTarget.Selected;
 
         public void SnapToDisplayMode()
         {
@@ -108,6 +115,36 @@ namespace NineGrid.Cards
             }
 
             PlayGroundHover();
+        }
+
+        private void PlaySelected()
+        {
+            if (_card?.DisplayMode == CardDisplayMode.HandCardMode)
+            {
+                PlayHandHover();
+                return;
+            }
+
+            PlayGroundSelected();
+        }
+
+        private void PlayGroundSelected()
+        {
+            var settings = ResolveGroundLayoutSettings();
+            var baseScale = GetBaseScale();
+            var hoverScale = baseScale * (1f + settings.hoverScaleIntensity);
+
+            _transform.localRotation = Quaternion.identity;
+
+            var sequence = DOTween.Sequence()
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
+
+            sequence.Join(
+                _transform
+                    .DOScale(hoverScale, settings.hoverEnterDuration)
+                    .SetEase(Ease.OutBack));
+
+            _feedbackSequence = sequence;
         }
 
         private void PlayGroundHover()

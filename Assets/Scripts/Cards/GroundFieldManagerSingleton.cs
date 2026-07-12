@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using UnityEngine;
 
 namespace NineGrid.Cards
@@ -932,6 +933,13 @@ namespace NineGrid.Cards
                 return;
             }
 
+            if (moves.Count == 2
+                && TryGetCrossSwapPair(moves, out var swapA, out var swapB))
+            {
+                await ApplyCrossSwapMovesInternalAsync(swapA, swapB, cancellationToken, skipBusyGuard);
+                return;
+            }
+
             if (!skipBusyGuard)
             {
                 _isBusy = true;
@@ -1302,6 +1310,147 @@ namespace NineGrid.Cards
                 layoutSettings.hopLandScaleIntensity,
                 cancellationToken,
                 onComplete: () => CardManagerSingleton.Instance.RefreshDisplayMode(card));
+        }
+
+        private static bool TryGetCrossSwapPair(
+            IReadOnlyList<PostKillCardMove> moves,
+            out PostKillCardMove first,
+            out PostKillCardMove second)
+        {
+            first = default;
+            second = default;
+            if (moves == null || moves.Count != 2)
+            {
+                return false;
+            }
+
+            var a = moves[0];
+            var b = moves[1];
+            if (a.Uid <= 0 || b.Uid <= 0 || a.Uid == b.Uid)
+            {
+                return false;
+            }
+
+            if (a.FromSlot == b.ToSlot && a.ToSlot == b.FromSlot)
+            {
+                first = a;
+                second = b;
+                return true;
+            }
+
+            return false;
+        }
+
+        private async UniTask ApplyCrossSwapMovesInternalAsync(
+            PostKillCardMove moveA,
+            PostKillCardMove moveB,
+            CancellationToken cancellationToken,
+            bool skipBusyGuard)
+        {
+            if (!skipBusyGuard && IsBusy)
+            {
+                Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法应用换位。");
+                return;
+            }
+
+            var cardManager = CardManagerSingleton.Instance;
+            if (cardManager == null)
+            {
+                return;
+            }
+
+            if (!cardManager.TryGet(moveA.Uid, out var cardA)
+                || !cardManager.TryGet(moveB.Uid, out var cardB)
+                || cardA?.Transform == null
+                || cardB?.Transform == null)
+            {
+                Debug.LogWarning("[GroundFieldManager] 换位缺少视图，回退 Sync。");
+                return;
+            }
+
+            if (!TryGetAnchor(moveA.ToSlot, out var anchorA)
+                || !TryGetAnchor(moveB.ToSlot, out var anchorB))
+            {
+                return;
+            }
+
+            if (!skipBusyGuard)
+            {
+                _isBusy = true;
+            }
+
+            try
+            {
+                if (_slotByUid.TryGetValue(moveA.Uid, out var slotA)
+                    && _slotByUid.TryGetValue(moveB.Uid, out var slotB))
+                {
+                    _uidBySlot[slotA] = 0;
+                    _uidBySlot[slotB] = 0;
+                    _slotByUid.Remove(moveA.Uid);
+                    _slotByUid.Remove(moveB.Uid);
+                    TryRegisterCardAtSlot(moveA.ToSlot, moveA.Uid);
+                    TryRegisterCardAtSlot(moveB.ToSlot, moveB.Uid);
+                }
+
+                var duration = layoutSettings != null ? layoutSettings.swapMoveDuration : 0.3f;
+                CardManagerSingleton.Instance.RefreshDisplayMode(cardA);
+                CardManagerSingleton.Instance.RefreshDisplayMode(cardB);
+
+                var tweenA = CardDeckTween.MoveToWorld(
+                    cardA.Transform,
+                    anchorA.position,
+                    duration,
+                    uid: cardA.Uid,
+                    reason: "swap");
+                var tweenB = CardDeckTween.MoveToWorld(
+                    cardB.Transform,
+                    anchorB.position,
+                    duration,
+                    uid: cardB.Uid,
+                    reason: "swap");
+
+                await UniTask.WhenAll(
+                    AwaitTweenAsync(tweenA, cancellationToken),
+                    AwaitTweenAsync(tweenB, cancellationToken));
+
+                CardManagerSingleton.Instance.RefreshDisplayMode(cardA);
+                CardManagerSingleton.Instance.RefreshDisplayMode(cardB);
+                RefreshAllSlotHitColliders();
+            }
+            finally
+            {
+                if (!skipBusyGuard)
+                {
+                    _isBusy = false;
+                }
+            }
+        }
+
+        private static UniTask AwaitTweenAsync(Tween tween, CancellationToken cancellationToken)
+        {
+            if (tween == null || !tween.IsActive())
+            {
+                return UniTask.CompletedTask;
+            }
+
+            var tcs = new UniTaskCompletionSource();
+            tween.OnComplete(() => tcs.TrySetResult());
+            tween.OnKill(() => tcs.TrySetResult());
+
+            if (cancellationToken.CanBeCanceled)
+            {
+                cancellationToken.Register(() =>
+                {
+                    if (tween.IsActive())
+                    {
+                        tween.Kill(complete: false);
+                    }
+
+                    tcs.TrySetCanceled(cancellationToken);
+                });
+            }
+
+            return tcs.Task;
         }
 
         private Vector3 ComputeHopMidpoint(Vector3 start, Vector3 end)
