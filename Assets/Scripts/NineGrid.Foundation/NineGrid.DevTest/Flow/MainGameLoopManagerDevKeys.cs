@@ -30,7 +30,9 @@ namespace NineGrid.DevTest.Flow
 
         protected override void ConfigureBindings(TestKeyRegistrationBuilder builder)
         {
-            builder.Bind(KeyCode.Keypad0, "进入主游戏循环测试", BeginTestLoop);
+            builder
+                .Bind(KeyCode.Keypad0, "进入主游戏循环测试", BeginTestLoop)
+                .Bind(KeyCode.Backslash, "快速测试入场 (x2+HP99)", BeginQuickTestLoop);
         }
 
         private void BeginTestLoop()
@@ -42,6 +44,23 @@ namespace NineGrid.DevTest.Flow
             }
 
             manager.BeginRun(testMode: true);
+        }
+
+        private void BeginQuickTestLoop()
+        {
+            var manager = ResolveManager();
+            if (manager == null)
+            {
+                return;
+            }
+
+            if (manager.State != MainGameLoopManagerSingleton.LoopState.MainMenu)
+            {
+                Debug.LogWarning("[MainGameLoopManagerDevKeys] 快速测试仅可在主菜单触发。");
+                return;
+            }
+
+            manager.BeginRun(testMode: true, quickTestMode: true);
         }
 
         private MainGameLoopManagerSingleton ResolveManager()

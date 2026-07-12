@@ -74,9 +74,13 @@ namespace NineGrid.Flow
         [Tooltip("失败文案。")]
         [SerializeField] private string defeatMessage = "失败";
 
+        public const float QuickTestTimeScale = 2f;
+        public const int QuickTestAvatarHp = 99;
+
         private LoopState _state = LoopState.MainMenu;
         private bool _isBusy;
         private bool _testMode;
+        private bool _quickTestMode;
         private int _nodeIndex;
         private CancellationTokenSource _loopCts;
         private CancellationTokenSource _battleEndCts;
@@ -103,6 +107,7 @@ namespace NineGrid.Flow
 
         public LoopState State => _state;
         public bool IsTestMode => _testMode;
+        public bool IsQuickTestMode => _quickTestMode;
         public int NodeIndex => _nodeIndex;
 
         private void Awake()
@@ -157,7 +162,7 @@ namespace NineGrid.Flow
         /// <summary>
         /// DevTest / 按钮入口：开启一局主循环（默认测试模式）。
         /// </summary>
-        public void BeginRun(bool testMode = true)
+        public void BeginRun(bool testMode = true, bool quickTestMode = false)
         {
             if (_isBusy && _state != LoopState.MainMenu)
             {
@@ -171,7 +176,9 @@ namespace NineGrid.Flow
             _loopCts = new CancellationTokenSource();
 
             _testMode = testMode;
+            _quickTestMode = quickTestMode;
             _nodeIndex = 0;
+            ApplyQuickTestTimeScale();
             HideNotice();
             panelRouter.ShowInRunShell(inBattle: true);
             try
@@ -184,12 +191,19 @@ namespace NineGrid.Flow
                     new Dictionary<string, string>
                     {
                         { "testMode", testMode ? "true" : "false" },
+                        { "quickTestMode", quickTestMode ? "true" : "false" },
                     },
                     loopState: _state.ToString());
             }
             catch (Exception ex)
             {
                 Debug.LogWarning("[MainGameLoop] FlowTrace StartRun: " + ex.Message);
+            }
+
+            if (quickTestMode)
+            {
+                Debug.Log(
+                    $"[MainGameLoop] 快速测试模式：全局速度 x{QuickTestTimeScale}，玩家血量 {QuickTestAvatarHp}");
             }
 
             RunNodeCycleAsync(_loopCts.Token).Forget();
@@ -331,6 +345,8 @@ namespace NineGrid.Flow
             {
                 return;
             }
+
+            ApplyQuickTestAvatarHpIfNeeded();
 
             // 开局即空怪时 StartBattleNode 内可能已 Raise 结算；补一次探测。
             inBattleManager.TryEnterNodeSettlement();
@@ -807,9 +823,43 @@ namespace NineGrid.Flow
             }
 
             _testMode = false;
+            _quickTestMode = false;
+            ResetQuickTestTimeScale();
             _nodeIndex = 0;
             _isBusy = false;
             _settlementTcs = null;
+        }
+
+        private void ApplyQuickTestTimeScale()
+        {
+            if (!_quickTestMode)
+            {
+                return;
+            }
+
+            Time.timeScale = QuickTestTimeScale;
+        }
+
+        private void ResetQuickTestTimeScale()
+        {
+            if (Mathf.Approximately(Time.timeScale, QuickTestTimeScale))
+            {
+                Time.timeScale = 1f;
+            }
+        }
+
+        private void ApplyQuickTestAvatarHpIfNeeded()
+        {
+            if (!_quickTestMode || _nodeIndex != 1 || inBattleManager == null)
+            {
+                return;
+            }
+
+            if (!inBattleManager.TryCheatSetAvatarHp(QuickTestAvatarHp))
+            {
+                Debug.LogWarning(
+                    $"[MainGameLoop] 快速测试改血失败：目标 {QuickTestAvatarHp}，请确认 Avatar 已入场。");
+            }
         }
 
         private void SubscribeSettlement()

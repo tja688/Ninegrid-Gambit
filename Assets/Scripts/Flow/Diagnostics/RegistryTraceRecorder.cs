@@ -15,11 +15,21 @@ namespace NineGrid.Flow.Diagnostics
     /// </summary>
     public static class RegistryTraceRecorder
     {
-        private static readonly float[] IdleWatchDelaysSeconds = { 2f, 5f, 10f };
+        private static readonly float[] IdleWatchDelaysSeconds = { 1f, 2f, 3f, 5f, 7f, 10f, 15f };
+        private static readonly float IdlePollIntervalSeconds = 0.5f;
 
         private static RegistryTraceSession sSession;
         private static float sSessionStartRealtime;
         private static int sIdleWatchGeneration;
+        private static int sVisualBaseline = -1;
+        private static int sLastReportedVisualGap = -1;
+        private static int sUserInteractionCount;
+        private static int sLastReleaseUid = -1;
+        private static string sLastReleaseReason = string.Empty;
+        private static string sLastReleaseCaller = string.Empty;
+        private static int sLastReleaseTMs;
+        private static string sLastVacateDetail = string.Empty;
+        private static int sLastVacateTMs;
         private static bool sEnabled =
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             true;
@@ -38,17 +48,97 @@ namespace NineGrid.Flow.Diagnostics
         public static bool HasEvents =>
             sSession != null && sSession.events != null && sSession.events.Count > 0;
 
+        public static void RegisterSinkHandlers()
+        {
+            RegistryTraceSink.NotifyUserInteraction = NotifyUserInteraction;
+            RegistryTraceSink.RecordSuspectGroundRelease = RecordSuspectGroundRelease;
+        }
+
+        public static void UnregisterSinkHandlers()
+        {
+            RegistryTraceSink.ClearHandlers();
+        }
+
         public static void Clear()
         {
             try
             {
                 CancelIdleWatch();
                 sSession = null;
+                ResetVisualSessionState();
             }
             catch (Exception ex)
             {
                 Debug.LogWarning("[RegistryTrace] Clear failed: " + ex.Message);
             }
+        }
+
+        public static void NotifyUserInteraction(string site)
+        {
+            if (!sEnabled)
+            {
+                return;
+            }
+
+            sUserInteractionCount++;
+            Record(
+                RegistryTraceKinds.Checkpoint,
+                -1,
+                "Registry.UserInteraction",
+                new Dictionary<string, string>
+                {
+                    { "trigger", "UserInteraction." + (site ?? string.Empty) },
+                    { "count", sUserInteractionCount.ToString() },
+                    { "phase", BattleTraceRecorder.CurrentPhaseName() },
+                });
+        }
+
+        public static void ResetVisualBaselineForOpening()
+        {
+            sVisualBaseline = -1;
+            sLastReportedVisualGap = -1;
+            sUserInteractionCount = 0;
+        }
+
+        /// <summary>BeatClose 时补采样，抓检查点之间的瞬时空槽。</summary>
+        public static void OnPresentationBeatClosed(string beatKind)
+        {
+            if (!sEnabled || string.IsNullOrEmpty(beatKind))
+            {
+                return;
+            }
+
+            if (!IsInteractionLoopPhase())
+            {
+                return;
+            }
+
+            CaptureFieldVisualState(RegistryTraceTriggers.BeatClosePrefix + beatKind, includeCheckpoint: false);
+        }
+
+        public static void RecordSuspectGroundRelease(
+            int uid,
+            string reason,
+            string caller,
+            int groundSlot)
+        {
+            if (!sEnabled)
+            {
+                return;
+            }
+
+            Record(
+                RegistryTraceKinds.SuspectRelease,
+                uid,
+                "Card.SuspectGroundRelease",
+                new Dictionary<string, string>
+                {
+                    { "reason", reason ?? string.Empty },
+                    { "caller", caller ?? string.Empty },
+                    { "groundSlot", groundSlot.ToString() },
+                    { "userInteractionCount", sUserInteractionCount.ToString() },
+                    { "beatKind", DiagBeatClock.CurrentBeatKind ?? string.Empty },
+                });
         }
 
         public static void BeginSessionIfNeeded(ulong seed = 0UL)
@@ -71,7 +161,7 @@ namespace NineGrid.Flow.Diagnostics
                 sSessionStartRealtime = Time.realtimeSinceStartup;
                 sSession = new RegistryTraceSession
                 {
-                    schemaVersion = 1,
+                    schemaVersion = 2,
                     seed = DiagTraceShared.CurrentSeed,
                     sessionId = DiagTraceShared.CurrentSessionId,
                     events = new List<RegistryTraceEvent>(),
@@ -95,9 +185,26 @@ namespace NineGrid.Flow.Diagnostics
 
             try
             {
+                BeginSessionIfNeeded();
                 if (!ShouldMirrorPerfKind(ev.kind, ev.payload))
                 {
                     return;
+                }
+
+                if (ev.kind == RegistryTraceKinds.RegistryDelta
+                    && ev.payload != null
+                    && ev.payload.TryGetValue("op", out var op)
+                    && op == "remove")
+                {
+                    TrackReleaseFromMirror(ev.uid, ev.payload);
+                }
+                else if (ev.kind == RegistryTraceKinds.Despawn && ev.payload != null)
+                {
+                    TrackReleaseFromMirror(ev.uid, ev.payload);
+                }
+                else if (ev.kind == RegistryTraceKinds.Vacate)
+                {
+                    TrackVacateFromMirror(ev.uid, ev.payload);
                 }
 
                 Record(
@@ -151,6 +258,8 @@ namespace NineGrid.Flow.Diagnostics
                         : trigger;
                     CaptureCheckpoint(checkpointTrigger, registryCount, fieldCount, ghosts, orphans);
                 }
+
+                CaptureFieldVisualState(trigger ?? string.Empty, includeCheckpoint: false);
             }
             catch (Exception ex)
             {
@@ -217,6 +326,7 @@ namespace NineGrid.Flow.Diagnostics
                     });
 
                 RecordFullBoardSnap("checkpoint:" + (trigger ?? string.Empty));
+                CaptureFieldVisualState(trigger ?? string.Empty, includeCheckpoint: true);
             }
             catch (Exception ex)
             {
@@ -269,10 +379,13 @@ namespace NineGrid.Flow.Diagnostics
         {
             try
             {
-                for (var i = 0; i < IdleWatchDelaysSeconds.Length; i++)
+                var elapsed = 0f;
+                var nextWatchIndex = 0;
+                while (elapsed < IdleWatchDelaysSeconds[IdleWatchDelaysSeconds.Length - 1] + 0.01f)
                 {
-                    var delay = IdleWatchDelaysSeconds[i];
-                    await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: cancellationToken);
+                    await UniTask.Delay(
+                        TimeSpan.FromSeconds(IdlePollIntervalSeconds),
+                        cancellationToken: cancellationToken);
                     if (generation != sIdleWatchGeneration || cancellationToken.IsCancellationRequested)
                     {
                         return;
@@ -283,8 +396,20 @@ namespace NineGrid.Flow.Diagnostics
                         return;
                     }
 
-                    var trigger = RegistryTraceTriggers.IdleWatchPrefix + delay.ToString("0") + "s";
-                    CardManagerSingleton.TryGetInstance()?.AuditRegistryIntegrity(trigger);
+                    elapsed += IdlePollIntervalSeconds;
+
+                    while (nextWatchIndex < IdleWatchDelaysSeconds.Length
+                           && elapsed + 0.001f >= IdleWatchDelaysSeconds[nextWatchIndex])
+                    {
+                        var delay = IdleWatchDelaysSeconds[nextWatchIndex];
+                        var trigger = RegistryTraceTriggers.IdleWatchPrefix + delay.ToString("0") + "s";
+                        CardManagerSingleton.TryGetInstance()?.AuditRegistryIntegrity(trigger);
+                        nextWatchIndex++;
+                    }
+
+                    CaptureFieldVisualState(
+                        RegistryTraceTriggers.IdlePollPrefix + Mathf.RoundToInt(elapsed) + "s",
+                        includeCheckpoint: false);
                 }
             }
             catch (OperationCanceledException)
@@ -320,6 +445,8 @@ namespace NineGrid.Flow.Diagnostics
             return trigger == RegistryTraceTriggers.OpeningSettled
                 || trigger == RegistryTraceTriggers.InteractionLoopIdle
                 || trigger.StartsWith(RegistryTraceTriggers.IdleWatchPrefix, StringComparison.Ordinal)
+                || trigger.StartsWith(RegistryTraceTriggers.IdlePollPrefix, StringComparison.Ordinal)
+                || trigger.StartsWith(RegistryTraceTriggers.BeatClosePrefix, StringComparison.Ordinal)
                 || trigger.StartsWith(RegistryTraceTriggers.UserMarkPrefix, StringComparison.Ordinal);
         }
 
@@ -439,6 +566,141 @@ namespace NineGrid.Flow.Diagnostics
         private static int ElapsedMs()
         {
             return Mathf.Max(0, Mathf.RoundToInt((Time.realtimeSinceStartup - sSessionStartRealtime) * 1000f));
+        }
+
+        private static void ResetVisualSessionState()
+        {
+            sVisualBaseline = -1;
+            sLastReportedVisualGap = -1;
+            sUserInteractionCount = 0;
+            sLastReleaseUid = -1;
+            sLastReleaseReason = string.Empty;
+            sLastReleaseCaller = string.Empty;
+            sLastReleaseTMs = 0;
+            sLastVacateDetail = string.Empty;
+            sLastVacateTMs = 0;
+        }
+
+        private static void CaptureFieldVisualState(string trigger, bool includeCheckpoint)
+        {
+            if (!sEnabled)
+            {
+                return;
+            }
+
+            try
+            {
+                var isOpeningBaseline = trigger == RegistryTraceTriggers.OpeningSettled
+                    || trigger == RegistryTraceTriggers.InteractionLoopIdle;
+                if (isOpeningBaseline && sVisualBaseline < 0)
+                {
+                    var baselineReport = DiagFieldVisualCapture.Capture(-1);
+                    sVisualBaseline = baselineReport.VisibleCount;
+                }
+
+                var report = DiagFieldVisualCapture.Capture(sVisualBaseline);
+                var payload = BuildVisualPayload(trigger, report);
+                Record(RegistryTraceKinds.FieldVisualAudit, -1, "Registry.FieldVisualAudit", payload);
+
+                if (includeCheckpoint && IsLifecycleTrigger(trigger))
+                {
+                    Record(
+                        RegistryTraceKinds.Checkpoint,
+                        -1,
+                        "Registry.VisualCheckpoint",
+                        new Dictionary<string, string>(payload));
+                }
+
+                MaybeEmitVisualGap(trigger, report);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[RegistryTrace] CaptureFieldVisualState failed: " + ex.Message);
+            }
+        }
+
+        private static Dictionary<string, string> BuildVisualPayload(
+            string trigger,
+            DiagFieldVisualCapture.FieldVisualReport report)
+        {
+            return new Dictionary<string, string>
+            {
+                { "trigger", trigger ?? string.Empty },
+                { "baselineVisible", report.BaselineVisible.ToString() },
+                { "visibleCount", report.VisibleCount.ToString() },
+                { "occupiedCount", report.OccupiedCount.ToString() },
+                { "coreCount", report.CoreCount.ToString() },
+                { "visualMissing", report.MissingVisible.ToString() },
+                { "emptyVisualSlots", report.EmptyVisualSlots ?? string.Empty },
+                { "emptyVisualSlotCount", report.EmptyVisualSlotCount.ToString() },
+                { "hiddenOccupied", report.HiddenOccupied ?? string.Empty },
+                { "offModeOccupied", report.OffModeOccupied ?? string.Empty },
+                { "slotDetail", report.SlotDetail ?? string.Empty },
+                { "userInteractionCount", sUserInteractionCount.ToString() },
+                { "phase", BattleTraceRecorder.CurrentPhaseName() },
+                { "beatKind", DiagBeatClock.CurrentBeatKind ?? string.Empty },
+            };
+        }
+
+        private static void MaybeEmitVisualGap(
+            string trigger,
+            DiagFieldVisualCapture.FieldVisualReport report)
+        {
+            if (sVisualBaseline <= 0 || report.MissingVisible <= 0)
+            {
+                if (report.MissingVisible <= 0)
+                {
+                    sLastReportedVisualGap = 0;
+                }
+
+                return;
+            }
+
+            if (report.MissingVisible == sLastReportedVisualGap)
+            {
+                return;
+            }
+
+            sLastReportedVisualGap = report.MissingVisible;
+            var gapPayload = BuildVisualPayload(trigger, report);
+            gapPayload["code"] = RegistryTraceAnomalyCodes.FieldVisualGap;
+            gapPayload["lastReleaseUid"] = sLastReleaseUid.ToString();
+            gapPayload["lastReleaseReason"] = sLastReleaseReason ?? string.Empty;
+            gapPayload["lastReleaseCaller"] = sLastReleaseCaller ?? string.Empty;
+            gapPayload["lastReleaseTMs"] = sLastReleaseTMs.ToString();
+            gapPayload["lastVacate"] = sLastVacateDetail ?? string.Empty;
+            gapPayload["lastVacateTMs"] = sLastVacateTMs.ToString();
+
+            Record(RegistryTraceKinds.FieldVisualGap, -1, "Registry.FieldVisualGap", gapPayload);
+            Record(
+                RegistryTraceKinds.Anomaly,
+                -1,
+                "Anomaly.Detect",
+                new Dictionary<string, string>
+                {
+                    { "code", RegistryTraceAnomalyCodes.FieldVisualGap },
+                    { "detail", "missing=" + report.MissingVisible + " empty=" + report.EmptyVisualSlots },
+                    { "trigger", trigger ?? string.Empty },
+                });
+        }
+
+        private static void TrackReleaseFromMirror(int uid, Dictionary<string, string> payload)
+        {
+            sLastReleaseUid = uid;
+            sLastReleaseTMs = ElapsedMs();
+            sLastReleaseReason = payload != null && payload.TryGetValue("reason", out var reason)
+                ? reason
+                : string.Empty;
+            sLastReleaseCaller = payload != null && payload.TryGetValue("caller", out var caller)
+                ? caller
+                : string.Empty;
+        }
+
+        private static void TrackVacateFromMirror(int uid, Dictionary<string, string> payload)
+        {
+            sLastVacateTMs = ElapsedMs();
+            var slot = payload != null && payload.TryGetValue("slot", out var slotText) ? slotText : "?";
+            sLastVacateDetail = uid + "@" + slot;
         }
     }
 }

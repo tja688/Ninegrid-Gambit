@@ -16,7 +16,9 @@
 |---------|------|------|
 | `Opening.Settled` | 开局发牌 BeatClose 后 | `Checkpoint` + 全量 `BoardSnap` |
 | `InteractionLoop.Idle` | 进入 InteractionLoop 后 | 同上 |
-| `IdleWatch.2s` / `5s` / `10s` | idle 延迟自动审计 | `RegistryAudit` + `Checkpoint` + `BoardSnap` |
+| `IdleWatch.1s` / `2s` / `3s` / `5s` / `7s` / `10s` / `15s` | idle 延迟自动审计 | `RegistryAudit` + `Checkpoint` + `BoardSnap` + **`FieldVisualAudit`** |
+| `IdlePoll.*` | idle 段每 0.5s 轮询 | **`FieldVisualAudit`**；`visualMissing>0` 时额外 **`FieldVisualGap`** |
+| `BeatClose.*` | 每个表现 Beat 结束 | **`FieldVisualAudit`**；有 gap 时 **`FieldVisualGap`** |
 | `AuditMismatch.{原trigger}` | ghosts/orphans 非空 | 额外检查点 |
 | `UserMark.*` | DevTest Keypad7（可选） | 同上 |
 
@@ -31,7 +33,9 @@
 | `Vacate` | 场地占格注销 | `slot`, `caller` |
 | `Checkpoint` | 生命周期/异常锚点 | `trigger`, `registryCount`, `fieldCount`, `ghosts`, `orphans`, `phase` |
 | `BoardSnap` | 检查点伴随全量画面 | `phase`, `full`=1, `cards` 紧凑串（同 PerfLog 格式） |
-| `Anomaly` | 占格相关自动异常 | `code`=`FieldOccupancyWithoutView` / `ViewWithoutFieldOccupancy` / `OrphanAtWrongAnchor` |
+| `FieldVisualAudit` | 场地可见卡审计 | `baselineVisible`, `visibleCount`, `visualMissing`, `emptyVisualSlots`, `hiddenOccupied`, `slotDetail`, `userInteractionCount` |
+| `FieldVisualGap` | 可见卡少于 Opening 基线（**直接回答少几张**） | 同上 + `lastReleaseUid/reason/caller`, `lastVacate`, `beatKind` |
+| `SuspectRelease` | 可疑 Release（如 Hand vanish 时仍占 Ground 槽） | `reason`, `caller`, `groundSlot` |
 
 ## Release reason 速查（沿 reason+caller 修调用方）
 

@@ -204,6 +204,8 @@ namespace NineGrid.Flow.Diagnostics
                 DetectBeatCloseAnomalies();
 
                 var beatKind = DiagBeatClock.CurrentBeatKind;
+                RegistryTraceRecorder.OnPresentationBeatClosed(beatKind);
+
                 var nodeIndex = DiagBeatClock.CurrentNodeIndex;
                 Record(
                     PerfTraceKinds.BeatClose,

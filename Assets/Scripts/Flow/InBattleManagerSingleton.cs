@@ -499,6 +499,7 @@ namespace NineGrid.Flow
                 }
 
                 cardManager?.AuditRegistryIntegrity("Opening.Settled");
+                RegistryTraceRecorder.ResetVisualBaselineForOpening();
                 if (phase.CurrentPhase == GamePhase.InteractionLoop)
                 {
                     cardManager?.AuditRegistryIntegrity("InteractionLoop.Idle");
@@ -954,6 +955,7 @@ namespace NineGrid.Flow
             CombatHitSink.NotifyNodeSettlementReady = OnNodeSettlementFromCombat;
             FieldTraceHelper.RegisterSinkHandlers();
             PerfTraceRecorder.RegisterSinkHandlers();
+            RegistryTraceRecorder.RegisterSinkHandlers();
             RegisterHandBridge();
         }
 
@@ -961,6 +963,7 @@ namespace NineGrid.Flow
         {
             FieldTraceHelper.UnregisterSinkHandlers();
             PerfTraceRecorder.UnregisterSinkHandlers();
+            RegistryTraceRecorder.UnregisterSinkHandlers();
             if (CombatHitSink.ApplyCombatHit == ApplyCombatHitFromCore)
             {
                 CombatHitSink.ApplyCombatHit = null;

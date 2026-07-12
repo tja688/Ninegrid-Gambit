@@ -10,7 +10,7 @@ namespace NineGrid.Flow.Diagnostics
     [Serializable]
     public sealed class RegistryTraceSession
     {
-        public int schemaVersion = 1;
+        public int schemaVersion = 2;
         public string seed = "0";
         public string sessionId = string.Empty;
         public List<RegistryTraceEvent> events = new List<RegistryTraceEvent>();
@@ -38,6 +38,9 @@ namespace NineGrid.Flow.Diagnostics
         public const string BoardSnap = "BoardSnap";
         public const string Checkpoint = "Checkpoint";
         public const string Anomaly = "Anomaly";
+        public const string FieldVisualAudit = "FieldVisualAudit";
+        public const string FieldVisualGap = "FieldVisualGap";
+        public const string SuspectRelease = "SuspectRelease";
     }
 
     public static class RegistryTraceTriggers
@@ -45,7 +48,14 @@ namespace NineGrid.Flow.Diagnostics
         public const string OpeningSettled = "Opening.Settled";
         public const string InteractionLoopIdle = "InteractionLoop.Idle";
         public const string IdleWatchPrefix = "IdleWatch.";
+        public const string IdlePollPrefix = "IdlePoll.";
+        public const string BeatClosePrefix = "BeatClose.";
         public const string AuditMismatchPrefix = "AuditMismatch.";
         public const string UserMarkPrefix = "UserMark.";
+    }
+
+    public static class RegistryTraceAnomalyCodes
+    {
+        public const string FieldVisualGap = "FieldVisualGap";
     }
 }

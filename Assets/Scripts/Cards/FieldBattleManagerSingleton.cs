@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -114,6 +115,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
+            RegistryTraceSink.NotifyUserInteraction?.Invoke("BattleClick");
             RequestBasicAttackAtSlotAsync(slot).Forget();
             return true;
         }

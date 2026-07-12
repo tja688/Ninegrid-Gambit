@@ -947,6 +947,7 @@ namespace NineGrid.Cards
                 return;
             }
 
+            RegistryTraceSink.NotifyUserInteraction?.Invoke("HandDragApply");
             ClearDragSession();
             CardOpacityUtility.ResetAlpha(card);
             await VanishCardAfterApplyAsync(card);
@@ -995,6 +996,19 @@ namespace NineGrid.Cards
                             layoutSettings.applyVanishDuration),
                         CancellationToken.None);
                 }
+
+                var field = GroundFieldManagerSingleton.TryGetInstance();
+                if (field != null
+                    && field.TryGetSlotOf(card.Uid, out var groundSlot)
+                    && !GroundSlotTopology.IsAvatarReserved(groundSlot))
+                {
+                    RegistryTraceSink.RecordSuspectGroundRelease?.Invoke(
+                        card.Uid,
+                        "Hand.VanishAfterApply",
+                        nameof(VanishCardAfterApplyAsync),
+                        groundSlot);
+                }
+
                 CardOpacityUtility.ClearCache(card.Uid);
                 CardManagerSingleton.Instance.Release(card, "Hand.VanishAfterApply");
             }
