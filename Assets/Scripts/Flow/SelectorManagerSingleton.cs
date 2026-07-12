@@ -53,6 +53,19 @@ namespace NineGrid.Flow
             }
         }
 
+        /// <summary>
+        /// 仅查找，不创建。卡面重置/卸场景时须先 HideChoice，避免走 Instance 误拉起新会话。
+        /// </summary>
+        public static SelectorManagerSingleton TryGetInstance()
+        {
+            if (_instance != null)
+            {
+                return _instance;
+            }
+
+            return FindFirstObjectByType<SelectorManagerSingleton>();
+        }
+
         public bool IsChoiceActive => _sessionActive;
 
         private void Awake()

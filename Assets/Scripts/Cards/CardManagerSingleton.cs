@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using UnityEngine;
@@ -444,10 +445,30 @@ namespace NineGrid.Cards
 
         public void Release(ManagedCard card, string reason, [CallerMemberName] string caller = "")
         {
-            if (card != null)
+            if (card == null)
             {
-                Release(card.Uid, reason, caller);
+                return;
             }
+
+            if (!_cardsByUid.TryGetValue(card.Uid, out var registered) || !ReferenceEquals(registered, card))
+            {
+                var currentDefId = registered?.DefId ?? string.Empty;
+                var requestedViewId = card.View != null ? card.View.GetInstanceID() : 0;
+                var currentViewId = registered?.View != null ? registered.View.GetInstanceID() : 0;
+                var detail = string.Format(
+                    CultureInfo.InvariantCulture,
+                    "reason={0};caller={1};requestedDefId={2};currentDefId={3};requestedViewId={4};currentViewId={5}",
+                    reason ?? string.Empty,
+                    caller ?? string.Empty,
+                    card.DefId ?? string.Empty,
+                    currentDefId,
+                    requestedViewId,
+                    currentViewId);
+                CardPresentationProbe.RegistryMiss(card.Uid, "Card.Release.StaleHandle", detail);
+                return;
+            }
+
+            Release(card.Uid, reason, caller);
         }
 
         /// <summary>

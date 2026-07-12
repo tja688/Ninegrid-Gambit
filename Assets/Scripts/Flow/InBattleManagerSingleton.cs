@@ -787,6 +787,8 @@ namespace NineGrid.Flow
         private void ResetCardPresentationSurface()
         {
             ResolveManagers();
+            // Bounce 退场 DelayedCall 可能跨节点；清场前必须先终止选择会话，避免陈旧句柄误删新视图。
+            SelectorManagerSingleton.TryGetInstance()?.HideChoice();
             // 先取消交战/手牌异步，再强制清占格与手牌槽，最后统一 Release 视图。
             FieldBattleManagerSingleton.Instance?.CancelBattleWork();
             CardHandManagerSingleton.Instance?.ClearHand();

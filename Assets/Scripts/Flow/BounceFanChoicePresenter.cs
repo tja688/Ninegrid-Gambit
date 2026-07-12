@@ -599,6 +599,8 @@ namespace NineGrid.Flow
 
         private void ReleaseAllEntries()
         {
+            // _entries 中的 ManagedCard 可跨异步边界存活；UID 复用后须走实例所有权校验，
+            // 绝不能仅凭 UID 释放后来者（见 CardManagerSingleton.Release(ManagedCard)）。
             // 销毁/卸场景时绝不可走 Instance（会新建残留 CardManagerSingleton）。
             var cardManager = CardManagerSingleton.TryGetInstance();
             for (var i = 0; i < _entries.Count; i++)

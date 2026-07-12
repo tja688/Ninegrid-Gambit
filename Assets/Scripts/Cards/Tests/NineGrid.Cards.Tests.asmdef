@@ -3,6 +3,7 @@
     "rootNamespace": "NineGrid.Cards.Tests",
     "references": [
         "NineGrid.Cards",
+        "NineGrid.Flow",
         "UniTask",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
