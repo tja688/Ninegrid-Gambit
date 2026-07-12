@@ -488,6 +488,7 @@ namespace NineGrid.Cards
                         Accepted = true,
                         Moves = pickup.Moves,
                         Deals = pickup.Deals,
+                        RemovedUids = pickup.RemovedUids,
                         NodeClearedOrRewardPhase = pickup.NodeClearedOrRewardPhase,
                     });
 

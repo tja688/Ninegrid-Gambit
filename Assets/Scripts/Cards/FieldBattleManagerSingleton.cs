@@ -679,6 +679,68 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 技能/效果 RemoveCard：在原地播默认死亡退场并 Release（不等离锚），供 Drain 等待完成后再 hop/补牌。
+        /// </summary>
+        public async UniTask PresentRemovedFieldCardAsync(
+            ManagedCard victim,
+            CancellationToken cancellationToken = default)
+        {
+            ResolveFieldManager();
+            if (victim == null)
+            {
+                return;
+            }
+
+            var victimSlot = 0;
+            var hadSlot = fieldManager != null
+                && fieldManager.TryGetSlotOf(victim.Uid, out victimSlot);
+
+            CardManagerSingleton.Instance?.MarkFieldDead(victim);
+
+            if (hadSlot)
+            {
+                fieldManager.VacateSlotForExplore(
+                    victimSlot,
+                    victim,
+                    playRemoveAnim: false,
+                    skipBusyGuard: true,
+                    startExplore: false);
+            }
+
+            if (victim.TryGetEffectManager(out var effectManager))
+            {
+                if (!effectManager.IsPlaying)
+                {
+                    await effectManager.PlayDeathAsync(
+                        victimSlot,
+                        cancellationToken: cancellationToken);
+                }
+                else
+                {
+                    await WaitForEffectIdleAsync(effectManager, cancellationToken);
+                }
+            }
+            else if (victim.Transform != null)
+            {
+                var removeDuration = fieldManager != null
+                    ? fieldManager.LayoutSettings.removeDisappearDuration
+                    : 0.25f;
+                var initialScale = victim.Transform.localScale;
+                await RunViewTweenAsync(
+                    CardViewTween.ScaleDisappear(
+                        victim.Transform,
+                        initialScale,
+                        removeDuration),
+                    cancellationToken);
+            }
+
+            if (victim.Transform != null)
+            {
+                CardManagerSingleton.Instance?.Release(victim.Uid);
+            }
+        }
+
+        /// <summary>
         /// 即死交战已在 rig 时间轴内触发死亡特效，此处仅等待播完再 Release，避免重复播死亡或 Refresh 诈尸。
         /// </summary>
         private async UniTask FinalizeLethalVictimAsync(ManagedCard card, CancellationToken cancellationToken)

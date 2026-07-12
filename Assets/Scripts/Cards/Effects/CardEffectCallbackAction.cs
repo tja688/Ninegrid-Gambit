@@ -13,6 +13,7 @@ namespace NineGrid.Cards
         PlayDeath = 2,
         PlayUse = 3,
         PlayHitFlash = 4,
+        PlayEffectTrigger = 5,
 
         StopCurrent = 100,
         StopHitFlash = 101,
@@ -71,6 +72,12 @@ namespace NineGrid.Cards
                 case "闪白":
                     action = CardEffectCallbackAction.PlayHitFlash;
                     return true;
+                case "effecttrigger":
+                case "trigger":
+                case "效果触发":
+                case "基础卡牌效果触发":
+                    action = CardEffectCallbackAction.PlayEffectTrigger;
+                    return true;
                 case "stop":
                 case "stopcurrent":
                 case "停止":
@@ -89,7 +96,7 @@ namespace NineGrid.Cards
         public static bool IsPlayAction(CardEffectCallbackAction action)
         {
             return (int)action >= (int)CardEffectCallbackAction.PlayAttack
-                && (int)action <= (int)CardEffectCallbackAction.PlayHitFlash;
+                && (int)action <= (int)CardEffectCallbackAction.PlayEffectTrigger;
         }
 
         public static CardEffectKind ToPlayKind(CardEffectCallbackAction action)

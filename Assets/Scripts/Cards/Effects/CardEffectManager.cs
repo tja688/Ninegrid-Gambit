@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -13,7 +14,9 @@ namespace NineGrid.Cards
     [RequireComponent(typeof(StandardCardView))]
     public sealed class CardEffectManager : MonoBehaviour
     {
-        [Tooltip("五类效果 SO 装配；每项 kind 对应 Attack/Hit/Death/Use/HitFlash。")]
+        private const string EffectTriggerTweenId = "CardEffectTriggerPulse";
+
+        [Tooltip("效果 SO 装配；Attack/Hit/Death/Use/HitFlash。EffectTrigger 为内置脉冲，可不装 SO。")]
         [SerializeField] private List<CardEffectBinding> bindings = new()
         {
             new CardEffectBinding { kind = CardEffectKind.Attack },
@@ -23,6 +26,15 @@ namespace NineGrid.Cards
             new CardEffectBinding { kind = CardEffectKind.HitFlash },
         };
 
+        [Tooltip("基础卡牌效果触发：放大倍率（相对当前 localScale）。")]
+        [SerializeField] private float effectTriggerScale = 1.1f;
+
+        [Tooltip("基础卡牌效果触发：放大段时长（秒，宜短）。")]
+        [SerializeField] private float effectTriggerPunchDuration = 0.08f;
+
+        [Tooltip("基础卡牌效果触发：回落段时长（秒，宜长于放大段）。")]
+        [SerializeField] private float effectTriggerRecoverDuration = 0.22f;
+
         private StandardCardView _view;
         private CardVisualDriver _visualDriver;
         private CardEffectSO _currentEffect;
@@ -30,6 +42,9 @@ namespace NineGrid.Cards
         private CancellationTokenSource _playCts;
         private bool _isPlaying;
         private bool _suppressHover;
+        private Tween _effectTriggerTween;
+        private Vector3 _effectTriggerBaseScale = Vector3.one;
+        private bool _effectTriggerBaseCaptured;
 
         [ShowInInspector, ReadOnly, FoldoutGroup("Runtime")]
         public bool IsPlaying => _isPlaying;
@@ -104,6 +119,87 @@ namespace NineGrid.Cards
             return PlayAsync(
                 CardEffectInvokeContext.ForHitFlash(selfDirection, selfSlot, otherSlot),
                 cancellationToken);
+        }
+
+        /// <summary>
+        /// 基础卡牌效果触发：快速放大到 1.1x 后较慢回落。不阻塞、不打断 Attack/Death 等主通道；
+        /// 对象销毁或中途被杀时由 DOTween SetLink / OnDisable 兜底。
+        /// </summary>
+        public void PlayEffectTriggerPulse()
+        {
+            if (!isActiveAndEnabled || transform == null)
+            {
+                return;
+            }
+
+            // 若装配了 EffectTrigger SO，走 SO；否则内置 DOTween 脉冲。
+            var so = ResolveEffect(CardEffectKind.EffectTrigger, CardBoardDirection.None);
+            if (so != null)
+            {
+                PlayAsync(CardEffectInvokeContext.ForEffectTrigger(), destroyCancellationToken).Forget();
+                return;
+            }
+
+            PlayBuiltinEffectTriggerPulse();
+        }
+
+        private void PlayBuiltinEffectTriggerPulse()
+        {
+            var root = transform;
+            if (root == null)
+            {
+                return;
+            }
+
+            if (_effectTriggerTween != null && _effectTriggerTween.IsActive())
+            {
+                _effectTriggerTween.Kill(complete: false);
+                if (_effectTriggerBaseCaptured)
+                {
+                    root.localScale = _effectTriggerBaseScale;
+                }
+            }
+
+            _effectTriggerBaseScale = root.localScale;
+            _effectTriggerBaseCaptured = true;
+            var peak = _effectTriggerBaseScale * Mathf.Max(1.01f, effectTriggerScale);
+            var punchDur = Mathf.Max(0.01f, effectTriggerPunchDuration);
+            var recoverDur = Mathf.Max(0.01f, effectTriggerRecoverDuration);
+
+            var seq = DOTween.Sequence().SetId(EffectTriggerTweenId).SetLink(gameObject, LinkBehaviour.KillOnDestroy);
+            seq.Append(root.DOScale(peak, punchDur).SetEase(Ease.OutQuad));
+            seq.Append(root.DOScale(_effectTriggerBaseScale, recoverDur).SetEase(Ease.OutQuad));
+            seq.OnKill(() =>
+            {
+                if (root != null && _effectTriggerBaseCaptured)
+                {
+                    root.localScale = _effectTriggerBaseScale;
+                }
+
+                _effectTriggerTween = null;
+            });
+            seq.OnComplete(() =>
+            {
+                _effectTriggerTween = null;
+                _effectTriggerBaseCaptured = false;
+            });
+            _effectTriggerTween = seq;
+        }
+
+        private void OnDisable()
+        {
+            if (_effectTriggerTween != null && _effectTriggerTween.IsActive())
+            {
+                _effectTriggerTween.Kill(complete: false);
+            }
+
+            _effectTriggerTween = null;
+            if (_effectTriggerBaseCaptured && transform != null)
+            {
+                transform.localScale = _effectTriggerBaseScale;
+            }
+
+            _effectTriggerBaseCaptured = false;
         }
 
         /// <summary>
@@ -201,6 +297,12 @@ namespace NineGrid.Cards
             }
 
             var direction = directionOverride ?? LastResolvedDirection;
+            if (action == CardEffectCallbackAction.PlayEffectTrigger)
+            {
+                PlayEffectTriggerPulse();
+                return;
+            }
+
             PlayCallbackEffectAsync(CardEffectCallbackActionUtility.ToPlayKind(action), direction).Forget();
         }
 
@@ -213,8 +315,15 @@ namespace NineGrid.Cards
                 CardEffectKind.Death => PlayDeathAsync(selfDirection: direction),
                 CardEffectKind.Use => PlayUseAsync(direction),
                 CardEffectKind.HitFlash => PlayHitFlashAsync(direction),
+                CardEffectKind.EffectTrigger => PlayEffectTriggerAsTask(),
                 _ => UniTask.CompletedTask,
             };
+        }
+
+        private UniTask PlayEffectTriggerAsTask()
+        {
+            PlayEffectTriggerPulse();
+            return UniTask.CompletedTask;
         }
 
         public void StopCurrent()
@@ -271,6 +380,13 @@ namespace NineGrid.Cards
             }
 
             if (invoke.Kind == CardEffectKind.HitFlash)
+            {
+                await PlayHitFlashOverlayAsync(effect, invoke, cancellationToken);
+                return;
+            }
+
+            // EffectTrigger 若走了 SO：同样不占主通道、不 StopCurrent，避免掐断死亡/攻击。
+            if (invoke.Kind == CardEffectKind.EffectTrigger)
             {
                 await PlayHitFlashOverlayAsync(effect, invoke, cancellationToken);
                 return;

@@ -32,6 +32,14 @@ namespace NineGrid.Cards
             return true;
         }
 
+        public static void PlayEffectTriggerPulse(this ManagedCard card)
+        {
+            if (card.TryGetEffectManager(out var manager))
+            {
+                manager.PlayEffectTriggerPulse();
+            }
+        }
+
         public static async UniTask<bool> TryPlayHitFlashAsync(
             this ManagedCard card,
             CardBoardDirection selfDirection = CardBoardDirection.None,

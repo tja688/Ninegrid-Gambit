@@ -60,6 +60,11 @@ namespace NineGrid.Cards
         public bool AvatarDefeated;
         public PostKillCardMove[] Moves;
         public PostKillCardDeal[] Deals;
+        /// <summary>
+        /// 本段技能/效果导致的 CardRemoved / CardKilled（非交战主目标尸体）。
+        /// Drain 须先播默认死亡退场，再 hop，再补牌。
+        /// </summary>
+        public int[] RemovedUids;
         /// <summary>旋转/移动技能等造成的 DamageDealt 飘字（如投石）。</summary>
         public CombatDamagePopup[] DamagePopups;
     }
@@ -75,6 +80,7 @@ namespace NineGrid.Cards
         public bool RemovedWithoutHand;
         public PostKillCardMove[] Moves;
         public PostKillCardDeal[] Deals;
+        public int[] RemovedUids;
         public bool NodeClearedOrRewardPhase;
     }
 

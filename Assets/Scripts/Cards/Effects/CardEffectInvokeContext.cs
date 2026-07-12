@@ -146,5 +146,13 @@ namespace NineGrid.Cards
                 isOrchestrated,
                 presentationKind);
         }
+
+        public static CardEffectInvokeContext ForEffectTrigger(
+            CardDisplayMode displayMode = CardDisplayMode.GroundCardMode)
+        {
+            return new CardEffectInvokeContext(
+                CardEffectKind.EffectTrigger,
+                displayMode: displayMode);
+        }
     }
 }

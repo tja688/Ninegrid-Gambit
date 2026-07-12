@@ -10,5 +10,7 @@ namespace NineGrid.Cards
         Death = 2,
         Use = 3,
         HitFlash = 4,
+        /// <summary>基础卡牌效果触发：场地卡自身效果触发时的轻量脉冲（不阻塞）。</summary>
+        EffectTrigger = 5,
     }
 }

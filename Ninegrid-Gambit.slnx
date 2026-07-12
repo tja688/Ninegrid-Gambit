@@ -23,9 +23,9 @@
   <Project Path="UniTask.Addressables.csproj" />
   <Project Path="Lofelt.NiceVibrations.Demo.csproj" />
   <Project Path="NineGrid.Content.Editor.csproj" />
+  <Project Path="NineGrid.Core.Tests.csproj" />
   <Project Path="ResKit.Editor.csproj" />
   <Project Path="UniRx.Examples.csproj" />
-  <Project Path="NineGrid.Core.Tests.csproj" />
   <Project Path="NineGrid.Core.csproj" />
   <Project Path="Febucci.TextAnimator.Demo.Runtime.csproj" />
   <Project Path="Assembly-CSharp-Editor-firstpass.csproj" />

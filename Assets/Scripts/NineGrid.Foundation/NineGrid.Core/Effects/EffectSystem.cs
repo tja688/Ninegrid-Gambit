@@ -340,7 +340,18 @@ namespace NineGrid.Core.Effects
 
         private bool CanTrigger(EffectInstance instance, EffectRuntimeContext runtime)
         {
-            if (instance.Trigger == null || instance.Action == null || !instance.Trigger.Matches(runtime))
+            if (instance.Trigger == null || instance.Action == null)
+            {
+                return false;
+            }
+
+            // 必须在 Trigger.Matches 之前检查：OnCumulative 等在 Matches 内会改写计数器。
+            if (!IsCardOwnedEffectInTriggerableZone(instance, runtime))
+            {
+                return false;
+            }
+
+            if (!instance.Trigger.Matches(runtime))
             {
                 return false;
             }
@@ -354,6 +365,95 @@ namespace NineGrid.Core.Effects
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// 卡牌挂载效果（怪物技能 / 帮助卡）的区域门禁：
+        /// 卡组、坟场、移除区永不触发；九宫格可触发；
+        /// 道具牌格仅允许「使用时」或显式声明 ItemSlots 的被动效果。
+        /// 遗物 / 玩家技能（无 ownerUid）不受此限。
+        /// </summary>
+        private static bool IsCardOwnedEffectInTriggerableZone(EffectInstance instance, EffectRuntimeContext runtime)
+        {
+            if (instance?.Owner == null || instance.Owner.OwnerUid == 0)
+            {
+                return true;
+            }
+
+            var container = instance.Owner.ContainerType;
+            if (container != EffectContainerType.MonsterSkill && container != EffectContainerType.HelpCard)
+            {
+                return true;
+            }
+
+            CardInstance ownerCard;
+            if (!runtime.TryGetCard(instance.Owner.OwnerUid, out ownerCard))
+            {
+                return false;
+            }
+
+            var zone = ownerCard.Zone.Value;
+            if (zone == ZoneId.Graveyard || zone == ZoneId.Removed || zone == ZoneId.DrawPile)
+            {
+                return false;
+            }
+
+            if (zone == ZoneId.Board)
+            {
+                return true;
+            }
+
+            if (zone == ZoneId.ItemSlots && container == EffectContainerType.HelpCard)
+            {
+                return IsHelpCardItemSlotTriggerable(instance);
+            }
+
+            return false;
+        }
+
+        private static bool IsHelpCardItemSlotTriggerable(EffectInstance instance)
+        {
+            var trigger = instance.Definition?.Trigger;
+            if (trigger != null && !trigger.IsNull)
+            {
+                var atom = trigger.Get("atom").AsString(string.Empty);
+                if (string.Equals(atom, "OnUseHelpCard", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return HasCardZoneCondition(instance, ZoneId.ItemSlots);
+        }
+
+        private static bool HasCardZoneCondition(EffectInstance instance, ZoneId zone)
+        {
+            var conditions = instance.Definition?.Conditions;
+            if (conditions == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < conditions.Count; i++)
+            {
+                var node = conditions[i];
+                if (node.IsNull)
+                {
+                    continue;
+                }
+
+                if (!string.Equals(node.Get("atom").AsString(string.Empty), "CardZone", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (node.Get("zone").AsEnum(ZoneId.None) == zone)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private StatModifier CreateStatModifier(EffectInstance instance)

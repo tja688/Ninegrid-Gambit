@@ -1101,6 +1101,7 @@ namespace NineGrid.Flow
             summary.DamagePopups = popups.Count > 0 ? popups.ToArray() : Array.Empty<CombatDamagePopup>();
 
             PresentGoldGainsFromEventLog(startIndex, ResolveCardWorldPosition(targetUid));
+            PresentEffectTriggersFromEventLog(startIndex);
 
             if (!summary.TargetKilled
                 && arch.GetModel<CardRegistry>().TryGet(targetUid, out var target)
@@ -1271,6 +1272,7 @@ namespace NineGrid.Flow
                 Debug.LogWarning($"[InBattleManager] ResolvePostKillBoard 被拒: {result.Reason}");
                 summary.Moves = Array.Empty<PostKillCardMove>();
                 summary.Deals = Array.Empty<PostKillCardDeal>();
+                summary.RemovedUids = Array.Empty<int>();
                 summary.DamagePopups = Array.Empty<CombatDamagePopup>();
                 try
                 {
@@ -1308,11 +1310,13 @@ namespace NineGrid.Flow
                 return summary;
             }
 
-            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _);
+            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids);
             summary.Moves = moves;
             summary.Deals = deals;
+            summary.RemovedUids = removedUids;
             summary.DamagePopups = CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
             PresentGoldGainsFromEventLog(startIndex);
+            PresentEffectTriggersFromEventLog(startIndex);
 
             try
             {
@@ -1472,10 +1476,15 @@ namespace NineGrid.Flow
                 FieldTraceHelper.RecordOccupancySnapshot("drainBefore");
                 fieldManager.ClearOccupancyConflictFlag();
 
-                // 对齐 Core Fill→Rotate / EventLog：先补牌（CardDealt），再 hop（CardMoved，含新牌）。
+                // 对齐 Core Fill→Rotate / EventLog：先补牌（CardDealt），技能移除退场，再 hop，再二次补空。
                 if (result.Deals != null && result.Deals.Length > 0)
                 {
                     await DrainDealsAsync(result.Deals, ct);
+                }
+
+                if (result.RemovedUids != null && result.RemovedUids.Length > 0)
+                {
+                    await PresentSkillRemovedCardsAsync(result.RemovedUids, ct);
                 }
 
                 if (result.Moves != null && result.Moves.Length > 0)
@@ -1487,6 +1496,13 @@ namespace NineGrid.Flow
                 }
 
                 SoftAlignBoardAnchorsToCore();
+
+                // 技能移除退场 + hop 完成后：有牌则补空槽；交互由 PresentationLocked 挂起至补牌播完。
+                if (result.RemovedUids != null && result.RemovedUids.Length > 0)
+                {
+                    await DrainPostRemoveRefillAsync(ct);
+                }
+
                 SyncBoardOccupancyFromCore();
                 if (fieldManager.HasOccupancyConflictSinceClear)
                 {
@@ -1712,13 +1728,15 @@ namespace NineGrid.Flow
                 Debug.LogWarning($"[InBattleManager] PickupItem 被拒: {result.Reason}");
                 summary.Moves = Array.Empty<PostKillCardMove>();
                 summary.Deals = Array.Empty<PostKillCardDeal>();
+                summary.RemovedUids = Array.Empty<int>();
                 return summary;
             }
 
-            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out var pickedUid);
+            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out var pickedUid, out var removedUids);
             summary.CardUid = pickedUid;
             summary.Moves = moves;
             summary.Deals = deals;
+            summary.RemovedUids = removedUids;
 
             if (pickedUid > 0
                 && arch.GetModel<CardRegistry>().TryGet(pickedUid, out var card))
@@ -1736,6 +1754,7 @@ namespace NineGrid.Flow
 
             // 金币卡等即时改 Coins：先按事件带出生点开演，再静默刷 HUD（避免二次开演/跳变）。
             PresentGoldGainsFromEventLog(startIndex, ResolveCardWorldPosition(pickedUid));
+            PresentEffectTriggersFromEventLog(startIndex);
             PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
             return summary;
         }
@@ -1763,15 +1782,18 @@ namespace NineGrid.Flow
                 Debug.LogWarning($"[InBattleManager] ClickEmpty 被拒: {result.Reason}");
                 summary.Moves = Array.Empty<PostKillCardMove>();
                 summary.Deals = Array.Empty<PostKillCardDeal>();
+                summary.RemovedUids = Array.Empty<int>();
                 summary.DamagePopups = Array.Empty<CombatDamagePopup>();
                 return summary;
             }
 
-            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _);
+            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids);
             summary.Moves = moves;
             summary.Deals = deals;
+            summary.RemovedUids = removedUids;
             summary.DamagePopups = CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
             PresentGoldGainsFromEventLog(startIndex, ResolveBoardSlotWorldPosition(groundSlot));
+            PresentEffectTriggersFromEventLog(startIndex);
             return summary;
         }
 
@@ -1847,6 +1869,7 @@ namespace NineGrid.Flow
             PresentGoldGainsFromEventLog(
                 startIndex,
                 ResolveCardWorldPosition(summary.PrimaryTargetUid));
+            PresentEffectTriggersFromEventLog(startIndex);
 
             var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
             summary.AvatarDefeated = phase == GamePhase.Defeat;
@@ -1860,8 +1883,11 @@ namespace NineGrid.Flow
                 || phase == GamePhase.RoomChoice
                 || arch.GetSystem<IDeckSystem>().IsNodeCleared();
 
-            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _);
-            if ((moves != null && moves.Length > 0) || (deals != null && deals.Length > 0) || summary.TargetKilled)
+            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids);
+            if ((moves != null && moves.Length > 0)
+                || (deals != null && deals.Length > 0)
+                || (removedUids != null && removedUids.Length > 0)
+                || summary.TargetKilled)
             {
                 // 飘字由 PresentUseItemEffectsAsync 用 summary.DamagePopups 强兜底；此处不重复塞。
                 summary.PostKillBoard = new PostKillBoardPresentationResult
@@ -1869,6 +1895,7 @@ namespace NineGrid.Flow
                     Accepted = true,
                     Moves = moves ?? Array.Empty<PostKillCardMove>(),
                     Deals = deals ?? Array.Empty<PostKillCardDeal>(),
+                    RemovedUids = removedUids ?? Array.Empty<int>(),
                     DamagePopups = Array.Empty<CombatDamagePopup>(),
                     NodeClearedOrRewardPhase = summary.NodeClearedOrRewardPhase,
                     AvatarDefeated = summary.AvatarDefeated,
@@ -1885,8 +1912,21 @@ namespace NineGrid.Flow
             out PostKillCardDeal[] deals,
             out int pickedUid)
         {
+            FillBoardDeltaFromEventLog(pipeline, startIndex, out moves, out deals, out pickedUid, out _);
+        }
+
+        private static void FillBoardDeltaFromEventLog(
+            IActionPipelineSystem pipeline,
+            int startIndex,
+            out PostKillCardMove[] moves,
+            out PostKillCardDeal[] deals,
+            out int pickedUid,
+            out int[] removedUids)
+        {
             var moveList = new List<PostKillCardMove>(8);
             var dealList = new List<PostKillCardDeal>(8);
+            var removeList = new List<int>(4);
+            var removedSet = new HashSet<int>(4);
             pickedUid = 0;
             var registry = NineGridArchitecture.Current.GetModel<CardRegistry>();
             var entries = pipeline.EventLog.Entries;
@@ -1896,6 +1936,13 @@ namespace NineGrid.Flow
                 if (e.Type == CoreEventType.ItemPicked && e.CardUid > 0 && pickedUid == 0)
                 {
                     pickedUid = e.CardUid;
+                }
+
+                if ((e.Type == CoreEventType.CardRemoved || e.Type == CoreEventType.CardKilled)
+                    && e.CardUid > 0
+                    && removedSet.Add(e.CardUid))
+                {
+                    removeList.Add(e.CardUid);
                 }
 
                 if (e.Type == CoreEventType.CardMoved
@@ -1929,8 +1976,199 @@ namespace NineGrid.Flow
                 }
             }
 
+            // 同批已移除的牌不再 hop（避免碾压后仍飞到目标格再被 Sync 硬删）。
+            if (removedSet.Count > 0 && moveList.Count > 0)
+            {
+                for (var i = moveList.Count - 1; i >= 0; i--)
+                {
+                    if (removedSet.Contains(moveList[i].Uid))
+                    {
+                        moveList.RemoveAt(i);
+                    }
+                }
+            }
+
             moves = moveList.ToArray();
             deals = dealList.ToArray();
+            removedUids = removeList.Count > 0 ? removeList.ToArray() : Array.Empty<int>();
+        }
+
+        /// <summary>
+        /// 扫描 EffectTriggered：对效果所有者播「基础卡牌效果触发」脉冲（发射后不管）。
+        /// 仅九宫格在场卡播脉冲；卡组 / 手牌 / 已移除不播。
+        /// </summary>
+        public static void PresentEffectTriggersFromEventLog(int startIndex)
+        {
+            if (startIndex < 0)
+            {
+                return;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            var entries = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
+            if (startIndex >= entries.Count)
+            {
+                return;
+            }
+
+            var cardManager = CardManagerSingleton.Instance;
+            if (cardManager == null)
+            {
+                return;
+            }
+
+            var seen = new HashSet<int>();
+            for (var i = startIndex; i < entries.Count; i++)
+            {
+                var e = entries[i];
+                if (e.Type != CoreEventType.EffectTriggered || e.CardUid <= 0)
+                {
+                    continue;
+                }
+
+                if (!seen.Add(e.CardUid))
+                {
+                    continue;
+                }
+
+                if (!cardManager.TryGet(e.CardUid, out var card)
+                    || card == null
+                    || card.IsFieldDead
+                    || card.DisplayMode == CardDisplayMode.RemovedMode
+                    || card.DisplayMode == CardDisplayMode.CardDeckMode
+                    || card.DisplayMode == CardDisplayMode.HandCardMode)
+                {
+                    continue;
+                }
+
+                if (!IsCoreCardOnBoardForEffectPresentation(e.CardUid))
+                {
+                    continue;
+                }
+
+                if (card.TryGetEffectManager(out var effectManager))
+                {
+                    effectManager.PlayEffectTriggerPulse();
+                }
+            }
+        }
+
+        private static bool IsCoreCardOnBoardForEffectPresentation(int uid)
+        {
+            if (uid <= 0)
+            {
+                return false;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return false;
+            }
+
+            var registry = arch.GetModel<CardRegistry>();
+            CardInstance coreCard;
+            if (!registry.TryGet(uid, out coreCard))
+            {
+                return false;
+            }
+
+            return coreCard.Zone.Value == ZoneId.Board;
+        }
+
+        private async UniTask PresentSkillRemovedCardsAsync(int[] removedUids, CancellationToken ct)
+        {
+            ResolveManagers();
+            if (removedUids == null || removedUids.Length == 0 || cardManager == null)
+            {
+                return;
+            }
+
+            var battle = FieldBattleManagerSingleton.Instance;
+            if (battle == null)
+            {
+                return;
+            }
+
+            var tasks = new List<UniTask>(removedUids.Length);
+            for (var i = 0; i < removedUids.Length; i++)
+            {
+                var uid = removedUids[i];
+                if (uid <= 0 || !cardManager.TryGet(uid, out var card) || card == null)
+                {
+                    continue;
+                }
+
+                // 交战主目标尸体已 MarkFieldDead + 异步 Finalize，勿重复播死。
+                if (card.IsFieldDead && card.DisplayMode == CardDisplayMode.RemovedMode)
+                {
+                    continue;
+                }
+
+                if (card.DisplayMode == CardDisplayMode.RemovedMode
+                    && !fieldManager.TryGetSlotOf(uid, out _))
+                {
+                    continue;
+                }
+
+                tasks.Add(battle.PresentRemovedFieldCardAsync(card, ct));
+            }
+
+            if (tasks.Count > 0)
+            {
+                await UniTask.WhenAll(tasks);
+            }
+        }
+
+        /// <summary>
+        /// 技能移除退场后：Core FillEmptySlots + 播补牌。仅 InteractionLoop 且牌堆有牌时执行。
+        /// </summary>
+        private async UniTask DrainPostRemoveRefillAsync(CancellationToken ct)
+        {
+            var arch = NineGridArchitecture.Current;
+            var phaseSystem = arch.GetSystem<IPhaseSystem>();
+            if (phaseSystem.CurrentPhase != GamePhase.InteractionLoop)
+            {
+                return;
+            }
+
+            var deck = arch.GetModel<DeckModel>();
+            if (deck == null || deck.DrawPileUids == null || deck.DrawPileUids.Count <= 0)
+            {
+                return;
+            }
+
+            // 已无空槽则跳过，避免空跑。
+            var board = arch.GetModel<BoardModel>();
+            var hasEmpty = false;
+            for (var s = SlotId.MinBoardIndex; s <= SlotId.MaxBoardIndex; s++)
+            {
+                if (s == GroundSlotTopology.AvatarReservedSlot)
+                {
+                    continue;
+                }
+
+                if (board.GetCardUid(SlotId.Board(s)) <= 0)
+                {
+                    hasEmpty = true;
+                    break;
+                }
+            }
+
+            if (!hasEmpty)
+            {
+                return;
+            }
+
+            var pipeline = arch.GetSystem<IActionPipelineSystem>();
+            var startIndex = pipeline.EventLog.Entries.Count;
+            arch.GetSystem<IBoardSystem>().FillEmptySlots();
+            FillBoardDeltaFromEventLog(pipeline, startIndex, out _, out var refillDeals, out _);
+            PresentEffectTriggersFromEventLog(startIndex);
+            if (refillDeals != null && refillDeals.Length > 0)
+            {
+                await DrainDealsAsync(refillDeals, ct);
+            }
         }
 
         private async UniTask<bool> ValidateHandDragApplyAsync(ManagedCard card, int? targetGroundSlot)
@@ -2260,14 +2498,16 @@ namespace NineGrid.Flow
                 CombatHitSink.ChoiceOverlayActive = false;
                 try
                 {
-                    FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _);
+                    FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids);
                     PresentGoldGainsFromEventLog(startIndex);
+                    PresentEffectTriggersFromEventLog(startIndex);
                     var phase = phaseSystem.CurrentPhase;
                     var boardDelta = new PostKillBoardPresentationResult
                     {
                         Accepted = true,
                         Moves = moves ?? Array.Empty<PostKillCardMove>(),
                         Deals = deals ?? Array.Empty<PostKillCardDeal>(),
+                        RemovedUids = removedUids ?? Array.Empty<int>(),
                         DamagePopups = Array.Empty<CombatDamagePopup>(),
                         NodeClearedOrRewardPhase =
                             phase == GamePhase.RewardItemChoice
@@ -2279,7 +2519,8 @@ namespace NineGrid.Flow
                     };
 
                     if ((boardDelta.Moves != null && boardDelta.Moves.Length > 0)
-                        || (boardDelta.Deals != null && boardDelta.Deals.Length > 0))
+                        || (boardDelta.Deals != null && boardDelta.Deals.Length > 0)
+                        || (boardDelta.RemovedUids != null && boardDelta.RemovedUids.Length > 0))
                     {
                         await DrainPostKillBoardAsync(boardDelta, EnsurePresentationToken());
                     }
