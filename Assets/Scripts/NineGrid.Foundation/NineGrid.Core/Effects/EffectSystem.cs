@@ -351,6 +351,11 @@ namespace NineGrid.Core.Effects
                 return false;
             }
 
+            if (!EffectOwnerScopeGate.Passes(instance, runtime))
+            {
+                return false;
+            }
+
             if (!instance.Trigger.Matches(runtime))
             {
                 return false;

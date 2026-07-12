@@ -32,6 +32,85 @@ namespace NineGrid.Core.Effects
             {
                 ValidateNode(definition.Conditions[i], EffectAtomKind.Condition, "conditions[" + i + "]", registry, result);
             }
+
+            if (definition.Kind == EffectKind.Triggered)
+            {
+                ValidateCardOwnedTriggerScope(definition, result);
+            }
+        }
+
+        private static void ValidateCardOwnedTriggerScope(EffectDefinition definition, EffectValidationResult result)
+        {
+            if (definition.ContainerType != EffectContainerType.MonsterSkill)
+            {
+                return;
+            }
+
+            var trigger = definition.Trigger;
+            if (trigger == null || trigger.IsNull)
+            {
+                return;
+            }
+
+            var atom = ReadAtomName(trigger);
+            if (Same(atom, "OnBattle") && !ConditionsDeclareEventScope(definition))
+            {
+                result.Add(
+                    "scope.monster-on-battle",
+                    "MonsterSkill OnBattle requires EventFilter or AtSlot scope in conditions.");
+            }
+
+            if (Same(atom, "OnRemove")
+                && trigger.Has("ownerOnly")
+                && !trigger.Get("ownerOnly").AsBool(true)
+                && !ConditionsDeclareAdjacentOrEventFilter(definition))
+            {
+                result.Add(
+                    "scope.remove-global",
+                    "OnRemove with ownerOnly:false requires EventFilter or Adjacent in conditions.");
+            }
+        }
+
+        private static bool ConditionsDeclareEventScope(EffectDefinition definition)
+        {
+            var conditions = definition.Conditions;
+            for (var i = 0; i < conditions.Count; i++)
+            {
+                var condition = conditions[i];
+                if (condition == null || condition.IsNull)
+                {
+                    continue;
+                }
+
+                var atom = ReadAtomName(condition);
+                if (Same(atom, "AtSlot") || Same(atom, "EventFilter"))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool ConditionsDeclareAdjacentOrEventFilter(EffectDefinition definition)
+        {
+            var conditions = definition.Conditions;
+            for (var i = 0; i < conditions.Count; i++)
+            {
+                var condition = conditions[i];
+                if (condition == null || condition.IsNull)
+                {
+                    continue;
+                }
+
+                var atom = ReadAtomName(condition);
+                if (Same(atom, "Adjacent") || Same(atom, "EventFilter"))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void ValidateNode(
