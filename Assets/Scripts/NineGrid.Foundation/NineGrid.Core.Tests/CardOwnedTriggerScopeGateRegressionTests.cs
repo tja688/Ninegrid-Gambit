@@ -47,8 +47,16 @@ namespace NineGrid.Core.Tests
         private const string SharpStoneEffectJson =
             "{\"id\":\"skill.sharp_stone.armor_break\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnArmorBreak\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":1,\"actor\":\"Self\"}}";
 
+        private const string UnscopedMoveToSlotJson =
+            "{\"id\":\"test.gate.move_slot\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
+            + "\"kind\":\"Triggered\","
+            + "\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":3,\"target\":\"Any\"},"
+            + "\"target\":{\"atom\":\"Self\"},"
+            + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"test.gate.move_slot\"}}";
+
         private static readonly SlotId sObserverSlot = SlotId.Board(2);
         private static readonly SlotId sVictimSlot = SlotId.Board(4);
+        private static readonly SlotId sMoveTargetSlot = SlotId.Board(3);
 
         private IArchitecture mArch;
         private IPhaseSystem mPhase;
@@ -76,12 +84,12 @@ namespace NineGrid.Core.Tests
         [Test]
         public void OnDamageTaken_OtherMonsterDamaged_ObserverDoesNotGainAttack()
         {
-            Assert.IsTrue(mPhase.StartNode(CreateTwoMonsterNode()).Accepted);
+            Assert.IsTrue(mPhase.StartNode(CreateEmptyEnemyNode()).Accepted);
             var board = mArch.GetModel<BoardModel>();
             var registry = mArch.GetModel<CardRegistry>();
 
-            var observerUid = PlaceBoardCard("monster.test_a", sObserverSlot);
-            var victimUid = PlaceBoardCard("monster.test_b", sVictimSlot);
+            var observerUid = SpawnOnBoardReturnUid("monster.big_skeleton", sObserverSlot);
+            var victimUid = SpawnOnBoardReturnUid("monster.headless_skeleton", sVictimSlot);
             ActivateEffect(DamageTakenGateJson, observerUid, "test.gate.damage_taken");
 
             var atkBefore = (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack);
@@ -95,12 +103,12 @@ namespace NineGrid.Core.Tests
         [Test]
         public void OnDamageTaken_SelfDamaged_TriggersOnce()
         {
-            Assert.IsTrue(mPhase.StartNode(CreateTwoMonsterNode()).Accepted);
+            Assert.IsTrue(mPhase.StartNode(CreateEmptyEnemyNode()).Accepted);
             var board = mArch.GetModel<BoardModel>();
             var registry = mArch.GetModel<CardRegistry>();
 
-            var observerUid = PlaceBoardCard("monster.test_a", sObserverSlot);
-            PlaceBoardCard("monster.test_b", sVictimSlot);
+            var observerUid = SpawnOnBoardReturnUid("monster.big_skeleton", sObserverSlot);
+            SpawnOnBoardReturnUid("monster.headless_skeleton", sVictimSlot);
             ActivateEffect(DamageTakenGateJson, observerUid, "test.gate.damage_taken");
 
             var atkBefore = (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack);
@@ -114,12 +122,13 @@ namespace NineGrid.Core.Tests
         [Test]
         public void OnCumulative_Unscoped_OtherMonsterArmorLost_DoesNotTriggerObserver()
         {
-            Assert.IsTrue(mPhase.StartNode(CreateTwoMonsterNode(armor: 2)).Accepted);
+            Assert.IsTrue(mPhase.StartNode(CreateEmptyEnemyNode()).Accepted);
             var board = mArch.GetModel<BoardModel>();
             var registry = mArch.GetModel<CardRegistry>();
 
-            var observerUid = PlaceBoardCard("monster.test_a", sObserverSlot);
-            var victimUid = PlaceBoardCard("monster.test_b", sVictimSlot);
+            var observerUid = SpawnOnBoardReturnUid("monster.big_skeleton", sObserverSlot);
+            var victimUid = SpawnOnBoardReturnUid("monster.headless_skeleton", sVictimSlot);
+            registry.Get(victimUid).Stats.SetBase(StatId.Armor, 2);
             ActivateEffect(UnscopedCumulativeJson, observerUid, "test.gate.cumulative");
 
             var atkBefore = (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack);
@@ -146,6 +155,77 @@ namespace NineGrid.Core.Tests
             var validation = mEffects.Validate(definition);
             Assert.IsFalse(validation.IsValid);
             Assert.IsTrue(HasIssue(validation, "scope.remove-global"));
+        }
+
+        [Test]
+        public void OnMoveToSlot_TargetAny_OtherMonsterMoves_ObserverDoesNotGainAttack()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateEmptyEnemyNode()).Accepted);
+            var registry = mArch.GetModel<CardRegistry>();
+
+            var observerUid = SpawnOnBoardReturnUid("monster.big_skeleton", sObserverSlot);
+            var victimUid = SpawnOnBoardReturnUid("monster.headless_skeleton", sVictimSlot);
+            ActivateEffect(UnscopedMoveToSlotJson, observerUid, "test.gate.move_slot");
+
+            var atkBefore = (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack);
+            mPipeline.Enqueue(new MoveCardAction(victimUid, sMoveTargetSlot, "test", "test"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+
+            Assert.AreEqual(atkBefore, (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack), "target:Any 时他怪移动到目标格不得触发观察者");
+        }
+
+        [Test]
+        public void OnMoveToSlot_TargetAny_SelfMoves_TriggersOnce()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateEmptyEnemyNode()).Accepted);
+            var registry = mArch.GetModel<CardRegistry>();
+
+            var observerUid = SpawnOnBoardReturnUid("monster.big_skeleton", sObserverSlot);
+            SpawnOnBoardReturnUid("monster.headless_skeleton", sVictimSlot);
+            ActivateEffect(UnscopedMoveToSlotJson, observerUid, "test.gate.move_slot");
+
+            var atkBefore = (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack);
+            mPipeline.Enqueue(new MoveCardAction(observerUid, sMoveTargetSlot, "test", "test"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+
+            Assert.AreEqual(atkBefore + 1, (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack), "target:Any 视同 Self：本怪移动到目标格应触发一次");
+        }
+
+        [Test]
+        public void AbsorbBone_AdjacentRemoved_GateDoesNotBlock()
+        {
+            Assert.IsTrue(mPhase.StartNode(new NodeDeckOptions
+            {
+                PlayerOpeningCount = 0,
+                EnemyOpeningCount = 0
+            }).Accepted);
+
+            SpawnOnBoard("monster.skeleton_king", SlotId.Board(2));
+            SpawnOnBoard("monster.headless_skeleton", SlotId.Board(1));
+
+            var board = mArch.GetModel<BoardModel>();
+            var kingUid = board.GetCardUid(SlotId.Board(2));
+            var atkBefore = (int)mArch.GetModel<CardRegistry>().Get(kingUid).Stats.GetBase(StatId.Attack);
+            var startIndex = mPipeline.EventLog.Entries.Count;
+            PrepareAvatarAttack(10);
+
+            var victimUid = board.GetCardUid(SlotId.Board(1));
+            Assert.Greater(victimUid, 0);
+            var hit = mPhase.ApplyCombatHit(board.AvatarUid.Value, victimUid);
+            Assert.IsTrue(hit.Accepted, hit.Reason);
+
+            var king = mArch.GetModel<CardRegistry>().Get(kingUid);
+            Assert.IsTrue(
+                ContainsEffectTriggeredSince(startIndex, "skill.absorb_bone")
+                || (int)king.Stats.GetBase(StatId.Attack) > atkBefore,
+                "S1 白名单：吸骨相邻怪物被移除时薄层不得误拦");
+        }
+
+        [Test]
+        public void DefaultCatalog_ValidateCatalog_HasNoScopeValidationErrors()
+        {
+            var report = mArch.GetSystem<IContentSystem>().ValidateCatalog();
+            Assert.IsTrue(report.IsValid, FormatScopeIssues(report));
         }
 
         [Test]
@@ -193,44 +273,13 @@ namespace NineGrid.Core.Tests
             mEffects.Activate(definition, new EffectOwner(EffectContainerType.MonsterSkill, sourceDefId, ownerUid));
         }
 
-        private static NodeDeckOptions CreateTwoMonsterNode(int armor = 0)
+        private static NodeDeckOptions CreateEmptyEnemyNode()
         {
             return new NodeDeckOptions
             {
                 PlayerOpeningCount = 0,
-                EnemyOpeningCount = 2
-            }
-                .AddEnemyCard(new CardDraft("monster.test_a", CardKind.Monster) { MaxHp = 20, Attack = 0, Armor = armor })
-                .AddEnemyCard(new CardDraft("monster.test_b", CardKind.Monster) { MaxHp = 20, Attack = 0, Armor = armor });
-        }
-
-        private int PlaceBoardCard(string defId, SlotId slot)
-        {
-            var board = mArch.GetModel<BoardModel>();
-            var registry = mArch.GetModel<CardRegistry>();
-            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
-            {
-                var candidate = SlotId.Board(i);
-                if (candidate == board.AvatarSlot.Value)
-                {
-                    continue;
-                }
-
-                var uid = board.GetCardUid(candidate);
-                if (uid > 0 && registry.Get(uid).DefId == defId)
-                {
-                    if (candidate != slot)
-                    {
-                        board.ClearSlot(candidate);
-                        board.PlaceCard(registry.Get(uid), slot);
-                    }
-
-                    return uid;
-                }
-            }
-
-            Assert.Fail("未找到 " + defId);
-            return 0;
+                EnemyOpeningCount = 0
+            };
         }
 
         private void SpawnOnBoard(string defId, SlotId slot)
@@ -289,6 +338,22 @@ namespace NineGrid.Core.Tests
             return count;
         }
 
+        private bool ContainsEffectTriggeredSince(int startIndex, string sourceDefId)
+        {
+            var entries = mPipeline.EventLog.Entries;
+            for (var i = startIndex; i < entries.Count; i++)
+            {
+                var evt = entries[i];
+                if (evt.Type == CoreEventType.EffectTriggered
+                    && evt.SourceDefId == sourceDefId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private static bool HasIssue(EffectValidationResult validation, string code)
         {
             for (var i = 0; i < validation.Issues.Count; i++)
@@ -300,6 +365,31 @@ namespace NineGrid.Core.Tests
             }
 
             return false;
+        }
+
+        private static string FormatScopeIssues(ContentValidationReport report)
+        {
+            if (report.Issues.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var scopeIssues = new List<string>();
+            for (var i = 0; i < report.Issues.Count; i++)
+            {
+                var issue = report.Issues[i];
+                if (issue.Contains("scope.") || issue.Contains(":scope."))
+                {
+                    scopeIssues.Add(issue);
+                }
+            }
+
+            if (scopeIssues.Count > 0)
+            {
+                return string.Join("; ", scopeIssues);
+            }
+
+            return string.Join("; ", report.Issues);
         }
     }
 }

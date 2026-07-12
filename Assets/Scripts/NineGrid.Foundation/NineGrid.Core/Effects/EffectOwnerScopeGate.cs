@@ -37,7 +37,7 @@ namespace NineGrid.Core.Effects
                 return true;
             }
 
-            if (TriggerDeclaresEventScope(trigger))
+            if (TriggerDeclaresEventScope(trigger, container))
             {
                 return true;
             }
@@ -52,6 +52,7 @@ namespace NineGrid.Core.Effects
 
         private static bool HasExplicitGlobalScope(EffectDslNode trigger, EffectDefinition definition)
         {
+            // S1/S2：ownerOnly:false（吸骨、暴力营养等听他卡移除）
             if (trigger.Has("ownerOnly") && !trigger.Get("ownerOnly").AsBool(true))
             {
                 return true;
@@ -67,8 +68,56 @@ namespace NineGrid.Core.Effects
                 return true;
             }
 
+            // S3：OnEvent + 观察型 EventFilter（石头爱好者/学习成长/灼热观察等）
             var atom = ReadAtom(trigger);
-            if (Same(atom, "OnEvent") && HasAnyEventFilterCondition(definition))
+            if (Same(atom, "OnEvent") && HasObservationOrGlobalEventFilter(definition))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool HasObservationOrGlobalEventFilter(EffectDefinition definition)
+        {
+            var conditions = definition.Conditions;
+            for (var i = 0; i < conditions.Count; i++)
+            {
+                var condition = conditions[i];
+                if (condition == null || condition.IsNull || !Same(ReadAtom(condition), "EventFilter"))
+                {
+                    continue;
+                }
+
+                if (IsObservationOrGlobalEventFilter(condition))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsObservationOrGlobalEventFilter(EffectDslNode filter)
+        {
+            if (HasNonEmpty(filter, "targetNot"))
+            {
+                return true;
+            }
+
+            if (HasNonEmpty(filter, "targetIs"))
+            {
+                return false;
+            }
+
+            if (HasNonEmpty(filter, "targetKind")
+                || HasNonEmpty(filter, "sourcePrefix")
+                || HasNonEmpty(filter, "sourceDefId"))
+            {
+                return true;
+            }
+
+            if (filter.Has("maxDelta") || filter.Has("minDelta") || HasNonEmpty(filter, "stat"))
             {
                 return true;
             }
@@ -97,7 +146,7 @@ namespace NineGrid.Core.Effects
             return false;
         }
 
-        private static bool TriggerDeclaresEventScope(EffectDslNode trigger)
+        private static bool TriggerDeclaresEventScope(EffectDslNode trigger, EffectContainerType container)
         {
             var atom = ReadAtom(trigger);
             if (Same(atom, "OnCumulative"))
@@ -112,7 +161,13 @@ namespace NineGrid.Core.Effects
             if (Same(atom, "OnMoveToSlot"))
             {
                 var target = trigger.Get("target").AsString("Any");
-                return TargetResolver.IsSelfRef(target);
+                if (TargetResolver.IsSelfRef(target))
+                {
+                    return true;
+                }
+
+                // U3：MonsterSkill 默认 target:Any 视同 Self，走 BatchConcernsOwner 兜底而非放行。
+                return false;
             }
 
             return false;
@@ -146,21 +201,6 @@ namespace NineGrid.Core.Effects
                     || HasNonEmpty(condition, "targetKind")
                     || HasNonEmpty(condition, "sourceDefId")
                     || HasNonEmpty(condition, "sourcePrefix"))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static bool HasAnyEventFilterCondition(EffectDefinition definition)
-        {
-            var conditions = definition.Conditions;
-            for (var i = 0; i < conditions.Count; i++)
-            {
-                var condition = conditions[i];
-                if (condition != null && !condition.IsNull && Same(ReadAtom(condition), "EventFilter"))
                 {
                     return true;
                 }
