@@ -47,8 +47,17 @@ namespace NineGrid.Flow
         private bool _settlementRaised;
         private bool _fieldSignalSubscribed;
         private bool _drainInFlight;
+        private bool _boardPresentationPumpRunning;
+        private readonly Queue<BoardPresentationRequest> _boardPresentationQueue = new();
         private CancellationTokenSource _presentationCts;
         private int _nodeEventLogStart;
+
+        private sealed class BoardPresentationRequest
+        {
+            public PostKillBoardPresentationResult Result;
+            public UniTaskCompletionSource Completion = new();
+            public CancellationToken CancellationToken;
+        }
 
         public static InBattleManagerSingleton Instance
         {
@@ -865,6 +874,8 @@ namespace NineGrid.Flow
                 var battleBusy = battle != null && battle.IsBusy;
 
                 if (!_drainInFlight
+                    && !_boardPresentationPumpRunning
+                    && _boardPresentationQueue.Count == 0
                     && !fieldBusy
                     && !handBusy
                     && !deckBusy
@@ -892,7 +903,14 @@ namespace NineGrid.Flow
                 _presentationCts = null;
             }
 
+            while (_boardPresentationQueue.Count > 0)
+            {
+                var request = _boardPresentationQueue.Dequeue();
+                request.Completion.TrySetCanceled();
+            }
+
             CombatHitSink.ForceEndPresentationLock("CancelPresentationWork");
+            _boardPresentationPumpRunning = false;
             _drainInFlight = false;
         }
 
@@ -1516,8 +1534,7 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 表现缓冲缓释：先补牌再旋转 hop（Deals → Moves，对齐 Core Fill→Rotate），末尾两阶段 Sync 安全网。
-        /// 若外层已持 PresentationLocked 则不重复加解锁；否则本方法自持锁。
+        /// 表现缓冲缓释入队：旋转/换位/hop 等大盘面 delta 串行播放，队列泵持有 PresentationLocked 至清空。
         /// </summary>
         private async UniTask DrainPostKillBoardAsync(
             PostKillBoardPresentationResult result,
@@ -1528,26 +1545,106 @@ namespace NineGrid.Flow
                 return;
             }
 
-            if (_drainInFlight)
+            var request = new BoardPresentationRequest
             {
-                Debug.LogWarning("[InBattleManager] DrainPostKillBoard 已在进行，拒绝并发缓释。");
+                Result = result,
+                CancellationToken = cancellationToken,
+            };
+            _boardPresentationQueue.Enqueue(request);
+            EnsureBoardPresentationPumpRunning();
+            await request.Completion.Task;
+        }
+
+        private void EnsureBoardPresentationPumpRunning()
+        {
+            if (_boardPresentationPumpRunning)
+            {
                 return;
             }
 
-            var ownedByCaller = CombatHitSink.PresentationLocked;
-            var acquiredHere = false;
-            if (!ownedByCaller)
+            RunBoardPresentationPumpAsync().Forget();
+        }
+
+        private async UniTask RunBoardPresentationPumpAsync()
+        {
+            if (_boardPresentationPumpRunning)
             {
-                if (!CombatHitSink.TryBeginPresentationLock("Drain"))
+                return;
+            }
+
+            _boardPresentationPumpRunning = true;
+            _drainInFlight = true;
+
+            var acquiredHere = false;
+            if (!CombatHitSink.PresentationLocked)
+            {
+                if (!CombatHitSink.TryBeginPresentationLock("BoardPresentationQueue"))
                 {
-                    Debug.LogWarning("[InBattleManager] DrainPostKillBoard 无法获取表现锁，跳过。");
+                    Debug.LogWarning("[InBattleManager] 盘面表演队列无法获取表现锁，跳过缓释。");
+                    while (_boardPresentationQueue.Count > 0)
+                    {
+                        var pending = _boardPresentationQueue.Dequeue();
+                        pending.Completion.TrySetResult();
+                    }
+
+                    _boardPresentationPumpRunning = false;
+                    _drainInFlight = false;
                     return;
                 }
 
                 acquiredHere = true;
             }
 
-            _drainInFlight = true;
+            try
+            {
+                while (_boardPresentationQueue.Count > 0)
+                {
+                    var request = _boardPresentationQueue.Dequeue();
+                    try
+                    {
+                        FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.BoardPresentationQueue);
+                        await DrainPostKillBoardCoreAsync(request.Result, request.CancellationToken);
+                        request.Completion.TrySetResult();
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        request.Completion.TrySetCanceled();
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning("[InBattleManager] 盘面表演队列项失败: " + ex.Message);
+                        request.Completion.TrySetException(ex);
+                    }
+                    finally
+                    {
+                        FieldTraceHelper.ClearBatchTag();
+                    }
+                }
+            }
+            finally
+            {
+                _boardPresentationPumpRunning = false;
+                _drainInFlight = false;
+                if (acquiredHere)
+                {
+                    CombatHitSink.EndPresentationLock("BoardPresentationQueue");
+                }
+            }
+        }
+
+        /// <summary>
+        /// 单条盘面 delta 缓释：先补牌再旋转 hop（Deals → Moves），末尾两阶段 Sync 安全网。
+        /// 锁由队列泵或外层交战流程持有，本方法不再重复加解锁。
+        /// </summary>
+        private async UniTask DrainPostKillBoardCoreAsync(
+            PostKillBoardPresentationResult result,
+            CancellationToken cancellationToken)
+        {
+            if (!result.Accepted)
+            {
+                return;
+            }
+
             var moveCount = result.Moves?.Length ?? 0;
             var dealCount = result.Deals?.Length ?? 0;
             FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.PostKill);
@@ -1630,13 +1727,8 @@ namespace NineGrid.Flow
             }
             finally
             {
-                _drainInFlight = false;
                 PerfTraceRecorder.CloseBeat();
                 FieldTraceHelper.ClearBatchTag();
-                if (acquiredHere)
-                {
-                    CombatHitSink.EndPresentationLock("Drain");
-                }
             }
         }
 
@@ -3835,6 +3927,16 @@ namespace NineGrid.Flow
                     vacated++;
                     vacatedUids.Add(occ.Uid);
                 }
+                else if (registry.TryGet(occ.Uid, out var leavingCore)
+                         && leavingCore.Zone.Value == ZoneId.DrawPile
+                         && cardManager.TryGet(occ.Uid, out var deckView)
+                         && deckManager != null)
+                {
+                    fieldManager.ClearSlotOccupancy(occ.Slot, skipBusyGuard: true);
+                    deckManager.LaunchReturnFieldCardToDeck(deckView, 0);
+                    vacated++;
+                    vacatedUids.Add(occ.Uid);
+                }
                 else
                 {
                     fieldManager.RequestRemoveFromField(
@@ -4070,6 +4172,14 @@ namespace NineGrid.Flow
 
                 if (registry.TryGet(uid, out var coreCard))
                 {
+                    if (coreCard.Zone.Value == ZoneId.DrawPile
+                        && deck != null
+                        && !deck.ContainsUid(uid))
+                    {
+                        deck.LaunchReturnFieldCardToDeck(view, 0);
+                        continue;
+                    }
+
                     if (coreCard.Zone.Value != ZoneId.Graveyard
                         && coreCard.Zone.Value != ZoneId.Removed)
                     {

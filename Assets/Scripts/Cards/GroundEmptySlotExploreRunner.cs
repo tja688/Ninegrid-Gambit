@@ -155,13 +155,8 @@ namespace NineGrid.Cards
             CardDeckTween.KillMotion(card.Transform);
 
             var deck = CardDeckManagerSingleton.Instance;
-            if (deck != null && deck.TryReturnCardToDeckFront(card, out var ripple))
+            if (deck != null && deck.LaunchReturnFieldCardToDeck(card, 0))
             {
-                if (ripple != null && ripple.Count > 0)
-                {
-                    CardDeckTween.MoveRippleAsync(ripple, deck.LayoutSettings.moveDuration).Forget();
-                }
-
                 return;
             }
 

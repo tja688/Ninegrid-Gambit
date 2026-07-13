@@ -894,6 +894,14 @@ namespace NineGrid.Cards
             return RotateOuterRingInternalAsync(true, cancellationToken, skipBusyGuard: true);
         }
 
+        /// <summary>
+        /// 交战流程内嵌套旋转：跳过场地忙碌门禁，可指定顺/逆时针。
+        /// </summary>
+        internal UniTask RotateOuterRingWhileBusyAsync(bool clockwise, CancellationToken cancellationToken = default)
+        {
+            return RotateOuterRingInternalAsync(clockwise, cancellationToken, skipBusyGuard: true);
+        }
+
         public Transform GetGroundAnchor(int slot)
         {
             return TryGetAnchor(slot, out var anchor) ? anchor : null;
@@ -940,6 +948,123 @@ namespace NineGrid.Cards
                 return;
             }
 
+            if (TryClassifyOuterRingRotation(moves, out var clockwise))
+            {
+                await RotateOuterRingWhileBusyAsync(clockwise, cancellationToken);
+                return;
+            }
+
+            await ApplyGeneralBoardMovesInternalAsync(moves, cancellationToken, skipBusyGuard);
+        }
+
+        private bool TryClassifyOuterRingRotation(
+            IReadOnlyList<PostKillCardMove> moves,
+            out bool clockwise)
+        {
+            clockwise = true;
+            if (moves == null || moves.Count == 0)
+            {
+                return false;
+            }
+
+            var ring = GroundSlotTopology.ClockwiseRing;
+            var ringOccupied = 0;
+            for (var i = 0; i < ring.Count; i++)
+            {
+                if (_uidBySlot[ring[i]] != 0)
+                {
+                    ringOccupied++;
+                }
+            }
+
+            if (ringOccupied == 0 || moves.Count != ringOccupied)
+            {
+                return false;
+            }
+
+            bool? direction = null;
+            var fromSlots = new HashSet<int>(moves.Count);
+            for (var i = 0; i < moves.Count; i++)
+            {
+                var move = moves[i];
+                if (move.Uid <= 0
+                    || !IsValidSlot(move.FromSlot)
+                    || !IsValidSlot(move.ToSlot)
+                    || move.FromSlot == move.ToSlot)
+                {
+                    return false;
+                }
+
+                if (!GroundSlotTopology.IsOuterRing(move.FromSlot)
+                    || !GroundSlotTopology.IsOuterRing(move.ToSlot))
+                {
+                    return false;
+                }
+
+                if (_uidBySlot[move.FromSlot] != move.Uid)
+                {
+                    return false;
+                }
+
+                var fromIdx = GroundSlotTopology.GetClockwiseRingIndex(move.FromSlot);
+                var toIdx = GroundSlotTopology.GetClockwiseRingIndex(move.ToSlot);
+                if (fromIdx < 0 || toIdx < 0)
+                {
+                    return false;
+                }
+
+                var isClockwise = toIdx == (fromIdx + 1) % ring.Count;
+                var isCounterClockwise = toIdx == (fromIdx + ring.Count - 1) % ring.Count;
+                if (!isClockwise && !isCounterClockwise)
+                {
+                    return false;
+                }
+
+                var moveClockwise = isClockwise;
+                if (!direction.HasValue)
+                {
+                    direction = moveClockwise;
+                }
+                else if (direction.Value != moveClockwise)
+                {
+                    return false;
+                }
+
+                if (!fromSlots.Add(move.FromSlot))
+                {
+                    return false;
+                }
+            }
+
+            for (var i = 0; i < ring.Count; i++)
+            {
+                var slot = ring[i];
+                if (_uidBySlot[slot] != 0 && !fromSlots.Contains(slot))
+                {
+                    return false;
+                }
+            }
+
+            clockwise = direction ?? true;
+            return true;
+        }
+
+        private async UniTask ApplyGeneralBoardMovesInternalAsync(
+            IReadOnlyList<PostKillCardMove> moves,
+            CancellationToken cancellationToken,
+            bool skipBusyGuard)
+        {
+            if (!skipBusyGuard && IsBusy)
+            {
+                Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法应用盘面移动。");
+                return;
+            }
+
+            if (moves == null || moves.Count == 0)
+            {
+                return;
+            }
+
             if (!skipBusyGuard)
             {
                 _isBusy = true;
@@ -949,11 +1074,10 @@ namespace NineGrid.Cards
             {
                 var cardManager = CardManagerSingleton.Instance;
                 var hopPlans = new List<(ManagedCard card, int fromSlot, int toSlot)>(moves.Count);
-                // Core 声明应移动的 uid → 目标格；漏 hop 时按目标格落位，禁止当静止卡回原格。
                 var expectedToSlotByUid = new Dictionary<int, int>(moves.Count);
+                var movingUids = new HashSet<int>(moves.Count);
                 var expectedMoveCount = 0;
 
-                // 先收集可播 hop 的计划（死者已 Vacate 的 uid 跳过）。
                 for (var i = 0; i < moves.Count; i++)
                 {
                     var move = moves[i];
@@ -967,13 +1091,13 @@ namespace NineGrid.Cards
 
                     expectedMoveCount++;
                     expectedToSlotByUid[move.Uid] = move.ToSlot;
+                    movingUids.Add(move.Uid);
 
                     if (!cardManager.TryGet(move.Uid, out var card) || card?.Transform == null)
                     {
                         continue;
                     }
 
-                    // 表现侧已无此 uid 占格（击杀 Vacate）→ 跳过动画，仍记入 expected 供落位。
                     if (!_slotByUid.ContainsKey(move.Uid))
                     {
                         continue;
@@ -1028,98 +1152,44 @@ namespace NineGrid.Cards
                         reason: "hop");
                 }
 
-                var incomplete = hopPlans.Count < expectedMoveCount;
-                if (incomplete)
+                if (hopPlans.Count < expectedMoveCount)
                 {
                     Debug.LogWarning(
                         $"[GroundFieldManager] 盘面 hop 不完整：可播={hopPlans.Count}/{expectedMoveCount}，"
                         + "漏移卡按目标格落位或留给 Sync，禁止原格回登。");
                 }
 
-                // 对齐 RotateOuterRingInternalAsync：整环先 Vacate，再登记。
-                var ring = GroundSlotTopology.ClockwiseRing;
-                var ringUids = new int[ring.Count];
-                var hoppingUids = new HashSet<int>(hopPlans.Count);
-                var hopperDestSlots = new HashSet<int>(hopPlans.Count);
-                for (var i = 0; i < ring.Count; i++)
+                foreach (var uid in movingUids)
                 {
-                    ringUids[i] = _uidBySlot[ring[i]];
-                }
-
-                for (var i = 0; i < hopPlans.Count; i++)
-                {
-                    hoppingUids.Add(hopPlans[i].card.Uid);
-                    hopperDestSlots.Add(hopPlans[i].toSlot);
-                }
-
-                for (var i = 0; i < ring.Count; i++)
-                {
-                    var slot = ring[i];
-                    var uid = _uidBySlot[slot];
-                    if (uid != 0)
+                    if (_slotByUid.TryGetValue(uid, out var occupiedSlot))
                     {
-                        _slotByUid.Remove(uid);
+                        UnregisterCardAtSlot(occupiedSlot, "General.Vacate");
                     }
-
-                    _uidBySlot[slot] = 0;
                 }
 
+                var registeredUids = new HashSet<int>(hopPlans.Count);
                 for (var i = 0; i < hopPlans.Count; i++)
                 {
                     var plan = hopPlans[i];
-                    if (!TryRegisterCardAtSlot(plan.toSlot, plan.card.Uid))
+                    if (TryRegisterCardAtSlot(plan.toSlot, plan.card.Uid, logConflict: false))
                     {
-                        Debug.LogError(
-                            $"[GroundFieldManager] 盘面 hop 登记失败 uid={plan.card.Uid} → slot={plan.toSlot}");
+                        registeredUids.Add(plan.card.Uid);
                     }
                 }
 
-                // Core 声明应移但未能播 hop：有视图则静默落到 toSlot，无视图留给 Sync。
                 foreach (var kv in expectedToSlotByUid)
                 {
-                    var uid = kv.Key;
-                    var toSlot = kv.Value;
-                    if (hoppingUids.Contains(uid))
+                    if (registeredUids.Contains(kv.Key))
                     {
                         continue;
                     }
 
-                    if (!cardManager.TryGet(uid, out var card) || card?.Transform == null)
+                    if (!cardManager.TryGet(kv.Key, out var card) || card?.Transform == null)
                     {
                         continue;
                     }
 
-                    if (!TryRegisterCardAtSlot(toSlot, uid))
-                    {
-                        Debug.LogWarning(
-                            $"[GroundFieldManager] 漏 hop 卡落位失败 uid={uid} → slot={toSlot}，留给 Sync。");
-                    }
-                }
-
-                // 真正静止的环上卡：仅当目标格未被 hop/漏移落位占用时回登原格。
-                // incomplete 时跳过原格回登，避免把「漏移卡」当成静止卡挤占 hop 目标格。
-                if (!incomplete)
-                {
-                    for (var i = 0; i < ring.Count; i++)
-                    {
-                        var uid = ringUids[i];
-                        if (uid == 0 || hoppingUids.Contains(uid) || expectedToSlotByUid.ContainsKey(uid))
-                        {
-                            continue;
-                        }
-
-                        var homeSlot = ring[i];
-                        if (hopperDestSlots.Contains(homeSlot) || _uidBySlot[homeSlot] != 0)
-                        {
-                            continue;
-                        }
-
-                        if (!TryRegisterCardAtSlot(homeSlot, uid))
-                        {
-                            Debug.LogError(
-                                $"[GroundFieldManager] 盘面 hop 非移动卡回登失败 uid={uid} → slot={homeSlot}");
-                        }
-                    }
+                    TryRegisterCardAtSlot(kv.Value, kv.Key, logConflict: false);
                 }
 
                 if (hopPlans.Count > 0)
@@ -1128,11 +1198,20 @@ namespace NineGrid.Cards
                     for (var i = 0; i < hopPlans.Count; i++)
                     {
                         var plan = hopPlans[i];
+                        if (!_slotByUid.TryGetValue(plan.card.Uid, out var registeredSlot)
+                            || registeredSlot != plan.toSlot)
+                        {
+                            continue;
+                        }
+
                         moveTasks.Add(
                             AnimateCardHopToSlotAsync(plan.card, plan.fromSlot, plan.toSlot, cancellationToken));
                     }
 
-                    await UniTask.WhenAll(moveTasks);
+                    if (moveTasks.Count > 0)
+                    {
+                        await UniTask.WhenAll(moveTasks);
+                    }
                 }
 
                 RefreshAllSlotHitColliders();
@@ -1528,7 +1607,7 @@ namespace NineGrid.Cards
         /// 登记占格。目标格已有其他 uid 时失败并告警，禁止静默挤占留下游离视图。
         /// 同 uid 迁格：先清旧格再写新格。
         /// </summary>
-        private bool TryRegisterCardAtSlot(int slot, int uid)
+        private bool TryRegisterCardAtSlot(int slot, int uid, bool logConflict = true)
         {
             if (!IsValidSlot(slot) || uid <= 0)
             {
@@ -1539,16 +1618,20 @@ namespace NineGrid.Cards
             if (previousUid != 0 && previousUid != uid)
             {
                 _occupancyConflictSinceClear = true;
-                Debug.LogError(
-                    $"[GroundFieldManager] 禁止静默挤占：slot={slot} 已有 uid={previousUid}，拒绝登记 uid={uid}。"
-                    + " 调用方须先 Vacate/Clear 旧占格。");
+                if (logConflict)
+                {
+                    Debug.LogError(
+                        $"[GroundFieldManager] 禁止静默挤占：slot={slot} 已有 uid={previousUid}，拒绝登记 uid={uid}。"
+                        + " 调用方须先 Vacate/Clear 旧占格。");
+                }
+
                 try
                 {
                     FlowFieldTraceSink.OccupancyConflict?.Invoke(
                         slot,
                         previousUid,
                         uid,
-                        "TryRegisterCardAtSlot");
+                        logConflict ? "TryRegisterCardAtSlot" : "TryRegisterCardAtSlot.Silent");
                 }
                 catch
                 {

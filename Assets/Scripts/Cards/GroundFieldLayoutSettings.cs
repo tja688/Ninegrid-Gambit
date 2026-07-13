@@ -46,6 +46,13 @@ namespace NineGrid.Cards
         [Tooltip("多条探求依次启动的最小间隔（秒），贴近补牌防抖。")]
         public float exploreDealInterval = 0.04f;
 
+        [Header("Field To Deck")]
+        [Tooltip("场地卡垂直回卡组时 Y 轴离画阈值（世界单位）；物体 Y 超过此值视为已出画。")]
+        public float fieldExitYThreshold = 8f;
+
+        [Tooltip("场地卡垂直上飞离画的缓动时长（秒）。")]
+        public float fieldExitDuration = 0.35f;
+
         [Header("Hover")]
         [Tooltip("场地卡 hover 时 localScale 相对基准的放大增量（如 0.05 表示约为 1.05 倍）。")]
         public float hoverScaleIntensity = 0.05f;

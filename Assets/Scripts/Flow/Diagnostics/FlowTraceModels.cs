@@ -102,5 +102,6 @@ namespace NineGrid.Flow.Diagnostics
         public const string Pickup = "pickup";
         public const string Hop = "hop";
         public const string Deal = "deal";
+        public const string BoardPresentationQueue = "boardPresentationQueue";
     }
 }

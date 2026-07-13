@@ -380,18 +380,71 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 将卡牌退回卡组最左侧（探求失败回滚，仅 InGame）。
+        /// 将卡牌退回卡组最左侧（探求失败回滚，仅 InGame）。发射后不管：垂直上飞离画后自然 ripple 入组。
         /// </summary>
         public bool TryReturnCardToDeckFront(ManagedCard card, out IReadOnlyList<CardDeckRippleMove> rippleMoves)
         {
             rippleMoves = Array.Empty<CardDeckRippleMove>();
-            if (!EnsureInGameForDeal() || card == null)
+            return LaunchReturnFieldCardToDeck(card, 0);
+        }
+
+        /// <summary>
+        /// 场地卡垂直上飞离画后插入卡组（发射后不管，可与旋转/换位并行）。
+        /// </summary>
+        public bool LaunchReturnFieldCardToDeck(ManagedCard card, int insertIndex = 0)
+        {
+            if (!EnsureInGameForDeal() || card == null || card.Transform == null)
             {
                 return false;
             }
 
+            if (ContainsUid(card.Uid))
+            {
+                return true;
+            }
+
+            var field = ResolveFieldManager();
+            if (field != null && field.TryGetSlotOf(card.Uid, out var slot))
+            {
+                field.ClearSlotOccupancy(slot, skipBusyGuard: true);
+            }
+
             CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
-            return _slotContainer.TryInsertAt(0, card, out rippleMoves);
+
+            var fieldLayout = field?.LayoutSettings;
+            var exitY = fieldLayout != null ? fieldLayout.fieldExitYThreshold : 8f;
+            var exitDuration = fieldLayout != null ? fieldLayout.fieldExitDuration : 0.35f;
+            var targetInsertIndex = Mathf.Clamp(insertIndex, 0, Mathf.Max(0, layoutSettings.maxSlots - 1));
+
+            CardDeckTween.LaunchFieldExitThenDeckInsert(
+                card.Transform,
+                exitY,
+                exitDuration,
+                () => CompleteFieldReturnDeckInsert(card, targetInsertIndex),
+                uid: card.Uid);
+
+            return true;
+        }
+
+        private void CompleteFieldReturnDeckInsert(ManagedCard card, int insertIndex)
+        {
+            if (card == null || card.Transform == null || CurrentMode != CardDeckMode.InGame)
+            {
+                return;
+            }
+
+            if (ContainsUid(card.Uid))
+            {
+                return;
+            }
+
+            CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
+            if (_slotContainer.TryInsertAt(insertIndex, card, out var rippleMoves)
+                && rippleMoves != null
+                && rippleMoves.Count > 0)
+            {
+                CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration).Forget();
+            }
         }
 
         private async UniTask BeginEntryInternalAsync(CancellationToken cancellationToken)
@@ -658,6 +711,16 @@ namespace NineGrid.Cards
 
             if (_isBusy || card == null)
             {
+                return;
+            }
+
+            var field = ResolveFieldManager();
+            if (field != null
+                && (card.DisplayMode == CardDisplayMode.GroundCardMode
+                    || field.TryGetSlotOf(card.Uid, out _))
+                && field.TryGetSlotOf(card.Uid, out _))
+            {
+                LaunchReturnFieldCardToDeck(card, slotIndex);
                 return;
             }
 

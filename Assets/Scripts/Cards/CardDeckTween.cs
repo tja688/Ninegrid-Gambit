@@ -255,6 +255,33 @@ namespace NineGrid.Cards
             await UniTask.WaitUntil(() => completed, cancellationToken: cancellationToken);
         }
 
+        /// <summary>
+        /// 场地卡垂直上飞离画后回调入组（发射后不管，由调用方在 onExitComplete 内插入卡组 ripple）。
+        /// </summary>
+        public static void LaunchFieldExitThenDeckInsert(
+            Transform target,
+            float exitY,
+            float exitDuration,
+            Action onExitComplete,
+            int uid = 0)
+        {
+            if (target == null)
+            {
+                onExitComplete?.Invoke();
+                return;
+            }
+
+            var pos = target.position;
+            var exitPos = new Vector3(pos.x, Mathf.Max(pos.y, exitY), pos.z);
+            MoveToWorld(
+                target,
+                exitPos,
+                exitDuration,
+                onComplete: () => onExitComplete?.Invoke(),
+                uid: uid,
+                reason: "fieldExit");
+        }
+
         public static async UniTask WaitOneFrameAsync(CancellationToken cancellationToken = default)
         {
             await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
