@@ -897,7 +897,7 @@ namespace NineGrid.Cards
         /// <summary>
         /// 交战流程内嵌套旋转：跳过场地忙碌门禁，可指定顺/逆时针。
         /// </summary>
-        internal UniTask RotateOuterRingWhileBusyAsync(bool clockwise, CancellationToken cancellationToken = default)
+        public UniTask RotateOuterRingWhileBusyAsync(bool clockwise, CancellationToken cancellationToken = default)
         {
             return RotateOuterRingInternalAsync(clockwise, cancellationToken, skipBusyGuard: true);
         }

@@ -94,6 +94,11 @@ namespace NineGrid.Flow.Diagnostics
         public const string BoardQueueDequeue = "BoardQueueDequeue";
         public const string BoardQueueSkip = "BoardQueueSkip";
         public const string RotateClassify = "RotateClassify";
+        public const string BoardStepBegin = "BoardStepBegin";
+        public const string BoardStepEnd = "BoardStepEnd";
+        public const string BoardSyncDeferred = "BoardSyncDeferred";
+        public const string BoardStepFallbackGeneralHop = "BoardStepFallbackGeneralHop";
+        public const string BoardRotateChoreoMismatch = "BoardRotateChoreoMismatch";
         public const string PickupAttempt = "PickupAttempt";
         public const string PickupGate = "PickupGate";
         public const string PickupSuccess = "PickupSuccess";

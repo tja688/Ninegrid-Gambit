@@ -48,6 +48,9 @@ namespace NineGrid.Flow
         private bool _fieldSignalSubscribed;
         private bool _drainInFlight;
         private bool _boardPresentationPumpRunning;
+        private bool _pendingSyncFromCore;
+        private bool _pendingSoftAlignToCore;
+        private int _boardPresentationRequestId;
         private readonly Queue<BoardPresentationRequest> _boardPresentationQueue = new();
         private CancellationTokenSource _presentationCts;
         private int _nodeEventLogStart;
@@ -1003,7 +1006,7 @@ namespace NineGrid.Flow
             CombatHitSink.EstimateWillKill = EstimateWillKillFromCore;
             CombatHitSink.SyncCardPresentation = SyncManagedCardPresentation;
             CombatHitSink.SpawnDamageNumber = SpawnDamageNumberAt;
-            CombatHitSink.SyncBoardFromCore = SyncBoardOccupancyFromCore;
+            CombatHitSink.SyncBoardFromCore = RequestSyncBoardFromCore;
             CombatHitSink.DrainPostKillBoard = DrainPostKillBoardAsync;
             CombatHitSink.ApplyPickupItem = ApplyPickupItemFromCore;
             CombatHitSink.ApplyClickEmpty = ApplyClickEmptyFromCore;
@@ -1046,7 +1049,7 @@ namespace NineGrid.Flow
                 CombatHitSink.SpawnDamageNumber = null;
             }
 
-            if (CombatHitSink.SyncBoardFromCore == SyncBoardOccupancyFromCore)
+            if (CombatHitSink.SyncBoardFromCore == RequestSyncBoardFromCore)
             {
                 CombatHitSink.SyncBoardFromCore = null;
             }
@@ -1234,7 +1237,8 @@ namespace NineGrid.Flow
                 || phase == GamePhase.NodeCompleted
                 || arch.GetSystem<IDeckSystem>().IsNodeCleared();
 
-            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids);
+            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids, out var steps);
+            summary.Steps = steps;
             summary.Moves = moves;
             summary.Deals = deals;
             summary.RemovedUids = removedUids;
@@ -1430,7 +1434,8 @@ namespace NineGrid.Flow
                 return summary;
             }
 
-            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids);
+            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids, out var steps);
+            summary.Steps = steps;
             summary.Moves = moves;
             summary.Deals = deals;
             summary.RemovedUids = removedUids;
@@ -1553,9 +1558,10 @@ namespace NineGrid.Flow
             _boardPresentationQueue.Enqueue(request);
             ChoreoTraceContext.BoardQueueDepth = _boardPresentationQueue.Count;
             FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.BoardPresentationQueue);
+            var stepCount = result.Steps?.Length ?? 0;
             FieldTraceHelper.RecordBoardQueueEnqueue(
                 _boardPresentationQueue.Count,
-                result.Moves?.Length ?? 0,
+                stepCount > 0 ? stepCount : (result.Moves?.Length ?? 0),
                 result.Deals?.Length ?? 0);
             FieldTraceHelper.ClearBatchTag();
             EnsureBoardPresentationPumpRunning();
@@ -1650,11 +1656,13 @@ namespace NineGrid.Flow
                 {
                     CombatHitSink.EndPresentationLock("BoardPresentationQueue");
                 }
+
+                FlushDeferredBoardSync(force: true);
             }
         }
 
         /// <summary>
-        /// 单条盘面 delta 缓释：先补牌再旋转 hop（Deals → Moves），末尾两阶段 Sync 安全网。
+        /// 单条盘面 delta 缓释：保序步骤流逐步 await，或回退扁平 Deals/Moves；末尾一次 Sync 安全网。
         /// 锁由队列泵或外层交战流程持有，本方法不再重复加解锁。
         /// </summary>
         private async UniTask DrainPostKillBoardCoreAsync(
@@ -1666,9 +1674,11 @@ namespace NineGrid.Flow
                 return;
             }
 
-            var moveCount = result.Moves?.Length ?? 0;
+            var stepCount = result.Steps?.Length ?? 0;
+            var moveCount = stepCount > 0 ? stepCount : (result.Moves?.Length ?? 0);
             var dealCount = result.Deals?.Length ?? 0;
-            FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.PostKill);
+            var requestId = ++_boardPresentationRequestId;
+            FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.BoardPresentationQueue);
             var drainNode = 0;
             int.TryParse(FieldTraceHelper.ResolveNodeIndex(), out drainNode);
             PerfTraceRecorder.OpenBeat(DiagBeatKinds.PostKillDrain, drainNode);
@@ -1692,43 +1702,34 @@ namespace NineGrid.Flow
                     dealCount,
                     drainInFlight: true,
                     fieldBusy: fieldManager.IsBusy,
-                    presentationLocked: CombatHitSink.PresentationLocked);
+                    presentationLocked: CombatHitSink.PresentationLocked,
+                    stepCount: stepCount,
+                    requestId: requestId);
                 FieldTraceHelper.RecordOccupancySnapshot("drainBefore");
                 fieldManager.ClearOccupancyConflictFlag();
 
-                // 对齐 Core Fill→Rotate / EventLog：先补牌（CardDealt），技能移除退场，再 hop，再二次补空。
-                if (result.Deals != null && result.Deals.Length > 0)
+                if (stepCount > 0)
                 {
-                    await DrainDealsAsync(result.Deals, ct);
+                    await DrainBoardStepsAsync(result.Steps, requestId, ct);
+                }
+                else
+                {
+                    await DrainLegacyBoardDeltaAsync(result, ct);
                 }
 
-                if (result.RemovedUids != null && result.RemovedUids.Length > 0)
-                {
-                    await PresentSkillRemovedCardsAsync(result.RemovedUids, ct);
-                }
+                SoftAlignBoardAnchorsToCore(force: true);
 
-                if (result.Moves != null && result.Moves.Length > 0)
-                {
-                    await fieldManager.ApplyBoardMovesAndHopAsync(
-                        result.Moves,
-                        ct,
-                        skipBusyGuard: true);
-                }
-
-                SoftAlignBoardAnchorsToCore();
-
-                // 技能移除退场 + hop 完成后：有牌则补空槽；交互由 PresentationLocked 挂起至补牌播完。
                 if (result.RemovedUids != null && result.RemovedUids.Length > 0)
                 {
                     await DrainPostRemoveRefillAsync(ct);
                 }
 
-                SyncBoardOccupancyFromCore();
+                SyncBoardOccupancyFromCore(force: true);
                 if (fieldManager.HasOccupancyConflictSinceClear)
                 {
                     Debug.LogWarning(
                         "[InBattleManager] Drain 期间发生 OccupancyConflict，再次强制 SyncBoardOccupancyFromCore。");
-                    SyncBoardOccupancyFromCore();
+                    SyncBoardOccupancyFromCore(force: true);
                 }
 
                 FieldTraceHelper.RecordOccupancySnapshot("drainAfter");
@@ -1737,7 +1738,9 @@ namespace NineGrid.Flow
                     dealCount,
                     drainInFlight: true,
                     fieldBusy: fieldManager.IsBusy,
-                    presentationLocked: CombatHitSink.PresentationLocked);
+                    presentationLocked: CombatHitSink.PresentationLocked,
+                    stepCount: stepCount,
+                    requestId: requestId);
                 SpawnDamagePopups(result.DamagePopups, fallbackVictim: null, fallbackAmount: 0);
                 UpdateAvatarDebugText();
 
@@ -1746,10 +1749,132 @@ namespace NineGrid.Flow
                     TryEnterNodeSettlement();
                 }
             }
+            catch (OperationCanceledException)
+            {
+                ChoreoTraceContext.ForceCloseOpenChoreos("boardDrainCancelled");
+                throw;
+            }
             finally
             {
                 PerfTraceRecorder.CloseBeat();
                 FieldTraceHelper.ClearBatchTag();
+            }
+        }
+
+        private async UniTask DrainLegacyBoardDeltaAsync(
+            PostKillBoardPresentationResult result,
+            CancellationToken ct)
+        {
+            if (result.Deals != null && result.Deals.Length > 0)
+            {
+                await DrainDealsAsync(result.Deals, ct);
+            }
+
+            if (result.RemovedUids != null && result.RemovedUids.Length > 0)
+            {
+                await PresentSkillRemovedCardsAsync(result.RemovedUids, ct);
+            }
+
+            if (result.Moves != null && result.Moves.Length > 0)
+            {
+                await fieldManager.ApplyBoardMovesAndHopAsync(
+                    result.Moves,
+                    ct,
+                    skipBusyGuard: true);
+            }
+        }
+
+        private async UniTask DrainBoardStepsAsync(
+            BoardPresentationStep[] steps,
+            int requestId,
+            CancellationToken ct)
+        {
+            var rotateCount = 0;
+            var choreoRotateCount = 0;
+            for (var i = 0; i < steps.Length; i++)
+            {
+                var step = steps[i];
+                if (step.Kind == BoardPresentationStepKind.Rotate)
+                {
+                    rotateCount++;
+                }
+
+                FieldTraceHelper.RecordBoardStepBegin(
+                    requestId,
+                    i,
+                    steps.Length,
+                    step);
+
+                try
+                {
+                    ct.ThrowIfCancellationRequested();
+                    switch (step.Kind)
+                    {
+                        case BoardPresentationStepKind.Rotate:
+                            var choreoBefore = ChoreoTraceContext.LastChoreoSeqId;
+                            await fieldManager.RotateOuterRingWhileBusyAsync(step.Clockwise, ct);
+                            if (ChoreoTraceContext.LastChoreoSeqId != choreoBefore)
+                            {
+                                choreoRotateCount++;
+                            }
+
+                            break;
+
+                        case BoardPresentationStepKind.Swap:
+                        case BoardPresentationStepKind.Move:
+                            if (step.Moves != null && step.Moves.Length > 0)
+                            {
+                                if (step.Kind == BoardPresentationStepKind.Move
+                                    && step.Moves.Length >= GroundSlotTopology.ClockwiseRing.Count)
+                                {
+                                    FieldTraceHelper.RecordBoardStepFallbackGeneralHop(
+                                        requestId,
+                                        i,
+                                        step.Moves.Length);
+                                }
+
+                                await fieldManager.ApplyBoardMovesAndHopAsync(
+                                    step.Moves,
+                                    ct,
+                                    skipBusyGuard: true);
+                            }
+
+                            break;
+
+                        case BoardPresentationStepKind.Deal:
+                            if (step.Deals != null && step.Deals.Length > 0)
+                            {
+                                await DrainDealsAsync(step.Deals, ct);
+                            }
+
+                            break;
+
+                        case BoardPresentationStepKind.Remove:
+                            if (step.RemovedUids != null && step.RemovedUids.Length > 0)
+                            {
+                                await PresentSkillRemovedCardsAsync(step.RemovedUids, ct);
+                            }
+
+                            break;
+                    }
+                }
+                finally
+                {
+                    FieldTraceHelper.RecordBoardStepEnd(
+                        requestId,
+                        i,
+                        steps.Length,
+                        step,
+                        ChoreoTraceContext.CurrentSeqId);
+                }
+            }
+
+            if (rotateCount > 0 && rotateCount != choreoRotateCount)
+            {
+                FieldTraceHelper.RecordBoardRotateChoreoMismatch(
+                    requestId,
+                    rotateCount,
+                    choreoRotateCount);
             }
         }
 
@@ -1947,8 +2072,9 @@ namespace NineGrid.Flow
                 return summary;
             }
 
-            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out var pickedUid, out var removedUids);
+            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out var pickedUid, out var removedUids, out var steps);
             summary.CardUid = pickedUid;
+            summary.Steps = steps;
             summary.Moves = moves;
             summary.Deals = deals;
             summary.RemovedUids = removedUids;
@@ -2002,7 +2128,8 @@ namespace NineGrid.Flow
                 return summary;
             }
 
-            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids);
+            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids, out var steps);
+            summary.Steps = steps;
             summary.Moves = moves;
             summary.Deals = deals;
             summary.RemovedUids = removedUids;
@@ -2098,8 +2225,9 @@ namespace NineGrid.Flow
                 || phase == GamePhase.RoomChoice
                 || arch.GetSystem<IDeckSystem>().IsNodeCleared();
 
-            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids);
-            if ((moves != null && moves.Length > 0)
+            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids, out var boardSteps);
+            if ((boardSteps != null && boardSteps.Length > 0)
+                || (moves != null && moves.Length > 0)
                 || (deals != null && deals.Length > 0)
                 || (removedUids != null && removedUids.Length > 0)
                 || summary.TargetKilled)
@@ -2108,6 +2236,7 @@ namespace NineGrid.Flow
                 summary.PostKillBoard = new PostKillBoardPresentationResult
                 {
                     Accepted = true,
+                    Steps = boardSteps ?? Array.Empty<BoardPresentationStep>(),
                     Moves = moves ?? Array.Empty<PostKillCardMove>(),
                     Deals = deals ?? Array.Empty<PostKillCardDeal>(),
                     RemovedUids = removedUids ?? Array.Empty<int>(),
@@ -2127,7 +2256,7 @@ namespace NineGrid.Flow
             out PostKillCardDeal[] deals,
             out int pickedUid)
         {
-            FillBoardDeltaFromEventLog(pipeline, startIndex, out moves, out deals, out pickedUid, out _);
+            FillBoardDeltaFromEventLog(pipeline, startIndex, out moves, out deals, out pickedUid, out _, out _);
         }
 
         private static void FillBoardDeltaFromEventLog(
@@ -2138,74 +2267,45 @@ namespace NineGrid.Flow
             out int pickedUid,
             out int[] removedUids)
         {
-            var moveList = new List<PostKillCardMove>(8);
-            var dealList = new List<PostKillCardDeal>(8);
-            var removeList = new List<int>(4);
-            var removedSet = new HashSet<int>(4);
+            FillBoardDeltaFromEventLog(
+                pipeline,
+                startIndex,
+                out moves,
+                out deals,
+                out pickedUid,
+                out removedUids,
+                out _);
+        }
+
+        private static void FillBoardDeltaFromEventLog(
+            IActionPipelineSystem pipeline,
+            int startIndex,
+            out PostKillCardMove[] moves,
+            out PostKillCardDeal[] deals,
+            out int pickedUid,
+            out int[] removedUids,
+            out BoardPresentationStep[] steps)
+        {
             pickedUid = 0;
+            moves = Array.Empty<PostKillCardMove>();
+            deals = Array.Empty<PostKillCardDeal>();
+            removedUids = Array.Empty<int>();
+            steps = Array.Empty<BoardPresentationStep>();
+            if (pipeline?.EventLog?.Entries == null)
+            {
+                return;
+            }
+
             var registry = NineGridArchitecture.Current.GetModel<CardRegistry>();
-            var entries = pipeline.EventLog.Entries;
-            for (var i = startIndex; i < entries.Count; i++)
-            {
-                var e = entries[i];
-                if (e.Type == CoreEventType.ItemPicked && e.CardUid > 0 && pickedUid == 0)
-                {
-                    pickedUid = e.CardUid;
-                }
-
-                if ((e.Type == CoreEventType.CardRemoved || e.Type == CoreEventType.CardKilled)
-                    && e.CardUid > 0
-                    && removedSet.Add(e.CardUid))
-                {
-                    removeList.Add(e.CardUid);
-                }
-
-                if (e.Type == CoreEventType.CardMoved
-                    && e.CardUid > 0
-                    && e.FromSlot.IsBoardSlot
-                    && e.ToSlot.IsBoardSlot)
-                {
-                    moveList.Add(new PostKillCardMove
-                    {
-                        Uid = e.CardUid,
-                        FromSlot = e.FromSlot.Index,
-                        ToSlot = e.ToSlot.Index,
-                    });
-                }
-                else if (e.Type == CoreEventType.CardDealt
-                         && e.CardUid > 0
-                         && e.ToSlot.IsBoardSlot)
-                {
-                    var defId = string.Empty;
-                    if (registry.TryGet(e.CardUid, out var coreCard))
-                    {
-                        defId = coreCard.DefId;
-                    }
-
-                    dealList.Add(new PostKillCardDeal
-                    {
-                        Uid = e.CardUid,
-                        Slot = e.ToSlot.Index,
-                        DefId = defId,
-                    });
-                }
-            }
-
-            // 同批已移除的牌不再 hop（避免碾压后仍飞到目标格再被 Sync 硬删）。
-            if (removedSet.Count > 0 && moveList.Count > 0)
-            {
-                for (var i = moveList.Count - 1; i >= 0; i--)
-                {
-                    if (removedSet.Contains(moveList[i].Uid))
-                    {
-                        moveList.RemoveAt(i);
-                    }
-                }
-            }
-
-            moves = moveList.ToArray();
-            deals = dealList.ToArray();
-            removedUids = removeList.Count > 0 ? removeList.ToArray() : Array.Empty<int>();
+            var projection = BoardPresentationStepProjector.Project(
+                pipeline.EventLog.Entries,
+                startIndex,
+                registry);
+            pickedUid = projection.PickedUid;
+            moves = projection.LegacyMoves ?? Array.Empty<PostKillCardMove>();
+            deals = projection.LegacyDeals ?? Array.Empty<PostKillCardDeal>();
+            removedUids = projection.LegacyRemovedUids ?? Array.Empty<int>();
+            steps = projection.Steps ?? Array.Empty<BoardPresentationStep>();
         }
 
         /// <summary>
@@ -2837,8 +2937,10 @@ namespace NineGrid.Flow
                 }
 
                 if (useResult.PostKillBoard.Accepted
-                    && ((useResult.PostKillBoard.Moves != null && useResult.PostKillBoard.Moves.Length > 0)
-                        || (useResult.PostKillBoard.Deals != null && useResult.PostKillBoard.Deals.Length > 0)))
+                    && ((useResult.PostKillBoard.Steps != null && useResult.PostKillBoard.Steps.Length > 0)
+                        || (useResult.PostKillBoard.Moves != null && useResult.PostKillBoard.Moves.Length > 0)
+                        || (useResult.PostKillBoard.Deals != null && useResult.PostKillBoard.Deals.Length > 0)
+                        || (useResult.PostKillBoard.RemovedUids != null && useResult.PostKillBoard.RemovedUids.Length > 0)))
                 {
                     await DrainPostKillBoardAsync(useResult.PostKillBoard, ct);
                 }
@@ -3023,13 +3125,14 @@ namespace NineGrid.Flow
                 CombatHitSink.ChoiceOverlayActive = false;
                 try
                 {
-                    FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids);
+                    FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids, out var rewardSteps);
                     PresentGoldGainsFromEventLog(startIndex);
                     PresentEffectTriggersFromEventLog(startIndex);
                     var phase = phaseSystem.CurrentPhase;
                     var boardDelta = new PostKillBoardPresentationResult
                     {
                         Accepted = true,
+                        Steps = rewardSteps ?? Array.Empty<BoardPresentationStep>(),
                         Moves = moves ?? Array.Empty<PostKillCardMove>(),
                         Deals = deals ?? Array.Empty<PostKillCardDeal>(),
                         RemovedUids = removedUids ?? Array.Empty<int>(),
@@ -3043,7 +3146,8 @@ namespace NineGrid.Flow
                         AvatarDefeated = phase == GamePhase.Defeat,
                     };
 
-                    if ((boardDelta.Moves != null && boardDelta.Moves.Length > 0)
+                    if ((boardDelta.Steps != null && boardDelta.Steps.Length > 0)
+                        || (boardDelta.Moves != null && boardDelta.Moves.Length > 0)
                         || (boardDelta.Deals != null && boardDelta.Deals.Length > 0)
                         || (boardDelta.RemovedUids != null && boardDelta.RemovedUids.Length > 0))
                     {
@@ -3195,11 +3299,44 @@ namespace NineGrid.Flow
             return new BouncePickResult(picked, skipRequested: false, cancelled: false);
         }
 
+        private static bool ShouldDeferBoardTimelineSync()
+        {
+            return ChoreoTraceContext.PumpRunning || ChoreoTraceContext.DrainInFlight;
+        }
+
+        private void FlushDeferredBoardSync(bool force = false)
+        {
+            if (!force && ShouldDeferBoardTimelineSync())
+            {
+                return;
+            }
+
+            if (_pendingSoftAlignToCore)
+            {
+                _pendingSoftAlignToCore = false;
+                SoftAlignBoardAnchorsToCore(force: true);
+            }
+
+            if (_pendingSyncFromCore)
+            {
+                _pendingSyncFromCore = false;
+                SyncBoardOccupancyFromCore(force: true);
+            }
+        }
+
         /// <summary>
         /// 占格已与 Core 一致时，把 Transform 软对齐到锚点（不 Release）。
         /// </summary>
-        private void SoftAlignBoardAnchorsToCore()
+        private void SoftAlignBoardAnchorsToCore(bool force = false)
         {
+            if (!force && ShouldDeferBoardTimelineSync())
+            {
+                _pendingSoftAlignToCore = true;
+                FieldTraceHelper.RecordBoardSyncDeferred("SoftAlign", "timelineActive");
+                return;
+            }
+
+            _pendingSoftAlignToCore = false;
             ResolveManagers();
             if (fieldManager == null || cardManager == null)
             {
@@ -3869,13 +4006,26 @@ namespace NineGrid.Flow
             return null;
         }
 
+        private void RequestSyncBoardFromCore()
+        {
+            SyncBoardOccupancyFromCore();
+        }
+
         /// <summary>
         /// 安全网：两阶段对齐 Core 占格。
         /// 1) 卸下所有与 Core 不一致的占格（含仍在盘面但错位的 uid，避免目标格占用阻塞迁移）；
         /// 2) 按 Core 落位（已有视图迁/放锚，缺失则 Spawn）。
         /// </summary>
-        private void SyncBoardOccupancyFromCore()
+        private void SyncBoardOccupancyFromCore(bool force = false)
         {
+            if (!force && ShouldDeferBoardTimelineSync())
+            {
+                _pendingSyncFromCore = true;
+                FieldTraceHelper.RecordBoardSyncDeferred("SyncOccupancy", "timelineActive");
+                return;
+            }
+
+            _pendingSyncFromCore = false;
             ResolveManagers();
             if (cardManager == null || fieldManager == null)
             {

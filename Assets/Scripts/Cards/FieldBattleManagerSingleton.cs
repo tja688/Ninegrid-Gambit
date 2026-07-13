@@ -365,6 +365,7 @@ namespace NineGrid.Cards
                 new PostKillBoardPresentationResult
                 {
                     Accepted = true,
+                    Steps = hit.Steps ?? Array.Empty<BoardPresentationStep>(),
                     Moves = hit.Moves ?? Array.Empty<PostKillCardMove>(),
                     Deals = hit.Deals ?? Array.Empty<PostKillCardDeal>(),
                     RemovedUids = hit.RemovedUids ?? Array.Empty<int>(),

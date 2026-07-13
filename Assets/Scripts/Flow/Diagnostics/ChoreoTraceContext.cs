@@ -124,6 +124,17 @@ namespace NineGrid.Flow.Diagnostics
             }
         }
 
+        /// <summary>
+        /// 取消/异常恢复：关闭所有未结束的 choreo，避免泄漏到后续 Sync 诊断。
+        /// </summary>
+        public static void ForceCloseOpenChoreos(string reason)
+        {
+            while (sOpenStack.Count > 0)
+            {
+                EndChoreo("cancelled:" + (reason ?? string.Empty));
+            }
+        }
+
         public static void RecordExploreTrace(
             int uid,
             string phase,

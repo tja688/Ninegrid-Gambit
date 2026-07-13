@@ -443,6 +443,7 @@ namespace NineGrid.Cards
                     new PostKillBoardPresentationResult
                     {
                         Accepted = true,
+                        Steps = pickup.Steps,
                         Moves = pickup.Moves,
                         Deals = pickup.Deals,
                         NodeClearedOrRewardPhase = pickup.NodeClearedOrRewardPhase,
@@ -533,6 +534,7 @@ namespace NineGrid.Cards
                     new PostKillBoardPresentationResult
                     {
                         Accepted = true,
+                        Steps = pickup.Steps,
                         Moves = pickup.Moves,
                         Deals = pickup.Deals,
                         RemovedUids = pickup.RemovedUids,

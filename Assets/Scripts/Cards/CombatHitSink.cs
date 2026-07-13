@@ -28,6 +28,8 @@ namespace NineGrid.Cards
         public bool NodeClearedOrRewardPhase;
         /// <summary>本段所有 amount&gt;0 的 DamageDealt，按事件序；可多条（主伤+反伤）。</summary>
         public CombatDamagePopup[] DamagePopups;
+        /// <summary>保序步骤流；非空时优先于扁平 Moves/Deals/RemovedUids。</summary>
+        public BoardPresentationStep[] Steps;
         /// <summary>本段 CardMoved（含 OnBattle 旋转 hop），对齐 UseItem/Pickup 缓释契约。</summary>
         public PostKillCardMove[] Moves;
         /// <summary>本段 CardDealt（旋转后补牌等）。</summary>
@@ -35,8 +37,11 @@ namespace NineGrid.Cards
         /// <summary>本段技能/效果 CardRemoved / CardKilled（非交战主目标尸体路径）。</summary>
         public int[] RemovedUids;
 
+        public readonly bool HasOrderedSteps => Steps != null && Steps.Length > 0;
+
         public readonly bool HasBoardDelta =>
-            (Moves != null && Moves.Length > 0)
+            HasOrderedSteps
+            || (Moves != null && Moves.Length > 0)
             || (Deals != null && Deals.Length > 0)
             || (RemovedUids != null && RemovedUids.Length > 0);
     }
@@ -62,6 +67,33 @@ namespace NineGrid.Cards
     }
 
     /// <summary>
+    /// 盘面表现步骤种类（由 Flow 自 EventLog 投影，非 Core 契约）。
+    /// </summary>
+    public enum BoardPresentationStepKind
+    {
+        Rotate,
+        Swap,
+        Move,
+        Deal,
+        Remove,
+    }
+
+    /// <summary>
+    /// 保序盘面表现步骤：一次 Core action 或独立事件对应一步演出。
+    /// </summary>
+    public struct BoardPresentationStep
+    {
+        public long CoreSequence;
+        public int ActionId;
+        public BoardPresentationStepKind Kind;
+        /// <summary>旋转方向；仅 <see cref="BoardPresentationStepKind.Rotate"/> 有效。</summary>
+        public bool Clockwise;
+        public PostKillCardMove[] Moves;
+        public PostKillCardDeal[] Deals;
+        public int[] RemovedUids;
+    }
+
+    /// <summary>
     /// 击杀后盘面结算摘要（Core 一次算完的结果，供表现缓冲缓释）。
     /// </summary>
     public struct PostKillBoardPresentationResult
@@ -69,6 +101,8 @@ namespace NineGrid.Cards
         public bool Accepted;
         public bool NodeClearedOrRewardPhase;
         public bool AvatarDefeated;
+        /// <summary>保序步骤流；非空时 Drain 逐步播放，扁平 Moves 仅作回退。</summary>
+        public BoardPresentationStep[] Steps;
         public PostKillCardMove[] Moves;
         public PostKillCardDeal[] Deals;
         /// <summary>
@@ -92,7 +126,11 @@ namespace NineGrid.Cards
         public PostKillCardMove[] Moves;
         public PostKillCardDeal[] Deals;
         public int[] RemovedUids;
+        /// <summary>保序步骤流；非空时 Drain 逐步播放。</summary>
+        public BoardPresentationStep[] Steps;
         public bool NodeClearedOrRewardPhase;
+
+        public readonly bool HasOrderedSteps => Steps != null && Steps.Length > 0;
     }
 
     /// <summary>

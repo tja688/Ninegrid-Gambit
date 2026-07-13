@@ -163,7 +163,9 @@ namespace NineGrid.Flow.Diagnostics
             int deals,
             bool drainInFlight,
             bool fieldBusy,
-            bool presentationLocked)
+            bool presentationLocked,
+            int stepCount = 0,
+            int requestId = 0)
         {
             Record(
                 FlowTraceCategory.Presentation,
@@ -172,6 +174,8 @@ namespace NineGrid.Flow.Diagnostics
                 {
                     { "moves", moves.ToString() },
                     { "deals", deals.ToString() },
+                    { "stepCount", stepCount.ToString() },
+                    { "requestId", requestId.ToString() },
                     { "drainInFlight", drainInFlight ? "true" : "false" },
                     { "fieldBusy", fieldBusy ? "true" : "false" },
                     { "presentationLocked", presentationLocked ? "true" : "false" },
@@ -183,7 +187,9 @@ namespace NineGrid.Flow.Diagnostics
             int deals,
             bool drainInFlight,
             bool fieldBusy,
-            bool presentationLocked)
+            bool presentationLocked,
+            int stepCount = 0,
+            int requestId = 0)
         {
             Record(
                 FlowTraceCategory.Presentation,
@@ -192,6 +198,8 @@ namespace NineGrid.Flow.Diagnostics
                 {
                     { "moves", moves.ToString() },
                     { "deals", deals.ToString() },
+                    { "stepCount", stepCount.ToString() },
+                    { "requestId", requestId.ToString() },
                     { "drainInFlight", drainInFlight ? "true" : "false" },
                     { "fieldBusy", fieldBusy ? "true" : "false" },
                     { "presentationLocked", presentationLocked ? "true" : "false" },
@@ -370,6 +378,114 @@ namespace NineGrid.Flow.Diagnostics
                     { "pendingCount", pendingCount.ToString() },
                 },
                 accepted: false);
+        }
+
+        public static void RecordBoardStepBegin(
+            int requestId,
+            int stepIndex,
+            int stepCount,
+            BoardPresentationStep step)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.BoardStepBegin,
+                new Dictionary<string, string>
+                {
+                    { "requestId", requestId.ToString() },
+                    { "stepIndex", stepIndex.ToString() },
+                    { "stepCount", stepCount.ToString() },
+                    { "stepKind", step.Kind.ToString() },
+                    { "coreSequence", step.CoreSequence.ToString() },
+                    { "actionId", step.ActionId.ToString() },
+                    { "moveCount", (step.Moves?.Length ?? 0).ToString() },
+                    { "dealCount", (step.Deals?.Length ?? 0).ToString() },
+                    { "removeCount", (step.RemovedUids?.Length ?? 0).ToString() },
+                    { "clockwise", step.Clockwise ? "true" : "false" },
+                    { "choreoSeqId", ChoreoTraceContext.CurrentSeqId.ToString() },
+                });
+        }
+
+        public static void RecordBoardStepEnd(
+            int requestId,
+            int stepIndex,
+            int stepCount,
+            BoardPresentationStep step,
+            int choreoSeqId)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.BoardStepEnd,
+                new Dictionary<string, string>
+                {
+                    { "requestId", requestId.ToString() },
+                    { "stepIndex", stepIndex.ToString() },
+                    { "stepCount", stepCount.ToString() },
+                    { "stepKind", step.Kind.ToString() },
+                    { "coreSequence", step.CoreSequence.ToString() },
+                    { "actionId", step.ActionId.ToString() },
+                    { "choreoSeqId", choreoSeqId.ToString() },
+                });
+        }
+
+        public static void RecordBoardSyncDeferred(string phase, string reason)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.BoardSyncDeferred,
+                new Dictionary<string, string>
+                {
+                    { "phase", phase ?? string.Empty },
+                    { "reason", reason ?? string.Empty },
+                    { "pumpRunning", ChoreoTraceContext.PumpRunning ? "true" : "false" },
+                    { "drainInFlight", ChoreoTraceContext.DrainInFlight ? "true" : "false" },
+                },
+                accepted: false);
+            PerfTraceRecorder.EmitChoreoAnomaly(
+                PerfTraceAnomalyCodes.SyncDuringBoardTimeline,
+                -1,
+                phase + ":" + reason);
+        }
+
+        public static void RecordBoardStepFallbackGeneralHop(
+            int requestId,
+            int stepIndex,
+            int moveCount)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.BoardStepFallbackGeneralHop,
+                new Dictionary<string, string>
+                {
+                    { "requestId", requestId.ToString() },
+                    { "stepIndex", stepIndex.ToString() },
+                    { "moveCount", moveCount.ToString() },
+                },
+                accepted: false);
+            PerfTraceRecorder.EmitChoreoAnomaly(
+                PerfTraceAnomalyCodes.BoardStepGeneralHopFallback,
+                -1,
+                "requestId=" + requestId + " step=" + stepIndex + " moves=" + moveCount);
+        }
+
+        public static void RecordBoardRotateChoreoMismatch(
+            int requestId,
+            int coreRotateCount,
+            int choreoRotateCount)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.BoardRotateChoreoMismatch,
+                new Dictionary<string, string>
+                {
+                    { "requestId", requestId.ToString() },
+                    { "coreRotateCount", coreRotateCount.ToString() },
+                    { "choreoRotateCount", choreoRotateCount.ToString() },
+                },
+                accepted: false);
+            PerfTraceRecorder.EmitChoreoAnomaly(
+                PerfTraceAnomalyCodes.BoardRotateChoreoCountMismatch,
+                -1,
+                "requestId=" + requestId + " core=" + coreRotateCount + " choreo=" + choreoRotateCount);
         }
 
         public static void RecordRotateClassify(

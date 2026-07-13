@@ -116,6 +116,14 @@ namespace NineGrid.Flow
         public int NodeIndex => _nodeIndex;
         public bool CanAcceptQuickTestEntry => _state == LoopState.MainMenu && !_isBusy;
 
+        /// <summary>
+        /// 局内（非主菜单/胜负 Notice）可接受 \ 长按 Debug 快速模式。
+        /// </summary>
+        public bool CanAcceptInBattleDebugQuickMode =>
+            _state != LoopState.MainMenu
+            && _state != LoopState.VictoryNotice
+            && _state != LoopState.DefeatNotice;
+
         private void Awake()
         {
             if (_instance != null && _instance != this)
@@ -217,6 +225,60 @@ namespace NineGrid.Flow
             CoreCardPresentationMapper.EnsureContentCatalogLoaded();
             var catalog = NineGridArchitecture.Current.GetSystem<IContentSystem>()?.Catalog;
             return QuickTestDeckCatalog.BuildPickerMenuText(catalog);
+        }
+
+        /// <summary>
+        /// 局内 Debug 快速模式菜单（Notice Text）。
+        /// </summary>
+        public void ShowInBattleDebugQuickModeNotice(string message)
+        {
+            ShowNotice(message);
+        }
+
+        /// <summary>
+        /// 关闭局内 Debug 快速模式菜单。
+        /// </summary>
+        public void HideInBattleDebugQuickModeNotice()
+        {
+            HideNotice();
+        }
+
+        /// <summary>
+        /// 构建局内 Debug 快速模式菜单文案。
+        /// </summary>
+        public string BuildInBattleDebugQuickModeMenuText()
+        {
+            return "局内 Debug 快速模式\n\n"
+                + "当前全局速度：x" + FormatTimeScale(Time.timeScale) + "\n\n"
+                + "\\1  全局速度 x1\n"
+                + "\\2  全局速度 x2（再按在此基础上 x2）\n\n"
+                + "Esc 关闭";
+        }
+
+        /// <summary>
+        /// 局内 Debug：全局速度设为 x1。
+        /// </summary>
+        public void ApplyInBattleDebugQuickModeTimeScaleX1()
+        {
+            Time.timeScale = 1f;
+            Debug.Log("[MainGameLoop] 局内 Debug 快速模式：全局速度 x1");
+        }
+
+        /// <summary>
+        /// 局内 Debug：首次 x2，之后在当前倍率上再 x2。
+        /// </summary>
+        public void ApplyInBattleDebugQuickModeTimeScaleX2()
+        {
+            if (Time.timeScale <= 1.01f)
+            {
+                Time.timeScale = 2f;
+            }
+            else
+            {
+                Time.timeScale *= 2f;
+            }
+
+            Debug.Log("[MainGameLoop] 局内 Debug 快速模式：全局速度 x" + FormatTimeScale(Time.timeScale));
         }
 
         /// <summary>
@@ -991,10 +1053,14 @@ namespace NineGrid.Flow
 
         private void ResetQuickTestTimeScale()
         {
-            if (Mathf.Approximately(Time.timeScale, QuickTestTimeScale))
-            {
-                Time.timeScale = 1f;
-            }
+            Time.timeScale = 1f;
+        }
+
+        private static string FormatTimeScale(float scale)
+        {
+            return Mathf.Approximately(scale, Mathf.Round(scale))
+                ? Mathf.RoundToInt(scale).ToString()
+                : scale.ToString("0.##");
         }
 
         private void ApplyQuickTestAvatarCheatsIfNeeded()

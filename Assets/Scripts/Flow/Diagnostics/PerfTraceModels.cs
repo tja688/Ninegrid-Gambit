@@ -126,5 +126,11 @@ namespace NineGrid.Flow.Diagnostics
         public const string PickupVisualEligibleButGateFail = "PickupVisualEligibleButGateFail";
         /// <summary>BeatClose 时仍有未完成 choreo。</summary>
         public const string ChoreoIncompleteAtBeatClose = "ChoreoIncompleteAtBeatClose";
+        /// <summary>盘面步骤流播放期间外部 Sync/Snap 被延迟。</summary>
+        public const string SyncDuringBoardTimeline = "SyncDuringBoardTimeline";
+        /// <summary>单步 Move 回退 general-hop，语义可能丢失。</summary>
+        public const string BoardStepGeneralHopFallback = "BoardStepGeneralHopFallback";
+        /// <summary>Core BoardRotated 数与 ChoreoBegin rotate 数不等。</summary>
+        public const string BoardRotateChoreoCountMismatch = "BoardRotateChoreoCountMismatch";
     }
 }
