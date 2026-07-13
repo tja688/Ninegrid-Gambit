@@ -629,6 +629,38 @@ namespace NineGrid.Content
                     "{\"atom\":\"Repeat\",\"count\":2,\"action\":{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Player\"}}"),
                 "[使用帮助卡时] 对随机怪物连续造成2次2点伤害"));
 
+            c.AddEffect(Impl("relic.swap_button.node_start", EffectContainerType.Relic,
+                Triggered("relic.swap_button.node_start", "Relic",
+                    "{\"atom\":\"OnNodeStart\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"Spawn\",\"defId\":\"help.swap_card\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}"),
+                "[每关卡开始时] 将一张交换卡放入道具牌格"));
+            c.AddEffect(Impl("relic.rotation_button.node_start", EffectContainerType.Relic,
+                Triggered("relic.rotation_button.node_start", "Relic",
+                    "{\"atom\":\"OnNodeStart\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"Spawn\",\"defId\":\"help.rotation_wheel\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}"),
+                "[每关卡开始时] 将一张旋转轮放入道具牌格"));
+            c.AddEffect(Impl("relic.blood_shockwave.max_hp", EffectContainerType.Relic,
+                Triggered("relic.blood_shockwave.max_hp", "Relic",
+                    "{\"atom\":\"OnActivate\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":4,\"reason\":\"relic.blood_shockwave.max_hp\"}"),
+                "血量上限+4"));
+            c.AddEffect(Impl("relic.blood_shockwave.node_start", EffectContainerType.Relic,
+                Triggered("relic.blood_shockwave.node_start", "Relic",
+                    "{\"atom\":\"OnNodeStart\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"Spawn\",\"defId\":\"help.impact_tutorial\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}"),
+                "[每关卡开始时] 将一张撞击教程放入道具牌格"));
+            c.AddEffect(Impl("relic.blood_shockwave.node_start_low_hp", EffectContainerType.Relic,
+                Triggered("relic.blood_shockwave.node_start_low_hp", "Relic",
+                    "{\"atom\":\"OnNodeStart\"}",
+                    "{\"atom\":\"Player\"}",
+                    "{\"atom\":\"Spawn\",\"defId\":\"help.impact_tutorial\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}",
+                    "[{\"atom\":\"HpBelow\",\"target\":\"Player\",\"pct\":0.5}]"),
+                "[每关卡开始时] 当前血量低于50%时再放入一张撞击教程"));
+
             c.AddEffect(Impl("relic.throwing_knife_bag.node_start", EffectContainerType.Relic,
                 Triggered("relic.throwing_knife_bag.node_start", "Relic",
                     "{\"atom\":\"OnNodeStart\"}",
@@ -1083,6 +1115,8 @@ namespace NineGrid.Content
             Relic(c, "relic.wood_sword", "木剑", ContentRarity.White, "攻击+1，木套装额外+2").AddEffect("relic.wood_sword.base").AddEffect("relic.wood_sword.set");
             Relic(c, "relic.wood_armor", "木甲", ContentRarity.White, "血量上限+2，木套装额外+8").AddEffect("relic.wood_armor.base").AddEffect("relic.wood_armor.set");
             Relic(c, "relic.lucky_coin", "幸运硬币", ContentRarity.White, "击杀精英/层主时加入金币卡").AddEffect("relic.lucky_coin.elite_kill").AddEffect("relic.lucky_coin.boss_kill");
+            Relic(c, "relic.swap_button", "交换按钮", ContentRarity.White, "每关卡开始放入交换卡").AddEffect("relic.swap_button.node_start");
+            Relic(c, "relic.rotation_button", "旋转按钮", ContentRarity.White, "每关卡开始放入旋转轮").AddEffect("relic.rotation_button.node_start");
             Relic(c, "relic.throwing_knife_bag", "飞刀袋", ContentRarity.White, "每关卡开始加入两张飞刀").AddEffect("relic.throwing_knife_bag.node_start");
             Relic(c, "relic.potion_bag", "药水袋", ContentRarity.White, "每关卡开始加入两张恢复药水").AddEffect("relic.potion_bag.node_start");
             Relic(c, "relic.junk_launcher", "废物发射器", ContentRarity.White, "使用帮助卡时随机伤害").AddEffect("relic.junk_launcher.use");
@@ -1100,6 +1134,10 @@ namespace NineGrid.Content
                 .AddEffect("relic.phoenix_feather.max_hp").AddEffect("relic.phoenix_feather.fatal");
             Relic(c, "relic.craving", "渴望", ContentRarity.Gold, "所有恢复血量效果翻倍").AddEffect("relic.craving.rule");
             Relic(c, "relic.junk_slot_machine", "废物老虎机", ContentRarity.Gold, "使用帮助卡时随机触发九选一").AddEffect("relic.junk_slot_machine.use");
+            Relic(c, "relic.blood_shockwave", "血液冲击波", ContentRarity.Gold, "血量上限+4，关卡开始放入撞击教程，低血再放一张")
+                .AddEffect("relic.blood_shockwave.max_hp")
+                .AddEffect("relic.blood_shockwave.node_start")
+                .AddEffect("relic.blood_shockwave.node_start_low_hp");
         }
 
         private static void AddPlayerSkills(GameContentCatalog c)

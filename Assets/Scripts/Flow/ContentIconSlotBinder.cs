@@ -9,6 +9,43 @@ namespace NineGrid.Flow
     /// </summary>
     internal static class ContentIconSlotBinder
     {
+        public static bool TryGetSlotTransform(Transform anchorsRoot, int slotIndex, out Transform slot)
+        {
+            slot = null;
+            if (anchorsRoot == null || slotIndex < 0 || slotIndex >= anchorsRoot.childCount)
+            {
+                return false;
+            }
+
+            slot = anchorsRoot.GetChild(slotIndex);
+            return slot != null;
+        }
+
+        public static bool TryGetSlotTransformByDefId(
+            Transform anchorsRoot,
+            IReadOnlyList<string> displayedDefIds,
+            string defId,
+            out Transform slot)
+        {
+            slot = null;
+            if (anchorsRoot == null || string.IsNullOrEmpty(defId) || displayedDefIds == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < displayedDefIds.Count; i++)
+            {
+                if (displayedDefIds[i] != defId)
+                {
+                    continue;
+                }
+
+                return TryGetSlotTransform(anchorsRoot, i, out slot);
+            }
+
+            return false;
+        }
+
         public static SpriteRenderer[] CollectChildRenderers(Transform anchorsRoot)
         {
             if (anchorsRoot == null)

@@ -404,6 +404,110 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 开局/遗物锚点发牌：卡组 withdraw 或 Spawn 后，从 origin 飞入手牌（仅 InGame）。
+        /// </summary>
+        public async UniTask<bool> DealCardToHandAsync(
+            int uid,
+            string defId,
+            Transform originAnchor,
+            ManagedCard ensureCard = null,
+            bool skipBusyGuard = false,
+            CancellationToken cancellationToken = default)
+        {
+            if (!EnsureInGameForDeal())
+            {
+                return false;
+            }
+
+            var handManager = CardHandManagerSingleton.Instance;
+            if (handManager == null)
+            {
+                Debug.LogWarning($"[CardDeckManager] DealCardToHand uid={uid} 失败：无 CardHandManager。");
+                return false;
+            }
+
+            if (!skipBusyGuard && !handManager.CanAcceptCard)
+            {
+                Debug.LogWarning($"[CardDeckManager] DealCardToHand uid={uid} 跳过：手牌已满。");
+                return false;
+            }
+
+            if (skipBusyGuard && handManager.HandCount >= handManager.MaxHandSlots)
+            {
+                Debug.LogWarning($"[CardDeckManager] DealCardToHand uid={uid} 跳过：手牌已满。");
+                return false;
+            }
+
+            var cardManager = CardManagerSingleton.Instance;
+            ManagedCard card = ensureCard != null && ensureCard.Uid == uid ? ensureCard : null;
+            if (card == null)
+            {
+                cardManager?.TryGet(uid, out card);
+            }
+
+            if (TryFindDeckSlotByUid(uid, out var deckSlot))
+            {
+                if (!_slotContainer.TryRemoveAt(deckSlot, out card, out var rippleMoves))
+                {
+                    Debug.LogWarning($"[CardDeckManager] DealCardToHand uid={uid} 失败：卡组槽移除失败。");
+                    return false;
+                }
+
+                await CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration, cancellationToken);
+            }
+            else if (card == null && cardManager != null)
+            {
+                card = cardManager.SpawnView(uid, defId, initialMode: CardDisplayMode.GroundCardMode);
+            }
+
+            if (card == null || card.Transform == null)
+            {
+                Debug.LogWarning($"[CardDeckManager] DealCardToHand uid={uid} 失败：无可用视图。");
+                return false;
+            }
+
+            var origin = originAnchor != null ? originAnchor : GetDeckAnchor(0);
+            if (origin != null)
+            {
+                card.Transform.position = origin.position;
+            }
+
+            cardManager?.SetDisplayMode(card, CardDisplayMode.GroundCardMode);
+            CardOpacityUtility.ResetAlpha(card);
+
+            var ok = await handManager.PullFromGroundAsync(
+                card,
+                skipBusyGuard: skipBusyGuard,
+                cancellationToken: cancellationToken);
+            if (ok)
+            {
+                try
+                {
+                    FlowFieldTraceSink.HandLifecycle?.Invoke(
+                        card.Uid,
+                        "acquire",
+                        true,
+                        "OpeningDeal");
+                }
+                catch
+                {
+                    // ignore
+                }
+            }
+
+            return ok;
+        }
+
+        /// <summary>
+        /// 发牌视觉起点兜底：卡组最左侧槽位锚点。
+        /// </summary>
+        public bool TryGetDefaultDealOrigin(out Transform anchor)
+        {
+            anchor = GetDeckAnchor(0);
+            return anchor != null;
+        }
+
+        /// <summary>
         /// 将卡牌退回卡组最左侧（探求失败回滚，仅 InGame）。发射后不管：垂直上飞离画后自然 ripple 入组。
         /// </summary>
         public bool TryReturnCardToDeckFront(ManagedCard card, out IReadOnlyList<CardDeckRippleMove> rippleMoves)

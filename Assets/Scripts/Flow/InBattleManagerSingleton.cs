@@ -592,6 +592,30 @@ namespace NineGrid.Flow
             public string AvatarDefId;
             public readonly List<ManagedCard> DeckCards = new();
             public readonly List<BoardPlacement> BoardPlacements = new();
+            public readonly List<HandDealFromSource> HandDeals = new();
+        }
+
+        private sealed class HandDealFromSource
+        {
+            public HandDealFromSource(
+                int uid,
+                string defId,
+                string sourceDefId,
+                int sourceSlotIndex,
+                long eventSequence)
+            {
+                Uid = uid;
+                DefId = defId;
+                SourceDefId = sourceDefId ?? string.Empty;
+                SourceSlotIndex = sourceSlotIndex;
+                EventSequence = eventSequence;
+            }
+
+            public int Uid { get; }
+            public string DefId { get; }
+            public string SourceDefId { get; }
+            public int SourceSlotIndex { get; }
+            public long EventSequence { get; }
         }
 
         private OpeningPresentationPlan CaptureOpeningPresentationPlan(IArchitecture arch)
@@ -700,7 +724,129 @@ namespace NineGrid.Flow
                 }
             }
 
+            CaptureOpeningHandDeals(arch, plan);
+
             return plan;
+        }
+
+        private void CaptureOpeningHandDeals(IArchitecture arch, OpeningPresentationPlan plan)
+        {
+            var deck = arch.GetModel<DeckModel>();
+            var registry = arch.GetModel<CardRegistry>();
+            var player = arch.GetModel<PlayerModel>();
+            var entries = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
+            if (deck.ItemSlotUids.Count == 0 || entries == null)
+            {
+                return;
+            }
+
+            var spawnMeta = new Dictionary<int, (string sourceDefId, long sequence)>();
+            for (var i = _nodeEventLogStart; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                if (entry.Type != CoreEventType.CardSpawned || entry.CardUid <= 0)
+                {
+                    continue;
+                }
+
+                if (spawnMeta.ContainsKey(entry.CardUid))
+                {
+                    continue;
+                }
+
+                var sourceDefId = entry.Cause ?? string.Empty;
+                spawnMeta[entry.CardUid] = (sourceDefId, entry.Sequence);
+            }
+
+            for (var i = 0; i < deck.ItemSlotUids.Count; i++)
+            {
+                var uid = deck.ItemSlotUids[i];
+                if (!registry.TryGet(uid, out var coreCard))
+                {
+                    continue;
+                }
+
+                var sourceDefId = string.Empty;
+                long eventSequence = i;
+                if (spawnMeta.TryGetValue(uid, out var meta))
+                {
+                    sourceDefId = meta.sourceDefId;
+                    eventSequence = meta.sequence;
+                }
+
+                var slotIndex = ResolveHandDealSourceSlotIndex(sourceDefId, player);
+                plan.HandDeals.Add(new HandDealFromSource(
+                    uid,
+                    coreCard.DefId,
+                    sourceDefId,
+                    slotIndex,
+                    eventSequence));
+            }
+
+            plan.HandDeals.Sort((a, b) =>
+            {
+                var cmp = a.SourceSlotIndex.CompareTo(b.SourceSlotIndex);
+                return cmp != 0 ? cmp : a.EventSequence.CompareTo(b.EventSequence);
+            });
+        }
+
+        private static int ResolveHandDealSourceSlotIndex(string sourceDefId, PlayerModel player)
+        {
+            if (string.IsNullOrEmpty(sourceDefId) || player == null)
+            {
+                return 99999;
+            }
+
+            if (sourceDefId.StartsWith("relic.", StringComparison.Ordinal))
+            {
+                var relics = player.RelicDefIds;
+                for (var i = 0; i < relics.Count; i++)
+                {
+                    if (relics[i] == sourceDefId)
+                    {
+                        return i;
+                    }
+                }
+
+                return 9000;
+            }
+
+            if (sourceDefId.StartsWith("skill.", StringComparison.Ordinal))
+            {
+                var skills = player.SkillDefIds;
+                for (var i = 0; i < skills.Count; i++)
+                {
+                    if (skills[i] == sourceDefId)
+                    {
+                        return 10000 + i;
+                    }
+                }
+
+                return 19000;
+            }
+
+            return 99999;
+        }
+
+        private bool TryResolveHandDealOrigin(string sourceDefId, out Transform origin)
+        {
+            origin = null;
+            if (string.IsNullOrEmpty(sourceDefId))
+            {
+                return false;
+            }
+
+            if (sourceDefId.StartsWith("relic.", StringComparison.Ordinal))
+            {
+                return relicManager != null && relicManager.TryGetDealOrigin(sourceDefId, out origin);
+            }
+
+            if (sourceDefId.StartsWith("skill.", StringComparison.Ordinal))
+            {
+                return skillManager != null && skillManager.TryGetDealOrigin(sourceDefId, out origin);
+            }
+
+            return false;
         }
 
         private async UniTask PresentOpeningAsync(
@@ -800,6 +946,66 @@ namespace NineGrid.Flow
                     await GroundFieldManagerSingleton.WaitDealFlightsSettledAsync(
                         flightHandles,
                         cancellationToken);
+                }
+
+                if (plan.HandDeals.Count > 0)
+                {
+                    ResolveManagers();
+                    for (var h = 0; h < plan.HandDeals.Count; h++)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        var handDeal = plan.HandDeals[h];
+                        if (!TryResolveHandDealOrigin(handDeal.SourceDefId, out var origin))
+                        {
+                            if (deckManager == null || !deckManager.TryGetDefaultDealOrigin(out origin))
+                            {
+                                Debug.LogWarning(
+                                    $"[InBattleManager] Opening HandDeal uid={handDeal.Uid} source={handDeal.SourceDefId} 无锚点，跳过。");
+                                continue;
+                            }
+
+                            Debug.LogWarning(
+                                $"[InBattleManager] Opening HandDeal uid={handDeal.Uid} source={handDeal.SourceDefId} 锚点未找到，fallback 卡组左侧。");
+                        }
+
+                        cardManager.TryGet(handDeal.Uid, out var ensureCard);
+                        if (ensureCard == null)
+                        {
+                            ensureCard = cardManager.SpawnView(
+                                handDeal.Uid,
+                                handDeal.DefId,
+                                initialMode: CardDisplayMode.GroundCardMode);
+                            if (ensureCard != null)
+                            {
+                                CoreCardPresentationMapper.ApplyToManagedCard(ensureCard);
+                            }
+                        }
+
+                        var handOk = await deckManager.DealCardToHandAsync(
+                            handDeal.Uid,
+                            handDeal.DefId,
+                            origin,
+                            ensureCard: ensureCard,
+                            skipBusyGuard: true,
+                            cancellationToken: cancellationToken);
+                        FieldTraceHelper.RecordOpeningHandDealProgress(
+                            handDeal.Uid,
+                            handDeal.SourceDefId,
+                            handOk,
+                            h);
+                        if (!handOk)
+                        {
+                            Debug.LogWarning(
+                                $"[InBattleManager] Opening HandDeal 失败 uid={handDeal.Uid} source={handDeal.SourceDefId}。");
+                        }
+
+                        if (h < plan.HandDeals.Count - 1 && dealInterval > 0f)
+                        {
+                            await UniTask.Delay(
+                                TimeSpan.FromSeconds(dealInterval),
+                                cancellationToken: cancellationToken);
+                        }
+                    }
                 }
             }
             finally

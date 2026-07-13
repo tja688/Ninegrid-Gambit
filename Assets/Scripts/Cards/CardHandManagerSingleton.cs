@@ -82,6 +82,8 @@ namespace NineGrid.Cards
 
         public int HandCount => _slotContainer?.Count ?? 0;
 
+        public int MaxHandSlots => layoutSettings.maxSlots;
+
         public bool IsBusy
         {
             get
@@ -240,6 +242,7 @@ namespace NineGrid.Cards
         public async UniTask<bool> PullFromGroundAsync(
             ManagedCard card,
             int? insertSlot = null,
+            bool skipBusyGuard = false,
             CancellationToken cancellationToken = default)
         {
             // PresentationLocked 时本路径已持单输入锁，勿用完整 IsBusy/CanAcceptCard 自拒。
@@ -250,13 +253,18 @@ namespace NineGrid.Cards
             if (card == null
                 || IsDragging
                 || HandCount >= layoutSettings.maxSlots
-                || (_isBusy && !boardSelectAbortRestore)
                 || CombatHitSink.ChoiceOverlayActive)
             {
                 return false;
             }
 
-            if (!CombatHitSink.PresentationLocked)
+            if (!skipBusyGuard
+                && (_isBusy && !boardSelectAbortRestore))
+            {
+                return false;
+            }
+
+            if (!CombatHitSink.PresentationLocked && !skipBusyGuard)
             {
                 var field = GroundFieldManagerSingleton.Instance;
                 if (field != null && field.IsBusy)

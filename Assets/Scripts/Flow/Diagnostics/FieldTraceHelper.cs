@@ -292,6 +292,21 @@ namespace NineGrid.Flow.Diagnostics
                 accepted: ok);
         }
 
+        public static void RecordOpeningHandDealProgress(int uid, string sourceDefId, bool ok, int handIndex)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.OpeningDealProgress,
+                new Dictionary<string, string>
+                {
+                    { "uid", uid.ToString() },
+                    { "sourceDefId", sourceDefId ?? string.Empty },
+                    { "ok", ok ? "true" : "false" },
+                    { "handIndex", handIndex.ToString() },
+                },
+                accepted: ok);
+        }
+
         public static void RecordHopPlanFromMoves(IReadOnlyList<PostKillCardMove> moves)
         {
             if (!FlowTraceRecorder.Enabled || moves == null || moves.Count == 0)

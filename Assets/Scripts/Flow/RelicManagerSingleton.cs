@@ -109,6 +109,25 @@ namespace NineGrid.Flow
             ContentIconSlotBinder.ClearAll(_slotRenderers);
         }
 
+        /// <summary>
+        /// 按当前遗物栏占位顺序解析发牌视觉起点（与图标槽 index 一致）。
+        /// </summary>
+        public bool TryGetDealOrigin(string relicDefId, out Transform anchor)
+        {
+            anchor = null;
+            EnsureBindings();
+            if (panelAnchors == null || string.IsNullOrEmpty(relicDefId))
+            {
+                return false;
+            }
+
+            return ContentIconSlotBinder.TryGetSlotTransformByDefId(
+                panelAnchors,
+                _displayedDefIds,
+                relicDefId,
+                out anchor);
+        }
+
         private void EnsureBindings()
         {
             if (panelAnchors == null)
