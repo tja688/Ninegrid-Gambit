@@ -725,6 +725,16 @@ namespace NineGrid.Cards
             return _dealFlightCoordinator != null && _dealFlightCoordinator.IsInFlight(uid);
         }
 
+        internal void NotifyDealDecoyHop(int uid, int fromSlot, int toSlot)
+        {
+            _dealFlightCoordinator?.NotifyDecoyHop(uid, fromSlot, toSlot);
+        }
+
+        internal void NotifyDealDecoyLinearMove(int uid, int toSlot, float duration)
+        {
+            _dealFlightCoordinator?.NotifyDecoyLinearMove(uid, toSlot, duration);
+        }
+
         internal bool TryReleaseDealFlightForHop(int uid, out Vector3 currentPosition)
         {
             currentPosition = default;
@@ -1238,6 +1248,11 @@ namespace NineGrid.Cards
                             continue;
                         }
 
+                        if (IsDealInFlight(plan.card.Uid))
+                        {
+                            NotifyDealDecoyHop(plan.card.Uid, plan.fromSlot, plan.toSlot);
+                        }
+
                         moveTasks.Add(
                             AnimateCardHopToSlotAsync(plan.card, plan.fromSlot, plan.toSlot, cancellationToken));
                     }
@@ -1581,6 +1596,19 @@ namespace NineGrid.Cards
                 var duration = layoutSettings != null ? layoutSettings.swapMoveDuration : 0.3f;
                 CardManagerSingleton.Instance.RefreshDisplayMode(cardA);
                 CardManagerSingleton.Instance.RefreshDisplayMode(cardB);
+
+                if (IsDealInFlight(moveA.Uid))
+                {
+                    NotifyDealDecoyLinearMove(moveA.Uid, moveA.ToSlot, duration);
+                }
+
+                if (IsDealInFlight(moveB.Uid))
+                {
+                    NotifyDealDecoyLinearMove(moveB.Uid, moveB.ToSlot, duration);
+                }
+
+                TryReleaseDealFlightForHop(moveA.Uid, out _);
+                TryReleaseDealFlightForHop(moveB.Uid, out _);
 
                 var tweenA = CardDeckTween.MoveToWorld(
                     cardA.Transform,

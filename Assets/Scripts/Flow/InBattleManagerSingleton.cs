@@ -2038,10 +2038,6 @@ namespace NineGrid.Flow
                 }
             }
 
-            if (flightHandles.Count > 0)
-            {
-                await GroundFieldManagerSingleton.WaitDealFlightsSettledAsync(flightHandles, ct);
-            }
         }
 
         /// <summary>

@@ -79,6 +79,17 @@ namespace NineGrid.Cards.Tests
         }
 
         [Test]
+        public void ComputeHopMidpoint_AddsArcHeight()
+        {
+            var start = Vector3.zero;
+            var end = new Vector3(2f, 0f, 0f);
+            var mid = DealFlightMath.ComputeHopMidpoint(start, end, 0.5f);
+
+            Assert.AreEqual(1f, mid.x, 0.0001f);
+            Assert.AreEqual(0.5f, mid.y, 0.0001f);
+        }
+
+        [Test]
         public void ComputeBudget_RespectsClamp()
         {
             var budget = DealSettleBudget.Compute(

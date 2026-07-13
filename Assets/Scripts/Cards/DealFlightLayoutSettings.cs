@@ -74,5 +74,8 @@ namespace NineGrid.Cards
 
         [Tooltip("多条探求依次启动的最小间隔（秒）。")]
         public float exploreDealInterval = 0.04f;
+
+        [Tooltip("替身静止后末端指数追赶灵敏度（越大越快贴合，避免贝塞尔末端拖尾）。")]
+        public float stableChaseResponsiveness = 16f;
     }
 }

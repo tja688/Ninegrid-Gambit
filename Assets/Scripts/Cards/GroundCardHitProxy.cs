@@ -194,6 +194,13 @@ namespace NineGrid.Cards
             }
 
             _driver ??= GetComponent<CardVisualDriver>();
+            if (_driver?.BoundCard != null
+                && field != null
+                && field.IsDealInFlight(_driver.BoundCard.Uid))
+            {
+                return false;
+            }
+
             return _driver != null && _driver.IsGroundHoverEligible;
         }
 
@@ -212,6 +219,13 @@ namespace NineGrid.Cards
             }
 
             _driver ??= GetComponent<CardVisualDriver>();
+            if (_driver?.BoundCard != null
+                && field != null
+                && field.IsDealInFlight(_driver.BoundCard.Uid))
+            {
+                return false;
+            }
+
             return _driver != null && _driver.IsGroundHoverEligible;
         }
     }

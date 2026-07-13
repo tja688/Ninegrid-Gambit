@@ -67,5 +67,16 @@ namespace NineGrid.Cards
             var duration = Mathf.Max(0.01f, expectedDuration);
             return baseSpeed * speedFactor * budgetFactor * deltaTime / duration;
         }
+
+        public static Vector3 ComputeHopMidpoint(Vector3 start, Vector3 end, float arcHeight)
+        {
+            var linearMid = Vector3.Lerp(start, end, 0.5f);
+            if (arcHeight <= 0f)
+            {
+                return linearMid;
+            }
+
+            return linearMid + Vector3.up * arcHeight;
+        }
     }
 }
