@@ -231,7 +231,7 @@ namespace NineGrid.Cards
             var victimSnapshot = BattleFinalStateGuard.Capture(tauntVictim, field, tauntSlot);
 
             PrepareAttackerAtAvatarAnchor(field, attacker, clickedTransform);
-            rig.ResetParticipantMotion(attacker, clickedTransform);
+            rig.ResetParticipantMotion(attacker, tauntTransform);
             rig.BindParticipantsTauntRedirect(
                 attacker,
                 clickedTransform,

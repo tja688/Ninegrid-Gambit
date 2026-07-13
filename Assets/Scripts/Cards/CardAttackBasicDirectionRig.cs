@@ -166,15 +166,8 @@ namespace NineGrid.Cards
 
             RebindAttackerMotionTauntRedirect(attacker, windupFacingVictim, lungeTargetVictim);
 
-            if (bind.UseRelativeVictimKnockback)
-            {
-                RebindVictimKnockbackFromAttacker(lungeTargetVictim, attacker, bind.VictimKnockbackCoefficient);
-            }
-            else
-            {
-                RebindAnimations(victimAnimations, lungeTargetVictim);
-                ScaleVictimKnockbackEndValues(bind.VictimKnockbackCoefficient);
-            }
+            // 嘲讽目标未必落在本 rig 正交邻格；必须用相对击退，否则会套用点选格烘焙位移导致瞬移。
+            RebindVictimKnockbackFromAttacker(lungeTargetVictim, attacker, bind.VictimKnockbackCoefficient);
 
             if (bind.HitFlashTimingPolicy == BattleHitFlashTimingPolicy.Explicit)
             {

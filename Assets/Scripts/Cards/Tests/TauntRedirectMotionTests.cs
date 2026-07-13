@@ -46,12 +46,23 @@ namespace NineGrid.Cards.Tests
                 var towardTaunt = (lungeEnd - attacker.position).normalized;
                 var expectedToward = ((lungeVictim.position - attacker.position)).normalized;
                 Assert.Greater(Vector3.Dot(towardTaunt, expectedToward), 0.9f, "冲刺应朝向嘲讽目标");
+
+                var knockbackEnd = ReadFirstWorldEnd(rigObject, lungeVictim, delayMin: 0.35f, delayMax: 0.55f);
+                var knockbackDir = (knockbackEnd - lungeVictim.position).normalized;
+                var expectedKnockback = (lungeVictim.position - attacker.position).normalized;
+                Assert.Greater(Vector3.Dot(knockbackDir, expectedKnockback), 0.9f, "击退应沿嘲讽怪远离攻击者方向");
             }
             finally
             {
                 Object.DestroyImmediate(attacker.gameObject);
                 Object.DestroyImmediate(windupVictim.gameObject);
                 Object.DestroyImmediate(lungeVictim.gameObject);
+                var victimTemplate = GameObject.Find("victim_template");
+                if (victimTemplate != null)
+                {
+                    Object.DestroyImmediate(victimTemplate);
+                }
+
                 Object.DestroyImmediate(rigObject);
             }
         }
@@ -68,6 +79,11 @@ namespace NineGrid.Cards.Tests
             CreateMoveTween(rigObject, attackerObject, dotweenAnimationType, delay: 0f, endValue: new Vector3(0f, -0.1f, 0f));
             CreateMoveTween(rigObject, attackerObject, dotweenAnimationType, delay: 0.1f, endValue: new Vector3(1f, 0f, 0f));
             CreateMoveTween(rigObject, attackerObject, dotweenAnimationType, delay: 0.7f, endValue: Vector3.zero);
+
+            var victimObject = new GameObject("victim_template").transform;
+            victimObject.position = new Vector3(-1f, 0f, 0f);
+            CreateMoveTween(rigObject, victimObject.gameObject, dotweenAnimationType, delay: 0.4f, endValue: new Vector3(2f, 0f, 0f));
+            CreateMoveTween(rigObject, victimObject.gameObject, dotweenAnimationType, delay: 0.7f, endValue: Vector3.zero);
         }
 
         private static void CreateMoveTween(
