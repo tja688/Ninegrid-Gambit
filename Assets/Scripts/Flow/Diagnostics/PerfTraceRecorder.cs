@@ -99,6 +99,7 @@ namespace NineGrid.Flow.Diagnostics
                 {
                     sSession.sessionId = DiagTraceShared.CurrentSessionId;
                     sSession.seed = DiagTraceShared.CurrentSeed;
+                    DiagTraceShared.StampSessionRunMetadata(out sSession.runTag, out sSession.runTagNote);
                     return;
                 }
 
@@ -110,6 +111,7 @@ namespace NineGrid.Flow.Diagnostics
                     sessionId = DiagTraceShared.CurrentSessionId,
                     events = new List<PerfTraceEvent>(),
                 };
+                DiagTraceShared.StampSessionRunMetadata(out sSession.runTag, out sSession.runTagNote);
             }
             catch (Exception ex)
             {

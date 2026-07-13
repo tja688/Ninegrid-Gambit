@@ -136,6 +136,42 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
+        /// DevTest：将 Avatar Attack 设为指定值并刷新表现。
+        /// </summary>
+        public bool TryCheatSetAvatarAttack(int attack)
+        {
+            if (attack < 0)
+            {
+                return false;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            var board = arch.GetModel<BoardModel>();
+            var avatarUid = board.AvatarUid.Value;
+            if (avatarUid <= 0
+                || !arch.GetModel<CardRegistry>().TryGet(avatarUid, out var avatar))
+            {
+                Debug.LogWarning("[InBattleManager] Avatar 不存在，无法改攻。");
+                return false;
+            }
+
+            avatar.Stats.SetBase(StatId.Attack, attack);
+
+            ResolveManagers();
+            if (cardManager != null
+                && cardManager.TryGet(avatarUid, out var view)
+                && view != null)
+            {
+                CoreCardPresentationMapper.ApplyToManagedCard(view);
+            }
+
+            UpdateAvatarDebugText();
+            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
+            Debug.Log($"[InBattleManager] Avatar#{avatarUid} Attack → {attack}");
+            return true;
+        }
+
+        /// <summary>
         /// DevTest：强制判定本节点胜利，写入通关奖励相位并触发结算推进（纯流程测试）。
         /// </summary>
         public bool TryCheatForceNodeVictory()

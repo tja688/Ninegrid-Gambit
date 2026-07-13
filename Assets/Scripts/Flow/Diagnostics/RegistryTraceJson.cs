@@ -24,6 +24,10 @@ namespace NineGrid.Flow.Diagnostics
             sb.Append(',');
             AppendString(sb, "sessionId", session.sessionId ?? string.Empty);
             sb.Append(',');
+            AppendString(sb, "runTag", session.runTag ?? string.Empty);
+            sb.Append(',');
+            AppendString(sb, "runTagNote", session.runTagNote ?? string.Empty);
+            sb.Append(',');
             sb.Append("\"events\":[");
             var events = session.events;
             if (events != null)

@@ -25,6 +25,12 @@ Session 根：`sessionId` + `seed`（`DiagTraceShared`）。
 旧顶层 `Assets/Notes/FlowLog/`、`Assets/Notes/BattleLog/` **仅历史归档**；最新以 `Logs/` 为准。  
 兼容：CoreLog 分析时可顺带认旧名 `flowlog-*`（若仍存在）。
 
+### DevTest 快速测试（QuickTest）
+
+主菜单 `\` 键触发的快速测试局，日志会带 **`runTag: "QuickTest"`**（四轨 session JSON 均有），导出文件名含 **`-QuickTest-`**（如 `battlelog-QuickTest-…`）。CoreLog 的 `StartRun` payload 另有 `quickTestNodeOrder`、`runTagNote`。
+
+**分析前先看是否 QuickTest**：若是，该 session **不宜用于正常数值/流程回归判定**——玩家 HP/ATK 被 cheat、全局速度 ×2、战斗内容节点乱序；表现/时序也可能与正式局不同。可用来查接线或复现 bug，但勿与设计文档或 EditMode 基线直接三角对照。详情读 session 顶部的 `runTagNote`。
+
 ---
 
 ## 何时用 / 读哪份

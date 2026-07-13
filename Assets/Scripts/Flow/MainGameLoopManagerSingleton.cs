@@ -76,12 +76,15 @@ namespace NineGrid.Flow
 
         public const float QuickTestTimeScale = 2f;
         public const int QuickTestAvatarHp = 99;
+        public const int QuickTestAvatarAttack = QuickTestRunPlanner.AvatarAttack;
 
         private LoopState _state = LoopState.MainMenu;
         private bool _isBusy;
         private bool _testMode;
         private bool _quickTestMode;
         private int _nodeIndex;
+        private List<int> _quickTestContentNodeQueue;
+        private int _quickTestContentNodeCursor;
         private CancellationTokenSource _loopCts;
         private CancellationTokenSource _battleEndCts;
         private UniTaskCompletionSource _settlementTcs;
@@ -178,6 +181,28 @@ namespace NineGrid.Flow
             _testMode = testMode;
             _quickTestMode = quickTestMode;
             _nodeIndex = 0;
+            _quickTestContentNodeQueue = null;
+            _quickTestContentNodeCursor = 0;
+            if (quickTestMode)
+            {
+                DiagTraceShared.SetRunTag(
+                    DiagTraceShared.QuickTestRunTag,
+                    "DevTest快速测试：全局速度x"
+                    + QuickTestTimeScale
+                    + "，玩家HP"
+                    + QuickTestAvatarHp
+                    + "/ATK"
+                    + QuickTestAvatarAttack
+                    + "每关重置，战斗内容节点乱序(整局各配置"
+                    + RunModel.FinalFloor
+                    + "次不重复)");
+                PrepareQuickTestContentNodeQueue();
+            }
+            else
+            {
+                DiagTraceShared.ClearRunTag();
+            }
+
             ApplyQuickTestTimeScale();
             HideNotice();
             panelRouter.ShowInRunShell(inBattle: true);
@@ -192,6 +217,11 @@ namespace NineGrid.Flow
                     {
                         { "testMode", testMode ? "true" : "false" },
                         { "quickTestMode", quickTestMode ? "true" : "false" },
+                        { "runTag", DiagTraceShared.RunTag },
+                        { "runTagNote", DiagTraceShared.RunTagNote },
+                        { "quickTestNodeOrder", quickTestMode
+                            ? QuickTestRunPlanner.FormatNodeOrder(_quickTestContentNodeQueue)
+                            : string.Empty },
                     },
                     loopState: _state.ToString());
             }
@@ -203,7 +233,7 @@ namespace NineGrid.Flow
             if (quickTestMode)
             {
                 Debug.Log(
-                    $"[MainGameLoop] 快速测试模式：全局速度 x{QuickTestTimeScale}，玩家血量 {QuickTestAvatarHp}");
+                    $"[MainGameLoop] 快速测试模式：全局速度 x{QuickTestTimeScale}，玩家 HP {QuickTestAvatarHp} / ATK {QuickTestAvatarAttack} 每关重置，节点乱序 {QuickTestRunPlanner.FormatNodeOrder(_quickTestContentNodeQueue)}");
             }
 
             RunNodeCycleAsync(_loopCts.Token).Forget();
@@ -333,20 +363,23 @@ namespace NineGrid.Flow
 
             CoreCardPresentationMapper.EnsureContentCatalogLoaded();
 
-            var options = arch.GetSystem<IRewardSystem>().BuildNodeDeckOptions(_nodeIndex, monsterDeckId: null);
+            var contentNodeIndex = ResolveBattleContentNodeIndex();
+            var options = arch.GetSystem<IRewardSystem>().BuildNodeDeckOptions(contentNodeIndex, monsterDeckId: null);
             if (options == null)
             {
                 options = NodeDeckOptions.CreateDefaultBattle();
             }
 
-            Debug.Log($"[MainGameLoop] 节点 {_nodeIndex} 真实局内入场");
+            Debug.Log(_quickTestMode
+                ? $"[MainGameLoop] 循环节点 {_nodeIndex} 快速测试内容节点 {contentNodeIndex} 真实局内入场"
+                : $"[MainGameLoop] 节点 {_nodeIndex} 真实局内入场");
             await inBattleManager.StartBattleNodeAsync(options, ct);
             if (ct.IsCancellationRequested)
             {
                 return;
             }
 
-            ApplyQuickTestAvatarHpIfNeeded();
+            ApplyQuickTestAvatarCheatsIfNeeded();
 
             // 开局即空怪时 StartBattleNode 内可能已 Raise 结算；补一次探测。
             inBattleManager.TryEnterNodeSettlement();
@@ -824,6 +857,9 @@ namespace NineGrid.Flow
 
             _testMode = false;
             _quickTestMode = false;
+            _quickTestContentNodeQueue = null;
+            _quickTestContentNodeCursor = 0;
+            DiagTraceShared.ClearRunTag();
             ResetQuickTestTimeScale();
             _nodeIndex = 0;
             _isBusy = false;
@@ -848,9 +884,9 @@ namespace NineGrid.Flow
             }
         }
 
-        private void ApplyQuickTestAvatarHpIfNeeded()
+        private void ApplyQuickTestAvatarCheatsIfNeeded()
         {
-            if (!_quickTestMode || _nodeIndex != 1 || inBattleManager == null)
+            if (!_quickTestMode || inBattleManager == null)
             {
                 return;
             }
@@ -860,6 +896,41 @@ namespace NineGrid.Flow
                 Debug.LogWarning(
                     $"[MainGameLoop] 快速测试改血失败：目标 {QuickTestAvatarHp}，请确认 Avatar 已入场。");
             }
+
+            if (!inBattleManager.TryCheatSetAvatarAttack(QuickTestAvatarAttack))
+            {
+                Debug.LogWarning(
+                    $"[MainGameLoop] 快速测试改攻失败：目标 {QuickTestAvatarAttack}，请确认 Avatar 已入场。");
+            }
+        }
+
+        private void PrepareQuickTestContentNodeQueue()
+        {
+            CoreCardPresentationMapper.EnsureContentCatalogLoaded();
+            var arch = NineGridArchitecture.Current;
+            var catalog = arch?.GetSystem<IContentSystem>()?.Catalog;
+            var ruleIndices = QuickTestRunPlanner.CollectRuleNodeIndices(catalog);
+            _quickTestContentNodeQueue = QuickTestRunPlanner.BuildShuffledContentNodeQueue(ruleIndices);
+            _quickTestContentNodeCursor = 0;
+        }
+
+        private int ResolveBattleContentNodeIndex()
+        {
+            if (!_quickTestMode
+                || _quickTestContentNodeQueue == null
+                || _quickTestContentNodeQueue.Count == 0)
+            {
+                return _nodeIndex;
+            }
+
+            if (_quickTestContentNodeCursor >= _quickTestContentNodeQueue.Count)
+            {
+                Debug.LogWarning(
+                    $"[MainGameLoop] 快速测试节点队列已耗尽，回退顺序节点 {_nodeIndex}。");
+                return _nodeIndex;
+            }
+
+            return _quickTestContentNodeQueue[_quickTestContentNodeCursor++];
         }
 
         private void SubscribeSettlement()

@@ -13,6 +13,8 @@ namespace NineGrid.Flow.Diagnostics
         public int schemaVersion = 2;
         public string seed = "0";
         public string sessionId = string.Empty;
+        public string runTag = string.Empty;
+        public string runTagNote = string.Empty;
         public List<RegistryTraceEvent> events = new List<RegistryTraceEvent>();
     }
 

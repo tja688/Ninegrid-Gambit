@@ -12,8 +12,12 @@ namespace NineGrid.Flow.Diagnostics
     /// </summary>
     public static class DiagTraceShared
     {
+        public const string QuickTestRunTag = "QuickTest";
+
         private static string sSessionId = string.Empty;
         private static string sSeed = "0";
+        private static string sRunTag = string.Empty;
+        private static string sRunTagNote = string.Empty;
         private static bool sExportedThisPlayExit;
 
         /// <summary>
@@ -24,7 +28,35 @@ namespace NineGrid.Flow.Diagnostics
             sExportedThisPlayExit = false;
             sSessionId = string.Empty;
             sSeed = "0";
+            ClearRunTag();
             DiagBeatClock.Reset();
+        }
+
+        public static string RunTag => sRunTag ?? string.Empty;
+
+        public static string RunTagNote => sRunTagNote ?? string.Empty;
+
+        /// <summary>
+        /// 标记本局诊断会话（如 DevTest 快速测试），写入各 Log session 与导出文件名前缀。
+        /// </summary>
+        public static void SetRunTag(string tag, string note = null)
+        {
+            sRunTag = tag ?? string.Empty;
+            sRunTagNote = note ?? string.Empty;
+        }
+
+        public static void ClearRunTag()
+        {
+            sRunTag = string.Empty;
+            sRunTagNote = string.Empty;
+        }
+
+        public static void StampSessionRunMetadata(
+            out string runTag,
+            out string runTagNote)
+        {
+            runTag = RunTag;
+            runTagNote = RunTagNote;
         }
 
         public static bool AlreadyExportedThisPlayExit => sExportedThisPlayExit;
@@ -144,6 +176,11 @@ namespace NineGrid.Flow.Diagnostics
         {
             var sid = string.IsNullOrEmpty(sessionId) ? DateTime.Now.ToString("yyyyMMdd-HHmmss") : sessionId;
             var s = string.IsNullOrEmpty(seed) ? "0" : seed;
+            if (!string.IsNullOrEmpty(sRunTag))
+            {
+                prefix = prefix + "-" + sRunTag;
+            }
+
             return prefix + "-" + sid + "-seed" + s + ".json";
         }
 

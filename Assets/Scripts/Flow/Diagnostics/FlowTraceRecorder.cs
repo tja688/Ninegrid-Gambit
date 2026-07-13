@@ -85,6 +85,7 @@ namespace NineGrid.Flow.Diagnostics
                     // 对齐 Shared（Bootstrap 后 seed 可能从 0 变为真实值）
                     sSession.sessionId = DiagTraceShared.CurrentSessionId;
                     sSession.seed = DiagTraceShared.CurrentSeed;
+                    DiagTraceShared.StampSessionRunMetadata(out sSession.runTag, out sSession.runTagNote);
                     return;
                 }
 
@@ -95,6 +96,7 @@ namespace NineGrid.Flow.Diagnostics
                     sessionId = DiagTraceShared.CurrentSessionId,
                     events = new List<FlowTraceEvent>(),
                 };
+                DiagTraceShared.StampSessionRunMetadata(out sSession.runTag, out sSession.runTagNote);
             }
             catch (Exception ex)
             {

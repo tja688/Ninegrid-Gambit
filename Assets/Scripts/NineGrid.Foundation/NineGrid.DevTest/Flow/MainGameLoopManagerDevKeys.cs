@@ -32,7 +32,7 @@ namespace NineGrid.DevTest.Flow
         {
             builder
                 .Bind(KeyCode.Keypad0, "进入主游戏循环测试", BeginTestLoop)
-                .Bind(KeyCode.Backslash, "快速测试入场 (x2+HP99)", BeginQuickTestLoop);
+                .Bind(KeyCode.Backslash, "快速测试 (x2 HP99 ATK5 乱序节点)", BeginQuickTestLoop);
         }
 
         private void BeginTestLoop()
