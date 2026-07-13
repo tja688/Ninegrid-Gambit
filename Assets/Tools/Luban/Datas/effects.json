@@ -829,14 +829,14 @@
     "id": "skill.recombine_body.move",
     "container_type": "MonsterSkill",
     "state": "Implemented",
-    "json": "{\"id\":\"skill.recombine_body.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"AdjacentHasCard\",\"origin\":\"Self\",\"defId\":\"monster.headless_skeleton\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\"},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"AdjacentCard\",\"origin\":\"Self\",\"defId\":\"monster.headless_skeleton\"}},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton\",\"kind\":\"Monster\",\"count\":1,\"top\":true}]}}",
+    "json": "{\"id\":\"skill.recombine_body.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"AdjacentHasCard\",\"origin\":\"Self\",\"defId\":\"monster.headless_skeleton\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\"},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"AdjacentCard\",\"origin\":\"Self\",\"defId\":\"monster.headless_skeleton\"}},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton_reborn\",\"kind\":\"Monster\",\"count\":1,\"top\":true}]}}",
     "design_text": "相邻无头骷髅时移除双方并洗入大骷髅"
   },
   {
     "id": "skill.recombine_head.move",
     "container_type": "MonsterSkill",
     "state": "Implemented",
-    "json": "{\"id\":\"skill.recombine_head.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"AdjacentHasCard\",\"origin\":\"Self\",\"defId\":\"monster.skull_head\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\"},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"AdjacentCard\",\"origin\":\"Self\",\"defId\":\"monster.skull_head\"}},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton\",\"kind\":\"Monster\",\"count\":1,\"top\":true}]}}",
+    "json": "{\"id\":\"skill.recombine_head.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"AdjacentHasCard\",\"origin\":\"Self\",\"defId\":\"monster.skull_head\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\"},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"AdjacentCard\",\"origin\":\"Self\",\"defId\":\"monster.skull_head\"}},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton_reborn\",\"kind\":\"Monster\",\"count\":1,\"top\":true}]}}",
     "design_text": "相邻骷髅头时移除双方并洗入大骷髅"
   },
   {

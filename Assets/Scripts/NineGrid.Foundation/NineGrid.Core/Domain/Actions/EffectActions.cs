@@ -686,6 +686,11 @@ namespace NineGrid.Core
                     continue;
                 }
 
+                if (card.IsReserve)
+                {
+                    continue;
+                }
+
                 if (!string.IsNullOrEmpty(excludeDeckId) && string.Equals(card.DeckId, excludeDeckId, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;

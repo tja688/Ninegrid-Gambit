@@ -155,6 +155,11 @@
     "description": "大骷髅：被移除时洗入骷髅头与无头骷髅"
   },
   {
+    "content_id": "monster.big_skeleton_reborn",
+    "content_kind": "Monster",
+    "description": "重组大骷髅：碎片重组而成，不持有散架"
+  },
+  {
     "content_id": "monster.big_stone",
     "content_kind": "Monster",
     "description": "大石头：左列战斗时按损失护甲伤害玩家"

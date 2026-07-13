@@ -698,10 +698,10 @@ namespace NineGrid.Content
                     "{\"atom\":\"Sequence\",\"actions\":["
                     + "{\"atom\":\"RemoveCard\"},"
                     + "{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"AdjacentCard\",\"origin\":\"Self\",\"defId\":\"monster.skull_head\"}},"
-                    + "{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton\",\"kind\":\"Monster\",\"count\":1,\"top\":true}"
+                    + "{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton_reborn\",\"kind\":\"Monster\",\"count\":1,\"top\":true}"
                     + "]}",
                     "[{\"atom\":\"AdjacentHasCard\",\"origin\":\"Self\",\"defId\":\"monster.skull_head\"}]"),
-                "相邻骷髅头时移除双方并洗入大骷髅"));
+                "相邻骷髅头时移除双方并洗入重组大骷髅（不持有散架）"));
 
             c.AddEffect(Impl("skill.recombine_body.move", EffectContainerType.MonsterSkill,
                 Triggered("skill.recombine_body.move", "MonsterSkill",
@@ -710,10 +710,10 @@ namespace NineGrid.Content
                     "{\"atom\":\"Sequence\",\"actions\":["
                     + "{\"atom\":\"RemoveCard\"},"
                     + "{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"AdjacentCard\",\"origin\":\"Self\",\"defId\":\"monster.headless_skeleton\"}},"
-                    + "{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton\",\"kind\":\"Monster\",\"count\":1,\"top\":true}"
+                    + "{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton_reborn\",\"kind\":\"Monster\",\"count\":1,\"top\":true}"
                     + "]}",
                     "[{\"atom\":\"AdjacentHasCard\",\"origin\":\"Self\",\"defId\":\"monster.headless_skeleton\"}]"),
-                "相邻无头骷髅时移除双方并洗入大骷髅"));
+                "相邻无头骷髅时移除双方并洗入重组大骷髅（不持有散架）"));
 
             c.AddEffect(Impl("skill.falling_rocks.cumulative", EffectContainerType.MonsterSkill,
                 Triggered("skill.falling_rocks.cumulative", "MonsterSkill",
@@ -1273,6 +1273,11 @@ namespace NineGrid.Content
             Monster(c, skeleton, "monster.skeleton_taunter", "骷髅嘲讽子", 1, 7, 2, 1, "skill.taunt");
             Monster(c, skeleton, "monster.bone_club_skeleton", "骨棒骷髅", 1, 8, 2, 1);
             Monster(c, skeleton, "monster.big_skeleton", "大骷髅", 2, 10, 2, 0, "skill.fall_apart");
+            c.AddCard(new CardContentDefinition("monster.big_skeleton_reborn", "重组大骷髅", CardKind.Monster)
+                .WithStats(10, 2, 0)
+                .WithLevel(2)
+                .InDeck(skeleton.Id)
+                .AsReserve());
             Monster(c, skeleton, "monster.multi_bone_worm", "多骨虫", 2, 3, 2, 6, "skill.strong_combo");
             Monster(c, skeleton, "monster.bone_courier", "骨头快递员", 2, 7, 2, 1, "skill.delivery");
             Monster(c, skeleton, "monster.giant_skeleton", "巨大骷髅", 3, 12, 3, 0, "skill.fracture_fall_apart");

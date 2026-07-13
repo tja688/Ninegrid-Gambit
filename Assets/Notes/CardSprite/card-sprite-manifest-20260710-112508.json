@@ -252,6 +252,14 @@
       "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
     },
     {
+      "contentId": "monster.big_skeleton_reborn",
+      "displayName": "重组大骷髅",
+      "contentKind": "Monster",
+      "description": "重组大骷髅：碎片重组而成，不持有散架",
+      "icon": {"name":"pixel_art_card_pack 1_28","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png","guid":"f43635180a621a94c863227b8118db1f"},
+      "face": {"name":"pixel_art_card_pack_3","assetPath":"Assets/Arts/Images/Multiple/pixel_art_card_pack.png","guid":"69ceff06ec729b04590602187e875309"}
+    },
+    {
       "contentId": "monster.big_stone",
       "displayName": "大石头",
       "contentKind": "Monster",

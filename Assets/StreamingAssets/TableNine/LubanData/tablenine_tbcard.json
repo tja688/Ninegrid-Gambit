@@ -570,6 +570,25 @@
     "skill_ids": "skill.fall_apart"
   },
   {
+    "def_id": "monster.big_skeleton_reborn",
+    "display_name": "重组大骷髅",
+    "kind": "Monster",
+    "rarity": "None",
+    "price": 0,
+    "level": 2,
+    "is_elite": false,
+    "is_boss": false,
+    "is_reserve": true,
+    "deck_id": "deck.skeleton_legion",
+    "max_hp": 10,
+    "attack": 2,
+    "armor": 0,
+    "recovery": 0,
+    "tags": "",
+    "effect_ids": "",
+    "skill_ids": ""
+  },
+  {
     "def_id": "monster.big_stone",
     "display_name": "大石头",
     "kind": "Monster",
