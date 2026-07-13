@@ -558,6 +558,11 @@ namespace NineGrid.Cards
                 return true;
             }
 
+            if (!TryClaimCardForDeck(card, nameof(LaunchReturnFieldCardToDeck)))
+            {
+                return false;
+            }
+
             var field = ResolveFieldManager();
             if (field != null && field.TryGetSlotOf(card.Uid, out var slot))
             {
@@ -589,6 +594,11 @@ namespace NineGrid.Cards
             }
 
             if (ContainsUid(card.Uid))
+            {
+                return;
+            }
+
+            if (!TryClaimCardForDeck(card, nameof(CompleteFieldReturnDeckInsert)))
             {
                 return;
             }
@@ -905,13 +915,36 @@ namespace NineGrid.Cards
             }
 
             var field = ResolveFieldManager();
-            if (field != null
-                && (card.DisplayMode == CardDisplayMode.GroundCardMode
-                    || field.TryGetSlotOf(card.Uid, out _))
-                && field.TryGetSlotOf(card.Uid, out _))
+            if (field != null && field.TryGetSlotOf(card.Uid, out var staleSlot))
             {
-                LaunchReturnFieldCardToDeck(card, slotIndex);
-                return true;
+                field.ClearSlotOccupancy(staleSlot, skipBusyGuard: true);
+                if (card.DisplayMode == CardDisplayMode.GroundCardMode)
+                {
+                    if (!TryClaimCardForDeck(card, nameof(AddCardAtFromOriginInternalAsync)))
+                    {
+                        return false;
+                    }
+
+                    return LaunchReturnFieldCardToDeck(card, slotIndex);
+                }
+
+                try
+                {
+                    RegistryTraceSink.RecordSuspectGroundRelease?.Invoke(
+                        card.Uid,
+                        $"AddCardAt.staleOccupancy:{card.DisplayMode}",
+                        nameof(AddCardAtFromOriginInternalAsync),
+                        staleSlot);
+                }
+                catch
+                {
+                    // ignore
+                }
+            }
+
+            if (!TryClaimCardForDeck(card, nameof(AddCardAtFromOriginInternalAsync)))
+            {
+                return false;
             }
 
             _isBusy = true;
@@ -1175,6 +1208,55 @@ namespace NineGrid.Cards
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// 入组/回堆前校验：禁止手牌与 Core ItemSlots 的视图被卡组槽吸纳。
+        /// </summary>
+        private bool TryClaimCardForDeck(ManagedCard card, string caller)
+        {
+            if (card == null)
+            {
+                return false;
+            }
+
+            if (ContainsUid(card.Uid))
+            {
+                return true;
+            }
+
+            if (IsHandHeldPresentation(card))
+            {
+                Debug.LogWarning(
+                    $"[CardDeckManager] {caller} 拒绝：uid={card.Uid} 仍在手牌/拖拽（mode={card.DisplayMode}）。");
+                return false;
+            }
+
+            if (CardZoneOwnershipSink.CoreSaysItemSlots(card.Uid))
+            {
+                Debug.LogWarning(
+                    $"[CardDeckManager] {caller} 拒绝：uid={card.Uid} Core=ItemSlots。");
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool IsHandHeldPresentation(ManagedCard card)
+        {
+            if (card == null)
+            {
+                return false;
+            }
+
+            var hand = CardHandManagerSingleton.Instance;
+            if (hand != null && hand.ContainsUid(card.Uid))
+            {
+                return true;
+            }
+
+            return card.DisplayMode == CardDisplayMode.HandCardMode
+                   || card.DisplayMode == CardDisplayMode.DragCardMode;
         }
     }
 }

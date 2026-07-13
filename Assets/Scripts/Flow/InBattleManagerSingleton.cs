@@ -1392,7 +1392,38 @@ namespace NineGrid.Flow
             FieldTraceHelper.RegisterSinkHandlers();
             PerfTraceRecorder.RegisterSinkHandlers();
             RegistryTraceRecorder.RegisterSinkHandlers();
+            RegisterCardZoneOwnershipSink();
             RegisterHandBridge();
+        }
+
+        private void RegisterCardZoneOwnershipSink()
+        {
+            CardZoneOwnershipSink.IsCoreItemSlots = IsCoreItemSlotsZone;
+            CardZoneOwnershipSink.IsCoreDrawPile = IsCoreDrawPileZone;
+        }
+
+        private static bool IsCoreItemSlotsZone(int uid)
+        {
+            if (uid <= 0)
+            {
+                return false;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            return arch.GetModel<CardRegistry>().TryGet(uid, out var card)
+                   && card.Zone.Value == ZoneId.ItemSlots;
+        }
+
+        private static bool IsCoreDrawPileZone(int uid)
+        {
+            if (uid <= 0)
+            {
+                return false;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            return arch.GetModel<CardRegistry>().TryGet(uid, out var card)
+                   && card.Zone.Value == ZoneId.DrawPile;
         }
 
         private void UnregisterCombatHitSink()
@@ -1400,6 +1431,7 @@ namespace NineGrid.Flow
             FieldTraceHelper.UnregisterSinkHandlers();
             PerfTraceRecorder.UnregisterSinkHandlers();
             RegistryTraceRecorder.UnregisterSinkHandlers();
+            CardZoneOwnershipSink.Reset();
             if (CombatHitSink.ApplyCombatHit == ApplyCombatHitFromCore)
             {
                 CombatHitSink.ApplyCombatHit = null;
@@ -2425,8 +2457,20 @@ namespace NineGrid.Flow
                 return null;
             }
 
+            var hand = CardHandManagerSingleton.Instance;
+            if (hand != null && hand.ContainsUid(deal.Uid))
+            {
+                return null;
+            }
+
             if (cardManager != null && cardManager.TryGet(deal.Uid, out var existing) && existing != null)
             {
+                if (existing.DisplayMode == CardDisplayMode.HandCardMode
+                    || existing.DisplayMode == CardDisplayMode.DragCardMode)
+                {
+                    return null;
+                }
+
                 return existing;
             }
 
@@ -4543,7 +4587,9 @@ namespace NineGrid.Flow
 
                 // Core 已离场：禁止 Spawn 幽灵视图。
                 if (coreCard.Zone.Value == ZoneId.Graveyard
-                    || coreCard.Zone.Value == ZoneId.Removed)
+                    || coreCard.Zone.Value == ZoneId.Removed
+                    || coreCard.Zone.Value == ZoneId.DrawPile
+                    || coreCard.Zone.Value == ZoneId.ItemSlots)
                 {
                     Debug.LogWarning(
                         $"[InBattleManager] Sync 跳过 Spawn：uid={uid} zone={coreCard.Zone.Value}（Board 占格与 Zone 不一致）");
@@ -4708,7 +4754,8 @@ namespace NineGrid.Flow
 
                 // 打出消失 / 拖拽中：生命周期由手牌路径负责，勿抢 Release。
                 if (view.DisplayMode == CardDisplayMode.RemovedMode
-                    || view.DisplayMode == CardDisplayMode.DragCardMode)
+                    || view.DisplayMode == CardDisplayMode.DragCardMode
+                    || view.DisplayMode == CardDisplayMode.HandCardMode)
                 {
                     continue;
                 }
@@ -4720,8 +4767,9 @@ namespace NineGrid.Flow
 
                 // Pickup 进行中：手牌尚未 ContainsUid 的窗口，勿误 Sweep。
                 if (hand != null
-                    && hand.IsBusy
-                    && view.DisplayMode == CardDisplayMode.HandCardMode)
+                    && (hand.IsBusy || hand.IsDragging)
+                    && (view.DisplayMode == CardDisplayMode.HandCardMode
+                        || view.DisplayMode == CardDisplayMode.DragCardMode))
                 {
                     continue;
                 }
@@ -4738,6 +4786,11 @@ namespace NineGrid.Flow
 
                 if (registry.TryGet(uid, out var coreCard))
                 {
+                    if (coreCard.Zone.Value == ZoneId.ItemSlots)
+                    {
+                        continue;
+                    }
+
                     if (coreCard.Zone.Value == ZoneId.DrawPile
                         && deck != null
                         && !deck.ContainsUid(uid))

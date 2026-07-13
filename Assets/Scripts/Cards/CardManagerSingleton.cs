@@ -344,6 +344,7 @@ namespace NineGrid.Cards
 
                 var ghosts = ghostSb.ToString();
                 var orphans = orphanSb.ToString();
+                var dualHold = BuildDualHandDeckHoldReport();
                 CardPresentationProbe.RegistryAudit(
                     "Card.RegistryAudit",
                     _cardsByUid.Count,
@@ -351,6 +352,12 @@ namespace NineGrid.Cards
                     ghosts,
                     orphans,
                     trigger: triggerSite);
+
+                if (!string.IsNullOrEmpty(dualHold))
+                {
+                    Debug.LogError(
+                        $"[CardManager] 手牌与卡组双持有 uid={dualHold}（site={triggerSite}）。");
+                }
 
                 try
                 {
@@ -370,6 +377,34 @@ namespace NineGrid.Cards
             {
                 // swallow
             }
+        }
+
+        private string BuildDualHandDeckHoldReport()
+        {
+            var hand = CardHandManagerSingleton.Instance;
+            var deck = CardDeckManagerSingleton.Instance;
+            if (hand == null || deck == null)
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder(16);
+            foreach (var card in _cardsByUid.Values)
+            {
+                if (card == null || !hand.ContainsUid(card.Uid) || !deck.ContainsUid(card.Uid))
+                {
+                    continue;
+                }
+
+                if (sb.Length > 0)
+                {
+                    sb.Append(';');
+                }
+
+                sb.Append(card.Uid);
+            }
+
+            return sb.ToString();
         }
 
         public IEnumerable<ManagedCard> EnumerateCards()
