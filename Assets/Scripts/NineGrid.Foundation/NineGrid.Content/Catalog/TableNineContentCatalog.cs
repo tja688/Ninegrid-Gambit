@@ -213,7 +213,7 @@ namespace NineGrid.Content
                 Triggered("help.armor_breaking_hammer.use", "HelpCard",
                     "{\"atom\":\"OnUseHelpCard\"}",
                     "{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":1}",
-                    "{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":-10,\"reason\":\"help.armor_breaking_hammer\"}"),
+                    "{\"atom\":\"TransferArmor\",\"amount\":10,\"receiver\":\"None\",\"cause\":\"help.armor_breaking_hammer\"}"),
                 "[使用时] 将目标怪物卡护甲降低10点"));
 
             c.AddEffect(Impl("help.healing_spring.board_adjacent", EffectContainerType.HelpCard,

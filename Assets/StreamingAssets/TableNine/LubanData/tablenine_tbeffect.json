@@ -3,7 +3,7 @@
     "id": "help.armor_breaking_hammer.use",
     "container_type": "HelpCard",
     "state": "Implemented",
-    "json": "{\"id\":\"help.armor_breaking_hammer.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":1},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":-10,\"reason\":\"help.armor_breaking_hammer\"}}",
+    "json": "{\"id\":\"help.armor_breaking_hammer.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":1},\"action\":{\"atom\":\"TransferArmor\",\"amount\":10,\"receiver\":\"None\",\"cause\":\"help.armor_breaking_hammer\"}}",
     "design_text": "[使用时] 将目标怪物卡护甲降低10点"
   },
   {

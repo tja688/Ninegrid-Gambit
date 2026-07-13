@@ -284,13 +284,15 @@ namespace NineGrid.Cards
                 var cardManager = CardManagerSingleton.Instance;
                 CardOpacityUtility.ResetAlpha(card);
 
+                // 须在 TryInsertAt 之前切 HandCardMode：ApplyDisplayMode → SnapToDisplayMode 会查手牌槽位并贴布局坐标；
+                // 若已入槽再切模式，会瞬间贴位，MoveRippleAsync 无法从场地缓动飞入。
+                cardManager.SetDisplayMode(card, CardDisplayMode.HandCardMode);
+
                 var slot = insertSlot ?? HandCount;
                 if (!_slotContainer.TryInsertAt(slot, card, out var rippleMoves))
                 {
                     return false;
                 }
-
-                cardManager.SetDisplayMode(card, CardDisplayMode.HandCardMode);
 
                 await CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration, ct);
                 ct.ThrowIfCancellationRequested();

@@ -108,5 +108,55 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(2, StatArmorUtility.GetBaseArmor(avatar));
             Assert.AreEqual(4, StatArmorUtility.GetCurrentArmor(avatar));
         }
+
+        [Test]
+        public void ArmorBreakingHammer_ReducesMonsterCurrentArmor_NotBaseOnly()
+        {
+            var node = new NodeDeckOptions
+            {
+                PlayerOpeningCount = 0,
+                EnemyOpeningCount = 1
+            }.AddEnemyCard(new CardDraft("monster.test", CardKind.Monster)
+            {
+                MaxHp = 20,
+                Attack = 0,
+                Armor = 5
+            });
+            Assert.IsTrue(mPhase.StartNode(node).Accepted);
+
+            var board = mArch.GetModel<BoardModel>();
+            var registry = mArch.GetModel<CardRegistry>();
+            var monsterUid = 0;
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var slot = SlotId.Board(i);
+                if (slot == board.AvatarSlot.Value)
+                {
+                    continue;
+                }
+
+                monsterUid = board.GetCardUid(slot);
+                if (monsterUid != 0)
+                {
+                    break;
+                }
+            }
+
+            Assert.Greater(monsterUid, 0);
+            var monster = registry.Get(monsterUid);
+            Assert.AreEqual(5, StatArmorUtility.GetBaseArmor(monster));
+            Assert.AreEqual(5, StatArmorUtility.GetCurrentArmor(monster));
+
+            mPipeline.Enqueue(new SpawnCardAction("help.armor_breaking_hammer", CardKind.HelpCard, ZoneId.ItemSlots, SlotId.None, 1, "test"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+            var hammerUid = mArch.GetModel<DeckModel>().ItemSlotUids[mArch.GetModel<DeckModel>().ItemSlotUids.Count - 1];
+
+            var use = mPhase.ApplyUseItem(hammerUid, new System.Collections.Generic.List<int> { monsterUid }, null);
+            Assert.IsTrue(use.Accepted, use.Reason);
+
+            monster = registry.Get(monsterUid);
+            Assert.AreEqual(5, StatArmorUtility.GetBaseArmor(monster), "破击锤应扣当前护甲，不改基础护甲");
+            Assert.AreEqual(0, StatArmorUtility.GetCurrentArmor(monster), "5 护甲怪物被破击锤应归零");
+        }
     }
 }
