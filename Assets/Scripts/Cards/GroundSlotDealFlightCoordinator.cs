@@ -569,7 +569,7 @@ namespace NineGrid.Cards
             CardDeckTween.KillMotion(card.Transform);
 
             var deck = CardDeckManagerSingleton.Instance;
-            if (deck != null && deck.LaunchReturnFieldCardToDeck(card, 0))
+            if (deck != null && deck.LaunchReturnFieldCardToDeck(card))
             {
                 return;
             }

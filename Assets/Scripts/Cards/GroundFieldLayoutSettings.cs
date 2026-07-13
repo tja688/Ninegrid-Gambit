@@ -52,7 +52,7 @@ namespace NineGrid.Cards
 
         [Header("Field To Deck")]
         [Tooltip("场地卡垂直回卡组时 Y 轴离画阈值（世界单位）；物体 Y 超过此值视为已出画。")]
-        public float fieldExitYThreshold = 8f;
+        public float fieldExitYThreshold = 7f;
 
         [Tooltip("场地卡垂直上飞离画的缓动时长（秒）。")]
         public float fieldExitDuration = 0.35f;

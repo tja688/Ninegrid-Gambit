@@ -300,10 +300,11 @@ namespace NineGrid.Cards
 
             var pos = target.position;
             var exitPos = new Vector3(pos.x, Mathf.Max(pos.y, exitY), pos.z);
+            var effectiveDuration = pos.y >= exitY - 0.001f ? 0f : exitDuration;
             MoveToWorld(
                 target,
                 exitPos,
-                exitDuration,
+                effectiveDuration,
                 onComplete: () => onExitComplete?.Invoke(),
                 uid: uid,
                 reason: "fieldExit");

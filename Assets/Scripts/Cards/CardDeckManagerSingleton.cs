@@ -36,6 +36,10 @@ namespace NineGrid.Cards
         private List<Transform> _addAnchors = new();
         private List<Transform> _groundAnchors = new();
         private bool _isBusy;
+        private ManagedCard _hoveredDeckCard;
+
+        /// <summary>入组索引：随机落点（非空时排除最左 slot 0）。</summary>
+        public const int RandomInsertIndex = -1;
 
         public static CardDeckManagerSingleton Instance
         {
@@ -79,6 +83,11 @@ namespace NineGrid.Cards
             {
                 _instance = null;
             }
+        }
+
+        private void Update()
+        {
+            TickDeckHover();
         }
 
         /// <summary>
@@ -219,7 +228,7 @@ namespace NineGrid.Cards
                     return (false, null);
                 }
 
-                await AddCardAtInternalAsync(0, ensureCard, cancellationToken);
+                await AddCardAtInternalAsync(RandomInsertIndex, ensureCard, cancellationToken);
                 if (!TryFindDeckSlotByUid(uid, out deckSlot))
                 {
                     Debug.LogWarning(
@@ -535,18 +544,19 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 将卡牌退回卡组最左侧（探求失败回滚，仅 InGame）。发射后不管：垂直上飞离画后自然 ripple 入组。
+        /// 将卡牌退回牌组（探求失败回滚，仅 InGame）。发射后不管：垂直上飞离画后经 AddAnchors 随机 ripple 入组（非空不进最左）。
         /// </summary>
         public bool TryReturnCardToDeckFront(ManagedCard card, out IReadOnlyList<CardDeckRippleMove> rippleMoves)
         {
             rippleMoves = Array.Empty<CardDeckRippleMove>();
-            return LaunchReturnFieldCardToDeck(card, 0);
+            return LaunchReturnFieldCardToDeck(card);
         }
 
         /// <summary>
         /// 场地卡垂直上飞离画后插入卡组（发射后不管，可与旋转/换位并行）。
+        /// <paramref name="insertIndex"/> 为 <see cref="RandomInsertIndex"/> 时随机落点；显式索引在非空时不得为最左 slot 0。
         /// </summary>
-        public bool LaunchReturnFieldCardToDeck(ManagedCard card, int insertIndex = 0)
+        public bool LaunchReturnFieldCardToDeck(ManagedCard card, int insertIndex = RandomInsertIndex)
         {
             if (!EnsureInGameForDeal() || card == null || card.Transform == null)
             {
@@ -572,21 +582,20 @@ namespace NineGrid.Cards
             CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
 
             var fieldLayout = field?.LayoutSettings;
-            var exitY = fieldLayout != null ? fieldLayout.fieldExitYThreshold : 8f;
+            var exitY = fieldLayout != null ? fieldLayout.fieldExitYThreshold : 7f;
             var exitDuration = fieldLayout != null ? fieldLayout.fieldExitDuration : 0.35f;
-            var targetInsertIndex = Mathf.Clamp(insertIndex, 0, Mathf.Max(0, layoutSettings.maxSlots - 1));
 
             CardDeckTween.LaunchFieldExitThenDeckInsert(
                 card.Transform,
                 exitY,
                 exitDuration,
-                () => CompleteFieldReturnDeckInsert(card, targetInsertIndex),
+                () => CompleteFieldReturnDeckInsert(card, insertIndex),
                 uid: card.Uid);
 
             return true;
         }
 
-        private void CompleteFieldReturnDeckInsert(ManagedCard card, int insertIndex)
+        private void CompleteFieldReturnDeckInsert(ManagedCard card, int requestedIndex)
         {
             if (card == null || card.Transform == null || CurrentMode != CardDeckMode.InGame)
             {
@@ -604,12 +613,62 @@ namespace NineGrid.Cards
             }
 
             CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
-            if (_slotContainer.TryInsertAt(insertIndex, card, out var rippleMoves)
-                && rippleMoves != null
-                && rippleMoves.Count > 0)
+            InsertViaAddAnchorAsync(requestedIndex, card, CancellationToken.None).Forget();
+        }
+
+        /// <summary>
+        /// 解析入组槽位：随机时非空排除 index 0；显式 0 在非空时抬到 1；牌组空时唯一合法为 0。
+        /// </summary>
+        private int ResolveDeckInsertIndex(int requestedIndex)
+        {
+            var count = _slotContainer?.Count ?? 0;
+            if (count == 0)
             {
-                CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration).Forget();
+                return 0;
             }
+
+            if (requestedIndex < 0)
+            {
+                return UnityEngine.Random.Range(1, count + 1);
+            }
+
+            if (requestedIndex <= 0)
+            {
+                return 1;
+            }
+
+            return requestedIndex;
+        }
+
+        /// <summary>
+        /// 直接入牌组第二段：CardDeckAddAnchors 落点 → TryInsertAt → ripple 归位。
+        /// </summary>
+        private async UniTask<bool> InsertViaAddAnchorAsync(
+            int requestedIndex,
+            ManagedCard card,
+            CancellationToken cancellationToken)
+        {
+            if (card == null || _slotContainer == null)
+            {
+                return false;
+            }
+
+            var slotIndex = ResolveDeckInsertIndex(requestedIndex);
+            var clampedSlot = Mathf.Clamp(slotIndex, 0, Mathf.Max(0, layoutSettings.maxSlots - 1));
+            var addAnchor = GetAddAnchor(clampedSlot);
+            if (addAnchor != null && card.Transform != null)
+            {
+                card.Transform.position = addAnchor.position;
+            }
+
+            if (!_slotContainer.TryInsertAt(slotIndex, card, out var rippleMoves))
+            {
+                Debug.LogWarning("[CardDeckManager] 插入卡牌失败（卡牌无效或索引非法）。");
+                return false;
+            }
+
+            await CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration, cancellationToken);
+            return true;
         }
 
         private async UniTask BeginEntryInternalAsync(CancellationToken cancellationToken)
@@ -952,25 +1011,13 @@ namespace NineGrid.Cards
             {
                 CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
 
-                var clampedSlot = Mathf.Clamp(slotIndex, 0, Mathf.Max(0, layoutSettings.maxSlots - 1));
                 if (originAnchor == null)
                 {
-                    var addAnchor = GetAddAnchor(clampedSlot);
-                    if (addAnchor != null && card.Transform != null)
-                    {
-                        card.Transform.position = addAnchor.position;
-                    }
-
-                    if (!_slotContainer.TryInsertAt(slotIndex, card, out var rippleMoves))
-                    {
-                        Debug.LogWarning("[CardDeckManager] 插入卡牌失败（卡牌无效或索引非法）。");
-                        return false;
-                    }
-
-                    await CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration, cancellationToken);
-                    return true;
+                    return await InsertViaAddAnchorAsync(slotIndex, card, cancellationToken);
                 }
 
+                var resolvedIndex = ResolveDeckInsertIndex(slotIndex);
+                var clampedSlot = Mathf.Clamp(resolvedIndex, 0, Mathf.Max(0, layoutSettings.maxSlots - 1));
                 var deckAnchor = GetDeckAnchor(clampedSlot);
                 if (originAnchor != null && card.Transform != null)
                 {
@@ -988,7 +1035,7 @@ namespace NineGrid.Cards
                     card.Transform.localScale = Vector3.zero;
                 }
 
-                if (!_slotContainer.TryInsertAt(slotIndex, card, out var originRippleMoves))
+                if (!_slotContainer.TryInsertAt(resolvedIndex, card, out var originRippleMoves))
                 {
                     Debug.LogWarning("[CardDeckManager] 插入卡牌失败（卡牌无效或索引非法）。");
                     return false;
@@ -1257,6 +1304,137 @@ namespace NineGrid.Cards
 
             return card.DisplayMode == CardDisplayMode.HandCardMode
                    || card.DisplayMode == CardDisplayMode.DragCardMode;
+        }
+
+        private void TickDeckHover()
+        {
+            if (CurrentMode != CardDeckMode.InGame || _isBusy || _slotContainer == null)
+            {
+                return;
+            }
+
+            if (_hoveredDeckCard != null && (!ContainsUid(_hoveredDeckCard.Uid) || !IsLiveDeckCard(_hoveredDeckCard)))
+            {
+                _hoveredDeckCard = null;
+                DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
+            }
+
+            var camera = Camera.main;
+            if (camera == null)
+            {
+                return;
+            }
+
+            var pointerWorld = ScreenToWorldOnPlane(
+                Input.mousePosition,
+                camera,
+                ResolveDeckHoverPlaneZ());
+            var resolved = ResolveDeckHoverTarget(pointerWorld.x, pointerWorld.y);
+            ApplyDeckHoverTarget(resolved);
+        }
+
+        private void ApplyDeckHoverTarget(ManagedCard card)
+        {
+            if (card != null && !IsLiveDeckCardAtSlotZero(card))
+            {
+                card = null;
+            }
+
+            if (_hoveredDeckCard == card)
+            {
+                if (card != null)
+                {
+                    DescriptionHoverSink.RequestShow(card.DefId, DescriptionShowRoute.Hover);
+                }
+
+                return;
+            }
+
+            _hoveredDeckCard = card;
+            if (card == null)
+            {
+                DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(card.DefId))
+            {
+                _hoveredDeckCard = null;
+                DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
+                return;
+            }
+
+            DescriptionHoverSink.RequestShow(card.DefId, DescriptionShowRoute.Hover);
+        }
+
+        private ManagedCard ResolveDeckHoverTarget(float pointerX, float pointerY)
+        {
+            if (!_slotContainer.TryGetCardAt(0, out var card) || card == null || !IsLiveDeckCard(card))
+            {
+                return null;
+            }
+
+            if (card.Transform == null)
+            {
+                return null;
+            }
+
+            var position = card.Transform.position;
+            var halfSize = layoutSettings.deckHoverHitBoxSize * 0.5f;
+            if (pointerX < position.x - halfSize.x || pointerX > position.x + halfSize.x
+                || pointerY < position.y - halfSize.y || pointerY > position.y + halfSize.y)
+            {
+                return null;
+            }
+
+            return card;
+        }
+
+        private float ResolveDeckHoverPlaneZ()
+        {
+            var anchor = GetDeckAnchor(0);
+            if (anchor != null)
+            {
+                return anchor.position.z;
+            }
+
+            return layoutSettings.layoutBaseZ;
+        }
+
+        private bool IsLiveDeckCardAtSlotZero(ManagedCard card)
+        {
+            if (!IsLiveDeckCard(card))
+            {
+                return false;
+            }
+
+            return _slotContainer.TryGetCardAt(0, out var slotZero) && slotZero == card;
+        }
+
+        private static bool IsLiveDeckCard(ManagedCard card)
+        {
+            if (card == null)
+            {
+                return false;
+            }
+
+            if (card.View == null)
+            {
+                return false;
+            }
+
+            return card.DisplayMode == CardDisplayMode.CardDeckMode;
+        }
+
+        private static Vector3 ScreenToWorldOnPlane(Vector3 screenPosition, Camera camera, float worldZ)
+        {
+            var point = camera.ScreenToWorldPoint(
+                new Vector3(
+                    screenPosition.x,
+                    screenPosition.y,
+                    camera.WorldToScreenPoint(new Vector3(0f, 0f, worldZ)).z));
+            point.z = worldZ;
+            return point;
         }
     }
 }

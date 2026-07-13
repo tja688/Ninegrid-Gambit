@@ -44,5 +44,9 @@ namespace NineGrid.Cards
 
         [Tooltip("每向右一个槽位 sortingOrder 的递减量。")]
         public int sortingOrderStep = 1;
+
+        [Header("Hover")]
+        [Tooltip("牌组最左卡（slot 0）hover 命中框尺寸（世界单位），用于显示卡牌描述。")]
+        public Vector2 deckHoverHitBoxSize = new(1.6f, 2.2f);
     }
 }

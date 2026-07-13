@@ -4546,7 +4546,7 @@ namespace NineGrid.Flow
                          && deckManager != null)
                 {
                     fieldManager.ClearSlotOccupancy(occ.Slot, skipBusyGuard: true);
-                    deckManager.LaunchReturnFieldCardToDeck(deckView, 0);
+                    deckManager.LaunchReturnFieldCardToDeck(deckView);
                     vacated++;
                     vacatedUids.Add(occ.Uid);
                 }
@@ -4798,7 +4798,7 @@ namespace NineGrid.Flow
                         && deck != null
                         && !deck.ContainsUid(uid))
                     {
-                        deck.LaunchReturnFieldCardToDeck(view, 0);
+                        deck.LaunchReturnFieldCardToDeck(view);
                         continue;
                     }
 
