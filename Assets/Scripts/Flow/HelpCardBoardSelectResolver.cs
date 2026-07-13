@@ -6,13 +6,123 @@ using NineGrid.Core.Systems;
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 从内容 Catalog 解析帮助卡「使用时需选 N 张盘面卡」的需求（SelectedCards + zone=Board）。
+    /// 帮助卡打出目标解析：无指向 / 单目标拖拽(count=1) / 盘面多选(count>=2)。
+    /// </summary>
+    public enum HelpCardPlayKind
+    {
+        None = 0,
+        SingleDragTarget = 1,
+        MultiBoardSelect = 2,
+    }
+
+    /// <summary>
+    /// Catalog SelectedCards 原子解析结果（zone=Board）。
+    /// </summary>
+    public readonly struct HelpCardSelectedCardsSpec
+    {
+        public HelpCardSelectedCardsSpec(int count, string kindFilter)
+        {
+            Count = count;
+            KindFilter = kindFilter;
+        }
+
+        public int Count { get; }
+
+        /// <summary>Monster 等；null/空表示任意非 Avatar 盘面卡。</summary>
+        public string KindFilter { get; }
+
+        public bool RequiresMonster =>
+            !string.IsNullOrEmpty(KindFilter)
+            && string.Equals(KindFilter, "Monster", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// 从内容 Catalog 解析帮助卡打出时的目标需求。
     /// </summary>
     public static class HelpCardBoardSelectResolver
     {
+        public static bool TryGetPlayKind(string defId, out HelpCardPlayKind kind, out HelpCardSelectedCardsSpec spec)
+        {
+            kind = HelpCardPlayKind.None;
+            spec = default;
+            if (!TryResolveSelectedCardsSpec(defId, out spec))
+            {
+                return true;
+            }
+
+            if (spec.Count >= 2)
+            {
+                kind = HelpCardPlayKind.MultiBoardSelect;
+            }
+            else if (spec.Count == 1)
+            {
+                kind = HelpCardPlayKind.SingleDragTarget;
+            }
+
+            return true;
+        }
+
+        /// <summary>仅 count>=2 的多选模式。</summary>
         public static bool TryGetRequiredBoardSelectCount(string defId, out int count)
         {
             count = 0;
+            if (!TryResolveSelectedCardsSpec(defId, out var spec) || spec.Count < 2)
+            {
+                return false;
+            }
+
+            count = spec.Count;
+            return true;
+        }
+
+        /// <summary>单目标拖拽（count=1）。</summary>
+        public static bool TryGetSingleTargetSpec(string defId, out HelpCardSelectedCardsSpec spec)
+        {
+            spec = default;
+            if (!TryResolveSelectedCardsSpec(defId, out spec) || spec.Count != 1)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>多选模式默认描述（无 hover 时回退展示）。</summary>
+        public static bool TryGetBoardSelectPrompt(string defId, out string prompt)
+        {
+            prompt = null;
+            if (string.IsNullOrEmpty(defId))
+            {
+                return false;
+            }
+
+            if (TryResolveUseEffectDescription(defId, out var fromEffect))
+            {
+                prompt = BuildBoardSelectPrompt(fromEffect);
+                if (!string.IsNullOrWhiteSpace(prompt))
+                {
+                    return true;
+                }
+            }
+
+            if (defId.IndexOf("swap_card", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                prompt = "选择两张卡牌互换位置";
+                return true;
+            }
+
+            if (TryResolveSelectedCardsSpec(defId, out var spec) && spec.Count >= 2)
+            {
+                prompt = $"选择{spec.Count}张卡牌";
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryResolveSelectedCardsSpec(string defId, out HelpCardSelectedCardsSpec spec)
+        {
+            spec = default;
             if (string.IsNullOrEmpty(defId))
             {
                 return false;
@@ -21,24 +131,26 @@ namespace NineGrid.Flow
             var arch = NineGridArchitecture.Current;
             if (arch != null)
             {
-                var catalog = arch.GetSystem<IContentSystem>()?.Catalog;
+                var content = arch.GetSystem<IContentSystem>();
+                content?.TryReloadFromConfig();
+                var catalog = content?.Catalog;
                 if (catalog != null
                     && catalog.Cards.TryGetValue(defId, out var cardDef)
-                    && TryParseFromCardEffects(catalog, cardDef, out count))
+                    && TryParseFromCardEffects(catalog, cardDef, out spec))
                 {
                     return true;
                 }
             }
 
-            return TryHardcoded(defId, out count);
+            return TryHardcodedSpec(defId, out spec);
         }
 
         private static bool TryParseFromCardEffects(
             GameContentCatalog catalog,
             CardContentDefinition cardDef,
-            out int count)
+            out HelpCardSelectedCardsSpec spec)
         {
-            count = 0;
+            spec = default;
             if (cardDef?.EffectIds == null)
             {
                 return false;
@@ -60,7 +172,7 @@ namespace NineGrid.Flow
                     continue;
                 }
 
-                if (TryParseSelectedCardsBoardCount(effect.Json, out count))
+                if (TryParseSelectedCardsBoardSpec(effect.Json, out spec))
                 {
                     return true;
                 }
@@ -69,35 +181,58 @@ namespace NineGrid.Flow
             return false;
         }
 
-        private static bool TryParseSelectedCardsBoardCount(string json, out int count)
+        private static bool TryParseSelectedCardsBoardSpec(string json, out HelpCardSelectedCardsSpec spec)
         {
-            count = 0;
+            spec = default;
             if (string.IsNullOrEmpty(json))
             {
                 return false;
             }
 
-            if (json.IndexOf("\"SelectedCards\"", StringComparison.OrdinalIgnoreCase) < 0
-                || json.IndexOf("\"Board\"", StringComparison.OrdinalIgnoreCase) < 0)
+            const string selectedCardsAtom = "\"atom\":\"SelectedCards\"";
+            var atomIdx = json.IndexOf(selectedCardsAtom, StringComparison.OrdinalIgnoreCase);
+            if (atomIdx < 0)
             {
                 return false;
             }
 
-            const string countKey = "\"count\":";
-            var idx = json.IndexOf(countKey, StringComparison.OrdinalIgnoreCase);
+            var sliceStart = Math.Max(0, atomIdx - 1);
+            var sliceLength = Math.Min(220, json.Length - sliceStart);
+            var slice = json.Substring(sliceStart, sliceLength);
+
+            if (slice.IndexOf("\"Board\"", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                return false;
+            }
+
+            if (!TryParseJsonIntField(slice, "count", out var count) || count <= 0)
+            {
+                return false;
+            }
+
+            TryParseJsonStringField(slice, "kind", out var kindFilter);
+            spec = new HelpCardSelectedCardsSpec(count, kindFilter);
+            return true;
+        }
+
+        private static bool TryParseJsonIntField(string json, string fieldName, out int value)
+        {
+            value = 0;
+            var key = "\"" + fieldName + "\":";
+            var idx = json.IndexOf(key, StringComparison.OrdinalIgnoreCase);
             if (idx < 0)
             {
                 return false;
             }
 
-            idx += countKey.Length;
+            idx += key.Length;
             while (idx < json.Length && char.IsWhiteSpace(json[idx]))
             {
                 idx++;
             }
 
             var end = idx;
-            while (end < json.Length && char.IsDigit(json[end]))
+            while (end < json.Length && (char.IsDigit(json[end]) || json[end] == '-'))
             {
                 end++;
             }
@@ -107,31 +242,115 @@ namespace NineGrid.Flow
                 return false;
             }
 
-            if (!int.TryParse(json.Substring(idx, end - idx), out count) || count <= 0)
+            return int.TryParse(json.Substring(idx, end - idx), out value);
+        }
+
+        private static bool TryParseJsonStringField(string json, string fieldName, out string value)
+        {
+            value = null;
+            var key = "\"" + fieldName + "\":";
+            var idx = json.IndexOf(key, StringComparison.OrdinalIgnoreCase);
+            if (idx < 0)
             {
-                count = 0;
                 return false;
             }
 
+            idx += key.Length;
+            while (idx < json.Length && char.IsWhiteSpace(json[idx]))
+            {
+                idx++;
+            }
+
+            if (idx >= json.Length || json[idx] != '"')
+            {
+                return false;
+            }
+
+            idx++;
+            var end = json.IndexOf('"', idx);
+            if (end < 0)
+            {
+                return false;
+            }
+
+            value = json.Substring(idx, end - idx);
             return true;
         }
 
-        private static bool TryHardcoded(string defId, out int count)
+        private static bool TryHardcodedSpec(string defId, out HelpCardSelectedCardsSpec spec)
         {
-            count = 0;
+            spec = default;
             if (defId.IndexOf("swap_card", StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                count = 2;
-                return true;
-            }
-
-            if (defId.IndexOf("teleport_card", StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                count = 1;
+                spec = new HelpCardSelectedCardsSpec(2, null);
                 return true;
             }
 
             return false;
+        }
+
+        private static bool TryResolveUseEffectDescription(string defId, out string description)
+        {
+            description = null;
+            var arch = NineGridArchitecture.Current;
+            var catalog = arch?.GetSystem<IContentSystem>()?.Catalog;
+            if (catalog == null
+                || !catalog.Cards.TryGetValue(defId, out var cardDef)
+                || cardDef?.EffectIds == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < cardDef.EffectIds.Count; i++)
+            {
+                var effectId = cardDef.EffectIds[i];
+                if (string.IsNullOrEmpty(effectId)
+                    || !effectId.EndsWith(".use", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (!catalog.Effects.TryGetValue(effectId, out var effect) || effect == null)
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(effect.DesignText))
+                {
+                    description = effect.DesignText;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static string BuildBoardSelectPrompt(string effectDescription)
+        {
+            if (string.IsNullOrWhiteSpace(effectDescription))
+            {
+                return null;
+            }
+
+            var text = effectDescription.Trim();
+            const string usePrefix = "[使用时]";
+            var idx = text.IndexOf(usePrefix, StringComparison.Ordinal);
+            if (idx >= 0)
+            {
+                text = text.Substring(idx + usePrefix.Length).Trim();
+            }
+
+            if (text.StartsWith("选择", StringComparison.Ordinal))
+            {
+                return text;
+            }
+
+            if (text.StartsWith("对", StringComparison.Ordinal))
+            {
+                return "请" + text;
+            }
+
+            return text;
         }
     }
 }

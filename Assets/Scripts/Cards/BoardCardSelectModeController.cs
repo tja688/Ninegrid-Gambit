@@ -15,6 +15,7 @@ namespace NineGrid.Cards
         private static int _itemUid;
         private static string _itemDefId;
         private static int _requiredCount;
+        private static int _parkedItemUid;
         private static bool _active;
         private static bool _committing;
 
@@ -26,6 +27,8 @@ namespace NineGrid.Cards
 
         public static int RequiredCount => _requiredCount;
 
+        public static int ParkedItemUid => _parkedItemUid;
+
         public static IReadOnlyList<int> SelectedUidsReadOnly => SelectedUids;
 
         /// <summary>选满 N 张后触发；由 Flow 注册并完成 Core 写入与表现。</summary>
@@ -36,7 +39,7 @@ namespace NineGrid.Cards
 
         public static bool Begin(int itemUid, string itemDefId, int requiredCount)
         {
-            if (_active || _committing || itemUid <= 0 || requiredCount <= 0)
+            if (_active || _committing || itemUid <= 0 || requiredCount < 2)
             {
                 return false;
             }
@@ -49,6 +52,7 @@ namespace NineGrid.Cards
             _itemUid = itemUid;
             _itemDefId = itemDefId ?? string.Empty;
             _requiredCount = requiredCount;
+            _parkedItemUid = 0;
             SelectedUids.Clear();
             _active = true;
             CombatHitSink.BoardSelectModeActive = true;
@@ -56,6 +60,21 @@ namespace NineGrid.Cards
             Debug.Log(
                 $"[BoardCardSelectMode] Begin itemUid={itemUid} defId={_itemDefId} required={requiredCount}");
             return true;
+        }
+
+        public static void SetParkedItem(int itemUid)
+        {
+            if (!_active || itemUid <= 0 || itemUid != _itemUid)
+            {
+                return;
+            }
+
+            _parkedItemUid = itemUid;
+        }
+
+        public static void ClearParkedItem()
+        {
+            _parkedItemUid = 0;
         }
 
         public static void End()
@@ -70,10 +89,46 @@ namespace NineGrid.Cards
             _itemUid = 0;
             _itemDefId = string.Empty;
             _requiredCount = 0;
+            _parkedItemUid = 0;
             _active = false;
             _committing = false;
             CombatHitSink.BoardSelectModeActive = false;
+            DescriptionHoverSink.RequestClear(DescriptionShowRoute.BoardSelect);
             Debug.Log("[BoardCardSelectMode] End");
+        }
+
+        /// <summary>流程打断时由 Flow 调用；未 commit 则回手。</summary>
+        public static void RequestAbort(string reason)
+        {
+            if (!_active || _committing)
+            {
+                return;
+            }
+
+            var itemUid = _itemUid;
+            var defId = _itemDefId;
+            _active = false;
+            InvokeSelectionAbortedAsync(itemUid, defId, reason ?? "interrupt").Forget();
+        }
+
+        /// <summary>点击驻留效果卡反悔取消。</summary>
+        public static bool TryAbortByParkedItemClick(int uid)
+        {
+            if (!_active || _committing || uid <= 0 || uid != _parkedItemUid || uid != _itemUid)
+            {
+                return false;
+            }
+
+            var itemUid = _itemUid;
+            var defId = _itemDefId;
+            _active = false;
+            ClearSelectedVisuals();
+            SelectedUids.Clear();
+            RegistryTraceSink.NotifyUserInteraction?.Invoke("BoardSelectCancelParked");
+            Debug.Log(
+                $"[BoardCardSelectMode] AbortByParkedClick itemUid={itemUid} defId={defId}");
+            InvokeSelectionAbortedAsync(itemUid, defId, "parked-click").Forget();
+            return true;
         }
 
         public static bool IsSelected(int uid) => uid > 0 && SelectedUids.Contains(uid);
@@ -187,6 +242,7 @@ namespace NineGrid.Cards
             var aborter = SelectionAbortedAsync;
             if (aborter == null)
             {
+                End();
                 return;
             }
 
@@ -197,6 +253,10 @@ namespace NineGrid.Cards
             catch (Exception ex)
             {
                 Debug.LogException(ex);
+            }
+            finally
+            {
+                End();
             }
         }
 

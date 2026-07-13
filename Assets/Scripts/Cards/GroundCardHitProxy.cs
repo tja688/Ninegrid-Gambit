@@ -39,11 +39,6 @@ namespace NineGrid.Cards
 
         private void OnMouseEnter()
         {
-            if (CombatHitSink.BoardSelectModeActive)
-            {
-                return;
-            }
-
             if (!CanRespondToHover())
             {
                 return;
@@ -67,11 +62,6 @@ namespace NineGrid.Cards
         private void OnMouseExit()
         {
             DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
-
-            if (CombatHitSink.BoardSelectModeActive)
-            {
-                return;
-            }
 
             if (!CanRespondToHover())
             {
@@ -127,7 +117,12 @@ namespace NineGrid.Cards
         private bool CanRespondToHover()
         {
             var hand = CardHandManagerSingleton.Instance;
-            if (hand != null && (hand.IsBusy || hand.IsDragging))
+            if (hand != null && hand.IsDragging)
+            {
+                return false;
+            }
+
+            if (hand != null && hand.IsBusy && !CombatHitSink.BoardSelectModeActive)
             {
                 return false;
             }

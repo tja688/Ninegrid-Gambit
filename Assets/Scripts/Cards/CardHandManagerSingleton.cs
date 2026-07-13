@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -242,10 +243,14 @@ namespace NineGrid.Cards
             CancellationToken cancellationToken = default)
         {
             // PresentationLocked 时本路径已持单输入锁，勿用完整 IsBusy/CanAcceptCard 自拒。
+            // 多选反悔回手：End 后卡可能仍为 DragCardMode 且 _isBusy 短暂为 true，须放行。
+            var boardSelectAbortRestore = !CombatHitSink.BoardSelectModeActive
+                && card.DisplayMode == CardDisplayMode.DragCardMode;
+
             if (card == null
                 || IsDragging
                 || HandCount >= layoutSettings.maxSlots
-                || _isBusy
+                || (_isBusy && !boardSelectAbortRestore)
                 || CombatHitSink.ChoiceOverlayActive)
             {
                 return false;
@@ -950,6 +955,13 @@ namespace NineGrid.Cards
             RegistryTraceSink.NotifyUserInteraction?.Invoke("HandDragApply");
             ClearDragSession();
             CardOpacityUtility.ResetAlpha(card);
+
+            if (CombatHitSink.BoardSelectModeActive)
+            {
+                await ParkCardForBoardSelectAsync(card);
+                return;
+            }
+
             await VanishCardAfterApplyAsync(card);
         }
 
@@ -968,6 +980,96 @@ namespace NineGrid.Cards
         {
             await UniTask.CompletedTask;
             return true;
+        }
+
+        private async UniTask ParkCardForBoardSelectAsync(ManagedCard card)
+        {
+            if (card?.Transform == null)
+            {
+                return;
+            }
+
+            var field = GroundFieldManagerSingleton.Instance;
+            var anchor = field?.GetGroundAnchor(GroundSlotTopology.AvatarReservedSlot);
+            if (anchor == null)
+            {
+                Debug.LogWarning("[CardHandManager] BoardSelect 驻留失败：缺少 Avatar 锚点。");
+                BoardCardSelectModeController.RequestAbort("park-no-anchor");
+                return;
+            }
+
+            _isBusy = true;
+            try
+            {
+                var cardManager = CardManagerSingleton.Instance;
+                cardManager.SetDisplayMode(card, CardDisplayMode.DragCardMode);
+                BoostDragSorting(card);
+
+                var target = anchor.position;
+                target.z = card.Transform.position.z;
+
+                var tween = CardDeckTween.MoveToWorld(
+                    card.Transform,
+                    target,
+                    layoutSettings.moveDuration,
+                    uid: card.Uid,
+                    reason: "BoardSelect.Park");
+                if (tween != null && tween.IsActive())
+                {
+                    var tcs = new UniTaskCompletionSource();
+                    tween.OnComplete(() => tcs.TrySetResult());
+                    tween.OnKill(() => tcs.TrySetResult());
+                    await tcs.Task;
+                }
+
+                ArmBoardSelectParkedHitProxy(card);
+                BoardCardSelectModeController.SetParkedItem(card.Uid);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                BoardCardSelectModeController.RequestAbort("park-exception");
+            }
+            finally
+            {
+                _isBusy = false;
+            }
+        }
+
+        private static void ArmBoardSelectParkedHitProxy(ManagedCard card)
+        {
+            if (card?.View == null)
+            {
+                return;
+            }
+
+            var proxy = card.View.GetComponent<BoardSelectParkedCardHitProxy>();
+            if (proxy == null)
+            {
+                proxy = card.View.gameObject.AddComponent<BoardSelectParkedCardHitProxy>();
+            }
+
+            proxy.SetArmed(true);
+        }
+
+        public static void DisarmBoardSelectParkedHitProxy(ManagedCard card)
+        {
+            if (card?.View == null)
+            {
+                return;
+            }
+
+            var proxy = card.View.GetComponent<BoardSelectParkedCardHitProxy>();
+            proxy?.SetArmed(false);
+        }
+
+        /// <summary>多选提交成功后播放退场 effect 并释放视图。</summary>
+        public async UniTask VanishParkedBoardSelectItemAsync(ManagedCard card)
+        {
+            DisarmBoardSelectParkedHitProxy(card);
+            BoardCardSelectModeController.ClearParkedItem();
+            DescriptionHoverSink.RequestClear(DescriptionShowRoute.BoardSelect);
+            await VanishCardAfterApplyAsync(card);
         }
 
         private async UniTask VanishCardAfterApplyAsync(ManagedCard card)

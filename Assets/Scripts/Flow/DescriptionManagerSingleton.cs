@@ -31,6 +31,7 @@ namespace NineGrid.Flow
         private int _generation;
         private DescriptionShowRoute _activeRoute = DescriptionShowRoute.Hover;
         private string _activeDefId = string.Empty;
+        private string _boardSelectPrompt = string.Empty;
         private int _noticeGeneration;
         private string _activeNoticeDefId = string.Empty;
         private ContentVisualCatalog _visualCatalog;
@@ -107,12 +108,27 @@ namespace NineGrid.Flow
                 return _generation;
             }
 
+            // 拖拽 / 悬停占用时 BoardSelect 不得抢占
+            if (route == DescriptionShowRoute.BoardSelect
+                && (_activeRoute == DescriptionShowRoute.Drag || _activeRoute == DescriptionShowRoute.Hover))
+            {
+                return _generation;
+            }
+
             // 拖拽描述占用中时，Hover 不得抢占；返回 -1 避免调用方 Clear(token) 误清 Drag
             if (route == DescriptionShowRoute.Hover
                 && !string.IsNullOrEmpty(_activeDefId)
                 && _activeRoute == DescriptionShowRoute.Drag)
             {
                 return -1;
+            }
+
+            // 悬停占用时 BoardSelect 不得抢占（BoardSelect 仅作无 hover 回退）
+            if (route == DescriptionShowRoute.BoardSelect
+                && _activeRoute == DescriptionShowRoute.Hover
+                && !string.IsNullOrEmpty(_activeDefId))
+            {
+                return _generation;
             }
 
             if (string.IsNullOrEmpty(defId))
@@ -142,6 +158,54 @@ namespace NineGrid.Flow
 
         /// <summary>兼容旧调用：按 defId 走 Hover 路由。</summary>
         public int Show(string defId) => Show(defId, DescriptionShowRoute.Hover);
+
+        /// <summary>展示原始文案（多选模式专属提示等）。</summary>
+        public int ShowText(string text, DescriptionShowRoute route = DescriptionShowRoute.BoardSelect)
+        {
+            EnsureBindings();
+
+            if (route == DescriptionShowRoute.BoardSelect)
+            {
+                _boardSelectPrompt = text ?? string.Empty;
+            }
+
+            if (cardInfoText == null)
+            {
+                _generation++;
+                return _generation;
+            }
+
+            if (route == DescriptionShowRoute.BoardSelect)
+            {
+                if (_activeRoute == DescriptionShowRoute.Drag
+                    || (_activeRoute == DescriptionShowRoute.Hover && !string.IsNullOrEmpty(_activeDefId)))
+                {
+                    return _generation;
+                }
+
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    return ClearActiveAndBump();
+                }
+
+                _generation++;
+                _activeDefId = string.Empty;
+                _activeRoute = route;
+                cardInfoText.text = ClampDescription(text, MaxDescriptionChars);
+                return _generation;
+            }
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return ClearActiveAndBump();
+            }
+
+            _generation++;
+            _activeDefId = string.Empty;
+            _activeRoute = route;
+            cardInfoText.text = ClampDescription(text, MaxDescriptionChars);
+            return _generation;
+        }
 
         /// <summary>
         /// 主流程选择悬停：写入 Notice Text（与 Card Info Text 独立 generation）。
@@ -221,12 +285,39 @@ namespace NineGrid.Flow
         /// <summary>仅当当前展示路由匹配时清空，避免 hover/drag 互相踩。</summary>
         public void ClearRoute(DescriptionShowRoute route)
         {
-            if (string.IsNullOrEmpty(_activeDefId) || _activeRoute != route)
+            if (_activeRoute != route)
             {
                 return;
             }
 
+            if (route == DescriptionShowRoute.BoardSelect)
+            {
+                _boardSelectPrompt = string.Empty;
+            }
+
             Clear(_generation);
+            TryRestoreBoardSelectPrompt();
+        }
+
+        private void TryRestoreBoardSelectPrompt()
+        {
+            if (string.IsNullOrWhiteSpace(_boardSelectPrompt)
+                || !CombatHitSink.BoardSelectModeActive
+                || cardInfoText == null)
+            {
+                return;
+            }
+
+            if (_activeRoute == DescriptionShowRoute.Drag
+                || (_activeRoute == DescriptionShowRoute.Hover && !string.IsNullOrEmpty(_activeDefId)))
+            {
+                return;
+            }
+
+            _generation++;
+            _activeDefId = string.Empty;
+            _activeRoute = DescriptionShowRoute.BoardSelect;
+            cardInfoText.text = ClampDescription(_boardSelectPrompt, MaxDescriptionChars);
         }
 
         private int ClearActiveAndBump()
@@ -256,6 +347,7 @@ namespace NineGrid.Flow
         private void RegisterHoverSink()
         {
             DescriptionHoverSink.Show = ShowFromSink;
+            DescriptionHoverSink.ShowText = ShowTextFromSink;
             DescriptionHoverSink.Clear = ClearFromSink;
         }
 
@@ -266,6 +358,11 @@ namespace NineGrid.Flow
                 DescriptionHoverSink.Show = null;
             }
 
+            if (DescriptionHoverSink.ShowText == ShowTextFromSink)
+            {
+                DescriptionHoverSink.ShowText = null;
+            }
+
             if (DescriptionHoverSink.Clear == ClearFromSink)
             {
                 DescriptionHoverSink.Clear = null;
@@ -273,6 +370,8 @@ namespace NineGrid.Flow
         }
 
         private void ShowFromSink(string defId, DescriptionShowRoute route) => Show(defId, route);
+
+        private void ShowTextFromSink(string text, DescriptionShowRoute route) => ShowText(text, route);
 
         private void ClearFromSink(DescriptionShowRoute route) => ClearRoute(route);
 

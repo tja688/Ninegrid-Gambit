@@ -1096,6 +1096,7 @@ namespace NineGrid.Flow
             }
 
             hand.DragApplyValidator -= ValidateHandDragApplyAsync;
+            AbortBoardSelectIfActive("unregister-hand-bridge");
             BoardCardSelectModeController.SelectionCompletedAsync -= OnBoardSelectionCompletedAsync;
             BoardCardSelectModeController.SelectionAbortedAsync -= OnBoardSelectionAbortedAsync;
             BoardCardSelectModeController.End();
@@ -2280,31 +2281,10 @@ namespace NineGrid.Flow
             }
 
             ResolveManagers();
-            int? targetUid = null;
-            ManagedCard targetCard = null;
-            if (targetGroundSlot.HasValue
-                && fieldManager != null
-                && fieldManager.TryGetCardAt(targetGroundSlot.Value, out targetCard)
-                && targetCard != null)
-            {
-                if (targetCard.CoreKind != CardPresentationKind.Monster
-                    && HelpCardNeedsMonsterTarget(card.DefId))
-                {
-                    return false;
-                }
-
-                targetUid = targetCard.Uid;
-            }
-            else if (HelpCardNeedsMonsterTarget(card.DefId))
-            {
-                // 飞刀等：必须落到怪物上方，否则回手。
-                return false;
-            }
 
             string selectedOption = null;
             if (IsStatBoostCard(card.DefId))
             {
-                // 先藏起本体，避免三选一期间手牌卡仍停在拖放位置。
                 HideHandCardForChoice(card);
                 selectedOption = await PresentStatBoostChoiceAsync();
                 if (string.IsNullOrEmpty(selectedOption))
@@ -2314,9 +2294,15 @@ namespace NineGrid.Flow
                 }
             }
 
-            if (HelpCardBoardSelectResolver.TryGetRequiredBoardSelectCount(card.DefId, out var boardSelectCount))
+            HelpCardBoardSelectResolver.TryGetPlayKind(
+                card.DefId,
+                out var playKind,
+                out var selectedCardsSpec);
+
+            if (playKind == HelpCardPlayKind.MultiBoardSelect)
             {
-                if (!BoardCardSelectModeController.Begin(card.Uid, card.DefId, boardSelectCount))
+                if (!HelpCardBoardSelectResolver.TryGetRequiredBoardSelectCount(card.DefId, out var boardSelectCount)
+                    || !BoardCardSelectModeController.Begin(card.Uid, card.DefId, boardSelectCount))
                 {
                     if (IsStatBoostCard(card.DefId))
                     {
@@ -2326,7 +2312,23 @@ namespace NineGrid.Flow
                     return false;
                 }
 
+                if (HelpCardBoardSelectResolver.TryGetBoardSelectPrompt(card.DefId, out var prompt))
+                {
+                    DescriptionHoverSink.RequestShowText(prompt, DescriptionShowRoute.BoardSelect);
+                }
+
                 return true;
+            }
+
+            int[] selectedUids = null;
+            if (playKind == HelpCardPlayKind.SingleDragTarget)
+            {
+                if (!TryResolveSingleDragTarget(targetGroundSlot, selectedCardsSpec, out var targetUid))
+                {
+                    return false;
+                }
+
+                selectedUids = new[] { targetUid };
             }
 
             if (!CombatHitSink.TryBeginPresentationLock("UseItem"))
@@ -2337,12 +2339,6 @@ namespace NineGrid.Flow
                 }
 
                 return false;
-            }
-
-            int[] selectedUids = null;
-            if (targetUid.HasValue && targetUid.Value > 0)
-            {
-                selectedUids = new[] { targetUid.Value };
             }
 
             var useResult = ApplyUseItemFromCore(card.Uid, selectedUids, selectedOption);
@@ -2359,6 +2355,47 @@ namespace NineGrid.Flow
 
             PresentUseItemEffectsAsync(useResult).Forget();
             return true;
+        }
+
+        private bool TryResolveSingleDragTarget(
+            int? targetGroundSlot,
+            HelpCardSelectedCardsSpec spec,
+            out int targetUid)
+        {
+            targetUid = 0;
+            if (!targetGroundSlot.HasValue || fieldManager == null)
+            {
+                return false;
+            }
+
+            if (!fieldManager.TryGetCardAt(targetGroundSlot.Value, out var targetCard)
+                || targetCard == null)
+            {
+                return false;
+            }
+
+            if (targetCard.CoreKind == CardPresentationKind.Avatar)
+            {
+                return false;
+            }
+
+            if (spec.RequiresMonster && targetCard.CoreKind != CardPresentationKind.Monster)
+            {
+                return false;
+            }
+
+            targetUid = targetCard.Uid;
+            return targetUid > 0;
+        }
+
+        private void AbortBoardSelectIfActive(string reason)
+        {
+            if (!BoardCardSelectModeController.IsActive)
+            {
+                return;
+            }
+
+            BoardCardSelectModeController.RequestAbort(reason);
         }
 
         private async UniTask OnBoardSelectionCompletedAsync(int itemUid, int[] selectedUids)
@@ -2397,6 +2434,7 @@ namespace NineGrid.Flow
             }
 
             RegistryTraceSink.NotifyUserInteraction?.Invoke("BoardSelectUseItemAccepted");
+            await VanishParkedBoardSelectItemIfPresentAsync(itemUid);
             PresentUseItemEffectsAsync(useResult).Forget();
             await UniTask.CompletedTask;
         }
@@ -2493,7 +2531,9 @@ namespace NineGrid.Flow
             var elapsed = 0;
             while (elapsed < BoardSelectLockWaitMs)
             {
-                if (!hand.IsDragging && hand.CanAcceptCard)
+                if (!hand.IsDragging
+                    && !CombatHitSink.BoardSelectModeActive
+                    && (hand.CanAcceptCard || !hand.IsBusy))
                 {
                     return true;
                 }
@@ -2502,7 +2542,9 @@ namespace NineGrid.Flow
                 elapsed += stepMs;
             }
 
-            return !hand.IsDragging && hand.CanAcceptCard;
+            return !hand.IsDragging
+                   && !CombatHitSink.BoardSelectModeActive
+                   && (hand.CanAcceptCard || !hand.IsBusy);
         }
 
         private async UniTask RestoreBoardSelectItemToHandAsync(int itemUid, string defId, string reason)
@@ -2566,6 +2608,7 @@ namespace NineGrid.Flow
             }
             else
             {
+                CardHandManagerSingleton.DisarmBoardSelectParkedHitProxy(card);
                 cardManager.SetDisplayMode(card, CardDisplayMode.HandCardMode);
                 CardOpacityUtility.ResetAlpha(card);
             }
@@ -2596,6 +2639,30 @@ namespace NineGrid.Flow
             }
         }
 
+        private async UniTask VanishParkedBoardSelectItemIfPresentAsync(int itemUid)
+        {
+            if (itemUid <= 0)
+            {
+                return;
+            }
+
+            ResolveManagers();
+            if (cardManager == null || !cardManager.TryGet(itemUid, out var card) || card == null)
+            {
+                return;
+            }
+
+            var hand = CardHandManagerSingleton.Instance;
+            if (hand == null)
+            {
+                CardHandManagerSingleton.DisarmBoardSelectParkedHitProxy(card);
+                CardManagerSingleton.Instance.Release(card, "BoardSelect.VanishNoHand");
+                return;
+            }
+
+            await hand.VanishParkedBoardSelectItemAsync(card);
+        }
+
         private static void HideHandCardForChoice(ManagedCard card)
         {
             if (card?.Transform == null)
@@ -2621,19 +2688,6 @@ namespace NineGrid.Flow
         {
             return !string.IsNullOrEmpty(defId)
                    && string.Equals(defId, StatBoostCardDefId, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static bool HelpCardNeedsMonsterTarget(string defId)
-        {
-            if (string.IsNullOrEmpty(defId))
-            {
-                return false;
-            }
-
-            return defId.IndexOf("throwing_knife", StringComparison.OrdinalIgnoreCase) >= 0
-                   || defId.IndexOf("fireball", StringComparison.OrdinalIgnoreCase) >= 0
-                   || defId.IndexOf("impact_tutorial", StringComparison.OrdinalIgnoreCase) >= 0
-                   || defId.IndexOf("shield_bash", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private async UniTaskVoid PresentUseItemEffectsAsync(UseItemPresentationResult useResult)
@@ -2774,6 +2828,7 @@ namespace NineGrid.Flow
                 defIds[i] = options[i].DefId;
             }
 
+            AbortBoardSelectIfActive("reward-choice");
             CombatHitSink.ChoiceOverlayActive = true;
             try
             {
@@ -2955,6 +3010,7 @@ namespace NineGrid.Flow
                 return null;
             }
 
+            AbortBoardSelectIfActive("stat-boost-choice");
             CombatHitSink.ChoiceOverlayActive = true;
             try
             {

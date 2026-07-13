@@ -455,6 +455,7 @@ namespace NineGrid.Flow
             }
 
             panelRouter.ShowRewardOverlay();
+            BoardCardSelectModeController.RequestAbort("mainloop-reward-overlay");
             CombatHitSink.ChoiceOverlayActive = true;
             try
             {
@@ -534,6 +535,7 @@ namespace NineGrid.Flow
             var pickedIndex = -1;
             var pickedId = string.Empty;
             var finished = false;
+            BoardCardSelectModeController.RequestAbort("mainloop-room-choice");
             CombatHitSink.ChoiceOverlayActive = true;
             try
             {
@@ -710,6 +712,7 @@ namespace NineGrid.Flow
 
                 // 商店 / 宝箱房：复用 Bounce 默认选择器。
                 panelRouter.ShowRewardOverlay();
+                BoardCardSelectModeController.RequestAbort("mainloop-room-reward-overlay");
                 CombatHitSink.ChoiceOverlayActive = true;
                 try
                 {

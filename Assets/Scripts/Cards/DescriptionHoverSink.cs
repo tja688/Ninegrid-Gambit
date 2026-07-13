@@ -9,6 +9,7 @@ namespace NineGrid.Cards
     {
         Hover = 0,
         Drag = 1,
+        BoardSelect = 2,
     }
 
     /// <summary>
@@ -18,6 +19,9 @@ namespace NineGrid.Cards
     {
         /// <summary>Show(defId, route)；由 DescriptionManager 注册。</summary>
         public static Action<string, DescriptionShowRoute> Show;
+
+        /// <summary>ShowText(text, route)；展示原始文案（多选提示等）。</summary>
+        public static Action<string, DescriptionShowRoute> ShowText;
 
         /// <summary>Clear(route)；仅清除匹配路由的当前描述，避免 hover/drag 互相踩。</summary>
         public static Action<DescriptionShowRoute> Clear;
@@ -31,6 +35,17 @@ namespace NineGrid.Cards
             }
 
             Show?.Invoke(defId, route);
+        }
+
+        public static void RequestShowText(string text, DescriptionShowRoute route)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                RequestClear(route);
+                return;
+            }
+
+            ShowText?.Invoke(text, route);
         }
 
         public static void RequestClear(DescriptionShowRoute route = DescriptionShowRoute.Hover)
