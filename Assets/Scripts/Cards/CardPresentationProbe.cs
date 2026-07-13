@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -48,7 +49,8 @@ namespace NineGrid.Cards
             Vector3 to,
             string site,
             string reason = null,
-            float expectMs = 0f)
+            float expectMs = 0f,
+            int choreoSeqId = 0)
         {
             Emit(
                 "MotionBegin",
@@ -60,7 +62,10 @@ namespace NineGrid.Cards
                 "toX", FormatXy(to.x),
                 "toY", FormatXy(to.y),
                 "reason", reason ?? string.Empty,
-                "expectMs", ((int)(expectMs * 1000f)).ToString(CultureInfo.InvariantCulture));
+                "expectMs", ((int)(expectMs * 1000f)).ToString(CultureInfo.InvariantCulture),
+                "choreoSeqId", choreoSeqId > 0
+                    ? choreoSeqId.ToString(CultureInfo.InvariantCulture)
+                    : string.Empty);
         }
 
         public static void MotionEnd(
@@ -69,7 +74,8 @@ namespace NineGrid.Cards
             Vector3 at,
             string endHow,
             string site,
-            string killedBySite = null)
+            string killedBySite = null,
+            int choreoSeqId = 0)
         {
             Emit(
                 "MotionEnd",
@@ -79,7 +85,10 @@ namespace NineGrid.Cards
                 "endHow", endHow ?? string.Empty,
                 "x", FormatXy(at.x),
                 "y", FormatXy(at.y),
-                "killedBySite", killedBySite ?? string.Empty);
+                "killedBySite", killedBySite ?? string.Empty,
+                "choreoSeqId", choreoSeqId > 0
+                    ? choreoSeqId.ToString(CultureInfo.InvariantCulture)
+                    : string.Empty);
         }
 
         public static void MotionPlan(
@@ -90,7 +99,8 @@ namespace NineGrid.Cards
             Vector3 to,
             string site,
             string reason = null,
-            float expectMs = 0f)
+            float expectMs = 0f,
+            int choreoSeqId = 0)
         {
             Emit(
                 "MotionPlan",
@@ -103,7 +113,10 @@ namespace NineGrid.Cards
                 "toX", FormatXy(to.x),
                 "toY", FormatXy(to.y),
                 "reason", reason ?? string.Empty,
-                "expectMs", ((int)(expectMs * 1000f)).ToString(CultureInfo.InvariantCulture));
+                "expectMs", ((int)(expectMs * 1000f)).ToString(CultureInfo.InvariantCulture),
+                "choreoSeqId", choreoSeqId > 0
+                    ? choreoSeqId.ToString(CultureInfo.InvariantCulture)
+                    : string.Empty);
         }
 
         public static void VisChange(
@@ -252,14 +265,77 @@ namespace NineGrid.Cards
         }
 
         /// <summary>外圈旋转：整环 Vacate → 重登记计划摘要。</summary>
-        public static void RingShift(string phase, string plan, string site)
+        public static void RingShift(
+            string phase,
+            string plan,
+            string site,
+            bool clockwise = false,
+            bool skipBusyGuard = false,
+            int ringOccupied = 0,
+            int animateTasks = 0,
+            int choreoSeqId = 0)
         {
             Emit(
                 "RingShift",
                 -1,
                 site,
                 "phase", phase ?? string.Empty,
-                "plan", plan ?? string.Empty);
+                "plan", plan ?? string.Empty,
+                "clockwise", clockwise ? "1" : "0",
+                "skipBusyGuard", skipBusyGuard ? "1" : "0",
+                "ringOccupied", ringOccupied.ToString(CultureInfo.InvariantCulture),
+                "animateTasks", animateTasks.ToString(CultureInfo.InvariantCulture),
+                "choreoSeqId", choreoSeqId > 0
+                    ? choreoSeqId.ToString(CultureInfo.InvariantCulture)
+                    : string.Empty);
+        }
+
+        public static void ChoreoBegin(Dictionary<string, string> payload)
+        {
+            EmitDict("ChoreoBegin", -1, "Choreo.Begin", payload);
+        }
+
+        public static void ChoreoEnd(Dictionary<string, string> payload)
+        {
+            EmitDict("ChoreoEnd", -1, "Choreo.End", payload);
+        }
+
+        public static void ExploreTrace(int uid, Dictionary<string, string> payload)
+        {
+            EmitDict("ExploreTrace", uid, "Explore.Trace", payload);
+        }
+
+        public static void BusySnapshot(Dictionary<string, string> payload)
+        {
+            EmitDict("BusySnapshot", -1, "Choreo.Busy", payload);
+        }
+
+        public static void ChaseSample(
+            int uid,
+            int trackedSlot,
+            Vector3 current,
+            Vector3 destination,
+            float dist,
+            int choreoSeqId = 0)
+        {
+            Emit(
+                "ChaseSample",
+                uid,
+                "Explore.Chase",
+                "trackedSlot", trackedSlot.ToString(CultureInfo.InvariantCulture),
+                "x", FormatXy(current.x),
+                "y", FormatXy(current.y),
+                "destX", FormatXy(destination.x),
+                "destY", FormatXy(destination.y),
+                "dist", dist.ToString("0.###", CultureInfo.InvariantCulture),
+                "choreoSeqId", choreoSeqId > 0
+                    ? choreoSeqId.ToString(CultureInfo.InvariantCulture)
+                    : string.Empty);
+        }
+
+        public static void SessionChoreoSummary(Dictionary<string, string> payload)
+        {
+            EmitDict("SessionChoreoSummary", -1, "Choreo.SessionSummary", payload);
         }
 
         /// <summary>
@@ -361,6 +437,25 @@ namespace NineGrid.Cards
             {
                 // swallow
             }
+        }
+
+        private static void EmitDict(string kind, int uid, string site, Dictionary<string, string> payload)
+        {
+            if (payload == null || payload.Count == 0)
+            {
+                Emit(kind, uid, site);
+                return;
+            }
+
+            var pairs = new string[payload.Count * 2];
+            var i = 0;
+            foreach (var kv in payload)
+            {
+                pairs[i++] = kv.Key ?? string.Empty;
+                pairs[i++] = kv.Value ?? string.Empty;
+            }
+
+            Emit(kind, uid, site, pairs);
         }
     }
 }

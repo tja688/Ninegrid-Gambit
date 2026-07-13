@@ -12,10 +12,29 @@ namespace NineGrid.Cards
 
         public static Action<int, string, string, int> RecordSuspectGroundRelease;
 
+        /// <summary>Pickup 点击前 eligibility 审计（参数见 RegistryTraceRecorder.RecordPickupEligibility）。</summary>
+        public static Action<
+            int,
+            string,
+            string,
+            string,
+            float,
+            float,
+            int,
+            int,
+            float,
+            bool,
+            bool,
+            bool,
+            bool,
+            bool,
+            bool> RecordPickupEligibility;
+
         public static void ClearHandlers()
         {
             NotifyUserInteraction = null;
             RecordSuspectGroundRelease = null;
+            RecordPickupEligibility = null;
         }
     }
 }

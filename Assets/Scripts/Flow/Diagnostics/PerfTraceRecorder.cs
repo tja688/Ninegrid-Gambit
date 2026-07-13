@@ -35,6 +35,8 @@ namespace NineGrid.Flow.Diagnostics
             public int MotionId;
             public int EventIndex;
             public string Site;
+            public int ExpectMs;
+            public float BeginRealtime;
         }
 
         private struct PlannedMotion
@@ -67,6 +69,8 @@ namespace NineGrid.Flow.Diagnostics
         public static bool HasEvents =>
             sSession != null && sSession.events != null && sSession.events.Count > 0;
 
+        public static int OpenMotionCount => sOpenMotions.Count;
+
         public static void Clear()
         {
             try
@@ -78,6 +82,7 @@ namespace NineGrid.Flow.Diagnostics
                 sLastBoardFull.Clear();
                 sAnomalyCountThisBeat = 0;
                 CardPresentationProbe.ResetMotionIds();
+                ChoreoTraceContext.Reset();
             }
             catch (Exception ex)
             {
@@ -106,7 +111,7 @@ namespace NineGrid.Flow.Diagnostics
                 sSessionStartRealtime = Time.realtimeSinceStartup;
                 sSession = new PerfTraceSession
                 {
-                    schemaVersion = 1,
+                    schemaVersion = 2,
                     seed = DiagTraceShared.CurrentSeed,
                     sessionId = DiagTraceShared.CurrentSessionId,
                     events = new List<PerfTraceEvent>(),
@@ -203,9 +208,23 @@ namespace NineGrid.Flow.Diagnostics
                     RecordBoardSnap("beatClose", full: false);
                 }
 
-                DetectBeatCloseAnomalies();
-
                 var beatKind = DiagBeatClock.CurrentBeatKind;
+                if (beatKind == DiagBeatKinds.BoardChoreo)
+                {
+                    ChoreoTraceContext.RecordBusySnapshot("BeatClose.BoardChoreo");
+                    if (ChoreoTraceContext.OpenChoreoCount > 0 || sOpenMotions.Count > 0)
+                    {
+                        EmitAnomaly(
+                            PerfTraceAnomalyCodes.ChoreoIncompleteAtBeatClose,
+                            -1,
+                            "openChoreo=" + ChoreoTraceContext.GetOpenChoreoSummary()
+                            + " openMotion=" + sOpenMotions.Count,
+                            -1);
+                    }
+                }
+
+                DetectBeatCloseAnomalies(beatKind);
+
                 RegistryTraceRecorder.OnPresentationBeatClosed(beatKind);
 
                 var nodeIndex = DiagBeatClock.CurrentNodeIndex;
@@ -483,6 +502,35 @@ namespace NineGrid.Flow.Diagnostics
             }
         }
 
+        /// <summary>编排/拾取专项 Anomaly（BeatClose 外也可实时写入）。</summary>
+        public static void EmitChoreoAnomaly(string code, int uid, string detail)
+        {
+            if (!sEnabled)
+            {
+                return;
+            }
+
+            try
+            {
+                EmitAnomaly(code, uid, detail, -1);
+            }
+            catch
+            {
+                // swallow
+            }
+        }
+
+        public static void RecordSessionChoreoSummary(Dictionary<string, string> payload)
+        {
+            Record(
+                PerfTraceKinds.SessionChoreoSummary,
+                uid: -1,
+                site: "Choreo.SessionSummary",
+                payload: payload != null
+                    ? new Dictionary<string, string>(payload)
+                    : new Dictionary<string, string>());
+        }
+
         public static string ResolveExportDirectory()
         {
             return DiagTraceShared.ResolveNotesDir("Logs/PerfLog");
@@ -536,11 +584,23 @@ namespace NineGrid.Flow.Diagnostics
             else if (ev.kind == PerfTraceKinds.MotionBegin && ev.uid > 0)
             {
                 var motionId = ParseInt(ev.payload, "motionId", 0);
+                if (sOpenMotions.ContainsKey(ev.uid))
+                {
+                    var prev = sOpenMotions[ev.uid];
+                    EmitAnomaly(
+                        PerfTraceAnomalyCodes.MotionOverlap,
+                        ev.uid,
+                        "new motionId=" + motionId + " while open motionId=" + prev.MotionId,
+                        ev.index);
+                }
+
                 sOpenMotions[ev.uid] = new OpenMotion
                 {
                     MotionId = motionId,
                     EventIndex = ev.index,
                     Site = ev.site,
+                    ExpectMs = ParseInt(ev.payload, "expectMs", 0),
+                    BeginRealtime = Time.realtimeSinceStartup,
                 };
                 if (sPlans.TryGetValue(ev.uid, out var plan))
                 {
@@ -779,17 +839,38 @@ namespace NineGrid.Flow.Diagnostics
             }
         }
 
-        private static void DetectBeatCloseAnomalies()
+        private static void DetectBeatCloseAnomalies(string beatKind = null)
         {
+            beatKind ??= DiagBeatClock.CurrentBeatKind;
             DetectCombatantOffscreenAtBeatClose();
 
-            foreach (var kv in sOpenMotions)
+            var openSnapshot = new List<KeyValuePair<int, OpenMotion>>(sOpenMotions);
+            foreach (var kv in openSnapshot)
             {
-                EmitAnomaly(
-                    PerfTraceAnomalyCodes.MissingMotionEnd,
+                var open = kv.Value;
+                var elapsedMs = (Time.realtimeSinceStartup - open.BeginRealtime) * 1000f;
+                var overExpected = open.ExpectMs > 0 && elapsedMs > open.ExpectMs * 2f;
+                var strictBeat = beatKind == DiagBeatKinds.PostKillDrain
+                    || beatKind == DiagBeatKinds.BoardChoreo;
+
+                Record(
+                    PerfTraceKinds.MotionEnd,
                     kv.Key,
-                    "open motionId=" + kv.Value.MotionId + " at beat close",
-                    kv.Value.EventIndex);
+                    open.Site,
+                    new Dictionary<string, string>
+                    {
+                        ["motionId"] = open.MotionId.ToString(CultureInfo.InvariantCulture),
+                        ["endHow"] = "beatClose",
+                    });
+
+                if (overExpected || strictBeat)
+                {
+                    EmitAnomaly(
+                        PerfTraceAnomalyCodes.MissingMotionEnd,
+                        kv.Key,
+                        "open motionId=" + open.MotionId + " at beat close",
+                        open.EventIndex);
+                }
             }
 
             sOpenMotions.Clear();

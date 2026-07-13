@@ -1551,6 +1551,13 @@ namespace NineGrid.Flow
                 CancellationToken = cancellationToken,
             };
             _boardPresentationQueue.Enqueue(request);
+            ChoreoTraceContext.BoardQueueDepth = _boardPresentationQueue.Count;
+            FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.BoardPresentationQueue);
+            FieldTraceHelper.RecordBoardQueueEnqueue(
+                _boardPresentationQueue.Count,
+                result.Moves?.Length ?? 0,
+                result.Deals?.Length ?? 0);
+            FieldTraceHelper.ClearBatchTag();
             EnsureBoardPresentationPumpRunning();
             await request.Completion.Task;
         }
@@ -1574,6 +1581,8 @@ namespace NineGrid.Flow
 
             _boardPresentationPumpRunning = true;
             _drainInFlight = true;
+            ChoreoTraceContext.PumpRunning = true;
+            ChoreoTraceContext.DrainInFlight = true;
 
             var acquiredHere = false;
             if (!CombatHitSink.PresentationLocked)
@@ -1581,14 +1590,19 @@ namespace NineGrid.Flow
                 if (!CombatHitSink.TryBeginPresentationLock("BoardPresentationQueue"))
                 {
                     Debug.LogWarning("[InBattleManager] 盘面表演队列无法获取表现锁，跳过缓释。");
+                    var pendingCount = _boardPresentationQueue.Count;
+                    FieldTraceHelper.RecordBoardQueueSkip("lockFail", pendingCount);
                     while (_boardPresentationQueue.Count > 0)
                     {
                         var pending = _boardPresentationQueue.Dequeue();
                         pending.Completion.TrySetResult();
                     }
 
+                    ChoreoTraceContext.BoardQueueDepth = 0;
                     _boardPresentationPumpRunning = false;
                     _drainInFlight = false;
+                    ChoreoTraceContext.PumpRunning = false;
+                    ChoreoTraceContext.DrainInFlight = false;
                     return;
                 }
 
@@ -1600,6 +1614,10 @@ namespace NineGrid.Flow
                 while (_boardPresentationQueue.Count > 0)
                 {
                     var request = _boardPresentationQueue.Dequeue();
+                    ChoreoTraceContext.BoardQueueDepth = _boardPresentationQueue.Count;
+                    FieldTraceHelper.RecordBoardQueueDequeue(
+                        _boardPresentationQueue.Count,
+                        lockAcquired: true);
                     try
                     {
                         FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.BoardPresentationQueue);
@@ -1625,6 +1643,9 @@ namespace NineGrid.Flow
             {
                 _boardPresentationPumpRunning = false;
                 _drainInFlight = false;
+                ChoreoTraceContext.PumpRunning = false;
+                ChoreoTraceContext.DrainInFlight = false;
+                ChoreoTraceContext.BoardQueueDepth = 0;
                 if (acquiredHere)
                 {
                     CombatHitSink.EndPresentationLock("BoardPresentationQueue");
@@ -3215,7 +3236,11 @@ namespace NineGrid.Flow
 
                 if ((card.Transform.position - anchor.position).sqrMagnitude > 0.0001f)
                 {
-                    CardDeckTween.KillMotion(card.Transform);
+                    if (DOTween.IsTweening(card.Transform))
+                    {
+                        CardDeckTween.KillMotion(card.Transform);
+                    }
+
                     card.Transform.position = anchor.position;
                     cardManager.RefreshDisplayMode(card);
                 }

@@ -22,8 +22,31 @@ Session 根：`sessionId` + `seed`（`DiagTraceShared`）。
 | **RegistryLog** | `Assets/Notes/Logs/OtherLog/RegistryLog/registrylog-*.json` | CardManager 注册表专项：Delta/Audit/Checkpoint/IdleWatch |
 | **Battle Probe** | `Assets/Notes/Logs/OtherLog/BattleLog/battlelog-*.json` | 战斗门禁 Op 深挖 |
 
-旧顶层 `Assets/Notes/FlowLog/`、`Assets/Notes/BattleLog/` **仅历史归档**；最新以 `Logs/` 为准。  
-兼容：CoreLog 分析时可顺带认旧名 `flowlog-*`（若仍存在）。
+> **勿搜旧目录**：`Assets/Notes/FlowLog/`、`Assets/Notes/BattleLog/` 已废弃且磁盘上通常不存在；仅当用户明确给出旧文件路径时才读历史 `flowlog-*`。
+
+### 日志发现（分析前必做）
+
+**文件名规则**（对齐 `DiagTraceShared.BuildFileName`）：
+
+```
+{prefix}[-{runTag}]-{sessionId}-seed{seed}.json
+```
+
+- `runTag` 为空时无中间段，如 `corelog-20260713-111111-seed1.json`
+- QuickTest 时含 `-QuickTest-`，如 `corelog-QuickTest-20260713-113131-seed1.json`
+- **禁止**仅用 JSON 内 `sessionId` 拼路径——必须带上文件名中的 `runTag` 段（若有）
+
+**取最新 session（标准流程）**：
+
+1. Glob `Assets/Notes/Logs/CoreLog/corelog-*.json`，按修改时间取最新
+2. 去掉 `corelog-` 前缀与 `.json` 后缀 → **stem**（含 runTag，如 `QuickTest-20260713-113131-seed1`）
+3. 同 stem 拼齐四件套：
+   - `Assets/Notes/Logs/CoreLog/corelog-{stem}.json`
+   - `Assets/Notes/Logs/PerfLog/perflog-{stem}.json`
+   - `Assets/Notes/Logs/OtherLog/RegistryLog/registrylog-{stem}.json`
+   - `Assets/Notes/Logs/OtherLog/BattleLog/battlelog-{stem}.json`
+
+**Glob 结果为 0 时**：用 Shell 列 `Assets/Notes/Logs/` 复核，**不要**直接结论「无日志」。
 
 ### DevTest 快速测试（QuickTest）
 
@@ -43,7 +66,7 @@ Session 根：`sessionId` + `seed`（`DiagTraceShared`）。
 
 **硬区分**：`OccupancySnapshot`（CoreLog）= 逻辑占格登记，**不是**世界坐标。画面位置只信 PerfLog。`site` 是追责主键；无 site 的坐标变化视为插桩缺口，不臆测 Core。
 
-导出：Play 退出 / 胜负 Notice / DevTest Keypad4 → 四件套同 session（含 RegistryLog）；Keypad5 同步开关四轨 Enabled。RegistryLog 在 Opening.Settled / InteractionLoop.Idle 及 2s/5s/10s IdleWatch 自动打 Checkpoint+BoardSnap，无需 Keypad7。
+导出：Play 退出 / 胜负 Notice → 四件套同 session（含 RegistryLog）；**不依赖 Keypad 导出**。RegistryLog 在 Opening.Settled / InteractionLoop.Idle 及 IdleWatch 自动打 Checkpoint。
 
 ---
 
@@ -89,9 +112,8 @@ Schema（schemaVersion **3**）：每条含 `beatId`；`category` / `name` / `lo
 
 ```markdown
 ## 流程溯源结论
-- 日志：`Assets/Notes/Logs/CoreLog/...`
-- 同局 Battle：`.../OtherLog/BattleLog/battlelog-{sessionId}-seed{seed}.json`
-- 同局 Perf：`.../PerfLog/perflog-{sessionId}-seed{seed}.json`（若有）
+- 日志：`Assets/Notes/Logs/CoreLog/...`（stem / sessionId / seed / runTag）
+- 同局四件套：同 stem 拼 `battlelog-` / `perflog-` / `registrylog-`（见「日志发现」）
 
 ## 时间线（关键）
 - #i beatId=… SetState / StartNode / …
@@ -173,6 +195,20 @@ Keypad7 `UserMark` 仍可用作可选加强，非必需。
 - …
 ```
 
+| 错位/空位有牌/瞬移/多次旋转无表现/Help 卡点不动 | **C 表现溯源** 或 **D 场地编排** | 见下 |
+
+---
+
+# 模式 D：场地编排（旋转 / 探求 / 拾取）
+
+**入口**：同 session 的 `perflog-*` + `corelog-*` + `registrylog-*`。  
+**工作流**：正常游玩复现 → Stop Play → 读 `Assets/Notes/Logs/`（无需 Keypad）。
+
+1. **首看** 末条 `SessionChoreoSummary`（四轨均有）：`choreoPartialAnimateCount` / `pickupGateFailCount` / `lastPickupGate` / `lastChoreoSeqId`
+2. **多次旋转无表现**：CoreLog `BoardQueue*` + `RotateClassify` → 同 `choreoSeqId` 的 `ChoreoBegin→RingShift×→Motion*→ChoreoEnd`；Anomaly `ChoreoPartialAnimate` / `MotionOverlap`
+3. **乱飘/瞬移**：PerfLog 按 uid 查 `SnapSet(killedTween=1)`、`ChaseSample`、`ExploreTrace` 是否与 `RingShift` 同 seq 重叠
+4. **Help 卡点不动**：RegistryLog `PickupEligibility` + CoreLog `PickupGate` 最后一条 `gate=`；同 beatId `OccupancySnapshot phase=pickupClick`
+
 ---
 
 ## 用户意图分流
@@ -182,7 +218,7 @@ Keypad7 `UserMark` 仍可用作可选加强，非必需。
 | 分析 / 合不合理 / 汇报 | 只出简报（选对模式） |
 | 修 / 改 / 落地 | 按定性改层；默认不改 Core |
 | 复测 | 只跑/补测试 |
-| 错位 / 瞬移 / 闪消失 | **模式 C**，不要只翻 Battle/数值表 |
+| 多次旋转/乱飘/Help 拾取失败 | **模式 D**（场地编排专查） |
 
 ## 参考
 

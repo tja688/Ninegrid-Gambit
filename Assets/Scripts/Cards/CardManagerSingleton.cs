@@ -632,7 +632,18 @@ namespace NineGrid.Cards
 
             cardTransform.localScale = CardDisplayModeVisuals.GetBaseLocalScale(mode);
             cardTransform.localRotation = Quaternion.identity;
-            SetSortingOrder(sortingGroup, CardDisplayModeVisuals.GetSortingOrder(mode, card.CoreKind));
+            if (mode == CardDisplayMode.HandCardMode)
+            {
+                var hand = CardHandManagerSingleton.Instance;
+                if (hand != null && hand.ContainsUid(card.Uid))
+                {
+                    hand.EnsureHandSorting(card);
+                }
+            }
+            else
+            {
+                SetSortingOrder(sortingGroup, CardDisplayModeVisuals.GetSortingOrder(mode, card.CoreKind));
+            }
 
             var driver = card.View.GetComponent<CardVisualDriver>();
             driver?.SnapToDisplayMode();

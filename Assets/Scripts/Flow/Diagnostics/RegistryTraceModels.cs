@@ -43,6 +43,10 @@ namespace NineGrid.Flow.Diagnostics
         public const string FieldVisualAudit = "FieldVisualAudit";
         public const string FieldVisualGap = "FieldVisualGap";
         public const string SuspectRelease = "SuspectRelease";
+        /// <summary>Help/道具卡点击前拾取门禁审计。</summary>
+        public const string PickupEligibility = "PickupEligibility";
+        /// <summary>Play 退出前会话编排摘要。</summary>
+        public const string SessionChoreoSummary = "SessionChoreoSummary";
     }
 
     public static class RegistryTraceTriggers
@@ -59,5 +63,7 @@ namespace NineGrid.Flow.Diagnostics
     public static class RegistryTraceAnomalyCodes
     {
         public const string FieldVisualGap = "FieldVisualGap";
+        /// <summary>BeatClose 时仍有未完成 choreo 或 open motion。</summary>
+        public const string ChoreoIncompleteAtBeatClose = "ChoreoIncompleteAtBeatClose";
     }
 }

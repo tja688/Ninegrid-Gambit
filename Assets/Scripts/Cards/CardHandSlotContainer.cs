@@ -154,8 +154,9 @@ namespace NineGrid.Cards
             }
 
             removed = _slots[slotIndex];
+            var priorSlotByUid = CaptureOccupiedSlots();
             CompactFrom(slotIndex);
-            rippleMoves = BuildRippleMoves(pivotSlot: slotIndex);
+            rippleMoves = BuildRippleMoves(pivotSlot: slotIndex, priorSlotByUid);
             ApplySortingOrders();
             return true;
         }
@@ -175,9 +176,10 @@ namespace NineGrid.Cards
             }
 
             var clampedSlot = Mathf.Clamp(slotIndex, 0, Count);
+            var priorSlotByUid = CaptureOccupiedSlots();
             ExpandFrom(clampedSlot);
             _slots[clampedSlot] = card;
-            rippleMoves = BuildRippleMoves(pivotSlot: clampedSlot);
+            rippleMoves = BuildRippleMoves(pivotSlot: clampedSlot, priorSlotByUid);
             ApplySortingOrders();
             return true;
         }
@@ -202,7 +204,24 @@ namespace NineGrid.Cards
             _slots[insertSlot] = null;
         }
 
-        private List<CardDeckRippleMove> BuildRippleMoves(int pivotSlot)
+        private Dictionary<int, int> CaptureOccupiedSlots()
+        {
+            var map = new Dictionary<int, int>();
+            for (var i = 0; i < _slots.Length; i++)
+            {
+                var occupied = _slots[i];
+                if (occupied != null)
+                {
+                    map[occupied.Uid] = i;
+                }
+            }
+
+            return map;
+        }
+
+        private List<CardDeckRippleMove> BuildRippleMoves(
+            int pivotSlot,
+            Dictionary<int, int> priorSlotByUid = null)
         {
             var moves = new List<CardDeckRippleMove>();
             for (var i = 0; i < _slots.Length; i++)
@@ -215,13 +234,20 @@ namespace NineGrid.Cards
 
                 var target = GetLayoutPosition(i);
                 var current = card.Transform.position;
-                if (Vector3.SqrMagnitude(current - target) < 0.0001f)
+                var fromSlot = -1;
+                if (priorSlotByUid != null && priorSlotByUid.TryGetValue(card.Uid, out var priorSlot))
+                {
+                    fromSlot = priorSlot;
+                }
+
+                var toSlot = i;
+                if (fromSlot == toSlot && Vector3.SqrMagnitude(current - target) < 0.0001f)
                 {
                     continue;
                 }
 
                 var delay = Mathf.Abs(i - pivotSlot) * _settings.rippleDelayPerSlot;
-                moves.Add(new CardDeckRippleMove(card, i, i, target, delay));
+                moves.Add(new CardDeckRippleMove(card, fromSlot, toSlot, target, delay));
             }
 
             return moves;

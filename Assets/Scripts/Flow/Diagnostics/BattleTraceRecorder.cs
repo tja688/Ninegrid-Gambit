@@ -80,6 +80,7 @@ namespace NineGrid.Flow.Diagnostics
                 PerfTraceRecorder.Clear();
                 RegistryTraceRecorder.Clear();
                 DiagBeatClock.Reset();
+                ChoreoTraceContext.Reset();
                 DiagTraceShared.ForceNewSessionIdentity(seed);
                 BeginSessionIfNeeded(seed);
                 FlowTraceRecorder.BeginSessionIfNeeded(seed);
@@ -414,6 +415,7 @@ namespace NineGrid.Flow.Diagnostics
                     }
                 }
 
+                ChoreoTraceContext.AppendExportSummaryEvents();
                 FlowTraceRecorder.ExportOnPlayExit(source);
                 PerfTraceRecorder.ExportOnPlayExit(source);
                 RegistryTraceRecorder.ExportJson(silentIfEmpty: true);
@@ -428,7 +430,7 @@ namespace NineGrid.Flow.Diagnostics
         }
 
         /// <summary>
-        /// 立即导出 Battle + CoreLog + PerfLog（DevKeys / 胜负落盘 / 重开轮转）。不受 Play 退出去重影响。
+        /// 立即导出四轨（Battle + CoreLog + PerfLog + RegistryLog）（DevKeys / 胜负落盘 / 重开轮转）。不受 Play 退出去重影响。
         /// </summary>
         public static void ExportBothNow(bool silentIfEmpty = false)
         {

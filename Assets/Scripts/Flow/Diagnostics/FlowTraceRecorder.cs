@@ -230,6 +230,15 @@ namespace NineGrid.Flow.Diagnostics
             return DiagTraceShared.ResolveNotesDir("Logs/CoreLog");
         }
 
+        public static void RecordSessionChoreoSummary(Dictionary<string, string> payload)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.SessionChoreoSummary,
+                payload,
+                accepted: true);
+        }
+
         private static string BuildTailSummary(FlowTraceSession session)
         {
             var sb = new StringBuilder();

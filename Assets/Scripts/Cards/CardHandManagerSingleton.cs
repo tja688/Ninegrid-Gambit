@@ -274,7 +274,6 @@ namespace NineGrid.Cards
             try
             {
                 var cardManager = CardManagerSingleton.Instance;
-                cardManager.SetDisplayMode(card, CardDisplayMode.HandCardMode);
                 CardOpacityUtility.ResetAlpha(card);
 
                 var slot = insertSlot ?? HandCount;
@@ -283,10 +282,11 @@ namespace NineGrid.Cards
                     return false;
                 }
 
+                cardManager.SetDisplayMode(card, CardDisplayMode.HandCardMode);
+
                 await CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration, ct);
                 ct.ThrowIfCancellationRequested();
-                RefreshHandCardDisplay(card);
-                SnapHandCardToLayout(card);
+                EnsureHandLayout(card);
                 try
                 {
                     FlowFieldTraceSink.HandLifecycle?.Invoke(
@@ -360,35 +360,66 @@ namespace NineGrid.Cards
         /// </summary>
         public bool TryPickupFromGround(ManagedCard card)
         {
-            if (card == null || IsBusy || IsDragging || !CanAcceptCard)
+            if (card == null)
             {
+                FlowFieldTraceSink.PickupGate?.Invoke(-1, "NullCard", false);
+                return false;
+            }
+
+            var field = GroundFieldManagerSingleton.Instance;
+            var groundSlotForAttempt = -1;
+            if (field != null)
+            {
+                field.TryGetSlotOf(card.Uid, out groundSlotForAttempt);
+            }
+
+            FlowFieldTraceSink.SetBatchTag?.Invoke("pickup");
+            FlowFieldTraceSink.PickupAttempt?.Invoke(
+                card.Uid,
+                groundSlotForAttempt,
+                card.DefId,
+                card.CoreKind.ToString());
+
+            if (IsBusy || IsDragging || !CanAcceptCard)
+            {
+                var gate = IsBusy ? "HandBusy" : IsDragging ? "HandDragging" : "HandFull";
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, gate, false);
+                FlowFieldTraceSink.ClearBatchTag?.Invoke();
                 return false;
             }
 
             if (card.DisplayMode != CardDisplayMode.GroundCardMode)
             {
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "NotGroundMode", false);
+                FlowFieldTraceSink.ClearBatchTag?.Invoke();
                 return false;
             }
 
-            var field = GroundFieldManagerSingleton.Instance;
             if (field == null || field.IsBusy)
             {
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "FieldBusy", false);
+                FlowFieldTraceSink.ClearBatchTag?.Invoke();
                 return false;
             }
 
             if (!field.TryGetSlotOf(card.Uid, out var groundSlot))
             {
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "NoSlot", false);
+                FlowFieldTraceSink.ClearBatchTag?.Invoke();
                 return false;
             }
 
-            // 与攻击侧 TryHandleBattleClick 对称：非正交邻接格不打 Core。
             if (!field.IsAvatarOrthogonalBattleSlot(groundSlot))
             {
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "NotOrtho", false);
+                FlowFieldTraceSink.ClearBatchTag?.Invoke();
                 return false;
             }
 
             if (!CombatHitSink.TryBeginPresentationLock("Pickup"))
             {
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "LockFail", false);
+                FlowFieldTraceSink.ClearBatchTag?.Invoke();
                 return false;
             }
 
@@ -396,12 +427,13 @@ namespace NineGrid.Cards
             if (!pickup.Accepted)
             {
                 CombatHitSink.EndPresentationLock("Pickup-rejected");
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "CoreReject", false);
+                FlowFieldTraceSink.ClearBatchTag?.Invoke();
                 return false;
             }
 
             if (pickup.RemovedWithoutHand)
             {
-                // 金币等：Core 已移除，表现清格并销毁，再缓释转/补。
                 field.RequestRemoveFromField(
                     card.Uid,
                     animate: true,
@@ -415,6 +447,8 @@ namespace NineGrid.Cards
                         Deals = pickup.Deals,
                         NodeClearedOrRewardPhase = pickup.NodeClearedOrRewardPhase,
                     }).Forget();
+                FlowFieldTraceSink.PickupSuccess?.Invoke(card.Uid, -1);
+                FlowFieldTraceSink.ClearBatchTag?.Invoke();
                 return true;
             }
 
@@ -422,6 +456,8 @@ namespace NineGrid.Cards
             {
                 Debug.LogWarning($"[CardHandManager] Pickup 已接受但未入手 uid={card.Uid}");
                 CombatHitSink.EndPresentationLock("Pickup-no-hand");
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "NoAcquire", false);
+                FlowFieldTraceSink.ClearBatchTag?.Invoke();
                 return false;
             }
 
@@ -429,6 +465,8 @@ namespace NineGrid.Cards
                 || taken != card)
             {
                 CombatHitSink.EndPresentationLock("Pickup-take-failed");
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "TakeFail", false);
+                FlowFieldTraceSink.ClearBatchTag?.Invoke();
                 return false;
             }
 
@@ -437,6 +475,8 @@ namespace NineGrid.Cards
             DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
 
             RunPickupFromGroundAsync(card, pickup).Forget();
+            FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "ok", true);
+            FlowFieldTraceSink.ClearBatchTag?.Invoke();
             return true;
         }
 
@@ -488,6 +528,7 @@ namespace NineGrid.Cards
                     return;
                 }
 
+                FlowFieldTraceSink.PickupSuccess?.Invoke(card.Uid, ResolveHandSlotForTrace(card));
                 await CombatHitSink.RequestDrainPostKillBoard(
                     new PostKillBoardPresentationResult
                     {
@@ -505,8 +546,6 @@ namespace NineGrid.Cards
                     CombatHitSink.RequestSyncBoardFromCore();
                     if (card != null && ContainsUid(card.Uid))
                     {
-                        var cm = CardManagerSingleton.TryGetInstance();
-                        cm?.SetDisplayMode(card, CardDisplayMode.HandCardMode);
                         try
                         {
                             FlowFieldTraceSink.HandLifecycle?.Invoke(
@@ -520,6 +559,11 @@ namespace NineGrid.Cards
                             // ignore
                         }
                     }
+                }
+
+                if (card != null && ContainsUid(card.Uid))
+                {
+                    EnsureHandLayout(card);
                 }
             }
             catch (OperationCanceledException)
@@ -815,6 +859,45 @@ namespace NineGrid.Cards
             _slotContainer?.ApplySortingOrders();
         }
 
+        /// <summary>
+        /// 刷新手牌 sorting（左高右低）；供 CardManager 在 HandCardMode 切换时委托。
+        /// </summary>
+        internal void EnsureHandSorting(ManagedCard card)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            if (_slotContainer != null && _slotContainer.TryGetSlotOf(card, out var slotIndex))
+            {
+                _slotContainer.ApplySortingOrder(card, slotIndex);
+            }
+            else
+            {
+                ApplyAllHandSortingOrders();
+            }
+        }
+
+        private void EnsureHandLayout(ManagedCard focus = null)
+        {
+            ApplyAllHandSortingOrders();
+            if (focus != null)
+            {
+                SnapHandCardToLayout(focus);
+            }
+        }
+
+        private int ResolveHandSlotForTrace(ManagedCard card)
+        {
+            if (card == null || _slotContainer == null)
+            {
+                return -1;
+            }
+
+            return _slotContainer.TryGetSlotOf(card, out var slot) ? slot : -1;
+        }
+
         private void RefreshHandCardDisplay(ManagedCard card)
         {
             if (card == null)
@@ -823,7 +906,7 @@ namespace NineGrid.Cards
             }
 
             CardManagerSingleton.Instance.RefreshDisplayMode(card);
-            ApplyAllHandSortingOrders();
+            EnsureHandLayout(card);
         }
 
         private void BoostHandCardHoverSorting(ManagedCard card)

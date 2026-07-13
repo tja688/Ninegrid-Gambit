@@ -107,11 +107,71 @@ namespace NineGrid.Cards
 
             if (!CanRespondToPickup())
             {
+                RecordPickupEligibility(card, canRespond: false);
                 return;
             }
 
+            RecordPickupEligibility(card, canRespond: true);
             // 道具卡 / 帮助卡等：场地仅允许点击入手，禁止拖拽
             CardHandManagerSingleton.Instance?.TryPickupFromGround(card);
+        }
+
+        private void RecordPickupEligibility(ManagedCard card, bool canRespond)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            var hand = CardHandManagerSingleton.Instance;
+            var field = GroundFieldManagerSingleton.Instance;
+            var pos = card.Transform != null ? card.Transform.position : Vector3.zero;
+            var registeredSlot = -1;
+            var hasRegistered = field != null && field.TryGetSlotOf(card.Uid, out registeredSlot);
+            var nearestSlot = -1;
+            var slotDist = float.MaxValue;
+            if (field != null)
+            {
+                for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
+                {
+                    var anchor = field.GetGroundAnchor(slot);
+                    if (anchor == null)
+                    {
+                        continue;
+                    }
+
+                    var dist = Vector2.Distance(pos, anchor.position);
+                    if (dist < slotDist)
+                    {
+                        slotDist = dist;
+                        nearestSlot = slot;
+                    }
+                }
+            }
+
+            var isOrtho = hasRegistered && field != null
+                && field.IsAvatarOrthogonalBattleSlot(registeredSlot);
+            var isOrphan = card.DisplayMode == CardDisplayMode.GroundCardMode && !hasRegistered;
+            var cardManager = CardManagerSingleton.Instance;
+            var isGhost = hasRegistered
+                && (cardManager == null || !cardManager.TryGet(card.Uid, out _));
+
+            RegistryTraceSink.RecordPickupEligibility?.Invoke(
+                card.Uid,
+                card.DefId,
+                card.CoreKind.ToString(),
+                card.DisplayMode.ToString(),
+                pos.x,
+                pos.y,
+                registeredSlot,
+                nearestSlot,
+                slotDist,
+                canRespond,
+                field != null && field.IsBusy,
+                hand != null && hand.CanAcceptCard,
+                isOrtho,
+                isOrphan,
+                isGhost);
         }
 
         private bool CanRespondToHover()

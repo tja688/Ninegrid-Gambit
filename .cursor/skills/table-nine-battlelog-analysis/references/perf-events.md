@@ -1,9 +1,9 @@
 # PerfLog / PerfTrace 事件与约定
 
-落盘：`Assets/Notes/Logs/PerfLog/perflog-{sessionId}-seed{seed}.json`  
-与 CoreLog / BattleLog 共享 `sessionId` / `seed`。  
+落盘：`Assets/Notes/Logs/PerfLog/perflog[-{runTag}]-{sessionId}-seed{seed}.json`  
+与 CoreLog / BattleLog / RegistryLog 共享 `sessionId` / `seed` / `runTag`（见 skill「日志发现」）。  
 共通键：`beatId`（与 CoreLog 事件、`DiagBeatClock` 对齐）。  
-`schemaVersion`：**1**。
+`schemaVersion`：**2**（编排批次 choreoSeqId / ExploreTrace / BusySnapshot；v1 字段兼容）。
 
 ## 设计原则
 
@@ -32,13 +32,18 @@
 | `Spawn` / `Despawn` | 创建/回收视图 | `defId`, `slot`, `parent` / `reason`, `caller` |
 | `RegistryMiss` | CardManager TryGet 失败 | `detail`（含 slot/caller） |
 | `Vacate` | 场地占格注销 | `slot`, `caller` |
-| `RingShift` | 外圈旋转计划/阶段 | `phase`=`plan\|vacated\|registered`, `plan` |
+| `RingShift` | 外圈旋转计划/阶段 | `phase`=`plan\|vacated\|registered\|animate`, `plan`, `choreoSeqId`, `clockwise`, `skipBusyGuard`, `ringOccupied`, `animateTasks` |
+| `ChoreoBegin` / `ChoreoEnd` | 编排批次开闭 | `choreoSeqId`, `kind`, `outcome`, `plannedAnim`, `actualAnim`, `durationMs` + Busy 摘要 |
+| `ExploreTrace` | 空槽探求生命周期 | `phase`=`start\|withdraw\|chaseStart\|chaseEnd\|placeOk\|placeFail\|ringShift\|rollback`, `birthSlot`, `trackedSlot` |
+| `BusySnapshot` | 各 busy 位快照 | `fieldBusy`, `fieldSelfBusy`, `deckBusy`, `handBusy`, `drainInFlight`, `pumpRunning`, `queueDepth`, `openMotionCount`, `trigger` |
+| `ChaseSample` | Explore 追锚降采样 | `trackedSlot`, `x/y`, `destX/destY`, `dist`, `choreoSeqId` |
+| `SessionChoreoSummary` | Play 退出前摘要 | `choreoOpenAtExit`, `choreoPartialAnimateCount`, `pickupGateFailCount`, `lastPickupGate`, `lastChoreoSeqId` |
 | `RegistryAudit` | 注册表完整性快照 | `registryCount`, `fieldCount`, `ghosts`, `orphans`, `trigger` |
 | `RegistryDelta` | CardManager `_cardsByUid` 增删 | `op`, `countBefore`, `countAfter`, `reason`, `caller`, `defId` |
 | `UserMark` | 用户/DevTest 现场戳点 | `label`, `registryCount` |
 | `MotionPlan` | Hop 等已知 from→to | `fromSlot`,`toSlot`,`fromX/Y`,`toX/Y`,`reason`,`expectMs` |
-| `MotionBegin` | tween 启动 | `motionId`, from/to, `reason` |
-| `MotionEnd` | complete / kill | `motionId`, `endHow`, `x/y`, `killedBySite` |
+| `MotionBegin` | tween 启动 | `motionId`, from/to, `reason`, `choreoSeqId` |
+| `MotionEnd` | complete / kill | `motionId`, `endHow`, `x/y`, `killedBySite`, `choreoSeqId` |
 | `SnapSet` | 瞬间写 position | `x/y`, `slot`, `killedTween`, `reason` |
 | `VisChange` | DisplayMode / active 等 | `active`, `alpha`, `mode`, `renderOn` |
 | `ParentChange` | SetParent | `parent`, `worldStays` |
@@ -57,6 +62,7 @@
 |----|------|
 | `OpeningDeal` | 开局发牌表现 |
 | `PostKillDrain` | 击杀后补牌/hop Drain |
+| `BoardChoreo` | 单条盘面编排（旋转/交换/hop/探求） |
 | `SyncBoard` | 独立 Sync（非 Drain 内） |
 | `CombatHit` | 一次进攻或反击表现段 |
 | `StartNode` / `Reward` / `Room` | 预留 |
@@ -73,6 +79,11 @@
 | `MissingMotionEnd` | BeatClose 时 motion 未收尾 |
 | `FieldOccupancyWithoutView` | 占格有 uid，CardManager 无视图（缺卡主嫌疑） |
 | `ViewWithoutFieldOccupancy` | 有 GroundCardMode 视图，占格无登记 |
+| `MotionOverlap` | 同 uid 未 End 又 Begin |
+| `ChoreoPartialAnimate` | ChoreoEnd：`actualAnim < plannedAnim`（旋转无表现） |
+| `ExplorePlaceWhileBusy` | Explore 就位时 field/deck busy 异常 |
+| `PickupVisualEligibleButGateFail` | PickupEligibility 可响应但 PickupGate 失败 |
+| `ChoreoIncompleteAtBeatClose` | BoardChoreo BeatClose 时仍有 open choreo/motion |
 
 ## 常用 site
 
@@ -89,7 +100,7 @@
 
 ## 与 CoreLog / Battle 互指
 
-- 同 `sessionId` + `seed` 打开三文件。
+- 同 `sessionId` + `seed`（+ 文件名 `runTag`）打开四文件：corelog / perflog / registrylog / battlelog。
 - 同 `beatId`：CoreLog 看意图与逻辑占格；PerfLog 看画面。
 - Battle：`refBattleOpIndex` 仍指向 BattleLog Op；节奏用 `beatId`（CombatHit Beat 与战斗表现段对齐）。
 
@@ -97,4 +108,4 @@
 
 - Cards：`CardPresentationProbe` → `PerfTraceSink`
 - Flow：`PerfTraceRecorder.OpenBeat` / `CloseBeat` / `RecordBoardSnap`
-- 导出：`BattleTraceRecorder.ExportBothNow` / Play 退出三件套
+- 导出：`BattleTraceRecorder.ExportBothNow` / Play 退出四件套

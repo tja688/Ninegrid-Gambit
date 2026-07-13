@@ -1,7 +1,7 @@
 # RegistryLog / RegistryTrace 事件与约定
 
-落盘：`Assets/Notes/Logs/OtherLog/RegistryLog/registrylog-{sessionId}-seed{seed}.json`  
-与 CoreLog / PerfLog / BattleLog 共享 `sessionId` / `seed`。  
+落盘：`Assets/Notes/Logs/OtherLog/RegistryLog/registrylog[-{runTag}]-{sessionId}-seed{seed}.json`  
+与 CoreLog / PerfLog / BattleLog 共享 `sessionId` / `seed` / `runTag`（见 skill「日志发现」）。  
 共通键：`beatId`（`DiagBeatClock`）、`tMs`（相对会话起点毫秒）。
 
 ## 设计原则

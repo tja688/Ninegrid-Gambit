@@ -105,5 +105,7 @@ namespace NineGrid.Flow.Diagnostics
         public const string CombatHit = "CombatHit";
         public const string Reward = "Reward";
         public const string Room = "Room";
+        /// <summary>单条盘面编排（旋转/交换/hop/队列项）。</summary>
+        public const string BoardChoreo = "BoardChoreo";
     }
 }

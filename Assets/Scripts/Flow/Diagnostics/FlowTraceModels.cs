@@ -88,6 +88,16 @@ namespace NineGrid.Flow.Diagnostics
         public const string HandRelease = "HandRelease";
         public const string OccupancyVacate = "OccupancyVacate";
         public const string RegistryAudit = "RegistryAudit";
+
+        // Board choreo / pickup
+        public const string BoardQueueEnqueue = "BoardQueueEnqueue";
+        public const string BoardQueueDequeue = "BoardQueueDequeue";
+        public const string BoardQueueSkip = "BoardQueueSkip";
+        public const string RotateClassify = "RotateClassify";
+        public const string PickupAttempt = "PickupAttempt";
+        public const string PickupGate = "PickupGate";
+        public const string PickupSuccess = "PickupSuccess";
+        public const string SessionChoreoSummary = "SessionChoreoSummary";
     }
 
     /// <summary>

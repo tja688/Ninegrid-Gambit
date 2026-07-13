@@ -215,9 +215,10 @@ namespace NineGrid.Cards
                     .Append(target.DOScale(baseScale, settleDuration).SetEase(Ease.OutSine)));
 
             var completed = false;
-            var endHow = "complete";
+            var motionClosed = false;
             sequence.OnComplete(() =>
             {
+                motionClosed = true;
                 completed = true;
                 if (target == null)
                 {
@@ -231,7 +232,7 @@ namespace NineGrid.Cards
                         resolvedUid,
                         motionId,
                         target.position,
-                        endHow,
+                        "complete",
                         "DeckTween.Hop");
                 }
 
@@ -239,18 +240,19 @@ namespace NineGrid.Cards
             });
             sequence.OnKill(() =>
             {
-                endHow = "kill";
                 completed = true;
-                if (resolvedUid > 0 && target != null)
+                if (motionClosed || resolvedUid <= 0 || target == null)
                 {
-                    CardPresentationProbe.MotionEnd(
-                        resolvedUid,
-                        motionId,
-                        target.position,
-                        "kill",
-                        "DeckTween.Hop",
-                        killedBySite: "DeckTween.Kill");
+                    return;
                 }
+
+                CardPresentationProbe.MotionEnd(
+                    resolvedUid,
+                    motionId,
+                    target.position,
+                    "kill",
+                    "DeckTween.Hop",
+                    killedBySite: "DeckTween.Kill");
             });
             await UniTask.WaitUntil(() => completed, cancellationToken: cancellationToken);
         }
@@ -298,51 +300,111 @@ namespace NineGrid.Cards
             float arriveThreshold,
             CancellationToken cancellationToken = default,
             Func<bool> shouldContinue = null,
-            float maxStep = 0f)
+            float maxStep = 0f,
+            int trackedSlot = -1,
+            int uid = 0)
         {
             if (target == null || getTarget == null)
             {
                 return;
             }
 
-            KillMotion(target);
+            KillMotion(target, "DeckTween.Chase", uid);
+
+            var resolvedUid = uid;
+            if (resolvedUid <= 0)
+            {
+                CardManagerSingleton.Instance?.TryResolveUid(target, out resolvedUid);
+            }
+
+            var choreoSeqId = ChoreoTraceSink.SafeCurrentSeqId();
+            var motionId = 0;
+            if (resolvedUid > 0)
+            {
+                motionId = CardPresentationProbe.NextMotionId();
+                var initialDest = getTarget();
+                CardPresentationProbe.MotionBegin(
+                    resolvedUid,
+                    motionId,
+                    target.position,
+                    initialDest,
+                    "DeckTween.Chase",
+                    reason: "exploreChase",
+                    choreoSeqId: choreoSeqId);
+            }
 
             var thresholdSqr = arriveThreshold * arriveThreshold;
             var lambda = Mathf.Max(0.01f, responsiveness);
-            while (!cancellationToken.IsCancellationRequested)
+            var lastSampleTime = Time.time;
+            var lastDest = getTarget();
+            try
             {
-                if (target == null)
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    return;
-                }
-
-                if (shouldContinue != null && !shouldContinue())
-                {
-                    return;
-                }
-
-                var destination = getTarget();
-                var current = target.position;
-                var delta = destination - current;
-                if (delta.sqrMagnitude <= thresholdSqr)
-                {
-                    target.position = destination;
-                    return;
-                }
-
-                var t = 1f - Mathf.Exp(-lambda * Time.deltaTime);
-                var step = delta * Mathf.Clamp01(t);
-                if (maxStep > 0f)
-                {
-                    var stepLen = step.magnitude;
-                    if (stepLen > maxStep)
+                    if (target == null)
                     {
-                        step *= maxStep / stepLen;
+                        return;
                     }
-                }
 
-                target.position = current + step;
-                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                    if (shouldContinue != null && !shouldContinue())
+                    {
+                        return;
+                    }
+
+                    var destination = getTarget();
+                    var current = target.position;
+                    var delta = destination - current;
+                    if (delta.sqrMagnitude <= thresholdSqr)
+                    {
+                        target.position = destination;
+                        return;
+                    }
+
+                    if (resolvedUid > 0 && Time.time - lastSampleTime >= 0.1f)
+                    {
+                        var anchorJump = (destination - lastDest).sqrMagnitude;
+                        if (anchorJump > 0.25f || delta.magnitude > 0.5f)
+                        {
+                            CardPresentationProbe.ChaseSample(
+                                resolvedUid,
+                                trackedSlot,
+                                current,
+                                destination,
+                                delta.magnitude,
+                                choreoSeqId);
+                            lastDest = destination;
+                        }
+
+                        lastSampleTime = Time.time;
+                    }
+
+                    var t = 1f - Mathf.Exp(-lambda * Time.deltaTime);
+                    var step = delta * Mathf.Clamp01(t);
+                    if (maxStep > 0f)
+                    {
+                        var stepLen = step.magnitude;
+                        if (stepLen > maxStep)
+                        {
+                            step *= maxStep / stepLen;
+                        }
+                    }
+
+                    target.position = current + step;
+                    await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                }
+            }
+            finally
+            {
+                if (resolvedUid > 0 && motionId > 0 && target != null)
+                {
+                    CardPresentationProbe.MotionEnd(
+                        resolvedUid,
+                        motionId,
+                        target.position,
+                        cancellationToken.IsCancellationRequested ? "cancel" : "complete",
+                        "DeckTween.Chase",
+                        choreoSeqId: choreoSeqId);
+                }
             }
         }
     }

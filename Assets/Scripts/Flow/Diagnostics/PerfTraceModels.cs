@@ -9,7 +9,7 @@ namespace NineGrid.Flow.Diagnostics
     [Serializable]
     public sealed class PerfTraceSession
     {
-        public int schemaVersion = 1;
+        public int schemaVersion = 2;
         public string seed = "0";
         public string sessionId = string.Empty;
         public string runTag = string.Empty;
@@ -59,6 +59,18 @@ namespace NineGrid.Flow.Diagnostics
         public const string RegistryDelta = "RegistryDelta";
         /// <summary>用户/DevTest 现场戳点（BUG 复现瞬间）。</summary>
         public const string UserMark = "UserMark";
+        /// <summary>场地编排批次开始。</summary>
+        public const string ChoreoBegin = "ChoreoBegin";
+        /// <summary>场地编排批次结束。</summary>
+        public const string ChoreoEnd = "ChoreoEnd";
+        /// <summary>空槽探求生命周期。</summary>
+        public const string ExploreTrace = "ExploreTrace";
+        /// <summary>各管理器 busy 位快照。</summary>
+        public const string BusySnapshot = "BusySnapshot";
+        /// <summary>ChaseAnchor 追锚采样（降采样）。</summary>
+        public const string ChaseSample = "ChaseSample";
+        /// <summary>Play 退出前会话编排摘要。</summary>
+        public const string SessionChoreoSummary = "SessionChoreoSummary";
     }
 
     public static class PerfTraceSites
@@ -104,5 +116,15 @@ namespace NineGrid.Flow.Diagnostics
         public const string FieldOccupancyWithoutView = "FieldOccupancyWithoutView";
         /// <summary>CardManager 有 GroundCardMode 视图，场地占格无登记。</summary>
         public const string ViewWithoutFieldOccupancy = "ViewWithoutFieldOccupancy";
+        /// <summary>同 uid 有未 End 的 motion 时又 Begin。</summary>
+        public const string MotionOverlap = "MotionOverlap";
+        /// <summary>编排结束 actualAnim &lt; plannedAnim（旋转无表现）。</summary>
+        public const string ChoreoPartialAnimate = "ChoreoPartialAnimate";
+        /// <summary>Explore 就位时 busy 标志异常。</summary>
+        public const string ExplorePlaceWhileBusy = "ExplorePlaceWhileBusy";
+        /// <summary>视觉可响应但 PickupGate 失败。</summary>
+        public const string PickupVisualEligibleButGateFail = "PickupVisualEligibleButGateFail";
+        /// <summary>BeatClose 时仍有未完成 choreo。</summary>
+        public const string ChoreoIncompleteAtBeatClose = "ChoreoIncompleteAtBeatClose";
     }
 }

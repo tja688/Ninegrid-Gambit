@@ -1,7 +1,7 @@
 # CoreLog（FlowTrace）事件名与挂点
 
-落盘：`Assets/Notes/Logs/CoreLog/corelog-{sessionId}-seed{seed}.json`  
-（过渡兼容：旧文件可能仍叫 `flowlog-*`，或位于已废弃的 `Assets/Notes/FlowLog/`。）
+落盘：`Assets/Notes/Logs/CoreLog/corelog[-{runTag}]-{sessionId}-seed{seed}.json`  
+（历史归档：个别旧文件可能叫 `flowlog-*`；**勿主动搜索**已废弃的 `Assets/Notes/FlowLog/`。）
 
 与 BattleLog / PerfLog 共享 `sessionId` / `seed`（`DiagTraceShared`）。  
 共通节奏：`beatId`（`DiagBeatClock`；与 PerfLog 对齐）。  
@@ -57,6 +57,10 @@
 | `SyncDiff` | Presentation | `SyncBoardOccupancyFromCore` | vacated/placed/spawned/swept |
 | `OpeningDealProgress` | Presentation | `PresentOpeningAsync`（Beat=`OpeningDeal`） | uid/slot/ok |
 | `HandAcquire` / `HandRelease` | Hand | Pickup 生命周期 | uid/displayMode |
+| `BoardQueueEnqueue` / `BoardQueueDequeue` / `BoardQueueSkip` | Presentation | 盘面表演队列 | queueDepth/moves/deals；Skip=锁失败静默跳过 |
+| `RotateClassify` | Field | `TryClassifyOuterRingRotation` | accepted/clockwise/moveCount/ringOccupied |
+| `PickupAttempt` / `PickupGate` / `PickupSuccess` | Hand | 场地点击入手 | `gate=` 枚举即拒因；Snapshot `phase=pickupClick` |
+| `SessionChoreoSummary` | Presentation | Play 退出前 | 同 PerfLog 摘要字段 |
 
 ### coreHash / presHash / diffSlots
 
@@ -72,6 +76,8 @@
 | `opening` | PresentOpening → `OpeningDeal` |
 | `startNode` | StartNode 后 Snapshot |
 | `sync` | 独立 Sync → `SyncBoard` |
+| `boardPresentationQueue` | 队列泵缓释 |
+| `pickup` | 场地点击入手 |
 
 ## 占格验证剧本
 
@@ -94,5 +100,5 @@ FlowTraceRecorder.Record(
 
 ## 导出
 
-- 胜负 / `BeginRun` 轮转 / Play 退出 / Keypad4：`ExportBothNow` → Battle + CoreLog + PerfLog
-- 目录：`Logs/CoreLog`、`Logs/PerfLog`、`Logs/OtherLog/BattleLog`
+- 胜负 / `BeginRun` 轮转 / Play 退出 / Keypad4：`ExportBothNow` → 四件套（Battle + CoreLog + PerfLog + RegistryLog）
+- 目录：`Logs/CoreLog`、`Logs/PerfLog`、`Logs/OtherLog/BattleLog`、`Logs/OtherLog/RegistryLog`

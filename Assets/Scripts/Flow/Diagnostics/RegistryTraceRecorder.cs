@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
@@ -52,6 +53,37 @@ namespace NineGrid.Flow.Diagnostics
         {
             RegistryTraceSink.NotifyUserInteraction = NotifyUserInteraction;
             RegistryTraceSink.RecordSuspectGroundRelease = RecordSuspectGroundRelease;
+            RegistryTraceSink.RecordPickupEligibility = (
+                uid,
+                defId,
+                coreKind,
+                displayMode,
+                worldX,
+                worldY,
+                registeredSlot,
+                nearestSlot,
+                slotDist,
+                canRespond,
+                fieldBusy,
+                handCanAccept,
+                isOrtho,
+                isOrphan,
+                isGhost) => RecordPickupEligibility(
+                uid,
+                defId,
+                coreKind,
+                displayMode,
+                worldX,
+                worldY,
+                registeredSlot,
+                nearestSlot,
+                slotDist,
+                canRespond,
+                fieldBusy,
+                handCanAccept,
+                isOrtho,
+                isOrphan,
+                isGhost);
         }
 
         public static void UnregisterSinkHandlers()
@@ -108,12 +140,104 @@ namespace NineGrid.Flow.Diagnostics
                 return;
             }
 
+            if (beatKind == DiagBeatKinds.BoardChoreo)
+            {
+                if (ChoreoTraceContext.OpenChoreoCount > 0 || PerfTraceRecorder.OpenMotionCount > 0)
+                {
+                    Record(
+                        RegistryTraceKinds.Anomaly,
+                        -1,
+                        "Registry.ChoreoIncomplete",
+                        new Dictionary<string, string>
+                        {
+                            { "code", RegistryTraceAnomalyCodes.ChoreoIncompleteAtBeatClose },
+                            { "trigger", RegistryTraceTriggers.BeatClosePrefix + beatKind },
+                            { "openChoreo", ChoreoTraceContext.GetOpenChoreoSummary() },
+                            { "openMotionCount", PerfTraceRecorder.OpenMotionCount.ToString() },
+                        });
+                }
+            }
+
             if (!IsInteractionLoopPhase())
             {
                 return;
             }
 
             CaptureFieldVisualState(RegistryTraceTriggers.BeatClosePrefix + beatKind, includeCheckpoint: false);
+        }
+
+        /// <summary>Help/道具卡点击前拾取门禁审计。</summary>
+        public static void RecordPickupEligibility(
+            int uid,
+            string defId,
+            string coreKind,
+            string displayMode,
+            float worldX,
+            float worldY,
+            int registeredSlot,
+            int nearestSlot,
+            float slotDist,
+            bool canRespond,
+            bool fieldBusy,
+            bool handCanAccept,
+            bool isOrtho,
+            bool isOrphan,
+            bool isGhost)
+        {
+            if (!sEnabled)
+            {
+                return;
+            }
+
+            try
+            {
+                BeginSessionIfNeeded();
+                ChoreoTraceContext.NotePickupEligibility(canRespond);
+                Record(
+                    RegistryTraceKinds.PickupEligibility,
+                    uid,
+                    "Pickup.Click",
+                    new Dictionary<string, string>
+                    {
+                        { "trigger", "Pickup.Click" },
+                        { "defId", defId ?? string.Empty },
+                        { "coreKind", coreKind ?? string.Empty },
+                        { "displayMode", displayMode ?? string.Empty },
+                        { "worldX", CardPresentationProbe.FormatXy(worldX) },
+                        { "worldY", CardPresentationProbe.FormatXy(worldY) },
+                        { "registeredSlot", registeredSlot.ToString() },
+                        { "nearestSlot", nearestSlot.ToString() },
+                        { "slotDist", slotDist.ToString("0.###", CultureInfo.InvariantCulture) },
+                        { "canRespond", canRespond ? "true" : "false" },
+                        { "fieldBusy", fieldBusy ? "true" : "false" },
+                        { "handCanAccept", handCanAccept ? "true" : "false" },
+                        { "isOrtho", isOrtho ? "true" : "false" },
+                        { "isOrphan", isOrphan ? "true" : "false" },
+                        { "isGhost", isGhost ? "true" : "false" },
+                        { "choreoSeqId", ChoreoTraceContext.CurrentSeqId.ToString() },
+                        { "phase", BattleTraceRecorder.CurrentPhaseName() },
+                    });
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[RegistryTrace] RecordPickupEligibility failed: " + ex.Message);
+            }
+        }
+
+        public static void RecordSessionChoreoSummary(Dictionary<string, string> payload)
+        {
+            if (!sEnabled)
+            {
+                return;
+            }
+
+            Record(
+                RegistryTraceKinds.SessionChoreoSummary,
+                -1,
+                "Registry.SessionChoreoSummary",
+                payload != null
+                    ? new Dictionary<string, string>(payload)
+                    : new Dictionary<string, string>());
         }
 
         public static void RecordSuspectGroundRelease(

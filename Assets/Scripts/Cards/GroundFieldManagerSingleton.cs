@@ -1046,6 +1046,7 @@ namespace NineGrid.Cards
             }
 
             clockwise = direction ?? true;
+            FlowFieldTraceSink.RotateClassify?.Invoke(true, clockwise, moves.Count, ringOccupied);
             return true;
         }
 
@@ -1241,6 +1242,15 @@ namespace NineGrid.Cards
                 _isBusy = true;
             }
 
+            PerfTraceSink.OpenBeat?.Invoke("BoardChoreo", 0);
+            var choreoSeqId = ChoreoTraceSink.SafeBeginChoreo(
+                "rotate",
+                "skipBusyGuard", skipBusyGuard ? "1" : "0",
+                "clockwise", clockwise ? "1" : "0");
+            var plannedAnim = 0;
+            var actualAnim = 0;
+            var outcome = "ok";
+
             try
             {
                 var ring = GroundSlotTopology.ClockwiseRing;
@@ -1254,6 +1264,7 @@ namespace NineGrid.Cards
                         continue;
                     }
 
+                    plannedAnim++;
                     var toIndex = clockwise
                         ? (i + 1) % ring.Count
                         : (i + ring.Count - 1) % ring.Count;
@@ -1269,7 +1280,15 @@ namespace NineGrid.Cards
                         .Append(ring[toIndex]);
                 }
 
-                CardPresentationProbe.RingShift("plan", planSb.ToString(), "Ground.RingShift");
+                CardPresentationProbe.RingShift(
+                    "plan",
+                    planSb.ToString(),
+                    "Ground.RingShift",
+                    clockwise,
+                    skipBusyGuard,
+                    plannedAnim,
+                    0,
+                    choreoSeqId);
 
                 for (var i = 0; i < ring.Count; i++)
                 {
@@ -1283,7 +1302,15 @@ namespace NineGrid.Cards
                     _uidBySlot[slot] = 0;
                 }
 
-                CardPresentationProbe.RingShift("vacated", planSb.ToString(), "Ground.RingShift");
+                CardPresentationProbe.RingShift(
+                    "vacated",
+                    planSb.ToString(),
+                    "Ground.RingShift",
+                    clockwise,
+                    skipBusyGuard,
+                    plannedAnim,
+                    0,
+                    choreoSeqId);
 
                 for (var i = 0; i < ring.Count; i++)
                 {
@@ -1307,7 +1334,22 @@ namespace NineGrid.Cards
                     }
                 }
 
-                CardPresentationProbe.RingShift("registered", planSb.ToString(), "Ground.RingShift");
+                CardPresentationProbe.RingShift(
+                    "registered",
+                    planSb.ToString(),
+                    "Ground.RingShift",
+                    clockwise,
+                    skipBusyGuard,
+                    plannedAnim,
+                    0,
+                    choreoSeqId);
+
+                ChoreoTraceSink.SafeExploreTrace(
+                    -1,
+                    "ringShift",
+                    -1,
+                    -1,
+                    "clockwise", clockwise ? "1" : "0");
 
                 _exploreRunner?.OnRingShifted(clockwise);
 
@@ -1336,7 +1378,18 @@ namespace NineGrid.Cards
 
                     var fromSlot = ring[i];
                     moveTasks.Add(AnimateCardHopToSlotAsync(card, fromSlot, toSlot, cancellationToken));
+                    actualAnim++;
                 }
+
+                CardPresentationProbe.RingShift(
+                    "animate",
+                    planSb.ToString(),
+                    "Ground.RingShift",
+                    clockwise,
+                    skipBusyGuard,
+                    plannedAnim,
+                    actualAnim,
+                    choreoSeqId);
 
                 if (moveTasks.Count > 0)
                 {
@@ -1352,8 +1405,20 @@ namespace NineGrid.Cards
                 RefreshAllSlotHitColliders();
                 CardManagerSingleton.Instance?.AuditRegistryIntegrity("Ground.RingRotate.End");
             }
+            catch (OperationCanceledException)
+            {
+                outcome = "cancel";
+                throw;
+            }
+            catch (Exception)
+            {
+                outcome = "error";
+                throw;
+            }
             finally
             {
+                ChoreoTraceSink.SafeEndChoreo(outcome, plannedAnim, actualAnim);
+                PerfTraceSink.CloseBeat?.Invoke();
                 if (!skipBusyGuard)
                 {
                     _isBusy = false;

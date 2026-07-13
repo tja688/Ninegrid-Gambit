@@ -37,12 +37,65 @@ namespace NineGrid.Flow.Diagnostics
             FlowFieldTraceSink.HandLifecycle = OnHandLifecycle;
             FlowFieldTraceSink.OccupancyVacate = OnOccupancyVacate;
             FlowFieldTraceSink.RegistryAudit = OnRegistryAudit;
+            FlowFieldTraceSink.SetBatchTag = SetBatchTag;
+            FlowFieldTraceSink.ClearBatchTag = ClearBatchTag;
+            FlowFieldTraceSink.PickupAttempt = (uid, groundSlot, defId, coreKind) =>
+                RecordPickupAttempt(uid, groundSlot, defId, coreKind);
+            FlowFieldTraceSink.PickupGate = (uid, gate, accepted) =>
+                RecordPickupGate(uid, gate, accepted);
+            FlowFieldTraceSink.PickupSuccess = RecordPickupSuccess;
+            FlowFieldTraceSink.RotateClassify = (accepted, clockwise, moveCount, ringOccupied) =>
+                RecordRotateClassify(accepted, clockwise, moveCount, ringOccupied);
+            RegisterChoreoSinkHandlers();
         }
 
         public static void UnregisterSinkHandlers()
         {
             FlowFieldTraceSink.ClearHandlers();
+            ChoreoTraceSink.ClearHandlers();
             ClearBatchTag();
+        }
+
+        private static void RegisterChoreoSinkHandlers()
+        {
+            ChoreoTraceSink.BeginChoreo = (kind, pairs) =>
+                BeginChoreoFromPairs(kind, PairsToDict(pairs));
+            ChoreoTraceSink.EndChoreo = (outcome, plannedAnim, actualAnim, pairs) =>
+                ChoreoTraceContext.EndChoreo(outcome, plannedAnim, actualAnim, PairsToDict(pairs));
+            ChoreoTraceSink.GetCurrentSeqId = () => ChoreoTraceContext.CurrentSeqId;
+            ChoreoTraceSink.RecordExploreTrace = (uid, phase, birthSlot, trackedSlot, pairs) =>
+                ChoreoTraceContext.RecordExploreTrace(uid, phase, birthSlot, trackedSlot, PairsToDict(pairs));
+            ChoreoTraceSink.RecordBusySnapshot = (trigger, pairs) =>
+                ChoreoTraceContext.RecordBusySnapshot(trigger, PairsToDict(pairs));
+            ChoreoTraceSink.EmitAnomaly = (code, uid, detail) =>
+                PerfTraceRecorder.EmitChoreoAnomaly(code, uid, detail);
+        }
+
+        private static Dictionary<string, string> PairsToDict(string[] pairs)
+        {
+            var dict = new Dictionary<string, string>();
+            if (pairs == null)
+            {
+                return dict;
+            }
+
+            for (var i = 0; i + 1 < pairs.Length; i += 2)
+            {
+                var key = pairs[i] ?? string.Empty;
+                if (string.IsNullOrEmpty(key))
+                {
+                    continue;
+                }
+
+                dict[key] = pairs[i + 1] ?? string.Empty;
+            }
+
+            return dict;
+        }
+
+        private static int BeginChoreoFromPairs(string kind, Dictionary<string, string> extra)
+        {
+            return ChoreoTraceContext.BeginChoreo(kind, extra);
         }
 
         public static string ResolveNodeIndex()
@@ -270,6 +323,129 @@ namespace NineGrid.Flow.Diagnostics
             {
                 Debug.LogWarning("[FieldTrace] HopPlan failed: " + ex.Message);
             }
+        }
+
+        public static void RecordBoardQueueEnqueue(
+            int queueDepth,
+            int moves,
+            int deals,
+            int choreoSeqId = 0)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.BoardQueueEnqueue,
+                new Dictionary<string, string>
+                {
+                    { "queueDepth", queueDepth.ToString() },
+                    { "moves", moves.ToString() },
+                    { "deals", deals.ToString() },
+                    { "choreoSeqId", choreoSeqId.ToString() },
+                });
+        }
+
+        public static void RecordBoardQueueDequeue(
+            int queueDepth,
+            bool lockAcquired,
+            int choreoSeqId = 0)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.BoardQueueDequeue,
+                new Dictionary<string, string>
+                {
+                    { "queueDepth", queueDepth.ToString() },
+                    { "lockAcquired", lockAcquired ? "true" : "false" },
+                    { "choreoSeqId", choreoSeqId.ToString() },
+                });
+        }
+
+        public static void RecordBoardQueueSkip(string reason, int pendingCount)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.BoardQueueSkip,
+                new Dictionary<string, string>
+                {
+                    { "reason", reason ?? string.Empty },
+                    { "pendingCount", pendingCount.ToString() },
+                },
+                accepted: false);
+        }
+
+        public static void RecordRotateClassify(
+            bool accepted,
+            bool clockwise,
+            int moveCount,
+            int ringOccupied,
+            string mismatchDetail = null)
+        {
+            Record(
+                FlowTraceCategory.Field,
+                FlowTraceNames.RotateClassify,
+                new Dictionary<string, string>
+                {
+                    { "accepted", accepted ? "true" : "false" },
+                    { "clockwise", clockwise ? "true" : "false" },
+                    { "moveCount", moveCount.ToString() },
+                    { "ringOccupied", ringOccupied.ToString() },
+                    { "mismatchDetail", mismatchDetail ?? string.Empty },
+                    { "choreoSeqId", ChoreoTraceContext.CurrentSeqId.ToString() },
+                },
+                accepted: accepted);
+        }
+
+        public static void RecordPickupAttempt(int uid, int groundSlot, string defId, string coreKind)
+        {
+            ChoreoTraceContext.RecordBusySnapshot("Pickup.Attempt");
+            Record(
+                FlowTraceCategory.Hand,
+                FlowTraceNames.PickupAttempt,
+                new Dictionary<string, string>
+                {
+                    { "uid", uid.ToString() },
+                    { "groundSlot", groundSlot.ToString() },
+                    { "defId", defId ?? string.Empty },
+                    { "coreKind", coreKind ?? string.Empty },
+                    { "choreoSeqId", ChoreoTraceContext.CurrentSeqId.ToString() },
+                });
+        }
+
+        public static void RecordPickupGate(
+            int uid,
+            string gate,
+            bool accepted,
+            string coreReason = null)
+        {
+            if (!accepted)
+            {
+                ChoreoTraceContext.NotePickupGateFailure(gate);
+            }
+
+            RecordOccupancySnapshot("pickupClick", FlowTraceBatchTags.Pickup);
+            Record(
+                FlowTraceCategory.Hand,
+                FlowTraceNames.PickupGate,
+                new Dictionary<string, string>
+                {
+                    { "uid", uid.ToString() },
+                    { "gate", gate ?? string.Empty },
+                    { "accepted", accepted ? "true" : "false" },
+                    { "coreReason", coreReason ?? string.Empty },
+                    { "choreoSeqId", ChoreoTraceContext.CurrentSeqId.ToString() },
+                },
+                accepted: accepted);
+        }
+
+        public static void RecordPickupSuccess(int uid, int handSlot)
+        {
+            Record(
+                FlowTraceCategory.Hand,
+                FlowTraceNames.PickupSuccess,
+                new Dictionary<string, string>
+                {
+                    { "uid", uid.ToString() },
+                    { "handSlot", handSlot.ToString() },
+                });
         }
 
         public static Dictionary<string, string> BuildStartNodePayload(

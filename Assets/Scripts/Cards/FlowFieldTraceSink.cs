@@ -29,6 +29,23 @@ namespace NineGrid.Cards
         /// <summary>trigger, registryCount, fieldCount, ghosts, orphans</summary>
         public static Action<string, int, int, string, string> RegistryAudit;
 
+        /// <summary>batchTag</summary>
+        public static Action<string> SetBatchTag;
+
+        public static Action ClearBatchTag;
+
+        /// <summary>uid, groundSlot, defId, coreKind</summary>
+        public static Action<int, int, string, string> PickupAttempt;
+
+        /// <summary>uid, gate, accepted</summary>
+        public static Action<int, string, bool> PickupGate;
+
+        /// <summary>uid, handSlot</summary>
+        public static Action<int, int> PickupSuccess;
+
+        /// <summary>accepted, clockwise, moveCount, ringOccupied</summary>
+        public static Action<bool, bool, int, int> RotateClassify;
+
         public static void ClearHandlers()
         {
             OccupancyConflict = null;
@@ -37,6 +54,12 @@ namespace NineGrid.Cards
             HandLifecycle = null;
             OccupancyVacate = null;
             RegistryAudit = null;
+            SetBatchTag = null;
+            ClearBatchTag = null;
+            PickupAttempt = null;
+            PickupGate = null;
+            PickupSuccess = null;
+            RotateClassify = null;
             CurrentBatchTag = string.Empty;
         }
     }
