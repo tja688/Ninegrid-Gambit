@@ -444,7 +444,14 @@ namespace NineGrid.Core
             TriggerPoint.OnEnter
         };
 
-        public SpawnCardAction(string defId, CardKind kind, ZoneId zone, SlotId slot, int count, string cause = null)
+        public SpawnCardAction(
+            string defId,
+            CardKind kind,
+            ZoneId zone,
+            SlotId slot,
+            int count,
+            string cause = null,
+            bool nodeStartDrawPileGrant = false)
         {
             DefId = defId ?? string.Empty;
             Kind = kind;
@@ -452,6 +459,7 @@ namespace NineGrid.Core
             Slot = slot;
             Count = Math.Max(0, count);
             Cause = cause ?? string.Empty;
+            NodeStartDrawPileGrant = nodeStartDrawPileGrant;
         }
 
         public string DefId { get; private set; }
@@ -460,6 +468,7 @@ namespace NineGrid.Core
         public SlotId Slot { get; private set; }
         public int Count { get; private set; }
         public string Cause { get; private set; }
+        public bool NodeStartDrawPileGrant { get; private set; }
         public override string ActionName { get { return "SpawnCard"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -471,6 +480,21 @@ namespace NineGrid.Core
 
             for (var i = 0; i < Count; i++)
             {
+                if (NodeStartDrawPileGrant
+                    && Zone == ZoneId.PlayerCardPool
+                    && Kind == CardKind.HelpCard)
+                {
+                    context.GetModel<PlayerModel>().AddHelpCard(DefId, 1);
+                    var grantCard = CreateConfiguredCard(context, registry, DefId, Kind);
+                    grantCard.Counters.Set(CoreCounterKeys.PlayerSideDeck, 1);
+                    deck.AddToDrawPile(grantCard, false);
+                    result.AddEvent(new CoreGameEvent(CoreEventType.CardSpawned, context.ActionId, ActionName)
+                        .WithCard(grantCard.Uid)
+                        .WithMessage(DefId)
+                        .WithSource(DefId, Cause));
+                    continue;
+                }
+
                 if (Zone == ZoneId.PlayerCardPool
                     && Kind == CardKind.HelpCard
                     && HelpCardGrantRouting.ShouldGrantToPlayerSideDeck(context))

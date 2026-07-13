@@ -312,6 +312,18 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 从遗物/技能锚点飞入卡组槽位（仅 InGame）：起点缩小 + 位移 + ScaleAppear。
+        /// </summary>
+        public UniTask<bool> AddCardAtFromOriginAsync(
+            int slotIndex,
+            ManagedCard card,
+            Transform originAnchor,
+            CancellationToken cancellationToken = default)
+        {
+            return AddCardAtFromOriginInternalAsync(slotIndex, card, originAnchor, cancellationToken);
+        }
+
+        /// <summary>
         /// 清理 Ground 上已发卡牌并释放槽位占用（测试/重置用）。委托 GroundFieldManagerSingleton。
         /// </summary>
         public void ClearGround()
@@ -472,13 +484,28 @@ namespace NineGrid.Cards
                 card.Transform.position = origin.position;
             }
 
+            var finalScale = card.Transform.localScale;
+            if (finalScale.sqrMagnitude <= 0.0001f)
+            {
+                finalScale = Vector3.one;
+            }
+
+            card.Transform.localScale = Vector3.zero;
+
             cardManager?.SetDisplayMode(card, CardDisplayMode.GroundCardMode);
             CardOpacityUtility.ResetAlpha(card);
 
+            var moveDuration = layoutSettings != null ? layoutSettings.moveDuration : 0.2f;
+            var scaleTask = CardDeckTween.ScaleAppearAsync(
+                card.Transform,
+                finalScale,
+                moveDuration,
+                cancellationToken);
             var ok = await handManager.PullFromGroundAsync(
                 card,
                 skipBusyGuard: skipBusyGuard,
                 cancellationToken: cancellationToken);
+            await scaleTask;
             if (ok)
             {
                 try
@@ -857,15 +884,24 @@ namespace NineGrid.Cards
 
         private async UniTask AddCardAtInternalAsync(int slotIndex, ManagedCard card, CancellationToken cancellationToken)
         {
+            await AddCardAtFromOriginInternalAsync(slotIndex, card, null, cancellationToken);
+        }
+
+        private async UniTask<bool> AddCardAtFromOriginInternalAsync(
+            int slotIndex,
+            ManagedCard card,
+            Transform originAnchor,
+            CancellationToken cancellationToken)
+        {
             if (CurrentMode != CardDeckMode.InGame)
             {
                 Debug.LogWarning("[CardDeckManager] AddCardAt 仅在 InGame 模式可用。");
-                return;
+                return false;
             }
 
             if (_isBusy || card == null)
             {
-                return;
+                return false;
             }
 
             var field = ResolveFieldManager();
@@ -875,7 +911,7 @@ namespace NineGrid.Cards
                 && field.TryGetSlotOf(card.Uid, out _))
             {
                 LaunchReturnFieldCardToDeck(card, slotIndex);
-                return;
+                return true;
             }
 
             _isBusy = true;
@@ -883,19 +919,65 @@ namespace NineGrid.Cards
             {
                 CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
 
-                var addAnchor = GetAddAnchor(Mathf.Clamp(slotIndex, 0, Mathf.Max(0, layoutSettings.maxSlots - 1)));
-                if (addAnchor != null && card.Transform != null)
+                var clampedSlot = Mathf.Clamp(slotIndex, 0, Mathf.Max(0, layoutSettings.maxSlots - 1));
+                if (originAnchor == null)
                 {
-                    card.Transform.position = addAnchor.position;
+                    var addAnchor = GetAddAnchor(clampedSlot);
+                    if (addAnchor != null && card.Transform != null)
+                    {
+                        card.Transform.position = addAnchor.position;
+                    }
+
+                    if (!_slotContainer.TryInsertAt(slotIndex, card, out var rippleMoves))
+                    {
+                        Debug.LogWarning("[CardDeckManager] 插入卡牌失败（卡牌无效或索引非法）。");
+                        return false;
+                    }
+
+                    await CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration, cancellationToken);
+                    return true;
                 }
 
-                if (!_slotContainer.TryInsertAt(slotIndex, card, out var rippleMoves))
+                var deckAnchor = GetDeckAnchor(clampedSlot);
+                if (originAnchor != null && card.Transform != null)
+                {
+                    card.Transform.position = originAnchor.position;
+                }
+
+                var finalScale = card.Transform != null ? card.Transform.localScale : Vector3.one;
+                if (finalScale.sqrMagnitude <= 0.0001f)
+                {
+                    finalScale = Vector3.one;
+                }
+
+                if (card.Transform != null)
+                {
+                    card.Transform.localScale = Vector3.zero;
+                }
+
+                if (!_slotContainer.TryInsertAt(slotIndex, card, out var originRippleMoves))
                 {
                     Debug.LogWarning("[CardDeckManager] 插入卡牌失败（卡牌无效或索引非法）。");
-                    return;
+                    return false;
                 }
 
-                await CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration, cancellationToken);
+                var moveDuration = layoutSettings.moveDuration;
+                if (deckAnchor != null && card.Transform != null)
+                {
+                    CardDeckTween.MoveToWorld(card.Transform, deckAnchor.position, moveDuration);
+                }
+
+                var scaleTask = card.Transform != null
+                    ? CardDeckTween.ScaleAppearAsync(card.Transform, finalScale, moveDuration, cancellationToken)
+                    : UniTask.CompletedTask;
+                var rippleTask = CardDeckTween.MoveRippleAsync(originRippleMoves, moveDuration, cancellationToken);
+                await UniTask.WhenAll(scaleTask, rippleTask);
+                if (deckAnchor != null && card.Transform != null)
+                {
+                    await UniTask.Delay(TimeSpan.FromSeconds(moveDuration), cancellationToken: cancellationToken);
+                }
+
+                return true;
             }
             finally
             {

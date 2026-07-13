@@ -80,6 +80,30 @@
     "effect_ids": "relic.lucky_coin.elite_kill|relic.lucky_coin.boss_kill"
   },
   {
+    "def_id": "relic.blood_shockwave",
+    "display_name": "血液冲击波",
+    "rarity": "Gold",
+    "design_text": "血量上限+4，关卡开始放入撞击教程，低血再放一张",
+    "tags": "",
+    "effect_ids": "relic.blood_shockwave.max_hp|relic.blood_shockwave.node_start|relic.blood_shockwave.node_start_low_hp"
+  },
+  {
+    "def_id": "relic.rotation_button",
+    "display_name": "旋转按钮",
+    "rarity": "White",
+    "design_text": "每关卡开始放入旋转轮",
+    "tags": "",
+    "effect_ids": "relic.rotation_button.node_start"
+  },
+  {
+    "def_id": "relic.swap_button",
+    "display_name": "交换按钮",
+    "rarity": "White",
+    "design_text": "每关卡开始放入交换卡",
+    "tags": "",
+    "effect_ids": "relic.swap_button.node_start"
+  },
+  {
     "def_id": "relic.phoenix_feather",
     "display_name": "凤凰羽毛",
     "rarity": "Gold",

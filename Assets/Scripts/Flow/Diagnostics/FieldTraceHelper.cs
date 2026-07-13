@@ -292,7 +292,12 @@ namespace NineGrid.Flow.Diagnostics
                 accepted: ok);
         }
 
-        public static void RecordOpeningHandDealProgress(int uid, string sourceDefId, bool ok, int handIndex)
+        public static void RecordOpeningGrantProgress(
+            int uid,
+            string sourceDefId,
+            string target,
+            bool ok,
+            int grantIndex)
         {
             Record(
                 FlowTraceCategory.Presentation,
@@ -301,10 +306,16 @@ namespace NineGrid.Flow.Diagnostics
                 {
                     { "uid", uid.ToString() },
                     { "sourceDefId", sourceDefId ?? string.Empty },
+                    { "target", target ?? string.Empty },
                     { "ok", ok ? "true" : "false" },
-                    { "handIndex", handIndex.ToString() },
+                    { "grantIndex", grantIndex.ToString() },
                 },
                 accepted: ok);
+        }
+
+        public static void RecordOpeningHandDealProgress(int uid, string sourceDefId, bool ok, int handIndex)
+        {
+            RecordOpeningGrantProgress(uid, sourceDefId, "hand", ok, handIndex);
         }
 
         public static void RecordHopPlanFromMoves(IReadOnlyList<PostKillCardMove> moves)

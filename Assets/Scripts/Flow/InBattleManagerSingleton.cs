@@ -592,7 +592,32 @@ namespace NineGrid.Flow
             public string AvatarDefId;
             public readonly List<ManagedCard> DeckCards = new();
             public readonly List<BoardPlacement> BoardPlacements = new();
+            public readonly List<DeckDealFromSource> DeckAdds = new();
             public readonly List<HandDealFromSource> HandDeals = new();
+            public readonly HashSet<int> PendingDeckAddUids = new();
+        }
+
+        private sealed class DeckDealFromSource
+        {
+            public DeckDealFromSource(
+                int uid,
+                string defId,
+                string sourceDefId,
+                int sourceSlotIndex,
+                long eventSequence)
+            {
+                Uid = uid;
+                DefId = defId;
+                SourceDefId = sourceDefId ?? string.Empty;
+                SourceSlotIndex = sourceSlotIndex;
+                EventSequence = eventSequence;
+            }
+
+            public int Uid { get; }
+            public string DefId { get; }
+            public string SourceDefId { get; }
+            public int SourceSlotIndex { get; }
+            public long EventSequence { get; }
         }
 
         private sealed class HandDealFromSource
@@ -711,6 +736,11 @@ namespace NineGrid.Flow
             for (var i = 0; i < deck.DrawPileUids.Count; i++)
             {
                 var uid = deck.DrawPileUids[i];
+                if (plan.PendingDeckAddUids.Contains(uid))
+                {
+                    continue;
+                }
+
                 if (!registry.TryGet(uid, out var card))
                 {
                     continue;
@@ -724,9 +754,87 @@ namespace NineGrid.Flow
                 }
             }
 
+            CaptureOpeningDeckAdds(arch, plan);
             CaptureOpeningHandDeals(arch, plan);
 
             return plan;
+        }
+
+        private void CaptureOpeningDeckAdds(IArchitecture arch, OpeningPresentationPlan plan)
+        {
+            var deck = arch.GetModel<DeckModel>();
+            var registry = arch.GetModel<CardRegistry>();
+            var player = arch.GetModel<PlayerModel>();
+            var entries = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
+            if (entries == null)
+            {
+                return;
+            }
+
+            var boardUids = new HashSet<int>();
+            for (var p = 0; p < plan.BoardPlacements.Count; p++)
+            {
+                boardUids.Add(plan.BoardPlacements[p].Uid);
+            }
+
+            var spawnMeta = new Dictionary<int, (string sourceDefId, long sequence)>();
+            for (var i = _nodeEventLogStart; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                if (entry.Type != CoreEventType.CardSpawned || entry.CardUid <= 0)
+                {
+                    continue;
+                }
+
+                if (spawnMeta.ContainsKey(entry.CardUid))
+                {
+                    continue;
+                }
+
+                var sourceDefId = entry.Cause ?? string.Empty;
+                if (!IsOpeningGrantSource(sourceDefId))
+                {
+                    continue;
+                }
+
+                spawnMeta[entry.CardUid] = (sourceDefId, entry.Sequence);
+            }
+
+            for (var i = 0; i < deck.DrawPileUids.Count; i++)
+            {
+                var uid = deck.DrawPileUids[i];
+                if (boardUids.Contains(uid) || !spawnMeta.TryGetValue(uid, out var meta))
+                {
+                    continue;
+                }
+
+                if (!registry.TryGet(uid, out var coreCard))
+                {
+                    continue;
+                }
+
+                plan.PendingDeckAddUids.Add(uid);
+                var slotIndex = ResolveHandDealSourceSlotIndex(meta.sourceDefId, player);
+                plan.DeckAdds.Add(new DeckDealFromSource(
+                    uid,
+                    coreCard.DefId,
+                    meta.sourceDefId,
+                    slotIndex,
+                    meta.sequence));
+            }
+
+            plan.DeckAdds.Sort((a, b) =>
+            {
+                var cmp = a.SourceSlotIndex.CompareTo(b.SourceSlotIndex);
+                return cmp != 0 ? cmp : a.EventSequence.CompareTo(b.EventSequence);
+            });
+        }
+
+        private static bool IsOpeningGrantSource(string sourceDefId)
+        {
+            return !string.IsNullOrEmpty(sourceDefId)
+                && (sourceDefId.StartsWith("relic.", StringComparison.Ordinal)
+                    || sourceDefId.StartsWith("skill.", StringComparison.Ordinal));
         }
 
         private void CaptureOpeningHandDeals(IArchitecture arch, OpeningPresentationPlan plan)
@@ -948,6 +1056,65 @@ namespace NineGrid.Flow
                         cancellationToken);
                 }
 
+                if (plan.DeckAdds.Count > 0)
+                {
+                    ResolveManagers();
+                    for (var d = 0; d < plan.DeckAdds.Count; d++)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        var deckDeal = plan.DeckAdds[d];
+                        if (!TryResolveHandDealOrigin(deckDeal.SourceDefId, out var origin))
+                        {
+                            if (deckManager == null || !deckManager.TryGetDefaultDealOrigin(out origin))
+                            {
+                                Debug.LogWarning(
+                                    $"[InBattleManager] Opening DeckAdd uid={deckDeal.Uid} source={deckDeal.SourceDefId} 无锚点，跳过。");
+                                continue;
+                            }
+
+                            Debug.LogWarning(
+                                $"[InBattleManager] Opening DeckAdd uid={deckDeal.Uid} source={deckDeal.SourceDefId} 锚点未找到，fallback 卡组左侧。");
+                        }
+
+                        cardManager.TryGet(deckDeal.Uid, out var ensureCard);
+                        if (ensureCard == null)
+                        {
+                            ensureCard = cardManager.SpawnView(
+                                deckDeal.Uid,
+                                deckDeal.DefId,
+                                initialMode: CardDisplayMode.CardDeckMode);
+                            if (ensureCard != null)
+                            {
+                                CoreCardPresentationMapper.ApplyToManagedCard(ensureCard);
+                            }
+                        }
+
+                        var deckOk = await deckManager.AddCardAtFromOriginAsync(
+                            deckManager.DeckCount,
+                            ensureCard,
+                            origin,
+                            cancellationToken);
+                        FieldTraceHelper.RecordOpeningGrantProgress(
+                            deckDeal.Uid,
+                            deckDeal.SourceDefId,
+                            "deck",
+                            deckOk,
+                            d);
+                        if (!deckOk)
+                        {
+                            Debug.LogWarning(
+                                $"[InBattleManager] Opening DeckAdd 失败 uid={deckDeal.Uid} source={deckDeal.SourceDefId}。");
+                        }
+
+                        if (d < plan.DeckAdds.Count - 1 && dealInterval > 0f)
+                        {
+                            await UniTask.Delay(
+                                TimeSpan.FromSeconds(dealInterval),
+                                cancellationToken: cancellationToken);
+                        }
+                    }
+                }
+
                 if (plan.HandDeals.Count > 0)
                 {
                     ResolveManagers();
@@ -988,9 +1155,10 @@ namespace NineGrid.Flow
                             ensureCard: ensureCard,
                             skipBusyGuard: true,
                             cancellationToken: cancellationToken);
-                        FieldTraceHelper.RecordOpeningHandDealProgress(
+                        FieldTraceHelper.RecordOpeningGrantProgress(
                             handDeal.Uid,
                             handDeal.SourceDefId,
+                            "hand",
                             handOk,
                             h);
                         if (!handOk)

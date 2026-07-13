@@ -133,6 +133,31 @@ namespace NineGrid.Cards
                 cancellationToken: cancellationToken);
         }
 
+        public static async UniTask ScaleAppearAsync(
+            Transform target,
+            Vector3 finalScale,
+            float duration = 0.2f,
+            CancellationToken cancellationToken = default)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            KillMotion(target, "DeckTween.ScaleAppear");
+            target.localScale = Vector3.zero;
+            target.DOScale(finalScale, duration)
+                .SetEase(Ease.OutBack)
+                .SetLink(target.gameObject, LinkBehaviour.KillOnDestroy);
+            await UniTask.Delay(
+                System.TimeSpan.FromSeconds(duration),
+                cancellationToken: cancellationToken);
+            if (target != null)
+            {
+                target.localScale = finalScale;
+            }
+        }
+
         public static async UniTask MoveAllAsync(
             IReadOnlyList<(Transform transform, Vector3 target, float delay)> moves,
             float duration,

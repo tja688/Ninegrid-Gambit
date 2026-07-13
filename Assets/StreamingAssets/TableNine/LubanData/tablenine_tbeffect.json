@@ -336,6 +336,41 @@
     "design_text": "[击杀精英时] 将一张金币卡加入战斗卡组"
   },
   {
+    "id": "relic.blood_shockwave.max_hp",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.blood_shockwave.max_hp\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":4,\"reason\":\"relic.blood_shockwave.max_hp\"}}",
+    "design_text": "血量上限+4"
+  },
+  {
+    "id": "relic.blood_shockwave.node_start",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.blood_shockwave.node_start\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.impact_tutorial\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}",
+    "design_text": "[每关卡开始时] 将一张撞击教程放入道具牌格"
+  },
+  {
+    "id": "relic.blood_shockwave.node_start_low_hp",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.blood_shockwave.node_start_low_hp\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.impact_tutorial\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"},\"conditions\":[{\"atom\":\"HpBelow\",\"target\":\"Player\",\"pct\":0.5}]}",
+    "design_text": "[每关卡开始时] 当前血量低于50%时再放入一张撞击教程"
+  },
+  {
+    "id": "relic.rotation_button.node_start",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.rotation_button.node_start\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.rotation_wheel\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}",
+    "design_text": "[每关卡开始时] 将一张旋转轮放入道具牌格"
+  },
+  {
+    "id": "relic.swap_button.node_start",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.swap_button.node_start\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.swap_card\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}",
+    "design_text": "[每关卡开始时] 将一张交换卡放入道具牌格"
+  },
+  {
     "id": "relic.phoenix_feather.fatal",
     "container_type": "Relic",
     "state": "Implemented",

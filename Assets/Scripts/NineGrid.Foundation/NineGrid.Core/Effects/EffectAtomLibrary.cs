@@ -2720,7 +2720,21 @@ namespace NineGrid.Core.Effects
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
         {
             var count = mPerTarget ? mCount * targets.Count : mCount;
-            return new[] { new SpawnCardAction(mDefId, mKind, mZone, mSlot, count, context.SourceDefId) };
+            var nodeStartDrawPileGrant = mZone == ZoneId.PlayerCardPool
+                && mKind == CardKind.HelpCard
+                && context.Instance?.Trigger != null
+                && context.Instance.Trigger.Point == TriggerPoint.OnNodeStart;
+            return new[]
+            {
+                new SpawnCardAction(
+                    mDefId,
+                    mKind,
+                    mZone,
+                    mSlot,
+                    count,
+                    context.SourceDefId,
+                    nodeStartDrawPileGrant),
+            };
         }
     }
 
