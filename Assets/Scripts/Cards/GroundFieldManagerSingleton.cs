@@ -30,7 +30,7 @@ namespace NineGrid.Cards
         private readonly Dictionary<int, int> _slotByUid = new();
         private readonly List<Transform> _groundAnchors = new();
         private readonly GroundSlotHitProxy[] _slotHitProxies = new GroundSlotHitProxy[GroundSlotTopology.MaxSlot + 1];
-        private GroundEmptySlotExploreRunner _exploreRunner;
+        private GroundSlotDealFlightCoordinator _dealFlightCoordinator;
         private bool _isBusy;
         private CancellationTokenSource _fieldAnimCts;
         private bool _occupancyConflictSinceClear;
@@ -83,6 +83,8 @@ namespace NineGrid.Cards
 
         public GroundFieldLayoutSettings LayoutSettings => layoutSettings;
 
+        public int ActiveDealFlightCount => _dealFlightCoordinator?.ActiveCount ?? 0;
+
         public event Action<int> EmptySlotClicked;
 
         /// <summary>
@@ -104,7 +106,7 @@ namespace NineGrid.Cards
             CacheAnchors();
             EnsureSlotHitProxies();
             RefreshAllSlotHitColliders();
-            _exploreRunner = new GroundEmptySlotExploreRunner(this, this.GetCancellationTokenOnDestroy());
+            _dealFlightCoordinator = new GroundSlotDealFlightCoordinator(this, this.GetCancellationTokenOnDestroy());
         }
 
         private void OnDestroy()
@@ -589,7 +591,7 @@ namespace NineGrid.Cards
                 RefreshSlotHitCollider(slot);
                 if (startExplore)
                 {
-                    _exploreRunner?.StartExplore(slot);
+                    _dealFlightCoordinator?.StartExplore(slot);
                 }
 
                 return false;
@@ -626,7 +628,7 @@ namespace NineGrid.Cards
                 RefreshSlotHitCollider(slot);
                 if (startExplore)
                 {
-                    _exploreRunner?.StartExplore(slot);
+                    _dealFlightCoordinator?.StartExplore(slot);
                 }
 
                 return false;
@@ -663,7 +665,7 @@ namespace NineGrid.Cards
             RefreshSlotHitCollider(slot);
             if (startExplore)
             {
-                _exploreRunner?.StartExplore(slot);
+                _dealFlightCoordinator?.StartExplore(slot);
             }
 
             if (card == null)
@@ -707,6 +709,37 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 启动 Drain 补牌贝塞尔飞牌（逻辑占格后视觉追踪）。
+        /// </summary>
+        internal DealFlightHandle LaunchDrainDealFlight(
+            ManagedCard card,
+            int targetSlot,
+            Vector3 launchPos,
+            DealFlightContext context)
+        {
+            return _dealFlightCoordinator?.LaunchDrainFlight(card, targetSlot, launchPos, context);
+        }
+
+        internal bool IsDealInFlight(int uid)
+        {
+            return _dealFlightCoordinator != null && _dealFlightCoordinator.IsInFlight(uid);
+        }
+
+        internal bool TryReleaseDealFlightForHop(int uid, out Vector3 currentPosition)
+        {
+            currentPosition = default;
+            return _dealFlightCoordinator != null
+                   && _dealFlightCoordinator.TryReleaseFlightForHop(uid, out currentPosition);
+        }
+
+        public static async UniTask WaitDealFlightsSettledAsync(
+            IReadOnlyList<DealFlightHandle> handles,
+            CancellationToken cancellationToken)
+        {
+            await GroundSlotDealFlightCoordinator.WaitAllSettledAsync(handles, cancellationToken);
+        }
+
+        /// <summary>
         /// 清场。生命周期清理（回主菜单/重开）应传 <paramref name="force"/>，
         /// 否则忙碌态会直接放弃，留下占格与 _isBusy 残留。
         /// </summary>
@@ -725,7 +758,7 @@ namespace NineGrid.Cards
                 _isBusy = false;
             }
 
-            _exploreRunner?.CancelAll();
+            _dealFlightCoordinator?.CancelAll();
 
             // 非 force：先 Vacate 再 Release，与 RequestRemoveFromField 契约一致，避免幽灵占格。
             if (!force)
@@ -1351,7 +1384,7 @@ namespace NineGrid.Cards
                     -1,
                     "clockwise", clockwise ? "1" : "0");
 
-                _exploreRunner?.OnRingShifted(clockwise);
+                _dealFlightCoordinator?.OnRingShifted(clockwise);
 
                 var moveTasks = new List<UniTask>();
                 for (var i = 0; i < ring.Count; i++)
@@ -1440,7 +1473,16 @@ namespace NineGrid.Cards
             }
 
             CardManagerSingleton.Instance.RefreshDisplayMode(card);
-            var start = fromAnchor.position;
+            Vector3 start;
+            if (TryReleaseDealFlightForHop(card.Uid, out var inFlightPos))
+            {
+                start = inFlightPos;
+            }
+            else
+            {
+                start = fromAnchor.position;
+            }
+
             var end = toAnchor.position;
             var mid = ComputeHopMidpoint(start, end);
 

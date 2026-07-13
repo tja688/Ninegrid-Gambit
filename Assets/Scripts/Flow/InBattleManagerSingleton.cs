@@ -735,10 +735,7 @@ namespace NineGrid.Flow
             var dealInterval = deckManager.LayoutSettings != null
                 ? deckManager.LayoutSettings.dealInterval
                 : 0.06f;
-            var moveDuration = deckManager.LayoutSettings != null
-                ? deckManager.LayoutSettings.moveDuration
-                : 0.28f;
-            var dealtAny = false;
+            var flightHandles = new List<DealFlightHandle>();
 
             try
             {
@@ -761,15 +758,17 @@ namespace NineGrid.Flow
                         continue;
                     }
 
-                    // 开局在 InBattle 忙碌期内；与 DrainDeals 一致跳过场地忙锁。
-                    // ensureCard：卡不在组内时兜底补入再发。
                     cardManager.TryGet(placement.Uid, out var ensureCard);
-                    var ok = await deckManager.DealCardByUidAsync(
+                    var flightContext = new DealFlightContext(
+                        fieldManager.IsFieldBusy,
+                        fieldManager.ActiveDealFlightCount + flightHandles.Count + 1,
+                        pendingRotateSteps: 0);
+                    var (ok, handle) = await deckManager.DealCardByUidWithFlightAsync(
                         placement.Uid,
                         placement.GroundSlot,
                         ensureCard: ensureCard,
                         skipBusyGuard: true,
-                        awaitMove: false,
+                        flightContext: flightContext,
                         cancellationToken: cancellationToken);
                     FieldTraceHelper.RecordOpeningDealProgress(
                         placement.Uid,
@@ -783,7 +782,11 @@ namespace NineGrid.Flow
                         continue;
                     }
 
-                    dealtAny = true;
+                    if (handle != null)
+                    {
+                        flightHandles.Add(handle);
+                    }
+
                     if (i < ring.Count - 1 && dealInterval > 0f)
                     {
                         await UniTask.Delay(
@@ -792,12 +795,11 @@ namespace NineGrid.Flow
                     }
                 }
 
-                // 末张飞入播完后再 SoftAlign/Sync，避免 KillMotion 掐掉轨迹。
-                if (dealtAny && moveDuration > 0f)
+                if (flightHandles.Count > 0)
                 {
-                    await UniTask.Delay(
-                        TimeSpan.FromSeconds(moveDuration),
-                        cancellationToken: cancellationToken);
+                    await GroundFieldManagerSingleton.WaitDealFlightsSettledAsync(
+                        flightHandles,
+                        cancellationToken);
                 }
             }
             finally
@@ -1844,7 +1846,8 @@ namespace NineGrid.Flow
                         case BoardPresentationStepKind.Deal:
                             if (step.Deals != null && step.Deals.Length > 0)
                             {
-                                await DrainDealsAsync(step.Deals, ct);
+                                var pendingRotates = CountRemainingRotateSteps(steps, i + 1);
+                                await DrainDealsAsync(step.Deals, ct, pendingRotates);
                             }
 
                             break;
@@ -1948,15 +1951,29 @@ namespace NineGrid.Flow
             }
         }
 
-        private async UniTask DrainDealsAsync(PostKillCardDeal[] deals, CancellationToken ct)
+        private static int CountRemainingRotateSteps(BoardPresentationStep[] steps, int startIndex)
+        {
+            var count = 0;
+            for (var i = startIndex; i < steps.Length; i++)
+            {
+                if (steps[i].Kind == BoardPresentationStepKind.Rotate)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private async UniTask DrainDealsAsync(
+            PostKillCardDeal[] deals,
+            CancellationToken ct,
+            int pendingRotateSteps = 0)
         {
             var dealInterval = deckManager.LayoutSettings != null
                 ? deckManager.LayoutSettings.dealInterval
                 : 0.05f;
-            var moveDuration = deckManager.LayoutSettings != null
-                ? deckManager.LayoutSettings.moveDuration
-                : 0.28f;
-            var dealtAny = false;
+            var flightHandles = new List<DealFlightHandle>();
 
             for (var i = 0; i < deals.Length; i++)
             {
@@ -1983,18 +2000,25 @@ namespace NineGrid.Flow
                     continue;
                 }
 
-                // 缺牌时先入组再发，始终走卡组完整缓动；禁止瞬移落锚兜底。
                 var ensureCard = ResolveOrSpawnDeckCardForDeal(deal);
-                var ok = await deckManager.DealCardByUidAsync(
+                var flightContext = new DealFlightContext(
+                    fieldManager.IsFieldBusy,
+                    fieldManager.ActiveDealFlightCount + flightHandles.Count + 1,
+                    pendingRotateSteps);
+                var (ok, handle) = await deckManager.DealCardByUidWithFlightAsync(
                     deal.Uid,
                     deal.Slot,
                     ensureCard: ensureCard,
                     skipBusyGuard: true,
-                    awaitMove: false,
+                    flightContext: flightContext,
                     cancellationToken: ct);
                 if (ok)
                 {
-                    dealtAny = true;
+                    if (handle != null)
+                    {
+                        flightHandles.Add(handle);
+                    }
+
                     if (cardManager.TryGet(deal.Uid, out var dealt))
                     {
                         CoreCardPresentationMapper.ApplyToManagedCard(dealt);
@@ -2014,12 +2038,9 @@ namespace NineGrid.Flow
                 }
             }
 
-            // 末张飞入播完后再 SoftAlign/Sync，避免 KillMotion 掐掉轨迹。
-            if (dealtAny && moveDuration > 0f)
+            if (flightHandles.Count > 0)
             {
-                await UniTask.Delay(
-                    TimeSpan.FromSeconds(moveDuration),
-                    cancellationToken: ct);
+                await GroundFieldManagerSingleton.WaitDealFlightsSettledAsync(flightHandles, ct);
             }
         }
 

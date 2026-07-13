@@ -162,7 +162,7 @@ namespace NineGrid.Cards
         /// 按 Uid 发牌到 Ground。若卡不在组内且提供了 <paramref name="ensureCard"/>，
         /// 先经 CardDeckAddAnchors 入组（完整入组缓动），再走与 <see cref="DealCard"/> 相同的飞入轨迹。
         /// </summary>
-        /// <param name="awaitMove">为 true 时等到本张 moveDuration 结束；批量交错发牌时应传 false，由调用方在末张后再等一次。</param>
+        /// <param name="awaitMove">为 true 时等到本张飞牌动态就位结束；批量交错发牌时应传 false，由调用方 WaitAllSettledAsync。</param>
         public async UniTask<bool> DealCardByUidAsync(
             int uid,
             int groundSlot,
@@ -171,9 +171,35 @@ namespace NineGrid.Cards
             bool awaitMove = true,
             CancellationToken cancellationToken = default)
         {
+            var (ok, handle) = await DealCardByUidWithFlightAsync(
+                uid,
+                groundSlot,
+                ensureCard,
+                skipBusyGuard,
+                flightContext: null,
+                cancellationToken);
+            if (ok && awaitMove && handle != null)
+            {
+                await handle.WaitSettleAsync(cancellationToken);
+            }
+
+            return ok;
+        }
+
+        /// <summary>
+        /// 发牌并返回飞牌句柄，供批量交错起飞 + WaitAllSettledAsync 聚合等待。
+        /// </summary>
+        public async UniTask<(bool ok, DealFlightHandle handle)> DealCardByUidWithFlightAsync(
+            int uid,
+            int groundSlot,
+            ManagedCard ensureCard = null,
+            bool skipBusyGuard = false,
+            DealFlightContext? flightContext = null,
+            CancellationToken cancellationToken = default)
+        {
             if (!EnsureInGameForDeal())
             {
-                return false;
+                return (false, null);
             }
 
             if (!TryFindDeckSlotByUid(uid, out var deckSlot))
@@ -182,7 +208,7 @@ namespace NineGrid.Cards
                 {
                     Debug.LogWarning(
                         $"[CardDeckManager] 卡组中未找到 Uid={uid}，且无 ensureCard，无法就位到格 {groundSlot}。");
-                    return false;
+                    return (false, null);
                 }
 
                 var field = ResolveFieldManager();
@@ -190,7 +216,7 @@ namespace NineGrid.Cards
                 {
                     Debug.LogWarning(
                         $"[CardDeckManager] Uid={uid} 已在场地，跳过入组发牌到格 {groundSlot}。");
-                    return false;
+                    return (false, null);
                 }
 
                 await AddCardAtInternalAsync(0, ensureCard, cancellationToken);
@@ -198,23 +224,21 @@ namespace NineGrid.Cards
                 {
                     Debug.LogWarning(
                         $"[CardDeckManager] 入组后仍未找到 Uid={uid}，无法就位到格 {groundSlot}。");
-                    return false;
+                    return (false, null);
                 }
             }
 
-            if (!TryDealCard(deckSlot, groundSlot, skipBusyGuard))
+            if (!TryDealCard(
+                    deckSlot,
+                    groundSlot,
+                    skipBusyGuard,
+                    flightContext,
+                    out var handle))
             {
-                return false;
+                return (false, null);
             }
 
-            if (awaitMove && layoutSettings != null && layoutSettings.moveDuration > 0f)
-            {
-                await UniTask.Delay(
-                    TimeSpan.FromSeconds(layoutSettings.moveDuration),
-                    cancellationToken: cancellationToken);
-            }
-
-            return true;
+            return (true, handle);
         }
 
         /// <summary>
@@ -541,8 +565,14 @@ namespace NineGrid.Cards
             await CardDeckTween.MoveRippleAsync(moves, layoutSettings.moveDuration, cancellationToken);
         }
 
-        private bool TryDealCard(int deckSlotIndex, int groundSlot, bool skipBusyGuard = false)
+        private bool TryDealCard(
+            int deckSlotIndex,
+            int groundSlot,
+            bool skipBusyGuard,
+            DealFlightContext? flightContext,
+            out DealFlightHandle flightHandle)
         {
+            flightHandle = null;
             if (!EnsureInGameForDeal())
             {
                 return false;
@@ -622,13 +652,33 @@ namespace NineGrid.Cards
             }
 
             CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration).Forget();
-            CardDeckTween.MoveToWorld(
-                removed.Transform,
-                groundAnchor.position,
-                layoutSettings.moveDuration,
-                onComplete: () => cardManager.RefreshDisplayMode(removed));
+            var launchPos = removed.Transform.position;
+            var context = flightContext ?? BuildDefaultFlightContext(field);
+            flightHandle = field.LaunchDrainDealFlight(removed, groundSlot, launchPos, context);
+            if (flightHandle == null)
+            {
+                CardDeckTween.MoveToWorld(
+                    removed.Transform,
+                    groundAnchor.position,
+                    layoutSettings.moveDuration,
+                    onComplete: () => cardManager.RefreshDisplayMode(removed));
+            }
+
             ReportDealTrace(dealUid, groundSlot, placeable: true, ok: true, rollback: false);
             return true;
+        }
+
+        private static DealFlightContext BuildDefaultFlightContext(GroundFieldManagerSingleton field)
+        {
+            return new DealFlightContext(
+                field.IsFieldBusy,
+                activeFlightCount: 1,
+                pendingRotateSteps: 0);
+        }
+
+        private bool TryDealCard(int deckSlotIndex, int groundSlot, bool skipBusyGuard = false)
+        {
+            return TryDealCard(deckSlotIndex, groundSlot, skipBusyGuard, null, out _);
         }
 
         private static void ReportDealTrace(int uid, int slot, bool placeable, bool ok, bool rollback)

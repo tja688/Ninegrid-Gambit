@@ -290,6 +290,154 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 二阶贝塞尔可变缓动追踪可变锚点：远快近慢，锚点跳变时 boost 并消费预算。
+        /// </summary>
+        public static async UniTask<float> TrackQuadraticBezierAnchorAsync(
+            Transform target,
+            Vector3 launchPos,
+            Func<Vector3> getTarget,
+            DealFlightLayoutSettings settings,
+            DealSettleBudget budget,
+            CancellationToken cancellationToken = default,
+            Func<bool> shouldContinue = null,
+            int trackedSlot = -1,
+            int uid = 0,
+            Action<float, float> onAnchorJump = null)
+        {
+            if (target == null || getTarget == null || settings == null || budget == null)
+            {
+                return 0f;
+            }
+
+            KillMotion(target, "DeckTween.BezierTrack", uid);
+
+            var resolvedUid = uid;
+            if (resolvedUid <= 0)
+            {
+                CardManagerSingleton.Instance?.TryResolveUid(target, out resolvedUid);
+            }
+
+            var choreoSeqId = ChoreoTraceSink.SafeCurrentSeqId();
+            var motionId = 0;
+            if (resolvedUid > 0)
+            {
+                motionId = CardPresentationProbe.NextMotionId();
+                var initialDest = getTarget();
+                CardPresentationProbe.MotionBegin(
+                    resolvedUid,
+                    motionId,
+                    launchPos,
+                    initialDest,
+                    "DeckTween.BezierTrack",
+                    reason: "dealFlight",
+                    choreoSeqId: choreoSeqId);
+            }
+
+            var threshold = settings.arriveThreshold;
+            var thresholdSqr = threshold * threshold;
+            var progressU = 0f;
+            var lastDest = getTarget();
+            var jumpBoostTimer = 0f;
+            var softLandFrames = 0;
+
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    if (target == null)
+                    {
+                        return progressU;
+                    }
+
+                    if (shouldContinue != null && !shouldContinue())
+                    {
+                        return progressU;
+                    }
+
+                    var destination = getTarget();
+                    var current = target.position;
+                    var toTarget = destination - current;
+                    var remainingDist = toTarget.magnitude;
+
+                    var anchorJumpSqr = (destination - lastDest).sqrMagnitude;
+                    if (anchorJumpSqr > settings.anchorJumpThresholdSqr)
+                    {
+                        jumpBoostTimer = 0.12f;
+                        budget.ApplyJumpPenalty(settings.rotationJumpCost);
+                        onAnchorJump?.Invoke(anchorJumpSqr, settings.rotationJumpCost);
+                        lastDest = destination;
+                    }
+
+                    if (remainingDist * remainingDist <= thresholdSqr && progressU >= settings.arriveMinU)
+                    {
+                        target.position = destination;
+                        progressU = 1f;
+                        return progressU;
+                    }
+
+                    var distFactor = Mathf.Clamp01(remainingDist / Mathf.Max(0.01f, settings.refDistance));
+                    var control = DealFlightMath.ComputeControlPoint(
+                        current,
+                        destination,
+                        settings.arcHeight,
+                        distFactor);
+                    var speedFactor = DealFlightMath.ComputeSpeedFactor(
+                        remainingDist,
+                        settings.speedNearDistance,
+                        settings.speedFarDistance,
+                        settings.easeNear,
+                        settings.easeFar);
+
+                    if (jumpBoostTimer > 0f)
+                    {
+                        speedFactor *= settings.rotationJumpBoost;
+                        jumpBoostTimer -= Time.deltaTime;
+                    }
+
+                    var budgetFactor = DealFlightMath.ComputeBudgetFactor(budget.Remaining, budget.Total);
+                    if (budget.IsExhausted)
+                    {
+                        speedFactor *= settings.exhaustedSnapBlend;
+                        softLandFrames++;
+                        if (softLandFrames >= 2 && remainingDist * remainingDist <= thresholdSqr * 4f)
+                        {
+                            target.position = destination;
+                            progressU = 1f;
+                            return progressU;
+                        }
+                    }
+
+                    var du = DealFlightMath.ComputeProgressDelta(
+                        1f,
+                        speedFactor,
+                        budgetFactor,
+                        Time.deltaTime,
+                        settings.baseDuration);
+                    progressU = Mathf.Clamp01(progressU + du);
+                    target.position = DealFlightMath.EvaluateQuadraticBezier(launchPos, control, destination, progressU);
+
+                    budget.Consume(Time.deltaTime);
+                    await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                }
+            }
+            finally
+            {
+                if (resolvedUid > 0 && motionId > 0 && target != null)
+                {
+                    CardPresentationProbe.MotionEnd(
+                        resolvedUid,
+                        motionId,
+                        target.position,
+                        cancellationToken.IsCancellationRequested ? "cancel" : "complete",
+                        "DeckTween.BezierTrack",
+                        choreoSeqId: choreoSeqId);
+                }
+            }
+
+            return progressU;
+        }
+
+        /// <summary>
         /// 指数缓动追可变锚点：远时快、近时慢（OutCubic 手感）；锚点跳变后会自动再加速。
         /// 位移公式：pos = Lerp(pos, dest, 1 - exp(-responsiveness * dt))。
         /// </summary>

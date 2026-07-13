@@ -132,5 +132,9 @@ namespace NineGrid.Flow.Diagnostics
         public const string BoardStepGeneralHopFallback = "BoardStepGeneralHopFallback";
         /// <summary>Core BoardRotated 数与 ChoreoBegin rotate 数不等。</summary>
         public const string BoardRotateChoreoCountMismatch = "BoardRotateChoreoCountMismatch";
+        /// <summary>飞牌预算耗尽后软着陆。</summary>
+        public const string DealFlightBudgetExhausted = "DealFlightBudgetExhausted";
+        /// <summary>旋转 hop 接管 in-flight 飞牌。</summary>
+        public const string DealFlightRotateHopTakeover = "DealFlightRotateHopTakeover";
     }
 }
