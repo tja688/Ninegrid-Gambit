@@ -241,6 +241,13 @@ namespace NineGrid.Cards
 
                 await DrainCombatHitBoardDeltaAsync(hitResult, ct);
 
+                if (hitResult.AvatarDefeated)
+                {
+                    TryBeginAvatarDefeatPresentation(ct);
+                    CombatHitSink.RequestBattleEnded(victory: false);
+                    return;
+                }
+
                 if (hitResult.TargetKilled)
                 {
                     CardManagerSingleton.Instance.MarkFieldDead(victim);
@@ -443,6 +450,7 @@ namespace NineGrid.Cards
 
                 if (hitResult.AvatarDefeated)
                 {
+                    TryBeginAvatarDefeatPresentation(cancellationToken);
                     CombatHitSink.RequestBattleEnded(victory: false);
                 }
             }
@@ -682,6 +690,23 @@ namespace NineGrid.Cards
             }
 
             return BattleParticipantIds.Wildcard;
+        }
+
+        /// <summary>
+        /// 玩家战败：对齐怪物击杀卸尸（MarkFieldDead → Vacate → 播死 → Release）。
+        /// </summary>
+        public bool TryBeginAvatarDefeatPresentation(CancellationToken cancellationToken = default)
+        {
+            ResolveFieldManager();
+            if (fieldManager == null
+                || !fieldManager.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+                || avatar == null
+                || avatar.IsFieldDead)
+            {
+                return false;
+            }
+
+            return TryBeginLethalVictimPresentation(avatar, cancellationToken);
         }
 
         /// <summary>

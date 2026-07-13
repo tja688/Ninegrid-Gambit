@@ -3387,6 +3387,7 @@ namespace NineGrid.Flow
 
                 if (useResult.AvatarDefeated)
                 {
+                    FieldBattleManagerSingleton.Instance?.TryBeginAvatarDefeatPresentation(ct);
                     CombatHitSink.RequestBattleEnded(victory: false);
                     return;
                 }
@@ -3600,6 +3601,8 @@ namespace NineGrid.Flow
 
                     if (boardDelta.AvatarDefeated)
                     {
+                        FieldBattleManagerSingleton.Instance?.TryBeginAvatarDefeatPresentation(
+                            EnsurePresentationToken());
                         CombatHitSink.RequestBattleEnded(victory: false);
                         return;
                     }

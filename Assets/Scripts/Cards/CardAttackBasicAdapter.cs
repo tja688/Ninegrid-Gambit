@@ -283,6 +283,11 @@ namespace NineGrid.Cards
                     StopSpuriousDeathEffect(victimSnapshot.Card);
                 }
 
+                if (ShouldKeepVictimOffField(victimSnapshot.Card))
+                {
+                    restoreVictim = false;
+                }
+
                 await BattleFinalStateGuard.RestorePairAsync(
                     attackerSnapshot,
                     victimSnapshot,
@@ -306,6 +311,24 @@ namespace NineGrid.Cards
             }
 
             CardManagerSingleton.Instance?.RefreshDisplayMode(victim);
+        }
+
+        /// <summary>
+        /// 命中帧已写 Core 并 Sync 后，0 血/已标死者不得被终态守卫拉回格锚（含反击非 Lethal Profile）。
+        /// </summary>
+        private static bool ShouldKeepVictimOffField(ManagedCard victim)
+        {
+            if (victim == null)
+            {
+                return false;
+            }
+
+            if (victim.IsFieldDead)
+            {
+                return true;
+            }
+
+            return victim.View != null && victim.View.Health <= 0;
         }
 
         private readonly struct AttackerSortBoost
