@@ -54,6 +54,9 @@ namespace NineGrid.Flow
         private readonly Queue<BoardPresentationRequest> _boardPresentationQueue = new();
         private CancellationTokenSource _presentationCts;
         private int _nodeEventLogStart;
+        private readonly Queue<ShuffleIntoDeckPresentationEntry> _pendingShuffleInto = new();
+        private bool _shuffleIntoDrainRunning;
+        private Transform _shuffleOriginScratch;
 
         private sealed class BoardPresentationRequest
         {
@@ -1288,6 +1291,9 @@ namespace NineGrid.Flow
                 request.Completion.TrySetCanceled();
             }
 
+            _pendingShuffleInto.Clear();
+            _shuffleIntoDrainRunning = false;
+
             CombatHitSink.ForceEndPresentationLock("CancelPresentationWork");
             _boardPresentationPumpRunning = false;
             _drainInFlight = false;
@@ -1380,6 +1386,7 @@ namespace NineGrid.Flow
             CombatHitSink.ApplyCombatHit = ApplyCombatHitFromCore;
             CombatHitSink.ResolvePostKillBoard = ResolvePostKillBoardFromCore;
             CombatHitSink.EstimateWillKill = EstimateWillKillFromCore;
+            CombatHitSink.ResolvePlayerAttackTarget = ResolvePlayerAttackTargetFromCore;
             CombatHitSink.SyncCardPresentation = SyncManagedCardPresentation;
             CombatHitSink.SpawnDamageNumber = SpawnDamageNumberAt;
             CombatHitSink.SyncBoardFromCore = RequestSyncBoardFromCore;
@@ -1445,6 +1452,11 @@ namespace NineGrid.Flow
             if (CombatHitSink.EstimateWillKill == EstimateWillKillFromCore)
             {
                 CombatHitSink.EstimateWillKill = null;
+            }
+
+            if (CombatHitSink.ResolvePlayerAttackTarget == ResolvePlayerAttackTargetFromCore)
+            {
+                CombatHitSink.ResolvePlayerAttackTarget = null;
             }
 
             if (CombatHitSink.SyncCardPresentation == SyncManagedCardPresentation)
@@ -1628,6 +1640,7 @@ namespace NineGrid.Flow
 
             PresentGoldGainsFromEventLog(startIndex, ResolveCardWorldPosition(targetUid));
             PresentEffectTriggersFromEventLog(startIndex);
+            Instance?.PresentShuffleIntoDeckFromEventLog(startIndex);
 
             if (!summary.TargetKilled
                 && arch.GetModel<CardRegistry>().TryGet(targetUid, out var target)
@@ -1850,6 +1863,7 @@ namespace NineGrid.Flow
             summary.DamagePopups = CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
             PresentGoldGainsFromEventLog(startIndex);
             PresentEffectTriggersFromEventLog(startIndex);
+            Instance?.PresentShuffleIntoDeckFromEventLog(startIndex);
 
             try
             {
@@ -2104,6 +2118,8 @@ namespace NineGrid.Flow
                     Debug.LogError("[InBattleManager] DrainPostKillBoard 缺少 Card/Deck/Field 管理器。");
                     return;
                 }
+
+                await FlushPendingShuffleIntoPresentationAsync(ct);
 
                 FieldTraceHelper.RecordDrainBegin(
                     moveCount,
@@ -2376,7 +2392,10 @@ namespace NineGrid.Flow
             CancellationToken ct,
             int pendingRotateSteps = 0)
         {
-            var dealInterval = deckManager.LayoutSettings != null
+            ResolveManagers();
+            await FlushPendingShuffleIntoPresentationAsync(ct);
+
+            var dealInterval = deckManager != null && deckManager.LayoutSettings != null
                 ? deckManager.LayoutSettings.dealInterval
                 : 0.05f;
             var flightHandles = new List<DealFlightHandle>();
@@ -2531,6 +2550,7 @@ namespace NineGrid.Flow
             // 金币卡等即时改 Coins：先按事件带出生点开演，再静默刷 HUD（避免二次开演/跳变）。
             PresentGoldGainsFromEventLog(startIndex, ResolveCardWorldPosition(pickedUid));
             PresentEffectTriggersFromEventLog(startIndex);
+            Instance?.PresentShuffleIntoDeckFromEventLog(startIndex);
             PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
             return summary;
         }
@@ -2571,6 +2591,7 @@ namespace NineGrid.Flow
             summary.DamagePopups = CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
             PresentGoldGainsFromEventLog(startIndex, ResolveBoardSlotWorldPosition(groundSlot));
             PresentEffectTriggersFromEventLog(startIndex);
+            Instance?.PresentShuffleIntoDeckFromEventLog(startIndex);
             return summary;
         }
 
@@ -2647,6 +2668,7 @@ namespace NineGrid.Flow
                 startIndex,
                 ResolveCardWorldPosition(summary.PrimaryTargetUid));
             PresentEffectTriggersFromEventLog(startIndex);
+            Instance?.PresentShuffleIntoDeckFromEventLog(startIndex);
 
             var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
             summary.AvatarDefeated = phase == GamePhase.Defeat;
@@ -2826,6 +2848,302 @@ namespace NineGrid.Flow
             return coreCard.Zone.Value == ZoneId.Board;
         }
 
+        /// <summary>
+        /// 扫描局内洗入事件并入队；由 FlushPendingShuffleIntoPresentationAsync 在补牌前即时飞入卡组。
+        /// </summary>
+        private void PresentShuffleIntoDeckFromEventLog(int startIndex)
+        {
+            if (startIndex < 0)
+            {
+                return;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return;
+            }
+
+            var entries = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
+            if (startIndex >= entries.Count)
+            {
+                return;
+            }
+
+            ResolveManagers();
+            if (deckManager == null || cardManager == null || deckManager.CurrentMode != CardDeckMode.InGame)
+            {
+                return;
+            }
+
+            var collected = ShuffleIntoDeckPresentationScanner.Collect(
+                entries,
+                startIndex,
+                uid => deckManager.ContainsUid(uid));
+            for (var i = 0; i < collected.Count; i++)
+            {
+                _pendingShuffleInto.Enqueue(collected[i]);
+            }
+
+            if (_pendingShuffleInto.Count > 0)
+            {
+                EnsureShuffleIntoDrainScheduled();
+            }
+        }
+
+        private void EnsureShuffleIntoDrainScheduled()
+        {
+            if (_shuffleIntoDrainRunning)
+            {
+                return;
+            }
+
+            _shuffleIntoDrainRunning = true;
+            DrainPendingShuffleIntoPresentationAsync(EnsurePresentationToken()).Forget();
+        }
+
+        private async UniTask FlushPendingShuffleIntoPresentationAsync(CancellationToken ct)
+        {
+            if (_pendingShuffleInto.Count == 0)
+            {
+                return;
+            }
+
+            if (!_shuffleIntoDrainRunning)
+            {
+                _shuffleIntoDrainRunning = true;
+                try
+                {
+                    await DrainPendingShuffleIntoPresentationCoreAsync(ct);
+                }
+                finally
+                {
+                    _shuffleIntoDrainRunning = false;
+                }
+
+                return;
+            }
+
+            while (_shuffleIntoDrainRunning && _pendingShuffleInto.Count > 0)
+            {
+                ct.ThrowIfCancellationRequested();
+                await UniTask.Yield(PlayerLoopTiming.Update, ct);
+            }
+
+            if (_pendingShuffleInto.Count > 0)
+            {
+                _shuffleIntoDrainRunning = true;
+                try
+                {
+                    await DrainPendingShuffleIntoPresentationCoreAsync(ct);
+                }
+                finally
+                {
+                    _shuffleIntoDrainRunning = false;
+                }
+            }
+        }
+
+        private async UniTask DrainPendingShuffleIntoPresentationAsync(CancellationToken ct)
+        {
+            try
+            {
+                await DrainPendingShuffleIntoPresentationCoreAsync(ct);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[InBattleManager] ShuffleInto 表现失败: " + ex.Message);
+            }
+            finally
+            {
+                _shuffleIntoDrainRunning = false;
+                if (_pendingShuffleInto.Count > 0)
+                {
+                    EnsureShuffleIntoDrainScheduled();
+                }
+            }
+        }
+
+        private async UniTask DrainPendingShuffleIntoPresentationCoreAsync(CancellationToken ct)
+        {
+            ResolveManagers();
+            if (deckManager == null || cardManager == null)
+            {
+                return;
+            }
+
+            var dealInterval = deckManager.LayoutSettings != null
+                ? deckManager.LayoutSettings.dealInterval
+                : 0.05f;
+
+            while (_pendingShuffleInto.Count > 0)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                while (deckManager.IsBusy)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    await UniTask.Yield(PlayerLoopTiming.Update, ct);
+                }
+
+                var entry = _pendingShuffleInto.Dequeue();
+                await PresentOneShuffleIntoDeckAsync(entry, ct);
+
+                if (_pendingShuffleInto.Count > 0 && dealInterval > 0f)
+                {
+                    await UniTask.Delay(TimeSpan.FromSeconds(dealInterval), cancellationToken: ct);
+                }
+            }
+        }
+
+        private async UniTask PresentOneShuffleIntoDeckAsync(
+            ShuffleIntoDeckPresentationEntry entry,
+            CancellationToken ct)
+        {
+            ResolveManagers();
+            if (deckManager == null || cardManager == null || entry.Uid <= 0)
+            {
+                return;
+            }
+
+            if (deckManager.ContainsUid(entry.Uid))
+            {
+                return;
+            }
+
+            if (entry.Kind == ShuffleIntoDeckEventKind.ExistingCard)
+            {
+                if (cardManager.TryGet(entry.Uid, out var existing) && existing != null)
+                {
+                    deckManager.LaunchReturnFieldCardToDeck(existing);
+                }
+
+                return;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            var defId = entry.DefId;
+            if (string.IsNullOrEmpty(defId)
+                && arch != null
+                && arch.GetModel<CardRegistry>().TryGet(entry.Uid, out var coreCard))
+            {
+                defId = coreCard.DefId;
+            }
+
+            if (string.IsNullOrEmpty(defId))
+            {
+                defId = CardManagerSingleton.StandardDefId;
+            }
+
+            cardManager.TryGet(entry.Uid, out var ensureCard);
+            if (ensureCard == null)
+            {
+                ensureCard = cardManager.SpawnView(
+                    entry.Uid,
+                    defId,
+                    initialMode: CardDisplayMode.CardDeckMode);
+                if (ensureCard != null)
+                {
+                    CoreCardPresentationMapper.ApplyToManagedCard(ensureCard);
+                }
+            }
+
+            if (ensureCard == null)
+            {
+                Debug.LogWarning($"[InBattleManager] ShuffleInto 无法生成视图 uid={entry.Uid} def={defId}。");
+                return;
+            }
+
+            if (!TryResolveShuffleIntoOrigin(entry, out var origin))
+            {
+                if (!deckManager.TryGetDefaultDealOrigin(out origin))
+                {
+                    Debug.LogWarning(
+                        $"[InBattleManager] ShuffleInto uid={entry.Uid} 无飞入起点，fallback 直接入组。");
+                }
+            }
+
+            var deckOk = await deckManager.AddCardAtFromOriginAsync(
+                CardDeckManagerSingleton.RandomInsertIndex,
+                ensureCard,
+                origin,
+                ct);
+            if (!deckOk)
+            {
+                Debug.LogWarning($"[InBattleManager] ShuffleInto 入组失败 uid={entry.Uid} def={defId}。");
+            }
+        }
+
+        private bool TryResolveShuffleIntoOrigin(
+            ShuffleIntoDeckPresentationEntry entry,
+            out Transform origin)
+        {
+            origin = null;
+            ResolveManagers();
+
+            if (entry.TriggerCardUid > 0
+                && cardManager != null
+                && cardManager.TryGet(entry.TriggerCardUid, out var triggerCard)
+                && triggerCard?.Transform != null)
+            {
+                origin = triggerCard.Transform;
+                return true;
+            }
+
+            if (entry.FromBoardSlot > 0)
+            {
+                var slotPos = ResolveBoardSlotWorldPosition(entry.FromBoardSlot);
+                if (slotPos.HasValue && TryGetShuffleOriginScratch(slotPos.Value, out origin))
+                {
+                    return true;
+                }
+            }
+
+            if (entry.TriggerCardUid > 0)
+            {
+                var cardPos = ResolveCardWorldPosition(entry.TriggerCardUid);
+                if (cardPos.HasValue && TryGetShuffleOriginScratch(cardPos.Value, out origin))
+                {
+                    return true;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(entry.Cause) && TryResolveHandDealOrigin(entry.Cause, out origin))
+            {
+                return true;
+            }
+
+            return deckManager != null && deckManager.TryGetDefaultDealOrigin(out origin);
+        }
+
+        private bool TryGetShuffleOriginScratch(Vector3 worldPosition, out Transform origin)
+        {
+            origin = EnsureShuffleOriginScratch();
+            if (origin == null)
+            {
+                return false;
+            }
+
+            origin.position = worldPosition;
+            return true;
+        }
+
+        private Transform EnsureShuffleOriginScratch()
+        {
+            if (_shuffleOriginScratch == null)
+            {
+                var scratchGo = new GameObject("ShuffleIntoOriginScratch");
+                scratchGo.hideFlags = HideFlags.HideAndDontSave;
+                _shuffleOriginScratch = scratchGo.transform;
+            }
+
+            return _shuffleOriginScratch;
+        }
+
         private async UniTask PresentSkillRemovedCardsAsync(int[] removedUids, CancellationToken ct)
         {
             ResolveManagers();
@@ -2915,6 +3233,8 @@ namespace NineGrid.Flow
             arch.GetSystem<IBoardSystem>().FillEmptySlots();
             FillBoardDeltaFromEventLog(pipeline, startIndex, out _, out var refillDeals, out _);
             PresentEffectTriggersFromEventLog(startIndex);
+            PresentShuffleIntoDeckFromEventLog(startIndex);
+            await FlushPendingShuffleIntoPresentationAsync(ct);
             if (refillDeals != null && refillDeals.Length > 0)
             {
                 await DrainDealsAsync(refillDeals, ct);
@@ -3564,6 +3884,7 @@ namespace NineGrid.Flow
                     FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids, out var rewardSteps);
                     PresentGoldGainsFromEventLog(startIndex);
                     PresentEffectTriggersFromEventLog(startIndex);
+                    PresentShuffleIntoDeckFromEventLog(startIndex);
                     var phase = phaseSystem.CurrentPhase;
                     var boardDelta = new PostKillBoardPresentationResult
                     {
@@ -3842,6 +4163,12 @@ namespace NineGrid.Flow
             var hp = Math.Max(0, stats.GetEffectiveInt(target, StatId.Hp));
             var hpLoss = Math.Min(hp, Math.Max(0, attack - armor));
             return hp - hpLoss <= 0;
+        }
+
+        private static int ResolvePlayerAttackTargetFromCore(int intendedTargetUid)
+        {
+            var arch = NineGridArchitecture.Current;
+            return arch.GetSystem<IPhaseSystem>().ResolvePlayerAttackTargetUid(intendedTargetUid);
         }
 
         private static void SyncManagedCardPresentation(ManagedCard card)

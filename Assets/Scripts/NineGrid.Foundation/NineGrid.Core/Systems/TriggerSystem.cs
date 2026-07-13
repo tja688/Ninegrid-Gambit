@@ -25,6 +25,33 @@ namespace NineGrid.Core.Systems
         public GameAction Action { get; private set; }
         public IReadOnlyList<CoreGameEvent> Events { get; private set; }
         public GameActionContext ActionContext { get; private set; }
+
+        /// <summary>
+        /// 同一触发批次内，碎片重组 (headless, skull) 仅允许合并一次。
+        /// </summary>
+        public bool TryReserveFragmentMerge(int leftUid, int rightUid)
+        {
+            if (leftUid == 0 || rightUid == 0)
+            {
+                return false;
+            }
+
+            if (mMergedFragmentPairs == null)
+            {
+                mMergedFragmentPairs = new HashSet<long>();
+            }
+
+            return mMergedFragmentPairs.Add(PackPair(leftUid, rightUid));
+        }
+
+        private HashSet<long> mMergedFragmentPairs;
+
+        private static long PackPair(int leftUid, int rightUid)
+        {
+            var lo = leftUid < rightUid ? leftUid : rightUid;
+            var hi = leftUid < rightUid ? rightUid : leftUid;
+            return ((long)lo << 32) | (uint)hi;
+        }
     }
 
     public interface ITriggerReaction

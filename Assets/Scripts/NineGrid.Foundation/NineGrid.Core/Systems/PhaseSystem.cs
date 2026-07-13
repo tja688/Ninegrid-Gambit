@@ -13,6 +13,10 @@ namespace NineGrid.Core.Systems
             CoreCommandResult StartNode(NodeDeckOptions options);
             CoreCommandResult Attack(SlotId targetSlot);
             /// <summary>
+            /// 玩家攻击解析：嘲讽等 AttackTargetRestriction 生效时返回嘲讽者 UID，否则返回 intendedTargetUid。
+            /// </summary>
+            int ResolvePlayerAttackTargetUid(int intendedTargetUid);
+            /// <summary>
             /// 表现层可信命中：仅一段伤害（含致死 Kill/Defeat），无门禁、无反击、无旋转。
             /// </summary>
             CoreCommandResult ApplyCombatHit(int attackerUid, int targetUid);
@@ -158,6 +162,23 @@ namespace NineGrid.Core.Systems
             return CoreCommandResult.Accept(resolved);
         }
 
+        public int ResolvePlayerAttackTargetUid(int intendedTargetUid)
+        {
+            if (intendedTargetUid <= 0)
+            {
+                return intendedTargetUid;
+            }
+
+            var registry = this.GetModel<CardRegistry>();
+            if (!registry.TryGet(intendedTargetUid, out var intendedTarget))
+            {
+                return intendedTargetUid;
+            }
+
+            var restrictedUid = GetAttackTargetRestrictionUid(intendedTarget);
+            return restrictedUid != 0 ? restrictedUid : intendedTargetUid;
+        }
+
         public CoreCommandResult ApplyCombatHit(int attackerUid, int targetUid)
         {
             var registry = this.GetModel<CardRegistry>();
@@ -174,6 +195,15 @@ namespace NineGrid.Core.Systems
             if (target.Zone.Value == ZoneId.Graveyard || target.Zone.Value == ZoneId.Removed)
             {
                 return CoreCommandResult.Reject("Combat hit target is already removed.");
+            }
+
+            if (attacker.Kind == CardKind.Avatar && target.Kind == CardKind.Monster)
+            {
+                var resolvedTargetUid = ResolvePlayerAttackTargetUid(targetUid);
+                if (resolvedTargetUid != targetUid)
+                {
+                    return CoreCommandResult.Reject("Combat hit target is restricted by taunt.");
+                }
             }
 
             var statSystem = this.GetSystem<IStatSystem>();
@@ -710,9 +740,20 @@ namespace NineGrid.Core.Systems
 
         private bool CanAttackTargetUnderRules(CardInstance target)
         {
-            var statSystem = this.GetSystem<IStatSystem>();
-            var restrictedUid = (int)System.Math.Round(statSystem.EvaluateRule(RuleId.AttackTargetRestriction, 0f, statSystem.CreateContext(target)));
+            var restrictedUid = GetAttackTargetRestrictionUid(target);
             return restrictedUid == 0 || restrictedUid == target.Uid;
+        }
+
+        private int GetAttackTargetRestrictionUid(CardInstance target)
+        {
+            if (target == null)
+            {
+                return 0;
+            }
+
+            var statSystem = this.GetSystem<IStatSystem>();
+            return (int)System.Math.Round(
+                statSystem.EvaluateRule(RuleId.AttackTargetRestriction, 0f, statSystem.CreateContext(target)));
         }
 
         private static int GetAttackDamage(IStatSystem statSystem, CardInstance card)

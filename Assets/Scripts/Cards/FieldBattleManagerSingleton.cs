@@ -191,15 +191,38 @@ namespace NineGrid.Cards
                 return;
             }
 
+            var clickedVictim = victim;
+            var clickedSlot = victimSlot;
+            var resolvedTargetUid = CombatHitSink.RequestResolvePlayerAttackTarget(clickedVictim.Uid);
+            var useTauntRedirect = resolvedTargetUid != clickedVictim.Uid;
+            ManagedCard combatVictim = clickedVictim;
+            var combatSlot = clickedSlot;
+            if (useTauntRedirect)
+            {
+                if (CardManagerSingleton.Instance == null
+                    || !CardManagerSingleton.Instance.TryGet(resolvedTargetUid, out combatVictim)
+                    || combatVictim == null)
+                {
+                    Debug.LogWarning($"[FieldBattleManager] 嘲讽重定向目标 uid={resolvedTargetUid} 不可用。");
+                    return;
+                }
+
+                if (!fieldManager.TryGetSlotOf(combatVictim.Uid, out combatSlot))
+                {
+                    Debug.LogWarning($"[FieldBattleManager] 嘲讽重定向目标 uid={resolvedTargetUid} 不在场地。");
+                    return;
+                }
+            }
+
             var linkedCts = CreateLinkedBattleCts(cancellationToken);
             var ct = linkedCts.Token;
 
             var willKill = lethalOverride
                 ?? attackAdapter.ConsumeNextLethalArmed()
-                || CombatHitSink.RequestEstimateWillKill(avatar.Uid, victim.Uid);
+                || CombatHitSink.RequestEstimateWillKill(avatar.Uid, combatVictim.Uid);
             var attackIntent = BattleIntentUtility.FromFlags(counter: false, willKill);
-            var attackBind = ResolveBindParams(attackIntent, victim, out var attackProfile);
-            LogBattleBindResolve(avatar.Uid, victim.Uid, attackBind, attackProfile, willKill, isCounter: false);
+            var attackBind = ResolveBindParams(attackIntent, combatVictim, out var attackProfile);
+            LogBattleBindResolve(avatar.Uid, combatVictim.Uid, attackBind, attackProfile, willKill, isCounter: false);
 
             CombatHitPresentationResult hitResult = default;
             var hitApplied = false;
@@ -210,32 +233,56 @@ namespace NineGrid.Cards
                 try
                 {
                     PerfTraceSink.OpenBeat?.Invoke("CombatHit", 0);
-                    PerfTraceSink.SetCombatants?.Invoke(avatar.Uid, victim.Uid);
+                    PerfTraceSink.SetCombatants?.Invoke(avatar.Uid, combatVictim.Uid);
                 }
                 catch
                 {
                     // ignore
                 }
 
-                await attackAdapter.PlayBasicAttackAsync(
-                    victim,
-                    attackBind,
-                    () =>
-                    {
-                        if (hitApplied)
+                if (useTauntRedirect)
+                {
+                    await attackAdapter.PlayTauntRedirectAttackAsync(
+                        clickedVictim,
+                        combatVictim,
+                        attackBind,
+                        () =>
                         {
-                            return;
-                        }
+                            if (hitApplied)
+                            {
+                                return;
+                            }
 
-                        hitApplied = true;
-                        hitResult = ApplyHitPresentation(avatar, victim, "PlayerAttack");
-                    },
-                    ct);
+                            hitApplied = true;
+                            hitResult = ApplyHitPresentation(avatar, combatVictim, "PlayerAttackTauntRedirect");
+                        },
+                        ct);
+                }
+                else
+                {
+                    await attackAdapter.PlayBasicAttackAsync(
+                        clickedVictim,
+                        attackBind,
+                        () =>
+                        {
+                            if (hitApplied)
+                            {
+                                return;
+                            }
+
+                            hitApplied = true;
+                            hitResult = ApplyHitPresentation(avatar, combatVictim, "PlayerAttack");
+                        },
+                        ct);
+                }
 
                 if (!hitApplied)
                 {
                     // Timeline 未打到命中回调时兜底结算，避免动画播完无数据。
-                    hitResult = ApplyHitPresentation(avatar, victim, "PlayerAttack");
+                    hitResult = ApplyHitPresentation(
+                        avatar,
+                        combatVictim,
+                        useTauntRedirect ? "PlayerAttackTauntRedirect" : "PlayerAttack");
                     hitApplied = true;
                 }
 
@@ -250,7 +297,7 @@ namespace NineGrid.Cards
 
                 if (hitResult.TargetKilled)
                 {
-                    CardManagerSingleton.Instance.MarkFieldDead(victim);
+                    CardManagerSingleton.Instance.MarkFieldDead(combatVictim);
 
                     // Core 须在 Vacate 之前结算：否则 FieldMaybeClearSignal 会在
                     // OfferReward 前用 IsNodeCleared 抢跑主循环。
@@ -258,14 +305,14 @@ namespace NineGrid.Cards
 
                     // 真交战击杀后由 Core 旋转补牌，不走空槽探求。
                     fieldManager.VacateSlotForExplore(
-                        victimSlot,
-                        victim,
+                        combatSlot,
+                        combatVictim,
                         playRemoveAnim: false,
                         skipBusyGuard: true,
                         startExplore: false);
                     // Drain 前必须离锚点，否则 hop 会与尸体叠位闪现。
-                    CardManagerSingleton.Instance.StageFieldDeadCorpseOffAnchor(victim);
-                    FinalizeLethalVictimAsync(victim, ct).Forget();
+                    CardManagerSingleton.Instance.StageFieldDeadCorpseOffAnchor(combatVictim);
+                    FinalizeLethalVictimAsync(combatVictim, ct).Forget();
 
                     await CombatHitSink.RequestDrainPostKillBoard(postKill, ct);
 
@@ -284,14 +331,14 @@ namespace NineGrid.Cards
                 {
                     RecoverSurvivingVictimAfterLethalMismatch(
                         avatar.Uid,
-                        victim,
-                        victimSlot,
+                        combatVictim,
+                        combatSlot,
                         attackBind,
                         willKill,
                         hitResult.TargetKilled);
                 }
 
-                await PlayCounterAttackCoreAsync(victimSlot, lethal: false, ct);
+                await PlayCounterAttackCoreAsync(combatSlot, lethal: false, ct);
             }
             catch (System.OperationCanceledException)
             {

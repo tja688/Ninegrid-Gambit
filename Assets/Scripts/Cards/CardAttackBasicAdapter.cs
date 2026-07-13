@@ -171,6 +171,86 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 嘲讽重定向进攻：蓄力朝向 clickedVictim，出手瞬间脉冲 tauntVictim 并斜线冲刺命中。
+        /// </summary>
+        public async UniTask PlayTauntRedirectAttackAsync(
+            ManagedCard clickedVictim,
+            ManagedCard tauntVictim,
+            BattleBindParams bind,
+            Action onCombatHit,
+            CancellationToken cancellationToken = default)
+        {
+            if (clickedVictim?.Transform == null || tauntVictim?.Transform == null)
+            {
+                Debug.LogWarning("[CardAttackBasicAdapter] 嘲讽重定向受击卡无效，跳过交战。");
+                return;
+            }
+
+            if (!string.Equals(bind.RigFamily, BattleEncounterProfileSO.DefaultRigFamily, System.StringComparison.Ordinal))
+            {
+                Debug.LogWarning(
+                    $"[CardAttackBasicAdapter] 暂不支持 RigFamily='{bind.RigFamily}'，回退 {BattleEncounterProfileSO.DefaultRigFamily}。",
+                    this);
+            }
+
+            var field = GroundFieldManagerSingleton.Instance;
+            if (field == null || !field.TryGetSlotOf(clickedVictim.Uid, out var clickedSlot))
+            {
+                Debug.LogWarning("[CardAttackBasicAdapter] 点选受击卡不在场地中，跳过嘲讽重定向交战。");
+                return;
+            }
+
+            if (!field.TryGetSlotOf(tauntVictim.Uid, out var tauntSlot))
+            {
+                Debug.LogWarning("[CardAttackBasicAdapter] 嘲讽受击卡不在场地中，跳过嘲讽重定向交战。");
+                return;
+            }
+
+            EnsureRigsCollected();
+            if (!TryResolveDirectionForVictimSlot(clickedSlot, out var direction)
+                || !_rigByDirection.TryGetValue(direction, out var rig))
+            {
+                Debug.LogWarning($"[CardAttackBasicAdapter] 格位 {clickedSlot} 无可用交战 rig（嘲讽重定向）。");
+                return;
+            }
+
+            if (!TryResolveAttacker(field, out var attackerCard, out var attacker))
+            {
+                Debug.LogWarning("[CardAttackBasicAdapter] 未找到 Avatar 攻击者，跳过嘲讽重定向交战。");
+                return;
+            }
+
+            var clickedTransform = clickedVictim.Transform;
+            var tauntTransform = tauntVictim.Transform;
+            tauntVictim.TryGetEffectManager(out var tauntEffects);
+
+            var attackerSnapshot = BattleFinalStateGuard.Capture(
+                attackerCard,
+                field,
+                GroundSlotTopology.AvatarReservedSlot);
+            var victimSnapshot = BattleFinalStateGuard.Capture(tauntVictim, field, tauntSlot);
+
+            PrepareAttackerAtAvatarAnchor(field, attacker, clickedTransform);
+            rig.ResetParticipantMotion(attacker, clickedTransform);
+            rig.BindParticipantsTauntRedirect(
+                attacker,
+                clickedTransform,
+                tauntTransform,
+                tauntEffects,
+                in bind,
+                onLungeBegin: () => tauntVictim.PlayEffectTriggerPulse(),
+                onCombatHit);
+
+            await PlayBoundRigAsync(
+                rig,
+                attacker,
+                attackerSnapshot,
+                victimSnapshot,
+                bind,
+                cancellationToken);
+        }
+
+        /// <summary>
         /// 兼容旧调用：按 lethal 构造默认绑参后播放反击。
         /// </summary>
         public UniTask PlayBasicCounterAttackAsync(

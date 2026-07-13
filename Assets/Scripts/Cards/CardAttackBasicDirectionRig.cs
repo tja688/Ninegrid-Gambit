@@ -65,6 +65,7 @@ namespace NineGrid.Cards
         private bool _combatRigMotionProbed;
         private bool _bindDeathCallbackRequested;
         private bool _hitConfirmedKill;
+        private Action _onLungeBegin;
 
         /// <summary>命中帧后是否已确认受击者被击杀（用于门控 Timeline 死亡回调）。</summary>
         public bool LastHitConfirmedKill => _hitConfirmedKill;
@@ -137,6 +138,57 @@ namespace NineGrid.Cards
                 bind.HitFlashCallbackDelay,
                 bind.DeathCallbackDelay,
                 onCombatHit);
+        }
+
+        /// <summary>
+        /// 嘲讽重定向：蓄力朝向 windupFacingVictim，冲刺/命中绑定 lungeTargetVictim。
+        /// </summary>
+        public void BindParticipantsTauntRedirect(
+            Transform attacker,
+            Transform windupFacingVictim,
+            Transform lungeTargetVictim,
+            CardEffectManager lungeTargetEffects,
+            in BattleBindParams bind,
+            Action onLungeBegin,
+            Action onCombatHit)
+        {
+            BuildRoleMapIfNeeded();
+            CacheBakedClipValuesIfNeeded();
+
+            if (attacker == null || windupFacingVictim == null || lungeTargetVictim == null)
+            {
+                Debug.LogWarning($"[{nameof(CardAttackBasicDirectionRig)}] {name} 嘲讽重定向绑定失败：参与者为空。", this);
+                return;
+            }
+
+            RestoreBakedEndValues(attackerAnimations);
+            RestoreBakedEndValues(victimAnimations);
+
+            RebindAttackerMotionTauntRedirect(attacker, windupFacingVictim, lungeTargetVictim);
+
+            if (bind.UseRelativeVictimKnockback)
+            {
+                RebindVictimKnockbackFromAttacker(lungeTargetVictim, attacker, bind.VictimKnockbackCoefficient);
+            }
+            else
+            {
+                RebindAnimations(victimAnimations, lungeTargetVictim);
+                ScaleVictimKnockbackEndValues(bind.VictimKnockbackCoefficient);
+            }
+
+            if (bind.HitFlashTimingPolicy == BattleHitFlashTimingPolicy.Explicit)
+            {
+                ApplyExplicitCallbackDelays(bind.HitFlashCallbackDelay, bind.BindDeathCallback ? bind.DeathCallbackDelay : 0f);
+            }
+
+            _boundAttacker = attacker;
+            _boundVictim = lungeTargetVictim;
+            _bindDeathCallbackRequested = bind.BindDeathCallback;
+            _hitConfirmedKill = false;
+            _onLungeBegin = onLungeBegin;
+
+            ConfigureHitFlashCallback(lungeTargetEffects, onCombatHit);
+            ConfigureDeathCallback(lungeTargetEffects, bind.BindDeathCallback);
         }
 
         public void BindParticipants(
@@ -221,22 +273,54 @@ namespace NineGrid.Cards
 
             var sequence = ResolveSequence(timeline);
             ProbeCombatRigMotionBegin();
+            var lungeBeginDelay = ResolveLungeBeginDelaySeconds();
+            var lungeBeginInvoked = false;
             try
             {
                 if (sequence == null || !sequence.IsActive())
                 {
+                    if (_onLungeBegin != null && !lungeBeginInvoked)
+                    {
+                        lungeBeginInvoked = true;
+                        _onLungeBegin.Invoke();
+                    }
+
                     await UniTask.Delay(TimeSpan.FromSeconds(0.9f), cancellationToken: cancellationToken);
                     ProbeCombatRigMotionEnd("fallback");
                     return;
                 }
 
-                await WaitForSequenceAsync(sequence, cancellationToken);
+                var elapsed = 0f;
+                while (sequence.IsActive() && !sequence.IsComplete())
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (!lungeBeginInvoked
+                        && _onLungeBegin != null
+                        && elapsed + Time.deltaTime >= lungeBeginDelay)
+                    {
+                        lungeBeginInvoked = true;
+                        _onLungeBegin.Invoke();
+                    }
+
+                    elapsed += Time.deltaTime;
+                    await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                }
+
+                if (!lungeBeginInvoked && _onLungeBegin != null)
+                {
+                    _onLungeBegin.Invoke();
+                }
+
                 ProbeCombatRigMotionEnd("complete");
             }
             catch (OperationCanceledException)
             {
                 ProbeCombatRigMotionEnd("kill");
                 throw;
+            }
+            finally
+            {
+                _onLungeBegin = null;
             }
         }
 
@@ -698,6 +782,99 @@ namespace NineGrid.Cards
 
                 WriteWorldEndAsLocal(animation, attacker, worldEnd);
             }
+        }
+
+        private void RebindAttackerMotionTauntRedirect(
+            Transform attacker,
+            Transform windupFacingVictim,
+            Transform lungeTargetVictim)
+        {
+            if (attackerAnimations == null || attackerAnimations.Count == 0)
+            {
+                return;
+            }
+
+            var homeWorld = attacker.position;
+            var towardWindupVictim = windupFacingVictim.position - homeWorld;
+            var flatTowardWindup = new Vector3(towardWindupVictim.x, towardWindupVictim.y, 0f);
+            if (flatTowardWindup.sqrMagnitude < 0.0001f)
+            {
+                flatTowardWindup = Vector3.right;
+            }
+            else
+            {
+                flatTowardWindup.Normalize();
+            }
+
+            var towardLungeVictim = lungeTargetVictim.position - homeWorld;
+            var flatTowardLunge = new Vector3(towardLungeVictim.x, towardLungeVictim.y, 0f);
+            if (flatTowardLunge.sqrMagnitude < 0.0001f)
+            {
+                flatTowardLunge = flatTowardWindup;
+            }
+            else
+            {
+                flatTowardLunge.Normalize();
+            }
+
+            var awayFromWindupVictim = -flatTowardWindup;
+            var homeBaked = Vector3.zero;
+
+            for (var i = 0; i < attackerAnimations.Count; i++)
+            {
+                var animation = attackerAnimations[i];
+                if (animation == null)
+                {
+                    continue;
+                }
+
+                WriteAnimationTarget(animation, attacker.gameObject, attacker);
+
+                var bakedEnd = GetBakedEndValue(animation);
+                var delay = ReadDelay(animation);
+                var axisMagnitude = ExtractAxisMagnitude(bakedEnd - homeBaked);
+                Vector3 worldEnd;
+                if (delay <= WindupDelayMax)
+                {
+                    worldEnd = homeWorld + awayFromWindupVictim * axisMagnitude;
+                }
+                else if (delay <= LungeDelayMax)
+                {
+                    worldEnd = homeWorld + flatTowardLunge * axisMagnitude;
+                }
+                else
+                {
+                    worldEnd = homeWorld;
+                }
+
+                WriteWorldEndAsLocal(animation, attacker, worldEnd);
+            }
+        }
+
+        private float ResolveLungeBeginDelaySeconds()
+        {
+            if (attackerAnimations == null || attackerAnimations.Count == 0)
+            {
+                return LungeDelayMax;
+            }
+
+            var bestDelay = float.MaxValue;
+            for (var i = 0; i < attackerAnimations.Count; i++)
+            {
+                var animation = attackerAnimations[i];
+                if (animation == null)
+                {
+                    continue;
+                }
+
+                var delay = ReadDelay(animation);
+                if (delay > WindupDelayMax && delay < bestDelay)
+                {
+                    bestDelay = delay;
+                }
+            }
+
+            return bestDelay < float.MaxValue ? bestDelay : LungeDelayMax;
         }
 
         private void RebindVictimKnockbackFromAttacker(

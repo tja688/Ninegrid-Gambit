@@ -550,6 +550,7 @@ namespace NineGrid.Flow
             }
 
             ApplyQuickTestAvatarCheatsIfNeeded();
+            ApplyQuickTestTimeScale();
 
             // 开局即空怪时 StartBattleNode 内可能已 Raise 结算；补一次探测。
             inBattleManager.TryEnterNodeSettlement();

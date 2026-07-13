@@ -369,6 +369,11 @@ namespace NineGrid.Core.Effects
                 }
             }
 
+            if (!FragmentRecombineDedup.Passes(instance, runtime))
+            {
+                return false;
+            }
+
             return true;
         }
 

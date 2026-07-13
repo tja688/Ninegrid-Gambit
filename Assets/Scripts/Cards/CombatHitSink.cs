@@ -240,6 +240,9 @@ namespace NineGrid.Cards
         /// <summary>预估 attacker 对 target 是否足以击杀（选 Lethal Profile 用）。</summary>
         public static Func<int, int, bool> EstimateWillKill;
 
+        /// <summary>解析玩家攻击实际目标（嘲讽重定向等）。</summary>
+        public static Func<int, int> ResolvePlayerAttackTarget;
+
         /// <summary>命中后刷受击卡数值。</summary>
         public static Action<ManagedCard> SyncCardPresentation;
 
@@ -289,6 +292,16 @@ namespace NineGrid.Cards
         public static bool RequestEstimateWillKill(int attackerUid, int targetUid)
         {
             return EstimateWillKill != null && EstimateWillKill(attackerUid, targetUid);
+        }
+
+        public static int RequestResolvePlayerAttackTarget(int intendedTargetUid)
+        {
+            if (ResolvePlayerAttackTarget == null)
+            {
+                return intendedTargetUid;
+            }
+
+            return ResolvePlayerAttackTarget(intendedTargetUid);
         }
 
         public static void RequestSyncCard(ManagedCard card)
