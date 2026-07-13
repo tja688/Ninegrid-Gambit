@@ -1,0 +1,256 @@
+﻿================================================================================
+DESPAWN EVENTS (n=51)
+================================================================================
+ index |     tMs | beatId |   uid | site                         | payload
+------------------------------------------------------------------------------------------------------------------------
+   421 |    8092 |      5 |    12 | Card.Release                 | reason=
+   596 |   13647 |      8 |     6 | Card.Release                 | reason=
+   623 |   14916 |     10 |    19 | Card.Release                 | reason=
+   789 |   20931 |     13 |     9 | Card.Release                 | reason=
+   817 |   25852 |     15 |    23 | Card.Release                 | reason=
+   818 |   25852 |     15 |    24 | Card.Release                 | reason=
+   819 |   25852 |     15 |    25 | Card.Release                 | reason=
+   920 |   31324 |     20 |    17 | Card.Release                 | reason=
+  1012 |   35543 |     24 |    15 | Card.Release                 | reason=
+  1016 |   35854 |     24 |     5 | Card.Release                 | reason=
+  1120 |   39672 |     27 |    18 | Card.Release                 | reason=
+  1165 |   41058 |     29 |    11 | Card.Release                 | reason=
+  1221 |   44524 |     32 |     4 | Card.Release                 | reason=
+  1248 |   45727 |     34 |    14 | Card.Release                 | reason=
+  1285 |   47111 |     36 |    16 | Card.Release                 | reason=
+  1345 |   50512 |     40 |    10 | Card.Release                 | reason=
+  1382 |   51874 |     42 |    13 | Card.Release                 | reason=
+  1383 |   51906 |     42 |     3 | Card.Release                 | reason=
+  1385 |   51906 |     42 |     8 | Card.Release                 | reason=
+  1387 |   51906 |     42 |     2 | Card.Release                 | reason=
+  1388 |   51906 |     42 |     7 | Card.Release                 | reason=
+  1402 |   61028 |     43 |    26 | Card.Release                 | reason=
+  1403 |   61028 |     43 |    27 | Card.Release                 | reason=
+  1404 |   61028 |     43 |    28 | Card.Release                 | reason=
+  1405 |   64076 |     43 |     1 | Card.Release                 | reason=
+  1809 |   77213 |     52 |    34 | Card.Release                 | reason=
+  1919 |   84569 |     54 |    24 | Card.Release                 | reason=
+  1920 |   84569 |     54 |    31 | Card.Release                 | reason=
+  2036 |   90517 |     59 |    28 | Card.Release                 | reason=
+  2133 |   93576 |     61 |    20 | Card.Release                 | reason=
+  2211 |   95901 |     64 |    30 | Card.Release                 | reason=
+  2260 |   97613 |     66 |    25 | Card.Release                 | reason=
+  2336 |  101665 |     70 |    27 | Card.Release                 | reason=
+  2431 |  107933 |     76 |    32 | Card.Release                 | reason=
+  2479 |  111290 |     79 |    22 | Card.Release                 | reason=
+  2531 |  114541 |     83 |    33 | Card.Release                 | reason=
+  2564 |  115968 |     85 |    26 | Card.Release                 | reason=
+  2627 |  119390 |     89 |    23 | Card.Release                 | reason=
+  2629 |  119532 |     89 |    29 | Card.Release                 | reason=
+  2630 |  119563 |     89 |    21 | Card.Release                 | reason=
+  2643 |  127138 |     90 |    35 | Card.Release                 | reason=
+  2644 |  127138 |     90 |    36 | Card.Release                 | reason=
+  2645 |  127138 |     90 |    37 | Card.Release                 | reason=
+  2658 |  134439 |     91 |    40 | Card.Release                 | reason=
+  2659 |  134439 |     91 |    38 | Card.Release                 | reason=
+  2660 |  134439 |     91 |     1 | Card.Release                 | reason=
+  2661 |  134439 |     91 |    39 | Card.Release                 | reason=
+  2936 |  139537 |     92 |    38 | Card.Release                 | reason=
+  2938 |  139537 |     92 |    39 | Card.Release                 | reason=
+  2940 |  139537 |     92 |    40 | Card.Release                 | reason=
+  3020 |  151501 |     98 |    45 | Card.Release                 | reason=
+
+================================================================================
+SPAWN EVENTS (n=65)
+================================================================================
+ index |     tMs | beatId |   uid | site                         | payload
+------------------------------------------------------------------------------------------------------------------------
+     1 |       3 |      0 |    19 | Card.Spawn                   | defId=monster.stone_shrimp; parent=Cards; slot=
+     3 |       4 |      0 |    12 | Card.Spawn                   | defId=monster.big_stone; parent=Cards; slot=
+     5 |       4 |      0 |     5 | Card.Spawn                   | defId=help.common_chest_card; parent=Cards; slot=
+     7 |       4 |      0 |    15 | Card.Spawn                   | defId=monster.stone_swallower; parent=Cards; slot=
+     9 |       5 |      0 |     8 | Card.Spawn                   | defId=help.throwing_knife; parent=Cards; slot=
+    11 |       5 |      0 |    10 | Card.Spawn                   | defId=monster.big_stone; parent=Cards; slot=
+    13 |       6 |      0 |    16 | Card.Spawn                   | defId=monster.sharp_stone; parent=Cards; slot=
+    15 |       6 |      0 |     2 | Card.Spawn                   | defId=help.healing_potion; parent=Cards; slot=
+    17 |       7 |      0 |     6 | Card.Spawn                   | defId=help.throwing_knife; parent=Cards; slot=
+    19 |       7 |      0 |    13 | Card.Spawn                   | defId=monster.big_stone; parent=Cards; slot=
+    21 |       8 |      0 |     4 | Card.Spawn                   | defId=help.healing_potion; parent=Cards; slot=
+    23 |       8 |      0 |     9 | Card.Spawn                   | defId=help.stat_boost_card; parent=Cards; slot=
+    25 |       8 |      0 |    18 | Card.Spawn                   | defId=monster.rolling_stone_man; parent=Cards; slot=
+    27 |       9 |      0 |    17 | Card.Spawn                   | defId=monster.stone_thrower; parent=Cards; slot=
+    29 |       9 |      0 |    14 | Card.Spawn                   | defId=monster.stone_man; parent=Cards; slot=
+    31 |      10 |      0 |    11 | Card.Spawn                   | defId=monster.sharp_stone; parent=Cards; slot=
+    33 |      10 |      0 |     3 | Card.Spawn                   | defId=help.healing_potion; parent=Cards; slot=
+    35 |      10 |      0 |     7 | Card.Spawn                   | defId=help.throwing_knife; parent=Cards; slot=
+   111 |    2310 |      1 |     1 | Card.Spawn                   | defId=avatar.default; parent=Cards; slot=
+   777 |   19161 |     12 |    23 | Card.Spawn                   | defId=Attack; parent=BounceOption_0_Attack; slot=
+   779 |   19162 |     12 |    24 | Card.Spawn                   | defId=Armor; parent=BounceOption_1_Armor; slot=
+   781 |   19162 |     12 |    25 | Card.Spawn                   | defId=Hp; parent=BounceOption_2_Hp; slot=
+  1375 |   51736 |     42 |    26 | Card.Spawn                   | defId=help.common_chest_card; parent=BounceOption_0_help.common_chest_card; slot=
+  1377 |   51737 |     42 |    27 | Card.Spawn                   | defId=help.kidnapping; parent=BounceOption_1_help.kidnapping; slot=
+  1379 |   51738 |     42 |    28 | Card.Spawn                   | defId=help.armor_breaking_hammer; parent=BounceOption_2_help.armor_breaking_hammer; slot=
+  1407 |   64078 |     43 |    26 | Card.Spawn                   | defId=monster.sharp_stone; parent=Cards; slot=
+  1409 |   64078 |     43 |    33 | Card.Spawn                   | defId=monster.shelter_stone; parent=Cards; slot=
+  1411 |   64079 |     43 |    24 | Card.Spawn                   | defId=help.kidnapping; parent=Cards; slot=
+  1413 |   64079 |     43 |    34 | Card.Spawn                   | defId=monster.shelter_stone; parent=Cards; slot=
+  1415 |   64080 |     43 |    28 | Card.Spawn                   | defId=monster.stone_swallower; parent=Cards; slot=
+  1417 |   64080 |     43 |    20 | Card.Spawn                   | defId=help.throwing_knife; parent=Cards; slot=
+  1419 |   64081 |     43 |    22 | Card.Spawn                   | defId=help.healing_potion; parent=Cards; slot=
+  1421 |   64081 |     43 |    29 | Card.Spawn                   | defId=monster.big_stone; parent=Cards; slot=
+  1423 |   64082 |     43 |    31 | Card.Spawn                   | defId=monster.stone_shrimp; parent=Cards; slot=
+  1425 |   64082 |     43 |    25 | Card.Spawn                   | defId=monster.sharp_stone; parent=Cards; slot=
+  1427 |   64083 |     43 |    27 | Card.Spawn                   | defId=monster.stone_swallower; parent=Cards; slot=
+  1429 |   64083 |     43 |    21 | Card.Spawn                   | defId=help.throwing_knife; parent=Cards; slot=
+  1431 |   64084 |     43 |    23 | Card.Spawn                   | defId=help.healing_potion; parent=Cards; slot=
+  1433 |   64084 |     43 |    30 | Card.Spawn                   | defId=monster.stone_thrower; parent=Cards; slot=
+  1435 |   64084 |     43 |    32 | Card.Spawn                   | defId=monster.rolling_stone_man; parent=Cards; slot=
+  1498 |   66063 |     44 |     1 | Card.Spawn                   | defId=avatar.default; parent=Cards; slot=
+  2621 |  119385 |     89 |    35 | Card.Spawn                   | defId=help.gold_card; parent=BounceOption_0_help.gold_card; slot=
+  2623 |  119385 |     89 |    36 | Card.Spawn                   | defId=help.brutality_card; parent=BounceOption_1_help.brutality_card; slot=
+  2625 |  119387 |     89 |    37 | Card.Spawn                   | defId=help.shield_bash_tutorial; parent=BounceOption_2_help.shield_bash_tutorial; slot=
+  2647 |  130883 |     90 |    38 | Card.Spawn                   | defId=relic.junk_launcher; parent=BounceOption_0_relic.junk_launcher; slot=
+  2649 |  130884 |     90 |    39 | Card.Spawn                   | defId=relic.vitality_amulet; parent=BounceOption_1_relic.vitality_amulet; slot=
+  2651 |  130885 |     90 |    40 | Card.Spawn                   | defId=relic.lucky_coin; parent=BounceOption_2_relic.lucky_coin; slot=
+  2663 |  134441 |     91 |    44 | Card.Spawn                   | defId=monster.stone_shrimp; parent=Cards; slot=
+  2665 |  134442 |     91 |    43 | Card.Spawn                   | defId=monster.rolling_stone_man; parent=Cards; slot=
+  2667 |  134443 |     91 |    42 | Card.Spawn                   | defId=monster.rolling_stone_man; parent=Cards; slot=
+  2669 |  134444 |     91 |    40 | Card.Spawn                   | defId=monster.stone_swallower; parent=Cards; slot=
+  2671 |  134444 |     91 |    38 | Card.Spawn                   | defId=monster.stone_man; parent=Cards; slot=
+  2673 |  134445 |     91 |    45 | Card.Spawn                   | defId=monster.stone_thrower; parent=Cards; slot=
+  2675 |  134446 |     91 |    37 | Card.Spawn                   | defId=help.brutality_card; parent=Cards; slot=
+  2677 |  134446 |     91 |    39 | Card.Spawn                   | defId=monster.stone_man; parent=Cards; slot=
+  2679 |  134447 |     91 |    36 | Card.Spawn                   | defId=help.healing_potion; parent=Cards; slot=
+  2681 |  134447 |     91 |    47 | Card.Spawn                   | defId=monster.growing_stone; parent=Cards; slot=
+  2683 |  134448 |     91 |    46 | Card.Spawn                   | defId=monster.shelter_stone; parent=Cards; slot=
+  2685 |  134448 |     91 |    41 | Card.Spawn                   | defId=monster.stone_shrimp; parent=Cards; slot=
+  2687 |  134449 |     91 |    35 | Card.Spawn                   | defId=help.throwing_knife; parent=Cards; slot=
+  2689 |  134449 |     91 |    48 | Card.Spawn                   | defId=monster.megalith; parent=Cards; slot=
+  2749 |  136314 |     92 |     1 | Card.Spawn                   | defId=avatar.default; parent=Cards; slot=
+  3049 |  151981 |     98 |    39 | Card.Spawn                   | defId=monster.stone_man; parent=Cards; slot=
+  3052 |  151982 |     98 |    38 | Card.Spawn                   | defId=monster.stone_man; parent=Cards; slot=
+  3055 |  151982 |     98 |    40 | Card.Spawn                   | defId=monster.stone_swallower; parent=Cards; slot=
+
+================================================================================
+REGISTRY AUDIT ALL (n=84)
+================================================================================
+ index |     tMs | beatId | trigger              | registryCount | fieldCount | ghosts | orphans
+----------------------------------------------------------------------------------------------------
+   343 |    3439 |      1 | Sync.Before          |            19 |          8 |        |        
+   344 |    3439 |      1 | Sync.After           |            19 |          8 |        |        
+   464 |    8572 |      5 | Sync.Before          |            18 |          8 |        |        
+   465 |    8572 |      5 | Sync.After           |            18 |          8 |        |        
+   525 |   10967 |      6 | Sync.Before          |            18 |          8 |        |        
+   526 |   10967 |      6 | Sync.After           |            18 |          8 |        |        
+   584 |   12380 |      7 | Sync.Before          |            18 |          8 |        |        
+   585 |   12380 |      7 | Sync.After           |            18 |          8 |        |        
+   591 |   13469 |      8 | Sync.Before          |            18 |          8 |        |        
+   592 |   13469 |      8 | Sync.After           |            18 |          8 |        |        
+   663 |   15400 |     10 | Sync.Before          |            16 |          8 |        |        
+   664 |   15400 |     10 | Sync.After           |            16 |          8 |        |        
+   718 |   16653 |     11 | Sync.Before          |            16 |          8 |        |        
+   719 |   16653 |     11 | Sync.After           |            16 |          8 |        |        
+   771 |   17701 |     12 | Sync.Before          |            16 |          8 |        |        
+   772 |   17701 |     12 | Sync.After           |            16 |          8 |        |        
+   784 |   20754 |     13 | Sync.Before          |            19 |          8 |        |        
+   785 |   20754 |     13 | Sync.After           |            19 |          8 |        |        
+   867 |   28167 |     16 | Sync.Before          |            15 |          8 |        |        
+   868 |   28167 |     16 | Sync.After           |            15 |          8 |        |        
+   956 |   31806 |     20 | Sync.Before          |            14 |          8 |        |        
+   957 |   31806 |     20 | Sync.After           |            14 |          8 |        |        
+  1048 |   36486 |     24 | Sync.Before          |            12 |          8 |        |        
+  1049 |   36486 |     24 | Sync.After           |            12 |          8 |        |        
+  1086 |   38407 |     25 | Sync.Before          |            12 |          7 |        |        
+  1087 |   38407 |     25 | Sync.After           |            12 |          7 |        |        
+  1133 |   39873 |     27 | Sync.Before          |            11 |          6 |        |        
+  1134 |   39873 |     27 | Sync.After           |            11 |          6 |        |        
+  1176 |   41258 |     29 | Sync.Before          |            10 |          5 |        |        
+  1177 |   41258 |     29 | Sync.After           |            10 |          5 |        |        
+  1212 |   44343 |     32 | Sync.Before          |            10 |          5 |        |        
+  1213 |   44344 |     32 | Sync.After           |            10 |          5 |        |        
+  1257 |   45927 |     34 | Sync.Before          |             8 |          4 |        |        
+  1258 |   45927 |     34 | Sync.After           |             8 |          4 |        |        
+  1292 |   47310 |     36 | Sync.Before          |             7 |          3 |        |        
+  1293 |   47310 |     36 | Sync.After           |             7 |          3 |        |        
+  1350 |   50711 |     40 | Sync.Before          |             6 |          2 |        |        
+  1351 |   50711 |     40 | Sync.After           |             6 |          2 |        |        
+  1389 |   51906 |     42 | Sync.Before          |             4 |          0 |        |        
+  1390 |   51906 |     42 | Sync.After           |             4 |          0 |        |        
+  1398 |   61025 |     43 | Sync.Before          |             4 |          0 |        |        
+  1399 |   61025 |     43 | Sync.After           |             4 |          0 |        |        
+  1686 |   67188 |     44 | Sync.Before          |            16 |          8 |        |        
+  1687 |   67188 |     44 | Sync.After           |            16 |          8 |        |        
+  1849 |   77693 |     52 | Sync.Before          |            15 |          8 |        |        
+  1850 |   77693 |     52 | Sync.After           |            15 |          8 |        |        
+  1904 |   78900 |     53 | Sync.Before          |            15 |          8 |        |        
+  1905 |   78900 |     53 | Sync.After           |            15 |          8 |        |        
+  1914 |   84390 |     54 | Sync.Before          |            15 |          7 |        |        
+  1915 |   84390 |     54 | Sync.After           |            15 |          7 |        |        
+  1979 |   87105 |     55 | Sync.Before          |            13 |          8 |        |        
+  1980 |   87105 |     55 | Sync.After           |            13 |          8 |        |        
+  2072 |   90995 |     59 | Sync.Before          |            12 |          8 |        |        
+  2073 |   90995 |     59 | Sync.After           |            12 |          8 |        |        
+  2119 |   92334 |     60 | Sync.Before          |            12 |          8 |        |        
+  2120 |   92334 |     60 | Sync.After           |            12 |          8 |        |        
+  2128 |   93395 |     61 | Sync.Before          |            12 |          8 |        |        
+  2129 |   93395 |     61 | Sync.After           |            12 |          8 |        |        
+  2175 |   94796 |     62 | Sync.Before          |            11 |          8 |        |        
+  2176 |   94796 |     62 | Sync.After           |            11 |          8 |        |        
+  2226 |   96100 |     64 | Sync.Before          |            10 |          7 |        |        
+  2227 |   96100 |     64 | Sync.After           |            10 |          7 |        |        
+  2273 |   97778 |     66 | Sync.Before          |             9 |          6 |        |        
+  2274 |   97778 |     66 | Sync.After           |             9 |          6 |        |        
+  2347 |  101866 |     70 | Sync.Before          |             8 |          5 |        |        
+  2348 |  101866 |     70 | Sync.After           |             8 |          5 |        |        
+  2440 |  108138 |     76 | Sync.Before          |             7 |          4 |        |        
+  2441 |  108138 |     76 | Sync.After           |             7 |          4 |        |        
+  2474 |  111109 |     79 | Sync.Before          |             7 |          4 |        |        
+  2475 |  111109 |     79 | Sync.After           |             7 |          4 |        |        
+  2538 |  114741 |     83 | Sync.Before          |             5 |          3 |        |        
+  2539 |  114741 |     83 | Sync.After           |             5 |          3 |        |        
+  2569 |  116167 |     85 | Sync.Before          |             4 |          2 |        |        
+  2570 |  116167 |     85 | Sync.After           |             4 |          2 |        |        
+  2632 |  119564 |     89 | Sync.Before          |             4 |          0 |        |        
+  2633 |  119564 |     89 | Sync.After           |             4 |          0 |        |        
+  2639 |  127138 |     90 | Sync.Before          |             4 |          0 |        |        
+  2640 |  127138 |     90 | Sync.After           |             4 |          0 |        |        
+  2654 |  134438 |     91 | Sync.Before          |             4 |          0 |        |        
+  2655 |  134438 |     91 | Sync.After           |             4 |          0 |        |        
+  2921 |  137463 |     92 | Sync.Before          |            15 |          8 |        |        
+  2922 |  137463 |     92 | Sync.After           |            15 |          8 |        |        
+  3047 |  151980 |     98 | Sync.Before          |            11 |          5 |        |        
+  3057 |  151982 |     98 | Sync.After           |            14 |          8 |        |        
+
+================================================================================
+REGISTRY AUDIT tMs 0-15000 (opening period)
+================================================================================
+count in range: 10
+   343 |    3439 | beatId=1 | trigger=Sync.Before | registry=19 | field=8 | ghosts= | orphans=
+   344 |    3439 | beatId=1 | trigger=Sync.After | registry=19 | field=8 | ghosts= | orphans=
+   464 |    8572 | beatId=5 | trigger=Sync.Before | registry=18 | field=8 | ghosts= | orphans=
+   465 |    8572 | beatId=5 | trigger=Sync.After | registry=18 | field=8 | ghosts= | orphans=
+   525 |   10967 | beatId=6 | trigger=Sync.Before | registry=18 | field=8 | ghosts= | orphans=
+   526 |   10967 | beatId=6 | trigger=Sync.After | registry=18 | field=8 | ghosts= | orphans=
+   584 |   12380 | beatId=7 | trigger=Sync.Before | registry=18 | field=8 | ghosts= | orphans=
+   585 |   12380 | beatId=7 | trigger=Sync.After | registry=18 | field=8 | ghosts= | orphans=
+   591 |   13469 | beatId=8 | trigger=Sync.Before | registry=18 | field=8 | ghosts= | orphans=
+   592 |   13469 | beatId=8 | trigger=Sync.After | registry=18 | field=8 | ghosts= | orphans=
+
+================================================================================
+COUNTS
+================================================================================
+Spawn total: 65
+Despawn total: 51
+Net (Spawn-Despawn): 14
+
+Despawn strictly between OpeningDeal BeatClose (3439) and first CombatHit BeatOpen (4163): 0
+Despawn inclusive [3439,4163]: 0
+
+Despawn during beatId=1 (OpeningDeal): 0
+
+All events with tMs in (3439, 4163):
+  356 tMs=3477 beatId=1 kind=MotionEnd uid=13 site=DeckTween.Move
+  357 tMs=3517 beatId=1 kind=MotionEnd uid=4 site=DeckTween.Move
+  358 tMs=3556 beatId=1 kind=MotionEnd uid=9 site=DeckTween.Move
+  359 tMs=3596 beatId=1 kind=MotionEnd uid=18 site=DeckTween.Move
+  360 tMs=3637 beatId=1 kind=MotionEnd uid=17 site=DeckTween.Move
+  361 tMs=3677 beatId=1 kind=MotionEnd uid=14 site=DeckTween.Move
+  362 tMs=3716 beatId=1 kind=MotionEnd uid=11 site=DeckTween.Move
+  363 tMs=3758 beatId=1 kind=MotionEnd uid=3 site=DeckTween.Move
+  364 tMs=3798 beatId=1 kind=MotionEnd uid=7 site=DeckTween.Move
+  365 tMs=4162 beatId=1 kind=BattleBind uid=1 site=Combat.BindResolve

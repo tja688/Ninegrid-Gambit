@@ -1,0 +1,589 @@
+﻿##### ALL ANOMALIES #####
+{
+  "index": 346,
+  "beatId": 1,
+  "kind": "Anomaly",
+  "uid": 11,
+  "site": "Anomaly.Detect",
+  "tMs": 3431,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=149 at beat close",
+    "refIndex": "331"
+  }
+}
+---
+{
+  "index": 347,
+  "beatId": 1,
+  "kind": "Anomaly",
+  "uid": 7,
+  "site": "Anomaly.Detect",
+  "tMs": 3431,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=151 at beat close",
+    "refIndex": "335"
+  }
+}
+---
+{
+  "index": 348,
+  "beatId": 1,
+  "kind": "Anomaly",
+  "uid": 14,
+  "site": "Anomaly.Detect",
+  "tMs": 3431,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=148 at beat close",
+    "refIndex": "329"
+  }
+}
+---
+{
+  "index": 349,
+  "beatId": 1,
+  "kind": "Anomaly",
+  "uid": 3,
+  "site": "Anomaly.Detect",
+  "tMs": 3431,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=150 at beat close",
+    "refIndex": "333"
+  }
+}
+---
+{
+  "index": 350,
+  "beatId": 1,
+  "kind": "Anomaly",
+  "uid": 17,
+  "site": "Anomaly.Detect",
+  "tMs": 3431,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=147 at beat close",
+    "refIndex": "327"
+  }
+}
+---
+{
+  "index": 351,
+  "beatId": 1,
+  "kind": "Anomaly",
+  "uid": 18,
+  "site": "Anomaly.Detect",
+  "tMs": 3431,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=146 at beat close",
+    "refIndex": "325"
+  }
+}
+---
+{
+  "index": 352,
+  "beatId": 1,
+  "kind": "Anomaly",
+  "uid": 9,
+  "site": "Anomaly.Detect",
+  "tMs": 3431,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=145 at beat close",
+    "refIndex": "323"
+  }
+}
+---
+{
+  "index": 353,
+  "beatId": 1,
+  "kind": "Anomaly",
+  "uid": 4,
+  "site": "Anomaly.Detect",
+  "tMs": 3431,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=144 at beat close",
+    "refIndex": "321"
+  }
+}
+---
+{
+  "index": 354,
+  "beatId": 1,
+  "kind": "Anomaly",
+  "uid": 13,
+  "site": "Anomaly.Detect",
+  "tMs": 3431,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=143 at beat close",
+    "refIndex": "319"
+  }
+}
+---
+{
+  "index": 1213,
+  "beatId": 31,
+  "kind": "Anomaly",
+  "uid": 15,
+  "site": "Anomaly.Detect",
+  "tMs": 41910,
+  "payload": {
+    "code": "LethalEstimateMismatch",
+    "detail": "armed death callback skipped at site=Combat.DeathCallback",
+    "refIndex": "1212"
+  }
+}
+---
+{
+  "index": 1245,
+  "beatId": 33,
+  "kind": "Anomaly",
+  "uid": 4,
+  "site": "Anomaly.Detect",
+  "tMs": 44422,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=339 at beat close",
+    "refIndex": "1236"
+  }
+}
+---
+{
+  "index": 1246,
+  "beatId": 33,
+  "kind": "Anomaly",
+  "uid": 3,
+  "site": "Anomaly.Detect",
+  "tMs": 44422,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=340 at beat close",
+    "refIndex": "1237"
+  }
+}
+---
+{
+  "index": 1247,
+  "beatId": 33,
+  "kind": "Anomaly",
+  "uid": 7,
+  "site": "Anomaly.Detect",
+  "tMs": 44422,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=341 at beat close",
+    "refIndex": "1238"
+  }
+}
+---
+{
+  "index": 1262,
+  "beatId": 34,
+  "kind": "Anomaly",
+  "uid": 15,
+  "site": "Anomaly.Detect",
+  "tMs": 45369,
+  "payload": {
+    "code": "LethalEstimateMismatch",
+    "detail": "armed death callback skipped at site=Combat.DeathCallback",
+    "refIndex": "1261"
+  }
+}
+---
+{
+  "index": 1882,
+  "beatId": 51,
+  "kind": "Anomaly",
+  "uid": 38,
+  "site": "Anomaly.Detect",
+  "tMs": 71325,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=525 at beat close",
+    "refIndex": "1869"
+  }
+}
+---
+{
+  "index": 1883,
+  "beatId": 51,
+  "kind": "Anomaly",
+  "uid": 26,
+  "site": "Anomaly.Detect",
+  "tMs": 71325,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=526 at beat close",
+    "refIndex": "1871"
+  }
+}
+---
+{
+  "index": 1884,
+  "beatId": 51,
+  "kind": "Anomaly",
+  "uid": 22,
+  "site": "Anomaly.Detect",
+  "tMs": 71325,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=523 at beat close",
+    "refIndex": "1865"
+  }
+}
+---
+{
+  "index": 1885,
+  "beatId": 51,
+  "kind": "Anomaly",
+  "uid": 23,
+  "site": "Anomaly.Detect",
+  "tMs": 71325,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=524 at beat close",
+    "refIndex": "1867"
+  }
+}
+---
+{
+  "index": 1886,
+  "beatId": 51,
+  "kind": "Anomaly",
+  "uid": 32,
+  "site": "Anomaly.Detect",
+  "tMs": 71325,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=522 at beat close",
+    "refIndex": "1863"
+  }
+}
+---
+{
+  "index": 1887,
+  "beatId": 51,
+  "kind": "Anomaly",
+  "uid": 33,
+  "site": "Anomaly.Detect",
+  "tMs": 71325,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=521 at beat close",
+    "refIndex": "1861"
+  }
+}
+---
+{
+  "index": 1888,
+  "beatId": 51,
+  "kind": "Anomaly",
+  "uid": 25,
+  "site": "Anomaly.Detect",
+  "tMs": 71325,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=520 at beat close",
+    "refIndex": "1859"
+  }
+}
+---
+{
+  "index": 1889,
+  "beatId": 51,
+  "kind": "Anomaly",
+  "uid": 36,
+  "site": "Anomaly.Detect",
+  "tMs": 71325,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=519 at beat close",
+    "refIndex": "1857"
+  }
+}
+---
+{
+  "index": 1890,
+  "beatId": 51,
+  "kind": "Anomaly",
+  "uid": 31,
+  "site": "Anomaly.Detect",
+  "tMs": 71325,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=518 at beat close",
+    "refIndex": "1855"
+  }
+}
+---
+{
+  "index": 2374,
+  "beatId": 67,
+  "kind": "Anomaly",
+  "uid": 30,
+  "site": "Anomaly.Detect",
+  "tMs": 100704,
+  "payload": {
+    "code": "LethalEstimateMismatch",
+    "detail": "armed death callback skipped at site=Combat.DeathCallback",
+    "refIndex": "2373"
+  }
+}
+---
+{
+  "index": 2964,
+  "beatId": 94,
+  "kind": "Anomaly",
+  "uid": 26,
+  "site": "Anomaly.Detect",
+  "tMs": 125082,
+  "payload": {
+    "code": "ViewWithoutFieldOccupancy",
+    "detail": "mode=GroundCardMode noFieldSlot",
+    "refIndex": "-1"
+  }
+}
+---
+{
+  "index": 2965,
+  "beatId": 94,
+  "kind": "Anomaly",
+  "uid": 26,
+  "site": "Anomaly.Detect",
+  "tMs": 125082,
+  "payload": {
+    "code": "OrphanAtWrongAnchor",
+    "detail": "emptySlot=8 cardSlot=-1 at empty anchor",
+    "refIndex": "-1"
+  }
+}
+---
+{
+  "index": 3423,
+  "beatId": 97,
+  "kind": "Anomaly",
+  "uid": 61,
+  "site": "Anomaly.Detect",
+  "tMs": 136720,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=912 at beat close",
+    "refIndex": "3408"
+  }
+}
+---
+{
+  "index": 3424,
+  "beatId": 97,
+  "kind": "Anomaly",
+  "uid": 57,
+  "site": "Anomaly.Detect",
+  "tMs": 136720,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=913 at beat close",
+    "refIndex": "3410"
+  }
+}
+---
+{
+  "index": 3425,
+  "beatId": 97,
+  "kind": "Anomaly",
+  "uid": 48,
+  "site": "Anomaly.Detect",
+  "tMs": 136720,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=914 at beat close",
+    "refIndex": "3412"
+  }
+}
+---
+{
+  "index": 3426,
+  "beatId": 97,
+  "kind": "Anomaly",
+  "uid": 42,
+  "site": "Anomaly.Detect",
+  "tMs": 136720,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=911 at beat close",
+    "refIndex": "3406"
+  }
+}
+---
+{
+  "index": 3427,
+  "beatId": 97,
+  "kind": "Anomaly",
+  "uid": 46,
+  "site": "Anomaly.Detect",
+  "tMs": 136720,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=910 at beat close",
+    "refIndex": "3404"
+  }
+}
+---
+{
+  "index": 3428,
+  "beatId": 97,
+  "kind": "Anomaly",
+  "uid": 56,
+  "site": "Anomaly.Detect",
+  "tMs": 136720,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=909 at beat close",
+    "refIndex": "3402"
+  }
+}
+---
+{
+  "index": 3429,
+  "beatId": 97,
+  "kind": "Anomaly",
+  "uid": 52,
+  "site": "Anomaly.Detect",
+  "tMs": 136720,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=908 at beat close",
+    "refIndex": "3400"
+  }
+}
+---
+{
+  "index": 3430,
+  "beatId": 97,
+  "kind": "Anomaly",
+  "uid": 54,
+  "site": "Anomaly.Detect",
+  "tMs": 136720,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=907 at beat close",
+    "refIndex": "3398"
+  }
+}
+---
+{
+  "index": 3431,
+  "beatId": 97,
+  "kind": "Anomaly",
+  "uid": 50,
+  "site": "Anomaly.Detect",
+  "tMs": 136720,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=906 at beat close",
+    "refIndex": "3396"
+  }
+}
+---
+{
+  "index": 3432,
+  "beatId": 97,
+  "kind": "Anomaly",
+  "uid": 47,
+  "site": "Anomaly.Detect",
+  "tMs": 136720,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=905 at beat close",
+    "refIndex": "3394"
+  }
+}
+---
+{
+  "index": 3433,
+  "beatId": 97,
+  "kind": "Anomaly",
+  "uid": 53,
+  "site": "Anomaly.Detect",
+  "tMs": 136720,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=904 at beat close",
+    "refIndex": "3392"
+  }
+}
+---
+{
+  "index": 3434,
+  "beatId": 97,
+  "kind": "Anomaly",
+  "uid": 51,
+  "site": "Anomaly.Detect",
+  "tMs": 136720,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=903 at beat close",
+    "refIndex": "3390"
+  }
+}
+---
+{
+  "index": 3551,
+  "beatId": 101,
+  "kind": "Anomaly",
+  "uid": 61,
+  "site": "Anomaly.Detect",
+  "tMs": 148090,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=926 at beat close",
+    "refIndex": "3505"
+  }
+}
+---
+{
+  "index": 3552,
+  "beatId": 101,
+  "kind": "Anomaly",
+  "uid": 57,
+  "site": "Anomaly.Detect",
+  "tMs": 148090,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=927 at beat close",
+    "refIndex": "3506"
+  }
+}
+---
+{
+  "index": 3553,
+  "beatId": 101,
+  "kind": "Anomaly",
+  "uid": 48,
+  "site": "Anomaly.Detect",
+  "tMs": 148090,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=928 at beat close",
+    "refIndex": "3507"
+  }
+}
+---
+{
+  "index": 3624,
+  "beatId": 102,
+  "kind": "Anomaly",
+  "uid": 48,
+  "site": "Anomaly.Detect",
+  "tMs": 151563,
+  "payload": {
+    "code": "MissingMotionEnd",
+    "detail": "open motionId=951 at beat close",
+    "refIndex": "3584"
+  }
+}
+---

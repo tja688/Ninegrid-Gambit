@@ -1,0 +1,5239 @@
+================================================================================
+TASK 5: BattleLog ops mentioning rolling_crush / RemoveCard / throwing_knife / uid 45 / help.throwing_knife
+================================================================================
+matched ops count=7
+-- opIndex=11 opKind=CombatHit matched=['rolling_crush']
+reason='PlayerAttack'
+apiPath='PhaseSystem.ApplyCombatHit'
+phaseBefore='InteractionLoop' phaseAfter='InteractionLoop'
+attacker={
+  "uid": 1,
+  "defId": "avatar.default",
+  "kind": "Avatar",
+  "atk": 4,
+  "hp": 8,
+  "armor": 1
+}
+target={
+  "uid": 18,
+  "defId": "monster.rolling_stone_man",
+  "kind": "Monster",
+  "atk": 2,
+  "hp": 3,
+  "armor": 3
+}
+eventStartIndex=362 eventEndIndex=388
+events:
+[
+  {
+    "sequence": 362,
+    "type": "ActionStarted",
+    "actionName": "BeginPlayerMonsterEngagement",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#362 Action started"
+  },
+  {
+    "sequence": 363,
+    "type": "ActionFinished",
+    "actionName": "BeginPlayerMonsterEngagement",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#363 Action finished"
+  },
+  {
+    "sequence": 364,
+    "type": "ActionStarted",
+    "actionName": "DealDamage",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#364 Action started"
+  },
+  {
+    "sequence": 365,
+    "type": "HpChanged",
+    "actionName": "DealDamage",
+    "actorUid": 1,
+    "targetUid": 18,
+    "cardUid": 18,
+    "amount": 0,
+    "delta": -3,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#365 HP changed card=18 amount=0 delta=-3"
+  },
+  {
+    "sequence": 366,
+    "type": "DamageDealt",
+    "actionName": "DealDamage",
+    "actorUid": 1,
+    "targetUid": 18,
+    "cardUid": 18,
+    "amount": 4,
+    "delta": 3,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#366 Damage card=18 amount=4 delta=3"
+  },
+  {
+    "sequence": 367,
+    "type": "ActionStarted",
+    "actionName": "KillIfDead",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#367 Action started"
+  },
+  {
+    "sequence": 368,
+    "type": "ActionStarted",
+    "actionName": "Kill",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#368 Action started"
+  },
+  {
+    "sequence": 369,
+    "type": "CardKilled",
+    "actionName": "Kill",
+    "actorUid": 1,
+    "targetUid": 18,
+    "cardUid": 18,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#369 Card killed card=18"
+  },
+  {
+    "sequence": 370,
+    "type": "CardRemoved",
+    "actionName": "Kill",
+    "actorUid": 1,
+    "targetUid": 18,
+    "cardUid": 18,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#370 Card removed card=18 kill"
+  },
+  {
+    "sequence": 371,
+    "type": "ActionStarted",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#371 Action started"
+  },
+  {
+    "sequence": 372,
+    "type": "EffectTriggered",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "relic.shield_knife",
+    "cause": "relic.shield_knife.kill",
+    "summary": "#372 Effect triggered source=relic.shield_knife cause=relic.shield_knife.kill relic.shield_knife.kill"
+  },
+  {
+    "sequence": 373,
+    "type": "ActionStarted",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#373 Action started"
+  },
+  {
+    "sequence": 374,
+    "type": "ArmorChanged",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 1,
+    "cardUid": 1,
+    "amount": 0,
+    "delta": 1,
+    "remainingHp": 8,
+    "remainingArmor": 1,
+    "sourceDefId": "relic.shield_knife",
+    "cause": "relic.shield_knife.kill",
+    "summary": "#374 Armor changed card=1 amount=0 delta=1 hp=8 armor=1 source=relic.shield_knife cause=relic.shield_knife.kill"
+  },
+  {
+    "sequence": 375,
+    "type": "ActionFinished",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#375 Action finished"
+  },
+  {
+    "sequence": 376,
+    "type": "ActionFinished",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#376 Action finished"
+  },
+  {
+    "sequence": 377,
+    "type": "ActionStarted",
+    "actionName": "ModifyGold",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#377 Action started"
+  },
+  {
+    "sequence": 378,
+    "type": "GoldModified",
+    "actionName": "ModifyGold",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 15,
+    "delta": 5,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "remove:monster.rolling_stone_man",
+    "summary": "#378 Gold changed amount=15 delta=5 source= cause=remove:monster.rolling_stone_man remove:monster.rolling_stone_man"
+  },
+  {
+    "sequence": 379,
+    "type": "ActionFinished",
+    "actionName": "ModifyGold",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#379 Action finished"
+  },
+  {
+    "sequence": 380,
+    "type": "ActionStarted",
+    "actionName": "DeactivateOwnerEffects",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#380 Action started"
+  },
+  {
+    "sequence": 381,
+    "type": "EffectDeactivated",
+    "actionName": "DeactivateOwnerEffects",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 18,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "kill",
+    "summary": "#381 Effect deactivated card=18 source= cause=kill skill.rolling_crush.slot3#23"
+  },
+  {
+    "sequence": 382,
+    "type": "ActionFinished",
+    "actionName": "DeactivateOwnerEffects",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#382 Action finished"
+  },
+  {
+    "sequence": 383,
+    "type": "ActionFinished",
+    "actionName": "Kill",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#383 Action finished"
+  },
+  {
+    "sequence": 384,
+    "type": "ActionFinished",
+    "actionName": "KillIfDead",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#384 Action finished"
+  },
+  {
+    "sequence": 385,
+    "type": "ActionFinished",
+    "actionName": "DealDamage",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#385 Action finished"
+  },
+  {
+    "sequence": 386,
+    "type": "ActionStarted",
+    "actionName": "EndBattleScopeCleanup",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#386 Action started"
+  },
+  {
+    "sequence": 387,
+    "type": "ActionFinished",
+    "actionName": "EndBattleScopeCleanup",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#387 Action finished"
+  }
+]
+presentation:
+{
+  "accepted": true,
+  "damageAmount": 4,
+  "targetKilled": true,
+  "avatarDefeated": false,
+  "nodeClearedOrRewardPhase": false
+}
+verdictHints:
+{
+  "avatarDefeated": false,
+  "targetKilled": true,
+  "extraDamageDealtCount": 0,
+  "effectTriggeredIds": [
+    "relic.shield_knife"
+  ]
+}
+===
+-- opIndex=40 opKind=CombatHit matched=['rolling_crush']
+reason='PlayerAttack'
+apiPath='PhaseSystem.ApplyCombatHit'
+phaseBefore='InteractionLoop' phaseAfter='InteractionLoop'
+attacker={
+  "uid": 1,
+  "defId": "avatar.default",
+  "kind": "Avatar",
+  "atk": 5,
+  "hp": 6,
+  "armor": 2
+}
+target={
+  "uid": 35,
+  "defId": "monster.rolling_stone_man",
+  "kind": "Monster",
+  "atk": 2,
+  "hp": 2,
+  "armor": 3
+}
+eventStartIndex=1133 eventEndIndex=1159
+events:
+[
+  {
+    "sequence": 1133,
+    "type": "ActionStarted",
+    "actionName": "BeginPlayerMonsterEngagement",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1133 Action started"
+  },
+  {
+    "sequence": 1134,
+    "type": "ActionFinished",
+    "actionName": "BeginPlayerMonsterEngagement",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1134 Action finished"
+  },
+  {
+    "sequence": 1135,
+    "type": "ActionStarted",
+    "actionName": "DealDamage",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1135 Action started"
+  },
+  {
+    "sequence": 1136,
+    "type": "HpChanged",
+    "actionName": "DealDamage",
+    "actorUid": 1,
+    "targetUid": 35,
+    "cardUid": 35,
+    "amount": 0,
+    "delta": -2,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1136 HP changed card=35 amount=0 delta=-2"
+  },
+  {
+    "sequence": 1137,
+    "type": "DamageDealt",
+    "actionName": "DealDamage",
+    "actorUid": 1,
+    "targetUid": 35,
+    "cardUid": 35,
+    "amount": 5,
+    "delta": 2,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1137 Damage card=35 amount=5 delta=2"
+  },
+  {
+    "sequence": 1138,
+    "type": "ActionStarted",
+    "actionName": "KillIfDead",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1138 Action started"
+  },
+  {
+    "sequence": 1139,
+    "type": "ActionStarted",
+    "actionName": "Kill",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1139 Action started"
+  },
+  {
+    "sequence": 1140,
+    "type": "CardKilled",
+    "actionName": "Kill",
+    "actorUid": 1,
+    "targetUid": 35,
+    "cardUid": 35,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1140 Card killed card=35"
+  },
+  {
+    "sequence": 1141,
+    "type": "CardRemoved",
+    "actionName": "Kill",
+    "actorUid": 1,
+    "targetUid": 35,
+    "cardUid": 35,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1141 Card removed card=35 kill"
+  },
+  {
+    "sequence": 1142,
+    "type": "ActionStarted",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1142 Action started"
+  },
+  {
+    "sequence": 1143,
+    "type": "EffectTriggered",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "relic.shield_knife",
+    "cause": "relic.shield_knife.kill",
+    "summary": "#1143 Effect triggered source=relic.shield_knife cause=relic.shield_knife.kill relic.shield_knife.kill"
+  },
+  {
+    "sequence": 1144,
+    "type": "ActionStarted",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1144 Action started"
+  },
+  {
+    "sequence": 1145,
+    "type": "ArmorChanged",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 1,
+    "cardUid": 1,
+    "amount": 0,
+    "delta": 1,
+    "remainingHp": 6,
+    "remainingArmor": 1,
+    "sourceDefId": "relic.shield_knife",
+    "cause": "relic.shield_knife.kill",
+    "summary": "#1145 Armor changed card=1 amount=0 delta=1 hp=6 armor=1 source=relic.shield_knife cause=relic.shield_knife.kill"
+  },
+  {
+    "sequence": 1146,
+    "type": "ActionFinished",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1146 Action finished"
+  },
+  {
+    "sequence": 1147,
+    "type": "ActionFinished",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1147 Action finished"
+  },
+  {
+    "sequence": 1148,
+    "type": "ActionStarted",
+    "actionName": "ModifyGold",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1148 Action started"
+  },
+  {
+    "sequence": 1149,
+    "type": "GoldModified",
+    "actionName": "ModifyGold",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 95,
+    "delta": 5,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "remove:monster.rolling_stone_man",
+    "summary": "#1149 Gold changed amount=95 delta=5 source= cause=remove:monster.rolling_stone_man remove:monster.rolling_stone_man"
+  },
+  {
+    "sequence": 1150,
+    "type": "ActionFinished",
+    "actionName": "ModifyGold",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1150 Action finished"
+  },
+  {
+    "sequence": 1151,
+    "type": "ActionStarted",
+    "actionName": "DeactivateOwnerEffects",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1151 Action started"
+  },
+  {
+    "sequence": 1152,
+    "type": "EffectDeactivated",
+    "actionName": "DeactivateOwnerEffects",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 35,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "kill",
+    "summary": "#1152 Effect deactivated card=35 source= cause=kill skill.rolling_crush.slot3#45"
+  },
+  {
+    "sequence": 1153,
+    "type": "ActionFinished",
+    "actionName": "DeactivateOwnerEffects",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1153 Action finished"
+  },
+  {
+    "sequence": 1154,
+    "type": "ActionFinished",
+    "actionName": "Kill",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1154 Action finished"
+  },
+  {
+    "sequence": 1155,
+    "type": "ActionFinished",
+    "actionName": "KillIfDead",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1155 Action finished"
+  },
+  {
+    "sequence": 1156,
+    "type": "ActionFinished",
+    "actionName": "DealDamage",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1156 Action finished"
+  },
+  {
+    "sequence": 1157,
+    "type": "ActionStarted",
+    "actionName": "EndBattleScopeCleanup",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1157 Action started"
+  },
+  {
+    "sequence": 1158,
+    "type": "ActionFinished",
+    "actionName": "EndBattleScopeCleanup",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1158 Action finished"
+  }
+]
+presentation:
+{
+  "accepted": true,
+  "damageAmount": 5,
+  "targetKilled": true,
+  "avatarDefeated": false,
+  "nodeClearedOrRewardPhase": false
+}
+verdictHints:
+{
+  "avatarDefeated": false,
+  "targetKilled": true,
+  "extraDamageDealtCount": 0,
+  "effectTriggeredIds": [
+    "relic.shield_knife"
+  ]
+}
+===
+-- opIndex=42 opKind=CombatHit matched=['rolling_crush']
+reason='PlayerAttack'
+apiPath='PhaseSystem.ApplyCombatHit'
+phaseBefore='InteractionLoop' phaseAfter='InteractionLoop'
+attacker={
+  "uid": 1,
+  "defId": "avatar.default",
+  "kind": "Avatar",
+  "atk": 5,
+  "hp": 6,
+  "armor": 2
+}
+target={
+  "uid": 37,
+  "defId": "monster.rolling_stone_man",
+  "kind": "Monster",
+  "atk": 2,
+  "hp": 1,
+  "armor": 3
+}
+eventStartIndex=1207 eventEndIndex=1233
+events:
+[
+  {
+    "sequence": 1207,
+    "type": "ActionStarted",
+    "actionName": "BeginPlayerMonsterEngagement",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1207 Action started"
+  },
+  {
+    "sequence": 1208,
+    "type": "ActionFinished",
+    "actionName": "BeginPlayerMonsterEngagement",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1208 Action finished"
+  },
+  {
+    "sequence": 1209,
+    "type": "ActionStarted",
+    "actionName": "DealDamage",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1209 Action started"
+  },
+  {
+    "sequence": 1210,
+    "type": "HpChanged",
+    "actionName": "DealDamage",
+    "actorUid": 1,
+    "targetUid": 37,
+    "cardUid": 37,
+    "amount": 0,
+    "delta": -1,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1210 HP changed card=37 amount=0 delta=-1"
+  },
+  {
+    "sequence": 1211,
+    "type": "DamageDealt",
+    "actionName": "DealDamage",
+    "actorUid": 1,
+    "targetUid": 37,
+    "cardUid": 37,
+    "amount": 5,
+    "delta": 1,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1211 Damage card=37 amount=5 delta=1"
+  },
+  {
+    "sequence": 1212,
+    "type": "ActionStarted",
+    "actionName": "KillIfDead",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1212 Action started"
+  },
+  {
+    "sequence": 1213,
+    "type": "ActionStarted",
+    "actionName": "Kill",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1213 Action started"
+  },
+  {
+    "sequence": 1214,
+    "type": "CardKilled",
+    "actionName": "Kill",
+    "actorUid": 1,
+    "targetUid": 37,
+    "cardUid": 37,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1214 Card killed card=37"
+  },
+  {
+    "sequence": 1215,
+    "type": "CardRemoved",
+    "actionName": "Kill",
+    "actorUid": 1,
+    "targetUid": 37,
+    "cardUid": 37,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1215 Card removed card=37 kill"
+  },
+  {
+    "sequence": 1216,
+    "type": "ActionStarted",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1216 Action started"
+  },
+  {
+    "sequence": 1217,
+    "type": "EffectTriggered",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "relic.shield_knife",
+    "cause": "relic.shield_knife.kill",
+    "summary": "#1217 Effect triggered source=relic.shield_knife cause=relic.shield_knife.kill relic.shield_knife.kill"
+  },
+  {
+    "sequence": 1218,
+    "type": "ActionStarted",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1218 Action started"
+  },
+  {
+    "sequence": 1219,
+    "type": "ArmorChanged",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 1,
+    "cardUid": 1,
+    "amount": 0,
+    "delta": 1,
+    "remainingHp": 6,
+    "remainingArmor": 2,
+    "sourceDefId": "relic.shield_knife",
+    "cause": "relic.shield_knife.kill",
+    "summary": "#1219 Armor changed card=1 amount=0 delta=1 hp=6 armor=2 source=relic.shield_knife cause=relic.shield_knife.kill"
+  },
+  {
+    "sequence": 1220,
+    "type": "ActionFinished",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1220 Action finished"
+  },
+  {
+    "sequence": 1221,
+    "type": "ActionFinished",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1221 Action finished"
+  },
+  {
+    "sequence": 1222,
+    "type": "ActionStarted",
+    "actionName": "ModifyGold",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1222 Action started"
+  },
+  {
+    "sequence": 1223,
+    "type": "GoldModified",
+    "actionName": "ModifyGold",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 100,
+    "delta": 5,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "remove:monster.rolling_stone_man",
+    "summary": "#1223 Gold changed amount=100 delta=5 source= cause=remove:monster.rolling_stone_man remove:monster.rolling_stone_man"
+  },
+  {
+    "sequence": 1224,
+    "type": "ActionFinished",
+    "actionName": "ModifyGold",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1224 Action finished"
+  },
+  {
+    "sequence": 1225,
+    "type": "ActionStarted",
+    "actionName": "DeactivateOwnerEffects",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1225 Action started"
+  },
+  {
+    "sequence": 1226,
+    "type": "EffectDeactivated",
+    "actionName": "DeactivateOwnerEffects",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 37,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "kill",
+    "summary": "#1226 Effect deactivated card=37 source= cause=kill skill.rolling_crush.slot3#47"
+  },
+  {
+    "sequence": 1227,
+    "type": "ActionFinished",
+    "actionName": "DeactivateOwnerEffects",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1227 Action finished"
+  },
+  {
+    "sequence": 1228,
+    "type": "ActionFinished",
+    "actionName": "Kill",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1228 Action finished"
+  },
+  {
+    "sequence": 1229,
+    "type": "ActionFinished",
+    "actionName": "KillIfDead",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1229 Action finished"
+  },
+  {
+    "sequence": 1230,
+    "type": "ActionFinished",
+    "actionName": "DealDamage",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1230 Action finished"
+  },
+  {
+    "sequence": 1231,
+    "type": "ActionStarted",
+    "actionName": "EndBattleScopeCleanup",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1231 Action started"
+  },
+  {
+    "sequence": 1232,
+    "type": "ActionFinished",
+    "actionName": "EndBattleScopeCleanup",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1232 Action finished"
+  }
+]
+presentation:
+{
+  "accepted": true,
+  "damageAmount": 5,
+  "targetKilled": true,
+  "avatarDefeated": false,
+  "nodeClearedOrRewardPhase": false
+}
+verdictHints:
+{
+  "avatarDefeated": false,
+  "targetKilled": true,
+  "extraDamageDealtCount": 0,
+  "effectTriggeredIds": [
+    "relic.shield_knife"
+  ]
+}
+===
+-- opIndex=51 opKind=PostKillBoard matched=['rolling_crush']
+reason='PostKillBoard'
+apiPath='PhaseSystem.ResolvePostKillBoard'
+phaseBefore='InteractionLoop' phaseAfter='InteractionLoop'
+attacker=null
+target=null
+eventStartIndex=1448 eventEndIndex=1468
+events:
+[
+  {
+    "sequence": 1448,
+    "type": "ActionStarted",
+    "actionName": "ModifyInteractionCount",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1448 Action started"
+  },
+  {
+    "sequence": 1449,
+    "type": "InteractionChanged",
+    "actionName": "ModifyInteractionCount",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 29,
+    "delta": 1,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1449 Interaction changed amount=29 delta=1"
+  },
+  {
+    "sequence": 1450,
+    "type": "ActionFinished",
+    "actionName": "ModifyInteractionCount",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1450 Action finished"
+  },
+  {
+    "sequence": 1451,
+    "type": "ActionStarted",
+    "actionName": "FillEmptySlots",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1451 Action started"
+  },
+  {
+    "sequence": 1452,
+    "type": "SlotsFilled",
+    "actionName": "FillEmptySlots",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1452 Slots filled"
+  },
+  {
+    "sequence": 1453,
+    "type": "DrawPileExhausted",
+    "actionName": "FillEmptySlots",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1453 Draw pile exhausted"
+  },
+  {
+    "sequence": 1454,
+    "type": "ActionFinished",
+    "actionName": "FillEmptySlots",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1454 Action finished"
+  },
+  {
+    "sequence": 1455,
+    "type": "ActionStarted",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1455 Action started"
+  },
+  {
+    "sequence": 1456,
+    "type": "CardMoved",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 31,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1456 Card moved card=31"
+  },
+  {
+    "sequence": 1457,
+    "type": "CardMoved",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 36,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1457 Card moved card=36"
+  },
+  {
+    "sequence": 1458,
+    "type": "CardMoved",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 32,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1458 Card moved card=32"
+  },
+  {
+    "sequence": 1459,
+    "type": "CardMoved",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 38,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1459 Card moved card=38"
+  },
+  {
+    "sequence": 1460,
+    "type": "CardMoved",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 23,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1460 Card moved card=23"
+  },
+  {
+    "sequence": 1461,
+    "type": "CardMoved",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 26,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1461 Card moved card=26"
+  },
+  {
+    "sequence": 1462,
+    "type": "CardMoved",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 34,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1462 Card moved card=34"
+  },
+  {
+    "sequence": 1463,
+    "type": "BoardRotated",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 1,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1463 Board rotated amount=1 delta=0 clockwise"
+  },
+  {
+    "sequence": 1464,
+    "type": "ActionStarted",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1464 Action started"
+  },
+  {
+    "sequence": 1465,
+    "type": "EffectTriggered",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 36,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "skill.rolling_crush",
+    "cause": "skill.rolling_crush.slot3",
+    "summary": "#1465 Effect triggered card=36 source=skill.rolling_crush cause=skill.rolling_crush.slot3 skill.rolling_crush.slot3"
+  },
+  {
+    "sequence": 1466,
+    "type": "ActionFinished",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1466 Action finished"
+  },
+  {
+    "sequence": 1467,
+    "type": "ActionFinished",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1467 Action finished"
+  }
+]
+presentation:
+{
+  "accepted": true,
+  "damageAmount": 0,
+  "targetKilled": false,
+  "avatarDefeated": false,
+  "nodeClearedOrRewardPhase": false
+}
+verdictHints:
+{
+  "avatarDefeated": false,
+  "targetKilled": false,
+  "extraDamageDealtCount": 0,
+  "effectTriggeredIds": [
+    "skill.rolling_crush"
+  ]
+}
+===
+-- opIndex=60 opKind=CombatHit matched=['rolling_crush']
+reason='PlayerAttack'
+apiPath='PhaseSystem.ApplyCombatHit'
+phaseBefore='InteractionLoop' phaseAfter='InteractionLoop'
+attacker={
+  "uid": 1,
+  "defId": "avatar.default",
+  "kind": "Avatar",
+  "atk": 5,
+  "hp": 10,
+  "armor": 2
+}
+target={
+  "uid": 36,
+  "defId": "monster.rolling_stone_man",
+  "kind": "Monster",
+  "atk": 2,
+  "hp": 2,
+  "armor": 3
+}
+eventStartIndex=1598 eventEndIndex=1624
+events:
+[
+  {
+    "sequence": 1598,
+    "type": "ActionStarted",
+    "actionName": "BeginPlayerMonsterEngagement",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1598 Action started"
+  },
+  {
+    "sequence": 1599,
+    "type": "ActionFinished",
+    "actionName": "BeginPlayerMonsterEngagement",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1599 Action finished"
+  },
+  {
+    "sequence": 1600,
+    "type": "ActionStarted",
+    "actionName": "DealDamage",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1600 Action started"
+  },
+  {
+    "sequence": 1601,
+    "type": "HpChanged",
+    "actionName": "DealDamage",
+    "actorUid": 1,
+    "targetUid": 36,
+    "cardUid": 36,
+    "amount": 0,
+    "delta": -2,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1601 HP changed card=36 amount=0 delta=-2"
+  },
+  {
+    "sequence": 1602,
+    "type": "DamageDealt",
+    "actionName": "DealDamage",
+    "actorUid": 1,
+    "targetUid": 36,
+    "cardUid": 36,
+    "amount": 5,
+    "delta": 2,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1602 Damage card=36 amount=5 delta=2"
+  },
+  {
+    "sequence": 1603,
+    "type": "ActionStarted",
+    "actionName": "KillIfDead",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1603 Action started"
+  },
+  {
+    "sequence": 1604,
+    "type": "ActionStarted",
+    "actionName": "Kill",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1604 Action started"
+  },
+  {
+    "sequence": 1605,
+    "type": "CardKilled",
+    "actionName": "Kill",
+    "actorUid": 1,
+    "targetUid": 36,
+    "cardUid": 36,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1605 Card killed card=36"
+  },
+  {
+    "sequence": 1606,
+    "type": "CardRemoved",
+    "actionName": "Kill",
+    "actorUid": 1,
+    "targetUid": 36,
+    "cardUid": 36,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1606 Card removed card=36 kill"
+  },
+  {
+    "sequence": 1607,
+    "type": "ActionStarted",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1607 Action started"
+  },
+  {
+    "sequence": 1608,
+    "type": "EffectTriggered",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "relic.shield_knife",
+    "cause": "relic.shield_knife.kill",
+    "summary": "#1608 Effect triggered source=relic.shield_knife cause=relic.shield_knife.kill relic.shield_knife.kill"
+  },
+  {
+    "sequence": 1609,
+    "type": "ActionStarted",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1609 Action started"
+  },
+  {
+    "sequence": 1610,
+    "type": "ArmorChanged",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 1,
+    "cardUid": 1,
+    "amount": 0,
+    "delta": 1,
+    "remainingHp": 10,
+    "remainingArmor": 1,
+    "sourceDefId": "relic.shield_knife",
+    "cause": "relic.shield_knife.kill",
+    "summary": "#1610 Armor changed card=1 amount=0 delta=1 hp=10 armor=1 source=relic.shield_knife cause=relic.shield_knife.kill"
+  },
+  {
+    "sequence": 1611,
+    "type": "ActionFinished",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1611 Action finished"
+  },
+  {
+    "sequence": 1612,
+    "type": "ActionFinished",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1612 Action finished"
+  },
+  {
+    "sequence": 1613,
+    "type": "ActionStarted",
+    "actionName": "ModifyGold",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1613 Action started"
+  },
+  {
+    "sequence": 1614,
+    "type": "GoldModified",
+    "actionName": "ModifyGold",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 130,
+    "delta": 5,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "remove:monster.rolling_stone_man",
+    "summary": "#1614 Gold changed amount=130 delta=5 source= cause=remove:monster.rolling_stone_man remove:monster.rolling_stone_man"
+  },
+  {
+    "sequence": 1615,
+    "type": "ActionFinished",
+    "actionName": "ModifyGold",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1615 Action finished"
+  },
+  {
+    "sequence": 1616,
+    "type": "ActionStarted",
+    "actionName": "DeactivateOwnerEffects",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1616 Action started"
+  },
+  {
+    "sequence": 1617,
+    "type": "EffectDeactivated",
+    "actionName": "DeactivateOwnerEffects",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 36,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "kill",
+    "summary": "#1617 Effect deactivated card=36 source= cause=kill skill.rolling_crush.slot3#46"
+  },
+  {
+    "sequence": 1618,
+    "type": "ActionFinished",
+    "actionName": "DeactivateOwnerEffects",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1618 Action finished"
+  },
+  {
+    "sequence": 1619,
+    "type": "ActionFinished",
+    "actionName": "Kill",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1619 Action finished"
+  },
+  {
+    "sequence": 1620,
+    "type": "ActionFinished",
+    "actionName": "KillIfDead",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1620 Action finished"
+  },
+  {
+    "sequence": 1621,
+    "type": "ActionFinished",
+    "actionName": "DealDamage",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1621 Action finished"
+  },
+  {
+    "sequence": 1622,
+    "type": "ActionStarted",
+    "actionName": "EndBattleScopeCleanup",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1622 Action started"
+  },
+  {
+    "sequence": 1623,
+    "type": "ActionFinished",
+    "actionName": "EndBattleScopeCleanup",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1623 Action finished"
+  }
+]
+presentation:
+{
+  "accepted": true,
+  "damageAmount": 5,
+  "targetKilled": true,
+  "avatarDefeated": false,
+  "nodeClearedOrRewardPhase": false
+}
+verdictHints:
+{
+  "avatarDefeated": false,
+  "targetKilled": true,
+  "extraDamageDealtCount": 0,
+  "effectTriggeredIds": [
+    "relic.shield_knife"
+  ]
+}
+===
+-- opIndex=67 opKind=PostKillBoard matched=['throwing_knife', 'help.throwing_knife']
+reason='PostKillBoard'
+apiPath='PhaseSystem.ResolvePostKillBoard'
+phaseBefore='InteractionLoop' phaseAfter='RewardItemChoice'
+attacker=null
+target=null
+eventStartIndex=1722 eventEndIndex=1757
+events:
+[
+  {
+    "sequence": 1722,
+    "type": "ActionStarted",
+    "actionName": "ModifyInteractionCount",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1722 Action started"
+  },
+  {
+    "sequence": 1723,
+    "type": "InteractionChanged",
+    "actionName": "ModifyInteractionCount",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 35,
+    "delta": 1,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1723 Interaction changed amount=35 delta=1"
+  },
+  {
+    "sequence": 1724,
+    "type": "ActionFinished",
+    "actionName": "ModifyInteractionCount",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1724 Action finished"
+  },
+  {
+    "sequence": 1725,
+    "type": "ActionStarted",
+    "actionName": "FillEmptySlots",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1725 Action started"
+  },
+  {
+    "sequence": 1726,
+    "type": "SlotsFilled",
+    "actionName": "FillEmptySlots",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1726 Slots filled"
+  },
+  {
+    "sequence": 1727,
+    "type": "DrawPileExhausted",
+    "actionName": "FillEmptySlots",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1727 Draw pile exhausted"
+  },
+  {
+    "sequence": 1728,
+    "type": "ActionFinished",
+    "actionName": "FillEmptySlots",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1728 Action finished"
+  },
+  {
+    "sequence": 1729,
+    "type": "ActionStarted",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1729 Action started"
+  },
+  {
+    "sequence": 1730,
+    "type": "CardMoved",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 26,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1730 Card moved card=26"
+  },
+  {
+    "sequence": 1731,
+    "type": "BoardRotated",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 1,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1731 Board rotated amount=1 delta=0 clockwise"
+  },
+  {
+    "sequence": 1732,
+    "type": "ActionFinished",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1732 Action finished"
+  },
+  {
+    "sequence": 1733,
+    "type": "ActionStarted",
+    "actionName": "ChangePhase",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1733 Action started"
+  },
+  {
+    "sequence": 1734,
+    "type": "PhaseChanged",
+    "actionName": "ChangePhase",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 5,
+    "delta": 4,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1734 Phase changed amount=5 delta=4 InteractionLoop->ClearCheck"
+  },
+  {
+    "sequence": 1735,
+    "type": "ActionFinished",
+    "actionName": "ChangePhase",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1735 Action finished"
+  },
+  {
+    "sequence": 1736,
+    "type": "ActionStarted",
+    "actionName": "ChangePhase",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1736 Action started"
+  },
+  {
+    "sequence": 1737,
+    "type": "PhaseChanged",
+    "actionName": "ChangePhase",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 9,
+    "delta": 5,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1737 Phase changed amount=9 delta=5 ClearCheck->NodeCompleted"
+  },
+  {
+    "sequence": 1738,
+    "type": "ActionFinished",
+    "actionName": "ChangePhase",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1738 Action finished"
+  },
+  {
+    "sequence": 1739,
+    "type": "ActionStarted",
+    "actionName": "NodeCompleted",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1739 Action started"
+  },
+  {
+    "sequence": 1740,
+    "type": "NodeCompleted",
+    "actionName": "NodeCompleted",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1740 Node completed"
+  },
+  {
+    "sequence": 1741,
+    "type": "ActionStarted",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1741 Action started"
+  },
+  {
+    "sequence": 1742,
+    "type": "EffectTriggered",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "skill.easy_road",
+    "cause": "skill.easy_road.node_end",
+    "summary": "#1742 Effect triggered source=skill.easy_road cause=skill.easy_road.node_end skill.easy_road.node_end"
+  },
+  {
+    "sequence": 1743,
+    "type": "ActionStarted",
+    "actionName": "OfferRewardChoice",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1743 Action started"
+  },
+  {
+    "sequence": 1744,
+    "type": "RewardOffered",
+    "actionName": "OfferRewardChoice",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 3,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1744 Reward offered amount=3 delta=0 help.white.choice|help.ward_magic_card:HelpCard:1,help.throwing_knife:HelpCard:1,help.bear_trap:HelpCard:1"
+  },
+  {
+    "sequence": 1745,
+    "type": "ActionFinished",
+    "actionName": "OfferRewardChoice",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1745 Action finished"
+  },
+  {
+    "sequence": 1746,
+    "type": "ActionFinished",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1746 Action finished"
+  },
+  {
+    "sequence": 1747,
+    "type": "ActionFinished",
+    "actionName": "NodeCompleted",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1747 Action finished"
+  },
+  {
+    "sequence": 1748,
+    "type": "ActionStarted",
+    "actionName": "ModifyGold",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1748 Action started"
+  },
+  {
+    "sequence": 1749,
+    "type": "GoldModified",
+    "actionName": "ModifyGold",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 190,
+    "delta": 50,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "unusedHelpCards",
+    "summary": "#1749 Gold changed amount=190 delta=50 source= cause=unusedHelpCards unusedHelpCards"
+  },
+  {
+    "sequence": 1750,
+    "type": "ActionFinished",
+    "actionName": "ModifyGold",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1750 Action finished"
+  },
+  {
+    "sequence": 1751,
+    "type": "ActionStarted",
+    "actionName": "ChangePhase",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1751 Action started"
+  },
+  {
+    "sequence": 1752,
+    "type": "PhaseChanged",
+    "actionName": "ChangePhase",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 6,
+    "delta": 9,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1752 Phase changed amount=6 delta=9 NodeCompleted->RewardItemChoice"
+  },
+  {
+    "sequence": 1753,
+    "type": "ActionFinished",
+    "actionName": "ChangePhase",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1753 Action finished"
+  },
+  {
+    "sequence": 1754,
+    "type": "ActionStarted",
+    "actionName": "OfferRewardChoice",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1754 Action started"
+  },
+  {
+    "sequence": 1755,
+    "type": "RewardOffered",
+    "actionName": "OfferRewardChoice",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 3,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1755 Reward offered amount=3 delta=0 help.choice|help.blood_conversion:HelpCard:1,help.bomb:HelpCard:1,help.rotation_wheel:HelpCard:1"
+  },
+  {
+    "sequence": 1756,
+    "type": "ActionFinished",
+    "actionName": "OfferRewardChoice",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1756 Action finished"
+  }
+]
+presentation:
+{
+  "accepted": true,
+  "damageAmount": 0,
+  "targetKilled": false,
+  "avatarDefeated": false,
+  "nodeClearedOrRewardPhase": true
+}
+verdictHints:
+{
+  "avatarDefeated": false,
+  "targetKilled": false,
+  "extraDamageDealtCount": 0,
+  "effectTriggeredIds": [
+    "skill.easy_road"
+  ]
+}
+===
+-- opIndex=72 opKind=PostKillBoard matched=['rolling_crush', 'RemoveCard', 'throwing_knife', 'help.throwing_knife']
+reason='PostKillBoard'
+apiPath='PhaseSystem.ResolvePostKillBoard'
+phaseBefore='InteractionLoop' phaseAfter='InteractionLoop'
+attacker=null
+target=null
+eventStartIndex=1956 eventEndIndex=1995
+events:
+[
+  {
+    "sequence": 1956,
+    "type": "ActionStarted",
+    "actionName": "ModifyInteractionCount",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1956 Action started"
+  },
+  {
+    "sequence": 1957,
+    "type": "InteractionChanged",
+    "actionName": "ModifyInteractionCount",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 36,
+    "delta": 1,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1957 Interaction changed amount=36 delta=1"
+  },
+  {
+    "sequence": 1958,
+    "type": "ActionFinished",
+    "actionName": "ModifyInteractionCount",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1958 Action finished"
+  },
+  {
+    "sequence": 1959,
+    "type": "ActionStarted",
+    "actionName": "FillEmptySlots",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1959 Action started"
+  },
+  {
+    "sequence": 1960,
+    "type": "CardDealt",
+    "actionName": "FillEmptySlots",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 43,
+    "amount": 1,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1960 Card dealt card=43 amount=1 delta=0"
+  },
+  {
+    "sequence": 1961,
+    "type": "SlotsFilled",
+    "actionName": "FillEmptySlots",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 1,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1961 Slots filled amount=1 delta=0"
+  },
+  {
+    "sequence": 1962,
+    "type": "ActionFinished",
+    "actionName": "FillEmptySlots",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1962 Action finished"
+  },
+  {
+    "sequence": 1963,
+    "type": "ActionStarted",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1963 Action started"
+  },
+  {
+    "sequence": 1964,
+    "type": "CardMoved",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 44,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1964 Card moved card=44"
+  },
+  {
+    "sequence": 1965,
+    "type": "CardMoved",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 55,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1965 Card moved card=55"
+  },
+  {
+    "sequence": 1966,
+    "type": "CardMoved",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 45,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1966 Card moved card=45"
+  },
+  {
+    "sequence": 1967,
+    "type": "CardMoved",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 43,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1967 Card moved card=43"
+  },
+  {
+    "sequence": 1968,
+    "type": "CardMoved",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 60,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1968 Card moved card=60"
+  },
+  {
+    "sequence": 1969,
+    "type": "CardMoved",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 49,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1969 Card moved card=49"
+  },
+  {
+    "sequence": 1970,
+    "type": "CardMoved",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 41,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1970 Card moved card=41"
+  },
+  {
+    "sequence": 1971,
+    "type": "CardMoved",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 58,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1971 Card moved card=58"
+  },
+  {
+    "sequence": 1972,
+    "type": "BoardRotated",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 1,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1972 Board rotated amount=1 delta=0 clockwise"
+  },
+  {
+    "sequence": 1973,
+    "type": "ActionStarted",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1973 Action started"
+  },
+  {
+    "sequence": 1974,
+    "type": "EffectTriggered",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 55,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "skill.rolling_crush",
+    "cause": "skill.rolling_crush.slot3",
+    "summary": "#1974 Effect triggered card=55 source=skill.rolling_crush cause=skill.rolling_crush.slot3 skill.rolling_crush.slot3"
+  },
+  {
+    "sequence": 1975,
+    "type": "ActionStarted",
+    "actionName": "RemoveCard",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1975 Action started"
+  },
+  {
+    "sequence": 1976,
+    "type": "CardRemoved",
+    "actionName": "RemoveCard",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 45,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "skill.rolling_crush",
+    "cause": "skill.rolling_crush",
+    "summary": "#1976 Card removed card=45 source=skill.rolling_crush cause=skill.rolling_crush skill.rolling_crush"
+  },
+  {
+    "sequence": 1977,
+    "type": "ActionStarted",
+    "actionName": "DeactivateOwnerEffects",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1977 Action started"
+  },
+  {
+    "sequence": 1978,
+    "type": "EffectDeactivated",
+    "actionName": "DeactivateOwnerEffects",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 45,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "remove:skill.rolling_crush",
+    "summary": "#1978 Effect deactivated card=45 source= cause=remove:skill.rolling_crush help.throwing_knife.use#59"
+  },
+  {
+    "sequence": 1979,
+    "type": "ActionFinished",
+    "actionName": "DeactivateOwnerEffects",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1979 Action finished"
+  },
+  {
+    "sequence": 1980,
+    "type": "ActionStarted",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1980 Action started"
+  },
+  {
+    "sequence": 1981,
+    "type": "EffectTriggered",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 58,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "skill.stone_growth",
+    "cause": "skill.stone_growth.slot1",
+    "summary": "#1981 Effect triggered card=58 source=skill.stone_growth cause=skill.stone_growth.slot1 skill.stone_growth.slot1"
+  },
+  {
+    "sequence": 1982,
+    "type": "ActionStarted",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1982 Action started"
+  },
+  {
+    "sequence": 1983,
+    "type": "ArmorChanged",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 55,
+    "cardUid": 55,
+    "amount": 0,
+    "delta": 2,
+    "remainingHp": 4,
+    "remainingArmor": 5,
+    "sourceDefId": "skill.stone_growth",
+    "cause": "skill.stone_growth.slot1",
+    "summary": "#1983 Armor changed card=55 amount=0 delta=2 hp=4 armor=5 source=skill.stone_growth cause=skill.stone_growth.slot1"
+  },
+  {
+    "sequence": 1984,
+    "type": "ActionFinished",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1984 Action finished"
+  },
+  {
+    "sequence": 1985,
+    "type": "ActionStarted",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1985 Action started"
+  },
+  {
+    "sequence": 1986,
+    "type": "ArmorChanged",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 49,
+    "cardUid": 49,
+    "amount": 0,
+    "delta": 2,
+    "remainingHp": 1,
+    "remainingArmor": 6,
+    "sourceDefId": "skill.stone_growth",
+    "cause": "skill.stone_growth.slot1",
+    "summary": "#1986 Armor changed card=49 amount=0 delta=2 hp=1 armor=6 source=skill.stone_growth cause=skill.stone_growth.slot1"
+  },
+  {
+    "sequence": 1987,
+    "type": "ActionFinished",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1987 Action finished"
+  },
+  {
+    "sequence": 1988,
+    "type": "ActionStarted",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1988 Action started"
+  },
+  {
+    "sequence": 1989,
+    "type": "ArmorChanged",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 60,
+    "cardUid": 60,
+    "amount": 0,
+    "delta": 2,
+    "remainingHp": 10,
+    "remainingArmor": 2,
+    "sourceDefId": "skill.stone_growth",
+    "cause": "skill.stone_growth.slot1",
+    "summary": "#1989 Armor changed card=60 amount=0 delta=2 hp=10 armor=2 source=skill.stone_growth cause=skill.stone_growth.slot1"
+  },
+  {
+    "sequence": 1990,
+    "type": "ActionFinished",
+    "actionName": "GainArmor",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1990 Action finished"
+  },
+  {
+    "sequence": 1991,
+    "type": "ActionFinished",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1991 Action finished"
+  },
+  {
+    "sequence": 1992,
+    "type": "ActionFinished",
+    "actionName": "RemoveCard",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1992 Action finished"
+  },
+  {
+    "sequence": 1993,
+    "type": "ActionFinished",
+    "actionName": "ExecuteEffect",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1993 Action finished"
+  },
+  {
+    "sequence": 1994,
+    "type": "ActionFinished",
+    "actionName": "RotateBoardClockwise",
+    "actorUid": 0,
+    "targetUid": 0,
+    "cardUid": 0,
+    "amount": 0,
+    "delta": 0,
+    "remainingHp": 0,
+    "remainingArmor": 0,
+    "sourceDefId": "",
+    "cause": "",
+    "summary": "#1994 Action finished"
+  }
+]
+presentation:
+{
+  "accepted": true,
+  "damageAmount": 0,
+  "targetKilled": false,
+  "avatarDefeated": false,
+  "nodeClearedOrRewardPhase": false
+}
+verdictHints:
+{
+  "avatarDefeated": false,
+  "targetKilled": false,
+  "extraDamageDealtCount": 0,
+  "effectTriggeredIds": [
+    "skill.rolling_crush",
+    "skill.stone_growth"
+  ]
+}
+===
+
+--- Scan all ops for RemoveCard / rolling_crush / throwing_knife event names ---
+opIndex=11 opKind=CombatHit reason='PlayerAttack' EVENT={
+  "sequence": 381,
+  "type": "EffectDeactivated",
+  "actionName": "DeactivateOwnerEffects",
+  "actorUid": 0,
+  "targetUid": 0,
+  "cardUid": 18,
+  "amount": 0,
+  "delta": 0,
+  "remainingHp": 0,
+  "remainingArmor": 0,
+  "sourceDefId": "",
+  "cause": "kill",
+  "summary": "#381 Effect deactivated card=18 source= cause=kill skill.rolling_crush.slot3#23"
+}
+opIndex=40 opKind=CombatHit reason='PlayerAttack' EVENT={
+  "sequence": 1152,
+  "type": "EffectDeactivated",
+  "actionName": "DeactivateOwnerEffects",
+  "actorUid": 0,
+  "targetUid": 0,
+  "cardUid": 35,
+  "amount": 0,
+  "delta": 0,
+  "remainingHp": 0,
+  "remainingArmor": 0,
+  "sourceDefId": "",
+  "cause": "kill",
+  "summary": "#1152 Effect deactivated card=35 source= cause=kill skill.rolling_crush.slot3#45"
+}
+opIndex=42 opKind=CombatHit reason='PlayerAttack' EVENT={
+  "sequence": 1226,
+  "type": "EffectDeactivated",
+  "actionName": "DeactivateOwnerEffects",
+  "actorUid": 0,
+  "targetUid": 0,
+  "cardUid": 37,
+  "amount": 0,
+  "delta": 0,
+  "remainingHp": 0,
+  "remainingArmor": 0,
+  "sourceDefId": "",
+  "cause": "kill",
+  "summary": "#1226 Effect deactivated card=37 source= cause=kill skill.rolling_crush.slot3#47"
+}
+opIndex=51 opKind=PostKillBoard reason='PostKillBoard' EVENT={
+  "sequence": 1465,
+  "type": "EffectTriggered",
+  "actionName": "ExecuteEffect",
+  "actorUid": 0,
+  "targetUid": 0,
+  "cardUid": 36,
+  "amount": 0,
+  "delta": 0,
+  "remainingHp": 0,
+  "remainingArmor": 0,
+  "sourceDefId": "skill.rolling_crush",
+  "cause": "skill.rolling_crush.slot3",
+  "summary": "#1465 Effect triggered card=36 source=skill.rolling_crush cause=skill.rolling_crush.slot3 skill.rolling_crush.slot3"
+}
+opIndex=60 opKind=CombatHit reason='PlayerAttack' EVENT={
+  "sequence": 1617,
+  "type": "EffectDeactivated",
+  "actionName": "DeactivateOwnerEffects",
+  "actorUid": 0,
+  "targetUid": 0,
+  "cardUid": 36,
+  "amount": 0,
+  "delta": 0,
+  "remainingHp": 0,
+  "remainingArmor": 0,
+  "sourceDefId": "",
+  "cause": "kill",
+  "summary": "#1617 Effect deactivated card=36 source= cause=kill skill.rolling_crush.slot3#46"
+}
+opIndex=67 opKind=PostKillBoard reason='PostKillBoard' EVENT={
+  "sequence": 1744,
+  "type": "RewardOffered",
+  "actionName": "OfferRewardChoice",
+  "actorUid": 0,
+  "targetUid": 0,
+  "cardUid": 0,
+  "amount": 3,
+  "delta": 0,
+  "remainingHp": 0,
+  "remainingArmor": 0,
+  "sourceDefId": "",
+  "cause": "",
+  "summary": "#1744 Reward offered amount=3 delta=0 help.white.choice|help.ward_magic_card:HelpCard:1,help.throwing_knife:HelpCard:1,help.bear_trap:HelpCard:1"
+}
+opIndex=72 opKind=PostKillBoard reason='PostKillBoard' EVENT={
+  "sequence": 1974,
+  "type": "EffectTriggered",
+  "actionName": "ExecuteEffect",
+  "actorUid": 0,
+  "targetUid": 0,
+  "cardUid": 55,
+  "amount": 0,
+  "delta": 0,
+  "remainingHp": 0,
+  "remainingArmor": 0,
+  "sourceDefId": "skill.rolling_crush",
+  "cause": "skill.rolling_crush.slot3",
+  "summary": "#1974 Effect triggered card=55 source=skill.rolling_crush cause=skill.rolling_crush.slot3 skill.rolling_crush.slot3"
+}
+opIndex=72 opKind=PostKillBoard reason='PostKillBoard' EVENT={
+  "sequence": 1975,
+  "type": "ActionStarted",
+  "actionName": "RemoveCard",
+  "actorUid": 0,
+  "targetUid": 0,
+  "cardUid": 0,
+  "amount": 0,
+  "delta": 0,
+  "remainingHp": 0,
+  "remainingArmor": 0,
+  "sourceDefId": "",
+  "cause": "",
+  "summary": "#1975 Action started"
+}
+opIndex=72 opKind=PostKillBoard reason='PostKillBoard' EVENT={
+  "sequence": 1976,
+  "type": "CardRemoved",
+  "actionName": "RemoveCard",
+  "actorUid": 0,
+  "targetUid": 0,
+  "cardUid": 45,
+  "amount": 0,
+  "delta": 0,
+  "remainingHp": 0,
+  "remainingArmor": 0,
+  "sourceDefId": "skill.rolling_crush",
+  "cause": "skill.rolling_crush",
+  "summary": "#1976 Card removed card=45 source=skill.rolling_crush cause=skill.rolling_crush skill.rolling_crush"
+}
+opIndex=72 opKind=PostKillBoard reason='PostKillBoard' EVENT={
+  "sequence": 1978,
+  "type": "EffectDeactivated",
+  "actionName": "DeactivateOwnerEffects",
+  "actorUid": 0,
+  "targetUid": 0,
+  "cardUid": 45,
+  "amount": 0,
+  "delta": 0,
+  "remainingHp": 0,
+  "remainingArmor": 0,
+  "sourceDefId": "",
+  "cause": "remove:skill.rolling_crush",
+  "summary": "#1978 Effect deactivated card=45 source= cause=remove:skill.rolling_crush help.throwing_knife.use#59"
+}
+opIndex=72 opKind=PostKillBoard reason='PostKillBoard' EVENT={
+  "sequence": 1992,
+  "type": "ActionFinished",
+  "actionName": "RemoveCard",
+  "actorUid": 0,
+  "targetUid": 0,
+  "cardUid": 0,
+  "amount": 0,
+  "delta": 0,
+  "remainingHp": 0,
+  "remainingArmor": 0,
+  "sourceDefId": "",
+  "cause": "",
+  "summary": "#1992 Action finished"
+}
+
+================================================================================
+TASK 6: CoreLog around beatId 94,100,101,102 — OccupancySnapshot/SyncDiff/SettleUnused/PostKill/RemoveCard
+================================================================================
+
+----- ALL Core events beatId=94 -----
+{
+  "index": 648,
+  "name": "DrainBegin",
+  "category": "Presentation",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "moves": "1",
+    "deals": "0",
+    "drainInFlight": "true",
+    "fieldBusy": "true",
+    "presentationLocked": "true",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 649,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": false,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "phase": "drainBefore",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:0|9:26",
+    "diffSlots": "8:C26/P0,9:C0/P26",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "true",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 650,
+  "name": "HopPlan",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "plans": "26:9→8",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 651,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 652,
+  "name": "RegistryAudit",
+  "category": "Presentation",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "trigger": "Sync.Before",
+    "registryCount": "6",
+    "fieldCount": "1",
+    "ghosts": "",
+    "orphans": "",
+    "hasGhosts": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 653,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "vacated": "0",
+    "placed": "0",
+    "spawned": "0",
+    "swept": "0",
+    "vacatedUids": "",
+    "placedUids": "",
+    "spawnedUids": "",
+    "sweptUids": "",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 654,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 655,
+  "name": "RegistryAudit",
+  "category": "Presentation",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "trigger": "Sync.After",
+    "registryCount": "6",
+    "fieldCount": "1",
+    "ghosts": "",
+    "orphans": "",
+    "hasGhosts": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 656,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "phase": "drainAfter",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 657,
+  "name": "DrainEnd",
+  "category": "Presentation",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "moves": "1",
+    "deals": "0",
+    "drainInFlight": "true",
+    "fieldBusy": "true",
+    "presentationLocked": "true",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 658,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "slot": "8",
+    "uid": "26",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 659,
+  "name": "SetState",
+  "category": "Loop",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "RewardChoice",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": -1,
+  "payload": {
+    "from": "BattleStub",
+    "to": "RewardChoice",
+    "nodeIndex": "2"
+  }
+}
+---
+{
+  "index": 660,
+  "name": "RewardPresented",
+  "category": "CoreGate",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "RewardChoice",
+  "phaseBefore": "RewardItemChoice",
+  "phaseAfter": "",
+  "refBattleOpIndex": -1,
+  "payload": {
+    "optionCount": "3",
+    "options": "help.blood_conversion,help.bomb,help.rotation_wheel",
+    "nodeIndex": "2",
+    "source": "nodeClear"
+  }
+}
+---
+{
+  "index": 661,
+  "name": "GoldGained",
+  "category": "Economy",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "delta": "50",
+    "amountAfter": "190",
+    "reason": "unusedHelpCards",
+    "sourceDefId": "",
+    "action": "ModifyGold"
+  }
+}
+---
+{
+  "index": 662,
+  "name": "RewardChosen",
+  "category": "CoreGate",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "RewardItemChoice",
+  "phaseAfter": "RoomChoice",
+  "refBattleOpIndex": -1,
+  "payload": {
+    "kind": "select",
+    "defId": "help.blood_conversion",
+    "index": "0",
+    "reason": ""
+  }
+}
+---
+
+----- ALL Core events beatId=100 -----
+{
+  "index": 716,
+  "name": "GoldGained",
+  "category": "Economy",
+  "beatId": 100,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 70,
+  "payload": {
+    "delta": "5",
+    "amountAfter": "45",
+    "reason": "remove:monster.shelter_stone",
+    "sourceDefId": "",
+    "action": "ModifyGold"
+  }
+}
+---
+{
+  "index": 717,
+  "name": "CombatHitSummary",
+  "category": "CombatSummary",
+  "beatId": 100,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "InteractionLoop",
+  "phaseAfter": "InteractionLoop",
+  "refBattleOpIndex": 71,
+  "payload": {
+    "reason": "PlayerAttack",
+    "attackerDefId": "avatar.default",
+    "targetDefId": "monster.shelter_stone",
+    "attackerUid": "1",
+    "targetUid": "59",
+    "damage": "5",
+    "targetKilled": "true",
+    "avatarDefeated": "false",
+    "avatarHpAfter": "10"
+  }
+}
+---
+{
+  "index": 718,
+  "name": "PostKillBoard",
+  "category": "Deck",
+  "beatId": 100,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "InteractionLoop",
+  "phaseAfter": "InteractionLoop",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "moveCount": "8",
+    "dealCount": "1",
+    "drawPileCount": "12",
+    "deckEmpty": "false",
+    "enemyDrawEmpty": "false"
+  }
+}
+---
+{
+  "index": 719,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 100,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "slot": "6",
+    "uid": "59",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "3"
+  }
+}
+---
+
+----- ALL Core events beatId=101 -----
+{
+  "index": 720,
+  "name": "DrainBegin",
+  "category": "Presentation",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "moves": "8",
+    "deals": "1",
+    "drainInFlight": "true",
+    "fieldBusy": "true",
+    "presentationLocked": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 721,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": false,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "phase": "drainBefore",
+    "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "presHash": "1:44|2:0|3:45|4:58|6:0|7:41|8:49|9:60",
+    "diffSlots": "1:C58/P44,2:C44/P0,3:C55/P45,4:C41/P58,7:C49/P41,8:C60/P49,9:C43/P60",
+    "coreOccupantCount": "7",
+    "presOccupantCount": "6",
+    "hasDiff": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 722,
+  "name": "DealAttempt",
+  "category": "Deck",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "uid": "43",
+    "slot": "6",
+    "placeable": "true",
+    "ok": "true",
+    "rollback": "false",
+    "caller": "TryDealCard",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 723,
+  "name": "DealResult",
+  "category": "Deck",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "uid": "43",
+    "slot": "6",
+    "placeable": "true",
+    "ok": "true",
+    "rollback": "false",
+    "caller": "TryDealCard",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 724,
+  "name": "HopPlan",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "plans": "44:1→2;45:3→6;43:6→9;60:9→8;49:8→7;41:7→4;58:4→1",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 725,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": false,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "presHash": "1:58|2:44|3:0|4:41|6:45|7:49|8:60|9:43",
+    "diffSlots": "3:C55/P0,6:C0/P45",
+    "coreOccupantCount": "7",
+    "presOccupantCount": "7",
+    "hasDiff": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 726,
+  "name": "RegistryAudit",
+  "category": "Presentation",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "trigger": "Sync.Before",
+    "registryCount": "15",
+    "fieldCount": "7",
+    "ghosts": "",
+    "orphans": "",
+    "hasGhosts": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 727,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "slot": "6",
+    "uid": "45",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 728,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 101,
+  "accepted": false,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "vacated": "1",
+    "placed": "1",
+    "spawned": "1",
+    "swept": "0",
+    "vacatedUids": "45",
+    "placedUids": "55",
+    "spawnedUids": "55",
+    "sweptUids": "",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 729,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "presHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "diffSlots": "",
+    "coreOccupantCount": "7",
+    "presOccupantCount": "7",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 730,
+  "name": "RegistryAudit",
+  "category": "Presentation",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "trigger": "Sync.After",
+    "registryCount": "15",
+    "fieldCount": "7",
+    "ghosts": "",
+    "orphans": "",
+    "hasGhosts": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 731,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "phase": "drainAfter",
+    "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "presHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "diffSlots": "",
+    "coreOccupantCount": "7",
+    "presOccupantCount": "7",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 732,
+  "name": "DrainEnd",
+  "category": "Presentation",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "moves": "8",
+    "deals": "1",
+    "drainInFlight": "true",
+    "fieldBusy": "true",
+    "presentationLocked": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 733,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "slot": "4",
+    "uid": "41",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "3"
+  }
+}
+---
+{
+  "index": 734,
+  "name": "HandAcquire",
+  "category": "Hand",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "uid": "41",
+    "phase": "acquire",
+    "handContains": "true",
+    "displayMode": "HandCardMode",
+    "nodeIndex": "3"
+  }
+}
+---
+
+----- ALL Core events beatId=102 -----
+{
+  "index": 735,
+  "name": "DrainBegin",
+  "category": "Presentation",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "moves": "8",
+    "deals": "2",
+    "drainInFlight": "true",
+    "fieldBusy": "true",
+    "presentationLocked": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 736,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": false,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "phase": "drainBefore",
+    "coreHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "presHash": "1:58|2:44|3:55|4:0|6:0|7:49|8:60|9:43",
+    "diffSlots": "1:C53/P58,2:C58/P44,3:C44/P55,4:C49/P0,6:C55/P0,7:C60/P49,8:C43/P60,9:C51/P43",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "6",
+    "hasDiff": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 737,
+  "name": "DealAttempt",
+  "category": "Deck",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "uid": "51",
+    "slot": "6",
+    "placeable": "true",
+    "ok": "true",
+    "rollback": "false",
+    "caller": "TryDealCard",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 738,
+  "name": "DealResult",
+  "category": "Deck",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "uid": "51",
+    "slot": "6",
+    "placeable": "true",
+    "ok": "true",
+    "rollback": "false",
+    "caller": "TryDealCard",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 739,
+  "name": "DealAttempt",
+  "category": "Deck",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "uid": "53",
+    "slot": "4",
+    "placeable": "true",
+    "ok": "true",
+    "rollback": "false",
+    "caller": "TryDealCard",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 740,
+  "name": "DealResult",
+  "category": "Deck",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "uid": "53",
+    "slot": "4",
+    "placeable": "true",
+    "ok": "true",
+    "rollback": "false",
+    "caller": "TryDealCard",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 741,
+  "name": "HopPlan",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "plans": "58:1→2;44:2→3;55:3→6;43:9→8;60:8→7;49:7→4",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 742,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": false,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "presHash": "1:0|2:58|3:44|4:49|6:55|7:60|8:43|9:0",
+    "diffSlots": "1:C53/P0,9:C51/P0",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "6",
+    "hasDiff": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 743,
+  "name": "RegistryAudit",
+  "category": "Presentation",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "trigger": "Sync.Before",
+    "registryCount": "15",
+    "fieldCount": "6",
+    "ghosts": "",
+    "orphans": "",
+    "hasGhosts": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 744,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 102,
+  "accepted": false,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "vacated": "0",
+    "placed": "2",
+    "spawned": "2",
+    "swept": "0",
+    "vacatedUids": "",
+    "placedUids": "53,51",
+    "spawnedUids": "53,51",
+    "sweptUids": "",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 745,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "presHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "diffSlots": "",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "8",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 746,
+  "name": "RegistryAudit",
+  "category": "Presentation",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "trigger": "Sync.After",
+    "registryCount": "17",
+    "fieldCount": "8",
+    "ghosts": "",
+    "orphans": "",
+    "hasGhosts": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 747,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "phase": "drainAfter",
+    "coreHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "presHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "diffSlots": "",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "8",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 748,
+  "name": "DrainEnd",
+  "category": "Presentation",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "moves": "8",
+    "deals": "2",
+    "drainInFlight": "true",
+    "fieldBusy": "true",
+    "presentationLocked": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+
+----- Core events ANY beat with name containing Occupancy/SyncDiff/SettleUnused/PostKill/RemoveCard near 94-102 -----
+{
+  "index": 633,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 90,
+  "accepted": false,
+  "payload": {
+    "phase": "drainBefore",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:34|9:26",
+    "presHash": "1:0|2:0|3:0|4:0|6:26|7:0|8:0|9:34",
+    "diffSlots": "6:C0/P26,8:C34/P0,9:C26/P34",
+    "coreOccupantCount": "2",
+    "presOccupantCount": "2",
+    "hasDiff": "true",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 635,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 90,
+  "accepted": true,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:34|9:26",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:34|9:26",
+    "diffSlots": "",
+    "coreOccupantCount": "2",
+    "presOccupantCount": "2",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 637,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 90,
+  "accepted": true,
+  "payload": {
+    "vacated": "0",
+    "placed": "0",
+    "spawned": "0",
+    "swept": "0",
+    "vacatedUids": "",
+    "placedUids": "",
+    "spawnedUids": "",
+    "sweptUids": "",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 638,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 90,
+  "accepted": true,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:34|9:26",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:34|9:26",
+    "diffSlots": "",
+    "coreOccupantCount": "2",
+    "presOccupantCount": "2",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 640,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 90,
+  "accepted": true,
+  "payload": {
+    "phase": "drainAfter",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:34|9:26",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:34|9:26",
+    "diffSlots": "",
+    "coreOccupantCount": "2",
+    "presOccupantCount": "2",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 646,
+  "name": "PostKillBoard",
+  "category": "Deck",
+  "beatId": 93,
+  "accepted": true,
+  "payload": {
+    "moveCount": "1",
+    "dealCount": "0",
+    "drawPileCount": "0",
+    "deckEmpty": "true",
+    "enemyDrawEmpty": "true"
+  }
+}
+---
+{
+  "index": 647,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 93,
+  "accepted": true,
+  "payload": {
+    "slot": "8",
+    "uid": "34",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "2"
+  }
+}
+---
+{
+  "index": 649,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": false,
+  "payload": {
+    "phase": "drainBefore",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:0|9:26",
+    "diffSlots": "8:C26/P0,9:C0/P26",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "true",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 651,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 653,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 94,
+  "accepted": true,
+  "payload": {
+    "vacated": "0",
+    "placed": "0",
+    "spawned": "0",
+    "swept": "0",
+    "vacatedUids": "",
+    "placedUids": "",
+    "spawnedUids": "",
+    "sweptUids": "",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 654,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 656,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "payload": {
+    "phase": "drainAfter",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 658,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "payload": {
+    "slot": "8",
+    "uid": "26",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 663,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 95,
+  "accepted": false,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:0|9:0",
+    "diffSlots": "8:C26/P0",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "0",
+    "hasDiff": "true",
+    "nodeIndex": "2",
+    "batchTag": "sync"
+  }
+}
+---
+{
+  "index": 665,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 95,
+  "accepted": false,
+  "payload": {
+    "vacated": "0",
+    "placed": "1",
+    "spawned": "1",
+    "swept": "0",
+    "vacatedUids": "",
+    "placedUids": "26",
+    "spawnedUids": "26",
+    "sweptUids": "",
+    "nodeIndex": "2",
+    "batchTag": "sync"
+  }
+}
+---
+{
+  "index": 666,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 95,
+  "accepted": true,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "sync"
+  }
+}
+---
+{
+  "index": 676,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 96,
+  "accepted": true,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "sync"
+  }
+}
+---
+{
+  "index": 678,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 96,
+  "accepted": true,
+  "payload": {
+    "vacated": "0",
+    "placed": "0",
+    "spawned": "0",
+    "swept": "0",
+    "vacatedUids": "",
+    "placedUids": "",
+    "spawnedUids": "",
+    "sweptUids": "",
+    "nodeIndex": "2",
+    "batchTag": "sync"
+  }
+}
+---
+{
+  "index": 679,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 96,
+  "accepted": true,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "sync"
+  }
+}
+---
+{
+  "index": 707,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 97,
+  "accepted": true,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60",
+    "presHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60",
+    "diffSlots": "",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "8",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "opening"
+  }
+}
+---
+{
+  "index": 709,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 97,
+  "accepted": true,
+  "payload": {
+    "vacated": "0",
+    "placed": "0",
+    "spawned": "0",
+    "swept": "0",
+    "vacatedUids": "",
+    "placedUids": "",
+    "spawnedUids": "",
+    "sweptUids": "",
+    "nodeIndex": "3",
+    "batchTag": "opening"
+  }
+}
+---
+{
+  "index": 710,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 97,
+  "accepted": true,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60",
+    "presHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60",
+    "diffSlots": "",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "8",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "opening"
+  }
+}
+---
+{
+  "index": 712,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 97,
+  "accepted": true,
+  "payload": {
+    "phase": "startNodeAfter",
+    "coreHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60",
+    "presHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60",
+    "diffSlots": "",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "8",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "startNode"
+  }
+}
+---
+{
+  "index": 713,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 97,
+  "accepted": true,
+  "payload": {
+    "slot": "2",
+    "uid": "55",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "3"
+  }
+}
+---
+{
+  "index": 718,
+  "name": "PostKillBoard",
+  "category": "Deck",
+  "beatId": 100,
+  "accepted": true,
+  "payload": {
+    "moveCount": "8",
+    "dealCount": "1",
+    "drawPileCount": "12",
+    "deckEmpty": "false",
+    "enemyDrawEmpty": "false"
+  }
+}
+---
+{
+  "index": 719,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 100,
+  "accepted": true,
+  "payload": {
+    "slot": "6",
+    "uid": "59",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "3"
+  }
+}
+---
+{
+  "index": 721,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": false,
+  "payload": {
+    "phase": "drainBefore",
+    "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "presHash": "1:44|2:0|3:45|4:58|6:0|7:41|8:49|9:60",
+    "diffSlots": "1:C58/P44,2:C44/P0,3:C55/P45,4:C41/P58,7:C49/P41,8:C60/P49,9:C43/P60",
+    "coreOccupantCount": "7",
+    "presOccupantCount": "6",
+    "hasDiff": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 725,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": false,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "presHash": "1:58|2:44|3:0|4:41|6:45|7:49|8:60|9:43",
+    "diffSlots": "3:C55/P0,6:C0/P45",
+    "coreOccupantCount": "7",
+    "presOccupantCount": "7",
+    "hasDiff": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 727,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "payload": {
+    "slot": "6",
+    "uid": "45",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 728,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 101,
+  "accepted": false,
+  "payload": {
+    "vacated": "1",
+    "placed": "1",
+    "spawned": "1",
+    "swept": "0",
+    "vacatedUids": "45",
+    "placedUids": "55",
+    "spawnedUids": "55",
+    "sweptUids": "",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 729,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "presHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "diffSlots": "",
+    "coreOccupantCount": "7",
+    "presOccupantCount": "7",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 731,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "payload": {
+    "phase": "drainAfter",
+    "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "presHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "diffSlots": "",
+    "coreOccupantCount": "7",
+    "presOccupantCount": "7",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 733,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "payload": {
+    "slot": "4",
+    "uid": "41",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "3"
+  }
+}
+---
+{
+  "index": 736,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": false,
+  "payload": {
+    "phase": "drainBefore",
+    "coreHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "presHash": "1:58|2:44|3:55|4:0|6:0|7:49|8:60|9:43",
+    "diffSlots": "1:C53/P58,2:C58/P44,3:C44/P55,4:C49/P0,6:C55/P0,7:C60/P49,8:C43/P60,9:C51/P43",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "6",
+    "hasDiff": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 742,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": false,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "presHash": "1:0|2:58|3:44|4:49|6:55|7:60|8:43|9:0",
+    "diffSlots": "1:C53/P0,9:C51/P0",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "6",
+    "hasDiff": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 744,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 102,
+  "accepted": false,
+  "payload": {
+    "vacated": "0",
+    "placed": "2",
+    "spawned": "2",
+    "swept": "0",
+    "vacatedUids": "",
+    "placedUids": "53,51",
+    "spawnedUids": "53,51",
+    "sweptUids": "",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 745,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": true,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "presHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "diffSlots": "",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "8",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 747,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": true,
+  "payload": {
+    "phase": "drainAfter",
+    "coreHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "presHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "diffSlots": "",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "8",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+
+================================================================================
+TASK 7: beat 101 — was uid 45 in Core occupancy before vs after? Despawn at Card.Release?
+================================================================================
+CORE idx=721 name=OccupancySnapshot accepted=False
+{
+  "phase": "drainBefore",
+  "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+  "presHash": "1:44|2:0|3:45|4:58|6:0|7:41|8:49|9:60",
+  "diffSlots": "1:C58/P44,2:C44/P0,3:C55/P45,4:C41/P58,7:C49/P41,8:C60/P49,9:C43/P60",
+  "coreOccupantCount": "7",
+  "presOccupantCount": "6",
+  "hasDiff": "true",
+  "nodeIndex": "3",
+  "batchTag": "postKill"
+}
+---
+CORE idx=725 name=OccupancySnapshot accepted=False
+{
+  "phase": "syncBefore",
+  "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+  "presHash": "1:58|2:44|3:0|4:41|6:45|7:49|8:60|9:43",
+  "diffSlots": "3:C55/P0,6:C0/P45",
+  "coreOccupantCount": "7",
+  "presOccupantCount": "7",
+  "hasDiff": "true",
+  "nodeIndex": "3",
+  "batchTag": "postKill"
+}
+---
+CORE idx=727 name=OccupancyVacate accepted=True
+{
+  "slot": "6",
+  "uid": "45",
+  "caller": "UnregisterCardAtSlot",
+  "nodeIndex": "3",
+  "batchTag": "postKill"
+}
+---
+CORE idx=728 name=SyncDiff accepted=False
+{
+  "vacated": "1",
+  "placed": "1",
+  "spawned": "1",
+  "swept": "0",
+  "vacatedUids": "45",
+  "placedUids": "55",
+  "spawnedUids": "55",
+  "sweptUids": "",
+  "nodeIndex": "3",
+  "batchTag": "postKill"
+}
+---
+CORE idx=729 name=OccupancySnapshot accepted=True
+{
+  "phase": "syncAfter",
+  "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+  "presHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+  "diffSlots": "",
+  "coreOccupantCount": "7",
+  "presOccupantCount": "7",
+  "hasDiff": "false",
+  "nodeIndex": "3",
+  "batchTag": "postKill"
+}
+---
+CORE idx=731 name=OccupancySnapshot accepted=True
+{
+  "phase": "drainAfter",
+  "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+  "presHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+  "diffSlots": "",
+  "coreOccupantCount": "7",
+  "presOccupantCount": "7",
+  "hasDiff": "false",
+  "nodeIndex": "3",
+  "batchTag": "postKill"
+}
+---
+CORE idx=733 name=OccupancyVacate accepted=True
+{
+  "slot": "4",
+  "uid": "41",
+  "caller": "UnregisterCardAtSlot",
+  "nodeIndex": "3"
+}
+---
+
+--- Occupancy payloads mentioning card uid 45 (beats 94-102) ---
+idx=689 beat=97 name=DealAttempt accepted=True payload={"uid": "45", "slot": "3", "placeable": "true", "ok": "true", "rollback": "false", "caller": "TryDealCard", "nodeIndex": "3", "batchTag": "opening"}
+idx=690 beat=97 name=DealResult accepted=True payload={"uid": "45", "slot": "3", "placeable": "true", "ok": "true", "rollback": "false", "caller": "TryDealCard", "nodeIndex": "3", "batchTag": "opening"}
+idx=691 beat=97 name=OpeningDealProgress accepted=True payload={"uid": "45", "slot": "3", "ok": "true", "ringIndex": "2", "nodeIndex": "3", "batchTag": "opening"}
+idx=707 beat=97 name=OccupancySnapshot accepted=True payload={"phase": "syncBefore", "coreHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60", "presHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60", "diffSlots": "", "coreOccupantCount": "8", "presOccupantCount": "8", "hasDiff": "false", "nodeIndex": "3", "batchTag": "opening"}
+idx=710 beat=97 name=OccupancySnapshot accepted=True payload={"phase": "syncAfter", "coreHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60", "presHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60", "diffSlots": "", "coreOccupantCount": "8", "presOccupantCount": "8", "hasDiff": "false", "nodeIndex": "3", "batchTag": "opening"}
+idx=712 beat=97 name=OccupancySnapshot accepted=True payload={"phase": "startNodeAfter", "coreHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60", "presHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60", "diffSlots": "", "coreOccupantCount": "8", "presOccupantCount": "8", "hasDiff": "false", "nodeIndex": "3", "batchTag": "startNode"}
+idx=716 beat=100 name=GoldGained accepted=True payload={"delta": "5", "amountAfter": "45", "reason": "remove:monster.shelter_stone", "sourceDefId": "", "action": "ModifyGold"}
+idx=721 beat=101 name=OccupancySnapshot accepted=False payload={"phase": "drainBefore", "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43", "presHash": "1:44|2:0|3:45|4:58|6:0|7:41|8:49|9:60", "diffSlots": "1:C58/P44,2:C44/P0,3:C55/P45,4:C41/P58,7:C49/P41,8:C60/P49,9:C43/P60", "coreOccupantCount": "7", "presOccupantCount": "6", "hasDiff": "true", "nodeIndex": "3", "batchTag": "postKill"}
+idx=724 beat=101 name=HopPlan accepted=True payload={"plans": "44:1→2;45:3→6;43:6→9;60:9→8;49:8→7;41:7→4;58:4→1", "nodeIndex": "3", "batchTag": "postKill"}
+idx=725 beat=101 name=OccupancySnapshot accepted=False payload={"phase": "syncBefore", "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43", "presHash": "1:58|2:44|3:0|4:41|6:45|7:49|8:60|9:43", "diffSlots": "3:C55/P0,6:C0/P45", "coreOccupantCount": "7", "presOccupantCount": "7", "hasDiff": "true", "nodeIndex": "3", "batchTag": "postKill"}
+idx=727 beat=101 name=OccupancyVacate accepted=True payload={"slot": "6", "uid": "45", "caller": "UnregisterCardAtSlot", "nodeIndex": "3", "batchTag": "postKill"}
+idx=728 beat=101 name=SyncDiff accepted=False payload={"vacated": "1", "placed": "1", "spawned": "1", "swept": "0", "vacatedUids": "45", "placedUids": "55", "spawnedUids": "55", "sweptUids": "", "nodeIndex": "3", "batchTag": "postKill"}
+
+--- Perf Despawn uid=45 ---
+{
+  "index": 2146,
+  "beatId": 59,
+  "kind": "Despawn",
+  "site": "Card.Release",
+  "tMs": 89450,
+  "payload": {
+    "reason": ""
+  }
+}
+{
+  "index": 3545,
+  "beatId": 101,
+  "kind": "Despawn",
+  "site": "Card.Release",
+  "tMs": 148089,
+  "payload": {
+    "reason": ""
+  }
+}

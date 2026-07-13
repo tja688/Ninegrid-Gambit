@@ -1,0 +1,386 @@
+﻿##### uid==26 ALL in beat 90-96 #####
+{
+  "index": 2890,
+  "beatId": 90,
+  "kind": "MotionPlan",
+  "uid": 26,
+  "site": "Ground.HopPlan",
+  "tMs": 121267,
+  "payload": {
+    "fromSlot": "6",
+    "toSlot": "9",
+    "fromX": "2.06",
+    "fromY": "0",
+    "toX": "2.06",
+    "toY": "-2.5",
+    "reason": "hop",
+    "expectMs": "0"
+  }
+}
+---
+{
+  "index": 2892,
+  "beatId": 90,
+  "kind": "MotionBegin",
+  "uid": 26,
+  "site": "DeckTween.Hop",
+  "tMs": 121267,
+  "payload": {
+    "motionId": "725",
+    "fromX": "2.06",
+    "fromY": "0",
+    "toX": "2.06",
+    "toY": "-2.5",
+    "reason": "hop",
+    "expectMs": "349"
+  }
+}
+---
+{
+  "index": 2895,
+  "beatId": 90,
+  "kind": "MotionEnd",
+  "uid": 26,
+  "site": "DeckTween.Hop",
+  "tMs": 121616,
+  "payload": {
+    "motionId": "725",
+    "endHow": "complete",
+    "x": "2.06",
+    "y": "-2.5",
+    "killedBySite": ""
+  }
+}
+---
+{
+  "index": 2898,
+  "beatId": 90,
+  "kind": "MotionEnd",
+  "uid": 26,
+  "site": "DeckTween.Hop",
+  "tMs": 121616,
+  "payload": {
+    "motionId": "725",
+    "endHow": "kill",
+    "x": "2.06",
+    "y": "-2.5",
+    "killedBySite": "DeckTween.Kill"
+  }
+}
+---
+{
+  "index": 2948,
+  "beatId": 94,
+  "kind": "MotionPlan",
+  "uid": 26,
+  "site": "Ground.HopPlan",
+  "tMs": 124729,
+  "payload": {
+    "fromSlot": "9",
+    "toSlot": "8",
+    "fromX": "2.06",
+    "fromY": "-2.5",
+    "toX": "0",
+    "toY": "-2.5",
+    "reason": "hop",
+    "expectMs": "0"
+  }
+}
+---
+{
+  "index": 2949,
+  "beatId": 94,
+  "kind": "MotionBegin",
+  "uid": 26,
+  "site": "DeckTween.Hop",
+  "tMs": 124729,
+  "payload": {
+    "motionId": "733",
+    "fromX": "2.06",
+    "fromY": "-2.5",
+    "toX": "0",
+    "toY": "-2.5",
+    "reason": "hop",
+    "expectMs": "349"
+  }
+}
+---
+{
+  "index": 2951,
+  "beatId": 94,
+  "kind": "MotionEnd",
+  "uid": 26,
+  "site": "DeckTween.Hop",
+  "tMs": 125077,
+  "payload": {
+    "motionId": "733",
+    "endHow": "complete",
+    "x": "0",
+    "y": "-2.5",
+    "killedBySite": ""
+  }
+}
+---
+{
+  "index": 2952,
+  "beatId": 94,
+  "kind": "MotionEnd",
+  "uid": 26,
+  "site": "DeckTween.Hop",
+  "tMs": 125077,
+  "payload": {
+    "motionId": "733",
+    "endHow": "kill",
+    "x": "0",
+    "y": "-2.5",
+    "killedBySite": "DeckTween.Kill"
+  }
+}
+---
+{
+  "index": 2955,
+  "beatId": 94,
+  "kind": "Vacate",
+  "uid": 26,
+  "site": "Ground.Vacate",
+  "tMs": 125079,
+  "payload": {
+    "slot": "8",
+    "caller": ""
+  }
+}
+---
+{
+  "index": 2964,
+  "beatId": 94,
+  "kind": "Anomaly",
+  "uid": 26,
+  "site": "Anomaly.Detect",
+  "tMs": 125082,
+  "payload": {
+    "code": "ViewWithoutFieldOccupancy",
+    "detail": "mode=GroundCardMode noFieldSlot",
+    "refIndex": "-1"
+  }
+}
+---
+{
+  "index": 2965,
+  "beatId": 94,
+  "kind": "Anomaly",
+  "uid": 26,
+  "site": "Anomaly.Detect",
+  "tMs": 125082,
+  "payload": {
+    "code": "OrphanAtWrongAnchor",
+    "detail": "emptySlot=8 cardSlot=-1 at empty anchor",
+    "refIndex": "-1"
+  }
+}
+---
+{
+  "index": 2972,
+  "beatId": 94,
+  "kind": "VisChange",
+  "uid": 26,
+  "site": "Card.DisplayMode",
+  "tMs": 125359,
+  "payload": {
+    "active": "1",
+    "alpha": "",
+    "mode": "RemovedMode",
+    "renderOn": "1",
+    "sortOrder": "20"
+  }
+}
+---
+{
+  "index": 2975,
+  "beatId": 94,
+  "kind": "Despawn",
+  "uid": 26,
+  "site": "Card.Release",
+  "tMs": 125540,
+  "payload": {
+    "reason": ""
+  }
+}
+---
+{
+  "index": 2979,
+  "beatId": 95,
+  "kind": "VisChange",
+  "uid": 26,
+  "site": "Card.DisplayMode",
+  "tMs": 127692,
+  "payload": {
+    "active": "1",
+    "alpha": "",
+    "mode": "GroundCardMode",
+    "renderOn": "1",
+    "sortOrder": "-10"
+  }
+}
+---
+{
+  "index": 2980,
+  "beatId": 95,
+  "kind": "Spawn",
+  "uid": 26,
+  "site": "Card.Spawn",
+  "tMs": 127692,
+  "payload": {
+    "defId": "help.throwing_knife",
+    "slot": "",
+    "parent": "Cards"
+  }
+}
+---
+{
+  "index": 2981,
+  "beatId": 95,
+  "kind": "SnapSet",
+  "uid": 26,
+  "site": "Ground.Place.Snap",
+  "tMs": 127692,
+  "payload": {
+    "x": "0",
+    "y": "-2.5",
+    "slot": "8",
+    "killedTween": "1",
+    "reason": "placeAtAnchor"
+  }
+}
+---
+{
+  "index": 3012,
+  "beatId": 96,
+  "kind": "Despawn",
+  "uid": 26,
+  "site": "Card.Release",
+  "tMs": 133005,
+  "payload": {
+    "reason": ""
+  }
+}
+---
+##### BoardSnap with card 26 in beat 90-96 #####
+{
+  "index": 2889,
+  "beatId": 90,
+  "kind": "BoardSnap",
+  "site": "BoardSnap.Capture",
+  "tMs": 121267,
+  "phase": "beatOpen",
+  "cards": "27,slot=-1,xy=4.78,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0;1,slot=5,xy=0,0,active=1,fieldDead=0,mode=GroundCardMode,tween=0;26,slot=6,xy=2.06,0,active=1,fieldDead=0,mode=GroundCardMode,tween=0;34,slot=9,xy=2.06,-2.5,active=1,fieldDead=0,mode=GroundCardMode,tween=0;23,slot=-1,xy=5.78,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0;21,slot=-1,xy=5.12,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0;31,slot=-1,xy=0,-82.5,active=1,fieldDead=1,mode=RemovedMode,tween=0;25,slot=-1,xy=5.47,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0"
+}
+---
+{
+  "index": 2901,
+  "beatId": 90,
+  "kind": "BoardSnap",
+  "site": "BoardSnap.Capture",
+  "tMs": 121617,
+  "phase": "beatClose",
+  "cards": "~26 slot=6→9 xy=2.06,0→2.06,-2.5 active=1 fieldDead=0 tween=0 mode=GroundCardMode;~34 slot=9→8 xy=2.06,-2.5→0,-2.5 active=1 fieldDead=0 tween=0 mode=GroundCardMode;-31"
+}
+---
+{
+  "index": 2905,
+  "beatId": 91,
+  "kind": "BoardSnap",
+  "site": "BoardSnap.Capture",
+  "tMs": 121754,
+  "phase": "beatOpen",
+  "cards": "27,slot=-1,xy=4.78,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0;1,slot=5,xy=0,0,active=1,fieldDead=0,mode=GroundCardMode,tween=0;26,slot=9,xy=2.06,-2.5,active=1,fieldDead=0,mode=GroundCardMode,tween=0;34,slot=8,xy=0,-2.5,active=1,fieldDead=0,mode=GroundCardMode,tween=0;23,slot=-1,xy=5.78,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0;21,slot=-1,xy=5.12,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0;25,slot=-1,xy=5.47,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0"
+}
+---
+{
+  "index": 2918,
+  "beatId": 92,
+  "kind": "BoardSnap",
+  "site": "BoardSnap.Capture",
+  "tMs": 122655,
+  "phase": "beatOpen",
+  "cards": "27,slot=-1,xy=4.78,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0;1,slot=5,xy=0,0,active=1,fieldDead=0,mode=GroundCardMode,tween=0;26,slot=9,xy=2.06,-2.5,active=1,fieldDead=0,mode=GroundCardMode,tween=0;34,slot=8,xy=0,-2.5,active=1,fieldDead=0,mode=GroundCardMode,tween=0;23,slot=-1,xy=5.78,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0;21,slot=-1,xy=5.12,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0;25,slot=-1,xy=5.47,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0"
+}
+---
+{
+  "index": 2932,
+  "beatId": 93,
+  "kind": "BoardSnap",
+  "site": "BoardSnap.Capture",
+  "tMs": 123829,
+  "phase": "beatOpen",
+  "cards": "27,slot=-1,xy=4.78,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0;1,slot=5,xy=0,0,active=1,fieldDead=0,mode=GroundCardMode,tween=0;26,slot=9,xy=2.06,-2.5,active=1,fieldDead=0,mode=GroundCardMode,tween=0;34,slot=8,xy=0,-2.5,active=1,fieldDead=0,mode=GroundCardMode,tween=0;23,slot=-1,xy=5.78,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0;21,slot=-1,xy=5.12,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0;25,slot=-1,xy=5.47,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0"
+}
+---
+{
+  "index": 2947,
+  "beatId": 94,
+  "kind": "BoardSnap",
+  "site": "BoardSnap.Capture",
+  "tMs": 124729,
+  "phase": "beatOpen",
+  "cards": "27,slot=-1,xy=4.78,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0;1,slot=5,xy=0,0,active=1,fieldDead=0,mode=GroundCardMode,tween=0;26,slot=9,xy=2.06,-2.5,active=1,fieldDead=0,mode=GroundCardMode,tween=0;34,slot=-1,xy=0,-82.5,active=1,fieldDead=1,mode=RemovedMode,tween=0;23,slot=-1,xy=5.78,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0;21,slot=-1,xy=5.12,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0;25,slot=-1,xy=5.47,-2.94,active=1,fieldDead=0,mode=HandCardMode,tween=0"
+}
+---
+{
+  "index": 2963,
+  "beatId": 94,
+  "kind": "BoardSnap",
+  "site": "BoardSnap.Capture",
+  "tMs": 125082,
+  "phase": "beatClose",
+  "cards": "~27 slot=-1→-1 xy=4.78,-2.94→4.78,-2.94 active=1 fieldDead=0 tween=0 mode=RemovedMode;~26 slot=9→-1 xy=2.06,-2.5→0,-2.5 active=1 fieldDead=0 tween=0 mode=GroundCardMode;+47,slot=-1,xy=-1.1,0.5,active=1,fieldDead=0,mode=RemovedMode,tween=0;+48,slot=-1,xy=0,0.5,active=1,fieldDead=0,mode=RemovedMode,tween=0;+49,slot=-1,xy=1.1,0.5,active=1,fieldDead=0,mode=RemovedMode,tween=0;-34"
+}
+---
+{
+  "index": 2983,
+  "beatId": 95,
+  "kind": "BoardSnap",
+  "site": "BoardSnap.Capture",
+  "tMs": 127692,
+  "phase": "beatClose",
+  "cards": "+26,slot=8,xy=0,-2.5,active=1,fieldDead=0,mode=GroundCardMode,tween=0"
+}
+---
+{
+  "index": 3001,
+  "beatId": 96,
+  "kind": "BoardSnap",
+  "site": "BoardSnap.Capture",
+  "tMs": 133004,
+  "phase": "beatOpen",
+  "cards": "1,slot=5,xy=0,0,active=1,fieldDead=0,mode=GroundCardMode,tween=0;26,slot=8,xy=0,-2.5,active=1,fieldDead=0,mode=GroundCardMode,tween=0;52,slot=-1,xy=-2.15,0.5,active=1,fieldDead=0,mode=RemovedMode,tween=0;53,slot=-1,xy=-1.05,0.5,active=1,fieldDead=0,mode=RemovedMode,tween=0;55,slot=-1,xy=4.35,0.5,active=1,fieldDead=0,mode=RemovedMode,tween=0;51,slot=-1,xy=-3.25,0.5,active=1,fieldDead=0,mode=RemovedMode,tween=0;50,slot=-1,xy=-4.35,0.5,active=1,fieldDead=0,mode=RemovedMode,tween=0;54,slot=-1,xy=1.65,0.79,active=1,fieldDead=0,mode=RemovedMode,tween=0"
+}
+---
+##### RegistryMiss / Anomaly involving uid 26 beat 90-96 #####
+{
+  "index": 2964,
+  "beatId": 94,
+  "kind": "Anomaly",
+  "uid": 26,
+  "site": "Anomaly.Detect",
+  "tMs": 125082,
+  "payload": {
+    "code": "ViewWithoutFieldOccupancy",
+    "detail": "mode=GroundCardMode noFieldSlot",
+    "refIndex": "-1"
+  }
+}
+---
+{
+  "index": 2965,
+  "beatId": 94,
+  "kind": "Anomaly",
+  "uid": 26,
+  "site": "Anomaly.Detect",
+  "tMs": 125082,
+  "payload": {
+    "code": "OrphanAtWrongAnchor",
+    "detail": "emptySlot=8 cardSlot=-1 at empty anchor",
+    "refIndex": "-1"
+  }
+}
+---

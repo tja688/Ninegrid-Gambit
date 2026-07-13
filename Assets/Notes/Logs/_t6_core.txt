@@ -1,0 +1,1738 @@
+Core name counts: {
+  "OccupancySnapshot": 183,
+  "RegistryAudit": 106,
+  "SyncDiff": 53,
+  "CombatHitSummary": 49,
+  "DealAttempt": 47,
+  "DealResult": 47,
+  "OccupancyVacate": 40,
+  "DrainBegin": 37,
+  "DrainEnd": 37,
+  "HopPlan": 36,
+  "OpeningDealProgress": 24,
+  "GoldGained": 23,
+  "PostKillBoard": 21,
+  "HandAcquire": 16,
+  "SetState": 9,
+  "RewardChosen": 6,
+  "RewardPresented": 4,
+  "StartNode": 3,
+  "RoomPresented": 2,
+  "RoomChosen": 2,
+  "EnterRoom": 2,
+  "StartRun": 1,
+  "GoldSpent": 1
+}
+\n##### CORE ALL beatId=94 #####
+{
+  "index": 648,
+  "name": "DrainBegin",
+  "category": "Presentation",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "moves": "1",
+    "deals": "0",
+    "drainInFlight": "true",
+    "fieldBusy": "true",
+    "presentationLocked": "true",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 649,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": false,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "phase": "drainBefore",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:0|9:26",
+    "diffSlots": "8:C26/P0,9:C0/P26",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "true",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 650,
+  "name": "HopPlan",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "plans": "26:9→8",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 651,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 652,
+  "name": "RegistryAudit",
+  "category": "Presentation",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "trigger": "Sync.Before",
+    "registryCount": "6",
+    "fieldCount": "1",
+    "ghosts": "",
+    "orphans": "",
+    "hasGhosts": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 653,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "vacated": "0",
+    "placed": "0",
+    "spawned": "0",
+    "swept": "0",
+    "vacatedUids": "",
+    "placedUids": "",
+    "spawnedUids": "",
+    "sweptUids": "",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 654,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 655,
+  "name": "RegistryAudit",
+  "category": "Presentation",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "trigger": "Sync.After",
+    "registryCount": "6",
+    "fieldCount": "1",
+    "ghosts": "",
+    "orphans": "",
+    "hasGhosts": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 656,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "phase": "drainAfter",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 657,
+  "name": "DrainEnd",
+  "category": "Presentation",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "moves": "1",
+    "deals": "0",
+    "drainInFlight": "true",
+    "fieldBusy": "true",
+    "presentationLocked": "true",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 658,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "slot": "8",
+    "uid": "26",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 659,
+  "name": "SetState",
+  "category": "Loop",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "RewardChoice",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": -1,
+  "payload": {
+    "from": "BattleStub",
+    "to": "RewardChoice",
+    "nodeIndex": "2"
+  }
+}
+---
+{
+  "index": 660,
+  "name": "RewardPresented",
+  "category": "CoreGate",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "RewardChoice",
+  "phaseBefore": "RewardItemChoice",
+  "phaseAfter": "",
+  "refBattleOpIndex": -1,
+  "payload": {
+    "optionCount": "3",
+    "options": "help.blood_conversion,help.bomb,help.rotation_wheel",
+    "nodeIndex": "2",
+    "source": "nodeClear"
+  }
+}
+---
+{
+  "index": 661,
+  "name": "GoldGained",
+  "category": "Economy",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 67,
+  "payload": {
+    "delta": "50",
+    "amountAfter": "190",
+    "reason": "unusedHelpCards",
+    "sourceDefId": "",
+    "action": "ModifyGold"
+  }
+}
+---
+{
+  "index": 662,
+  "name": "RewardChosen",
+  "category": "CoreGate",
+  "beatId": 94,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "RewardItemChoice",
+  "phaseAfter": "RoomChoice",
+  "refBattleOpIndex": -1,
+  "payload": {
+    "kind": "select",
+    "defId": "help.blood_conversion",
+    "index": "0",
+    "reason": ""
+  }
+}
+---
+\n##### CORE ALL beatId=100 #####
+{
+  "index": 716,
+  "name": "GoldGained",
+  "category": "Economy",
+  "beatId": 100,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 70,
+  "payload": {
+    "delta": "5",
+    "amountAfter": "45",
+    "reason": "remove:monster.shelter_stone",
+    "sourceDefId": "",
+    "action": "ModifyGold"
+  }
+}
+---
+{
+  "index": 717,
+  "name": "CombatHitSummary",
+  "category": "CombatSummary",
+  "beatId": 100,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "InteractionLoop",
+  "phaseAfter": "InteractionLoop",
+  "refBattleOpIndex": 71,
+  "payload": {
+    "reason": "PlayerAttack",
+    "attackerDefId": "avatar.default",
+    "targetDefId": "monster.shelter_stone",
+    "attackerUid": "1",
+    "targetUid": "59",
+    "damage": "5",
+    "targetKilled": "true",
+    "avatarDefeated": "false",
+    "avatarHpAfter": "10"
+  }
+}
+---
+{
+  "index": 718,
+  "name": "PostKillBoard",
+  "category": "Deck",
+  "beatId": 100,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "InteractionLoop",
+  "phaseAfter": "InteractionLoop",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "moveCount": "8",
+    "dealCount": "1",
+    "drawPileCount": "12",
+    "deckEmpty": "false",
+    "enemyDrawEmpty": "false"
+  }
+}
+---
+{
+  "index": 719,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 100,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "slot": "6",
+    "uid": "59",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "3"
+  }
+}
+---
+\n##### CORE ALL beatId=101 #####
+{
+  "index": 720,
+  "name": "DrainBegin",
+  "category": "Presentation",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "moves": "8",
+    "deals": "1",
+    "drainInFlight": "true",
+    "fieldBusy": "true",
+    "presentationLocked": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 721,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": false,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "phase": "drainBefore",
+    "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "presHash": "1:44|2:0|3:45|4:58|6:0|7:41|8:49|9:60",
+    "diffSlots": "1:C58/P44,2:C44/P0,3:C55/P45,4:C41/P58,7:C49/P41,8:C60/P49,9:C43/P60",
+    "coreOccupantCount": "7",
+    "presOccupantCount": "6",
+    "hasDiff": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 722,
+  "name": "DealAttempt",
+  "category": "Deck",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "uid": "43",
+    "slot": "6",
+    "placeable": "true",
+    "ok": "true",
+    "rollback": "false",
+    "caller": "TryDealCard",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 723,
+  "name": "DealResult",
+  "category": "Deck",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "uid": "43",
+    "slot": "6",
+    "placeable": "true",
+    "ok": "true",
+    "rollback": "false",
+    "caller": "TryDealCard",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 724,
+  "name": "HopPlan",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "plans": "44:1→2;45:3→6;43:6→9;60:9→8;49:8→7;41:7→4;58:4→1",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 725,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": false,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "presHash": "1:58|2:44|3:0|4:41|6:45|7:49|8:60|9:43",
+    "diffSlots": "3:C55/P0,6:C0/P45",
+    "coreOccupantCount": "7",
+    "presOccupantCount": "7",
+    "hasDiff": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 726,
+  "name": "RegistryAudit",
+  "category": "Presentation",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "trigger": "Sync.Before",
+    "registryCount": "15",
+    "fieldCount": "7",
+    "ghosts": "",
+    "orphans": "",
+    "hasGhosts": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 727,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "slot": "6",
+    "uid": "45",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 728,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 101,
+  "accepted": false,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "vacated": "1",
+    "placed": "1",
+    "spawned": "1",
+    "swept": "0",
+    "vacatedUids": "45",
+    "placedUids": "55",
+    "spawnedUids": "55",
+    "sweptUids": "",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 729,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "presHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "diffSlots": "",
+    "coreOccupantCount": "7",
+    "presOccupantCount": "7",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 730,
+  "name": "RegistryAudit",
+  "category": "Presentation",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "trigger": "Sync.After",
+    "registryCount": "15",
+    "fieldCount": "7",
+    "ghosts": "",
+    "orphans": "",
+    "hasGhosts": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 731,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "phase": "drainAfter",
+    "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "presHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "diffSlots": "",
+    "coreOccupantCount": "7",
+    "presOccupantCount": "7",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 732,
+  "name": "DrainEnd",
+  "category": "Presentation",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "moves": "8",
+    "deals": "1",
+    "drainInFlight": "true",
+    "fieldBusy": "true",
+    "presentationLocked": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 733,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "slot": "4",
+    "uid": "41",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "3"
+  }
+}
+---
+{
+  "index": 734,
+  "name": "HandAcquire",
+  "category": "Hand",
+  "beatId": 101,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "uid": "41",
+    "phase": "acquire",
+    "handContains": "true",
+    "displayMode": "HandCardMode",
+    "nodeIndex": "3"
+  }
+}
+---
+\n##### CORE ALL beatId=102 #####
+{
+  "index": 735,
+  "name": "DrainBegin",
+  "category": "Presentation",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "moves": "8",
+    "deals": "2",
+    "drainInFlight": "true",
+    "fieldBusy": "true",
+    "presentationLocked": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 736,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": false,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "phase": "drainBefore",
+    "coreHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "presHash": "1:58|2:44|3:55|4:0|6:0|7:49|8:60|9:43",
+    "diffSlots": "1:C53/P58,2:C58/P44,3:C44/P55,4:C49/P0,6:C55/P0,7:C60/P49,8:C43/P60,9:C51/P43",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "6",
+    "hasDiff": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 737,
+  "name": "DealAttempt",
+  "category": "Deck",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "uid": "51",
+    "slot": "6",
+    "placeable": "true",
+    "ok": "true",
+    "rollback": "false",
+    "caller": "TryDealCard",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 738,
+  "name": "DealResult",
+  "category": "Deck",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "uid": "51",
+    "slot": "6",
+    "placeable": "true",
+    "ok": "true",
+    "rollback": "false",
+    "caller": "TryDealCard",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 739,
+  "name": "DealAttempt",
+  "category": "Deck",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "uid": "53",
+    "slot": "4",
+    "placeable": "true",
+    "ok": "true",
+    "rollback": "false",
+    "caller": "TryDealCard",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 740,
+  "name": "DealResult",
+  "category": "Deck",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "uid": "53",
+    "slot": "4",
+    "placeable": "true",
+    "ok": "true",
+    "rollback": "false",
+    "caller": "TryDealCard",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 741,
+  "name": "HopPlan",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "plans": "58:1→2;44:2→3;55:3→6;43:9→8;60:8→7;49:7→4",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 742,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": false,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "presHash": "1:0|2:58|3:44|4:49|6:55|7:60|8:43|9:0",
+    "diffSlots": "1:C53/P0,9:C51/P0",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "6",
+    "hasDiff": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 743,
+  "name": "RegistryAudit",
+  "category": "Presentation",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "trigger": "Sync.Before",
+    "registryCount": "15",
+    "fieldCount": "6",
+    "ghosts": "",
+    "orphans": "",
+    "hasGhosts": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 744,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 102,
+  "accepted": false,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "vacated": "0",
+    "placed": "2",
+    "spawned": "2",
+    "swept": "0",
+    "vacatedUids": "",
+    "placedUids": "53,51",
+    "spawnedUids": "53,51",
+    "sweptUids": "",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 745,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "presHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "diffSlots": "",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "8",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 746,
+  "name": "RegistryAudit",
+  "category": "Presentation",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "trigger": "Sync.After",
+    "registryCount": "17",
+    "fieldCount": "8",
+    "ghosts": "",
+    "orphans": "",
+    "hasGhosts": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 747,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "phase": "drainAfter",
+    "coreHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "presHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "diffSlots": "",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "8",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 748,
+  "name": "DrainEnd",
+  "category": "Presentation",
+  "beatId": 102,
+  "accepted": true,
+  "loopState": "",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "refBattleOpIndex": 72,
+  "payload": {
+    "moves": "8",
+    "deals": "2",
+    "drainInFlight": "true",
+    "fieldBusy": "true",
+    "presentationLocked": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+\n##### CORE interest names beats 90-105 #####
+{
+  "index": 633,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 90,
+  "accepted": false,
+  "payload": {
+    "phase": "drainBefore",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:34|9:26",
+    "presHash": "1:0|2:0|3:0|4:0|6:26|7:0|8:0|9:34",
+    "diffSlots": "6:C0/P26,8:C34/P0,9:C26/P34",
+    "coreOccupantCount": "2",
+    "presOccupantCount": "2",
+    "hasDiff": "true",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 635,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 90,
+  "accepted": true,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:34|9:26",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:34|9:26",
+    "diffSlots": "",
+    "coreOccupantCount": "2",
+    "presOccupantCount": "2",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 637,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 90,
+  "accepted": true,
+  "payload": {
+    "vacated": "0",
+    "placed": "0",
+    "spawned": "0",
+    "swept": "0",
+    "vacatedUids": "",
+    "placedUids": "",
+    "spawnedUids": "",
+    "sweptUids": "",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 638,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 90,
+  "accepted": true,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:34|9:26",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:34|9:26",
+    "diffSlots": "",
+    "coreOccupantCount": "2",
+    "presOccupantCount": "2",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 640,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 90,
+  "accepted": true,
+  "payload": {
+    "phase": "drainAfter",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:34|9:26",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:34|9:26",
+    "diffSlots": "",
+    "coreOccupantCount": "2",
+    "presOccupantCount": "2",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 646,
+  "name": "PostKillBoard",
+  "category": "Deck",
+  "beatId": 93,
+  "accepted": true,
+  "payload": {
+    "moveCount": "1",
+    "dealCount": "0",
+    "drawPileCount": "0",
+    "deckEmpty": "true",
+    "enemyDrawEmpty": "true"
+  }
+}
+---
+{
+  "index": 647,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 93,
+  "accepted": true,
+  "payload": {
+    "slot": "8",
+    "uid": "34",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "2"
+  }
+}
+---
+{
+  "index": 649,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": false,
+  "payload": {
+    "phase": "drainBefore",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:0|9:26",
+    "diffSlots": "8:C26/P0,9:C0/P26",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "true",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 651,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 653,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 94,
+  "accepted": true,
+  "payload": {
+    "vacated": "0",
+    "placed": "0",
+    "spawned": "0",
+    "swept": "0",
+    "vacatedUids": "",
+    "placedUids": "",
+    "spawnedUids": "",
+    "sweptUids": "",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 654,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 656,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "payload": {
+    "phase": "drainAfter",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 658,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 94,
+  "accepted": true,
+  "payload": {
+    "slot": "8",
+    "uid": "26",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "2",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 663,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 95,
+  "accepted": false,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:0|9:0",
+    "diffSlots": "8:C26/P0",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "0",
+    "hasDiff": "true",
+    "nodeIndex": "2",
+    "batchTag": "sync"
+  }
+}
+---
+{
+  "index": 665,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 95,
+  "accepted": false,
+  "payload": {
+    "vacated": "0",
+    "placed": "1",
+    "spawned": "1",
+    "swept": "0",
+    "vacatedUids": "",
+    "placedUids": "26",
+    "spawnedUids": "26",
+    "sweptUids": "",
+    "nodeIndex": "2",
+    "batchTag": "sync"
+  }
+}
+---
+{
+  "index": 666,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 95,
+  "accepted": true,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "sync"
+  }
+}
+---
+{
+  "index": 676,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 96,
+  "accepted": true,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "sync"
+  }
+}
+---
+{
+  "index": 678,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 96,
+  "accepted": true,
+  "payload": {
+    "vacated": "0",
+    "placed": "0",
+    "spawned": "0",
+    "swept": "0",
+    "vacatedUids": "",
+    "placedUids": "",
+    "spawnedUids": "",
+    "sweptUids": "",
+    "nodeIndex": "2",
+    "batchTag": "sync"
+  }
+}
+---
+{
+  "index": 679,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 96,
+  "accepted": true,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "presHash": "1:0|2:0|3:0|4:0|6:0|7:0|8:26|9:0",
+    "diffSlots": "",
+    "coreOccupantCount": "1",
+    "presOccupantCount": "1",
+    "hasDiff": "false",
+    "nodeIndex": "2",
+    "batchTag": "sync"
+  }
+}
+---
+{
+  "index": 707,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 97,
+  "accepted": true,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60",
+    "presHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60",
+    "diffSlots": "",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "8",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "opening"
+  }
+}
+---
+{
+  "index": 709,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 97,
+  "accepted": true,
+  "payload": {
+    "vacated": "0",
+    "placed": "0",
+    "spawned": "0",
+    "swept": "0",
+    "vacatedUids": "",
+    "placedUids": "",
+    "spawnedUids": "",
+    "sweptUids": "",
+    "nodeIndex": "3",
+    "batchTag": "opening"
+  }
+}
+---
+{
+  "index": 710,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 97,
+  "accepted": true,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60",
+    "presHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60",
+    "diffSlots": "",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "8",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "opening"
+  }
+}
+---
+{
+  "index": 712,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 97,
+  "accepted": true,
+  "payload": {
+    "phase": "startNodeAfter",
+    "coreHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60",
+    "presHash": "1:44|2:55|3:45|4:58|6:59|7:41|8:49|9:60",
+    "diffSlots": "",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "8",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "startNode"
+  }
+}
+---
+{
+  "index": 713,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 97,
+  "accepted": true,
+  "payload": {
+    "slot": "2",
+    "uid": "55",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "3"
+  }
+}
+---
+{
+  "index": 718,
+  "name": "PostKillBoard",
+  "category": "Deck",
+  "beatId": 100,
+  "accepted": true,
+  "payload": {
+    "moveCount": "8",
+    "dealCount": "1",
+    "drawPileCount": "12",
+    "deckEmpty": "false",
+    "enemyDrawEmpty": "false"
+  }
+}
+---
+{
+  "index": 719,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 100,
+  "accepted": true,
+  "payload": {
+    "slot": "6",
+    "uid": "59",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "3"
+  }
+}
+---
+{
+  "index": 721,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": false,
+  "payload": {
+    "phase": "drainBefore",
+    "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "presHash": "1:44|2:0|3:45|4:58|6:0|7:41|8:49|9:60",
+    "diffSlots": "1:C58/P44,2:C44/P0,3:C55/P45,4:C41/P58,7:C49/P41,8:C60/P49,9:C43/P60",
+    "coreOccupantCount": "7",
+    "presOccupantCount": "6",
+    "hasDiff": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 725,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": false,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "presHash": "1:58|2:44|3:0|4:41|6:45|7:49|8:60|9:43",
+    "diffSlots": "3:C55/P0,6:C0/P45",
+    "coreOccupantCount": "7",
+    "presOccupantCount": "7",
+    "hasDiff": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 727,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "payload": {
+    "slot": "6",
+    "uid": "45",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 728,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 101,
+  "accepted": false,
+  "payload": {
+    "vacated": "1",
+    "placed": "1",
+    "spawned": "1",
+    "swept": "0",
+    "vacatedUids": "45",
+    "placedUids": "55",
+    "spawnedUids": "55",
+    "sweptUids": "",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 729,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "presHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "diffSlots": "",
+    "coreOccupantCount": "7",
+    "presOccupantCount": "7",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 731,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "payload": {
+    "phase": "drainAfter",
+    "coreHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "presHash": "1:58|2:44|3:55|4:41|6:0|7:49|8:60|9:43",
+    "diffSlots": "",
+    "coreOccupantCount": "7",
+    "presOccupantCount": "7",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 733,
+  "name": "OccupancyVacate",
+  "category": "Field",
+  "beatId": 101,
+  "accepted": true,
+  "payload": {
+    "slot": "4",
+    "uid": "41",
+    "caller": "UnregisterCardAtSlot",
+    "nodeIndex": "3"
+  }
+}
+---
+{
+  "index": 736,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": false,
+  "payload": {
+    "phase": "drainBefore",
+    "coreHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "presHash": "1:58|2:44|3:55|4:0|6:0|7:49|8:60|9:43",
+    "diffSlots": "1:C53/P58,2:C58/P44,3:C44/P55,4:C49/P0,6:C55/P0,7:C60/P49,8:C43/P60,9:C51/P43",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "6",
+    "hasDiff": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 742,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": false,
+  "payload": {
+    "phase": "syncBefore",
+    "coreHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "presHash": "1:0|2:58|3:44|4:49|6:55|7:60|8:43|9:0",
+    "diffSlots": "1:C53/P0,9:C51/P0",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "6",
+    "hasDiff": "true",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 744,
+  "name": "SyncDiff",
+  "category": "Presentation",
+  "beatId": 102,
+  "accepted": false,
+  "payload": {
+    "vacated": "0",
+    "placed": "2",
+    "spawned": "2",
+    "swept": "0",
+    "vacatedUids": "",
+    "placedUids": "53,51",
+    "spawnedUids": "53,51",
+    "sweptUids": "",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 745,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": true,
+  "payload": {
+    "phase": "syncAfter",
+    "coreHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "presHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "diffSlots": "",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "8",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---
+{
+  "index": 747,
+  "name": "OccupancySnapshot",
+  "category": "Field",
+  "beatId": 102,
+  "accepted": true,
+  "payload": {
+    "phase": "drainAfter",
+    "coreHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "presHash": "1:53|2:58|3:44|4:49|6:55|7:60|8:43|9:51",
+    "diffSlots": "",
+    "coreOccupantCount": "8",
+    "presOccupantCount": "8",
+    "hasDiff": "false",
+    "nodeIndex": "3",
+    "batchTag": "postKill"
+  }
+}
+---

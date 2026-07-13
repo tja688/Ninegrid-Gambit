@@ -36,8 +36,8 @@
   <Project Path="Febucci.Attributes.Runtime.csproj" />
   <Project Path="Febucci.TextAnimatorForUnity.Input.Runtime.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
-  <Project Path="Lofelt.NiceVibrations.csproj" />
   <Project Path="NineGrid.Cards.Tests.csproj" />
+  <Project Path="Lofelt.NiceVibrations.csproj" />
   <Project Path="UniTask.Editor.csproj" />
   <Project Path="Sirenix.OdinInspector.Modules.UnityMathematics.csproj" />
   <Project Path="UniTask.DOTween.csproj" />

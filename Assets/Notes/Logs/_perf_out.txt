@@ -1,0 +1,110 @@
+﻿
+========================================================================
+PERFLOG 141249 perflog-20260712-141249-seed1.json
+sessionId=20260712-141249 seed=1
+Total events: 3060
+Kind counts: {'MotionEnd': 960, 'MotionBegin': 778, 'BoardSnap': 196, 'VisChange': 194, 'MotionPlan': 178, 'CombatHitFrame': 112, 'SnapSet': 110, 'BeatOpen': 98, 'BeatClose': 98, 'RegistryAudit': 84, 'Spawn': 65, 'BattleBind': 56, 'Despawn': 51, 'Vacate': 37, 'Anomaly': 25, 'DeathCallback': 14, 'RegistryMiss': 4}
+
+--- Anomaly events (25) ---
+{"index": 346, "beatId": 1, "tMs": 3439, "uid": 11, "code": "MissingMotionEnd", "detail": "open motionId=149 at beat close", "refIndex": "331"}
+{"index": 347, "beatId": 1, "tMs": 3439, "uid": 7, "code": "MissingMotionEnd", "detail": "open motionId=151 at beat close", "refIndex": "335"}
+{"index": 348, "beatId": 1, "tMs": 3439, "uid": 14, "code": "MissingMotionEnd", "detail": "open motionId=148 at beat close", "refIndex": "329"}
+{"index": 349, "beatId": 1, "tMs": 3439, "uid": 3, "code": "MissingMotionEnd", "detail": "open motionId=150 at beat close", "refIndex": "333"}
+{"index": 350, "beatId": 1, "tMs": 3439, "uid": 17, "code": "MissingMotionEnd", "detail": "open motionId=147 at beat close", "refIndex": "327"}
+{"index": 351, "beatId": 1, "tMs": 3439, "uid": 18, "code": "MissingMotionEnd", "detail": "open motionId=146 at beat close", "refIndex": "325"}
+{"index": 352, "beatId": 1, "tMs": 3439, "uid": 9, "code": "MissingMotionEnd", "detail": "open motionId=145 at beat close", "refIndex": "323"}
+{"index": 353, "beatId": 1, "tMs": 3439, "uid": 4, "code": "MissingMotionEnd", "detail": "open motionId=144 at beat close", "refIndex": "321"}
+{"index": 354, "beatId": 1, "tMs": 3439, "uid": 13, "code": "MissingMotionEnd", "detail": "open motionId=143 at beat close", "refIndex": "319"}
+{"index": 968, "beatId": 21, "tMs": 33044, "uid": 15, "code": "LethalEstimateMismatch", "detail": "armed death callback skipped at site=Combat.DeathCallback", "refIndex": "967"}
+{"index": 1215, "beatId": 32, "tMs": 44344, "uid": 2, "code": "MissingMotionEnd", "detail": "open motionId=335 at beat close", "refIndex": "1207"}
+{"index": 1216, "beatId": 32, "tMs": 44344, "uid": 7, "code": "MissingMotionEnd", "detail": "open motionId=336 at beat close", "refIndex": "1208"}
+{"index": 1689, "beatId": 44, "tMs": 67188, "uid": 21, "code": "MissingMotionEnd", "detail": "open motionId=475 at beat close", "refIndex": "1672"}
+{"index": 1690, "beatId": 44, "tMs": 67188, "uid": 23, "code": "MissingMotionEnd", "detail": "open motionId=476 at beat close", "refIndex": "1674"}
+{"index": 1691, "beatId": 44, "tMs": 67188, "uid": 30, "code": "MissingMotionEnd", "detail": "open motionId=477 at beat close", "refIndex": "1676"}
+{"index": 1692, "beatId": 44, "tMs": 67188, "uid": 32, "code": "MissingMotionEnd", "detail": "open motionId=478 at beat close", "refIndex": "1678"}
+{"index": 1693, "beatId": 44, "tMs": 67188, "uid": 27, "code": "MissingMotionEnd", "detail": "open motionId=474 at beat close", "refIndex": "1670"}
+{"index": 1694, "beatId": 44, "tMs": 67188, "uid": 25, "code": "MissingMotionEnd", "detail": "open motionId=473 at beat close", "refIndex": "1668"}
+{"index": 1991, "beatId": 56, "tMs": 88006, "uid": 28, "code": "LethalEstimateMismatch", "detail": "armed death callback skipped at site=Combat.DeathCallback", "refIndex": "1990"}
+{"index": 2285, "beatId": 67, "tMs": 98446, "uid": 27, "code": "LethalEstimateMismatch", "detail": "armed death callback skipped at site=Combat.DeathCallback", "refIndex": "2284"}
+{"index": 2924, "beatId": 92, "tMs": 137463, "uid": 35, "code": "MissingMotionEnd", "detail": "open motionId=755 at beat close", "refIndex": "2911"}
+{"index": 2925, "beatId": 92, "tMs": 137463, "uid": 48, "code": "MissingMotionEnd", "detail": "open motionId=756 at beat close", "refIndex": "2913"}
+{"index": 2926, "beatId": 92, "tMs": 137463, "uid": 41, "code": "MissingMotionEnd", "detail": "open motionId=754 at beat close", "refIndex": "2909"}
+{"index": 2927, "beatId": 92, "tMs": 137463, "uid": 46, "code": "MissingMotionEnd", "detail": "open motionId=753 at beat close", "refIndex": "2907"}
+{"index": 2928, "beatId": 92, "tMs": 137463, "uid": 47, "code": "MissingMotionEnd", "detail": "open motionId=752 at beat close", "refIndex": "2905"}
+
+--- VisChange active=0 (0) ---
+
+--- BeatClose anomalyCount>0 (7) ---
+  idx=355 beatId=1 tMs=3439 anomalyCount=9 payload={'beatKind': 'OpeningDeal', 'nodeIndex': '1', 'anomalyCount': '9'}
+  idx=977 beatId=21 tMs=33406 anomalyCount=1 payload={'beatKind': 'CombatHit', 'nodeIndex': '0', 'anomalyCount': '1'}
+  idx=1217 beatId=32 tMs=44344 anomalyCount=2 payload={'beatKind': 'SyncBoard', 'nodeIndex': '1', 'anomalyCount': '2'}
+  idx=1695 beatId=44 tMs=67188 anomalyCount=6 payload={'beatKind': 'OpeningDeal', 'nodeIndex': '2', 'anomalyCount': '6'}
+  idx=2000 beatId=56 tMs=88367 anomalyCount=1 payload={'beatKind': 'CombatHit', 'nodeIndex': '0', 'anomalyCount': '1'}
+  idx=2294 beatId=67 tMs=98811 anomalyCount=1 payload={'beatKind': 'CombatHit', 'nodeIndex': '0', 'anomalyCount': '1'}
+  idx=2929 beatId=92 tMs=137463 anomalyCount=5 payload={'beatKind': 'OpeningDeal', 'nodeIndex': '3', 'anomalyCount': '5'}
+
+--- BoardSnap Close minus/active=0 ---
+  count: 0 (of 196 BoardSnap total)
+
+--- RegistryAudit ghosts/orphans>0 (0) ---
+
+--- Beat timeline (first 30 beatIds) ---
+OpeningDeal beatIds: []
+
+--- BoardSnap around OpeningDeal ---
+  idx=37 beatId=1 name=None phase=beatOpen cards=None
+    payload= {"phase": "beatOpen", "full": "1", "cards": "17,slot=-1,xy=-1.46,-2.28,active=1,fieldDead=0,mode=CardDeckMode,tween=0;7,slot=-1,xy=-1.46,-2.28,active=1,fieldDead=0,mode=CardDeckMode,tween=0;9,slot=-1,xy=-1.46,-2.28,active=1,fieldDead=0,mode=CardDeckMode,tween=0;14,slot=-1,xy=-1.46,-2.28,active=1,fieldDead=0,mode=CardDeckMode,tween=0;19,slot=-1,xy=-1.46,-2.28,active=1,fieldDead=0,mode=CardDeckMode,tween=0;12,slot=-1,xy=-1.46,-2.28,active=1,fieldDead=0,mode=CardDeckMode,tween=0;5,slot=-1,xy=-1.46,-2.28,active=1,fieldDead=0,mode=CardDeckMode,tween=0;15,slot=-1,xy=-1.46,-2.28,active=1,fieldDead=0,
+  idx=345 beatId=1 name=None phase=beatClose cards=None
+    payload= {"phase": "beatClose", "full": "0", "cards": "~17 slot=-1→-1 xy=-1.46,-2.28→5.52,3 active=1 fieldDead=0 tween=1 mode=CardDeckMode;~7 slot=-1→-1 xy=-1.46,-2.28→6.38,3 active=1 fieldDead=0 tween=1 mode=CardDeckMode;~9 slot=-1→-1 xy=-1.46,-2.28→5.12,3 active=1 fieldDead=0 tween=1 mode=CardDeckMode;~14 slot=-1→-1 xy=-1.46,-2.28→5.81,3 active=1 fieldDead=0 tween=1 mode=CardDeckMode;~19 slot=-1→1 xy=-1.46,-2.28→-2.06,2.5 active=1 fieldDead=0 tween=0 mode=GroundCardMode;~12 slot=-1→2 xy=-1.46,-2.28→0,2.5 active=1 fieldDead=0 tween=0 mode=GroundCardMode;~5 slot=-1→3 xy=-1.46,-2.28→2.06,2.5 active=1 fi
+
+--- OpeningDeal close: idx=3059 tMs=151983 ---
+First BeatOpen after OpeningDeal: None
+
+--- Gap suspicious events (0) ---
+
+========================================================================
+PERFLOG 141203 perflog-20260712-141203-seed1.json
+sessionId=20260712-141203 seed=1
+Total events: 1230
+Kind counts: {'MotionEnd': 423, 'MotionBegin': 336, 'MotionPlan': 87, 'VisChange': 66, 'BoardSnap': 64, 'CombatHitFrame': 38, 'SnapSet': 36, 'BeatOpen': 32, 'BeatClose': 32, 'RegistryAudit': 26, 'Spawn': 22, 'Despawn': 22, 'BattleBind': 19, 'Anomaly': 11, 'Vacate': 11, 'DeathCallback': 5}
+
+--- Anomaly events (11) ---
+{"index": 346, "beatId": 1, "tMs": 3520, "uid": 3, "code": "MissingMotionEnd", "detail": "open motionId=148 at beat close", "refIndex": "329"}
+{"index": 347, "beatId": 1, "tMs": 3520, "uid": 4, "code": "MissingMotionEnd", "detail": "open motionId=151 at beat close", "refIndex": "335"}
+{"index": 348, "beatId": 1, "tMs": 3520, "uid": 18, "code": "MissingMotionEnd", "detail": "open motionId=149 at beat close", "refIndex": "331"}
+{"index": 349, "beatId": 1, "tMs": 3520, "uid": 5, "code": "MissingMotionEnd", "detail": "open motionId=150 at beat close", "refIndex": "333"}
+{"index": 350, "beatId": 1, "tMs": 3520, "uid": 7, "code": "MissingMotionEnd", "detail": "open motionId=147 at beat close", "refIndex": "327"}
+{"index": 351, "beatId": 1, "tMs": 3520, "uid": 16, "code": "MissingMotionEnd", "detail": "open motionId=146 at beat close", "refIndex": "325"}
+{"index": 352, "beatId": 1, "tMs": 3520, "uid": 10, "code": "MissingMotionEnd", "detail": "open motionId=145 at beat close", "refIndex": "323"}
+{"index": 353, "beatId": 1, "tMs": 3520, "uid": 14, "code": "MissingMotionEnd", "detail": "open motionId=144 at beat close", "refIndex": "321"}
+{"index": 354, "beatId": 1, "tMs": 3520, "uid": 19, "code": "MissingMotionEnd", "detail": "open motionId=143 at beat close", "refIndex": "319"}
+{"index": 738, "beatId": 15, "tMs": 21370, "uid": 14, "code": "LethalEstimateMismatch", "detail": "armed death callback skipped at site=Combat.DeathCallback", "refIndex": "737"}
+{"index": 1203, "beatId": 31, "tMs": 43142, "uid": 18, "code": "LethalEstimateMismatch", "detail": "counter routed with lethal/death bind profile=Battle_Counter_Lethal_Default", "refIndex": "1202"}
+
+--- VisChange active=0 (0) ---
+
+--- BeatClose anomalyCount>0 (3) ---
+  idx=355 beatId=1 tMs=3520 anomalyCount=9 payload={'beatKind': 'OpeningDeal', 'nodeIndex': '1', 'anomalyCount': '9'}
+  idx=747 beatId=15 tMs=21735 anomalyCount=1 payload={'beatKind': 'CombatHit', 'nodeIndex': '0', 'anomalyCount': '1'}
+  idx=1205 beatId=31 tMs=43142 anomalyCount=1 payload={'beatKind': 'CombatHit', 'nodeIndex': '0', 'anomalyCount': '1'}
+
+--- BoardSnap Close minus/active=0 ---
+  count: 0 (of 64 BoardSnap total)
+
+--- RegistryAudit ghosts/orphans>0 (0) ---
+
+--- Beat timeline (first 30 beatIds) ---
+OpeningDeal beatIds: []
+
+--- BoardSnap around OpeningDeal ---
+  idx=37 beatId=1 name=None phase=beatOpen cards=None
+    payload= {"phase": "beatOpen", "full": "1", "cards": "13,slot=-1,xy=-1.46,-2.28,active=1,fieldDead=0,mode=CardDeckMode,tween=0;12,slot=-1,xy=-1.46,-2.28,active=1,fieldDead=0,mode=CardDeckMode,tween=0;17,slot=-1,xy=-1.46,-2.28,active=1,fieldDead=0,mode=CardDeckMode,tween=0;9,slot=-1,xy=-1.46,-2.28,active=1,fieldDead=0,mode=CardDeckMode,tween=0;15,slot=-1,xy=-1.46,-2.28,active=1,fieldDead=0,mode=CardDeckMode,tween=0;6,slot=-1,xy=-1.46,-2.28,active=1,fieldDead=0,mode=CardDeckMode,tween=0;2,slot=-1,xy=-1.46,-2.28,active=1,fieldDead=0,mode=CardDeckMode,tween=0;11,slot=-1,xy=-1.46,-2.28,active=1,fieldDead=0,
+  idx=345 beatId=1 name=None phase=beatClose cards=None
+    payload= {"phase": "beatClose", "full": "0", "cards": "~13 slot=-1→1 xy=-1.46,-2.28→-2.06,2.5 active=1 fieldDead=0 tween=0 mode=GroundCardMode;~12 slot=-1→2 xy=-1.46,-2.28→0,2.5 active=1 fieldDead=0 tween=0 mode=GroundCardMode;~17 slot=-1→3 xy=-1.46,-2.28→2.06,2.5 active=1 fieldDead=0 tween=0 mode=GroundCardMode;~9 slot=-1→6 xy=-1.46,-2.28→2.06,0 active=1 fieldDead=0 tween=0 mode=GroundCardMode;~15 slot=-1→9 xy=-1.46,-2.28→2.06,-2.5 active=1 fieldDead=0 tween=0 mode=GroundCardMode;~6 slot=-1→8 xy=-1.46,-2.28→0,-2.5 active=1 fieldDead=0 tween=0 mode=GroundCardMode;~2 slot=-1→7 xy=-1.46,-2.28→-2.09,-2.5 
+
+--- OpeningDeal close: idx=1229 tMs=44064 ---
+First BeatOpen after OpeningDeal: None
+
+--- Gap suspicious events (0) ---
+
+SUMMARY: 141249 events=3060, 141203 events=1230
