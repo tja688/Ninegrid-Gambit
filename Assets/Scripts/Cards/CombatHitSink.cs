@@ -28,6 +28,17 @@ namespace NineGrid.Cards
         public bool NodeClearedOrRewardPhase;
         /// <summary>本段所有 amount&gt;0 的 DamageDealt，按事件序；可多条（主伤+反伤）。</summary>
         public CombatDamagePopup[] DamagePopups;
+        /// <summary>本段 CardMoved（含 OnBattle 旋转 hop），对齐 UseItem/Pickup 缓释契约。</summary>
+        public PostKillCardMove[] Moves;
+        /// <summary>本段 CardDealt（旋转后补牌等）。</summary>
+        public PostKillCardDeal[] Deals;
+        /// <summary>本段技能/效果 CardRemoved / CardKilled（非交战主目标尸体路径）。</summary>
+        public int[] RemovedUids;
+
+        public readonly bool HasBoardDelta =>
+            (Moves != null && Moves.Length > 0)
+            || (Deals != null && Deals.Length > 0)
+            || (RemovedUids != null && RemovedUids.Length > 0);
     }
 
     /// <summary>

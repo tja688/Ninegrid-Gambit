@@ -85,6 +85,8 @@ namespace NineGrid.Flow
         private int _nodeIndex;
         private List<int> _quickTestContentNodeQueue;
         private int _quickTestContentNodeCursor;
+        private QuickTestNodeOrderMode _quickTestNodeOrderMode = QuickTestNodeOrderMode.Shuffled;
+        private string _pinnedFirstBattleDeckId;
         private CancellationTokenSource _loopCts;
         private CancellationTokenSource _battleEndCts;
         private UniTaskCompletionSource _settlementTcs;
@@ -112,6 +114,7 @@ namespace NineGrid.Flow
         public bool IsTestMode => _testMode;
         public bool IsQuickTestMode => _quickTestMode;
         public int NodeIndex => _nodeIndex;
+        public bool CanAcceptQuickTestEntry => _state == LoopState.MainMenu && !_isBusy;
 
         private void Awake()
         {
@@ -167,6 +170,88 @@ namespace NineGrid.Flow
         /// </summary>
         public void BeginRun(bool testMode = true, bool quickTestMode = false)
         {
+            if (quickTestMode)
+            {
+                BeginQuickTestRun(new QuickTestRunOptions
+                {
+                    NodeOrder = QuickTestNodeOrderMode.Shuffled,
+                });
+                return;
+            }
+
+            BeginRunInternal(testMode, quickTestMode: false, quickTestOptions: null);
+        }
+
+        /// <summary>
+        /// DevTest 快速测试：可选正式/乱序节点与首关固定怪物牌组。
+        /// </summary>
+        public void BeginQuickTestRun(QuickTestRunOptions options)
+        {
+            BeginRunInternal(
+                testMode: true,
+                quickTestMode: true,
+                quickTestOptions: options ?? new QuickTestRunOptions());
+        }
+
+        /// <summary>
+        /// 主菜单快速测试选关菜单（Notice Text）。
+        /// </summary>
+        public void ShowQuickTestPickerNotice(string message)
+        {
+            ShowNotice(message);
+        }
+
+        /// <summary>
+        /// 关闭快速测试选关菜单。
+        /// </summary>
+        public void HideQuickTestPickerNotice()
+        {
+            HideNotice();
+        }
+
+        /// <summary>
+        /// 构建快速测试选关菜单文案（Notice Text）。
+        /// </summary>
+        public string BuildQuickTestPickerMenuText()
+        {
+            CoreCardPresentationMapper.EnsureContentCatalogLoaded();
+            var catalog = NineGridArchitecture.Current.GetSystem<IContentSystem>()?.Catalog;
+            return QuickTestDeckCatalog.BuildPickerMenuText(catalog);
+        }
+
+        /// <summary>
+        /// 解析选关编号并开局；失败返回 false 且不启动。
+        /// </summary>
+        public bool TryBeginQuickTestFromPickerCode(int code)
+        {
+            if (!CanAcceptQuickTestEntry)
+            {
+                return false;
+            }
+
+            CoreCardPresentationMapper.EnsureContentCatalogLoaded();
+            var catalog = NineGridArchitecture.Current.GetSystem<IContentSystem>()?.Catalog;
+            if (!QuickTestDeckCatalog.TryResolvePickerCode(code, catalog, out var deckId, out _))
+            {
+                return false;
+            }
+
+            HideQuickTestPickerNotice();
+            BeginQuickTestRun(new QuickTestRunOptions
+            {
+                NodeOrder = code == QuickTestDeckCatalog.FormalOrderPickerCode
+                    ? QuickTestNodeOrderMode.Sequential
+                    : QuickTestNodeOrderMode.Shuffled,
+                PinnedFirstBattleDeckId = deckId,
+            });
+            return true;
+        }
+
+        private void BeginRunInternal(
+            bool testMode,
+            bool quickTestMode,
+            QuickTestRunOptions quickTestOptions)
+        {
             if (_isBusy && _state != LoopState.MainMenu)
             {
                 Debug.LogWarning("[MainGameLoop] 当前循环仍在进行，忽略 BeginRun。");
@@ -183,23 +268,22 @@ namespace NineGrid.Flow
             _nodeIndex = 0;
             _quickTestContentNodeQueue = null;
             _quickTestContentNodeCursor = 0;
+            _pinnedFirstBattleDeckId = null;
             if (quickTestMode)
             {
+                var options = quickTestOptions ?? new QuickTestRunOptions();
+                _quickTestNodeOrderMode = options.NodeOrder;
+                _pinnedFirstBattleDeckId = string.IsNullOrWhiteSpace(options.PinnedFirstBattleDeckId)
+                    ? null
+                    : options.PinnedFirstBattleDeckId.Trim();
                 DiagTraceShared.SetRunTag(
                     DiagTraceShared.QuickTestRunTag,
-                    "DevTest快速测试：全局速度x"
-                    + QuickTestTimeScale
-                    + "，玩家HP"
-                    + QuickTestAvatarHp
-                    + "/ATK"
-                    + QuickTestAvatarAttack
-                    + "每关重置，战斗内容节点乱序(整局各配置"
-                    + RunModel.FinalFloor
-                    + "次不重复)");
-                PrepareQuickTestContentNodeQueue();
+                    BuildQuickTestRunTagNote(_quickTestNodeOrderMode, _pinnedFirstBattleDeckId));
+                PrepareQuickTestContentNodeQueue(_quickTestNodeOrderMode);
             }
             else
             {
+                _quickTestNodeOrderMode = QuickTestNodeOrderMode.Shuffled;
                 DiagTraceShared.ClearRunTag();
             }
 
@@ -222,6 +306,12 @@ namespace NineGrid.Flow
                         { "quickTestNodeOrder", quickTestMode
                             ? QuickTestRunPlanner.FormatNodeOrder(_quickTestContentNodeQueue)
                             : string.Empty },
+                        { "quickTestNodeOrderMode", quickTestMode
+                            ? _quickTestNodeOrderMode.ToString()
+                            : string.Empty },
+                        { "quickTestPinnedFirstDeck", quickTestMode && !string.IsNullOrEmpty(_pinnedFirstBattleDeckId)
+                            ? _pinnedFirstBattleDeckId
+                            : string.Empty },
                     },
                     loopState: _state.ToString());
             }
@@ -233,7 +323,11 @@ namespace NineGrid.Flow
             if (quickTestMode)
             {
                 Debug.Log(
-                    $"[MainGameLoop] 快速测试模式：全局速度 x{QuickTestTimeScale}，玩家 HP {QuickTestAvatarHp} / ATK {QuickTestAvatarAttack} 每关重置，节点乱序 {QuickTestRunPlanner.FormatNodeOrder(_quickTestContentNodeQueue)}");
+                    $"[MainGameLoop] 快速测试模式：全局速度 x{QuickTestTimeScale}，玩家 HP {QuickTestAvatarHp} / ATK {QuickTestAvatarAttack} 每关重置，"
+                    + $"节点顺序 {_quickTestNodeOrderMode}，队列 {QuickTestRunPlanner.FormatNodeOrder(_quickTestContentNodeQueue)}"
+                    + (string.IsNullOrEmpty(_pinnedFirstBattleDeckId)
+                        ? string.Empty
+                        : $"，首关牌组 {_pinnedFirstBattleDeckId}"));
             }
 
             RunNodeCycleAsync(_loopCts.Token).Forget();
@@ -363,15 +457,29 @@ namespace NineGrid.Flow
 
             CoreCardPresentationMapper.EnsureContentCatalogLoaded();
 
-            var contentNodeIndex = ResolveBattleContentNodeIndex();
-            var options = arch.GetSystem<IRewardSystem>().BuildNodeDeckOptions(contentNodeIndex, monsterDeckId: null);
+            var catalog = arch.GetSystem<IContentSystem>()?.Catalog;
+            string monsterDeckId = null;
+            int contentNodeIndex;
+            if (TryConsumePinnedFirstBattle(out var pinnedDeckId))
+            {
+                monsterDeckId = pinnedDeckId;
+                contentNodeIndex = QuickTestDeckCatalog.GetDefaultNodeIndexForDeckId(catalog, pinnedDeckId);
+            }
+            else
+            {
+                contentNodeIndex = ResolveBattleContentNodeIndex();
+            }
+
+            var options = arch.GetSystem<IRewardSystem>().BuildNodeDeckOptions(contentNodeIndex, monsterDeckId);
             if (options == null)
             {
                 options = NodeDeckOptions.CreateDefaultBattle();
             }
 
             Debug.Log(_quickTestMode
-                ? $"[MainGameLoop] 循环节点 {_nodeIndex} 快速测试内容节点 {contentNodeIndex} 真实局内入场"
+                ? $"[MainGameLoop] 循环节点 {_nodeIndex} 快速测试内容节点 {contentNodeIndex}"
+                  + (string.IsNullOrEmpty(monsterDeckId) ? string.Empty : $" 固定牌组 {monsterDeckId}")
+                  + " 真实局内入场"
                 : $"[MainGameLoop] 节点 {_nodeIndex} 真实局内入场");
             await inBattleManager.StartBattleNodeAsync(options, ct);
             if (ct.IsCancellationRequested)
@@ -862,6 +970,8 @@ namespace NineGrid.Flow
             _quickTestMode = false;
             _quickTestContentNodeQueue = null;
             _quickTestContentNodeCursor = 0;
+            _pinnedFirstBattleDeckId = null;
+            _quickTestNodeOrderMode = QuickTestNodeOrderMode.Shuffled;
             DiagTraceShared.ClearRunTag();
             ResetQuickTestTimeScale();
             _nodeIndex = 0;
@@ -907,14 +1017,43 @@ namespace NineGrid.Flow
             }
         }
 
-        private void PrepareQuickTestContentNodeQueue()
+        private void PrepareQuickTestContentNodeQueue(QuickTestNodeOrderMode orderMode)
         {
             CoreCardPresentationMapper.EnsureContentCatalogLoaded();
             var arch = NineGridArchitecture.Current;
             var catalog = arch?.GetSystem<IContentSystem>()?.Catalog;
             var ruleIndices = QuickTestRunPlanner.CollectRuleNodeIndices(catalog);
-            _quickTestContentNodeQueue = QuickTestRunPlanner.BuildShuffledContentNodeQueue(ruleIndices);
+            _quickTestContentNodeQueue = orderMode == QuickTestNodeOrderMode.Sequential
+                ? QuickTestRunPlanner.BuildSequentialContentNodeQueue(ruleIndices)
+                : QuickTestRunPlanner.BuildShuffledContentNodeQueue(ruleIndices);
             _quickTestContentNodeCursor = 0;
+        }
+
+        private bool TryConsumePinnedFirstBattle(out string deckId)
+        {
+            deckId = null;
+            if (!_quickTestMode || _nodeIndex != 1 || string.IsNullOrEmpty(_pinnedFirstBattleDeckId))
+            {
+                return false;
+            }
+
+            deckId = _pinnedFirstBattleDeckId;
+            _pinnedFirstBattleDeckId = null;
+            return true;
+        }
+
+        private static string BuildQuickTestRunTagNote(
+            QuickTestNodeOrderMode orderMode,
+            string pinnedFirstBattleDeckId)
+        {
+            var note = "DevTest快速测试：全局速度x2，玩家HP99/ATK5每关重置，节点顺序"
+                + (orderMode == QuickTestNodeOrderMode.Sequential ? "正式" : "乱序");
+            if (!string.IsNullOrEmpty(pinnedFirstBattleDeckId))
+            {
+                note += "，首关固定牌组=" + pinnedFirstBattleDeckId;
+            }
+
+            return note;
         }
 
         private int ResolveBattleContentNodeIndex()

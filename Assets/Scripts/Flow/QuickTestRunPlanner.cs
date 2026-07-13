@@ -14,6 +14,18 @@ namespace NineGrid.Flow
 
         public static List<int> BuildShuffledContentNodeQueue(IReadOnlyList<int> ruleNodeIndices)
         {
+            var queue = BuildFullContentNodeQueue(ruleNodeIndices);
+            ShuffleInPlace(queue);
+            return queue;
+        }
+
+        public static List<int> BuildSequentialContentNodeQueue(IReadOnlyList<int> ruleNodeIndices)
+        {
+            return BuildFullContentNodeQueue(ruleNodeIndices);
+        }
+
+        private static List<int> BuildFullContentNodeQueue(IReadOnlyList<int> ruleNodeIndices)
+        {
             var perFloor = ruleNodeIndices == null || ruleNodeIndices.Count == 0
                 ? BuildDefaultRuleNodeIndices()
                 : ruleNodeIndices;
@@ -28,7 +40,6 @@ namespace NineGrid.Flow
                 }
             }
 
-            ShuffleInPlace(queue);
             return queue;
         }
 

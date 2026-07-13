@@ -239,6 +239,8 @@ namespace NineGrid.Cards
                     hitApplied = true;
                 }
 
+                await DrainCombatHitBoardDeltaAsync(hitResult, ct);
+
                 if (hitResult.TargetKilled)
                 {
                     CardManagerSingleton.Instance.MarkFieldDead(victim);
@@ -267,6 +269,7 @@ namespace NineGrid.Cards
                         CombatHitSink.RequestNodeSettlement();
                     }
 
+                    SyncAfterCombatRound();
                     return;
                 }
 
@@ -299,6 +302,7 @@ namespace NineGrid.Cards
                 }
 
                 _isBusy = false;
+                SyncAfterCombatRound();
                 DisposeBattleCts(linkedCts);
             }
         }
@@ -340,7 +344,45 @@ namespace NineGrid.Cards
             finally
             {
                 _isBusy = false;
+                SyncAfterCombatRound();
                 DisposeBattleCts(linkedCts);
+            }
+        }
+
+        /// <summary>
+        /// 交战命中后缓释 Core EventLog 盘面 delta（OnBattle 旋转、OnSelfMove 塞牌等），对齐 Pickup/UseItem。
+        /// </summary>
+        private static async UniTask DrainCombatHitBoardDeltaAsync(
+            CombatHitPresentationResult hit,
+            CancellationToken cancellationToken)
+        {
+            if (!hit.Accepted || !hit.HasBoardDelta)
+            {
+                return;
+            }
+
+            await CombatHitSink.RequestDrainPostKillBoard(
+                new PostKillBoardPresentationResult
+                {
+                    Accepted = true,
+                    Moves = hit.Moves ?? Array.Empty<PostKillCardMove>(),
+                    Deals = hit.Deals ?? Array.Empty<PostKillCardDeal>(),
+                    RemovedUids = hit.RemovedUids ?? Array.Empty<int>(),
+                    NodeClearedOrRewardPhase = hit.NodeClearedOrRewardPhase,
+                    AvatarDefeated = hit.AvatarDefeated,
+                },
+                cancellationToken);
+        }
+
+        /// <summary>
+        /// Drain 后若占格冲突，强制 Sync 对齐 Core（与 Pickup 路径一致）。
+        /// </summary>
+        private void SyncAfterCombatRound()
+        {
+            ResolveFieldManager();
+            if (fieldManager != null && fieldManager.ConsumeOccupancyConflictFlag())
+            {
+                CombatHitSink.RequestSyncBoardFromCore();
             }
         }
 
@@ -395,6 +437,8 @@ namespace NineGrid.Cards
                 {
                     hitResult = ApplyHitPresentation(attacker, avatar, "CounterAttack");
                 }
+
+                await DrainCombatHitBoardDeltaAsync(hitResult, cancellationToken);
 
                 if (hitResult.AvatarDefeated)
                 {

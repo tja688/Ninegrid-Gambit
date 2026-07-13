@@ -1216,6 +1216,11 @@ namespace NineGrid.Flow
                 || phase == GamePhase.NodeCompleted
                 || arch.GetSystem<IDeckSystem>().IsNodeCleared();
 
+            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids);
+            summary.Moves = moves;
+            summary.Deals = deals;
+            summary.RemovedUids = removedUids;
+
             try
             {
                 if (BattleTraceRecorder.Enabled || FlowTraceRecorder.Enabled)
