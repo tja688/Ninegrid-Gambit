@@ -1,0 +1,339 @@
+:root {
+  color-scheme: light dark;
+  font-family: var(--font-ui);
+}
+
+body {
+  margin: 0;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-ui);
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.view-shell {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-color);
+}
+
+.view-toolbar {
+  min-height: 42px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 10px 0 12px;
+  border-bottom: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--panel-bg) 88%, var(--bg-color) 12%);
+}
+
+.toolbar-title {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.toolbar-title span {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.toolbar-title small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+button {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--panel-bg) 72%, var(--sidebar-bg) 28%);
+  color: var(--text-color);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: var(--hover-bg);
+  border-color: var(--border-strong);
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+input,
+select {
+  min-height: 26px;
+  min-width: 0;
+  padding: 0 7px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--input-bg);
+  color: var(--text-color);
+  font: inherit;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.view-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  overflow: auto;
+}
+
+.view-panel {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  overflow: hidden;
+}
+
+.view-row {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.view-row + .view-row {
+  border-top: 1px solid var(--border-color);
+}
+
+label {
+  color: var(--text-secondary);
+}
+
+/* Card Table */
+.card-table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--panel-bg);
+}
+
+.card-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  table-layout: auto;
+  white-space: nowrap;
+}
+
+.card-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.card-table th {
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 650;
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: color-mix(in srgb, var(--panel-bg) 88%, var(--sidebar-bg) 12%);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.card-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: default;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-table tbody tr:hover {
+  background: var(--hover-bg);
+}
+
+.card-table tbody tr.row-monster {
+  background: color-mix(in srgb, var(--accent-color) 4%, transparent);
+}
+
+.card-table tbody tr.row-monster:hover {
+  background: color-mix(in srgb, var(--accent-color) 8%, transparent);
+}
+
+/* Rarity row tints */
+.rarity-gold td:first-child {
+  border-left: 3px solid #d4a017;
+}
+
+.rarity-red td:first-child {
+  border-left: 3px solid #c0392b;
+}
+
+.rarity-blue td:first-child {
+  border-left: 3px solid #3498db;
+}
+
+.rarity-white td:first-child {
+  border-left: 3px solid #95a5a6;
+}
+
+/* Rarity badge */
+.rarity-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.rarity-badge.rarity-white {
+  background: #e0e0e0;
+  color: #555;
+}
+
+.rarity-badge.rarity-blue {
+  background: #d6eaf8;
+  color: #2471a3;
+}
+
+.rarity-badge.rarity-gold {
+  background: #fcf3cf;
+  color: #b7950b;
+}
+
+.rarity-badge.rarity-red {
+  background: #fadbd8;
+  color: #c0392b;
+}
+
+/* Bool cell */
+.bool-true {
+  color: var(--accent-color);
+  font-weight: 700;
+}
+
+/* Monospace cells */
+.mono {
+  font-family: var(--font-mono, "SF Mono", "Cascadia Code", "Consolas", monospace);
+  font-size: 11px;
+}
+
+/* Edit cell */
+.edit-cell input,
+.edit-cell select {
+  width: 100%;
+  min-width: 60px;
+  padding: 2px 4px;
+  border: 1px solid var(--accent-color);
+  border-radius: 3px;
+  background: var(--input-bg);
+  color: var(--text-color);
+  font: inherit;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.edit-cell input:focus,
+.edit-cell select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 1px var(--accent-color);
+}
+
+/* Column widths */
+.col-id { min-width: 160px; }
+.col-name { min-width: 90px; }
+.col-kind { min-width: 70px; }
+.col-rarity { min-width: 70px; }
+.col-num { min-width: 50px; text-align: right; }
+.col-bool { min-width: 44px; text-align: center; }
+.col-tags { min-width: 80px; }
+.col-ref { min-width: 140px; }
+
+/* Search input */
+.search-input {
+  width: 160px;
+}
+
+/* Save button */
+.btn-save {
+  background: var(--accent-color);
+  color: #fff;
+  border-color: var(--accent-color);
+  font-weight: 600;
+}
+
+.btn-save:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.btn-save:disabled {
+  opacity: 0.55;
+}
+
+/* Error banner */
+.error-banner {
+  padding: 10px 14px;
+  border: 1px solid #e74c3c;
+  border-radius: 6px;
+  background: #fdedec;
+  color: #c0392b;
+  font-size: 12px;
+}
+
+/* Status bar */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 11px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.status-bar .hint {
+  opacity: 0.7;
+}

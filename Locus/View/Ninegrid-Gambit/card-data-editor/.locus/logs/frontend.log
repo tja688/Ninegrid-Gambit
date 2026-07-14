@@ -1,0 +1,33 @@
+{"level":"info","message":"[startup] phase=viewRead_start total=180ms delta=1ms timeOrigin=2026-07-14T11:14:04.830Z viewId=card-data-editor mode=content-pool","time":1784027645095}
+{"level":"info","message":"[startup] phase=load-start total=179ms delta=30ms timeOrigin=2026-07-14T11:14:04.830Z viewId=card-data-editor mode=content-pool","time":1784027645096}
+{"level":"info","message":"[startup] phase=frontend_locale_sync_done total=182ms delta=2ms timeOrigin=2026-07-14T11:14:04.830Z","time":1784027645096}
+{"level":"info","message":"[startup] phase=frontend_debug_console_ready total=290ms delta=108ms timeOrigin=2026-07-14T11:14:04.830Z","time":1784027645144}
+{"level":"info","message":"[startup] phase=viewRead_done total=300ms delta=10ms timeOrigin=2026-07-14T11:14:04.830Z viewId=card-data-editor mode=content-pool elapsedMs=121 fileCount=8 packageRoot=C:/Users/jinji/Documents/GitHub/Ninegrid-Gambit/Locus/View/Ninegrid-Gambit/card-data-editor","time":1784027645156}
+{"level":"info","message":"[startup] phase=registerHost_start total=301ms delta=1ms timeOrigin=2026-07-14T11:14:04.830Z hostLabel=view-card-data-editor viewIds=card-data-editor","time":1784027645158}
+{"level":"info","message":"[startup] phase=registerHost_done total=334ms delta=33ms timeOrigin=2026-07-14T11:14:04.830Z hostLabel=view-card-data-editor viewIds=card-data-editor elapsedMs=33","time":1784027645168}
+{"level":"info","message":"[startup] phase=viewContentMount_start total=388ms delta=54ms timeOrigin=2026-07-14T11:14:04.830Z viewId=card-data-editor hostLabel=view-card-data-editor","time":1784027645223}
+{"level":"info","message":"[startup] phase=viewContentMount_done total=621ms delta=233ms timeOrigin=2026-07-14T11:14:04.830Z viewId=card-data-editor hostLabel=view-card-data-editor elapsedMs=233","time":1784027645468}
+{"level":"info","message":"[startup] phase=load-finish total=621ms delta=1ms timeOrigin=2026-07-14T11:14:04.830Z viewId=card-data-editor mode=content-pool elapsedMs=443","time":1784027645471}
+{"level":"info","message":"[startup] phase=load-start total=284ms delta=46ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor","time":1784027645704}
+{"level":"info","message":"[startup] phase=viewRead_start total=286ms delta=3ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor","time":1784027645706}
+{"level":"info","message":"[startup] phase=frontend_locale_sync_done total=300ms delta=14ms timeOrigin=2026-07-14T11:14:05.415Z","time":1784027645718}
+{"level":"info","message":"[startup] phase=frontend_debug_console_ready total=308ms delta=8ms timeOrigin=2026-07-14T11:14:05.415Z","time":1784027645725}
+{"level":"info","message":"[startup] phase=viewRead_done total=309ms delta=2ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor elapsedMs=23 fileCount=8 packageRoot=C:/Users/jinji/Documents/GitHub/Ninegrid-Gambit/Locus/View/Ninegrid-Gambit/card-data-editor","time":1784027645726}
+{"level":"info","message":"[startup] phase=unityStatus_start total=310ms delta=1ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor","time":1784027645727}
+{"level":"info","message":"[startup] phase=unityStatus_done total=315ms delta=5ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor elapsedMs=5 connected=true","time":1784027645733}
+{"level":"info","message":"[startup] phase=runtimeComponent_create_start total=316ms delta=1ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor","time":1784027645734}
+{"level":"info","message":"[startup] phase=runtimeComponent_create_done total=318ms delta=2ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor elapsedMs=2","time":1784027645736}
+{"level":"info","message":"[startup] phase=load-finish total=319ms delta=1ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor elapsedMs=35","time":1784027645737}
+{"level":"info","message":"[startup] phase=runtimePrepare_start total=321ms delta=2ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor entry=src/main.ts fileCount=8","time":1784027645741}
+{"level":"info","message":"[startup] phase=runtimeCompilerImport_start total=323ms delta=2ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor","time":1784027645742}
+{"level":"info","message":"[startup] phase=runtimeCompilerImport_done total=563ms delta=241ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor elapsedMs=241","time":1784027645981}
+{"level":"info","message":"[startup] phase=runtimeModuleLoader_ready total=564ms delta=1ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor elapsedMs=0","time":1784027645981}
+{"level":"info","message":"[startup] phase=runtimeEntryImport_start total=565ms delta=1ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor entryPath=Ninegrid-Gambit/card-data-editor/src/main.ts","time":1784027645982}
+{"level":"info","message":"[startup] phase=runtimeEntryImport_done total=704ms delta=140ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor entryPath=Ninegrid-Gambit/card-data-editor/src/main.ts elapsedMs=140 styleCount=1","time":1784027646122}
+{"level":"info","message":"[startup] phase=runtimeComponentResolve_done total=705ms delta=1ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor elapsedMs=0 usedEntryComponent=true hasAppFile=true","time":1784027646123}
+{"level":"info","message":"[startup] phase=runtimeStylesApply_done total=706ms delta=1ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor elapsedMs=1 styleCount=1","time":1784027646125}
+{"level":"info","message":"[startup] phase=runtimePrepare_done total=708ms delta=1ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor elapsedMs=387 styleCount=1","time":1784027646126}
+{"level":"info","message":"[startup] phase=runtimeFirstDataRequest total=712ms delta=5ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor request=callScript callId=1 dataCallId=1 kind=data scriptName=CardEditorApi method=ReadCards","time":1784027646131}
+{"level":"info","message":"[startup] phase=runtimeDataRequest_start total=713ms delta=1ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor request=callScript callId=1 dataCallId=1 kind=data scriptName=CardEditorApi method=ReadCards","time":1784027646131}
+{"level":"info","message":"[startup] phase=viewFirstInteractive total=727ms delta=13ms timeOrigin=2026-07-14T11:14:05.415Z viewId=card-data-editor elapsedMs=406 sinceRuntimePrepareDoneMs=19","time":1784027646144}
+{"level":"info","message":"[startup] phase=frontend_paint_late total=1631ms delta=1010ms timeOrigin=2026-07-14T11:14:04.830Z firstPaint=84ms fcp=84ms domInteractive=74ms domContentLoaded=128ms loadEventEnd=158ms","time":1784027646464}

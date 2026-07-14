@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@locus/project-view": ["src/index.ts"],
+      "@locus/project-view/*": ["src/*"],
+      "@project-view": ["src/index.ts"],
+      "@project-view/*": ["src/*"]
+    }
+  }
+}

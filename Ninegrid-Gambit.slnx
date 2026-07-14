@@ -13,6 +13,7 @@
   <Project Path="QFramework.CoreKit.csproj" />
   <Project Path="Febucci.TextAnimatorForUnity.TMP.Runtime.csproj" />
   <Project Path="UniTask.Linq.csproj" />
+  <Project Path="Locus.Editor.csproj" />
   <Project Path="SupportOldQF.csproj" />
   <Project Path="MoreMountains.Tools.Editor.csproj" />
   <Project Path="NineGrid.Flow.csproj" />

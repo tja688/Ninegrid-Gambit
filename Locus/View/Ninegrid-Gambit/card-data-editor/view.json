@@ -1,0 +1,24 @@
+{
+  "schema": "locus.view.v1",
+  "apiVersion": "v0.5.8",
+  "id": "card-data-editor",
+  "name": "卡牌数据编辑器",
+  "version": "0.1.0",
+  "template": "blank",
+  "displayPath": "Ninegrid-Gambit/card-data-editor",
+  "icon": "TableProperties",
+  "entry": "src/main.ts",
+  "style": "src/style.css",
+  "scripts": [
+    {
+      "name": "CardEditorApi",
+      "path": "unity/ViewApi.cs"
+    }
+  ],
+  "capabilities": {
+    "unity": true
+  },
+  "requirements": {
+    "unityConnection": true
+  }
+}
