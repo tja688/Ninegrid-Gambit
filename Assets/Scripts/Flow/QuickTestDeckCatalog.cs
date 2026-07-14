@@ -80,13 +80,13 @@ namespace NineGrid.Flow
         {
             var builder = new StringBuilder(256);
             builder.AppendLine("[快速测试]");
-            builder.AppendLine("0 正式顺序 (HP99 ATK5 x2)");
+            builder.AppendLine("0 正式顺序 (HP99 ATK5 x1)");
             AppendDeckLine(builder, catalog, 1, 2);
             builder.AppendLine();
             AppendDeckLine(builder, catalog, 3, 4);
             builder.AppendLine();
             AppendDeckLine(builder, catalog, 5, 6);
-            builder.AppendLine("短按 \\ 随机 | 输入编号开始");
+            builder.AppendLine("长按 \\ 选关，释放确认");
             return builder.ToString().TrimEnd();
         }
 

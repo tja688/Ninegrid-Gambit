@@ -1,12 +1,10 @@
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-
 using NineGrid.Flow;
 using UnityEngine;
 
 namespace NineGrid.DevTest.Flow
 {
     /// <summary>
-    /// 局内 \ 键 Debug 快速模式：长按弹出菜单，\1 全局 x1，\2 全局 x2（再按 x2）。
+    /// 局内 \ 键快速模式：长按弹出菜单，\1/\2 调速，释放关闭。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class InBattleDebugQuickModeInputHandler : MonoBehaviour
@@ -103,6 +101,13 @@ namespace NineGrid.DevTest.Flow
 
         private void PollMenuOpen()
         {
+            // 释放 \ 键：关闭菜单
+            if (!Input.GetKey(KeyCode.Backslash))
+            {
+                ResetToIdle(closeMenu: true);
+                return;
+            }
+
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 ResetToIdle(closeMenu: true);
@@ -170,5 +175,3 @@ namespace NineGrid.DevTest.Flow
         }
     }
 }
-
-#endif

@@ -143,9 +143,14 @@ namespace NineGrid.Core
         {
             var registry = context.GetModel<CardRegistry>();
             var deck = context.GetModel<DeckModel>();
-            var selected = new List<int>();
+            var board = context.GetModel<BoardModel>();
+            var rng = context.Architecture.GetUtility<IRngUtility>();
 
-            SelectCards(selected, deck.PlayerCardPoolUids, registry, Options.PlayerOpeningCount, false);
+            // Step 1: place player-side cards directly on the board (soft guarantee).
+            var playerPlaced = PlacePlayerCardsDirectly(deck, board, registry, rng, Options.PlayerOpeningCount);
+
+            // Step 2: select enemy cards.
+            var selected = new List<int>();
             SelectCards(selected, deck.EnemyCardPoolUids, registry, Options.EnemyOpeningCount, Options.RequireElite);
 
             for (var i = 0; i < selected.Count; i++)
@@ -158,17 +163,57 @@ namespace NineGrid.Core
             DrainStagingPool(deck, registry, deck.PlayerCardPoolUids);
             DrainStagingPool(deck, registry, deck.EnemyCardPoolUids);
 
-            ShuffleDrawPile(deck, context.Architecture.GetUtility<IRngUtility>());
+            ShuffleDrawPile(deck, rng);
 
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
-                    .WithAmount(selected.Count)
+                    .WithAmount(playerPlaced + selected.Count)
                     .WithMessage("opening"));
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
         {
             return sPostTriggers;
+        }
+
+        private static int PlacePlayerCardsDirectly(
+            DeckModel deck,
+            BoardModel board,
+            CardRegistry registry,
+            IRngUtility rng,
+            int maxCount)
+        {
+            var poolUids = new List<int>(deck.PlayerCardPoolUids);
+            if (poolUids.Count == 0 || maxCount <= 0)
+            {
+                return 0;
+            }
+
+            var availableSlots = new List<SlotId>();
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var slot = SlotId.Board(i);
+                if (slot != board.AvatarSlot.Value && board.IsEmpty(slot))
+                {
+                    availableSlots.Add(slot);
+                }
+            }
+
+            var placed = 0;
+            var count = poolUids.Count < maxCount ? poolUids.Count : maxCount;
+            for (var i = 0; i < count && availableSlots.Count > 0; i++)
+            {
+                var card = registry.Get(poolUids[i]);
+                var slotIdx = rng.Range(0, availableSlots.Count);
+                var slot = availableSlots[slotIdx];
+                availableSlots.RemoveAt(slotIdx);
+
+                deck.RemoveUid(card.Uid);
+                board.PlaceCard(card, slot);
+                placed++;
+            }
+
+            return placed;
         }
 
         private static void SelectCards(List<int> selected, IReadOnlyList<int> pool, CardRegistry registry, int count, bool requireElite)

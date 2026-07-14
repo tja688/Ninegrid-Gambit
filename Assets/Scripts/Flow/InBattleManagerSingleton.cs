@@ -289,6 +289,81 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
+        /// [DeckProbe] 记录 StartNode 前 NodeDeckOptions 组成。
+        /// </summary>
+        private static void LogDeckOptionsProbe(NodeDeckOptions options)
+        {
+            var playerKinds = new System.Text.StringBuilder();
+            for (var i = 0; i < options.PlayerCards.Count; i++)
+            {
+                if (i > 0) playerKinds.Append(",");
+                playerKinds.Append(options.PlayerCards[i].DefId);
+                playerKinds.Append(":");
+                playerKinds.Append(options.PlayerCards[i].Kind);
+            }
+
+            var enemyKinds = new System.Text.StringBuilder();
+            for (var i = 0; i < options.EnemyCards.Count; i++)
+            {
+                if (i > 0) enemyKinds.Append(",");
+                enemyKinds.Append(options.EnemyCards[i].DefId);
+                enemyKinds.Append(":");
+                enemyKinds.Append(options.EnemyCards[i].Kind);
+            }
+
+            Debug.Log(
+                $"[DeckProbe] OptionsBeforeStartNode "
+                + $"playerOpening={options.PlayerOpeningCount} enemyOpening={options.EnemyOpeningCount} "
+                + $"playerCards=[{playerKinds}] (n={options.PlayerCards.Count}) "
+                + $"enemyCards=[{enemyKinds}] (n={options.EnemyCards.Count})");
+        }
+
+        /// <summary>
+        /// [DeckProbe] 记录 StartNode 后板面卡牌组成。
+        /// </summary>
+        private static void LogBoardDeckProbe(IArchitecture arch)
+        {
+            var registry = arch.GetModel<CardRegistry>();
+            var board = arch.GetModel<BoardModel>();
+            var deck = arch.GetModel<DeckModel>();
+
+            var boardSlots = new System.Text.StringBuilder();
+            var kindTally = new System.Collections.Generic.Dictionary<CardKind, int>();
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var slot = SlotId.Board(i);
+                var uid = board.GetCardUid(slot);
+                if (uid <= 0 || !registry.TryGet(uid, out var card))
+                {
+                    if (i > SlotId.MinBoardIndex) boardSlots.Append(",");
+                    boardSlots.Append($"s{i}:empty");
+                    continue;
+                }
+
+                if (i > SlotId.MinBoardIndex) boardSlots.Append(",");
+                boardSlots.Append($"s{i}:{card.DefId}:{card.Kind}");
+                kindTally.TryGetValue(card.Kind, out var c);
+                kindTally[card.Kind] = c + 1;
+            }
+
+            var tallyStr = new System.Text.StringBuilder();
+            foreach (var kv in kindTally)
+            {
+                if (tallyStr.Length > 0) tallyStr.Append(" ");
+                tallyStr.Append($"{kv.Key}={kv.Value}");
+            }
+
+            UnityEngine.Debug.Log(
+                $"[DeckProbe] BoardAfterStartNode "
+                + $"drawPile={deck.DrawPileUids.Count} "
+                + $"playerPoolRemain={deck.PlayerCardPoolUids.Count} "
+                + $"enemyPoolRemain={deck.EnemyCardPoolUids.Count} "
+                + $"itemSlots={deck.ItemSlotUids.Count} "
+                + $"board=[{boardSlots}] "
+                + $"tally=[{tallyStr}]");
+        }
+
+        /// <summary>
         /// 建跑并复位表现侧卡视图/卡组/场地。
         /// </summary>
         public InitialGameSnapshot BootstrapRun(InitialGameOptions options = null)
@@ -481,6 +556,8 @@ namespace NineGrid.Flow
                 }
 
                 options ??= NodeDeckOptions.CreateDefaultBattle();
+                LogDeckOptionsProbe(options);
+
                 // 记录本节点 EventLog 起点：结算演出据此定位 unusedHelpCards 金币事件。
                 _nodeEventLogStart = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries.Count;
                 var result = phase.StartNode(options);
@@ -489,6 +566,8 @@ namespace NineGrid.Flow
                     Debug.LogError($"[InBattleManager] StartNode 被拒: {result.Reason}");
                     return;
                 }
+
+                LogBoardDeckProbe(arch);
 
                 // StartNode 后立即对齐持久 HUD，避免 Opening 期间遗物/技能/数值栏断口。
                 RefreshPersistentInBattleUi(animate: false);

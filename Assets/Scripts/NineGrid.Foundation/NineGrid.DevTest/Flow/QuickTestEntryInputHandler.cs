@@ -1,25 +1,20 @@
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-
-using System.Text;
 using NineGrid.Flow;
 using UnityEngine;
 
 namespace NineGrid.DevTest.Flow
 {
     /// <summary>
-    /// 主菜单 \ 键快速测试入口：短按随机开局，长按弹出选关菜单。
+    /// 主菜单 \ 键快速测试入口：长按弹出选关菜单，释放确认。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class QuickTestEntryInputHandler : MonoBehaviour
     {
         private const float LongPressSeconds = 0.35f;
-        private const float DigitConfirmSeconds = 0.8f;
-        private const int MaxDigitCount = 2;
 
         private enum InputState
         {
             Idle,
-            PendingShort,
+            PendingLongPress,
             Picker,
         }
 
@@ -29,8 +24,7 @@ namespace NineGrid.DevTest.Flow
         private InputState _state = InputState.Idle;
         private float _backslashDownRealtime;
         private bool _longPressTriggered;
-        private readonly StringBuilder _digitBuffer = new StringBuilder(MaxDigitCount);
-        private float _lastDigitRealtime;
+        private string _digitBuffer = string.Empty;
 
         private void Awake()
         {
@@ -58,8 +52,8 @@ namespace NineGrid.DevTest.Flow
                 case InputState.Idle:
                     PollIdle();
                     break;
-                case InputState.PendingShort:
-                    PollPendingShort();
+                case InputState.PendingLongPress:
+                    PollPendingLongPress();
                     break;
                 case InputState.Picker:
                     PollPicker();
@@ -86,10 +80,10 @@ namespace NineGrid.DevTest.Flow
 
             _backslashDownRealtime = Time.unscaledTime;
             _longPressTriggered = false;
-            _state = InputState.PendingShort;
+            _state = InputState.PendingLongPress;
         }
 
-        private void PollPendingShort()
+        private void PollPendingLongPress()
         {
             if (!_longPressTriggered
                 && Input.GetKey(KeyCode.Backslash)
@@ -102,17 +96,19 @@ namespace NineGrid.DevTest.Flow
 
             if (!Input.GetKey(KeyCode.Backslash))
             {
-                if (!_longPressTriggered)
-                {
-                    StartRandomQuickTest();
-                }
-
                 ResetToIdle();
             }
         }
 
         private void PollPicker()
         {
+            // 释放 \ 键：确认选择并关闭
+            if (!Input.GetKey(KeyCode.Backslash))
+            {
+                ConfirmAndClose();
+                return;
+            }
+
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 loopManager.HideQuickTestPickerNotice();
@@ -120,75 +116,36 @@ namespace NineGrid.DevTest.Flow
                 return;
             }
 
-            if (TryReadDigitKeyDown(out var digit))
+            if (TryReadDigitKeyDown(out var digit) && _digitBuffer.Length < 2)
             {
-                if (_digitBuffer.Length < MaxDigitCount)
-                {
-                    _digitBuffer.Append(digit);
-                }
-
-                _lastDigitRealtime = Time.unscaledTime;
-            }
-
-            if (_digitBuffer.Length == 0)
-            {
-                return;
-            }
-
-            if (_digitBuffer.Length >= MaxDigitCount
-                || Time.unscaledTime - _lastDigitRealtime >= DigitConfirmSeconds)
-            {
-                TryConfirmPickerSelection();
+                _digitBuffer += digit;
             }
         }
 
         private void EnterPicker()
         {
             _state = InputState.Picker;
-            _digitBuffer.Clear();
-            _lastDigitRealtime = Time.unscaledTime;
+            _digitBuffer = string.Empty;
             loopManager.ShowQuickTestPickerNotice(loopManager.BuildQuickTestPickerMenuText());
         }
 
-        private void TryConfirmPickerSelection()
+        private void ConfirmAndClose()
         {
-            if (!int.TryParse(_digitBuffer.ToString(), out var code))
-            {
-                ShowInvalidSelection("编号无效");
-                return;
-            }
-
-            if (loopManager.TryBeginQuickTestFromPickerCode(code))
+            if (_digitBuffer.Length > 0
+                && int.TryParse(_digitBuffer, out var code)
+                && loopManager.TryBeginQuickTestFromPickerCode(code))
             {
                 Debug.Log("[QuickTestEntry] 选关开始 code=" + code);
-                ResetToIdle();
-                return;
             }
 
-            ShowInvalidSelection(
-                "编号 " + code + " 无效（可用 0-" + QuickTestDeckCatalog.MaxPickerCode + "）");
-        }
-
-        private void ShowInvalidSelection(string message)
-        {
-            Debug.LogWarning("[QuickTestEntry] " + message);
-            loopManager.ShowQuickTestPickerNotice(
-                loopManager.BuildQuickTestPickerMenuText()
-                + "\n\n"
-                + message);
-            _digitBuffer.Clear();
-            _lastDigitRealtime = Time.unscaledTime;
-        }
-
-        private void StartRandomQuickTest()
-        {
-            loopManager.BeginRun(testMode: true, quickTestMode: true);
+            loopManager.HideQuickTestPickerNotice();
+            ResetToIdle();
         }
 
         private void ResetToIdle()
         {
             _state = InputState.Idle;
-            _digitBuffer.Clear();
+            _digitBuffer = string.Empty;
             _longPressTriggered = false;
         }
 
@@ -210,5 +167,3 @@ namespace NineGrid.DevTest.Flow
         }
     }
 }
-
-#endif

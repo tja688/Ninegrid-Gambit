@@ -74,7 +74,7 @@ namespace NineGrid.Flow
         [Tooltip("失败文案。")]
         [SerializeField] private string defeatMessage = "失败";
 
-        public const float QuickTestTimeScale = 2f;
+        public const float QuickTestTimeScale = 1f;
         public const int QuickTestAvatarHp = 99;
         public const int QuickTestAvatarAttack = QuickTestRunPlanner.AvatarAttack;
 
@@ -248,11 +248,11 @@ namespace NineGrid.Flow
         /// </summary>
         public string BuildInBattleDebugQuickModeMenuText()
         {
-            return "局内 Debug 快速模式\n\n"
+            return "局内快速模式\n\n"
                 + "当前全局速度：x" + FormatTimeScale(Time.timeScale) + "\n\n"
                 + "\\1  全局速度 x1\n"
                 + "\\2  全局速度 x2（再按在此基础上 x2）\n\n"
-                + "Esc 关闭";
+                + "释放 \\ 键关闭";
         }
 
         /// <summary>
@@ -385,7 +385,7 @@ namespace NineGrid.Flow
             if (quickTestMode)
             {
                 Debug.Log(
-                    $"[MainGameLoop] 快速测试模式：全局速度 x{QuickTestTimeScale}，玩家 HP {QuickTestAvatarHp} / ATK {QuickTestAvatarAttack} 每关重置，"
+                    $"[MainGameLoop] 快速测试模式：全局速度 x1（局内 \\2 可加速），玩家 HP {QuickTestAvatarHp} / ATK {QuickTestAvatarAttack} 每关重置，"
                     + $"节点顺序 {_quickTestNodeOrderMode}，队列 {QuickTestRunPlanner.FormatNodeOrder(_quickTestContentNodeQueue)}"
                     + (string.IsNullOrEmpty(_pinnedFirstBattleDeckId)
                         ? string.Empty
@@ -1113,7 +1113,7 @@ namespace NineGrid.Flow
             QuickTestNodeOrderMode orderMode,
             string pinnedFirstBattleDeckId)
         {
-            var note = "DevTest快速测试：全局速度x2，玩家HP99/ATK5每关重置，节点顺序"
+            var note = "快速测试：全局速度x1，玩家HP99/ATK5每关重置，节点顺序"
                 + (orderMode == QuickTestNodeOrderMode.Sequential ? "正式" : "乱序");
             if (!string.IsNullOrEmpty(pinnedFirstBattleDeckId))
             {
