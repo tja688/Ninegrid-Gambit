@@ -565,7 +565,14 @@ namespace NineGrid.Cards
 
             if (ContainsUid(card.Uid))
             {
-                return true;
+                if (card.DisplayMode == CardDisplayMode.GroundCardMode)
+                {
+                    TryDetachByUid(card.Uid, out _);
+                }
+                else
+                {
+                    return true;
+                }
             }
 
             if (!TryClaimCardForDeck(card, nameof(LaunchReturnFieldCardToDeck)))

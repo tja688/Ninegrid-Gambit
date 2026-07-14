@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using NineGrid.Core.Content;
+using UnityEngine;
 
 namespace NineGrid.Content
 {
@@ -17,6 +18,7 @@ namespace NineGrid.Content
         {
             var candidates = new[]
             {
+                Path.Combine(Application.streamingAssetsPath, "TableNine", "LubanData"),
                 Path.Combine(Environment.CurrentDirectory, TableNineLubanCatalogFactory.DefaultDataRelativePath),
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TableNine", "LubanData"),
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Assets", "StreamingAssets", "TableNine", "LubanData")

@@ -152,6 +152,18 @@ namespace NineGrid.Flow
 
         private void TryLoadCatalog()
         {
+            if (visualCatalog != null)
+            {
+                return;
+            }
+
+            var catalogSet = ContentVisualSpriteCatalogBootstrapSO.TryLoadCatalogSet();
+            if (catalogSet?.skills != null)
+            {
+                visualCatalog = catalogSet.skills;
+                return;
+            }
+
 #if UNITY_EDITOR
             visualCatalog = AssetDatabase.LoadAssetAtPath<SkillVisualCatalogSO>(DefaultCatalogAssetPath);
 #endif

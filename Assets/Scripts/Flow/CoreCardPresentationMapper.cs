@@ -348,8 +348,19 @@ namespace NineGrid.Flow
                 out _visualCatalog,
                 out _frameStyleCatalog);
 
+            _spriteCatalogs = ContentVisualSpriteCatalogBootstrapSO.TryLoadCatalogSet();
 #if UNITY_EDITOR
-            _spriteCatalogs = new ContentVisualSpriteCatalogSet
+            if (_spriteCatalogs == null)
+            {
+                _spriteCatalogs = LoadSpriteCatalogsEditorFallback();
+            }
+#endif
+        }
+
+#if UNITY_EDITOR
+        private static ContentVisualSpriteCatalogSet LoadSpriteCatalogsEditorFallback()
+        {
+            return new ContentVisualSpriteCatalogSet
             {
                 helpCards = AssetDatabase.LoadAssetAtPath<HelpCardVisualCatalogSO>(
                     VisualAssetFolder + "HelpCardVisualCatalog.asset"),
@@ -364,8 +375,8 @@ namespace NineGrid.Flow
                 choiceOptions = AssetDatabase.LoadAssetAtPath<ChoiceOptionVisualCatalogSO>(
                     VisualAssetFolder + "ChoiceOptionVisualCatalog.asset"),
             };
-#endif
         }
+#endif
 
         private static CardPresentationKind ToPresentationKind(CardKind kind)
         {

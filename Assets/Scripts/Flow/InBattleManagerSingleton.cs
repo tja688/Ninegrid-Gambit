@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -2121,8 +2122,9 @@ namespace NineGrid.Flow
                     return;
                 }
 
+                var fusionState = BuildFusionDrainState(result);
+                PurgeFusionResultsFromShuffleQueue(fusionState);
                 await FlushPendingShuffleIntoPresentationAsync(ct);
-
                 FieldTraceHelper.RecordDrainBegin(
                     moveCount,
                     dealCount,
@@ -2136,8 +2138,6 @@ namespace NineGrid.Flow
 
                 if (stepCount > 0)
                 {
-                    var fusionState = BuildFusionDrainState(result);
-                    PurgeFusionResultsFromShuffleQueue(fusionState);
                     await DrainBoardStepsAsync(result.Steps, requestId, fusionState, ct);
                 }
                 else
@@ -3262,8 +3262,20 @@ namespace NineGrid.Flow
         private static FusionDrainState BuildFusionDrainState(PostKillBoardPresentationResult result)
         {
             var state = new FusionDrainState();
-            var actionIds = CollectFusionActionIds(result);
-            if (actionIds.Count == 0)
+            var removedInBatch = CollectRemovedUidsFromSteps(result.Steps);
+            if (removedInBatch.Count == 0 && result.RemovedUids != null)
+            {
+                for (var i = 0; i < result.RemovedUids.Length; i++)
+                {
+                    var uid = result.RemovedUids[i];
+                    if (uid > 0)
+                    {
+                        removedInBatch.Add(uid);
+                    }
+                }
+            }
+
+            if (removedInBatch.Count == 0)
             {
                 return state;
             }
@@ -3279,7 +3291,7 @@ namespace NineGrid.Flow
             for (var i = 0; i < fusions.Count; i++)
             {
                 var fusion = fusions[i];
-                if (!actionIds.Contains(fusion.ActionId))
+                if (!FusionIntersectsBatch(fusion, removedInBatch))
                 {
                     continue;
                 }
@@ -3289,34 +3301,92 @@ namespace NineGrid.Flow
                 for (var j = 0; j < participants.Length; j++)
                 {
                     var uid = participants[j];
-                    if (uid > 0)
+                    if (uid > 0 && removedInBatch.Contains(uid))
                     {
                         state.ParticipantIndex[uid] = fusion;
                     }
                 }
             }
 
+            RecordSkeletonFusionTrace(
+                "DrainStateBuilt",
+                -1,
+                new Dictionary<string, string>
+                {
+                    ["removedInBatch"] = removedInBatch.Count.ToString(),
+                    ["fusionCandidates"] = fusions.Count.ToString(),
+                    ["participantMapped"] = state.ParticipantIndex.Count.ToString(),
+                    ["resultUids"] = state.ResultUids.Count.ToString(),
+                });
+
             return state;
         }
 
-        private static HashSet<int> CollectFusionActionIds(PostKillBoardPresentationResult result)
+        private static HashSet<int> CollectRemovedUidsFromSteps(BoardPresentationStep[] steps)
         {
-            var ids = new HashSet<int>();
-            if (result.Steps == null)
+            var removed = new HashSet<int>();
+            if (steps == null)
             {
-                return ids;
+                return removed;
             }
 
-            for (var i = 0; i < result.Steps.Length; i++)
+            for (var i = 0; i < steps.Length; i++)
             {
-                var step = result.Steps[i];
-                if (step.Kind == BoardPresentationStepKind.Remove && step.ActionId >= 0)
+                var step = steps[i];
+                if (step.Kind != BoardPresentationStepKind.Remove || step.RemovedUids == null)
                 {
-                    ids.Add(step.ActionId);
+                    continue;
+                }
+
+                for (var j = 0; j < step.RemovedUids.Length; j++)
+                {
+                    var uid = step.RemovedUids[j];
+                    if (uid > 0)
+                    {
+                        removed.Add(uid);
+                    }
                 }
             }
 
-            return ids;
+            return removed;
+        }
+
+        private static bool FusionIntersectsBatch(
+            SkeletonFusionPresentationEntry fusion,
+            HashSet<int> removedInBatch)
+        {
+            var participants = fusion.ParticipantUids;
+            for (var i = 0; i < participants.Length; i++)
+            {
+                if (removedInBatch.Contains(participants[i]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void RecordSkeletonFusionTrace(
+            string site,
+            int uid,
+            Dictionary<string, string> payload = null)
+        {
+            PerfTraceRecorder.Record("SkeletonFusion", uid, site, payload);
+            if (payload == null || payload.Count == 0)
+            {
+                Debug.Log($"[SkeletonFusion] {site} uid={uid}");
+                return;
+            }
+
+            var summary = new StringBuilder(site);
+            summary.Append(" uid=").Append(uid);
+            foreach (var pair in payload)
+            {
+                summary.Append(' ').Append(pair.Key).Append('=').Append(pair.Value);
+            }
+
+            Debug.Log("[SkeletonFusion] " + summary);
         }
 
         private void PurgeFusionResultsFromShuffleQueue(FusionDrainState fusionState)
@@ -3357,6 +3427,14 @@ namespace NineGrid.Flow
             var uid = step.RemovedUids[0];
             if (!fusionState.ParticipantIndex.TryGetValue(uid, out var fusion))
             {
+                RecordSkeletonFusionTrace(
+                    "RemoveStepMiss",
+                    uid,
+                    new Dictionary<string, string>
+                    {
+                        ["stepActionId"] = step.ActionId.ToString(),
+                        ["participantMapped"] = fusionState.ParticipantIndex.Count.ToString(),
+                    });
                 return false;
             }
 
@@ -3369,11 +3447,24 @@ namespace NineGrid.Flow
             pending.Add(uid);
             if (pending.Count < fusion.ParticipantUids.Length)
             {
+                RecordSkeletonFusionTrace(
+                    "RemoveStepPending",
+                    uid,
+                    new Dictionary<string, string>
+                    {
+                        ["skillId"] = fusion.SkillId,
+                        ["pending"] = pending.Count.ToString(),
+                        ["required"] = fusion.ParticipantUids.Length.ToString(),
+                    });
                 return true;
             }
 
             if (_completedFusionActionIds.Contains(fusion.ActionId))
             {
+                RecordSkeletonFusionTrace(
+                    "RemoveStepAlreadyCompleted",
+                    uid,
+                    new Dictionary<string, string> { ["skillId"] = fusion.SkillId });
                 return true;
             }
 
@@ -3383,15 +3474,30 @@ namespace NineGrid.Flow
             ResolveManagers();
             if (fieldManager == null)
             {
+                RecordSkeletonFusionTrace("PresentBlockedNoFieldManager", uid);
                 return false;
             }
 
             var request = ToFusionRequest(fusion);
             EnsureFusionResultView(fusion);
+            RecordSkeletonFusionTrace(
+                "PresentBegin",
+                uid,
+                new Dictionary<string, string>
+                {
+                    ["skillId"] = fusion.SkillId,
+                    ["resultUid"] = fusion.ResultUid.ToString(),
+                    ["resultDefId"] = fusion.ResultDefId,
+                    ["participants"] = string.Join(",", fusion.ParticipantUids),
+                });
             await fieldManager.PresentSkeletonFusionAsync(
                 request,
                 fusionCt => DrainFusionRefillAsync(fusion.ResultUid, fusionCt),
                 ct);
+            RecordSkeletonFusionTrace(
+                "PresentEnd",
+                uid,
+                new Dictionary<string, string> { ["skillId"] = fusion.SkillId });
             return true;
         }
 
@@ -3419,7 +3525,7 @@ namespace NineGrid.Flow
                 resultCard = cardManager.SpawnView(
                     fusion.ResultUid,
                     fusion.ResultDefId,
-                    initialMode: CardDisplayMode.CardDeckMode);
+                    initialMode: CardDisplayMode.GroundCardMode);
             }
 
             if (resultCard != null)

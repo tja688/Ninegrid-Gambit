@@ -152,6 +152,18 @@ namespace NineGrid.Flow
 
         private void TryLoadCatalog()
         {
+            if (visualCatalog != null)
+            {
+                return;
+            }
+
+            var catalogSet = ContentVisualSpriteCatalogBootstrapSO.TryLoadCatalogSet();
+            if (catalogSet?.relics != null)
+            {
+                visualCatalog = catalogSet.relics;
+                return;
+            }
+
 #if UNITY_EDITOR
             visualCatalog = AssetDatabase.LoadAssetAtPath<RelicVisualCatalogSO>(DefaultCatalogAssetPath);
 #endif

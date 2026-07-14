@@ -117,15 +117,15 @@ namespace NineGrid.Flow
             out SkeletonFusionPresentationEntry fusion)
         {
             fusion = default;
-            var actionId = triggerEvent.ActionId;
             var removedUids = new List<int>(4);
             var resultUid = 0;
             var resultDefId = string.Empty;
 
-            for (var i = triggerIndex; i < entries.Count; i++)
+            // ExecuteEffect 与 RemoveCard / ShuffleInto 各自拥有独立 ActionId，不能按 actionId 截断。
+            for (var i = triggerIndex + 1; i < entries.Count; i++)
             {
                 var entry = entries[i];
-                if (entry.ActionId != actionId)
+                if (IsFusionTriggerEvent(entry))
                 {
                     break;
                 }
@@ -155,13 +155,21 @@ namespace NineGrid.Flow
             }
 
             fusion = new SkeletonFusionPresentationEntry(
-                actionId,
+                triggerEvent.ActionId,
                 triggerEvent.SourceDefId,
                 triggerEvent.CardUid,
                 removedUids.ToArray(),
                 resultUid,
                 resultDefId);
             return true;
+        }
+
+        private static bool IsFusionTriggerEvent(CoreGameEvent entry)
+        {
+            return entry != null
+                   && entry.Type == CoreEventType.EffectTriggered
+                   && entry.CardUid > 0
+                   && IsFusionSkillId(entry.SourceDefId);
         }
     }
 }

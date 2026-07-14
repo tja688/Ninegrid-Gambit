@@ -4,6 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace NineGrid.Cards
 {
@@ -63,9 +64,13 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 播放骷髅合体：互撞重叠 → 闪白替换结果卡 → 场地离场入组。
-        /// <paramref name="onFusionStarted"/> 在参与卡脱离场地格位后调用（用于触发补牌）。
+        /// 合体时参与卡 / 结果卡用于层级提升的 sortingOrder 增量，高于 <see cref="CardDisplayModeVisuals.GroundCardSortingOrder"/>。
         /// </summary>
+        private const int FusionSortingOrderBoost = 10;
+
+        /// <summary>
+        /// 播放骷髅合体：互撞重叠 → 闪白替换结果卡 → 场地离场入组。</summary>
+        /// <paramref name="onFusionStarted"/> 在参与卡脱离场地格位后调用（用于触发补牌）。</summary>
         public async UniTask PresentFusionAsync(
             SkeletonFusionPresentationRequest request,
             Func<CancellationToken, UniTask> onFusionStarted,
@@ -76,17 +81,21 @@ namespace NineGrid.Cards
             var deckManager = CardDeckManagerSingleton.Instance;
             if (fieldManager == null || cardManager == null || deckManager == null)
             {
+                Debug.LogWarning("[SkeletonDeckPresentation] PresentFusion 缺少 Field/Card/Deck 管理器。");
                 return;
             }
 
             var participants = ResolveParticipants(request, fieldManager, cardManager);
             if (participants.Count < 2)
             {
+                Debug.LogWarning(
+                    $"[SkeletonDeckPresentation] PresentFusion 参与卡不足 action={request.ActionId} skill={request.SkillId} resolved={participants.Count}/{request.ParticipantUids.Length}");
                 return;
             }
 
             var mergeCenter = ComputeMergeCenter(participants);
             VacateFusionParticipants(fieldManager, cardManager, participants);
+            BoostSortingOrder(participants);
 
             if (onFusionStarted != null)
             {
@@ -112,9 +121,12 @@ namespace NineGrid.Cards
                 cancellationToken);
             if (resultCard == null)
             {
+                RestoreSortingOrder(participants);
                 ReleaseParticipants(cardManager, participants);
                 return;
             }
+
+            BoostCardSortingOrder(resultCard);
 
             if (layoutSettings.fusionResultHoldDuration > 0f)
             {
@@ -124,6 +136,7 @@ namespace NineGrid.Cards
             }
 
             await ExitResultToDeckAsync(resultCard, deckManager, fieldManager, cancellationToken);
+            RestoreSortingOrder(participants);
             ReleaseParticipants(cardManager, participants);
         }
 
@@ -299,7 +312,20 @@ namespace NineGrid.Cards
 
             var fieldLayout = fieldManager.LayoutSettings;
             var exitDuration = fieldLayout != null ? fieldLayout.fieldExitDuration : 0.35f;
-            deckManager.LaunchReturnFieldCardToDeck(resultCard);
+
+            // 若洗入通道曾提前登记入组，合体 reveal 会把 Transform 留在场上；需先卸下再走上飞入组。
+            if (deckManager.ContainsUid(resultCard.Uid))
+            {
+                deckManager.TryDetachByUid(resultCard.Uid, out _);
+            }
+
+            if (!deckManager.LaunchReturnFieldCardToDeck(resultCard))
+            {
+                Debug.LogWarning(
+                    $"[SkeletonDeckPresentation] LaunchReturnFieldCardToDeck 失败 uid={resultCard.Uid} mode={resultCard.DisplayMode}");
+                return;
+            }
+
             if (exitDuration > 0f)
             {
                 await UniTask.Delay(TimeSpan.FromSeconds(exitDuration), cancellationToken: cancellationToken);
@@ -335,6 +361,52 @@ namespace NineGrid.Cards
                 if (uid > 0)
                 {
                     cardManager.Release(uid, "SkeletonFusion.Participant");
+                }
+            }
+        }
+
+        private void BoostSortingOrder(IReadOnlyList<ParticipantView> participants)
+        {
+            var boosted = CardDisplayModeVisuals.GroundCardSortingOrder + FusionSortingOrderBoost;
+            for (var i = 0; i < participants.Count; i++)
+            {
+                BoostCardSortingOrder(participants[i].Card, boosted);
+            }
+        }
+
+        private static void BoostCardSortingOrder(ManagedCard card)
+        {
+            BoostCardSortingOrder(card, CardDisplayModeVisuals.GroundCardSortingOrder + FusionSortingOrderBoost);
+        }
+
+        private static void BoostCardSortingOrder(ManagedCard card, int order)
+        {
+            if (card?.View == null)
+            {
+                return;
+            }
+
+            var sg = card.View.GetComponent<SortingGroup>();
+            if (sg != null)
+            {
+                sg.sortingOrder = order;
+            }
+        }
+
+        private static void RestoreSortingOrder(IReadOnlyList<ParticipantView> participants)
+        {
+            for (var i = 0; i < participants.Count; i++)
+            {
+                var card = participants[i].Card;
+                if (card?.View == null)
+                {
+                    continue;
+                }
+
+                var sg = card.View.GetComponent<SortingGroup>();
+                if (sg != null)
+                {
+                    sg.sortingOrder = CardDisplayModeVisuals.GroundCardSortingOrder;
                 }
             }
         }
