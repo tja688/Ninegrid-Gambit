@@ -57,6 +57,8 @@ namespace NineGrid.Flow
         private readonly Queue<ShuffleIntoDeckPresentationEntry> _pendingShuffleInto = new();
         private bool _shuffleIntoDrainRunning;
         private Transform _shuffleOriginScratch;
+        private readonly Dictionary<int, HashSet<int>> _pendingFusionRemoves = new();
+        private readonly HashSet<int> _completedFusionActionIds = new();
 
         private sealed class BoardPresentationRequest
         {
@@ -2134,7 +2136,9 @@ namespace NineGrid.Flow
 
                 if (stepCount > 0)
                 {
-                    await DrainBoardStepsAsync(result.Steps, requestId, ct);
+                    var fusionState = BuildFusionDrainState(result);
+                    PurgeFusionResultsFromShuffleQueue(fusionState);
+                    await DrainBoardStepsAsync(result.Steps, requestId, fusionState, ct);
                 }
                 else
                 {
@@ -2143,7 +2147,8 @@ namespace NineGrid.Flow
 
                 SoftAlignBoardAnchorsToCore(force: true);
 
-                if (result.RemovedUids != null && result.RemovedUids.Length > 0)
+                if (result.RemovedUids != null && result.RemovedUids.Length > 0
+                    && _completedFusionActionIds.Count == 0)
                 {
                     await DrainPostRemoveRefillAsync(ct);
                 }
@@ -2211,8 +2216,12 @@ namespace NineGrid.Flow
         private async UniTask DrainBoardStepsAsync(
             BoardPresentationStep[] steps,
             int requestId,
+            FusionDrainState fusionState,
             CancellationToken ct)
         {
+            _pendingFusionRemoves.Clear();
+            _completedFusionActionIds.Clear();
+
             var rotateCount = 0;
             var choreoRotateCount = 0;
             for (var i = 0; i < steps.Length; i++)
@@ -2277,7 +2286,10 @@ namespace NineGrid.Flow
                         case BoardPresentationStepKind.Remove:
                             if (step.RemovedUids != null && step.RemovedUids.Length > 0)
                             {
-                                await PresentSkillRemovedCardsAsync(step.RemovedUids, ct);
+                                if (!await TryHandleFusionRemoveStepAsync(fusionState, step, ct))
+                                {
+                                    await PresentSkillRemovedCardsAsync(step.RemovedUids, ct);
+                                }
                             }
 
                             break;
@@ -3239,6 +3251,317 @@ namespace NineGrid.Flow
             {
                 await DrainDealsAsync(refillDeals, ct);
             }
+        }
+
+        private sealed class FusionDrainState
+        {
+            public Dictionary<int, SkeletonFusionPresentationEntry> ParticipantIndex = new();
+            public HashSet<int> ResultUids = new();
+        }
+
+        private static FusionDrainState BuildFusionDrainState(PostKillBoardPresentationResult result)
+        {
+            var state = new FusionDrainState();
+            var actionIds = CollectFusionActionIds(result);
+            if (actionIds.Count == 0)
+            {
+                return state;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return state;
+            }
+
+            var entries = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
+            var fusions = SkeletonFusionPresentationScanner.Collect(entries, 0);
+            for (var i = 0; i < fusions.Count; i++)
+            {
+                var fusion = fusions[i];
+                if (!actionIds.Contains(fusion.ActionId))
+                {
+                    continue;
+                }
+
+                state.ResultUids.Add(fusion.ResultUid);
+                var participants = fusion.ParticipantUids;
+                for (var j = 0; j < participants.Length; j++)
+                {
+                    var uid = participants[j];
+                    if (uid > 0)
+                    {
+                        state.ParticipantIndex[uid] = fusion;
+                    }
+                }
+            }
+
+            return state;
+        }
+
+        private static HashSet<int> CollectFusionActionIds(PostKillBoardPresentationResult result)
+        {
+            var ids = new HashSet<int>();
+            if (result.Steps == null)
+            {
+                return ids;
+            }
+
+            for (var i = 0; i < result.Steps.Length; i++)
+            {
+                var step = result.Steps[i];
+                if (step.Kind == BoardPresentationStepKind.Remove && step.ActionId >= 0)
+                {
+                    ids.Add(step.ActionId);
+                }
+            }
+
+            return ids;
+        }
+
+        private void PurgeFusionResultsFromShuffleQueue(FusionDrainState fusionState)
+        {
+            if (fusionState == null || fusionState.ResultUids.Count == 0 || _pendingShuffleInto.Count == 0)
+            {
+                return;
+            }
+
+            var kept = new Queue<ShuffleIntoDeckPresentationEntry>();
+            while (_pendingShuffleInto.Count > 0)
+            {
+                var entry = _pendingShuffleInto.Dequeue();
+                if (!fusionState.ResultUids.Contains(entry.Uid))
+                {
+                    kept.Enqueue(entry);
+                }
+            }
+
+            while (kept.Count > 0)
+            {
+                _pendingShuffleInto.Enqueue(kept.Dequeue());
+            }
+        }
+
+        private async UniTask<bool> TryHandleFusionRemoveStepAsync(
+            FusionDrainState fusionState,
+            BoardPresentationStep step,
+            CancellationToken ct)
+        {
+            if (fusionState == null
+                || step.RemovedUids == null
+                || step.RemovedUids.Length != 1)
+            {
+                return false;
+            }
+
+            var uid = step.RemovedUids[0];
+            if (!fusionState.ParticipantIndex.TryGetValue(uid, out var fusion))
+            {
+                return false;
+            }
+
+            if (!_pendingFusionRemoves.TryGetValue(fusion.ActionId, out var pending))
+            {
+                pending = new HashSet<int>();
+                _pendingFusionRemoves[fusion.ActionId] = pending;
+            }
+
+            pending.Add(uid);
+            if (pending.Count < fusion.ParticipantUids.Length)
+            {
+                return true;
+            }
+
+            if (_completedFusionActionIds.Contains(fusion.ActionId))
+            {
+                return true;
+            }
+
+            _completedFusionActionIds.Add(fusion.ActionId);
+            _pendingFusionRemoves.Remove(fusion.ActionId);
+
+            ResolveManagers();
+            if (fieldManager == null)
+            {
+                return false;
+            }
+
+            var request = ToFusionRequest(fusion);
+            EnsureFusionResultView(fusion);
+            await fieldManager.PresentSkeletonFusionAsync(
+                request,
+                fusionCt => DrainFusionRefillAsync(fusion.ResultUid, fusionCt),
+                ct);
+            return true;
+        }
+
+        private static SkeletonFusionPresentationRequest ToFusionRequest(SkeletonFusionPresentationEntry entry)
+        {
+            return new SkeletonFusionPresentationRequest(
+                entry.ActionId,
+                entry.SkillId,
+                entry.TriggerCardUid,
+                entry.ParticipantUids,
+                entry.ResultUid,
+                entry.ResultDefId);
+        }
+
+        private void EnsureFusionResultView(SkeletonFusionPresentationEntry fusion)
+        {
+            ResolveManagers();
+            if (cardManager == null || fusion.ResultUid <= 0)
+            {
+                return;
+            }
+
+            if (!cardManager.TryGet(fusion.ResultUid, out var resultCard) || resultCard == null)
+            {
+                resultCard = cardManager.SpawnView(
+                    fusion.ResultUid,
+                    fusion.ResultDefId,
+                    initialMode: CardDisplayMode.CardDeckMode);
+            }
+
+            if (resultCard != null)
+            {
+                CoreCardPresentationMapper.ApplyToManagedCard(resultCard);
+            }
+        }
+
+        /// <summary>
+        /// 合体开始后补牌：排除刚洗入的合体结果 uid；牌堆仅有合体结果时跳过（等下一轮交互）。
+        /// </summary>
+        private async UniTask DrainFusionRefillAsync(int fusionResultUid, CancellationToken ct)
+        {
+            var arch = NineGridArchitecture.Current;
+            var phaseSystem = arch.GetSystem<IPhaseSystem>();
+            if (phaseSystem.CurrentPhase != GamePhase.InteractionLoop)
+            {
+                return;
+            }
+
+            var deck = arch.GetModel<DeckModel>();
+            if (deck == null || deck.DrawPileUids == null || deck.DrawPileUids.Count <= 0)
+            {
+                return;
+            }
+
+            if (!HasRefillCandidateExcluding(deck, fusionResultUid))
+            {
+                return;
+            }
+
+            var board = arch.GetModel<BoardModel>();
+            var hasEmpty = false;
+            for (var s = SlotId.MinBoardIndex; s <= SlotId.MaxBoardIndex; s++)
+            {
+                if (s == GroundSlotTopology.AvatarReservedSlot)
+                {
+                    continue;
+                }
+
+                if (board.GetCardUid(SlotId.Board(s)) <= 0)
+                {
+                    hasEmpty = true;
+                    break;
+                }
+            }
+
+            if (!hasEmpty)
+            {
+                return;
+            }
+
+            var originalOrder = new List<int>(deck.DrawPileUids);
+            var refillOrder = BuildRefillDrawOrder(originalOrder, fusionResultUid);
+            if (!HasRefillCandidateExcludingOrder(refillOrder, fusionResultUid))
+            {
+                return;
+            }
+
+            deck.ReorderDrawPile(refillOrder);
+            try
+            {
+                var pipeline = arch.GetSystem<IActionPipelineSystem>();
+                var startIndex = pipeline.EventLog.Entries.Count;
+                arch.GetSystem<IBoardSystem>().FillEmptySlots();
+                FillBoardDeltaFromEventLog(pipeline, startIndex, out _, out var refillDeals, out _);
+                PresentEffectTriggersFromEventLog(startIndex);
+                var filtered = FilterDealsExcluding(refillDeals, fusionResultUid);
+                if (filtered.Length > 0)
+                {
+                    await DrainDealsAsync(filtered, ct);
+                }
+            }
+            finally
+            {
+                deck.ReorderDrawPile(originalOrder);
+            }
+        }
+
+        private static bool HasRefillCandidateExcluding(DeckModel deck, int excludeUid)
+        {
+            for (var i = 0; i < deck.DrawPileUids.Count; i++)
+            {
+                if (deck.DrawPileUids[i] != excludeUid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool HasRefillCandidateExcludingOrder(IReadOnlyList<int> orderedUids, int excludeUid)
+        {
+            for (var i = 0; i < orderedUids.Count; i++)
+            {
+                if (orderedUids[i] != excludeUid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static List<int> BuildRefillDrawOrder(IReadOnlyList<int> original, int excludeUid)
+        {
+            var nonFusion = new List<int>(original.Count);
+            var fusionTail = new List<int>(1);
+            for (var i = 0; i < original.Count; i++)
+            {
+                if (original[i] == excludeUid)
+                {
+                    fusionTail.Add(original[i]);
+                }
+                else
+                {
+                    nonFusion.Add(original[i]);
+                }
+            }
+
+            nonFusion.AddRange(fusionTail);
+            return nonFusion;
+        }
+
+        private static PostKillCardDeal[] FilterDealsExcluding(PostKillCardDeal[] deals, int excludeUid)
+        {
+            if (deals == null || deals.Length == 0 || excludeUid <= 0)
+            {
+                return deals ?? Array.Empty<PostKillCardDeal>();
+            }
+
+            var filtered = new List<PostKillCardDeal>(deals.Length);
+            for (var i = 0; i < deals.Length; i++)
+            {
+                if (deals[i].Uid != excludeUid)
+                {
+                    filtered.Add(deals[i]);
+                }
+            }
+
+            return filtered.Count > 0 ? filtered.ToArray() : Array.Empty<PostKillCardDeal>();
         }
 
         private async UniTask<bool> ValidateHandDragApplyAsync(ManagedCard card, int? targetGroundSlot)

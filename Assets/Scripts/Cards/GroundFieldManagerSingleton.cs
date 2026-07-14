@@ -26,6 +26,10 @@ namespace NineGrid.Cards
         [Tooltip("场地布局与动效参数。")]
         [SerializeField] private GroundFieldLayoutSettings layoutSettings = new();
 
+        [Header("Deck Presentation")]
+        [Tooltip("骷髅军团牌组专用表现管理器。留空时 Awake 在场景中查找 SkeletonDeckPresentationManager。")]
+        [SerializeField] private SkeletonDeckPresentationManager skeletonDeckPresentation;
+
         private readonly int[] _uidBySlot = new int[GroundSlotTopology.MaxSlot + 1];
         private readonly Dictionary<int, int> _slotByUid = new();
         private readonly List<Transform> _groundAnchors = new();
@@ -83,6 +87,33 @@ namespace NineGrid.Cards
 
         public GroundFieldLayoutSettings LayoutSettings => layoutSettings;
 
+        /// <summary>
+        /// 骷髅合体表现：参与卡互撞重叠 → 闪白替换结果卡 → 场地离场入组。
+        /// <paramref name="onFusionStarted"/> 在参与卡脱离场地格位后调用（用于触发补牌）。
+        /// </summary>
+        public async UniTask PresentSkeletonFusionAsync(
+            SkeletonFusionPresentationRequest request,
+            Func<CancellationToken, UniTask> onFusionStarted,
+            CancellationToken cancellationToken = default)
+        {
+            ResolveSkeletonDeckPresentation();
+            if (skeletonDeckPresentation == null)
+            {
+                Debug.LogWarning("[GroundFieldManager] 未装配 SkeletonDeckPresentationManager，跳过骷髅合体表现。");
+                if (onFusionStarted != null)
+                {
+                    await onFusionStarted(cancellationToken);
+                }
+
+                return;
+            }
+
+            await skeletonDeckPresentation.PresentFusionAsync(
+                request,
+                onFusionStarted,
+                cancellationToken);
+        }
+
         public int ActiveDealFlightCount => _dealFlightCoordinator?.ActiveCount ?? 0;
 
         public event Action<int> EmptySlotClicked;
@@ -107,6 +138,7 @@ namespace NineGrid.Cards
             EnsureSlotHitProxies();
             RefreshAllSlotHitColliders();
             _dealFlightCoordinator = new GroundSlotDealFlightCoordinator(this, this.GetCancellationTokenOnDestroy());
+            ResolveSkeletonDeckPresentation();
         }
 
         private void OnDestroy()
@@ -1941,6 +1973,16 @@ namespace NineGrid.Cards
             {
                 groundAnchorsRoot = anchors.transform.Find("GroundAnchors");
             }
+        }
+
+        private void ResolveSkeletonDeckPresentation()
+        {
+            if (skeletonDeckPresentation != null)
+            {
+                return;
+            }
+
+            skeletonDeckPresentation = SkeletonDeckPresentationManager.TryGetInstance();
         }
 
         private void CacheAnchors()
