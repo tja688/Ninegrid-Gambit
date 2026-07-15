@@ -529,9 +529,17 @@ namespace NineGrid.Cards
             ManagedCard avatar,
             CancellationToken cancellationToken)
         {
-            if (IsBusy)
+            // 开局揭示只门禁场地自身 busy：覆盖层 / PresentationLocked / 交战忙不应挡 Avatar 落格。
+            if (IsFieldBusy)
             {
-                Debug.LogWarning("[GroundFieldManager] 当前忙碌，无法揭示 Avatar。");
+                var battle = FieldBattleManagerSingleton.Instance;
+                Debug.LogWarning(
+                    "[GroundFieldManager] 场地自身忙碌，无法揭示 Avatar。"
+                    + $" choiceOverlay={CombatHitSink.ChoiceOverlayActive}"
+                    + $" presentationLocked={CombatHitSink.PresentationLocked}"
+                    + $" fieldSelfBusy={IsFieldBusy}"
+                    + $" battleBusy={battle != null && battle.IsBusy}"
+                    + $" fieldBusy={IsBusy}");
                 return;
             }
 

@@ -1065,6 +1065,19 @@ namespace NineGrid.Flow
                 {
                     CoreCardPresentationMapper.ApplyToManagedCard(avatar);
                     await fieldManager.RequestRevealAvatarAsync(avatar, cancellationToken);
+
+                    // 揭示被场地自身 busy 拒掉时：强制 skipBusyGuard 落格 5，避免孤儿视图卡在牌堆坐标。
+                    if (!fieldManager.TryGetSlotOf(avatar.Uid, out var avatarSlot)
+                        || avatarSlot != GroundSlotTopology.AvatarReservedSlot)
+                    {
+                        Debug.LogWarning(
+                            $"[InBattleManager] Opening Avatar 未占格5，skipBusyGuard 兜底落位 uid={avatar.Uid}。");
+                        fieldManager.RequestPlaceCardAtAnchor(
+                            GroundSlotTopology.AvatarReservedSlot,
+                            avatar,
+                            skipBusyGuard: true,
+                            snapToAnchor: true);
+                    }
                 }
             }
 
@@ -1298,6 +1311,7 @@ namespace NineGrid.Flow
             SelectorManagerSingleton.TryGetInstance()?.HideChoice();
             // 先取消交战/手牌异步，再强制清占格与手牌槽，最后统一 Release 视图。
             FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+            CombatHitSink.ResetInputGates("ResetCardPresentationSurface");
             CardHandManagerSingleton.Instance?.ClearHand();
             deckManager?.ResetToStandby();
             fieldManager?.ClearField(force: true);

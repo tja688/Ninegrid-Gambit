@@ -324,6 +324,8 @@ namespace NineGrid.Flow
             SubscribeSettlement();
             CancelLoopWork();
             _loopCts = new CancellationTokenSource();
+            CombatHitSink.ResetInputGates("BeginRun");
+            FieldBattleManagerSingleton.Instance?.CancelBattleWork();
 
             _testMode = testMode;
             _quickTestMode = quickTestMode;
@@ -1012,6 +1014,7 @@ namespace NineGrid.Flow
         {
             EnsureBindings();
             HideNotice();
+            CombatHitSink.ResetInputGates("EnterMainMenu");
             FieldBattleManagerSingleton.Instance?.CancelBattleWork();
             inBattleManager?.ClearPresentationSurface();
             panelRouter.ShowMainMenu();

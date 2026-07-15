@@ -248,6 +248,16 @@ namespace NineGrid.Cards
             Debug.Log($"[CombatHitSink] PresentationLocked force-end: {reason ?? "clear"}");
         }
 
+        /// <summary>
+        /// 开局 / 回主菜单强制清零静态输入门禁，避免上一局覆盖层或选卡模式粘住整场 IsBusy。
+        /// </summary>
+        public static void ResetInputGates(string reason = null)
+        {
+            ChoiceOverlayActive = false;
+            BoardSelectModeActive = false;
+            ForceEndPresentationLock(reason ?? "ResetInputGates");
+        }
+
         /// <summary>ApplyCombatHit(attackerUid, targetUid) → 摘要。</summary>
         public static Func<int, int, CombatHitPresentationResult> ApplyCombatHit;
 

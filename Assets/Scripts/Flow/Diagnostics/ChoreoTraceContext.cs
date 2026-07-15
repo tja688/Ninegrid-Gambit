@@ -294,6 +294,7 @@ namespace NineGrid.Flow.Diagnostics
                 var deck = CardDeckManagerSingleton.Instance;
                 var hand = CardHandManagerSingleton.Instance;
                 var battle = InBattleManagerSingleton.Instance;
+                var fieldBattle = FieldBattleManagerSingleton.Instance;
 
                 payload["fieldBusy"] = field != null && field.IsBusy ? "true" : "false";
                 payload["fieldSelfBusy"] = field != null && field.IsFieldBusy ? "true" : "false";
@@ -303,6 +304,8 @@ namespace NineGrid.Flow.Diagnostics
                 payload["pumpRunning"] = PumpRunning ? "true" : "false";
                 payload["queueDepth"] = BoardQueueDepth.ToString(CultureInfo.InvariantCulture);
                 payload["presentationLocked"] = CombatHitSink.PresentationLocked ? "true" : "false";
+                payload["choiceOverlay"] = CombatHitSink.ChoiceOverlayActive ? "true" : "false";
+                payload["battleBusy"] = fieldBattle != null && fieldBattle.IsBusy ? "true" : "false";
                 payload["openMotionCount"] = PerfTraceRecorder.OpenMotionCount.ToString(CultureInfo.InvariantCulture);
                 if (battle != null)
                 {
