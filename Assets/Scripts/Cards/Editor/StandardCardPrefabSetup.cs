@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using NineGrid.Cards.Convergence;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -8,10 +9,36 @@ namespace NineGrid.Cards.Editor
     public static class StandardCardPrefabSetup
     {
         private const string PrefabPath = "Assets/Prefabs/Standard Card.prefab";
+        private const string PrefabPathAlt = "Assets/Prefabs/Standard Card 1.prefab";
         private const string LibraryPath = "Assets/Scripts/Cards/PixelCardPackSpriteLibrary.asset";
 
         [MenuItem("NineGrid/Cards/Setup Standard Card Prefab")]
         public static void SetupPrefab()
+        {
+            SetupPrefabAt(PrefabPath);
+        }
+
+        [MenuItem("NineGrid/Cards/Setup Standard Card Prefab (All Variants)")]
+        public static void SetupAllStandardCardPrefabs()
+        {
+            SetupPrefabAt(PrefabPath);
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPathAlt) != null)
+            {
+                SetupPrefabAt(PrefabPathAlt);
+            }
+        }
+
+        [MenuItem("NineGrid/Cards/Install Transform Tower On Standard Card Prefab")]
+        public static void InstallTransformTowerOnPrefab()
+        {
+            InstallTransformTowerAt(PrefabPath);
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPathAlt) != null)
+            {
+                InstallTransformTowerAt(PrefabPathAlt);
+            }
+        }
+
+        private static void SetupPrefabAt(string prefabPath)
         {
             PixelCardPackSpriteLibraryMenu.CreateOrReloadLibrary();
             var library = AssetDatabase.LoadAssetAtPath<PixelCardPackSpriteLibrary>(LibraryPath);
@@ -21,12 +48,12 @@ namespace NineGrid.Cards.Editor
                 return;
             }
 
-            var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+            var root = PrefabUtility.LoadPrefabContents(prefabPath);
             try
             {
                 ApplySetup(root, library);
-                PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
-                Debug.Log("Standard Card prefab setup complete.");
+                PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+                Debug.Log($"Standard Card prefab setup complete: {prefabPath}");
             }
             finally
             {
@@ -34,27 +61,131 @@ namespace NineGrid.Cards.Editor
             }
         }
 
+        private static void InstallTransformTowerAt(string prefabPath)
+        {
+            var root = PrefabUtility.LoadPrefabContents(prefabPath);
+            try
+            {
+                InstallTransformTower(root);
+                PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+                Debug.Log($"Transform tower installed: {prefabPath}");
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        /// <summary>
+        /// 插入 L1–L4 塔层，把现有视觉子节点迁入 L4 CardVisual，并挂塔组件。
+        /// </summary>
+        public static CardTransformTower InstallTransformTower(GameObject root)
+        {
+            var tower = GetOrAdd<CardTransformTower>(root);
+            tower.EnsureTower();
+
+            var visual = tower.CardVisual;
+            if (visual == null)
+            {
+                Debug.LogError("[StandardCardPrefabSetup] CardVisual 层创建失败。", root);
+                return tower;
+            }
+
+            ReparentVisualChildrenUnderCardVisual(root.transform, visual);
+            GetOrAdd<LayerConvergenceDriver>(root);
+
+            var cardView = root.GetComponent<StandardCardView>();
+            if (cardView != null)
+            {
+                RewireCardViewAfterTower(cardView, visual);
+            }
+
+            return tower;
+        }
+
+        private static void ReparentVisualChildrenUnderCardVisual(Transform root, Transform cardVisual)
+        {
+            for (var i = root.childCount - 1; i >= 0; i--)
+            {
+                var child = root.GetChild(i);
+                if (child == null || child.name == CardTransformTower.BoardFrameName)
+                {
+                    continue;
+                }
+
+                child.SetParent(cardVisual, false);
+            }
+        }
+
+        private static void RewireCardViewAfterTower(StandardCardView cardView, Transform visualRoot)
+        {
+            var serialized = new SerializedObject(cardView);
+            AssignIfFound(serialized, "attackAnchor", visualRoot.Find("Attack"));
+            AssignIfFound(serialized, "lifeAnchor", visualRoot.Find("Life"));
+            AssignIfFound(serialized, "armorBlocksAnchor", visualRoot.Find("ArmorBlocks"));
+            AssignIfFound(serialized, "armorValueAnchor", visualRoot.Find("ArmorValue"));
+            AssignRendererIfFound(serialized, "cardBackgroundRenderer", visualRoot, "Card Background");
+            AssignRendererIfFound(serialized, "cardFrameRenderer", visualRoot, "Card Frame");
+            AssignRendererIfFound(serialized, "mainIconRenderer", visualRoot, "MainIcon");
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void AssignIfFound(SerializedObject serialized, string propertyName, Transform value)
+        {
+            if (value == null)
+            {
+                return;
+            }
+
+            var property = serialized.FindProperty(propertyName);
+            if (property != null)
+            {
+                property.objectReferenceValue = value;
+            }
+        }
+
+        private static void AssignRendererIfFound(
+            SerializedObject serialized,
+            string propertyName,
+            Transform visualRoot,
+            string childName)
+        {
+            var renderer = FindRenderer(visualRoot, childName);
+            if (renderer == null)
+            {
+                return;
+            }
+
+            var property = serialized.FindProperty(propertyName);
+            if (property != null)
+            {
+                property.objectReferenceValue = renderer;
+            }
+        }
+
         private static void ApplySetup(GameObject root, PixelCardPackSpriteLibrary library)
         {
             var sortingGroup = GetOrAdd<SortingGroup>(root);
             var cardView = GetOrAdd<StandardCardView>(root);
+            var tower = InstallTransformTower(root);
+            var visualParent = tower.CardVisual != null ? tower.CardVisual : root.transform;
 
-            var attack = EnsureChild(root.transform, "Attack", new Vector3(-0.5939188f, 0.7503282f, 0f));
-            var life = EnsureChild(root.transform, "Life", new Vector3(0.5935812f, 0.7503282f, 0f));
-            var armorBlocks = EnsureChild(root.transform, "ArmorBlocks", new Vector3(-0.5388546f, -0.6682327f, 0f));
-            var armorValue = EnsureChild(root.transform, "ArmorValue", new Vector3(0.5861454f, -0.7307327f, 0f));
+            var attack = EnsureChild(visualParent, "Attack", new Vector3(-0.5939188f, 0.7503282f, 0f));
+            var life = EnsureChild(visualParent, "Life", new Vector3(0.5935812f, 0.7503282f, 0f));
+            var armorBlocks = EnsureChild(visualParent, "ArmorBlocks", new Vector3(-0.5388546f, -0.6682327f, 0f));
+            var armorValue = EnsureChild(visualParent, "ArmorValue", new Vector3(0.5861454f, -0.7307327f, 0f));
 
-            CaptureArmorLayout(root.transform, out var blockScale, out var blockSpacing);
+            CaptureArmorLayout(visualParent, out var blockScale, out var blockSpacing);
             blockScale = Vector3.one;
             blockSpacing = 0.156f;
-            FlattenArmorHierarchy(root.transform);
+            FlattenArmorHierarchy(visualParent);
 
             DisableSpriteRenderer(attack);
             DisableSpriteRenderer(life);
 
             NormalizeSorting(root.transform, sortingGroup);
-            ApplyPrefabSortingOrders(root.transform);
-            MoveFrameToBottom(root.transform);
+            ApplyPrefabSortingOrders(visualParent);
+            MoveFrameToBottom(visualParent);
 
             AssignCardView(cardView, library, attack, life, armorBlocks, armorValue, blockScale, blockSpacing);
             SetupInteractionComponents(root);
@@ -132,11 +263,12 @@ namespace NineGrid.Cards.Editor
             serialized.FindProperty("lifeAnchor").objectReferenceValue = life;
             serialized.FindProperty("armorBlocksAnchor").objectReferenceValue = armorBlocks;
             serialized.FindProperty("armorValueAnchor").objectReferenceValue = armorValue;
+            var visualRoot = ResolveVisualRoot(cardView.transform);
             serialized.FindProperty("cardBackgroundRenderer").objectReferenceValue =
-                FindRenderer(cardView.transform, "Card Background");
+                FindRenderer(visualRoot, "Card Background");
             serialized.FindProperty("cardFrameRenderer").objectReferenceValue =
-                FindRenderer(cardView.transform, "Card Frame");
-            serialized.FindProperty("mainIconRenderer").objectReferenceValue = FindRenderer(cardView.transform, "MainIcon");
+                FindRenderer(visualRoot, "Card Frame");
+            serialized.FindProperty("mainIconRenderer").objectReferenceValue = FindRenderer(visualRoot, "MainIcon");
             serialized.FindProperty("armorBlockScale").vector3Value = blockScale;
             serialized.FindProperty("digitSpacing").floatValue = 0.04f;
             serialized.FindProperty("armorDigitSpacing").floatValue = 0.25f;
@@ -200,7 +332,8 @@ namespace NineGrid.Cards.Editor
 
         private static void NormalizeSorting(Transform root, SortingGroup sortingGroup)
         {
-            var reference = FindRenderer(root, "MainIcon") ?? root.GetComponent<SpriteRenderer>();
+            var visualRoot = ResolveVisualRoot(root);
+            var reference = FindRenderer(visualRoot, "MainIcon") ?? root.GetComponent<SpriteRenderer>();
             if (reference != null)
             {
                 sortingGroup.sortingLayerID = reference.sortingLayerID;
@@ -226,7 +359,7 @@ namespace NineGrid.Cards.Editor
                 frame.sortingOrder = frameOrder;
             }
 
-            var background = root.GetComponent<SpriteRenderer>();
+            var background = FindRenderer(root, "Card Background") ?? root.GetComponent<SpriteRenderer>();
             if (background != null)
             {
                 background.sortingOrder = backgroundOrder;
@@ -255,6 +388,23 @@ namespace NineGrid.Cards.Editor
             {
                 frame.SetSiblingIndex(0);
             }
+        }
+
+        private static Transform ResolveVisualRoot(Transform root)
+        {
+            var tower = root.GetComponent<CardTransformTower>();
+            if (tower != null)
+            {
+                tower.EnsureTower();
+                if (tower.CardVisual != null)
+                {
+                    return tower.CardVisual;
+                }
+            }
+
+            var named = root.Find(
+                $"{CardTransformTower.BoardFrameName}/{CardTransformTower.SlotFrameName}/{CardTransformTower.EffectFrameName}/{CardTransformTower.CardVisualName}");
+            return named != null ? named : root;
         }
 
         private static Transform EnsureChild(Transform parent, string childName, Vector3 localPosition)
@@ -294,7 +444,20 @@ namespace NineGrid.Cards.Editor
             }
 
             var childTransform = root.Find(childName);
-            return childTransform != null ? childTransform.GetComponent<SpriteRenderer>() : null;
+            if (childTransform != null)
+            {
+                return childTransform.GetComponent<SpriteRenderer>();
+            }
+
+            foreach (var renderer in root.GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                if (renderer != null && renderer.name.Trim() == trimmed)
+                {
+                    return renderer;
+                }
+            }
+
+            return null;
         }
 
         private static T GetOrAdd<T>(GameObject go) where T : Component

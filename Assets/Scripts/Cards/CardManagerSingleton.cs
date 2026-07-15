@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
+using NineGrid.Cards.Convergence;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -198,6 +199,8 @@ namespace NineGrid.Cards
                 "Card.Spawn",
                 reason: "SpawnView",
                 defId: card.DefId);
+
+            EnsureTransformTower(instance);
 
             var driver = instance.GetComponent<CardVisualDriver>();
             if (driver == null)
@@ -630,6 +633,45 @@ namespace NineGrid.Cards
             var rootObject = new GameObject("Cards");
             rootObject.transform.SetParent(transform, false);
             cardRoot = rootObject.transform;
+        }
+
+        private static void EnsureTransformTower(GameObject instance)
+        {
+            if (instance == null)
+            {
+                return;
+            }
+
+            var tower = instance.GetComponent<CardTransformTower>();
+            if (tower == null)
+            {
+                tower = instance.AddComponent<CardTransformTower>();
+            }
+
+            tower.EnsureTower();
+
+            if (instance.GetComponent<LayerConvergenceDriver>() == null)
+            {
+                instance.AddComponent<LayerConvergenceDriver>();
+            }
+
+            // 运行时兜底：若预制体尚未迁入 L4，把非塔层直系子节点挂到 CardVisual 下，避免视觉与 L2 脱节。
+            var visual = tower.CardVisual;
+            if (visual == null)
+            {
+                return;
+            }
+
+            for (var i = instance.transform.childCount - 1; i >= 0; i--)
+            {
+                var child = instance.transform.GetChild(i);
+                if (child == null || child.name == CardTransformTower.BoardFrameName)
+                {
+                    continue;
+                }
+
+                child.SetParent(visual, false);
+            }
         }
 
         private void BootstrapPrefabs()

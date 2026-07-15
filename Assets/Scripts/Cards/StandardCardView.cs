@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using NineGrid.Cards.Convergence;
 
 namespace NineGrid.Cards
 {
@@ -312,14 +313,21 @@ namespace NineGrid.Cards
 
         private Transform FindChild(string childName)
         {
-            var child = transform.Find(childName);
-            return child;
+            var visualRoot = ResolveVisualRoot();
+            var child = visualRoot.Find(childName);
+            if (child != null)
+            {
+                return child;
+            }
+
+            return transform.Find(childName);
         }
 
         private SpriteRenderer FindRenderer(string childName)
         {
             var trimmed = childName.Trim();
-            foreach (Transform child in transform)
+            var visualRoot = ResolveVisualRoot();
+            foreach (Transform child in visualRoot)
             {
                 if (child.name.Trim() == trimmed)
                 {
@@ -327,16 +335,44 @@ namespace NineGrid.Cards
                 }
             }
 
-            var namedChild = transform.Find(childName);
-            return namedChild != null ? namedChild.GetComponent<SpriteRenderer>() : null;
+            var namedChild = visualRoot.Find(childName) ?? transform.Find(childName);
+            if (namedChild != null)
+            {
+                return namedChild.GetComponent<SpriteRenderer>();
+            }
+
+            foreach (var renderer in visualRoot.GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                if (renderer != null && renderer.name.Trim() == trimmed)
+                {
+                    return renderer;
+                }
+            }
+
+            return null;
         }
 
         private Transform CreateAnchor(string anchorName, Vector3 localPosition)
         {
             var anchor = new GameObject(anchorName).transform;
-            anchor.SetParent(transform, false);
+            anchor.SetParent(ResolveVisualRoot(), false);
             anchor.localPosition = localPosition;
             return anchor;
+        }
+
+        private Transform ResolveVisualRoot()
+        {
+            var tower = GetComponent<CardTransformTower>();
+            if (tower != null)
+            {
+                tower.EnsureTower();
+                if (tower.CardVisual != null)
+                {
+                    return tower.CardVisual;
+                }
+            }
+
+            return transform;
         }
 
 #if UNITY_EDITOR
