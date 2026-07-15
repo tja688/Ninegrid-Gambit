@@ -1,6 +1,7 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using NineGrid.Cards.Convergence;
 using UnityEngine;
 
 namespace NineGrid.Cards
@@ -92,6 +93,7 @@ namespace NineGrid.Cards
             }
 
             CardDeckTween.KillMotion(transform);
+            EffectFrameConvergence.SnapHome(transform, "FinalStateGuard.Restore", card.Uid);
 
             if (!restoreToSlot)
             {
@@ -109,35 +111,58 @@ namespace NineGrid.Cards
                 }
             }
 
-            var distance = Vector3.Distance(transform.position, targetPosition);
-            if (distance > AlignDistanceThreshold && allowSoftTween)
+            // 有塔时：L0 回锚 + L3 已归零；无塔时保留 SoftMove 兜底。
+            if (EffectFrameConvergence.TryGetTower(transform, out _))
             {
-                await SoftMoveOrSnapAsync(transform, targetPosition, cancellationToken);
+                if (SlotFrameConvergence.TryGetTower(card, out _))
+                {
+                    SlotFrameConvergence.SnapHome(card, targetPosition, "FinalStateGuard.SnapHome", card.Uid);
+                }
+                else
+                {
+                    transform.position = targetPosition;
+                }
+
                 CardPresentationProbe.SnapSet(
                     card.Uid,
                     transform.position,
-                    "FinalStateGuard.SoftSnap",
+                    "FinalStateGuard.TowerSnap",
                     slot: snapshot.SlotId,
-                    reason: "restoreSoft");
+                    reason: "restoreTower");
             }
             else
             {
-                transform.position = targetPosition;
-                CardPresentationProbe.SnapSet(
-                    card.Uid,
-                    targetPosition,
-                    "FinalStateGuard.HardSnap",
-                    slot: snapshot.SlotId,
-                    killedTween: true,
-                    reason: "restoreHard");
+                var distance = Vector3.Distance(transform.position, targetPosition);
+                if (distance > AlignDistanceThreshold && allowSoftTween)
+                {
+                    await SoftMoveOrSnapAsync(transform, targetPosition, cancellationToken);
+                    CardPresentationProbe.SnapSet(
+                        card.Uid,
+                        transform.position,
+                        "FinalStateGuard.SoftSnap",
+                        slot: snapshot.SlotId,
+                        reason: "restoreSoft");
+                }
+                else
+                {
+                    transform.position = targetPosition;
+                    CardPresentationProbe.SnapSet(
+                        card.Uid,
+                        targetPosition,
+                        "FinalStateGuard.HardSnap",
+                        slot: snapshot.SlotId,
+                        killedTween: true,
+                        reason: "restoreHard");
+                }
             }
 
             transform.rotation = Quaternion.identity;
 
-            distance = Vector3.Distance(transform.position, targetPosition);
-            if (distance > AlignDistanceThreshold)
+            var finalDistance = Vector3.Distance(transform.position, targetPosition);
+            if (finalDistance > AlignDistanceThreshold)
             {
                 transform.position = targetPosition;
+                EffectFrameConvergence.SnapHome(transform, "FinalStateGuard.Force", card.Uid);
                 CardPresentationProbe.SnapSet(
                     card.Uid,
                     targetPosition,
@@ -148,7 +173,7 @@ namespace NineGrid.Cards
                 if (strictWarn)
                 {
                     Debug.LogWarning(
-                        $"[BattleFinalStateGuard] 卡 {card.Uid} 终态未对齐锚点，已硬 Snap。distance={distance:F3}",
+                        $"[BattleFinalStateGuard] 卡 {card.Uid} 终态未对齐锚点，已硬 Snap。distance={finalDistance:F3}",
                         transform);
                 }
             }
@@ -212,6 +237,7 @@ namespace NineGrid.Cards
             }
 
             CardDeckTween.KillMotion(transform);
+            EffectFrameConvergence.SnapHome(transform, "FinalStateGuard.SnapImmediate");
             transform.position = targetPosition;
             if (resetRotation)
             {

@@ -29,17 +29,8 @@ namespace NineGrid.Cards.Convergence
             return tower.SlotFrame != null;
         }
 
-        public static bool TryGetDriver(ManagedCard card, out LayerConvergenceDriver driver)
-        {
-            driver = null;
-            if (card?.Transform == null)
-            {
-                return false;
-            }
-
-            driver = card.Transform.GetComponent<LayerConvergenceDriver>();
-            return driver != null;
-        }
+        public static bool TryGetDriver(ManagedCard card, out LayerConvergenceDriver driver) =>
+            LayerConvergenceDriver.TryGet(card?.Transform, TowerLayer.SlotFrame, out driver);
 
         /// <summary>世界点 → L2 父空间（BoardFrame）下的 local，供 L2.localPosition 收敛目标。</summary>
         public static Vector3 WorldToSlotLocal(CardTransformTower tower, Vector3 worldPosition)
@@ -88,6 +79,8 @@ namespace NineGrid.Cards.Convergence
             {
                 tower.SlotFrame.localPosition = Vector3.zero;
             }
+
+            FlightSortingChannel.Restore(card);
         }
 
         /// <summary>
@@ -108,6 +101,7 @@ namespace NineGrid.Cards.Convergence
             tower.CardRoot.position = slotAnchorWorld;
             var launchLocal = WorldToSlotLocal(tower, launchWorld);
             driver.Admit(HandoffState.AtRest(launchLocal));
+            FlightSortingChannel.ArmForSlotConvergence(card, driver);
             driver.ConvergeTo(Vector3.zero, sourceTime);
         }
 
@@ -126,6 +120,7 @@ namespace NineGrid.Cards.Convergence
 
             CardDeckTween.KillMotion(card.Transform, "SlotFrame.Converge", card.Uid);
             var targetLocal = WorldToSlotLocal(tower, targetWorld);
+            FlightSortingChannel.ArmForSlotConvergence(card, driver);
             driver.ConvergeTo(targetLocal, sourceTime);
         }
 

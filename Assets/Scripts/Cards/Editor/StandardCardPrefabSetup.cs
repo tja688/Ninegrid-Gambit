@@ -92,7 +92,8 @@ namespace NineGrid.Cards.Editor
             }
 
             ReparentVisualChildrenUnderCardVisual(root.transform, visual);
-            GetOrAdd<LayerConvergenceDriver>(root);
+            LayerConvergenceDriver.Ensure(root.transform, TowerLayer.SlotFrame);
+            LayerConvergenceDriver.Ensure(root.transform, TowerLayer.EffectFrame);
 
             var cardView = root.GetComponent<StandardCardView>();
             if (cardView != null)

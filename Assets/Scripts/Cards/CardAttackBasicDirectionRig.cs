@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using NineGrid.Cards.Convergence;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -217,7 +218,7 @@ namespace NineGrid.Cards
             }
             else
             {
-                RebindAnimations(attackerAnimations, attacker);
+                RebindAnimations(attackerAnimations, ResolveEffectMotionTarget(attacker));
             }
 
             if (relativeVictimKnockback)
@@ -226,7 +227,7 @@ namespace NineGrid.Cards
             }
             else
             {
-                RebindAnimations(victimAnimations, victim);
+                RebindAnimations(victimAnimations, ResolveEffectMotionTarget(victim));
                 ScaleVictimKnockbackEndValues(victimKnockbackCoefficient);
             }
 
@@ -549,12 +550,32 @@ namespace NineGrid.Cards
             if (attacker != null)
             {
                 CardDeckTween.KillMotion(attacker);
+                EffectFrameConvergence.SnapHome(attacker, "Combat.ResetAttacker");
             }
 
             if (victim != null)
             {
                 CardDeckTween.KillMotion(victim);
+                EffectFrameConvergence.SnapHome(victim, "Combat.ResetVictim");
             }
+        }
+
+        /// <summary>
+        /// 特效位移落在 L3 EffectFrame；无塔时退回卡根（兼容旧预制体 / EditMode 桩）。
+        /// </summary>
+        private static Transform ResolveEffectMotionTarget(Transform cardRoot)
+        {
+            if (cardRoot != null
+                && cardRoot.TryGetComponent<CardTransformTower>(out var tower))
+            {
+                tower.EnsureTower();
+                if (tower.EffectFrame != null)
+                {
+                    return tower.EffectFrame;
+                }
+            }
+
+            return cardRoot;
         }
 
         private void BuildRoleMapIfNeeded()
@@ -731,7 +752,8 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var homeWorld = attacker.position;
+            var motionTarget = ResolveEffectMotionTarget(attacker);
+            var homeWorld = motionTarget.position;
             var towardVictim = victim.position - homeWorld;
             var flatToward = new Vector3(towardVictim.x, towardVictim.y, 0f);
             if (flatToward.sqrMagnitude < 0.0001f)
@@ -754,7 +776,7 @@ namespace NineGrid.Cards
                     continue;
                 }
 
-                WriteAnimationTarget(animation, attacker.gameObject, attacker);
+                WriteAnimationTarget(animation, motionTarget.gameObject, motionTarget);
 
                 var bakedEnd = GetBakedEndValue(animation);
                 var delay = ReadDelay(animation);
@@ -773,7 +795,7 @@ namespace NineGrid.Cards
                     worldEnd = homeWorld;
                 }
 
-                WriteWorldEndAsLocal(animation, attacker, worldEnd);
+                WriteWorldEndAsLocal(animation, motionTarget, worldEnd);
             }
         }
 
@@ -787,7 +809,8 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var homeWorld = attacker.position;
+            var motionTarget = ResolveEffectMotionTarget(attacker);
+            var homeWorld = motionTarget.position;
             var towardWindupVictim = windupFacingVictim.position - homeWorld;
             var flatTowardWindup = new Vector3(towardWindupVictim.x, towardWindupVictim.y, 0f);
             if (flatTowardWindup.sqrMagnitude < 0.0001f)
@@ -821,7 +844,7 @@ namespace NineGrid.Cards
                     continue;
                 }
 
-                WriteAnimationTarget(animation, attacker.gameObject, attacker);
+                WriteAnimationTarget(animation, motionTarget.gameObject, motionTarget);
 
                 var bakedEnd = GetBakedEndValue(animation);
                 var delay = ReadDelay(animation);
@@ -840,7 +863,7 @@ namespace NineGrid.Cards
                     worldEnd = homeWorld;
                 }
 
-                WriteWorldEndAsLocal(animation, attacker, worldEnd);
+                WriteWorldEndAsLocal(animation, motionTarget, worldEnd);
             }
         }
 
@@ -880,7 +903,8 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var homeWorld = victim.position;
+            var motionTarget = ResolveEffectMotionTarget(victim);
+            var homeWorld = motionTarget.position;
             var away = victim.position - attacker.position;
             var flatAway = new Vector3(away.x, away.y, 0f);
             if (flatAway.sqrMagnitude < 0.0001f)
@@ -902,7 +926,7 @@ namespace NineGrid.Cards
                     continue;
                 }
 
-                WriteAnimationTarget(animation, victim.gameObject, victim);
+                WriteAnimationTarget(animation, motionTarget.gameObject, motionTarget);
 
                 var delay = ReadDelay(animation);
                 var bakedEnd = GetBakedEndValue(animation);
@@ -920,7 +944,7 @@ namespace NineGrid.Cards
                 var knockbackWorld = delay >= ReturnDelayMin && axisMagnitude <= 0.001f
                     ? homeWorld
                     : homeWorld + flatAway * axisMagnitude;
-                WriteWorldEndAsLocal(animation, victim, knockbackWorld);
+                WriteWorldEndAsLocal(animation, motionTarget, knockbackWorld);
             }
         }
 

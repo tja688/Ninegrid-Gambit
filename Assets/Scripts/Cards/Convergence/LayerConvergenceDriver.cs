@@ -6,13 +6,13 @@ namespace NineGrid.Cards.Convergence
     /// <summary>
     /// 单层 localPosition 五次收敛驱动器。初版用变长帧 Time.deltaTime，sourceTime 为墙钟秒。
     /// C 阶段 Evict 速度恒填 0；Admit 承接位姿，速度字段留给 B 阶段透传。
+    /// 同一卡可挂多个实例（L2 / L3 各一），按 <see cref="DrivenLayer"/> 区分。
     /// </summary>
-    [DisallowMultipleComponent]
     [RequireComponent(typeof(CardTransformTower))]
     public sealed class LayerConvergenceDriver : MonoBehaviour, IHandoffEndpoint
     {
         [SerializeField]
-        [Tooltip("驱动的塔层。默认 L2 SlotFrame（格位收敛）。")]
+        [Tooltip("驱动的塔层。默认 L2 SlotFrame（格位收敛）；L3 特效位移另挂一实例并设为 EffectFrame。")]
         private TowerLayer drivenLayer = TowerLayer.SlotFrame;
 
         private CardTransformTower _tower;
@@ -34,6 +34,51 @@ namespace NineGrid.Cards.Convergence
         private void Awake()
         {
             ResolveLayer();
+        }
+
+        /// <summary>配置驱动层并立刻解析 Transform（AddComponent 后调用）。</summary>
+        public void ConfigureDrivenLayer(TowerLayer layer)
+        {
+            drivenLayer = layer;
+            ResolveLayer();
+        }
+
+        public static bool TryGet(Transform root, TowerLayer layer, out LayerConvergenceDriver driver)
+        {
+            driver = null;
+            if (root == null)
+            {
+                return false;
+            }
+
+            var drivers = root.GetComponents<LayerConvergenceDriver>();
+            for (var i = 0; i < drivers.Length; i++)
+            {
+                if (drivers[i] != null && drivers[i].DrivenLayer == layer)
+                {
+                    driver = drivers[i];
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static LayerConvergenceDriver Ensure(Transform root, TowerLayer layer)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            if (TryGet(root, layer, out var existing))
+            {
+                return existing;
+            }
+
+            var driver = root.gameObject.AddComponent<LayerConvergenceDriver>();
+            driver.ConfigureDrivenLayer(layer);
+            return driver;
         }
 
         private void Update()

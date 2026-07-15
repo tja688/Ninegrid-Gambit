@@ -650,10 +650,8 @@ namespace NineGrid.Cards
 
             tower.EnsureTower();
 
-            if (instance.GetComponent<LayerConvergenceDriver>() == null)
-            {
-                instance.AddComponent<LayerConvergenceDriver>();
-            }
+            LayerConvergenceDriver.Ensure(instance.transform, TowerLayer.SlotFrame);
+            LayerConvergenceDriver.Ensure(instance.transform, TowerLayer.EffectFrame);
 
             // 运行时兜底：若预制体尚未迁入 L4，把非塔层直系子节点挂到 CardVisual 下，避免视觉与 L2 脱节。
             var visual = tower.CardVisual;

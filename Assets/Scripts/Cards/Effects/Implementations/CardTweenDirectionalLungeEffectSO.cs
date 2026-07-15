@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using NineGrid.Cards.Convergence;
 using UnityEngine;
 
 namespace NineGrid.Cards
@@ -23,7 +24,6 @@ namespace NineGrid.Cards
                 return;
             }
 
-            CardDeckTween.KillMotion(root);
             var direction = context.Invoke.SelfDirection;
             if (direction == CardBoardDirection.None)
             {
@@ -31,9 +31,21 @@ namespace NineGrid.Cards
             }
 
             var offset = CardBoardDirectionUtility.ToLocalOffset(direction, lungeDistance);
+            var duration = halfDuration > 0f ? halfDuration : EstimatedDuration * 0.5f;
+
+            if (await EffectFrameConvergence.TryPlayOutAndBackAsync(
+                    root,
+                    offset,
+                    duration,
+                    context.CancellationToken))
+            {
+                return;
+            }
+
+            // 无塔兜底：旧 DOMove 往返（净土/未挂塔对象）。
+            CardDeckTween.KillMotion(root);
             var start = root.position;
             var target = start + offset;
-            var duration = halfDuration > 0f ? halfDuration : EstimatedDuration * 0.5f;
 
             var completed = false;
             var sequence = DOTween.Sequence()
@@ -44,6 +56,12 @@ namespace NineGrid.Cards
             sequence.OnKill(() => completed = true);
 
             await UniTask.WaitUntil(() => completed, cancellationToken: context.CancellationToken);
+        }
+
+        public override void Stop(CardEffectPlayContext context)
+        {
+            base.Stop(context);
+            EffectFrameConvergence.SnapHome(context.Root, "Lunge.Stop");
         }
     }
 }
