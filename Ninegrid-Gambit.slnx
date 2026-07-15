@@ -18,6 +18,7 @@
   <Project Path="MoreMountains.Tools.Editor.csproj" />
   <Project Path="NineGrid.Flow.csproj" />
   <Project Path="AudioKit.csproj" />
+  <Project Path="NineGrid.Cards.Tests.csproj" />
   <Project Path="NineGrid.Cards.Editor.csproj" />
   <Project Path="NineGrid.DevTest.csproj" />
   <Project Path="UIKit.Editor.csproj" />
@@ -33,7 +34,6 @@
   <Project Path="Lofelt.NiceVibrations.Editor.csproj" />
   <Project Path="Febucci.TextAnimatorForUnity.UITk.Runtime.csproj" />
   <Project Path="UniTask.TextMeshPro.csproj" />
-  <Project Path="NineGrid.Cards.Tests.csproj" />
   <Project Path="Febucci.TextAnimator.Demo.Sounds.Runtime.csproj" />
   <Project Path="Febucci.Attributes.Runtime.csproj" />
   <Project Path="Febucci.TextAnimatorForUnity.Input.Runtime.csproj" />
