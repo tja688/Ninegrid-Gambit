@@ -206,7 +206,7 @@ Keypad7 `UserMark` 仍可用作可选加强，非必需。
 
 1. **首看** 末条 `SessionChoreoSummary`（四轨均有）：`choreoPartialAnimateCount` / `pickupGateFailCount` / `lastPickupGate` / `lastChoreoSeqId`
 2. **多次旋转无表现**：CoreLog `BoardQueue*` + `RotateClassify` → 同 `choreoSeqId` 的 `ChoreoBegin→RingShift×→Motion*→ChoreoEnd`；Anomaly `ChoreoPartialAnimate` / `MotionOverlap`
-3. **乱飘/瞬移**：PerfLog 按 uid 查 `SnapSet(killedTween=1)`、`ChaseSample`、`ExploreTrace` 是否与 `RingShift` 同 seq 重叠
+3. **乱飘/瞬移**：PerfLog 按 uid 查 `SnapSet(killedTween=1)`、`ExploreTrace` / `MotionBegin(SlotFrame.*)` 是否与 `RingShift` 同 seq 重叠；征用看 `Handoff(commandeerAdmit)`
 4. **Help 卡点不动**：RegistryLog `PickupEligibility` + CoreLog `PickupGate` 最后一条 `gate=`；同 beatId `OccupancySnapshot phase=pickupClick`
 
 ---

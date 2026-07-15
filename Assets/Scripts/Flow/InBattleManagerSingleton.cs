@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Stats;

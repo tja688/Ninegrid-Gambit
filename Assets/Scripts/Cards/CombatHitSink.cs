@@ -103,6 +103,8 @@ namespace NineGrid.Cards
         public bool Clockwise;
         /// <summary>Sync = 必达就位 + 租约；Async = 后发先至、无必达承诺。</summary>
         public CommitmentKind Commitment;
+        /// <summary>多跳投影策略标签（Rotate/Swap/Deal/Remove 恒 SerialVisible）。</summary>
+        public MultiHopProjectionStrategy MultiHopStrategy;
         public PostKillCardMove[] Moves;
         public PostKillCardDeal[] Deals;
         public int[] RemovedUids;

@@ -136,6 +136,9 @@ namespace NineGrid.Cards.Tests
             {
                 Assert.AreEqual(BoardPresentationStepKind.Move, result.Steps[i].Kind);
                 Assert.AreEqual(CommitmentKind.Sync, result.Steps[i].Commitment);
+                Assert.AreEqual(
+                    MultiHopProjectionStrategy.SerialVisible,
+                    result.Steps[i].MultiHopStrategy);
                 Assert.AreEqual(1, result.Steps[i].Moves.Length);
                 Assert.AreEqual(701, result.Steps[i].Moves[0].Uid);
             }
@@ -168,6 +171,9 @@ namespace NineGrid.Cards.Tests
             Assert.AreEqual(1, result.Steps.Length, "策略 C：N 跳 → 1 个 Step");
             Assert.AreEqual(BoardPresentationStepKind.Move, result.Steps[0].Kind);
             Assert.AreEqual(CommitmentKind.Async, result.Steps[0].Commitment);
+            Assert.AreEqual(
+                MultiHopProjectionStrategy.CollapsedEndpoint,
+                result.Steps[0].MultiHopStrategy);
             Assert.AreEqual(1, result.Steps[0].Moves.Length);
             Assert.AreEqual(701, result.Steps[0].Moves[0].Uid);
             Assert.AreEqual(1, result.Steps[0].Moves[0].FromSlot);

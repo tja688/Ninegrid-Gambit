@@ -67,10 +67,24 @@ namespace NineGrid.Flow.Diagnostics
         public const string ExploreTrace = "ExploreTrace";
         /// <summary>各管理器 busy 位快照。</summary>
         public const string BusySnapshot = "BusySnapshot";
-        /// <summary>ChaseAnchor 追锚采样（降采样）。</summary>
+        /// <summary>已废弃：旧 ChaseAnchor 追锚采样。保留常量供旧日志兼容。</summary>
         public const string ChaseSample = "ChaseSample";
         /// <summary>Play 退出前会话编排摘要。</summary>
         public const string SessionChoreoSummary = "SessionChoreoSummary";
+        /// <summary>租约申请结果（含征用）。</summary>
+        public const string LeaseAcquire = "LeaseAcquire";
+        /// <summary>租约释放。</summary>
+        public const string LeaseRelease = "LeaseRelease";
+        /// <summary>就位栅栏放置。</summary>
+        public const string BarrierPlace = "BarrierPlace";
+        /// <summary>就位栅栏兑现/未兑现。</summary>
+        public const string BarrierSatisfied = "BarrierSatisfied";
+        /// <summary>同步承诺兑现时刻（MarkFulfilled）。</summary>
+        public const string CommitmentArrive = "CommitmentArrive";
+        /// <summary>域边界 Evict/Admit/Commandeer 交接。</summary>
+        public const string Handoff = "Handoff";
+        /// <summary>表现节拍与诊断 beat 对齐（payload.presBeatId + 事件 beatId）。</summary>
+        public const string BeatAlign = "BeatAlign";
     }
 
     public static class PerfTraceSites
@@ -98,6 +112,12 @@ namespace NineGrid.Flow.Diagnostics
         public const string CardRegistryMiss = "Card.RegistryMiss";
         public const string GroundRingShift = "Ground.RingShift";
         public const string CardRegistryAudit = "Card.RegistryAudit";
+        public const string LeaseArbiter = "Lease.Arbiter";
+        public const string BeatGridBarrier = "BeatGrid.Barrier";
+        public const string BeatGridAlign = "BeatGrid.Align";
+        public const string SlotFrameConverge = "SlotFrame.Converge";
+        public const string EffectFrameConverge = "EffectFrame.Converge";
+        public const string LayerHandoff = "Layer.Handoff";
     }
 
     public static class PerfTraceAnomalyCodes
@@ -136,5 +156,9 @@ namespace NineGrid.Flow.Diagnostics
         public const string DealFlightBudgetExhausted = "DealFlightBudgetExhausted";
         /// <summary>旋转 hop 接管 in-flight 飞牌。</summary>
         public const string DealFlightRotateHopTakeover = "DealFlightRotateHopTakeover";
+        /// <summary>纪律 B：同步撞同步租约冲突。</summary>
+        public const string DisciplineBSyncConflict = "DisciplineBSyncConflict";
+        /// <summary>纪律 B：抢占未兑现的 committed 异步目标。</summary>
+        public const string DisciplineBPreemptCommitted = "DisciplineBPreemptCommitted";
     }
 }

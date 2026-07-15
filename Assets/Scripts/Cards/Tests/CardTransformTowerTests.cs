@@ -85,7 +85,7 @@ namespace NineGrid.Cards.Tests
         }
 
         [Test]
-        public void LayerDriver_Evict_PhaseC_VelocityZero()
+        public void LayerDriver_Evict_PhaseB_PassesVelocity()
         {
             var tower = _root.AddComponent<CardTransformTower>();
             tower.EnsureTower();
@@ -95,11 +95,16 @@ namespace NineGrid.Cards.Tests
             driver.Tick(0.2f);
 
             var mid = tower.SlotFrame.localPosition;
+            var expectedVelocity = driver.SampleVelocity();
+            Assert.Greater(expectedVelocity.magnitude, 1e-3f, "中段应有非零速度");
+
             var handoff = driver.Evict();
 
             Assert.AreEqual(mid.x, handoff.LocalPosition.x, ConvergenceCurve1D.PositionEpsilon);
             Assert.AreEqual(mid.y, handoff.LocalPosition.y, ConvergenceCurve1D.PositionEpsilon);
-            Assert.AreEqual(Vector3.zero, handoff.LocalVelocity);
+            Assert.AreEqual(expectedVelocity.x, handoff.LocalVelocity.x, 1e-4f);
+            Assert.AreEqual(expectedVelocity.y, handoff.LocalVelocity.y, 1e-4f);
+            Assert.AreEqual(Vector3.zero, driver.SampleVelocity());
             Assert.IsTrue(driver.IsComplete);
         }
 

@@ -46,6 +46,14 @@ namespace NineGrid.Flow.Diagnostics
             FlowFieldTraceSink.PickupSuccess = RecordPickupSuccess;
             FlowFieldTraceSink.RotateClassify = (accepted, clockwise, moveCount, ringOccupied) =>
                 RecordRotateClassify(accepted, clockwise, moveCount, ringOccupied);
+            FlowFieldTraceSink.DisciplineBAlarm = OnDisciplineBAlarm;
+            FlowFieldTraceSink.LeaseAcquire = OnLeaseAcquire;
+            FlowFieldTraceSink.LeaseRelease = OnLeaseRelease;
+            FlowFieldTraceSink.CommitmentArrive = OnCommitmentArrive;
+            FlowFieldTraceSink.BarrierPlace = OnBarrierPlace;
+            FlowFieldTraceSink.BarrierSatisfied = OnBarrierSatisfied;
+            FlowFieldTraceSink.BeatAlign = OnBeatAlign;
+            FlowFieldTraceSink.Handoff = OnHandoff;
             RegisterChoreoSinkHandlers();
         }
 
@@ -422,6 +430,7 @@ namespace NineGrid.Flow.Diagnostics
                     { "stepCount", stepCount.ToString() },
                     { "stepKind", step.Kind.ToString() },
                     { "commitment", step.Commitment.ToString() },
+                    { "multiHopStrategy", step.MultiHopStrategy.ToString() },
                     { "coreSequence", step.CoreSequence.ToString() },
                     { "actionId", step.ActionId.ToString() },
                     { "moveCount", (step.Moves?.Length ?? 0).ToString() },
@@ -449,6 +458,7 @@ namespace NineGrid.Flow.Diagnostics
                     { "stepCount", stepCount.ToString() },
                     { "stepKind", step.Kind.ToString() },
                     { "commitment", step.Commitment.ToString() },
+                    { "multiHopStrategy", step.MultiHopStrategy.ToString() },
                     { "coreSequence", step.CoreSequence.ToString() },
                     { "actionId", step.ActionId.ToString() },
                     { "choreoSeqId", choreoSeqId.ToString() },
@@ -764,6 +774,165 @@ namespace NineGrid.Flow.Diagnostics
                 fieldCount,
                 ghosts,
                 orphans);
+        }
+
+        private static void OnDisciplineBAlarm(
+            int uid,
+            string code,
+            string reason,
+            string layer,
+            string verdict)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.DisciplineBAlarm,
+                new Dictionary<string, string>
+                {
+                    { "uid", uid.ToString() },
+                    { "code", code ?? string.Empty },
+                    { "reason", reason ?? string.Empty },
+                    { "layer", layer ?? string.Empty },
+                    { "verdict", verdict ?? string.Empty },
+                },
+                accepted: false);
+        }
+
+        private static void OnLeaseAcquire(
+            int uid,
+            string layer,
+            string verdict,
+            string commitment,
+            int leaseId,
+            float windowStart,
+            float windowEnd,
+            bool disciplineB,
+            bool commandeered)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.LeaseAcquire,
+                new Dictionary<string, string>
+                {
+                    { "uid", uid.ToString() },
+                    { "layer", layer ?? string.Empty },
+                    { "verdict", verdict ?? string.Empty },
+                    { "commitment", commitment ?? string.Empty },
+                    { "leaseId", leaseId.ToString() },
+                    { "windowStart", windowStart.ToString("0.###") },
+                    { "windowEnd", windowEnd.ToString("0.###") },
+                    { "disciplineB", disciplineB ? "true" : "false" },
+                    { "commandeered", commandeered ? "true" : "false" },
+                },
+                accepted: string.Equals(verdict, "Accepted", StringComparison.Ordinal)
+                    || string.Equals(verdict, "Commandeered", StringComparison.Ordinal));
+        }
+
+        private static void OnLeaseRelease(int uid, string layer, int leaseId, string reason)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.LeaseRelease,
+                new Dictionary<string, string>
+                {
+                    { "uid", uid.ToString() },
+                    { "layer", layer ?? string.Empty },
+                    { "leaseId", leaseId.ToString() },
+                    { "reason", reason ?? string.Empty },
+                });
+        }
+
+        private static void OnCommitmentArrive(
+            int uid,
+            string layer,
+            string commitment,
+            int leaseId,
+            string site)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.CommitmentArrive,
+                new Dictionary<string, string>
+                {
+                    { "uid", uid.ToString() },
+                    { "layer", layer ?? string.Empty },
+                    { "commitment", commitment ?? string.Empty },
+                    { "leaseId", leaseId.ToString() },
+                    { "site", site ?? string.Empty },
+                });
+        }
+
+        private static void OnBarrierPlace(
+            int presBeatId,
+            float barrierWall,
+            float sourceTime,
+            float startWall,
+            int regHint)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.BarrierPlace,
+                new Dictionary<string, string>
+                {
+                    { "presBeatId", presBeatId.ToString() },
+                    { "barrierWall", barrierWall.ToString("0.###") },
+                    { "sourceTime", sourceTime.ToString("0.###") },
+                    { "startWall", startWall.ToString("0.###") },
+                    { "regHint", regHint.ToString() },
+                });
+        }
+
+        private static void OnBarrierSatisfied(
+            int presBeatId,
+            bool satisfied,
+            int regCount,
+            float nowWall)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.BarrierSatisfied,
+                new Dictionary<string, string>
+                {
+                    { "presBeatId", presBeatId.ToString() },
+                    { "satisfied", satisfied ? "true" : "false" },
+                    { "regCount", regCount.ToString() },
+                    { "nowWall", nowWall.ToString("0.###") },
+                },
+                accepted: satisfied);
+        }
+
+        private static void OnBeatAlign(int presBeatId, float sourceTime, float startWall)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.BeatAlign,
+                new Dictionary<string, string>
+                {
+                    { "presBeatId", presBeatId.ToString() },
+                    { "sourceTime", sourceTime.ToString("0.###") },
+                    { "startWall", startWall.ToString("0.###") },
+                });
+        }
+
+        private static void OnHandoff(
+            int uid,
+            string layer,
+            string phase,
+            string vx,
+            string vy,
+            string site)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.Handoff,
+                new Dictionary<string, string>
+                {
+                    { "uid", uid.ToString() },
+                    { "layer", layer ?? string.Empty },
+                    { "phase", phase ?? string.Empty },
+                    { "vx", vx ?? string.Empty },
+                    { "vy", vy ?? string.Empty },
+                    { "site", site ?? string.Empty },
+                });
         }
 
         private static void EnrichCommon(Dictionary<string, string> payload)

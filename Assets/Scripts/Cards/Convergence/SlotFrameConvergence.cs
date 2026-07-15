@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -11,6 +12,8 @@ namespace NineGrid.Cards.Convergence
     /// </summary>
     public static class SlotFrameConvergence
     {
+        private static readonly Dictionary<int, int> sMotionByDriver = new();
+
         public static bool TryGetTower(ManagedCard card, out CardTransformTower tower)
         {
             tower = null;
@@ -73,6 +76,7 @@ namespace NineGrid.Cards.Convergence
             }
 
             CardDeckTween.KillMotion(card.Transform, reason ?? "SlotFrame.SnapHome", uid > 0 ? uid : card.Uid);
+            EndMotionDiag(driver, card, "snap");
             driver.Admit(HandoffState.AtRest(Vector3.zero));
             tower.CardRoot.position = anchorWorld;
             if (tower.SlotFrame != null)
@@ -102,7 +106,15 @@ namespace NineGrid.Cards.Convergence
             var launchLocal = WorldToSlotLocal(tower, launchWorld);
             driver.Admit(HandoffState.AtRest(launchLocal));
             FlightSortingChannel.ArmForSlotConvergence(card, driver);
-            driver.ConvergeTo(Vector3.zero, sourceTime);
+            StartConvergenceDiag(
+                card,
+                driver,
+                launchWorld,
+                slotAnchorWorld,
+                Vector3.zero,
+                sourceTime,
+                "SlotFrame.BeginDeal",
+                CommitmentKind.Async.ToString());
         }
 
         /// <summary>
@@ -111,7 +123,8 @@ namespace NineGrid.Cards.Convergence
         public static void ConvergeVisualToWorld(
             ManagedCard card,
             Vector3 targetWorld,
-            float sourceTime)
+            float sourceTime,
+            CommitmentKind commitment = CommitmentKind.Sync)
         {
             if (card?.Transform == null || !TryGetTower(card, out var tower) || !TryGetDriver(card, out var driver))
             {
@@ -119,17 +132,27 @@ namespace NineGrid.Cards.Convergence
             }
 
             CardDeckTween.KillMotion(card.Transform, "SlotFrame.Converge", card.Uid);
+            var fromWorld = card.Transform.position;
             var targetLocal = WorldToSlotLocal(tower, targetWorld);
             FlightSortingChannel.ArmForSlotConvergence(card, driver);
-            driver.ConvergeTo(targetLocal, sourceTime);
+            StartConvergenceDiag(
+                card,
+                driver,
+                fromWorld,
+                targetWorld,
+                targetLocal,
+                sourceTime,
+                "SlotFrame.Converge",
+                commitment.ToString());
         }
 
         public static void RedirectVisualToWorld(
             ManagedCard card,
             Vector3 targetWorld,
-            float sourceTime)
+            float sourceTime,
+            CommitmentKind commitment = CommitmentKind.Sync)
         {
-            ConvergeVisualToWorld(card, targetWorld, sourceTime);
+            ConvergeVisualToWorld(card, targetWorld, sourceTime, commitment);
         }
 
         public static async UniTask AwaitDriverAsync(
@@ -158,20 +181,116 @@ namespace NineGrid.Cards.Convergence
             Vector3 targetWorld,
             float sourceTime,
             CancellationToken cancellationToken,
-            bool snapHomeOnComplete = true)
+            bool snapHomeOnComplete = true,
+            CommitmentKind commitment = CommitmentKind.Sync)
         {
             if (card?.Transform == null || !TryGetDriver(card, out var driver))
             {
                 return;
             }
 
-            ConvergeVisualToWorld(card, targetWorld, sourceTime);
-            await AwaitDriverAsync(driver, cancellationToken);
+            ConvergeVisualToWorld(card, targetWorld, sourceTime, commitment);
+            try
+            {
+                await AwaitDriverAsync(driver, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                EndMotionDiag(driver, card, "cancel");
+                throw;
+            }
 
             if (snapHomeOnComplete && !cancellationToken.IsCancellationRequested)
             {
                 SnapHome(card, targetWorld, "SlotFrame.HopComplete", card.Uid);
             }
+        }
+
+        private static void StartConvergenceDiag(
+            ManagedCard card,
+            LayerConvergenceDriver driver,
+            Vector3 fromWorld,
+            Vector3 toWorld,
+            Vector3 targetLocal,
+            float sourceTime,
+            string site,
+            string commitment)
+        {
+            if (driver == null || card == null)
+            {
+                return;
+            }
+
+            var driverId = driver.GetInstanceID();
+            if (sMotionByDriver.TryGetValue(driverId, out var prevMotionId))
+            {
+                CardPresentationProbe.MotionEnd(
+                    card.Uid,
+                    prevMotionId,
+                    card.Transform != null ? card.Transform.position : fromWorld,
+                    "redirected",
+                    site);
+                sMotionByDriver.Remove(driverId);
+            }
+
+            var motionId = CardPresentationProbe.NextMotionId();
+            sMotionByDriver[driverId] = motionId;
+            CardPresentationProbe.MotionBegin(
+                card.Uid,
+                motionId,
+                fromWorld,
+                toWorld,
+                site,
+                reason: commitment,
+                expectMs: sourceTime,
+                choreoSeqId: ChoreoTraceSink.SafeCurrentSeqId());
+
+            void OnCompleted()
+            {
+                driver.Completed -= OnCompleted;
+                if (!sMotionByDriver.TryGetValue(driverId, out var mid) || mid != motionId)
+                {
+                    return;
+                }
+
+                sMotionByDriver.Remove(driverId);
+                var at = card.Transform != null ? card.Transform.position : toWorld;
+                CardPresentationProbe.MotionEnd(
+                    card.Uid,
+                    motionId,
+                    at,
+                    "complete",
+                    site,
+                    choreoSeqId: ChoreoTraceSink.SafeCurrentSeqId());
+            }
+
+            driver.Completed += OnCompleted;
+            driver.ConvergeTo(targetLocal, sourceTime);
+        }
+
+        private static void EndMotionDiag(LayerConvergenceDriver driver, ManagedCard card, string endHow)
+        {
+            if (driver == null)
+            {
+                return;
+            }
+
+            var driverId = driver.GetInstanceID();
+            if (!sMotionByDriver.TryGetValue(driverId, out var motionId))
+            {
+                return;
+            }
+
+            sMotionByDriver.Remove(driverId);
+            var uid = card?.Uid ?? 0;
+            var at = card?.Transform != null ? card.Transform.position : Vector3.zero;
+            CardPresentationProbe.MotionEnd(
+                uid,
+                motionId,
+                at,
+                endHow,
+                "SlotFrame.Converge",
+                choreoSeqId: ChoreoTraceSink.SafeCurrentSeqId());
         }
     }
 }

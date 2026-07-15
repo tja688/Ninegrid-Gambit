@@ -36,8 +36,14 @@
 | `ChoreoBegin` / `ChoreoEnd` | 编排批次开闭 | `choreoSeqId`, `kind`, `outcome`, `plannedAnim`, `actualAnim`, `durationMs` + Busy 摘要 |
 | `ExploreTrace` | 空槽探求生命周期 | `phase`=`start\|withdraw\|chaseStart\|chaseEnd\|placeOk\|placeFail\|ringShift\|rollback`, `birthSlot`, `trackedSlot` |
 | `BusySnapshot` | 各 busy 位快照 | `fieldBusy`, `fieldSelfBusy`, `deckBusy`, `handBusy`, `drainInFlight`, `pumpRunning`, `queueDepth`, `openMotionCount`, `trigger` |
-| `ChaseSample` | Explore 追锚降采样 | `trackedSlot`, `x/y`, `destX/destY`, `dist`, `choreoSeqId` |
 | `SessionChoreoSummary` | Play 退出前摘要 | `choreoOpenAtExit`, `choreoPartialAnimateCount`, `pickupGateFailCount`, `lastPickupGate`, `lastChoreoSeqId` |
+| `LeaseAcquire` | 租约申请 | `layer`, `verdict`, `commitment`, `leaseId`, `windowStart/End`, `disciplineB`, `commandeered` |
+| `LeaseRelease` | 租约释放 | `layer`, `leaseId`, `reason` |
+| `BarrierPlace` | 就位栅栏放置 | `presBeatId`, `barrierWall`, `sourceTime`, `startWall`（事件 `beatId`=DiagBeat） |
+| `BarrierSatisfied` | 栅栏兑现 | `presBeatId`, `satisfied`, `regCount`, `nowWall` |
+| `CommitmentArrive` | 同步承诺兑现 | `layer`, `commitment`, `leaseId` |
+| `Handoff` | Evict/Admit/征用交接 | `layer`, `phase`, `x/y`, `vx/vy` |
+| `BeatAlign` | 表现节拍↔诊断 beat | `presBeatId`, `sourceTime`, `startWall`（与事件 `beatId` 对齐） |
 | `RegistryAudit` | 注册表完整性快照 | `registryCount`, `fieldCount`, `ghosts`, `orphans`, `trigger` |
 | `RegistryDelta` | CardManager `_cardsByUid` 增删 | `op`, `countBefore`, `countAfter`, `reason`, `caller`, `defId` |
 | `UserMark` | 用户/DevTest 现场戳点 | `label`, `registryCount` |
@@ -84,6 +90,8 @@
 | `ExplorePlaceWhileBusy` | Explore 就位时 field/deck busy 异常 |
 | `PickupVisualEligibleButGateFail` | PickupEligibility 可响应但 PickupGate 失败 |
 | `ChoreoIncompleteAtBeatClose` | BoardChoreo BeatClose 时仍有 open choreo/motion |
+| `DisciplineBSyncConflict` | 纪律 B：同步撞同步租约 |
+| `DisciplineBPreemptCommitted` | 纪律 B：抢占未兑现的 committed 目标 |
 
 ## 常用 site
 
@@ -91,12 +99,23 @@
 |------|------|
 | `Ground.Place.Snap` / `Ground.Relocate.Snap` | GroundField 硬贴锚点 |
 | `DeckTween.Move` / `DeckTween.Hop` / `DeckTween.Kill` | CardDeckTween |
+| `SlotFrame.Converge` / `SlotFrame.BeginDeal` | L2 五次收敛 |
+| `Lease.Arbiter` / `Lease.Commandeer` | 租约 / 征用交接 |
+| `BeatGrid.Barrier` / `BeatGrid.Align` | 就位栅栏 / 节拍对齐 |
 | `FinalStateGuard.SoftSnap` / `HardSnap` | 战斗终态守卫 |
 | `Card.DisplayMode` / `Card.Spawn` / `Card.Release` | CardManager |
 | `Ground.TryGetCardAt` / `Ground.Vacate` / `Ground.RingShift` | 占格查询/注销/旋转 |
 | `Card.RegistryAudit` | 注册表审计 |
 | `Ground.HopPlan` | hop MotionPlan |
 | `DiagBeat` / `BoardSnap.Capture` / `Anomaly.Detect` | 记录器自身 |
+
+## 收敛范式回放（Mode E）
+
+1. 同 `sessionId` 打开 CoreLog + PerfLog。
+2. 按 `beatId`（DiagBeat）对齐；payload `presBeatId` 关联表现节拍栅格。
+3. 链路：`BeatAlign` → `BarrierPlace` → `LeaseAcquire` → `MotionBegin(SlotFrame.*)` → `CommitmentArrive` → `LeaseRelease` → `BarrierSatisfied`。
+4. 纪律 B：Perf `Anomaly` code=`DisciplineB*` + Core `DisciplineBAlarm`。
+5. 征用：`LeaseAcquire(commandeered=1)` → `Handoff(phase=commandeerAdmit)` → 下一段 `MotionBegin` 速度连续。
 
 ## 与 CoreLog / Battle 互指
 
@@ -106,6 +125,6 @@
 
 ## 插桩入口
 
-- Cards：`CardPresentationProbe` → `PerfTraceSink`
+- Cards：`CardPresentationProbe` / `ConvergenceDiagProbe` → `PerfTraceSink` + `FlowFieldTraceSink`
 - Flow：`PerfTraceRecorder.OpenBeat` / `CloseBeat` / `RecordBoardSnap`
 - 导出：`BattleTraceRecorder.ExportBothNow` / Play 退出四件套

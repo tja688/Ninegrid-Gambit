@@ -124,6 +124,7 @@ namespace NineGrid.Flow
                                 ActionId = e.ActionId,
                                 Kind = BoardPresentationStepKind.Deal,
                                 Commitment = CommitmentKind.Sync,
+                                MultiHopStrategy = MultiHopProjectionStrategy.SerialVisible,
                                 Deals = new[] { deal },
                             });
                         }
@@ -147,6 +148,7 @@ namespace NineGrid.Flow
                                 ActionId = e.ActionId,
                                 Kind = BoardPresentationStepKind.Remove,
                                 Commitment = CommitmentKind.Sync,
+                                MultiHopStrategy = MultiHopProjectionStrategy.SerialVisible,
                                 RemovedUids = new[] { e.CardUid },
                             });
                         }
@@ -215,6 +217,7 @@ namespace NineGrid.Flow
                     ActionId = pendingActionId,
                     Kind = BoardPresentationStepKind.Move,
                     Commitment = CommitmentKind.Async,
+                    MultiHopStrategy = MultiHopProjectionStrategy.CollapsedEndpoint,
                     Moves = CollapseMovesToEndpoints(moves),
                 });
                 return;
@@ -230,6 +233,7 @@ namespace NineGrid.Flow
                         ActionId = pendingActionId,
                         Kind = BoardPresentationStepKind.Move,
                         Commitment = CommitmentKind.Sync,
+                        MultiHopStrategy = MultiHopProjectionStrategy.SerialVisible,
                         Moves = new[] { moves[i] },
                     });
                 }
@@ -242,6 +246,7 @@ namespace NineGrid.Flow
                 ActionId = pendingActionId,
                 Kind = BoardPresentationStepKind.Move,
                 Commitment = CommitmentKind.Sync,
+                MultiHopStrategy = MultiHopProjectionStrategy.SerialVisible,
                 Moves = moves,
             });
         }
@@ -292,6 +297,7 @@ namespace NineGrid.Flow
                 ActionId = rotateEvent.ActionId,
                 Kind = BoardPresentationStepKind.Rotate,
                 Commitment = CommitmentKind.Sync,
+                MultiHopStrategy = MultiHopProjectionStrategy.SerialVisible,
                 Clockwise = rotateEvent.Amount >= 0,
                 Moves = moves,
             });
@@ -318,6 +324,7 @@ namespace NineGrid.Flow
                 ActionId = swapEvent.ActionId,
                 Kind = BoardPresentationStepKind.Swap,
                 Commitment = CommitmentKind.Sync,
+                MultiHopStrategy = MultiHopProjectionStrategy.SerialVisible,
                 Moves = moves,
             });
         }

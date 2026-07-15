@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DG.Tweening;
 using NineGrid.Cards.Convergence;
 using UnityEngine;
 
@@ -38,7 +37,7 @@ namespace NineGrid.Cards
         private readonly PresentationClock _presentationClock = new();
         private BeatGrid _beatGrid;
         private LeaseArbiter _leaseArbiter;
-        private SlotDealFlightService _dealFlightCoordinator;
+        private SlotDealFlightService _dealFlightService;
         private bool _isBusy;
         private CancellationTokenSource _fieldAnimCts;
         private bool _occupancyConflictSinceClear;
@@ -118,7 +117,7 @@ namespace NineGrid.Cards
                 cancellationToken);
         }
 
-        public int ActiveDealFlightCount => _dealFlightCoordinator?.ActiveCount ?? 0;
+        public int ActiveDealFlightCount => _dealFlightService?.ActiveCount ?? 0;
 
         public event Action<int> EmptySlotClicked;
 
@@ -142,10 +141,51 @@ namespace NineGrid.Cards
             EnsureSlotHitProxies();
             RefreshAllSlotHitColliders();
             _beatGrid = new BeatGrid(_presentationClock);
-            _leaseArbiter = new LeaseArbiter(reason =>
-                Debug.LogWarning("[GroundFieldManager] " + reason));
-            _dealFlightCoordinator = new SlotDealFlightService(this, this.GetCancellationTokenOnDestroy());
+            _leaseArbiter = new LeaseArbiter(OnDisciplineBAlarm);
+            _dealFlightService = new SlotDealFlightService(this, this.GetCancellationTokenOnDestroy());
             ResolveSkeletonDeckPresentation();
+        }
+
+        private void OnDisciplineBAlarm(string reason)
+        {
+            Debug.LogWarning("[GroundFieldManager] " + reason);
+            var code = reason != null && reason.IndexOf("Preempted", StringComparison.Ordinal) >= 0
+                ? "DisciplineBPreemptCommitted"
+                : "DisciplineBSyncConflict";
+            var uid = TryParseCardIdFromLeaseReason(reason);
+            ConvergenceDiagProbe.DisciplineB(
+                uid: uid,
+                code: code,
+                reason: reason,
+                layer: TowerLayer.SlotFrame.ToString(),
+                verdict: code);
+        }
+
+        private static int TryParseCardIdFromLeaseReason(string reason)
+        {
+            if (string.IsNullOrEmpty(reason))
+            {
+                return 0;
+            }
+
+            const string marker = "card=";
+            var idx = reason.IndexOf(marker, StringComparison.Ordinal);
+            if (idx < 0)
+            {
+                return 0;
+            }
+
+            var start = idx + marker.Length;
+            var end = start;
+            while (end < reason.Length && char.IsDigit(reason[end]))
+            {
+                end++;
+            }
+
+            return end > start
+                   && int.TryParse(reason.Substring(start, end - start), out var uid)
+                ? uid
+                : 0;
         }
 
         private void OnDestroy()
@@ -633,7 +673,7 @@ namespace NineGrid.Cards
                 RefreshSlotHitCollider(slot);
                 if (startExplore)
                 {
-                    _dealFlightCoordinator?.StartExplore(slot);
+                    _dealFlightService?.StartExplore(slot);
                 }
 
                 return false;
@@ -670,7 +710,7 @@ namespace NineGrid.Cards
                 RefreshSlotHitCollider(slot);
                 if (startExplore)
                 {
-                    _dealFlightCoordinator?.StartExplore(slot);
+                    _dealFlightService?.StartExplore(slot);
                 }
 
                 return false;
@@ -707,7 +747,7 @@ namespace NineGrid.Cards
             RefreshSlotHitCollider(slot);
             if (startExplore)
             {
-                _dealFlightCoordinator?.StartExplore(slot);
+                _dealFlightService?.StartExplore(slot);
             }
 
             if (card == null)
@@ -759,12 +799,12 @@ namespace NineGrid.Cards
             Vector3 launchPos,
             DealFlightContext context)
         {
-            return _dealFlightCoordinator?.LaunchDrainFlight(card, targetSlot, launchPos, context);
+            return _dealFlightService?.LaunchDrainFlight(card, targetSlot, launchPos, context);
         }
 
         internal bool IsDealInFlight(int uid)
         {
-            return _dealFlightCoordinator != null && _dealFlightCoordinator.IsInFlight(uid);
+            return _dealFlightService != null && _dealFlightService.IsInFlight(uid);
         }
 
         public static async UniTask WaitDealFlightsSettledAsync(
@@ -793,7 +833,7 @@ namespace NineGrid.Cards
                 _isBusy = false;
             }
 
-            _dealFlightCoordinator?.CancelAll();
+            _dealFlightService?.CancelAll();
 
             // 非 force：先 Vacate 再 Release，与 RequestRemoveFromField 契约一致，避免幽灵占格。
             if (!force)
@@ -1286,7 +1326,7 @@ namespace NineGrid.Cards
 
                         if (IsDealInFlight(plan.card.Uid))
                         {
-                            _dealFlightCoordinator?.TryRedirectFlightToSlot(
+                            _dealFlightService?.TryRedirectFlightToSlot(
                                 plan.card.Uid,
                                 plan.toSlot,
                                 layoutSettings.moveDuration);
@@ -1443,14 +1483,25 @@ namespace NineGrid.Cards
                     -1,
                     "clockwise", clockwise ? "1" : "0");
 
-                _dealFlightCoordinator?.OnRingShifted(clockwise);
+                _dealFlightService?.OnRingShifted(clockwise);
 
                 SyncPresentationClock();
                 var sourceTime = layoutSettings != null ? layoutSettings.moveDuration : 0.35f;
                 var beatId = _beatGrid != null ? _beatGrid.OpenBeat(sourceTime) : -1;
-                if (beatId > 0)
+                if (beatId > 0 && _beatGrid.TryGetBeat(beatId, out var beatInfo))
                 {
-                    _beatGrid.PlaceBarrier(beatId, _presentationClock.Now + sourceTime);
+                    ConvergenceDiagProbe.BeatAlign(
+                        beatId,
+                        beatInfo.SharedSourceTime,
+                        beatInfo.StartWallTime);
+                    var barrierWall = _presentationClock.Now + sourceTime;
+                    _beatGrid.PlaceBarrier(beatId, barrierWall);
+                    ConvergenceDiagProbe.BarrierPlace(
+                        beatId,
+                        barrierWall,
+                        beatInfo.SharedSourceTime,
+                        beatInfo.StartWallTime,
+                        registrationHint: plannedAnim);
                 }
 
                 var moveTasks = new List<UniTask>();
@@ -1507,6 +1558,20 @@ namespace NineGrid.Cards
                         cancellationToken: cancellationToken);
                 }
 
+                if (beatId > 0)
+                {
+                    SyncPresentationClock();
+                    var satisfied = _beatGrid.IsBarrierSatisfied(beatId);
+                    var regCount = _beatGrid.TryGetBeat(beatId, out var afterInfo)
+                        ? afterInfo.RegistrationCount
+                        : 0;
+                    ConvergenceDiagProbe.BarrierSatisfied(
+                        beatId,
+                        satisfied,
+                        regCount,
+                        _presentationClock.Now);
+                }
+
                 RefreshAllSlotHitColliders();
                 CardManagerSingleton.Instance?.AuditRegistryIntegrity("Ground.RingRotate.End");
             }
@@ -1550,8 +1615,8 @@ namespace NineGrid.Cards
 
             // 补牌飞行中：只 Redirect L2 目标，由飞牌探针等待同一驱动器完成。
             if (IsDealInFlight(card.Uid)
-                && _dealFlightCoordinator != null
-                && _dealFlightCoordinator.TryRedirectFlightToSlot(card.Uid, toSlot, sourceTime))
+                && _dealFlightService != null
+                && _dealFlightService.TryRedirectFlightToSlot(card.Uid, toSlot, sourceTime))
             {
                 if (SlotFrameConvergence.TryGetDriver(card, out var inFlightDriver))
                 {
@@ -1574,7 +1639,8 @@ namespace NineGrid.Cards
                     toAnchor.position,
                     sourceTime,
                     cancellationToken,
-                    snapHomeOnComplete: true);
+                    snapHomeOnComplete: true,
+                    commitment: commitment);
             }
             finally
             {
@@ -1617,6 +1683,32 @@ namespace NineGrid.Cards
                 return HandoffState.AtRest(Vector3.zero);
             });
 
+            ConvergenceDiagProbe.LeaseAcquire(
+                cardId,
+                TowerLayer.SlotFrame.ToString(),
+                result.Verdict.ToString(),
+                CommitmentKind.Sync.ToString(),
+                result.LeaseId,
+                now,
+                now + sourceTime,
+                disciplineB: result.RaisedDisciplineBAlarm,
+                commandeered: result.HasCommandeerHandoff);
+
+            if (result.HasCommandeerHandoff
+                && CardManagerSingleton.Instance != null
+                && CardManagerSingleton.Instance.TryGet(cardId, out var commandeerCard)
+                && SlotFrameConvergence.TryGetDriver(commandeerCard, out var commandeerDriver))
+            {
+                ConvergenceDiagProbe.Handoff(
+                    cardId,
+                    TowerLayer.SlotFrame.ToString(),
+                    "commandeerAdmit",
+                    result.CommandeerHandoff.LocalPosition,
+                    result.CommandeerHandoff.LocalVelocity,
+                    site: "Lease.Commandeer");
+                commandeerDriver.Admit(result.CommandeerHandoff);
+            }
+
             if (!result.IsWriteAllowed)
             {
                 Debug.LogWarning(
@@ -1634,8 +1726,19 @@ namespace NineGrid.Cards
             var key = new LeaseKey(cardId, TowerLayer.SlotFrame);
             if (_leaseArbiter.TryGetActiveLeaseId(key, out var leaseId))
             {
+                ConvergenceDiagProbe.CommitmentArrive(
+                    cardId,
+                    TowerLayer.SlotFrame.ToString(),
+                    CommitmentKind.Sync.ToString(),
+                    leaseId,
+                    site: "Ground.HopComplete");
                 _leaseArbiter.MarkFulfilled(key);
                 _leaseArbiter.Release(key, leaseId);
+                ConvergenceDiagProbe.LeaseRelease(
+                    cardId,
+                    TowerLayer.SlotFrame.ToString(),
+                    leaseId,
+                    reason: "fulfilled");
             }
         }
 
@@ -1726,12 +1829,12 @@ namespace NineGrid.Cards
 
                 if (IsDealInFlight(moveA.Uid))
                 {
-                    _dealFlightCoordinator?.TryRedirectFlightToSlot(moveA.Uid, moveA.ToSlot, duration);
+                    _dealFlightService?.TryRedirectFlightToSlot(moveA.Uid, moveA.ToSlot, duration);
                 }
 
                 if (IsDealInFlight(moveB.Uid))
                 {
-                    _dealFlightCoordinator?.TryRedirectFlightToSlot(moveB.Uid, moveB.ToSlot, duration);
+                    _dealFlightService?.TryRedirectFlightToSlot(moveB.Uid, moveB.ToSlot, duration);
                 }
 
                 var useSyncLease = commitment == CommitmentKind.Sync;
@@ -1749,13 +1852,15 @@ namespace NineGrid.Cards
                             anchorA.position,
                             duration,
                             cancellationToken,
-                            snapHomeOnComplete: true),
+                            snapHomeOnComplete: true,
+                            commitment: commitment),
                         SlotFrameConvergence.ConvergeVisualToWorldAsync(
                             cardB,
                             anchorB.position,
                             duration,
                             cancellationToken,
-                            snapHomeOnComplete: true));
+                            snapHomeOnComplete: true,
+                            commitment: commitment));
                 }
                 finally
                 {
@@ -1777,33 +1882,6 @@ namespace NineGrid.Cards
                     _isBusy = false;
                 }
             }
-        }
-
-        private static UniTask AwaitTweenAsync(Tween tween, CancellationToken cancellationToken)
-        {
-            if (tween == null || !tween.IsActive())
-            {
-                return UniTask.CompletedTask;
-            }
-
-            var tcs = new UniTaskCompletionSource();
-            tween.OnComplete(() => tcs.TrySetResult());
-            tween.OnKill(() => tcs.TrySetResult());
-
-            if (cancellationToken.CanBeCanceled)
-            {
-                cancellationToken.Register(() =>
-                {
-                    if (tween.IsActive())
-                    {
-                        tween.Kill(complete: false);
-                    }
-
-                    tcs.TrySetCanceled(cancellationToken);
-                });
-            }
-
-            return tcs.Task;
         }
 
         private UniTask MoveCardAnimatedAsync(

@@ -5,7 +5,7 @@ namespace NineGrid.Cards.Convergence
 {
     /// <summary>
     /// 单层 localPosition 五次收敛驱动器。初版用变长帧 Time.deltaTime，sourceTime 为墙钟秒。
-    /// C 阶段 Evict 速度恒填 0；Admit 承接位姿，速度字段留给 B 阶段透传。
+    /// 复杂域 Evict 吐真实速度（B）；净土域交接口仍由各 Manager 恒填 0（C）。
     /// 同一卡可挂多个实例（L2 / L3 各一），按 <see cref="DrivenLayer"/> 区分。
     /// </summary>
     [RequireComponent(typeof(CardTransformTower))]
@@ -162,11 +162,11 @@ namespace NineGrid.Cards.Convergence
         {
             ResolveLayer();
             var position = _layer != null ? _layer.localPosition : Vector3.zero;
-
-            // C 阶段：速度恒填 0。B 阶段改为吐 _heldVelocity / 曲线当前速度。
+            // B 阶段（复杂域 L2/L3）：吐真实速度，供征用/跨域交接 C1 连续。
+            var velocity = SampleVelocity();
             Stop();
             _heldVelocity = Vector3.zero;
-            return HandoffState.AtRest(position);
+            return new HandoffState(position, velocity);
         }
 
         public void Admit(in HandoffState state)

@@ -310,32 +310,145 @@ namespace NineGrid.Cards
             EmitDict("BusySnapshot", -1, "Choreo.Busy", payload);
         }
 
-        public static void ChaseSample(
-            int uid,
-            int trackedSlot,
-            Vector3 current,
-            Vector3 destination,
-            float dist,
-            int choreoSeqId = 0)
-        {
-            Emit(
-                "ChaseSample",
-                uid,
-                "Explore.Chase",
-                "trackedSlot", trackedSlot.ToString(CultureInfo.InvariantCulture),
-                "x", FormatXy(current.x),
-                "y", FormatXy(current.y),
-                "destX", FormatXy(destination.x),
-                "destY", FormatXy(destination.y),
-                "dist", dist.ToString("0.###", CultureInfo.InvariantCulture),
-                "choreoSeqId", choreoSeqId > 0
-                    ? choreoSeqId.ToString(CultureInfo.InvariantCulture)
-                    : string.Empty);
-        }
-
         public static void SessionChoreoSummary(Dictionary<string, string> payload)
         {
             EmitDict("SessionChoreoSummary", -1, "Choreo.SessionSummary", payload);
+        }
+
+        /// <summary>Perf Anomaly（实时写入，不限于 BeatClose）。</summary>
+        public static void Anomaly(
+            int uid,
+            string code,
+            string detail,
+            string site = null,
+            string layer = null,
+            string verdict = null)
+        {
+            Emit(
+                "Anomaly",
+                uid,
+                site ?? "Anomaly.Detect",
+                "code", code ?? string.Empty,
+                "detail", detail ?? string.Empty,
+                "layer", layer ?? string.Empty,
+                "verdict", verdict ?? string.Empty);
+        }
+
+        public static void LeaseAcquire(
+            int uid,
+            string layer,
+            string verdict,
+            string commitment,
+            int leaseId,
+            float windowStart,
+            float windowEnd,
+            bool disciplineB = false,
+            bool commandeered = false)
+        {
+            Emit(
+                "LeaseAcquire",
+                uid,
+                "Lease.Arbiter",
+                "layer", layer ?? string.Empty,
+                "verdict", verdict ?? string.Empty,
+                "commitment", commitment ?? string.Empty,
+                "leaseId", leaseId.ToString(CultureInfo.InvariantCulture),
+                "windowStart", windowStart.ToString("0.###", CultureInfo.InvariantCulture),
+                "windowEnd", windowEnd.ToString("0.###", CultureInfo.InvariantCulture),
+                "disciplineB", disciplineB ? "1" : "0",
+                "commandeered", commandeered ? "1" : "0");
+        }
+
+        public static void LeaseRelease(int uid, string layer, int leaseId, string reason = null)
+        {
+            Emit(
+                "LeaseRelease",
+                uid,
+                "Lease.Arbiter",
+                "layer", layer ?? string.Empty,
+                "leaseId", leaseId.ToString(CultureInfo.InvariantCulture),
+                "reason", reason ?? string.Empty);
+        }
+
+        public static void CommitmentArrive(
+            int uid,
+            string layer,
+            string commitment,
+            int leaseId = 0,
+            string site = null)
+        {
+            Emit(
+                "CommitmentArrive",
+                uid,
+                site ?? "Lease.Arbiter",
+                "layer", layer ?? string.Empty,
+                "commitment", commitment ?? string.Empty,
+                "leaseId", leaseId.ToString(CultureInfo.InvariantCulture));
+        }
+
+        public static void BarrierPlace(
+            int presBeatId,
+            float barrierWallTime,
+            float sharedSourceTime,
+            float startWallTime,
+            int registrationHint = 0)
+        {
+            Emit(
+                "BarrierPlace",
+                -1,
+                "BeatGrid.Barrier",
+                "presBeatId", presBeatId.ToString(CultureInfo.InvariantCulture),
+                "barrierWall", barrierWallTime.ToString("0.###", CultureInfo.InvariantCulture),
+                "sourceTime", sharedSourceTime.ToString("0.###", CultureInfo.InvariantCulture),
+                "startWall", startWallTime.ToString("0.###", CultureInfo.InvariantCulture),
+                "regHint", registrationHint.ToString(CultureInfo.InvariantCulture));
+        }
+
+        public static void BarrierSatisfied(
+            int presBeatId,
+            bool satisfied,
+            int registrationCount,
+            float nowWallTime)
+        {
+            Emit(
+                "BarrierSatisfied",
+                -1,
+                "BeatGrid.Barrier",
+                "presBeatId", presBeatId.ToString(CultureInfo.InvariantCulture),
+                "satisfied", satisfied ? "1" : "0",
+                "regCount", registrationCount.ToString(CultureInfo.InvariantCulture),
+                "nowWall", nowWallTime.ToString("0.###", CultureInfo.InvariantCulture));
+        }
+
+        public static void BeatAlign(int presBeatId, float sharedSourceTime, float startWallTime)
+        {
+            Emit(
+                "BeatAlign",
+                -1,
+                "BeatGrid.Align",
+                "presBeatId", presBeatId.ToString(CultureInfo.InvariantCulture),
+                "sourceTime", sharedSourceTime.ToString("0.###", CultureInfo.InvariantCulture),
+                "startWall", startWallTime.ToString("0.###", CultureInfo.InvariantCulture));
+        }
+
+        public static void Handoff(
+            int uid,
+            string layer,
+            string phase,
+            Vector3 localPosition,
+            Vector3 localVelocity,
+            string site = null)
+        {
+            Emit(
+                "Handoff",
+                uid,
+                site ?? "Layer.Handoff",
+                "layer", layer ?? string.Empty,
+                "phase", phase ?? string.Empty,
+                "x", FormatXy(localPosition.x),
+                "y", FormatXy(localPosition.y),
+                "vx", localVelocity.x.ToString("0.###", CultureInfo.InvariantCulture),
+                "vy", localVelocity.y.ToString("0.###", CultureInfo.InvariantCulture));
         }
 
         /// <summary>

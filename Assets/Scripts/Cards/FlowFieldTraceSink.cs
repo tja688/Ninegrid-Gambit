@@ -46,6 +46,30 @@ namespace NineGrid.Cards
         /// <summary>accepted, clockwise, moveCount, ringOccupied</summary>
         public static Action<bool, bool, int, int> RotateClassify;
 
+        /// <summary>uid, code, reason, layer, verdict</summary>
+        public static Action<int, string, string, string, string> DisciplineBAlarm;
+
+        /// <summary>uid, layer, verdict, commitment, leaseId, windowStart, windowEnd, disciplineB, commandeered</summary>
+        public static Action<int, string, string, string, int, float, float, bool, bool> LeaseAcquire;
+
+        /// <summary>uid, layer, leaseId, reason</summary>
+        public static Action<int, string, int, string> LeaseRelease;
+
+        /// <summary>uid, layer, commitment, leaseId, site</summary>
+        public static Action<int, string, string, int, string> CommitmentArrive;
+
+        /// <summary>presBeatId, barrierWall, sourceTime, startWall, regHint</summary>
+        public static Action<int, float, float, float, int> BarrierPlace;
+
+        /// <summary>presBeatId, satisfied, regCount, nowWall</summary>
+        public static Action<int, bool, int, float> BarrierSatisfied;
+
+        /// <summary>presBeatId, sourceTime, startWall</summary>
+        public static Action<int, float, float> BeatAlign;
+
+        /// <summary>uid, layer, phase, vx, vy, site</summary>
+        public static Action<int, string, string, string, string, string> Handoff;
+
         public static void ClearHandlers()
         {
             OccupancyConflict = null;
@@ -60,6 +84,14 @@ namespace NineGrid.Cards
             PickupGate = null;
             PickupSuccess = null;
             RotateClassify = null;
+            DisciplineBAlarm = null;
+            LeaseAcquire = null;
+            LeaseRelease = null;
+            CommitmentArrive = null;
+            BarrierPlace = null;
+            BarrierSatisfied = null;
+            BeatAlign = null;
+            Handoff = null;
             CurrentBatchTag = string.Empty;
         }
     }

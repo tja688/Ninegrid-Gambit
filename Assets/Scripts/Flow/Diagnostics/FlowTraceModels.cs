@@ -103,6 +103,16 @@ namespace NineGrid.Flow.Diagnostics
         public const string PickupGate = "PickupGate";
         public const string PickupSuccess = "PickupSuccess";
         public const string SessionChoreoSummary = "SessionChoreoSummary";
+
+        // 收敛范式：租约 / 栅栏 / 纪律 B / 交接
+        public const string DisciplineBAlarm = "DisciplineBAlarm";
+        public const string LeaseAcquire = "LeaseAcquire";
+        public const string LeaseRelease = "LeaseRelease";
+        public const string BarrierPlace = "BarrierPlace";
+        public const string BarrierSatisfied = "BarrierSatisfied";
+        public const string CommitmentArrive = "CommitmentArrive";
+        public const string Handoff = "Handoff";
+        public const string BeatAlign = "BeatAlign";
     }
 
     /// <summary>
