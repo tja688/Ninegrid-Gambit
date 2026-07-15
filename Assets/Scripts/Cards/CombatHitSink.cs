@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using NineGrid.Cards.Convergence;
 using UnityEngine;
 
 namespace NineGrid.Cards
@@ -79,6 +80,18 @@ namespace NineGrid.Cards
     }
 
     /// <summary>
+    /// 多跳投影策略（StepProjector 编排层）。
+    /// S = 串行多 beat 逐跳可见；C = 合并单 beat 只看终点。
+    /// </summary>
+    public enum MultiHopProjectionStrategy
+    {
+        /// <summary>策略 S：N 跳 → N 个 Sync Step，逐跳精确落格。</summary>
+        SerialVisible = 0,
+        /// <summary>策略 C：N 跳 → 1 个 Async Step，只保留终点。</summary>
+        CollapsedEndpoint = 1,
+    }
+
+    /// <summary>
     /// 保序盘面表现步骤：一次 Core action 或独立事件对应一步演出。
     /// </summary>
     public struct BoardPresentationStep
@@ -88,6 +101,8 @@ namespace NineGrid.Cards
         public BoardPresentationStepKind Kind;
         /// <summary>旋转方向；仅 <see cref="BoardPresentationStepKind.Rotate"/> 有效。</summary>
         public bool Clockwise;
+        /// <summary>Sync = 必达就位 + 租约；Async = 后发先至、无必达承诺。</summary>
+        public CommitmentKind Commitment;
         public PostKillCardMove[] Moves;
         public PostKillCardDeal[] Deals;
         public int[] RemovedUids;

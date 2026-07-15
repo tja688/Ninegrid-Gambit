@@ -2,15 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using NineGrid.Cards.Convergence;
 using UnityEngine;
 
-namespace NineGrid.Cards
+namespace NineGrid.Cards.Convergence
 {
     /// <summary>
-    /// 统一飞牌协调器：Drain / Explore 补牌均走 L2 五次收敛；换格 = Redirect，无替身、无握手。
+    /// 补牌飞牌服务：Drain / Explore 均走 L2 五次收敛；换格 = Redirect，无替身、无握手。
     /// </summary>
-    internal sealed class GroundSlotDealFlightCoordinator
+    internal sealed class SlotDealFlightService
     {
         private sealed class DealFlightProbe
         {
@@ -31,7 +30,7 @@ namespace NineGrid.Cards
         private readonly Dictionary<int, DealFlightProbe> _drainByUid = new();
         private float _lastExploreStartTime = float.NegativeInfinity;
 
-        public GroundSlotDealFlightCoordinator(
+        public SlotDealFlightService(
             GroundFieldManagerSingleton field,
             CancellationToken destroyToken)
         {

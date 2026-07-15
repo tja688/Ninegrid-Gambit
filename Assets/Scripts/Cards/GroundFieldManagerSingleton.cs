@@ -38,7 +38,7 @@ namespace NineGrid.Cards
         private readonly PresentationClock _presentationClock = new();
         private BeatGrid _beatGrid;
         private LeaseArbiter _leaseArbiter;
-        private GroundSlotDealFlightCoordinator _dealFlightCoordinator;
+        private SlotDealFlightService _dealFlightCoordinator;
         private bool _isBusy;
         private CancellationTokenSource _fieldAnimCts;
         private bool _occupancyConflictSinceClear;
@@ -144,7 +144,7 @@ namespace NineGrid.Cards
             _beatGrid = new BeatGrid(_presentationClock);
             _leaseArbiter = new LeaseArbiter(reason =>
                 Debug.LogWarning("[GroundFieldManager] " + reason));
-            _dealFlightCoordinator = new GroundSlotDealFlightCoordinator(this, this.GetCancellationTokenOnDestroy());
+            _dealFlightCoordinator = new SlotDealFlightService(this, this.GetCancellationTokenOnDestroy());
             ResolveSkeletonDeckPresentation();
         }
 
@@ -463,12 +463,18 @@ namespace NineGrid.Cards
         /// <summary>
         /// 按 Core CardMoved 列表更新占格并并行 hop（不整圈盲转）。交战忙碌时可 skipBusyGuard。
         /// </summary>
+        /// <param name="commitment">Sync = 租约必达；Async = 无租约后发先至。</param>
         public UniTask ApplyBoardMovesAndHopAsync(
             IReadOnlyList<PostKillCardMove> moves,
             CancellationToken cancellationToken = default,
-            bool skipBusyGuard = false)
+            bool skipBusyGuard = false,
+            CommitmentKind commitment = CommitmentKind.Sync)
         {
-            return ApplyBoardMovesAndHopInternalAsync(moves, cancellationToken, skipBusyGuard);
+            return ApplyBoardMovesAndHopInternalAsync(
+                moves,
+                cancellationToken,
+                skipBusyGuard,
+                commitment);
         }
 
         /// <summary>
@@ -765,7 +771,7 @@ namespace NineGrid.Cards
             IReadOnlyList<DealFlightHandle> handles,
             CancellationToken cancellationToken)
         {
-            await GroundSlotDealFlightCoordinator.WaitAllSettledAsync(handles, cancellationToken);
+            await SlotDealFlightService.WaitAllSettledAsync(handles, cancellationToken);
         }
 
         /// <summary>
@@ -990,7 +996,8 @@ namespace NineGrid.Cards
         private async UniTask ApplyBoardMovesAndHopInternalAsync(
             IReadOnlyList<PostKillCardMove> moves,
             CancellationToken cancellationToken,
-            bool skipBusyGuard)
+            bool skipBusyGuard,
+            CommitmentKind commitment = CommitmentKind.Sync)
         {
             if (!skipBusyGuard && IsBusy)
             {
@@ -1006,7 +1013,12 @@ namespace NineGrid.Cards
             if (moves.Count == 2
                 && TryGetCrossSwapPair(moves, out var swapA, out var swapB))
             {
-                await ApplyCrossSwapMovesInternalAsync(swapA, swapB, cancellationToken, skipBusyGuard);
+                await ApplyCrossSwapMovesInternalAsync(
+                    swapA,
+                    swapB,
+                    cancellationToken,
+                    skipBusyGuard,
+                    commitment);
                 return;
             }
 
@@ -1016,7 +1028,11 @@ namespace NineGrid.Cards
                 return;
             }
 
-            await ApplyGeneralBoardMovesInternalAsync(moves, cancellationToken, skipBusyGuard);
+            await ApplyGeneralBoardMovesInternalAsync(
+                moves,
+                cancellationToken,
+                skipBusyGuard,
+                commitment);
         }
 
         private bool TryClassifyOuterRingRotation(
@@ -1115,7 +1131,8 @@ namespace NineGrid.Cards
         private async UniTask ApplyGeneralBoardMovesInternalAsync(
             IReadOnlyList<PostKillCardMove> moves,
             CancellationToken cancellationToken,
-            bool skipBusyGuard)
+            bool skipBusyGuard,
+            CommitmentKind commitment = CommitmentKind.Sync)
         {
             if (!skipBusyGuard && IsBusy)
             {
@@ -1276,7 +1293,12 @@ namespace NineGrid.Cards
                         }
 
                         moveTasks.Add(
-                            AnimateCardHopToSlotAsync(plan.card, plan.fromSlot, plan.toSlot, cancellationToken));
+                            AnimateCardHopToSlotAsync(
+                                plan.card,
+                                plan.fromSlot,
+                                plan.toSlot,
+                                cancellationToken,
+                                commitment));
                     }
 
                     if (moveTasks.Count > 0)
@@ -1513,7 +1535,8 @@ namespace NineGrid.Cards
             ManagedCard card,
             int fromSlot,
             int toSlot,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            CommitmentKind commitment = CommitmentKind.Sync)
         {
             if (card?.Transform == null
                 || !TryGetAnchor(toSlot, out var toAnchor)
@@ -1538,7 +1561,12 @@ namespace NineGrid.Cards
                 return;
             }
 
-            IssueSyncL2Lease(card.Uid, sourceTime);
+            var useSyncLease = commitment == CommitmentKind.Sync;
+            if (useSyncLease)
+            {
+                IssueSyncL2Lease(card.Uid, sourceTime);
+            }
+
             try
             {
                 await SlotFrameConvergence.ConvergeVisualToWorldAsync(
@@ -1550,7 +1578,10 @@ namespace NineGrid.Cards
             }
             finally
             {
-                ReleaseSyncL2Lease(card.Uid);
+                if (useSyncLease)
+                {
+                    ReleaseSyncL2Lease(card.Uid);
+                }
             }
 
             CardManagerSingleton.Instance.RefreshDisplayMode(card);
@@ -1641,7 +1672,8 @@ namespace NineGrid.Cards
             PostKillCardMove moveA,
             PostKillCardMove moveB,
             CancellationToken cancellationToken,
-            bool skipBusyGuard)
+            bool skipBusyGuard,
+            CommitmentKind commitment = CommitmentKind.Sync)
         {
             if (!skipBusyGuard && IsBusy)
             {
@@ -1702,8 +1734,13 @@ namespace NineGrid.Cards
                     _dealFlightCoordinator?.TryRedirectFlightToSlot(moveB.Uid, moveB.ToSlot, duration);
                 }
 
-                IssueSyncL2Lease(moveA.Uid, duration);
-                IssueSyncL2Lease(moveB.Uid, duration);
+                var useSyncLease = commitment == CommitmentKind.Sync;
+                if (useSyncLease)
+                {
+                    IssueSyncL2Lease(moveA.Uid, duration);
+                    IssueSyncL2Lease(moveB.Uid, duration);
+                }
+
                 try
                 {
                     await UniTask.WhenAll(
@@ -1722,8 +1759,11 @@ namespace NineGrid.Cards
                 }
                 finally
                 {
-                    ReleaseSyncL2Lease(moveA.Uid);
-                    ReleaseSyncL2Lease(moveB.Uid);
+                    if (useSyncLease)
+                    {
+                        ReleaseSyncL2Lease(moveA.Uid);
+                        ReleaseSyncL2Lease(moveB.Uid);
+                    }
                 }
 
                 CardManagerSingleton.Instance.RefreshDisplayMode(cardA);

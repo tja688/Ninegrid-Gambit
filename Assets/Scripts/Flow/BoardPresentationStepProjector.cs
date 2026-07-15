@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using NineGrid.Cards;
+using NineGrid.Cards.Convergence;
 using NineGrid.Core;
 
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 将 Core EventLog 投影为保序盘面表现步骤流，避免多转/换位被扁平 Moves 压成一步。
+    /// 将 Core EventLog 投影为带 commitment 标签的有序盘面表现步骤流。
+    /// 多跳策略 S/C 仅影响独立 Move 批；Rotate/Swap/Deal/Remove 恒 Sync。
     /// </summary>
     public static class BoardPresentationStepProjector
     {
@@ -22,7 +24,8 @@ namespace NineGrid.Flow
         public static ProjectionResult Project(
             IReadOnlyList<CoreGameEvent> entries,
             int startIndex,
-            CardRegistry registry)
+            CardRegistry registry,
+            MultiHopProjectionStrategy multiHopStrategy = MultiHopProjectionStrategy.SerialVisible)
         {
             var result = new ProjectionResult();
             if (entries == null || startIndex < 0 || startIndex >= entries.Count)
@@ -61,7 +64,12 @@ namespace NineGrid.Flow
                             && pendingActionId != e.ActionId
                             && pendingMoves.Count > 0)
                         {
-                            FlushPendingMoveStep(steps, legacyMoveList, pendingMoves, pendingActionId);
+                            FlushPendingMoveStep(
+                                steps,
+                                legacyMoveList,
+                                pendingMoves,
+                                pendingActionId,
+                                multiHopStrategy);
                             pendingMoves.Clear();
                             pendingActionId = -1;
                         }
@@ -89,7 +97,12 @@ namespace NineGrid.Flow
                         break;
 
                     case CoreEventType.CardDealt:
-                        FlushPendingMoveStepIfAny(steps, legacyMoveList, pendingMoves, ref pendingActionId);
+                        FlushPendingMoveStepIfAny(
+                            steps,
+                            legacyMoveList,
+                            pendingMoves,
+                            ref pendingActionId,
+                            multiHopStrategy);
                         if (e.CardUid > 0 && e.ToSlot.IsBoardSlot)
                         {
                             var defId = string.Empty;
@@ -110,6 +123,7 @@ namespace NineGrid.Flow
                                 CoreSequence = e.Sequence,
                                 ActionId = e.ActionId,
                                 Kind = BoardPresentationStepKind.Deal,
+                                Commitment = CommitmentKind.Sync,
                                 Deals = new[] { deal },
                             });
                         }
@@ -118,7 +132,12 @@ namespace NineGrid.Flow
 
                     case CoreEventType.CardRemoved:
                     case CoreEventType.CardKilled:
-                        FlushPendingMoveStepIfAny(steps, legacyMoveList, pendingMoves, ref pendingActionId);
+                        FlushPendingMoveStepIfAny(
+                            steps,
+                            legacyMoveList,
+                            pendingMoves,
+                            ref pendingActionId,
+                            multiHopStrategy);
                         if (e.CardUid > 0 && legacyRemovedSet.Add(e.CardUid))
                         {
                             legacyRemoveList.Add(e.CardUid);
@@ -127,6 +146,7 @@ namespace NineGrid.Flow
                                 CoreSequence = e.Sequence,
                                 ActionId = e.ActionId,
                                 Kind = BoardPresentationStepKind.Remove,
+                                Commitment = CommitmentKind.Sync,
                                 RemovedUids = new[] { e.CardUid },
                             });
                         }
@@ -135,7 +155,12 @@ namespace NineGrid.Flow
                 }
             }
 
-            FlushPendingMoveStepIfAny(steps, legacyMoveList, pendingMoves, ref pendingActionId);
+            FlushPendingMoveStepIfAny(
+                steps,
+                legacyMoveList,
+                pendingMoves,
+                ref pendingActionId,
+                multiHopStrategy);
 
             result.Steps = steps.ToArray();
             result.LegacyMoves = legacyMoveList.ToArray();
@@ -150,14 +175,20 @@ namespace NineGrid.Flow
             List<BoardPresentationStep> steps,
             List<PostKillCardMove> legacyMoveList,
             List<PostKillCardMove> pendingMoves,
-            ref int pendingActionId)
+            ref int pendingActionId,
+            MultiHopProjectionStrategy multiHopStrategy)
         {
             if (pendingMoves.Count <= 0)
             {
                 return;
             }
 
-            FlushPendingMoveStep(steps, legacyMoveList, pendingMoves, pendingActionId);
+            FlushPendingMoveStep(
+                steps,
+                legacyMoveList,
+                pendingMoves,
+                pendingActionId,
+                multiHopStrategy);
             pendingMoves.Clear();
             pendingActionId = -1;
         }
@@ -166,7 +197,8 @@ namespace NineGrid.Flow
             List<BoardPresentationStep> steps,
             List<PostKillCardMove> legacyMoveList,
             List<PostKillCardMove> pendingMoves,
-            int pendingActionId)
+            int pendingActionId,
+            MultiHopProjectionStrategy multiHopStrategy)
         {
             if (pendingMoves.Count <= 0)
             {
@@ -175,12 +207,68 @@ namespace NineGrid.Flow
 
             var moves = pendingMoves.ToArray();
             legacyMoveList.AddRange(moves);
+
+            if (multiHopStrategy == MultiHopProjectionStrategy.CollapsedEndpoint)
+            {
+                steps.Add(new BoardPresentationStep
+                {
+                    ActionId = pendingActionId,
+                    Kind = BoardPresentationStepKind.Move,
+                    Commitment = CommitmentKind.Async,
+                    Moves = CollapseMovesToEndpoints(moves),
+                });
+                return;
+            }
+
+            // 策略 S：同 uid 多跳才拆成 N 个 Sync Step；单跳多卡仍一批并行。
+            if (HasMultiHopUid(moves))
+            {
+                for (var i = 0; i < moves.Length; i++)
+                {
+                    steps.Add(new BoardPresentationStep
+                    {
+                        ActionId = pendingActionId,
+                        Kind = BoardPresentationStepKind.Move,
+                        Commitment = CommitmentKind.Sync,
+                        Moves = new[] { moves[i] },
+                    });
+                }
+
+                return;
+            }
+
             steps.Add(new BoardPresentationStep
             {
                 ActionId = pendingActionId,
                 Kind = BoardPresentationStepKind.Move,
+                Commitment = CommitmentKind.Sync,
                 Moves = moves,
             });
+        }
+
+        private static bool HasMultiHopUid(PostKillCardMove[] moves)
+        {
+            if (moves == null || moves.Length <= 1)
+            {
+                return false;
+            }
+
+            var seen = new HashSet<int>();
+            for (var i = 0; i < moves.Length; i++)
+            {
+                var uid = moves[i].Uid;
+                if (uid <= 0)
+                {
+                    continue;
+                }
+
+                if (!seen.Add(uid))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void FlushPendingRotateStep(
@@ -203,6 +291,7 @@ namespace NineGrid.Flow
                 CoreSequence = rotateEvent.Sequence,
                 ActionId = rotateEvent.ActionId,
                 Kind = BoardPresentationStepKind.Rotate,
+                Commitment = CommitmentKind.Sync,
                 Clockwise = rotateEvent.Amount >= 0,
                 Moves = moves,
             });
@@ -228,8 +317,54 @@ namespace NineGrid.Flow
                 CoreSequence = swapEvent.Sequence,
                 ActionId = swapEvent.ActionId,
                 Kind = BoardPresentationStepKind.Swap,
+                Commitment = CommitmentKind.Sync,
                 Moves = moves,
             });
+        }
+
+        /// <summary>
+        /// 策略 C：按 uid 首次出现序，折叠为 From=首跳起点、To=末跳终点。
+        /// </summary>
+        public static PostKillCardMove[] CollapseMovesToEndpoints(PostKillCardMove[] moves)
+        {
+            if (moves == null || moves.Length == 0)
+            {
+                return Array.Empty<PostKillCardMove>();
+            }
+
+            var order = new List<int>(moves.Length);
+            var fromByUid = new Dictionary<int, int>(moves.Length);
+            var toByUid = new Dictionary<int, int>(moves.Length);
+            for (var i = 0; i < moves.Length; i++)
+            {
+                var move = moves[i];
+                if (move.Uid <= 0)
+                {
+                    continue;
+                }
+
+                if (!fromByUid.ContainsKey(move.Uid))
+                {
+                    order.Add(move.Uid);
+                    fromByUid[move.Uid] = move.FromSlot;
+                }
+
+                toByUid[move.Uid] = move.ToSlot;
+            }
+
+            var collapsed = new PostKillCardMove[order.Count];
+            for (var i = 0; i < order.Count; i++)
+            {
+                var uid = order[i];
+                collapsed[i] = new PostKillCardMove
+                {
+                    Uid = uid,
+                    FromSlot = fromByUid[uid],
+                    ToSlot = toByUid[uid],
+                };
+            }
+
+            return collapsed;
         }
     }
 }

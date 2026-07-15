@@ -2,14 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using NineGrid.Cards.Convergence;
 using UnityEngine;
 
 namespace NineGrid.Cards
 {
     /// <summary>
     /// 牌组管理器单例：编排卡组 Standby / Entry / InGame 三模式，以及向 Ground 发牌。
+    /// 净土域：内部布局黑盒；仅暴露 C 阶段 Evict/Admit（速度恒 0）。
     /// </summary>
-    public sealed class CardDeckManagerSingleton : MonoBehaviour
+    public sealed class CardDeckManagerSingleton : MonoBehaviour, IHandoffEndpoint
     {
         private static CardDeckManagerSingleton _instance;
 
@@ -61,6 +63,39 @@ namespace NineGrid.Cards
         public bool IsBusy => _isBusy;
 
         public CardDeckLayoutSettings LayoutSettings => layoutSettings;
+
+        /// <summary>
+        /// 净土域 C 阶段交接：速度恒填 0。域级快照；卡级见 <see cref="EvictCard"/>。
+        /// </summary>
+        public HandoffState Evict() => HandoffState.AtRest(Vector3.zero);
+
+        /// <summary>净土域 C 阶段：承接位置，忽略速度。</summary>
+        public void Admit(in HandoffState state)
+        {
+            // 牌库布局黑盒内部不动；C 阶段仅接受接口契约。
+        }
+
+        /// <summary>单卡离开牌库域：C 阶段速度恒 0。</summary>
+        public HandoffState EvictCard(ManagedCard card)
+        {
+            if (card?.Transform == null)
+            {
+                return HandoffState.AtRest(Vector3.zero);
+            }
+
+            return HandoffState.AtRest(card.Transform.localPosition);
+        }
+
+        /// <summary>单卡进入牌库域：C 阶段忽略速度，仅对齐局部位姿。</summary>
+        public void AdmitCard(ManagedCard card, in HandoffState state)
+        {
+            if (card?.Transform == null)
+            {
+                return;
+            }
+
+            card.Transform.localPosition = state.LocalPosition;
+        }
 
         private void Awake()
         {

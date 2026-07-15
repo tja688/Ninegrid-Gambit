@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DG.Tweening;
 using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Stats;
@@ -50,7 +49,6 @@ namespace NineGrid.Flow
         private bool _drainInFlight;
         private bool _boardPresentationPumpRunning;
         private bool _pendingSyncFromCore;
-        private bool _pendingSoftAlignToCore;
         private int _boardPresentationRequestId;
         private readonly Queue<BoardPresentationRequest> _boardPresentationQueue = new();
         private CancellationTokenSource _presentationCts;
@@ -1265,7 +1263,6 @@ namespace NineGrid.Flow
             {
                 // 与 Drain/UseItem 对齐：开局发牌后必须 Sync，否则会出现
                 // 表现空槽可点、Core 非空拒 ClickEmpty（道具旋转 Sync 后“自愈”）。
-                SoftAlignBoardAnchorsToCore();
                 SyncBoardOccupancyFromCore();
                 CoreCardPresentationMapper.SyncAllSpawnedCards();
                 UpdateAvatarDebugText();
@@ -2166,7 +2163,8 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 单条盘面 delta 缓释：保序步骤流逐步 await，或回退扁平 Deals/Moves；末尾一次 Sync 安全网。
+        /// 单条盘面 delta 缓释：保序步骤流逐步 await，或回退扁平 Deals/Moves。
+        /// 位移类 Step 经 <see cref="BoardMotionStepScheduler"/> 供给执行层；就位由五次收敛 + 栅栏保证，无硬 snap。
         /// 锁由队列泵或外层交战流程持有，本方法不再重复加解锁。
         /// </summary>
         private async UniTask DrainPostKillBoardCoreAsync(
@@ -2223,8 +2221,6 @@ namespace NineGrid.Flow
                 {
                     await DrainLegacyBoardDeltaAsync(result, ct);
                 }
-
-                SoftAlignBoardAnchorsToCore(force: true);
 
                 if (result.RemovedUids != null && result.RemovedUids.Length > 0
                     && _completedFusionActionIds.Count == 0)
@@ -2324,7 +2320,7 @@ namespace NineGrid.Flow
                     {
                         case BoardPresentationStepKind.Rotate:
                             var choreoBefore = ChoreoTraceContext.LastChoreoSeqId;
-                            await fieldManager.RotateOuterRingWhileBusyAsync(step.Clockwise, ct);
+                            await BoardMotionStepScheduler.ExecuteMotionStepAsync(fieldManager, step, ct);
                             if (ChoreoTraceContext.LastChoreoSeqId != choreoBefore)
                             {
                                 choreoRotateCount++;
@@ -2345,10 +2341,7 @@ namespace NineGrid.Flow
                                         step.Moves.Length);
                                 }
 
-                                await fieldManager.ApplyBoardMovesAndHopAsync(
-                                    step.Moves,
-                                    ct,
-                                    skipBusyGuard: true);
+                                await BoardMotionStepScheduler.ExecuteMotionStepAsync(fieldManager, step, ct);
                             }
 
                             break;
@@ -3889,7 +3882,6 @@ namespace NineGrid.Flow
                 return;
             }
 
-            SoftAlignBoardAnchorsToCore();
             SyncBoardOccupancyFromCore();
 
             if (!TryValidateBoardSelectTargets(selectedUids, requiredCount, out var validateReason))
@@ -4209,7 +4201,6 @@ namespace NineGrid.Flow
                 }
                 else
                 {
-                    SoftAlignBoardAnchorsToCore();
                     SyncBoardOccupancyFromCore();
                 }
 
@@ -4422,7 +4413,6 @@ namespace NineGrid.Flow
                     {
                         CoreCardPresentationMapper.SyncAllSpawnedCards();
                         UpdateAvatarDebugText();
-                        SoftAlignBoardAnchorsToCore();
                         SyncBoardOccupancyFromCore();
                     }
 
@@ -4578,76 +4568,10 @@ namespace NineGrid.Flow
                 return;
             }
 
-            if (_pendingSoftAlignToCore)
-            {
-                _pendingSoftAlignToCore = false;
-                SoftAlignBoardAnchorsToCore(force: true);
-            }
-
             if (_pendingSyncFromCore)
             {
                 _pendingSyncFromCore = false;
                 SyncBoardOccupancyFromCore(force: true);
-            }
-        }
-
-        /// <summary>
-        /// 占格已与 Core 一致时，把 Transform 软对齐到锚点（不 Release）。
-        /// </summary>
-        private void SoftAlignBoardAnchorsToCore(bool force = false)
-        {
-            if (!force && ShouldDeferBoardTimelineSync())
-            {
-                _pendingSoftAlignToCore = true;
-                FieldTraceHelper.RecordBoardSyncDeferred("SoftAlign", "timelineActive");
-                return;
-            }
-
-            _pendingSoftAlignToCore = false;
-            ResolveManagers();
-            if (fieldManager == null || cardManager == null)
-            {
-                return;
-            }
-
-            var board = NineGridArchitecture.Current.GetModel<BoardModel>();
-            var avatarUid = board.AvatarUid.Value;
-            for (var slot = SlotId.MinBoardIndex; slot <= SlotId.MaxBoardIndex; slot++)
-            {
-                if (slot == GroundSlotTopology.AvatarReservedSlot)
-                {
-                    continue;
-                }
-
-                var uid = board.GetCardUid(SlotId.Board(slot));
-                if (uid <= 0 || uid == avatarUid)
-                {
-                    continue;
-                }
-
-                if (!fieldManager.TryGetCardAt(slot, out var card)
-                    || card?.Transform == null
-                    || card.Uid != uid)
-                {
-                    continue;
-                }
-
-                var anchor = fieldManager.GetGroundAnchor(slot);
-                if (anchor == null)
-                {
-                    continue;
-                }
-
-                if ((card.Transform.position - anchor.position).sqrMagnitude > 0.0001f)
-                {
-                    if (DOTween.IsTweening(card.Transform))
-                    {
-                        CardDeckTween.KillMotion(card.Transform);
-                    }
-
-                    card.Transform.position = anchor.position;
-                    cardManager.RefreshDisplayMode(card);
-                }
             }
         }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using NineGrid.Cards.Convergence;
 using UnityEngine;
 
 namespace NineGrid.Cards
@@ -10,8 +11,9 @@ namespace NineGrid.Cards
     /// 场地交战管理器单例：Intent → Catalog 路由 → Adapter 播 Rig；
     /// 命中帧经 CombatHitSink 写 Core，再抓 Model 刷血/飘字；
     /// 击杀后 Core 一次结算，表现缓冲按 Moved/Dealt 缓释。
+    /// 净土域（纯战斗黑盒）：仅暴露 C 阶段 Evict/Admit（速度恒 0）。
     /// </summary>
-    public sealed class FieldBattleManagerSingleton : MonoBehaviour
+    public sealed class FieldBattleManagerSingleton : MonoBehaviour, IHandoffEndpoint
     {
         private static FieldBattleManagerSingleton _instance;
 
@@ -46,6 +48,38 @@ namespace NineGrid.Cards
         public CardAttackBasicAdapter AttackAdapter => attackAdapter;
 
         public BattleEncounterCatalogSO EncounterCatalog => encounterCatalog;
+
+        /// <summary>
+        /// 净土域（纯战斗）C 阶段交接：速度恒填 0。
+        /// </summary>
+        public HandoffState Evict() => HandoffState.AtRest(Vector3.zero);
+
+        /// <summary>净土域 C 阶段：承接位置，忽略速度；内部战斗黑盒不动。</summary>
+        public void Admit(in HandoffState state)
+        {
+        }
+
+        /// <summary>单卡离开纯战斗域：C 阶段速度恒 0。</summary>
+        public HandoffState EvictCard(ManagedCard card)
+        {
+            if (card?.Transform == null)
+            {
+                return HandoffState.AtRest(Vector3.zero);
+            }
+
+            return HandoffState.AtRest(card.Transform.localPosition);
+        }
+
+        /// <summary>单卡进入纯战斗域：C 阶段忽略速度。</summary>
+        public void AdmitCard(ManagedCard card, in HandoffState state)
+        {
+            if (card?.Transform == null)
+            {
+                return;
+            }
+
+            card.Transform.localPosition = state.LocalPosition;
+        }
 
         private void Awake()
         {

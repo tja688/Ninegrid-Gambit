@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using NineGrid.Cards.Convergence;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -11,8 +12,9 @@ namespace NineGrid.Cards
 {
     /// <summary>
     /// 手牌管理器单例：最多 5 张，CardHandAnchors 布局，hover / 拖拽 / 回手 / 场地抓取。
+    /// 净土域：内部布局黑盒；仅暴露 C 阶段 Evict/Admit（速度恒 0）。
     /// </summary>
-    public sealed class CardHandManagerSingleton : MonoBehaviour
+    public sealed class CardHandManagerSingleton : MonoBehaviour, IHandoffEndpoint
     {
         private sealed class DragSession
         {
@@ -104,6 +106,39 @@ namespace NineGrid.Cards
         public bool IsDragging => _dragSession != null;
 
         public bool CanAcceptCard => !IsBusy && !IsDragging && HandCount < layoutSettings.maxSlots;
+
+        /// <summary>
+        /// 净土域 C 阶段交接：速度恒填 0。域级快照；卡级见 <see cref="EvictCard"/>。
+        /// </summary>
+        public HandoffState Evict() => HandoffState.AtRest(Vector3.zero);
+
+        /// <summary>净土域 C 阶段：承接位置，忽略速度。</summary>
+        public void Admit(in HandoffState state)
+        {
+            // 手牌布局黑盒内部不动；C 阶段仅接受接口契约。
+        }
+
+        /// <summary>单卡离开手牌域：C 阶段速度恒 0。</summary>
+        public HandoffState EvictCard(ManagedCard card)
+        {
+            if (card?.Transform == null)
+            {
+                return HandoffState.AtRest(Vector3.zero);
+            }
+
+            return HandoffState.AtRest(card.Transform.localPosition);
+        }
+
+        /// <summary>单卡进入手牌域：C 阶段忽略速度，仅对齐局部位姿。</summary>
+        public void AdmitCard(ManagedCard card, in HandoffState state)
+        {
+            if (card?.Transform == null)
+            {
+                return;
+            }
+
+            card.Transform.localPosition = state.LocalPosition;
+        }
 
         private void Awake()
         {

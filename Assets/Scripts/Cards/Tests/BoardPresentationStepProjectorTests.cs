@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using NineGrid.Cards;
+using NineGrid.Cards.Convergence;
 using NineGrid.Core;
 using NineGrid.Flow;
 
@@ -16,6 +17,7 @@ namespace NineGrid.Cards.Tests
 
             Assert.AreEqual(1, result.Steps.Length);
             Assert.AreEqual(BoardPresentationStepKind.Rotate, result.Steps[0].Kind);
+            Assert.AreEqual(CommitmentKind.Sync, result.Steps[0].Commitment);
             Assert.IsTrue(result.Steps[0].Clockwise);
             Assert.AreEqual(10, result.Steps[0].ActionId);
             Assert.Greater(result.Steps[0].Moves.Length, 0);
@@ -33,6 +35,8 @@ namespace NineGrid.Cards.Tests
             Assert.AreEqual(2, result.Steps.Length);
             Assert.AreEqual(BoardPresentationStepKind.Rotate, result.Steps[0].Kind);
             Assert.AreEqual(BoardPresentationStepKind.Rotate, result.Steps[1].Kind);
+            Assert.AreEqual(CommitmentKind.Sync, result.Steps[0].Commitment);
+            Assert.AreEqual(CommitmentKind.Sync, result.Steps[1].Commitment);
             Assert.IsTrue(result.Steps[0].Clockwise);
             Assert.IsFalse(result.Steps[1].Clockwise);
             Assert.AreEqual(1, result.Steps[0].ActionId);
@@ -51,6 +55,7 @@ namespace NineGrid.Cards.Tests
             Assert.AreEqual(2, result.Steps.Length);
             Assert.AreEqual(BoardPresentationStepKind.Rotate, result.Steps[0].Kind);
             Assert.AreEqual(BoardPresentationStepKind.Swap, result.Steps[1].Kind);
+            Assert.AreEqual(CommitmentKind.Sync, result.Steps[1].Commitment);
             Assert.AreEqual(2, result.Steps[1].Moves.Length);
         }
 
@@ -85,6 +90,7 @@ namespace NineGrid.Cards.Tests
 
             Assert.AreEqual(2, result.Steps.Length);
             Assert.AreEqual(BoardPresentationStepKind.Remove, result.Steps[1].Kind);
+            Assert.AreEqual(CommitmentKind.Sync, result.Steps[1].Commitment);
             CollectionAssert.Contains(result.LegacyRemovedUids, 105);
             Assert.Greater(result.LegacyMoves.Length, 0, "Legacy moves must not be filtered by later remove");
             Assert.IsTrue(ContainsUid(result.LegacyMoves, 105));
@@ -104,8 +110,90 @@ namespace NineGrid.Cards.Tests
 
             Assert.AreEqual(1, result.Steps.Length);
             Assert.AreEqual(BoardPresentationStepKind.Move, result.Steps[0].Kind);
+            Assert.AreEqual(CommitmentKind.Sync, result.Steps[0].Commitment);
             Assert.AreEqual(1, result.Steps[0].Moves.Length);
             Assert.AreEqual(501, result.Steps[0].Moves[0].Uid);
+        }
+
+        [Test]
+        public void Project_MultiHop_SerialVisible_EmitsNSyncSteps()
+        {
+            var events = BuildMultiHopAction(actionId: 42, uid: 701, hops: new[]
+            {
+                (1, 2),
+                (2, 3),
+                (3, 5),
+            });
+
+            var result = BoardPresentationStepProjector.Project(
+                events,
+                0,
+                registry: null,
+                MultiHopProjectionStrategy.SerialVisible);
+
+            Assert.AreEqual(3, result.Steps.Length, "策略 S：N 跳 → N 个 Step");
+            for (var i = 0; i < result.Steps.Length; i++)
+            {
+                Assert.AreEqual(BoardPresentationStepKind.Move, result.Steps[i].Kind);
+                Assert.AreEqual(CommitmentKind.Sync, result.Steps[i].Commitment);
+                Assert.AreEqual(1, result.Steps[i].Moves.Length);
+                Assert.AreEqual(701, result.Steps[i].Moves[0].Uid);
+            }
+
+            Assert.AreEqual(1, result.Steps[0].Moves[0].FromSlot);
+            Assert.AreEqual(2, result.Steps[0].Moves[0].ToSlot);
+            Assert.AreEqual(2, result.Steps[1].Moves[0].FromSlot);
+            Assert.AreEqual(3, result.Steps[1].Moves[0].ToSlot);
+            Assert.AreEqual(3, result.Steps[2].Moves[0].FromSlot);
+            Assert.AreEqual(5, result.Steps[2].Moves[0].ToSlot);
+            Assert.AreEqual(3, result.LegacyMoves.Length, "Legacy 保留全部跳");
+        }
+
+        [Test]
+        public void Project_MultiHop_CollapsedEndpoint_EmitsOneAsyncStep()
+        {
+            var events = BuildMultiHopAction(actionId: 42, uid: 701, hops: new[]
+            {
+                (1, 2),
+                (2, 3),
+                (3, 5),
+            });
+
+            var result = BoardPresentationStepProjector.Project(
+                events,
+                0,
+                registry: null,
+                MultiHopProjectionStrategy.CollapsedEndpoint);
+
+            Assert.AreEqual(1, result.Steps.Length, "策略 C：N 跳 → 1 个 Step");
+            Assert.AreEqual(BoardPresentationStepKind.Move, result.Steps[0].Kind);
+            Assert.AreEqual(CommitmentKind.Async, result.Steps[0].Commitment);
+            Assert.AreEqual(1, result.Steps[0].Moves.Length);
+            Assert.AreEqual(701, result.Steps[0].Moves[0].Uid);
+            Assert.AreEqual(1, result.Steps[0].Moves[0].FromSlot);
+            Assert.AreEqual(5, result.Steps[0].Moves[0].ToSlot);
+            Assert.AreEqual(3, result.LegacyMoves.Length, "Legacy 仍保留中间跳");
+        }
+
+        [Test]
+        public void CollapseMovesToEndpoints_PreservesUidOrder()
+        {
+            var moves = new[]
+            {
+                new PostKillCardMove { Uid = 10, FromSlot = 1, ToSlot = 2 },
+                new PostKillCardMove { Uid = 20, FromSlot = 3, ToSlot = 4 },
+                new PostKillCardMove { Uid = 10, FromSlot = 2, ToSlot = 5 },
+            };
+
+            var collapsed = BoardPresentationStepProjector.CollapseMovesToEndpoints(moves);
+
+            Assert.AreEqual(2, collapsed.Length);
+            Assert.AreEqual(10, collapsed[0].Uid);
+            Assert.AreEqual(1, collapsed[0].FromSlot);
+            Assert.AreEqual(5, collapsed[0].ToSlot);
+            Assert.AreEqual(20, collapsed[1].Uid);
+            Assert.AreEqual(3, collapsed[1].FromSlot);
+            Assert.AreEqual(4, collapsed[1].ToSlot);
         }
 
         private static bool ContainsUid(PostKillCardMove[] moves, int uid)
@@ -119,6 +207,22 @@ namespace NineGrid.Cards.Tests
             }
 
             return false;
+        }
+
+        private static List<CoreGameEvent> BuildMultiHopAction(
+            int actionId,
+            int uid,
+            (int from, int to)[] hops)
+        {
+            var events = new List<CoreGameEvent>(hops.Length);
+            for (var i = 0; i < hops.Length; i++)
+            {
+                events.Add(new CoreGameEvent(CoreEventType.CardMoved, actionId, "MultiHop")
+                    .WithCard(uid)
+                    .WithSlots(SlotId.Board(hops[i].from), SlotId.Board(hops[i].to)));
+            }
+
+            return events;
         }
 
         private static List<CoreGameEvent> BuildRotateAction(int actionId, bool clockwise, int startUid)
