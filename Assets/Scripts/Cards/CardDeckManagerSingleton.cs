@@ -864,11 +864,11 @@ namespace NineGrid.Cards
             flightHandle = field.LaunchDrainDealFlight(removed, groundSlot, launchPos, context);
             if (flightHandle == null)
             {
-                CardDeckTween.MoveToWorld(
-                    removed.Transform,
+                NineGrid.Cards.Convergence.SlotFrameConvergence.BeginDealFromLaunch(
+                    removed,
+                    launchPos,
                     groundAnchor.position,
-                    layoutSettings.moveDuration,
-                    onComplete: () => cardManager.RefreshDisplayMode(removed));
+                    layoutSettings.moveDuration);
             }
 
             ReportDealTrace(dealUid, groundSlot, placeable: true, ok: true, rollback: false);

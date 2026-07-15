@@ -6,13 +6,14 @@ using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using NineGrid.Cards.Convergence;
 using UnityEngine;
 
 namespace NineGrid.Cards
 {
     /// <summary>
     /// 场地卡管理器单例：9 格占用权威、放置申请、外圈旋转表演、方位查询与空槽点击。
-    /// 基础交战编排已抽至 <see cref="FieldBattleManagerSingleton"/>。
+    /// 格位位移由 L2 五次收敛编排（不写 world position 做动画）；基础交战编排已抽至 <see cref="FieldBattleManagerSingleton"/>。
     /// </summary>
     public sealed class GroundFieldManagerSingleton : MonoBehaviour
     {
@@ -34,6 +35,9 @@ namespace NineGrid.Cards
         private readonly Dictionary<int, int> _slotByUid = new();
         private readonly List<Transform> _groundAnchors = new();
         private readonly GroundSlotHitProxy[] _slotHitProxies = new GroundSlotHitProxy[GroundSlotTopology.MaxSlot + 1];
+        private readonly PresentationClock _presentationClock = new();
+        private BeatGrid _beatGrid;
+        private LeaseArbiter _leaseArbiter;
         private GroundSlotDealFlightCoordinator _dealFlightCoordinator;
         private bool _isBusy;
         private CancellationTokenSource _fieldAnimCts;
@@ -137,6 +141,9 @@ namespace NineGrid.Cards
             CacheAnchors();
             EnsureSlotHitProxies();
             RefreshAllSlotHitColliders();
+            _beatGrid = new BeatGrid(_presentationClock);
+            _leaseArbiter = new LeaseArbiter(reason =>
+                Debug.LogWarning("[GroundFieldManager] " + reason));
             _dealFlightCoordinator = new GroundSlotDealFlightCoordinator(this, this.GetCancellationTokenOnDestroy());
             ResolveSkeletonDeckPresentation();
         }
@@ -356,8 +363,7 @@ namespace NineGrid.Cards
                 && TryGetAnchor(slot, out var anchor)
                 && anchor != null)
             {
-                CardDeckTween.KillMotion(card.Transform, "Ground.Place.Snap", card.Uid);
-                card.Transform.position = anchor.position;
+                SlotFrameConvergence.SnapHome(card, anchor.position, "Ground.Place.Snap", card.Uid);
                 CardPresentationProbe.SnapSet(
                     card.Uid,
                     anchor.position,
@@ -404,8 +410,7 @@ namespace NineGrid.Cards
                     && TryGetAnchor(toSlot, out var sameAnchor)
                     && sameAnchor != null)
                 {
-                    CardDeckTween.KillMotion(same.Transform, "Ground.Relocate.Snap", uid);
-                    same.Transform.position = sameAnchor.position;
+                    SlotFrameConvergence.SnapHome(same, sameAnchor.position, "Ground.Relocate.Snap", uid);
                     CardPresentationProbe.SnapSet(
                         uid,
                         sameAnchor.position,
@@ -441,8 +446,7 @@ namespace NineGrid.Cards
                 && TryGetAnchor(toSlot, out var anchor)
                 && anchor != null)
             {
-                CardDeckTween.KillMotion(card.Transform, "Ground.Relocate.Snap", uid);
-                card.Transform.position = anchor.position;
+                SlotFrameConvergence.SnapHome(card, anchor.position, "Ground.Relocate.Snap", uid);
                 CardPresentationProbe.SnapSet(
                     uid,
                     anchor.position,
@@ -512,7 +516,7 @@ namespace NineGrid.Cards
 
             var cardManager = CardManagerSingleton.Instance;
             cardManager.SetDisplayMode(avatar, CardDisplayMode.GroundCardMode);
-            avatar.Transform.position = anchor.position;
+            SlotFrameConvergence.SnapHome(avatar, anchor.position, "Ground.AvatarReveal", avatar.Uid);
             RefreshSlotHitCollider(slot);
 
             var finalScale = CardDisplayModeVisuals.GetBaseLocalScale(CardDisplayMode.GroundCardMode);
@@ -583,7 +587,7 @@ namespace NineGrid.Cards
             }
             else if (TryGetAnchor(toSlot, out var anchor))
             {
-                card.Transform.position = anchor.position;
+                SlotFrameConvergence.SnapHome(card, anchor.position, "Ground.Move.Snap", uid);
                 CardManagerSingleton.Instance.RefreshDisplayMode(card);
             }
 
@@ -741,7 +745,7 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 启动 Drain 补牌贝塞尔飞牌（逻辑占格后视觉追踪）。
+        /// 启动 Drain 补牌 L2 收敛飞牌（逻辑占格后视觉收敛到格锚）。
         /// </summary>
         internal DealFlightHandle LaunchDrainDealFlight(
             ManagedCard card,
@@ -755,23 +759,6 @@ namespace NineGrid.Cards
         internal bool IsDealInFlight(int uid)
         {
             return _dealFlightCoordinator != null && _dealFlightCoordinator.IsInFlight(uid);
-        }
-
-        internal void NotifyDealDecoyHop(int uid, int fromSlot, int toSlot)
-        {
-            _dealFlightCoordinator?.NotifyDecoyHop(uid, fromSlot, toSlot);
-        }
-
-        internal void NotifyDealDecoyLinearMove(int uid, int toSlot, float duration)
-        {
-            _dealFlightCoordinator?.NotifyDecoyLinearMove(uid, toSlot, duration);
-        }
-
-        internal bool TryReleaseDealFlightForHop(int uid, out Vector3 currentPosition)
-        {
-            currentPosition = default;
-            return _dealFlightCoordinator != null
-                   && _dealFlightCoordinator.TryReleaseFlightForHop(uid, out currentPosition);
         }
 
         public static async UniTask WaitDealFlightsSettledAsync(
@@ -1282,7 +1269,10 @@ namespace NineGrid.Cards
 
                         if (IsDealInFlight(plan.card.Uid))
                         {
-                            NotifyDealDecoyHop(plan.card.Uid, plan.fromSlot, plan.toSlot);
+                            _dealFlightCoordinator?.TryRedirectFlightToSlot(
+                                plan.card.Uid,
+                                plan.toSlot,
+                                layoutSettings.moveDuration);
                         }
 
                         moveTasks.Add(
@@ -1433,6 +1423,14 @@ namespace NineGrid.Cards
 
                 _dealFlightCoordinator?.OnRingShifted(clockwise);
 
+                SyncPresentationClock();
+                var sourceTime = layoutSettings != null ? layoutSettings.moveDuration : 0.35f;
+                var beatId = _beatGrid != null ? _beatGrid.OpenBeat(sourceTime) : -1;
+                if (beatId > 0)
+                {
+                    _beatGrid.PlaceBarrier(beatId, _presentationClock.Now + sourceTime);
+                }
+
                 var moveTasks = new List<UniTask>();
                 for (var i = 0; i < ring.Count; i++)
                 {
@@ -1457,6 +1455,11 @@ namespace NineGrid.Cards
                     }
 
                     var fromSlot = ring[i];
+                    if (beatId > 0)
+                    {
+                        _beatGrid.Register(beatId, committed: true);
+                    }
+
                     moveTasks.Add(AnimateCardHopToSlotAsync(card, fromSlot, toSlot, cancellationToken));
                     actualAnim++;
                 }
@@ -1513,36 +1516,96 @@ namespace NineGrid.Cards
             CancellationToken cancellationToken)
         {
             if (card?.Transform == null
-                || !TryGetAnchor(fromSlot, out var fromAnchor)
-                || !TryGetAnchor(toSlot, out var toAnchor))
+                || !TryGetAnchor(toSlot, out var toAnchor)
+                || toAnchor == null)
             {
                 return;
             }
 
             CardManagerSingleton.Instance.RefreshDisplayMode(card);
-            Vector3 start;
-            if (TryReleaseDealFlightForHop(card.Uid, out var inFlightPos))
+            var sourceTime = layoutSettings != null ? layoutSettings.moveDuration : 0.35f;
+
+            // 补牌飞行中：只 Redirect L2 目标，由飞牌探针等待同一驱动器完成。
+            if (IsDealInFlight(card.Uid)
+                && _dealFlightCoordinator != null
+                && _dealFlightCoordinator.TryRedirectFlightToSlot(card.Uid, toSlot, sourceTime))
             {
-                start = inFlightPos;
-            }
-            else
-            {
-                start = fromAnchor.position;
+                if (SlotFrameConvergence.TryGetDriver(card, out var inFlightDriver))
+                {
+                    await SlotFrameConvergence.AwaitDriverAsync(inFlightDriver, cancellationToken);
+                }
+
+                return;
             }
 
-            var end = toAnchor.position;
-            var mid = ComputeHopMidpoint(start, end);
+            IssueSyncL2Lease(card.Uid, sourceTime);
+            try
+            {
+                await SlotFrameConvergence.ConvergeVisualToWorldAsync(
+                    card,
+                    toAnchor.position,
+                    sourceTime,
+                    cancellationToken,
+                    snapHomeOnComplete: true);
+            }
+            finally
+            {
+                ReleaseSyncL2Lease(card.Uid);
+            }
 
-            await CardDeckTween.MoveHopToWorldAsync(
-                card.Transform,
-                start,
-                mid,
-                end,
-                layoutSettings.moveDuration,
-                layoutSettings.hopPeakScaleIntensity,
-                layoutSettings.hopLandScaleIntensity,
-                cancellationToken,
-                onComplete: () => CardManagerSingleton.Instance.RefreshDisplayMode(card));
+            CardManagerSingleton.Instance.RefreshDisplayMode(card);
+        }
+
+        private void SyncPresentationClock()
+        {
+            _presentationClock.Seek(Time.time);
+        }
+
+        private void IssueSyncL2Lease(int cardId, float sourceTime)
+        {
+            if (_leaseArbiter == null || cardId <= 0)
+            {
+                return;
+            }
+
+            SyncPresentationClock();
+            var now = _presentationClock.Now;
+            var key = new LeaseKey(cardId, TowerLayer.SlotFrame);
+            var request = LeaseRequest.Sync(key, now, now + sourceTime, committed: true);
+            var result = _leaseArbiter.TryAcquire(request, () =>
+            {
+                if (CardManagerSingleton.Instance != null
+                    && CardManagerSingleton.Instance.TryGet(cardId, out var card)
+                    && SlotFrameConvergence.TryGetDriver(card, out var driver)
+                    && SlotFrameConvergence.TryGetTower(card, out var tower)
+                    && tower.SlotFrame != null)
+                {
+                    return new HandoffState(tower.SlotFrame.localPosition, driver.SampleVelocity());
+                }
+
+                return HandoffState.AtRest(Vector3.zero);
+            });
+
+            if (!result.IsWriteAllowed)
+            {
+                Debug.LogWarning(
+                    $"[GroundFieldManager] L2 sync lease denied uid={cardId} verdict={result.Verdict}");
+            }
+        }
+
+        private void ReleaseSyncL2Lease(int cardId)
+        {
+            if (_leaseArbiter == null || cardId <= 0)
+            {
+                return;
+            }
+
+            var key = new LeaseKey(cardId, TowerLayer.SlotFrame);
+            if (_leaseArbiter.TryGetActiveLeaseId(key, out var leaseId))
+            {
+                _leaseArbiter.MarkFulfilled(key);
+                _leaseArbiter.Release(key, leaseId);
+            }
         }
 
         private static bool TryGetCrossSwapPair(
@@ -1631,33 +1694,37 @@ namespace NineGrid.Cards
 
                 if (IsDealInFlight(moveA.Uid))
                 {
-                    NotifyDealDecoyLinearMove(moveA.Uid, moveA.ToSlot, duration);
+                    _dealFlightCoordinator?.TryRedirectFlightToSlot(moveA.Uid, moveA.ToSlot, duration);
                 }
 
                 if (IsDealInFlight(moveB.Uid))
                 {
-                    NotifyDealDecoyLinearMove(moveB.Uid, moveB.ToSlot, duration);
+                    _dealFlightCoordinator?.TryRedirectFlightToSlot(moveB.Uid, moveB.ToSlot, duration);
                 }
 
-                TryReleaseDealFlightForHop(moveA.Uid, out _);
-                TryReleaseDealFlightForHop(moveB.Uid, out _);
-
-                var tweenA = CardDeckTween.MoveToWorld(
-                    cardA.Transform,
-                    anchorA.position,
-                    duration,
-                    uid: cardA.Uid,
-                    reason: "swap");
-                var tweenB = CardDeckTween.MoveToWorld(
-                    cardB.Transform,
-                    anchorB.position,
-                    duration,
-                    uid: cardB.Uid,
-                    reason: "swap");
-
-                await UniTask.WhenAll(
-                    AwaitTweenAsync(tweenA, cancellationToken),
-                    AwaitTweenAsync(tweenB, cancellationToken));
+                IssueSyncL2Lease(moveA.Uid, duration);
+                IssueSyncL2Lease(moveB.Uid, duration);
+                try
+                {
+                    await UniTask.WhenAll(
+                        SlotFrameConvergence.ConvergeVisualToWorldAsync(
+                            cardA,
+                            anchorA.position,
+                            duration,
+                            cancellationToken,
+                            snapHomeOnComplete: true),
+                        SlotFrameConvergence.ConvergeVisualToWorldAsync(
+                            cardB,
+                            anchorB.position,
+                            duration,
+                            cancellationToken,
+                            snapHomeOnComplete: true));
+                }
+                finally
+                {
+                    ReleaseSyncL2Lease(moveA.Uid);
+                    ReleaseSyncL2Lease(moveB.Uid);
+                }
 
                 CardManagerSingleton.Instance.RefreshDisplayMode(cardA);
                 CardManagerSingleton.Instance.RefreshDisplayMode(cardB);
@@ -1697,17 +1764,6 @@ namespace NineGrid.Cards
             }
 
             return tcs.Task;
-        }
-
-        private Vector3 ComputeHopMidpoint(Vector3 start, Vector3 end)
-        {
-            var linearMid = Vector3.Lerp(start, end, 0.5f);
-            if (layoutSettings.hopArcHeight <= 0f)
-            {
-                return linearMid;
-            }
-
-            return linearMid + Vector3.up * layoutSettings.hopArcHeight;
         }
 
         private UniTask MoveCardAnimatedAsync(

@@ -2,14 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DG.Tweening;
+using NineGrid.Cards.Convergence;
 using UnityEngine;
 
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 统一飞牌协调器：Drain 补牌 + 空位 Explore 探求。
-    /// Drain 走替身预占位→表现追踪；Explore 仍用锚点贝塞尔。
+    /// 统一飞牌协调器：Drain / Explore 补牌均走 L2 五次收敛；换格 = Redirect，无替身、无握手。
     /// </summary>
     internal sealed class GroundSlotDealFlightCoordinator
     {
@@ -22,12 +21,12 @@ namespace NineGrid.Cards
             public DealFlightKind Kind;
             public DealFlightHandle Handle;
             public Vector3 LaunchPos;
+            public float SourceTime;
             public CancellationTokenSource LinkedCts;
         }
 
         private readonly GroundFieldManagerSingleton _field;
         private readonly CancellationToken _destroyToken;
-        private readonly GroundSlotDealDecoyTracker _decoys;
         private readonly Dictionary<int, DealFlightProbe> _exploreByBirthSlot = new();
         private readonly Dictionary<int, DealFlightProbe> _drainByUid = new();
         private float _lastExploreStartTime = float.NegativeInfinity;
@@ -38,10 +37,7 @@ namespace NineGrid.Cards
         {
             _field = field;
             _destroyToken = destroyToken;
-            _decoys = new GroundSlotDealDecoyTracker(field, destroyToken);
         }
-
-        public bool HasDecoy(int uid) => _decoys.HasDecoy(uid);
 
         public int ActiveCount => _exploreByBirthSlot.Count + _drainByUid.Count;
 
@@ -102,11 +98,11 @@ namespace NineGrid.Cards
                 Budget = budget,
                 Kind = DealFlightKind.Drain,
                 LaunchPos = launchPos,
+                SourceTime = budget.Total,
                 Handle = new DealFlightHandle(card.Uid, targetSlot, DealFlightKind.Drain),
             };
 
             _drainByUid[card.Uid] = probe;
-            _decoys.TrySpawn(card.Uid, targetSlot);
             ChoreoTraceSink.SafeBeginChoreo("dealFlight", "kind", "drain", "uid", card.Uid.ToString());
             TraceDealFlightBegin(probe);
             RunDrainProbeAsync(probe).Forget();
@@ -117,17 +113,6 @@ namespace NineGrid.Cards
         {
             ShiftProbes(_exploreByBirthSlot.Values, clockwise);
             ShiftProbes(_drainByUid.Values, clockwise);
-            _decoys.ShiftRingSlots(clockwise);
-        }
-
-        public void NotifyDecoyHop(int uid, int fromSlot, int toSlot)
-        {
-            _decoys.StartHopForUid(uid, fromSlot, toSlot);
-        }
-
-        public void NotifyDecoyLinearMove(int uid, int toSlot, float duration)
-        {
-            _decoys.StartLinearMoveForUid(uid, toSlot, duration);
         }
 
         public bool IsInFlight(int uid)
@@ -135,33 +120,33 @@ namespace NineGrid.Cards
             return uid > 0 && _drainByUid.ContainsKey(uid);
         }
 
-        public bool TryReleaseFlightForHop(int uid, out Vector3 currentPosition)
+        /// <summary>
+        /// 大盘 hop/换格接管：更新追踪格并 Redirect L2 目标。无暂停/恢复握手。
+        /// </summary>
+        public bool TryRedirectFlightToSlot(int uid, int toSlot, float sourceTime)
         {
-            currentPosition = default;
-            if (!_drainByUid.TryGetValue(uid, out var probe) || probe.Card?.Transform == null)
+            if (!_drainByUid.TryGetValue(uid, out var probe) || probe.Card == null)
             {
                 return false;
             }
 
-            currentPosition = probe.Card.Transform.position;
-            probe.LinkedCts?.Cancel();
-            probe.LinkedCts?.Dispose();
-            probe.LinkedCts = null;
-
-            if (_decoys.HasDecoy(uid))
+            probe.TrackedSlot = toSlot;
+            if (probe.Handle != null)
             {
-                // 大盘 hop 接管真牌位移；追踪协程在取消后由 RunDrainProbeAsync 恢复。
-                TraceProbe(probe, "hopPause", uid);
+                probe.Handle.TrackedSlot = toSlot;
+            }
+
+            if (!_field.TryGetExploreAnchorPosition(toSlot, out var targetWorld))
+            {
                 return true;
             }
 
-            _drainByUid.Remove(uid);
-            probe.Handle.Complete(true);
-            ChoreoTraceSink.SafeEmitAnomaly(
-                "DealFlightRotateHopTakeover",
-                uid,
-                "slot=" + probe.TrackedSlot);
-            TraceProbe(probe, "hopTakeover", uid);
+            var duration = sourceTime > 0f
+                ? sourceTime
+                : (_field.LayoutSettings != null ? _field.LayoutSettings.moveDuration : 0.35f);
+            probe.SourceTime = duration;
+            SlotFrameConvergence.RedirectVisualToWorld(probe.Card, targetWorld, duration);
+            TraceProbe(probe, "l2Redirect", uid, "toSlot", toSlot.ToString());
             return true;
         }
 
@@ -202,12 +187,11 @@ namespace NineGrid.Cards
             {
                 CancelProbe(drain[i], rollback: false);
             }
-
-            _decoys.ReleaseAll();
         }
 
-        private static void ShiftProbes(IEnumerable<DealFlightProbe> probes, bool clockwise)
+        private void ShiftProbes(IEnumerable<DealFlightProbe> probes, bool clockwise)
         {
+            var duration = _field.LayoutSettings != null ? _field.LayoutSettings.moveDuration : 0.35f;
             foreach (var probe in probes)
             {
                 if (!GroundSlotTopology.IsOuterRing(probe.TrackedSlot))
@@ -228,6 +212,15 @@ namespace NineGrid.Cards
                     probe.Card?.Uid ?? probe.Handle?.Uid ?? -1,
                     "prevSlot", prev.ToString(),
                     "clockwise", clockwise ? "1" : "0");
+
+                if (probe.Card == null
+                    || !_field.TryGetExploreAnchorPosition(probe.TrackedSlot, out var targetWorld))
+                {
+                    continue;
+                }
+
+                probe.SourceTime = duration;
+                SlotFrameConvergence.RedirectVisualToWorld(probe.Card, targetWorld, duration);
             }
         }
 
@@ -283,11 +276,17 @@ namespace NineGrid.Cards
                     pendingRotateSteps: 0);
                 probe.Budget = DealSettleBudget.Compute(launchPos, targetPos, context, settings);
                 probe.LaunchPos = launchPos;
+                probe.SourceTime = probe.Budget.Total;
                 probe.LinkedCts = CancellationTokenSource.CreateLinkedTokenSource(token);
                 TraceDealFlightBegin(probe);
 
                 TraceProbe(probe, "flightStart", card.Uid);
-                await RunBezierFlightAsync(probe, settings, probe.LinkedCts.Token);
+                SlotFrameConvergence.BeginDealFromLaunch(
+                    card,
+                    launchPos,
+                    targetPos,
+                    probe.SourceTime);
+                await WaitProbeConvergenceAsync(probe, probe.LinkedCts.Token);
                 TraceProbe(probe, "flightEnd", card.Uid);
 
                 if (token.IsCancellationRequested || probe.Card == null)
@@ -306,6 +305,13 @@ namespace NineGrid.Cards
                     probe.Card = null;
                     return;
                 }
+
+                if (!_field.TryGetExploreAnchorPosition(probe.TrackedSlot, out var settlePos))
+                {
+                    settlePos = targetPos;
+                }
+
+                SlotFrameConvergence.SnapHome(probe.Card, settlePos, "DealFlight.ExploreSettle", probe.Card.Uid);
 
                 if (!_field.PlaceForExplore(probe.TrackedSlot, probe.Card))
                 {
@@ -339,65 +345,49 @@ namespace NineGrid.Cards
         {
             var outcome = "ok";
             var uid = probe.Card?.Uid ?? -1;
-            var settings = Settings;
             try
             {
-                while (true)
+                if (_destroyToken.IsCancellationRequested || probe.Card?.Transform == null)
                 {
-                    if (_destroyToken.IsCancellationRequested || probe.Card?.Transform == null)
-                    {
-                        outcome = "cancel";
-                        _decoys.Release(uid);
-                        probe.Handle.Complete(false);
-                        return;
-                    }
-
-                    probe.LaunchPos = probe.Card.Transform.position;
-                    probe.LinkedCts = CancellationTokenSource.CreateLinkedTokenSource(_destroyToken);
-                    try
-                    {
-                        await RunDrainDecoyFlightAsync(probe, settings, probe.LinkedCts.Token);
-                        break;
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        if (!_drainByUid.ContainsKey(uid) || probe.Card?.Transform == null)
-                        {
-                            outcome = "cancel";
-                            _decoys.Release(uid);
-                            probe.Handle.Complete(false);
-                            return;
-                        }
-
-                        // 大盘 hop 暂停追踪，等真牌/替身 hop 结束后再恢复追替身。
-                        probe.LaunchPos = probe.Card.Transform.position;
-                        probe.Budget?.ApplyJumpPenalty(settings.rotationJumpCost);
-                        await WaitBoardChoreoForCardAsync(probe.Card, uid, _destroyToken);
-                    }
-                    finally
-                    {
-                        probe.LinkedCts?.Dispose();
-                        probe.LinkedCts = null;
-                    }
+                    outcome = "cancel";
+                    probe.Handle.Complete(false);
+                    return;
                 }
 
-                if (_decoys.TryGetPosition(uid, out var handshakePos))
+                if (!_field.TryGetExploreAnchorPosition(probe.TrackedSlot, out var slotPos))
                 {
-                    probe.Card.Transform.position = handshakePos;
-                }
-                else if (_field.TryGetExploreAnchorPosition(probe.TrackedSlot, out var anchorPos))
-                {
-                    probe.Card.Transform.position = anchorPos;
+                    slotPos = probe.LaunchPos;
                 }
 
-                _decoys.Release(uid);
+                probe.LinkedCts = CancellationTokenSource.CreateLinkedTokenSource(_destroyToken);
+                SlotFrameConvergence.BeginDealFromLaunch(
+                    probe.Card,
+                    probe.LaunchPos,
+                    slotPos,
+                    probe.SourceTime);
+                TraceProbe(probe, "flightStart", uid);
+                await WaitProbeConvergenceAsync(probe, probe.LinkedCts.Token);
+                TraceProbe(probe, "flightEnd", uid);
+
+                if (_destroyToken.IsCancellationRequested || probe.Card?.Transform == null)
+                {
+                    outcome = "cancel";
+                    probe.Handle.Complete(false);
+                    return;
+                }
+
+                if (!_field.TryGetExploreAnchorPosition(probe.TrackedSlot, out var settlePos))
+                {
+                    settlePos = slotPos;
+                }
+
+                SlotFrameConvergence.SnapHome(probe.Card, settlePos, "DealFlight.DrainSettle", uid);
                 CardManagerSingleton.Instance?.RefreshDisplayMode(probe.Card);
                 probe.Handle.Complete(true);
             }
             catch (OperationCanceledException)
             {
                 outcome = "cancel";
-                _decoys.Release(uid);
                 probe.Handle.Complete(false);
             }
             finally
@@ -405,10 +395,6 @@ namespace NineGrid.Cards
                 if (uid > 0)
                 {
                     _drainByUid.Remove(uid);
-                    if (_decoys.HasDecoy(uid))
-                    {
-                        _decoys.Release(uid);
-                    }
                 }
 
                 probe.LinkedCts?.Dispose();
@@ -425,126 +411,41 @@ namespace NineGrid.Cards
             }
         }
 
-        private async UniTask WaitBoardChoreoForCardAsync(
-            ManagedCard card,
-            int uid,
-            CancellationToken token)
+        private async UniTask WaitProbeConvergenceAsync(DealFlightProbe probe, CancellationToken token)
         {
-            if (card?.Transform == null)
+            if (probe.Card == null || !SlotFrameConvergence.TryGetDriver(probe.Card, out var driver))
             {
                 return;
             }
 
+            var tracked = probe.TrackedSlot;
             while (!token.IsCancellationRequested)
             {
-                var cardTweening = DOTween.IsTweening(card.Transform);
-                var decoyBusy = _decoys.IsHopping(uid);
-                if (!cardTweening && !decoyBusy)
+                if (probe.TrackedSlot != tracked)
                 {
-                    return;
+                    tracked = probe.TrackedSlot;
+                    if (_field.TryGetExploreAnchorPosition(tracked, out var targetWorld))
+                    {
+                        var duration = probe.SourceTime > 0f
+                            ? probe.SourceTime
+                            : (_field.LayoutSettings != null ? _field.LayoutSettings.moveDuration : 0.35f);
+                        SlotFrameConvergence.RedirectVisualToWorld(probe.Card, targetWorld, duration);
+                    }
+                }
+
+                if (!driver.IsActive)
+                {
+                    // Redirect 可能刚结束又被环移改槽：再确认目标格。
+                    if (probe.TrackedSlot == tracked)
+                    {
+                        return;
+                    }
+
+                    continue;
                 }
 
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
             }
-        }
-
-        private async UniTask RunDrainDecoyFlightAsync(
-            DealFlightProbe probe,
-            DealFlightLayoutSettings settings,
-            CancellationToken token)
-        {
-            if (probe.Card?.Transform == null)
-            {
-                return;
-            }
-
-            var uid = probe.Card.Uid;
-            Vector3 GetDecoyTarget()
-            {
-                if (_decoys.TryGetPosition(uid, out var pos))
-                {
-                    return pos;
-                }
-
-                return _field.TryGetExploreAnchorPosition(probe.TrackedSlot, out pos)
-                    ? pos
-                    : probe.Card.Transform.position;
-            }
-
-            await CardDeckTween.TrackQuadraticBezierAnchorAsync(
-                probe.Card.Transform,
-                probe.LaunchPos,
-                GetDecoyTarget,
-                settings,
-                probe.Budget,
-                token,
-                () => probe.Card != null && _drainByUid.ContainsKey(uid),
-                probe.TrackedSlot,
-                uid,
-                (jumpSqr, penalty) =>
-                {
-                    ChoreoTraceSink.SafeExploreTrace(
-                        uid,
-                        "decoyJump",
-                        probe.BirthSlot,
-                        probe.TrackedSlot,
-                        "jumpSqr", jumpSqr.ToString("F3"),
-                        "penalty", penalty.ToString("F3"));
-                });
-
-            if (token.IsCancellationRequested || probe.Card?.Transform == null)
-            {
-                return;
-            }
-
-            await CardDeckTween.ChaseAnchorAsync(
-                probe.Card.Transform,
-                GetDecoyTarget,
-                _decoys.IsHopping(uid)
-                    ? settings.stableChaseResponsiveness * 1.6f
-                    : settings.stableChaseResponsiveness,
-                settings.arriveThreshold,
-                token,
-                () => probe.Card != null && _drainByUid.ContainsKey(uid),
-                trackedSlot: probe.TrackedSlot,
-                uid: uid);
-        }
-
-        private async UniTask RunBezierFlightAsync(
-            DealFlightProbe probe,
-            DealFlightLayoutSettings settings,
-            CancellationToken token)
-        {
-            if (probe.Card?.Transform == null)
-            {
-                return;
-            }
-
-            var uid = probe.Card.Uid;
-            await CardDeckTween.TrackQuadraticBezierAnchorAsync(
-                probe.Card.Transform,
-                probe.LaunchPos,
-                () => _field.TryGetExploreAnchorPosition(probe.TrackedSlot, out var pos)
-                    ? pos
-                    : probe.Card.Transform.position,
-                settings,
-                probe.Budget,
-                token,
-                () => probe.Card != null
-                      && (probe.Kind == DealFlightKind.Drain
-                          || _field.IsPlaceable(probe.TrackedSlot)),
-                probe.TrackedSlot,
-                uid,
-                (jumpSqr, penalty) =>
-                {
-                    ChoreoTraceSink.SafeExploreTrace(
-                        uid,
-                        "anchorJump",
-                        probe.BirthSlot,
-                        probe.TrackedSlot,
-                        "jumpSqr", jumpSqr.ToString("F3"),
-                        "penalty", penalty.ToString("F3"));
-                });
         }
 
         private static void CancelProbe(DealFlightProbe probe, bool rollback)
@@ -564,6 +465,11 @@ namespace NineGrid.Cards
             if (card == null)
             {
                 return;
+            }
+
+            if (SlotFrameConvergence.TryGetDriver(card, out var driver))
+            {
+                driver.Stop();
             }
 
             CardDeckTween.KillMotion(card.Transform);
