@@ -33,6 +33,7 @@ namespace NineGrid.Flow.Diagnostics
         {
             FlowFieldTraceSink.OccupancyConflict = OnOccupancyConflict;
             FlowFieldTraceSink.HopPlan = OnHopPlan;
+            FlowFieldTraceSink.DealAttempt = OnDealAttempt;
             FlowFieldTraceSink.DealResult = OnDealResult;
             FlowFieldTraceSink.HandLifecycle = OnHandLifecycle;
             FlowFieldTraceSink.OccupancyVacate = OnOccupancyVacate;
@@ -485,6 +486,45 @@ namespace NineGrid.Flow.Diagnostics
                 });
         }
 
+        public static void RecordBoardStepFail(
+            int requestId,
+            int stepIndex,
+            BoardPresentationStep step,
+            Exception ex)
+        {
+            var uid = 0;
+            var slot = 0;
+            if (step.Deals != null && step.Deals.Length > 0)
+            {
+                uid = step.Deals[0].Uid;
+                slot = step.Deals[0].Slot;
+            }
+            else if (step.Moves != null && step.Moves.Length > 0)
+            {
+                uid = step.Moves[0].Uid;
+                slot = step.Moves[0].ToSlot;
+            }
+            else if (step.RemovedUids != null && step.RemovedUids.Length > 0)
+            {
+                uid = step.RemovedUids[0];
+            }
+
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.BoardStepFail,
+                new Dictionary<string, string>
+                {
+                    { "requestId", requestId.ToString() },
+                    { "stepIndex", stepIndex.ToString() },
+                    { "stepKind", step.Kind.ToString() },
+                    { "uid", uid.ToString() },
+                    { "slot", slot.ToString() },
+                    { "exType", ex?.GetType().Name ?? string.Empty },
+                    { "exMessage", ex?.Message ?? string.Empty },
+                },
+                accepted: false);
+        }
+
         public static void RecordBoardSyncDeferred(string phase, string reason)
         {
             Record(
@@ -708,13 +748,27 @@ namespace NineGrid.Flow.Diagnostics
                 });
         }
 
+        private static void OnDealAttempt(int uid, int slot, string caller)
+        {
+            Record(
+                FlowTraceCategory.Deck,
+                FlowTraceNames.DealAttempt,
+                new Dictionary<string, string>
+                {
+                    { "uid", uid.ToString() },
+                    { "slot", slot.ToString() },
+                    { "caller", caller ?? string.Empty },
+                });
+        }
+
         private static void OnDealResult(
             int uid,
             int slot,
             bool placeable,
             bool ok,
             bool rollback,
-            string caller)
+            string caller,
+            string reason)
         {
             var payload = new Dictionary<string, string>
             {
@@ -724,13 +778,13 @@ namespace NineGrid.Flow.Diagnostics
                 { "ok", ok ? "true" : "false" },
                 { "rollback", rollback ? "true" : "false" },
                 { "caller", caller ?? string.Empty },
+                { "reason", reason ?? string.Empty },
             };
 
-            Record(FlowTraceCategory.Deck, FlowTraceNames.DealAttempt, payload, accepted: placeable);
             Record(
                 FlowTraceCategory.Deck,
                 FlowTraceNames.DealResult,
-                new Dictionary<string, string>(payload),
+                payload,
                 accepted: ok);
         }
 

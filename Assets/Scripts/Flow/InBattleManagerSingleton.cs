@@ -1685,7 +1685,11 @@ namespace NineGrid.Flow
                             eventStartIndex = startIndex,
                             eventEndIndex = endIndex,
                             events = events,
-                            presentation = new BattleTracePresentation { accepted = false },
+                            presentation = new BattleTracePresentation
+                            {
+                                accepted = false,
+                                rejectReason = result.Reason ?? string.Empty,
+                            },
                             verdictHints = BattleTraceRecorder.BuildVerdictHints(events, false, false),
                         });
                         RecordCombatHitFlowSummary(
@@ -1698,7 +1702,8 @@ namespace NineGrid.Flow
                             damageAmount: 0,
                             targetKilled: false,
                             avatarDefeated: false,
-                            avatarHpAfter: targetSnap != null ? targetSnap.hp : -1);
+                            avatarHpAfter: targetSnap != null ? targetSnap.hp : -1,
+                            rejectReason: result.Reason);
                     }
                 }
                 catch (Exception ex)
@@ -1851,7 +1856,8 @@ namespace NineGrid.Flow
             int damageAmount,
             bool targetKilled,
             bool avatarDefeated,
-            int avatarHpAfter)
+            int avatarHpAfter,
+            string rejectReason = null)
         {
             try
             {
@@ -1867,6 +1873,7 @@ namespace NineGrid.Flow
                     new Dictionary<string, string>
                     {
                         { "reason", reason ?? string.Empty },
+                        { "rejectReason", rejectReason ?? string.Empty },
                         { "attackerDefId", attackerSnap != null ? attackerSnap.defId : string.Empty },
                         { "targetDefId", targetSnap != null ? targetSnap.defId : string.Empty },
                         { "attackerUid", attackerSnap != null ? attackerSnap.uid.ToString() : "0" },
@@ -2155,6 +2162,7 @@ namespace NineGrid.Flow
                     {
                         Debug.LogWarning("[InBattleManager] 盘面表演队列项失败: " + ex.Message);
                         request.Completion.TrySetException(ex);
+                        _pendingSyncFromCore = true;
                     }
                     finally
                     {
@@ -2200,6 +2208,8 @@ namespace NineGrid.Flow
             var drainNode = 0;
             int.TryParse(FieldTraceHelper.ResolveNodeIndex(), out drainNode);
             PerfTraceRecorder.OpenBeat(DiagBeatKinds.PostKillDrain, drainNode);
+            OperationCanceledException pendingCancel = null;
+            var ranDrainBody = false;
             try
             {
                 // 生命周期清场会 CancelPresentationWork；未传可取消 token 时挂到局内 CTS。
@@ -2212,79 +2222,110 @@ namespace NineGrid.Flow
                 if (fieldManager == null || cardManager == null || deckManager == null)
                 {
                     Debug.LogError("[InBattleManager] DrainPostKillBoard 缺少 Card/Deck/Field 管理器。");
-                    return;
-                }
-
-                var fusionState = BuildFusionDrainState(result);
-                PurgeFusionResultsFromShuffleQueue(fusionState);
-                await FlushPendingShuffleIntoPresentationAsync(ct);
-                FieldTraceHelper.RecordDrainBegin(
-                    moveCount,
-                    dealCount,
-                    drainInFlight: true,
-                    fieldBusy: fieldManager.IsBusy,
-                    presentationLocked: CombatHitSink.PresentationLocked,
-                    stepCount: stepCount,
-                    requestId: requestId);
-                FieldTraceHelper.RecordOccupancySnapshot("drainBefore");
-                fieldManager.ClearOccupancyConflictFlag();
-
-                if (stepCount > 0)
-                {
-                    await DrainBoardStepsAsync(result.Steps, requestId, fusionState, ct);
                 }
                 else
                 {
-                    FieldTraceHelper.RecordDrainLegacyFallback(
-                        requestId,
-                        moveCount,
-                        dealCount,
-                        result.RemovedUids != null ? result.RemovedUids.Length : 0);
-                    await DrainLegacyBoardDeltaAsync(result, ct);
-                }
+                    ranDrainBody = true;
+                    try
+                    {
+                        var fusionState = BuildFusionDrainState(result);
+                        PurgeFusionResultsFromShuffleQueue(fusionState);
+                        await FlushPendingShuffleIntoPresentationAsync(ct);
+                        FieldTraceHelper.RecordDrainBegin(
+                            moveCount,
+                            dealCount,
+                            drainInFlight: true,
+                            fieldBusy: fieldManager.IsBusy,
+                            presentationLocked: CombatHitSink.PresentationLocked,
+                            stepCount: stepCount,
+                            requestId: requestId);
+                        FieldTraceHelper.RecordOccupancySnapshot("drainBefore");
+                        fieldManager.ClearOccupancyConflictFlag();
 
-                if (result.RemovedUids != null && result.RemovedUids.Length > 0
-                    && _completedFusionActionIds.Count == 0)
-                {
-                    await DrainPostRemoveRefillAsync(ct);
-                }
+                        if (stepCount > 0)
+                        {
+                            await DrainBoardStepsAsync(result.Steps, requestId, fusionState, ct);
+                        }
+                        else
+                        {
+                            FieldTraceHelper.RecordDrainLegacyFallback(
+                                requestId,
+                                moveCount,
+                                dealCount,
+                                result.RemovedUids != null ? result.RemovedUids.Length : 0);
+                            await DrainLegacyBoardDeltaAsync(result, ct);
+                        }
 
-                await fieldManager.WaitAllActiveDealFlightsAsync(ct);
-                SyncBoardOccupancyFromCore(force: true);
-                if (fieldManager.HasOccupancyConflictSinceClear)
-                {
-                    Debug.LogWarning(
-                        "[InBattleManager] Drain 期间发生 OccupancyConflict，再次强制 SyncBoardOccupancyFromCore。");
-                    await fieldManager.WaitAllActiveDealFlightsAsync(ct);
-                    SyncBoardOccupancyFromCore(force: true);
-                }
+                        if (result.RemovedUids != null && result.RemovedUids.Length > 0
+                            && _completedFusionActionIds.Count == 0)
+                        {
+                            await DrainPostRemoveRefillAsync(ct);
+                        }
 
-                FieldTraceHelper.RecordOccupancySnapshot("drainAfter");
-                FieldTraceHelper.RecordDrainEnd(
-                    moveCount,
-                    dealCount,
-                    drainInFlight: true,
-                    fieldBusy: fieldManager.IsBusy,
-                    presentationLocked: CombatHitSink.PresentationLocked,
-                    stepCount: stepCount,
-                    requestId: requestId);
-                SpawnDamagePopups(result.DamagePopups, fallbackVictim: null, fallbackAmount: 0);
-                UpdateAvatarDebugText();
+                        SpawnDamagePopups(result.DamagePopups, fallbackVictim: null, fallbackAmount: 0);
+                        UpdateAvatarDebugText();
 
-                if (result.NodeClearedOrRewardPhase)
-                {
-                    TryEnterNodeSettlement();
+                        if (result.NodeClearedOrRewardPhase)
+                        {
+                            TryEnterNodeSettlement();
+                        }
+                    }
+                    catch (OperationCanceledException ex)
+                    {
+                        ChoreoTraceContext.ForceCloseOpenChoreos("boardDrainCancelled");
+                        pendingCancel = ex;
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning("[InBattleManager] DrainPostKillBoard 主体失败: " + ex.Message);
+                    }
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                ChoreoTraceContext.ForceCloseOpenChoreos("boardDrainCancelled");
-                throw;
             }
             finally
             {
                 PerfTraceRecorder.CloseBeat();
                 FieldTraceHelper.ClearBatchTag();
+            }
+
+            // 异常/取消后仍必跑 Sync + DrainEnd，避免 Core↔表现稳态分叉（不可放进 finally：需 await）。
+            if (ranDrainBody)
+            {
+                try
+                {
+                    ResolveManagers();
+                    if (fieldManager != null)
+                    {
+                        await fieldManager.WaitAllActiveDealFlightsAsync(CancellationToken.None);
+                        SyncBoardOccupancyFromCore(force: true);
+                        if (fieldManager.HasOccupancyConflictSinceClear)
+                        {
+                            Debug.LogWarning(
+                                "[InBattleManager] Drain 期间发生 OccupancyConflict，再次强制 SyncBoardOccupancyFromCore。");
+                            await fieldManager.WaitAllActiveDealFlightsAsync(CancellationToken.None);
+                            SyncBoardOccupancyFromCore(force: true);
+                        }
+
+                        FieldTraceHelper.RecordOccupancySnapshot("drainAfter");
+                        FieldTraceHelper.RecordDrainEnd(
+                            moveCount,
+                            dealCount,
+                            drainInFlight: true,
+                            fieldBusy: fieldManager.IsBusy,
+                            presentationLocked: CombatHitSink.PresentationLocked,
+                            stepCount: stepCount,
+                            requestId: requestId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[InBattleManager] Drain 尾部 Sync/DrainEnd 失败: " + ex.Message);
+                    _pendingSyncFromCore = true;
+                }
+            }
+
+            if (pendingCancel != null)
+            {
+                throw pendingCancel;
             }
         }
 
@@ -2388,6 +2429,16 @@ namespace NineGrid.Flow
 
                             break;
                     }
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning(
+                        $"[InBattleManager] BoardStep 失败 request={requestId} i={i} kind={step.Kind}: {ex.Message}");
+                    FieldTraceHelper.RecordBoardStepFail(requestId, i, step, ex);
                 }
                 finally
                 {
@@ -2588,7 +2639,17 @@ namespace NineGrid.Flow
                     return null;
                 }
 
-                return existing;
+                // 僵尸句柄（无 View）不可入组发牌；Release 后强制 SpawnView。
+                if (existing.View == null || existing.Transform == null)
+                {
+                    Debug.LogWarning(
+                        $"[InBattleManager] ResolveOrSpawnDeckCardForDeal uid={deal.Uid} View 为空，Release 后重 Spawn。");
+                    cardManager.Release(existing, "Deal.NullViewRespawn");
+                }
+                else
+                {
+                    return existing;
+                }
             }
 
             if (cardManager == null)

@@ -84,6 +84,8 @@ namespace NineGrid.Flow.Diagnostics
         public bool targetKilled;
         public bool avatarDefeated;
         public bool nodeClearedOrRewardPhase;
+        /// <summary>Core 拒结算原因；accepted=true 时为空。</summary>
+        public string rejectReason = string.Empty;
     }
 
     /// <summary>

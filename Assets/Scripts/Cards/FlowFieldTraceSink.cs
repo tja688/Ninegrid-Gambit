@@ -17,8 +17,11 @@ namespace NineGrid.Cards
         /// <summary>plans 摘要字符串，如 "26:1→2;32:2→3"</summary>
         public static Action<string> HopPlan;
 
-        /// <summary>uid, slot, placeable, ok, rollback, caller</summary>
-        public static Action<int, int, bool, bool, bool, string> DealResult;
+        /// <summary>uid, slot, caller — 变更前发牌意图。</summary>
+        public static Action<int, int, string> DealAttempt;
+
+        /// <summary>uid, slot, placeable, ok, rollback, caller, reason</summary>
+        public static Action<int, int, bool, bool, bool, string, string> DealResult;
 
         /// <summary>uid, phase, handContains, displayMode</summary>
         public static Action<int, string, bool, string> HandLifecycle;
@@ -74,6 +77,7 @@ namespace NineGrid.Cards
         {
             OccupancyConflict = null;
             HopPlan = null;
+            DealAttempt = null;
             DealResult = null;
             HandLifecycle = null;
             OccupancyVacate = null;

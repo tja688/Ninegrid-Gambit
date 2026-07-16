@@ -182,6 +182,8 @@ namespace NineGrid.Flow.Diagnostics
             AppendBool(sb, "avatarDefeated", p.avatarDefeated);
             sb.Append(',');
             AppendBool(sb, "nodeClearedOrRewardPhase", p.nodeClearedOrRewardPhase);
+            sb.Append(',');
+            AppendString(sb, "rejectReason", p.rejectReason);
             sb.Append('}');
         }
 

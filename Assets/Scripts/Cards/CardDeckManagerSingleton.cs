@@ -837,7 +837,7 @@ namespace NineGrid.Cards
             if (!placeable)
             {
                 Debug.LogWarning($"[CardDeckManager] Ground 格位已占用: {groundSlot}");
-                ReportDealTrace(uid: 0, groundSlot, placeable: false, ok: false, rollback: false);
+                ReportDealTrace(uid: 0, groundSlot, placeable: false, ok: false, rollback: false, reason: "placeDenied");
                 return false;
             }
 
@@ -848,6 +848,17 @@ namespace NineGrid.Cards
             }
 
             var dealUid = card.Uid;
+            ReportDealAttempt(dealUid, groundSlot);
+
+            // 变更前校验：无 View 的僵尸句柄不得入场，避免 RequestPlaceCard 后读 Transform NRE。
+            if (card.View == null || card.Transform == null)
+            {
+                Debug.LogWarning(
+                    $"[CardDeckManager] 发牌中止：Uid={dealUid} View/Transform 为空（nullView）。");
+                ReportDealTrace(dealUid, groundSlot, placeable: true, ok: false, rollback: false, reason: "nullView");
+                return false;
+            }
+
             if (!_slotContainer.TryRemoveAt(deckSlotIndex, out var removed, out var rippleMoves))
             {
                 return false;
@@ -869,7 +880,7 @@ namespace NineGrid.Cards
                     CardDeckTween.MoveRippleAsync(rollbackRipple, layoutSettings.moveDuration).Forget();
                 }
 
-                ReportDealTrace(dealUid, groundSlot, placeable: true, ok: false, rollback: true);
+                ReportDealTrace(dealUid, groundSlot, placeable: true, ok: false, rollback: true, reason: "noAnchor");
                 return false;
             }
 
@@ -889,7 +900,27 @@ namespace NineGrid.Cards
                     CardDeckTween.MoveRippleAsync(rollbackRipple, layoutSettings.moveDuration).Forget();
                 }
 
-                ReportDealTrace(dealUid, groundSlot, placeable: true, ok: false, rollback: true);
+                ReportDealTrace(dealUid, groundSlot, placeable: true, ok: false, rollback: true, reason: "placeDenied");
+                return false;
+            }
+
+            // 占格后二次校验：若 View 在登记后失效，清占格并回滚，禁止抛 NRE。
+            if (removed.View == null || removed.Transform == null)
+            {
+                Debug.LogWarning(
+                    $"[CardDeckManager] 发牌回滚：Uid={dealUid} 占格后 View 仍为空，清占格并回滚入组。");
+                field.ClearSlotOccupancy(groundSlot, skipBusyGuard: true);
+                if (!_slotContainer.TryInsertAt(deckSlotIndex, removed, out var rollbackRipple))
+                {
+                    CardManagerSingleton.Instance.Release(removed, "Deck.DealRollbackNullViewAfterPlace");
+                }
+                else
+                {
+                    CardManagerSingleton.Instance.SetDisplayMode(removed, CardDisplayMode.CardDeckMode);
+                    CardDeckTween.MoveRippleAsync(rollbackRipple, layoutSettings.moveDuration).Forget();
+                }
+
+                ReportDealTrace(dealUid, groundSlot, placeable: true, ok: false, rollback: true, reason: "nullView");
                 return false;
             }
 
@@ -906,7 +937,7 @@ namespace NineGrid.Cards
                     layoutSettings.moveDuration);
             }
 
-            ReportDealTrace(dealUid, groundSlot, placeable: true, ok: true, rollback: false);
+            ReportDealTrace(dealUid, groundSlot, placeable: true, ok: true, rollback: false, reason: string.Empty);
             return true;
         }
 
@@ -923,7 +954,25 @@ namespace NineGrid.Cards
             return TryDealCard(deckSlotIndex, groundSlot, skipBusyGuard, null, out _);
         }
 
-        private static void ReportDealTrace(int uid, int slot, bool placeable, bool ok, bool rollback)
+        private static void ReportDealAttempt(int uid, int slot)
+        {
+            try
+            {
+                FlowFieldTraceSink.DealAttempt?.Invoke(uid, slot, "TryDealCard");
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+
+        private static void ReportDealTrace(
+            int uid,
+            int slot,
+            bool placeable,
+            bool ok,
+            bool rollback,
+            string reason)
         {
             try
             {
@@ -933,7 +982,8 @@ namespace NineGrid.Cards
                     placeable,
                     ok,
                     rollback,
-                    "TryDealCard");
+                    "TryDealCard",
+                    reason ?? string.Empty);
             }
             catch
             {

@@ -97,6 +97,7 @@ namespace NineGrid.Flow.Diagnostics
         public const string RotateClassify = "RotateClassify";
         public const string BoardStepBegin = "BoardStepBegin";
         public const string BoardStepEnd = "BoardStepEnd";
+        public const string BoardStepFail = "BoardStepFail";
         public const string BoardSyncDeferred = "BoardSyncDeferred";
         public const string BoardStepFallbackGeneralHop = "BoardStepFallbackGeneralHop";
         public const string BoardRotateChoreoMismatch = "BoardRotateChoreoMismatch";
