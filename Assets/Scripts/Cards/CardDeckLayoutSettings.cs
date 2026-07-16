@@ -10,7 +10,7 @@ namespace NineGrid.Cards
     public sealed class CardDeckLayoutSettings
     {
         [Tooltip("视觉槽位上限（场景锚点数）；超出叠在末位，不截断逻辑牌数。")]
-        public int maxSlots = 20;
+        public int maxSlots = 13;
 
         [Tooltip("InGame 无场景锚点时的相邻卡牌水平间距回退值；有 CardDeckAnchors 时以锚点为准。")]
         public float cardSpacing = 1.05f;
