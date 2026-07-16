@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using NineGrid.Cards.Convergence;
+using UnityEngine;
 
 namespace NineGrid.Cards.Tests
 {
@@ -90,6 +91,52 @@ namespace NineGrid.Cards.Tests
             clock.Seek(2.3f);
             Assert.IsTrue(grid.IsBarrierSatisfied(beatId));
             Assert.IsTrue(slot.IsComplete);
+        }
+
+        [Test]
+        public void Barrier_DriverNotComplete_KeepsBarrierUnsatisfied()
+        {
+            var clock = new PresentationClock();
+            var grid = new BeatGrid(clock);
+            var root = new GameObject("BeatGridDriverBarrier");
+            try
+            {
+                var tower = root.AddComponent<CardTransformTower>();
+                tower.EnsureTower();
+                var driver = LayerConvergenceDriver.Ensure(root.transform, TowerLayer.SlotFrame);
+
+                const float sourceTime = 0.2f;
+                var beatId = grid.OpenBeat(sourceTime);
+                grid.PlaceBarrier(beatId, barrierWallTime: sourceTime);
+                var slot = grid.Register(beatId, committed: true, driver);
+
+                driver.ConvergeTo(new Vector3(1f, 0f, 0f), sourceTime);
+
+                // 时间到但未 Tick 完 driver → barrier 不满足
+                clock.Seek(sourceTime);
+                grid.TickBeat(beatId);
+                Assert.IsTrue(slot.Elapsed + 1e-5f >= slot.SourceTime);
+                Assert.IsFalse(slot.IsDriverComplete);
+                Assert.IsFalse(grid.AreAllComplete(beatId));
+                Assert.IsFalse(grid.IsBarrierSatisfied(beatId));
+
+                // driver 走完 → Completed 触发 → barrier 满足
+                var remaining = sourceTime;
+                while (remaining > 0f)
+                {
+                    var step = Mathf.Min(1f / 60f, remaining);
+                    driver.Tick(step);
+                    remaining -= step;
+                }
+
+                Assert.IsTrue(slot.IsDriverComplete);
+                Assert.IsTrue(grid.IsBarrierSatisfied(beatId));
+            }
+            finally
+            {
+                grid.Clear();
+                Object.DestroyImmediate(root);
+            }
         }
     }
 }

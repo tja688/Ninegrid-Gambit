@@ -76,5 +76,59 @@ namespace NineGrid.Cards.Tests
             FlightSortingChannel.Disarm(42);
             Assert.IsFalse(FlightSortingChannel.IsArmed(42));
         }
+
+        [Test]
+        public void RefreshDisplayMode_DoesNotOverwriteSortingOrder_WhileArmed()
+        {
+            foreach (var m in Object.FindObjectsByType<CardManagerSingleton>(FindObjectsSortMode.None))
+            {
+                Object.DestroyImmediate(m.gameObject);
+            }
+
+            var instanceField = typeof(CardManagerSingleton).GetField(
+                "_instance",
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+            instanceField?.SetValue(null, null);
+
+            var cardGo = new GameObject("FlightSortArmedGuard");
+            var cardManager = cardGo.AddComponent<CardManagerSingleton>();
+            var prefab = new GameObject("FlightSortPrefab");
+            prefab.AddComponent<StandardCardView>();
+            prefab.AddComponent<SortingGroup>();
+            cardManager.RegisterPrefab(CardManagerSingleton.StandardDefId, prefab);
+
+            const int uid = 9301;
+            ManagedCard card = null;
+            try
+            {
+                card = cardManager.SpawnView(uid, CardManagerSingleton.StandardDefId);
+                Assert.IsNotNull(card);
+                cardManager.SetDisplayMode(card, CardDisplayMode.GroundCardMode);
+
+                var tower = card.Transform.GetComponent<CardTransformTower>();
+                Assert.IsNotNull(tower);
+                tower.EnsureTower();
+                var driver = LayerConvergenceDriver.Ensure(card.Transform, TowerLayer.SlotFrame);
+                var group = card.View.GetComponent<SortingGroup>();
+                Assert.IsNotNull(group);
+
+                FlightSortingChannel.ArmForSlotConvergence(card, driver);
+                Assert.IsTrue(FlightSortingChannel.IsArmed(uid));
+                var flightOrder = group.sortingOrder;
+                Assert.GreaterOrEqual(flightOrder, FlightSortingChannel.GlobalFlightSortingOrder);
+
+                cardManager.RefreshDisplayMode(card);
+
+                Assert.AreEqual(flightOrder, group.sortingOrder);
+                Assert.IsTrue(FlightSortingChannel.IsArmed(uid));
+            }
+            finally
+            {
+                FlightSortingChannel.Disarm(uid);
+                Object.DestroyImmediate(cardGo);
+                Object.DestroyImmediate(prefab);
+                instanceField?.SetValue(null, null);
+            }
+        }
     }
 }

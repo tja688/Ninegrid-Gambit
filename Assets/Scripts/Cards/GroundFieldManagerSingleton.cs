@@ -1526,7 +1526,7 @@ namespace NineGrid.Cards
                         CardPresentationProbe.RegistryMiss(
                             uid,
                             "Ground.RingShift.AnimateSkip",
-                            "fromSlot=" + ring[i].ToString(CultureInfo.InvariantCulture));
+                            "fromSlot=" + ring[i].ToString(CultureInfo.InvariantCulture) + ";noCard");
                         continue;
                     }
 
@@ -1538,7 +1538,26 @@ namespace NineGrid.Cards
                     var fromSlot = ring[i];
                     if (beatId > 0)
                     {
-                        _beatGrid.Register(beatId, committed: true);
+                        if (SlotFrameConvergence.TryGetDriver(card, out var hopDriver)
+                            || SlotFrameConvergence.TryEnsureInfrastructure(
+                                card,
+                                out _,
+                                out hopDriver,
+                                "Ground.RingShift.Register"))
+                        {
+                            _beatGrid.Register(beatId, committed: true, hopDriver);
+                        }
+                        else
+                        {
+                            CardPresentationProbe.Anomaly(
+                                uid,
+                                "BarrierRegisterFail",
+                                "noDriver",
+                                "Ground.RingShift.Register",
+                                layer: "L2",
+                                verdict: "timeOnly");
+                            _beatGrid.Register(beatId, committed: true);
+                        }
                     }
 
                     moveTasks.Add(AnimateCardHopToSlotAsync(card, fromSlot, toSlot, cancellationToken));
@@ -1578,6 +1597,17 @@ namespace NineGrid.Cards
                         satisfied,
                         regCount,
                         _presentationClock.Now);
+                    if (!satisfied)
+                    {
+                        CardPresentationProbe.Anomaly(
+                            0,
+                            "BarrierUnsatisfied",
+                            "beatId=" + beatId.ToString(CultureInfo.InvariantCulture)
+                            + ";regs=" + regCount.ToString(CultureInfo.InvariantCulture),
+                            "Ground.RingShift.Barrier",
+                            layer: "L2",
+                            verdict: "fail");
+                    }
                 }
 
                 RefreshAllSlotHitColliders();
@@ -1618,7 +1648,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            CardManagerSingleton.Instance.RefreshDisplayMode(card);
+            // 收敛前不 RefreshDisplayMode：避免重置 scale/rotation 并抢写 sortingOrder。
             var sourceTime = layoutSettings != null ? layoutSettings.moveDuration : 0.35f;
 
             // 补牌飞行中：只 Redirect L2 目标，由飞牌探针等待同一驱动器完成。

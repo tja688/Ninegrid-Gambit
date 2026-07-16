@@ -306,7 +306,31 @@ namespace NineGrid.Cards
 
             cardManager.SetDisplayMode(resultCard, CardDisplayMode.GroundCardMode);
             cardManager.RefreshDisplayMode(resultCard);
-            resultCard.Transform.position = mergeCenter;
+            cardManager.EnsureComplexDomainStack(resultCard);
+            if (!SlotFrameConvergence.TryEnsureInfrastructure(
+                    resultCard,
+                    out _,
+                    out _,
+                    "Skeleton.RevealResult"))
+            {
+                CardPresentationProbe.Anomaly(
+                    resultCard.Uid,
+                    "forceSnap",
+                    "noTower/noDriver",
+                    "Skeleton.RevealResult",
+                    layer: "L2",
+                    verdict: "hardSet");
+                resultCard.Transform.position = mergeCenter;
+            }
+            else
+            {
+                SlotFrameConvergence.SnapHome(
+                    resultCard,
+                    mergeCenter,
+                    "Skeleton.RevealResult",
+                    resultCard.Uid);
+            }
+
             var baseScale = resultCard.Transform.localScale;
             if (baseScale == Vector3.zero)
             {

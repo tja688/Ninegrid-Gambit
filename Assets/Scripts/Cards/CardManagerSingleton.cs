@@ -237,6 +237,19 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 复杂域入口前置：强制补齐塔 + L2/L3 driver，消除中途 spawn 的 timing race。
+        /// </summary>
+        public void EnsureComplexDomainStack(ManagedCard card)
+        {
+            if (card?.GameObject == null)
+            {
+                return;
+            }
+
+            EnsureTransformTower(card.GameObject);
+        }
+
+        /// <summary>
         /// 本地测试用：自行分配 Uid 并创建视图。正式流程请用 Core 创建逻辑卡后再 SpawnView。
         /// </summary>
         public ManagedCard Spawn(
@@ -715,7 +728,7 @@ namespace NineGrid.Cards
                     hand.EnsureHandSorting(card);
                 }
             }
-            else
+            else if (!FlightSortingChannel.IsArmed(card.Uid))
             {
                 SetSortingOrder(sortingGroup, CardDisplayModeVisuals.GetSortingOrder(mode, card.CoreKind));
             }

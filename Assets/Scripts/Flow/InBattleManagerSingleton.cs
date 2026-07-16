@@ -2234,6 +2234,11 @@ namespace NineGrid.Flow
                 }
                 else
                 {
+                    FieldTraceHelper.RecordDrainLegacyFallback(
+                        requestId,
+                        moveCount,
+                        dealCount,
+                        result.RemovedUids != null ? result.RemovedUids.Length : 0);
                     await DrainLegacyBoardDeltaAsync(result, ct);
                 }
 
@@ -5390,6 +5395,13 @@ namespace NineGrid.Flow
                             && anchor != null
                             && (existing.Transform.position - anchor.position).sqrMagnitude > 0.0001f)
                         {
+                            CardPresentationProbe.Anomaly(
+                                existing.Uid,
+                                "forceSnap",
+                                "slot=" + slot,
+                                "Sync.Occupancy.Phase2",
+                                layer: "L2",
+                                verdict: "hardSet");
                             CardDeckTween.KillMotion(existing.Transform);
                             existing.Transform.position = anchor.position;
                             cardManager.RefreshDisplayMode(existing);
@@ -5419,6 +5431,13 @@ namespace NineGrid.Flow
                             if (currentSlot != slot)
                             {
                                 fieldManager.ClearSlotOccupancy(currentSlot, skipBusyGuard: true);
+                                CardPresentationProbe.Anomaly(
+                                    uid,
+                                    "forceSnap",
+                                    "slot=" + slot + ";relocate",
+                                    "Sync.Occupancy.Phase2",
+                                    layer: "L2",
+                                    verdict: "placeAtAnchor");
                                 fieldManager.RequestPlaceCardAtAnchor(
                                     slot,
                                     view,
@@ -5434,6 +5453,13 @@ namespace NineGrid.Flow
                                     && anchor != null
                                     && (view.Transform.position - anchor.position).sqrMagnitude > 0.0001f)
                                 {
+                                    CardPresentationProbe.Anomaly(
+                                        view.Uid,
+                                        "forceSnap",
+                                        "slot=" + slot,
+                                        "Sync.Occupancy.Phase2",
+                                        layer: "L2",
+                                        verdict: "hardSet");
                                     CardDeckTween.KillMotion(view.Transform);
                                     view.Transform.position = anchor.position;
                                     cardManager.RefreshDisplayMode(view);
@@ -5442,6 +5468,13 @@ namespace NineGrid.Flow
                         }
                         else
                         {
+                            CardPresentationProbe.Anomaly(
+                                uid,
+                                "forceSnap",
+                                "slot=" + slot + ";reanchor",
+                                "Sync.Occupancy.Phase2",
+                                layer: "L2",
+                                verdict: "placeAtAnchor");
                             fieldManager.RequestPlaceCardAtAnchor(
                                 slot,
                                 view,
@@ -5463,6 +5496,13 @@ namespace NineGrid.Flow
                 }
 
                 CoreCardPresentationMapper.ApplyToManagedCard(view);
+                CardPresentationProbe.Anomaly(
+                    uid,
+                    "forceSnap",
+                    "slot=" + slot + ";spawn",
+                    "Sync.Occupancy.Phase2",
+                    layer: "L2",
+                    verdict: "placeAtAnchor");
                 fieldManager.RequestPlaceCardAtAnchor(
                     slot,
                     view,

@@ -77,6 +77,7 @@ namespace NineGrid.Flow.Diagnostics
         // V2 Field / Presentation / Hand
         public const string DrainBegin = "DrainBegin";
         public const string DrainEnd = "DrainEnd";
+        public const string DrainLegacyFallback = "DrainLegacyFallback";
         public const string DealAttempt = "DealAttempt";
         public const string DealResult = "DealResult";
         public const string HopPlan = "HopPlan";

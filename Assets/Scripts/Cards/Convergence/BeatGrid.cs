@@ -6,6 +6,7 @@ namespace NineGrid.Cards.Convergence
     /// <summary>
     /// 节拍栅格：指令挂 beat，同 beat 共享 sourceTime（整环旋转同曲线进度）。
     /// 就位栅栏：barrier 墙钟时刻上，所有收敛 sourceTime ≤ 栅栏相对时长，到点全员完成。
+    /// 可选绑定 <see cref="LayerConvergenceDriver.Completed"/>，AreAllComplete 同时要求时间到 + driver 完成。
     /// </summary>
     public sealed class BeatGrid
     {
@@ -86,11 +87,15 @@ namespace NineGrid.Cards.Convergence
 
         /// <summary>
         /// 注册一条同 beat 收敛。强制使用 beat 共享 sourceTime（刚体同步）。
+        /// 传入 <paramref name="driver"/> 时，完成判定额外要求 driver.Completed。
         /// </summary>
-        public BeatConvergenceSlot Register(int beatId, bool committed = true)
+        public BeatConvergenceSlot Register(
+            int beatId,
+            bool committed = true,
+            LayerConvergenceDriver driver = null)
         {
             var record = Require(beatId);
-            var slot = new BeatConvergenceSlot(record.SharedSourceTime, committed);
+            var slot = new BeatConvergenceSlot(record.SharedSourceTime, committed, driver);
             record.Registrations.Add(slot);
             return slot;
         }
@@ -195,6 +200,15 @@ namespace NineGrid.Cards.Convergence
 
         public void Clear()
         {
+            foreach (var pair in _beats)
+            {
+                var regs = pair.Value.Registrations;
+                for (var i = 0; i < regs.Count; i++)
+                {
+                    regs[i].Detach();
+                }
+            }
+
             _beats.Clear();
             _nextBeatId = 1;
         }
@@ -244,25 +258,55 @@ namespace NineGrid.Cards.Convergence
 
     /// <summary>
     /// 挂在 beat 上的收敛槽（纯逻辑，不依赖 Transform）。
-    /// 完成判定：elapsed ≥ sourceTime（与五次曲线到点语义对齐）。
+    /// 完成判定：elapsed ≥ sourceTime；若绑定了 driver，还需 driver.Completed。
     /// </summary>
     public sealed class BeatConvergenceSlot
     {
+        private readonly LayerConvergenceDriver _driver;
+        private readonly Action _onDriverCompleted;
+        private bool _driverComplete;
+
         public float SourceTime { get; }
         public bool IsCommitted { get; }
         public bool IsComplete { get; private set; }
         public float Elapsed { get; private set; }
+        public bool RequiresDriverComplete => _driver != null;
+        public bool IsDriverComplete => _driverComplete;
 
-        public BeatConvergenceSlot(float sourceTime, bool committed)
+        public BeatConvergenceSlot(
+            float sourceTime,
+            bool committed,
+            LayerConvergenceDriver driver = null)
         {
             SourceTime = sourceTime < 0f ? 0f : sourceTime;
             IsCommitted = committed;
+            _driver = driver;
+            if (driver == null)
+            {
+                _driverComplete = true;
+            }
+            else
+            {
+                // 注册时常为 idle；收敛尚未启动，须等本次 Completed。
+                _driverComplete = false;
+                _onDriverCompleted = () => { _driverComplete = true; };
+                driver.Completed += _onDriverCompleted;
+            }
         }
 
         public void Tick(float elapsedSinceBeatStart)
         {
             Elapsed = elapsedSinceBeatStart < 0f ? 0f : elapsedSinceBeatStart;
-            IsComplete = Elapsed + 1e-5f >= SourceTime;
+            var timeComplete = Elapsed + 1e-5f >= SourceTime;
+            IsComplete = timeComplete && _driverComplete;
+        }
+
+        public void Detach()
+        {
+            if (_driver != null && _onDriverCompleted != null)
+            {
+                _driver.Completed -= _onDriverCompleted;
+            }
         }
     }
 }

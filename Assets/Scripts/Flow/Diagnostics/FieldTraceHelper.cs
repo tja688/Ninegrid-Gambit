@@ -214,6 +214,26 @@ namespace NineGrid.Flow.Diagnostics
                 });
         }
 
+        /// <summary>stepCount==0 时回退 Legacy Deals/Moves/Removes 路径；用于观测回退频率。</summary>
+        public static void RecordDrainLegacyFallback(
+            int requestId,
+            int moves,
+            int deals,
+            int removes)
+        {
+            Record(
+                FlowTraceCategory.Presentation,
+                FlowTraceNames.DrainLegacyFallback,
+                new Dictionary<string, string>
+                {
+                    { "requestId", requestId.ToString() },
+                    { "moves", moves.ToString() },
+                    { "deals", deals.ToString() },
+                    { "removes", removes.ToString() },
+                    { "stepCount", "0" },
+                });
+        }
+
         public static void RecordOccupancySnapshot(string phase, string batchTag = null)
         {
             if (!FlowTraceRecorder.Enabled)

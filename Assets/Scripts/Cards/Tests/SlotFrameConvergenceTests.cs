@@ -110,5 +110,74 @@ namespace NineGrid.Cards.Tests
             Assert.AreEqual(-1f, tower.SlotFrame.localPosition.x, ConvergenceCurve1D.PositionEpsilon);
             Assert.AreEqual(1f, tower.SlotFrame.localPosition.y, ConvergenceCurve1D.PositionEpsilon);
         }
+
+        [Test]
+        public void ConvergeVisualToWorld_EnsuresMissingTowerAndDriver_ThenRunsCurve()
+        {
+            // 无塔无 driver 的裸根 + ManagedCard：入口应补齐后走 L2 曲线。
+            DestroyAllSingletonsInScene();
+            var cardGo = new GameObject("CardManagerEnsureTest");
+            var cardManager = cardGo.AddComponent<CardManagerSingleton>();
+            var prefab = new GameObject("EnsurePrefab");
+            prefab.AddComponent<StandardCardView>();
+            // 故意不挂塔/driver，由 SpawnView 补齐；再剥掉以模拟 race。
+            cardManager.RegisterPrefab(CardManagerSingleton.StandardDefId, prefab);
+
+            ManagedCard card = null;
+            try
+            {
+                card = cardManager.SpawnView(9201, CardManagerSingleton.StandardDefId);
+                Assert.IsNotNull(card);
+
+                var tower = card.Transform.GetComponent<CardTransformTower>();
+                var drivers = card.Transform.GetComponents<LayerConvergenceDriver>();
+                Assert.IsNotNull(tower);
+                Assert.Greater(drivers.Length, 0);
+
+                // 剥掉驱动器模拟 timing race；塔保留但 Ensure 仍应补回 SlotFrame driver。
+                foreach (var d in drivers)
+                {
+                    Object.DestroyImmediate(d);
+                }
+
+                Assert.IsFalse(SlotFrameConvergence.TryGetDriver(card, out _));
+
+                var target = card.Transform.position + new Vector3(2f, 1f, 0f);
+                const float sourceTime = 0.2f;
+                SlotFrameConvergence.ConvergeVisualToWorld(card, target, sourceTime);
+
+                Assert.IsTrue(SlotFrameConvergence.TryGetDriver(card, out var driver));
+                Assert.IsTrue(driver.IsActive);
+
+                var remaining = sourceTime;
+                while (remaining > 0f)
+                {
+                    var step = Mathf.Min(1f / 60f, remaining);
+                    driver.Tick(step);
+                    remaining -= step;
+                }
+
+                Assert.IsTrue(driver.IsComplete);
+            }
+            finally
+            {
+                FlightSortingChannel.Disarm(9201);
+                Object.DestroyImmediate(cardGo);
+                Object.DestroyImmediate(prefab);
+            }
+        }
+
+        private static void DestroyAllSingletonsInScene()
+        {
+            foreach (var m in Object.FindObjectsByType<CardManagerSingleton>(FindObjectsSortMode.None))
+            {
+                Object.DestroyImmediate(m.gameObject);
+            }
+
+            var field = typeof(CardManagerSingleton).GetField(
+                "_instance",
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+            field?.SetValue(null, null);
+        }
     }
 }

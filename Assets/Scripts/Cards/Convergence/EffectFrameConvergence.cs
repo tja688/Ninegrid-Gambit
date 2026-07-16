@@ -38,6 +38,75 @@ namespace NineGrid.Cards.Convergence
         public static bool TryGetDriver(ManagedCard card, out LayerConvergenceDriver driver) =>
             TryGetDriver(card?.Transform, out driver);
 
+        /// <summary>
+        /// 无塔/无 driver 时补齐 L3 基础设施；成功则可继续走曲线。仍失败才返回 false。
+        /// </summary>
+        public static bool TryEnsureInfrastructure(
+            Transform root,
+            out CardTransformTower tower,
+            out LayerConvergenceDriver driver,
+            string site = null,
+            int uid = 0)
+        {
+            tower = null;
+            driver = null;
+            if (root == null)
+            {
+                return false;
+            }
+
+            var hadTower = root.GetComponent<CardTransformTower>() != null;
+            var hadDriver = LayerConvergenceDriver.TryGet(root, TowerLayer.EffectFrame, out _);
+
+            tower = root.GetComponent<CardTransformTower>();
+            if (tower == null)
+            {
+                tower = root.gameObject.AddComponent<CardTransformTower>();
+            }
+
+            tower.EnsureTower();
+            LayerConvergenceDriver.Ensure(root, TowerLayer.SlotFrame);
+            driver = LayerConvergenceDriver.Ensure(root, TowerLayer.EffectFrame);
+
+            if (tower.EffectFrame == null || driver == null)
+            {
+                var reason = tower.EffectFrame == null ? "noTower" : "noDriver";
+                CardPresentationProbe.Anomaly(
+                    uid,
+                    "SilentFail",
+                    reason,
+                    site ?? "EffectFrame.Ensure",
+                    layer: "L3",
+                    verdict: "abort");
+                tower = null;
+                driver = null;
+                return false;
+            }
+
+            if (!hadTower || !hadDriver)
+            {
+                var detail = !hadTower && !hadDriver
+                    ? "noTower+noDriver"
+                    : (!hadTower ? "noTower" : "noDriver");
+                CardPresentationProbe.Anomaly(
+                    uid,
+                    "EnsureRepaired",
+                    detail,
+                    site ?? "EffectFrame.Ensure",
+                    layer: "L3",
+                    verdict: "repaired");
+            }
+
+            return true;
+        }
+
+        public static bool TryEnsureInfrastructure(
+            ManagedCard card,
+            out CardTransformTower tower,
+            out LayerConvergenceDriver driver,
+            string site = null) =>
+            TryEnsureInfrastructure(card?.Transform, out tower, out driver, site, card?.Uid ?? 0);
+
         /// <summary>世界点 → L3 父空间（SlotFrame）下的 local，供 L3.localPosition 收敛目标。</summary>
         public static Vector3 WorldToEffectLocal(CardTransformTower tower, Vector3 worldPosition)
         {
@@ -53,7 +122,8 @@ namespace NineGrid.Cards.Convergence
 
         public static Vector3 WorldToEffectLocal(Transform root, Vector3 worldPosition)
         {
-            if (!TryGetTower(root, out var tower))
+            if (!TryGetTower(root, out var tower)
+                && !TryEnsureInfrastructure(root, out tower, out _, "EffectFrame.WorldToLocal"))
             {
                 return Vector3.zero;
             }
@@ -71,7 +141,17 @@ namespace NineGrid.Cards.Convergence
 
             if (!TryGetTower(root, out var tower) || !TryGetDriver(root, out var driver))
             {
-                return;
+                if (!TryEnsureInfrastructure(root, out tower, out driver, reason ?? "EffectFrame.SnapHome", uid))
+                {
+                    CardPresentationProbe.Anomaly(
+                        uid,
+                        "SilentFail",
+                        "noTower/noDriver",
+                        reason ?? "EffectFrame.SnapHome",
+                        layer: "L3",
+                        verdict: "abort");
+                    return;
+                }
             }
 
             CardDeckTween.KillMotion(root, reason ?? "EffectFrame.SnapHome", uid);
@@ -90,9 +170,17 @@ namespace NineGrid.Cards.Convergence
         /// </summary>
         public static void ConvergeVisualToWorld(Transform root, Vector3 targetWorld, float sourceTime)
         {
-            if (root == null || !TryGetTower(root, out var tower) || !TryGetDriver(root, out var driver))
+            if (root == null)
             {
                 return;
+            }
+
+            if (!TryGetTower(root, out var tower) || !TryGetDriver(root, out var driver))
+            {
+                if (!TryEnsureInfrastructure(root, out tower, out driver, "EffectFrame.Converge"))
+                {
+                    return;
+                }
             }
 
             CardDeckTween.KillMotion(root, "EffectFrame.Converge", 0);
@@ -106,7 +194,13 @@ namespace NineGrid.Cards.Convergence
         /// <summary>L3 收敛回零（末态回零）。</summary>
         public static void ConvergeHome(Transform root, float sourceTime)
         {
-            if (root == null || !TryGetDriver(root, out var driver))
+            if (root == null)
+            {
+                return;
+            }
+
+            if (!TryGetDriver(root, out var driver)
+                && !TryEnsureInfrastructure(root, out _, out driver, "EffectFrame.ConvergeHome"))
             {
                 return;
             }
@@ -123,14 +217,25 @@ namespace NineGrid.Cards.Convergence
         /// </summary>
         public static void ParkRootAtWorld(Transform root, Vector3 worldPosition, string reason = null, int uid = 0)
         {
-            if (root == null || !TryGetTower(root, out var tower) || !TryGetDriver(root, out var driver))
+            if (root == null)
             {
-                if (root != null)
-                {
-                    root.position = worldPosition;
-                }
-
                 return;
+            }
+
+            if (!TryGetTower(root, out var tower) || !TryGetDriver(root, out var driver))
+            {
+                if (!TryEnsureInfrastructure(root, out tower, out driver, reason ?? "EffectFrame.ParkRoot", uid))
+                {
+                    CardPresentationProbe.Anomaly(
+                        uid,
+                        "forceSnap",
+                        "noTower/noDriver",
+                        reason ?? "EffectFrame.ParkRoot",
+                        layer: "L3",
+                        verdict: "hardSet");
+                    root.position = worldPosition;
+                    return;
+                }
             }
 
             CardDeckTween.KillMotion(root, reason ?? "EffectFrame.ParkRoot", uid);
@@ -173,7 +278,13 @@ namespace NineGrid.Cards.Convergence
             CancellationToken cancellationToken,
             bool parkRootOnComplete = false)
         {
-            if (root == null || !TryGetDriver(root, out var driver))
+            if (root == null)
+            {
+                return;
+            }
+
+            if (!TryGetDriver(root, out var driver)
+                && !TryEnsureInfrastructure(root, out _, out driver, "EffectFrame.ConvergeAsync"))
             {
                 return;
             }
@@ -209,7 +320,13 @@ namespace NineGrid.Cards.Convergence
             float halfDuration,
             CancellationToken cancellationToken)
         {
-            if (root == null || !TryGetTower(root, out var tower) || !TryGetDriver(root, out var driver))
+            if (root == null)
+            {
+                return false;
+            }
+
+            if ((!TryGetTower(root, out var tower) || !TryGetDriver(root, out var driver))
+                && !TryEnsureInfrastructure(root, out tower, out driver, "EffectFrame.OutAndBack"))
             {
                 return false;
             }

@@ -35,6 +35,68 @@ namespace NineGrid.Cards.Convergence
         public static bool TryGetDriver(ManagedCard card, out LayerConvergenceDriver driver) =>
             LayerConvergenceDriver.TryGet(card?.Transform, TowerLayer.SlotFrame, out driver);
 
+        /// <summary>
+        /// 无塔/无 driver 时补齐 L2 基础设施；成功则可继续走曲线。仍失败才返回 false。
+        /// </summary>
+        public static bool TryEnsureInfrastructure(
+            ManagedCard card,
+            out CardTransformTower tower,
+            out LayerConvergenceDriver driver,
+            string site = null)
+        {
+            tower = null;
+            driver = null;
+            if (card?.Transform == null)
+            {
+                return false;
+            }
+
+            var root = card.Transform;
+            var hadTower = root.GetComponent<CardTransformTower>() != null;
+            var hadDriver = LayerConvergenceDriver.TryGet(root, TowerLayer.SlotFrame, out _);
+
+            tower = root.GetComponent<CardTransformTower>();
+            if (tower == null)
+            {
+                tower = root.gameObject.AddComponent<CardTransformTower>();
+            }
+
+            tower.EnsureTower();
+            driver = LayerConvergenceDriver.Ensure(root, TowerLayer.SlotFrame);
+            LayerConvergenceDriver.Ensure(root, TowerLayer.EffectFrame);
+
+            if (tower.SlotFrame == null || driver == null)
+            {
+                var reason = tower.SlotFrame == null ? "noTower" : "noDriver";
+                CardPresentationProbe.Anomaly(
+                    card.Uid,
+                    "SilentFail",
+                    reason,
+                    site ?? "SlotFrame.Ensure",
+                    layer: "L2",
+                    verdict: "abort");
+                tower = null;
+                driver = null;
+                return false;
+            }
+
+            if (!hadTower || !hadDriver)
+            {
+                var detail = !hadTower && !hadDriver
+                    ? "noTower+noDriver"
+                    : (!hadTower ? "noTower" : "noDriver");
+                CardPresentationProbe.Anomaly(
+                    card.Uid,
+                    "EnsureRepaired",
+                    detail,
+                    site ?? "SlotFrame.Ensure",
+                    layer: "L2",
+                    verdict: "repaired");
+            }
+
+            return true;
+        }
+
         /// <summary>世界点 → L2 父空间（BoardFrame）下的 local，供 L2.localPosition 收敛目标。</summary>
         public static Vector3 WorldToSlotLocal(CardTransformTower tower, Vector3 worldPosition)
         {
@@ -50,7 +112,8 @@ namespace NineGrid.Cards.Convergence
 
         public static Vector3 WorldToSlotLocal(ManagedCard card, Vector3 worldPosition)
         {
-            if (!TryGetTower(card, out var tower))
+            if (!TryGetTower(card, out var tower)
+                && !TryEnsureInfrastructure(card, out tower, out _, "SlotFrame.WorldToLocal"))
             {
                 return Vector3.zero;
             }
@@ -68,14 +131,25 @@ namespace NineGrid.Cards.Convergence
                 return;
             }
 
+            var probeUid = uid > 0 ? uid : card.Uid;
             if (!TryGetTower(card, out var tower) || !TryGetDriver(card, out var driver))
             {
-                CardDeckTween.KillMotion(card.Transform, reason ?? "SlotFrame.SnapHome", uid);
-                card.Transform.position = anchorWorld;
-                return;
+                if (!TryEnsureInfrastructure(card, out tower, out driver, reason ?? "SlotFrame.SnapHome"))
+                {
+                    CardPresentationProbe.Anomaly(
+                        probeUid,
+                        "forceSnap",
+                        "noTower/noDriver",
+                        reason ?? "SlotFrame.SnapHome",
+                        layer: "L2",
+                        verdict: "hardSet");
+                    CardDeckTween.KillMotion(card.Transform, reason ?? "SlotFrame.SnapHome", probeUid);
+                    card.Transform.position = anchorWorld;
+                    return;
+                }
             }
 
-            CardDeckTween.KillMotion(card.Transform, reason ?? "SlotFrame.SnapHome", uid > 0 ? uid : card.Uid);
+            CardDeckTween.KillMotion(card.Transform, reason ?? "SlotFrame.SnapHome", probeUid);
             EndMotionDiag(driver, card, "snap");
             driver.Admit(HandoffState.AtRest(Vector3.zero));
             tower.CardRoot.position = anchorWorld;
@@ -96,9 +170,17 @@ namespace NineGrid.Cards.Convergence
             Vector3 slotAnchorWorld,
             float sourceTime)
         {
-            if (card?.Transform == null || !TryGetTower(card, out var tower) || !TryGetDriver(card, out var driver))
+            if (card?.Transform == null)
             {
                 return;
+            }
+
+            if (!TryGetTower(card, out var tower) || !TryGetDriver(card, out var driver))
+            {
+                if (!TryEnsureInfrastructure(card, out tower, out driver, "SlotFrame.BeginDeal"))
+                {
+                    return;
+                }
             }
 
             CardDeckTween.KillMotion(card.Transform, "SlotFrame.BeginDeal", card.Uid);
@@ -126,9 +208,17 @@ namespace NineGrid.Cards.Convergence
             float sourceTime,
             CommitmentKind commitment = CommitmentKind.Sync)
         {
-            if (card?.Transform == null || !TryGetTower(card, out var tower) || !TryGetDriver(card, out var driver))
+            if (card?.Transform == null)
             {
                 return;
+            }
+
+            if (!TryGetTower(card, out var tower) || !TryGetDriver(card, out var driver))
+            {
+                if (!TryEnsureInfrastructure(card, out tower, out driver, "SlotFrame.Converge"))
+                {
+                    return;
+                }
             }
 
             CardDeckTween.KillMotion(card.Transform, "SlotFrame.Converge", card.Uid);
@@ -184,7 +274,13 @@ namespace NineGrid.Cards.Convergence
             bool snapHomeOnComplete = true,
             CommitmentKind commitment = CommitmentKind.Sync)
         {
-            if (card?.Transform == null || !TryGetDriver(card, out var driver))
+            if (card?.Transform == null)
+            {
+                return;
+            }
+
+            if (!TryGetDriver(card, out var driver)
+                && !TryEnsureInfrastructure(card, out _, out driver, "SlotFrame.ConvergeAsync"))
             {
                 return;
             }
