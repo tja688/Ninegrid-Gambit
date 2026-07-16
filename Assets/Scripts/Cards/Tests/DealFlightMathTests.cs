@@ -209,6 +209,63 @@ namespace NineGrid.Cards.Tests
         }
 
         [Test]
+        public void ResolveVisualDealSlot_SkipsTrailingDeals_AimsPastFillBatch()
+        {
+            // Projector 每张 CardDealt 单独一步：首张 Deal 必须跳过后续 Deal 才能看到 Rotate。
+            var steps = new[]
+            {
+                new BoardPresentationStep { Kind = BoardPresentationStepKind.Deal },
+                new BoardPresentationStep { Kind = BoardPresentationStepKind.Deal },
+                new BoardPresentationStep
+                {
+                    Kind = BoardPresentationStepKind.Rotate,
+                    Clockwise = true,
+                },
+            };
+
+            var visualFirst = DealVisualTargetResolver.ResolveVisualDealSlot(
+                birthSlot: 4,
+                steps,
+                rotateScanStart: 1,
+                out var pendingFirst);
+            var visualSecond = DealVisualTargetResolver.ResolveVisualDealSlot(
+                birthSlot: 1,
+                steps,
+                rotateScanStart: 2,
+                out var pendingSecond);
+
+            // 环序 {1,2,3,6,9,8,7,4}：4→1，1→2
+            Assert.AreEqual(1, visualFirst);
+            Assert.AreEqual(1, pendingFirst);
+            Assert.AreEqual(2, visualSecond);
+            Assert.AreEqual(1, pendingSecond);
+        }
+
+        [Test]
+        public void ResolveVisualDealSlot_RemoveBetweenDealAndRotate_KeepsBirth()
+        {
+            var steps = new[]
+            {
+                new BoardPresentationStep { Kind = BoardPresentationStepKind.Deal },
+                new BoardPresentationStep { Kind = BoardPresentationStepKind.Remove },
+                new BoardPresentationStep
+                {
+                    Kind = BoardPresentationStepKind.Rotate,
+                    Clockwise = true,
+                },
+            };
+
+            var visual = DealVisualTargetResolver.ResolveVisualDealSlot(
+                birthSlot: 4,
+                steps,
+                rotateScanStart: 1,
+                out var pending);
+
+            Assert.AreEqual(4, visual);
+            Assert.AreEqual(0, pending);
+        }
+
+        [Test]
         public void ApplyRingSteps_CounterClockwiseFrom1_GoesTo4()
         {
             var visual = DealVisualTargetResolver.ApplyRingSteps(

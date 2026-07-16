@@ -2295,6 +2295,7 @@ namespace NineGrid.Flow
                     ResolveManagers();
                     if (fieldManager != null)
                     {
+                        // 就位栅栏：解锁输入前必须等齐补牌飞行，再 Sync；禁止 flight 中 hardSet。
                         await fieldManager.WaitAllActiveDealFlightsAsync(CancellationToken.None);
                         SyncBoardOccupancyFromCore(force: true);
                         if (fieldManager.HasOccupancyConflictSinceClear)
@@ -2305,6 +2306,7 @@ namespace NineGrid.Flow
                             SyncBoardOccupancyFromCore(force: true);
                         }
 
+                        fieldManager.RefreshSlotHitColliders();
                         FieldTraceHelper.RecordOccupancySnapshot("drainAfter");
                         FieldTraceHelper.RecordDrainEnd(
                             moveCount,
@@ -3390,13 +3392,21 @@ namespace NineGrid.Flow
             var pipeline = arch.GetSystem<IActionPipelineSystem>();
             var startIndex = pipeline.EventLog.Entries.Count;
             arch.GetSystem<IBoardSystem>().FillEmptySlots();
-            FillBoardDeltaFromEventLog(pipeline, startIndex, out _, out var refillDeals, out _);
+            FillBoardDeltaFromEventLog(
+                pipeline,
+                startIndex,
+                out _,
+                out var refillDeals,
+                out _,
+                out _,
+                out var refillSteps);
             PresentEffectTriggersFromEventLog(startIndex);
             PresentShuffleIntoDeckFromEventLog(startIndex);
             await FlushPendingShuffleIntoPresentationAsync(ct);
             if (refillDeals != null && refillDeals.Length > 0)
             {
-                await DrainDealsAsync(refillDeals, ct);
+                // 传入 steps 使多张 Deal 能前瞻后续 Rotate（若有），避免 Aim=birth。
+                await DrainDealsAsync(refillDeals, ct, refillSteps, 0);
             }
         }
 
@@ -3738,12 +3748,19 @@ namespace NineGrid.Flow
                 var pipeline = arch.GetSystem<IActionPipelineSystem>();
                 var startIndex = pipeline.EventLog.Entries.Count;
                 arch.GetSystem<IBoardSystem>().FillEmptySlots();
-                FillBoardDeltaFromEventLog(pipeline, startIndex, out _, out var refillDeals, out _);
+                FillBoardDeltaFromEventLog(
+                    pipeline,
+                    startIndex,
+                    out _,
+                    out var refillDeals,
+                    out _,
+                    out _,
+                    out var refillSteps);
                 PresentEffectTriggersFromEventLog(startIndex);
                 var filtered = FilterDealsExcluding(refillDeals, fusionResultUid);
                 if (filtered.Length > 0)
                 {
-                    await DrainDealsAsync(filtered, ct);
+                    await DrainDealsAsync(filtered, ct, refillSteps, 0);
                 }
             }
             finally
@@ -5722,6 +5739,7 @@ namespace NineGrid.Flow
                 string.Join(",", sweptUids));
             FieldTraceHelper.RecordOccupancySnapshot("syncAfter");
             cardManager?.AuditRegistryIntegrity("Sync.After");
+            fieldManager.RefreshSlotHitColliders();
 
             if (openedSyncBeat)
             {

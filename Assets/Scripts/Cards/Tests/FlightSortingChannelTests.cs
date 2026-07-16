@@ -11,6 +11,9 @@ namespace NineGrid.Cards.Tests
         public void TearDown()
         {
             FlightSortingChannel.Disarm(42);
+            FlightSortingChannel.Disarm(9301);
+            FlightSortingChannel.Disarm(9401);
+            FlightSortingChannel.Disarm(9402);
         }
 
         [Test]
@@ -75,6 +78,113 @@ namespace NineGrid.Cards.Tests
             Assert.IsFalse(FlightSortingChannel.IsArmed(42));
             FlightSortingChannel.Disarm(42);
             Assert.IsFalse(FlightSortingChannel.IsArmed(42));
+        }
+
+        [Test]
+        public void HandSlotContainer_ComputeSortingOrder_IsLeftHighRightLow()
+        {
+            var settings = new CardHandLayoutSettings
+            {
+                sortingOrderBase = 10,
+                sortingOrderStep = 1,
+            };
+            var container = new CardHandSlotContainer(settings);
+            Assert.AreEqual(10, container.ComputeSortingOrder(0));
+            Assert.AreEqual(9, container.ComputeSortingOrder(1));
+            Assert.AreEqual(8, container.ComputeSortingOrder(2));
+        }
+
+        [Test]
+        public void ResolveTargetOrder_HandModeWithoutSlot_FallsBackToDisplayModeDefault()
+        {
+            foreach (var m in Object.FindObjectsByType<CardManagerSingleton>(FindObjectsSortMode.None))
+            {
+                Object.DestroyImmediate(m.gameObject);
+            }
+
+            var instanceField = typeof(CardManagerSingleton).GetField(
+                "_instance",
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+            instanceField?.SetValue(null, null);
+
+            var cardGo = new GameObject("FlightSortHandFallback");
+            var cardManager = cardGo.AddComponent<CardManagerSingleton>();
+            var prefab = new GameObject("FlightSortHandPrefab");
+            prefab.AddComponent<StandardCardView>();
+            prefab.AddComponent<SortingGroup>();
+            cardManager.RegisterPrefab(CardManagerSingleton.StandardDefId, prefab);
+
+            const int uid = 9401;
+            try
+            {
+                var card = cardManager.SpawnView(uid, CardManagerSingleton.StandardDefId);
+                Assert.IsNotNull(card);
+                cardManager.SetDisplayMode(card, CardDisplayMode.HandCardMode);
+
+                // 未入槽时无法委托手牌域，回落 DisplayMode 默认（Hand=0）。
+                Assert.AreEqual(0, FlightSortingChannel.ResolveTargetOrder(card));
+            }
+            finally
+            {
+                Object.DestroyImmediate(cardGo);
+                Object.DestroyImmediate(prefab);
+                instanceField?.SetValue(null, null);
+            }
+        }
+
+        [Test]
+        public void Restore_AfterDisplayModeChange_ReResolvesLiveTargetNotFrozenArmOrder()
+        {
+            foreach (var m in Object.FindObjectsByType<CardManagerSingleton>(FindObjectsSortMode.None))
+            {
+                Object.DestroyImmediate(m.gameObject);
+            }
+
+            var instanceField = typeof(CardManagerSingleton).GetField(
+                "_instance",
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+            instanceField?.SetValue(null, null);
+
+            var cardGo = new GameObject("FlightSortLiveRestore");
+            var cardManager = cardGo.AddComponent<CardManagerSingleton>();
+            var prefab = new GameObject("FlightSortLivePrefab");
+            prefab.AddComponent<StandardCardView>();
+            prefab.AddComponent<SortingGroup>();
+            cardManager.RegisterPrefab(CardManagerSingleton.StandardDefId, prefab);
+
+            const int uid = 9402;
+            try
+            {
+                var card = cardManager.SpawnView(uid, CardManagerSingleton.StandardDefId);
+                Assert.IsNotNull(card);
+                cardManager.SetDisplayMode(card, CardDisplayMode.GroundCardMode);
+
+                var tower = card.Transform.GetComponent<CardTransformTower>();
+                Assert.IsNotNull(tower);
+                tower.EnsureTower();
+                var driver = LayerConvergenceDriver.Ensure(card.Transform, TowerLayer.SlotFrame);
+                var group = card.View.GetComponent<SortingGroup>();
+                Assert.IsNotNull(group);
+
+                FlightSortingChannel.ArmForSlotConvergence(card, driver);
+                Assert.GreaterOrEqual(group.sortingOrder, FlightSortingChannel.GlobalFlightSortingOrder);
+
+                // 模拟入手：DisplayMode 已切到手牌，再 Restore（SanitizeForSanctuary 路径）。
+                // 必须按就位瞬间重解析，不能沿用起飞时冻结的 Ground order（-10）。
+                cardManager.SetDisplayMode(card, CardDisplayMode.HandCardMode);
+                FlightSortingChannel.Restore(card);
+
+                Assert.IsFalse(FlightSortingChannel.IsArmed(uid));
+                Assert.AreEqual(0, group.sortingOrder);
+                Assert.AreNotEqual(-10, group.sortingOrder);
+            }
+            finally
+            {
+                FlightSortingChannel.Disarm(uid);
+                Object.DestroyImmediate(cardGo);
+                Object.DestroyImmediate(prefab);
+                instanceField?.SetValue(null, null);
+            }
         }
 
         [Test]

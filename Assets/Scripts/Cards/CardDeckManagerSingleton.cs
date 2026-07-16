@@ -343,6 +343,26 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 解析卡组域权威 sortingOrder（左高右低）；供 FlightSortingChannel 掉回目标序时委托。
+        /// </summary>
+        internal bool TryResolveSortingOrder(ManagedCard card, out int sortingOrder)
+        {
+            sortingOrder = 0;
+            if (card == null || _slotContainer == null)
+            {
+                return false;
+            }
+
+            if (!TryFindDeckSlotByUid(card.Uid, out var slotIndex))
+            {
+                return false;
+            }
+
+            sortingOrder = _slotContainer.ComputeSortingOrder(slotIndex);
+            return true;
+        }
+
+        /// <summary>
         /// 按 Uid 从卡组槽卸下视图，不 Release（供未用帮助卡结算等外层自行退场）。
         /// </summary>
         public bool TryDetachByUid(int uid, out ManagedCard card)

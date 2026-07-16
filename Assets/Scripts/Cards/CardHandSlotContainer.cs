@@ -127,6 +127,12 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 手牌槽位权威 sortingOrder：左起（索引小）更高，右下更低（与卡组一致）。
+        /// </summary>
+        public int ComputeSortingOrder(int slotIndex) =>
+            _settings.sortingOrderBase - slotIndex * _settings.sortingOrderStep;
+
+        /// <summary>
         /// 按槽位索引设置单卡 sortingOrder：左起（索引小）更高，右下更低（与卡组一致）。
         /// </summary>
         public void ApplySortingOrder(ManagedCard card, int slotIndex)
@@ -139,7 +145,7 @@ namespace NineGrid.Cards
             var sortingGroup = card.View.GetComponent<SortingGroup>();
             if (sortingGroup != null)
             {
-                sortingGroup.sortingOrder = _settings.sortingOrderBase - slotIndex * _settings.sortingOrderStep;
+                sortingGroup.sortingOrder = ComputeSortingOrder(slotIndex);
             }
         }
 

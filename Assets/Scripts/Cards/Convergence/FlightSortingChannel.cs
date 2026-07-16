@@ -21,7 +21,6 @@ namespace NineGrid.Cards.Convergence
         {
             public LayerConvergenceDriver Driver;
             public Action Handler;
-            public int TargetOrder;
         }
 
         public static int ResolveFlightOrder(ManagedCard card)
@@ -35,6 +34,24 @@ namespace NineGrid.Cards.Convergence
             if (card == null)
             {
                 return CardDisplayModeVisuals.GroundCardSortingOrder;
+            }
+
+            // 净土域自有槽位序（左高右低）；不可回落到 DisplayMode 默认值，否则会吞掉手牌/卡组规则。
+            if (card.DisplayMode == CardDisplayMode.HandCardMode)
+            {
+                var hand = CardHandManagerSingleton.Instance;
+                if (hand != null && hand.TryResolveSortingOrder(card, out var handOrder))
+                {
+                    return handOrder;
+                }
+            }
+            else if (card.DisplayMode == CardDisplayMode.CardDeckMode)
+            {
+                var deck = CardDeckManagerSingleton.Instance;
+                if (deck != null && deck.TryResolveSortingOrder(card, out var deckOrder))
+                {
+                    return deckOrder;
+                }
             }
 
             return CardDisplayModeVisuals.GetSortingOrder(card.DisplayMode, card.CoreKind);
@@ -51,7 +68,6 @@ namespace NineGrid.Cards.Convergence
             }
 
             var uid = card.Uid;
-            var targetOrder = ResolveTargetOrder(card);
             RaiseSortingOrder(card, ResolveFlightOrder(card));
 
             if (ActiveByUid.TryGetValue(uid, out var existing))
@@ -62,7 +78,6 @@ namespace NineGrid.Cards.Convergence
                 }
 
                 existing.Driver = driver;
-                existing.TargetOrder = targetOrder;
                 existing.Handler = () => OnDriverCompleted(uid);
                 driver.Completed += existing.Handler;
                 return;
@@ -73,7 +88,6 @@ namespace NineGrid.Cards.Convergence
             {
                 Driver = driver,
                 Handler = handler,
-                TargetOrder = targetOrder,
             };
             driver.Completed += handler;
         }
@@ -89,7 +103,7 @@ namespace NineGrid.Cards.Convergence
             RaiseSortingOrder(card, ResolveFlightOrder(card));
         }
 
-        /// <summary>离散掉回目标序。</summary>
+        /// <summary>离散掉回目标序（完成瞬间按当前域规则重解析，不沿用起飞时冻结值）。</summary>
         public static void Restore(ManagedCard card)
         {
             if (card == null)
@@ -105,8 +119,6 @@ namespace NineGrid.Cards.Convergence
                 }
 
                 ActiveByUid.Remove(card.Uid);
-                ApplySortingOrder(card, active.TargetOrder);
-                return;
             }
 
             ApplySortingOrder(card, ResolveTargetOrder(card));
@@ -150,7 +162,8 @@ namespace NineGrid.Cards.Convergence
                 return;
             }
 
-            ApplySortingOrder(card, active.TargetOrder);
+            // 掉回时按就位瞬间的域规则重解析（手牌/卡组槽位序），避免起飞时冻结的 DisplayMode 默认值覆盖净土域规则。
+            ApplySortingOrder(card, ResolveTargetOrder(card));
         }
 
         private static void RaiseSortingOrder(ManagedCard card, int order) =>

@@ -929,6 +929,26 @@ namespace NineGrid.Cards
             }
         }
 
+        /// <summary>
+        /// 解析手牌域权威 sortingOrder（左高右低）；供 FlightSortingChannel 掉回目标序时委托。
+        /// </summary>
+        internal bool TryResolveSortingOrder(ManagedCard card, out int sortingOrder)
+        {
+            sortingOrder = 0;
+            if (card == null || _slotContainer == null)
+            {
+                return false;
+            }
+
+            if (!_slotContainer.TryGetSlotOf(card, out var slotIndex))
+            {
+                return false;
+            }
+
+            sortingOrder = _slotContainer.ComputeSortingOrder(slotIndex);
+            return true;
+        }
+
         private void EnsureHandLayout(ManagedCard focus = null)
         {
             ApplyAllHandSortingOrders();

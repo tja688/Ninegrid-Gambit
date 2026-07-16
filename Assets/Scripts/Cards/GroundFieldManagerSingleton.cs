@@ -1530,6 +1530,8 @@ namespace NineGrid.Cards
                     "clockwise", clockwise ? "1" : "0");
 
                 _dealFlightService?.OnRingShifted(clockwise);
+                // 占格已迁到环移后格：立刻刷新空槽代理，避免与视觉/占格短暂分叉。
+                RefreshAllSlotHitColliders();
 
                 SyncPresentationClock();
                 var sourceTime = layoutSettings != null ? layoutSettings.moveDuration : 0.35f;
@@ -1700,11 +1702,14 @@ namespace NineGrid.Cards
             // 收敛前不 RefreshDisplayMode：避免重置 scale/rotation 并抢写 sortingOrder。
             var sourceTime = layoutSettings != null ? layoutSettings.moveDuration : 0.35f;
 
-            // 补牌飞行中：只 Redirect L2 目标，由飞牌探针等待同一驱动器完成。
-            if (IsDealInFlight(card.Uid)
-                && _dealFlightService != null
-                && _dealFlightService.TryRedirectFlightToSlot(card.Uid, toSlot, sourceTime))
+            // 补牌飞行中：只 Redirect L2 目标，禁止与 hop 互抢；由飞牌探针等待同一驱动器完成。
+            if (IsDealInFlight(card.Uid))
             {
+                if (_dealFlightService != null)
+                {
+                    _dealFlightService.TryRedirectFlightToSlot(card.Uid, toSlot, sourceTime);
+                }
+
                 if (SlotFrameConvergence.TryGetDriver(card, out var inFlightDriver))
                 {
                     await SlotFrameConvergence.AwaitDriverAsync(inFlightDriver, cancellationToken);
@@ -2175,6 +2180,15 @@ namespace NineGrid.Cards
                 proxy.Configure(slot, layoutSettings.slotHitBoxSize);
                 _slotHitProxies[slot] = proxy;
             }
+        }
+
+        /// <summary>
+        /// 按当前占格刷新全部空槽点击代理（占格有牌则关闭、空槽且可交战则开启）。
+        /// Drain/Sync 收束后调用，保证可点击性与视觉占位一致。
+        /// </summary>
+        public void RefreshSlotHitColliders()
+        {
+            RefreshAllSlotHitColliders();
         }
 
         private void RefreshAllSlotHitColliders()
