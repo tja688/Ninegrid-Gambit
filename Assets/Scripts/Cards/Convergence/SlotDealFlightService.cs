@@ -8,6 +8,7 @@ namespace NineGrid.Cards.Convergence
 {
     /// <summary>
     /// 补牌飞牌服务：Drain / Explore 均走 L2 五次收敛；换格 = Redirect，无替身、无握手。
+    /// Deal→Rotate 时起飞即瞄准预解最终格（逻辑占格仍 birth）。
     /// </summary>
     internal sealed class SlotDealFlightService
     {
@@ -15,6 +16,11 @@ namespace NineGrid.Cards.Convergence
         {
             public int BirthSlot;
             public int TrackedSlot;
+            /// <summary>当前视觉收敛瞄准格（BeginDeal / Redirect 写入）。</summary>
+            public int VisualAimSlot;
+            public int PendingNetAtLaunch;
+            public float FlightBeginUnscaledTime;
+            public bool LoggedFirstRedirect;
             public ManagedCard Card;
             public DealSettleBudget Budget;
             public DealFlightKind Kind;
@@ -56,6 +62,7 @@ namespace NineGrid.Cards.Convergence
             {
                 BirthSlot = birthSlot,
                 TrackedSlot = birthSlot,
+                VisualAimSlot = birthSlot,
                 Kind = DealFlightKind.Explore,
                 Handle = new DealFlightHandle(-1, birthSlot, DealFlightKind.Explore),
             };
@@ -68,7 +75,7 @@ namespace NineGrid.Cards.Convergence
 
         public DealFlightHandle LaunchDrainFlight(
             ManagedCard card,
-            int targetSlot,
+            int birthSlot,
             Vector3 launchPos,
             DealFlightContext context)
         {
@@ -82,28 +89,37 @@ namespace NineGrid.Cards.Convergence
                 return _drainByUid[card.Uid].Handle;
             }
 
-            if (!_field.TryGetExploreAnchorPosition(targetSlot, out var targetPos))
+            var visualSlot = context.VisualTargetSlot > 0 ? context.VisualTargetSlot : birthSlot;
+            if (!_field.TryGetExploreAnchorPosition(visualSlot, out var targetPos))
             {
-                targetPos = launchPos;
+                if (!_field.TryGetExploreAnchorPosition(birthSlot, out targetPos))
+                {
+                    targetPos = launchPos;
+                }
+
+                visualSlot = birthSlot;
             }
 
             var settings = Settings;
             var budget = DealSettleBudget.Compute(launchPos, targetPos, context, settings);
             var probe = new DealFlightProbe
             {
-                BirthSlot = targetSlot,
-                TrackedSlot = targetSlot,
+                BirthSlot = birthSlot,
+                TrackedSlot = birthSlot,
+                VisualAimSlot = visualSlot,
+                PendingNetAtLaunch = context.PendingRotateSteps,
                 Card = card,
                 Budget = budget,
                 Kind = DealFlightKind.Drain,
                 LaunchPos = launchPos,
                 SourceTime = budget.Total,
-                Handle = new DealFlightHandle(card.Uid, targetSlot, DealFlightKind.Drain),
+                Handle = new DealFlightHandle(card.Uid, birthSlot, DealFlightKind.Drain),
             };
 
             _drainByUid[card.Uid] = probe;
             ChoreoTraceSink.SafeBeginChoreo("dealFlight", "kind", "drain", "uid", card.Uid.ToString());
             TraceDealFlightBegin(probe);
+            EmitAimAnomalyIfNeeded(probe, card.Uid);
             RunDrainProbeAsync(probe).Forget();
             return probe.Handle;
         }
@@ -143,7 +159,7 @@ namespace NineGrid.Cards.Convergence
         }
 
         /// <summary>
-        /// 大盘 hop/换格接管：更新追踪格并 Redirect L2 目标。无暂停/恢复握手。
+        /// 大盘 hop/换格接管：更新追踪格并 Redirect L2 目标。同目标 no-op。
         /// </summary>
         public bool TryRedirectFlightToSlot(int uid, int toSlot, float sourceTime)
         {
@@ -152,24 +168,7 @@ namespace NineGrid.Cards.Convergence
                 return false;
             }
 
-            probe.TrackedSlot = toSlot;
-            if (probe.Handle != null)
-            {
-                probe.Handle.TrackedSlot = toSlot;
-            }
-
-            if (!_field.TryGetExploreAnchorPosition(toSlot, out var targetWorld))
-            {
-                return true;
-            }
-
-            var duration = sourceTime > 0f
-                ? sourceTime
-                : (_field.LayoutSettings != null ? _field.LayoutSettings.moveDuration : 0.35f);
-            probe.SourceTime = duration;
-            SlotFrameConvergence.RedirectVisualToWorld(probe.Card, targetWorld, duration);
-            TraceProbe(probe, "l2Redirect", uid, "toSlot", toSlot.ToString());
-            return true;
+            return RedirectProbeToSlot(probe, toSlot, sourceTime, uid);
         }
 
         public static async UniTask WaitAllSettledAsync(
@@ -235,15 +234,47 @@ namespace NineGrid.Cards.Convergence
                     "prevSlot", prev.ToString(),
                     "clockwise", clockwise ? "1" : "0");
 
-                if (probe.Card == null
-                    || !_field.TryGetExploreAnchorPosition(probe.TrackedSlot, out var targetWorld))
+                if (probe.Card == null)
                 {
                     continue;
                 }
 
-                probe.SourceTime = duration;
-                SlotFrameConvergence.RedirectVisualToWorld(probe.Card, targetWorld, duration);
+                RedirectProbeToSlot(
+                    probe,
+                    probe.TrackedSlot,
+                    duration,
+                    probe.Card.Uid);
             }
+        }
+
+        private bool RedirectProbeToSlot(DealFlightProbe probe, int toSlot, float sourceTime, int uid)
+        {
+            probe.TrackedSlot = toSlot;
+            if (probe.Handle != null)
+            {
+                probe.Handle.TrackedSlot = toSlot;
+            }
+
+            if (probe.VisualAimSlot == toSlot)
+            {
+                TraceProbe(probe, "l2RedirectSkip", uid, "toSlot", toSlot.ToString(), "reason", "sameAim");
+                return true;
+            }
+
+            if (!_field.TryGetExploreAnchorPosition(toSlot, out var targetWorld))
+            {
+                return true;
+            }
+
+            var duration = sourceTime > 0f
+                ? sourceTime
+                : (_field.LayoutSettings != null ? _field.LayoutSettings.moveDuration : 0.35f);
+            probe.SourceTime = duration;
+            probe.VisualAimSlot = toSlot;
+            LogRedirectLatency(probe, uid);
+            SlotFrameConvergence.RedirectVisualToWorld(probe.Card, targetWorld, duration);
+            TraceProbe(probe, "l2Redirect", uid, "toSlot", toSlot.ToString());
+            return true;
         }
 
         private async UniTaskVoid RunExploreProbeAsync(DealFlightProbe probe)
@@ -287,22 +318,30 @@ namespace NineGrid.Cards.Convergence
                 }
 
                 var launchPos = card.Transform.position;
-                if (!_field.TryGetExploreAnchorPosition(probe.TrackedSlot, out var targetPos))
+                // 等待期间 OnRingShifted 可能已改 TrackedSlot：起飞瞄准当前追踪格。
+                var visualSlot = probe.TrackedSlot;
+                if (!_field.TryGetExploreAnchorPosition(visualSlot, out var targetPos))
                 {
                     targetPos = launchPos;
                 }
 
+                var pendingNet = CountRingDistance(probe.BirthSlot, visualSlot);
+                probe.VisualAimSlot = visualSlot;
+                probe.PendingNetAtLaunch = pendingNet;
                 var context = new DealFlightContext(
                     _field.IsFieldBusy,
                     ActiveCount,
-                    pendingRotateSteps: 0);
+                    pendingNet,
+                    visualSlot);
                 probe.Budget = DealSettleBudget.Compute(launchPos, targetPos, context, settings);
                 probe.LaunchPos = launchPos;
                 probe.SourceTime = probe.Budget.Total;
                 probe.LinkedCts = CancellationTokenSource.CreateLinkedTokenSource(token);
                 TraceDealFlightBegin(probe);
+                EmitAimAnomalyIfNeeded(probe, card.Uid);
 
                 TraceProbe(probe, "flightStart", card.Uid);
+                probe.FlightBeginUnscaledTime = Time.unscaledTime;
                 SlotFrameConvergence.BeginDealFromLaunch(
                     card,
                     launchPos,
@@ -328,7 +367,8 @@ namespace NineGrid.Cards.Convergence
                     return;
                 }
 
-                if (!_field.TryGetExploreAnchorPosition(probe.TrackedSlot, out var settlePos))
+                var settleSlot = ResolveSettleSlot(probe);
+                if (!_field.TryGetExploreAnchorPosition(settleSlot, out var settlePos))
                 {
                     settlePos = targetPos;
                 }
@@ -376,12 +416,14 @@ namespace NineGrid.Cards.Convergence
                     return;
                 }
 
-                if (!_field.TryGetExploreAnchorPosition(probe.TrackedSlot, out var slotPos))
+                var aimSlot = probe.VisualAimSlot > 0 ? probe.VisualAimSlot : probe.TrackedSlot;
+                if (!_field.TryGetExploreAnchorPosition(aimSlot, out var slotPos))
                 {
                     slotPos = probe.LaunchPos;
                 }
 
                 probe.LinkedCts = CancellationTokenSource.CreateLinkedTokenSource(_destroyToken);
+                probe.FlightBeginUnscaledTime = Time.unscaledTime;
                 SlotFrameConvergence.BeginDealFromLaunch(
                     probe.Card,
                     probe.LaunchPos,
@@ -398,7 +440,8 @@ namespace NineGrid.Cards.Convergence
                     return;
                 }
 
-                if (!_field.TryGetExploreAnchorPosition(probe.TrackedSlot, out var settlePos))
+                var settleSlot = ResolveSettleSlot(probe);
+                if (!_field.TryGetExploreAnchorPosition(settleSlot, out var settlePos))
                 {
                     settlePos = slotPos;
                 }
@@ -446,13 +489,13 @@ namespace NineGrid.Cards.Convergence
                 if (probe.TrackedSlot != tracked)
                 {
                     tracked = probe.TrackedSlot;
-                    if (_field.TryGetExploreAnchorPosition(tracked, out var targetWorld))
-                    {
-                        var duration = probe.SourceTime > 0f
+                    RedirectProbeToSlot(
+                        probe,
+                        tracked,
+                        probe.SourceTime > 0f
                             ? probe.SourceTime
-                            : (_field.LayoutSettings != null ? _field.LayoutSettings.moveDuration : 0.35f);
-                        SlotFrameConvergence.RedirectVisualToWorld(probe.Card, targetWorld, duration);
-                    }
+                            : (_field.LayoutSettings != null ? _field.LayoutSettings.moveDuration : 0.35f),
+                        probe.Card.Uid);
                 }
 
                 if (!driver.IsActive)
@@ -469,6 +512,78 @@ namespace NineGrid.Cards.Convergence
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
                 probe.Budget?.Consume(Time.deltaTime);
             }
+        }
+
+        private static int ResolveSettleSlot(DealFlightProbe probe)
+        {
+            // Tracked 已跟上环移时用 Tracked；否则保留预解视觉瞄准，避免 Snap 回 birth。
+            if (probe.VisualAimSlot > 0
+                && probe.TrackedSlot == probe.BirthSlot
+                && probe.VisualAimSlot != probe.BirthSlot)
+            {
+                return probe.VisualAimSlot;
+            }
+
+            return probe.TrackedSlot > 0 ? probe.TrackedSlot : probe.VisualAimSlot;
+        }
+
+        private static int CountRingDistance(int fromSlot, int toSlot)
+        {
+            if (fromSlot == toSlot
+                || !GroundSlotTopology.IsOuterRing(fromSlot)
+                || !GroundSlotTopology.IsOuterRing(toSlot))
+            {
+                return 0;
+            }
+
+            var steps = 0;
+            var slot = fromSlot;
+            for (var i = 0; i < GroundSlotTopology.ClockwiseRing.Count; i++)
+            {
+                if (slot == toSlot)
+                {
+                    return steps;
+                }
+
+                slot = GroundSlotTopology.GetClockwiseRingTargetSlot(slot, clockwise: true);
+                steps++;
+            }
+
+            return 0;
+        }
+
+        private static void EmitAimAnomalyIfNeeded(DealFlightProbe probe, int uid)
+        {
+            if (probe.PendingNetAtLaunch <= 0)
+            {
+                return;
+            }
+
+            if (probe.VisualAimSlot == probe.BirthSlot)
+            {
+                ChoreoTraceSink.SafeEmitAnomaly(
+                    "DealAimedBirthWithPendingRotate",
+                    uid,
+                    "birth=" + probe.BirthSlot
+                    + ";visual=" + probe.VisualAimSlot
+                    + ";pendingNet=" + probe.PendingNetAtLaunch);
+            }
+        }
+
+        private static void LogRedirectLatency(DealFlightProbe probe, int uid)
+        {
+            if (probe.LoggedFirstRedirect || probe.FlightBeginUnscaledTime <= 0f)
+            {
+                return;
+            }
+
+            probe.LoggedFirstRedirect = true;
+            var latencyMs = (Time.unscaledTime - probe.FlightBeginUnscaledTime) * 1000f;
+            TraceProbe(
+                probe,
+                "redirectLatency",
+                uid,
+                "latencyMs", latencyMs.ToString("F0"));
         }
 
         private static void CancelProbe(DealFlightProbe probe, bool rollback)
@@ -529,7 +644,9 @@ namespace NineGrid.Cards.Convergence
                 probe.BirthSlot,
                 probe.TrackedSlot,
                 "kind", probe.Kind.ToString(),
-                "budgetTotal", probe.Budget?.Total.ToString("F3") ?? "0");
+                "budgetTotal", probe.Budget?.Total.ToString("F3") ?? "0",
+                "visualTargetSlot", probe.VisualAimSlot.ToString(),
+                "pendingNet", probe.PendingNetAtLaunch.ToString());
         }
 
         private static void TraceDealFlightEnd(DealFlightProbe probe, string outcome)
@@ -542,7 +659,8 @@ namespace NineGrid.Cards.Convergence
                 probe.TrackedSlot,
                 "kind", probe.Kind.ToString(),
                 "outcome", outcome,
-                "budgetConsumed", probe.Budget?.Consumed.ToString("F3") ?? "0");
+                "budgetConsumed", probe.Budget?.Consumed.ToString("F3") ?? "0",
+                "visualTargetSlot", probe.VisualAimSlot.ToString());
         }
     }
 }

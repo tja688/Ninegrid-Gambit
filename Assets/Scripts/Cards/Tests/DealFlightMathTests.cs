@@ -113,5 +113,109 @@ namespace NineGrid.Cards.Tests
             budget.Consume(0.5f);
             Assert.IsTrue(budget.IsExhausted);
         }
+
+        [Test]
+        public void ResolveVisualDealSlot_NoRotate_KeepsBirth()
+        {
+            var steps = new[]
+            {
+                new BoardPresentationStep { Kind = BoardPresentationStepKind.Deal },
+                new BoardPresentationStep { Kind = BoardPresentationStepKind.Remove },
+            };
+
+            var visual = DealVisualTargetResolver.ResolveVisualDealSlot(
+                birthSlot: 1,
+                steps,
+                rotateScanStart: 1,
+                out var pending);
+
+            Assert.AreEqual(1, visual);
+            Assert.AreEqual(0, pending);
+        }
+
+        [Test]
+        public void ResolveVisualDealSlot_OneClockwise_AdvancesOneRingStep()
+        {
+            var steps = new[]
+            {
+                new BoardPresentationStep { Kind = BoardPresentationStepKind.Deal },
+                new BoardPresentationStep
+                {
+                    Kind = BoardPresentationStepKind.Rotate,
+                    Clockwise = true,
+                },
+            };
+
+            var visual = DealVisualTargetResolver.ResolveVisualDealSlot(
+                birthSlot: 1,
+                steps,
+                rotateScanStart: 1,
+                out var pending);
+
+            Assert.AreEqual(2, visual);
+            Assert.AreEqual(1, pending);
+        }
+
+        [Test]
+        public void ResolveVisualDealSlot_ClockwiseThenCounter_CancelsToBirth()
+        {
+            var steps = new[]
+            {
+                new BoardPresentationStep { Kind = BoardPresentationStepKind.Deal },
+                new BoardPresentationStep
+                {
+                    Kind = BoardPresentationStepKind.Rotate,
+                    Clockwise = true,
+                },
+                new BoardPresentationStep
+                {
+                    Kind = BoardPresentationStepKind.Rotate,
+                    Clockwise = false,
+                },
+            };
+
+            var visual = DealVisualTargetResolver.ResolveVisualDealSlot(
+                birthSlot: 6,
+                steps,
+                rotateScanStart: 1,
+                out var pending);
+
+            Assert.AreEqual(6, visual);
+            Assert.AreEqual(2, pending);
+        }
+
+        [Test]
+        public void CollectPendingRotateDirections_StopsAtNonRotate()
+        {
+            var steps = new[]
+            {
+                new BoardPresentationStep
+                {
+                    Kind = BoardPresentationStepKind.Rotate,
+                    Clockwise = true,
+                },
+                new BoardPresentationStep { Kind = BoardPresentationStepKind.Remove },
+                new BoardPresentationStep
+                {
+                    Kind = BoardPresentationStepKind.Rotate,
+                    Clockwise = false,
+                },
+            };
+            var dirs = new System.Collections.Generic.List<bool>();
+            DealVisualTargetResolver.CollectPendingRotateDirections(steps, 0, dirs);
+
+            Assert.AreEqual(1, dirs.Count);
+            Assert.IsTrue(dirs[0]);
+        }
+
+        [Test]
+        public void ApplyRingSteps_CounterClockwiseFrom1_GoesTo4()
+        {
+            var visual = DealVisualTargetResolver.ApplyRingSteps(
+                1,
+                new[] { false });
+
+            Assert.AreEqual(4, visual);
+        }
     }
 }

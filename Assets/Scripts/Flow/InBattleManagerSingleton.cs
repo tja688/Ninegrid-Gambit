@@ -2372,8 +2372,7 @@ namespace NineGrid.Flow
                         case BoardPresentationStepKind.Deal:
                             if (step.Deals != null && step.Deals.Length > 0)
                             {
-                                var pendingRotates = CountRemainingRotateSteps(steps, i + 1);
-                                await DrainDealsAsync(step.Deals, ct, pendingRotates);
+                                await DrainDealsAsync(step.Deals, ct, steps, i + 1);
                             }
 
                             break;
@@ -2480,24 +2479,11 @@ namespace NineGrid.Flow
             }
         }
 
-        private static int CountRemainingRotateSteps(BoardPresentationStep[] steps, int startIndex)
-        {
-            var count = 0;
-            for (var i = startIndex; i < steps.Length; i++)
-            {
-                if (steps[i].Kind == BoardPresentationStepKind.Rotate)
-                {
-                    count++;
-                }
-            }
-
-            return count;
-        }
-
         private async UniTask DrainDealsAsync(
             PostKillCardDeal[] deals,
             CancellationToken ct,
-            int pendingRotateSteps = 0)
+            BoardPresentationStep[] steps = null,
+            int rotateScanStart = 0)
         {
             ResolveManagers();
             await FlushPendingShuffleIntoPresentationAsync(ct);
@@ -2506,6 +2492,9 @@ namespace NineGrid.Flow
                 ? deckManager.LayoutSettings.dealInterval
                 : 0.05f;
             var flightHandles = new List<DealFlightHandle>();
+            var rotateDirs = new List<bool>(4);
+            DealVisualTargetResolver.CollectPendingRotateDirections(steps, rotateScanStart, rotateDirs);
+            var pendingRotateSteps = rotateDirs.Count;
 
             for (var i = 0; i < deals.Length; i++)
             {
@@ -2533,10 +2522,12 @@ namespace NineGrid.Flow
                 }
 
                 var ensureCard = ResolveOrSpawnDeckCardForDeal(deal);
+                var visualTargetSlot = DealVisualTargetResolver.ApplyRingSteps(deal.Slot, rotateDirs);
                 var flightContext = new DealFlightContext(
                     fieldManager.IsFieldBusy,
                     fieldManager.ActiveDealFlightCount + flightHandles.Count + 1,
-                    pendingRotateSteps);
+                    pendingRotateSteps,
+                    visualTargetSlot);
                 var (ok, handle) = await deckManager.DealCardByUidWithFlightAsync(
                     deal.Uid,
                     deal.Slot,
