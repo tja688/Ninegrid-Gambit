@@ -773,6 +773,21 @@ namespace NineGrid.Cards
                 return;
             }
 
+            var occupantUid = _uidBySlot[slot];
+            if (card != null && occupantUid != card.Uid)
+            {
+                CardPresentationProbe.Anomaly(
+                    card.Uid,
+                    "VacateUidMismatch",
+                    "slot=" + slot + ";expected=" + card.Uid + ";actual=" + occupantUid,
+                    "Ground.VacateSlotForExplore",
+                    layer: "L0",
+                    verdict: "refused");
+                Debug.LogWarning(
+                    $"[GroundFieldManager] 拒绝卸格：slot={slot} 期望 uid={card.Uid}，实际 occupant={occupantUid}。");
+                return;
+            }
+
             UnregisterCardAtSlot(slot);
             RefreshSlotHitCollider(slot);
             if (startExplore)

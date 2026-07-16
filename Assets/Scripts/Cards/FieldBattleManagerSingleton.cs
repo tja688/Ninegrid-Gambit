@@ -320,10 +320,9 @@ namespace NineGrid.Cards
                     hitApplied = true;
                 }
 
-                await DrainCombatHitBoardDeltaAsync(hitResult, ct);
-
                 if (hitResult.AvatarDefeated)
                 {
+                    await DrainCombatHitBoardDeltaAsync(hitResult, ct);
                     TryBeginAvatarDefeatPresentation(ct);
                     CombatHitSink.RequestBattleEnded(victory: false);
                     return;
@@ -348,7 +347,12 @@ namespace NineGrid.Cards
                     CardManagerSingleton.Instance.StageFieldDeadCorpseOffAnchor(combatVictim);
                     FinalizeLethalVictimAsync(combatVictim, ct).Forget();
 
-                    await CombatHitSink.RequestDrainPostKillBoard(postKill, ct);
+                    // 致死命中与 PostKill 合并为同一有序 Drain，避免提前补牌后按旧格误卸新 occupant。
+                    var mergedPresentation = BoardPresentationMerge.MergeLethalHitAndPostKill(
+                        hitResult,
+                        postKill,
+                        combatVictim.Uid);
+                    await CombatHitSink.RequestDrainPostKillBoard(mergedPresentation, ct);
 
                     // 只认 PostKill 结果，不用 hitResult.NodeCleared（击杀当下即可 true）。
                     if (postKill.NodeClearedOrRewardPhase)
@@ -360,6 +364,8 @@ namespace NineGrid.Cards
                     SyncAfterCombatRound();
                     return;
                 }
+
+                await DrainCombatHitBoardDeltaAsync(hitResult, ct);
 
                 if (attackBind.BindDeathCallback || attackBind.IsLethal)
                 {

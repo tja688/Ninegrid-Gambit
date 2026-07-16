@@ -5409,13 +5409,9 @@ namespace NineGrid.Flow
                 "forceSnap",
                 "slot=" + slot,
                 "Sync.Occupancy.Phase2",
-                layer: "L2",
-                verdict: "l2Converge");
-            SlotFrameConvergence.ConvergeVisualToWorld(
-                card,
-                anchor.position,
-                SyncPositionConvergeSeconds,
-                CommitmentKind.Async);
+                layer: "L0",
+                verdict: "snapHome");
+            SlotFrameConvergence.SnapHome(card, anchor.position, "Sync.Occupancy.Phase2", card.Uid);
             cardManager?.RefreshDisplayMode(card);
         }
 
@@ -5646,14 +5642,13 @@ namespace NineGrid.Flow
                                     "forceSnap",
                                     "slot=" + slot + ";relocate",
                                     "Sync.Occupancy.Phase2",
-                                    layer: "L2",
-                                    verdict: "l2Converge");
+                                    layer: "L0",
+                                    verdict: "snapHome");
                                 fieldManager.RequestPlaceCardAtAnchor(
                                     slot,
                                     view,
                                     skipBusyGuard: true,
-                                    snapToAnchor: false,
-                                    convergeSourceTime: SyncPositionConvergeSeconds);
+                                    snapToAnchor: true);
                                 placed++;
                                 placedUids.Add(uid);
                             }
@@ -5682,14 +5677,13 @@ namespace NineGrid.Flow
                                 "forceSnap",
                                 "slot=" + slot + ";reanchor",
                                 "Sync.Occupancy.Phase2",
-                                layer: "L2",
-                                verdict: "l2Converge");
+                                layer: "L0",
+                                verdict: "snapHome");
                             fieldManager.RequestPlaceCardAtAnchor(
                                 slot,
                                 view,
                                 skipBusyGuard: true,
-                                snapToAnchor: false,
-                                convergeSourceTime: SyncPositionConvergeSeconds);
+                                snapToAnchor: true);
                             placed++;
                             placedUids.Add(uid);
                         }

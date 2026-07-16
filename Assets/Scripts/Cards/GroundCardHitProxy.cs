@@ -1,3 +1,4 @@
+using NineGrid.Cards.Convergence;
 using UnityEngine;
 
 namespace NineGrid.Cards
@@ -10,6 +11,8 @@ namespace NineGrid.Cards
     [RequireComponent(typeof(CardVisualDriver))]
     public sealed class GroundCardHitProxy : MonoBehaviour
     {
+        private const float InputRootAlignEpsilonSqr = 0.01f;
+
         private BoxCollider2D _collider;
         private CardVisualDriver _driver;
 
@@ -99,6 +102,12 @@ namespace NineGrid.Cards
                     return;
             }
 
+            if (!TryPassGroundInputGate(card, out var blockReason))
+            {
+                RecordPickupEligibility(card, canRespond: false, blockReason);
+                return;
+            }
+
             if (card.CoreKind == CardPresentationKind.Monster)
             {
                 FieldBattleManagerSingleton.Instance?.TryHandleBattleClick(card);
@@ -107,7 +116,7 @@ namespace NineGrid.Cards
 
             if (!CanRespondToPickup())
             {
-                RecordPickupEligibility(card, canRespond: false);
+                RecordPickupEligibility(card, canRespond: false, blockReason: "pickupGate");
                 return;
             }
 
@@ -116,7 +125,7 @@ namespace NineGrid.Cards
             CardHandManagerSingleton.Instance?.TryPickupFromGround(card);
         }
 
-        private void RecordPickupEligibility(ManagedCard card, bool canRespond)
+        private void RecordPickupEligibility(ManagedCard card, bool canRespond, string blockReason = null)
         {
             if (card == null)
             {
@@ -156,6 +165,17 @@ namespace NineGrid.Cards
             var isGhost = hasRegistered
                 && (cardManager == null || !cardManager.TryGet(card.Uid, out _));
 
+            if (!canRespond && !string.IsNullOrEmpty(blockReason))
+            {
+                CardPresentationProbe.Anomaly(
+                    card.Uid,
+                    "InputGateBlocked",
+                    "reason=" + blockReason + ";slot=" + registeredSlot,
+                    "GroundCardHitProxy",
+                    layer: "L0",
+                    verdict: "blocked");
+            }
+
             RegistryTraceSink.RecordPickupEligibility?.Invoke(
                 card.Uid,
                 card.DefId,
@@ -187,30 +207,15 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            var field = GroundFieldManagerSingleton.Instance;
-            if (field != null && field.IsBusy)
-            {
-                return false;
-            }
-
             _driver ??= GetComponent<CardVisualDriver>();
             var card = _driver?.BoundCard;
-            if (card != null
-                && field != null
-                && field.IsDealInFlight(card.Uid))
+            if (card == null)
             {
                 return false;
             }
 
-            // 无占格登记时禁用 hover，避免 OrphanAtWrongAnchor / L2 残留导致空槽点到错卡。
-            if (card != null
-                && field != null
-                && !field.TryGetSlotOf(card.Uid, out _))
-            {
-                return false;
-            }
-
-            return _driver != null && _driver.IsGroundHoverEligible;
+            return TryPassGroundInputGate(card, out _)
+                   && _driver.IsGroundHoverEligible;
         }
 
         private bool CanRespondToPickup()
@@ -221,21 +226,88 @@ namespace NineGrid.Cards
                 return false;
             }
 
+            _driver ??= GetComponent<CardVisualDriver>();
+            var card = _driver?.BoundCard;
+            if (card == null)
+            {
+                return false;
+            }
+
+            return TryPassGroundInputGate(card, out _)
+                   && _driver.IsGroundHoverEligible;
+        }
+
+        /// <summary>
+        /// 统一场地输入门禁：占格登记、场地未锁、无 Deal/Slot 收敛、L0 根与注册格锚对齐。
+        /// </summary>
+        private bool TryPassGroundInputGate(ManagedCard card, out string blockReason)
+        {
+            blockReason = null;
+            if (card == null)
+            {
+                blockReason = "nullCard";
+                return false;
+            }
+
             var field = GroundFieldManagerSingleton.Instance;
             if (field != null && field.IsBusy)
             {
+                blockReason = "fieldBusy";
                 return false;
             }
 
-            _driver ??= GetComponent<CardVisualDriver>();
-            if (_driver?.BoundCard != null
-                && field != null
-                && field.IsDealInFlight(_driver.BoundCard.Uid))
+            if (field != null && field.IsDealInFlight(card.Uid))
             {
+                blockReason = "dealInFlight";
                 return false;
             }
 
-            return _driver != null && _driver.IsGroundHoverEligible;
+            if (SlotFrameConvergence.IsSlotConvergenceActive(card))
+            {
+                blockReason = "slotConverging";
+                return false;
+            }
+
+            if (field == null || !field.TryGetSlotOf(card.Uid, out var registeredSlot))
+            {
+                blockReason = "noOccupancy";
+                return false;
+            }
+
+            if (card.Transform == null)
+            {
+                blockReason = "noTransform";
+                return false;
+            }
+
+            var anchor = field.GetGroundAnchor(registeredSlot);
+            if (anchor == null)
+            {
+                blockReason = "noAnchor";
+                return false;
+            }
+
+            var rootDelta = card.Transform.position - anchor.position;
+            if (rootDelta.sqrMagnitude > InputRootAlignEpsilonSqr)
+            {
+                var visual = SlotFrameConvergence.GetVisualWorldPosition(card);
+                var visualDelta = visual - anchor.position;
+                CardPresentationProbe.Anomaly(
+                    card.Uid,
+                    "InputRootMisaligned",
+                    "slot=" + registeredSlot
+                    + ";rootDx=" + rootDelta.x.ToString("F3")
+                    + ";rootDy=" + rootDelta.y.ToString("F3")
+                    + ";visualDx=" + visualDelta.x.ToString("F3")
+                    + ";visualDy=" + visualDelta.y.ToString("F3"),
+                    "GroundCardHitProxy",
+                    layer: "L0",
+                    verdict: "blocked");
+                blockReason = "rootMisaligned";
+                return false;
+            }
+
+            return true;
         }
     }
 }
