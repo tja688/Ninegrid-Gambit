@@ -5,6 +5,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using NineGrid.Cards;
+using NineGrid.Cards.Convergence;
 using NineGrid.Core;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
@@ -2248,11 +2249,13 @@ namespace NineGrid.Flow
                     await DrainPostRemoveRefillAsync(ct);
                 }
 
+                await fieldManager.WaitAllActiveDealFlightsAsync(ct);
                 SyncBoardOccupancyFromCore(force: true);
                 if (fieldManager.HasOccupancyConflictSinceClear)
                 {
                     Debug.LogWarning(
                         "[InBattleManager] Drain 期间发生 OccupancyConflict，再次强制 SyncBoardOccupancyFromCore。");
+                    await fieldManager.WaitAllActiveDealFlightsAsync(ct);
                     SyncBoardOccupancyFromCore(force: true);
                 }
 
@@ -5229,6 +5232,71 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
+        /// Sync Phase2 位置纠偏短预算（秒）。已在复杂域的卡用 L2 收敛，禁止裸写 Transform.position。
+        /// </summary>
+        private const float SyncPositionConvergeSeconds = 0.2f;
+
+        private const float SyncPositionEpsilonSqr = 0.0001f;
+
+        private bool ShouldSkipSyncPositionCorrect(ManagedCard card)
+        {
+            if (card == null)
+            {
+                return true;
+            }
+
+            if (fieldManager != null && fieldManager.IsDealInFlight(card.Uid))
+            {
+                return true;
+            }
+
+            return SlotFrameConvergence.IsSlotConvergenceActive(card);
+        }
+
+        /// <summary>
+        /// 用视觉世界坐标判定是否偏离锚点；飞行中 skip；否则短预算 L2 收敛。禁止裸写 position。
+        /// </summary>
+        private void CorrectSyncVisualOrSkip(ManagedCard card, int slot, Transform anchor)
+        {
+            if (card?.Transform == null || anchor == null)
+            {
+                return;
+            }
+
+            var visual = SlotFrameConvergence.GetVisualWorldPosition(card);
+            if ((visual - anchor.position).sqrMagnitude <= SyncPositionEpsilonSqr)
+            {
+                return;
+            }
+
+            if (ShouldSkipSyncPositionCorrect(card))
+            {
+                CardPresentationProbe.Anomaly(
+                    card.Uid,
+                    "forceSnap",
+                    "slot=" + slot,
+                    "Sync.Occupancy.Phase2",
+                    layer: "L2",
+                    verdict: "skipInFlight");
+                return;
+            }
+
+            CardPresentationProbe.Anomaly(
+                card.Uid,
+                "forceSnap",
+                "slot=" + slot,
+                "Sync.Occupancy.Phase2",
+                layer: "L2",
+                verdict: "l2Converge");
+            SlotFrameConvergence.ConvergeVisualToWorld(
+                card,
+                anchor.position,
+                SyncPositionConvergeSeconds,
+                CommitmentKind.Async);
+            cardManager?.RefreshDisplayMode(card);
+        }
+
+        /// <summary>
         /// 安全网：两阶段对齐 Core 占格。
         /// 1) 卸下所有与 Core 不一致的占格（含仍在盘面但错位的 uid，避免目标格占用阻塞迁移）；
         /// 2) 按 Core 落位（已有视图迁/放锚，缺失则 Spawn）。
@@ -5391,22 +5459,7 @@ namespace NineGrid.Flow
                     {
                         CoreCardPresentationMapper.ApplyToManagedCard(existing);
                         var anchor = fieldManager.GetGroundAnchor(slot);
-                        if (existing.Transform != null
-                            && anchor != null
-                            && (existing.Transform.position - anchor.position).sqrMagnitude > 0.0001f)
-                        {
-                            CardPresentationProbe.Anomaly(
-                                existing.Uid,
-                                "forceSnap",
-                                "slot=" + slot,
-                                "Sync.Occupancy.Phase2",
-                                layer: "L2",
-                                verdict: "hardSet");
-                            CardDeckTween.KillMotion(existing.Transform);
-                            existing.Transform.position = anchor.position;
-                            cardManager.RefreshDisplayMode(existing);
-                        }
-
+                        CorrectSyncVisualOrSkip(existing, slot, anchor);
                         continue;
                     }
                 }
@@ -5430,6 +5483,18 @@ namespace NineGrid.Flow
                         {
                             if (currentSlot != slot)
                             {
+                                if (ShouldSkipSyncPositionCorrect(view))
+                                {
+                                    CardPresentationProbe.Anomaly(
+                                        uid,
+                                        "forceSnap",
+                                        "slot=" + slot + ";relocate",
+                                        "Sync.Occupancy.Phase2",
+                                        layer: "L2",
+                                        verdict: "skipInFlight");
+                                    continue;
+                                }
+
                                 fieldManager.ClearSlotOccupancy(currentSlot, skipBusyGuard: true);
                                 CardPresentationProbe.Anomaly(
                                     uid,
@@ -5437,49 +5502,49 @@ namespace NineGrid.Flow
                                     "slot=" + slot + ";relocate",
                                     "Sync.Occupancy.Phase2",
                                     layer: "L2",
-                                    verdict: "placeAtAnchor");
+                                    verdict: "l2Converge");
                                 fieldManager.RequestPlaceCardAtAnchor(
                                     slot,
                                     view,
                                     skipBusyGuard: true,
-                                    snapToAnchor: true);
+                                    snapToAnchor: false,
+                                    convergeSourceTime: SyncPositionConvergeSeconds);
                                 placed++;
                                 placedUids.Add(uid);
                             }
                             else
                             {
                                 var anchor = fieldManager.GetGroundAnchor(slot);
-                                if (view.Transform != null
-                                    && anchor != null
-                                    && (view.Transform.position - anchor.position).sqrMagnitude > 0.0001f)
-                                {
-                                    CardPresentationProbe.Anomaly(
-                                        view.Uid,
-                                        "forceSnap",
-                                        "slot=" + slot,
-                                        "Sync.Occupancy.Phase2",
-                                        layer: "L2",
-                                        verdict: "hardSet");
-                                    CardDeckTween.KillMotion(view.Transform);
-                                    view.Transform.position = anchor.position;
-                                    cardManager.RefreshDisplayMode(view);
-                                }
+                                CorrectSyncVisualOrSkip(view, slot, anchor);
                             }
                         }
                         else
                         {
+                            if (ShouldSkipSyncPositionCorrect(view))
+                            {
+                                CardPresentationProbe.Anomaly(
+                                    uid,
+                                    "forceSnap",
+                                    "slot=" + slot + ";reanchor",
+                                    "Sync.Occupancy.Phase2",
+                                    layer: "L2",
+                                    verdict: "skipInFlight");
+                                continue;
+                            }
+
                             CardPresentationProbe.Anomaly(
                                 uid,
                                 "forceSnap",
                                 "slot=" + slot + ";reanchor",
                                 "Sync.Occupancy.Phase2",
                                 layer: "L2",
-                                verdict: "placeAtAnchor");
+                                verdict: "l2Converge");
                             fieldManager.RequestPlaceCardAtAnchor(
                                 slot,
                                 view,
                                 skipBusyGuard: true,
-                                snapToAnchor: true);
+                                snapToAnchor: false,
+                                convergeSourceTime: SyncPositionConvergeSeconds);
                             placed++;
                             placedUids.Add(uid);
                         }
@@ -5488,7 +5553,7 @@ namespace NineGrid.Flow
                     }
                 }
 
-                // 视图缺失：Spawn 后必须落锚点（不再只登记占格）。
+                // 视图缺失：Spawn 后必须落锚点（冷启动允许 SnapHome）。
                 view = cardManager.SpawnView(uid, coreCard.DefId, initialMode: CardDisplayMode.GroundCardMode);
                 if (view == null)
                 {

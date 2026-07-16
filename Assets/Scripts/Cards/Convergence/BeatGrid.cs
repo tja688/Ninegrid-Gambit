@@ -10,6 +10,9 @@ namespace NineGrid.Cards.Convergence
     /// </summary>
     public sealed class BeatGrid
     {
+        /// <summary>墙钟栅栏边沿容忍（秒），消化 1–4ms 抢跑噪声。</summary>
+        public const float BarrierWallToleranceSeconds = 0.005f;
+
         private readonly PresentationClock _clock;
         private readonly Dictionary<int, BeatRecord> _beats = new();
         private int _nextBeatId = 1;
@@ -180,7 +183,8 @@ namespace NineGrid.Cards.Convergence
 
         /// <summary>
         /// 到栅栏墙钟时：先 Tick，再报告是否全员就位。
-        /// 未放置栅栏时返回 false。
+        /// 未放置栅栏时返回 false。regs=0 视为满足（空等无意义，由调用方报警）。
+        /// 墙钟允许 <see cref="BarrierWallToleranceSeconds"/> 边沿提前判定。
         /// </summary>
         public bool IsBarrierSatisfied(int beatId)
         {
@@ -189,7 +193,12 @@ namespace NineGrid.Cards.Convergence
                 return false;
             }
 
-            if (_clock.Now + 1e-5f < record.BarrierWallTime.Value)
+            if (record.Registrations.Count == 0)
+            {
+                return true;
+            }
+
+            if (_clock.Now + BarrierWallToleranceSeconds < record.BarrierWallTime.Value)
             {
                 return false;
             }
@@ -297,7 +306,7 @@ namespace NineGrid.Cards.Convergence
         public void Tick(float elapsedSinceBeatStart)
         {
             Elapsed = elapsedSinceBeatStart < 0f ? 0f : elapsedSinceBeatStart;
-            var timeComplete = Elapsed + 1e-5f >= SourceTime;
+            var timeComplete = Elapsed + BeatGrid.BarrierWallToleranceSeconds >= SourceTime;
             IsComplete = timeComplete && _driverComplete;
         }
 

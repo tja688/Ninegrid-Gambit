@@ -385,23 +385,28 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 登记到格位并把 Transform 落到锚点（战后 Sync / 补牌兜底用）。不播移动动画。
+        /// 登记到格位；可选硬贴锚点（冷启动 spawn）或短预算 L2 收敛（已在复杂域的 reanchor）。
         /// </summary>
         public bool RequestPlaceCardAtAnchor(
             int slot,
             ManagedCard card,
             bool skipBusyGuard = false,
-            bool snapToAnchor = true)
+            bool snapToAnchor = true,
+            float convergeSourceTime = 0.2f)
         {
             if (!RequestPlaceCard(slot, card, skipBusyGuard))
             {
                 return false;
             }
 
-            if (snapToAnchor
-                && card?.Transform != null
-                && TryGetAnchor(slot, out var anchor)
-                && anchor != null)
+            if (card?.Transform == null
+                || !TryGetAnchor(slot, out var anchor)
+                || anchor == null)
+            {
+                return true;
+            }
+
+            if (snapToAnchor)
             {
                 SlotFrameConvergence.SnapHome(card, anchor.position, "Ground.Place.Snap", card.Uid);
                 CardPresentationProbe.SnapSet(
@@ -411,6 +416,23 @@ namespace NineGrid.Cards
                     slot: slot,
                     killedTween: true,
                     reason: "placeAtAnchor");
+                CardManagerSingleton.Instance.RefreshDisplayMode(card);
+            }
+            else
+            {
+                var duration = convergeSourceTime > 0f ? convergeSourceTime : 0.2f;
+                SlotFrameConvergence.ConvergeVisualToWorld(
+                    card,
+                    anchor.position,
+                    duration,
+                    CommitmentKind.Async);
+                CardPresentationProbe.SnapSet(
+                    card.Uid,
+                    SlotFrameConvergence.GetVisualWorldPosition(card),
+                    "Ground.Place.Converge",
+                    slot: slot,
+                    killedTween: false,
+                    reason: "placeAtAnchorConverge");
                 CardManagerSingleton.Instance.RefreshDisplayMode(card);
             }
 
@@ -810,9 +832,25 @@ namespace NineGrid.Cards
             return _dealFlightService?.LaunchDrainFlight(card, targetSlot, launchPos, context);
         }
 
-        internal bool IsDealInFlight(int uid)
+        public bool IsDealInFlight(int uid)
         {
             return _dealFlightService != null && _dealFlightService.IsInFlight(uid);
+        }
+
+        /// <summary>
+        /// 等到当前所有 Drain/Explore 补牌飞牌结束（ActiveCount==0）。Sync 前调用，避免 Phase2 误杀在途卡。
+        /// </summary>
+        public async UniTask WaitAllActiveDealFlightsAsync(CancellationToken cancellationToken)
+        {
+            if (_dealFlightService == null)
+            {
+                return;
+            }
+
+            while (_dealFlightService.ActiveCount > 0)
+            {
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+            }
         }
 
         public static async UniTask WaitDealFlightsSettledAsync(
@@ -1597,7 +1635,18 @@ namespace NineGrid.Cards
                         satisfied,
                         regCount,
                         _presentationClock.Now);
-                    if (!satisfied)
+                    if (regCount == 0)
+                    {
+                        CardPresentationProbe.Anomaly(
+                            0,
+                            "BarrierUnsatisfied",
+                            "beatId=" + beatId.ToString(CultureInfo.InvariantCulture)
+                            + ";regs=0",
+                            "Ground.RingShift.Barrier",
+                            layer: "L2",
+                            verdict: "skipEmpty");
+                    }
+                    else if (!satisfied)
                     {
                         CardPresentationProbe.Anomaly(
                             0,

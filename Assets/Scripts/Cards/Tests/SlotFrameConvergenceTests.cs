@@ -167,6 +167,125 @@ namespace NineGrid.Cards.Tests
             }
         }
 
+        [Test]
+        public void GetVisualWorldPosition_IncludesSlotFrameOffset_WhileRootParked()
+        {
+            var tower = _root.AddComponent<CardTransformTower>();
+            tower.EnsureTower();
+            var slotWorld = new Vector3(5f, 0f, 0f);
+            tower.CardRoot.position = slotWorld;
+            tower.SlotFrame.localPosition = new Vector3(0f, 2.5f, 0f);
+
+            // 无 ManagedCard：用塔直接验证合成；入口 API 对 ManagedCard 走同一优先序。
+            var visual = tower.CardVisual != null
+                ? tower.CardVisual.position
+                : tower.SlotFrame.position;
+            Assert.AreEqual(5f, visual.x, 0.01f);
+            Assert.AreEqual(2.5f, visual.y, 0.01f);
+            Assert.AreEqual(slotWorld.x, tower.CardRoot.position.x, ConvergenceCurve1D.PositionEpsilon);
+            Assert.Greater(Mathf.Abs(tower.CardRoot.position.y - visual.y), 0.01f);
+        }
+
+        [Test]
+        public void BeginDeal_VisualNearTarget_WhileRootStillAtBirth_IsNotRootMismatch()
+        {
+            var tower = _root.AddComponent<CardTransformTower>();
+            tower.EnsureTower();
+            var driver = _root.AddComponent<LayerConvergenceDriver>();
+
+            var birthWorld = new Vector3(-2f, 0f, 0f);
+            var newSlotWorld = new Vector3(-2f, 2.5f, 0f);
+            tower.CardRoot.position = birthWorld;
+            var targetLocal = SlotFrameConvergence.WorldToSlotLocal(tower, newSlotWorld);
+            driver.Admit(HandoffState.AtRest(Vector3.zero));
+            driver.ConvergeTo(targetLocal, 0.01f);
+            driver.Tick(0.01f);
+
+            Assert.IsTrue(driver.IsComplete);
+            var visual = tower.SlotFrame.position;
+            Assert.AreEqual(newSlotWorld.x, visual.x, 0.05f);
+            Assert.AreEqual(newSlotWorld.y, visual.y, 0.05f);
+            // L0 仍停在 birth：若 Sync 只读 root 会假 mismatch。
+            Assert.AreEqual(birthWorld.x, tower.CardRoot.position.x, ConvergenceCurve1D.PositionEpsilon);
+            Assert.AreEqual(birthWorld.y, tower.CardRoot.position.y, ConvergenceCurve1D.PositionEpsilon);
+            Assert.Greater((tower.CardRoot.position - newSlotWorld).sqrMagnitude, 0.01f);
+            Assert.Less((visual - newSlotWorld).sqrMagnitude, 0.01f);
+        }
+
+        [Test]
+        public void SnapHome_ZerosSlotFrame_UnlikeRawRootWrite()
+        {
+            DestroyAllSingletonsInScene();
+            var cardGo = new GameObject("SnapHomeVsRaw");
+            var cardManager = cardGo.AddComponent<CardManagerSingleton>();
+            var prefab = new GameObject("SnapHomePrefab");
+            prefab.AddComponent<StandardCardView>();
+            cardManager.RegisterPrefab(CardManagerSingleton.StandardDefId, prefab);
+
+            ManagedCard card = null;
+            try
+            {
+                card = cardManager.SpawnView(9301, CardManagerSingleton.StandardDefId);
+                Assert.IsNotNull(card);
+                Assert.IsTrue(SlotFrameConvergence.TryEnsureInfrastructure(card, out var tower, out _, "test"));
+
+                tower.CardRoot.position = new Vector3(1f, 0f, 0f);
+                tower.SlotFrame.localPosition = new Vector3(0f, 2f, 0f);
+                var anchor = new Vector3(3f, 4f, 0f);
+
+                SlotFrameConvergence.SnapHome(card, anchor, "test.SnapHome", card.Uid);
+
+                Assert.AreEqual(anchor.x, tower.CardRoot.position.x, ConvergenceCurve1D.PositionEpsilon);
+                Assert.AreEqual(anchor.y, tower.CardRoot.position.y, ConvergenceCurve1D.PositionEpsilon);
+                Assert.AreEqual(0f, tower.SlotFrame.localPosition.x, ConvergenceCurve1D.PositionEpsilon);
+                Assert.AreEqual(0f, tower.SlotFrame.localPosition.y, ConvergenceCurve1D.PositionEpsilon);
+
+                // 裸写 root 不归零 L2 —— 这正是旧 hardSet 的病灶。
+                tower.SlotFrame.localPosition = new Vector3(0f, 2f, 0f);
+                card.Transform.position = anchor;
+                Assert.AreEqual(2f, tower.SlotFrame.localPosition.y, ConvergenceCurve1D.PositionEpsilon);
+            }
+            finally
+            {
+                FlightSortingChannel.Disarm(9301);
+                Object.DestroyImmediate(cardGo);
+                Object.DestroyImmediate(prefab);
+            }
+        }
+
+        [Test]
+        public void GetVisualWorldPosition_ManagedCard_MatchesSlotFrameWhenOffset()
+        {
+            DestroyAllSingletonsInScene();
+            var cardGo = new GameObject("VisualWorldPos");
+            var cardManager = cardGo.AddComponent<CardManagerSingleton>();
+            var prefab = new GameObject("VisualPrefab");
+            prefab.AddComponent<StandardCardView>();
+            cardManager.RegisterPrefab(CardManagerSingleton.StandardDefId, prefab);
+
+            ManagedCard card = null;
+            try
+            {
+                card = cardManager.SpawnView(9302, CardManagerSingleton.StandardDefId);
+                Assert.IsTrue(SlotFrameConvergence.TryGetTower(card, out var tower));
+                tower.CardRoot.position = new Vector3(1f, 1f, 0f);
+                tower.SlotFrame.localPosition = new Vector3(2f, 3f, 0f);
+
+                var visual = SlotFrameConvergence.GetVisualWorldPosition(card);
+                Assert.AreEqual(tower.CardVisual != null ? tower.CardVisual.position.x : tower.SlotFrame.position.x,
+                    visual.x, 0.01f);
+                Assert.AreEqual(tower.CardVisual != null ? tower.CardVisual.position.y : tower.SlotFrame.position.y,
+                    visual.y, 0.01f);
+                Assert.Greater(Mathf.Abs(card.Transform.position.x - visual.x), 0.01f);
+            }
+            finally
+            {
+                FlightSortingChannel.Disarm(9302);
+                Object.DestroyImmediate(cardGo);
+                Object.DestroyImmediate(prefab);
+            }
+        }
+
         private static void DestroyAllSingletonsInScene()
         {
             foreach (var m in Object.FindObjectsByType<CardManagerSingleton>(FindObjectsSortMode.None))

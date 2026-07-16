@@ -122,6 +122,38 @@ namespace NineGrid.Cards.Convergence
         }
 
         /// <summary>
+        /// 视觉世界坐标：优先 CardVisual（L0+…+L4），其次 SlotFrame（含 L2 偏移），无塔退回 root。
+        /// BeginDeal 期间 L0 停锚、运动在 L2——纠偏/诊断必须用本方法，禁止只读 CardRoot.position。
+        /// </summary>
+        public static Vector3 GetVisualWorldPosition(ManagedCard card)
+        {
+            if (card?.Transform == null)
+            {
+                return Vector3.zero;
+            }
+
+            if (TryGetTower(card, out var tower))
+            {
+                if (tower.CardVisual != null)
+                {
+                    return tower.CardVisual.position;
+                }
+
+                if (tower.SlotFrame != null)
+                {
+                    return tower.SlotFrame.position;
+                }
+
+                return tower.CardRoot.position;
+            }
+
+            return card.Transform.position;
+        }
+
+        public static bool IsSlotConvergenceActive(ManagedCard card) =>
+            TryGetDriver(card, out var driver) && driver.IsActive;
+
+        /// <summary>
         /// 离散落锚：L0 → 世界锚点，L2 归零并停止收敛。不播动画。
         /// </summary>
         public static void SnapHome(ManagedCard card, Vector3 anchorWorld, string reason = null, int uid = 0)
@@ -222,7 +254,7 @@ namespace NineGrid.Cards.Convergence
             }
 
             CardDeckTween.KillMotion(card.Transform, "SlotFrame.Converge", card.Uid);
-            var fromWorld = card.Transform.position;
+            var fromWorld = GetVisualWorldPosition(card);
             var targetLocal = WorldToSlotLocal(tower, targetWorld);
             FlightSortingChannel.ArmForSlotConvergence(card, driver);
             StartConvergenceDiag(
@@ -323,7 +355,7 @@ namespace NineGrid.Cards.Convergence
                 CardPresentationProbe.MotionEnd(
                     card.Uid,
                     prevMotionId,
-                    card.Transform != null ? card.Transform.position : fromWorld,
+                    GetVisualWorldPosition(card),
                     "redirected",
                     site);
                 sMotionByDriver.Remove(driverId);
@@ -350,11 +382,10 @@ namespace NineGrid.Cards.Convergence
                 }
 
                 sMotionByDriver.Remove(driverId);
-                var at = card.Transform != null ? card.Transform.position : toWorld;
                 CardPresentationProbe.MotionEnd(
                     card.Uid,
                     motionId,
-                    at,
+                    GetVisualWorldPosition(card),
                     "complete",
                     site,
                     choreoSeqId: ChoreoTraceSink.SafeCurrentSeqId());
@@ -379,11 +410,10 @@ namespace NineGrid.Cards.Convergence
 
             sMotionByDriver.Remove(driverId);
             var uid = card?.Uid ?? 0;
-            var at = card?.Transform != null ? card.Transform.position : Vector3.zero;
             CardPresentationProbe.MotionEnd(
                 uid,
                 motionId,
-                at,
+                GetVisualWorldPosition(card),
                 endHow,
                 "SlotFrame.Converge",
                 choreoSeqId: ChoreoTraceSink.SafeCurrentSeqId());

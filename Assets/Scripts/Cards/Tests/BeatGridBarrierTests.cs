@@ -138,5 +138,35 @@ namespace NineGrid.Cards.Tests
                 Object.DestroyImmediate(root);
             }
         }
+
+        [Test]
+        public void Barrier_WithinWallTolerance_IsSatisfied()
+        {
+            var clock = new PresentationClock();
+            var grid = new BeatGrid(clock);
+
+            const float sourceTime = 0.4f;
+            const float barrierAt = 0.4f;
+            var beatId = grid.OpenBeat(sourceTime);
+            grid.PlaceBarrier(beatId, barrierAt);
+            grid.Register(beatId);
+
+            // 差 3ms：旧 1e-5 容差会判未到；现 5ms 容差应满足。
+            clock.Seek(barrierAt - 0.003f);
+            Assert.IsTrue(grid.IsBarrierSatisfied(beatId));
+        }
+
+        [Test]
+        public void Barrier_EmptyRegistrations_IsSatisfied()
+        {
+            var clock = new PresentationClock();
+            var grid = new BeatGrid(clock);
+            var beatId = grid.OpenBeat(0.2f);
+            grid.PlaceBarrier(beatId, 0.2f);
+
+            clock.Seek(0.2f);
+            Assert.IsTrue(grid.IsBarrierSatisfied(beatId));
+            Assert.IsTrue(grid.AreAllComplete(beatId));
+        }
     }
 }

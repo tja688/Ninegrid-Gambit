@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using NineGrid.Cards;
+using NineGrid.Cards.Convergence;
 using UnityEngine;
 
 namespace NineGrid.Flow.Diagnostics
@@ -919,6 +920,12 @@ namespace NineGrid.Flow.Diagnostics
                 var dy = (c.YCm - ay) / 100f;
                 if (dx * dx + dy * dy > SlotMismatchThreshold * SlotMismatchThreshold)
                 {
+                    // BeginDeal/Redirect 途中视觉未到锚属预期，避免 L0/途中假阳刷屏。
+                    if (field.IsDealInFlight(c.Uid))
+                    {
+                        continue;
+                    }
+
                     EmitAnomaly(
                         PerfTraceAnomalyCodes.SlotWorldMismatch,
                         c.Uid,
@@ -1074,7 +1081,7 @@ namespace NineGrid.Flow.Diagnostics
                 }
 
                 var tween = sOpenMotions.ContainsKey(card.Uid);
-                var pos = card.Transform.position;
+                var pos = SlotFrameConvergence.GetVisualWorldPosition(card);
                 result[card.Uid] = new BoardCardSnap
                 {
                     Uid = card.Uid,

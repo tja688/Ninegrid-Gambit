@@ -116,7 +116,30 @@ namespace NineGrid.Cards.Convergence
 
         public bool IsInFlight(int uid)
         {
-            return uid > 0 && _drainByUid.ContainsKey(uid);
+            if (uid <= 0)
+            {
+                return false;
+            }
+
+            if (_drainByUid.ContainsKey(uid))
+            {
+                return true;
+            }
+
+            foreach (var probe in _exploreByBirthSlot.Values)
+            {
+                if (probe.Card != null && probe.Card.Uid == uid)
+                {
+                    return true;
+                }
+
+                if (probe.Handle != null && probe.Handle.Uid == uid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -444,6 +467,7 @@ namespace NineGrid.Cards.Convergence
                 }
 
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
+                probe.Budget?.Consume(Time.deltaTime);
             }
         }
 
