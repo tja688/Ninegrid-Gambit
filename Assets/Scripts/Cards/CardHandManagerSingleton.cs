@@ -727,13 +727,14 @@ namespace NineGrid.Cards
         private ManagedCard ResolveHandHoverBySlotBands(float pointerX)
         {
             var count = _hoverCandidates.Count;
+            var halfWidth = layoutSettings.handHitBoxSize.x * 0.5f;
             for (var i = 0; i < count; i++)
             {
                 var leftBound = i == 0
-                    ? float.NegativeInfinity
+                    ? _hoverCandidates[i].LayoutX - halfWidth
                     : (_hoverCandidates[i - 1].LayoutX + _hoverCandidates[i].LayoutX) * 0.5f;
                 var rightBound = i == count - 1
-                    ? float.PositiveInfinity
+                    ? _hoverCandidates[i].LayoutX + halfWidth
                     : (_hoverCandidates[i].LayoutX + _hoverCandidates[i + 1].LayoutX) * 0.5f;
 
                 if (pointerX >= leftBound && pointerX < rightBound)
@@ -742,7 +743,7 @@ namespace NineGrid.Cards
                 }
             }
 
-            return _hoverCandidates[count - 1].Card;
+            return null;
         }
 
         private bool ShouldKeepCurrentHover(float pointerX, ManagedCard rawTarget)
@@ -1299,6 +1300,7 @@ namespace NineGrid.Cards
                 return;
             }
 
+            SlotFrameConvergence.SanitizeForSanctuary(card, "Hand.SnapLayout.Sanitize");
             CardDeckTween.KillMotion(card.Transform);
             card.Transform.position = layoutPosition;
 

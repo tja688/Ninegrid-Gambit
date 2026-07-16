@@ -286,6 +286,49 @@ namespace NineGrid.Cards.Tests
             }
         }
 
+        [Test]
+        public void SanitizeForSanctuary_PreservesVisualWorld_AndZerosL2L3()
+        {
+            DestroyAllSingletonsInScene();
+            var cardGo = new GameObject("SanitizeSanctuary");
+            var cardManager = cardGo.AddComponent<CardManagerSingleton>();
+            var prefab = new GameObject("SanitizePrefab");
+            prefab.AddComponent<StandardCardView>();
+            cardManager.RegisterPrefab(CardManagerSingleton.StandardDefId, prefab);
+
+            ManagedCard card = null;
+            try
+            {
+                card = cardManager.SpawnView(9303, CardManagerSingleton.StandardDefId);
+                Assert.IsTrue(SlotFrameConvergence.TryEnsureInfrastructure(card, out var tower, out _, "test"));
+                Assert.IsTrue(EffectFrameConvergence.TryEnsureInfrastructure(card, out _, out _, "test"));
+
+                tower.CardRoot.position = new Vector3(1f, 2f, 0f);
+                tower.SlotFrame.localPosition = new Vector3(3f, -1f, 0f);
+                tower.EffectFrame.localPosition = new Vector3(0.5f, 0.25f, 0f);
+                var expectedVisual = SlotFrameConvergence.GetVisualWorldPosition(card);
+
+                SlotFrameConvergence.SanitizeForSanctuary(card, "test.Sanitize");
+
+                Assert.AreEqual(0f, tower.SlotFrame.localPosition.x, ConvergenceCurve1D.PositionEpsilon);
+                Assert.AreEqual(0f, tower.SlotFrame.localPosition.y, ConvergenceCurve1D.PositionEpsilon);
+                Assert.AreEqual(0f, tower.EffectFrame.localPosition.x, ConvergenceCurve1D.PositionEpsilon);
+                Assert.AreEqual(0f, tower.EffectFrame.localPosition.y, ConvergenceCurve1D.PositionEpsilon);
+
+                var afterVisual = SlotFrameConvergence.GetVisualWorldPosition(card);
+                Assert.AreEqual(expectedVisual.x, afterVisual.x, 0.05f);
+                Assert.AreEqual(expectedVisual.y, afterVisual.y, 0.05f);
+                Assert.AreEqual(expectedVisual.x, tower.CardRoot.position.x, 0.05f);
+                Assert.AreEqual(expectedVisual.y, tower.CardRoot.position.y, 0.05f);
+            }
+            finally
+            {
+                FlightSortingChannel.Disarm(9303);
+                Object.DestroyImmediate(cardGo);
+                Object.DestroyImmediate(prefab);
+            }
+        }
+
         private static void DestroyAllSingletonsInScene()
         {
             foreach (var m in Object.FindObjectsByType<CardManagerSingleton>(FindObjectsSortMode.None))

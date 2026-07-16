@@ -605,12 +605,7 @@ namespace NineGrid.Cards.Convergence
                 return;
             }
 
-            if (SlotFrameConvergence.TryGetDriver(card, out var driver))
-            {
-                driver.Stop();
-            }
-
-            CardDeckTween.KillMotion(card.Transform);
+            SlotFrameConvergence.SanitizeForSanctuary(card, "DealFlight.Rollback.Sanitize");
 
             var deck = CardDeckManagerSingleton.Instance;
             if (deck != null && deck.LaunchReturnFieldCardToDeck(card))

@@ -194,9 +194,18 @@ namespace NineGrid.Cards
             }
 
             _driver ??= GetComponent<CardVisualDriver>();
-            if (_driver?.BoundCard != null
+            var card = _driver?.BoundCard;
+            if (card != null
                 && field != null
-                && field.IsDealInFlight(_driver.BoundCard.Uid))
+                && field.IsDealInFlight(card.Uid))
+            {
+                return false;
+            }
+
+            // 无占格登记时禁用 hover，避免 OrphanAtWrongAnchor / L2 残留导致空槽点到错卡。
+            if (card != null
+                && field != null
+                && !field.TryGetSlotOf(card.Uid, out _))
             {
                 return false;
             }

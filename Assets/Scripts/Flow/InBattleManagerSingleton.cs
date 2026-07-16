@@ -5292,17 +5292,60 @@ namespace NineGrid.Flow
 
         private bool ShouldSkipSyncPositionCorrect(ManagedCard card)
         {
+            return TryGetSyncPositionSkipVerdict(card, out _);
+        }
+
+        /// <summary>
+        /// Sync 位置纠偏/落锚门禁。回库途中、净土模式、开放 DeckTween 均不得征用。
+        /// </summary>
+        private bool TryGetSyncPositionSkipVerdict(ManagedCard card, out string verdict)
+        {
+            verdict = null;
             if (card == null)
             {
+                verdict = "skipNull";
                 return true;
             }
 
             if (fieldManager != null && fieldManager.IsDealInFlight(card.Uid))
             {
+                verdict = "skipInFlight";
                 return true;
             }
 
-            return SlotFrameConvergence.IsSlotConvergenceActive(card);
+            if (SlotFrameConvergence.IsSlotConvergenceActive(card))
+            {
+                verdict = "skipInFlight";
+                return true;
+            }
+
+            var deck = CardDeckManagerSingleton.Instance;
+            if (deck != null && deck.IsReturnInFlight(card.Uid))
+            {
+                verdict = "skipDeckReturnInFlight";
+                return true;
+            }
+
+            if (card.DisplayMode == CardDisplayMode.CardDeckMode)
+            {
+                verdict = "skipCardDeckMode";
+                return true;
+            }
+
+            if (card.DisplayMode == CardDisplayMode.HandCardMode
+                || card.DisplayMode == CardDisplayMode.DragCardMode)
+            {
+                verdict = "skipHandMode";
+                return true;
+            }
+
+            if (CardDeckTween.IsMotionActive(card.Transform))
+            {
+                verdict = "skipDeckTween";
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -5321,15 +5364,26 @@ namespace NineGrid.Flow
                 return;
             }
 
-            if (ShouldSkipSyncPositionCorrect(card))
+            if (TryGetSyncPositionSkipVerdict(card, out var skipVerdict))
             {
+                if (skipVerdict == "skipDeckTween" || skipVerdict == "skipDeckReturnInFlight")
+                {
+                    CardPresentationProbe.Anomaly(
+                        card.Uid,
+                        PerfTraceAnomalyCodes.SyncReanchorDuringDeckTween,
+                        "slot=" + slot + ";verdict=" + skipVerdict,
+                        "Sync.Occupancy.Phase2",
+                        layer: "L2",
+                        verdict: "skipped");
+                }
+
                 CardPresentationProbe.Anomaly(
                     card.Uid,
                     "forceSnap",
                     "slot=" + slot,
                     "Sync.Occupancy.Phase2",
                     layer: "L2",
-                    verdict: "skipInFlight");
+                    verdict: skipVerdict ?? "skipInFlight");
                 return;
             }
 
@@ -5482,6 +5536,28 @@ namespace NineGrid.Flow
                     continue;
                 }
 
+                if (deckManager != null
+                    && (deckManager.ContainsUid(uid) || deckManager.IsReturnInFlight(uid)))
+                {
+                    Debug.LogWarning(
+                        $"[InBattleManager] Sync 跳过：uid={uid} 在牌组/回库途中，Core 却要求场地格 {slot}");
+                    if (cardManager.TryGet(uid, out var deckTransitView) && deckTransitView != null)
+                    {
+                        var skipVerdict = deckManager.IsReturnInFlight(uid)
+                            ? "skipDeckReturnInFlight"
+                            : "skipCardDeckMode";
+                        CardPresentationProbe.Anomaly(
+                            uid,
+                            "forceSnap",
+                            "slot=" + slot + ";deckTransit",
+                            "Sync.Occupancy.Phase2",
+                            layer: "L2",
+                            verdict: skipVerdict);
+                    }
+
+                    continue;
+                }
+
                 if (!registry.TryGet(uid, out var coreCard))
                 {
                     continue;
@@ -5535,7 +5611,7 @@ namespace NineGrid.Flow
                         {
                             if (currentSlot != slot)
                             {
-                                if (ShouldSkipSyncPositionCorrect(view))
+                                if (TryGetSyncPositionSkipVerdict(view, out var relocateSkip))
                                 {
                                     CardPresentationProbe.Anomaly(
                                         uid,
@@ -5543,7 +5619,7 @@ namespace NineGrid.Flow
                                         "slot=" + slot + ";relocate",
                                         "Sync.Occupancy.Phase2",
                                         layer: "L2",
-                                        verdict: "skipInFlight");
+                                        verdict: relocateSkip ?? "skipInFlight");
                                     continue;
                                 }
 
@@ -5572,7 +5648,7 @@ namespace NineGrid.Flow
                         }
                         else
                         {
-                            if (ShouldSkipSyncPositionCorrect(view))
+                            if (TryGetSyncPositionSkipVerdict(view, out var reanchorSkip))
                             {
                                 CardPresentationProbe.Anomaly(
                                     uid,
@@ -5580,7 +5656,7 @@ namespace NineGrid.Flow
                                     "slot=" + slot + ";reanchor",
                                     "Sync.Occupancy.Phase2",
                                     layer: "L2",
-                                    verdict: "skipInFlight");
+                                    verdict: reanchorSkip ?? "skipInFlight");
                                 continue;
                             }
 

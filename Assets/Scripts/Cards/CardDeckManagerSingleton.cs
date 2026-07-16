@@ -39,6 +39,7 @@ namespace NineGrid.Cards
         private List<Transform> _groundAnchors = new();
         private bool _isBusy;
         private ManagedCard _hoveredDeckCard;
+        private readonly HashSet<int> _returnInFlightUids = new();
 
         /// <summary>入组索引：随机落点（非空时排除最左 slot 0）。</summary>
         public const int RandomInsertIndex = -1;
@@ -63,6 +64,54 @@ namespace NineGrid.Cards
         public bool IsBusy => _isBusy;
 
         public CardDeckLayoutSettings LayoutSettings => layoutSettings;
+
+        /// <summary>
+        /// 场地回库途中（fieldExit → AddAnchor → ripple 完成前）。Sync 不得征用。
+        /// 视图已释放时自动清登记，避免 uid 粘住。
+        /// </summary>
+        public bool IsReturnInFlight(int uid)
+        {
+            if (uid <= 0 || !_returnInFlightUids.Contains(uid))
+            {
+                return false;
+            }
+
+            var cardManager = CardManagerSingleton.Instance;
+            if (cardManager != null && !cardManager.TryGet(uid, out _))
+            {
+                _returnInFlightUids.Remove(uid);
+                return false;
+            }
+
+            return true;
+        }
+
+        private void BeginReturnInFlight(int uid, string phase)
+        {
+            if (uid <= 0)
+            {
+                return;
+            }
+
+            _returnInFlightUids.Add(uid);
+            TraceDeckReturn(uid, phase);
+        }
+
+        private void EndReturnInFlight(int uid, string phase)
+        {
+            if (uid <= 0)
+            {
+                return;
+            }
+
+            _returnInFlightUids.Remove(uid);
+            TraceDeckReturn(uid, phase);
+        }
+
+        private static void TraceDeckReturn(int uid, string phase, params string[] extraPairs)
+        {
+            ChoreoTraceSink.SafeExploreTrace(uid, phase, -1, -1, extraPairs);
+        }
 
         /// <summary>
         /// 净土域 C 阶段交接：速度恒填 0。域级快照；卡级见 <see cref="EvictCard"/>。
@@ -326,6 +375,7 @@ namespace NineGrid.Cards
         public void ResetToStandby()
         {
             _pendingEntryCards.Clear();
+            _returnInFlightUids.Clear();
             _slotContainer?.Clear();
             CurrentMode = CardDeckMode.Standby;
             _isBusy = false;
@@ -621,11 +671,23 @@ namespace NineGrid.Cards
                 field.ClearSlotOccupancy(slot, skipBusyGuard: true);
             }
 
+            BeginReturnInFlight(card.Uid, "deckReturn.claim");
+            SlotFrameConvergence.SanitizeForSanctuary(card, "Deck.Return.Sanitize");
             CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
 
             var fieldLayout = field?.LayoutSettings;
             var exitY = fieldLayout != null ? fieldLayout.fieldExitYThreshold : 7f;
             var exitDuration = fieldLayout != null ? fieldLayout.fieldExitDuration : 0.35f;
+
+            TraceDeckReturn(
+                card.Uid,
+                "deckReturn.fieldExit",
+                "exitY",
+                exitY.ToString("0.##"),
+                "fromX",
+                card.Transform.position.x.ToString("0.##"),
+                "fromY",
+                card.Transform.position.y.ToString("0.##"));
 
             CardDeckTween.LaunchFieldExitThenDeckInsert(
                 card.Transform,
@@ -641,16 +703,23 @@ namespace NineGrid.Cards
         {
             if (card == null || card.Transform == null || CurrentMode != CardDeckMode.InGame)
             {
+                if (card != null)
+                {
+                    EndReturnInFlight(card.Uid, "deckReturn.abort");
+                }
+
                 return;
             }
 
             if (ContainsUid(card.Uid))
             {
+                EndReturnInFlight(card.Uid, "deckReturn.rippleEnd");
                 return;
             }
 
             if (!TryClaimCardForDeck(card, nameof(CompleteFieldReturnDeckInsert)))
             {
+                EndReturnInFlight(card.Uid, "deckReturn.abort");
                 return;
             }
 
@@ -692,25 +761,75 @@ namespace NineGrid.Cards
         {
             if (card == null || _slotContainer == null)
             {
+                if (card != null)
+                {
+                    EndReturnInFlight(card.Uid, "deckReturn.abort");
+                }
+
                 return false;
             }
 
-            var slotIndex = ResolveDeckInsertIndex(requestedIndex);
-            var clampedSlot = Mathf.Clamp(slotIndex, 0, Mathf.Max(0, layoutSettings.maxSlots - 1));
-            var addAnchor = GetAddAnchor(clampedSlot);
-            if (addAnchor != null && card.Transform != null)
+            var returning = _returnInFlightUids.Contains(card.Uid);
+            try
             {
-                card.Transform.position = addAnchor.position;
-            }
+                var slotIndex = ResolveDeckInsertIndex(requestedIndex);
+                var clampedSlot = Mathf.Clamp(slotIndex, 0, Mathf.Max(0, layoutSettings.maxSlots - 1));
+                var addAnchor = GetAddAnchor(clampedSlot);
+                if (addAnchor != null && card.Transform != null)
+                {
+                    card.Transform.position = addAnchor.position;
+                }
 
-            if (!_slotContainer.TryInsertAt(slotIndex, card, out var rippleMoves))
+                if (returning)
+                {
+                    TraceDeckReturn(
+                        card.Uid,
+                        "deckReturn.addAnchor",
+                        "slot",
+                        slotIndex.ToString(),
+                        "x",
+                        (addAnchor != null ? addAnchor.position.x : 0f).ToString("0.##"),
+                        "y",
+                        (addAnchor != null ? addAnchor.position.y : 0f).ToString("0.##"));
+                }
+
+                if (!_slotContainer.TryInsertAt(slotIndex, card, out var rippleMoves))
+                {
+                    Debug.LogWarning("[CardDeckManager] 插入卡牌失败（卡牌无效或索引非法）。");
+                    if (returning)
+                    {
+                        EndReturnInFlight(card.Uid, "deckReturn.abort");
+                    }
+
+                    return false;
+                }
+
+                await CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration, cancellationToken);
+                if (returning)
+                {
+                    EndReturnInFlight(card.Uid, "deckReturn.rippleEnd");
+                }
+
+                return true;
+            }
+            catch (OperationCanceledException)
             {
-                Debug.LogWarning("[CardDeckManager] 插入卡牌失败（卡牌无效或索引非法）。");
-                return false;
-            }
+                if (returning)
+                {
+                    EndReturnInFlight(card.Uid, "deckReturn.abort");
+                }
 
-            await CardDeckTween.MoveRippleAsync(rippleMoves, layoutSettings.moveDuration, cancellationToken);
-            return true;
+                throw;
+            }
+            catch
+            {
+                if (returning)
+                {
+                    EndReturnInFlight(card.Uid, "deckReturn.abort");
+                }
+
+                throw;
+            }
         }
 
         private async UniTask BeginEntryInternalAsync(CancellationToken cancellationToken)

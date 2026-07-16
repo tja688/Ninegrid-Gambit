@@ -715,6 +715,11 @@ namespace NineGrid.Cards
             var modeChanged = card.DisplayMode != mode;
             card.DisplayMode = mode;
 
+            if (modeChanged && IsSanctuaryDisplayMode(mode))
+            {
+                SlotFrameConvergence.SanitizeForSanctuary(card, "Card.DisplayMode." + mode);
+            }
+
             var cardTransform = card.View.transform;
             var sortingGroup = card.View.GetComponent<SortingGroup>();
 
@@ -749,6 +754,11 @@ namespace NineGrid.Cards
                     sortOrder: sortOrder);
             }
         }
+
+        private static bool IsSanctuaryDisplayMode(CardDisplayMode mode) =>
+            mode == CardDisplayMode.CardDeckMode
+            || mode == CardDisplayMode.HandCardMode
+            || mode == CardDisplayMode.RemovedMode;
 
         private static void SetSortingOrder(SortingGroup sortingGroup, int sortingOrder)
         {

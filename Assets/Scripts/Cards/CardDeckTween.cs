@@ -39,6 +39,10 @@ namespace NineGrid.Cards
             target.DOKill(complete: false);
         }
 
+        /// <summary>目标 Transform 上是否仍有未完成的 DeckTween（含 fieldExit / ripple）。</summary>
+        public static bool IsMotionActive(Transform target) =>
+            target != null && DOTween.IsTweening(target);
+
         public static Tween MoveToWorld(
             Transform target,
             Vector3 worldPosition,

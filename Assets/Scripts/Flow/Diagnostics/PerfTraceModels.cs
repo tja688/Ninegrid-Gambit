@@ -160,5 +160,9 @@ namespace NineGrid.Flow.Diagnostics
         public const string DisciplineBSyncConflict = "DisciplineBSyncConflict";
         /// <summary>纪律 B：抢占未兑现的 committed 异步目标。</summary>
         public const string DisciplineBPreemptCommitted = "DisciplineBPreemptCommitted";
+        /// <summary>切入净土域时 L2/L3 仍有残留偏移（Sanitize 前探测）。</summary>
+        public const string TowerResidueOnSanctuary = "TowerResidueOnSanctuary";
+        /// <summary>Sync Phase2 试图在开放 DeckTween 期间 reanchor（门禁失效时报警）。</summary>
+        public const string SyncReanchorDuringDeckTween = "SyncReanchorDuringDeckTween";
     }
 }

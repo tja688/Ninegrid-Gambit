@@ -193,6 +193,96 @@ namespace NineGrid.Cards.Convergence
             FlightSortingChannel.Restore(card);
         }
 
+        private const float SanctuaryResidueEpsilon = 0.01f;
+
+        /// <summary>
+        /// 进入净土域（手/牌组）前清塔：保持当前视觉世界位，L2/L3 归零，杀掉 hover punch。
+        /// 不把 L0 瞬移到场锚——避免回库/入手路径跳变。
+        /// </summary>
+        public static void SanitizeForSanctuary(ManagedCard card, string reason = null)
+        {
+            if (card?.Transform == null)
+            {
+                return;
+            }
+
+            var probeUid = card.Uid;
+            var site = reason ?? "SlotFrame.SanitizeSanctuary";
+            var visual = GetVisualWorldPosition(card);
+
+            var l2Mag = 0f;
+            var l3Mag = 0f;
+            if (TryGetTower(card, out var measureTower))
+            {
+                if (measureTower.SlotFrame != null)
+                {
+                    l2Mag = measureTower.SlotFrame.localPosition.magnitude;
+                }
+
+                if (measureTower.EffectFrame != null)
+                {
+                    l3Mag = measureTower.EffectFrame.localPosition.magnitude;
+                }
+            }
+
+            if (l2Mag + l3Mag > SanctuaryResidueEpsilon)
+            {
+                CardPresentationProbe.Anomaly(
+                    probeUid,
+                    "TowerResidueOnSanctuary",
+                    "l2=" + l2Mag.ToString("0.###") + ";l3=" + l3Mag.ToString("0.###"),
+                    site,
+                    layer: "L2",
+                    verdict: "sanitize");
+            }
+
+            var driver = card.View != null ? card.View.GetComponent<CardVisualDriver>() : null;
+            driver?.InterruptFeedbackMotion();
+            card.Transform.localRotation = Quaternion.identity;
+
+            CardDeckTween.KillMotion(card.Transform, site, probeUid);
+
+            if (TryGetDriver(card, out var slotDriver)
+                || TryEnsureInfrastructure(card, out _, out slotDriver, site))
+            {
+                EndMotionDiag(slotDriver, card, "sanitize");
+                slotDriver.Admit(HandoffState.AtRest(Vector3.zero));
+            }
+
+            if (TryGetTower(card, out var tower) || TryEnsureInfrastructure(card, out tower, out _, site))
+            {
+                if (tower.SlotFrame != null)
+                {
+                    tower.SlotFrame.localPosition = Vector3.zero;
+                }
+
+                if (tower.EffectFrame != null)
+                {
+                    tower.EffectFrame.localPosition = Vector3.zero;
+                }
+
+                if (LayerConvergenceDriver.TryGet(card.Transform, TowerLayer.EffectFrame, out var effectDriver))
+                {
+                    effectDriver.Admit(HandoffState.AtRest(Vector3.zero));
+                }
+
+                tower.CardRoot.position = visual;
+            }
+            else
+            {
+                card.Transform.position = visual;
+            }
+
+            FlightSortingChannel.Restore(card);
+            CardPresentationProbe.Handoff(
+                probeUid,
+                "SlotFrame",
+                "sanctuaryAdmit",
+                Vector3.zero,
+                Vector3.zero,
+                site);
+        }
+
         /// <summary>
         /// 补牌起飞：L0 先落目标格锚，L2 设为起飞点相对 local，再收敛回 0。
         /// </summary>
