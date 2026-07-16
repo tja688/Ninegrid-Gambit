@@ -1046,6 +1046,9 @@ namespace NineGrid.Flow
             OpeningPresentationPlan plan,
             CancellationToken cancellationToken)
         {
+            CombatHitSink.OpeningPresentationActive = true;
+            try
+            {
             if (plan.DeckCards.Count > 0)
             {
                 deckManager.ResetToStandby();
@@ -1089,8 +1092,6 @@ namespace NineGrid.Flow
                 : 0.06f;
             var flightHandles = new List<DealFlightHandle>();
 
-            try
-            {
                 for (var i = 0; i < ring.Count; i++)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -1276,6 +1277,7 @@ namespace NineGrid.Flow
             }
             finally
             {
+                CombatHitSink.OpeningPresentationActive = false;
                 // 与 Drain/UseItem 对齐：开局发牌后必须 Sync，否则会出现
                 // 表现空槽可点、Core 非空拒 ClickEmpty（道具旋转 Sync 后“自愈”）。
                 SyncBoardOccupancyFromCore();
@@ -2558,7 +2560,18 @@ namespace NineGrid.Flow
                     continue;
                 }
 
+                var visualTargetSlot = DealVisualTargetResolver.ApplyRingSteps(deal.Slot, rotateDirs);
+
                 if (fieldManager.TryGetCardAt(deal.Slot, out var already)
+                    && already != null
+                    && already.Uid == deal.Uid)
+                {
+                    CoreCardPresentationMapper.ApplyToManagedCard(already);
+                    continue;
+                }
+
+                if (visualTargetSlot != deal.Slot
+                    && fieldManager.TryGetCardAt(visualTargetSlot, out already)
                     && already != null
                     && already.Uid == deal.Uid)
                 {
@@ -2575,7 +2588,6 @@ namespace NineGrid.Flow
                 }
 
                 var ensureCard = ResolveOrSpawnDeckCardForDeal(deal);
-                var visualTargetSlot = DealVisualTargetResolver.ApplyRingSteps(deal.Slot, rotateDirs);
                 var flightContext = new DealFlightContext(
                     fieldManager.IsFieldBusy,
                     fieldManager.ActiveDealFlightCount + flightHandles.Count + 1,
@@ -5718,6 +5730,9 @@ namespace NineGrid.Flow
                 placedUids.Add(uid);
             }
 
+            var reconciled = ReconcileGroundViewsFromCore(avatarUid, hand);
+            placed += reconciled;
+
             var swept = SweepOrphanCardViews(avatarUid, hand, sweptUids);
             CoreCardPresentationMapper.SyncAllSpawnedCards();
             UpdateAvatarDebugText();
@@ -5744,6 +5759,87 @@ namespace NineGrid.Flow
             {
                 FieldTraceHelper.ClearBatchTag();
             }
+        }
+
+        /// <summary>
+        /// 场地视图在 GroundCardMode 但未登记占格、Core 仍要求其在盘面时，强制落锚（Sync Phase 2 漏 place 的孤儿自愈）。
+        /// </summary>
+        private int ReconcileGroundViewsFromCore(int avatarUid, CardHandManagerSingleton hand)
+        {
+            ResolveManagers();
+            if (cardManager == null || fieldManager == null)
+            {
+                return 0;
+            }
+
+            var board = NineGridArchitecture.Current.GetModel<BoardModel>();
+            var reconciled = 0;
+
+            foreach (var pair in cardManager.CardsByUid)
+            {
+                var uid = pair.Key;
+                var view = pair.Value;
+                if (uid <= 0 || uid == avatarUid || view == null)
+                {
+                    continue;
+                }
+
+                if (view.DisplayMode != CardDisplayMode.GroundCardMode)
+                {
+                    continue;
+                }
+
+                if (fieldManager.TryGetSlotOf(uid, out _))
+                {
+                    continue;
+                }
+
+                if (hand != null && hand.ContainsUid(uid))
+                {
+                    continue;
+                }
+
+                if (TryGetSyncPositionSkipVerdict(view, out _))
+                {
+                    continue;
+                }
+
+                var coreSlot = -1;
+                for (var slot = SlotId.MinBoardIndex; slot <= SlotId.MaxBoardIndex; slot++)
+                {
+                    if (slot == GroundSlotTopology.AvatarReservedSlot)
+                    {
+                        continue;
+                    }
+
+                    if (board.GetCardUid(SlotId.Board(slot)) == uid)
+                    {
+                        coreSlot = slot;
+                        break;
+                    }
+                }
+
+                if (coreSlot < 0)
+                {
+                    continue;
+                }
+
+                CardPresentationProbe.Anomaly(
+                    uid,
+                    "forceSnap",
+                    "slot=" + coreSlot + ";reconcileOrphan",
+                    "Sync.Occupancy.Reconcile",
+                    layer: "L0",
+                    verdict: "snapHome");
+                fieldManager.RequestPlaceCardAtAnchor(
+                    coreSlot,
+                    view,
+                    skipBusyGuard: true,
+                    snapToAnchor: true);
+                reconciled++;
+            }
+
+            return reconciled;
         }
 
         /// <summary>

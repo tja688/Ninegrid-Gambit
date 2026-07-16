@@ -449,6 +449,13 @@ namespace NineGrid.Cards
                 return false;
             }
 
+            if (CombatHitSink.OpeningPresentationActive)
+            {
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "OpeningDeal", false);
+                FlowFieldTraceSink.ClearBatchTag?.Invoke();
+                return false;
+            }
+
             if (!field.TryGetSlotOf(card.Uid, out var groundSlot))
             {
                 FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "NoSlot", false);

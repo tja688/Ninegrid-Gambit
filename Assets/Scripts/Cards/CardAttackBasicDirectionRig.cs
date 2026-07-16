@@ -221,15 +221,9 @@ namespace NineGrid.Cards
                 RebindAnimations(attackerAnimations, ResolveEffectMotionTarget(attacker));
             }
 
-            if (relativeVictimKnockback)
-            {
-                RebindVictimKnockbackFromAttacker(victim, attacker, victimKnockbackCoefficient);
-            }
-            else
-            {
-                RebindAnimations(victimAnimations, ResolveEffectMotionTarget(victim));
-                ScaleVictimKnockbackEndValues(victimKnockbackCoefficient);
-            }
+            // L3 击退必须走相对几何重绑：场景烘焙 endValue 是模板占位在 rig 父空间下的绝对 local，
+            // 不能直接 DOLocalMove 到 EffectFrame（home 恒为 0），否则会变成「飞到烘焙坐标」再 SnapHome 闪回。
+            RebindVictimKnockbackFromAttacker(victim, attacker, victimKnockbackCoefficient);
 
             if (hitFlashTimingPolicy == BattleHitFlashTimingPolicy.Explicit)
             {
@@ -1074,33 +1068,6 @@ namespace NineGrid.Cards
                 }
 
                 WriteEndValueV3(animation, GetBakedEndValue(animation));
-            }
-        }
-
-        /// <summary>
-        /// 绝对位移路径下按系数缩放受击动画 endValue（相对路径由 RebindVictimKnockbackFromAttacker 处理）。
-        /// 系数 1 保持场景烘焙手感；越界值应由 Profile clamp 后再传入。
-        /// 调用前 BindParticipants 已 RestoreBakedEndValues，此处仍从烘焙字典重算以免系数残留。
-        /// </summary>
-        private void ScaleVictimKnockbackEndValues(float knockbackCoefficient)
-        {
-            CacheBakedClipValuesIfNeeded();
-            if (victimAnimations == null)
-            {
-                return;
-            }
-
-            var scale = Mathf.Max(0f, knockbackCoefficient);
-            for (var i = 0; i < victimAnimations.Count; i++)
-            {
-                var animation = victimAnimations[i];
-                if (animation == null)
-                {
-                    continue;
-                }
-
-                var baked = GetBakedEndValue(animation);
-                WriteEndValueV3(animation, baked * scale);
             }
         }
 

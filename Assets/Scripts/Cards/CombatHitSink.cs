@@ -193,6 +193,11 @@ namespace NineGrid.Cards
         public static bool BoardSelectModeActive;
 
         /// <summary>
+        /// StartNode 开局发牌编排进行中（含补牌 flight 收束）；Cards 侧拾取/空槽门禁读取，不引用 Flow。
+        /// </summary>
+        public static bool OpeningPresentationActive;
+
+        /// <summary>
         /// 表现层单输入锁：一次玩家操作（写 Core → Drain 播完）期间为 true。
         /// Cards 侧 IsBusy 聚合读取，不引用 Flow。
         /// </summary>
@@ -255,6 +260,7 @@ namespace NineGrid.Cards
         {
             ChoiceOverlayActive = false;
             BoardSelectModeActive = false;
+            OpeningPresentationActive = false;
             ForceEndPresentationLock(reason ?? "ResetInputGates");
         }
 

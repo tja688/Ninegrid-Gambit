@@ -1,5 +1,6 @@
 using System.Reflection;
 using NUnit.Framework;
+using NineGrid.Cards.Convergence;
 using UnityEngine;
 
 namespace NineGrid.Cards.Tests
@@ -9,6 +10,64 @@ namespace NineGrid.Cards.Tests
     /// </summary>
     public sealed class TauntRedirectMotionTests
     {
+        [Test]
+        public void BindParticipants_AttackIntent_KnockbackUsesRelativeOffsetOnEffectFrame()
+        {
+            var rigObject = new GameObject("rig_attack_knockback_test");
+            var rig = rigObject.AddComponent<CardAttackBasicDirectionRig>();
+
+            var attacker = new GameObject("attacker").transform;
+            attacker.position = Vector3.zero;
+            var victim = new GameObject("victim").transform;
+            victim.position = new Vector3(-1f, 0f, 0f);
+            victim.gameObject.AddComponent<CardTransformTower>().EnsureTower();
+
+            try
+            {
+                SeedAttackerAnimations(rigObject, attacker.gameObject);
+
+                var bind = BattleBindParams.CreateSafeFallback(BattleIntent.Attack);
+                Assert.IsFalse(bind.UseRelativeVictimKnockback, "Attack 预设仍标记为绝对击退，但 L3 必须几何重绑");
+
+                rig.BindParticipants(
+                    attacker,
+                    victim,
+                    victimEffects: null,
+                    bindDeathCallback: false,
+                    relativeAttackerMotion: bind.UseRelativeAttackerMotion,
+                    relativeVictimKnockback: bind.UseRelativeVictimKnockback,
+                    victimKnockbackCoefficient: bind.VictimKnockbackCoefficient);
+
+                var tower = victim.GetComponent<CardTransformTower>();
+                Assert.IsNotNull(tower?.EffectFrame);
+                var motionTarget = tower.EffectFrame;
+                var knockbackLocalEnd = ReadFirstLocalEnd(rigObject, delayMin: 0.35f, delayMax: 0.55f);
+                var knockbackEnd = motionTarget.parent != null
+                    ? motionTarget.parent.TransformPoint(knockbackLocalEnd)
+                    : knockbackLocalEnd;
+                var homeWorld = motionTarget.position;
+                var knockbackDistance = Vector3.Distance(knockbackEnd, homeWorld);
+                Assert.Less(knockbackDistance, 2.5f, "击退距离应接近烘焙幅度，而非模板绝对 local 坐标");
+                Assert.Greater(knockbackDistance, 0.05f);
+
+                var knockbackDir = (knockbackEnd - homeWorld).normalized;
+                var expectedKnockback = (victim.position - attacker.position).normalized;
+                Assert.Greater(Vector3.Dot(knockbackDir, expectedKnockback), 0.9f);
+            }
+            finally
+            {
+                Object.DestroyImmediate(attacker.gameObject);
+                Object.DestroyImmediate(victim.gameObject);
+                var victimTemplate = GameObject.Find("victim_template");
+                if (victimTemplate != null)
+                {
+                    Object.DestroyImmediate(victimTemplate);
+                }
+
+                Object.DestroyImmediate(rigObject);
+            }
+        }
+
         [Test]
         public void RebindAttackerMotionTauntRedirect_WindupAwayFromClicked_LungeTowardTaunt()
         {
@@ -107,6 +166,38 @@ namespace NineGrid.Cards.Tests
             endValueField?.SetValue(animation, endValue);
             delayField?.SetValue(animation, delay);
             targetGoField?.SetValue(animation, target);
+        }
+
+        private static Vector3 ReadFirstLocalEnd(
+            GameObject rigObject,
+            float delayMax = float.MaxValue,
+            float delayMin = float.MinValue)
+        {
+            var dotweenAnimationType = ResolveType("DG.Tweening.DOTweenAnimation");
+            if (dotweenAnimationType == null)
+            {
+                return Vector3.zero;
+            }
+
+            var animations = rigObject.GetComponents(dotweenAnimationType);
+            for (var i = 0; i < animations.Length; i++)
+            {
+                var animation = animations[i];
+                var delay = (float)(dotweenAnimationType.GetField(
+                    "delay",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)?.GetValue(animation) ?? 0f);
+                if (delay < delayMin || delay > delayMax)
+                {
+                    continue;
+                }
+
+                return (Vector3)(dotweenAnimationType.GetField(
+                    "endValueV3",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)?.GetValue(animation) ?? Vector3.zero);
+            }
+
+            Assert.Fail("No matching animation for delay window.");
+            return Vector3.zero;
         }
 
         private static Vector3 ReadFirstWorldEnd(

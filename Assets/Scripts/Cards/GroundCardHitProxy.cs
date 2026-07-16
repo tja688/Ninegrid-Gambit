@@ -256,6 +256,12 @@ namespace NineGrid.Cards
                 return false;
             }
 
+            if (CombatHitSink.OpeningPresentationActive)
+            {
+                blockReason = "openingDeal";
+                return false;
+            }
+
             if (field != null && field.IsDealInFlight(card.Uid))
             {
                 blockReason = "dealInFlight";
