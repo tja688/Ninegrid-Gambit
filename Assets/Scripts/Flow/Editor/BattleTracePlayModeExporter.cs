@@ -35,6 +35,11 @@ namespace NineGrid.Flow.Editor
                 return;
             }
 
+            if (!DiagTraceExportPreferences.AutoExportEnabled)
+            {
+                return;
+            }
+
             var battlePath = BattleTraceRecorder.ExportOnPlayExit("ExitingPlayMode");
             // CoreLog / PerfLog 已在 ExportOnPlayExit 内一并尝试
             if (!string.IsNullOrEmpty(battlePath)

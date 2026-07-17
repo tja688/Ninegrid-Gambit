@@ -460,10 +460,15 @@ namespace NineGrid.Flow.Diagnostics
             }
         }
 
-        public static string ExportJson(bool silentIfEmpty = false)
+        public static string ExportJson(bool silentIfEmpty = false, bool automatic = true)
         {
             try
             {
+                if (!DiagTraceExportPreferences.ShouldWriteFile(DiagTraceTrack.Registry, automatic))
+                {
+                    return null;
+                }
+
                 if (sSession == null || sSession.events == null || sSession.events.Count == 0)
                 {
                     if (!silentIfEmpty)

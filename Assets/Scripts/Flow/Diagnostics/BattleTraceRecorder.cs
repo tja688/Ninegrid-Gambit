@@ -346,10 +346,16 @@ namespace NineGrid.Flow.Diagnostics
         /// 导出当前局战斗日志。Editor → Assets/Notes/Logs/OtherLog/BattleLog。
         /// </summary>
         /// <param name="silentIfEmpty">无数据时不打 Warning。</param>
-        public static string ExportJson(bool silentIfEmpty = false)
+        /// <param name="automatic">自动落盘时受 <see cref="DiagTraceExportPreferences"/> 约束。</param>
+        public static string ExportJson(bool silentIfEmpty = false, bool automatic = true)
         {
             try
             {
+                if (!DiagTraceExportPreferences.ShouldWriteFile(DiagTraceTrack.Battle, automatic))
+                {
+                    return null;
+                }
+
                 if (sSession == null || sSession.ops == null || sSession.ops.Count == 0)
                 {
                     if (!silentIfEmpty)
@@ -402,13 +408,18 @@ namespace NineGrid.Flow.Diagnostics
                     return null;
                 }
 
+                if (!DiagTraceExportPreferences.AutoExportEnabled)
+                {
+                    return null;
+                }
+
                 string battlePath = null;
                 if (sEnabled
                     && sSession != null
                     && sSession.ops != null
                     && sSession.ops.Count > 0)
                 {
-                    battlePath = ExportJson();
+                    battlePath = ExportJson(automatic: true);
                     if (!string.IsNullOrEmpty(battlePath))
                     {
                         Debug.Log("[BattleTrace] Play 结束已导出战斗日志（" + source + "）：" + battlePath);
@@ -418,7 +429,7 @@ namespace NineGrid.Flow.Diagnostics
                 ChoreoTraceContext.AppendExportSummaryEvents();
                 FlowTraceRecorder.ExportOnPlayExit(source);
                 PerfTraceRecorder.ExportOnPlayExit(source);
-                RegistryTraceRecorder.ExportJson(silentIfEmpty: true);
+                RegistryTraceRecorder.ExportJson(silentIfEmpty: true, automatic: true);
                 DiagTraceShared.MarkExportedThisPlayExit();
                 return battlePath;
             }
@@ -432,11 +443,12 @@ namespace NineGrid.Flow.Diagnostics
         /// <summary>
         /// 立即导出四轨（Battle + CoreLog + PerfLog + RegistryLog）（DevKeys / 胜负落盘 / 重开轮转）。不受 Play 退出去重影响。
         /// </summary>
-        public static void ExportBothNow(bool silentIfEmpty = false)
+        /// <param name="automatic">false = 手动加记，不受自动落盘开关限制。</param>
+        public static void ExportBothNow(bool silentIfEmpty = false, bool automatic = true)
         {
             try
             {
-                ExportJson(silentIfEmpty);
+                ExportJson(silentIfEmpty, automatic);
             }
             catch (Exception ex)
             {
@@ -445,7 +457,7 @@ namespace NineGrid.Flow.Diagnostics
 
             try
             {
-                FlowTraceRecorder.ExportJson(silentIfEmpty);
+                FlowTraceRecorder.ExportJson(silentIfEmpty, automatic);
             }
             catch (Exception ex)
             {
@@ -454,7 +466,7 @@ namespace NineGrid.Flow.Diagnostics
 
             try
             {
-                PerfTraceRecorder.ExportJson(silentIfEmpty);
+                PerfTraceRecorder.ExportJson(silentIfEmpty, automatic);
             }
             catch (Exception ex)
             {
@@ -463,12 +475,25 @@ namespace NineGrid.Flow.Diagnostics
 
             try
             {
-                RegistryTraceRecorder.ExportJson(silentIfEmpty);
+                RegistryTraceRecorder.ExportJson(silentIfEmpty, automatic);
             }
             catch (Exception ex)
             {
                 Debug.LogWarning("[BattleTrace] ExportBothNow registry: " + ex.Message);
             }
+        }
+
+        /// <summary>手动导出单轨（编辑器窗口 / DevTest 点对点加记）。</summary>
+        public static string ExportTrackNow(DiagTraceTrack track, bool silentIfEmpty = false)
+        {
+            return track switch
+            {
+                DiagTraceTrack.Battle => ExportJson(silentIfEmpty, automatic: false),
+                DiagTraceTrack.Core => FlowTraceRecorder.ExportJson(silentIfEmpty, automatic: false),
+                DiagTraceTrack.Perf => PerfTraceRecorder.ExportJson(silentIfEmpty, automatic: false),
+                DiagTraceTrack.Registry => RegistryTraceRecorder.ExportJson(silentIfEmpty, automatic: false),
+                _ => null,
+            };
         }
 
         public static string ResolveExportDirectory()

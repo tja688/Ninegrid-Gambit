@@ -416,10 +416,15 @@ namespace NineGrid.Flow.Diagnostics
             }
         }
 
-        public static string ExportJson(bool silentIfEmpty = false)
+        public static string ExportJson(bool silentIfEmpty = false, bool automatic = true)
         {
             try
             {
+                if (!DiagTraceExportPreferences.ShouldWriteFile(DiagTraceTrack.Perf, automatic))
+                {
+                    return null;
+                }
+
                 if (sSession == null || sSession.events == null || sSession.events.Count == 0)
                 {
                     if (!silentIfEmpty)
@@ -460,7 +465,7 @@ namespace NineGrid.Flow.Diagnostics
                     return null;
                 }
 
-                var path = ExportJson();
+                var path = ExportJson(automatic: true);
                 if (!string.IsNullOrEmpty(path))
                 {
                     Debug.Log("[PerfTrace] Play 结束已导出表现日志（" + source + "）：" + path);

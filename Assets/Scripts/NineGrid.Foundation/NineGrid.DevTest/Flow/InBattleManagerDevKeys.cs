@@ -105,7 +105,7 @@ namespace NineGrid.DevTest.Flow
 
         private static void ExportBattleAndFlowTrace()
         {
-            BattleTraceRecorder.ExportBothNow();
+            BattleTraceRecorder.ExportBothNow(automatic: false);
             var battleOk = BattleTraceRecorder.CurrentSession != null
                 && BattleTraceRecorder.CurrentSession.ops != null
                 && BattleTraceRecorder.CurrentSession.ops.Count > 0;

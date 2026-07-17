@@ -157,10 +157,16 @@ namespace NineGrid.Flow.Diagnostics
         /// 导出当前局 CoreLog。Editor → Assets/Notes/Logs/CoreLog。
         /// </summary>
         /// <param name="silentIfEmpty">无数据时不打 Warning（轮转/一并导出用）。</param>
-        public static string ExportJson(bool silentIfEmpty = false)
+        /// <param name="automatic">自动落盘时受 <see cref="DiagTraceExportPreferences"/> 约束。</param>
+        public static string ExportJson(bool silentIfEmpty = false, bool automatic = true)
         {
             try
             {
+                if (!DiagTraceExportPreferences.ShouldWriteFile(DiagTraceTrack.Core, automatic))
+                {
+                    return null;
+                }
+
                 if (sSession == null || sSession.events == null || sSession.events.Count == 0)
                 {
                     if (!silentIfEmpty)
@@ -210,7 +216,7 @@ namespace NineGrid.Flow.Diagnostics
                     return null;
                 }
 
-                var path = ExportJson();
+                var path = ExportJson(automatic: true);
                 if (!string.IsNullOrEmpty(path))
                 {
                     Debug.Log("[FlowTrace] Play 结束已导出流程日志（" + source + "）：" + path);
