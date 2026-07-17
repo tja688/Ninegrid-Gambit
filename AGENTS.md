@@ -4,9 +4,6 @@
 
 **TableNine（九宫牌局）**：Unity 6.3 LTS · URP · 2D 卡牌像素风 Roguelike。核心玩法为九宫格棋盘驱动的卡牌战斗。
 
-- **代码入口**：`Assets/Scripts`
-- **唯一游戏场景**：`Assets/Scenes/MainScene.unity`
-
 ---
 
 ## 文档地图（按用途选读）
