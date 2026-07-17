@@ -7,7 +7,12 @@ namespace NineGrid.LivingUI
     {
         public const float MinimumDuration = 0.0001f;
 
-        private QuinticMotion(float p0, float v0, float p1, float duration, float v0Normalized, float b3, float b4, float b5)
+        private readonly Func<float, float> _easing;
+        private readonly Func<float, float> _easingDerivative;
+
+        private QuinticMotion(float p0, float v0, float p1, float duration, float v0Normalized,
+            float b3, float b4, float b5,
+            Func<float, float> easing, Func<float, float> easingDerivative)
         {
             P0 = p0;
             V0 = v0;
@@ -17,6 +22,8 @@ namespace NineGrid.LivingUI
             B3 = b3;
             B4 = b4;
             B5 = b5;
+            _easing = easing;
+            _easingDerivative = easingDerivative;
         }
 
         public float P0 { get; }
@@ -28,9 +35,16 @@ namespace NineGrid.LivingUI
         public float B4 { get; }
         public float B5 { get; }
 
-        public static QuinticMotion Create(float p0, float v0, float p1, float duration)
+        public static QuinticMotion Create(float p0, float v0, float p1, float duration,
+            Func<float, float> easing = null, Func<float, float> easingDerivative = null)
         {
             duration = Mathf.Max(duration, MinimumDuration);
+
+            if (easing != null && Mathf.Abs(v0) < 0.0001f)
+            {
+                return CreateEased(p0, p1, duration, easing, easingDerivative);
+            }
+
             var v0Normalized = duration * v0;
             var delta = p1 - p0 - v0Normalized;
             return new QuinticMotion(
@@ -41,7 +55,30 @@ namespace NineGrid.LivingUI
                 v0Normalized,
                 10f * delta + 4f * v0Normalized,
                 -15f * delta - 7f * v0Normalized,
-                6f * delta + 3f * v0Normalized);
+                6f * delta + 3f * v0Normalized,
+                null,
+                null);
+        }
+
+        private static QuinticMotion CreateEased(float p0, float p1, float duration,
+            Func<float, float> easing, Func<float, float> easingDerivative)
+        {
+            return new QuinticMotion(
+                p0,
+                0f,
+                p1,
+                duration,
+                0f,
+                0f, 0f, 0f,
+                easing,
+                easingDerivative ?? (t => NumericalDerivative(easing, t)));
+        }
+
+        private static float NumericalDerivative(Func<float, float> f, float t, float h = 0.001f)
+        {
+            var t0 = Mathf.Max(0f, t - h);
+            var t1 = Mathf.Min(1f, t + h);
+            return (f(t1) - f(t0)) / (t1 - t0);
         }
 
         public float EvaluatePosition(float time)
@@ -50,6 +87,12 @@ namespace NineGrid.LivingUI
             if (time >= Duration) return P1;
 
             var s = time / Duration;
+
+            if (_easing != null)
+            {
+                return P0 + (P1 - P0) * _easing(s);
+            }
+
             var s2 = s * s;
             var s3 = s2 * s;
             var s4 = s3 * s;
@@ -63,6 +106,12 @@ namespace NineGrid.LivingUI
             if (time >= Duration) return 0f;
 
             var s = time / Duration;
+
+            if (_easingDerivative != null)
+            {
+                return (P1 - P0) * _easingDerivative(s) / Duration;
+            }
+
             var s2 = s * s;
             var s3 = s2 * s;
             var s4 = s3 * s;
@@ -104,7 +153,9 @@ namespace NineGrid.LivingUI
             float target,
             float duration,
             float minimum,
-            float maximum)
+            float maximum,
+            Func<float, float> easing = null,
+            Func<float, float> easingDerivative = null)
         {
             if (minimum > maximum) throw new ArgumentException("标量运动边界无效。");
             if (source < minimum || source > maximum || target < minimum || target > maximum)
@@ -112,7 +163,7 @@ namespace NineGrid.LivingUI
                 throw new ArgumentOutOfRangeException(nameof(target), "源值与目标值必须处于运动边界内。");
             }
 
-            var direct = QuinticMotion.Create(source, sourceVelocity, target, duration);
+            var direct = QuinticMotion.Create(source, sourceVelocity, target, duration, easing, easingDerivative);
             if (direct.StaysWithin(minimum, maximum))
             {
                 return new BoundedScalarMotion(direct, default, false);
@@ -124,8 +175,8 @@ namespace NineGrid.LivingUI
                 var brakeTarget = source + sourceVelocity * brakeDuration * 0.18f;
                 if (brakeTarget >= minimum && brakeTarget <= maximum)
                 {
-                    var brake = QuinticMotion.Create(source, sourceVelocity, brakeTarget, brakeDuration);
-                    var arrival = QuinticMotion.Create(brakeTarget, 0f, target, Mathf.Max(duration - brakeDuration, 0.02f));
+                    var brake = QuinticMotion.Create(source, sourceVelocity, brakeTarget, brakeDuration, easing, easingDerivative);
+                    var arrival = QuinticMotion.Create(brakeTarget, 0f, target, Mathf.Max(duration - brakeDuration, 0.02f), easing, easingDerivative);
                     if (brake.StaysWithin(minimum, maximum) && arrival.StaysWithin(minimum, maximum))
                     {
                         return new BoundedScalarMotion(brake, arrival, true);

@@ -103,6 +103,9 @@ namespace NineGrid.LivingUI
             var programs = new Dictionary<int, LivingUiMotionProgram>(liveStates.Count);
             var makespan = 0f;
 
+            var easing = LivingUiEasing.GetEasing(style.EasingType, style.CustomEasingCurve);
+            var easingDerivative = LivingUiEasing.GetDerivative(style.EasingType, style.CustomEasingCurve);
+
             for (var index = 0; index < liveStates.Count; index++)
             {
                 var source = liveStates[index];
@@ -124,14 +127,18 @@ namespace NineGrid.LivingUI
                     targetSize.x,
                     duration,
                     Mathf.Min(style.FlowWidthFloor, Mathf.Min(source.Size.x, targetSize.x)),
-                    widthMaximum);
+                    widthMaximum,
+                    easing,
+                    easingDerivative);
                 var height = BoundedScalarMotion.Create(
                     source.Size.y,
                     expelled ? 0f : source.SizeVelocity.y,
                     targetSize.y,
                     duration,
                     Mathf.Min(style.FlowHeightFloor, Mathf.Min(source.Size.y, targetSize.y)),
-                    heightMaximum);
+                    heightMaximum,
+                    easing,
+                    easingDerivative);
                 var program = new LivingUiMotionProgram(
                     source.CarrierId,
                     source,
@@ -139,8 +146,8 @@ namespace NineGrid.LivingUI
                     startOffset,
                     duration,
                     expelled,
-                    QuinticMotion.Create(source.Position.x, source.Velocity.x, terminal.Position.x, duration),
-                    QuinticMotion.Create(source.Position.y, source.Velocity.y, terminal.Position.y, duration),
+                    QuinticMotion.Create(source.Position.x, source.Velocity.x, terminal.Position.x, duration, easing, easingDerivative),
+                    QuinticMotion.Create(source.Position.y, source.Velocity.y, terminal.Position.y, duration, easing, easingDerivative),
                     width,
                     height);
                 programs.Add(source.CarrierId, program);
