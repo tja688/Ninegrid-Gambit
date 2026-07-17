@@ -43,6 +43,7 @@
   <Project Path="Sirenix.OdinInspector.Modules.UnityMathematics.csproj" />
   <Project Path="UniTask.DOTween.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="NineGrid.TemporaryTest.csproj" />
   <Project Path="NineGrid.DevTest.Tests.csproj" />
   <Project Path="QFramework.csproj" />
 </Solution>

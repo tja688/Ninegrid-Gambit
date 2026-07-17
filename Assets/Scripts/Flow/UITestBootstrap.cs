@@ -14,7 +14,11 @@ namespace NineGrid.Flow
         [Header("快捷面板引用（留空则从同 GameObject 自动查找）")]
         [SerializeField] private UiPanelRouter panelRouter;
 
+        [Header("灵动形态选择测试（留空则从同 GameObject 自动查找 IUITestKeyConsumer）")]
+        [SerializeField] private MonoBehaviour livingFormChoiceTest;
+
         private MainGameLoopManagerSingleton _loopManager;
+        private IUITestKeyConsumer _livingFormChoiceConsumer;
         private bool _inGameVisible = true;
 
         private void Awake()
@@ -31,7 +35,10 @@ namespace NineGrid.Flow
                 panelRouter = GetComponent<UiPanelRouter>();
             }
 
-            Debug.Log("[UITestBootstrap] UI 测试模式就绪。按 1~6 触发不同面板状态。");
+            _livingFormChoiceConsumer = livingFormChoiceTest as IUITestKeyConsumer
+                ?? GetComponent<IUITestKeyConsumer>();
+
+            Debug.Log("[UITestBootstrap] UI 测试模式就绪。数字 1~7/0 切面板；小键盘 1 切形态选择（3→6→关）。");
         }
 
         private void Start()
@@ -51,6 +58,7 @@ namespace NineGrid.Flow
             if (Input.GetKeyDown(KeyCode.Alpha6)) ToggleMainBackground();
             if (Input.GetKeyDown(KeyCode.Alpha7)) ToggleInGameInfoText();
             if (Input.GetKeyDown(KeyCode.Alpha0)) DumpPanelStates();
+            if (Input.GetKeyDown(KeyCode.Keypad1)) _livingFormChoiceConsumer?.HandleKeypad1();
         }
 
         [ContextMenu("1. 切换 主菜单/局内")]
