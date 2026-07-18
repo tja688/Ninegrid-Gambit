@@ -26,6 +26,7 @@ namespace NineGrid.LivingUI
     public static class LivingUiContentProjector
     {
         public const float DefaultStaggerSpan = 0.35f;
+        public const float DefaultContentPadding = 0.05f;
         public const float VisibleScaleEpsilon = 0.001f;
 
         /// <summary>
@@ -37,7 +38,9 @@ namespace NineGrid.LivingUI
             Vector2 baselineSize,
             Vector2 currentCarrierSize,
             LivingUiPartialFollowEdge followEdge,
-            float staggerSpan)
+            float staggerSpan,
+            Vector2 envelopeSize = default,
+            float contentPadding = DefaultContentPadding)
         {
             switch (policy)
             {
@@ -46,7 +49,12 @@ namespace NineGrid.LivingUI
 
                 case LivingUiContentFollowPolicy.BoundaryReactive:
                     return ProjectBoundaryReactive(
-                        authoredPose, baselineSize, currentCarrierSize, staggerSpan);
+                        authoredPose,
+                        baselineSize,
+                        currentCarrierSize,
+                        staggerSpan,
+                        envelopeSize,
+                        contentPadding);
 
                 case LivingUiContentFollowPolicy.PartialFollow:
                     return ProjectPartialFollow(
@@ -58,23 +66,63 @@ namespace NineGrid.LivingUI
         }
 
         /// <summary>
-        /// 场景 b：缩放随 size/基线映射；错峰由归一化局部位决定（离中心越远越先坍缩到 0）。
+        /// 场景 b：锚点锁定在 authored 局部位；边界扫过锚点时 scale→0，扫过后再按可用间隙
+        /// 「种子式」长大。AABB = 锚点 ± envelope·scale/2 始终落在 Inset(carrier) 内，绝不挪位跟边。
+        /// staggerSpan 保留参数兼容；错峰由锚点离边远近自然产生。
         /// </summary>
         public static LivingUiContentProjection ProjectBoundaryReactive(
             LivingUiContentLocalPose authoredPose,
             Vector2 baselineSize,
             Vector2 currentCarrierSize,
-            float staggerSpan)
+            float staggerSpan,
+            Vector2 envelopeSize = default,
+            float contentPadding = DefaultContentPadding)
         {
-            var sizeRatio = ResolveSizeRatio(baselineSize, currentCarrierSize);
-            var stagger01 = Stagger01FromLocal(authoredPose.LocalPosition, baselineSize);
-            var span = Mathf.Clamp01(staggerSpan);
-            var threshold = stagger01 * span;
-            var denom = Mathf.Max(1f - threshold, 0.0001f);
-            var scaleFactor = Mathf.Clamp01((sizeRatio - threshold) / denom);
+            // 锚点固定：不随载体 size 比例重映射，也不向中心 clamp。
+            var local = authoredPose.LocalPosition;
+            _ = staggerSpan;
+
+            var padding = Mathf.Max(contentPadding, 0f);
+            var insetHalf = new Vector2(
+                Mathf.Max(currentCarrierSize.x * 0.5f - padding, 0f),
+                Mathf.Max(currentCarrierSize.y * 0.5f - padding, 0f));
+
+            var absX = Mathf.Abs(local.x);
+            var absY = Mathf.Abs(local.y);
+            var roomX = insetHalf.x - absX;
+            var roomY = insetHalf.y - absY;
+
+            // 边界尚未覆盖锚点（或刚好扫过）→ 必然已消失。
+            if (roomX <= 0f || roomY <= 0f)
+            {
+                return new LivingUiContentProjection(local, Vector3.zero, false);
+            }
+
+            var envHalfX = Mathf.Max(envelopeSize.x, 0f) * 0.5f;
+            var envHalfY = Mathf.Max(envelopeSize.y, 0f) * 0.5f;
+
+            float scaleFactor;
+            if (envHalfX > 0.0001f || envHalfY > 0.0001f)
+            {
+                // 间隙刚好等于半包络 → 满尺寸；更小则成比例缩小，外缘贴着 inset。
+                var sx = envHalfX > 0.0001f ? roomX / envHalfX : float.PositiveInfinity;
+                var sy = envHalfY > 0.0001f ? roomY / envHalfY : float.PositiveInfinity;
+                scaleFactor = Mathf.Clamp01(Mathf.Min(sx, sy));
+            }
+            else
+            {
+                // 无 envelope：相对基线间隙做种子生长，基线满尺寸为 1。
+                var baseInsetHalf = new Vector2(
+                    Mathf.Max(baselineSize.x * 0.5f - padding, 0f),
+                    Mathf.Max(baselineSize.y * 0.5f - padding, 0f));
+                var baseRoomX = Mathf.Max(baseInsetHalf.x - absX, 0.0001f);
+                var baseRoomY = Mathf.Max(baseInsetHalf.y - absY, 0.0001f);
+                scaleFactor = Mathf.Clamp01(Mathf.Min(roomX / baseRoomX, roomY / baseRoomY));
+            }
+
             var scale = authoredPose.LocalScale * scaleFactor;
             var visible = scaleFactor > VisibleScaleEpsilon;
-            return new LivingUiContentProjection(authoredPose.LocalPosition, scale, visible);
+            return new LivingUiContentProjection(local, scale, visible);
         }
 
         /// <summary>
@@ -120,6 +168,7 @@ namespace NineGrid.LivingUI
 
         /// <summary>
         /// 归一化错峰键：相对基线半尺寸的切比雪夫距离，钳到 [0,1]。中心≈0，贴边≈1。
+        /// BoundaryReactive 的出场错峰由锚点间隙自然产生；此函数仍可供诊断/他策略使用。
         /// </summary>
         public static float Stagger01FromLocal(Vector3 localPosition, Vector2 baselineSize)
         {

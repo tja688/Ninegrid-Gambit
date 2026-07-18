@@ -78,6 +78,7 @@ namespace NineGrid.LivingUI.Unity
             var effective = director.EffectiveLayout;
             var committed = director.CommittedLayout;
             var transitioning = director.IsTransitioning;
+            var transitionFrom = director.TransitionFromLayout;
             for (var i = 0; i < _runtimeMarkers.Count; i++)
             {
                 var marker = _runtimeMarkers[i];
@@ -85,7 +86,7 @@ namespace NineGrid.LivingUI.Unity
 
                 var binding = marker.ToBinding();
                 var policyVisible = LivingUiContentPolicy.EvaluateVisible(
-                    binding, effective, committed, transitioning);
+                    binding, effective, committed, transitioning, transitionFrom);
 
                 if (!policyVisible)
                 {
@@ -114,7 +115,9 @@ namespace NineGrid.LivingUI.Unity
                     baseline,
                     skin.size,
                     binding.FollowEdge,
-                    binding.StaggerSpan);
+                    binding.StaggerSpan,
+                    binding.Envelope.Size,
+                    binding.ContentPadding);
 
                 var visible = policyVisible && projection.Visible;
                 if (marker.gameObject.activeSelf != visible)
