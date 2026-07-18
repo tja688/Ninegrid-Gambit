@@ -63,10 +63,7 @@ namespace NineGrid.DevTest.Editor
                 $"{Root}/Layer_DamageNumberManager.asset",
                 "damage-number-manager",
                 "伤害数字测试",
-                new[]
-                {
-                    (KeyCode.Alpha2, "屏幕中心随机伤害数字"),
-                });
+                System.Array.Empty<(KeyCode, string)>());
 
             Selection.activeObject = AssetDatabase.LoadAssetAtPath<TestKeyLayerProfileSO>(
                 $"{Root}/Layer_DamageNumberManager.asset");
