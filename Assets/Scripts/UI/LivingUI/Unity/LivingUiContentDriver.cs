@@ -4,8 +4,8 @@ using UnityEngine;
 namespace NineGrid.LivingUI.Unity
 {
     /// <summary>
-    /// 内容层驱动：显隐 + 反应式投影（BoundaryReactive / PartialFollow）。
-    /// RigidTravel 由父子挂接完成，不写 Transform。
+    /// 内容层驱动：反应式投影 + 缩放进/退场（无 SetActive 瞬闪）。
+    /// RigidTravel 仅写退场倍率；进场缩放请用 BoundaryReactive。
     /// </summary>
     [DefaultExecutionOrder(-180)]
     [DisallowMultipleComponent]
@@ -16,6 +16,10 @@ namespace NineGrid.LivingUI.Unity
 
         [Tooltip("构型样板来源；留空时同物体 GetComponent。反应式投影需读载体 live size。")]
         [SerializeField] private LivingUiSceneLayoutSource layoutSource;
+
+        [Tooltip("离场缩至 0 的时长（秒）；进场仍随载体 size 自然展开。")]
+        [Min(0.01f)]
+        [SerializeField] private float exitDuration = LivingUiContentProjector.DefaultExitDuration;
 
         [Tooltip("可选显式内容标记列表；留空或空数组时运行时 FindObjectsByType 收集。")]
         [SerializeField] private LivingUiContentMarker[] markers;
@@ -76,26 +80,23 @@ namespace NineGrid.LivingUI.Unity
             if (_runtimeMarkers.Count == 0) RefreshMarkers();
 
             var effective = director.EffectiveLayout;
-            var committed = director.CommittedLayout;
+            var source = director.TransitionSourceLayout;
+            var target = director.TransitionTargetLayout;
             var transitioning = director.IsTransitioning;
+            var transitionElapsed = director.TransitionElapsed;
+
             for (var i = 0; i < _runtimeMarkers.Count; i++)
             {
                 var marker = _runtimeMarkers[i];
                 if (marker == null) continue;
 
                 var binding = marker.ToBinding();
-                var policyVisible = LivingUiContentPolicy.EvaluateVisible(
-                    binding, effective, committed, transitioning);
+                var phase = LivingUiContentPolicy.EvaluatePhase(
+                    binding, source, target, effective, transitioning);
 
-                if (!policyVisible)
+                if (phase == LivingUiContentPhase.Hidden)
                 {
-                    if (marker.gameObject.activeSelf) marker.gameObject.SetActive(false);
-                    continue;
-                }
-
-                if (binding.FollowPolicy == LivingUiContentFollowPolicy.RigidTravel)
-                {
-                    if (!marker.gameObject.activeSelf) marker.gameObject.SetActive(true);
+                    SetMarkerVisible(marker, false);
                     continue;
                 }
 
@@ -103,29 +104,65 @@ namespace NineGrid.LivingUI.Unity
                     || !layoutSource.Carriers.TryGetValue(binding.CarrierId, out var skin)
                     || skin == null)
                 {
-                    if (!marker.gameObject.activeSelf) marker.gameObject.SetActive(true);
+                    SetMarkerVisible(marker, true);
                     continue;
                 }
 
                 var baseline = ResolveBaseline(binding);
-                var projection = LivingUiContentProjector.Project(
-                    binding.FollowPolicy,
-                    binding.LocalPose,
-                    baseline,
-                    skin.size,
-                    binding.FollowEdge,
-                    binding.StaggerSpan);
-
-                var visible = policyVisible && projection.Visible;
-                if (marker.gameObject.activeSelf != visible)
+                LivingUiContentProjection projection;
+                if (phase == LivingUiContentPhase.Entering
+                    && binding.FollowPolicy == LivingUiContentFollowPolicy.BoundaryReactive
+                    && layoutSource.Snapshots.TryGetValue(source, out var sourceLayout)
+                    && layoutSource.Snapshots.TryGetValue(target, out var targetLayout))
                 {
-                    marker.gameObject.SetActive(visible);
+                    var sourceSize = sourceLayout.GetTerminal(binding.CarrierId).Size;
+                    var targetSize = targetLayout.GetTerminal(binding.CarrierId).Size;
+                    projection = LivingUiContentProjector.ProjectBoundaryReactiveEnter(
+                        binding.LocalPose,
+                        sourceSize,
+                        targetSize,
+                        skin.size,
+                        binding.StaggerSpan);
+                }
+                else
+                {
+                    projection = LivingUiContentProjector.Project(
+                        binding.FollowPolicy,
+                        binding.LocalPose,
+                        baseline,
+                        skin.size,
+                        binding.FollowEdge,
+                        binding.StaggerSpan);
                 }
 
+                var scale = projection.LocalScale;
+                if (phase == LivingUiContentPhase.Exiting)
+                {
+                    var exitFactor = LivingUiContentProjector.ComputeExitScaleFactor(
+                        transitionElapsed, exitDuration);
+                    scale = new Vector3(
+                        scale.x * exitFactor,
+                        scale.y * exitFactor,
+                        scale.z * exitFactor);
+                }
+
+                var visible = projection.Visible
+                    && scale.x > LivingUiContentProjector.VisibleScaleEpsilon
+                    && scale.y > LivingUiContentProjector.VisibleScaleEpsilon;
+
+                SetMarkerVisible(marker, visible);
                 if (!visible) continue;
 
                 marker.transform.localPosition = projection.LocalPosition;
-                marker.transform.localScale = projection.LocalScale;
+                marker.transform.localScale = scale;
+            }
+        }
+
+        private static void SetMarkerVisible(LivingUiContentMarker marker, bool visible)
+        {
+            if (marker.gameObject.activeSelf != visible)
+            {
+                marker.gameObject.SetActive(visible);
             }
         }
 

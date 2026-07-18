@@ -18,9 +18,9 @@ namespace NineGrid.LivingUI.Unity
         [Tooltip("跟随策略：RigidTravel / BoundaryReactive / PartialFollow。")]
         [SerializeField] private LivingUiContentFollowPolicy followPolicy = LivingUiContentFollowPolicy.RigidTravel;
 
-        [Tooltip("显隐策略；反应式内容建议 AlwaysVisible 以便转场中可见投影。")]
+        [Tooltip("显隐策略；进场/退场由 ContentDriver 写 scale 控制，建议 AlwaysVisible。")]
         [SerializeField] private LivingUiContentVisibilityPolicy visibilityPolicy =
-            LivingUiContentVisibilityPolicy.HideDuringTransit;
+            LivingUiContentVisibilityPolicy.AlwaysVisible;
 
         [Tooltip("仅在该构型 Face 显示；MainMenu 切片内容绑 MainMenu。")]
         [SerializeField] private LivingUiLayoutId faceLayout = LivingUiLayoutId.MainMenu;

@@ -25,11 +25,16 @@ namespace NineGrid.LivingUI.Unity
         private readonly LivingUiTransitionPlayer _player = new();
         private LivingUiLayoutId _committedLayout = LivingUiLayoutId.MainMenu;
         private LivingUiLayoutId? _previewLayout;
+        private LivingUiLayoutId _transitionSourceLayout = LivingUiLayoutId.MainMenu;
         private Rect _stageBounds;
 
         public LivingUiLayoutId CommittedLayout => _committedLayout;
         public LivingUiLayoutId EffectiveLayout => _previewLayout ?? _committedLayout;
         public LivingUiLayoutId? PreviewLayout => _previewLayout;
+        public LivingUiLayoutId TransitionSourceLayout => _transitionSourceLayout;
+        public LivingUiLayoutId TransitionTargetLayout =>
+            _player.ActivePlan?.TargetLayout ?? EffectiveLayout;
+        public float TransitionElapsed => _player.Elapsed;
         public float PlaybackSpeed { get => playbackSpeed; set => playbackSpeed = Mathf.Max(0.05f, value); }
         public Rect StageBounds => _stageBounds;
         public int ActiveGeneration => _player.ActivePlan?.Generation ?? 0;
@@ -58,23 +63,26 @@ namespace NineGrid.LivingUI.Unity
 
         public void Commit(LivingUiLayoutId layoutId)
         {
+            var source = EffectiveLayout;
             _previewLayout = null;
             _committedLayout = layoutId;
-            BeginTransition(layoutId);
+            BeginTransition(layoutId, source);
         }
 
         public void Preview(LivingUiLayoutId layoutId)
         {
             if (_previewLayout == layoutId) return;
+            var source = EffectiveLayout;
             _previewLayout = layoutId;
-            BeginTransition(layoutId);
+            BeginTransition(layoutId, source);
         }
 
         public void ClearPreview()
         {
             if (!_previewLayout.HasValue) return;
+            var source = EffectiveLayout;
             _previewLayout = null;
-            BeginTransition(_committedLayout);
+            BeginTransition(_committedLayout, source);
         }
 
         public Rect GetTerminalRect(LivingUiLayoutId layoutId, int carrierId)
@@ -83,8 +91,9 @@ namespace NineGrid.LivingUI.Unity
             return new Rect(terminal.Position - terminal.Size * 0.5f, terminal.Size);
         }
 
-        private void BeginTransition(LivingUiLayoutId layoutId)
+        private void BeginTransition(LivingUiLayoutId layoutId, LivingUiLayoutId sourceLayout)
         {
+            _transitionSourceLayout = sourceLayout;
             var liveStates = CaptureLiveStates();
             var target = layoutSource.GetLayout(layoutId);
             var envelopeFloors = LivingUiContentProjector.AggregateEnvelopeFloors(

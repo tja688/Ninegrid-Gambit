@@ -25,27 +25,67 @@ namespace NineGrid.LivingUI.Tests
         }
 
         [Test]
-        public void HideDuringTransit_TogglesAtTransitFlag()
+        public void ContentPhase_DistinguishesEnteringAndExiting()
         {
             var binding = new LivingUiContentBinding(
                 "menu.title",
                 4,
                 new LivingUiContentLocalPose(Vector3.zero, Vector3.one),
-                LivingUiContentFollowPolicy.RigidTravel,
+                LivingUiContentFollowPolicy.BoundaryReactive,
+                LivingUiContentVisibilityPolicy.AlwaysVisible,
+                LivingUiLayoutId.MainMenu,
+                new LivingUiContentEnvelope(Vector2.zero));
+
+            Assert.AreEqual(
+                LivingUiContentPhase.Stable,
+                LivingUiContentPolicy.EvaluatePhase(
+                    binding, LivingUiLayoutId.MainMenu, LivingUiLayoutId.MainMenu,
+                    LivingUiLayoutId.MainMenu, isTransitioning: false));
+            Assert.AreEqual(
+                LivingUiContentPhase.Exiting,
+                LivingUiContentPolicy.EvaluatePhase(
+                    binding, LivingUiLayoutId.MainMenu, LivingUiLayoutId.Battle,
+                    LivingUiLayoutId.Battle, isTransitioning: true));
+            Assert.AreEqual(
+                LivingUiContentPhase.Entering,
+                LivingUiContentPolicy.EvaluatePhase(
+                    binding, LivingUiLayoutId.Battle, LivingUiLayoutId.MainMenu,
+                    LivingUiLayoutId.MainMenu, isTransitioning: true));
+            Assert.AreEqual(
+                LivingUiContentPhase.Hidden,
+                LivingUiContentPolicy.EvaluatePhase(
+                    binding, LivingUiLayoutId.MainMenu, LivingUiLayoutId.Battle,
+                    LivingUiLayoutId.Battle, isTransitioning: false));
+        }
+
+        [Test]
+        public void ExitScaleFactor_ReachesZeroWithinDuration()
+        {
+            Assert.AreEqual(1f, LivingUiContentProjector.ComputeExitScaleFactor(0f), 0.0001f);
+            Assert.AreEqual(0.5f, LivingUiContentProjector.ComputeExitScaleFactor(0.05f), 0.0001f);
+            Assert.AreEqual(0f, LivingUiContentProjector.ComputeExitScaleFactor(0.1f), 0.0001f);
+            Assert.AreEqual(0f, LivingUiContentProjector.ComputeExitScaleFactor(0.5f), 0.0001f);
+        }
+
+        [Test]
+        public void HideDuringTransit_NoLongerHidesDuringTransit()
+        {
+            var binding = new LivingUiContentBinding(
+                "menu.start",
+                12,
+                new LivingUiContentLocalPose(Vector3.zero, Vector3.one),
+                LivingUiContentFollowPolicy.BoundaryReactive,
                 LivingUiContentVisibilityPolicy.HideDuringTransit,
                 LivingUiLayoutId.MainMenu,
                 new LivingUiContentEnvelope(Vector2.zero));
 
             Assert.IsTrue(LivingUiContentPolicy.EvaluateVisible(
-                binding, LivingUiLayoutId.MainMenu, LivingUiLayoutId.MainMenu, isTransitioning: false));
-            Assert.IsFalse(LivingUiContentPolicy.EvaluateVisible(
-                binding, LivingUiLayoutId.MainMenu, LivingUiLayoutId.MainMenu, isTransitioning: true));
-            Assert.IsFalse(LivingUiContentPolicy.EvaluateVisible(
-                binding, LivingUiLayoutId.Battle, LivingUiLayoutId.Battle, isTransitioning: false));
+                binding, LivingUiLayoutId.MainMenu, LivingUiLayoutId.Battle,
+                LivingUiLayoutId.Battle, isTransitioning: true));
         }
 
         [Test]
-        public void FaceMatch_AllowsCommittedFaceDuringTransit()
+        public void FaceMatch_AllowsExitingFaceDuringTransit()
         {
             var binding = new LivingUiContentBinding(
                 "menu.title",
@@ -57,9 +97,11 @@ namespace NineGrid.LivingUI.Tests
                 new LivingUiContentEnvelope(Vector2.zero));
 
             Assert.IsTrue(LivingUiContentPolicy.EvaluateVisible(
-                binding, LivingUiLayoutId.Battle, LivingUiLayoutId.MainMenu, isTransitioning: true));
+                binding, LivingUiLayoutId.MainMenu, LivingUiLayoutId.Battle,
+                LivingUiLayoutId.Battle, isTransitioning: true));
             Assert.IsFalse(LivingUiContentPolicy.EvaluateVisible(
-                binding, LivingUiLayoutId.Battle, LivingUiLayoutId.MainMenu, isTransitioning: false));
+                binding, LivingUiLayoutId.MainMenu, LivingUiLayoutId.Battle,
+                LivingUiLayoutId.Battle, isTransitioning: false));
         }
 
         [Test]
@@ -76,6 +118,33 @@ namespace NineGrid.LivingUI.Tests
 
             Assert.IsTrue(LivingUiContentPolicy.EvaluateVisible(binding, LivingUiLayoutId.MainMenu, true));
             Assert.IsFalse(LivingUiContentPolicy.EvaluateVisible(binding, LivingUiLayoutId.Room, false));
+        }
+
+        [Test]
+        public void EnterProgress_StartsAtZeroWhenSourceLargerThanTarget()
+        {
+            var source = new Vector2(7.72f, 2.06f);
+            var target = new Vector2(3.32f, 1.63f);
+
+            Assert.AreEqual(0f, LivingUiContentProjector.ComputeEnterProgress(source, target, source), 0.0001f);
+            Assert.AreEqual(1f, LivingUiContentProjector.ComputeEnterProgress(source, target, target), 0.0001f);
+        }
+
+        [Test]
+        public void EnterProjection_DoesNotStartAtFullScaleWhenSourceExceedsBaseline()
+        {
+            var authored = new LivingUiContentLocalPose(Vector3.zero, Vector3.one);
+            var source = new Vector2(7.72f, 2.06f);
+            var target = new Vector2(3.32f, 1.63f);
+
+            var atStart = LivingUiContentProjector.ProjectBoundaryReactiveEnter(
+                authored, source, target, source, LivingUiContentProjector.DefaultStaggerSpan);
+            var oldWay = LivingUiContentProjector.ProjectBoundaryReactive(
+                authored, target, source, LivingUiContentProjector.DefaultStaggerSpan);
+
+            Assert.AreEqual(0f, atStart.LocalScale.x, 0.0001f);
+            Assert.IsFalse(atStart.Visible);
+            Assert.AreEqual(1f, oldWay.LocalScale.x, 0.0001f);
         }
 
         [Test]

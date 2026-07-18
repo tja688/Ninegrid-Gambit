@@ -112,6 +112,15 @@ namespace NineGrid.LivingUI
         public float StaggerSpan { get; }
     }
 
+    /// <summary>内容在转场中的参与阶段；驱动端据此决定缩放进/退场。</summary>
+    public enum LivingUiContentPhase
+    {
+        Hidden = 0,
+        Stable = 1,
+        Entering = 2,
+        Exiting = 3,
+    }
+
     /// <summary>纯数据内容策略求值（镜像 TransitionPlanner：无 MonoBehaviour、可 EditMode 验）。</summary>
     public static class LivingUiContentPolicy
     {
@@ -125,38 +134,54 @@ namespace NineGrid.LivingUI
         }
 
         /// <summary>
-        /// 显隐：Face 须匹配 effective，或（转场中）匹配 committed 以便出场反应式投影可见；
-        /// HideDuringTransit 且正在转场 → 隐。scale→0 可见性由 ContentProjector 另行给出。
+        /// 内容阶段：停稳时仅 effective Face；转场中区分进场（target）与快速退场（source）。
+        /// 可见性由 ContentDriver 写 scale 决定，不再用 SetActive 瞬闪。
         /// </summary>
-        public static bool EvaluateVisible(
+        public static LivingUiContentPhase EvaluatePhase(
             LivingUiContentBinding binding,
+            LivingUiLayoutId sourceLayout,
+            LivingUiLayoutId targetLayout,
             LivingUiLayoutId effectiveLayout,
-            LivingUiLayoutId committedLayout,
             bool isTransitioning)
         {
-            if (binding.FaceLayout.HasValue)
+            if (!binding.FaceLayout.HasValue)
             {
-                var face = binding.FaceLayout.Value;
-                var faceMatch = face == effectiveLayout
-                    || (isTransitioning && face == committedLayout);
-                if (!faceMatch) return false;
+                return isTransitioning ? LivingUiContentPhase.Entering : LivingUiContentPhase.Stable;
             }
 
-            if (binding.VisibilityPolicy == LivingUiContentVisibilityPolicy.HideDuringTransit && isTransitioning)
+            var face = binding.FaceLayout.Value;
+            if (!isTransitioning)
             {
-                return false;
+                return face == effectiveLayout ? LivingUiContentPhase.Stable : LivingUiContentPhase.Hidden;
             }
 
-            return true;
+            var onSource = face == sourceLayout;
+            var onTarget = face == targetLayout;
+            if (onSource && onTarget) return LivingUiContentPhase.Stable;
+            if (onSource) return LivingUiContentPhase.Exiting;
+            if (onTarget) return LivingUiContentPhase.Entering;
+            return LivingUiContentPhase.Hidden;
         }
 
-        /// <summary>兼容重载：无 committed 时仅按 effective 判 Face。</summary>
+        /// <summary>兼容：阶段非 Hidden 即视为策略可见（实际显隐由 scale 控制）。</summary>
+        public static bool EvaluateVisible(
+            LivingUiContentBinding binding,
+            LivingUiLayoutId sourceLayout,
+            LivingUiLayoutId targetLayout,
+            LivingUiLayoutId effectiveLayout,
+            bool isTransitioning)
+        {
+            return EvaluatePhase(binding, sourceLayout, targetLayout, effectiveLayout, isTransitioning)
+                != LivingUiContentPhase.Hidden;
+        }
+
+        /// <summary>兼容重载：无转场端点时 source/target 均取 effective。</summary>
         public static bool EvaluateVisible(
             LivingUiContentBinding binding,
             LivingUiLayoutId effectiveLayout,
             bool isTransitioning)
         {
-            return EvaluateVisible(binding, effectiveLayout, effectiveLayout, isTransitioning);
+            return EvaluateVisible(binding, effectiveLayout, effectiveLayout, effectiveLayout, isTransitioning);
         }
     }
 }

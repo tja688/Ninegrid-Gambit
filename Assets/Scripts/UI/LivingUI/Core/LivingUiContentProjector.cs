@@ -26,7 +26,15 @@ namespace NineGrid.LivingUI
     public static class LivingUiContentProjector
     {
         public const float DefaultStaggerSpan = 0.35f;
+        public const float DefaultExitDuration = 0.1f;
         public const float VisibleScaleEpsilon = 0.001f;
+
+        /// <summary>离场倍率：转场起始为 1，在 exitDuration 内线性缩至 0。</summary>
+        public static float ComputeExitScaleFactor(float transitionElapsed, float exitDuration = DefaultExitDuration)
+        {
+            var duration = Mathf.Max(exitDuration, 0.0001f);
+            return 1f - Mathf.Clamp01(transitionElapsed / duration);
+        }
 
         /// <summary>
         /// 按跟随策略投影。RigidTravel 原样返回 authored 位姿（规模 1），由父子挂接完成世界跟随。
@@ -67,14 +75,61 @@ namespace NineGrid.LivingUI
             float staggerSpan)
         {
             var sizeRatio = ResolveSizeRatio(baselineSize, currentCarrierSize);
-            var stagger01 = Stagger01FromLocal(authoredPose.LocalPosition, baselineSize);
-            var span = Mathf.Clamp01(staggerSpan);
-            var threshold = stagger01 * span;
-            var denom = Mathf.Max(1f - threshold, 0.0001f);
-            var scaleFactor = Mathf.Clamp01((sizeRatio - threshold) / denom);
+            return ProjectBoundaryReactiveFromRatio(authoredPose, baselineSize, sizeRatio, staggerSpan);
+        }
+
+        /// <summary>
+        /// 进场专用：按转场起止载体尺寸插值，避免源构型比基线更大时一进场就满 scale。
+        /// </summary>
+        public static LivingUiContentProjection ProjectBoundaryReactiveEnter(
+            LivingUiContentLocalPose authoredPose,
+            Vector2 sourceCarrierSize,
+            Vector2 targetCarrierSize,
+            Vector2 currentCarrierSize,
+            float staggerSpan)
+        {
+            var enterRatio = ComputeEnterProgress(sourceCarrierSize, targetCarrierSize, currentCarrierSize);
+            return ProjectBoundaryReactiveFromRatio(authoredPose, targetCarrierSize, enterRatio, staggerSpan);
+        }
+
+        /// <summary>
+        /// 转场进场进度 [0,1]：current 在 source 时为 0，到达 target 时为 1。
+        /// </summary>
+        public static float ComputeEnterProgress(
+            Vector2 sourceCarrierSize,
+            Vector2 targetCarrierSize,
+            Vector2 currentCarrierSize)
+        {
+            var width = ProgressAxis(sourceCarrierSize.x, targetCarrierSize.x, currentCarrierSize.x);
+            var height = ProgressAxis(sourceCarrierSize.y, targetCarrierSize.y, currentCarrierSize.y);
+            return Mathf.Clamp01(Mathf.Min(width, height));
+        }
+
+        private static float ProgressAxis(float source, float target, float current)
+        {
+            if (Mathf.Approximately(source, target)) return 1f;
+            return Mathf.Clamp01((current - source) / (target - source));
+        }
+
+        private static LivingUiContentProjection ProjectBoundaryReactiveFromRatio(
+            LivingUiContentLocalPose authoredPose,
+            Vector2 referenceSize,
+            float sizeRatio,
+            float staggerSpan)
+        {
+            var stagger01 = Stagger01FromLocal(authoredPose.LocalPosition, referenceSize);
+            var scaleFactor = ResolveStaggeredScaleFactor(sizeRatio, stagger01, staggerSpan);
             var scale = authoredPose.LocalScale * scaleFactor;
             var visible = scaleFactor > VisibleScaleEpsilon;
             return new LivingUiContentProjection(authoredPose.LocalPosition, scale, visible);
+        }
+
+        private static float ResolveStaggeredScaleFactor(float sizeRatio, float stagger01, float staggerSpan)
+        {
+            var span = Mathf.Clamp01(staggerSpan);
+            var threshold = stagger01 * span;
+            var denom = Mathf.Max(1f - threshold, 0.0001f);
+            return Mathf.Clamp01((sizeRatio - threshold) / denom);
         }
 
         /// <summary>
