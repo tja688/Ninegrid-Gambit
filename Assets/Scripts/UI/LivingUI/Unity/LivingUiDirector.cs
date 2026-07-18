@@ -25,17 +25,11 @@ namespace NineGrid.LivingUI.Unity
         private readonly LivingUiTransitionPlayer _player = new();
         private LivingUiLayoutId _committedLayout = LivingUiLayoutId.MainMenu;
         private LivingUiLayoutId? _previewLayout;
-        private LivingUiLayoutId? _transitionFromLayout;
         private Rect _stageBounds;
 
         public LivingUiLayoutId CommittedLayout => _committedLayout;
         public LivingUiLayoutId EffectiveLayout => _previewLayout ?? _committedLayout;
         public LivingUiLayoutId? PreviewLayout => _previewLayout;
-
-        /// <summary>当前转场的出发构型；未在转场时为 null。退场内容 Face 匹配用。</summary>
-        public LivingUiLayoutId? TransitionFromLayout =>
-            IsTransitioning ? _transitionFromLayout : null;
-
         public float PlaybackSpeed { get => playbackSpeed; set => playbackSpeed = Mathf.Max(0.05f, value); }
         public Rect StageBounds => _stageBounds;
         public int ActiveGeneration => _player.ActivePlan?.Generation ?? 0;
@@ -60,34 +54,27 @@ namespace NineGrid.LivingUI.Unity
             if (_player.ActivePlan == null) return;
             _player.Advance(Time.unscaledDeltaTime * playbackSpeed);
             ApplyCurrentPlanSample();
-            if (!_player.IsPlaying)
-            {
-                _transitionFromLayout = null;
-            }
         }
 
         public void Commit(LivingUiLayoutId layoutId)
         {
-            var from = EffectiveLayout;
             _previewLayout = null;
             _committedLayout = layoutId;
-            BeginTransition(layoutId, from);
+            BeginTransition(layoutId);
         }
 
         public void Preview(LivingUiLayoutId layoutId)
         {
             if (_previewLayout == layoutId) return;
-            var from = EffectiveLayout;
             _previewLayout = layoutId;
-            BeginTransition(layoutId, from);
+            BeginTransition(layoutId);
         }
 
         public void ClearPreview()
         {
             if (!_previewLayout.HasValue) return;
-            var from = EffectiveLayout;
             _previewLayout = null;
-            BeginTransition(_committedLayout, from);
+            BeginTransition(_committedLayout);
         }
 
         public Rect GetTerminalRect(LivingUiLayoutId layoutId, int carrierId)
@@ -96,9 +83,8 @@ namespace NineGrid.LivingUI.Unity
             return new Rect(terminal.Position - terminal.Size * 0.5f, terminal.Size);
         }
 
-        private void BeginTransition(LivingUiLayoutId layoutId, LivingUiLayoutId fromLayout)
+        private void BeginTransition(LivingUiLayoutId layoutId)
         {
-            _transitionFromLayout = fromLayout;
             var liveStates = CaptureLiveStates();
             var target = layoutSource.GetLayout(layoutId);
             var envelopeFloors = LivingUiContentProjector.AggregateEnvelopeFloors(

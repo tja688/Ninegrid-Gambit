@@ -37,12 +37,9 @@ namespace NineGrid.LivingUI.Unity
         [Tooltip("PartialFollow 贴边方向。")]
         [SerializeField] private LivingUiPartialFollowEdge followEdge = LivingUiPartialFollowEdge.Left;
 
-        [Tooltip("BoundaryReactive 兼容保留；定点缩放的错峰由锚点离边远近自然产生，此值当前不参与计算。")]
+        [Tooltip("BoundaryReactive 错峰跨度 [0,1]；越大则边缘内容越早坍缩。")]
         [Range(0f, 1f)]
         [SerializeField] private float staggerSpan = LivingUiContentProjector.DefaultStaggerSpan;
-
-        [Tooltip("BoundaryReactive 相对载体边的内边距（世界单位）；种子放大时 AABB 须落在 Inset 内。")]
-        [SerializeField] private float contentPadding = LivingUiContentProjector.DefaultContentPadding;
 
         [Tooltip("作者局部位姿（相对 ContentAttach）；反应式投影以此为基准。留空则 Awake 从 Transform 捕获。")]
         [SerializeField] private Vector3 authoredLocalPosition;
@@ -59,7 +56,6 @@ namespace NineGrid.LivingUI.Unity
         public Vector2 BaselineSize => baselineSize;
         public LivingUiPartialFollowEdge FollowEdge => followEdge;
         public float StaggerSpan => staggerSpan;
-        public float ContentPadding => contentPadding;
 
         private void Awake()
         {
@@ -97,8 +93,7 @@ namespace NineGrid.LivingUI.Unity
                 new LivingUiContentEnvelope(envelopeSize),
                 baselineSize,
                 followEdge,
-                staggerSpan,
-                contentPadding);
+                staggerSpan);
         }
 
         public void ApplyAuthored(
@@ -111,8 +106,7 @@ namespace NineGrid.LivingUI.Unity
             Vector2 envelope = default,
             Vector2 baseline = default,
             LivingUiPartialFollowEdge edge = LivingUiPartialFollowEdge.Left,
-            float stagger = LivingUiContentProjector.DefaultStaggerSpan,
-            float padding = LivingUiContentProjector.DefaultContentPadding)
+            float stagger = LivingUiContentProjector.DefaultStaggerSpan)
         {
             contentId = id;
             carrierId = carrier;
@@ -124,7 +118,6 @@ namespace NineGrid.LivingUI.Unity
             baselineSize = baseline;
             followEdge = edge;
             staggerSpan = stagger;
-            contentPadding = padding;
         }
 
         public void CaptureAuthoredPoseFromTransform()

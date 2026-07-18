@@ -9,7 +9,7 @@ namespace NineGrid.LivingUI
         /// <summary>纯位置随行（场景 a）；挂载体子树即可，不随 9-slice size 缩放。</summary>
         RigidTravel = 0,
 
-        /// <summary>锚点固定，依边界扫过锚点的间隙定点缩放进/退场（场景 b）。</summary>
+        /// <summary>随载体 size 依边界错峰缩放进/退场（场景 b）。</summary>
         BoundaryReactive = 1,
 
         /// <summary>贴一条边按比例位移、不缩放（场景 c）。</summary>
@@ -77,8 +77,7 @@ namespace NineGrid.LivingUI
             LivingUiContentEnvelope envelope,
             Vector2 baselineSize = default,
             LivingUiPartialFollowEdge followEdge = LivingUiPartialFollowEdge.Left,
-            float staggerSpan = 0.35f,
-            float contentPadding = LivingUiContentProjector.DefaultContentPadding)
+            float staggerSpan = 0.35f)
         {
             ContentId = contentId ?? throw new ArgumentNullException(nameof(contentId));
             CarrierId = carrierId;
@@ -90,7 +89,6 @@ namespace NineGrid.LivingUI
             BaselineSize = baselineSize;
             FollowEdge = followEdge;
             StaggerSpan = staggerSpan;
-            ContentPadding = contentPadding;
         }
 
         public string ContentId { get; }
@@ -110,11 +108,8 @@ namespace NineGrid.LivingUI
         /// <summary>PartialFollow 贴边。</summary>
         public LivingUiPartialFollowEdge FollowEdge { get; }
 
-        /// <summary>BoundaryReactive 兼容参数；错峰由锚点离边远近自然产生。</summary>
+        /// <summary>BoundaryReactive 错峰跨度 [0,1]。</summary>
         public float StaggerSpan { get; }
-
-        /// <summary>BoundaryReactive 相对载体边的内边距（世界单位）。</summary>
-        public float ContentPadding { get; }
     }
 
     /// <summary>纯数据内容策略求值（镜像 TransitionPlanner：无 MonoBehaviour、可 EditMode 验）。</summary>
@@ -130,25 +125,20 @@ namespace NineGrid.LivingUI
         }
 
         /// <summary>
-        /// 显隐：Face 须匹配 effective；转场中还匹配 committed（进场）或 transitionFrom（退场），
-        /// 以便反应式投影能长大/缩小。HideDuringTransit 且正在转场 → 隐。
-        /// scale→0 可见性由 ContentProjector 另行给出。
+        /// 显隐：Face 须匹配 effective，或（转场中）匹配 committed 以便出场反应式投影可见；
+        /// HideDuringTransit 且正在转场 → 隐。scale→0 可见性由 ContentProjector 另行给出。
         /// </summary>
         public static bool EvaluateVisible(
             LivingUiContentBinding binding,
             LivingUiLayoutId effectiveLayout,
             LivingUiLayoutId committedLayout,
-            bool isTransitioning,
-            LivingUiLayoutId? transitionFromLayout = null)
+            bool isTransitioning)
         {
             if (binding.FaceLayout.HasValue)
             {
                 var face = binding.FaceLayout.Value;
                 var faceMatch = face == effectiveLayout
-                    || (isTransitioning && face == committedLayout)
-                    || (isTransitioning
-                        && transitionFromLayout.HasValue
-                        && face == transitionFromLayout.Value);
+                    || (isTransitioning && face == committedLayout);
                 if (!faceMatch) return false;
             }
 
@@ -160,7 +150,7 @@ namespace NineGrid.LivingUI
             return true;
         }
 
-        /// <summary>兼容重载：无 committed / from 时仅按 effective 判 Face。</summary>
+        /// <summary>兼容重载：无 committed 时仅按 effective 判 Face。</summary>
         public static bool EvaluateVisible(
             LivingUiContentBinding binding,
             LivingUiLayoutId effectiveLayout,
