@@ -26,7 +26,7 @@ Main Camera (Base)
 
 - **扫描线**：世界靠 Selective Look Pass2；文字靠 TMP Scanline（同 `_PixelResolution` / intensity，对齐）。
 - **PixelSnap**：只打在 Base 相机世界内容；`NoPixelSnap` 层（文字）走 Overlay 相机，不被 UV snap。
-- **跟随**：`LivingTextWorldBinder` 把 SS-Camera 文字投影对齐世界面板中心（主菜单已绑 标题→4 / 开始→12 / 设置→11 / 结束→2）。
+- **跟随**：`LivingTextWorldBinder` 投影跟随世界背板；Play 时自动捕获编辑器相对偏移（主菜单已绑 标题→4 / 开始→12 / 设置→11 / 结束→2）。
 
 ## 关键资产
 
@@ -43,6 +43,10 @@ Main Camera (Base)
 2. 不要 snap 的对象（文字/细 UI）：放到 `NoPixelSnap`，并由 `TableNineLookRig` 管到 UICamera。
 3. 调参：Main Camera 上 `TableNineLookRig`（resolution / snap / scanline）。
 4. 跟随：在 Text Overlay 根上配 `LivingTextWorldBinder` bindings。
+
+> **批量处理其它大盘构型（AI SOP）**：见  
+> [`LivingText-UICamera换域与背板绑定操作指南-2026-07-18.md`](./LivingText-UICamera换域与背板绑定操作指南-2026-07-18.md)  
+> （独占激活构型、激活失活 Overlay、屏幕 AABB 可靠配对、截图防绑错、Play 无跳变验收）。
 
 ## 后续可选项
 
