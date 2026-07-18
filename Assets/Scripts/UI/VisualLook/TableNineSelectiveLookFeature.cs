@@ -7,8 +7,11 @@ using UnityEngine.Rendering.Universal;
 namespace NineGrid.VisualLook
 {
     /// <summary>
-    /// Base camera only: pixel-snap the frame, then apply scanlines.
-    /// Pair with <see cref="TableNineLookRig"/> so NoPixelSnap UI rides an Overlay camera and skips this pass.
+    /// Selective look pipeline.
+    /// Default (stable): Base camera runs Pass1 snap + Pass2 scanline; Overlay early-outs.
+    /// Experimental: when <see cref="Settings.overlayOwnsScanline"/> is on, Base is snap-only and
+    /// an Overlay camera with <see cref="TableNineFinalScanlineMarker"/> runs scanline-only.
+    /// (Overlay AfterRendering blit is unreliable on the current URP stack — keep off unless verified.)
     /// </summary>
     public sealed class TableNineSelectiveLookFeature : ScriptableRendererFeature
     {
@@ -16,21 +19,26 @@ namespace NineGrid.VisualLook
         public sealed class Settings
         {
             public RenderPassEvent passEvent = RenderPassEvent.AfterRenderingPostProcessing;
+            public RenderPassEvent overlayScanlineEvent = RenderPassEvent.AfterRendering;
             public Material lookMaterial;
             [Tooltip("Reserved for same-camera mesh mask path; UGUI 主路径请用相机栈。")]
             public Material maskMaterial;
             public LayerMask noSnapLayers;
             [Tooltip("同相机 mask 路径（Canvas 无效）；相机栈方案请保持 false。")]
             public bool buildNoSnapMask;
+            [Tooltip("实验：由带 TableNineFinalScanlineMarker 的 Overlay 相机在栈末做 scanline-only blit。默认关闭（当前 URP 栈上不稳定）。")]
+            public bool overlayOwnsScanline;
         }
 
         public Settings settings = new Settings();
 
-        SelectiveLookPass _pass;
+        SelectiveLookPass _basePass;
+        SelectiveLookPass _overlayPass;
 
         public override void Create()
         {
-            _pass = new SelectiveLookPass();
+            _basePass = new SelectiveLookPass();
+            _overlayPass = new SelectiveLookPass();
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -45,14 +53,45 @@ namespace NineGrid.VisualLook
                 return;
             }
 
-            if (renderingData.cameraData.renderType == CameraRenderType.Overlay)
+            var camera = renderingData.cameraData.camera;
+            var isOverlay = renderingData.cameraData.renderType == CameraRenderType.Overlay;
+
+            if (isOverlay)
             {
+                if (!settings.overlayOwnsScanline)
+                {
+                    return;
+                }
+
+                if (camera == null || camera.GetComponent<TableNineFinalScanlineMarker>() == null)
+                {
+                    return;
+                }
+
+                _overlayPass.Setup(settings, PassMode.ScanlineOnly);
+                _overlayPass.renderPassEvent = settings.overlayScanlineEvent;
+                renderer.EnqueuePass(_overlayPass);
                 return;
             }
 
-            _pass.Setup(settings);
-            _pass.renderPassEvent = settings.passEvent;
-            renderer.EnqueuePass(_pass);
+            if (settings.overlayOwnsScanline)
+            {
+                _basePass.Setup(settings, PassMode.SnapOnly);
+            }
+            else
+            {
+                _basePass.Setup(settings, PassMode.SnapThenScanline);
+            }
+
+            _basePass.renderPassEvent = settings.passEvent;
+            renderer.EnqueuePass(_basePass);
+        }
+
+        enum PassMode
+        {
+            SnapThenScanline,
+            SnapOnly,
+            ScanlineOnly
         }
 
         sealed class SelectiveLookPass : ScriptableRenderPass
@@ -60,10 +99,12 @@ namespace NineGrid.VisualLook
             static readonly int UseNoSnapMaskId = Shader.PropertyToID("_UseNoSnapMask");
 
             Settings _settings;
+            PassMode _mode;
 
-            public void Setup(Settings settings)
+            public void Setup(Settings settings, PassMode mode)
             {
                 _settings = settings;
+                _mode = mode;
             }
 
             public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
@@ -85,7 +126,6 @@ namespace NineGrid.VisualLook
                     return;
                 }
 
-                // Camera-stack path: no mask. Always snap unprotected base color.
                 _settings.lookMaterial.SetFloat(UseNoSnapMaskId, 0f);
 
                 var desc = renderGraph.GetTextureDesc(source);
@@ -93,21 +133,30 @@ namespace NineGrid.VisualLook
                 desc.clearBuffer = false;
                 var temp = renderGraph.CreateTexture(desc);
 
-                // Pass 1: selective / full snap into temp
-                var snapParams = new RenderGraphUtils.BlitMaterialParameters(
-                    source,
-                    temp,
-                    _settings.lookMaterial,
-                    1);
-                renderGraph.AddBlitPass(snapParams, "TableNine Look Snap");
+                if (_mode == PassMode.SnapThenScanline)
+                {
+                    var snapParams = new RenderGraphUtils.BlitMaterialParameters(
+                        source, temp, _settings.lookMaterial, 1);
+                    renderGraph.AddBlitPass(snapParams, "TableNine Look Snap");
 
-                // Pass 2: scanlines temp -> camera color
-                var scanParams = new RenderGraphUtils.BlitMaterialParameters(
-                    temp,
-                    source,
-                    _settings.lookMaterial,
-                    2);
-                renderGraph.AddBlitPass(scanParams, "TableNine Look Scanlines");
+                    var scanParams = new RenderGraphUtils.BlitMaterialParameters(
+                        temp, source, _settings.lookMaterial, 2);
+                    renderGraph.AddBlitPass(scanParams, "TableNine Look Scanlines");
+                    return;
+                }
+
+                int effectPass = _mode == PassMode.SnapOnly ? 1 : 2;
+                string effectName = _mode == PassMode.SnapOnly
+                    ? "TableNine Look Snap"
+                    : "TableNine Look Scanlines";
+
+                var effectParams = new RenderGraphUtils.BlitMaterialParameters(
+                    source, temp, _settings.lookMaterial, effectPass);
+                renderGraph.AddBlitPass(effectParams, effectName);
+
+                var copyParams = new RenderGraphUtils.BlitMaterialParameters(
+                    temp, source, _settings.lookMaterial, 0);
+                renderGraph.AddBlitPass(copyParams, "TableNine Look Copy");
             }
         }
     }

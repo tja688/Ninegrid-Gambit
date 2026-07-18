@@ -113,8 +113,9 @@ namespace NineGrid.Flow.Editor
         {
             EditorGUILayout.LabelField("TableNine 诊断日志控制台", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "四轨 Trace：Battle / Core / Perf / Registry。内存中持续记录；"
-                + "自动落盘受下方开关控制；Play 中可手动「加记」落盘且不影响继续游戏。",
+                "四轨 Trace：Battle / Core / Perf / Registry。"
+                + "「自动落盘」与「内存记录」均写入 EditorPrefs，域重载 / 重启 Unity 后保持。"
+                + "Play 中可手动「加记」落盘且不影响继续游戏。",
                 MessageType.None);
         }
 
@@ -156,33 +157,12 @@ namespace NineGrid.Flow.Editor
 
         private static bool IsRecordingEnabled(DiagTraceTrack track)
         {
-            return track switch
-            {
-                DiagTraceTrack.Battle => BattleTraceRecorder.Enabled,
-                DiagTraceTrack.Core => FlowTraceRecorder.Enabled,
-                DiagTraceTrack.Perf => PerfTraceRecorder.Enabled,
-                DiagTraceTrack.Registry => RegistryTraceRecorder.Enabled,
-                _ => false,
-            };
+            return DiagTraceExportPreferences.GetTrackRecording(track);
         }
 
         private static void SetRecordingEnabled(DiagTraceTrack track, bool enabled)
         {
-            switch (track)
-            {
-                case DiagTraceTrack.Battle:
-                    BattleTraceRecorder.Enabled = enabled;
-                    break;
-                case DiagTraceTrack.Core:
-                    FlowTraceRecorder.Enabled = enabled;
-                    break;
-                case DiagTraceTrack.Perf:
-                    PerfTraceRecorder.Enabled = enabled;
-                    break;
-                case DiagTraceTrack.Registry:
-                    RegistryTraceRecorder.Enabled = enabled;
-                    break;
-            }
+            DiagTraceExportPreferences.SetTrackRecording(track, enabled);
         }
 
         private static int CountBattle()
@@ -213,8 +193,8 @@ namespace NineGrid.Flow.Editor
         {
             EditorGUILayout.LabelField("自动落盘", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "关闭后 Play 退出、胜负、重开轮转均不写 JSON 文件；内存记录仍继续。"
-                + "手动加记不受此限制。",
+                "关闭后 Play 退出、胜负、重开轮转均不写 JSON 文件；内存记录仍继续（可另关）。"
+                + "开关会持久化。手动加记不受此限制。",
                 MessageType.None);
 
             using (new EditorGUI.IndentLevelScope())
@@ -254,8 +234,9 @@ namespace NineGrid.Flow.Editor
         {
             EditorGUILayout.LabelField("内存记录", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "关闭后该轨不再写入内存缓冲（与自动落盘独立）。"
-                + "若只需禁止写文件，请只关「自动落盘」即可。",
+                "关闭后该轨不再写入内存缓冲（与自动落盘独立，且会持久化）。"
+                + "若只需禁止写文件、仍要内存缓冲，请只关「自动落盘」。"
+                + "DevTest 小键盘切换记录也会写入同一偏好。",
                 MessageType.None);
 
             using (new EditorGUI.IndentLevelScope())

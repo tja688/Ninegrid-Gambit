@@ -14,6 +14,8 @@ namespace NineGrid.Flow.Editor
     {
         static BattleTracePlayModeExporter()
         {
+            // 域重载后静态 Enabled 会回到编译期默认 true；立刻从 EditorPrefs 套回用户选择。
+            DiagTraceExportPreferences.Reload();
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         }
 
@@ -21,6 +23,7 @@ namespace NineGrid.Flow.Editor
         {
             if (state == PlayModeStateChange.EnteredPlayMode)
             {
+                DiagTraceExportPreferences.ApplyRecordingToRecorders();
                 BattleTraceRecorder.NotifyEnteredPlayMode();
                 BattleTraceRecorder.Clear();
                 FlowTraceRecorder.Clear();

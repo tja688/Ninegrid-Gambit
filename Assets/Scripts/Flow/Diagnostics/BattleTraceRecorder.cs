@@ -23,10 +23,31 @@ namespace NineGrid.Flow.Diagnostics
             false;
 #endif
 
+#if UNITY_EDITOR
+        static BattleTraceRecorder()
+        {
+            // 首次触达即从 EditorPrefs 套回，不依赖 InitializeOnLoad 执行顺序。
+            sEnabled = DiagTraceExportPreferences.GetTrackRecording(DiagTraceTrack.Battle);
+        }
+#endif
+
         public static bool Enabled
         {
             get => sEnabled;
-            set => sEnabled = value;
+            set
+            {
+#if UNITY_EDITOR
+                DiagTraceExportPreferences.SetTrackRecording(DiagTraceTrack.Battle, value);
+#else
+                sEnabled = value;
+#endif
+            }
+        }
+
+        /// <summary>由偏好系统写入，避免与 <see cref="Enabled"/> setter 互相递归。</summary>
+        internal static void SetEnabledFromPreferences(bool enabled)
+        {
+            sEnabled = enabled;
         }
 
         public static BattleTraceSession CurrentSession => sSession;

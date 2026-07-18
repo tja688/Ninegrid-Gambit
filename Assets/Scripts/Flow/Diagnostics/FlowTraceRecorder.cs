@@ -18,10 +18,30 @@ namespace NineGrid.Flow.Diagnostics
             false;
 #endif
 
+#if UNITY_EDITOR
+        static FlowTraceRecorder()
+        {
+            sEnabled = DiagTraceExportPreferences.GetTrackRecording(DiagTraceTrack.Core);
+        }
+#endif
+
         public static bool Enabled
         {
             get => sEnabled;
-            set => sEnabled = value;
+            set
+            {
+#if UNITY_EDITOR
+                DiagTraceExportPreferences.SetTrackRecording(DiagTraceTrack.Core, value);
+#else
+                sEnabled = value;
+#endif
+            }
+        }
+
+        /// <summary>由偏好系统写入，避免与 <see cref="Enabled"/> setter 互相递归。</summary>
+        internal static void SetEnabledFromPreferences(bool enabled)
+        {
+            sEnabled = enabled;
         }
 
         public static FlowTraceSession CurrentSession => sSession;

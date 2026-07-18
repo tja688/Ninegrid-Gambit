@@ -25,6 +25,13 @@ namespace NineGrid.Flow.Diagnostics
             false;
 #endif
 
+#if UNITY_EDITOR
+        static PerfTraceRecorder()
+        {
+            sEnabled = DiagTraceExportPreferences.GetTrackRecording(DiagTraceTrack.Perf);
+        }
+#endif
+
         private static readonly Dictionary<int, OpenMotion> sOpenMotions = new Dictionary<int, OpenMotion>();
         private static readonly Dictionary<int, PlannedMotion> sPlans = new Dictionary<int, PlannedMotion>();
         private static readonly HashSet<int> sCombatantUids = new HashSet<int>();
@@ -62,7 +69,20 @@ namespace NineGrid.Flow.Diagnostics
         public static bool Enabled
         {
             get => sEnabled;
-            set => sEnabled = value;
+            set
+            {
+#if UNITY_EDITOR
+                DiagTraceExportPreferences.SetTrackRecording(DiagTraceTrack.Perf, value);
+#else
+                sEnabled = value;
+#endif
+            }
+        }
+
+        /// <summary>由偏好系统写入，避免与 <see cref="Enabled"/> setter 互相递归。</summary>
+        internal static void SetEnabledFromPreferences(bool enabled)
+        {
+            sEnabled = enabled;
         }
 
         public static PerfTraceSession CurrentSession => sSession;

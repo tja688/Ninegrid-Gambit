@@ -7,10 +7,10 @@ namespace NineGrid.VisualLook
 {
     /// <summary>
     /// 把「全屏 PixelSnap + Overlay 文字逃逸」收敛为：
-    /// - 世界默认走 PixelSnap
-    /// - NoPixelSnap 层（文字等）受保护不 snap
-    /// - 扫描线对最终合成图全局生效
-    /// 主菜单可用它把 Text Overlay 从 ScreenSpaceOverlay 拉回同一相机域，便于文字跟随灵动 UI。
+    /// - 世界默认走 PixelSnap + 扫描线（Base 相机）
+    /// - NoPixelSnap 层（文字等）由 Overlay UICamera 渲染，不吃 snap
+    /// - 文字扫描线默认由 TMP Scanline 材质补齐（与 Rig 参数同步）
+    /// - 可选 useUnifiedScanline：关掉 TMP 扫描线，改由 Overlay 末相机统一 blit（需 Feature.overlayOwnsScanline，实验性）
     /// </summary>
     [DisallowMultipleComponent]
     [ExecuteAlways]
@@ -37,7 +37,7 @@ namespace NineGrid.VisualLook
         float pixelSnap = 1f;
 
         [SerializeField]
-        [Tooltip("是否启用全局扫描线。")]
+        [Tooltip("是否启用全局扫描线（写入 Look 材质；文字侧默认由 TMP 材质同步同一参数）。")]
         [Range(0f, 1f)]
         float scanlineEnabled = 1f;
 
@@ -73,7 +73,11 @@ namespace NineGrid.VisualLook
         bool rebindLivingTextCanvases = true;
 
         [SerializeField]
-        [Tooltip("把 TMP 扫描线材质参数同步到本 Rig，避免双域强度不一致。")]
+        [Tooltip("实验：关掉 TMP 自带扫描线，改由 Overlay 末相机统一 blit。需 Feature.overlayOwnsScanline=true 且已验证，否则文字会丢扫描线。")]
+        bool useUnifiedScanline = false;
+
+        [SerializeField]
+        [Tooltip("把 TMP 扫描线材质分辨率等参数同步到本 Rig（扫描线开关由 useUnifiedScanline 决定）。")]
         bool syncTmpScanlineMaterials = true;
 
         int _noSnapLayer = -1;
@@ -213,6 +217,11 @@ namespace NineGrid.VisualLook
             uiData.renderPostProcessing = false;
             uiData.renderShadows = false;
 
+            if (uiCamera.GetComponent<TableNineFinalScanlineMarker>() == null)
+            {
+                uiCamera.gameObject.AddComponent<TableNineFinalScanlineMarker>();
+            }
+
             if (!worldData.cameraStack.Contains(uiCamera))
             {
                 worldData.cameraStack.Add(uiCamera);
@@ -286,9 +295,10 @@ namespace NineGrid.VisualLook
                         mat.SetVector("_PixelResolution", new Vector4(pixelResolution.x, pixelResolution.y, 0f, 0f));
                     }
 
+                    // Unified post-stack blit owns scanlines; keep TMP materials off to avoid double.
                     if (mat.HasProperty("_ScanlineEnabled"))
                     {
-                        mat.SetFloat("_ScanlineEnabled", scanlineEnabled);
+                        mat.SetFloat("_ScanlineEnabled", useUnifiedScanline ? 0f : scanlineEnabled);
                     }
 
                     if (mat.HasProperty("_ScanlineIntensity"))
