@@ -27,10 +27,10 @@
   <Project Path="Lofelt.NiceVibrations.Demo.csproj" />
   <Project Path="NineGrid.Content.Editor.csproj" />
   <Project Path="NineGrid.Core.Tests.csproj" />
+  <Project Path="NineGrid.LivingUI.csproj" />
   <Project Path="ResKit.Editor.csproj" />
   <Project Path="UniRx.Examples.csproj" />
   <Project Path="NineGrid.Core.csproj" />
-  <Project Path="NineGrid.LivingUI.csproj" />
   <Project Path="Febucci.TextAnimator.Demo.Runtime.csproj" />
   <Project Path="Assembly-CSharp-Editor-firstpass.csproj" />
   <Project Path="Lofelt.NiceVibrations.Editor.csproj" />
@@ -45,10 +45,10 @@
   <Project Path="UniTask.Editor.csproj" />
   <Project Path="Sirenix.OdinInspector.Modules.UnityMathematics.csproj" />
   <Project Path="UniTask.DOTween.csproj" />
+  <Project Path="NineGrid.LivingUI.Tests.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="NineGrid.TemporaryTest.csproj" />
   <Project Path="NineGrid.DevTest.Tests.csproj" />
   <Project Path="QFramework.csproj" />
   <Project Path="NineGrid.LivingUI.Editor.csproj" />
-  <Project Path="NineGrid.LivingUI.Tests.csproj" />
 </Solution>

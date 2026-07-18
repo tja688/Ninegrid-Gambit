@@ -93,7 +93,8 @@ namespace NineGrid.LivingUI
             IReadOnlyList<LivingUiCarrierState> liveStates,
             LivingUiLayout target,
             Rect stageBounds,
-            LivingUiTransitionStyle style)
+            LivingUiTransitionStyle style,
+            IReadOnlyDictionary<int, Vector2> carrierFlowFloorOverrides = null)
         {
             if (liveStates == null) throw new ArgumentNullException(nameof(liveStates));
             if (target == null) throw new ArgumentNullException(nameof(target));
@@ -105,6 +106,7 @@ namespace NineGrid.LivingUI
 
             var easing = LivingUiEasing.GetEasing(style.EasingType, style.CustomEasingCurve);
             var easingDerivative = LivingUiEasing.GetDerivative(style.EasingType, style.CustomEasingCurve);
+            var styleFloor = new Vector2(style.FlowWidthFloor, style.FlowHeightFloor);
 
             for (var index = 0; index < liveStates.Count; index++)
             {
@@ -121,12 +123,14 @@ namespace NineGrid.LivingUI
                 var targetSize = expelled ? source.Size : terminal.Size;
                 var widthMaximum = Mathf.Max(source.Size.x, targetSize.x) * style.SizeCeilingMultiplier;
                 var heightMaximum = Mathf.Max(source.Size.y, targetSize.y) * style.SizeCeilingMultiplier;
+                var carrierFloor = LivingUiContentProjector.ResolveCarrierFlowFloor(
+                    styleFloor, carrierFlowFloorOverrides, source.CarrierId);
                 var width = BoundedScalarMotion.Create(
                     source.Size.x,
                     expelled ? 0f : source.SizeVelocity.x,
                     targetSize.x,
                     duration,
-                    Mathf.Min(style.FlowWidthFloor, Mathf.Min(source.Size.x, targetSize.x)),
+                    Mathf.Min(carrierFloor.x, Mathf.Min(source.Size.x, targetSize.x)),
                     widthMaximum,
                     easing,
                     easingDerivative);
@@ -135,7 +139,7 @@ namespace NineGrid.LivingUI
                     expelled ? 0f : source.SizeVelocity.y,
                     targetSize.y,
                     duration,
-                    Mathf.Min(style.FlowHeightFloor, Mathf.Min(source.Size.y, targetSize.y)),
+                    Mathf.Min(carrierFloor.y, Mathf.Min(source.Size.y, targetSize.y)),
                     heightMaximum,
                     easing,
                     easingDerivative);

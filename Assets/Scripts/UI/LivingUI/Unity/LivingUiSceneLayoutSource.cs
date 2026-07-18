@@ -23,6 +23,8 @@ namespace NineGrid.LivingUI.Unity
 
         private readonly Dictionary<LivingUiLayoutId, LivingUiLayout> _snapshots = new();
         private readonly Dictionary<int, SpriteRenderer> _carriers = new();
+        private readonly Dictionary<int, CarrierView> _carrierViews = new();
+        private readonly List<LivingUiContentBinding> _contentBindings = new();
 
         public IReadOnlyDictionary<LivingUiLayoutId, LivingUiLayout> Snapshots
         {
@@ -42,6 +44,24 @@ namespace NineGrid.LivingUI.Unity
             }
         }
 
+        public IReadOnlyDictionary<int, CarrierView> CarrierViews
+        {
+            get
+            {
+                EnsureCaptured();
+                return _carrierViews;
+            }
+        }
+
+        public IReadOnlyList<LivingUiContentBinding> ContentBindings
+        {
+            get
+            {
+                EnsureCaptured();
+                return _contentBindings;
+            }
+        }
+
         private void Awake()
         {
             Capture();
@@ -52,6 +72,8 @@ namespace NineGrid.LivingUI.Unity
         {
             _snapshots.Clear();
             _carriers.Clear();
+            _carrierViews.Clear();
+            _contentBindings.Clear();
 
             var bindings = ResolveBindings();
             HashSet<int> expectedIds = null;
@@ -83,7 +105,13 @@ namespace NineGrid.LivingUI.Unity
                 }
 
                 _carriers.Add(carrierId, renderer);
+                var view = child.GetComponent<CarrierView>();
+                if (view == null) view = child.gameObject.AddComponent<CarrierView>();
+                view.EnsureWired();
+                _carrierViews.Add(carrierId, view);
             }
+
+            CaptureContentBindings(carrierRoot);
 
             foreach (var binding in bindings)
             {
@@ -193,6 +221,15 @@ namespace NineGrid.LivingUI.Unity
             }
 
             throw new InvalidOperationException($"缺少构型绑定 {id}。");
+        }
+
+        private void CaptureContentBindings(Transform carrierRoot)
+        {
+            var markers = carrierRoot.GetComponentsInChildren<LivingUiContentMarker>(true);
+            for (var i = 0; i < markers.Length; i++)
+            {
+                _contentBindings.Add(markers[i].ToBinding());
+            }
         }
     }
 }

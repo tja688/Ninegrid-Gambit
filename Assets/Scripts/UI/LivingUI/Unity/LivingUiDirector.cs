@@ -33,6 +33,7 @@ namespace NineGrid.LivingUI.Unity
         public float PlaybackSpeed { get => playbackSpeed; set => playbackSpeed = Mathf.Max(0.05f, value); }
         public Rect StageBounds => _stageBounds;
         public int ActiveGeneration => _player.ActivePlan?.Generation ?? 0;
+        public bool IsTransitioning => _player.IsPlaying;
 
         private void Awake()
         {
@@ -86,7 +87,9 @@ namespace NineGrid.LivingUI.Unity
         {
             var liveStates = CaptureLiveStates();
             var target = layoutSource.GetLayout(layoutId);
-            var plan = _planner.Plan(liveStates, target, _stageBounds, transitionStyle);
+            var envelopeFloors = LivingUiContentProjector.AggregateEnvelopeFloors(
+                layoutSource.ContentBindings);
+            var plan = _planner.Plan(liveStates, target, _stageBounds, transitionStyle, envelopeFloors);
             _player.TryBegin(plan);
 
             foreach (var entry in plan.Programs)
