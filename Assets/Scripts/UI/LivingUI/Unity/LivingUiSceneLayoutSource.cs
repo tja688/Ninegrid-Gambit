@@ -166,7 +166,7 @@ namespace NineGrid.LivingUI.Unity
                 Binding(LivingUiLayoutId.RewardChoice, "大盘构型2-1-选择奖励"),
                 Binding(LivingUiLayoutId.DeckPreview, "大盘构型2-2-打开卡组视图"),
                 Binding(LivingUiLayoutId.Room, "大盘构型3-房间基础面板"),
-                Binding(LivingUiLayoutId.Route, "大盘构型4-路线展示"),
+                Binding(LivingUiLayoutId.Route, "大盘构型4-预备待定"),
             };
         }
 
