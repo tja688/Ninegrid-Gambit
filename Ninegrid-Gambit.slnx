@@ -18,6 +18,7 @@
   <Project Path="MoreMountains.Tools.Editor.csproj" />
   <Project Path="NineGrid.Flow.csproj" />
   <Project Path="AudioKit.csproj" />
+  <Project Path="NineGrid.VisualLook.csproj" />
   <Project Path="NineGrid.Cards.Tests.csproj" />
   <Project Path="NineGrid.Cards.Editor.csproj" />
   <Project Path="NineGrid.DevTest.csproj" />
