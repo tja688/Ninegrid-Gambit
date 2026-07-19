@@ -1,4 +1,5 @@
 using System;
+using NineGrid.Flow.Diagnostics;
 
 namespace NineGrid.Flow.Presentation
 {
@@ -58,11 +59,14 @@ namespace NineGrid.Flow.Presentation
             if (!IsMainlineBusy)
             {
                 mScriptFactory.BuildScript(intent, mMainline);
+                DirectorTrace.IntentAccepted(intent.Kind, intent.TargetId);
+                PublishBusy();
                 return true;
             }
 
             if (mHasBufferedIntent)
             {
+                DirectorTrace.IntentRejected(intent.Kind, intent.TargetId);
                 return false;
             }
 
@@ -74,6 +78,8 @@ namespace NineGrid.Flow.Presentation
                 mUiPickPreview.Preview(intent);
             }
 
+            DirectorTrace.IntentBuffered(intent.Kind, intent.TargetId, uiPick: true);
+            PublishBusy();
             return true;
         }
 
@@ -87,17 +93,23 @@ namespace NineGrid.Flow.Presentation
             // Phase / 战败 / 换层使当前剧本上下文失效，一并中止主线与旁路。
             mMainline.Clear();
             mBypass.Clear();
+            DirectorTrace.IntentHardClear(reason.ToString());
+            PublishBusy();
         }
 
         public void EnqueueMainline(ITimelineStep step)
         {
             mMainline.Enqueue(step);
+            PublishBusy();
         }
 
         /// <summary>旁路装饰道：与主线并行，不占输入互斥。</summary>
         public void StartBypass(ITimelineStep step)
         {
+            var stepName = step != null ? step.GetType().Name : string.Empty;
             mBypass.Enqueue(step);
+            DirectorTrace.BypassStart(stepName);
+            PublishBusy();
         }
 
         public void Tick(float deltaTime)
@@ -110,8 +122,20 @@ namespace NineGrid.Flow.Presentation
                 var intent = mBufferedIntent;
                 mHasBufferedIntent = false;
                 mBufferedIntent = default(InputIntent);
+                DirectorTrace.IntentFlush(intent.Kind, intent.TargetId);
                 mScriptFactory.BuildScript(intent, mMainline);
             }
+
+            PublishBusy();
+        }
+
+        private void PublishBusy()
+        {
+            DirectorTrace.PublishBusyState(
+                IsMainlineBusy,
+                IsBypassBusy,
+                mHasBufferedIntent,
+                mHasBufferedIntent ? mBufferedIntent.Kind : string.Empty);
         }
     }
 }

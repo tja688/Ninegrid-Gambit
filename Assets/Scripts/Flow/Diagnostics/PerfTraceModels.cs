@@ -85,6 +85,43 @@ namespace NineGrid.Flow.Diagnostics
         public const string Handoff = "Handoff";
         /// <summary>表现节拍与诊断 beat 对齐（payload.presBeatId + 事件 beatId）。</summary>
         public const string BeatAlign = "BeatAlign";
+
+        // --- PresentationDirector 剧本层（同轨 PerfLog；见 DirectorTrace）---
+
+        /// <summary>批次门成功 OpenBatch。</summary>
+        public const string DirectorBatchOpen = "DirectorBatchOpen";
+        /// <summary>批次门拒绝打开下一批。</summary>
+        public const string DirectorBatchOpenRejected = "DirectorBatchOpenRejected";
+        /// <summary>Resolve 终态失败等：剧本中止，主线 idle。</summary>
+        public const string DirectorScriptAborted = "DirectorScriptAborted";
+        /// <summary>PresentStep 开始播当前批。</summary>
+        public const string DirectorPresentBegin = "DirectorPresentBegin";
+        /// <summary>PresentStep 就位回执成功 FinishBatch。</summary>
+        public const string DirectorPresentAck = "DirectorPresentAck";
+        /// <summary>PresentStep 就位回执被拒。</summary>
+        public const string DirectorPresentAckRejected = "DirectorPresentAckRejected";
+        /// <summary>PresentStep 长时间 Continue（卡死探针）。</summary>
+        public const string DirectorPresentStall = "DirectorPresentStall";
+        /// <summary>意图立即开主线剧本。</summary>
+        public const string DirectorIntentAccepted = "DirectorIntentAccepted";
+        /// <summary>忙时缓冲意图（可含 uiPick）。</summary>
+        public const string DirectorIntentBuffered = "DirectorIntentBuffered";
+        /// <summary>已有缓冲时拒绝后来意图。</summary>
+        public const string DirectorIntentRejected = "DirectorIntentRejected";
+        /// <summary>主线空闲后消化缓冲意图。</summary>
+        public const string DirectorIntentFlush = "DirectorIntentFlush";
+        /// <summary>Phase/战败/换层硬清空。</summary>
+        public const string DirectorIntentHardClear = "DirectorIntentHardClear";
+        /// <summary>时间线换步进入（非逐帧）。</summary>
+        public const string DirectorStepEnter = "DirectorStepEnter";
+        /// <summary>时间线当前步 Finished。</summary>
+        public const string DirectorStepExit = "DirectorStepExit";
+        /// <summary>并行子流开始。</summary>
+        public const string DirectorForkBegin = "DirectorForkBegin";
+        /// <summary>并行子流全部结束。</summary>
+        public const string DirectorForkEnd = "DirectorForkEnd";
+        /// <summary>旁路装饰道入队（不占输入锁）。</summary>
+        public const string DirectorBypassStart = "DirectorBypassStart";
     }
 
     public static class PerfTraceSites
@@ -118,6 +155,12 @@ namespace NineGrid.Flow.Diagnostics
         public const string SlotFrameConverge = "SlotFrame.Converge";
         public const string EffectFrameConverge = "EffectFrame.Converge";
         public const string LayerHandoff = "Layer.Handoff";
+        public const string DirectorBatchGate = "Director.BatchGate";
+        public const string DirectorPresentStep = "Director.PresentStep";
+        public const string DirectorIntent = "Director.Intent";
+        public const string DirectorTimeline = "Director.Timeline";
+        public const string DirectorFork = "Director.Fork";
+        public const string DirectorBypass = "Director.Bypass";
     }
 
     public static class PerfTraceAnomalyCodes

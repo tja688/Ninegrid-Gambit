@@ -311,6 +311,8 @@ namespace NineGrid.Flow.Diagnostics
                 {
                     payload["inBattleBusy"] = battle.IsBusy ? "true" : "false";
                 }
+
+                DirectorTrace.AppendBusyFields(payload);
             }
             catch
             {

@@ -5945,6 +5945,15 @@ namespace NineGrid.Flow
                 return false;
             }
 
+            // idle 合法性预检：Cards 正交空槽与 Core 裁决不一致时勿入队，避免 Resolve dispatchReject 粘死主线。
+            string legalityReject;
+            if (!TryExplainExploreCoreLegality(groundSlot, out legalityReject))
+            {
+                Debug.LogWarning(
+                    $"[InBattleManager] Explore 被 Core 合法性拒绝 slot={groundSlot}: {legalityReject}");
+                return false;
+            }
+
             instance.EnsurePresentationDirector();
             bool preview;
             var accepted = instance._presentationDirector.TrySubmitIntent(
@@ -5953,6 +5962,58 @@ namespace NineGrid.Flow
             // 同帧同步 busy，避免等 Update 前出现门禁空窗。
             CombatHitSink.DirectorMainlineBusy = instance._presentationDirector.IsMainlineBusy;
             return accepted;
+        }
+
+        /// <summary>
+        /// 与 PhaseSystem.ClickEmpty 门禁对齐的 idle 裁决（不改 Core 状态）。
+        /// </summary>
+        private static bool TryExplainExploreCoreLegality(int groundSlot, out string rejectReason)
+        {
+            rejectReason = null;
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                rejectReason = "noArchitecture";
+                return false;
+            }
+
+            var phase = arch.GetSystem<IPhaseSystem>();
+            var sync = arch.GetSystem<IPresentationSyncSystem>();
+            if (sync != null && sync.IsInputLocked)
+            {
+                rejectReason = "presentationInputLocked activeBatchId=" + sync.ActiveBatchId;
+                return false;
+            }
+
+            if (!phase.CanExecute(GameCommandKind.ClickEmpty))
+            {
+                var pending = arch.GetModel<PendingChoiceModel>().Kind.Value;
+                rejectReason = "notLegal phase=" + phase.CurrentPhase + " pendingChoice=" + pending;
+                return false;
+            }
+
+            if (groundSlot < SlotId.MinBoardIndex || groundSlot > SlotId.MaxBoardIndex)
+            {
+                rejectReason = "slotOutOfRange";
+                return false;
+            }
+
+            var slot = SlotId.Board(groundSlot);
+            var board = arch.GetModel<BoardModel>();
+            if (slot == board.AvatarSlot.Value || !board.IsEmpty(slot))
+            {
+                rejectReason = "notEmptyOrAvatar avatarSlot=" + board.AvatarSlot.Value
+                    + " occupant=" + board.GetCardUid(slot);
+                return false;
+            }
+
+            if (!arch.GetSystem<IBoardSystem>().AreAdjacent(board.AvatarSlot.Value, slot))
+            {
+                rejectReason = "notAdjacent avatarSlot=" + board.AvatarSlot.Value;
+                return false;
+            }
+
+            return true;
         }
 
         private static bool TrySubmitAttackIntentFromCards(int groundSlot)

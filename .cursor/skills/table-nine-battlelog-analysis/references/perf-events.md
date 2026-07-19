@@ -35,8 +35,23 @@
 | `RingShift` | 外圈旋转计划/阶段 | `phase`=`plan\|vacated\|registered\|animate`, `plan`, `choreoSeqId`, `clockwise`, `skipBusyGuard`, `ringOccupied`, `animateTasks` |
 | `ChoreoBegin` / `ChoreoEnd` | 编排批次开闭 | `choreoSeqId`, `kind`, `outcome`, `plannedAnim`, `actualAnim`, `durationMs` + Busy 摘要 |
 | `ExploreTrace` | 空槽探求生命周期 | `phase`=`start\|withdraw\|chaseStart\|chaseEnd\|placeOk\|placeFail\|ringShift\|rollback`, `birthSlot`, `trackedSlot` |
-| `BusySnapshot` | 各 busy 位快照 | `fieldBusy`, `fieldSelfBusy`, `deckBusy`, `handBusy`, `drainInFlight`, `pumpRunning`, `queueDepth`, `openMotionCount`, `trigger` |
+| `BusySnapshot` | 各 busy 位快照 | 旧 busy 位 + `directorMainlineBusy` / `directorBypassBusy` / `bufferedIntent` / `activeBatchId`（见下） |
 | `SessionChoreoSummary` | Play 退出前摘要 | `choreoOpenAtExit`, `choreoPartialAnimateCount`, `pickupGateFailCount`, `lastPickupGate`, `lastChoreoSeqId` |
+| `DirectorBatchOpen` | 批次门成功 OpenBatch | `batchId`, `path=director`, `lane=mainline`, 可选 `slice` |
+| `DirectorBatchOpenRejected` | 拒绝打开下一批（同 reason 去重） | `reason`=`hasOpen\|dispatchReject\|noBatch`；`dispatchReject` 可带 `detail`（Core 拒因） |
+| `DirectorScriptAborted` | Resolve 终态失败中止剧本（主线应 idle） | `reason`（如 `batchOpenFailed`） |
+| `DirectorPresentBegin` | PresentStep 开始播批 | `batchId`, `channel` |
+| `DirectorPresentAck` | Present 就位回执成功 | `batchId` |
+| `DirectorPresentAckRejected` | FinishBatch 被拒（同批去重） | `batchId`, `expected` |
+| `DirectorPresentStall` | Present 连续 Continue ≥1s | `waitMs`, `phase`=`!complete\|!ack` |
+| `DirectorIntentAccepted` | 意图立即开主线剧本 | `intentKind`, `intentSlot` |
+| `DirectorIntentBuffered` | 忙时缓冲 + uiPick | `intentKind`, `intentSlot`, `uiPick=1` |
+| `DirectorIntentRejected` | 已有缓冲拒绝后来者 | `intentKind`, `intentSlot` |
+| `DirectorIntentFlush` | 主线空闲后消化缓冲 | `intentKind`, `intentSlot` |
+| `DirectorIntentHardClear` | Phase/战败/换层硬清空 | `reason` |
+| `DirectorStepEnter` / `DirectorStepExit` | 时间线换步（非逐帧；可选） | `step`, `lane` |
+| `DirectorForkBegin` / `DirectorForkEnd` | 并行子流（可选） | `childCount` |
+| `DirectorBypassStart` | 旁路装饰道入队 | `lane=bypass`, `step` |
 | `LeaseAcquire` | 租约申请 | `layer`, `verdict`, `commitment`, `leaseId`, `windowStart/End`, `disciplineB`, `commandeered` |
 | `LeaseRelease` | 租约释放 | `layer`, `leaseId`, `reason` |
 | `BarrierPlace` | 就位栅栏放置 | `presBeatId`, `barrierWall`, `sourceTime`, `startWall`（事件 `beatId`=DiagBeat） |
@@ -146,8 +161,39 @@
 | `Card.RegistryAudit` | 注册表审计 |
 | `Ground.HopPlan` | hop MotionPlan |
 | `DiagBeat` / `BoardSnap.Capture` / `Anomaly.Detect` | 记录器自身 |
+| `Director.BatchGate` / `Director.PresentStep` / `Director.Intent` | `DirectorTrace` 剧本层 |
 
-## 收敛范式回放（Mode E）
+### BusySnapshot 导演字段（迁移期与旧 busy 并存）
+
+| 字段 | 含义 |
+|------|------|
+| `directorMainlineBusy` | 主线在跑（唯一输入互斥真相） |
+| `directorBypassBusy` | 旁路装饰道在跑（不占输入锁） |
+| `bufferedIntent` | `0\|1`；有缓冲时另有 `bufferedIntentKind` |
+| `activeBatchId` | Core PresentationSync 当前打开批；0=无 |
+
+旧字段（`queueDepth` / `pumpRunning` / `presentationLocked` 等）迁移期保留便于 bisect；阶段 5 硬切后随旧泵清理（见 skill「阶段 5 诊断清理」）。
+
+## 导演剧本层（skill 模式 E）
+
+主键：`batchId` 串 Resolve→Present→Ack；`beatId` 对照 Motion/Choreo/Occupancy。  
+共性 payload：`path=director`，`lane=mainline|bypass`。
+
+期望垂直切片序（验收门）：
+
+```
+DirectorIntentAccepted
+  → DirectorBatchOpen → DirectorPresentBegin → (Motion*/Choreo*/切片 path=director)
+  → DirectorPresentAck
+  → …（下一批同形）
+```
+
+卡死：末条为 `DirectorPresentBegin` 后出现 `DirectorPresentStall(phase=!complete|!ack)`，或长时间无 `DirectorPresentAck`。  
+未 ack 却前进：同 `batchId` 未见 Ack 又出现下一 `DirectorBatchOpen`（或 OpenRejected `hasOpen` 缺失却仍 Open）。
+
+实现：`DirectorTrace` → `PerfTraceRecorder`（**不另开第五轨**）。
+
+## 收敛范式回放
 
 1. 同 `sessionId` 打开 CoreLog + PerfLog。
 2. 按 `beatId`（DiagBeat）对齐；payload `presBeatId` 关联表现节拍栅格。
@@ -158,11 +204,12 @@
 ## 与 CoreLog / Battle 互指
 
 - 同 `sessionId` + `seed`（+ 文件名 `runTag`）打开四文件：corelog / perflog / registrylog / battlelog。
-- 同 `beatId`：CoreLog 看意图与逻辑占格；PerfLog 看画面。
+- 同 `beatId`：CoreLog 看意图与逻辑占格；PerfLog 看画面与导演剧本。
 - Battle：`refBattleOpIndex` 仍指向 BattleLog Op；节奏用 `beatId`（CombatHit Beat 与战斗表现段对齐）。
 
 ## 插桩入口
 
 - Cards：`CardPresentationProbe` / `ConvergenceDiagProbe` → `PerfTraceSink` + `FlowFieldTraceSink`
 - Flow：`PerfTraceRecorder.OpenBeat` / `CloseBeat` / `RecordBoardSnap`
+- 导演：`DirectorTrace`（BatchGate / PresentStep / PresentationDirector）
 - 导出：`BattleTraceRecorder.ExportBothNow` / Play 退出四件套

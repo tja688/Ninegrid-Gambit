@@ -1,5 +1,6 @@
 using System;
 using NineGrid.Core;
+using NineGrid.Flow.Diagnostics;
 
 namespace NineGrid.Flow.Presentation
 {
@@ -14,12 +15,14 @@ namespace NineGrid.Flow.Presentation
         private readonly Func<int> mActiveBatchId;
         private readonly Func<CoreCommandDispatchResult> mResolveAndOpen;
         private readonly Func<int, CoreCommandResult> mFinishBatch;
+        private readonly string mSlice;
 
         public PresentationSyncBatchGate(
             Func<bool> hasOpenBatch,
             Func<int> activeBatchId,
             Func<CoreCommandDispatchResult> resolveAndOpen,
-            Func<int, CoreCommandResult> finishBatch)
+            Func<int, CoreCommandResult> finishBatch,
+            string slice = null)
         {
             if (hasOpenBatch == null)
             {
@@ -45,12 +48,14 @@ namespace NineGrid.Flow.Presentation
             mActiveBatchId = activeBatchId;
             mResolveAndOpen = resolveAndOpen;
             mFinishBatch = finishBatch;
+            mSlice = slice;
         }
 
         /// <summary>从真实 PresentationSyncSystem + Dispatcher 解算回调接线。</summary>
         public static PresentationSyncBatchGate FromSync(
             IPresentationSyncSystem sync,
-            Func<CoreCommandDispatchResult> resolveAndOpen)
+            Func<CoreCommandDispatchResult> resolveAndOpen,
+            string slice = null)
         {
             if (sync == null)
             {
@@ -61,7 +66,8 @@ namespace NineGrid.Flow.Presentation
                 () => sync.ActiveBatchId > 0,
                 () => sync.ActiveBatchId,
                 resolveAndOpen,
-                sync.FinishBatch);
+                sync.FinishBatch,
+                slice);
         }
 
         public bool HasOpenBatch
@@ -74,23 +80,43 @@ namespace NineGrid.Flow.Presentation
             get { return mActiveBatchId(); }
         }
 
-        public bool TryOpenNextBatch(out int batchId)
+        public BatchOpenResult TryOpenNextBatch(out int batchId)
         {
             if (mHasOpenBatch())
             {
                 batchId = 0;
-                return false;
+                DirectorTrace.PublishActiveBatchId(mActiveBatchId());
+                DirectorTrace.BatchOpenRejected(DirectorTrace.RejectHasOpen);
+                return BatchOpenResult.WaitHasOpen;
             }
 
             var result = mResolveAndOpen();
-            if (result == null || !result.Accepted || !result.BatchOpened || result.Batch == null)
+            if (result == null || !result.Accepted)
             {
                 batchId = 0;
-                return false;
+                var detail = result != null && result.CommandResult != null
+                    ? result.CommandResult.Reason
+                    : "nullDispatch";
+                DirectorTrace.BatchOpenRejected(DirectorTrace.RejectDispatch, detail);
+                return BatchOpenResult.Failed;
+            }
+
+            if (!result.BatchOpened || result.Batch == null)
+            {
+                batchId = 0;
+                DirectorTrace.BatchOpenRejected(DirectorTrace.RejectNoBatch);
+                return BatchOpenResult.Failed;
             }
 
             batchId = result.Batch.BatchId;
-            return batchId > 0;
+            if (batchId <= 0)
+            {
+                DirectorTrace.BatchOpenRejected(DirectorTrace.RejectNoBatch);
+                return BatchOpenResult.Failed;
+            }
+
+            DirectorTrace.BatchOpen(batchId, mSlice);
+            return BatchOpenResult.Opened;
         }
 
         public bool TryAcknowledge(int batchId)

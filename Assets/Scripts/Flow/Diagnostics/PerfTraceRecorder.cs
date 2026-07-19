@@ -104,6 +104,7 @@ namespace NineGrid.Flow.Diagnostics
                 sAnomalyCountThisBeat = 0;
                 CardPresentationProbe.ResetMotionIds();
                 ChoreoTraceContext.Reset();
+                DirectorTrace.Reset();
             }
             catch (Exception ex)
             {

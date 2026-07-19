@@ -88,14 +88,14 @@ namespace NineGrid.Flow.Tests
             });
 
             int firstId;
-            Assert.IsTrue(gate.TryOpenNextBatch(out firstId));
+            Assert.AreEqual(BatchOpenResult.Opened, gate.TryOpenNextBatch(out firstId));
             Assert.AreEqual(1, firstId);
             Assert.AreEqual(1, resolveCount);
             Assert.IsTrue(gate.HasOpenBatch);
             Assert.IsFalse(session.IsInputLocked);
 
             int blocked;
-            Assert.IsFalse(gate.TryOpenNextBatch(out blocked));
+            Assert.AreEqual(BatchOpenResult.WaitHasOpen, gate.TryOpenNextBatch(out blocked));
             Assert.AreEqual(1, resolveCount);
 
             Assert.IsTrue(gate.TryAcknowledge(firstId));
@@ -103,7 +103,7 @@ namespace NineGrid.Flow.Tests
             Assert.AreEqual(0, session.ActiveBatchId);
 
             int secondId;
-            Assert.IsTrue(gate.TryOpenNextBatch(out secondId));
+            Assert.AreEqual(BatchOpenResult.Opened, gate.TryOpenNextBatch(out secondId));
             Assert.AreEqual(2, secondId);
             Assert.AreEqual(2, resolveCount);
         }
@@ -132,6 +132,39 @@ namespace NineGrid.Flow.Tests
             Assert.IsTrue(present.Began);
             Assert.IsFalse(gate.HasOpenBatch);
             Assert.IsFalse(timeline.IsBusy);
+        }
+
+        [Test]
+        public void ResolveBatch_DispatchReject_AbortsMainline_DoesNotStickBusy()
+        {
+            // P0：dispatchReject 若 Continue 重试会永久粘住 IsMainlineBusy（空格 explore 卡死）。
+            var gate = new FakeBatchGate(alwaysFail: true);
+            var present = new FakePresentChannel(ticksUntilComplete: 1);
+            var director = new PresentationDirector(new RecordingScriptFactory());
+            director.EnqueueMainline(new ResolveBatchStep(gate));
+            director.EnqueueMainline(new PresentStep(gate, present));
+            Assert.IsTrue(director.IsMainlineBusy);
+
+            director.Tick(0.016f);
+            Assert.IsFalse(director.IsMainlineBusy);
+            Assert.IsFalse(present.Began);
+        }
+
+        [Test]
+        public void SyncBatchGate_RejectedDispatch_ReturnsFailed_NotWaitHasOpen()
+        {
+            var session = new SyncSessionStub();
+            var gate = CreateGateFromSession(
+                session,
+                () => new CoreCommandDispatchResult(
+                    CoreCommandResult.Reject("Clicked slot is outside interaction range."),
+                    null,
+                    false));
+
+            int batchId;
+            Assert.AreEqual(BatchOpenResult.Failed, gate.TryOpenNextBatch(out batchId));
+            Assert.AreEqual(0, batchId);
+            Assert.IsFalse(gate.HasOpenBatch);
         }
 
         private static PresentationSyncBatchGate CreateGateFromSession(
@@ -342,22 +375,34 @@ namespace NineGrid.Flow.Tests
         private sealed class FakeBatchGate : IPresentationBatchGate
         {
             private int mNextId = 1;
+            private readonly bool mAlwaysFail;
+
+            public FakeBatchGate(bool alwaysFail = false)
+            {
+                mAlwaysFail = alwaysFail;
+            }
 
             public bool HasOpenBatch { get; private set; }
             public int ActiveBatchId { get; private set; }
 
-            public bool TryOpenNextBatch(out int batchId)
+            public BatchOpenResult TryOpenNextBatch(out int batchId)
             {
+                if (mAlwaysFail)
+                {
+                    batchId = 0;
+                    return BatchOpenResult.Failed;
+                }
+
                 if (HasOpenBatch)
                 {
                     batchId = 0;
-                    return false;
+                    return BatchOpenResult.WaitHasOpen;
                 }
 
                 batchId = mNextId++;
                 ActiveBatchId = batchId;
                 HasOpenBatch = true;
-                return true;
+                return BatchOpenResult.Opened;
             }
 
             public bool TryAcknowledge(int batchId)

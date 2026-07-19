@@ -48,6 +48,12 @@ namespace NineGrid.Flow.Presentation
             }
 
             var status = mCurrent.Tick(deltaTime);
+            if (status == TimelineStepStatus.Aborted)
+            {
+                Clear();
+                return TimelineStepStatus.Finished;
+            }
+
             if (status != TimelineStepStatus.Finished)
             {
                 return TimelineStepStatus.Continue;

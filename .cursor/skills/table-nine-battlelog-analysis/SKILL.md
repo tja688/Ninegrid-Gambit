@@ -5,12 +5,13 @@ description: >-
   Combat mode: damage/design numeric triangulation via BattleLog.
   Flow mode: reconstruct run timeline via CoreLog.
   Perf mode: card position/visibility/teleport bugs via PerfLog + beatId sync.
+  Director lockstep mode: PresentationDirector batch/ack/intent via PerfLog Director* events.
   Use when the user asks to 分析战斗日志/BattleLog、流程日志/CoreLog/FlowLog、表现日志/PerfLog、
-  错位/瞬移/闪消失、一反击就死、跳过奖励、房间卡住、全流程还原、对照设计文档查战斗问题、
-  或根据日志复测/改接线.
+  导演锁步/批次ack/MainlineBusy卡死、错位/瞬移/闪消失、一反击就死、跳过奖励、房间卡住、
+  全流程还原、对照设计文档查战斗问题、或根据日志复测/改接线.
 ---
 
-# TableNine 诊断日志分析（三模式）
+# TableNine 诊断日志分析
 
 Session 根：`sessionId` + `seed`（`DiagTraceShared`）。  
 共通节奏键：`beatId`（`DiagBeatClock`）。同一 Beat 下 Core 可多事件、Perf 可少事件，**用 Beat 对齐，勿要求 1:1**。
@@ -63,6 +64,7 @@ Session 根：`sessionId` + `seed`（`DiagTraceShared`）。
 | 伤害/反击/数值对不对 | **A 战斗分析** | BattleLog；需节奏时同 `beatId` 看 CoreLog |
 | 跳过环节/房间/流程缺步 | **B 流程溯源** | CoreLog；需画面时同 `beatId` 开 PerfLog |
 | 错位/空位有牌/瞬移补位/怪闪消失/消失还能打 / CardManager actor 变少 | **C 表现溯源** | **PerfLog + RegistryLog 为主**；同 `beatId` 对照 CoreLog 占格/意图；伤害细节回 Battle |
+| 导演锁步/未 ack 前进/意图缓冲/MainlineBusy 粘住/垂直切片还原门 | **E 导演锁步** | PerfLog 滤 `Director*`；同 `batchId`/`beatId` 对照 Motion/Choreo |
 
 **硬区分**：`OccupancySnapshot`（CoreLog）= 逻辑占格登记，**不是**世界坐标。画面位置只信 PerfLog。`site` 是追责主键；无 site 的坐标变化视为插桩缺口，不臆测 Core。
 
@@ -209,6 +211,62 @@ Keypad7 `UserMark` 仍可用作可选加强，非必需。
 3. **乱飘/瞬移**：PerfLog 按 uid 查 `SnapSet(killedTween=1)`、`ExploreTrace` / `MotionBegin(SlotFrame.*)` 是否与 `RingShift` 同 seq 重叠；征用看 `Handoff(commandeerAdmit)`
 4. **Help 卡点不动**：RegistryLog `PickupEligibility` + CoreLog `PickupGate` 最后一条 `gate=`；同 beatId `OccupancySnapshot phase=pickupClick`
 
+> 已迁导演的流程优先 **模式 E**（`Director*` 剧本序）；模式 D 的 `BoardQueue*` 在迁移期仍可用于旧路径 bisect。
+
+---
+
+# 模式 E：导演锁步溯源
+
+**入口**：同 session 的 `perflog-*`（主）+ 必要时同 `beatId` 开 `corelog-*` / Motion·Choreo。  
+**实现**：`DirectorTrace` → PerfLog（**无第五轨 DirectorLog**）。事件表见 [`references/perf-events.md`](references/perf-events.md)「导演剧本层」。
+
+### 工作流
+
+1. 滤 PerfLog `kind` 前缀 `Director`
+2. 按 `batchId` 串：`BatchOpen` → `PresentBegin` →（同 beatId 的 Motion*/Choreo*/`path=director` 切片）→ `PresentAck`
+3. 意图：`IntentAccepted` / `Buffered(uiPick=1)` / `Rejected` / `Flush` / `HardClear`
+4. Busy：`BusySnapshot.directorMainlineBusy` / `activeBatchId` / `bufferedIntent`
+5. 卡死：`DirectorPresentStall` 或 Begin 后长期无 Ack；对照 `phase=!complete|!ack`；或 `DirectorBatchOpenRejected(dispatchReject)` 后无 `DirectorScriptAborted`（旧缺陷：Resolve 无限 Continue → MainlineBusy 粘死）
+
+### 垂直切片验收序（还原门）
+
+```
+DirectorIntentAccepted
+  → DirectorBatchOpen → DirectorPresentBegin → (Motion*|Choreo*|切片 path=director)
+  → DirectorPresentAck
+  → …下一批
+```
+
+失败则禁止拆该流程旧路径。迁移期对照 `path=director|legacy*`。
+
+### 汇报模板（导演）
+
+```markdown
+## 导演锁步结论
+- 日志：`Assets/Notes/Logs/PerfLog/perflog-…`（stem / sessionId）
+- 意图：Accepted/Buffered/HardClear …
+- 批次序：batchId=… Open→PresentBegin→Ack（或缺哪环）
+- Stall / Reject：…
+
+## 判定
+- [ ] 锁步顺序坏 / [ ] Present 卡死 / [ ] 意图缓冲异常 / [ ] 切片还原偏差 / [ ] 合理
+```
+
+---
+
+## 阶段 5 诊断清理（硬切时执行；迁移期尚未删）
+
+旧编排机制删净后，**清旧专属挂点，保留 Diag 四轨基建**：
+
+| 清理 | 保留 |
+|------|------|
+| CoreLog `BoardQueueEnqueue/Dequeue/Skip` | `DiagTraceShared` / `DiagBeatClock` / 四轨导出 |
+| BusySnapshot 旧泵字段：`queueDepth` / `pumpRunning` /（若退场）`presentationLocked` | `Director*` + `directorMainlineBusy` 等 |
+| `path=legacyPostPresent` 等对照位点 | `Motion*` / Lease / Barrier / Occupancy / Registry / Battle |
+| 模式 D 中「只讲 BoardQueue」的验收路径 | 模式 E 导演剧本序 + 收敛探针 |
+
+迁移期：**双写对照保留**，勿提前删 emitter。
+
 ---
 
 ## 用户意图分流
@@ -218,13 +276,14 @@ Keypad7 `UserMark` 仍可用作可选加强，非必需。
 | 分析 / 合不合理 / 汇报 | 只出简报（选对模式） |
 | 修 / 改 / 落地 | 按定性改层；默认不改 Core |
 | 复测 | 只跑/补测试 |
-| 多次旋转/乱飘/Help 拾取失败 | **模式 D**（场地编排专查） |
+| 多次旋转/乱飘/Help 拾取失败 | **模式 D**（场地编排专查）；已迁导演则先 **E** |
+| 锁步/ack/意图缓冲/MainlineBusy 粘住 | **模式 E** |
 
 ## 参考
 
 - Core 事件：[`references/flow-events.md`](references/flow-events.md)
-- Perf 事件：[`references/perf-events.md`](references/perf-events.md)
+- Perf 事件：[`references/perf-events.md`](references/perf-events.md)（含 Director*）
 - Registry 事件：[`references/registry-events.md`](references/registry-events.md)
 - 数值查表：[`references/numeric-tables.md`](references/numeric-tables.md)
 - EditMode：[`references/test-harness.md`](references/test-harness.md)
-- 产出代码：`DiagBeatClock` / `PerfTraceRecorder` / `FlowTraceRecorder` / `BattleTraceRecorder` / `CardPresentationProbe`
+- 产出代码：`DiagBeatClock` / `PerfTraceRecorder` / `DirectorTrace` / `FlowTraceRecorder` / `BattleTraceRecorder` / `CardPresentationProbe`

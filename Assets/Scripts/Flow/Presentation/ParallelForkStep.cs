@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NineGrid.Flow.Diagnostics;
 
 namespace NineGrid.Flow.Presentation
 {
@@ -10,6 +11,8 @@ namespace NineGrid.Flow.Presentation
     {
         private readonly ITimelineStep[] mChildren;
         private readonly bool[] mFinished;
+        private bool mBegan;
+        private bool mEnded;
 
         public ParallelForkStep(IReadOnlyList<ITimelineStep> children)
         {
@@ -33,6 +36,12 @@ namespace NineGrid.Flow.Presentation
 
         public TimelineStepStatus Tick(float deltaTime)
         {
+            if (!mBegan)
+            {
+                mBegan = true;
+                DirectorTrace.ForkBegin(mChildren.Length);
+            }
+
             var allFinished = true;
             for (var i = 0; i < mChildren.Length; i++)
             {
@@ -41,7 +50,13 @@ namespace NineGrid.Flow.Presentation
                     continue;
                 }
 
-                if (mChildren[i].Tick(deltaTime) == TimelineStepStatus.Finished)
+                var childStatus = mChildren[i].Tick(deltaTime);
+                if (childStatus == TimelineStepStatus.Aborted)
+                {
+                    return TimelineStepStatus.Aborted;
+                }
+
+                if (childStatus == TimelineStepStatus.Finished)
                 {
                     mFinished[i] = true;
                 }
@@ -51,7 +66,18 @@ namespace NineGrid.Flow.Presentation
                 }
             }
 
-            return allFinished ? TimelineStepStatus.Finished : TimelineStepStatus.Continue;
+            if (!allFinished)
+            {
+                return TimelineStepStatus.Continue;
+            }
+
+            if (!mEnded)
+            {
+                mEnded = true;
+                DirectorTrace.ForkEnd(mChildren.Length);
+            }
+
+            return TimelineStepStatus.Finished;
         }
     }
 }

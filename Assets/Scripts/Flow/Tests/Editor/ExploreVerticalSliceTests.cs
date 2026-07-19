@@ -121,6 +121,30 @@ namespace NineGrid.Flow.Tests
             Assert.AreEqual(0, mSync.ActiveBatchId);
         }
 
+        [Test]
+        public void ExploreIntent_ClickEmptyRejected_AbortsMainline_DoesNotStickBusy()
+        {
+            // 非法空格（远角）→ Resolve ClickEmpty dispatchReject → 必须中止，不可永久 busy。
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sAdjacentSlot);
+            Assert.IsTrue(mArch.GetModel<BoardModel>().IsEmpty(sFarCornerSlot));
+
+            var present = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var factory = new ExploreIntentScriptFactory(mArch, mDispatcher, present);
+            var director = new PresentationDirector(factory);
+
+            bool preview;
+            Assert.IsTrue(director.TrySubmitIntent(
+                new InputIntent(InputIntentKinds.Explore, sFarCornerSlot.Index),
+                out preview));
+            Assert.IsTrue(director.IsMainlineBusy);
+
+            director.Tick(0.016f);
+            Assert.IsFalse(director.IsMainlineBusy);
+            Assert.AreEqual(0, present.BeginCount);
+            Assert.AreEqual(0, mSync.ActiveBatchId);
+        }
+
         private bool ContainsEventTypeSince(int startIndex, CoreEventType type)
         {
             var entries = mPipeline.EventLog.Entries;

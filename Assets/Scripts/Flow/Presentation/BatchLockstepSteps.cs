@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using UnityEngine;
 using NineGrid.Flow.Diagnostics;
 
 namespace NineGrid.Flow.Presentation
@@ -12,20 +12,24 @@ namespace NineGrid.Flow.Presentation
         bool HasOpenBatch { get; }
         int ActiveBatchId { get; }
 
-        /// <summary>请 Core 解算下一批并 OpenBatch。若仍有未 ack 批次则拒绝。</summary>
-        bool TryOpenNextBatch(out int batchId);
+        /// <summary>
+        /// 请 Core 解算下一批并 OpenBatch。
+        /// WaitHasOpen=仍有未 ack 批次（可重试）；Failed=解算/开门终态失败（须中止剧本）。
+        /// </summary>
+        BatchOpenResult TryOpenNextBatch(out int batchId);
 
         /// <summary>表演就位回执：FinishBatch。batchId 不匹配则拒绝。</summary>
         bool TryAcknowledge(int batchId);
     }
 
     /// <summary>
-    /// ResolveBatch：瞬时打开一批后 Finished；被门拒绝则驻留 Continue（等待 ack 后重试）。
+    /// ResolveBatch：瞬时打开一批后 Finished；仅 WaitHasOpen 驻留 Continue；Failed 则 Aborted。
     /// </summary>
     public sealed class ResolveBatchStep : ITimelineStep
     {
         private readonly IPresentationBatchGate mGate;
         private int mOpenedBatchId;
+        private bool mAborted;
 
         public ResolveBatchStep(IPresentationBatchGate gate)
         {
@@ -44,15 +48,28 @@ namespace NineGrid.Flow.Presentation
 
         public TimelineStepStatus Tick(float deltaTime)
         {
+            if (mAborted)
+            {
+                return TimelineStepStatus.Aborted;
+            }
+
             if (mOpenedBatchId > 0)
             {
                 return TimelineStepStatus.Finished;
             }
 
             int batchId;
-            if (!mGate.TryOpenNextBatch(out batchId))
+            var open = mGate.TryOpenNextBatch(out batchId);
+            if (open == BatchOpenResult.WaitHasOpen)
             {
                 return TimelineStepStatus.Continue;
+            }
+
+            if (open == BatchOpenResult.Failed)
+            {
+                mAborted = true;
+                DirectorTrace.ScriptAborted("batchOpenFailed");
+                return TimelineStepStatus.Aborted;
             }
 
             mOpenedBatchId = batchId;
@@ -78,11 +95,14 @@ namespace NineGrid.Flow.Presentation
     {
         private readonly IPresentationBatchGate mGate;
         private readonly IPresentChannel mChannel;
+        private readonly string mChannelName;
         private int mBatchId;
         private bool mStarted;
         private bool mAcknowledged;
+        private float mWaitStartRealtime = -1f;
+        private float mLastStallRealtime = -1f;
 
-        public PresentStep(IPresentationBatchGate gate, IPresentChannel channel)
+        public PresentStep(IPresentationBatchGate gate, IPresentChannel channel, string channelName = null)
         {
             if (gate == null)
             {
@@ -96,6 +116,7 @@ namespace NineGrid.Flow.Presentation
 
             mGate = gate;
             mChannel = channel;
+            mChannelName = channelName ?? channel.GetType().Name;
         }
 
         public TimelineStepStatus Tick(float deltaTime)
@@ -115,30 +136,53 @@ namespace NineGrid.Flow.Presentation
                 mBatchId = mGate.ActiveBatchId;
                 mChannel.Begin(mBatchId);
                 mStarted = true;
+                mWaitStartRealtime = Time.realtimeSinceStartup;
+                mLastStallRealtime = -1f;
+                DirectorTrace.PresentBegin(mBatchId, mChannelName);
             }
 
             mChannel.Tick(deltaTime);
 
             if (!mChannel.IsComplete)
             {
+                MaybeStall(DirectorTrace.StallPhaseNotComplete);
                 return TimelineStepStatus.Continue;
             }
 
             if (!mGate.TryAcknowledge(mBatchId))
             {
+                DirectorTrace.PresentAckRejected(mBatchId);
+                MaybeStall(DirectorTrace.StallPhaseNotAck);
                 return TimelineStepStatus.Continue;
             }
 
-            PerfTraceRecorder.Record(
-                "DirectorPresentAck",
-                mBatchId,
-                "PresentStep",
-                new Dictionary<string, string>
-                {
-                    ["batchId"] = mBatchId.ToString(),
-                });
+            DirectorTrace.PresentAck(mBatchId);
             mAcknowledged = true;
             return TimelineStepStatus.Finished;
+        }
+
+        private void MaybeStall(string phase)
+        {
+            if (mWaitStartRealtime < 0f)
+            {
+                return;
+            }
+
+            var now = Time.realtimeSinceStartup;
+            var waitSec = now - mWaitStartRealtime;
+            if (waitSec < DirectorTrace.PresentStallThresholdSec)
+            {
+                return;
+            }
+
+            if (mLastStallRealtime >= 0f
+                && now - mLastStallRealtime < DirectorTrace.PresentStallRepeatSec)
+            {
+                return;
+            }
+
+            mLastStallRealtime = now;
+            DirectorTrace.PresentStall(mBatchId, waitSec, phase);
         }
     }
 }
