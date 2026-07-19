@@ -43,6 +43,7 @@
   <Project Path="NineGrid.Flow.Editor.csproj" />
   <Project Path="NineGrid.LivingUI.Editor.csproj" />
   <Project Path="Lofelt.NiceVibrations.csproj" />
+  <Project Path="NineGrid.Flow.Tests.csproj" />
   <Project Path="UniTask.Editor.csproj" />
   <Project Path="Sirenix.OdinInspector.Modules.UnityMathematics.csproj" />
   <Project Path="UniTask.DOTween.csproj" />
