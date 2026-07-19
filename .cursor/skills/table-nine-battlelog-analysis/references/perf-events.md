@@ -57,6 +57,7 @@
 | `Anomaly` | 自动 | `code`, `detail`, `refIndex` |
 | `SkeletonFusion` | 骷髅融合编排（PerfTraceRecorder） | `site` 见下；payload 含 skillId/resultUid/participants 等 |
 | `ShuffleIntoDeck` | 洗回牌库编排（PerfTraceRecorder） | `site` 见下；payload 含 count/path |
+| `ShuffleBurstScatter` | 洗回炸牌散点（PerfTraceRecorder） | `site` 见下；payload 含 actionId/count/path |
 
 ### SkeletonFusion `site`
 
@@ -78,6 +79,12 @@
 | `PresentBegin` / `PresentEnd` | 洗回飞入卡组表演开闭（用牌 Present 前缀或盘面 Drain Flush） |
 
 导演路径上洗回只经 Present/Drain Flush；旧 `_pendingShuffleInto` Forget 泵不可达。净土域入组仍走 DOTween 黑盒（Evict/Admit 边界）。
+
+### ShuffleBurstScatter `site`
+
+| site | 含义 |
+|------|------|
+| `PresentBegin` / `PresentEnd` | 同 ActionId 多张新生/随机洗入：圆上炸开 → 同步停稳 → 集体上飞入组 |
 
 ### BoardSnap `cards` 格式
 

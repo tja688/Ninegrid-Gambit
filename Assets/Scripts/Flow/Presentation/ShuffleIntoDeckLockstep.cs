@@ -110,5 +110,33 @@ namespace NineGrid.Flow.Presentation
                     ["path"] = "director",
                 });
         }
+
+        public static void RecordBurstScatterBegin(int actionId, int count)
+        {
+            PerfTraceRecorder.Record(
+                "ShuffleBurstScatter",
+                -1,
+                "PresentBegin",
+                new Dictionary<string, string>
+                {
+                    ["actionId"] = actionId.ToString(),
+                    ["count"] = count.ToString(),
+                    ["path"] = "director",
+                });
+        }
+
+        public static void RecordBurstScatterEnd(int actionId, int count)
+        {
+            PerfTraceRecorder.Record(
+                "ShuffleBurstScatter",
+                -1,
+                "PresentEnd",
+                new Dictionary<string, string>
+                {
+                    ["actionId"] = actionId.ToString(),
+                    ["count"] = count.ToString(),
+                    ["path"] = "director",
+                });
+        }
     }
 }

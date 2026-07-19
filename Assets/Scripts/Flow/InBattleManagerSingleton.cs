@@ -2944,30 +2944,53 @@ namespace NineGrid.Flow
                 return;
             }
 
+            var pending = new List<ShuffleIntoDeckPresentationEntry>(_shuffleIntoSink.PendingCount);
+            while (_shuffleIntoSink.TryDequeue(out var queued))
+            {
+                pending.Add(queued);
+            }
+
+            if (pending.Count == 0)
+            {
+                return;
+            }
+
+            var burstGroups = new List<ShuffleBurstGroup>();
+            var leftovers = new List<ShuffleIntoDeckPresentationEntry>();
+            ShuffleBurstGrouper.Partition(pending, burstGroups, leftovers);
+
             var dealInterval = deckManager.LayoutSettings != null
                 ? deckManager.LayoutSettings.dealInterval
                 : 0.05f;
-            var startedCount = _shuffleIntoSink.PendingCount;
-            if (startedCount > 0)
-            {
-                ShuffleIntoDeckLockstep.RecordPresentBegin(startedCount);
-            }
+            var startedCount = pending.Count;
+            ShuffleIntoDeckLockstep.RecordPresentBegin(startedCount);
 
             try
             {
-                while (_shuffleIntoSink.TryDequeue(out var entry))
+                for (var i = 0; i < burstGroups.Count; i++)
                 {
                     ct.ThrowIfCancellationRequested();
-
                     while (deckManager.IsBusy)
                     {
                         ct.ThrowIfCancellationRequested();
                         await UniTask.Yield(PlayerLoopTiming.Update, ct);
                     }
 
-                    await PresentOneShuffleIntoDeckAsync(entry, ct);
+                    await PresentBurstScatterShuffleGroupAsync(burstGroups[i], ct);
+                }
 
-                    if (_shuffleIntoSink.HasPending && dealInterval > 0f)
+                for (var i = 0; i < leftovers.Count; i++)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    while (deckManager.IsBusy)
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        await UniTask.Yield(PlayerLoopTiming.Update, ct);
+                    }
+
+                    await PresentOneShuffleIntoDeckAsync(leftovers[i], ct);
+
+                    if (i + 1 < leftovers.Count && dealInterval > 0f)
                     {
                         await UniTask.Delay(TimeSpan.FromSeconds(dealInterval), cancellationToken: ct);
                     }
@@ -2975,11 +2998,128 @@ namespace NineGrid.Flow
             }
             finally
             {
-                if (startedCount > 0)
+                ShuffleIntoDeckLockstep.RecordPresentEnd(startedCount);
+            }
+        }
+
+        private async UniTask PresentBurstScatterShuffleGroupAsync(
+            ShuffleBurstGroup group,
+            CancellationToken ct)
+        {
+            if (group.Entries == null || group.Entries.Count == 0)
+            {
+                return;
+            }
+
+            ShuffleIntoDeckLockstep.RecordBurstScatterBegin(group.ActionId, group.Entries.Count);
+            try
+            {
+                ResolveManagers();
+                if (deckManager == null || cardManager == null)
                 {
-                    ShuffleIntoDeckLockstep.RecordPresentEnd(startedCount);
+                    return;
+                }
+
+                var originEntry = group.Entries[0];
+                if (!TryResolveShuffleIntoOrigin(originEntry, out var originTransform)
+                    || originTransform == null)
+                {
+                    if (!deckManager.TryGetDefaultDealOrigin(out originTransform)
+                        || originTransform == null)
+                    {
+                        Debug.LogWarning(
+                            $"[InBattleManager] BurstScatter action={group.ActionId} 无炸开原点，回退单条洗回。");
+                        for (var i = 0; i < group.Entries.Count; i++)
+                        {
+                            await PresentOneShuffleIntoDeckAsync(group.Entries[i], ct);
+                        }
+
+                        return;
+                    }
+                }
+
+                var origin = originTransform.position;
+                var cards = new List<ManagedCard>(group.Entries.Count);
+                for (var i = 0; i < group.Entries.Count; i++)
+                {
+                    var entry = group.Entries[i];
+                    if (deckManager.ContainsUid(entry.Uid))
+                    {
+                        continue;
+                    }
+
+                    var card = EnsureShuffleIntoCardView(entry, CardDisplayMode.GroundCardMode);
+                    if (card != null)
+                    {
+                        cards.Add(card);
+                    }
+                }
+
+                if (cards.Count == 0)
+                {
+                    return;
+                }
+
+                var fieldLayout = fieldManager != null ? fieldManager.LayoutSettings : null;
+                var radius = fieldLayout != null ? fieldLayout.burstScatterRadius : 1.1f;
+                var burstDuration = fieldLayout != null ? fieldLayout.burstScatterDuration : 0.28f;
+                var holdDuration = fieldLayout != null ? fieldLayout.burstScatterHoldDuration : 0.06f;
+                var exitDuration = fieldLayout != null ? fieldLayout.fieldExitDuration : 0.35f;
+
+                await CardBurstScatterIntoDeckPresenter.PresentAsync(
+                    cards,
+                    origin,
+                    radius,
+                    burstDuration,
+                    holdDuration,
+                    exitDuration,
+                    deckManager,
+                    ct);
+            }
+            finally
+            {
+                ShuffleIntoDeckLockstep.RecordBurstScatterEnd(group.ActionId, group.Entries.Count);
+            }
+        }
+
+        private ManagedCard EnsureShuffleIntoCardView(
+            ShuffleIntoDeckPresentationEntry entry,
+            CardDisplayMode initialMode)
+        {
+            ResolveManagers();
+            if (cardManager == null || entry.Uid <= 0)
+            {
+                return null;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            var defId = entry.DefId;
+            if (string.IsNullOrEmpty(defId)
+                && arch != null
+                && arch.GetModel<CardRegistry>().TryGet(entry.Uid, out var coreCard))
+            {
+                defId = coreCard.DefId;
+            }
+
+            if (string.IsNullOrEmpty(defId))
+            {
+                defId = CardManagerSingleton.StandardDefId;
+            }
+
+            cardManager.TryGet(entry.Uid, out var ensureCard);
+            if (ensureCard == null)
+            {
+                ensureCard = cardManager.SpawnView(
+                    entry.Uid,
+                    defId,
+                    initialMode: initialMode);
+                if (ensureCard != null)
+                {
+                    CoreCardPresentationMapper.ApplyToManagedCard(ensureCard);
                 }
             }
+
+            return ensureCard;
         }
 
         private async UniTask PresentOneShuffleIntoDeckAsync(
@@ -3007,36 +3147,10 @@ namespace NineGrid.Flow
                 return;
             }
 
-            var arch = NineGridArchitecture.Current;
-            var defId = entry.DefId;
-            if (string.IsNullOrEmpty(defId)
-                && arch != null
-                && arch.GetModel<CardRegistry>().TryGet(entry.Uid, out var coreCard))
-            {
-                defId = coreCard.DefId;
-            }
-
-            if (string.IsNullOrEmpty(defId))
-            {
-                defId = CardManagerSingleton.StandardDefId;
-            }
-
-            cardManager.TryGet(entry.Uid, out var ensureCard);
+            var ensureCard = EnsureShuffleIntoCardView(entry, CardDisplayMode.CardDeckMode);
             if (ensureCard == null)
             {
-                ensureCard = cardManager.SpawnView(
-                    entry.Uid,
-                    defId,
-                    initialMode: CardDisplayMode.CardDeckMode);
-                if (ensureCard != null)
-                {
-                    CoreCardPresentationMapper.ApplyToManagedCard(ensureCard);
-                }
-            }
-
-            if (ensureCard == null)
-            {
-                Debug.LogWarning($"[InBattleManager] ShuffleInto 无法生成视图 uid={entry.Uid} def={defId}。");
+                Debug.LogWarning($"[InBattleManager] ShuffleInto 无法生成视图 uid={entry.Uid} def={entry.DefId}。");
                 return;
             }
 
@@ -3056,7 +3170,7 @@ namespace NineGrid.Flow
                 ct);
             if (!deckOk)
             {
-                Debug.LogWarning($"[InBattleManager] ShuffleInto 入组失败 uid={entry.Uid} def={defId}。");
+                Debug.LogWarning($"[InBattleManager] ShuffleInto 入组失败 uid={entry.Uid} def={entry.DefId}。");
             }
         }
 
