@@ -27,6 +27,7 @@ namespace NineGrid.LivingUI.Unity
         [SerializeField] private LivingUiContentMarker[] markers;
 
         private readonly List<LivingUiContentMarker> _runtimeMarkers = new();
+        private LivingUiLayoutId? _syncedPoseLayout;
 
         private void Awake()
         {
@@ -42,6 +43,8 @@ namespace NineGrid.LivingUI.Unity
 
         private void OnEnable()
         {
+            LivingUiBlueprintPoseSampler.InvalidateCache();
+            _syncedPoseLayout = null;
             RefreshMarkers();
         }
 
@@ -106,6 +109,13 @@ namespace NineGrid.LivingUI.Unity
             var transitioning = director.IsTransitioning;
             var transitionElapsed = director.TransitionElapsed;
 
+            // 停稳或进场：按目标/有效构型蓝图刷新作者位姿，消除迁移偏差。
+            // 转场中的 Invariant 不刷新，避免同名跨构型时跳动。
+            if (!transitioning)
+            {
+                SyncAuthoredPosesFromBlueprint(effective);
+            }
+
             for (var i = 0; i < _runtimeMarkers.Count; i++)
             {
                 var marker = _runtimeMarkers[i];
@@ -117,6 +127,17 @@ namespace NineGrid.LivingUI.Unity
                 {
                     SetMarkerVisible(marker, false);
                     continue;
+                }
+
+                if (transitioning && phase == LivingUiContentPhase.Entering)
+                {
+                    TryApplyBlueprintPose(marker, target);
+                    binding = marker.ToBinding();
+                }
+                else if (transitioning && phase == LivingUiContentPhase.Exiting)
+                {
+                    TryApplyBlueprintPose(marker, source);
+                    binding = marker.ToBinding();
                 }
 
                 if (layoutSource == null
@@ -156,13 +177,11 @@ namespace NineGrid.LivingUI.Unity
                         targetTerminal.Position,
                         currentPos,
                         timeProgress);
-                    // 位姿用目标终态尺寸固定，避免进场过程中随 size 漂移（对齐旧表现）
                     projection = LivingUiContentProjector.ProjectScale(
                         binding.Anchor, binding.LocalPose, targetTerminal.Size, enter);
                 }
                 else
                 {
-                    // Exiting Scale：固定参考尺寸 + exit 倍率
                     var refSize = authoringSize;
                     if (layoutSource.Snapshots.TryGetValue(source, out var exitSource))
                     {
@@ -186,6 +205,54 @@ namespace NineGrid.LivingUI.Unity
                 marker.transform.localPosition = projection.LocalPosition;
                 marker.transform.localScale = scale;
             }
+        }
+
+        private void SyncAuthoredPosesFromBlueprint(LivingUiLayoutId layout)
+        {
+            if (_syncedPoseLayout == layout) return;
+            _syncedPoseLayout = layout;
+            for (var i = 0; i < _runtimeMarkers.Count; i++)
+            {
+                var marker = _runtimeMarkers[i];
+                if (marker == null) continue;
+                TryApplyBlueprintPose(marker, layout);
+            }
+        }
+
+        private static void TryApplyBlueprintPose(LivingUiContentMarker marker, LivingUiLayoutId layout)
+        {
+            var contentName = string.IsNullOrEmpty(marker.ContentId) ? marker.name : marker.ContentId;
+            if (!LivingUiBlueprintPoseSampler.TrySample(
+                    layout,
+                    marker.CarrierId,
+                    contentName,
+                    out var localPosition,
+                    out var localScale,
+                    out var carrierSize)
+                && contentName != marker.name
+                && !LivingUiBlueprintPoseSampler.TrySample(
+                    layout,
+                    marker.CarrierId,
+                    marker.name,
+                    out localPosition,
+                    out localScale,
+                    out carrierSize))
+            {
+                return;
+            }
+
+            marker.transform.localPosition = localPosition;
+            marker.transform.localScale = localScale;
+            marker.ApplyAuthored(
+                contentName,
+                marker.CarrierId,
+                LivingUiContentAnchor.TopLeft,
+                layout,
+                restrictFace: false,
+                envelope: default,
+                authoring: carrierSize);
+            marker.CaptureAuthoredPoseFromTransform();
+            marker.ConvertCenterLocalToAnchorOffset(carrierSize);
         }
 
         private LivingUiContentPhase ResolvePhase(
