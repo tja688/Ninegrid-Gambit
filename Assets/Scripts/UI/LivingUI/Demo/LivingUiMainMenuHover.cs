@@ -4,7 +4,7 @@ using UnityEngine;
 namespace NineGrid.LivingUI.Demo
 {
     /// <summary>
-    /// 主菜单右侧三小载体 hover 局部变体：稳定区命中 → 该载体 pop（位/尺寸）→ 标签 RigidTravel 跟随。
+    /// 主菜单右侧三小载体 hover 局部变体：稳定区命中 → 该载体 pop（位/尺寸）→ 标签按锚点随行。
     /// </summary>
     [DefaultExecutionOrder(-150)]
     [DisallowMultipleComponent]

@@ -3,42 +3,33 @@ using UnityEngine;
 
 namespace NineGrid.LivingUI
 {
-    /// <summary>A 类内容对载体采样位姿的跟随策略。</summary>
-    public enum LivingUiContentFollowPolicy
+    /// <summary>
+    /// 内容相对载体矩形的锚点（类 CSS）。必选；默认左上。
+    /// 四角对应各自两条边的交点；中心为载体中心。
+    /// </summary>
+    public enum LivingUiContentAnchor
     {
-        /// <summary>纯位置随行（场景 a）；挂载体子树即可，不随 9-slice size 缩放。</summary>
-        RigidTravel = 0,
-
-        /// <summary>随载体 size 依边界错峰缩放进/退场（场景 b）。</summary>
-        BoundaryReactive = 1,
-
-        /// <summary>贴一条边按比例位移、不缩放（场景 c）。</summary>
-        PartialFollow = 2,
+        TopLeft = 0,
+        BottomLeft = 1,
+        BottomRight = 2,
+        TopRight = 3,
+        Center = 4,
     }
 
-    /// <summary>内容显隐 / 换文案策略。</summary>
-    public enum LivingUiContentVisibilityPolicy
+    /// <summary>
+    /// 转场运动模式：由外部控制器按核心规则下发，元素自身不持有。
+    /// 跨构型存在 → Invariant；非跨构型 → Scale。
+    /// </summary>
+    public enum LivingUiContentMotionMode
     {
-        /// <summary>只要 Face 匹配就显示。</summary>
-        AlwaysVisible = 0,
+        /// <summary>按锚点随面板；不缩放进退场。</summary>
+        Invariant = 0,
 
-        /// <summary>转场播放期间隐藏，停稳后按 Face 再显。</summary>
-        HideDuringTransit = 1,
-
-        /// <summary>到达目标 Face 时切换文案（M1 预留，主菜单切片未用）。</summary>
-        SwapOnFace = 2,
+        /// <summary>大盘构型变换时缩放进/退场。</summary>
+        Scale = 1,
     }
 
-    /// <summary>PartialFollow 贴边方向（相对载体中心轴对齐边）。</summary>
-    public enum LivingUiPartialFollowEdge
-    {
-        Left = 0,
-        Right = 1,
-        Bottom = 2,
-        Top = 3,
-    }
-
-    /// <summary>内容相对载体中心的局部位姿。</summary>
+    /// <summary>内容相对锚点的作者局部位姿（偏移相对所选锚点角/中心）。</summary>
     public readonly struct LivingUiContentLocalPose
     {
         public LivingUiContentLocalPose(Vector3 localPosition, Vector3 localScale)
@@ -47,7 +38,9 @@ namespace NineGrid.LivingUI
             LocalScale = localScale;
         }
 
+        /// <summary>相对锚点的局部偏移（非相对载体中心，除非 Anchor=Center）。</summary>
         public Vector3 LocalPosition { get; }
+
         public Vector3 LocalScale { get; }
     }
 
@@ -64,52 +57,39 @@ namespace NineGrid.LivingUI
         public Vector2 Size { get; }
     }
 
-    /// <summary>纯数据内容绑定：内容ID → 载体 → 策略 → 局部位姿。</summary>
+    /// <summary>纯数据内容绑定：内容ID → 载体 → 锚点 → 局部位姿。</summary>
     public readonly struct LivingUiContentBinding
     {
         public LivingUiContentBinding(
             string contentId,
             int carrierId,
             LivingUiContentLocalPose localPose,
-            LivingUiContentFollowPolicy followPolicy,
-            LivingUiContentVisibilityPolicy visibilityPolicy,
+            LivingUiContentAnchor anchor,
             LivingUiLayoutId? faceLayout,
             LivingUiContentEnvelope envelope,
-            Vector2 baselineSize = default,
-            LivingUiPartialFollowEdge followEdge = LivingUiPartialFollowEdge.Left,
-            float staggerSpan = 0.35f)
+            Vector2 authoringSize = default)
         {
             ContentId = contentId ?? throw new ArgumentNullException(nameof(contentId));
             CarrierId = carrierId;
             LocalPose = localPose;
-            FollowPolicy = followPolicy;
-            VisibilityPolicy = visibilityPolicy;
+            Anchor = anchor;
             FaceLayout = faceLayout;
             Envelope = envelope;
-            BaselineSize = baselineSize;
-            FollowEdge = followEdge;
-            StaggerSpan = staggerSpan;
+            AuthoringSize = authoringSize;
         }
 
         public string ContentId { get; }
         public int CarrierId { get; }
         public LivingUiContentLocalPose LocalPose { get; }
-        public LivingUiContentFollowPolicy FollowPolicy { get; }
-        public LivingUiContentVisibilityPolicy VisibilityPolicy { get; }
+        public LivingUiContentAnchor Anchor { get; }
 
-        /// <summary>仅在该构型 Face 上显示；null 表示不限 Face。</summary>
+        /// <summary>登记的主 Face；跨构型复用时由控制器映射表扩展，可为 null。</summary>
         public LivingUiLayoutId? FaceLayout { get; }
 
         public LivingUiContentEnvelope Envelope { get; }
 
-        /// <summary>反应式基线载体尺寸；(0,0) 表示运行时用构型终态尺寸。</summary>
-        public Vector2 BaselineSize { get; }
-
-        /// <summary>PartialFollow 贴边。</summary>
-        public LivingUiPartialFollowEdge FollowEdge { get; }
-
-        /// <summary>BoundaryReactive 错峰跨度 [0,1]。</summary>
-        public float StaggerSpan { get; }
+        /// <summary>作者化时的载体尺寸；用于中心↔锚点换算与 Scale 位姿固定参考。</summary>
+        public Vector2 AuthoringSize { get; }
     }
 
     /// <summary>内容在转场中的参与阶段；驱动端据此决定缩放进/退场。</summary>
@@ -124,19 +104,42 @@ namespace NineGrid.LivingUI
     /// <summary>纯数据内容策略求值（镜像 TransitionPlanner：无 MonoBehaviour、可 EditMode 验）。</summary>
     public static class LivingUiContentPolicy
     {
-        /// <summary>RigidTravel：世界位 = 载体位 + 局部偏移（忽略载体 size）。</summary>
-        public static Vector3 RigidTravelWorldPosition(Vector2 carrierPosition, Vector3 localOffset)
+        /// <summary>
+        /// 核心规则：元素在 source 与 target 都存在 → Invariant；否则 Scale。
+        /// 非转场时返回 Invariant（停稳按锚点）。
+        /// </summary>
+        public static LivingUiContentMotionMode ResolveMotionMode(
+            bool presentInSource,
+            bool presentInTarget,
+            bool isTransitioning)
         {
-            return new Vector3(
-                carrierPosition.x + localOffset.x,
-                carrierPosition.y + localOffset.y,
-                localOffset.z);
+            if (!isTransitioning) return LivingUiContentMotionMode.Invariant;
+            if (presentInSource && presentInTarget) return LivingUiContentMotionMode.Invariant;
+            return LivingUiContentMotionMode.Scale;
         }
 
         /// <summary>
-        /// 内容阶段：停稳时仅 effective Face；转场中区分进场（target）与快速退场（source）。
-        /// 可见性由 ContentDriver 写 scale 决定，不再用 SetActive 瞬闪。
+        /// 内容阶段：停稳时仅 effective Face；转场中区分进场（target）与退场（source）。
+        /// presentIn* 由控制器映射表提供（同一 GO 可挂多个构型）。
         /// </summary>
+        public static LivingUiContentPhase EvaluatePhase(
+            bool presentInSource,
+            bool presentInTarget,
+            bool presentInEffective,
+            bool isTransitioning)
+        {
+            if (!isTransitioning)
+            {
+                return presentInEffective ? LivingUiContentPhase.Stable : LivingUiContentPhase.Hidden;
+            }
+
+            if (presentInSource && presentInTarget) return LivingUiContentPhase.Stable;
+            if (presentInSource) return LivingUiContentPhase.Exiting;
+            if (presentInTarget) return LivingUiContentPhase.Entering;
+            return LivingUiContentPhase.Hidden;
+        }
+
+        /// <summary>兼容：单 Face 绑定时的阶段求值。</summary>
         public static LivingUiContentPhase EvaluatePhase(
             LivingUiContentBinding binding,
             LivingUiLayoutId sourceLayout,
@@ -150,38 +153,11 @@ namespace NineGrid.LivingUI
             }
 
             var face = binding.FaceLayout.Value;
-            if (!isTransitioning)
-            {
-                return face == effectiveLayout ? LivingUiContentPhase.Stable : LivingUiContentPhase.Hidden;
-            }
-
-            var onSource = face == sourceLayout;
-            var onTarget = face == targetLayout;
-            if (onSource && onTarget) return LivingUiContentPhase.Stable;
-            if (onSource) return LivingUiContentPhase.Exiting;
-            if (onTarget) return LivingUiContentPhase.Entering;
-            return LivingUiContentPhase.Hidden;
-        }
-
-        /// <summary>兼容：阶段非 Hidden 即视为策略可见（实际显隐由 scale 控制）。</summary>
-        public static bool EvaluateVisible(
-            LivingUiContentBinding binding,
-            LivingUiLayoutId sourceLayout,
-            LivingUiLayoutId targetLayout,
-            LivingUiLayoutId effectiveLayout,
-            bool isTransitioning)
-        {
-            return EvaluatePhase(binding, sourceLayout, targetLayout, effectiveLayout, isTransitioning)
-                != LivingUiContentPhase.Hidden;
-        }
-
-        /// <summary>兼容重载：无转场端点时 source/target 均取 effective。</summary>
-        public static bool EvaluateVisible(
-            LivingUiContentBinding binding,
-            LivingUiLayoutId effectiveLayout,
-            bool isTransitioning)
-        {
-            return EvaluateVisible(binding, effectiveLayout, effectiveLayout, effectiveLayout, isTransitioning);
+            return EvaluatePhase(
+                presentInSource: face == sourceLayout,
+                presentInTarget: face == targetLayout,
+                presentInEffective: face == effectiveLayout,
+                isTransitioning);
         }
     }
 }

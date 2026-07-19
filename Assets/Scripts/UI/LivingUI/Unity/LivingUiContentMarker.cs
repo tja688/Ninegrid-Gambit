@@ -3,8 +3,7 @@ using UnityEngine;
 namespace NineGrid.LivingUI.Unity
 {
     /// <summary>
-    /// 挂在 A 类内容物体上，声明内容绑定元数据；由 LivingUiContentDriver 驱动显隐与反应式投影。
-    /// RigidTravel 靠父子挂接；BoundaryReactive / PartialFollow 由投影器写 local 位姿。
+    /// 挂在 A 类内容物体上：声明锚点与作者位姿；模式由 LivingUiContentController 下发。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class LivingUiContentMarker : MonoBehaviour
@@ -15,33 +14,22 @@ namespace NineGrid.LivingUI.Unity
         [Tooltip("所属载体 ID 1…12；应与父 CarrierView 一致。")]
         [SerializeField] private int carrierId;
 
-        [Tooltip("跟随策略：RigidTravel / BoundaryReactive / PartialFollow。")]
-        [SerializeField] private LivingUiContentFollowPolicy followPolicy = LivingUiContentFollowPolicy.RigidTravel;
+        [Tooltip("相对载体的锚点：左上/左下/右下/右上/中心。默认左上。")]
+        [SerializeField] private LivingUiContentAnchor anchor = LivingUiContentAnchor.TopLeft;
 
-        [Tooltip("显隐策略；进场/退场由 ContentDriver 写 scale 控制，建议 AlwaysVisible。")]
-        [SerializeField] private LivingUiContentVisibilityPolicy visibilityPolicy =
-            LivingUiContentVisibilityPolicy.AlwaysVisible;
-
-        [Tooltip("仅在该构型 Face 显示；MainMenu 切片内容绑 MainMenu。")]
+        [Tooltip("登记的主构型 Face；跨构型复用时由 ContentController 映射表扩展。留空限制关则不限 Face。")]
         [SerializeField] private LivingUiLayoutId faceLayout = LivingUiLayoutId.MainMenu;
 
-        [Tooltip("是否限制 Face；关则任意构型都可显示（仍受显隐策略约束）。")]
+        [Tooltip("是否限制到 faceLayout；关则任意构型都可显示（仍受控制器映射约束）。")]
         [SerializeField] private bool restrictToFace = true;
 
         [Tooltip("随行包裹尺寸（世界单位）；>0 时抬高该载体流动下限。")]
         [SerializeField] private Vector2 envelopeSize;
 
-        [Tooltip("反应式基线载体尺寸；留 (0,0) 时运行时用 MainMenu 终态尺寸。")]
-        [SerializeField] private Vector2 baselineSize;
+        [Tooltip("作者化时的载体尺寸；用于锚点换算。留 (0,0) 时运行时用 Face 终态尺寸。")]
+        [SerializeField] private Vector2 authoringSize;
 
-        [Tooltip("PartialFollow 贴边方向。")]
-        [SerializeField] private LivingUiPartialFollowEdge followEdge = LivingUiPartialFollowEdge.Left;
-
-        [Tooltip("BoundaryReactive 错峰跨度 [0,1]；越大则边缘内容越早坍缩。")]
-        [Range(0f, 1f)]
-        [SerializeField] private float staggerSpan = LivingUiContentProjector.DefaultStaggerSpan;
-
-        [Tooltip("作者局部位姿（相对 ContentAttach）；反应式投影以此为基准。留空则 Awake 从 Transform 捕获。")]
+        [Tooltip("作者局部位姿（相对所选锚点的偏移）；驱动每帧写回中心系 local。留空则 Awake 从 Transform 捕获。")]
         [SerializeField] private Vector3 authoredLocalPosition;
 
         [Tooltip("作者局部缩放；留 (0,0,0) 时 Awake 从 Transform 捕获（通常为 1,1,1）。")]
@@ -52,10 +40,11 @@ namespace NineGrid.LivingUI.Unity
 
         public string ContentId => contentId;
         public int CarrierId => carrierId;
-        public LivingUiContentFollowPolicy FollowPolicy => followPolicy;
-        public Vector2 BaselineSize => baselineSize;
-        public LivingUiPartialFollowEdge FollowEdge => followEdge;
-        public float StaggerSpan => staggerSpan;
+        public LivingUiContentAnchor Anchor => anchor;
+        public LivingUiLayoutId FaceLayout => faceLayout;
+        public bool RestrictToFace => restrictToFace;
+        public Vector2 AuthoringSize => authoringSize;
+        public Vector2 EnvelopeSize => envelopeSize;
 
         private void Awake()
         {
@@ -87,37 +76,35 @@ namespace NineGrid.LivingUI.Unity
                 string.IsNullOrEmpty(contentId) ? name : contentId,
                 carrierId,
                 AuthoredPose,
-                followPolicy,
-                visibilityPolicy,
+                anchor,
                 restrictToFace ? faceLayout : (LivingUiLayoutId?)null,
                 new LivingUiContentEnvelope(envelopeSize),
-                baselineSize,
-                followEdge,
-                staggerSpan);
+                authoringSize);
         }
 
         public void ApplyAuthored(
             string id,
             int carrier,
-            LivingUiContentFollowPolicy follow,
-            LivingUiContentVisibilityPolicy visibility,
+            LivingUiContentAnchor contentAnchor,
             LivingUiLayoutId face,
             bool restrictFace,
             Vector2 envelope = default,
-            Vector2 baseline = default,
-            LivingUiPartialFollowEdge edge = LivingUiPartialFollowEdge.Left,
-            float stagger = LivingUiContentProjector.DefaultStaggerSpan)
+            Vector2 authoring = default)
         {
             contentId = id;
             carrierId = carrier;
-            followPolicy = follow;
-            visibilityPolicy = visibility;
+            anchor = contentAnchor;
             faceLayout = face;
             restrictToFace = restrictFace;
             envelopeSize = envelope;
-            baselineSize = baseline;
-            followEdge = edge;
-            staggerSpan = stagger;
+            authoringSize = authoring;
+        }
+
+        public void SetAuthoredPose(Vector3 offsetFromAnchor, Vector3 localScale)
+        {
+            authoredLocalPosition = offsetFromAnchor;
+            authoredLocalScale = localScale == Vector3.zero ? Vector3.one : localScale;
+            hasAuthoredPose = true;
         }
 
         public void CaptureAuthoredPoseFromTransform()
@@ -125,6 +112,19 @@ namespace NineGrid.LivingUI.Unity
             authoredLocalPosition = transform.localPosition;
             authoredLocalScale = transform.localScale;
             if (authoredLocalScale == Vector3.zero) authoredLocalScale = Vector3.one;
+            hasAuthoredPose = true;
+        }
+
+        /// <summary>
+        /// 把当前中心系 local 换算为相对锚点偏移（在 authoringSize 下世界位不变）。
+        /// </summary>
+        public void ConvertCenterLocalToAnchorOffset(Vector2 carrierSize)
+        {
+            EnsureAuthoredPose();
+            if (carrierSize.x <= 0f || carrierSize.y <= 0f) carrierSize = Vector2.one;
+            authoredLocalPosition = LivingUiContentProjector.CenterLocalToAnchorOffset(
+                anchor, authoredLocalPosition, carrierSize);
+            if (authoringSize.x <= 0f || authoringSize.y <= 0f) authoringSize = carrierSize;
             hasAuthoredPose = true;
         }
     }

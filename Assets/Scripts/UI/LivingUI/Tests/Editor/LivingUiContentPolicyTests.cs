@@ -7,55 +7,80 @@ namespace NineGrid.LivingUI.Tests
     public sealed class LivingUiContentPolicyTests
     {
         [Test]
-        public void RigidTravel_KeepsLocalOffsetUnchanged()
+        public void Anchor_TopLeft_PinsWhenSizeGrows()
         {
-            var local = new Vector3(-1.4f, 1.34f, 0.1f);
-            var carrierA = new Vector2(-1.55f, 0.08f);
-            var carrierB = new Vector2(4f, -2f);
+            var offset = new Vector3(0.5f, -0.25f, 0f);
+            var small = new Vector2(2f, 2f);
+            var large = new Vector2(4f, 4f);
 
-            var worldA = LivingUiContentPolicy.RigidTravelWorldPosition(carrierA, local);
-            var worldB = LivingUiContentPolicy.RigidTravelWorldPosition(carrierB, local);
+            var atSmall = LivingUiContentProjector.ResolveAnchoredLocal(
+                LivingUiContentAnchor.TopLeft, offset, small);
+            var atLarge = LivingUiContentProjector.ResolveAnchoredLocal(
+                LivingUiContentAnchor.TopLeft, offset, large);
 
-            Assert.AreEqual(local.x, worldA.x - carrierA.x, 0.0001f);
-            Assert.AreEqual(local.y, worldA.y - carrierA.y, 0.0001f);
-            Assert.AreEqual(local.x, worldB.x - carrierB.x, 0.0001f);
-            Assert.AreEqual(local.y, worldB.y - carrierB.y, 0.0001f);
-            Assert.AreEqual(local.z, worldA.z);
-            Assert.AreEqual(local.z, worldB.z);
+            Assert.AreEqual(-1f + 0.5f, atSmall.x, 0.0001f);
+            Assert.AreEqual(1f - 0.25f, atSmall.y, 0.0001f);
+            Assert.AreEqual(-2f + 0.5f, atLarge.x, 0.0001f);
+            Assert.AreEqual(2f - 0.25f, atLarge.y, 0.0001f);
+        }
+
+        [Test]
+        public void Anchor_Center_IgnoresSize()
+        {
+            var offset = new Vector3(-1.4f, 1.34f, 0.1f);
+            var a = LivingUiContentProjector.ResolveAnchoredLocal(
+                LivingUiContentAnchor.Center, offset, new Vector2(2f, 2f));
+            var b = LivingUiContentProjector.ResolveAnchoredLocal(
+                LivingUiContentAnchor.Center, offset, new Vector2(9f, 6f));
+            Assert.AreEqual(offset, a);
+            Assert.AreEqual(offset, b);
+        }
+
+        [Test]
+        public void CenterLocalToAnchorOffset_RoundTripsAtAuthoringSize()
+        {
+            var centerLocal = new Vector3(-1.4f, 1.34f, 0f);
+            var size = new Vector2(9.91f, 6.98f);
+            var offset = LivingUiContentProjector.CenterLocalToAnchorOffset(
+                LivingUiContentAnchor.TopLeft, centerLocal, size);
+            var back = LivingUiContentProjector.ResolveAnchoredLocal(
+                LivingUiContentAnchor.TopLeft, offset, size);
+            Assert.AreEqual(centerLocal.x, back.x, 0.0001f);
+            Assert.AreEqual(centerLocal.y, back.y, 0.0001f);
+        }
+
+        [Test]
+        public void CoreRule_CrossLayout_IsInvariant()
+        {
+            Assert.AreEqual(
+                LivingUiContentMotionMode.Invariant,
+                LivingUiContentPolicy.ResolveMotionMode(true, true, isTransitioning: true));
+            Assert.AreEqual(
+                LivingUiContentMotionMode.Scale,
+                LivingUiContentPolicy.ResolveMotionMode(false, true, isTransitioning: true));
+            Assert.AreEqual(
+                LivingUiContentMotionMode.Scale,
+                LivingUiContentPolicy.ResolveMotionMode(true, false, isTransitioning: true));
+            Assert.AreEqual(
+                LivingUiContentMotionMode.Invariant,
+                LivingUiContentPolicy.ResolveMotionMode(true, false, isTransitioning: false));
         }
 
         [Test]
         public void ContentPhase_DistinguishesEnteringAndExiting()
         {
-            var binding = new LivingUiContentBinding(
-                "menu.title",
-                4,
-                new LivingUiContentLocalPose(Vector3.zero, Vector3.one),
-                LivingUiContentFollowPolicy.BoundaryReactive,
-                LivingUiContentVisibilityPolicy.AlwaysVisible,
-                LivingUiLayoutId.MainMenu,
-                new LivingUiContentEnvelope(Vector2.zero));
-
             Assert.AreEqual(
                 LivingUiContentPhase.Stable,
-                LivingUiContentPolicy.EvaluatePhase(
-                    binding, LivingUiLayoutId.MainMenu, LivingUiLayoutId.MainMenu,
-                    LivingUiLayoutId.MainMenu, isTransitioning: false));
+                LivingUiContentPolicy.EvaluatePhase(true, true, true, isTransitioning: false));
             Assert.AreEqual(
                 LivingUiContentPhase.Exiting,
-                LivingUiContentPolicy.EvaluatePhase(
-                    binding, LivingUiLayoutId.MainMenu, LivingUiLayoutId.Battle,
-                    LivingUiLayoutId.Battle, isTransitioning: true));
+                LivingUiContentPolicy.EvaluatePhase(true, false, false, isTransitioning: true));
             Assert.AreEqual(
                 LivingUiContentPhase.Entering,
-                LivingUiContentPolicy.EvaluatePhase(
-                    binding, LivingUiLayoutId.Battle, LivingUiLayoutId.MainMenu,
-                    LivingUiLayoutId.MainMenu, isTransitioning: true));
+                LivingUiContentPolicy.EvaluatePhase(false, true, true, isTransitioning: true));
             Assert.AreEqual(
                 LivingUiContentPhase.Hidden,
-                LivingUiContentPolicy.EvaluatePhase(
-                    binding, LivingUiLayoutId.MainMenu, LivingUiLayoutId.Battle,
-                    LivingUiLayoutId.Battle, isTransitioning: false));
+                LivingUiContentPolicy.EvaluatePhase(false, false, false, isTransitioning: false));
         }
 
         [Test]
@@ -65,59 +90,6 @@ namespace NineGrid.LivingUI.Tests
             Assert.AreEqual(0.5f, LivingUiContentProjector.ComputeExitScaleFactor(0.05f), 0.0001f);
             Assert.AreEqual(0f, LivingUiContentProjector.ComputeExitScaleFactor(0.1f), 0.0001f);
             Assert.AreEqual(0f, LivingUiContentProjector.ComputeExitScaleFactor(0.5f), 0.0001f);
-        }
-
-        [Test]
-        public void HideDuringTransit_NoLongerHidesDuringTransit()
-        {
-            var binding = new LivingUiContentBinding(
-                "menu.start",
-                12,
-                new LivingUiContentLocalPose(Vector3.zero, Vector3.one),
-                LivingUiContentFollowPolicy.BoundaryReactive,
-                LivingUiContentVisibilityPolicy.HideDuringTransit,
-                LivingUiLayoutId.MainMenu,
-                new LivingUiContentEnvelope(Vector2.zero));
-
-            Assert.IsTrue(LivingUiContentPolicy.EvaluateVisible(
-                binding, LivingUiLayoutId.MainMenu, LivingUiLayoutId.Battle,
-                LivingUiLayoutId.Battle, isTransitioning: true));
-        }
-
-        [Test]
-        public void FaceMatch_AllowsExitingFaceDuringTransit()
-        {
-            var binding = new LivingUiContentBinding(
-                "menu.title",
-                4,
-                new LivingUiContentLocalPose(Vector3.zero, Vector3.one),
-                LivingUiContentFollowPolicy.BoundaryReactive,
-                LivingUiContentVisibilityPolicy.AlwaysVisible,
-                LivingUiLayoutId.MainMenu,
-                new LivingUiContentEnvelope(Vector2.zero));
-
-            Assert.IsTrue(LivingUiContentPolicy.EvaluateVisible(
-                binding, LivingUiLayoutId.MainMenu, LivingUiLayoutId.Battle,
-                LivingUiLayoutId.Battle, isTransitioning: true));
-            Assert.IsFalse(LivingUiContentPolicy.EvaluateVisible(
-                binding, LivingUiLayoutId.MainMenu, LivingUiLayoutId.Battle,
-                LivingUiLayoutId.Battle, isTransitioning: false));
-        }
-
-        [Test]
-        public void AlwaysVisible_RespectsFaceOnly()
-        {
-            var binding = new LivingUiContentBinding(
-                "menu.start",
-                12,
-                new LivingUiContentLocalPose(Vector3.zero, Vector3.one),
-                LivingUiContentFollowPolicy.RigidTravel,
-                LivingUiContentVisibilityPolicy.AlwaysVisible,
-                LivingUiLayoutId.MainMenu,
-                new LivingUiContentEnvelope(Vector2.zero));
-
-            Assert.IsTrue(LivingUiContentPolicy.EvaluateVisible(binding, LivingUiLayoutId.MainMenu, true));
-            Assert.IsFalse(LivingUiContentPolicy.EvaluateVisible(binding, LivingUiLayoutId.Room, false));
         }
 
         [Test]
@@ -131,80 +103,63 @@ namespace NineGrid.LivingUI.Tests
         }
 
         [Test]
-        public void EnterProjection_DoesNotStartAtFullScaleWhenSourceExceedsBaseline()
+        public void EnterProgress_SizeStable_UsesPositionTravel()
+        {
+            var size = new Vector2(3f, 1f);
+            var sourcePos = new Vector2(1.41f, -6.59f);
+            var targetPos = new Vector2(-5.5f, 1.53f);
+
+            Assert.AreEqual(
+                0f,
+                LivingUiContentProjector.ComputeEnterProgress(
+                    size, size, size, sourcePos, targetPos, sourcePos, timeProgress01: 1f),
+                0.0001f);
+            Assert.AreEqual(
+                1f,
+                LivingUiContentProjector.ComputeEnterProgress(
+                    size, size, size, sourcePos, targetPos, targetPos, timeProgress01: 0f),
+                0.0001f);
+
+            var mid = Vector2.Lerp(sourcePos, targetPos, 0.4f);
+            Assert.AreEqual(
+                0.4f,
+                LivingUiContentProjector.ComputeEnterProgress(
+                    size, size, size, sourcePos, targetPos, mid, timeProgress01: 0f),
+                0.02f);
+        }
+
+        [Test]
+        public void EnterProgress_SizeAndPositionStable_UsesTimeProgress()
+        {
+            var size = new Vector2(3f, 3f);
+            var pos = new Vector2(5.47f, 0.03f);
+
+            Assert.AreEqual(
+                0f,
+                LivingUiContentProjector.ComputeEnterProgress(
+                    size, size, size, pos, pos, pos, timeProgress01: 0f),
+                0.0001f);
+            Assert.AreEqual(
+                0.35f,
+                LivingUiContentProjector.ComputeEnterProgress(
+                    size, size, size, pos, pos, pos, timeProgress01: 0.35f),
+                0.0001f);
+        }
+
+        [Test]
+        public void ScaleEnter_DoesNotPopWhenSizeStable()
         {
             var authored = new LivingUiContentLocalPose(Vector3.zero, Vector3.one);
-            var source = new Vector2(7.72f, 2.06f);
-            var target = new Vector2(3.32f, 1.63f);
+            var size = new Vector2(3f, 1f);
+            var sourcePos = new Vector2(0f, 0f);
+            var targetPos = new Vector2(10f, 0f);
 
-            var atStart = LivingUiContentProjector.ProjectBoundaryReactiveEnter(
-                authored, source, target, source, LivingUiContentProjector.DefaultStaggerSpan);
-            var oldWay = LivingUiContentProjector.ProjectBoundaryReactive(
-                authored, target, source, LivingUiContentProjector.DefaultStaggerSpan);
-
-            Assert.AreEqual(0f, atStart.LocalScale.x, 0.0001f);
-            Assert.IsFalse(atStart.Visible);
-            Assert.AreEqual(1f, oldWay.LocalScale.x, 0.0001f);
-        }
-
-        [Test]
-        public void BoundaryReactive_CollapsesToZeroAndExpandsToOne()
-        {
-            var baseline = new Vector2(8f, 4f);
-            var authored = new LivingUiContentLocalPose(new Vector3(1f, 0.5f, 0f), Vector3.one);
-
-            var atBaseline = LivingUiContentProjector.ProjectBoundaryReactive(
-                authored, baseline, baseline, LivingUiContentProjector.DefaultStaggerSpan);
-            Assert.AreEqual(1f, atBaseline.LocalScale.x, 0.0001f);
-            Assert.IsTrue(atBaseline.Visible);
-
-            var collapsed = LivingUiContentProjector.ProjectBoundaryReactive(
-                authored, baseline, Vector2.zero, LivingUiContentProjector.DefaultStaggerSpan);
-            Assert.AreEqual(0f, collapsed.LocalScale.x, 0.0001f);
-            Assert.IsFalse(collapsed.Visible);
-        }
-
-        [Test]
-        public void BoundaryReactive_StaggerOrderFollowsNormalizedPosition()
-        {
-            var baseline = new Vector2(8f, 4f);
-            var nearCenter = new LivingUiContentLocalPose(new Vector3(0.2f, 0.1f, 0f), Vector3.one);
-            var nearEdge = new LivingUiContentLocalPose(new Vector3(3.6f, 1.6f, 0f), Vector3.one);
-            var midSize = baseline * 0.55f;
-            const float span = 0.35f;
-
-            var centerProj = LivingUiContentProjector.ProjectBoundaryReactive(nearCenter, baseline, midSize, span);
-            var edgeProj = LivingUiContentProjector.ProjectBoundaryReactive(nearEdge, baseline, midSize, span);
-
-            Assert.Greater(centerProj.LocalScale.x, edgeProj.LocalScale.x);
-            Assert.Greater(
-                LivingUiContentProjector.Stagger01FromLocal(nearEdge.LocalPosition, baseline),
-                LivingUiContentProjector.Stagger01FromLocal(nearCenter.LocalPosition, baseline));
-        }
-
-        [Test]
-        public void PartialFollow_DisplacesAlongEdgeWithoutScaling()
-        {
-            var baseline = new Vector2(4f, 2f);
-            var authored = new LivingUiContentLocalPose(new Vector3(-1.5f, 0.25f, 0.1f), new Vector3(1f, 1f, 1f));
-            var wider = new Vector2(6f, 2f);
-
-            var left = LivingUiContentProjector.ProjectPartialFollow(
-                authored, baseline, wider, LivingUiPartialFollowEdge.Left);
-            Assert.AreEqual(authored.LocalPosition.x - 1f, left.LocalPosition.x, 0.0001f);
-            Assert.AreEqual(authored.LocalPosition.y, left.LocalPosition.y, 0.0001f);
-            Assert.AreEqual(authored.LocalScale, left.LocalScale);
-            Assert.IsTrue(left.Visible);
-
-            var right = LivingUiContentProjector.ProjectPartialFollow(
-                authored, baseline, wider, LivingUiPartialFollowEdge.Right);
-            Assert.AreEqual(authored.LocalPosition.x + 1f, right.LocalPosition.x, 0.0001f);
-
-            var taller = new Vector2(4f, 3f);
-            var top = LivingUiContentProjector.ProjectPartialFollow(
-                authored, baseline, taller, LivingUiPartialFollowEdge.Top);
-            Assert.AreEqual(authored.LocalPosition.y + 0.5f, top.LocalPosition.y, 0.0001f);
-            Assert.AreEqual(authored.LocalScale, top.LocalScale);
+            var enter0 = LivingUiContentProjector.ComputeEnterProgress(
+                size, size, size, sourcePos, targetPos, sourcePos, 1f);
+            var proj = LivingUiContentProjector.ProjectScale(
+                LivingUiContentAnchor.Center, authored, size, enter0);
+            Assert.AreEqual(0f, proj.LocalScale.x, 0.0001f);
+            Assert.IsFalse(proj.Visible);
         }
 
         [Test]
@@ -217,24 +172,21 @@ namespace NineGrid.LivingUI.Tests
                     "menu.title",
                     4,
                     new LivingUiContentLocalPose(Vector3.zero, Vector3.one),
-                    LivingUiContentFollowPolicy.BoundaryReactive,
-                    LivingUiContentVisibilityPolicy.AlwaysVisible,
+                    LivingUiContentAnchor.Center,
                     LivingUiLayoutId.MainMenu,
                     new LivingUiContentEnvelope(new Vector2(2.5f, 0.8f))),
                 new(
                     "menu.icon.pack",
                     4,
                     new LivingUiContentLocalPose(Vector3.zero, Vector3.one),
-                    LivingUiContentFollowPolicy.BoundaryReactive,
-                    LivingUiContentVisibilityPolicy.AlwaysVisible,
+                    LivingUiContentAnchor.Center,
                     LivingUiLayoutId.MainMenu,
                     new LivingUiContentEnvelope(new Vector2(1.2f, 1.5f))),
                 new(
                     "menu.start",
                     12,
                     new LivingUiContentLocalPose(Vector3.zero, Vector3.one),
-                    LivingUiContentFollowPolicy.RigidTravel,
-                    LivingUiContentVisibilityPolicy.HideDuringTransit,
+                    LivingUiContentAnchor.Center,
                     LivingUiLayoutId.MainMenu,
                     new LivingUiContentEnvelope(Vector2.zero)),
             };

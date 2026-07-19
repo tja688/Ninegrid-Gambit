@@ -9,20 +9,20 @@ namespace NineGrid.LivingUI.Editor
 {
     /// <summary>
     /// 一次性：把各构型样板 Anchors 顶层内容按位置挂到活体载体（构型0）ContentAttach，
-    /// 并装配 LivingUiContentMarker（与主菜单现行标准：BoundaryReactive + AlwaysVisible）。
+    /// 并装配 LivingUiContentMarker（Center 锚点，保持中心系局部位；模式由 ContentController 下发）。
     /// </summary>
     public static class LivingUiContentBindMigrator
     {
-        private const string LiveRootName = "大盘构型0-主菜单";
+        private const string LiveRootName = "大盘";
 
         private static readonly (LivingUiLayoutId Face, string RootName, string IdPrefix)[] Sources =
         {
             (LivingUiLayoutId.CharacterChoice, "大盘构型1-人物选择", "char"),
             (LivingUiLayoutId.Battle, "大盘构型2-核心战斗面板", "battle"),
-            (LivingUiLayoutId.RewardChoice, "大盘构型2-1-选择奖励", "reward"),
-            (LivingUiLayoutId.DeckPreview, "大盘构型2-2-打开卡组视图", "deck"),
-            (LivingUiLayoutId.Room, "大盘构型3-房间基础面板", "room"),
-            (LivingUiLayoutId.Route, "大盘构型4-预备待定", "route"),
+            (LivingUiLayoutId.RewardChoice, "大盘构型3-选择奖励", "reward"),
+            (LivingUiLayoutId.DeckPreview, "大盘构型4-打开卡组视图", "deck"),
+            (LivingUiLayoutId.Room, "大盘构型5-房间基础面板", "room"),
+            (LivingUiLayoutId.Route, "大盘构型6-预备待定", "route"),
         };
 
         [MenuItem("TableNine/LivingUI/Migrate Anchors → Live ContentAttach (1-4)")]
@@ -122,15 +122,15 @@ namespace NineGrid.LivingUI.Editor
                     if (marker == null) marker = Undo.AddComponent<LivingUiContentMarker>(content.gameObject);
 
                     var contentId = $"{source.IdPrefix}.{SanitizeId(content.name)}";
+                    // Center：局部位即相对中心，与旧 ContentAttach 装配一致，视觉不漂
                     marker.ApplyAuthored(
                         contentId,
                         carrierId,
-                        LivingUiContentFollowPolicy.BoundaryReactive,
-                        LivingUiContentVisibilityPolicy.AlwaysVisible,
+                        LivingUiContentAnchor.Center,
                         source.Face,
                         restrictFace: true,
                         envelope: default,
-                        baseline: sourceSizes[carrierId]);
+                        authoring: sourceSizes[carrierId]);
                     marker.CaptureAuthoredPoseFromTransform();
                     EditorUtility.SetDirty(marker);
                     EditorUtility.SetDirty(content.gameObject);

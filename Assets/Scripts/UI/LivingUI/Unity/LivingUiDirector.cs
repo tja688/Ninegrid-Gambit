@@ -35,6 +35,7 @@ namespace NineGrid.LivingUI.Unity
         public LivingUiLayoutId TransitionTargetLayout =>
             _player.ActivePlan?.TargetLayout ?? EffectiveLayout;
         public float TransitionElapsed => _player.Elapsed;
+        public float TransitionMakespan => _player.ActivePlan?.Makespan ?? 0f;
         public float PlaybackSpeed { get => playbackSpeed; set => playbackSpeed = Mathf.Max(0.05f, value); }
         public Rect StageBounds => _stageBounds;
         public int ActiveGeneration => _player.ActivePlan?.Generation ?? 0;

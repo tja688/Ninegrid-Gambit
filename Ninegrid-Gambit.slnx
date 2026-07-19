@@ -44,11 +44,11 @@
   <Project Path="Lofelt.NiceVibrations.csproj" />
   <Project Path="UniTask.Editor.csproj" />
   <Project Path="Sirenix.OdinInspector.Modules.UnityMathematics.csproj" />
+  <Project Path="NineGrid.LivingUI.Editor.csproj" />
   <Project Path="UniTask.DOTween.csproj" />
   <Project Path="NineGrid.LivingUI.Tests.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="NineGrid.TemporaryTest.csproj" />
   <Project Path="NineGrid.DevTest.Tests.csproj" />
   <Project Path="QFramework.csproj" />
-  <Project Path="NineGrid.LivingUI.Editor.csproj" />
 </Solution>

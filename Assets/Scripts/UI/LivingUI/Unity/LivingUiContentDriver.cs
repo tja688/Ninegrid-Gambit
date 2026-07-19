@@ -4,8 +4,7 @@ using UnityEngine;
 namespace NineGrid.LivingUI.Unity
 {
     /// <summary>
-    /// 内容层驱动：反应式投影 + 缩放进/退场（无 SetActive 瞬闪）。
-    /// RigidTravel 仅写退场倍率；进场缩放请用 BoundaryReactive。
+    /// 内容层驱动：锚点解算 + 控制器下发的不变/缩放进退场。
     /// </summary>
     [DefaultExecutionOrder(-180)]
     [DisallowMultipleComponent]
@@ -14,10 +13,13 @@ namespace NineGrid.LivingUI.Unity
         [Tooltip("灵动 UI 导演；留空时同物体 GetComponent，缺失则禁用。")]
         [SerializeField] private LivingUiDirector director;
 
-        [Tooltip("构型样板来源；留空时同物体 GetComponent。反应式投影需读载体 live size。")]
+        [Tooltip("构型样板来源；留空时同物体 GetComponent。")]
         [SerializeField] private LivingUiSceneLayoutSource layoutSource;
 
-        [Tooltip("离场缩至 0 的时长（秒）；进场仍随载体 size 自然展开。")]
+        [Tooltip("内容控制器；留空时同物体 GetComponent，缺失则按 Marker.faceLayout 退化为单 Face 规则。")]
+        [SerializeField] private LivingUiContentController contentController;
+
+        [Tooltip("离场缩至 0 的时长（秒）。")]
         [Min(0.01f)]
         [SerializeField] private float exitDuration = LivingUiContentProjector.DefaultExitDuration;
 
@@ -25,12 +27,12 @@ namespace NineGrid.LivingUI.Unity
         [SerializeField] private LivingUiContentMarker[] markers;
 
         private readonly List<LivingUiContentMarker> _runtimeMarkers = new();
-        private readonly Dictionary<int, Vector2> _baselineCache = new();
 
         private void Awake()
         {
             if (director == null) director = GetComponent<LivingUiDirector>();
             if (layoutSource == null) layoutSource = GetComponent<LivingUiSceneLayoutSource>();
+            if (contentController == null) contentController = GetComponent<LivingUiContentController>();
             if (director == null)
             {
                 Debug.LogError("[LivingUI] ContentDriver 未找到 LivingUiDirector，已禁用。");
@@ -45,6 +47,7 @@ namespace NineGrid.LivingUI.Unity
 
         private void Start()
         {
+            if (contentController != null) contentController.Rebuild();
             RefreshMarkers();
             ApplyAll();
         }
@@ -57,10 +60,28 @@ namespace NineGrid.LivingUI.Unity
         public void RefreshMarkers()
         {
             _runtimeMarkers.Clear();
-            var found = FindObjectsByType<LivingUiContentMarker>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-            for (var i = 0; i < found.Length; i++)
+
+            // 只驱动权威大盘下的内容；蓝图构型上的 Marker 仅作摆布参考。
+            Transform liveRoot = null;
+            if (layoutSource != null)
             {
-                if (found[i] != null) _runtimeMarkers.Add(found[i]);
+                try { liveRoot = layoutSource.LiveRoot; }
+                catch { /* Capture 尚未完成时忽略 */ }
+            }
+
+            if (liveRoot == null)
+            {
+                var stage = GameObject.Find(LivingUiSceneLayoutSource.LiveRootName);
+                if (stage != null) liveRoot = stage.transform;
+            }
+
+            if (liveRoot != null)
+            {
+                var found = liveRoot.GetComponentsInChildren<LivingUiContentMarker>(true);
+                for (var i = 0; i < found.Length; i++)
+                {
+                    if (found[i] != null) _runtimeMarkers.Add(found[i]);
+                }
             }
 
             if (markers == null) return;
@@ -91,9 +112,7 @@ namespace NineGrid.LivingUI.Unity
                 if (marker == null) continue;
 
                 var binding = marker.ToBinding();
-                var phase = LivingUiContentPolicy.EvaluatePhase(
-                    binding, source, target, effective, transitioning);
-
+                var phase = ResolvePhase(marker, binding, source, target, effective, transitioning);
                 if (phase == LivingUiContentPhase.Hidden)
                 {
                     SetMarkerVisible(marker, false);
@@ -108,44 +127,55 @@ namespace NineGrid.LivingUI.Unity
                     continue;
                 }
 
-                var baseline = ResolveBaseline(binding);
+                var mode = ResolveMode(marker, binding, source, target, transitioning);
+                var authoringSize = ResolveAuthoringSize(binding, target);
                 LivingUiContentProjection projection;
-                if (phase == LivingUiContentPhase.Entering
-                    && binding.FollowPolicy == LivingUiContentFollowPolicy.BoundaryReactive
-                    && layoutSource.Snapshots.TryGetValue(source, out var sourceLayout)
-                    && layoutSource.Snapshots.TryGetValue(target, out var targetLayout))
+
+                if (mode == LivingUiContentMotionMode.Invariant
+                    || phase == LivingUiContentPhase.Stable)
                 {
-                    var sourceSize = sourceLayout.GetTerminal(binding.CarrierId).Size;
-                    var targetSize = targetLayout.GetTerminal(binding.CarrierId).Size;
-                    projection = LivingUiContentProjector.ProjectBoundaryReactiveEnter(
-                        binding.LocalPose,
-                        sourceSize,
-                        targetSize,
+                    projection = LivingUiContentProjector.ProjectInvariant(
+                        binding.Anchor, binding.LocalPose, skin.size);
+                }
+                else if (phase == LivingUiContentPhase.Entering
+                         && layoutSource.Snapshots.TryGetValue(source, out var sourceLayout)
+                         && layoutSource.Snapshots.TryGetValue(target, out var targetLayout))
+                {
+                    var sourceTerminal = sourceLayout.GetTerminal(binding.CarrierId);
+                    var targetTerminal = targetLayout.GetTerminal(binding.CarrierId);
+                    var makespan = director.TransitionMakespan;
+                    var timeProgress = makespan > 0.0001f
+                        ? Mathf.Clamp01(transitionElapsed / makespan)
+                        : 1f;
+                    var currentPos = new Vector2(skin.transform.position.x, skin.transform.position.y);
+                    var enter = LivingUiContentProjector.ComputeEnterProgress(
+                        sourceTerminal.Size,
+                        targetTerminal.Size,
                         skin.size,
-                        binding.StaggerSpan);
+                        sourceTerminal.Position,
+                        targetTerminal.Position,
+                        currentPos,
+                        timeProgress);
+                    // 位姿用目标终态尺寸固定，避免进场过程中随 size 漂移（对齐旧表现）
+                    projection = LivingUiContentProjector.ProjectScale(
+                        binding.Anchor, binding.LocalPose, targetTerminal.Size, enter);
                 }
                 else
                 {
-                    projection = LivingUiContentProjector.Project(
-                        binding.FollowPolicy,
-                        binding.LocalPose,
-                        baseline,
-                        skin.size,
-                        binding.FollowEdge,
-                        binding.StaggerSpan);
+                    // Exiting Scale：固定参考尺寸 + exit 倍率
+                    var refSize = authoringSize;
+                    if (layoutSource.Snapshots.TryGetValue(source, out var exitSource))
+                    {
+                        refSize = exitSource.GetTerminal(binding.CarrierId).Size;
+                    }
+
+                    var exitFactor = LivingUiContentProjector.ComputeExitScaleFactor(
+                        transitionElapsed, exitDuration);
+                    projection = LivingUiContentProjector.ProjectScale(
+                        binding.Anchor, binding.LocalPose, refSize, exitFactor);
                 }
 
                 var scale = projection.LocalScale;
-                if (phase == LivingUiContentPhase.Exiting)
-                {
-                    var exitFactor = LivingUiContentProjector.ComputeExitScaleFactor(
-                        transitionElapsed, exitDuration);
-                    scale = new Vector3(
-                        scale.x * exitFactor,
-                        scale.y * exitFactor,
-                        scale.z * exitFactor);
-                }
-
                 var visible = projection.Visible
                     && scale.x > LivingUiContentProjector.VisibleScaleEpsilon
                     && scale.y > LivingUiContentProjector.VisibleScaleEpsilon;
@@ -158,35 +188,73 @@ namespace NineGrid.LivingUI.Unity
             }
         }
 
+        private LivingUiContentPhase ResolvePhase(
+            LivingUiContentMarker marker,
+            LivingUiContentBinding binding,
+            LivingUiLayoutId source,
+            LivingUiLayoutId target,
+            LivingUiLayoutId effective,
+            bool transitioning)
+        {
+            if (contentController != null)
+            {
+                return contentController.ResolvePhase(marker, source, target, effective, transitioning);
+            }
+
+            return LivingUiContentPolicy.EvaluatePhase(binding, source, target, effective, transitioning);
+        }
+
+        private LivingUiContentMotionMode ResolveMode(
+            LivingUiContentMarker marker,
+            LivingUiContentBinding binding,
+            LivingUiLayoutId source,
+            LivingUiLayoutId target,
+            bool transitioning)
+        {
+            if (contentController != null)
+            {
+                return contentController.ResolveMotionMode(marker, source, target, transitioning);
+            }
+
+            if (!binding.FaceLayout.HasValue)
+            {
+                return LivingUiContentPolicy.ResolveMotionMode(true, true, transitioning);
+            }
+
+            var face = binding.FaceLayout.Value;
+            return LivingUiContentPolicy.ResolveMotionMode(
+                face == source, face == target, transitioning);
+        }
+
+        private Vector2 ResolveAuthoringSize(LivingUiContentBinding binding, LivingUiLayoutId fallbackLayout)
+        {
+            if (binding.AuthoringSize.x > 0f && binding.AuthoringSize.y > 0f)
+            {
+                return binding.AuthoringSize;
+            }
+
+            if (layoutSource != null
+                && binding.FaceLayout.HasValue
+                && layoutSource.Snapshots.TryGetValue(binding.FaceLayout.Value, out var faceLayout))
+            {
+                return faceLayout.GetTerminal(binding.CarrierId).Size;
+            }
+
+            if (layoutSource != null
+                && layoutSource.Snapshots.TryGetValue(fallbackLayout, out var fallback))
+            {
+                return fallback.GetTerminal(binding.CarrierId).Size;
+            }
+
+            return Vector2.one;
+        }
+
         private static void SetMarkerVisible(LivingUiContentMarker marker, bool visible)
         {
             if (marker.gameObject.activeSelf != visible)
             {
                 marker.gameObject.SetActive(visible);
             }
-        }
-
-        private Vector2 ResolveBaseline(LivingUiContentBinding binding)
-        {
-            if (binding.BaselineSize.x > 0f && binding.BaselineSize.y > 0f)
-            {
-                return binding.BaselineSize;
-            }
-
-            if (_baselineCache.TryGetValue(binding.CarrierId, out var cached))
-            {
-                return cached;
-            }
-
-            if (layoutSource != null
-                && layoutSource.Snapshots.TryGetValue(LivingUiLayoutId.MainMenu, out var mainMenu))
-            {
-                var terminal = mainMenu.GetTerminal(binding.CarrierId);
-                _baselineCache[binding.CarrierId] = terminal.Size;
-                return terminal.Size;
-            }
-
-            return Vector2.one;
         }
     }
 }
