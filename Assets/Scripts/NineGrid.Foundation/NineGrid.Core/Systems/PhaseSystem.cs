@@ -36,6 +36,10 @@ namespace NineGrid.Core.Systems
             /// 融合伴随补牌分拍：仅 FillEmptySlots。skipFill 时不写 Core，仅供导演打开空批。
             /// </summary>
             CoreCommandResult ResolveFusionRefill(bool skipFill = false);
+            /// <summary>
+            /// drain 退场补牌分拍：仅 FillEmptySlots。skipFill 时不写 Core，仅供导演打开空批。
+            /// </summary>
+            CoreCommandResult ResolveDrainRefill(bool skipFill = false);
             CoreCommandResult PickupItem(SlotId targetSlot);
             /// <summary>
             /// 表现层可信拾取：无相邻门禁；InteractionLoop 下仍会旋转补牌。
@@ -254,7 +258,12 @@ namespace NineGrid.Core.Systems
 
         public CoreCommandResult ResolveFusionRefill(bool skipFill = false)
         {
-            return CoreCommandResult.Accept(ResolveFusionRefillInternal(skipFill));
+            return CoreCommandResult.Accept(ResolveFillEmptySlotsBatchInternal(skipFill));
+        }
+
+        public CoreCommandResult ResolveDrainRefill(bool skipFill = false)
+        {
+            return CoreCommandResult.Accept(ResolveFillEmptySlotsBatchInternal(skipFill));
         }
 
         // 九宫格互动范围：当前 = Avatar 槽正交邻接（IBoardSystem.AreAdjacent）。
@@ -655,7 +664,7 @@ namespace NineGrid.Core.Systems
             return resolved;
         }
 
-        private int ResolveFusionRefillInternal(bool skipFill)
+        private int ResolveFillEmptySlotsBatchInternal(bool skipFill)
         {
             if (skipFill || IsTerminalPhase(CurrentPhase))
             {

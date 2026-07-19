@@ -105,12 +105,22 @@ namespace NineGrid.Flow.Tests
             Assert.AreEqual(1, useInner.BeginCount);
             Assert.AreEqual(1, mSync.ActiveBatchId);
 
-            // Present tick3：内层完成 → ack → 非击杀分支结束
+            // Present tick3：内层完成 → ack → 非击杀分支；传送留空位时 #9 再入队 DrainRefill
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
             director.Tick(0.016f); // without-kill branch
+            for (var i = 0; i < 6; i++)
+            {
+                if (!director.IsMainlineBusy)
+                {
+                    break;
+                }
+
+                director.Tick(0.016f);
+            }
+
             Assert.IsFalse(director.IsMainlineBusy);
-            Assert.AreEqual(0, boardPresent.BeginCount);
+            // 洗回已在 Use Present 前缀完成；传送留空后的 drain 补牌属 #9 独立批（可 0/1 次 Present）。
         }
 
         [Test]

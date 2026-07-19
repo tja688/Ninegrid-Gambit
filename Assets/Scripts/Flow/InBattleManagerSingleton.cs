@@ -2302,8 +2302,11 @@ namespace NineGrid.Flow
                             await DrainFusionRefillAfterPresentAsync(fusionState, ct);
                         }
 
+                        // #9：导演主线忙时由 DrainRefillLockstep 离散批次解算；
+                        // 旧 in-flight FillEmptySlots 仅非导演 drain（反击等）可达。
                         if (result.RemovedUids != null && result.RemovedUids.Length > 0
-                            && _completedFusionActionIds.Count == 0)
+                            && _completedFusionActionIds.Count == 0
+                            && !CombatHitSink.DirectorMainlineBusy)
                         {
                             await DrainPostRemoveRefillAsync(ct);
                         }
@@ -3303,47 +3306,24 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 技能移除退场后：Core FillEmptySlots + 播补牌。仅 InteractionLoop 且牌堆有牌时执行。
+        /// 技能移除退场后：Core FillEmptySlots + 播补牌（非导演路径）。
+        /// 导演路径请走 <see cref="DrainRefillLockstep"/>。
         /// </summary>
         private async UniTask DrainPostRemoveRefillAsync(CancellationToken ct)
         {
             var arch = NineGridArchitecture.Current;
-            var phaseSystem = arch.GetSystem<IPhaseSystem>();
-            if (phaseSystem.CurrentPhase != GamePhase.InteractionLoop)
-            {
-                return;
-            }
-
-            var deck = arch.GetModel<DeckModel>();
-            if (deck == null || deck.DrawPileUids == null || deck.DrawPileUids.Count <= 0)
-            {
-                return;
-            }
-
-            // 已无空槽则跳过，避免空跑。
-            var board = arch.GetModel<BoardModel>();
-            var hasEmpty = false;
-            for (var s = SlotId.MinBoardIndex; s <= SlotId.MaxBoardIndex; s++)
-            {
-                if (s == GroundSlotTopology.AvatarReservedSlot)
-                {
-                    continue;
-                }
-
-                if (board.GetCardUid(SlotId.Board(s)) <= 0)
-                {
-                    hasEmpty = true;
-                    break;
-                }
-            }
-
-            if (!hasEmpty)
+            if (!DrainRefillLockstep.ShouldRefill(arch))
             {
                 return;
             }
 
             var pipeline = arch.GetSystem<IActionPipelineSystem>();
             var startIndex = pipeline.EventLog.Entries.Count;
+            PerfTraceRecorder.Record(
+                "DrainRefill",
+                -1,
+                "RefillBatchBegin",
+                new Dictionary<string, string> { ["path"] = "legacyPostPresent" });
             arch.GetSystem<IBoardSystem>().FillEmptySlots();
             FillBoardDeltaFromEventLog(
                 pipeline,
@@ -3361,6 +3341,12 @@ namespace NineGrid.Flow
                 // 传入 steps 使多张 Deal 能前瞻后续 Rotate（若有），避免 Aim=birth。
                 await DrainDealsAsync(refillDeals, ct, refillSteps, 0);
             }
+
+            PerfTraceRecorder.Record(
+                "DrainRefill",
+                -1,
+                "RefillBatchEnd",
+                new Dictionary<string, string> { ["path"] = "legacyPostPresent" });
         }
 
         private sealed class FusionDrainState

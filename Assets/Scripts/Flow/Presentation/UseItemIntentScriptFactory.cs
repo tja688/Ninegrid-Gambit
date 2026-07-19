@@ -9,8 +9,9 @@ using QFramework;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// 用牌/帮助卡垂直切片：ApplyUseItem → Present →（击杀）Fill → Present → Rotate → Present →（融合）Refill。
-    /// 未击杀不入 Fill/Rotate；未识别 kind 不入队。
+    /// 用牌/帮助卡垂直切片：ApplyUseItem → Present →（击杀）Fill/Rotate/（融合）Refill；
+    /// （非击杀盘面空位）DrainRefill → Present。
+    /// 未识别 kind 不入队。
     /// </summary>
     public sealed class UseItemIntentScriptFactory : IIntentScriptFactory
     {
@@ -22,6 +23,7 @@ namespace NineGrid.Flow.Presentation
         private readonly Action<int, int, PostKillBoardPresentationResult> mOnBoardBatchProjected;
         private readonly Action mOnResolvedWithoutKill;
         private bool mLastUseKilledTarget;
+        private bool mLastUseNeedsDrainRefill;
         private bool mLastRotateHadFusion;
         private readonly List<int> mFusionExcludeResultUids = new List<int>(2);
 
@@ -86,6 +88,7 @@ namespace NineGrid.Flow.Presentation
             var boardSlot = ResolvePrimaryBoardSlot(selected);
             var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
             mLastUseKilledTarget = false;
+            mLastUseNeedsDrainRefill = false;
             mLastRotateHadFusion = false;
             mFusionExcludeResultUids.Clear();
 
@@ -99,6 +102,16 @@ namespace NineGrid.Flow.Presentation
                 () => mLastUseKilledTarget,
                 t => EnqueueKillAftermath(t, boardSlot),
                 mOnResolvedWithoutKill));
+            DrainRefillLockstep.AppendAfterPresentIfNeeded(
+                timeline,
+                () => mLastUseNeedsDrainRefill,
+                t => DrainRefillLockstep.EnqueueRefillBatches(
+                    t,
+                    mArchitecture,
+                    mDispatcher,
+                    mBoardPresentChannel,
+                    boardSlot,
+                    mOnBoardBatchProjected));
         }
 
         private void EnqueueKillAftermath(BattleTimeline timeline, int boardSlot)
@@ -144,6 +157,8 @@ namespace NineGrid.Flow.Presentation
             }
 
             mLastUseKilledTarget = ContainsAnyCardKilled(pipeline, startIndex);
+            // 击杀补牌走 ResolvePostKillFill；非击杀盘面空位升格为独立 DrainRefill 批次。
+            mLastUseNeedsDrainRefill = !mLastUseKilledTarget && DrainRefillLockstep.ShouldRefill(mArchitecture);
             if (mOnUseBatchProjected != null)
             {
                 mOnUseBatchProjected(startIndex, boardSlot, IntentBatchProjection.Build(mArchitecture, pipeline, startIndex));

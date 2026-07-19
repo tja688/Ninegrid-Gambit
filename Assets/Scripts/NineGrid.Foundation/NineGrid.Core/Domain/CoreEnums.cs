@@ -262,6 +262,7 @@ namespace NineGrid.Core
         ResolvePostKillFill,
         ResolvePostKillRotate,
         ResolveFusionRefill,
+        ResolveDrainRefill,
         PickupItem,
         ClickEmpty,
         UseItem,

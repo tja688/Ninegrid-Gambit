@@ -105,6 +105,24 @@ namespace NineGrid.Core.Commands
         }
     }
 
+    /// <summary>
+    /// drain 退场补牌分拍：仅 FillEmptySlots（不含交互计数）。skipFill 用于打开空批 ack。
+    /// </summary>
+    public sealed class ResolveDrainRefillCommand : AbstractCommand<CoreCommandResult>
+    {
+        private readonly bool mSkipFill;
+
+        public ResolveDrainRefillCommand(bool skipFill = false)
+        {
+            mSkipFill = skipFill;
+        }
+
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().ResolveDrainRefill(mSkipFill);
+        }
+    }
+
     public sealed class PickupItemCommand : AbstractCommand<CoreCommandResult>
     {
         private readonly SlotId mTargetSlot;

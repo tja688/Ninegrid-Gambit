@@ -71,6 +71,14 @@
 
 导演路径上融合伴随补牌走 `ResolveFusionRefill` 批次锁步，PerfLog 以独立 `SlotsFilled` 批 + 上述 site 对照验收。
 
+### DrainRefill `site`
+
+| site | 含义 |
+|------|------|
+| `RefillBatchBegin` / `RefillBatchEnd` | drain 退场补牌开闭；`path=director` 为导演离散批，`path=legacyPostPresent` 为非导演旧路径 |
+
+导演路径上非击杀移除后退场补牌走 `ResolveDrainRefill` 批次锁步；`DrainPostRemoveRefill` 在 `DirectorMainlineBusy` 时不可达。
+
 ### ShuffleIntoDeck `site`
 
 | site | 含义 |

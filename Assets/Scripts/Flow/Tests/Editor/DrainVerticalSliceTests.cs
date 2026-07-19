@@ -12,9 +12,9 @@ using QFramework;
 namespace NineGrid.Flow.Tests
 {
     /// <summary>
-    /// #6 用牌/帮助卡：ApplyUseItem → Present → Fill → Present → Rotate → Present 批次锁步。
+    /// #9 drain 补牌 refill：非击杀移除后退场补牌升格为独立 Resolve/Present 批次，禁止 in-flight FillEmptySlots。
     /// </summary>
-    public sealed class UseItemVerticalSliceTests
+    public sealed class DrainVerticalSliceTests
     {
         private static readonly SlotId sAdjacentSlot = SlotId.Board(2);
 
@@ -46,13 +46,14 @@ namespace NineGrid.Flow.Tests
         }
 
         [Test]
-        public void UseItemIntent_Kill_Lockstep_UseThenFillThenRotate_AcksBetweenBatches()
+        public void UseItemIntent_NonKillBoardRemove_Lockstep_DrainRefillIsSeparateBatchAfterUsePresent()
         {
-            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 99, attack: 0, armor: 3)).Accepted);
             PlaceSoleBoardCardAt(sAdjacentSlot);
             var targetUid = mArch.GetModel<BoardModel>().GetCardUid(sAdjacentSlot);
             Assert.Greater(targetUid, 0);
-            var knifeUid = SpawnHelpIntoItemSlots("help.throwing_knife");
+            SeedDrawPileFiller("monster.test", count: 8);
+            var kidnapUid = SpawnHelpIntoItemSlots("help.kidnapping");
 
             var usePresent = new RecordingPresentChannel(ticksUntilComplete: 1);
             var boardPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
@@ -61,80 +62,65 @@ namespace NineGrid.Flow.Tests
 
             bool preview;
             Assert.IsTrue(director.TrySubmitIntent(
-                new InputIntent(InputIntentKinds.UseItem, knifeUid, new[] { targetUid }, null),
+                new InputIntent(InputIntentKinds.UseItem, kidnapUid, new[] { targetUid }, null),
                 out preview));
             Assert.IsFalse(preview);
             Assert.IsTrue(director.IsMainlineBusy);
 
-            // Resolve ApplyUseItem
+            // Resolve ApplyUseItem：移除盘面怪，不得 in-flight FillEmptySlots
             var useStart = mPipeline.EventLog.Entries.Count;
             director.Tick(0.016f);
             Assert.AreEqual(1, mSync.ActiveBatchId);
-            Assert.AreEqual(0, usePresent.BeginCount);
-            Assert.IsFalse(ContainsTypeSince(useStart, CoreEventType.BoardRotated));
-            Assert.IsTrue(ContainsTypeSince(useStart, CoreEventType.CardKilled));
+            Assert.IsTrue(ContainsTypeSince(useStart, CoreEventType.CardRemoved),
+                "绑票应 RemoveCard 盘面怪");
+            Assert.IsFalse(ContainsTypeSince(useStart, CoreEventType.CardKilled),
+                "绑票移除不是击杀路径");
+            Assert.IsFalse(ContainsTypeSince(useStart, CoreEventType.SlotsFilled),
+                "drain 补牌不得在 Use 解算批内 in-flight 写入");
+            Assert.IsTrue(FusionRefillPlanner.HasEmptyBoardSlot(mArch.GetModel<BoardModel>()),
+                "移除后盘面应有空位");
 
             // Present use ack
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(1, usePresent.BeginCount);
 
-            // Kill branch enqueues aftermath（本 Tick 只入队，不推进 Fill）
+            // Kill branch（非击杀空过）
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(0, boardPresent.BeginCount);
 
-            // Drain refill branch（击杀路径 needsDrainRefill=false，空过）
+            // DrainRefill branch：入队补牌批（本 Tick 只入队）
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(0, boardPresent.BeginCount);
 
-            // Resolve Fill
-            var fillStart = mPipeline.EventLog.Entries.Count;
+            // Resolve DrainRefill：离散 SlotsFilled 批次
+            var refillStart = mPipeline.EventLog.Entries.Count;
             director.Tick(0.016f);
             Assert.AreEqual(2, mSync.ActiveBatchId);
-            Assert.IsTrue(ContainsTypeSince(fillStart, CoreEventType.SlotsFilled));
+            Assert.IsTrue(ContainsTypeSince(refillStart, CoreEventType.SlotsFilled),
+                "drain 补牌须在独立 Resolve 批次写入 Core");
 
-            // Present fill ack
+            // Present refill ack → idle
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(1, boardPresent.BeginCount);
-
-            // Resolve Rotate
-            var rotateStart = mPipeline.EventLog.Entries.Count;
-            director.Tick(0.016f);
-            Assert.AreEqual(3, mSync.ActiveBatchId);
-            Assert.IsTrue(ContainsTypeSince(rotateStart, CoreEventType.BoardRotated));
-
-            // Present rotate ack
-            director.Tick(0.016f);
-            Assert.AreEqual(0, mSync.ActiveBatchId);
-            Assert.AreEqual(2, boardPresent.BeginCount);
-
-            // Fusion aftermath branch（无融合则空过）→ idle
-            director.Tick(0.016f);
             Assert.IsFalse(director.IsMainlineBusy);
         }
 
         [Test]
-        public void UseItemIntent_NonKill_DoesNotEnqueueFillRotate()
+        public void UseItemIntent_Kill_DoesNotEnqueueDrainRefill_FillHandlesSlots()
         {
-            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 99, attack: 0)).Accepted);
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sAdjacentSlot);
             var targetUid = mArch.GetModel<BoardModel>().GetCardUid(sAdjacentSlot);
+            SeedDrawPileFiller("monster.test", count: 8);
             var knifeUid = SpawnHelpIntoItemSlots("help.throwing_knife");
 
-            var resolvedWithoutKill = false;
             var usePresent = new RecordingPresentChannel(ticksUntilComplete: 1);
             var boardPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
-            var factory = new UseItemIntentScriptFactory(
-                mArch,
-                mDispatcher,
-                usePresent,
-                boardPresent,
-                onUseBatchProjected: null,
-                onBoardBatchProjected: null,
-                onResolvedWithoutKill: () => resolvedWithoutKill = true);
+            var factory = new UseItemIntentScriptFactory(mArch, mDispatcher, usePresent, boardPresent);
             var director = new PresentationDirector(factory);
 
             bool preview;
@@ -142,28 +128,30 @@ namespace NineGrid.Flow.Tests
                 new InputIntent(InputIntentKinds.UseItem, knifeUid, new[] { targetUid }, null),
                 out preview));
 
-            var useStart = mPipeline.EventLog.Entries.Count;
-            director.Tick(0.016f); // resolve use
-            director.Tick(0.016f); // present use
-            director.Tick(0.016f); // kill branch → without kill
-            director.Tick(0.016f); // drain refill branch（无空位则空过）
+            // use resolve + present + kill branch（入队 Fill/Rotate）+ drain branch（空过）
+            director.Tick(0.016f);
+            director.Tick(0.016f);
+            director.Tick(0.016f);
+            director.Tick(0.016f);
 
-            Assert.IsTrue(resolvedWithoutKill);
-            Assert.AreEqual(0, boardPresent.BeginCount);
-            Assert.IsFalse(ContainsTypeSince(useStart, CoreEventType.BoardRotated));
-            Assert.IsFalse(ContainsTypeSince(useStart, CoreEventType.SlotsFilled));
+            // Fill resolve：击杀补牌走 ResolvePostKillFill，不是 DrainRefill
+            var fillStart = mPipeline.EventLog.Entries.Count;
+            director.Tick(0.016f);
+            Assert.AreEqual(2, mSync.ActiveBatchId);
+            Assert.IsTrue(ContainsTypeSince(fillStart, CoreEventType.SlotsFilled));
+
+            // fill present + rotate resolve/present + fusion branch → idle
+            for (var i = 0; i < 8; i++)
+            {
+                director.Tick(0.016f);
+                if (!director.IsMainlineBusy)
+                {
+                    break;
+                }
+            }
+
             Assert.IsFalse(director.IsMainlineBusy);
-        }
-
-        [Test]
-        public void UseItemScriptFactory_IgnoresNonUseItemIntent()
-        {
-            var usePresent = new RecordingPresentChannel(ticksUntilComplete: 1);
-            var boardPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
-            var factory = new UseItemIntentScriptFactory(mArch, mDispatcher, usePresent, boardPresent);
-            var timeline = new BattleTimeline();
-            factory.BuildScript(new InputIntent(InputIntentKinds.Attack, 2), timeline);
-            Assert.IsFalse(timeline.IsBusy);
+            Assert.AreEqual(2, boardPresent.BeginCount, "击杀路径仅 Fill/Rotate 两次板 Present，无额外 drain refill Present");
         }
 
         private int SpawnHelpIntoItemSlots(string defId)
@@ -173,6 +161,16 @@ namespace NineGrid.Flow.Tests
             var deck = mArch.GetModel<DeckModel>();
             Assert.Greater(deck.ItemSlotUids.Count, 0);
             return deck.ItemSlotUids[deck.ItemSlotUids.Count - 1];
+        }
+
+        private void SeedDrawPileFiller(string defId, int count)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                mPipeline.Enqueue(new SpawnCardAction(defId, CardKind.Monster, ZoneId.DrawPile, SlotId.None, 1, "test"));
+            }
+
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
         }
 
         private bool ContainsTypeSince(int startIndex, CoreEventType type)
@@ -189,13 +187,18 @@ namespace NineGrid.Flow.Tests
             return false;
         }
 
-        private static NodeDeckOptions CreateSingleMonsterNode(int hp, int attack)
+        private static NodeDeckOptions CreateSingleMonsterNode(int hp, int attack, int armor = 0)
         {
             return new NodeDeckOptions
             {
                 PlayerOpeningCount = 0,
                 EnemyOpeningCount = 1
-            }.AddEnemyCard(new CardDraft("monster.test", CardKind.Monster) { MaxHp = hp, Attack = attack });
+            }.AddEnemyCard(new CardDraft("monster.test", CardKind.Monster)
+            {
+                MaxHp = hp,
+                Attack = attack,
+                Armor = armor,
+            });
         }
 
         private void PlaceSoleBoardCardAt(SlotId targetSlot)

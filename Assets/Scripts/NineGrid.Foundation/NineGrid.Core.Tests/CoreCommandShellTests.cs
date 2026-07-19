@@ -20,6 +20,7 @@ namespace NineGrid.Core.Tests
             (typeof(ResolvePostKillFillCommand), GameCommandKind.ResolvePostKillFill),
             (typeof(ResolvePostKillRotateCommand), GameCommandKind.ResolvePostKillRotate),
             (typeof(ResolveFusionRefillCommand), GameCommandKind.ResolveFusionRefill),
+            (typeof(ResolveDrainRefillCommand), GameCommandKind.ResolveDrainRefill),
             (typeof(PickupItemCommand), GameCommandKind.PickupItem),
             (typeof(ClickEmptyCommand), GameCommandKind.ClickEmpty),
             (typeof(UseItemCommand), GameCommandKind.UseItem),
