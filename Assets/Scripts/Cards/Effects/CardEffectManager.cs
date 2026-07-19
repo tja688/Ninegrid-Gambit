@@ -35,9 +35,6 @@ namespace NineGrid.Cards
         [Tooltip("基础卡牌效果触发：回落段时长（秒，宜长于放大段）。")]
         [SerializeField] private float effectTriggerRecoverDuration = 0.22f;
 
-        [Tooltip("本卡效果触发脉冲发出后，再延迟多少秒刷新 ATK/HP/Armor。0=脉冲后立刻刷。仅本卡实例生效，可按怪单独调。")]
-        [SerializeField] private float statRevealDelayAfterEffectTrigger = 0.08f;
-
         private StandardCardView _view;
         private CardVisualDriver _visualDriver;
         private CardEffectSO _currentEffect;
@@ -60,15 +57,6 @@ namespace NineGrid.Cards
 
         [ShowInInspector, ReadOnly, FoldoutGroup("Runtime")]
         public bool SuppressHover => _suppressHover;
-
-        /// <summary>
-        /// 效果触发脉冲后再刷卡面数值的延迟（秒）。运行时/测试可改；Inspector 默认见序列化字段。
-        /// </summary>
-        public float StatRevealDelayAfterEffectTrigger
-        {
-            get => Mathf.Max(0f, statRevealDelayAfterEffectTrigger);
-            set => statRevealDelayAfterEffectTrigger = Mathf.Max(0f, value);
-        }
 
         private void Awake()
         {

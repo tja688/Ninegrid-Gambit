@@ -89,8 +89,6 @@ namespace NineGrid.Flow.Tests
         {
             var uid = SpawnCoreMonsterAndView();
             PlaceOnBoard(uid);
-            // 延迟 0：断言脉冲后调度路径立刻落地（非「等下一轮 SyncAll」）。
-            SetStatRevealDelay(uid, 0f);
             var startIndex = _pipeline.EventLog.Entries.Count;
 
             _pipeline.Enqueue(new ModifyBaseStatAction(uid, StatId.Attack, 2, "test.stat.via_effect_path"));
@@ -101,31 +99,7 @@ namespace NineGrid.Flow.Tests
             CollectionAssert.Contains(
                 _syncedUids,
                 uid,
-                "PresentEffectTriggers 应调度属性 Sync（延迟 0 时立刻执行）");
-        }
-
-        [Test]
-        public void PresentEffectTriggers_WithDelay_DoesNotSyncBeforeDelayElapses()
-        {
-            var uid = SpawnCoreMonsterAndView();
-            PlaceOnBoard(uid);
-            SetStatRevealDelay(uid, 0.5f);
-            var startIndex = _pipeline.EventLog.Entries.Count;
-
-            // 需要 EffectTriggered 才会走延迟分支；直接 BaseStatModified 无脉冲时 delay=0。
-            // 注入一条 EffectTriggered 事件到同一段，模拟技能触发。
-            _pipeline.Enqueue(new ModifyBaseStatAction(uid, StatId.Attack, 1, "test.stat.delayed"));
-            Assert.Greater(_pipeline.RunToCompletion(), 0);
-
-            // 无 EffectTriggered 时 PresentEffectTriggers 仍会立刻 Sync（hasEffectTriggers=false）。
-            // 用带 EffectTriggered 的 overload 路径：手动构造 effectTrigger set。
-            var triggers = new HashSet<int> { uid };
-            InBattleManagerSingleton.PresentStatChangesFromEventLog(startIndex, triggers);
-
-            CollectionAssert.DoesNotContain(
-                _syncedUids,
-                uid,
-                "有 EffectTriggered 且延迟>0 时不应在 DelayedCall 前 Sync");
+                "PresentEffectTriggers 同拍应刷属性变化卡面");
         }
 
         [Test]
@@ -164,13 +138,6 @@ namespace NineGrid.Flow.Tests
             var managed = _cardManager.SpawnView(uid, CardManagerSingleton.StandardDefId);
             Assert.IsNotNull(managed);
             return uid;
-        }
-
-        private void SetStatRevealDelay(int uid, float delaySeconds)
-        {
-            Assert.IsTrue(_cardManager.TryGet(uid, out var managed) && managed != null);
-            Assert.IsTrue(managed.TryGetEffectManager(out var effectManager) && effectManager != null);
-            effectManager.StatRevealDelayAfterEffectTrigger = delaySeconds;
         }
 
         private void PlaceOnBoard(int uid)
