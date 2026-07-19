@@ -56,8 +56,7 @@ namespace NineGrid.Flow
         private readonly Queue<BoardPresentationRequest> _boardPresentationQueue = new();
         private CancellationTokenSource _presentationCts;
         private int _nodeEventLogStart;
-        private readonly Queue<ShuffleIntoDeckPresentationEntry> _pendingShuffleInto = new();
-        private bool _shuffleIntoDrainRunning;
+        private readonly ShuffleIntoDeckPresentSink _shuffleIntoSink = new ShuffleIntoDeckPresentSink();
         private Transform _shuffleOriginScratch;
         private readonly Dictionary<int, HashSet<int>> _pendingFusionRemoves = new();
         private readonly HashSet<int> _completedFusionActionIds = new();
@@ -1398,8 +1397,7 @@ namespace NineGrid.Flow
                 request.Completion.TrySetCanceled();
             }
 
-            _pendingShuffleInto.Clear();
-            _shuffleIntoDrainRunning = false;
+            _shuffleIntoSink.Clear();
 
             CombatHitSink.ForceEndPresentationLock("CancelPresentationWork");
             TeardownPresentationDirector(IntentClearReason.LayerChange);
@@ -2899,7 +2897,7 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 扫描局内洗入事件并入队；由 FlushPendingShuffleIntoPresentationAsync 在补牌前即时飞入卡组。
+        /// 扫描局内洗入事件并入导演 sink；仅由 Present 前缀 / Drain Flush 播出，禁止 Forget 旁路泵。
         /// </summary>
         private void PresentShuffleIntoDeckFromEventLog(int startIndex)
         {
@@ -2914,108 +2912,27 @@ namespace NineGrid.Flow
                 return;
             }
 
-            var entries = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
-            if (startIndex >= entries.Count)
-            {
-                return;
-            }
-
             ResolveManagers();
             if (deckManager == null || cardManager == null || deckManager.CurrentMode != CardDeckMode.InGame)
             {
                 return;
             }
 
-            var collected = ShuffleIntoDeckPresentationScanner.Collect(
-                entries,
+            ShuffleIntoDeckLockstep.EnqueueFromEventLog(
+                _shuffleIntoSink,
+                arch,
                 startIndex,
                 uid => deckManager.ContainsUid(uid));
-            for (var i = 0; i < collected.Count; i++)
-            {
-                _pendingShuffleInto.Enqueue(collected[i]);
-            }
-
-            if (_pendingShuffleInto.Count > 0)
-            {
-                EnsureShuffleIntoDrainScheduled();
-            }
-        }
-
-        private void EnsureShuffleIntoDrainScheduled()
-        {
-            if (_shuffleIntoDrainRunning)
-            {
-                return;
-            }
-
-            _shuffleIntoDrainRunning = true;
-            DrainPendingShuffleIntoPresentationAsync(EnsurePresentationToken()).Forget();
         }
 
         private async UniTask FlushPendingShuffleIntoPresentationAsync(CancellationToken ct)
         {
-            if (_pendingShuffleInto.Count == 0)
+            if (!_shuffleIntoSink.HasPending)
             {
                 return;
             }
 
-            if (!_shuffleIntoDrainRunning)
-            {
-                _shuffleIntoDrainRunning = true;
-                try
-                {
-                    await DrainPendingShuffleIntoPresentationCoreAsync(ct);
-                }
-                finally
-                {
-                    _shuffleIntoDrainRunning = false;
-                }
-
-                return;
-            }
-
-            while (_shuffleIntoDrainRunning && _pendingShuffleInto.Count > 0)
-            {
-                ct.ThrowIfCancellationRequested();
-                await UniTask.Yield(PlayerLoopTiming.Update, ct);
-            }
-
-            if (_pendingShuffleInto.Count > 0)
-            {
-                _shuffleIntoDrainRunning = true;
-                try
-                {
-                    await DrainPendingShuffleIntoPresentationCoreAsync(ct);
-                }
-                finally
-                {
-                    _shuffleIntoDrainRunning = false;
-                }
-            }
-        }
-
-        private async UniTask DrainPendingShuffleIntoPresentationAsync(CancellationToken ct)
-        {
-            try
-            {
-                await DrainPendingShuffleIntoPresentationCoreAsync(ct);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[InBattleManager] ShuffleInto 表现失败: " + ex.Message);
-            }
-            finally
-            {
-                _shuffleIntoDrainRunning = false;
-                if (_pendingShuffleInto.Count > 0)
-                {
-                    EnsureShuffleIntoDrainScheduled();
-                }
-            }
+            await DrainPendingShuffleIntoPresentationCoreAsync(ct);
         }
 
         private async UniTask DrainPendingShuffleIntoPresentationCoreAsync(CancellationToken ct)
@@ -3023,29 +2940,44 @@ namespace NineGrid.Flow
             ResolveManagers();
             if (deckManager == null || cardManager == null)
             {
+                _shuffleIntoSink.Clear();
                 return;
             }
 
             var dealInterval = deckManager.LayoutSettings != null
                 ? deckManager.LayoutSettings.dealInterval
                 : 0.05f;
-
-            while (_pendingShuffleInto.Count > 0)
+            var startedCount = _shuffleIntoSink.PendingCount;
+            if (startedCount > 0)
             {
-                ct.ThrowIfCancellationRequested();
+                ShuffleIntoDeckLockstep.RecordPresentBegin(startedCount);
+            }
 
-                while (deckManager.IsBusy)
+            try
+            {
+                while (_shuffleIntoSink.TryDequeue(out var entry))
                 {
                     ct.ThrowIfCancellationRequested();
-                    await UniTask.Yield(PlayerLoopTiming.Update, ct);
+
+                    while (deckManager.IsBusy)
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        await UniTask.Yield(PlayerLoopTiming.Update, ct);
+                    }
+
+                    await PresentOneShuffleIntoDeckAsync(entry, ct);
+
+                    if (_shuffleIntoSink.HasPending && dealInterval > 0f)
+                    {
+                        await UniTask.Delay(TimeSpan.FromSeconds(dealInterval), cancellationToken: ct);
+                    }
                 }
-
-                var entry = _pendingShuffleInto.Dequeue();
-                await PresentOneShuffleIntoDeckAsync(entry, ct);
-
-                if (_pendingShuffleInto.Count > 0 && dealInterval > 0f)
+            }
+            finally
+            {
+                if (startedCount > 0)
                 {
-                    await UniTask.Delay(TimeSpan.FromSeconds(dealInterval), cancellationToken: ct);
+                    ShuffleIntoDeckLockstep.RecordPresentEnd(startedCount);
                 }
             }
         }
@@ -3437,25 +3369,12 @@ namespace NineGrid.Flow
 
         private void PurgeFusionResultsFromShuffleQueue(FusionDrainState fusionState)
         {
-            if (fusionState == null || fusionState.ResultUids.Count == 0 || _pendingShuffleInto.Count == 0)
+            if (fusionState == null || fusionState.ResultUids.Count == 0)
             {
                 return;
             }
 
-            var kept = new Queue<ShuffleIntoDeckPresentationEntry>();
-            while (_pendingShuffleInto.Count > 0)
-            {
-                var entry = _pendingShuffleInto.Dequeue();
-                if (!fusionState.ResultUids.Contains(entry.Uid))
-                {
-                    kept.Enqueue(entry);
-                }
-            }
-
-            while (kept.Count > 0)
-            {
-                _pendingShuffleInto.Enqueue(kept.Dequeue());
-            }
+            _shuffleIntoSink.PurgeUids(fusionState.ResultUids);
         }
 
         private async UniTask<bool> TryHandleFusionRemoveStepAsync(
@@ -4086,6 +4005,9 @@ namespace NineGrid.Flow
             PostKillBoardPresentationResult boardResult,
             CancellationToken token)
         {
+            // #8：无盘面 delta 的洗回（传送卡）也必须在用牌 Present 主线内 Flush，禁止 Forget 旁路。
+            await FlushPendingShuffleIntoPresentationAsync(token);
+
             var useResult = _pendingUseItemPresent;
             _pendingUseItemPresent = default;
             if (!useResult.Accepted)
@@ -5882,6 +5804,7 @@ namespace NineGrid.Flow
             _coreCommandDispatcher = null;
             _pendingAttackSlot = 0;
             _pendingUseItemPresent = default;
+            _shuffleIntoSink.Clear();
             CombatHitSink.DirectorMainlineBusy = false;
         }
 

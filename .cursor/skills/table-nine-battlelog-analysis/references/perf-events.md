@@ -56,6 +56,7 @@
 | `BoardSnap` | Beat 边界 | `phase`, `full`=`0\|1`, `cards` 紧凑串 |
 | `Anomaly` | 自动 | `code`, `detail`, `refIndex` |
 | `SkeletonFusion` | 骷髅融合编排（PerfTraceRecorder） | `site` 见下；payload 含 skillId/resultUid/participants 等 |
+| `ShuffleIntoDeck` | 洗回牌库编排（PerfTraceRecorder） | `site` 见下；payload 含 count/path |
 
 ### SkeletonFusion `site`
 
@@ -68,6 +69,15 @@
 | `RemoveStepPending` / `RemoveStepMiss` | Remove 步聚合等待 |
 
 导演路径上融合伴随补牌走 `ResolveFusionRefill` 批次锁步，PerfLog 以独立 `SlotsFilled` 批 + 上述 site 对照验收。
+
+### ShuffleIntoDeck `site`
+
+| site | 含义 |
+|------|------|
+| `EnqueuedForDirector` | 解算批投影后入导演 sink（不再 Forget 旁路开播） |
+| `PresentBegin` / `PresentEnd` | 洗回飞入卡组表演开闭（用牌 Present 前缀或盘面 Drain Flush） |
+
+导演路径上洗回只经 Present/Drain Flush；旧 `_pendingShuffleInto` Forget 泵不可达。净土域入组仍走 DOTween 黑盒（Evict/Admit 边界）。
 
 ### BoardSnap `cards` 格式
 
