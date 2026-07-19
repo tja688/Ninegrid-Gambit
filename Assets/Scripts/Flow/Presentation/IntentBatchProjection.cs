@@ -7,7 +7,7 @@ using QFramework;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// 导演解算批 → 盘面表演摘要的共享投影（explore / attack 切片复用）。
+    /// 导演解算批 → 盘面表演摘要的共享投影（explore / attack / useItem 切片复用）。
     /// </summary>
     public static class IntentBatchProjection
     {

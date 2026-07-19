@@ -1,6 +1,9 @@
 using System.Collections.Generic;
+using NineGrid.Content;
 using NineGrid.Core;
+using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
+using NineGrid.Core.Utilities;
 using NUnit.Framework;
 using QFramework;
 
@@ -24,6 +27,9 @@ namespace NineGrid.Core.Tests
         {
             NineGridArchitecture.ResetForTests();
             mArch = NineGridArchitecture.Current;
+            mArch.GetUtility<IConfigUtility>().Set(
+                ContentConfigKeys.DefaultCatalog,
+                TableNineContentCatalog.CreateDefault());
             InitialGameFactory.Create(mArch, new InitialGameOptions { Seed = 42UL });
             mPhase = mArch.GetSystem<IPhaseSystem>();
             mPipeline = mArch.GetSystem<IActionPipelineSystem>();
@@ -96,6 +102,43 @@ namespace NineGrid.Core.Tests
             var rotateEvents = SliceEvents(rotateStart);
             Assert.IsTrue(ContainsType(rotateEvents, CoreEventType.BoardRotated));
             Assert.IsFalse(ContainsType(rotateEvents, CoreEventType.SlotsFilled));
+        }
+
+        [Test]
+        public void ApplyUseItem_Kill_DoesNotRotate_UntilSplitBatches()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sAdjacentSlot);
+            var board = mArch.GetModel<BoardModel>();
+            var targetUid = board.GetCardUid(sAdjacentSlot);
+            Assert.Greater(targetUid, 0);
+
+            mPipeline.Enqueue(new SpawnCardAction(
+                "help.throwing_knife",
+                CardKind.HelpCard,
+                ZoneId.ItemSlots,
+                SlotId.None,
+                1,
+                "test"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+            var knifeUid = mArch.GetModel<DeckModel>().ItemSlotUids[
+                mArch.GetModel<DeckModel>().ItemSlotUids.Count - 1];
+
+            var useStart = mPipeline.EventLog.Entries.Count;
+            Assert.IsTrue(
+                mPhase.ApplyUseItem(knifeUid, new List<int> { targetUid }, null).Accepted);
+            var useEvents = SliceEvents(useStart);
+            Assert.IsTrue(ContainsType(useEvents, CoreEventType.CardKilled));
+            Assert.IsFalse(ContainsType(useEvents, CoreEventType.BoardRotated));
+            Assert.IsFalse(ContainsType(useEvents, CoreEventType.SlotsFilled));
+
+            var fillStart = mPipeline.EventLog.Entries.Count;
+            Assert.IsTrue(mPhase.ResolvePostKillFill().Accepted);
+            Assert.IsTrue(ContainsType(SliceEvents(fillStart), CoreEventType.SlotsFilled));
+
+            var rotateStart = mPipeline.EventLog.Entries.Count;
+            Assert.IsTrue(mPhase.ResolvePostKillRotate().Accepted);
+            Assert.IsTrue(ContainsType(SliceEvents(rotateStart), CoreEventType.BoardRotated));
         }
 
         [Test]

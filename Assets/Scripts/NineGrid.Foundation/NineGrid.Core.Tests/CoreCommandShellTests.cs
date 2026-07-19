@@ -22,6 +22,7 @@ namespace NineGrid.Core.Tests
             (typeof(PickupItemCommand), GameCommandKind.PickupItem),
             (typeof(ClickEmptyCommand), GameCommandKind.ClickEmpty),
             (typeof(UseItemCommand), GameCommandKind.UseItem),
+            (typeof(ApplyUseItemCommand), GameCommandKind.ApplyUseItem),
             (typeof(SelectRewardCommand), GameCommandKind.SelectReward),
             (typeof(SkipHelpChoiceCommand), GameCommandKind.SkipHelpChoice),
             (typeof(SelectRoomCommand), GameCommandKind.SelectRoom),

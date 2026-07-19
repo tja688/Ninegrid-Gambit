@@ -146,6 +146,38 @@ namespace NineGrid.Core.Commands
         }
     }
 
+    /// <summary>
+    /// 表现层可信用牌：无相位门禁；击杀后补牌/旋转由导演分拍。
+    /// </summary>
+    public sealed class ApplyUseItemCommand : AbstractCommand<CoreCommandResult>
+    {
+        private readonly int mItemUid;
+        private readonly IReadOnlyList<int> mSelectedCardUids;
+        private readonly string mSelectedOption;
+
+        public ApplyUseItemCommand(int itemUid)
+            : this(itemUid, null, null)
+        {
+        }
+
+        public ApplyUseItemCommand(int itemUid, IReadOnlyList<int> selectedCardUids)
+            : this(itemUid, selectedCardUids, null)
+        {
+        }
+
+        public ApplyUseItemCommand(int itemUid, IReadOnlyList<int> selectedCardUids, string selectedOption)
+        {
+            mItemUid = itemUid;
+            mSelectedCardUids = selectedCardUids == null ? new int[0] : new List<int>(selectedCardUids).ToArray();
+            mSelectedOption = selectedOption ?? string.Empty;
+        }
+
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().ApplyUseItem(mItemUid, mSelectedCardUids, mSelectedOption);
+        }
+    }
+
     public sealed class SelectRewardCommand : AbstractCommand<CoreCommandResult>
     {
         private readonly int mOptionIndex;

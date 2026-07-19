@@ -5,5 +5,6 @@ namespace NineGrid.Flow.Presentation
     {
         public const string Explore = "explore";
         public const string Attack = "attack";
+        public const string UseItem = "useItem";
     }
 }

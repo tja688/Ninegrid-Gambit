@@ -264,6 +264,7 @@ namespace NineGrid.Core
         PickupItem,
         ClickEmpty,
         UseItem,
+        ApplyUseItem,
         SelectReward,
         SkipHelpChoice,
         SelectRoom,

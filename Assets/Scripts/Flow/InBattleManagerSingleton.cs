@@ -65,8 +65,11 @@ namespace NineGrid.Flow
         private QueuedBoardPresentChannel _explorePresentChannel;
         private CombatAttackPresentChannel _attackHitPresentChannel;
         private QueuedBoardPresentChannel _attackBoardPresentChannel;
+        private UseItemPresentChannel _useItemPresentChannel;
+        private QueuedBoardPresentChannel _useItemBoardPresentChannel;
         private CoreCommandDispatcher _coreCommandDispatcher;
         private int _pendingAttackSlot;
+        private UseItemPresentationResult _pendingUseItemPresent;
 
         private sealed class BoardPresentationRequest
         {
@@ -1499,7 +1502,7 @@ namespace NineGrid.Flow
             CombatHitSink.ApplyPickupItem = ApplyPickupItemFromCore;
             CombatHitSink.TrySubmitExploreIntent = TrySubmitExploreIntentFromCards;
             CombatHitSink.TrySubmitAttackIntent = TrySubmitAttackIntentFromCards;
-            CombatHitSink.ApplyUseItem = ApplyUseItemFromCore;
+            CombatHitSink.TrySubmitUseItemIntent = TrySubmitUseItemIntentFromCards;
             CombatHitSink.NotifyBattleEnded = OnBattleEndedFromCombat;
             CombatHitSink.NotifyNodeSettlementReady = OnNodeSettlementFromCombat;
             FieldTraceHelper.RegisterSinkHandlers();
@@ -1603,13 +1606,13 @@ namespace NineGrid.Flow
                 CombatHitSink.TrySubmitAttackIntent = null;
             }
 
+            if (CombatHitSink.TrySubmitUseItemIntent == TrySubmitUseItemIntentFromCards)
+            {
+                CombatHitSink.TrySubmitUseItemIntent = null;
+            }
+
             CombatHitSink.DirectorMainlineBusy = false;
             TeardownPresentationDirector(IntentClearReason.LayerChange);
-
-            if (CombatHitSink.ApplyUseItem == ApplyUseItemFromCore)
-            {
-                CombatHitSink.ApplyUseItem = null;
-            }
 
             if (CombatHitSink.NotifyBattleEnded == OnBattleEndedFromCombat)
             {
@@ -2745,117 +2748,6 @@ namespace NineGrid.Flow
             return summary;
         }
 
-        private static UseItemPresentationResult ApplyUseItemFromCore(
-            int itemUid,
-            int[] selectedCardUids,
-            string selectedOption = null)
-        {
-            var arch = NineGridArchitecture.Current;
-            var pipeline = arch.GetSystem<IActionPipelineSystem>();
-            var startIndex = pipeline.EventLog.Entries.Count;
-            int[] selected = null;
-            if (selectedCardUids != null && selectedCardUids.Length > 0)
-            {
-                selected = selectedCardUids;
-            }
-
-            var result = arch.GetSystem<IPhaseSystem>().ApplyUseItem(itemUid, selected, selectedOption);
-            var summary = new UseItemPresentationResult
-            {
-                Accepted = result.Accepted,
-                DamagePopups = Array.Empty<CombatDamagePopup>(),
-                PrimaryTargetUid = selected != null && selected.Length > 0 ? selected[0] : 0,
-            };
-            if (!result.Accepted)
-            {
-                Debug.LogWarning($"[InBattleManager] UseItem 被拒: {result.Reason}");
-                return summary;
-            }
-
-            var killedUids = new List<int>(2);
-            var entries = pipeline.EventLog.Entries;
-            var primaryUid = summary.PrimaryTargetUid;
-            for (var i = startIndex; i < entries.Count; i++)
-            {
-                var e = entries[i];
-                if (e.Type == CoreEventType.CardKilled && e.CardUid > 0)
-                {
-                    summary.TargetKilled = true;
-                    if (!killedUids.Contains(e.CardUid))
-                    {
-                        killedUids.Add(e.CardUid);
-                    }
-                }
-
-                // 主目标伤害标量：与 CombatHit 一致，取本段最后一次命中主目标的 DamageDealt。
-                if (e.Type == CoreEventType.DamageDealt
-                    && e.Amount > 0
-                    && primaryUid > 0
-                    && e.TargetUid == primaryUid)
-                {
-                    summary.DamageAmount = e.Amount;
-                }
-            }
-
-            // 飞刀等：EventLog 偶发漏 CardKilled 时，用选定目标的 Graveyard/Removed/Hp 兜底。
-            if (!summary.TargetKilled
-                && primaryUid > 0
-                && arch.GetModel<CardRegistry>().TryGet(primaryUid, out var target)
-                && (target.Zone.Value == ZoneId.Graveyard
-                    || target.Zone.Value == ZoneId.Removed
-                    || arch.GetSystem<IStatSystem>().GetEffectiveInt(target, StatId.Hp) <= 0)
-                && target.Kind != CardKind.Avatar)
-            {
-                summary.TargetKilled = true;
-                killedUids.Add(primaryUid);
-            }
-
-            summary.KilledTargetUids = killedUids.Count > 0
-                ? killedUids.ToArray()
-                : Array.Empty<int>();
-            summary.DamagePopups = CollectDamagePopups(entries, startIndex);
-            PresentGoldGainsFromEventLog(
-                startIndex,
-                ResolveCardWorldPosition(summary.PrimaryTargetUid));
-            PresentEffectTriggersFromEventLog(startIndex);
-            Instance?.PresentShuffleIntoDeckFromEventLog(startIndex);
-
-            var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
-            summary.AvatarDefeated = phase == GamePhase.Defeat;
-            // 局内宝箱：PendingChoice + InteractionLoop；通关奖励：RewardItemChoice。
-            summary.RewardChoicePending =
-                arch.GetModel<PendingChoiceModel>().Kind.Value == PendingChoiceKind.Reward;
-            summary.NodeClearedOrRewardPhase =
-                phase == GamePhase.RewardItemChoice
-                || phase == GamePhase.ClearCheck
-                || phase == GamePhase.NodeCompleted
-                || phase == GamePhase.RoomChoice
-                || arch.GetSystem<IDeckSystem>().IsNodeCleared();
-
-            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids, out var boardSteps);
-            if ((boardSteps != null && boardSteps.Length > 0)
-                || (moves != null && moves.Length > 0)
-                || (deals != null && deals.Length > 0)
-                || (removedUids != null && removedUids.Length > 0)
-                || summary.TargetKilled)
-            {
-                // 飘字由 PresentUseItemEffectsAsync 用 summary.DamagePopups 强兜底；此处不重复塞。
-                summary.PostKillBoard = new PostKillBoardPresentationResult
-                {
-                    Accepted = true,
-                    Steps = boardSteps ?? Array.Empty<BoardPresentationStep>(),
-                    Moves = moves ?? Array.Empty<PostKillCardMove>(),
-                    Deals = deals ?? Array.Empty<PostKillCardDeal>(),
-                    RemovedUids = removedUids ?? Array.Empty<int>(),
-                    DamagePopups = Array.Empty<CombatDamagePopup>(),
-                    NodeClearedOrRewardPhase = summary.NodeClearedOrRewardPhase,
-                    AvatarDefeated = summary.AvatarDefeated,
-                };
-            }
-
-            return summary;
-        }
-
         private static void FillBoardDeltaFromEventLog(
             IActionPipelineSystem pipeline,
             int startIndex,
@@ -3830,7 +3722,9 @@ namespace NineGrid.Flow
                 return false;
             }
 
-            if (CombatHitSink.ChoiceOverlayActive || CombatHitSink.PresentationLocked)
+            if (CombatHitSink.ChoiceOverlayActive
+                || CombatHitSink.PresentationLocked
+                || CombatHitSink.DirectorMainlineBusy)
             {
                 return false;
             }
@@ -3886,7 +3780,7 @@ namespace NineGrid.Flow
                 selectedUids = new[] { targetUid };
             }
 
-            if (!CombatHitSink.TryBeginPresentationLock("UseItem"))
+            if (!TrySubmitUseItemIntentFromCards(card.Uid, selectedUids, selectedOption))
             {
                 if (IsStatBoostCard(card.DefId))
                 {
@@ -3896,19 +3790,6 @@ namespace NineGrid.Flow
                 return false;
             }
 
-            var useResult = ApplyUseItemFromCore(card.Uid, selectedUids, selectedOption);
-            if (!useResult.Accepted)
-            {
-                CombatHitSink.EndPresentationLock("UseItem-rejected");
-                if (IsStatBoostCard(card.DefId))
-                {
-                    RestoreHandCardAfterChoiceCancel(card);
-                }
-
-                return false;
-            }
-
-            PresentUseItemEffectsAsync(useResult).Forget();
             return true;
         }
 
@@ -3973,23 +3854,20 @@ namespace NineGrid.Flow
                 return;
             }
 
-            if (!await TryAcquirePresentationLockForBoardSelectAsync("UseItem"))
+            if (!await TryAwaitDirectorIdleForBoardSelectAsync())
             {
-                await RestoreBoardSelectItemToHandAsync(itemUid, defId, "lock-timeout");
+                await RestoreBoardSelectItemToHandAsync(itemUid, defId, "director-busy-timeout");
                 return;
             }
 
-            var useResult = ApplyUseItemFromCore(itemUid, selectedUids, null);
-            if (!useResult.Accepted)
+            if (!TrySubmitUseItemIntentFromCards(itemUid, selectedUids, null))
             {
-                CombatHitSink.EndPresentationLock("UseItem-rejected");
-                await RestoreBoardSelectItemToHandAsync(itemUid, defId, "use-rejected");
+                await RestoreBoardSelectItemToHandAsync(itemUid, defId, "use-intent-rejected");
                 return;
             }
 
             RegistryTraceSink.NotifyUserInteraction?.Invoke("BoardSelectUseItemAccepted");
             await VanishParkedBoardSelectItemIfPresentAsync(itemUid);
-            PresentUseItemEffectsAsync(useResult).Forget();
             await UniTask.CompletedTask;
         }
 
@@ -3998,7 +3876,7 @@ namespace NineGrid.Flow
             return RestoreBoardSelectItemToHandAsync(itemUid, defId, reason);
         }
 
-        private static async UniTask<bool> TryAcquirePresentationLockForBoardSelectAsync(string reason)
+        private static async UniTask<bool> TryAwaitDirectorIdleForBoardSelectAsync()
         {
             const int stepMs = 50;
             var elapsed = 0;
@@ -4006,7 +3884,7 @@ namespace NineGrid.Flow
             {
                 if (!CombatHitSink.ChoiceOverlayActive
                     && !CombatHitSink.PresentationLocked
-                    && CombatHitSink.TryBeginPresentationLock(reason))
+                    && !CombatHitSink.DirectorMainlineBusy)
                 {
                     return true;
                 }
@@ -4244,85 +4122,103 @@ namespace NineGrid.Flow
                    && string.Equals(defId, StatBoostCardDefId, StringComparison.OrdinalIgnoreCase);
         }
 
-        private async UniTaskVoid PresentUseItemEffectsAsync(UseItemPresentationResult useResult)
+        private async UniTask PlayDirectorUseItemPresentAsync(
+            PostKillBoardPresentationResult boardResult,
+            CancellationToken token)
         {
-            try
+            var useResult = _pendingUseItemPresent;
+            _pendingUseItemPresent = default;
+            if (!useResult.Accepted)
             {
-                var ct = EnsurePresentationToken();
-                ResolveManagers();
-                CoreCardPresentationMapper.SyncAllSpawnedCards();
-                UpdateAvatarDebugText();
-
-                // 飞刀等 UseItem 直伤：对齐 FieldBattle 强兜底（本段 popups + 主目标 DamageAmount）。
-                // 必须在 Vacate 尸体之前飘字，否则目标 Transform 可能已卸。
-                ManagedCard fallbackVictim = null;
-                if (useResult.PrimaryTargetUid > 0
-                    && cardManager != null
-                    && cardManager.TryGet(useResult.PrimaryTargetUid, out var primary)
-                    && primary != null)
+                useResult = new UseItemPresentationResult
                 {
-                    fallbackVictim = primary;
-                }
+                    Accepted = boardResult.Accepted,
+                    PostKillBoard = boardResult,
+                    DamagePopups = boardResult.DamagePopups ?? Array.Empty<CombatDamagePopup>(),
+                    KilledTargetUids = boardResult.RemovedUids ?? Array.Empty<int>(),
+                    TargetKilled = boardResult.RemovedUids != null && boardResult.RemovedUids.Length > 0,
+                    AvatarDefeated = boardResult.AvatarDefeated,
+                    NodeClearedOrRewardPhase = boardResult.NodeClearedOrRewardPhase,
+                    RewardChoicePending =
+                        NineGridArchitecture.Current.GetModel<PendingChoiceModel>().Kind.Value
+                        == PendingChoiceKind.Reward,
+                };
+            }
+            else if (!useResult.PostKillBoard.Accepted && boardResult.Accepted)
+            {
+                useResult.PostKillBoard = boardResult;
+            }
 
-                SpawnDamagePopups(useResult.DamagePopups, fallbackVictim, useResult.DamageAmount);
+            await PlayUseItemPresentCoreAsync(useResult, token);
+        }
 
-                // 击杀必须先 Vacate 尸体，再 Drain/Sync；否则 Register 会静默挤占格留下钉住幽灵。
-                if (useResult.TargetKilled)
-                {
-                    BeginUseItemLethalVictims(useResult, ct);
-                }
+        private async UniTask PlayUseItemPresentCoreAsync(
+            UseItemPresentationResult useResult,
+            CancellationToken ct)
+        {
+            ResolveManagers();
+            CoreCardPresentationMapper.SyncAllSpawnedCards();
+            UpdateAvatarDebugText();
 
-                if (useResult.PostKillBoard.Accepted
-                    && ((useResult.PostKillBoard.Steps != null && useResult.PostKillBoard.Steps.Length > 0)
-                        || (useResult.PostKillBoard.Moves != null && useResult.PostKillBoard.Moves.Length > 0)
-                        || (useResult.PostKillBoard.Deals != null && useResult.PostKillBoard.Deals.Length > 0)
-                        || (useResult.PostKillBoard.RemovedUids != null && useResult.PostKillBoard.RemovedUids.Length > 0)))
-                {
-                    await DrainPostKillBoardAsync(useResult.PostKillBoard, ct);
-                }
-                else
-                {
-                    SyncBoardOccupancyFromCore();
-                }
+            // 飞刀等 UseItem 直伤：对齐 FieldBattle 强兜底（本段 popups + 主目标 DamageAmount）。
+            // 必须在 Vacate 尸体之前飘字，否则目标 Transform 可能已卸。
+            ManagedCard fallbackVictim = null;
+            if (useResult.PrimaryTargetUid > 0
+                && cardManager != null
+                && cardManager.TryGet(useResult.PrimaryTargetUid, out var primary)
+                && primary != null)
+            {
+                fallbackVictim = primary;
+            }
 
-                if (useResult.AvatarDefeated)
-                {
-                    FieldBattleManagerSingleton.Instance?.TryBeginAvatarDefeatPresentation(ct);
-                    CombatHitSink.RequestBattleEnded(victory: false);
-                    return;
-                }
+            SpawnDamagePopups(useResult.DamagePopups, fallbackVictim, useResult.DamageAmount);
 
-                if (useResult.RewardChoicePending)
-                {
-                    // 局内宝箱等：仍在 InteractionLoop，当场 Bounce；通关奖励由主循环接 OnNodeSettlementReady。
-                    var phase = NineGridArchitecture.Current.GetSystem<IPhaseSystem>().CurrentPhase;
-                    if (phase == GamePhase.RewardItemChoice)
-                    {
-                        TryEnterNodeSettlement();
-                    }
-                    else
-                    {
-                        await PresentRewardChoiceFromCoreAsync(hoverOnNotice: false);
-                    }
+            // 击杀必须先 Vacate 尸体，再 Drain/Sync；否则 Register 会静默挤占格留下钉住幽灵。
+            if (useResult.TargetKilled)
+            {
+                BeginUseItemLethalVictims(useResult, ct);
+            }
 
-                    return;
-                }
+            if (useResult.PostKillBoard.Accepted
+                && ((useResult.PostKillBoard.Steps != null && useResult.PostKillBoard.Steps.Length > 0)
+                    || (useResult.PostKillBoard.Moves != null && useResult.PostKillBoard.Moves.Length > 0)
+                    || (useResult.PostKillBoard.Deals != null && useResult.PostKillBoard.Deals.Length > 0)
+                    || (useResult.PostKillBoard.RemovedUids != null && useResult.PostKillBoard.RemovedUids.Length > 0)))
+            {
+                await DrainPostKillBoardAsync(useResult.PostKillBoard, ct);
+            }
+            else
+            {
+                SyncBoardOccupancyFromCore();
+            }
 
-                if (useResult.NodeClearedOrRewardPhase)
+            if (useResult.AvatarDefeated)
+            {
+                FieldBattleManagerSingleton.Instance?.TryBeginAvatarDefeatPresentation(ct);
+                CombatHitSink.RequestBattleEnded(victory: false);
+                return;
+            }
+
+            if (useResult.RewardChoicePending)
+            {
+                // 局内宝箱等：仍在 InteractionLoop，当场 Bounce；通关奖励由主循环接 OnNodeSettlementReady。
+                var phase = NineGridArchitecture.Current.GetSystem<IPhaseSystem>().CurrentPhase;
+                if (phase == GamePhase.RewardItemChoice)
                 {
                     TryEnterNodeSettlement();
                 }
+                else
+                {
+                    await PresentRewardChoiceFromCoreAsync(hoverOnNotice: false);
+                }
+
+                return;
             }
-            catch (OperationCanceledException)
+
+            // 击杀清场由旋转批投影 ScheduleNodeSettlement；此处仅处理用牌批内已进入结算相位的非击杀路径。
+            if (useResult.NodeClearedOrRewardPhase && !useResult.TargetKilled)
             {
-            }
-            catch (Exception ex)
-            {
-                Debug.LogException(ex);
-            }
-            finally
-            {
-                CombatHitSink.EndPresentationLock("UseItem-effects");
+                TryEnterNodeSettlement();
             }
         }
 
@@ -5978,6 +5874,12 @@ namespace NineGrid.Flow
             _attackHitPresentChannel = new CombatAttackPresentChannel(
                 PlayDirectorAttackHitPresentAsync,
                 EnsurePresentationToken);
+            _useItemBoardPresentChannel = new QueuedBoardPresentChannel(
+                DrainPostKillBoardAsync,
+                EnsurePresentationToken);
+            _useItemPresentChannel = new UseItemPresentChannel(
+                PlayDirectorUseItemPresentAsync,
+                EnsurePresentationToken);
 
             var exploreFactory = new ExploreIntentScriptFactory(
                 arch,
@@ -5992,8 +5894,16 @@ namespace NineGrid.Flow
                 OnAttackHitBatchProjected,
                 OnAttackBoardBatchProjected,
                 OnAttackSurvivedForCounter);
+            var useItemFactory = new UseItemIntentScriptFactory(
+                arch,
+                _coreCommandDispatcher,
+                _useItemPresentChannel,
+                _useItemBoardPresentChannel,
+                OnUseItemBatchProjected,
+                OnUseItemBoardBatchProjected,
+                OnUseItemResolvedWithoutKill);
             _presentationDirector = new PresentationDirector(
-                new RoutingIntentScriptFactory(exploreFactory, attackFactory));
+                new RoutingIntentScriptFactory(exploreFactory, attackFactory, useItemFactory));
         }
 
         private void TeardownPresentationDirector(IntentClearReason reason)
@@ -6007,8 +5917,11 @@ namespace NineGrid.Flow
             _explorePresentChannel = null;
             _attackHitPresentChannel = null;
             _attackBoardPresentChannel = null;
+            _useItemPresentChannel = null;
+            _useItemBoardPresentChannel = null;
             _coreCommandDispatcher = null;
             _pendingAttackSlot = 0;
+            _pendingUseItemPresent = default;
             CombatHitSink.DirectorMainlineBusy = false;
         }
 
@@ -6045,6 +5958,32 @@ namespace NineGrid.Flow
             bool preview;
             var accepted = instance._presentationDirector.TrySubmitIntent(
                 new InputIntent(InputIntentKinds.Attack, groundSlot),
+                out preview);
+            CombatHitSink.DirectorMainlineBusy = instance._presentationDirector.IsMainlineBusy;
+            return accepted;
+        }
+
+        private static bool TrySubmitUseItemIntentFromCards(
+            int itemUid,
+            int[] selectedCardUids,
+            string selectedOption)
+        {
+            var instance = Instance;
+            if (instance == null)
+            {
+                Debug.LogWarning("[InBattleManager] TrySubmitUseItemIntent：无局内管理器。");
+                return false;
+            }
+
+            if (itemUid <= 0)
+            {
+                return false;
+            }
+
+            instance.EnsurePresentationDirector();
+            bool preview;
+            var accepted = instance._presentationDirector.TrySubmitIntent(
+                new InputIntent(InputIntentKinds.UseItem, itemUid, selectedCardUids, selectedOption),
                 out preview);
             CombatHitSink.DirectorMainlineBusy = instance._presentationDirector.IsMainlineBusy;
             return accepted;
@@ -6107,6 +6046,112 @@ namespace NineGrid.Flow
             {
                 ScheduleNodeSettlementAfterBoardPresent();
             }
+        }
+
+        private void OnUseItemBatchProjected(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result)
+        {
+            var pipeline = NineGridArchitecture.Current.GetSystem<IActionPipelineSystem>();
+            result.DamagePopups = CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
+            _pendingUseItemPresent = BuildUseItemPresentationFromBatch(startIndex, result);
+
+            if (_useItemPresentChannel != null)
+            {
+                _useItemPresentChannel.Enqueue(result);
+            }
+
+            PresentGoldGainsFromEventLog(
+                startIndex,
+                boardSlot > 0
+                    ? ResolveBoardSlotWorldPosition(boardSlot)
+                    : ResolveCardWorldPosition(_pendingUseItemPresent.PrimaryTargetUid));
+            PresentEffectTriggersFromEventLog(startIndex);
+            PresentShuffleIntoDeckFromEventLog(startIndex);
+        }
+
+        private void OnUseItemBoardBatchProjected(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result)
+        {
+            var pipeline = NineGridArchitecture.Current.GetSystem<IActionPipelineSystem>();
+            result.DamagePopups = CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
+
+            if (_useItemBoardPresentChannel != null)
+            {
+                _useItemBoardPresentChannel.Enqueue(result);
+            }
+
+            PresentGoldGainsFromEventLog(startIndex, ResolveBoardSlotWorldPosition(boardSlot));
+            PresentEffectTriggersFromEventLog(startIndex);
+            PresentShuffleIntoDeckFromEventLog(startIndex);
+
+            if (result.NodeClearedOrRewardPhase)
+            {
+                ScheduleNodeSettlementAfterBoardPresent();
+            }
+        }
+
+        private void OnUseItemResolvedWithoutKill()
+        {
+            // 非击杀副作用（宝箱 Bounce 等）已在用牌 Present 通道处理。
+        }
+
+        private UseItemPresentationResult BuildUseItemPresentationFromBatch(
+            int startIndex,
+            PostKillBoardPresentationResult boardResult)
+        {
+            var arch = NineGridArchitecture.Current;
+            var pipeline = arch.GetSystem<IActionPipelineSystem>();
+            var entries = pipeline.EventLog.Entries;
+            var killedUids = new List<int>(2);
+            var primaryUid = 0;
+            var damageAmount = 0;
+
+            for (var i = startIndex; i < entries.Count; i++)
+            {
+                var e = entries[i];
+                if (e.Type == CoreEventType.CardKilled && e.CardUid > 0 && !killedUids.Contains(e.CardUid))
+                {
+                    killedUids.Add(e.CardUid);
+                }
+
+                if (e.Type == CoreEventType.DamageDealt && e.Amount > 0 && e.TargetUid > 0)
+                {
+                    if (primaryUid == 0)
+                    {
+                        primaryUid = e.TargetUid;
+                    }
+
+                    if (e.TargetUid == primaryUid)
+                    {
+                        damageAmount = e.Amount;
+                    }
+                }
+            }
+
+            if (primaryUid == 0 && killedUids.Count > 0)
+            {
+                primaryUid = killedUids[0];
+            }
+
+            var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
+            return new UseItemPresentationResult
+            {
+                Accepted = true,
+                TargetKilled = killedUids.Count > 0,
+                KilledTargetUids = killedUids.Count > 0 ? killedUids.ToArray() : Array.Empty<int>(),
+                DamagePopups = boardResult.DamagePopups ?? Array.Empty<CombatDamagePopup>(),
+                DamageAmount = damageAmount,
+                PrimaryTargetUid = primaryUid,
+                AvatarDefeated = phase == GamePhase.Defeat || boardResult.AvatarDefeated,
+                RewardChoicePending =
+                    arch.GetModel<PendingChoiceModel>().Kind.Value == PendingChoiceKind.Reward,
+                NodeClearedOrRewardPhase = boardResult.NodeClearedOrRewardPhase,
+                PostKillBoard = boardResult,
+            };
         }
 
         private void ScheduleNodeSettlementAfterBoardPresent()

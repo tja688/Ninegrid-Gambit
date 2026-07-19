@@ -93,6 +93,7 @@ namespace NineGrid.Cards
                 if (_isBusy
                     || CombatHitSink.ChoiceOverlayActive
                     || CombatHitSink.PresentationLocked
+                    || CombatHitSink.DirectorMainlineBusy
                     || CombatHitSink.BoardSelectModeActive)
                 {
                     return true;

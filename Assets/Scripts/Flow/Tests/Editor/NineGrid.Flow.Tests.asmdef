@@ -5,6 +5,7 @@
         "NineGrid.Flow",
         "NineGrid.Core",
         "NineGrid.Cards",
+        "NineGrid.Content",
         "QFramework",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"

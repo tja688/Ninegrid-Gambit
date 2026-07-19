@@ -427,15 +427,13 @@ namespace NineGrid.Core.Systems
             var resolved = pipeline.RunToCompletion();
             resolved += ConsumeUsedItemIfStillInItemSlots(itemUid, card.DefId);
 
-            if (ContainsAnyEventSince(startIndex, CoreEventType.CardKilled)
-                && CurrentPhase == GamePhase.InteractionLoop)
+            // 击杀后补牌/旋转/清场留给导演 ResolvePostKillFill / ResolvePostKillRotate。
+            // 非击杀路径仍可立即 CompleteNodeIfCleared（宝箱等只写 PendingChoice，本调用通常 no-op）。
+            if (!ContainsAnyEventSince(startIndex, CoreEventType.CardKilled))
             {
-                resolved += ResolveInteractiveRotation();
+                resolved += CompleteNodeIfCleared();
             }
 
-            // 局内 OfferRewardChoice（宝箱等）只写 PendingChoice，保持 InteractionLoop；
-            // 通关奖励仍由 CompleteNodeIfCleared 进入 RewardItemChoice。
-            resolved += CompleteNodeIfCleared();
             return CoreCommandResult.Accept(resolved);
         }
 
