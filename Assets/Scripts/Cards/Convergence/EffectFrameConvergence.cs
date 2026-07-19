@@ -290,9 +290,12 @@ namespace NineGrid.Cards.Convergence
             }
 
             ConvergeVisualToWorld(root, targetWorld, sourceTime);
-            await AwaitDriverAsync(driver, cancellationToken);
+            // 视图被 Release/Destroy 后 driver 可能永不 IsActive=false；销毁即退出，避免 Present 挂死。
+            await AwaitDriverAsync(driver, cancellationToken, () => root != null);
 
-            if (parkRootOnComplete && !cancellationToken.IsCancellationRequested)
+            if (parkRootOnComplete
+                && !cancellationToken.IsCancellationRequested
+                && root != null)
             {
                 ParkRootAtWorld(root, targetWorld, "EffectFrame.ParkAfterConverge");
             }
@@ -303,13 +306,33 @@ namespace NineGrid.Cards.Convergence
             Vector3 targetWorld,
             float sourceTime,
             CancellationToken cancellationToken,
-            bool parkRootOnComplete = false) =>
-            await ConvergeVisualToWorldAsync(
-                card?.Transform,
-                targetWorld,
-                sourceTime,
+            bool parkRootOnComplete = false)
+        {
+            var root = card?.Transform;
+            if (root == null)
+            {
+                return;
+            }
+
+            if (!TryGetDriver(root, out var driver)
+                && !TryEnsureInfrastructure(root, out _, out driver, "EffectFrame.ConvergeAsync"))
+            {
+                return;
+            }
+
+            ConvergeVisualToWorld(root, targetWorld, sourceTime);
+            await AwaitDriverAsync(
+                driver,
                 cancellationToken,
-                parkRootOnComplete);
+                () => card?.Transform != null && root != null);
+
+            if (parkRootOnComplete
+                && !cancellationToken.IsCancellationRequested
+                && card?.Transform != null)
+            {
+                ParkRootAtWorld(root, targetWorld, "EffectFrame.ParkAfterConverge");
+            }
+        }
 
         /// <summary>
         /// 冲刺往返：L3 先到偏移世界点再回零。无塔时返回 false，由调用方走旧路径。

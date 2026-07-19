@@ -79,6 +79,11 @@ namespace NineGrid.Cards
         /// </summary>
         private int _nextUid = 1;
 
+        /// <summary>
+        /// 纯表现卡（BounceFan 等）负 Uid 分配器：递减，永不与 Core 正整数 CardUid 撞号。
+        /// </summary>
+        private int _nextPresentationUid = -1;
+
         public static CardManagerSingleton Instance
         {
             get
@@ -153,9 +158,9 @@ namespace NineGrid.Cards
             Transform parent = null,
             CardDisplayMode initialMode = CardDisplayMode.HandCardMode)
         {
-            if (uid <= InvalidUid)
+            if (uid == InvalidUid)
             {
-                Debug.LogError("[CardManagerSingleton] Uid 无效，须为正整数。");
+                Debug.LogError("[CardManagerSingleton] Uid 无效（不可为 0）。Core 卡用正整数；纯表现卡用负整数。");
                 return null;
             }
 
@@ -250,7 +255,8 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 本地测试用：自行分配 Uid 并创建视图。正式流程请用 Core 创建逻辑卡后再 SpawnView。
+        /// 本地测试用：自行分配正 Uid 并创建视图。正式流程请用 Core 创建逻辑卡后再 SpawnView。
+        /// BounceFan / 无 Core 选项卡请用 <see cref="SpawnPresentationOnly"/>，避免占 Core 号段。
         /// </summary>
         public ManagedCard Spawn(
             string defId,
@@ -258,6 +264,17 @@ namespace NineGrid.Cards
             CardDisplayMode initialMode = CardDisplayMode.HandCardMode)
         {
             return SpawnView(_nextUid++, defId, parent, initialMode);
+        }
+
+        /// <summary>
+        /// 纯表现卡：分配负 Uid，不占用 Core CardUid 号段（防 BounceFan 与洗回 NewCard 撞号挂死）。
+        /// </summary>
+        public ManagedCard SpawnPresentationOnly(
+            string defId,
+            Transform parent = null,
+            CardDisplayMode initialMode = CardDisplayMode.HandCardMode)
+        {
+            return SpawnView(_nextPresentationUid--, defId, parent, initialMode);
         }
 
         public List<ManagedCard> SpawnMany(
@@ -630,9 +647,14 @@ namespace NineGrid.Cards
 
         private void TrackUid(int uid)
         {
-            if (uid >= _nextUid)
+            if (uid > 0 && uid >= _nextUid)
             {
                 _nextUid = uid + 1;
+            }
+
+            if (uid < 0 && uid <= _nextPresentationUid)
+            {
+                _nextPresentationUid = uid - 1;
             }
         }
 

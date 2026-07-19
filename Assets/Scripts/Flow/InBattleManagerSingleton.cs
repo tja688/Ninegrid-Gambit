@@ -3123,6 +3123,16 @@ namespace NineGrid.Flow
             }
 
             cardManager.TryGet(entry.Uid, out var ensureCard);
+            if (ensureCard != null
+                && !string.IsNullOrEmpty(defId)
+                && !string.Equals(ensureCard.DefId, defId, StringComparison.Ordinal))
+            {
+                Debug.LogWarning(
+                    $"[InBattleManager] ShuffleInto uid={entry.Uid} 视图 def 不符 expect={defId} actual={ensureCard.DefId}，重建。");
+                cardManager.Release(ensureCard, "ShuffleInto.DefIdMismatch");
+                ensureCard = null;
+            }
+
             if (ensureCard == null)
             {
                 ensureCard = cardManager.SpawnView(
@@ -5516,6 +5526,7 @@ namespace NineGrid.Flow
         private void OnAttackHitBatchProjected(
             int startIndex,
             int boardSlot,
+            int resolvedCombatUid,
             PostKillBoardPresentationResult result)
         {
             var pipeline = NineGridArchitecture.Current.GetSystem<IActionPipelineSystem>();
@@ -5523,7 +5534,7 @@ namespace NineGrid.Flow
 
             if (_attackHitPresentChannel != null)
             {
-                _attackHitPresentChannel.Enqueue(boardSlot, result);
+                _attackHitPresentChannel.Enqueue(boardSlot, resolvedCombatUid, result);
             }
 
             PresentGoldGainsFromEventLog(startIndex, ResolveBoardSlotWorldPosition(boardSlot));
@@ -5697,6 +5708,7 @@ namespace NineGrid.Flow
 
         private UniTask PlayDirectorAttackHitPresentAsync(
             int boardSlot,
+            int resolvedCombatUid,
             PostKillBoardPresentationResult result,
             CancellationToken token)
         {
@@ -5707,7 +5719,7 @@ namespace NineGrid.Flow
                 return UniTask.CompletedTask;
             }
 
-            return battle.PlayDirectorAttackHitPresentAsync(boardSlot, result, token);
+            return battle.PlayDirectorAttackHitPresentAsync(boardSlot, resolvedCombatUid, result, token);
         }
     }
 }

@@ -248,7 +248,11 @@ namespace NineGrid.Flow
                 wrapper.transform.localRotation = Quaternion.Euler(0f, 0f, GetCenteredRotationZ(i, count));
                 wrapper.transform.localScale = Vector3.zero;
 
-                var managed = cardManager.Spawn(defId, wrapper.transform, CardDisplayMode.RemovedMode);
+                // 负 Uid 纯表现卡：勿用 Spawn() 占 Core 正号段，否则会与后续 NewCard 洗回撞号。
+                var managed = cardManager.SpawnPresentationOnly(
+                    defId,
+                    wrapper.transform,
+                    CardDisplayMode.RemovedMode);
                 if (managed?.View == null)
                 {
                     Destroy(wrapper);

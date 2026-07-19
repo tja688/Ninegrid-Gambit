@@ -18,7 +18,8 @@ namespace NineGrid.Flow.Presentation
         private readonly CoreCommandDispatcher mDispatcher;
         private readonly IPresentChannel mHitPresentChannel;
         private readonly IPresentChannel mBoardPresentChannel;
-        private readonly Action<int, int, PostKillBoardPresentationResult> mOnHitBatchProjected;
+        /// <summary>startIndex, clickedBoardSlot, resolvedCombatUid, projection</summary>
+        private readonly Action<int, int, int, PostKillBoardPresentationResult> mOnHitBatchProjected;
         private readonly Action<int, int, PostKillBoardPresentationResult> mOnBoardBatchProjected;
         private readonly Action mOnSurvived;
         private bool mLastHitKilledTarget;
@@ -30,7 +31,7 @@ namespace NineGrid.Flow.Presentation
             CoreCommandDispatcher dispatcher,
             IPresentChannel hitPresentChannel,
             IPresentChannel boardPresentChannel,
-            Action<int, int, PostKillBoardPresentationResult> onHitBatchProjected = null,
+            Action<int, int, int, PostKillBoardPresentationResult> onHitBatchProjected = null,
             Action<int, int, PostKillBoardPresentationResult> onBoardBatchProjected = null,
             Action onSurvived = null)
         {
@@ -150,7 +151,11 @@ namespace NineGrid.Flow.Presentation
             mLastHitKilledTarget = IntentBatchProjection.ContainsCardKilled(pipeline, startIndex, targetUid);
             if (mOnHitBatchProjected != null)
             {
-                mOnHitBatchProjected(startIndex, boardSlot, IntentBatchProjection.Build(mArchitecture, pipeline, startIndex));
+                mOnHitBatchProjected(
+                    startIndex,
+                    boardSlot,
+                    targetUid,
+                    IntentBatchProjection.Build(mArchitecture, pipeline, startIndex));
             }
 
             return dispatch;

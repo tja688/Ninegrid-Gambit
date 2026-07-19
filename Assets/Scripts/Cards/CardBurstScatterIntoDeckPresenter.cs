@@ -67,6 +67,14 @@ namespace NineGrid.Cards
 
             await UniTask.WhenAll(scatterTasks);
 
+            // 中途被 Release（如 BounceFan teardown）时剔除，避免后续入组挂死。
+            active.RemoveAll(c => c?.Transform == null);
+
+            if (active.Count == 0)
+            {
+                return;
+            }
+
             if (burstHoldDuration > 0f)
             {
                 await UniTask.Delay(
@@ -77,6 +85,11 @@ namespace NineGrid.Cards
             for (var i = 0; i < active.Count; i++)
             {
                 var card = active[i];
+                if (card?.Transform == null)
+                {
+                    continue;
+                }
+
                 if (deckManager.ContainsUid(card.Uid))
                 {
                     deckManager.TryDetachByUid(card.Uid, out _);
@@ -98,7 +111,13 @@ namespace NineGrid.Cards
 
             for (var i = 0; i < active.Count; i++)
             {
-                FlightSortingChannel.Restore(active[i]);
+                var card = active[i];
+                if (card?.Transform == null)
+                {
+                    continue;
+                }
+
+                FlightSortingChannel.Restore(card);
             }
         }
 
@@ -145,6 +164,11 @@ namespace NineGrid.Cards
                     duration,
                     cancellationToken,
                     parkRootOnComplete: true);
+                return;
+            }
+
+            if (card.Transform == null)
+            {
                 return;
             }
 

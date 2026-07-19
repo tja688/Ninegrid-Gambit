@@ -10,16 +10,17 @@ namespace NineGrid.Flow.Presentation
     /// </summary>
     public sealed class CombatAttackPresentChannel : IPresentChannel
     {
-        private readonly Func<int, PostKillBoardPresentationResult, CancellationToken, UniTask> mPlayHit;
+        private readonly Func<int, int, PostKillBoardPresentationResult, CancellationToken, UniTask> mPlayHit;
         private readonly Func<CancellationToken> mTokenFactory;
         private PostKillBoardPresentationResult mPending;
         private int mPendingSlot;
+        private int mPendingResolvedCombatUid;
         private bool mHasPending;
         private bool mComplete = true;
         private int mActiveBatchId;
 
         public CombatAttackPresentChannel(
-            Func<int, PostKillBoardPresentationResult, CancellationToken, UniTask> playHit,
+            Func<int, int, PostKillBoardPresentationResult, CancellationToken, UniTask> playHit,
             Func<CancellationToken> tokenFactory = null)
         {
             if (playHit == null)
@@ -41,9 +42,12 @@ namespace NineGrid.Flow.Presentation
             get { return mComplete; }
         }
 
-        public void Enqueue(int boardSlot, PostKillBoardPresentationResult result)
+        /// <param name="boardSlot">玩家点击格（蓄力朝向）。</param>
+        /// <param name="resolvedCombatUid">Resolve 批已确定的战斗目标 UID（嘲讽重定向后可能≠点击格卡）。</param>
+        public void Enqueue(int boardSlot, int resolvedCombatUid, PostKillBoardPresentationResult result)
         {
             mPendingSlot = boardSlot;
+            mPendingResolvedCombatUid = resolvedCombatUid;
             mPending = result;
             mHasPending = true;
         }
@@ -54,6 +58,7 @@ namespace NineGrid.Flow.Presentation
             mComplete = false;
 
             var slot = mPendingSlot;
+            var resolvedCombatUid = mPendingResolvedCombatUid;
             PostKillBoardPresentationResult result = default;
             var has = mHasPending;
             if (has)
@@ -62,6 +67,7 @@ namespace NineGrid.Flow.Presentation
                 mPending = default;
                 mHasPending = false;
                 mPendingSlot = 0;
+                mPendingResolvedCombatUid = 0;
             }
 
             if (!has || !result.Accepted)
@@ -71,7 +77,7 @@ namespace NineGrid.Flow.Presentation
             }
 
             var token = mTokenFactory != null ? mTokenFactory() : CancellationToken.None;
-            RunPlayAsync(slot, result, token).Forget();
+            RunPlayAsync(slot, resolvedCombatUid, result, token).Forget();
         }
 
         public void Tick(float deltaTime)
@@ -80,12 +86,13 @@ namespace NineGrid.Flow.Presentation
 
         private async UniTaskVoid RunPlayAsync(
             int boardSlot,
+            int resolvedCombatUid,
             PostKillBoardPresentationResult result,
             CancellationToken token)
         {
             try
             {
-                await mPlayHit(boardSlot, result, token);
+                await mPlayHit(boardSlot, resolvedCombatUid, result, token);
             }
             catch (OperationCanceledException)
             {

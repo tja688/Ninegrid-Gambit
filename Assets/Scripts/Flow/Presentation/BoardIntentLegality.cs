@@ -117,13 +117,9 @@ namespace NineGrid.Flow.Presentation
                 return false;
             }
 
-            var resolvedUid = phase.ResolvePlayerAttackTargetUid(targetUid);
-            if (resolvedUid != 0 && resolvedUid != targetUid)
-            {
-                rejectReason = "tauntRestricted intended=" + targetUid + " restricted=" + resolvedUid;
-                return false;
-            }
-
+            // 嘲讽：允许点击非嘲讽邻怪；实际目标由 AttackIntentScriptFactory /
+            // ResolvePlayerAttackTargetUid 重定向，Present 播 PlayTauntRedirectAttackAsync。
+            // 此处拒点会与重定向演出打架。
             return true;
         }
 

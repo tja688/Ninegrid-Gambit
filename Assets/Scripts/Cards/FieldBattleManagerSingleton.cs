@@ -169,9 +169,11 @@ namespace NineGrid.Cards
 
         /// <summary>
         /// 导演命中批 Present：Core 已 CombatHit；此处只播 lunge/受击/飘字，击杀则 Vacate（不含 Fill/Rotate）。
+        /// <paramref name="resolvedCombatUid"/> 必须来自 Resolve 批捕获值，禁止在 Hit 后再 Resolve（致死会卸嘲讽规则）。
         /// </summary>
         public async UniTask PlayDirectorAttackHitPresentAsync(
             int clickedSlot,
+            int resolvedCombatUid,
             PostKillBoardPresentationResult hitProjection,
             CancellationToken cancellationToken = default)
         {
@@ -193,7 +195,25 @@ namespace NineGrid.Cards
 
             if (!fieldManager.TryGetCardAt(clickedSlot, out var clickedVictim) || clickedVictim == null)
             {
-                // 嘲讽重定向后点击格可能已空；用投影 RemovedUids / 场地搜死尸。
+                // 点击格已空：优先用 Resolve 批捕获的战斗目标（嘲讽致死常见），否则搜投影死尸。
+                if (resolvedCombatUid > 0
+                    && CardManagerSingleton.Instance != null
+                    && CardManagerSingleton.Instance.TryGet(resolvedCombatUid, out var resolvedVictim)
+                    && resolvedVictim != null)
+                {
+                    var resolvedSlot = clickedSlot;
+                    fieldManager.TryGetSlotOf(resolvedVictim.Uid, out resolvedSlot);
+                    await PlayDirectorAttackHitCoreAsync(
+                        resolvedVictim,
+                        resolvedVictim,
+                        resolvedSlot,
+                        avatar,
+                        hitProjection,
+                        useTauntRedirect: false,
+                        cancellationToken);
+                    return;
+                }
+
                 if (!TryResolveDirectorCombatVictim(clickedSlot, hitProjection, out clickedVictim, out var combatSlotFallback))
                 {
                     Debug.LogWarning($"[FieldBattleManager] 导演命中 Present：格位 {clickedSlot} 无目标。");
@@ -211,24 +231,35 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var resolvedTargetUid = CombatHitSink.RequestResolvePlayerAttackTarget(clickedVictim.Uid);
-            var useTauntRedirect = resolvedTargetUid != clickedVictim.Uid;
+            DirectorAttackPresentTargeting.Decide(
+                clickedVictim.Uid,
+                resolvedCombatUid,
+                out var combatUid,
+                out var useTauntRedirect);
             ManagedCard combatVictim = clickedVictim;
             var combatSlot = clickedSlot;
             if (useTauntRedirect)
             {
                 if (CardManagerSingleton.Instance == null
-                    || !CardManagerSingleton.Instance.TryGet(resolvedTargetUid, out combatVictim)
+                    || !CardManagerSingleton.Instance.TryGet(combatUid, out combatVictim)
                     || combatVictim == null)
                 {
-                    Debug.LogWarning($"[FieldBattleManager] 导演命中 Present：嘲讽目标 uid={resolvedTargetUid} 不可用。");
+                    Debug.LogWarning($"[FieldBattleManager] 导演命中 Present：嘲讽目标 uid={combatUid} 不可用。");
                     return;
                 }
 
                 if (!fieldManager.TryGetSlotOf(combatVictim.Uid, out combatSlot))
                 {
-                    Debug.LogWarning($"[FieldBattleManager] 导演命中 Present：嘲讽目标不在场地。");
-                    return;
+                    // Core 已清格时表现层卡可能仍在；尽量用投影 RemovedUids 找回槽位。
+                    if (!TryResolveDirectorCombatVictim(clickedSlot, hitProjection, out var corpse, out combatSlot)
+                        || corpse == null
+                        || corpse.Uid != combatUid)
+                    {
+                        Debug.LogWarning($"[FieldBattleManager] 导演命中 Present：嘲讽目标不在场地 uid={combatUid}。");
+                        return;
+                    }
+
+                    combatVictim = corpse;
                 }
             }
 
