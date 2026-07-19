@@ -8,7 +8,7 @@ using QFramework;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// 空格 explore 剧本：ClickEmpty 一批 → Present → ResolvePostKillBoard 一批 → Present。
+    /// 空格 explore 剧本：ClickEmpty → Present → Fill → Present → Rotate → Present。
     /// 未识别 kind 不入队（留给旧路径 / 后续切片）。
     /// </summary>
     public sealed class ExploreIntentScriptFactory : IIntentScriptFactory
@@ -64,14 +64,19 @@ namespace NineGrid.Flow.Presentation
             var clickGate = PresentationSyncBatchGate.FromSync(
                 sync,
                 () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ClickEmptyCommand(slot))));
-            var postKillGate = PresentationSyncBatchGate.FromSync(
+            var fillGate = PresentationSyncBatchGate.FromSync(
                 sync,
-                () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ResolvePostKillBoardCommand())));
+                () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ResolvePostKillFillCommand())));
+            var rotateGate = PresentationSyncBatchGate.FromSync(
+                sync,
+                () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ResolvePostKillRotateCommand())));
 
             timeline.Enqueue(new ResolveBatchStep(clickGate));
             timeline.Enqueue(new PresentStep(clickGate, mPresentChannel));
-            timeline.Enqueue(new ResolveBatchStep(postKillGate));
-            timeline.Enqueue(new PresentStep(postKillGate, mPresentChannel));
+            timeline.Enqueue(new ResolveBatchStep(fillGate));
+            timeline.Enqueue(new PresentStep(fillGate, mPresentChannel));
+            timeline.Enqueue(new ResolveBatchStep(rotateGate));
+            timeline.Enqueue(new PresentStep(rotateGate, mPresentChannel));
         }
 
         private CoreCommandDispatchResult ResolveAndProject(
@@ -88,39 +93,10 @@ namespace NineGrid.Flow.Presentation
 
             if (mOnBatchProjected != null)
             {
-                mOnBatchProjected(startIndex, boardSlot, BuildPresentationResult(pipeline, startIndex));
+                mOnBatchProjected(startIndex, boardSlot, IntentBatchProjection.Build(mArchitecture, pipeline, startIndex));
             }
 
             return dispatch;
-        }
-
-        private static PostKillBoardPresentationResult BuildPresentationResult(
-            IActionPipelineSystem pipeline,
-            int startIndex)
-        {
-            var phase = NineGridArchitecture.Current.GetSystem<IPhaseSystem>();
-            var summary = new PostKillBoardPresentationResult
-            {
-                Accepted = true,
-                AvatarDefeated = phase.CurrentPhase == GamePhase.Defeat,
-                NodeClearedOrRewardPhase =
-                    phase.CurrentPhase == GamePhase.RewardItemChoice
-                    || phase.CurrentPhase == GamePhase.ClearCheck
-                    || phase.CurrentPhase == GamePhase.NodeCompleted
-                    || NineGridArchitecture.Current.GetSystem<IDeckSystem>().IsNodeCleared(),
-            };
-
-            var registry = NineGridArchitecture.Current.GetModel<CardRegistry>();
-            var projection = BoardPresentationStepProjector.Project(
-                pipeline.EventLog.Entries,
-                startIndex,
-                registry);
-            summary.Steps = projection.Steps ?? Array.Empty<BoardPresentationStep>();
-            summary.Moves = projection.LegacyMoves ?? Array.Empty<PostKillCardMove>();
-            summary.Deals = projection.LegacyDeals ?? Array.Empty<PostKillCardDeal>();
-            summary.RemovedUids = projection.LegacyRemovedUids ?? Array.Empty<int>();
-            summary.DamagePopups = Array.Empty<CombatDamagePopup>();
-            return summary;
         }
     }
 }

@@ -4,5 +4,6 @@ namespace NineGrid.Flow.Presentation
     public static class InputIntentKinds
     {
         public const string Explore = "explore";
+        public const string Attack = "attack";
     }
 }

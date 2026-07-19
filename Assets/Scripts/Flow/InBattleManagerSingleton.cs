@@ -63,7 +63,10 @@ namespace NineGrid.Flow
         private readonly HashSet<int> _completedFusionActionIds = new();
         private PresentationDirector _presentationDirector;
         private QueuedBoardPresentChannel _explorePresentChannel;
+        private CombatAttackPresentChannel _attackHitPresentChannel;
+        private QueuedBoardPresentChannel _attackBoardPresentChannel;
         private CoreCommandDispatcher _coreCommandDispatcher;
+        private int _pendingAttackSlot;
 
         private sealed class BoardPresentationRequest
         {
@@ -1495,6 +1498,7 @@ namespace NineGrid.Flow
             CombatHitSink.DrainPostKillBoard = DrainPostKillBoardAsync;
             CombatHitSink.ApplyPickupItem = ApplyPickupItemFromCore;
             CombatHitSink.TrySubmitExploreIntent = TrySubmitExploreIntentFromCards;
+            CombatHitSink.TrySubmitAttackIntent = TrySubmitAttackIntentFromCards;
             CombatHitSink.ApplyUseItem = ApplyUseItemFromCore;
             CombatHitSink.NotifyBattleEnded = OnBattleEndedFromCombat;
             CombatHitSink.NotifyNodeSettlementReady = OnNodeSettlementFromCombat;
@@ -1592,6 +1596,11 @@ namespace NineGrid.Flow
             if (CombatHitSink.TrySubmitExploreIntent == TrySubmitExploreIntentFromCards)
             {
                 CombatHitSink.TrySubmitExploreIntent = null;
+            }
+
+            if (CombatHitSink.TrySubmitAttackIntent == TrySubmitAttackIntentFromCards)
+            {
+                CombatHitSink.TrySubmitAttackIntent = null;
             }
 
             CombatHitSink.DirectorMainlineBusy = false;
@@ -5963,12 +5972,28 @@ namespace NineGrid.Flow
             _explorePresentChannel = new QueuedBoardPresentChannel(
                 DrainPostKillBoardAsync,
                 EnsurePresentationToken);
-            var factory = new ExploreIntentScriptFactory(
+            _attackBoardPresentChannel = new QueuedBoardPresentChannel(
+                DrainPostKillBoardAsync,
+                EnsurePresentationToken);
+            _attackHitPresentChannel = new CombatAttackPresentChannel(
+                PlayDirectorAttackHitPresentAsync,
+                EnsurePresentationToken);
+
+            var exploreFactory = new ExploreIntentScriptFactory(
                 arch,
                 _coreCommandDispatcher,
                 _explorePresentChannel,
                 OnExploreBatchProjected);
-            _presentationDirector = new PresentationDirector(factory);
+            var attackFactory = new AttackIntentScriptFactory(
+                arch,
+                _coreCommandDispatcher,
+                _attackHitPresentChannel,
+                _attackBoardPresentChannel,
+                OnAttackHitBatchProjected,
+                OnAttackBoardBatchProjected,
+                OnAttackSurvivedForCounter);
+            _presentationDirector = new PresentationDirector(
+                new RoutingIntentScriptFactory(exploreFactory, attackFactory));
         }
 
         private void TeardownPresentationDirector(IntentClearReason reason)
@@ -5980,7 +6005,10 @@ namespace NineGrid.Flow
 
             _presentationDirector = null;
             _explorePresentChannel = null;
+            _attackHitPresentChannel = null;
+            _attackBoardPresentChannel = null;
             _coreCommandDispatcher = null;
+            _pendingAttackSlot = 0;
             CombatHitSink.DirectorMainlineBusy = false;
         }
 
@@ -6003,6 +6031,25 @@ namespace NineGrid.Flow
             return accepted;
         }
 
+        private static bool TrySubmitAttackIntentFromCards(int groundSlot)
+        {
+            var instance = Instance;
+            if (instance == null)
+            {
+                Debug.LogWarning("[InBattleManager] TrySubmitAttackIntent：无局内管理器。");
+                return false;
+            }
+
+            instance.EnsurePresentationDirector();
+            instance._pendingAttackSlot = groundSlot;
+            bool preview;
+            var accepted = instance._presentationDirector.TrySubmitIntent(
+                new InputIntent(InputIntentKinds.Attack, groundSlot),
+                out preview);
+            CombatHitSink.DirectorMainlineBusy = instance._presentationDirector.IsMainlineBusy;
+            return accepted;
+        }
+
         private void OnExploreBatchProjected(
             int startIndex,
             int boardSlot,
@@ -6019,6 +6066,97 @@ namespace NineGrid.Flow
             PresentGoldGainsFromEventLog(startIndex, ResolveBoardSlotWorldPosition(boardSlot));
             PresentEffectTriggersFromEventLog(startIndex);
             PresentShuffleIntoDeckFromEventLog(startIndex);
+        }
+
+        private void OnAttackHitBatchProjected(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result)
+        {
+            var pipeline = NineGridArchitecture.Current.GetSystem<IActionPipelineSystem>();
+            result.DamagePopups = CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
+
+            if (_attackHitPresentChannel != null)
+            {
+                _attackHitPresentChannel.Enqueue(boardSlot, result);
+            }
+
+            PresentGoldGainsFromEventLog(startIndex, ResolveBoardSlotWorldPosition(boardSlot));
+            PresentEffectTriggersFromEventLog(startIndex);
+            PresentShuffleIntoDeckFromEventLog(startIndex);
+        }
+
+        private void OnAttackBoardBatchProjected(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result)
+        {
+            var pipeline = NineGridArchitecture.Current.GetSystem<IActionPipelineSystem>();
+            result.DamagePopups = CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
+
+            if (_attackBoardPresentChannel != null)
+            {
+                _attackBoardPresentChannel.Enqueue(result);
+            }
+
+            PresentGoldGainsFromEventLog(startIndex, ResolveBoardSlotWorldPosition(boardSlot));
+            PresentEffectTriggersFromEventLog(startIndex);
+            PresentShuffleIntoDeckFromEventLog(startIndex);
+
+            if (result.NodeClearedOrRewardPhase)
+            {
+                ScheduleNodeSettlementAfterBoardPresent();
+            }
+        }
+
+        private void ScheduleNodeSettlementAfterBoardPresent()
+        {
+            // 旋转批投影已进清场相位：等当前 Present drain 完成后再结算（下一帧检查导演空闲）。
+            AwaitDirectorIdleThenSettleAsync().Forget();
+        }
+
+        private async UniTaskVoid AwaitDirectorIdleThenSettleAsync()
+        {
+            var token = EnsurePresentationToken();
+            try
+            {
+                while (_presentationDirector != null && _presentationDirector.IsMainlineBusy)
+                {
+                    await UniTask.Yield(PlayerLoopTiming.Update, token);
+                }
+
+                CombatHitSink.RequestNodeSettlement();
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
+        private void OnAttackSurvivedForCounter()
+        {
+            var slot = _pendingAttackSlot;
+            var battle = FieldBattleManagerSingleton.Instance;
+            if (battle == null || slot <= 0)
+            {
+                return;
+            }
+
+            battle.RequestDirectorCounterAfterSurviveAsync(slot, EnsurePresentationToken()).Forget();
+        }
+
+        private UniTask PlayDirectorAttackHitPresentAsync(
+            int boardSlot,
+            PostKillBoardPresentationResult result,
+            CancellationToken token)
+        {
+            var battle = FieldBattleManagerSingleton.Instance;
+            if (battle == null)
+            {
+                Debug.LogWarning("[InBattleManager] PlayDirectorAttackHitPresent：无 FieldBattleManager。");
+                return UniTask.CompletedTask;
+            }
+
+            return battle.PlayDirectorAttackHitPresentAsync(boardSlot, result, token);
         }
     }
 }

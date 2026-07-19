@@ -9,12 +9,11 @@ using QFramework;
 namespace NineGrid.Flow.Tests
 {
     /// <summary>
-    /// #4 空格 explore 垂直切片：导演缝上 ClickEmpty → Present → Fill → Present → Rotate → Present 批次锁步。
+    /// #5 攻击→击杀补牌旋转：CombatHit → Present → Fill → Present → Rotate → Present 批次锁步。
     /// </summary>
-    public sealed class ExploreVerticalSliceTests
+    public sealed class AttackVerticalSliceTests
     {
         private static readonly SlotId sAdjacentSlot = SlotId.Board(2);
-        private static readonly SlotId sFarCornerSlot = SlotId.Board(1);
 
         private IArchitecture mArch;
         private IPhaseSystem mPhase;
@@ -41,84 +40,117 @@ namespace NineGrid.Flow.Tests
         }
 
         [Test]
-        public void ExploreIntent_Lockstep_ClickEmptyThenFillThenRotate_AcksBetweenBatches()
+        public void AttackIntent_Kill_Lockstep_HitThenFillThenRotate_AcksBetweenBatches()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
-            PlaceSoleBoardCardAt(sFarCornerSlot);
-            Assert.IsTrue(mArch.GetModel<BoardModel>().IsEmpty(sAdjacentSlot));
+            PlaceSoleBoardCardAt(sAdjacentSlot);
 
-            var present = new RecordingPresentChannel(ticksUntilComplete: 1);
-            var factory = new ExploreIntentScriptFactory(mArch, mDispatcher, present);
+            var hitPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var boardPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var factory = new AttackIntentScriptFactory(mArch, mDispatcher, hitPresent, boardPresent);
             var director = new PresentationDirector(factory);
 
             bool preview;
-            Assert.IsTrue(director.TrySubmitIntent(new InputIntent(InputIntentKinds.Explore, 2), out preview));
+            Assert.IsTrue(director.TrySubmitIntent(
+                new InputIntent(InputIntentKinds.Attack, sAdjacentSlot.Index),
+                out preview));
             Assert.IsFalse(preview);
             Assert.IsTrue(director.IsMainlineBusy);
 
-            // Resolve ClickEmpty（本拍只解算，尚未 Present）
-            var clickStart = mPipeline.EventLog.Entries.Count;
+            // Resolve CombatHit
+            var hitStart = mPipeline.EventLog.Entries.Count;
             director.Tick(0.016f);
             Assert.AreEqual(1, mSync.ActiveBatchId);
-            Assert.AreEqual(0, present.BeginCount);
-            Assert.IsFalse(ContainsEventTypeSince(clickStart, CoreEventType.BoardRotated));
-            Assert.IsFalse(ContainsEventTypeSince(clickStart, CoreEventType.SlotsFilled));
+            Assert.AreEqual(0, hitPresent.BeginCount);
+            Assert.IsFalse(ContainsTypeSince(hitStart, CoreEventType.BoardRotated));
+            Assert.IsTrue(ContainsTypeSince(hitStart, CoreEventType.CardKilled));
 
-            // Present ack batch 1
+            // Present hit ack
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
-            Assert.AreEqual(1, present.BeginCount);
-            Assert.AreEqual(1, present.PresentedBatchIds[0]);
+            Assert.AreEqual(1, hitPresent.BeginCount);
+
+            // Branch enqueues aftermath（本 Tick 只入队，不推进 Fill）
+            director.Tick(0.016f);
+            Assert.AreEqual(0, mSync.ActiveBatchId);
+            Assert.AreEqual(0, boardPresent.BeginCount);
 
             // Resolve Fill
             var fillStart = mPipeline.EventLog.Entries.Count;
             director.Tick(0.016f);
             Assert.AreEqual(2, mSync.ActiveBatchId);
-            Assert.AreEqual(1, present.BeginCount);
-            Assert.IsTrue(ContainsEventTypeSince(fillStart, CoreEventType.SlotsFilled));
+            Assert.IsTrue(ContainsTypeSince(fillStart, CoreEventType.SlotsFilled));
 
-            // Present ack batch 2
+            // Present fill ack
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
-            Assert.AreEqual(2, present.BeginCount);
+            Assert.AreEqual(1, boardPresent.BeginCount);
 
             // Resolve Rotate
             var rotateStart = mPipeline.EventLog.Entries.Count;
             director.Tick(0.016f);
             Assert.AreEqual(3, mSync.ActiveBatchId);
-            Assert.IsTrue(ContainsEventTypeSince(rotateStart, CoreEventType.BoardRotated));
+            Assert.IsTrue(ContainsTypeSince(rotateStart, CoreEventType.BoardRotated));
 
-            // Present ack batch 3 → idle
+            // Present rotate ack → idle
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
-            Assert.AreEqual(3, present.BeginCount);
-            Assert.AreEqual(3, present.PresentedBatchIds[2]);
+            Assert.AreEqual(2, boardPresent.BeginCount);
             Assert.IsFalse(director.IsMainlineBusy);
         }
 
         [Test]
-        public void ExploreScriptFactory_IgnoresNonExploreIntent()
+        public void AttackIntent_NonKill_DoesNotEnqueueFillRotate()
         {
-            var present = new RecordingPresentChannel(ticksUntilComplete: 1);
-            var factory = new ExploreIntentScriptFactory(mArch, mDispatcher, present);
-            var timeline = new BattleTimeline();
-            factory.BuildScript(new InputIntent("pickup", 2), timeline);
-            Assert.IsFalse(timeline.IsBusy);
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 99, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sAdjacentSlot);
+            // 压低 Avatar 攻击，确保本拍不击杀。
+            var board = mArch.GetModel<BoardModel>();
+            var avatar = mArch.GetModel<CardRegistry>().Get(board.AvatarUid.Value);
+            avatar.Stats.SetBase(StatId.Attack, 1);
+
+            var survived = false;
+            var hitPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var boardPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var factory = new AttackIntentScriptFactory(
+                mArch,
+                mDispatcher,
+                hitPresent,
+                boardPresent,
+                onHitBatchProjected: null,
+                onBoardBatchProjected: null,
+                onSurvived: () => survived = true);
+            var director = new PresentationDirector(factory);
+
+            bool preview;
+            Assert.IsTrue(director.TrySubmitIntent(
+                new InputIntent(InputIntentKinds.Attack, sAdjacentSlot.Index),
+                out preview));
+
+            var hitStart = mPipeline.EventLog.Entries.Count;
+            director.Tick(0.016f); // resolve hit
+            director.Tick(0.016f); // present hit
+            director.Tick(0.016f); // branch → survived
+
+            Assert.IsTrue(survived);
+            Assert.AreEqual(0, boardPresent.BeginCount);
+            Assert.IsFalse(ContainsTypeSince(hitStart, CoreEventType.BoardRotated));
+            Assert.IsFalse(ContainsTypeSince(hitStart, CoreEventType.SlotsFilled));
+            Assert.IsFalse(director.IsMainlineBusy);
         }
 
         [Test]
-        public void Dispatcher_RejectedCommand_DoesNotOpenBatch()
+        public void AttackScriptFactory_IgnoresNonAttackIntent()
         {
-            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
-            PlaceSoleBoardCardAt(sAdjacentSlot);
-
-            var result = mDispatcher.Send(new ClickEmptyCommand(sFarCornerSlot));
-            Assert.IsFalse(result.Accepted);
-            Assert.IsFalse(result.BatchOpened);
-            Assert.AreEqual(0, mSync.ActiveBatchId);
+            var hitPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var boardPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var factory = new AttackIntentScriptFactory(mArch, mDispatcher, hitPresent, boardPresent);
+            var timeline = new BattleTimeline();
+            factory.BuildScript(new InputIntent(InputIntentKinds.Explore, 2), timeline);
+            Assert.IsFalse(timeline.IsBusy);
         }
 
-        private bool ContainsEventTypeSince(int startIndex, CoreEventType type)
+        private bool ContainsTypeSince(int startIndex, CoreEventType type)
         {
             var entries = mPipeline.EventLog.Entries;
             for (var i = startIndex; i < entries.Count; i++)
@@ -174,10 +206,6 @@ namespace NineGrid.Flow.Tests
             board.PlaceCard(sole, targetSlot);
         }
 
-        /// <summary>
-        /// 假表演通道：Begin 后 N tick 完成；记录已播批次，供锁步断言。
-        /// Ack 由 PresentStep 调 gate.TryAcknowledge，此处只记 Begin 次序。
-        /// </summary>
         private sealed class RecordingPresentChannel : IPresentChannel
         {
             private readonly int mTicksUntilComplete;

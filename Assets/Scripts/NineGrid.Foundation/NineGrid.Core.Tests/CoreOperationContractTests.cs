@@ -74,6 +74,31 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void ResolvePostKillFill_ThenRotate_SplitBatches_R1()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sAdjacentSlot);
+
+            var board = mArch.GetModel<BoardModel>();
+            var targetUid = board.GetCardUid(sAdjacentSlot);
+            Assert.Greater(targetUid, 0);
+            Assert.IsTrue(mPhase.ApplyCombatHit(board.AvatarUid.Value, targetUid).Accepted);
+
+            var fillStart = mPipeline.EventLog.Entries.Count;
+            Assert.IsTrue(mPhase.ResolvePostKillFill().Accepted);
+            var fillEvents = SliceEvents(fillStart);
+            Assert.IsTrue(ContainsType(fillEvents, CoreEventType.SlotsFilled));
+            Assert.IsTrue(ContainsType(fillEvents, CoreEventType.InteractionChanged));
+            Assert.IsFalse(ContainsType(fillEvents, CoreEventType.BoardRotated));
+
+            var rotateStart = mPipeline.EventLog.Entries.Count;
+            Assert.IsTrue(mPhase.ResolvePostKillRotate().Accepted);
+            var rotateEvents = SliceEvents(rotateStart);
+            Assert.IsTrue(ContainsType(rotateEvents, CoreEventType.BoardRotated));
+            Assert.IsFalse(ContainsType(rotateEvents, CoreEventType.SlotsFilled));
+        }
+
+        [Test]
         public void ClickEmpty_Adjacent_EmitsEmptyClicked_WithoutRotation()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);

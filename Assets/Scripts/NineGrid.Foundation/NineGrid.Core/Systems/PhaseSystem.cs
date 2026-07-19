@@ -21,9 +21,17 @@ namespace NineGrid.Core.Systems
             /// </summary>
             CoreCommandResult ApplyCombatHit(int attackerUid, int targetUid);
             /// <summary>
-            /// 击杀后盘面：交互计数 + 旋转 + 补牌 + 清场判定。
+            /// 击杀后盘面：交互计数 + 补牌 + 旋转 + 清场判定（兼容整拍；导演路径请用分拍）。
             /// </summary>
             CoreCommandResult ResolvePostKillBoard();
+            /// <summary>
+            /// 击杀后分拍：交互计数 + 补牌（Fill）。不旋转。
+            /// </summary>
+            CoreCommandResult ResolvePostKillFill();
+            /// <summary>
+            /// 击杀后分拍：顺时针旋转 + 清场判定。
+            /// </summary>
+            CoreCommandResult ResolvePostKillRotate();
             CoreCommandResult PickupItem(SlotId targetSlot);
             /// <summary>
             /// 表现层可信拾取：无相邻门禁；InteractionLoop 下仍会旋转补牌。
@@ -226,7 +234,18 @@ namespace NineGrid.Core.Systems
 
         public CoreCommandResult ResolvePostKillBoard()
         {
+            // 兼容整拍：与历史 ResolveInteractiveRotation 同语义（单次 RunToCompletion）。
             return CoreCommandResult.Accept(ResolveInteractiveRotation());
+        }
+
+        public CoreCommandResult ResolvePostKillFill()
+        {
+            return CoreCommandResult.Accept(ResolvePostKillFillInternal());
+        }
+
+        public CoreCommandResult ResolvePostKillRotate()
+        {
+            return CoreCommandResult.Accept(ResolvePostKillRotateInternal());
         }
 
         // 九宫格互动范围：当前 = Avatar 槽正交邻接（IBoardSystem.AreAdjacent）。
@@ -591,10 +610,38 @@ namespace NineGrid.Core.Systems
                 return 0;
             }
 
-            // R1：先补牌再旋转（Fill → Rotate）。
+            // 旧整拍入口（Attack / Pickup / ResolvePostKillBoard）：单次 RunToCompletion 保语义。
+            // 导演分拍请用 ResolvePostKillFill / ResolvePostKillRotate。
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new ModifyInteractionCountAction(1));
             pipeline.Enqueue(new FillEmptySlotsAction());
+            pipeline.Enqueue(new RotateBoardClockwiseAction());
+            var resolved = pipeline.RunToCompletion();
+            resolved += CompleteNodeIfCleared();
+            return resolved;
+        }
+
+        private int ResolvePostKillFillInternal()
+        {
+            if (IsTerminalPhase(CurrentPhase))
+            {
+                return 0;
+            }
+
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new ModifyInteractionCountAction(1));
+            pipeline.Enqueue(new FillEmptySlotsAction());
+            return pipeline.RunToCompletion();
+        }
+
+        private int ResolvePostKillRotateInternal()
+        {
+            if (IsTerminalPhase(CurrentPhase))
+            {
+                return 0;
+            }
+
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new RotateBoardClockwiseAction());
             var resolved = pipeline.RunToCompletion();
             resolved += CompleteNodeIfCleared();

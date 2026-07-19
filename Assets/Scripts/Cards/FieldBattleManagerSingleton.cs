@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards.Convergence;
@@ -131,7 +132,6 @@ namespace NineGrid.Cards
                 || CombatHitSink.ChoiceOverlayActive
                 || CombatHitSink.BoardSelectModeActive
                 || CombatHitSink.PresentationLocked
-                || CombatHitSink.DirectorMainlineBusy
                 || attackAdapter == null
                 || fieldManager == null
                 || fieldManager.IsFieldBusy)
@@ -151,12 +151,13 @@ namespace NineGrid.Cards
             }
 
             RegistryTraceSink.NotifyUserInteraction?.Invoke("BattleClick");
-            RequestBasicAttackAtSlotAsync(slot).Forget();
-            return true;
+            // 已迁导演：提交攻击意图（忙时由导演缓冲）；不再走旧 RequestBasicAttack 编排。
+            return CombatHitSink.RequestAttackIntent(slot);
         }
 
         /// <summary>
         /// 玩家进攻编排：命中帧写 Core；击杀则清格+Core 旋转；未击杀则接播反击。
+        /// DevTest / 旧入口仍可用；正式点击交战已迁导演 <see cref="CombatHitSink.RequestAttackIntent"/>。
         /// </summary>
         public UniTask RequestBasicAttackAtSlotAsync(
             int victimSlot,
@@ -167,7 +168,353 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 仅怪物反击（DevTest Keypad1 等）。点击交战请走 <see cref="RequestBasicAttackAtSlotAsync"/>。
+        /// 导演命中批 Present：Core 已 CombatHit；此处只播 lunge/受击/飘字，击杀则 Vacate（不含 Fill/Rotate）。
+        /// </summary>
+        public async UniTask PlayDirectorAttackHitPresentAsync(
+            int clickedSlot,
+            PostKillBoardPresentationResult hitProjection,
+            CancellationToken cancellationToken = default)
+        {
+            ResolveFieldManager();
+            ResolveAttackAdapter();
+
+            if (attackAdapter == null || fieldManager == null)
+            {
+                Debug.LogWarning("[FieldBattleManager] 导演命中 Present：缺 adapter/field。");
+                return;
+            }
+
+            if (!fieldManager.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+                || avatar == null)
+            {
+                Debug.LogWarning("[FieldBattleManager] 导演命中 Present：Avatar 不可用。");
+                return;
+            }
+
+            if (!fieldManager.TryGetCardAt(clickedSlot, out var clickedVictim) || clickedVictim == null)
+            {
+                // 嘲讽重定向后点击格可能已空；用投影 RemovedUids / 场地搜死尸。
+                if (!TryResolveDirectorCombatVictim(clickedSlot, hitProjection, out clickedVictim, out var combatSlotFallback))
+                {
+                    Debug.LogWarning($"[FieldBattleManager] 导演命中 Present：格位 {clickedSlot} 无目标。");
+                    return;
+                }
+
+                await PlayDirectorAttackHitCoreAsync(
+                    clickedVictim,
+                    clickedVictim,
+                    combatSlotFallback,
+                    avatar,
+                    hitProjection,
+                    useTauntRedirect: false,
+                    cancellationToken);
+                return;
+            }
+
+            var resolvedTargetUid = CombatHitSink.RequestResolvePlayerAttackTarget(clickedVictim.Uid);
+            var useTauntRedirect = resolvedTargetUid != clickedVictim.Uid;
+            ManagedCard combatVictim = clickedVictim;
+            var combatSlot = clickedSlot;
+            if (useTauntRedirect)
+            {
+                if (CardManagerSingleton.Instance == null
+                    || !CardManagerSingleton.Instance.TryGet(resolvedTargetUid, out combatVictim)
+                    || combatVictim == null)
+                {
+                    Debug.LogWarning($"[FieldBattleManager] 导演命中 Present：嘲讽目标 uid={resolvedTargetUid} 不可用。");
+                    return;
+                }
+
+                if (!fieldManager.TryGetSlotOf(combatVictim.Uid, out combatSlot))
+                {
+                    Debug.LogWarning($"[FieldBattleManager] 导演命中 Present：嘲讽目标不在场地。");
+                    return;
+                }
+            }
+
+            await PlayDirectorAttackHitCoreAsync(
+                clickedVictim,
+                combatVictim,
+                combatSlot,
+                avatar,
+                hitProjection,
+                useTauntRedirect,
+                cancellationToken);
+        }
+
+        /// <summary>
+        /// 导演未击杀分支：播怪物反击（Core 命中仍走旧 ApplyCombatHit 回调）。
+        /// </summary>
+        public UniTask RequestDirectorCounterAfterSurviveAsync(
+            int combatSlot,
+            CancellationToken cancellationToken = default)
+        {
+            return RequestDirectorCounterInternalAsync(combatSlot, cancellationToken);
+        }
+
+        private async UniTask RequestDirectorCounterInternalAsync(
+            int clickedSlot,
+            CancellationToken cancellationToken)
+        {
+            ResolveFieldManager();
+            if (_isBusy
+                || CombatHitSink.PresentationLocked
+                || (fieldManager != null && fieldManager.IsFieldBusy))
+            {
+                Debug.LogWarning("[FieldBattleManager] 导演反击：忙碌，跳过。");
+                return;
+            }
+
+            var combatSlot = clickedSlot;
+            if (fieldManager != null
+                && fieldManager.TryGetCardAt(clickedSlot, out var clicked)
+                && clicked != null)
+            {
+                var resolvedUid = CombatHitSink.RequestResolvePlayerAttackTarget(clicked.Uid);
+                if (resolvedUid != clicked.Uid
+                    && CardManagerSingleton.Instance != null
+                    && CardManagerSingleton.Instance.TryGet(resolvedUid, out var combatVictim)
+                    && combatVictim != null
+                    && fieldManager.TryGetSlotOf(combatVictim.Uid, out var redirectedSlot))
+                {
+                    combatSlot = redirectedSlot;
+                }
+            }
+
+            var linkedCts = CreateLinkedBattleCts(cancellationToken);
+            var ct = linkedCts.Token;
+            _isBusy = true;
+            try
+            {
+                await PlayCounterAttackCoreAsync(combatSlot, lethal: false, ct);
+            }
+            catch (System.OperationCanceledException)
+            {
+            }
+            finally
+            {
+                _isBusy = false;
+                SyncAfterCombatRound();
+                DisposeBattleCts(linkedCts);
+            }
+        }
+
+        private async UniTask PlayDirectorAttackHitCoreAsync(
+            ManagedCard clickedVictim,
+            ManagedCard combatVictim,
+            int combatSlot,
+            ManagedCard avatar,
+            PostKillBoardPresentationResult hitProjection,
+            bool useTauntRedirect,
+            CancellationToken cancellationToken)
+        {
+            var linkedCts = CreateLinkedBattleCts(cancellationToken);
+            var ct = linkedCts.Token;
+
+            var willKill = HasRemovedUid(hitProjection, combatVictim.Uid)
+                || combatVictim.IsFieldDead
+                || hitProjection.NodeClearedOrRewardPhase;
+            var attackIntent = BattleIntentUtility.FromFlags(counter: false, willKill);
+            var attackBind = ResolveBindParams(attackIntent, combatVictim, out var attackProfile);
+            LogBattleBindResolve(avatar.Uid, combatVictim.Uid, attackBind, attackProfile, willKill, isCounter: false);
+
+            var hitFrameApplied = false;
+            void ApplyHitFrameVisuals()
+            {
+                if (hitFrameApplied)
+                {
+                    return;
+                }
+
+                hitFrameApplied = true;
+                CombatHitSink.RequestSyncCard(combatVictim);
+                SpawnDamagePopups(hitProjection.DamagePopups, combatVictim, 0);
+            }
+
+            _isBusy = true;
+            try
+            {
+                try
+                {
+                    PerfTraceSink.OpenBeat?.Invoke("CombatHit", 0);
+                    PerfTraceSink.SetCombatants?.Invoke(avatar.Uid, combatVictim.Uid);
+                }
+                catch
+                {
+                    // ignore
+                }
+
+                if (useTauntRedirect)
+                {
+                    await attackAdapter.PlayTauntRedirectAttackAsync(
+                        clickedVictim,
+                        combatVictim,
+                        attackBind,
+                        ApplyHitFrameVisuals,
+                        ct);
+                }
+                else
+                {
+                    await attackAdapter.PlayBasicAttackAsync(
+                        clickedVictim,
+                        attackBind,
+                        ApplyHitFrameVisuals,
+                        ct);
+                }
+
+                if (!hitFrameApplied)
+                {
+                    ApplyHitFrameVisuals();
+                }
+
+                if (hitProjection.AvatarDefeated)
+                {
+                    await DrainCombatHitBoardDeltaFromProjectionAsync(hitProjection, ct);
+                    TryBeginAvatarDefeatPresentation(ct);
+                    CombatHitSink.RequestBattleEnded(victory: false);
+                    return;
+                }
+
+                var killed = HasRemovedUid(hitProjection, combatVictim.Uid) || combatVictim.IsFieldDead;
+                if (killed)
+                {
+                    var hitDelta = StripRemovedUid(hitProjection, combatVictim.Uid);
+                    await DrainCombatHitBoardDeltaFromProjectionAsync(hitDelta, ct);
+
+                    CardManagerSingleton.Instance?.MarkFieldDead(combatVictim);
+                    fieldManager.VacateSlotForExplore(
+                        combatSlot,
+                        combatVictim,
+                        playRemoveAnim: false,
+                        skipBusyGuard: true,
+                        startExplore: false);
+                    CardManagerSingleton.Instance?.StageFieldDeadCorpseOffAnchor(combatVictim);
+                    FinalizeLethalVictimAsync(combatVictim, ct).Forget();
+                    // Fill/Rotate Present 由导演后续批次驱动；此处不 RequestPostKillBoard。
+                    return;
+                }
+
+                // 未击杀：命中批可能仍有盘面 delta（技能挪位等），先 drain。
+                await DrainCombatHitBoardDeltaFromProjectionAsync(hitProjection, ct);
+            }
+            catch (System.OperationCanceledException)
+            {
+            }
+            finally
+            {
+                try
+                {
+                    PerfTraceSink.CloseBeat?.Invoke();
+                }
+                catch
+                {
+                    // ignore
+                }
+
+                _isBusy = false;
+                SyncAfterCombatRound();
+                DisposeBattleCts(linkedCts);
+            }
+        }
+
+        private bool TryResolveDirectorCombatVictim(
+            int clickedSlot,
+            PostKillBoardPresentationResult hitProjection,
+            out ManagedCard victim,
+            out int combatSlot)
+        {
+            victim = null;
+            combatSlot = clickedSlot;
+            var cards = CardManagerSingleton.Instance;
+            if (cards == null || hitProjection.RemovedUids == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < hitProjection.RemovedUids.Length; i++)
+            {
+                var uid = hitProjection.RemovedUids[i];
+                if (uid <= 0 || !cards.TryGet(uid, out victim) || victim == null)
+                {
+                    continue;
+                }
+
+                if (fieldManager != null && fieldManager.TryGetSlotOf(uid, out combatSlot))
+                {
+                    return true;
+                }
+
+                combatSlot = clickedSlot;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool HasRemovedUid(PostKillBoardPresentationResult result, int uid)
+        {
+            if (uid <= 0 || result.RemovedUids == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < result.RemovedUids.Length; i++)
+            {
+                if (result.RemovedUids[i] == uid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static PostKillBoardPresentationResult StripRemovedUid(
+            PostKillBoardPresentationResult source,
+            int uid)
+        {
+            if (!HasRemovedUid(source, uid))
+            {
+                return source;
+            }
+
+            var filtered = new List<int>(source.RemovedUids.Length);
+            for (var i = 0; i < source.RemovedUids.Length; i++)
+            {
+                if (source.RemovedUids[i] != uid)
+                {
+                    filtered.Add(source.RemovedUids[i]);
+                }
+            }
+
+            var copy = source;
+            copy.RemovedUids = filtered.Count > 0 ? filtered.ToArray() : System.Array.Empty<int>();
+            return copy;
+        }
+
+        private async UniTask DrainCombatHitBoardDeltaFromProjectionAsync(
+            PostKillBoardPresentationResult projection,
+            CancellationToken cancellationToken)
+        {
+            if (!projection.Accepted || IsEmptyBoardProjection(projection))
+            {
+                return;
+            }
+
+            await CombatHitSink.RequestDrainPostKillBoard(projection, cancellationToken);
+        }
+
+        private static bool IsEmptyBoardProjection(PostKillBoardPresentationResult result)
+        {
+            var stepCount = result.Steps != null ? result.Steps.Length : 0;
+            var moveCount = result.Moves != null ? result.Moves.Length : 0;
+            var dealCount = result.Deals != null ? result.Deals.Length : 0;
+            var removeCount = result.RemovedUids != null ? result.RemovedUids.Length : 0;
+            return stepCount == 0 && moveCount == 0 && dealCount == 0 && removeCount == 0;
+        }
+
+        /// <summary>
+        /// 仅怪物反击（DevTest Keypad1 等）。点击交战请走 <see cref="CombatHitSink.RequestAttackIntent"/>。
         /// </summary>
         public UniTask RequestBasicCounterAttackAtSlotAsync(
             int attackerSlot,

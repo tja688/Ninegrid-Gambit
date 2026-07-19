@@ -55,13 +55,35 @@ namespace NineGrid.Core.Commands
     }
 
     /// <summary>
-    /// 击杀后盘面结算：旋转 + 补牌 + 清场判定。
+    /// 击杀后盘面结算：补牌 + 旋转 + 清场判定（整拍兼容）。
     /// </summary>
     public sealed class ResolvePostKillBoardCommand : AbstractCommand<CoreCommandResult>
     {
         protected override CoreCommandResult OnExecute()
         {
             return this.GetSystem<IPhaseSystem>().ResolvePostKillBoard();
+        }
+    }
+
+    /// <summary>
+    /// 击杀后分拍：交互计数 + 补牌。
+    /// </summary>
+    public sealed class ResolvePostKillFillCommand : AbstractCommand<CoreCommandResult>
+    {
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().ResolvePostKillFill();
+        }
+    }
+
+    /// <summary>
+    /// 击杀后分拍：旋转 + 清场判定。
+    /// </summary>
+    public sealed class ResolvePostKillRotateCommand : AbstractCommand<CoreCommandResult>
+    {
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().ResolvePostKillRotate();
         }
     }
 

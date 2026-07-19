@@ -17,6 +17,8 @@ namespace NineGrid.Core.Tests
             (typeof(AttackCommand), GameCommandKind.Attack),
             (typeof(CombatHitCommand), GameCommandKind.CombatHit),
             (typeof(ResolvePostKillBoardCommand), GameCommandKind.ResolvePostKillBoard),
+            (typeof(ResolvePostKillFillCommand), GameCommandKind.ResolvePostKillFill),
+            (typeof(ResolvePostKillRotateCommand), GameCommandKind.ResolvePostKillRotate),
             (typeof(PickupItemCommand), GameCommandKind.PickupItem),
             (typeof(ClickEmptyCommand), GameCommandKind.ClickEmpty),
             (typeof(UseItemCommand), GameCommandKind.UseItem),

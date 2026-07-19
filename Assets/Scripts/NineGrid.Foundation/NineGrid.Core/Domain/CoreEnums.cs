@@ -259,6 +259,8 @@ namespace NineGrid.Core
         Attack,
         CombatHit,
         ResolvePostKillBoard,
+        ResolvePostKillFill,
+        ResolvePostKillRotate,
         PickupItem,
         ClickEmpty,
         UseItem,

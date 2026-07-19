@@ -295,6 +295,9 @@ namespace NineGrid.Cards
         /// <summary>空槽 explore：提交导演意图（忙时缓冲）；返回是否接纳。</summary>
         public static Func<int, bool> TrySubmitExploreIntent;
 
+        /// <summary>攻击：提交导演意图（忙时缓冲）；返回是否接纳。</summary>
+        public static Func<int, bool> TrySubmitAttackIntent;
+
         /// <summary>
         /// 表演导演主线在跑。已迁流程以此为输入互斥真相；Cards 侧 IsBusy 聚合读取，不引用 Flow。
         /// </summary>
@@ -396,6 +399,17 @@ namespace NineGrid.Cards
             }
 
             return TrySubmitExploreIntent(groundSlot);
+        }
+
+        public static bool RequestAttackIntent(int groundSlot)
+        {
+            if (TrySubmitAttackIntent == null)
+            {
+                Debug.LogWarning("[CombatHitSink] TrySubmitAttackIntent 未注册。");
+                return false;
+            }
+
+            return TrySubmitAttackIntent(groundSlot);
         }
 
         public static UseItemPresentationResult RequestUseItem(
