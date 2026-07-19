@@ -71,30 +71,28 @@ namespace NineGrid.Flow.Tests
         }
 
         [Test]
-        public void SyncBatchGate_UsesFinishBatchSeam_AndBlocksResolveWhileLocked()
+        public void SyncBatchGate_EmptyNonLockingBatch_StillBlocksUntilFinishBatch()
         {
             var session = new SyncSessionStub();
             var resolveCount = 0;
-            var gate = new PresentationSyncBatchGate(
-                () => session.IsInputLocked,
-                () => session.ActiveBatchId,
-                () =>
-                {
-                    resolveCount++;
-                    var batch = new PresentationBatch(
-                        session.NextBatchId(),
-                        System.Array.Empty<PresentationInstruction>(),
-                        null);
-                    session.OpenBatch(batch);
-                    return new CoreCommandDispatchResult(CoreCommandResult.Accept(0), batch, true);
-                },
-                session.FinishBatch);
+            var gate = CreateGateFromSession(session, () =>
+            {
+                resolveCount++;
+                var batch = new PresentationBatch(
+                    session.NextBatchId(),
+                    System.Array.Empty<PresentationInstruction>(),
+                    null);
+                Assert.IsFalse(batch.RequiresAcknowledgement);
+                session.OpenBatch(batch);
+                return new CoreCommandDispatchResult(CoreCommandResult.Accept(0), batch, true);
+            });
 
             int firstId;
             Assert.IsTrue(gate.TryOpenNextBatch(out firstId));
             Assert.AreEqual(1, firstId);
             Assert.AreEqual(1, resolveCount);
             Assert.IsTrue(gate.HasOpenBatch);
+            Assert.IsFalse(session.IsInputLocked);
 
             int blocked;
             Assert.IsFalse(gate.TryOpenNextBatch(out blocked));
@@ -102,6 +100,7 @@ namespace NineGrid.Flow.Tests
 
             Assert.IsTrue(gate.TryAcknowledge(firstId));
             Assert.IsFalse(gate.HasOpenBatch);
+            Assert.AreEqual(0, session.ActiveBatchId);
 
             int secondId;
             Assert.IsTrue(gate.TryOpenNextBatch(out secondId));
@@ -109,7 +108,44 @@ namespace NineGrid.Flow.Tests
             Assert.AreEqual(2, resolveCount);
         }
 
-        /// <summary>镜像 PresentationSyncSystem OpenBatch/FinishBatch 锁语义（无 QFramework 架构）。</summary>
+        [Test]
+        public void PresentStep_WithSyncGate_EmptyBatch_DoesNotDeadlock()
+        {
+            var session = new SyncSessionStub();
+            var gate = CreateGateFromSession(session, () =>
+            {
+                var batch = new PresentationBatch(
+                    session.NextBatchId(),
+                    System.Array.Empty<PresentationInstruction>(),
+                    null);
+                session.OpenBatch(batch);
+                return new CoreCommandDispatchResult(CoreCommandResult.Accept(0), batch, true);
+            });
+            var present = new FakePresentChannel(ticksUntilComplete: 1);
+            var timeline = new BattleTimeline();
+            timeline.Enqueue(new ResolveBatchStep(gate));
+            timeline.Enqueue(new PresentStep(gate, present));
+
+            Assert.AreEqual(TimelineStepStatus.Continue, timeline.Tick(0.016f));
+            Assert.IsTrue(gate.HasOpenBatch);
+            Assert.AreEqual(TimelineStepStatus.Finished, timeline.Tick(0.016f));
+            Assert.IsTrue(present.Began);
+            Assert.IsFalse(gate.HasOpenBatch);
+            Assert.IsFalse(timeline.IsBusy);
+        }
+
+        private static PresentationSyncBatchGate CreateGateFromSession(
+            SyncSessionStub session,
+            System.Func<CoreCommandDispatchResult> resolveAndOpen)
+        {
+            return new PresentationSyncBatchGate(
+                () => session.ActiveBatchId > 0,
+                () => session.ActiveBatchId,
+                resolveAndOpen,
+                session.FinishBatch);
+        }
+
+        /// <summary>忠实镜像 PresentationSyncSystem OpenBatch/FinishBatch（无 QFramework 架构）。</summary>
         private sealed class SyncSessionStub
         {
             private int mNextId = 1;
@@ -126,17 +162,11 @@ namespace NineGrid.Flow.Tests
             {
                 ActiveBatchId = batch != null ? batch.BatchId : 0;
                 IsInputLocked = batch != null && batch.RequiresAcknowledgement;
-                // Empty instruction list => RequiresAcknowledgement false. Force lock for lockstep tests.
-                if (batch != null)
-                {
-                    IsInputLocked = true;
-                    ActiveBatchId = batch.BatchId;
-                }
             }
 
             public CoreCommandResult FinishBatch(int batchId)
             {
-                if (!IsInputLocked)
+                if (ActiveBatchId <= 0)
                 {
                     return CoreCommandResult.Reject("No presentation batch is waiting.");
                 }

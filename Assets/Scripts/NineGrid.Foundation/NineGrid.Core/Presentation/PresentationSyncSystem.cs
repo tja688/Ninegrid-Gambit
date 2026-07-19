@@ -38,7 +38,9 @@ namespace NineGrid.Core
 
         public CoreCommandResult FinishBatch(int batchId)
         {
-            if (!IsInputLocked)
+            // ActiveBatchId 是打开中的批次真相；IsInputLocked 仅表示该批含阻塞指令。
+            // 无阻塞指令的批次仍须经 FinishBatch 就位回执关闭，否则导演锁步无法前进。
+            if (ActiveBatchId <= 0)
             {
                 return CoreCommandResult.Reject("No presentation batch is waiting.");
             }

@@ -81,5 +81,32 @@ namespace NineGrid.Core.Tests
             Assert.IsFalse(result.Accepted);
             Assert.IsFalse(result.BatchOpened);
         }
+
+        [Test]
+        public void PresentationSync_FinishBatch_ClearsActiveNonLockingBatch()
+        {
+            var sync = NineGridArchitecture.Current.GetSystem<IPresentationSyncSystem>();
+            var batch = new PresentationBatch(7, Array.Empty<PresentationInstruction>(), null);
+
+            Assert.IsFalse(batch.RequiresAcknowledgement);
+            sync.OpenBatch(batch);
+            Assert.AreEqual(7, sync.ActiveBatchId);
+            Assert.IsFalse(sync.IsInputLocked);
+
+            var result = sync.FinishBatch(7);
+            Assert.IsTrue(result.Accepted);
+            Assert.AreEqual(0, sync.ActiveBatchId);
+            Assert.IsFalse(sync.IsInputLocked);
+        }
+
+        [Test]
+        public void PresentationSync_FinishBatch_RejectsWhenNoActiveBatch()
+        {
+            var sync = NineGridArchitecture.Current.GetSystem<IPresentationSyncSystem>();
+            var result = sync.FinishBatch(1);
+
+            Assert.IsFalse(result.Accepted);
+            Assert.AreEqual(0, sync.ActiveBatchId);
+        }
     }
 }

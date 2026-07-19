@@ -5,24 +5,25 @@ namespace NineGrid.Flow.Presentation
 {
     /// <summary>
     /// 将既有 PresentationSyncSystem OpenBatch/FinishBatch 缝接到导演批次门。
-    /// 未 ack（IsInputLocked）时拒绝再解算下一批；就位回执走 FinishBatch。
+    /// 未 ack（ActiveBatchId &gt; 0）时拒绝再解算下一批；就位回执走 FinishBatch。
+    /// 与 IsInputLocked 解耦：无阻塞指令的批次仍算打开中，必须 FinishBatch 后才能下一批。
     /// </summary>
     public sealed class PresentationSyncBatchGate : IPresentationBatchGate
     {
-        private readonly Func<bool> mIsInputLocked;
+        private readonly Func<bool> mHasOpenBatch;
         private readonly Func<int> mActiveBatchId;
         private readonly Func<CoreCommandDispatchResult> mResolveAndOpen;
         private readonly Func<int, CoreCommandResult> mFinishBatch;
 
         public PresentationSyncBatchGate(
-            Func<bool> isInputLocked,
+            Func<bool> hasOpenBatch,
             Func<int> activeBatchId,
             Func<CoreCommandDispatchResult> resolveAndOpen,
             Func<int, CoreCommandResult> finishBatch)
         {
-            if (isInputLocked == null)
+            if (hasOpenBatch == null)
             {
-                throw new ArgumentNullException("isInputLocked");
+                throw new ArgumentNullException("hasOpenBatch");
             }
 
             if (activeBatchId == null)
@@ -40,7 +41,7 @@ namespace NineGrid.Flow.Presentation
                 throw new ArgumentNullException("finishBatch");
             }
 
-            mIsInputLocked = isInputLocked;
+            mHasOpenBatch = hasOpenBatch;
             mActiveBatchId = activeBatchId;
             mResolveAndOpen = resolveAndOpen;
             mFinishBatch = finishBatch;
@@ -57,7 +58,7 @@ namespace NineGrid.Flow.Presentation
             }
 
             return new PresentationSyncBatchGate(
-                () => sync.IsInputLocked,
+                () => sync.ActiveBatchId > 0,
                 () => sync.ActiveBatchId,
                 resolveAndOpen,
                 sync.FinishBatch);
@@ -65,7 +66,7 @@ namespace NineGrid.Flow.Presentation
 
         public bool HasOpenBatch
         {
-            get { return mIsInputLocked(); }
+            get { return mHasOpenBatch(); }
         }
 
         public int ActiveBatchId
@@ -75,7 +76,7 @@ namespace NineGrid.Flow.Presentation
 
         public bool TryOpenNextBatch(out int batchId)
         {
-            if (mIsInputLocked())
+            if (mHasOpenBatch())
             {
                 batchId = 0;
                 return false;
