@@ -796,7 +796,7 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// Drain 后若占格冲突，强制 Sync 对齐 Core（与 Pickup 路径一致）。
+        /// #10：交战收尾若几何登记冲突，经 sink 触发对账断言（禁止静默 Sync 修补）。
         /// </summary>
         private void SyncAfterCombatRound()
         {

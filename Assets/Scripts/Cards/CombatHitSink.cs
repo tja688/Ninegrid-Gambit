@@ -294,7 +294,9 @@ namespace NineGrid.Cards
         /// <summary>世界坐标飘字。</summary>
         public static Action<Vector3, int> SpawnDamageNumber;
 
-        /// <summary>击杀后按 Core Board 最小同步表现占格（安全网，非主路径）。</summary>
+        /// <summary>
+        /// #10：占格对账已退场。保留委托供旧调用点触发断言诊断，不得再静默 heal。
+        /// </summary>
         public static Action SyncBoardFromCore;
 
         /// <summary>缓释击杀后盘面摘要：hop 已有卡 + 发新牌 + 软对齐。</summary>

@@ -26,6 +26,7 @@ namespace NineGrid.Flow.Tests
         public void SetUp()
         {
             NineGridArchitecture.ResetForTests();
+            OccupancyForceSyncGuard.ResetForTests();
             mArch = NineGridArchitecture.Current;
             InitialGameFactory.Create(mArch, new InitialGameOptions { Seed = 42UL });
             mPhase = mArch.GetSystem<IPhaseSystem>();
@@ -37,6 +38,7 @@ namespace NineGrid.Flow.Tests
         [TearDown]
         public void TearDown()
         {
+            OccupancyForceSyncGuard.ResetForTests();
             NineGridArchitecture.ResetForTests();
         }
 
@@ -97,6 +99,10 @@ namespace NineGrid.Flow.Tests
             // Fusion aftermath branch（无融合则空过）→ idle
             director.Tick(0.016f);
             Assert.IsFalse(director.IsMainlineBusy);
+            Assert.AreEqual(
+                0,
+                OccupancyForceSyncGuard.InvocationCount,
+                "#10 idle 锁步路径不得触发占格强制对账断言");
         }
 
         [Test]

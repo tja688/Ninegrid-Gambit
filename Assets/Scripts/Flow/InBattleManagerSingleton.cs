@@ -1288,9 +1288,7 @@ namespace NineGrid.Flow
             finally
             {
                 CombatHitSink.OpeningPresentationActive = false;
-                // 与 Drain/UseItem 对齐：开局发牌后必须 Sync，否则会出现
-                // 表现空槽可点、Core 非空拒 ClickEmpty（道具旋转 Sync 后“自愈”）。
-                SyncBoardOccupancyFromCore();
+                // #10：开局不再靠 Sync 自愈占格镜像；几何登记由发牌表演维护，合法性由 Flow idle 裁决。
                 CoreCardPresentationMapper.SyncAllSpawnedCards();
                 UpdateAvatarDebugText();
             }
@@ -2337,7 +2335,7 @@ namespace NineGrid.Flow
                 FieldTraceHelper.ClearBatchTag();
             }
 
-            // 异常/取消后仍必跑 Sync + DrainEnd，避免 Core↔表现稳态分叉（不可放进 finally：需 await）。
+            // #10：Drain 尾部不再 force Sync 自愈；冲突只断言+诊断。就位栅栏仍等齐飞牌。
             if (ranDrainBody)
             {
                 try
@@ -2345,15 +2343,11 @@ namespace NineGrid.Flow
                     ResolveManagers();
                     if (fieldManager != null)
                     {
-                        // 就位栅栏：解锁输入前必须等齐补牌飞行，再 Sync；禁止 flight 中 hardSet。
                         await fieldManager.WaitAllActiveDealFlightsAsync(CancellationToken.None);
-                        SyncBoardOccupancyFromCore(force: true);
                         if (fieldManager.HasOccupancyConflictSinceClear)
                         {
-                            Debug.LogWarning(
-                                "[InBattleManager] Drain 期间发生 OccupancyConflict，再次强制 SyncBoardOccupancyFromCore。");
+                            AssertOccupancySyncForbidden("drainOccupancyConflict", "force");
                             await fieldManager.WaitAllActiveDealFlightsAsync(CancellationToken.None);
-                            SyncBoardOccupancyFromCore(force: true);
                         }
 
                         fieldManager.RefreshSlotHitColliders();
@@ -2370,8 +2364,8 @@ namespace NineGrid.Flow
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning("[InBattleManager] Drain 尾部 Sync/DrainEnd 失败: " + ex.Message);
-                    _pendingSyncFromCore = true;
+                    Debug.LogWarning("[InBattleManager] Drain 尾部 DrainEnd 失败: " + ex.Message);
+                    AssertOccupancySyncForbidden("drainTailFailure", ex.Message);
                 }
             }
 
@@ -3852,8 +3846,7 @@ namespace NineGrid.Flow
                 return;
             }
 
-            SyncBoardOccupancyFromCore();
-
+            // #10：BoardSelect 合法性读 BoardModel，不再前置 Sync 自愈占格镜像。
             if (!TryValidateBoardSelectTargets(selectedUids, requiredCount, out var validateReason))
             {
                 Debug.LogWarning(
@@ -4198,10 +4191,7 @@ namespace NineGrid.Flow
             {
                 await DrainPostKillBoardAsync(useResult.PostKillBoard, ct);
             }
-            else
-            {
-                SyncBoardOccupancyFromCore();
-            }
+            // #10：无盘面 delta 时不再 soft Sync；几何由导演 Present 维护。
 
             if (useResult.AvatarDefeated)
             {
@@ -4401,7 +4391,7 @@ namespace NineGrid.Flow
                     {
                         CoreCardPresentationMapper.SyncAllSpawnedCards();
                         UpdateAvatarDebugText();
-                        SyncBoardOccupancyFromCore();
+                        // #10：空 delta 不再 soft Sync。
                     }
 
                     RefreshPersistentInBattleUi(animate: false);
@@ -4559,7 +4549,8 @@ namespace NineGrid.Flow
             if (_pendingSyncFromCore)
             {
                 _pendingSyncFromCore = false;
-                SyncBoardOccupancyFromCore(force: true);
+                // #10：延迟对账降级为断言，禁止静默修补。
+                AssertOccupancySyncForbidden("flushDeferredBoardSync", force ? "force" : "soft");
             }
         }
 
@@ -5193,634 +5184,30 @@ namespace NineGrid.Flow
 
         private void RequestSyncBoardFromCore()
         {
-            SyncBoardOccupancyFromCore();
+            // #10：Cards 侧 RequestSync 入口改为断言，不再 heal。
+            AssertOccupancySyncForbidden("requestSyncBoardFromCore", "soft");
         }
 
-        /// <summary>
-        /// Sync Phase2 位置纠偏短预算（秒）。已在复杂域的卡用 L2 收敛，禁止裸写 Transform.position。
-        /// </summary>
-        private const float SyncPositionConvergeSeconds = 0.2f;
-
-        private const float SyncPositionEpsilonSqr = 0.0001f;
-
-        private bool ShouldSkipSyncPositionCorrect(ManagedCard card)
+        private static void AssertOccupancySyncForbidden(string reason, string detail = null)
         {
-            return TryGetSyncPositionSkipVerdict(card, out _);
+            OccupancyForceSyncGuard.RecordForbiddenSync(reason, detail);
+            var message =
+                "[InBattleManager] #10 占格强制对账断言触发（正常路径永不应发生）。reason="
+                + (reason ?? string.Empty)
+                + " detail="
+                + (detail ?? string.Empty);
+            Debug.LogError(message);
+            Debug.Assert(false, message);
         }
 
         /// <summary>
-        /// Sync 位置纠偏/落锚门禁。回库途中、净土模式、开放 DeckTween 均不得征用。
-        /// </summary>
-        private bool TryGetSyncPositionSkipVerdict(ManagedCard card, out string verdict)
-        {
-            verdict = null;
-            if (card == null)
-            {
-                verdict = "skipNull";
-                return true;
-            }
-
-            if (fieldManager != null && fieldManager.IsDealInFlight(card.Uid))
-            {
-                verdict = "skipInFlight";
-                return true;
-            }
-
-            if (SlotFrameConvergence.IsSlotConvergenceActive(card))
-            {
-                verdict = "skipInFlight";
-                return true;
-            }
-
-            var deck = CardDeckManagerSingleton.Instance;
-            if (deck != null && deck.IsReturnInFlight(card.Uid))
-            {
-                verdict = "skipDeckReturnInFlight";
-                return true;
-            }
-
-            if (card.DisplayMode == CardDisplayMode.CardDeckMode)
-            {
-                verdict = "skipCardDeckMode";
-                return true;
-            }
-
-            if (card.DisplayMode == CardDisplayMode.HandCardMode
-                || card.DisplayMode == CardDisplayMode.DragCardMode)
-            {
-                verdict = "skipHandMode";
-                return true;
-            }
-
-            if (CardDeckTween.IsMotionActive(card.Transform))
-            {
-                verdict = "skipDeckTween";
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// 用视觉世界坐标判定是否偏离锚点；飞行中 skip；否则短预算 L2 收敛。禁止裸写 position。
-        /// </summary>
-        private void CorrectSyncVisualOrSkip(ManagedCard card, int slot, Transform anchor)
-        {
-            if (card?.Transform == null || anchor == null)
-            {
-                return;
-            }
-
-            var visual = SlotFrameConvergence.GetVisualWorldPosition(card);
-            if ((visual - anchor.position).sqrMagnitude <= SyncPositionEpsilonSqr)
-            {
-                return;
-            }
-
-            if (TryGetSyncPositionSkipVerdict(card, out var skipVerdict))
-            {
-                if (skipVerdict == "skipDeckTween" || skipVerdict == "skipDeckReturnInFlight")
-                {
-                    CardPresentationProbe.Anomaly(
-                        card.Uid,
-                        PerfTraceAnomalyCodes.SyncReanchorDuringDeckTween,
-                        "slot=" + slot + ";verdict=" + skipVerdict,
-                        "Sync.Occupancy.Phase2",
-                        layer: "L2",
-                        verdict: "skipped");
-                }
-
-                CardPresentationProbe.Anomaly(
-                    card.Uid,
-                    "forceSnap",
-                    "slot=" + slot,
-                    "Sync.Occupancy.Phase2",
-                    layer: "L2",
-                    verdict: skipVerdict ?? "skipInFlight");
-                return;
-            }
-
-            CardPresentationProbe.Anomaly(
-                card.Uid,
-                "forceSnap",
-                "slot=" + slot,
-                "Sync.Occupancy.Phase2",
-                layer: "L0",
-                verdict: "snapHome");
-            SlotFrameConvergence.SnapHome(card, anchor.position, "Sync.Occupancy.Phase2", card.Uid);
-            cardManager?.RefreshDisplayMode(card);
-        }
-
-        /// <summary>
-        /// 安全网：两阶段对齐 Core 占格。
-        /// 1) 卸下所有与 Core 不一致的占格（含仍在盘面但错位的 uid，避免目标格占用阻塞迁移）；
-        /// 2) 按 Core 落位（已有视图迁/放锚，缺失则 Spawn）。
+        /// #10：占格强制/软对账已退场。保留入口仅作断言探针——触发即失败并留诊断，永不静默修补。
         /// </summary>
         private void SyncBoardOccupancyFromCore(bool force = false)
         {
-            if (!force && ShouldDeferBoardTimelineSync())
-            {
-                _pendingSyncFromCore = true;
-                FieldTraceHelper.RecordBoardSyncDeferred("SyncOccupancy", "timelineActive");
-                return;
-            }
-
-            _pendingSyncFromCore = false;
-            ResolveManagers();
-            if (cardManager == null || fieldManager == null)
-            {
-                return;
-            }
-
-            var previousBatch = FieldTraceHelper.CurrentBatchTag;
-            var openedSyncBeat = false;
-            if (string.IsNullOrEmpty(previousBatch))
-            {
-                FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.Sync);
-                var syncNode = 0;
-                int.TryParse(FieldTraceHelper.ResolveNodeIndex(), out syncNode);
-                PerfTraceRecorder.OpenBeat(DiagBeatKinds.SyncBoard, syncNode);
-                openedSyncBeat = true;
-            }
-
-            FieldTraceHelper.RecordOccupancySnapshot("syncBefore");
-            cardManager?.AuditRegistryIntegrity("Sync.Before");
-
-            var vacated = 0;
-            var placed = 0;
-            var spawned = 0;
-            var vacatedUids = new List<int>(4);
-            var placedUids = new List<int>(4);
-            var spawnedUids = new List<int>(4);
-            var sweptUids = new List<int>(4);
-
-            var arch = NineGridArchitecture.Current;
-            var board = arch.GetModel<BoardModel>();
-            var registry = arch.GetModel<CardRegistry>();
-            var avatarUid = board.AvatarUid.Value;
-            var hand = CardHandManagerSingleton.Instance;
-
-            // Phase 1：卸下与 Core 不一致的占格（错位也先卸，再统一落位）。
-            var snapshot = fieldManager.GetSnapshot();
-            for (var i = 0; i < snapshot.Slots.Length; i++)
-            {
-                var occ = snapshot.Slots[i];
-                if (occ.IsEmpty || occ.Uid == avatarUid || occ.IsAvatarReserved)
-                {
-                    continue;
-                }
-
-                var coreSlotUid = board.GetCardUid(SlotId.Board(occ.Slot));
-                if (coreSlotUid == occ.Uid)
-                {
-                    continue;
-                }
-
-                // 手牌视图绝不能被 Sync 拽回场地；仅清场地占格。
-                if (hand != null && hand.ContainsUid(occ.Uid))
-                {
-                    fieldManager.ClearSlotOccupancy(occ.Slot, skipBusyGuard: true);
-                    vacated++;
-                    vacatedUids.Add(occ.Uid);
-                    continue;
-                }
-
-                var stillOnBoard = false;
-                for (var s = SlotId.MinBoardIndex; s <= SlotId.MaxBoardIndex; s++)
-                {
-                    if (board.GetCardUid(SlotId.Board(s)) == occ.Uid)
-                    {
-                        stillOnBoard = true;
-                        break;
-                    }
-                }
-
-                if (stillOnBoard)
-                {
-                    // 错位：只清占格，保留视图供 Phase 2 落锚。
-                    fieldManager.ClearSlotOccupancy(occ.Slot, skipBusyGuard: true);
-                    vacated++;
-                    vacatedUids.Add(occ.Uid);
-                }
-                else if (registry.TryGet(occ.Uid, out var leavingCore)
-                         && leavingCore.Zone.Value == ZoneId.DrawPile
-                         && cardManager.TryGet(occ.Uid, out var deckView)
-                         && deckManager != null)
-                {
-                    fieldManager.ClearSlotOccupancy(occ.Slot, skipBusyGuard: true);
-                    deckManager.LaunchReturnFieldCardToDeck(deckView);
-                    vacated++;
-                    vacatedUids.Add(occ.Uid);
-                }
-                else
-                {
-                    fieldManager.RequestRemoveFromField(
-                        occ.Uid,
-                        animate: false,
-                        skipBusyGuard: true,
-                        startExplore: false);
-                    vacated++;
-                    vacatedUids.Add(occ.Uid);
-                }
-            }
-
-            // Phase 2：按 Core 落位。
-            for (var slot = SlotId.MinBoardIndex; slot <= SlotId.MaxBoardIndex; slot++)
-            {
-                if (slot == GroundSlotTopology.AvatarReservedSlot)
-                {
-                    continue;
-                }
-
-                var uid = board.GetCardUid(SlotId.Board(slot));
-                if (uid <= 0 || uid == avatarUid)
-                {
-                    continue;
-                }
-
-                if (hand != null && hand.ContainsUid(uid))
-                {
-                    Debug.LogWarning(
-                        $"[InBattleManager] Sync 跳过：uid={uid} 在手牌，Core 却要求场地格 {slot}");
-                    continue;
-                }
-
-                if (deckManager != null
-                    && (deckManager.ContainsUid(uid) || deckManager.IsReturnInFlight(uid)))
-                {
-                    Debug.LogWarning(
-                        $"[InBattleManager] Sync 跳过：uid={uid} 在牌组/回库途中，Core 却要求场地格 {slot}");
-                    if (cardManager.TryGet(uid, out var deckTransitView) && deckTransitView != null)
-                    {
-                        var skipVerdict = deckManager.IsReturnInFlight(uid)
-                            ? "skipDeckReturnInFlight"
-                            : "skipCardDeckMode";
-                        CardPresentationProbe.Anomaly(
-                            uid,
-                            "forceSnap",
-                            "slot=" + slot + ";deckTransit",
-                            "Sync.Occupancy.Phase2",
-                            layer: "L2",
-                            verdict: skipVerdict);
-                    }
-
-                    continue;
-                }
-
-                if (!registry.TryGet(uid, out var coreCard))
-                {
-                    continue;
-                }
-
-                // Core 已离场：禁止 Spawn 幽灵视图。
-                if (coreCard.Zone.Value == ZoneId.Graveyard
-                    || coreCard.Zone.Value == ZoneId.Removed
-                    || coreCard.Zone.Value == ZoneId.DrawPile
-                    || coreCard.Zone.Value == ZoneId.ItemSlots)
-                {
-                    Debug.LogWarning(
-                        $"[InBattleManager] Sync 跳过 Spawn：uid={uid} zone={coreCard.Zone.Value}（Board 占格与 Zone 不一致）");
-                    continue;
-                }
-
-                if (fieldManager.TryGetCardAt(slot, out var existing) && existing != null && existing.Uid == uid)
-                {
-                    if (existing.IsFieldDead)
-                    {
-                        fieldManager.ClearSlotOccupancy(slot, skipBusyGuard: true);
-                        cardManager.Release(existing, "Sync.FieldDeadOnSlot");
-                        vacated++;
-                        vacatedUids.Add(uid);
-                    }
-                    else
-                    {
-                        CoreCardPresentationMapper.ApplyToManagedCard(existing);
-                        var anchor = fieldManager.GetGroundAnchor(slot);
-                        CorrectSyncVisualOrSkip(existing, slot, anchor);
-                        continue;
-                    }
-                }
-
-                if (cardManager.TryGet(uid, out var view) && view != null)
-                {
-                    // 已标死的视图禁止复用落锚，先 Release 再走下方 Spawn。
-                    if (view.IsFieldDead)
-                    {
-                        if (fieldManager.TryGetSlotOf(view.Uid, out var deadSlot))
-                        {
-                            fieldManager.ClearSlotOccupancy(deadSlot, skipBusyGuard: true);
-                        }
-
-                        cardManager.Release(view, "Sync.FieldDeadReuse");
-                    }
-                    else
-                    {
-                        CoreCardPresentationMapper.ApplyToManagedCard(view);
-                        if (fieldManager.TryGetSlotOf(view.Uid, out var currentSlot))
-                        {
-                            if (currentSlot != slot)
-                            {
-                                if (TryGetSyncPositionSkipVerdict(view, out var relocateSkip))
-                                {
-                                    CardPresentationProbe.Anomaly(
-                                        uid,
-                                        "forceSnap",
-                                        "slot=" + slot + ";relocate",
-                                        "Sync.Occupancy.Phase2",
-                                        layer: "L2",
-                                        verdict: relocateSkip ?? "skipInFlight");
-                                    continue;
-                                }
-
-                                fieldManager.ClearSlotOccupancy(currentSlot, skipBusyGuard: true);
-                                CardPresentationProbe.Anomaly(
-                                    uid,
-                                    "forceSnap",
-                                    "slot=" + slot + ";relocate",
-                                    "Sync.Occupancy.Phase2",
-                                    layer: "L0",
-                                    verdict: "snapHome");
-                                fieldManager.RequestPlaceCardAtAnchor(
-                                    slot,
-                                    view,
-                                    skipBusyGuard: true,
-                                    snapToAnchor: true);
-                                placed++;
-                                placedUids.Add(uid);
-                            }
-                            else
-                            {
-                                var anchor = fieldManager.GetGroundAnchor(slot);
-                                CorrectSyncVisualOrSkip(view, slot, anchor);
-                            }
-                        }
-                        else
-                        {
-                            if (TryGetSyncPositionSkipVerdict(view, out var reanchorSkip))
-                            {
-                                CardPresentationProbe.Anomaly(
-                                    uid,
-                                    "forceSnap",
-                                    "slot=" + slot + ";reanchor",
-                                    "Sync.Occupancy.Phase2",
-                                    layer: "L2",
-                                    verdict: reanchorSkip ?? "skipInFlight");
-                                continue;
-                            }
-
-                            CardPresentationProbe.Anomaly(
-                                uid,
-                                "forceSnap",
-                                "slot=" + slot + ";reanchor",
-                                "Sync.Occupancy.Phase2",
-                                layer: "L0",
-                                verdict: "snapHome");
-                            fieldManager.RequestPlaceCardAtAnchor(
-                                slot,
-                                view,
-                                skipBusyGuard: true,
-                                snapToAnchor: true);
-                            placed++;
-                            placedUids.Add(uid);
-                        }
-
-                        continue;
-                    }
-                }
-
-                // 视图缺失：Spawn 后必须落锚点（冷启动允许 SnapHome）。
-                view = cardManager.SpawnView(uid, coreCard.DefId, initialMode: CardDisplayMode.GroundCardMode);
-                if (view == null)
-                {
-                    continue;
-                }
-
-                CoreCardPresentationMapper.ApplyToManagedCard(view);
-                CardPresentationProbe.Anomaly(
-                    uid,
-                    "forceSnap",
-                    "slot=" + slot + ";spawn",
-                    "Sync.Occupancy.Phase2",
-                    layer: "L2",
-                    verdict: "placeAtAnchor");
-                fieldManager.RequestPlaceCardAtAnchor(
-                    slot,
-                    view,
-                    skipBusyGuard: true,
-                    snapToAnchor: true);
-                spawned++;
-                spawnedUids.Add(uid);
-                placed++;
-                placedUids.Add(uid);
-            }
-
-            var reconciled = ReconcileGroundViewsFromCore(avatarUid, hand);
-            placed += reconciled;
-
-            var swept = SweepOrphanCardViews(avatarUid, hand, sweptUids);
-            CoreCardPresentationMapper.SyncAllSpawnedCards();
-            UpdateAvatarDebugText();
-
-            FieldTraceHelper.RecordSyncDiff(
-                vacated,
-                placed,
-                spawned,
-                swept,
-                string.Join(",", vacatedUids),
-                string.Join(",", placedUids),
-                string.Join(",", spawnedUids),
-                string.Join(",", sweptUids));
-            FieldTraceHelper.RecordOccupancySnapshot("syncAfter");
-            cardManager?.AuditRegistryIntegrity("Sync.After");
-            fieldManager.RefreshSlotHitColliders();
-
-            if (openedSyncBeat)
-            {
-                PerfTraceRecorder.CloseBeat();
-            }
-
-            if (string.IsNullOrEmpty(previousBatch))
-            {
-                FieldTraceHelper.ClearBatchTag();
-            }
-        }
-
-        /// <summary>
-        /// 场地视图在 GroundCardMode 但未登记占格、Core 仍要求其在盘面时，强制落锚（Sync Phase 2 漏 place 的孤儿自愈）。
-        /// </summary>
-        private int ReconcileGroundViewsFromCore(int avatarUid, CardHandManagerSingleton hand)
-        {
-            ResolveManagers();
-            if (cardManager == null || fieldManager == null)
-            {
-                return 0;
-            }
-
-            var board = NineGridArchitecture.Current.GetModel<BoardModel>();
-            var reconciled = 0;
-
-            foreach (var pair in cardManager.CardsByUid)
-            {
-                var uid = pair.Key;
-                var view = pair.Value;
-                if (uid <= 0 || uid == avatarUid || view == null)
-                {
-                    continue;
-                }
-
-                if (view.DisplayMode != CardDisplayMode.GroundCardMode)
-                {
-                    continue;
-                }
-
-                if (fieldManager.TryGetSlotOf(uid, out _))
-                {
-                    continue;
-                }
-
-                if (hand != null && hand.ContainsUid(uid))
-                {
-                    continue;
-                }
-
-                if (TryGetSyncPositionSkipVerdict(view, out _))
-                {
-                    continue;
-                }
-
-                var coreSlot = -1;
-                for (var slot = SlotId.MinBoardIndex; slot <= SlotId.MaxBoardIndex; slot++)
-                {
-                    if (slot == GroundSlotTopology.AvatarReservedSlot)
-                    {
-                        continue;
-                    }
-
-                    if (board.GetCardUid(SlotId.Board(slot)) == uid)
-                    {
-                        coreSlot = slot;
-                        break;
-                    }
-                }
-
-                if (coreSlot < 0)
-                {
-                    continue;
-                }
-
-                CardPresentationProbe.Anomaly(
-                    uid,
-                    "forceSnap",
-                    "slot=" + coreSlot + ";reconcileOrphan",
-                    "Sync.Occupancy.Reconcile",
-                    layer: "L0",
-                    verdict: "snapHome");
-                fieldManager.RequestPlaceCardAtAnchor(
-                    coreSlot,
-                    view,
-                    skipBusyGuard: true,
-                    snapToAnchor: true);
-                reconciled++;
-            }
-
-            return reconciled;
-        }
-
-        /// <summary>
-        /// 清扫已不在手牌/卡组/场地占格、且 Core 为 Graveyard/Removed（或 registry 无）的游离视图。
-        /// 堵住「Register 挤占后 Sync 只扫占格表」漏掉的尸体钉住。
-        /// </summary>
-        private int SweepOrphanCardViews(
-            int avatarUid,
-            CardHandManagerSingleton hand,
-            List<int> sweptUids = null)
-        {
-            ResolveManagers();
-            if (cardManager == null || fieldManager == null)
-            {
-                return 0;
-            }
-
-            var registry = NineGridArchitecture.Current.GetModel<CardRegistry>();
-            var deck = deckManager;
-            var toRelease = new List<int>(4);
-
-            foreach (var pair in cardManager.CardsByUid)
-            {
-                var uid = pair.Key;
-                var view = pair.Value;
-                if (uid <= 0 || uid == avatarUid || view == null)
-                {
-                    continue;
-                }
-
-                // 打出消失 / 拖拽中：生命周期由手牌路径负责，勿抢 Release。
-                if (view.DisplayMode == CardDisplayMode.RemovedMode
-                    || view.DisplayMode == CardDisplayMode.DragCardMode
-                    || view.DisplayMode == CardDisplayMode.HandCardMode)
-                {
-                    continue;
-                }
-
-                if (hand != null && hand.ContainsUid(uid))
-                {
-                    continue;
-                }
-
-                // Pickup 进行中：手牌尚未 ContainsUid 的窗口，勿误 Sweep。
-                if (hand != null
-                    && (hand.IsBusy || hand.IsDragging)
-                    && (view.DisplayMode == CardDisplayMode.HandCardMode
-                        || view.DisplayMode == CardDisplayMode.DragCardMode))
-                {
-                    continue;
-                }
-
-                if (deck != null && deck.ContainsUid(uid))
-                {
-                    continue;
-                }
-
-                if (fieldManager.TryGetSlotOf(uid, out _))
-                {
-                    continue;
-                }
-
-                if (registry.TryGet(uid, out var coreCard))
-                {
-                    if (coreCard.Zone.Value == ZoneId.ItemSlots)
-                    {
-                        continue;
-                    }
-
-                    if (coreCard.Zone.Value == ZoneId.DrawPile
-                        && deck != null
-                        && !deck.ContainsUid(uid))
-                    {
-                        deck.LaunchReturnFieldCardToDeck(view);
-                        continue;
-                    }
-
-                    if (coreCard.Zone.Value != ZoneId.Graveyard
-                        && coreCard.Zone.Value != ZoneId.Removed)
-                    {
-                        continue;
-                    }
-                }
-
-                toRelease.Add(uid);
-            }
-
-            for (var i = 0; i < toRelease.Count; i++)
-            {
-                var uid = toRelease[i];
-                Debug.LogWarning(
-                    $"[InBattleManager] 清扫游离卡视图 uid={uid}（Core 已离场且不在手牌/卡组/占格）。");
-                cardManager.Release(uid, "Sync.SweepOrphan");
-                sweptUids?.Add(uid);
-            }
-
-            return toRelease.Count;
+            AssertOccupancySyncForbidden(
+                force ? "forceSync" : "softSync",
+                "SyncBoardOccupancyFromCore");
         }
 
         private static void OnNodeSettlementFromCombat()
@@ -5946,9 +5333,12 @@ namespace NineGrid.Flow
                 return false;
             }
 
-            // idle 合法性预检：Cards 正交空槽与 Core 裁决不一致时勿入队，避免 Resolve dispatchReject 粘死主线。
+            // #10 idle 合法性：Flow 对 BoardModel 裁决，勿入队非法意图。
             string legalityReject;
-            if (!TryExplainExploreCoreLegality(groundSlot, out legalityReject))
+            if (!BoardIntentLegality.TryExplainExplore(
+                    NineGridArchitecture.Current,
+                    groundSlot,
+                    out legalityReject))
             {
                 if (HasOrphanMidBattleRewardPending())
                 {
@@ -5968,58 +5358,6 @@ namespace NineGrid.Flow
             // 同帧同步 busy，避免等 Update 前出现门禁空窗。
             CombatHitSink.DirectorMainlineBusy = instance._presentationDirector.IsMainlineBusy;
             return accepted;
-        }
-
-        /// <summary>
-        /// 与 PhaseSystem.ClickEmpty 门禁对齐的 idle 裁决（不改 Core 状态）。
-        /// </summary>
-        private static bool TryExplainExploreCoreLegality(int groundSlot, out string rejectReason)
-        {
-            rejectReason = null;
-            var arch = NineGridArchitecture.Current;
-            if (arch == null)
-            {
-                rejectReason = "noArchitecture";
-                return false;
-            }
-
-            var phase = arch.GetSystem<IPhaseSystem>();
-            var sync = arch.GetSystem<IPresentationSyncSystem>();
-            if (sync != null && sync.IsInputLocked)
-            {
-                rejectReason = "presentationInputLocked activeBatchId=" + sync.ActiveBatchId;
-                return false;
-            }
-
-            if (!phase.CanExecute(GameCommandKind.ClickEmpty))
-            {
-                var pending = arch.GetModel<PendingChoiceModel>().Kind.Value;
-                rejectReason = "notLegal phase=" + phase.CurrentPhase + " pendingChoice=" + pending;
-                return false;
-            }
-
-            if (groundSlot < SlotId.MinBoardIndex || groundSlot > SlotId.MaxBoardIndex)
-            {
-                rejectReason = "slotOutOfRange";
-                return false;
-            }
-
-            var slot = SlotId.Board(groundSlot);
-            var board = arch.GetModel<BoardModel>();
-            if (slot == board.AvatarSlot.Value || !board.IsEmpty(slot))
-            {
-                rejectReason = "notEmptyOrAvatar avatarSlot=" + board.AvatarSlot.Value
-                    + " occupant=" + board.GetCardUid(slot);
-                return false;
-            }
-
-            if (!arch.GetSystem<IBoardSystem>().AreAdjacent(board.AvatarSlot.Value, slot))
-            {
-                rejectReason = "notAdjacent avatarSlot=" + board.AvatarSlot.Value;
-                return false;
-            }
-
-            return true;
         }
 
         private static bool HasOrphanMidBattleRewardPending()
@@ -6097,6 +5435,17 @@ namespace NineGrid.Flow
                 return false;
             }
 
+            string legalityReject;
+            if (!BoardIntentLegality.TryExplainAttack(
+                    NineGridArchitecture.Current,
+                    groundSlot,
+                    out legalityReject))
+            {
+                Debug.LogWarning(
+                    $"[InBattleManager] Attack 被 Core 合法性拒绝 slot={groundSlot}: {legalityReject}");
+                return false;
+            }
+
             instance.EnsurePresentationDirector();
             instance._pendingAttackSlot = groundSlot;
             bool preview;
@@ -6121,6 +5470,19 @@ namespace NineGrid.Flow
 
             if (itemUid <= 0)
             {
+                return false;
+            }
+
+            string legalityReject;
+            if (!BoardIntentLegality.TryExplainUseItem(
+                    NineGridArchitecture.Current,
+                    itemUid,
+                    selectedCardUids,
+                    selectedOption,
+                    out legalityReject))
+            {
+                Debug.LogWarning(
+                    $"[InBattleManager] UseItem 被 Core 合法性拒绝 itemUid={itemUid}: {legalityReject}");
                 return false;
             }
 

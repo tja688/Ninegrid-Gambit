@@ -30,6 +30,7 @@ namespace NineGrid.Cards
         [Tooltip("骷髅军团牌组专用表现管理器。留空时 Awake 在场景中查找 SkeletonDeckPresentationManager。")]
         [SerializeField] private SkeletonDeckPresentationManager skeletonDeckPresentation;
 
+        // #10：几何注册（格位↔视图），非逻辑占格权威；逻辑真相在 Core BoardModel，合法性由 Flow idle 裁决。
         private readonly int[] _uidBySlot = new int[GroundSlotTopology.MaxSlot + 1];
         private readonly Dictionary<int, int> _slotByUid = new();
         private readonly List<Transform> _groundAnchors = new();
@@ -292,11 +293,13 @@ namespace NineGrid.Cards
             return ClearSlotOccupancy(slot, skipBusyGuard);
         }
 
+        /// <summary>#10 几何登记是否为空（命中代理用），非 Core 逻辑占格。</summary>
         public bool IsEmpty(int slot)
         {
             return IsValidSlot(slot) && _uidBySlot[slot] == 0;
         }
 
+        /// <summary>#10 几何上是否可落视图（非逻辑 Placeable）。</summary>
         public bool IsPlaceable(int slot)
         {
             return IsValidSlot(slot)
@@ -951,6 +954,7 @@ namespace NineGrid.Cards
 
         public bool TryHandleEmptySlotClick(int slot)
         {
+            // 几何命中门：视图登记非空则无空槽代理可点。逻辑合法性由 Flow idle（BoardModel）裁决。
             if (!IsEmpty(slot) || !IsAvatarOrthogonalBattleSlot(slot))
             {
                 return false;
@@ -1067,8 +1071,8 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 自上次 <see cref="ClearOccupancyConflictFlag"/> 以来是否发生过占格冲突。
-        /// Drain/拾取路径用此决定是否强制 SyncBoardOccupancyFromCore。
+        /// 自上次 <see cref="ClearOccupancyConflictFlag"/> 以来是否发生过几何登记冲突。
+        /// #10：不再驱动 force Sync；冲突应由 Flow 断言并诊断失败。
         /// </summary>
         public bool HasOccupancyConflictSinceClear => _occupancyConflictSinceClear;
 
