@@ -2742,7 +2742,6 @@ namespace NineGrid.Flow
         /// <summary>
         /// 扫描 EffectTriggered：经 TriggerPulseHub 发 FX/音效脉冲（发即完成、可降级）。
         /// 仅九宫格在场卡；卡组 / 手牌 / 已移除不播。不占主时间线控制权。
-        /// 同拍刷卡面 ATK/HP/Armor（见 <see cref="PresentStatChangesFromEventLog"/>）。
         /// </summary>
         public static void PresentEffectTriggersFromEventLog(int startIndex)
         {
@@ -2780,93 +2779,6 @@ namespace NineGrid.Flow
                 var fxId = CardEffectTriggerPulseSink.IdForCard(e.CardUid);
                 TriggerPulseHub.PulseFx(fxId);
                 TriggerPulseHub.PulseAudio("sfx.effect." + e.CardUid.ToString());
-            }
-
-            // 与 effect 脉冲同拍：属性事件落到卡面，避免观察者增益等到下次 SyncAll。
-            PresentStatChangesFromEventLog(startIndex);
-        }
-
-        /// <summary>
-        /// 扫描属性变化事件，对涉及 uid 立刻 Sync 卡面（及 avatar HUD）。
-        /// 对齐 <see cref="PresentGoldGainsFromEventLog"/> 的 EventLog 投影习惯；不占主时间线。
-        /// </summary>
-        public static void PresentStatChangesFromEventLog(int startIndex)
-        {
-            if (startIndex < 0)
-            {
-                return;
-            }
-
-            var arch = NineGridArchitecture.Current;
-            if (arch == null)
-            {
-                return;
-            }
-
-            var entries = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
-            if (entries == null || startIndex >= entries.Count)
-            {
-                return;
-            }
-
-            var cards = CardManagerSingleton.TryGetInstance();
-            if (cards == null)
-            {
-                return;
-            }
-
-            var avatarUid = arch.GetModel<BoardModel>().AvatarUid.Value;
-            var seen = new HashSet<int>();
-            var needsHudFallback = false;
-
-            for (var i = startIndex; i < entries.Count; i++)
-            {
-                var e = entries[i];
-                if (!IsStatPresentationEvent(e.Type))
-                {
-                    continue;
-                }
-
-                QueueStatSyncUid(e.CardUid, seen, cards, avatarUid, ref needsHudFallback);
-                QueueStatSyncUid(e.TargetUid, seen, cards, avatarUid, ref needsHudFallback);
-            }
-
-            if (needsHudFallback)
-            {
-                PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
-            }
-        }
-
-        private static bool IsStatPresentationEvent(CoreEventType type)
-        {
-            return type == CoreEventType.BaseStatModified
-                || type == CoreEventType.ArmorChanged
-                || type == CoreEventType.HpChanged
-                || type == CoreEventType.Healed
-                || type == CoreEventType.EffectModifierApplied;
-        }
-
-        private static void QueueStatSyncUid(
-            int uid,
-            HashSet<int> seen,
-            CardManagerSingleton cards,
-            int avatarUid,
-            ref bool needsHudFallback)
-        {
-            if (uid <= 0 || !seen.Add(uid))
-            {
-                return;
-            }
-
-            if (cards.TryGet(uid, out var managed) && managed != null)
-            {
-                CombatHitSink.RequestSyncCard(managed);
-                return;
-            }
-
-            if (uid == avatarUid)
-            {
-                needsHudFallback = true;
             }
         }
 
