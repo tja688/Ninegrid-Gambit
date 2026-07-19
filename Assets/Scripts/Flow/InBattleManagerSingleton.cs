@@ -2739,9 +2739,13 @@ namespace NineGrid.Flow
             steps = projection.Steps ?? Array.Empty<BoardPresentationStep>();
         }
 
+        private const string StoneLoverSkillDefId = "skill.stone_lover";
+        private const string StoneLoverArmorLostCause = "skill.stone_lover.armor_lost";
+
         /// <summary>
         /// 扫描 EffectTriggered：经 TriggerPulseHub 发 FX/音效脉冲（发即完成、可降级）。
         /// 仅九宫格在场卡；卡组 / 手牌 / 已移除不播。不占主时间线控制权。
+        /// 石头爱好者：额外同拍刷新卡面攻（观察型加攻不走受击 Sync）。
         /// </summary>
         public static void PresentEffectTriggersFromEventLog(int startIndex)
         {
@@ -2758,15 +2762,11 @@ namespace NineGrid.Flow
             }
 
             var seen = new HashSet<int>();
+            var stoneLoverSynced = new HashSet<int>();
             for (var i = startIndex; i < entries.Count; i++)
             {
                 var e = entries[i];
                 if (e.Type != CoreEventType.EffectTriggered || e.CardUid <= 0)
-                {
-                    continue;
-                }
-
-                if (!seen.Add(e.CardUid))
                 {
                     continue;
                 }
@@ -2776,10 +2776,42 @@ namespace NineGrid.Flow
                     continue;
                 }
 
+                if (IsStoneLoverArmorLostTrigger(e) && stoneLoverSynced.Add(e.CardUid))
+                {
+                    TrySyncStoneLoverCardPresentation(e.CardUid);
+                }
+
+                if (!seen.Add(e.CardUid))
+                {
+                    continue;
+                }
+
                 var fxId = CardEffectTriggerPulseSink.IdForCard(e.CardUid);
                 TriggerPulseHub.PulseFx(fxId);
                 TriggerPulseHub.PulseAudio("sfx.effect." + e.CardUid.ToString());
             }
+        }
+
+        private static bool IsStoneLoverArmorLostTrigger(CoreGameEvent gameEvent)
+        {
+            if (string.Equals(gameEvent.SourceDefId, StoneLoverSkillDefId, StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            return !string.IsNullOrEmpty(gameEvent.Cause)
+                   && gameEvent.Cause.IndexOf(StoneLoverArmorLostCause, StringComparison.Ordinal) >= 0;
+        }
+
+        private static void TrySyncStoneLoverCardPresentation(int cardUid)
+        {
+            var manager = CardManagerSingleton.TryGetInstance();
+            if (manager == null || !manager.TryGet(cardUid, out var card) || card == null)
+            {
+                return;
+            }
+
+            CoreCardPresentationMapper.ApplyToManagedCard(card, animate: true);
         }
 
         private static bool IsCoreCardOnBoardForEffectPresentation(int uid)
