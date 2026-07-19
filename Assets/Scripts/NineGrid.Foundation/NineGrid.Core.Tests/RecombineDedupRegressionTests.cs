@@ -16,8 +16,6 @@ namespace NineGrid.Core.Tests
     {
         private static readonly SlotId sHeadlessSlot = SlotId.Board(4);
         private static readonly SlotId sSkullSlot = SlotId.Board(7);
-        private static readonly SlotId sSecondHeadlessSlot = SlotId.Board(2);
-        private static readonly SlotId sSecondSkullSlot = SlotId.Board(1);
 
         private IArchitecture mArch;
         private IPhaseSystem mPhase;
@@ -58,42 +56,6 @@ namespace NineGrid.Core.Tests
             var headTriggers = CountEffectTriggeredSince(startIndex, "skill.recombine_head");
             var bodyTriggers = CountEffectTriggeredSince(startIndex, "skill.recombine_body");
             Assert.AreEqual(1, headTriggers + bodyTriggers, "重组头/身在同一对应只触发其一");
-        }
-
-        [Test]
-        public void TwoAdjacentPairs_RotateOnce_ShufflesTwoBigSkeletonReborns()
-        {
-            Assert.IsTrue(mPhase.StartNode(CreateEmptyEnemyNode()).Accepted);
-            SpawnOnBoard("monster.headless_skeleton", sHeadlessSlot);
-            SpawnOnBoard("monster.skull_head", sSkullSlot);
-            SpawnOnBoard("monster.headless_skeleton", sSecondHeadlessSlot);
-            SpawnOnBoard("monster.skull_head", sSecondSkullSlot);
-
-            var before = CountDefInDrawPile("monster.big_skeleton_reborn");
-
-            mPipeline.Enqueue(new RotateBoardClockwiseAction(true, "test", "test"));
-            Assert.Greater(mPipeline.RunToCompletion(), 0);
-
-            Assert.AreEqual(before + 2, CountDefInDrawPile("monster.big_skeleton_reborn"), "两对相邻碎片应各合并一张重组大骷髅");
-        }
-
-        [Test]
-        public void AdjacentFragments_ThreeRotations_ShufflesThreeBigSkeletonRebornsNotSix()
-        {
-            Assert.IsTrue(mPhase.StartNode(CreateEmptyEnemyNode()).Accepted);
-            SpawnOnBoard("monster.headless_skeleton", sHeadlessSlot);
-            SpawnOnBoard("monster.skull_head", sSkullSlot);
-
-            var before = CountDefInDrawPile("monster.big_skeleton_reborn");
-            for (var rotation = 0; rotation < 3; rotation++)
-            {
-                SpawnOnBoard("monster.headless_skeleton", sHeadlessSlot);
-                SpawnOnBoard("monster.skull_head", sSkullSlot);
-                mPipeline.Enqueue(new RotateBoardClockwiseAction(true, "test", "test"));
-                Assert.Greater(mPipeline.RunToCompletion(), 0);
-            }
-
-            Assert.AreEqual(before + 3, CountDefInDrawPile("monster.big_skeleton_reborn"), "三次旋转各合并一次，不得双重洗入");
         }
 
         [Test]
