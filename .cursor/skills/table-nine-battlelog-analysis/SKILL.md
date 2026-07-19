@@ -260,9 +260,9 @@ DirectorIntentAccepted
 
 | 清理 | 保留 |
 |------|------|
-| CoreLog `BoardQueueEnqueue/Dequeue/Skip` | `DiagTraceShared` / `DiagBeatClock` / 四轨导出 |
-| BusySnapshot 旧泵字段：`queueDepth` / `pumpRunning` /（若退场）`presentationLocked` | `Director*` + `directorMainlineBusy` 等 |
-| `path=legacyPostPresent` 等对照位点 | `Motion*` / Lease / Barrier / Occupancy / Registry / Battle |
+| CoreLog `BoardQueueEnqueue/Dequeue/Skip`（#11 泵已删，历史日志仍可读） | `DiagTraceShared` / `DiagBeatClock` / 四轨导出 |
+| BusySnapshot 旧泵字段：`queueDepth` / `pumpRunning` | `Director*` + `directorMainlineBusy` + `DirectorTriggerPulse` |
+| `path=legacyPostPresent`（已改为 `presentAdapter`） | `Motion*` / Lease / Barrier / Occupancy / Registry / Battle |
 | 模式 D 中「只讲 BoardQueue」的验收路径 | 模式 E 导演剧本序 + 收敛探针 |
 
 迁移期：**双写对照保留**，勿提前删 emitter。

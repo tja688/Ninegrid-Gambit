@@ -44,7 +44,7 @@ namespace NineGrid.DevTest.Cards
                 .Bind(KeyCode.Keypad1, "随机相邻怪反击玩家", () => RunRandomCounterAttackAsync().Forget())
                 .Bind(KeyCode.Keypad4, "外圈全体顺时针旋转", () => RunRotateOuterRingAsync().Forget())
                 .Bind(KeyCode.Keypad5, "随机移除场中1张", () => RunRandomRemoveAsync().Forget())
-                .Bind(KeyCode.Keypad6, "即死击杀相邻怪", () => RunLethalAttackAdjacentAsync().Forget())
+                .Bind(KeyCode.Keypad6, "即死击杀相邻怪", RunLethalAttackAdjacent)
                 .Bind(KeyCode.Keypad7, "移除1张并立即旋转", () => RunRemoveAndRotateAsync().Forget())
                 .Bind(KeyCode.Keypad8, "下一次交战即死", ArmNextLethalAttack);
         }
@@ -127,7 +127,7 @@ namespace NineGrid.DevTest.Cards
             await UniTask.CompletedTask;
         }
 
-        private async UniTaskVoid RunLethalAttackAdjacentAsync()
+        private void RunLethalAttackAdjacent()
         {
             var field = ResolveFieldManager();
             var battle = ResolveBattleManager();
@@ -154,7 +154,8 @@ namespace NineGrid.DevTest.Cards
                     continue;
                 }
 
-                await battle.RequestBasicAttackAtSlotAsync(slot);
+                // #11：DevTest 进攻也走导演意图，不再走已删的旧编排链。
+                CombatHitSink.RequestAttackIntent(slot);
                 return;
             }
 

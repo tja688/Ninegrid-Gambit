@@ -156,15 +156,22 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 玩家进攻编排：命中帧写 Core；击杀则清格+Core 旋转；未击杀则接播反击。
-        /// DevTest / 旧入口仍可用；正式点击交战已迁导演 <see cref="CombatHitSink.RequestAttackIntent"/>。
+        /// #11 硬切：旧进攻编排已删。提交导演攻击意图后立即返回（不等待主线播完）。
+        /// 若需等表演结束，请轮询 <see cref="CombatHitSink.DirectorMainlineBusy"/>。
+        /// <paramref name="lethalOverride"/> 仍经 <see cref="ArmNextLethalAttack"/> 注入下一击。
         /// </summary>
         public UniTask RequestBasicAttackAtSlotAsync(
             int victimSlot,
             bool? lethalOverride = null,
             CancellationToken cancellationToken = default)
         {
-            return RequestBasicAttackInternalAsync(victimSlot, lethalOverride, cancellationToken);
+            if (lethalOverride.HasValue)
+            {
+                ArmNextLethalAttack(lethalOverride.Value);
+            }
+
+            CombatHitSink.RequestAttackIntent(victimSlot);
+            return UniTask.CompletedTask;
         }
 
         /// <summary>
@@ -529,232 +536,6 @@ namespace NineGrid.Cards
             CancellationToken cancellationToken = default)
         {
             return RequestBasicCounterAttackInternalAsync(attackerSlot, lethalOverride, cancellationToken);
-        }
-
-        private async UniTask RequestBasicAttackInternalAsync(
-            int victimSlot,
-            bool? lethalOverride,
-            CancellationToken cancellationToken)
-        {
-            ResolveFieldManager();
-            ResolveAttackAdapter();
-
-            if (_isBusy
-                || CombatHitSink.ChoiceOverlayActive
-                || CombatHitSink.PresentationLocked
-                || CombatHitSink.DirectorMainlineBusy
-                || (fieldManager != null && fieldManager.IsFieldBusy))
-            {
-                Debug.LogWarning("[FieldBattleManager] 当前忙碌，无法触发交战。");
-                return;
-            }
-
-            if (attackAdapter == null)
-            {
-                Debug.LogWarning("[FieldBattleManager] 未配置 CardAttackBasicAdapter。");
-                return;
-            }
-
-            if (fieldManager == null)
-            {
-                Debug.LogWarning("[FieldBattleManager] 未找到 GroundFieldManagerSingleton。");
-                return;
-            }
-
-            if (!fieldManager.IsAvatarOrthogonalBattleSlot(victimSlot)
-                || !fieldManager.TryGetCardAt(victimSlot, out var victim))
-            {
-                Debug.LogWarning($"[FieldBattleManager] 格位 {victimSlot} 不可触发 Avatar 四向交战。");
-                return;
-            }
-
-            if (victim.IsFieldDead)
-            {
-                Debug.LogWarning($"[FieldBattleManager] 格位 {victimSlot} 卡牌已死亡。");
-                return;
-            }
-
-            if (!fieldManager.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
-                || avatar == null)
-            {
-                Debug.LogWarning("[FieldBattleManager] Avatar 不可用，无法进攻。");
-                return;
-            }
-
-            var clickedVictim = victim;
-            var clickedSlot = victimSlot;
-            var resolvedTargetUid = CombatHitSink.RequestResolvePlayerAttackTarget(clickedVictim.Uid);
-            var useTauntRedirect = resolvedTargetUid != clickedVictim.Uid;
-            ManagedCard combatVictim = clickedVictim;
-            var combatSlot = clickedSlot;
-            if (useTauntRedirect)
-            {
-                if (CardManagerSingleton.Instance == null
-                    || !CardManagerSingleton.Instance.TryGet(resolvedTargetUid, out combatVictim)
-                    || combatVictim == null)
-                {
-                    Debug.LogWarning($"[FieldBattleManager] 嘲讽重定向目标 uid={resolvedTargetUid} 不可用。");
-                    return;
-                }
-
-                if (!fieldManager.TryGetSlotOf(combatVictim.Uid, out combatSlot))
-                {
-                    Debug.LogWarning($"[FieldBattleManager] 嘲讽重定向目标 uid={resolvedTargetUid} 不在场地。");
-                    return;
-                }
-            }
-
-            var linkedCts = CreateLinkedBattleCts(cancellationToken);
-            var ct = linkedCts.Token;
-
-            var willKill = lethalOverride
-                ?? attackAdapter.ConsumeNextLethalArmed()
-                || CombatHitSink.RequestEstimateWillKill(avatar.Uid, combatVictim.Uid);
-            var attackIntent = BattleIntentUtility.FromFlags(counter: false, willKill);
-            var attackBind = ResolveBindParams(attackIntent, combatVictim, out var attackProfile);
-            LogBattleBindResolve(avatar.Uid, combatVictim.Uid, attackBind, attackProfile, willKill, isCounter: false);
-
-            CombatHitPresentationResult hitResult = default;
-            var hitApplied = false;
-
-            _isBusy = true;
-            try
-            {
-                try
-                {
-                    PerfTraceSink.OpenBeat?.Invoke("CombatHit", 0);
-                    PerfTraceSink.SetCombatants?.Invoke(avatar.Uid, combatVictim.Uid);
-                }
-                catch
-                {
-                    // ignore
-                }
-
-                if (useTauntRedirect)
-                {
-                    await attackAdapter.PlayTauntRedirectAttackAsync(
-                        clickedVictim,
-                        combatVictim,
-                        attackBind,
-                        () =>
-                        {
-                            if (hitApplied)
-                            {
-                                return;
-                            }
-
-                            hitApplied = true;
-                            hitResult = ApplyHitPresentation(avatar, combatVictim, "PlayerAttackTauntRedirect");
-                        },
-                        ct);
-                }
-                else
-                {
-                    await attackAdapter.PlayBasicAttackAsync(
-                        clickedVictim,
-                        attackBind,
-                        () =>
-                        {
-                            if (hitApplied)
-                            {
-                                return;
-                            }
-
-                            hitApplied = true;
-                            hitResult = ApplyHitPresentation(avatar, combatVictim, "PlayerAttack");
-                        },
-                        ct);
-                }
-
-                if (!hitApplied)
-                {
-                    // Timeline 未打到命中回调时兜底结算，避免动画播完无数据。
-                    hitResult = ApplyHitPresentation(
-                        avatar,
-                        combatVictim,
-                        useTauntRedirect ? "PlayerAttackTauntRedirect" : "PlayerAttack");
-                    hitApplied = true;
-                }
-
-                if (hitResult.AvatarDefeated)
-                {
-                    await DrainCombatHitBoardDeltaAsync(hitResult, ct);
-                    TryBeginAvatarDefeatPresentation(ct);
-                    CombatHitSink.RequestBattleEnded(victory: false);
-                    return;
-                }
-
-                if (hitResult.TargetKilled)
-                {
-                    CardManagerSingleton.Instance.MarkFieldDead(combatVictim);
-
-                    // Core 须在 Vacate 之前结算：否则 FieldMaybeClearSignal 会在
-                    // OfferReward 前用 IsNodeCleared 抢跑主循环。
-                    var postKill = CombatHitSink.RequestPostKillBoard();
-
-                    // 真交战击杀后由 Core 旋转补牌，不走空槽探求。
-                    fieldManager.VacateSlotForExplore(
-                        combatSlot,
-                        combatVictim,
-                        playRemoveAnim: false,
-                        skipBusyGuard: true,
-                        startExplore: false);
-                    // Drain 前必须离锚点，否则 hop 会与尸体叠位闪现。
-                    CardManagerSingleton.Instance.StageFieldDeadCorpseOffAnchor(combatVictim);
-                    FinalizeLethalVictimAsync(combatVictim, ct).Forget();
-
-                    // 致死命中与 PostKill 合并为同一有序 Drain，避免提前补牌后按旧格误卸新 occupant。
-                    var mergedPresentation = BoardPresentationMerge.MergeLethalHitAndPostKill(
-                        hitResult,
-                        postKill,
-                        combatVictim.Uid);
-                    await CombatHitSink.RequestDrainPostKillBoard(mergedPresentation, ct);
-
-                    // 只认 PostKill 结果，不用 hitResult.NodeCleared（击杀当下即可 true）。
-                    if (postKill.NodeClearedOrRewardPhase)
-                    {
-                        // 节点通关 → 主循环结算（奖励/房间），非整局胜利。
-                        CombatHitSink.RequestNodeSettlement();
-                    }
-
-                    SyncAfterCombatRound();
-                    return;
-                }
-
-                await DrainCombatHitBoardDeltaAsync(hitResult, ct);
-
-                if (attackBind.BindDeathCallback || attackBind.IsLethal)
-                {
-                    RecoverSurvivingVictimAfterLethalMismatch(
-                        avatar.Uid,
-                        combatVictim,
-                        combatSlot,
-                        attackBind,
-                        willKill,
-                        hitResult.TargetKilled);
-                }
-
-                await PlayCounterAttackCoreAsync(combatSlot, lethal: false, ct);
-            }
-            catch (System.OperationCanceledException)
-            {
-                // 回主菜单等取消路径
-            }
-            finally
-            {
-                try
-                {
-                    PerfTraceSink.CloseBeat?.Invoke();
-                }
-                catch
-                {
-                    // ignore
-                }
-
-                _isBusy = false;
-                SyncAfterCombatRound();
-                DisposeBattleCts(linkedCts);
-            }
         }
 
         private async UniTask RequestBasicCounterAttackInternalAsync(

@@ -9,7 +9,18 @@ namespace NineGrid.Flow.Presentation
     public sealed class BattleTimeline
     {
         private readonly Queue<ITimelineStep> mQueue = new Queue<ITimelineStep>();
+        private readonly ITimelineDiagnosticSink mDiagnostics;
+        private readonly string mLane;
         private ITimelineStep mCurrent;
+        private string mCurrentStepName;
+
+        public BattleTimeline(
+            ITimelineDiagnosticSink diagnostics = null,
+            string lane = DirectorTimelineLane.Mainline)
+        {
+            mDiagnostics = diagnostics;
+            mLane = string.IsNullOrEmpty(lane) ? DirectorTimelineLane.Mainline : lane;
+        }
 
         public bool IsBusy
         {
@@ -33,8 +44,14 @@ namespace NineGrid.Flow.Presentation
 
         public void Clear()
         {
+            if (mCurrent != null && !string.IsNullOrEmpty(mCurrentStepName))
+            {
+                EmitExit(mCurrentStepName);
+            }
+
             mQueue.Clear();
             mCurrent = null;
+            mCurrentStepName = null;
         }
 
         /// <summary>
@@ -47,10 +64,21 @@ namespace NineGrid.Flow.Presentation
                 return TimelineStepStatus.Finished;
             }
 
+            if (string.IsNullOrEmpty(mCurrentStepName))
+            {
+                mCurrentStepName = ResolveStepName(mCurrent);
+                EmitEnter(mCurrentStepName);
+            }
+
             var status = mCurrent.Tick(deltaTime);
             if (status == TimelineStepStatus.Aborted)
             {
-                Clear();
+                // Clear 会再 EmitExit 一次当前步；先摘掉名称避免双写。
+                var abortedName = mCurrentStepName;
+                mCurrentStepName = null;
+                EmitExit(abortedName);
+                mQueue.Clear();
+                mCurrent = null;
                 return TimelineStepStatus.Finished;
             }
 
@@ -59,7 +87,9 @@ namespace NineGrid.Flow.Presentation
                 return TimelineStepStatus.Continue;
             }
 
+            EmitExit(mCurrentStepName);
             mCurrent = null;
+            mCurrentStepName = null;
             return IsBusy ? TimelineStepStatus.Continue : TimelineStepStatus.Finished;
         }
 
@@ -74,5 +104,37 @@ namespace NineGrid.Flow.Presentation
             step = mQueue.Dequeue();
             return true;
         }
+
+        private void EmitEnter(string step)
+        {
+            if (mDiagnostics == null || string.IsNullOrEmpty(step))
+            {
+                return;
+            }
+
+            mDiagnostics.StepEnter(step, mLane);
+        }
+
+        private void EmitExit(string step)
+        {
+            if (mDiagnostics == null || string.IsNullOrEmpty(step))
+            {
+                return;
+            }
+
+            mDiagnostics.StepExit(step, mLane);
+        }
+
+        private static string ResolveStepName(ITimelineStep step)
+        {
+            return step != null ? step.GetType().Name : string.Empty;
+        }
+    }
+
+    /// <summary>与 DirectorTrace lane 常量对齐，避免 Presentation→Diagnostics 循环引用时字符串漂移。</summary>
+    public static class DirectorTimelineLane
+    {
+        public const string Mainline = "mainline";
+        public const string Bypass = "bypass";
     }
 }

@@ -122,6 +122,8 @@ namespace NineGrid.Flow.Diagnostics
         public const string DirectorForkEnd = "DirectorForkEnd";
         /// <summary>旁路装饰道入队（不占输入锁）。</summary>
         public const string DirectorBypassStart = "DirectorBypassStart";
+        /// <summary>FX/音效 Trigger 脉冲（发即完成；可 degraded）。</summary>
+        public const string DirectorTriggerPulse = "DirectorTriggerPulse";
     }
 
     public static class PerfTraceSites

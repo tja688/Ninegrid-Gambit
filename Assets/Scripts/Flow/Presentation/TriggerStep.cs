@@ -3,7 +3,7 @@ using System;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// 触发脉冲：发即完成，不占长期控制权，可降级。
+    /// 触发脉冲：发即完成，不占长期控制权，可降级（sink 失败/关闭不拆主线）。
     /// </summary>
     public interface ITriggerPulseSink
     {
@@ -36,7 +36,15 @@ namespace NineGrid.Flow.Presentation
         {
             if (!mFired)
             {
-                mSink.Pulse(mTriggerId);
+                try
+                {
+                    mSink.Pulse(mTriggerId);
+                }
+                catch (Exception)
+                {
+                    // 关闭/失败 FX 不拆主时间线；卡时序靠显式 Delay，不靠 await FX。
+                }
+
                 mFired = true;
             }
 

@@ -52,6 +52,7 @@
 | `DirectorStepEnter` / `DirectorStepExit` | 时间线换步（非逐帧；可选） | `step`, `lane` |
 | `DirectorForkBegin` / `DirectorForkEnd` | 并行子流（可选） | `childCount` |
 | `DirectorBypassStart` | 旁路装饰道入队 | `lane=bypass`, `step` |
+| `DirectorTriggerPulse` | FX/音效 Trigger 脉冲（发即完成） | `triggerId`, `channel`=`fx\|audio`, `degraded`=`0\|1` |
 | `LeaseAcquire` | 租约申请 | `layer`, `verdict`, `commitment`, `leaseId`, `windowStart/End`, `disciplineB`, `commandeered` |
 | `LeaseRelease` | 租约释放 | `layer`, `leaseId`, `reason` |
 | `BarrierPlace` | 就位栅栏放置 | `presBeatId`, `barrierWall`, `sourceTime`, `startWall`（事件 `beatId`=DiagBeat） |
@@ -90,7 +91,7 @@
 
 | site | 含义 |
 |------|------|
-| `RefillBatchBegin` / `RefillBatchEnd` | drain 退场补牌开闭；`path=director` 为导演离散批，`path=legacyPostPresent` 为非导演旧路径 |
+| `RefillBatchBegin` / `RefillBatchEnd` | drain 退场补牌开闭；`path=director` 为导演离散批，`path=presentAdapter` 为反击等 Present 薄适配（#11 已删 `legacyPostPresent`） |
 
 导演路径上非击杀移除后退场补牌走 `ResolveDrainRefill` 批次锁步；`DrainPostRemoveRefill` 在 `DirectorMainlineBusy` 时不可达。
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using NineGrid.Flow.Presentation;
 
 namespace NineGrid.Flow.Diagnostics
 {
@@ -340,6 +341,39 @@ namespace NineGrid.Flow.Diagnostics
                     {
                         ["step"] = step ?? string.Empty,
                     }));
+        }
+
+        /// <summary>FX/音效脉冲：发即完成；degraded=关闭或 sink 失败。</summary>
+        public static void TriggerPulse(string triggerId, string channel, bool degraded)
+        {
+            Record(
+                PerfTraceKinds.DirectorTriggerPulse,
+                PerfTraceSites.DirectorTimeline,
+                -1,
+                BasePayload(
+                    sActiveBatchId,
+                    extra: new Dictionary<string, string>
+                    {
+                        ["triggerId"] = triggerId ?? string.Empty,
+                        ["channel"] = channel ?? string.Empty,
+                        ["degraded"] = degraded ? "1" : "0",
+                    }));
+        }
+
+        /// <summary>BattleTimeline 诊断适配：换步写入 PerfLog 供回放。</summary>
+        public static readonly ITimelineDiagnosticSink TimelineSink = new TimelineDiagnosticAdapter();
+
+        private sealed class TimelineDiagnosticAdapter : ITimelineDiagnosticSink
+        {
+            public void StepEnter(string step, string lane)
+            {
+                DirectorTrace.StepEnter(step, lane ?? LaneMainline);
+            }
+
+            public void StepExit(string step, string lane)
+            {
+                DirectorTrace.StepExit(step, lane ?? LaneMainline);
+            }
         }
 
         private static Dictionary<string, string> IntentPayload(string intentKind, int targetId)

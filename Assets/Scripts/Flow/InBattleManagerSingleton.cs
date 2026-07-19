@@ -17,8 +17,8 @@ using UnityEngine;
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 游戏局内管理器单例：内核 ↔ 表现中转与局内总控编排（入场、通关结算钩子）。
-    /// 非全部效果的唯一编排器；部分效果仍可由表现自取或由内核驱动对应脚本。
+    /// 游戏局内管理器单例：Core 桥注册 + 薄 Present 适配（入场/结算钩子、导演宿主）。
+    /// #11 硬切后局内表演编排唯一出口为 <see cref="PresentationDirector"/>；本类不再承载进攻编排剧本。
     /// </summary>
     public sealed class InBattleManagerSingleton : MonoBehaviour
     {
@@ -50,10 +50,8 @@ namespace NineGrid.Flow
         private bool _settlementRaised;
         private bool _fieldSignalSubscribed;
         private bool _drainInFlight;
-        private bool _boardPresentationPumpRunning;
         private bool _pendingSyncFromCore;
         private int _boardPresentationRequestId;
-        private readonly Queue<BoardPresentationRequest> _boardPresentationQueue = new();
         private CancellationTokenSource _presentationCts;
         private int _nodeEventLogStart;
         private readonly ShuffleIntoDeckPresentSink _shuffleIntoSink = new ShuffleIntoDeckPresentSink();
@@ -70,13 +68,6 @@ namespace NineGrid.Flow
         private CoreCommandDispatcher _coreCommandDispatcher;
         private int _pendingAttackSlot;
         private UseItemPresentationResult _pendingUseItemPresent;
-
-        private sealed class BoardPresentationRequest
-        {
-            public PostKillBoardPresentationResult Result;
-            public UniTaskCompletionSource Completion = new();
-            public CancellationToken CancellationToken;
-        }
 
         public static InBattleManagerSingleton Instance
         {
@@ -1361,13 +1352,12 @@ namespace NineGrid.Flow
                 var battleBusy = battle != null && battle.IsBusy;
 
                 if (!_drainInFlight
-                    && !_boardPresentationPumpRunning
-                    && _boardPresentationQueue.Count == 0
                     && !fieldBusy
                     && !handBusy
                     && !deckBusy
                     && !battleBusy
-                    && !CombatHitSink.PresentationLocked)
+                    && !CombatHitSink.PresentationLocked
+                    && (_presentationDirector == null || !_presentationDirector.IsMainlineBusy))
                 {
                     return;
                 }
@@ -1390,17 +1380,10 @@ namespace NineGrid.Flow
                 _presentationCts = null;
             }
 
-            while (_boardPresentationQueue.Count > 0)
-            {
-                var request = _boardPresentationQueue.Dequeue();
-                request.Completion.TrySetCanceled();
-            }
-
             _shuffleIntoSink.Clear();
 
             CombatHitSink.ForceEndPresentationLock("CancelPresentationWork");
             TeardownPresentationDirector(IntentClearReason.LayerChange);
-            _boardPresentationPumpRunning = false;
             _drainInFlight = false;
         }
 
@@ -2088,7 +2071,8 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 表现缓冲缓释入队：旋转/换位/hop 等大盘面 delta 串行播放，队列泵持有 PresentationLocked 至清空。
+        /// #11 硬切后的 Present 薄适配：直接播盘面 delta，不再经 BoardPresentationQueue 泵。
+        /// 导演主线已串行 Present；并发入口（反击等）在此单飞等待。
         /// </summary>
         private async UniTask DrainPostKillBoardAsync(
             PostKillBoardPresentationResult result,
@@ -2099,127 +2083,53 @@ namespace NineGrid.Flow
                 return;
             }
 
-            var request = new BoardPresentationRequest
+            while (_drainInFlight)
             {
-                Result = result,
-                CancellationToken = cancellationToken,
-            };
-            _boardPresentationQueue.Enqueue(request);
-            ChoreoTraceContext.BoardQueueDepth = _boardPresentationQueue.Count;
-            FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.BoardPresentationQueue);
-            var stepCount = result.Steps?.Length ?? 0;
-            FieldTraceHelper.RecordBoardQueueEnqueue(
-                _boardPresentationQueue.Count,
-                stepCount > 0 ? stepCount : (result.Moves?.Length ?? 0),
-                result.Deals?.Length ?? 0);
-            FieldTraceHelper.ClearBatchTag();
-            EnsureBoardPresentationPumpRunning();
-            await request.Completion.Task;
-        }
-
-        private void EnsureBoardPresentationPumpRunning()
-        {
-            if (_boardPresentationPumpRunning)
-            {
-                return;
+                cancellationToken.ThrowIfCancellationRequested();
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
             }
-
-            RunBoardPresentationPumpAsync().Forget();
-        }
-
-        private async UniTask RunBoardPresentationPumpAsync()
-        {
-            if (_boardPresentationPumpRunning)
-            {
-                return;
-            }
-
-            _boardPresentationPumpRunning = true;
-            _drainInFlight = true;
-            ChoreoTraceContext.PumpRunning = true;
-            ChoreoTraceContext.DrainInFlight = true;
 
             var acquiredHere = false;
             if (!CombatHitSink.PresentationLocked)
             {
-                if (!CombatHitSink.TryBeginPresentationLock("BoardPresentationQueue"))
+                if (!CombatHitSink.TryBeginPresentationLock("BoardPresentDrain"))
                 {
-                    Debug.LogWarning("[InBattleManager] 盘面表演队列无法获取表现锁，跳过缓释。");
-                    var pendingCount = _boardPresentationQueue.Count;
-                    FieldTraceHelper.RecordBoardQueueSkip("lockFail", pendingCount);
-                    while (_boardPresentationQueue.Count > 0)
-                    {
-                        var pending = _boardPresentationQueue.Dequeue();
-                        pending.Completion.TrySetResult();
-                    }
-
-                    ChoreoTraceContext.BoardQueueDepth = 0;
-                    _boardPresentationPumpRunning = false;
-                    _drainInFlight = false;
-                    ChoreoTraceContext.PumpRunning = false;
-                    ChoreoTraceContext.DrainInFlight = false;
-                    // 锁失败清空后若又入队，允许重启。
-                    if (_boardPresentationQueue.Count > 0)
-                    {
-                        EnsureBoardPresentationPumpRunning();
-                    }
-
+                    Debug.LogWarning("[InBattleManager] 盘面 Present 无法获取表现锁，跳过。");
                     return;
                 }
 
                 acquiredHere = true;
             }
 
+            _drainInFlight = true;
+            ChoreoTraceContext.DrainInFlight = true;
+            ChoreoTraceContext.PumpRunning = false;
+            ChoreoTraceContext.BoardQueueDepth = 0;
             try
             {
-                while (_boardPresentationQueue.Count > 0)
-                {
-                    var request = _boardPresentationQueue.Dequeue();
-                    ChoreoTraceContext.BoardQueueDepth = _boardPresentationQueue.Count;
-                    FieldTraceHelper.RecordBoardQueueDequeue(
-                        _boardPresentationQueue.Count,
-                        lockAcquired: true);
-                    try
-                    {
-                        FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.BoardPresentationQueue);
-                        await DrainPostKillBoardCoreAsync(request.Result, request.CancellationToken);
-                        request.Completion.TrySetResult();
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        request.Completion.TrySetCanceled();
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogWarning("[InBattleManager] 盘面表演队列项失败: " + ex.Message);
-                        request.Completion.TrySetException(ex);
-                        _pendingSyncFromCore = true;
-                    }
-                    finally
-                    {
-                        FieldTraceHelper.ClearBatchTag();
-                    }
-                }
+                FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.BoardPresentationQueue);
+                await DrainPostKillBoardCoreAsync(result, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[InBattleManager] 盘面 Present 失败: " + ex.Message);
+                _pendingSyncFromCore = true;
             }
             finally
             {
-                _boardPresentationPumpRunning = false;
+                FieldTraceHelper.ClearBatchTag();
                 _drainInFlight = false;
-                ChoreoTraceContext.PumpRunning = false;
                 ChoreoTraceContext.DrainInFlight = false;
-                ChoreoTraceContext.BoardQueueDepth = 0;
                 if (acquiredHere)
                 {
-                    CombatHitSink.EndPresentationLock("BoardPresentationQueue");
+                    CombatHitSink.EndPresentationLock("BoardPresentDrain");
                 }
 
                 FlushDeferredBoardSync(force: true);
-
-                // 收尾窗口又入队：放锁后再重启，避免新泵与旧 finally 交叉 EndPresentationLock。
-                if (_boardPresentationQueue.Count > 0)
-                {
-                    EnsureBoardPresentationPumpRunning();
-                }
             }
         }
 
@@ -2830,8 +2740,8 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 扫描 EffectTriggered：对效果所有者播「基础卡牌效果触发」脉冲（发射后不管）。
-        /// 仅九宫格在场卡播脉冲；卡组 / 手牌 / 已移除不播。
+        /// 扫描 EffectTriggered：经 TriggerPulseHub 发 FX/音效脉冲（发即完成、可降级）。
+        /// 仅九宫格在场卡；卡组 / 手牌 / 已移除不播。不占主时间线控制权。
         /// </summary>
         public static void PresentEffectTriggersFromEventLog(int startIndex)
         {
@@ -2843,12 +2753,6 @@ namespace NineGrid.Flow
             var arch = NineGridArchitecture.Current;
             var entries = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
             if (startIndex >= entries.Count)
-            {
-                return;
-            }
-
-            var cardManager = CardManagerSingleton.Instance;
-            if (cardManager == null)
             {
                 return;
             }
@@ -2867,25 +2771,14 @@ namespace NineGrid.Flow
                     continue;
                 }
 
-                if (!cardManager.TryGet(e.CardUid, out var card)
-                    || card == null
-                    || card.IsFieldDead
-                    || card.DisplayMode == CardDisplayMode.RemovedMode
-                    || card.DisplayMode == CardDisplayMode.CardDeckMode
-                    || card.DisplayMode == CardDisplayMode.HandCardMode)
-                {
-                    continue;
-                }
-
                 if (!IsCoreCardOnBoardForEffectPresentation(e.CardUid))
                 {
                     continue;
                 }
 
-                if (card.TryGetEffectManager(out var effectManager))
-                {
-                    effectManager.PlayEffectTriggerPulse();
-                }
+                var fxId = CardEffectTriggerPulseSink.IdForCard(e.CardUid);
+                TriggerPulseHub.PulseFx(fxId);
+                TriggerPulseHub.PulseAudio("sfx.effect." + e.CardUid.ToString());
             }
         }
 
@@ -3328,7 +3221,7 @@ namespace NineGrid.Flow
                 "DrainRefill",
                 -1,
                 "RefillBatchBegin",
-                new Dictionary<string, string> { ["path"] = "legacyPostPresent" });
+                new Dictionary<string, string> { ["path"] = "presentAdapter" });
             arch.GetSystem<IBoardSystem>().FillEmptySlots();
             FillBoardDeltaFromEventLog(
                 pipeline,
@@ -3351,7 +3244,7 @@ namespace NineGrid.Flow
                 "DrainRefill",
                 -1,
                 "RefillBatchEnd",
-                new Dictionary<string, string> { ["path"] = "legacyPostPresent" });
+                new Dictionary<string, string> { ["path"] = "presentAdapter" });
         }
 
         private sealed class FusionDrainState
@@ -3694,7 +3587,7 @@ namespace NineGrid.Flow
                 new Dictionary<string, string>
                 {
                     ["excludeCount"] = exclude.Count.ToString(),
-                    ["path"] = "legacyPostPresent",
+                    ["path"] = "presentAdapter",
                 });
 
             deck.ReorderDrawPile(refillOrder);
@@ -5310,8 +5203,17 @@ namespace NineGrid.Flow
                 OnUseItemBatchProjected,
                 OnUseItemBoardBatchProjected,
                 OnUseItemResolvedWithoutKill);
+            // 开关在 TriggerPulseHub.PulseFx/PulseAudio；此处只装配实现 + 音效 debounce。
+            TriggerPulseHub.Configure(
+                new CardEffectTriggerPulseSink(),
+                new DebouncingTriggerPulseSink(
+                    new AudioTriggerPulseSink(),
+                    TriggerPulseHub.DefaultAudioDebounceSeconds));
+
             _presentationDirector = new PresentationDirector(
-                new RoutingIntentScriptFactory(exploreFactory, attackFactory, useItemFactory));
+                new RoutingIntentScriptFactory(exploreFactory, attackFactory, useItemFactory),
+                uiPickPreview: null,
+                timelineDiagnostics: DirectorTrace.TimelineSink);
         }
 
         private void TeardownPresentationDirector(IntentClearReason reason)
@@ -5321,6 +5223,7 @@ namespace NineGrid.Flow
                 _presentationDirector.HardClearIntents(reason);
             }
 
+            TriggerPulseHub.ResetToNull();
             _presentationDirector = null;
             _explorePresentChannel = null;
             _attackHitPresentChannel = null;

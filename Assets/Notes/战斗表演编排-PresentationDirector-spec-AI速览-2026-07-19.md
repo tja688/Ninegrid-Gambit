@@ -2,8 +2,8 @@
 
 > **用途**：给并行改代码的 AI / 人快速对齐 #2 新设计，避免在共存期踩旧路径或扩大范围。  
 > **权威源**：[#2 Spec](https://github.com/tja688/Ninegrid-Gambit/issues/2) · [ADR-0001](../../docs/adr/0001-battle-presentation-unified-timeline-batch-ack.md) · [`CONTEXT.md`「战斗表演编排」](../../CONTEXT.md) · [落地方案](../../.cursor/plans/表演编排统一时间线重构_f1ba353d.plan.md)  
-> **状态快照**：2026-07-19 — Agent 侧 #3 已关；#4–#9 已进人眼批量验收（`ready-for-human`）；#10/#11 未开始。  
-> **本轮性质**：新旧**并行共存**；未硬切前，禁止把旧路径当终态，也禁止提前拆掉未验收流程的旧出口。
+> **状态快照**：2026-07-19 — #3–#10 已关；#11 硬切收尾进行中（Trigger/debounce/诊断 + 删 BoardQueue 泵 + 旧进攻入口改导演）。  
+> **本轮性质**：导演为唯一编排出口；Present 薄适配可残留（反击等），勿再复活 `_boardPresentationQueue` / `legacyPostPresent` / `RequestBasicAttackInternal`。
 
 ---
 

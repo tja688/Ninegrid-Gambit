@@ -8,8 +8,8 @@ namespace NineGrid.Flow.Presentation
     /// </summary>
     public sealed class PresentationDirector
     {
-        private readonly BattleTimeline mMainline = new BattleTimeline();
-        private readonly BattleTimeline mBypass = new BattleTimeline();
+        private readonly BattleTimeline mMainline;
+        private readonly BattleTimeline mBypass;
         private readonly IIntentScriptFactory mScriptFactory;
         private readonly IUiPickPreviewSink mUiPickPreview;
         private bool mHasBufferedIntent;
@@ -17,7 +17,8 @@ namespace NineGrid.Flow.Presentation
 
         public PresentationDirector(
             IIntentScriptFactory scriptFactory,
-            IUiPickPreviewSink uiPickPreview = null)
+            IUiPickPreviewSink uiPickPreview = null,
+            ITimelineDiagnosticSink timelineDiagnostics = null)
         {
             if (scriptFactory == null)
             {
@@ -26,6 +27,9 @@ namespace NineGrid.Flow.Presentation
 
             mScriptFactory = scriptFactory;
             mUiPickPreview = uiPickPreview;
+            var diag = timelineDiagnostics ?? DirectorTrace.TimelineSink;
+            mMainline = new BattleTimeline(diag, DirectorTimelineLane.Mainline);
+            mBypass = new BattleTimeline(diag, DirectorTimelineLane.Bypass);
         }
 
         /// <summary>主线在跑 = 唯一 busy 真相（旁路装饰道不计入）。</summary>
