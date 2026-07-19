@@ -79,6 +79,37 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void SelectReward_WhilePresentationInputLocked_StillLegal_ForMidBattlePending()
+        {
+            // 导演锁步：UseItem Present 未 Ack 时 IsInputLocked=true，Bounce 点选必须仍能 SelectReward。
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 5, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sAdjacentSlot);
+            var chestUid = SpawnHelpIntoItemSlots("help.common_chest_card");
+            Assert.IsTrue(mPhase.ApplyUseItem(chestUid, null, null).Accepted);
+
+            var sync = mArch.GetSystem<IPresentationSyncSystem>();
+            var map = PresentationEventMap.Get(CoreEventType.ItemUsed);
+            Assert.IsTrue(map.LocksInput);
+            var blocking = new[]
+            {
+                new PresentationInstruction(new CoreGameEvent(CoreEventType.ItemUsed, 1, "UseItem"), map),
+            };
+            sync.OpenBatch(new PresentationBatch(42, blocking, null));
+            Assert.IsTrue(sync.IsInputLocked);
+
+            Assert.IsTrue(mPhase.CanExecute(GameCommandKind.PresentationFinished));
+            Assert.IsTrue(mPhase.CanExecute(GameCommandKind.SelectReward));
+            Assert.IsTrue(mPhase.CanExecute(GameCommandKind.SkipHelpChoice));
+            Assert.IsFalse(mPhase.CanExecute(GameCommandKind.ClickEmpty));
+
+            var select = mPhase.SelectReward(0);
+            Assert.IsTrue(select.Accepted, select.Reason);
+            Assert.AreEqual(PendingChoiceKind.None, mArch.GetModel<PendingChoiceModel>().Kind.Value);
+
+            Assert.IsTrue(sync.FinishBatch(42).Accepted);
+        }
+
+        [Test]
         public void UseItem_StatBoost_WithSelectedOption_ModifiesBaseStat_NoRewardPending()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 5, attack: 0)).Accepted);

@@ -61,6 +61,7 @@ namespace NineGrid.Flow
         private readonly Dictionary<int, HashSet<int>> _pendingFusionRemoves = new();
         private readonly HashSet<int> _completedFusionActionIds = new();
         private PresentationDirector _presentationDirector;
+        private bool _recoveringRewardUi;
         private QueuedBoardPresentChannel _explorePresentChannel;
         private CombatAttackPresentChannel _attackHitPresentChannel;
         private QueuedBoardPresentChannel _attackBoardPresentChannel;
@@ -5949,6 +5950,11 @@ namespace NineGrid.Flow
             string legalityReject;
             if (!TryExplainExploreCoreLegality(groundSlot, out legalityReject))
             {
+                if (HasOrphanMidBattleRewardPending())
+                {
+                    TryRecoverOrphanMidBattleRewardUi("explore:" + legalityReject);
+                }
+
                 Debug.LogWarning(
                     $"[InBattleManager] Explore 被 Core 合法性拒绝 slot={groundSlot}: {legalityReject}");
                 return false;
@@ -6016,12 +6022,78 @@ namespace NineGrid.Flow
             return true;
         }
 
+        private static bool HasOrphanMidBattleRewardPending()
+        {
+            if (CombatHitSink.ChoiceOverlayActive)
+            {
+                return false;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return false;
+            }
+
+            var pending = arch.GetModel<PendingChoiceModel>();
+            if (pending.Kind.Value != PendingChoiceKind.Reward
+                || pending.RewardOptions == null
+                || pending.RewardOptions.Count == 0)
+            {
+                return false;
+            }
+
+            var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
+            return phase == GamePhase.InteractionLoop || phase == GamePhase.RewardItemChoice;
+        }
+
+        private static void TryRecoverOrphanMidBattleRewardUi(string context)
+        {
+            var instance = Instance;
+            if (instance == null || instance._recoveringRewardUi)
+            {
+                return;
+            }
+
+            if (!HasOrphanMidBattleRewardPending())
+            {
+                return;
+            }
+
+            Debug.LogWarning(
+                "[InBattleManager] 孤儿 PendingReward（无覆盖层），重开 Bounce。context="
+                + (context ?? string.Empty));
+            instance._recoveringRewardUi = true;
+            instance.RecoverPendingRewardUiAsync().Forget();
+        }
+
+        private async UniTaskVoid RecoverPendingRewardUiAsync()
+        {
+            try
+            {
+                await PresentRewardChoiceFromCoreAsync(hoverOnNotice: false);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                _recoveringRewardUi = false;
+            }
+        }
+
         private static bool TrySubmitAttackIntentFromCards(int groundSlot)
         {
             var instance = Instance;
             if (instance == null)
             {
                 Debug.LogWarning("[InBattleManager] TrySubmitAttackIntent：无局内管理器。");
+                return false;
+            }
+
+            if (HasOrphanMidBattleRewardPending())
+            {
+                TryRecoverOrphanMidBattleRewardUi("attack");
                 return false;
             }
 

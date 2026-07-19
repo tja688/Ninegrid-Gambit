@@ -871,6 +871,9 @@ namespace NineGrid.Core.Systems
             if (this.GetSystem<IPresentationSyncSystem>().IsInputLocked)
             {
                 mLegalCommands.Add(GameCommandKind.PresentationFinished);
+                // 导演 Present 未 Ack 时批次仍锁输入；宝箱 Bounce 在 Present 内等待点选，
+                // 必须仍能 Select/Skip，否则会留下孤儿 PendingChoice 并卡死战场。
+                AppendPendingChoiceCommandsWhilePresentationLocked();
                 return;
             }
 
@@ -909,6 +912,20 @@ namespace NineGrid.Core.Systems
                 case GamePhase.RoomEvent:
                     mLegalCommands.Add(GameCommandKind.EnterRoom);
                     break;
+            }
+        }
+
+        private void AppendPendingChoiceCommandsWhilePresentationLocked()
+        {
+            var pending = this.GetModel<PendingChoiceModel>().Kind.Value;
+            if (pending == PendingChoiceKind.Reward)
+            {
+                mLegalCommands.Add(GameCommandKind.SelectReward);
+                mLegalCommands.Add(GameCommandKind.SkipHelpChoice);
+            }
+            else if (pending == PendingChoiceKind.Room)
+            {
+                mLegalCommands.Add(GameCommandKind.SelectRoom);
             }
         }
     }
