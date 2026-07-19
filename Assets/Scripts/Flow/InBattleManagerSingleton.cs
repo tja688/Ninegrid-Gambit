@@ -2742,7 +2742,7 @@ namespace NineGrid.Flow
         /// <summary>
         /// 扫描 EffectTriggered：经 TriggerPulseHub 发 FX/音效脉冲（发即完成、可降级）。
         /// 仅九宫格在场卡；卡组 / 手牌 / 已移除不播。不占主时间线控制权。
-        /// 同拍刷卡面 ATK/HP/Armor（见 <see cref="PresentStatChangesFromEventLog"/>）。
+        /// 脉冲发出后按卡 <see cref="CardEffectManager.StatRevealDelayAfterEffectTrigger"/> 再刷 ATK/HP/Armor。
         /// </summary>
         public static void PresentEffectTriggersFromEventLog(int startIndex)
         {
@@ -2758,6 +2758,7 @@ namespace NineGrid.Flow
                 return;
             }
 
+            var effectTriggerUids = new HashSet<int>();
             var seen = new HashSet<int>();
             for (var i = startIndex; i < entries.Count; i++)
             {
@@ -2777,20 +2778,30 @@ namespace NineGrid.Flow
                     continue;
                 }
 
+                effectTriggerUids.Add(e.CardUid);
                 var fxId = CardEffectTriggerPulseSink.IdForCard(e.CardUid);
                 TriggerPulseHub.PulseFx(fxId);
                 TriggerPulseHub.PulseAudio("sfx.effect." + e.CardUid.ToString());
             }
 
-            // 与 effect 脉冲同拍：属性事件落到卡面，避免观察者增益等到下次 SyncAll。
-            PresentStatChangesFromEventLog(startIndex);
+            // 效果脉冲之后再刷属性：有 EffectTriggered 时按卡私有延迟，否则立刻对齐。
+            PresentStatChangesFromEventLog(startIndex, effectTriggerUids);
         }
 
         /// <summary>
-        /// 扫描属性变化事件，对涉及 uid 立刻 Sync 卡面（及 avatar HUD）。
-        /// 对齐 <see cref="PresentGoldGainsFromEventLog"/> 的 EventLog 投影习惯；不占主时间线。
+        /// 扫描属性变化事件并 Sync 卡面（及 avatar HUD）。无效果触发时立刻刷；
+        /// 有效果触发时按卡 <see cref="CardEffectManager.StatRevealDelayAfterEffectTrigger"/> 延迟。
         /// </summary>
         public static void PresentStatChangesFromEventLog(int startIndex)
+        {
+            PresentStatChangesFromEventLog(startIndex, effectTriggerUids: null);
+        }
+
+        /// <summary>
+        /// 扫描属性变化事件并 Sync 卡面（及 avatar HUD）。
+        /// </summary>
+        /// <param name="effectTriggerUids">本段已播效果脉冲的卡；非空且含 uid 时按该卡私有延迟刷新。</param>
+        public static void PresentStatChangesFromEventLog(int startIndex, HashSet<int> effectTriggerUids)
         {
             if (startIndex < 0)
             {
@@ -2817,7 +2828,13 @@ namespace NineGrid.Flow
 
             var avatarUid = arch.GetModel<BoardModel>().AvatarUid.Value;
             var seen = new HashSet<int>();
-            var needsHudFallback = false;
+            var pendingHudFallback = false;
+            var hasEffectTriggers = effectTriggerUids != null && effectTriggerUids.Count > 0;
+            float fallbackDelayFromTriggers = 0f;
+            if (hasEffectTriggers)
+            {
+                fallbackDelayFromTriggers = ResolveMaxStatRevealDelay(effectTriggerUids, cards);
+            }
 
             for (var i = startIndex; i < entries.Count; i++)
             {
@@ -2827,13 +2844,29 @@ namespace NineGrid.Flow
                     continue;
                 }
 
-                QueueStatSyncUid(e.CardUid, seen, cards, avatarUid, ref needsHudFallback);
-                QueueStatSyncUid(e.TargetUid, seen, cards, avatarUid, ref needsHudFallback);
+                QueueStatSyncUid(
+                    e.CardUid,
+                    seen,
+                    cards,
+                    avatarUid,
+                    hasEffectTriggers,
+                    effectTriggerUids,
+                    fallbackDelayFromTriggers,
+                    ref pendingHudFallback);
+                QueueStatSyncUid(
+                    e.TargetUid,
+                    seen,
+                    cards,
+                    avatarUid,
+                    hasEffectTriggers,
+                    effectTriggerUids,
+                    fallbackDelayFromTriggers,
+                    ref pendingHudFallback);
             }
 
-            if (needsHudFallback)
+            if (pendingHudFallback)
             {
-                PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
+                ScheduleHudSync(hasEffectTriggers ? fallbackDelayFromTriggers : 0f);
             }
         }
 
@@ -2851,7 +2884,10 @@ namespace NineGrid.Flow
             HashSet<int> seen,
             CardManagerSingleton cards,
             int avatarUid,
-            ref bool needsHudFallback)
+            bool hasEffectTriggers,
+            HashSet<int> effectTriggerUids,
+            float fallbackDelayFromTriggers,
+            ref bool pendingHudFallback)
         {
             if (uid <= 0 || !seen.Add(uid))
             {
@@ -2860,14 +2896,103 @@ namespace NineGrid.Flow
 
             if (cards.TryGet(uid, out var managed) && managed != null)
             {
-                CombatHitSink.RequestSyncCard(managed);
+                var delay = 0f;
+                if (hasEffectTriggers)
+                {
+                    // 自身播了效果脉冲：用本卡私有延迟；否则跟本段效果卡的最大延迟（如 gear_delivery 改别人）。
+                    delay = effectTriggerUids != null && effectTriggerUids.Contains(uid)
+                        ? ResolveStatRevealDelay(managed)
+                        : fallbackDelayFromTriggers;
+                }
+
+                ScheduleCardStatSync(managed, delay);
                 return;
             }
 
             if (uid == avatarUid)
             {
-                needsHudFallback = true;
+                pendingHudFallback = true;
             }
+        }
+
+        private static float ResolveMaxStatRevealDelay(HashSet<int> effectTriggerUids, CardManagerSingleton cards)
+        {
+            var max = 0f;
+            foreach (var uid in effectTriggerUids)
+            {
+                if (!cards.TryGet(uid, out var managed) || managed == null)
+                {
+                    continue;
+                }
+
+                max = Mathf.Max(max, ResolveStatRevealDelay(managed));
+            }
+
+            return max;
+        }
+
+        private static float ResolveStatRevealDelay(ManagedCard card)
+        {
+            if (card != null && card.TryGetEffectManager(out var effectManager) && effectManager != null)
+            {
+                return effectManager.StatRevealDelayAfterEffectTrigger;
+            }
+
+            return 0f;
+        }
+
+        private static void ScheduleCardStatSync(ManagedCard card, float delaySeconds)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            if (delaySeconds <= 0f)
+            {
+                CombatHitSink.RequestSyncCard(card);
+                return;
+            }
+
+            var host = Instance;
+            if (host == null)
+            {
+                // 无宿主无法排程；禁止立刻刷，避免「延迟被吞」掩盖时序。
+                return;
+            }
+
+            var uid = card.Uid;
+            DOVirtual.DelayedCall(
+                    delaySeconds,
+                    () =>
+                    {
+                        var cards = CardManagerSingleton.TryGetInstance();
+                        if (cards != null && cards.TryGet(uid, out var managed) && managed != null)
+                        {
+                            CombatHitSink.RequestSyncCard(managed);
+                        }
+                    })
+                .SetLink(host.gameObject, LinkBehaviour.KillOnDestroy);
+        }
+
+        private static void ScheduleHudSync(float delaySeconds)
+        {
+            if (delaySeconds <= 0f)
+            {
+                PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
+                return;
+            }
+
+            var host = Instance;
+            if (host == null)
+            {
+                return;
+            }
+
+            DOVirtual.DelayedCall(
+                    delaySeconds,
+                    () => PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true))
+                .SetLink(host.gameObject, LinkBehaviour.KillOnDestroy);
         }
 
         private static bool IsCoreCardOnBoardForEffectPresentation(int uid)
