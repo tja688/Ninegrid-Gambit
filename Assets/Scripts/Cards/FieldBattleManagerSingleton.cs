@@ -370,6 +370,7 @@ namespace NineGrid.Cards
                 if (hitProjection.AvatarDefeated)
                 {
                     await DrainCombatHitBoardDeltaFromProjectionAsync(hitProjection, ct);
+                    await CombatHitSink.RequestFlushPendingShuffleIntoPresentation(ct);
                     TryBeginAvatarDefeatPresentation(ct);
                     CombatHitSink.RequestBattleEnded(victory: false);
                     return;
@@ -378,9 +379,8 @@ namespace NineGrid.Cards
                 var killed = HasRemovedUid(hitProjection, combatVictim.Uid) || combatVictim.IsFieldDead;
                 if (killed)
                 {
-                    var hitDelta = StripRemovedUid(hitProjection, combatVictim.Uid);
-                    await DrainCombatHitBoardDeltaFromProjectionAsync(hitDelta, ct);
-
+                    // 导演路径：击杀只做 lunge / 尸体离锚；不再嵌套 DrainPostKillBoard。
+                    // Fill/Rotate 由导演后续 Present 驱动，避免 Hit+板面双重 Drain 挂死主线。
                     CardManagerSingleton.Instance?.MarkFieldDead(combatVictim);
                     fieldManager.VacateSlotForExplore(
                         combatSlot,
@@ -390,12 +390,11 @@ namespace NineGrid.Cards
                         startExplore: false);
                     CardManagerSingleton.Instance?.StageFieldDeadCorpseOffAnchor(combatVictim);
                     FinalizeLethalVictimAsync(combatVictim, ct).Forget();
-                    // Fill/Rotate Present 由导演后续批次驱动；此处不 RequestPostKillBoard。
-                    return;
                 }
 
-                // 未击杀：命中批可能仍有盘面 delta（技能挪位等），先 drain。
-                await DrainCombatHitBoardDeltaFromProjectionAsync(hitProjection, ct);
+                // 未击杀也不在 Hit 内嵌套盘面 Drain；盘面 delta 走后续 Fill/Rotate Present。
+                // 洗回（含散架爆开）与击杀同拍，不等到 Fill。
+                await CombatHitSink.RequestFlushPendingShuffleIntoPresentation(ct);
             }
             catch (System.OperationCanceledException)
             {
@@ -467,29 +466,6 @@ namespace NineGrid.Cards
             }
 
             return false;
-        }
-
-        private static PostKillBoardPresentationResult StripRemovedUid(
-            PostKillBoardPresentationResult source,
-            int uid)
-        {
-            if (!HasRemovedUid(source, uid))
-            {
-                return source;
-            }
-
-            var filtered = new List<int>(source.RemovedUids.Length);
-            for (var i = 0; i < source.RemovedUids.Length; i++)
-            {
-                if (source.RemovedUids[i] != uid)
-                {
-                    filtered.Add(source.RemovedUids[i]);
-                }
-            }
-
-            var copy = source;
-            copy.RemovedUids = filtered.Count > 0 ? filtered.ToArray() : System.Array.Empty<int>();
-            return copy;
         }
 
         private async UniTask DrainCombatHitBoardDeltaFromProjectionAsync(

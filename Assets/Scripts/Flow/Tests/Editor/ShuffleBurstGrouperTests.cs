@@ -27,6 +27,27 @@ namespace NineGrid.Flow.Tests
         }
 
         [Test]
+        public void Partition_FallApartStyle_DifferentActionId_SameTrigger_Bursts()
+        {
+            // Sequence 展开为两条独立 ShuffleInto，ActionId 不同但 TriggerCardUid 相同。
+            var pending = new List<ShuffleIntoDeckPresentationEntry>
+            {
+                Entry(101, "monster.skull_head", 11, ShuffleIntoDeckEventKind.NewCard, triggerCardUid: 50),
+                Entry(102, "monster.headless_skeleton", 12, ShuffleIntoDeckEventKind.NewCard, triggerCardUid: 50),
+            };
+            var bursts = new List<ShuffleBurstGroup>();
+            var leftovers = new List<ShuffleIntoDeckPresentationEntry>();
+
+            ShuffleBurstGrouper.Partition(pending, bursts, leftovers);
+
+            Assert.AreEqual(1, bursts.Count);
+            Assert.AreEqual(2, bursts[0].Entries.Count);
+            Assert.AreEqual(0, leftovers.Count);
+            Assert.AreEqual(101, bursts[0].Entries[0].Uid);
+            Assert.AreEqual(102, bursts[0].Entries[1].Uid);
+        }
+
+        [Test]
         public void Partition_SingleNewCard_GoesToLeftovers()
         {
             var pending = new List<ShuffleIntoDeckPresentationEntry>
@@ -81,13 +102,14 @@ namespace NineGrid.Flow.Tests
         [Test]
         public void Partition_MultipleActionIds_SeparateGroups()
         {
+            // TriggerCardUid==0 时回退 ActionId 分桶。
             var pending = new List<ShuffleIntoDeckPresentationEntry>
             {
-                Entry(101, "a", 1, ShuffleIntoDeckEventKind.NewCard),
-                Entry(102, "b", 1, ShuffleIntoDeckEventKind.NewCard),
-                Entry(201, "c", 2, ShuffleIntoDeckEventKind.NewCard),
-                Entry(202, "d", 2, ShuffleIntoDeckEventKind.NewCard),
-                Entry(301, "solo", 3, ShuffleIntoDeckEventKind.NewCard),
+                Entry(101, "a", 1, ShuffleIntoDeckEventKind.NewCard, triggerCardUid: 0),
+                Entry(102, "b", 1, ShuffleIntoDeckEventKind.NewCard, triggerCardUid: 0),
+                Entry(201, "c", 2, ShuffleIntoDeckEventKind.NewCard, triggerCardUid: 0),
+                Entry(202, "d", 2, ShuffleIntoDeckEventKind.NewCard, triggerCardUid: 0),
+                Entry(301, "solo", 3, ShuffleIntoDeckEventKind.NewCard, triggerCardUid: 0),
             };
             var bursts = new List<ShuffleBurstGroup>();
             var leftovers = new List<ShuffleIntoDeckPresentationEntry>();
@@ -122,7 +144,8 @@ namespace NineGrid.Flow.Tests
             int uid,
             string defId,
             int actionId,
-            ShuffleIntoDeckEventKind kind)
+            ShuffleIntoDeckEventKind kind,
+            int triggerCardUid = 50)
         {
             return new ShuffleIntoDeckPresentationEntry(
                 uid,
@@ -131,7 +154,7 @@ namespace NineGrid.Flow.Tests
                 actionId,
                 eventSequence: uid,
                 kind,
-                triggerCardUid: 50,
+                triggerCardUid,
                 fromBoardSlot: 3);
         }
     }

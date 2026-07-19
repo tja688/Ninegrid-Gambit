@@ -1497,6 +1497,7 @@ namespace NineGrid.Flow
             CombatHitSink.SpawnDamageNumber = SpawnDamageNumberAt;
             CombatHitSink.SyncBoardFromCore = RequestSyncBoardFromCore;
             CombatHitSink.DrainPostKillBoard = DrainPostKillBoardAsync;
+            CombatHitSink.FlushPendingShuffleIntoPresentation = FlushPendingShuffleIntoPresentationAsync;
             CombatHitSink.ApplyPickupItem = ApplyPickupItemFromCore;
             CombatHitSink.TrySubmitExploreIntent = TrySubmitExploreIntentFromCards;
             CombatHitSink.TrySubmitAttackIntent = TrySubmitAttackIntentFromCards;
@@ -1584,6 +1585,11 @@ namespace NineGrid.Flow
             if (CombatHitSink.DrainPostKillBoard == DrainPostKillBoardAsync)
             {
                 CombatHitSink.DrainPostKillBoard = null;
+            }
+
+            if (CombatHitSink.FlushPendingShuffleIntoPresentation == FlushPendingShuffleIntoPresentationAsync)
+            {
+                CombatHitSink.FlushPendingShuffleIntoPresentation = null;
             }
 
             CombatHitSink.ForceEndPresentationLock("UnregisterCombatHitSink");
@@ -2153,6 +2159,12 @@ namespace NineGrid.Flow
                     _drainInFlight = false;
                     ChoreoTraceContext.PumpRunning = false;
                     ChoreoTraceContext.DrainInFlight = false;
+                    // 锁失败清空后若又入队，允许重启。
+                    if (_boardPresentationQueue.Count > 0)
+                    {
+                        EnsureBoardPresentationPumpRunning();
+                    }
+
                     return;
                 }
 
@@ -2203,6 +2215,12 @@ namespace NineGrid.Flow
                 }
 
                 FlushDeferredBoardSync(force: true);
+
+                // 收尾窗口又入队：放锁后再重启，避免新泵与旧 finally 交叉 EndPresentationLock。
+                if (_boardPresentationQueue.Count > 0)
+                {
+                    EnsureBoardPresentationPumpRunning();
+                }
             }
         }
 
@@ -2248,7 +2266,7 @@ namespace NineGrid.Flow
                     ranDrainBody = true;
                     try
                     {
-                        var fusionState = BuildFusionDrainState(result);
+                        var fusionState = BuildFusionDrainState(result, _nodeEventLogStart);
                         PurgeFusionResultsFromShuffleQueue(fusionState);
                         await FlushPendingShuffleIntoPresentationAsync(ct);
                         FieldTraceHelper.RecordDrainBegin(
@@ -3351,7 +3369,9 @@ namespace NineGrid.Flow
             public HashSet<int> ResultUids = new();
         }
 
-        private static FusionDrainState BuildFusionDrainState(PostKillBoardPresentationResult result)
+        private static FusionDrainState BuildFusionDrainState(
+            PostKillBoardPresentationResult result,
+            int eventLogStartIndex)
         {
             var state = new FusionDrainState();
             var removedInBatch = CollectRemovedUidsFromSteps(result.Steps);
@@ -3379,7 +3399,9 @@ namespace NineGrid.Flow
             }
 
             var entries = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
-            var fusions = SkeletonFusionPresentationScanner.Collect(entries, 0);
+            // 仅扫本节点 EventLog 窗口，禁止全历史 Collect(0) 把旧融合 ResultUid 误 purge 进 sink。
+            var startIndex = eventLogStartIndex < 0 ? 0 : eventLogStartIndex;
+            var fusions = SkeletonFusionPresentationScanner.Collect(entries, startIndex);
             for (var i = 0; i < fusions.Count; i++)
             {
                 var fusion = fusions[i];
@@ -3388,7 +3410,12 @@ namespace NineGrid.Flow
                     continue;
                 }
 
-                state.ResultUids.Add(fusion.ResultUid);
+                // 只 purge 与本批移除相交的融合结果；ResultUid 须为正。
+                if (fusion.ResultUid > 0)
+                {
+                    state.ResultUids.Add(fusion.ResultUid);
+                }
+
                 var participants = fusion.ParticipantUids;
                 for (var j = 0; j < participants.Length; j++)
                 {
@@ -3406,6 +3433,7 @@ namespace NineGrid.Flow
                 new Dictionary<string, string>
                 {
                     ["removedInBatch"] = removedInBatch.Count.ToString(),
+                    ["eventLogStart"] = startIndex.ToString(),
                     ["fusionCandidates"] = fusions.Count.ToString(),
                     ["participantMapped"] = state.ParticipantIndex.Count.ToString(),
                     ["resultUids"] = state.ResultUids.Count.ToString(),

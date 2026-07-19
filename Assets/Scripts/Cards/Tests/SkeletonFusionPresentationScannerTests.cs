@@ -100,5 +100,39 @@ namespace NineGrid.Cards.Tests
             Assert.AreEqual(10, a.TriggerCardUid);
             Assert.AreEqual(10, b.TriggerCardUid);
         }
+
+        [Test]
+        public void Collect_FusionThenFallApart_DoesNotAbsorbLaterShuffleIntoAsResult()
+        {
+            var entries = new List<CoreGameEvent>
+            {
+                new CoreGameEvent(CoreEventType.EffectTriggered, 7, "ExecuteEffect")
+                    .WithCard(100)
+                    .WithSource("skill.recombine_head", "skill.recombine_head.move"),
+                new CoreGameEvent(CoreEventType.CardRemoved, 8, "RemoveCard").WithCard(100),
+                new CoreGameEvent(CoreEventType.CardRemoved, 9, "RemoveCard").WithCard(101),
+                new CoreGameEvent(CoreEventType.CardDealt, 10, "ShuffleIntoDrawPile")
+                    .WithCard(202)
+                    .WithMessage("shuffleInto:monster.big_skeleton_reborn"),
+                // 同节点后续散架：不得把碎片 uid 写成融合 ResultUid。
+                new CoreGameEvent(CoreEventType.EffectTriggered, 20, "ExecuteEffect")
+                    .WithCard(202)
+                    .WithSource("skill.fall_apart", "skill.fall_apart.remove"),
+                new CoreGameEvent(CoreEventType.CardKilled, 21, "KillCard").WithCard(202),
+                new CoreGameEvent(CoreEventType.CardDealt, 22, "ShuffleIntoDrawPile")
+                    .WithCard(301)
+                    .WithMessage("shuffleInto:monster.skull_head"),
+                new CoreGameEvent(CoreEventType.CardDealt, 23, "ShuffleIntoDrawPile")
+                    .WithCard(302)
+                    .WithMessage("shuffleInto:monster.headless_skeleton"),
+            };
+
+            var collected = SkeletonFusionPresentationScanner.Collect(entries, 0);
+            Assert.AreEqual(1, collected.Count);
+            Assert.AreEqual(202, collected[0].ResultUid);
+            Assert.AreEqual(2, collected[0].ParticipantUids.Length);
+            Assert.Contains(100, collected[0].ParticipantUids);
+            Assert.Contains(101, collected[0].ParticipantUids);
+        }
     }
 }

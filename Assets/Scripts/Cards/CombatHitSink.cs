@@ -219,6 +219,11 @@ namespace NineGrid.Cards
                 Debug.Log($"[CombatHitSink] PresentationLocked begin: {reason}");
             }
 
+            PerfTraceSink.Record?.Invoke(
+                "PresentationLock",
+                -1,
+                "begin",
+                string.IsNullOrEmpty(reason) ? null : new[] { "reason", reason });
             return true;
         }
 
@@ -237,6 +242,12 @@ namespace NineGrid.Cards
             {
                 Debug.Log($"[CombatHitSink] PresentationLocked end: {reason}");
             }
+
+            PerfTraceSink.Record?.Invoke(
+                "PresentationLock",
+                -1,
+                "end",
+                string.IsNullOrEmpty(reason) ? null : new[] { "reason", reason });
         }
 
         /// <summary>
@@ -288,6 +299,11 @@ namespace NineGrid.Cards
 
         /// <summary>缓释击杀后盘面摘要：hop 已有卡 + 发新牌 + 软对齐。</summary>
         public static Func<PostKillBoardPresentationResult, CancellationToken, UniTask> DrainPostKillBoard;
+
+        /// <summary>
+        /// 导演 Hit Present 末尾 Flush 洗回 sink（散架爆开与击杀同拍；不嵌套盘面 Drain）。
+        /// </summary>
+        public static Func<CancellationToken, UniTask> FlushPendingShuffleIntoPresentation;
 
         /// <summary>场地拾取：ApplyPickupItem(groundSlot) → 摘要。</summary>
         public static Func<int, PickupItemPresentationResult> ApplyPickupItem;
@@ -382,6 +398,17 @@ namespace NineGrid.Cards
             }
 
             return DrainPostKillBoard(result, cancellationToken);
+        }
+
+        public static UniTask RequestFlushPendingShuffleIntoPresentation(
+            CancellationToken cancellationToken = default)
+        {
+            if (FlushPendingShuffleIntoPresentation == null)
+            {
+                return UniTask.CompletedTask;
+            }
+
+            return FlushPendingShuffleIntoPresentation(cancellationToken);
         }
 
         public static PickupItemPresentationResult RequestPickupItem(int groundSlot)

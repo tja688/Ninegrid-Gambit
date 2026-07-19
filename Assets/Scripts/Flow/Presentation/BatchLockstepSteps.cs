@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using NineGrid.Flow.Diagnostics;
 
 namespace NineGrid.Flow.Presentation
 {
@@ -127,6 +129,14 @@ namespace NineGrid.Flow.Presentation
                 return TimelineStepStatus.Continue;
             }
 
+            PerfTraceRecorder.Record(
+                "DirectorPresentAck",
+                mBatchId,
+                "PresentStep",
+                new Dictionary<string, string>
+                {
+                    ["batchId"] = mBatchId.ToString(),
+                });
             mAcknowledged = true;
             return TimelineStepStatus.Finished;
         }

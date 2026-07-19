@@ -146,6 +146,11 @@ namespace NineGrid.Flow
                 {
                     resultUid = entry.CardUid;
                     resultDefId = defId;
+                    // 融合批次在「≥2 移除 + 首条洗入结果」即闭合；勿吞掉后续 fall_apart 等无关 ShuffleInto。
+                    if (removedUids.Count >= 2 && resultUid > 0 && !string.IsNullOrEmpty(resultDefId))
+                    {
+                        break;
+                    }
                 }
             }
 
