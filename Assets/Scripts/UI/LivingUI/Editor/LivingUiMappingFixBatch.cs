@@ -107,7 +107,7 @@ namespace NineGrid.LivingUI.Editor
                         envelope: default,
                         authoring: GetCarrierSize(root, toPanel));
                     marker.CaptureAuthoredPoseFromTransform();
-                    marker.ConvertCenterLocalToAnchorOffset(GetCarrierSize(root, toPanel));
+                    marker.EnsureAuthoringSize(GetCarrierSize(root, toPanel));
                     EditorUtility.SetDirty(marker);
                 }
 
@@ -218,7 +218,7 @@ namespace NineGrid.LivingUI.Editor
             if (skin != null) size = skin.size;
             marker.ApplyAuthored(content.name, panelId, LivingUiContentAnchor.TopLeft, face, restrict, default, size);
             marker.CaptureAuthoredPoseFromTransform();
-            marker.ConvertCenterLocalToAnchorOffset(size);
+            marker.EnsureAuthoringSize(size);
             EditorUtility.SetDirty(marker);
         }
 

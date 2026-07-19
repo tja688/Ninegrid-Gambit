@@ -4,7 +4,7 @@ using UnityEngine;
 namespace NineGrid.LivingUI.Unity
 {
     /// <summary>
-    /// 从构型蓝图读取同面板同名内容的局部位姿，供大盘 live 对齐。
+    /// 从构型蓝图读取定性信息：是否出现 + 本构型锚点。不再向 runtime 提供位姿。
     /// </summary>
     public static class LivingUiBlueprintPoseSampler
     {
@@ -28,7 +28,28 @@ namespace NineGrid.LivingUI.Unity
             _cacheBuilt = false;
         }
 
-        public static bool TrySample(
+        /// <summary>
+        /// 定性采样：同面板同基础名内容是否存在，及其 LivingUiContentMarker.Anchor。
+        /// </summary>
+        public static bool TrySampleQualitative(
+            LivingUiLayoutId layout,
+            int carrierId,
+            string contentName,
+            out LivingUiContentAnchor anchor)
+        {
+            anchor = LivingUiContentAnchor.TopLeft;
+            var content = FindContent(layout, carrierId, contentName);
+            if (content == null) return false;
+
+            var marker = content.GetComponent<LivingUiContentMarker>();
+            if (marker != null) anchor = marker.Anchor;
+            return true;
+        }
+
+        /// <summary>
+        /// 编辑器/迁移用：读取蓝图局部位姿。运行时内容驱动不应调用。
+        /// </summary>
+        public static bool TrySamplePoseForEditor(
             LivingUiLayoutId layout,
             int carrierId,
             string contentName,
@@ -40,31 +61,42 @@ namespace NineGrid.LivingUI.Unity
             localScale = Vector3.one;
             carrierSize = Vector2.one;
 
-            EnsureCache();
-            if (!Cache.TryGetValue(layout, out var root) || root == null) return false;
-
-            var carrier = root.Find(carrierId.ToString());
-            if (carrier == null) return false;
-            var attach = carrier.Find("ContentAttach");
-            if (attach == null) return false;
-
-            Transform content = null;
-            for (var i = 0; i < attach.childCount; i++)
-            {
-                if (attach.GetChild(i).name != contentName) continue;
-                content = attach.GetChild(i);
-                break;
-            }
-
+            var content = FindContent(layout, carrierId, contentName);
             if (content == null) return false;
 
             localPosition = content.localPosition;
             localScale = content.localScale;
             if (localScale == Vector3.zero) localScale = Vector3.one;
 
-            var skin = carrier.GetComponent<SpriteRenderer>();
-            if (skin != null) carrierSize = skin.size;
+            var carrier = content.parent != null ? content.parent.parent : null;
+            if (carrier != null)
+            {
+                var skin = carrier.GetComponent<SpriteRenderer>();
+                if (skin != null) carrierSize = skin.size;
+            }
+
             return true;
+        }
+
+        private static Transform FindContent(LivingUiLayoutId layout, int carrierId, string contentName)
+        {
+            EnsureCache();
+            if (!Cache.TryGetValue(layout, out var root) || root == null) return null;
+
+            var carrier = root.Find(carrierId.ToString());
+            if (carrier == null) return null;
+            var attach = carrier.Find("ContentAttach");
+            if (attach == null) return null;
+
+            var want = LivingUiContentNames.BaseName(contentName);
+            for (var i = 0; i < attach.childCount; i++)
+            {
+                var child = attach.GetChild(i);
+                if (!LivingUiContentNames.BaseNameEquals(child.name, want)) continue;
+                return child;
+            }
+
+            return null;
         }
 
         private static void EnsureCache()

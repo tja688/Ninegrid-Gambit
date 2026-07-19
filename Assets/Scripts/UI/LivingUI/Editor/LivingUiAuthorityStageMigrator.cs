@@ -478,7 +478,7 @@ namespace NineGrid.LivingUI.Editor
             var marker = content.GetComponent<LivingUiContentMarker>();
             if (marker == null) marker = Undo.AddComponent<LivingUiContentMarker>(content.gameObject);
             marker.ApplyAuthored(
-                content.name,
+                LivingUiContentNames.BaseName(content.name),
                 panelId,
                 LivingUiContentAnchor.TopLeft,
                 face,
@@ -494,7 +494,7 @@ namespace NineGrid.LivingUI.Editor
             if (marker == null) marker = Undo.AddComponent<LivingUiContentMarker>(content.gameObject);
             // restrictToFace=false：由 ContentController 按蓝图同名出现登记多构型
             marker.ApplyAuthored(
-                content.name,
+                LivingUiContentNames.BaseName(content.name),
                 panelId,
                 LivingUiContentAnchor.TopLeft,
                 homeFace,
@@ -509,7 +509,8 @@ namespace NineGrid.LivingUI.Editor
             var carrier = content.parent != null ? content.parent.parent : null;
             var skin = carrier != null ? carrier.GetComponent<SpriteRenderer>() : null;
             var size = skin != null ? skin.size : Vector2.one;
-            marker.ConvertCenterLocalToAnchorOffset(size);
+            // 原初权威：AuthoredPose 保持中心系；仅钉死 authoringSize。
+            marker.EnsureAuthoringSize(size);
         }
 
         private static Transform FindSceneRoot(string rootName)

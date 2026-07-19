@@ -29,13 +29,13 @@ namespace NineGrid.LivingUI.Unity
         [Tooltip("作者化时的载体尺寸；用于锚点换算。留 (0,0) 时运行时用 Face 终态尺寸。")]
         [SerializeField] private Vector2 authoringSize;
 
-        [Tooltip("作者局部位姿（相对所选锚点的偏移）；驱动每帧写回中心系 local。留空则 Awake 从 Transform 捕获。")]
+        [Tooltip("原初局部位姿：相对 ContentAttach 中心（非锚点偏移）。驱动按构型锚点 + authoringSize 投影。留空则 Awake 从 Transform 捕获。")]
         [SerializeField] private Vector3 authoredLocalPosition;
 
         [Tooltip("作者局部缩放；留 (0,0,0) 时 Awake 从 Transform 捕获（通常为 1,1,1）。")]
         [SerializeField] private Vector3 authoredLocalScale = Vector3.one;
 
-        [Tooltip("是否已写入作者位姿；关则 Awake/首次 ToBinding 从 Transform 捕获。")]
+        [Tooltip("是否已写入原初位姿；关则 Awake/首次 ToBinding 从 Transform 捕获。")]
         [SerializeField] private bool hasAuthoredPose;
 
         public string ContentId => contentId;
@@ -100,13 +100,15 @@ namespace NineGrid.LivingUI.Unity
             authoringSize = authoring;
         }
 
-        public void SetAuthoredPose(Vector3 offsetFromAnchor, Vector3 localScale)
+        /// <summary>写入原初中心系局部位姿（相对 ContentAttach 中心）。</summary>
+        public void SetAuthoredPose(Vector3 centerLocal, Vector3 localScale)
         {
-            authoredLocalPosition = offsetFromAnchor;
+            authoredLocalPosition = centerLocal;
             authoredLocalScale = localScale == Vector3.zero ? Vector3.one : localScale;
             hasAuthoredPose = true;
         }
 
+        /// <summary>从当前 Transform 捕获为原初中心系位姿。</summary>
         public void CaptureAuthoredPoseFromTransform()
         {
             authoredLocalPosition = transform.localPosition;
@@ -116,13 +118,24 @@ namespace NineGrid.LivingUI.Unity
         }
 
         /// <summary>
-        /// 把当前中心系 local 换算为相对锚点偏移（在 authoringSize 下世界位不变）。
+        /// 钉死 authoringSize（原初参考载体尺寸）。中心系原初位不再换算为锚点偏移。
         /// </summary>
-        public void ConvertCenterLocalToAnchorOffset(Vector2 carrierSize)
+        public void EnsureAuthoringSize(Vector2 carrierSize)
+        {
+            if (authoringSize.x > 0f && authoringSize.y > 0f) return;
+            if (carrierSize.x <= 0f || carrierSize.y <= 0f) carrierSize = Vector2.one;
+            authoringSize = carrierSize;
+        }
+
+        /// <summary>
+        /// 兼容旧迁移：若位姿曾存为锚点偏移，在给定尺寸下还原为中心系。
+        /// 新流程请直接 CaptureAuthoredPoseFromTransform + EnsureAuthoringSize。
+        /// </summary>
+        public void ConvertAnchorOffsetToCenterLocal(Vector2 carrierSize)
         {
             EnsureAuthoredPose();
             if (carrierSize.x <= 0f || carrierSize.y <= 0f) carrierSize = Vector2.one;
-            authoredLocalPosition = LivingUiContentProjector.CenterLocalToAnchorOffset(
+            authoredLocalPosition = LivingUiContentProjector.ResolveAnchoredLocal(
                 anchor, authoredLocalPosition, carrierSize);
             if (authoringSize.x <= 0f || authoringSize.y <= 0f) authoringSize = carrierSize;
             hasAuthoredPose = true;

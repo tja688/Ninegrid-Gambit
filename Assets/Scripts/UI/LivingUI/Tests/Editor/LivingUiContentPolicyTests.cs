@@ -7,6 +7,83 @@ namespace NineGrid.LivingUI.Tests
     public sealed class LivingUiContentPolicyTests
     {
         [Test]
+        public void BaseName_StripsOnlyPrimordialSuffix()
+        {
+            Assert.AreEqual("血量图标", LivingUiContentNames.BaseName("血量图标（原初元素）"));
+            Assert.AreEqual("GoldText", LivingUiContentNames.BaseName("GoldText(原初元素)"));
+            Assert.AreEqual("Notice Text（限 62 ）", LivingUiContentNames.BaseName("Notice Text（限 62 ）"));
+            Assert.AreEqual("plain", LivingUiContentNames.BaseName("plain"));
+            Assert.IsTrue(LivingUiContentNames.BaseNameEquals(
+                "血量图标（原初元素）", "血量图标"));
+            Assert.IsFalse(LivingUiContentNames.BaseNameEquals(
+                "Notice Text（限 62 ）", "Notice Text"));
+        }
+
+        [Test]
+        public void EnsurePrimordialName_AppendsSuffixOnce()
+        {
+            Assert.AreEqual(
+                "血量图标" + LivingUiContentNames.PrimordialSuffix,
+                LivingUiContentNames.EnsurePrimordialName("血量图标"));
+            Assert.AreEqual(
+                "血量图标" + LivingUiContentNames.PrimordialSuffix,
+                LivingUiContentNames.EnsurePrimordialName("血量图标（原初元素）"));
+        }
+
+        [Test]
+        public void FromCenter_SwitchingAnchorAtAuthoringSize_DoesNotJump()
+        {
+            var center = new Vector3(-1.4f, 1.34f, 0f);
+            var authored = new LivingUiContentLocalPose(center, Vector3.one);
+            var size = new Vector2(9.91f, 6.98f);
+
+            var topLeft = LivingUiContentProjector.ProjectInvariantFromCenter(
+                LivingUiContentAnchor.TopLeft, authored, size, size);
+            var bottomRight = LivingUiContentProjector.ProjectInvariantFromCenter(
+                LivingUiContentAnchor.BottomRight, authored, size, size);
+            var mid = LivingUiContentProjector.ProjectInvariantFromCenter(
+                LivingUiContentAnchor.Center, authored, size, size);
+
+            Assert.AreEqual(center.x, topLeft.LocalPosition.x, 0.0001f);
+            Assert.AreEqual(center.y, topLeft.LocalPosition.y, 0.0001f);
+            Assert.AreEqual(center.x, bottomRight.LocalPosition.x, 0.0001f);
+            Assert.AreEqual(center.y, bottomRight.LocalPosition.y, 0.0001f);
+            Assert.AreEqual(center.x, mid.LocalPosition.x, 0.0001f);
+            Assert.AreEqual(center.y, mid.LocalPosition.y, 0.0001f);
+        }
+
+        [Test]
+        public void FromCenter_DifferentAnchors_DivergeWhenLiveSizeChanges()
+        {
+            var center = new Vector3(-1f, 0.5f, 0f);
+            var authored = new LivingUiContentLocalPose(center, Vector3.one);
+            var authoring = new Vector2(4f, 4f);
+            var live = new Vector2(8f, 8f);
+
+            var topLeft = LivingUiContentProjector.ProjectInvariantFromCenter(
+                LivingUiContentAnchor.TopLeft, authored, authoring, live);
+            var bottomRight = LivingUiContentProjector.ProjectInvariantFromCenter(
+                LivingUiContentAnchor.BottomRight, authored, authoring, live);
+
+            Assert.AreNotEqual(topLeft.LocalPosition.x, bottomRight.LocalPosition.x);
+            Assert.AreNotEqual(topLeft.LocalPosition.y, bottomRight.LocalPosition.y);
+        }
+
+        [Test]
+        public void ScaleFromCenter_PreservesCenterAtReferenceWhenFactorOne()
+        {
+            var center = new Vector3(0.25f, -0.5f, 0f);
+            var authored = new LivingUiContentLocalPose(center, Vector3.one);
+            var size = new Vector2(5f, 3f);
+            var proj = LivingUiContentProjector.ProjectScaleFromCenter(
+                LivingUiContentAnchor.TopLeft, authored, size, size, 1f);
+            Assert.AreEqual(center.x, proj.LocalPosition.x, 0.0001f);
+            Assert.AreEqual(center.y, proj.LocalPosition.y, 0.0001f);
+            Assert.AreEqual(1f, proj.LocalScale.x, 0.0001f);
+            Assert.IsTrue(proj.Visible);
+        }
+
+        [Test]
         public void Anchor_TopLeft_PinsWhenSizeGrows()
         {
             var offset = new Vector3(0.5f, -0.25f, 0f);

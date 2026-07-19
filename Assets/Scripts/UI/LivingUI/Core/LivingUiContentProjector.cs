@@ -80,7 +80,7 @@ namespace NineGrid.LivingUI
                 centerLocal.z);
         }
 
-        /// <summary>不变模式：锚点钉角 + 作者缩放。</summary>
+        /// <summary>不变模式：AuthoredPose.LocalPosition 为相对锚点偏移；钉角 + 作者缩放。</summary>
         public static LivingUiContentProjection ProjectInvariant(
             LivingUiContentAnchor anchor,
             LivingUiContentLocalPose authoredPose,
@@ -91,8 +91,26 @@ namespace NineGrid.LivingUI
         }
 
         /// <summary>
+        /// 不变模式（原初中心系）：AuthoredPose.LocalPosition 为相对 ContentAttach 中心；
+        /// 用 authoringSize 换算角偏移后再投影到 liveSize。同尺寸下换锚点不跳变。
+        /// </summary>
+        public static LivingUiContentProjection ProjectInvariantFromCenter(
+            LivingUiContentAnchor layoutAnchor,
+            LivingUiContentLocalPose authoredCenterPose,
+            Vector2 authoringSize,
+            Vector2 liveCarrierSize)
+        {
+            var size = authoringSize.x > 0f && authoringSize.y > 0f ? authoringSize : liveCarrierSize;
+            if (size.x <= 0f || size.y <= 0f) size = Vector2.one;
+            var live = liveCarrierSize.x > 0f && liveCarrierSize.y > 0f ? liveCarrierSize : size;
+            var offset = CenterLocalToAnchorOffset(layoutAnchor, authoredCenterPose.LocalPosition, size);
+            var local = ResolveAnchoredLocal(layoutAnchor, offset, live);
+            return new LivingUiContentProjection(local, authoredCenterPose.LocalScale, true);
+        }
+
+        /// <summary>
         /// 缩放模式：局部位用固定参考尺寸解算（转场中不随 live size 漂移，对齐旧表现）；
-        /// scale = authored * scaleFactor。
+        /// scale = authored * scaleFactor。AuthoredPose 为相对锚点偏移。
         /// </summary>
         public static LivingUiContentProjection ProjectScale(
             LivingUiContentAnchor anchor,
@@ -103,6 +121,29 @@ namespace NineGrid.LivingUI
             var factor = Mathf.Max(0f, scaleFactor);
             var local = ResolveAnchoredLocal(anchor, authoredPose.LocalPosition, referenceCarrierSize);
             var scale = authoredPose.LocalScale * factor;
+            var visible = factor > VisibleScaleEpsilon;
+            return new LivingUiContentProjection(local, scale, visible);
+        }
+
+        /// <summary>
+        /// 缩放模式（原初中心系）：中心系原初位 + 构型锚点；局部位钉在 referenceCarrierSize 上。
+        /// </summary>
+        public static LivingUiContentProjection ProjectScaleFromCenter(
+            LivingUiContentAnchor layoutAnchor,
+            LivingUiContentLocalPose authoredCenterPose,
+            Vector2 authoringSize,
+            Vector2 referenceCarrierSize,
+            float scaleFactor)
+        {
+            var factor = Mathf.Max(0f, scaleFactor);
+            var auth = authoringSize.x > 0f && authoringSize.y > 0f ? authoringSize : referenceCarrierSize;
+            if (auth.x <= 0f || auth.y <= 0f) auth = Vector2.one;
+            var reference = referenceCarrierSize.x > 0f && referenceCarrierSize.y > 0f
+                ? referenceCarrierSize
+                : auth;
+            var offset = CenterLocalToAnchorOffset(layoutAnchor, authoredCenterPose.LocalPosition, auth);
+            var local = ResolveAnchoredLocal(layoutAnchor, offset, reference);
+            var scale = authoredCenterPose.LocalScale * factor;
             var visible = factor > VisibleScaleEpsilon;
             return new LivingUiContentProjection(local, scale, visible);
         }

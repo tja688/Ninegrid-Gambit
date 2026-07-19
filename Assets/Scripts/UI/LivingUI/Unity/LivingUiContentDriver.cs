@@ -4,7 +4,8 @@ using UnityEngine;
 namespace NineGrid.LivingUI.Unity
 {
     /// <summary>
-    /// 内容层驱动：锚点解算 + 控制器下发的不变/缩放进退场。
+    /// 内容层驱动：原初中心系位姿 + 构型蓝图锚点投影；Invariant/Scale 进退场。
+    /// 不再从蓝图覆写 AuthoredPose。
     /// </summary>
     [DefaultExecutionOrder(-180)]
     [DisallowMultipleComponent]
@@ -23,11 +24,10 @@ namespace NineGrid.LivingUI.Unity
         [Min(0.01f)]
         [SerializeField] private float exitDuration = LivingUiContentProjector.DefaultExitDuration;
 
-        [Tooltip("可选显式内容标记列表；留空或空数组时运行时 FindObjectsByType 收集。")]
+        [Tooltip("可选显式内容标记列表；留空或空数组时运行时从大盘收集。")]
         [SerializeField] private LivingUiContentMarker[] markers;
 
         private readonly List<LivingUiContentMarker> _runtimeMarkers = new();
-        private LivingUiLayoutId? _syncedPoseLayout;
 
         private void Awake()
         {
@@ -44,7 +44,6 @@ namespace NineGrid.LivingUI.Unity
         private void OnEnable()
         {
             LivingUiBlueprintPoseSampler.InvalidateCache();
-            _syncedPoseLayout = null;
             RefreshMarkers();
         }
 
@@ -109,13 +108,6 @@ namespace NineGrid.LivingUI.Unity
             var transitioning = director.IsTransitioning;
             var transitionElapsed = director.TransitionElapsed;
 
-            // 停稳或进场：按目标/有效构型蓝图刷新作者位姿，消除迁移偏差。
-            // 转场中的 Invariant 不刷新，避免同名跨构型时跳动。
-            if (!transitioning)
-            {
-                SyncAuthoredPosesFromBlueprint(effective);
-            }
-
             for (var i = 0; i < _runtimeMarkers.Count; i++)
             {
                 var marker = _runtimeMarkers[i];
@@ -129,17 +121,6 @@ namespace NineGrid.LivingUI.Unity
                     continue;
                 }
 
-                if (transitioning && phase == LivingUiContentPhase.Entering)
-                {
-                    TryApplyBlueprintPose(marker, target);
-                    binding = marker.ToBinding();
-                }
-                else if (transitioning && phase == LivingUiContentPhase.Exiting)
-                {
-                    TryApplyBlueprintPose(marker, source);
-                    binding = marker.ToBinding();
-                }
-
                 if (layoutSource == null
                     || !layoutSource.Carriers.TryGetValue(binding.CarrierId, out var skin)
                     || skin == null)
@@ -150,13 +131,15 @@ namespace NineGrid.LivingUI.Unity
 
                 var mode = ResolveMode(marker, binding, source, target, transitioning);
                 var authoringSize = ResolveAuthoringSize(binding, target);
+                var anchorLayout = ResolveAnchorLayout(phase, effective, source, target, transitioning);
+                var layoutAnchor = ResolveLayoutAnchor(marker, binding, anchorLayout);
                 LivingUiContentProjection projection;
 
                 if (mode == LivingUiContentMotionMode.Invariant
                     || phase == LivingUiContentPhase.Stable)
                 {
-                    projection = LivingUiContentProjector.ProjectInvariant(
-                        binding.Anchor, binding.LocalPose, skin.size);
+                    projection = LivingUiContentProjector.ProjectInvariantFromCenter(
+                        layoutAnchor, binding.LocalPose, authoringSize, skin.size);
                 }
                 else if (phase == LivingUiContentPhase.Entering
                          && layoutSource.Snapshots.TryGetValue(source, out var sourceLayout)
@@ -177,8 +160,12 @@ namespace NineGrid.LivingUI.Unity
                         targetTerminal.Position,
                         currentPos,
                         timeProgress);
-                    projection = LivingUiContentProjector.ProjectScale(
-                        binding.Anchor, binding.LocalPose, targetTerminal.Size, enter);
+                    projection = LivingUiContentProjector.ProjectScaleFromCenter(
+                        layoutAnchor,
+                        binding.LocalPose,
+                        authoringSize,
+                        targetTerminal.Size,
+                        enter);
                 }
                 else
                 {
@@ -190,8 +177,12 @@ namespace NineGrid.LivingUI.Unity
 
                     var exitFactor = LivingUiContentProjector.ComputeExitScaleFactor(
                         transitionElapsed, exitDuration);
-                    projection = LivingUiContentProjector.ProjectScale(
-                        binding.Anchor, binding.LocalPose, refSize, exitFactor);
+                    projection = LivingUiContentProjector.ProjectScaleFromCenter(
+                        layoutAnchor,
+                        binding.LocalPose,
+                        authoringSize,
+                        refSize,
+                        exitFactor);
                 }
 
                 var scale = projection.LocalScale;
@@ -207,52 +198,30 @@ namespace NineGrid.LivingUI.Unity
             }
         }
 
-        private void SyncAuthoredPosesFromBlueprint(LivingUiLayoutId layout)
+        private static LivingUiLayoutId ResolveAnchorLayout(
+            LivingUiContentPhase phase,
+            LivingUiLayoutId effective,
+            LivingUiLayoutId source,
+            LivingUiLayoutId target,
+            bool transitioning)
         {
-            if (_syncedPoseLayout == layout) return;
-            _syncedPoseLayout = layout;
-            for (var i = 0; i < _runtimeMarkers.Count; i++)
-            {
-                var marker = _runtimeMarkers[i];
-                if (marker == null) continue;
-                TryApplyBlueprintPose(marker, layout);
-            }
+            if (!transitioning) return effective;
+            if (phase == LivingUiContentPhase.Exiting) return source;
+            // Entering / Invariant Stable during transition → 立刻切到目标构型锚点
+            return target;
         }
 
-        private static void TryApplyBlueprintPose(LivingUiContentMarker marker, LivingUiLayoutId layout)
+        private LivingUiContentAnchor ResolveLayoutAnchor(
+            LivingUiContentMarker marker,
+            LivingUiContentBinding binding,
+            LivingUiLayoutId layout)
         {
-            var contentName = string.IsNullOrEmpty(marker.ContentId) ? marker.name : marker.ContentId;
-            if (!LivingUiBlueprintPoseSampler.TrySample(
-                    layout,
-                    marker.CarrierId,
-                    contentName,
-                    out var localPosition,
-                    out var localScale,
-                    out var carrierSize)
-                && contentName != marker.name
-                && !LivingUiBlueprintPoseSampler.TrySample(
-                    layout,
-                    marker.CarrierId,
-                    marker.name,
-                    out localPosition,
-                    out localScale,
-                    out carrierSize))
+            if (contentController != null)
             {
-                return;
+                return contentController.ResolveLayoutAnchor(marker, layout);
             }
 
-            marker.transform.localPosition = localPosition;
-            marker.transform.localScale = localScale;
-            marker.ApplyAuthored(
-                contentName,
-                marker.CarrierId,
-                LivingUiContentAnchor.TopLeft,
-                layout,
-                restrictFace: false,
-                envelope: default,
-                authoring: carrierSize);
-            marker.CaptureAuthoredPoseFromTransform();
-            marker.ConvertCenterLocalToAnchorOffset(carrierSize);
+            return binding.Anchor;
         }
 
         private LivingUiContentPhase ResolvePhase(
