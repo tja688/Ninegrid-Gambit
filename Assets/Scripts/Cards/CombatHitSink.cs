@@ -262,6 +262,7 @@ namespace NineGrid.Cards
             BoardSelectModeActive = false;
             OpeningPresentationActive = false;
             ForceEndPresentationLock(reason ?? "ResetInputGates");
+            DirectorMainlineBusy = false;
         }
 
         /// <summary>ApplyCombatHit(attackerUid, targetUid) → 摘要。</summary>
@@ -291,8 +292,13 @@ namespace NineGrid.Cards
         /// <summary>场地拾取：ApplyPickupItem(groundSlot) → 摘要。</summary>
         public static Func<int, PickupItemPresentationResult> ApplyPickupItem;
 
-        /// <summary>空槽点击：ClickEmpty(groundSlot) → 摘要（含 Moved/Dealt）。</summary>
-        public static Func<int, PostKillBoardPresentationResult> ApplyClickEmpty;
+        /// <summary>空槽 explore：提交导演意图（忙时缓冲）；返回是否接纳。</summary>
+        public static Func<int, bool> TrySubmitExploreIntent;
+
+        /// <summary>
+        /// 表演导演主线在跑。已迁流程以此为输入互斥真相；Cards 侧 IsBusy 聚合读取，不引用 Flow。
+        /// </summary>
+        public static bool DirectorMainlineBusy;
 
         /// <summary>手牌打出：ApplyUseItem(itemUid, selectedCardUids, selectedOption) → 摘要。</summary>
         public static Func<int, int[], string, UseItemPresentationResult> ApplyUseItem;
@@ -381,15 +387,15 @@ namespace NineGrid.Cards
             return ApplyPickupItem(groundSlot);
         }
 
-        public static PostKillBoardPresentationResult RequestClickEmpty(int groundSlot)
+        public static bool RequestExploreIntent(int groundSlot)
         {
-            if (ApplyClickEmpty == null)
+            if (TrySubmitExploreIntent == null)
             {
-                Debug.LogWarning("[CombatHitSink] ApplyClickEmpty 未注册。");
-                return default;
+                Debug.LogWarning("[CombatHitSink] TrySubmitExploreIntent 未注册。");
+                return false;
             }
 
-            return ApplyClickEmpty(groundSlot);
+            return TrySubmitExploreIntent(groundSlot);
         }
 
         public static UseItemPresentationResult RequestUseItem(

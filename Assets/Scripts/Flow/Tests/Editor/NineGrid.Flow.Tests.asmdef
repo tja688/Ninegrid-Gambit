@@ -4,6 +4,8 @@
     "references": [
         "NineGrid.Flow",
         "NineGrid.Core",
+        "NineGrid.Cards",
+        "QFramework",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

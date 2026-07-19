@@ -350,7 +350,7 @@ namespace NineGrid.Core.Systems
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new ClickEmptySlotAction(targetSlot));
             var resolved = pipeline.RunToCompletion();
-            resolved += ResolveInteractiveRotation();
+            // 旋转/补牌留给 ResolvePostKillBoard，供表演导演按批锁步。
             return CoreCommandResult.Accept(resolved);
         }
 

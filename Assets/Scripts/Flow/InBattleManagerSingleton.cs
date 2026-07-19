@@ -10,6 +10,7 @@ using NineGrid.Core;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.Diagnostics;
+using NineGrid.Flow.Presentation;
 using QFramework;
 using UnityEngine;
 
@@ -60,6 +61,9 @@ namespace NineGrid.Flow
         private Transform _shuffleOriginScratch;
         private readonly Dictionary<int, HashSet<int>> _pendingFusionRemoves = new();
         private readonly HashSet<int> _completedFusionActionIds = new();
+        private PresentationDirector _presentationDirector;
+        private QueuedBoardPresentChannel _explorePresentChannel;
+        private CoreCommandDispatcher _coreCommandDispatcher;
 
         private sealed class BoardPresentationRequest
         {
@@ -1392,6 +1396,7 @@ namespace NineGrid.Flow
             _shuffleIntoDrainRunning = false;
 
             CombatHitSink.ForceEndPresentationLock("CancelPresentationWork");
+            TeardownPresentationDirector(IntentClearReason.LayerChange);
             _boardPresentationPumpRunning = false;
             _drainInFlight = false;
         }
@@ -1489,7 +1494,7 @@ namespace NineGrid.Flow
             CombatHitSink.SyncBoardFromCore = RequestSyncBoardFromCore;
             CombatHitSink.DrainPostKillBoard = DrainPostKillBoardAsync;
             CombatHitSink.ApplyPickupItem = ApplyPickupItemFromCore;
-            CombatHitSink.ApplyClickEmpty = ApplyClickEmptyFromCore;
+            CombatHitSink.TrySubmitExploreIntent = TrySubmitExploreIntentFromCards;
             CombatHitSink.ApplyUseItem = ApplyUseItemFromCore;
             CombatHitSink.NotifyBattleEnded = OnBattleEndedFromCombat;
             CombatHitSink.NotifyNodeSettlementReady = OnNodeSettlementFromCombat;
@@ -1584,10 +1589,13 @@ namespace NineGrid.Flow
                 CombatHitSink.ApplyPickupItem = null;
             }
 
-            if (CombatHitSink.ApplyClickEmpty == ApplyClickEmptyFromCore)
+            if (CombatHitSink.TrySubmitExploreIntent == TrySubmitExploreIntentFromCards)
             {
-                CombatHitSink.ApplyClickEmpty = null;
+                CombatHitSink.TrySubmitExploreIntent = null;
             }
+
+            CombatHitSink.DirectorMainlineBusy = false;
+            TeardownPresentationDirector(IntentClearReason.LayerChange);
 
             if (CombatHitSink.ApplyUseItem == ApplyUseItemFromCore)
             {
@@ -2725,46 +2733,6 @@ namespace NineGrid.Flow
             PresentEffectTriggersFromEventLog(startIndex);
             Instance?.PresentShuffleIntoDeckFromEventLog(startIndex);
             PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
-            return summary;
-        }
-
-        private static PostKillBoardPresentationResult ApplyClickEmptyFromCore(int groundSlot)
-        {
-            var arch = NineGridArchitecture.Current;
-            var pipeline = arch.GetSystem<IActionPipelineSystem>();
-            var startIndex = pipeline.EventLog.Entries.Count;
-            var result = arch.GetSystem<IPhaseSystem>().ClickEmpty(SlotId.Board(groundSlot));
-            var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
-            var summary = new PostKillBoardPresentationResult
-            {
-                Accepted = result.Accepted,
-                AvatarDefeated = phase == GamePhase.Defeat,
-                NodeClearedOrRewardPhase =
-                    phase == GamePhase.RewardItemChoice
-                    || phase == GamePhase.ClearCheck
-                    || phase == GamePhase.NodeCompleted
-                    || arch.GetSystem<IDeckSystem>().IsNodeCleared(),
-            };
-
-            if (!result.Accepted)
-            {
-                Debug.LogWarning($"[InBattleManager] ClickEmpty 被拒: {result.Reason}");
-                summary.Moves = Array.Empty<PostKillCardMove>();
-                summary.Deals = Array.Empty<PostKillCardDeal>();
-                summary.RemovedUids = Array.Empty<int>();
-                summary.DamagePopups = Array.Empty<CombatDamagePopup>();
-                return summary;
-            }
-
-            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids, out var steps);
-            summary.Steps = steps;
-            summary.Moves = moves;
-            summary.Deals = deals;
-            summary.RemovedUids = removedUids;
-            summary.DamagePopups = CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
-            PresentGoldGainsFromEventLog(startIndex, ResolveBoardSlotWorldPosition(groundSlot));
-            PresentEffectTriggersFromEventLog(startIndex);
-            Instance?.PresentShuffleIntoDeckFromEventLog(startIndex);
             return summary;
         }
 
@@ -5946,6 +5914,14 @@ namespace NineGrid.Flow
 
         private static void OnBattleEndedFromCombat(bool victory)
         {
+            var instance = Instance;
+            if (instance != null && instance._presentationDirector != null)
+            {
+                instance._presentationDirector.HardClearIntents(
+                    victory ? IntentClearReason.PhaseChange : IntentClearReason.Defeat);
+                CombatHitSink.DirectorMainlineBusy = false;
+            }
+
             var loop = MainGameLoopManagerSingleton.Instance;
             if (loop == null)
             {
@@ -5961,6 +5937,88 @@ namespace NineGrid.Flow
             {
                 loop.NotifyBattleDefeat();
             }
+        }
+
+        private void Update()
+        {
+            if (_presentationDirector == null)
+            {
+                CombatHitSink.DirectorMainlineBusy = false;
+                return;
+            }
+
+            _presentationDirector.Tick(Time.deltaTime);
+            CombatHitSink.DirectorMainlineBusy = _presentationDirector.IsMainlineBusy;
+        }
+
+        private void EnsurePresentationDirector()
+        {
+            if (_presentationDirector != null)
+            {
+                return;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            _coreCommandDispatcher = new CoreCommandDispatcher(arch);
+            _explorePresentChannel = new QueuedBoardPresentChannel(
+                DrainPostKillBoardAsync,
+                EnsurePresentationToken);
+            var factory = new ExploreIntentScriptFactory(
+                arch,
+                _coreCommandDispatcher,
+                _explorePresentChannel,
+                OnExploreBatchProjected);
+            _presentationDirector = new PresentationDirector(factory);
+        }
+
+        private void TeardownPresentationDirector(IntentClearReason reason)
+        {
+            if (_presentationDirector != null)
+            {
+                _presentationDirector.HardClearIntents(reason);
+            }
+
+            _presentationDirector = null;
+            _explorePresentChannel = null;
+            _coreCommandDispatcher = null;
+            CombatHitSink.DirectorMainlineBusy = false;
+        }
+
+        private static bool TrySubmitExploreIntentFromCards(int groundSlot)
+        {
+            var instance = Instance;
+            if (instance == null)
+            {
+                Debug.LogWarning("[InBattleManager] TrySubmitExploreIntent：无局内管理器。");
+                return false;
+            }
+
+            instance.EnsurePresentationDirector();
+            bool preview;
+            var accepted = instance._presentationDirector.TrySubmitIntent(
+                new InputIntent(InputIntentKinds.Explore, groundSlot),
+                out preview);
+            // 同帧同步 busy，避免等 Update 前出现门禁空窗。
+            CombatHitSink.DirectorMainlineBusy = instance._presentationDirector.IsMainlineBusy;
+            return accepted;
+        }
+
+        private void OnExploreBatchProjected(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result)
+        {
+            var pipeline = NineGridArchitecture.Current.GetSystem<IActionPipelineSystem>();
+            result.DamagePopups = CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
+
+            if (_explorePresentChannel != null)
+            {
+                _explorePresentChannel.Enqueue(result);
+            }
+
+            PresentGoldGainsFromEventLog(startIndex, ResolveBoardSlotWorldPosition(boardSlot));
+            PresentEffectTriggersFromEventLog(startIndex);
+            PresentShuffleIntoDeckFromEventLog(startIndex);
         }
     }
 }

@@ -66,7 +66,8 @@ namespace NineGrid.Core
                 CoreViewSnapshotFactory.Capture(mArchitecture));
 
             var opened = false;
-            if (!wasLocked && !isPresentationFinished)
+            // 拒收命令不得打开批次，否则导演门会因 ActiveBatchId>0 却 Accepted=false 而卡死。
+            if (!wasLocked && !isPresentationFinished && commandResult != null && commandResult.Accepted)
             {
                 sync.OpenBatch(batch);
                 opened = true;

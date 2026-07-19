@@ -131,6 +131,7 @@ namespace NineGrid.Cards
                 || CombatHitSink.ChoiceOverlayActive
                 || CombatHitSink.BoardSelectModeActive
                 || CombatHitSink.PresentationLocked
+                || CombatHitSink.DirectorMainlineBusy
                 || attackAdapter == null
                 || fieldManager == null
                 || fieldManager.IsFieldBusy)
@@ -187,6 +188,7 @@ namespace NineGrid.Cards
             if (_isBusy
                 || CombatHitSink.ChoiceOverlayActive
                 || CombatHitSink.PresentationLocked
+                || CombatHitSink.DirectorMainlineBusy
                 || (fieldManager != null && fieldManager.IsFieldBusy))
             {
                 Debug.LogWarning("[FieldBattleManager] 当前忙碌，无法触发交战。");
@@ -412,6 +414,7 @@ namespace NineGrid.Cards
             if (_isBusy
                 || CombatHitSink.ChoiceOverlayActive
                 || CombatHitSink.PresentationLocked
+                || CombatHitSink.DirectorMainlineBusy
                 || (fieldManager != null && fieldManager.IsFieldBusy))
             {
                 Debug.LogWarning("[FieldBattleManager] 当前忙碌，无法触发反击。");

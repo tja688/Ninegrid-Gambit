@@ -74,7 +74,7 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void ClickEmpty_Adjacent_RotatesWithR1Order()
+        public void ClickEmpty_Adjacent_EmitsEmptyClicked_WithoutRotation()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             // 把唯一怪挪到远角，邻接格空出。
@@ -87,7 +87,25 @@ namespace NineGrid.Core.Tests
 
             var events = SliceEvents(startIndex);
             Assert.IsTrue(ContainsType(events, CoreEventType.EmptyClicked));
+            Assert.IsFalse(ContainsType(events, CoreEventType.BoardRotated));
+            Assert.IsFalse(ContainsType(events, CoreEventType.SlotsFilled));
+        }
+
+        [Test]
+        public void ClickEmpty_ThenResolvePostKillBoard_RotatesWithR1Order()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sFarCornerSlot);
+            Assert.IsTrue(mArch.GetModel<BoardModel>().IsEmpty(sAdjacentSlot));
+
+            Assert.IsTrue(mPhase.ClickEmpty(sAdjacentSlot).Accepted);
+            var startIndex = mPipeline.EventLog.Entries.Count;
+            var result = mPhase.ResolvePostKillBoard();
+            Assert.IsTrue(result.Accepted, result.Reason);
+
+            var events = SliceEvents(startIndex);
             AssertFillBeforeRotate(events);
+            Assert.IsTrue(ContainsType(events, CoreEventType.InteractionChanged));
         }
 
         [Test]

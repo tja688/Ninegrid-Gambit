@@ -73,7 +73,9 @@ namespace NineGrid.Cards
         {
             get
             {
-                if (CombatHitSink.ChoiceOverlayActive || CombatHitSink.PresentationLocked)
+                if (CombatHitSink.ChoiceOverlayActive
+                    || CombatHitSink.PresentationLocked
+                    || CombatHitSink.DirectorMainlineBusy)
                 {
                     return true;
                 }
@@ -949,48 +951,36 @@ namespace NineGrid.Cards
 
         public bool TryHandleEmptySlotClick(int slot)
         {
-            if (IsBusy)
-            {
-                return false;
-            }
-
             if (!IsEmpty(slot) || !IsAvatarOrthogonalBattleSlot(slot))
             {
                 return false;
             }
 
-            if (!CombatHitSink.TryBeginPresentationLock("ClickEmpty"))
+            // 已迁导演：覆盖层/开局/旧表现锁/场地自忙仍硬挡；主线忙由导演缓冲意图。
+            if (CombatHitSink.ChoiceOverlayActive
+                || CombatHitSink.OpeningPresentationActive
+                || CombatHitSink.PresentationLocked
+                || CombatHitSink.BoardSelectModeActive
+                || _isBusy)
             {
                 return false;
             }
 
-            Debug.Log($"[GroundFieldManager] 空槽点击 → Core ClickEmpty: slot={slot}");
+            var battle = FieldBattleManagerSingleton.Instance;
+            if (battle != null && battle.IsBusy)
+            {
+                return false;
+            }
+
+            if (CombatHitSink.TrySubmitExploreIntent == null)
+            {
+                Debug.LogWarning("[GroundFieldManager] TrySubmitExploreIntent 未注册，空槽点击不可用。");
+                return false;
+            }
+
+            Debug.Log($"[GroundFieldManager] 空槽点击 → 导演 explore 意图: slot={slot}");
             EmptySlotClicked?.Invoke(slot);
-
-            var postKill = CombatHitSink.RequestClickEmpty(slot);
-            if (!postKill.Accepted)
-            {
-                CombatHitSink.EndPresentationLock("ClickEmpty-rejected");
-                return false;
-            }
-
-            RunEmptySlotDrainAsync(postKill).Forget();
-            return true;
-        }
-
-        private async UniTaskVoid RunEmptySlotDrainAsync(PostKillBoardPresentationResult postKill)
-        {
-            try
-            {
-                await CombatHitSink.RequestDrainPostKillBoard(postKill);
-            }
-            catch (System.OperationCanceledException)
-            {
-            }
-            finally
-            {
-                CombatHitSink.EndPresentationLock("ClickEmpty-drain");
-            }
+            return CombatHitSink.RequestExploreIntent(slot);
         }
 
         /// <summary>
