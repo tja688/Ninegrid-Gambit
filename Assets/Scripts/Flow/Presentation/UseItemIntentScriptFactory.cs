@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Commands;
@@ -8,7 +9,7 @@ using QFramework;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// 用牌/帮助卡垂直切片：ApplyUseItem → Present →（击杀）Fill → Present → Rotate → Present。
+    /// 用牌/帮助卡垂直切片：ApplyUseItem → Present →（击杀）Fill → Present → Rotate → Present →（融合）Refill。
     /// 未击杀不入 Fill/Rotate；未识别 kind 不入队。
     /// </summary>
     public sealed class UseItemIntentScriptFactory : IIntentScriptFactory
@@ -21,6 +22,8 @@ namespace NineGrid.Flow.Presentation
         private readonly Action<int, int, PostKillBoardPresentationResult> mOnBoardBatchProjected;
         private readonly Action mOnResolvedWithoutKill;
         private bool mLastUseKilledTarget;
+        private bool mLastRotateHadFusion;
+        private readonly List<int> mFusionExcludeResultUids = new List<int>(2);
 
         public UseItemIntentScriptFactory(
             IArchitecture architecture,
@@ -83,6 +86,8 @@ namespace NineGrid.Flow.Presentation
             var boardSlot = ResolvePrimaryBoardSlot(selected);
             var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
             mLastUseKilledTarget = false;
+            mLastRotateHadFusion = false;
+            mFusionExcludeResultUids.Clear();
 
             var useGate = PresentationSyncBatchGate.FromSync(
                 sync,
@@ -101,15 +106,26 @@ namespace NineGrid.Flow.Presentation
             var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
             var fillGate = PresentationSyncBatchGate.FromSync(
                 sync,
-                () => ResolveAndProject(boardSlot, () => mDispatcher.Send(new ResolvePostKillFillCommand())));
+                () => ResolveAndProject(boardSlot, () => mDispatcher.Send(new ResolvePostKillFillCommand()), trackFusion: false));
             var rotateGate = PresentationSyncBatchGate.FromSync(
                 sync,
-                () => ResolveAndProject(boardSlot, () => mDispatcher.Send(new ResolvePostKillRotateCommand())));
+                () => ResolveAndProject(boardSlot, () => mDispatcher.Send(new ResolvePostKillRotateCommand()), trackFusion: true));
 
             timeline.Enqueue(new ResolveBatchStep(fillGate));
             timeline.Enqueue(new PresentStep(fillGate, mBoardPresentChannel));
             timeline.Enqueue(new ResolveBatchStep(rotateGate));
             timeline.Enqueue(new PresentStep(rotateGate, mBoardPresentChannel));
+            FusionRefillLockstep.AppendAfterRotatePresent(
+                timeline,
+                () => mLastRotateHadFusion,
+                t => FusionRefillLockstep.EnqueueRefillBatches(
+                    t,
+                    mArchitecture,
+                    mDispatcher,
+                    mBoardPresentChannel,
+                    boardSlot,
+                    mFusionExcludeResultUids,
+                    mOnBoardBatchProjected));
         }
 
         private CoreCommandDispatchResult ResolveUseAndProject(
@@ -138,7 +154,8 @@ namespace NineGrid.Flow.Presentation
 
         private CoreCommandDispatchResult ResolveAndProject(
             int boardSlot,
-            Func<CoreCommandDispatchResult> resolve)
+            Func<CoreCommandDispatchResult> resolve,
+            bool trackFusion)
         {
             var pipeline = mArchitecture.GetSystem<IActionPipelineSystem>();
             var startIndex = pipeline.EventLog.Entries.Count;
@@ -146,6 +163,14 @@ namespace NineGrid.Flow.Presentation
             if (dispatch == null || !dispatch.Accepted)
             {
                 return dispatch;
+            }
+
+            if (trackFusion)
+            {
+                mLastRotateHadFusion = FusionRefillPlanner.TryCollectResultUids(
+                    pipeline.EventLog.Entries,
+                    startIndex,
+                    mFusionExcludeResultUids);
             }
 
             if (mOnBoardBatchProjected != null)

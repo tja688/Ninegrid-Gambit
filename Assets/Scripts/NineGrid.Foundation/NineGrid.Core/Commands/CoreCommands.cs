@@ -87,6 +87,24 @@ namespace NineGrid.Core.Commands
         }
     }
 
+    /// <summary>
+    /// 融合伴随补牌分拍：仅 FillEmptySlots（不含交互计数）。skipFill 用于打开空批 ack。
+    /// </summary>
+    public sealed class ResolveFusionRefillCommand : AbstractCommand<CoreCommandResult>
+    {
+        private readonly bool mSkipFill;
+
+        public ResolveFusionRefillCommand(bool skipFill = false)
+        {
+            mSkipFill = skipFill;
+        }
+
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().ResolveFusionRefill(mSkipFill);
+        }
+    }
+
     public sealed class PickupItemCommand : AbstractCommand<CoreCommandResult>
     {
         private readonly SlotId mTargetSlot;

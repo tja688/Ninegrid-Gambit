@@ -55,6 +55,19 @@
 | `ParentChange` | SetParent | `parent`, `worldStays` |
 | `BoardSnap` | Beat 边界 | `phase`, `full`=`0\|1`, `cards` 紧凑串 |
 | `Anomaly` | 自动 | `code`, `detail`, `refIndex` |
+| `SkeletonFusion` | 骷髅融合编排（PerfTraceRecorder） | `site` 见下；payload 含 skillId/resultUid/participants 等 |
+
+### SkeletonFusion `site`
+
+| site | 含义 |
+|------|------|
+| `DrainStateBuilt` | Drain 构建融合索引 |
+| `PresentBegin` / `PresentEnd` | 合体表演开闭（补牌已不在 onFusionStarted） |
+| `RefillBatchBegin` / `RefillBatchEnd` | 非导演路径：表演后离散补牌 |
+| `RefillSkipped` / `RefillSkippedNoCandidate` | 跳过补牌（无空位/无候选） |
+| `RemoveStepPending` / `RemoveStepMiss` | Remove 步聚合等待 |
+
+导演路径上融合伴随补牌走 `ResolveFusionRefill` 批次锁步，PerfLog 以独立 `SlotsFilled` 批 + 上述 site 对照验收。
 
 ### BoardSnap `cards` 格式
 

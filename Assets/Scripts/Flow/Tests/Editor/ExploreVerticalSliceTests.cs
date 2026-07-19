@@ -88,11 +88,14 @@ namespace NineGrid.Flow.Tests
             Assert.AreEqual(3, mSync.ActiveBatchId);
             Assert.IsTrue(ContainsEventTypeSince(rotateStart, CoreEventType.BoardRotated));
 
-            // Present ack batch 3 → idle
+            // Present ack batch 3
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(3, present.BeginCount);
             Assert.AreEqual(3, present.PresentedBatchIds[2]);
+
+            // Fusion aftermath branch（无融合则空过）→ idle
+            director.Tick(0.016f);
             Assert.IsFalse(director.IsMainlineBusy);
         }
 

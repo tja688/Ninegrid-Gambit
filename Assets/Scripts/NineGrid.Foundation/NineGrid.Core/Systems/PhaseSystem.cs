@@ -32,6 +32,10 @@ namespace NineGrid.Core.Systems
             /// 击杀后分拍：顺时针旋转 + 清场判定。
             /// </summary>
             CoreCommandResult ResolvePostKillRotate();
+            /// <summary>
+            /// 融合伴随补牌分拍：仅 FillEmptySlots。skipFill 时不写 Core，仅供导演打开空批。
+            /// </summary>
+            CoreCommandResult ResolveFusionRefill(bool skipFill = false);
             CoreCommandResult PickupItem(SlotId targetSlot);
             /// <summary>
             /// 表现层可信拾取：无相邻门禁；InteractionLoop 下仍会旋转补牌。
@@ -246,6 +250,11 @@ namespace NineGrid.Core.Systems
         public CoreCommandResult ResolvePostKillRotate()
         {
             return CoreCommandResult.Accept(ResolvePostKillRotateInternal());
+        }
+
+        public CoreCommandResult ResolveFusionRefill(bool skipFill = false)
+        {
+            return CoreCommandResult.Accept(ResolveFusionRefillInternal(skipFill));
         }
 
         // 九宫格互动范围：当前 = Avatar 槽正交邻接（IBoardSystem.AreAdjacent）。
@@ -644,6 +653,18 @@ namespace NineGrid.Core.Systems
             var resolved = pipeline.RunToCompletion();
             resolved += CompleteNodeIfCleared();
             return resolved;
+        }
+
+        private int ResolveFusionRefillInternal(bool skipFill)
+        {
+            if (skipFill || IsTerminalPhase(CurrentPhase))
+            {
+                return 0;
+            }
+
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new FillEmptySlotsAction());
+            return pipeline.RunToCompletion();
         }
 
         private int CompleteNodeIfCleared()

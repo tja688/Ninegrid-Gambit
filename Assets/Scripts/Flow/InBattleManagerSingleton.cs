@@ -2278,6 +2278,14 @@ namespace NineGrid.Flow
                             await DrainLegacyBoardDeltaAsync(result, ct);
                         }
 
+                        // #7：融合补牌不再挂在 PresentFusion onFusionStarted。
+                        // 导演主线忙时由 FusionRefillLockstep 在 Rotate Present 后解算；
+                        // 非导演 drain（反击等）在步骤播完后补一次离散 Fill。
+                        if (_completedFusionActionIds.Count > 0 && !CombatHitSink.DirectorMainlineBusy)
+                        {
+                            await DrainFusionRefillAfterPresentAsync(fusionState, ct);
+                        }
+
                         if (result.RemovedUids != null && result.RemovedUids.Length > 0
                             && _completedFusionActionIds.Count == 0)
                         {
@@ -3530,12 +3538,16 @@ namespace NineGrid.Flow
                 });
             await fieldManager.PresentSkeletonFusionAsync(
                 request,
-                fusionCt => DrainFusionRefillAsync(fusion.ResultUid, fusionCt),
+                onFusionStarted: null,
                 ct);
             RecordSkeletonFusionTrace(
                 "PresentEnd",
                 uid,
-                new Dictionary<string, string> { ["skillId"] = fusion.SkillId });
+                new Dictionary<string, string>
+                {
+                    ["skillId"] = fusion.SkillId,
+                    ["refillDeferredToDirector"] = CombatHitSink.DirectorMainlineBusy ? "1" : "0",
+                });
             return true;
         }
 
@@ -3573,9 +3585,12 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 合体开始后补牌：排除刚洗入的合体结果 uid；牌堆仅有合体结果时跳过（等下一轮交互）。
+        /// 合体表演结束后的离散补牌（非导演路径）。排除刚洗入的合体结果 uid。
+        /// 导演路径请走 FusionRefillLockstep。
         /// </summary>
-        private async UniTask DrainFusionRefillAsync(int fusionResultUid, CancellationToken ct)
+        private async UniTask DrainFusionRefillAfterPresentAsync(
+            FusionDrainState fusionState,
+            CancellationToken ct)
         {
             var arch = NineGridArchitecture.Current;
             var phaseSystem = arch.GetSystem<IPhaseSystem>();
@@ -3584,44 +3599,51 @@ namespace NineGrid.Flow
                 return;
             }
 
+            var exclude = new List<int>(fusionState != null ? fusionState.ResultUids.Count : 0);
+            if (fusionState != null)
+            {
+                foreach (var uid in fusionState.ResultUids)
+                {
+                    if (uid > 0)
+                    {
+                        exclude.Add(uid);
+                    }
+                }
+            }
+
+            if (exclude.Count == 0)
+            {
+                return;
+            }
+
             var deck = arch.GetModel<DeckModel>();
-            if (deck == null || deck.DrawPileUids == null || deck.DrawPileUids.Count <= 0)
-            {
-                return;
-            }
-
-            if (!HasRefillCandidateExcluding(deck, fusionResultUid))
-            {
-                return;
-            }
-
             var board = arch.GetModel<BoardModel>();
-            var hasEmpty = false;
-            for (var s = SlotId.MinBoardIndex; s <= SlotId.MaxBoardIndex; s++)
+            if (deck == null
+                || deck.DrawPileUids == null
+                || deck.DrawPileUids.Count <= 0
+                || !FusionRefillPlanner.HasRefillCandidateExcluding(deck, exclude)
+                || !FusionRefillPlanner.HasEmptyBoardSlot(board))
             {
-                if (s == GroundSlotTopology.AvatarReservedSlot)
-                {
-                    continue;
-                }
-
-                if (board.GetCardUid(SlotId.Board(s)) <= 0)
-                {
-                    hasEmpty = true;
-                    break;
-                }
-            }
-
-            if (!hasEmpty)
-            {
+                RecordSkeletonFusionTrace("RefillSkipped", -1);
                 return;
             }
 
             var originalOrder = new List<int>(deck.DrawPileUids);
-            var refillOrder = BuildRefillDrawOrder(originalOrder, fusionResultUid);
-            if (!HasRefillCandidateExcludingOrder(refillOrder, fusionResultUid))
+            var refillOrder = FusionRefillPlanner.BuildRefillDrawOrder(originalOrder, exclude);
+            if (!FusionRefillPlanner.HasRefillCandidateExcludingOrder(refillOrder, exclude))
             {
+                RecordSkeletonFusionTrace("RefillSkippedNoCandidate", -1);
                 return;
             }
+
+            RecordSkeletonFusionTrace(
+                "RefillBatchBegin",
+                -1,
+                new Dictionary<string, string>
+                {
+                    ["excludeCount"] = exclude.Count.ToString(),
+                    ["path"] = "legacyPostPresent",
+                });
 
             deck.ReorderDrawPile(refillOrder);
             try
@@ -3638,7 +3660,7 @@ namespace NineGrid.Flow
                     out _,
                     out var refillSteps);
                 PresentEffectTriggersFromEventLog(startIndex);
-                var filtered = FilterDealsExcluding(refillDeals, fusionResultUid);
+                var filtered = FusionRefillPlanner.FilterDealsExcluding(refillDeals, exclude);
                 if (filtered.Length > 0)
                 {
                     await DrainDealsAsync(filtered, ct, refillSteps, 0);
@@ -3646,73 +3668,11 @@ namespace NineGrid.Flow
             }
             finally
             {
-                deck.ReorderDrawPile(originalOrder);
-            }
-        }
-
-        private static bool HasRefillCandidateExcluding(DeckModel deck, int excludeUid)
-        {
-            for (var i = 0; i < deck.DrawPileUids.Count; i++)
-            {
-                if (deck.DrawPileUids[i] != excludeUid)
-                {
-                    return true;
-                }
+                var restored = FusionRefillPlanner.RestoreRemainingOrder(originalOrder, deck.DrawPileUids);
+                deck.ReorderDrawPile(restored);
             }
 
-            return false;
-        }
-
-        private static bool HasRefillCandidateExcludingOrder(IReadOnlyList<int> orderedUids, int excludeUid)
-        {
-            for (var i = 0; i < orderedUids.Count; i++)
-            {
-                if (orderedUids[i] != excludeUid)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static List<int> BuildRefillDrawOrder(IReadOnlyList<int> original, int excludeUid)
-        {
-            var nonFusion = new List<int>(original.Count);
-            var fusionTail = new List<int>(1);
-            for (var i = 0; i < original.Count; i++)
-            {
-                if (original[i] == excludeUid)
-                {
-                    fusionTail.Add(original[i]);
-                }
-                else
-                {
-                    nonFusion.Add(original[i]);
-                }
-            }
-
-            nonFusion.AddRange(fusionTail);
-            return nonFusion;
-        }
-
-        private static PostKillCardDeal[] FilterDealsExcluding(PostKillCardDeal[] deals, int excludeUid)
-        {
-            if (deals == null || deals.Length == 0 || excludeUid <= 0)
-            {
-                return deals ?? Array.Empty<PostKillCardDeal>();
-            }
-
-            var filtered = new List<PostKillCardDeal>(deals.Length);
-            for (var i = 0; i < deals.Length; i++)
-            {
-                if (deals[i].Uid != excludeUid)
-                {
-                    filtered.Add(deals[i]);
-                }
-            }
-
-            return filtered.Count > 0 ? filtered.ToArray() : Array.Empty<PostKillCardDeal>();
+            RecordSkeletonFusionTrace("RefillBatchEnd", -1);
         }
 
         private async UniTask<bool> ValidateHandDragApplyAsync(ManagedCard card, int? targetGroundSlot)

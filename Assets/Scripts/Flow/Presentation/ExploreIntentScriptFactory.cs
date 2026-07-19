@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Commands;
@@ -8,7 +9,7 @@ using QFramework;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// 空格 explore 剧本：ClickEmpty → Present → Fill → Present → Rotate → Present。
+    /// 空格 explore 剧本：ClickEmpty → Present → Fill → Present → Rotate → Present →（融合）Refill → Present。
     /// 未识别 kind 不入队（留给旧路径 / 后续切片）。
     /// </summary>
     public sealed class ExploreIntentScriptFactory : IIntentScriptFactory
@@ -17,6 +18,8 @@ namespace NineGrid.Flow.Presentation
         private readonly CoreCommandDispatcher mDispatcher;
         private readonly IPresentChannel mPresentChannel;
         private readonly Action<int, int, PostKillBoardPresentationResult> mOnBatchProjected;
+        private bool mLastRotateHadFusion;
+        private readonly List<int> mFusionExcludeResultUids = new List<int>(2);
 
         public ExploreIntentScriptFactory(
             IArchitecture architecture,
@@ -60,16 +63,18 @@ namespace NineGrid.Flow.Presentation
             var slotIndex = intent.TargetId;
             var slot = SlotId.Board(slotIndex);
             var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
+            mLastRotateHadFusion = false;
+            mFusionExcludeResultUids.Clear();
 
             var clickGate = PresentationSyncBatchGate.FromSync(
                 sync,
-                () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ClickEmptyCommand(slot))));
+                () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ClickEmptyCommand(slot)), trackFusion: false));
             var fillGate = PresentationSyncBatchGate.FromSync(
                 sync,
-                () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ResolvePostKillFillCommand())));
+                () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ResolvePostKillFillCommand()), trackFusion: false));
             var rotateGate = PresentationSyncBatchGate.FromSync(
                 sync,
-                () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ResolvePostKillRotateCommand())));
+                () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ResolvePostKillRotateCommand()), trackFusion: true));
 
             timeline.Enqueue(new ResolveBatchStep(clickGate));
             timeline.Enqueue(new PresentStep(clickGate, mPresentChannel));
@@ -77,11 +82,23 @@ namespace NineGrid.Flow.Presentation
             timeline.Enqueue(new PresentStep(fillGate, mPresentChannel));
             timeline.Enqueue(new ResolveBatchStep(rotateGate));
             timeline.Enqueue(new PresentStep(rotateGate, mPresentChannel));
+            FusionRefillLockstep.AppendAfterRotatePresent(
+                timeline,
+                () => mLastRotateHadFusion,
+                t => FusionRefillLockstep.EnqueueRefillBatches(
+                    t,
+                    mArchitecture,
+                    mDispatcher,
+                    mPresentChannel,
+                    slotIndex,
+                    mFusionExcludeResultUids,
+                    mOnBatchProjected));
         }
 
         private CoreCommandDispatchResult ResolveAndProject(
             int boardSlot,
-            Func<CoreCommandDispatchResult> resolve)
+            Func<CoreCommandDispatchResult> resolve,
+            bool trackFusion)
         {
             var pipeline = mArchitecture.GetSystem<IActionPipelineSystem>();
             var startIndex = pipeline.EventLog.Entries.Count;
@@ -89,6 +106,14 @@ namespace NineGrid.Flow.Presentation
             if (dispatch == null || !dispatch.Accepted)
             {
                 return dispatch;
+            }
+
+            if (trackFusion)
+            {
+                mLastRotateHadFusion = FusionRefillPlanner.TryCollectResultUids(
+                    pipeline.EventLog.Entries,
+                    startIndex,
+                    mFusionExcludeResultUids);
             }
 
             if (mOnBatchProjected != null)
