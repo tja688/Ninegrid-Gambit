@@ -7,11 +7,7 @@ namespace NineGrid.Flow
 {
     /// <summary>
     /// DevTest 快速测试：策划文档顺序的怪物牌组编号与菜单文案。
-    /// <para>
-    /// 首发版路由排除：<see cref="LevelRouteDeckPolicy.SkeletonLegionDeckId"/> 已从随机路由移除；
-    /// 本目录中仅选关编号 4（<c>sDesignOrderDeckIds[3]</c>）可在主菜单 \ 路径下首关固定进入骷髅牌组。
-    /// 选 0 正式顺序或其它编号时，StrongElite 节点只会随机到兽人军团等非排除牌组。
-    /// </para>
+    /// 选 0 正式顺序时按节点 DeckKind 随机牌组（含骷髅军团）；选 1–6 可首关固定对应牌组。
     /// </summary>
     public static class QuickTestDeckCatalog
     {

@@ -370,8 +370,7 @@ namespace NineGrid.Core.Systems
             var cacheKey = run.Floor.Value + ":" + ((int)kind).ToString();
             string cachedId;
             if (mFloorMonsterDeckCache.TryGetValue(cacheKey, out cachedId)
-                && catalog.MonsterDecks.TryGetValue(cachedId, out deck)
-                && !LevelRouteDeckPolicy.IsExcludedFromRandomMonsterDeckRoute(cachedId))
+                && catalog.MonsterDecks.TryGetValue(cachedId, out deck))
             {
                 return deck;
             }
@@ -379,8 +378,7 @@ namespace NineGrid.Core.Systems
             var matches = new List<MonsterDeckDefinition>();
             foreach (var pair in catalog.MonsterDecks)
             {
-                if (pair.Value.Kind == kind
-                    && !LevelRouteDeckPolicy.IsExcludedFromRandomMonsterDeckRoute(pair.Value.Id))
+                if (pair.Value.Kind == kind)
                 {
                     matches.Add(pair.Value);
                 }

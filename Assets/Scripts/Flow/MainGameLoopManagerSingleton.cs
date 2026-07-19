@@ -19,10 +19,8 @@ namespace NineGrid.Flow
 {
     /// <summary>
     /// 主游戏流程壳状态机：主菜单 → 局内 → 通关奖励 → 房间二选一 → 房间事件 → 下一节点。
-    /// <para>
-    /// 关卡怪物牌组路由见 <see cref="LevelRouteDeckPolicy"/>：首发版骷髅军团已从随机路由排除，
-    /// 仅主菜单 DevTest \ 选关直接点 4 时可首关固定进入（<see cref="TryBeginQuickTestFromPickerCode"/>）。
-    /// </para>
+    /// 关卡怪物牌组由 RewardSystem 按节点 DeckKind 随机（含骷髅军团）；
+    /// DevTest \ 选关可经 <see cref="TryBeginQuickTestFromPickerCode"/> 首关固定牌组。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class MainGameLoopManagerSingleton : MonoBehaviour
@@ -526,8 +524,8 @@ namespace NineGrid.Flow
             CoreCardPresentationMapper.EnsureContentCatalogLoaded();
 
             var catalog = arch.GetSystem<IContentSystem>()?.Catalog;
-            // 随机路由时 RewardSystem 会应用 LevelRouteDeckPolicy（骷髅军团已排除）；
-            // 仅 DevTest \ 选关首关经 TryConsumePinnedFirstBattle 显式传入 deckId 时可进入骷髅牌组。
+            // 未 pin 时由 RewardSystem 按 DeckKind 随机牌组（含骷髅军团）；
+            // DevTest \ 选关首关经 TryConsumePinnedFirstBattle 可显式固定 deckId。
             string monsterDeckId = null;
             int contentNodeIndex;
             if (TryConsumePinnedFirstBattle(out var pinnedDeckId))

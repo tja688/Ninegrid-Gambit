@@ -7,7 +7,7 @@ namespace NineGrid.Flow
 {
     /// <summary>
     /// DevTest 快速测试：整局战斗内容节点乱序规划（每配置出现 floor 数次，全序洗牌）。
-    /// 节点索引本身不含怪物牌组；牌组随机见 <see cref="LevelRouteDeckPolicy"/>（骷髅军团已排除，除非 \ 选关 4 首关固定）。
+    /// 节点索引本身不含怪物牌组；牌组由 RewardSystem 按节点 DeckKind 随机（含骷髅军团）。
     /// </summary>
     internal static class QuickTestRunPlanner
     {
