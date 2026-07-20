@@ -75,7 +75,6 @@ namespace NineGrid.Cards
             get
             {
                 if (CombatHitSink.ChoiceOverlayActive
-                    || CombatHitSink.PresentationLocked
                     || CombatHitSink.DirectorMainlineBusy)
                 {
                     return true;
@@ -960,10 +959,9 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            // 已迁导演：覆盖层/开局/旧表现锁/场地自忙仍硬挡；主线忙由导演缓冲意图。
+            // 已迁导演：覆盖层/开局/选卡/场地自忙仍硬挡；主线忙由导演缓冲意图。
             if (CombatHitSink.ChoiceOverlayActive
                 || CombatHitSink.OpeningPresentationActive
-                || CombatHitSink.PresentationLocked
                 || CombatHitSink.BoardSelectModeActive
                 || _isBusy)
             {

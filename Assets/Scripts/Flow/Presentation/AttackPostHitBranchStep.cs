@@ -3,21 +3,21 @@ using System;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// 命中批 Present 之后：若击杀则向主线追加 Fill/Rotate 锁步剧本；否则走未击杀回调。
+    /// 命中批 Present 之后：若击杀则向主线追加 Fill/Rotate 锁步剧本；否则追加反击锁步剧本。
     /// </summary>
     public sealed class AttackPostHitBranchStep : ITimelineStep
     {
         private readonly BattleTimeline mTimeline;
         private readonly Func<bool> mWasTargetKilled;
         private readonly Action<BattleTimeline> mEnqueueKillAftermath;
-        private readonly Action mOnSurvived;
+        private readonly Action<BattleTimeline> mEnqueueCounterAftermath;
         private bool mDone;
 
         public AttackPostHitBranchStep(
             BattleTimeline timeline,
             Func<bool> wasTargetKilled,
             Action<BattleTimeline> enqueueKillAftermath,
-            Action onSurvived = null)
+            Action<BattleTimeline> enqueueCounterAftermath = null)
         {
             if (timeline == null)
             {
@@ -37,7 +37,7 @@ namespace NineGrid.Flow.Presentation
             mTimeline = timeline;
             mWasTargetKilled = wasTargetKilled;
             mEnqueueKillAftermath = enqueueKillAftermath;
-            mOnSurvived = onSurvived;
+            mEnqueueCounterAftermath = enqueueCounterAftermath;
         }
 
         public TimelineStepStatus Tick(float deltaTime)
@@ -51,9 +51,9 @@ namespace NineGrid.Flow.Presentation
             {
                 mEnqueueKillAftermath(mTimeline);
             }
-            else if (mOnSurvived != null)
+            else if (mEnqueueCounterAftermath != null)
             {
-                mOnSurvived();
+                mEnqueueCounterAftermath(mTimeline);
             }
 
             mDone = true;

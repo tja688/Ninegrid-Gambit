@@ -62,6 +62,7 @@ namespace NineGrid.Flow
         private bool _recoveringRewardUi;
         private QueuedBoardPresentChannel _explorePresentChannel;
         private CombatAttackPresentChannel _attackHitPresentChannel;
+        private CombatCounterPresentChannel _attackCounterPresentChannel;
         private QueuedBoardPresentChannel _attackBoardPresentChannel;
         private UseItemPresentChannel _useItemPresentChannel;
         private QueuedBoardPresentChannel _useItemBoardPresentChannel;
@@ -525,8 +526,12 @@ namespace NineGrid.Flow
         {
             if (_isBusy)
             {
-                Debug.LogWarning("[InBattleManager] 当前忙碌，无法 StartBattleNode。");
-                return;
+                // 失败重开/清场竞态可能留下粘连忙碌；强制复位后继续，避免空场干等结算。
+                Debug.LogWarning("[InBattleManager] StartBattleNode：检测到粘连忙碌，强制复位后继续。");
+                CancelPresentationWork();
+                _drainInFlight = false;
+                _isBusy = false;
+                CombatHitSink.ForceEndPresentationLock("StartBattleNode.staleBusy");
             }
 
             ResolveManagers();
@@ -546,6 +551,7 @@ namespace NineGrid.Flow
                 CancelPresentationWork();
                 // StartNode 前清零卡牌占格，保留遗物/技能/PlayerInfo 持久 HUD。
                 ResetCardPresentationSurface();
+                EnsurePresentationDirector();
 
                 var arch = NineGridArchitecture.Current;
                 var phase = arch.GetSystem<IPhaseSystem>();
@@ -1344,19 +1350,19 @@ namespace NineGrid.Flow
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
+                // 勿用 hand.IsBusy / field.IsBusy 聚合（含 DirectorMainlineBusy），避免静态镜像粘连假忙。
                 var fieldBusy = fieldManager != null && fieldManager.IsFieldBusy;
                 var hand = CardHandManagerSingleton.Instance;
-                var handBusy = hand != null && hand.IsBusy;
+                var handSelfBusy = hand != null && hand.IsSelfBusy;
                 var deckBusy = deckManager != null && deckManager.IsBusy;
                 var battle = FieldBattleManagerSingleton.Instance;
                 var battleBusy = battle != null && battle.IsBusy;
 
                 if (!_drainInFlight
                     && !fieldBusy
-                    && !handBusy
+                    && !handSelfBusy
                     && !deckBusy
                     && !battleBusy
-                    && !CombatHitSink.PresentationLocked
                     && (_presentationDirector == null || !_presentationDirector.IsMainlineBusy))
                 {
                     return;
@@ -1368,7 +1374,7 @@ namespace NineGrid.Flow
             Debug.LogWarning(
                 $"[InBattleManager] WaitPresentationIdle 超时({timeoutSeconds:0.##}s)：drain={_drainInFlight} " +
                 $"fieldBusy={fieldManager != null && fieldManager.IsFieldBusy} " +
-                $"presentationLocked={CombatHitSink.PresentationLocked}，继续清场。");
+                $"directorBusy={_presentationDirector != null && _presentationDirector.IsMainlineBusy}，继续清场。");
         }
 
         private void CancelPresentationWork()
@@ -1384,6 +1390,17 @@ namespace NineGrid.Flow
 
             CombatHitSink.ForceEndPresentationLock("CancelPresentationWork");
             TeardownPresentationDirector(IntentClearReason.LayerChange);
+            // 导演硬清不会 FinishBatch；必须清核心 PresentationSync，否则 IsInputLocked
+            // 粘连会使 BuildEnemyPool 下 StartNode 非法。
+            try
+            {
+                NineGridArchitecture.Current.GetSystem<IPresentationSyncSystem>().Clear();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[InBattleManager] Clear PresentationSync: " + ex.Message);
+            }
+
             _drainInFlight = false;
         }
 
@@ -2072,7 +2089,7 @@ namespace NineGrid.Flow
 
         /// <summary>
         /// #11 硬切后的 Present 薄适配：直接播盘面 delta，不再经 BoardPresentationQueue 泵。
-        /// 导演主线已串行 Present；并发入口（反击等）在此单飞等待。
+        /// 导演主线已串行 Present；外部薄适配经主线租约持忙。
         /// </summary>
         private async UniTask DrainPostKillBoardAsync(
             PostKillBoardPresentationResult result,
@@ -3660,7 +3677,6 @@ namespace NineGrid.Flow
             }
 
             if (CombatHitSink.ChoiceOverlayActive
-                || CombatHitSink.PresentationLocked
                 || CombatHitSink.DirectorMainlineBusy)
             {
                 return false;
@@ -3819,7 +3835,6 @@ namespace NineGrid.Flow
             while (elapsed < BoardSelectLockWaitMs)
             {
                 if (!CombatHitSink.ChoiceOverlayActive
-                    && !CombatHitSink.PresentationLocked
                     && !CombatHitSink.DirectorMainlineBusy)
                 {
                     return true;
@@ -4288,7 +4303,7 @@ namespace NineGrid.Flow
                     accepted: true,
                     reason: string.Empty);
 
-                // 选完关闭覆盖层；Drain 期间由 PresentationLocked 挡输入（外层已持锁则复用）。
+                // 选完关闭覆盖层；Drain 期间由导演主线租约挡输入（外层已持锁则复用）。
                 var acquiredDrainLock = CombatHitSink.TryBeginPresentationLock("RewardDrain");
                 CombatHitSink.ChoiceOverlayActive = false;
                 try
@@ -5207,6 +5222,9 @@ namespace NineGrid.Flow
             _attackHitPresentChannel = new CombatAttackPresentChannel(
                 PlayDirectorAttackHitPresentAsync,
                 EnsurePresentationToken);
+            _attackCounterPresentChannel = new CombatCounterPresentChannel(
+                PlayDirectorCounterPresentAsync,
+                EnsurePresentationToken);
             _useItemBoardPresentChannel = new QueuedBoardPresentChannel(
                 DrainPostKillBoardAsync,
                 EnsurePresentationToken);
@@ -5224,9 +5242,10 @@ namespace NineGrid.Flow
                 _coreCommandDispatcher,
                 _attackHitPresentChannel,
                 _attackBoardPresentChannel,
+                _attackCounterPresentChannel,
                 OnAttackHitBatchProjected,
                 OnAttackBoardBatchProjected,
-                OnAttackSurvivedForCounter);
+                OnAttackCounterBatchProjected);
             var useItemFactory = new UseItemIntentScriptFactory(
                 arch,
                 _coreCommandDispatcher,
@@ -5246,19 +5265,38 @@ namespace NineGrid.Flow
                 new RoutingIntentScriptFactory(exploreFactory, attackFactory, useItemFactory),
                 uiPickPreview: null,
                 timelineDiagnostics: DirectorTrace.TimelineSink);
+            CombatHitSink.BeginDirectorExternalHold = reason =>
+            {
+                // 导演尚未装配时允许仅靠 PresentationLocked 防重入，避免 Drain 整段被跳过。
+                if (_presentationDirector == null)
+                {
+                    return true;
+                }
+
+                return _presentationDirector.TryBeginExternalHold(reason);
+            };
+            CombatHitSink.EndDirectorExternalHold = reason =>
+                _presentationDirector?.EndExternalHold(reason);
+            CombatHitSink.ForceEndDirectorExternalHold = reason =>
+                _presentationDirector?.ForceEndExternalHold(reason);
         }
 
         private void TeardownPresentationDirector(IntentClearReason reason)
         {
             if (_presentationDirector != null)
             {
+                _presentationDirector.ForceEndExternalHold(reason.ToString());
                 _presentationDirector.HardClearIntents(reason);
             }
 
+            CombatHitSink.BeginDirectorExternalHold = null;
+            CombatHitSink.EndDirectorExternalHold = null;
+            CombatHitSink.ForceEndDirectorExternalHold = null;
             TriggerPulseHub.ResetToNull();
             _presentationDirector = null;
             _explorePresentChannel = null;
             _attackHitPresentChannel = null;
+            _attackCounterPresentChannel = null;
             _attackBoardPresentChannel = null;
             _useItemPresentChannel = null;
             _useItemBoardPresentChannel = null;
@@ -5500,6 +5538,25 @@ namespace NineGrid.Flow
             }
         }
 
+        private void OnAttackCounterBatchProjected(
+            int startIndex,
+            int attackerBoardSlot,
+            int attackerUid,
+            PostKillBoardPresentationResult result)
+        {
+            var pipeline = NineGridArchitecture.Current.GetSystem<IActionPipelineSystem>();
+            result.DamagePopups = CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
+
+            if (_attackCounterPresentChannel != null)
+            {
+                _attackCounterPresentChannel.Enqueue(attackerBoardSlot, attackerUid, result);
+            }
+
+            PresentGoldGainsFromEventLog(startIndex, ResolveBoardSlotWorldPosition(attackerBoardSlot));
+            PresentEffectTriggersFromEventLog(startIndex);
+            PresentShuffleIntoDeckFromEventLog(startIndex);
+        }
+
         private void OnUseItemBatchProjected(
             int startIndex,
             int boardSlot,
@@ -5629,18 +5686,6 @@ namespace NineGrid.Flow
             }
         }
 
-        private void OnAttackSurvivedForCounter()
-        {
-            var slot = _pendingAttackSlot;
-            var battle = FieldBattleManagerSingleton.Instance;
-            if (battle == null || slot <= 0)
-            {
-                return;
-            }
-
-            battle.RequestDirectorCounterAfterSurviveAsync(slot, EnsurePresentationToken()).Forget();
-        }
-
         private UniTask PlayDirectorAttackHitPresentAsync(
             int boardSlot,
             int resolvedCombatUid,
@@ -5655,6 +5700,22 @@ namespace NineGrid.Flow
             }
 
             return battle.PlayDirectorAttackHitPresentAsync(boardSlot, resolvedCombatUid, result, token);
+        }
+
+        private UniTask PlayDirectorCounterPresentAsync(
+            int attackerSlot,
+            int attackerUid,
+            PostKillBoardPresentationResult result,
+            CancellationToken token)
+        {
+            var battle = FieldBattleManagerSingleton.Instance;
+            if (battle == null)
+            {
+                Debug.LogWarning("[InBattleManager] PlayDirectorCounterPresent：无 FieldBattleManager。");
+                return UniTask.CompletedTask;
+            }
+
+            return battle.PlayDirectorCounterPresentAsync(attackerSlot, attackerUid, result, token);
         }
     }
 }

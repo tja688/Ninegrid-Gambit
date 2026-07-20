@@ -44,7 +44,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (CombatHitSink.PresentationLocked || CombatHitSink.ChoiceOverlayActive)
+            if (CombatHitSink.DirectorMainlineBusy || CombatHitSink.ChoiceOverlayActive)
             {
                 return false;
             }

@@ -92,7 +92,6 @@ namespace NineGrid.Cards
             {
                 if (_isBusy
                     || CombatHitSink.ChoiceOverlayActive
-                    || CombatHitSink.PresentationLocked
                     || CombatHitSink.DirectorMainlineBusy
                     || CombatHitSink.BoardSelectModeActive)
                 {
@@ -103,6 +102,9 @@ namespace NineGrid.Cards
                 return field != null && field.IsBusy;
             }
         }
+
+        /// <summary>仅手牌自身忙碌（不含场地/导演聚合），供跨关 WaitPresentationIdle 使用。</summary>
+        public bool IsSelfBusy => _isBusy;
 
         public bool IsDragging => _dragSession != null;
 

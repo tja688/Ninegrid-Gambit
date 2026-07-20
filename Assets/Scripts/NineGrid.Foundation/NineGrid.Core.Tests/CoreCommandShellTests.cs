@@ -113,5 +113,34 @@ namespace NineGrid.Core.Tests
             Assert.IsFalse(result.Accepted);
             Assert.AreEqual(0, sync.ActiveBatchId);
         }
+
+        [Test]
+        public void InitialGameFactory_ClearsOrphanPresentationLock_SoStartNodeIsLegal()
+        {
+            // 上一局导演硬清可能留下未 Ack 的阻塞批；Bootstrap 必须清掉，否则
+            // phase=BuildEnemyPool 时 StartNode 仍被 IsInputLocked 拒掉。
+            var arch = NineGridArchitecture.Current;
+            var sync = arch.GetSystem<IPresentationSyncSystem>();
+            var phase = arch.GetSystem<IPhaseSystem>();
+            var map = PresentationEventMap.Get(CoreEventType.ItemUsed);
+            Assert.IsTrue(map.LocksInput);
+            sync.OpenBatch(new PresentationBatch(
+                99,
+                new[]
+                {
+                    new PresentationInstruction(new CoreGameEvent(CoreEventType.ItemUsed, 1, "UseItem"), map),
+                },
+                null));
+            Assert.IsTrue(sync.IsInputLocked);
+            Assert.IsFalse(phase.CanExecute(GameCommandKind.StartNode));
+
+            InitialGameFactory.Create(arch);
+
+            Assert.IsFalse(sync.IsInputLocked);
+            Assert.AreEqual(0, sync.ActiveBatchId);
+            Assert.AreEqual(GamePhase.BuildEnemyPool, phase.CurrentPhase);
+            Assert.IsTrue(phase.CanExecute(GameCommandKind.StartNode));
+            Assert.IsTrue(phase.StartNode(NodeDeckOptions.CreateDefaultBattle()).Accepted);
+        }
     }
 }

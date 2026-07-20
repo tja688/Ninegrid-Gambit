@@ -131,7 +131,7 @@ namespace NineGrid.Cards
                 || _isBusy
                 || CombatHitSink.ChoiceOverlayActive
                 || CombatHitSink.BoardSelectModeActive
-                || CombatHitSink.PresentationLocked
+                || CombatHitSink.DirectorMainlineBusy
                 || attackAdapter == null
                 || fieldManager == null
                 || fieldManager.IsFieldBusy)
@@ -281,56 +281,112 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 导演未击杀分支：播怪物反击（Core 命中仍走旧 ApplyCombatHit 回调）。
+        /// 导演反击 Present：只播 Rig/Sync/飘字/盘面 delta；Core 命中已在 ResolveBatch 完成。
         /// </summary>
-        public UniTask RequestDirectorCounterAfterSurviveAsync(
-            int combatSlot,
+        public async UniTask PlayDirectorCounterPresentAsync(
+            int attackerSlot,
+            int attackerUid,
+            PostKillBoardPresentationResult counterProjection,
             CancellationToken cancellationToken = default)
         {
-            return RequestDirectorCounterInternalAsync(combatSlot, cancellationToken);
-        }
-
-        private async UniTask RequestDirectorCounterInternalAsync(
-            int clickedSlot,
-            CancellationToken cancellationToken)
-        {
             ResolveFieldManager();
-            if (_isBusy
-                || CombatHitSink.PresentationLocked
-                || (fieldManager != null && fieldManager.IsFieldBusy))
+            if (attackAdapter == null || fieldManager == null)
             {
-                Debug.LogWarning("[FieldBattleManager] 导演反击：忙碌，跳过。");
+                Debug.LogWarning("[FieldBattleManager] 导演反击 Present：未装配 attackAdapter/fieldManager。");
                 return;
             }
 
-            var combatSlot = clickedSlot;
-            if (fieldManager != null
-                && fieldManager.TryGetCardAt(clickedSlot, out var clicked)
-                && clicked != null)
+            if (!counterProjection.Accepted)
             {
-                var resolvedUid = CombatHitSink.RequestResolvePlayerAttackTarget(clicked.Uid);
-                if (resolvedUid != clicked.Uid
-                    && CardManagerSingleton.Instance != null
-                    && CardManagerSingleton.Instance.TryGet(resolvedUid, out var combatVictim)
-                    && combatVictim != null
-                    && fieldManager.TryGetSlotOf(combatVictim.Uid, out var redirectedSlot))
-                {
-                    combatSlot = redirectedSlot;
-                }
+                return;
+            }
+
+            if (!fieldManager.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+                || avatar == null)
+            {
+                Debug.LogWarning("[FieldBattleManager] 导演反击 Present：无 Avatar。");
+                return;
+            }
+
+            ManagedCard attacker = null;
+            var resolvedFromUid = CardManagerSingleton.Instance != null
+                && CardManagerSingleton.Instance.TryGet(attackerUid, out attacker)
+                && attacker != null;
+            if (!resolvedFromUid && !TryValidateCounterParticipants(attackerSlot, out attacker))
+            {
+                Debug.LogWarning($"[FieldBattleManager] 导演反击 Present：攻击方不可用 slot={attackerSlot} uid={attackerUid}。");
+                return;
             }
 
             var linkedCts = CreateLinkedBattleCts(cancellationToken);
             var ct = linkedCts.Token;
+            var willKill = counterProjection.AvatarDefeated
+                || HasRemovedUid(counterProjection, avatar.Uid)
+                || avatar.IsFieldDead;
+            var intent = BattleIntentUtility.FromFlags(counter: true, willKill);
+            var bind = ResolveBindParams(intent, attacker, out var profile);
+            LogBattleBindResolve(attacker.Uid, avatar.Uid, bind, profile, willKill, isCounter: true);
+
+            var hitFrameApplied = false;
+            void ApplyHitFrameVisuals()
+            {
+                if (hitFrameApplied)
+                {
+                    return;
+                }
+
+                hitFrameApplied = true;
+                CombatHitSink.RequestSyncCard(avatar);
+                SpawnDamagePopups(counterProjection.DamagePopups, avatar, 0);
+            }
+
             _isBusy = true;
             try
             {
-                await PlayCounterAttackCoreAsync(combatSlot, lethal: false, ct);
+                try
+                {
+                    PerfTraceSink.OpenBeat?.Invoke("CombatHit", 0);
+                    PerfTraceSink.SetCombatants?.Invoke(attacker.Uid, avatar.Uid);
+                }
+                catch
+                {
+                    // ignore
+                }
+
+                await attackAdapter.PlayBasicCounterAttackAsync(
+                    attacker,
+                    bind,
+                    ApplyHitFrameVisuals,
+                    ct);
+
+                if (!hitFrameApplied)
+                {
+                    ApplyHitFrameVisuals();
+                }
+
+                await DrainCombatHitBoardDeltaFromProjectionAsync(counterProjection, ct);
+                await CombatHitSink.RequestFlushPendingShuffleIntoPresentation(ct);
+
+                if (counterProjection.AvatarDefeated || willKill)
+                {
+                    TryBeginAvatarDefeatPresentation(ct);
+                    CombatHitSink.RequestBattleEnded(victory: false);
+                }
             }
             catch (System.OperationCanceledException)
             {
             }
             finally
             {
+                try
+                {
+                    PerfTraceSink.CloseBeat?.Invoke();
+                }
+                catch
+                {
+                    // ignore
+                }
+
                 _isBusy = false;
                 SyncAfterCombatRound();
                 DisposeBattleCts(linkedCts);
@@ -548,7 +604,6 @@ namespace NineGrid.Cards
 
             if (_isBusy
                 || CombatHitSink.ChoiceOverlayActive
-                || CombatHitSink.PresentationLocked
                 || CombatHitSink.DirectorMainlineBusy
                 || (fieldManager != null && fieldManager.IsFieldBusy))
             {

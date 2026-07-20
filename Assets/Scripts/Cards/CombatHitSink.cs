@@ -198,17 +198,33 @@ namespace NineGrid.Cards
         public static bool OpeningPresentationActive;
 
         /// <summary>
-        /// 表现层单输入锁：一次玩家操作（写 Core → Drain 播完）期间为 true。
-        /// Cards 侧 IsBusy 聚合读取，不引用 Flow。
+        /// 外部薄适配重入门（Pickup / Drain 防双开）。输入互斥只认 <see cref="DirectorMainlineBusy"/>；
+        /// 本标志配合 <see cref="BeginDirectorExternalHold"/> 挂导演主线租约。
         /// </summary>
         public static bool PresentationLocked { get; private set; }
 
         /// <summary>
-        /// 尝试获取表现锁。已锁时返回 false（防重入）。
+        /// 导演主线外部租约：idle 时入队 Hold；主线已忙则嵌套。由 InBattle 注册。
+        /// </summary>
+        public static Func<string, bool> BeginDirectorExternalHold;
+
+        /// <summary>释放 <see cref="BeginDirectorExternalHold"/> 租约。由 InBattle 注册。</summary>
+        public static Action<string> EndDirectorExternalHold;
+
+        /// <summary>强制清导演外部租约（清场）。由 InBattle 注册。</summary>
+        public static Action<string> ForceEndDirectorExternalHold;
+
+        /// <summary>
+        /// 尝试获取表现锁并挂导演主线租约。已锁时返回 false（防重入）。
         /// </summary>
         public static bool TryBeginPresentationLock(string reason = null)
         {
             if (PresentationLocked)
+            {
+                return false;
+            }
+
+            if (BeginDirectorExternalHold != null && !BeginDirectorExternalHold(reason))
             {
                 return false;
             }
@@ -228,7 +244,7 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 释放表现锁。未持锁时为 no-op。
+        /// 释放表现锁与导演主线租约。未持锁时为 no-op。
         /// </summary>
         public static void EndPresentationLock(string reason = null)
         {
@@ -238,6 +254,7 @@ namespace NineGrid.Cards
             }
 
             PresentationLocked = false;
+            EndDirectorExternalHold?.Invoke(reason);
             if (!string.IsNullOrEmpty(reason))
             {
                 Debug.Log($"[CombatHitSink] PresentationLocked end: {reason}");
@@ -255,13 +272,13 @@ namespace NineGrid.Cards
         /// </summary>
         public static void ForceEndPresentationLock(string reason = null)
         {
-            if (!PresentationLocked)
-            {
-                return;
-            }
-
+            var wasLocked = PresentationLocked;
             PresentationLocked = false;
-            Debug.Log($"[CombatHitSink] PresentationLocked force-end: {reason ?? "clear"}");
+            ForceEndDirectorExternalHold?.Invoke(reason ?? "force-end");
+            if (wasLocked)
+            {
+                Debug.Log($"[CombatHitSink] PresentationLocked force-end: {reason ?? "clear"}");
+            }
         }
 
         /// <summary>

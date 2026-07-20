@@ -316,6 +316,10 @@ namespace NineGrid.Flow
             bool quickTestMode,
             QuickTestRunOptions quickTestOptions)
         {
+            // 必须先取消胜负 Notice 的延迟回菜单，否则 Delay 结束后 EnterMainMenuImmediate
+            // 会 ClearPresentationSurface，把已重开的 Opening/StartNode 清成空场。
+            CancelBattleEndWork();
+
             if (_isBusy && _state != LoopState.MainMenu)
             {
                 Debug.LogWarning("[MainGameLoop] 当前循环仍在进行，忽略 BeginRun。");
@@ -328,6 +332,7 @@ namespace NineGrid.Flow
             _loopCts = new CancellationTokenSource();
             CombatHitSink.ResetInputGates("BeginRun");
             FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+            inBattleManager?.ClearCardPresentationSurface();
 
             _testMode = testMode;
             _quickTestMode = quickTestMode;

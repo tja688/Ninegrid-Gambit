@@ -101,7 +101,13 @@ namespace NineGrid.Flow.Presentation
                 timeline,
                 () => mLastUseKilledTarget,
                 t => EnqueueKillAftermath(t, boardSlot),
-                mOnResolvedWithoutKill));
+                t =>
+                {
+                    if (mOnResolvedWithoutKill != null)
+                    {
+                        mOnResolvedWithoutKill();
+                    }
+                }));
             DrainRefillLockstep.AppendAfterPresentIfNeeded(
                 timeline,
                 () => mLastUseNeedsDrainRefill,

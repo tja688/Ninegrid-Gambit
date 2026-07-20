@@ -348,6 +348,38 @@ namespace NineGrid.Flow.Tests
             Assert.IsTrue(director.IsBypassBusy);
         }
 
+        [Test]
+        public void ExternalHold_KeepsMainlineBusy_UntilReleased()
+        {
+            var director = new PresentationDirector(new RecordingScriptFactory());
+            Assert.IsTrue(director.TryBeginExternalHold("pickup"));
+            Assert.IsTrue(director.IsMainlineBusy);
+            Assert.IsFalse(director.TryBeginExternalHold("pickup-reentry"));
+
+            bool preview;
+            Assert.IsTrue(director.TrySubmitIntent(new InputIntent("explore", 1), out preview));
+            Assert.IsTrue(preview);
+            Assert.IsTrue(director.HasBufferedIntent);
+
+            director.EndExternalHold("pickup");
+            director.Tick(0.016f);
+            Assert.IsFalse(director.HasBufferedIntent);
+        }
+
+        [Test]
+        public void ExternalHold_NestsWhenMainlineAlreadyBusy()
+        {
+            var director = new PresentationDirector(new RecordingScriptFactory());
+            director.EnqueueMainline(new ScriptedStep(continueTicks: 1));
+            Assert.IsTrue(director.TryBeginExternalHold("drain-nested"));
+            Assert.IsTrue(director.IsMainlineBusy);
+
+            director.EndExternalHold("drain-nested");
+            director.Tick(0.016f); // Continue
+            director.Tick(0.016f); // Finished → idle
+            Assert.IsFalse(director.IsMainlineBusy);
+        }
+
         private sealed class ScriptedStep : ITimelineStep
         {
             private readonly int mContinueTicks;

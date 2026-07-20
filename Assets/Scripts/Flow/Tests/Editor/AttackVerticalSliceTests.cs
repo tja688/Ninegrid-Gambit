@@ -103,26 +103,31 @@ namespace NineGrid.Flow.Tests
         }
 
         [Test]
-        public void AttackIntent_NonKill_DoesNotEnqueueFillRotate()
+        public void AttackIntent_NonKill_Lockstep_CounterOnMainline_NoFillRotate()
         {
-            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 99, attack: 0)).Accepted);
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 99, attack: 3)).Accepted);
             PlaceSoleBoardCardAt(sAdjacentSlot);
             // 压低 Avatar 攻击，确保本拍不击杀。
             var board = mArch.GetModel<BoardModel>();
             var avatar = mArch.GetModel<CardRegistry>().Get(board.AvatarUid.Value);
             avatar.Stats.SetBase(StatId.Attack, 1);
 
-            var survived = false;
+            var counterProjected = false;
             var hitPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
             var boardPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var counterPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
             var factory = new AttackIntentScriptFactory(
                 mArch,
                 mDispatcher,
                 hitPresent,
                 boardPresent,
-                onHitBatchProjected: null,
-                onBoardBatchProjected: null,
-                onSurvived: () => survived = true);
+                counterPresent,
+                onCounterBatchProjected: (start, slot, attackerUid, result) =>
+                {
+                    counterProjected = true;
+                    Assert.IsTrue(result.Accepted);
+                    Assert.AreEqual(board.GetCardUid(sAdjacentSlot), attackerUid);
+                });
             var director = new PresentationDirector(factory);
 
             bool preview;
@@ -133,13 +138,68 @@ namespace NineGrid.Flow.Tests
             var hitStart = mPipeline.EventLog.Entries.Count;
             director.Tick(0.016f); // resolve hit
             director.Tick(0.016f); // present hit
-            director.Tick(0.016f); // branch → survived
-
-            Assert.IsTrue(survived);
+            director.Tick(0.016f); // branch → enqueue counter
+            Assert.IsTrue(director.IsMainlineBusy);
             Assert.AreEqual(0, boardPresent.BeginCount);
             Assert.IsFalse(ContainsTypeSince(hitStart, CoreEventType.BoardRotated));
             Assert.IsFalse(ContainsTypeSince(hitStart, CoreEventType.SlotsFilled));
+
+            var counterStart = mPipeline.EventLog.Entries.Count;
+            director.Tick(0.016f); // resolve counter CombatHit
+            Assert.IsTrue(counterProjected);
+            Assert.AreEqual(2, mSync.ActiveBatchId);
+            Assert.IsTrue(ContainsTypeSince(counterStart, CoreEventType.DamageDealt));
+            Assert.AreEqual(0, counterPresent.BeginCount);
+
+            director.Tick(0.016f); // present counter ack
+            Assert.AreEqual(0, mSync.ActiveBatchId);
+            Assert.AreEqual(1, counterPresent.BeginCount);
             Assert.IsFalse(director.IsMainlineBusy);
+        }
+
+        [Test]
+        public void AttackIntent_NonKill_BufferedIntent_DoesNotFlushUntilCounterPresentDone()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 99, attack: 1)).Accepted);
+            PlaceSoleBoardCardAt(sAdjacentSlot);
+            var board = mArch.GetModel<BoardModel>();
+            var avatar = mArch.GetModel<CardRegistry>().Get(board.AvatarUid.Value);
+            avatar.Stats.SetBase(StatId.Attack, 1);
+
+            var hitPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var boardPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var counterPresent = new RecordingPresentChannel(ticksUntilComplete: 2);
+            var factory = new AttackIntentScriptFactory(
+                mArch,
+                mDispatcher,
+                hitPresent,
+                boardPresent,
+                counterPresent);
+            var director = new PresentationDirector(factory);
+
+            bool preview;
+            Assert.IsTrue(director.TrySubmitIntent(
+                new InputIntent(InputIntentKinds.Attack, sAdjacentSlot.Index),
+                out preview));
+
+            director.Tick(0.016f); // resolve hit
+            director.Tick(0.016f); // present hit
+            // 反击 Present 前缓冲另一意图
+            Assert.IsTrue(director.TrySubmitIntent(
+                new InputIntent(InputIntentKinds.Explore, sAdjacentSlot.Index),
+                out preview));
+            Assert.IsTrue(preview);
+            Assert.IsTrue(director.HasBufferedIntent);
+
+            director.Tick(0.016f); // branch → counter
+            director.Tick(0.016f); // resolve counter
+            director.Tick(0.016f); // present counter begin (needs 2 ticks)
+            Assert.IsTrue(director.IsMainlineBusy);
+            Assert.IsTrue(director.HasBufferedIntent);
+            Assert.AreEqual(1, counterPresent.BeginCount);
+
+            director.Tick(0.016f); // counter present complete → flush buffered
+            Assert.IsFalse(director.HasBufferedIntent);
         }
 
         [Test]

@@ -14,6 +14,8 @@ namespace NineGrid.Flow.Presentation
         private readonly IUiPickPreviewSink mUiPickPreview;
         private bool mHasBufferedIntent;
         private InputIntent mBufferedIntent;
+        private bool mExternalHoldReleased = true;
+        private int mExternalHoldNestDepth;
 
         public PresentationDirector(
             IIntentScriptFactory scriptFactory,
@@ -97,6 +99,8 @@ namespace NineGrid.Flow.Presentation
             // Phase / 战败 / 换层使当前剧本上下文失效，一并中止主线与旁路。
             mMainline.Clear();
             mBypass.Clear();
+            mExternalHoldReleased = true;
+            mExternalHoldNestDepth = 0;
             DirectorTrace.IntentHardClear(reason.ToString());
             PublishBusy();
         }
@@ -104,6 +108,49 @@ namespace NineGrid.Flow.Presentation
         public void EnqueueMainline(ITimelineStep step)
         {
             mMainline.Enqueue(step);
+            PublishBusy();
+        }
+
+        /// <summary>
+        /// 外部薄适配挂主线租约：idle 时入队 Hold；主线已忙则嵌套计数（由现有 Present 持忙）。
+        /// </summary>
+        public bool TryBeginExternalHold(string reason = null)
+        {
+            if (!mExternalHoldReleased && mExternalHoldNestDepth == 0)
+            {
+                return false;
+            }
+
+            if (IsMainlineBusy)
+            {
+                mExternalHoldNestDepth++;
+                return true;
+            }
+
+            mExternalHoldReleased = false;
+            mMainline.Enqueue(new ExternalMainlineHoldStep(() => mExternalHoldReleased));
+            PublishBusy();
+            return true;
+        }
+
+        /// <summary>释放 <see cref="TryBeginExternalHold"/> 租约。</summary>
+        public void EndExternalHold(string reason = null)
+        {
+            if (mExternalHoldNestDepth > 0)
+            {
+                mExternalHoldNestDepth--;
+                return;
+            }
+
+            mExternalHoldReleased = true;
+            PublishBusy();
+        }
+
+        /// <summary>清场：强制结束外部租约（含嵌套）。</summary>
+        public void ForceEndExternalHold(string reason = null)
+        {
+            mExternalHoldReleased = true;
+            mExternalHoldNestDepth = 0;
             PublishBusy();
         }
 

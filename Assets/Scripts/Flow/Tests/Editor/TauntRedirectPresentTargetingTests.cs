@@ -100,6 +100,7 @@ namespace NineGrid.Flow.Tests
                 mDispatcher,
                 hitPresent,
                 boardPresent,
+                counterPresentChannel: null,
                 onHitBatchProjected: (start, slot, resolvedUid, result) =>
                 {
                     projectedClickedSlot = slot;

@@ -9,8 +9,8 @@ using QFramework;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// 攻击垂直切片剧本：CombatHit → Present →（击杀）Fill → Present → Rotate → Present →（融合）Refill。
-    /// 未击杀走 onSurvived（旧反击路径）；未识别 kind 不入队。
+    /// 攻击垂直切片剧本：CombatHit → Present →（击杀）Fill → Present → Rotate → Present →（融合）Refill；
+    /// 未击杀 → 反击 CombatHit → Present（主线续写，非 Forget 旁路）。
     /// </summary>
     public sealed class AttackIntentScriptFactory : IIntentScriptFactory
     {
@@ -18,12 +18,15 @@ namespace NineGrid.Flow.Presentation
         private readonly CoreCommandDispatcher mDispatcher;
         private readonly IPresentChannel mHitPresentChannel;
         private readonly IPresentChannel mBoardPresentChannel;
+        private readonly IPresentChannel mCounterPresentChannel;
         /// <summary>startIndex, clickedBoardSlot, resolvedCombatUid, projection</summary>
         private readonly Action<int, int, int, PostKillBoardPresentationResult> mOnHitBatchProjected;
         private readonly Action<int, int, PostKillBoardPresentationResult> mOnBoardBatchProjected;
-        private readonly Action mOnSurvived;
+        /// <summary>startIndex, attackerBoardSlot, attackerUid, projection</summary>
+        private readonly Action<int, int, int, PostKillBoardPresentationResult> mOnCounterBatchProjected;
         private bool mLastHitKilledTarget;
         private bool mLastRotateHadFusion;
+        private int mLastResolvedCombatUid;
         private readonly List<int> mFusionExcludeResultUids = new List<int>(2);
 
         public AttackIntentScriptFactory(
@@ -31,9 +34,10 @@ namespace NineGrid.Flow.Presentation
             CoreCommandDispatcher dispatcher,
             IPresentChannel hitPresentChannel,
             IPresentChannel boardPresentChannel,
+            IPresentChannel counterPresentChannel = null,
             Action<int, int, int, PostKillBoardPresentationResult> onHitBatchProjected = null,
             Action<int, int, PostKillBoardPresentationResult> onBoardBatchProjected = null,
-            Action onSurvived = null)
+            Action<int, int, int, PostKillBoardPresentationResult> onCounterBatchProjected = null)
         {
             if (architecture == null)
             {
@@ -59,9 +63,10 @@ namespace NineGrid.Flow.Presentation
             mDispatcher = dispatcher;
             mHitPresentChannel = hitPresentChannel;
             mBoardPresentChannel = boardPresentChannel;
+            mCounterPresentChannel = counterPresentChannel;
             mOnHitBatchProjected = onHitBatchProjected;
             mOnBoardBatchProjected = onBoardBatchProjected;
-            mOnSurvived = onSurvived;
+            mOnCounterBatchProjected = onCounterBatchProjected;
         }
 
         public void BuildScript(InputIntent intent, BattleTimeline timeline)
@@ -96,6 +101,7 @@ namespace NineGrid.Flow.Presentation
             var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
             mLastHitKilledTarget = false;
             mLastRotateHadFusion = false;
+            mLastResolvedCombatUid = 0;
             mFusionExcludeResultUids.Clear();
 
             var hitGate = PresentationSyncBatchGate.FromSync(
@@ -107,7 +113,7 @@ namespace NineGrid.Flow.Presentation
                 timeline,
                 () => mLastHitKilledTarget,
                 t => EnqueueKillAftermath(t, slotIndex),
-                mOnSurvived));
+                t => EnqueueCounterAftermath(t, slotIndex)));
         }
 
         private void EnqueueKillAftermath(BattleTimeline timeline, int boardSlot)
@@ -137,6 +143,35 @@ namespace NineGrid.Flow.Presentation
                     mOnBoardBatchProjected));
         }
 
+        private void EnqueueCounterAftermath(BattleTimeline timeline, int boardSlot)
+        {
+            if (mCounterPresentChannel == null)
+            {
+                return;
+            }
+
+            var monsterUid = mLastResolvedCombatUid;
+            if (monsterUid <= 0)
+            {
+                var board = mArchitecture.GetModel<BoardModel>();
+                monsterUid = board.GetCardUid(SlotId.Board(boardSlot));
+            }
+
+            var avatarUid = mArchitecture.GetModel<BoardModel>().AvatarUid.Value;
+            if (monsterUid <= 0 || avatarUid <= 0)
+            {
+                return;
+            }
+
+            var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
+            var counterGate = PresentationSyncBatchGate.FromSync(
+                sync,
+                () => ResolveCounterAndProject(boardSlot, monsterUid, avatarUid),
+                slice: "AttackCounter");
+            timeline.Enqueue(new ResolveBatchStep(counterGate));
+            timeline.Enqueue(new PresentStep(counterGate, mCounterPresentChannel, "CounterHit"));
+        }
+
         private CoreCommandDispatchResult ResolveHitAndProject(int boardSlot, int attackerUid, int targetUid)
         {
             var pipeline = mArchitecture.GetSystem<IActionPipelineSystem>();
@@ -145,9 +180,11 @@ namespace NineGrid.Flow.Presentation
             if (dispatch == null || !dispatch.Accepted)
             {
                 mLastHitKilledTarget = false;
+                mLastResolvedCombatUid = 0;
                 return dispatch;
             }
 
+            mLastResolvedCombatUid = targetUid;
             mLastHitKilledTarget = IntentBatchProjection.ContainsCardKilled(pipeline, startIndex, targetUid);
             if (mOnHitBatchProjected != null)
             {
@@ -156,6 +193,28 @@ namespace NineGrid.Flow.Presentation
                     boardSlot,
                     targetUid,
                     IntentBatchProjection.Build(mArchitecture, pipeline, startIndex));
+            }
+
+            return dispatch;
+        }
+
+        private CoreCommandDispatchResult ResolveCounterAndProject(
+            int attackerBoardSlot,
+            int monsterUid,
+            int avatarUid)
+        {
+            var pipeline = mArchitecture.GetSystem<IActionPipelineSystem>();
+            var startIndex = pipeline.EventLog.Entries.Count;
+            var dispatch = mDispatcher.Send(new CombatHitCommand(monsterUid, avatarUid));
+            if (dispatch == null || !dispatch.Accepted)
+            {
+                return dispatch;
+            }
+
+            var projection = IntentBatchProjection.Build(mArchitecture, pipeline, startIndex);
+            if (mOnCounterBatchProjected != null)
+            {
+                mOnCounterBatchProjected(startIndex, attackerBoardSlot, monsterUid, projection);
             }
 
             return dispatch;
