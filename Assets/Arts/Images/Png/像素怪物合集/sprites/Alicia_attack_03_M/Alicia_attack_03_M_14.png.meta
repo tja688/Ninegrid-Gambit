@@ -1,0 +1,598 @@
+fileFormatVersion: 2
+guid: 10831834a377f7b43af2faff7938e614
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 4732601667107201239
+    second: Alicia_attack_03_M_14_0
+  - first:
+      213: 3742217882686110680
+    second: Alicia_attack_03_M_14_1
+  - first:
+      213: 3120079588233075680
+    second: Alicia_attack_03_M_14_2
+  - first:
+      213: 8232154996724813185
+    second: Alicia_attack_03_M_14_3
+  - first:
+      213: -2885193595186777159
+    second: Alicia_attack_03_M_14_4
+  - first:
+      213: 9197248640626066419
+    second: Alicia_attack_03_M_14_5
+  - first:
+      213: -8358554763040429424
+    second: Alicia_attack_03_M_14_6
+  - first:
+      213: 7127679084218235544
+    second: Alicia_attack_03_M_14_7
+  - first:
+      213: 1091631425963762409
+    second: Alicia_attack_03_M_14_8
+  - first:
+      213: 1962685989532248056
+    second: Alicia_attack_03_M_14_9
+  - first:
+      213: 4415709796641889010
+    second: Alicia_attack_03_M_14_10
+  - first:
+      213: -9162362771522675155
+    second: Alicia_attack_03_M_14_11
+  - first:
+      213: 5669950441760248319
+    second: Alicia_attack_03_M_14_12
+  - first:
+      213: -2048532882113872332
+    second: Alicia_attack_03_M_14_13
+  - first:
+      213: 609646941620872559
+    second: Alicia_attack_03_M_14_14
+  - first:
+      213: 5482019979035019197
+    second: Alicia_attack_03_M_14_15
+  - first:
+      213: 2253773122826147476
+    second: Alicia_attack_03_M_14_16
+  - first:
+      213: 7422270087993951067
+    second: Alicia_attack_03_M_14_17
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: 4
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_0
+      rect:
+        serializedVersion: 2
+        x: 36
+        y: 94
+        width: 9
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7d0a85f44249da140800000000000000
+      internalID: 4732601667107201239
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_1
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 107
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8dbbe9156570fe330800000000000000
+      internalID: 3742217882686110680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_2
+      rect:
+        serializedVersion: 2
+        x: 46
+        y: 106
+        width: 14
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0eb5497cadfbc4b20800000000000000
+      internalID: 3120079588233075680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_3
+      rect:
+        serializedVersion: 2
+        x: 60
+        y: 97
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18d4dbb8a5d7e3270800000000000000
+      internalID: 8232154996724813185
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_4
+      rect:
+        serializedVersion: 2
+        x: 75
+        y: 101
+        width: 15
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b3f8aa26bbb5f7d0800000000000000
+      internalID: -2885193595186777159
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_5
+      rect:
+        serializedVersion: 2
+        x: 20
+        y: 92
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f30677d8e033af70800000000000000
+      internalID: 9197248640626066419
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_6
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 83
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 09a63518ab2700c80800000000000000
+      internalID: -8358554763040429424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_7
+      rect:
+        serializedVersion: 2
+        x: 33
+        y: 83
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 89a3fcfec5a9ae260800000000000000
+      internalID: 7127679084218235544
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_8
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 83
+        width: 8
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e2293a8ff0462f00800000000000000
+      internalID: 1091631425963762409
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_9
+      rect:
+        serializedVersion: 2
+        x: 57
+        y: 85
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f7a4bb328cdc3b10800000000000000
+      internalID: 1962685989532248056
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_10
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 78
+        width: 11
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2fa5d042aa0c74d30800000000000000
+      internalID: 4415709796641889010
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_11
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 79
+        width: 14
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d2e90248a9fb8d080800000000000000
+      internalID: -9162362771522675155
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_12
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 0
+        width: 79
+        height: 81
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ff15037d2e5bfae40800000000000000
+      internalID: 5669950441760248319
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_13
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 81
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43e35e282362293e0800000000000000
+      internalID: -2048532882113872332
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_14
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 70
+        width: 13
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f6527b1d9a6e57800800000000000000
+      internalID: 609646941620872559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_15
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 50
+        width: 6
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: db70afd302c041c40800000000000000
+      internalID: 5482019979035019197
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_16
+      rect:
+        serializedVersion: 2
+        x: 81
+        y: 49
+        width: 10
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4961066d6b2074f10800000000000000
+      internalID: 2253773122826147476
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Alicia_attack_03_M_14_17
+      rect:
+        serializedVersion: 2
+        x: 81
+        y: 23
+        width: 9
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b5303e5f153310760800000000000000
+      internalID: 7422270087993951067
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Alicia_attack_03_M_14_0: 4732601667107201239
+      Alicia_attack_03_M_14_1: 3742217882686110680
+      Alicia_attack_03_M_14_10: 4415709796641889010
+      Alicia_attack_03_M_14_11: -9162362771522675155
+      Alicia_attack_03_M_14_12: 5669950441760248319
+      Alicia_attack_03_M_14_13: -2048532882113872332
+      Alicia_attack_03_M_14_14: 609646941620872559
+      Alicia_attack_03_M_14_15: 5482019979035019197
+      Alicia_attack_03_M_14_16: 2253773122826147476
+      Alicia_attack_03_M_14_17: 7422270087993951067
+      Alicia_attack_03_M_14_2: 3120079588233075680
+      Alicia_attack_03_M_14_3: 8232154996724813185
+      Alicia_attack_03_M_14_4: -2885193595186777159
+      Alicia_attack_03_M_14_5: 9197248640626066419
+      Alicia_attack_03_M_14_6: -8358554763040429424
+      Alicia_attack_03_M_14_7: 7127679084218235544
+      Alicia_attack_03_M_14_8: 1091631425963762409
+      Alicia_attack_03_M_14_9: 1962685989532248056
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: PIXEL_ART_IMAGE_PROCESSED_V1_PPU_32
+  assetBundleName: 
+  assetBundleVariant: 
