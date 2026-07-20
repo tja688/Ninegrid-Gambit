@@ -29,7 +29,7 @@ namespace NineGrid.VisualLook
 
         [SerializeField]
         [Tooltip("像素网格分辨率，默认与 PixelPerfectCamera 参考分辨率一致。")]
-        Vector2 pixelResolution = new Vector2(480f, 270f);
+        Vector2 pixelResolution = new Vector2(960f, 540f);
 
         [SerializeField]
         [Tooltip("是否启用 UV Pixel Snap（对未受保护像素）。")]
