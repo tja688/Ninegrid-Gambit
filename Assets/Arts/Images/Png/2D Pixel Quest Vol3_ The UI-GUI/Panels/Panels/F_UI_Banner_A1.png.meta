@@ -5,6 +5,30 @@ TextureImporter:
   - first:
       213: 3837346706868353804
     second: F_UI_Banner_A1_0
+  - first:
+      213: -6200225047750397024
+    second: F_UI_Banner_A1_1
+  - first:
+      213: -1949012874400085344
+    second: F_UI_Banner_A1_2
+  - first:
+      213: -2038993753576822560
+    second: F_UI_Banner_A1_3
+  - first:
+      213: 8945980323379914960
+    second: F_UI_Banner_A1_4
+  - first:
+      213: -2600012805229914492
+    second: F_UI_Banner_A1_5
+  - first:
+      213: -670820851431555396
+    second: F_UI_Banner_A1_6
+  - first:
+      213: 3597004194873429388
+    second: F_UI_Banner_A1_7
+  - first:
+      213: 1209489258694834341
+    second: F_UI_Banner_A1_8
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -52,7 +76,7 @@ TextureImporter:
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 32
-  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteBorder: {x: 32, y: 32, z: 32, w: 32}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -111,29 +135,7 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites:
-    - serializedVersion: 2
-      name: F_UI_Banner_A1_0
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 0
-        width: 96
-        height: 96
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: c0b37eeaf7ef04530800000000000000
-      internalID: 3837346706868353804
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
+    sprites: []
     outline: []
     customData: 
     physicsShape: []
@@ -149,6 +151,14 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       F_UI_Banner_A1_0: 3837346706868353804
+      F_UI_Banner_A1_1: -6200225047750397024
+      F_UI_Banner_A1_2: -1949012874400085344
+      F_UI_Banner_A1_3: -2038993753576822560
+      F_UI_Banner_A1_4: 8945980323379914960
+      F_UI_Banner_A1_5: -2600012805229914492
+      F_UI_Banner_A1_6: -670820851431555396
+      F_UI_Banner_A1_7: 3597004194873429388
+      F_UI_Banner_A1_8: 1209489258694834341
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: PIXEL_ART_IMAGE_PROCESSED_V1_PPU_32

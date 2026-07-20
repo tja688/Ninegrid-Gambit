@@ -5,6 +5,30 @@ TextureImporter:
   - first:
       213: -2195090954182724305
     second: F_UI_Panel_A_0
+  - first:
+      213: 6604169401257042275
+    second: F_UI_Panel_A_1
+  - first:
+      213: -568347391249784370
+    second: F_UI_Panel_A_2
+  - first:
+      213: 8423277177839404179
+    second: F_UI_Panel_A_3
+  - first:
+      213: 4110958928785205456
+    second: F_UI_Panel_A_4
+  - first:
+      213: -4930059341994000753
+    second: F_UI_Panel_A_5
+  - first:
+      213: 7445760842024670978
+    second: F_UI_Panel_A_6
+  - first:
+      213: -3350598176372994991
+    second: F_UI_Panel_A_7
+  - first:
+      213: -2290630137018801085
+    second: F_UI_Panel_A_8
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -52,7 +76,7 @@ TextureImporter:
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 32
-  spriteBorder: {x: 9, y: 10, z: 10, w: 10}
+  spriteBorder: {x: 32, y: 32, z: 32, w: 32}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -111,29 +135,7 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites:
-    - serializedVersion: 2
-      name: F_UI_Panel_A_0
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 0
-        width: 96
-        height: 96
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: f25f34248687981e0800000000000000
-      internalID: -2195090954182724305
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
+    sprites: []
     outline: []
     customData: 
     physicsShape: []
@@ -149,6 +151,14 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       F_UI_Panel_A_0: -2195090954182724305
+      F_UI_Panel_A_1: 6604169401257042275
+      F_UI_Panel_A_2: -568347391249784370
+      F_UI_Panel_A_3: 8423277177839404179
+      F_UI_Panel_A_4: 4110958928785205456
+      F_UI_Panel_A_5: -4930059341994000753
+      F_UI_Panel_A_6: 7445760842024670978
+      F_UI_Panel_A_7: -3350598176372994991
+      F_UI_Panel_A_8: -2290630137018801085
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: PIXEL_ART_IMAGE_PROCESSED_V1_PPU_32
