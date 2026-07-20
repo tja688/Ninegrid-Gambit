@@ -269,48 +269,67 @@ namespace NineGrid.VisualLook
 
         void SyncTmpMaterials()
         {
-            if (livingTextCanvases == null)
+            if (livingTextCanvases != null)
             {
-                return;
-            }
-
-            foreach (var canvas in livingTextCanvases)
-            {
-                if (canvas == null)
+                foreach (var canvas in livingTextCanvases)
                 {
-                    continue;
-                }
-
-                var tmps = canvas.GetComponentsInChildren<TMP_Text>(true);
-                foreach (var tmp in tmps)
-                {
-                    var mat = tmp.fontSharedMaterial;
-                    if (mat == null)
+                    if (canvas == null)
                     {
                         continue;
                     }
 
-                    if (mat.HasProperty("_PixelResolution"))
+                    var tmps = canvas.GetComponentsInChildren<TMP_Text>(true);
+                    foreach (var tmp in tmps)
                     {
-                        mat.SetVector("_PixelResolution", new Vector4(pixelResolution.x, pixelResolution.y, 0f, 0f));
-                    }
-
-                    // Unified post-stack blit owns scanlines; keep TMP materials off to avoid double.
-                    if (mat.HasProperty("_ScanlineEnabled"))
-                    {
-                        mat.SetFloat("_ScanlineEnabled", useUnifiedScanline ? 0f : scanlineEnabled);
-                    }
-
-                    if (mat.HasProperty("_ScanlineIntensity"))
-                    {
-                        mat.SetFloat("_ScanlineIntensity", scanlineIntensity);
-                    }
-
-                    if (mat.HasProperty("_ScanlineSpacing"))
-                    {
-                        mat.SetFloat("_ScanlineSpacing", scanlineSpacing);
+                        ApplyTmpScanlineParams(tmp.fontSharedMaterial);
                     }
                 }
+            }
+
+            // 世界空间 TMP（背板子物体）不在 Canvas 下，仍需跟 Rig 扫描线参数对齐。
+            var worldTmps = Object.FindObjectsByType<TextMeshPro>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (var tmp in worldTmps)
+            {
+                if (tmp == null)
+                {
+                    continue;
+                }
+
+                if (_noSnapLayer >= 0 && tmp.gameObject.layer != _noSnapLayer)
+                {
+                    continue;
+                }
+
+                ApplyTmpScanlineParams(tmp.fontSharedMaterial);
+            }
+        }
+
+        void ApplyTmpScanlineParams(Material mat)
+        {
+            if (mat == null)
+            {
+                return;
+            }
+
+            if (mat.HasProperty("_PixelResolution"))
+            {
+                mat.SetVector("_PixelResolution", new Vector4(pixelResolution.x, pixelResolution.y, 0f, 0f));
+            }
+
+            // Unified post-stack blit owns scanlines; keep TMP materials off to avoid double.
+            if (mat.HasProperty("_ScanlineEnabled"))
+            {
+                mat.SetFloat("_ScanlineEnabled", useUnifiedScanline ? 0f : scanlineEnabled);
+            }
+
+            if (mat.HasProperty("_ScanlineIntensity"))
+            {
+                mat.SetFloat("_ScanlineIntensity", scanlineIntensity);
+            }
+
+            if (mat.HasProperty("_ScanlineSpacing"))
+            {
+                mat.SetFloat("_ScanlineSpacing", scanlineSpacing);
             }
         }
 
