@@ -10,7 +10,7 @@ namespace NineGrid.Flow.Presentation
 {
     /// <summary>
     /// 空格 explore 剧本：ClickEmpty → Present → Fill → Present → Rotate → Present →（融合）Refill → Present。
-    /// 未识别 kind 不入队（留给旧路径 / 后续切片）。
+    /// 非 explore kind 不入队（由 RoutingIntentScriptFactory 分发）。
     /// </summary>
     public sealed class ExploreIntentScriptFactory : IIntentScriptFactory
     {

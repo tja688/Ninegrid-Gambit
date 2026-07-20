@@ -91,7 +91,7 @@
 
 | site | 含义 |
 |------|------|
-| `RefillBatchBegin` / `RefillBatchEnd` | drain 退场补牌开闭；`path=director` 为导演离散批，`path=presentAdapter` 为反击等 Present 薄适配（#11 已删 `legacyPostPresent`） |
+| `RefillBatchBegin` / `RefillBatchEnd` | drain 退场补牌开闭；`path=director` 为导演离散批，`path=presentAdapter` 为 Present 薄适配内补牌（#11 已删 `legacyPostPresent`；反击 Resolve 见 `slice=AttackCounter`） |
 
 导演路径上非击杀移除后退场补牌走 `ResolveDrainRefill` 批次锁步；`DrainPostRemoveRefill` 在 `DirectorMainlineBusy` 时不可达。
 

@@ -41,7 +41,7 @@ namespace NineGrid.DevTest.Cards
         protected override void ConfigureBindings(TestKeyRegistrationBuilder builder)
         {
             builder
-                .Bind(KeyCode.Keypad1, "随机相邻怪反击玩家", () => RunRandomCounterAttackAsync().Forget())
+                .Bind(KeyCode.Keypad1, "导演攻击相邻怪（未击杀走反击锁步）", RunDirectorAttackAdjacent)
                 .Bind(KeyCode.Keypad4, "外圈全体顺时针旋转", () => RunRotateOuterRingAsync().Forget())
                 .Bind(KeyCode.Keypad5, "随机移除场中1张", () => RunRandomRemoveAsync().Forget())
                 .Bind(KeyCode.Keypad6, "即死击杀相邻怪", RunLethalAttackAdjacent)
@@ -49,11 +49,13 @@ namespace NineGrid.DevTest.Cards
                 .Bind(KeyCode.Keypad8, "下一次交战即死", ArmNextLethalAttack);
         }
 
-        private async UniTaskVoid RunRandomCounterAttackAsync()
+        /// <summary>
+        /// #2 硬切：DevTest 也只提交导演攻击意图；未击杀时反击由主线 AttackCounter 锁步播，不再走旧旁路。
+        /// </summary>
+        private void RunDirectorAttackAdjacent()
         {
             var field = ResolveFieldManager();
-            var battle = ResolveBattleManager();
-            if (field == null || battle == null)
+            if (field == null)
             {
                 return;
             }
@@ -70,8 +72,8 @@ namespace NineGrid.DevTest.Cards
                 return;
             }
 
-            Debug.Log($"[GroundFieldManagerDevKeys] 触发怪物反击: slot={slot} uid={attacker.Uid}");
-            await battle.RequestBasicCounterAttackAtSlotAsync(slot);
+            Debug.Log($"[GroundFieldManagerDevKeys] 导演攻击意图: slot={slot} uid={attacker.Uid}");
+            CombatHitSink.RequestAttackIntent(slot);
         }
 
         private async UniTaskVoid RunRotateOuterRingAsync()

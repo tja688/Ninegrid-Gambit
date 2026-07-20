@@ -131,7 +131,7 @@ namespace NineGrid.DevTest.Editor
                 "场地卡管理器测试",
                 new[]
                 {
-                    (KeyCode.Keypad1, "随机相邻怪反击玩家"),
+                    (KeyCode.Keypad1, "导演攻击相邻怪（未击杀走反击锁步）"),
                     (KeyCode.Keypad4, "外圈全体顺时针旋转"),
                     (KeyCode.Keypad5, "随机移除场中1张"),
                     (KeyCode.Keypad6, "即死击杀相邻怪"),
