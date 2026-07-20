@@ -1,13 +1,10 @@
 fileFormatVersion: 2
-guid: bd40dcc8d42ab1a448ee3a03398a573d
+guid: c21e341fce3d1c54088e36f59f06dee7
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 6746126608104750057
-    second: F_U_Frame11_0
-  - first:
-      213: 6053091749129938901
-    second: F_U_Frame11_1
+      213: 8453531423142147409
+    second: SnowShot_2026-07-20_15-36-27_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -40,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -49,13 +46,13 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 32
-  spriteBorder: {x: 32, y: 32, z: 32, w: 32}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -75,10 +72,10 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 4096
+    maxTextureSize: 2048
     resizeAlgorithm: 0
-    textureFormat: 4
-    textureCompression: 0
+    textureFormat: -1
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -116,35 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: F_U_Frame11_0
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 80
-        width: 96
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 9ebf4e5586e0f9d50800000000000000
-      internalID: 6746126608104750057
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: F_U_Frame11_1
+      name: SnowShot_2026-07-20_15-36-27_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 96
-        height: 16
+        width: 1920
+        height: 1080
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -153,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 5d7ecbb00e6e00450800000000000000
-      internalID: 6053091749129938901
+      spriteID: 1557df56a0af05570800000000000000
+      internalID: 8453531423142147409
       vertices: []
       indices: 
       edges: []
@@ -163,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -173,10 +148,9 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      F_U_Frame11_0: 6746126608104750057
-      F_U_Frame11_1: 6053091749129938901
+      SnowShot_2026-07-20_15-36-27_0: 8453531423142147409
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  userData: PIXEL_ART_IMAGE_PROCESSED_V1_PPU_32
+  userData: 
   assetBundleName: 
   assetBundleVariant: 
