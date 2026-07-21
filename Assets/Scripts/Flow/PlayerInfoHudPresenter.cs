@@ -1,4 +1,5 @@
 using System.Collections;
+using DG.Tweening;
 using NineGrid.Core;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
@@ -8,45 +9,99 @@ using UnityEngine;
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 局内 PlayerInfo Text：从内核 Avatar / Coins 刷血攻防金与名称，数值变化时做轻量跳变。
-    /// 防御栏显示有效护甲（基础护甲 + 遗物/套装等修正）；中央玩家卡面显示当前护甲（本关临时资源）。
+    /// 局内「玩家信息」HUD：血槽血管 + 当前/最大血量、有效护甲、金币。
+    /// 血槽长度随 MaxHp 相对基础上限伸长（每点 +0.1）；最大血量文案仅悬停血槽时显示。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PlayerInfoHudPresenter : MonoBehaviour
     {
-        private const string DefaultInfoRootName = "InGameInfo Text";
-        private const string DefaultPlayerInfoName = "PlayerInfoText";
-        private const float FlashDuration = 0.18f;
+        private const string PlayerInfoRootName = "玩家信息";
+        private const string BloodBarName = "血条";
+        private const string BloodSlotName = "血槽";
+        private const string BloodFillName = "真实血量条";
+        private const string CurrentHpName = "血量数值（当前）";
+        private const string MaxHpName = "血量数值（最大）";
+        private const string ArmorValueName = "防御数值";
+        private const string GoldValueName = "金币数值";
+
+        private const float SlotWidthPerMaxHp = 0.1f;
+        private const float DefaultBaseMaxHp = 10f;
+        private const float HpFillAnimDuration = 0.38f;
+        private const float SlotGrowDuration = 0.45f;
+        private const float NumberFlashDuration = 0.2f;
         private const float MaxHpFlashHalfPeriod = 0.12f;
         private const int MaxHpFlashPulses = 2;
 
-        private static readonly Color HpNormalColor = new Color32(0x00, 0xBE, 0x13, 0xFF);
-        private static readonly Color HpMaxColor = new Color32(0x03, 0xFF, 0x1D, 0xFF);
+        private static readonly Color HpNormalColor = new Color32(0xFF, 0xFF, 0xFF, 0xBF);
+        private static readonly Color HpFullColor = new Color32(0xC8, 0xFF, 0xD0, 0xFF);
+        private static readonly Color HpDamageFlash = new Color32(0xFF, 0x6A, 0x6A, 0xFF);
+        private static readonly Color HpHealFlash = new Color32(0x7C, 0xFF, 0x9A, 0xFF);
+        private static readonly Color FillNormalColor = Color.white;
+        private static readonly Color FillDamageColor = new Color32(0xFF, 0x8A, 0x8A, 0xFF);
+        private static readonly Color FillHealColor = new Color32(0xB8, 0xFF, 0xC4, 0xFF);
 
         private static PlayerInfoHudPresenter _instance;
 
-        [Tooltip("血量 TMP；留空则运行时在 PlayerInfo Text 下按名查找 HpText。")]
-        [SerializeField] private TextMeshProUGUI hpText;
+        [Header("根与文本")]
+        [Tooltip("玩家信息根；留空则按名查找「玩家信息」。")]
+        [SerializeField] private Transform playerInfoRoot;
 
-        [Tooltip("攻击 TMP；留空则运行时在 PlayerInfo Text 下按名查找 AttackText。")]
-        [SerializeField] private TextMeshProUGUI attackText;
+        [Tooltip("当前血量 TMP（世界空间 TextMeshPro）。")]
+        [SerializeField] private TMP_Text currentHpText;
 
-        [Tooltip("防御（有效护甲）TMP；留空则运行时在 PlayerInfo Text 下按名查找 ArmorText。")]
-        [SerializeField] private TextMeshProUGUI armorText;
+        [Tooltip("最大血量 TMP；默认隐藏，悬停血槽时显示。")]
+        [SerializeField] private TMP_Text maxHpText;
 
-        [Tooltip("金币 TMP；留空则运行时在 PlayerInfo Text 下按名查找 GoldText。")]
-        [SerializeField] private TextMeshProUGUI goldText;
+        [Tooltip("防御（有效护甲）TMP。")]
+        [SerializeField] private TMP_Text armorText;
 
-        [Tooltip("名称 TMP；留空则运行时在 PlayerInfo Text 下按名查找 NameText。")]
-        [SerializeField] private TextMeshProUGUI nameText;
+        [Tooltip("金币 TMP；增益演出可由 GoldGainFx 接管。")]
+        [SerializeField] private TMP_Text goldText;
 
-        private readonly StatSlot _hp = new();
-        private readonly StatSlot _attack = new();
+        [Header("血槽血管")]
+        [Tooltip("血槽（血管）SpriteRenderer；Sliced，左 pivot。")]
+        [SerializeField] private SpriteRenderer bloodSlot;
+
+        [Tooltip("真实血量条 SpriteRenderer；Sliced，左 pivot。")]
+        [SerializeField] private SpriteRenderer bloodFill;
+
+        [Tooltip("血条根（抖动/脉搏挂点）。")]
+        [SerializeField] private Transform bloodBarRoot;
+
+        [Tooltip("编辑器现状对应的基础血量上限；血槽现状宽度即此上限下的基础长度。")]
+        [SerializeField] private float baseMaxHp = DefaultBaseMaxHp;
+
+        [Tooltip("血槽悬停检测用 Collider2D；留空则运行时在血槽上补 BoxCollider2D。")]
+        [SerializeField] private Collider2D bloodSlotCollider;
+
         private readonly StatSlot _armor = new();
         private readonly StatSlot _gold = new();
+
         private bool _hasSnapshot;
         private bool _wasAtMaxHp;
-        private string _lastName = string.Empty;
+        private bool _capturedVesselBase;
+        private float _baseSlotWidth;
+        private float _baseFillWidth;
+        private float _fillLocalX;
+        private float _displayedHp;
+        private float _animatedFillWidth;
+        private float _animatedSlotWidth;
+        private int _coreHp;
+        private int _coreMaxHp;
+        private bool _hoveringSlot;
+        private bool _maxHpVisible;
+        private Color _maxHpBaseColor = Color.white;
+        private bool _hasMaxHpBaseColor;
+        private Vector3 _bloodBarBasePos;
+        private bool _hasBloodBarBasePos;
+        private Tween _fillTween;
+        private Tween _slotTween;
+        private Tween _hpNumberTween;
+        private Tween _fillColorTween;
+        private Tween _hpTextColorTween;
+        private Tween _barShakeTween;
+        private Coroutine _maxHpPulseRoutine;
+        private Sequence _maxHpRevealSeq;
 
         public static PlayerInfoHudPresenter Instance
         {
@@ -81,30 +136,45 @@ namespace NineGrid.Flow
         {
             if (_instance != null && _instance != this)
             {
-                Destroy(gameObject);
+                Destroy(this);
                 return;
             }
 
             _instance = this;
             EnsureBindings();
+            CaptureVesselBaseIfNeeded();
+            SetMaxHpVisible(false, instant: true);
         }
 
         private void OnDestroy()
         {
+            KillHpTweens();
+            if (_maxHpPulseRoutine != null)
+            {
+                StopCoroutine(_maxHpPulseRoutine);
+                _maxHpPulseRoutine = null;
+            }
+
             if (_instance == this)
             {
                 _instance = null;
             }
         }
 
+        private void Update()
+        {
+            UpdateBloodSlotHover();
+        }
+
         /// <summary>
-        /// 从内核刷新 PlayerInfoText；<paramref name="animate"/> 为 true 时对变化项做跳变。
+        /// 从内核刷新玩家信息；<paramref name="animate"/> 为 true 时播放血槽/数值动效。
         /// </summary>
         public void SyncFromCore(bool animate = true)
         {
             EnsureBindings();
+            CaptureVesselBaseIfNeeded();
 
-            if (!TryReadAvatarHud(out var hp, out var maxHp, out var attack, out var armor, out var gold, out var displayName))
+            if (!TryReadAvatarHud(out var hp, out var maxHp, out var armor, out var gold))
             {
                 return;
             }
@@ -113,205 +183,442 @@ namespace NineGrid.Flow
             var shouldAnimate = animate && !firstPaint;
             _hasSnapshot = true;
 
-            ApplyHp(hp, maxHp, shouldAnimate);
-            ApplyIntStat(_attack, attackText, attack, attack.ToString(), shouldAnimate);
+            ApplyHpVessel(hp, maxHp, shouldAnimate, firstPaint);
             ApplyIntStat(_armor, armorText, armor, armor.ToString(), shouldAnimate);
             ApplyGold(gold, shouldAnimate);
-
-            if (nameText != null && displayName != _lastName)
-            {
-                _lastName = displayName;
-                nameText.text = displayName;
-            }
         }
 
         public void ClearSnapshot()
         {
             _hasSnapshot = false;
-            _lastName = string.Empty;
-            _hp.Reset();
-            _attack.Reset();
+            _wasAtMaxHp = false;
+            _displayedHp = 0f;
+            _coreHp = 0;
+            _coreMaxHp = 0;
             _armor.Reset();
             _gold.Reset();
-            _wasAtMaxHp = false;
-            // 清场只丢 HUD 缓存，不把金币显示 Snap 到 0（跨关 Opening 期间会闪零再暴涨）。
-            // 保留 GoldGainFx 当前显示；Opening / SyncFromCore 再对齐 Core。
+            KillHpTweens();
         }
 
         private void EnsureBindings()
         {
-            if (hpText != null
-                && attackText != null
-                && armorText != null
-                && goldText != null
-                && nameText != null)
+            if (playerInfoRoot == null)
+            {
+                var rootGo = GameObject.Find(PlayerInfoRootName);
+                if (rootGo != null)
+                {
+                    playerInfoRoot = rootGo.transform;
+                }
+            }
+
+            if (playerInfoRoot == null)
             {
                 return;
             }
 
-            var root = FindPlayerInfoRoot();
-            if (root == null)
+            bloodBarRoot ??= FindChild(playerInfoRoot, BloodBarName);
+            bloodSlot ??= FindChild(playerInfoRoot, BloodSlotName)?.GetComponent<SpriteRenderer>();
+            bloodFill ??= FindChild(playerInfoRoot, BloodFillName)?.GetComponent<SpriteRenderer>();
+            currentHpText ??= FindTmp(playerInfoRoot, CurrentHpName);
+            maxHpText ??= FindTmp(playerInfoRoot, MaxHpName);
+            armorText ??= FindTmp(playerInfoRoot, ArmorValueName);
+            goldText ??= FindTmp(playerInfoRoot, GoldValueName);
+
+            if (bloodSlot != null && bloodSlotCollider == null)
+            {
+                bloodSlotCollider = bloodSlot.GetComponent<Collider2D>();
+                if (bloodSlotCollider == null)
+                {
+                    var box = bloodSlot.gameObject.AddComponent<BoxCollider2D>();
+                    box.isTrigger = true;
+                    SyncColliderToSlot(box);
+                    bloodSlotCollider = box;
+                }
+            }
+
+            if (maxHpText != null && !_hasMaxHpBaseColor)
+            {
+                _maxHpBaseColor = maxHpText.color;
+                _hasMaxHpBaseColor = true;
+            }
+
+            if (bloodBarRoot != null && !_hasBloodBarBasePos)
+            {
+                _bloodBarBasePos = bloodBarRoot.localPosition;
+                _hasBloodBarBasePos = true;
+            }
+        }
+
+        private void CaptureVesselBaseIfNeeded()
+        {
+            if (_capturedVesselBase || bloodSlot == null || bloodFill == null)
             {
                 return;
             }
 
-            hpText ??= FindTmp(root, "HpText");
-            attackText ??= FindTmp(root, "AttackText");
-            armorText ??= FindTmp(root, "ArmorText");
-            goldText ??= FindTmp(root, "GoldText");
-            nameText ??= FindTmp(root, "NameText");
+            _baseSlotWidth = Mathf.Max(0.01f, bloodSlot.size.x);
+            _baseFillWidth = Mathf.Max(0.01f, bloodFill.size.x);
+            _fillLocalX = bloodFill.transform.localPosition.x;
+            _animatedSlotWidth = _baseSlotWidth;
+            _animatedFillWidth = _baseFillWidth;
+            _capturedVesselBase = true;
         }
 
-        private static Transform FindPlayerInfoRoot()
+        private void ApplyHpVessel(int hp, int maxHp, bool animate, bool firstPaint)
         {
-            var overlay = GameObject.Find("TableNine Text Overlay UI");
-            if (overlay != null)
-            {
-                var direct = overlay.transform.Find($"{DefaultInfoRootName}/{DefaultPlayerInfoName}");
-                if (direct != null)
-                {
-                    return direct;
-                }
+            hp = Mathf.Max(0, hp);
+            maxHp = Mathf.Max(1, maxHp);
+            _coreHp = hp;
+            _coreMaxHp = maxHp;
 
-                foreach (var t in overlay.GetComponentsInChildren<Transform>(true))
-                {
-                    if (t.name == DefaultPlayerInfoName)
-                    {
-                        return t;
-                    }
-                }
-            }
-
-            foreach (var t in Resources.FindObjectsOfTypeAll<Transform>())
-            {
-                if (t != null
-                    && t.name == DefaultPlayerInfoName
-                    && t.gameObject.scene.IsValid())
-                {
-                    return t;
-                }
-            }
-
-            return null;
-        }
-
-        private static TextMeshProUGUI FindTmp(Transform root, string childName)
-        {
-            var child = root.Find(childName);
-            return child != null ? child.GetComponent<TextMeshProUGUI>() : null;
-        }
-
-        private static bool TryReadAvatarHud(
-            out int hp,
-            out int maxHp,
-            out int attack,
-            out int armor,
-            out int gold,
-            out string displayName)
-        {
-            hp = 0;
-            maxHp = 0;
-            attack = 0;
-            armor = 0;
-            gold = 0;
-            displayName = string.Empty;
-
-            var arch = NineGridArchitecture.Current;
-            if (arch == null)
-            {
-                return false;
-            }
-
-            var player = arch.GetModel<PlayerModel>();
-            gold = player.Coins != null ? Mathf.Max(0, player.Coins.Value) : 0;
-
-            var board = arch.GetModel<BoardModel>();
-            var avatarUid = board.AvatarUid != null ? board.AvatarUid.Value : 0;
-            if (avatarUid <= 0 || !arch.GetModel<CardRegistry>().TryGet(avatarUid, out var avatar))
-            {
-                return false;
-            }
-
-            var stats = arch.GetSystem<IStatSystem>();
-            hp = Mathf.Max(0, stats.GetEffectiveInt(avatar, StatId.Hp));
-            maxHp = Mathf.Max(hp, stats.GetEffectiveInt(avatar, StatId.MaxHp));
-            attack = Mathf.Max(0, stats.GetEffectiveInt(avatar, StatId.Attack));
-            armor = StatArmorUtility.GetEffectiveArmor(stats, avatar);
-            displayName = ResolveAvatarDisplayName(avatar.DefId);
-            return true;
-        }
-
-        private static string ResolveAvatarDisplayName(string defId)
-        {
-            if (string.IsNullOrEmpty(defId))
-            {
-                return "玩家";
-            }
-
-            CoreCardPresentationMapper.EnsureContentCatalogLoaded();
-            var arch = NineGridArchitecture.Current;
-            var content = arch?.GetSystem<IContentSystem>();
-            if (content != null
-                && content.HasCatalog
-                && content.Catalog.Cards.TryGetValue(defId, out var card)
-                && !string.IsNullOrWhiteSpace(card.DisplayName))
-            {
-                return card.DisplayName;
-            }
-
-            return "玩家";
-        }
-
-        private void ApplyHp(int hp, int maxHp, bool animate)
-        {
-            if (hpText == null)
-            {
-                return;
-            }
-
-            var atMax = maxHp > 0 && hp >= maxHp;
-            var text = Mathf.Max(0, hp).ToString();
-            var targetColor = atMax ? HpMaxColor : HpNormalColor;
-            var hadValue = _hp.HasValue;
-            var valueChanged = !hadValue || _hp.Value != hp || hpText.text != text;
-            // 首次刷入不闪；仅从未满 → 满血时提醒两下。
-            var reachedMax = animate && atMax && hadValue && !_wasAtMaxHp;
-            _hp.Value = hp;
-            _hp.HasValue = true;
+            var atMax = hp >= maxHp;
+            var prevHp = firstPaint ? hp : _displayedHp;
+            var hpDelta = hp - prevHp;
+            var reachedMax = animate && atMax && !firstPaint && !_wasAtMaxHp;
             _wasAtMaxHp = atMax;
 
-            if (!valueChanged && !reachedMax)
+            var targetSlot = ResolveSlotWidth(maxHp);
+            var fullFill = ResolveFullFillWidth(maxHp);
+            var targetFill = fullFill * Mathf.Clamp01(hp / (float)maxHp);
+
+            if (maxHpText != null)
             {
-                hpText.color = targetColor;
+                maxHpText.text = "MAX:" + maxHp;
+            }
+
+            if (!animate || bloodSlot == null || bloodFill == null)
+            {
+                KillHpTweens();
+                ApplySlotWidth(targetSlot);
+                ApplyFillWidth(targetFill);
+                _animatedSlotWidth = targetSlot;
+                _animatedFillWidth = targetFill;
+                _displayedHp = hp;
+                if (currentHpText != null)
+                {
+                    currentHpText.text = hp.ToString();
+                    currentHpText.color = atMax ? HpFullColor : HpNormalColor;
+                }
+
                 return;
             }
 
-            hpText.text = text;
+            PlayVesselMotion(targetSlot, targetFill, hp, hpDelta, atMax, reachedMax);
+        }
 
-            StopPunch(_hp, hpText);
+        private void PlayVesselMotion(
+            float targetSlot,
+            float targetFill,
+            int hp,
+            float hpDelta,
+            bool atMax,
+            bool reachedMax)
+        {
+            KillHpTweens(keepDisplayedNumber: true);
 
-            if (!animate)
+            var slotChanged = Mathf.Abs(targetSlot - _animatedSlotWidth) > 0.001f;
+            if (slotChanged)
             {
-                hpText.color = targetColor;
-                return;
+                _slotTween = DOTween
+                    .To(() => _animatedSlotWidth, w =>
+                    {
+                        _animatedSlotWidth = w;
+                        ApplySlotWidth(w);
+                    }, targetSlot, SlotGrowDuration)
+                    .SetEase(Ease.OutBack)
+                    .SetUpdate(true)
+                    .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
+            }
+            else
+            {
+                ApplySlotWidth(targetSlot);
+                _animatedSlotWidth = targetSlot;
+            }
+
+            var fillEase = hpDelta < 0f ? Ease.OutCubic : Ease.OutBack;
+            var fillDuration = HpFillAnimDuration;
+            if (hpDelta < 0f)
+            {
+                fillDuration = 0.32f;
+                FlashFill(FillDamageColor);
+                PunchBloodBar(damage: true);
+                FlashHpText(HpDamageFlash, atMax ? HpFullColor : HpNormalColor);
+            }
+            else if (hpDelta > 0f)
+            {
+                FlashFill(FillHealColor);
+                PunchBloodBar(damage: false);
+                FlashHpText(HpHealFlash, atMax ? HpFullColor : HpNormalColor);
+            }
+
+            _fillTween = DOTween
+                .To(() => _animatedFillWidth, w =>
+                {
+                    _animatedFillWidth = w;
+                    ApplyFillWidth(w);
+                }, targetFill, fillDuration)
+                .SetEase(fillEase)
+                .SetUpdate(true)
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
+
+            if (currentHpText != null)
+            {
+                _hpNumberTween = DOTween
+                    .To(() => _displayedHp, v =>
+                    {
+                        _displayedHp = v;
+                        currentHpText.text = Mathf.RoundToInt(v).ToString();
+                    }, hp, fillDuration)
+                    .SetEase(Ease.OutQuad)
+                    .SetUpdate(true)
+                    .SetLink(gameObject, LinkBehaviour.KillOnDestroy)
+                    .OnComplete(() =>
+                    {
+                        _displayedHp = hp;
+                        currentHpText.text = hp.ToString();
+                        currentHpText.color = atMax ? HpFullColor : HpNormalColor;
+                    });
+            }
+            else
+            {
+                _displayedHp = hp;
             }
 
             if (reachedMax)
             {
-                _hp.PunchRoutine = StartCoroutine(FlashMaxHp(hpText, _hp, targetColor));
+                if (_maxHpPulseRoutine != null)
+                {
+                    StopCoroutine(_maxHpPulseRoutine);
+                }
+
+                _maxHpPulseRoutine = StartCoroutine(FlashMaxHpReached());
+            }
+        }
+
+        private float ResolveSlotWidth(int maxHp)
+        {
+            var delta = maxHp - baseMaxHp;
+            return Mathf.Max(0.05f, _baseSlotWidth + delta * SlotWidthPerMaxHp);
+        }
+
+        private float ResolveFullFillWidth(int maxHp)
+        {
+            var delta = maxHp - baseMaxHp;
+            return Mathf.Max(0.02f, _baseFillWidth + delta * SlotWidthPerMaxHp);
+        }
+
+        private void ApplySlotWidth(float width)
+        {
+            if (bloodSlot == null)
+            {
                 return;
             }
 
-            hpText.color = targetColor;
-            if (valueChanged)
+            var size = bloodSlot.size;
+            size.x = width;
+            bloodSlot.size = size;
+            SyncColliderToSlot(bloodSlotCollider as BoxCollider2D);
+        }
+
+        private void ApplyFillWidth(float width)
+        {
+            if (bloodFill == null)
             {
-                _hp.PunchRoutine = StartCoroutine(FlashColor(hpText, _hp, targetColor));
+                return;
+            }
+
+            var size = bloodFill.size;
+            size.x = Mathf.Max(0.001f, width);
+            bloodFill.size = size;
+
+            var lp = bloodFill.transform.localPosition;
+            lp.x = _fillLocalX;
+            bloodFill.transform.localPosition = lp;
+        }
+
+        private void SyncColliderToSlot(BoxCollider2D box)
+        {
+            if (box == null || bloodSlot == null)
+            {
+                return;
+            }
+
+            // 左 pivot：碰撞盒中心在宽度一半处。
+            var w = bloodSlot.size.x;
+            var h = Mathf.Max(0.2f, bloodSlot.size.y);
+            box.size = new Vector2(w, h);
+            box.offset = new Vector2(w * 0.5f, 0f);
+        }
+
+        private void FlashFill(Color flash)
+        {
+            if (bloodFill == null)
+            {
+                return;
+            }
+
+            _fillColorTween?.Kill();
+            bloodFill.color = flash;
+            _fillColorTween = DOTween
+                .To(() => bloodFill.color, c => bloodFill.color = c, FillNormalColor, 0.28f)
+                .SetUpdate(true)
+                .SetLink(bloodFill.gameObject, LinkBehaviour.KillOnDestroy);
+        }
+
+        private void FlashHpText(Color flash, Color settle)
+        {
+            if (currentHpText == null)
+            {
+                return;
+            }
+
+            _hpTextColorTween?.Kill();
+            currentHpText.color = flash;
+            _hpTextColorTween = DOTween
+                .To(() => currentHpText.color, c => currentHpText.color = c, settle, NumberFlashDuration)
+                .SetUpdate(true)
+                .SetLink(currentHpText.gameObject, LinkBehaviour.KillOnDestroy);
+        }
+
+        private void PunchBloodBar(bool damage)
+        {
+            if (bloodBarRoot == null)
+            {
+                return;
+            }
+
+            if (!_hasBloodBarBasePos)
+            {
+                _bloodBarBasePos = bloodBarRoot.localPosition;
+                _hasBloodBarBasePos = true;
+            }
+
+            _barShakeTween?.Kill();
+            bloodBarRoot.localPosition = _bloodBarBasePos;
+            if (damage)
+            {
+                _barShakeTween = bloodBarRoot
+                    .DOShakePosition(0.22f, new Vector3(0.06f, 0.04f, 0f), 18, 90f, false, true)
+                    .SetUpdate(true)
+                    .SetLink(bloodBarRoot.gameObject, LinkBehaviour.KillOnDestroy)
+                    .OnComplete(() => bloodBarRoot.localPosition = _bloodBarBasePos);
+            }
+            else
+            {
+                _barShakeTween = bloodBarRoot
+                    .DOPunchScale(new Vector3(0.06f, 0.1f, 0f), 0.28f, 8, 0.6f)
+                    .SetUpdate(true)
+                    .SetLink(bloodBarRoot.gameObject, LinkBehaviour.KillOnDestroy);
+            }
+        }
+
+        private IEnumerator FlashMaxHpReached()
+        {
+            if (currentHpText == null)
+            {
+                yield break;
+            }
+
+            var settle = HpFullColor;
+            for (var pulse = 0; pulse < MaxHpFlashPulses; pulse++)
+            {
+                var elapsed = 0f;
+                var half = MaxHpFlashHalfPeriod;
+                while (elapsed < half * 2f)
+                {
+                    elapsed += Time.unscaledDeltaTime;
+                    var rising = elapsed < half;
+                    var t = rising
+                        ? Mathf.Clamp01(elapsed / half)
+                        : Mathf.Clamp01((elapsed - half) / half);
+                    var blend = rising ? t : 1f - t;
+                    currentHpText.color = Color.Lerp(settle, Color.white, blend);
+                    yield return null;
+                }
+            }
+
+            currentHpText.color = settle;
+            _maxHpPulseRoutine = null;
+        }
+
+        private void UpdateBloodSlotHover()
+        {
+            if (bloodSlotCollider == null || maxHpText == null)
+            {
+                return;
+            }
+
+            var cam = Camera.main;
+            if (cam == null)
+            {
+                return;
+            }
+
+            var mouse = Input.mousePosition;
+            var world = cam.ScreenToWorldPoint(mouse);
+            world.z = bloodSlotCollider.bounds.center.z;
+            var hovering = bloodSlotCollider.OverlapPoint(world);
+            if (hovering == _hoveringSlot)
+            {
+                return;
+            }
+
+            _hoveringSlot = hovering;
+            SetMaxHpVisible(hovering, instant: false);
+        }
+
+        private void SetMaxHpVisible(bool visible, bool instant)
+        {
+            if (maxHpText == null)
+            {
+                return;
+            }
+
+            _maxHpRevealSeq?.Kill();
+            _maxHpVisible = visible;
+
+            if (!_hasMaxHpBaseColor)
+            {
+                _maxHpBaseColor = maxHpText.color;
+                _hasMaxHpBaseColor = true;
+            }
+
+            var target = _maxHpBaseColor;
+            if (!visible)
+            {
+                target.a = 0f;
+            }
+
+            if (instant)
+            {
+                maxHpText.color = target;
+                maxHpText.enabled = visible || target.a > 0.01f;
+                if (!visible)
+                {
+                    maxHpText.enabled = false;
+                }
+
+                return;
+            }
+
+            maxHpText.enabled = true;
+            _maxHpRevealSeq = DOTween.Sequence().SetUpdate(true).SetLink(maxHpText.gameObject, LinkBehaviour.KillOnDestroy);
+            _maxHpRevealSeq.Append(
+                DOTween.To(() => maxHpText.color, c => maxHpText.color = c, target, 0.12f));
+            if (!visible)
+            {
+                _maxHpRevealSeq.OnComplete(() =>
+                {
+                    if (!_maxHpVisible)
+                    {
+                        maxHpText.enabled = false;
+                    }
+                });
             }
         }
 
         private void ApplyGold(int gold, bool animate)
         {
-            // 增益演出由 GoldGainFx 缓冲驱动文本；本处只同步槽位，避免瞬间跳变抢戏。
             if (GoldGainFxManagerSingleton.TryGetInstance(out var goldFx)
                 && goldFx.TryHandleGoldSync(gold, animate))
             {
@@ -325,7 +632,7 @@ namespace NineGrid.Flow
 
         private void ApplyIntStat(
             StatSlot slot,
-            TextMeshProUGUI label,
+            TMP_Text label,
             int value,
             string text,
             bool animate)
@@ -353,7 +660,7 @@ namespace NineGrid.Flow
             slot.PunchRoutine = StartCoroutine(FlashColor(label, slot, label.color));
         }
 
-        private void StopPunch(StatSlot slot, TextMeshProUGUI label)
+        private void StopPunch(StatSlot slot, TMP_Text label)
         {
             if (slot.PunchRoutine != null)
             {
@@ -361,7 +668,6 @@ namespace NineGrid.Flow
                 slot.PunchRoutine = null;
             }
 
-            // 左对齐 + 中心 pivot：缩放残留会把字形左缘往右推，停动画时必须还原。
             if (label != null)
             {
                 EnsureBaseScale(slot, label);
@@ -369,7 +675,7 @@ namespace NineGrid.Flow
             }
         }
 
-        private static void EnsureBaseScale(StatSlot slot, TextMeshProUGUI label)
+        private static void EnsureBaseScale(StatSlot slot, TMP_Text label)
         {
             if (slot.HasBaseScale || label == null)
             {
@@ -380,7 +686,7 @@ namespace NineGrid.Flow
             slot.HasBaseScale = true;
         }
 
-        private IEnumerator FlashColor(TextMeshProUGUI label, StatSlot slot, Color settleColor)
+        private IEnumerator FlashColor(TMP_Text label, StatSlot slot, Color settleColor)
         {
             if (label == null)
             {
@@ -392,10 +698,11 @@ namespace NineGrid.Flow
 
             var flashColor = Color.Lerp(settleColor, Color.white, 0.55f);
             var elapsed = 0f;
-            while (elapsed < FlashDuration)
+            const float flashDuration = 0.18f;
+            while (elapsed < flashDuration)
             {
                 elapsed += Time.unscaledDeltaTime;
-                var flashT = Mathf.Clamp01(elapsed / FlashDuration);
+                var flashT = Mathf.Clamp01(elapsed / flashDuration);
                 label.color = Color.Lerp(flashColor, settleColor, flashT);
                 yield return null;
             }
@@ -405,37 +712,95 @@ namespace NineGrid.Flow
             slot.PunchRoutine = null;
         }
 
-        private IEnumerator FlashMaxHp(TextMeshProUGUI label, StatSlot slot, Color settleColor)
+        private void KillHpTweens(bool keepDisplayedNumber = false)
         {
-            if (label == null)
+            _fillTween?.Kill();
+            _slotTween?.Kill();
+            _hpNumberTween?.Kill();
+            _fillColorTween?.Kill();
+            _hpTextColorTween?.Kill();
+            _barShakeTween?.Kill();
+            _fillTween = null;
+            _slotTween = null;
+            _hpNumberTween = null;
+            _fillColorTween = null;
+            _hpTextColorTween = null;
+            _barShakeTween = null;
+
+            if (!keepDisplayedNumber)
             {
-                yield break;
+                _displayedHp = _coreHp;
             }
 
-            EnsureBaseScale(slot, label);
-            label.rectTransform.localScale = slot.BaseScale;
-            var white = Color.white;
-
-            for (var pulse = 0; pulse < MaxHpFlashPulses; pulse++)
+            if (bloodBarRoot != null && _hasBloodBarBasePos)
             {
-                var elapsed = 0f;
-                var half = MaxHpFlashHalfPeriod;
-                while (elapsed < half * 2f)
+                bloodBarRoot.localPosition = _bloodBarBasePos;
+                bloodBarRoot.localScale = Vector3.one;
+            }
+
+            if (bloodFill != null)
+            {
+                bloodFill.color = FillNormalColor;
+            }
+        }
+
+        private static bool TryReadAvatarHud(
+            out int hp,
+            out int maxHp,
+            out int armor,
+            out int gold)
+        {
+            hp = 0;
+            maxHp = 0;
+            armor = 0;
+            gold = 0;
+
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return false;
+            }
+
+            var player = arch.GetModel<PlayerModel>();
+            gold = player.Coins != null ? Mathf.Max(0, player.Coins.Value) : 0;
+
+            var board = arch.GetModel<BoardModel>();
+            var avatarUid = board.AvatarUid != null ? board.AvatarUid.Value : 0;
+            if (avatarUid <= 0 || !arch.GetModel<CardRegistry>().TryGet(avatarUid, out var avatar))
+            {
+                return false;
+            }
+
+            var stats = arch.GetSystem<IStatSystem>();
+            hp = Mathf.Max(0, stats.GetEffectiveInt(avatar, StatId.Hp));
+            maxHp = Mathf.Max(hp, stats.GetEffectiveInt(avatar, StatId.MaxHp));
+            armor = StatArmorUtility.GetEffectiveArmor(stats, avatar);
+            return true;
+        }
+
+        private static Transform FindChild(Transform root, string childName)
+        {
+            if (root == null || string.IsNullOrEmpty(childName))
+            {
+                return null;
+            }
+
+            var trimTarget = childName.Trim();
+            foreach (var t in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (t != null && t.name.Trim() == trimTarget)
                 {
-                    elapsed += Time.unscaledDeltaTime;
-                    var rising = elapsed < half;
-                    var t = rising
-                        ? Mathf.Clamp01(elapsed / half)
-                        : Mathf.Clamp01((elapsed - half) / half);
-                    var blend = rising ? t : 1f - t;
-                    label.color = Color.Lerp(settleColor, white, blend);
-                    yield return null;
+                    return t;
                 }
             }
 
-            label.color = settleColor;
-            label.rectTransform.localScale = slot.BaseScale;
-            slot.PunchRoutine = null;
+            return null;
+        }
+
+        private static TMP_Text FindTmp(Transform root, string childName)
+        {
+            var child = FindChild(root, childName);
+            return child != null ? child.GetComponent<TMP_Text>() : null;
         }
 
         private sealed class StatSlot

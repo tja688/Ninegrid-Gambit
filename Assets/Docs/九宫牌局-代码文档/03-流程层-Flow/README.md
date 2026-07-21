@@ -57,7 +57,7 @@
 | `DamageNumberManagerSingleton.cs` | MonoBehaviour 单例 | DamageNumbersPro 飘字 Spawn |
 | `GoldGainFxManagerSingleton.cs` | MonoBehaviour 单例 | 金币飞入与 HUD 数字表演 |
 | `UiPanelRouter.cs` | MonoBehaviour | 主菜单/局内/奖励/房间等面板显隐 |
-| `PlayerInfoHudPresenter.cs` | MonoBehaviour | 血/攻/甲/金/名从 Core 同步 |
+| `PlayerInfoHudPresenter.cs` | MonoBehaviour | `玩家信息` 血槽/护甲/金币从 Core 同步 |
 | `BounceFanChoicePresenter.cs` | MonoBehaviour | Bounce 扇形多选一卡表演 |
 | `RoomChoicePresenter.cs` | MonoBehaviour | 房间左右二选一进出场 |
 | `BoardPresentationStepProjector.cs` | static | EventLog → BoardPresentationStep / Legacy Moves |

@@ -24,8 +24,8 @@ namespace NineGrid.Flow
         [Tooltip("场地内金币图标（吞噬目标）。留空则运行时按名查找「金币图标」。")]
         [SerializeField] private Transform sinkIcon;
 
-        [Tooltip("PlayerInfoText 下的金币 TMP。留空则运行时在 Overlay 下按名查找 GoldText。")]
-        [SerializeField] private TextMeshProUGUI goldText;
+        [Tooltip("金币数值 TMP（世界或 UGUI）。留空则优先「玩家信息/金币/金币数值」。")]
+        [SerializeField] private TMP_Text goldText;
 
         [Tooltip("留空则使用 Camera.main；也可手动拖入主相机。")]
         [SerializeField] private Camera targetCamera;
@@ -555,20 +555,26 @@ namespace NineGrid.Flow
         {
             if (sinkIcon == null)
             {
-                sinkIcon = FindNamedTransform(DefaultIconName);
+                sinkIcon = FindPreferredTransform(DefaultIconName, preferredRootName: "玩家信息")
+                           ?? FindNamedTransform(DefaultIconName);
             }
 
             if (goldText == null)
             {
-                var overlay = GameObject.Find("TableNine Text Overlay UI");
-                if (overlay != null)
+                goldText = FindPreferredTmp("金币数值", preferredRootName: "玩家信息");
+                if (goldText == null)
                 {
-                    foreach (var tmp in overlay.GetComponentsInChildren<TextMeshProUGUI>(true))
+                    var overlay = GameObject.Find("TableNine Text Overlay UI")
+                                  ?? GameObject.Find("Text Overlay UI");
+                    if (overlay != null)
                     {
-                        if (tmp != null && tmp.name == "GoldText")
+                        foreach (var tmp in overlay.GetComponentsInChildren<TMP_Text>(true))
                         {
-                            goldText = tmp;
-                            break;
+                            if (tmp != null && tmp.name == "GoldText")
+                            {
+                                goldText = tmp;
+                                break;
+                            }
                         }
                     }
                 }
@@ -578,6 +584,49 @@ namespace NineGrid.Flow
             {
                 targetCamera = Camera.main;
             }
+        }
+
+        private static Transform FindPreferredTransform(string objectName, string preferredRootName)
+        {
+            Transform preferred = null;
+            Transform fallback = null;
+            foreach (var t in Resources.FindObjectsOfTypeAll<Transform>())
+            {
+                if (t == null || t.name != objectName || !t.gameObject.scene.IsValid())
+                {
+                    continue;
+                }
+
+                fallback ??= t;
+                if (IsUnderNamedRoot(t, preferredRootName))
+                {
+                    preferred = t;
+                    break;
+                }
+            }
+
+            return preferred != null ? preferred : fallback;
+        }
+
+        private static TMP_Text FindPreferredTmp(string objectName, string preferredRootName)
+        {
+            var t = FindPreferredTransform(objectName, preferredRootName);
+            return t != null ? t.GetComponent<TMP_Text>() : null;
+        }
+
+        private static bool IsUnderNamedRoot(Transform t, string rootName)
+        {
+            while (t != null)
+            {
+                if (t.name == rootName)
+                {
+                    return true;
+                }
+
+                t = t.parent;
+            }
+
+            return false;
         }
 
         private void CaptureIconBaseScale()
