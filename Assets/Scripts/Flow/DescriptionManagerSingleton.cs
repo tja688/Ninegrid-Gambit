@@ -12,6 +12,10 @@ namespace NineGrid.Flow
     /// <summary>
     /// 局内描述管理单例：合法 hover/drag 对象时，把 ContentVisual 描述写入 Card Info Text；
     /// 主流程选择悬停可写入 Notice Text。
+    /// <para>
+    /// 遗留 UI：Card Info Text 不再作为卡面基础描述权威（权威在卡面 <c>Basic_Description</c> 槽 +
+    /// 投影 Commit）。本类可残存供选择/拖拽提示，但不得与卡面双写真相源。
+    /// </para>
     /// </summary>
     public sealed class DescriptionManagerSingleton : MonoBehaviour
     {
@@ -144,7 +148,15 @@ namespace NineGrid.Flow
                 return _generation;
             }
 
-            if (!TryResolveDescription(defId, route, out var description))
+            if (!TryResolveDescription(defId, route, out var description, out var isCardFaceBasicDescription))
+            {
+                return ClearActiveAndBump();
+            }
+
+            // #16：卡面基础描述权威在 Basic_Description Commit；Hover/Drag 不再把同源 ContentVisual
+            // 文案写入 Card Info Text，避免与卡面双写真相。选择项 / BoardSelect / Notice 仍可写。
+            if (isCardFaceBasicDescription
+                && (route == DescriptionShowRoute.Hover || route == DescriptionShowRoute.Drag))
             {
                 return ClearActiveAndBump();
             }
@@ -229,7 +241,11 @@ namespace NineGrid.Flow
                 return _noticeGeneration;
             }
 
-            if (!TryResolveDescription(defId, DescriptionShowRoute.Hover, out var description))
+            if (!TryResolveDescription(
+                    defId,
+                    DescriptionShowRoute.Hover,
+                    out var description,
+                    out _))
             {
                 return ClearNoticeActiveAndBump();
             }
@@ -455,9 +471,11 @@ namespace NineGrid.Flow
         private bool TryResolveDescription(
             string defId,
             DescriptionShowRoute route,
-            out string description)
+            out string description,
+            out bool isCardFaceBasicDescription)
         {
             description = string.Empty;
+            isCardFaceBasicDescription = false;
 
             // Drag 专属描述路由预留：当前与 Hover 相同，后续可在此分支替换文案来源。
             _ = route;
@@ -494,8 +512,15 @@ namespace NineGrid.Flow
             }
 
             description = resolved.Description ?? string.Empty;
-            TryAppendAvatarRuntimeDescription(defId, content.Catalog, ref description);
-            return !string.IsNullOrWhiteSpace(description);
+            // Avatar 悬停追加血量/遗物是 HUD 提示，不是卡面基础描述权威；其余 ContentVisual 描述归卡面。
+            var avatarEnriched = TryAppendAvatarRuntimeDescription(defId, content.Catalog, ref description);
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                return false;
+            }
+
+            isCardFaceBasicDescription = !avatarEnriched;
+            return true;
         }
 
         /// <summary>
