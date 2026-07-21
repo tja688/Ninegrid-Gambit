@@ -77,6 +77,10 @@ namespace NineGrid.VisualLook
         bool useUnifiedScanline = false;
 
         [SerializeField]
+        [Tooltip("单相机 + NoSnap 遮罩模式：世界字留在 Base 相机（不剔除 NoPixelSnap、不建 Overlay 文字相机），逃 Snap 靠 Feature.buildNoSnapMask，扫描线由全屏 Pass 统一施加。开启后世界排序层可自然遮挡文字（卡牌/书盖字）。需 Feature.buildNoSnapMask=true。")]
+        bool useSnapMaskSingleCamera = true;
+
+        [SerializeField]
         [Tooltip("把 TMP 扫描线材质分辨率等参数同步到本 Rig（扫描线开关由 useUnifiedScanline 决定）。")]
         bool syncTmpScanlineMaterials = true;
 
@@ -112,14 +116,21 @@ namespace NineGrid.VisualLook
                 return;
             }
 
-            if (rebindLivingTextCanvases)
+            if (useSnapMaskSingleCamera)
             {
-                RebindCanvases();
+                ApplySingleCameraMode();
             }
-
-            if (applyCameraStack)
+            else
             {
-                ApplyStackAndCulling();
+                if (rebindLivingTextCanvases)
+                {
+                    RebindCanvases();
+                }
+
+                if (applyCameraStack)
+                {
+                    ApplyStackAndCulling();
+                }
             }
 
             ApplyLookParams();
@@ -147,12 +158,41 @@ namespace NineGrid.VisualLook
                 }
             }
 
-            if (uiCamera == null && worldCamera != null && applyCameraStack)
+            if (uiCamera == null && worldCamera != null && applyCameraStack && !useSnapMaskSingleCamera)
             {
                 var go = new GameObject("UICamera");
                 go.transform.SetParent(worldCamera.transform, false);
                 uiCamera = go.AddComponent<Camera>();
                 go.AddComponent<UniversalAdditionalCameraData>();
+            }
+        }
+
+        /// <summary>
+        /// 单相机模式：Base 相机重新纳入 NoPixelSnap 层（撤销旧的剔除），并把旧的 Overlay 文字相机移出 camera stack。
+        /// 世界字于是回到 Base 相机的正常 2D 排序里，遮挡天然成立；逃 Snap 交给 Feature 的 NoSnap 遮罩。
+        /// </summary>
+        void ApplySingleCameraMode()
+        {
+            if (worldCamera == null)
+            {
+                return;
+            }
+
+            if (_noSnapLayer >= 0)
+            {
+                worldCamera.cullingMask |= 1 << _noSnapLayer;
+            }
+
+            var worldData = worldCamera.GetComponent<UniversalAdditionalCameraData>();
+            if (worldData != null && uiCamera != null && worldData.cameraStack.Contains(uiCamera))
+            {
+                worldData.cameraStack.Remove(uiCamera);
+            }
+
+            // 旧的 Overlay 文字相机若存在，关掉以免继续在栈末覆盖绘制。
+            if (uiCamera != null)
+            {
+                uiCamera.enabled = false;
             }
         }
 
@@ -316,10 +356,14 @@ namespace NineGrid.VisualLook
                 mat.SetVector("_PixelResolution", new Vector4(pixelResolution.x, pixelResolution.y, 0f, 0f));
             }
 
-            // Unified post-stack blit owns scanlines; keep TMP materials off to avoid double.
+            // 谁负责扫描线：
+            // - 单相机模式：字在 Base 颜色缓冲里，全屏 Pass2 已统一施加扫描线 → TMP 关掉，避免叠双份。
+            // - useUnifiedScanline：Overlay 末相机统一 blit → TMP 关掉。
+            // - 否则（旧双相机稳定路径）：TMP 自带扫描线补齐。
+            bool tmpOwnsScanline = !useUnifiedScanline && !useSnapMaskSingleCamera;
             if (mat.HasProperty("_ScanlineEnabled"))
             {
-                mat.SetFloat("_ScanlineEnabled", useUnifiedScanline ? 0f : scanlineEnabled);
+                mat.SetFloat("_ScanlineEnabled", tmpOwnsScanline ? scanlineEnabled : 0f);
             }
 
             if (mat.HasProperty("_ScanlineIntensity"))

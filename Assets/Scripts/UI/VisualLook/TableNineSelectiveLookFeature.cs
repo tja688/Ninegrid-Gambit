@@ -3,6 +3,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.RenderGraphModule.Util;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.Experimental.Rendering;
 
 namespace NineGrid.VisualLook
 {
@@ -34,11 +35,19 @@ namespace NineGrid.VisualLook
 
         SelectiveLookPass _basePass;
         SelectiveLookPass _overlayPass;
+        NoSnapMaskPass _maskPass;
 
         public override void Create()
         {
             _basePass = new SelectiveLookPass();
             _overlayPass = new SelectiveLookPass();
+            _maskPass = new NoSnapMaskPass();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            _maskPass?.Dispose();
+            base.Dispose(disposing);
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -72,6 +81,13 @@ namespace NineGrid.VisualLook
                 _overlayPass.renderPassEvent = settings.overlayScanlineEvent;
                 renderer.EnqueuePass(_overlayPass);
                 return;
+            }
+
+            if (settings.buildNoSnapMask && settings.maskMaterial != null)
+            {
+                _maskPass.Setup(settings);
+                _maskPass.renderPassEvent = RenderPassEvent.AfterRenderingTransparents;
+                renderer.EnqueuePass(_maskPass);
             }
 
             if (settings.overlayOwnsScanline)
@@ -126,7 +142,8 @@ namespace NineGrid.VisualLook
                     return;
                 }
 
-                _settings.lookMaterial.SetFloat(UseNoSnapMaskId, 0f);
+                _settings.lookMaterial.SetFloat(UseNoSnapMaskId,
+                    _settings.buildNoSnapMask && _settings.maskMaterial != null ? 1f : 0f);
 
                 var desc = renderGraph.GetTextureDesc(source);
                 desc.name = "_TableNineLookTemp";
@@ -157,6 +174,95 @@ namespace NineGrid.VisualLook
                 var copyParams = new RenderGraphUtils.BlitMaterialParameters(
                     temp, source, _settings.lookMaterial, 0);
                 renderGraph.AddBlitPass(copyParams, "TableNine Look Copy");
+            }
+        }
+
+        /// <summary>
+        /// Redraws NoPixelSnap-layer meshes (world TMP text) into a screen-space mask via
+        /// <see cref="Settings.maskMaterial"/>, then binds it as the global _NoSnapMask so the
+        /// snap pass can leave those pixels un-snapped. Text stays on the base camera, so world
+        /// sorting layers still occlude it naturally (cards over text, book over text, etc.).
+        /// </summary>
+        sealed class NoSnapMaskPass : ScriptableRenderPass
+        {
+            static readonly int NoSnapMaskId = Shader.PropertyToID("_NoSnapMask");
+            static readonly ShaderTagId[] MaskTags =
+            {
+                new ShaderTagId("Universal2D"),
+                new ShaderTagId("SRPDefaultUnlit"),
+                new ShaderTagId("UniversalForward"),
+            };
+
+            Settings _settings;
+
+            class PassData
+            {
+                public RendererListHandle rendererList;
+            }
+
+            public void Setup(Settings settings)
+            {
+                _settings = settings;
+            }
+
+            public void Dispose()
+            {
+            }
+
+            public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
+            {
+                if (_settings == null || _settings.maskMaterial == null)
+                {
+                    return;
+                }
+
+                var resourceData = frameData.Get<UniversalResourceData>();
+                if (resourceData.isActiveTargetBackBuffer)
+                {
+                    return;
+                }
+
+                var renderingData = frameData.Get<UniversalRenderingData>();
+                var cameraData = frameData.Get<UniversalCameraData>();
+
+                var maskDesc = renderGraph.GetTextureDesc(resourceData.activeColorTexture);
+                maskDesc.name = "_TableNineNoSnapMask";
+                maskDesc.depthBufferBits = 0;
+                maskDesc.clearBuffer = true;
+                maskDesc.clearColor = Color.black;
+                maskDesc.colorFormat = GraphicsFormat.R8_UNorm;
+                maskDesc.msaaSamples = MSAASamples.None;
+                var maskTex = renderGraph.CreateTexture(maskDesc);
+
+                var sorting = new SortingSettings(cameraData.camera)
+                {
+                    criteria = SortingCriteria.CommonTransparent,
+                };
+                var drawSettings = new DrawingSettings(MaskTags[0], sorting)
+                {
+                    overrideMaterial = _settings.maskMaterial,
+                    overrideMaterialPassIndex = 0,
+                };
+                for (int i = 1; i < MaskTags.Length; i++)
+                {
+                    drawSettings.SetShaderPassName(i, MaskTags[i]);
+                }
+
+                var filter = new FilteringSettings(RenderQueueRange.all, _settings.noSnapLayers);
+                var listParams = new RendererListParams(renderingData.cullResults, drawSettings, filter);
+
+                using (var builder = renderGraph.AddRasterRenderPass<PassData>(
+                    "TableNine NoSnap Mask", out var passData))
+                {
+                    passData.rendererList = renderGraph.CreateRendererList(listParams);
+                    builder.UseRendererList(passData.rendererList);
+                    builder.SetRenderAttachment(maskTex, 0);
+                    builder.AllowPassCulling(false);
+                    builder.SetGlobalTextureAfterPass(maskTex, NoSnapMaskId);
+                    builder.SetRenderFunc(
+                        (PassData data, RasterGraphContext ctx) =>
+                            ctx.cmd.DrawRendererList(data.rendererList));
+                }
             }
         }
     }
