@@ -9,11 +9,13 @@ using UnityEngine;
 namespace NineGrid.Content.Editor
 {
     /// <summary>
-    /// 一次性：从旧 visual_asset / content_visual JSON 灌图进 Catalog SO。
+    /// 一次性：从旧 visual_asset / content_visual JSON 仅灌主图标进 Catalog SO。
+    /// Face_Background / 卡背等不迁入，留给卡面模板兜底；勿把旧整卡面/卡背当背景。
     /// </summary>
     public static class ContentVisualSpriteCatalogMigrationMenu
     {
         private const string MenuPath = "TableNine/Content/Migrate Visual Assets Into Catalog SOs";
+        private const string ClearFacesMenuPath = "TableNine/Content/Clear Face Backgrounds From Catalog SOs";
         private const string AssetFolder = "Assets/Arts/ContentVisual";
         private const string LubanRelative = "Assets/StreamingAssets/TableNine/LubanData";
 
@@ -28,9 +30,25 @@ namespace NineGrid.Content.Editor
                 Debug.Log(
                     "[ContentVisual] Catalog SO migration: entries=" + report.EntryCount
                     + " icons=" + report.IconAssigned
-                    + " faces=" + report.FaceAssigned
+                    + " facesCleared=" + report.FacesCleared
                     + " missingIcon=" + report.MissingIcon
-                    + " missingFace=" + report.MissingFace);
+                    + " (face/back 不迁入，模板兜底)");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+            }
+        }
+
+        [MenuItem(ClearFacesMenuPath)]
+        public static void ClearFaceBackgrounds()
+        {
+            try
+            {
+                var cleared = ClearAllFaceBackgrounds();
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+                Debug.Log("[ContentVisual] Cleared Face_Background on " + cleared + " catalog entries (+ defaultFace).");
             }
             catch (Exception ex)
             {
@@ -100,11 +118,10 @@ namespace NineGrid.Content.Editor
                 report.EntryCount++;
 
                 Sprite icon;
-                Sprite face;
-                catalog.TryGet(contentId, out icon, out face);
+                Sprite existingFace;
+                catalog.TryGet(contentId, out icon, out existingFace);
 
                 var iconKey = node["icon_key"] != null ? node["icon_key"].Value : string.Empty;
-                var faceKey = node["face_key"] != null ? node["face_key"].Value : string.Empty;
 
                 Sprite resolvedIcon;
                 if (TryResolveSprite(iconKey, assetKeyByVisualId, out resolvedIcon))
@@ -117,22 +134,83 @@ namespace NineGrid.Content.Editor
                     report.MissingIcon++;
                 }
 
-                Sprite resolvedFace;
-                if (TryResolveSprite(faceKey, assetKeyByVisualId, out resolvedFace))
+                // 只保留主图标；Face_Background 一律清空，避免旧整卡面/卡包图盖掉模板背景。
+                if (existingFace != null)
                 {
-                    face = resolvedFace;
-                    report.FaceAssigned++;
-                }
-                else if (!string.IsNullOrEmpty(faceKey))
-                {
-                    report.MissingFace++;
+                    report.FacesCleared++;
                 }
 
-                catalog.SetSprites(contentId, icon, face);
+                catalog.SetSprites(contentId, icon, face: null);
                 EditorUtility.SetDirty(catalog);
             }
 
+            report.FacesCleared += ClearDefaultFaces(set);
             return report;
+        }
+
+        public static int ClearAllFaceBackgrounds()
+        {
+            var set = LoadOrCreateCatalogSet();
+            var cleared = 0;
+            foreach (var catalog in EnumerateCatalogs(set))
+            {
+                if (catalog == null || catalog.Entries == null)
+                {
+                    continue;
+                }
+
+                for (var i = 0; i < catalog.Entries.Count; i++)
+                {
+                    var entry = catalog.Entries[i];
+                    if (entry == null || entry.face == null)
+                    {
+                        continue;
+                    }
+
+                    entry.face = null;
+                    cleared++;
+                }
+
+                catalog.InvalidateLookup();
+                EditorUtility.SetDirty(catalog);
+            }
+
+            cleared += ClearDefaultFaces(set);
+            return cleared;
+        }
+
+        private static int ClearDefaultFaces(ContentVisualSpriteCatalogSet set)
+        {
+            var cleared = 0;
+            foreach (var catalog in EnumerateCatalogs(set))
+            {
+                if (catalog == null || catalog.DefaultFace == null)
+                {
+                    continue;
+                }
+
+                catalog.DefaultFace = null;
+                cleared++;
+                EditorUtility.SetDirty(catalog);
+            }
+
+            return cleared;
+        }
+
+        private static IEnumerable<ContentVisualSpriteCatalogSO> EnumerateCatalogs(
+            ContentVisualSpriteCatalogSet set)
+        {
+            if (set == null)
+            {
+                yield break;
+            }
+
+            yield return set.helpCards;
+            yield return set.monsters;
+            yield return set.relics;
+            yield return set.skills;
+            yield return set.misc;
+            yield return set.choiceOptions;
         }
 
         public static ContentVisualSpriteCatalogSet LoadOrCreateCatalogSet()
@@ -241,9 +319,8 @@ namespace NineGrid.Content.Editor
         {
             public int EntryCount;
             public int IconAssigned;
-            public int FaceAssigned;
+            public int FacesCleared;
             public int MissingIcon;
-            public int MissingFace;
         }
     }
 }

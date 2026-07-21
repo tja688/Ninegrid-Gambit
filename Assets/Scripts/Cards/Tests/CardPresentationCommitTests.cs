@@ -187,6 +187,80 @@ namespace NineGrid.Cards.Tests
         }
 
         [Test]
+        public void Commit_EmptyBasicDescription_KeepsTemplateText()
+        {
+            var card = _cardManager.SpawnView(
+                _nextUid++,
+                defId: "monster.desc_fallback",
+                kind: CardPresentationKind.Monster);
+
+            card.CommitPresentation(new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.Monster,
+                DefId = "monster.desc_fallback",
+                DisplayName = "模板描述怪",
+                MainIcon = _mainIcon,
+                Attack = 1,
+                Armor = 0,
+                Hp = 1,
+                BasicDescription = string.Empty,
+                FaceUp = true,
+            });
+
+            Assert.AreEqual(
+                "模板描述文案",
+                ReadBasicDescription(card),
+                "空 BasicDescription 应保留卡面模板文案，不灌旧 ContentVisual 长文");
+        }
+
+        [Test]
+        public void Commit_NullFaceBackground_KeepsTemplateBackground()
+        {
+            var templateBg = CreateSprite("template-face-bg");
+            try
+            {
+                Assert.IsTrue(
+                    CardFaceSlotNodeMap.TryFindRenderer(
+                        _monsterFace.transform,
+                        CardFaceSlotCodes.FaceBackground,
+                        out var bgRenderer));
+                bgRenderer.sprite = templateBg;
+
+                var card = _cardManager.SpawnView(
+                    _nextUid++,
+                    defId: "monster.bg_fallback",
+                    kind: CardPresentationKind.Monster);
+
+                card.CommitPresentation(new CardPresentationSnapshot
+                {
+                    Kind = CardPresentationKind.Monster,
+                    DefId = "monster.bg_fallback",
+                    DisplayName = "背景兜底",
+                    MainIcon = _mainIcon,
+                    FaceBackground = null,
+                    Attack = 1,
+                    Armor = 0,
+                    Hp = 1,
+                    FaceUp = true,
+                });
+
+                Assert.IsTrue(
+                    CardFaceSlotNodeMap.TryFindRenderer(
+                        card.MountedFaceRoot,
+                        CardFaceSlotCodes.FaceBackground,
+                        out var committedBg));
+                Assert.AreSame(
+                    templateBg,
+                    committedBg.sprite,
+                    "null Face_Background 不应覆盖模板背景（旧卡面/卡包图不得当背景）");
+            }
+            finally
+            {
+                DestroySprite(ref templateBg);
+            }
+        }
+
+        [Test]
         public void Commit_FaceUpReserved_DoesNotThrow_AndKeepsFrontVisible()
         {
             var card = _cardManager.SpawnView(
@@ -478,6 +552,7 @@ namespace NineGrid.Cards.Tests
             new GameObject("back").transform.SetParent(go.transform, false);
 
             CreateSpriteChild(front.transform, "核心图标");
+            CreateSpriteChild(front.transform, "背景");
             CreateSpriteChild(front.transform, "行动图标");
             var nameRoot = new GameObject("名字");
             nameRoot.transform.SetParent(front.transform, false);
@@ -486,7 +561,7 @@ namespace NineGrid.Cards.Tests
             CreateTmpChild(front.transform, "护甲数值", "0");
             CreateTmpChild(front.transform, "血量数值", "0");
             CreateTmpChild(front.transform, "行动计数", "9");
-            CreateTmpChild(front.transform, "描述", string.Empty);
+            CreateTmpChild(front.transform, "描述", "模板描述文案");
             return go;
         }
 
@@ -503,7 +578,7 @@ namespace NineGrid.Cards.Tests
             CreateTmpChild(banner.transform, "标准世界文字", "模板道具");
             var intro = new GameObject("介绍区域");
             intro.transform.SetParent(front.transform, false);
-            CreateTmpChild(intro.transform, "标准世界文字", string.Empty);
+            CreateTmpChild(intro.transform, "标准世界文字", "模板道具描述");
             return go;
         }
 

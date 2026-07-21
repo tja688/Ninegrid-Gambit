@@ -76,7 +76,7 @@
 | `SyncAllSpawnedCards` | 全场对账已提交投影（不直刷最新 Core） |
 | `ApplyVisualsByDefId` | 无 Core uid 展示卡：按 DefId 构建投影并 Commit |
 
-`BasicDescription` 来自 `ContentVisualResolver` 的 description（与内容同源；卡面为展示权威）。
+首波 `BasicDescription` **不**自动灌入 ContentVisual 旧长文案；投影留空时 Binder 保留卡面模板文案。显式写入投影后才覆盖。`Face_Background` / 卡背同理：Catalog 未装配则 null，不覆盖模板。
 
 ---
 

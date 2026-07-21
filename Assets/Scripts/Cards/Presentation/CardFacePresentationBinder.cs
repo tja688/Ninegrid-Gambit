@@ -16,6 +16,8 @@ namespace NineGrid.Cards.Presentation
     {
         private bool _committedFaceUp = true;
         private Dictionary<string, Sprite> _templateDefaults;
+        private string _templateBasicDescription;
+        private bool _hasTemplateBasicDescription;
         private string _lastBasicDescriptionSource;
         private string _lastIconFingerprint;
         private TMP_SpriteAsset _descriptionSpriteAsset;
@@ -78,6 +80,10 @@ namespace NineGrid.Cards.Presentation
             }
 
             _templateDefaults = CardFaceSlotNodeMap.CaptureTemplateDefaults(transform);
+            _hasTemplateBasicDescription = CardFaceSlotNodeMap.TryReadText(
+                transform,
+                CardFaceSlotCodes.BasicDescription,
+                out _templateBasicDescription);
         }
 
         private void ApplyMainIcon(Sprite contentIcon)
@@ -102,6 +108,7 @@ namespace NineGrid.Cards.Presentation
 
         private void ApplyDirectSprites(CardPresentationSnapshot snapshot)
         {
+            // null = 保留卡面模板兜底，不覆盖。
             TryApplySprite(CardFaceSlotCodes.FaceBackground, snapshot.FaceBackground);
             TryApplySprite(CardFaceSlotCodes.BackBorder, snapshot.BackBorder);
             TryApplySprite(CardFaceSlotCodes.BackShirt, snapshot.BackShirt);
@@ -143,7 +150,10 @@ namespace NineGrid.Cards.Presentation
             }
 
             var assembled = BuildAssembledIcons(snapshot);
-            var source = snapshot.BasicDescription ?? string.Empty;
+            // 空描述 = 未接线：保留模板自带文案，不把旧 ContentVisual 长文案盖上来。
+            var source = string.IsNullOrEmpty(snapshot.BasicDescription)
+                ? (_hasTemplateBasicDescription ? _templateBasicDescription : string.Empty)
+                : snapshot.BasicDescription;
             var fingerprint = BuildIconFingerprint(assembled);
             if (source == _lastBasicDescriptionSource
                 && fingerprint == _lastIconFingerprint)
@@ -153,6 +163,14 @@ namespace NineGrid.Cards.Presentation
 
             _lastBasicDescriptionSource = source;
             _lastIconFingerprint = fingerprint;
+
+            if (string.IsNullOrEmpty(snapshot.BasicDescription) && _hasTemplateBasicDescription)
+            {
+                ReleaseDescriptionSpriteAsset();
+                text.spriteAsset = null;
+                text.text = _templateBasicDescription ?? string.Empty;
+                return;
+            }
 
             var composed = CardFaceDescriptionComposer.Compose(
                 source,

@@ -201,7 +201,7 @@ Assets/Tools/Luban/
 | `Editor/ContentVisualXlsxIO.cs` | `ContentVisualXlsxIO`, `ContentVisualXlsxRow` | content_visual.xlsx 读 / patch_descriptions | Luban.SimpleJSON |
 | `Editor/CardFrameStyleXlsxIO.cs` | `CardFrameStyleXlsxIO`, `CardFrameStyleXlsxRow` | card_frame_style.xlsx 读/补丁色 | Python 脚本 |
 | `Editor/ContentVisualSpriteKeyCodec.cs` | `ContentVisualSpriteKeyCodec` | legacy `path#sprite` 键解码（迁移用） | AssetDatabase |
-| `Editor/ContentVisualSpriteCatalogMigrationMenu.cs` | `ContentVisualSpriteCatalogMigrationMenu` | 迁入 Catalog SO 的菜单与迁移逻辑 | SpriteKeyCodec, StreamingAssets |
+| `Editor/ContentVisualSpriteCatalogMigrationMenu.cs` | `ContentVisualSpriteCatalogMigrationMenu` | 仅迁主图标进 Catalog SO；可清空 Face_Background | SpriteKeyCodec, StreamingAssets |
 | `Editor/Ui/ContentVisualWarmConsoleUi.cs` | `ContentVisualWarmConsoleUi` | 暖棕控制台风格 UI 控件库 | UI Toolkit |
 
 ## 9. 统计

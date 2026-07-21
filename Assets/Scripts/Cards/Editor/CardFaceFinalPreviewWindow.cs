@@ -154,13 +154,7 @@ namespace NineGrid.Cards.Editor
                 var dataDirectory = ContentVisualBootstrap.ResolveLubanDataDirectory();
                 var coreCatalog = TableNineLubanCatalogFactory.CreateFromDirectory(dataDirectory);
                 CardFacePreviewBuilder.TryFillSampleStats(request, coreCatalog);
-                if (string.IsNullOrEmpty(request.BasicDescription)
-                    && TableNineVisualCatalogFactory.CreateFromDirectory(dataDirectory) is { } visual
-                    && visual.TryGet(_defId, out var def)
-                    && def != null)
-                {
-                    request.BasicDescription = def.Description ?? string.Empty;
-                }
+                // 不自动把 ContentVisual 旧长文案灌进 Basic_Description；空则预览保留模板文案。
             }
             catch (System.Exception ex)
             {

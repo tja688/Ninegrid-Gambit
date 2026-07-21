@@ -228,8 +228,10 @@ namespace NineGrid.Flow
                     _spriteCatalogs,
                     out var resolved))
             {
+                // 首波回填范围：仅名字 + 主图标（数值由 Core 读入）。
+                // Face_Background / Back_* / Basic_Description 仅在 Catalog 显式装配时覆盖；
+                // 不把 ContentVisual 旧长文案灌进卡面描述（空则 Binder 保留模板兜底）。
                 snapshot.DisplayName = resolved.DisplayName ?? string.Empty;
-                snapshot.BasicDescription = resolved.Description ?? string.Empty;
                 snapshot.MainIcon = resolved.Icon;
                 snapshot.FaceBackground = resolved.Face;
                 snapshot.BackBorder = resolved.BackBorder;
@@ -238,10 +240,9 @@ namespace NineGrid.Flow
                 return;
             }
 
-            if (TryGetSpritesDirect(defId, kind, out var directIcon, out var directFace))
+            if (TryGetSpritesDirect(defId, kind, out var directIcon, out _))
             {
                 snapshot.MainIcon = directIcon;
-                snapshot.FaceBackground = directFace;
             }
 
             if (string.IsNullOrEmpty(snapshot.DisplayName))
