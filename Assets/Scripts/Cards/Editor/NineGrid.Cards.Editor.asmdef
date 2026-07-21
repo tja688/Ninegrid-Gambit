@@ -2,7 +2,9 @@
     "name": "NineGrid.Cards.Editor",
     "rootNamespace": "NineGrid.Cards.Editor",
     "references": [
-        "NineGrid.Cards"
+        "NineGrid.Cards",
+        "NineGrid.Content",
+        "NineGrid.Core"
     ],
     "includePlatforms": [
         "Editor"

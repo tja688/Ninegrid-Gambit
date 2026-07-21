@@ -76,7 +76,7 @@ BoardModel 占格  ──► idle 裁决 / Sync      ──► GroundField 几�
 
 | 项 | 值 |
 |----|-----|
-| references | `NineGrid.Cards` |
+| references | `NineGrid.Cards`, `NineGrid.Content`, `NineGrid.Core` |
 | platforms | Editor only |
 
 ### `NineGrid.Cards.Tests`
@@ -148,7 +148,9 @@ Tests 可引用 Core/Flow；生产 Cards 不可。
 | `CardManagerSingleton.cs` | 卡牌视图注册表单例 + ManagedCard |
 | `CardOpacityUtility.cs` | 卡牌 alpha 批量工具 |
 | `CardPerformanceTimelinePlayer.cs` | DOTweenTimeline 播放包装 |
+| `CardChassisPaths.cs` | 底盘/四套卡面/槽表权威资产路径 |
 | `CardPresentationKind.cs` | 表现层卡种（对齐 Core CardKind） |
+| `CardPresentationKindResolver.cs` | DefId→Kind（skill.*→Unknown） |
 | `CardPresentationProbe.cs` | 表现诊断探针（运动/注册/租约等） |
 | `CardSlotAnchorUtility.cs` | GroundAnchors 槽解析与开局环 |
 | `CardViewTween.cs` | 视图 Punch/Appear/Disappear 协程 |
@@ -192,6 +194,7 @@ Tests 可引用 Core/Flow；生产 Cards 不可。
 | `Convergence/` | [Convergence/汇合与编排.md](./Convergence/汇合与编排.md) |
 | `Effects/` | [Effects/卡牌效果表现.md](./Effects/卡牌效果表现.md) |
 | `Editor/` | [Editor/Cards编辑器.md](./Editor/Cards编辑器.md) |
+| `Slots/` | [Slots/装配槽注册表.md](./Slots/装配槽注册表.md) |
 | 根目录详解 | [Managers/管理器与视图.md](./Managers/管理器与视图.md) |
 
 ### Tests 清单（仅列文件，不写权威语义）
@@ -204,6 +207,9 @@ Tests 可引用 Core/Flow；生产 Cards 不可。
 - `BoardPresentationStepProjectorTests.cs`
 - `BurstScatterPointSamplerTests.cs`
 - `CardAttackBasicDirectionRigTests.cs`
+- `CardFaceMountTests.cs`
+- `CardFaceSlotRegistryTests.cs`
+- `CardFaceSortingOrderValidatorTests.cs`
 - `CardManagerPresentationUidTests.cs`
 - `CardTransformTowerTests.cs`
 - `CombatHitSinkOpeningGateTests.cs`
@@ -233,5 +239,6 @@ Tests 可引用 Core/Flow；生产 Cards 不可。
 |----------|------|
 | `NineGrid.Cards` | 根、Battle、Effects（含 Implementations） |
 | `NineGrid.Cards.Convergence` | Convergence/ |
+| `NineGrid.Cards.Slots` | Slots/ 装配槽 |
 | `NineGrid.Cards.Editor` | Editor/ |
 | `NineGrid.Cards.Tests` | Tests/ |

@@ -1,5 +1,7 @@
 #if UNITY_EDITOR
+using System.IO;
 using NineGrid.Cards.Convergence;
+using NineGrid.Cards.Slots;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -8,13 +10,15 @@ namespace NineGrid.Cards.Editor
 {
     public static class StandardCardPrefabSetup
     {
-        private const string PrefabPath = "Assets/Prefabs/老Standard Card.prefab";
+        private const string PrefabPath = CardChassisPaths.ChassisPrefab;
         private const string LibraryPath = "Assets/Scripts/Cards/PixelCardPackSpriteLibrary.asset";
 
         [MenuItem("NineGrid/Cards/Setup Card Chassis Prefab")]
         public static void SetupPrefab()
         {
-            SetupPrefabAt(PrefabPath);
+            // 底盘权威形态：塔 + FacePivot，不再在 L4 重建旧万能视觉（#13/#14）。
+            EvolveChassisFacePivot();
+            EnsureChassisInteractionAndEffects();
         }
 
         [MenuItem("NineGrid/Cards/Install Transform Tower On Card Chassis Prefab")]
@@ -38,6 +42,63 @@ namespace NineGrid.Cards.Editor
             {
                 PrefabUtility.UnloadPrefabContents(root);
             }
+        }
+
+        [MenuItem("NineGrid/Cards/Ensure Card Face Slot Registry Asset")]
+        public static void EnsureSlotRegistryAsset()
+        {
+            EnsureFolder("Assets/Arts/Cards");
+            var existing = AssetDatabase.LoadAssetAtPath<CardFaceSlotRegistrySO>(CardChassisPaths.SlotRegistryAsset);
+            if (existing == null)
+            {
+                existing = ScriptableObject.CreateInstance<CardFaceSlotRegistrySO>();
+                existing.ApplyDefaultCatalog();
+                AssetDatabase.CreateAsset(existing, CardChassisPaths.SlotRegistryAsset);
+            }
+            else
+            {
+                existing.ApplyDefaultCatalog();
+                EditorUtility.SetDirty(existing);
+            }
+
+            AssetDatabase.SaveAssets();
+            Selection.activeObject = existing;
+            Debug.Log("CardFaceSlotRegistry ready: " + CardChassisPaths.SlotRegistryAsset);
+        }
+
+        private static void EnsureChassisInteractionAndEffects()
+        {
+            var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+            try
+            {
+                SetupInteractionComponents(root);
+                SetupEffectManager(root);
+                var sortingGroup = GetOrAdd<SortingGroup>(root);
+                sortingGroup.enabled = true;
+                PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+                Debug.Log($"Card chassis interaction/effects ensured: {PrefabPath}");
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        private static void EnsureFolder(string folder)
+        {
+            if (AssetDatabase.IsValidFolder(folder))
+            {
+                return;
+            }
+
+            var parent = Path.GetDirectoryName(folder)?.Replace('\\', '/');
+            var name = Path.GetFileName(folder);
+            if (!string.IsNullOrEmpty(parent) && !AssetDatabase.IsValidFolder(parent))
+            {
+                EnsureFolder(parent);
+            }
+
+            AssetDatabase.CreateFolder(parent, name);
         }
 
         /// <summary>

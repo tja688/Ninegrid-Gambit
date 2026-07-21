@@ -27,11 +27,10 @@ namespace NineGrid.Content
             }
 
             var frameStyleId = ResolveFrameStyleId(contentId, visual, coreCatalog);
-            Sprite icon = null;
-            Sprite face = null;
+            ContentVisualDirectSlotSprites slots = default;
             if (spriteProvider != null)
             {
-                spriteProvider.TryGet(visual.Kind, contentId, out icon, out face);
+                spriteProvider.TryGetDirectSlots(visual.Kind, contentId, out slots);
             }
 
             view = new ContentVisualResolvedView
@@ -42,8 +41,11 @@ namespace NineGrid.Content
                 Description = string.IsNullOrWhiteSpace(visual.Description)
                     ? ResolveDisplayName(contentId, visual.Kind, coreCatalog)
                     : visual.Description,
-                Icon = icon,
-                Face = face,
+                Icon = slots.MainIcon,
+                Face = slots.FaceBackground,
+                BackBorder = slots.BackBorder,
+                BackShirt = slots.BackShirt,
+                BackLogo = slots.BackLogo,
                 FrameStyleId = frameStyleId,
                 FrameColor = ResolveFrameColor(frameStyleId, frameStyleCatalog)
             };

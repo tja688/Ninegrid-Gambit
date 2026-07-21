@@ -144,14 +144,14 @@ Assets/Tools/Luban/
 | `Catalog/TableNineVisualCatalogFactory.cs` | `TableNineVisualCatalogFactory` | TbContentVisual → `ContentVisualCatalog`；兼 LoadTables | `cfg.Tables` |
 | `Catalog/TableNineCardFrameStyleCatalogFactory.cs` | `TableNineCardFrameStyleCatalogFactory` | TbCardFrameStyle → `CardFrameStyleCatalog` | Visual Factory, `cfg.Tables` |
 | `Catalog/ContentVisualBootstrap.cs` | `ContentVisualBootstrap` | 加载 visual + frameStyle；目录探测复用 ContentCatalogBootstrap | 两个 Frame/Visual Factory |
-| `Catalog/ContentVisualResolvedView.cs` | `ContentVisualResolvedView` | 解析后的展示视图（名/描述/图/框色） | UnityEngine.Sprite |
+| `Catalog/ContentVisualResolvedView.cs` | `ContentVisualResolvedView` | 解析后的展示视图（名/描述/主图标/背景/卡背三件套/框色） | UnityEngine.Sprite |
 | `Catalog/ContentVisualResolver.cs` | `ContentVisualResolver` | 合并 Core 内容 + Visual + Frame + Sprite → ResolvedView | Core.Content, Visual/Frame catalogs |
 
 ### 8.4 Catalog（手写）— Sprite SO
 
 | 路径 | 类型 | 职责 | 关键依赖 |
 |------|------|------|----------|
-| `Catalog/ContentVisualSpriteCatalogSO.cs` | `ContentVisualSpriteEntry`, `IContentVisualSpriteProvider`, `ContentVisualSpriteCatalogSO`, `ContentVisualSpriteCatalogSet` | 条目/抽象 SO/按 kind 分派的 Sprite 提供者 | UnityEngine |
+| `Catalog/ContentVisualSpriteCatalogSO.cs` | `ContentVisualSpriteEntry`, `ContentVisualDirectSlotSprites`, `IContentVisualSpriteProvider`, `ContentVisualSpriteCatalogSO`, `ContentVisualSpriteCatalogSet` | 直暴露五项（icon/face/back*）+ 按 kind 分派 | UnityEngine |
 | `Catalog/ContentVisualSpriteCatalogBootstrapSO.cs` | `ContentVisualSpriteCatalogBootstrapSO` | Resources 引导加载 CatalogSet | `ContentVisualSpriteCatalogSet` |
 | `Catalog/HelpCardVisualCatalogSO.cs` | `HelpCardVisualCatalogSO` | HelpCard 专用 SO | 基类 SO |
 | `Catalog/MonsterVisualCatalogSO.cs` | `MonsterVisualCatalogSO` | Monster 专用 SO | 基类 SO |

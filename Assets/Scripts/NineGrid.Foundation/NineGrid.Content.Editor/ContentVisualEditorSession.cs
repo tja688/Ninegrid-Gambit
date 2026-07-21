@@ -13,7 +13,10 @@ namespace NineGrid.Content.Editor
     public enum ContentVisualKeySlot
     {
         Icon,
-        Face
+        Face,
+        BackBorder,
+        BackShirt,
+        BackLogo
     }
 
     public sealed class ContentVisualEditorRowState
@@ -21,28 +24,58 @@ namespace NineGrid.Content.Editor
         public ContentVisualXlsxRow Source { get; set; }
         public Sprite SavedIcon { get; set; }
         public Sprite SavedFace { get; set; }
+        public Sprite SavedBackBorder { get; set; }
+        public Sprite SavedBackShirt { get; set; }
+        public Sprite SavedBackLogo { get; set; }
         public Sprite Icon { get; set; }
         public Sprite Face { get; set; }
+        public Sprite BackBorder { get; set; }
+        public Sprite BackShirt { get; set; }
+        public Sprite BackLogo { get; set; }
         public bool IsChecked { get; set; }
 
         public string ContentId => Source?.ContentId ?? string.Empty;
         public string ContentKind => Source?.ContentKind ?? string.Empty;
         public string Description => Source?.Description ?? string.Empty;
 
-        public bool IsDirty => Icon != SavedIcon || Face != SavedFace;
+        public bool IsDirty =>
+            Icon != SavedIcon ||
+            Face != SavedFace ||
+            BackBorder != SavedBackBorder ||
+            BackShirt != SavedBackShirt ||
+            BackLogo != SavedBackLogo;
+
         public bool HasIcon => Icon != null;
         public bool HasFace => Face != null;
+
+        public ContentVisualDirectSlotSprites ToDirectSlots()
+        {
+            return new ContentVisualDirectSlotSprites
+            {
+                MainIcon = Icon,
+                FaceBackground = Face,
+                BackBorder = BackBorder,
+                BackShirt = BackShirt,
+                BackLogo = BackLogo
+            };
+        }
 
         public void Revert()
         {
             Icon = SavedIcon;
             Face = SavedFace;
+            BackBorder = SavedBackBorder;
+            BackShirt = SavedBackShirt;
+            BackLogo = SavedBackLogo;
         }
 
         public void MarkSaved()
         {
             SavedIcon = Icon;
             SavedFace = Face;
+            SavedBackBorder = BackBorder;
+            SavedBackShirt = BackShirt;
+            SavedBackLogo = BackLogo;
         }
     }
 
@@ -153,20 +186,22 @@ namespace NineGrid.Content.Editor
                     kind = ContentVisualKind.Unknown;
                 }
 
-                Sprite icon = null;
-                Sprite face = null;
+                ContentVisualDirectSlotSprites slots = default;
                 var catalog = SpriteCatalogs.ResolveCatalog(kind);
                 if (catalog != null)
                 {
                     catalog.EnsureEntry(source.ContentId);
-                    catalog.TryGet(source.ContentId, out icon, out face);
+                    catalog.TryGetDirectSlots(source.ContentId, out slots);
                 }
 
                 var state = new ContentVisualEditorRowState
                 {
                     Source = source,
-                    Icon = icon,
-                    Face = face
+                    Icon = slots.MainIcon,
+                    Face = slots.FaceBackground,
+                    BackBorder = slots.BackBorder,
+                    BackShirt = slots.BackShirt,
+                    BackLogo = slots.BackLogo
                 };
                 state.MarkSaved();
                 rows.Add(state);
@@ -284,30 +319,30 @@ namespace NineGrid.Content.Editor
         {
             foreach (var row in targets)
             {
-                if (slot == ContentVisualKeySlot.Icon)
+                switch (slot)
                 {
-                    row.Icon = sprite;
-                }
-                else
-                {
-                    row.Face = sprite;
+                    case ContentVisualKeySlot.Icon:
+                        row.Icon = sprite;
+                        break;
+                    case ContentVisualKeySlot.Face:
+                        row.Face = sprite;
+                        break;
+                    case ContentVisualKeySlot.BackBorder:
+                        row.BackBorder = sprite;
+                        break;
+                    case ContentVisualKeySlot.BackShirt:
+                        row.BackShirt = sprite;
+                        break;
+                    case ContentVisualKeySlot.BackLogo:
+                        row.BackLogo = sprite;
+                        break;
                 }
             }
         }
 
         public void ClearKeyOnRows(IEnumerable<ContentVisualEditorRowState> targets, ContentVisualKeySlot slot)
         {
-            foreach (var row in targets)
-            {
-                if (slot == ContentVisualKeySlot.Icon)
-                {
-                    row.Icon = null;
-                }
-                else
-                {
-                    row.Face = null;
-                }
-            }
+            ApplySpriteToRows(targets, slot, null);
         }
 
         public bool TrySave(out string error)
@@ -342,7 +377,7 @@ namespace NineGrid.Content.Editor
                         continue;
                     }
 
-                    catalog.SetSprites(row.ContentId, row.Icon, row.Face);
+                    catalog.SetDirectSlots(row.ContentId, row.ToDirectSlots());
                     EditorUtility.SetDirty(catalog);
                     row.MarkSaved();
                 }
@@ -792,21 +827,37 @@ namespace NineGrid.Content.Editor
 
             public bool TryGet(ContentVisualKind kind, string contentId, out Sprite icon, out Sprite face)
             {
+                ContentVisualDirectSlotSprites slots;
+                if (!TryGetDirectSlots(kind, contentId, out slots))
+                {
+                    icon = null;
+                    face = null;
+                    return false;
+                }
+
+                icon = slots.MainIcon;
+                face = slots.FaceBackground;
+                return icon != null || face != null;
+            }
+
+            public bool TryGetDirectSlots(
+                ContentVisualKind kind,
+                string contentId,
+                out ContentVisualDirectSlotSprites slots)
+            {
                 if (mOverride != null
                     && string.Equals(mOverride.ContentId, contentId, StringComparison.Ordinal))
                 {
-                    icon = mOverride.Icon;
-                    face = mOverride.Face;
-                    return icon != null || face != null;
+                    slots = mOverride.ToDirectSlots();
+                    return slots.HasAny;
                 }
 
                 if (mFallback != null)
                 {
-                    return mFallback.TryGet(kind, contentId, out icon, out face);
+                    return mFallback.TryGetDirectSlots(kind, contentId, out slots);
                 }
 
-                icon = null;
-                face = null;
+                slots = default;
                 return false;
             }
         }

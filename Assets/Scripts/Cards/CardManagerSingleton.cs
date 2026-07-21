@@ -68,7 +68,7 @@ namespace NineGrid.Cards
         public const int InvalidUid = 0;
         public const string StandardDefId = "standard";
 
-        private const string CardChassisPrefabAssetPath = "Assets/Prefabs/老Standard Card.prefab";
+        private const string CardChassisPrefabAssetPath = CardChassisPaths.ChassisPrefab;
 
         private static CardManagerSingleton _instance;
 

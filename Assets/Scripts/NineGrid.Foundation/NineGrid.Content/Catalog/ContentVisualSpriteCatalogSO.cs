@@ -10,16 +10,49 @@ namespace NineGrid.Content
         [Tooltip("与 Core defId / content_visual.content_id 同值，例如 help.fireball。")]
         public string contentId;
 
-        [Tooltip("主图标 Sprite；留空表示未配置。")]
+        [Tooltip("主图标 Sprite（槽代号 Main_Icon）；留空则运行时/预览回退卡面模板兜底。")]
         public Sprite icon;
 
-        [Tooltip("卡面/立绘 Sprite；留空表示未配置或复用 icon。")]
+        [Tooltip("卡面背景 Sprite（槽代号 Face_Background）；留空则回退卡面模板兜底。")]
         public Sprite face;
+
+        [Tooltip("卡背·背框 Sprite（槽代号 Back_Border）；留空则回退该卡面模板兜底，无全局卡背源。")]
+        public Sprite backBorder;
+
+        [Tooltip("卡背·背纹 Sprite（槽代号 Back_Shirt）；留空则回退该卡面模板兜底，无全局卡背源。")]
+        public Sprite backShirt;
+
+        [Tooltip("卡背·Logo Sprite（槽代号 Back_Logo）；留空则回退该卡面模板兜底，无全局卡背源。")]
+        public Sprite backLogo;
     }
 
     public interface IContentVisualSpriteProvider
     {
         bool TryGet(ContentVisualKind kind, string contentId, out Sprite icon, out Sprite face);
+
+        bool TryGetDirectSlots(
+            ContentVisualKind kind,
+            string contentId,
+            out ContentVisualDirectSlotSprites slots);
+    }
+
+    /// <summary>
+    /// 内容侧直接暴露装配项：主图标 / 卡面背景 / 卡背三件套（无全局卡背源）。
+    /// </summary>
+    public struct ContentVisualDirectSlotSprites
+    {
+        public Sprite MainIcon;
+        public Sprite FaceBackground;
+        public Sprite BackBorder;
+        public Sprite BackShirt;
+        public Sprite BackLogo;
+
+        public bool HasAny =>
+            MainIcon != null ||
+            FaceBackground != null ||
+            BackBorder != null ||
+            BackShirt != null ||
+            BackLogo != null;
     }
 
     public abstract class ContentVisualSpriteCatalogSO : ScriptableObject
@@ -60,8 +93,22 @@ namespace NineGrid.Content
 
         public bool TryGet(string contentId, out Sprite icon, out Sprite face)
         {
-            icon = null;
-            face = null;
+            ContentVisualDirectSlotSprites slots;
+            if (!TryGetDirectSlots(contentId, out slots))
+            {
+                icon = null;
+                face = null;
+                return false;
+            }
+
+            icon = slots.MainIcon;
+            face = slots.FaceBackground;
+            return icon != null || face != null;
+        }
+
+        public bool TryGetDirectSlots(string contentId, out ContentVisualDirectSlotSprites slots)
+        {
+            slots = default;
             if (string.IsNullOrEmpty(contentId))
             {
                 return false;
@@ -74,27 +121,60 @@ namespace NineGrid.Content
                 return false;
             }
 
-            icon = entry.icon;
-            face = entry.face;
-            return icon != null || face != null;
+            slots = new ContentVisualDirectSlotSprites
+            {
+                MainIcon = entry.icon,
+                FaceBackground = entry.face,
+                BackBorder = entry.backBorder,
+                BackShirt = entry.backShirt,
+                BackLogo = entry.backLogo
+            };
+            return slots.HasAny;
         }
 
         /// <summary>
         /// 解析条目图；icon 为空时回退到类型 FallbackIcon（face 不自动回退 DefaultFace）。
+        /// 卡背三件套不做类型级全局回退（无全局卡背源；模板兜底在卡面侧）。
         /// </summary>
         public bool TryGetWithFallback(string contentId, out Sprite icon, out Sprite face)
         {
-            var found = TryGet(contentId, out icon, out face);
-            if (icon == null && fallbackIcon != null)
-            {
-                icon = fallbackIcon;
-                found = true;
-            }
-
+            ContentVisualDirectSlotSprites slots;
+            var found = TryGetDirectSlotsWithFallback(contentId, out slots);
+            icon = slots.MainIcon;
+            face = slots.FaceBackground;
             return found && (icon != null || face != null);
         }
 
+        public bool TryGetDirectSlotsWithFallback(string contentId, out ContentVisualDirectSlotSprites slots)
+        {
+            var found = TryGetDirectSlots(contentId, out slots);
+            if (slots.MainIcon == null && fallbackIcon != null)
+            {
+                slots.MainIcon = fallbackIcon;
+                found = true;
+            }
+
+            return found && slots.HasAny;
+        }
+
         public void SetSprites(string contentId, Sprite icon, Sprite face)
+        {
+            SetDirectSlots(contentId, new ContentVisualDirectSlotSprites
+            {
+                MainIcon = icon,
+                FaceBackground = face
+            }, preserveUnspecifiedBack: true);
+        }
+
+        public void SetDirectSlots(string contentId, ContentVisualDirectSlotSprites slots)
+        {
+            SetDirectSlots(contentId, slots, preserveUnspecifiedBack: false);
+        }
+
+        public void SetDirectSlots(
+            string contentId,
+            ContentVisualDirectSlotSprites slots,
+            bool preserveUnspecifiedBack)
         {
             if (string.IsNullOrEmpty(contentId))
             {
@@ -110,8 +190,14 @@ namespace NineGrid.Content
                 mLookup[contentId] = entry;
             }
 
-            entry.icon = icon;
-            entry.face = face;
+            entry.icon = slots.MainIcon;
+            entry.face = slots.FaceBackground;
+            if (!preserveUnspecifiedBack)
+            {
+                entry.backBorder = slots.BackBorder;
+                entry.backShirt = slots.BackShirt;
+                entry.backLogo = slots.BackLogo;
+            }
         }
 
         public void ClearSprites(string contentId)
@@ -130,6 +216,9 @@ namespace NineGrid.Content
 
             entry.icon = null;
             entry.face = null;
+            entry.backBorder = null;
+            entry.backShirt = null;
+            entry.backLogo = null;
         }
 
         public bool HasIcon(string contentId)
@@ -255,6 +344,17 @@ namespace NineGrid.Content
             face = null;
             var catalog = ResolveCatalog(kind);
             return catalog != null && catalog.TryGetWithFallback(contentId, out icon, out face);
+        }
+
+        public bool TryGetDirectSlots(
+            ContentVisualKind kind,
+            string contentId,
+            out ContentVisualDirectSlotSprites slots)
+        {
+            // 直暴露槽：仅返回条目自定值；缺省回退卡面模板（非类型 FallbackIcon / 非全局卡背）。
+            slots = default;
+            var catalog = ResolveCatalog(kind);
+            return catalog != null && catalog.TryGetDirectSlots(contentId, out slots);
         }
 
         public ContentVisualSpriteCatalogSO ResolveCatalog(ContentVisualKind kind)

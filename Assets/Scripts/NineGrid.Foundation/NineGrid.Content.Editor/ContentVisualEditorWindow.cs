@@ -30,6 +30,9 @@ namespace NineGrid.Content.Editor
 
         private ObjectField iconField;
         private ObjectField faceField;
+        private ObjectField backBorderField;
+        private ObjectField backShirtField;
+        private ObjectField backLogoField;
         private ObjectField batchIconField;
         private ObjectField batchFaceField;
         private ObjectField kindDefaultFaceField;
@@ -577,49 +580,69 @@ namespace NineGrid.Content.Editor
                 }));
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
-                "Catalog SO 配图",
-                "保存时按 contentId 写入对应 Kind 的 Catalog SO。",
+                "直接暴露装配项",
+                "Main_Icon / Face_Background / 卡背三件套写入 Catalog SO；空则回退卡面模板（无全局卡背）。终态叠合预览见 NineGrid/Cards/Face Final Preview。",
                 column =>
                 {
-                    iconField = new ObjectField
+                    iconField = CreateSpriteField(row.Icon, sprite =>
                     {
-                        objectType = typeof(Sprite),
-                        allowSceneObjects = false,
-                        value = row.Icon
-                    };
-                    iconField.RegisterValueChangedCallback(evt =>
-                    {
-                        session.ApplySpriteToRows(new[] { row }, ContentVisualKeySlot.Icon, evt.newValue as Sprite);
+                        session.ApplySpriteToRows(new[] { row }, ContentVisualKeySlot.Icon, sprite);
                         RefreshAfterRowEdit();
                     });
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
-                        "Icon",
-                        "主图标 Sprite；contentId = Core defId",
+                        "Main_Icon",
+                        "主图标；留空回退卡面模板",
                         iconField));
-                    column.Add(ContentVisualWarmConsoleUi.CreateTinyPathLabel(
-                        "当前：" + (row.Icon != null ? row.Icon.name : "(空)")));
 
-                    faceField = new ObjectField
+                    faceField = CreateSpriteField(row.Face, sprite =>
                     {
-                        objectType = typeof(Sprite),
-                        allowSceneObjects = false,
-                        value = row.Face
-                    };
-                    faceField.RegisterValueChangedCallback(evt =>
-                    {
-                        session.ApplySpriteToRows(new[] { row }, ContentVisualKeySlot.Face, evt.newValue as Sprite);
+                        session.ApplySpriteToRows(new[] { row }, ContentVisualKeySlot.Face, sprite);
                         RefreshAfterRowEdit();
                     });
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
-                        "Face",
-                        "卡面/立绘 Sprite",
+                        "Face_Background",
+                        "卡面背景；留空回退卡面模板",
                         faceField));
-                    column.Add(ContentVisualWarmConsoleUi.CreateTinyPathLabel(
-                        "当前：" + (row.Face != null ? row.Face.name : "(空)")));
+
+                    backBorderField = CreateSpriteField(row.BackBorder, sprite =>
+                    {
+                        session.ApplySpriteToRows(new[] { row }, ContentVisualKeySlot.BackBorder, sprite);
+                        RefreshAfterRowEdit();
+                    });
+                    column.Add(ContentVisualWarmConsoleUi.WrapControl(
+                        "Back_Border",
+                        "卡背·背框；留空回退该卡面模板兜底",
+                        backBorderField));
+
+                    backShirtField = CreateSpriteField(row.BackShirt, sprite =>
+                    {
+                        session.ApplySpriteToRows(new[] { row }, ContentVisualKeySlot.BackShirt, sprite);
+                        RefreshAfterRowEdit();
+                    });
+                    column.Add(ContentVisualWarmConsoleUi.WrapControl(
+                        "Back_Shirt",
+                        "卡背·背纹；留空回退该卡面模板兜底",
+                        backShirtField));
+
+                    backLogoField = CreateSpriteField(row.BackLogo, sprite =>
+                    {
+                        session.ApplySpriteToRows(new[] { row }, ContentVisualKeySlot.BackLogo, sprite);
+                        RefreshAfterRowEdit();
+                    });
+                    column.Add(ContentVisualWarmConsoleUi.WrapControl(
+                        "Back_Logo",
+                        "卡背·Logo；留空回退该卡面模板兜底",
+                        backLogoField));
 
                     column.Add(ContentVisualWarmConsoleUi.CreateButtonRow(
-                        new Button(() => ClearRowKey(row, ContentVisualKeySlot.Icon)) { text = "清空 Icon" },
-                        new Button(() => ClearRowKey(row, ContentVisualKeySlot.Face)) { text = "清空 Face" }));
+                        new Button(() => ClearRowKey(row, ContentVisualKeySlot.Icon)) { text = "清空主图标" },
+                        new Button(() => ClearRowKey(row, ContentVisualKeySlot.Face)) { text = "清空背景" },
+                        new Button(() =>
+                        {
+                            ClearRowKey(row, ContentVisualKeySlot.BackBorder);
+                            ClearRowKey(row, ContentVisualKeySlot.BackShirt);
+                            ClearRowKey(row, ContentVisualKeySlot.BackLogo);
+                        }) { text = "清空卡背" }));
                 }));
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
@@ -712,6 +735,18 @@ namespace NineGrid.Content.Editor
         {
             session.ApplySpriteToRows(rows, slot, sprite);
             RefreshAfterRowEdit();
+        }
+
+        private static ObjectField CreateSpriteField(Sprite value, Action<Sprite> onChanged)
+        {
+            var field = new ObjectField
+            {
+                objectType = typeof(Sprite),
+                allowSceneObjects = false,
+                value = value
+            };
+            field.RegisterValueChangedCallback(evt => onChanged?.Invoke(evt.newValue as Sprite));
+            return field;
         }
 
         private void ClearRowKey(ContentVisualEditorRowState row, ContentVisualKeySlot slot)
