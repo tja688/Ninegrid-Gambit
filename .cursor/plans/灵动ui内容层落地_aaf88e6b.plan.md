@@ -9,7 +9,7 @@ todos:
     content: 定义纯数据 LivingUiContentBinding(含 policy+envelope 字段) + CarrierView(ContentAttach 子节点 + CarrierAnchorRegistry)，扩展 LivingUiSceneLayoutSource 烘焙内容绑定
     status: completed
   - id: m1-attach
-    content: "M1: 主菜单 A类随行内容挂到载体 ContentAttach 下(RigidTravel)，菜单文字迁为世界 TMP 子物体(走 world-living-text skill)，全程 MCP"
+    content: "M1: 主菜单 A类随行内容挂到载体 ContentAttach 下(RigidTravel)，菜单文字迁为世界 TMP 子物体(走 world-tmp-no-snap-mask skill)，全程 MCP"
     status: completed
   - id: m1-hover
     content: "M1: 右侧三小载体 hover 局部变体 + StableHitZoneRoot(不随预演动) + HideDuringTransit/换文案，验收随行丝滑、hover 不自激"
@@ -75,7 +75,7 @@ flowchart TD
 
 ## 三、M1 — 主菜单切片（本次实际落地目标）
 
-范围：仅 `大盘构型0-主菜单`，证明场景 a + 显隐/换文案 + hover 局部变体。全程 **Unity MCP**，禁止手改 `.unity`；文字走 `.cursor/skills/table-nine-world-living-text/`（世界 TMP 挂载体子树、`NoPixelSnap`+UICamera、`TmpBitmapPixelOutline`）。
+范围：仅 `大盘构型0-主菜单`，证明场景 a + 显隐/换文案 + hover 局部变体。全程 **Unity MCP**，禁止手改 `.unity`；文字走 `.cursor/skills/world-tmp-no-snap-mask/`（世界 TMP 挂载体子树、同相机 NoSnap 遮罩、像素描边组件）。
 
 1. 分类主菜单 `Anchors`（标题/开始/设置/结束游戏/版本信息/图标）为 A/B，产出绑定表。
 2. 把 A 类随行内容改挂到对应载体的 `ContentAttach` 下（标题→载体 `4` 等，具体载体号用 MCP 层级读 + 预览图确定）；菜单文字迁移为世界 TMP 子物体。
