@@ -1,0 +1,13 @@
+{
+  "servers": {
+    "unity": {
+      "type": "stdio",
+      "command": "unity",
+      "args": [
+        "mcp",
+        "--project-path",
+        "C:\\Users\\jinji\\Documents\\GitHub\\Ninegrid Gambit"
+      ]
+    }
+  }
+}
