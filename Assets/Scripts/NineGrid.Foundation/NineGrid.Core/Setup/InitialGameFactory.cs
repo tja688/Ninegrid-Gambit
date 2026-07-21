@@ -155,13 +155,13 @@ namespace NineGrid.Core
             ApplyAvatarStats(avatar, options);
             ProfessionCatalog.SeedPlayerSideDeck(player, profession.DefId);
 
-            if (string.IsNullOrEmpty(profession.InitialSkillDefId))
+            if (string.IsNullOrEmpty(profession.InitialRelicDefId))
             {
                 return;
             }
 
-            player.AddSkill(profession.InitialSkillDefId);
-            content.ActivatePlayerSkill(profession.InitialSkillDefId);
+            player.AddRelic(profession.InitialRelicDefId);
+            content.ActivateRelic(profession.InitialRelicDefId);
         }
 
         private static bool HasBoardCards(BoardModel board)

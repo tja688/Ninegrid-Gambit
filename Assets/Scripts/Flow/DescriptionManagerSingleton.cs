@@ -527,7 +527,7 @@ namespace NineGrid.Flow
             var stats = arch.GetSystem<IStatSystem>();
             var maxHp = Mathf.Max(0, stats.GetEffectiveInt(avatar, StatId.MaxHp));
             var player = arch.GetModel<PlayerModel>();
-            var skillNames = ResolveSkillDisplayNames(player.SkillDefIds, catalog);
+            var relicNames = ResolveRelicDisplayNames(player.RelicDefIds, catalog);
 
             var builder = new System.Text.StringBuilder();
             if (!string.IsNullOrWhiteSpace(description))
@@ -545,22 +545,22 @@ namespace NineGrid.Flow
                 builder.Append("血量上限").Append(maxHp);
             }
 
-            if (skillNames.Count > 0)
+            if (relicNames.Count > 0)
             {
                 if (builder.Length > 0)
                 {
                     builder.Append(' ');
                 }
 
-                builder.Append("技能:");
-                for (var i = 0; i < skillNames.Count; i++)
+                builder.Append("遗物:");
+                for (var i = 0; i < relicNames.Count; i++)
                 {
                     if (i > 0)
                     {
                         builder.Append('、');
                     }
 
-                    builder.Append(skillNames[i]);
+                    builder.Append(relicNames[i]);
                 }
             }
 
@@ -573,32 +573,32 @@ namespace NineGrid.Flow
             return true;
         }
 
-        private static System.Collections.Generic.List<string> ResolveSkillDisplayNames(
-            System.Collections.Generic.IReadOnlyList<string> skillDefIds,
+        private static System.Collections.Generic.List<string> ResolveRelicDisplayNames(
+            System.Collections.Generic.IReadOnlyList<string> relicDefIds,
             GameContentCatalog catalog)
         {
             var names = new System.Collections.Generic.List<string>();
-            if (skillDefIds == null || catalog == null)
+            if (relicDefIds == null || catalog == null)
             {
                 return names;
             }
 
-            for (var i = 0; i < skillDefIds.Count; i++)
+            for (var i = 0; i < relicDefIds.Count; i++)
             {
-                var skillId = skillDefIds[i];
-                if (string.IsNullOrEmpty(skillId))
+                var relicId = relicDefIds[i];
+                if (string.IsNullOrEmpty(relicId))
                 {
                     continue;
                 }
 
-                if (catalog.Skills.TryGetValue(skillId, out var skill)
-                    && !string.IsNullOrWhiteSpace(skill.DisplayName))
+                if (catalog.Relics.TryGetValue(relicId, out var relic)
+                    && !string.IsNullOrWhiteSpace(relic.DisplayName))
                 {
-                    names.Add(skill.DisplayName);
+                    names.Add(relic.DisplayName);
                 }
                 else
                 {
-                    names.Add(skillId);
+                    names.Add(relicId);
                 }
             }
 

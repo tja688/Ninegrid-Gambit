@@ -73,26 +73,6 @@ namespace NineGrid.Core
         }
     }
 
-    public sealed class GrantPlayerSkillContentAction : GameAction
-    {
-        public GrantPlayerSkillContentAction(string skillDefId)
-        {
-            SkillDefId = skillDefId ?? string.Empty;
-        }
-
-        public string SkillDefId { get; private set; }
-        public override string ActionName { get { return "GrantPlayerSkillContent"; } }
-
-        public override GameActionResult Apply(GameActionContext context)
-        {
-            context.GetModel<PlayerModel>().AddSkill(SkillDefId);
-            context.GetSystem<IContentSystem>().ActivatePlayerSkill(SkillDefId);
-            return new GameActionResult()
-                .AddEvent(new CoreGameEvent(CoreEventType.SkillGranted, context.ActionId, ActionName)
-                    .WithMessage(SkillDefId));
-        }
-    }
-
     public sealed class GrantHelpCardToPlayerSideDeckAction : GameAction
     {
         public GrantHelpCardToPlayerSideDeckAction(string defId, int count = 1)
@@ -314,10 +294,6 @@ namespace NineGrid.Core
                     {
                         result.AddFollowUp(new ShuffleIntoDrawPileAction(entry.DefId, entry.Kind, 1, false));
                     }
-                }
-                else if (entry.Kind == CardKind.PlayerCard)
-                {
-                    result.AddFollowUp(new GrantPlayerSkillContentAction(entry.DefId));
                 }
             }
         }

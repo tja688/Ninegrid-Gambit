@@ -480,7 +480,55 @@
     "count": 1
   },
   {
-    "id": "relic.blood_conversion.15.relic_dragon_scale_armor",
+    "id": "relic.blood_conversion.15.relic_thorn_skin",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.thorn_skin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.16.relic_hard_skin",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.hard_skin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.17.relic_battle_hardened",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.battle_hardened",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.18.relic_arsenal",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.arsenal",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.19.relic_even_hatred",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.even_hatred",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.20.relic_tower_child",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.tower_child",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.21.relic_dragon_scale_armor",
     "pool_id": "relic.blood_conversion",
     "def_id": "relic.dragon_scale_armor",
     "kind": "Relic",
@@ -488,7 +536,7 @@
     "count": 1
   },
   {
-    "id": "relic.blood_conversion.16.relic_phoenix_feather",
+    "id": "relic.blood_conversion.22.relic_phoenix_feather",
     "pool_id": "relic.blood_conversion",
     "def_id": "relic.phoenix_feather",
     "kind": "Relic",
@@ -496,7 +544,7 @@
     "count": 1
   },
   {
-    "id": "relic.blood_conversion.17.relic_craving",
+    "id": "relic.blood_conversion.23.relic_craving",
     "pool_id": "relic.blood_conversion",
     "def_id": "relic.craving",
     "kind": "Relic",
@@ -504,7 +552,7 @@
     "count": 1
   },
   {
-    "id": "relic.blood_conversion.18.relic_junk_slot_machine",
+    "id": "relic.blood_conversion.24.relic_junk_slot_machine",
     "pool_id": "relic.blood_conversion",
     "def_id": "relic.junk_slot_machine",
     "kind": "Relic",
@@ -632,7 +680,55 @@
     "count": 1
   },
   {
-    "id": "relic.blue_chest.15.relic_dragon_scale_armor",
+    "id": "relic.blue_chest.15.relic_thorn_skin",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.thorn_skin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.16.relic_hard_skin",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.hard_skin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.17.relic_battle_hardened",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.battle_hardened",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.18.relic_arsenal",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.arsenal",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.19.relic_even_hatred",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.even_hatred",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.20.relic_tower_child",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.tower_child",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.21.relic_dragon_scale_armor",
     "pool_id": "relic.blue_chest",
     "def_id": "relic.dragon_scale_armor",
     "kind": "Relic",
@@ -640,7 +736,7 @@
     "count": 1
   },
   {
-    "id": "relic.blue_chest.16.relic_phoenix_feather",
+    "id": "relic.blue_chest.22.relic_phoenix_feather",
     "pool_id": "relic.blue_chest",
     "def_id": "relic.phoenix_feather",
     "kind": "Relic",
@@ -648,7 +744,7 @@
     "count": 1
   },
   {
-    "id": "relic.blue_chest.17.relic_craving",
+    "id": "relic.blue_chest.23.relic_craving",
     "pool_id": "relic.blue_chest",
     "def_id": "relic.craving",
     "kind": "Relic",
@@ -656,7 +752,7 @@
     "count": 1
   },
   {
-    "id": "relic.blue_chest.18.relic_junk_slot_machine",
+    "id": "relic.blue_chest.24.relic_junk_slot_machine",
     "pool_id": "relic.blue_chest",
     "def_id": "relic.junk_slot_machine",
     "kind": "Relic",
@@ -784,7 +880,55 @@
     "count": 1
   },
   {
-    "id": "relic.common_chest.15.relic_dragon_scale_armor",
+    "id": "relic.common_chest.15.relic_thorn_skin",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.thorn_skin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.16.relic_hard_skin",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.hard_skin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.17.relic_battle_hardened",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.battle_hardened",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.18.relic_arsenal",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.arsenal",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.19.relic_even_hatred",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.even_hatred",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.20.relic_tower_child",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.tower_child",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.21.relic_dragon_scale_armor",
     "pool_id": "relic.common_chest",
     "def_id": "relic.dragon_scale_armor",
     "kind": "Relic",
@@ -792,7 +936,7 @@
     "count": 1
   },
   {
-    "id": "relic.common_chest.16.relic_phoenix_feather",
+    "id": "relic.common_chest.22.relic_phoenix_feather",
     "pool_id": "relic.common_chest",
     "def_id": "relic.phoenix_feather",
     "kind": "Relic",
@@ -800,7 +944,7 @@
     "count": 1
   },
   {
-    "id": "relic.common_chest.17.relic_craving",
+    "id": "relic.common_chest.23.relic_craving",
     "pool_id": "relic.common_chest",
     "def_id": "relic.craving",
     "kind": "Relic",
@@ -808,7 +952,7 @@
     "count": 1
   },
   {
-    "id": "relic.common_chest.18.relic_junk_slot_machine",
+    "id": "relic.common_chest.24.relic_junk_slot_machine",
     "pool_id": "relic.common_chest",
     "def_id": "relic.junk_slot_machine",
     "kind": "Relic",
@@ -824,7 +968,55 @@
     "count": 1
   },
   {
-    "id": "relic.golden_chest.01.relic_dragon_scale_armor",
+    "id": "relic.golden_chest.01.relic_thorn_skin",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.thorn_skin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.02.relic_hard_skin",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.hard_skin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.03.relic_battle_hardened",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.battle_hardened",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.04.relic_arsenal",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.arsenal",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.05.relic_even_hatred",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.even_hatred",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.06.relic_tower_child",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.tower_child",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.07.relic_dragon_scale_armor",
     "pool_id": "relic.golden_chest",
     "def_id": "relic.dragon_scale_armor",
     "kind": "Relic",
@@ -832,7 +1024,7 @@
     "count": 1
   },
   {
-    "id": "relic.golden_chest.02.relic_phoenix_feather",
+    "id": "relic.golden_chest.08.relic_phoenix_feather",
     "pool_id": "relic.golden_chest",
     "def_id": "relic.phoenix_feather",
     "kind": "Relic",
@@ -840,7 +1032,7 @@
     "count": 1
   },
   {
-    "id": "relic.golden_chest.03.relic_craving",
+    "id": "relic.golden_chest.09.relic_craving",
     "pool_id": "relic.golden_chest",
     "def_id": "relic.craving",
     "kind": "Relic",
@@ -848,7 +1040,7 @@
     "count": 1
   },
   {
-    "id": "relic.golden_chest.04.relic_junk_slot_machine",
+    "id": "relic.golden_chest.10.relic_junk_slot_machine",
     "pool_id": "relic.golden_chest",
     "def_id": "relic.junk_slot_machine",
     "kind": "Relic",

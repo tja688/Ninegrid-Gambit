@@ -24,7 +24,7 @@ namespace NineGrid.Core
             int attack,
             int armor,
             int recovery,
-            string initialSkillDefId,
+            string initialRelicDefId,
             IReadOnlyList<ProfessionCardEntry> initialCards)
         {
             DefId = defId ?? string.Empty;
@@ -32,7 +32,7 @@ namespace NineGrid.Core
             Attack = attack;
             Armor = armor;
             Recovery = recovery;
-            InitialSkillDefId = initialSkillDefId ?? string.Empty;
+            InitialRelicDefId = initialRelicDefId ?? string.Empty;
             InitialCards = initialCards ?? new ProfessionCardEntry[0];
         }
 
@@ -41,12 +41,12 @@ namespace NineGrid.Core
         public int Attack { get; private set; }
         public int Armor { get; private set; }
         public int Recovery { get; private set; }
-        public string InitialSkillDefId { get; private set; }
+        public string InitialRelicDefId { get; private set; }
         public IReadOnlyList<ProfessionCardEntry> InitialCards { get; private set; }
     }
 
     /// <summary>
-    /// 首版唯一职业（小丑）配置：属性、初始技能、开局帮助卡池。
+    /// 首版唯一职业（小丑）配置：属性、初始遗物、开局帮助卡池。
     /// </summary>
     public static class ProfessionCatalog
     {
@@ -58,7 +58,7 @@ namespace NineGrid.Core
             attack: 3,
             armor: 1,
             recovery: 1,
-            initialSkillDefId: "skill.easy_road",
+            initialRelicDefId: "relic.easy_road",
             initialCards: new[]
             {
                 new ProfessionCardEntry("help.healing_potion", 3),

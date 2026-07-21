@@ -53,13 +53,13 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void HardSkin_GrantsBaseMaxHpAndHp_OnSkillGrant()
+        public void HardSkin_GrantsBaseMaxHpAndHp_OnRelicGrant()
         {
             var avatar = Avatar();
             var hpBefore = (int)avatar.Stats.GetBase(StatId.Hp);
             var maxBefore = (int)avatar.Stats.GetBase(StatId.MaxHp);
 
-            mContent.ActivatePlayerSkill("skill.hard_skin");
+            mContent.ActivateRelic("relic.hard_skin");
             mPipeline.RunToCompletion();
 
             avatar = Avatar();

@@ -2539,22 +2539,6 @@ namespace NineGrid.Core.Effects
         }
     }
 
-    [EffectAtom("GrantPlayerSkillContent", EffectAtomKind.Action)]
-    public sealed class GrantPlayerSkillContentEffectAction : IAction
-    {
-        private string mSkillDefId = string.Empty;
-
-        public void Configure(EffectDslNode config)
-        {
-            mSkillDefId = config.Get("skillDefId").AsString(string.Empty);
-        }
-
-        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
-        {
-            return new[] { new GrantPlayerSkillContentAction(mSkillDefId) };
-        }
-    }
-
     [EffectAtom("Move", EffectAtomKind.Action)]
     public sealed class MoveEffectAction : IAction
     {
@@ -3094,22 +3078,6 @@ namespace NineGrid.Core.Effects
             }
 
             return false;
-        }
-    }
-
-    [EffectAtom("GrantSkill", EffectAtomKind.Action)]
-    public sealed class GrantSkillEffectAction : IAction
-    {
-        private string mSkillDefId = string.Empty;
-
-        public void Configure(EffectDslNode config)
-        {
-            mSkillDefId = config.Get("skillDefId").AsString(string.Empty);
-        }
-
-        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
-        {
-            return new[] { new GrantSkillAction(mSkillDefId) };
         }
     }
 

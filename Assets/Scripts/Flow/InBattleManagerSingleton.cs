@@ -36,9 +36,6 @@ namespace NineGrid.Flow
         [Tooltip("运行时自动查找 RelicManagerSingleton.Instance；也可手动拖入覆盖。")]
         [SerializeField] private RelicManagerSingleton relicManager;
 
-        [Tooltip("运行时自动查找 PlayerSkillManagerSingleton.Instance；也可手动拖入覆盖。")]
-        [SerializeField] private PlayerSkillManagerSingleton skillManager;
-
         [Tooltip("面板路由；留空则运行时在同物体或场景中查找 UiPanelRouter。")]
         [SerializeField] private UiPanelRouter panelRouter;
 
@@ -436,7 +433,6 @@ namespace NineGrid.Flow
         {
             ResolveManagers();
             relicManager?.SyncFromCore();
-            skillManager?.SyncFromCore();
             PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate);
         }
 
@@ -1011,20 +1007,6 @@ namespace NineGrid.Flow
                 return 9000;
             }
 
-            if (sourceDefId.StartsWith("skill.", StringComparison.Ordinal))
-            {
-                var skills = player.SkillDefIds;
-                for (var i = 0; i < skills.Count; i++)
-                {
-                    if (skills[i] == sourceDefId)
-                    {
-                        return 10000 + i;
-                    }
-                }
-
-                return 19000;
-            }
-
             return 99999;
         }
 
@@ -1039,11 +1021,6 @@ namespace NineGrid.Flow
             if (sourceDefId.StartsWith("relic.", StringComparison.Ordinal))
             {
                 return relicManager != null && relicManager.TryGetDealOrigin(sourceDefId, out origin);
-            }
-
-            if (sourceDefId.StartsWith("skill.", StringComparison.Ordinal))
-            {
-                return skillManager != null && skillManager.TryGetDealOrigin(sourceDefId, out origin);
             }
 
             return false;
@@ -1332,7 +1309,6 @@ namespace NineGrid.Flow
         {
             ResolveManagers();
             relicManager?.Clear();
-            skillManager?.Clear();
             PlayerInfoHudPresenter.TryGetInstance()?.ClearSnapshot();
         }
 
@@ -1446,11 +1422,6 @@ namespace NineGrid.Flow
             if (relicManager == null)
             {
                 relicManager = RelicManagerSingleton.Instance;
-            }
-
-            if (skillManager == null)
-            {
-                skillManager = PlayerSkillManagerSingleton.Instance;
             }
         }
 

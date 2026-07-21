@@ -17,12 +17,12 @@ namespace NineGrid.Core.Tests
     public sealed class OnBattleFilterRegressionTests
     {
         private const string BattleHardenedEffectJson =
-            "{\"id\":\"skill.battle_hardened.battle\",\"typeTag\":\"【类型玩家技能】\",\"containerType\":\"PlayerSkill\","
+            "{\"id\":\"relic.battle_hardened.battle\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\","
             + "\"kind\":\"Triggered\","
             + "\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},"
             + "\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetKind\":\"Monster\"}],"
             + "\"target\":{\"atom\":\"Player\"},"
-            + "\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"UntilEnemyChanges\",\"source\":\"skill.battle_hardened\"}}";
+            + "\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"UntilEnemyChanges\",\"source\":\"relic.battle_hardened\"}}";
 
         private const string SpaceMasteryEffectJson =
             "{\"id\":\"skill.space_mastery.battle\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
@@ -145,7 +145,7 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(mEffects.Validate(definition).IsValid);
             mEffects.Activate(
                 definition,
-                new EffectOwner(EffectContainerType.PlayerSkill, "skill.battle_hardened", 0));
+                new EffectOwner(EffectContainerType.Relic, "relic.battle_hardened", 0));
         }
 
         private void ActivateSpaceMastery(int ownerUid)

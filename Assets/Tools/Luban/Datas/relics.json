@@ -1,5 +1,29 @@
 [
   {
+    "def_id": "relic.arsenal",
+    "display_name": "军械库",
+    "rarity": "Blue",
+    "design_text": "关卡结束加入飞刀/爆弹/破击锤之一",
+    "tags": "",
+    "effect_ids": "relic.arsenal.node_end"
+  },
+  {
+    "def_id": "relic.battle_hardened",
+    "display_name": "历战",
+    "rarity": "Blue",
+    "design_text": "战斗时攻击+2，换敌复原",
+    "tags": "",
+    "effect_ids": "relic.battle_hardened.battle"
+  },
+  {
+    "def_id": "relic.blood_shockwave",
+    "display_name": "血液冲击波",
+    "rarity": "Gold",
+    "design_text": "血量上限+4，关卡开始放入撞击教程，低血再放一张",
+    "tags": "",
+    "effect_ids": "relic.blood_shockwave.max_hp|relic.blood_shockwave.node_start|relic.blood_shockwave.node_start_low_hp"
+  },
+  {
     "def_id": "relic.craving",
     "display_name": "渴望",
     "rarity": "Gold",
@@ -16,6 +40,22 @@
     "effect_ids": "relic.dragon_scale_armor.base|relic.dragon_scale_armor.max_hp|relic.dragon_scale_armor.rule"
   },
   {
+    "def_id": "relic.easy_road",
+    "display_name": "轻车熟路",
+    "rarity": "Blue",
+    "design_text": "关卡结束白色帮助卡三选一",
+    "tags": "",
+    "effect_ids": "relic.easy_road.node_end"
+  },
+  {
+    "def_id": "relic.even_hatred",
+    "display_name": "偶数仇恨",
+    "rarity": "Blue",
+    "design_text": "对偶数等级怪物造成双倍伤害",
+    "tags": "",
+    "effect_ids": "relic.even_hatred.rule"
+  },
+  {
     "def_id": "relic.gold_armor",
     "display_name": "金币盔甲",
     "rarity": "White",
@@ -30,6 +70,14 @@
     "design_text": "击杀怪物时获得2金币",
     "tags": "",
     "effect_ids": "relic.gold_knife.kill"
+  },
+  {
+    "def_id": "relic.hard_skin",
+    "display_name": "硬皮",
+    "rarity": "Blue",
+    "design_text": "血量上限+10，关卡结束恢复10",
+    "tags": "",
+    "effect_ids": "relic.hard_skin.max_hp|relic.hard_skin.node_end"
   },
   {
     "def_id": "relic.heavy_armor",
@@ -80,30 +128,6 @@
     "effect_ids": "relic.lucky_coin.elite_kill|relic.lucky_coin.boss_kill"
   },
   {
-    "def_id": "relic.blood_shockwave",
-    "display_name": "血液冲击波",
-    "rarity": "Gold",
-    "design_text": "血量上限+4，关卡开始放入撞击教程，低血再放一张",
-    "tags": "",
-    "effect_ids": "relic.blood_shockwave.max_hp|relic.blood_shockwave.node_start|relic.blood_shockwave.node_start_low_hp"
-  },
-  {
-    "def_id": "relic.rotation_button",
-    "display_name": "旋转按钮",
-    "rarity": "White",
-    "design_text": "每关卡开始放入旋转轮",
-    "tags": "",
-    "effect_ids": "relic.rotation_button.node_start"
-  },
-  {
-    "def_id": "relic.swap_button",
-    "display_name": "交换按钮",
-    "rarity": "White",
-    "design_text": "每关卡开始放入交换卡",
-    "tags": "",
-    "effect_ids": "relic.swap_button.node_start"
-  },
-  {
     "def_id": "relic.phoenix_feather",
     "display_name": "凤凰羽毛",
     "rarity": "Gold",
@@ -118,6 +142,14 @@
     "design_text": "每关卡开始加入两张恢复药水",
     "tags": "",
     "effect_ids": "relic.potion_bag.node_start"
+  },
+  {
+    "def_id": "relic.rotation_button",
+    "display_name": "旋转按钮",
+    "rarity": "White",
+    "design_text": "每关卡开始放入旋转轮",
+    "tags": "",
+    "effect_ids": "relic.rotation_button.node_start"
   },
   {
     "def_id": "relic.shield_knife",
@@ -136,12 +168,36 @@
     "effect_ids": "relic.sling.kill"
   },
   {
+    "def_id": "relic.swap_button",
+    "display_name": "交换按钮",
+    "rarity": "White",
+    "design_text": "每关卡开始放入交换卡",
+    "tags": "",
+    "effect_ids": "relic.swap_button.node_start"
+  },
+  {
+    "def_id": "relic.thorn_skin",
+    "display_name": "刺皮",
+    "rarity": "Blue",
+    "design_text": "战斗时对怪物造成等同其攻击的伤害",
+    "tags": "",
+    "effect_ids": "relic.thorn_skin.battle"
+  },
+  {
     "def_id": "relic.throwing_knife_bag",
     "display_name": "飞刀袋",
     "rarity": "White",
     "design_text": "每关卡开始加入两张飞刀",
     "tags": "",
     "effect_ids": "relic.throwing_knife_bag.node_start"
+  },
+  {
+    "def_id": "relic.tower_child",
+    "display_name": "塔之子",
+    "rarity": "Blue",
+    "design_text": "关卡开始放入倍增塔",
+    "tags": "",
+    "effect_ids": "relic.tower_child.node_start"
   },
   {
     "def_id": "relic.vitality_amulet",

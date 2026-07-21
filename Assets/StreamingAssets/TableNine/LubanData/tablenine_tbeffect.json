@@ -231,6 +231,41 @@
     "design_text": "[使用时] 直接移除本卡，不触发其他效果"
   },
   {
+    "id": "relic.arsenal.node_end",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.arsenal.node_end\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeEnd\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"WeightedRandom\",\"choices\":[{\"weight\":1,\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.throwing_knife\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\"}},{\"weight\":1,\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.bomb\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\"}},{\"weight\":1,\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.armor_breaking_hammer\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\"}}]}}",
+    "design_text": "[每关卡结束时] 加入飞刀/爆弹/破击锤之一"
+  },
+  {
+    "id": "relic.battle_hardened.battle",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.battle_hardened.battle\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"UntilEnemyChanges\",\"source\":\"relic.battle_hardened\"}}",
+    "design_text": "[战斗时] 攻击+2（仅对当前敌人有效）"
+  },
+  {
+    "id": "relic.blood_shockwave.max_hp",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.blood_shockwave.max_hp\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":4,\"reason\":\"relic.blood_shockwave.max_hp\"}}",
+    "design_text": "血量上限+4"
+  },
+  {
+    "id": "relic.blood_shockwave.node_start",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.blood_shockwave.node_start\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.impact_tutorial\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}",
+    "design_text": "[每关卡开始时] 将一张撞击教程放入道具牌格"
+  },
+  {
+    "id": "relic.blood_shockwave.node_start_low_hp",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.blood_shockwave.node_start_low_hp\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"conditions\":[{\"atom\":\"HpBelow\",\"target\":\"Player\",\"pct\":0.5}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.impact_tutorial\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}",
+    "design_text": "[每关卡开始时] 当前血量低于50%时再放入一张撞击教程"
+  },
+  {
     "id": "relic.craving.rule",
     "container_type": "Relic",
     "state": "Implemented",
@@ -259,6 +294,20 @@
     "design_text": "所有怪物卡的攻击-1"
   },
   {
+    "id": "relic.easy_road.node_end",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.easy_road.node_end\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeEnd\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"OfferRewardChoice\",\"poolId\":\"help.white.choice\"}}",
+    "design_text": "[每关卡结束时] 进行一次白色帮助卡三选一"
+  },
+  {
+    "id": "relic.even_hatred.rule",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.even_hatred.rule\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"RuleModifier\",\"conditions\":[{\"atom\":\"EventFilter\",\"targetKind\":\"Monster\",\"actorIs\":\"Player\"},{\"atom\":\"LevelParity\",\"target\":\"Self\",\"parity\":\"Even\"}],\"ruleModifier\":{\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":2,\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"relic.even_hatred\"}}",
+    "design_text": "[战斗时] 若目标怪物卡等级为偶数，玩家造成双倍伤害"
+  },
+  {
     "id": "relic.gold_armor.base",
     "container_type": "Relic",
     "state": "Implemented",
@@ -280,11 +329,32 @@
     "design_text": "[击杀怪物时] 获得2金币"
   },
   {
+    "id": "relic.hard_skin.max_hp",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.hard_skin.max_hp\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":10,\"reason\":\"relic.hard_skin.max_hp\"}}",
+    "design_text": "获得本遗物时血量上限+10"
+  },
+  {
+    "id": "relic.hard_skin.node_end",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.hard_skin.node_end\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeEnd\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":10,\"actor\":\"Player\"}}",
+    "design_text": "[每关卡结束时] 恢复10点血量"
+  },
+  {
     "id": "relic.heavy_armor.base",
     "container_type": "Relic",
     "state": "Implemented",
     "json": "{\"id\":\"relic.heavy_armor.base\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"modifier\":{\"stat\":\"Armor\",\"op\":\"Add\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}",
     "design_text": "基础护甲+1"
+  },
+  {
+    "id": "relic.heavy_armor.node_start",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.heavy_armor.node_start\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"Player\",\"stat\":\"Armor\"},{\"constant\":0.5}]}]}}}",
+    "design_text": "[每关卡开始时] 每有两点基础护甲，额外获得1点当前护甲"
   },
   {
     "id": "relic.junk_coating.use",
@@ -336,41 +406,6 @@
     "design_text": "[击杀精英时] 将一张金币卡加入战斗卡组"
   },
   {
-    "id": "relic.blood_shockwave.max_hp",
-    "container_type": "Relic",
-    "state": "Implemented",
-    "json": "{\"id\":\"relic.blood_shockwave.max_hp\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":4,\"reason\":\"relic.blood_shockwave.max_hp\"}}",
-    "design_text": "血量上限+4"
-  },
-  {
-    "id": "relic.blood_shockwave.node_start",
-    "container_type": "Relic",
-    "state": "Implemented",
-    "json": "{\"id\":\"relic.blood_shockwave.node_start\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.impact_tutorial\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}",
-    "design_text": "[每关卡开始时] 将一张撞击教程放入道具牌格"
-  },
-  {
-    "id": "relic.blood_shockwave.node_start_low_hp",
-    "container_type": "Relic",
-    "state": "Implemented",
-    "json": "{\"id\":\"relic.blood_shockwave.node_start_low_hp\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.impact_tutorial\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"},\"conditions\":[{\"atom\":\"HpBelow\",\"target\":\"Player\",\"pct\":0.5}]}",
-    "design_text": "[每关卡开始时] 当前血量低于50%时再放入一张撞击教程"
-  },
-  {
-    "id": "relic.rotation_button.node_start",
-    "container_type": "Relic",
-    "state": "Implemented",
-    "json": "{\"id\":\"relic.rotation_button.node_start\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.rotation_wheel\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}",
-    "design_text": "[每关卡开始时] 将一张旋转轮放入道具牌格"
-  },
-  {
-    "id": "relic.swap_button.node_start",
-    "container_type": "Relic",
-    "state": "Implemented",
-    "json": "{\"id\":\"relic.swap_button.node_start\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.swap_card\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}",
-    "design_text": "[每关卡开始时] 将一张交换卡放入道具牌格"
-  },
-  {
     "id": "relic.phoenix_feather.fatal",
     "container_type": "Relic",
     "state": "Implemented",
@@ -392,6 +427,13 @@
     "design_text": "[每关卡开始时] 将两张恢复药水加入到玩家侧卡组"
   },
   {
+    "id": "relic.rotation_button.node_start",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.rotation_button.node_start\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.rotation_wheel\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}",
+    "design_text": "[每关卡开始时] 将一张旋转轮放入道具牌格"
+  },
+  {
     "id": "relic.shield_knife.kill",
     "container_type": "Relic",
     "state": "Implemented",
@@ -406,11 +448,32 @@
     "design_text": "[击杀怪物时] 对随机一张怪物卡造成4点伤害"
   },
   {
+    "id": "relic.swap_button.node_start",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.swap_button.node_start\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.swap_card\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}",
+    "design_text": "[每关卡开始时] 将一张交换卡放入道具牌格"
+  },
+  {
+    "id": "relic.thorn_skin.battle",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.thorn_skin.battle\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"target\":{\"atom\":\"EventTarget\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Target\",\"stat\":\"Attack\"},\"actor\":\"Player\"}}",
+    "design_text": "[战斗时] 对怪物卡造成等同于该怪物卡攻击的伤害"
+  },
+  {
     "id": "relic.throwing_knife_bag.node_start",
     "container_type": "Relic",
     "state": "Implemented",
     "json": "{\"id\":\"relic.throwing_knife_bag.node_start\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.throwing_knife\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\",\"count\":2}}",
     "design_text": "[每关卡开始时] 将两张飞刀加入到玩家侧卡组"
+  },
+  {
+    "id": "relic.tower_child.node_start",
+    "container_type": "Relic",
+    "state": "Implemented",
+    "json": "{\"id\":\"relic.tower_child.node_start\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.doubling_tower\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}",
+    "design_text": "[每关卡开始时] 将一张倍增塔放入道具牌格"
   },
   {
     "id": "relic.vitality_amulet.max_hp",
@@ -511,20 +574,6 @@
     "design_text": "[场上] 移动到格9时对玩家造成2点伤害"
   },
   {
-    "id": "skill.arsenal.node_end",
-    "container_type": "PlayerSkill",
-    "state": "Implemented",
-    "json": "{\"id\":\"skill.arsenal.node_end\",\"typeTag\":\"【类型玩家技能】\",\"containerType\":\"PlayerSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeEnd\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"WeightedRandom\",\"choices\":[{\"weight\":1,\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.throwing_knife\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\"}},{\"weight\":1,\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.bomb\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\"}},{\"weight\":1,\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.armor_breaking_hammer\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\"}}]}}",
-    "design_text": "[每关卡结束时] 加入飞刀/爆弹/破击锤之一"
-  },
-  {
-    "id": "skill.battle_hardened.battle",
-    "container_type": "PlayerSkill",
-    "state": "Implemented",
-    "json": "{\"id\":\"skill.battle_hardened.battle\",\"typeTag\":\"【类型玩家技能】\",\"containerType\":\"PlayerSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"UntilEnemyChanges\",\"source\":\"skill.battle_hardened\"}}",
-    "design_text": "[战斗时] 攻击+2（仅对当前敌人有效）"
-  },
-  {
     "id": "skill.beggar_bond.move",
     "container_type": "MonsterSkill",
     "state": "Implemented",
@@ -572,20 +621,6 @@
     "state": "Implemented",
     "json": "{\"id\":\"skill.devotion.remove\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnRemove\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"help.flame\",\"kind\":\"HelpCard\",\"count\":1,\"top\":false}}",
     "design_text": "[被移除时] 将一张烈焰加入战斗卡组"
-  },
-  {
-    "id": "skill.easy_road.node_end",
-    "container_type": "PlayerSkill",
-    "state": "Implemented",
-    "json": "{\"id\":\"skill.easy_road.node_end\",\"typeTag\":\"【类型玩家技能】\",\"containerType\":\"PlayerSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeEnd\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"OfferRewardChoice\",\"poolId\":\"help.white.choice\"}}",
-    "design_text": "[每关卡结束时] 进行一次白色帮助卡三选一"
-  },
-  {
-    "id": "skill.even_hatred.rule",
-    "container_type": "PlayerSkill",
-    "state": "Implemented",
-    "json": "{\"id\":\"skill.even_hatred.rule\",\"typeTag\":\"【类型玩家技能】\",\"containerType\":\"PlayerSkill\",\"kind\":\"RuleModifier\",\"conditions\":[{\"atom\":\"EventFilter\",\"targetKind\":\"Monster\",\"actorIs\":\"Player\"},{\"atom\":\"LevelParity\",\"target\":\"Self\",\"parity\":\"Even\"}],\"ruleModifier\":{\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":2,\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"skill.even_hatred\"}}",
-    "design_text": "[战斗时] 若目标怪物卡等级为偶数，玩家造成双倍伤害"
   },
   {
     "id": "skill.fall_apart.remove",
@@ -728,20 +763,6 @@
     "design_text": "[场上] 处于格7时，战斗损失护甲后对玩家造成等同损失护甲的伤害"
   },
   {
-    "id": "skill.hard_skin.max_hp",
-    "container_type": "PlayerSkill",
-    "state": "Implemented",
-    "json": "{\"id\":\"skill.hard_skin.max_hp\",\"typeTag\":\"【类型玩家技能】\",\"containerType\":\"PlayerSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":10,\"reason\":\"skill.hard_skin.max_hp\"}}",
-    "design_text": "获得本技能时血量上限+10"
-  },
-  {
-    "id": "skill.hard_skin.node_end",
-    "container_type": "PlayerSkill",
-    "state": "Implemented",
-    "json": "{\"id\":\"skill.hard_skin.node_end\",\"typeTag\":\"【类型玩家技能】\",\"containerType\":\"PlayerSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeEnd\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":10,\"actor\":\"Player\"}}",
-    "design_text": "[每关卡结束时] 恢复10点血量"
-  },
-  {
     "id": "skill.hoodlum.slot1",
     "container_type": "MonsterSkill",
     "state": "Implemented",
@@ -830,14 +851,14 @@
     "container_type": "MonsterSkill",
     "state": "Implemented",
     "json": "{\"id\":\"skill.recombine_body.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"AdjacentHasCard\",\"origin\":\"Self\",\"defId\":\"monster.headless_skeleton\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\"},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"AdjacentCard\",\"origin\":\"Self\",\"defId\":\"monster.headless_skeleton\"}},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton_reborn\",\"kind\":\"Monster\",\"count\":1,\"top\":true}]}}",
-    "design_text": "相邻无头骷髅时移除双方并洗入大骷髅"
+    "design_text": "相邻无头骷髅时移除双方并洗入重组大骷髅（不持有散架）"
   },
   {
     "id": "skill.recombine_head.move",
     "container_type": "MonsterSkill",
     "state": "Implemented",
     "json": "{\"id\":\"skill.recombine_head.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"AdjacentHasCard\",\"origin\":\"Self\",\"defId\":\"monster.skull_head\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\"},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"AdjacentCard\",\"origin\":\"Self\",\"defId\":\"monster.skull_head\"}},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton_reborn\",\"kind\":\"Monster\",\"count\":1,\"top\":true}]}}",
-    "design_text": "相邻骷髅头时移除双方并洗入大骷髅"
+    "design_text": "相邻骷髅头时移除双方并洗入重组大骷髅（不持有散架）"
   },
   {
     "id": "skill.relentless_chase.move",
@@ -987,25 +1008,11 @@
     "design_text": "每移动3次，移除正交相邻帮助卡"
   },
   {
-    "id": "skill.thorn_skin.battle",
-    "container_type": "PlayerSkill",
-    "state": "Implemented",
-    "json": "{\"id\":\"skill.thorn_skin.battle\",\"typeTag\":\"【类型玩家技能】\",\"containerType\":\"PlayerSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"target\":{\"atom\":\"EventTarget\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Target\",\"stat\":\"Attack\"},\"actor\":\"Player\"}}",
-    "design_text": "[战斗时] 对怪物卡造成等同于该怪物卡攻击的伤害"
-  },
-  {
     "id": "skill.throw_stone.move",
     "container_type": "MonsterSkill",
     "state": "Implemented",
     "json": "{\"id\":\"skill.throw_stone.move\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":2},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"StatAtLeast\",\"target\":\"Self\",\"stat\":\"Armor\",\"value\":2},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"TransferArmor\",\"amount\":2,\"receiver\":\"None\",\"cause\":\"skill.throw_stone\"},{\"atom\":\"DealDamage\",\"amount\":2,\"actor\":\"Self\",\"target\":{\"atom\":\"Player\"}}]}}}",
     "design_text": "每移动2次，若本卡护甲至少2，扣除2点护甲并对玩家造成2点伤害"
-  },
-  {
-    "id": "skill.tower_child.node_start",
-    "container_type": "PlayerSkill",
-    "state": "Implemented",
-    "json": "{\"id\":\"skill.tower_child.node_start\",\"typeTag\":\"【类型玩家技能】\",\"containerType\":\"PlayerSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.doubling_tower\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}",
-    "design_text": "[每关卡开始时] 将一张倍增塔放入道具牌格"
   },
   {
     "id": "skill.turn_world.enter",

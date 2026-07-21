@@ -268,11 +268,6 @@ namespace NineGrid.Core.Effects
                 result.Add("verb.relic", "Relic effects must trigger or stay active; they are not used.");
             }
 
-            if (definition.ContainerType == EffectContainerType.PlayerSkill && Same(definition.Verb, "Use"))
-            {
-                result.Add("verb.playerSkill", "Player skills are passive and cannot be used.");
-            }
-
             if (definition.ContainerType == EffectContainerType.HelpCard && Same(definition.Verb, "Equip"))
             {
                 result.Add("verb.helpCard", "Help cards are not passive equipment.");
@@ -330,8 +325,6 @@ namespace NineGrid.Core.Effects
                     return "【类型遗物】";
                 case EffectContainerType.MonsterSkill:
                     return "【类型怪物技能】";
-                case EffectContainerType.PlayerSkill:
-                    return "【类型玩家技能】";
                 case EffectContainerType.HelpCard:
                     return "【类型帮助卡】";
                 default:

@@ -157,7 +157,7 @@
   {
     "content_id": "monster.big_skeleton_reborn",
     "content_kind": "Monster",
-    "description": "重组大骷髅：碎片重组而成，不持有散架"
+    "description": "重组大骷髅"
   },
   {
     "content_id": "monster.big_stone",
@@ -475,6 +475,11 @@
     "description": "流浪军团牌组"
   },
   {
+    "content_id": "relic.blood_shockwave",
+    "content_kind": "Relic",
+    "description": "血液冲击波：血量上限+4，关卡开始放入撞击教程，低血再放一张"
+  },
+  {
     "content_id": "relic.craving",
     "content_kind": "Relic",
     "description": "渴望：所有恢复血量效果翻倍"
@@ -482,12 +487,12 @@
   {
     "content_id": "relic.dragon_scale_armor",
     "content_kind": "Relic",
-    "description": "龙鳞甲：所有怪物攻击-1"
+    "description": "龙鳞甲：基础护甲+1，血量上限+6，怪物攻击-1"
   },
   {
     "content_id": "relic.gold_armor",
     "content_kind": "Relic",
-    "description": "金币盔甲：金币抵消护甲伤害"
+    "description": "金币盔甲：基础护甲+1，金币抵消护甲伤害"
   },
   {
     "content_id": "relic.gold_knife",
@@ -527,12 +532,17 @@
   {
     "content_id": "relic.phoenix_feather",
     "content_kind": "Relic",
-    "description": "凤凰羽毛：致命伤害免死"
+    "description": "凤凰羽毛：血量上限+8，致命伤害免死"
   },
   {
     "content_id": "relic.potion_bag",
     "content_kind": "Relic",
     "description": "药水袋：每关卡开始加入两张恢复药水"
+  },
+  {
+    "content_id": "relic.rotation_button",
+    "content_kind": "Relic",
+    "description": "旋转按钮：每关卡开始放入旋转轮"
   },
   {
     "content_id": "relic.shield_knife",
@@ -543,6 +553,11 @@
     "content_id": "relic.sling",
     "content_kind": "Relic",
     "description": "弹弓：击杀怪物时随机伤害"
+  },
+  {
+    "content_id": "relic.swap_button",
+    "content_kind": "Relic",
+    "description": "交换按钮：每关卡开始放入交换卡"
   },
   {
     "content_id": "relic.throwing_knife_bag",
@@ -933,20 +948,5 @@
     "content_id": "skill.violence_nutrition",
     "content_kind": "Skill",
     "description": "暴力即养分：依靠暴力狂移除怪物得攻击，移除帮助卡得护甲"
-  },
-  {
-    "content_id": "Attack",
-    "content_kind": "ChoiceOption",
-    "description": "攻击+1"
-  },
-  {
-    "content_id": "Armor",
-    "content_kind": "ChoiceOption",
-    "description": "护甲+1"
-  },
-  {
-    "content_id": "Hp",
-    "content_kind": "ChoiceOption",
-    "description": "血量上限与当前血量+2"
   }
 ]

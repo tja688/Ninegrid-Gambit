@@ -1172,25 +1172,6 @@ namespace NineGrid.Core
         }
     }
 
-    public sealed class GrantSkillAction : GameAction
-    {
-        public GrantSkillAction(string skillDefId)
-        {
-            SkillDefId = skillDefId ?? string.Empty;
-        }
-
-        public string SkillDefId { get; private set; }
-        public override string ActionName { get { return "GrantSkill"; } }
-
-        public override GameActionResult Apply(GameActionContext context)
-        {
-            context.GetModel<PlayerModel>().AddSkill(SkillDefId);
-            return new GameActionResult()
-                .AddEvent(new CoreGameEvent(CoreEventType.SkillGranted, context.ActionId, ActionName)
-                    .WithMessage(SkillDefId));
-        }
-    }
-
     public sealed class DeactivateEffectAction : GameAction
     {
         public DeactivateEffectAction(string instanceId)
@@ -1210,16 +1191,10 @@ namespace NineGrid.Core
                 return GameActionResult.Empty;
             }
 
-            if (instance.Owner != null)
+            if (instance.Owner != null
+                && instance.Owner.ContainerType == EffectContainerType.Relic)
             {
-                if (instance.Owner.ContainerType == EffectContainerType.Relic)
-                {
-                    context.GetModel<PlayerModel>().RemoveRelic(instance.Owner.SourceDefId);
-                }
-                else if (instance.Owner.ContainerType == EffectContainerType.PlayerSkill)
-                {
-                    context.GetModel<PlayerModel>().RemoveSkill(instance.Owner.SourceDefId);
-                }
+                context.GetModel<PlayerModel>().RemoveRelic(instance.Owner.SourceDefId);
             }
 
             effectSystem.Deactivate(InstanceId);

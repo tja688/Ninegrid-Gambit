@@ -12,7 +12,6 @@ namespace NineGrid.Content
             AddEffects(catalog);
             AddHelpCards(catalog);
             AddRelics(catalog);
-            AddPlayerSkills(catalog);
             AddMonsterSkills(catalog);
             AddMonsterCards(catalog);
             AddRewardsAndRooms(catalog);
@@ -279,13 +278,6 @@ namespace NineGrid.Content
                     + "]}"),
                 "[使用时] 直接移除本卡，不触发其他效果"));
 
-            c.AddEffect(Impl("skill.thorn_skin.battle", EffectContainerType.PlayerSkill,
-                Triggered("skill.thorn_skin.battle", "PlayerSkill",
-                    "{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0}",
-                    "{\"atom\":\"EventTarget\"}",
-                    "{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Target\",\"stat\":\"Attack\"},\"actor\":\"Player\"}"),
-                "[战斗时] 对怪物卡造成等同于该怪物卡攻击的伤害"));
-
             c.AddEffect(Impl("help.flame.use", EffectContainerType.HelpCard,
                 Triggered("help.flame.use", "HelpCard",
                     "{\"atom\":\"OnUseHelpCard\"}",
@@ -439,27 +431,34 @@ namespace NineGrid.Content
                     "{\"stat\":\"MaxHp\",\"op\":\"Add\",\"value\":8,\"layer\":\"Conditional\",\"scope\":\"Permanent\"}"),
                 "木甲套装血量额外+8"));
 
-            c.AddEffect(Impl("skill.hard_skin.max_hp", EffectContainerType.PlayerSkill,
-                Triggered("skill.hard_skin.max_hp", "PlayerSkill",
+            // Former player skills → Relic (default ContentRarity.Blue).
+            c.AddEffect(Impl("relic.thorn_skin.battle", EffectContainerType.Relic,
+                Triggered("relic.thorn_skin.battle", "Relic",
+                    "{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0}",
+                    "{\"atom\":\"EventTarget\"}",
+                    "{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Target\",\"stat\":\"Attack\"},\"actor\":\"Player\"}"),
+                "[战斗时] 对怪物卡造成等同于该怪物卡攻击的伤害"));
+            c.AddEffect(Impl("relic.hard_skin.max_hp", EffectContainerType.Relic,
+                Triggered("relic.hard_skin.max_hp", "Relic",
                     "{\"atom\":\"OnActivate\"}",
                     "{\"atom\":\"Player\"}",
-                    "{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":10,\"reason\":\"skill.hard_skin.max_hp\"}"),
-                "获得本技能时血量上限+10"));
-            c.AddEffect(Impl("skill.hard_skin.node_end", EffectContainerType.PlayerSkill,
-                Triggered("skill.hard_skin.node_end", "PlayerSkill",
+                    "{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":10,\"reason\":\"relic.hard_skin.max_hp\"}"),
+                "获得本遗物时血量上限+10"));
+            c.AddEffect(Impl("relic.hard_skin.node_end", EffectContainerType.Relic,
+                Triggered("relic.hard_skin.node_end", "Relic",
                     "{\"atom\":\"OnNodeEnd\"}",
                     "{\"atom\":\"Player\"}",
                     "{\"atom\":\"Heal\",\"amount\":10,\"actor\":\"Player\"}"),
                 "[每关卡结束时] 恢复10点血量"));
-            c.AddEffect(Impl("skill.battle_hardened.battle", EffectContainerType.PlayerSkill,
-                Triggered("skill.battle_hardened.battle", "PlayerSkill",
+            c.AddEffect(Impl("relic.battle_hardened.battle", EffectContainerType.Relic,
+                Triggered("relic.battle_hardened.battle", "Relic",
                     "{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0}",
                     "{\"atom\":\"Player\"}",
-                    "{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"UntilEnemyChanges\",\"source\":\"skill.battle_hardened\"}",
+                    "{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"UntilEnemyChanges\",\"source\":\"relic.battle_hardened\"}",
                     "[{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetKind\":\"Monster\"}]"),
                 "[战斗时] 攻击+2（仅对当前敌人有效）"));
-            c.AddEffect(Impl("skill.arsenal.node_end", EffectContainerType.PlayerSkill,
-                Triggered("skill.arsenal.node_end", "PlayerSkill",
+            c.AddEffect(Impl("relic.arsenal.node_end", EffectContainerType.Relic,
+                Triggered("relic.arsenal.node_end", "Relic",
                     "{\"atom\":\"OnNodeEnd\"}",
                     "{\"atom\":\"Player\"}",
                     "{\"atom\":\"WeightedRandom\",\"choices\":["
@@ -467,21 +466,21 @@ namespace NineGrid.Content
                     + "{\"weight\":1,\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.bomb\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\"}},"
                     + "{\"weight\":1,\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.armor_breaking_hammer\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\"}}]}"),
                 "[每关卡结束时] 加入飞刀/爆弹/破击锤之一"));
-            c.AddEffect(Impl("skill.easy_road.node_end", EffectContainerType.PlayerSkill,
-                Triggered("skill.easy_road.node_end", "PlayerSkill",
+            c.AddEffect(Impl("relic.easy_road.node_end", EffectContainerType.Relic,
+                Triggered("relic.easy_road.node_end", "Relic",
                     "{\"atom\":\"OnNodeEnd\"}",
                     "{\"atom\":\"Player\"}",
                     "{\"atom\":\"OfferRewardChoice\",\"poolId\":\"help.white.choice\"}"),
                 "[每关卡结束时] 进行一次白色帮助卡三选一"));
-            c.AddEffect(Impl("skill.tower_child.node_start", EffectContainerType.PlayerSkill,
-                Triggered("skill.tower_child.node_start", "PlayerSkill",
+            c.AddEffect(Impl("relic.tower_child.node_start", EffectContainerType.Relic,
+                Triggered("relic.tower_child.node_start", "Relic",
                     "{\"atom\":\"OnNodeStart\"}",
                     "{\"atom\":\"Player\"}",
                     "{\"atom\":\"Spawn\",\"defId\":\"help.doubling_tower\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}"),
                 "[每关卡开始时] 将一张倍增塔放入道具牌格"));
-            c.AddEffect(Impl("skill.even_hatred.rule", EffectContainerType.PlayerSkill,
-                Rule("skill.even_hatred.rule", "PlayerSkill",
-                    "{\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":2,\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"skill.even_hatred\"}",
+            c.AddEffect(Impl("relic.even_hatred.rule", EffectContainerType.Relic,
+                Rule("relic.even_hatred.rule", "Relic",
+                    "{\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":2,\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"relic.even_hatred\"}",
                     "[{\"atom\":\"EventFilter\",\"targetKind\":\"Monster\",\"actorIs\":\"Player\"},{\"atom\":\"LevelParity\",\"target\":\"Self\",\"parity\":\"Even\"}]"),
                 "[战斗时] 若目标怪物卡等级为偶数，玩家造成双倍伤害"));
 
@@ -1138,24 +1137,23 @@ namespace NineGrid.Content
                 .AddEffect("relic.blood_shockwave.max_hp")
                 .AddEffect("relic.blood_shockwave.node_start")
                 .AddEffect("relic.blood_shockwave.node_start_low_hp");
-        }
 
-        private static void AddPlayerSkills(GameContentCatalog c)
-        {
-            Skill(c, "skill.thorn_skin", "刺皮", EffectContainerType.PlayerSkill, "战斗时对怪物造成等同其攻击的伤害")
-                .AddEffect("skill.thorn_skin.battle");
-            Skill(c, "skill.hard_skin", "硬皮", EffectContainerType.PlayerSkill, "血量上限+10，关卡结束恢复10")
-                .AddEffect("skill.hard_skin.max_hp").AddEffect("skill.hard_skin.node_end");
-            Skill(c, "skill.battle_hardened", "历战", EffectContainerType.PlayerSkill, "战斗时攻击+2，换敌复原")
-                .AddEffect("skill.battle_hardened.battle");
-            Skill(c, "skill.arsenal", "军械库", EffectContainerType.PlayerSkill, "关卡结束加入飞刀/爆弹/破击锤之一")
-                .AddEffect("skill.arsenal.node_end");
-            Skill(c, "skill.even_hatred", "偶数仇恨", EffectContainerType.PlayerSkill, "对偶数等级怪物造成双倍伤害")
-                .AddEffect("skill.even_hatred.rule");
-            Skill(c, "skill.tower_child", "塔之子", EffectContainerType.PlayerSkill, "关卡开始放入倍增塔")
-                .AddEffect("skill.tower_child.node_start");
-            Skill(c, "skill.easy_road", "轻车熟路", EffectContainerType.PlayerSkill, "关卡结束白色帮助卡三选一")
-                .AddEffect("skill.easy_road.node_end");
+            // Former player skills → Relic; rarity defaulted to Blue.
+            Relic(c, "relic.thorn_skin", "刺皮", ContentRarity.Blue, "战斗时对怪物造成等同其攻击的伤害")
+                .AddEffect("relic.thorn_skin.battle");
+            Relic(c, "relic.hard_skin", "硬皮", ContentRarity.Blue, "血量上限+10，关卡结束恢复10")
+                .AddEffect("relic.hard_skin.max_hp").AddEffect("relic.hard_skin.node_end");
+            Relic(c, "relic.battle_hardened", "历战", ContentRarity.Blue, "战斗时攻击+2，换敌复原")
+                .AddEffect("relic.battle_hardened.battle");
+            Relic(c, "relic.arsenal", "军械库", ContentRarity.Blue, "关卡结束加入飞刀/爆弹/破击锤之一")
+                .AddEffect("relic.arsenal.node_end");
+            Relic(c, "relic.even_hatred", "偶数仇恨", ContentRarity.Blue, "对偶数等级怪物造成双倍伤害")
+                .AddEffect("relic.even_hatred.rule");
+            Relic(c, "relic.tower_child", "塔之子", ContentRarity.Blue, "关卡开始放入倍增塔")
+                .AddEffect("relic.tower_child.node_start");
+            // Profession starter only — not added to chest reward pools.
+            Relic(c, "relic.easy_road", "轻车熟路", ContentRarity.Blue, "关卡结束白色帮助卡三选一")
+                .AddEffect("relic.easy_road.node_end");
         }
 
         private static void AddMonsterSkills(GameContentCatalog c)
@@ -1435,6 +1433,13 @@ namespace NineGrid.Content
             pool.Add("relic.gold_armor", CardKind.Relic, 1);
             // Blue
             pool.Add("relic.vitality_amulet", CardKind.Relic, 1);
+            // Former player skills → Relic; rarity defaulted to Blue (easy_road is starter-only).
+            pool.Add("relic.thorn_skin", CardKind.Relic, 1);
+            pool.Add("relic.hard_skin", CardKind.Relic, 1);
+            pool.Add("relic.battle_hardened", CardKind.Relic, 1);
+            pool.Add("relic.arsenal", CardKind.Relic, 1);
+            pool.Add("relic.even_hatred", CardKind.Relic, 1);
+            pool.Add("relic.tower_child", CardKind.Relic, 1);
             // Gold
             pool.Add("relic.dragon_scale_armor", CardKind.Relic, 1);
             pool.Add("relic.phoenix_feather", CardKind.Relic, 1);
@@ -1445,6 +1450,13 @@ namespace NineGrid.Content
         private static void AddBlueAndGoldRelics(RewardPoolDefinition pool)
         {
             pool.Add("relic.vitality_amulet", CardKind.Relic, 1);
+            // Former player skills → Relic; rarity defaulted to Blue.
+            pool.Add("relic.thorn_skin", CardKind.Relic, 1);
+            pool.Add("relic.hard_skin", CardKind.Relic, 1);
+            pool.Add("relic.battle_hardened", CardKind.Relic, 1);
+            pool.Add("relic.arsenal", CardKind.Relic, 1);
+            pool.Add("relic.even_hatred", CardKind.Relic, 1);
+            pool.Add("relic.tower_child", CardKind.Relic, 1);
             pool.Add("relic.dragon_scale_armor", CardKind.Relic, 1);
             pool.Add("relic.phoenix_feather", CardKind.Relic, 1);
             pool.Add("relic.craving", CardKind.Relic, 1);
@@ -1601,11 +1613,6 @@ namespace NineGrid.Content
             if (container == "MonsterSkill")
             {
                 return "【类型怪物技能】";
-            }
-
-            if (container == "PlayerSkill")
-            {
-                return "【类型玩家技能】";
             }
 
             return "【类型帮助卡】";

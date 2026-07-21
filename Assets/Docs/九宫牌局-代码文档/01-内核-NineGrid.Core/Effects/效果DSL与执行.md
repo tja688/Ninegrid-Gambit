@@ -24,7 +24,7 @@ ActionPipeline ResolveAction
 | 相对路径 | 类型名 | 一句话职责 | 关键依赖 |
 | --- | --- | --- | --- |
 | `Effects/EffectEnums.cs` | `EffectKind` | Triggered / Modifier / RuleModifier | Definition |
-| 同上 | `EffectContainerType` | Relic / MonsterSkill / PlayerSkill / HelpCard | typeTag 校验 |
+| 同上 | `EffectContainerType` | Relic / MonsterSkill / HelpCard | typeTag 校验 |
 | 同上 | `EffectAtomKind` | Trigger / Condition / Target / Action | 注册表 |
 | 同上 | `EffectAtomAttribute` | 标记原子类 `(id, kind)` | 反射发现 |
 | `Effects/EffectDslNode.cs` | `EffectDslNode` | 轻量 JSON 树节点 | Parser |
@@ -54,10 +54,9 @@ ActionPipeline ResolveAction
 | --- | --- |
 | Relic | `【类型遗物】` |
 | MonsterSkill | `【类型怪物技能】` |
-| PlayerSkill | `【类型玩家技能】` |
 | HelpCard | `【类型帮助卡】` |
 
-`EffectValidator` 另校验：Triggered 需 trigger+action；Modifier 需 target+modifier；RuleModifier 需 ruleModifier；互斥字段；Relic/PlayerSkill 禁止 verb=`Use`；HelpCard 禁止 verb=`Equip`。
+`EffectValidator` 另校验：Triggered 需 trigger+action；Modifier 需 target+modifier；RuleModifier 需 ruleModifier；互斥字段；Relic 禁止 verb=`Use`；HelpCard 禁止 verb=`Equip`。
 
 ## 4. 原子 / 组合方式
 
@@ -90,7 +89,7 @@ ActionPipeline ResolveAction
 `AdjacentHasCard`, `AtSlot`, `Adjacent`, `CardZone`, `HpBelow`, `StatAtLeast`, `HasCard`, `CardCounter`, `TargetCount`, `BoardMarkCount`, `SelectedOption`, `EventFilter`, `ActionSource`, `OwnsRelicSet`, `LevelParity`
 
 **Action（28）**  
-`Sequence`, `WeightedRandom`, `Repeat`, `Conditional`, `DealDamage`, `Heal`, `GainArmor`, `TransferArmor`, `ModifyGold`, `ModifyBaseStat`, `OfferRewardChoice`, `GrantRewardFromPool`, `GrantRelic`, `GrantPlayerSkillContent`, `Move`, `Swap`, `Rotate`, `ShuffleInto`, `MoveToDrawPile`, `Spawn`, `ShuffleRandomContent`, `ExchangeWithDrawPile`, `ForceBattle`, `AddModifier`, `AddRuleModifier`, `ReplayHelpCardEffects`, `SetBoardMark`, `GrantSkill`, `RemoveCard`, `DeactivateSelfEffect`
+`Sequence`, `WeightedRandom`, `Repeat`, `Conditional`, `DealDamage`, `Heal`, `GainArmor`, `TransferArmor`, `ModifyGold`, `ModifyBaseStat`, `OfferRewardChoice`, `GrantRewardFromPool`, `GrantRelic`, `Move`, `Swap`, `Rotate`, `ShuffleInto`, `MoveToDrawPile`, `Spawn`, `ShuffleRandomContent`, `ExchangeWithDrawPile`, `ForceBattle`, `AddModifier`, `AddRuleModifier`, `ReplayHelpCardEffects`, `SetBoardMark`, `RemoveCard`, `DeactivateSelfEffect`
 
 另有抽象基类 `TriggerAtomBase`（无 Atom 属性）。
 

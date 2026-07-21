@@ -21,20 +21,6 @@
     "effect_ids": "skill.air_strike.slot1|skill.air_strike.slot3|skill.air_strike.slot7|skill.air_strike.slot9"
   },
   {
-    "def_id": "skill.arsenal",
-    "display_name": "军械库",
-    "container_type": "PlayerSkill",
-    "design_text": "关卡结束加入飞刀/爆弹/破击锤之一",
-    "effect_ids": "skill.arsenal.node_end"
-  },
-  {
-    "def_id": "skill.battle_hardened",
-    "display_name": "历战",
-    "container_type": "PlayerSkill",
-    "design_text": "战斗时攻击+2，换敌复原",
-    "effect_ids": "skill.battle_hardened.battle"
-  },
-  {
     "def_id": "skill.beggar_bond",
     "display_name": "丐帮同心",
     "container_type": "MonsterSkill",
@@ -82,20 +68,6 @@
     "container_type": "MonsterSkill",
     "design_text": "被移除时加入烈焰",
     "effect_ids": "skill.devotion.remove"
-  },
-  {
-    "def_id": "skill.easy_road",
-    "display_name": "轻车熟路",
-    "container_type": "PlayerSkill",
-    "design_text": "关卡结束白色帮助卡三选一",
-    "effect_ids": "skill.easy_road.node_end"
-  },
-  {
-    "def_id": "skill.even_hatred",
-    "display_name": "偶数仇恨",
-    "container_type": "PlayerSkill",
-    "design_text": "对偶数等级怪物造成双倍伤害",
-    "effect_ids": "skill.even_hatred.rule"
   },
   {
     "def_id": "skill.fall_apart",
@@ -194,13 +166,6 @@
     "container_type": "MonsterSkill",
     "design_text": "左列战斗时按损失护甲伤害玩家",
     "effect_ids": "skill.hard.slot1|skill.hard.slot4|skill.hard.slot7"
-  },
-  {
-    "def_id": "skill.hard_skin",
-    "display_name": "硬皮",
-    "container_type": "PlayerSkill",
-    "design_text": "血量上限+10，关卡结束恢复10",
-    "effect_ids": "skill.hard_skin.max_hp|skill.hard_skin.node_end"
   },
   {
     "def_id": "skill.hoodlum",
@@ -427,25 +392,11 @@
     "effect_ids": "skill.thief_claims.move"
   },
   {
-    "def_id": "skill.thorn_skin",
-    "display_name": "刺皮",
-    "container_type": "PlayerSkill",
-    "design_text": "战斗时对怪物造成等同其攻击的伤害",
-    "effect_ids": "skill.thorn_skin.battle"
-  },
-  {
     "def_id": "skill.throw_stone",
     "display_name": "丢石头",
     "container_type": "MonsterSkill",
     "design_text": "每移动2次消耗本卡2护甲并伤害玩家",
     "effect_ids": "skill.throw_stone.move"
-  },
-  {
-    "def_id": "skill.tower_child",
-    "display_name": "塔之子",
-    "container_type": "PlayerSkill",
-    "design_text": "关卡开始放入倍增塔",
-    "effect_ids": "skill.tower_child.node_start"
   },
   {
     "def_id": "skill.turn_world",

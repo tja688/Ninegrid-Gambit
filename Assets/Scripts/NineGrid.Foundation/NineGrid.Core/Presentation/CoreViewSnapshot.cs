@@ -186,20 +186,17 @@ namespace NineGrid.Core
             int coins,
             int interactionCount,
             IReadOnlyList<string> relicDefIds,
-            IReadOnlyList<string> skillDefIds,
             CardStatView avatarStats)
         {
             Coins = coins;
             InteractionCount = interactionCount;
             RelicDefIds = relicDefIds ?? new string[0];
-            SkillDefIds = skillDefIds ?? new string[0];
             AvatarStats = avatarStats ?? CardStatView.Empty;
         }
 
         public int Coins { get; private set; }
         public int InteractionCount { get; private set; }
         public IReadOnlyList<string> RelicDefIds { get; private set; }
-        public IReadOnlyList<string> SkillDefIds { get; private set; }
         public CardStatView AvatarStats { get; private set; }
     }
 
@@ -239,7 +236,7 @@ namespace NineGrid.Core
         {
             Version = version;
             Run = run ?? new RunView(GamePhase.None, 0, 1, RoomKind.None, 0UL);
-            Player = player ?? new PlayerView(0, 0, new string[0], new string[0], CardStatView.Empty);
+            Player = player ?? new PlayerView(0, 0, new string[0], CardStatView.Empty);
             Board = board ?? new BoardView(new BoardSlotView[0], 0, SlotId.None);
             Deck = deck ?? new DeckView(new int[0], new int[0], new int[0], new int[0]);
             Choice = choice ?? new ChoiceView(PendingChoiceKind.None, string.Empty, new RewardEntry[0], new RoomKind[0], RoomKind.None);
@@ -368,7 +365,6 @@ namespace NineGrid.Core
                 player.Coins.Value,
                 player.InteractionCount.Value,
                 new List<string>(player.RelicDefIds),
-                new List<string>(player.SkillDefIds),
                 avatarStats);
 
             var choiceView = new ChoiceView(

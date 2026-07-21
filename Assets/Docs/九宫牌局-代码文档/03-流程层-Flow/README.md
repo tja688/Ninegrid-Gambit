@@ -51,8 +51,7 @@
 |------|------|--------|
 | `InBattleManagerSingleton.cs` | MonoBehaviour 单例 | 局内唯一导演宿主 + Present 薄适配 + Core 桥 |
 | `MainGameLoopManagerSingleton.cs` | MonoBehaviour 单例 | 主菜单→战斗→奖励→房间→胜负壳状态机 |
-| `RelicManagerSingleton.cs` | MonoBehaviour 单例 | 遗物图标槽同步 `PlayerModel.RelicDefIds` |
-| `PlayerSkillManagerSingleton.cs` | MonoBehaviour 单例 | 技能图标槽同步 `PlayerModel.SkillDefIds` |
+| `RelicManagerSingleton.cs` | MonoBehaviour 单例 | 遗物图标槽同步 `PlayerModel.RelicDefIds`（含原玩家技能） |
 | `SelectorManagerSingleton.cs` | MonoBehaviour 单例 | Bounce/房间二选一会话门面 |
 | `DescriptionManagerSingleton.cs` | MonoBehaviour 单例 | 卡牌/Notice 描述 TMP；接 DescriptionHoverSink |
 | `DamageNumberManagerSingleton.cs` | MonoBehaviour 单例 | DamageNumbersPro 飘字 Spawn |

@@ -449,10 +449,6 @@ namespace NineGrid.Core.Effects
             {
                 result.Add("schema.action.relicDefId", path + ".relicDefId is required for GrantRelic.");
             }
-            else if (Same(atom, "GrantPlayerSkillContent") && !node.Has("skillDefId"))
-            {
-                result.Add("schema.action.skillDefId", path + ".skillDefId is required for GrantPlayerSkillContent.");
-            }
             else if (Same(atom, "ShuffleInto") || Same(atom, "Spawn"))
             {
                 if (!node.Has("defId"))
@@ -465,10 +461,6 @@ namespace NineGrid.Core.Effects
                 && !IsSupportedCardKind(node.Get("kind").AsString(string.Empty)))
             {
                 result.Add("schema.action.kind", path + ".kind is not supported.");
-            }
-            else if (Same(atom, "GrantSkill") && !node.Has("skillDefId"))
-            {
-                result.Add("schema.action.skillDefId", path + ".skillDefId is required for GrantSkill.");
             }
             else if (Same(atom, "AddRuleModifier"))
             {

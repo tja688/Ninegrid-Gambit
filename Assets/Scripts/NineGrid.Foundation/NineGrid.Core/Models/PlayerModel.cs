@@ -7,7 +7,6 @@ namespace NineGrid.Core
     public sealed class PlayerModel : AbstractModel
     {
         private readonly List<string> mRelicDefIds = new List<string>();
-        private readonly List<string> mSkillDefIds = new List<string>();
         private readonly List<HelpCardStackEntry> mHelpCardStacks = new List<HelpCardStackEntry>();
 
         public PlayerModel()
@@ -24,11 +23,6 @@ namespace NineGrid.Core
         public IReadOnlyList<string> RelicDefIds
         {
             get { return mRelicDefIds; }
-        }
-
-        public IReadOnlyList<string> SkillDefIds
-        {
-            get { return mSkillDefIds; }
         }
 
         public IReadOnlyList<HelpCardStackEntry> HelpCardStacks
@@ -77,26 +71,6 @@ namespace NineGrid.Core
         public bool RemoveRelic(string defId)
         {
             var removed = mRelicDefIds.Remove(defId);
-            if (removed)
-            {
-                Touch();
-            }
-
-            return removed;
-        }
-
-        public void AddSkill(string defId)
-        {
-            if (!string.IsNullOrEmpty(defId) && !mSkillDefIds.Contains(defId))
-            {
-                mSkillDefIds.Add(defId);
-                Touch();
-            }
-        }
-
-        public bool RemoveSkill(string defId)
-        {
-            var removed = mSkillDefIds.Remove(defId);
             if (removed)
             {
                 Touch();
@@ -213,7 +187,6 @@ namespace NineGrid.Core
             InteractionCount.Value = 0;
             ProfessionId.Value = string.Empty;
             mRelicDefIds.Clear();
-            mSkillDefIds.Clear();
             mHelpCardStacks.Clear();
             Touch();
         }

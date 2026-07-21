@@ -15,7 +15,6 @@ namespace NineGrid.Core.Effects
         Unknown,
         Relic,
         MonsterSkill,
-        PlayerSkill,
         HelpCard
     }
 
