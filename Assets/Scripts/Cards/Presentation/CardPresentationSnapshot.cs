@@ -33,10 +33,13 @@ namespace NineGrid.Cards.Presentation
         /// </summary>
         public bool FaceUp = true;
 
-        /// <summary>静态基础描述占位；首波可不接线，不进数值 Commit 跳动。</summary>
+        /// <summary>
+        /// 静态基础描述（可含 `[SlotCode]` 图标引用）。
+        /// 文案本身不随战中数值跳动；不进数值旁路 Set*。详细描述见 <see cref="DetailDescription"/>。
+        /// </summary>
         public string BasicDescription = string.Empty;
 
-        /// <summary>详细描述字段契约留口；右键面板 Out of Scope。</summary>
+        /// <summary>详细描述字段契约留口；右键面板 / 词条排版 Out of Scope。</summary>
         public string DetailDescription = string.Empty;
     }
 }

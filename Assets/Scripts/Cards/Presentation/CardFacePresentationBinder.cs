@@ -1,18 +1,25 @@
 using System.Collections.Generic;
+using System.Text;
 using NineGrid.Cards.Slots;
+using TMPro;
 using UnityEngine;
 
 namespace NineGrid.Cards.Presentation
 {
     /// <summary>
-    /// L4 卡面 Kind Binder：按投影 Kind 路由消费图标/名字/数值；未绑字段忽略。
+    /// L4 卡面 Kind Binder：按投影 Kind 路由消费图标/名字/数值/基础描述；未绑字段忽略。
     /// 朝向：本波恒正面（front 显 / back 隐），存储 FaceUp 供后续演出循迹。
+    /// 基础描述静态组装（含 `[SlotCode]`→真实图标），不随数值 Commit 重算跳动。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CardFacePresentationBinder : MonoBehaviour, ICardFaceBinder
     {
         private bool _committedFaceUp = true;
         private Dictionary<string, Sprite> _templateDefaults;
+        private string _lastBasicDescriptionSource;
+        private string _lastIconFingerprint;
+        private TMP_SpriteAsset _descriptionSpriteAsset;
+        private static CardFaceSlotRegistrySO _defaultRegistry;
 
         /// <summary>最近一次 Commit 的朝向镜像（供后续翻牌专题读取；本波不驱动演出）。</summary>
         public bool CommittedFaceUp => _committedFaceUp;
@@ -20,6 +27,11 @@ namespace NineGrid.Cards.Presentation
         private void Awake()
         {
             CaptureTemplateDefaultsIfNeeded();
+        }
+
+        private void OnDestroy()
+        {
+            ReleaseDescriptionSpriteAsset();
         }
 
         public void ApplyPresentation(CardPresentationSnapshot snapshot)
@@ -34,6 +46,7 @@ namespace NineGrid.Cards.Presentation
             ApplyDirectSprites(snapshot);
             ApplyName(snapshot.DisplayName);
             ApplyStats(snapshot);
+            ApplyBasicDescription(snapshot);
             ApplyFaceOrientation(snapshot.FaceUp);
         }
 
@@ -117,6 +130,117 @@ namespace NineGrid.Cards.Presentation
             }
 
             text.text = displayName ?? string.Empty;
+        }
+
+        private void ApplyBasicDescription(CardPresentationSnapshot snapshot)
+        {
+            if (!CardFaceSlotNodeMap.TryFindText(
+                    transform,
+                    CardFaceSlotCodes.BasicDescription,
+                    out var text))
+            {
+                return;
+            }
+
+            var assembled = BuildAssembledIcons(snapshot);
+            var source = snapshot.BasicDescription ?? string.Empty;
+            var fingerprint = BuildIconFingerprint(assembled);
+            if (source == _lastBasicDescriptionSource
+                && fingerprint == _lastIconFingerprint)
+            {
+                return;
+            }
+
+            _lastBasicDescriptionSource = source;
+            _lastIconFingerprint = fingerprint;
+
+            var composed = CardFaceDescriptionComposer.Compose(
+                source,
+                assembled,
+                GetDefaultRegistry());
+
+            ReleaseDescriptionSpriteAsset();
+            if (composed.Icons.Count > 0)
+            {
+                _descriptionSpriteAsset = CardFaceDescriptionSpriteAssetBuilder.Build(composed.Icons);
+                text.spriteAsset = _descriptionSpriteAsset;
+            }
+            else
+            {
+                text.spriteAsset = null;
+            }
+
+            text.text = composed.TmpRichText;
+        }
+
+        private Dictionary<string, Sprite> BuildAssembledIcons(CardPresentationSnapshot snapshot)
+        {
+            var map = new Dictionary<string, Sprite>();
+
+            Sprite templateMain = null;
+            _templateDefaults?.TryGetValue(CardFaceSlotCodes.MainIcon, out templateMain);
+            var main = snapshot.MainIcon != null ? snapshot.MainIcon : templateMain;
+            if (main != null)
+            {
+                map[CardFaceSlotCodes.MainIcon] = main;
+            }
+
+            Sprite action = null;
+            _templateDefaults?.TryGetValue(CardFaceSlotCodes.ActionIcon, out action);
+            if (action != null)
+            {
+                map[CardFaceSlotCodes.ActionIcon] = action;
+            }
+
+            return map;
+        }
+
+        private static string BuildIconFingerprint(IReadOnlyDictionary<string, Sprite> assembled)
+        {
+            if (assembled == null || assembled.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var codes = new List<string>(assembled.Keys);
+            codes.Sort(System.StringComparer.Ordinal);
+            var sb = new StringBuilder(codes.Count * 24);
+            for (var i = 0; i < codes.Count; i++)
+            {
+                var code = codes[i];
+                sb.Append(code).Append('=');
+                if (assembled.TryGetValue(code, out var sprite) && sprite != null)
+                {
+                    sb.Append(sprite.GetInstanceID());
+                }
+
+                sb.Append(';');
+            }
+
+            return sb.ToString();
+        }
+
+        private void ReleaseDescriptionSpriteAsset()
+        {
+            if (_descriptionSpriteAsset == null)
+            {
+                return;
+            }
+
+            CardFaceDescriptionSpriteAssetBuilder.DestroyBuilt(_descriptionSpriteAsset);
+            _descriptionSpriteAsset = null;
+        }
+
+        private static CardFaceSlotRegistrySO GetDefaultRegistry()
+        {
+            if (_defaultRegistry == null)
+            {
+                _defaultRegistry = ScriptableObject.CreateInstance<CardFaceSlotRegistrySO>();
+                _defaultRegistry.hideFlags = HideFlags.HideAndDontSave;
+                _defaultRegistry.ApplyDefaultCatalog();
+            }
+
+            return _defaultRegistry;
         }
 
         private void ApplyStats(CardPresentationSnapshot snapshot)

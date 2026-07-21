@@ -21,6 +21,10 @@ namespace NineGrid.Cards.Slots
                 { CardFaceSlotCodes.BackBorder, new[] { "边框", "Card_Border_rectangle_bronze", "Card_Border_rectangle_dark" } },
                 { CardFaceSlotCodes.BackShirt, new[] { "CardShirts_8", "CardShirts", "背纹" } },
                 { CardFaceSlotCodes.BackLogo, new[] { "logo", "Logo" } },
+                {
+                    CardFaceSlotCodes.ActionIcon,
+                    new[] { "行动图标", "Action_Icon", "ActionIcon" }
+                },
             };
 
         private static readonly Dictionary<string, string[]> TextCandidates =
@@ -117,6 +121,7 @@ namespace NineGrid.Cards.Slots
             Capture(faceRoot, CardFaceSlotCodes.BackBorder, map);
             Capture(faceRoot, CardFaceSlotCodes.BackShirt, map);
             Capture(faceRoot, CardFaceSlotCodes.BackLogo, map);
+            Capture(faceRoot, CardFaceSlotCodes.ActionIcon, map);
             return map;
         }
 

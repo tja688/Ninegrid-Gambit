@@ -53,7 +53,7 @@ BoardModel 占格  ──► idle 裁决 / Sync      ──► GroundField 几�
 | `CombatHitSink` | Cards → Flow 委托 | 命中结算、击杀后盘面、拾取/用道具、输入门禁 |
 | `CardZoneOwnershipSink` | Flow → Cards 查询 | Core ItemSlots / DrawPile，避免 asmdef 环 |
 | `ChoreoTraceSink` / `PerfTraceSink` / `FlowFieldTraceSink` / `RegistryTraceSink` | Cards → 外部 | 编排/性能/场地/注册表诊断 |
-| `DescriptionHoverSink` | Cards → UI | 卡牌描述悬停展示 |
+| `DescriptionHoverSink` | Cards → UI | 遗留悬停桥（Card Info Text）；卡面基础描述权威在 Presentation Commit |
 | `ManagedCard.CoreKind` | Flow 写入 | `CardPresentationKind`，数值对齐 Core `CardKind` |
 
 ---

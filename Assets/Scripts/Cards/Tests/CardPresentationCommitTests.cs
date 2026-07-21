@@ -26,6 +26,7 @@ namespace NineGrid.Cards.Tests
         private GameObject _relicFace;
         private Sprite _mainIcon;
         private Sprite _templateIcon;
+        private Sprite _actionIcon;
         private int _nextUid = 15001;
 
         [SetUp]
@@ -46,6 +47,7 @@ namespace NineGrid.Cards.Tests
             _relicFace = CreateItemFacePrefab("RelicFacePrefab");
             _mainIcon = CreateSprite("commit-main-icon");
             _templateIcon = CreateSprite("template-main-icon");
+            _actionIcon = CreateSprite("template-action-icon");
 
             // 模板默认主图标：Commit 未覆盖时回退此图。
             if (CardFaceSlotNodeMap.TryFindRenderer(
@@ -54,6 +56,14 @@ namespace NineGrid.Cards.Tests
                     out var templateRenderer))
             {
                 templateRenderer.sprite = _templateIcon;
+            }
+
+            if (CardFaceSlotNodeMap.TryFindRenderer(
+                    _monsterFace.transform,
+                    CardFaceSlotCodes.ActionIcon,
+                    out var actionRenderer))
+            {
+                actionRenderer.sprite = _actionIcon;
             }
 
             _cardManager.ConfigureChassisAndFaces(
@@ -80,6 +90,7 @@ namespace NineGrid.Cards.Tests
             DestroyIfPresent(ref _relicFace);
             DestroySprite(ref _mainIcon);
             DestroySprite(ref _templateIcon);
+            DestroySprite(ref _actionIcon);
 
             DestroyAllCardManagers();
             ResetCardManagerSingleton();
@@ -254,6 +265,132 @@ namespace NineGrid.Cards.Tests
             Assert.AreEqual("已提交", ReadName(card));
         }
 
+        [Test]
+        public void Commit_MonsterBasicDescription_ShowsOnFace_WithSlotCodeIconTag()
+        {
+            var card = _cardManager.SpawnView(
+                _nextUid++,
+                defId: "monster.desc",
+                kind: CardPresentationKind.Monster);
+
+            card.CommitPresentation(new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.Monster,
+                DefId = "monster.desc",
+                DisplayName = "史莱姆",
+                MainIcon = _mainIcon,
+                Attack = 2,
+                Armor = 0,
+                Hp = 5,
+                BasicDescription = "在[Action_Icon]回合后攻击玩家",
+                FaceUp = true,
+            });
+
+            Assert.AreEqual(
+                "在<sprite name=\"Action_Icon\">回合后攻击玩家",
+                ReadBasicDescription(card),
+                "主 seam：基础描述应上卡面，且 SlotCode 解析为真实图标标签");
+            Assert.GreaterOrEqual(
+                ReadDescriptionSpriteIndex(card, CardFaceSlotCodes.ActionIcon),
+                0,
+                "装配槽 Action_Icon 应进入描述 SpriteAsset（真实游戏图标，非表情）");
+        }
+
+        [Test]
+        public void Commit_BasicDescription_DoesNotChangeWhenOnlyStatsChange()
+        {
+            var card = _cardManager.SpawnView(
+                _nextUid++,
+                defId: "monster.static_desc",
+                kind: CardPresentationKind.Monster);
+
+            card.CommitPresentation(new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.Monster,
+                DefId = "monster.static_desc",
+                DisplayName = "静态怪",
+                MainIcon = _mainIcon,
+                Attack = 1,
+                Armor = 0,
+                Hp = 3,
+                BasicDescription = "在[Action_Icon]后攻击",
+                FaceUp = true,
+            });
+
+            var before = ReadBasicDescription(card);
+
+            card.CommitPresentation(new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.Monster,
+                DefId = "monster.static_desc",
+                DisplayName = "静态怪",
+                MainIcon = _mainIcon,
+                Attack = 9,
+                Armor = 4,
+                Hp = 20,
+                BasicDescription = "在[Action_Icon]后攻击",
+                FaceUp = true,
+            });
+
+            Assert.AreEqual("9", ReadNumericText(card, CardFaceSlotCodes.Attack));
+            Assert.AreEqual(
+                before,
+                ReadBasicDescription(card),
+                "基础描述不随战斗数值 Commit 跳动");
+        }
+
+        [Test]
+        public void Commit_ItemBasicDescription_ShowsOnFace()
+        {
+            var card = _cardManager.SpawnView(
+                _nextUid++,
+                defId: "item.potion",
+                kind: CardPresentationKind.HelpCard);
+
+            card.CommitPresentation(new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.HelpCard,
+                DefId = "item.potion",
+                DisplayName = "药水",
+                MainIcon = _mainIcon,
+                BasicDescription = "[使用时]恢复生命",
+                FaceUp = true,
+            });
+
+            Assert.AreEqual("[使用时]恢复生命", ReadBasicDescription(card));
+        }
+
+        [Test]
+        public void Commit_RelicBasicDescription_ShowsOnFace()
+        {
+            // 遗物模板与道具共用介绍/描述槽候选（描述面板）。
+            var relicFace = CreateRelicFacePrefab("RelicFaceWithDesc");
+            _cardManager.ConfigureChassisAndFaces(
+                _chassis,
+                _avatarFace,
+                _monsterFace,
+                _itemFace,
+                relicFace);
+
+            var card = _cardManager.SpawnView(
+                _nextUid++,
+                defId: "relic.coin_armor",
+                kind: CardPresentationKind.Relic);
+
+            card.CommitPresentation(new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.Relic,
+                DefId = "relic.coin_armor",
+                DisplayName = "金币护甲",
+                MainIcon = _mainIcon,
+                BasicDescription = "获得护甲",
+                FaceUp = true,
+            });
+
+            Assert.AreEqual("获得护甲", ReadBasicDescription(card));
+            Object.DestroyImmediate(relicFace);
+        }
+
         private static Sprite ReadMainIcon(ManagedCard card)
         {
             Assert.IsTrue(
@@ -280,6 +417,34 @@ namespace NineGrid.Cards.Tests
                 CardFaceSlotNodeMap.TryReadText(card.MountedFaceRoot, slotCode, out var text),
                 $"缺少数值槽节点：{slotCode}");
             return text;
+        }
+
+        private static string ReadBasicDescription(ManagedCard card)
+        {
+            Assert.IsTrue(
+                CardFaceSlotNodeMap.TryReadText(
+                    card.MountedFaceRoot,
+                    CardFaceSlotCodes.BasicDescription,
+                    out var text),
+                "缺少基础描述槽节点");
+            return text;
+        }
+
+        /// <summary>
+        /// 经反射读描述 TMP 的 spriteAsset 索引（Tests 程序集不直接引用 TMP 类型）。
+        /// </summary>
+        private static int ReadDescriptionSpriteIndex(ManagedCard card, string slotCode)
+        {
+            Assert.IsNotNull(TextMeshProType);
+            var descNode = FindDeep(card.MountedFaceRoot, "描述");
+            Assert.IsNotNull(descNode, "怪物描述节点");
+            var tmp = descNode.GetComponent(TextMeshProType);
+            Assert.IsNotNull(tmp);
+            var spriteAsset = TextMeshProType.GetProperty("spriteAsset")?.GetValue(tmp);
+            Assert.IsNotNull(spriteAsset, "应挂运行时 TMP_SpriteAsset");
+            var getIndex = spriteAsset.GetType().GetMethod("GetSpriteIndexFromName");
+            Assert.IsNotNull(getIndex);
+            return (int)getIndex.Invoke(spriteAsset, new object[] { slotCode });
         }
 
         private static GameObject CreateChassisPrefab(string name)
@@ -313,6 +478,7 @@ namespace NineGrid.Cards.Tests
             new GameObject("back").transform.SetParent(go.transform, false);
 
             CreateSpriteChild(front.transform, "核心图标");
+            CreateSpriteChild(front.transform, "行动图标");
             var nameRoot = new GameObject("名字");
             nameRoot.transform.SetParent(front.transform, false);
             CreateTmpChild(nameRoot.transform, "标准世界文字", "模板怪");
@@ -320,6 +486,7 @@ namespace NineGrid.Cards.Tests
             CreateTmpChild(front.transform, "护甲数值", "0");
             CreateTmpChild(front.transform, "血量数值", "0");
             CreateTmpChild(front.transform, "行动计数", "9");
+            CreateTmpChild(front.transform, "描述", string.Empty);
             return go;
         }
 
@@ -334,6 +501,26 @@ namespace NineGrid.Cards.Tests
             var banner = new GameObject("名字横幅");
             banner.transform.SetParent(front.transform, false);
             CreateTmpChild(banner.transform, "标准世界文字", "模板道具");
+            var intro = new GameObject("介绍区域");
+            intro.transform.SetParent(front.transform, false);
+            CreateTmpChild(intro.transform, "标准世界文字", string.Empty);
+            return go;
+        }
+
+        private static GameObject CreateRelicFacePrefab(string name)
+        {
+            var go = new GameObject(name);
+            var front = new GameObject("GameObject");
+            front.transform.SetParent(go.transform, false);
+            new GameObject("back").transform.SetParent(go.transform, false);
+
+            CreateSpriteChild(front.transform, "遗物主图标");
+            var nameRoot = new GameObject("遗物名字");
+            nameRoot.transform.SetParent(front.transform, false);
+            CreateTmpChild(nameRoot.transform, "标准世界文字", "模板遗物");
+            var panel = new GameObject("描述面板");
+            panel.transform.SetParent(front.transform, false);
+            CreateTmpChild(panel.transform, "标准世界文字", string.Empty);
             return go;
         }
 

@@ -14,6 +14,7 @@ namespace NineGrid.Cards
 
     /// <summary>
     /// Cards → Flow 描述悬停桥：Cards 不引用 Flow，由 DescriptionManagerSingleton 在 Awake 注册。
+    /// 遗留桥：卡面基础描述权威在 Presentation Commit（Basic_Description），本 Sink 不承载卡面真相。
     /// </summary>
     public static class DescriptionHoverSink
     {
