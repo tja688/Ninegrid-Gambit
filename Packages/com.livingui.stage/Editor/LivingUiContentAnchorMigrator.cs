@@ -13,7 +13,7 @@ namespace NineGrid.LivingUI.Editor
     /// </summary>
     public static class LivingUiContentAnchorMigrator
     {
-        [MenuItem("TableNine/LivingUI/Migrate Markers → Anchor Architecture")]
+        [MenuItem("LivingUI/Migrate Markers → Anchor Architecture")]
         public static void MigrateToAnchorArchitecture()
         {
             var markers = Object.FindObjectsByType<LivingUiContentMarker>(

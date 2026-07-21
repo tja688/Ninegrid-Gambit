@@ -1,0 +1,19 @@
+{
+  "name": "com.livingui.stage",
+  "displayName": "Living UI Stage",
+  "version": "0.1.0",
+  "description": "World-space living UI stage: fixed-identity carriers, blueprint layouts, pure-data transition planner/player, and companion content projection. No game-framework dependency.",
+  "unity": "6000.0",
+  "keywords": [
+    "ui",
+    "living-ui",
+    "layout",
+    "world-space",
+    "transition"
+  ],
+  "author": {
+    "name": "TableNine / LivingUI"
+  },
+  "license": "UNLICENSED",
+  "type": "library"
+}

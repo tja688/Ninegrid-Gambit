@@ -12,7 +12,7 @@ Core ← Flow
 Content ← Flow
 Cards ← Flow
 Cards ↛ Core     （程序集级禁止；Cards 运行时源码亦不 using NineGrid.Core）
-LivingUI / VisualLook ↛ Flow/Cards/Core（asmdef 空或仅 URP/TMP）
+LivingUI（`Packages/com.livingui.stage`）/ VisualLook ↛ Flow/Cards/Core（asmdef 空或仅 URP/TMP）
 DevTest → Flow, Cards, Core
 TemporaryTest → Flow
 ```

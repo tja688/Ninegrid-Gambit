@@ -9,13 +9,13 @@ namespace NineGrid.LivingUI.Editor
     /// </summary>
     public static class LivingUiLiveContentPoseResync
     {
-        [MenuItem("TableNine/LivingUI/Resync Live Content Poses From Blueprints")]
+        [MenuItem("LivingUI/Resync Live Content Poses From Blueprints")]
         public static void Resync()
         {
             Debug.LogWarning(
                 "[LivingUI] Resync Live Content Poses From Blueprints 已废弃。" +
                 "运行时不再从蓝图拉扯位姿。请改用：" +
-                "TableNine/LivingUI/Init Primordial Poses From First Blueprint Occurrence");
+                "LivingUI/Init Primordial Poses From First Blueprint Occurrence");
             LivingUiPrimordialPoseInit.Init();
         }
     }

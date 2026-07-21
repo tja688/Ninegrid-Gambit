@@ -25,7 +25,7 @@ namespace NineGrid.LivingUI.Editor
             (LivingUiLayoutId.Route, "大盘构型6-预备待定", "route"),
         };
 
-        [MenuItem("TableNine/LivingUI/Migrate Anchors → Live ContentAttach (1-4)")]
+        [MenuItem("LivingUI/Migrate Anchors → Live ContentAttach (1-4)")]
         public static void Migrate()
         {
             var liveRoot = FindSceneTransform(LiveRootName);

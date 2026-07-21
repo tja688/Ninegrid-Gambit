@@ -11,8 +11,10 @@
 ### 架构与设计
 
 | 文档 | 何时读 |
-| `Assets/Docs/` | 策划设计案、效果语义 |
-| `Assets/Notes/` | 进行时过程性开发笔记，归档里面有历史记录 |
+|------|--------|
+| `Assets/Docs/九宫牌局-代码文档/` | **代码现状权威库**（只描述源码事实；摸结构、改模块、重构前先读） |
+| `Assets/Docs/`（其余） | 策划设计案、效果语义 |
+| `Assets/Notes/` | 进行时过程性开发笔记；归档里有历史记录 |
 
 ---
 
@@ -21,6 +23,7 @@
 - **Unity MCP**：改场景/组件用 MCP，**禁止**手改 `.unity`；改脚本后 `refresh_unity` 并读 Console。
 - **DevTest 小键盘测试**：见项目 skill `.cursor/skills/table-nine-devtest-keys/`（接入、置顶、优先级以 `TestKeyStack` SO 为准）。
 - **战斗 / 流程 / 表现日志分析**：Play 结束导出至 `Assets/Notes/Logs/`；分析见 `.cursor/skills/table-nine-battlelog-analysis/`。
+- **代码现状**：先读 `Assets/Docs/九宫牌局-代码文档/`；改完脚本后按上文「代码文档库维护」同步文档。
 
 ---
 

@@ -8,7 +8,7 @@
 
 ## 一句话现状
 
-自研代码约 **450+** 个 `.cs`（不含 Plugins / QFramework），按程序集切成：**无引擎依赖的 QFramework 内核（Core）** → **Luban 内容桥（Content）** → **Unity 流程编排（Flow）** → **卡牌视图与场地（Cards）**，辅以 **LivingUI / VisualLook** 与 **DevTest** 小键盘层。
+自研代码约 **450+** 个 `.cs`（不含 Plugins / QFramework），按程序集切成：**无引擎依赖的 QFramework 内核（Core）** → **Luban 内容桥（Content）** → **Unity 流程编排（Flow）** → **卡牌视图与场地（Cards）**，辅以 **VisualLook**、嵌入式包 **Living UI Stage**（`Packages/com.livingui.stage`）与 **DevTest** 小键盘层。
 
 ---
 
@@ -21,7 +21,7 @@
 | 02 | [内容层 Content](../02-内容层-NineGrid.Content/) | `NineGrid.Content` (+ Editor) | Catalog + Luban 生成表 |
 | 03 | [流程层 Flow](../03-流程层-Flow/) | `Scripts/Flow` | 对局循环、表现时间线、HUD/选择器 |
 | 04 | [卡牌表现 Cards](../04-卡牌表现层-Cards/) | `Scripts/Cards` | 手牌/牌库/场地/飞行/视图（**不引用 Core**） |
-| 05 | [UI 层](../05-UI层/) | `Scripts/UI` | LivingUI、VisualLook |
+| 05 | [UI 层](../05-UI层/) | `Scripts/UI` + `Packages/com.livingui.stage` | VisualLook；LivingUI 已外置为包 |
 | 06 | [DevTest](../06-DevTest/) | `NineGrid.DevTest` | 小键盘测试栈 |
 | 07 | [测试体系](../07-测试体系/) | `*.Tests` | EditMode 契约/切片测试地图 |
 | 08 | [Editor 与工具链](../08-Editor与工具链/) | Editor asmdef、`Assets/Editor`、Luban Tools | 编辑器窗与数据管线 |
@@ -44,9 +44,12 @@ Assets/Scripts/
 ├── Flow/                       (~102 cs) 程序集 NineGrid.Flow
 ├── Cards/                      (~138 cs) 程序集 NineGrid.Cards
 ├── UI/
-│   ├── LivingUI/               程序集 NineGrid.LivingUI
-│   └── VisualLook/             程序集 NineGrid.VisualLook
+│   ├── VisualLook/             程序集 NineGrid.VisualLook
+│   └── TmpBitmapPixelOutline.cs（默认程序集）
 └── Temporary Test/             程序集 NineGrid.TemporaryTest（1 cs）
+
+Packages/
+└── com.livingui.stage/         程序集 NineGrid.LivingUI（+ Editor / Tests）
 ```
 
 ---

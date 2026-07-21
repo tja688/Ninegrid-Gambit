@@ -10,7 +10,7 @@ namespace NineGrid.LivingUI.Editor
     /// </summary>
     public sealed class LivingUiFeelWindow : EditorWindow
     {
-        private const string MenuPath = "NineGrid/Living UI/动效手感调试";
+        private const string MenuPath = "LivingUI/动效手感调试";
 
         private Unity.LivingUiDirector _director;
         private SerializedObject _directorSo;

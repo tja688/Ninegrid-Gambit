@@ -14,7 +14,7 @@ namespace NineGrid.LivingUI.Editor
     {
         private const string LiveRootName = "大盘";
 
-        [MenuItem("TableNine/LivingUI/Fix Mapping Batch (panel moves + deck variants)")]
+        [MenuItem("LivingUI/Legacy/Fix Mapping Batch (panel moves + deck variants)")]
         public static void Fix()
         {
             var report = new StringBuilder();

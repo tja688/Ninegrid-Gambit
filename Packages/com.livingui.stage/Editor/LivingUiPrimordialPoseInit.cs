@@ -27,7 +27,7 @@ namespace NineGrid.LivingUI.Editor
             (LivingUiLayoutId.Route, "大盘构型6-预备待定"),
         };
 
-        [MenuItem("TableNine/LivingUI/Init Primordial Poses From First Blueprint Occurrence")]
+        [MenuItem("LivingUI/Init Primordial Poses From First Blueprint Occurrence")]
         public static void Init()
         {
             var live = FindSceneRoot(LiveRootName);

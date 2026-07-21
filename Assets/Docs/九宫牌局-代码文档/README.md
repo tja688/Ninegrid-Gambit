@@ -15,7 +15,7 @@
 | 02 | [内容 Content](./02-内容层-NineGrid.Content/) | Catalog + Luban |
 | 03 | [流程 Flow](./03-流程层-Flow/) | 主循环、表现时间线、诊断 |
 | 04 | [卡牌 Cards](./04-卡牌表现层-Cards/) | 视图 / 场地 / 飞行（不引 Core） |
-| 05 | [UI](./05-UI层/) | LivingUI、VisualLook |
+| 05 | [UI](./05-UI层/) | VisualLook；LivingUI → `Packages/com.livingui.stage` |
 | 06 | [DevTest](./06-DevTest/) | 小键盘测试栈 |
 | 07 | [测试体系](./07-测试体系/) | EditMode 用例地图 |
 | 08 | [Editor 与工具链](./08-Editor与工具链/) | Editor 窗、Luban Tools |

@@ -109,7 +109,7 @@ namespace NineGrid.LivingUI.Editor
             LivingUiLayoutId.Route,
         };
 
-        [MenuItem("TableNine/LivingUI/Migrate Authority Stage")]
+        [MenuItem("LivingUI/Legacy/Migrate Authority Stage")]
         public static void Migrate()
         {
             var report = new StringBuilder();
