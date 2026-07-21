@@ -65,7 +65,7 @@ BoardModel 占格  ──► idle 裁决 / Sync      ──► GroundField 几�
 | 项 | 值 |
 |----|-----|
 | rootNamespace | `NineGrid.Cards` |
-| references | `UniTask` |
+| references | `UniTask`, `Unity.TextMeshPro` |
 | precompiled | `DOTween.dll`, `Sirenix.OdinInspector.Attributes.dll` |
 | overrideReferences | `true` |
 | autoReferenced | `true` |
@@ -184,7 +184,7 @@ Tests 可引用 Core/Flow；生产 Cards 不可。
 | `SkeletonDeckLayoutSettings.cs` | 骷髅合体时序参数 |
 | `SkeletonDeckPresentationManager.cs` | 骷髅军团合体表现 |
 | `SkeletonFusionPresentationRequest.cs` | 合体请求 DTO |
-| `StandardCardView.cs` | 标准卡面视图 |
+| `StandardCardView.cs` | 卡牌底盘宿主：ApplyPresentation → Kind Binder |
 
 ### 子目录（详见专章）
 
@@ -194,6 +194,7 @@ Tests 可引用 Core/Flow；生产 Cards 不可。
 | `Convergence/` | [Convergence/汇合与编排.md](./Convergence/汇合与编排.md) |
 | `Effects/` | [Effects/卡牌效果表现.md](./Effects/卡牌效果表现.md) |
 | `Editor/` | [Editor/Cards编辑器.md](./Editor/Cards编辑器.md) |
+| `Presentation/` | [Presentation/投影Commit.md](./Presentation/投影Commit.md) |
 | `Slots/` | [Slots/装配槽注册表.md](./Slots/装配槽注册表.md) |
 | 根目录详解 | [Managers/管理器与视图.md](./Managers/管理器与视图.md) |
 
@@ -210,6 +211,7 @@ Tests 可引用 Core/Flow；生产 Cards 不可。
 - `CardFaceMountTests.cs`
 - `CardFaceSlotRegistryTests.cs`
 - `CardFaceSortingOrderValidatorTests.cs`
+- `CardPresentationCommitTests.cs`
 - `CardManagerPresentationUidTests.cs`
 - `CardTransformTowerTests.cs`
 - `CombatHitSinkOpeningGateTests.cs`
@@ -239,6 +241,7 @@ Tests 可引用 Core/Flow；生产 Cards 不可。
 |----------|------|
 | `NineGrid.Cards` | 根、Battle、Effects（含 Implementations） |
 | `NineGrid.Cards.Convergence` | Convergence/ |
+| `NineGrid.Cards.Presentation` | Presentation/ 投影与 Binder |
 | `NineGrid.Cards.Slots` | Slots/ 装配槽 |
 | `NineGrid.Cards.Editor` | Editor/ |
 | `NineGrid.Cards.Tests` | Tests/ |

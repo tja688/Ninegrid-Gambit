@@ -1275,7 +1275,8 @@ namespace NineGrid.Flow
             {
                 CombatHitSink.OpeningPresentationActive = false;
                 // #10：开局不再靠 Sync 自愈占格镜像；几何登记由发牌表演维护，合法性由 Flow idle 裁决。
-                CoreCardPresentationMapper.SyncAllSpawnedCards();
+                // 开局表演收束：编排主线全场 Commit 投影（非旁路 Set*）。
+                CoreCardPresentationMapper.CommitAllSpawnedCards();
                 UpdateAvatarDebugText();
             }
         }
@@ -4105,7 +4106,8 @@ namespace NineGrid.Flow
             CancellationToken ct)
         {
             ResolveManagers();
-            CoreCardPresentationMapper.SyncAllSpawnedCards();
+            // UseItem Present 节拍：编排主线 Commit（对齐已结算 Core → 投影），非队列外直刷。
+            CoreCardPresentationMapper.CommitAllSpawnedCards();
             UpdateAvatarDebugText();
 
             // 飞刀等 UseItem 直伤：对齐 FieldBattle 强兜底（本段 popups + 主目标 DamageAmount）。
@@ -4333,6 +4335,7 @@ namespace NineGrid.Flow
                     }
                     else
                     {
+                        // 空 delta：对账已提交投影（不直读最新 Core 抢刷卡面）。
                         CoreCardPresentationMapper.SyncAllSpawnedCards();
                         UpdateAvatarDebugText();
                         // #10：空 delta 不再 soft Sync。

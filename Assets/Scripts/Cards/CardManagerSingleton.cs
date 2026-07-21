@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using NineGrid.Cards.Convergence;
+using NineGrid.Cards.Presentation;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -58,6 +59,40 @@ namespace NineGrid.Cards
         /// 主路径挂入 FacePivot 的卡面根；RegisterPrefab 特例路径为 null。
         /// </summary>
         public Transform MountedFaceRoot { get; internal set; }
+
+        /// <summary>
+        /// 已提交的卡牌表现投影（可见值真相层 2）。对账应对齐此快照，而非最新 Core。
+        /// </summary>
+        public CardPresentationSnapshot CommittedPresentation { get; private set; }
+
+        /// <summary>
+        /// 投影提交：写入已提交快照并分发给底盘宿主 → Kind Binder。
+        /// 仅应由战斗表演编排串行主线 / 对等 Commit 出口触发。
+        /// </summary>
+        public void CommitPresentation(CardPresentationSnapshot snapshot)
+        {
+            if (snapshot == null || View == null)
+            {
+                return;
+            }
+
+            CommittedPresentation = snapshot;
+            CoreKind = snapshot.Kind;
+            View.ApplyPresentation(snapshot);
+        }
+
+        /// <summary>
+        /// 全场对账：重放已提交投影到卡面；无已提交快照时 no-op。
+        /// </summary>
+        public void ReapplyCommittedPresentation()
+        {
+            if (CommittedPresentation == null || View == null)
+            {
+                return;
+            }
+
+            View.ApplyPresentation(CommittedPresentation);
+        }
     }
 
     /// <summary>
@@ -675,6 +710,15 @@ namespace NineGrid.Cards
             }
 
             card.IsFieldDead = true;
+
+            // 正式路径：改已提交投影再重放；无投影时才回退底盘 SetHealth（特例过渡）。
+            if (card.CommittedPresentation != null)
+            {
+                card.CommittedPresentation.Hp = 0;
+                card.ReapplyCommittedPresentation();
+                return;
+            }
+
             if (card.View != null)
             {
                 card.View.SetHealth(0, animate: false);
@@ -867,6 +911,14 @@ namespace NineGrid.Cards
             }
 
             card.MountedFaceRoot = face.transform;
+
+            var binder = face.GetComponent<CardFacePresentationBinder>();
+            if (binder == null)
+            {
+                binder = face.AddComponent<CardFacePresentationBinder>();
+            }
+
+            card.View?.AttachFaceBinder(binder);
         }
 
         private static void DestroyUnityObject(UnityEngine.Object target)

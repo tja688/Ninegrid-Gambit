@@ -1,4 +1,5 @@
 using NineGrid.Cards;
+using NineGrid.Cards.Presentation;
 using NineGrid.Content;
 using NineGrid.Core;
 using NineGrid.Core.Stats;
@@ -22,7 +23,9 @@ namespace NineGrid.Flow
     }
 
     /// <summary>
-    /// 表现层只读 Core 模型，同步 StandardCardView 数值与 ContentVisual 图标（不走 Snapshot）。
+    /// 从 Core/Content 构建胖投影，经编排侧 Commit 出口提交到卡牌底盘宿主。
+    /// 正式路径：Build → CommitPresentation → ApplyPresentation → Binder；禁止旁路 Set* 直刷卡面。
+    /// SyncAllSpawnedCards 对账已提交投影，不直读最新 Core。
     /// </summary>
     public static class CoreCardPresentationMapper
     {
@@ -74,22 +77,33 @@ namespace NineGrid.Flow
             return true;
         }
 
+        /// <summary>
+        /// 编排串行主线 Commit：读 Core/Content → 胖投影 → 底盘宿主分发 Binder。
+        /// </summary>
         public static void ApplyToManagedCard(ManagedCard card, bool animate = false)
         {
-            if (card?.View == null || !TryRead(card.Uid, out var read))
+            // animate 保留调用方签名兼容；卡面数值改由 Binder 文本 Commit，不再走底盘 digit punch。
+            _ = animate;
+            if (card?.View == null)
             {
                 return;
             }
 
-            card.CoreKind = read.Kind;
-            card.View.SetAttack(read.Attack, animate);
-            card.View.SetHealth(read.Hp, animate);
-            card.View.SetArmor(read.Armor, animate);
-            ApplyVisuals(card.View, read.DefId, read.Kind);
+            if (card.Uid > 0 && TryRead(card.Uid, out var read))
+            {
+                var snapshot = BuildSnapshot(read);
+                card.CommitPresentation(snapshot);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(card.DefId))
+            {
+                ApplyVisualsByDefId(card, card.CoreKind, clearCombatStats: false);
+            }
         }
 
         /// <summary>
-        /// 按 defId 套用 ContentVisual（Bounce 选卡 / 无 Core uid 的展示卡）。
+        /// 按 defId 构建投影并 Commit（Bounce 选卡 / 无 Core uid 的展示卡）。
         /// </summary>
         public static void ApplyVisualsByDefId(
             ManagedCard card,
@@ -101,26 +115,19 @@ namespace NineGrid.Flow
                 return;
             }
 
-            if (kindHint != CardPresentationKind.Unknown)
-            {
-                card.CoreKind = kindHint;
-            }
-            else
-            {
-                card.CoreKind = InferPresentationKind(card.DefId);
-            }
+            var kind = kindHint != CardPresentationKind.Unknown
+                ? kindHint
+                : InferPresentationKind(card.DefId);
 
-            if (clearCombatStats)
-            {
-                card.View.SetAttack(0, animate: false);
-                card.View.SetHealth(0, animate: false);
-                card.View.SetArmor(0, animate: false);
-            }
-
-            ApplyVisuals(card.View, card.DefId, card.CoreKind);
+            var snapshot = BuildSnapshotFromDefId(card.DefId, kind, clearCombatStats);
+            card.CommitPresentation(snapshot);
         }
 
-        public static void SyncAllSpawnedCards()
+        /// <summary>
+        /// 编排主线全场 Commit：从 Core/Content 重建投影并提交。
+        /// 用于 Present 节拍需要把逻辑结算推到卡面的出口（非队列外旁路）。
+        /// </summary>
+        public static void CommitAllSpawnedCards()
         {
             var cardManager = CardManagerSingleton.TryGetInstance();
             if (cardManager == null)
@@ -134,6 +141,23 @@ namespace NineGrid.Flow
             }
         }
 
+        /// <summary>
+        /// 全场对账：重放各卡已提交投影；无已提交快照时跳过（不直刷最新 Core）。
+        /// </summary>
+        public static void SyncAllSpawnedCards()
+        {
+            var cardManager = CardManagerSingleton.TryGetInstance();
+            if (cardManager == null)
+            {
+                return;
+            }
+
+            foreach (var pair in cardManager.CardsByUid)
+            {
+                pair.Value?.ReapplyCommittedPresentation();
+            }
+        }
+
         public static void UpdateAvatarDebugText(UiPanelRouter router, bool animate = true)
         {
             // Card Info Text 已专用于悬停描述；玩家数值走 PlayerInfoText（Hp/Attack/防御=有效护甲/Gold/Name）。
@@ -142,19 +166,55 @@ namespace NineGrid.Flow
             hud.SyncFromCore(animate);
         }
 
-        private static void ApplyVisuals(StandardCardView view, string defId, CardPresentationKind kind)
+        public static CardPresentationSnapshot BuildSnapshot(CardPresentationRead read)
         {
-            if (view == null || string.IsNullOrEmpty(defId))
+            var snapshot = new CardPresentationSnapshot
+            {
+                Kind = read.Kind,
+                DefId = read.DefId ?? string.Empty,
+                Attack = Mathf.Max(0, read.Attack),
+                Armor = Mathf.Max(0, read.Armor),
+                Hp = Mathf.Max(0, read.Hp),
+                ActionCount = 0,
+                FaceUp = true,
+            };
+
+            ApplyVisualFields(snapshot, read.DefId, read.Kind);
+            return snapshot;
+        }
+
+        private static CardPresentationSnapshot BuildSnapshotFromDefId(
+            string defId,
+            CardPresentationKind kind,
+            bool clearCombatStats)
+        {
+            var snapshot = new CardPresentationSnapshot
+            {
+                Kind = kind,
+                DefId = defId ?? string.Empty,
+                Attack = 0,
+                Armor = 0,
+                Hp = 0,
+                ActionCount = 0,
+                FaceUp = true,
+            };
+
+            _ = clearCombatStats; // 展示卡战斗数值恒 0；参数保留调用方语义。
+            ApplyVisualFields(snapshot, defId, kind);
+            return snapshot;
+        }
+
+        private static void ApplyVisualFields(
+            CardPresentationSnapshot snapshot,
+            string defId,
+            CardPresentationKind kind)
+        {
+            if (snapshot == null || string.IsNullOrEmpty(defId))
             {
                 return;
             }
 
             EnsureVisualsLoaded();
-
-            Sprite icon = null;
-            Sprite face = null;
-            var frameColor = ContentColor.White;
-            var hasVisual = false;
 
             var arch = NineGridArchitecture.Current;
             var content = arch.GetSystem<IContentSystem>();
@@ -168,41 +228,26 @@ namespace NineGrid.Flow
                     _spriteCatalogs,
                     out var resolved))
             {
-                icon = resolved.Icon;
-                face = resolved.Face;
-                frameColor = resolved.FrameColor;
-                hasVisual = true;
-            }
-
-            if (!hasVisual && TryGetSpritesDirect(defId, kind, out var directIcon, out var directFace))
-            {
-                icon = directIcon;
-                face = directFace;
-                hasVisual = true;
-                frameColor = ResolveFrameColorFallback(defId, kind, content);
-            }
-
-            if (!hasVisual)
-            {
+                snapshot.DisplayName = resolved.DisplayName ?? string.Empty;
+                snapshot.BasicDescription = resolved.Description ?? string.Empty;
+                snapshot.MainIcon = resolved.Icon;
+                snapshot.FaceBackground = resolved.Face;
+                snapshot.BackBorder = resolved.BackBorder;
+                snapshot.BackShirt = resolved.BackShirt;
+                snapshot.BackLogo = resolved.BackLogo;
                 return;
             }
 
-            if (face != null)
+            if (TryGetSpritesDirect(defId, kind, out var directIcon, out var directFace))
             {
-                view.SetCardFace(face);
+                snapshot.MainIcon = directIcon;
+                snapshot.FaceBackground = directFace;
             }
 
-            if (icon != null)
+            if (string.IsNullOrEmpty(snapshot.DisplayName))
             {
-                view.SetMainIcon(icon);
+                snapshot.DisplayName = defId;
             }
-            else
-            {
-                view.SetMainIcon(null);
-            }
-
-            var color = frameColor;
-            view.SetFrameColor(new Color(color.R, color.G, color.B, color.A));
         }
 
         private static bool TryGetSpritesDirect(
@@ -220,35 +265,6 @@ namespace NineGrid.Flow
 
             var visualKind = InferVisualKind(defId, kind);
             return _spriteCatalogs.TryGet(visualKind, defId, out icon, out face);
-        }
-
-        private static ContentColor ResolveFrameColorFallback(
-            string defId,
-            CardPresentationKind kind,
-            IContentSystem content)
-        {
-            if (!content.HasCatalog || _frameStyleCatalog == null)
-            {
-                return ContentColor.White;
-            }
-
-            var visualKind = InferVisualKind(defId, kind);
-            ContentVisualDefinition visual = null;
-            if (_visualCatalog != null)
-            {
-                _visualCatalog.TryGet(defId, out visual);
-            }
-
-            if (visual == null)
-            {
-                visual = new ContentVisualDefinition(defId, visualKind, string.Empty);
-            }
-
-            var frameStyleId = ContentVisualResolver.ResolveFrameStyleId(
-                defId,
-                visual,
-                content.Catalog);
-            return ContentVisualResolver.ResolveFrameColor(frameStyleId, _frameStyleCatalog);
         }
 
         private static ContentVisualKind InferVisualKind(string defId, CardPresentationKind kind)

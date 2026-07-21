@@ -1,9 +1,15 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using NineGrid.Cards.Convergence;
+using NineGrid.Cards.Presentation;
 
 namespace NineGrid.Cards
 {
+    /// <summary>
+    /// 卡牌底盘宿主：SortingGroup / 卡面挂载 / 分发已提交投影给 Kind Binder。
+    /// 正式可见值路径为 <see cref="ApplyPresentation"/>；旧 Set* 仅过渡 / 测试兼容。
+    /// 朝向：Core 权威 → 投影 Commit 镜像 → 卡面消费；禁止 DisplayMode→朝向隐式通道。
+    /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(SortingGroup))]
     public sealed class StandardCardView : MonoBehaviour
@@ -58,10 +64,64 @@ namespace NineGrid.Cards
         private PixelDigitDisplay _lifeDigits;
         private PixelDigitDisplay _armorValueDigits;
         private ArmorBlockDisplay _armorBlocks;
+        private ICardFaceBinder _faceBinder;
 
         public int Attack => attack;
         public int Health => health;
         public int Armor => armor;
+
+        /// <summary>挂载 Kind 卡面时由 CardManager 装配；RegisterPrefab 特例可为空。</summary>
+        public void AttachFaceBinder(ICardFaceBinder binder)
+        {
+            _faceBinder = binder;
+        }
+
+        /// <summary>
+        /// 分发已提交投影给当前 L4 Binder。正式路径唯一出口家族（含朝向分支）。
+        /// </summary>
+        public void ApplyPresentation(CardPresentationSnapshot snapshot)
+        {
+            if (snapshot == null)
+            {
+                return;
+            }
+
+            // 底盘缓存与旧 API 只读字段对齐（非旁路直刷卡面节点）。
+            attack = Mathf.Max(0, snapshot.Attack);
+            health = Mathf.Max(0, snapshot.Hp);
+            armor = Mathf.Clamp(snapshot.Armor, 0, MaxArmor);
+
+            if (_faceBinder != null)
+            {
+                _faceBinder.ApplyPresentation(snapshot);
+                return;
+            }
+
+            // 过渡：无 Binder（完整 Prefab 特例）时回退底盘 Set*，正式 Kind 挂面路径不应落入此处。
+            if (snapshot.MainIcon != null)
+            {
+                SetMainIcon(snapshot.MainIcon);
+            }
+
+            if (snapshot.FaceBackground != null)
+            {
+                SetCardFace(snapshot.FaceBackground);
+            }
+
+            SetAttack(snapshot.Attack, animate: false);
+            SetHealth(snapshot.Hp, animate: false);
+            SetArmor(snapshot.Armor, animate: false);
+            ApplyFaceOrientation(snapshot.FaceUp);
+        }
+
+        /// <summary>
+        /// 朝向 Commit 入口（与数值同一 Apply/Commit 出口家族）。
+        /// FaceUp = Core 朝向镜像；本波 Binder 可恒正面；禁止 DisplayMode 推导。
+        /// </summary>
+        public void ApplyFaceOrientation(bool faceUp)
+        {
+            _faceBinder?.ApplyFaceOrientation(faceUp);
+        }
 
         private void Awake()
         {
