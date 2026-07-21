@@ -583,7 +583,11 @@ namespace NineGrid.Cards
             }
             else if (card == null && cardManager != null)
             {
-                card = cardManager.SpawnView(uid, defId, initialMode: CardDisplayMode.GroundCardMode);
+                card = cardManager.SpawnView(
+                    uid,
+                    defId,
+                    initialMode: CardDisplayMode.GroundCardMode,
+                    kind: CardPresentationKindResolver.FromDefId(defId));
             }
 
             if (card == null || card.Transform == null)

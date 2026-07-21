@@ -8,33 +8,95 @@ namespace NineGrid.Cards.Editor
 {
     public static class StandardCardPrefabSetup
     {
-        private const string PrefabPath = "Assets/Prefabs/Standard Card.prefab";
-        private const string PrefabPathAlt = "Assets/Prefabs/Standard Card 1.prefab";
+        private const string PrefabPath = "Assets/Prefabs/老Standard Card.prefab";
         private const string LibraryPath = "Assets/Scripts/Cards/PixelCardPackSpriteLibrary.asset";
 
-        [MenuItem("NineGrid/Cards/Setup Standard Card Prefab")]
+        [MenuItem("NineGrid/Cards/Setup Card Chassis Prefab")]
         public static void SetupPrefab()
         {
             SetupPrefabAt(PrefabPath);
         }
 
-        [MenuItem("NineGrid/Cards/Setup Standard Card Prefab (All Variants)")]
-        public static void SetupAllStandardCardPrefabs()
-        {
-            SetupPrefabAt(PrefabPath);
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPathAlt) != null)
-            {
-                SetupPrefabAt(PrefabPathAlt);
-            }
-        }
-
-        [MenuItem("NineGrid/Cards/Install Transform Tower On Standard Card Prefab")]
+        [MenuItem("NineGrid/Cards/Install Transform Tower On Card Chassis Prefab")]
         public static void InstallTransformTowerOnPrefab()
         {
             InstallTransformTowerAt(PrefabPath);
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPathAlt) != null)
+        }
+
+        [MenuItem("NineGrid/Cards/Evolve Chassis FacePivot (strip legacy L4 visuals)")]
+        public static void EvolveChassisFacePivot()
+        {
+            var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+            try
             {
-                InstallTransformTowerAt(PrefabPathAlt);
+                var tower = InstallTransformTower(root);
+                StripLegacyL4Visuals(tower);
+                PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+                Debug.Log($"Card chassis FacePivot evolved: {PrefabPath}");
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        /// <summary>
+        /// 剥除 L4 旧万能视觉，仅保留 FacePivot 挂载点（#13）。
+        /// </summary>
+        public static void StripLegacyL4Visuals(CardTransformTower tower)
+        {
+            if (tower == null)
+            {
+                return;
+            }
+
+            tower.EnsureTower();
+            var visual = tower.CardVisual;
+            var pivot = tower.FacePivot;
+            if (visual == null)
+            {
+                return;
+            }
+
+            for (var i = visual.childCount - 1; i >= 0; i--)
+            {
+                var child = visual.GetChild(i);
+                if (child == null)
+                {
+                    continue;
+                }
+
+                if (pivot != null && child == pivot)
+                {
+                    continue;
+                }
+
+                Object.DestroyImmediate(child.gameObject);
+            }
+
+            var cardView = tower.GetComponent<StandardCardView>();
+            if (cardView == null)
+            {
+                return;
+            }
+
+            var serialized = new SerializedObject(cardView);
+            ClearObjectReference(serialized, "attackAnchor");
+            ClearObjectReference(serialized, "lifeAnchor");
+            ClearObjectReference(serialized, "armorBlocksAnchor");
+            ClearObjectReference(serialized, "armorValueAnchor");
+            ClearObjectReference(serialized, "cardBackgroundRenderer");
+            ClearObjectReference(serialized, "cardFrameRenderer");
+            ClearObjectReference(serialized, "mainIconRenderer");
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void ClearObjectReference(SerializedObject serialized, string propertyName)
+        {
+            var property = serialized.FindProperty(propertyName);
+            if (property != null)
+            {
+                property.objectReferenceValue = null;
             }
         }
 

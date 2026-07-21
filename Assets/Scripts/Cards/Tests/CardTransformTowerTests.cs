@@ -34,11 +34,13 @@ namespace NineGrid.Cards.Tests
             Assert.AreEqual(CardTransformTower.SlotFrameName, tower.SlotFrame.name);
             Assert.AreEqual(CardTransformTower.EffectFrameName, tower.EffectFrame.name);
             Assert.AreEqual(CardTransformTower.CardVisualName, tower.CardVisual.name);
+            Assert.AreEqual(CardTransformTower.FacePivotName, tower.FacePivot.name);
 
             Assert.AreSame(_root.transform, tower.BoardFrame.parent);
             Assert.AreSame(tower.BoardFrame, tower.SlotFrame.parent);
             Assert.AreSame(tower.SlotFrame, tower.EffectFrame.parent);
             Assert.AreSame(tower.EffectFrame, tower.CardVisual.parent);
+            Assert.AreSame(tower.CardVisual, tower.FacePivot.parent);
         }
 
         [Test]

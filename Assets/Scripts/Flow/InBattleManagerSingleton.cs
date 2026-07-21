@@ -793,7 +793,8 @@ namespace NineGrid.Flow
                 var view = cardManager.SpawnView(
                     placement.Uid,
                     placement.DefId,
-                    initialMode: CardDisplayMode.CardDeckMode);
+                    initialMode: CardDisplayMode.CardDeckMode,
+                    kind: CoreCardPresentationMapper.ResolvePresentationKind(placement.Uid, placement.DefId));
                 if (view != null)
                 {
                     plan.DeckCards.Add(view);
@@ -813,7 +814,8 @@ namespace NineGrid.Flow
                 var view = cardManager.SpawnView(
                     placement.Uid,
                     placement.DefId,
-                    initialMode: CardDisplayMode.CardDeckMode);
+                    initialMode: CardDisplayMode.CardDeckMode,
+                    kind: CoreCardPresentationMapper.ResolvePresentationKind(placement.Uid, placement.DefId));
                 if (view != null)
                 {
                     plan.DeckCards.Add(view);
@@ -834,7 +836,11 @@ namespace NineGrid.Flow
                     continue;
                 }
 
-                var view = cardManager.SpawnView(uid, card.DefId, initialMode: CardDisplayMode.CardDeckMode);
+                var view = cardManager.SpawnView(
+                    uid,
+                    card.DefId,
+                    initialMode: CardDisplayMode.CardDeckMode,
+                    kind: CoreCardPresentationMapper.ResolvePresentationKind(uid, card.DefId));
                 if (view != null)
                 {
                     plan.DeckCards.Add(view);
@@ -1042,12 +1048,14 @@ namespace NineGrid.Flow
 
             if (plan.AvatarUid > 0)
             {
+                var avatarDefId = string.IsNullOrEmpty(plan.AvatarDefId)
+                    ? CardManagerSingleton.StandardDefId
+                    : plan.AvatarDefId;
                 var avatar = cardManager.SpawnView(
                     plan.AvatarUid,
-                    string.IsNullOrEmpty(plan.AvatarDefId)
-                        ? CardManagerSingleton.StandardDefId
-                        : plan.AvatarDefId,
-                    initialMode: CardDisplayMode.GroundCardMode);
+                    avatarDefId,
+                    initialMode: CardDisplayMode.GroundCardMode,
+                    kind: CardPresentationKind.Avatar);
 
                 if (avatar != null)
                 {
@@ -1165,7 +1173,9 @@ namespace NineGrid.Flow
                             ensureCard = cardManager.SpawnView(
                                 deckDeal.Uid,
                                 deckDeal.DefId,
-                                initialMode: CardDisplayMode.CardDeckMode);
+                                initialMode: CardDisplayMode.CardDeckMode,
+                                kind: CoreCardPresentationMapper.ResolvePresentationKind(
+                                    deckDeal.Uid, deckDeal.DefId));
                             if (ensureCard != null)
                             {
                                 CoreCardPresentationMapper.ApplyToManagedCard(ensureCard);
@@ -1224,7 +1234,9 @@ namespace NineGrid.Flow
                             ensureCard = cardManager.SpawnView(
                                 handDeal.Uid,
                                 handDeal.DefId,
-                                initialMode: CardDisplayMode.GroundCardMode);
+                                initialMode: CardDisplayMode.GroundCardMode,
+                                kind: CoreCardPresentationMapper.ResolvePresentationKind(
+                                    handDeal.Uid, handDeal.DefId));
                             if (ensureCard != null)
                             {
                                 CoreCardPresentationMapper.ApplyToManagedCard(ensureCard);
@@ -2614,7 +2626,11 @@ namespace NineGrid.Flow
             var defId = string.IsNullOrEmpty(deal.DefId)
                 ? CardManagerSingleton.StandardDefId
                 : deal.DefId;
-            var view = cardManager.SpawnView(deal.Uid, defId, initialMode: CardDisplayMode.CardDeckMode);
+            var view = cardManager.SpawnView(
+                deal.Uid,
+                defId,
+                initialMode: CardDisplayMode.CardDeckMode,
+                kind: CoreCardPresentationMapper.ResolvePresentationKind(deal.Uid, defId));
             if (view != null)
             {
                 CoreCardPresentationMapper.ApplyToManagedCard(view);
@@ -3051,7 +3067,8 @@ namespace NineGrid.Flow
                 ensureCard = cardManager.SpawnView(
                     entry.Uid,
                     defId,
-                    initialMode: initialMode);
+                    initialMode: initialMode,
+                    kind: CoreCardPresentationMapper.ResolvePresentationKind(entry.Uid, defId));
                 if (ensureCard != null)
                 {
                     CoreCardPresentationMapper.ApplyToManagedCard(ensureCard);
@@ -3540,7 +3557,9 @@ namespace NineGrid.Flow
                 resultCard = cardManager.SpawnView(
                     fusion.ResultUid,
                     fusion.ResultDefId,
-                    initialMode: CardDisplayMode.GroundCardMode);
+                    initialMode: CardDisplayMode.GroundCardMode,
+                    kind: CoreCardPresentationMapper.ResolvePresentationKind(
+                        fusion.ResultUid, fusion.ResultDefId));
             }
 
             if (resultCard != null)
@@ -3954,7 +3973,11 @@ namespace NineGrid.Flow
 
             if (!cardManager.TryGet(itemUid, out var card) || card == null)
             {
-                card = cardManager.SpawnView(itemUid, defId, initialMode: CardDisplayMode.HandCardMode);
+                card = cardManager.SpawnView(
+                    itemUid,
+                    defId,
+                    initialMode: CardDisplayMode.HandCardMode,
+                    kind: CoreCardPresentationMapper.ResolvePresentationKind(itemUid, defId));
                 if (card != null)
                 {
                     CoreCardPresentationMapper.ApplyToManagedCard(card);

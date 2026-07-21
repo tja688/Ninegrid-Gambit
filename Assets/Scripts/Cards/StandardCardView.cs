@@ -146,22 +146,46 @@ namespace NineGrid.Cards
                 return;
             }
 
+            // 底盘演化后旧万能锚点可为空；数值改由卡面 Binder/Commit 消费（#15）。缺锚点时不建 digit，避免 NRE。
+            if (attackAnchor == null && lifeAnchor == null && armorBlocksAnchor == null && armorValueAnchor == null)
+            {
+                return;
+            }
+
             var sortingLayerId = ResolveSortingLayerId();
-            _attackDigits = new PixelDigitDisplay(attackAnchor, spriteLibrary, digitSpacing, sortingLayerId, statSortingOrder, this);
-            _lifeDigits = new PixelDigitDisplay(lifeAnchor, spriteLibrary, digitSpacing, sortingLayerId, statSortingOrder, this);
-            var armorDigitSlotOffsets = BuildArmorDigitSlotOffsets();
-            _armorValueDigits = new PixelDigitDisplay(
-                armorValueAnchor,
-                spriteLibrary,
-                armorDigitSpacing,
-                sortingLayerId,
-                armorSortingOrder,
-                this,
-                DigitAlignment.FixedSlotsOnesRight,
-                armorDigitSlotOffsets,
-                armorDigitScale,
-                armorDigitColor);
-            _armorBlocks = new ArmorBlockDisplay(armorBlocksAnchor, spriteLibrary, armorBlockScale, armorBlockSpacing, sortingLayerId, armorSortingOrder, this);
+            if (attackAnchor != null)
+            {
+                _attackDigits = new PixelDigitDisplay(
+                    attackAnchor, spriteLibrary, digitSpacing, sortingLayerId, statSortingOrder, this);
+            }
+
+            if (lifeAnchor != null)
+            {
+                _lifeDigits = new PixelDigitDisplay(
+                    lifeAnchor, spriteLibrary, digitSpacing, sortingLayerId, statSortingOrder, this);
+            }
+
+            if (armorValueAnchor != null)
+            {
+                var armorDigitSlotOffsets = BuildArmorDigitSlotOffsets();
+                _armorValueDigits = new PixelDigitDisplay(
+                    armorValueAnchor,
+                    spriteLibrary,
+                    armorDigitSpacing,
+                    sortingLayerId,
+                    armorSortingOrder,
+                    this,
+                    DigitAlignment.FixedSlotsOnesRight,
+                    armorDigitSlotOffsets,
+                    armorDigitScale,
+                    armorDigitColor);
+            }
+
+            if (armorBlocksAnchor != null)
+            {
+                _armorBlocks = new ArmorBlockDisplay(
+                    armorBlocksAnchor, spriteLibrary, armorBlockScale, armorBlockSpacing, sortingLayerId, armorSortingOrder, this);
+            }
         }
 
         private void RefreshAll(bool animate)

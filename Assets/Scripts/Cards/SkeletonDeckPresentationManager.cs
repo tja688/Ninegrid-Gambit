@@ -296,7 +296,8 @@ namespace NineGrid.Cards
                 resultCard = cardManager.SpawnView(
                     request.ResultUid,
                     request.ResultDefId,
-                    initialMode: CardDisplayMode.GroundCardMode);
+                    initialMode: CardDisplayMode.GroundCardMode,
+                    kind: CardPresentationKindResolver.FromDefId(request.ResultDefId));
             }
 
             if (resultCard?.Transform == null)

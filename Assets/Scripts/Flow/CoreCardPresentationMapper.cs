@@ -308,6 +308,27 @@ namespace NineGrid.Flow
             }
         }
 
+        /// <summary>
+        /// Spawn 前解析表现种：优先 Core CardKind，其次 DefId 前缀（不为 skill./PlayerSkill 开卡面）。
+        /// </summary>
+        public static CardPresentationKind ResolvePresentationKind(int uid, string defIdFallback = null)
+        {
+            if (uid > 0 && TryRead(uid, out var read) && read.Kind != CardPresentationKind.Unknown)
+            {
+                return read.Kind;
+            }
+
+            return ResolvePresentationKindFromDefId(defIdFallback);
+        }
+
+        /// <summary>
+        /// 按 DefId 推断表现种。skill.* 返回 Unknown（不为 PlayerSkill 开 Spawn 卡面）。
+        /// </summary>
+        public static CardPresentationKind ResolvePresentationKindFromDefId(string defId)
+        {
+            return InferPresentationKind(defId);
+        }
+
         private static CardPresentationKind InferPresentationKind(string defId)
         {
             var visualKind = InferVisualKind(defId, CardPresentationKind.Unknown);

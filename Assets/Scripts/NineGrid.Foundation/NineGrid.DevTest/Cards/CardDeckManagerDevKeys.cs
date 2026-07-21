@@ -52,14 +52,16 @@ namespace NineGrid.DevTest.Cards
             var cards = cardManager.SpawnMany(
                 CardManagerSingleton.StandardDefId,
                 DefaultEntryCardCount,
-                initialMode: CardDisplayMode.CardDeckMode);
+                initialMode: CardDisplayMode.CardDeckMode,
+                kind: CardPresentationKind.Monster);
 
             manager.InjectDeck(cards);
             await manager.BeginEntryAsync();
 
             var avatar = cardManager.Spawn(
                 CardManagerSingleton.StandardDefId,
-                initialMode: CardDisplayMode.GroundCardMode);
+                initialMode: CardDisplayMode.GroundCardMode,
+                kind: CardPresentationKind.Avatar);
             var field = GroundFieldManagerSingleton.Instance;
             if (field != null)
             {
@@ -111,7 +113,8 @@ namespace NineGrid.DevTest.Cards
 
             var card = CardManagerSingleton.Instance.Spawn(
                 CardManagerSingleton.StandardDefId,
-                initialMode: CardDisplayMode.CardDeckMode);
+                initialMode: CardDisplayMode.CardDeckMode,
+                kind: CardPresentationKind.HelpCard);
 
             var slotIndex = Random.Range(0, Mathf.Max(1, manager.DeckCount + 1));
             await manager.AddCardAtAsync(slotIndex, card);

@@ -53,6 +53,11 @@ namespace NineGrid.Cards
 
         /// <summary>由 Flow 映射层写入的 Core 卡牌种类，Cards 程序集不直接引用 Core。</summary>
         public CardPresentationKind CoreKind { get; set; }
+
+        /// <summary>
+        /// 主路径挂入 FacePivot 的卡面根；RegisterPrefab 特例路径为 null。
+        /// </summary>
+        public Transform MountedFaceRoot { get; internal set; }
     }
 
     /// <summary>
@@ -63,12 +68,33 @@ namespace NineGrid.Cards
         public const int InvalidUid = 0;
         public const string StandardDefId = "standard";
 
-        private const string StandardCardPrefabAssetPath = "Assets/Prefabs/Standard Card.prefab";
+        private const string CardChassisPrefabAssetPath = "Assets/Prefabs/老Standard Card.prefab";
 
         private static CardManagerSingleton _instance;
 
-        [SerializeField] private Transform cardRoot;
-        [SerializeField] private GameObject standardCardPrefab;
+        [SerializeField]
+        [Tooltip("卡牌根节点。运行时自动查找/装配：留空时 Awake EnsureCardRoot 创建 Cards 子节点。")]
+        private Transform cardRoot;
+
+        [SerializeField]
+        [Tooltip("卡牌底盘预制体（变换塔 / SortingGroup / HitProxy / Effect）。主 Spawn 路径 Instantiate 此底盘后再挂 Kind 卡面。留空时编辑器 Awake 尝试加载 Assets/Prefabs/老Standard Card.prefab；仍空则 Spawn 失败并打 Error。")]
+        private GameObject standardCardPrefab;
+
+        [SerializeField]
+        [Tooltip("Avatar → 玩家卡面模板，挂入底盘 L4/FacePivot。留空时 Avatar Spawn 只出底盘、跳过挂面并 Warning。")]
+        private GameObject avatarFacePrefab;
+
+        [SerializeField]
+        [Tooltip("Monster → 怪物卡面模板，挂入底盘 L4/FacePivot。留空时 Monster Spawn 只出底盘、跳过挂面并 Warning。")]
+        private GameObject monsterFacePrefab;
+
+        [SerializeField]
+        [Tooltip("HelpCard / Item / PlayerCard → 道具卡面模板，挂入底盘 L4/FacePivot。留空时对应 Kind Spawn 只出底盘、跳过挂面并 Warning。")]
+        private GameObject itemFacePrefab;
+
+        [SerializeField]
+        [Tooltip("Relic → 遗物卡面模板，挂入底盘 L4/FacePivot。留空时 Relic Spawn 只出底盘、跳过挂面并 Warning。")]
+        private GameObject relicFacePrefab;
 
         private readonly Dictionary<int, ManagedCard> _cardsByUid = new();
         private readonly Dictionary<string, GameObject> _defPrefabs = new(StringComparer.Ordinal);
@@ -150,13 +176,33 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 配置卡牌底盘与 Kind→卡面模板表（EditMode / 运行时装配）。
+        /// </summary>
+        public void ConfigureChassisAndFaces(
+            GameObject chassis,
+            GameObject avatarFace,
+            GameObject monsterFace,
+            GameObject itemFace,
+            GameObject relicFace)
+        {
+            standardCardPrefab = chassis;
+            avatarFacePrefab = avatarFace;
+            monsterFacePrefab = monsterFace;
+            itemFacePrefab = itemFace;
+            relicFacePrefab = relicFace;
+        }
+
+        /// <summary>
         /// 为指定 Uid 创建表现视图。Uid 应由 Core CardRegistry 分配。
+        /// 主路径：Instantiate(底盘) → 按 Kind 挂 L4/FacePivot 卡面。
+        /// <see cref="RegisterPrefab"/> 仅作 DefId 完整预制体特例覆盖。
         /// </summary>
         public ManagedCard SpawnView(
             int uid,
             string defId,
             Transform parent = null,
-            CardDisplayMode initialMode = CardDisplayMode.HandCardMode)
+            CardDisplayMode initialMode = CardDisplayMode.HandCardMode,
+            CardPresentationKind kind = CardPresentationKind.Unknown)
         {
             if (uid == InvalidUid)
             {
@@ -170,22 +216,31 @@ namespace NineGrid.Cards
                 return null;
             }
 
-            if (!_defPrefabs.TryGetValue(defId, out var prefab) || prefab == null)
+            GameObject overridePrefab = null;
+            var useOverride = !string.IsNullOrWhiteSpace(defId)
+                              && _defPrefabs.TryGetValue(defId, out overridePrefab)
+                              && overridePrefab != null;
+            GameObject instance;
+            if (useOverride)
             {
-                if (!_defPrefabs.TryGetValue(StandardDefId, out prefab) || prefab == null)
+                TrackUid(uid);
+                instance = Instantiate(overridePrefab, parent != null ? parent : cardRoot);
+                instance.name = $"{overridePrefab.name} (#{uid})";
+            }
+            else
+            {
+                var chassis = standardCardPrefab;
+                if (chassis == null)
                 {
-                    Debug.LogError($"[CardManagerSingleton] 未找到 DefId 对应预制体: {defId}");
+                    Debug.LogError(
+                        $"[CardManagerSingleton] 未配置卡牌底盘，无法 Spawn DefId={defId}。路径回退：{CardChassisPrefabAssetPath}");
                     return null;
                 }
 
-                Debug.LogWarning(
-                    $"[CardManagerSingleton] DefId {defId} 无专用预制体，回退 Standard Card。");
+                TrackUid(uid);
+                instance = Instantiate(chassis, parent != null ? parent : cardRoot);
+                instance.name = $"{chassis.name} (#{uid})";
             }
-
-            TrackUid(uid);
-
-            var instance = Instantiate(prefab, parent != null ? parent : cardRoot);
-            instance.name = $"{prefab.name} (#{uid})";
 
             var view = instance.GetComponent<StandardCardView>();
             if (view == null)
@@ -193,7 +248,10 @@ namespace NineGrid.Cards
                 Debug.LogWarning($"[CardManagerSingleton] DefId {defId} 未挂载 StandardCardView。");
             }
 
-            var card = new ManagedCard(uid, defId, view);
+            var card = new ManagedCard(uid, defId, view)
+            {
+                CoreKind = kind,
+            };
             var countBefore = _cardsByUid.Count;
             _cardsByUid[uid] = card;
             CardPresentationProbe.RegistryDelta(
@@ -206,6 +264,11 @@ namespace NineGrid.Cards
                 defId: card.DefId);
 
             EnsureTransformTower(instance);
+
+            if (!useOverride)
+            {
+                MountFaceForKind(card, kind);
+            }
 
             var driver = instance.GetComponent<CardVisualDriver>();
             if (driver == null)
@@ -261,9 +324,10 @@ namespace NineGrid.Cards
         public ManagedCard Spawn(
             string defId,
             Transform parent = null,
-            CardDisplayMode initialMode = CardDisplayMode.HandCardMode)
+            CardDisplayMode initialMode = CardDisplayMode.HandCardMode,
+            CardPresentationKind kind = CardPresentationKind.Unknown)
         {
-            return SpawnView(_nextUid++, defId, parent, initialMode);
+            return SpawnView(_nextUid++, defId, parent, initialMode, kind);
         }
 
         /// <summary>
@@ -272,21 +336,23 @@ namespace NineGrid.Cards
         public ManagedCard SpawnPresentationOnly(
             string defId,
             Transform parent = null,
-            CardDisplayMode initialMode = CardDisplayMode.HandCardMode)
+            CardDisplayMode initialMode = CardDisplayMode.HandCardMode,
+            CardPresentationKind kind = CardPresentationKind.Unknown)
         {
-            return SpawnView(_nextPresentationUid--, defId, parent, initialMode);
+            return SpawnView(_nextPresentationUid--, defId, parent, initialMode, kind);
         }
 
         public List<ManagedCard> SpawnMany(
             string defId,
             int count,
             Transform parent = null,
-            CardDisplayMode initialMode = CardDisplayMode.HandCardMode)
+            CardDisplayMode initialMode = CardDisplayMode.HandCardMode,
+            CardPresentationKind kind = CardPresentationKind.Unknown)
         {
             var result = new List<ManagedCard>(Mathf.Max(0, count));
             for (var i = 0; i < count; i++)
             {
-                var card = Spawn(defId, parent, initialMode);
+                var card = Spawn(defId, parent, initialMode, kind);
                 if (card != null)
                 {
                     result.Add(card);
@@ -712,18 +778,111 @@ namespace NineGrid.Cards
             if (standardCardPrefab == null)
             {
 #if UNITY_EDITOR
-                standardCardPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(StandardCardPrefabAssetPath);
+                standardCardPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(CardChassisPrefabAssetPath);
 #endif
             }
 
-            if (standardCardPrefab != null)
+            if (standardCardPrefab == null)
             {
-                RegisterPrefab(StandardDefId, standardCardPrefab);
+                Debug.LogWarning(
+                    $"[CardManagerSingleton] 未配置卡牌底盘，请赋值或通过路径 {CardChassisPrefabAssetPath} 提供。");
+            }
+
+            // RegisterPrefab(defId) 仅作特例覆盖；底盘不再注册为 StandardDefId 主回退。
+        }
+
+        /// <summary>
+        /// Kind → 卡面模板显式表。不为 PlayerSkill / Unknown 开卡面。
+        /// </summary>
+        private GameObject ResolveFacePrefab(CardPresentationKind kind)
+        {
+            return kind switch
+            {
+                CardPresentationKind.Avatar => avatarFacePrefab,
+                CardPresentationKind.Monster => monsterFacePrefab,
+                CardPresentationKind.HelpCard => itemFacePrefab,
+                CardPresentationKind.Item => itemFacePrefab,
+                CardPresentationKind.PlayerCard => itemFacePrefab,
+                CardPresentationKind.Relic => relicFacePrefab,
+                _ => null,
+            };
+        }
+
+        private void MountFaceForKind(ManagedCard card, CardPresentationKind kind)
+        {
+            if (card?.GameObject == null)
+            {
+                return;
+            }
+
+            var facePrefab = ResolveFacePrefab(kind);
+            if (facePrefab == null)
+            {
+                if (kind != CardPresentationKind.Unknown)
+                {
+                    Debug.LogWarning(
+                        $"[CardManagerSingleton] Kind={kind} 无卡面模板，跳过挂面 uid={card.Uid} defId={card.DefId}");
+                }
+
+                return;
+            }
+
+            var tower = card.GameObject.GetComponent<CardTransformTower>();
+            if (tower == null)
+            {
+                Debug.LogError($"[CardManagerSingleton] 底盘缺少 CardTransformTower，无法挂面 uid={card.Uid}");
+                return;
+            }
+
+            tower.EnsureTower();
+            var pivot = tower.FacePivot;
+            if (pivot == null)
+            {
+                Debug.LogError($"[CardManagerSingleton] FacePivot 缺失，无法挂面 uid={card.Uid}");
+                return;
+            }
+
+            for (var i = pivot.childCount - 1; i >= 0; i--)
+            {
+                var child = pivot.GetChild(i);
+                if (child != null)
+                {
+                    DestroyUnityObject(child.gameObject);
+                }
+            }
+
+            var face = Instantiate(facePrefab, pivot);
+            face.name = facePrefab.name;
+            face.transform.localPosition = Vector3.zero;
+            face.transform.localRotation = Quaternion.identity;
+            face.transform.localScale = Vector3.one;
+
+            var faceSortingGroup = face.GetComponent<SortingGroup>();
+            if (faceSortingGroup != null)
+            {
+                Debug.LogWarning(
+                    $"[CardManagerSingleton] 卡面模板自带 SortingGroup，已移除以免第二套卡级 SG：{facePrefab.name}",
+                    face);
+                DestroyUnityObject(faceSortingGroup);
+            }
+
+            card.MountedFaceRoot = face.transform;
+        }
+
+        private static void DestroyUnityObject(UnityEngine.Object target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(target);
             }
             else
             {
-                Debug.LogWarning(
-                    $"[CardManagerSingleton] 未配置 Standard Card 预制体，请赋值或通过路径 {StandardCardPrefabAssetPath} 提供。");
+                DestroyImmediate(target);
             }
         }
 

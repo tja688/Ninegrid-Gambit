@@ -249,10 +249,12 @@ namespace NineGrid.Flow
                 wrapper.transform.localScale = Vector3.zero;
 
                 // 负 Uid 纯表现卡：勿用 Spawn() 占 Core 正号段，否则会与后续 NewCard 洗回撞号。
+                var choiceKind = InferChoicePresentationKind(defId);
                 var managed = cardManager.SpawnPresentationOnly(
                     defId,
                     wrapper.transform,
-                    CardDisplayMode.RemovedMode);
+                    CardDisplayMode.RemovedMode,
+                    choiceKind);
                 if (managed?.View == null)
                 {
                     Destroy(wrapper);
@@ -265,7 +267,7 @@ namespace NineGrid.Flow
                 // Bounce 选项无 Core uid：按 defId 套 ContentVisual（遗物 / 属性三选一等）。
                 CoreCardPresentationMapper.ApplyVisualsByDefId(
                     managed,
-                    InferChoicePresentationKind(defId),
+                    choiceKind,
                     clearCombatStats: true);
 
                 var sortingGroup = managed.View.GetComponent<SortingGroup>();
