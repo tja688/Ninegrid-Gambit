@@ -74,6 +74,12 @@ namespace NineGrid.Content.Editor
             return (node["var_row"].Value, node["type_row"].Value);
         }
 
+        public static void PatchDescriptions(string absolutePath, IReadOnlyList<ContentVisualXlsxRow> patches)
+        {
+            var payload = BuildDescriptionPatchJson(patches);
+            RunPython("patch_descriptions", absolutePath, payload);
+        }
+
         private static List<ContentVisualXlsxRow> ParseRows(string json)
         {
             var rows = new List<ContentVisualXlsxRow>();
@@ -91,6 +97,50 @@ namespace NineGrid.Content.Editor
             }
 
             return rows;
+        }
+
+        private static string BuildDescriptionPatchJson(IReadOnlyList<ContentVisualXlsxRow> patches)
+        {
+            var builder = new StringBuilder();
+            builder.Append('[');
+            for (var i = 0; i < patches.Count; i++)
+            {
+                var patch = patches[i];
+                if (patch == null || string.IsNullOrEmpty(patch.ContentId))
+                {
+                    continue;
+                }
+
+                if (builder.Length > 1)
+                {
+                    builder.Append(',');
+                }
+
+                builder.Append('{');
+                AppendJsonString(builder, "content_id", patch.ContentId);
+                builder.Append(',');
+                AppendJsonString(builder, "description", patch.Description ?? string.Empty);
+                builder.Append(',');
+                builder.Append("\"sheet_row_index\":").Append(patch.SheetRowIndex);
+                builder.Append('}');
+            }
+
+            builder.Append(']');
+            return builder.ToString();
+        }
+
+        private static void AppendJsonString(StringBuilder builder, string key, string value)
+        {
+            builder.Append('\"').Append(key).Append("\":\"").Append(EscapeJson(value)).Append('\"');
+        }
+
+        private static string EscapeJson(string value)
+        {
+            return (value ?? string.Empty)
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"")
+                .Replace("\n", "\\n")
+                .Replace("\r", "\\r");
         }
 
         private static string RunPython(string mode, string absolutePath, string patchesJson)

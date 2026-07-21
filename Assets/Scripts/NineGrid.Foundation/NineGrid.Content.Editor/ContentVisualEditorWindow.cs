@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using NineGrid.Cards;
+using NineGrid.Cards.Editor;
+using NineGrid.Cards.Slots;
 using NineGrid.Content;
 using NineGrid.Content.Editor.Ui;
 using UnityEditor;
@@ -14,7 +17,7 @@ namespace NineGrid.Content.Editor
     {
         private readonly ContentVisualEditorSession session = new();
         private readonly List<ContentVisualWarmConsoleUi.NavEntry> kindNavEntries = new();
-        private readonly ContentVisualCardPreview cardPreview = new();
+        private readonly CardFacePreviewHost previewHost = new();
 
         private VisualElement rootElement;
         private VisualElement listContainer;
@@ -38,6 +41,8 @@ namespace NineGrid.Content.Editor
         private ObjectField kindDefaultFaceField;
         private ObjectField kindFallbackIconField;
         private IMGUIContainer previewContainer;
+        private TextField descriptionField;
+        private string previewFingerprint = string.Empty;
 
         private const string CardSpriteExportFolder = "Assets/Notes/CardSprite";
 
@@ -68,7 +73,8 @@ namespace NineGrid.Content.Editor
         private void OnDisable()
         {
             session.SavePreferences();
-            cardPreview.Dispose();
+            previewHost.Dispose();
+            previewFingerprint = string.Empty;
         }
 
         private void BuildShell()
@@ -80,7 +86,7 @@ namespace NineGrid.Content.Editor
 
             rootElement.Add(ContentVisualWarmConsoleUi.BuildHeader(
                 "表现层配图",
-                "content_visual.xlsx：纯文本 description；图标/卡面写入 Catalog SO；card_frame_style：框色。"));
+                "本窗为卡面权威预览（底盘+L4+ApplyPresentation）。description 可编辑写回 xlsx；图标写入 Catalog SO。"));
 
             tabToolbar = new Toolbar();
             var contentTabButton = new ToolbarButton(() => SetActiveTab(0)) { text = "内容配图" };
@@ -90,9 +96,9 @@ namespace NineGrid.Content.Editor
             rootElement.Add(tabToolbar);
 
             saveButton = new ToolbarButton(SaveChanges) { text = "保存" };
-            saveButton.tooltip = "保存 Catalog SO 图引用 + PATCH card_frame_style";
+            saveButton.tooltip = "保存 Catalog SO 图引用 + PATCH description / card_frame_style";
             regenerateButton = new ToolbarButton(RegenerateLuban) { text = "Regenerate Luban" };
-            regenerateButton.tooltip = "运行 gen_table_nine.ps1 刷新 StreamingAssets 与 Generated 代码";
+            regenerateButton.tooltip = "运行 gen_table_nine.ps1 刷新 StreamingAssets 与 Generated 代码（描述进 Play 前须执行）";
 
             rootElement.Add(ContentVisualWarmConsoleUi.BuildToolbar(
                 ("保存", SaveChanges, saveButton.tooltip),
@@ -566,28 +572,51 @@ namespace NineGrid.Content.Editor
                 row.ContentId + "  ·  " + row.ContentKind + (row.IsDirty ? "  ·  未保存" : string.Empty)));
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
-                "标准卡预览",
-                "基于当前会话 Sprite（含未保存）与 Resolver。",
+                "卡面终态预览",
+                "底盘 + L4 + ApplyPresentation；含未保存 Sprite / 描述草稿。本窗为权威预览。",
                 column =>
                 {
                     previewContainer = new IMGUIContainer(() =>
                     {
-                        var rect = GUILayoutUtility.GetRect(280f, 360f, GUILayout.ExpandWidth(true));
-                        cardPreview.Draw(rect, resolved);
+                        EnsureHiFiPreview(row);
+                        var rect = GUILayoutUtility.GetRect(280f, 420f, GUILayout.ExpandWidth(true));
+                        previewHost.Draw(rect);
                     });
-                    previewContainer.style.minHeight = 360;
+                    previewContainer.style.minHeight = 420;
                     column.Add(previewContainer);
+
+                    column.Add(ContentVisualWarmConsoleUi.CreateButtonRow(
+                        new Button(() =>
+                        {
+                            previewFingerprint = string.Empty;
+                            EnsureHiFiPreview(row);
+                            previewContainer?.MarkDirtyRepaint();
+                        }) { text = "重建预览" },
+                        new Button(() =>
+                        {
+                            EnsureHiFiPreview(row);
+                            previewHost.ValidateSortingOrders();
+                            EditorUtility.DisplayDialog(
+                                "通层 sortingOrder",
+                                previewHost.Status
+                                + (previewHost.Warnings.Count > 0
+                                    ? "\n\n" + string.Join("\n", previewHost.Warnings)
+                                    : string.Empty),
+                                "确定");
+                        }) { text = "校验 sortingOrder" }));
+
+                    column.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel(previewHost.Status));
                 }));
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
                 "直接暴露装配项",
-                "Main_Icon / Face_Background / 卡背三件套写入 Catalog SO；空则回退卡面模板（无全局卡背）。终态叠合预览见 NineGrid/Cards/Face Final Preview。",
+                "Main_Icon / Face_Background / 卡背三件套写入 Catalog SO；空则回退卡面模板（无全局卡背）。",
                 column =>
                 {
                     iconField = CreateSpriteField(row.Icon, sprite =>
                     {
                         session.ApplySpriteToRows(new[] { row }, ContentVisualKeySlot.Icon, sprite);
-                        RefreshAfterRowEdit();
+                        InvalidateAndRefreshPreview(row);
                     });
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
                         "Main_Icon",
@@ -597,7 +626,7 @@ namespace NineGrid.Content.Editor
                     faceField = CreateSpriteField(row.Face, sprite =>
                     {
                         session.ApplySpriteToRows(new[] { row }, ContentVisualKeySlot.Face, sprite);
-                        RefreshAfterRowEdit();
+                        InvalidateAndRefreshPreview(row);
                     });
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
                         "Face_Background",
@@ -607,7 +636,7 @@ namespace NineGrid.Content.Editor
                     backBorderField = CreateSpriteField(row.BackBorder, sprite =>
                     {
                         session.ApplySpriteToRows(new[] { row }, ContentVisualKeySlot.BackBorder, sprite);
-                        RefreshAfterRowEdit();
+                        InvalidateAndRefreshPreview(row);
                     });
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
                         "Back_Border",
@@ -617,7 +646,7 @@ namespace NineGrid.Content.Editor
                     backShirtField = CreateSpriteField(row.BackShirt, sprite =>
                     {
                         session.ApplySpriteToRows(new[] { row }, ContentVisualKeySlot.BackShirt, sprite);
-                        RefreshAfterRowEdit();
+                        InvalidateAndRefreshPreview(row);
                     });
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
                         "Back_Shirt",
@@ -627,7 +656,7 @@ namespace NineGrid.Content.Editor
                     backLogoField = CreateSpriteField(row.BackLogo, sprite =>
                     {
                         session.ApplySpriteToRows(new[] { row }, ContentVisualKeySlot.BackLogo, sprite);
-                        RefreshAfterRowEdit();
+                        InvalidateAndRefreshPreview(row);
                     });
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
                         "Back_Logo",
@@ -646,25 +675,62 @@ namespace NineGrid.Content.Editor
                 }));
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
-                "只读信息",
-                "文案与身份列请在 Excel / bootstrap 维护。",
+                "静态基础描述",
+                "写入 content_visual.xlsx description；可用 [SlotCode] 插入装配图标。保存后须 Regenerate Luban 才进 Play。",
                 column =>
                 {
+                    descriptionField = new TextField
+                    {
+                        multiline = true,
+                        value = row.DraftDescription ?? string.Empty
+                    };
+                    descriptionField.style.minHeight = 88;
+                    descriptionField.RegisterValueChangedCallback(evt =>
+                    {
+                        row.DraftDescription = evt.newValue ?? string.Empty;
+                        InvalidateAndRefreshPreview(row);
+                    });
+                    column.Add(ContentVisualWarmConsoleUi.WrapControl(
+                        "Basic_Description",
+                        "静态卡面描述（不进数值 Commit）",
+                        descriptionField));
+
+                    var insertables = CardFacePreviewBuilder.ListInsertableSlots();
+                    if (insertables.Count > 0)
+                    {
+                        var buttonRow = new VisualElement();
+                        buttonRow.style.flexDirection = FlexDirection.Row;
+                        buttonRow.style.flexWrap = Wrap.Wrap;
+                        for (var i = 0; i < insertables.Count; i++)
+                        {
+                            var slot = insertables[i];
+                            var code = slot.Code;
+                            var label = string.IsNullOrEmpty(slot.DisplayNameZh)
+                                ? code
+                                : slot.DisplayNameZh + " [" + code + "]";
+                            var button = new Button(() => InsertSlotCode(row, code))
+                            {
+                                text = "插入 " + label,
+                                tooltip = "插入 [" + code + "] 到描述框，并复制到剪贴板"
+                            };
+                            button.style.marginRight = 4;
+                            button.style.marginBottom = 4;
+                            buttonRow.Add(button);
+                        }
+
+                        column.Add(buttonRow);
+                    }
+
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
                         "display_name",
                         "来自内核 Catalog",
                         ContentVisualWarmConsoleUi.CreateTinyPathLabel(displayName)));
-                    column.Add(ContentVisualWarmConsoleUi.WrapControl(
-                        "description",
-                        "权威列：Excel",
-                        ContentVisualWarmConsoleUi.CreateDescriptionLabel(
-                            string.IsNullOrEmpty(row.Description) ? "(空)" : row.Description)));
 
                     if (resolved != null)
                     {
                         column.Add(ContentVisualWarmConsoleUi.WrapControl(
                             "frame_style",
-                            "稀有度/tier → frame_style_id",
+                            "稀有度/tier → frame_style_id（首波预览以卡面模板为准）",
                             ContentVisualWarmConsoleUi.CreateTinyPathLabel(resolved.FrameStyleId)));
                     }
                 }));
@@ -682,24 +748,26 @@ namespace NineGrid.Content.Editor
                 ("", "", ""),
                 ("", "", "")));
 
-            ContentVisualResolvedView previewView = null;
             var sampleRow = session.GetFocusedRow() ?? session.GetFilteredRows().FirstOrDefault();
-            if (sampleRow != null)
-            {
-                session.TryResolveRow(sampleRow, out previewView);
-            }
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
                 "预览样本",
-                sampleRow != null ? sampleRow.ContentId : "在「内容配图」页选择一条内容作为框色预览样本",
+                sampleRow != null
+                    ? sampleRow.ContentId + "（高保真卡面；框色首波以卡面模板为准）"
+                    : "在「内容配图」页选择一条内容作为预览样本",
                 column =>
                 {
                     previewContainer = new IMGUIContainer(() =>
                     {
-                        var rect = GUILayoutUtility.GetRect(280f, 360f, GUILayout.ExpandWidth(true));
-                        cardPreview.Draw(rect, previewView);
+                        if (sampleRow != null)
+                        {
+                            EnsureHiFiPreview(sampleRow);
+                        }
+
+                        var rect = GUILayoutUtility.GetRect(280f, 420f, GUILayout.ExpandWidth(true));
+                        previewHost.Draw(rect);
                     });
-                    previewContainer.style.minHeight = 360;
+                    previewContainer.style.minHeight = 420;
                     column.Add(previewContainer);
                 }));
 
@@ -716,11 +784,7 @@ namespace NineGrid.Content.Editor
                         field.RegisterValueChangedCallback(evt =>
                         {
                             captured.Color = evt.newValue;
-                            if (previewView != null && sampleRow != null)
-                            {
-                                session.TryResolveRow(sampleRow, out previewView);
-                            }
-
+                            previewFingerprint = string.Empty;
                             RefreshContent();
                         });
                         column.Add(ContentVisualWarmConsoleUi.WrapControl(
@@ -752,13 +816,158 @@ namespace NineGrid.Content.Editor
         private void ClearRowKey(ContentVisualEditorRowState row, ContentVisualKeySlot slot)
         {
             session.ClearKeyOnRows(new[] { row }, slot);
-            RefreshAfterRowEdit();
+            InvalidateAndRefreshPreview(row);
         }
 
         private void RefreshAfterRowEdit()
         {
+            previewFingerprint = string.Empty;
             RefreshList();
             RefreshContent();
+        }
+
+        private void InvalidateAndRefreshPreview(ContentVisualEditorRowState row)
+        {
+            previewFingerprint = string.Empty;
+            RefreshList();
+            // 避免整页重建打断描述框输入：仅重绘预览与列表脏标记
+            if (descriptionField != null && row != null
+                && descriptionField.value != row.DraftDescription)
+            {
+                descriptionField.SetValueWithoutNotify(row.DraftDescription ?? string.Empty);
+            }
+
+            EnsureHiFiPreview(row);
+            previewContainer?.MarkDirtyRepaint();
+            UpdateToolbarState();
+        }
+
+        private void EnsureHiFiPreview(ContentVisualEditorRowState row)
+        {
+            if (row == null)
+            {
+                return;
+            }
+
+            var fingerprint = BuildPreviewFingerprint(row);
+            if (fingerprint == previewFingerprint && previewHost.PreviewRoot != null)
+            {
+                return;
+            }
+
+            previewFingerprint = fingerprint;
+            if (!TryBuildPreviewRequest(row, out var request, out var error))
+            {
+                previewHost.Rebuild(null);
+                Debug.LogWarning("[ContentVisual] 预览跳过：" + error);
+                return;
+            }
+
+            previewHost.Rebuild(request);
+        }
+
+        private static string BuildPreviewFingerprint(ContentVisualEditorRowState row)
+        {
+            return string.Join("|",
+                row.ContentId,
+                row.ContentKind,
+                row.DraftDescription ?? string.Empty,
+                SpriteId(row.Icon),
+                SpriteId(row.Face),
+                SpriteId(row.BackBorder),
+                SpriteId(row.BackShirt),
+                SpriteId(row.BackLogo));
+        }
+
+        private static string SpriteId(Sprite sprite)
+        {
+            return sprite == null ? "-" : sprite.GetInstanceID().ToString();
+        }
+
+        private bool TryBuildPreviewRequest(
+            ContentVisualEditorRowState row,
+            out CardFacePreviewRequest request,
+            out string error)
+        {
+            request = null;
+            error = null;
+            if (row == null)
+            {
+                error = "无选中行。";
+                return false;
+            }
+
+            ContentVisualKind contentKind;
+            if (!Enum.TryParse(row.ContentKind, true, out contentKind))
+            {
+                contentKind = ContentVisualKind.Unknown;
+            }
+
+            var kind = CardFacePreviewBuilder.ToPresentationKind(contentKind, row.ContentId);
+            if (kind == CardPresentationKind.Unknown)
+            {
+                error = "该 Kind 不挂四套卡面：" + row.ContentId;
+                return false;
+            }
+
+            request = new CardFacePreviewRequest
+            {
+                DefId = row.ContentId,
+                Kind = kind,
+                DisplayName = session.GetDisplayName(row.ContentId, row.ContentKind),
+                BasicDescription = row.DraftDescription ?? string.Empty,
+                MainIcon = row.Icon,
+                FaceBackground = row.Face,
+                BackBorder = row.BackBorder,
+                BackShirt = row.BackShirt,
+                BackLogo = row.BackLogo,
+                FaceUp = true,
+            };
+            CardFacePreviewBuilder.TryFillSampleStats(request, session.CoreCatalog);
+            return true;
+        }
+
+        private void InsertSlotCode(ContentVisualEditorRowState row, string slotCode)
+        {
+            if (row == null || string.IsNullOrEmpty(slotCode))
+            {
+                return;
+            }
+
+            var token = "[" + slotCode + "]";
+            EditorGUIUtility.systemCopyBuffer = token;
+
+            var text = row.DraftDescription ?? string.Empty;
+            var index = text.Length;
+            if (descriptionField != null)
+            {
+                try
+                {
+                    index = Mathf.Clamp(descriptionField.cursorIndex, 0, text.Length);
+                }
+                catch
+                {
+                    index = text.Length;
+                }
+            }
+
+            row.DraftDescription = text.Insert(index, token);
+            if (descriptionField != null)
+            {
+                descriptionField.SetValueWithoutNotify(row.DraftDescription);
+                try
+                {
+                    var caret = index + token.Length;
+                    descriptionField.SelectRange(caret, caret);
+                }
+                catch
+                {
+                    // UI Toolkit 版本差异：无光标 API 时已写入全文。
+                }
+            }
+
+            InvalidateAndRefreshPreview(row);
+            ShowNotification(new GUIContent("已插入并复制 " + token));
         }
 
         private bool TryBuildPreviewView(ContentVisualEditorRowState row, out ContentVisualResolvedView view)
@@ -821,8 +1030,9 @@ namespace NineGrid.Content.Editor
             }
 
             session.ReloadCatalogs();
+            previewFingerprint = string.Empty;
             RefreshAll();
-            ShowNotification(new GUIContent("已保存 Catalog SO / 框色表"));
+            ShowNotification(new GUIContent("已保存 Catalog SO / description / 框色表"));
         }
 
         private void RegenerateLuban()

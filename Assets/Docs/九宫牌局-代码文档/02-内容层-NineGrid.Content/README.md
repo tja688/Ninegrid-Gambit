@@ -196,13 +196,12 @@ Assets/Tools/Luban/
 |------|------|------|----------|
 | `Editor/TableNineLubanDataExporter.cs` | `TableNineLubanDataExporter` | 硬编码 Catalog → Luban Datas JSON | `TableNineContentCatalog`, Core.Content |
 | `Editor/ContentVisualLubanMenu.cs` | `ContentVisualLubanMenu` | 打开配图窗口；运行 gen_table_nine.ps1 | EditorWindow, Process |
-| `Editor/ContentVisualEditorWindow.cs` | `ContentVisualEditorWindow` | 表现层配图 EditorWindow UI | Session, WarmConsoleUi, Preview |
-| `Editor/ContentVisualEditorSession.cs` | `ContentVisualEditorSession` 等 | 会话状态、筛选、保存 SO/xlsx、Resolve 预览 | XlsxIO, Factories, Resolver |
-| `Editor/ContentVisualXlsxIO.cs` | `ContentVisualXlsxIO`, `ContentVisualXlsxRow` | content_visual.xlsx 经 Python 读写 | Luban.SimpleJSON |
+| `Editor/ContentVisualEditorWindow.cs` | `ContentVisualEditorWindow` | 配图窗 + 内嵌高保真预览（`CardFacePreviewHost`） | Session, Cards.Editor Host |
+| `Editor/ContentVisualEditorSession.cs` | `ContentVisualEditorSession` 等 | 会话状态、筛选、保存 SO/xlsx（含 description）、Resolve | XlsxIO, Factories, Resolver |
+| `Editor/ContentVisualXlsxIO.cs` | `ContentVisualXlsxIO`, `ContentVisualXlsxRow` | content_visual.xlsx 读 / patch_descriptions | Luban.SimpleJSON |
 | `Editor/CardFrameStyleXlsxIO.cs` | `CardFrameStyleXlsxIO`, `CardFrameStyleXlsxRow` | card_frame_style.xlsx 读/补丁色 | Python 脚本 |
 | `Editor/ContentVisualSpriteKeyCodec.cs` | `ContentVisualSpriteKeyCodec` | legacy `path#sprite` 键解码（迁移用） | AssetDatabase |
 | `Editor/ContentVisualSpriteCatalogMigrationMenu.cs` | `ContentVisualSpriteCatalogMigrationMenu` | 迁入 Catalog SO 的菜单与迁移逻辑 | SpriteKeyCodec, StreamingAssets |
-| `Editor/ContentVisualCardPreview.cs` | `ContentVisualCardPreview` | IMGUI 卡预览叠图 | `ContentVisualResolvedView` |
 | `Editor/Ui/ContentVisualWarmConsoleUi.cs` | `ContentVisualWarmConsoleUi` | 暖棕控制台风格 UI 控件库 | UI Toolkit |
 
 ## 9. 统计
@@ -211,5 +210,5 @@ Assets/Tools/Luban/
 |------|----------|
 | Content 手写（含 Marker） | 23 |
 | Content Generated | 25 |
-| Content.Editor | 10 |
-| **合计** | **58** |
+| Content.Editor | 9 |
+| **合计** | **57** |

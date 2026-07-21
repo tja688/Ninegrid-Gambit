@@ -51,15 +51,19 @@
 ### Content.Editor
 
 - `CardFrameStyleXlsxIO.cs`
-- `ContentVisualCardPreview.cs`
 - `ContentVisualEditorSession.cs`
-- `ContentVisualEditorWindow.cs`
+- `ContentVisualEditorWindow.cs`（内嵌 `CardFacePreviewHost` 高保真预览）
 - `ContentVisualLubanMenu.cs`
 - `ContentVisualSpriteCatalogMigrationMenu.cs`
 - `ContentVisualSpriteKeyCodec.cs`
-- `ContentVisualXlsxIO.cs`
+- `ContentVisualXlsxIO.cs`（含 description patch）
 - `TableNineLubanDataExporter.cs`
 - `Ui/ContentVisualWarmConsoleUi.cs`
+
+### Cards/Editor（预览相关）
+
+- `CardFacePreviewRequest.cs` / `CardFacePreviewBuilder.cs` / `CardFacePreviewHost.cs`
+- `CardFaceFinalPreviewWindow.cs`（调试薄壳；权威在 Content Visual Editor）
 
 ### DevTest/Editor
 

@@ -3,6 +3,7 @@
     "rootNamespace": "NineGrid.Cards.Tests",
     "references": [
         "NineGrid.Cards",
+        "NineGrid.Cards.Editor",
         "NineGrid.Content",
         "NineGrid.Core",
         "NineGrid.Flow",

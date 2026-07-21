@@ -1,18 +1,15 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
-using NineGrid.Cards.Convergence;
-using NineGrid.Cards.Slots;
 using NineGrid.Content;
 using NineGrid.Core.Content;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace NineGrid.Cards.Editor
 {
     /// <summary>
-    /// 编辑器权威预览：底盘 + L4 卡面终态全显示（收纳槽仍渲染）。
-    /// 假投影默认取 ContentCatalog DefId，可选手填覆盖直暴露槽。
+    /// 薄壳调试窗：共享 <see cref="CardFacePreviewBuilder"/>。
+    /// 内容装配权威预览在 TableNine/Content/Content Visual Editor。
     /// </summary>
     public sealed class CardFaceFinalPreviewWindow : EditorWindow
     {
@@ -24,9 +21,9 @@ namespace NineGrid.Cards.Editor
         private Sprite _overrideBackShirt;
         private Sprite _overrideBackLogo;
 
-        private GameObject _previewRoot;
+        private CardFacePreviewBuilder.BuildResult _build;
         private Vector2 _scroll;
-        private string _status = "就绪";
+        private string _status = "就绪（调试薄壳；权威预览见 Content Visual Editor）";
         private readonly List<string> _warnings = new List<string>();
 
         [MenuItem("NineGrid/Cards/Face Final Preview (Chassis + L4)")]
@@ -46,6 +43,10 @@ namespace NineGrid.Cards.Editor
         private void OnGUI()
         {
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
+
+            EditorGUILayout.HelpBox(
+                "调试薄壳：与 Content Visual Editor 共用 CardFacePreviewBuilder（ApplyPresentation）。内容配图请用 TableNine/Content/Content Visual Editor。",
+                MessageType.None);
 
             EditorGUILayout.LabelField("假投影来源", EditorStyles.boldLabel);
             _defId = EditorGUILayout.TextField(
@@ -85,11 +86,11 @@ namespace NineGrid.Cards.Editor
                 EditorGUILayout.HelpBox(string.Join("\n", _warnings), MessageType.Warning);
             }
 
-            if (_previewRoot != null)
+            if (_build?.Root != null)
             {
                 EditorGUILayout.Space(6f);
-                EditorGUILayout.LabelField("预览根", _previewRoot.name);
-                EditorGUILayout.ObjectField("Scene 实例", _previewRoot, typeof(GameObject), true);
+                EditorGUILayout.LabelField("预览根", _build.Root.name);
+                EditorGUILayout.ObjectField("Scene 实例", _build.Root, typeof(GameObject), true);
             }
 
             EditorGUILayout.EndScrollView();
@@ -100,316 +101,98 @@ namespace NineGrid.Cards.Editor
             DestroyPreview();
             _warnings.Clear();
 
-            var chassisPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardChassisPaths.ChassisPrefab);
-            if (chassisPrefab == null)
+            if (!TryBuildRequest(out var request, out var note))
             {
-                _status = "找不到底盘：" + CardChassisPaths.ChassisPrefab;
+                _status = note;
                 return;
             }
 
-            if (!TryResolveDefId(_defId, out var presentationKind, out _, out var catalogNote))
+            if (!CardFacePreviewBuilder.TryBuild(request, out _build, out var error))
             {
-                _status = catalogNote;
+                _status = error;
                 return;
             }
 
-            var kind = presentationKind;
-            var facePrefab = LoadFacePrefab(kind);
-            if (facePrefab == null)
-            {
-                _status = "Kind=" + kind + " 无对应卡面模板（或 DefId 无法映射）。";
-                return;
-            }
-
-            _previewRoot = (GameObject)PrefabUtility.InstantiatePrefab(chassisPrefab);
-            _previewRoot.name = "CardFaceFinalPreview";
-            _previewRoot.hideFlags = HideFlags.DontSave;
-
-            var tower = _previewRoot.GetComponent<CardTransformTower>();
-            if (tower == null)
-            {
-                tower = _previewRoot.AddComponent<CardTransformTower>();
-            }
-
-            tower.EnsureTower();
-            var pivot = tower.FacePivot;
-            if (pivot == null)
-            {
-                _status = "底盘缺少 FacePivot。";
-                DestroyPreview();
-                return;
-            }
-
-            var face = (GameObject)PrefabUtility.InstantiatePrefab(facePrefab, pivot);
-            face.name = facePrefab.name;
-            StripFaceSortingGroup(face);
-
-            var templateDefaults = CardFaceSlotNodeMap.CaptureTemplateDefaults(face.transform);
-            var contentOverrides = ResolveContentOverrides();
-            var resolved = new Dictionary<string, Sprite>();
-            foreach (var code in new[]
-                     {
-                         CardFaceSlotCodes.MainIcon,
-                         CardFaceSlotCodes.FaceBackground,
-                         CardFaceSlotCodes.BackBorder,
-                         CardFaceSlotCodes.BackShirt,
-                         CardFaceSlotCodes.BackLogo
-                     })
-            {
-                var sprite = CardFaceSlotResolver.ResolveIcon(code, contentOverrides, templateDefaults);
-                if (sprite != null)
-                {
-                    resolved[code] = sprite;
-                }
-            }
-
-            CardFaceSlotNodeMap.ApplyResolvedSprites(face.transform, resolved);
-            CollectSortingWarnings(_previewRoot.transform);
-
-            Selection.activeGameObject = _previewRoot;
+            _build.Root.hideFlags = HideFlags.DontSave;
+            _warnings.AddRange(_build.SortingWarnings);
+            Selection.activeGameObject = _build.Root;
             SceneView.lastActiveSceneView?.FrameSelected();
-            _status = "已预览 DefId=" + _defId + " Kind=" + kind + "（底盘 + L4 终态）。";
+            _status = "已预览 DefId=" + _defId + " Kind=" + request.Kind + "（Builder + ApplyPresentation）。";
         }
 
-        private Dictionary<string, Sprite> ResolveContentOverrides()
+        private bool TryBuildRequest(out CardFacePreviewRequest request, out string error)
         {
-            if (_useManualOverride)
+            request = null;
+            if (!CardFacePreviewBuilder.TryResolveDefId(_defId, out var presentationKind, out var contentKind, out error))
             {
-                return CardFaceSlotResolver.BuildContentOverrides(
-                    _overrideMainIcon,
-                    _overrideFaceBackground,
-                    _overrideBackBorder,
-                    _overrideBackShirt,
-                    _overrideBackLogo);
-            }
-
-            if (!TryResolveDefId(_defId, out _, out var contentKind, out _) ||
-                !TryLoadSpriteCatalogs(out var catalogs))
-            {
-                return CardFaceSlotResolver.BuildContentOverrides(null, null, null, null, null);
-            }
-
-            ContentVisualDirectSlotSprites slots;
-            if (catalogs.TryGetDirectSlots(contentKind, _defId, out slots))
-            {
-                return CardFaceSlotResolver.BuildContentOverrides(
-                    slots.MainIcon,
-                    slots.FaceBackground,
-                    slots.BackBorder,
-                    slots.BackShirt,
-                    slots.BackLogo);
-            }
-
-            return CardFaceSlotResolver.BuildContentOverrides(null, null, null, null, null);
-        }
-
-        /// <summary>
-        /// 假投影默认走 ContentCatalog DefId：校验条目存在，并用 Content Visual 的 Kind。
-        /// </summary>
-        private static bool TryResolveDefId(
-            string defId,
-            out CardPresentationKind presentationKind,
-            out ContentVisualKind contentKind,
-            out string error)
-        {
-            presentationKind = CardPresentationKind.Unknown;
-            contentKind = ContentVisualKind.Unknown;
-            error = null;
-
-            if (string.IsNullOrEmpty(defId))
-            {
-                error = "请填写 ContentCatalog DefId。";
                 return false;
             }
 
-            var dataDirectory = ContentVisualBootstrap.ResolveLubanDataDirectory();
-            GameContentCatalog coreCatalog = null;
-            ContentVisualCatalog visualCatalog = null;
+            request = new CardFacePreviewRequest
+            {
+                DefId = _defId,
+                Kind = presentationKind,
+                DisplayName = _defId,
+                FaceUp = true,
+            };
+
+            if (_useManualOverride)
+            {
+                request.MainIcon = _overrideMainIcon;
+                request.FaceBackground = _overrideFaceBackground;
+                request.BackBorder = _overrideBackBorder;
+                request.BackShirt = _overrideBackShirt;
+                request.BackLogo = _overrideBackLogo;
+            }
+            else
+            {
+                CardFacePreviewBuilder.ApplyCatalogDirectSlots(request, contentKind);
+            }
+
             try
             {
-                coreCatalog = TableNineLubanCatalogFactory.CreateFromDirectory(dataDirectory);
-                visualCatalog = TableNineVisualCatalogFactory.CreateFromDirectory(dataDirectory);
+                var dataDirectory = ContentVisualBootstrap.ResolveLubanDataDirectory();
+                var coreCatalog = TableNineLubanCatalogFactory.CreateFromDirectory(dataDirectory);
+                CardFacePreviewBuilder.TryFillSampleStats(request, coreCatalog);
+                if (string.IsNullOrEmpty(request.BasicDescription)
+                    && TableNineVisualCatalogFactory.CreateFromDirectory(dataDirectory) is { } visual
+                    && visual.TryGet(_defId, out var def)
+                    && def != null)
+                {
+                    request.BasicDescription = def.Description ?? string.Empty;
+                }
             }
             catch (System.Exception ex)
             {
-                error = "无法加载 ContentCatalog：" + ex.Message;
-                return false;
-            }
-
-            ContentVisualDefinition visual = null;
-            var inVisual = visualCatalog != null && visualCatalog.TryGet(defId, out visual) && visual != null;
-            if (!DefIdExistsInContentCatalog(coreCatalog, defId) && !inVisual)
-            {
-                error = "ContentCatalog / Content Visual 中无此 DefId：" + defId;
-                return false;
-            }
-
-            contentKind = inVisual ? visual.Kind : GuessContentVisualKind(defId);
-
-            presentationKind = ToPresentationKind(contentKind, defId);
-            if (presentationKind == CardPresentationKind.Unknown)
-            {
-                error = "DefId 在 ContentCatalog 中存在，但不映射到四套卡面：" + defId;
-                return false;
+                Debug.LogWarning("[CardFaceFinalPreview] 样例数值/描述填充失败：" + ex.Message);
             }
 
             return true;
         }
 
-        private static bool DefIdExistsInContentCatalog(GameContentCatalog catalog, string defId)
-        {
-            if (catalog == null)
-            {
-                return false;
-            }
-
-            return catalog.Cards.ContainsKey(defId)
-                   || catalog.Relics.ContainsKey(defId)
-                   || catalog.Skills.ContainsKey(defId);
-        }
-
-        private static CardPresentationKind ToPresentationKind(ContentVisualKind kind, string defId)
-        {
-            switch (kind)
-            {
-                case ContentVisualKind.Avatar:
-                    return CardPresentationKind.Avatar;
-                case ContentVisualKind.Monster:
-                    return CardPresentationKind.Monster;
-                case ContentVisualKind.HelpCard:
-                    return CardPresentationKind.HelpCard;
-                case ContentVisualKind.Relic:
-                    return CardPresentationKind.Relic;
-                case ContentVisualKind.Skill:
-                    return CardPresentationKind.Unknown;
-                default:
-                    return CardPresentationKindResolver.FromDefId(defId);
-            }
-        }
-
-        private static bool TryLoadSpriteCatalogs(out ContentVisualSpriteCatalogSet catalogs)
-        {
-            catalogs = ContentVisualSpriteCatalogBootstrapSO.TryLoadCatalogSet();
-            if (catalogs != null)
-            {
-                return true;
-            }
-
-            catalogs = new ContentVisualSpriteCatalogSet
-            {
-                helpCards = AssetDatabase.LoadAssetAtPath<HelpCardVisualCatalogSO>(
-                    "Assets/Arts/ContentVisual/HelpCardVisualCatalog.asset"),
-                monsters = AssetDatabase.LoadAssetAtPath<MonsterVisualCatalogSO>(
-                    "Assets/Arts/ContentVisual/MonsterVisualCatalog.asset"),
-                relics = AssetDatabase.LoadAssetAtPath<RelicVisualCatalogSO>(
-                    "Assets/Arts/ContentVisual/RelicVisualCatalog.asset"),
-                skills = AssetDatabase.LoadAssetAtPath<SkillVisualCatalogSO>(
-                    "Assets/Arts/ContentVisual/SkillVisualCatalog.asset"),
-                misc = AssetDatabase.LoadAssetAtPath<MiscVisualCatalogSO>(
-                    "Assets/Arts/ContentVisual/MiscVisualCatalog.asset"),
-                choiceOptions = AssetDatabase.LoadAssetAtPath<ChoiceOptionVisualCatalogSO>(
-                    "Assets/Arts/ContentVisual/ChoiceOptionVisualCatalog.asset")
-            };
-            return catalogs.helpCards != null || catalogs.monsters != null;
-        }
-
-        private static ContentVisualKind GuessContentVisualKind(string defId)
-        {
-            if (defId.StartsWith("monster."))
-            {
-                return ContentVisualKind.Monster;
-            }
-
-            if (defId.StartsWith("relic."))
-            {
-                return ContentVisualKind.Relic;
-            }
-
-            if (defId.StartsWith("skill."))
-            {
-                return ContentVisualKind.Skill;
-            }
-
-            if (defId.StartsWith("avatar."))
-            {
-                return ContentVisualKind.Avatar;
-            }
-
-            return ContentVisualKind.HelpCard;
-        }
-
-        private static GameObject LoadFacePrefab(CardPresentationKind kind)
-        {
-            string path;
-            switch (kind)
-            {
-                case CardPresentationKind.Avatar:
-                    path = CardChassisPaths.AvatarFacePrefab;
-                    break;
-                case CardPresentationKind.Monster:
-                    path = CardChassisPaths.MonsterFacePrefab;
-                    break;
-                case CardPresentationKind.HelpCard:
-                case CardPresentationKind.Item:
-                case CardPresentationKind.PlayerCard:
-                    path = CardChassisPaths.ItemFacePrefab;
-                    break;
-                case CardPresentationKind.Relic:
-                    path = CardChassisPaths.RelicFacePrefab;
-                    break;
-                default:
-                    return null;
-            }
-
-            return AssetDatabase.LoadAssetAtPath<GameObject>(path);
-        }
-
         private void ValidateSortingOrders()
         {
             _warnings.Clear();
-            if (_previewRoot == null)
+            if (_build?.Root == null)
             {
                 RebuildPreview();
             }
 
-            if (_previewRoot == null)
+            if (_build?.Root == null)
             {
                 return;
             }
 
-            CollectSortingWarnings(_previewRoot.transform);
+            CardFacePreviewBuilder.CollectSortingWarnings(_build.Root.transform, _warnings);
             _status = _warnings.Count == 0
                 ? "通层 sortingOrder 无重复。"
                 : "发现 " + _warnings.Count + " 处通层 sortingOrder 重复（见下方告警）。";
         }
 
-        private void CollectSortingWarnings(Transform root)
-        {
-            var hits = CardFaceSortingOrderValidator.FindDuplicates(root);
-            for (var i = 0; i < hits.Count; i++)
-            {
-                var line = hits[i].ToString();
-                _warnings.Add(line);
-                Debug.LogWarning("[CardFaceFinalPreview] 通层 sortingOrder 重复：" + line, root);
-            }
-        }
-
-        private static void StripFaceSortingGroup(GameObject face)
-        {
-            var group = face.GetComponent<SortingGroup>();
-            if (group != null)
-            {
-                Object.DestroyImmediate(group);
-            }
-        }
-
         private void DestroyPreview()
         {
-            if (_previewRoot != null)
-            {
-                Object.DestroyImmediate(_previewRoot);
-                _previewRoot = null;
-            }
+            CardFacePreviewBuilder.DestroyBuild(_build);
+            _build = null;
         }
     }
 }

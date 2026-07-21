@@ -32,18 +32,27 @@ namespace NineGrid.Content.Editor
         public Sprite BackBorder { get; set; }
         public Sprite BackShirt { get; set; }
         public Sprite BackLogo { get; set; }
+        public string SavedDescription { get; set; } = string.Empty;
+        public string DraftDescription { get; set; } = string.Empty;
         public bool IsChecked { get; set; }
 
         public string ContentId => Source?.ContentId ?? string.Empty;
         public string ContentKind => Source?.ContentKind ?? string.Empty;
-        public string Description => Source?.Description ?? string.Empty;
 
-        public bool IsDirty =>
+        /// <summary>会话草稿描述（可含未保存的 [SlotCode]）。</summary>
+        public string Description => DraftDescription ?? string.Empty;
+
+        public bool IsDescriptionDirty =>
+            !string.Equals(DraftDescription ?? string.Empty, SavedDescription ?? string.Empty, StringComparison.Ordinal);
+
+        public bool IsSpriteDirty =>
             Icon != SavedIcon ||
             Face != SavedFace ||
             BackBorder != SavedBackBorder ||
             BackShirt != SavedBackShirt ||
             BackLogo != SavedBackLogo;
+
+        public bool IsDirty => IsSpriteDirty || IsDescriptionDirty;
 
         public bool HasIcon => Icon != null;
         public bool HasFace => Face != null;
@@ -60,6 +69,17 @@ namespace NineGrid.Content.Editor
             };
         }
 
+        public ContentVisualXlsxRow ToDescriptionPatchRow()
+        {
+            return new ContentVisualXlsxRow
+            {
+                ContentId = ContentId,
+                ContentKind = ContentKind,
+                Description = DraftDescription ?? string.Empty,
+                SheetRowIndex = Source?.SheetRowIndex ?? -1
+            };
+        }
+
         public void Revert()
         {
             Icon = SavedIcon;
@@ -67,6 +87,7 @@ namespace NineGrid.Content.Editor
             BackBorder = SavedBackBorder;
             BackShirt = SavedBackShirt;
             BackLogo = SavedBackLogo;
+            DraftDescription = SavedDescription ?? string.Empty;
         }
 
         public void MarkSaved()
@@ -76,6 +97,20 @@ namespace NineGrid.Content.Editor
             SavedBackBorder = BackBorder;
             SavedBackShirt = BackShirt;
             SavedBackLogo = BackLogo;
+            SavedDescription = DraftDescription ?? string.Empty;
+            if (Source != null)
+            {
+                Source.Description = SavedDescription;
+            }
+        }
+
+        public void MarkDescriptionSaved()
+        {
+            SavedDescription = DraftDescription ?? string.Empty;
+            if (Source != null)
+            {
+                Source.Description = SavedDescription;
+            }
         }
     }
 
@@ -201,7 +236,9 @@ namespace NineGrid.Content.Editor
                     Face = slots.FaceBackground,
                     BackBorder = slots.BackBorder,
                     BackShirt = slots.BackShirt,
-                    BackLogo = slots.BackLogo
+                    BackLogo = slots.BackLogo,
+                    DraftDescription = source.Description ?? string.Empty,
+                    SavedDescription = source.Description ?? string.Empty
                 };
                 state.MarkSaved();
                 rows.Add(state);
@@ -348,23 +385,29 @@ namespace NineGrid.Content.Editor
         public bool TrySave(out string error)
         {
             error = null;
-            if (!ContentVisualXlsxIO.CanWrite(FrameStyleXlsxPath, out error))
-            {
-                return false;
-            }
-
-            var dirtyRows = rows.Where(row => row.IsDirty).ToList();
+            var dirtySpriteRows = rows.Where(row => row.IsSpriteDirty).ToList();
+            var dirtyDescriptionRows = rows.Where(row => row.IsDescriptionDirty).ToList();
             var dirtyFrameRows = frameStyleRows.Where(row => row.IsDirty).Select(row => row.ToPatchRow()).ToList();
-            if (dirtyRows.Count == 0 && dirtyFrameRows.Count == 0)
+            if (dirtySpriteRows.Count == 0 && dirtyDescriptionRows.Count == 0 && dirtyFrameRows.Count == 0)
             {
                 return true;
             }
 
+            if (dirtyDescriptionRows.Count > 0 && !ContentVisualXlsxIO.CanWrite(XlsxPath, out error))
+            {
+                return false;
+            }
+
+            if (dirtyFrameRows.Count > 0 && !ContentVisualXlsxIO.CanWrite(FrameStyleXlsxPath, out error))
+            {
+                return false;
+            }
+
             try
             {
-                for (var i = 0; i < dirtyRows.Count; i++)
+                for (var i = 0; i < dirtySpriteRows.Count; i++)
                 {
-                    var row = dirtyRows[i];
+                    var row = dirtySpriteRows[i];
                     ContentVisualKind kind;
                     if (!Enum.TryParse(row.ContentKind, true, out kind))
                     {
@@ -379,12 +422,32 @@ namespace NineGrid.Content.Editor
 
                     catalog.SetDirectSlots(row.ContentId, row.ToDirectSlots());
                     EditorUtility.SetDirty(catalog);
-                    row.MarkSaved();
                 }
 
-                if (dirtyRows.Count > 0)
+                if (dirtySpriteRows.Count > 0)
                 {
                     AssetDatabase.SaveAssets();
+                    for (var i = 0; i < dirtySpriteRows.Count; i++)
+                    {
+                        // 描述可能仍脏：只落盘图槽
+                        var row = dirtySpriteRows[i];
+                        row.SavedIcon = row.Icon;
+                        row.SavedFace = row.Face;
+                        row.SavedBackBorder = row.BackBorder;
+                        row.SavedBackShirt = row.BackShirt;
+                        row.SavedBackLogo = row.BackLogo;
+                    }
+                }
+
+                if (dirtyDescriptionRows.Count > 0)
+                {
+                    ContentVisualXlsxIO.PatchDescriptions(
+                        XlsxPath,
+                        dirtyDescriptionRows.ConvertAll(row => row.ToDescriptionPatchRow()));
+                    for (var i = 0; i < dirtyDescriptionRows.Count; i++)
+                    {
+                        dirtyDescriptionRows[i].MarkDescriptionSaved();
+                    }
                 }
 
                 if (dirtyFrameRows.Count > 0)

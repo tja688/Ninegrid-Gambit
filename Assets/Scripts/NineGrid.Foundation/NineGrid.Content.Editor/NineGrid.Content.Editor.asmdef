@@ -4,6 +4,8 @@
     "references": [
         "NineGrid.Core",
         "NineGrid.Content",
+        "NineGrid.Cards",
+        "NineGrid.Cards.Editor",
         "Luban.Runtime"
     ],
     "includePlatforms": [

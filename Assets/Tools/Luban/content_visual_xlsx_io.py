@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read content_visual.xlsx for Unity ContentVisualEditor (text-only columns)."""
+"""Read / patch content_visual.xlsx for Unity ContentVisualEditor (text-only columns)."""
 
 from __future__ import annotations
 
@@ -85,10 +85,49 @@ def strip_visual_key_columns(path: Path) -> dict:
     return {"removed_columns": removed}
 
 
+def patch_descriptions(path: Path, patches: list[dict]) -> None:
+    """Patch description cells by sheet_row_index (preferred) or content_id."""
+    wb = load_workbook(path)
+    ws = wb[SHEET_NAME] if SHEET_NAME in wb.sheetnames else wb.active
+    row_by_id: dict[str, int] = {}
+    for row_index, row in enumerate(ws.iter_rows(values_only=True)):
+        marker = _cell_str(row[COL_MARKER] if len(row) > COL_MARKER else "")
+        if marker.startswith("##"):
+            continue
+        content_id = _cell_str(row[COL_CONTENT_ID] if len(row) > COL_CONTENT_ID else "")
+        if content_id:
+            row_by_id[content_id] = row_index
+
+    for patch in patches:
+        content_id = patch.get("content_id", "")
+        if not content_id:
+            continue
+        sheet_row_index = patch.get("sheet_row_index", -1)
+        if sheet_row_index is None:
+            sheet_row_index = -1
+        sheet_row_index = int(sheet_row_index)
+        if sheet_row_index < 0:
+            sheet_row_index = row_by_id.get(content_id, -1)
+        if sheet_row_index < 0:
+            continue
+        excel_row = sheet_row_index + 1
+        description = patch.get("description", "")
+        if description is None:
+            description = ""
+        ws.cell(row=excel_row, column=COL_DESCRIPTION + 1, value=str(description))
+
+    wb.save(path)
+    wb.close()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=["read", "headers", "strip_visual_keys"])
+    parser.add_argument(
+        "mode",
+        choices=["read", "headers", "strip_visual_keys", "patch_descriptions"],
+    )
     parser.add_argument("--path", required=True)
+    parser.add_argument("--patches", default="")
     args = parser.parse_args()
     path = Path(args.path)
     if not path.exists():
@@ -107,6 +146,12 @@ def main() -> int:
     if args.mode == "strip_visual_keys":
         result = strip_visual_key_columns(path)
         print(json.dumps(result, ensure_ascii=False))
+        return 0
+
+    if args.mode == "patch_descriptions":
+        patches = json.loads(args.patches) if args.patches else []
+        patch_descriptions(path, patches)
+        print(json.dumps({"patched": len(patches)}, ensure_ascii=False))
         return 0
 
     return 1
