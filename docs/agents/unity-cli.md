@@ -6,7 +6,8 @@
 
 1. 本机已安装 `unity` CLI（`unity --version` 可用）。
 2. 项目已装 `com.unity.pipeline`（可用 `unity pipeline install --project-path <本仓库>`）。
-3. **Unity Editor 已打开本工程**，且 `unity pipeline list` 显示 Pipeline 可达。
+3. **Unity Editor 已打开本工程**，且须带 **`-automated`**（Hub 双击不够）。启动见 `.cursor/skills/unity-automated-launch/`（通用 skill，可移植）。
+4. `unity pipeline list` 显示 Pipeline 可达。
 
 ## 首选调用
 

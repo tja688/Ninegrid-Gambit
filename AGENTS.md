@@ -20,6 +20,7 @@
 ## 工具与工作流
 
 - **Unity CLI（首选）**：与 Editor 协作一律用 `unity` CLI + `com.unity.pipeline`（`unity command …`），**不要依赖 Unity MCP**。改场景/组件走 Pipeline 命令，**禁止**手改 `.unity`；改脚本后 `unity command recompile`（或等自动编译）并用 `unity command console` 读 Console。详见 `docs/agents/unity-cli.md`。
+- **Unity `-automated` 启动**：Agent 开/重开 Editor 用 `.cursor/skills/unity-automated-launch/`（直启 + `-automated`，避免外部改 `.unity` 弹窗卡死 Pipeline；可整夹移植到其他工程）。
 - **DevTest 小键盘测试**：见项目 skill `.cursor/skills/table-nine-devtest-keys/`（接入、置顶、优先级以 `TestKeyStack` SO 为准）。
 - **战斗 / 流程 / 表现日志分析**：Play 结束导出至 `Assets/Notes/Logs/`；分析见 `.cursor/skills/table-nine-battlelog-analysis/`。
 
@@ -42,4 +43,8 @@ Single-context: root `CONTEXT.md` + `docs/adr/`. See `docs/agents/domain.md`.
 ### Unity CLI
 
 Prefer `unity command` over MCP for Editor automation. See `docs/agents/unity-cli.md`.
+
+### Unity `-automated` launch
+
+Start/restart Editor with `-automated` via `.cursor/skills/unity-automated-launch/` (portable; copy the folder to other repos).
 

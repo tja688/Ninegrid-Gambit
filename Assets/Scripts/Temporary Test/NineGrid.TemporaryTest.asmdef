@@ -2,7 +2,8 @@
     "name": "NineGrid.TemporaryTest",
     "rootNamespace": "NineGrid.TemporaryTest",
     "references": [
-        "NineGrid.Flow"
+        "NineGrid.Flow",
+        "Unity.Pipeline"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
