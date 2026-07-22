@@ -318,21 +318,10 @@ namespace NineGrid.Cards
         /// </summary>
         public static Func<CancellationToken, UniTask> FlushPendingShuffleIntoPresentation;
 
-        /// <summary>场地拾取：ApplyPickupItem(groundSlot) → 摘要。</summary>
-        public static Func<int, PickupItemPresentationResult> ApplyPickupItem;
-
-        /// <summary>用牌/帮助卡：提交导演意图（忙时缓冲）；返回是否接纳。</summary>
-        public static Func<int, int[], string, bool> TrySubmitUseItemIntent;
-
         /// <summary>
         /// 表演导演主线在跑。已迁流程以此为输入互斥真相；Cards 侧 IsBusy 聚合读取，不引用 Flow。
         /// </summary>
         public static bool DirectorMainlineBusy;
-
-        /// <summary>
-        /// 旧同步用牌出口（已迁导演后不再注册）。保留字段以免外部编译断裂。
-        /// </summary>
-        public static Func<int, int[], string, UseItemPresentationResult> ApplyUseItem;
 
         /// <summary>清场胜利 / 玩家战败 → Notice + 回主菜单。</summary>
         public static Action<bool> NotifyBattleEnded;
@@ -401,61 +390,6 @@ namespace NineGrid.Cards
             }
 
             return FlushPendingShuffleIntoPresentation(cancellationToken);
-        }
-
-        public static PickupItemPresentationResult RequestPickupItem(int groundSlot)
-        {
-            if (ApplyPickupItem == null)
-            {
-                Debug.LogWarning("[CombatHitSink] ApplyPickupItem 未注册。");
-                return default;
-            }
-
-            return ApplyPickupItem(groundSlot);
-        }
-
-        public static bool RequestUseItemIntent(
-            int itemUid,
-            int[] selectedCardUids,
-            string selectedOption = null)
-        {
-            if (TrySubmitUseItemIntent == null)
-            {
-                Debug.LogWarning("[CombatHitSink] TrySubmitUseItemIntent 未注册。");
-                return false;
-            }
-
-            return TrySubmitUseItemIntent(itemUid, selectedCardUids, selectedOption);
-        }
-
-        public static UseItemPresentationResult RequestUseItem(
-            int itemUid,
-            int[] selectedCardUids,
-            string selectedOption = null)
-        {
-            // #6：用牌已迁导演；旧同步 ApplyUseItem 出口拆除。
-            if (TrySubmitUseItemIntent == null)
-            {
-                Debug.LogWarning("[CombatHitSink] TrySubmitUseItemIntent 未注册。");
-                return default;
-            }
-
-            var accepted = TrySubmitUseItemIntent(itemUid, selectedCardUids, selectedOption);
-            return new UseItemPresentationResult { Accepted = accepted };
-        }
-
-        public static UseItemPresentationResult RequestUseItem(
-            int itemUid,
-            int? targetCardUid,
-            string selectedOption = null)
-        {
-            int[] selected = null;
-            if (targetCardUid.HasValue && targetCardUid.Value > 0)
-            {
-                selected = new[] { targetCardUid.Value };
-            }
-
-            return RequestUseItem(itemUid, selected, selectedOption);
         }
 
         public static void RequestBattleEnded(bool victory)

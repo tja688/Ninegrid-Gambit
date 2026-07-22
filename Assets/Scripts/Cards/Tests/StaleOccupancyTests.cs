@@ -24,7 +24,7 @@ namespace NineGrid.Cards.Tests
         {
             DestroyAllSingletonsInScene();
             ResetPresentationSingletons();
-            CardZoneOwnershipSink.Reset();
+            CardZoneOwnershipHook.Reset();
 
             var cardGo = new GameObject("CardManagerTest");
             var deckGo = new GameObject("DeckManagerTest");
@@ -44,7 +44,7 @@ namespace NineGrid.Cards.Tests
         [TearDown]
         public void TearDown()
         {
-            CardZoneOwnershipSink.Reset();
+            CardZoneOwnershipHook.Reset();
             DestroyManagerObject(_fieldManager);
             DestroyManagerObject(_deckManager);
             DestroyManagerObject(_cardManager);

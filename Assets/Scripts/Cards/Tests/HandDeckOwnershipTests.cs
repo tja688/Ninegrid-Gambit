@@ -22,7 +22,7 @@ namespace NineGrid.Cards.Tests
         {
             DestroyAllSingletonsInScene();
             ResetPresentationSingletons();
-            CardZoneOwnershipSink.Reset();
+            CardZoneOwnershipHook.Reset();
 
             var cardGo = new GameObject("CardManagerTest");
             var deckGo = new GameObject("DeckManagerTest");
@@ -40,7 +40,7 @@ namespace NineGrid.Cards.Tests
         [TearDown]
         public void TearDown()
         {
-            CardZoneOwnershipSink.Reset();
+            CardZoneOwnershipHook.Reset();
             DestroyManagerObject(_deckManager);
             DestroyManagerObject(_cardManager);
 
@@ -66,10 +66,10 @@ namespace NineGrid.Cards.Tests
         }
 
         [Test]
-        public void LaunchReturnFieldCardToDeck_RejectsCoreItemSlotsViaSink()
+        public void LaunchReturnFieldCardToDeck_RejectsCoreItemSlotsViaHook()
         {
             var card = SpawnGroundCard(TestUid);
-            CardZoneOwnershipSink.IsCoreItemSlots = uid => uid == TestUid;
+            CardZoneOwnershipHook.IsCoreItemSlots = uid => uid == TestUid;
 
             var launched = _deckManager.LaunchReturnFieldCardToDeck(card, 0);
 

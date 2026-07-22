@@ -156,6 +156,8 @@ namespace NineGrid.Cards
             ResolveSceneReferences();
             CacheAnchors();
             InitializeLayoutOrigin();
+            UseItemInputHook.RequestWire(this);
+            PickupInputHook.RequestWire(this);
         }
 
         private void OnDestroy()
@@ -480,7 +482,16 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            var pickup = CombatHitSink.RequestPickupItem(groundSlot);
+            if (PickupInputHook.TryApplyPickup == null)
+            {
+                CombatHitSink.EndPresentationLock("Pickup-unwired");
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "PickupHookUnwired", false);
+                FlowFieldTraceSink.ClearBatchTag?.Invoke();
+                Debug.LogWarning("[CardHandManager] PickupInputHook.TryApplyPickup 未装配。");
+                return false;
+            }
+
+            var pickup = PickupInputHook.TryApplyPickup(groundSlot);
             if (!pickup.Accepted)
             {
                 CombatHitSink.EndPresentationLock("Pickup-rejected");
@@ -598,26 +609,13 @@ namespace NineGrid.Cards
                         NodeClearedOrRewardPhase = pickup.NodeClearedOrRewardPhase,
                     });
 
-                // Drain 内已 Sync；若仍有占格冲突残留，再强制对齐，避免手牌/场视图半残。
+                // #10 / V3：占格权威在 Core；冲突只记诊断，禁止 force-sync heal。
                 var field = GroundFieldManagerSingleton.Instance;
                 if (field != null && field.ConsumeOccupancyConflictFlag())
                 {
-                    CombatHitSink.RequestSyncBoardFromCore();
-                    if (card != null && ContainsUid(card.Uid))
-                    {
-                        try
-                        {
-                            FlowFieldTraceSink.HandLifecycle?.Invoke(
-                                card.Uid,
-                                "reaffirm-hand-after-conflict",
-                                true,
-                                card.DisplayMode.ToString());
-                        }
-                        catch
-                        {
-                            // ignore
-                        }
-                    }
+                    Debug.LogWarning(
+                        "[CardHandManager] Pickup 后占格冲突残留（已禁止 force-sync）uid="
+                        + (card != null ? card.Uid : 0));
                 }
 
                 if (card != null && ContainsUid(card.Uid))

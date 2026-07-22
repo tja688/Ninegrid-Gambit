@@ -1514,7 +1514,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (CardZoneOwnershipSink.CoreSaysItemSlots(card.Uid))
+            if (CardZoneOwnershipHook.CoreSaysItemSlots(card.Uid))
             {
                 Debug.LogWarning(
                     $"[CardDeckManager] {caller} 拒绝：uid={card.Uid} Core=ItemSlots。");

@@ -3,10 +3,9 @@ using System;
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 表现层容器归属与 Core 区对照（由 Flow 在战斗启动时接线）。
-    /// Cards 层不直接依赖 Core，避免 asmdef 环依赖。
+    /// 区域归属只读桥：Cards 不引 Core/Presentation，由表现层接线到 Query。
     /// </summary>
-    public static class CardZoneOwnershipSink
+    public static class CardZoneOwnershipHook
     {
         /// <summary>uid 在 Core ItemSlots 时为 true；禁止将该视图插入卡组。</summary>
         public static Func<int, bool> IsCoreItemSlots;

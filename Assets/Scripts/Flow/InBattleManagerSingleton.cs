@@ -1482,46 +1482,13 @@ namespace NineGrid.Flow
             CombatHitSink.SyncBoardFromCore = RequestSyncBoardFromCore;
             CombatHitSink.DrainPostKillBoard = DrainPostKillBoardAsync;
             CombatHitSink.FlushPendingShuffleIntoPresentation = FlushPendingShuffleIntoPresentationAsync;
-            CombatHitSink.ApplyPickupItem = ApplyPickupItemFromCore;
-            CombatHitSink.TrySubmitUseItemIntent = TrySubmitUseItemIntentFromCards;
             CombatHitSink.NotifyBattleEnded = OnBattleEndedFromCombat;
             CombatHitSink.NotifyNodeSettlementReady = OnNodeSettlementFromCombat;
             FieldTraceHelper.RegisterSinkHandlers();
             PerfTraceRecorder.RegisterSinkHandlers();
             RegistryTraceRecorder.RegisterSinkHandlers();
-            RegisterCardZoneOwnershipSink();
             RegisterHandBridge();
             RegisterPresentationIntentHandlers();
-        }
-
-        private void RegisterCardZoneOwnershipSink()
-        {
-            CardZoneOwnershipSink.IsCoreItemSlots = IsCoreItemSlotsZone;
-            CardZoneOwnershipSink.IsCoreDrawPile = IsCoreDrawPileZone;
-        }
-
-        private static bool IsCoreItemSlotsZone(int uid)
-        {
-            if (uid <= 0)
-            {
-                return false;
-            }
-
-            var arch = NineGridArchitecture.Current;
-            return arch.GetModel<CardRegistry>().TryGet(uid, out var card)
-                   && card.Zone.Value == ZoneId.ItemSlots;
-        }
-
-        private static bool IsCoreDrawPileZone(int uid)
-        {
-            if (uid <= 0)
-            {
-                return false;
-            }
-
-            var arch = NineGridArchitecture.Current;
-            return arch.GetModel<CardRegistry>().TryGet(uid, out var card)
-                   && card.Zone.Value == ZoneId.DrawPile;
         }
 
         private void UnregisterCombatHitSink()
@@ -1529,7 +1496,6 @@ namespace NineGrid.Flow
             FieldTraceHelper.UnregisterSinkHandlers();
             PerfTraceRecorder.UnregisterSinkHandlers();
             RegistryTraceRecorder.UnregisterSinkHandlers();
-            CardZoneOwnershipSink.Reset();
             if (CombatHitSink.ApplyCombatHit == ApplyCombatHitFromCore)
             {
                 CombatHitSink.ApplyCombatHit = null;
@@ -1568,17 +1534,7 @@ namespace NineGrid.Flow
             CombatHitSink.ForceEndPresentationLock("UnregisterCombatHitSink");
             _drainInFlight = false;
 
-            if (CombatHitSink.ApplyPickupItem == ApplyPickupItemFromCore)
-            {
-                CombatHitSink.ApplyPickupItem = null;
-            }
-
             UnregisterPresentationIntentHandlers();
-
-            if (CombatHitSink.TrySubmitUseItemIntent == TrySubmitUseItemIntentFromCards)
-            {
-                CombatHitSink.TrySubmitUseItemIntent = null;
-            }
 
             CombatHitSink.DirectorMainlineBusy = false;
             TeardownPresentationDirector(IntentClearReason.LayerChange);
@@ -1607,6 +1563,8 @@ namespace NineGrid.Flow
 
             hand.DragApplyValidator -= ValidateHandDragApplyAsync;
             hand.DragApplyValidator += ValidateHandDragApplyAsync;
+            UseItemInputHook.RequestWire(hand);
+            PickupInputHook.RequestWire(hand);
 
             BoardCardSelectModeController.SelectionCompletedAsync -= OnBoardSelectionCompletedAsync;
             BoardCardSelectModeController.SelectionCompletedAsync += OnBoardSelectionCompletedAsync;
@@ -2622,49 +2580,15 @@ namespace NineGrid.Flow
             return view;
         }
 
-        private static PickupItemPresentationResult ApplyPickupItemFromCore(int groundSlot)
+        /// <summary>
+        /// Pickup Command 写 Core 后的旁路演出（金币/触发/洗牌/HUD）；不承担规则写。
+        /// </summary>
+        public static void PresentPickupPostApplyEffects(int startIndex, int pickedUid)
         {
-            var arch = NineGridArchitecture.Current;
-            var pipeline = arch.GetSystem<IActionPipelineSystem>();
-            var startIndex = pipeline.EventLog.Entries.Count;
-            var result = arch.GetSystem<IPhaseSystem>().ApplyPickupItem(SlotId.Board(groundSlot));
-            var summary = new PickupItemPresentationResult { Accepted = result.Accepted };
-            if (!result.Accepted)
-            {
-                Debug.LogWarning($"[InBattleManager] PickupItem 被拒: {result.Reason}");
-                summary.Moves = Array.Empty<PostKillCardMove>();
-                summary.Deals = Array.Empty<PostKillCardDeal>();
-                summary.RemovedUids = Array.Empty<int>();
-                return summary;
-            }
-
-            FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out var pickedUid, out var removedUids, out var steps);
-            summary.CardUid = pickedUid;
-            summary.Steps = steps;
-            summary.Moves = moves;
-            summary.Deals = deals;
-            summary.RemovedUids = removedUids;
-
-            if (pickedUid > 0
-                && arch.GetModel<CardRegistry>().TryGet(pickedUid, out var card))
-            {
-                summary.AcquiredToHand = card.Zone.Value == ZoneId.ItemSlots;
-                summary.RemovedWithoutHand = card.Zone.Value == ZoneId.Removed;
-            }
-
-            var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
-            summary.NodeClearedOrRewardPhase =
-                phase == GamePhase.RewardItemChoice
-                || phase == GamePhase.ClearCheck
-                || phase == GamePhase.NodeCompleted
-                || arch.GetSystem<IDeckSystem>().IsNodeCleared();
-
-            // 金币卡等即时改 Coins：先按事件带出生点开演，再静默刷 HUD（避免二次开演/跳变）。
             PresentGoldGainsFromEventLog(startIndex, ResolveCardWorldPosition(pickedUid));
             PresentEffectTriggersFromEventLog(startIndex);
             Instance?.PresentShuffleIntoDeckFromEventLog(startIndex);
             PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
-            return summary;
         }
 
         private static void FillBoardDeltaFromEventLog(
@@ -3706,7 +3630,18 @@ namespace NineGrid.Flow
                 selectedUids = new[] { targetUid };
             }
 
-            if (!TrySubmitUseItemIntentFromCards(card.Uid, selectedUids, selectedOption))
+            if (UseItemInputHook.TrySubmitUseItem == null)
+            {
+                Debug.LogWarning("[InBattleManager] UseItemInputHook.TrySubmitUseItem 未装配。");
+                if (IsStatBoostCard(card.DefId))
+                {
+                    RestoreHandCardAfterChoiceCancel(card);
+                }
+
+                return false;
+            }
+
+            if (!UseItemInputHook.TrySubmitUseItem(card.Uid, selectedUids, selectedOption))
             {
                 if (IsStatBoostCard(card.DefId))
                 {
@@ -3785,7 +3720,14 @@ namespace NineGrid.Flow
                 return;
             }
 
-            if (!TrySubmitUseItemIntentFromCards(itemUid, selectedUids, null))
+            if (UseItemInputHook.TrySubmitUseItem == null)
+            {
+                Debug.LogWarning("[InBattleManager] UseItemInputHook.TrySubmitUseItem 未装配。");
+                await RestoreBoardSelectItemToHandAsync(itemUid, defId, "use-intent-unwired");
+                return;
+            }
+
+            if (!UseItemInputHook.TrySubmitUseItem(itemUid, selectedUids, null))
             {
                 await RestoreBoardSelectItemToHandAsync(itemUid, defId, "use-intent-rejected");
                 return;
@@ -5400,45 +5342,6 @@ namespace NineGrid.Flow
             {
                 _recoveringRewardUi = false;
             }
-        }
-
-        private static bool TrySubmitUseItemIntentFromCards(
-            int itemUid,
-            int[] selectedCardUids,
-            string selectedOption)
-        {
-            var instance = Instance;
-            if (instance == null)
-            {
-                Debug.LogWarning("[InBattleManager] TrySubmitUseItemIntent：无局内管理器。");
-                return false;
-            }
-
-            if (itemUid <= 0)
-            {
-                return false;
-            }
-
-            string legalityReject;
-            if (!BoardIntentLegality.TryExplainUseItem(
-                    NineGridArchitecture.Current,
-                    itemUid,
-                    selectedCardUids,
-                    selectedOption,
-                    out legalityReject))
-            {
-                Debug.LogWarning(
-                    $"[InBattleManager] UseItem 被 Core 合法性拒绝 itemUid={itemUid}: {legalityReject}");
-                return false;
-            }
-
-            instance.EnsurePresentationDirector();
-            bool preview;
-            var accepted = instance._presentationDirector.TrySubmitIntent(
-                new InputIntent(InputIntentKinds.UseItem, itemUid, selectedCardUids, selectedOption),
-                out preview);
-            CombatHitSink.DirectorMainlineBusy = instance._presentationDirector.IsMainlineBusy;
-            return accepted;
         }
 
         private void OnExploreBatchProjected(
