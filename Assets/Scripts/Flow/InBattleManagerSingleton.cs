@@ -1480,7 +1480,7 @@ namespace NineGrid.Flow
             CombatHitSink.SyncCardPresentation = SyncManagedCardPresentation;
             CombatHitSink.SpawnDamageNumber = SpawnDamageNumberAt;
             CombatHitSink.SyncBoardFromCore = RequestSyncBoardFromCore;
-            CombatHitSink.DrainPostKillBoard = DrainPostKillBoardAsync;
+            BoardPresentDrainHook.RequestWire(DrainPostKillBoardAsync);
             CombatHitSink.FlushPendingShuffleIntoPresentation = FlushPendingShuffleIntoPresentationAsync;
             CombatHitSink.NotifyBattleEnded = OnBattleEndedFromCombat;
             CombatHitSink.NotifyNodeSettlementReady = OnNodeSettlementFromCombat;
@@ -1521,9 +1521,9 @@ namespace NineGrid.Flow
                 CombatHitSink.SyncBoardFromCore = null;
             }
 
-            if (CombatHitSink.DrainPostKillBoard == DrainPostKillBoardAsync)
+            if (BoardPresentDrainHook.Drain == DrainPostKillBoardAsync)
             {
-                CombatHitSink.DrainPostKillBoard = null;
+                BoardPresentDrainHook.Drain = null;
             }
 
             if (CombatHitSink.FlushPendingShuffleIntoPresentation == FlushPendingShuffleIntoPresentationAsync)
@@ -2144,23 +2144,8 @@ namespace NineGrid.Flow
                             await DrainLegacyBoardDeltaAsync(result, ct);
                         }
 
-                        // #7：融合补牌不再挂在 PresentFusion onFusionStarted。
-                        // 导演主线忙时由 FusionRefillLockstep 在 Rotate Present 后解算；
-                        // 非导演 drain（反击等）在步骤播完后补一次离散 Fill。
-                        if (_completedFusionActionIds.Count > 0 && !CombatHitSink.DirectorMainlineBusy)
-                        {
-                            await DrainFusionRefillAfterPresentAsync(fusionState, ct);
-                        }
-
-                        // #9：导演主线忙时由 DrainRefillLockstep 离散批次解算；
-                        // 旧 in-flight FillEmptySlots 仅非导演 drain（反击等）可达。
-                        if (result.RemovedUids != null && result.RemovedUids.Length > 0
-                            && _completedFusionActionIds.Count == 0
-                            && !CombatHitSink.DirectorMainlineBusy)
-                        {
-                            await DrainPostRemoveRefillAsync(ct);
-                        }
-
+                        // #7 / #9 / V4：融合与 drain 补牌只经导演 Scheduler 离散批次；
+                        // 禁止 Present 内 presentAdapter in-flight FillEmptySlots。
                         SpawnDamagePopups(result.DamagePopups, fallbackVictim: null, fallbackAmount: 0);
                         UpdateAvatarDebugText();
 
@@ -3147,50 +3132,6 @@ namespace NineGrid.Flow
             }
         }
 
-        /// <summary>
-        /// 技能移除退场后：Core FillEmptySlots + 播补牌（非导演路径）。
-        /// 导演路径请走 <see cref="DrainRefillLockstep"/>。
-        /// </summary>
-        private async UniTask DrainPostRemoveRefillAsync(CancellationToken ct)
-        {
-            var arch = NineGridArchitecture.Current;
-            if (!DrainRefillLockstep.ShouldRefill(arch))
-            {
-                return;
-            }
-
-            var pipeline = arch.GetSystem<IActionPipelineSystem>();
-            var startIndex = pipeline.EventLog.Entries.Count;
-            PerfTraceRecorder.Record(
-                "DrainRefill",
-                -1,
-                "RefillBatchBegin",
-                new Dictionary<string, string> { ["path"] = "presentAdapter" });
-            arch.GetSystem<IBoardSystem>().FillEmptySlots();
-            FillBoardDeltaFromEventLog(
-                pipeline,
-                startIndex,
-                out _,
-                out var refillDeals,
-                out _,
-                out _,
-                out var refillSteps);
-            PresentEffectTriggersFromEventLog(startIndex);
-            PresentShuffleIntoDeckFromEventLog(startIndex);
-            await FlushPendingShuffleIntoPresentationAsync(ct);
-            if (refillDeals != null && refillDeals.Length > 0)
-            {
-                // 传入 steps 使多张 Deal 能前瞻后续 Rotate（若有），避免 Aim=birth。
-                await DrainDealsAsync(refillDeals, ct, refillSteps, 0);
-            }
-
-            PerfTraceRecorder.Record(
-                "DrainRefill",
-                -1,
-                "RefillBatchEnd",
-                new Dictionary<string, string> { ["path"] = "presentAdapter" });
-        }
-
         private sealed class FusionDrainState
         {
             public Dictionary<int, SkeletonFusionPresentationEntry> ParticipantIndex = new();
@@ -3473,97 +3414,6 @@ namespace NineGrid.Flow
             {
                 CoreCardPresentationMapper.ApplyToManagedCard(resultCard);
             }
-        }
-
-        /// <summary>
-        /// 合体表演结束后的离散补牌（非导演路径）。排除刚洗入的合体结果 uid。
-        /// 导演路径请走 FusionRefillLockstep。
-        /// </summary>
-        private async UniTask DrainFusionRefillAfterPresentAsync(
-            FusionDrainState fusionState,
-            CancellationToken ct)
-        {
-            var arch = NineGridArchitecture.Current;
-            var phaseSystem = arch.GetSystem<IPhaseSystem>();
-            if (phaseSystem.CurrentPhase != GamePhase.InteractionLoop)
-            {
-                return;
-            }
-
-            var exclude = new List<int>(fusionState != null ? fusionState.ResultUids.Count : 0);
-            if (fusionState != null)
-            {
-                foreach (var uid in fusionState.ResultUids)
-                {
-                    if (uid > 0)
-                    {
-                        exclude.Add(uid);
-                    }
-                }
-            }
-
-            if (exclude.Count == 0)
-            {
-                return;
-            }
-
-            var deck = arch.GetModel<DeckModel>();
-            var board = arch.GetModel<BoardModel>();
-            if (deck == null
-                || deck.DrawPileUids == null
-                || deck.DrawPileUids.Count <= 0
-                || !FusionRefillPlanner.HasRefillCandidateExcluding(deck, exclude)
-                || !FusionRefillPlanner.HasEmptyBoardSlot(board))
-            {
-                RecordSkeletonFusionTrace("RefillSkipped", -1);
-                return;
-            }
-
-            var originalOrder = new List<int>(deck.DrawPileUids);
-            var refillOrder = FusionRefillPlanner.BuildRefillDrawOrder(originalOrder, exclude);
-            if (!FusionRefillPlanner.HasRefillCandidateExcludingOrder(refillOrder, exclude))
-            {
-                RecordSkeletonFusionTrace("RefillSkippedNoCandidate", -1);
-                return;
-            }
-
-            RecordSkeletonFusionTrace(
-                "RefillBatchBegin",
-                -1,
-                new Dictionary<string, string>
-                {
-                    ["excludeCount"] = exclude.Count.ToString(),
-                    ["path"] = "presentAdapter",
-                });
-
-            deck.ReorderDrawPile(refillOrder);
-            try
-            {
-                var pipeline = arch.GetSystem<IActionPipelineSystem>();
-                var startIndex = pipeline.EventLog.Entries.Count;
-                arch.GetSystem<IBoardSystem>().FillEmptySlots();
-                FillBoardDeltaFromEventLog(
-                    pipeline,
-                    startIndex,
-                    out _,
-                    out var refillDeals,
-                    out _,
-                    out _,
-                    out var refillSteps);
-                PresentEffectTriggersFromEventLog(startIndex);
-                var filtered = FusionRefillPlanner.FilterDealsExcluding(refillDeals, exclude);
-                if (filtered.Length > 0)
-                {
-                    await DrainDealsAsync(filtered, ct, refillSteps, 0);
-                }
-            }
-            finally
-            {
-                var restored = FusionRefillPlanner.RestoreRemainingOrder(originalOrder, deck.DrawPileUids);
-                deck.ReorderDrawPile(restored);
-            }
-
-            RecordSkeletonFusionTrace("RefillBatchEnd", -1);
         }
 
         private async UniTask<bool> ValidateHandDragApplyAsync(ManagedCard card, int? targetGroundSlot)
@@ -4059,7 +3909,7 @@ namespace NineGrid.Flow
                     || (useResult.PostKillBoard.Deals != null && useResult.PostKillBoard.Deals.Length > 0)
                     || (useResult.PostKillBoard.RemovedUids != null && useResult.PostKillBoard.RemovedUids.Length > 0)))
             {
-                await DrainPostKillBoardAsync(useResult.PostKillBoard, ct);
+                await BoardPresentDrainHook.RequestDrain(useResult.PostKillBoard, ct);
             }
             // #10：无盘面 delta 时不再 soft Sync；几何由导演 Present 维护。
 
@@ -4255,7 +4105,7 @@ namespace NineGrid.Flow
                         || (boardDelta.Deals != null && boardDelta.Deals.Length > 0)
                         || (boardDelta.RemovedUids != null && boardDelta.RemovedUids.Length > 0))
                     {
-                        await DrainPostKillBoardAsync(boardDelta, EnsurePresentationToken());
+                        await BoardPresentDrainHook.RequestDrain(boardDelta, EnsurePresentationToken());
                     }
                     else
                     {
@@ -5106,11 +4956,12 @@ namespace NineGrid.Flow
 
             var arch = NineGridArchitecture.Current;
             _coreCommandDispatcher = new CoreCommandDispatcher(arch);
+            BoardPresentDrainHook.RequestWire(DrainPostKillBoardAsync);
             _explorePresentChannel = new QueuedBoardPresentChannel(
-                DrainPostKillBoardAsync,
+                BoardPresentDrainHook.RequestDrain,
                 EnsurePresentationToken);
             _attackBoardPresentChannel = new QueuedBoardPresentChannel(
-                DrainPostKillBoardAsync,
+                BoardPresentDrainHook.RequestDrain,
                 EnsurePresentationToken);
             _attackHitPresentChannel = new CombatAttackPresentChannel(
                 PlayDirectorAttackHitPresentAsync,
@@ -5119,7 +4970,7 @@ namespace NineGrid.Flow
                 PlayDirectorCounterPresentAsync,
                 EnsurePresentationToken);
             _useItemBoardPresentChannel = new QueuedBoardPresentChannel(
-                DrainPostKillBoardAsync,
+                BoardPresentDrainHook.RequestDrain,
                 EnsurePresentationToken);
             _useItemPresentChannel = new UseItemPresentChannel(
                 PlayDirectorUseItemPresentAsync,

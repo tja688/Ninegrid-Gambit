@@ -10,11 +10,12 @@ using QFramework;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// #7 融合伴随补牌：Rotate Present 之后按需追加 ResolveFusionRefill → Present。
+    /// 融合伴随补牌锁步：Rotate Present 之后按需追加 ResolveFusionRefill → Present。
+    /// V4：由静态 Lockstep 收为实例调度器，Resolve 亦可经 Presentation Command 统一入口。
     /// </summary>
-    public static class FusionRefillLockstep
+    public sealed class FusionRefillScheduler
     {
-        public static void AppendAfterRotatePresent(
+        public void AppendAfterRotatePresent(
             BattleTimeline timeline,
             Func<bool> hadFusion,
             Action<BattleTimeline> enqueueFusionRefill)
@@ -37,7 +38,7 @@ namespace NineGrid.Flow.Presentation
             timeline.Enqueue(new AttackPostHitBranchStep(timeline, hadFusion, enqueueFusionRefill));
         }
 
-        public static void EnqueueRefillBatches(
+        public void EnqueueRefillBatches(
             BattleTimeline timeline,
             IArchitecture architecture,
             CoreCommandDispatcher dispatcher,
@@ -81,13 +82,23 @@ namespace NineGrid.Flow.Presentation
             timeline.Enqueue(new PresentStep(refillGate, boardPresentChannel));
         }
 
-        public static CoreCommandDispatchResult ResolveAndProject(
+        public CoreCommandDispatchResult ResolveAndProject(
             IArchitecture architecture,
             CoreCommandDispatcher dispatcher,
             int boardSlot,
             IReadOnlyList<int> excludeResultUids,
             Action<int, int, PostKillBoardPresentationResult> onBoardBatchProjected)
         {
+            if (architecture == null)
+            {
+                throw new ArgumentNullException("architecture");
+            }
+
+            if (dispatcher == null)
+            {
+                throw new ArgumentNullException("dispatcher");
+            }
+
             var phase = architecture.GetSystem<IPhaseSystem>();
             if (phase.CurrentPhase != GamePhase.InteractionLoop)
             {

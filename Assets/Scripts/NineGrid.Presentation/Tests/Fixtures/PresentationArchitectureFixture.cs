@@ -50,6 +50,21 @@ namespace NineGrid.Presentation.Tests.Fixtures
             return new PresentationArchitectureFixture(architecture, startedGame: true);
         }
 
+        /// <summary>
+        /// 注入默认 ContentCatalog 后再开战（融合技能等依赖编目）。
+        /// </summary>
+        public static PresentationArchitectureFixture CreateStartedGameWithCatalog(ulong seed = 42UL)
+        {
+            NineGridArchitecture.ResetForTests();
+            OccupancyForceSyncGuard.ResetForTests();
+            var architecture = NineGridArchitecture.Current;
+            architecture.GetUtility<NineGrid.Core.Utilities.IConfigUtility>().Set(
+                NineGrid.Core.Content.ContentConfigKeys.DefaultCatalog,
+                NineGrid.Content.TableNineContentCatalog.CreateDefault());
+            InitialGameFactory.Create(architecture, new InitialGameOptions { Seed = seed });
+            return new PresentationArchitectureFixture(architecture, startedGame: true);
+        }
+
         public void PlaceSoleBoardCardAt(SlotId targetSlot)
         {
             CardInstance sole = null;

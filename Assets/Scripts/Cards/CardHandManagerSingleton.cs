@@ -553,7 +553,7 @@ namespace NineGrid.Cards
         {
             try
             {
-                await CombatHitSink.RequestDrainPostKillBoard(postKill);
+                await BoardPresentDrainHook.RequestDrain(postKill);
             }
             catch (OperationCanceledException)
             {
@@ -598,7 +598,7 @@ namespace NineGrid.Cards
                 }
 
                 FlowFieldTraceSink.PickupSuccess?.Invoke(card.Uid, ResolveHandSlotForTrace(card));
-                await CombatHitSink.RequestDrainPostKillBoard(
+                await BoardPresentDrainHook.RequestDrain(
                     new PostKillBoardPresentationResult
                     {
                         Accepted = true,

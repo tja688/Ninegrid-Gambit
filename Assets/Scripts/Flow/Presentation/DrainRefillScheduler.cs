@@ -10,11 +10,12 @@ using QFramework;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// #9 drain 退场补牌：非击杀移除 Present 之后按需追加 ResolveDrainRefill → Present。
+    /// drain 退场补牌锁步：非击杀移除 Present 之后按需追加 ResolveDrainRefill → Present。
+    /// V4：由静态 Lockstep 收为实例调度器，Resolve 亦可经 Presentation Command 统一入口。
     /// </summary>
-    public static class DrainRefillLockstep
+    public sealed class DrainRefillScheduler
     {
-        public static void AppendAfterPresentIfNeeded(
+        public void AppendAfterPresentIfNeeded(
             BattleTimeline timeline,
             Func<bool> needsDrainRefill,
             Action<BattleTimeline> enqueueDrainRefill)
@@ -37,7 +38,7 @@ namespace NineGrid.Flow.Presentation
             timeline.Enqueue(new AttackPostHitBranchStep(timeline, needsDrainRefill, enqueueDrainRefill));
         }
 
-        public static void EnqueueRefillBatches(
+        public void EnqueueRefillBatches(
             BattleTimeline timeline,
             IArchitecture architecture,
             CoreCommandDispatcher dispatcher,
@@ -78,7 +79,7 @@ namespace NineGrid.Flow.Presentation
             timeline.Enqueue(new PresentStep(refillGate, boardPresentChannel));
         }
 
-        public static bool ShouldRefill(IArchitecture architecture)
+        public bool ShouldRefill(IArchitecture architecture)
         {
             if (architecture == null)
             {
@@ -100,12 +101,22 @@ namespace NineGrid.Flow.Presentation
             return FusionRefillPlanner.HasEmptyBoardSlot(architecture.GetModel<BoardModel>());
         }
 
-        public static CoreCommandDispatchResult ResolveAndProject(
+        public CoreCommandDispatchResult ResolveAndProject(
             IArchitecture architecture,
             CoreCommandDispatcher dispatcher,
             int boardSlot,
             Action<int, int, PostKillBoardPresentationResult> onBoardBatchProjected)
         {
+            if (architecture == null)
+            {
+                throw new ArgumentNullException("architecture");
+            }
+
+            if (dispatcher == null)
+            {
+                throw new ArgumentNullException("dispatcher");
+            }
+
             if (!ShouldRefill(architecture))
             {
                 return dispatcher.Send(new ResolveDrainRefillCommand(skipFill: true));

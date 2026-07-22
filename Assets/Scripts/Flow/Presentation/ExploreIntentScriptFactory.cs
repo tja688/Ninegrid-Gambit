@@ -18,6 +18,7 @@ namespace NineGrid.Flow.Presentation
         private readonly CoreCommandDispatcher mDispatcher;
         private readonly IPresentChannel mPresentChannel;
         private readonly Action<int, int, PostKillBoardPresentationResult> mOnBatchProjected;
+        private readonly FusionRefillScheduler mFusionRefill;
         private bool mLastRotateHadFusion;
         private readonly List<int> mFusionExcludeResultUids = new List<int>(2);
 
@@ -25,7 +26,8 @@ namespace NineGrid.Flow.Presentation
             IArchitecture architecture,
             CoreCommandDispatcher dispatcher,
             IPresentChannel presentChannel,
-            Action<int, int, PostKillBoardPresentationResult> onBatchProjected = null)
+            Action<int, int, PostKillBoardPresentationResult> onBatchProjected = null,
+            FusionRefillScheduler fusionRefill = null)
         {
             if (architecture == null)
             {
@@ -46,6 +48,7 @@ namespace NineGrid.Flow.Presentation
             mDispatcher = dispatcher;
             mPresentChannel = presentChannel;
             mOnBatchProjected = onBatchProjected;
+            mFusionRefill = fusionRefill ?? new FusionRefillScheduler();
         }
 
         public void BuildScript(InputIntent intent, BattleTimeline timeline)
@@ -82,10 +85,10 @@ namespace NineGrid.Flow.Presentation
             timeline.Enqueue(new PresentStep(fillGate, mPresentChannel));
             timeline.Enqueue(new ResolveBatchStep(rotateGate));
             timeline.Enqueue(new PresentStep(rotateGate, mPresentChannel));
-            FusionRefillLockstep.AppendAfterRotatePresent(
+            mFusionRefill.AppendAfterRotatePresent(
                 timeline,
                 () => mLastRotateHadFusion,
-                t => FusionRefillLockstep.EnqueueRefillBatches(
+                t => mFusionRefill.EnqueueRefillBatches(
                     t,
                     mArchitecture,
                     mDispatcher,

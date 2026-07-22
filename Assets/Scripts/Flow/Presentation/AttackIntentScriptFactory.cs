@@ -24,6 +24,7 @@ namespace NineGrid.Flow.Presentation
         private readonly Action<int, int, PostKillBoardPresentationResult> mOnBoardBatchProjected;
         /// <summary>startIndex, attackerBoardSlot, attackerUid, projection</summary>
         private readonly Action<int, int, int, PostKillBoardPresentationResult> mOnCounterBatchProjected;
+        private readonly FusionRefillScheduler mFusionRefill;
         private bool mLastHitKilledTarget;
         private bool mLastRotateHadFusion;
         private int mLastResolvedCombatUid;
@@ -37,7 +38,8 @@ namespace NineGrid.Flow.Presentation
             IPresentChannel counterPresentChannel = null,
             Action<int, int, int, PostKillBoardPresentationResult> onHitBatchProjected = null,
             Action<int, int, PostKillBoardPresentationResult> onBoardBatchProjected = null,
-            Action<int, int, int, PostKillBoardPresentationResult> onCounterBatchProjected = null)
+            Action<int, int, int, PostKillBoardPresentationResult> onCounterBatchProjected = null,
+            FusionRefillScheduler fusionRefill = null)
         {
             if (architecture == null)
             {
@@ -67,6 +69,7 @@ namespace NineGrid.Flow.Presentation
             mOnHitBatchProjected = onHitBatchProjected;
             mOnBoardBatchProjected = onBoardBatchProjected;
             mOnCounterBatchProjected = onCounterBatchProjected;
+            mFusionRefill = fusionRefill ?? new FusionRefillScheduler();
         }
 
         public void BuildScript(InputIntent intent, BattleTimeline timeline)
@@ -130,10 +133,10 @@ namespace NineGrid.Flow.Presentation
             timeline.Enqueue(new PresentStep(fillGate, mBoardPresentChannel));
             timeline.Enqueue(new ResolveBatchStep(rotateGate));
             timeline.Enqueue(new PresentStep(rotateGate, mBoardPresentChannel));
-            FusionRefillLockstep.AppendAfterRotatePresent(
+            mFusionRefill.AppendAfterRotatePresent(
                 timeline,
                 () => mLastRotateHadFusion,
-                t => FusionRefillLockstep.EnqueueRefillBatches(
+                t => mFusionRefill.EnqueueRefillBatches(
                     t,
                     mArchitecture,
                     mDispatcher,

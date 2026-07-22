@@ -310,9 +310,6 @@ namespace NineGrid.Cards
         /// </summary>
         public static Action SyncBoardFromCore;
 
-        /// <summary>缓释击杀后盘面摘要：hop 已有卡 + 发新牌 + 软对齐。</summary>
-        public static Func<PostKillBoardPresentationResult, CancellationToken, UniTask> DrainPostKillBoard;
-
         /// <summary>
         /// 导演 Hit Present 末尾 Flush 洗回 sink（散架爆开与击杀同拍；不嵌套盘面 Drain）。
         /// </summary>
@@ -366,19 +363,6 @@ namespace NineGrid.Cards
         public static void RequestSyncBoardFromCore()
         {
             SyncBoardFromCore?.Invoke();
-        }
-
-        public static UniTask RequestDrainPostKillBoard(
-            PostKillBoardPresentationResult result,
-            CancellationToken cancellationToken = default)
-        {
-            if (DrainPostKillBoard == null)
-            {
-                Debug.LogWarning("[CombatHitSink] DrainPostKillBoard 未注册。");
-                return UniTask.CompletedTask;
-            }
-
-            return DrainPostKillBoard(result, cancellationToken);
         }
 
         public static UniTask RequestFlushPendingShuffleIntoPresentation(

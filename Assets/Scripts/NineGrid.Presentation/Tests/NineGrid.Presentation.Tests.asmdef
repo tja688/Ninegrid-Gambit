@@ -8,6 +8,7 @@
         "NineGrid.Cards",
         "NineGrid.Content",
         "QFramework",
+        "UniTask",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

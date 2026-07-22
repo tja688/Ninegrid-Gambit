@@ -22,6 +22,8 @@ namespace NineGrid.Flow.Presentation
         private readonly Action<int, int, PostKillBoardPresentationResult> mOnUseBatchProjected;
         private readonly Action<int, int, PostKillBoardPresentationResult> mOnBoardBatchProjected;
         private readonly Action mOnResolvedWithoutKill;
+        private readonly FusionRefillScheduler mFusionRefill;
+        private readonly DrainRefillScheduler mDrainRefill;
         private bool mLastUseKilledTarget;
         private bool mLastUseNeedsDrainRefill;
         private bool mLastRotateHadFusion;
@@ -34,7 +36,9 @@ namespace NineGrid.Flow.Presentation
             IPresentChannel boardPresentChannel,
             Action<int, int, PostKillBoardPresentationResult> onUseBatchProjected = null,
             Action<int, int, PostKillBoardPresentationResult> onBoardBatchProjected = null,
-            Action onResolvedWithoutKill = null)
+            Action onResolvedWithoutKill = null,
+            FusionRefillScheduler fusionRefill = null,
+            DrainRefillScheduler drainRefill = null)
         {
             if (architecture == null)
             {
@@ -63,6 +67,8 @@ namespace NineGrid.Flow.Presentation
             mOnUseBatchProjected = onUseBatchProjected;
             mOnBoardBatchProjected = onBoardBatchProjected;
             mOnResolvedWithoutKill = onResolvedWithoutKill;
+            mFusionRefill = fusionRefill ?? new FusionRefillScheduler();
+            mDrainRefill = drainRefill ?? new DrainRefillScheduler();
         }
 
         public void BuildScript(InputIntent intent, BattleTimeline timeline)
@@ -108,10 +114,10 @@ namespace NineGrid.Flow.Presentation
                         mOnResolvedWithoutKill();
                     }
                 }));
-            DrainRefillLockstep.AppendAfterPresentIfNeeded(
+            mDrainRefill.AppendAfterPresentIfNeeded(
                 timeline,
                 () => mLastUseNeedsDrainRefill,
-                t => DrainRefillLockstep.EnqueueRefillBatches(
+                t => mDrainRefill.EnqueueRefillBatches(
                     t,
                     mArchitecture,
                     mDispatcher,
@@ -134,10 +140,10 @@ namespace NineGrid.Flow.Presentation
             timeline.Enqueue(new PresentStep(fillGate, mBoardPresentChannel));
             timeline.Enqueue(new ResolveBatchStep(rotateGate));
             timeline.Enqueue(new PresentStep(rotateGate, mBoardPresentChannel));
-            FusionRefillLockstep.AppendAfterRotatePresent(
+            mFusionRefill.AppendAfterRotatePresent(
                 timeline,
                 () => mLastRotateHadFusion,
-                t => FusionRefillLockstep.EnqueueRefillBatches(
+                t => mFusionRefill.EnqueueRefillBatches(
                     t,
                     mArchitecture,
                     mDispatcher,
@@ -164,7 +170,7 @@ namespace NineGrid.Flow.Presentation
 
             mLastUseKilledTarget = ContainsAnyCardKilled(pipeline, startIndex);
             // 击杀补牌走 ResolvePostKillFill；非击杀盘面空位升格为独立 DrainRefill 批次。
-            mLastUseNeedsDrainRefill = !mLastUseKilledTarget && DrainRefillLockstep.ShouldRefill(mArchitecture);
+            mLastUseNeedsDrainRefill = !mLastUseKilledTarget && mDrainRefill.ShouldRefill(mArchitecture);
             if (mOnUseBatchProjected != null)
             {
                 mOnUseBatchProjected(startIndex, boardSlot, IntentBatchProjection.Build(mArchitecture, pipeline, startIndex));

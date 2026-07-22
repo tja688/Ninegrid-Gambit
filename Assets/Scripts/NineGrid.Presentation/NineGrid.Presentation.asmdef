@@ -6,7 +6,8 @@
         "NineGrid.Content",
         "NineGrid.Cards",
         "NineGrid.Flow",
-        "QFramework"
+        "QFramework",
+        "UniTask"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

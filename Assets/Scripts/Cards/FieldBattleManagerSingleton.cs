@@ -584,7 +584,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            await CombatHitSink.RequestDrainPostKillBoard(projection, cancellationToken);
+            await BoardPresentDrainHook.RequestDrain(projection, cancellationToken);
         }
 
         private static bool IsEmptyBoardProjection(PostKillBoardPresentationResult result)
