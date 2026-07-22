@@ -146,6 +146,7 @@ namespace NineGrid.Cards
             _leaseArbiter = new LeaseArbiter(OnDisciplineBAlarm);
             _dealFlightService = new SlotDealFlightService(this, this.GetCancellationTokenOnDestroy());
             ResolveSkeletonDeckPresentation();
+            ExploreInputHook.RequestWire(this);
         }
 
         private void OnDisciplineBAlarm(string reason)
@@ -974,15 +975,15 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (CombatHitSink.TrySubmitExploreIntent == null)
+            if (ExploreInputHook.TrySubmitExplore == null)
             {
-                Debug.LogWarning("[GroundFieldManager] TrySubmitExploreIntent 未注册，空槽点击不可用。");
+                Debug.LogWarning("[GroundFieldManager] ExploreInputHook.TrySubmitExplore 未装配，空槽点击不可用。");
                 return false;
             }
 
-            Debug.Log($"[GroundFieldManager] 空槽点击 → 导演 explore 意图: slot={slot}");
+            Debug.Log($"[GroundFieldManager] 空槽点击 → ExploreInputController: slot={slot}");
             EmptySlotClicked?.Invoke(slot);
-            return CombatHitSink.RequestExploreIntent(slot);
+            return ExploreInputHook.TrySubmitExplore(slot);
         }
 
         /// <summary>

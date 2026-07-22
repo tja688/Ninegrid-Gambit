@@ -1,19 +1,14 @@
 using NineGrid.Flow.Presentation;
-using QFramework;
 
 namespace NineGrid.Presentation.Systems
 {
-    public interface IPresentationRuntimeSystem : ISystem
+    /// <summary>
+    /// CompositionRoot 用的完整运行时：在意图窄接口上增加 Start/Stop 工厂生命周期。
+    /// </summary>
+    public interface IPresentationRuntimeSystem : IPresentationIntentRuntime
     {
-        bool IsStarted { get; }
-        IReadonlyBindableProperty<bool> MainlineBusy { get; }
         void Start(IIntentScriptFactory scriptFactory, IUiPickPreviewSink uiPickPreview = null,
             ITimelineDiagnosticSink timelineDiagnostics = null);
         void Stop(IntentClearReason reason);
-        bool TrySubmitIntent(InputIntent intent, out bool uiPickPreview);
-        void Tick(float deltaTime);
-        bool TryBeginExternalHold(string reason = null);
-        void EndExternalHold(string reason = null);
-        void ForceEndExternalHold(string reason = null);
     }
 }

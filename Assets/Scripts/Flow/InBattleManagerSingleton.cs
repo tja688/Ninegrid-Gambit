@@ -56,6 +56,9 @@ namespace NineGrid.Flow
         private readonly Dictionary<int, HashSet<int>> _pendingFusionRemoves = new();
         private readonly HashSet<int> _completedFusionActionIds = new();
         private PresentationDirector _presentationDirector;
+        private DirectorIntentRuntime _directorIntentRuntime;
+        private IUnRegister _exploreRejectedUnRegister;
+        private IUnRegister _ensureDirectorUnRegister;
         private bool _recoveringRewardUi;
         private QueuedBoardPresentChannel _explorePresentChannel;
         private CombatAttackPresentChannel _attackHitPresentChannel;
@@ -1482,7 +1485,6 @@ namespace NineGrid.Flow
             CombatHitSink.DrainPostKillBoard = DrainPostKillBoardAsync;
             CombatHitSink.FlushPendingShuffleIntoPresentation = FlushPendingShuffleIntoPresentationAsync;
             CombatHitSink.ApplyPickupItem = ApplyPickupItemFromCore;
-            CombatHitSink.TrySubmitExploreIntent = TrySubmitExploreIntentFromCards;
             CombatHitSink.TrySubmitAttackIntent = TrySubmitAttackIntentFromCards;
             CombatHitSink.TrySubmitUseItemIntent = TrySubmitUseItemIntentFromCards;
             CombatHitSink.NotifyBattleEnded = OnBattleEndedFromCombat;
@@ -1492,6 +1494,7 @@ namespace NineGrid.Flow
             RegistryTraceRecorder.RegisterSinkHandlers();
             RegisterCardZoneOwnershipSink();
             RegisterHandBridge();
+            RegisterExplorePresentationHandlers();
         }
 
         private void RegisterCardZoneOwnershipSink()
@@ -1583,10 +1586,7 @@ namespace NineGrid.Flow
                 CombatHitSink.ApplyPickupItem = null;
             }
 
-            if (CombatHitSink.TrySubmitExploreIntent == TrySubmitExploreIntentFromCards)
-            {
-                CombatHitSink.TrySubmitExploreIntent = null;
-            }
+            UnregisterExplorePresentationHandlers();
 
             if (CombatHitSink.TrySubmitAttackIntent == TrySubmitAttackIntentFromCards)
             {
@@ -5262,6 +5262,7 @@ namespace NineGrid.Flow
                 new RoutingIntentScriptFactory(exploreFactory, attackFactory, useItemFactory),
                 uiPickPreview: null,
                 timelineDiagnostics: DirectorTrace.TimelineSink);
+            BindDirectorIntentRuntime(_presentationDirector);
             CombatHitSink.BeginDirectorExternalHold = reason =>
             {
                 // 导演尚未装配时允许仅靠 PresentationLocked 防重入，避免 Drain 整段被跳过。
@@ -5290,6 +5291,7 @@ namespace NineGrid.Flow
             CombatHitSink.EndDirectorExternalHold = null;
             CombatHitSink.ForceEndDirectorExternalHold = null;
             TriggerPulseHub.ResetToNull();
+            UnbindDirectorIntentRuntime();
             _presentationDirector = null;
             _explorePresentChannel = null;
             _attackHitPresentChannel = null;
@@ -5304,40 +5306,70 @@ namespace NineGrid.Flow
             CombatHitSink.DirectorMainlineBusy = false;
         }
 
-        private static bool TrySubmitExploreIntentFromCards(int groundSlot)
+        private void RegisterExplorePresentationHandlers()
         {
-            var instance = Instance;
-            if (instance == null)
+            UnregisterExplorePresentationHandlers();
+            var architecture = NineGridArchitecture.Current;
+            if (architecture == null)
             {
-                Debug.LogWarning("[InBattleManager] TrySubmitExploreIntent：无局内管理器。");
-                return false;
+                return;
             }
 
-            // #10 idle 合法性：Flow 对 BoardModel 裁决，勿入队非法意图。
-            string legalityReject;
-            if (!BoardIntentLegality.TryExplainExplore(
-                    NineGridArchitecture.Current,
-                    groundSlot,
-                    out legalityReject))
-            {
-                if (HasOrphanMidBattleRewardPending())
-                {
-                    TryRecoverOrphanMidBattleRewardUi("explore:" + legalityReject);
-                }
+            _exploreRejectedUnRegister = architecture.RegisterEvent<ExploreIntentRejectedEvent>(
+                OnExploreIntentRejected);
+            _ensureDirectorUnRegister = architecture.RegisterEvent<EnsurePresentationDirectorRequested>(
+                _ => EnsurePresentationDirector());
+        }
 
-                Debug.LogWarning(
-                    $"[InBattleManager] Explore 被 Core 合法性拒绝 slot={groundSlot}: {legalityReject}");
-                return false;
+        private void UnregisterExplorePresentationHandlers()
+        {
+            if (_exploreRejectedUnRegister != null)
+            {
+                _exploreRejectedUnRegister.UnRegister();
+                _exploreRejectedUnRegister = null;
             }
 
-            instance.EnsurePresentationDirector();
-            bool preview;
-            var accepted = instance._presentationDirector.TrySubmitIntent(
-                new InputIntent(InputIntentKinds.Explore, groundSlot),
-                out preview);
-            // 同帧同步 busy，避免等 Update 前出现门禁空窗。
-            CombatHitSink.DirectorMainlineBusy = instance._presentationDirector.IsMainlineBusy;
-            return accepted;
+            if (_ensureDirectorUnRegister != null)
+            {
+                _ensureDirectorUnRegister.UnRegister();
+                _ensureDirectorUnRegister = null;
+            }
+        }
+
+        private void OnExploreIntentRejected(ExploreIntentRejectedEvent e)
+        {
+            if (HasOrphanMidBattleRewardPending())
+            {
+                TryRecoverOrphanMidBattleRewardUi("explore:" + (e.Reason ?? string.Empty));
+            }
+        }
+
+        private void BindDirectorIntentRuntime(PresentationDirector director)
+        {
+            var architecture = NineGridArchitecture.Current;
+            if (architecture == null || director == null)
+            {
+                return;
+            }
+
+            var runtime = architecture.GetSystem<IPresentationIntentRuntime>() as DirectorIntentRuntime;
+            if (runtime == null)
+            {
+                runtime = new DirectorIntentRuntime();
+                architecture.RegisterSystem<IPresentationIntentRuntime>(runtime);
+            }
+
+            runtime.Bind(director);
+            _directorIntentRuntime = runtime;
+        }
+
+        private void UnbindDirectorIntentRuntime()
+        {
+            if (_directorIntentRuntime != null)
+            {
+                _directorIntentRuntime.Unbind();
+                _directorIntentRuntime = null;
+            }
         }
 
         private static bool HasOrphanMidBattleRewardPending()

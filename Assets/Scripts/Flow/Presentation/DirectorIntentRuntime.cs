@@ -1,41 +1,43 @@
 using System;
 using NineGrid.Cards;
-using NineGrid.Flow.Presentation;
 using QFramework;
 
-namespace NineGrid.Presentation.Systems
+namespace NineGrid.Flow.Presentation
 {
-    public sealed class PresentationRuntimeSystem : AbstractSystem, IPresentationRuntimeSystem
+    /// <summary>
+    /// 将已有 <see cref="PresentationDirector"/> 暴露为 <see cref="IPresentationIntentRuntime"/>，
+    /// 供生产路径（InBattle 装配导演）与 QF Command 共用同一实例。
+    /// </summary>
+    public sealed class DirectorIntentRuntime : AbstractSystem, IPresentationIntentRuntime
     {
         private readonly BindableProperty<bool> mMainlineBusy = new BindableProperty<bool>(false);
         private PresentationDirector mDirector;
 
-        public bool IsStarted { get { return mDirector != null; } }
-        public IReadonlyBindableProperty<bool> MainlineBusy { get { return mMainlineBusy; } }
-
-        public void Start(IIntentScriptFactory scriptFactory, IUiPickPreviewSink uiPickPreview = null,
-            ITimelineDiagnosticSink timelineDiagnostics = null)
+        public bool IsStarted
         {
-            if (scriptFactory == null) throw new ArgumentNullException("scriptFactory");
-            if (mDirector != null) throw new InvalidOperationException("Presentation runtime is already started.");
-            mDirector = new PresentationDirector(scriptFactory, uiPickPreview, timelineDiagnostics);
+            get { return mDirector != null; }
+        }
+
+        public IReadonlyBindableProperty<bool> MainlineBusy
+        {
+            get { return mMainlineBusy; }
+        }
+
+        public void Bind(PresentationDirector director)
+        {
+            mDirector = director;
             PublishBusy();
         }
 
-        public void Stop(IntentClearReason reason)
+        public void Unbind()
         {
-            if (mDirector != null)
-            {
-                mDirector.ForceEndExternalHold(reason.ToString());
-                mDirector.HardClearIntents(reason);
-                mDirector = null;
-            }
+            mDirector = null;
             PublishBusy();
         }
 
         public bool TrySubmitIntent(InputIntent intent, out bool uiPickPreview)
         {
-            EnsureStarted();
+            EnsureBound();
             var accepted = mDirector.TrySubmitIntent(intent, out uiPickPreview);
             PublishBusy();
             return accepted;
@@ -43,14 +45,14 @@ namespace NineGrid.Presentation.Systems
 
         public void Tick(float deltaTime)
         {
-            EnsureStarted();
+            EnsureBound();
             mDirector.Tick(deltaTime);
             PublishBusy();
         }
 
         public bool TryBeginExternalHold(string reason = null)
         {
-            EnsureStarted();
+            EnsureBound();
             var accepted = mDirector.TryBeginExternalHold(reason);
             PublishBusy();
             return accepted;
@@ -58,24 +60,34 @@ namespace NineGrid.Presentation.Systems
 
         public void EndExternalHold(string reason = null)
         {
-            EnsureStarted();
+            EnsureBound();
             mDirector.EndExternalHold(reason);
             PublishBusy();
         }
 
         public void ForceEndExternalHold(string reason = null)
         {
-            EnsureStarted();
+            EnsureBound();
             mDirector.ForceEndExternalHold(reason);
             PublishBusy();
         }
 
-        protected override void OnInit() { PublishBusy(); }
-        protected override void OnDeinit() { Stop(IntentClearReason.LayerChange); }
-
-        private void EnsureStarted()
+        protected override void OnInit()
         {
-            if (mDirector == null) throw new InvalidOperationException("Presentation runtime is not started.");
+            PublishBusy();
+        }
+
+        protected override void OnDeinit()
+        {
+            Unbind();
+        }
+
+        private void EnsureBound()
+        {
+            if (mDirector == null)
+            {
+                throw new InvalidOperationException("Presentation director is not bound.");
+            }
         }
 
         private void PublishBusy()

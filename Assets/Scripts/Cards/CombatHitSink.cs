@@ -327,9 +327,6 @@ namespace NineGrid.Cards
         /// <summary>场地拾取：ApplyPickupItem(groundSlot) → 摘要。</summary>
         public static Func<int, PickupItemPresentationResult> ApplyPickupItem;
 
-        /// <summary>空槽 explore：提交导演意图（忙时缓冲）；返回是否接纳。</summary>
-        public static Func<int, bool> TrySubmitExploreIntent;
-
         /// <summary>攻击：提交导演意图（忙时缓冲）；返回是否接纳。</summary>
         public static Func<int, bool> TrySubmitAttackIntent;
 
@@ -439,17 +436,6 @@ namespace NineGrid.Cards
             }
 
             return ApplyPickupItem(groundSlot);
-        }
-
-        public static bool RequestExploreIntent(int groundSlot)
-        {
-            if (TrySubmitExploreIntent == null)
-            {
-                Debug.LogWarning("[CombatHitSink] TrySubmitExploreIntent 未注册。");
-                return false;
-            }
-
-            return TrySubmitExploreIntent(groundSlot);
         }
 
         public static bool RequestAttackIntent(int groundSlot)
