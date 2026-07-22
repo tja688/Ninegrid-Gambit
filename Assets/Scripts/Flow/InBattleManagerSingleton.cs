@@ -61,6 +61,7 @@ namespace NineGrid.Flow
         private IUnRegister _exploreRejectedUnRegister;
         private IUnRegister _attackRejectedUnRegister;
         private IUnRegister _ensureDirectorUnRegister;
+        private IUnRegister _teardownDirectorUnRegister;
         private bool _recoveringRewardUi;
         private QueuedBoardPresentChannel _explorePresentChannel;
         private CombatAttackPresentChannel _attackHitPresentChannel;
@@ -436,7 +437,15 @@ namespace NineGrid.Flow
         public void RefreshPersistentInBattleUi(bool animate = false)
         {
             ResolveManagers();
-            relicManager?.SyncFromCore();
+            EnsureRelicHudHookWired();
+            if (RelicHudHook.SyncFromCore != null)
+            {
+                RelicHudHook.RequestSync();
+            }
+            else
+            {
+                relicManager?.SyncFromCore();
+            }
             PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate);
         }
 
@@ -1325,7 +1334,16 @@ namespace NineGrid.Flow
         private void ClearPersistentInBattleHud()
         {
             ResolveManagers();
-            relicManager?.Clear();
+            EnsureRelicHudHookWired();
+            if (RelicHudHook.Clear != null)
+            {
+                RelicHudHook.RequestClear();
+            }
+            else
+            {
+                relicManager?.Clear();
+            }
+
             PlayerInfoHudPresenter.TryGetInstance()?.ClearSnapshot();
         }
 
@@ -1483,6 +1501,8 @@ namespace NineGrid.Flow
             CombatHitSink.SyncBoardFromCore = RequestSyncBoardFromCore;
             BoardPresentDrainHook.RequestWire(DrainPostKillBoardAsync);
             BoardPresentShuffleHook.RequestWire(FlushPendingShuffleIntoPresentationAsync);
+            RewardChoiceCoreHook.RequestWire();
+            RelicHudHook.RequestWire();
             CombatHitSink.NotifyBattleEnded = OnBattleEndedFromCombat;
             CombatHitSink.NotifyNodeSettlementReady = OnNodeSettlementFromCombat;
             FieldTraceHelper.RegisterSinkHandlers();
@@ -4028,7 +4048,7 @@ namespace NineGrid.Flow
                 {
                     chosenDefId = string.Empty;
                     choiceKind = "skip";
-                    result = phaseSystem.SkipHelpChoice();
+                    result = SubmitSkipHelpChoice(phaseSystem);
                     if (!result.Accepted)
                     {
                         Debug.LogWarning($"[InBattleManager] SkipHelpChoice 被拒: {result.Reason}");
@@ -4049,7 +4069,7 @@ namespace NineGrid.Flow
                         ? defIds[pick.Index]
                         : string.Empty;
                     choiceKind = "select";
-                    result = phaseSystem.SelectReward(pick.Index);
+                    result = SubmitSelectReward(phaseSystem, pick.Index);
                     if (!result.Accepted)
                     {
                         Debug.LogWarning($"[InBattleManager] SelectReward 被拒: {result.Reason}");
@@ -4143,6 +4163,44 @@ namespace NineGrid.Flow
             finally
             {
                 CombatHitSink.ChoiceOverlayActive = false;
+            }
+        }
+
+        private static CoreCommandResult SubmitSelectReward(IPhaseSystem phaseSystem, int optionIndex)
+        {
+            EnsureRewardChoiceHookWired();
+            if (RewardChoiceCoreHook.SelectReward != null)
+            {
+                return RewardChoiceCoreHook.SelectReward(optionIndex);
+            }
+
+            return phaseSystem.SelectReward(optionIndex);
+        }
+
+        private static CoreCommandResult SubmitSkipHelpChoice(IPhaseSystem phaseSystem)
+        {
+            EnsureRewardChoiceHookWired();
+            if (RewardChoiceCoreHook.SkipHelpChoice != null)
+            {
+                return RewardChoiceCoreHook.SkipHelpChoice();
+            }
+
+            return phaseSystem.SkipHelpChoice();
+        }
+
+        private static void EnsureRewardChoiceHookWired()
+        {
+            if (RewardChoiceCoreHook.SelectReward == null || RewardChoiceCoreHook.SkipHelpChoice == null)
+            {
+                RewardChoiceCoreHook.RequestWire();
+            }
+        }
+
+        private static void EnsureRelicHudHookWired()
+        {
+            if (RelicHudHook.SyncFromCore == null || RelicHudHook.Clear == null)
+            {
+                RelicHudHook.RequestWire();
             }
         }
 
@@ -5068,6 +5126,8 @@ namespace NineGrid.Flow
                 OnAttackIntentRejected);
             _ensureDirectorUnRegister = architecture.RegisterEvent<EnsurePresentationDirectorRequested>(
                 _ => EnsurePresentationDirector());
+            _teardownDirectorUnRegister = architecture.RegisterEvent<TeardownPresentationDirectorRequested>(
+                e => TeardownPresentationDirector(e.Reason));
         }
 
         private void UnregisterPresentationIntentHandlers()
@@ -5088,6 +5148,12 @@ namespace NineGrid.Flow
             {
                 _ensureDirectorUnRegister.UnRegister();
                 _ensureDirectorUnRegister = null;
+            }
+
+            if (_teardownDirectorUnRegister != null)
+            {
+                _teardownDirectorUnRegister.UnRegister();
+                _teardownDirectorUnRegister = null;
             }
         }
 

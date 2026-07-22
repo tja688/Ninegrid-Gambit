@@ -7,6 +7,7 @@ using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.Diagnostics;
+using NineGrid.Flow.Presentation;
 using QFramework;
 using TMPro;
 using UnityEngine;
@@ -754,7 +755,7 @@ namespace NineGrid.Flow
             var phaseBeforeSelect = phaseSystem.CurrentPhase.ToString();
             var pipeline = arch.GetSystem<IActionPipelineSystem>();
             var goldEventStart = pipeline.EventLog.Entries.Count;
-            var result = phaseSystem.SelectRoom(pickedIndex);
+            var result = SubmitSelectRoom(phaseSystem, pickedIndex);
             if (!result.Accepted)
             {
                 Debug.LogWarning($"[MainGameLoop] SelectRoom 被拒: {result.Reason}");
@@ -807,7 +808,7 @@ namespace NineGrid.Flow
             var phaseBeforeEnter = phaseSystem.CurrentPhase.ToString();
             var pipeline = arch.GetSystem<IActionPipelineSystem>();
             var goldEventStart = pipeline.EventLog.Entries.Count;
-            var enter = phaseSystem.EnterRoom();
+            var enter = SubmitEnterRoom(phaseSystem);
             if (!enter.Accepted)
             {
                 Debug.LogWarning($"[MainGameLoop] EnterRoom 被拒: {enter.Reason}");
@@ -1238,6 +1239,9 @@ namespace NineGrid.Flow
                 return;
             }
 
+            EnsureFlowShellHooksWired();
+            GameFlowShellHook.PublishState(ToShellState(next));
+
             try
             {
                 FlowTraceRecorder.Record(
@@ -1254,6 +1258,46 @@ namespace NineGrid.Flow
             catch (Exception ex)
             {
                 Debug.LogWarning("[MainGameLoop] FlowTrace SetState: " + ex.Message);
+            }
+        }
+
+        private static GameFlowShellState ToShellState(LoopState state)
+        {
+            return (GameFlowShellState)(int)state;
+        }
+
+        private static CoreCommandResult SubmitSelectRoom(IPhaseSystem phaseSystem, int optionIndex)
+        {
+            EnsureFlowShellHooksWired();
+            if (RoomChoiceCoreHook.SelectRoom != null)
+            {
+                return RoomChoiceCoreHook.SelectRoom(optionIndex);
+            }
+
+            return phaseSystem.SelectRoom(optionIndex);
+        }
+
+        private static CoreCommandResult SubmitEnterRoom(IPhaseSystem phaseSystem)
+        {
+            EnsureFlowShellHooksWired();
+            if (RoomChoiceCoreHook.EnterRoom != null)
+            {
+                return RoomChoiceCoreHook.EnterRoom();
+            }
+
+            return phaseSystem.EnterRoom();
+        }
+
+        private static void EnsureFlowShellHooksWired()
+        {
+            if (GameFlowShellHook.SetState == null)
+            {
+                GameFlowShellHook.RequestWire();
+            }
+
+            if (RoomChoiceCoreHook.SelectRoom == null || RoomChoiceCoreHook.EnterRoom == null)
+            {
+                RoomChoiceCoreHook.RequestWire();
             }
         }
 
@@ -1274,6 +1318,8 @@ namespace NineGrid.Flow
 
         private void EnsureBindings()
         {
+            EnsureFlowShellHooksWired();
+
             if (panelRouter == null)
             {
                 panelRouter = GetComponent<UiPanelRouter>();
