@@ -1,0 +1,46 @@
+---
+description: Subagent 模型白名单与选型策略（配合 hooks 硬拦截）
+alwaysApply: true
+---
+
+# Subagent 模型策略
+
+硬拦截：`.cursor/hooks.json` 仅允许以下模型（含 slug 别名）：
+
+| UI 名称 | slug / 用法 |
+|---|---|
+| Cursor Grok 4.5 High | `cursor-grok-4.5-high`；或自定义子代理 `grok-high` |
+| Composer 2.5 | `composer-2.5[fast=false]`；或自定义子代理 `composer-standard` |
+| Cursor Grok 4.5 High Fast | `cursor-grok-4.5-high-fast`（Task 内联） |
+| Composer 2.5 Fast | `composer-2.5-fast`（Task 内联） |
+
+## Cursor Task 内联 `model` 限制（重要）
+
+当前 Task 工具**只接受**这些 Composer/Grok slug（与模型选择器同步）：
+
+- `cursor-grok-4.5-high` ✅
+- `cursor-grok-4.5-high-fast` ✅
+- `composer-2.5-fast` ✅
+- `composer-2.5` / `composer-2.5[fast=false]` ❌ **Task 内联会被拒**
+
+因此 **Composer 2.5 非 Fast** 请走：
+
+1. 自定义子代理 `.cursor/agents/composer-standard.md`（推荐）
+2. 或父 agent 已是 Composer 2.5 非 Fast 时，Task **省略** `model` 继承父模型
+
+## 选型
+
+- **难任务**：`grok-high` 子代理，或 Task + `model: cursor-grok-4.5-high`
+- **简单任务**：`composer-standard` 子代理（非 Fast）
+- **Fast 回退**：仅当对应 non-fast 子代理失败后再用 `*-fast` Task slug
+- 两者都失败 → **停止开 subagent**，父 agent 自己完成
+
+## 调用 Task 时
+
+- 禁止 Claude / GPT / Opus / Sonnet / Auto 等非白名单模型
+- 首次尝试禁止直接用 `*-fast`（hooks 会拦）
+- 简单 Composer 任务优先 `composer-standard`，不要硬塞 `model: composer-2.5`
+
+## 与 worktree 规则并存
+
+- 禁止 `best-of-n-runner`、worktree、旁路克隆（见 `no-worktrees.mdc`）

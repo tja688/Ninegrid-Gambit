@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "hooks": {
+    "subagentStart": [
+      {
+        "type": "command",
+        "command": "node .cursor/hooks/run-hook.js",
+        "failClosed": true,
+        "timeout": 15
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "command": "node .cursor/hooks/run-hook.js",
+        "matcher": "Task",
+        "failClosed": true,
+        "timeout": 15
+      }
+    ],
+    "postToolUseFailure": [
+      {
+        "type": "command",
+        "command": "node .cursor/hooks/run-hook.js",
+        "matcher": "Task",
+        "failClosed": false,
+        "timeout": 10
+      }
+    ]
+  }
+}
