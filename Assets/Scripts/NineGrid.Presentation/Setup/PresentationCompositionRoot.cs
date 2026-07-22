@@ -148,6 +148,7 @@ namespace NineGrid.Presentation.Setup
             BattleSessionSystem.EnsureRegistered(architecture);
             ChoicePresentationSystem.EnsureRegistered(architecture);
             BoardSelectionSystem.EnsureRegistered(architecture);
+            GameFlowShellSystem.EnsureRegistered(architecture);
 
             var existing = architecture.GetSystem<IPresentationRuntimeSystem>();
             if (existing != null && existing.IsStarted)

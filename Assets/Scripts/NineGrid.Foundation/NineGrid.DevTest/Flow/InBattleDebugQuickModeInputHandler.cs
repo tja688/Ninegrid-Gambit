@@ -1,4 +1,5 @@
 using NineGrid.Flow;
+using NineGrid.DevTest.Commands;
 using UnityEngine;
 
 namespace NineGrid.DevTest.Flow
@@ -67,7 +68,7 @@ namespace NineGrid.DevTest.Flow
                 loopManager = UnityEngine.Object.FindFirstObjectByType<MainGameLoopManagerSingleton>();
             }
 
-            return loopManager != null && loopManager.CanAcceptInBattleDebugQuickMode;
+            return loopManager != null && GameFlowDevQueries.CanAcceptInBattleDebugQuickMode();
         }
 
         private void PollIdle()
@@ -128,14 +129,32 @@ namespace NineGrid.DevTest.Flow
 
         private void ApplyDigitAction(char digit)
         {
+            var arch = NineGrid.Core.NineGridArchitecture.Interface
+                       ?? NineGrid.Core.NineGridArchitecture.Current;
             switch (digit)
             {
                 case '1':
-                    loopManager.ApplyInBattleDebugQuickModeTimeScaleX1();
+                    if (arch != null)
+                    {
+                        arch.SendCommand(new ApplyInBattleTimeScaleX1Command());
+                    }
+                    else
+                    {
+                        loopManager.ApplyInBattleDebugQuickModeTimeScaleX1();
+                    }
+
                     RefreshMenuNotice();
                     break;
                 case '2':
-                    loopManager.ApplyInBattleDebugQuickModeTimeScaleX2();
+                    if (arch != null)
+                    {
+                        arch.SendCommand(new ApplyInBattleTimeScaleX2Command());
+                    }
+                    else
+                    {
+                        loopManager.ApplyInBattleDebugQuickModeTimeScaleX2();
+                    }
+
                     RefreshMenuNotice();
                     break;
             }

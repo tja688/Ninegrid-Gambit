@@ -1,14 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.Threading;
-using Cysharp.Threading.Tasks;
-using NineGrid.Cards;
 using NineGrid.Core;
-using NineGrid.Core.Content;
-using NineGrid.Core.Systems;
-using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
-using NineGrid.Presentation;
+using NineGrid.Presentation.Commands;
 using NineGrid.Presentation.Systems;
 using QFramework;
 using TMPro;
@@ -21,34 +14,18 @@ using UnityEditor;
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 主游戏流程壳状态机：主菜单 → 局内 → 通关奖励 → 房间二选一 → 房间事件 → 下一节点。
-    /// 关卡怪物牌组由 RewardSystem 按节点 DeckKind 随机（含骷髅军团）；
-    /// DevTest \ 选关可经 <see cref="TryBeginQuickTestFromPickerCode"/> 首关固定牌组。
+    /// 主流程场景 View：场景绑定 / 主菜单输入 / Notice·Panel 投影。
+    /// 流程权威在 <see cref="IGameFlowShellSystem"/>；编排在内部 Orchestrator。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class MainGameLoopManagerSingleton : MonoBehaviour
+    public sealed class MainGameLoopManagerSingleton : MonoBehaviour, IGameFlowView
     {
-        public enum LoopState
-        {
-            MainMenu,
-            BattleStub,
-            RewardChoice,
-            RoomChoice,
-            RoomEvent,
-            VictoryNotice,
-            DefeatNotice,
-        }
-
-
         [Header("Refs")]
         [Tooltip("面板路由；留空则运行时在同物体上 GetComponent / AddComponent。")]
         [SerializeField] private UiPanelRouter panelRouter;
 
-        [Tooltip("选择器管理；由 PresentationSceneRoot.BindSceneHosts 注入，也可手动拖入。")]
+        [Tooltip("选择器管理；可手动拖入，也可由同场景 SerializeField 解析。")]
         [SerializeField] private SelectorManagerSingleton selectorManager;
-
-        [Tooltip("局内管理；由 PresentationSceneRoot.BindSceneHosts 注入，也可手动拖入。")]
-        [SerializeField] private InBattleManagerSingleton inBattleManager;
 
         [Tooltip("主菜单「开始」按钮；留空则运行时查找 MainPanel/StartRun。")]
         [SerializeField] private Collider2D startRunHit;
@@ -56,7 +33,7 @@ namespace NineGrid.Flow
         [Tooltip("主菜单「退出」按钮；留空则运行时查找 MainPanel/QuitGame。")]
         [SerializeField] private Collider2D quitGameHit;
 
-        [Tooltip("Notice Text；留空则运行时查找 TableNine Text Overlay UI/Notice Text。")]
+        [Tooltip("Notice Text；留空则运行时查找 TableNine Text Overlay UI/NoticeText。")]
         [SerializeField] private TextMeshProUGUI noticeText;
 
         [Tooltip("点选相机；留空则运行时取 Camera.main。")]
@@ -78,60 +55,51 @@ namespace NineGrid.Flow
         [Tooltip("失败文案。")]
         [SerializeField] private string defeatMessage = "失败";
 
-        public const float QuickTestTimeScale = 1f;
-        public const int QuickTestAvatarHp = 99;
-        public const int QuickTestAvatarAttack = QuickTestRunPlanner.AvatarAttack;
+        public const float QuickTestTimeScale = GameFlowShellSystem.QuickTestTimeScale;
+        public const int QuickTestAvatarHp = GameFlowShellSystem.QuickTestAvatarHp;
+        public const int QuickTestAvatarAttack = GameFlowShellSystem.QuickTestAvatarAttack;
 
-        private LoopState _state = LoopState.MainMenu;
-        private bool _isBusy;
-        private bool _testMode;
-        private bool _quickTestMode;
-        private int _nodeIndex;
-        private List<int> _quickTestContentNodeQueue;
-        private int _quickTestContentNodeCursor;
-        private QuickTestNodeOrderMode _quickTestNodeOrderMode = QuickTestNodeOrderMode.Shuffled;
-        private string _pinnedFirstBattleDeckId;
-        private CancellationTokenSource _loopCts;
-        private CancellationTokenSource _battleEndCts;
-        private UniTaskCompletionSource _settlementTcs;
-        private bool _subscribedSettlement;
+        public float RoomEventStubSeconds => roomEventStubSeconds;
+        public float VictoryNoticeSeconds => victoryNoticeSeconds;
+        public float DefeatNoticeSeconds => defeatNoticeSeconds;
+        public string VictoryMessage => victoryMessage;
+        public string DefeatMessage => defeatMessage;
 
-        public LoopState State => _state;
-        public bool IsTestMode => _testMode;
-        public bool IsQuickTestMode => _quickTestMode;
-        public int NodeIndex => _nodeIndex;
-        public bool CanAcceptQuickTestEntry => _state == LoopState.MainMenu && !_isBusy;
+        public GameFlowShellState State =>
+            ResolveShell()?.State.Value ?? GameFlowShellState.MainMenu;
 
-        /// <summary>
-        /// 局内（非主菜单/胜负 Notice）可接受 \ 长按 Debug 快速模式。
-        /// </summary>
+        public bool IsTestMode => ResolveShell()?.IsTestMode ?? false;
+        public bool IsQuickTestMode => ResolveShell()?.IsQuickTestMode ?? false;
+        public int NodeIndex => ResolveShell()?.NodeIndex ?? 0;
+        public bool CanAcceptQuickTestEntry => ResolveShell()?.CanAcceptQuickTestEntry ?? false;
+
         public bool CanAcceptInBattleDebugQuickMode =>
-            _state != LoopState.MainMenu
-            && _state != LoopState.VictoryNotice
-            && _state != LoopState.DefeatNotice;
+            ResolveShell()?.CanAcceptInBattleDebugQuickMode ?? false;
 
-        public void BindSceneHosts(SelectorManagerSingleton selector, InBattleManagerSingleton inBattle)
-        {
-            if (selector != null) selectorManager = selector;
-            if (inBattle != null) inBattleManager = inBattle;
-        }
+        public bool IsRoomChoiceActive =>
+            selectorManager != null && selectorManager.IsChoiceActive;
 
         private void Awake()
         {
-            EnsureBindings();
-            SubscribeSettlement();
-            EnterMainMenuImmediate();
+            EnsureViewBindings();
+            var shell = GameFlowShellSystem.EnsureRegistered();
+            shell.Bind(this);
+            ShowMainMenuPanels();
+            HideNotice();
         }
 
         private void OnDestroy()
         {
-            UnsubscribeSettlement();
-            CancelLoopWork();
+            var shell = ResolveShell() as GameFlowShellSystem;
+            shell?.UnbindIfView(this);
         }
 
         private void Update()
         {
-            if (_state != LoopState.MainMenu || _isBusy)
+            var shell = ResolveShell();
+            if (shell == null
+                || shell.State.Value != GameFlowShellState.MainMenu
+                || shell.IsBusy)
             {
                 return;
             }
@@ -141,7 +109,7 @@ namespace NineGrid.Flow
                 return;
             }
 
-            EnsureBindings();
+            EnsureViewBindings();
             if (WorldPointerUtility.TryPickCollider(worldCamera, startRunHit))
             {
                 BeginRun(testMode: true);
@@ -154,9 +122,7 @@ namespace NineGrid.Flow
             }
         }
 
-        /// <summary>
-        /// DevTest / 按钮入口：开启一局主循环（默认测试模式）。
-        /// </summary>
+        /// <summary>DevTest / 按钮入口：开局（默认测试模式）。真相在 BeginGameFlowRunCommand。</summary>
         public void BeginRun(bool testMode = true, bool quickTestMode = false)
         {
             if (quickTestMode)
@@ -168,1145 +134,76 @@ namespace NineGrid.Flow
                 return;
             }
 
-            BeginRunInternal(testMode, quickTestMode: false, quickTestOptions: null);
+            SendBeginRun(new GameFlowRunOptions
+            {
+                TestMode = testMode,
+                QuickTestMode = false,
+            });
         }
 
-        /// <summary>
-        /// DevTest 快速测试：可选正式/乱序节点与首关固定怪物牌组。
-        /// </summary>
         public void BeginQuickTestRun(QuickTestRunOptions options)
         {
-            BeginRunInternal(
-                testMode: true,
-                quickTestMode: true,
-                quickTestOptions: options ?? new QuickTestRunOptions());
+            SendBeginRun(new GameFlowRunOptions
+            {
+                TestMode = true,
+                QuickTestMode = true,
+                QuickTest = options ?? new QuickTestRunOptions(),
+            });
         }
 
-        /// <summary>
-        /// 主菜单快速测试选关菜单（Notice Text）。
-        /// </summary>
+        public void ReturnToMainMenu()
+        {
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            arch?.SendCommand(new ReturnToMainMenuCommand());
+        }
+
         public void ShowQuickTestPickerNotice(string message)
         {
             ShowNotice(message);
         }
 
-        /// <summary>
-        /// 关闭快速测试选关菜单。
-        /// </summary>
         public void HideQuickTestPickerNotice()
         {
             HideNotice();
         }
 
-        /// <summary>
-        /// 构建快速测试选关菜单文案（Notice Text）。
-        /// </summary>
         public string BuildQuickTestPickerMenuText()
         {
-            CoreCardPresentationMapper.EnsureContentCatalogLoaded();
-            var catalog = NineGridArchitecture.Current.GetSystem<IContentSystem>()?.Catalog;
-            return QuickTestDeckCatalog.BuildPickerMenuText(catalog);
+            return GameFlowShellSystem.EnsureRegistered().BuildQuickTestPickerMenuText();
         }
 
-        /// <summary>
-        /// 局内 Debug 快速模式菜单（Notice Text）。
-        /// </summary>
         public void ShowInBattleDebugQuickModeNotice(string message)
         {
             ShowNotice(message);
         }
 
-        /// <summary>
-        /// 关闭局内 Debug 快速模式菜单。
-        /// </summary>
         public void HideInBattleDebugQuickModeNotice()
         {
             HideNotice();
         }
 
-        /// <summary>
-        /// 构建局内 Debug 快速模式菜单文案。
-        /// </summary>
         public string BuildInBattleDebugQuickModeMenuText()
         {
-            return "局内快速模式\n\n"
-                + "当前全局速度：x" + FormatTimeScale(Time.timeScale) + "\n\n"
-                + "\\1  全局速度 x1\n"
-                + "\\2  全局速度 x2（再按在此基础上 x2）\n\n"
-                + "释放 \\ 键关闭";
+            return GameFlowShellSystem.EnsureRegistered().BuildInBattleDebugQuickModeMenuText();
         }
 
-        /// <summary>
-        /// 局内 Debug：全局速度设为 x1。
-        /// </summary>
         public void ApplyInBattleDebugQuickModeTimeScaleX1()
         {
-            Time.timeScale = 1f;
-            Debug.Log("[MainGameLoop] 局内 Debug 快速模式：全局速度 x1");
+            GameFlowShellSystem.ApplyInBattleDebugQuickModeTimeScaleX1();
         }
 
-        /// <summary>
-        /// 局内 Debug：首次 x2，之后在当前倍率上再 x2。
-        /// </summary>
         public void ApplyInBattleDebugQuickModeTimeScaleX2()
         {
-            if (Time.timeScale <= 1.01f)
-            {
-                Time.timeScale = 2f;
-            }
-            else
-            {
-                Time.timeScale *= 2f;
-            }
-
-            Debug.Log("[MainGameLoop] 局内 Debug 快速模式：全局速度 x" + FormatTimeScale(Time.timeScale));
+            GameFlowShellSystem.ApplyInBattleDebugQuickModeTimeScaleX2();
         }
 
-        /// <summary>
-        /// 解析选关编号并开局；失败返回 false 且不启动。
-        /// </summary>
         public bool TryBeginQuickTestFromPickerCode(int code)
         {
-            if (!CanAcceptQuickTestEntry)
-            {
-                return false;
-            }
-
-            CoreCardPresentationMapper.EnsureContentCatalogLoaded();
-            var catalog = NineGridArchitecture.Current.GetSystem<IContentSystem>()?.Catalog;
-            if (!QuickTestDeckCatalog.TryResolvePickerCode(code, catalog, out var deckId, out _))
-            {
-                return false;
-            }
-
-            HideQuickTestPickerNotice();
-            BeginQuickTestRun(new QuickTestRunOptions
-            {
-                NodeOrder = code == QuickTestDeckCatalog.FormalOrderPickerCode
-                    ? QuickTestNodeOrderMode.Sequential
-                    : QuickTestNodeOrderMode.Shuffled,
-                PinnedFirstBattleDeckId = deckId,
-            });
-            return true;
+            return GameFlowShellSystem.EnsureRegistered().TryBeginQuickTestFromPickerCode(code);
         }
 
-        private void BeginRunInternal(
-            bool testMode,
-            bool quickTestMode,
-            QuickTestRunOptions quickTestOptions)
+        public void EnsureViewBindings()
         {
-            // 必须先取消胜负 Notice 的延迟回菜单，否则 Delay 结束后 EnterMainMenuImmediate
-            // 会 ClearPresentationSurface，把已重开的 Opening/StartNode 清成空场。
-            CancelBattleEndWork();
-
-            if (_isBusy && _state != LoopState.MainMenu)
-            {
-                Debug.LogWarning("[MainGameLoop] 当前循环仍在进行，忽略 BeginRun。");
-                return;
-            }
-
-            EnsureBindings();
-            SubscribeSettlement();
-            CancelLoopWork();
-            _loopCts = new CancellationTokenSource();
-            PresentationInputGates.Reset("BeginRun");
-            NineGridArchitecture.Interface?.GetSystem<IFieldBattlePresentationSystem>()?.CancelBattleWork();
-            inBattleManager?.ClearCardPresentationSurface();
-
-            _testMode = testMode;
-            _quickTestMode = quickTestMode;
-            _nodeIndex = 0;
-            _quickTestContentNodeQueue = null;
-            _quickTestContentNodeCursor = 0;
-            _pinnedFirstBattleDeckId = null;
-            if (quickTestMode)
-            {
-                var options = quickTestOptions ?? new QuickTestRunOptions();
-                _quickTestNodeOrderMode = options.NodeOrder;
-                _pinnedFirstBattleDeckId = string.IsNullOrWhiteSpace(options.PinnedFirstBattleDeckId)
-                    ? null
-                    : options.PinnedFirstBattleDeckId.Trim();
-                DiagTraceShared.SetRunTag(
-                    DiagTraceShared.QuickTestRunTag,
-                    BuildQuickTestRunTagNote(_quickTestNodeOrderMode, _pinnedFirstBattleDeckId));
-                PrepareQuickTestContentNodeQueue(_quickTestNodeOrderMode);
-            }
-            else
-            {
-                _quickTestNodeOrderMode = QuickTestNodeOrderMode.Shuffled;
-                DiagTraceShared.ClearRunTag();
-            }
-
-            ApplyQuickTestTimeScale();
-            HideNotice();
-            panelRouter.ShowInRunShell(inBattle: true);
-            try
-            {
-                // 失败重开：先落盘上一局，再开新 session，避免 Flow 粘连 / Battle 被 Bootstrap 清掉后对不上。
-                BattleTraceRecorder.RotateSessionForNewRun();
-                FlowTraceRecorder.Record(
-                    FlowTraceCategory.UI,
-                    FlowTraceNames.StartRun,
-                    new Dictionary<string, string>
-                    {
-                        { "testMode", testMode ? "true" : "false" },
-                        { "quickTestMode", quickTestMode ? "true" : "false" },
-                        { "runTag", DiagTraceShared.RunTag },
-                        { "runTagNote", DiagTraceShared.RunTagNote },
-                        { "quickTestNodeOrder", quickTestMode
-                            ? QuickTestRunPlanner.FormatNodeOrder(_quickTestContentNodeQueue)
-                            : string.Empty },
-                        { "quickTestNodeOrderMode", quickTestMode
-                            ? _quickTestNodeOrderMode.ToString()
-                            : string.Empty },
-                        { "quickTestPinnedFirstDeck", quickTestMode && !string.IsNullOrEmpty(_pinnedFirstBattleDeckId)
-                            ? _pinnedFirstBattleDeckId
-                            : string.Empty },
-                    },
-                    loopState: _state.ToString());
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[MainGameLoop] FlowTrace StartRun: " + ex.Message);
-            }
-
-            if (quickTestMode)
-            {
-                Debug.Log(
-                    $"[MainGameLoop] 快速测试模式：全局速度 x1（局内 \\2 可加速），玩家 HP {QuickTestAvatarHp} / ATK {QuickTestAvatarAttack} 每关重置，"
-                    + $"节点顺序 {_quickTestNodeOrderMode}，队列 {QuickTestRunPlanner.FormatNodeOrder(_quickTestContentNodeQueue)}"
-                    + (string.IsNullOrEmpty(_pinnedFirstBattleDeckId)
-                        ? string.Empty
-                        : $"，首关牌组 {_pinnedFirstBattleDeckId}"));
-            }
-
-            RunNodeCycleAsync(_loopCts.Token).Forget();
-        }
-
-        /// <summary>
-        /// 强制停循环并回主菜单。
-        /// </summary>
-        public void ReturnToMainMenu()
-        {
-            CancelLoopWork();
-            CancelBattleEndWork();
-            if (selectorManager != null && selectorManager.IsChoiceActive)
-            {
-                selectorManager.HideChoice();
-            }
-
-            try
-            {
-                FlowTraceRecorder.Record(
-                    FlowTraceCategory.UI,
-                    FlowTraceNames.ReturnMainMenu,
-                    loopState: _state.ToString());
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[MainGameLoop] FlowTrace ReturnMainMenu: " + ex.Message);
-            }
-
-            EnterMainMenuImmediate();
-        }
-
-        /// <summary>
-        /// 整局胜利：Notice → 等待 → 回主菜单。
-        /// </summary>
-        public void NotifyBattleVictory()
-        {
-            ShowBattleEndAndReturnAsync(victory: true).Forget();
-        }
-
-        /// <summary>
-        /// 玩家战败：Notice → 等待 → 回主菜单。
-        /// </summary>
-        public void NotifyBattleDefeat()
-        {
-            ShowBattleEndAndReturnAsync(victory: false).Forget();
-        }
-
-        private async UniTaskVoid RunNodeCycleAsync(CancellationToken ct)
-        {
-            _isBusy = true;
-            try
-            {
-                while (!ct.IsCancellationRequested)
-                {
-                    _nodeIndex++;
-                    await PlayRealBattleAsync(ct);
-                    if (ct.IsCancellationRequested)
-                    {
-                        return;
-                    }
-
-                    await PlayRewardChoiceAsync(ct);
-                    if (ct.IsCancellationRequested)
-                    {
-                        return;
-                    }
-
-                    await PlayRoomChoiceAsync(ct);
-                    if (ct.IsCancellationRequested)
-                    {
-                        return;
-                    }
-
-                    await PlayRoomEventAsync(ct);
-                    if (ct.IsCancellationRequested)
-                    {
-                        return;
-                    }
-
-                    var phase = NineGridArchitecture.Current.GetSystem<IPhaseSystem>().CurrentPhase;
-                    if (phase == GamePhase.Victory)
-                    {
-                        await ShowVictoryAndReturnAsync(ct);
-                        return;
-                    }
-
-                    // 继续下一节点（Core 已 AdvanceNode → NodeCompleted）
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                // ignore
-            }
-            finally
-            {
-                _isBusy = false;
-            }
-        }
-
-        private async UniTask PlayRealBattleAsync(CancellationToken ct)
-        {
-            SetState(LoopState.BattleStub);
-            EnsureBindings();
-            panelRouter.ShowInRunShell(inBattle: true);
-
-            if (inBattleManager == null)
-            {
-                Debug.LogError("[MainGameLoop] 未找到 InBattleManagerSingleton，无法入场。");
-                return;
-            }
-
-            SubscribeSettlement();
-            _settlementTcs = new UniTaskCompletionSource();
-
-            var arch = NineGridArchitecture.Current;
-            var phase = arch.GetSystem<IPhaseSystem>();
-            if (_nodeIndex <= 1 || !phase.CanExecute(GameCommandKind.StartNode))
-            {
-                inBattleManager.BootstrapRun();
-            }
-
-            CoreCardPresentationMapper.EnsureContentCatalogLoaded();
-
-            var catalog = arch.GetSystem<IContentSystem>()?.Catalog;
-            // 未 pin 时由 RewardSystem 按 DeckKind 随机牌组（含骷髅军团）；
-            // DevTest \ 选关首关经 TryConsumePinnedFirstBattle 可显式固定 deckId。
-            string monsterDeckId = null;
-            int contentNodeIndex;
-            if (TryConsumePinnedFirstBattle(out var pinnedDeckId))
-            {
-                monsterDeckId = pinnedDeckId;
-                contentNodeIndex = QuickTestDeckCatalog.GetDefaultNodeIndexForDeckId(catalog, pinnedDeckId);
-            }
-            else
-            {
-                contentNodeIndex = ResolveBattleContentNodeIndex();
-            }
-
-            var options = arch.GetSystem<IRewardSystem>().BuildNodeDeckOptions(contentNodeIndex, monsterDeckId);
-            if (options == null)
-            {
-                options = NodeDeckOptions.CreateDefaultBattle();
-            }
-
-            Debug.Log(_quickTestMode
-                ? $"[MainGameLoop] 循环节点 {_nodeIndex} 快速测试内容节点 {contentNodeIndex}"
-                  + (string.IsNullOrEmpty(monsterDeckId) ? string.Empty : $" 固定牌组 {monsterDeckId}")
-                  + " 真实局内入场"
-                : $"[MainGameLoop] 节点 {_nodeIndex} 真实局内入场");
-            await inBattleManager.StartBattleNodeAsync(options, ct);
-            if (ct.IsCancellationRequested)
-            {
-                return;
-            }
-
-            ApplyQuickTestAvatarCheatsIfNeeded();
-            ApplyQuickTestTimeScale();
-
-            // 开局即空怪时 StartBattleNode 内可能已 Raise 结算；补一次探测。
-            inBattleManager.TryEnterNodeSettlement();
-
-            Debug.Log($"[MainGameLoop] 节点 {_nodeIndex} 已入场，等待节点结算");
-            await _settlementTcs.Task.AttachExternalCancellation(ct);
-            Debug.Log($"[MainGameLoop] 节点 {_nodeIndex} 结算就绪，进入奖励");
-        }
-
-        private async UniTask PlayRewardChoiceAsync(CancellationToken ct)
-        {
-            SetState(LoopState.RewardChoice);
-            EnsureBindings();
-
-            var arch = NineGridArchitecture.Current;
-            var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
-            var pending = arch.GetModel<PendingChoiceModel>();
-            if (phase != GamePhase.RewardItemChoice
-                || pending.Kind.Value != PendingChoiceKind.Reward
-                || pending.RewardOptions == null
-                || pending.RewardOptions.Count == 0)
-            {
-                Debug.LogWarning(
-                    $"[MainGameLoop] 跳过通关奖励 phase={phase} pending={pending.Kind.Value}");
-                try
-                {
-                    FlowTraceRecorder.Record(
-                        FlowTraceCategory.CoreGate,
-                        FlowTraceNames.RewardPresented,
-                        new Dictionary<string, string>
-                        {
-                            { "skipped", "true" },
-                            { "phase", phase.ToString() },
-                            { "pending", pending.Kind.Value.ToString() },
-                            { "nodeIndex", _nodeIndex.ToString() },
-                        },
-                        loopState: _state.ToString(),
-                        phaseBefore: phase.ToString(),
-                        accepted: false);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning("[MainGameLoop] FlowTrace RewardSkipped: " + ex.Message);
-                }
-
-                return;
-            }
-
-            try
-            {
-                var optionIds = new List<string>(pending.RewardOptions.Count);
-                for (var i = 0; i < pending.RewardOptions.Count; i++)
-                {
-                    optionIds.Add(pending.RewardOptions[i].DefId ?? string.Empty);
-                }
-
-                FlowTraceRecorder.Record(
-                    FlowTraceCategory.CoreGate,
-                    FlowTraceNames.RewardPresented,
-                    new Dictionary<string, string>
-                    {
-                        { "optionCount", pending.RewardOptions.Count.ToString() },
-                        { "options", string.Join(",", optionIds) },
-                        { "nodeIndex", _nodeIndex.ToString() },
-                        { "source", "nodeClear" },
-                    },
-                    loopState: _state.ToString(),
-                    phaseBefore: phase.ToString());
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[MainGameLoop] FlowTrace RewardPresented: " + ex.Message);
-            }
-
-            panelRouter.ShowRewardOverlay();
-            BoardCardSelectModeController.RequestAbort("mainloop-reward-overlay");
-            PresentationInputGates.SetChoiceOverlay(true);
-            try
-            {
-                await inBattleManager.PresentRewardChoiceFromCoreAsync(hoverOnNotice: true);
-            }
-            finally
-            {
-                PresentationInputGates.SetChoiceOverlay(false);
-                panelRouter.HideAllOverlays();
-            }
-
-            await UniTask.Yield(cancellationToken: ct);
-        }
-
-        private async UniTask PlayRoomChoiceAsync(CancellationToken ct)
-        {
-            SetState(LoopState.RoomChoice);
-            EnsureBindings();
-
-            var arch = NineGridArchitecture.Current;
-            var phaseSystem = arch.GetSystem<IPhaseSystem>();
-            var pending = arch.GetModel<PendingChoiceModel>();
-            if (phaseSystem.CurrentPhase != GamePhase.RoomChoice
-                || pending.Kind.Value != PendingChoiceKind.Room
-                || pending.RoomOptions == null
-                || pending.RoomOptions.Count < 2)
-            {
-                Debug.LogWarning(
-                    $"[MainGameLoop] 跳过房间选择 phase={phaseSystem.CurrentPhase} pending={pending.Kind.Value}");
-                try
-                {
-                    FlowTraceRecorder.Record(
-                        FlowTraceCategory.CoreGate,
-                        FlowTraceNames.RoomPresented,
-                        new Dictionary<string, string>
-                        {
-                            { "skipped", "true" },
-                            { "phase", phaseSystem.CurrentPhase.ToString() },
-                            { "pending", pending.Kind.Value.ToString() },
-                            { "nodeIndex", _nodeIndex.ToString() },
-                        },
-                        loopState: _state.ToString(),
-                        phaseBefore: phaseSystem.CurrentPhase.ToString(),
-                        accepted: false);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning("[MainGameLoop] FlowTrace RoomSkipped: " + ex.Message);
-                }
-
-                return;
-            }
-
-            var left = pending.RoomOptions[0];
-            var right = pending.RoomOptions[1];
-            try
-            {
-                FlowTraceRecorder.Record(
-                    FlowTraceCategory.CoreGate,
-                    FlowTraceNames.RoomPresented,
-                    new Dictionary<string, string>
-                    {
-                        { "left", left.ToString() },
-                        { "right", right.ToString() },
-                        { "nodeIndex", _nodeIndex.ToString() },
-                    },
-                    loopState: _state.ToString(),
-                    phaseBefore: phaseSystem.CurrentPhase.ToString());
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[MainGameLoop] FlowTrace RoomPresented: " + ex.Message);
-            }
-
-            panelRouter.ShowRoomChoiceOverlay();
-
-            var pickedIndex = -1;
-            var pickedId = string.Empty;
-            var finished = false;
-            BoardCardSelectModeController.RequestAbort("mainloop-room-choice");
-            PresentationInputGates.SetChoiceOverlay(true);
-            try
-            {
-                selectorManager.BeginRoomChoice(
-                    left.ToString(),
-                    right.ToString(),
-                    (index, optionId) =>
-                    {
-                        pickedIndex = index;
-                        pickedId = optionId ?? string.Empty;
-                        Debug.Log($"[MainGameLoop] 房间已选 index={index} id={optionId}");
-                    },
-                    () => { finished = true; },
-                    hoverOnNotice: true);
-
-                await UniTask.WaitUntil(() => finished || ct.IsCancellationRequested, cancellationToken: ct);
-            }
-            finally
-            {
-                PresentationInputGates.SetChoiceOverlay(false);
-                panelRouter.HideAllOverlays();
-            }
-
-            if (ct.IsCancellationRequested)
-            {
-                return;
-            }
-
-            if (pickedIndex < 0)
-            {
-                pickedIndex = 0;
-            }
-
-            var phaseBeforeSelect = phaseSystem.CurrentPhase.ToString();
-            var pipeline = arch.GetSystem<IActionPipelineSystem>();
-            var goldEventStart = pipeline.EventLog.Entries.Count;
-            var result = SubmitSelectRoom(phaseSystem, pickedIndex);
-            if (!result.Accepted)
-            {
-                Debug.LogWarning($"[MainGameLoop] SelectRoom 被拒: {result.Reason}");
-            }
-
-            try
-            {
-                FlowTraceRecorder.Record(
-                    FlowTraceCategory.CoreGate,
-                    FlowTraceNames.RoomChosen,
-                    new Dictionary<string, string>
-                    {
-                        { "index", pickedIndex.ToString() },
-                        { "optionId", string.IsNullOrEmpty(pickedId) ? pickedIndex.ToString() : pickedId },
-                        { "reason", result.Reason ?? string.Empty },
-                        { "nodeIndex", _nodeIndex.ToString() },
-                    },
-                    loopState: _state.ToString(),
-                    phaseBefore: phaseBeforeSelect,
-                    phaseAfter: phaseSystem.CurrentPhase.ToString(),
-                    accepted: result.Accepted);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[MainGameLoop] FlowTrace RoomChosen: " + ex.Message);
-            }
-
-            // 残留帮助卡结算已在通关判定当拍由 InBattleManager 并行演出（不阻塞此处）；
-            // 这里仅兜底呈现选房本身产生的其他金币事件，并静默对齐 HUD。
-            InBattleManagerSingleton.PresentGoldGainsFromEventLog(goldEventStart);
-            inBattleManager?.RefreshPersistentInBattleUi(animate: false);
-        }
-
-        private async UniTask PlayRoomEventAsync(CancellationToken ct)
-        {
-            SetState(LoopState.RoomEvent);
-            EnsureBindings();
-
-            var arch = NineGridArchitecture.Current;
-            var phaseSystem = arch.GetSystem<IPhaseSystem>();
-            if (phaseSystem.CurrentPhase != GamePhase.RoomEvent)
-            {
-                Debug.LogWarning($"[MainGameLoop] 跳过房间事件 phase={phaseSystem.CurrentPhase}");
-                return;
-            }
-
-            var selectedRoom = arch.GetModel<PendingChoiceModel>().SelectedRoom.Value;
-            panelRouter.ShowRoomEventOverlay();
-
-            var phaseBeforeEnter = phaseSystem.CurrentPhase.ToString();
-            var pipeline = arch.GetSystem<IActionPipelineSystem>();
-            var goldEventStart = pipeline.EventLog.Entries.Count;
-            var enter = SubmitEnterRoom(phaseSystem);
-            if (!enter.Accepted)
-            {
-                Debug.LogWarning($"[MainGameLoop] EnterRoom 被拒: {enter.Reason}");
-                try
-                {
-                    FlowTraceRecorder.Record(
-                        FlowTraceCategory.CoreGate,
-                        FlowTraceNames.EnterRoom,
-                        new Dictionary<string, string>
-                        {
-                            { "room", selectedRoom.ToString() },
-                            { "reason", enter.Reason ?? string.Empty },
-                            { "nodeIndex", _nodeIndex.ToString() },
-                        },
-                        loopState: _state.ToString(),
-                        phaseBefore: phaseBeforeEnter,
-                        phaseAfter: phaseSystem.CurrentPhase.ToString(),
-                        accepted: false);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning("[MainGameLoop] FlowTrace EnterRoom reject: " + ex.Message);
-                }
-
-                panelRouter.HideAllOverlays();
-                return;
-            }
-
-            try
-            {
-                FlowTraceRecorder.Record(
-                    FlowTraceCategory.CoreGate,
-                    FlowTraceNames.EnterRoom,
-                    new Dictionary<string, string>
-                    {
-                        { "room", selectedRoom.ToString() },
-                        { "nodeIndex", _nodeIndex.ToString() },
-                    },
-                    loopState: _state.ToString(),
-                    phaseBefore: phaseBeforeEnter,
-                    phaseAfter: phaseSystem.CurrentPhase.ToString(),
-                    accepted: true);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[MainGameLoop] FlowTrace EnterRoom: " + ex.Message);
-            }
-
-            // 房间金币等：先按 EventLog 开演，再静默对齐 HUD，避免二次 Sync 抢戏跳变。
-            InBattleManagerSingleton.PresentGoldGainsFromEventLog(goldEventStart);
-            inBattleManager?.RefreshPersistentInBattleUi(animate: false);
-
-            var pending = arch.GetModel<PendingChoiceModel>();
-            if (pending.Kind.Value == PendingChoiceKind.Reward
-                && pending.RewardOptions != null
-                && pending.RewardOptions.Count > 0)
-            {
-                try
-                {
-                    var optionIds = new List<string>(pending.RewardOptions.Count);
-                    for (var i = 0; i < pending.RewardOptions.Count; i++)
-                    {
-                        optionIds.Add(pending.RewardOptions[i].DefId ?? string.Empty);
-                    }
-
-                    FlowTraceRecorder.Record(
-                        FlowTraceCategory.CoreGate,
-                        FlowTraceNames.RewardPresented,
-                        new Dictionary<string, string>
-                        {
-                            { "optionCount", pending.RewardOptions.Count.ToString() },
-                            { "options", string.Join(",", optionIds) },
-                            { "nodeIndex", _nodeIndex.ToString() },
-                            { "source", "roomEvent" },
-                            { "room", selectedRoom.ToString() },
-                        },
-                        loopState: _state.ToString(),
-                        phaseBefore: phaseSystem.CurrentPhase.ToString());
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning("[MainGameLoop] FlowTrace RoomRewardPresented: " + ex.Message);
-                }
-
-                // 商店 / 宝箱房：复用 Bounce 默认选择器。
-                panelRouter.ShowRewardOverlay();
-                BoardCardSelectModeController.RequestAbort("mainloop-room-reward-overlay");
-                PresentationInputGates.SetChoiceOverlay(true);
-                try
-                {
-                    await inBattleManager.PresentRewardChoiceFromCoreAsync(hoverOnNotice: true);
-                }
-                finally
-                {
-                    PresentationInputGates.SetChoiceOverlay(false);
-                }
-            }
-            else
-            {
-                var message = BuildRoomResolvedNotice(selectedRoom);
-                if (!string.IsNullOrEmpty(message))
-                {
-                    ShowNotice(message);
-                    await UniTask.Delay(
-                        TimeSpan.FromSeconds(Mathf.Max(0.05f, roomEventStubSeconds)),
-                        cancellationToken: ct);
-                    HideNotice();
-                }
-            }
-
-            panelRouter.HideAllOverlays();
-            inBattleManager?.RefreshPersistentInBattleUi(animate: false);
-        }
-
-        private static string BuildRoomResolvedNotice(RoomKind room)
-        {
-            CoreCardPresentationMapper.EnsureContentCatalogLoaded();
-            var arch = NineGridArchitecture.Current;
-            if (arch != null)
-            {
-                var content = arch.GetSystem<IContentSystem>();
-                if (content != null
-                    && content.HasCatalog
-                    && content.Catalog.Rewards.TryGetRoom(room, out var def)
-                    && !string.IsNullOrWhiteSpace(def.DisplayName))
-                {
-                    if (def.GoldDelta != 0)
-                    {
-                        return $"{def.DisplayName}：金币{(def.GoldDelta > 0 ? "+" : string.Empty)}{def.GoldDelta}";
-                    }
-
-                    if (def.MaxHpDelta != 0 || def.HealToFull)
-                    {
-                        return def.HealToFull
-                            ? $"{def.DisplayName}：血量上限+{def.MaxHpDelta}，已回满"
-                            : $"{def.DisplayName}：血量上限+{def.MaxHpDelta}";
-                    }
-
-                    return def.DisplayName;
-                }
-            }
-
-            return room == RoomKind.None ? string.Empty : room.ToString();
-        }
-
-        private async UniTask ShowVictoryAndReturnAsync(CancellationToken ct)
-        {
-            await ShowBattleEndAndReturnAsync(victory: true, ct);
-        }
-
-        private async UniTaskVoid ShowBattleEndAndReturnAsync(bool victory)
-        {
-            CancelBattleEndWork();
-            _battleEndCts = new CancellationTokenSource();
-            try
-            {
-                await ShowBattleEndAndReturnAsync(victory, _battleEndCts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-            }
-        }
-
-        private async UniTask ShowBattleEndAndReturnAsync(bool victory, CancellationToken ct)
-        {
-            CancelLoopWork();
-            inBattleManager?.ClearCardPresentationSurface();
-            inBattleManager?.RefreshPersistentInBattleUi(animate: false);
-            NineGridArchitecture.Interface?.GetSystem<IFieldBattlePresentationSystem>()?.CancelBattleWork();
-
-            SetState(victory ? LoopState.VictoryNotice : LoopState.DefeatNotice);
-            EnsureBindings();
-            panelRouter.ShowInRunShell();
-            var message = victory
-                ? (string.IsNullOrWhiteSpace(victoryMessage) ? "胜利" : victoryMessage)
-                : (string.IsNullOrWhiteSpace(defeatMessage) ? "失败" : defeatMessage);
-            ShowNotice(message);
-            try
-            {
-                FlowTraceRecorder.Record(
-                    FlowTraceCategory.Loop,
-                    victory ? FlowTraceNames.Victory : FlowTraceNames.Defeat,
-                    new Dictionary<string, string>
-                    {
-                        { "message", message },
-                        { "nodeIndex", _nodeIndex.ToString() },
-                    },
-                    loopState: _state.ToString());
-                // 胜负当场落盘，避免未点「再开始」就退出 Play 时只靠退出钩子、或重开粘连。
-                BattleTraceRecorder.ExportBothNow(silentIfEmpty: true);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[MainGameLoop] FlowTrace Victory/Defeat: " + ex.Message);
-            }
-
-            Debug.Log(victory
-                ? "[MainGameLoop] 整局胜利，准备回主菜单。"
-                : "[MainGameLoop] 战斗失败，准备回主菜单。");
-            var seconds = victory
-                ? Mathf.Max(0.2f, victoryNoticeSeconds)
-                : Mathf.Max(0.2f, defeatNoticeSeconds);
-            await UniTask.Delay(TimeSpan.FromSeconds(seconds), cancellationToken: ct);
-            EnterMainMenuImmediate();
-        }
-
-        private void EnterMainMenuImmediate()
-        {
-            EnsureBindings();
-            HideNotice();
-            PresentationInputGates.Reset("EnterMainMenu");
-            NineGridArchitecture.Interface?.GetSystem<IFieldBattlePresentationSystem>()?.CancelBattleWork();
-            inBattleManager?.ClearPresentationSurface();
-            panelRouter.ShowMainMenu();
-            SetState(LoopState.MainMenu);
-            try
-            {
-                FlowTraceRecorder.BeginSessionIfNeeded();
-                FlowTraceRecorder.Record(
-                    FlowTraceCategory.Loop,
-                    FlowTraceNames.EnterMainMenu,
-                    loopState: LoopState.MainMenu.ToString());
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[MainGameLoop] FlowTrace EnterMainMenu: " + ex.Message);
-            }
-
-            _testMode = false;
-            _quickTestMode = false;
-            _quickTestContentNodeQueue = null;
-            _quickTestContentNodeCursor = 0;
-            _pinnedFirstBattleDeckId = null;
-            _quickTestNodeOrderMode = QuickTestNodeOrderMode.Shuffled;
-            DiagTraceShared.ClearRunTag();
-            ResetQuickTestTimeScale();
-            _nodeIndex = 0;
-            _isBusy = false;
-            _settlementTcs = null;
-        }
-
-        private void ApplyQuickTestTimeScale()
-        {
-            if (!_quickTestMode)
-            {
-                return;
-            }
-
-            Time.timeScale = QuickTestTimeScale;
-        }
-
-        private void ResetQuickTestTimeScale()
-        {
-            Time.timeScale = 1f;
-        }
-
-        private static string FormatTimeScale(float scale)
-        {
-            return Mathf.Approximately(scale, Mathf.Round(scale))
-                ? Mathf.RoundToInt(scale).ToString()
-                : scale.ToString("0.##");
-        }
-
-        private void ApplyQuickTestAvatarCheatsIfNeeded()
-        {
-            if (!_quickTestMode || inBattleManager == null)
-            {
-                return;
-            }
-
-            if (!BattleSessionCheat.TrySetAvatarHp(QuickTestAvatarHp))
-            {
-                Debug.LogWarning(
-                    $"[MainGameLoop] 快速测试改血失败：目标 {QuickTestAvatarHp}，请确认 Avatar 已入场。");
-            }
-
-            if (!BattleSessionCheat.TrySetAvatarAttack(QuickTestAvatarAttack))
-            {
-                Debug.LogWarning(
-                    $"[MainGameLoop] 快速测试改攻失败：目标 {QuickTestAvatarAttack}，请确认 Avatar 已入场。");
-            }
-        }
-
-        private void PrepareQuickTestContentNodeQueue(QuickTestNodeOrderMode orderMode)
-        {
-            CoreCardPresentationMapper.EnsureContentCatalogLoaded();
-            var arch = NineGridArchitecture.Current;
-            var catalog = arch?.GetSystem<IContentSystem>()?.Catalog;
-            var ruleIndices = QuickTestRunPlanner.CollectRuleNodeIndices(catalog);
-            _quickTestContentNodeQueue = orderMode == QuickTestNodeOrderMode.Sequential
-                ? QuickTestRunPlanner.BuildSequentialContentNodeQueue(ruleIndices)
-                : QuickTestRunPlanner.BuildShuffledContentNodeQueue(ruleIndices);
-            _quickTestContentNodeCursor = 0;
-        }
-
-        private bool TryConsumePinnedFirstBattle(out string deckId)
-        {
-            deckId = null;
-            if (!_quickTestMode || _nodeIndex != 1 || string.IsNullOrEmpty(_pinnedFirstBattleDeckId))
-            {
-                return false;
-            }
-
-            deckId = _pinnedFirstBattleDeckId;
-            _pinnedFirstBattleDeckId = null;
-            return true;
-        }
-
-        private static string BuildQuickTestRunTagNote(
-            QuickTestNodeOrderMode orderMode,
-            string pinnedFirstBattleDeckId)
-        {
-            var note = "快速测试：全局速度x1，玩家HP99/ATK5每关重置，节点顺序"
-                + (orderMode == QuickTestNodeOrderMode.Sequential ? "正式" : "乱序");
-            if (!string.IsNullOrEmpty(pinnedFirstBattleDeckId))
-            {
-                note += "，首关固定牌组=" + pinnedFirstBattleDeckId;
-            }
-
-            return note;
-        }
-
-        private int ResolveBattleContentNodeIndex()
-        {
-            if (!_quickTestMode
-                || _quickTestContentNodeQueue == null
-                || _quickTestContentNodeQueue.Count == 0)
-            {
-                return _nodeIndex;
-            }
-
-            if (_quickTestContentNodeCursor >= _quickTestContentNodeQueue.Count)
-            {
-                Debug.LogWarning(
-                    $"[MainGameLoop] 快速测试节点队列已耗尽，回退顺序节点 {_nodeIndex}。");
-                return _nodeIndex;
-            }
-
-            return _quickTestContentNodeQueue[_quickTestContentNodeCursor++];
-        }
-
-        private IUnRegister _settlementEventUnRegister;
-        private IUnRegister _battleEndedEventUnRegister;
-
-        private void SubscribeSettlement()
-        {
-            if (_subscribedSettlement)
-            {
-                return;
-            }
-
-            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
-            if (arch != null)
-            {
-                _settlementEventUnRegister = arch.RegisterEvent<BattleSessionSettlementReadyEvent>(_ =>
-                    OnNodeSettlementReady());
-                _battleEndedEventUnRegister = arch.RegisterEvent<BattleSessionEndedEvent>(OnBattleSessionEnded);
-            }
-
-            _subscribedSettlement = true;
-        }
-
-        private void UnsubscribeSettlement()
-        {
-            if (!_subscribedSettlement)
-            {
-                return;
-            }
-
-            _settlementEventUnRegister?.UnRegister();
-            _settlementEventUnRegister = null;
-            _battleEndedEventUnRegister?.UnRegister();
-            _battleEndedEventUnRegister = null;
-            _subscribedSettlement = false;
-        }
-
-        private void OnBattleSessionEnded(BattleSessionEndedEvent e)
-        {
-            if (e.Victory)
-            {
-                NotifyBattleVictory();
-            }
-            else
-            {
-                NotifyBattleDefeat();
-            }
-        }
-
-        private void OnNodeSettlementReady()
-        {
-            _settlementTcs?.TrySetResult();
-        }
-
-        private void CancelBattleEndWork()
-        {
-            if (_battleEndCts == null)
-            {
-                return;
-            }
-
-            _battleEndCts.Cancel();
-            _battleEndCts.Dispose();
-            _battleEndCts = null;
-        }
-
-        private void ShowNotice(string message)
-        {
-            EnsureBindings();
-            if (noticeText == null)
-            {
-                Debug.LogWarning($"[MainGameLoop] NoticeText 缺失，文案：{message}");
-                return;
-            }
-
-            noticeText.text = message;
-            noticeText.gameObject.SetActive(true);
-        }
-
-        private void HideNotice()
-        {
-            if (noticeText != null)
-            {
-                noticeText.gameObject.SetActive(false);
-            }
-        }
-
-        private void QuitGame()
-        {
-#if UNITY_EDITOR
-            EditorApplication.isPlaying = false;
-#else
-            Application.Quit();
-#endif
-        }
-
-        private void SetState(LoopState next)
-        {
-            var from = _state;
-            _state = next;
-            if (from == next)
-            {
-                return;
-            }
-
-            EnsureFlowShellHooksWired();
-            GameFlowShellHook.PublishState(ToShellState(next));
-
-            try
-            {
-                FlowTraceRecorder.Record(
-                    FlowTraceCategory.Loop,
-                    FlowTraceNames.SetState,
-                    new Dictionary<string, string>
-                    {
-                        { "from", from.ToString() },
-                        { "to", next.ToString() },
-                        { "nodeIndex", _nodeIndex.ToString() },
-                    },
-                    loopState: next.ToString());
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[MainGameLoop] FlowTrace SetState: " + ex.Message);
-            }
-        }
-
-        private static GameFlowShellState ToShellState(LoopState state)
-        {
-            return (GameFlowShellState)(int)state;
-        }
-
-        private static CoreCommandResult SubmitSelectRoom(IPhaseSystem phaseSystem, int optionIndex)
-        {
-            EnsureFlowShellHooksWired();
-            if (RoomChoiceCoreHook.SelectRoom != null)
-            {
-                return RoomChoiceCoreHook.SelectRoom(optionIndex);
-            }
-
-            return phaseSystem.SelectRoom(optionIndex);
-        }
-
-        private static CoreCommandResult SubmitEnterRoom(IPhaseSystem phaseSystem)
-        {
-            EnsureFlowShellHooksWired();
-            if (RoomChoiceCoreHook.EnterRoom != null)
-            {
-                return RoomChoiceCoreHook.EnterRoom();
-            }
-
-            return phaseSystem.EnterRoom();
-        }
-
-        private static void EnsureFlowShellHooksWired()
-        {
-            if (GameFlowShellHook.SetState == null)
-            {
-                GameFlowShellHook.RequestWire();
-            }
-
-            if (RoomChoiceCoreHook.SelectRoom == null || RoomChoiceCoreHook.EnterRoom == null)
-            {
-                RoomChoiceCoreHook.RequestWire();
-            }
-        }
-
-        private void CancelLoopWork()
-        {
-            _settlementTcs?.TrySetCanceled();
-            _settlementTcs = null;
-
-            if (_loopCts == null)
-            {
-                return;
-            }
-
-            _loopCts.Cancel();
-            _loopCts.Dispose();
-            _loopCts = null;
-        }
-
-        private void EnsureBindings()
-        {
-            EnsureFlowShellHooksWired();
-
             if (panelRouter == null)
             {
                 panelRouter = GetComponent<UiPanelRouter>();
@@ -1318,7 +215,10 @@ namespace NineGrid.Flow
 
             panelRouter.EnsureBindings();
 
-            // C2：selectorManager / inBattleManager 仅由 BindSceneHosts 或 SerializeField 提供。
+            if (selectorManager == null)
+            {
+                selectorManager = FindFirstObjectByType<SelectorManagerSingleton>();
+            }
 
             worldCamera = WorldPointerUtility.ResolveCamera(worldCamera);
 
@@ -1342,12 +242,127 @@ namespace NineGrid.Flow
 
             if (noticeText == null)
             {
-                var noticeGo = FindDeep("Notice Text");
+                var noticeGo = FindDeep("NoticeText");
                 if (noticeGo != null)
                 {
                     noticeText = noticeGo.GetComponent<TextMeshProUGUI>();
                 }
             }
+        }
+
+        public void ShowNotice(string message)
+        {
+            EnsureViewBindings();
+            if (noticeText == null)
+            {
+                Debug.LogWarning($"[MainGameLoop] NoticeText 缺失，文案：{message}");
+                return;
+            }
+
+            noticeText.text = message;
+            noticeText.gameObject.SetActive(true);
+        }
+
+        public void HideNotice()
+        {
+            if (noticeText != null)
+            {
+                noticeText.gameObject.SetActive(false);
+            }
+        }
+
+        public void ShowMainMenuPanels()
+        {
+            EnsureViewBindings();
+            panelRouter.ShowMainMenu();
+        }
+
+        public void ShowInRunShell(bool inBattle = true)
+        {
+            EnsureViewBindings();
+            panelRouter.ShowInRunShell(inBattle);
+        }
+
+        public void ShowRewardOverlay()
+        {
+            EnsureViewBindings();
+            panelRouter.ShowRewardOverlay();
+        }
+
+        public void ShowRoomChoiceOverlay()
+        {
+            EnsureViewBindings();
+            panelRouter.ShowRoomChoiceOverlay();
+        }
+
+        public void ShowRoomEventOverlay()
+        {
+            EnsureViewBindings();
+            panelRouter.ShowRoomEventOverlay();
+        }
+
+        public void HideAllOverlays()
+        {
+            EnsureViewBindings();
+            panelRouter.HideAllOverlays();
+        }
+
+        public void BeginRoomChoice(
+            string leftLabel,
+            string rightLabel,
+            Action<int, string> onPicked,
+            Action onFinished,
+            bool hoverOnNotice)
+        {
+            EnsureViewBindings();
+            if (selectorManager == null)
+            {
+                Debug.LogError("[MainGameLoop] 未找到 SelectorManagerSingleton，无法房间选择。");
+                onFinished?.Invoke();
+                return;
+            }
+
+            selectorManager.BeginRoomChoice(
+                leftLabel,
+                rightLabel,
+                onPicked,
+                onFinished,
+                hoverOnNotice);
+        }
+
+        public void HideRoomChoice()
+        {
+            if (selectorManager != null && selectorManager.IsChoiceActive)
+            {
+                selectorManager.HideChoice();
+            }
+        }
+
+        public void QuitGame()
+        {
+#if UNITY_EDITOR
+            EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        }
+
+        private static void SendBeginRun(GameFlowRunOptions options)
+        {
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                GameFlowShellSystem.EnsureRegistered().BeginRun(options);
+                return;
+            }
+
+            arch.SendCommand(new BeginGameFlowRunCommand(options));
+        }
+
+        private static IGameFlowShellSystem ResolveShell()
+        {
+            return NineGridArchitecture.Interface?.GetSystem<IGameFlowShellSystem>()
+                   ?? NineGridArchitecture.Current?.GetSystem<IGameFlowShellSystem>();
         }
 
         private static GameObject FindDeep(string objectName)

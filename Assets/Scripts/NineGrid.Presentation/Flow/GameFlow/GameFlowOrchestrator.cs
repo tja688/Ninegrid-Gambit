@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
@@ -172,9 +173,15 @@ namespace NineGrid.Flow
                 while (!ct.IsCancellationRequested)
                 {
                     mShell.IncrementNodeIndex();
-                    await PlayRealBattleAsync(ct);
+                    var battleStarted = await PlayRealBattleAsync(ct);
                     if (ct.IsCancellationRequested)
                     {
+                        return;
+                    }
+
+                    if (!battleStarted)
+                    {
+                        Debug.LogError("[GameFlow] 局内会话未就绪，终止节点循环。");
                         return;
                     }
 
@@ -213,7 +220,7 @@ namespace NineGrid.Flow
             }
         }
 
-        private async UniTask PlayRealBattleAsync(CancellationToken ct)
+        private async UniTask<bool> PlayRealBattleAsync(CancellationToken ct)
         {
             RequestSetState(GameFlowShellState.BattleStub);
             var view = mShell.View;
@@ -224,7 +231,7 @@ namespace NineGrid.Flow
             if (session == null || !session.IsBound)
             {
                 Debug.LogError("[GameFlow] 未绑定 IBattleSessionSystem，无法入场。");
-                return;
+                return false;
             }
 
             mSettlementTcs = new UniTaskCompletionSource();
@@ -265,7 +272,7 @@ namespace NineGrid.Flow
             await session.StartBattleNodeAsync(options, ct);
             if (ct.IsCancellationRequested)
             {
-                return;
+                return false;
             }
 
             ApplyQuickTestAvatarCheatsIfNeeded();
@@ -276,6 +283,7 @@ namespace NineGrid.Flow
             Debug.Log($"[GameFlow] 节点 {mShell.NodeIndex} 已入场，等待节点结算");
             await mSettlementTcs.Task.AttachExternalCancellation(ct);
             Debug.Log($"[GameFlow] 节点 {mShell.NodeIndex} 结算就绪，进入奖励");
+            return true;
         }
 
         private async UniTask PlayRewardChoiceAsync(CancellationToken ct)

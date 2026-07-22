@@ -16,7 +16,7 @@ namespace NineGrid.Presentation.Tests.FlowShell
         private static readonly SlotId sAdjacentSlot = SlotId.Board(2);
 
         [Test]
-        public void GameFlowShellController_HandleSetState_UpdatesHookPath()
+        public void GameFlowShellController_HandleSetState_UpdatesViaCommand()
         {
             using (PresentationArchitectureFixture.CreateBare())
             {
@@ -24,7 +24,7 @@ namespace NineGrid.Presentation.Tests.FlowShell
                 var controller = go.AddComponent<GameFlowShellController>();
                 try
                 {
-                    // EditMode 不跑 Awake：显式绑定。
+                    // EditMode 不跑 Awake：显式走 Command 路径。
                     controller.HandleSetState(GameFlowShellState.BattleStub);
                     Assert.AreEqual(
                         GameFlowShellState.BattleStub,

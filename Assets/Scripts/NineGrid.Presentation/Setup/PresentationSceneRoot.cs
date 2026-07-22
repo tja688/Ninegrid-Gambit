@@ -116,7 +116,7 @@ namespace NineGrid.Presentation.Setup
 
             if (mainGameLoop != null)
             {
-                mainGameLoop.BindSceneHosts(selectorManager, inBattle);
+                GameFlowShellSystem.EnsureRegistered().Bind(mainGameLoop);
             }
 
             if (cardManager != null || cardHand != null || cardDeck != null)

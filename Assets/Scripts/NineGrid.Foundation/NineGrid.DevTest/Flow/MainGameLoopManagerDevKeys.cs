@@ -1,6 +1,8 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 
+using NineGrid.Core;
 using NineGrid.Flow;
+using NineGrid.Presentation.Commands;
 using UnityEngine;
 
 namespace NineGrid.DevTest.Flow
@@ -36,6 +38,13 @@ namespace NineGrid.DevTest.Flow
 
         private void BeginTestLoop()
         {
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            if (arch != null)
+            {
+                arch.SendCommand(new BeginGameFlowRunCommand(testMode: true));
+                return;
+            }
+
             var manager = ResolveManager();
             if (manager == null)
             {

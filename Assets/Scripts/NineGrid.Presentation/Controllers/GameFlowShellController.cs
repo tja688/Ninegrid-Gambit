@@ -9,28 +9,31 @@ using UnityEngine;
 namespace NineGrid.Presentation.Controllers
 {
     /// <summary>
-    /// 流程壳 Controller：注册 <see cref="GameFlowShellHook"/>，相位写入走 Command。
+    /// 流程壳 Controller：Bind View、订阅 BattleSession Event → Signal、相位写入走 Command。
     /// </summary>
     public sealed class GameFlowShellController : PresentationController
     {
-        private System.Action<GameFlowShellState> mSetStateHandler;
+        private IUnRegister mSettlementUnRegister;
+        private IUnRegister mBattleEndedUnRegister;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void RegisterInstallHook()
         {
             GameFlowShellHook.WireController = Wire;
+            // PublishState 镜像路径已停用；编排写相位直接走 Command。
             GameFlowShellHook.SetState = null;
         }
 
         protected override void OnBind()
         {
-            EnsureShellRegistered();
-            InstallSetStateHandler();
+            var shell = GameFlowShellSystem.EnsureRegistered();
+            TryBindSceneView(shell);
+            SubscribeBattleSessionEvents();
         }
 
         protected override void OnUnbind()
         {
-            ClearSetStateHandler();
+            UnsubscribeBattleSessionEvents();
         }
 
         public void HandleSetState(GameFlowShellState next)
@@ -38,44 +41,70 @@ namespace NineGrid.Presentation.Controllers
             this.SendCommand(new SetGameFlowShellStateCommand(next));
         }
 
-        private void InstallSetStateHandler()
+        public void HandleBeginRun(bool testMode = true, bool quickTestMode = false)
         {
-            mSetStateHandler = HandleSetState;
-            GameFlowShellHook.SetState = mSetStateHandler;
+            this.SendCommand(new BeginGameFlowRunCommand(testMode, quickTestMode));
         }
 
-        private void ClearSetStateHandler()
+        public void HandleReturnToMainMenu()
         {
-            if (mSetStateHandler != null && GameFlowShellHook.SetState == mSetStateHandler)
-            {
-                GameFlowShellHook.SetState = null;
-            }
-
-            mSetStateHandler = null;
+            this.SendCommand(new ReturnToMainMenuCommand());
         }
 
-        private void EnsureShellRegistered()
+        public void HandleSignal(GameFlowSignal signal)
         {
-            var architecture = NineGridArchitecture.Interface;
-            if (architecture.GetSystem<IGameFlowShellSystem>() != null)
+            this.SendCommand(new SignalGameFlowCommand(signal));
+        }
+
+        private void SubscribeBattleSessionEvents()
+        {
+            UnsubscribeBattleSessionEvents();
+            var architecture = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            if (architecture == null)
             {
                 return;
             }
 
-            architecture.RegisterSystem(new GameFlowShellSystem());
+            mSettlementUnRegister = architecture.RegisterEvent<BattleSessionSettlementReadyEvent>(_ =>
+                this.SendCommand(SignalGameFlowCommand.SettlementReady()));
+            mBattleEndedUnRegister = architecture.RegisterEvent<BattleSessionEndedEvent>(e =>
+                this.SendCommand(SignalGameFlowCommand.BattleEnded(e.Victory)));
+        }
+
+        private void UnsubscribeBattleSessionEvents()
+        {
+            mSettlementUnRegister?.UnRegister();
+            mSettlementUnRegister = null;
+            mBattleEndedUnRegister?.UnRegister();
+            mBattleEndedUnRegister = null;
+        }
+
+        private static void TryBindSceneView(GameFlowShellSystem shell)
+        {
+            if (shell.IsBound)
+            {
+                return;
+            }
+
+            var view = Object.FindFirstObjectByType<MainGameLoopManagerSingleton>();
+            if (view != null)
+            {
+                shell.Bind(view);
+            }
         }
 
         private static void Wire()
         {
-            var existing = Object.FindObjectOfType<GameFlowShellController>();
+            var existing = Object.FindFirstObjectByType<GameFlowShellController>();
             if (existing == null)
             {
                 var host = new GameObject(nameof(GameFlowShellController));
                 existing = host.AddComponent<GameFlowShellController>();
             }
 
-            existing.InstallSetStateHandler();
-            existing.EnsureShellRegistered();
+            GameFlowShellSystem.EnsureRegistered();
+            TryBindSceneView(GameFlowShellSystem.EnsureRegistered());
+            existing.SubscribeBattleSessionEvents();
         }
     }
 }

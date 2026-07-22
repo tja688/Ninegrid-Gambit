@@ -1,7 +1,7 @@
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// 流程壳相位（与 MainGameLoop LoopState 对齐，供 QF System/Event 使用）。
+    /// 流程壳相位权威枚举（由 <c>IGameFlowShellSystem</c> 持有）。
     /// </summary>
     public enum GameFlowShellState
     {

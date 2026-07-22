@@ -1,3 +1,5 @@
+using NineGrid.Core;
+using NineGrid.DevTest.Commands;
 using NineGrid.Flow;
 using UnityEngine;
 
@@ -68,7 +70,7 @@ namespace NineGrid.DevTest.Flow
                 loopManager = UnityEngine.Object.FindFirstObjectByType<MainGameLoopManagerSingleton>();
             }
 
-            return loopManager != null && loopManager.CanAcceptQuickTestEntry;
+            return loopManager != null && GameFlowDevQueries.CanAcceptQuickTestEntry();
         }
 
         private void PollIdle()
@@ -131,11 +133,15 @@ namespace NineGrid.DevTest.Flow
 
         private void ConfirmAndClose()
         {
-            if (_digitBuffer.Length > 0
-                && int.TryParse(_digitBuffer, out var code)
-                && loopManager.TryBeginQuickTestFromPickerCode(code))
+            if (_digitBuffer.Length > 0 && int.TryParse(_digitBuffer, out var code))
             {
-                Debug.Log("[QuickTestEntry] 选关开始 code=" + code);
+                var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+                var started = arch != null
+                    && arch.SendCommand(new TryBeginQuickTestFromPickerCodeCommand(code));
+                if (started)
+                {
+                    Debug.Log("[QuickTestEntry] 选关开始 code=" + code);
+                }
             }
 
             loopManager.HideQuickTestPickerNotice();

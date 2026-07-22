@@ -111,13 +111,13 @@ namespace NineGrid.Flow.Diagnostics
         {
             try
             {
-                var loop = UnityEngine.Object.FindFirstObjectByType<MainGameLoopManagerSingleton>();
-                if (loop != null && loop.NodeIndex > 0)
+                var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+                var shell = arch?.GetSystem<NineGrid.Presentation.Systems.IGameFlowShellSystem>();
+                if (shell != null && shell.NodeIndex > 0)
                 {
-                    return loop.NodeIndex.ToString();
+                    return shell.NodeIndex.ToString();
                 }
 
-                var arch = NineGridArchitecture.Current;
                 if (arch != null)
                 {
                     var run = arch.GetModel<RunModel>();
