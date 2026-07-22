@@ -4,6 +4,7 @@ using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
+using NineGrid.Presentation;
 
 namespace NineGrid.Presentation.Commands
 {
@@ -63,7 +64,7 @@ namespace NineGrid.Presentation.Commands
 
         private static bool IsOrphanMidBattleRewardPending(IArchitecture architecture)
         {
-            if (CombatHitSink.ChoiceOverlayActive || architecture == null)
+            if (PresentationInputGates.ChoiceOverlayActive || architecture == null)
             {
                 return false;
             }

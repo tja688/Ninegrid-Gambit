@@ -40,6 +40,12 @@ namespace NineGrid.Flow.Presentation
             get { return mMainline.IsBusy; }
         }
 
+        /// <summary>外部薄适配租约仍持有（含嵌套未清）。</summary>
+        public bool HasExternalHold
+        {
+            get { return !mExternalHoldReleased || mExternalHoldNestDepth > 0; }
+        }
+
         public bool IsBypassBusy
         {
             get { return mBypass.IsBusy; }

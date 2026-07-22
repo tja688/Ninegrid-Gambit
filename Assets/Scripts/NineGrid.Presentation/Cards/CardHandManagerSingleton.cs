@@ -7,6 +7,7 @@ using DG.Tweening;
 using NineGrid.Cards.Convergence;
 using UnityEngine;
 using UnityEngine.Rendering;
+using NineGrid.Presentation;
 
 namespace NineGrid.Cards
 {
@@ -78,9 +79,9 @@ namespace NineGrid.Cards
             get
             {
                 if (_isBusy
-                    || CombatHitSink.ChoiceOverlayActive
-                    || CombatHitSink.DirectorMainlineBusy
-                    || CombatHitSink.BoardSelectModeActive)
+                    || PresentationInputGates.ChoiceOverlayActive
+                    || PresentationInputGates.MainlineBusy
+                    || PresentationInputGates.BoardSelectModeActive)
                 {
                     return true;
                 }
@@ -263,13 +264,13 @@ namespace NineGrid.Cards
         {
             // PresentationLocked 时本路径已持单输入锁，勿用完整 IsBusy/CanAcceptCard 自拒。
             // 多选反悔回手：End 后卡可能仍为 DragCardMode 且 _isBusy 短暂为 true，须放行。
-            var boardSelectAbortRestore = !CombatHitSink.BoardSelectModeActive
+            var boardSelectAbortRestore = !PresentationInputGates.BoardSelectModeActive
                 && card.DisplayMode == CardDisplayMode.DragCardMode;
 
             if (card == null
                 || IsDragging
                 || HandCount >= layoutSettings.maxSlots
-                || CombatHitSink.ChoiceOverlayActive)
+                || PresentationInputGates.ChoiceOverlayActive)
             {
                 return false;
             }
@@ -280,7 +281,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (!CombatHitSink.PresentationLocked && !skipBusyGuard)
+            if (!PresentationInputGates.HasExternalHold && !skipBusyGuard)
             {
                 var field = GroundFieldGeometryHook.FieldOrNull();
                 if (field != null && field.IsBusy)
@@ -435,7 +436,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (CombatHitSink.OpeningPresentationActive)
+            if (PresentationInputGates.OpeningPresentationActive)
             {
                 FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "OpeningDeal", false);
                 FlowFieldTraceSink.ClearBatchTag?.Invoke();
@@ -456,7 +457,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (!CombatHitSink.TryBeginPresentationLock("Pickup"))
+            if (!PresentationInputGates.TryBeginExternalHold("Pickup"))
             {
                 FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "LockFail", false);
                 FlowFieldTraceSink.ClearBatchTag?.Invoke();
@@ -465,7 +466,7 @@ namespace NineGrid.Cards
 
             if (PickupInputHook.TryApplyPickup == null)
             {
-                CombatHitSink.EndPresentationLock("Pickup-unwired");
+                PresentationInputGates.EndExternalHold("Pickup-unwired");
                 FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "PickupHookUnwired", false);
                 FlowFieldTraceSink.ClearBatchTag?.Invoke();
                 Debug.LogWarning("[CardHandManager] PickupInputHook.TryApplyPickup 未装配。");
@@ -475,7 +476,7 @@ namespace NineGrid.Cards
             var pickup = PickupInputHook.TryApplyPickup(groundSlot);
             if (!pickup.Accepted)
             {
-                CombatHitSink.EndPresentationLock("Pickup-rejected");
+                PresentationInputGates.EndExternalHold("Pickup-rejected");
                 FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "CoreReject", false);
                 FlowFieldTraceSink.ClearBatchTag?.Invoke();
                 return false;
@@ -505,7 +506,7 @@ namespace NineGrid.Cards
             if (!pickup.AcquiredToHand)
             {
                 Debug.LogWarning($"[CardHandManager] Pickup 已接受但未入手 uid={card.Uid}");
-                CombatHitSink.EndPresentationLock("Pickup-no-hand");
+                PresentationInputGates.EndExternalHold("Pickup-no-hand");
                 FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "NoAcquire", false);
                 FlowFieldTraceSink.ClearBatchTag?.Invoke();
                 return false;
@@ -514,7 +515,7 @@ namespace NineGrid.Cards
             if (!field.TryTakeCardFromField(card.Uid, out var taken, startExplore: false, skipBusyGuard: true)
                 || taken != card)
             {
-                CombatHitSink.EndPresentationLock("Pickup-take-failed");
+                PresentationInputGates.EndExternalHold("Pickup-take-failed");
                 FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "TakeFail", false);
                 FlowFieldTraceSink.ClearBatchTag?.Invoke();
                 return false;
@@ -541,7 +542,7 @@ namespace NineGrid.Cards
             }
             finally
             {
-                CombatHitSink.EndPresentationLock("Pickup-drain");
+                PresentationInputGates.EndExternalHold("Pickup-drain");
             }
         }
 
@@ -609,7 +610,7 @@ namespace NineGrid.Cards
             }
             finally
             {
-                CombatHitSink.EndPresentationLock("Pickup-from-ground");
+                PresentationInputGates.EndExternalHold("Pickup-from-ground");
             }
         }
 
@@ -1098,7 +1099,7 @@ namespace NineGrid.Cards
             ClearDragSession();
             CardOpacityUtility.ResetAlpha(card);
 
-            if (CombatHitSink.BoardSelectModeActive)
+            if (PresentationInputGates.BoardSelectModeActive)
             {
                 await ParkCardForBoardSelectAsync(card);
                 return;

@@ -52,21 +52,11 @@ namespace NineGrid.Presentation.Tests.UseItem
         }
 
         [Test]
-        public void CombatHitSink_NoLongerExposesUseItemBridges()
+        public void CombatHitSink_TypeIsDeleted()
         {
-            var sinkType = typeof(CombatHitSink);
             Assert.IsNull(
-                sinkType.GetField("TrySubmitUseItemIntent"),
-                "TrySubmitUseItemIntent 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetMethod("RequestUseItemIntent"),
-                "RequestUseItemIntent 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetField("ApplyUseItem"),
-                "ApplyUseItem 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetMethod("RequestUseItem"),
-                "RequestUseItem 应已从 CombatHitSink 删除");
+                System.Type.GetType("NineGrid.Cards.CombatHitSink, NineGrid.Presentation"),
+                "CombatHitSink 应已删除");
         }
 
         private static int SpawnHelpIntoItemSlots(PresentationArchitectureFixture arch, string defId)

@@ -109,7 +109,6 @@ namespace NineGrid.Presentation.Setup
 
             if (mBindings != null)
             {
-                UnwireExternalHold();
                 TriggerPulseOutputHook.RequestReset();
                 mBindings.InBattle.ClearPresentChannels();
             }
@@ -131,6 +130,8 @@ namespace NineGrid.Presentation.Setup
             }
 
             var architecture = NineGridArchitecture.Interface;
+            PresentationInputStateSystem.EnsureRegistered(architecture);
+
             var existing = architecture.GetSystem<IPresentationRuntimeSystem>();
             if (existing != null && existing.IsStarted)
             {
@@ -146,49 +147,9 @@ namespace NineGrid.Presentation.Setup
             }
 
             existing.Start(scriptFactory, uiPickPreview, timelineDiagnostics);
-            if (bindings != null)
-            {
-                WireExternalHold(existing);
-            }
-
             mRuntime = existing;
             mBindings = bindings;
             return mRuntime;
-        }
-
-        private static void WireExternalHold(IPresentationRuntimeSystem runtime)
-        {
-            CombatHitBridgeHook.BeginDirectorExternalHold = reason =>
-            {
-                if (runtime == null || !runtime.IsStarted)
-                {
-                    // 导演尚未装配时允许仅靠 PresentationLocked 防重入。
-                    return true;
-                }
-
-                return runtime.TryBeginExternalHold(reason);
-            };
-            CombatHitBridgeHook.EndDirectorExternalHold = reason =>
-            {
-                if (runtime != null && runtime.IsStarted)
-                {
-                    runtime.EndExternalHold(reason);
-                }
-            };
-            CombatHitBridgeHook.ForceEndDirectorExternalHold = reason =>
-            {
-                if (runtime != null && runtime.IsStarted)
-                {
-                    runtime.ForceEndExternalHold(reason);
-                }
-            };
-        }
-
-        private static void UnwireExternalHold()
-        {
-            CombatHitBridgeHook.BeginDirectorExternalHold = null;
-            CombatHitBridgeHook.EndDirectorExternalHold = null;
-            CombatHitBridgeHook.ForceEndDirectorExternalHold = null;
         }
     }
 }

@@ -10,6 +10,8 @@ namespace NineGrid.Flow.Presentation
     {
         bool IsStarted { get; }
         IReadonlyBindableProperty<bool> MainlineBusy { get; }
+        /// <summary>导演 external-hold 租约是否仍持有（含嵌套计数归零前）。</summary>
+        bool HasExternalHold { get; }
         bool TrySubmitIntent(InputIntent intent, out bool uiPickPreview);
         void Tick(float deltaTime);
         bool TryBeginExternalHold(string reason = null);

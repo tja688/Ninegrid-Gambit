@@ -8,6 +8,7 @@ using NineGrid.Flow.Presentation;
 using QFramework;
 using TMPro;
 using UnityEngine;
+using NineGrid.Presentation;
 
 namespace NineGrid.Flow
 {
@@ -279,7 +280,7 @@ namespace NineGrid.Flow
         private void TryRestoreBoardSelectPrompt()
         {
             if (string.IsNullOrWhiteSpace(_boardSelectPrompt)
-                || !CombatHitSink.BoardSelectModeActive
+                || !PresentationInputGates.BoardSelectModeActive
                 || cardInfoText == null)
             {
                 return;

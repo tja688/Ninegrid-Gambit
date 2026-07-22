@@ -1,5 +1,4 @@
 using System;
-using NineGrid.Cards;
 using NineGrid.Flow.Presentation;
 using QFramework;
 
@@ -12,6 +11,10 @@ namespace NineGrid.Presentation.Systems
 
         public bool IsStarted { get { return mDirector != null; } }
         public IReadonlyBindableProperty<bool> MainlineBusy { get { return mMainlineBusy; } }
+        public bool HasExternalHold
+        {
+            get { return mDirector != null && mDirector.HasExternalHold; }
+        }
 
         public void Start(IIntentScriptFactory scriptFactory, IUiPickPreviewSink uiPickPreview = null,
             ITimelineDiagnosticSink timelineDiagnostics = null)
@@ -93,10 +96,7 @@ namespace NineGrid.Presentation.Systems
 
         private void PublishBusy()
         {
-            var busy = mDirector != null && mDirector.IsMainlineBusy;
-            mMainlineBusy.Value = busy;
-            // expand-contract：Cards IsBusy 仍读 Sink；V2+ 改只读投影后删除。
-            CombatHitSink.DirectorMainlineBusy = busy;
+            mMainlineBusy.Value = mDirector != null && mDirector.IsMainlineBusy;
         }
     }
 }

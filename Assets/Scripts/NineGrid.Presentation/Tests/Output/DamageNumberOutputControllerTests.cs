@@ -64,15 +64,11 @@ namespace NineGrid.Presentation.Tests.Output
         }
 
         [Test]
-        public void CombatHitSink_NoLongerExposesDamageNumberBridge()
+        public void CombatHitSink_TypeIsDeleted()
         {
-            var sinkType = typeof(CombatHitSink);
             Assert.IsNull(
-                sinkType.GetField("SpawnDamageNumber"),
-                "SpawnDamageNumber 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetMethod("RequestDamageNumber"),
-                "RequestDamageNumber 应已从 CombatHitSink 删除");
+                System.Type.GetType("NineGrid.Cards.CombatHitSink, NineGrid.Presentation"),
+                "CombatHitSink 应已删除");
         }
     }
 }

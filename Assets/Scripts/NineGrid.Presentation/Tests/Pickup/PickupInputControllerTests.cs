@@ -40,15 +40,11 @@ namespace NineGrid.Presentation.Tests.Pickup
         }
 
         [Test]
-        public void CombatHitSink_NoLongerExposesPickupBridges()
+        public void CombatHitSink_TypeIsDeleted()
         {
-            var sinkType = typeof(CombatHitSink);
             Assert.IsNull(
-                sinkType.GetField("ApplyPickupItem"),
-                "ApplyPickupItem 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetMethod("RequestPickupItem"),
-                "RequestPickupItem 应已从 CombatHitSink 删除");
+                System.Type.GetType("NineGrid.Cards.CombatHitSink, NineGrid.Presentation"),
+                "CombatHitSink 应已删除");
         }
 
         private static int SpawnHelpOnBoard(

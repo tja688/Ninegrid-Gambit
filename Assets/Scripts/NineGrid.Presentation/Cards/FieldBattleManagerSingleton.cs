@@ -5,12 +5,13 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards.Convergence;
 using UnityEngine;
+using NineGrid.Presentation;
 
 namespace NineGrid.Cards
 {
     /// <summary>
     /// 场地交战管理器单例：Intent → Catalog 路由 → Adapter 播 Rig；
-    /// 命中帧经 CombatHitSink 写 Core，再抓 Model 刷血/飘字；
+    /// 命中帧经 CombatHitBridgeHook 写 Core，再抓 Model 刷血/飘字；
     /// 击杀后 Core 一次结算，表现缓冲按 Moved/Dealt 缓释。
     /// 净土域（纯战斗黑盒）：仅暴露 C 阶段 Evict/Admit（速度恒 0）。
     /// V7 compat shell — 跨模块解析优先 <see cref="FieldBattlePresentationHook"/> /
@@ -108,9 +109,9 @@ namespace NineGrid.Cards
             ResolveFieldManager();
             if (card == null
                 || _isBusy
-                || CombatHitSink.ChoiceOverlayActive
-                || CombatHitSink.BoardSelectModeActive
-                || CombatHitSink.DirectorMainlineBusy
+                || PresentationInputGates.ChoiceOverlayActive
+                || PresentationInputGates.BoardSelectModeActive
+                || PresentationInputGates.MainlineBusy
                 || attackAdapter == null
                 || fieldManager == null
                 || fieldManager.IsFieldBusy)
@@ -142,7 +143,7 @@ namespace NineGrid.Cards
 
         /// <summary>
         /// #11 硬切：旧进攻编排已删。提交导演攻击意图后立即返回（不等待主线播完）。
-        /// 若需等表演结束，请轮询 <see cref="CombatHitSink.DirectorMainlineBusy"/>。
+        /// 若需等表演结束，请轮询 <see cref="PresentationInputGates.MainlineBusy"/>。
         /// <paramref name="lethalOverride"/> 仍经 <see cref="ArmNextLethalAttack"/> 注入下一击。
         /// </summary>
         public UniTask RequestBasicAttackAtSlotAsync(

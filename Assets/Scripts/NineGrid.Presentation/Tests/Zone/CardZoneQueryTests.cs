@@ -59,7 +59,7 @@ namespace NineGrid.Presentation.Tests.Zone
         [Test]
         public void CardZoneOwnershipSink_TypeRemoved()
         {
-            var cardsAsm = typeof(CombatHitSink).Assembly;
+            var cardsAsm = typeof(CombatHitBridgeHook).Assembly;
             Assert.IsNull(
                 cardsAsm.GetType("NineGrid.Cards.CardZoneOwnershipSink"),
                 "CardZoneOwnershipSink 应已删除，改由 Hook + Query");

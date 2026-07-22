@@ -79,7 +79,7 @@ namespace NineGrid.Presentation.Tests.Output
         [Test]
         public void DescriptionHoverSink_TypeIsRemoved()
         {
-            var cardsAssembly = typeof(CombatHitSink).Assembly;
+            var cardsAssembly = typeof(CombatHitBridgeHook).Assembly;
             Assert.IsNull(
                 cardsAssembly.GetType("NineGrid.Cards.DescriptionHoverSink"),
                 "DescriptionHoverSink 应已删除，改由 DescriptionDisplayHook + QF Event");

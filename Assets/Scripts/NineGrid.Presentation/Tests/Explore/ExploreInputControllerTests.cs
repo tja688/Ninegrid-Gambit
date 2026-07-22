@@ -48,15 +48,11 @@ namespace NineGrid.Presentation.Tests.Explore
         }
 
         [Test]
-        public void CombatHitSink_NoLongerExposesExploreEntry()
+        public void CombatHitSink_TypeIsDeleted()
         {
-            var sinkType = typeof(CombatHitSink);
             Assert.IsNull(
-                sinkType.GetField("TrySubmitExploreIntent"),
-                "TrySubmitExploreIntent 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetMethod("RequestExploreIntent"),
-                "RequestExploreIntent 应已从 CombatHitSink 删除");
+                System.Type.GetType("NineGrid.Cards.CombatHitSink, NineGrid.Presentation"),
+                "CombatHitSink 应已删除");
         }
 
         private static NodeDeckOptions CreateSingleMonsterNode(int hp, int attack)

@@ -8,6 +8,7 @@ using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
+using NineGrid.Presentation;
 using QFramework;
 using TMPro;
 using UnityEngine;
@@ -307,7 +308,7 @@ namespace NineGrid.Flow
             SubscribeSettlement();
             CancelLoopWork();
             _loopCts = new CancellationTokenSource();
-            CombatHitSink.ResetInputGates("BeginRun");
+            PresentationInputGates.Reset("BeginRun");
             FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
             inBattleManager?.ClearCardPresentationSurface();
 
@@ -610,14 +611,14 @@ namespace NineGrid.Flow
 
             panelRouter.ShowRewardOverlay();
             BoardCardSelectModeController.RequestAbort("mainloop-reward-overlay");
-            CombatHitSink.ChoiceOverlayActive = true;
+            PresentationInputGates.SetChoiceOverlay(true);
             try
             {
                 await inBattleManager.PresentRewardChoiceFromCoreAsync(hoverOnNotice: true);
             }
             finally
             {
-                CombatHitSink.ChoiceOverlayActive = false;
+                PresentationInputGates.SetChoiceOverlay(false);
                 panelRouter.HideAllOverlays();
             }
 
@@ -690,7 +691,7 @@ namespace NineGrid.Flow
             var pickedId = string.Empty;
             var finished = false;
             BoardCardSelectModeController.RequestAbort("mainloop-room-choice");
-            CombatHitSink.ChoiceOverlayActive = true;
+            PresentationInputGates.SetChoiceOverlay(true);
             try
             {
                 selectorManager.BeginRoomChoice(
@@ -709,7 +710,7 @@ namespace NineGrid.Flow
             }
             finally
             {
-                CombatHitSink.ChoiceOverlayActive = false;
+                PresentationInputGates.SetChoiceOverlay(false);
                 panelRouter.HideAllOverlays();
             }
 
@@ -867,14 +868,14 @@ namespace NineGrid.Flow
                 // 商店 / 宝箱房：复用 Bounce 默认选择器。
                 panelRouter.ShowRewardOverlay();
                 BoardCardSelectModeController.RequestAbort("mainloop-room-reward-overlay");
-                CombatHitSink.ChoiceOverlayActive = true;
+                PresentationInputGates.SetChoiceOverlay(true);
                 try
                 {
                     await inBattleManager.PresentRewardChoiceFromCoreAsync(hoverOnNotice: true);
                 }
                 finally
                 {
-                    CombatHitSink.ChoiceOverlayActive = false;
+                    PresentationInputGates.SetChoiceOverlay(false);
                 }
             }
             else
@@ -990,7 +991,7 @@ namespace NineGrid.Flow
         {
             EnsureBindings();
             HideNotice();
-            CombatHitSink.ResetInputGates("EnterMainMenu");
+            PresentationInputGates.Reset("EnterMainMenu");
             FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
             inBattleManager?.ClearPresentationSurface();
             panelRouter.ShowMainMenu();

@@ -7,6 +7,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards.Convergence;
 using UnityEngine;
+using NineGrid.Presentation;
 
 namespace NineGrid.Cards
 {
@@ -50,8 +51,8 @@ namespace NineGrid.Cards
         {
             get
             {
-                if (CombatHitSink.ChoiceOverlayActive
-                    || CombatHitSink.DirectorMainlineBusy)
+                if (PresentationInputGates.ChoiceOverlayActive
+                    || PresentationInputGates.MainlineBusy)
                 {
                     return true;
                 }
@@ -528,8 +529,8 @@ namespace NineGrid.Cards
                 var battle = FieldBattlePresentationHook.BattleOrNull();
                 Debug.LogWarning(
                     "[GroundFieldManager] 场地自身忙碌，无法揭示 Avatar。"
-                    + $" choiceOverlay={CombatHitSink.ChoiceOverlayActive}"
-                    + $" presentationLocked={CombatHitSink.PresentationLocked}"
+                    + $" choiceOverlay={PresentationInputGates.ChoiceOverlayActive}"
+                    + $" presentationLocked={PresentationInputGates.HasExternalHold}"
                     + $" fieldSelfBusy={IsFieldBusy}"
                     + $" battleBusy={battle != null && battle.IsBusy}"
                     + $" fieldBusy={IsBusy}");
@@ -927,9 +928,9 @@ namespace NineGrid.Cards
             }
 
             // 已迁导演：覆盖层/开局/选卡/场地自忙仍硬挡；主线忙由导演缓冲意图。
-            if (CombatHitSink.ChoiceOverlayActive
-                || CombatHitSink.OpeningPresentationActive
-                || CombatHitSink.BoardSelectModeActive
+            if (PresentationInputGates.ChoiceOverlayActive
+                || PresentationInputGates.OpeningPresentationActive
+                || PresentationInputGates.BoardSelectModeActive
                 || _isBusy)
             {
                 return false;

@@ -7,6 +7,7 @@ using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using QFramework;
 using UnityEngine;
+using NineGrid.Flow.Diagnostics;
 
 namespace NineGrid.Flow.Diagnostics
 {
@@ -526,8 +527,8 @@ namespace NineGrid.Flow.Diagnostics
         {
             try
             {
-                var reason = CombatHitSink.PendingTraceReason;
-                CombatHitSink.PendingTraceReason = null;
+                var reason = CombatHitTraceContext.PendingReason;
+                CombatHitTraceContext.PendingReason = null;
                 return string.IsNullOrEmpty(reason) ? fallback : reason;
             }
             catch

@@ -1,59 +1,33 @@
+using System;
 using NineGrid.Cards;
 using NUnit.Framework;
 
 namespace NineGrid.Presentation.Tests
 {
     /// <summary>
-    /// C2：交战业务桥迁至 CombatHitBridgeHook；CombatHitSink 不再暴露业务委托/Request。
+    /// #43 批次2：交战业务桥在 CombatHitBridgeHook；CombatHitSink 与 BridgeHook external-hold 已删。
     /// </summary>
     public sealed class CombatHitBridgeHookTests
     {
         [Test]
-        public void CombatHitSink_NoLongerExposesCombatHitBusinessBridge()
+        public void CombatHitSink_TypeIsDeleted()
         {
-            var sinkType = typeof(CombatHitSink);
             Assert.IsNull(
-                sinkType.GetField("ApplyCombatHit"),
-                "ApplyCombatHit 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetMethod("RequestCombatHit"),
-                "RequestCombatHit 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetField("ResolvePostKillBoard"),
-                "ResolvePostKillBoard 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetMethod("RequestPostKillBoard"),
-                "RequestPostKillBoard 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetField("SyncCardPresentation"),
-                "SyncCardPresentation 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetField("SyncBoardFromCore"),
-                "SyncBoardFromCore 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetField("NotifyBattleEnded"),
-                "NotifyBattleEnded 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetField("NotifyNodeSettlementReady"),
-                "NotifyNodeSettlementReady 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetField("BeginDirectorExternalHold"),
-                "BeginDirectorExternalHold 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetField("EndDirectorExternalHold"),
-                "EndDirectorExternalHold 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetField("ForceEndDirectorExternalHold"),
-                "ForceEndDirectorExternalHold 应已从 CombatHitSink 删除");
+                Type.GetType("NineGrid.Cards.CombatHitSink, NineGrid.Presentation"),
+                "CombatHitSink 应已删除");
         }
 
         [Test]
-        public void CombatHitBridgeHook_ExposesCombatHitBusinessBridge()
+        public void CombatHitBridgeHook_ExposesCombatHitBusinessBridge_WithoutExternalHold()
         {
             var hookType = typeof(CombatHitBridgeHook);
             Assert.IsNotNull(hookType.GetField("ApplyCombatHit"));
             Assert.IsNotNull(hookType.GetMethod("RequestCombatHit"));
-            Assert.IsNotNull(hookType.GetField("BeginDirectorExternalHold"));
+            Assert.IsNull(
+                hookType.GetField("BeginDirectorExternalHold"),
+                "external-hold 应已迁出 BridgeHook");
+            Assert.IsNull(hookType.GetField("EndDirectorExternalHold"));
+            Assert.IsNull(hookType.GetField("ForceEndDirectorExternalHold"));
         }
     }
 }

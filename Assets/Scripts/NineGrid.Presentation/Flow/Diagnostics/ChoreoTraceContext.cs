@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text;
 using NineGrid.Cards;
 using UnityEngine;
+using NineGrid.Presentation;
 
 namespace NineGrid.Flow.Diagnostics
 {
@@ -303,8 +304,8 @@ namespace NineGrid.Flow.Diagnostics
                 payload["drainInFlight"] = DrainInFlight ? "true" : "false";
                 payload["pumpRunning"] = PumpRunning ? "true" : "false";
                 payload["queueDepth"] = BoardQueueDepth.ToString(CultureInfo.InvariantCulture);
-                payload["presentationLocked"] = CombatHitSink.PresentationLocked ? "true" : "false";
-                payload["choiceOverlay"] = CombatHitSink.ChoiceOverlayActive ? "true" : "false";
+                payload["presentationLocked"] = PresentationInputGates.HasExternalHold ? "true" : "false";
+                payload["choiceOverlay"] = PresentationInputGates.ChoiceOverlayActive ? "true" : "false";
                 payload["battleBusy"] = fieldBattle != null && fieldBattle.IsBusy ? "true" : "false";
                 payload["openMotionCount"] = PerfTraceRecorder.OpenMotionCount.ToString(CultureInfo.InvariantCulture);
                 if (battle != null)

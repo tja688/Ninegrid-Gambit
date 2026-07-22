@@ -1,4 +1,5 @@
 using UnityEngine;
+using NineGrid.Presentation;
 
 namespace NineGrid.Cards
 {
@@ -49,7 +50,7 @@ namespace NineGrid.Cards
 
         private void OnMouseDown()
         {
-            if (CombatHitSink.BoardSelectModeActive)
+            if (PresentationInputGates.BoardSelectModeActive)
             {
                 return;
             }

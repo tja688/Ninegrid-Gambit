@@ -14,6 +14,7 @@ using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
+using NineGrid.Presentation;
 
 namespace NineGrid.Flow
 {
@@ -354,7 +355,7 @@ namespace NineGrid.Flow
             CheatMakeNodeCleared(arch);
 
             (battleManager ?? FieldBattlePresentationHook.BattleOrNull())?.CancelBattleWork();
-            CombatHitSink.ForceEndPresentationLock("CheatForceNodeVictory");
+            PresentationInputGates.ForceEndExternalHold("CheatForceNodeVictory");
             CancelPresentationWork();
 
             var pipeline = arch.GetSystem<IActionPipelineSystem>();
@@ -541,7 +542,7 @@ namespace NineGrid.Flow
         {
             CancelPresentationWork();
             (battleManager ?? FieldBattlePresentationHook.BattleOrNull())?.CancelBattleWork();
-            CombatHitSink.ForceEndPresentationLock("ClearPresentationSurface");
+            PresentationInputGates.ForceEndExternalHold("ClearPresentationSurface");
             _drainInFlight = false;
             ResetPresentationSurface();
             _settlementRaised = false;
@@ -555,7 +556,7 @@ namespace NineGrid.Flow
         {
             CancelPresentationWork();
             (battleManager ?? FieldBattlePresentationHook.BattleOrNull())?.CancelBattleWork();
-            CombatHitSink.ForceEndPresentationLock("ClearCardPresentationSurface");
+            PresentationInputGates.ForceEndExternalHold("ClearCardPresentationSurface");
             _drainInFlight = false;
             ResetCardPresentationSurface();
             _settlementRaised = false;
@@ -672,7 +673,7 @@ namespace NineGrid.Flow
                 CancelPresentationWork();
                 _drainInFlight = false;
                 _isBusy = false;
-                CombatHitSink.ForceEndPresentationLock("StartBattleNode.staleBusy");
+                PresentationInputGates.ForceEndExternalHold("StartBattleNode.staleBusy");
             }
 
             ResolveManagers();
@@ -1181,7 +1182,7 @@ namespace NineGrid.Flow
             OpeningPresentationPlan plan,
             CancellationToken cancellationToken)
         {
-            CombatHitSink.OpeningPresentationActive = true;
+            PresentationInputGates.SetOpening(true);
             try
             {
             if (plan.DeckCards.Count > 0)
@@ -1418,7 +1419,7 @@ namespace NineGrid.Flow
             }
             finally
             {
-                CombatHitSink.OpeningPresentationActive = false;
+                PresentationInputGates.SetOpening(false);
                 // #10：开局不再靠 Sync 自愈占格镜像；几何登记由发牌表演维护，合法性由 Flow idle 裁决。
                 // 开局表演收束：编排主线全场 Commit 投影（非旁路 Set*）。
                 CoreCardPresentationMapper.CommitAllSpawnedCards();
@@ -1454,7 +1455,7 @@ namespace NineGrid.Flow
             (selectorManager ?? FindFirstObjectByType<SelectorManagerSingleton>())?.HideChoice();
             // 先取消交战/手牌异步，再强制清占格与手牌槽，最后统一 Release 视图。
             (battleManager ?? FieldBattlePresentationHook.BattleOrNull())?.CancelBattleWork();
-            CombatHitSink.ResetInputGates("ResetCardPresentationSurface");
+            PresentationInputGates.Reset("ResetCardPresentationSurface");
             (handManager ?? CardEntityLifecycleHook.HandOrNull())?.ClearHand();
             deckManager?.ResetToStandby();
             fieldManager?.ClearField(force: true);
@@ -1531,7 +1532,7 @@ namespace NineGrid.Flow
 
             _shuffleIntoSink.Clear();
 
-            CombatHitSink.ForceEndPresentationLock("CancelPresentationWork");
+            PresentationInputGates.ForceEndExternalHold("CancelPresentationWork");
             ShutdownPresentationRuntime(IntentClearReason.LayerChange);
             // 导演硬清不会 FinishBatch；必须清核心 PresentationSync，否则 IsInputLocked
             // 粘连会使 BuildEnemyPool 下 StartNode 非法。
@@ -1657,12 +1658,10 @@ namespace NineGrid.Flow
                 BoardPresentShuffleHook.Flush = null;
             }
 
-            CombatHitSink.ForceEndPresentationLock("UnregisterCombatHitSink");
+            PresentationInputGates.ForceEndExternalHold("UnregisterCombatHitSink");
             _drainInFlight = false;
 
             UnregisterPresentationIntentHandlers();
-
-            CombatHitSink.DirectorMainlineBusy = false;
             ShutdownPresentationRuntime(IntentClearReason.LayerChange);
 
             if (CombatHitBridgeHook.NotifyBattleEnded == OnBattleEndedFromCombat)
@@ -2169,9 +2168,9 @@ namespace NineGrid.Flow
             }
 
             var acquiredHere = false;
-            if (!CombatHitSink.PresentationLocked)
+            if (!PresentationInputGates.HasExternalHold)
             {
-                if (!CombatHitSink.TryBeginPresentationLock("BoardPresentDrain"))
+                if (!PresentationInputGates.TryBeginExternalHold("BoardPresentDrain"))
                 {
                     Debug.LogWarning("[InBattleManager] 盘面 Present 无法获取表现锁，跳过。");
                     return;
@@ -2205,7 +2204,7 @@ namespace NineGrid.Flow
                 ChoreoTraceContext.DrainInFlight = false;
                 if (acquiredHere)
                 {
-                    CombatHitSink.EndPresentationLock("BoardPresentDrain");
+                    PresentationInputGates.EndExternalHold("BoardPresentDrain");
                 }
 
                 FlushDeferredBoardSync(force: true);
@@ -2262,7 +2261,7 @@ namespace NineGrid.Flow
                             dealCount,
                             drainInFlight: true,
                             fieldBusy: fieldManager.IsBusy,
-                            presentationLocked: CombatHitSink.PresentationLocked,
+                            presentationLocked: PresentationInputGates.HasExternalHold,
                             stepCount: stepCount,
                             requestId: requestId);
                         FieldTraceHelper.RecordOccupancySnapshot("drainBefore");
@@ -2331,7 +2330,7 @@ namespace NineGrid.Flow
                             dealCount,
                             drainInFlight: true,
                             fieldBusy: fieldManager.IsBusy,
-                            presentationLocked: CombatHitSink.PresentationLocked,
+                            presentationLocked: PresentationInputGates.HasExternalHold,
                             stepCount: stepCount,
                             requestId: requestId);
                     }
@@ -3515,7 +3514,7 @@ namespace NineGrid.Flow
                 new Dictionary<string, string>
                 {
                     ["skillId"] = fusion.SkillId,
-                    ["refillDeferredToDirector"] = CombatHitSink.DirectorMainlineBusy ? "1" : "0",
+                    ["refillDeferredToDirector"] = PresentationInputGates.MainlineBusy ? "1" : "0",
                 });
             return true;
         }
@@ -3562,8 +3561,8 @@ namespace NineGrid.Flow
                 return false;
             }
 
-            if (CombatHitSink.ChoiceOverlayActive
-                || CombatHitSink.DirectorMainlineBusy)
+            if (PresentationInputGates.ChoiceOverlayActive
+                || PresentationInputGates.MainlineBusy)
             {
                 return false;
             }
@@ -3738,8 +3737,8 @@ namespace NineGrid.Flow
             var elapsed = 0;
             while (elapsed < BoardSelectLockWaitMs)
             {
-                if (!CombatHitSink.ChoiceOverlayActive
-                    && !CombatHitSink.DirectorMainlineBusy)
+                if (!PresentationInputGates.ChoiceOverlayActive
+                    && !PresentationInputGates.MainlineBusy)
                 {
                     return true;
                 }
@@ -3819,7 +3818,7 @@ namespace NineGrid.Flow
             while (elapsed < BoardSelectLockWaitMs)
             {
                 if (!hand.IsDragging
-                    && !CombatHitSink.BoardSelectModeActive
+                    && !PresentationInputGates.BoardSelectModeActive
                     && (hand.CanAcceptCard || !hand.IsBusy))
                 {
                     return true;
@@ -3830,7 +3829,7 @@ namespace NineGrid.Flow
             }
 
             return !hand.IsDragging
-                   && !CombatHitSink.BoardSelectModeActive
+                   && !PresentationInputGates.BoardSelectModeActive
                    && (hand.CanAcceptCard || !hand.IsBusy);
         }
 
@@ -4141,7 +4140,7 @@ namespace NineGrid.Flow
             }
 
             AbortBoardSelectIfActive("reward-choice");
-            CombatHitSink.ChoiceOverlayActive = true;
+            PresentationInputGates.SetChoiceOverlay(true);
             try
             {
                 // 点选即推进 Core；退场动画（约 5s 掉落）在后台播，不再锁输入。
@@ -4213,8 +4212,8 @@ namespace NineGrid.Flow
                     reason: string.Empty);
 
                 // 选完关闭覆盖层；Drain 期间由导演主线租约挡输入（外层已持锁则复用）。
-                var acquiredDrainLock = CombatHitSink.TryBeginPresentationLock("RewardDrain");
-                CombatHitSink.ChoiceOverlayActive = false;
+                var acquiredDrainLock = PresentationInputGates.TryBeginExternalHold("RewardDrain");
+                PresentationInputGates.SetChoiceOverlay(false);
                 try
                 {
                     FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids, out var rewardSteps);
@@ -4274,13 +4273,13 @@ namespace NineGrid.Flow
                 {
                     if (acquiredDrainLock)
                     {
-                        CombatHitSink.EndPresentationLock("RewardDrain");
+                        PresentationInputGates.EndExternalHold("RewardDrain");
                     }
                 }
             }
             finally
             {
-                CombatHitSink.ChoiceOverlayActive = false;
+                PresentationInputGates.SetChoiceOverlay(false);
             }
         }
 
@@ -4366,7 +4365,7 @@ namespace NineGrid.Flow
             }
 
             AbortBoardSelectIfActive("stat-boost-choice");
-            CombatHitSink.ChoiceOverlayActive = true;
+            PresentationInputGates.SetChoiceOverlay(true);
             try
             {
                 var pick = await WaitBouncePickAsync(selector, StatBoostOptions, allowEscapeSkip: false);
@@ -4379,7 +4378,7 @@ namespace NineGrid.Flow
             }
             finally
             {
-                CombatHitSink.ChoiceOverlayActive = false;
+                PresentationInputGates.SetChoiceOverlay(false);
             }
         }
 
@@ -5094,7 +5093,7 @@ namespace NineGrid.Flow
 
         private static bool HasOrphanMidBattleRewardPending()
         {
-            if (CombatHitSink.ChoiceOverlayActive)
+            if (PresentationInputGates.ChoiceOverlayActive)
             {
                 return false;
             }

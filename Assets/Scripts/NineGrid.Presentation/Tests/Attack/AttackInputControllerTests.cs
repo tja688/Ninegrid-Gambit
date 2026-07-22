@@ -47,27 +47,11 @@ namespace NineGrid.Presentation.Tests.Attack
         }
 
         [Test]
-        public void CombatHitSink_NoLongerExposesAttackRuleBridges()
+        public void CombatHitSink_TypeIsDeleted()
         {
-            var sinkType = typeof(CombatHitSink);
             Assert.IsNull(
-                sinkType.GetField("TrySubmitAttackIntent"),
-                "TrySubmitAttackIntent 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetMethod("RequestAttackIntent"),
-                "RequestAttackIntent 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetField("EstimateWillKill"),
-                "EstimateWillKill 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetField("ResolvePlayerAttackTarget"),
-                "ResolvePlayerAttackTarget 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetMethod("RequestEstimateWillKill"),
-                "RequestEstimateWillKill 应已从 CombatHitSink 删除");
-            Assert.IsNull(
-                sinkType.GetMethod("RequestResolvePlayerAttackTarget"),
-                "RequestResolvePlayerAttackTarget 应已从 CombatHitSink 删除");
+                System.Type.GetType("NineGrid.Cards.CombatHitSink, NineGrid.Presentation"),
+                "CombatHitSink 应已删除");
         }
 
         private static NodeDeckOptions CreateSingleMonsterNode(int hp, int attack)

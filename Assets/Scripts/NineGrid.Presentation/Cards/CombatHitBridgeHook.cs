@@ -3,8 +3,8 @@ using System;
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 交战/盘面结算桥：由场景组合根或 InBattle 宿主显式注册，替代 CombatHitSink 业务静态委托。
-    /// 门禁标志仍暂留 CombatHitSink（A1 后只读投影化）。
+    /// 交战/盘面结算桥：由场景组合根或 InBattle 宿主显式注册。
+    /// 输入门禁与 external-hold 见 <c>PresentationInputGates</c> / Runtime Command。
     /// </summary>
     public static class CombatHitBridgeHook
     {
@@ -15,10 +15,6 @@ namespace NineGrid.Cards
         public static Action<bool> NotifyBattleEnded;
         public static Action NotifyNodeSettlementReady;
 
-        public static Func<string, bool> BeginDirectorExternalHold;
-        public static Action<string> EndDirectorExternalHold;
-        public static Action<string> ForceEndDirectorExternalHold;
-
         public static void Reset()
         {
             ApplyCombatHit = null;
@@ -27,9 +23,6 @@ namespace NineGrid.Cards
             SyncBoardFromCore = null;
             NotifyBattleEnded = null;
             NotifyNodeSettlementReady = null;
-            BeginDirectorExternalHold = null;
-            EndDirectorExternalHold = null;
-            ForceEndDirectorExternalHold = null;
         }
 
         public static CombatHitPresentationResult RequestCombatHit(int attackerUid, int targetUid)

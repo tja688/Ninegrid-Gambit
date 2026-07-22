@@ -1,74 +1,130 @@
-using NineGrid.Cards;
+using NineGrid.Flow.Presentation;
+using NineGrid.Presentation.Systems;
+using NineGrid.Presentation.Tests.Fixtures;
 using NUnit.Framework;
 
 namespace NineGrid.Presentation.Tests.BehaviorBaseline
 {
     /// <summary>
-    /// #43 批次0：Opening / overlay / board-select 门禁矩阵行为基线（接口级标志语义）。
-    /// 批次2 迁入 PresentationInputStateSystem 后本测试应改读只读投影。
+    /// #43 批次2：Opening / overlay / board-select 门禁矩阵（只读投影 + Command 写入）。
     /// </summary>
     public sealed class InputGateMatrixBaselineTests
     {
         [TearDown]
         public void TearDown()
         {
-            CombatHitSink.ResetInputGates("InputGateMatrixBaselineTests");
+            PresentationInputGates.Reset("InputGateMatrixBaselineTests");
         }
 
         [Test]
         public void GateFlags_AreIndependent_UntilResetClearsAll()
         {
-            CombatHitSink.OpeningPresentationActive = true;
-            CombatHitSink.ChoiceOverlayActive = true;
-            CombatHitSink.BoardSelectModeActive = true;
-            CombatHitSink.DirectorMainlineBusy = true;
+            using (var arch = PresentationArchitectureFixture.CreateBare())
+            using (var runtime = PresentationRuntimeFixture.Install(arch, new AcceptAllScriptFactory()))
+            {
+                var input = PresentationInputStateSystem.EnsureRegistered(arch.Architecture);
 
-            Assert.IsTrue(CombatHitSink.OpeningPresentationActive);
-            Assert.IsTrue(CombatHitSink.ChoiceOverlayActive);
-            Assert.IsTrue(CombatHitSink.BoardSelectModeActive);
-            Assert.IsTrue(CombatHitSink.DirectorMainlineBusy);
+                input.SetOpeningPresentationActive(true);
+                input.SetChoiceOverlayActive(true);
+                input.SetBoardSelectModeActive(true);
+                Assert.IsTrue(runtime.Runtime.TryBeginExternalHold("busy-mirror"));
 
-            CombatHitSink.OpeningPresentationActive = false;
-            Assert.IsFalse(CombatHitSink.OpeningPresentationActive);
-            Assert.IsTrue(CombatHitSink.ChoiceOverlayActive);
-            Assert.IsTrue(CombatHitSink.BoardSelectModeActive);
+                Assert.IsTrue(input.OpeningPresentationActive.Value);
+                Assert.IsTrue(input.ChoiceOverlayActive.Value);
+                Assert.IsTrue(input.BoardSelectModeActive.Value);
+                Assert.IsTrue(input.MainlineBusy);
 
-            CombatHitSink.ResetInputGates("matrix");
-            Assert.IsFalse(CombatHitSink.OpeningPresentationActive);
-            Assert.IsFalse(CombatHitSink.ChoiceOverlayActive);
-            Assert.IsFalse(CombatHitSink.BoardSelectModeActive);
-            Assert.IsFalse(CombatHitSink.DirectorMainlineBusy);
-            Assert.IsFalse(CombatHitSink.PresentationLocked);
+                input.SetOpeningPresentationActive(false);
+                Assert.IsFalse(input.OpeningPresentationActive.Value);
+                Assert.IsTrue(input.ChoiceOverlayActive.Value);
+                Assert.IsTrue(input.BoardSelectModeActive.Value);
+
+                input.ResetGates("matrix");
+                runtime.Tick();
+                Assert.IsFalse(input.OpeningPresentationActive.Value);
+                Assert.IsFalse(input.ChoiceOverlayActive.Value);
+                Assert.IsFalse(input.BoardSelectModeActive.Value);
+                Assert.IsFalse(input.MainlineBusy);
+                Assert.IsFalse(input.HasExternalHold);
+            }
         }
 
         [Test]
-        public void PresentationLock_RejectsReentry_AndForceEndAlwaysReleases()
+        public void ExternalHold_RejectsReentry_AndForceEndAlwaysReleases()
         {
-            Assert.IsTrue(CombatHitSink.TryBeginPresentationLock("pickup"));
-            Assert.IsTrue(CombatHitSink.PresentationLocked);
-            Assert.IsFalse(CombatHitSink.TryBeginPresentationLock("pickup-reentry"));
+            using (var arch = PresentationArchitectureFixture.CreateBare())
+            using (var runtime = PresentationRuntimeFixture.Install(
+                       arch,
+                       new RecordingScriptFactory(continueTicks: 1)))
+            {
+                PresentationInputStateSystem.EnsureRegistered(arch.Architecture);
 
-            CombatHitSink.EndPresentationLock("pickup");
-            Assert.IsFalse(CombatHitSink.PresentationLocked);
+                Assert.IsTrue(PresentationInputGates.TryBeginExternalHold("pickup"));
+                Assert.IsTrue(PresentationInputGates.HasExternalHold);
+                Assert.IsFalse(PresentationInputGates.TryBeginExternalHold("pickup-reentry"));
 
-            Assert.IsTrue(CombatHitSink.TryBeginPresentationLock("drain"));
-            CombatHitSink.ForceEndPresentationLock("cancel");
-            Assert.IsFalse(CombatHitSink.PresentationLocked);
+                PresentationInputGates.EndExternalHold("pickup");
+                runtime.Tick();
+                Assert.IsFalse(PresentationInputGates.HasExternalHold);
 
-            // ForceEnd 在未持锁时也是幂等 no-op。
-            CombatHitSink.ForceEndPresentationLock("already-clear");
-            Assert.IsFalse(CombatHitSink.PresentationLocked);
+                Assert.IsTrue(PresentationInputGates.TryBeginExternalHold("drain"));
+                PresentationInputGates.ForceEndExternalHold("cancel");
+                runtime.Tick();
+                Assert.IsFalse(PresentationInputGates.HasExternalHold);
+
+                PresentationInputGates.ForceEndExternalHold("already-clear");
+                runtime.Tick();
+                Assert.IsFalse(PresentationInputGates.HasExternalHold);
+            }
         }
 
         [Test]
-        public void Opening_Overlay_BoardSelect_DoNotImplyPresentationLocked()
+        public void Opening_Overlay_BoardSelect_DoNotImplyExternalHold()
         {
-            CombatHitSink.OpeningPresentationActive = true;
-            CombatHitSink.ChoiceOverlayActive = true;
-            CombatHitSink.BoardSelectModeActive = true;
+            using (var arch = PresentationArchitectureFixture.CreateBare())
+            {
+                var input = PresentationInputStateSystem.EnsureRegistered(arch.Architecture);
+                input.SetOpeningPresentationActive(true);
+                input.SetChoiceOverlayActive(true);
+                input.SetBoardSelectModeActive(true);
 
-            Assert.IsFalse(CombatHitSink.PresentationLocked);
-            Assert.IsFalse(CombatHitSink.DirectorMainlineBusy);
+                Assert.IsFalse(input.HasExternalHold);
+                Assert.IsFalse(input.MainlineBusy);
+            }
+        }
+
+        [Test]
+        public void TypedQueries_RejectOverlayAndAllowExploreBufferWhenBusy()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateBare())
+            using (var runtime = PresentationRuntimeFixture.Install(arch, new AcceptAllScriptFactory()))
+            {
+                var input = PresentationInputStateSystem.EnsureRegistered(arch.Architecture);
+
+                input.SetChoiceOverlayActive(true);
+                Assert.AreEqual(
+                    PresentationInputDisposition.Reject,
+                    input.EvaluateExplore().Disposition);
+                Assert.AreEqual(
+                    PresentationInputDisposition.Reject,
+                    input.EvaluateAttack().Disposition);
+
+                input.SetChoiceOverlayActive(false);
+                Assert.IsTrue(runtime.Runtime.TryBeginExternalHold("hold"));
+                Assert.AreEqual(
+                    PresentationInputDisposition.BufferToDirector,
+                    input.EvaluateExplore().Disposition);
+                Assert.AreEqual(
+                    PresentationInputDisposition.Reject,
+                    input.EvaluateAttack().Disposition);
+            }
+        }
+
+        private sealed class AcceptAllScriptFactory : IIntentScriptFactory
+        {
+            public void BuildScript(InputIntent intent, BattleTimeline mainline)
+            {
+            }
         }
     }
 }

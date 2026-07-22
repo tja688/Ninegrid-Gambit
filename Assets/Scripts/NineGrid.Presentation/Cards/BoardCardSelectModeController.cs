@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using NineGrid.Presentation;
 
 namespace NineGrid.Cards
 {
@@ -44,7 +45,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (CombatHitSink.DirectorMainlineBusy || CombatHitSink.ChoiceOverlayActive)
+            if (PresentationInputGates.MainlineBusy || PresentationInputGates.ChoiceOverlayActive)
             {
                 return false;
             }
@@ -55,7 +56,7 @@ namespace NineGrid.Cards
             _parkedItemUid = 0;
             SelectedUids.Clear();
             _active = true;
-            CombatHitSink.BoardSelectModeActive = true;
+            PresentationInputGates.SetBoardSelect(true);
             RegistryTraceSink.NotifyUserInteraction?.Invoke("BoardSelectBegin");
             Debug.Log(
                 $"[BoardCardSelectMode] Begin itemUid={itemUid} defId={_itemDefId} required={requiredCount}");
@@ -92,7 +93,7 @@ namespace NineGrid.Cards
             _parkedItemUid = 0;
             _active = false;
             _committing = false;
-            CombatHitSink.BoardSelectModeActive = false;
+            PresentationInputGates.SetBoardSelect(false);
             DescriptionDisplayHook.RequestClear(DescriptionShowRoute.BoardSelect);
             Debug.Log("[BoardCardSelectMode] End");
         }

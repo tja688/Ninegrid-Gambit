@@ -1,5 +1,6 @@
 using NineGrid.Cards.Convergence;
 using UnityEngine;
+using NineGrid.Presentation;
 
 namespace NineGrid.Cards
 {
@@ -89,7 +90,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            if (CombatHitSink.BoardSelectModeActive)
+            if (PresentationInputGates.BoardSelectModeActive)
             {
                 BoardCardSelectModeController.TryToggleSelection(card);
                 return;
@@ -202,7 +203,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (hand != null && hand.IsBusy && !CombatHitSink.BoardSelectModeActive)
+            if (hand != null && hand.IsBusy && !PresentationInputGates.BoardSelectModeActive)
             {
                 return false;
             }
@@ -256,7 +257,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (CombatHitSink.OpeningPresentationActive)
+            if (PresentationInputGates.OpeningPresentationActive)
             {
                 blockReason = "openingDeal";
                 return false;
