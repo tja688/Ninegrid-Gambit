@@ -13,6 +13,7 @@ namespace NineGrid.Flow.Tests
 {
     /// <summary>
     /// #8 洗回牌库：导演 Present 前缀拥有洗回表演；解算后仅入 sink，Present 前不旁路开播。
+    /// V5：经 ShuffleIntoDeckScheduler 入队（生产路径另有 Presentation Command）。
     /// </summary>
     public sealed class ShuffleVerticalSliceTests
     {
@@ -23,6 +24,7 @@ namespace NineGrid.Flow.Tests
         private IActionPipelineSystem mPipeline;
         private IPresentationSyncSystem mSync;
         private CoreCommandDispatcher mDispatcher;
+        private ShuffleIntoDeckScheduler mScheduler;
 
         [SetUp]
         public void SetUp()
@@ -37,6 +39,7 @@ namespace NineGrid.Flow.Tests
             mPipeline = mArch.GetSystem<IActionPipelineSystem>();
             mSync = mArch.GetSystem<IPresentationSyncSystem>();
             mDispatcher = new CoreCommandDispatcher(mArch);
+            mScheduler = new ShuffleIntoDeckScheduler();
         }
 
         [TearDown]
@@ -57,7 +60,7 @@ namespace NineGrid.Flow.Tests
             var shuffleSink = new ShuffleIntoDeckPresentSink();
             var useInner = new RecordingPresentChannel(ticksUntilComplete: 1);
             // 2 tick：与 PresentStep 同帧 Begin+Tick 错开，便于断言「先洗回、后内层」。
-            var usePresent = new ShufflePrefixedPresentChannel(shuffleSink, useInner, 2);
+            var usePresent = new ShufflePrefixedPresentChannel(shuffleSink, useInner, 2, mScheduler);
             var boardPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
             var factory = new UseItemIntentScriptFactory(
                 mArch,
@@ -66,7 +69,7 @@ namespace NineGrid.Flow.Tests
                 boardPresent,
                 onUseBatchProjected: (startIndex, _, __) =>
                 {
-                    ShuffleIntoDeckLockstep.EnqueueFromEventLog(
+                    mScheduler.EnqueueFromEventLog(
                         shuffleSink,
                         mArch,
                         startIndex,
@@ -86,7 +89,7 @@ namespace NineGrid.Flow.Tests
             director.Tick(0.016f);
             Assert.AreEqual(1, mSync.ActiveBatchId);
             Assert.IsTrue(
-                ShuffleIntoDeckLockstep.HasShuffleExistingSince(mPipeline, useStart),
+                mScheduler.HasShuffleExistingSince(mPipeline, useStart),
                 "传送卡解算须产生 ExistingCard 洗回事件");
             Assert.Greater(shuffleSink.PendingCount, 0, "洗回应入导演 sink，而非旁路开播");
             Assert.AreEqual(0, usePresent.ShuffleBeginCount);
@@ -128,7 +131,7 @@ namespace NineGrid.Flow.Tests
         {
             var sink = new ShuffleIntoDeckPresentSink();
             var inner = new RecordingPresentChannel(ticksUntilComplete: 1);
-            var channel = new ShufflePrefixedPresentChannel(sink, inner, 1);
+            var channel = new ShufflePrefixedPresentChannel(sink, inner, 1, mScheduler);
 
             channel.Begin(7);
             Assert.AreEqual(0, channel.ShuffleBeginCount);

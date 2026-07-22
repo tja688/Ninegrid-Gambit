@@ -52,6 +52,7 @@ namespace NineGrid.Flow
         private CancellationTokenSource _presentationCts;
         private int _nodeEventLogStart;
         private readonly ShuffleIntoDeckPresentSink _shuffleIntoSink = new ShuffleIntoDeckPresentSink();
+        private readonly ShuffleIntoDeckScheduler _shuffleIntoScheduler = new ShuffleIntoDeckScheduler();
         private Transform _shuffleOriginScratch;
         private readonly Dictionary<int, HashSet<int>> _pendingFusionRemoves = new();
         private readonly HashSet<int> _completedFusionActionIds = new();
@@ -1481,7 +1482,7 @@ namespace NineGrid.Flow
             CombatHitSink.SpawnDamageNumber = SpawnDamageNumberAt;
             CombatHitSink.SyncBoardFromCore = RequestSyncBoardFromCore;
             BoardPresentDrainHook.RequestWire(DrainPostKillBoardAsync);
-            CombatHitSink.FlushPendingShuffleIntoPresentation = FlushPendingShuffleIntoPresentationAsync;
+            BoardPresentShuffleHook.RequestWire(FlushPendingShuffleIntoPresentationAsync);
             CombatHitSink.NotifyBattleEnded = OnBattleEndedFromCombat;
             CombatHitSink.NotifyNodeSettlementReady = OnNodeSettlementFromCombat;
             FieldTraceHelper.RegisterSinkHandlers();
@@ -1526,9 +1527,9 @@ namespace NineGrid.Flow
                 BoardPresentDrainHook.Drain = null;
             }
 
-            if (CombatHitSink.FlushPendingShuffleIntoPresentation == FlushPendingShuffleIntoPresentationAsync)
+            if (BoardPresentShuffleHook.Flush == FlushPendingShuffleIntoPresentationAsync)
             {
-                CombatHitSink.FlushPendingShuffleIntoPresentation = null;
+                BoardPresentShuffleHook.Flush = null;
             }
 
             CombatHitSink.ForceEndPresentationLock("UnregisterCombatHitSink");
@@ -2118,7 +2119,7 @@ namespace NineGrid.Flow
                     {
                         var fusionState = BuildFusionDrainState(result, _nodeEventLogStart);
                         PurgeFusionResultsFromShuffleQueue(fusionState);
-                        await FlushPendingShuffleIntoPresentationAsync(ct);
+                        await BoardPresentShuffleHook.RequestFlush(ct);
                         FieldTraceHelper.RecordDrainBegin(
                             moveCount,
                             dealCount,
@@ -2419,7 +2420,7 @@ namespace NineGrid.Flow
             int rotateScanStart = 0)
         {
             ResolveManagers();
-            await FlushPendingShuffleIntoPresentationAsync(ct);
+            await BoardPresentShuffleHook.RequestFlush(ct);
 
             var dealInterval = deckManager != null && deckManager.LayoutSettings != null
                 ? deckManager.LayoutSettings.dealInterval
@@ -2755,7 +2756,7 @@ namespace NineGrid.Flow
                 return;
             }
 
-            ShuffleIntoDeckLockstep.EnqueueFromEventLog(
+            _shuffleIntoScheduler.EnqueueFromEventLog(
                 _shuffleIntoSink,
                 arch,
                 startIndex,
@@ -2800,7 +2801,7 @@ namespace NineGrid.Flow
                 ? deckManager.LayoutSettings.dealInterval
                 : 0.05f;
             var startedCount = pending.Count;
-            ShuffleIntoDeckLockstep.RecordPresentBegin(startedCount);
+            _shuffleIntoScheduler.RecordPresentBegin(startedCount);
 
             try
             {
@@ -2835,7 +2836,7 @@ namespace NineGrid.Flow
             }
             finally
             {
-                ShuffleIntoDeckLockstep.RecordPresentEnd(startedCount);
+                _shuffleIntoScheduler.RecordPresentEnd(startedCount);
             }
         }
 
@@ -2848,7 +2849,7 @@ namespace NineGrid.Flow
                 return;
             }
 
-            ShuffleIntoDeckLockstep.RecordBurstScatterBegin(group.ActionId, group.Entries.Count);
+            _shuffleIntoScheduler.RecordBurstScatterBegin(group.ActionId, group.Entries.Count);
             try
             {
                 ResolveManagers();
@@ -2915,7 +2916,7 @@ namespace NineGrid.Flow
             }
             finally
             {
-                ShuffleIntoDeckLockstep.RecordBurstScatterEnd(group.ActionId, group.Entries.Count);
+                _shuffleIntoScheduler.RecordBurstScatterEnd(group.ActionId, group.Entries.Count);
             }
         }
 
@@ -3847,7 +3848,7 @@ namespace NineGrid.Flow
             CancellationToken token)
         {
             // #8：无盘面 delta 的洗回（传送卡）也必须在用牌 Present 主线内 Flush，禁止 Forget 旁路。
-            await FlushPendingShuffleIntoPresentationAsync(token);
+            await BoardPresentShuffleHook.RequestFlush(token);
 
             var useResult = _pendingUseItemPresent;
             _pendingUseItemPresent = default;

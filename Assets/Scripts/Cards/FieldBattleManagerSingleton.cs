@@ -378,7 +378,7 @@ namespace NineGrid.Cards
                 }
 
                 await DrainCombatHitBoardDeltaFromProjectionAsync(counterProjection, ct);
-                await CombatHitSink.RequestFlushPendingShuffleIntoPresentation(ct);
+                await BoardPresentShuffleHook.RequestFlush(ct);
 
                 if (counterProjection.AvatarDefeated || willKill)
                 {
@@ -477,7 +477,7 @@ namespace NineGrid.Cards
                 if (hitProjection.AvatarDefeated)
                 {
                     await DrainCombatHitBoardDeltaFromProjectionAsync(hitProjection, ct);
-                    await CombatHitSink.RequestFlushPendingShuffleIntoPresentation(ct);
+                    await BoardPresentShuffleHook.RequestFlush(ct);
                     TryBeginAvatarDefeatPresentation(ct);
                     CombatHitSink.RequestBattleEnded(victory: false);
                     return;
@@ -501,7 +501,7 @@ namespace NineGrid.Cards
 
                 // 未击杀也不在 Hit 内嵌套盘面 Drain；盘面 delta 走后续 Fill/Rotate Present。
                 // 洗回（含散架爆开）与击杀同拍，不等到 Fill。
-                await CombatHitSink.RequestFlushPendingShuffleIntoPresentation(ct);
+                await BoardPresentShuffleHook.RequestFlush(ct);
             }
             catch (System.OperationCanceledException)
             {

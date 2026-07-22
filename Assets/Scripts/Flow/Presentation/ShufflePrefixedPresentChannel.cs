@@ -18,6 +18,7 @@ namespace NineGrid.Flow.Presentation
 
         private readonly ShuffleIntoDeckPresentSink mSink;
         private readonly IPresentChannel mInner;
+        private readonly ShuffleIntoDeckScheduler mScheduler;
         private readonly int mFakeShuffleTicks;
         private Phase mPhase = Phase.Idle;
         private int mShuffleTicksLeft;
@@ -28,7 +29,8 @@ namespace NineGrid.Flow.Presentation
         public ShufflePrefixedPresentChannel(
             ShuffleIntoDeckPresentSink sink,
             IPresentChannel inner,
-            int fakeShuffleTicksUntilComplete = 1)
+            int fakeShuffleTicksUntilComplete = 1,
+            ShuffleIntoDeckScheduler scheduler = null)
         {
             if (sink == null)
             {
@@ -42,6 +44,7 @@ namespace NineGrid.Flow.Presentation
 
             mSink = sink;
             mInner = inner;
+            mScheduler = scheduler ?? new ShuffleIntoDeckScheduler();
             mFakeShuffleTicks = fakeShuffleTicksUntilComplete < 1 ? 1 : fakeShuffleTicksUntilComplete;
         }
 
@@ -78,7 +81,7 @@ namespace NineGrid.Flow.Presentation
             {
                 mPhase = Phase.Shuffling;
                 mShuffleBeginCount++;
-                ShuffleIntoDeckLockstep.RecordPresentBegin(mLastShuffleCount);
+                mScheduler.RecordPresentBegin(mLastShuffleCount);
                 mShuffleTicksLeft = mFakeShuffleTicks;
                 return;
             }
@@ -94,7 +97,7 @@ namespace NineGrid.Flow.Presentation
                 if (mShuffleTicksLeft <= 0)
                 {
                     mSink.Clear();
-                    ShuffleIntoDeckLockstep.RecordPresentEnd(mLastShuffleCount);
+                    mScheduler.RecordPresentEnd(mLastShuffleCount);
                     StartInner(mActiveBatchId);
                 }
 

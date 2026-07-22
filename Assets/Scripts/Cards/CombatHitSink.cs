@@ -1,6 +1,4 @@
 using System;
-using System.Threading;
-using Cysharp.Threading.Tasks;
 using NineGrid.Cards.Convergence;
 using UnityEngine;
 
@@ -311,11 +309,6 @@ namespace NineGrid.Cards
         public static Action SyncBoardFromCore;
 
         /// <summary>
-        /// 导演 Hit Present 末尾 Flush 洗回 sink（散架爆开与击杀同拍；不嵌套盘面 Drain）。
-        /// </summary>
-        public static Func<CancellationToken, UniTask> FlushPendingShuffleIntoPresentation;
-
-        /// <summary>
         /// 表演导演主线在跑。已迁流程以此为输入互斥真相；Cards 侧 IsBusy 聚合读取，不引用 Flow。
         /// </summary>
         public static bool DirectorMainlineBusy;
@@ -363,17 +356,6 @@ namespace NineGrid.Cards
         public static void RequestSyncBoardFromCore()
         {
             SyncBoardFromCore?.Invoke();
-        }
-
-        public static UniTask RequestFlushPendingShuffleIntoPresentation(
-            CancellationToken cancellationToken = default)
-        {
-            if (FlushPendingShuffleIntoPresentation == null)
-            {
-                return UniTask.CompletedTask;
-            }
-
-            return FlushPendingShuffleIntoPresentation(cancellationToken);
         }
 
         public static void RequestBattleEnded(bool victory)

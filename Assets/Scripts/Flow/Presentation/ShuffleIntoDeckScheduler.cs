@@ -9,10 +9,11 @@ namespace NineGrid.Flow.Presentation
 {
     /// <summary>
     /// #8 洗回牌库：解算批投影后入导演 sink，Present 前缀通道 Flush；旁路 Forget 泵不可达。
+    /// V5：由静态 Lockstep 收为实例调度器，Enqueue 亦可经 Presentation Command 统一入口。
     /// </summary>
-    public static class ShuffleIntoDeckLockstep
+    public sealed class ShuffleIntoDeckScheduler
     {
-        public static int EnqueueFromEventLog(
+        public int EnqueueFromEventLog(
             ShuffleIntoDeckPresentSink sink,
             IArchitecture architecture,
             int startIndex,
@@ -62,7 +63,7 @@ namespace NineGrid.Flow.Presentation
             return collected.Count;
         }
 
-        public static bool HasShuffleExistingSince(IActionPipelineSystem pipeline, int startIndex)
+        public bool HasShuffleExistingSince(IActionPipelineSystem pipeline, int startIndex)
         {
             if (pipeline == null || startIndex < 0)
             {
@@ -85,7 +86,7 @@ namespace NineGrid.Flow.Presentation
             return false;
         }
 
-        public static void RecordPresentBegin(int count)
+        public void RecordPresentBegin(int count)
         {
             PerfTraceRecorder.Record(
                 "ShuffleIntoDeck",
@@ -98,7 +99,7 @@ namespace NineGrid.Flow.Presentation
                 });
         }
 
-        public static void RecordPresentEnd(int count)
+        public void RecordPresentEnd(int count)
         {
             PerfTraceRecorder.Record(
                 "ShuffleIntoDeck",
@@ -111,7 +112,7 @@ namespace NineGrid.Flow.Presentation
                 });
         }
 
-        public static void RecordBurstScatterBegin(int actionId, int count)
+        public void RecordBurstScatterBegin(int actionId, int count)
         {
             PerfTraceRecorder.Record(
                 "ShuffleBurstScatter",
@@ -125,7 +126,7 @@ namespace NineGrid.Flow.Presentation
                 });
         }
 
-        public static void RecordBurstScatterEnd(int actionId, int count)
+        public void RecordBurstScatterEnd(int actionId, int count)
         {
             PerfTraceRecorder.Record(
                 "ShuffleBurstScatter",
