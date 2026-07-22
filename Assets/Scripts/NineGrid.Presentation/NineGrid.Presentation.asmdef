@@ -1,0 +1,19 @@
+{
+    "name": "NineGrid.Presentation",
+    "rootNamespace": "NineGrid.Presentation",
+    "references": [
+        "NineGrid.Core",
+        "NineGrid.Content",
+        "NineGrid.Flow",
+        "QFramework"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
