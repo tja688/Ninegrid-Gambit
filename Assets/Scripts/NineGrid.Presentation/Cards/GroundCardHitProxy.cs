@@ -122,7 +122,7 @@ namespace NineGrid.Cards
 
             RecordPickupEligibility(card, canRespond: true);
             // 道具卡 / 帮助卡等：场地仅允许点击入手，禁止拖拽
-            CardHandManagerSingleton.Instance?.TryPickupFromGround(card);
+            CardEntityLifecycleHook.HandOrNull()?.TryPickupFromGround(card);
         }
 
         private void RecordPickupEligibility(ManagedCard card, bool canRespond, string blockReason = null)
@@ -132,7 +132,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var hand = CardHandManagerSingleton.Instance;
+            var hand = CardEntityLifecycleHook.HandOrNull();
             var field = GroundFieldGeometryHook.FieldOrNull();
             var pos = card.Transform != null ? card.Transform.position : Vector3.zero;
             var registeredSlot = -1;
@@ -196,7 +196,7 @@ namespace NineGrid.Cards
 
         private bool CanRespondToHover()
         {
-            var hand = CardHandManagerSingleton.Instance;
+            var hand = CardEntityLifecycleHook.HandOrNull();
             if (hand != null && hand.IsDragging)
             {
                 return false;
@@ -220,7 +220,7 @@ namespace NineGrid.Cards
 
         private bool CanRespondToPickup()
         {
-            var hand = CardHandManagerSingleton.Instance;
+            var hand = CardEntityLifecycleHook.HandOrNull();
             if (hand == null || !hand.CanAcceptCard || hand.IsDragging)
             {
                 return false;

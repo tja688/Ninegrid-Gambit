@@ -34,6 +34,8 @@ namespace NineGrid.Presentation.Tests
             _cardManager = cardGo.AddComponent<CardManagerSingleton>();
             _deckManager = deckGo.AddComponent<CardDeckManagerSingleton>();
             _fieldManager = fieldGo.AddComponent<GroundFieldManagerSingleton>();
+            CardEntityLifecycleHook.RequestWire(_cardManager, null, _deckManager);
+            GroundFieldGeometryHook.RequestWire(_fieldManager);
 
             _prefab = new GameObject("StandardCardPrefab");
             _prefab.AddComponent<StandardCardView>();
@@ -46,6 +48,8 @@ namespace NineGrid.Presentation.Tests
         public void TearDown()
         {
             CardZoneOwnershipHook.Reset();
+            CardEntityLifecycleHook.Reset();
+            GroundFieldGeometryHook.Reset();
             DestroyManagerObject(_fieldManager);
             DestroyManagerObject(_deckManager);
             DestroyManagerObject(_cardManager);

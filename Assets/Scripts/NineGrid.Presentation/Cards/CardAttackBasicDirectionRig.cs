@@ -401,8 +401,8 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (CardManagerSingleton.Instance == null
-                || !CardManagerSingleton.Instance.TryResolveUid(transform, out var uid)
+            if (CardEntityLifecycleHook.CardsOrNull() == null
+                || !CardEntityLifecycleHook.CardsOrNull().TryResolveUid(transform, out var uid)
                 || uid <= 0)
             {
                 return false;
@@ -428,8 +428,8 @@ namespace NineGrid.Cards
         private static void ProbeParticipantHitFrame(Transform transform, string site)
         {
             if (transform == null
-                || CardManagerSingleton.Instance == null
-                || !CardManagerSingleton.Instance.TryResolveUid(transform, out var uid)
+                || CardEntityLifecycleHook.CardsOrNull() == null
+                || !CardEntityLifecycleHook.CardsOrNull().TryResolveUid(transform, out var uid)
                 || uid <= 0)
             {
                 return;
@@ -524,8 +524,8 @@ namespace NineGrid.Cards
                 return;
             }
 
-            if (CardManagerSingleton.Instance == null
-                || !CardManagerSingleton.Instance.TryResolveUid(transform, out var uid)
+            if (CardEntityLifecycleHook.CardsOrNull() == null
+                || !CardEntityLifecycleHook.CardsOrNull().TryResolveUid(transform, out var uid)
                 || uid <= 0)
             {
                 return;
@@ -1169,8 +1169,8 @@ namespace NineGrid.Cards
         private static int TryResolveUid(Transform transform)
         {
             if (transform == null
-                || CardManagerSingleton.Instance == null
-                || !CardManagerSingleton.Instance.TryResolveUid(transform, out var uid))
+                || CardEntityLifecycleHook.CardsOrNull() == null
+                || !CardEntityLifecycleHook.CardsOrNull().TryResolveUid(transform, out var uid))
             {
                 return 0;
             }
@@ -1184,15 +1184,15 @@ namespace NineGrid.Cards
         private static bool TryReadVictimConfirmedKill(Transform victimTransform)
         {
             if (victimTransform == null
-                || CardManagerSingleton.Instance == null
-                || !CardManagerSingleton.Instance.TryResolveUid(victimTransform, out var uid)
+                || CardEntityLifecycleHook.CardsOrNull() == null
+                || !CardEntityLifecycleHook.CardsOrNull().TryResolveUid(victimTransform, out var uid)
                 || uid <= 0)
             {
                 return false;
             }
 
-            if (CardManagerSingleton.Instance.CardsByUid != null
-                && CardManagerSingleton.Instance.CardsByUid.TryGetValue(uid, out var card)
+            if (CardEntityLifecycleHook.CardsOrNull().CardsByUid != null
+                && CardEntityLifecycleHook.CardsOrNull().CardsByUid.TryGetValue(uid, out var card)
                 && card != null)
             {
                 if (card.IsFieldDead)

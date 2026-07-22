@@ -290,11 +290,11 @@ namespace NineGrid.Flow.Diagnostics
 
             try
             {
-                var field = GroundFieldManagerSingleton.Instance;
-                var deck = CardDeckManagerSingleton.Instance;
-                var hand = CardHandManagerSingleton.Instance;
-                var battle = InBattleManagerSingleton.Instance;
-                var fieldBattle = FieldBattleManagerSingleton.Instance;
+                var field = GroundFieldGeometryHook.FieldOrNull();
+                var deck = CardEntityLifecycleHook.DeckOrNull();
+                var hand = CardEntityLifecycleHook.HandOrNull();
+                var battle = UnityEngine.Object.FindFirstObjectByType<InBattleManagerSingleton>();
+                var fieldBattle = FieldBattlePresentationHook.BattleOrNull();
 
                 payload["fieldBusy"] = field != null && field.IsBusy ? "true" : "false";
                 payload["fieldSelfBusy"] = field != null && field.IsFieldBusy ? "true" : "false";

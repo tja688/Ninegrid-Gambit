@@ -73,7 +73,7 @@ namespace NineGrid.Cards
         {
             var fieldManager = GroundFieldGeometryHook.FieldOrNull();
             var cardManager = CardEntityLifecycleHook.CardsOrNull();
-            var deckManager = CardDeckManagerSingleton.Instance;
+            var deckManager = CardEntityLifecycleHook.DeckOrNull();
             if (fieldManager == null || cardManager == null || deckManager == null)
             {
                 Debug.LogWarning("[SkeletonDeckPresentation] PresentFusion 缺少 Field/Card/Deck 管理器。");

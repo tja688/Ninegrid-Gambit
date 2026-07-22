@@ -27,7 +27,7 @@ namespace NineGrid.Flow
                 return;
             }
 
-            var mgr = DescriptionManagerSingleton.TryGetInstance();
+            var mgr = UnityEngine.Object.FindFirstObjectByType<DescriptionManagerSingleton>();
             if (mgr == null)
             {
                 return;
@@ -38,7 +38,7 @@ namespace NineGrid.Flow
 
         private void OnMouseExit()
         {
-            var mgr = DescriptionManagerSingleton.TryGetInstance();
+            var mgr = UnityEngine.Object.FindFirstObjectByType<DescriptionManagerSingleton>();
             if (mgr == null)
             {
                 return;
@@ -62,7 +62,7 @@ namespace NineGrid.Flow
                 return;
             }
 
-            var mgr = DescriptionManagerSingleton.TryGetInstance();
+            var mgr = UnityEngine.Object.FindFirstObjectByType<DescriptionManagerSingleton>();
             mgr?.Clear(_showGeneration);
             _showGeneration = -1;
         }

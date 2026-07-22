@@ -17,7 +17,6 @@ namespace NineGrid.Cards
     /// </summary>
     public sealed class GroundFieldManagerSingleton : MonoBehaviour
     {
-        private static GroundFieldManagerSingleton _instance;
 
         [Header("Scene Anchors")]
         [Tooltip("场景 Anchors/GroundAnchors。留空时 Awake 按名称 GroundAnchors 查找。")]
@@ -43,30 +42,6 @@ namespace NineGrid.Cards
         private bool _isBusy;
         private CancellationTokenSource _fieldAnimCts;
         private bool _occupancyConflictSinceClear;
-
-        public static GroundFieldManagerSingleton Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<GroundFieldManagerSingleton>();
-                }
-
-                return _instance;
-            }
-        }
-
-        /// <summary>仅查找，不创建。审计/销毁期用。</summary>
-        public static GroundFieldManagerSingleton TryGetInstance()
-        {
-            if (_instance != null)
-            {
-                return _instance;
-            }
-
-            return FindFirstObjectByType<GroundFieldManagerSingleton>();
-        }
 
         /// <summary>
         /// 场地自身忙碌，或交战管理器忙碌（保持原有 IsBusy 语义，供 hover/点击门禁使用）。
@@ -131,13 +106,6 @@ namespace NineGrid.Cards
 
         private void Awake()
         {
-            if (_instance != null && _instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            _instance = this;
             ClearSlotTable();
             ResolveSceneReferences();
             CacheAnchors();
@@ -196,10 +164,6 @@ namespace NineGrid.Cards
         private void OnDestroy()
         {
             CancelFieldAnimations();
-            if (_instance == this)
-            {
-                _instance = null;
-            }
         }
 
         public GroundFieldSnapshot GetSnapshot()
@@ -906,7 +870,7 @@ namespace NineGrid.Cards
             // 非 force：先 Vacate 再 Release，与 RequestRemoveFromField 契约一致，避免幽灵占格。
             if (!force)
             {
-                var cardManager = CardManagerSingleton.TryGetInstance();
+                var cardManager = CardEntityLifecycleHook.CardsOrNull();
                 if (cardManager != null)
                 {
                     for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
@@ -2003,7 +1967,7 @@ namespace NineGrid.Cards
                 {
                     if (card != null)
                     {
-                        CardManagerSingleton.TryGetInstance()?.Release(card.Uid, "Ground.RemoveAnimatedNoTransform");
+                        CardEntityLifecycleHook.CardsOrNull()?.Release(card.Uid, "Ground.RemoveAnimatedNoTransform");
                     }
 
                     return;
@@ -2024,7 +1988,7 @@ namespace NineGrid.Cards
                         cancellationToken);
                 }
 
-                CardManagerSingleton.TryGetInstance()?.Release(card.Uid, "Ground.RemoveAnimatedComplete");
+                CardEntityLifecycleHook.CardsOrNull()?.Release(card.Uid, "Ground.RemoveAnimatedComplete");
             }
             catch (OperationCanceledException)
             {

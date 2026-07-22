@@ -40,7 +40,7 @@ unity command console --project-path "<本仓库>" --format json
 unity command run_tests --mode editor --filter <Name> --project-path "<本仓库>" --format json
 ```
 
-改场景 / GameObject / 组件：用 `create_gameobject`、`find_gameobjects`、`add_component`、`set_component_properties` 等 Pipeline 命令；**禁止**手改 `.unity` YAML。
+改场景 / GameObject / 组件：用 `create_gameobject`、`find_gameobjects`、`add_component`、`set_component_properties` 等 Pipeline 命令。
 
 ## 与 MCP 的关系
 

@@ -26,7 +26,6 @@ namespace NineGrid.Flow
         private const string DefaultCardInfoTextName = "Card Info Text";
         private const string DefaultNoticeTextName = "Notice Text";
 
-        private static DescriptionManagerSingleton _instance;
 
         [Tooltip("局内描述 TMP；留空则运行时在 InGameInfoText 下按名查找 Card Info Text。")]
         [SerializeField] private TextMeshProUGUI cardInfoText;
@@ -47,47 +46,8 @@ namespace NineGrid.Flow
         private IUnRegister _showTextEventUnRegister;
         private IUnRegister _clearEventUnRegister;
 
-        public static DescriptionManagerSingleton Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<DescriptionManagerSingleton>();
-                    if (_instance == null)
-                    {
-                        var go = new GameObject(nameof(DescriptionManagerSingleton));
-                        _instance = go.AddComponent<DescriptionManagerSingleton>();
-                    }
-                }
-
-                return _instance;
-            }
-        }
-
-        /// <summary>
-        /// 仅查找，不创建。销毁期调用避免残留对象。
-        /// </summary>
-        public static DescriptionManagerSingleton TryGetInstance()
-        {
-            if (_instance != null)
-            {
-                return _instance;
-            }
-
-            _instance = FindFirstObjectByType<DescriptionManagerSingleton>();
-            return _instance;
-        }
-
         private void Awake()
         {
-            if (_instance != null && _instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            _instance = this;
             EnsureBindings();
             RegisterDescriptionEvents();
             Clear();
@@ -96,10 +56,6 @@ namespace NineGrid.Flow
         private void OnDestroy()
         {
             UnregisterDescriptionEvents();
-            if (_instance == this)
-            {
-                _instance = null;
-            }
         }
 
         /// <summary>

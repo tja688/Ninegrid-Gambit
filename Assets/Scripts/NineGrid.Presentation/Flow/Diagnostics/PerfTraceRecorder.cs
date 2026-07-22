@@ -510,7 +510,7 @@ namespace NineGrid.Flow.Diagnostics
             try
             {
                 var safeLabel = string.IsNullOrWhiteSpace(label) ? "BugScene" : label.Trim();
-                var cardManager = CardManagerSingleton.TryGetInstance();
+                var cardManager = CardEntityLifecycleHook.CardsOrNull();
                 var registryCount = cardManager != null ? cardManager.CardsByUid.Count : 0;
                 cardManager?.AuditRegistryIntegrity("UserMark." + safeLabel);
                 RecordBoardSnap("userMark:" + safeLabel, full: true);
@@ -748,7 +748,7 @@ namespace NineGrid.Flow.Diagnostics
 
         private static bool ShouldIgnoreOffscreenCombatant(int uid)
         {
-            var cards = CardManagerSingleton.Instance;
+            var cards = CardEntityLifecycleHook.CardsOrNull();
             if (cards?.CardsByUid == null || !cards.CardsByUid.TryGetValue(uid, out var card))
             {
                 return false;
@@ -787,7 +787,7 @@ namespace NineGrid.Flow.Diagnostics
 
         private static bool IsWithinCombatBoardBounds(float x, float y)
         {
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             if (field == null)
             {
                 return Mathf.Abs(x) <= 15f && y >= -8f && y <= 15f;
@@ -831,7 +831,7 @@ namespace NineGrid.Flow.Diagnostics
                 return;
             }
 
-            var cards = CardManagerSingleton.Instance;
+            var cards = CardEntityLifecycleHook.CardsOrNull();
             if (cards == null)
             {
                 return;
@@ -919,7 +919,7 @@ namespace NineGrid.Flow.Diagnostics
 
         private static void DetectBoardAnomalies(Dictionary<int, BoardCardSnap> cards)
         {
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             if (field == null)
             {
                 return;
@@ -962,7 +962,7 @@ namespace NineGrid.Flow.Diagnostics
             }
 
             // FieldOccupancyWithoutView / ViewWithoutFieldOccupancy
-            var cardManager = CardManagerSingleton.Instance;
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
             if (cardManager != null)
             {
                 var snap = field.GetSnapshot();
@@ -1084,8 +1084,8 @@ namespace NineGrid.Flow.Diagnostics
         private static Dictionary<int, BoardCardSnap> CaptureLiveBoard()
         {
             var result = new Dictionary<int, BoardCardSnap>();
-            var cards = CardManagerSingleton.Instance;
-            var field = GroundFieldManagerSingleton.Instance;
+            var cards = CardEntityLifecycleHook.CardsOrNull();
+            var field = GroundFieldGeometryHook.FieldOrNull();
             if (cards == null)
             {
                 return result;

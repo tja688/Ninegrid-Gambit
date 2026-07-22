@@ -36,8 +36,8 @@ namespace NineGrid.Flow.Diagnostics
             {
                 CountCoreOccupants(out report.CoreCount);
 
-                var field = GroundFieldManagerSingleton.TryGetInstance();
-                var cards = CardManagerSingleton.TryGetInstance();
+                var field = GroundFieldGeometryHook.FieldOrNull();
+                var cards = CardEntityLifecycleHook.CardsOrNull();
                 if (field == null)
                 {
                     return report;

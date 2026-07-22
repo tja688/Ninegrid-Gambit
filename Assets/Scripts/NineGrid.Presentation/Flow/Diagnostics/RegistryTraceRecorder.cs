@@ -448,7 +448,7 @@ namespace NineGrid.Flow.Diagnostics
             {
                 if (registryCount < 0)
                 {
-                    var cardManager = CardManagerSingleton.TryGetInstance();
+                    var cardManager = CardEntityLifecycleHook.CardsOrNull();
                     registryCount = cardManager != null ? cardManager.CardsByUid.Count : 0;
                 }
 
@@ -554,7 +554,7 @@ namespace NineGrid.Flow.Diagnostics
                     {
                         var delay = IdleWatchDelaysSeconds[nextWatchIndex];
                         var trigger = RegistryTraceTriggers.IdleWatchPrefix + delay.ToString("0") + "s";
-                        CardManagerSingleton.TryGetInstance()?.AuditRegistryIntegrity(trigger);
+                        CardEntityLifecycleHook.CardsOrNull()?.AuditRegistryIntegrity(trigger);
                         nextWatchIndex++;
                     }
 
@@ -689,7 +689,7 @@ namespace NineGrid.Flow.Diagnostics
         {
             try
             {
-                var field = GroundFieldManagerSingleton.TryGetInstance();
+                var field = GroundFieldGeometryHook.FieldOrNull();
                 if (field == null)
                 {
                     return 0;

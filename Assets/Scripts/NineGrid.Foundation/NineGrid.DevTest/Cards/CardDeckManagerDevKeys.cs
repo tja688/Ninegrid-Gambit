@@ -12,7 +12,7 @@ namespace NineGrid.DevTest.Cards
     {
         private const int DefaultEntryCardCount = 15;
 
-        [Tooltip("运行时自动查找 CardDeckManagerSingleton.Instance；也可手动拖入覆盖。")]
+        [Tooltip("运行时查找场景中的 CardDeckManagerSingleton；也可手动拖入覆盖。")]
         [SerializeField] private CardDeckManagerSingleton deckManager;
 
         protected override string ModuleId => "card-deck-manager";
@@ -26,7 +26,7 @@ namespace NineGrid.DevTest.Cards
 
             if (deckManager == null)
             {
-                deckManager = CardDeckManagerSingleton.Instance;
+                deckManager = UnityEngine.Object.FindFirstObjectByType<CardDeckManagerSingleton>();
             }
 
             base.OnEnable();
@@ -48,7 +48,7 @@ namespace NineGrid.DevTest.Cards
                 return;
             }
 
-            var cardManager = CardManagerSingleton.Instance;
+            var cardManager = UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
             var cards = cardManager.SpawnMany(
                 CardManagerSingleton.StandardDefId,
                 DefaultEntryCardCount,
@@ -62,7 +62,7 @@ namespace NineGrid.DevTest.Cards
                 CardManagerSingleton.StandardDefId,
                 initialMode: CardDisplayMode.GroundCardMode,
                 kind: CardPresentationKind.Avatar);
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = UnityEngine.Object.FindFirstObjectByType<GroundFieldManagerSingleton>();
             if (field != null)
             {
                 field.RequestRevealAvatarAsync(avatar).Forget();
@@ -111,7 +111,14 @@ namespace NineGrid.DevTest.Cards
                 return;
             }
 
-            var card = CardManagerSingleton.Instance.Spawn(
+            var cardManager = UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
+            if (cardManager == null)
+            {
+                Debug.LogWarning("[CardDeckManagerDevKeys] 未找到 CardManagerSingleton。");
+                return;
+            }
+
+            var card = cardManager.Spawn(
                 CardManagerSingleton.StandardDefId,
                 initialMode: CardDisplayMode.CardDeckMode,
                 kind: CardPresentationKind.HelpCard);
@@ -127,7 +134,7 @@ namespace NineGrid.DevTest.Cards
                 return deckManager;
             }
 
-            deckManager = CardDeckManagerSingleton.Instance;
+            deckManager = UnityEngine.Object.FindFirstObjectByType<CardDeckManagerSingleton>();
             if (deckManager == null)
             {
                 Debug.LogWarning("[CardDeckManagerDevKeys] 未找到 CardDeckManagerSingleton。");

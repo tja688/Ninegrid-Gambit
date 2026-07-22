@@ -37,16 +37,15 @@ namespace NineGrid.Flow
             DefeatNotice,
         }
 
-        private static MainGameLoopManagerSingleton _instance;
 
         [Header("Refs")]
         [Tooltip("面板路由；留空则运行时在同物体上 GetComponent / AddComponent。")]
         [SerializeField] private UiPanelRouter panelRouter;
 
-        [Tooltip("选择器管理；留空则运行时取 SelectorManagerSingleton.Instance。")]
+        [Tooltip("选择器管理；由 PresentationSceneRoot.BindSceneHosts 注入，也可手动拖入。")]
         [SerializeField] private SelectorManagerSingleton selectorManager;
 
-        [Tooltip("局内管理；留空则运行时取 InBattleManagerSingleton.Instance。")]
+        [Tooltip("局内管理；由 PresentationSceneRoot.BindSceneHosts 注入，也可手动拖入。")]
         [SerializeField] private InBattleManagerSingleton inBattleManager;
 
         [Tooltip("主菜单「开始」按钮；留空则运行时查找 MainPanel/StartRun。")]
@@ -95,24 +94,6 @@ namespace NineGrid.Flow
         private UniTaskCompletionSource _settlementTcs;
         private bool _subscribedSettlement;
 
-        public static MainGameLoopManagerSingleton Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<MainGameLoopManagerSingleton>();
-                    if (_instance == null)
-                    {
-                        var go = new GameObject(nameof(MainGameLoopManagerSingleton));
-                        _instance = go.AddComponent<MainGameLoopManagerSingleton>();
-                    }
-                }
-
-                return _instance;
-            }
-        }
-
         public LoopState State => _state;
         public bool IsTestMode => _testMode;
         public bool IsQuickTestMode => _quickTestMode;
@@ -127,15 +108,14 @@ namespace NineGrid.Flow
             && _state != LoopState.VictoryNotice
             && _state != LoopState.DefeatNotice;
 
+        public void BindSceneHosts(SelectorManagerSingleton selector, InBattleManagerSingleton inBattle)
+        {
+            if (selector != null) selectorManager = selector;
+            if (inBattle != null) inBattleManager = inBattle;
+        }
+
         private void Awake()
         {
-            if (_instance != null && _instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            _instance = this;
             EnsureBindings();
             SubscribeSettlement();
             EnterMainMenuImmediate();
@@ -145,10 +125,6 @@ namespace NineGrid.Flow
         {
             UnsubscribeSettlement();
             CancelLoopWork();
-            if (_instance == this)
-            {
-                _instance = null;
-            }
         }
 
         private void Update()
@@ -505,11 +481,6 @@ namespace NineGrid.Flow
             SetState(LoopState.BattleStub);
             EnsureBindings();
             panelRouter.ShowInRunShell(inBattle: true);
-
-            if (inBattleManager == null)
-            {
-                inBattleManager = InBattleManagerSingleton.Instance;
-            }
 
             if (inBattleManager == null)
             {
@@ -975,11 +946,6 @@ namespace NineGrid.Flow
         private async UniTask ShowBattleEndAndReturnAsync(bool victory, CancellationToken ct)
         {
             CancelLoopWork();
-            if (inBattleManager == null)
-            {
-                inBattleManager = InBattleManagerSingleton.Instance;
-            }
-
             inBattleManager?.ClearCardPresentationSurface();
             inBattleManager?.RefreshPersistentInBattleUi(animate: false);
             FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
@@ -1158,11 +1124,6 @@ namespace NineGrid.Flow
         private void SubscribeSettlement()
         {
             EnsureBindings();
-            if (inBattleManager == null)
-            {
-                inBattleManager = InBattleManagerSingleton.Instance;
-            }
-
             if (inBattleManager == null || _subscribedSettlement)
             {
                 return;
@@ -1331,15 +1292,7 @@ namespace NineGrid.Flow
 
             panelRouter.EnsureBindings();
 
-            if (selectorManager == null)
-            {
-                selectorManager = SelectorManagerSingleton.Instance;
-            }
-
-            if (inBattleManager == null)
-            {
-                inBattleManager = InBattleManagerSingleton.Instance;
-            }
+            // C2：selectorManager / inBattleManager 仅由 BindSceneHosts 或 SerializeField 提供。
 
             worldCamera = WorldPointerUtility.ResolveCamera(worldCamera);
 

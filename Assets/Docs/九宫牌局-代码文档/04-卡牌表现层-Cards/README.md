@@ -24,7 +24,7 @@ Cards 是**纯表现层**：管理卡牌视图生命周期、三区布局（牌�
 
 - 不拥有逻辑占格真相（注释写明逻辑在 Core `BoardModel`，合法性由 Flow idle 裁决）。
 - 运行时 asmdef **不引用** `NineGrid.Core` / `NineGrid.Flow`；跨层经 Sink 委托与 Uid 契约。
-- 不直接改场景 `.unity`（装配点见各 Singleton 的 SerializeField）。
+- 场景装配点见各 Singleton 的 SerializeField。
 
 ---
 

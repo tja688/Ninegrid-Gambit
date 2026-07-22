@@ -178,7 +178,7 @@ namespace NineGrid.Cards
                 }
             }
 
-            CardManagerSingleton.Instance?.RefreshDisplayMode(card);
+            CardEntityLifecycleHook.CardsOrNull()?.RefreshDisplayMode(card);
         }
 
         public static async UniTask RestorePairAsync(
@@ -244,8 +244,8 @@ namespace NineGrid.Cards
                 transform.rotation = Quaternion.identity;
             }
 
-            if (CardManagerSingleton.Instance != null
-                && CardManagerSingleton.Instance.TryResolveUid(transform, out var uid)
+            if (CardEntityLifecycleHook.CardsOrNull() != null
+                && CardEntityLifecycleHook.CardsOrNull().TryResolveUid(transform, out var uid)
                 && uid > 0)
             {
                 CardPresentationProbe.SnapSet(

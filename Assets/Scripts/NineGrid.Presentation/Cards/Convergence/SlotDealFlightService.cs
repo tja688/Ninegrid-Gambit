@@ -300,7 +300,7 @@ namespace NineGrid.Cards.Convergence
 
                 _lastExploreStartTime = Time.time;
 
-                var deck = CardDeckManagerSingleton.Instance;
+                var deck = CardEntityLifecycleHook.DeckOrNull();
                 if (deck == null || !deck.TryWithdrawFirstCard(out var card, out var ripple))
                 {
                     outcome = "withdrawFail";
@@ -447,7 +447,7 @@ namespace NineGrid.Cards.Convergence
                 }
 
                 SlotFrameConvergence.SnapHome(probe.Card, settlePos, "DealFlight.DrainSettle", uid);
-                CardManagerSingleton.Instance?.RefreshDisplayMode(probe.Card);
+                CardEntityLifecycleHook.CardsOrNull()?.RefreshDisplayMode(probe.Card);
                 probe.Handle.Complete(true);
             }
             catch (OperationCanceledException)
@@ -607,13 +607,13 @@ namespace NineGrid.Cards.Convergence
 
             SlotFrameConvergence.SanitizeForSanctuary(card, "DealFlight.Rollback.Sanitize");
 
-            var deck = CardDeckManagerSingleton.Instance;
+            var deck = CardEntityLifecycleHook.DeckOrNull();
             if (deck != null && deck.LaunchReturnFieldCardToDeck(card))
             {
                 return;
             }
 
-            CardManagerSingleton.Instance?.Release(card.Uid, "DealFlight.Rollback");
+            CardEntityLifecycleHook.CardsOrNull()?.Release(card.Uid, "DealFlight.Rollback");
         }
 
         private static void TraceProbe(

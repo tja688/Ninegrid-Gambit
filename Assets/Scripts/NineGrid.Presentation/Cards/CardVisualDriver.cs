@@ -270,7 +270,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            var hand = CardHandManagerSingleton.Instance;
+            var hand = CardEntityLifecycleHook.HandOrNull();
             return hand != null && hand.TryGetHandLayoutWorldPosition(_card, out layoutPosition);
         }
 
@@ -309,7 +309,7 @@ namespace NineGrid.Cards
 
         private static CardHandLayoutSettings ResolveHandLayoutSettings()
         {
-            var hand = CardHandManagerSingleton.Instance;
+            var hand = CardEntityLifecycleHook.HandOrNull();
             return hand != null ? hand.LayoutSettings : new CardHandLayoutSettings();
         }
     }

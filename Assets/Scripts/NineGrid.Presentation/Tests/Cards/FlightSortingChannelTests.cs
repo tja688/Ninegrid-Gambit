@@ -11,6 +11,7 @@ namespace NineGrid.Presentation.Tests
         [TearDown]
         public void TearDown()
         {
+            CardEntityLifecycleHook.Reset();
             FlightSortingChannel.Disarm(42);
             FlightSortingChannel.Disarm(9301);
             FlightSortingChannel.Disarm(9401);
@@ -103,13 +104,9 @@ namespace NineGrid.Presentation.Tests
                 Object.DestroyImmediate(m.gameObject);
             }
 
-            var instanceField = typeof(CardManagerSingleton).GetField(
-                "_instance",
-                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
-            instanceField?.SetValue(null, null);
-
             var cardGo = new GameObject("FlightSortHandFallback");
             var cardManager = cardGo.AddComponent<CardManagerSingleton>();
+            CardEntityLifecycleHook.RequestWire(cardManager, null, null);
             var prefab = new GameObject("FlightSortHandPrefab");
             prefab.AddComponent<StandardCardView>();
             prefab.AddComponent<SortingGroup>();
@@ -129,7 +126,6 @@ namespace NineGrid.Presentation.Tests
             {
                 Object.DestroyImmediate(cardGo);
                 Object.DestroyImmediate(prefab);
-                instanceField?.SetValue(null, null);
             }
         }
 
@@ -141,13 +137,9 @@ namespace NineGrid.Presentation.Tests
                 Object.DestroyImmediate(m.gameObject);
             }
 
-            var instanceField = typeof(CardManagerSingleton).GetField(
-                "_instance",
-                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
-            instanceField?.SetValue(null, null);
-
             var cardGo = new GameObject("FlightSortLiveRestore");
             var cardManager = cardGo.AddComponent<CardManagerSingleton>();
+            CardEntityLifecycleHook.RequestWire(cardManager, null, null);
             var prefab = new GameObject("FlightSortLivePrefab");
             prefab.AddComponent<StandardCardView>();
             prefab.AddComponent<SortingGroup>();
@@ -184,7 +176,6 @@ namespace NineGrid.Presentation.Tests
                 FlightSortingChannel.Disarm(uid);
                 Object.DestroyImmediate(cardGo);
                 Object.DestroyImmediate(prefab);
-                instanceField?.SetValue(null, null);
             }
         }
 
@@ -196,13 +187,9 @@ namespace NineGrid.Presentation.Tests
                 Object.DestroyImmediate(m.gameObject);
             }
 
-            var instanceField = typeof(CardManagerSingleton).GetField(
-                "_instance",
-                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
-            instanceField?.SetValue(null, null);
-
             var cardGo = new GameObject("FlightSortArmedGuard");
             var cardManager = cardGo.AddComponent<CardManagerSingleton>();
+            CardEntityLifecycleHook.RequestWire(cardManager, null, null);
             var prefab = new GameObject("FlightSortPrefab");
             prefab.AddComponent<StandardCardView>();
             prefab.AddComponent<SortingGroup>();
@@ -238,7 +225,6 @@ namespace NineGrid.Presentation.Tests
                 FlightSortingChannel.Disarm(uid);
                 Object.DestroyImmediate(cardGo);
                 Object.DestroyImmediate(prefab);
-                instanceField?.SetValue(null, null);
             }
         }
     }

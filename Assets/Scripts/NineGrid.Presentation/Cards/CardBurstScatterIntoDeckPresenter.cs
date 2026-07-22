@@ -29,7 +29,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var cardManager = CardManagerSingleton.Instance;
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
             var active = new List<ManagedCard>(cards.Count);
             for (var i = 0; i < cards.Count; i++)
             {

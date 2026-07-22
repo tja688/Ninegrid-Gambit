@@ -22,19 +22,30 @@ namespace NineGrid.Flow
     /// </summary>
     public sealed class InBattleManagerSingleton : MonoBehaviour
     {
-        private static InBattleManagerSingleton _instance;
 
-        [Tooltip("运行时自动查找 CardManagerSingleton.Instance；也可手动拖入覆盖。")]
+        [Tooltip("卡牌宿主；由 PresentationSceneRoot.BindSceneHosts 注入，也可手动拖入。")]
         [SerializeField] private CardManagerSingleton cardManager;
 
-        [Tooltip("运行时自动查找 CardDeckManagerSingleton.Instance；也可手动拖入覆盖。")]
+        [Tooltip("牌库宿主；由 PresentationSceneRoot.BindSceneHosts 注入，也可手动拖入。")]
         [SerializeField] private CardDeckManagerSingleton deckManager;
 
-        [Tooltip("运行时自动查找 GroundFieldManagerSingleton.Instance；也可手动拖入覆盖。")]
+        [Tooltip("场地宿主；由 PresentationSceneRoot.BindSceneHosts 注入，也可手动拖入。")]
         [SerializeField] private GroundFieldManagerSingleton fieldManager;
 
-        [Tooltip("运行时自动查找 RelicManagerSingleton.Instance；也可手动拖入覆盖。")]
+        [Tooltip("遗物栏宿主；由 PresentationSceneRoot.BindSceneHosts 注入，也可手动拖入。")]
         [SerializeField] private RelicManagerSingleton relicManager;
+
+        [Tooltip("手牌宿主；由 PresentationSceneRoot.BindSceneHosts 注入，也可手动拖入。")]
+        [SerializeField] private CardHandManagerSingleton handManager;
+
+        [Tooltip("交战宿主；由 PresentationSceneRoot.BindSceneHosts 注入，也可手动拖入。")]
+        [SerializeField] private FieldBattleManagerSingleton battleManager;
+
+        [Tooltip("主流程宿主；由 PresentationSceneRoot.BindSceneHosts 注入，也可手动拖入。")]
+        [SerializeField] private MainGameLoopManagerSingleton mainGameLoop;
+
+        [Tooltip("选择器宿主；留空则场景内 FindFirstObjectByType。")]
+        [SerializeField] private SelectorManagerSingleton selectorManager;
 
         [Tooltip("面板路由；留空则运行时在同物体或场景中查找 UiPanelRouter。")]
         [SerializeField] private UiPanelRouter panelRouter;
@@ -72,19 +83,6 @@ namespace NineGrid.Flow
         private CoreCommandDispatcher _coreCommandDispatcher;
         private UseItemPresentationResult _pendingUseItemPresent;
 
-        public static InBattleManagerSingleton Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<InBattleManagerSingleton>();
-                }
-
-                return _instance;
-            }
-        }
-
         public bool IsBusy => _isBusy;
 
         /// <summary>
@@ -92,15 +90,26 @@ namespace NineGrid.Flow
         /// </summary>
         public event Action OnNodeSettlementReady;
 
+        public void BindSceneHosts(
+            CardManagerSingleton cards,
+            CardDeckManagerSingleton deck,
+            GroundFieldManagerSingleton field,
+            RelicManagerSingleton relic,
+            CardHandManagerSingleton hand,
+            FieldBattleManagerSingleton battle,
+            MainGameLoopManagerSingleton loop)
+        {
+            if (cards != null) cardManager = cards;
+            if (deck != null) deckManager = deck;
+            if (field != null) fieldManager = field;
+            if (relic != null) relicManager = relic;
+            if (hand != null) handManager = hand;
+            if (battle != null) battleManager = battle;
+            if (loop != null) mainGameLoop = loop;
+        }
+
         private void Awake()
         {
-            if (_instance != null && _instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            _instance = this;
             ResolveManagers();
             SubscribeFieldSignal();
             RegisterCombatHitSink();
@@ -115,10 +124,6 @@ namespace NineGrid.Flow
             // Play 退出时先于域重载导出，避免静态会话被清掉。
             BattleTraceRecorder.ExportOnPlayExit("OnDestroy");
 #endif
-            if (_instance == this)
-            {
-                _instance = null;
-            }
         }
 
         /// <summary>
@@ -221,7 +226,7 @@ namespace NineGrid.Flow
 
             CheatMakeNodeCleared(arch);
 
-            FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
+            (battleManager ?? FieldBattlePresentationHook.BattleOrNull())?.CancelBattleWork();
             CombatHitSink.ForceEndPresentationLock("CheatForceNodeVictory");
             CancelPresentationWork();
 
@@ -408,7 +413,7 @@ namespace NineGrid.Flow
         public void ClearPresentationSurface()
         {
             CancelPresentationWork();
-            FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
+            (battleManager ?? FieldBattlePresentationHook.BattleOrNull())?.CancelBattleWork();
             CombatHitSink.ForceEndPresentationLock("ClearPresentationSurface");
             _drainInFlight = false;
             ResetPresentationSurface();
@@ -422,7 +427,7 @@ namespace NineGrid.Flow
         public void ClearCardPresentationSurface()
         {
             CancelPresentationWork();
-            FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
+            (battleManager ?? FieldBattlePresentationHook.BattleOrNull())?.CancelBattleWork();
             CombatHitSink.ForceEndPresentationLock("ClearCardPresentationSurface");
             _drainInFlight = false;
             ResetCardPresentationSurface();
@@ -1319,15 +1324,15 @@ namespace NineGrid.Flow
         {
             ResolveManagers();
             // Bounce 退场 DelayedCall 可能跨节点；清场前必须先终止选择会话，避免陈旧句柄误删新视图。
-            SelectorManagerSingleton.TryGetInstance()?.HideChoice();
+            (selectorManager ?? FindFirstObjectByType<SelectorManagerSingleton>())?.HideChoice();
             // 先取消交战/手牌异步，再强制清占格与手牌槽，最后统一 Release 视图。
-            FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
+            (battleManager ?? FieldBattlePresentationHook.BattleOrNull())?.CancelBattleWork();
             CombatHitSink.ResetInputGates("ResetCardPresentationSurface");
-            CardHandManagerSingleton.Instance?.ClearHand();
+            (handManager ?? CardEntityLifecycleHook.HandOrNull())?.ClearHand();
             deckManager?.ResetToStandby();
             fieldManager?.ClearField(force: true);
             cardManager?.ReleaseAll("Presentation.ResetCardSurface");
-            DescriptionManagerSingleton.TryGetInstance()?.Clear();
+            UnityEngine.Object.FindFirstObjectByType<DescriptionManagerSingleton>()?.Clear();
             _isBusy = false;
         }
 
@@ -1363,10 +1368,10 @@ namespace NineGrid.Flow
 
                 // 勿用 hand.IsBusy / field.IsBusy 聚合（含 DirectorMainlineBusy），避免静态镜像粘连假忙。
                 var fieldBusy = fieldManager != null && fieldManager.IsFieldBusy;
-                var hand = CardHandManagerSingleton.Instance;
+                var hand = (handManager ?? CardEntityLifecycleHook.HandOrNull());
                 var handSelfBusy = hand != null && hand.IsSelfBusy;
                 var deckBusy = deckManager != null && deckManager.IsBusy;
-                var battle = FieldBattlePresentationHook.BattleOrNull();
+                var battle = (battleManager ?? FieldBattlePresentationHook.BattleOrNull());
                 var battleBusy = battle != null && battle.IsBusy;
 
                 if (!_drainInFlight
@@ -1439,25 +1444,8 @@ namespace NineGrid.Flow
 
         private void ResolveManagers()
         {
-            if (cardManager == null)
-            {
-                cardManager = CardManagerSingleton.Instance;
-            }
-
-            if (deckManager == null)
-            {
-                deckManager = CardDeckManagerSingleton.Instance;
-            }
-
-            if (fieldManager == null)
-            {
-                fieldManager = GroundFieldGeometryHook.FieldOrNull();
-            }
-
-            if (relicManager == null)
-            {
-                relicManager = RelicManagerSingleton.Instance;
-            }
+            // C2：仅使用已 Bind / SerializeField 的宿主；不再 Instance / Find 回填。
+            // 调用点可用 cardManager ?? CardEntityLifecycleHook.CardsOrNull() 等兜底。
         }
 
         private void SubscribeFieldSignal()
@@ -1494,16 +1482,16 @@ namespace NineGrid.Flow
 
         private void RegisterCombatHitSink()
         {
-            CombatHitSink.ApplyCombatHit = ApplyCombatHitFromCore;
-            CombatHitSink.ResolvePostKillBoard = ResolvePostKillBoardFromCore;
-            CombatHitSink.SyncCardPresentation = SyncManagedCardPresentation;
-            CombatHitSink.SyncBoardFromCore = RequestSyncBoardFromCore;
+            CombatHitBridgeHook.ApplyCombatHit = ApplyCombatHitFromCore;
+            CombatHitBridgeHook.ResolvePostKillBoard = ResolvePostKillBoardFromCore;
+            CombatHitBridgeHook.SyncCardPresentation = SyncManagedCardPresentation;
+            CombatHitBridgeHook.SyncBoardFromCore = RequestSyncBoardFromCore;
             BoardPresentDrainHook.RequestWire(DrainPostKillBoardAsync);
             BoardPresentShuffleHook.RequestWire(FlushPendingShuffleIntoPresentationAsync);
             RewardChoiceCoreHook.RequestWire();
             RelicHudHook.RequestWire();
-            CombatHitSink.NotifyBattleEnded = OnBattleEndedFromCombat;
-            CombatHitSink.NotifyNodeSettlementReady = OnNodeSettlementFromCombat;
+            CombatHitBridgeHook.NotifyBattleEnded = OnBattleEndedFromCombat;
+            CombatHitBridgeHook.NotifyNodeSettlementReady = OnNodeSettlementFromCombat;
             DiagnosticOutputHook.RequestAttach();
             RegisterHandBridge();
             RegisterPresentationIntentHandlers();
@@ -1512,24 +1500,24 @@ namespace NineGrid.Flow
         private void UnregisterCombatHitSink()
         {
             DiagnosticOutputHook.RequestDetach();
-            if (CombatHitSink.ApplyCombatHit == ApplyCombatHitFromCore)
+            if (CombatHitBridgeHook.ApplyCombatHit == ApplyCombatHitFromCore)
             {
-                CombatHitSink.ApplyCombatHit = null;
+                CombatHitBridgeHook.ApplyCombatHit = null;
             }
 
-            if (CombatHitSink.ResolvePostKillBoard == ResolvePostKillBoardFromCore)
+            if (CombatHitBridgeHook.ResolvePostKillBoard == ResolvePostKillBoardFromCore)
             {
-                CombatHitSink.ResolvePostKillBoard = null;
+                CombatHitBridgeHook.ResolvePostKillBoard = null;
             }
 
-            if (CombatHitSink.SyncCardPresentation == SyncManagedCardPresentation)
+            if (CombatHitBridgeHook.SyncCardPresentation == SyncManagedCardPresentation)
             {
-                CombatHitSink.SyncCardPresentation = null;
+                CombatHitBridgeHook.SyncCardPresentation = null;
             }
 
-            if (CombatHitSink.SyncBoardFromCore == RequestSyncBoardFromCore)
+            if (CombatHitBridgeHook.SyncBoardFromCore == RequestSyncBoardFromCore)
             {
-                CombatHitSink.SyncBoardFromCore = null;
+                CombatHitBridgeHook.SyncBoardFromCore = null;
             }
 
             if (BoardPresentDrainHook.Drain == DrainPostKillBoardAsync)
@@ -1550,14 +1538,14 @@ namespace NineGrid.Flow
             CombatHitSink.DirectorMainlineBusy = false;
             TeardownPresentationDirector(IntentClearReason.LayerChange);
 
-            if (CombatHitSink.NotifyBattleEnded == OnBattleEndedFromCombat)
+            if (CombatHitBridgeHook.NotifyBattleEnded == OnBattleEndedFromCombat)
             {
-                CombatHitSink.NotifyBattleEnded = null;
+                CombatHitBridgeHook.NotifyBattleEnded = null;
             }
 
-            if (CombatHitSink.NotifyNodeSettlementReady == OnNodeSettlementFromCombat)
+            if (CombatHitBridgeHook.NotifyNodeSettlementReady == OnNodeSettlementFromCombat)
             {
-                CombatHitSink.NotifyNodeSettlementReady = null;
+                CombatHitBridgeHook.NotifyNodeSettlementReady = null;
             }
 
             UnregisterHandBridge();
@@ -1565,8 +1553,7 @@ namespace NineGrid.Flow
 
         private void RegisterHandBridge()
         {
-            var hand = CardHandManagerSingleton.Instance
-                       ?? FindFirstObjectByType<CardHandManagerSingleton>();
+            var hand = handManager ?? (handManager ?? CardEntityLifecycleHook.HandOrNull());
             if (hand == null)
             {
                 return;
@@ -1584,7 +1571,7 @@ namespace NineGrid.Flow
                 GroundFieldGeometryHook.RequestWire(fieldManager);
             }
 
-            var battle = FieldBattlePresentationHook.BattleOrNull();
+            var battle = (battleManager ?? FieldBattlePresentationHook.BattleOrNull());
             if (battle != null)
             {
                 FieldBattlePresentationHook.RequestWire(battle);
@@ -1598,7 +1585,7 @@ namespace NineGrid.Flow
 
         private void UnregisterHandBridge()
         {
-            var hand = CardHandManagerSingleton.Instance;
+            var hand = handManager ?? (handManager ?? CardEntityLifecycleHook.HandOrNull());
             if (hand == null)
             {
                 return;
@@ -1611,7 +1598,7 @@ namespace NineGrid.Flow
             BoardCardSelectModeController.End();
         }
 
-        private static CombatHitPresentationResult ApplyCombatHitFromCore(int attackerUid, int targetUid)
+        private CombatHitPresentationResult ApplyCombatHitFromCore(int attackerUid, int targetUid)
         {
             var reason = BattleTraceRecorder.ConsumePendingReason("CombatHit");
             var arch = NineGridArchitecture.Current;
@@ -1713,7 +1700,7 @@ namespace NineGrid.Flow
 
             PresentGoldGainsFromEventLog(startIndex, ResolveCardWorldPosition(targetUid));
             PresentEffectTriggersFromEventLog(startIndex);
-            Instance?.PresentShuffleIntoDeckFromEventLog(startIndex);
+            PresentShuffleIntoDeckFromEventLog(startIndex);
 
             if (!summary.TargetKilled
                 && arch.GetModel<CardRegistry>().TryGet(targetUid, out var target)
@@ -1867,7 +1854,7 @@ namespace NineGrid.Flow
             }
         }
 
-        private static PostKillBoardPresentationResult ResolvePostKillBoardFromCore()
+        private PostKillBoardPresentationResult ResolvePostKillBoardFromCore()
         {
             var arch = NineGridArchitecture.Current;
             var pipeline = arch.GetSystem<IActionPipelineSystem>();
@@ -1938,7 +1925,7 @@ namespace NineGrid.Flow
             summary.DamagePopups = CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
             PresentGoldGainsFromEventLog(startIndex);
             PresentEffectTriggersFromEventLog(startIndex);
-            Instance?.PresentShuffleIntoDeckFromEventLog(startIndex);
+            PresentShuffleIntoDeckFromEventLog(startIndex);
 
             try
             {
@@ -2481,7 +2468,7 @@ namespace NineGrid.Flow
                     continue;
                 }
 
-                var hand = CardHandManagerSingleton.Instance;
+                var hand = (handManager ?? CardEntityLifecycleHook.HandOrNull());
                 if (hand != null && hand.ContainsUid(deal.Uid))
                 {
                     Debug.LogWarning(
@@ -2541,7 +2528,7 @@ namespace NineGrid.Flow
                 return null;
             }
 
-            var hand = CardHandManagerSingleton.Instance;
+            var hand = (handManager ?? CardEntityLifecycleHook.HandOrNull());
             if (hand != null && hand.ContainsUid(deal.Uid))
             {
                 return null;
@@ -2596,7 +2583,8 @@ namespace NineGrid.Flow
         {
             PresentGoldGainsFromEventLog(startIndex, ResolveCardWorldPosition(pickedUid));
             PresentEffectTriggersFromEventLog(startIndex);
-            Instance?.PresentShuffleIntoDeckFromEventLog(startIndex);
+            var host = FindFirstObjectByType<InBattleManagerSingleton>();
+            host?.PresentShuffleIntoDeckFromEventLog(startIndex);
             PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
         }
 
@@ -2725,7 +2713,7 @@ namespace NineGrid.Flow
 
         private static void TrySyncStoneLoverCardPresentation(int cardUid)
         {
-            var manager = CardManagerSingleton.TryGetInstance();
+            var manager = CardEntityLifecycleHook.CardsOrNull();
             if (manager == null || !manager.TryGet(cardUid, out var card) || card == null)
             {
                 return;
@@ -3120,7 +3108,7 @@ namespace NineGrid.Flow
                 return;
             }
 
-            var battle = FieldBattlePresentationHook.BattleOrNull();
+            var battle = (battleManager ?? FieldBattlePresentationHook.BattleOrNull());
             if (battle == null)
             {
                 return;
@@ -3794,7 +3782,7 @@ namespace NineGrid.Flow
                 return;
             }
 
-            var hand = CardHandManagerSingleton.Instance;
+            var hand = (handManager ?? CardEntityLifecycleHook.HandOrNull());
             if (hand == null)
             {
                 return;
@@ -3828,11 +3816,11 @@ namespace NineGrid.Flow
                 return;
             }
 
-            var hand = CardHandManagerSingleton.Instance;
+            var hand = (handManager ?? CardEntityLifecycleHook.HandOrNull());
             if (hand == null)
             {
                 CardHandManagerSingleton.DisarmBoardSelectParkedHitProxy(card);
-                CardManagerSingleton.Instance.Release(card, "BoardSelect.VanishNoHand");
+                (cardManager ?? CardEntityLifecycleHook.CardsOrNull()).Release(card, "BoardSelect.VanishNoHand");
                 return;
             }
 
@@ -3939,8 +3927,8 @@ namespace NineGrid.Flow
 
             if (useResult.AvatarDefeated)
             {
-                FieldBattlePresentationHook.BattleOrNull()?.TryBeginAvatarDefeatPresentation(ct);
-                CombatHitSink.RequestBattleEnded(victory: false);
+                (battleManager ?? FieldBattlePresentationHook.BattleOrNull())?.TryBeginAvatarDefeatPresentation(ct);
+                CombatHitBridgeHook.RequestBattleEnded(victory: false);
                 return;
             }
 
@@ -3973,7 +3961,7 @@ namespace NineGrid.Flow
         private void BeginUseItemLethalVictims(UseItemPresentationResult useResult, CancellationToken cancellationToken)
         {
             ResolveManagers();
-            var battle = FieldBattlePresentationHook.BattleOrNull();
+            var battle = (battleManager ?? FieldBattlePresentationHook.BattleOrNull());
             if (battle == null || cardManager == null)
             {
                 Debug.LogWarning("[InBattleManager] UseItem 击杀卸尸缺少 FieldBattle/CardManager。");
@@ -4003,7 +3991,7 @@ namespace NineGrid.Flow
         /// </summary>
         public async UniTask PresentRewardChoiceFromCoreAsync(bool hoverOnNotice = false)
         {
-            var selector = SelectorManagerSingleton.Instance;
+            var selector = selectorManager ?? FindFirstObjectByType<SelectorManagerSingleton>();
             if (selector == null)
             {
                 Debug.LogWarning("[InBattleManager] 奖励相位但无 SelectorManager。");
@@ -4143,16 +4131,16 @@ namespace NineGrid.Flow
 
                     if (boardDelta.AvatarDefeated)
                     {
-                        FieldBattlePresentationHook.BattleOrNull()?.TryBeginAvatarDefeatPresentation(
+                        (battleManager ?? FieldBattlePresentationHook.BattleOrNull())?.TryBeginAvatarDefeatPresentation(
                             EnsurePresentationToken());
-                        CombatHitSink.RequestBattleEnded(victory: false);
+                        CombatHitBridgeHook.RequestBattleEnded(victory: false);
                         return;
                     }
 
                     // 整局通关：回主菜单。RoomChoice / NodeCompleted 交主循环继续，不在此宣告胜利。
                     if (phase == GamePhase.Victory)
                     {
-                        CombatHitSink.RequestBattleEnded(victory: true);
+                        CombatHitBridgeHook.RequestBattleEnded(victory: true);
                     }
                 }
                 finally
@@ -4243,7 +4231,7 @@ namespace NineGrid.Flow
         /// </summary>
         private async UniTask<string> PresentStatBoostChoiceAsync()
         {
-            var selector = SelectorManagerSingleton.Instance;
+            var selector = selectorManager ?? FindFirstObjectByType<SelectorManagerSingleton>();
             if (selector == null)
             {
                 Debug.LogWarning("[InBattleManager] 属性提升选择缺少 SelectorManager。");
@@ -4337,7 +4325,7 @@ namespace NineGrid.Flow
             }
         }
 
-        private static void SyncManagedCardPresentation(ManagedCard card)
+        private void SyncManagedCardPresentation(ManagedCard card)
         {
             CoreCardPresentationMapper.ApplyToManagedCard(card, animate: true);
 
@@ -4486,7 +4474,7 @@ namespace NineGrid.Flow
             }
 
             // 先卸占位（手牌整清，保证手牌中的也退场），再并行退场飞币。
-            CardHandManagerSingleton.Instance?.ClearHand();
+            (handManager ?? CardEntityLifecycleHook.HandOrNull())?.ClearHand();
             for (var i = 0; i < snapshots.Count; i++)
             {
                 var card = snapshots[i].card;
@@ -4494,7 +4482,7 @@ namespace NineGrid.Flow
                 deckManager?.TryDetachByUid(card.Uid, out _);
             }
 
-            GoldGainFxManagerSingleton.TryGetInstance(out var goldFx);
+            var goldFx = UnityEngine.Object.FindFirstObjectByType<GoldGainFxManagerSingleton>();
             var before = Math.Max(0, amountAfter - totalDelta);
             var credited = 0;
 
@@ -4554,7 +4542,7 @@ namespace NineGrid.Flow
             HashSet<int> restrictToUids,
             CancellationToken cancellationToken)
         {
-            CardHandManagerSingleton.Instance?.ClearHand();
+            (handManager ?? CardEntityLifecycleHook.HandOrNull())?.ClearHand();
             if (cardManager == null)
             {
                 return;
@@ -4800,7 +4788,7 @@ namespace NineGrid.Flow
                 return null;
             }
 
-            var cards = CardManagerSingleton.TryGetInstance();
+            var cards = CardEntityLifecycleHook.CardsOrNull();
             if (cards != null
                 && cards.TryGet(cardUid, out var view)
                 && view?.Transform != null)
@@ -4862,22 +4850,21 @@ namespace NineGrid.Flow
                 "SyncBoardOccupancyFromCore");
         }
 
-        private static void OnNodeSettlementFromCombat()
+        private void OnNodeSettlementFromCombat()
         {
-            Instance?.TryEnterNodeSettlement();
+            TryEnterNodeSettlement();
         }
 
-        private static void OnBattleEndedFromCombat(bool victory)
+        private void OnBattleEndedFromCombat(bool victory)
         {
-            var instance = Instance;
-            if (instance != null && instance._presentationDirector != null)
+            if (_presentationDirector != null)
             {
-                instance._presentationDirector.HardClearIntents(
+                _presentationDirector.HardClearIntents(
                     victory ? IntentClearReason.PhaseChange : IntentClearReason.Defeat);
                 CombatHitSink.DirectorMainlineBusy = false;
             }
 
-            var loop = MainGameLoopManagerSingleton.Instance;
+            var loop = mainGameLoop;
             if (loop == null)
             {
                 Debug.LogWarning("[InBattleManager] 战斗结束但未找到 MainGameLoop。");
@@ -4965,7 +4952,7 @@ namespace NineGrid.Flow
                 uiPickPreview: null,
                 timelineDiagnostics: DirectorTrace.TimelineSink);
             BindDirectorIntentRuntime(_presentationDirector);
-            CombatHitSink.BeginDirectorExternalHold = reason =>
+            CombatHitBridgeHook.BeginDirectorExternalHold = reason =>
             {
                 // 导演尚未装配时允许仅靠 PresentationLocked 防重入，避免 Drain 整段被跳过。
                 if (_presentationDirector == null)
@@ -4975,9 +4962,9 @@ namespace NineGrid.Flow
 
                 return _presentationDirector.TryBeginExternalHold(reason);
             };
-            CombatHitSink.EndDirectorExternalHold = reason =>
+            CombatHitBridgeHook.EndDirectorExternalHold = reason =>
                 _presentationDirector?.EndExternalHold(reason);
-            CombatHitSink.ForceEndDirectorExternalHold = reason =>
+            CombatHitBridgeHook.ForceEndDirectorExternalHold = reason =>
                 _presentationDirector?.ForceEndExternalHold(reason);
         }
 
@@ -4989,9 +4976,9 @@ namespace NineGrid.Flow
                 _presentationDirector.HardClearIntents(reason);
             }
 
-            CombatHitSink.BeginDirectorExternalHold = null;
-            CombatHitSink.EndDirectorExternalHold = null;
-            CombatHitSink.ForceEndDirectorExternalHold = null;
+            CombatHitBridgeHook.BeginDirectorExternalHold = null;
+            CombatHitBridgeHook.EndDirectorExternalHold = null;
+            CombatHitBridgeHook.ForceEndDirectorExternalHold = null;
             TriggerPulseOutputHook.RequestReset();
             UnbindDirectorIntentRuntime();
             _presentationDirector = null;
@@ -5123,10 +5110,9 @@ namespace NineGrid.Flow
             return phase == GamePhase.InteractionLoop || phase == GamePhase.RewardItemChoice;
         }
 
-        private static void TryRecoverOrphanMidBattleRewardUi(string context)
+        private void TryRecoverOrphanMidBattleRewardUi(string context)
         {
-            var instance = Instance;
-            if (instance == null || instance._recoveringRewardUi)
+            if (_recoveringRewardUi)
             {
                 return;
             }
@@ -5139,8 +5125,8 @@ namespace NineGrid.Flow
             Debug.LogWarning(
                 "[InBattleManager] 孤儿 PendingReward（无覆盖层），重开 Bounce。context="
                 + (context ?? string.Empty));
-            instance._recoveringRewardUi = true;
-            instance.RecoverPendingRewardUiAsync().Forget();
+            _recoveringRewardUi = true;
+            RecoverPendingRewardUiAsync().Forget();
         }
 
         private async UniTaskVoid RecoverPendingRewardUiAsync()
@@ -5359,7 +5345,7 @@ namespace NineGrid.Flow
                     await UniTask.Yield(PlayerLoopTiming.Update, token);
                 }
 
-                CombatHitSink.RequestNodeSettlement();
+                CombatHitBridgeHook.RequestNodeSettlement();
             }
             catch (OperationCanceledException)
             {
@@ -5372,7 +5358,7 @@ namespace NineGrid.Flow
             PostKillBoardPresentationResult result,
             CancellationToken token)
         {
-            var battle = FieldBattlePresentationHook.BattleOrNull();
+            var battle = (battleManager ?? FieldBattlePresentationHook.BattleOrNull());
             if (battle == null)
             {
                 Debug.LogWarning("[InBattleManager] PlayDirectorAttackHitPresent：无 FieldBattleManager。");
@@ -5388,7 +5374,7 @@ namespace NineGrid.Flow
             PostKillBoardPresentationResult result,
             CancellationToken token)
         {
-            var battle = FieldBattlePresentationHook.BattleOrNull();
+            var battle = (battleManager ?? FieldBattlePresentationHook.BattleOrNull());
             if (battle == null)
             {
                 Debug.LogWarning("[InBattleManager] PlayDirectorCounterPresent：无 FieldBattleManager。");

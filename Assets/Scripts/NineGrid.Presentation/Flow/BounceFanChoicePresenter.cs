@@ -228,7 +228,7 @@ namespace NineGrid.Flow
 
         private void BuildEntries(IReadOnlyList<string> optionDefIds)
         {
-            var cardManager = CardManagerSingleton.Instance;
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
             if (cardManager == null)
             {
                 Debug.LogError("[BounceFanChoice] CardManagerSingleton 缺失。");
@@ -477,7 +477,7 @@ namespace NineGrid.Flow
                 return;
             }
 
-            var manager = SelectorManagerSingleton.Instance;
+            var manager = UnityEngine.Object.FindFirstObjectByType<SelectorManagerSingleton>();
             if (manager != null)
             {
                 manager.NotifySessionFinished();
@@ -608,7 +608,7 @@ namespace NineGrid.Flow
             // _entries 中的 ManagedCard 可跨异步边界存活；UID 复用后须走实例所有权校验，
             // 绝不能仅凭 UID 释放后来者（见 CardManagerSingleton.Release(ManagedCard)）。
             // 销毁/卸场景时绝不可走 Instance（会新建残留 CardManagerSingleton）。
-            var cardManager = CardManagerSingleton.TryGetInstance();
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
             for (var i = 0; i < _entries.Count; i++)
             {
                 var entry = _entries[i];
@@ -652,7 +652,7 @@ namespace NineGrid.Flow
 
         private void ShowHoverDescription(string defId)
         {
-            var mgr = DescriptionManagerSingleton.TryGetInstance();
+            var mgr = UnityEngine.Object.FindFirstObjectByType<DescriptionManagerSingleton>();
             if (mgr == null)
             {
                 return;
@@ -670,7 +670,7 @@ namespace NineGrid.Flow
                 return;
             }
 
-            var mgr = DescriptionManagerSingleton.TryGetInstance();
+            var mgr = UnityEngine.Object.FindFirstObjectByType<DescriptionManagerSingleton>();
             if (_hoverOnNotice)
             {
                 mgr?.ClearNotice(_descriptionGeneration);

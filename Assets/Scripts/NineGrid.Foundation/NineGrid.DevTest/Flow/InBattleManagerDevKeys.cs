@@ -12,7 +12,7 @@ namespace NineGrid.DevTest.Flow
     {
         private const int CheatAvatarHp = 99;
 
-        [Tooltip("运行时自动查找 InBattleManagerSingleton.Instance；也可手动拖入覆盖。")]
+        [Tooltip("运行时查找场景中的 InBattleManagerSingleton；也可手动拖入覆盖。")]
         [SerializeField] private InBattleManagerSingleton inBattleManager;
 
         protected override string ModuleId => "in-battle-manager";
@@ -26,7 +26,7 @@ namespace NineGrid.DevTest.Flow
 
             if (inBattleManager == null)
             {
-                inBattleManager = InBattleManagerSingleton.Instance;
+                inBattleManager = UnityEngine.Object.FindFirstObjectByType<InBattleManagerSingleton>();
             }
 
             base.OnEnable();
@@ -148,7 +148,7 @@ namespace NineGrid.DevTest.Flow
                 return inBattleManager;
             }
 
-            inBattleManager = InBattleManagerSingleton.Instance;
+            inBattleManager = UnityEngine.Object.FindFirstObjectByType<InBattleManagerSingleton>();
             if (inBattleManager == null)
             {
                 Debug.LogWarning("[InBattleManagerDevKeys] 未找到 InBattleManagerSingleton。");

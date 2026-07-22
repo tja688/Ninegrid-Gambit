@@ -619,7 +619,8 @@ namespace NineGrid.Flow
 
         private void ApplyGold(int gold, bool animate)
         {
-            if (GoldGainFxManagerSingleton.TryGetInstance(out var goldFx)
+            var goldFx = UnityEngine.Object.FindFirstObjectByType<GoldGainFxManagerSingleton>();
+            if (goldFx != null
                 && goldFx.TryHandleGoldSync(gold, animate))
             {
                 _gold.Value = gold;

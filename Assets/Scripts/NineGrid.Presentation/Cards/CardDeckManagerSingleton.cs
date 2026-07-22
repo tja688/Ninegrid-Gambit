@@ -14,7 +14,6 @@ namespace NineGrid.Cards
     /// </summary>
     public sealed class CardDeckManagerSingleton : MonoBehaviour, IHandoffEndpoint
     {
-        private static CardDeckManagerSingleton _instance;
 
         [Header("Scene Anchors")]
         [Tooltip("场景 Anchors/CardDeckAnchors。留空时 Awake 按名称 CardDeckAnchors 查找。")]
@@ -44,19 +43,6 @@ namespace NineGrid.Cards
 
         /// <summary>入组索引：随机落点（非空时排除最左 slot 0）。</summary>
         public const int RandomInsertIndex = -1;
-
-        public static CardDeckManagerSingleton Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<CardDeckManagerSingleton>();
-                }
-
-                return _instance;
-            }
-        }
 
         public CardDeckMode CurrentMode { get; private set; } = CardDeckMode.Standby;
 
@@ -149,13 +135,6 @@ namespace NineGrid.Cards
 
         private void Awake()
         {
-            if (_instance != null && _instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            _instance = this;
             _slotContainer = new CardDeckSlotContainer(layoutSettings);
             ResolveSceneReferences();
             CacheAnchors();
@@ -164,10 +143,6 @@ namespace NineGrid.Cards
 
         private void OnDestroy()
         {
-            if (_instance == this)
-            {
-                _instance = null;
-            }
         }
 
         private void Update()

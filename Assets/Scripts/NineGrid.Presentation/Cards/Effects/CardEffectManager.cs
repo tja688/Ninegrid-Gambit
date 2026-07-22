@@ -432,7 +432,7 @@ namespace NineGrid.Cards
                     && invoke.Kind != CardEffectKind.Death
                     && invoke.Kind != CardEffectKind.Use)
                 {
-                    CardManagerSingleton.Instance.RefreshDisplayMode(card);
+                    CardEntityLifecycleHook.CardsOrNull().RefreshDisplayMode(card);
                 }
             }
         }

@@ -29,7 +29,7 @@ namespace NineGrid.Flow.Presentation
                 return;
             }
 
-            var cardManager = CardManagerSingleton.Instance;
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
             if (cardManager == null
                 || !cardManager.TryGet(uid, out var card)
                 || card == null

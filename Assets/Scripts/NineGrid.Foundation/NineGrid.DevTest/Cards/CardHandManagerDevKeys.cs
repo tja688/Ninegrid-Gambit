@@ -10,7 +10,7 @@ namespace NineGrid.DevTest.Cards
     [DisallowMultipleComponent]
     public sealed class CardHandManagerDevKeys : TestKeyModuleBehaviour
     {
-        [Tooltip("运行时自动查找 CardHandManagerSingleton.Instance；也可手动拖入覆盖。")]
+        [Tooltip("运行时查找场景中的 CardHandManagerSingleton；也可手动拖入覆盖。")]
         [SerializeField] private CardHandManagerSingleton handManager;
 
         protected override string ModuleId => "card-hand-manager";
@@ -24,7 +24,7 @@ namespace NineGrid.DevTest.Cards
 
             if (handManager == null)
             {
-                handManager = CardHandManagerSingleton.Instance;
+                handManager = UnityEngine.Object.FindFirstObjectByType<CardHandManagerSingleton>();
             }
 
             base.OnEnable();
@@ -52,7 +52,7 @@ namespace NineGrid.DevTest.Cards
                 return;
             }
 
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = UnityEngine.Object.FindFirstObjectByType<GroundFieldManagerSingleton>();
             if (field == null)
             {
                 Debug.LogWarning("[CardHandManagerDevKeys] 未找到 GroundFieldManagerSingleton。");
@@ -81,7 +81,8 @@ namespace NineGrid.DevTest.Cards
             if (!success)
             {
                 Debug.LogWarning("[CardHandManagerDevKeys] 入手牌失败，已释放卡牌。");
-                CardManagerSingleton.Instance.Release(taken, "DevTest.HandPickup");
+                var cards = UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
+                cards?.Release(taken, "DevTest.HandPickup");
             }
         }
 
@@ -92,7 +93,7 @@ namespace NineGrid.DevTest.Cards
                 return handManager;
             }
 
-            handManager = CardHandManagerSingleton.Instance;
+            handManager = UnityEngine.Object.FindFirstObjectByType<CardHandManagerSingleton>();
             if (handManager == null)
             {
                 Debug.LogWarning("[CardHandManagerDevKeys] 未找到 CardHandManagerSingleton。");

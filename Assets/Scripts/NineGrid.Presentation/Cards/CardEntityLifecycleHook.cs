@@ -66,47 +66,22 @@ namespace NineGrid.Cards
 
         public static void RequestNotifyReleased(int uid)
         {
-            if (NotifyCardReleased != null)
-            {
-                NotifyCardReleased(uid);
-                return;
-            }
-
-            // V6 compat shell：Hook 未接线时回退 Instance。
-            CardHandManagerSingleton.Instance?.NotifyCardReleased(uid);
+            NotifyCardReleased?.Invoke(uid);
         }
 
         public static CardManagerSingleton CardsOrNull()
         {
-            var wired = ResolveCards?.Invoke();
-            if (wired != null)
-            {
-                return wired;
-            }
-
-            return CardManagerSingleton.TryGetInstance();
+            return ResolveCards?.Invoke();
         }
 
         public static CardHandManagerSingleton HandOrNull()
         {
-            var wired = ResolveHand?.Invoke();
-            if (wired != null)
-            {
-                return wired;
-            }
-
-            return CardHandManagerSingleton.Instance;
+            return ResolveHand?.Invoke();
         }
 
         public static CardDeckManagerSingleton DeckOrNull()
         {
-            var wired = ResolveDeck?.Invoke();
-            if (wired != null)
-            {
-                return wired;
-            }
-
-            return CardDeckManagerSingleton.Instance;
+            return ResolveDeck?.Invoke();
         }
     }
 }

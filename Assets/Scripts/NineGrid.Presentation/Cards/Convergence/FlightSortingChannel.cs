@@ -39,7 +39,7 @@ namespace NineGrid.Cards.Convergence
             // 净土域自有槽位序（左高右低）；不可回落到 DisplayMode 默认值，否则会吞掉手牌/卡组规则。
             if (card.DisplayMode == CardDisplayMode.HandCardMode)
             {
-                var hand = CardHandManagerSingleton.Instance;
+                var hand = CardEntityLifecycleHook.HandOrNull();
                 if (hand != null && hand.TryResolveSortingOrder(card, out var handOrder))
                 {
                     return handOrder;
@@ -47,7 +47,7 @@ namespace NineGrid.Cards.Convergence
             }
             else if (card.DisplayMode == CardDisplayMode.CardDeckMode)
             {
-                var deck = CardDeckManagerSingleton.Instance;
+                var deck = CardEntityLifecycleHook.DeckOrNull();
                 if (deck != null && deck.TryResolveSortingOrder(card, out var deckOrder))
                 {
                     return deckOrder;
@@ -155,8 +155,8 @@ namespace NineGrid.Cards.Convergence
                 active.Driver.Completed -= active.Handler;
             }
 
-            if (CardManagerSingleton.Instance == null
-                || !CardManagerSingleton.Instance.TryGet(uid, out var card)
+            if (CardEntityLifecycleHook.CardsOrNull() == null
+                || !CardEntityLifecycleHook.CardsOrNull().TryGet(uid, out var card)
                 || card == null)
             {
                 return;

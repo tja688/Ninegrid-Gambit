@@ -10,7 +10,7 @@
 
 | 邻层 | Flow 做什么 | Flow 不做什么 |
 |------|-------------|---------------|
-| **Core**（`NineGrid.Core` + QFramework） | 经 `NineGridArchitecture.Current` 读 Model/System；经 `CoreCommandDispatcher` 发命令；经 `IPresentationSyncSystem` Open/Finish 批次门 | 不实现规则引擎；不手改 `.unity`；不把剧本写进 Core |
+| **Core**（`NineGrid.Core` + QFramework） | 经 `NineGridArchitecture.Current` 读 Model/System；经 `CoreCommandDispatcher` 发命令；经 `IPresentationSyncSystem` Open/Finish 批次门 | 不实现规则引擎；不把剧本写进 Core |
 | **Cards**（`NineGrid.Cards`） | 调用 `CardManager`/`Deck`/`GroundField` 做盘面 drain、命中观感、洗回牌堆；`CombatHitSink` 等桥接由 InBattle 注册 | 不做几何命中裁决（idle 合法性在 Flow 的 `BoardIntentLegality`）；不拥有主线时间线 |
 | **UI / 面板** | `UiPanelRouter` 显隐壳；`Description`/`PlayerInfoHud`/`Selector`/`RoomChoice`/`BounceFan` 等 Presenter | 不承载 Core 状态真相；不替代导演 busy |
 

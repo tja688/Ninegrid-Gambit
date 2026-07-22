@@ -97,7 +97,7 @@ namespace NineGrid.Presentation.Controllers
                 return mRelicManager;
             }
 
-            mRelicManager = RelicManagerSingleton.Instance;
+            mRelicManager = UnityEngine.Object.FindFirstObjectByType<RelicManagerSingleton>();
             return mRelicManager;
         }
 

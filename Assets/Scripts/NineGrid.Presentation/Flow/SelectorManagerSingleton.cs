@@ -12,7 +12,6 @@ namespace NineGrid.Flow
     {
         private const string DefaultPlaceholderDefId = CardManagerSingleton.StandardDefId;
 
-        private static SelectorManagerSingleton _instance;
 
         [Tooltip("Bounce 扇形选择表现；留空则运行时在同物体上 GetComponent 或 AddComponent。")]
         [SerializeField] private BounceFanChoicePresenter bouncePresenter;
@@ -35,48 +34,10 @@ namespace NineGrid.Flow
             Room,
         }
 
-        public static SelectorManagerSingleton Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<SelectorManagerSingleton>();
-                    if (_instance == null)
-                    {
-                        var go = new GameObject(nameof(SelectorManagerSingleton));
-                        _instance = go.AddComponent<SelectorManagerSingleton>();
-                    }
-                }
-
-                return _instance;
-            }
-        }
-
-        /// <summary>
-        /// 仅查找，不创建。卡面重置/卸场景时须先 HideChoice，避免走 Instance 误拉起新会话。
-        /// </summary>
-        public static SelectorManagerSingleton TryGetInstance()
-        {
-            if (_instance != null)
-            {
-                return _instance;
-            }
-
-            return FindFirstObjectByType<SelectorManagerSingleton>();
-        }
-
         public bool IsChoiceActive => _sessionActive;
 
         private void Awake()
         {
-            if (_instance != null && _instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            _instance = this;
             EnsureBouncePresenter();
             EnsureRoomPresenter();
         }
@@ -88,10 +49,6 @@ namespace NineGrid.Flow
                 HideChoice();
             }
 
-            if (_instance == this)
-            {
-                _instance = null;
-            }
         }
 
         /// <summary>

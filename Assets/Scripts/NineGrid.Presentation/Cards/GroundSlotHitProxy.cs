@@ -65,7 +65,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var hand = CardHandManagerSingleton.Instance;
+            var hand = CardEntityLifecycleHook.HandOrNull();
             if (hand != null && (hand.IsBusy || hand.IsDragging))
             {
                 return;

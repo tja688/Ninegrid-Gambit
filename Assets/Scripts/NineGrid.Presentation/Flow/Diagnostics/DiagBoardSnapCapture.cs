@@ -26,8 +26,8 @@ namespace NineGrid.Flow.Diagnostics
         public static Dictionary<int, CardSnap> CaptureLiveBoard(IReadOnlyCollection<int> tweeningUids = null)
         {
             var result = new Dictionary<int, CardSnap>();
-            var cards = CardManagerSingleton.Instance;
-            var field = GroundFieldManagerSingleton.Instance;
+            var cards = CardEntityLifecycleHook.CardsOrNull();
+            var field = GroundFieldGeometryHook.FieldOrNull();
             if (cards == null)
             {
                 return result;

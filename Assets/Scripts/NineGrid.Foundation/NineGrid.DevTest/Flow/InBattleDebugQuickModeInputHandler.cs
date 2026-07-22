@@ -18,7 +18,7 @@ namespace NineGrid.DevTest.Flow
             MenuOpen,
         }
 
-        [Tooltip("运行时自动查找 MainGameLoopManagerSingleton.Instance；也可手动拖入覆盖。")]
+        [Tooltip("运行时查找场景中的 MainGameLoopManagerSingleton；也可手动拖入覆盖。")]
         [SerializeField] private MainGameLoopManagerSingleton loopManager;
 
         private InputState _state = InputState.Idle;
@@ -34,7 +34,7 @@ namespace NineGrid.DevTest.Flow
 
             if (loopManager == null)
             {
-                loopManager = MainGameLoopManagerSingleton.Instance;
+                loopManager = UnityEngine.Object.FindFirstObjectByType<MainGameLoopManagerSingleton>();
             }
         }
 
@@ -64,7 +64,7 @@ namespace NineGrid.DevTest.Flow
         {
             if (loopManager == null)
             {
-                loopManager = MainGameLoopManagerSingleton.Instance;
+                loopManager = UnityEngine.Object.FindFirstObjectByType<MainGameLoopManagerSingleton>();
             }
 
             return loopManager != null && loopManager.CanAcceptInBattleDebugQuickMode;

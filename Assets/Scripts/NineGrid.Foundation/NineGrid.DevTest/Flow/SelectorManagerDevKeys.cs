@@ -8,7 +8,7 @@ namespace NineGrid.DevTest.Flow
     [DisallowMultipleComponent]
     public sealed class SelectorManagerDevKeys : TestKeyModuleBehaviour
     {
-        [Tooltip("运行时自动查找 SelectorManagerSingleton.Instance；也可手动拖入覆盖。")]
+        [Tooltip("运行时查找场景中的 SelectorManagerSingleton；也可手动拖入覆盖。")]
         [SerializeField] private SelectorManagerSingleton selectorManager;
 
         protected override string ModuleId => "selector-manager";
@@ -22,7 +22,7 @@ namespace NineGrid.DevTest.Flow
 
             if (selectorManager == null)
             {
-                selectorManager = SelectorManagerSingleton.Instance;
+                selectorManager = UnityEngine.Object.FindFirstObjectByType<SelectorManagerSingleton>();
             }
 
             base.OnEnable();
@@ -59,7 +59,7 @@ namespace NineGrid.DevTest.Flow
                 return selectorManager;
             }
 
-            selectorManager = SelectorManagerSingleton.Instance;
+            selectorManager = UnityEngine.Object.FindFirstObjectByType<SelectorManagerSingleton>();
             if (selectorManager == null)
             {
                 Debug.LogWarning("[SelectorManagerDevKeys] 未找到 SelectorManagerSingleton。");

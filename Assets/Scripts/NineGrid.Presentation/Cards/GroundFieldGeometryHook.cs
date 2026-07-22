@@ -28,14 +28,7 @@ namespace NineGrid.Cards
 
         public static GroundFieldManagerSingleton FieldOrNull()
         {
-            var wired = ResolveField?.Invoke();
-            if (wired != null)
-            {
-                return wired;
-            }
-
-            // V7 compat shell：Hook 未接线时回退 Instance。
-            return GroundFieldManagerSingleton.TryGetInstance();
+            return ResolveField?.Invoke();
         }
     }
 }

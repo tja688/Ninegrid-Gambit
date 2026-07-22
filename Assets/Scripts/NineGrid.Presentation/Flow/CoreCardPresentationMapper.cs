@@ -129,7 +129,7 @@ namespace NineGrid.Flow
         /// </summary>
         public static void CommitAllSpawnedCards()
         {
-            var cardManager = CardManagerSingleton.TryGetInstance();
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
             if (cardManager == null)
             {
                 return;
@@ -146,7 +146,7 @@ namespace NineGrid.Flow
         /// </summary>
         public static void SyncAllSpawnedCards()
         {
-            var cardManager = CardManagerSingleton.TryGetInstance();
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
             if (cardManager == null)
             {
                 return;

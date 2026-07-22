@@ -17,7 +17,6 @@ namespace NineGrid.Flow
         public const string DefaultAnchorsName = "RelicPanelAnchors";
         private const string DefaultCatalogAssetPath = "Assets/Arts/ContentVisual/RelicVisualCatalog.asset";
 
-        private static RelicManagerSingleton _instance;
 
         [Tooltip("遗物栏锚点根；留空则运行时按名查找 RelicPanelAnchors。")]
         [SerializeField] private Transform panelAnchors;
@@ -28,44 +27,15 @@ namespace NineGrid.Flow
         private SpriteRenderer[] _slotRenderers = System.Array.Empty<SpriteRenderer>();
         private readonly List<string> _displayedDefIds = new();
 
-        public static RelicManagerSingleton Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<RelicManagerSingleton>();
-                    if (_instance == null)
-                    {
-                        var go = new GameObject(nameof(RelicManagerSingleton));
-                        _instance = go.AddComponent<RelicManagerSingleton>();
-                    }
-                }
-
-                return _instance;
-            }
-        }
-
         public IReadOnlyList<string> DisplayedDefIds => _displayedDefIds;
 
         private void Awake()
         {
-            if (_instance != null && _instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            _instance = this;
             EnsureBindings();
         }
 
         private void OnDestroy()
         {
-            if (_instance == this)
-            {
-                _instance = null;
-            }
         }
 
         /// <summary>

@@ -170,7 +170,7 @@ namespace NineGrid.Cards
     }
 
     /// <summary>
-    /// Cards → Flow 交战/手牌结算桥：Cards 不引用 Core/Flow，由 InBattleManager 在 Awake 注册。
+    /// 交战输入门禁与表现锁：业务桥已迁 <see cref="CombatHitBridgeHook"/>。
     /// </summary>
     public static class CombatHitSink
     {
@@ -197,20 +197,9 @@ namespace NineGrid.Cards
 
         /// <summary>
         /// 外部薄适配重入门（Pickup / Drain 防双开）。输入互斥只认 <see cref="DirectorMainlineBusy"/>；
-        /// 本标志配合 <see cref="BeginDirectorExternalHold"/> 挂导演主线租约。
+        /// 本标志配合 CombatHitBridgeHook 导演主线租约。
         /// </summary>
         public static bool PresentationLocked { get; private set; }
-
-        /// <summary>
-        /// 导演主线外部租约：idle 时入队 Hold；主线已忙则嵌套。由 InBattle 注册。
-        /// </summary>
-        public static Func<string, bool> BeginDirectorExternalHold;
-
-        /// <summary>释放 <see cref="BeginDirectorExternalHold"/> 租约。由 InBattle 注册。</summary>
-        public static Action<string> EndDirectorExternalHold;
-
-        /// <summary>强制清导演外部租约（清场）。由 InBattle 注册。</summary>
-        public static Action<string> ForceEndDirectorExternalHold;
 
         /// <summary>
         /// 尝试获取表现锁并挂导演主线租约。已锁时返回 false（防重入）。
@@ -222,7 +211,8 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (BeginDirectorExternalHold != null && !BeginDirectorExternalHold(reason))
+            if (CombatHitBridgeHook.BeginDirectorExternalHold != null
+                && !CombatHitBridgeHook.BeginDirectorExternalHold(reason))
             {
                 return false;
             }
@@ -252,7 +242,7 @@ namespace NineGrid.Cards
             }
 
             PresentationLocked = false;
-            EndDirectorExternalHold?.Invoke(reason);
+            CombatHitBridgeHook.EndDirectorExternalHold?.Invoke(reason);
             if (!string.IsNullOrEmpty(reason))
             {
                 Debug.Log($"[CombatHitSink] PresentationLocked end: {reason}");
@@ -272,7 +262,7 @@ namespace NineGrid.Cards
         {
             var wasLocked = PresentationLocked;
             PresentationLocked = false;
-            ForceEndDirectorExternalHold?.Invoke(reason ?? "force-end");
+            CombatHitBridgeHook.ForceEndDirectorExternalHold?.Invoke(reason ?? "force-end");
             if (wasLocked)
             {
                 Debug.Log($"[CombatHitSink] PresentationLocked force-end: {reason ?? "clear"}");
@@ -291,73 +281,9 @@ namespace NineGrid.Cards
             DirectorMainlineBusy = false;
         }
 
-        /// <summary>ApplyCombatHit(attackerUid, targetUid) → 摘要。</summary>
-        public static Func<int, int, CombatHitPresentationResult> ApplyCombatHit;
-
-        /// <summary>ResolvePostKillBoard() → 摘要（含 Moved/Dealt）。</summary>
-        public static Func<PostKillBoardPresentationResult> ResolvePostKillBoard;
-
-        /// <summary>命中后刷受击卡数值。</summary>
-        public static Action<ManagedCard> SyncCardPresentation;
-
-        /// <summary>
-        /// #10：占格对账已退场。保留委托供旧调用点触发断言诊断，不得再静默 heal。
-        /// </summary>
-        public static Action SyncBoardFromCore;
-
         /// <summary>
         /// 表演导演主线在跑。已迁流程以此为输入互斥真相；Cards 侧 IsBusy 聚合读取，不引用 Flow。
         /// </summary>
         public static bool DirectorMainlineBusy;
-
-        /// <summary>清场胜利 / 玩家战败 → Notice + 回主菜单。</summary>
-        public static Action<bool> NotifyBattleEnded;
-
-        public static CombatHitPresentationResult RequestCombatHit(int attackerUid, int targetUid)
-        {
-            if (ApplyCombatHit == null)
-            {
-                Debug.LogWarning("[CombatHitSink] ApplyCombatHit 未注册。");
-                return default;
-            }
-
-            return ApplyCombatHit(attackerUid, targetUid);
-        }
-
-        public static PostKillBoardPresentationResult RequestPostKillBoard()
-        {
-            if (ResolvePostKillBoard == null)
-            {
-                Debug.LogWarning("[CombatHitSink] ResolvePostKillBoard 未注册。");
-                return default;
-            }
-
-            return ResolvePostKillBoard();
-        }
-
-        public static void RequestSyncCard(ManagedCard card)
-        {
-            SyncCardPresentation?.Invoke(card);
-        }
-
-        public static void RequestSyncBoardFromCore()
-        {
-            SyncBoardFromCore?.Invoke();
-        }
-
-        public static void RequestBattleEnded(bool victory)
-        {
-            NotifyBattleEnded?.Invoke(victory);
-        }
-
-        /// <summary>
-        /// 节点通关结算就绪（奖励/房间），非整局胜负。由 InBattleManager 注册。
-        /// </summary>
-        public static Action NotifyNodeSettlementReady;
-
-        public static void RequestNodeSettlement()
-        {
-            NotifyNodeSettlementReady?.Invoke();
-        }
     }
 }

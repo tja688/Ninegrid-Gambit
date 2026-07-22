@@ -54,7 +54,6 @@ namespace NineGrid.Presentation.Tests.Lifecycle
             DestroyManager(_hand);
             DestroyManager(_deck);
             DestroyAllManagers();
-            ResetStaticInstances();
         }
 
         [Test]
@@ -82,14 +81,19 @@ namespace NineGrid.Presentation.Tests.Lifecycle
         }
 
         [Test]
-        public void HookResolvers_SurviveClearedSingletonInstances()
+        public void HookResolvers_WorkWithoutStaticInstanceFields()
         {
-            CardEntityLifecycleHook.RequestWire(_cards, _hand, _deck);
-            ResetStaticInstances();
+            Assert.IsNull(
+                typeof(CardManagerSingleton).GetField(
+                    "_instance", BindingFlags.Static | BindingFlags.NonPublic));
+            Assert.IsNull(
+                typeof(CardHandManagerSingleton).GetField(
+                    "_instance", BindingFlags.Static | BindingFlags.NonPublic));
+            Assert.IsNull(
+                typeof(CardDeckManagerSingleton).GetField(
+                    "_instance", BindingFlags.Static | BindingFlags.NonPublic));
 
-            Assert.IsNull(GetStaticInstance(typeof(CardManagerSingleton), "_instance"));
-            Assert.IsNull(GetStaticInstance(typeof(CardHandManagerSingleton), "_instance"));
-            Assert.IsNull(GetStaticInstance(typeof(CardDeckManagerSingleton), "_instance"));
+            CardEntityLifecycleHook.RequestWire(_cards, _hand, _deck);
 
             Assert.AreSame(_cards, CardEntityLifecycleHook.CardsOrNull());
             Assert.AreSame(_hand, CardEntityLifecycleHook.HandOrNull());
@@ -102,14 +106,13 @@ namespace NineGrid.Presentation.Tests.Lifecycle
         }
 
         [Test]
-        public void Release_NotifiesViaHook_WhenInstanceCleared()
+        public void Release_NotifiesViaHook_WithoutStaticInstance()
         {
             var card = _cards.SpawnView(TestUid, CardManagerSingleton.StandardDefId);
             Assert.IsNotNull(card);
 
             var notified = 0;
             CardEntityLifecycleHook.NotifyCardReleased = uid => notified = uid;
-            ResetStaticInstances();
 
             // EditMode：Release 内 Destroy 会打 Error；行为断言关注 Hook 通知与注册表移除。
             LogAssert.Expect(LogType.Error, new Regex("Destroy may not be called from edit mode"));
@@ -165,25 +168,6 @@ namespace NineGrid.Presentation.Tests.Lifecycle
             {
                 Object.DestroyImmediate(manager.gameObject);
             }
-        }
-
-        private static void ResetStaticInstances()
-        {
-            SetStaticInstance(typeof(CardManagerSingleton), "_instance", null);
-            SetStaticInstance(typeof(CardHandManagerSingleton), "_instance", null);
-            SetStaticInstance(typeof(CardDeckManagerSingleton), "_instance", null);
-        }
-
-        private static object GetStaticInstance(System.Type type, string fieldName)
-        {
-            var field = type.GetField(fieldName, BindingFlags.Static | BindingFlags.NonPublic);
-            return field?.GetValue(null);
-        }
-
-        private static void SetStaticInstance(System.Type type, string fieldName, object value)
-        {
-            var field = type.GetField(fieldName, BindingFlags.Static | BindingFlags.NonPublic);
-            field?.SetValue(null, value);
         }
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using UnityEngine;
 
 namespace NineGrid.Cards
 {
@@ -29,14 +28,7 @@ namespace NineGrid.Cards
 
         public static FieldBattleManagerSingleton BattleOrNull()
         {
-            var wired = ResolveBattle?.Invoke();
-            if (wired != null)
-            {
-                return wired;
-            }
-
-            // V7 compat shell：Hook 未接线时回退查找，不经 Instance 懒创建语义。
-            return UnityEngine.Object.FindFirstObjectByType<FieldBattleManagerSingleton>();
+            return ResolveBattle?.Invoke();
         }
     }
 }

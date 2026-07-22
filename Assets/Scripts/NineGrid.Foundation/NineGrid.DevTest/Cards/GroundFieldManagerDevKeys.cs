@@ -10,10 +10,10 @@ namespace NineGrid.DevTest.Cards
     [DisallowMultipleComponent]
     public sealed class GroundFieldManagerDevKeys : TestKeyModuleBehaviour
     {
-        [Tooltip("运行时自动查找 GroundFieldManagerSingleton.Instance；也可手动拖入覆盖。")]
+        [Tooltip("运行时查找场景中的 GroundFieldManagerSingleton；也可手动拖入覆盖。")]
         [SerializeField] private GroundFieldManagerSingleton fieldManager;
 
-        [Tooltip("运行时自动查找 FieldBattleManagerSingleton.Instance；也可手动拖入覆盖。")]
+        [Tooltip("运行时查找场景中的 FieldBattleManagerSingleton；也可手动拖入覆盖。")]
         [SerializeField] private FieldBattleManagerSingleton battleManager;
 
         protected override string ModuleId => "ground-field-manager";
@@ -27,12 +27,12 @@ namespace NineGrid.DevTest.Cards
 
             if (fieldManager == null)
             {
-                fieldManager = GroundFieldManagerSingleton.Instance;
+                fieldManager = UnityEngine.Object.FindFirstObjectByType<GroundFieldManagerSingleton>();
             }
 
             if (battleManager == null)
             {
-                battleManager = FieldBattleManagerSingleton.Instance;
+                battleManager = UnityEngine.Object.FindFirstObjectByType<FieldBattleManagerSingleton>();
             }
 
             base.OnEnable();
@@ -207,7 +207,7 @@ namespace NineGrid.DevTest.Cards
                 return fieldManager;
             }
 
-            fieldManager = GroundFieldManagerSingleton.Instance;
+            fieldManager = UnityEngine.Object.FindFirstObjectByType<GroundFieldManagerSingleton>();
             if (fieldManager == null)
             {
                 Debug.LogWarning("[GroundFieldManagerDevKeys] 未找到 GroundFieldManagerSingleton。");
@@ -223,7 +223,7 @@ namespace NineGrid.DevTest.Cards
                 return battleManager;
             }
 
-            battleManager = FieldBattleManagerSingleton.Instance;
+            battleManager = UnityEngine.Object.FindFirstObjectByType<FieldBattleManagerSingleton>();
             if (battleManager == null)
             {
                 Debug.LogWarning("[GroundFieldManagerDevKeys] 未找到 FieldBattleManagerSingleton。");

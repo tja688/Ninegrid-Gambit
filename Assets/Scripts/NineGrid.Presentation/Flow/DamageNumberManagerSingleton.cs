@@ -15,7 +15,6 @@ namespace NineGrid.Flow
         private const string DefaultSortingLayerName = "Main";
         private const int DefaultSortingOrder = 5;
 
-        private static DamageNumberManagerSingleton _instance;
         private IUnRegister _damageEventUnRegister;
 
         [Tooltip("用于 Spawn 的伤害数字预制体（DamageNumberMesh，2D 世界空间）。留空时无法生成。")]
@@ -39,34 +38,8 @@ namespace NineGrid.Flow
         [Tooltip("SpawnRandomAtScreenCenter 时的随机伤害上限（含）。")]
         [SerializeField] private int randomMax = 999;
 
-        public static DamageNumberManagerSingleton Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<DamageNumberManagerSingleton>();
-                }
-
-                return _instance;
-            }
-        }
-
-        public static bool TryGetInstance(out DamageNumberManagerSingleton manager)
-        {
-            manager = Instance;
-            return manager != null;
-        }
-
         private void Awake()
         {
-            if (_instance != null && _instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            _instance = this;
             ResolveCamera();
             PrewarmDefaultPrefab();
             RegisterDamageEvents();
@@ -75,10 +48,6 @@ namespace NineGrid.Flow
         private void OnDestroy()
         {
             UnregisterDamageEvents();
-            if (_instance == this)
-            {
-                _instance = null;
-            }
         }
 
         private void RegisterDamageEvents()

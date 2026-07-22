@@ -81,7 +81,7 @@ namespace NineGrid.Flow
 
         private static void OnGoldGainPresentationRequested(GoldGainPresentationRequested e)
         {
-            GoldGainFxManagerSingleton.TryGetInstance(out var goldFx);
+            var goldFx = UnityEngine.Object.FindFirstObjectByType<GoldGainFxManagerSingleton>();
             if (e.IsSpend)
             {
                 goldFx?.SnapToCore(e.AmountAfter);

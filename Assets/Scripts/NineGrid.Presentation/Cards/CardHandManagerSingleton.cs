@@ -25,7 +25,6 @@ namespace NineGrid.Cards
             public bool PointerReleasedInZone;
         }
 
-        private static CardHandManagerSingleton _instance;
 
         [Header("Scene Anchors")]
         [Tooltip("场景 Anchors/CardHandAnchors。留空时 Awake 按名称 CardHandAnchors 查找。")]
@@ -67,19 +66,6 @@ namespace NineGrid.Cards
         /// TODO: Core 逻辑层注入 — 校验手牌释放（目标格位、费用、效果等）。返回 true 表示释放成功。
         /// </summary>
         public event Func<ManagedCard, int?, UniTask<bool>> DragApplyValidator;
-
-        public static CardHandManagerSingleton Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<CardHandManagerSingleton>();
-                }
-
-                return _instance;
-            }
-        }
 
         public CardHandLayoutSettings LayoutSettings => layoutSettings;
 
@@ -146,13 +132,6 @@ namespace NineGrid.Cards
 
         private void Awake()
         {
-            if (_instance != null && _instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            _instance = this;
             _slotContainer = new CardHandSlotContainer(layoutSettings);
             ResolveSceneReferences();
             CacheAnchors();
@@ -165,10 +144,6 @@ namespace NineGrid.Cards
         {
             CancelHandWork();
 
-            if (_instance == this)
-            {
-                _instance = null;
-            }
         }
 
         /// <summary>
@@ -580,7 +555,7 @@ namespace NineGrid.Cards
                 if (!success)
                 {
                     // 清场取消时卡视图会由 ReleaseAll 统一释放，勿二次 Release。
-                    var cm = CardManagerSingleton.TryGetInstance();
+                    var cm = CardEntityLifecycleHook.CardsOrNull();
                     if (card != null && cm != null && cm.TryGet(card.Uid, out _))
                     {
                         Debug.LogWarning("[CardHandManager] 场地卡点击入手失败，已释放卡牌。");

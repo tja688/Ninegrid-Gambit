@@ -106,7 +106,6 @@ namespace NineGrid.Cards
 
         private const string CardChassisPrefabAssetPath = CardChassisPaths.ChassisPrefab;
 
-        private static CardManagerSingleton _instance;
 
         [SerializeField]
         [Tooltip("卡牌根节点。运行时自动查找/装配：留空时 Awake EnsureCardRoot 创建 Cards 子节点。")]
@@ -146,48 +145,10 @@ namespace NineGrid.Cards
         /// </summary>
         private int _nextPresentationUid = -1;
 
-        public static CardManagerSingleton Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<CardManagerSingleton>();
-                    if (_instance == null)
-                    {
-                        var go = new GameObject(nameof(CardManagerSingleton));
-                        _instance = go.AddComponent<CardManagerSingleton>();
-                    }
-                }
-
-                return _instance;
-            }
-        }
-
-        /// <summary>
-        /// 仅查找，不创建。销毁/卸载期释放卡视图时必须走此入口，避免 OnDestroy 里 Spawn 残留对象。
-        /// </summary>
-        public static CardManagerSingleton TryGetInstance()
-        {
-            if (_instance != null)
-            {
-                return _instance;
-            }
-
-            return FindFirstObjectByType<CardManagerSingleton>();
-        }
-
         public IReadOnlyDictionary<int, ManagedCard> CardsByUid => _cardsByUid;
 
         private void Awake()
         {
-            if (_instance != null && _instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            _instance = this;
             DontDestroyOnLoad(gameObject);
             EnsureCardRoot();
             BootstrapPrefabs();
@@ -195,10 +156,6 @@ namespace NineGrid.Cards
 
         private void OnDestroy()
         {
-            if (_instance == this)
-            {
-                _instance = null;
-            }
         }
 
         public void RegisterPrefab(string defId, GameObject prefab)

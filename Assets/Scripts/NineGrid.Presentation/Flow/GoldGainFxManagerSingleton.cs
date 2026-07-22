@@ -15,7 +15,6 @@ namespace NineGrid.Flow
     {
         private const string DefaultIconName = "金币图标";
 
-        private static GoldGainFxManagerSingleton _instance;
 
         [Header("装配")]
         [Tooltip("飞入用的金币预制体（世界空间 Sprite）。留空则无法播放飞入演出，仍会按节奏跳数值。")]
@@ -92,25 +91,6 @@ namespace NineGrid.Flow
         private Color _goldBaseColor = Color.white;
         private bool _hasGoldBaseColor;
 
-        public static GoldGainFxManagerSingleton Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<GoldGainFxManagerSingleton>();
-                }
-
-                return _instance;
-            }
-        }
-
-        public static bool TryGetInstance(out GoldGainFxManagerSingleton manager)
-        {
-            manager = Instance;
-            return manager != null;
-        }
-
         /// <summary>当前 UI 已显示的金币（可能落后于内核目标值）。</summary>
         public int DisplayedGold => _displayedGold;
 
@@ -122,13 +102,6 @@ namespace NineGrid.Flow
 
         private void Awake()
         {
-            if (_instance != null && _instance != this)
-            {
-                Destroy(this);
-                return;
-            }
-
-            _instance = this;
             EnsureBindings();
             CaptureIconBaseScale();
         }
@@ -136,10 +109,6 @@ namespace NineGrid.Flow
         private void OnDestroy()
         {
             KillGoldFlash();
-            if (_instance == this)
-            {
-                _instance = null;
-            }
         }
 
         /// <summary>

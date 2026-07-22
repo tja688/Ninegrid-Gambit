@@ -8,7 +8,7 @@ namespace NineGrid.DevTest.Flow
     [DisallowMultipleComponent]
     public sealed class GoldGainFxManagerDevKeys : TestKeyModuleBehaviour
     {
-        [Tooltip("运行时自动查找 GoldGainFxManagerSingleton.Instance；也可手动拖入覆盖。")]
+        [Tooltip("运行时查找场景中的 GoldGainFxManagerSingleton；也可手动拖入覆盖。")]
         [SerializeField] private GoldGainFxManagerSingleton goldGainFxManager;
 
         protected override string ModuleId => "gold-gain-fx";
@@ -22,7 +22,7 @@ namespace NineGrid.DevTest.Flow
 
             if (goldGainFxManager == null)
             {
-                goldGainFxManager = GoldGainFxManagerSingleton.Instance;
+                goldGainFxManager = UnityEngine.Object.FindFirstObjectByType<GoldGainFxManagerSingleton>();
             }
 
             base.OnEnable();
@@ -51,7 +51,7 @@ namespace NineGrid.DevTest.Flow
                 return goldGainFxManager;
             }
 
-            goldGainFxManager = GoldGainFxManagerSingleton.Instance;
+            goldGainFxManager = UnityEngine.Object.FindFirstObjectByType<GoldGainFxManagerSingleton>();
             if (goldGainFxManager == null)
             {
                 Debug.LogWarning("[GoldGainFxManagerDevKeys] 未找到 GoldGainFxManagerSingleton。");

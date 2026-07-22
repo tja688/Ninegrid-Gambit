@@ -34,20 +34,22 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
             FieldBattlePresentationHook.Reset();
             DestroyControllers();
             DestroyManagers();
-            ResetStaticInstances();
         }
 
         [Test]
-        public void HookResolvers_SurviveClearedSingletonInstances()
+        public void HookResolvers_WorkWithoutStaticInstanceFields()
         {
             using (PresentationArchitectureFixture.CreateBare())
             {
+                Assert.IsNull(
+                    typeof(GroundFieldManagerSingleton).GetField(
+                        "_instance", BindingFlags.Static | BindingFlags.NonPublic));
+                Assert.IsNull(
+                    typeof(FieldBattleManagerSingleton).GetField(
+                        "_instance", BindingFlags.Static | BindingFlags.NonPublic));
+
                 GroundFieldGeometryHook.RequestWire(_field);
                 FieldBattlePresentationHook.RequestWire(_battle);
-                ResetStaticInstances();
-
-                Assert.IsNull(GetStaticInstance(typeof(GroundFieldManagerSingleton), "_instance"));
-                Assert.IsNull(GetStaticInstance(typeof(FieldBattleManagerSingleton), "_instance"));
 
                 Assert.AreSame(_field, GroundFieldGeometryHook.FieldOrNull());
                 Assert.AreSame(_battle, FieldBattlePresentationHook.BattleOrNull());
@@ -78,24 +80,6 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
                     Object.DestroyImmediate(found[i].gameObject);
                 }
             }
-        }
-
-        private static void ResetStaticInstances()
-        {
-            SetStaticInstance(typeof(GroundFieldManagerSingleton), "_instance", null);
-            SetStaticInstance(typeof(FieldBattleManagerSingleton), "_instance", null);
-        }
-
-        private static object GetStaticInstance(System.Type type, string fieldName)
-        {
-            var field = type.GetField(fieldName, BindingFlags.Static | BindingFlags.NonPublic);
-            return field?.GetValue(null);
-        }
-
-        private static void SetStaticInstance(System.Type type, string fieldName, object value)
-        {
-            var field = type.GetField(fieldName, BindingFlags.Static | BindingFlags.NonPublic);
-            field?.SetValue(null, value);
         }
     }
 }

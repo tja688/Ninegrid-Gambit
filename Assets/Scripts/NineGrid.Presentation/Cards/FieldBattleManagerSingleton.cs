@@ -18,9 +18,8 @@ namespace NineGrid.Cards
     /// </summary>
     public sealed class FieldBattleManagerSingleton : MonoBehaviour, IHandoffEndpoint
     {
-        private static FieldBattleManagerSingleton _instance;
 
-        [Tooltip("运行时自动查找 GroundFieldManagerSingleton.Instance；也可手动拖入覆盖。")]
+        [Tooltip("运行时自动查找 GroundFieldGeometryHook.FieldOrNull()；也可手动拖入覆盖。")]
         [SerializeField] private GroundFieldManagerSingleton fieldManager;
 
         [Header("Battle Presentation")]
@@ -32,19 +31,6 @@ namespace NineGrid.Cards
 
         private bool _isBusy;
         private CancellationTokenSource _battleCts;
-
-        public static FieldBattleManagerSingleton Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<FieldBattleManagerSingleton>();
-                }
-
-                return _instance;
-            }
-        }
 
         public bool IsBusy => _isBusy;
 
@@ -86,13 +72,6 @@ namespace NineGrid.Cards
 
         private void Awake()
         {
-            if (_instance != null && _instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            _instance = this;
             ResolveFieldManager();
             ResolveAttackAdapter();
             FieldBattlePresentationHook.RequestWire(this);
@@ -102,10 +81,6 @@ namespace NineGrid.Cards
         private void OnDestroy()
         {
             CancelBattleWork();
-            if (_instance == this)
-            {
-                _instance = null;
-            }
         }
 
         /// <summary>
@@ -352,7 +327,7 @@ namespace NineGrid.Cards
                 }
 
                 hitFrameApplied = true;
-                CombatHitSink.RequestSyncCard(avatar);
+                CombatHitBridgeHook.RequestSyncCard(avatar);
                 SpawnDamagePopups(counterProjection.DamagePopups, avatar, 0);
             }
 
@@ -386,7 +361,7 @@ namespace NineGrid.Cards
                 if (counterProjection.AvatarDefeated || willKill)
                 {
                     TryBeginAvatarDefeatPresentation(ct);
-                    CombatHitSink.RequestBattleEnded(victory: false);
+                    CombatHitBridgeHook.RequestBattleEnded(victory: false);
                 }
             }
             catch (System.OperationCanceledException)
@@ -437,7 +412,7 @@ namespace NineGrid.Cards
                 }
 
                 hitFrameApplied = true;
-                CombatHitSink.RequestSyncCard(combatVictim);
+                CombatHitBridgeHook.RequestSyncCard(combatVictim);
                 SpawnDamagePopups(hitProjection.DamagePopups, combatVictim, 0);
             }
 
@@ -482,7 +457,7 @@ namespace NineGrid.Cards
                     await DrainCombatHitBoardDeltaFromProjectionAsync(hitProjection, ct);
                     await BoardPresentShuffleHook.RequestFlush(ct);
                     TryBeginAvatarDefeatPresentation(ct);
-                    CombatHitSink.RequestBattleEnded(victory: false);
+                    CombatHitBridgeHook.RequestBattleEnded(victory: false);
                     return;
                 }
 
@@ -607,7 +582,7 @@ namespace NineGrid.Cards
             ResolveFieldManager();
             if (fieldManager != null && fieldManager.ConsumeOccupancyConflictFlag())
             {
-                CombatHitSink.RequestSyncBoardFromCore();
+                CombatHitBridgeHook.RequestSyncBoardFromCore();
             }
         }
 
@@ -638,7 +613,7 @@ namespace NineGrid.Cards
                         pos = target.Transform.position;
                         if (fallbackVictim == null || target.Uid != fallbackVictim.Uid)
                         {
-                            CombatHitSink.RequestSyncCard(target);
+                            CombatHitBridgeHook.RequestSyncCard(target);
                         }
                     }
                     else if (fallbackVictim != null

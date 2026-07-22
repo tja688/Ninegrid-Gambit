@@ -44,13 +44,13 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var manager = CardHandManagerSingleton.Instance;
+            var manager = CardEntityLifecycleHook.HandOrNull();
             manager?.TryBeginDragFromHand(_driver.BoundCard);
         }
 
         private bool CanRespond()
         {
-            var manager = CardHandManagerSingleton.Instance;
+            var manager = CardEntityLifecycleHook.HandOrNull();
             if (manager == null || manager.IsBusy || manager.IsDragging)
             {
                 return false;

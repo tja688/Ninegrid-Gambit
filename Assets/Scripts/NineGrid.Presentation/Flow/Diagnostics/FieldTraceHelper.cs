@@ -111,7 +111,7 @@ namespace NineGrid.Flow.Diagnostics
         {
             try
             {
-                var loop = MainGameLoopManagerSingleton.Instance;
+                var loop = UnityEngine.Object.FindFirstObjectByType<MainGameLoopManagerSingleton>();
                 if (loop != null && loop.NodeIndex > 0)
                 {
                     return loop.NodeIndex.ToString();
@@ -702,7 +702,7 @@ namespace NineGrid.Flow.Diagnostics
                     }
                 }
 
-                var field = GroundFieldManagerSingleton.Instance;
+                var field = GroundFieldGeometryHook.FieldOrNull();
                 if (field != null)
                 {
                     var snap = field.GetSnapshot();
@@ -1041,7 +1041,7 @@ namespace NineGrid.Flow.Diagnostics
 
             var arch = NineGridArchitecture.Current;
             var board = arch?.GetModel<BoardModel>();
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             GroundFieldSnapshot snap = null;
             var hasSnap = false;
             if (field != null)

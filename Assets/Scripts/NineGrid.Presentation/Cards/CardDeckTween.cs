@@ -22,7 +22,7 @@ namespace NineGrid.Cards
             var resolvedUid = uid;
             if (resolvedUid <= 0)
             {
-                CardManagerSingleton.Instance?.TryResolveUid(target, out resolvedUid);
+                CardEntityLifecycleHook.CardsOrNull()?.TryResolveUid(target, out resolvedUid);
             }
 
             if (resolvedUid > 0 && DOTween.IsTweening(target))
@@ -60,7 +60,7 @@ namespace NineGrid.Cards
             var resolvedUid = uid;
             if (resolvedUid <= 0)
             {
-                CardManagerSingleton.Instance?.TryResolveUid(target, out resolvedUid);
+                CardEntityLifecycleHook.CardsOrNull()?.TryResolveUid(target, out resolvedUid);
             }
 
             KillMotion(target, "DeckTween.Move", resolvedUid);
@@ -210,7 +210,7 @@ namespace NineGrid.Cards
             target.position = worldStart;
 
             var resolvedUid = 0;
-            CardManagerSingleton.Instance?.TryResolveUid(target, out resolvedUid);
+            CardEntityLifecycleHook.CardsOrNull()?.TryResolveUid(target, out resolvedUid);
             var motionId = 0;
             if (resolvedUid > 0)
             {
