@@ -58,6 +58,7 @@ namespace NineGrid.Flow
         private PresentationDirector _presentationDirector;
         private DirectorIntentRuntime _directorIntentRuntime;
         private IUnRegister _exploreRejectedUnRegister;
+        private IUnRegister _attackRejectedUnRegister;
         private IUnRegister _ensureDirectorUnRegister;
         private bool _recoveringRewardUi;
         private QueuedBoardPresentChannel _explorePresentChannel;
@@ -67,7 +68,6 @@ namespace NineGrid.Flow
         private UseItemPresentChannel _useItemPresentChannel;
         private QueuedBoardPresentChannel _useItemBoardPresentChannel;
         private CoreCommandDispatcher _coreCommandDispatcher;
-        private int _pendingAttackSlot;
         private UseItemPresentationResult _pendingUseItemPresent;
 
         public static InBattleManagerSingleton Instance
@@ -1477,15 +1477,12 @@ namespace NineGrid.Flow
         {
             CombatHitSink.ApplyCombatHit = ApplyCombatHitFromCore;
             CombatHitSink.ResolvePostKillBoard = ResolvePostKillBoardFromCore;
-            CombatHitSink.EstimateWillKill = EstimateWillKillFromCore;
-            CombatHitSink.ResolvePlayerAttackTarget = ResolvePlayerAttackTargetFromCore;
             CombatHitSink.SyncCardPresentation = SyncManagedCardPresentation;
             CombatHitSink.SpawnDamageNumber = SpawnDamageNumberAt;
             CombatHitSink.SyncBoardFromCore = RequestSyncBoardFromCore;
             CombatHitSink.DrainPostKillBoard = DrainPostKillBoardAsync;
             CombatHitSink.FlushPendingShuffleIntoPresentation = FlushPendingShuffleIntoPresentationAsync;
             CombatHitSink.ApplyPickupItem = ApplyPickupItemFromCore;
-            CombatHitSink.TrySubmitAttackIntent = TrySubmitAttackIntentFromCards;
             CombatHitSink.TrySubmitUseItemIntent = TrySubmitUseItemIntentFromCards;
             CombatHitSink.NotifyBattleEnded = OnBattleEndedFromCombat;
             CombatHitSink.NotifyNodeSettlementReady = OnNodeSettlementFromCombat;
@@ -1494,7 +1491,7 @@ namespace NineGrid.Flow
             RegistryTraceRecorder.RegisterSinkHandlers();
             RegisterCardZoneOwnershipSink();
             RegisterHandBridge();
-            RegisterExplorePresentationHandlers();
+            RegisterPresentationIntentHandlers();
         }
 
         private void RegisterCardZoneOwnershipSink()
@@ -1543,16 +1540,6 @@ namespace NineGrid.Flow
                 CombatHitSink.ResolvePostKillBoard = null;
             }
 
-            if (CombatHitSink.EstimateWillKill == EstimateWillKillFromCore)
-            {
-                CombatHitSink.EstimateWillKill = null;
-            }
-
-            if (CombatHitSink.ResolvePlayerAttackTarget == ResolvePlayerAttackTargetFromCore)
-            {
-                CombatHitSink.ResolvePlayerAttackTarget = null;
-            }
-
             if (CombatHitSink.SyncCardPresentation == SyncManagedCardPresentation)
             {
                 CombatHitSink.SyncCardPresentation = null;
@@ -1586,12 +1573,7 @@ namespace NineGrid.Flow
                 CombatHitSink.ApplyPickupItem = null;
             }
 
-            UnregisterExplorePresentationHandlers();
-
-            if (CombatHitSink.TrySubmitAttackIntent == TrySubmitAttackIntentFromCards)
-            {
-                CombatHitSink.TrySubmitAttackIntent = null;
-            }
+            UnregisterPresentationIntentHandlers();
 
             if (CombatHitSink.TrySubmitUseItemIntent == TrySubmitUseItemIntentFromCards)
             {
@@ -4501,34 +4483,6 @@ namespace NineGrid.Flow
             }
         }
 
-        private static bool EstimateWillKillFromCore(int attackerUid, int targetUid)
-        {
-            var arch = NineGridArchitecture.Current;
-            var registry = arch.GetModel<CardRegistry>();
-            if (!registry.TryGet(attackerUid, out var attacker) || !registry.TryGet(targetUid, out var target))
-            {
-                return false;
-            }
-
-            var stats = arch.GetSystem<IStatSystem>();
-            var attack = Math.Max(0, stats.GetEffectiveInt(attacker, StatId.Attack));
-            if (attacker.Kind == CardKind.Monster)
-            {
-                attack += (int)Math.Round(stats.EvaluateRule(RuleId.EnemyAttackDelta, 0f, stats.CreateContext(attacker)));
-            }
-
-            var armor = Math.Max(0, stats.GetEffectiveInt(target, StatId.Armor));
-            var hp = Math.Max(0, stats.GetEffectiveInt(target, StatId.Hp));
-            var hpLoss = Math.Min(hp, Math.Max(0, attack - armor));
-            return hp - hpLoss <= 0;
-        }
-
-        private static int ResolvePlayerAttackTargetFromCore(int intendedTargetUid)
-        {
-            var arch = NineGridArchitecture.Current;
-            return arch.GetSystem<IPhaseSystem>().ResolvePlayerAttackTargetUid(intendedTargetUid);
-        }
-
         private static void SyncManagedCardPresentation(ManagedCard card)
         {
             CoreCardPresentationMapper.ApplyToManagedCard(card, animate: true);
@@ -5300,15 +5254,14 @@ namespace NineGrid.Flow
             _useItemPresentChannel = null;
             _useItemBoardPresentChannel = null;
             _coreCommandDispatcher = null;
-            _pendingAttackSlot = 0;
             _pendingUseItemPresent = default;
             _shuffleIntoSink.Clear();
             CombatHitSink.DirectorMainlineBusy = false;
         }
 
-        private void RegisterExplorePresentationHandlers()
+        private void RegisterPresentationIntentHandlers()
         {
-            UnregisterExplorePresentationHandlers();
+            UnregisterPresentationIntentHandlers();
             var architecture = NineGridArchitecture.Current;
             if (architecture == null)
             {
@@ -5317,16 +5270,24 @@ namespace NineGrid.Flow
 
             _exploreRejectedUnRegister = architecture.RegisterEvent<ExploreIntentRejectedEvent>(
                 OnExploreIntentRejected);
+            _attackRejectedUnRegister = architecture.RegisterEvent<AttackIntentRejectedEvent>(
+                OnAttackIntentRejected);
             _ensureDirectorUnRegister = architecture.RegisterEvent<EnsurePresentationDirectorRequested>(
                 _ => EnsurePresentationDirector());
         }
 
-        private void UnregisterExplorePresentationHandlers()
+        private void UnregisterPresentationIntentHandlers()
         {
             if (_exploreRejectedUnRegister != null)
             {
                 _exploreRejectedUnRegister.UnRegister();
                 _exploreRejectedUnRegister = null;
+            }
+
+            if (_attackRejectedUnRegister != null)
+            {
+                _attackRejectedUnRegister.UnRegister();
+                _attackRejectedUnRegister = null;
             }
 
             if (_ensureDirectorUnRegister != null)
@@ -5341,6 +5302,15 @@ namespace NineGrid.Flow
             if (HasOrphanMidBattleRewardPending())
             {
                 TryRecoverOrphanMidBattleRewardUi("explore:" + (e.Reason ?? string.Empty));
+            }
+        }
+
+        private void OnAttackIntentRejected(AttackIntentRejectedEvent e)
+        {
+            if (HasOrphanMidBattleRewardPending()
+                || string.Equals(e.Reason, "orphanMidBattleReward", StringComparison.Ordinal))
+            {
+                TryRecoverOrphanMidBattleRewardUi("attack:" + (e.Reason ?? string.Empty));
             }
         }
 
@@ -5430,42 +5400,6 @@ namespace NineGrid.Flow
             {
                 _recoveringRewardUi = false;
             }
-        }
-
-        private static bool TrySubmitAttackIntentFromCards(int groundSlot)
-        {
-            var instance = Instance;
-            if (instance == null)
-            {
-                Debug.LogWarning("[InBattleManager] TrySubmitAttackIntent：无局内管理器。");
-                return false;
-            }
-
-            if (HasOrphanMidBattleRewardPending())
-            {
-                TryRecoverOrphanMidBattleRewardUi("attack");
-                return false;
-            }
-
-            string legalityReject;
-            if (!BoardIntentLegality.TryExplainAttack(
-                    NineGridArchitecture.Current,
-                    groundSlot,
-                    out legalityReject))
-            {
-                Debug.LogWarning(
-                    $"[InBattleManager] Attack 被 Core 合法性拒绝 slot={groundSlot}: {legalityReject}");
-                return false;
-            }
-
-            instance.EnsurePresentationDirector();
-            instance._pendingAttackSlot = groundSlot;
-            bool preview;
-            var accepted = instance._presentationDirector.TrySubmitIntent(
-                new InputIntent(InputIntentKinds.Attack, groundSlot),
-                out preview);
-            CombatHitSink.DirectorMainlineBusy = instance._presentationDirector.IsMainlineBusy;
-            return accepted;
         }
 
         private static bool TrySubmitUseItemIntentFromCards(

@@ -299,12 +299,6 @@ namespace NineGrid.Cards
         /// <summary>ResolvePostKillBoard() → 摘要（含 Moved/Dealt）。</summary>
         public static Func<PostKillBoardPresentationResult> ResolvePostKillBoard;
 
-        /// <summary>预估 attacker 对 target 是否足以击杀（选 Lethal Profile 用）。</summary>
-        public static Func<int, int, bool> EstimateWillKill;
-
-        /// <summary>解析玩家攻击实际目标（嘲讽重定向等）。</summary>
-        public static Func<int, int> ResolvePlayerAttackTarget;
-
         /// <summary>命中后刷受击卡数值。</summary>
         public static Action<ManagedCard> SyncCardPresentation;
 
@@ -326,9 +320,6 @@ namespace NineGrid.Cards
 
         /// <summary>场地拾取：ApplyPickupItem(groundSlot) → 摘要。</summary>
         public static Func<int, PickupItemPresentationResult> ApplyPickupItem;
-
-        /// <summary>攻击：提交导演意图（忙时缓冲）；返回是否接纳。</summary>
-        public static Func<int, bool> TrySubmitAttackIntent;
 
         /// <summary>用牌/帮助卡：提交导演意图（忙时缓冲）；返回是否接纳。</summary>
         public static Func<int, int[], string, bool> TrySubmitUseItemIntent;
@@ -366,21 +357,6 @@ namespace NineGrid.Cards
             }
 
             return ResolvePostKillBoard();
-        }
-
-        public static bool RequestEstimateWillKill(int attackerUid, int targetUid)
-        {
-            return EstimateWillKill != null && EstimateWillKill(attackerUid, targetUid);
-        }
-
-        public static int RequestResolvePlayerAttackTarget(int intendedTargetUid)
-        {
-            if (ResolvePlayerAttackTarget == null)
-            {
-                return intendedTargetUid;
-            }
-
-            return ResolvePlayerAttackTarget(intendedTargetUid);
         }
 
         public static void RequestSyncCard(ManagedCard card)
@@ -436,17 +412,6 @@ namespace NineGrid.Cards
             }
 
             return ApplyPickupItem(groundSlot);
-        }
-
-        public static bool RequestAttackIntent(int groundSlot)
-        {
-            if (TrySubmitAttackIntent == null)
-            {
-                Debug.LogWarning("[CombatHitSink] TrySubmitAttackIntent 未注册。");
-                return false;
-            }
-
-            return TrySubmitAttackIntent(groundSlot);
         }
 
         public static bool RequestUseItemIntent(

@@ -93,6 +93,7 @@ namespace NineGrid.Cards
             _instance = this;
             ResolveFieldManager();
             ResolveAttackAdapter();
+            AttackInputHook.RequestWire(this);
         }
 
         private void OnDestroy()
@@ -151,8 +152,14 @@ namespace NineGrid.Cards
             }
 
             RegistryTraceSink.NotifyUserInteraction?.Invoke("BattleClick");
-            // 已迁导演：提交攻击意图（忙时由导演缓冲）；不再走旧 RequestBasicAttack 编排。
-            return CombatHitSink.RequestAttackIntent(slot);
+            if (AttackInputHook.TrySubmitAttack == null)
+            {
+                Debug.LogWarning("[FieldBattleManager] AttackInputHook.TrySubmitAttack 未装配，交战点击不可用。");
+                return false;
+            }
+
+            // 已迁导演：经 AttackInputController → QF Command 提交意图。
+            return AttackInputHook.TrySubmitAttack(slot);
         }
 
         /// <summary>
@@ -170,7 +177,13 @@ namespace NineGrid.Cards
                 ArmNextLethalAttack(lethalOverride.Value);
             }
 
-            CombatHitSink.RequestAttackIntent(victimSlot);
+            if (AttackInputHook.TrySubmitAttack == null)
+            {
+                Debug.LogWarning("[FieldBattleManager] AttackInputHook.TrySubmitAttack 未装配。");
+                return UniTask.CompletedTask;
+            }
+
+            AttackInputHook.TrySubmitAttack(victimSlot);
             return UniTask.CompletedTask;
         }
 

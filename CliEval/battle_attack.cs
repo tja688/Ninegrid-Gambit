@@ -1,4 +1,4 @@
-// Attack weakest orthogonal monster via CombatHitSink (presentation path).
+// Attack weakest orthogonal monster via AttackInputHook (QF presentation path).
 var arch = NineGrid.Core.NineGridArchitecture.Current;
 var board = arch.GetModel<NineGrid.Core.BoardModel>();
 var reg = arch.GetModel<NineGrid.Core.CardRegistry>();
@@ -19,5 +19,7 @@ for (var i = NineGrid.Core.SlotId.MinBoardIndex; i <= NineGrid.Core.SlotId.MaxBo
     }
 }
 if (targetSlot < 0) return "FAIL:no monster";
-var ok = NineGrid.Cards.CombatHitSink.RequestAttackIntent(targetSlot);
+if (NineGrid.Cards.AttackInputHook.TrySubmitAttack == null)
+    return "FAIL:AttackInputHook not wired";
+var ok = NineGrid.Cards.AttackInputHook.TrySubmitAttack(targetSlot);
 return "attackSlot=" + targetSlot + " uid=" + targetUid + " hpBase=" + targetHp + " submitted=" + ok;

@@ -94,7 +94,7 @@ namespace NineGrid.Flow.Presentation
         {
             var busy = mDirector != null && mDirector.IsMainlineBusy;
             mMainlineBusy.Value = busy;
-            // expand-contract：Cards IsBusy 仍读 Sink；V2+ 改只读投影后删除。
+            // expand-contract：Cards IsBusy 仍读 Sink；后续票改只读投影后删除。
             CombatHitSink.DirectorMainlineBusy = busy;
         }
     }

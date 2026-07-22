@@ -73,7 +73,13 @@ namespace NineGrid.DevTest.Cards
             }
 
             Debug.Log($"[GroundFieldManagerDevKeys] 导演攻击意图: slot={slot} uid={attacker.Uid}");
-            CombatHitSink.RequestAttackIntent(slot);
+            if (AttackInputHook.TrySubmitAttack == null)
+            {
+                Debug.LogWarning("[GroundFieldManagerDevKeys] AttackInputHook.TrySubmitAttack 未装配。");
+                return;
+            }
+
+            AttackInputHook.TrySubmitAttack(slot);
         }
 
         private async UniTaskVoid RunRotateOuterRingAsync()
@@ -157,7 +163,13 @@ namespace NineGrid.DevTest.Cards
                 }
 
                 // #11：DevTest 进攻也走导演意图，不再走已删的旧编排链。
-                CombatHitSink.RequestAttackIntent(slot);
+                if (AttackInputHook.TrySubmitAttack == null)
+                {
+                    Debug.LogWarning("[GroundFieldManagerDevKeys] AttackInputHook.TrySubmitAttack 未装配。");
+                    return;
+                }
+
+                AttackInputHook.TrySubmitAttack(slot);
                 return;
             }
 
