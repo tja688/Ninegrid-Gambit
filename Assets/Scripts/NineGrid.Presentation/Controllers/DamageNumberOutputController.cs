@@ -1,12 +1,12 @@
 using NineGrid.Cards;
-using NineGrid.Flow.Presentation;
+using NineGrid.Presentation.Commands;
 using QFramework;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Controllers
 {
     /// <summary>
-    /// 伤害飘字 Controller：Cards Hook → QF Event；FX 只订阅事件。
+    /// 伤害飘字 Controller：Cards Hook → Command → Event；FX 只订阅事件。
     /// </summary>
     public sealed class DamageNumberOutputController : PresentationController
     {
@@ -19,6 +19,8 @@ namespace NineGrid.Presentation.Controllers
 
         public static DamageNumberOutputController EnsureInstalled()
         {
+            DamageNumberHook.EnsureWired = () => EnsureInstalled();
+
             var existing = UnityEngine.Object.FindObjectOfType<DamageNumberOutputController>();
             if (existing != null)
             {
@@ -27,7 +29,10 @@ namespace NineGrid.Presentation.Controllers
             }
 
             var host = new GameObject(nameof(DamageNumberOutputController));
-            return host.AddComponent<DamageNumberOutputController>();
+            var created = host.AddComponent<DamageNumberOutputController>();
+            // EditMode 下 AddComponent 不一定触发 Awake，显式接线。
+            created.InstallHookHandlers();
+            return created;
         }
 
         protected override void OnBind()
@@ -55,11 +60,7 @@ namespace NineGrid.Presentation.Controllers
 
         private void HandleSpawn(Vector3 worldPosition, int amount)
         {
-            this.SendEvent(new DamageNumberRequested
-            {
-                WorldPosition = worldPosition,
-                Amount = amount
-            });
+            this.SendCommand(new RequestDamageNumberCommand(worldPosition, amount));
         }
     }
 }

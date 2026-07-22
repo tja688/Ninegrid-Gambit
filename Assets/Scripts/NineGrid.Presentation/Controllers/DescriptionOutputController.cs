@@ -1,12 +1,12 @@
 using NineGrid.Cards;
-using NineGrid.Flow.Presentation;
+using NineGrid.Presentation.Commands;
 using QFramework;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Controllers
 {
     /// <summary>
-    /// 描述输出 Controller：Cards Hook → QF Event；UI 只订阅事件。
+    /// 描述输出 Controller：Cards Hook → Command → Event；UI 只订阅事件。
     /// </summary>
     public sealed class DescriptionOutputController : PresentationController
     {
@@ -22,6 +22,8 @@ namespace NineGrid.Presentation.Controllers
         /// <summary>场景或 EditMode 探针确保唯一 Controller 并接线 Hook。</summary>
         public static DescriptionOutputController EnsureInstalled()
         {
+            DescriptionDisplayHook.EnsureWired = () => EnsureInstalled();
+
             var existing = UnityEngine.Object.FindObjectOfType<DescriptionOutputController>();
             if (existing != null)
             {
@@ -30,7 +32,10 @@ namespace NineGrid.Presentation.Controllers
             }
 
             var host = new GameObject(nameof(DescriptionOutputController));
-            return host.AddComponent<DescriptionOutputController>();
+            var created = host.AddComponent<DescriptionOutputController>();
+            // EditMode 下 AddComponent 不一定触发 Awake，显式接线。
+            created.InstallHookHandlers();
+            return created;
         }
 
         protected override void OnBind()
@@ -70,28 +75,17 @@ namespace NineGrid.Presentation.Controllers
 
         private void HandleShow(string defId, DescriptionShowRoute route)
         {
-            this.SendEvent(new DescriptionShowRequested
-            {
-                DefId = defId,
-                Route = route
-            });
+            this.SendCommand(new RequestDescriptionShowCommand(defId, route));
         }
 
         private void HandleShowText(string text, DescriptionShowRoute route)
         {
-            this.SendEvent(new DescriptionShowTextRequested
-            {
-                Text = text,
-                Route = route
-            });
+            this.SendCommand(new RequestDescriptionShowTextCommand(text, route));
         }
 
         private void HandleClear(DescriptionShowRoute route)
         {
-            this.SendEvent(new DescriptionClearRequested
-            {
-                Route = route
-            });
+            this.SendCommand(new RequestDescriptionClearCommand(route));
         }
     }
 }

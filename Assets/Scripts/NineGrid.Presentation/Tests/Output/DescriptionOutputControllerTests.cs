@@ -22,8 +22,7 @@ namespace NineGrid.Presentation.Tests.Output
                 DescriptionShowRequested? received = null;
                 var unreg = arch.Architecture.RegisterEvent<DescriptionShowRequested>(e => received = e);
 
-                var go = new GameObject(nameof(DescriptionOutputController));
-                var controller = go.AddComponent<DescriptionOutputController>();
+                var controller = DescriptionOutputController.EnsureInstalled();
                 try
                 {
                     DescriptionDisplayHook.RequestShow("help.throwing_knife", DescriptionShowRoute.Hover);
@@ -35,7 +34,7 @@ namespace NineGrid.Presentation.Tests.Output
                 finally
                 {
                     unreg.UnRegister();
-                    UnityEngine.Object.DestroyImmediate(go);
+                    UnityEngine.Object.DestroyImmediate(controller.gameObject);
                 }
             }
         }
@@ -53,8 +52,7 @@ namespace NineGrid.Presentation.Tests.Output
                     arch.Architecture.RegisterEvent<DescriptionClearRequested>(e => clearEvent = e),
                 };
 
-                var go = new GameObject(nameof(DescriptionOutputController));
-                go.AddComponent<DescriptionOutputController>();
+                var controller = DescriptionOutputController.EnsureInstalled();
                 try
                 {
                     DescriptionDisplayHook.RequestShowText("选一张牌", DescriptionShowRoute.BoardSelect);
@@ -73,7 +71,7 @@ namespace NineGrid.Presentation.Tests.Output
                         u.UnRegister();
                     }
 
-                    UnityEngine.Object.DestroyImmediate(go);
+                    UnityEngine.Object.DestroyImmediate(controller.gameObject);
                 }
             }
         }

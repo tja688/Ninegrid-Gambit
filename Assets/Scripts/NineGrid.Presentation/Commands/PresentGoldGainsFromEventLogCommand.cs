@@ -1,4 +1,5 @@
 using System;
+using NineGrid.Core;
 using NineGrid.Flow.Presentation;
 using QFramework;
 using UnityEngine;
@@ -33,7 +34,7 @@ namespace NineGrid.Presentation.Commands
         protected override int OnExecute()
         {
             return mScheduler.PresentFromEventLog(
-                this,
+                NineGridArchitecture.Interface,
                 mStartIndex,
                 mOriginWorld,
                 mSkipReason,

@@ -21,8 +21,7 @@ namespace NineGrid.Presentation.Tests.Output
                 DamageNumberRequested? received = null;
                 var unreg = arch.Architecture.RegisterEvent<DamageNumberRequested>(e => received = e);
 
-                var go = new GameObject(nameof(DamageNumberOutputController));
-                go.AddComponent<DamageNumberOutputController>();
+                var controller = DamageNumberOutputController.EnsureInstalled();
                 try
                 {
                     var pos = new Vector3(1.5f, -2f, 0f);
@@ -35,7 +34,7 @@ namespace NineGrid.Presentation.Tests.Output
                 finally
                 {
                     unreg.UnRegister();
-                    UnityEngine.Object.DestroyImmediate(go);
+                    UnityEngine.Object.DestroyImmediate(controller.gameObject);
                 }
             }
         }
@@ -48,8 +47,7 @@ namespace NineGrid.Presentation.Tests.Output
                 var count = 0;
                 var unreg = arch.Architecture.RegisterEvent<DamageNumberRequested>(_ => count++);
 
-                var go = new GameObject(nameof(DamageNumberOutputController));
-                go.AddComponent<DamageNumberOutputController>();
+                var controller = DamageNumberOutputController.EnsureInstalled();
                 try
                 {
                     DamageNumberHook.RequestSpawn(Vector3.zero, 0);
@@ -60,7 +58,7 @@ namespace NineGrid.Presentation.Tests.Output
                 finally
                 {
                     unreg.UnRegister();
-                    UnityEngine.Object.DestroyImmediate(go);
+                    UnityEngine.Object.DestroyImmediate(controller.gameObject);
                 }
             }
         }

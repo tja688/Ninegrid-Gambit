@@ -28,7 +28,7 @@ namespace NineGrid.Presentation.Tests.Output
             controller.AttachRecordersForTests(
                 record: (_, __, ___, ____) => { },
                 occupancyConflict: (_, __, ___, ____) => { },
-                beginChoreo: (_, __) => { },
+                beginChoreo: (_, __) => 0,
                 notifyUserInteraction: _ => { });
 
             Assert.IsNotNull(PerfTraceSink.Record);
@@ -36,6 +36,8 @@ namespace NineGrid.Presentation.Tests.Output
             Assert.IsNotNull(ChoreoTraceSink.BeginChoreo);
             Assert.IsNotNull(RegistryTraceSink.NotifyUserInteraction);
 
+            // EditMode 下 DestroyImmediate 不一定触发 OnDestroy/OnUnbind。
+            controller.DetachRecorders();
             UnityEngine.Object.DestroyImmediate(go);
 
             Assert.IsNull(PerfTraceSink.Record);
