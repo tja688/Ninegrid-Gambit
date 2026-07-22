@@ -3,7 +3,7 @@ using System;
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 描述展示路由：Hover 为默认悬停；Drag 预留给拖拽专属文案（当前默认与 Hover 相同）。
+    /// 描述展示路由：Hover 为默认悬停；Drag 预留给拖拽专属文案；BoardSelect 为多选提示。
     /// </summary>
     public enum DescriptionShowRoute : byte
     {
@@ -13,22 +13,21 @@ namespace NineGrid.Cards
     }
 
     /// <summary>
-    /// Cards → Flow 描述悬停桥：Cards 不引用 Flow，由 DescriptionManagerSingleton 在 Awake 注册。
-    /// 遗留桥：卡面基础描述权威在 Presentation Commit（Basic_Description），本 Sink 不承载卡面真相。
+    /// 描述输出统一入口：由 NineGrid.Presentation Controller 接线为 QF Event。
+    /// 卡面基础描述权威仍在 Presentation Commit（Basic_Description）；本 Hook 只驱动遗留 HUD/提示文案。
     /// </summary>
-    public static class DescriptionHoverSink
+    public static class DescriptionDisplayHook
     {
-        /// <summary>Show(defId, route)；由 DescriptionManager 注册。</summary>
+        /// <summary>由 Presentation Controller 注册，确保 Hook→Event 接线已安装。</summary>
+        public static Action EnsureWired;
+
         public static Action<string, DescriptionShowRoute> Show;
-
-        /// <summary>ShowText(text, route)；展示原始文案（多选提示等）。</summary>
         public static Action<string, DescriptionShowRoute> ShowText;
-
-        /// <summary>Clear(route)；仅清除匹配路由的当前描述，避免 hover/drag 互相踩。</summary>
         public static Action<DescriptionShowRoute> Clear;
 
         public static void RequestShow(string defId, DescriptionShowRoute route = DescriptionShowRoute.Hover)
         {
+            EnsureWired?.Invoke();
             if (string.IsNullOrEmpty(defId))
             {
                 RequestClear(route);
@@ -40,6 +39,7 @@ namespace NineGrid.Cards
 
         public static void RequestShowText(string text, DescriptionShowRoute route)
         {
+            EnsureWired?.Invoke();
             if (string.IsNullOrEmpty(text))
             {
                 RequestClear(route);
@@ -51,6 +51,7 @@ namespace NineGrid.Cards
 
         public static void RequestClear(DescriptionShowRoute route = DescriptionShowRoute.Hover)
         {
+            EnsureWired?.Invoke();
             Clear?.Invoke(route);
         }
     }

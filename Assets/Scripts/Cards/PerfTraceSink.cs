@@ -22,6 +22,62 @@ namespace NineGrid.Cards
         /// <summary>attackerUid, targetUid</summary>
         public static Action<int, int> SetCombatants;
 
+        public static void SafeRecord(string kind, int uid, string site, string[] payloadPairs)
+        {
+            try
+            {
+                Record?.Invoke(kind, uid, site, payloadPairs);
+            }
+            catch
+            {
+                // 诊断失败不阻塞主线
+            }
+        }
+
+        public static void SafeRequestBoardSnap(string phase, bool full)
+        {
+            try
+            {
+                RequestBoardSnap?.Invoke(phase, full);
+            }
+            catch
+            {
+            }
+        }
+
+        public static void SafeOpenBeat(string beatKind, int nodeIndex)
+        {
+            try
+            {
+                OpenBeat?.Invoke(beatKind, nodeIndex);
+            }
+            catch
+            {
+            }
+        }
+
+        public static void SafeCloseBeat()
+        {
+            try
+            {
+                CloseBeat?.Invoke();
+            }
+            catch
+            {
+            }
+        }
+
+        public static void SafeSetCombatants(int attackerUid, int targetUid)
+        {
+            try
+            {
+                SetCombatants?.Invoke(attackerUid, targetUid);
+            }
+            catch
+            {
+            }
+        }
+
         public static void ClearHandlers()
         {
             Record = null;

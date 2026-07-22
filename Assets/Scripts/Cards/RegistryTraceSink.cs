@@ -36,5 +36,16 @@ namespace NineGrid.Cards
             RecordSuspectGroundRelease = null;
             RecordPickupEligibility = null;
         }
+
+        public static void SafeNotifyUserInteraction(string name)
+        {
+            try
+            {
+                NotifyUserInteraction?.Invoke(name);
+            }
+            catch
+            {
+            }
+        }
     }
 }

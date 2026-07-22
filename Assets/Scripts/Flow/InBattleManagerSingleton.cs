@@ -1497,7 +1497,6 @@ namespace NineGrid.Flow
             CombatHitSink.ApplyCombatHit = ApplyCombatHitFromCore;
             CombatHitSink.ResolvePostKillBoard = ResolvePostKillBoardFromCore;
             CombatHitSink.SyncCardPresentation = SyncManagedCardPresentation;
-            CombatHitSink.SpawnDamageNumber = SpawnDamageNumberAt;
             CombatHitSink.SyncBoardFromCore = RequestSyncBoardFromCore;
             BoardPresentDrainHook.RequestWire(DrainPostKillBoardAsync);
             BoardPresentShuffleHook.RequestWire(FlushPendingShuffleIntoPresentationAsync);
@@ -1505,18 +1504,14 @@ namespace NineGrid.Flow
             RelicHudHook.RequestWire();
             CombatHitSink.NotifyBattleEnded = OnBattleEndedFromCombat;
             CombatHitSink.NotifyNodeSettlementReady = OnNodeSettlementFromCombat;
-            FieldTraceHelper.RegisterSinkHandlers();
-            PerfTraceRecorder.RegisterSinkHandlers();
-            RegistryTraceRecorder.RegisterSinkHandlers();
+            DiagnosticOutputHook.RequestAttach();
             RegisterHandBridge();
             RegisterPresentationIntentHandlers();
         }
 
         private void UnregisterCombatHitSink()
         {
-            FieldTraceHelper.UnregisterSinkHandlers();
-            PerfTraceRecorder.UnregisterSinkHandlers();
-            RegistryTraceRecorder.UnregisterSinkHandlers();
+            DiagnosticOutputHook.RequestDetach();
             if (CombatHitSink.ApplyCombatHit == ApplyCombatHitFromCore)
             {
                 CombatHitSink.ApplyCombatHit = null;
@@ -1530,11 +1525,6 @@ namespace NineGrid.Flow
             if (CombatHitSink.SyncCardPresentation == SyncManagedCardPresentation)
             {
                 CombatHitSink.SyncCardPresentation = null;
-            }
-
-            if (CombatHitSink.SpawnDamageNumber == SpawnDamageNumberAt)
-            {
-                CombatHitSink.SpawnDamageNumber = null;
             }
 
             if (CombatHitSink.SyncBoardFromCore == RequestSyncBoardFromCore)
@@ -2423,7 +2413,7 @@ namespace NineGrid.Flow
 
                     if (pos.HasValue)
                     {
-                        SpawnDamageNumberAt(pos.Value, popup.Amount);
+                        DamageNumberHook.RequestSpawn(pos.Value, popup.Amount);
                     }
                 }
 
@@ -2432,7 +2422,7 @@ namespace NineGrid.Flow
 
             if (fallbackAmount > 0 && fallbackVictim?.Transform != null)
             {
-                SpawnDamageNumberAt(fallbackVictim.Transform.position, fallbackAmount);
+                DamageNumberHook.RequestSpawn(fallbackVictim.Transform.position, fallbackAmount);
             }
         }
 
@@ -3487,7 +3477,7 @@ namespace NineGrid.Flow
 
                 if (HelpCardBoardSelectResolver.TryGetBoardSelectPrompt(card.DefId, out var prompt))
                 {
-                    DescriptionHoverSink.RequestShowText(prompt, DescriptionShowRoute.BoardSelect);
+                    DescriptionDisplayHook.RequestShowText(prompt, DescriptionShowRoute.BoardSelect);
                 }
 
                 return true;
@@ -4354,19 +4344,6 @@ namespace NineGrid.Flow
             }
         }
 
-        private static void SpawnDamageNumberAt(Vector3 worldPosition, int amount)
-        {
-            if (amount <= 0)
-            {
-                return;
-            }
-
-            if (DamageNumberManagerSingleton.TryGetInstance(out var manager))
-            {
-                manager.SpawnAtWorldPosition(worldPosition, amount);
-            }
-        }
-
         private const string UnusedHelpCardsGoldReason = "unusedHelpCards";
         private const float UnusedHelpCardVanishDuration = 0.18f;
         private const float UnusedHelpCardStaggerSeconds = 0.07f;
@@ -4433,7 +4410,7 @@ namespace NineGrid.Flow
                     unusedDelta,
                     unusedAfter,
                     cancellationToken);
-                RecordGoldChangedFlow(
+                GoldGainPresentationBinder.RecordGoldChangedFlow(
                     FlowTraceNames.GoldGained,
                     unusedDelta,
                     unusedAfter,
@@ -4447,8 +4424,7 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 扫描 EventLog 中的 GoldModified：正 delta 飞币演出，负 delta 静默对齐 HUD，
-        /// 并写入 FlowTrace Economy/GoldGained 或 GoldSpent。
+        /// 扫描 EventLog 中的 GoldModified：经 Scheduler 广播单向表现事件，Binder 消费飞币/HUD。
         /// </summary>
         /// <param name="skipReason">若与事件 Message 相同则跳过（已由专用演出处理）。</param>
         public static void PresentGoldGainsFromEventLog(
@@ -4456,73 +4432,19 @@ namespace NineGrid.Flow
             Vector3? originWorld = null,
             string skipReason = null)
         {
-            var arch = NineGridArchitecture.Current;
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
             if (arch == null)
             {
                 return;
             }
 
-            var entries = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
-            if (entries == null || startIndex >= entries.Count)
-            {
-                return;
-            }
-
-            GoldGainFxManagerSingleton.TryGetInstance(out var goldFx);
-
-            for (var i = Math.Max(0, startIndex); i < entries.Count; i++)
-            {
-                var e = entries[i];
-                if (e.Type != CoreEventType.GoldModified || e.Delta == 0)
-                {
-                    continue;
-                }
-
-                // 残留帮助卡金币由通关当拍的专用逐张演出接管，通用扫描一律跳过，避免双飞/抢占目标值。
-                if (string.Equals(e.Message, UnusedHelpCardsGoldReason, StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                if (!string.IsNullOrEmpty(skipReason)
-                    && string.Equals(e.Message, skipReason, StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                if (e.Delta < 0)
-                {
-                    goldFx?.SnapToCore(e.Amount);
-                    RecordGoldChangedFlow(
-                        FlowTraceNames.GoldSpent,
-                        e.Delta,
-                        e.Amount,
-                        e.Message,
-                        e.SourceDefId,
-                        e.ActionName);
-                    continue;
-                }
-
-                var origin = originWorld;
-                if (!origin.HasValue && e.CardUid > 0)
-                {
-                    origin = ResolveCardWorldPosition(e.CardUid);
-                }
-
-                if (!origin.HasValue && e.TargetUid > 0)
-                {
-                    origin = ResolveCardWorldPosition(e.TargetUid);
-                }
-
-                goldFx?.PlayGain(e.Delta, e.Amount, origin);
-                RecordGoldChangedFlow(
-                    FlowTraceNames.GoldGained,
-                    e.Delta,
-                    e.Amount,
-                    e.Message,
-                    e.SourceDefId,
-                    e.ActionName);
-            }
+            GoldGainPresentationBinder.EnsureInstalled();
+            new GoldGainPresentationScheduler().PresentFromEventLog(
+                arch,
+                startIndex,
+                originWorld,
+                skipReason,
+                ResolveCardWorldPosition);
         }
 
         private async UniTask PresentUnusedHelpCardsToGoldAsync(
@@ -4861,41 +4783,6 @@ namespace NineGrid.Flow
             return null;
         }
 
-        private static void RecordGoldChangedFlow(
-            string eventName,
-            int delta,
-            int amountAfter,
-            string reason,
-            string sourceDefId,
-            string actionName)
-        {
-            try
-            {
-                if (!FlowTraceRecorder.Enabled)
-                {
-                    return;
-                }
-
-                FlowTraceRecorder.BeginSessionIfNeeded();
-                FlowTraceRecorder.Record(
-                    FlowTraceCategory.Economy,
-                    eventName,
-                    new Dictionary<string, string>
-                    {
-                        { "delta", delta.ToString() },
-                        { "amountAfter", amountAfter.ToString() },
-                        { "reason", reason ?? string.Empty },
-                        { "sourceDefId", sourceDefId ?? string.Empty },
-                        { "action", actionName ?? string.Empty },
-                    },
-                    refBattleOpIndex: BattleTraceRecorder.LastOpIndex);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[InBattleManager] FlowTrace " + eventName + ": " + ex.Message);
-            }
-        }
-
         private static Vector3? ResolveCardWorldPosition(int cardUid)
         {
             if (cardUid <= 0)
@@ -5060,12 +4947,8 @@ namespace NineGrid.Flow
                 OnUseItemBatchProjected,
                 OnUseItemBoardBatchProjected,
                 OnUseItemResolvedWithoutKill);
-            // 开关在 TriggerPulseHub.PulseFx/PulseAudio；此处只装配实现 + 音效 debounce。
-            TriggerPulseHub.Configure(
-                new CardEffectTriggerPulseSink(),
-                new DebouncingTriggerPulseSink(
-                    new AudioTriggerPulseSink(),
-                    TriggerPulseHub.DefaultAudioDebounceSeconds));
+            // 开关在 TriggerPulseHub.PulseFx/PulseAudio；经 QF Controller 装配实现 + 音效 debounce。
+            TriggerPulseOutputHook.RequestConfigureProduction();
 
             _presentationDirector = new PresentationDirector(
                 new RoutingIntentScriptFactory(exploreFactory, attackFactory, useItemFactory),
@@ -5099,7 +4982,7 @@ namespace NineGrid.Flow
             CombatHitSink.BeginDirectorExternalHold = null;
             CombatHitSink.EndDirectorExternalHold = null;
             CombatHitSink.ForceEndDirectorExternalHold = null;
-            TriggerPulseHub.ResetToNull();
+            TriggerPulseOutputHook.RequestReset();
             UnbindDirectorIntentRuntime();
             _presentationDirector = null;
             _explorePresentChannel = null;

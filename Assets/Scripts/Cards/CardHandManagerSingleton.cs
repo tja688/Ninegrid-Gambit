@@ -405,7 +405,7 @@ namespace NineGrid.Cards
                 WasHovering = wasHovering,
             };
 
-            DescriptionHoverSink.RequestShow(removed.DefId, DescriptionShowRoute.Drag);
+            DescriptionDisplayHook.RequestShow(removed.DefId, DescriptionShowRoute.Drag);
             BeginDragLoop();
             return true;
         }
@@ -547,7 +547,7 @@ namespace NineGrid.Cards
 
             var driver = card.View?.GetComponent<CardVisualDriver>();
             driver?.SetTarget(CardVisualTarget.Base);
-            DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
+            DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Hover);
 
             RunPickupFromGroundAsync(card, pickup).Forget();
             FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "ok", true);
@@ -809,7 +809,7 @@ namespace NineGrid.Cards
             if (_hoveredCard != null && !IsLiveHandCard(_hoveredCard))
             {
                 _hoveredCard = null;
-                DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
+                DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Hover);
             }
 
             if (_hoveredCard == card)
@@ -818,7 +818,7 @@ namespace NineGrid.Cards
                 {
                     RefreshHandHoverAlphas(card);
                     // 每帧重申：防止场地卡 OnMouseExit 等把 Hover 描述清掉后不再恢复
-                    DescriptionHoverSink.RequestShow(card.DefId, DescriptionShowRoute.Hover);
+                    DescriptionDisplayHook.RequestShow(card.DefId, DescriptionShowRoute.Hover);
                 }
 
                 return;
@@ -833,7 +833,7 @@ namespace NineGrid.Cards
             if (card == null)
             {
                 ResetAllHandAlphas();
-                DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
+                DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Hover);
                 return;
             }
 
@@ -842,7 +842,7 @@ namespace NineGrid.Cards
             {
                 _hoveredCard = null;
                 ResetAllHandAlphas();
-                DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
+                DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Hover);
                 return;
             }
 
@@ -850,7 +850,7 @@ namespace NineGrid.Cards
             driver?.SetTarget(CardVisualTarget.Hover);
             BoostHandCardHoverSorting(card);
             RefreshHandHoverAlphas(card);
-            DescriptionHoverSink.RequestShow(card.DefId, DescriptionShowRoute.Hover);
+            DescriptionDisplayHook.RequestShow(card.DefId, DescriptionShowRoute.Hover);
         }
 
         /// <summary>
@@ -1075,7 +1075,7 @@ namespace NineGrid.Cards
                         overGround ? layoutSettings.dragAlphaWhenOverGround : 1f);
 
                     // 拖拽期间每帧重申 Drag 描述，防止被其它 Clear/Show 冲掉
-                    DescriptionHoverSink.RequestShow(card.DefId, DescriptionShowRoute.Drag);
+                    DescriptionDisplayHook.RequestShow(card.DefId, DescriptionShowRoute.Drag);
 
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                 }
@@ -1235,7 +1235,7 @@ namespace NineGrid.Cards
         {
             DisarmBoardSelectParkedHitProxy(card);
             BoardCardSelectModeController.ClearParkedItem();
-            DescriptionHoverSink.RequestClear(DescriptionShowRoute.BoardSelect);
+            DescriptionDisplayHook.RequestClear(DescriptionShowRoute.BoardSelect);
             await VanishCardAfterApplyAsync(card);
         }
 
@@ -1358,7 +1358,7 @@ namespace NineGrid.Cards
         {
             if (_dragSession != null)
             {
-                DescriptionHoverSink.RequestClear(DescriptionShowRoute.Drag);
+                DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Drag);
             }
 
             _dragSession = null;
@@ -1374,7 +1374,7 @@ namespace NineGrid.Cards
             if (_hoveredCard == card)
             {
                 _hoveredCard = null;
-                DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
+                DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Hover);
             }
 
             ResetAllHandAlphas();

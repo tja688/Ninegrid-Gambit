@@ -58,13 +58,13 @@ namespace NineGrid.Cards
             var defId = _driver?.BoundCard?.DefId;
             if (!string.IsNullOrEmpty(defId))
             {
-                DescriptionHoverSink.RequestShow(defId, DescriptionShowRoute.Hover);
+                DescriptionDisplayHook.RequestShow(defId, DescriptionShowRoute.Hover);
             }
         }
 
         private void OnMouseExit()
         {
-            DescriptionHoverSink.RequestClear(DescriptionShowRoute.Hover);
+            DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Hover);
 
             if (!CanRespondToHover())
             {

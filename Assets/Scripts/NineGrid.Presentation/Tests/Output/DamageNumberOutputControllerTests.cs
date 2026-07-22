@@ -1,0 +1,80 @@
+using NineGrid.Cards;
+using NineGrid.Flow.Presentation;
+using NineGrid.Presentation.Controllers;
+using NineGrid.Presentation.Tests.Fixtures;
+using NUnit.Framework;
+using QFramework;
+using UnityEngine;
+
+namespace NineGrid.Presentation.Tests.Output
+{
+    /// <summary>
+    /// V9：伤害飘字经 Hook → Event；CombatHitSink 飘字入口退役。
+    /// </summary>
+    public sealed class DamageNumberOutputControllerTests
+    {
+        [Test]
+        public void Controller_RequestSpawn_SendsDamageNumberRequestedEvent()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateStartedGame(seed: 42UL))
+            {
+                DamageNumberRequested? received = null;
+                var unreg = arch.Architecture.RegisterEvent<DamageNumberRequested>(e => received = e);
+
+                var go = new GameObject(nameof(DamageNumberOutputController));
+                go.AddComponent<DamageNumberOutputController>();
+                try
+                {
+                    var pos = new Vector3(1.5f, -2f, 0f);
+                    DamageNumberHook.RequestSpawn(pos, 7);
+
+                    Assert.IsTrue(received.HasValue);
+                    Assert.AreEqual(pos, received.Value.WorldPosition);
+                    Assert.AreEqual(7, received.Value.Amount);
+                }
+                finally
+                {
+                    unreg.UnRegister();
+                    UnityEngine.Object.DestroyImmediate(go);
+                }
+            }
+        }
+
+        [Test]
+        public void Controller_NonPositiveAmount_DoesNotSendEvent()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateStartedGame(seed: 42UL))
+            {
+                var count = 0;
+                var unreg = arch.Architecture.RegisterEvent<DamageNumberRequested>(_ => count++);
+
+                var go = new GameObject(nameof(DamageNumberOutputController));
+                go.AddComponent<DamageNumberOutputController>();
+                try
+                {
+                    DamageNumberHook.RequestSpawn(Vector3.zero, 0);
+                    DamageNumberHook.RequestSpawn(Vector3.zero, -3);
+
+                    Assert.AreEqual(0, count);
+                }
+                finally
+                {
+                    unreg.UnRegister();
+                    UnityEngine.Object.DestroyImmediate(go);
+                }
+            }
+        }
+
+        [Test]
+        public void CombatHitSink_NoLongerExposesDamageNumberBridge()
+        {
+            var sinkType = typeof(CombatHitSink);
+            Assert.IsNull(
+                sinkType.GetField("SpawnDamageNumber"),
+                "SpawnDamageNumber 应已从 CombatHitSink 删除");
+            Assert.IsNull(
+                sinkType.GetMethod("RequestDamageNumber"),
+                "RequestDamageNumber 应已从 CombatHitSink 删除");
+        }
+    }
+}

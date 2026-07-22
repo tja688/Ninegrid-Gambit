@@ -4,6 +4,8 @@ using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
+using NineGrid.Flow.Presentation;
+using QFramework;
 using TMPro;
 using UnityEngine;
 
@@ -41,6 +43,9 @@ namespace NineGrid.Flow
         private ContentVisualCatalog _visualCatalog;
         private CardFrameStyleCatalog _frameStyleCatalog;
         private bool _visualsResolved;
+        private IUnRegister _showEventUnRegister;
+        private IUnRegister _showTextEventUnRegister;
+        private IUnRegister _clearEventUnRegister;
 
         public static DescriptionManagerSingleton Instance
         {
@@ -84,13 +89,13 @@ namespace NineGrid.Flow
 
             _instance = this;
             EnsureBindings();
-            RegisterHoverSink();
+            RegisterDescriptionEvents();
             Clear();
         }
 
         private void OnDestroy()
         {
-            UnregisterHoverSink();
+            UnregisterDescriptionEvents();
             if (_instance == this)
             {
                 _instance = null;
@@ -360,36 +365,38 @@ namespace NineGrid.Flow
             return _noticeGeneration;
         }
 
-        private void RegisterHoverSink()
+        private void RegisterDescriptionEvents()
         {
-            DescriptionHoverSink.Show = ShowFromSink;
-            DescriptionHoverSink.ShowText = ShowTextFromSink;
-            DescriptionHoverSink.Clear = ClearFromSink;
+            UnregisterDescriptionEvents();
+            var arch = NineGridArchitecture.Interface;
+            if (arch == null)
+            {
+                return;
+            }
+
+            _showEventUnRegister = arch.RegisterEvent<DescriptionShowRequested>(OnDescriptionShowRequested);
+            _showTextEventUnRegister = arch.RegisterEvent<DescriptionShowTextRequested>(
+                OnDescriptionShowTextRequested);
+            _clearEventUnRegister = arch.RegisterEvent<DescriptionClearRequested>(
+                OnDescriptionClearRequested);
         }
 
-        private void UnregisterHoverSink()
+        private void UnregisterDescriptionEvents()
         {
-            if (DescriptionHoverSink.Show == ShowFromSink)
-            {
-                DescriptionHoverSink.Show = null;
-            }
-
-            if (DescriptionHoverSink.ShowText == ShowTextFromSink)
-            {
-                DescriptionHoverSink.ShowText = null;
-            }
-
-            if (DescriptionHoverSink.Clear == ClearFromSink)
-            {
-                DescriptionHoverSink.Clear = null;
-            }
+            _showEventUnRegister?.UnRegister();
+            _showTextEventUnRegister?.UnRegister();
+            _clearEventUnRegister?.UnRegister();
+            _showEventUnRegister = null;
+            _showTextEventUnRegister = null;
+            _clearEventUnRegister = null;
         }
 
-        private void ShowFromSink(string defId, DescriptionShowRoute route) => Show(defId, route);
+        private void OnDescriptionShowRequested(DescriptionShowRequested e) => Show(e.DefId, e.Route);
 
-        private void ShowTextFromSink(string text, DescriptionShowRoute route) => ShowText(text, route);
+        private void OnDescriptionShowTextRequested(DescriptionShowTextRequested e) =>
+            ShowText(e.Text, e.Route);
 
-        private void ClearFromSink(DescriptionShowRoute route) => ClearRoute(route);
+        private void OnDescriptionClearRequested(DescriptionClearRequested e) => ClearRoute(e.Route);
 
         private void EnsureBindings()
         {
