@@ -28,7 +28,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             var size = field != null
                 ? field.LayoutSettings.slotHitBoxSize
                 : new Vector2(1.6f, 2.2f);

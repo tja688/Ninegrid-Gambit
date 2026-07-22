@@ -1316,7 +1316,7 @@ namespace NineGrid.Cards
 
         private static GroundFieldManagerSingleton ResolveFieldManager()
         {
-            return GroundFieldManagerSingleton.Instance;
+            return GroundFieldGeometryHook.FieldOrNull();
         }
 
         private void PlaceCardInStandby(ManagedCard card, int stackIndex)

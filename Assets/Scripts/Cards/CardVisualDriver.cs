@@ -303,7 +303,7 @@ namespace NineGrid.Cards
 
         private static GroundFieldLayoutSettings ResolveGroundLayoutSettings()
         {
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             return field != null ? field.LayoutSettings : new GroundFieldLayoutSettings();
         }
 

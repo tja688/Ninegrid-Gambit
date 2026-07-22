@@ -59,7 +59,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             if (field == null || field.IsBusy)
             {
                 return;

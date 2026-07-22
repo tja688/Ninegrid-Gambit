@@ -425,7 +425,7 @@ namespace NineGrid.Cards
         {
             try
             {
-                var field = GroundFieldManagerSingleton.TryGetInstance();
+                var field = GroundFieldGeometryHook.FieldOrNull();
                 if (field == null)
                 {
                     return;
@@ -653,7 +653,7 @@ namespace NineGrid.Cards
 
             try
             {
-                GroundFieldManagerSingleton.TryGetInstance()?.TryClearOccupancyForUid(
+                GroundFieldGeometryHook.FieldOrNull()?.TryClearOccupancyForUid(
                     uid,
                     skipBusyGuard: true);
             }

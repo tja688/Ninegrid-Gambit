@@ -332,7 +332,7 @@ namespace NineGrid.Flow
             CancelLoopWork();
             _loopCts = new CancellationTokenSource();
             CombatHitSink.ResetInputGates("BeginRun");
-            FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+            FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
             inBattleManager?.ClearCardPresentationSurface();
 
             _testMode = testMode;
@@ -982,7 +982,7 @@ namespace NineGrid.Flow
 
             inBattleManager?.ClearCardPresentationSurface();
             inBattleManager?.RefreshPersistentInBattleUi(animate: false);
-            FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+            FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
 
             SetState(victory ? LoopState.VictoryNotice : LoopState.DefeatNotice);
             EnsureBindings();
@@ -1025,7 +1025,7 @@ namespace NineGrid.Flow
             EnsureBindings();
             HideNotice();
             CombatHitSink.ResetInputGates("EnterMainMenu");
-            FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+            FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
             inBattleManager?.ClearPresentationSurface();
             panelRouter.ShowMainMenu();
             SetState(LoopState.MainMenu);

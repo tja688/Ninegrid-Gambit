@@ -221,7 +221,7 @@ namespace NineGrid.Flow
 
             CheatMakeNodeCleared(arch);
 
-            FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+            FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
             CombatHitSink.ForceEndPresentationLock("CheatForceNodeVictory");
             CancelPresentationWork();
 
@@ -408,7 +408,7 @@ namespace NineGrid.Flow
         public void ClearPresentationSurface()
         {
             CancelPresentationWork();
-            FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+            FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
             CombatHitSink.ForceEndPresentationLock("ClearPresentationSurface");
             _drainInFlight = false;
             ResetPresentationSurface();
@@ -422,7 +422,7 @@ namespace NineGrid.Flow
         public void ClearCardPresentationSurface()
         {
             CancelPresentationWork();
-            FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+            FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
             CombatHitSink.ForceEndPresentationLock("ClearCardPresentationSurface");
             _drainInFlight = false;
             ResetCardPresentationSurface();
@@ -1321,7 +1321,7 @@ namespace NineGrid.Flow
             // Bounce 退场 DelayedCall 可能跨节点；清场前必须先终止选择会话，避免陈旧句柄误删新视图。
             SelectorManagerSingleton.TryGetInstance()?.HideChoice();
             // 先取消交战/手牌异步，再强制清占格与手牌槽，最后统一 Release 视图。
-            FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+            FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
             CombatHitSink.ResetInputGates("ResetCardPresentationSurface");
             CardHandManagerSingleton.Instance?.ClearHand();
             deckManager?.ResetToStandby();
@@ -1366,7 +1366,7 @@ namespace NineGrid.Flow
                 var hand = CardHandManagerSingleton.Instance;
                 var handSelfBusy = hand != null && hand.IsSelfBusy;
                 var deckBusy = deckManager != null && deckManager.IsBusy;
-                var battle = FieldBattleManagerSingleton.Instance;
+                var battle = FieldBattlePresentationHook.BattleOrNull();
                 var battleBusy = battle != null && battle.IsBusy;
 
                 if (!_drainInFlight
@@ -1451,7 +1451,7 @@ namespace NineGrid.Flow
 
             if (fieldManager == null)
             {
-                fieldManager = GroundFieldManagerSingleton.Instance;
+                fieldManager = GroundFieldGeometryHook.FieldOrNull();
             }
 
             if (relicManager == null)
@@ -1579,6 +1579,16 @@ namespace NineGrid.Flow
 
             ResolveManagers();
             CardEntityLifecycleHook.RequestWire(cardManager, hand, deckManager);
+            if (fieldManager != null)
+            {
+                GroundFieldGeometryHook.RequestWire(fieldManager);
+            }
+
+            var battle = FieldBattlePresentationHook.BattleOrNull();
+            if (battle != null)
+            {
+                FieldBattlePresentationHook.RequestWire(battle);
+            }
 
             BoardCardSelectModeController.SelectionCompletedAsync -= OnBoardSelectionCompletedAsync;
             BoardCardSelectModeController.SelectionCompletedAsync += OnBoardSelectionCompletedAsync;
@@ -3110,7 +3120,7 @@ namespace NineGrid.Flow
                 return;
             }
 
-            var battle = FieldBattleManagerSingleton.Instance;
+            var battle = FieldBattlePresentationHook.BattleOrNull();
             if (battle == null)
             {
                 return;
@@ -3929,7 +3939,7 @@ namespace NineGrid.Flow
 
             if (useResult.AvatarDefeated)
             {
-                FieldBattleManagerSingleton.Instance?.TryBeginAvatarDefeatPresentation(ct);
+                FieldBattlePresentationHook.BattleOrNull()?.TryBeginAvatarDefeatPresentation(ct);
                 CombatHitSink.RequestBattleEnded(victory: false);
                 return;
             }
@@ -3963,7 +3973,7 @@ namespace NineGrid.Flow
         private void BeginUseItemLethalVictims(UseItemPresentationResult useResult, CancellationToken cancellationToken)
         {
             ResolveManagers();
-            var battle = FieldBattleManagerSingleton.Instance;
+            var battle = FieldBattlePresentationHook.BattleOrNull();
             if (battle == null || cardManager == null)
             {
                 Debug.LogWarning("[InBattleManager] UseItem 击杀卸尸缺少 FieldBattle/CardManager。");
@@ -4133,7 +4143,7 @@ namespace NineGrid.Flow
 
                     if (boardDelta.AvatarDefeated)
                     {
-                        FieldBattleManagerSingleton.Instance?.TryBeginAvatarDefeatPresentation(
+                        FieldBattlePresentationHook.BattleOrNull()?.TryBeginAvatarDefeatPresentation(
                             EnsurePresentationToken());
                         CombatHitSink.RequestBattleEnded(victory: false);
                         return;
@@ -4803,7 +4813,7 @@ namespace NineGrid.Flow
 
         private static Vector3? ResolveBoardSlotWorldPosition(int groundSlot)
         {
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             if (field == null)
             {
                 return null;
@@ -5362,7 +5372,7 @@ namespace NineGrid.Flow
             PostKillBoardPresentationResult result,
             CancellationToken token)
         {
-            var battle = FieldBattleManagerSingleton.Instance;
+            var battle = FieldBattlePresentationHook.BattleOrNull();
             if (battle == null)
             {
                 Debug.LogWarning("[InBattleManager] PlayDirectorAttackHitPresent：无 FieldBattleManager。");
@@ -5378,7 +5388,7 @@ namespace NineGrid.Flow
             PostKillBoardPresentationResult result,
             CancellationToken token)
         {
-            var battle = FieldBattleManagerSingleton.Instance;
+            var battle = FieldBattlePresentationHook.BattleOrNull();
             if (battle == null)
             {
                 Debug.LogWarning("[InBattleManager] PlayDirectorCounterPresent：无 FieldBattleManager。");

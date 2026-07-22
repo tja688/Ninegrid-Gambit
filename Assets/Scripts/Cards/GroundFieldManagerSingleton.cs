@@ -11,8 +11,9 @@ using UnityEngine;
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 场地卡管理器单例：9 格占用权威、放置申请、外圈旋转表演、方位查询与空槽点击。
+    /// 场地卡管理器单例：9 格几何注册、放置申请、外圈旋转表演、方位查询与空槽点击。
     /// 格位位移由 L2 五次收敛编排（不写 world position 做动画）；基础交战编排已抽至 <see cref="FieldBattleManagerSingleton"/>。
+    /// V7 compat shell — 跨模块解析优先 <see cref="GroundFieldGeometryHook"/>；逻辑占格权威在 Core BoardModel。
     /// </summary>
     public sealed class GroundFieldManagerSingleton : MonoBehaviour
     {
@@ -80,7 +81,7 @@ namespace NineGrid.Cards
                     return true;
                 }
 
-                var battle = FieldBattleManagerSingleton.Instance;
+                var battle = FieldBattlePresentationHook.BattleOrNull();
                 return _isBusy || (battle != null && battle.IsBusy);
             }
         }
@@ -146,6 +147,7 @@ namespace NineGrid.Cards
             _leaseArbiter = new LeaseArbiter(OnDisciplineBAlarm);
             _dealFlightService = new SlotDealFlightService(this, this.GetCancellationTokenOnDestroy());
             ResolveSkeletonDeckPresentation();
+            GroundFieldGeometryHook.RequestWire(this);
             ExploreInputHook.RequestWire(this);
         }
 
@@ -232,7 +234,7 @@ namespace NineGrid.Cards
             }
 
             var uid = _uidBySlot[slot];
-            if (CardManagerSingleton.Instance.TryGet(uid, out card))
+            if (CardEntityLifecycleHook.CardsOrNull().TryGet(uid, out card))
             {
                 return true;
             }
@@ -241,7 +243,7 @@ namespace NineGrid.Cards
                 uid,
                 "Ground.TryGetCardAt",
                 "slot=" + slot.ToString(CultureInfo.InvariantCulture));
-            CardManagerSingleton.Instance?.AuditRegistryIntegrity("Ground.TryGetCardAt");
+            CardEntityLifecycleHook.CardsOrNull()?.AuditRegistryIntegrity("Ground.TryGetCardAt");
             return false;
         }
 
@@ -352,7 +354,7 @@ namespace NineGrid.Cards
             }
 
             var uid = candidates[UnityEngine.Random.Range(0, candidates.Count)];
-            if (!CardManagerSingleton.Instance.TryGetTracked(uid, "Ground.TryGetRandomOccupiedCard", out card))
+            if (!CardEntityLifecycleHook.CardsOrNull().TryGetTracked(uid, "Ground.TryGetRandomOccupiedCard", out card))
             {
                 return false;
             }
@@ -384,7 +386,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.GroundCardMode);
+            CardEntityLifecycleHook.CardsOrNull().SetDisplayMode(card, CardDisplayMode.GroundCardMode);
             RefreshSlotHitCollider(slot);
             return true;
         }
@@ -421,7 +423,7 @@ namespace NineGrid.Cards
                     slot: slot,
                     killedTween: true,
                     reason: "placeAtAnchor");
-                CardManagerSingleton.Instance.RefreshDisplayMode(card);
+                CardEntityLifecycleHook.CardsOrNull().RefreshDisplayMode(card);
             }
             else
             {
@@ -438,7 +440,7 @@ namespace NineGrid.Cards
                     slot: slot,
                     killedTween: false,
                     reason: "placeAtAnchorConverge");
-                CardManagerSingleton.Instance.RefreshDisplayMode(card);
+                CardEntityLifecycleHook.CardsOrNull().RefreshDisplayMode(card);
             }
 
             return true;
@@ -472,7 +474,7 @@ namespace NineGrid.Cards
             if (fromSlot == toSlot)
             {
                 if (snapToAnchor
-                    && CardManagerSingleton.Instance.TryGet(uid, out var same)
+                    && CardEntityLifecycleHook.CardsOrNull().TryGet(uid, out var same)
                     && same?.Transform != null
                     && TryGetAnchor(toSlot, out var sameAnchor)
                     && sameAnchor != null)
@@ -508,7 +510,7 @@ namespace NineGrid.Cards
             RefreshSlotHitCollider(toSlot);
 
             if (snapToAnchor
-                && CardManagerSingleton.Instance.TryGet(uid, out var card)
+                && CardEntityLifecycleHook.CardsOrNull().TryGet(uid, out var card)
                 && card?.Transform != null
                 && TryGetAnchor(toSlot, out var anchor)
                 && anchor != null)
@@ -521,7 +523,7 @@ namespace NineGrid.Cards
                     slot: toSlot,
                     killedTween: true,
                     reason: "relocate");
-                CardManagerSingleton.Instance.RefreshDisplayMode(card);
+                CardEntityLifecycleHook.CardsOrNull().RefreshDisplayMode(card);
             }
 
             return true;
@@ -559,7 +561,7 @@ namespace NineGrid.Cards
             // 开局揭示只门禁场地自身 busy：覆盖层 / PresentationLocked / 交战忙不应挡 Avatar 落格。
             if (IsFieldBusy)
             {
-                var battle = FieldBattleManagerSingleton.Instance;
+                var battle = FieldBattlePresentationHook.BattleOrNull();
                 Debug.LogWarning(
                     "[GroundFieldManager] 场地自身忙碌，无法揭示 Avatar。"
                     + $" choiceOverlay={CombatHitSink.ChoiceOverlayActive}"
@@ -595,7 +597,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var cardManager = CardManagerSingleton.Instance;
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
             cardManager.SetDisplayMode(avatar, CardDisplayMode.GroundCardMode);
             SlotFrameConvergence.SnapHome(avatar, anchor.position, "Ground.AvatarReveal", avatar.Uid);
             RefreshSlotHitCollider(slot);
@@ -645,7 +647,7 @@ namespace NineGrid.Cards
             }
 
             var uid = _uidBySlot[fromSlot];
-            if (!CardManagerSingleton.Instance.TryGetTracked(
+            if (!CardEntityLifecycleHook.CardsOrNull().TryGetTracked(
                     uid,
                     "Ground.RequestMoveCard",
                     out var card,
@@ -669,7 +671,7 @@ namespace NineGrid.Cards
             else if (TryGetAnchor(toSlot, out var anchor))
             {
                 SlotFrameConvergence.SnapHome(card, anchor.position, "Ground.Move.Snap", uid);
-                CardManagerSingleton.Instance.RefreshDisplayMode(card);
+                CardEntityLifecycleHook.CardsOrNull().RefreshDisplayMode(card);
             }
 
             RefreshSlotHitCollider(fromSlot);
@@ -698,7 +700,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (!CardManagerSingleton.Instance.TryGet(uid, out card))
+            if (!CardEntityLifecycleHook.CardsOrNull().TryGet(uid, out card))
             {
                 CardPresentationProbe.RegistryMiss(
                     uid,
@@ -735,7 +737,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (!CardManagerSingleton.Instance.TryGet(uid, out var card))
+            if (!CardEntityLifecycleHook.CardsOrNull().TryGet(uid, out var card))
             {
                 CardPresentationProbe.RegistryMiss(
                     uid,
@@ -754,7 +756,7 @@ namespace NineGrid.Cards
             VacateSlotForExplore(slot, card, animate, skipBusyGuard, startExplore);
             if (!animate)
             {
-                CardManagerSingleton.Instance.Release(uid, "Ground.RemoveImmediate");
+                CardEntityLifecycleHook.CardsOrNull().Release(uid, "Ground.RemoveImmediate");
             }
 
             return true;
@@ -823,7 +825,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.GroundCardMode);
+            CardEntityLifecycleHook.CardsOrNull().SetDisplayMode(card, CardDisplayMode.GroundCardMode);
             RefreshSlotHitCollider(slot);
             return true;
         }
@@ -894,7 +896,7 @@ namespace NineGrid.Cards
 
             if (force)
             {
-                FieldBattleManagerSingleton.Instance?.CancelBattleWork();
+                FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
                 CancelFieldAnimations();
                 _isBusy = false;
             }
@@ -969,7 +971,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            var battle = FieldBattleManagerSingleton.Instance;
+            var battle = FieldBattlePresentationHook.BattleOrNull();
             if (battle != null && battle.IsBusy)
             {
                 return false;
@@ -1246,7 +1248,7 @@ namespace NineGrid.Cards
 
             try
             {
-                var cardManager = CardManagerSingleton.Instance;
+                var cardManager = CardEntityLifecycleHook.CardsOrNull();
                 var hopPlans = new List<(ManagedCard card, int fromSlot, int toSlot)>(moves.Count);
                 var expectedToSlotByUid = new Dictionary<int, int>(moves.Count);
                 var movingUids = new HashSet<int>(moves.Count);
@@ -1569,7 +1571,7 @@ namespace NineGrid.Cards
                         continue;
                     }
 
-                    if (!CardManagerSingleton.Instance.TryGet(uid, out var card) || card?.Transform == null)
+                    if (!CardEntityLifecycleHook.CardsOrNull().TryGet(uid, out var card) || card?.Transform == null)
                     {
                         CardPresentationProbe.RegistryMiss(
                             uid,
@@ -1670,7 +1672,7 @@ namespace NineGrid.Cards
                 }
 
                 RefreshAllSlotHitColliders();
-                CardManagerSingleton.Instance?.AuditRegistryIntegrity("Ground.RingRotate.End");
+                CardEntityLifecycleHook.CardsOrNull()?.AuditRegistryIntegrity("Ground.RingRotate.End");
             }
             catch (OperationCanceledException)
             {
@@ -1750,7 +1752,7 @@ namespace NineGrid.Cards
                 }
             }
 
-            CardManagerSingleton.Instance.RefreshDisplayMode(card);
+            CardEntityLifecycleHook.CardsOrNull().RefreshDisplayMode(card);
         }
 
         private void SyncPresentationClock()
@@ -1771,8 +1773,8 @@ namespace NineGrid.Cards
             var request = LeaseRequest.Sync(key, now, now + sourceTime, committed: true);
             var result = _leaseArbiter.TryAcquire(request, () =>
             {
-                if (CardManagerSingleton.Instance != null
-                    && CardManagerSingleton.Instance.TryGet(cardId, out var card)
+                if (CardEntityLifecycleHook.CardsOrNull() != null
+                    && CardEntityLifecycleHook.CardsOrNull().TryGet(cardId, out var card)
                     && SlotFrameConvergence.TryGetDriver(card, out var driver)
                     && SlotFrameConvergence.TryGetTower(card, out var tower)
                     && tower.SlotFrame != null)
@@ -1795,8 +1797,8 @@ namespace NineGrid.Cards
                 commandeered: result.HasCommandeerHandoff);
 
             if (result.HasCommandeerHandoff
-                && CardManagerSingleton.Instance != null
-                && CardManagerSingleton.Instance.TryGet(cardId, out var commandeerCard)
+                && CardEntityLifecycleHook.CardsOrNull() != null
+                && CardEntityLifecycleHook.CardsOrNull().TryGet(cardId, out var commandeerCard)
                 && SlotFrameConvergence.TryGetDriver(commandeerCard, out var commandeerDriver))
             {
                 ConvergenceDiagProbe.Handoff(
@@ -1884,7 +1886,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var cardManager = CardManagerSingleton.Instance;
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
             if (cardManager == null)
             {
                 return;
@@ -1924,8 +1926,8 @@ namespace NineGrid.Cards
                 }
 
                 var duration = layoutSettings != null ? layoutSettings.swapMoveDuration : 0.3f;
-                CardManagerSingleton.Instance.RefreshDisplayMode(cardA);
-                CardManagerSingleton.Instance.RefreshDisplayMode(cardB);
+                CardEntityLifecycleHook.CardsOrNull().RefreshDisplayMode(cardA);
+                CardEntityLifecycleHook.CardsOrNull().RefreshDisplayMode(cardB);
 
                 if (IsDealInFlight(moveA.Uid))
                 {
@@ -1971,8 +1973,8 @@ namespace NineGrid.Cards
                     }
                 }
 
-                CardManagerSingleton.Instance.RefreshDisplayMode(cardA);
-                CardManagerSingleton.Instance.RefreshDisplayMode(cardB);
+                CardEntityLifecycleHook.CardsOrNull().RefreshDisplayMode(cardA);
+                CardEntityLifecycleHook.CardsOrNull().RefreshDisplayMode(cardB);
                 RefreshAllSlotHitColliders();
             }
             finally
@@ -2126,7 +2128,7 @@ namespace NineGrid.Cards
 
         private bool HasLivingNonAvatarCard()
         {
-            var cardManager = CardManagerSingleton.Instance;
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
             for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
             {
                 if (slot == GroundSlotTopology.AvatarReservedSlot)

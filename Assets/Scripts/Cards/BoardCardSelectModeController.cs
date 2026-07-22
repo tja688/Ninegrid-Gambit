@@ -150,7 +150,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             return field != null && field.TryGetSlotOf(card.Uid, out _);
         }
 
@@ -262,7 +262,7 @@ namespace NineGrid.Cards
 
         private static void ClearSelectedVisuals()
         {
-            var cardManager = CardManagerSingleton.Instance;
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
             if (cardManager == null)
             {
                 return;

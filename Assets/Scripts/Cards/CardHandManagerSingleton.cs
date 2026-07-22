@@ -99,7 +99,7 @@ namespace NineGrid.Cards
                     return true;
                 }
 
-                var field = GroundFieldManagerSingleton.Instance;
+                var field = GroundFieldGeometryHook.FieldOrNull();
                 return field != null && field.IsBusy;
             }
         }
@@ -307,7 +307,7 @@ namespace NineGrid.Cards
 
             if (!CombatHitSink.PresentationLocked && !skipBusyGuard)
             {
-                var field = GroundFieldManagerSingleton.Instance;
+                var field = GroundFieldGeometryHook.FieldOrNull();
                 if (field != null && field.IsBusy)
                 {
                     return false;
@@ -424,7 +424,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             var groundSlotForAttempt = -1;
             if (field != null)
             {
@@ -616,7 +616,7 @@ namespace NineGrid.Cards
                     });
 
                 // #10 / V3：占格权威在 Core；冲突只记诊断，禁止 force-sync heal。
-                var field = GroundFieldManagerSingleton.Instance;
+                var field = GroundFieldGeometryHook.FieldOrNull();
                 if (field != null && field.ConsumeOccupancyConflictFlag())
                 {
                     Debug.LogWarning(
@@ -1156,7 +1156,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             var anchor = field?.GetGroundAnchor(GroundSlotTopology.AvatarReservedSlot);
             if (anchor == null)
             {
@@ -1266,7 +1266,7 @@ namespace NineGrid.Cards
                         CancellationToken.None);
                 }
 
-                var field = GroundFieldManagerSingleton.TryGetInstance();
+                var field = GroundFieldGeometryHook.FieldOrNull();
                 if (field != null
                     && field.TryGetSlotOf(card.Uid, out var groundSlot)
                     && !GroundSlotTopology.IsAvatarReserved(groundSlot))
@@ -1451,7 +1451,7 @@ namespace NineGrid.Cards
 
         private int? TryResolveGroundSlotUnderPoint(Vector3 worldPoint)
         {
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             if (field == null)
             {
                 return null;

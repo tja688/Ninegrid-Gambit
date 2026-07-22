@@ -31,7 +31,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             var size = field != null
                 ? field.LayoutSettings.slotHitBoxSize
                 : new Vector2(1.6f, 2.2f);
@@ -110,7 +110,7 @@ namespace NineGrid.Cards
 
             if (card.CoreKind == CardPresentationKind.Monster)
             {
-                FieldBattleManagerSingleton.Instance?.TryHandleBattleClick(card);
+                FieldBattlePresentationHook.BattleOrNull()?.TryHandleBattleClick(card);
                 return;
             }
 
@@ -133,7 +133,7 @@ namespace NineGrid.Cards
             }
 
             var hand = CardHandManagerSingleton.Instance;
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             var pos = card.Transform != null ? card.Transform.position : Vector3.zero;
             var registeredSlot = -1;
             var hasRegistered = field != null && field.TryGetSlotOf(card.Uid, out registeredSlot);
@@ -161,7 +161,7 @@ namespace NineGrid.Cards
             var isOrtho = hasRegistered && field != null
                 && field.IsAvatarOrthogonalBattleSlot(registeredSlot);
             var isOrphan = card.DisplayMode == CardDisplayMode.GroundCardMode && !hasRegistered;
-            var cardManager = CardManagerSingleton.Instance;
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
             var isGhost = hasRegistered
                 && (cardManager == null || !cardManager.TryGet(card.Uid, out _));
 
@@ -249,7 +249,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             if (field != null && field.IsBusy)
             {
                 blockReason = "fieldBusy";

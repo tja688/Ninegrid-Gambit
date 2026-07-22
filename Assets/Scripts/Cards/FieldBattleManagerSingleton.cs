@@ -13,6 +13,8 @@ namespace NineGrid.Cards
     /// 命中帧经 CombatHitSink 写 Core，再抓 Model 刷血/飘字；
     /// 击杀后 Core 一次结算，表现缓冲按 Moved/Dealt 缓释。
     /// 净土域（纯战斗黑盒）：仅暴露 C 阶段 Evict/Admit（速度恒 0）。
+    /// V7 compat shell — 跨模块解析优先 <see cref="FieldBattlePresentationHook"/> /
+    /// <see cref="GroundFieldGeometryHook"/>。
     /// </summary>
     public sealed class FieldBattleManagerSingleton : MonoBehaviour, IHandoffEndpoint
     {
@@ -93,6 +95,7 @@ namespace NineGrid.Cards
             _instance = this;
             ResolveFieldManager();
             ResolveAttackAdapter();
+            FieldBattlePresentationHook.RequestWire(this);
             AttackInputHook.RequestWire(this);
         }
 
@@ -217,8 +220,8 @@ namespace NineGrid.Cards
             {
                 // 点击格已空：优先用 Resolve 批捕获的战斗目标（嘲讽致死常见），否则搜投影死尸。
                 if (resolvedCombatUid > 0
-                    && CardManagerSingleton.Instance != null
-                    && CardManagerSingleton.Instance.TryGet(resolvedCombatUid, out var resolvedVictim)
+                    && CardEntityLifecycleHook.CardsOrNull() != null
+                    && CardEntityLifecycleHook.CardsOrNull().TryGet(resolvedCombatUid, out var resolvedVictim)
                     && resolvedVictim != null)
                 {
                     var resolvedSlot = clickedSlot;
@@ -260,8 +263,8 @@ namespace NineGrid.Cards
             var combatSlot = clickedSlot;
             if (useTauntRedirect)
             {
-                if (CardManagerSingleton.Instance == null
-                    || !CardManagerSingleton.Instance.TryGet(combatUid, out combatVictim)
+                if (CardEntityLifecycleHook.CardsOrNull() == null
+                    || !CardEntityLifecycleHook.CardsOrNull().TryGet(combatUid, out combatVictim)
                     || combatVictim == null)
                 {
                     Debug.LogWarning($"[FieldBattleManager] 导演命中 Present：嘲讽目标 uid={combatUid} 不可用。");
@@ -322,8 +325,8 @@ namespace NineGrid.Cards
             }
 
             ManagedCard attacker = null;
-            var resolvedFromUid = CardManagerSingleton.Instance != null
-                && CardManagerSingleton.Instance.TryGet(attackerUid, out attacker)
+            var resolvedFromUid = CardEntityLifecycleHook.CardsOrNull() != null
+                && CardEntityLifecycleHook.CardsOrNull().TryGet(attackerUid, out attacker)
                 && attacker != null;
             if (!resolvedFromUid && !TryValidateCounterParticipants(attackerSlot, out attacker))
             {
@@ -488,14 +491,14 @@ namespace NineGrid.Cards
                 {
                     // 导演路径：击杀只做 lunge / 尸体离锚；不再嵌套 DrainPostKillBoard。
                     // Fill/Rotate 由导演后续 Present 驱动，避免 Hit+板面双重 Drain 挂死主线。
-                    CardManagerSingleton.Instance?.MarkFieldDead(combatVictim);
+                    CardEntityLifecycleHook.CardsOrNull()?.MarkFieldDead(combatVictim);
                     fieldManager.VacateSlotForExplore(
                         combatSlot,
                         combatVictim,
                         playRemoveAnim: false,
                         skipBusyGuard: true,
                         startExplore: false);
-                    CardManagerSingleton.Instance?.StageFieldDeadCorpseOffAnchor(combatVictim);
+                    CardEntityLifecycleHook.CardsOrNull()?.StageFieldDeadCorpseOffAnchor(combatVictim);
                     FinalizeLethalVictimAsync(combatVictim, ct).Forget();
                 }
 
@@ -531,7 +534,7 @@ namespace NineGrid.Cards
         {
             victim = null;
             combatSlot = clickedSlot;
-            var cards = CardManagerSingleton.Instance;
+            var cards = CardEntityLifecycleHook.CardsOrNull();
             if (cards == null || hitProjection.RemovedUids == null)
             {
                 return false;
@@ -616,7 +619,7 @@ namespace NineGrid.Cards
             ManagedCard fallbackVictim,
             int fallbackAmount)
         {
-            var cards = CardManagerSingleton.Instance;
+            var cards = CardEntityLifecycleHook.CardsOrNull();
             if (popups != null && popups.Length > 0)
             {
                 for (var i = 0; i < popups.Length; i++)
@@ -764,7 +767,7 @@ namespace NineGrid.Cards
                 effectManager.StopCurrent();
             }
 
-            CardManagerSingleton.Instance?.RefreshDisplayMode(victim);
+            CardEntityLifecycleHook.CardsOrNull()?.RefreshDisplayMode(victim);
 
             ResolveFieldManager();
             if (fieldManager != null && victim.Transform != null)
@@ -839,7 +842,7 @@ namespace NineGrid.Cards
             }
 
             var hadSlot = fieldManager.TryGetSlotOf(victim.Uid, out var victimSlot);
-            CardManagerSingleton.Instance?.MarkFieldDead(victim);
+            CardEntityLifecycleHook.CardsOrNull()?.MarkFieldDead(victim);
 
             if (hadSlot)
             {
@@ -852,7 +855,7 @@ namespace NineGrid.Cards
             }
 
             // 与真交战一致：Vacate 后立刻离锚，避免后续 Drain/Sync 叠位。
-            CardManagerSingleton.Instance?.StageFieldDeadCorpseOffAnchor(victim);
+            CardEntityLifecycleHook.CardsOrNull()?.StageFieldDeadCorpseOffAnchor(victim);
 
             // UseItem 无交战时间轴：若尚未在播死亡，主动开播，再由 Finalize 等闲后 Release。
             if (victim.TryGetEffectManager(out var effectManager) && !effectManager.IsPlaying)
@@ -883,7 +886,7 @@ namespace NineGrid.Cards
             var hadSlot = fieldManager != null
                 && fieldManager.TryGetSlotOf(victim.Uid, out victimSlot);
 
-            CardManagerSingleton.Instance?.MarkFieldDead(victim);
+            CardEntityLifecycleHook.CardsOrNull()?.MarkFieldDead(victim);
 
             if (hadSlot)
             {
@@ -924,7 +927,7 @@ namespace NineGrid.Cards
 
             if (victim.Transform != null)
             {
-                CardManagerSingleton.Instance?.Release(victim.Uid, "Combat.CompleteRemoveVictim");
+                CardEntityLifecycleHook.CardsOrNull()?.Release(victim.Uid, "Combat.CompleteRemoveVictim");
             }
         }
 
@@ -958,7 +961,7 @@ namespace NineGrid.Cards
 
             if (card.Transform != null)
             {
-                CardManagerSingleton.Instance.Release(card.Uid, "Combat.FinalizeLethal");
+                CardEntityLifecycleHook.CardsOrNull()?.Release(card.Uid, "Combat.FinalizeLethal");
             }
         }
 
@@ -1030,7 +1033,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            fieldManager = GroundFieldManagerSingleton.Instance;
+            fieldManager = GroundFieldGeometryHook.FieldOrNull();
         }
 
         private void ResolveAttackAdapter()

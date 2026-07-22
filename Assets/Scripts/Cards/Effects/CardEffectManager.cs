@@ -500,7 +500,7 @@ namespace NineGrid.Cards
             var selfWorld = root.position;
             Vector3? otherWorld = null;
 
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             if (field != null)
             {
                 if (invoke.SelfSlot > 0)

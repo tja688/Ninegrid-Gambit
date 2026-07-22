@@ -127,7 +127,7 @@ namespace NineGrid.Cards
                     this);
             }
 
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             if (field == null || !field.TryGetSlotOf(victim.Uid, out var victimSlot))
             {
                 Debug.LogWarning("[CardAttackBasicAdapter] 受击卡不在场地中，跳过交战。");
@@ -193,7 +193,7 @@ namespace NineGrid.Cards
                     this);
             }
 
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             if (field == null || !field.TryGetSlotOf(clickedVictim.Uid, out var clickedSlot))
             {
                 Debug.LogWarning("[CardAttackBasicAdapter] 点选受击卡不在场地中，跳过嘲讽重定向交战。");
@@ -289,7 +289,7 @@ namespace NineGrid.Cards
                     this);
             }
 
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             if (field == null || !field.TryGetSlotOf(attacker.Uid, out var attackerSlot))
             {
                 Debug.LogWarning("[CardAttackBasicAdapter] 反击攻击者不在场地中，跳过交战。");
@@ -342,7 +342,7 @@ namespace NineGrid.Cards
             BattleBindParams bind,
             CancellationToken cancellationToken)
         {
-            var field = GroundFieldManagerSingleton.Instance;
+            var field = GroundFieldGeometryHook.FieldOrNull();
             var victimTransform = victimSnapshot.Transform;
             var sortBoost = BeginAttackerSortBoost(attackerSnapshot, victimSnapshot);
             try
@@ -390,7 +390,7 @@ namespace NineGrid.Cards
                 effectManager.StopCurrent();
             }
 
-            CardManagerSingleton.Instance?.RefreshDisplayMode(victim);
+            CardEntityLifecycleHook.CardsOrNull()?.RefreshDisplayMode(victim);
         }
 
         /// <summary>

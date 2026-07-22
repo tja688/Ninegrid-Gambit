@@ -71,8 +71,8 @@ namespace NineGrid.Cards
             Func<CancellationToken, UniTask> onFusionStarted,
             CancellationToken cancellationToken = default)
         {
-            var fieldManager = GroundFieldManagerSingleton.Instance;
-            var cardManager = CardManagerSingleton.Instance;
+            var fieldManager = GroundFieldGeometryHook.FieldOrNull();
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
             var deckManager = CardDeckManagerSingleton.Instance;
             if (fieldManager == null || cardManager == null || deckManager == null)
             {
