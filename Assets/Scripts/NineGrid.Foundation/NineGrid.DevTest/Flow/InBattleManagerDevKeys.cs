@@ -1,8 +1,11 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 
 using Cysharp.Threading.Tasks;
+using NineGrid.Core;
+using NineGrid.DevTest.Commands;
 using NineGrid.Flow;
 using NineGrid.Flow.Diagnostics;
+using QFramework;
 using UnityEngine;
 
 namespace NineGrid.DevTest.Flow
@@ -51,16 +54,24 @@ namespace NineGrid.DevTest.Flow
 
         private void CheatForceNodeVictory()
         {
-            var manager = ResolveManager();
-            if (manager == null)
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            if (arch == null)
             {
                 return;
             }
 
-            if (!manager.TryCheatForceNodeVictory())
+            arch.SendCommand(new CheatForceNodeVictoryCommand());
+        }
+
+        private void CheatAvatarHpTo99()
+        {
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            if (arch == null)
             {
-                Debug.LogWarning("[InBattleManagerDevKeys] 强制胜利失败：请先进入正式对局（InteractionLoop）。");
+                return;
             }
+
+            arch.SendCommand(new CheatSetAvatarHpCommand(CheatAvatarHp));
         }
 
         private async UniTaskVoid RunRealBattleEntryAsync()
@@ -86,20 +97,6 @@ namespace NineGrid.DevTest.Flow
             if (!manager.TryEnterNodeSettlement())
             {
                 Debug.Log("[InBattleManagerDevKeys] 内核尚未确认通关，未进入结算。");
-            }
-        }
-
-        private void CheatAvatarHpTo99()
-        {
-            var manager = ResolveManager();
-            if (manager == null)
-            {
-                return;
-            }
-
-            if (!manager.TryCheatSetAvatarHp(CheatAvatarHp))
-            {
-                Debug.LogWarning("[InBattleManagerDevKeys] 改血失败：请先进入正式对局。");
             }
         }
 

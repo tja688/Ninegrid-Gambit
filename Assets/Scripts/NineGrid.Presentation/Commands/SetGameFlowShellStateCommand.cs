@@ -19,14 +19,14 @@ namespace NineGrid.Presentation.Commands
 
         protected override void OnExecute()
         {
-            var shell = EnsureShell();
+            var shell = GameFlowShellSystem.EnsureRegistered();
             var from = shell.State.Value;
             if (from == mNext)
             {
                 return;
             }
 
-            shell.SetState(mNext);
+            shell.ApplyState(mNext);
             this.SendEvent(new GameFlowShellStateChangedEvent
             {
                 From = from,
@@ -42,19 +42,6 @@ namespace NineGrid.Presentation.Commands
             {
                 Reason = ResolveClearReason(mNext)
             });
-        }
-
-        private IGameFlowShellSystem EnsureShell()
-        {
-            var shell = this.GetSystem<IGameFlowShellSystem>();
-            if (shell != null)
-            {
-                return shell;
-            }
-
-            shell = new GameFlowShellSystem();
-            NineGridArchitecture.Interface.RegisterSystem(shell);
-            return shell;
         }
 
         private static bool ShouldHardClearDirector(GameFlowShellState next)

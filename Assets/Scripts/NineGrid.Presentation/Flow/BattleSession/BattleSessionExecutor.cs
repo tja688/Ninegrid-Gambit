@@ -1,0 +1,653 @@
+using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using NineGrid.Cards;
+using NineGrid.Core;
+using NineGrid.Core.Systems;
+using NineGrid.Flow.Diagnostics;
+using NineGrid.Flow.Presentation;
+using NineGrid.Presentation;
+using NineGrid.Presentation.Systems;
+using QFramework;
+using UnityEngine;
+
+namespace NineGrid.Flow
+{
+    /// <summary>
+    /// 局内会话执行缝：busy / CTS / Opening / 结算门 / Channel 持有；
+    /// 盘面与批次投影经 <see cref="BoardPresentationPlayer"/> / <see cref="CoreBatchProjectionCoordinator"/>。
+    /// 由 <see cref="NineGrid.Presentation.Systems.BattleSessionSystem"/> 拥有。
+    /// </summary>
+    internal sealed partial class BattleSessionExecutor
+    {
+        private const string StatBoostCardDefId = "help.stat_boost_card";
+        private const int BoardSelectLockWaitMs = 3000;
+        private static readonly string[] StatBoostOptions = { "Attack", "Armor", "Hp" };
+
+        private IBattleSessionView _view;
+        private bool _isBusy;
+        private bool _settlementRaised;
+        private bool _drainInFlight;
+        private CancellationTokenSource _presentationCts;
+        private int _nodeEventLogStart;
+        private UseItemPresentationResult _pendingUseItemPresent;
+
+        private QueuedBoardPresentChannel _explorePresentChannel;
+        private CombatAttackPresentChannel _attackHitPresentChannel;
+        private CombatCounterPresentChannel _attackCounterPresentChannel;
+        private QueuedBoardPresentChannel _attackBoardPresentChannel;
+        private UseItemPresentChannel _useItemPresentChannel;
+        private QueuedBoardPresentChannel _useItemBoardPresentChannel;
+
+        private Action _ensurePresentationRuntime;
+        private Action<IntentClearReason> _shutdownPresentationRuntime;
+
+        private IUnRegister _exploreRejectedUnRegister;
+        private IUnRegister _attackRejectedUnRegister;
+        private bool _recoveringRewardUi;
+
+        public BattleSessionExecutor()
+        {
+            BoardPlayer = new BoardPresentationPlayer(this);
+            Coordinator = new CoreBatchProjectionCoordinator(this);
+        }
+
+        public BoardPresentationPlayer BoardPlayer { get; }
+
+        public CoreBatchProjectionCoordinator Coordinator { get; }
+
+        public bool IsBusy => _isBusy;
+
+        public bool IsBound => _view != null;
+
+        public event Action OnNodeSettlementReady;
+
+        public CardManagerSingleton Cards =>
+            _view?.CardManager ?? CardEntityLifecycleHook.CardsOrNull();
+
+        public CardDeckManagerSingleton Deck =>
+            _view?.DeckManager ?? CardEntityLifecycleHook.DeckOrNull();
+
+        public GroundFieldManagerSingleton Field =>
+            _view?.FieldManager ?? GroundFieldGeometryHook.FieldOrNull();
+
+        public CardHandManagerSingleton Hand =>
+            _view?.HandManager ?? CardEntityLifecycleHook.HandOrNull();
+
+        public RelicManagerSingleton Relic => _view?.RelicManager;
+
+        public SelectorManagerSingleton Selector =>
+            _view?.SelectorManager ?? UnityEngine.Object.FindFirstObjectByType<SelectorManagerSingleton>();
+
+        public FieldBattleManagerSingleton BattleHost => _view?.BattleManager;
+
+        public bool DrainInFlight
+        {
+            get => _drainInFlight;
+            set => _drainInFlight = value;
+        }
+
+        public int NodeEventLogStart
+        {
+            get => _nodeEventLogStart;
+            set => _nodeEventLogStart = value;
+        }
+
+        public UseItemPresentationResult PendingUseItemPresent
+        {
+            get => _pendingUseItemPresent;
+            set => _pendingUseItemPresent = value;
+        }
+
+        public QueuedBoardPresentChannel ExplorePresentChannel => _explorePresentChannel;
+
+        public CombatAttackPresentChannel AttackHitPresentChannel => _attackHitPresentChannel;
+
+        public CombatCounterPresentChannel AttackCounterPresentChannel => _attackCounterPresentChannel;
+
+        public QueuedBoardPresentChannel AttackBoardPresentChannel => _attackBoardPresentChannel;
+
+        public UseItemPresentChannel UseItemPresentChannel => _useItemPresentChannel;
+
+        public QueuedBoardPresentChannel UseItemBoardPresentChannel => _useItemBoardPresentChannel;
+
+        public void Bind(IBattleSessionView view)
+        {
+            if (ReferenceEquals(_view, view) && view != null)
+            {
+                return;
+            }
+
+            UnbindInternal(cancelWork: false);
+            _view = view;
+            if (view != null)
+            {
+                _ensurePresentationRuntime = view.EnsurePresentationRuntimeInstalled;
+                _shutdownPresentationRuntime = view.ShutdownPresentationRuntime;
+            }
+        }
+
+        public void Unbind()
+        {
+            UnbindInternal(cancelWork: true);
+        }
+
+        public void UnbindIfView(IBattleSessionView view)
+        {
+            if (ReferenceEquals(_view, view))
+            {
+                Unbind();
+            }
+        }
+
+        private void UnbindInternal(bool cancelWork)
+        {
+            if (cancelWork)
+            {
+                CancelPresentationWork();
+            }
+
+            UnregisterPresentationIntentHandlers();
+            _view = null;
+            _ensurePresentationRuntime = null;
+            _shutdownPresentationRuntime = null;
+        }
+
+        public void BindPresentChannels(
+            QueuedBoardPresentChannel explore,
+            CombatAttackPresentChannel attackHit,
+            CombatCounterPresentChannel attackCounter,
+            QueuedBoardPresentChannel attackBoard,
+            UseItemPresentChannel useItem,
+            QueuedBoardPresentChannel useItemBoard)
+        {
+            _explorePresentChannel = explore;
+            _attackHitPresentChannel = attackHit;
+            _attackCounterPresentChannel = attackCounter;
+            _attackBoardPresentChannel = attackBoard;
+            _useItemPresentChannel = useItem;
+            _useItemBoardPresentChannel = useItemBoard;
+        }
+
+        public void ClearPresentChannels()
+        {
+            _explorePresentChannel = null;
+            _attackHitPresentChannel = null;
+            _attackCounterPresentChannel = null;
+            _attackBoardPresentChannel = null;
+            _useItemPresentChannel = null;
+            _useItemBoardPresentChannel = null;
+            _pendingUseItemPresent = default;
+            BoardPlayer.ClearShuffleSink();
+        }
+
+        public CancellationToken EnsurePresentationToken()
+        {
+            if (_presentationCts == null)
+            {
+                _presentationCts = new CancellationTokenSource();
+            }
+
+            return _presentationCts.Token;
+        }
+
+        public CancellationToken RenewPresentationToken()
+        {
+            CancelPresentationWork();
+            _presentationCts = new CancellationTokenSource();
+            return _presentationCts.Token;
+        }
+
+        public void CancelPresentationWork()
+        {
+            if (_presentationCts != null)
+            {
+                _presentationCts.Cancel();
+                _presentationCts.Dispose();
+                _presentationCts = null;
+            }
+
+            BoardPlayer.ClearShuffleSink();
+            PresentationInputGates.ForceEndExternalHold("CancelPresentationWork");
+            ShutdownPresentationRuntime(IntentClearReason.LayerChange);
+            try
+            {
+                NineGridArchitecture.Current.GetSystem<IPresentationSyncSystem>().Clear();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[BattleSession] Clear PresentationSync: " + ex.Message);
+            }
+
+            _drainInFlight = false;
+        }
+
+        public void RegisterPresentationIntentHandlers()
+        {
+            UnregisterPresentationIntentHandlers();
+            var architecture = NineGridArchitecture.Current;
+            if (architecture == null)
+            {
+                return;
+            }
+
+            _exploreRejectedUnRegister = architecture.RegisterEvent<ExploreIntentRejectedEvent>(
+                OnExploreIntentRejected);
+            _attackRejectedUnRegister = architecture.RegisterEvent<AttackIntentRejectedEvent>(
+                OnAttackIntentRejected);
+        }
+
+        public void UnregisterPresentationIntentHandlers()
+        {
+            if (_exploreRejectedUnRegister != null)
+            {
+                _exploreRejectedUnRegister.UnRegister();
+                _exploreRejectedUnRegister = null;
+            }
+
+            if (_attackRejectedUnRegister != null)
+            {
+                _attackRejectedUnRegister.UnRegister();
+                _attackRejectedUnRegister = null;
+            }
+        }
+
+        public InitialGameSnapshot BootstrapRun(InitialGameOptions options = null)
+        {
+            CancelPresentationWork();
+            ResetPresentationSurface();
+            CoreCardPresentationMapper.EnsureContentCatalogLoaded();
+
+            var arch = NineGridArchitecture.Current;
+            var snapshot = options != null
+                ? InitialGameFactory.Create(arch, options)
+                : InitialGameFactory.Create(arch);
+
+            RefreshPersistentInBattleUi(animate: false);
+            _settlementRaised = false;
+            _nodeEventLogStart = 0;
+            try
+            {
+                BattleTraceRecorder.Clear();
+                DiagTraceShared.EnsureSessionIdentity(snapshot.Seed);
+                BattleTraceRecorder.BeginSessionIfNeeded(snapshot.Seed);
+                FlowTraceRecorder.BeginSessionIfNeeded(snapshot.Seed);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[BattleSession] BattleTrace BootstrapRun: " + ex.Message);
+            }
+
+            Debug.Log($"[BattleSession] BootstrapRun 完成 avatar=#{snapshot.AvatarUid} @{snapshot.AvatarSlot}");
+            return snapshot;
+        }
+
+        public void ClearPresentationSurface()
+        {
+            CancelPresentationWork();
+            ResolveBattlePresentation()?.CancelBattleWork();
+            PresentationInputGates.ForceEndExternalHold("ClearPresentationSurface");
+            _drainInFlight = false;
+            ResetPresentationSurface();
+            _settlementRaised = false;
+            _isBusy = false;
+        }
+
+        public void ClearCardPresentationSurface()
+        {
+            CancelPresentationWork();
+            ResolveBattlePresentation()?.CancelBattleWork();
+            PresentationInputGates.ForceEndExternalHold("ClearCardPresentationSurface");
+            _drainInFlight = false;
+            ResetCardPresentationSurface();
+            _settlementRaised = false;
+            _isBusy = false;
+        }
+
+        public void RefreshPersistentInBattleUi(bool animate = false)
+        {
+            EnsureRelicHudHookWired();
+            if (RelicHudHook.SyncFromCore != null)
+            {
+                RelicHudHook.RequestSync();
+            }
+            else
+            {
+                Relic?.SyncFromCore();
+            }
+
+            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate);
+        }
+
+        public UniTask StartBattleNodeAsync(
+            NodeDeckOptions options = null,
+            CancellationToken cancellationToken = default)
+        {
+            return StartBattleNodeInternalAsync(options, cancellationToken);
+        }
+
+        public void NotifyPresentationBoardMayBeClear()
+        {
+            TryEnterNodeSettlement();
+        }
+
+        public bool TryEnterNodeSettlement()
+        {
+            if (_settlementRaised)
+            {
+                return false;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
+            var pending = arch.GetModel<PendingChoiceModel>();
+            var inReward = phase == GamePhase.RewardItemChoice
+                || (pending.Kind.Value == PendingChoiceKind.Reward
+                    && pending.RewardOptions != null
+                    && pending.RewardOptions.Count > 0);
+
+            if (!inReward)
+            {
+                return false;
+            }
+
+            Debug.Log(
+                $"[BattleSession] 节点结算就绪 phase={phase} pending={pending.Kind.Value}");
+            RaiseSettlementReady();
+            return true;
+        }
+
+        public void RaiseBattleEnded(bool victory)
+        {
+            var runtime = TryGetPresentationRuntime();
+            if (runtime != null && runtime.IsStarted)
+            {
+                runtime.HardClearIntents(
+                    victory ? IntentClearReason.PhaseChange : IntentClearReason.Defeat);
+            }
+
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            arch?.SendEvent(new BattleSessionEndedEvent(victory));
+        }
+
+        public bool TryResolveHandDealOrigin(string sourceDefId, out Transform origin)
+        {
+            origin = null;
+            if (string.IsNullOrEmpty(sourceDefId))
+            {
+                return false;
+            }
+
+            if (sourceDefId.StartsWith("relic.", StringComparison.Ordinal))
+            {
+                return Relic != null && Relic.TryGetDealOrigin(sourceDefId, out origin);
+            }
+
+            return false;
+        }
+
+        public UniTask DrainPostKillBoardAsync(
+            PostKillBoardPresentationResult result,
+            CancellationToken cancellationToken)
+        {
+            return BoardPlayer.DrainPostKillBoardAsync(result, cancellationToken);
+        }
+
+        public void PresentShuffleIntoDeckFromEventLog(int startIndex)
+        {
+            BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
+        }
+
+        public UniTask FlushPendingShuffleIntoPresentationAsync(CancellationToken ct)
+        {
+            return BoardPlayer.FlushPendingShuffleIntoPresentationAsync(ct);
+        }
+
+        public CombatHitPresentationResult ApplyCombatHit(int attackerUid, int targetUid)
+        {
+            return Coordinator.ApplyCombatHitFromCore(attackerUid, targetUid);
+        }
+
+        public PostKillBoardPresentationResult ResolvePostKillBoard()
+        {
+            return Coordinator.ResolvePostKillBoardFromCore();
+        }
+
+        public void OnExploreBatchProjected(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result)
+        {
+            Coordinator.OnExploreBatchProjected(startIndex, boardSlot, result);
+        }
+
+        public void OnAttackHitBatchProjected(
+            int startIndex,
+            int boardSlot,
+            int resolvedCombatUid,
+            PostKillBoardPresentationResult result)
+        {
+            Coordinator.OnAttackHitBatchProjected(startIndex, boardSlot, resolvedCombatUid, result);
+        }
+
+        public void OnAttackBoardBatchProjected(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result)
+        {
+            Coordinator.OnAttackBoardBatchProjected(startIndex, boardSlot, result);
+        }
+
+        public void OnAttackCounterBatchProjected(
+            int startIndex,
+            int attackerBoardSlot,
+            int attackerUid,
+            PostKillBoardPresentationResult result)
+        {
+            Coordinator.OnAttackCounterBatchProjected(startIndex, attackerBoardSlot, attackerUid, result);
+        }
+
+        public void OnUseItemBatchProjected(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result)
+        {
+            Coordinator.OnUseItemBatchProjected(startIndex, boardSlot, result);
+        }
+
+        public void OnUseItemBoardBatchProjected(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result)
+        {
+            Coordinator.OnUseItemBoardBatchProjected(startIndex, boardSlot, result);
+        }
+
+        public void OnUseItemResolvedWithoutKill()
+        {
+            Coordinator.OnUseItemResolvedWithoutKill();
+        }
+
+        public UniTask PlayDirectorAttackHitPresentAsync(
+            int boardSlot,
+            int resolvedCombatUid,
+            PostKillBoardPresentationResult result,
+            CancellationToken token)
+        {
+            var battle = ResolveBattlePresentation();
+            if (battle == null)
+            {
+                Debug.LogWarning("[BattleSession] PlayDirectorAttackHitPresent：无 FieldBattlePresentationSystem。");
+                return UniTask.CompletedTask;
+            }
+
+            return battle.PlayDirectorAttackHitPresentAsync(boardSlot, resolvedCombatUid, result, token);
+        }
+
+        public UniTask PlayDirectorCounterPresentAsync(
+            int attackerSlot,
+            int attackerUid,
+            PostKillBoardPresentationResult result,
+            CancellationToken token)
+        {
+            var battle = ResolveBattlePresentation();
+            if (battle == null)
+            {
+                Debug.LogWarning("[BattleSession] PlayDirectorCounterPresent：无 FieldBattlePresentationSystem。");
+                return UniTask.CompletedTask;
+            }
+
+            return battle.PlayDirectorCounterPresentAsync(attackerSlot, attackerUid, result, token);
+        }
+
+        public static void AssertOccupancySyncForbidden(string reason, string detail = null)
+        {
+            OccupancyForceSyncGuard.RecordForbiddenSync(reason, detail);
+            var message =
+                "[BattleSession] #10 占格强制对账断言触发（正常路径永不应发生）。reason="
+                + (reason ?? string.Empty)
+                + " detail="
+                + (detail ?? string.Empty);
+            Debug.LogError(message);
+            Debug.Assert(false, message);
+        }
+
+        public static IFieldBattlePresentationSystem ResolveBattlePresentation()
+        {
+            return NineGridArchitecture.Interface?.GetSystem<IFieldBattlePresentationSystem>();
+        }
+
+        public static bool IsPresentationMainlineBusy()
+        {
+            var runtime = TryGetPresentationRuntime();
+            return runtime != null && runtime.IsStarted && runtime.MainlineBusy.Value;
+        }
+
+        public static IPresentationRuntimeSystem TryGetPresentationRuntime()
+        {
+            var architecture = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            return architecture != null
+                ? architecture.GetSystem<IPresentationRuntimeSystem>()
+                : null;
+        }
+
+        private void RaiseSettlementReady()
+        {
+            _settlementRaised = true;
+            RunUnusedHelpCardSettlementPresentationAsync(
+                _nodeEventLogStart,
+                EnsurePresentationToken()).Forget();
+            OnNodeSettlementReady?.Invoke();
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            arch?.SendEvent(new BattleSessionSettlementReadyEvent());
+        }
+
+        private async UniTaskVoid RunUnusedHelpCardSettlementPresentationAsync(
+            int startIndex,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await PresentUnusedHelpCardSettlementFromEventLogAsync(startIndex, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[BattleSession] 残留帮助卡结算演出异常: " + ex.Message);
+            }
+        }
+
+        private void EnsurePresentationRuntimeInstalled()
+        {
+            if (_ensurePresentationRuntime != null)
+            {
+                _ensurePresentationRuntime();
+                return;
+            }
+
+            Debug.LogWarning(
+                "[BattleSession] PresentationSceneRoot 未绑定 Runtime 生命周期，无法安装导演。");
+        }
+
+        private void ShutdownPresentationRuntime(IntentClearReason reason)
+        {
+            if (_shutdownPresentationRuntime != null)
+            {
+                _shutdownPresentationRuntime(reason);
+                return;
+            }
+
+            ClearPresentChannels();
+        }
+
+        private void ResetPresentationSurface()
+        {
+            ResetCardPresentationSurface();
+            ClearPersistentInBattleHud();
+        }
+
+        private void ResetCardPresentationSurface()
+        {
+            // Bounce 退出 DelayedCall 可能跨节点；清场前必须先终止选择会话，避免陈旧句柄误触新视图。
+            Selector?.HideChoice();
+            ResolveBattlePresentation()?.CancelBattleWork();
+            PresentationInputGates.Reset("ResetCardPresentationSurface");
+            Hand?.ClearHand();
+            Deck?.ResetToStandby();
+            Field?.ClearField(force: true);
+            Cards?.ReleaseAll("Presentation.ResetCardSurface");
+            UnityEngine.Object.FindFirstObjectByType<DescriptionManagerSingleton>()?.Clear();
+            _isBusy = false;
+        }
+
+        private void ClearPersistentInBattleHud()
+        {
+            EnsureRelicHudHookWired();
+            if (RelicHudHook.Clear != null)
+            {
+                RelicHudHook.RequestClear();
+            }
+            else
+            {
+                Relic?.Clear();
+            }
+
+            PlayerInfoHudPresenter.TryGetInstance()?.ClearSnapshot();
+        }
+
+        private static void EnsureRelicHudHookWired()
+        {
+            if (RelicHudHook.SyncFromCore == null || RelicHudHook.Clear == null)
+            {
+                RelicHudHook.RequestWire();
+            }
+        }
+
+        private static void EnsureRewardChoiceHookWired()
+        {
+            if (RewardChoiceCoreHook.SelectReward == null || RewardChoiceCoreHook.SkipHelpChoice == null)
+            {
+                RewardChoiceCoreHook.RequestWire();
+            }
+        }
+
+        private void OnExploreIntentRejected(ExploreIntentRejectedEvent e)
+        {
+            TryRecoverOrphanMidBattleRewardUi("ExploreRejected");
+        }
+
+        private void OnAttackIntentRejected(AttackIntentRejectedEvent e)
+        {
+            TryRecoverOrphanMidBattleRewardUi("AttackRejected");
+        }
+
+        private void RequestSyncBoardFromCore()
+        {
+            AssertOccupancySyncForbidden("requestSyncBoardFromCore", "soft");
+        }
+
+        // Choice / Opening / UseItem / UnusedHelp 见 partial 文件。
+    }
+}

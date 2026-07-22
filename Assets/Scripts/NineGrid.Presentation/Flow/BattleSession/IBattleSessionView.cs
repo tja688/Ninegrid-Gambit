@@ -1,4 +1,6 @@
 using NineGrid.Cards;
+using NineGrid.Flow.Presentation;
+using NineGrid.Presentation;
 
 namespace NineGrid.Flow
 {
@@ -19,5 +21,15 @@ namespace NineGrid.Flow
         CardHandManagerSingleton HandManager { get; }
 
         SelectorManagerSingleton SelectorManager { get; }
+
+        FieldBattleManagerSingleton BattleManager { get; }
+
+        UiPanelRouter PanelRouter { get; }
+
+        /// <summary>由 PresentationSceneRoot 注入的 Runtime Install 回调。</summary>
+        void EnsurePresentationRuntimeInstalled();
+
+        /// <summary>由 PresentationSceneRoot 注入的 Runtime Shutdown 回调。</summary>
+        void ShutdownPresentationRuntime(IntentClearReason reason);
     }
 }

@@ -8,6 +8,7 @@ using NineGrid.Cards.Convergence;
 using UnityEngine;
 using UnityEngine.Rendering;
 using NineGrid.Presentation;
+using NineGrid.Presentation.Systems;
 
 namespace NineGrid.Cards
 {
@@ -535,7 +536,7 @@ namespace NineGrid.Cards
         {
             try
             {
-                await BoardPresentDrainHook.RequestDrain(postKill);
+                await BattleSessionSystem.EnsureRegistered().DrainPostKillBoardAsync(postKill);
             }
             catch (OperationCanceledException)
             {
@@ -580,7 +581,7 @@ namespace NineGrid.Cards
                 }
 
                 FlowFieldTraceSink.PickupSuccess?.Invoke(card.Uid, ResolveHandSlotForTrace(card));
-                await BoardPresentDrainHook.RequestDrain(
+                await BattleSessionSystem.EnsureRegistered().DrainPostKillBoardAsync(
                     new PostKillBoardPresentationResult
                     {
                         Accepted = true,

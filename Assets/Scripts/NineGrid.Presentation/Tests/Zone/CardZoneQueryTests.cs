@@ -2,6 +2,7 @@ using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Presentation.Controllers;
 using NineGrid.Presentation.Queries;
+using NineGrid.Presentation.Systems;
 using NineGrid.Presentation.Tests.Fixtures;
 using NUnit.Framework;
 using QFramework;
@@ -59,7 +60,7 @@ namespace NineGrid.Presentation.Tests.Zone
         [Test]
         public void CardZoneOwnershipSink_TypeRemoved()
         {
-            var cardsAsm = typeof(CombatHitBridgeHook).Assembly;
+            var cardsAsm = typeof(IBattleSessionSystem).Assembly;
             Assert.IsNull(
                 cardsAsm.GetType("NineGrid.Cards.CardZoneOwnershipSink"),
                 "CardZoneOwnershipSink 应已删除，改由 Hook + Query");

@@ -33,16 +33,20 @@ namespace NineGrid.Presentation.Setup
             }
 
             var architecture = NineGridArchitecture.Interface;
-            var inBattle = bindings.InBattle;
+            var session = BattleSessionSystem.EnsureRegistered(architecture);
+            if (bindings.InBattle != null)
+            {
+                session.Bind(bindings.InBattle);
+            }
+
             var dispatcher = new CoreCommandDispatcher(architecture);
 
-            BoardPresentDrainHook.RequestWire(inBattle.DrainPostKillBoardForDirector);
             var explorePresentChannel = new QueuedBoardPresentChannel(
-                BoardPresentDrainHook.RequestDrain,
-                inBattle.EnsurePresentationTokenForDirector);
+                session.DrainPostKillBoardAsync,
+                session.EnsurePresentationToken);
             var attackBoardPresentChannel = new QueuedBoardPresentChannel(
-                BoardPresentDrainHook.RequestDrain,
-                inBattle.EnsurePresentationTokenForDirector);
+                session.DrainPostKillBoardAsync,
+                session.EnsurePresentationToken);
 
             var battlePresentation = architecture.GetSystem<IFieldBattlePresentationSystem>();
             var attackHitPresentChannel = new CombatAttackPresentChannel(
@@ -50,21 +54,21 @@ namespace NineGrid.Presentation.Setup
                     battlePresentation != null
                         ? battlePresentation.PlayDirectorAttackHitPresentAsync(slot, uid, result, token)
                         : UniTask.CompletedTask,
-                inBattle.EnsurePresentationTokenForDirector);
+                session.EnsurePresentationToken);
             var attackCounterPresentChannel = new CombatCounterPresentChannel(
                 (slot, uid, result, token) =>
                     battlePresentation != null
                         ? battlePresentation.PlayDirectorCounterPresentAsync(slot, uid, result, token)
                         : UniTask.CompletedTask,
-                inBattle.EnsurePresentationTokenForDirector);
+                session.EnsurePresentationToken);
             var useItemBoardPresentChannel = new QueuedBoardPresentChannel(
-                BoardPresentDrainHook.RequestDrain,
-                inBattle.EnsurePresentationTokenForDirector);
+                session.DrainPostKillBoardAsync,
+                session.EnsurePresentationToken);
             var useItemPresentChannel = new UseItemPresentChannel(
-                inBattle.PlayDirectorUseItemPresentForDirector,
-                inBattle.EnsurePresentationTokenForDirector);
+                session.PlayDirectorUseItemPresentAsync,
+                session.EnsurePresentationToken);
 
-            inBattle.BindPresentChannels(
+            session.BindPresentChannels(
                 explorePresentChannel,
                 attackHitPresentChannel,
                 attackCounterPresentChannel,
@@ -76,24 +80,24 @@ namespace NineGrid.Presentation.Setup
                 architecture,
                 dispatcher,
                 explorePresentChannel,
-                inBattle.OnExploreBatchProjectedForDirector);
+                session.OnExploreBatchProjected);
             var attackFactory = new AttackIntentScriptFactory(
                 architecture,
                 dispatcher,
                 attackHitPresentChannel,
                 attackBoardPresentChannel,
                 attackCounterPresentChannel,
-                inBattle.OnAttackHitBatchProjectedForDirector,
-                inBattle.OnAttackBoardBatchProjectedForDirector,
-                inBattle.OnAttackCounterBatchProjectedForDirector);
+                session.OnAttackHitBatchProjected,
+                session.OnAttackBoardBatchProjected,
+                session.OnAttackCounterBatchProjected);
             var useItemFactory = new UseItemIntentScriptFactory(
                 architecture,
                 dispatcher,
                 useItemPresentChannel,
                 useItemBoardPresentChannel,
-                inBattle.OnUseItemBatchProjectedForDirector,
-                inBattle.OnUseItemBoardBatchProjectedForDirector,
-                inBattle.OnUseItemResolvedWithoutKillForDirector);
+                session.OnUseItemBatchProjected,
+                session.OnUseItemBoardBatchProjected,
+                session.OnUseItemResolvedWithoutKill);
 
             TriggerPulseOutputHook.RequestConfigureProduction();
 
@@ -119,7 +123,8 @@ namespace NineGrid.Presentation.Setup
             if (mBindings != null)
             {
                 TriggerPulseOutputHook.RequestReset();
-                mBindings.InBattle.ClearPresentChannels();
+                var session = NineGridArchitecture.Interface?.GetSystem<IBattleSessionSystem>();
+                session?.ClearPresentChannels();
             }
 
             mRuntime.Stop(reason);
@@ -140,6 +145,9 @@ namespace NineGrid.Presentation.Setup
 
             var architecture = NineGridArchitecture.Interface;
             PresentationInputStateSystem.EnsureRegistered(architecture);
+            BattleSessionSystem.EnsureRegistered(architecture);
+            ChoicePresentationSystem.EnsureRegistered(architecture);
+            BoardSelectionSystem.EnsureRegistered(architecture);
 
             var existing = architecture.GetSystem<IPresentationRuntimeSystem>();
             if (existing != null && existing.IsStarted)

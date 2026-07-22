@@ -4,6 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards.Convergence;
 using NineGrid.Core;
+using NineGrid.Flow;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Queries;
 using NineGrid.Presentation.Systems;
@@ -279,7 +280,7 @@ namespace NineGrid.Cards
                 }
 
                 hitFrameApplied = true;
-                CombatHitBridgeHook.RequestSyncCard(avatar);
+                PresentationOutputProjector.SyncManagedCardPresentation(avatar);
                 SpawnDamagePopups(counterProjection.DamagePopups, avatar, 0);
             }
 
@@ -308,12 +309,12 @@ namespace NineGrid.Cards
                 }
 
                 await DrainCombatHitBoardDeltaFromProjectionAsync(counterProjection, ct);
-                await BoardPresentShuffleHook.RequestFlush(ct);
+                await FlushPendingShuffleAsync(ct);
 
                 if (counterProjection.AvatarDefeated || willKill)
                 {
                     TryBeginAvatarDefeatPresentation(ct);
-                    CombatHitBridgeHook.RequestBattleEnded(victory: false);
+                    ResolveBattleSession()?.RaiseBattleEnded(victory: false);
                 }
             }
             catch (OperationCanceledException)
@@ -371,7 +372,7 @@ namespace NineGrid.Cards
                 }
 
                 hitFrameApplied = true;
-                CombatHitBridgeHook.RequestSyncCard(combatVictim);
+                PresentationOutputProjector.SyncManagedCardPresentation(combatVictim);
                 SpawnDamagePopups(hitProjection.DamagePopups, combatVictim, 0);
             }
 
@@ -414,9 +415,9 @@ namespace NineGrid.Cards
                 if (hitProjection.AvatarDefeated)
                 {
                     await DrainCombatHitBoardDeltaFromProjectionAsync(hitProjection, ct);
-                    await BoardPresentShuffleHook.RequestFlush(ct);
+                    await FlushPendingShuffleAsync(ct);
                     TryBeginAvatarDefeatPresentation(ct);
-                    CombatHitBridgeHook.RequestBattleEnded(victory: false);
+                    ResolveBattleSession()?.RaiseBattleEnded(victory: false);
                     return;
                 }
 
@@ -434,7 +435,7 @@ namespace NineGrid.Cards
                     FinalizeLethalVictimAsync(combatVictim, ct).Forget();
                 }
 
-                await BoardPresentShuffleHook.RequestFlush(ct);
+                await FlushPendingShuffleAsync(ct);
             }
             catch (OperationCanceledException)
             {
@@ -518,7 +519,24 @@ namespace NineGrid.Cards
                 return;
             }
 
-            await BoardPresentDrainHook.RequestDrain(projection, cancellationToken);
+            var session = ResolveBattleSession();
+            if (session == null)
+            {
+                return;
+            }
+
+            await session.DrainPostKillBoardAsync(projection, cancellationToken);
+        }
+
+        private static async UniTask FlushPendingShuffleAsync(CancellationToken cancellationToken)
+        {
+            var session = ResolveBattleSession();
+            if (session == null)
+            {
+                return;
+            }
+
+            await session.FlushPendingShuffleIntoPresentationAsync(cancellationToken);
         }
 
         private static bool IsEmptyBoardProjection(PostKillBoardPresentationResult result)
@@ -535,7 +553,7 @@ namespace NineGrid.Cards
             var geometry = ResolveGeometry();
             if (geometry != null && geometry.ConsumeOccupancyConflictFlag())
             {
-                CombatHitBridgeHook.RequestSyncBoardFromCore();
+                ResolveBattleSession()?.RequestSyncBoardFromCore();
             }
         }
 
@@ -563,7 +581,7 @@ namespace NineGrid.Cards
                         pos = target.Transform.position;
                         if (fallbackVictim == null || target.Uid != fallbackVictim.Uid)
                         {
-                            CombatHitBridgeHook.RequestSyncCard(target);
+                            PresentationOutputProjector.SyncManagedCardPresentation(target);
                         }
                     }
                     else if (fallbackVictim != null
@@ -895,6 +913,12 @@ namespace NineGrid.Cards
         private static IGroundFieldGeometrySystem ResolveGeometry()
         {
             return NineGridArchitecture.Interface?.GetSystem<IGroundFieldGeometrySystem>();
+        }
+
+        private static IBattleSessionSystem ResolveBattleSession()
+        {
+            return NineGridArchitecture.Interface?.GetSystem<IBattleSessionSystem>()
+                   ?? NineGridArchitecture.Current?.GetSystem<IBattleSessionSystem>();
         }
     }
 }

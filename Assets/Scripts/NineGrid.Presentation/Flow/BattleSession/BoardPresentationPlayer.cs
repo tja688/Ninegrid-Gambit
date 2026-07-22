@@ -152,7 +152,7 @@ namespace NineGrid.Flow
                     {
                         var fusionState = BuildFusionDrainState(result, _session.NodeEventLogStart);
                         PurgeFusionResultsFromShuffleQueue(fusionState);
-                        await BoardPresentShuffleHook.RequestFlush(ct);
+                        await FlushPendingShuffleIntoPresentationAsync(ct);
                         FieldTraceHelper.RecordDrainBegin(
                             moveCount,
                             dealCount,
@@ -383,7 +383,7 @@ namespace NineGrid.Flow
             BoardPresentationStep[] steps = null,
             int rotateScanStart = 0)
         {
-            await BoardPresentShuffleHook.RequestFlush(ct);
+            await FlushPendingShuffleIntoPresentationAsync(ct);
 
             var deckManager = Deck;
             var fieldManager = Field;

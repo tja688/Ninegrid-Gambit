@@ -1,11 +1,11 @@
 using System;
-using NineGrid.Cards;
+using NineGrid.Presentation.Systems;
 using NUnit.Framework;
 
 namespace NineGrid.Presentation.Tests
 {
     /// <summary>
-    /// #43 批次2：交战业务桥在 CombatHitBridgeHook；CombatHitSink 与 BridgeHook external-hold 已删。
+    /// #43 批次5：CombatHitBridgeHook 已删；交战/结算走 IBattleSessionSystem。
     /// </summary>
     public sealed class CombatHitBridgeHookTests
     {
@@ -18,16 +18,21 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void CombatHitBridgeHook_ExposesCombatHitBusinessBridge_WithoutExternalHold()
+        public void CombatHitBridgeHook_TypeIsDeleted()
         {
-            var hookType = typeof(CombatHitBridgeHook);
-            Assert.IsNotNull(hookType.GetField("ApplyCombatHit"));
-            Assert.IsNotNull(hookType.GetMethod("RequestCombatHit"));
             Assert.IsNull(
-                hookType.GetField("BeginDirectorExternalHold"),
-                "external-hold 应已迁出 BridgeHook");
-            Assert.IsNull(hookType.GetField("EndDirectorExternalHold"));
-            Assert.IsNull(hookType.GetField("ForceEndDirectorExternalHold"));
+                Type.GetType("NineGrid.Cards.CombatHitBridgeHook, NineGrid.Presentation"),
+                "CombatHitBridgeHook 应已删除");
+        }
+
+        [Test]
+        public void BattleSessionSystem_ExposesCombatHitAndSettlementSurface()
+        {
+            var systemType = typeof(IBattleSessionSystem);
+            Assert.IsNotNull(systemType.GetMethod("ApplyCombatHit"));
+            Assert.IsNotNull(systemType.GetMethod("ResolvePostKillBoard"));
+            Assert.IsNotNull(systemType.GetMethod("RaiseBattleEnded"));
+            Assert.IsNotNull(systemType.GetMethod("TryEnterNodeSettlement"));
         }
     }
 }

@@ -1052,13 +1052,13 @@ namespace NineGrid.Flow
                 return;
             }
 
-            if (!inBattleManager.TryCheatSetAvatarHp(QuickTestAvatarHp))
+            if (!BattleSessionCheat.TrySetAvatarHp(QuickTestAvatarHp))
             {
                 Debug.LogWarning(
                     $"[MainGameLoop] 快速测试改血失败：目标 {QuickTestAvatarHp}，请确认 Avatar 已入场。");
             }
 
-            if (!inBattleManager.TryCheatSetAvatarAttack(QuickTestAvatarAttack))
+            if (!BattleSessionCheat.TrySetAvatarAttack(QuickTestAvatarAttack))
             {
                 Debug.LogWarning(
                     $"[MainGameLoop] 快速测试改攻失败：目标 {QuickTestAvatarAttack}，请确认 Avatar 已入场。");
@@ -1123,27 +1123,51 @@ namespace NineGrid.Flow
             return _quickTestContentNodeQueue[_quickTestContentNodeCursor++];
         }
 
+        private IUnRegister _settlementEventUnRegister;
+        private IUnRegister _battleEndedEventUnRegister;
+
         private void SubscribeSettlement()
         {
-            EnsureBindings();
-            if (inBattleManager == null || _subscribedSettlement)
+            if (_subscribedSettlement)
             {
                 return;
             }
 
-            inBattleManager.OnNodeSettlementReady += OnNodeSettlementReady;
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            if (arch != null)
+            {
+                _settlementEventUnRegister = arch.RegisterEvent<BattleSessionSettlementReadyEvent>(_ =>
+                    OnNodeSettlementReady());
+                _battleEndedEventUnRegister = arch.RegisterEvent<BattleSessionEndedEvent>(OnBattleSessionEnded);
+            }
+
             _subscribedSettlement = true;
         }
 
         private void UnsubscribeSettlement()
         {
-            if (!_subscribedSettlement || inBattleManager == null)
+            if (!_subscribedSettlement)
             {
                 return;
             }
 
-            inBattleManager.OnNodeSettlementReady -= OnNodeSettlementReady;
+            _settlementEventUnRegister?.UnRegister();
+            _settlementEventUnRegister = null;
+            _battleEndedEventUnRegister?.UnRegister();
+            _battleEndedEventUnRegister = null;
             _subscribedSettlement = false;
+        }
+
+        private void OnBattleSessionEnded(BattleSessionEndedEvent e)
+        {
+            if (e.Victory)
+            {
+                NotifyBattleVictory();
+            }
+            else
+            {
+                NotifyBattleDefeat();
+            }
         }
 
         private void OnNodeSettlementReady()

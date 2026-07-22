@@ -9,6 +9,7 @@ using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation;
 using UnityEngine;
+using QFramework;
 
 namespace NineGrid.Flow
 {
@@ -692,7 +693,7 @@ namespace NineGrid.Flow
                     await UniTask.Yield(PlayerLoopTiming.Update, token);
                 }
 
-                CombatHitBridgeHook.RequestNodeSettlement();
+                _session.TryEnterNodeSettlement();
             }
             catch (OperationCanceledException)
             {
