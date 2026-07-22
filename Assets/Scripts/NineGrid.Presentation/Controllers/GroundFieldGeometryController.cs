@@ -7,7 +7,7 @@ using UnityEngine;
 namespace NineGrid.Presentation.Controllers
 {
     /// <summary>
-    /// 场地几何 / 收敛宿主 Controller：将场景 Field 登记到 QF System，并接线 Hook。
+    /// 场地几何 / 收敛宿主 Controller：将场景 View 登记到 QF System，并接线 Hook。
     /// </summary>
     public sealed class GroundFieldGeometryController : PresentationController
     {
@@ -32,7 +32,7 @@ namespace NineGrid.Presentation.Controllers
             ClearBind();
         }
 
-        /// <summary>绑定 Field（Hook 与 EditMode 直驱共用）。</summary>
+        /// <summary>绑定 Field View（Hook 与 EditMode 直驱共用）。</summary>
         public void BindField(GroundFieldManagerSingleton field)
         {
             mField = field;
@@ -42,9 +42,9 @@ namespace NineGrid.Presentation.Controllers
         private void ClearBind()
         {
             var system = TryGetGeometrySystem();
-            if (system != null && ReferenceEquals(system.Field, mField))
+            if (system != null && mField != null)
             {
-                system.Unbind();
+                system.UnbindIfView(mField);
             }
 
             if (ReferenceEquals(GroundFieldGeometryHook.ResolveField?.Invoke(), mField))

@@ -2,15 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using NineGrid.Cards.Convergence;
 using UnityEngine;
 
-namespace NineGrid.Cards.Convergence
+namespace NineGrid.Cards
 {
     /// <summary>
-    /// 补牌飞牌服务：Drain / Explore 均走 L2 五次收敛；换格 = Redirect，无替身、无握手。
+    /// 补牌飞牌协调器：Drain / Explore 均走 L2 五次收敛；换格 = Redirect，无替身、无握手。
     /// Deal→Rotate 时起飞即瞄准预解最终格（逻辑占格仍 birth）。
+    /// 宿主经 <see cref="IDealFlightHost"/>，不直接依赖具体 MonoBehaviour 业务状态。
     /// </summary>
-    internal sealed class SlotDealFlightService
+    internal sealed class DealFlightCoordinator
     {
         private sealed class DealFlightProbe
         {
@@ -30,29 +32,29 @@ namespace NineGrid.Cards.Convergence
             public CancellationTokenSource LinkedCts;
         }
 
-        private readonly GroundFieldManagerSingleton _field;
+        private readonly IDealFlightHost _host;
         private readonly CancellationToken _destroyToken;
         private readonly Dictionary<int, DealFlightProbe> _exploreByBirthSlot = new();
         private readonly Dictionary<int, DealFlightProbe> _drainByUid = new();
         private float _lastExploreStartTime = float.NegativeInfinity;
 
-        public SlotDealFlightService(
-            GroundFieldManagerSingleton field,
+        public DealFlightCoordinator(
+            IDealFlightHost host,
             CancellationToken destroyToken)
         {
-            _field = field;
+            _host = host;
             _destroyToken = destroyToken;
         }
 
         public int ActiveCount => _exploreByBirthSlot.Count + _drainByUid.Count;
 
         public DealFlightLayoutSettings Settings =>
-            _field?.LayoutSettings?.dealFlight ?? new DealFlightLayoutSettings();
+            _host?.LayoutSettings?.dealFlight ?? new DealFlightLayoutSettings();
 
         public void StartExplore(int birthSlot)
         {
-            if (_field == null
-                || !_field.IsPlaceable(birthSlot)
+            if (_host == null
+                || !_host.IsPlaceable(birthSlot)
                 || _exploreByBirthSlot.ContainsKey(birthSlot))
             {
                 return;
@@ -79,7 +81,7 @@ namespace NineGrid.Cards.Convergence
             Vector3 launchPos,
             DealFlightContext context)
         {
-            if (_field == null || card == null || card.Uid <= 0)
+            if (_host == null || card == null || card.Uid <= 0)
             {
                 return null;
             }
@@ -90,9 +92,9 @@ namespace NineGrid.Cards.Convergence
             }
 
             var visualSlot = context.VisualTargetSlot > 0 ? context.VisualTargetSlot : birthSlot;
-            if (!_field.TryGetExploreAnchorPosition(visualSlot, out var targetPos))
+            if (!_host.TryGetExploreAnchorPosition(visualSlot, out var targetPos))
             {
-                if (!_field.TryGetExploreAnchorPosition(birthSlot, out targetPos))
+                if (!_host.TryGetExploreAnchorPosition(birthSlot, out targetPos))
                 {
                     targetPos = launchPos;
                 }
@@ -212,7 +214,7 @@ namespace NineGrid.Cards.Convergence
 
         private void ShiftProbes(IEnumerable<DealFlightProbe> probes, bool clockwise)
         {
-            var duration = _field.LayoutSettings != null ? _field.LayoutSettings.moveDuration : 0.35f;
+            var duration = _host.LayoutSettings != null ? _host.LayoutSettings.moveDuration : 0.35f;
             foreach (var probe in probes)
             {
                 if (!GroundSlotTopology.IsOuterRing(probe.TrackedSlot))
@@ -261,14 +263,14 @@ namespace NineGrid.Cards.Convergence
                 return true;
             }
 
-            if (!_field.TryGetExploreAnchorPosition(toSlot, out var targetWorld))
+            if (!_host.TryGetExploreAnchorPosition(toSlot, out var targetWorld))
             {
                 return true;
             }
 
             var duration = sourceTime > 0f
                 ? sourceTime
-                : (_field.LayoutSettings != null ? _field.LayoutSettings.moveDuration : 0.35f);
+                : (_host.LayoutSettings != null ? _host.LayoutSettings.moveDuration : 0.35f);
             probe.SourceTime = duration;
             probe.VisualAimSlot = toSlot;
             LogRedirectLatency(probe, uid);
@@ -320,7 +322,7 @@ namespace NineGrid.Cards.Convergence
                 var launchPos = card.Transform.position;
                 // 等待期间 OnRingShifted 可能已改 TrackedSlot：起飞瞄准当前追踪格。
                 var visualSlot = probe.TrackedSlot;
-                if (!_field.TryGetExploreAnchorPosition(visualSlot, out var targetPos))
+                if (!_host.TryGetExploreAnchorPosition(visualSlot, out var targetPos))
                 {
                     targetPos = launchPos;
                 }
@@ -329,7 +331,7 @@ namespace NineGrid.Cards.Convergence
                 probe.VisualAimSlot = visualSlot;
                 probe.PendingNetAtLaunch = pendingNet;
                 var context = new DealFlightContext(
-                    _field.IsFieldBusy,
+                    _host.IsFieldBusy,
                     ActiveCount,
                     pendingNet,
                     visualSlot);
@@ -358,7 +360,7 @@ namespace NineGrid.Cards.Convergence
                     return;
                 }
 
-                if (!_field.IsPlaceable(probe.TrackedSlot))
+                if (!_host.IsPlaceable(probe.TrackedSlot))
                 {
                     outcome = "placeFail";
                     TraceProbe(probe, "placeFail", probe.Card.Uid);
@@ -368,14 +370,14 @@ namespace NineGrid.Cards.Convergence
                 }
 
                 var settleSlot = ResolveSettleSlot(probe);
-                if (!_field.TryGetExploreAnchorPosition(settleSlot, out var settlePos))
+                if (!_host.TryGetExploreAnchorPosition(settleSlot, out var settlePos))
                 {
                     settlePos = targetPos;
                 }
 
                 SlotFrameConvergence.SnapHome(probe.Card, settlePos, "DealFlight.ExploreSettle", probe.Card.Uid);
 
-                if (!_field.PlaceForExplore(probe.TrackedSlot, probe.Card))
+                if (!_host.PlaceForExplore(probe.TrackedSlot, probe.Card))
                 {
                     outcome = "placeFail";
                     TraceProbe(probe, "placeFail", probe.Card.Uid);
@@ -417,7 +419,7 @@ namespace NineGrid.Cards.Convergence
                 }
 
                 var aimSlot = probe.VisualAimSlot > 0 ? probe.VisualAimSlot : probe.TrackedSlot;
-                if (!_field.TryGetExploreAnchorPosition(aimSlot, out var slotPos))
+                if (!_host.TryGetExploreAnchorPosition(aimSlot, out var slotPos))
                 {
                     slotPos = probe.LaunchPos;
                 }
@@ -441,7 +443,7 @@ namespace NineGrid.Cards.Convergence
                 }
 
                 var settleSlot = ResolveSettleSlot(probe);
-                if (!_field.TryGetExploreAnchorPosition(settleSlot, out var settlePos))
+                if (!_host.TryGetExploreAnchorPosition(settleSlot, out var settlePos))
                 {
                     settlePos = slotPos;
                 }
@@ -494,7 +496,7 @@ namespace NineGrid.Cards.Convergence
                         tracked,
                         probe.SourceTime > 0f
                             ? probe.SourceTime
-                            : (_field.LayoutSettings != null ? _field.LayoutSettings.moveDuration : 0.35f),
+                            : (_host.LayoutSettings != null ? _host.LayoutSettings.moveDuration : 0.35f),
                         probe.Card.Uid);
                 }
 

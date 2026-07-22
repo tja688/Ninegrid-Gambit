@@ -5,6 +5,9 @@ using NUnit.Framework;
 using NineGrid.Cards.Convergence;
 using UnityEngine;
 using NineGrid.Cards;
+using NineGrid.Core;
+using NineGrid.Presentation.Systems;
+using QFramework;
 
 namespace NineGrid.Presentation.Tests
 {
@@ -186,13 +189,27 @@ namespace NineGrid.Presentation.Tests
 
         private void SeedOccupancy(ManagedCard card, int slot)
         {
-            var register = typeof(GroundFieldManagerSingleton).GetMethod(
-                "TryRegisterCardAtSlot",
-                BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.IsNotNull(register, "TryRegisterCardAtSlot missing");
+            var system = EnsureGeometrySystemBound(_fieldManager);
+            Assert.IsTrue(system.TryRegisterCardAtSlot(slot, card.Uid, logConflict: false));
+        }
 
-            var registered = (bool)register.Invoke(_fieldManager, new object[] { slot, card.Uid, false });
-            Assert.IsTrue(registered);
+        private static IGroundFieldGeometrySystem EnsureGeometrySystemBound(GroundFieldManagerSingleton field)
+        {
+            var architecture = NineGridArchitecture.Interface;
+            Assert.IsNotNull(architecture, "NineGridArchitecture missing");
+            var system = architecture.GetSystem<IGroundFieldGeometrySystem>();
+            if (system == null)
+            {
+                system = new GroundFieldGeometrySystem();
+                architecture.RegisterSystem<IGroundFieldGeometrySystem>(system);
+            }
+
+            if (!system.IsBound)
+            {
+                system.Bind(field);
+            }
+
+            return system;
         }
 
         private static void DestroyAllSingletonsInScene()

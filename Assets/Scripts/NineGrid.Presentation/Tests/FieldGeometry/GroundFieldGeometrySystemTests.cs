@@ -1,5 +1,6 @@
 using NineGrid.Cards;
 using NineGrid.Core;
+using NineGrid.Presentation.Commands;
 using NineGrid.Presentation.Controllers;
 using NineGrid.Presentation.Queries;
 using NineGrid.Presentation.Systems;
@@ -41,7 +42,7 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
         }
 
         [Test]
-        public void Bind_ExposesFieldWithoutSingletonLookup()
+        public void Bind_OwnsGeometryWithoutExposingViewAsField()
         {
             using (PresentationArchitectureFixture.CreateBare())
             {
@@ -49,9 +50,12 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
                 system.Bind(_field);
 
                 Assert.IsTrue(system.IsBound);
-                Assert.AreSame(_field, system.Field);
                 Assert.IsFalse(system.IsFieldBusy);
                 Assert.AreEqual(0, system.ActiveDealFlightCount);
+                Assert.IsTrue(system.IsEmpty(1));
+                Assert.IsTrue(system.TryRegisterCardAtSlot(2, 9001));
+                Assert.IsTrue(system.TryGetSlotOf(9001, out var slot));
+                Assert.AreEqual(2, slot);
             }
         }
 
@@ -70,6 +74,26 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
         }
 
         [Test]
+        public void OccupancyCommands_PlaceAndVacateThroughSystem()
+        {
+            using (var fixture = PresentationArchitectureFixture.CreateBare())
+            {
+                var system = RegisterSystem();
+                system.Bind(_field);
+
+                // 无 ManagedCard 时 Place 失败；Vacate 在空格返回 false。
+                Assert.IsFalse(fixture.Architecture.SendCommand(new VacateGroundOccupancyCommand(3)));
+                Assert.IsTrue(system.TryRegisterCardAtSlot(3, 9002));
+                Assert.IsTrue(fixture.Architecture.SendCommand(new VacateGroundOccupancyCommand(3, skipBusyGuard: true)));
+                Assert.IsTrue(system.IsEmpty(3));
+
+                var snapshot = fixture.Architecture.SendQuery(new GroundFieldSnapshotQuery());
+                Assert.IsNotNull(snapshot);
+                Assert.AreEqual(0, snapshot.OccupiedCount);
+            }
+        }
+
+        [Test]
         public void Controller_BindField_WiresHookAndSystem()
         {
             using (PresentationArchitectureFixture.CreateBare())
@@ -80,7 +104,7 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
 
                 var system = NineGridArchitecture.Interface.GetSystem<IGroundFieldGeometrySystem>();
                 Assert.IsNotNull(system);
-                Assert.AreSame(_field, system.Field);
+                Assert.IsTrue(system.IsBound);
                 Assert.AreSame(_field, GroundFieldGeometryHook.FieldOrNull());
 
                 Object.DestroyImmediate(host);

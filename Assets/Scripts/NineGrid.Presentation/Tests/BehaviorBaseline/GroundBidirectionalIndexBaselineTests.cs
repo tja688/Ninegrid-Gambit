@@ -1,6 +1,9 @@
-using System.Reflection;
 using NineGrid.Cards;
+using NineGrid.Core;
+using NineGrid.Presentation.Systems;
+using NineGrid.Presentation.Tests.Fixtures;
 using NUnit.Framework;
+using QFramework;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Tests.BehaviorBaseline
@@ -29,7 +32,6 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             _prefab.AddComponent<StandardCardView>();
             _cards.RegisterPrefab(CardManagerSingleton.StandardDefId, _prefab);
             CardEntityLifecycleHook.RequestWire(_cards, null, null);
-            GroundFieldGeometryHook.RequestWire(_field);
         }
 
         [TearDown]
@@ -59,20 +61,24 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
         [Test]
         public void RegisterThenLookup_SlotAndUidStayBidirectional()
         {
-            var card = _cards.SpawnView(Uid, CardManagerSingleton.StandardDefId);
-            Assert.IsNotNull(card);
+            using (PresentationArchitectureFixture.CreateBare())
+            {
+                var system = new GroundFieldGeometrySystem();
+                NineGridArchitecture.Interface.RegisterSystem<IGroundFieldGeometrySystem>(system);
+                system.Bind(_field);
+                GroundFieldGeometryHook.RequestWire(_field);
 
-            var register = typeof(GroundFieldManagerSingleton).GetMethod(
-                "TryRegisterCardAtSlot",
-                BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.IsNotNull(register);
-            Assert.IsTrue((bool)register.Invoke(_field, new object[] { Slot, Uid, true }));
+                var card = _cards.SpawnView(Uid, CardManagerSingleton.StandardDefId);
+                Assert.IsNotNull(card);
 
-            Assert.IsTrue(_field.TryGetCardAt(Slot, out var atSlot));
-            Assert.AreSame(card, atSlot);
-            Assert.IsTrue(_field.TryGetSlotOf(Uid, out var slotOf));
-            Assert.AreEqual(Slot, slotOf);
-            Assert.IsFalse(_field.IsEmpty(Slot));
+                Assert.IsTrue(system.TryRegisterCardAtSlot(Slot, Uid));
+
+                Assert.IsTrue(system.TryGetCardAt(Slot, out var atSlot));
+                Assert.AreSame(card, atSlot);
+                Assert.IsTrue(system.TryGetSlotOf(Uid, out var slotOf));
+                Assert.AreEqual(Slot, slotOf);
+                Assert.IsFalse(system.IsEmpty(Slot));
+            }
         }
     }
 }
