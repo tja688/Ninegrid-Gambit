@@ -1,4 +1,7 @@
 using DamageNumbersPro;
+using NineGrid.Core;
+using NineGrid.Flow.Presentation;
+using QFramework;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -13,6 +16,7 @@ namespace NineGrid.Flow
         private const int DefaultSortingOrder = 5;
 
         private static DamageNumberManagerSingleton _instance;
+        private IUnRegister _damageEventUnRegister;
 
         [Tooltip("用于 Spawn 的伤害数字预制体（DamageNumberMesh，2D 世界空间）。留空时无法生成。")]
         [SerializeField] private DamageNumber defaultPrefab;
@@ -65,14 +69,44 @@ namespace NineGrid.Flow
             _instance = this;
             ResolveCamera();
             PrewarmDefaultPrefab();
+            RegisterDamageEvents();
         }
 
         private void OnDestroy()
         {
+            UnregisterDamageEvents();
             if (_instance == this)
             {
                 _instance = null;
             }
+        }
+
+        private void RegisterDamageEvents()
+        {
+            UnregisterDamageEvents();
+            var arch = NineGridArchitecture.Interface;
+            if (arch == null)
+            {
+                return;
+            }
+
+            _damageEventUnRegister = arch.RegisterEvent<DamageNumberRequested>(OnDamageNumberRequested);
+        }
+
+        private void UnregisterDamageEvents()
+        {
+            _damageEventUnRegister?.UnRegister();
+            _damageEventUnRegister = null;
+        }
+
+        private void OnDamageNumberRequested(DamageNumberRequested e)
+        {
+            if (e.Amount <= 0)
+            {
+                return;
+            }
+
+            SpawnAtWorldPosition(e.WorldPosition, e.Amount);
         }
 
         /// <summary>

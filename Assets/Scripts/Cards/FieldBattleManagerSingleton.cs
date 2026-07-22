@@ -647,7 +647,7 @@ namespace NineGrid.Cards
 
                     if (pos.HasValue)
                     {
-                        CombatHitSink.RequestDamageNumber(pos.Value, popup.Amount);
+                        DamageNumberHook.RequestSpawn(pos.Value, popup.Amount);
                     }
                 }
 
@@ -656,7 +656,7 @@ namespace NineGrid.Cards
 
             if (fallbackAmount > 0 && fallbackVictim?.Transform != null)
             {
-                CombatHitSink.RequestDamageNumber(fallbackVictim.Transform.position, fallbackAmount);
+                DamageNumberHook.RequestSpawn(fallbackVictim.Transform.position, fallbackAmount);
             }
         }
 

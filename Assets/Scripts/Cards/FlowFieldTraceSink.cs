@@ -73,6 +73,17 @@ namespace NineGrid.Cards
         /// <summary>uid, layer, phase, vx, vy, site</summary>
         public static Action<int, string, string, string, string, string> Handoff;
 
+        public static void SafeOccupancyConflict(int slot, int existingUid, int incomingUid, string caller)
+        {
+            try
+            {
+                OccupancyConflict?.Invoke(slot, existingUid, incomingUid, caller);
+            }
+            catch
+            {
+            }
+        }
+
         public static void ClearHandlers()
         {
             OccupancyConflict = null;

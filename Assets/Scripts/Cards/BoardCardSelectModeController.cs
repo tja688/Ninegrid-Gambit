@@ -93,7 +93,7 @@ namespace NineGrid.Cards
             _active = false;
             _committing = false;
             CombatHitSink.BoardSelectModeActive = false;
-            DescriptionHoverSink.RequestClear(DescriptionShowRoute.BoardSelect);
+            DescriptionDisplayHook.RequestClear(DescriptionShowRoute.BoardSelect);
             Debug.Log("[BoardCardSelectMode] End");
         }
 

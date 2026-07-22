@@ -300,9 +300,6 @@ namespace NineGrid.Cards
         /// <summary>命中后刷受击卡数值。</summary>
         public static Action<ManagedCard> SyncCardPresentation;
 
-        /// <summary>世界坐标飘字。</summary>
-        public static Action<Vector3, int> SpawnDamageNumber;
-
         /// <summary>
         /// #10：占格对账已退场。保留委托供旧调用点触发断言诊断，不得再静默 heal。
         /// </summary>
@@ -341,16 +338,6 @@ namespace NineGrid.Cards
         public static void RequestSyncCard(ManagedCard card)
         {
             SyncCardPresentation?.Invoke(card);
-        }
-
-        public static void RequestDamageNumber(Vector3 worldPosition, int amount)
-        {
-            if (amount <= 0)
-            {
-                return;
-            }
-
-            SpawnDamageNumber?.Invoke(worldPosition, amount);
         }
 
         public static void RequestSyncBoardFromCore()
