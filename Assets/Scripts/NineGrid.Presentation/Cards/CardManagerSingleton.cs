@@ -554,7 +554,7 @@ namespace NineGrid.Cards
             if (card.View != null)
             {
                 CardDeckTween.KillMotion(card.Transform);
-                Destroy(card.View.gameObject);
+                DestroyUnityObject(card.View.gameObject);
             }
 
             _cardsByUid.Remove(uid);

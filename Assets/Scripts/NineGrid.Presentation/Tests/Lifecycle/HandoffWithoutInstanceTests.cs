@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Text.RegularExpressions;
 using NineGrid.Cards;
 using NineGrid.Cards.Convergence;
 using NineGrid.Core;
@@ -9,7 +8,6 @@ using NineGrid.Presentation.Tests.Fixtures;
 using NUnit.Framework;
 using QFramework;
 using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace NineGrid.Presentation.Tests.Lifecycle
 {
@@ -114,8 +112,6 @@ namespace NineGrid.Presentation.Tests.Lifecycle
             var notified = 0;
             CardEntityLifecycleHook.NotifyCardReleased = uid => notified = uid;
 
-            // EditMode：Release 内 Destroy 会打 Error；行为断言关注 Hook 通知与注册表移除。
-            LogAssert.Expect(LogType.Error, new Regex("Destroy may not be called from edit mode"));
             _cards.Release(card, "V6.HandoffTest");
             Assert.AreEqual(TestUid, notified);
             Assert.IsFalse(_cards.TryGet(TestUid, out _));
