@@ -11,6 +11,7 @@ using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
+using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
 
@@ -67,12 +68,8 @@ namespace NineGrid.Flow
         private Transform _shuffleOriginScratch;
         private readonly Dictionary<int, HashSet<int>> _pendingFusionRemoves = new();
         private readonly HashSet<int> _completedFusionActionIds = new();
-        private PresentationDirector _presentationDirector;
-        private DirectorIntentRuntime _directorIntentRuntime;
         private IUnRegister _exploreRejectedUnRegister;
         private IUnRegister _attackRejectedUnRegister;
-        private IUnRegister _ensureDirectorUnRegister;
-        private IUnRegister _teardownDirectorUnRegister;
         private bool _recoveringRewardUi;
         private QueuedBoardPresentChannel _explorePresentChannel;
         private CombatAttackPresentChannel _attackHitPresentChannel;
@@ -80,8 +77,9 @@ namespace NineGrid.Flow
         private QueuedBoardPresentChannel _attackBoardPresentChannel;
         private UseItemPresentChannel _useItemPresentChannel;
         private QueuedBoardPresentChannel _useItemBoardPresentChannel;
-        private CoreCommandDispatcher _coreCommandDispatcher;
         private UseItemPresentationResult _pendingUseItemPresent;
+        private Action _ensurePresentationRuntime;
+        private Action<IntentClearReason> _shutdownPresentationRuntime;
 
         public bool IsBusy => _isBusy;
 
@@ -106,6 +104,135 @@ namespace NineGrid.Flow
             if (hand != null) handManager = hand;
             if (battle != null) battleManager = battle;
             if (loop != null) mainGameLoop = loop;
+        }
+
+        /// <summary>由 PresentationSceneRoot 注入唯一 Runtime 的 Install/Shutdown。</summary>
+        public void BindRuntimeLifecycle(
+            Action ensureInstalled,
+            Action<IntentClearReason> shutdown)
+        {
+            _ensurePresentationRuntime = ensureInstalled;
+            _shutdownPresentationRuntime = shutdown;
+        }
+
+        internal void BindPresentChannels(
+            QueuedBoardPresentChannel explore,
+            CombatAttackPresentChannel attackHit,
+            CombatCounterPresentChannel attackCounter,
+            QueuedBoardPresentChannel attackBoard,
+            UseItemPresentChannel useItem,
+            QueuedBoardPresentChannel useItemBoard)
+        {
+            _explorePresentChannel = explore;
+            _attackHitPresentChannel = attackHit;
+            _attackCounterPresentChannel = attackCounter;
+            _attackBoardPresentChannel = attackBoard;
+            _useItemPresentChannel = useItem;
+            _useItemBoardPresentChannel = useItemBoard;
+        }
+
+        internal void ClearPresentChannels()
+        {
+            _explorePresentChannel = null;
+            _attackHitPresentChannel = null;
+            _attackCounterPresentChannel = null;
+            _attackBoardPresentChannel = null;
+            _useItemPresentChannel = null;
+            _useItemBoardPresentChannel = null;
+            _pendingUseItemPresent = default;
+            _shuffleIntoSink.Clear();
+        }
+
+        internal CancellationToken EnsurePresentationTokenForDirector()
+        {
+            return EnsurePresentationToken();
+        }
+
+        internal UniTask DrainPostKillBoardForDirector(
+            PostKillBoardPresentationResult result,
+            CancellationToken token)
+        {
+            return DrainPostKillBoardAsync(result, token);
+        }
+
+        internal void OnExploreBatchProjectedForDirector(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result)
+        {
+            OnExploreBatchProjected(startIndex, boardSlot, result);
+        }
+
+        internal void OnAttackHitBatchProjectedForDirector(
+            int startIndex,
+            int boardSlot,
+            int resolvedCombatUid,
+            PostKillBoardPresentationResult result)
+        {
+            OnAttackHitBatchProjected(startIndex, boardSlot, resolvedCombatUid, result);
+        }
+
+        internal void OnAttackBoardBatchProjectedForDirector(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result)
+        {
+            OnAttackBoardBatchProjected(startIndex, boardSlot, result);
+        }
+
+        internal void OnAttackCounterBatchProjectedForDirector(
+            int startIndex,
+            int attackerBoardSlot,
+            int attackerUid,
+            PostKillBoardPresentationResult result)
+        {
+            OnAttackCounterBatchProjected(startIndex, attackerBoardSlot, attackerUid, result);
+        }
+
+        internal void OnUseItemBatchProjectedForDirector(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result)
+        {
+            OnUseItemBatchProjected(startIndex, boardSlot, result);
+        }
+
+        internal void OnUseItemBoardBatchProjectedForDirector(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result)
+        {
+            OnUseItemBoardBatchProjected(startIndex, boardSlot, result);
+        }
+
+        internal void OnUseItemResolvedWithoutKillForDirector()
+        {
+            OnUseItemResolvedWithoutKill();
+        }
+
+        internal UniTask PlayDirectorAttackHitPresentForDirector(
+            int boardSlot,
+            int resolvedCombatUid,
+            PostKillBoardPresentationResult result,
+            CancellationToken token)
+        {
+            return PlayDirectorAttackHitPresentAsync(boardSlot, resolvedCombatUid, result, token);
+        }
+
+        internal UniTask PlayDirectorCounterPresentForDirector(
+            int attackerSlot,
+            int attackerUid,
+            PostKillBoardPresentationResult result,
+            CancellationToken token)
+        {
+            return PlayDirectorCounterPresentAsync(attackerSlot, attackerUid, result, token);
+        }
+
+        internal UniTask PlayDirectorUseItemPresentForDirector(
+            PostKillBoardPresentationResult boardResult,
+            CancellationToken token)
+        {
+            return PlayDirectorUseItemPresentAsync(boardResult, token);
         }
 
         private void Awake()
@@ -565,7 +692,7 @@ namespace NineGrid.Flow
                 CancelPresentationWork();
                 // StartNode 前清零卡牌占格，保留遗物/技能/PlayerInfo 持久 HUD。
                 ResetCardPresentationSurface();
-                EnsurePresentationDirector();
+                EnsurePresentationRuntimeInstalled();
 
                 var arch = NineGridArchitecture.Current;
                 var phase = arch.GetSystem<IPhaseSystem>();
@@ -1379,7 +1506,7 @@ namespace NineGrid.Flow
                     && !handSelfBusy
                     && !deckBusy
                     && !battleBusy
-                    && (_presentationDirector == null || !_presentationDirector.IsMainlineBusy))
+                    && !IsPresentationMainlineBusy())
                 {
                     return;
                 }
@@ -1390,7 +1517,7 @@ namespace NineGrid.Flow
             Debug.LogWarning(
                 $"[InBattleManager] WaitPresentationIdle 超时({timeoutSeconds:0.##}s)：drain={_drainInFlight} " +
                 $"fieldBusy={fieldManager != null && fieldManager.IsFieldBusy} " +
-                $"directorBusy={_presentationDirector != null && _presentationDirector.IsMainlineBusy}，继续清场。");
+                $"directorBusy={IsPresentationMainlineBusy()}，继续清场。");
         }
 
         private void CancelPresentationWork()
@@ -1405,7 +1532,7 @@ namespace NineGrid.Flow
             _shuffleIntoSink.Clear();
 
             CombatHitSink.ForceEndPresentationLock("CancelPresentationWork");
-            TeardownPresentationDirector(IntentClearReason.LayerChange);
+            ShutdownPresentationRuntime(IntentClearReason.LayerChange);
             // 导演硬清不会 FinishBatch；必须清核心 PresentationSync，否则 IsInputLocked
             // 粘连会使 BuildEnemyPool 下 StartNode 非法。
             try
@@ -1536,7 +1663,7 @@ namespace NineGrid.Flow
             UnregisterPresentationIntentHandlers();
 
             CombatHitSink.DirectorMainlineBusy = false;
-            TeardownPresentationDirector(IntentClearReason.LayerChange);
+            ShutdownPresentationRuntime(IntentClearReason.LayerChange);
 
             if (CombatHitBridgeHook.NotifyBattleEnded == OnBattleEndedFromCombat)
             {
@@ -4857,11 +4984,11 @@ namespace NineGrid.Flow
 
         private void OnBattleEndedFromCombat(bool victory)
         {
-            if (_presentationDirector != null)
+            var runtime = TryGetPresentationRuntime();
+            if (runtime != null && runtime.IsStarted)
             {
-                _presentationDirector.HardClearIntents(
+                runtime.HardClearIntents(
                     victory ? IntentClearReason.PhaseChange : IntentClearReason.Defeat);
-                CombatHitSink.DirectorMainlineBusy = false;
             }
 
             var loop = mainGameLoop;
@@ -4881,117 +5008,41 @@ namespace NineGrid.Flow
             }
         }
 
-        private void Update()
+        private void EnsurePresentationRuntimeInstalled()
         {
-            if (_presentationDirector == null)
+            if (_ensurePresentationRuntime != null)
             {
-                CombatHitSink.DirectorMainlineBusy = false;
+                _ensurePresentationRuntime();
                 return;
             }
 
-            _presentationDirector.Tick(Time.deltaTime);
-            CombatHitSink.DirectorMainlineBusy = _presentationDirector.IsMainlineBusy;
+            Debug.LogWarning(
+                "[InBattleManager] PresentationSceneRoot 未绑定 Runtime 生命周期，无法安装导演。");
         }
 
-        private void EnsurePresentationDirector()
+        private void ShutdownPresentationRuntime(IntentClearReason reason)
         {
-            if (_presentationDirector != null)
+            if (_shutdownPresentationRuntime != null)
             {
+                _shutdownPresentationRuntime(reason);
                 return;
             }
 
-            var arch = NineGridArchitecture.Current;
-            _coreCommandDispatcher = new CoreCommandDispatcher(arch);
-            BoardPresentDrainHook.RequestWire(DrainPostKillBoardAsync);
-            _explorePresentChannel = new QueuedBoardPresentChannel(
-                BoardPresentDrainHook.RequestDrain,
-                EnsurePresentationToken);
-            _attackBoardPresentChannel = new QueuedBoardPresentChannel(
-                BoardPresentDrainHook.RequestDrain,
-                EnsurePresentationToken);
-            _attackHitPresentChannel = new CombatAttackPresentChannel(
-                PlayDirectorAttackHitPresentAsync,
-                EnsurePresentationToken);
-            _attackCounterPresentChannel = new CombatCounterPresentChannel(
-                PlayDirectorCounterPresentAsync,
-                EnsurePresentationToken);
-            _useItemBoardPresentChannel = new QueuedBoardPresentChannel(
-                BoardPresentDrainHook.RequestDrain,
-                EnsurePresentationToken);
-            _useItemPresentChannel = new UseItemPresentChannel(
-                PlayDirectorUseItemPresentAsync,
-                EnsurePresentationToken);
-
-            var exploreFactory = new ExploreIntentScriptFactory(
-                arch,
-                _coreCommandDispatcher,
-                _explorePresentChannel,
-                OnExploreBatchProjected);
-            var attackFactory = new AttackIntentScriptFactory(
-                arch,
-                _coreCommandDispatcher,
-                _attackHitPresentChannel,
-                _attackBoardPresentChannel,
-                _attackCounterPresentChannel,
-                OnAttackHitBatchProjected,
-                OnAttackBoardBatchProjected,
-                OnAttackCounterBatchProjected);
-            var useItemFactory = new UseItemIntentScriptFactory(
-                arch,
-                _coreCommandDispatcher,
-                _useItemPresentChannel,
-                _useItemBoardPresentChannel,
-                OnUseItemBatchProjected,
-                OnUseItemBoardBatchProjected,
-                OnUseItemResolvedWithoutKill);
-            // 开关在 TriggerPulseHub.PulseFx/PulseAudio；经 QF Controller 装配实现 + 音效 debounce。
-            TriggerPulseOutputHook.RequestConfigureProduction();
-
-            _presentationDirector = new PresentationDirector(
-                new RoutingIntentScriptFactory(exploreFactory, attackFactory, useItemFactory),
-                uiPickPreview: null,
-                timelineDiagnostics: DirectorTrace.TimelineSink);
-            BindDirectorIntentRuntime(_presentationDirector);
-            CombatHitBridgeHook.BeginDirectorExternalHold = reason =>
-            {
-                // 导演尚未装配时允许仅靠 PresentationLocked 防重入，避免 Drain 整段被跳过。
-                if (_presentationDirector == null)
-                {
-                    return true;
-                }
-
-                return _presentationDirector.TryBeginExternalHold(reason);
-            };
-            CombatHitBridgeHook.EndDirectorExternalHold = reason =>
-                _presentationDirector?.EndExternalHold(reason);
-            CombatHitBridgeHook.ForceEndDirectorExternalHold = reason =>
-                _presentationDirector?.ForceEndExternalHold(reason);
+            ClearPresentChannels();
         }
 
-        private void TeardownPresentationDirector(IntentClearReason reason)
+        private static IPresentationRuntimeSystem TryGetPresentationRuntime()
         {
-            if (_presentationDirector != null)
-            {
-                _presentationDirector.ForceEndExternalHold(reason.ToString());
-                _presentationDirector.HardClearIntents(reason);
-            }
+            var architecture = NineGridArchitecture.Current;
+            return architecture != null
+                ? architecture.GetSystem<IPresentationRuntimeSystem>()
+                : null;
+        }
 
-            CombatHitBridgeHook.BeginDirectorExternalHold = null;
-            CombatHitBridgeHook.EndDirectorExternalHold = null;
-            CombatHitBridgeHook.ForceEndDirectorExternalHold = null;
-            TriggerPulseOutputHook.RequestReset();
-            UnbindDirectorIntentRuntime();
-            _presentationDirector = null;
-            _explorePresentChannel = null;
-            _attackHitPresentChannel = null;
-            _attackCounterPresentChannel = null;
-            _attackBoardPresentChannel = null;
-            _useItemPresentChannel = null;
-            _useItemBoardPresentChannel = null;
-            _coreCommandDispatcher = null;
-            _pendingUseItemPresent = default;
-            _shuffleIntoSink.Clear();
-            CombatHitSink.DirectorMainlineBusy = false;
+        private static bool IsPresentationMainlineBusy()
+        {
+            var runtime = TryGetPresentationRuntime();
+            return runtime != null && runtime.IsStarted && runtime.MainlineBusy.Value;
         }
 
         private void RegisterPresentationIntentHandlers()
@@ -5007,10 +5058,6 @@ namespace NineGrid.Flow
                 OnExploreIntentRejected);
             _attackRejectedUnRegister = architecture.RegisterEvent<AttackIntentRejectedEvent>(
                 OnAttackIntentRejected);
-            _ensureDirectorUnRegister = architecture.RegisterEvent<EnsurePresentationDirectorRequested>(
-                _ => EnsurePresentationDirector());
-            _teardownDirectorUnRegister = architecture.RegisterEvent<TeardownPresentationDirectorRequested>(
-                e => TeardownPresentationDirector(e.Reason));
         }
 
         private void UnregisterPresentationIntentHandlers()
@@ -5025,18 +5072,6 @@ namespace NineGrid.Flow
             {
                 _attackRejectedUnRegister.UnRegister();
                 _attackRejectedUnRegister = null;
-            }
-
-            if (_ensureDirectorUnRegister != null)
-            {
-                _ensureDirectorUnRegister.UnRegister();
-                _ensureDirectorUnRegister = null;
-            }
-
-            if (_teardownDirectorUnRegister != null)
-            {
-                _teardownDirectorUnRegister.UnRegister();
-                _teardownDirectorUnRegister = null;
             }
         }
 
@@ -5054,34 +5089,6 @@ namespace NineGrid.Flow
                 || string.Equals(e.Reason, "orphanMidBattleReward", StringComparison.Ordinal))
             {
                 TryRecoverOrphanMidBattleRewardUi("attack:" + (e.Reason ?? string.Empty));
-            }
-        }
-
-        private void BindDirectorIntentRuntime(PresentationDirector director)
-        {
-            var architecture = NineGridArchitecture.Current;
-            if (architecture == null || director == null)
-            {
-                return;
-            }
-
-            var runtime = architecture.GetSystem<IPresentationIntentRuntime>() as DirectorIntentRuntime;
-            if (runtime == null)
-            {
-                runtime = new DirectorIntentRuntime();
-                architecture.RegisterSystem<IPresentationIntentRuntime>(runtime);
-            }
-
-            runtime.Bind(director);
-            _directorIntentRuntime = runtime;
-        }
-
-        private void UnbindDirectorIntentRuntime()
-        {
-            if (_directorIntentRuntime != null)
-            {
-                _directorIntentRuntime.Unbind();
-                _directorIntentRuntime = null;
             }
         }
 
@@ -5340,7 +5347,7 @@ namespace NineGrid.Flow
             var token = EnsurePresentationToken();
             try
             {
-                while (_presentationDirector != null && _presentationDirector.IsMainlineBusy)
+                while (IsPresentationMainlineBusy())
                 {
                     await UniTask.Yield(PlayerLoopTiming.Update, token);
                 }

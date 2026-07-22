@@ -70,6 +70,19 @@ namespace NineGrid.Presentation.Systems
             PublishBusy();
         }
 
+        public void HardClearIntents(IntentClearReason reason)
+        {
+            if (mDirector == null)
+            {
+                PublishBusy();
+                return;
+            }
+
+            mDirector.ForceEndExternalHold(reason.ToString());
+            mDirector.HardClearIntents(reason);
+            PublishBusy();
+        }
+
         protected override void OnInit() { PublishBusy(); }
         protected override void OnDeinit() { Stop(IntentClearReason.LayerChange); }
 

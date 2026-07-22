@@ -32,5 +32,41 @@ namespace NineGrid.Presentation.Tests
                     arch.Architecture.GetSystem<IPresentationRuntimeSystem>());
             }
         }
+
+        [Test]
+        public void Runtime_HardClearIntents_ClearsBusyWithoutUnregisteringSystem()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateBare())
+            using (var runtime = PresentationRuntimeFixture.Install(
+                       arch,
+                       new RecordingScriptFactory(continueTicks: 3)))
+            {
+                bool preview;
+                Assert.IsTrue(runtime.TrySubmitIntent(
+                    new InputIntent(InputIntentKinds.Explore, 1), out preview));
+                Assert.IsTrue(runtime.MainlineBusy.Value);
+
+                runtime.Runtime.HardClearIntents(IntentClearReason.Defeat);
+                Assert.IsTrue(runtime.Runtime.IsStarted);
+                Assert.IsFalse(runtime.MainlineBusy.Value);
+                Assert.AreSame(
+                    runtime.Runtime,
+                    arch.Architecture.GetSystem<IPresentationRuntimeSystem>());
+            }
+        }
+
+        [Test]
+        public void Runtime_IsSolePresentationRuntime_OnArchitecture()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateBare())
+            using (var runtime = PresentationRuntimeFixture.Install(
+                       arch,
+                       new RecordingScriptFactory()))
+            {
+                var asRuntime = arch.Architecture.GetSystem<IPresentationRuntimeSystem>();
+                Assert.AreSame(runtime.Runtime, asRuntime);
+                Assert.IsTrue(asRuntime.IsStarted);
+            }
+        }
     }
 }

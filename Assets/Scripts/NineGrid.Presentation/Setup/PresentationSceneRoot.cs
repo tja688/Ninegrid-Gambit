@@ -1,14 +1,17 @@
+using System;
 using NineGrid.Cards;
 using NineGrid.Flow;
+using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Controllers;
+using NineGrid.Presentation.Systems;
+using QFramework;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Setup
 {
     /// <summary>
-    /// 场景表现组合根：持有宿主 SerializeField，显式接线 Controllers/Hooks。
-    /// C2：取代 ManagerSingleton.Instance / ResolveManagers 散点查找。
-    /// 导演仍由 InBattle 宿主装配（A1 后迁入 PresentationCompositionRoot.Install）。
+    /// 场景表现组合根：持有宿主 SerializeField，显式接线 Controllers/Hooks，
+    /// 并拥有唯一生产 Runtime 的 Install / Tick / Shutdown。
     /// </summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-100)]
@@ -30,14 +33,70 @@ namespace NineGrid.Presentation.Setup
         [SerializeField] private GroundFieldManagerSingleton groundField;
         [SerializeField] private FieldBattleManagerSingleton fieldBattle;
 
+        private readonly PresentationCompositionRoot mComposition = new PresentationCompositionRoot();
+        private PresentationSceneBindings mBindings;
+        private bool mInstalled;
+
         protected override void OnBind()
         {
             WireHosts();
+            if (inBattle != null)
+            {
+                inBattle.BindRuntimeLifecycle(EnsureInstalled, ShutdownRuntime);
+            }
+
+            this.RegisterEvent<TeardownPresentationDirectorRequested>(OnTeardownRequested)
+                .AddToUnregisterList(this);
         }
 
         protected override void OnUnbind()
         {
-            // Hook 清理由各宿主 OnDestroy / Controller OnUnbind 负责。
+            ShutdownRuntime(IntentClearReason.LayerChange);
+            if (inBattle != null)
+            {
+                inBattle.BindRuntimeLifecycle(null, null);
+            }
+
+            mBindings = null;
+        }
+
+        private void Update()
+        {
+            if (!mInstalled)
+            {
+                return;
+            }
+
+            var runtime = this.GetSystem<IPresentationRuntimeSystem>();
+            if (runtime != null && runtime.IsStarted)
+            {
+                runtime.Tick(Time.deltaTime);
+            }
+        }
+
+        /// <summary>局内开始时幂等安装生产 Runtime。</summary>
+        public void EnsureInstalled()
+        {
+            if (mInstalled)
+            {
+                return;
+            }
+
+            mBindings = BuildBindings();
+            mComposition.Install(mBindings);
+            mInstalled = true;
+        }
+
+        /// <summary>幂等关停；未安装时 no-op。</summary>
+        public void ShutdownRuntime(IntentClearReason reason)
+        {
+            if (!mInstalled)
+            {
+                return;
+            }
+
+            mComposition.Shutdown(reason);
+            mInstalled = false;
         }
 
         /// <summary>EditMode / Pipeline 装配后可显式再接线。</summary>
@@ -94,7 +153,6 @@ namespace NineGrid.Presentation.Setup
             DiagnosticOutputController.EnsureInstalled();
             GoldGainPresentationBinder.EnsureInstalled();
 
-            // 输出宿主由场景 SerializeField 保活（自身 Awake 接线）；组合根校验非空以免漏挂。
             if (descriptionManager == null)
             {
                 Debug.LogWarning("[PresentationSceneRoot] descriptionManager 未绑定。");
@@ -109,6 +167,28 @@ namespace NineGrid.Presentation.Setup
             {
                 Debug.LogWarning("[PresentationSceneRoot] goldGainFxManager 未绑定。");
             }
+        }
+
+        private PresentationSceneBindings BuildBindings()
+        {
+            return new PresentationSceneBindings(
+                inBattle,
+                mainGameLoop,
+                relicManager,
+                selectorManager,
+                descriptionManager,
+                damageNumberManager,
+                goldGainFxManager,
+                cardManager,
+                cardHand,
+                cardDeck,
+                groundField,
+                fieldBattle);
+        }
+
+        private void OnTeardownRequested(TeardownPresentationDirectorRequested e)
+        {
+            ShutdownRuntime(e.Reason);
         }
     }
 }

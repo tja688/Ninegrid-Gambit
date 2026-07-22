@@ -7,7 +7,7 @@ using UnityEngine;
 namespace NineGrid.Presentation.Commands
 {
     /// <summary>
-    /// 玩家探索意图：Core 合法性裁决后经 <see cref="IPresentationIntentRuntime"/> 提交导演。
+    /// 玩家探索意图：Core 合法性裁决后经 <see cref="IPresentationRuntimeSystem"/> 提交导演。
     /// </summary>
     public sealed class SubmitExploreIntentCommand : AbstractCommand<bool>
     {
@@ -35,9 +35,7 @@ namespace NineGrid.Presentation.Commands
                 return false;
             }
 
-            this.SendEvent(new EnsurePresentationDirectorRequested());
-
-            var runtime = ResolveRuntime();
+            var runtime = this.GetSystem<IPresentationRuntimeSystem>();
             if (runtime == null || !runtime.IsStarted)
             {
                 Debug.LogWarning("[SubmitExploreIntentCommand] 表现意图运行时未启动。");
@@ -48,19 +46,6 @@ namespace NineGrid.Presentation.Commands
             return runtime.TrySubmitIntent(
                 new InputIntent(InputIntentKinds.Explore, mGroundSlot),
                 out preview);
-        }
-
-        private IPresentationIntentRuntime ResolveRuntime()
-        {
-            // 测试夹具经 CompositionRoot 注册 IPresentationRuntimeSystem；
-            // 生产路径由 InBattle 注册 DirectorIntentRuntime。
-            var presentation = this.GetSystem<IPresentationRuntimeSystem>();
-            if (presentation != null)
-            {
-                return presentation;
-            }
-
-            return this.GetSystem<IPresentationIntentRuntime>();
         }
     }
 }
