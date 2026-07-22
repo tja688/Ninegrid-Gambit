@@ -117,6 +117,20 @@ namespace NineGrid.Presentation.Systems
                 return PresentationInputGateResult.Reject("mainlineBusy");
             }
 
+            var battle = this.GetSystem<IFieldBattlePresentationSystem>()
+                ?? NineGridArchitecture.Interface?.GetSystem<IFieldBattlePresentationSystem>();
+            if (battle != null && battle.IsBusy)
+            {
+                return PresentationInputGateResult.Reject("battleBusy");
+            }
+
+            var ground = this.GetSystem<IGroundFieldGeometrySystem>()
+                ?? NineGridArchitecture.Interface?.GetSystem<IGroundFieldGeometrySystem>();
+            if (ground != null && ground.IsFieldBusy)
+            {
+                return PresentationInputGateResult.Reject("fieldBusy");
+            }
+
             return PresentationInputGateResult.Allow();
         }
 

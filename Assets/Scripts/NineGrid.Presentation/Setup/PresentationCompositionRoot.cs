@@ -1,4 +1,5 @@
 using System;
+using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Flow;
@@ -42,11 +43,19 @@ namespace NineGrid.Presentation.Setup
             var attackBoardPresentChannel = new QueuedBoardPresentChannel(
                 BoardPresentDrainHook.RequestDrain,
                 inBattle.EnsurePresentationTokenForDirector);
+
+            var battlePresentation = architecture.GetSystem<IFieldBattlePresentationSystem>();
             var attackHitPresentChannel = new CombatAttackPresentChannel(
-                inBattle.PlayDirectorAttackHitPresentForDirector,
+                (slot, uid, result, token) =>
+                    battlePresentation != null
+                        ? battlePresentation.PlayDirectorAttackHitPresentAsync(slot, uid, result, token)
+                        : UniTask.CompletedTask,
                 inBattle.EnsurePresentationTokenForDirector);
             var attackCounterPresentChannel = new CombatCounterPresentChannel(
-                inBattle.PlayDirectorCounterPresentForDirector,
+                (slot, uid, result, token) =>
+                    battlePresentation != null
+                        ? battlePresentation.PlayDirectorCounterPresentAsync(slot, uid, result, token)
+                        : UniTask.CompletedTask,
                 inBattle.EnsurePresentationTokenForDirector);
             var useItemBoardPresentChannel = new QueuedBoardPresentChannel(
                 BoardPresentDrainHook.RequestDrain,

@@ -12,7 +12,7 @@ using UnityEngine;
 namespace NineGrid.Presentation.Tests.FieldGeometry
 {
     /// <summary>
-    /// V7 Seam2：IFieldBattlePresentationSystem 持有战斗宿主与净土域 Handoff。
+    /// IFieldBattlePresentationSystem 拥有 busy/Present；View 仅 Adapter/Catalog；Handoff 在 Lifecycle。
     /// </summary>
     public sealed class FieldBattlePresentationSystemTests
     {
@@ -56,7 +56,7 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
         }
 
         [Test]
-        public void Bind_ExposesBattleWithoutSingletonLookup()
+        public void Bind_ExposesBoundWithoutConcreteViewLeak()
         {
             using (PresentationArchitectureFixture.CreateBare())
             {
@@ -64,13 +64,12 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
                 system.Bind(_battle);
 
                 Assert.IsTrue(system.IsBound);
-                Assert.AreSame(_battle, system.Battle);
                 Assert.IsFalse(system.IsBusy);
             }
         }
 
         [Test]
-        public void HandoffCommand_EvictHandAdmitBattle_ThroughSystems()
+        public void HandoffCommand_EvictHandAdmitBattle_ThroughLifecycle()
         {
             using (var fixture = PresentationArchitectureFixture.CreateBare())
             {
@@ -97,22 +96,22 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
         }
 
         [Test]
-        public void SystemEvictAdmit_MatchesCPhaseAtRestContract()
+        public void LifecycleEvictAdmitBattle_MatchesCPhaseAtRestContract()
         {
-            using (PresentationArchitectureFixture.CreateBare())
+            using (var fixture = PresentationArchitectureFixture.CreateBare())
             {
-                var system = RegisterBattleSystem();
-                system.Bind(_battle);
+                var lifecycle = new CardEntityLifecycleSystem();
+                fixture.Architecture.RegisterSystem<ICardEntityLifecycleSystem>(lifecycle);
 
                 var card = _cards.SpawnView(7702, CardManagerSingleton.StandardDefId);
                 card.Transform.localPosition = new Vector3(4f, 5f, 0f);
 
-                var state = system.EvictCard(card);
+                var state = lifecycle.EvictFromBattle(card);
                 Assert.AreEqual(Vector3.zero, state.LocalVelocity);
                 Assert.AreEqual(new Vector3(4f, 5f, 0f), state.LocalPosition);
 
                 var shifted = HandoffState.AtRest(new Vector3(8f, 0f, 0f));
-                system.AdmitCard(card, in shifted);
+                lifecycle.AdmitToBattle(card, in shifted);
                 Assert.AreEqual(new Vector3(8f, 0f, 0f), card.Transform.localPosition);
             }
         }
@@ -128,7 +127,7 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
 
                 var system = NineGridArchitecture.Interface.GetSystem<IFieldBattlePresentationSystem>();
                 Assert.IsNotNull(system);
-                Assert.AreSame(_battle, system.Battle);
+                Assert.IsTrue(system.IsBound);
                 Assert.AreSame(_battle, FieldBattlePresentationHook.BattleOrNull());
 
                 Object.DestroyImmediate(host);

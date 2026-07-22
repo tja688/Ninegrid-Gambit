@@ -36,5 +36,11 @@ namespace NineGrid.Presentation.Systems
         HandoffState EvictFromDeck(ManagedCard card);
 
         void AdmitToDeck(ManagedCard card, in HandoffState state);
+
+        /// <summary>净土域战斗端 C 阶段：速度恒 0。</summary>
+        HandoffState EvictFromBattle(ManagedCard card);
+
+        /// <summary>净土域战斗端 C 阶段：承接位置，忽略速度。</summary>
+        void AdmitToBattle(ManagedCard card, in HandoffState state);
     }
 }

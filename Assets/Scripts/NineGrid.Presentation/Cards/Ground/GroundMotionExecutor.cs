@@ -6,7 +6,10 @@ using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards.Convergence;
+using NineGrid.Core;
 using NineGrid.Presentation;
+using NineGrid.Presentation.Systems;
+using QFramework;
 using UnityEngine;
 
 namespace NineGrid.Cards
@@ -74,8 +77,14 @@ namespace NineGrid.Cards
                 }
 
                 var battle = FieldBattlePresentationHook.BattleOrNull();
-                return _isBusy || (battle != null && battle.IsBusy);
+                return _isBusy || IsBattlePresentationBusy();
             }
+        }
+
+        private static bool IsBattlePresentationBusy()
+        {
+            var system = NineGridArchitecture.Interface?.GetSystem<IFieldBattlePresentationSystem>();
+            return system != null && system.IsBusy;
         }
 
         GroundFieldLayoutSettings IDealFlightHost.LayoutSettings =>
@@ -483,13 +492,12 @@ namespace NineGrid.Cards
             // 开局揭示只门禁场地自身 busy：覆盖层 / PresentationLocked / 交战忙不应挡 Avatar 落格。
             if (IsFieldBusy)
             {
-                var battle = FieldBattlePresentationHook.BattleOrNull();
                 Debug.LogWarning(
                     "[GroundMotionExecutor] 场地自身忙碌，无法揭示 Avatar。"
                     + $" choiceOverlay={PresentationInputGates.ChoiceOverlayActive}"
                     + $" presentationLocked={PresentationInputGates.HasExternalHold}"
                     + $" fieldSelfBusy={IsFieldBusy}"
-                    + $" battleBusy={battle != null && battle.IsBusy}"
+                    + $" battleBusy={IsBattlePresentationBusy()}"
                     + $" fieldBusy={IsBusy}");
                 return;
             }
@@ -818,7 +826,7 @@ namespace NineGrid.Cards
 
             if (force)
             {
-                FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
+                NineGridArchitecture.Interface?.GetSystem<IFieldBattlePresentationSystem>()?.CancelBattleWork();
                 CancelFieldAnimations();
                 _isBusy = false;
             }
@@ -893,8 +901,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            var battle = FieldBattlePresentationHook.BattleOrNull();
-            if (battle != null && battle.IsBusy)
+            if (IsBattlePresentationBusy())
             {
                 return false;
             }

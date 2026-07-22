@@ -85,6 +85,26 @@ namespace NineGrid.Presentation.Systems
             mDeck?.AdmitCard(card, in state);
         }
 
+        public HandoffState EvictFromBattle(ManagedCard card)
+        {
+            if (card?.Transform == null)
+            {
+                return HandoffState.AtRest(Vector3.zero);
+            }
+
+            return HandoffState.AtRest(card.Transform.localPosition);
+        }
+
+        public void AdmitToBattle(ManagedCard card, in HandoffState state)
+        {
+            if (card?.Transform == null)
+            {
+                return;
+            }
+
+            card.Transform.localPosition = state.LocalPosition;
+        }
+
         protected override void OnInit()
         {
         }

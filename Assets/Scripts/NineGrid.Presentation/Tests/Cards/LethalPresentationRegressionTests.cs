@@ -204,10 +204,9 @@ namespace NineGrid.Presentation.Tests
                 architecture.RegisterSystem<IGroundFieldGeometrySystem>(system);
             }
 
-            if (!system.IsBound)
-            {
-                system.Bind(field);
-            }
+            // 强制重绑并清占格：架构跨用例存活时旧 View/Index 会污染 SeedOccupancy。
+            system.Unbind();
+            system.Bind(field);
 
             return system;
         }

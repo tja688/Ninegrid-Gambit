@@ -9,6 +9,7 @@ using NineGrid.Core.Systems;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation;
+using NineGrid.Presentation.Systems;
 using QFramework;
 using TMPro;
 using UnityEngine;
@@ -309,7 +310,7 @@ namespace NineGrid.Flow
             CancelLoopWork();
             _loopCts = new CancellationTokenSource();
             PresentationInputGates.Reset("BeginRun");
-            FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
+            NineGridArchitecture.Interface?.GetSystem<IFieldBattlePresentationSystem>()?.CancelBattleWork();
             inBattleManager?.ClearCardPresentationSurface();
 
             _testMode = testMode;
@@ -949,7 +950,7 @@ namespace NineGrid.Flow
             CancelLoopWork();
             inBattleManager?.ClearCardPresentationSurface();
             inBattleManager?.RefreshPersistentInBattleUi(animate: false);
-            FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
+            NineGridArchitecture.Interface?.GetSystem<IFieldBattlePresentationSystem>()?.CancelBattleWork();
 
             SetState(victory ? LoopState.VictoryNotice : LoopState.DefeatNotice);
             EnsureBindings();
@@ -992,7 +993,7 @@ namespace NineGrid.Flow
             EnsureBindings();
             HideNotice();
             PresentationInputGates.Reset("EnterMainMenu");
-            FieldBattlePresentationHook.BattleOrNull()?.CancelBattleWork();
+            NineGridArchitecture.Interface?.GetSystem<IFieldBattlePresentationSystem>()?.CancelBattleWork();
             inBattleManager?.ClearPresentationSurface();
             panelRouter.ShowMainMenu();
             SetState(LoopState.MainMenu);

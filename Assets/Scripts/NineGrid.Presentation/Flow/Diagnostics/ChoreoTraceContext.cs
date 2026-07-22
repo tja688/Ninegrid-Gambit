@@ -295,7 +295,6 @@ namespace NineGrid.Flow.Diagnostics
                 var deck = CardEntityLifecycleHook.DeckOrNull();
                 var hand = CardEntityLifecycleHook.HandOrNull();
                 var battle = UnityEngine.Object.FindFirstObjectByType<InBattleManagerSingleton>();
-                var fieldBattle = FieldBattlePresentationHook.BattleOrNull();
 
                 payload["fieldBusy"] = field != null && field.IsBusy ? "true" : "false";
                 payload["fieldSelfBusy"] = field != null && field.IsFieldBusy ? "true" : "false";
@@ -306,7 +305,11 @@ namespace NineGrid.Flow.Diagnostics
                 payload["queueDepth"] = BoardQueueDepth.ToString(CultureInfo.InvariantCulture);
                 payload["presentationLocked"] = PresentationInputGates.HasExternalHold ? "true" : "false";
                 payload["choiceOverlay"] = PresentationInputGates.ChoiceOverlayActive ? "true" : "false";
-                payload["battleBusy"] = fieldBattle != null && fieldBattle.IsBusy ? "true" : "false";
+                payload["battleBusy"] = NineGrid.Core.NineGridArchitecture.Interface
+                    ?.GetSystem<NineGrid.Presentation.Systems.IFieldBattlePresentationSystem>()
+                    ?.IsBusy == true
+                    ? "true"
+                    : "false";
                 payload["openMotionCount"] = PerfTraceRecorder.OpenMotionCount.ToString(CultureInfo.InvariantCulture);
                 if (battle != null)
                 {

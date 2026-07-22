@@ -221,6 +221,19 @@ namespace NineGrid.Presentation.Systems
             return mMotion.RequestRemoveFromField(uid, animate, skipBusyGuard, startExplore);
         }
 
+        public void VacateSlotForExplore(
+            int slot,
+            ManagedCard card,
+            bool playRemoveAnim = false,
+            bool skipBusyGuard = false,
+            bool startExplore = false)
+        {
+            mMotion.VacateSlotForExplore(slot, card, playRemoveAnim, skipBusyGuard, startExplore);
+        }
+
+        public GroundFieldLayoutSettings LayoutSettings =>
+            mView?.LayoutSettings ?? new GroundFieldLayoutSettings();
+
         public UniTask WaitAllActiveDealFlightsAsync(CancellationToken cancellationToken)
         {
             return mMotion.WaitAllActiveDealFlightsAsync(cancellationToken);

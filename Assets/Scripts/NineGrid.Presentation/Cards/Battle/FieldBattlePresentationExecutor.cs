@@ -1,0 +1,900 @@
+using System;
+using System.Collections;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using NineGrid.Cards.Convergence;
+using NineGrid.Core;
+using NineGrid.Presentation;
+using NineGrid.Presentation.Queries;
+using NineGrid.Presentation.Systems;
+using QFramework;
+using UnityEngine;
+
+namespace NineGrid.Cards
+{
+    /// <summary>
+    /// 场地交战表现执行缝：busy / CTS / 目标解析 / 攻击·反击·致死 Present。
+    /// 由 <see cref="NineGrid.Presentation.Systems.FieldBattlePresentationSystem"/> 拥有。
+    /// </summary>
+    public sealed class FieldBattlePresentationExecutor
+    {
+        private IFieldBattleView _view;
+        private bool _isBusy;
+        private CancellationTokenSource _battleCts;
+
+        public bool IsBusy => _isBusy;
+
+        public void Bind(IFieldBattleView view)
+        {
+            _view = view;
+        }
+
+        public void Unbind()
+        {
+            CancelBattleWork();
+            _view = null;
+        }
+
+        public void CancelBattleWork()
+        {
+            if (_battleCts != null)
+            {
+                _battleCts.Cancel();
+                _battleCts.Dispose();
+                _battleCts = null;
+            }
+
+            _isBusy = false;
+        }
+
+        public void ArmNextLethalAttack(bool armed = true)
+        {
+            EnsureAdapter()?.ArmNextLethalAttack(armed);
+        }
+
+        public bool TryHandleBattleClick(ManagedCard card)
+        {
+            var geometry = ResolveGeometry();
+            var adapter = EnsureAdapter();
+            if (card == null
+                || _isBusy
+                || adapter == null
+                || geometry == null
+                || geometry.IsFieldBusy)
+            {
+                return false;
+            }
+
+            var architecture = NineGridArchitecture.Interface;
+            if (architecture != null)
+            {
+                var gate = architecture.SendQuery(new EvaluateAttackInputGateQuery());
+                if (gate.Disposition == PresentationInputDisposition.Reject)
+                {
+                    return false;
+                }
+            }
+            else if (PresentationInputGates.ChoiceOverlayActive
+                     || PresentationInputGates.BoardSelectModeActive
+                     || PresentationInputGates.MainlineBusy)
+            {
+                return false;
+            }
+
+            if (card.IsFieldDead)
+            {
+                return false;
+            }
+
+            if (!geometry.TryGetSlotOf(card.Uid, out var slot)
+                || !geometry.IsAvatarOrthogonalBattleSlot(slot))
+            {
+                return false;
+            }
+
+            RegistryTraceSink.NotifyUserInteraction?.Invoke("BattleClick");
+            if (AttackInputHook.TrySubmitAttack == null)
+            {
+                Debug.LogWarning("[FieldBattle] AttackInputHook.TrySubmitAttack 未装配，交战点击不可用。");
+                return false;
+            }
+
+            return AttackInputHook.TrySubmitAttack(slot);
+        }
+
+        public UniTask RequestBasicAttackAtSlotAsync(
+            int victimSlot,
+            bool? lethalOverride = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (lethalOverride.HasValue)
+            {
+                ArmNextLethalAttack(lethalOverride.Value);
+            }
+
+            if (AttackInputHook.TrySubmitAttack == null)
+            {
+                Debug.LogWarning("[FieldBattle] AttackInputHook.TrySubmitAttack 未装配。");
+                return UniTask.CompletedTask;
+            }
+
+            AttackInputHook.TrySubmitAttack(victimSlot);
+            return UniTask.CompletedTask;
+        }
+
+        /// <summary>
+        /// 导演命中批 Present：Core 已 CombatHit；此处只播 lunge/受击/飘字，击杀则 Vacate（不含 Fill/Rotate）。
+        /// <paramref name="resolvedCombatUid"/> 必须来自 Resolve 批捕获值，禁止在 Hit 后再 Resolve。
+        /// </summary>
+        public async UniTask PlayDirectorAttackHitPresentAsync(
+            int clickedSlot,
+            int resolvedCombatUid,
+            PostKillBoardPresentationResult hitProjection,
+            CancellationToken cancellationToken = default)
+        {
+            var geometry = ResolveGeometry();
+            var adapter = EnsureAdapter();
+            if (adapter == null || geometry == null)
+            {
+                Debug.LogWarning("[FieldBattle] 导演命中 Present：缺 adapter/geometry。");
+                return;
+            }
+
+            if (!geometry.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+                || avatar == null)
+            {
+                Debug.LogWarning("[FieldBattle] 导演命中 Present：Avatar 不可用。");
+                return;
+            }
+
+            if (!geometry.TryGetCardAt(clickedSlot, out var clickedVictim) || clickedVictim == null)
+            {
+                if (resolvedCombatUid > 0
+                    && CardEntityLifecycleHook.CardsOrNull() != null
+                    && CardEntityLifecycleHook.CardsOrNull().TryGet(resolvedCombatUid, out var resolvedVictim)
+                    && resolvedVictim != null)
+                {
+                    var resolvedSlot = clickedSlot;
+                    geometry.TryGetSlotOf(resolvedVictim.Uid, out resolvedSlot);
+                    await PlayDirectorAttackHitCoreAsync(
+                        resolvedVictim,
+                        resolvedVictim,
+                        resolvedSlot,
+                        avatar,
+                        hitProjection,
+                        useTauntRedirect: false,
+                        cancellationToken);
+                    return;
+                }
+
+                if (!TryResolveDirectorCombatVictim(clickedSlot, hitProjection, out clickedVictim, out var combatSlotFallback))
+                {
+                    Debug.LogWarning($"[FieldBattle] 导演命中 Present：格位 {clickedSlot} 无目标。");
+                    return;
+                }
+
+                await PlayDirectorAttackHitCoreAsync(
+                    clickedVictim,
+                    clickedVictim,
+                    combatSlotFallback,
+                    avatar,
+                    hitProjection,
+                    useTauntRedirect: false,
+                    cancellationToken);
+                return;
+            }
+
+            DirectorAttackPresentTargeting.Decide(
+                clickedVictim.Uid,
+                resolvedCombatUid,
+                out var combatUid,
+                out var useTauntRedirect);
+            ManagedCard combatVictim = clickedVictim;
+            var combatSlot = clickedSlot;
+            if (useTauntRedirect)
+            {
+                if (CardEntityLifecycleHook.CardsOrNull() == null
+                    || !CardEntityLifecycleHook.CardsOrNull().TryGet(combatUid, out combatVictim)
+                    || combatVictim == null)
+                {
+                    Debug.LogWarning($"[FieldBattle] 导演命中 Present：嘲讽目标 uid={combatUid} 不可用。");
+                    return;
+                }
+
+                if (!geometry.TryGetSlotOf(combatVictim.Uid, out combatSlot))
+                {
+                    if (!TryResolveDirectorCombatVictim(clickedSlot, hitProjection, out var corpse, out combatSlot)
+                        || corpse == null
+                        || corpse.Uid != combatUid)
+                    {
+                        Debug.LogWarning($"[FieldBattle] 导演命中 Present：嘲讽目标不在场地 uid={combatUid}。");
+                        return;
+                    }
+
+                    combatVictim = corpse;
+                }
+            }
+
+            await PlayDirectorAttackHitCoreAsync(
+                clickedVictim,
+                combatVictim,
+                combatSlot,
+                avatar,
+                hitProjection,
+                useTauntRedirect,
+                cancellationToken);
+        }
+
+        public async UniTask PlayDirectorCounterPresentAsync(
+            int attackerSlot,
+            int attackerUid,
+            PostKillBoardPresentationResult counterProjection,
+            CancellationToken cancellationToken = default)
+        {
+            var geometry = ResolveGeometry();
+            var adapter = EnsureAdapter();
+            if (adapter == null || geometry == null)
+            {
+                Debug.LogWarning("[FieldBattle] 导演反击 Present：未装配 adapter/geometry。");
+                return;
+            }
+
+            if (!counterProjection.Accepted)
+            {
+                return;
+            }
+
+            if (!geometry.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+                || avatar == null)
+            {
+                Debug.LogWarning("[FieldBattle] 导演反击 Present：无 Avatar。");
+                return;
+            }
+
+            ManagedCard attacker = null;
+            var resolvedFromUid = CardEntityLifecycleHook.CardsOrNull() != null
+                && CardEntityLifecycleHook.CardsOrNull().TryGet(attackerUid, out attacker)
+                && attacker != null;
+            if (!resolvedFromUid && !TryValidateCounterParticipants(attackerSlot, out attacker))
+            {
+                Debug.LogWarning($"[FieldBattle] 导演反击 Present：攻击方不可用 slot={attackerSlot} uid={attackerUid}。");
+                return;
+            }
+
+            var linkedCts = CreateLinkedBattleCts(cancellationToken);
+            var ct = linkedCts.Token;
+            var willKill = counterProjection.AvatarDefeated
+                || HasRemovedUid(counterProjection, avatar.Uid)
+                || avatar.IsFieldDead;
+            var intent = BattleIntentUtility.FromFlags(counter: true, willKill);
+            var bind = ResolveBindParams(intent, attacker, out var profile);
+            LogBattleBindResolve(attacker.Uid, avatar.Uid, bind, profile, willKill, isCounter: true);
+
+            var hitFrameApplied = false;
+            void ApplyHitFrameVisuals()
+            {
+                if (hitFrameApplied)
+                {
+                    return;
+                }
+
+                hitFrameApplied = true;
+                CombatHitBridgeHook.RequestSyncCard(avatar);
+                SpawnDamagePopups(counterProjection.DamagePopups, avatar, 0);
+            }
+
+            _isBusy = true;
+            try
+            {
+                try
+                {
+                    PerfTraceSink.OpenBeat?.Invoke("CombatHit", 0);
+                    PerfTraceSink.SetCombatants?.Invoke(attacker.Uid, avatar.Uid);
+                }
+                catch
+                {
+                    // ignore
+                }
+
+                await adapter.PlayBasicCounterAttackAsync(
+                    attacker,
+                    bind,
+                    ApplyHitFrameVisuals,
+                    ct);
+
+                if (!hitFrameApplied)
+                {
+                    ApplyHitFrameVisuals();
+                }
+
+                await DrainCombatHitBoardDeltaFromProjectionAsync(counterProjection, ct);
+                await BoardPresentShuffleHook.RequestFlush(ct);
+
+                if (counterProjection.AvatarDefeated || willKill)
+                {
+                    TryBeginAvatarDefeatPresentation(ct);
+                    CombatHitBridgeHook.RequestBattleEnded(victory: false);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                try
+                {
+                    PerfTraceSink.CloseBeat?.Invoke();
+                }
+                catch
+                {
+                    // ignore
+                }
+
+                _isBusy = false;
+                SyncAfterCombatRound();
+                DisposeBattleCts(linkedCts);
+            }
+        }
+
+        private async UniTask PlayDirectorAttackHitCoreAsync(
+            ManagedCard clickedVictim,
+            ManagedCard combatVictim,
+            int combatSlot,
+            ManagedCard avatar,
+            PostKillBoardPresentationResult hitProjection,
+            bool useTauntRedirect,
+            CancellationToken cancellationToken)
+        {
+            var geometry = ResolveGeometry();
+            var adapter = EnsureAdapter();
+            if (adapter == null || geometry == null)
+            {
+                return;
+            }
+
+            var linkedCts = CreateLinkedBattleCts(cancellationToken);
+            var ct = linkedCts.Token;
+
+            var willKill = HasRemovedUid(hitProjection, combatVictim.Uid)
+                || combatVictim.IsFieldDead
+                || hitProjection.NodeClearedOrRewardPhase;
+            var attackIntent = BattleIntentUtility.FromFlags(counter: false, willKill);
+            var attackBind = ResolveBindParams(attackIntent, combatVictim, out var attackProfile);
+            LogBattleBindResolve(avatar.Uid, combatVictim.Uid, attackBind, attackProfile, willKill, isCounter: false);
+
+            var hitFrameApplied = false;
+            void ApplyHitFrameVisuals()
+            {
+                if (hitFrameApplied)
+                {
+                    return;
+                }
+
+                hitFrameApplied = true;
+                CombatHitBridgeHook.RequestSyncCard(combatVictim);
+                SpawnDamagePopups(hitProjection.DamagePopups, combatVictim, 0);
+            }
+
+            _isBusy = true;
+            try
+            {
+                try
+                {
+                    PerfTraceSink.OpenBeat?.Invoke("CombatHit", 0);
+                    PerfTraceSink.SetCombatants?.Invoke(avatar.Uid, combatVictim.Uid);
+                }
+                catch
+                {
+                    // ignore
+                }
+
+                if (useTauntRedirect)
+                {
+                    await adapter.PlayTauntRedirectAttackAsync(
+                        clickedVictim,
+                        combatVictim,
+                        attackBind,
+                        ApplyHitFrameVisuals,
+                        ct);
+                }
+                else
+                {
+                    await adapter.PlayBasicAttackAsync(
+                        clickedVictim,
+                        attackBind,
+                        ApplyHitFrameVisuals,
+                        ct);
+                }
+
+                if (!hitFrameApplied)
+                {
+                    ApplyHitFrameVisuals();
+                }
+
+                if (hitProjection.AvatarDefeated)
+                {
+                    await DrainCombatHitBoardDeltaFromProjectionAsync(hitProjection, ct);
+                    await BoardPresentShuffleHook.RequestFlush(ct);
+                    TryBeginAvatarDefeatPresentation(ct);
+                    CombatHitBridgeHook.RequestBattleEnded(victory: false);
+                    return;
+                }
+
+                var killed = HasRemovedUid(hitProjection, combatVictim.Uid) || combatVictim.IsFieldDead;
+                if (killed)
+                {
+                    CardEntityLifecycleHook.CardsOrNull()?.MarkFieldDead(combatVictim);
+                    geometry.VacateSlotForExplore(
+                        combatSlot,
+                        combatVictim,
+                        playRemoveAnim: false,
+                        skipBusyGuard: true,
+                        startExplore: false);
+                    CardEntityLifecycleHook.CardsOrNull()?.StageFieldDeadCorpseOffAnchor(combatVictim);
+                    FinalizeLethalVictimAsync(combatVictim, ct).Forget();
+                }
+
+                await BoardPresentShuffleHook.RequestFlush(ct);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                try
+                {
+                    PerfTraceSink.CloseBeat?.Invoke();
+                }
+                catch
+                {
+                    // ignore
+                }
+
+                _isBusy = false;
+                SyncAfterCombatRound();
+                DisposeBattleCts(linkedCts);
+            }
+        }
+
+        private bool TryResolveDirectorCombatVictim(
+            int clickedSlot,
+            PostKillBoardPresentationResult hitProjection,
+            out ManagedCard victim,
+            out int combatSlot)
+        {
+            victim = null;
+            combatSlot = clickedSlot;
+            var cards = CardEntityLifecycleHook.CardsOrNull();
+            var geometry = ResolveGeometry();
+            if (cards == null || hitProjection.RemovedUids == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < hitProjection.RemovedUids.Length; i++)
+            {
+                var uid = hitProjection.RemovedUids[i];
+                if (uid <= 0 || !cards.TryGet(uid, out victim) || victim == null)
+                {
+                    continue;
+                }
+
+                if (geometry != null && geometry.TryGetSlotOf(uid, out combatSlot))
+                {
+                    return true;
+                }
+
+                combatSlot = clickedSlot;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool HasRemovedUid(PostKillBoardPresentationResult result, int uid)
+        {
+            if (uid <= 0 || result.RemovedUids == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < result.RemovedUids.Length; i++)
+            {
+                if (result.RemovedUids[i] == uid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static async UniTask DrainCombatHitBoardDeltaFromProjectionAsync(
+            PostKillBoardPresentationResult projection,
+            CancellationToken cancellationToken)
+        {
+            if (!projection.Accepted || IsEmptyBoardProjection(projection))
+            {
+                return;
+            }
+
+            await BoardPresentDrainHook.RequestDrain(projection, cancellationToken);
+        }
+
+        private static bool IsEmptyBoardProjection(PostKillBoardPresentationResult result)
+        {
+            var stepCount = result.Steps != null ? result.Steps.Length : 0;
+            var moveCount = result.Moves != null ? result.Moves.Length : 0;
+            var dealCount = result.Deals != null ? result.Deals.Length : 0;
+            var removeCount = result.RemovedUids != null ? result.RemovedUids.Length : 0;
+            return stepCount == 0 && moveCount == 0 && dealCount == 0 && removeCount == 0;
+        }
+
+        private void SyncAfterCombatRound()
+        {
+            var geometry = ResolveGeometry();
+            if (geometry != null && geometry.ConsumeOccupancyConflictFlag())
+            {
+                CombatHitBridgeHook.RequestSyncBoardFromCore();
+            }
+        }
+
+        private static void SpawnDamagePopups(
+            CombatDamagePopup[] popups,
+            ManagedCard fallbackVictim,
+            int fallbackAmount)
+        {
+            var cards = CardEntityLifecycleHook.CardsOrNull();
+            if (popups != null && popups.Length > 0)
+            {
+                for (var i = 0; i < popups.Length; i++)
+                {
+                    var popup = popups[i];
+                    if (popup.Amount <= 0)
+                    {
+                        continue;
+                    }
+
+                    Vector3? pos = null;
+                    if (cards != null
+                        && cards.TryGet(popup.TargetUid, out var target)
+                        && target?.Transform != null)
+                    {
+                        pos = target.Transform.position;
+                        if (fallbackVictim == null || target.Uid != fallbackVictim.Uid)
+                        {
+                            CombatHitBridgeHook.RequestSyncCard(target);
+                        }
+                    }
+                    else if (fallbackVictim != null
+                             && fallbackVictim.Uid == popup.TargetUid
+                             && fallbackVictim.Transform != null)
+                    {
+                        pos = fallbackVictim.Transform.position;
+                    }
+
+                    if (pos.HasValue)
+                    {
+                        DamageNumberHook.RequestSpawn(pos.Value, popup.Amount);
+                    }
+                }
+
+                return;
+            }
+
+            if (fallbackAmount > 0 && fallbackVictim?.Transform != null)
+            {
+                DamageNumberHook.RequestSpawn(fallbackVictim.Transform.position, fallbackAmount);
+            }
+        }
+
+        private bool TryValidateCounterParticipants(int attackerSlot, out ManagedCard attacker)
+        {
+            attacker = null;
+            var geometry = ResolveGeometry();
+            var adapter = EnsureAdapter();
+
+            if (adapter == null)
+            {
+                Debug.LogWarning("[FieldBattle] 未配置 CardAttackBasicAdapter。");
+                return false;
+            }
+
+            if (geometry == null)
+            {
+                Debug.LogWarning("[FieldBattle] 未绑定 GroundFieldGeometrySystem。");
+                return false;
+            }
+
+            if (!geometry.IsAvatarOrthogonalBattleSlot(attackerSlot)
+                || !geometry.TryGetCardAt(attackerSlot, out attacker))
+            {
+                Debug.LogWarning($"[FieldBattle] 格位 {attackerSlot} 不可触发怪物反击。");
+                return false;
+            }
+
+            if (attacker.IsFieldDead)
+            {
+                Debug.LogWarning($"[FieldBattle] 格位 {attackerSlot} 卡牌已死亡。");
+                return false;
+            }
+
+            if (!geometry.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+                || avatar.IsFieldDead)
+            {
+                Debug.LogWarning("[FieldBattle] Avatar 不可用，无法触发反击。");
+                return false;
+            }
+
+            return true;
+        }
+
+        private static void LogBattleBindResolve(
+            int attackerUid,
+            int victimUid,
+            BattleBindParams bind,
+            BattleEncounterProfileSO profile,
+            bool estimatedWillKill,
+            bool isCounter)
+        {
+            var profileId = profile != null ? profile.ProfileId : bind.ProfileId;
+            CardPresentationProbe.BattleBindResolve(
+                attackerUid,
+                victimUid,
+                "Combat.BindResolve",
+                bind.Intent.ToString(),
+                profileId,
+                bind.BindDeathCallback,
+                estimatedWillKill,
+                isCounter);
+
+            Debug.Log(
+                $"[FieldBattle] 路由 intent={bind.Intent} profile={profileId}"
+                + $" bindDeath={bind.BindDeathCallback} estKill={estimatedWillKill}"
+                + $" counter={isCounter} attacker={attackerUid} victim={victimUid}");
+        }
+
+        private BattleBindParams ResolveBindParams(
+            BattleIntent intent,
+            ManagedCard monsterCard,
+            out BattleEncounterProfileSO profile)
+        {
+            var playerId = ResolveAvatarDefId();
+            var monsterId = monsterCard != null ? monsterCard.DefId : BattleParticipantIds.Wildcard;
+            return BattlePresentationRouter.ResolveBindParams(
+                _view?.EncounterCatalog,
+                intent,
+                playerId,
+                monsterId,
+                out profile,
+                out _);
+        }
+
+        private string ResolveAvatarDefId()
+        {
+            var geometry = ResolveGeometry();
+            if (geometry != null
+                && geometry.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+                && avatar != null
+                && !string.IsNullOrWhiteSpace(avatar.DefId))
+            {
+                return avatar.DefId;
+            }
+
+            return BattleParticipantIds.Wildcard;
+        }
+
+        public bool TryBeginAvatarDefeatPresentation(CancellationToken cancellationToken = default)
+        {
+            var geometry = ResolveGeometry();
+            if (geometry == null
+                || !geometry.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+                || avatar == null
+                || avatar.IsFieldDead)
+            {
+                return false;
+            }
+
+            return TryBeginLethalVictimPresentation(avatar, cancellationToken);
+        }
+
+        public bool TryBeginLethalVictimPresentation(
+            ManagedCard victim,
+            CancellationToken cancellationToken = default)
+        {
+            var geometry = ResolveGeometry();
+            if (victim == null || geometry == null)
+            {
+                return false;
+            }
+
+            var hadSlot = geometry.TryGetSlotOf(victim.Uid, out var victimSlot);
+            CardEntityLifecycleHook.CardsOrNull()?.MarkFieldDead(victim);
+
+            if (hadSlot)
+            {
+                geometry.VacateSlotForExplore(
+                    victimSlot,
+                    victim,
+                    playRemoveAnim: false,
+                    skipBusyGuard: true,
+                    startExplore: false);
+            }
+
+            CardEntityLifecycleHook.CardsOrNull()?.StageFieldDeadCorpseOffAnchor(victim);
+
+            if (victim.TryGetEffectManager(out var effectManager) && !effectManager.IsPlaying)
+            {
+                effectManager.PlayDeathAsync(
+                    hadSlot ? victimSlot : 0,
+                    cancellationToken: cancellationToken).Forget();
+            }
+
+            FinalizeLethalVictimAsync(victim, cancellationToken).Forget();
+            return true;
+        }
+
+        public async UniTask PresentRemovedFieldCardAsync(
+            ManagedCard victim,
+            CancellationToken cancellationToken = default)
+        {
+            var geometry = ResolveGeometry();
+            if (victim == null)
+            {
+                return;
+            }
+
+            var victimSlot = 0;
+            var hadSlot = geometry != null
+                && geometry.TryGetSlotOf(victim.Uid, out victimSlot);
+
+            CardEntityLifecycleHook.CardsOrNull()?.MarkFieldDead(victim);
+
+            if (hadSlot)
+            {
+                geometry.VacateSlotForExplore(
+                    victimSlot,
+                    victim,
+                    playRemoveAnim: false,
+                    skipBusyGuard: true,
+                    startExplore: false);
+            }
+
+            if (victim.TryGetEffectManager(out var effectManager))
+            {
+                if (!effectManager.IsPlaying)
+                {
+                    await effectManager.PlayDeathAsync(
+                        victimSlot,
+                        cancellationToken: cancellationToken);
+                }
+                else
+                {
+                    await WaitForEffectIdleAsync(effectManager, cancellationToken);
+                }
+            }
+            else if (victim.Transform != null)
+            {
+                var removeDuration = geometry != null
+                    ? geometry.LayoutSettings.removeDisappearDuration
+                    : 0.25f;
+                var initialScale = victim.Transform.localScale;
+                await RunViewTweenAsync(
+                    CardViewTween.ScaleDisappear(
+                        victim.Transform,
+                        initialScale,
+                        removeDuration),
+                    cancellationToken);
+            }
+
+            if (victim.Transform != null)
+            {
+                CardEntityLifecycleHook.CardsOrNull()?.Release(victim.Uid, "Combat.CompleteRemoveVictim");
+            }
+        }
+
+        private async UniTask FinalizeLethalVictimAsync(ManagedCard card, CancellationToken cancellationToken)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            var geometry = ResolveGeometry();
+            if (card.TryGetEffectManager(out var effectManager))
+            {
+                await WaitForEffectIdleAsync(effectManager, cancellationToken);
+            }
+            else if (card.Transform != null)
+            {
+                var removeDuration = geometry != null
+                    ? geometry.LayoutSettings.removeDisappearDuration
+                    : 0.25f;
+                var initialScale = card.Transform.localScale;
+                await RunViewTweenAsync(
+                    CardViewTween.ScaleDisappear(
+                        card.Transform,
+                        initialScale,
+                        removeDuration),
+                    cancellationToken);
+            }
+
+            if (card.Transform != null)
+            {
+                CardEntityLifecycleHook.CardsOrNull()?.Release(card.Uid, "Combat.FinalizeLethal");
+            }
+        }
+
+        private static async UniTask WaitForEffectIdleAsync(
+            CardEffectManager effectManager,
+            CancellationToken cancellationToken)
+        {
+            const float startupGraceSeconds = 0.15f;
+            var deadline = Time.time + startupGraceSeconds;
+            while (!effectManager.IsPlaying && Time.time < deadline)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+            }
+
+            while (effectManager.IsPlaying)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+            }
+        }
+
+        private static async UniTask RunViewTweenAsync(IEnumerator routine, CancellationToken cancellationToken)
+        {
+            if (routine == null)
+            {
+                return;
+            }
+
+            while (routine.MoveNext())
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+            }
+        }
+
+        private CancellationTokenSource CreateLinkedBattleCts(CancellationToken external)
+        {
+            if (_battleCts != null)
+            {
+                _battleCts.Cancel();
+                _battleCts.Dispose();
+                _battleCts = null;
+            }
+
+            _battleCts = new CancellationTokenSource();
+            if (external.CanBeCanceled)
+            {
+                return CancellationTokenSource.CreateLinkedTokenSource(_battleCts.Token, external);
+            }
+
+            return CancellationTokenSource.CreateLinkedTokenSource(_battleCts.Token);
+        }
+
+        private void DisposeBattleCts(CancellationTokenSource linked)
+        {
+            linked?.Dispose();
+            if (_battleCts != null)
+            {
+                _battleCts.Dispose();
+                _battleCts = null;
+            }
+        }
+
+        private CardAttackBasicAdapter EnsureAdapter()
+        {
+            _view?.EnsureAttackAdapter();
+            return _view?.AttackAdapter;
+        }
+
+        private static IGroundFieldGeometrySystem ResolveGeometry()
+        {
+            return NineGridArchitecture.Interface?.GetSystem<IGroundFieldGeometrySystem>();
+        }
+    }
+}

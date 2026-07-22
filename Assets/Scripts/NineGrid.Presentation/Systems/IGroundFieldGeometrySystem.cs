@@ -94,6 +94,15 @@ namespace NineGrid.Presentation.Systems
             bool skipBusyGuard = false,
             bool startExplore = true);
 
+        void VacateSlotForExplore(
+            int slot,
+            ManagedCard card,
+            bool playRemoveAnim = false,
+            bool skipBusyGuard = false,
+            bool startExplore = false);
+
+        GroundFieldLayoutSettings LayoutSettings { get; }
+
         UniTask WaitAllActiveDealFlightsAsync(CancellationToken cancellationToken);
 
         void RefreshSlotHitColliders();

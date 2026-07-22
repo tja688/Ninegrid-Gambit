@@ -7,7 +7,7 @@ using UnityEngine;
 namespace NineGrid.Presentation.Controllers
 {
     /// <summary>
-    /// 场地战斗表现 Controller：将场景 Battle 登记到 QF System，并接线 Hook。
+    /// 场地战斗表现 Controller：将场景 View 登记到 QF System，并接线 Hook。
     /// </summary>
     public sealed class FieldBattlePresentationController : PresentationController
     {
@@ -32,7 +32,7 @@ namespace NineGrid.Presentation.Controllers
             ClearBind();
         }
 
-        /// <summary>绑定 Battle（Hook 与 EditMode 直驱共用）。</summary>
+        /// <summary>绑定 Battle View（Hook 与 EditMode 直驱共用）。</summary>
         public void BindBattle(FieldBattleManagerSingleton battle)
         {
             mBattle = battle;
@@ -42,10 +42,7 @@ namespace NineGrid.Presentation.Controllers
         private void ClearBind()
         {
             var system = TryGetBattleSystem();
-            if (system != null && ReferenceEquals(system.Battle, mBattle))
-            {
-                system.Unbind();
-            }
+            system?.UnbindIfView(mBattle);
 
             if (ReferenceEquals(FieldBattlePresentationHook.ResolveBattle?.Invoke(), mBattle))
             {
