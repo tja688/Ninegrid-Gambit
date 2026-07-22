@@ -10,6 +10,7 @@ namespace NineGrid.Cards
     /// <summary>
     /// 牌组管理器单例：编排卡组 Standby / Entry / InGame 三模式，以及向 Ground 发牌。
     /// 净土域：内部布局黑盒；仅暴露 C 阶段 Evict/Admit（速度恒 0）。
+    /// V6 compat shell — Cards/Hand 解析优先 <see cref="CardEntityLifecycleHook"/>。
     /// </summary>
     public sealed class CardDeckManagerSingleton : MonoBehaviour, IHandoffEndpoint
     {
@@ -76,7 +77,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            var cardManager = CardManagerSingleton.Instance;
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
             if (cardManager != null && !cardManager.TryGet(uid, out _))
             {
                 _returnInFlightUids.Remove(uid);
@@ -204,7 +205,7 @@ namespace NineGrid.Cards
 
                 _pendingEntryCards.Add(card);
                 PlaceCardInStandby(card, _pendingEntryCards.Count - 1);
-                CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
+                CardEntityLifecycleHook.CardsOrNull()?.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
             }
         }
 
@@ -545,7 +546,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            var handManager = CardHandManagerSingleton.Instance;
+            var handManager = CardEntityLifecycleHook.HandOrNull();
             if (handManager == null)
             {
                 Debug.LogWarning($"[CardDeckManager] DealCardToHand uid={uid} 失败：无 CardHandManager。");
@@ -564,7 +565,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            var cardManager = CardManagerSingleton.Instance;
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
             ManagedCard card = ensureCard != null && ensureCard.Uid == uid ? ensureCard : null;
             if (card == null)
             {
@@ -697,7 +698,7 @@ namespace NineGrid.Cards
 
             BeginReturnInFlight(card.Uid, "deckReturn.claim");
             SlotFrameConvergence.SanitizeForSanctuary(card, "Deck.Return.Sanitize");
-            CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
+            CardEntityLifecycleHook.CardsOrNull()?.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
 
             var fieldLayout = field?.LayoutSettings;
             var exitY = fieldLayout != null ? fieldLayout.fieldExitYThreshold : 7f;
@@ -747,7 +748,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
+            CardEntityLifecycleHook.CardsOrNull()?.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
             InsertViaAddAnchorAsync(requestedIndex, card, CancellationToken.None).Forget();
         }
 
@@ -1016,7 +1017,7 @@ namespace NineGrid.Cards
                 Debug.LogWarning($"[CardDeckManager] Ground 锚点缺失: slot={groundSlot}");
                 if (!_slotContainer.TryInsertAt(deckSlotIndex, removed, out var rollbackRipple))
                 {
-                    CardManagerSingleton.Instance.Release(removed, "Deck.DealRollbackNoAnchor");
+                    CardEntityLifecycleHook.CardsOrNull()?.Release(removed, "Deck.DealRollbackNoAnchor");
                 }
                 else
                 {
@@ -1027,19 +1028,19 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            var cardManager = CardManagerSingleton.Instance;
-            cardManager.SetDisplayMode(removed, CardDisplayMode.GroundCardMode);
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
+            cardManager?.SetDisplayMode(removed, CardDisplayMode.GroundCardMode);
             if (!field.RequestPlaceCard(groundSlot, removed, skipBusyGuard))
             {
                 Debug.LogWarning(
                     $"[CardDeckManager] 场地拒收发牌 uid={removed.Uid} slot={groundSlot}，回滚入组。");
                 if (!_slotContainer.TryInsertAt(deckSlotIndex, removed, out var rollbackRipple))
                 {
-                    CardManagerSingleton.Instance.Release(removed, "Deck.DealRollbackPlaceDenied");
+                    CardEntityLifecycleHook.CardsOrNull()?.Release(removed, "Deck.DealRollbackPlaceDenied");
                 }
                 else
                 {
-                    CardManagerSingleton.Instance.SetDisplayMode(removed, CardDisplayMode.CardDeckMode);
+                    CardEntityLifecycleHook.CardsOrNull()?.SetDisplayMode(removed, CardDisplayMode.CardDeckMode);
                     CardDeckTween.MoveRippleAsync(rollbackRipple, layoutSettings.moveDuration).Forget();
                 }
 
@@ -1055,11 +1056,11 @@ namespace NineGrid.Cards
                 field.ClearSlotOccupancy(groundSlot, skipBusyGuard: true);
                 if (!_slotContainer.TryInsertAt(deckSlotIndex, removed, out var rollbackRipple))
                 {
-                    CardManagerSingleton.Instance.Release(removed, "Deck.DealRollbackNullViewAfterPlace");
+                    CardEntityLifecycleHook.CardsOrNull()?.Release(removed, "Deck.DealRollbackNullViewAfterPlace");
                 }
                 else
                 {
-                    CardManagerSingleton.Instance.SetDisplayMode(removed, CardDisplayMode.CardDeckMode);
+                    CardEntityLifecycleHook.CardsOrNull()?.SetDisplayMode(removed, CardDisplayMode.CardDeckMode);
                     CardDeckTween.MoveRippleAsync(rollbackRipple, layoutSettings.moveDuration).Forget();
                 }
 
@@ -1244,7 +1245,7 @@ namespace NineGrid.Cards
             _isBusy = true;
             try
             {
-                CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
+                CardEntityLifecycleHook.CardsOrNull()?.SetDisplayMode(card, CardDisplayMode.CardDeckMode);
 
                 if (originAnchor == null)
                 {
@@ -1531,7 +1532,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            var hand = CardHandManagerSingleton.Instance;
+            var hand = CardEntityLifecycleHook.HandOrNull();
             if (hand != null && hand.ContainsUid(card.Uid))
             {
                 return true;

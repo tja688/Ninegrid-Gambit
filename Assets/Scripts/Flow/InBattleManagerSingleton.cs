@@ -1567,6 +1567,9 @@ namespace NineGrid.Flow
             UseItemInputHook.RequestWire(hand);
             PickupInputHook.RequestWire(hand);
 
+            ResolveManagers();
+            CardEntityLifecycleHook.RequestWire(cardManager, hand, deckManager);
+
             BoardCardSelectModeController.SelectionCompletedAsync -= OnBoardSelectionCompletedAsync;
             BoardCardSelectModeController.SelectionCompletedAsync += OnBoardSelectionCompletedAsync;
             BoardCardSelectModeController.SelectionAbortedAsync -= OnBoardSelectionAbortedAsync;

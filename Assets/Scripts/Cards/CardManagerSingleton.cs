@@ -97,6 +97,7 @@ namespace NineGrid.Cards
 
     /// <summary>
     /// 卡牌管理器单例：以 Core 下发的 Uid 为键，管理表现视图与显示模式。
+    /// V6 compat shell — 跨手牌/牌库解析优先 <see cref="CardEntityLifecycleHook"/>；待调用点切换后可收缩。
     /// </summary>
     public sealed class CardManagerSingleton : MonoBehaviour
     {
@@ -515,8 +516,8 @@ namespace NineGrid.Cards
 
         private string BuildDualHandDeckHoldReport()
         {
-            var hand = CardHandManagerSingleton.Instance;
-            var deck = CardDeckManagerSingleton.Instance;
+            var hand = CardEntityLifecycleHook.HandOrNull();
+            var deck = CardEntityLifecycleHook.DeckOrNull();
             if (hand == null || deck == null)
             {
                 return string.Empty;
@@ -609,7 +610,7 @@ namespace NineGrid.Cards
                 reason: reason,
                 caller: caller,
                 defId: card.DefId);
-            CardHandManagerSingleton.Instance?.NotifyCardReleased(uid);
+            CardEntityLifecycleHook.RequestNotifyReleased(uid);
         }
 
         public void Release(ManagedCard card, string reason, [CallerMemberName] string caller = "")
@@ -960,7 +961,7 @@ namespace NineGrid.Cards
             cardTransform.localRotation = Quaternion.identity;
             if (mode == CardDisplayMode.HandCardMode)
             {
-                var hand = CardHandManagerSingleton.Instance;
+                var hand = CardEntityLifecycleHook.HandOrNull();
                 if (hand != null && hand.ContainsUid(card.Uid))
                 {
                     hand.EnsureHandSorting(card);

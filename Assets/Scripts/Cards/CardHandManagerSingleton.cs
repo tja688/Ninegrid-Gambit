@@ -13,6 +13,7 @@ namespace NineGrid.Cards
     /// <summary>
     /// 手牌管理器单例：最多 5 张，CardHandAnchors 布局，hover / 拖拽 / 回手 / 场地抓取。
     /// 净土域：内部布局黑盒；仅暴露 C 阶段 Evict/Admit（速度恒 0）。
+    /// V6 compat shell — Cards/Deck 解析优先 <see cref="CardEntityLifecycleHook"/>。
     /// </summary>
     public sealed class CardHandManagerSingleton : MonoBehaviour, IHandoffEndpoint
     {
@@ -321,10 +322,15 @@ namespace NineGrid.Cards
             _isBusy = true;
             try
             {
-                var cardManager = CardManagerSingleton.Instance;
+                var cardManager = CardEntityLifecycleHook.CardsOrNull();
+                if (cardManager == null)
+                {
+                    return false;
+                }
+
                 CardOpacityUtility.ResetAlpha(card);
 
-                CardDeckManagerSingleton.Instance?.TryDetachByUid(card.Uid, out _);
+                CardEntityLifecycleHook.DeckOrNull()?.TryDetachByUid(card.Uid, out _);
 
                 // 须在 TryInsertAt 之前切 HandCardMode：ApplyDisplayMode → SnapToDisplayMode 会查手牌槽位并贴布局坐标；
                 // 若已入槽再切模式，会瞬间贴位，MoveRippleAsync 无法从场地缓动飞入。
@@ -983,7 +989,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            CardManagerSingleton.Instance.RefreshDisplayMode(card);
+            CardEntityLifecycleHook.CardsOrNull()?.RefreshDisplayMode(card);
             EnsureHandLayout(card);
         }
 
@@ -1039,8 +1045,8 @@ namespace NineGrid.Cards
             }
 
             var card = session.Card;
-            var cardManager = CardManagerSingleton.Instance;
-            cardManager.SetDisplayMode(card, CardDisplayMode.DragCardMode);
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
+            cardManager?.SetDisplayMode(card, CardDisplayMode.DragCardMode);
             BoostDragSorting(card);
 
             var camera = Camera.main;
@@ -1162,8 +1168,8 @@ namespace NineGrid.Cards
             _isBusy = true;
             try
             {
-                var cardManager = CardManagerSingleton.Instance;
-                cardManager.SetDisplayMode(card, CardDisplayMode.DragCardMode);
+                var cardManager = CardEntityLifecycleHook.CardsOrNull();
+                cardManager?.SetDisplayMode(card, CardDisplayMode.DragCardMode);
                 BoostDragSorting(card);
 
                 var target = anchor.position;
@@ -1237,14 +1243,14 @@ namespace NineGrid.Cards
         {
             if (card?.Transform == null)
             {
-                CardManagerSingleton.Instance.Release(card, "Hand.VanishNoTransform");
+                CardEntityLifecycleHook.CardsOrNull()?.Release(card, "Hand.VanishNoTransform");
                 return;
             }
 
             _isBusy = true;
             try
             {
-                CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.RemovedMode);
+                CardEntityLifecycleHook.CardsOrNull()?.SetDisplayMode(card, CardDisplayMode.RemovedMode);
                 if (card.TryGetEffectManager(out var effectManager))
                 {
                     await effectManager.PlayUseAsync(CardBoardDirection.None, CancellationToken.None);
@@ -1273,7 +1279,7 @@ namespace NineGrid.Cards
                 }
 
                 CardOpacityUtility.ClearCache(card.Uid);
-                CardManagerSingleton.Instance.Release(card, "Hand.VanishAfterApply");
+                CardEntityLifecycleHook.CardsOrNull()?.Release(card, "Hand.VanishAfterApply");
             }
             finally
             {
@@ -1294,13 +1300,13 @@ namespace NineGrid.Cards
             try
             {
                 CardOpacityUtility.ResetAlpha(card);
-                CardManagerSingleton.Instance.SetDisplayMode(card, CardDisplayMode.HandCardMode);
+                CardEntityLifecycleHook.CardsOrNull()?.SetDisplayMode(card, CardDisplayMode.HandCardMode);
 
                 var slot = session.OriginHandSlot >= 0 ? session.OriginHandSlot : HandCount;
                 if (!_slotContainer.TryInsertAt(slot, card, out var rippleMoves))
                 {
                     Debug.LogWarning("[CardHandManager] 回手失败，手牌已满。");
-                    CardManagerSingleton.Instance.Release(card, "Hand.DragReturnFail");
+                    CardEntityLifecycleHook.CardsOrNull()?.Release(card, "Hand.DragReturnFail");
                     ClearDragSession();
                     return;
                 }
