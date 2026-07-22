@@ -4,16 +4,19 @@
     "references": [
         "NineGrid.Core",
         "NineGrid.Content",
-        "NineGrid.Cards",
-        "NineGrid.Flow",
         "QFramework",
-        "UniTask"
+        "UniTask",
+        "Unity.TextMeshPro",
+        "DamageNumbersPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "DOTween.dll",
+        "Sirenix.OdinInspector.Attributes.dll"
+    ],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],

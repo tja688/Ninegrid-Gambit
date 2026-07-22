@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NineGrid.Cards;
-using NineGrid.Cards.Editor;
+using NineGrid.Presentation.Editor;
 using NineGrid.Cards.Slots;
 using NineGrid.Content;
 using NineGrid.Content.Editor.Ui;

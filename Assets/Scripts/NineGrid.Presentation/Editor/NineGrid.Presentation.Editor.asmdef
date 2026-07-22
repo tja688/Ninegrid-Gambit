@@ -1,11 +1,15 @@
 {
-    "name": "NineGrid.TemporaryTest",
-    "rootNamespace": "NineGrid.TemporaryTest",
+    "name": "NineGrid.Presentation.Editor",
+    "rootNamespace": "NineGrid.Presentation.Editor",
     "references": [
         "NineGrid.Presentation",
-        "Unity.Pipeline"
+        "NineGrid.Content",
+        "NineGrid.Core",
+        "DamageNumbersPro"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

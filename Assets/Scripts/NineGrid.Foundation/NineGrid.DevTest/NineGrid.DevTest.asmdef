@@ -3,9 +3,8 @@
     "rootNamespace": "NineGrid.DevTest",
     "references": [
         "DamageNumbersPro",
-        "NineGrid.Cards",
+        "NineGrid.Presentation",
         "NineGrid.Core",
-        "NineGrid.Flow",
         "QFramework",
         "UniTask"
     ],

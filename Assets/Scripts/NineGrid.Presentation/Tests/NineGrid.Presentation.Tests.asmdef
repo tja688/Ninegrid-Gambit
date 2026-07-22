@@ -3,20 +3,24 @@
     "rootNamespace": "NineGrid.Presentation.Tests",
     "references": [
         "NineGrid.Presentation",
-        "NineGrid.Flow",
-        "NineGrid.Core",
-        "NineGrid.Cards",
+        "NineGrid.Presentation.Editor",
         "NineGrid.Content",
+        "NineGrid.Core",
         "QFramework",
         "UniTask",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
-    "includePlatforms": ["Editor"],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": true,
-    "precompiledReferences": ["nunit.framework.dll"],
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "DOTween.dll"
+    ],
     "autoReferenced": false,
     "defineConstraints": [],
     "versionDefines": [],
