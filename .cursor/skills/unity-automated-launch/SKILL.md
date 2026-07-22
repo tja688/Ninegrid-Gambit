@@ -64,8 +64,9 @@ Switches:
 | `-TimeoutSec N` | Pipeline wait limit (default 180) |
 
 The script: reads `ProjectSettings/ProjectVersion.txt` → resolves `Unity.exe` via
-`unity editors -i` → starts with `ProcessStartInfo.ArgumentList` (safe for spaces
-in the path) → adds `-automated` → polls `unity pipeline list` until reachable.
+`unity editors -i` → starts with `-projectpath` + `-automated` (PS7 `ArgumentList`,
+or quoted `Arguments` on Windows PowerShell 5.1) → polls `unity pipeline list`
+until reachable.
 
 ## Manual equivalent
 
@@ -74,16 +75,21 @@ $proj = "D:\MyUnityProject"   # absolute project root
 $ver  = (Select-String -Path "$proj\ProjectSettings\ProjectVersion.txt" -Pattern 'm_EditorVersion:\s*(\S+)').Matches[0].Groups[1].Value
 $editors = unity editors -i --format json | ConvertFrom-Json
 $exe = ($editors.data | Where-Object { $_.version -eq $ver } | Select-Object -First 1).location
-$psi = [Diagnostics.ProcessStartInfo]::new()
+$psi = New-Object System.Diagnostics.ProcessStartInfo
 $psi.FileName = $exe
-$psi.ArgumentList.Add('-projectpath'); $psi.ArgumentList.Add($proj)
-$psi.ArgumentList.Add('-automated')
 $psi.UseShellExecute = $false
+if ($null -ne $psi.ArgumentList) {
+  $psi.ArgumentList.Add('-projectpath'); $psi.ArgumentList.Add($proj); $psi.ArgumentList.Add('-automated')
+} else {
+  $psi.Arguments = "-projectpath `"$proj`" -automated"   # PS 5.1 / .NET Framework
+}
 [Diagnostics.Process]::Start($psi) | Out-Null
 # Poll: unity pipeline list --format json until this project's isReachable=true
 ```
 
 Do **not** pass a space-containing `-projectpath` via a fragile `Start-Process -ArgumentList` join that splits the path.
+
+**Note:** `unity pipeline list` can report `isRunning: true` with stale Hub/licensing leftovers even when no Editor process exists. Trust `pipelineServer.isReachable` (and/or a live `Unity.exe` process), not `isRunning` alone.
 
 ## After launch
 

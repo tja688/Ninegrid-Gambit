@@ -139,11 +139,17 @@ Write-Host "Editor: $version -> $exe"
 
 $psi = New-Object System.Diagnostics.ProcessStartInfo
 $psi.FileName = $exe
-$psi.ArgumentList.Add("-projectpath")
-$psi.ArgumentList.Add($ProjectPath)
-$psi.ArgumentList.Add("-automated")
 $psi.UseShellExecute = $false
 $psi.WorkingDirectory = $ProjectPath
+# ArgumentList is .NET Core / PS7+; on Windows PowerShell 5.1 (.NET Framework) it is null.
+if ($null -ne $psi.ArgumentList) {
+    $psi.ArgumentList.Add("-projectpath")
+    $psi.ArgumentList.Add($ProjectPath)
+    $psi.ArgumentList.Add("-automated")
+} else {
+    $escaped = $ProjectPath.Replace('"', '\"')
+    $psi.Arguments = "-projectpath `"$escaped`" -automated"
+}
 
 $proc = [Diagnostics.Process]::Start($psi)
 if (-not $proc) {
