@@ -25,4 +25,4 @@ status: accepted
 - `BattleBusy`/`FieldBusy` 不再作独立门禁输入：须阻塞输入的交战/场地表演改为持有主线（Step 或 ExternalHold 租约），否则会漏门禁。
 - `OccupancyDesyncLatched` 退出运行时门禁，降为断言；真出 desync 视为 bug 修根因。
 - 玩家可见反馈（缓冲/非法/非当前所有者的差异化提示）**不在本轮**，保持现状。
-- 禁用壁钟为硬约束：未来 debounce/加速需注入时钟 `Func<float>`，以保门禁边界测试可确定、不 flaky。
+- 禁用壁钟为硬约束：未来 debounce/加速需注入时钟 `Func<float>`，以保门禁边界测试可确定、不 flaky。由 `IntentIntakeStructuralTests` 对门禁/收口决策面做源码扫描护栏（#52）。

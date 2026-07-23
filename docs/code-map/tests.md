@@ -18,6 +18,7 @@
 | `Flow/` | Flow 侧遗留/切片 |
 | `Fixtures/` | EditMode 夹具 |
 | `HostContractStructuralTests.cs` | 结构护栏：禁四大旧宿主名、禁 `CombatHitSink`、禁回流 `new PresentationDirector`、System 不暴露具体 View |
+| `IntentIntakeStructuralTests.cs` | 结构护栏（#52）：输入路径须经 IntentIntake；门禁/收口决策禁用壁钟；ADR-0004 accepted |
 
 ## 关闭门槛（普通实施票）
 

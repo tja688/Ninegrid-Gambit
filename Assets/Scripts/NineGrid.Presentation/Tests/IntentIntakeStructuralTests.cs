@@ -12,10 +12,23 @@ using UnityEngine;
 namespace NineGrid.Presentation.Tests
 {
     /// <summary>
-    /// #50：任何输入路径不得绕过 IntentIntake 的结构护栏。
+    /// #52：结构护栏——玩家输入不得绕过 IntentIntake；门禁/收口决策禁用壁钟。
     /// </summary>
     public sealed class IntentIntakeStructuralTests
     {
+        private static readonly string[] WallClockDecisionSurfaces =
+        {
+            "Systems/IntentIntakeSystem.cs",
+            "Systems/PresentationInputStateSystem.cs",
+            "Systems/PresentationRuntimeSystem.cs",
+            "Flow/Presentation/PresentationDirector.cs",
+            "PresentationInputGates.cs",
+        };
+
+        private static readonly Regex WallClockBan = new Regex(
+            @"Time\.realtimeSinceStartup|DateTime\.Now|DateTime\.UtcNow|\bStopwatch\b",
+            RegexOptions.CultureInvariant);
+
         [Test]
         public void IntentIntake_AndAccelerationSink_Exist()
         {
@@ -27,35 +40,63 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void SubmitBoardIntentCommands_ReferenceIntentIntake()
+        public void Adr0004_StatusIsAccepted()
         {
-            AssertSourceMentions(
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath, "..", "docs", "adr", "0004-input-intake-two-axis-gating.md"));
+            Assert.IsTrue(File.Exists(path), "missing ADR-0004");
+            var text = File.ReadAllText(path);
+            Assert.IsTrue(
+                Regex.IsMatch(text, @"^---\s*\r?\nstatus:\s*accepted\s*\r?\n---", RegexOptions.Multiline),
+                "ADR-0004 status 应为 accepted");
+        }
+
+        [Test]
+        public void BoardActionSubmitCommands_CallIntentIntakeSubmit()
+        {
+            AssertSourceMatches(
                 "Commands/SubmitExploreIntentCommand.cs",
-                "IIntentIntake");
-            AssertSourceMentions(
+                @"intake\.Submit\s*\(");
+            AssertSourceMatches(
                 "Commands/SubmitAttackIntentCommand.cs",
-                "IIntentIntake");
-            AssertSourceMentions(
+                @"intake\.Submit\s*\(");
+            AssertSourceMatches(
                 "Commands/SubmitUseItemIntentCommand.cs",
-                "IIntentIntake");
+                @"intake\.Submit\s*\(");
+        }
+
+        [Test]
+        public void PlayerInputControllers_RouteThroughIntentIntake()
+        {
+            // Explore/Attack/UseItem：Controller → Submit*IntentCommand → intake.Submit（见 BoardAction 测例）。
             AssertSourceMentions(
+                "Controllers/ExploreInputController.cs",
+                "SubmitExploreIntentCommand");
+            AssertSourceMentions(
+                "Controllers/AttackInputController.cs",
+                "SubmitAttackIntentCommand");
+            AssertSourceMentions(
+                "Controllers/UseItemInputController.cs",
+                "SubmitUseItemIntentCommand");
+            // Pickup / 模态 / BoardSelect：Controller 内直接 intake.Submit。
+            AssertSourceMatches(
                 "Controllers/PickupInputController.cs",
-                "IIntentIntake");
-            AssertSourceMentions(
+                @"intake\.Submit\s*\(");
+            AssertSourceMatches(
                 "Controllers/RoomChoiceInputController.cs",
-                "IIntentIntake");
-            AssertSourceMentions(
+                @"intake\.Submit\s*\(");
+            AssertSourceMatches(
                 "Controllers/RewardChoiceInputController.cs",
-                "IIntentIntake");
-            AssertSourceMentions(
+                @"intake\.Submit\s*\(");
+            AssertSourceMatches(
                 "Cards/BoardCardSelectModeController.cs",
-                "IntentIntakeSystem");
+                @"intake\.Submit\s*\(");
         }
 
         [Test]
         public void ProductionSources_TrySubmitIntent_OnlyInsideIntakeOrRuntime()
         {
-            var root = Path.GetFullPath(Path.Combine(Application.dataPath, "Scripts", "NineGrid.Presentation"));
+            var root = PresentationRoot();
             var allowed = new[]
             {
                 "IntentIntakeSystem.cs",
@@ -66,8 +107,7 @@ namespace NineGrid.Presentation.Tests
             };
             var offenders = Directory
                 .EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
-                .Where(path => path.IndexOf("\\Tests\\", StringComparison.OrdinalIgnoreCase) < 0
-                               && path.IndexOf("/Tests/", StringComparison.OrdinalIgnoreCase) < 0)
+                .Where(IsProductionSource)
                 .Where(path =>
                 {
                     var name = Path.GetFileName(path);
@@ -81,12 +121,105 @@ namespace NineGrid.Presentation.Tests
 
                     return Regex.IsMatch(File.ReadAllText(path), @"\bTrySubmitIntent\s*\(");
                 })
-                .Select(path => path.Substring(Application.dataPath.Length).TrimStart('\\', '/'))
+                .Select(ToDataRelative)
                 .ToArray();
 
             Assert.IsEmpty(
                 offenders,
                 "生产路径禁止绕过 IntentIntake 直接 TrySubmitIntent：\n" + string.Join("\n", offenders));
+        }
+
+        [Test]
+        public void ProductionSources_ApplyPickupItemCommand_OnlyViaIntakeOrFlushFactory()
+        {
+            var root = PresentationRoot();
+            var allowed = new[]
+            {
+                "PickupInputController.cs",
+                "PickupIntentScriptFactory.cs",
+                "ApplyPickupItemCommand.cs",
+            };
+            var offenders = Directory
+                .EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
+                .Where(IsProductionSource)
+                .Where(path =>
+                {
+                    var name = Path.GetFileName(path);
+                    for (var i = 0; i < allowed.Length; i++)
+                    {
+                        if (string.Equals(name, allowed[i], StringComparison.OrdinalIgnoreCase))
+                        {
+                            return false;
+                        }
+                    }
+
+                    return Regex.IsMatch(
+                        File.ReadAllText(path),
+                        @"\bnew\s+ApplyPickupItemCommand\b");
+                })
+                .Select(ToDataRelative)
+                .ToArray();
+
+            Assert.IsEmpty(
+                offenders,
+                "ApplyPickupItemCommand 仅允许经 Intake Allow 或 flush ScriptFactory：\n"
+                + string.Join("\n", offenders));
+        }
+
+        [Test]
+        public void ProductionSources_ModalSelectCommands_OnlyFromIntakeGatedControllers()
+        {
+            var root = PresentationRoot();
+            var allowed = new[]
+            {
+                "RoomChoiceInputController.cs",
+                "RewardChoiceInputController.cs",
+                "SubmitSelectRoomCommand.cs",
+                "SubmitSelectRewardCommand.cs",
+                "SubmitEnterRoomCommand.cs",
+                "SubmitSkipHelpChoiceCommand.cs",
+            };
+            var pattern = new Regex(
+                @"\bnew\s+Submit(?:SelectRoom|SelectReward|EnterRoom|SkipHelpChoice)Command\b",
+                RegexOptions.CultureInvariant);
+            var offenders = Directory
+                .EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
+                .Where(IsProductionSource)
+                .Where(path =>
+                {
+                    var name = Path.GetFileName(path);
+                    for (var i = 0; i < allowed.Length; i++)
+                    {
+                        if (string.Equals(name, allowed[i], StringComparison.OrdinalIgnoreCase))
+                        {
+                            return false;
+                        }
+                    }
+
+                    return pattern.IsMatch(File.ReadAllText(path));
+                })
+                .Select(ToDataRelative)
+                .ToArray();
+
+            Assert.IsEmpty(
+                offenders,
+                "模态选择 Command 仅允许经 IntentIntake 门禁后的 Controller：\n"
+                + string.Join("\n", offenders));
+        }
+
+        [Test]
+        public void GateAndIntakeDecisionSurfaces_DoNotUseWallClock()
+        {
+            for (var i = 0; i < WallClockDecisionSurfaces.Length; i++)
+            {
+                var relative = WallClockDecisionSurfaces[i];
+                var path = Path.GetFullPath(Path.Combine(PresentationRoot(), relative));
+                Assert.IsTrue(File.Exists(path), "missing " + relative);
+                var match = WallClockBan.Match(File.ReadAllText(path));
+                Assert.IsFalse(
+                    match.Success,
+                    relative + " 门禁/收口决策禁用壁钟，发现: " + match.Value);
+            }
         }
 
         [Test]
@@ -96,14 +229,38 @@ namespace NineGrid.Presentation.Tests
             Assert.IsNotNull(typeof(PresentationCompositionRoot));
         }
 
+        private static string PresentationRoot()
+        {
+            return Path.GetFullPath(Path.Combine(Application.dataPath, "Scripts", "NineGrid.Presentation"));
+        }
+
+        private static bool IsProductionSource(string path)
+        {
+            return path.IndexOf("\\Tests\\", StringComparison.OrdinalIgnoreCase) < 0
+                   && path.IndexOf("/Tests/", StringComparison.OrdinalIgnoreCase) < 0;
+        }
+
+        private static string ToDataRelative(string path)
+        {
+            return path.Substring(Application.dataPath.Length).TrimStart('\\', '/');
+        }
+
         private static void AssertSourceMentions(string relativeUnderPresentation, string needle)
         {
-            var path = Path.GetFullPath(Path.Combine(
-                Application.dataPath, "Scripts", "NineGrid.Presentation", relativeUnderPresentation));
+            var path = Path.GetFullPath(Path.Combine(PresentationRoot(), relativeUnderPresentation));
             Assert.IsTrue(File.Exists(path), "missing " + relativeUnderPresentation);
             Assert.IsTrue(
                 File.ReadAllText(path).IndexOf(needle, StringComparison.Ordinal) >= 0,
                 relativeUnderPresentation + " 应引用 " + needle);
+        }
+
+        private static void AssertSourceMatches(string relativeUnderPresentation, string pattern)
+        {
+            var path = Path.GetFullPath(Path.Combine(PresentationRoot(), relativeUnderPresentation));
+            Assert.IsTrue(File.Exists(path), "missing " + relativeUnderPresentation);
+            Assert.IsTrue(
+                Regex.IsMatch(File.ReadAllText(path), pattern),
+                relativeUnderPresentation + " 应符合 " + pattern);
         }
     }
 }
