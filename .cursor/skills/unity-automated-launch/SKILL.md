@@ -108,3 +108,4 @@ Confirm args contain `-automated` and Pipeline `isReachable=true`, then use `uni
 | Dialog already up | CLI cannot click it; quit Editor and relaunch with this skill |
 | Hub processes | May still appear for licensing; Editor itself should not need `-useHub` |
 | No Pipeline package | Editor can still start with `-NoWait`; install `com.unity.pipeline` before relying on `unity command` |
+| Safe Mode | **Forbidden for this project.** Do not Enter Safe Mode. After launch, verify `EditorUtility.isInSafeMode` is false; if true, quit, fix compile errors, relaunch. See `.cursor/rules/unity-cli.mdc`. |

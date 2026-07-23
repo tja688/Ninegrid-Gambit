@@ -2,12 +2,28 @@
 
 本项目 Agent **优先用 Unity CLI + Pipeline** 驱动已打开的 Editor；不要依赖 Unity MCP。
 
+项目级硬规则见 `.cursor/rules/unity-cli.mdc`（alwaysApply）。
+
 ## 前提
 
 1. 本机已安装 `unity` CLI（`unity --version` 可用）。
 2. 项目已装 `com.unity.pipeline`（可用 `unity pipeline install --project-path <本仓库>`）。
 3. **Unity Editor 已打开本工程**，且须带 **`-automated`**（Hub 双击不够）。启动见 `.cursor/skills/unity-automated-launch/`（通用 skill，可移植）。
 4. `unity pipeline list` 显示 Pipeline 可达。
+5. Editor **不得处于 Safe Mode**（见下节）。
+
+## 严禁 Safe Mode
+
+**不准以 Safe Mode 启动，也不准在 Safe Mode 下继续 Agent 操作。**
+
+- 编译错误弹「Enter Safe Mode」时：选 **Ignore** 或 **Quit**，不要 Enter Safe Mode。
+- 启动或重开后用下面命令确认（期望 `false`）：
+
+```bash
+unity command eval "return UnityEditor.EditorUtility.isInSafeMode;" --project-path "<本仓库绝对路径>" --format json
+```
+
+- 若已是 Safe Mode：停手 → 退出 Editor → 修好编译错误 → 再用 `unity-automated-launch` 以正常模式（`-automated`）重开。
 
 ## 首选调用
 
