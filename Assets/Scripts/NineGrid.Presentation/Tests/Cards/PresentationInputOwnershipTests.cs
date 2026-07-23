@@ -1,3 +1,4 @@
+using NineGrid.Cards;
 using NineGrid.Presentation.Systems;
 using NineGrid.Presentation.Tests.Fixtures;
 using NUnit.Framework;
@@ -12,6 +13,7 @@ namespace NineGrid.Presentation.Tests
         [TearDown]
         public void TearDown()
         {
+            BoardCardSelectModeController.End();
             PresentationInputGates.Reset("test-teardown");
         }
 
@@ -94,6 +96,41 @@ namespace NineGrid.Presentation.Tests
                 Assert.IsFalse(input.OpeningPresentationActive.Value);
                 Assert.IsFalse(input.ChoiceOverlayActive.Value);
                 Assert.IsFalse(input.BoardSelectModeActive.Value);
+            }
+        }
+
+        [Test]
+        public void ResetGates_ClearsStickyBoardSelectStaticSession()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateBare())
+            {
+                var input = PresentationInputStateSystem.EnsureRegistered(arch.Architecture);
+                Assert.IsTrue(BoardCardSelectModeController.Begin(101, "help.test_multi", 2));
+                Assert.AreEqual(InputOwner.BoardSelect, input.CurrentOwner);
+
+                input.ResetGates("sticky-board-select");
+
+                Assert.IsFalse(BoardCardSelectModeController.IsActive);
+                Assert.IsFalse(input.BoardSelectModeActive.Value);
+                Assert.AreEqual(InputOwner.ProtectedField, input.CurrentOwner);
+            }
+        }
+
+        [Test]
+        public void RequestAbort_ClearsBoardSelectGate_RestoresProtectedField()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateBare())
+            {
+                PresentationInputStateSystem.EnsureRegistered(arch.Architecture);
+                Assert.IsTrue(BoardCardSelectModeController.Begin(202, "help.test_multi", 2));
+                Assert.IsTrue(PresentationInputGates.BoardSelectModeActive);
+
+                // 无 SelectionAbortedAsync 订阅时 End 同步执行。
+                BoardCardSelectModeController.RequestAbort("test-abort");
+
+                Assert.IsFalse(BoardCardSelectModeController.IsActive);
+                Assert.IsFalse(PresentationInputGates.BoardSelectModeActive);
+                Assert.AreEqual(InputOwner.ProtectedField, PresentationInputGates.CurrentOwner);
             }
         }
 

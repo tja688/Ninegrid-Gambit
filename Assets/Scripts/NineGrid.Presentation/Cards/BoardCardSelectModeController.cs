@@ -87,12 +87,20 @@ namespace NineGrid.Cards
 
         public static void End()
         {
-            if (!_active && !_committing)
+            // RequestAbort / ParkedAbort 会先清 _active 再异步 End；必须仍能清掉门禁布尔，
+            // 否则 CurrentOwner 粘在 BoardSelect，场地点击全部静默失效（hover 仍可用）。
+            var hadSession = _active || _committing;
+            var gateStuck = PresentationInputGates.BoardSelectModeActive;
+            if (!hadSession && !gateStuck)
             {
                 return;
             }
 
-            ClearSelectedVisuals();
+            if (hadSession)
+            {
+                ClearSelectedVisuals();
+            }
+
             SelectedUids.Clear();
             _itemUid = 0;
             _itemDefId = string.Empty;
@@ -102,7 +110,10 @@ namespace NineGrid.Cards
             _committing = false;
             PresentationInputGates.SetBoardSelect(false);
             DescriptionDisplayHook.RequestClear(DescriptionShowRoute.BoardSelect);
-            Debug.Log("[BoardCardSelectMode] End");
+            if (hadSession || gateStuck)
+            {
+                Debug.Log("[BoardCardSelectMode] End");
+            }
         }
 
         /// <summary>流程打断时由 Flow 调用；未 commit 则回手。</summary>
@@ -110,12 +121,18 @@ namespace NineGrid.Cards
         {
             if (!_active || _committing)
             {
+                // 静态会话已关但门禁布尔残留：强制收口，避免粘住所有权轴。
+                if (PresentationInputGates.BoardSelectModeActive)
+                {
+                    End();
+                }
+
                 return;
             }
 
             var itemUid = _itemUid;
             var defId = _itemDefId;
-            _active = false;
+            // 保持 _active 直至 End：否则 End 早退会留下 BoardSelect 门禁粘连。
             InvokeSelectionAbortedAsync(itemUid, defId, reason ?? "interrupt").Forget();
         }
 
@@ -129,12 +146,12 @@ namespace NineGrid.Cards
 
             var itemUid = _itemUid;
             var defId = _itemDefId;
-            _active = false;
             ClearSelectedVisuals();
             SelectedUids.Clear();
             RegistryTraceSink.NotifyUserInteraction?.Invoke("BoardSelectCancelParked");
             Debug.Log(
                 $"[BoardCardSelectMode] AbortByParkedClick itemUid={itemUid} defId={defId}");
+            // 勿先清 _active：交由 InvokeSelectionAbortedAsync → End 统一收口门禁。
             InvokeSelectionAbortedAsync(itemUid, defId, "parked-click").Forget();
             return true;
         }

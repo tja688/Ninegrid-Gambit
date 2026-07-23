@@ -1,3 +1,4 @@
+using System;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.Presentation;
@@ -78,6 +79,32 @@ namespace NineGrid.Presentation.Tests
             string reason;
             Assert.IsTrue(BoardIntentLegality.TryExplainAttack(mArch, sAdjacentSlot.Index, out reason));
             Assert.IsNull(reason);
+        }
+
+        [Test]
+        public void Attack_WhilePresentationInputLocked_StillLegal_BusyBufferedByIntake()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sAdjacentSlot);
+
+            var sync = mArch.GetSystem<IPresentationSyncSystem>();
+            var map = PresentationEventMap.Get(CoreEventType.DamageDealt);
+            Assert.IsTrue(map.LocksInput, "需要一把会锁输入的指令验证忽略 IsInputLocked");
+            var blocking = new[]
+            {
+                new PresentationInstruction(new CoreGameEvent(CoreEventType.DamageDealt, 1, "Attack"), map),
+            };
+            sync.OpenBatch(new PresentationBatch(42, blocking, null));
+            Assert.IsTrue(sync.IsInputLocked);
+            Assert.IsFalse(mPhase.CanExecute(GameCommandKind.Attack), "Phase 在锁输入时拒 Attack");
+
+            string reason;
+            Assert.IsTrue(
+                BoardIntentLegality.TryExplainAttack(mArch, sAdjacentSlot.Index, out reason),
+                "Intake 合法性须忽略仅因 IsInputLocked 的 Phase 拒因；忙时由 IntentIntake 缓冲。");
+            Assert.IsNull(reason);
+
+            Assert.IsTrue(sync.FinishBatch(42).Accepted);
         }
 
         [Test]

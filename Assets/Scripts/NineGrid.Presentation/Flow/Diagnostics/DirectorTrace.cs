@@ -257,13 +257,19 @@ namespace NineGrid.Flow.Diagnostics
                 payload);
         }
 
-        public static void IntentRejected(string intentKind, int targetId)
+        public static void IntentRejected(string intentKind, int targetId, string reason = null)
         {
+            var payload = IntentPayload(intentKind, targetId);
+            if (!string.IsNullOrEmpty(reason))
+            {
+                payload["reason"] = reason;
+            }
+
             Record(
                 PerfTraceKinds.DirectorIntentRejected,
                 PerfTraceSites.DirectorIntent,
                 -1,
-                IntentPayload(intentKind, targetId));
+                payload);
         }
 
         public static void IntentFlush(string intentKind, int targetId)

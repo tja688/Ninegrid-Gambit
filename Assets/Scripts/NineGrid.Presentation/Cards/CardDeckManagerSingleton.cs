@@ -362,10 +362,28 @@ namespace NineGrid.Cards
                 }
 
                 var field = ResolveFieldManager();
-                if (field != null && field.TryGetSlotOf(uid, out _))
+                if (field != null && field.TryGetSlotOf(uid, out var occupiedSlot))
                 {
+                    if (occupiedSlot == groundSlot)
+                    {
+                        return (true, null);
+                    }
+
+                    // 错位：迁到目标格，避免「已在场地」假失败留下 Core/Pres 分叉。
+                    if (field.IsPlaceable(groundSlot)
+                        && field.RequestRelocateOccupancy(
+                            uid,
+                            groundSlot,
+                            snapToAnchor: true,
+                            skipBusyGuard: true))
+                    {
+                        Debug.LogWarning(
+                            $"[CardDeckManager] Uid={uid} 已在场地 slot={occupiedSlot}，迁至格 {groundSlot}。");
+                        return (true, null);
+                    }
+
                     Debug.LogWarning(
-                        $"[CardDeckManager] Uid={uid} 已在场地，跳过入组发牌到格 {groundSlot}。");
+                        $"[CardDeckManager] Uid={uid} 已在场地 slot={occupiedSlot}，无法就位到格 {groundSlot}。");
                     return (false, null);
                 }
 

@@ -5,6 +5,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using NineGrid.Cards.Convergence;
+using NineGrid.Flow.Diagnostics;
 using UnityEngine;
 using UnityEngine.Rendering;
 using NineGrid.Presentation;
@@ -468,39 +469,39 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            // 主线忙：只经 IntentIntake 缓冲，不取 ExternalHold。
-            if (PresentationInputGates.MainlineBusy)
-            {
-                var buffered = PickupInputHook.TryApplyPickup(groundSlot);
-                if (string.Equals(buffered.Reason, "buffered", System.StringComparison.Ordinal))
-                {
-                    FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "Buffered", true, null);
-                    return true;
-                }
-
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "BusyReject", false, buffered.Reason);
-                return false;
-            }
-
-            if (!PresentationInputGates.TryBeginExternalHold("Pickup"))
-            {
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "LockFail", false, null);
-                return false;
-            }
-
+            // IntentIntake 先裁决：idle→Allow 后再取 ExternalHold；busy→Buffer（勿先持锁，否则会被误判为 busy）。
             var pickup = PickupInputHook.TryApplyPickup(groundSlot);
             if (string.Equals(pickup.Reason, "buffered", System.StringComparison.Ordinal))
             {
-                PresentationInputGates.EndExternalHold("Pickup-buffered");
                 FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "Buffered", true, null);
                 return true;
             }
 
             if (!pickup.Accepted)
             {
-                PresentationInputGates.EndExternalHold("Pickup-rejected");
                 FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "CoreReject", false, pickup.Reason);
                 return false;
+            }
+
+            // Core 已 Apply：必须拿住主线租约播表现。
+            // 禁止 ForceEnd 打断进行中的 BoardPresentDrain（会撕掉盘面 Present 租约导致占格分叉）。
+            if (!PresentationInputGates.TryBeginExternalHold("Pickup"))
+            {
+                if (ChoreoTraceContext.DrainInFlight)
+                {
+                    Debug.LogWarning(
+                        "[CardHandManager] Pickup 时 Drain 仍在飞，跳过 preempt uid=" + card.Uid);
+                    FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "DrainInFlightNoPreempt", false, null);
+                    return false;
+                }
+
+                PresentationInputGates.ForceEndExternalHold("Pickup-preempt");
+                if (!PresentationInputGates.TryBeginExternalHold("Pickup"))
+                {
+                    Debug.LogWarning(
+                        "[CardHandManager] Pickup ExternalHold 失败，继续表现但无主线租约 uid=" + card.Uid);
+                    FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "LockFailContinue", true, null);
+                }
             }
 
             if (pickup.RemovedWithoutHand)

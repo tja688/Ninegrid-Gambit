@@ -91,6 +91,9 @@ namespace NineGrid.Presentation.Systems
             mOpening.Value = false;
             mChoiceOverlay.Value = false;
             mBoardSelect.Value = false;
+            // 清静态选卡会话，避免 IsActive 与门禁布尔分裂后 CurrentOwner 粘在 BoardSelect。
+            BoardCardSelectModeController.End();
+            mBoardSelect.Value = false;
             ChoreoTraceContext.ClearOccupancyDesyncLatch(reason ?? "ResetInputGates");
 
             var runtime = ResolveRuntime();

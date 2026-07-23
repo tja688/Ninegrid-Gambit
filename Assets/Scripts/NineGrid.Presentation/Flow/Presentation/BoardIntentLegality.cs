@@ -6,8 +6,10 @@ using QFramework;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// #10 idle 合法性门：主线空闲时由 Flow 对 BoardModel / Phase 裁决，Cards 只做几何命中。
-    /// 与 PhaseSystem 对应命令门禁对齐，不改 Core 状态。
+    /// #10 / ADR-0004 Core 棋盘合法性：只裁 BoardModel / Phase 内容，不含表演时序。
+    /// 忙时互斥由 IntentIntake→MainlineBusy→Director 缓冲承担。
+    /// <see cref="IPresentationSyncSystem.IsInputLocked"/> 只挡 Core 解算下一拍，不得在此把
+    /// 本应 Buffer 的点击误 Reject（PhaseSystem.CanExecute 在锁输入时会清空 Attack/Explore）。
     /// </summary>
     public static class BoardIntentLegality
     {
@@ -20,18 +22,8 @@ namespace NineGrid.Flow.Presentation
                 return false;
             }
 
-            var phase = arch.GetSystem<IPhaseSystem>();
-            var sync = arch.GetSystem<IPresentationSyncSystem>();
-            if (sync != null && sync.IsInputLocked)
+            if (!TryExplainPhaseAllowsBoardCommand(arch, GameCommandKind.ClickEmpty, out rejectReason))
             {
-                rejectReason = "presentationInputLocked activeBatchId=" + sync.ActiveBatchId;
-                return false;
-            }
-
-            if (!phase.CanExecute(GameCommandKind.ClickEmpty))
-            {
-                var pending = arch.GetModel<PendingChoiceModel>().Kind.Value;
-                rejectReason = "notLegal phase=" + phase.CurrentPhase + " pendingChoice=" + pending;
                 return false;
             }
 
@@ -68,18 +60,8 @@ namespace NineGrid.Flow.Presentation
                 return false;
             }
 
-            var phase = arch.GetSystem<IPhaseSystem>();
-            var sync = arch.GetSystem<IPresentationSyncSystem>();
-            if (sync != null && sync.IsInputLocked)
+            if (!TryExplainPhaseAllowsBoardCommand(arch, GameCommandKind.Attack, out rejectReason))
             {
-                rejectReason = "presentationInputLocked activeBatchId=" + sync.ActiveBatchId;
-                return false;
-            }
-
-            if (!phase.CanExecute(GameCommandKind.Attack))
-            {
-                var pending = arch.GetModel<PendingChoiceModel>().Kind.Value;
-                rejectReason = "notLegal phase=" + phase.CurrentPhase + " pendingChoice=" + pending;
                 return false;
             }
 
@@ -137,18 +119,8 @@ namespace NineGrid.Flow.Presentation
                 return false;
             }
 
-            var phase = arch.GetSystem<IPhaseSystem>();
-            var sync = arch.GetSystem<IPresentationSyncSystem>();
-            if (sync != null && sync.IsInputLocked)
+            if (!TryExplainPhaseAllowsBoardCommand(arch, GameCommandKind.UseItem, out rejectReason))
             {
-                rejectReason = "presentationInputLocked activeBatchId=" + sync.ActiveBatchId;
-                return false;
-            }
-
-            if (!phase.CanExecute(GameCommandKind.UseItem))
-            {
-                var pending = arch.GetModel<PendingChoiceModel>().Kind.Value;
-                rejectReason = "notLegal phase=" + phase.CurrentPhase + " pendingChoice=" + pending;
                 return false;
             }
 
@@ -198,14 +170,8 @@ namespace NineGrid.Flow.Presentation
                 return false;
             }
 
-            var sync = arch.GetSystem<IPresentationSyncSystem>();
-            if (sync != null && sync.IsInputLocked)
-            {
-                rejectReason = "presentationInputLocked activeBatchId=" + sync.ActiveBatchId;
-                return false;
-            }
-
             // 与 PhaseSystem.ApplyPickupItem 对齐：表现可信入口不查 CanExecute。
+            // ADR-0004：表演锁步（IsInputLocked）不在此拒；忙时由 IntentIntake 缓冲。
             if (groundSlot < SlotId.MinBoardIndex || groundSlot > SlotId.MaxBoardIndex)
             {
                 rejectReason = "slotOutOfRange";
@@ -241,6 +207,52 @@ namespace NineGrid.Flow.Presentation
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Phase 内容门：忽略「仅因 IsInputLocked 而 CanExecute=false」——那是时序轴，不是棋盘非法。
+        /// </summary>
+        private static bool TryExplainPhaseAllowsBoardCommand(
+            IArchitecture arch,
+            GameCommandKind command,
+            out string rejectReason)
+        {
+            rejectReason = null;
+            var phase = arch.GetSystem<IPhaseSystem>();
+            if (phase.CanExecute(command))
+            {
+                return true;
+            }
+
+            var sync = arch.GetSystem<IPresentationSyncSystem>();
+            var pending = arch.GetModel<PendingChoiceModel>().Kind.Value;
+            if (sync != null
+                && sync.IsInputLocked
+                && pending == PendingChoiceKind.None
+                && IsBoardCommandPhaseWithoutLock(phase.CurrentPhase, command))
+            {
+                return true;
+            }
+
+            rejectReason = "notLegal phase=" + phase.CurrentPhase + " pendingChoice=" + pending;
+            return false;
+        }
+
+        private static bool IsBoardCommandPhaseWithoutLock(GamePhase phase, GameCommandKind command)
+        {
+            switch (phase)
+            {
+                case GamePhase.InteractionLoop:
+                    return command == GameCommandKind.Attack
+                           || command == GameCommandKind.ClickEmpty
+                           || command == GameCommandKind.UseItem
+                           || command == GameCommandKind.PickupItem;
+                case GamePhase.RoomChoice:
+                    return command == GameCommandKind.UseItem
+                           || command == GameCommandKind.PickupItem;
+                default:
+                    return false;
+            }
         }
 
         private static bool IsRegisteredInItemSlots(DeckModel deck, int itemUid)

@@ -199,7 +199,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             };
 
             var forbidden = new Regex(
-                @"OccupancyDesyncLatched|EvaluateAttack|IsFieldBusy|IsBattlePresentationBusy|field\.IsBusy|hand\.IsBusy",
+                @"OccupancyDesyncLatched|EvaluateAttack|IsFieldBusy|IsBattlePresentationBusy|field\.IsBusy|hand\.IsBusy|presentationInputLocked",
                 RegexOptions.CultureInvariant);
 
             for (var i = 0; i < files.Length; i++)
@@ -211,6 +211,12 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
                     match.Success,
                     Path.GetFileName(path) + " 仍含独立 busy/desync 门禁: " + match.Value);
             }
+
+            var legalityPath = Path.Combine(root, "Flow", "Presentation", "BoardIntentLegality.cs");
+            Assert.IsTrue(File.Exists(legalityPath), legalityPath);
+            Assert.IsFalse(
+                File.ReadAllText(legalityPath).Contains("presentationInputLocked"),
+                "BoardIntentLegality 不得再以 presentationInputLocked 硬拒（ADR-0004 缓冲轴）");
 
             var groundCardPath = Path.Combine(root, "Cards", "GroundCardHitProxy.cs");
             var groundCardText = File.ReadAllText(groundCardPath);
@@ -264,6 +270,19 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
                     handText,
                     @"TryPickupFromGround[\s\S]{0,1200}?FieldBusy"),
                 "拾取入口不得再以 FieldBusy 作独立互斥门禁");
+
+            var pickupBody = Regex.Match(
+                handText,
+                @"public bool TryPickupFromGround\(ManagedCard card\)[\s\S]*?RunPickupFromGroundAsync");
+            Assert.IsTrue(pickupBody.Success, "找不到 TryPickupFromGround 主体");
+            var applyIdx = pickupBody.Value.IndexOf("PickupInputHook.TryApplyPickup", StringComparison.Ordinal);
+            var holdIdx = pickupBody.Value.IndexOf("TryBeginExternalHold(\"Pickup\")", StringComparison.Ordinal);
+            Assert.GreaterOrEqual(applyIdx, 0, "TryPickupFromGround 须调用 TryApplyPickup");
+            Assert.GreaterOrEqual(holdIdx, 0, "TryPickupFromGround 须在 Allow 后取 ExternalHold");
+            Assert.Less(
+                applyIdx,
+                holdIdx,
+                "idle Pickup 须先 IntentIntake/TryApplyPickup，再 TryBeginExternalHold（否则 busy 误判）");
         }
 
         private sealed class AcceptAllScriptFactory : IIntentScriptFactory

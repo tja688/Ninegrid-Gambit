@@ -1,6 +1,7 @@
 using System;
 using NineGrid.Core;
 using NineGrid.Flow;
+using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation;
 using QFramework;
@@ -45,6 +46,10 @@ namespace NineGrid.Presentation.Systems
                     mAcceleration.Tap(intent);
                 }
 
+                Reject(
+                    intent,
+                    "ownerMismatch owner=" + owner + " target=" + targetSurface,
+                    mainlineBusy);
                 return IntentDisposition.Reject;
             }
 
@@ -61,10 +66,16 @@ namespace NineGrid.Presentation.Systems
 
             if (InputIntentKinds.IsModeOrModal(intent.Kind))
             {
-                return mainlineBusy ? IntentDisposition.Reject : IntentDisposition.Allow;
+                if (mainlineBusy)
+                {
+                    Reject(intent, "modeOrModalWhileMainlineBusy", mainlineBusy: true);
+                    return IntentDisposition.Reject;
+                }
+
+                return IntentDisposition.Allow;
             }
 
-            Debug.LogWarning("[IntentIntake] unknown intent kind: " + intent.Kind);
+            Reject(intent, "unknownKind", mainlineBusy);
             return IntentDisposition.Reject;
         }
 
@@ -77,20 +88,29 @@ namespace NineGrid.Presentation.Systems
 
             if (ShouldRouteToBoardSelect(intent))
             {
-                return mainlineBusy
-                    ? IntentDisposition.Reject
-                    : IntentDisposition.RouteToBoardSelect;
+                if (mainlineBusy)
+                {
+                    Reject(intent, "routeBoardSelectWhileMainlineBusy", mainlineBusy: true);
+                    return IntentDisposition.Reject;
+                }
+
+                return IntentDisposition.RouteToBoardSelect;
             }
 
             if (string.Equals(intent.Kind, InputIntentKinds.Attack, StringComparison.Ordinal)
                 && IsOrphanMidBattleRewardPending())
             {
+                Reject(intent, "orphanMidBattleReward", mainlineBusy);
                 return IntentDisposition.Reject;
             }
 
             string legalityReject;
             if (!TryExplainBoardLegality(intent, out legalityReject))
             {
+                Reject(
+                    intent,
+                    string.IsNullOrEmpty(legalityReject) ? "illegal" : legalityReject,
+                    mainlineBusy);
                 return IntentDisposition.Reject;
             }
 
@@ -105,7 +125,7 @@ namespace NineGrid.Presentation.Systems
                 var pickupRuntime = this.GetSystem<IPresentationRuntimeSystem>();
                 if (pickupRuntime == null || !pickupRuntime.IsStarted)
                 {
-                    Debug.LogWarning("[IntentIntake] 表现意图运行时未启动（Pickup buffer）。");
+                    Reject(intent, "runtimeNotStarted(pickupBuffer)", mainlineBusy: true);
                     return IntentDisposition.Reject;
                 }
 
@@ -116,7 +136,7 @@ namespace NineGrid.Presentation.Systems
             var runtime = this.GetSystem<IPresentationRuntimeSystem>();
             if (runtime == null || !runtime.IsStarted)
             {
-                Debug.LogWarning("[IntentIntake] 表现意图运行时未启动。");
+                Reject(intent, "runtimeNotStarted", mainlineBusy);
                 return IntentDisposition.Reject;
             }
 
@@ -221,6 +241,17 @@ namespace NineGrid.Presentation.Systems
 
             rejectReason = "unknownKind";
             return false;
+        }
+
+        private static void Reject(InputIntent intent, string reason, bool mainlineBusy)
+        {
+            DirectorTrace.IntentRejected(intent.Kind, intent.TargetId, reason);
+            Debug.LogWarning(
+                "[IntentIntake] Reject kind=" + intent.Kind
+                + " target=" + intent.TargetId
+                + " reason=" + reason
+                + " mainlineBusy=" + mainlineBusy
+                + " owner=" + PresentationInputGates.CurrentOwner);
         }
 
         public static IIntentIntake EnsureRegistered(

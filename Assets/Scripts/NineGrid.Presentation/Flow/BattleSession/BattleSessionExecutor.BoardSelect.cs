@@ -134,6 +134,12 @@ namespace NineGrid.Flow
         {
             if (!BoardCardSelectModeController.IsActive)
             {
+                // RequestAbort 旧路径可能留下门禁布尔粘连：IsActive=false 但 gate=true。
+                if (PresentationInputGates.BoardSelectModeActive)
+                {
+                    BoardCardSelectModeController.End();
+                }
+
                 return;
             }
 
