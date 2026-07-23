@@ -543,10 +543,17 @@ namespace NineGrid.Flow
             var coreUid = ResolveCoreBoardUid(slot);
             if (coreUid == blocker.Uid)
             {
-                // Core 也认这个占格：不是幽灵，不能强清。
+                // 当前格正确：不是幽灵，不能强清。
                 return false;
             }
 
+            // Core 在别格仍拥有 → 错位，只能 relocate，绝不能当幽灵销毁。
+            if (FindCoreBoardSlotOfUid(blocker.Uid) > 0)
+            {
+                return false;
+            }
+
+            // Core 已不拥有 → 真幽灵，可 Release。
             Debug.LogWarning(
                 $"[InBattleManager] Deal 前清幽灵占格 slot={slot} ghostUid={blocker.Uid} expectDeal={expectedDealUid} coreUid={coreUid}");
             ChoreoTraceSink.SafeEmitAnomaly(
@@ -573,8 +580,7 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// drainAfter 若仍有 Core↔Pres 分叉：先迁回错位牌，再清真幽灵；仍缺则定向补位。
-        /// 不做全盘 force-sync（ADR-0001）；补位失败才 Latch + 断言（#51）。
+        /// drainAfter 若仍有 Core↔Pres 分叉：只 Latch + 断言，禁止末端 relocate/repair 自愈（ADR-0001 / #51）。
         /// </summary>
         private void HandleDrainAfterOccupancyDesync(GroundFieldView fieldManager, int requestId)
         {
@@ -586,296 +592,11 @@ namespace NineGrid.Flow
                 return;
             }
 
-            var relocated = RelocateMisplacedPresentationToCore(fieldManager);
-            var cleared = ClearPresentationGhostsAgainstCore(fieldManager);
-            var repaired = RepairMissingPresentationAgainstCore(fieldManager);
-            FieldTraceHelper.RecordOccupancySnapshot("drainAfterReconcile");
-            if (!FieldTraceHelper.TryGetOccupancyDiff(out var remainDiff) || string.IsNullOrEmpty(remainDiff))
-            {
-                ChoreoTraceContext.ClearOccupancyDesyncLatch(
-                    "drainAfter.reconcile:relocated="
-                    + relocated
-                    + ";cleared="
-                    + cleared
-                    + ";repaired="
-                    + repaired
-                    + ";req="
-                    + requestId);
-                return;
-            }
-
             ChoreoTraceContext.LatchOccupancyDesync(
-                "req="
-                + requestId
-                + ";relocated="
-                + relocated
-                + ";cleared="
-                + cleared
-                + ";repaired="
-                + repaired
-                + ";diff="
-                + remainDiff);
+                "req=" + requestId + ";diff=" + diffSlots);
             BattleSessionExecutor.AssertOccupancySyncForbidden(
                 "drainAfterStickyDiff",
-                remainDiff);
-        }
-
-        /// <summary>
-        /// Pres 牌在错位：Core 仍认该 uid 时迁回 Core 格，禁止当幽灵 Release（否则会 sticky 空场）。
-        /// </summary>
-        private static int RelocateMisplacedPresentationToCore(GroundFieldView fieldManager)
-        {
-            if (fieldManager == null)
-            {
-                return 0;
-            }
-
-            var relocated = 0;
-            for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
-            {
-                if (slot == GroundSlotTopology.AvatarReservedSlot)
-                {
-                    continue;
-                }
-
-                if (!fieldManager.TryGetCardAt(slot, out var card) || card == null)
-                {
-                    continue;
-                }
-
-                var coreSlotOfUid = FindCoreBoardSlotOfUid(card.Uid);
-                if (coreSlotOfUid <= 0 || coreSlotOfUid == slot)
-                {
-                    continue;
-                }
-
-                // 目标格若有不符 Core 的占格，先卸掉（真幽灵或另一张错位牌会在本循环后续处理）。
-                if (fieldManager.TryGetCardAt(coreSlotOfUid, out var blocker)
-                    && blocker != null
-                    && blocker.Uid != card.Uid)
-                {
-                    var blockerCoreSlot = FindCoreBoardSlotOfUid(blocker.Uid);
-                    if (blockerCoreSlot <= 0)
-                    {
-                        fieldManager.RequestRemoveFromField(
-                            blocker.Uid,
-                            animate: false,
-                            skipBusyGuard: true,
-                            startExplore: false);
-                    }
-                    else if (blockerCoreSlot != coreSlotOfUid
-                             && fieldManager.IsEmpty(blockerCoreSlot))
-                    {
-                        fieldManager.RequestRelocateOccupancy(
-                            blocker.Uid,
-                            blockerCoreSlot,
-                            snapToAnchor: true,
-                            skipBusyGuard: true);
-                    }
-                    else if (blockerCoreSlot != coreSlotOfUid)
-                    {
-                        // 目标仍堵：先清占格不 Release，让出格子；视图随后由其 Core 格补位。
-                        fieldManager.TryClearOccupancyForUid(blocker.Uid, skipBusyGuard: true);
-                    }
-                }
-
-                if (fieldManager.RequestRelocateOccupancy(
-                        card.Uid,
-                        coreSlotOfUid,
-                        snapToAnchor: true,
-                        skipBusyGuard: true))
-                {
-                    relocated++;
-                    ChoreoTraceSink.SafeEmitAnomaly(
-                        "DrainAfterMisplacedRelocate",
-                        card.Uid,
-                        "from=" + slot + ";to=" + coreSlotOfUid);
-                }
-            }
-
-            return relocated;
-        }
-
-        /// <summary>
-        /// 仅卸 Core 盘上已不存在的真幽灵；错位牌由 <see cref="RelocateMisplacedPresentationToCore"/> 处理。
-        /// </summary>
-        private static int ClearPresentationGhostsAgainstCore(GroundFieldView fieldManager)
-        {
-            if (fieldManager == null)
-            {
-                return 0;
-            }
-
-            var cleared = 0;
-            for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
-            {
-                if (slot == GroundSlotTopology.AvatarReservedSlot)
-                {
-                    continue;
-                }
-
-                if (!fieldManager.TryGetCardAt(slot, out var card) || card == null)
-                {
-                    continue;
-                }
-
-                var coreUid = ResolveCoreBoardUid(slot);
-                if (coreUid == card.Uid)
-                {
-                    continue;
-                }
-
-                // Core 别处仍认此 uid → 错位，勿 Release。
-                if (FindCoreBoardSlotOfUid(card.Uid) > 0)
-                {
-                    continue;
-                }
-
-                if (fieldManager.RequestRemoveFromField(
-                        card.Uid,
-                        animate: false,
-                        skipBusyGuard: true,
-                        startExplore: false))
-                {
-                    cleared++;
-                    ChoreoTraceSink.SafeEmitAnomaly(
-                        "DrainAfterGhostVacate",
-                        card.Uid,
-                        "slot=" + slot + ";core=" + coreUid);
-                }
-            }
-
-            return cleared;
-        }
-
-        /// <summary>
-        /// Core 有而 Pres 缺：优先迁回场上错位牌；否则 Spawn/Deal 定向补位（非全盘 Sync）。
-        /// </summary>
-        private int RepairMissingPresentationAgainstCore(GroundFieldView fieldManager)
-        {
-            if (fieldManager == null)
-            {
-                return 0;
-            }
-
-            var repaired = 0;
-            for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
-            {
-                if (slot == GroundSlotTopology.AvatarReservedSlot)
-                {
-                    continue;
-                }
-
-                var coreUid = ResolveCoreBoardUid(slot);
-                if (coreUid <= 0)
-                {
-                    continue;
-                }
-
-                if (fieldManager.TryGetCardAt(slot, out var present)
-                    && present != null
-                    && present.Uid == coreUid)
-                {
-                    continue;
-                }
-
-                if (fieldManager.TryGetSlotOf(coreUid, out var fromSlot) && fromSlot != slot)
-                {
-                    TryClearGhostOccupantForDeal(fieldManager, slot, coreUid);
-                    if (fieldManager.RequestRelocateOccupancy(
-                            coreUid,
-                            slot,
-                            snapToAnchor: true,
-                            skipBusyGuard: true))
-                    {
-                        repaired++;
-                        ChoreoTraceSink.SafeEmitAnomaly(
-                            "DrainAfterMissingRelocate",
-                            coreUid,
-                            "from=" + fromSlot + ";to=" + slot);
-                        continue;
-                    }
-                }
-
-                if (TryPlaceMissingCoreCard(fieldManager, slot, coreUid))
-                {
-                    repaired++;
-                    ChoreoTraceSink.SafeEmitAnomaly(
-                        "DrainAfterMissingPlace",
-                        coreUid,
-                        "slot=" + slot);
-                }
-            }
-
-            return repaired;
-        }
-
-        private bool TryPlaceMissingCoreCard(GroundFieldView fieldManager, int slot, int coreUid)
-        {
-            if (fieldManager == null || slot <= 0 || coreUid <= 0)
-            {
-                return false;
-            }
-
-            TryClearGhostOccupantForDeal(fieldManager, slot, coreUid);
-            if (!fieldManager.IsPlaceable(slot))
-            {
-                return false;
-            }
-
-            var cardManager = Cards;
-            var deckManager = Deck;
-            if (deckManager != null && deckManager.ContainsUid(coreUid))
-            {
-                return deckManager.DealCardByUid(coreUid, slot, skipBusyGuard: true);
-            }
-
-            if (cardManager != null && cardManager.TryGet(coreUid, out var existing) && existing != null)
-            {
-                if (existing.View == null || existing.Transform == null)
-                {
-                    cardManager.Release(existing, "DrainAfter.NullViewRespawn");
-                    existing = null;
-                }
-                else if (existing.DisplayMode == CardDisplayMode.HandCardMode
-                         || existing.DisplayMode == CardDisplayMode.DragCardMode)
-                {
-                    return false;
-                }
-                else
-                {
-                    cardManager.SetDisplayMode(existing, CardDisplayMode.GroundCardMode);
-                    return fieldManager.RequestPlaceCard(slot, existing, skipBusyGuard: true);
-                }
-            }
-
-            if (cardManager == null)
-            {
-                return false;
-            }
-
-            var arch = NineGridArchitecture.Current;
-            var registry = arch?.GetModel<CardRegistry>();
-            var defId = CardManagerSingleton.StandardDefId;
-            if (registry != null && registry.TryGet(coreUid, out var instance) && instance != null)
-            {
-                defId = string.IsNullOrEmpty(instance.DefId)
-                    ? defId
-                    : instance.DefId;
-            }
-
-            var view = cardManager.SpawnView(
-                coreUid,
-                defId,
-                initialMode: CardDisplayMode.GroundCardMode,
-                kind: CoreCardPresentationMapper.ResolvePresentationKind(coreUid, defId));
-            if (view == null || !cardManager.TryGet(coreUid, out var spawned) || spawned == null)
-            {
-                return false;
-            }
-
-            CoreCardPresentationMapper.ApplyToManagedCard(spawned);
-            return fieldManager.RequestPlaceCard(slot, spawned, skipBusyGuard: true);
+                diffSlots);
         }
 
         private static int FindCoreBoardSlotOfUid(int uid)

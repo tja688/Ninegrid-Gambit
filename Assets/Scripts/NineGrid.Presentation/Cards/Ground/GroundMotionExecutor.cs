@@ -1173,10 +1173,13 @@ namespace NineGrid.Cards
             try
             {
                 var cardManager = CardEntityLifecycleHook.CardsOrNull();
-                var hopPlans = new List<(ManagedCard card, int fromSlot, int toSlot)>(moves.Count);
-                var expectedToSlotByUid = new Dictionary<int, int>(moves.Count);
-                var movingUids = new HashSet<int>(moves.Count);
-                var expectedMoveCount = 0;
+                if (cardManager == null)
+                {
+                    Debug.LogWarning("[GroundMotionExecutor] 盘面 hop：CardManager 未装配，占格不变。");
+                    return;
+                }
+
+                var expectedMoves = new List<(int uid, int fromSlot, int toSlot)>(moves.Count);
 
                 for (var i = 0; i < moves.Count; i++)
                 {
@@ -1189,26 +1192,50 @@ namespace NineGrid.Cards
                         continue;
                     }
 
-                    expectedMoveCount++;
-                    expectedToSlotByUid[move.Uid] = move.ToSlot;
-                    movingUids.Add(move.Uid);
-
-                    if (!cardManager.TryGet(move.Uid, out var card) || card?.Transform == null)
-                    {
-                        continue;
-                    }
-
-                    if (!_index.ContainsUid(move.Uid))
-                    {
-                        continue;
-                    }
-
-                    hopPlans.Add((card, move.FromSlot, move.ToSlot));
+                    expectedMoves.Add((move.Uid, move.FromSlot, move.ToSlot));
                 }
 
-                if (hopPlans.Count == 0 && expectedMoveCount == 0)
+                if (expectedMoves.Count == 0)
                 {
                     return;
+                }
+
+                for (var i = 0; i < expectedMoves.Count; i++)
+                {
+                    var expected = expectedMoves[i];
+                    if (!cardManager.TryGet(expected.uid, out var card) || card?.Transform == null)
+                    {
+                        Debug.LogWarning(
+                            $"[GroundMotionExecutor] 盘面 hop 前置校验失败：uid={expected.uid} 缺少视图，占格不变。");
+                        return;
+                    }
+
+                    if (!_index.ContainsUid(expected.uid))
+                    {
+                        Debug.LogWarning(
+                            $"[GroundMotionExecutor] 盘面 hop 前置校验失败：uid={expected.uid} 不在占格索引，占格不变。");
+                        return;
+                    }
+                }
+
+                var batch = new List<(int uid, int toSlot)>(expectedMoves.Count);
+                for (var i = 0; i < expectedMoves.Count; i++)
+                {
+                    batch.Add((expectedMoves[i].uid, expectedMoves[i].toSlot));
+                }
+
+                if (!_index.TryCommitPermutation(batch, "General.Hop"))
+                {
+                    Debug.LogError("[GroundMotionExecutor] 盘面 hop 占格批量置换失败，跳过动画。");
+                    return;
+                }
+
+                var hopPlans = new List<(ManagedCard card, int fromSlot, int toSlot)>(expectedMoves.Count);
+                for (var i = 0; i < expectedMoves.Count; i++)
+                {
+                    var expected = expectedMoves[i];
+                    cardManager.TryGet(expected.uid, out var card);
+                    hopPlans.Add((card, expected.fromSlot, expected.toSlot));
                 }
 
                 try
@@ -1250,46 +1277,6 @@ namespace NineGrid.Cards
                         toPos,
                         "Ground.HopPlan",
                         reason: "hop");
-                }
-
-                if (hopPlans.Count < expectedMoveCount)
-                {
-                    Debug.LogWarning(
-                        $"[GroundMotionExecutor] 盘面 hop 不完整：可播={hopPlans.Count}/{expectedMoveCount}，"
-                        + "漏移卡按目标格落位或留给 Sync，禁止原格回登。");
-                }
-
-                foreach (var uid in movingUids)
-                {
-                    if (_index.TryGetSlotOf(uid, out var occupiedSlot))
-                    {
-                        _index.Unregister(occupiedSlot, "General.Vacate");
-                    }
-                }
-
-                var registeredUids = new HashSet<int>(hopPlans.Count);
-                for (var i = 0; i < hopPlans.Count; i++)
-                {
-                    var plan = hopPlans[i];
-                    if (_index.TryRegister(plan.toSlot, plan.card.Uid, logConflict: false))
-                    {
-                        registeredUids.Add(plan.card.Uid);
-                    }
-                }
-
-                foreach (var kv in expectedToSlotByUid)
-                {
-                    if (registeredUids.Contains(kv.Key))
-                    {
-                        continue;
-                    }
-
-                    if (!cardManager.TryGet(kv.Key, out var card) || card?.Transform == null)
-                    {
-                        continue;
-                    }
-
-                    _index.TryRegister(kv.Value, kv.Key, logConflict: false);
                 }
 
                 if (hopPlans.Count > 0)
@@ -1409,22 +1396,7 @@ namespace NineGrid.Cards
                     0,
                     choreoSeqId);
 
-                for (var i = 0; i < ring.Count; i++)
-                {
-                    var slot = ring[i];
-                    _index.VacateSlotSilent(slot);
-                }
-
-                CardPresentationProbe.RingShift(
-                    "vacated",
-                    planSb.ToString(),
-                    "Ground.RingShift",
-                    clockwise,
-                    skipBusyGuard,
-                    plannedAnim,
-                    0,
-                    choreoSeqId);
-
+                var batch = new List<(int uid, int toSlot)>(plannedAnim);
                 for (var i = 0; i < ring.Count; i++)
                 {
                     if (uids[i] == 0)
@@ -1435,16 +1407,23 @@ namespace NineGrid.Cards
                     var toIndex = clockwise
                         ? (i + 1) % ring.Count
                         : (i + ring.Count - 1) % ring.Count;
-                    var toSlot = ring[toIndex];
-                    if (!_index.TryRegister(toSlot, uids[i]))
-                    {
-                        Debug.LogError(
-                            $"[GroundMotionExecutor] 外圈旋转登记失败 uid={uids[i]} → slot={toSlot}");
-                        CardPresentationProbe.RegistryMiss(
-                            uids[i],
-                            "Ground.RingShift.RegisterFail",
-                            "toSlot=" + toSlot.ToString(CultureInfo.InvariantCulture));
-                    }
+                    batch.Add((uids[i], ring[toIndex]));
+                }
+
+                if (!_index.TryCommitPermutation(batch, "Ring.Shift"))
+                {
+                    Debug.LogError("[GroundMotionExecutor] 外圈旋转占格批量置换失败，跳过动画。");
+                    outcome = "commit_fail";
+                    CardPresentationProbe.RingShift(
+                        "commit_fail",
+                        planSb.ToString(),
+                        "Ground.RingShift",
+                        clockwise,
+                        skipBusyGuard,
+                        plannedAnim,
+                        0,
+                        choreoSeqId);
+                    return;
                 }
 
                 CardPresentationProbe.RingShift(
@@ -1846,13 +1825,16 @@ namespace NineGrid.Cards
 
             try
             {
-                if (_index.TryGetSlotOf(moveA.Uid, out var slotA)
-                    && _index.TryGetSlotOf(moveB.Uid, out var slotB))
+                var batch = new List<(int uid, int toSlot)>
                 {
-                    _index.VacateUidSilent(moveA.Uid);
-                    _index.VacateUidSilent(moveB.Uid);
-                    _index.TryRegister(moveA.ToSlot, moveA.Uid);
-                    _index.TryRegister(moveB.ToSlot, moveB.Uid);
+                    (moveA.Uid, moveA.ToSlot),
+                    (moveB.Uid, moveB.ToSlot),
+                };
+
+                if (!_index.TryCommitPermutation(batch, "Cross.Swap"))
+                {
+                    Debug.LogError("[GroundMotionExecutor] 换位占格批量置换失败，跳过动画。");
+                    return;
                 }
 
                 var duration = LayoutSettings != null ? LayoutSettings.swapMoveDuration : 0.3f;
@@ -1934,7 +1916,7 @@ namespace NineGrid.Cards
                 {
                     if (card != null)
                     {
-                        CardEntityLifecycleHook.CardsOrNull()?.Release(card.Uid, "Ground.RemoveAnimatedNoTransform");
+                        CardEntityLifecycleHook.CardsOrNull()?.Release(card, "Ground.RemoveAnimatedNoTransform");
                     }
 
                     return;
@@ -1955,7 +1937,7 @@ namespace NineGrid.Cards
                         cancellationToken);
                 }
 
-                CardEntityLifecycleHook.CardsOrNull()?.Release(card.Uid, "Ground.RemoveAnimatedComplete");
+                CardEntityLifecycleHook.CardsOrNull()?.Release(card, "Ground.RemoveAnimatedComplete");
             }
             catch (OperationCanceledException)
             {

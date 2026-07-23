@@ -201,6 +201,114 @@ namespace NineGrid.Cards
             _slotByUid.Remove(uid);
         }
 
+        /// <summary>
+        /// 批量置换占格：验证通过后一次性更新双向表；失败则原快照不变并置冲突标志。
+        /// moves: (uid, toSlot)。参与移动的 uid 视为同一事务；目标格仅允许空或被本批 uid 占用。
+        /// </summary>
+        public bool TryCommitPermutation(IReadOnlyList<(int uid, int toSlot)> moves, string caller = null)
+        {
+            if (moves == null || moves.Count == 0)
+            {
+                return true;
+            }
+
+            var batchUids = new HashSet<int>(moves.Count);
+            var targetSlots = new HashSet<int>(moves.Count);
+            var fromSlotByUid = new Dictionary<int, int>(moves.Count);
+
+            for (var i = 0; i < moves.Count; i++)
+            {
+                var (uid, toSlot) = moves[i];
+                if (uid <= 0)
+                {
+                    return FailPermutation(
+                        $"uid={uid} 无效",
+                        0,
+                        0,
+                        uid,
+                        caller);
+                }
+
+                if (!IsValidSlot(toSlot))
+                {
+                    return FailPermutation(
+                        $"toSlot={toSlot} 无效",
+                        toSlot,
+                        0,
+                        uid,
+                        caller);
+                }
+
+                if (!batchUids.Add(uid))
+                {
+                    return FailPermutation(
+                        $"批次内 uid={uid} 重复",
+                        0,
+                        uid,
+                        uid,
+                        caller);
+                }
+
+                if (!targetSlots.Add(toSlot))
+                {
+                    return FailPermutation(
+                        $"批次内 toSlot={toSlot} 重复",
+                        toSlot,
+                        0,
+                        uid,
+                        caller);
+                }
+
+                if (!TryFindOccupiedSlotForUid(uid, out var fromSlot))
+                {
+                    return FailPermutation(
+                        $"uid={uid} 不在场地",
+                        0,
+                        0,
+                        uid,
+                        caller);
+                }
+
+                fromSlotByUid[uid] = fromSlot;
+            }
+
+            for (var i = 0; i < moves.Count; i++)
+            {
+                var (uid, toSlot) = moves[i];
+                var occupant = GetUidAt(toSlot);
+                if (occupant != 0 && occupant != uid && !batchUids.Contains(occupant))
+                {
+                    return FailPermutation(
+                        $"slot={toSlot} 被外部 uid={occupant} 占用，拒绝 uid={uid} 迁入",
+                        toSlot,
+                        occupant,
+                        uid,
+                        caller);
+                }
+            }
+
+            foreach (var uid in batchUids)
+            {
+                var fromSlot = fromSlotByUid[uid];
+                if (_uidBySlot[fromSlot] == uid)
+                {
+                    _uidBySlot[fromSlot] = 0;
+                }
+
+                _slotByUid.Remove(uid);
+            }
+
+            for (var i = 0; i < moves.Count; i++)
+            {
+                var (uid, toSlot) = moves[i];
+                _uidBySlot[toSlot] = uid;
+                _slotByUid[uid] = toSlot;
+            }
+
+            OccupancyMaybeClear?.Invoke();
+            return true;
+        }
+
         public GroundFieldSnapshot BuildSnapshot()
         {
             var slots = new GroundFieldSlotSnapshot[GroundSlotTopology.MaxSlot];
@@ -274,6 +382,26 @@ namespace NineGrid.Cards
         private static bool IsValidSlot(int slot)
         {
             return GroundSlotTopology.IsValidSlot(slot);
+        }
+
+        private bool FailPermutation(string detail, int slot, int existingUid, int incomingUid, string caller)
+        {
+            _occupancyConflictSinceClear = true;
+            Debug.LogError($"[GroundOccupancyIndex] 批量置换失败：{detail}");
+            try
+            {
+                FlowFieldTraceSink.OccupancyConflict?.Invoke(
+                    slot,
+                    existingUid,
+                    incomingUid,
+                    caller ?? "TryCommitPermutation");
+            }
+            catch
+            {
+                // ignore
+            }
+
+            return false;
         }
     }
 }

@@ -806,7 +806,8 @@ namespace NineGrid.Cards
 
             if (victim.Transform != null)
             {
-                CardEntityLifecycleHook.CardsOrNull()?.Release(victim.Uid, "Combat.CompleteRemoveVictim");
+                // 引用身份保护：禁止 await 后仅凭可复用 uid 释放新实体。
+                CardEntityLifecycleHook.CardsOrNull()?.Release(victim, "Combat.CompleteRemoveVictim");
             }
         }
 
@@ -838,7 +839,8 @@ namespace NineGrid.Cards
 
             if (card.Transform != null)
             {
-                CardEntityLifecycleHook.CardsOrNull()?.Release(card.Uid, "Combat.FinalizeLethal");
+                // 引用身份保护：禁止 await 后仅凭可复用 uid 释放新实体。
+                CardEntityLifecycleHook.CardsOrNull()?.Release(card, "Combat.FinalizeLethal");
             }
         }
 

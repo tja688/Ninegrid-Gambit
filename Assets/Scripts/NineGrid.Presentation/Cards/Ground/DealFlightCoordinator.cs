@@ -615,7 +615,8 @@ namespace NineGrid.Cards
                 return;
             }
 
-            CardEntityLifecycleHook.CardsOrNull()?.Release(card.Uid, "DealFlight.Rollback");
+            // 引用身份保护：禁止仅凭可复用 uid 释放新实体。
+            CardEntityLifecycleHook.CardsOrNull()?.Release(card, "DealFlight.Rollback");
         }
 
         private static void TraceProbe(

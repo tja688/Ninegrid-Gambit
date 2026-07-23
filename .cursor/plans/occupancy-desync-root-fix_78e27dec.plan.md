@@ -4,16 +4,16 @@ overview: 已确认本次并非单纯门禁判定错误：#46 让高压输入更
 todos:
   - id: red-loop
     content: 建立真实几何与完整 Director 压力下可稳定触发 Cuid/P0 的失败测试
-    status: pending
+    status: completed
   - id: atomic-occupancy
     content: 实现占格批量原子提交并切换 General/Rotate/Swap 路径
-    status: pending
+    status: completed
   - id: lifecycle-contract
     content: 修正 ghost 分类与异步实体身份释放，移除末端自愈
-    status: pending
+    status: completed
   - id: mainline-window
     content: 确保 Core Apply 始终处于 Director 主线或有效租约内
-    status: pending
+    status: completed
   - id: stress-verify
     content: 完成定向、全量和 100 局高压回归验收
     status: pending

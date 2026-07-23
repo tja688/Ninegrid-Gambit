@@ -484,24 +484,13 @@ namespace NineGrid.Cards
             }
 
             // Core 已 Apply：必须拿住主线租约播表现。
-            // 禁止 ForceEnd 打断进行中的 BoardPresentDrain（会撕掉盘面 Present 租约导致占格分叉）。
+            // 获取失败不得 ForceEnd/preempt，也不得无租约继续表现。
             if (!PresentationInputGates.TryBeginExternalHold("Pickup"))
             {
-                if (ChoreoTraceContext.DrainInFlight)
-                {
-                    Debug.LogWarning(
-                        "[CardHandManager] Pickup 时 Drain 仍在飞，跳过 preempt uid=" + card.Uid);
-                    FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "DrainInFlightNoPreempt", false, null);
-                    return false;
-                }
-
-                PresentationInputGates.ForceEndExternalHold("Pickup-preempt");
-                if (!PresentationInputGates.TryBeginExternalHold("Pickup"))
-                {
-                    Debug.LogWarning(
-                        "[CardHandManager] Pickup ExternalHold 失败，继续表现但无主线租约 uid=" + card.Uid);
-                    FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "LockFailContinue", true, null);
-                }
+                Debug.LogWarning(
+                    "[CardHandManager] Pickup ExternalHold 失败，中止表现 uid=" + card.Uid);
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "LockFailAbort", false, null);
+                return false;
             }
 
             if (pickup.RemovedWithoutHand)
