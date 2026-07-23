@@ -40,6 +40,7 @@ namespace NineGrid.Cards
         private bool _isBusy;
         private ManagedCard _hoveredDeckCard;
         private readonly HashSet<int> _returnInFlightUids = new();
+        private readonly Dictionary<int, UniTaskCompletionSource> _returnSettledWaiters = new();
 
         /// <summary>入组索引：随机落点（非空时排除最左 slot 0）。</summary>
         public const int RandomInsertIndex = -1;
@@ -66,11 +67,65 @@ namespace NineGrid.Cards
             var cardManager = CardEntityLifecycleHook.CardsOrNull();
             if (cardManager != null && !cardManager.TryGet(uid, out _))
             {
-                _returnInFlightUids.Remove(uid);
+                ClearReturnInFlight(uid, "deckReturn.abort");
                 return false;
             }
 
             return true;
+        }
+
+        /// <summary>等待单卡回库（fieldExit → insert → ripple）结束；未在途立即返回。</summary>
+        public UniTask WaitReturnSettledAsync(int uid, CancellationToken cancellationToken = default)
+        {
+            if (uid <= 0 || !IsReturnInFlight(uid))
+            {
+                return UniTask.CompletedTask;
+            }
+
+            if (!_returnSettledWaiters.TryGetValue(uid, out var tcs))
+            {
+                tcs = new UniTaskCompletionSource();
+                _returnSettledWaiters[uid] = tcs;
+            }
+
+            // End 可能与注册竞态：再确认一次，避免挂死。
+            if (!IsReturnInFlight(uid))
+            {
+                CompleteReturnSettledWaiters(uid);
+                return UniTask.CompletedTask;
+            }
+
+            return tcs.Task.AttachExternalCancellation(cancellationToken);
+        }
+
+        /// <summary>等待多卡回库全部结束。</summary>
+        public UniTask WaitReturnsSettledAsync(
+            IReadOnlyList<int> uids,
+            CancellationToken cancellationToken = default)
+        {
+            if (uids == null || uids.Count == 0)
+            {
+                return UniTask.CompletedTask;
+            }
+
+            var pending = new List<UniTask>(uids.Count);
+            for (var i = 0; i < uids.Count; i++)
+            {
+                var uid = uids[i];
+                if (uid <= 0 || !IsReturnInFlight(uid))
+                {
+                    continue;
+                }
+
+                pending.Add(WaitReturnSettledAsync(uid, cancellationToken));
+            }
+
+            if (pending.Count == 0)
+            {
+                return UniTask.CompletedTask;
+            }
+
+            return UniTask.WhenAll(pending);
         }
 
         private void BeginReturnInFlight(int uid, string phase)
@@ -86,13 +141,33 @@ namespace NineGrid.Cards
 
         private void EndReturnInFlight(int uid, string phase)
         {
+            ClearReturnInFlight(uid, phase);
+        }
+
+        private void ClearReturnInFlight(int uid, string phase)
+        {
             if (uid <= 0)
             {
                 return;
             }
 
-            _returnInFlightUids.Remove(uid);
-            TraceDeckReturn(uid, phase);
+            if (_returnInFlightUids.Remove(uid))
+            {
+                TraceDeckReturn(uid, phase);
+            }
+
+            CompleteReturnSettledWaiters(uid);
+        }
+
+        private void CompleteReturnSettledWaiters(int uid)
+        {
+            if (!_returnSettledWaiters.TryGetValue(uid, out var tcs))
+            {
+                return;
+            }
+
+            _returnSettledWaiters.Remove(uid);
+            tcs.TrySetResult();
         }
 
         private static void TraceDeckReturn(int uid, string phase, params string[] extraPairs)
@@ -271,6 +346,12 @@ namespace NineGrid.Cards
                 return (false, null);
             }
 
+            // 回库途中禁止抢跑发牌（空堆同 UID 时尤其关键）。
+            if (IsReturnInFlight(uid))
+            {
+                await WaitReturnSettledAsync(uid, cancellationToken);
+            }
+
             if (!TryFindDeckSlotByUid(uid, out var deckSlot))
             {
                 if (ensureCard == null || ensureCard.Uid != uid)
@@ -371,7 +452,20 @@ namespace NineGrid.Cards
         public void ResetToStandby()
         {
             _pendingEntryCards.Clear();
-            _returnInFlightUids.Clear();
+            if (_returnInFlightUids.Count > 0)
+            {
+                var pending = new List<int>(_returnInFlightUids);
+                _returnInFlightUids.Clear();
+                for (var i = 0; i < pending.Count; i++)
+                {
+                    CompleteReturnSettledWaiters(pending[i]);
+                }
+            }
+            else
+            {
+                _returnSettledWaiters.Clear();
+            }
+
             _slotContainer?.Clear();
             CurrentMode = CardDeckMode.Standby;
             _isBusy = false;

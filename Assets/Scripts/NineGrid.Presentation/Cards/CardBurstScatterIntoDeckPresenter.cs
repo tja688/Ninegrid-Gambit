@@ -22,12 +22,16 @@ namespace NineGrid.Cards
             float fieldExitDuration,
             CardDeckManagerSingleton deckManager,
             CancellationToken cancellationToken = default,
-            float? phaseRadians = null)
+            float? phaseRadians = null,
+            float fieldToDeckDwellDuration = 0f)
         {
             if (cards == null || cards.Count == 0 || deckManager == null)
             {
                 return;
             }
+
+            // fieldExitDuration 由 LaunchReturn 内部读 LayoutSettings；此处保留参数以兼容调用方。
+            _ = fieldExitDuration;
 
             var cardManager = CardEntityLifecycleHook.CardsOrNull();
             var active = new List<ManagedCard>(cards.Count);
@@ -82,6 +86,7 @@ namespace NineGrid.Cards
                     cancellationToken: cancellationToken);
             }
 
+            var launchedUids = new List<int>(active.Count);
             for (var i = 0; i < active.Count; i++)
             {
                 var card = active[i];
@@ -99,13 +104,22 @@ namespace NineGrid.Cards
                 {
                     Debug.LogWarning(
                         $"[BurstScatterIntoDeck] LaunchReturnFieldCardToDeck 失败 uid={card.Uid} mode={card.DisplayMode}");
+                    continue;
                 }
+
+                launchedUids.Add(card.Uid);
             }
 
-            if (fieldExitDuration > 0f)
+            // 等 fieldExit + addAnchor + ripple 真正落地，不再只 Delay(fieldExit)。
+            if (launchedUids.Count > 0)
+            {
+                await deckManager.WaitReturnsSettledAsync(launchedUids, cancellationToken);
+            }
+
+            if (fieldToDeckDwellDuration > 0f)
             {
                 await UniTask.Delay(
-                    TimeSpan.FromSeconds(fieldExitDuration),
+                    TimeSpan.FromSeconds(fieldToDeckDwellDuration),
                     cancellationToken: cancellationToken);
             }
 

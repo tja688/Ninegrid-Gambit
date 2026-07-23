@@ -698,6 +698,7 @@ namespace NineGrid.Flow
                 var burstDuration = fieldLayout != null ? fieldLayout.burstScatterDuration : 0.28f;
                 var holdDuration = fieldLayout != null ? fieldLayout.burstScatterHoldDuration : 0.06f;
                 var exitDuration = fieldLayout != null ? fieldLayout.fieldExitDuration : 0.35f;
+                var dwellDuration = fieldLayout != null ? fieldLayout.fieldToDeckDwellDuration : 0.28f;
 
                 await CardBurstScatterIntoDeckPresenter.PresentAsync(
                     cards,
@@ -707,7 +708,9 @@ namespace NineGrid.Flow
                     holdDuration,
                     exitDuration,
                     deckManager,
-                    ct);
+                    ct,
+                    phaseRadians: null,
+                    fieldToDeckDwellDuration: dwellDuration);
             }
             finally
             {

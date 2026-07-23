@@ -57,6 +57,9 @@ namespace NineGrid.Cards
         [Tooltip("场地卡垂直上飞离画的缓动时长（秒）。")]
         public float fieldExitDuration = 0.50f;
 
+        [Tooltip("回库落地（addAnchor/ripple）后、允许发牌前的可读停顿（秒）。空堆同 UID 立刻补牌时尤其需要。")]
+        public float fieldToDeckDwellDuration = 0.28f;
+
         [Header("Burst Scatter Into Deck")]
         [Tooltip("炸牌散点圆半径（世界单位）。同批新生洗入卡从死位炸到圆周上的点。")]
         public float burstScatterRadius = 1.1f;
