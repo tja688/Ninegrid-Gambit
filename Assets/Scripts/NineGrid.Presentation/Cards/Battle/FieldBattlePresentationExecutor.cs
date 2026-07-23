@@ -6,7 +6,6 @@ using NineGrid.Cards.Convergence;
 using NineGrid.Core;
 using NineGrid.Flow;
 using NineGrid.Presentation;
-using NineGrid.Presentation.Queries;
 using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
@@ -66,18 +65,8 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            var architecture = NineGridArchitecture.Interface;
-            if (architecture != null)
-            {
-                var gate = architecture.SendQuery(new EvaluateAttackInputGateQuery());
-                if (gate.Disposition == PresentationInputDisposition.Reject)
-                {
-                    return false;
-                }
-            }
-            else if (PresentationInputGates.ChoiceOverlayActive
-                     || PresentationInputGates.BoardSelectModeActive
-                     || PresentationInputGates.MainlineBusy)
+            // 轴二：攻击目标表面为受保护场地。轴一互斥由 Director 在提交时裁决（#48/#50）。
+            if (!PresentationInputGates.OwnsProtectedField)
             {
                 return false;
             }
