@@ -1,7 +1,7 @@
 # Living UI · 现状与解耦说明
 
 > 对齐日期：2026-07-21  
-> 对照：`Assets/Notes/归档/灵动UI架构-spec-2026-07-17.md`（产品 Spec）+ 抽出前代码文档 `Assets/Docs/九宫牌局-代码文档/05-UI层/`
+> 对照：`Assets/Notes/归档/灵动UI架构-spec-2026-07-17.md`（产品 Spec）；抽出前代码文档镜像已删除，现状见仓库 `docs/code-map/`
 
 ---
 

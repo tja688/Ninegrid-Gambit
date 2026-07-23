@@ -227,10 +227,10 @@ PresentationSceneRoot (IController, order -100)
 |----|------|
 | ADR-0001 / ADR-0002 | `status: accepted`，与实现一致 |
 | Spec #28 | 关闭时见 GitHub 关闭评论（US20 Code Map 落地后收口） |
-| `Assets/Docs/九宫牌局-代码文档/` | **DEPRECATED**（2026-07-23）；冻结，勿再当权威 |
+| `Assets/Docs/九宫牌局-代码文档/` | ✅ 已删除（2026-07-23） |
 | 轻量 Code Map | ✅ `docs/code-map/`（按**当前** Flow/Cards+QF 角色目录描述，非未落地目标树） |
 
-**文档结论（收口后）**：决策层（ADR）+ 导航层（`docs/code-map/`）对齐现状；镜像库仅作历史备查。
+**文档结论（收口后）**：决策层（ADR）+ 导航层（`docs/code-map/`）对齐现状；源码镜像库已移除。
 
 ---
 
@@ -263,7 +263,7 @@ PresentationSceneRoot (IController, order -100)
 3. 废除或改名 8 个 `*ManagerSingleton`（至少去 Singleton 后缀，职责继续下沉 System）。  
 4. 收敛/替换静态 Hook 矩阵为组合根显式接线（或文档裁定「Hook = 过渡装配，非业务 Sink」）。  
 5. 目录/命名空间平铺：拆除 `Flow/`·`Cards/` 作为边界语义；补 `Events/`（及可选 Models/Views）。  
-6. ~~按 US20 **弃用** 镜像库 + 轻量 Code Map~~ → ✅ `docs/code-map/` + 镜像 DEPRECATED（2026-07-23）。
+6. ~~按 US20 **弃用** 镜像库 + 轻量 Code Map~~ → ✅ `docs/code-map/`；镜像目录已删除（2026-07-23）。
 
 ### P2 — 质量与可维护性
 
@@ -311,7 +311,7 @@ PresentationSceneRoot (IController, order -100)
 - GitHub：`gh issue view` #17、#28–#43（含关闭评论）。  
 - 源码树：`Assets/Scripts/NineGrid.Presentation/` 目录与类型扫描。  
 - 结构/行为测试：`Tests/BehaviorBaseline`、`HostContractStructuralTests`。  
-- 文档：`docs/adr/*`、`Assets/Docs/九宫牌局-代码文档/`、`Assets/Notes/Logs/`。  
+- 文档：`docs/adr/*`、`docs/code-map/`、`Assets/Notes/Logs/`。  
 - 并行只读探索子代理交叉核对程序集、QF 范式、测试与文档三轴。
 
 ### C. 相关链接

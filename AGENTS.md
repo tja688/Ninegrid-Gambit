@@ -15,7 +15,6 @@
 | [`docs/code-map/`](docs/code-map/) | **代码现状入口**（程序集、Presentation 目录、测试地图） |
 | [`docs/adr/`](docs/adr/) | 长期架构决策（时间线 Batch-ack、卡牌底盘） |
 | `Assets/Notes/` | 进行时过程性开发笔记；归档里有历史记录 |
-| `Assets/Docs/九宫牌局-代码文档/` | **DEPRECATED** 历史源码镜像；勿再当权威（见该目录 README） |
 
 ---
 
