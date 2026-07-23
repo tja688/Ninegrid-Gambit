@@ -48,7 +48,7 @@
 - **组合根**：`Setup/PresentationCompositionRoot.Install(bindings)` —— 唯一生产装配入口
 - **绑定表**：`Setup/PresentationSceneBindings`（场景 Host 引用）
 
-主线 busy 真相：`PresentationDirector.IsMainlineBusy`（经 `IPresentationRuntimeSystem` / InputState 只读投影）。
+主线 busy 真相：`PresentationDirector.IsMainlineBusy`（经 `IPresentationRuntimeSystem` / InputState 只读投影）。`BattleBusy` / `FieldBusy` 不作独立输入门禁；`OccupancyDesyncLatched` 仅为诊断断言。
 
 ## Controllers（18）
 

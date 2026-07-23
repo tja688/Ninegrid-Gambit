@@ -1,12 +1,19 @@
+using System;
+using System.IO;
+using System.Text.RegularExpressions;
+using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Systems;
 using NineGrid.Presentation.Tests.Fixtures;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace NineGrid.Presentation.Tests.BehaviorBaseline
 {
     /// <summary>
-    /// #49：输入所有权轴 + ExternalHold / MainlineBusy 只读投影基线。
+    /// #49/#51：输入所有权轴 + ExternalHold / MainlineBusy 只读投影；
+    /// 弃用 BattleBusy/FieldBusy 独立门禁；OccupancyDesync 降诊断断言。
     /// </summary>
     public sealed class InputGateMatrixBaselineTests
     {
@@ -14,6 +21,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
         public void TearDown()
         {
             PresentationInputGates.Reset("InputGateMatrixBaselineTests");
+            ChoreoTraceContext.Reset();
         }
 
         [Test]
@@ -114,6 +122,148 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
                 Assert.AreEqual(InputOwner.ChoiceOverlay, input.CurrentOwner);
                 Assert.IsTrue(input.MainlineBusy);
             }
+        }
+
+        [Test]
+        public void OccupancyDesyncLatched_DoesNotRejectIntentIntake()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateBare())
+            using (var runtime = PresentationRuntimeFixture.Install(
+                       arch,
+                       new RecordingScriptFactory(continueTicks: 0)))
+            {
+                var intake = IntentIntakeSystem.EnsureRegistered(
+                    arch.Architecture,
+                    legalityOverride: _ => true);
+
+                LogAssert.Expect(LogType.Error, new Regex("OccupancyDesyncLatched"));
+                LogAssert.Expect(LogType.Assert, new Regex("OccupancyDesyncLatched"));
+                ChoreoTraceContext.LatchOccupancyDesync("contract-test");
+                Assert.IsTrue(ChoreoTraceContext.OccupancyDesyncLatched);
+
+                bool preview;
+                var disposition = intake.Submit(
+                    new InputIntent(InputIntentKinds.Explore, 2),
+                    InputOwner.ProtectedField,
+                    out preview);
+
+                Assert.AreEqual(IntentDisposition.Allow, disposition);
+                Assert.AreEqual(1, runtime.ScriptFactory.Built.Count);
+            }
+        }
+
+        [Test]
+        public void BlockingPresentMainlineHold_GatesIntentIntake_SameAsMainlineBusy()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateBare())
+            using (var runtime = PresentationRuntimeFixture.Install(
+                       arch,
+                       new RecordingScriptFactory(continueTicks: 2)))
+            {
+                var intake = IntentIntakeSystem.EnsureRegistered(
+                    arch.Architecture,
+                    legalityOverride: _ => true);
+
+                bool acquiredHere;
+                Assert.IsTrue(PresentationMainlineHold.TryAcquire("FieldBattlePresent", out acquiredHere));
+                Assert.IsTrue(acquiredHere);
+                Assert.IsTrue(runtime.MainlineBusy.Value);
+
+                bool preview;
+                Assert.AreEqual(
+                    IntentDisposition.BufferToDirector,
+                    intake.Submit(
+                        new InputIntent(InputIntentKinds.Attack, 3),
+                        InputOwner.ProtectedField,
+                        out preview));
+                Assert.IsTrue(preview);
+
+                PresentationMainlineHold.Release(acquiredHere, "FieldBattlePresent");
+                runtime.TickUntilIdle();
+                Assert.IsFalse(runtime.MainlineBusy.Value);
+                Assert.AreEqual(1, runtime.ScriptFactory.Built.Count);
+                Assert.AreEqual(3, runtime.ScriptFactory.Built[0].TargetId);
+            }
+        }
+
+        [Test]
+        public void IntakeAndInputStateSources_DoNotPollBattleOrFieldBusyOrDesyncGate()
+        {
+            var root = Path.GetFullPath(
+                Path.Combine(Application.dataPath, "Scripts", "NineGrid.Presentation"));
+            var files = new[]
+            {
+                Path.Combine(root, "Systems", "IntentIntakeSystem.cs"),
+                Path.Combine(root, "Systems", "PresentationInputStateSystem.cs"),
+                Path.Combine(root, "Cards", "GroundSlotHitProxy.cs"),
+            };
+
+            var forbidden = new Regex(
+                @"OccupancyDesyncLatched|EvaluateAttack|IsFieldBusy|IsBattlePresentationBusy|field\.IsBusy|hand\.IsBusy",
+                RegexOptions.CultureInvariant);
+
+            for (var i = 0; i < files.Length; i++)
+            {
+                var path = files[i];
+                Assert.IsTrue(File.Exists(path), path);
+                var match = forbidden.Match(File.ReadAllText(path));
+                Assert.IsFalse(
+                    match.Success,
+                    Path.GetFileName(path) + " 仍含独立 busy/desync 门禁: " + match.Value);
+            }
+
+            var groundCardPath = Path.Combine(root, "Cards", "GroundCardHitProxy.cs");
+            var groundCardText = File.ReadAllText(groundCardPath);
+            var gateMethod = Regex.Match(
+                groundCardText,
+                @"private bool TryPassGroundInputGate\(ManagedCard card, out string blockReason\)[\s\S]*?return true;\s*\}");
+            Assert.IsTrue(gateMethod.Success, "找不到 TryPassGroundInputGate 方法体");
+            Assert.IsFalse(
+                gateMethod.Value.Contains("field.IsBusy"),
+                "GroundCardHitProxy.TryPassGroundInputGate 不得以 field.IsBusy 作门禁");
+
+            var battlePath = Path.Combine(
+                root, "Cards", "Battle", "FieldBattlePresentationExecutor.cs");
+            var battleText = File.ReadAllText(battlePath);
+            Assert.IsFalse(
+                Regex.IsMatch(
+                    battleText,
+                    @"TryHandleBattleClick[\s\S]*?geometry\.IsFieldBusy"),
+                "TryHandleBattleClick 不得以 geometry.IsFieldBusy 作独立互斥");
+            Assert.IsFalse(
+                Regex.IsMatch(
+                    battleText,
+                    @"TryHandleBattleClick[\s\S]*?\|\|\s*_isBusy"),
+                "TryHandleBattleClick 不得以本地 BattleBusy(_isBusy) 作独立输入互斥");
+
+            var explorePath = Path.Combine(root, "Cards", "Ground", "GroundMotionExecutor.cs");
+            var exploreText = File.ReadAllText(explorePath);
+            var tryHandle = Regex.Match(
+                exploreText,
+                @"public bool TryHandleEmptySlotClick\(int slot\)[\s\S]*?return ExploreInputHook");
+            Assert.IsTrue(tryHandle.Success, "找不到 TryHandleEmptySlotClick");
+            Assert.IsFalse(
+                tryHandle.Value.Contains("_isBusy")
+                || tryHandle.Value.Contains("IsBattlePresentationBusy"),
+                "TryHandleEmptySlotClick 不得以 FieldBusy/BattleBusy 作独立互斥");
+
+            var handPath = Path.Combine(root, "Cards", "CardHandManagerSingleton.cs");
+            var handText = File.ReadAllText(handPath);
+            Assert.IsFalse(
+                Regex.IsMatch(
+                    handText,
+                    @"public bool IsBusy\s*\{[\s\S]*?field\.IsBusy"),
+                "CardHandManagerSingleton.IsBusy 不得再聚合 field.IsBusy 作门禁");
+            Assert.IsFalse(
+                Regex.IsMatch(
+                    handText,
+                    @"TryPickupFromGround[\s\S]{0,1200}?if \(IsBusy \|\|"),
+                "TryPickupFromGround 不得用含 MainlineBusy 的 IsBusy 提前吞掉缓冲路径");
+            Assert.IsFalse(
+                Regex.IsMatch(
+                    handText,
+                    @"TryPickupFromGround[\s\S]{0,1200}?FieldBusy"),
+                "拾取入口不得再以 FieldBusy 作独立互斥门禁");
         }
 
         private sealed class AcceptAllScriptFactory : IIntentScriptFactory

@@ -222,7 +222,16 @@ namespace NineGrid.Cards
         private bool CanRespondToPickup()
         {
             var hand = CardEntityLifecycleHook.HandOrNull();
-            if (hand == null || !hand.CanAcceptCard || hand.IsDragging)
+            if (hand == null || hand.IsDragging)
+            {
+                return false;
+            }
+
+            // 主线忙仍可点：交 IntentIntake 缓冲；勿用含 MainlineBusy 的 CanAcceptCard 自拒。
+            if (hand.IsSelfBusy
+                || hand.HandCount >= hand.MaxHandSlots
+                || PresentationInputGates.ChoiceOverlayActive
+                || PresentationInputGates.BoardSelectModeActive)
             {
                 return false;
             }
@@ -239,7 +248,8 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 统一场地输入门禁：占格登记、场地未锁、无 Deal/Slot 收敛、L0 根与注册格锚对齐。
+        /// 场地输入资格：占格登记、无 Opening、无 Deal/Slot 收敛、L0 根与注册格锚对齐。
+        /// 时序互斥不在此轮询 FieldBusy（#51 → IntentIntake / MainlineBusy）。
         /// </summary>
         private bool TryPassGroundInputGate(ManagedCard card, out string blockReason)
         {
@@ -251,11 +261,7 @@ namespace NineGrid.Cards
             }
 
             var field = GroundFieldGeometryHook.FieldOrNull();
-            if (field != null && field.IsBusy)
-            {
-                blockReason = "fieldBusy";
-                return false;
-            }
+            // #51：FieldBusy 不再作独立输入互斥；须阻塞时由主线持有，经 IntentIntake 裁决。
 
             if (PresentationInputGates.OpeningPresentationActive)
             {

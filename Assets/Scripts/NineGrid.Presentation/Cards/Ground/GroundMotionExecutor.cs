@@ -892,16 +892,10 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            // 已迁导演：覆盖层/开局/选卡/场地自忙仍硬挡；主线忙由导演缓冲意图。
+            // 轴二所有权快拒；轴一互斥只认 MainlineBusy（IntentIntake），勿再轮询 FieldBusy/BattleBusy。
             if (PresentationInputGates.ChoiceOverlayActive
                 || PresentationInputGates.OpeningPresentationActive
-                || PresentationInputGates.BoardSelectModeActive
-                || _isBusy)
-            {
-                return false;
-            }
-
-            if (IsBattlePresentationBusy())
+                || PresentationInputGates.BoardSelectModeActive)
             {
                 return false;
             }

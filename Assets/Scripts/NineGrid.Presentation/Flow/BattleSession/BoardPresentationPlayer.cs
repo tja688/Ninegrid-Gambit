@@ -547,7 +547,7 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// drainAfter 若仍有 Core↔Pres 分叉：清幽灵占格；仍未齐则输入熔断。
+        /// drainAfter 若仍有 Core↔Pres 分叉：清幽灵占格；仍未齐则诊断 Latch + 断言（#51 不再输入熔断）。
         /// 不做全盘 force-sync（ADR-0001）。
         /// </summary>
         private void HandleDrainAfterOccupancyDesync(GroundFieldView fieldManager, int requestId)

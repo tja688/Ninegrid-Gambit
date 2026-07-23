@@ -61,13 +61,14 @@ namespace NineGrid.Cards
             }
 
             var field = GroundFieldGeometryHook.FieldOrNull();
-            if (field == null || field.IsBusy)
+            if (field == null)
             {
                 return;
             }
 
+            // 轴一互斥只认 MainlineBusy（经 IntentIntake）；勿再轮询 FieldBusy/HandBusy。
             var hand = CardEntityLifecycleHook.HandOrNull();
-            if (hand != null && (hand.IsBusy || hand.IsDragging))
+            if (hand != null && hand.IsDragging)
             {
                 return;
             }

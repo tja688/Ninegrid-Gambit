@@ -31,7 +31,8 @@ namespace NineGrid.Flow.Diagnostics
         public static bool DrainInFlight { get; set; }
 
         /// <summary>
-        /// drainAfter 粘滞 Core↔Pres 占格分叉时置位；输入门全拒，直至清幽灵成功或 Reset。
+        /// drainAfter 粘滞 Core↔Pres 占格分叉时置位（诊断旗标）。
+        /// #51：不再作运行时输入硬拒；真出 desync 视为 bug，Latch 时告警/断言。
         /// </summary>
         public static bool OccupancyDesyncLatched => sOccupancyDesyncLatched;
 
@@ -66,6 +67,11 @@ namespace NineGrid.Flow.Diagnostics
         public static void LatchOccupancyDesync(string detail = null)
         {
             sOccupancyDesyncLatched = true;
+            var message =
+                "[Choreo] OccupancyDesyncLatched（永不应触发的诊断；不再作输入硬拒）。detail="
+                + (detail ?? "drainAfter.hasDiff");
+            Debug.LogError(message);
+            Debug.Assert(false, message);
             PerfTraceRecorder.EmitChoreoAnomaly(
                 "OccupancyDesyncLatched",
                 -1,

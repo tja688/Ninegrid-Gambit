@@ -56,16 +56,12 @@ namespace NineGrid.Cards
         {
             var geometry = ResolveGeometry();
             var adapter = EnsureAdapter();
-            if (card == null
-                || _isBusy
-                || adapter == null
-                || geometry == null
-                || geometry.IsFieldBusy)
+            if (card == null || adapter == null || geometry == null)
             {
                 return false;
             }
 
-            // 轴二：攻击目标表面为受保护场地。轴一互斥由 Director 在提交时裁决（#48/#50）。
+            // 轴二：攻击目标表面为受保护场地。轴一互斥只认 MainlineBusy（IntentIntake/#51）。
             if (!PresentationInputGates.OwnsProtectedField)
             {
                 return false;

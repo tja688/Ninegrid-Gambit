@@ -79,16 +79,11 @@ namespace NineGrid.Cards
         {
             get
             {
-                if (_isBusy
+                // #51：不再聚合场地忙旗；须阻塞的场地表演应持主线（MainlineBusy）。
+                return _isBusy
                     || PresentationInputGates.ChoiceOverlayActive
                     || PresentationInputGates.MainlineBusy
-                    || PresentationInputGates.BoardSelectModeActive)
-                {
-                    return true;
-                }
-
-                var field = GroundFieldGeometryHook.FieldOrNull();
-                return field != null && field.IsBusy;
+                    || PresentationInputGates.BoardSelectModeActive;
             }
         }
 
@@ -285,7 +280,8 @@ namespace NineGrid.Cards
             if (!PresentationInputGates.HasExternalHold && !skipBusyGuard)
             {
                 var field = GroundFieldGeometryHook.FieldOrNull();
-                if (field != null && field.IsBusy)
+                // 本地场地运动重入保护（非输入门禁）；勿用聚合 IsBusy 轮询 BattleBusy。
+                if (field != null && field.IsFieldBusy)
                 {
                     return false;
                 }
@@ -414,10 +410,24 @@ namespace NineGrid.Cards
                 card.DefId,
                 card.CoreKind.ToString());
 
-            if (IsBusy || IsDragging || !CanAcceptCard)
+            // 勿用含 MainlineBusy 的 IsBusy/CanAcceptCard：忙时应落到下方 IntentIntake 缓冲。
+            if (IsDragging)
             {
-                var gate = IsBusy ? "HandBusy" : IsDragging ? "HandDragging" : "HandFull";
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, gate, false, null);
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "HandDragging", false, null);
+                return false;
+            }
+
+            if (HandCount >= layoutSettings.maxSlots)
+            {
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "HandFull", false, null);
+                return false;
+            }
+
+            if (_isBusy
+                || PresentationInputGates.ChoiceOverlayActive
+                || PresentationInputGates.BoardSelectModeActive)
+            {
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "HandBusy", false, null);
                 return false;
             }
 
@@ -427,9 +437,9 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (field == null || field.IsBusy)
+            if (field == null)
             {
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "FieldBusy", false, null);
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "NoField", false, null);
                 return false;
             }
 
