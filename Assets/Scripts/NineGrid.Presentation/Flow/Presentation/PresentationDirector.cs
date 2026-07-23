@@ -4,7 +4,9 @@ using NineGrid.Flow.Diagnostics;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// 琛ㄦ紨瀵兼紨锛氭椂闂寸嚎鍞竴鎵€鏈夎€呬笌鍑哄彛锛涗富绾垮湪璺戞槸鍞竴杈撳叆浜掓枼鐪熺浉銆?    /// 璇婃柇杩為攣鏍?<see cref="DirectorTrace.CurrentChainId"/> 缁戜竴娆?InputIntent 鑴氭湰鐢熷懡鍛ㄦ湡銆?    /// </summary>
+    /// 表演导演：时间线唯一所有者与出口；主线在跑是唯一输入互斥真相。
+    /// 诊断连锁根 <see cref="DirectorTrace.CurrentChainId"/> 绑一次 InputIntent 脚本生命周期。
+    /// </summary>
     public sealed class PresentationDirector
     {
         private readonly BattleTimeline mMainline;
@@ -36,13 +38,13 @@ namespace NineGrid.Flow.Presentation
             mBypass = new BattleTimeline(diag, DirectorTimelineLane.Bypass);
         }
 
-        /// <summary>涓荤嚎鍦ㄨ窇 = 鍞竴 busy 鐪熺浉锛堟梺璺楗伴亾涓嶈鍏ワ級銆?/summary>
+        /// <summary>主线在跑 = 唯一 busy 真相（旁路装饰道不计入）。</summary>
         public bool IsMainlineBusy
         {
             get { return mMainline.IsBusy; }
         }
 
-        /// <summary>澶栭儴钖勯€傞厤绉熺害浠嶆寔鏈夛紙鍚祵濂楁湭娓咃級銆?/summary>
+        /// <summary>外部薄适配租约仍持有（含嵌套未清）。</summary>
         public bool HasExternalHold
         {
             get { return !mExternalHoldReleased || mExternalHoldNestDepth > 0; }
@@ -64,7 +66,8 @@ namespace NineGrid.Flow.Presentation
         }
 
         /// <summary>
-        /// 鎻愪氦杈撳叆鎰忓浘銆傚繖鏃剁紦鍐叉渶鏃╀竴鏉″苟缁欏嚭 uiPick 棰勫憡锛涘凡鏈夌紦鍐插垯鎷掔粷鍚庢潵鑰呫€?        /// </summary>
+        /// 提交输入意图。主线忙时 latest-wins 缓冲（深度 1，后者覆盖前者）并给出 uiPick 预告。
+        /// </summary>
         public bool TrySubmitIntent(InputIntent intent, out bool uiPickPreview)
         {
             uiPickPreview = false;
@@ -98,11 +101,13 @@ namespace NineGrid.Flow.Presentation
             LastClearReason = reason;
             mHasBufferedIntent = false;
             mBufferedIntent = default(InputIntent);
-            // Phase / 鎴樿触 / 鎹㈠眰浣垮綋鍓嶅墽鏈笂涓嬫枃澶辨晥锛屼竴骞朵腑姝富绾夸笌鏃佽矾銆?            mMainline.Clear();
+            // Phase / 战败 / 换层使当前剧本上下文失效，一并中止主线与旁路。
+            mMainline.Clear();
             mBypass.Clear();
             mExternalHoldReleased = true;
             mExternalHoldNestDepth = 0;
-            // IntentHardClear 鍐?ClearChain锛涙澶勫啀 PublishBusy銆?            DirectorTrace.IntentHardClear(reason.ToString());
+            // IntentHardClear 内 ClearChain；此处再 PublishBusy。
+            DirectorTrace.IntentHardClear(reason.ToString());
             PublishBusy();
         }
 
@@ -112,7 +117,7 @@ namespace NineGrid.Flow.Presentation
             PublishBusy();
         }
 
-        /// <summary>鍚戜富绾胯拷鍔犲姝ワ紙濡?FusionRefill Resolve+Present锛夈€?/summary>
+        /// <summary>向主线追加多步（如 FusionRefill Resolve+Present）。</summary>
         public void MutateMainline(Action<BattleTimeline> mutate)
         {
             if (mutate == null)
@@ -125,7 +130,8 @@ namespace NineGrid.Flow.Presentation
         }
 
         /// <summary>
-        /// 澶栭儴钖勯€傞厤鎸備富绾跨绾︼細idle 鏃跺叆闃?Hold锛涗富绾垮凡蹇欏垯宓屽璁℃暟锛堢敱鐜版湁 Present 鎸佸繖锛夈€?        /// </summary>
+        /// 外部薄适配挂主线租约：idle 时入队 Hold；主线已忙则嵌套计数（由现有 Present 持忙）。
+        /// </summary>
         public bool TryBeginExternalHold(string reason = null)
         {
             if (!mExternalHoldReleased && mExternalHoldNestDepth == 0)
@@ -145,7 +151,7 @@ namespace NineGrid.Flow.Presentation
             return true;
         }
 
-        /// <summary>閲婃斁 <see cref="TryBeginExternalHold"/> 绉熺害銆?/summary>
+        /// <summary>释放 <see cref="TryBeginExternalHold"/> 租约。</summary>
         public void EndExternalHold(string reason = null)
         {
             if (mExternalHoldNestDepth > 0)
@@ -158,7 +164,7 @@ namespace NineGrid.Flow.Presentation
             PublishBusy();
         }
 
-        /// <summary>娓呭満锛氬己鍒剁粨鏉熷閮ㄧ绾︼紙鍚祵濂楋級銆?/summary>
+        /// <summary>清场：强制结束外部租约（含嵌套）。</summary>
         public void ForceEndExternalHold(string reason = null)
         {
             mExternalHoldReleased = true;
@@ -166,7 +172,7 @@ namespace NineGrid.Flow.Presentation
             PublishBusy();
         }
 
-        /// <summary>鏃佽矾瑁呴グ閬擄細涓庝富绾垮苟琛岋紝涓嶅崰杈撳叆浜掓枼銆?/summary>
+        /// <summary>旁路装饰道：与主线并行，不占输入互斥。</summary>
         public void StartBypass(ITimelineStep step)
         {
             var stepName = step != null ? step.GetType().Name : string.Empty;
@@ -202,7 +208,8 @@ namespace NineGrid.Flow.Presentation
             }
             else if (!IsMainlineBusy && !mHasBufferedIntent)
             {
-                // defer 琛ョ墝绛夊厔寮?batch 浠嶅湪鍚屼竴鑴氭湰鍐咃紱浠呮暣鏉′富绾胯窇绌轰笖鏃犵紦鍐叉椂娓呰繛閿佹牴銆?                DirectorTrace.ClearChain();
+                // defer 补牌等兄弟 batch 仍在同一脚本内；仅整条主线跑空且无缓冲时清连锁根。
+                DirectorTrace.ClearChain();
             }
 
             PublishBusy();
