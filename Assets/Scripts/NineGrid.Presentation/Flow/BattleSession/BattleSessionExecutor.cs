@@ -39,7 +39,7 @@ namespace NineGrid.Flow
         private UseItemPresentChannel _useItemPresentChannel;
         private QueuedBoardPresentChannel _useItemBoardPresentChannel;
 
-        private Action _ensurePresentationRuntime;
+        private Func<bool> _ensurePresentationRuntime;
         private Action<IntentClearReason> _shutdownPresentationRuntime;
 
         private IUnRegister _exploreRejectedUnRegister;
@@ -144,7 +144,7 @@ namespace NineGrid.Flow
         {
             if (cancelWork)
             {
-                CancelPresentationWork();
+                TeardownPresentationRuntime(IntentClearReason.LayerChange);
             }
 
             UnregisterPresentationIntentHandlers();
@@ -198,7 +198,24 @@ namespace NineGrid.Flow
             return _presentationCts.Token;
         }
 
+        /// <summary>
+        /// 软取消局内表现工作：取消 CTS、清 hold/sync、HardClear 意图缓冲；
+        /// <b>不</b>关停 <see cref="IPresentationRuntimeSystem"/>（Opening Renew 依赖此语义）。
+        /// </summary>
         public void CancelPresentationWork()
+        {
+            CancelPresentationWorkCore(teardownRuntime: false, IntentClearReason.LayerChange);
+        }
+
+        /// <summary>
+        /// 硬关停：软取消后经 SceneRoot 回调 Stop 导演并清 mInstalled。
+        /// </summary>
+        public void TeardownPresentationRuntime(IntentClearReason reason = IntentClearReason.LayerChange)
+        {
+            CancelPresentationWorkCore(teardownRuntime: true, reason);
+        }
+
+        private void CancelPresentationWorkCore(bool teardownRuntime, IntentClearReason reason)
         {
             if (_presentationCts != null)
             {
@@ -208,8 +225,22 @@ namespace NineGrid.Flow
             }
 
             BoardPlayer.ClearShuffleSink();
-            PresentationInputGates.ForceEndExternalHold("CancelPresentationWork");
-            ShutdownPresentationRuntime(IntentClearReason.LayerChange);
+            PresentationInputGates.ForceEndExternalHold(
+                teardownRuntime ? "TeardownPresentationRuntime" : "CancelPresentationWork");
+
+            if (teardownRuntime)
+            {
+                ShutdownPresentationRuntime(reason);
+            }
+            else
+            {
+                var runtime = TryGetPresentationRuntime();
+                if (runtime != null && runtime.IsStarted)
+                {
+                    runtime.HardClearIntents(IntentClearReason.LayerChange);
+                }
+            }
+
             try
             {
                 NineGridArchitecture.Current.GetSystem<IPresentationSyncSystem>().Clear();
@@ -254,7 +285,7 @@ namespace NineGrid.Flow
 
         public InitialGameSnapshot BootstrapRun(InitialGameOptions options = null)
         {
-            CancelPresentationWork();
+            TeardownPresentationRuntime(IntentClearReason.LayerChange);
             ResetPresentationSurface();
             CoreCardPresentationMapper.EnsureContentCatalogLoaded();
 
@@ -284,7 +315,7 @@ namespace NineGrid.Flow
 
         public void ClearPresentationSurface()
         {
-            CancelPresentationWork();
+            TeardownPresentationRuntime(IntentClearReason.LayerChange);
             ResolveBattlePresentation()?.CancelBattleWork();
             PresentationInputGates.ForceEndExternalHold("ClearPresentationSurface");
             _drainInFlight = false;
@@ -295,7 +326,7 @@ namespace NineGrid.Flow
 
         public void ClearCardPresentationSurface()
         {
-            CancelPresentationWork();
+            TeardownPresentationRuntime(IntentClearReason.LayerChange);
             ResolveBattlePresentation()?.CancelBattleWork();
             PresentationInputGates.ForceEndExternalHold("ClearCardPresentationSurface");
             _drainInFlight = false;
@@ -559,16 +590,23 @@ namespace NineGrid.Flow
             }
         }
 
-        private void EnsurePresentationRuntimeInstalled()
+        private bool EnsurePresentationRuntimeInstalled()
         {
             if (_ensurePresentationRuntime != null)
             {
-                _ensurePresentationRuntime();
-                return;
+                if (_ensurePresentationRuntime())
+                {
+                    return true;
+                }
+
+                Debug.LogWarning(
+                    "[BattleSession] EnsurePresentationRuntimeInstalled 后导演仍未启动。");
+                return false;
             }
 
             Debug.LogWarning(
                 "[BattleSession] PresentationSceneRoot 未绑定 Runtime 生命周期，无法安装导演。");
+            return false;
         }
 
         private void ShutdownPresentationRuntime(IntentClearReason reason)
@@ -580,6 +618,11 @@ namespace NineGrid.Flow
             }
 
             ClearPresentChannels();
+            var runtime = TryGetPresentationRuntime();
+            if (runtime != null && runtime.IsStarted)
+            {
+                runtime.Stop(reason);
+            }
         }
 
         private void ResetPresentationSurface()

@@ -45,7 +45,7 @@ namespace NineGrid.Flow
         [SerializeField] private UiPanelRouter panelRouter;
 
         private bool _fieldSignalSubscribed;
-        private Action _ensurePresentationRuntime;
+        private Func<bool> _ensurePresentationRuntime;
         private Action<IntentClearReason> _shutdownPresentationRuntime;
 
         public CardManagerSingleton CardManager => cardManager;
@@ -88,23 +88,23 @@ namespace NineGrid.Flow
         }
 
         public void BindRuntimeLifecycle(
-            Action ensureInstalled,
+            Func<bool> ensureInstalled,
             Action<IntentClearReason> shutdown)
         {
             _ensurePresentationRuntime = ensureInstalled;
             _shutdownPresentationRuntime = shutdown;
         }
 
-        public void EnsurePresentationRuntimeInstalled()
+        public bool EnsurePresentationRuntimeInstalled()
         {
             if (_ensurePresentationRuntime != null)
             {
-                _ensurePresentationRuntime();
-                return;
+                return _ensurePresentationRuntime();
             }
 
             Debug.LogWarning(
                 "[BattleSession] PresentationSceneRoot 未绑定 Runtime 生命周期，无法安装导演。");
+            return false;
         }
 
         public void ShutdownPresentationRuntime(IntentClearReason reason)

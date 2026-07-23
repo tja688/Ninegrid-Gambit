@@ -122,7 +122,11 @@ namespace NineGrid.Flow
                 CancelPresentationWork();
                 // StartNode 前清零卡牌占格，保留遗物/技能/PlayerInfo 持久 HUD。
                 ResetCardPresentationSurface();
-                EnsurePresentationRuntimeInstalled();
+                if (!EnsurePresentationRuntimeInstalled())
+                {
+                    Debug.LogError("[BattleSession] 表现意图运行时未启动，中止入场。");
+                    return;
+                }
 
                 var arch = NineGridArchitecture.Current;
                 var phase = arch.GetSystem<IPhaseSystem>();
@@ -131,6 +135,12 @@ namespace NineGrid.Flow
                     Debug.LogWarning(
                         $"[BattleSession] StartNode 非法 phase={phase.CurrentPhase}，先 BootstrapRun。");
                     BootstrapRun();
+                    if (!EnsurePresentationRuntimeInstalled())
+                    {
+                        Debug.LogError(
+                            "[BattleSession] BootstrapRun 后表现意图运行时未启动，中止入场。");
+                        return;
+                    }
                 }
 
                 options ??= NodeDeckOptions.CreateDefaultBattle();

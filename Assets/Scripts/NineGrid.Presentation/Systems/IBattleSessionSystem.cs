@@ -121,6 +121,9 @@ namespace NineGrid.Presentation.Systems
 
         void CancelPresentationWork();
 
+        /// <summary>硬关停表现 Runtime（离开局内生命周期 / Bootstrap / 清场）。</summary>
+        void TeardownPresentationRuntime(IntentClearReason reason = IntentClearReason.LayerChange);
+
         UniTask<bool> ValidateHandDragApplyAsync(ManagedCard card, int? targetGroundSlot);
 
         void AbortBoardSelectIfActive(string reason);

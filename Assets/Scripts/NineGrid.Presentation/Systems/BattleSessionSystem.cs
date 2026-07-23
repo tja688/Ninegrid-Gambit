@@ -236,6 +236,11 @@ namespace NineGrid.Presentation.Systems
             mExecutor.CancelPresentationWork();
         }
 
+        public void TeardownPresentationRuntime(IntentClearReason reason = IntentClearReason.LayerChange)
+        {
+            mExecutor.TeardownPresentationRuntime(reason);
+        }
+
         public UniTask<bool> ValidateHandDragApplyAsync(ManagedCard card, int? targetGroundSlot)
         {
             return mExecutor.ValidateHandDragApplyAsync(card, targetGroundSlot);

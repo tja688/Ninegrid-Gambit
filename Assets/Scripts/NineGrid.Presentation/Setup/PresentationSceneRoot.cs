@@ -74,17 +74,18 @@ namespace NineGrid.Presentation.Setup
             }
         }
 
-        /// <summary>局内开始时幂等安装生产 Runtime。</summary>
-        public void EnsureInstalled()
+        /// <summary>局内开始时幂等安装生产 Runtime；返回导演是否已启动。</summary>
+        public bool EnsureInstalled()
         {
-            if (mInstalled)
+            if (!mInstalled)
             {
-                return;
+                mBindings = BuildBindings();
+                mComposition.Install(mBindings);
+                mInstalled = true;
             }
 
-            mBindings = BuildBindings();
-            mComposition.Install(mBindings);
-            mInstalled = true;
+            var runtime = this.GetSystem<IPresentationRuntimeSystem>();
+            return runtime != null && runtime.IsStarted;
         }
 
         /// <summary>幂等关停；未安装时 no-op。</summary>

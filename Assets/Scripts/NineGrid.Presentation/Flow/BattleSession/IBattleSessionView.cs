@@ -26,8 +26,8 @@ namespace NineGrid.Flow
 
         UiPanelRouter PanelRouter { get; }
 
-        /// <summary>由 PresentationSceneRoot 注入的 Runtime Install 回调。</summary>
-        void EnsurePresentationRuntimeInstalled();
+        /// <summary>由 PresentationSceneRoot 注入的 Runtime Install 回调；成功时导演已 IsStarted。</summary>
+        bool EnsurePresentationRuntimeInstalled();
 
         /// <summary>由 PresentationSceneRoot 注入的 Runtime Shutdown 回调。</summary>
         void ShutdownPresentationRuntime(IntentClearReason reason);
