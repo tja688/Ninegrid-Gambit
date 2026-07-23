@@ -37,7 +37,11 @@ namespace NineGrid.Presentation.Commands
             var pipeline = arch.GetSystem<IActionPipelineSystem>();
             var startIndex = pipeline.EventLog.Entries.Count;
             var result = arch.GetSystem<IPhaseSystem>().ApplyPickupItem(SlotId.Board(mGroundSlot));
-            var summary = new PickupItemPresentationResult { Accepted = result.Accepted };
+            var summary = new PickupItemPresentationResult
+            {
+                Accepted = result.Accepted,
+                Reason = result.Reason ?? string.Empty,
+            };
             if (!result.Accepted)
             {
                 this.SendEvent(new PickupItemRejectedEvent

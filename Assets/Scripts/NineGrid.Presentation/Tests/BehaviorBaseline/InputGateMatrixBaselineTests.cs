@@ -17,6 +17,27 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
         }
 
         [Test]
+        public void OccupancyDesyncLatch_RejectsAllTypedQueries_UntilReset()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateBare())
+            {
+                var input = PresentationInputStateSystem.EnsureRegistered(arch.Architecture);
+                NineGrid.Flow.Diagnostics.ChoreoTraceContext.Reset();
+                NineGrid.Flow.Diagnostics.ChoreoTraceContext.LatchOccupancyDesync("test");
+
+                Assert.AreEqual("occupancyDesync", input.EvaluateExplore().Reason);
+                Assert.AreEqual("occupancyDesync", input.EvaluateAttack().Reason);
+                Assert.AreEqual("occupancyDesync", input.EvaluatePickup().Reason);
+                Assert.AreEqual("occupancyDesync", input.EvaluateUseItem().Reason);
+                Assert.AreEqual("occupancyDesync", input.EvaluateBoardSelectionBegin().Reason);
+
+                input.ResetGates("clear-desync");
+                Assert.IsFalse(NineGrid.Flow.Diagnostics.ChoreoTraceContext.OccupancyDesyncLatched);
+                Assert.IsTrue(input.EvaluateExplore().IsAllowed);
+            }
+        }
+
+        [Test]
         public void GateFlags_AreIndependent_UntilResetClearsAll()
         {
             using (var arch = PresentationArchitectureFixture.CreateBare())

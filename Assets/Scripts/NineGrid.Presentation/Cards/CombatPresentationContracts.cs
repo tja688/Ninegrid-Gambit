@@ -133,6 +133,7 @@ namespace NineGrid.Cards
     public struct PickupItemPresentationResult
     {
         public bool Accepted;
+        public string Reason;
         public int CardUid;
         public bool AcquiredToHand;
         public bool RemovedWithoutHand;

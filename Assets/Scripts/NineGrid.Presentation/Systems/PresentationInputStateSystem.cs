@@ -1,5 +1,6 @@
 using NineGrid.Cards;
 using NineGrid.Core;
+using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using QFramework;
 
@@ -67,6 +68,7 @@ namespace NineGrid.Presentation.Systems
             mOpening.Value = false;
             mChoiceOverlay.Value = false;
             mBoardSelect.Value = false;
+            ChoreoTraceContext.ClearOccupancyDesyncLatch(reason ?? "ResetInputGates");
 
             var runtime = ResolveRuntime();
             if (runtime != null && runtime.IsStarted)
@@ -77,6 +79,11 @@ namespace NineGrid.Presentation.Systems
 
         public PresentationInputGateResult EvaluateExplore()
         {
+            if (ChoreoTraceContext.OccupancyDesyncLatched)
+            {
+                return PresentationInputGateResult.Reject("occupancyDesync");
+            }
+
             if (mChoiceOverlay.Value)
             {
                 return PresentationInputGateResult.Reject("choiceOverlay");
@@ -102,6 +109,11 @@ namespace NineGrid.Presentation.Systems
 
         public PresentationInputGateResult EvaluateAttack()
         {
+            if (ChoreoTraceContext.OccupancyDesyncLatched)
+            {
+                return PresentationInputGateResult.Reject("occupancyDesync");
+            }
+
             if (mChoiceOverlay.Value)
             {
                 return PresentationInputGateResult.Reject("choiceOverlay");
@@ -136,6 +148,11 @@ namespace NineGrid.Presentation.Systems
 
         public PresentationInputGateResult EvaluatePickup()
         {
+            if (ChoreoTraceContext.OccupancyDesyncLatched)
+            {
+                return PresentationInputGateResult.Reject("occupancyDesync");
+            }
+
             if (mOpening.Value)
             {
                 return PresentationInputGateResult.Reject("openingDeal");
@@ -161,6 +178,11 @@ namespace NineGrid.Presentation.Systems
 
         public PresentationInputGateResult EvaluateUseItem()
         {
+            if (ChoreoTraceContext.OccupancyDesyncLatched)
+            {
+                return PresentationInputGateResult.Reject("occupancyDesync");
+            }
+
             if (mChoiceOverlay.Value)
             {
                 return PresentationInputGateResult.Reject("choiceOverlay");
@@ -181,6 +203,11 @@ namespace NineGrid.Presentation.Systems
 
         public PresentationInputGateResult EvaluateBoardSelectionBegin()
         {
+            if (ChoreoTraceContext.OccupancyDesyncLatched)
+            {
+                return PresentationInputGateResult.Reject("occupancyDesync");
+            }
+
             if (mChoiceOverlay.Value)
             {
                 return PresentationInputGateResult.Reject("choiceOverlay");

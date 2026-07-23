@@ -103,6 +103,26 @@ namespace NineGrid.Flow
                             pendingMoves,
                             ref pendingActionId,
                             multiHopStrategy);
+                        // 盘面→非盘面（exchangeToDraw / shuffleExisting 等）：投影为 Remove，避免幽灵占格。
+                        if (e.CardUid > 0 && e.FromSlot.IsBoardSlot && !e.ToSlot.IsBoardSlot)
+                        {
+                            if (legacyRemovedSet.Add(e.CardUid))
+                            {
+                                legacyRemoveList.Add(e.CardUid);
+                                steps.Add(new BoardPresentationStep
+                                {
+                                    CoreSequence = e.Sequence,
+                                    ActionId = e.ActionId,
+                                    Kind = BoardPresentationStepKind.Remove,
+                                    Commitment = CommitmentKind.Sync,
+                                    MultiHopStrategy = MultiHopProjectionStrategy.SerialVisible,
+                                    RemovedUids = new[] { e.CardUid },
+                                });
+                            }
+
+                            break;
+                        }
+
                         if (e.CardUid > 0 && e.ToSlot.IsBoardSlot)
                         {
                             var defId = string.Empty;

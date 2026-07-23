@@ -397,7 +397,7 @@ namespace NineGrid.Cards
         {
             if (card == null)
             {
-                FlowFieldTraceSink.PickupGate?.Invoke(-1, "NullCard", false);
+                FlowFieldTraceSink.PickupGate?.Invoke(-1, "NullCard", false, null);
                 return false;
             }
 
@@ -417,50 +417,50 @@ namespace NineGrid.Cards
             if (IsBusy || IsDragging || !CanAcceptCard)
             {
                 var gate = IsBusy ? "HandBusy" : IsDragging ? "HandDragging" : "HandFull";
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, gate, false);
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, gate, false, null);
                 return false;
             }
 
             if (card.DisplayMode != CardDisplayMode.GroundCardMode)
             {
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "NotGroundMode", false);
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "NotGroundMode", false, null);
                 return false;
             }
 
             if (field == null || field.IsBusy)
             {
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "FieldBusy", false);
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "FieldBusy", false, null);
                 return false;
             }
 
             if (PresentationInputGates.OpeningPresentationActive)
             {
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "OpeningDeal", false);
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "OpeningDeal", false, null);
                 return false;
             }
 
             if (!field.TryGetSlotOf(card.Uid, out var groundSlot))
             {
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "NoSlot", false);
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "NoSlot", false, null);
                 return false;
             }
 
             if (!field.IsAvatarOrthogonalBattleSlot(groundSlot))
             {
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "NotOrtho", false);
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "NotOrtho", false, null);
                 return false;
             }
 
             if (!PresentationInputGates.TryBeginExternalHold("Pickup"))
             {
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "LockFail", false);
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "LockFail", false, null);
                 return false;
             }
 
             if (PickupInputHook.TryApplyPickup == null)
             {
                 PresentationInputGates.EndExternalHold("Pickup-unwired");
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "PickupHookUnwired", false);
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "PickupHookUnwired", false, null);
                 Debug.LogWarning("[CardHandManager] PickupInputHook.TryApplyPickup 未装配。");
                 return false;
             }
@@ -469,7 +469,7 @@ namespace NineGrid.Cards
             if (!pickup.Accepted)
             {
                 PresentationInputGates.EndExternalHold("Pickup-rejected");
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "CoreReject", false);
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "CoreReject", false, pickup.Reason);
                 return false;
             }
 
@@ -497,7 +497,7 @@ namespace NineGrid.Cards
             {
                 Debug.LogWarning($"[CardHandManager] Pickup 已接受但未入手 uid={card.Uid}");
                 PresentationInputGates.EndExternalHold("Pickup-no-hand");
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "NoAcquire", false);
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "NoAcquire", false, null);
                 return false;
             }
 
@@ -505,7 +505,7 @@ namespace NineGrid.Cards
                 || taken != card)
             {
                 PresentationInputGates.EndExternalHold("Pickup-take-failed");
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "TakeFail", false);
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "TakeFail", false, null);
                 return false;
             }
 
@@ -514,7 +514,7 @@ namespace NineGrid.Cards
             DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Hover);
 
             RunPickupFromGroundAsync(card, pickup).Forget();
-            FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "ok", true);
+            FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "ok", true, null);
             return true;
         }
 

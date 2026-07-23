@@ -24,8 +24,8 @@ namespace NineGrid.Flow.Diagnostics
             FlowFieldTraceSink.RegistryAudit = OnRegistryAudit;
             FlowFieldTraceSink.PickupAttempt = (uid, groundSlot, defId, coreKind) =>
                 RecordPickupAttempt(uid, groundSlot, defId, coreKind);
-            FlowFieldTraceSink.PickupGate = (uid, gate, accepted) =>
-                RecordPickupGate(uid, gate, accepted);
+            FlowFieldTraceSink.PickupGate = (uid, gate, accepted, coreReason) =>
+                RecordPickupGate(uid, gate, accepted, coreReason);
             FlowFieldTraceSink.PickupSuccess = RecordPickupSuccess;
             FlowFieldTraceSink.RotateClassify = (accepted, clockwise, moveCount, ringOccupied) =>
                 RecordRotateClassify(accepted, clockwise, moveCount, ringOccupied);
@@ -255,6 +255,22 @@ namespace NineGrid.Flow.Diagnostics
             catch (Exception ex)
             {
                 Debug.LogWarning("[FieldTrace] OccupancySnapshot failed: " + ex.Message);
+            }
+        }
+
+        /// <summary>只读探测当前 Core↔Pres 占格分叉；失败时返回 false。</summary>
+        public static bool TryGetOccupancyDiff(out string diffSlots)
+        {
+            diffSlots = string.Empty;
+            try
+            {
+                BuildOccupancy(out _, out _, out diffSlots, out _, out _);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[FieldTrace] TryGetOccupancyDiff failed: " + ex.Message);
+                return false;
             }
         }
 

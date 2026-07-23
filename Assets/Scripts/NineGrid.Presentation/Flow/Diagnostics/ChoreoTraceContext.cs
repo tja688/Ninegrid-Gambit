@@ -24,10 +24,16 @@ namespace NineGrid.Flow.Diagnostics
         private static string sLastPickupGate = string.Empty;
         private static int sLastChoreoSeqId;
         private static bool sLastPickupEligibilityCanRespond;
+        private static bool sOccupancyDesyncLatched;
 
         public static int BoardQueueDepth { get; set; }
         public static bool PumpRunning { get; set; }
         public static bool DrainInFlight { get; set; }
+
+        /// <summary>
+        /// drainAfter 粘滞 Core↔Pres 占格分叉时置位；输入门全拒，直至清幽灵成功或 Reset。
+        /// </summary>
+        public static bool OccupancyDesyncLatched => sOccupancyDesyncLatched;
 
         public static int CurrentSeqId => sOpenStack.Count > 0 ? sOpenStack.Peek().SeqId : 0;
 
@@ -51,9 +57,33 @@ namespace NineGrid.Flow.Diagnostics
             sLastPickupGate = string.Empty;
             sLastChoreoSeqId = 0;
             sLastPickupEligibilityCanRespond = false;
+            sOccupancyDesyncLatched = false;
             BoardQueueDepth = 0;
             PumpRunning = false;
             DrainInFlight = false;
+        }
+
+        public static void LatchOccupancyDesync(string detail = null)
+        {
+            sOccupancyDesyncLatched = true;
+            PerfTraceRecorder.EmitChoreoAnomaly(
+                "OccupancyDesyncLatched",
+                -1,
+                detail ?? "drainAfter.hasDiff");
+        }
+
+        public static void ClearOccupancyDesyncLatch(string reason = null)
+        {
+            if (!sOccupancyDesyncLatched)
+            {
+                return;
+            }
+
+            sOccupancyDesyncLatched = false;
+            PerfTraceRecorder.EmitChoreoAnomaly(
+                "OccupancyDesyncCleared",
+                -1,
+                reason ?? "cleared");
         }
 
         public static int BeginChoreo(string kind, Dictionary<string, string> extra = null)

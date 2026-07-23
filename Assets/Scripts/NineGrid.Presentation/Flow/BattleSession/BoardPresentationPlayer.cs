@@ -218,6 +218,7 @@ namespace NineGrid.Flow
 
                         fieldManager.RefreshSlotHitColliders();
                         FieldTraceHelper.RecordOccupancySnapshot("drainAfter");
+                        HandleDrainAfterOccupancyDesync(fieldManager, requestId);
                         FieldTraceHelper.RecordDrainEnd(
                             moveCount,
                             dealCount,
@@ -428,6 +429,9 @@ namespace NineGrid.Flow
                     continue;
                 }
 
+                // Rotate 后 / Deal 前：清掉与 Core 不符的幽灵占格，避免 placeDenied。
+                TryClearGhostOccupantForDeal(fieldManager, deal.Slot, deal.Uid);
+
                 var ensureCard = ResolveOrSpawnDeckCardForDeal(deal);
                 var flightContext = new DealFlightContext(
                     fieldManager.IsFieldBusy,
@@ -441,6 +445,21 @@ namespace NineGrid.Flow
                     skipBusyGuard: true,
                     flightContext: flightContext,
                     cancellationToken: ct);
+                if (!ok)
+                {
+                    // placeDenied 防御：再清一次幽灵后重试一次。
+                    if (TryClearGhostOccupantForDeal(fieldManager, deal.Slot, deal.Uid))
+                    {
+                        (ok, handle) = await deckManager.DealCardByUidWithFlightAsync(
+                            deal.Uid,
+                            deal.Slot,
+                            ensureCard: ResolveOrSpawnDeckCardForDeal(deal),
+                            skipBusyGuard: true,
+                            flightContext: flightContext,
+                            cancellationToken: ct);
+                    }
+                }
+
                 if (ok)
                 {
                     if (handle != null)
@@ -456,7 +475,11 @@ namespace NineGrid.Flow
                 else
                 {
                     Debug.LogWarning(
-                        $"[InBattleManager] 补牌发牌失败 uid={deal.Uid} slot={deal.Slot}，留给安全网对齐。");
+                        $"[InBattleManager] 补牌发牌失败 uid={deal.Uid} slot={deal.Slot}（placeDenied 未自愈）。");
+                    ChoreoTraceSink.SafeEmitAnomaly(
+                        "DealPlaceDeniedSticky",
+                        deal.Uid,
+                        "slot=" + deal.Slot);
                 }
 
                 if (i < deals.Length - 1 && dealInterval > 0f)
@@ -466,6 +489,137 @@ namespace NineGrid.Flow
                         cancellationToken: ct);
                 }
             }
+        }
+
+        /// <summary>
+        /// 若 Present 占格 uid 与 Core 目标不符，卸掉幽灵占格。返回是否执行了卸格。
+        /// </summary>
+        private static bool TryClearGhostOccupantForDeal(
+            GroundFieldView fieldManager,
+            int slot,
+            int expectedDealUid)
+        {
+            if (fieldManager == null || slot <= 0)
+            {
+                return false;
+            }
+
+            if (!fieldManager.TryGetCardAt(slot, out var blocker) || blocker == null)
+            {
+                return false;
+            }
+
+            if (blocker.Uid == expectedDealUid)
+            {
+                return false;
+            }
+
+            var coreUid = ResolveCoreBoardUid(slot);
+            if (coreUid == blocker.Uid)
+            {
+                // Core 也认这个占格：不是幽灵，不能强清。
+                return false;
+            }
+
+            Debug.LogWarning(
+                $"[InBattleManager] Deal 前清幽灵占格 slot={slot} ghostUid={blocker.Uid} expectDeal={expectedDealUid} coreUid={coreUid}");
+            ChoreoTraceSink.SafeEmitAnomaly(
+                "DealGhostVacate",
+                blocker.Uid,
+                "slot=" + slot + ";expect=" + expectedDealUid + ";core=" + coreUid);
+            return fieldManager.RequestRemoveFromField(
+                blocker.Uid,
+                animate: false,
+                skipBusyGuard: true,
+                startExplore: false);
+        }
+
+        private static int ResolveCoreBoardUid(int slot)
+        {
+            if (slot <= 0)
+            {
+                return 0;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            var board = arch?.GetModel<BoardModel>();
+            return board != null ? board.GetCardUid(SlotId.Board(slot)) : 0;
+        }
+
+        /// <summary>
+        /// drainAfter 若仍有 Core↔Pres 分叉：清幽灵占格；仍未齐则输入熔断。
+        /// 不做全盘 force-sync（ADR-0001）。
+        /// </summary>
+        private void HandleDrainAfterOccupancyDesync(GroundFieldView fieldManager, int requestId)
+        {
+            if (fieldManager == null
+                || !FieldTraceHelper.TryGetOccupancyDiff(out var diffSlots)
+                || string.IsNullOrEmpty(diffSlots))
+            {
+                ChoreoTraceContext.ClearOccupancyDesyncLatch("drainAfter.clean");
+                return;
+            }
+
+            var cleared = ClearPresentationGhostsAgainstCore(fieldManager);
+            FieldTraceHelper.RecordOccupancySnapshot("drainAfterGhostClear");
+            if (!FieldTraceHelper.TryGetOccupancyDiff(out var remainDiff) || string.IsNullOrEmpty(remainDiff))
+            {
+                ChoreoTraceContext.ClearOccupancyDesyncLatch(
+                    "drainAfter.ghostClear:" + cleared + ";req=" + requestId);
+                return;
+            }
+
+            ChoreoTraceContext.LatchOccupancyDesync(
+                "req=" + requestId + ";cleared=" + cleared + ";diff=" + remainDiff);
+            BattleSessionExecutor.AssertOccupancySyncForbidden(
+                "drainAfterStickyDiff",
+                remainDiff);
+        }
+
+        /// <summary>
+        /// 仅卸 Pres 有而 Core 无（或 uid 不符）的幽灵；不补 Core 有而 Pres 缺的牌。
+        /// </summary>
+        private static int ClearPresentationGhostsAgainstCore(GroundFieldView fieldManager)
+        {
+            if (fieldManager == null)
+            {
+                return 0;
+            }
+
+            var cleared = 0;
+            for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
+            {
+                if (slot == GroundSlotTopology.AvatarReservedSlot)
+                {
+                    continue;
+                }
+
+                if (!fieldManager.TryGetCardAt(slot, out var card) || card == null)
+                {
+                    continue;
+                }
+
+                var coreUid = ResolveCoreBoardUid(slot);
+                if (coreUid == card.Uid)
+                {
+                    continue;
+                }
+
+                if (fieldManager.RequestRemoveFromField(
+                        card.Uid,
+                        animate: false,
+                        skipBusyGuard: true,
+                        startExplore: false))
+                {
+                    cleared++;
+                    ChoreoTraceSink.SafeEmitAnomaly(
+                        "DrainAfterGhostVacate",
+                        card.Uid,
+                        "slot=" + slot + ";core=" + coreUid);
+                }
+            }
+
+            return cleared;
         }
 
         /// <summary>

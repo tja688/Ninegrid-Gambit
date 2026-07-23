@@ -202,6 +202,77 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(4, collapsed[1].ToSlot);
         }
 
+        [Test]
+        public void Project_ExchangeToDraw_EmitsRemoveBeforeExchangeDrawDeal()
+        {
+            var events = new List<CoreGameEvent>
+            {
+                new CoreGameEvent(CoreEventType.CardDealt, 74, "ExchangeWithDrawPile")
+                    .WithCard(9)
+                    .WithSlots(SlotId.Board(9), SlotId.None)
+                    .WithMessage("exchangeToDraw:help.stat_boost_card"),
+                new CoreGameEvent(CoreEventType.CardDealt, 74, "ExchangeWithDrawPile")
+                    .WithCard(21)
+                    .WithSlots(SlotId.None, SlotId.Board(9))
+                    .WithMessage("exchangeDraw:monster.skull_head"),
+            };
+
+            var result = BoardPresentationStepProjector.Project(events, 0, registry: null);
+
+            Assert.AreEqual(2, result.Steps.Length);
+            Assert.AreEqual(BoardPresentationStepKind.Remove, result.Steps[0].Kind);
+            Assert.AreEqual(9, result.Steps[0].RemovedUids[0]);
+            Assert.AreEqual(BoardPresentationStepKind.Deal, result.Steps[1].Kind);
+            Assert.AreEqual(21, result.Steps[1].Deals[0].Uid);
+            Assert.AreEqual(9, result.Steps[1].Deals[0].Slot);
+            CollectionAssert.Contains(result.LegacyRemovedUids, 9);
+            Assert.AreEqual(1, result.LegacyDeals.Length);
+            Assert.AreEqual(21, result.LegacyDeals[0].Uid);
+        }
+
+        [Test]
+        public void Project_BoardToNonBoardCardDealt_DoesNotEmitDeal()
+        {
+            var events = new List<CoreGameEvent>
+            {
+                new CoreGameEvent(CoreEventType.CardDealt, 3, "ShuffleCardIntoDrawPile")
+                    .WithCard(401)
+                    .WithSlots(SlotId.Board(2), SlotId.None)
+                    .WithMessage("shuffleExisting:help.flame"),
+            };
+
+            var result = BoardPresentationStepProjector.Project(events, 0, registry: null);
+
+            Assert.AreEqual(1, result.Steps.Length);
+            Assert.AreEqual(BoardPresentationStepKind.Remove, result.Steps[0].Kind);
+            Assert.AreEqual(0, result.LegacyDeals.Length);
+            CollectionAssert.Contains(result.LegacyRemovedUids, 401);
+        }
+
+        [Test]
+        public void Project_RotateThenExchange_PreservesRemoveBeforeDeal()
+        {
+            var events = new List<CoreGameEvent>();
+            events.AddRange(BuildRotateAction(actionId: 58, clockwise: true, startUid: 100));
+            events.Add(new CoreGameEvent(CoreEventType.CardDealt, 60, "ExchangeWithDrawPile")
+                .WithCard(9)
+                .WithSlots(SlotId.Board(9), SlotId.None)
+                .WithMessage("exchangeToDraw:help.stat_boost_card"));
+            events.Add(new CoreGameEvent(CoreEventType.CardDealt, 60, "ExchangeWithDrawPile")
+                .WithCard(21)
+                .WithSlots(SlotId.None, SlotId.Board(9))
+                .WithMessage("exchangeDraw:monster.skull_head"));
+
+            var result = BoardPresentationStepProjector.Project(events, 0, registry: null);
+
+            Assert.AreEqual(3, result.Steps.Length);
+            Assert.AreEqual(BoardPresentationStepKind.Rotate, result.Steps[0].Kind);
+            Assert.AreEqual(BoardPresentationStepKind.Remove, result.Steps[1].Kind);
+            Assert.AreEqual(BoardPresentationStepKind.Deal, result.Steps[2].Kind);
+            Assert.AreEqual(9, result.Steps[1].RemovedUids[0]);
+            Assert.AreEqual(21, result.Steps[2].Deals[0].Uid);
+        }
+
         private static bool ContainsUid(PostKillCardMove[] moves, int uid)
         {
             for (var i = 0; i < moves.Length; i++)

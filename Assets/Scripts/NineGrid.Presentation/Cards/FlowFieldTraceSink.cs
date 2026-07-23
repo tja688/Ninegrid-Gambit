@@ -33,8 +33,8 @@ namespace NineGrid.Cards
         /// <summary>uid, groundSlot, defId, coreKind</summary>
         public static Action<int, int, string, string> PickupAttempt;
 
-        /// <summary>uid, gate, accepted</summary>
-        public static Action<int, string, bool> PickupGate;
+        /// <summary>uid, gate, accepted, coreReason</summary>
+        public static Action<int, string, bool, string> PickupGate;
 
         /// <summary>uid, handSlot</summary>
         public static Action<int, int> PickupSuccess;

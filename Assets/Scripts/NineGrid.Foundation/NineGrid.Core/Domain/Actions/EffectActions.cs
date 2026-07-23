@@ -781,17 +781,18 @@ namespace NineGrid.Core
             deck.AddToDrawPile(target, false);
             Shuffle(deck, rng);
 
+            // 换出腿必须先于换入 Deal：Present 投影为 Remove→Deal，避免幽灵占格导致 placeDenied。
             return new GameActionResult()
-                .AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
-                    .WithCard(drawn.Uid)
-                    .WithSlots(SlotId.None, fromSlot)
-                    .WithMessage("exchangeDraw:" + drawn.DefId)
-                    .WithSource(drawn.DefId, SourceDefId))
                 .AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
                     .WithCard(target.Uid)
                     .WithSlots(fromSlot, SlotId.None)
                     .WithMessage("exchangeToDraw:" + target.DefId)
-                    .WithSource(target.DefId, SourceDefId));
+                    .WithSource(target.DefId, SourceDefId))
+                .AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
+                    .WithCard(drawn.Uid)
+                    .WithSlots(SlotId.None, fromSlot)
+                    .WithMessage("exchangeDraw:" + drawn.DefId)
+                    .WithSource(drawn.DefId, SourceDefId));
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
