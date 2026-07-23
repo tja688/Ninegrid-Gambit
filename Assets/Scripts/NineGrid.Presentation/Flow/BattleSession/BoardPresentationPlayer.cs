@@ -1060,8 +1060,29 @@ namespace NineGrid.Flow
             int uid,
             Dictionary<string, string> payload = null)
         {
+            payload = payload ?? new Dictionary<string, string>();
+            if (!payload.ContainsKey("chainId"))
+            {
+                payload["chainId"] = DirectorTrace.CurrentChainId.ToString();
+            }
+
+            if (!payload.ContainsKey("choreoSeqId"))
+            {
+                payload["choreoSeqId"] = ChoreoTraceContext.CurrentSeqId.ToString();
+            }
+
+            if (!payload.ContainsKey("refillScheduled"))
+            {
+                payload["refillScheduled"] = FusionRefillScheduler.IsRefillScheduled ? "1" : "0";
+            }
+
+            if (!payload.ContainsKey("refillGateArmed"))
+            {
+                payload["refillGateArmed"] = FusionRefillScheduler.IsRefillGateArmed ? "1" : "0";
+            }
+
             PerfTraceRecorder.Record("SkeletonFusion", uid, site, payload);
-            if (payload == null || payload.Count == 0)
+            if (payload.Count == 0)
             {
                 Debug.Log($"[SkeletonFusion] {site} uid={uid}");
                 return;
@@ -1169,6 +1190,8 @@ namespace NineGrid.Flow
                 request,
                 onFusionStarted: null,
                 ct);
+            var gateArmed = FusionRefillScheduler.IsRefillGateArmed;
+            var alreadyScheduled = FusionRefillScheduler.IsRefillScheduled;
             RecordSkeletonFusionTrace(
                 "PresentEnd",
                 uid,
@@ -1176,7 +1199,20 @@ namespace NineGrid.Flow
                 {
                     ["skillId"] = fusion.SkillId,
                     ["refillDeferredToDirector"] = PresentationInputGates.MainlineBusy ? "1" : "0",
+                    ["refillScheduled"] = alreadyScheduled || gateArmed ? "1" : "0",
+                    ["refillGateArmed"] = gateArmed ? "1" : "0",
                 });
+            if (!gateArmed && !alreadyScheduled)
+            {
+                var exclude = new List<int>(1);
+                if (fusion.ResultUid > 0)
+                {
+                    exclude.Add(fusion.ResultUid);
+                }
+
+                FusionRefillAftermath.TrySchedule(exclude);
+            }
+
             return true;
         }
 

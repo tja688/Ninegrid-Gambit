@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NineGrid.Content;
 using NineGrid.Core;
@@ -162,6 +163,116 @@ namespace NineGrid.Presentation.Tests
 
             Assert.IsFalse(director.IsMainlineBusy);
             Assert.AreEqual(3, boardPresent.BeginCount, "无融合时仅 Click/Fill/Rotate 三次 Present");
+        }
+
+        [Test]
+        public void ResolveAndProject_WhenNoEmptySlots_SkipFillAccepted()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 99, attack: 0)).Accepted);
+            SeedDrawPileFiller("monster.headless_skeleton", count: 4);
+            Assert.IsFalse(FusionRefillPlanner.HasEmptyBoardSlot(mArch.GetModel<BoardModel>()));
+
+            var scheduler = new FusionRefillScheduler();
+            var before = mPipeline.EventLog.Entries.Count;
+            var dispatch = scheduler.ResolveAndProject(
+                mArch,
+                mDispatcher,
+                boardSlot: 2,
+                excludeResultUids: new List<int>(),
+                onBoardBatchProjected: null);
+            Assert.IsNotNull(dispatch);
+            Assert.IsTrue(dispatch.Accepted);
+            Assert.IsFalse(ContainsTypeSince(before, CoreEventType.SlotsFilled));
+        }
+
+        [Test]
+        public void ResolveAndProject_WhenEmptyAndOnlyExcludedCandidates_FillsWithFallback()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 99, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sFarCornerSlot);
+            Assert.IsTrue(mArch.GetModel<BoardModel>().IsEmpty(sAdjacentSlot));
+
+            // 牌堆只放一张，并将其列入 exclude → 旧逻辑会 skipFill；新逻辑回退补牌。
+            SeedDrawPileFiller("monster.headless_skeleton", count: 1);
+            var deck = mArch.GetModel<DeckModel>();
+            Assert.AreEqual(1, deck.DrawPileUids.Count);
+            var onlyUid = deck.DrawPileUids[0];
+            var exclude = new List<int> { onlyUid };
+            Assert.IsFalse(FusionRefillPlanner.HasRefillCandidateExcluding(deck, exclude));
+            Assert.IsTrue(FusionRefillPlanner.HasEmptyBoardSlot(mArch.GetModel<BoardModel>()));
+
+            var scheduler = new FusionRefillScheduler();
+            var before = mPipeline.EventLog.Entries.Count;
+            var projected = false;
+            var dispatch = scheduler.ResolveAndProject(
+                mArch,
+                mDispatcher,
+                boardSlot: sAdjacentSlot.Index,
+                excludeResultUids: exclude,
+                onBoardBatchProjected: (start, slot, result) => projected = result.Accepted);
+            Assert.IsNotNull(dispatch);
+            Assert.IsTrue(dispatch.Accepted);
+            Assert.IsTrue(ContainsTypeSince(before, CoreEventType.SlotsFilled),
+                "有空槽且牌堆非空时不得因 exclude 静默 skipFill");
+            Assert.IsTrue(projected);
+        }
+
+        [Test]
+        public void Aftermath_TrySchedule_WhenGateNotArmed_EnqueuesFusionRefillOnMainline()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 99, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sFarCornerSlot);
+            Assert.IsTrue(mArch.GetModel<BoardModel>().IsEmpty(sAdjacentSlot));
+            SeedDrawPileFiller("monster.headless_skeleton", count: 8);
+
+            var boardPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var noopFactory = new NoopIntentScriptFactory();
+            var director = new PresentationDirector(noopFactory);
+            DirectorTrace.BeginChain();
+            var scheduler = new FusionRefillScheduler();
+
+            FusionRefillAftermath.Register(exclude =>
+            {
+                director.MutateMainline(timeline =>
+                {
+                    FusionRefillScheduler.ArmRefillGate();
+                    scheduler.EnqueueRefillBatches(
+                        timeline,
+                        mArch,
+                        mDispatcher,
+                        boardPresent,
+                        sAdjacentSlot.Index,
+                        exclude,
+                        onBoardBatchProjected: null);
+                });
+            });
+
+            try
+            {
+                Assert.IsFalse(FusionRefillScheduler.IsRefillGateArmed);
+                Assert.IsTrue(FusionRefillAftermath.TrySchedule(Array.Empty<int>()));
+                Assert.IsTrue(FusionRefillScheduler.IsRefillScheduled);
+                Assert.IsTrue(director.IsMainlineBusy);
+
+                var refillStart = mPipeline.EventLog.Entries.Count;
+                director.Tick(0.016f);
+                Assert.AreEqual(1, mSync.ActiveBatchId);
+                Assert.IsTrue(ContainsTypeSince(refillStart, CoreEventType.SlotsFilled));
+                director.Tick(0.016f);
+                Assert.AreEqual(1, boardPresent.BeginCount);
+                Assert.IsFalse(director.IsMainlineBusy);
+            }
+            finally
+            {
+                FusionRefillAftermath.Unregister();
+            }
+        }
+
+        private sealed class NoopIntentScriptFactory : IIntentScriptFactory
+        {
+            public void BuildScript(InputIntent intent, BattleTimeline timeline)
+            {
+            }
         }
 
         private bool HasFusionSince(int startIndex)

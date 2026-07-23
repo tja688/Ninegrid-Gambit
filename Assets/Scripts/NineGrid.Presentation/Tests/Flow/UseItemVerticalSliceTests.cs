@@ -86,6 +86,11 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(0, boardPresent.BeginCount);
 
+            // Use-batch FusionRefill 门（击杀路径 predicate 为 false，空过）
+            director.Tick(0.016f);
+            Assert.AreEqual(0, mSync.ActiveBatchId);
+            Assert.AreEqual(0, boardPresent.BeginCount);
+
             // Drain refill branch（击杀路径 needsDrainRefill=false，空过）
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
@@ -148,6 +153,7 @@ namespace NineGrid.Presentation.Tests
             director.Tick(0.016f); // resolve use
             director.Tick(0.016f); // present use
             director.Tick(0.016f); // kill branch → without kill
+            director.Tick(0.016f); // use-fusion refill 门空过
             director.Tick(0.016f); // drain refill branch（无空位则空过）
 
             Assert.IsTrue(resolvedWithoutKill);

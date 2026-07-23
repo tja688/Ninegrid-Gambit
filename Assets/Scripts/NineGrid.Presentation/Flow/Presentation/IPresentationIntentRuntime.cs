@@ -17,5 +17,7 @@ namespace NineGrid.Flow.Presentation
         bool TryBeginExternalHold(string reason = null);
         void EndExternalHold(string reason = null);
         void ForceEndExternalHold(string reason = null);
+        /// <summary>向主线 timeline 追加步骤（旁路融合补牌等 defer 入队）。</summary>
+        void MutateMainline(System.Action<BattleTimeline> mutate);
     }
 }

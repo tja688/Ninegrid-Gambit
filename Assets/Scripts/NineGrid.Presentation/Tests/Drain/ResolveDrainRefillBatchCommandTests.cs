@@ -76,6 +76,11 @@ namespace NineGrid.Presentation.Tests.Drain
                     Assert.AreEqual(0, arch.Sync.ActiveBatchId);
                     Assert.AreEqual(0, boardPresent.BeginCount);
 
+                    // Use-batch FusionRefill 门（无融合空过）
+                    runtime.Tick();
+                    Assert.AreEqual(0, arch.Sync.ActiveBatchId);
+                    Assert.AreEqual(0, boardPresent.BeginCount);
+
                     // DrainRefill branch：入队补牌批（本 Tick 只入队）
                     runtime.Tick();
                     Assert.AreEqual(0, arch.Sync.ActiveBatchId);
@@ -122,7 +127,8 @@ namespace NineGrid.Presentation.Tests.Drain
                     Assert.IsTrue(arch.Architecture.SendCommand(
                         new SubmitUseItemIntentCommand(knifeUid, new[] { targetUid }, null)));
 
-                    // use resolve + present + kill branch（入队 Fill/Rotate）+ drain branch（空过）
+                    // use resolve + present + kill branch（入队 Fill/Rotate）+ use-fusion 门空过 + drain 门空过
+                    runtime.Tick();
                     runtime.Tick();
                     runtime.Tick();
                     runtime.Tick();

@@ -10,11 +10,63 @@ using QFramework;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// 融合伴随补牌锁步：Rotate Present 之后按需追加 ResolveFusionRefill → Present。
+    /// 融合伴随补牌锁步：Rotate/Use Present 之后按需追加 ResolveFusionRefill → Present。
     /// V4：由静态 Lockstep 收为实例调度器，Resolve 亦可经 Presentation Command 统一入口。
     /// </summary>
     public sealed class FusionRefillScheduler
     {
+        private static int sArmedChainId = -1;
+        private static int sScheduledChainId = -1;
+
+        /// <summary>当前连锁已挂「可能入队 FusionRefill」的剧本门（AppendAfter*）。</summary>
+        public static bool IsRefillGateArmed
+        {
+            get
+            {
+                var chain = DirectorTrace.CurrentChainId;
+                return chain > 0 && sArmedChainId == chain;
+            }
+        }
+
+        /// <summary>当前连锁已实际入队 FusionRefill Resolve/Present。</summary>
+        public static bool IsRefillScheduled
+        {
+            get
+            {
+                var chain = DirectorTrace.CurrentChainId;
+                return chain > 0 && sScheduledChainId == chain;
+            }
+        }
+
+        public static void ResetScheduleMarks()
+        {
+            sArmedChainId = -1;
+            sScheduledChainId = -1;
+        }
+
+        public static void ArmRefillGate()
+        {
+            var chain = DirectorTrace.CurrentChainId;
+            if (chain > 0)
+            {
+                sArmedChainId = chain;
+            }
+        }
+
+        public static void DisarmRefillGate()
+        {
+            sArmedChainId = -1;
+        }
+
+        public static void MarkRefillScheduled()
+        {
+            var chain = DirectorTrace.CurrentChainId;
+            if (chain > 0)
+            {
+                sScheduledChainId = chain;
+            }
+        }
+
         public void AppendAfterRotatePresent(
             BattleTimeline timeline,
             Func<bool> hadFusion,
@@ -35,7 +87,25 @@ namespace NineGrid.Flow.Presentation
                 throw new ArgumentNullException("enqueueFusionRefill");
             }
 
-            timeline.Enqueue(new AttackPostHitBranchStep(timeline, hadFusion, enqueueFusionRefill));
+            ArmRefillGate();
+            timeline.Enqueue(new AttackPostHitBranchStep(
+                timeline,
+                () =>
+                {
+                    var hit = hadFusion();
+                    if (!hit)
+                    {
+                        DisarmRefillGate();
+                    }
+
+                    return hit;
+                },
+                t =>
+                {
+                    enqueueFusionRefill(t);
+                    MarkRefillScheduled();
+                    DisarmRefillGate();
+                }));
         }
 
         public void EnqueueRefillBatches(
@@ -84,6 +154,7 @@ namespace NineGrid.Flow.Presentation
                 boardPresentChannel,
                 channelName: "FusionRefill",
                 choreoKind: "Refill"));
+            MarkRefillScheduled();
         }
 
         public CoreCommandDispatchResult ResolveAndProject(
@@ -104,28 +175,75 @@ namespace NineGrid.Flow.Presentation
             }
 
             var phase = architecture.GetSystem<IPhaseSystem>();
-            if (phase.CurrentPhase != GamePhase.InteractionLoop)
-            {
-                return dispatcher.Send(new ResolveFusionRefillCommand(skipFill: true));
-            }
-
             var deck = architecture.GetModel<DeckModel>();
             var board = architecture.GetModel<BoardModel>();
-            if (deck == null
-                || deck.DrawPileUids == null
-                || deck.DrawPileUids.Count <= 0
-                || !FusionRefillPlanner.HasRefillCandidateExcluding(deck, excludeResultUids)
-                || !FusionRefillPlanner.HasEmptyBoardSlot(board))
+            var emptyCount = FusionRefillPlanner.CountEmptyBoardSlots(board);
+            var drawCount = deck != null && deck.DrawPileUids != null ? deck.DrawPileUids.Count : 0;
+            var excludeCount = excludeResultUids != null ? excludeResultUids.Count : 0;
+            var hasNonExcludeCandidate = FusionRefillPlanner.HasRefillCandidateExcluding(deck, excludeResultUids);
+
+            if (phase.CurrentPhase != GamePhase.InteractionLoop)
             {
-                // 仍走命令打开空批，便于 Present 立刻完成并 ack（与无盘面 delta 一致）。
-                return dispatcher.Send(new ResolveFusionRefillCommand(skipFill: true));
+                return SkipFill(
+                    dispatcher,
+                    reason: "phase",
+                    emptyCount,
+                    drawCount,
+                    excludeCount,
+                    hasNonExcludeCandidate);
+            }
+
+            if (deck == null || deck.DrawPileUids == null || drawCount <= 0)
+            {
+                return SkipFill(
+                    dispatcher,
+                    reason: "noDraw",
+                    emptyCount,
+                    drawCount,
+                    excludeCount,
+                    hasNonExcludeCandidate);
+            }
+
+            if (emptyCount <= 0)
+            {
+                return SkipFill(
+                    dispatcher,
+                    reason: "noEmpty",
+                    emptyCount,
+                    drawCount,
+                    excludeCount,
+                    hasNonExcludeCandidate);
+            }
+
+            // 有空槽且牌堆非空：即使候选全被 exclude，也不得静默空批——回退为不过滤补牌。
+            var effectiveExclude = excludeResultUids;
+            var usedExcludeFallback = false;
+            if (!hasNonExcludeCandidate)
+            {
+                effectiveExclude = Array.Empty<int>();
+                usedExcludeFallback = true;
+                RecordDecision(
+                    "RefillExcludeFallback",
+                    skipFill: false,
+                    reason: "excludeOnly",
+                    emptyCount,
+                    drawCount,
+                    excludeCount,
+                    hasNonExcludeCandidate: false);
             }
 
             var originalOrder = new List<int>(deck.DrawPileUids);
-            var refillOrder = FusionRefillPlanner.BuildRefillDrawOrder(originalOrder, excludeResultUids);
-            if (!FusionRefillPlanner.HasRefillCandidateExcludingOrder(refillOrder, excludeResultUids))
+            var refillOrder = FusionRefillPlanner.BuildRefillDrawOrder(originalOrder, effectiveExclude);
+            if (!FusionRefillPlanner.HasRefillCandidateExcludingOrder(refillOrder, effectiveExclude)
+                && refillOrder.Count <= 0)
             {
-                return dispatcher.Send(new ResolveFusionRefillCommand(skipFill: true));
+                return SkipFill(
+                    dispatcher,
+                    reason: "noCandidate",
+                    emptyCount,
+                    drawCount,
+                    excludeCount,
+                    hasNonExcludeCandidate);
             }
 
             deck.ReorderDrawPile(refillOrder);
@@ -134,15 +252,14 @@ namespace NineGrid.Flow.Presentation
             CoreCommandDispatchResult dispatch;
             try
             {
-                PerfTraceRecorder.Record(
-                    "SkeletonFusion",
-                    -1,
+                RecordDecision(
                     "RefillBatchBegin",
-                    new Dictionary<string, string>
-                    {
-                        ["excludeCount"] = (excludeResultUids != null ? excludeResultUids.Count : 0).ToString(),
-                        ["path"] = "director",
-                    });
+                    skipFill: false,
+                    reason: usedExcludeFallback ? "excludeFallback" : "fill",
+                    emptyCount,
+                    drawCount,
+                    excludeCount,
+                    hasNonExcludeCandidate || usedExcludeFallback);
                 dispatch = dispatcher.Send(new ResolveFusionRefillCommand());
             }
             finally
@@ -159,22 +276,119 @@ namespace NineGrid.Flow.Presentation
             if (onBoardBatchProjected != null)
             {
                 var summary = IntentBatchProjection.Build(architecture, pipeline, startIndex);
-                summary.Deals = FusionRefillPlanner.FilterDealsExcluding(summary.Deals, excludeResultUids);
+                var filteredDeals = FusionRefillPlanner.FilterDealsExcluding(summary.Deals, effectiveExclude);
+                if ((filteredDeals == null || filteredDeals.Length == 0)
+                    && summary.Deals != null
+                    && summary.Deals.Length > 0)
+                {
+                    RecordDecision(
+                        "RefillDealFilterEmpty",
+                        skipFill: false,
+                        reason: "filteredEmpty",
+                        emptyCount,
+                        drawCount,
+                        excludeCount,
+                        hasNonExcludeCandidate);
+                    // 投影仍保留 Core 已发出的 deals，避免 Present 空批瞬 ack。
+                }
+                else
+                {
+                    summary.Deals = filteredDeals;
+                }
+
                 if (summary.Steps != null && summary.Steps.Length > 0)
                 {
-                    summary.Steps = FilterDealStepsExcluding(summary.Steps, excludeResultUids);
+                    var filteredSteps = FilterDealStepsExcluding(summary.Steps, effectiveExclude);
+                    if (filteredSteps.Length == 0 && HasAnyDealStep(summary.Steps))
+                    {
+                        // 同上：滤空则保留原步骤，保证飞牌栅栏可跑。
+                    }
+                    else
+                    {
+                        summary.Steps = filteredSteps;
+                    }
                 }
 
                 onBoardBatchProjected(startIndex, boardSlot, summary);
             }
 
+            RecordDecision(
+                "RefillBatchEnd",
+                skipFill: false,
+                reason: usedExcludeFallback ? "excludeFallback" : "fill",
+                emptyCount,
+                drawCount,
+                excludeCount,
+                hasNonExcludeCandidate || usedExcludeFallback);
+            return dispatch;
+        }
+
+        private static CoreCommandDispatchResult SkipFill(
+            CoreCommandDispatcher dispatcher,
+            string reason,
+            int emptyCount,
+            int drawCount,
+            int excludeCount,
+            bool hasNonExcludeCandidate)
+        {
+            RecordDecision(
+                "RefillBatchSkip",
+                skipFill: true,
+                reason,
+                emptyCount,
+                drawCount,
+                excludeCount,
+                hasNonExcludeCandidate);
+            return dispatcher.Send(new ResolveFusionRefillCommand(skipFill: true));
+        }
+
+        private static void RecordDecision(
+            string site,
+            bool skipFill,
+            string reason,
+            int emptyCount,
+            int drawCount,
+            int excludeCount,
+            bool hasNonExcludeCandidate)
+        {
             PerfTraceRecorder.Record(
                 "SkeletonFusion",
                 -1,
-                "RefillBatchEnd",
-                new Dictionary<string, string> { ["path"] = "director" });
+                site,
+                new Dictionary<string, string>
+                {
+                    ["path"] = "director",
+                    ["skipFill"] = skipFill ? "1" : "0",
+                    ["reason"] = reason ?? string.Empty,
+                    ["emptySlotCount"] = emptyCount.ToString(),
+                    ["drawCount"] = drawCount.ToString(),
+                    ["excludeCount"] = excludeCount.ToString(),
+                    ["hasNonExcludeCandidate"] = hasNonExcludeCandidate ? "1" : "0",
+                    ["chainId"] = DirectorTrace.CurrentChainId.ToString(),
+                    ["choreoSeqId"] = ChoreoTraceContext.CurrentSeqId.ToString(),
+                    ["refillScheduled"] = IsRefillScheduled ? "1" : "0",
+                    ["refillGateArmed"] = IsRefillGateArmed ? "1" : "0",
+                });
+        }
 
-            return dispatch;
+        private static bool HasAnyDealStep(BoardPresentationStep[] steps)
+        {
+            if (steps == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < steps.Length; i++)
+            {
+                if (steps[i].Kind == BoardPresentationStepKind.Deal
+                    && steps[i].Deals != null
+                    && steps[i].Deals.Length > 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static BoardPresentationStep[] FilterDealStepsExcluding(

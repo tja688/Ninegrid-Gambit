@@ -73,6 +73,13 @@ namespace NineGrid.Presentation.Systems
             PublishBusy();
         }
 
+        public void MutateMainline(Action<BattleTimeline> mutate)
+        {
+            EnsureStarted();
+            mDirector.MutateMainline(mutate);
+            PublishBusy();
+        }
+
         public void HardClearIntents(IntentClearReason reason)
         {
             if (mDirector == null)

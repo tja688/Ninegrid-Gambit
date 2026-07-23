@@ -26,6 +26,7 @@ namespace NineGrid.Flow.Presentation
         private readonly DrainRefillScheduler mDrainRefill;
         private bool mLastUseKilledTarget;
         private bool mLastUseNeedsDrainRefill;
+        private bool mLastUseHadFusion;
         private bool mLastRotateHadFusion;
         private readonly List<int> mFusionExcludeResultUids = new List<int>(2);
 
@@ -95,6 +96,7 @@ namespace NineGrid.Flow.Presentation
             var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
             mLastUseKilledTarget = false;
             mLastUseNeedsDrainRefill = false;
+            mLastUseHadFusion = false;
             mLastRotateHadFusion = false;
             mFusionExcludeResultUids.Clear();
 
@@ -114,6 +116,18 @@ namespace NineGrid.Flow.Presentation
                         mOnResolvedWithoutKill();
                     }
                 }));
+            // 用牌批内强联融合：与 Rotate 后 FusionRefill 同形，避免空槽挂到下一次 intent。
+            mFusionRefill.AppendAfterRotatePresent(
+                timeline,
+                () => mLastUseHadFusion && !mLastUseKilledTarget,
+                t => mFusionRefill.EnqueueRefillBatches(
+                    t,
+                    mArchitecture,
+                    mDispatcher,
+                    mBoardPresentChannel,
+                    boardSlot,
+                    mFusionExcludeResultUids,
+                    mOnBoardBatchProjected));
             mDrainRefill.AppendAfterPresentIfNeeded(
                 timeline,
                 () => mLastUseNeedsDrainRefill,
@@ -169,8 +183,14 @@ namespace NineGrid.Flow.Presentation
             }
 
             mLastUseKilledTarget = ContainsAnyCardKilled(pipeline, startIndex);
-            // 击杀补牌走 ResolvePostKillFill；非击杀盘面空位升格为独立 DrainRefill 批次。
-            mLastUseNeedsDrainRefill = !mLastUseKilledTarget && mDrainRefill.ShouldRefill(mArchitecture);
+            mLastUseHadFusion = FusionRefillPlanner.TryCollectResultUids(
+                pipeline.EventLog.Entries,
+                startIndex,
+                mFusionExcludeResultUids);
+            // 击杀补牌走 ResolvePostKillFill；融合空槽走 FusionRefill；其余非击杀空位走 DrainRefill。
+            mLastUseNeedsDrainRefill = !mLastUseKilledTarget
+                && !mLastUseHadFusion
+                && mDrainRefill.ShouldRefill(mArchitecture);
             if (mOnUseBatchProjected != null)
             {
                 mOnUseBatchProjected(startIndex, boardSlot, IntentBatchProjection.Build(mArchitecture, pipeline, startIndex));

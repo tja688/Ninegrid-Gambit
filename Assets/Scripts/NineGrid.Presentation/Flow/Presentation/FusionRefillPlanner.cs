@@ -72,11 +72,17 @@ namespace NineGrid.Flow.Presentation
 
         public static bool HasEmptyBoardSlot(BoardModel board)
         {
+            return CountEmptyBoardSlots(board) > 0;
+        }
+
+        public static int CountEmptyBoardSlots(BoardModel board)
+        {
             if (board == null)
             {
-                return false;
+                return 0;
             }
 
+            var empty = 0;
             var avatarSlot = board.AvatarSlot.Value;
             for (var s = SlotId.MinBoardIndex; s <= SlotId.MaxBoardIndex; s++)
             {
@@ -88,11 +94,11 @@ namespace NineGrid.Flow.Presentation
 
                 if (board.GetCardUid(slot) <= 0)
                 {
-                    return true;
+                    empty++;
                 }
             }
 
-            return false;
+            return empty;
         }
 
         public static List<int> BuildRefillDrawOrder(IReadOnlyList<int> original, IReadOnlyList<int> excludeUids)

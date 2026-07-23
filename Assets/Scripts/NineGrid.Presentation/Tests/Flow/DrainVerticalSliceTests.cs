@@ -92,6 +92,11 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(0, boardPresent.BeginCount);
 
+            // Use-batch FusionRefill 门（无融合空过）
+            director.Tick(0.016f);
+            Assert.AreEqual(0, mSync.ActiveBatchId);
+            Assert.AreEqual(0, boardPresent.BeginCount);
+
             // DrainRefill branch：入队补牌批（本 Tick 只入队）
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
@@ -130,7 +135,8 @@ namespace NineGrid.Presentation.Tests
                 new InputIntent(InputIntentKinds.UseItem, knifeUid, new[] { targetUid }, null),
                 out preview));
 
-            // use resolve + present + kill branch（入队 Fill/Rotate）+ drain branch（空过）
+            // use resolve + present + kill branch（入队 Fill/Rotate）+ use-fusion 门空过 + drain 门空过
+            director.Tick(0.016f);
             director.Tick(0.016f);
             director.Tick(0.016f);
             director.Tick(0.016f);

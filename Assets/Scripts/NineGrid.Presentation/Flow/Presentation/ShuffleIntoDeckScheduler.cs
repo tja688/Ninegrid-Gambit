@@ -59,6 +59,8 @@ namespace NineGrid.Flow.Presentation
                 {
                     ["count"] = collected.Count.ToString(),
                     ["path"] = "director",
+                    ["chainId"] = DirectorTrace.CurrentChainId.ToString(),
+                    ["choreoSeqId"] = ChoreoTraceContext.CurrentSeqId.ToString(),
                 });
             return collected.Count;
         }
@@ -96,6 +98,8 @@ namespace NineGrid.Flow.Presentation
                 {
                     ["count"] = count.ToString(),
                     ["path"] = "director",
+                    ["chainId"] = DirectorTrace.CurrentChainId.ToString(),
+                    ["choreoSeqId"] = ChoreoTraceContext.CurrentSeqId.ToString(),
                 });
         }
 
@@ -109,6 +113,8 @@ namespace NineGrid.Flow.Presentation
                 {
                     ["count"] = count.ToString(),
                     ["path"] = "director",
+                    ["chainId"] = DirectorTrace.CurrentChainId.ToString(),
+                    ["choreoSeqId"] = ChoreoTraceContext.CurrentSeqId.ToString(),
                 });
         }
 

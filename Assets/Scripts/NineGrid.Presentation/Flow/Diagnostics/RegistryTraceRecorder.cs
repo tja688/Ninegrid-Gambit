@@ -790,6 +790,8 @@ namespace NineGrid.Flow.Diagnostics
                 { "userInteractionCount", sUserInteractionCount.ToString() },
                 { "phase", BattleTraceRecorder.CurrentPhaseName() },
                 { "beatKind", DiagBeatClock.CurrentBeatKind ?? string.Empty },
+                { "chainId", DirectorTrace.CurrentChainId.ToString() },
+                { "choreoSeqId", ChoreoTraceContext.CurrentSeqId.ToString() },
             };
         }
 

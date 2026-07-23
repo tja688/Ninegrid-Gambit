@@ -120,6 +120,18 @@ namespace NineGrid.Flow.Presentation
             PublishBusy();
         }
 
+        /// <summary>向主线追加多步（如 FusionRefill Resolve+Present）。</summary>
+        public void MutateMainline(Action<BattleTimeline> mutate)
+        {
+            if (mutate == null)
+            {
+                throw new ArgumentNullException("mutate");
+            }
+
+            mutate(mMainline);
+            PublishBusy();
+        }
+
         /// <summary>
         /// 外部薄适配挂主线租约：idle 时入队 Hold；主线已忙则嵌套计数（由现有 Present 持忙）。
         /// </summary>

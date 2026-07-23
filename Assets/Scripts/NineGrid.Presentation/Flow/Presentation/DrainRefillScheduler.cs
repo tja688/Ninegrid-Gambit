@@ -128,7 +128,12 @@ namespace NineGrid.Flow.Presentation
                 "DrainRefill",
                 -1,
                 "RefillBatchBegin",
-                new Dictionary<string, string> { ["path"] = "director" });
+                new Dictionary<string, string>
+                {
+                    ["path"] = "director",
+                    ["chainId"] = DirectorTrace.CurrentChainId.ToString(),
+                    ["choreoSeqId"] = ChoreoTraceContext.CurrentSeqId.ToString(),
+                });
 
             var dispatch = dispatcher.Send(new ResolveDrainRefillCommand());
             if (dispatch == null || !dispatch.Accepted)
@@ -148,7 +153,12 @@ namespace NineGrid.Flow.Presentation
                 "DrainRefill",
                 -1,
                 "RefillBatchEnd",
-                new Dictionary<string, string> { ["path"] = "director" });
+                new Dictionary<string, string>
+                {
+                    ["path"] = "director",
+                    ["chainId"] = DirectorTrace.CurrentChainId.ToString(),
+                    ["choreoSeqId"] = ChoreoTraceContext.CurrentSeqId.ToString(),
+                });
 
             return dispatch;
         }
