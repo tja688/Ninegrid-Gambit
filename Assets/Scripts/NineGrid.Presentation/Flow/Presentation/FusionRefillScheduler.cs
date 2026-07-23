@@ -79,7 +79,11 @@ namespace NineGrid.Flow.Presentation
                     onBoardBatchProjected));
 
             timeline.Enqueue(new ResolveBatchStep(refillGate));
-            timeline.Enqueue(new PresentStep(refillGate, boardPresentChannel));
+            timeline.Enqueue(new PresentStep(
+                refillGate,
+                boardPresentChannel,
+                channelName: "FusionRefill",
+                choreoKind: "Refill"));
         }
 
         public CoreCommandDispatchResult ResolveAndProject(

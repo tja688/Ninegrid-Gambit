@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using NineGrid.Flow.Diagnostics;
 
@@ -96,13 +97,19 @@ namespace NineGrid.Flow.Presentation
         private readonly IPresentationBatchGate mGate;
         private readonly IPresentChannel mChannel;
         private readonly string mChannelName;
+        private readonly string mChoreoKind;
         private int mBatchId;
         private bool mStarted;
         private bool mAcknowledged;
+        private bool mChoreoOpen;
         private float mWaitStartRealtime = -1f;
         private float mLastStallRealtime = -1f;
 
-        public PresentStep(IPresentationBatchGate gate, IPresentChannel channel, string channelName = null)
+        public PresentStep(
+            IPresentationBatchGate gate,
+            IPresentChannel channel,
+            string channelName = null,
+            string choreoKind = null)
         {
             if (gate == null)
             {
@@ -117,6 +124,7 @@ namespace NineGrid.Flow.Presentation
             mGate = gate;
             mChannel = channel;
             mChannelName = channelName ?? channel.GetType().Name;
+            mChoreoKind = choreoKind;
         }
 
         public TimelineStepStatus Tick(float deltaTime)
@@ -139,6 +147,7 @@ namespace NineGrid.Flow.Presentation
                 mWaitStartRealtime = Time.realtimeSinceStartup;
                 mLastStallRealtime = -1f;
                 DirectorTrace.PresentBegin(mBatchId, mChannelName);
+                TryBeginChoreo();
             }
 
             mChannel.Tick(deltaTime);
@@ -157,8 +166,37 @@ namespace NineGrid.Flow.Presentation
             }
 
             DirectorTrace.PresentAck(mBatchId);
+            TryEndChoreo("ok");
             mAcknowledged = true;
             return TimelineStepStatus.Finished;
+        }
+
+        private void TryBeginChoreo()
+        {
+            if (string.IsNullOrEmpty(mChoreoKind) || mChoreoOpen)
+            {
+                return;
+            }
+
+            ChoreoTraceContext.BeginChoreo(
+                mChoreoKind,
+                new Dictionary<string, string>
+                {
+                    { "batchId", mBatchId.ToString() },
+                    { "channel", mChannelName },
+                });
+            mChoreoOpen = true;
+        }
+
+        private void TryEndChoreo(string outcome)
+        {
+            if (!mChoreoOpen)
+            {
+                return;
+            }
+
+            ChoreoTraceContext.EndChoreo(outcome);
+            mChoreoOpen = false;
         }
 
         private void MaybeStall(string phase)

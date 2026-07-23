@@ -89,62 +89,82 @@ namespace NineGrid.Cards
             }
 
             var mergeCenter = ComputeMergeCenter(participants);
-            VacateFusionParticipants(fieldManager, cardManager, participants);
-            for (var i = 0; i < participants.Count; i++)
+            ChoreoTraceSink.SafeBeginChoreo(
+                "SkeletonFusion",
+                "resultUid", request.ResultUid.ToString(),
+                "participantCount", participants.Count.ToString(),
+                "actionId", request.ActionId.ToString(),
+                "skillId", request.SkillId ?? string.Empty);
+            var completed = false;
+            try
             {
-                FlightSortingChannel.Raise(participants[i].Card);
-            }
+                VacateFusionParticipants(fieldManager, cardManager, participants);
+                for (var i = 0; i < participants.Count; i++)
+                {
+                    FlightSortingChannel.Raise(participants[i].Card);
+                }
 
-            if (onFusionStarted != null)
-            {
-                await onFusionStarted(cancellationToken);
-            }
+                if (onFusionStarted != null)
+                {
+                    await onFusionStarted(cancellationToken);
+                }
 
-            await CrashParticipantsToCenterAsync(participants, mergeCenter, cancellationToken);
+                await CrashParticipantsToCenterAsync(participants, mergeCenter, cancellationToken);
 
-            if (layoutSettings.fusionOverlapHoldDuration > 0f)
-            {
-                await UniTask.Delay(
-                    TimeSpan.FromSeconds(layoutSettings.fusionOverlapHoldDuration),
-                    cancellationToken: cancellationToken);
-            }
+                if (layoutSettings.fusionOverlapHoldDuration > 0f)
+                {
+                    await UniTask.Delay(
+                        TimeSpan.FromSeconds(layoutSettings.fusionOverlapHoldDuration),
+                        cancellationToken: cancellationToken);
+                }
 
-            await PlayParticipantFlashAsync(participants, cancellationToken);
-            HideParticipants(participants);
+                await PlayParticipantFlashAsync(participants, cancellationToken);
+                HideParticipants(participants);
 
-            var resultCard = await RevealResultCardAsync(
-                request,
-                mergeCenter,
-                cardManager,
-                cancellationToken);
-            if (resultCard == null)
-            {
+                var resultCard = await RevealResultCardAsync(
+                    request,
+                    mergeCenter,
+                    cardManager,
+                    cancellationToken);
+                if (resultCard == null)
+                {
+                    for (var i = 0; i < participants.Count; i++)
+                    {
+                        FlightSortingChannel.Restore(participants[i].Card);
+                    }
+
+                    ReleaseParticipants(cardManager, participants);
+                    return;
+                }
+
+                FlightSortingChannel.Raise(resultCard);
+
+                if (layoutSettings.fusionResultHoldDuration > 0f)
+                {
+                    await UniTask.Delay(
+                        TimeSpan.FromSeconds(layoutSettings.fusionResultHoldDuration),
+                        cancellationToken: cancellationToken);
+                }
+
+                await ExitResultToDeckAsync(resultCard, deckManager, fieldManager, cancellationToken);
                 for (var i = 0; i < participants.Count; i++)
                 {
                     FlightSortingChannel.Restore(participants[i].Card);
                 }
 
+                FlightSortingChannel.Restore(resultCard);
                 ReleaseParticipants(cardManager, participants);
-                return;
+                completed = true;
             }
-
-            FlightSortingChannel.Raise(resultCard);
-
-            if (layoutSettings.fusionResultHoldDuration > 0f)
+            finally
             {
-                await UniTask.Delay(
-                    TimeSpan.FromSeconds(layoutSettings.fusionResultHoldDuration),
-                    cancellationToken: cancellationToken);
-            }
+                if (completed && ChoreoTraceSink.SafeCurrentSeqId() > 0)
+                {
+                    ChoreoTraceSink.SafeEndChoreo("ok");
+                }
 
-            await ExitResultToDeckAsync(resultCard, deckManager, fieldManager, cancellationToken);
-            for (var i = 0; i < participants.Count; i++)
-            {
-                FlightSortingChannel.Restore(participants[i].Card);
+                ChoreoTraceSink.SafeForceCloseOpenChoreos("SkeletonFusion");
             }
-
-            FlightSortingChannel.Restore(resultCard);
-            ReleaseParticipants(cardManager, participants);
         }
 
         private static List<ParticipantView> ResolveParticipants(
@@ -354,25 +374,43 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var fieldLayout = fieldManager.LayoutSettings;
-            var exitDuration = fieldLayout != null ? fieldLayout.fieldExitDuration : 0.35f;
-
-            // 若洗入通道曾提前登记入组，合体 reveal 会把 Transform 留在场上；需先卸下再走上飞入组。
-            if (deckManager.ContainsUid(resultCard.Uid))
+            ChoreoTraceSink.SafeBeginChoreo(
+                "ExitToDeck",
+                "uid", resultCard.Uid.ToString(),
+                "displayMode", resultCard.DisplayMode.ToString());
+            var outcome = "ok";
+            try
             {
-                deckManager.TryDetachByUid(resultCard.Uid, out _);
+                var fieldLayout = fieldManager.LayoutSettings;
+                var exitDuration = fieldLayout != null ? fieldLayout.fieldExitDuration : 0.35f;
+
+                // 若洗入通道曾提前登记入组，合体 reveal 会把 Transform 留在场上；需先卸下再走上飞入组。
+                if (deckManager.ContainsUid(resultCard.Uid))
+                {
+                    deckManager.TryDetachByUid(resultCard.Uid, out _);
+                }
+
+                if (!deckManager.LaunchReturnFieldCardToDeck(resultCard))
+                {
+                    Debug.LogWarning(
+                        $"[SkeletonDeckPresentation] LaunchReturnFieldCardToDeck 失败 uid={resultCard.Uid} mode={resultCard.DisplayMode}");
+                    outcome = "launchFail";
+                    return;
+                }
+
+                if (exitDuration > 0f)
+                {
+                    await UniTask.Delay(TimeSpan.FromSeconds(exitDuration), cancellationToken: cancellationToken);
+                }
             }
-
-            if (!deckManager.LaunchReturnFieldCardToDeck(resultCard))
+            catch (OperationCanceledException)
             {
-                Debug.LogWarning(
-                    $"[SkeletonDeckPresentation] LaunchReturnFieldCardToDeck 失败 uid={resultCard.Uid} mode={resultCard.DisplayMode}");
-                return;
+                outcome = "cancel";
+                throw;
             }
-
-            if (exitDuration > 0f)
+            finally
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(exitDuration), cancellationToken: cancellationToken);
+                ChoreoTraceSink.SafeEndChoreo(outcome);
             }
         }
 

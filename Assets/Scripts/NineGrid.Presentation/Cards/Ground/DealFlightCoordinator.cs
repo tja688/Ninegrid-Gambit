@@ -658,6 +658,15 @@ namespace NineGrid.Cards
                 "outcome", outcome,
                 "budgetConsumed", probe.Budget?.Consumed.ToString("F3") ?? "0",
                 "visualTargetSlot", probe.VisualAimSlot.ToString());
+            // #45：发牌发起→落位/中止成对 settle（与 dealFlightBegin 同 choreoSeqId + chainId）。
+            ChoreoTraceSink.SafeExploreTrace(
+                uid,
+                "deal.settled",
+                probe.BirthSlot,
+                probe.TrackedSlot,
+                "kind", probe.Kind.ToString(),
+                "outcome", outcome ?? string.Empty,
+                "visualTargetSlot", probe.VisualAimSlot.ToString());
         }
     }
 }

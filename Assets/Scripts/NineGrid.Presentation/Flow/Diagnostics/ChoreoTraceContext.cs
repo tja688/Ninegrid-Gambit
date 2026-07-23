@@ -148,9 +148,15 @@ namespace NineGrid.Flow.Diagnostics
                 var payload = extra != null
                     ? new Dictionary<string, string>(extra)
                     : new Dictionary<string, string>();
-                if (CurrentSeqId > 0)
+                // ADR-0003：Cards/Flow 表演诊断 payload 必须同带 chainId + choreoSeqId。
+                if (!payload.ContainsKey("choreoSeqId"))
                 {
                     payload["choreoSeqId"] = CurrentSeqId.ToString(CultureInfo.InvariantCulture);
+                }
+
+                if (!payload.ContainsKey("chainId"))
+                {
+                    payload["chainId"] = DirectorTrace.CurrentChainId.ToString(CultureInfo.InvariantCulture);
                 }
 
                 payload["phase"] = phase ?? string.Empty;

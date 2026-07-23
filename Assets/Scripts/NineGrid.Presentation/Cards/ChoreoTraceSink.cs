@@ -13,6 +13,7 @@ namespace NineGrid.Cards
         public static Action<int, string, int, int, string[]> RecordExploreTrace;
         public static Action<string, string[]> RecordBusySnapshot;
         public static Action<string, int, string> EmitAnomaly;
+        public static Action<string> ForceCloseOpenChoreos;
 
         public static int SafeBeginChoreo(string kind, params string[] pairs)
         {
@@ -95,6 +96,18 @@ namespace NineGrid.Cards
             }
         }
 
+        public static void SafeForceCloseOpenChoreos(string reason)
+        {
+            try
+            {
+                ForceCloseOpenChoreos?.Invoke(reason);
+            }
+            catch
+            {
+                // swallow
+            }
+        }
+
         public static void ClearHandlers()
         {
             BeginChoreo = null;
@@ -103,6 +116,7 @@ namespace NineGrid.Cards
             RecordExploreTrace = null;
             RecordBusySnapshot = null;
             EmitAnomaly = null;
+            ForceCloseOpenChoreos = null;
         }
     }
 }

@@ -59,6 +59,8 @@ namespace NineGrid.Flow.Diagnostics
                 ChoreoTraceContext.RecordBusySnapshot(trigger, PairsToDict(pairs));
             ChoreoTraceSink.EmitAnomaly = (code, uid, detail) =>
                 PerfTraceRecorder.EmitChoreoAnomaly(code, uid, detail);
+            ChoreoTraceSink.ForceCloseOpenChoreos = reason =>
+                ChoreoTraceContext.ForceCloseOpenChoreos(reason);
         }
 
         private static Dictionary<string, string> PairsToDict(string[] pairs)
