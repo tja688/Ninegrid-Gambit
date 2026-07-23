@@ -1165,8 +1165,14 @@ namespace NineGrid.Cards
                 return;
             }
 
+            var holdAcquired = false;
             if (!skipBusyGuard)
             {
+                if (!PresentationMainlineHold.TryAcquire("FieldMotion", out holdAcquired))
+                {
+                    Debug.LogWarning("[GroundMotionExecutor] 盘面移动：无法获取主线租约，本地 field busy 仍继续。");
+                }
+
                 _isBusy = true;
             }
 
@@ -1334,6 +1340,7 @@ namespace NineGrid.Cards
                 if (!skipBusyGuard)
                 {
                     _isBusy = false;
+                    PresentationMainlineHold.Release(holdAcquired, "FieldMotion");
                 }
             }
         }
@@ -1349,8 +1356,14 @@ namespace NineGrid.Cards
                 return;
             }
 
+            var holdAcquired = false;
             if (!skipBusyGuard)
             {
+                if (!PresentationMainlineHold.TryAcquire("FieldMotion", out holdAcquired))
+                {
+                    Debug.LogWarning("[GroundMotionExecutor] 外环旋转：无法获取主线租约，本地 field busy 仍继续。");
+                }
+
                 _isBusy = true;
             }
 
@@ -1609,6 +1622,7 @@ namespace NineGrid.Cards
                 if (!skipBusyGuard)
                 {
                     _isBusy = false;
+                    PresentationMainlineHold.Release(holdAcquired, "FieldMotion");
                 }
             }
         }
@@ -1825,8 +1839,14 @@ namespace NineGrid.Cards
                 return;
             }
 
+            var holdAcquired = false;
             if (!skipBusyGuard)
             {
+                if (!PresentationMainlineHold.TryAcquire("FieldMotion", out holdAcquired))
+                {
+                    Debug.LogWarning("[GroundMotionExecutor] 换位：无法获取主线租约，本地 field busy 仍继续。");
+                }
+
                 _isBusy = true;
             }
 
@@ -1898,6 +1918,7 @@ namespace NineGrid.Cards
                 if (!skipBusyGuard)
                 {
                     _isBusy = false;
+                    PresentationMainlineHold.Release(holdAcquired, "FieldMotion");
                 }
             }
         }

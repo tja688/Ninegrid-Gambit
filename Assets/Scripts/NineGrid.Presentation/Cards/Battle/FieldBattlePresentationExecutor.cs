@@ -284,6 +284,12 @@ namespace NineGrid.Cards
                 SpawnDamagePopups(counterProjection.DamagePopups, avatar, 0);
             }
 
+            var holdAcquired = false;
+            if (!PresentationMainlineHold.TryAcquire("FieldBattlePresent", out holdAcquired))
+            {
+                Debug.LogWarning("[FieldBattle] 导演反击 Present：无法获取主线租约，本地 busy 仍继续。");
+            }
+
             _isBusy = true;
             try
             {
@@ -332,6 +338,7 @@ namespace NineGrid.Cards
                 }
 
                 _isBusy = false;
+                PresentationMainlineHold.Release(holdAcquired, "FieldBattlePresent");
                 SyncAfterCombatRound();
                 DisposeBattleCts(linkedCts);
             }
@@ -374,6 +381,12 @@ namespace NineGrid.Cards
                 hitFrameApplied = true;
                 PresentationOutputProjector.SyncManagedCardPresentation(combatVictim);
                 SpawnDamagePopups(hitProjection.DamagePopups, combatVictim, 0);
+            }
+
+            var holdAcquired = false;
+            if (!PresentationMainlineHold.TryAcquire("FieldBattlePresent", out holdAcquired))
+            {
+                Debug.LogWarning("[FieldBattle] 导演攻击 Present：无法获取主线租约，本地 busy 仍继续。");
             }
 
             _isBusy = true;
@@ -452,6 +465,7 @@ namespace NineGrid.Cards
                 }
 
                 _isBusy = false;
+                PresentationMainlineHold.Release(holdAcquired, "FieldBattlePresent");
                 SyncAfterCombatRound();
                 DisposeBattleCts(linkedCts);
             }
