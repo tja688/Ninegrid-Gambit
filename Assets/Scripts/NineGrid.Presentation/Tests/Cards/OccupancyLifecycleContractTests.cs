@@ -91,6 +91,18 @@ namespace NineGrid.Presentation.Tests.Cards
             AssertSourceDoesNotMatch(
                 "Cards/Ground/GroundMotionExecutor.cs",
                 @"Release\(\s*card\.Uid\s*,\s*""Ground\.RemoveAnimated");
+            AssertSourceMatches(
+                "Cards/Ground/GroundMotionExecutor.cs",
+                @"Release\(\s*card\s*,\s*""Ground\.RemoveImmediate""");
+            AssertSourceDoesNotMatch(
+                "Cards/Ground/GroundMotionExecutor.cs",
+                @"Release\(\s*(?:uid|card\.Uid)\s*,\s*""Ground\.RemoveImmediate""");
+            AssertSourceMatches(
+                "Cards/Ground/GroundMotionExecutor.cs",
+                @"Release\(\s*card\s*,\s*""Ground\.ClearField""");
+            AssertSourceDoesNotMatch(
+                "Cards/Ground/GroundMotionExecutor.cs",
+                @"Release\(\s*uid\s*,\s*""Ground\.ClearField""");
         }
 
         [Test]

@@ -686,7 +686,8 @@ namespace NineGrid.Cards
             VacateSlotForExplore(slot, card, animate, skipBusyGuard, startExplore);
             if (!animate)
             {
-                CardEntityLifecycleHook.CardsOrNull().Release(uid, "Ground.RemoveImmediate");
+                // 引用身份保护：即使同步路径也走 ManagedCard，避免误伤复用 uid 的新实体。
+                CardEntityLifecycleHook.CardsOrNull().Release(card, "Ground.RemoveImmediate");
             }
 
             return true;
@@ -848,7 +849,10 @@ namespace NineGrid.Cards
                         }
 
                         _index.Unregister(slot, "ClearField");
-                        cardManager.Release(uid, "Ground.ClearField");
+                        if (cardManager.TryGet(uid, out var card) && card != null)
+                        {
+                            cardManager.Release(card, "Ground.ClearField");
+                        }
                     }
                 }
             }
