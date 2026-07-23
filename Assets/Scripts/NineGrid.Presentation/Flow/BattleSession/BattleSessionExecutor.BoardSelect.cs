@@ -19,11 +19,12 @@ namespace NineGrid.Flow
                 return false;
             }
 
-            if (PresentationInputGates.ChoiceOverlayActive
-                || PresentationInputGates.MainlineBusy)
+            if (PresentationInputGates.ChoiceOverlayActive)
             {
                 return false;
             }
+
+            // MainlineBusy 由 IntentIntake（BoardSelect begin / UseItem）裁决，此处不提前短路。
 
                         string selectedOption = null;
             if (IsStatBoostCard(card.DefId))

@@ -1,0 +1,278 @@
+using System;
+using NineGrid.Core;
+using NineGrid.Flow;
+using NineGrid.Flow.Presentation;
+using NineGrid.Presentation;
+using QFramework;
+using UnityEngine;
+
+namespace NineGrid.Presentation.Systems
+{
+    /// <summary>
+    /// #50 IntentIntake：薄前置，不自持缓冲/互斥可写真相。
+    /// </summary>
+    public sealed class IntentIntakeSystem : AbstractSystem, IIntentIntake
+    {
+        private IAccelerationSink mAcceleration = NoOpAccelerationSink.Instance;
+        private Func<InputIntent, bool> mLegalityOverride;
+
+        public void SetAccelerationSink(IAccelerationSink sink)
+        {
+            mAcceleration = sink ?? NoOpAccelerationSink.Instance;
+        }
+
+        /// <summary>EditMode：注入恒真/录制假体，跳过 Core 棋盘合法性。</summary>
+        public void SetLegalityOverride(Func<InputIntent, bool> legalityOverride)
+        {
+            mLegalityOverride = legalityOverride;
+        }
+
+        public IntentDisposition Submit(
+            InputIntent intent,
+            InputOwner targetSurface,
+            out bool uiPickPreview)
+        {
+            uiPickPreview = false;
+
+            var input = this.GetSystem<IPresentationInputStateSystem>();
+            var owner = input != null ? input.CurrentOwner : InputOwner.ProtectedField;
+            var mainlineBusy = input != null && input.MainlineBusy;
+
+            if (targetSurface != owner)
+            {
+                if (mainlineBusy)
+                {
+                    mAcceleration.Tap(intent);
+                }
+
+                return IntentDisposition.Reject;
+            }
+
+            // 主线忙时：对当前所有者的每次点击均发冲动轻点（含随后 Buffer/Reject/非法）。
+            if (mainlineBusy)
+            {
+                mAcceleration.Tap(intent);
+            }
+
+            if (InputIntentKinds.IsBoardAction(intent.Kind))
+            {
+                return SubmitBoardAction(intent, mainlineBusy, out uiPickPreview);
+            }
+
+            if (InputIntentKinds.IsModeOrModal(intent.Kind))
+            {
+                return mainlineBusy ? IntentDisposition.Reject : IntentDisposition.Allow;
+            }
+
+            Debug.LogWarning("[IntentIntake] unknown intent kind: " + intent.Kind);
+            return IntentDisposition.Reject;
+        }
+
+        private IntentDisposition SubmitBoardAction(
+            InputIntent intent,
+            bool mainlineBusy,
+            out bool uiPickPreview)
+        {
+            uiPickPreview = false;
+
+            if (ShouldRouteToBoardSelect(intent))
+            {
+                return mainlineBusy
+                    ? IntentDisposition.Reject
+                    : IntentDisposition.RouteToBoardSelect;
+            }
+
+            if (string.Equals(intent.Kind, InputIntentKinds.Attack, StringComparison.Ordinal)
+                && IsOrphanMidBattleRewardPending())
+            {
+                return IntentDisposition.Reject;
+            }
+
+            string legalityReject;
+            if (!TryExplainBoardLegality(intent, out legalityReject))
+            {
+                return IntentDisposition.Reject;
+            }
+
+            // Pickup：idle 时由调用方同步 Apply+ExternalHold；busy 时仍走 Director latest-wins。
+            if (string.Equals(intent.Kind, InputIntentKinds.Pickup, StringComparison.Ordinal))
+            {
+                if (!mainlineBusy)
+                {
+                    return IntentDisposition.Allow;
+                }
+
+                var pickupRuntime = this.GetSystem<IPresentationRuntimeSystem>();
+                if (pickupRuntime == null || !pickupRuntime.IsStarted)
+                {
+                    Debug.LogWarning("[IntentIntake] 表现意图运行时未启动（Pickup buffer）。");
+                    return IntentDisposition.Reject;
+                }
+
+                pickupRuntime.TrySubmitIntent(intent, out uiPickPreview);
+                return IntentDisposition.BufferToDirector;
+            }
+
+            var runtime = this.GetSystem<IPresentationRuntimeSystem>();
+            if (runtime == null || !runtime.IsStarted)
+            {
+                Debug.LogWarning("[IntentIntake] 表现意图运行时未启动。");
+                return IntentDisposition.Reject;
+            }
+
+            if (mainlineBusy)
+            {
+                runtime.TrySubmitIntent(intent, out uiPickPreview);
+                return IntentDisposition.BufferToDirector;
+            }
+
+            runtime.TrySubmitIntent(intent, out uiPickPreview);
+            return IntentDisposition.Allow;
+        }
+
+        private static bool IsOrphanMidBattleRewardPending()
+        {
+            var architecture = NineGridArchitecture.Interface;
+            if (PresentationInputGates.ChoiceOverlayActive || architecture == null)
+            {
+                return false;
+            }
+
+            var pending = architecture.GetModel<PendingChoiceModel>();
+            if (pending.Kind.Value != PendingChoiceKind.Reward
+                || pending.RewardOptions == null
+                || pending.RewardOptions.Count == 0)
+            {
+                return false;
+            }
+
+            var phase = architecture.GetSystem<NineGrid.Core.Systems.IPhaseSystem>().CurrentPhase;
+            return phase == GamePhase.InteractionLoop || phase == GamePhase.RewardItemChoice;
+        }
+
+        private bool ShouldRouteToBoardSelect(InputIntent intent)
+        {
+            if (!string.Equals(intent.Kind, InputIntentKinds.UseItem, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            if (intent.SelectedCardUids != null && intent.SelectedCardUids.Length > 0)
+            {
+                return false;
+            }
+
+            var arch = NineGridArchitecture.Interface;
+            if (arch == null || intent.TargetId <= 0)
+            {
+                return false;
+            }
+
+            var registry = arch.GetModel<CardRegistry>();
+            if (registry == null || !registry.TryGet(intent.TargetId, out var card))
+            {
+                return false;
+            }
+
+            HelpCardPlayKind playKind;
+            HelpCardSelectedCardsSpec spec;
+            if (!HelpCardBoardSelectResolver.TryGetPlayKind(card.DefId, out playKind, out spec))
+            {
+                return false;
+            }
+
+            return playKind == HelpCardPlayKind.MultiBoardSelect;
+        }
+
+        private bool TryExplainBoardLegality(InputIntent intent, out string rejectReason)
+        {
+            rejectReason = null;
+            if (mLegalityOverride != null)
+            {
+                return mLegalityOverride(intent);
+            }
+
+            var arch = NineGridArchitecture.Interface;
+
+            if (string.Equals(intent.Kind, InputIntentKinds.Explore, StringComparison.Ordinal))
+            {
+                return BoardIntentLegality.TryExplainExplore(arch, intent.TargetId, out rejectReason);
+            }
+
+            if (string.Equals(intent.Kind, InputIntentKinds.Attack, StringComparison.Ordinal))
+            {
+                return BoardIntentLegality.TryExplainAttack(arch, intent.TargetId, out rejectReason);
+            }
+
+            if (string.Equals(intent.Kind, InputIntentKinds.UseItem, StringComparison.Ordinal))
+            {
+                return BoardIntentLegality.TryExplainUseItem(
+                    arch,
+                    intent.TargetId,
+                    intent.SelectedCardUids,
+                    intent.SelectedOption,
+                    out rejectReason);
+            }
+
+            if (string.Equals(intent.Kind, InputIntentKinds.Pickup, StringComparison.Ordinal))
+            {
+                return BoardIntentLegality.TryExplainPickup(arch, intent.TargetId, out rejectReason);
+            }
+
+            rejectReason = "unknownKind";
+            return false;
+        }
+
+        public static IIntentIntake EnsureRegistered(
+            IArchitecture architecture = null,
+            IAccelerationSink acceleration = null,
+            Func<InputIntent, bool> legalityOverride = null)
+        {
+            var arch = architecture ?? NineGridArchitecture.Interface;
+            if (arch == null)
+            {
+                throw new InvalidOperationException("Architecture is not available for IntentIntake.");
+            }
+
+            PresentationInputStateSystem.EnsureRegistered(arch);
+
+            var existing = arch.GetSystem<IIntentIntake>();
+            if (existing != null)
+            {
+                var asSystem = existing as IntentIntakeSystem;
+                if (asSystem != null)
+                {
+                    if (acceleration != null)
+                    {
+                        asSystem.SetAccelerationSink(acceleration);
+                    }
+
+                    if (legalityOverride != null)
+                    {
+                        asSystem.SetLegalityOverride(legalityOverride);
+                    }
+                }
+
+                return existing;
+            }
+
+            var created = new IntentIntakeSystem();
+            if (acceleration != null)
+            {
+                created.SetAccelerationSink(acceleration);
+            }
+
+            if (legalityOverride != null)
+            {
+                created.SetLegalityOverride(legalityOverride);
+            }
+
+            arch.RegisterSystem<IIntentIntake>(created);
+            return created;
+        }
+
+        protected override void OnInit()
+        {
+        }
+    }
+}

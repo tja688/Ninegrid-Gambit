@@ -1,17 +1,18 @@
-using System;
 using NineGrid.Cards;
+using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Commands;
+using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Controllers
 {
     /// <summary>
-    /// 场地拾取输入 Controller：经 <see cref="PickupInputHook"/> 承接点击入手，发 QF Command。
+    /// 场地拾取输入 Controller：经 IntentIntake 门禁后发 Apply Command（busy 时缓冲进 Director）。
     /// </summary>
     public sealed class PickupInputController : PresentationController
     {
-        private Func<int, PickupItemPresentationResult> mSubmitHandler;
+        private System.Func<int, PickupItemPresentationResult> mSubmitHandler;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void RegisterInstallHook()
@@ -32,6 +33,28 @@ namespace NineGrid.Presentation.Controllers
         /// <summary>场地格拾取入口（Hook 与 EditMode 直驱共用）。</summary>
         public PickupItemPresentationResult HandlePickupRequested(int groundSlot)
         {
+            var intake = this.GetSystem<IIntentIntake>()
+                ?? IntentIntakeSystem.EnsureRegistered();
+            bool preview;
+            var disposition = intake.Submit(
+                new InputIntent(InputIntentKinds.Pickup, groundSlot),
+                InputOwner.ProtectedField,
+                out preview);
+
+            if (disposition == IntentDisposition.BufferToDirector)
+            {
+                return new PickupItemPresentationResult
+                {
+                    Accepted = false,
+                    Reason = "buffered",
+                };
+            }
+
+            if (disposition != IntentDisposition.Allow)
+            {
+                return default;
+            }
+
             return this.SendCommand(new ApplyPickupItemCommand(groundSlot));
         }
 

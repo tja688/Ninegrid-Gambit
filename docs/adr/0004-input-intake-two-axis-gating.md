@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # 输入交互走"单一意图收口 + 两轴门禁"

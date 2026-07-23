@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using NineGrid.Flow.Presentation;
 using NineGrid.Presentation;
+using NineGrid.Presentation.Systems;
 
 namespace NineGrid.Cards
 {
@@ -45,7 +47,12 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (PresentationInputGates.MainlineBusy || PresentationInputGates.ChoiceOverlayActive)
+            var intake = IntentIntakeSystem.EnsureRegistered();
+            bool preview;
+            if (intake.Submit(
+                    new InputIntent(InputIntentKinds.BoardSelectBegin, itemUid),
+                    InputOwner.ProtectedField,
+                    out preview) != IntentDisposition.Allow)
             {
                 return false;
             }

@@ -28,7 +28,7 @@ namespace NineGrid.Presentation.Tests.Pickup
                 try
                 {
                     var summary = controller.HandlePickupRequested(sAdjacentSlot.Index);
-                    Assert.IsTrue(summary.Accepted);
+                    Assert.IsTrue(summary.Accepted, summary.Reason);
                     Assert.AreEqual(uid, summary.CardUid);
                     Assert.IsTrue(summary.AcquiredToHand);
                 }

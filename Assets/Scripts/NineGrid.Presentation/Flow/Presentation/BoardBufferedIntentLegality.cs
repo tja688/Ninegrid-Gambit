@@ -43,6 +43,11 @@ namespace NineGrid.Flow.Presentation
                     out reason);
             }
 
+            if (string.Equals(intent.Kind, InputIntentKinds.Pickup, StringComparison.Ordinal))
+            {
+                return BoardIntentLegality.TryExplainPickup(mArch, intent.TargetId, out reason);
+            }
+
             return true;
         }
     }

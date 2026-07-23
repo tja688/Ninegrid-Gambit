@@ -1,13 +1,15 @@
 using NineGrid.Core;
 using NineGrid.Flow;
+using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Commands;
+using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Controllers
 {
     /// <summary>
-    /// 奖励点选 Controller：经 Hook 承接 InBattle Bounce，发 QF Command。
+    /// 奖励点选 Controller：经 IntentIntake 门禁后发 QF Command。
     /// </summary>
     public sealed class RewardChoiceInputController : PresentationController
     {
@@ -34,12 +36,33 @@ namespace NineGrid.Presentation.Controllers
 
         public CoreCommandResult HandleSelectReward(int optionIndex)
         {
+            if (!TryIntakeModal(InputIntentKinds.SelectReward, optionIndex))
+            {
+                return CoreCommandResult.Reject("intentIntakeReject");
+            }
+
             return this.SendCommand(new SubmitSelectRewardCommand(optionIndex));
         }
 
         public CoreCommandResult HandleSkipHelpChoice()
         {
+            if (!TryIntakeModal(InputIntentKinds.SkipHelpChoice, 0))
+            {
+                return CoreCommandResult.Reject("intentIntakeReject");
+            }
+
             return this.SendCommand(new SubmitSkipHelpChoiceCommand());
+        }
+
+        private bool TryIntakeModal(string kind, int targetId)
+        {
+            var intake = this.GetSystem<IIntentIntake>()
+                ?? IntentIntakeSystem.EnsureRegistered();
+            bool preview;
+            return intake.Submit(
+                new InputIntent(kind, targetId),
+                InputOwner.ChoiceOverlay,
+                out preview) == IntentDisposition.Allow;
         }
 
         private void InstallHandlers()

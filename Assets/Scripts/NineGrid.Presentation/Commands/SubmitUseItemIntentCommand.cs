@@ -1,13 +1,11 @@
-using NineGrid.Core;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
-using UnityEngine;
 
 namespace NineGrid.Presentation.Commands
 {
     /// <summary>
-    /// 玩家用牌意图：Core 合法性裁决后经 <see cref="IPresentationRuntimeSystem"/> 提交导演。
+    /// 玩家用牌意图：经唯一收口 <see cref="IIntentIntake"/> 进入编排。
     /// </summary>
     public sealed class SubmitUseItemIntentCommand : AbstractCommand<bool>
     {
@@ -32,41 +30,35 @@ namespace NineGrid.Presentation.Commands
                 return false;
             }
 
-            var architecture = NineGridArchitecture.Interface;
-            string legalityReject;
-            if (!BoardIntentLegality.TryExplainUseItem(
-                    architecture,
-                    mItemUid,
-                    mSelectedCardUids,
-                    mSelectedOption,
-                    out legalityReject))
-            {
-                this.SendEvent(new UseItemIntentRejectedEvent
-                {
-                    ItemUid = mItemUid,
-                    Reason = legalityReject
-                });
-                Debug.LogWarning(
-                    "[SubmitUseItemIntentCommand] UseItem 被 Core 合法性拒绝 itemUid="
-                    + mItemUid + ": " + legalityReject);
-                return false;
-            }
-
-            var runtime = this.GetSystem<IPresentationRuntimeSystem>();
-            if (runtime == null || !runtime.IsStarted)
-            {
-                Debug.LogWarning("[SubmitUseItemIntentCommand] 表现意图运行时未启动。");
-                return false;
-            }
-
+            var intake = this.GetSystem<IIntentIntake>()
+                ?? IntentIntakeSystem.EnsureRegistered();
             bool preview;
-            return runtime.TrySubmitIntent(
+            var disposition = intake.Submit(
                 new InputIntent(
                     InputIntentKinds.UseItem,
                     mItemUid,
                     mSelectedCardUids,
                     mSelectedOption),
+                InputOwner.ProtectedField,
                 out preview);
+
+            if (disposition == IntentDisposition.RouteToBoardSelect)
+            {
+                return false;
+            }
+
+            if (disposition == IntentDisposition.Reject)
+            {
+                this.SendEvent(new UseItemIntentRejectedEvent
+                {
+                    ItemUid = mItemUid,
+                    Reason = "intentIntakeReject"
+                });
+                return false;
+            }
+
+            return disposition == IntentDisposition.Allow
+                || disposition == IntentDisposition.BufferToDirector;
         }
     }
 }

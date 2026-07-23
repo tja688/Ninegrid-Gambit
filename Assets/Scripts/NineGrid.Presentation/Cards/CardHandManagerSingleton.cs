@@ -451,21 +451,41 @@ namespace NineGrid.Cards
                 return false;
             }
 
+            if (PickupInputHook.TryApplyPickup == null)
+            {
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "PickupHookUnwired", false, null);
+                Debug.LogWarning("[CardHandManager] PickupInputHook.TryApplyPickup 未装配。");
+                return false;
+            }
+
+            // 主线忙：只经 IntentIntake 缓冲，不取 ExternalHold。
+            if (PresentationInputGates.MainlineBusy)
+            {
+                var buffered = PickupInputHook.TryApplyPickup(groundSlot);
+                if (string.Equals(buffered.Reason, "buffered", System.StringComparison.Ordinal))
+                {
+                    FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "Buffered", true, null);
+                    return true;
+                }
+
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "BusyReject", false, buffered.Reason);
+                return false;
+            }
+
             if (!PresentationInputGates.TryBeginExternalHold("Pickup"))
             {
                 FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "LockFail", false, null);
                 return false;
             }
 
-            if (PickupInputHook.TryApplyPickup == null)
+            var pickup = PickupInputHook.TryApplyPickup(groundSlot);
+            if (string.Equals(pickup.Reason, "buffered", System.StringComparison.Ordinal))
             {
-                PresentationInputGates.EndExternalHold("Pickup-unwired");
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "PickupHookUnwired", false, null);
-                Debug.LogWarning("[CardHandManager] PickupInputHook.TryApplyPickup 未装配。");
-                return false;
+                PresentationInputGates.EndExternalHold("Pickup-buffered");
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "Buffered", true, null);
+                return true;
             }
 
-            var pickup = PickupInputHook.TryApplyPickup(groundSlot);
             if (!pickup.Accepted)
             {
                 PresentationInputGates.EndExternalHold("Pickup-rejected");

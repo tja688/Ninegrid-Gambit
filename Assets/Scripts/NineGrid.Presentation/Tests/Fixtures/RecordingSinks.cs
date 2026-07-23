@@ -22,4 +22,15 @@ namespace NineGrid.Presentation.Tests.Fixtures
             Pulses.Add(triggerId);
         }
     }
+
+    /// <summary>#50 impatience-tap 计数假体。</summary>
+    public sealed class RecordingAccelerationSink : IAccelerationSink
+    {
+        public readonly List<InputIntent> Taps = new List<InputIntent>();
+
+        public void Tap(InputIntent intent)
+        {
+            Taps.Add(intent);
+        }
+    }
 }

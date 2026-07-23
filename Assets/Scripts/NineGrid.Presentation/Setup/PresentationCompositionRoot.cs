@@ -115,7 +115,8 @@ namespace NineGrid.Presentation.Setup
             var scriptFactory = new RoutingIntentScriptFactory(
                 exploreFactory,
                 attackFactory,
-                useItemFactory);
+                useItemFactory,
+                new PickupIntentScriptFactory(architecture));
 
             return InstallCore(
                 scriptFactory,
@@ -160,6 +161,7 @@ namespace NineGrid.Presentation.Setup
 
             var architecture = NineGridArchitecture.Interface;
             PresentationInputStateSystem.EnsureRegistered(architecture);
+            IntentIntakeSystem.EnsureRegistered(architecture);
             BattleSessionSystem.EnsureRegistered(architecture);
             ChoicePresentationSystem.EnsureRegistered(architecture);
             BoardSelectionSystem.EnsureRegistered(architecture);

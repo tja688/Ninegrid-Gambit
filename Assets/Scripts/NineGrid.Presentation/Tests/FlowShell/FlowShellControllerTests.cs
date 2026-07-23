@@ -2,6 +2,7 @@ using NineGrid.Core;
 using NineGrid.Flow;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Controllers;
+using NineGrid.Presentation.Systems;
 using NineGrid.Presentation.Tests.Fixtures;
 using NUnit.Framework;
 using UnityEngine;
@@ -49,17 +50,19 @@ namespace NineGrid.Presentation.Tests.FlowShell
                 Assert.IsTrue(arch.Phase.Attack(sAdjacentSlot).Accepted);
                 Assert.IsTrue(arch.Phase.SkipHelpChoice().Accepted);
                 Assert.AreEqual(GamePhase.RoomChoice, arch.Phase.CurrentPhase);
+                PresentationInputStateSystem.EnsureRegistered(arch.Architecture)
+                    .SetChoiceOverlayActive(true);
 
                 var go = new GameObject(nameof(RoomChoiceInputController));
                 var controller = go.AddComponent<RoomChoiceInputController>();
                 try
                 {
                     var result = controller.HandleSelectRoom(0);
-                    Assert.IsTrue(result.Accepted);
+                    Assert.IsTrue(result.Accepted, result.Reason);
                     Assert.AreEqual(GamePhase.RoomEvent, arch.Phase.CurrentPhase);
 
                     result = controller.HandleEnterRoom();
-                    Assert.IsTrue(result.Accepted);
+                    Assert.IsTrue(result.Accepted, result.Reason);
                     Assert.AreEqual(GamePhase.NodeCompleted, arch.Phase.CurrentPhase);
                 }
                 finally
@@ -78,13 +81,15 @@ namespace NineGrid.Presentation.Tests.FlowShell
                 arch.PlaceSoleBoardCardAt(sAdjacentSlot);
                 Assert.IsTrue(arch.Phase.Attack(sAdjacentSlot).Accepted);
                 Assert.AreEqual(GamePhase.RewardItemChoice, arch.Phase.CurrentPhase);
+                PresentationInputStateSystem.EnsureRegistered(arch.Architecture)
+                    .SetChoiceOverlayActive(true);
 
                 var go = new GameObject(nameof(RewardChoiceInputController));
                 var controller = go.AddComponent<RewardChoiceInputController>();
                 try
                 {
                     var result = controller.HandleSelectReward(0);
-                    Assert.IsTrue(result.Accepted);
+                    Assert.IsTrue(result.Accepted, result.Reason);
                     Assert.AreEqual(GamePhase.RoomChoice, arch.Phase.CurrentPhase);
                 }
                 finally

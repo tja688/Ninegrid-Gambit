@@ -54,7 +54,7 @@
 
 `PresentationController` · `ExploreInputController` · `AttackInputController` · `PickupInputController` · `UseItemInputController` · `GroundFieldGeometryController` · `FieldBattlePresentationController` · `CardEntityLifecycleController` · `ZoneOwnershipQueryController` · `DescriptionOutputController` · `DamageNumberOutputController` · `RelicHudController` · `RoomChoiceInputController` · `RewardChoiceInputController` · `GameFlowShellController` · `TriggerPulseOutputController` · `DiagnosticOutputController` · `BattleSessionPresentationController`
 
-典型路径：场景 Host / Hook → Controller → 读所有权轴 / Query 合法性 → `SendCommand` → System / Director。
+典型路径：场景 Host / Hook → Controller → `IntentIntake.Submit`（所有权 × MainlineBusy）→ Director / Core Command。
 
 ## Systems
 
@@ -67,6 +67,7 @@
 | `ICardEntityLifecycleSystem` / `CardEntityLifecycleSystem` | 卡实体生命周期 |
 | `IGameFlowShellSystem` / `GameFlowShellSystem` | 流程壳相位权威 |
 | `IPresentationInputStateSystem` / `PresentationInputStateSystem` | 输入所有权轴只读投影（`CurrentOwner`）+ MainlineBusy |
+| `IIntentIntake` / `IntentIntakeSystem` | 唯一意图收口：两轴门禁 + 合法性 + Director 缓冲；忙时 `IAccelerationSink` |
 | `BoardSelectionSystem` | 棋盘选择模式 |
 | `ChoicePresentationSystem` | 房间/奖励选择表现 |
 | `GroundPresentation` | 场地表现辅助 |

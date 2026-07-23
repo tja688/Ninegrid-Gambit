@@ -1,15 +1,11 @@
-using NineGrid.Cards;
-using NineGrid.Core;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
-using UnityEngine;
-using NineGrid.Presentation;
 
 namespace NineGrid.Presentation.Commands
 {
     /// <summary>
-    /// 玩家攻击意图：Core 合法性裁决后经 <see cref="IPresentationRuntimeSystem"/> 提交导演。
+    /// 玩家攻击意图：经唯一收口 <see cref="IIntentIntake"/> 进入编排。
     /// </summary>
     public sealed class SubmitAttackIntentCommand : AbstractCommand<bool>
     {
@@ -22,63 +18,26 @@ namespace NineGrid.Presentation.Commands
 
         protected override bool OnExecute()
         {
-            var architecture = NineGridArchitecture.Interface;
-            if (IsOrphanMidBattleRewardPending(architecture))
-            {
-                this.SendEvent(new AttackIntentRejectedEvent
-                {
-                    GroundSlot = mGroundSlot,
-                    Reason = "orphanMidBattleReward"
-                });
-                Debug.LogWarning(
-                    "[SubmitAttackIntentCommand] Attack 被孤儿中局奖励门禁拒绝 slot=" + mGroundSlot);
-                return false;
-            }
-
-            string legalityReject;
-            if (!BoardIntentLegality.TryExplainAttack(architecture, mGroundSlot, out legalityReject))
-            {
-                this.SendEvent(new AttackIntentRejectedEvent
-                {
-                    GroundSlot = mGroundSlot,
-                    Reason = legalityReject
-                });
-                Debug.LogWarning(
-                    "[SubmitAttackIntentCommand] Attack 被 Core 合法性拒绝 slot="
-                    + mGroundSlot + ": " + legalityReject);
-                return false;
-            }
-
-            var runtime = this.GetSystem<IPresentationRuntimeSystem>();
-            if (runtime == null || !runtime.IsStarted)
-            {
-                Debug.LogWarning("[SubmitAttackIntentCommand] 表现意图运行时未启动。");
-                return false;
-            }
-
+            var intake = this.GetSystem<IIntentIntake>()
+                ?? IntentIntakeSystem.EnsureRegistered();
             bool preview;
-            return runtime.TrySubmitIntent(
+            var disposition = intake.Submit(
                 new InputIntent(InputIntentKinds.Attack, mGroundSlot),
+                InputOwner.ProtectedField,
                 out preview);
-        }
 
-        private static bool IsOrphanMidBattleRewardPending(IArchitecture architecture)
-        {
-            if (PresentationInputGates.ChoiceOverlayActive || architecture == null)
+            if (disposition == IntentDisposition.Reject)
             {
+                this.SendEvent(new AttackIntentRejectedEvent
+                {
+                    GroundSlot = mGroundSlot,
+                    Reason = "intentIntakeReject"
+                });
                 return false;
             }
 
-            var pending = architecture.GetModel<PendingChoiceModel>();
-            if (pending.Kind.Value != PendingChoiceKind.Reward
-                || pending.RewardOptions == null
-                || pending.RewardOptions.Count == 0)
-            {
-                return false;
-            }
-
-            var phase = architecture.GetSystem<NineGrid.Core.Systems.IPhaseSystem>().CurrentPhase;
-            return phase == GamePhase.InteractionLoop || phase == GamePhase.RewardItemChoice;
+            return disposition == IntentDisposition.Allow
+                || disposition == IntentDisposition.BufferToDirector;
         }
     }
 }

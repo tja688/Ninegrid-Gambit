@@ -189,6 +189,60 @@ namespace NineGrid.Flow.Presentation
             return true;
         }
 
+        public static bool TryExplainPickup(IArchitecture arch, int groundSlot, out string rejectReason)
+        {
+            rejectReason = null;
+            if (arch == null)
+            {
+                rejectReason = "noArchitecture";
+                return false;
+            }
+
+            var sync = arch.GetSystem<IPresentationSyncSystem>();
+            if (sync != null && sync.IsInputLocked)
+            {
+                rejectReason = "presentationInputLocked activeBatchId=" + sync.ActiveBatchId;
+                return false;
+            }
+
+            // 与 PhaseSystem.ApplyPickupItem 对齐：表现可信入口不查 CanExecute。
+            if (groundSlot < SlotId.MinBoardIndex || groundSlot > SlotId.MaxBoardIndex)
+            {
+                rejectReason = "slotOutOfRange";
+                return false;
+            }
+
+            var slot = SlotId.Board(groundSlot);
+            var board = arch.GetModel<BoardModel>();
+            if (!slot.IsBoardSlot || slot == board.AvatarSlot.Value)
+            {
+                rejectReason = "notBoardCardSlot";
+                return false;
+            }
+
+            var targetUid = board.GetCardUid(slot);
+            if (targetUid == 0)
+            {
+                rejectReason = "emptySlot";
+                return false;
+            }
+
+            var registry = arch.GetModel<CardRegistry>();
+            if (!registry.TryGet(targetUid, out var target) || target.Kind == CardKind.Monster)
+            {
+                rejectReason = "notPickupable uid=" + targetUid;
+                return false;
+            }
+
+            if (!arch.GetSystem<IBoardSystem>().AreAdjacent(board.AvatarSlot.Value, slot))
+            {
+                rejectReason = "notAdjacent avatarSlot=" + board.AvatarSlot.Value;
+                return false;
+            }
+
+            return true;
+        }
+
         private static bool IsRegisteredInItemSlots(DeckModel deck, int itemUid)
         {
             if (deck == null)
