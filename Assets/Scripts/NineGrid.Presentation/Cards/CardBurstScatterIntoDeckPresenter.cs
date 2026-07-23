@@ -143,6 +143,8 @@ namespace NineGrid.Cards
                 origin,
                 "BurstScatter.PlaceOrigin",
                 card.Uid);
+            // Park/Snap L2 后清 L3，避免视觉位偏离炸开原点。
+            EffectFrameConvergence.SnapHome(card, "BurstScatter.PlaceOrigin");
         }
 
         private static async UniTask MoveToPointAsync(

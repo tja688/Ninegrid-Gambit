@@ -84,14 +84,29 @@ namespace NineGrid.Flow
             EnsureViewBindings();
             var shell = GameFlowShellSystem.EnsureRegistered();
             shell.Bind(this);
-            ShowMainMenuPanels();
-            HideNotice();
+            // DisableDomainReload：上一局 Shell 相位/IsBusy 会残留，Update 会静默吞掉 StartRun。
+            if (shell.State.Value != GameFlowShellState.MainMenu || shell.IsBusy)
+            {
+                shell.ReturnToMainMenu();
+            }
+            else
+            {
+                ShowMainMenuPanels();
+                HideNotice();
+            }
         }
 
         private void OnDestroy()
         {
             var shell = ResolveShell() as GameFlowShellSystem;
-            shell?.UnbindIfView(this);
+            if (shell == null)
+            {
+                return;
+            }
+
+            // 先复位权威再 Unbind，避免无 Domain Reload 时 EditMode 残留 Busy/非 MainMenu。
+            shell.ForceMainMenuAuthority();
+            shell.UnbindIfView(this);
         }
 
         private void Update()

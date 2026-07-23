@@ -78,6 +78,35 @@ namespace NineGrid.Presentation.Tests.FlowShell
         }
 
         [Test]
+        public void DisableDomainReloadResidue_BlocksQuickTestUntilForceMainMenu()
+        {
+            // 模拟 Editor DisableDomainReload：Play 退出后 Shell 仍 Busy + 非 MainMenu，
+            // 下一局 Awake 若不复位，StartRun / 快速测试入口会被门禁静默吞掉。
+            using (PresentationArchitectureFixture.CreateBare())
+            {
+                var shell = GameFlowShellSystem.EnsureRegistered();
+                shell.Bind(new FakeGameFlowView());
+                NineGridArchitecture.Interface.SendCommand(
+                    new SetGameFlowShellStateCommand(GameFlowShellState.BattleStub));
+                typeof(GameFlowShellSystem)
+                    .GetMethod("SetBusy", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                    .Invoke(shell, new object[] { true });
+
+                Assert.IsFalse(shell.CanAcceptQuickTestEntry);
+                var genBefore = shell.Generation;
+                LogAssert.Expect(LogType.Warning, "[GameFlow] 当前循环仍在进行，忽略 BeginRun。");
+                shell.BeginRun(new GameFlowRunOptions { TestMode = true });
+                Assert.AreEqual(genBefore, shell.Generation, "残留 Busy 时应忽略 BeginRun");
+                Assert.AreEqual(GameFlowShellState.BattleStub, shell.State.Value);
+
+                shell.ForceMainMenuAuthority();
+                Assert.AreEqual(GameFlowShellState.MainMenu, shell.State.Value);
+                Assert.IsFalse(shell.IsBusy);
+                Assert.IsTrue(shell.CanAcceptQuickTestEntry);
+            }
+        }
+
+        [Test]
         public void SignalSettlementReady_DoesNotThrow_WhenNoActiveWait()
         {
             using (PresentationArchitectureFixture.CreateBare())

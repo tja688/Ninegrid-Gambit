@@ -111,6 +111,17 @@ namespace NineGrid.Presentation.Systems
             mOrchestrator.Stop();
         }
 
+        /// <summary>
+        /// DisableDomainReload 下 Play 退出后 Architecture 仍存活时，强制把 Shell 权威拉回主菜单。
+        /// 不碰场景 View/表现清场（销毁期可能已失效）；进 Play 的 Awake 再走完整 ReturnToMainMenu。
+        /// </summary>
+        public void ForceMainMenuAuthority()
+        {
+            mOrchestrator.Dispose();
+            mState.Value = GameFlowShellState.MainMenu;
+            ClearRunSession();
+        }
+
         public void Signal(GameFlowSignal signal)
         {
             mOrchestrator.Signal(signal);

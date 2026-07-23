@@ -680,7 +680,16 @@ namespace NineGrid.Flow
 
         private async UniTask ShowVictoryAndReturnAsync(CancellationToken ct)
         {
-            await ShowBattleEndAndReturnAsync(victory: true, ct);
+            // 不可把节点循环 ct 传给胜负回菜单：ShowBattleEnd 开头 CancelLoopWork 会立刻取消该 ct，
+            // Delay 抛取消后 EnterMainMenuImmediate 走不到，DisableDomainReload 下会残留非 MainMenu。
+            if (ct.IsCancellationRequested)
+            {
+                return;
+            }
+
+            CancelBattleEndWork();
+            mBattleEndCts = new CancellationTokenSource();
+            await ShowBattleEndAndReturnAsync(victory: true, mBattleEndCts.Token);
         }
 
         private async UniTaskVoid ShowBattleEndAndReturnAsync(bool victory)

@@ -826,31 +826,26 @@ namespace NineGrid.Flow
             origin = null;
             var cardManager = Cards;
 
-            if (entry.TriggerCardUid > 0
-                && cardManager != null
-                && cardManager.TryGet(entry.TriggerCardUid, out var triggerCard)
-                && triggerCard?.Transform != null)
+            // 优先死亡格锚点；禁止 StageFieldDead 后的尸体 live transform（y-80 → 炸开全程离屏）。
+            if (ShuffleBurstOriginResolver.TryResolveWorld(
+                    entry,
+                    ResolveBurstBoardSlotWorld,
+                    uid =>
+                    {
+                        if (cardManager == null
+                            || !cardManager.TryGet(uid, out var trigger)
+                            || !ShuffleBurstOriginResolver.IsUsableLiveTrigger(trigger))
+                        {
+                            return null;
+                        }
+
+                        return trigger;
+                    },
+                    PresentationOutputProjector.ResolveCardWorldPosition,
+                    out var world)
+                && TryGetShuffleOriginScratch(world, out origin))
             {
-                origin = triggerCard.Transform;
                 return true;
-            }
-
-            if (entry.FromBoardSlot > 0)
-            {
-                var slotPos = PresentationOutputProjector.ResolveBoardSlotWorldPosition(entry.FromBoardSlot);
-                if (slotPos.HasValue && TryGetShuffleOriginScratch(slotPos.Value, out origin))
-                {
-                    return true;
-                }
-            }
-
-            if (entry.TriggerCardUid > 0)
-            {
-                var cardPos = PresentationOutputProjector.ResolveCardWorldPosition(entry.TriggerCardUid);
-                if (cardPos.HasValue && TryGetShuffleOriginScratch(cardPos.Value, out origin))
-                {
-                    return true;
-                }
             }
 
             if (!string.IsNullOrEmpty(entry.Cause) && _session.TryResolveHandDealOrigin(entry.Cause, out origin))
@@ -860,6 +855,27 @@ namespace NineGrid.Flow
 
             var deckManager = Deck;
             return deckManager != null && deckManager.TryGetDefaultDealOrigin(out origin);
+        }
+
+        private Vector3? ResolveBurstBoardSlotWorld(int groundSlot)
+        {
+            if (groundSlot <= 0)
+            {
+                return null;
+            }
+
+            var field = Field;
+            if (field != null)
+            {
+                // 直接取格锚，避免 ResolveBoardSlotWorldPosition 仍读到 staged 尸体位。
+                var anchor = field.GetGroundAnchor(groundSlot);
+                if (anchor != null)
+                {
+                    return anchor.position;
+                }
+            }
+
+            return PresentationOutputProjector.ResolveBoardSlotWorldPosition(groundSlot);
         }
 
         private bool TryGetShuffleOriginScratch(Vector3 worldPosition, out Transform origin)
@@ -1249,6 +1265,11 @@ namespace NineGrid.Flow
             if (resultCard != null)
             {
                 CoreCardPresentationMapper.ApplyToManagedCard(resultCard);
+                // 预热 Spawn 不可提前显露：Reveal 前 scale=0，避免融合旁路「凭空多一张」。
+                if (resultCard.Transform != null)
+                {
+                    resultCard.Transform.localScale = Vector3.zero;
+                }
             }
         }
 
