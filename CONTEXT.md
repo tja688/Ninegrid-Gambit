@@ -122,6 +122,28 @@ _Avoid_: 装饰表演阻塞主交互、装饰表演抢主线时间轴
 逻辑占格真相永在 Core（BoardModel）；Cards 只持"格位→卡视图/Transform"的几何注册用于命中测试；目标合法性由 Flow 在 idle 时对 Core 裁决。
 _Avoid_: Cards 维护独立占格真相、事后 force sync 对账、双真相打架
 
+## 输入门禁与意图收口
+
+**意图收口（IntentIntake）**：
+玩家输入进入表演编排的唯一入口；门禁、合法性与互斥/缓冲在此一处裁决，任何输入路径都不得绕过它。
+_Avoid_: 各 Controller 各自判定、Explore 直发 Command 绕过门禁、advisory 与 authoritative 两层门禁并存
+
+**时序互斥（Mainline busy）**：
+门禁第一轴：唯一以"主线是否在跑"为准的临时输入互斥真相；凡须阻塞输入的表演都必须持有主线（作为 Step 或外部租约）。
+_Avoid_: BattleBusy/FieldBusy 各自为政的并行 busy 源、全局 PresentationLocked 布尔当唯一门禁
+
+**输入所有权（Input ownership）**：
+门禁第二轴：某一时刻拥有玩家输入的表面（受保护场地 / 场地覆层 / 棋盘选择模式）；意图被接纳须满足"目标表面 == 当前所有者"。与时序互斥正交。
+_Avoid_: Opening/Overlay/BoardSelect 摊平成一袋布尔、用 busy 表达所有权、活性遮盖当成"忙"
+
+**最新覆盖缓冲（latest-wins buffer）**：
+主线忙时至多缓冲一条意图，后来的点击覆盖先前缓冲；主线转 idle 时对 Core 重校合法性再放行，非法即丢。
+_Avoid_: 最早保留后来者拒、缓冲多条 FIFO 连动、flush 时不重校合法性
+
+**冲动轻点（impatience tap）**：
+主线忙时落下、并不改变缓冲的额外点击；作为独立脉冲交给（当前 no-op 的）加速通道，为未来"多点即加速"预留缝。
+_Avoid_: 忙时额外点击直接静默吞掉、把加速逻辑塞进缓冲语义
+
 ## 卡牌表现实体
 
 **卡牌底盘**：
