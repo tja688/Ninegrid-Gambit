@@ -86,7 +86,7 @@ namespace NineGrid.Presentation.Controllers
                 return;
             }
 
-            var view = Object.FindFirstObjectByType<MainGameLoopManagerSingleton>();
+            var view = Object.FindFirstObjectByType<GameFlowController>();
             if (view != null)
             {
                 shell.Bind(view);

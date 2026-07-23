@@ -16,7 +16,7 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
     /// </summary>
     public sealed class GroundFieldGeometrySystemTests
     {
-        private GroundFieldManagerSingleton _field;
+        private GroundFieldView _field;
 
         [SetUp]
         public void SetUp()
@@ -24,7 +24,7 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
             GroundFieldGeometryHook.Reset();
             DestroyControllers();
             DestroyAllFields();
-            _field = new GameObject("GroundField_V7").AddComponent<GroundFieldManagerSingleton>();
+            _field = new GameObject("GroundField_V7").AddComponent<GroundFieldView>();
         }
 
         [TearDown]
@@ -132,7 +132,7 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
 
         private static void DestroyAllFields()
         {
-            var found = Object.FindObjectsByType<GroundFieldManagerSingleton>(FindObjectsSortMode.None);
+            var found = Object.FindObjectsByType<GroundFieldView>(FindObjectsSortMode.None);
             for (var i = 0; i < found.Length; i++)
             {
                 if (found[i] != null)

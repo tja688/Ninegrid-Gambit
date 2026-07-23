@@ -1,6 +1,6 @@
 var arch = NineGrid.Core.NineGridArchitecture.Current;
 var sb = new System.Text.StringBuilder();
-var loop = NineGrid.Flow.MainGameLoopManagerSingleton.Instance;
+var loop = NineGrid.Flow.GameFlowController.Instance;
 sb.Append("state=").Append(loop.State).Append(';');
 var board = arch.GetModel<NineGrid.Core.BoardModel>();
 var reg = arch.GetModel<NineGrid.Core.CardRegistry>();

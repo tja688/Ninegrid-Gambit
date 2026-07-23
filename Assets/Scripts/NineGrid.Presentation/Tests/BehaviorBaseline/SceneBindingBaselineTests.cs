@@ -12,10 +12,16 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
     public sealed class SceneBindingBaselineTests
     {
         public const string PresentationSceneRootGuid = "f9ec36670b0774044923439f73976bda";
-        public const string InBattleManagerGuid = "a0b2cfd72c60cf34f89ee4d20ba8e695";
-        public const string GroundFieldManagerGuid = "dd5fe24c2f9ad124ab1bc2768cd540eb";
-        public const string FieldBattleManagerGuid = "09e2feeec00025844b9d28eca71b83de";
-        public const string MainGameLoopManagerGuid = "6fbe150bdc09a5c45bbac7c3eaf541b6";
+        public const string BattleSessionControllerGuid = "a0b2cfd72c60cf34f89ee4d20ba8e695";
+        public const string GroundFieldViewGuid = "dd5fe24c2f9ad124ab1bc2768cd540eb";
+        public const string FieldBattleViewGuid = "09e2feeec00025844b9d28eca71b83de";
+        public const string GameFlowControllerGuid = "6fbe150bdc09a5c45bbac7c3eaf541b6";
+
+        // 兼容批次0常量名（GUID 值不变）。
+        public const string InBattleManagerGuid = BattleSessionControllerGuid;
+        public const string GroundFieldManagerGuid = GroundFieldViewGuid;
+        public const string FieldBattleManagerGuid = FieldBattleViewGuid;
+        public const string MainGameLoopManagerGuid = GameFlowControllerGuid;
 
         private static readonly string[] RequiredSceneRootFields =
         {
@@ -40,16 +46,16 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
                 "Assets/Scripts/NineGrid.Presentation/Setup/PresentationSceneRoot.cs.meta",
                 PresentationSceneRootGuid);
             AssertGuid(
-                "Assets/Scripts/NineGrid.Presentation/Flow/InBattleManagerSingleton.cs.meta",
+                "Assets/Scripts/NineGrid.Presentation/Flow/BattleSessionController.cs.meta",
                 InBattleManagerGuid);
             AssertGuid(
-                "Assets/Scripts/NineGrid.Presentation/Cards/GroundFieldManagerSingleton.cs.meta",
+                "Assets/Scripts/NineGrid.Presentation/Cards/GroundFieldView.cs.meta",
                 GroundFieldManagerGuid);
             AssertGuid(
-                "Assets/Scripts/NineGrid.Presentation/Cards/FieldBattleManagerSingleton.cs.meta",
+                "Assets/Scripts/NineGrid.Presentation/Cards/FieldBattleView.cs.meta",
                 FieldBattleManagerGuid);
             AssertGuid(
-                "Assets/Scripts/NineGrid.Presentation/Flow/MainGameLoopManagerSingleton.cs.meta",
+                "Assets/Scripts/NineGrid.Presentation/Flow/GameFlowController.cs.meta",
                 MainGameLoopManagerGuid);
         }
 

@@ -12,7 +12,7 @@ namespace NineGrid.Presentation.Systems
     {
         private readonly FieldBattlePresentationExecutor mExecutor = new();
         private IFieldBattleView mView;
-        private FieldBattleManagerSingleton mBoundManager;
+        private IFieldBattleViewBinding mBoundView;
 
         public bool IsBound => mView != null;
 
@@ -27,9 +27,9 @@ namespace NineGrid.Presentation.Systems
 
             UnbindInternal();
             mView = view;
-            mBoundManager = view as FieldBattleManagerSingleton;
+            mBoundView = view as IFieldBattleViewBinding;
             mExecutor.Bind(view);
-            mBoundManager?.AttachBattleOwner(this);
+            mBoundView?.AttachBattleOwner(this);
         }
 
         public void Unbind()
@@ -47,14 +47,14 @@ namespace NineGrid.Presentation.Systems
 
         private void UnbindInternal()
         {
-            if (mBoundManager != null && ReferenceEquals(mBoundManager.BattleOwnerOrNull, this))
+            if (mBoundView != null && ReferenceEquals(mBoundView.BattleOwnerOrNull, this))
             {
-                mBoundManager.AttachBattleOwner(null);
+                mBoundView.AttachBattleOwner(null);
             }
 
             mExecutor.Unbind();
             mView = null;
-            mBoundManager = null;
+            mBoundView = null;
         }
 
         public void CancelBattleWork()

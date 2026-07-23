@@ -1,6 +1,7 @@
 # 03 · 流程层（Flow）
 
-> 权威来源：仅 `Assets/Scripts/Flow/**` 源码与 asmdef。不含 Docs/Notes/规划推断。
+> 权威来源：仅 `Assets/Scripts/NineGrid.Presentation/Flow/**` 等现源码与 asmdef。  
+> **弃用说明**：下文「运行时协作事实」等源码镜像段落已与 #43 后结构冲突，仅作历史对照；现行权威以 `PresentationSceneRoot` / `PresentationCompositionRoot` / 各 QF System 为准。
 
 ## 一句话职责
 
@@ -10,54 +11,50 @@
 
 | 邻层 | Flow 做什么 | Flow 不做什么 |
 |------|-------------|---------------|
-| **Core**（`NineGrid.Core` + QFramework） | 经 `NineGridArchitecture.Current` 读 Model/System；经 `CoreCommandDispatcher` 发命令；经 `IPresentationSyncSystem` Open/Finish 批次门 | 不实现规则引擎；不把剧本写进 Core |
-| **Cards**（`NineGrid.Cards`） | 调用 `CardManager`/`Deck`/`GroundField` 做盘面 drain、命中观感、洗回牌堆；`CombatHitSink` 等桥接由 InBattle 注册 | 不做几何命中裁决（idle 合法性在 Flow 的 `BoardIntentLegality`）；不拥有主线时间线 |
-| **UI / 面板** | `UiPanelRouter` 显隐壳；`Description`/`PlayerInfoHud`/`Selector`/`RoomChoice`/`BounceFan` 等 Presenter | 不承载 Core 状态真相；不替代导演 busy |
+| **Core**（`NineGrid.Core` + QFramework） | 经 Architecture 读 Model/System；经命令发请求；经 `IPresentationSyncSystem` Open/Finish 批次门 | 不实现规则引擎；不把剧本写进 Core |
+| **Cards** | 场景 View 提供锚点/HitProxy；几何与交战执行在 Presentation Systems | 不做几何命中裁决；不拥有主线时间线 |
+| **UI / 面板** | `UiPanelRouter` 显隐壳；Description / HUD / Selector 等 Presenter | 不承载 Core 状态真相；不替代导演 busy |
 
-### 运行时协作事实（InBattle 装配）
+### 现行装配（#43 后）
 
-1. Cards 命中空格/怪/用牌 → `InBattleManagerSingleton.TrySubmit*IntentFromCards`
-2. `BoardIntentLegality` 读 Core Phase/Board 裁决 → `PresentationDirector.TrySubmitIntent`
-3. `RoutingIntentScriptFactory` → Explore/Attack/UseItem 工厂编主线 Step
-4. `ResolveBatchStep` 经 `PresentationSyncBatchGate` 调 Core 命令并 OpenBatch
-5. 投影回调 `On*BatchProjected` → 对应 `IPresentChannel.Enqueue`
-6. `PresentStep` → `channel.Begin` → Cards 异步 drain → `IsComplete` → `FinishBatch` ACK
-7. `Update` 中 `_presentationDirector.Tick`；busy 同步到 `CombatHitSink.DirectorMainlineBusy`
+1. `PresentationSceneRoot` 持有场景宿主 SerializeField，显式 Wire Controllers/Hooks  
+2. `PresentationCompositionRoot.Install` 装配唯一生产 `PresentationRuntimeSystem` + Director  
+3. 局内会话权威在 `IBattleSessionSystem`；流程权威在 `IGameFlowShellSystem`  
+4. 门禁只读投影在 `PresentationInputStateSystem`（无 `CombatHitSink`）
 
 ## Asmdef
 
 | 程序集 | 路径 | 依赖 |
 |--------|------|------|
-| `NineGrid.Flow` | `Assets/Scripts/Flow/NineGrid.Flow.asmdef` | DamageNumbersPro, NineGrid.Cards, NineGrid.Content, NineGrid.Core, QFramework, UniTask, Unity.TextMeshPro；预编译 DOTween.dll |
-| `NineGrid.Flow.Editor` | `Assets/Scripts/Flow/Editor/NineGrid.Flow.Editor.asmdef` | NineGrid.Flow, DamageNumbersPro；平台 Editor |
-| `NineGrid.Flow.Tests` | `Assets/Scripts/Flow/Tests/Editor/NineGrid.Flow.Tests.asmdef` | NineGrid.Flow/Core/Cards/Content, QFramework, TestRunner；nunit；`autoReferenced: false` |
+| `NineGrid.Presentation` | `Assets/Scripts/NineGrid.Presentation/NineGrid.Presentation.asmdef` | 见 asmdef |
+| `NineGrid.Presentation.Tests` | `Assets/Scripts/NineGrid.Presentation/Tests/**` | 见测试 asmdef |
 
-根命名空间：`NineGrid.Flow`；子目录用 `NineGrid.Flow.Presentation` / `Diagnostics` / `Editor`。
+根命名空间：`NineGrid.Flow` / `NineGrid.Presentation.*`；子目录用 `NineGrid.Flow.Presentation` / `Diagnostics`。
 
 ## 子文档
 
 | 文档 | 内容 |
 |------|------|
-| [Runtime-Managers/运行时管理器.md](./Runtime-Managers/运行时管理器.md) | 根目录 Manager/Presenter/Scanner/Utility |
-| [Presentation/表现时间线.md](./Presentation/表现时间线.md) | Director / Channel / Lockstep / Pulse 全类型与链路 |
+| [Runtime-Managers/运行时管理器.md](./Runtime-Managers/运行时管理器.md) | 根目录 Manager/Presenter（部分镜像过期） |
+| [Presentation/表现时间线.md](./Presentation/表现时间线.md) | Director / Channel / Lockstep / Pulse |
 | [Diagnostics/诊断与日志.md](./Diagnostics/诊断与日志.md) | 四轨 Trace 与导出 |
 | [Editor/Flow编辑器工具.md](./Editor/Flow编辑器工具.md) | Editor 菜单与 LivingUi 工具 |
 
-## 完整文件路由表
+## 完整文件路由表（轻量 Code Map）
 
-### 根目录（Runtime）
+### 根目录（Runtime 壳）
 
 | 文件 | 类型 | 一句话 |
 |------|------|--------|
-| `InBattleManagerSingleton.cs` | MonoBehaviour 单例 | 局内唯一导演宿主 + Present 薄适配 + Core 桥 |
-| `MainGameLoopManagerSingleton.cs` | MonoBehaviour 单例 | 主菜单→战斗→奖励→房间→胜负壳状态机 |
-| `RelicManagerSingleton.cs` | MonoBehaviour 单例 | 遗物图标槽同步 `PlayerModel.RelicDefIds`（含原玩家技能） |
-| `SelectorManagerSingleton.cs` | MonoBehaviour 单例 | Bounce/房间二选一会话门面 |
-| `DescriptionManagerSingleton.cs` | MonoBehaviour 单例 | 卡牌/Notice 描述 TMP；接 DescriptionHoverSink |
-| `DamageNumberManagerSingleton.cs` | MonoBehaviour 单例 | DamageNumbersPro 飘字 Spawn |
-| `GoldGainFxManagerSingleton.cs` | MonoBehaviour 单例 | 金币飞入与 HUD 数字表演 |
+| `BattleSessionController.cs` | MonoBehaviour 场景壳 | 局内会话 View / 生命周期；业务在 BattleSessionSystem |
+| `GameFlowController.cs` | MonoBehaviour 场景壳 | 主菜单输入 + Notice/Panel 投影；权威在 GameFlowShellSystem |
+| `RelicManagerSingleton.cs` | MonoBehaviour | 遗物图标槽同步 |
+| `SelectorManagerSingleton.cs` | MonoBehaviour | Bounce/房间二选一会话门面 |
+| `DescriptionManagerSingleton.cs` | MonoBehaviour | 卡牌/Notice 描述 TMP |
+| `DamageNumberManagerSingleton.cs` | MonoBehaviour | DamageNumbersPro 飘字 Spawn |
+| `GoldGainFxManagerSingleton.cs` | MonoBehaviour | 金币飞入与 HUD 数字表演 |
 | `UiPanelRouter.cs` | MonoBehaviour | 主菜单/局内/奖励/房间等面板显隐 |
-| `PlayerInfoHudPresenter.cs` | MonoBehaviour | `玩家信息` 血槽/护甲/金币从 Core 同步 |
+| `PlayerInfoHudPresenter.cs` | MonoBehaviour | 玩家信息血槽/护甲/金币从 Core 同步 |
 | `BounceFanChoicePresenter.cs` | MonoBehaviour | Bounce 扇形多选一卡表演 |
 | `RoomChoicePresenter.cs` | MonoBehaviour | 房间左右二选一进出场 |
 | `BoardPresentationStepProjector.cs` | static | EventLog → BoardPresentationStep / Legacy Moves |

@@ -101,7 +101,7 @@
 | 四套卡面模板 | Kind→挂面 |
 | `CardFaceSlotRegistry` | 槽代号契约（内容 Catalog 按代号填值） |
 | CardEffect* SO | `CardEffectManager.bindings` |
-| BattleEncounter Catalog/Profile | `FieldBattleManagerSingleton.encounterCatalog` |
+| BattleEncounter Catalog/Profile | `FieldBattleView.encounterCatalog` |
 | PixelCardPackSpriteLibrary | `StandardCardView.spriteLibrary` |
 | 预览假投影 | 与 `CardFacePresentationBinder.ApplyPresentation` 同出口 |
 

@@ -14,7 +14,7 @@ namespace NineGrid.Flow
 
         CardDeckManagerSingleton DeckManager { get; }
 
-        GroundFieldManagerSingleton FieldManager { get; }
+        GroundFieldView FieldManager { get; }
 
         RelicManagerSingleton RelicManager { get; }
 
@@ -22,7 +22,7 @@ namespace NineGrid.Flow
 
         SelectorManagerSingleton SelectorManager { get; }
 
-        FieldBattleManagerSingleton BattleManager { get; }
+        FieldBattleView BattleManager { get; }
 
         UiPanelRouter PanelRouter { get; }
 

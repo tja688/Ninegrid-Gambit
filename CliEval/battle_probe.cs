@@ -1,5 +1,5 @@
 // unity command eval_file — NOT a Unity-compiled script (keep outside asmdef / Scripts).
-var loop = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.MainGameLoopManagerSingleton>();
+var loop = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.GameFlowController>();
 var arch = NineGrid.Core.NineGridArchitecture.Current;
 var sb = new System.Text.StringBuilder();
 sb.Append("loop=").Append(loop != null ? loop.State.ToString() : "null").Append(';');

@@ -50,7 +50,7 @@ namespace NineGrid.Cards
 
         public static ParticipantSnapshot Capture(
             ManagedCard card,
-            GroundFieldManagerSingleton field,
+            GroundFieldView field,
             int? preferredSlot = null)
         {
             if (card?.Transform == null)
@@ -79,7 +79,7 @@ namespace NineGrid.Cards
         /// </summary>
         public static async UniTask RestoreAsync(
             ParticipantSnapshot snapshot,
-            GroundFieldManagerSingleton field,
+            GroundFieldView field,
             bool restoreToSlot,
             bool allowSoftTween,
             bool strictWarn,
@@ -184,7 +184,7 @@ namespace NineGrid.Cards
         public static async UniTask RestorePairAsync(
             ParticipantSnapshot attacker,
             ParticipantSnapshot victim,
-            GroundFieldManagerSingleton field,
+            GroundFieldView field,
             BattleBindParams bind,
             CancellationToken cancellationToken = default,
             bool? restoreVictimOverride = null)

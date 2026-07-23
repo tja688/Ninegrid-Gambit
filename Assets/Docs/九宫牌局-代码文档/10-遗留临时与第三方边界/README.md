@@ -55,7 +55,7 @@
 
 | 信号 | 位置 |
 |------|------|
-| 超大 MonoBehaviour | `Flow/InBattleManagerSingleton.cs`（数千行量级；类注释称 #11 硬切后编排出口为 PresentationDirector，本类仍为局内桥） |
+| 超大 MonoBehaviour | `Flow/BattleSessionController.cs`（数千行量级；类注释称 #11 硬切后编排出口为 PresentationDirector，本类仍为局内桥） |
 | 生成代码区 | `NineGrid.Content/Generated/Luban/**` — 勿手改，走 Luban 生成 |
 | 双 Feel 目录 | `Plugins/Feel` 与 `Plugins/Feel 1` |
 

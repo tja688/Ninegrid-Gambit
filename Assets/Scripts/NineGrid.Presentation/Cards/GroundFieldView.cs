@@ -14,9 +14,8 @@ namespace NineGrid.Cards
     /// <summary>
     /// 场地场景视图适配：锚点、布局、HitProxy、骷髅 Fusion。
     /// 占格 / busy / Clock / 飞牌 / 运动由 <see cref="GroundFieldGeometrySystem"/> 持有。
-    /// 保留薄 forwarder 供 InBattle / HitProxy 过渡。
     /// </summary>
-    public sealed class GroundFieldManagerSingleton : MonoBehaviour, IGroundFieldView
+    public sealed class GroundFieldView : MonoBehaviour, IGroundFieldViewBinding
     {
         [Header("Scene Anchors")]
         [Tooltip("场景 Anchors/GroundAnchors。留空时 Awake 按名称 GroundAnchors 查找。")]
@@ -42,7 +41,7 @@ namespace NineGrid.Cards
 
         public CancellationToken DestroyToken => this.GetCancellationTokenOnDestroy();
 
-        internal GroundFieldGeometrySystem GeometryOwnerOrNull => _owner;
+        public GroundFieldGeometrySystem GeometryOwnerOrNull => _owner;
 
         public bool IsBusy => Geometry != null && Geometry.IsBusy;
 
@@ -57,17 +56,17 @@ namespace NineGrid.Cards
             _owner
             ?? NineGridArchitecture.Interface?.GetSystem<IGroundFieldGeometrySystem>();
 
-        internal void AttachGeometryOwner(GroundFieldGeometrySystem owner)
+        public void AttachGeometryOwner(GroundFieldGeometrySystem owner)
         {
             _owner = owner;
         }
 
-        internal void NotifyFieldMaybeClear()
+        public void NotifyFieldMaybeClear()
         {
             FieldMaybeClearSignal?.Invoke();
         }
 
-        internal void NotifyEmptySlotClicked(int slot)
+        public void NotifyEmptySlotClicked(int slot)
         {
             EmptySlotClicked?.Invoke(slot);
         }

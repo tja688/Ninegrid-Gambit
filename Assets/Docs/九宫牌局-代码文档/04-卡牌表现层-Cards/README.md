@@ -1,7 +1,7 @@
 # 04 — 卡牌表现层（Cards）
 
-> 权威来源：`Assets/Scripts/Cards/**` 源码。不含 Docs/Notes/规划推断。  
-> 程序集：`NineGrid.Cards`（运行时）· `NineGrid.Cards.Editor` · `NineGrid.Cards.Tests`（仅清单）。
+> 权威来源：`Assets/Scripts/NineGrid.Presentation/Cards/**` 现源码。  
+> **弃用说明**：下文仍含 #43 前 Sink/全能宿主镜像的段落已过期；场地/交战权威以 `GroundFieldGeometrySystem` / `FieldBattlePresentationSystem` 为准，场景仅留 `GroundFieldView` / `FieldBattleView`。
 
 ---
 
@@ -14,17 +14,17 @@ Cards 是**纯表现层**：管理卡牌视图生命周期、三区布局（牌�
 | 视图注册表 | `CardManagerSingleton` | 以 Uid 键管理 `ManagedCard` → `StandardCardView` |
 | 牌组布局 / 发牌 | `CardDeckManagerSingleton` | Standby / Entry / InGame；向 Ground 或 Hand 发牌 |
 | 手牌交互 | `CardHandManagerSingleton` | 最多 5 槽；hover / 拖拽 / 释放到 ApplyZone |
-| 场地占用与运动 | `GroundFieldManagerSingleton` | 9 格几何占用；外圈旋转；L2 收敛位移 |
-| 场地交战演出 | `FieldBattleManagerSingleton` | Intent → Catalog → Adapter Rig；命中经 Sink |
+| 场地占用与运动 | `GroundFieldGeometrySystem`（View=`GroundFieldView`） | System 拥有占格/busy/飞牌；View 锚点/HitProxy |
+| 场地交战演出 | `FieldBattlePresentationSystem`（View=`FieldBattleView`） | System 拥有 busy/CTS/Present；View=Adapter+Catalog |
 | 发牌飞行 | `SlotDealFlightService` + DealFlight* | Explore / Drain；换格 = Redirect |
 | 单卡反馈 | `CardEffectManager` + Effects SO | Attack/Hit/Death/Use/HitFlash |
 | 变换塔 / 收敛 | `Convergence/` | L0–L4 塔层；租约；节拍；交接 |
 
 **不做的事（边界）：**
 
-- 不拥有逻辑占格真相（注释写明逻辑在 Core `BoardModel`，合法性由 Flow idle 裁决）。
-- 运行时 asmdef **不引用** `NineGrid.Core` / `NineGrid.Flow`；跨层经 Sink 委托与 Uid 契约。
-- 场景装配点见各 Singleton 的 SerializeField。
+- 不拥有逻辑占格真相（逻辑在 Core `BoardModel`）。
+- 门禁只读投影走 `PresentationInputStateSystem`（无 `CombatHitSink`）。
+- 场景装配点见 `PresentationSceneRoot` SerializeField。
 
 ---
 
@@ -167,11 +167,11 @@ Tests 可引用 Core/Flow；生产 Cards 不可。
 | `DealVisualTargetResolver.cs` | 起飞视觉瞄准格预解 |
 | `DescriptionHoverSink.cs` | 描述悬停桥 |
 | `DirectorAttackPresentTargeting.cs` | 导演攻击表现目标决策 |
-| `FieldBattleManagerSingleton.cs` | 场地交战单例 |
+| `FieldBattleView.cs` | 场地交战单例 |
 | `FlowFieldTraceSink.cs` | 场地 Flow 追踪桥 |
 | `GroundCardHitProxy.cs` | 场地卡碰撞代理 |
 | `GroundFieldLayoutSettings.cs` | 场地布局 + dealFlight 参数 |
-| `GroundFieldManagerSingleton.cs` | 场地单例 |
+| `GroundFieldView.cs` | 场地单例 |
 | `GroundFieldSnapshot.cs` | 场地占用快照 |
 | `GroundSlotHitProxy.cs` | 空槽点击代理 |
 | `GroundSlotRelation.cs` | 格位关系枚举 |

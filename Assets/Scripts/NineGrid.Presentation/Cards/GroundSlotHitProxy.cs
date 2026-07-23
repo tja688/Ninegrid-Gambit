@@ -4,7 +4,7 @@ using NineGrid.Presentation;
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 空槽点击代理：由 GroundFieldManagerSingleton 在运行时动态装配到 slotN 锚点。
+    /// 空槽点击代理：由 GroundFieldView 在运行时动态装配到 slotN 锚点。
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(BoxCollider2D))]

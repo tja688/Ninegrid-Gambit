@@ -17,6 +17,6 @@ var path = p.name;
 while (p.parent != null) { p = p.parent; path = p.name + "/" + path; }
 sb.Append(path).Append(" active=").Append(start.activeInHierarchy).Append(" comps=");
 foreach (var c in comps) sb.Append(c.GetType().FullName).Append('|');
-var loop = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.MainGameLoopManagerSingleton>();
+var loop = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.GameFlowController>();
 sb.Append(" loop=").Append(loop != null ? loop.State.ToString() : "null");
 return sb.ToString();

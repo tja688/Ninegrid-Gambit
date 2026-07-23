@@ -68,7 +68,7 @@ namespace NineGrid.Flow
         public CardDeckManagerSingleton Deck =>
             _view?.DeckManager ?? CardEntityLifecycleHook.DeckOrNull();
 
-        public GroundFieldManagerSingleton Field =>
+        public GroundFieldView Field =>
             _view?.FieldManager ?? GroundFieldGeometryHook.FieldOrNull();
 
         public CardHandManagerSingleton Hand =>
@@ -79,7 +79,7 @@ namespace NineGrid.Flow
         public SelectorManagerSingleton Selector =>
             _view?.SelectorManager ?? UnityEngine.Object.FindFirstObjectByType<SelectorManagerSingleton>();
 
-        public FieldBattleManagerSingleton BattleHost => _view?.BattleManager;
+        public FieldBattleView BattleHost => _view?.BattleManager;
 
         public bool DrainInFlight
         {

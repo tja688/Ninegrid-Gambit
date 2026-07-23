@@ -23,11 +23,11 @@ TemporaryTest → Flow
 
 | 桥 | 位置 | 事实 |
 |----|------|------|
-| Architecture 单例 | `NineGridArchitecture.Current` | Flow（尤其 `InBattleManagerSingleton`）大量 `GetModel` / `GetSystem` |
+| Architecture 单例 | `NineGridArchitecture.Current` | Flow（尤其 `BattleSessionController`）大量 `GetModel` / `GetSystem` |
 | 内容装载 | `TableNineContentCatalog` + Core `IContentSystem` | Content 实现/填充，Core 消费契约 |
 | 命令入口 | `CoreCommands` / `CoreCommandDispatcher` | Flow 发命令进核 |
 | 表现同步 | `IPresentationSyncSystem` + Flow `PresentationDirector` | 核内排队/批次 ↔ Flow 时间线 ACK |
-| 卡牌视图 | Flow → `CardManagerSingleton` / `GroundFieldManagerSingleton` 等 | Cards 提供表现 API，不读规则 Model |
+| 卡牌视图 | Flow → `CardManagerSingleton` / `GroundFieldView` 等 | Cards 提供表现 API，不读规则 Model |
 | UITest 反向解耦 | `IUITestKeyConsumer` 在 Flow；实现在 TemporaryTest | 避免 Flow → Temporary 依赖 |
 
 ---
@@ -36,9 +36,9 @@ TemporaryTest → Flow
 
 | 文件 | 行数 | 角色 |
 |------|------|------|
-| `Flow/InBattleManagerSingleton.cs` | **~5048** | 局内 Core 桥 + Present 适配；类注释称编排出口已硬切到 `PresentationDirector` |
-| `Cards/GroundFieldManagerSingleton.cs` | **~1986** | 场地表现 |
-| `Flow/MainGameLoopManagerSingleton.cs` | **~1187** | 主循环 |
+| `Flow/BattleSessionController.cs` | **~5048** | 局内 Core 桥 + Present 适配；类注释称编排出口已硬切到 `PresentationDirector` |
+| `Cards/GroundFieldView.cs` | **~1986** | 场地表现 |
+| `Flow/GameFlowController.cs` | **~1187** | 主循环 |
 | `Cards/CardManagerSingleton.cs` | **~676** | 卡牌实体/视图注册 |
 | `Flow/Presentation/PresentationDirector.cs` | **~166** | 时间线导演（相对瘦） |
 
@@ -56,7 +56,7 @@ TemporaryTest → Flow
 
 ## Flow 同时触摸的层
 
-`InBattleManagerSingleton` using 列表（事实样本）：
+`BattleSessionController` using 列表（事实样本）：
 
 - `NineGrid.Cards` / `NineGrid.Cards.Convergence`
 - `NineGrid.Core` / `NineGrid.Core.Stats` / `NineGrid.Core.Systems`
@@ -86,7 +86,7 @@ TemporaryTest → Flow
 
 1. **保留**：Core 无引擎 + QFramework 边界。  
 2. **保留**：Cards 不引 Core。  
-3. **必拆焦点**：`InBattleManagerSingleton` 体量与「导演已外提」注释之间的残留职责。  
+3. **必拆焦点**：`BattleSessionController` 体量与「导演已外提」注释之间的残留职责。  
 4. **数据边界**：`Generated/Luban` 只经生成管线更新。  
 5. **可删候选**：`Temporary Test` 程序集（见 10）。
 

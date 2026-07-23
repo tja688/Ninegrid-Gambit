@@ -22,6 +22,6 @@ else
     sb.Append(" did=NONE");
 }
 sb.Append(" after=").Append(phase.CurrentPhase);
-var loop = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.MainGameLoopManagerSingleton>();
+var loop = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.GameFlowController>();
 sb.Append(" loop=").Append(loop != null ? loop.State.ToString() : "null");
 return sb.ToString();

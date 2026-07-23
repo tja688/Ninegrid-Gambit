@@ -18,7 +18,7 @@ namespace NineGrid.Flow
     /// 流程权威在 <see cref="IGameFlowShellSystem"/>；编排在内部 Orchestrator。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class MainGameLoopManagerSingleton : MonoBehaviour, IGameFlowView
+    public sealed class GameFlowController : MonoBehaviour, IGameFlowView
     {
         [Header("Refs")]
         [Tooltip("面板路由；留空则运行时在同物体上 GetComponent / AddComponent。")]

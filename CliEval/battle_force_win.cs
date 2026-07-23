@@ -1,6 +1,6 @@
 // Cheat: set avatar atk/hp then force node victory.
-var battle = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.InBattleManagerSingleton>();
-var loop = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.MainGameLoopManagerSingleton>();
+var battle = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.BattleSessionController>();
+var loop = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.GameFlowController>();
 var arch = NineGrid.Core.NineGridArchitecture.Current;
 var phaseBefore = arch.GetSystem<NineGrid.Core.Systems.IPhaseSystem>().CurrentPhase.ToString();
 var hpOk = battle.TryCheatSetAvatarHp(99);

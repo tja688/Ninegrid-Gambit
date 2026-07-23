@@ -9,7 +9,7 @@ using UnityEngine;
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 骷髅军团牌组专用表现管理器：合体、散架等。由 <see cref="GroundFieldManagerSingleton"/> 按时机调用。
+    /// 骷髅军团牌组专用表现管理器：合体、散架等。由 <see cref="GroundFieldView"/> 按时机调用。
     /// </summary>
     public sealed class SkeletonDeckPresentationManager : MonoBehaviour
     {
@@ -149,7 +149,7 @@ namespace NineGrid.Cards
 
         private static List<ParticipantView> ResolveParticipants(
             SkeletonFusionPresentationRequest request,
-            GroundFieldManagerSingleton fieldManager,
+            GroundFieldView fieldManager,
             CardManagerSingleton cardManager)
         {
             var participants = new List<ParticipantView>(request.ParticipantUids.Length);
@@ -199,7 +199,7 @@ namespace NineGrid.Cards
         }
 
         private static void VacateFusionParticipants(
-            GroundFieldManagerSingleton fieldManager,
+            GroundFieldView fieldManager,
             CardManagerSingleton cardManager,
             IReadOnlyList<ParticipantView> participants)
         {
@@ -346,7 +346,7 @@ namespace NineGrid.Cards
         private static async UniTask ExitResultToDeckAsync(
             ManagedCard resultCard,
             CardDeckManagerSingleton deckManager,
-            GroundFieldManagerSingleton fieldManager,
+            GroundFieldView fieldManager,
             CancellationToken cancellationToken)
         {
             if (resultCard == null || resultCard.Transform == null)

@@ -13,7 +13,7 @@ namespace NineGrid.Cards
     public static class BoardMotionStepScheduler
     {
         public static async UniTask ExecuteMotionStepAsync(
-            GroundFieldManagerSingleton field,
+            GroundFieldView field,
             BoardPresentationStep step,
             CancellationToken cancellationToken)
         {

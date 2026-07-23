@@ -15,7 +15,7 @@ namespace NineGrid.Flow
     /// <summary>
     /// 局内会话场景 View / 生命周期壳：场景绑定与桥接注册；业务由 <see cref="IBattleSessionSystem"/> 持有。
     /// </summary>
-    public sealed class InBattleManagerSingleton : MonoBehaviour, IBattleSessionView
+    public sealed class BattleSessionController : MonoBehaviour, IBattleSessionView
     {
         [Tooltip("卡牌宿主；由 PresentationSceneRoot.BindSceneHosts 注入，也可手动拖入。")]
         [SerializeField] private CardManagerSingleton cardManager;
@@ -24,7 +24,7 @@ namespace NineGrid.Flow
         [SerializeField] private CardDeckManagerSingleton deckManager;
 
         [Tooltip("场地宿主；由 PresentationSceneRoot.BindSceneHosts 注入，也可手动拖入。")]
-        [SerializeField] private GroundFieldManagerSingleton fieldManager;
+        [SerializeField] private GroundFieldView fieldManager;
 
         [Tooltip("遗物栏宿主；由 PresentationSceneRoot.BindSceneHosts 注入，也可手动拖入。")]
         [SerializeField] private RelicManagerSingleton relicManager;
@@ -33,10 +33,10 @@ namespace NineGrid.Flow
         [SerializeField] private CardHandManagerSingleton handManager;
 
         [Tooltip("交战宿主；由 PresentationSceneRoot.BindSceneHosts 注入，也可手动拖入。")]
-        [SerializeField] private FieldBattleManagerSingleton battleManager;
+        [SerializeField] private FieldBattleView battleManager;
 
         [Tooltip("主流程宿主；由 PresentationSceneRoot.BindSceneHosts 注入，也可手动拖入。保留字段但不做业务调用。")]
-        [SerializeField] private MainGameLoopManagerSingleton mainGameLoop;
+        [SerializeField] private GameFlowController mainGameLoop;
 
         [Tooltip("选择器宿主；留空则会话侧兜底查找。")]
         [SerializeField] private SelectorManagerSingleton selectorManager;
@@ -50,11 +50,11 @@ namespace NineGrid.Flow
 
         public CardManagerSingleton CardManager => cardManager;
         public CardDeckManagerSingleton DeckManager => deckManager;
-        public GroundFieldManagerSingleton FieldManager => fieldManager;
+        public GroundFieldView FieldManager => fieldManager;
         public RelicManagerSingleton RelicManager => relicManager;
         public CardHandManagerSingleton HandManager => handManager;
         public SelectorManagerSingleton SelectorManager => selectorManager;
-        public FieldBattleManagerSingleton BattleManager => battleManager;
+        public FieldBattleView BattleManager => battleManager;
         public UiPanelRouter PanelRouter => panelRouter;
 
         public bool IsBusy => SessionOrNull()?.IsBusy ?? false;
@@ -72,11 +72,11 @@ namespace NineGrid.Flow
         public void BindSceneHosts(
             CardManagerSingleton cards,
             CardDeckManagerSingleton deck,
-            GroundFieldManagerSingleton field,
+            GroundFieldView field,
             RelicManagerSingleton relic,
             CardHandManagerSingleton hand,
-            FieldBattleManagerSingleton battle,
-            MainGameLoopManagerSingleton loop)
+            FieldBattleView battle,
+            GameFlowController loop)
         {
             if (cards != null) cardManager = cards;
             if (deck != null) deckManager = deck;

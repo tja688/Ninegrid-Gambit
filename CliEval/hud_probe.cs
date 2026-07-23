@@ -1,5 +1,5 @@
-var loop = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.MainGameLoopManagerSingleton>();
-var battle = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.InBattleManagerSingleton>();
+var loop = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.GameFlowController>();
+var battle = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.BattleSessionController>();
 var hud = NineGrid.Flow.PlayerInfoHudPresenter.TryGetInstance();
 var sb = new System.Text.StringBuilder();
 sb.Append("loop=").Append(loop!=null).Append(" battle=").Append(battle!=null).Append(" hud=").Append(hud!=null);

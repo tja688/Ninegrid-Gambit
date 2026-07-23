@@ -1,2 +1,2 @@
-NineGrid.Flow.MainGameLoopManagerSingleton.Instance.BeginRun(testMode: true);
+NineGrid.Flow.GameFlowController.Instance.BeginRun(testMode: true);
 return "run";

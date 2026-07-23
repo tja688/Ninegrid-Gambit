@@ -20,7 +20,7 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
         private CardManagerSingleton _cards;
         private CardHandManagerSingleton _hand;
         private CardDeckManagerSingleton _deck;
-        private FieldBattleManagerSingleton _battle;
+        private FieldBattleView _battle;
 
         [SetUp]
         public void SetUp()
@@ -33,7 +33,7 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
             _cards = new GameObject("CardManager_V7Battle").AddComponent<CardManagerSingleton>();
             _hand = new GameObject("CardHand_V7Battle").AddComponent<CardHandManagerSingleton>();
             _deck = new GameObject("CardDeck_V7Battle").AddComponent<CardDeckManagerSingleton>();
-            _battle = new GameObject("FieldBattle_V7").AddComponent<FieldBattleManagerSingleton>();
+            _battle = new GameObject("FieldBattle_V7").AddComponent<FieldBattleView>();
 
             _prefab = new GameObject("StandardCardPrefab_V7Battle");
             _prefab.AddComponent<StandardCardView>();
@@ -162,7 +162,7 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
             DestroyAllOfType<CardManagerSingleton>();
             DestroyAllOfType<CardHandManagerSingleton>();
             DestroyAllOfType<CardDeckManagerSingleton>();
-            DestroyAllOfType<FieldBattleManagerSingleton>();
+            DestroyAllOfType<FieldBattleView>();
         }
 
         private static void DestroyAllOfType<T>() where T : MonoBehaviour

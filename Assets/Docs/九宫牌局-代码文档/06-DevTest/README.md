@@ -129,22 +129,22 @@ Resources 加载名：`DevTest/TestKeyStack`
 
 | 文件 | ModuleId | 目标 |
 |---|---|---|
-| `CardDeckManagerDevKeys.cs` | `card-deck-manager` | `CardDeckManagerSingleton`（兼用 `CardManagerSingleton` / `GroundFieldManagerSingleton`） |
-| `CardHandManagerDevKeys.cs` | `card-hand-manager` | `CardHandManagerSingleton` + `GroundFieldManagerSingleton` |
-| `GroundFieldManagerDevKeys.cs` | `ground-field-manager` | `GroundFieldManagerSingleton` + `FieldBattleManagerSingleton` + `CombatHitSink` |
+| `CardDeckManagerDevKeys.cs` | `card-deck-manager` | `CardDeckManagerSingleton`（兼用 `CardManagerSingleton` / `GroundFieldView`） |
+| `CardHandManagerDevKeys.cs` | `card-hand-manager` | `CardHandManagerSingleton` + `GroundFieldView` |
+| `GroundFieldManagerDevKeys.cs` | `ground-field-manager` | `GroundFieldView` + `FieldBattleView` + `CombatHitSink` |
 | `StandardCardViewDevKeys.cs` | `standard-card` | 同 GO 上 `StandardCardView` |
 
 ### Flow — `NineGrid.DevTest/Flow/`
 
 | 文件 | ModuleId / 角色 | 目标 |
 |---|---|---|
-| `InBattleManagerDevKeys.cs` | `in-battle-manager` | `InBattleManagerSingleton` + Trace Recorders |
-| `MainGameLoopManagerDevKeys.cs` | `main-game-loop` | `MainGameLoopManagerSingleton` |
+| `InBattleManagerDevKeys.cs` | `in-battle-manager` | `BattleSessionController` + Trace Recorders |
+| `MainGameLoopManagerDevKeys.cs` | `main-game-loop` | `GameFlowController` |
 | `SelectorManagerDevKeys.cs` | `selector-manager` | `SelectorManagerSingleton` |
 | `GoldGainFxManagerDevKeys.cs` | `gold-gain-fx` | `GoldGainFxManagerSingleton` |
 | `DamageNumberManagerDevKeys.cs` | `damage-number-manager` | **已下线**：不注册按键 |
-| `QuickTestEntryInputHandler.cs` | 非 TestKey | `MainGameLoopManagerSingleton` 快速选关 |
-| `InBattleDebugQuickModeInputHandler.cs` | 非 TestKey | `MainGameLoopManagerSingleton` 局内调速 |
+| `QuickTestEntryInputHandler.cs` | 非 TestKey | `GameFlowController` 快速选关 |
+| `InBattleDebugQuickModeInputHandler.cs` | 非 TestKey | `GameFlowController` 局内调速 |
 | `DamageLogPanel.cs` | 非 TestKey | `BattleTraceRecorder` OnGUI 伤害日志 |
 
 ### Editor — `NineGrid.DevTest/Editor/`

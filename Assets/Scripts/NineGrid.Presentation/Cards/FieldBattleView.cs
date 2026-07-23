@@ -10,9 +10,8 @@ namespace NineGrid.Cards
     /// <summary>
     /// 场地交战场景视图：Adapter + Encounter Catalog。
     /// busy / CTS / Present 由 <see cref="FieldBattlePresentationSystem"/> 持有。
-    /// 保留薄 forwarder 供 HitProxy / DevTest / InBattle 过渡。
     /// </summary>
-    public sealed class FieldBattleManagerSingleton : MonoBehaviour, IFieldBattleView
+    public sealed class FieldBattleView : MonoBehaviour, IFieldBattleViewBinding
     {
         [Header("Battle Presentation")]
         [Tooltip("CardAttack 节点上的基础交战适配器；留空时 Awake 在本节点子树查找。")]
@@ -29,13 +28,13 @@ namespace NineGrid.Cards
 
         public bool IsBusy => Battle != null && Battle.IsBusy;
 
-        internal FieldBattlePresentationSystem BattleOwnerOrNull => _owner;
+        public FieldBattlePresentationSystem BattleOwnerOrNull => _owner;
 
         private IFieldBattlePresentationSystem Battle =>
             _owner
             ?? NineGridArchitecture.Interface?.GetSystem<IFieldBattlePresentationSystem>();
 
-        internal void AttachBattleOwner(FieldBattlePresentationSystem owner)
+        public void AttachBattleOwner(FieldBattlePresentationSystem owner)
         {
             _owner = owner;
         }

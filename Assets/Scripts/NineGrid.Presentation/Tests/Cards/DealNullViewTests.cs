@@ -20,7 +20,7 @@ namespace NineGrid.Presentation.Tests
         private GameObject _anchorRoot;
         private CardManagerSingleton _cardManager;
         private CardDeckManagerSingleton _deckManager;
-        private GroundFieldManagerSingleton _fieldManager;
+        private GroundFieldView _fieldManager;
 
         [SetUp]
         public void SetUp()
@@ -34,7 +34,7 @@ namespace NineGrid.Presentation.Tests
 
             _cardManager = cardGo.AddComponent<CardManagerSingleton>();
             _deckManager = deckGo.AddComponent<CardDeckManagerSingleton>();
-            _fieldManager = fieldGo.AddComponent<GroundFieldManagerSingleton>();
+            _fieldManager = fieldGo.AddComponent<GroundFieldView>();
             EnsureDeckManagerInitialized(_deckManager);
 
             _prefab = new GameObject("StandardCardPrefab");
@@ -169,7 +169,7 @@ namespace NineGrid.Presentation.Tests
             DestroyAll<CardManagerSingleton>();
             DestroyAll<CardHandManagerSingleton>();
             DestroyAll<CardDeckManagerSingleton>();
-            DestroyAll<GroundFieldManagerSingleton>();
+            DestroyAll<GroundFieldView>();
         }
 
         private static void DestroyAll<T>() where T : MonoBehaviour
@@ -189,7 +189,7 @@ namespace NineGrid.Presentation.Tests
             ResetStaticInstance(typeof(CardManagerSingleton), "_instance");
             ResetStaticInstance(typeof(CardHandManagerSingleton), "_instance");
             ResetStaticInstance(typeof(CardDeckManagerSingleton), "_instance");
-            ResetStaticInstance(typeof(GroundFieldManagerSingleton), "_instance");
+            ResetStaticInstance(typeof(GroundFieldView), "_instance");
         }
 
         private static void ResetStaticInstance(Type type, string fieldName)

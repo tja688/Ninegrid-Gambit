@@ -699,7 +699,7 @@ namespace NineGrid.Flow
 
                 if (flightHandles.Count > 0)
                 {
-                    await GroundFieldManagerSingleton.WaitDealFlightsSettledAsync(
+                    await GroundFieldView.WaitDealFlightsSettledAsync(
                         flightHandles,
                         cancellationToken);
                 }

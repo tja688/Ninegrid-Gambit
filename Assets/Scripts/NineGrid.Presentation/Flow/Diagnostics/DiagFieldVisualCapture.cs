@@ -135,7 +135,7 @@ namespace NineGrid.Flow.Diagnostics
 
         private static bool TryFindVisibleGroundCardAtSlot(
             CardManagerSingleton cards,
-            GroundFieldManagerSingleton field,
+            GroundFieldView field,
             int slot,
             out int visibleUid,
             out bool offModeMismatch)

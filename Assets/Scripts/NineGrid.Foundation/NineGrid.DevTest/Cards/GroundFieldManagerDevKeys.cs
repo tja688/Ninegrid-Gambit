@@ -10,11 +10,11 @@ namespace NineGrid.DevTest.Cards
     [DisallowMultipleComponent]
     public sealed class GroundFieldManagerDevKeys : TestKeyModuleBehaviour
     {
-        [Tooltip("运行时查找场景中的 GroundFieldManagerSingleton；也可手动拖入覆盖。")]
-        [SerializeField] private GroundFieldManagerSingleton fieldManager;
+        [Tooltip("运行时查找场景中的 GroundFieldView；也可手动拖入覆盖。")]
+        [SerializeField] private GroundFieldView fieldManager;
 
-        [Tooltip("运行时查找场景中的 FieldBattleManagerSingleton；也可手动拖入覆盖。")]
-        [SerializeField] private FieldBattleManagerSingleton battleManager;
+        [Tooltip("运行时查找场景中的 FieldBattleView；也可手动拖入覆盖。")]
+        [SerializeField] private FieldBattleView battleManager;
 
         protected override string ModuleId => "ground-field-manager";
 
@@ -22,17 +22,17 @@ namespace NineGrid.DevTest.Cards
         {
             if (fieldManager == null)
             {
-                fieldManager = GetComponent<GroundFieldManagerSingleton>();
+                fieldManager = GetComponent<GroundFieldView>();
             }
 
             if (fieldManager == null)
             {
-                fieldManager = UnityEngine.Object.FindFirstObjectByType<GroundFieldManagerSingleton>();
+                fieldManager = UnityEngine.Object.FindFirstObjectByType<GroundFieldView>();
             }
 
             if (battleManager == null)
             {
-                battleManager = UnityEngine.Object.FindFirstObjectByType<FieldBattleManagerSingleton>();
+                battleManager = UnityEngine.Object.FindFirstObjectByType<FieldBattleView>();
             }
 
             base.OnEnable();
@@ -200,33 +200,33 @@ namespace NineGrid.DevTest.Cards
             await field.RotateOuterRingClockwiseAsync();
         }
 
-        private GroundFieldManagerSingleton ResolveFieldManager()
+        private GroundFieldView ResolveFieldManager()
         {
             if (fieldManager != null)
             {
                 return fieldManager;
             }
 
-            fieldManager = UnityEngine.Object.FindFirstObjectByType<GroundFieldManagerSingleton>();
+            fieldManager = UnityEngine.Object.FindFirstObjectByType<GroundFieldView>();
             if (fieldManager == null)
             {
-                Debug.LogWarning("[GroundFieldManagerDevKeys] 未找到 GroundFieldManagerSingleton。");
+                Debug.LogWarning("[GroundFieldManagerDevKeys] 未找到 GroundFieldView。");
             }
 
             return fieldManager;
         }
 
-        private FieldBattleManagerSingleton ResolveBattleManager()
+        private FieldBattleView ResolveBattleManager()
         {
             if (battleManager != null)
             {
                 return battleManager;
             }
 
-            battleManager = UnityEngine.Object.FindFirstObjectByType<FieldBattleManagerSingleton>();
+            battleManager = UnityEngine.Object.FindFirstObjectByType<FieldBattleView>();
             if (battleManager == null)
             {
-                Debug.LogWarning("[GroundFieldManagerDevKeys] 未找到 FieldBattleManagerSingleton。");
+                Debug.LogWarning("[GroundFieldManagerDevKeys] 未找到 FieldBattleView。");
             }
 
             return battleManager;

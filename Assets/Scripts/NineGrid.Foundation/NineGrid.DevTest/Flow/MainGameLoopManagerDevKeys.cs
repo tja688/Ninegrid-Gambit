@@ -10,8 +10,8 @@ namespace NineGrid.DevTest.Flow
     [DisallowMultipleComponent]
     public sealed class MainGameLoopManagerDevKeys : TestKeyModuleBehaviour
     {
-        [Tooltip("运行时查找场景中的 MainGameLoopManagerSingleton；也可手动拖入覆盖。")]
-        [SerializeField] private MainGameLoopManagerSingleton loopManager;
+        [Tooltip("运行时查找场景中的 GameFlowController；也可手动拖入覆盖。")]
+        [SerializeField] private GameFlowController loopManager;
 
         protected override string ModuleId => "main-game-loop";
 
@@ -19,12 +19,12 @@ namespace NineGrid.DevTest.Flow
         {
             if (loopManager == null)
             {
-                loopManager = GetComponent<MainGameLoopManagerSingleton>();
+                loopManager = GetComponent<GameFlowController>();
             }
 
             if (loopManager == null)
             {
-                loopManager = UnityEngine.Object.FindFirstObjectByType<MainGameLoopManagerSingleton>();
+                loopManager = UnityEngine.Object.FindFirstObjectByType<GameFlowController>();
             }
 
             base.OnEnable();
@@ -54,17 +54,17 @@ namespace NineGrid.DevTest.Flow
             manager.BeginRun(testMode: true);
         }
 
-        private MainGameLoopManagerSingleton ResolveManager()
+        private GameFlowController ResolveManager()
         {
             if (loopManager != null)
             {
                 return loopManager;
             }
 
-            loopManager = UnityEngine.Object.FindFirstObjectByType<MainGameLoopManagerSingleton>();
+            loopManager = UnityEngine.Object.FindFirstObjectByType<GameFlowController>();
             if (loopManager == null)
             {
-                Debug.LogWarning("[MainGameLoopManagerDevKeys] 未找到 MainGameLoopManagerSingleton。");
+                Debug.LogWarning("[MainGameLoopManagerDevKeys] 未找到 GameFlowController。");
             }
 
             return loopManager;

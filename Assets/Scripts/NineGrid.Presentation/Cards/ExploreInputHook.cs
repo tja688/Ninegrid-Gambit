@@ -8,12 +8,12 @@ namespace NineGrid.Cards
     /// </summary>
     public static class ExploreInputHook
     {
-        public static Action<GroundFieldManagerSingleton> WireController;
+        public static Action<GroundFieldView> WireController;
 
         /// <summary>空槽探索提交；返回是否接纳（含忙时缓冲）。</summary>
         public static Func<int, bool> TrySubmitExplore;
 
-        public static void RequestWire(GroundFieldManagerSingleton field)
+        public static void RequestWire(GroundFieldView field)
         {
             WireController?.Invoke(field);
         }

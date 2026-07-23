@@ -107,12 +107,12 @@ namespace NineGrid.Presentation.Editor
 
         private static void TryAssignCatalogToScene(BattleEncounterCatalogSO catalog)
         {
-            var managers = Object.FindObjectsByType<FieldBattleManagerSingleton>(
+            var managers = Object.FindObjectsByType<FieldBattleView>(
                 FindObjectsInactive.Include,
                 FindObjectsSortMode.None);
             if (managers == null || managers.Length == 0)
             {
-                Debug.LogWarning("[BattleEncounterDefaultsSetup] 场景中未找到 FieldBattleManagerSingleton，请手动拖入 Catalog。");
+                Debug.LogWarning("[BattleEncounterDefaultsSetup] 场景中未找到 FieldBattleView，请手动拖入 Catalog。");
                 return;
             }
 

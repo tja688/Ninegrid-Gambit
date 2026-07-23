@@ -16,7 +16,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
         private const int Uid = 43001;
         private const int Slot = 4;
 
-        private GroundFieldManagerSingleton _field;
+        private GroundFieldView _field;
         private CardManagerSingleton _cards;
         private GameObject _prefab;
 
@@ -26,7 +26,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             CardEntityLifecycleHook.Reset();
             GroundFieldGeometryHook.Reset();
 
-            _field = new GameObject("Ground_Bidirectional").AddComponent<GroundFieldManagerSingleton>();
+            _field = new GameObject("Ground_Bidirectional").AddComponent<GroundFieldView>();
             _cards = new GameObject("Cards_Bidirectional").AddComponent<CardManagerSingleton>();
             _prefab = new GameObject("StandardCardPrefab");
             _prefab.AddComponent<StandardCardView>();

@@ -18,8 +18,8 @@ namespace NineGrid.Presentation.Setup
     public sealed class PresentationSceneRoot : PresentationController
     {
         [Header("Flow Hosts")]
-        [SerializeField] private InBattleManagerSingleton inBattle;
-        [SerializeField] private MainGameLoopManagerSingleton mainGameLoop;
+        [SerializeField] private BattleSessionController inBattle;
+        [SerializeField] private GameFlowController mainGameLoop;
         [SerializeField] private RelicManagerSingleton relicManager;
         [SerializeField] private SelectorManagerSingleton selectorManager;
         [SerializeField] private DescriptionManagerSingleton descriptionManager;
@@ -30,8 +30,8 @@ namespace NineGrid.Presentation.Setup
         [SerializeField] private CardManagerSingleton cardManager;
         [SerializeField] private CardHandManagerSingleton cardHand;
         [SerializeField] private CardDeckManagerSingleton cardDeck;
-        [SerializeField] private GroundFieldManagerSingleton groundField;
-        [SerializeField] private FieldBattleManagerSingleton fieldBattle;
+        [SerializeField] private GroundFieldView groundField;
+        [SerializeField] private FieldBattleView fieldBattle;
 
         private readonly PresentationCompositionRoot mComposition = new PresentationCompositionRoot();
         private PresentationSceneBindings mBindings;

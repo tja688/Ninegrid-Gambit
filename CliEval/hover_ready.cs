@@ -1,6 +1,6 @@
 var start = GameObject.Find("StartRun");
 var c = start != null ? start.GetComponent<NineGrid.TemporaryTest.StartRunHoverScale>() : null;
-var loop = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.MainGameLoopManagerSingleton>();
+var loop = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.GameFlowController>();
 return "playing=" + Application.isPlaying
   + " hasStart=" + (start != null)
   + " hasHover=" + (c != null)

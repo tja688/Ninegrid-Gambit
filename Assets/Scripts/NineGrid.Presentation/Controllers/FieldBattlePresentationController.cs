@@ -11,7 +11,7 @@ namespace NineGrid.Presentation.Controllers
     /// </summary>
     public sealed class FieldBattlePresentationController : PresentationController
     {
-        private FieldBattleManagerSingleton mBattle;
+        private FieldBattleView mBattle;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void RegisterInstallHook()
@@ -33,7 +33,7 @@ namespace NineGrid.Presentation.Controllers
         }
 
         /// <summary>绑定 Battle View（Hook 与 EditMode 直驱共用）。</summary>
-        public void BindBattle(FieldBattleManagerSingleton battle)
+        public void BindBattle(FieldBattleView battle)
         {
             mBattle = battle;
             ApplyBind(battle);
@@ -52,7 +52,7 @@ namespace NineGrid.Presentation.Controllers
             mBattle = null;
         }
 
-        private static void WireBattle(FieldBattleManagerSingleton battle)
+        private static void WireBattle(FieldBattleView battle)
         {
             var existing = Object.FindObjectOfType<FieldBattlePresentationController>();
             if (existing == null)
@@ -64,7 +64,7 @@ namespace NineGrid.Presentation.Controllers
             existing.BindBattle(battle);
         }
 
-        private static void ApplyBind(FieldBattleManagerSingleton battle)
+        private static void ApplyBind(FieldBattleView battle)
         {
             var system = EnsureBattleSystem();
             system.Bind(battle);

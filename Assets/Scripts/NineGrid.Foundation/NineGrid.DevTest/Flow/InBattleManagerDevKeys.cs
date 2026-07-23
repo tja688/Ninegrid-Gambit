@@ -15,8 +15,8 @@ namespace NineGrid.DevTest.Flow
     {
         private const int CheatAvatarHp = 99;
 
-        [Tooltip("运行时查找场景中的 InBattleManagerSingleton；也可手动拖入覆盖。")]
-        [SerializeField] private InBattleManagerSingleton inBattleManager;
+        [Tooltip("运行时查找场景中的 BattleSessionController；也可手动拖入覆盖。")]
+        [SerializeField] private BattleSessionController inBattleManager;
 
         protected override string ModuleId => "in-battle-manager";
 
@@ -24,12 +24,12 @@ namespace NineGrid.DevTest.Flow
         {
             if (inBattleManager == null)
             {
-                inBattleManager = GetComponent<InBattleManagerSingleton>();
+                inBattleManager = GetComponent<BattleSessionController>();
             }
 
             if (inBattleManager == null)
             {
-                inBattleManager = UnityEngine.Object.FindFirstObjectByType<InBattleManagerSingleton>();
+                inBattleManager = UnityEngine.Object.FindFirstObjectByType<BattleSessionController>();
             }
 
             base.OnEnable();
@@ -138,17 +138,17 @@ namespace NineGrid.DevTest.Flow
                 + RegistryTraceRecorder.Enabled);
         }
 
-        private InBattleManagerSingleton ResolveManager()
+        private BattleSessionController ResolveManager()
         {
             if (inBattleManager != null)
             {
                 return inBattleManager;
             }
 
-            inBattleManager = UnityEngine.Object.FindFirstObjectByType<InBattleManagerSingleton>();
+            inBattleManager = UnityEngine.Object.FindFirstObjectByType<BattleSessionController>();
             if (inBattleManager == null)
             {
-                Debug.LogWarning("[InBattleManagerDevKeys] 未找到 InBattleManagerSingleton。");
+                Debug.LogWarning("[InBattleManagerDevKeys] 未找到 BattleSessionController。");
             }
 
             return inBattleManager;

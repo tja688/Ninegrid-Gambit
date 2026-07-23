@@ -23,7 +23,7 @@ namespace NineGrid.Presentation.Tests
         private GameObject _prefab;
         private GameObject _anchorRoot;
         private CardManagerSingleton _cardManager;
-        private GroundFieldManagerSingleton _fieldManager;
+        private GroundFieldView _fieldManager;
 
         [SetUp]
         public void SetUp()
@@ -36,7 +36,7 @@ namespace NineGrid.Presentation.Tests
             var fieldGo = new GameObject("GroundFieldTest");
 
             _cardManager = cardGo.AddComponent<CardManagerSingleton>();
-            _fieldManager = fieldGo.AddComponent<GroundFieldManagerSingleton>();
+            _fieldManager = fieldGo.AddComponent<GroundFieldView>();
             CardEntityLifecycleHook.RequestWire(_cardManager, null, null);
             GroundFieldGeometryHook.RequestWire(_fieldManager);
 
@@ -80,7 +80,7 @@ namespace NineGrid.Presentation.Tests
 
             SeedOccupancy(newCard, StaleSlot);
 
-            var vacate = typeof(GroundFieldManagerSingleton).GetMethod(
+            var vacate = typeof(GroundFieldView).GetMethod(
                 "VacateSlotForExplore",
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.IsNotNull(vacate, "VacateSlotForExplore missing");
@@ -171,7 +171,7 @@ namespace NineGrid.Presentation.Tests
         private void SeedGroundAnchors()
         {
             _anchorRoot = new GameObject("GroundAnchorsTest");
-            var anchorsField = typeof(GroundFieldManagerSingleton).GetField(
+            var anchorsField = typeof(GroundFieldView).GetField(
                 "_groundAnchors",
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.IsNotNull(anchorsField, "_groundAnchors missing");
@@ -193,7 +193,7 @@ namespace NineGrid.Presentation.Tests
             Assert.IsTrue(system.TryRegisterCardAtSlot(slot, card.Uid, logConflict: false));
         }
 
-        private static IGroundFieldGeometrySystem EnsureGeometrySystemBound(GroundFieldManagerSingleton field)
+        private static IGroundFieldGeometrySystem EnsureGeometrySystemBound(GroundFieldView field)
         {
             var architecture = NineGridArchitecture.Interface;
             Assert.IsNotNull(architecture, "NineGridArchitecture missing");
@@ -216,7 +216,7 @@ namespace NineGrid.Presentation.Tests
             DestroyAll<CardManagerSingleton>();
             DestroyAll<CardHandManagerSingleton>();
             DestroyAll<CardDeckManagerSingleton>();
-            DestroyAll<GroundFieldManagerSingleton>();
+            DestroyAll<GroundFieldView>();
         }
 
         private static void DestroyAll<T>() where T : MonoBehaviour
@@ -236,7 +236,7 @@ namespace NineGrid.Presentation.Tests
             ResetStaticInstance(typeof(CardManagerSingleton), "_instance");
             ResetStaticInstance(typeof(CardHandManagerSingleton), "_instance");
             ResetStaticInstance(typeof(CardDeckManagerSingleton), "_instance");
-            ResetStaticInstance(typeof(GroundFieldManagerSingleton), "_instance");
+            ResetStaticInstance(typeof(GroundFieldView), "_instance");
         }
 
         private static void ResetStaticInstance(Type type, string fieldName)

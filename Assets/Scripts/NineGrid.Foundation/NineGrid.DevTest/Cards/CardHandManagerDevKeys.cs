@@ -52,10 +52,10 @@ namespace NineGrid.DevTest.Cards
                 return;
             }
 
-            var field = UnityEngine.Object.FindFirstObjectByType<GroundFieldManagerSingleton>();
+            var field = UnityEngine.Object.FindFirstObjectByType<GroundFieldView>();
             if (field == null)
             {
-                Debug.LogWarning("[CardHandManagerDevKeys] 未找到 GroundFieldManagerSingleton。");
+                Debug.LogWarning("[CardHandManagerDevKeys] 未找到 GroundFieldView。");
                 return;
             }
 

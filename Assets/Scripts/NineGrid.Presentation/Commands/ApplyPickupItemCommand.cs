@@ -77,7 +77,7 @@ namespace NineGrid.Presentation.Commands
                 || phase == GamePhase.NodeCompleted
                 || arch.GetSystem<IDeckSystem>().IsNodeCleared();
 
-            InBattleManagerSingleton.PresentPickupPostApplyEffects(startIndex, pickedUid);
+            BattleSessionController.PresentPickupPostApplyEffects(startIndex, pickedUid);
             return summary;
         }
     }

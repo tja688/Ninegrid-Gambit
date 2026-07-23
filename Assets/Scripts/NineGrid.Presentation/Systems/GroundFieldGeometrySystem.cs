@@ -18,7 +18,7 @@ namespace NineGrid.Presentation.Systems
         private readonly GroundMotionExecutor mMotion;
         private IGroundFieldView mView;
         private GroundPresentation mPresentation;
-        private GroundFieldManagerSingleton mBoundManager;
+        private IGroundFieldViewBinding mBoundView;
 
         public GroundFieldGeometrySystem()
         {
@@ -50,13 +50,13 @@ namespace NineGrid.Presentation.Systems
 
             UnbindInternal(clearIndex: false);
             mView = view;
-            mBoundManager = view as GroundFieldManagerSingleton;
+            mBoundView = view as IGroundFieldViewBinding;
             mMotion.BindView(
                 view,
-                onFieldMaybeClear: () => mBoundManager?.NotifyFieldMaybeClear(),
-                onEmptySlotClicked: slot => mBoundManager?.NotifyEmptySlotClicked(slot));
+                onFieldMaybeClear: () => mBoundView?.NotifyFieldMaybeClear(),
+                onEmptySlotClicked: slot => mBoundView?.NotifyEmptySlotClicked(slot));
             mPresentation = view != null ? new GroundPresentation(mMotion, view) : null;
-            mBoundManager?.AttachGeometryOwner(this);
+            mBoundView?.AttachGeometryOwner(this);
             mIndex.ClearConflictFlag();
         }
 
@@ -75,15 +75,15 @@ namespace NineGrid.Presentation.Systems
 
         private void UnbindInternal(bool clearIndex)
         {
-            if (mBoundManager != null && ReferenceEquals(mBoundManager.GeometryOwnerOrNull, this))
+            if (mBoundView != null && ReferenceEquals(mBoundView.GeometryOwnerOrNull, this))
             {
-                mBoundManager.AttachGeometryOwner(null);
+                mBoundView.AttachGeometryOwner(null);
             }
 
             mMotion.UnbindView();
             mPresentation = null;
             mView = null;
-            mBoundManager = null;
+            mBoundView = null;
             if (clearIndex)
             {
                 mIndex.Clear();

@@ -11,7 +11,7 @@ namespace NineGrid.Presentation.Controllers
     /// </summary>
     public sealed class BattleSessionPresentationController : PresentationController
     {
-        private InBattleManagerSingleton mSession;
+        private BattleSessionController mSession;
 
         protected override void OnBind()
         {
@@ -26,7 +26,7 @@ namespace NineGrid.Presentation.Controllers
             ClearBind();
         }
 
-        public void BindSession(InBattleManagerSingleton session)
+        public void BindSession(BattleSessionController session)
         {
             mSession = session;
             ApplyBind(session);
@@ -39,7 +39,7 @@ namespace NineGrid.Presentation.Controllers
             mSession = null;
         }
 
-        public static void WireSession(InBattleManagerSingleton session)
+        public static void WireSession(BattleSessionController session)
         {
             var existing = Object.FindObjectOfType<BattleSessionPresentationController>();
             if (existing == null)
@@ -51,7 +51,7 @@ namespace NineGrid.Presentation.Controllers
             existing.BindSession(session);
         }
 
-        private static void ApplyBind(InBattleManagerSingleton session)
+        private static void ApplyBind(BattleSessionController session)
         {
             var system = BattleSessionSystem.EnsureRegistered();
             system.Bind(session);

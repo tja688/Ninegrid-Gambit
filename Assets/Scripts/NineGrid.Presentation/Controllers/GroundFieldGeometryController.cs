@@ -11,7 +11,7 @@ namespace NineGrid.Presentation.Controllers
     /// </summary>
     public sealed class GroundFieldGeometryController : PresentationController
     {
-        private GroundFieldManagerSingleton mField;
+        private GroundFieldView mField;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void RegisterInstallHook()
@@ -33,7 +33,7 @@ namespace NineGrid.Presentation.Controllers
         }
 
         /// <summary>绑定 Field View（Hook 与 EditMode 直驱共用）。</summary>
-        public void BindField(GroundFieldManagerSingleton field)
+        public void BindField(GroundFieldView field)
         {
             mField = field;
             ApplyBind(field);
@@ -55,7 +55,7 @@ namespace NineGrid.Presentation.Controllers
             mField = null;
         }
 
-        private static void WireField(GroundFieldManagerSingleton field)
+        private static void WireField(GroundFieldView field)
         {
             var existing = Object.FindObjectOfType<GroundFieldGeometryController>();
             if (existing == null)
@@ -67,7 +67,7 @@ namespace NineGrid.Presentation.Controllers
             existing.BindField(field);
         }
 
-        private static void ApplyBind(GroundFieldManagerSingleton field)
+        private static void ApplyBind(GroundFieldView field)
         {
             var system = EnsureGeometrySystem();
             system.Bind(field);

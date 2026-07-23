@@ -45,8 +45,8 @@ namespace NineGrid.Presentation.Editor
             }
 
             var so = new SerializedObject(root);
-            Bind(so, "inBattle", Object.FindFirstObjectByType<InBattleManagerSingleton>(FindObjectsInactive.Include));
-            Bind(so, "mainGameLoop", Object.FindFirstObjectByType<MainGameLoopManagerSingleton>(FindObjectsInactive.Include));
+            Bind(so, "inBattle", Object.FindFirstObjectByType<BattleSessionController>(FindObjectsInactive.Include));
+            Bind(so, "mainGameLoop", Object.FindFirstObjectByType<GameFlowController>(FindObjectsInactive.Include));
             Bind(so, "relicManager", Object.FindFirstObjectByType<RelicManagerSingleton>(FindObjectsInactive.Include));
             Bind(so, "selectorManager", Object.FindFirstObjectByType<SelectorManagerSingleton>(FindObjectsInactive.Include));
             Bind(so, "descriptionManager", Object.FindFirstObjectByType<DescriptionManagerSingleton>(FindObjectsInactive.Include));
@@ -55,8 +55,8 @@ namespace NineGrid.Presentation.Editor
             Bind(so, "cardManager", Object.FindFirstObjectByType<CardManagerSingleton>(FindObjectsInactive.Include));
             Bind(so, "cardHand", Object.FindFirstObjectByType<CardHandManagerSingleton>(FindObjectsInactive.Include));
             Bind(so, "cardDeck", Object.FindFirstObjectByType<CardDeckManagerSingleton>(FindObjectsInactive.Include));
-            Bind(so, "groundField", Object.FindFirstObjectByType<GroundFieldManagerSingleton>(FindObjectsInactive.Include));
-            Bind(so, "fieldBattle", Object.FindFirstObjectByType<FieldBattleManagerSingleton>(FindObjectsInactive.Include));
+            Bind(so, "groundField", Object.FindFirstObjectByType<GroundFieldView>(FindObjectsInactive.Include));
+            Bind(so, "fieldBattle", Object.FindFirstObjectByType<FieldBattleView>(FindObjectsInactive.Include));
             so.ApplyModifiedPropertiesWithoutUndo();
 
             EditorUtility.SetDirty(root);

@@ -51,7 +51,7 @@ namespace NineGrid.Presentation.Controllers
             mSubmitHandler = null;
         }
 
-        private static void WireToField(GroundFieldManagerSingleton field)
+        private static void WireToField(GroundFieldView field)
         {
             if (field == null)
             {

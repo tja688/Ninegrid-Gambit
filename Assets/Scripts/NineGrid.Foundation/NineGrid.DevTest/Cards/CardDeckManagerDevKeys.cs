@@ -62,14 +62,14 @@ namespace NineGrid.DevTest.Cards
                 CardManagerSingleton.StandardDefId,
                 initialMode: CardDisplayMode.GroundCardMode,
                 kind: CardPresentationKind.Avatar);
-            var field = UnityEngine.Object.FindFirstObjectByType<GroundFieldManagerSingleton>();
+            var field = UnityEngine.Object.FindFirstObjectByType<GroundFieldView>();
             if (field != null)
             {
                 field.RequestRevealAvatarAsync(avatar).Forget();
             }
             else
             {
-                Debug.LogWarning("[CardDeckManagerDevKeys] 未找到 GroundFieldManagerSingleton，跳过 Avatar 入场。");
+                Debug.LogWarning("[CardDeckManagerDevKeys] 未找到 GroundFieldView，跳过 Avatar 入场。");
                 cardManager.Release(avatar, "DevTest.DeckAvatar");
             }
 

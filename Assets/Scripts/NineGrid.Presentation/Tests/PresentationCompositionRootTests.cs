@@ -65,7 +65,7 @@ namespace NineGrid.Presentation.Tests
             using (var arch = PresentationArchitectureFixture.CreateBare())
             {
                 var go = new GameObject(nameof(Install_WithSceneBindings_StartsSingleProductionRuntime));
-                var inBattle = go.AddComponent<InBattleManagerSingleton>();
+                var inBattle = go.AddComponent<BattleSessionController>();
                 try
                 {
                     var bindings = new PresentationSceneBindings(

@@ -8,12 +8,12 @@ namespace NineGrid.Cards
     /// </summary>
     public static class AttackInputHook
     {
-        public static Action<FieldBattleManagerSingleton> WireController;
+        public static Action<FieldBattleView> WireController;
 
         /// <summary>怪物格攻击提交；返回是否接纳（含忙时缓冲）。</summary>
         public static Func<int, bool> TrySubmitAttack;
 
-        public static void RequestWire(FieldBattleManagerSingleton battle)
+        public static void RequestWire(FieldBattleView battle)
         {
             WireController?.Invoke(battle);
         }

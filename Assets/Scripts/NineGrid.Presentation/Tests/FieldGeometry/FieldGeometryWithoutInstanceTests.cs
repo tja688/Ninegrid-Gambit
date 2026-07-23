@@ -12,8 +12,8 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
     /// </summary>
     public sealed class FieldGeometryWithoutInstanceTests
     {
-        private GroundFieldManagerSingleton _field;
-        private FieldBattleManagerSingleton _battle;
+        private GroundFieldView _field;
+        private FieldBattleView _battle;
 
         [SetUp]
         public void SetUp()
@@ -23,8 +23,8 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
             DestroyControllers();
             DestroyManagers();
 
-            _field = new GameObject("GroundField_NoInstance").AddComponent<GroundFieldManagerSingleton>();
-            _battle = new GameObject("FieldBattle_NoInstance").AddComponent<FieldBattleManagerSingleton>();
+            _field = new GameObject("GroundField_NoInstance").AddComponent<GroundFieldView>();
+            _battle = new GameObject("FieldBattle_NoInstance").AddComponent<FieldBattleView>();
         }
 
         [TearDown]
@@ -42,10 +42,10 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
             using (PresentationArchitectureFixture.CreateBare())
             {
                 Assert.IsNull(
-                    typeof(GroundFieldManagerSingleton).GetField(
+                    typeof(GroundFieldView).GetField(
                         "_instance", BindingFlags.Static | BindingFlags.NonPublic));
                 Assert.IsNull(
-                    typeof(FieldBattleManagerSingleton).GetField(
+                    typeof(FieldBattleView).GetField(
                         "_instance", BindingFlags.Static | BindingFlags.NonPublic));
 
                 GroundFieldGeometryHook.RequestWire(_field);
@@ -58,8 +58,8 @@ namespace NineGrid.Presentation.Tests.FieldGeometry
 
         private void DestroyManagers()
         {
-            DestroyAllOfType<GroundFieldManagerSingleton>();
-            DestroyAllOfType<FieldBattleManagerSingleton>();
+            DestroyAllOfType<GroundFieldView>();
+            DestroyAllOfType<FieldBattleView>();
             _field = null;
             _battle = null;
         }

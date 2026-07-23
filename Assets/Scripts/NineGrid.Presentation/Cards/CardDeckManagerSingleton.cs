@@ -414,7 +414,7 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 清理 Ground 上已发卡牌并释放槽位占用（测试/重置用）。委托 GroundFieldManagerSingleton。
+        /// 清理 Ground 上已发卡牌并释放槽位占用（测试/重置用）。委托 GroundFieldView。
         /// </summary>
         public void ClearGround()
         {
@@ -942,7 +942,7 @@ namespace NineGrid.Cards
             var field = ResolveFieldManager();
             if (field == null)
             {
-                Debug.LogWarning("[CardDeckManager] 未找到 GroundFieldManagerSingleton。");
+                Debug.LogWarning("[CardDeckManager] 未找到 GroundFieldView。");
                 return false;
             }
 
@@ -1060,7 +1060,7 @@ namespace NineGrid.Cards
             return true;
         }
 
-        private static DealFlightContext BuildDefaultFlightContext(GroundFieldManagerSingleton field)
+        private static DealFlightContext BuildDefaultFlightContext(GroundFieldView field)
         {
             return new DealFlightContext(
                 field.IsFieldBusy,
@@ -1289,7 +1289,7 @@ namespace NineGrid.Cards
                    && _groundAnchors[anchorIndex] != null;
         }
 
-        private static GroundFieldManagerSingleton ResolveFieldManager()
+        private static GroundFieldView ResolveFieldManager()
         {
             return GroundFieldGeometryHook.FieldOrNull();
         }

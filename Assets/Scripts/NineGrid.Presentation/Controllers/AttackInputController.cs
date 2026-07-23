@@ -60,7 +60,7 @@ namespace NineGrid.Presentation.Controllers
             mSubmitHandler = null;
         }
 
-        private static void WireToBattle(FieldBattleManagerSingleton battle)
+        private static void WireToBattle(FieldBattleView battle)
         {
             if (battle == null)
             {

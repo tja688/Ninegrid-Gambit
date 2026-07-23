@@ -17,17 +17,17 @@ namespace NineGrid.Flow
         [Header("灵动形态选择测试（留空则从同 GameObject 自动查找 IUITestKeyConsumer）")]
         [SerializeField] private MonoBehaviour livingFormChoiceTest;
 
-        private MainGameLoopManagerSingleton _loopManager;
+        private GameFlowController _loopManager;
         private IUITestKeyConsumer _livingFormChoiceConsumer;
         private bool _inGameVisible = true;
 
         private void Awake()
         {
-            _loopManager = GetComponent<MainGameLoopManagerSingleton>();
+            _loopManager = GetComponent<GameFlowController>();
             if (_loopManager != null)
             {
                 _loopManager.enabled = false;
-                Debug.Log("[UITestBootstrap] 已阻断 MainGameLoopManagerSingleton 自动流程。");
+                Debug.Log("[UITestBootstrap] 已阻断 GameFlowController 自动流程。");
             }
 
             if (panelRouter == null)

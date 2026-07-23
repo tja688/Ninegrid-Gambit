@@ -9,8 +9,8 @@ namespace NineGrid.Presentation.Setup
     /// </summary>
     public sealed class PresentationSceneBindings
     {
-        public InBattleManagerSingleton InBattle { get; }
-        public MainGameLoopManagerSingleton MainGameLoop { get; }
+        public BattleSessionController InBattle { get; }
+        public GameFlowController MainGameLoop { get; }
         public RelicManagerSingleton RelicManager { get; }
         public SelectorManagerSingleton SelectorManager { get; }
         public DescriptionManagerSingleton DescriptionManager { get; }
@@ -19,12 +19,12 @@ namespace NineGrid.Presentation.Setup
         public CardManagerSingleton CardManager { get; }
         public CardHandManagerSingleton CardHand { get; }
         public CardDeckManagerSingleton CardDeck { get; }
-        public GroundFieldManagerSingleton GroundField { get; }
-        public FieldBattleManagerSingleton FieldBattle { get; }
+        public GroundFieldView GroundField { get; }
+        public FieldBattleView FieldBattle { get; }
 
         public PresentationSceneBindings(
-            InBattleManagerSingleton inBattle,
-            MainGameLoopManagerSingleton mainGameLoop,
+            BattleSessionController inBattle,
+            GameFlowController mainGameLoop,
             RelicManagerSingleton relicManager,
             SelectorManagerSingleton selectorManager,
             DescriptionManagerSingleton descriptionManager,
@@ -33,8 +33,8 @@ namespace NineGrid.Presentation.Setup
             CardManagerSingleton cardManager,
             CardHandManagerSingleton cardHand,
             CardDeckManagerSingleton cardDeck,
-            GroundFieldManagerSingleton groundField,
-            FieldBattleManagerSingleton fieldBattle)
+            GroundFieldView groundField,
+            FieldBattleView fieldBattle)
         {
             InBattle = inBattle ?? throw new ArgumentNullException("inBattle");
             MainGameLoop = mainGameLoop;

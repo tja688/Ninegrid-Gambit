@@ -9,9 +9,9 @@ namespace NineGrid.Cards
     public static class GroundFieldGeometryHook
     {
         /// <summary>由 Presentation Controller 注册；接收 Field 显式绑定。</summary>
-        public static Action<GroundFieldManagerSingleton> Wire;
+        public static Action<GroundFieldView> Wire;
 
-        public static Func<GroundFieldManagerSingleton> ResolveField;
+        public static Func<GroundFieldView> ResolveField;
 
         public static void Reset()
         {
@@ -20,13 +20,13 @@ namespace NineGrid.Cards
         }
 
         /// <summary>生产路径：绑定 Field 并通知 Presentation Controller 登记 QF System。</summary>
-        public static void RequestWire(GroundFieldManagerSingleton field)
+        public static void RequestWire(GroundFieldView field)
         {
             ResolveField = field != null ? () => field : null;
             Wire?.Invoke(field);
         }
 
-        public static GroundFieldManagerSingleton FieldOrNull()
+        public static GroundFieldView FieldOrNull()
         {
             return ResolveField?.Invoke();
         }

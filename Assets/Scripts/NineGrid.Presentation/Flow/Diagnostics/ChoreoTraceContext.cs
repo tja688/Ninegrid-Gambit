@@ -294,7 +294,7 @@ namespace NineGrid.Flow.Diagnostics
                 var field = GroundFieldGeometryHook.FieldOrNull();
                 var deck = CardEntityLifecycleHook.DeckOrNull();
                 var hand = CardEntityLifecycleHook.HandOrNull();
-                var battle = UnityEngine.Object.FindFirstObjectByType<InBattleManagerSingleton>();
+                var battle = UnityEngine.Object.FindFirstObjectByType<BattleSessionController>();
 
                 payload["fieldBusy"] = field != null && field.IsBusy ? "true" : "false";
                 payload["fieldSelfBusy"] = field != null && field.IsFieldBusy ? "true" : "false";

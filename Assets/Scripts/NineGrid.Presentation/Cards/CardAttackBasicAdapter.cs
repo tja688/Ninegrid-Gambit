@@ -470,7 +470,7 @@ namespace NineGrid.Cards
         /// 优先取场地格5入场的 Avatar 卡；否则用 Inspector defaultAttacker / AttackerProxy 兜底。
         /// </summary>
         private bool TryResolveAttacker(
-            GroundFieldManagerSingleton field,
+            GroundFieldView field,
             out ManagedCard attackerCard,
             out Transform attacker)
         {
@@ -506,7 +506,7 @@ namespace NineGrid.Cards
         }
 
         private static void PrepareAttackerAtAvatarAnchor(
-            GroundFieldManagerSingleton field,
+            GroundFieldView field,
             Transform attacker,
             Transform victim)
         {
@@ -518,7 +518,7 @@ namespace NineGrid.Cards
         }
 
         private static void PrepareAttackerAtSlotAnchor(
-            GroundFieldManagerSingleton field,
+            GroundFieldView field,
             Transform attacker,
             int attackerSlot,
             Transform victim)

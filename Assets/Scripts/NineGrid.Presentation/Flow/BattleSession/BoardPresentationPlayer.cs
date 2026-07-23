@@ -37,7 +37,7 @@ namespace NineGrid.Flow
 
         private CardManagerSingleton Cards => _session.Cards;
         private CardDeckManagerSingleton Deck => _session.Deck;
-        private GroundFieldManagerSingleton Field => _session.Field;
+        private GroundFieldView Field => _session.Field;
         private CardHandManagerSingleton Hand => _session.Hand;
 
         public void ClearShuffleSink()

@@ -9,9 +9,9 @@ namespace NineGrid.Cards
     public static class FieldBattlePresentationHook
     {
         /// <summary>由 Presentation Controller 注册；接收 Battle 显式绑定。</summary>
-        public static Action<FieldBattleManagerSingleton> Wire;
+        public static Action<FieldBattleView> Wire;
 
-        public static Func<FieldBattleManagerSingleton> ResolveBattle;
+        public static Func<FieldBattleView> ResolveBattle;
 
         public static void Reset()
         {
@@ -20,13 +20,13 @@ namespace NineGrid.Cards
         }
 
         /// <summary>生产路径：绑定 Battle 并通知 Presentation Controller 登记 QF System。</summary>
-        public static void RequestWire(FieldBattleManagerSingleton battle)
+        public static void RequestWire(FieldBattleView battle)
         {
             ResolveBattle = battle != null ? () => battle : null;
             Wire?.Invoke(battle);
         }
 
-        public static FieldBattleManagerSingleton BattleOrNull()
+        public static FieldBattleView BattleOrNull()
         {
             return ResolveBattle?.Invoke();
         }
