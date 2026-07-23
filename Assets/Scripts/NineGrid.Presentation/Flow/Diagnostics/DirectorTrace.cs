@@ -33,6 +33,8 @@ namespace NineGrid.Flow.Diagnostics
         private static bool sHasBufferedIntent;
         private static string sBufferedIntentKind = string.Empty;
         private static int sActiveBatchId;
+        private static int sCurrentChainId;
+        private static int sNextChainId = 1;
         private static string sOpenRejectReason = string.Empty;
         private static bool sAckRejectLogged;
 
@@ -46,6 +48,9 @@ namespace NineGrid.Flow.Diagnostics
 
         public static int ActiveBatchId => sActiveBatchId;
 
+        /// <summary>当前 InputIntent 脚本连锁根；idle/HardClear 后为 0。</summary>
+        public static int CurrentChainId => sCurrentChainId;
+
         public static void Reset()
         {
             sMainlineBusy = false;
@@ -53,6 +58,8 @@ namespace NineGrid.Flow.Diagnostics
             sHasBufferedIntent = false;
             sBufferedIntentKind = string.Empty;
             sActiveBatchId = 0;
+            sCurrentChainId = 0;
+            sNextChainId = 1;
             sOpenRejectReason = string.Empty;
             sAckRejectLogged = false;
         }
@@ -80,6 +87,19 @@ namespace NineGrid.Flow.Diagnostics
             }
         }
 
+        /// <summary>受理 intent / BuildScript 时分配单调连锁根。</summary>
+        public static int BeginChain()
+        {
+            sCurrentChainId = sNextChainId++;
+            return sCurrentChainId;
+        }
+
+        /// <summary>HardClear 或主线 idle 且无缓冲 intent 时清除。</summary>
+        public static void ClearChain()
+        {
+            sCurrentChainId = 0;
+        }
+
         public static void AppendBusyFields(Dictionary<string, string> payload)
         {
             if (payload == null)
@@ -96,6 +116,7 @@ namespace NineGrid.Flow.Diagnostics
             }
 
             payload["activeBatchId"] = sActiveBatchId.ToString(CultureInfo.InvariantCulture);
+            payload["chainId"] = sCurrentChainId.ToString(CultureInfo.InvariantCulture);
         }
 
         public static void BatchOpen(int batchId, string slice = null)
@@ -266,6 +287,7 @@ namespace NineGrid.Flow.Diagnostics
                     }));
             PublishBusyState(false, false, false, string.Empty);
             PublishActiveBatchId(0);
+            ClearChain();
         }
 
         public static void StepEnter(string step, string lane = LaneMainline)
@@ -399,6 +421,8 @@ namespace NineGrid.Flow.Diagnostics
                 payload["batchId"] = batchId.ToString(CultureInfo.InvariantCulture);
             }
 
+            payload["chainId"] = sCurrentChainId.ToString(CultureInfo.InvariantCulture);
+            payload["choreoSeqId"] = ChoreoTraceContext.CurrentSeqId.ToString(CultureInfo.InvariantCulture);
             return payload;
         }
 

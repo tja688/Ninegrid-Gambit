@@ -205,7 +205,6 @@ namespace NineGrid.Flow
                 using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
                     cancellationToken,
                     presentationCt);
-                FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.Opening);
                 var openingNode = 0;
                 int.TryParse(FieldTraceHelper.ResolveNodeIndex(), out openingNode);
                 PerfTraceRecorder.OpenBeat(DiagBeatKinds.OpeningDeal, openingNode);
@@ -217,7 +216,6 @@ namespace NineGrid.Flow
                 finally
                 {
                     PerfTraceRecorder.CloseBeat();
-                    FieldTraceHelper.ClearBatchTag();
                 }
 
                 Cards?.AuditRegistryIntegrity("Opening.Settled");

@@ -5,6 +5,7 @@ namespace NineGrid.Flow.Presentation
 {
     /// <summary>
     /// 表演导演：时间线唯一所有者与出口；主线在跑是唯一输入互斥真相。
+    /// 诊断连锁根 <see cref="DirectorTrace.CurrentChainId"/> 绑一次 InputIntent 脚本生命周期。
     /// </summary>
     public sealed class PresentationDirector
     {
@@ -70,6 +71,7 @@ namespace NineGrid.Flow.Presentation
 
             if (!IsMainlineBusy)
             {
+                DirectorTrace.BeginChain();
                 mScriptFactory.BuildScript(intent, mMainline);
                 DirectorTrace.IntentAccepted(intent.Kind, intent.TargetId);
                 PublishBusy();
@@ -107,6 +109,7 @@ namespace NineGrid.Flow.Presentation
             mBypass.Clear();
             mExternalHoldReleased = true;
             mExternalHoldNestDepth = 0;
+            // IntentHardClear 内 ClearChain；此处再 PublishBusy。
             DirectorTrace.IntentHardClear(reason.ToString());
             PublishBusy();
         }
@@ -179,8 +182,14 @@ namespace NineGrid.Flow.Presentation
                 var intent = mBufferedIntent;
                 mHasBufferedIntent = false;
                 mBufferedIntent = default(InputIntent);
+                DirectorTrace.BeginChain();
                 DirectorTrace.IntentFlush(intent.Kind, intent.TargetId);
                 mScriptFactory.BuildScript(intent, mMainline);
+            }
+            else if (!IsMainlineBusy && !mHasBufferedIntent)
+            {
+                // defer 补牌等兄弟 batch 仍在同一脚本内；仅整条主线跑空且无缓冲时清连锁根。
+                DirectorTrace.ClearChain();
             }
 
             PublishBusy();

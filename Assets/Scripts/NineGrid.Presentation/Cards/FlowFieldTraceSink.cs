@@ -5,12 +5,10 @@ namespace NineGrid.Cards
     /// <summary>
     /// Cards → Flow 占格/发牌/手牌诊断旁路。由 Flow <c>FieldTraceHelper</c> 注册，失败不影响游戏路径。
     /// Cards 程序集不可引用 Flow，故用静态 Action 解耦。
+    /// 关联键由 Flow 侧 EnrichCommon 注入 chainId + choreoSeqId（废全局 batchTag）。
     /// </summary>
     public static class FlowFieldTraceSink
     {
-        /// <summary>当前表现批标签（postKill / opening / sync …），由 Flow 设置。</summary>
-        public static string CurrentBatchTag = string.Empty;
-
         /// <summary>slot, existingUid, incomingUid, caller</summary>
         public static Action<int, int, int, string> OccupancyConflict;
 
@@ -31,11 +29,6 @@ namespace NineGrid.Cards
 
         /// <summary>trigger, registryCount, fieldCount, ghosts, orphans</summary>
         public static Action<string, int, int, string, string> RegistryAudit;
-
-        /// <summary>batchTag</summary>
-        public static Action<string> SetBatchTag;
-
-        public static Action ClearBatchTag;
 
         /// <summary>uid, groundSlot, defId, coreKind</summary>
         public static Action<int, int, string, string> PickupAttempt;
@@ -93,8 +86,6 @@ namespace NineGrid.Cards
             HandLifecycle = null;
             OccupancyVacate = null;
             RegistryAudit = null;
-            SetBatchTag = null;
-            ClearBatchTag = null;
             PickupAttempt = null;
             PickupGate = null;
             PickupSuccess = null;
@@ -107,7 +98,6 @@ namespace NineGrid.Cards
             BarrierSatisfied = null;
             BeatAlign = null;
             Handoff = null;
-            CurrentBatchTag = string.Empty;
         }
     }
 }

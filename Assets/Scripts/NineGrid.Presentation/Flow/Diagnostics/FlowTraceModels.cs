@@ -118,7 +118,7 @@ namespace NineGrid.Flow.Diagnostics
     }
 
     /// <summary>
-    /// V2 batchTag 约定，便于按阶段过滤。
+    /// 可选场景标记常量（写入单条 OccupancySnapshot 的 sceneTag），非全局关联键。
     /// </summary>
     public static class FlowTraceBatchTags
     {

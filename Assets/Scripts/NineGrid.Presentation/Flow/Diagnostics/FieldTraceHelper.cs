@@ -13,22 +13,6 @@ namespace NineGrid.Flow.Diagnostics
     /// </summary>
     public static class FieldTraceHelper
     {
-        private static string sBatchTag = string.Empty;
-
-        public static string CurrentBatchTag => sBatchTag;
-
-        public static void SetBatchTag(string tag)
-        {
-            sBatchTag = tag ?? string.Empty;
-            FlowFieldTraceSink.CurrentBatchTag = sBatchTag;
-        }
-
-        public static void ClearBatchTag()
-        {
-            sBatchTag = string.Empty;
-            FlowFieldTraceSink.CurrentBatchTag = string.Empty;
-        }
-
         public static void RegisterSinkHandlers()
         {
             FlowFieldTraceSink.OccupancyConflict = OnOccupancyConflict;
@@ -38,8 +22,6 @@ namespace NineGrid.Flow.Diagnostics
             FlowFieldTraceSink.HandLifecycle = OnHandLifecycle;
             FlowFieldTraceSink.OccupancyVacate = OnOccupancyVacate;
             FlowFieldTraceSink.RegistryAudit = OnRegistryAudit;
-            FlowFieldTraceSink.SetBatchTag = SetBatchTag;
-            FlowFieldTraceSink.ClearBatchTag = ClearBatchTag;
             FlowFieldTraceSink.PickupAttempt = (uid, groundSlot, defId, coreKind) =>
                 RecordPickupAttempt(uid, groundSlot, defId, coreKind);
             FlowFieldTraceSink.PickupGate = (uid, gate, accepted) =>
@@ -62,7 +44,6 @@ namespace NineGrid.Flow.Diagnostics
         {
             FlowFieldTraceSink.ClearHandlers();
             ChoreoTraceSink.ClearHandlers();
-            ClearBatchTag();
         }
 
         private static void RegisterChoreoSinkHandlers()
@@ -235,7 +216,7 @@ namespace NineGrid.Flow.Diagnostics
                 });
         }
 
-        public static void RecordOccupancySnapshot(string phase, string batchTag = null)
+        public static void RecordOccupancySnapshot(string phase, string sceneTag = null)
         {
             if (!FlowTraceRecorder.Enabled)
             {
@@ -244,34 +225,30 @@ namespace NineGrid.Flow.Diagnostics
 
             try
             {
-                var previousTag = sBatchTag;
-                if (!string.IsNullOrEmpty(batchTag))
-                {
-                    SetBatchTag(batchTag);
-                }
-
                 BuildOccupancy(out var coreHash, out var presHash, out var diffSlots,
                     out var coreCount, out var presCount);
+
+                var payload = new Dictionary<string, string>
+                {
+                    { "phase", phase ?? string.Empty },
+                    { "coreHash", coreHash },
+                    { "presHash", presHash },
+                    { "diffSlots", diffSlots },
+                    { "coreOccupantCount", coreCount.ToString() },
+                    { "presOccupantCount", presCount.ToString() },
+                    { "hasDiff", string.IsNullOrEmpty(diffSlots) ? "false" : "true" },
+                };
+                // 可选场景标记仅落本条 payload，不再经全局可变 tag（ADR-0003）。
+                if (!string.IsNullOrEmpty(sceneTag))
+                {
+                    payload["sceneTag"] = sceneTag;
+                }
 
                 Record(
                     FlowTraceCategory.Field,
                     FlowTraceNames.OccupancySnapshot,
-                    new Dictionary<string, string>
-                    {
-                        { "phase", phase ?? string.Empty },
-                        { "coreHash", coreHash },
-                        { "presHash", presHash },
-                        { "diffSlots", diffSlots },
-                        { "coreOccupantCount", coreCount.ToString() },
-                        { "presOccupantCount", presCount.ToString() },
-                        { "hasDiff", string.IsNullOrEmpty(diffSlots) ? "false" : "true" },
-                    },
+                    payload,
                     accepted: string.IsNullOrEmpty(diffSlots));
-
-                if (!string.IsNullOrEmpty(batchTag))
-                {
-                    SetBatchTag(previousTag);
-                }
             }
             catch (Exception ex)
             {
@@ -1016,9 +993,16 @@ namespace NineGrid.Flow.Diagnostics
                 payload["nodeIndex"] = ResolveNodeIndex();
             }
 
-            if (!payload.ContainsKey("batchTag") && !string.IsNullOrEmpty(sBatchTag))
+            if (!payload.ContainsKey("chainId"))
             {
-                payload["batchTag"] = sBatchTag;
+                payload["chainId"] = DirectorTrace.CurrentChainId.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            if (!payload.ContainsKey("choreoSeqId"))
+            {
+                payload["choreoSeqId"] = ChoreoTraceContext.CurrentSeqId.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture);
             }
         }
 

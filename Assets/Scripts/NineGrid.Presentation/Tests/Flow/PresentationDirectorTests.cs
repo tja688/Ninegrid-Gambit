@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using NineGrid.Core;
+using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using NUnit.Framework;
 using NineGrid.Flow;
@@ -12,6 +13,96 @@ namespace NineGrid.Presentation.Tests
     /// </summary>
     public sealed class PresentationDirectorTests
     {
+        [SetUp]
+        public void SetUp()
+        {
+            DirectorTrace.Reset();
+        }
+
+        [Test]
+        public void ChainId_AllocatesOnIntentAccept_StaysUntilIdle_ThenClears()
+        {
+            var factory = new RecordingScriptFactory(continueTicks: 2);
+            var director = new PresentationDirector(factory);
+
+            bool preview;
+            Assert.IsTrue(director.TrySubmitIntent(new InputIntent("explore", 1), out preview));
+            Assert.IsFalse(preview);
+            var chainId = DirectorTrace.CurrentChainId;
+            Assert.Greater(chainId, 0, "受理 intent / BuildScript 应分配 chainId");
+            Assert.IsTrue(director.IsMainlineBusy);
+
+            director.Tick(0.016f);
+            Assert.AreEqual(chainId, DirectorTrace.CurrentChainId, "脚本跑空前 chainId 应保持不变");
+            Assert.IsTrue(director.IsMainlineBusy);
+
+            director.Tick(0.016f);
+            director.Tick(0.016f);
+            Assert.IsFalse(director.IsMainlineBusy);
+            Assert.AreEqual(0, DirectorTrace.CurrentChainId, "主线 idle 且无缓冲 intent 后 chainId 应归零");
+        }
+
+        [Test]
+        public void ChainId_HardClear_ClearsToZero()
+        {
+            var director = new PresentationDirector(new RecordingScriptFactory(continueTicks: 5));
+            bool preview;
+            Assert.IsTrue(director.TrySubmitIntent(new InputIntent("explore", 1), out preview));
+            Assert.Greater(DirectorTrace.CurrentChainId, 0);
+
+            director.HardClearIntents(IntentClearReason.Defeat);
+            Assert.AreEqual(0, DirectorTrace.CurrentChainId);
+            Assert.IsFalse(director.IsMainlineBusy);
+        }
+
+        [Test]
+        public void ChainId_BufferedFlush_DoesNotReallocateMidScript_AndGetsNewId()
+        {
+            var factory = new RecordingScriptFactory(continueTicks: 1);
+            var director = new PresentationDirector(factory);
+
+            director.EnqueueMainline(new ScriptedStep(continueTicks: 1));
+            Assert.AreEqual(0, DirectorTrace.CurrentChainId, "无 intent 的主线步骤不分配 chainId");
+
+            bool preview;
+            Assert.IsTrue(director.TrySubmitIntent(new InputIntent("explore", 3), out preview));
+            Assert.IsTrue(preview);
+            Assert.AreEqual(0, DirectorTrace.CurrentChainId, "仅缓冲时不分配（避免覆盖在跑脚本）");
+
+            director.Tick(0.016f); // Continue hold step
+            director.Tick(0.016f); // Finished → flush BuildScript → BeginChain
+            var flushedChainId = DirectorTrace.CurrentChainId;
+            Assert.Greater(flushedChainId, 0);
+            Assert.AreEqual(1, factory.Built.Count);
+            Assert.IsTrue(director.IsMainlineBusy);
+
+            director.Tick(0.016f); // Continue flushed script
+            Assert.AreEqual(flushedChainId, DirectorTrace.CurrentChainId);
+            director.Tick(0.016f); // Finished → idle clear
+            Assert.IsFalse(director.IsMainlineBusy);
+            Assert.AreEqual(0, DirectorTrace.CurrentChainId);
+        }
+
+        [Test]
+        public void ChainId_SequentialIntents_AreMonotonicDistinct()
+        {
+            var factory = new RecordingScriptFactory(continueTicks: 0);
+            var director = new PresentationDirector(factory);
+
+            bool preview;
+            Assert.IsTrue(director.TrySubmitIntent(new InputIntent("explore", 1), out preview));
+            var first = DirectorTrace.CurrentChainId;
+            Assert.Greater(first, 0);
+            director.Tick(0.016f);
+            Assert.AreEqual(0, DirectorTrace.CurrentChainId);
+
+            Assert.IsTrue(director.TrySubmitIntent(new InputIntent("explore", 2), out preview));
+            var second = DirectorTrace.CurrentChainId;
+            Assert.Greater(second, first);
+            director.Tick(0.016f);
+            Assert.AreEqual(0, DirectorTrace.CurrentChainId);
+        }
+
         [Test]
         public void Timeline_StepContinuesUntilFinished_ThenAdvances()
         {

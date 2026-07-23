@@ -82,7 +82,6 @@ namespace NineGrid.Flow
             ChoreoTraceContext.BoardQueueDepth = 0;
             try
             {
-                FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.BoardPresentationQueue);
                 await DrainPostKillBoardCoreAsync(result, cancellationToken);
             }
             catch (OperationCanceledException)
@@ -96,7 +95,6 @@ namespace NineGrid.Flow
             }
             finally
             {
-                FieldTraceHelper.ClearBatchTag();
                 _session.DrainInFlight = false;
                 ChoreoTraceContext.DrainInFlight = false;
                 if (acquiredHere)
@@ -126,7 +124,6 @@ namespace NineGrid.Flow
             var moveCount = stepCount > 0 ? stepCount : (result.Moves?.Length ?? 0);
             var dealCount = result.Deals?.Length ?? 0;
             var requestId = ++_boardPresentationRequestId;
-            FieldTraceHelper.SetBatchTag(FlowTraceBatchTags.BoardPresentationQueue);
             var drainNode = 0;
             int.TryParse(FieldTraceHelper.ResolveNodeIndex(), out drainNode);
             PerfTraceRecorder.OpenBeat(DiagBeatKinds.PostKillDrain, drainNode);
@@ -202,7 +199,6 @@ namespace NineGrid.Flow
             finally
             {
                 PerfTraceRecorder.CloseBeat();
-                FieldTraceHelper.ClearBatchTag();
             }
 
             // #10：Drain 尾部不再 force Sync 自愈；冲突只断言+诊断。就位栅栏仍等齐飞牌。

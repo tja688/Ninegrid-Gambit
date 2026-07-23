@@ -5,6 +5,7 @@ using NineGrid.Core.Commands;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using NineGrid.Core.Utilities;
+using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using NUnit.Framework;
 using QFramework;
@@ -33,6 +34,7 @@ namespace NineGrid.Presentation.Tests
         public void SetUp()
         {
             NineGridArchitecture.ResetForTests();
+            DirectorTrace.Reset();
             mArch = NineGridArchitecture.Current;
             mArch.GetUtility<IConfigUtility>().Set(
                 ContentConfigKeys.DefaultCatalog,
@@ -71,10 +73,13 @@ namespace NineGrid.Presentation.Tests
                 out preview));
             Assert.IsFalse(preview);
             Assert.IsTrue(director.IsMainlineBusy);
+            var chainId = DirectorTrace.CurrentChainId;
+            Assert.Greater(chainId, 0, "Explore intent 应分配 chainId");
 
             // ClickEmpty resolve + present
             director.Tick(0.016f);
             Assert.AreEqual(1, mSync.ActiveBatchId, "ClickEmpty 应打开第 1 批");
+            Assert.AreEqual(chainId, DirectorTrace.CurrentChainId);
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(1, boardPresent.BeginCount);
@@ -90,6 +95,7 @@ namespace NineGrid.Presentation.Tests
             var rotateStart = mPipeline.EventLog.Entries.Count;
             director.Tick(0.016f);
             Assert.AreEqual(3, mSync.ActiveBatchId);
+            Assert.AreEqual(chainId, DirectorTrace.CurrentChainId, "融合 batch 应继承同一 chainId");
             Assert.IsTrue(HasFusionSince(rotateStart), "Rotate 批应触发骷髅融合");
             Assert.IsFalse(ContainsTypeSince(rotateStart, CoreEventType.SlotsFilled),
                 "融合伴随补牌不得在 Rotate 解算批内 in-flight 写入");
@@ -103,6 +109,7 @@ namespace NineGrid.Presentation.Tests
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(3, boardPresent.BeginCount);
+            Assert.AreEqual(chainId, DirectorTrace.CurrentChainId, "defer 入队后 chainId 不得因新 batch 重分配");
 
             var deck = mArch.GetModel<DeckModel>();
             var board = mArch.GetModel<BoardModel>();
@@ -115,6 +122,8 @@ namespace NineGrid.Presentation.Tests
             var refillStart = mPipeline.EventLog.Entries.Count;
             director.Tick(0.016f);
             Assert.AreEqual(4, mSync.ActiveBatchId);
+            Assert.AreEqual(chainId, DirectorTrace.CurrentChainId,
+                "融合 batch 与 defer 补牌 batch 须带同一 chainId");
             Assert.IsTrue(ContainsTypeSince(refillStart, CoreEventType.SlotsFilled),
                 "融合补牌须在独立 Resolve 批次写入 Core");
 
@@ -123,6 +132,7 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(4, boardPresent.BeginCount);
             Assert.IsFalse(director.IsMainlineBusy);
+            Assert.AreEqual(0, DirectorTrace.CurrentChainId, "脚本跑空后 chainId 归零");
         }
 
         [Test]
