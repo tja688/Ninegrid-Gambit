@@ -1,7 +1,6 @@
 using System;
 using NineGrid.Cards;
 using NineGrid.Presentation.Commands;
-using NineGrid.Presentation.Queries;
 using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
@@ -10,7 +9,7 @@ namespace NineGrid.Presentation.Controllers
 {
     /// <summary>
     /// 怪物格攻击输入 Controller：经 <see cref="AttackInputHook"/> 承接场地交战点击，
-    /// 先 Query 门禁再发 QF Command。
+    /// 校验输入所有权后发 QF Command。
     /// </summary>
     public sealed class AttackInputController : PresentationController
     {
@@ -35,8 +34,8 @@ namespace NineGrid.Presentation.Controllers
         /// <summary>怪物格点击入口（Hook 与 EditMode 直驱共用）。</summary>
         public bool HandleMonsterSlotClicked(int groundSlot)
         {
-            var gate = this.SendQuery(new EvaluateAttackInputGateQuery());
-            if (gate.Disposition == PresentationInputDisposition.Reject)
+            // 轴二：攻击目标表面为受保护场地；轴一互斥由 Director 在提交时裁决。
+            if (!PresentationInputGates.OwnsProtectedField)
             {
                 return false;
             }

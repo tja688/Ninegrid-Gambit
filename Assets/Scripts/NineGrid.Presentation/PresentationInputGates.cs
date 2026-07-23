@@ -20,6 +20,12 @@ namespace NineGrid.Presentation
             return PresentationInputStateSystem.EnsureRegistered();
         }
 
+        public static InputOwner CurrentOwner =>
+            OrNull()?.CurrentOwner ?? InputOwner.ProtectedField;
+
+        /// <summary>当前所有者是否为受保护场地（轴二门禁读口）。</summary>
+        public static bool OwnsProtectedField => CurrentOwner == InputOwner.ProtectedField;
+
         public static bool OpeningPresentationActive =>
             OrNull()?.OpeningPresentationActive.Value ?? false;
 

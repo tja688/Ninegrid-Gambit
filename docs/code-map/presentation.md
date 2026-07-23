@@ -13,7 +13,7 @@
 | `Setup/` | 3 | `NineGrid.Presentation.Setup` | `PresentationSceneRoot`、`PresentationCompositionRoot`、`PresentationSceneBindings` |
 | `Controllers/` | 18 | `NineGrid.Presentation.Controllers` | QF `PresentationController` 场景入口 |
 | `Commands/` | 25 | `NineGrid.Presentation.Commands` | 写意图 |
-| `Queries/` | 11 | `NineGrid.Presentation.Queries` | 读裁决 + 门禁 |
+| `Queries/` | 10 | `NineGrid.Presentation.Queries` | 读裁决（合法性等） |
 | `Systems/` | 18 | `NineGrid.Presentation.Systems` | QF System / 窄能力接口 |
 | `Flow/` | ~118 | `NineGrid.Flow*` | 导演/时间线/Channel/Scheduler、局内会话、流程壳、诊断、部分 Presenter |
 | `Cards/` | ~136 | `NineGrid.Cards*` | 卡视图、场地/手牌/牌库、收敛、特效 SO、静态 Hook |
@@ -54,7 +54,7 @@
 
 `PresentationController` · `ExploreInputController` · `AttackInputController` · `PickupInputController` · `UseItemInputController` · `GroundFieldGeometryController` · `FieldBattlePresentationController` · `CardEntityLifecycleController` · `ZoneOwnershipQueryController` · `DescriptionOutputController` · `DamageNumberOutputController` · `RelicHudController` · `RoomChoiceInputController` · `RewardChoiceInputController` · `GameFlowShellController` · `TriggerPulseOutputController` · `DiagnosticOutputController` · `BattleSessionPresentationController`
 
-典型路径：场景 Host / Hook → Controller → `SendQuery`（门禁）→ `SendCommand` → System / Director。
+典型路径：场景 Host / Hook → Controller → 读所有权轴 / Query 合法性 → `SendCommand` → System / Director。
 
 ## Systems
 
@@ -66,7 +66,7 @@
 | `IFieldBattlePresentationSystem` / `FieldBattlePresentationSystem` | 交战表现锚点 |
 | `ICardEntityLifecycleSystem` / `CardEntityLifecycleSystem` | 卡实体生命周期 |
 | `IGameFlowShellSystem` / `GameFlowShellSystem` | 流程壳相位权威 |
-| `IPresentationInputStateSystem` / `PresentationInputStateSystem` | busy / opening / external-hold 投影 |
+| `IPresentationInputStateSystem` / `PresentationInputStateSystem` | 输入所有权轴只读投影（`CurrentOwner`）+ MainlineBusy |
 | `BoardSelectionSystem` | 棋盘选择模式 |
 | `ChoicePresentationSystem` | 房间/奖励选择表现 |
 | `GroundPresentation` | 场地表现辅助 |

@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace NineGrid.Presentation.Tests.BehaviorBaseline
 {
     /// <summary>
-    /// #43 批次2：Opening / overlay / board-select 门禁矩阵（只读投影 + Command 写入）。
+    /// #49：输入所有权轴 + ExternalHold / MainlineBusy 只读投影基线。
     /// </summary>
     public sealed class InputGateMatrixBaselineTests
     {
@@ -14,27 +14,6 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
         public void TearDown()
         {
             PresentationInputGates.Reset("InputGateMatrixBaselineTests");
-        }
-
-        [Test]
-        public void OccupancyDesyncLatch_RejectsAllTypedQueries_UntilReset()
-        {
-            using (var arch = PresentationArchitectureFixture.CreateBare())
-            {
-                var input = PresentationInputStateSystem.EnsureRegistered(arch.Architecture);
-                NineGrid.Flow.Diagnostics.ChoreoTraceContext.Reset();
-                NineGrid.Flow.Diagnostics.ChoreoTraceContext.LatchOccupancyDesync("test");
-
-                Assert.AreEqual("occupancyDesync", input.EvaluateExplore().Reason);
-                Assert.AreEqual("occupancyDesync", input.EvaluateAttack().Reason);
-                Assert.AreEqual("occupancyDesync", input.EvaluatePickup().Reason);
-                Assert.AreEqual("occupancyDesync", input.EvaluateUseItem().Reason);
-                Assert.AreEqual("occupancyDesync", input.EvaluateBoardSelectionBegin().Reason);
-
-                input.ResetGates("clear-desync");
-                Assert.IsFalse(NineGrid.Flow.Diagnostics.ChoreoTraceContext.OccupancyDesyncLatched);
-                Assert.IsTrue(input.EvaluateExplore().IsAllowed);
-            }
         }
 
         [Test]
@@ -53,15 +32,18 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
                 Assert.IsTrue(input.OpeningPresentationActive.Value);
                 Assert.IsTrue(input.ChoiceOverlayActive.Value);
                 Assert.IsTrue(input.BoardSelectModeActive.Value);
+                Assert.AreEqual(InputOwner.ChoiceOverlay, input.CurrentOwner);
                 Assert.IsTrue(input.MainlineBusy);
 
                 input.SetOpeningPresentationActive(false);
                 Assert.IsFalse(input.OpeningPresentationActive.Value);
                 Assert.IsTrue(input.ChoiceOverlayActive.Value);
                 Assert.IsTrue(input.BoardSelectModeActive.Value);
+                Assert.AreEqual(InputOwner.ChoiceOverlay, input.CurrentOwner);
 
                 input.ResetGates("matrix");
                 runtime.Tick();
+                Assert.AreEqual(InputOwner.ProtectedField, input.CurrentOwner);
                 Assert.IsFalse(input.OpeningPresentationActive.Value);
                 Assert.IsFalse(input.ChoiceOverlayActive.Value);
                 Assert.IsFalse(input.BoardSelectModeActive.Value);
@@ -111,33 +93,26 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
 
                 Assert.IsFalse(input.HasExternalHold);
                 Assert.IsFalse(input.MainlineBusy);
+                Assert.AreEqual(InputOwner.ChoiceOverlay, input.CurrentOwner);
             }
         }
 
         [Test]
-        public void TypedQueries_RejectOverlayAndAllowExploreBufferWhenBusy()
+        public void CurrentOwner_OrthogonalToMainlineBusy()
         {
             using (var arch = PresentationArchitectureFixture.CreateBare())
             using (var runtime = PresentationRuntimeFixture.Install(arch, new AcceptAllScriptFactory()))
             {
                 var input = PresentationInputStateSystem.EnsureRegistered(arch.Architecture);
 
-                input.SetChoiceOverlayActive(true);
-                Assert.AreEqual(
-                    PresentationInputDisposition.Reject,
-                    input.EvaluateExplore().Disposition);
-                Assert.AreEqual(
-                    PresentationInputDisposition.Reject,
-                    input.EvaluateAttack().Disposition);
-
-                input.SetChoiceOverlayActive(false);
+                Assert.AreEqual(InputOwner.ProtectedField, input.CurrentOwner);
                 Assert.IsTrue(runtime.Runtime.TryBeginExternalHold("hold"));
-                Assert.AreEqual(
-                    PresentationInputDisposition.BufferToDirector,
-                    input.EvaluateExplore().Disposition);
-                Assert.AreEqual(
-                    PresentationInputDisposition.Reject,
-                    input.EvaluateAttack().Disposition);
+                Assert.IsTrue(input.MainlineBusy);
+                Assert.AreEqual(InputOwner.ProtectedField, input.CurrentOwner);
+
+                input.SetChoiceOverlayActive(true);
+                Assert.AreEqual(InputOwner.ChoiceOverlay, input.CurrentOwner);
+                Assert.IsTrue(input.MainlineBusy);
             }
         }
 

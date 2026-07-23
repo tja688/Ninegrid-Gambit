@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace NineGrid.Presentation.Tests
 {
     /// <summary>
-    /// #43 批次2：Opening 门禁迁入 PresentationInputStateSystem。
+    /// #49：Opening 归入输入所有权轴（对齐既有 Opening 门禁 EditMode）。
     /// </summary>
     public sealed class PresentationInputStateOpeningGateTests
     {
@@ -16,26 +16,29 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void ResetGates_ClearsOpeningPresentationActive()
+        public void ResetGates_ClearsOpeningOwner()
         {
             using (var arch = PresentationArchitectureFixture.CreateBare())
             {
                 var input = PresentationInputStateSystem.EnsureRegistered(arch.Architecture);
                 input.SetOpeningPresentationActive(true);
+                Assert.AreEqual(InputOwner.Opening, input.CurrentOwner);
 
                 input.ResetGates("test");
 
+                Assert.AreEqual(InputOwner.ProtectedField, input.CurrentOwner);
                 Assert.IsFalse(input.OpeningPresentationActive.Value);
             }
         }
 
         [Test]
-        public void OpeningPresentationActive_DefaultsFalse()
+        public void OpeningPresentationActive_DefaultsFalse_OwnerProtectedField()
         {
             using (var arch = PresentationArchitectureFixture.CreateBare())
             {
                 var input = PresentationInputStateSystem.EnsureRegistered(arch.Architecture);
                 Assert.IsFalse(input.OpeningPresentationActive.Value);
+                Assert.AreEqual(InputOwner.ProtectedField, input.CurrentOwner);
             }
         }
     }
