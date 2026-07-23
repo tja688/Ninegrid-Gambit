@@ -114,7 +114,7 @@ namespace NineGrid.Presentation.Systems
                 return IntentDisposition.Reject;
             }
 
-            // Pickup：idle 时由调用方同步 Apply+ExternalHold；busy 时仍走 Director latest-wins。
+            // Pickup：idle 时 Allow，由调用方 ExternalHold→Apply；busy 时 Director latest-wins 缓冲。
             if (string.Equals(intent.Kind, InputIntentKinds.Pickup, StringComparison.Ordinal))
             {
                 if (!mainlineBusy)

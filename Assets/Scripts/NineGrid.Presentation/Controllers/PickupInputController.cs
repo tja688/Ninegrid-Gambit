@@ -1,5 +1,6 @@
 using NineGrid.Cards;
 using NineGrid.Flow.Presentation;
+using NineGrid.Presentation;
 using NineGrid.Presentation.Commands;
 using NineGrid.Presentation.Systems;
 using QFramework;
@@ -30,7 +31,11 @@ namespace NineGrid.Presentation.Controllers
             ClearSubmitHandler();
         }
 
-        /// <summary>场地格拾取入口（Hook 与 EditMode 直驱共用）。</summary>
+        /// <summary>
+        /// 场地格拾取入口（Hook 与 EditMode 直驱共用）。
+        /// idle：IntentIntake Allow → ExternalHold → Core Apply（不得先改 Core 再抢锁）；
+        /// busy：BufferToDirector（latest-wins），Apply 由主线 flush 剧本承担。
+        /// </summary>
         public PickupItemPresentationResult HandlePickupRequested(int groundSlot)
         {
             var intake = this.GetSystem<IIntentIntake>()
@@ -55,7 +60,25 @@ namespace NineGrid.Presentation.Controllers
                 return default;
             }
 
-            return this.SendCommand(new ApplyPickupItemCommand(groundSlot));
+            // Allow 之后、Apply 之前取租约：失败则 Core 未改。
+            if (!PresentationInputGates.TryBeginExternalHold("Pickup"))
+            {
+                Debug.LogWarning(
+                    "[PickupInputController] Pickup ExternalHold 失败，中止 Apply slot=" + groundSlot);
+                return new PickupItemPresentationResult
+                {
+                    Accepted = false,
+                    Reason = "lockFail",
+                };
+            }
+
+            var summary = this.SendCommand(new ApplyPickupItemCommand(groundSlot));
+            if (!summary.Accepted)
+            {
+                PresentationInputGates.EndExternalHold("Pickup-apply-reject");
+            }
+
+            return summary;
         }
 
         private void InstallSubmitHandler()

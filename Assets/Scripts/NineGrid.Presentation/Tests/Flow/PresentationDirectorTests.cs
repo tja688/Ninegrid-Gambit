@@ -514,17 +514,23 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void ExternalHold_NestsWhenMainlineAlreadyBusy()
+        public void ExternalHold_WhenMainlineBusy_EnqueuesHoldThatSurvivesOuterStep()
         {
             var director = new PresentationDirector(new RecordingScriptFactory());
             director.EnqueueMainline(new ScriptedStep(continueTicks: 1));
-            Assert.IsTrue(director.TryBeginExternalHold("drain-nested"));
+            Assert.IsTrue(director.TryBeginExternalHold("drain-after-present"));
             Assert.IsTrue(director.IsMainlineBusy);
+            Assert.IsTrue(director.HasExternalHold);
 
-            director.EndExternalHold("drain-nested");
-            director.Tick(0.016f); // Continue
-            director.Tick(0.016f); // Finished → idle
+            director.Tick(0.016f); // ScriptedStep Continue
+            director.Tick(0.016f); // ScriptedStep Finished → Hold step still busy
+            Assert.IsTrue(director.IsMainlineBusy, "Hold step 须在外层 Present 结束后继续持 MainlineBusy");
+            Assert.IsTrue(director.HasExternalHold);
+
+            director.EndExternalHold("drain-after-present");
+            director.Tick(0.016f);
             Assert.IsFalse(director.IsMainlineBusy);
+            Assert.IsFalse(director.HasExternalHold);
         }
 
         private sealed class ScriptedStep : ITimelineStep

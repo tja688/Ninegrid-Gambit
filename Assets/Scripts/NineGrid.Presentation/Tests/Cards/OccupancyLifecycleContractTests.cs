@@ -145,16 +145,26 @@ namespace NineGrid.Presentation.Tests.Cards
         [Test]
         public void Pickup_DoesNotForceEndOrContinueWithoutLease()
         {
-            var text = ReadPresentationSource("Cards/CardHandManagerSingleton.cs");
+            var handText = ReadPresentationSource("Cards/CardHandManagerSingleton.cs");
             Assert.IsFalse(
-                text.Contains("Pickup-preempt", StringComparison.Ordinal),
+                handText.Contains("Pickup-preempt", StringComparison.Ordinal),
                 "Pickup 不得 ForceEnd preempt 撕主线租约");
             Assert.IsFalse(
-                text.Contains("LockFailContinue", StringComparison.Ordinal),
+                handText.Contains("LockFailContinue", StringComparison.Ordinal),
                 "Pickup 不得无租约继续表现");
             Assert.IsTrue(
-                text.Contains("LockFailAbort", StringComparison.Ordinal),
+                handText.Contains("LockFailAbort", StringComparison.Ordinal),
                 "租约失败须中止表现");
+
+            var controllerText = ReadPresentationSource("Controllers/PickupInputController.cs");
+            var holdIdx = controllerText.IndexOf("TryBeginExternalHold(\"Pickup\")", StringComparison.Ordinal);
+            var applyIdx = controllerText.IndexOf("ApplyPickupItemCommand", StringComparison.Ordinal);
+            Assert.GreaterOrEqual(holdIdx, 0);
+            Assert.GreaterOrEqual(applyIdx, 0);
+            Assert.Less(holdIdx, applyIdx, "Core Apply 必须在成功 ExternalHold 之后");
+            Assert.IsTrue(
+                controllerText.Contains("lockFail", StringComparison.Ordinal),
+                "Hold 失败须返回 lockFail 且不 Apply");
         }
 
         private static string ReadPresentationSource(string relativeUnderPresentation)

@@ -273,16 +273,29 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
 
             var pickupBody = Regex.Match(
                 handText,
-                @"public bool TryPickupFromGround\(ManagedCard card\)[\s\S]*?RunPickupFromGroundAsync");
+                @"public bool TryPickupFromGround\(ManagedCard card\)[\s\S]*?BeginPresentAcceptedPickup");
             Assert.IsTrue(pickupBody.Success, "找不到 TryPickupFromGround 主体");
-            var applyIdx = pickupBody.Value.IndexOf("PickupInputHook.TryApplyPickup", StringComparison.Ordinal);
-            var holdIdx = pickupBody.Value.IndexOf("TryBeginExternalHold(\"Pickup\")", StringComparison.Ordinal);
-            Assert.GreaterOrEqual(applyIdx, 0, "TryPickupFromGround 须调用 TryApplyPickup");
-            Assert.GreaterOrEqual(holdIdx, 0, "TryPickupFromGround 须在 Allow 后取 ExternalHold");
-            Assert.Less(
-                applyIdx,
-                holdIdx,
-                "idle Pickup 须先 IntentIntake/TryApplyPickup，再 TryBeginExternalHold（否则 busy 误判）");
+            Assert.IsTrue(
+                pickupBody.Value.Contains("PickupInputHook.TryApplyPickup", StringComparison.Ordinal),
+                "TryPickupFromGround 须调用 TryApplyPickup");
+            Assert.IsFalse(
+                pickupBody.Value.Contains("TryBeginExternalHold(\"Pickup\")", StringComparison.Ordinal),
+                "idle Pickup 租约须在 Controller Hold→Apply，Hand 不得在 Apply 后再抢锁");
+
+            var controllerPath = Path.Combine(root, "Controllers", "PickupInputController.cs");
+            var controllerText = File.ReadAllText(controllerPath);
+            var handleBody = Regex.Match(
+                controllerText,
+                @"public PickupItemPresentationResult HandlePickupRequested\(int groundSlot\)[\s\S]*?return summary;");
+            Assert.IsTrue(handleBody.Success, "找不到 HandlePickupRequested 主体");
+            var allowIdx = handleBody.Value.IndexOf("IntentDisposition.Allow", StringComparison.Ordinal);
+            var holdIdx = handleBody.Value.IndexOf("TryBeginExternalHold(\"Pickup\")", StringComparison.Ordinal);
+            var applyIdx = handleBody.Value.IndexOf("ApplyPickupItemCommand", StringComparison.Ordinal);
+            Assert.GreaterOrEqual(allowIdx, 0, "须先 IntentIntake Allow");
+            Assert.GreaterOrEqual(holdIdx, 0, "须取 ExternalHold");
+            Assert.GreaterOrEqual(applyIdx, 0, "须 ApplyPickupItemCommand");
+            Assert.Less(allowIdx, holdIdx, "Allow 须在 Hold 之前（勿先持锁误判 busy）");
+            Assert.Less(holdIdx, applyIdx, "Hold 须在 Core Apply 之前（不得先改 Core 再抢锁）");
         }
 
         private sealed class AcceptAllScriptFactory : IIntentScriptFactory

@@ -2,7 +2,7 @@ namespace NineGrid.Presentation
 {
     /// <summary>
     /// 须阻塞输入的交战/场地表演挂主线租约（#47 / ADR-0004）。
-    /// 已有 ExternalHold 时依赖外层；主线已因 PresentStep busy 时 TryBegin 嵌套计数。
+    /// 已有 ExternalHold 时依赖外层；未持有时 TryBegin 入队 Hold step（主线已忙则接在后面）。
     /// </summary>
     public static class PresentationMainlineHold
     {

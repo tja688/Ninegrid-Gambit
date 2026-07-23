@@ -34,7 +34,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
         }
 
         [Test]
-        public void BlockingPresentHold_WhenMainlineAlreadyBusy_NestsWithoutStealingOuterStep()
+        public void BlockingPresentHold_WhenMainlineAlreadyBusy_EnqueuesHoldWithoutStealingOuterStep()
         {
             using (var arch = PresentationArchitectureFixture.CreateBare())
             using (var runtime = PresentationRuntimeFixture.Install(

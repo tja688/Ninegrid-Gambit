@@ -6,6 +6,7 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using NineGrid.Cards.Convergence;
 using NineGrid.Flow.Diagnostics;
+using NineGrid.Flow.Presentation;
 using UnityEngine;
 using UnityEngine.Rendering;
 using NineGrid.Presentation;
@@ -136,12 +137,16 @@ namespace NineGrid.Cards
             InitializeLayoutOrigin();
             UseItemInputHook.RequestWire(this);
             PickupInputHook.RequestWire(this);
+            PickupIntentFlushHook.Notify = OnPickupIntentFlushed;
         }
 
         private void OnDestroy()
         {
             CancelHandWork();
-
+            if (PickupIntentFlushHook.Notify == (Action<int, PickupItemPresentationResult>)OnPickupIntentFlushed)
+            {
+                PickupIntentFlushHook.Notify = null;
+            }
         }
 
         /// <summary>
@@ -386,7 +391,8 @@ namespace NineGrid.Cards
 
         /// <summary>
         /// 场地卡点击入手：道具卡 / 帮助卡等不可从场地拖拽，只能点击直接入手牌。
-        /// 先写 Core Pickup，再播表现；拾取后的转/补由 Core 结果缓冲缓释。
+        /// idle：Controller 内 IntentIntake→ExternalHold→Core Apply 后，此处只播表现；
+        /// busy：IntentIntake 缓冲，flush 后经 <see cref="OnPickupIntentFlushed"/> 承接。
         /// 互动范围：目前硬编码 Avatar 格5四向正交（IsAvatarOrthogonalBattleSlot）；
         /// 后续职业互动范围应与 Core AreAdjacent / InteractionRange 共用同一判定源，勿再分叉。
         /// </summary>
@@ -469,12 +475,18 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            // IntentIntake 先裁决：idle→Allow 后再取 ExternalHold；busy→Buffer（勿先持锁，否则会被误判为 busy）。
+            // IntentIntake→Hold→Apply 在 Controller；busy 时 Reason=buffered（勿先持锁）。
             var pickup = PickupInputHook.TryApplyPickup(groundSlot);
-            if (string.Equals(pickup.Reason, "buffered", System.StringComparison.Ordinal))
+            if (string.Equals(pickup.Reason, "buffered", StringComparison.Ordinal))
             {
                 FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "Buffered", true, null);
                 return true;
+            }
+
+            if (string.Equals(pickup.Reason, "lockFail", StringComparison.Ordinal))
+            {
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "LockFailAbort", false, null);
+                return false;
             }
 
             if (!pickup.Accepted)
@@ -483,23 +495,76 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            // Core 已 Apply：必须拿住主线租约播表现。
-            // 获取失败不得 ForceEnd/preempt，也不得无租约继续表现。
-            if (!PresentationInputGates.TryBeginExternalHold("Pickup"))
+            // Controller 已在 Apply 前取得 ExternalHold；此处不得无租约继续，也不得再抢锁。
+            return BeginPresentAcceptedPickup(card, pickup, field);
+        }
+
+        /// <summary>
+        /// Director flush Pickup 后：Core 已在主线 Apply；取表现租约后接手牌/清场表演。
+        /// </summary>
+        private void OnPickupIntentFlushed(int groundSlot, PickupItemPresentationResult pickup)
+        {
+            if (!pickup.Accepted)
             {
-                Debug.LogWarning(
-                    "[CardHandManager] Pickup ExternalHold 失败，中止表现 uid=" + card.Uid);
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "LockFailAbort", false, null);
-                return false;
+                return;
             }
 
+            if (!PresentationInputGates.TryBeginExternalHold("PickupFlush"))
+            {
+                Debug.LogWarning(
+                    "[CardHandManager] PickupFlush ExternalHold 失败，跳过表现 slot="
+                    + groundSlot
+                    + " uid="
+                    + pickup.CardUid);
+                return;
+            }
+
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            ManagedCard card = null;
+            if (field != null && pickup.CardUid > 0)
+            {
+                if (field.TryGetSlotOf(pickup.CardUid, out var occupiedSlot)
+                    && field.TryGetCardAt(occupiedSlot, out var atSlot)
+                    && atSlot != null
+                    && atSlot.Uid == pickup.CardUid)
+                {
+                    card = atSlot;
+                }
+                else if (groundSlot >= 0
+                    && field.TryGetCardAt(groundSlot, out var atGround)
+                    && atGround != null
+                    && atGround.Uid == pickup.CardUid)
+                {
+                    card = atGround;
+                }
+                else
+                {
+                    CardEntityLifecycleHook.CardsOrNull()?.TryGet(pickup.CardUid, out card);
+                }
+            }
+
+            BeginPresentAcceptedPickup(card, pickup, field);
+        }
+
+        /// <summary>
+        /// 已在有效 ExternalHold 下承接 Pickup 表现。失败时由调用方或本方法释放租约。
+        /// </summary>
+        private bool BeginPresentAcceptedPickup(
+            ManagedCard card,
+            PickupItemPresentationResult pickup,
+            GroundFieldView field)
+        {
             if (pickup.RemovedWithoutHand)
             {
-                field.RequestRemoveFromField(
-                    card.Uid,
-                    animate: true,
-                    skipBusyGuard: true,
-                    startExplore: false);
+                if (field != null && pickup.CardUid > 0)
+                {
+                    field.RequestRemoveFromField(
+                        pickup.CardUid,
+                        animate: true,
+                        skipBusyGuard: true,
+                        startExplore: false);
+                }
+
                 RunPickupDrainAsync(
                     new PostKillBoardPresentationResult
                     {
@@ -509,15 +574,22 @@ namespace NineGrid.Cards
                         Deals = pickup.Deals,
                         NodeClearedOrRewardPhase = pickup.NodeClearedOrRewardPhase,
                     }).Forget();
-                FlowFieldTraceSink.PickupSuccess?.Invoke(card.Uid, -1);
+                FlowFieldTraceSink.PickupSuccess?.Invoke(pickup.CardUid, -1);
                 return true;
             }
 
             if (!pickup.AcquiredToHand)
             {
-                Debug.LogWarning($"[CardHandManager] Pickup 已接受但未入手 uid={card.Uid}");
+                Debug.LogWarning($"[CardHandManager] Pickup 已接受但未入手 uid={pickup.CardUid}");
                 PresentationInputGates.EndExternalHold("Pickup-no-hand");
-                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "NoAcquire", false, null);
+                FlowFieldTraceSink.PickupGate?.Invoke(pickup.CardUid, "NoAcquire", false, null);
+                return false;
+            }
+
+            if (card == null || field == null)
+            {
+                PresentationInputGates.EndExternalHold("Pickup-missing-view");
+                FlowFieldTraceSink.PickupGate?.Invoke(pickup.CardUid, "MissingView", false, null);
                 return false;
             }
 

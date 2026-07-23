@@ -130,19 +130,15 @@ namespace NineGrid.Flow.Presentation
         }
 
         /// <summary>
-        /// 外部薄适配挂主线租约：idle 时入队 Hold；主线已忙则嵌套计数（由现有 Present 持忙）。
+        /// 外部薄适配挂主线租约：未持有时一律入队 Hold step（主线已有其它 Step 时接在后面），
+        /// 保证 Apply/Present step 结束后表演窗口仍保持 <see cref="IsMainlineBusy"/>。
+        /// 已持有时拒绝重入（嵌套由 <see cref="PresentationMainlineHold"/> 在已有 Hold 上跳过 Begin）。
         /// </summary>
         public bool TryBeginExternalHold(string reason = null)
         {
-            if (!mExternalHoldReleased && mExternalHoldNestDepth == 0)
+            if (!mExternalHoldReleased)
             {
                 return false;
-            }
-
-            if (IsMainlineBusy)
-            {
-                mExternalHoldNestDepth++;
-                return true;
             }
 
             mExternalHoldReleased = false;
