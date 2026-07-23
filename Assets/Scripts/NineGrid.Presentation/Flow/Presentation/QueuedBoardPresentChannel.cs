@@ -96,6 +96,12 @@ namespace NineGrid.Flow.Presentation
 
         private static bool IsEmptyPresentation(PostKillBoardPresentationResult result)
         {
+            if (result.AvatarDefeated || result.NodeClearedOrRewardPhase)
+            {
+                // 战败/清场收口不得因无盘面 delta 被跳过。
+                return false;
+            }
+
             var stepCount = result.Steps != null ? result.Steps.Length : 0;
             var moveCount = result.Moves != null ? result.Moves.Length : 0;
             var dealCount = result.Deals != null ? result.Deals.Length : 0;

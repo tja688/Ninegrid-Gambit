@@ -11,7 +11,10 @@ namespace NineGrid.Flow.Presentation
         /// <summary>模式切换：进入棋盘选择；忙时 Reject，不进 Director 缓冲。</summary>
         public const string BoardSelectBegin = "boardSelectBegin";
 
-        /// <summary>模态选择：房间/奖励；忙时 Reject，不进 Director 缓冲。</summary>
+        /// <summary>
+        /// 模态选择：房间/奖励。ChoiceOverlay 持有时应放行（即使主线忙），
+        /// 因局内宝箱 Bounce 挂在 UseItem Present 内等待点选。
+        /// </summary>
         public const string SelectRoom = "selectRoom";
         public const string EnterRoom = "enterRoom";
         public const string SelectReward = "selectReward";

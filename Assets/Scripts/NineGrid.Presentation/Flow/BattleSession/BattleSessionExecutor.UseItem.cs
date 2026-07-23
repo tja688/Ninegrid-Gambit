@@ -90,8 +90,19 @@ namespace NineGrid.Flow
 
             if (useResult.AvatarDefeated)
             {
-                ResolveBattlePresentation()?.TryBeginAvatarDefeatPresentation(ct);
-                RaiseBattleEnded(victory: false);
+                EnsureBattleEndedIfAvatarDefeated(
+                    new PostKillBoardPresentationResult
+                    {
+                        Accepted = true,
+                        AvatarDefeated = true,
+                        DamagePopups = useResult.DamagePopups,
+                        Steps = useResult.PostKillBoard.Steps,
+                        Moves = useResult.PostKillBoard.Moves,
+                        Deals = useResult.PostKillBoard.Deals,
+                        RemovedUids = useResult.PostKillBoard.RemovedUids,
+                        NodeClearedOrRewardPhase = useResult.NodeClearedOrRewardPhase,
+                    },
+                    ct);
                 return;
             }
 

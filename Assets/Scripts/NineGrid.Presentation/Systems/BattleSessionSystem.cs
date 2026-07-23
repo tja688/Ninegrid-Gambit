@@ -216,6 +216,13 @@ namespace NineGrid.Presentation.Systems
             mExecutor.RaiseBattleEnded(victory);
         }
 
+        public void EnsureBattleEndedIfAvatarDefeated(
+            PostKillBoardPresentationResult result,
+            CancellationToken cancellationToken = default)
+        {
+            mExecutor.EnsureBattleEndedIfAvatarDefeated(result, cancellationToken);
+        }
+
         public void RegisterPresentationIntentHandlers()
         {
             mExecutor.RegisterPresentationIntentHandlers();

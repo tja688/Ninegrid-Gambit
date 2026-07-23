@@ -117,8 +117,9 @@ namespace NineGrid.Presentation.Tests.IntentIntake
         }
 
         [Test]
-        public void Busy_ModalSelect_RejectsWithoutBuffer()
+        public void Busy_SelectReward_OnChoiceOverlay_Allows_ForMidBattleChestPresent()
         {
+            // 局内宝箱 Bounce 挂在 UseItem Present 主线上；主线忙时仍须放行 SelectReward。
             using (var arch = PresentationArchitectureFixture.CreateBare())
             using (var runtime = PresentationRuntimeFixture.Install(
                        arch, new RecordingScriptFactory(continueTicks: 2)))
@@ -128,9 +129,36 @@ namespace NineGrid.Presentation.Tests.IntentIntake
                     arch.Architecture, accel, _ => true);
                 var input = PresentationInputStateSystem.EnsureRegistered(arch.Architecture);
 
-                Assert.IsTrue(runtime.Runtime.TryBeginExternalHold("modal-busy"));
+                Assert.IsTrue(runtime.Runtime.TryBeginExternalHold("useItem-present"));
                 Assert.IsTrue(runtime.MainlineBusy.Value);
                 input.SetChoiceOverlayActive(true);
+
+                bool preview;
+                Assert.AreEqual(
+                    IntentDisposition.Allow,
+                    intake.Submit(
+                        new InputIntent(InputIntentKinds.SelectReward, 0),
+                        InputOwner.ChoiceOverlay,
+                        out preview));
+                Assert.IsFalse(preview);
+                Assert.AreEqual(1, accel.Taps.Count);
+                Assert.AreEqual(0, runtime.ScriptFactory.Built.Count);
+            }
+        }
+
+        [Test]
+        public void Busy_SelectReward_WithoutChoiceOverlay_Rejects()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateBare())
+            using (var runtime = PresentationRuntimeFixture.Install(
+                       arch, new RecordingScriptFactory(continueTicks: 2)))
+            {
+                var accel = new RecordingAccelerationSink();
+                var intake = IntentIntakeSystem.EnsureRegistered(
+                    arch.Architecture, accel, _ => true);
+
+                Assert.IsTrue(runtime.Runtime.TryBeginExternalHold("modal-busy"));
+                Assert.IsTrue(runtime.MainlineBusy.Value);
 
                 bool preview;
                 Assert.AreEqual(
@@ -141,7 +169,6 @@ namespace NineGrid.Presentation.Tests.IntentIntake
                         out preview));
                 Assert.IsFalse(preview);
                 Assert.AreEqual(1, accel.Taps.Count);
-                Assert.AreEqual(0, runtime.ScriptFactory.Built.Count);
             }
         }
 

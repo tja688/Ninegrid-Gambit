@@ -58,51 +58,59 @@ namespace NineGrid.Flow
                 return;
             }
 
-            while (_session.DrainInFlight)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
-            }
-
-            var acquiredHere = false;
-            if (!PresentationInputGates.HasExternalHold)
-            {
-                if (!PresentationInputGates.TryBeginExternalHold("BoardPresentDrain"))
-                {
-                    Debug.LogWarning("[InBattleManager] 盘面 Present 无法获取表现锁，跳过。");
-                    return;
-                }
-
-                acquiredHere = true;
-            }
-
-            _session.DrainInFlight = true;
-            ChoreoTraceContext.DrainInFlight = true;
-            ChoreoTraceContext.PumpRunning = false;
-            ChoreoTraceContext.BoardQueueDepth = 0;
             try
             {
-                await DrainPostKillBoardCoreAsync(result, cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[InBattleManager] 盘面 Present 失败: " + ex.Message);
-                _pendingSyncFromCore = true;
+                while (_session.DrainInFlight)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                }
+
+                var acquiredHere = false;
+                if (!PresentationInputGates.HasExternalHold)
+                {
+                    if (!PresentationInputGates.TryBeginExternalHold("BoardPresentDrain"))
+                    {
+                        Debug.LogWarning("[InBattleManager] 盘面 Present 无法获取表现锁，跳过。");
+                        return;
+                    }
+
+                    acquiredHere = true;
+                }
+
+                _session.DrainInFlight = true;
+                ChoreoTraceContext.DrainInFlight = true;
+                ChoreoTraceContext.PumpRunning = false;
+                ChoreoTraceContext.BoardQueueDepth = 0;
+                try
+                {
+                    await DrainPostKillBoardCoreAsync(result, cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[InBattleManager] 盘面 Present 失败: " + ex.Message);
+                    _pendingSyncFromCore = true;
+                }
+                finally
+                {
+                    _session.DrainInFlight = false;
+                    ChoreoTraceContext.DrainInFlight = false;
+                    if (acquiredHere)
+                    {
+                        PresentationInputGates.EndExternalHold("BoardPresentDrain");
+                    }
+
+                    FlushDeferredBoardSync(force: true);
+                }
             }
             finally
             {
-                _session.DrainInFlight = false;
-                ChoreoTraceContext.DrainInFlight = false;
-                if (acquiredHere)
-                {
-                    PresentationInputGates.EndExternalHold("BoardPresentDrain");
-                }
-
-                FlushDeferredBoardSync(force: true);
+                // 击杀后 Fill/Rotate 等盘面批也可把 Core 推到 Defeat；不得只清场不结束战斗。
+                _session.EnsureBattleEndedIfAvatarDefeated(result, cancellationToken);
             }
         }
 

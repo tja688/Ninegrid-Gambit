@@ -66,7 +66,24 @@ namespace NineGrid.Presentation.Systems
 
             if (InputIntentKinds.IsModeOrModal(intent.Kind))
             {
-                if (mainlineBusy)
+                // 棋盘选牌模式：主线忙时禁止切入。
+                if (string.Equals(intent.Kind, InputIntentKinds.BoardSelectBegin, StringComparison.Ordinal))
+                {
+                    if (mainlineBusy)
+                    {
+                        Reject(intent, "modeOrModalWhileMainlineBusy", mainlineBusy: true);
+                        return IntentDisposition.Reject;
+                    }
+
+                    return IntentDisposition.Allow;
+                }
+
+                // 奖励/房间模态：Bounce 可能挂在 UseItem Present 主线上等待点选
+                // （局内宝箱）。主线忙时仍必须放行，否则 SelectReward 被拒 → 孤儿 Pending →
+                // 二次弹窗；未 Ack 批次还会粘住 IsInputLocked，跨关 BootstrapRun 清掉遗物。
+                if (mainlineBusy
+                    && (owner != InputOwner.ChoiceOverlay
+                        || !PresentationInputGates.ChoiceOverlayActive))
                 {
                     Reject(intent, "modeOrModalWhileMainlineBusy", mainlineBusy: true);
                     return IntentDisposition.Reject;

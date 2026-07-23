@@ -113,6 +113,11 @@ namespace NineGrid.Presentation.Systems
 
         void RaiseBattleEnded(bool victory);
 
+        /// <summary>投影已 AvatarDefeated 时保证战败收口（幂等）。</summary>
+        void EnsureBattleEndedIfAvatarDefeated(
+            PostKillBoardPresentationResult result,
+            CancellationToken cancellationToken = default);
+
         void RegisterPresentationIntentHandlers();
 
         void UnregisterPresentationIntentHandlers();

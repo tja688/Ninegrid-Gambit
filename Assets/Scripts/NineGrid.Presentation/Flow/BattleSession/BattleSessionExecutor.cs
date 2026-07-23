@@ -27,6 +27,7 @@ namespace NineGrid.Flow
         private IBattleSessionView _view;
         private bool _isBusy;
         private bool _settlementRaised;
+        private bool _battleEndRaised;
         private bool _drainInFlight;
         private CancellationTokenSource _presentationCts;
         private int _nodeEventLogStart;
@@ -296,6 +297,7 @@ namespace NineGrid.Flow
 
             RefreshPersistentInBattleUi(animate: false);
             _settlementRaised = false;
+            _battleEndRaised = false;
             _nodeEventLogStart = 0;
             try
             {
@@ -321,6 +323,7 @@ namespace NineGrid.Flow
             _drainInFlight = false;
             ResetPresentationSurface();
             _settlementRaised = false;
+            _battleEndRaised = false;
             _isBusy = false;
         }
 
@@ -332,6 +335,7 @@ namespace NineGrid.Flow
             _drainInFlight = false;
             ResetCardPresentationSurface();
             _settlementRaised = false;
+            _battleEndRaised = false;
             _isBusy = false;
         }
 
@@ -372,10 +376,12 @@ namespace NineGrid.Flow
             var arch = NineGridArchitecture.Current;
             var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
             var pending = arch.GetModel<PendingChoiceModel>();
+            // 仅通关奖励相位唤醒主循环。局内宝箱留在 InteractionLoop + PendingReward，
+            // 由 UseItem Present 当场 Bounce；若此处误判会提前结算并清掉 ChoiceOverlay。
             var inReward = phase == GamePhase.RewardItemChoice
-                || (pending.Kind.Value == PendingChoiceKind.Reward
-                    && pending.RewardOptions != null
-                    && pending.RewardOptions.Count > 0);
+                && pending.Kind.Value == PendingChoiceKind.Reward
+                && pending.RewardOptions != null
+                && pending.RewardOptions.Count > 0;
 
             if (!inReward)
             {
@@ -390,6 +396,13 @@ namespace NineGrid.Flow
 
         public void RaiseBattleEnded(bool victory)
         {
+            if (_battleEndRaised)
+            {
+                return;
+            }
+
+            _battleEndRaised = true;
+
             var runtime = TryGetPresentationRuntime();
             if (runtime != null && runtime.IsStarted)
             {
@@ -399,6 +412,22 @@ namespace NineGrid.Flow
 
             var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
             arch?.SendEvent(new BattleSessionEndedEvent(victory));
+        }
+
+        /// <summary>
+        /// Core 已 Defeat 时收口战败：Present 早退/取消/空盘面批不得漏 Raise。
+        /// </summary>
+        public void EnsureBattleEndedIfAvatarDefeated(
+            PostKillBoardPresentationResult result,
+            CancellationToken cancellationToken = default)
+        {
+            if (!result.AvatarDefeated)
+            {
+                return;
+            }
+
+            ResolveBattlePresentation()?.TryBeginAvatarDefeatPresentation(cancellationToken);
+            RaiseBattleEnded(victory: false);
         }
 
         public bool TryResolveHandDealOrigin(string sourceDefId, out Transform origin)

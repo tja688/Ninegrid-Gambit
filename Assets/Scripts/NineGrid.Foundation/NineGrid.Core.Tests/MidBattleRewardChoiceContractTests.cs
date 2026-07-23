@@ -160,6 +160,60 @@ namespace NineGrid.Core.Tests
             Assert.IsFalse(mPhase.CanExecute(GameCommandKind.ClickEmpty));
         }
 
+        [Test]
+        public void SelectReward_AfterMidBattleChest_PersistsRelicAcrossStartNode()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sAdjacentSlot);
+            var chestUid = SpawnHelpIntoItemSlots("help.common_chest_card");
+            Assert.IsTrue(mPhase.ApplyUseItem(chestUid, null, null).Accepted);
+
+            var pending = mArch.GetModel<PendingChoiceModel>();
+            Assert.Greater(pending.RewardOptions.Count, 0);
+            var relicDefId = pending.RewardOptions[0].DefId;
+            Assert.IsTrue(mPhase.SelectReward(0).Accepted);
+
+            var player = mArch.GetModel<PlayerModel>();
+            Assert.IsTrue(ContainsRelic(player, relicDefId), "局内宝箱选中后应写入 PlayerModel");
+
+            // 清场 → 通关奖励 → 选房 → 入房 → 下一节点，遗物必须仍在。
+            PlaceSoleBoardCardAt(sAdjacentSlot);
+            var kill = mPhase.Attack(sAdjacentSlot);
+            Assert.IsTrue(kill.Accepted, kill.Reason);
+            Assert.AreEqual(GamePhase.RewardItemChoice, mPhase.CurrentPhase);
+            Assert.IsTrue(mPhase.SelectReward(0).Accepted);
+            Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
+            Assert.IsTrue(mPhase.SelectRoom(0).Accepted);
+            Assert.IsTrue(mPhase.EnterRoom().Accepted);
+            Assert.AreEqual(GamePhase.NodeCompleted, mPhase.CurrentPhase);
+
+            Assert.IsTrue(
+                ContainsRelic(player, relicDefId),
+                "跨关后局内宝箱遗物不得因 Bootstrap/清场丢失");
+
+            var options = mArch.GetSystem<IRewardSystem>().BuildNodeDeckOptions(1, null);
+            options.AddEnemyCard(new CardDraft("monster.test", CardKind.Monster) { MaxHp = 20, Attack = 0 });
+            options.EnemyOpeningCount = 1;
+            Assert.IsTrue(mPhase.StartNode(options).Accepted);
+            Assert.IsTrue(
+                ContainsRelic(player, relicDefId),
+                "下一节点 StartNode 后遗物仍应保留");
+        }
+
+        private static bool ContainsRelic(PlayerModel player, string defId)
+        {
+            var relics = player.RelicDefIds;
+            for (var i = 0; i < relics.Count; i++)
+            {
+                if (relics[i] == defId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private int SpawnHelpIntoItemSlots(string defId)
         {
             var pipeline = mPipeline;
@@ -276,7 +330,12 @@ namespace NineGrid.Core.Tests
                 .AddPool(new RewardPoolDefinition("help.choice", 3)
                     .Add("help.gold_card", CardKind.HelpCard, 40)
                     .Add("help.throwing_knife", CardKind.HelpCard, 30)
-                    .Add("help.healing_potion", CardKind.HelpCard, 30));
+                    .Add("help.healing_potion", CardKind.HelpCard, 30))
+                .AddRoom(new RoomDefinition(RoomKind.Gold, "金币房")
+                {
+                    Weight = 1,
+                    GoldDelta = 5
+                });
 
             return catalog;
         }

@@ -52,16 +52,38 @@ namespace NineGrid.Presentation.Setup
 
             var battlePresentation = architecture.GetSystem<IFieldBattlePresentationSystem>();
             var attackHitPresentChannel = new CombatAttackPresentChannel(
-                (slot, uid, result, token) =>
-                    battlePresentation != null
-                        ? battlePresentation.PlayDirectorAttackHitPresentAsync(slot, uid, result, token)
-                        : UniTask.CompletedTask,
+                async (slot, uid, result, token) =>
+                {
+                    try
+                    {
+                        if (battlePresentation != null)
+                        {
+                            await battlePresentation.PlayDirectorAttackHitPresentAsync(
+                                slot, uid, result, token);
+                        }
+                    }
+                    finally
+                    {
+                        session.EnsureBattleEndedIfAvatarDefeated(result, token);
+                    }
+                },
                 session.EnsurePresentationToken);
             var attackCounterPresentChannel = new CombatCounterPresentChannel(
-                (slot, uid, result, token) =>
-                    battlePresentation != null
-                        ? battlePresentation.PlayDirectorCounterPresentAsync(slot, uid, result, token)
-                        : UniTask.CompletedTask,
+                async (slot, uid, result, token) =>
+                {
+                    try
+                    {
+                        if (battlePresentation != null)
+                        {
+                            await battlePresentation.PlayDirectorCounterPresentAsync(
+                                slot, uid, result, token);
+                        }
+                    }
+                    finally
+                    {
+                        session.EnsureBattleEndedIfAvatarDefeated(result, token);
+                    }
+                },
                 session.EnsurePresentationToken);
             var useItemBoardPresentChannel = new QueuedBoardPresentChannel(
                 session.DrainPostKillBoardAsync,

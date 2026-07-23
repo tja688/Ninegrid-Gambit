@@ -26,6 +26,7 @@ namespace NineGrid.Flow.Presentation
         private readonly Action<int, int, int, PostKillBoardPresentationResult> mOnCounterBatchProjected;
         private readonly FusionRefillScheduler mFusionRefill;
         private bool mLastHitKilledTarget;
+        private bool mLastAvatarDefeated;
         private bool mLastRotateHadFusion;
         private int mLastResolvedCombatUid;
         private readonly List<int> mFusionExcludeResultUids = new List<int>(2);
@@ -103,6 +104,7 @@ namespace NineGrid.Flow.Presentation
             var attackerUid = board.AvatarUid.Value;
             var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
             mLastHitKilledTarget = false;
+            mLastAvatarDefeated = false;
             mLastRotateHadFusion = false;
             mLastResolvedCombatUid = 0;
             mFusionExcludeResultUids.Clear();
@@ -116,7 +118,13 @@ namespace NineGrid.Flow.Presentation
                 timeline,
                 () => mLastHitKilledTarget,
                 t => EnqueueKillAftermath(t, slotIndex),
-                t => EnqueueCounterAftermath(t, slotIndex)));
+                t =>
+                {
+                    if (!mLastAvatarDefeated)
+                    {
+                        EnqueueCounterAftermath(t, slotIndex);
+                    }
+                }));
         }
 
         private void EnqueueKillAftermath(BattleTimeline timeline, int boardSlot)
@@ -183,19 +191,22 @@ namespace NineGrid.Flow.Presentation
             if (dispatch == null || !dispatch.Accepted)
             {
                 mLastHitKilledTarget = false;
+                mLastAvatarDefeated = false;
                 mLastResolvedCombatUid = 0;
                 return dispatch;
             }
 
             mLastResolvedCombatUid = targetUid;
             mLastHitKilledTarget = IntentBatchProjection.ContainsCardKilled(pipeline, startIndex, targetUid);
+            var projection = IntentBatchProjection.Build(mArchitecture, pipeline, startIndex);
+            mLastAvatarDefeated = projection.AvatarDefeated;
             if (mOnHitBatchProjected != null)
             {
                 mOnHitBatchProjected(
                     startIndex,
                     boardSlot,
                     targetUid,
-                    IntentBatchProjection.Build(mArchitecture, pipeline, startIndex));
+                    projection);
             }
 
             return dispatch;

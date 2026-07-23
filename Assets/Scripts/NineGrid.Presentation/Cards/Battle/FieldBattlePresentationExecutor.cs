@@ -222,11 +222,15 @@ namespace NineGrid.Cards
             if (adapter == null || geometry == null)
             {
                 Debug.LogWarning("[FieldBattle] 导演反击 Present：未装配 adapter/geometry。");
+                ResolveBattleSession()?.EnsureBattleEndedIfAvatarDefeated(
+                    counterProjection, cancellationToken);
                 return;
             }
 
             if (!counterProjection.Accepted)
             {
+                ResolveBattleSession()?.EnsureBattleEndedIfAvatarDefeated(
+                    counterProjection, cancellationToken);
                 return;
             }
 
@@ -234,6 +238,8 @@ namespace NineGrid.Cards
                 || avatar == null)
             {
                 Debug.LogWarning("[FieldBattle] 导演反击 Present：无 Avatar。");
+                ResolveBattleSession()?.EnsureBattleEndedIfAvatarDefeated(
+                    counterProjection, cancellationToken);
                 return;
             }
 
@@ -244,6 +250,8 @@ namespace NineGrid.Cards
             if (!resolvedFromUid && !TryValidateCounterParticipants(attackerSlot, out attacker))
             {
                 Debug.LogWarning($"[FieldBattle] 导演反击 Present：攻击方不可用 slot={attackerSlot} uid={attackerUid}。");
+                ResolveBattleSession()?.EnsureBattleEndedIfAvatarDefeated(
+                    counterProjection, cancellationToken);
                 return;
             }
 
@@ -301,12 +309,6 @@ namespace NineGrid.Cards
 
                 await DrainCombatHitBoardDeltaFromProjectionAsync(counterProjection, ct);
                 await FlushPendingShuffleAsync(ct);
-
-                if (counterProjection.AvatarDefeated || willKill)
-                {
-                    TryBeginAvatarDefeatPresentation(ct);
-                    ResolveBattleSession()?.RaiseBattleEnded(victory: false);
-                }
             }
             catch (OperationCanceledException)
             {
@@ -320,6 +322,24 @@ namespace NineGrid.Cards
                 catch
                 {
                     // ignore
+                }
+
+                if (counterProjection.AvatarDefeated || willKill)
+                {
+                    ResolveBattleSession()?.EnsureBattleEndedIfAvatarDefeated(
+                        counterProjection.AvatarDefeated
+                            ? counterProjection
+                            : new PostKillBoardPresentationResult
+                            {
+                                Accepted = true,
+                                AvatarDefeated = true,
+                                DamagePopups = counterProjection.DamagePopups,
+                                Steps = counterProjection.Steps,
+                                Moves = counterProjection.Moves,
+                                Deals = counterProjection.Deals,
+                                RemovedUids = counterProjection.RemovedUids,
+                            },
+                        ct);
                 }
 
                 _isBusy = false;
@@ -410,17 +430,8 @@ namespace NineGrid.Cards
                     ApplyHitFrameVisuals();
                 }
 
-                if (hitProjection.AvatarDefeated)
-                {
-                    await DrainCombatHitBoardDeltaFromProjectionAsync(hitProjection, ct);
-                    await FlushPendingShuffleAsync(ct);
-                    TryBeginAvatarDefeatPresentation(ct);
-                    ResolveBattleSession()?.RaiseBattleEnded(victory: false);
-                    return;
-                }
-
                 var killed = HasRemovedUid(hitProjection, combatVictim.Uid) || combatVictim.IsFieldDead;
-                if (killed)
+                if (!hitProjection.AvatarDefeated && killed)
                 {
                     CardEntityLifecycleHook.CardsOrNull()?.MarkFieldDead(combatVictim);
                     geometry.VacateSlotForExplore(
@@ -433,7 +444,15 @@ namespace NineGrid.Cards
                     FinalizeLethalVictimAsync(combatVictim, ct).Forget();
                 }
 
-                await FlushPendingShuffleAsync(ct);
+                if (hitProjection.AvatarDefeated)
+                {
+                    await DrainCombatHitBoardDeltaFromProjectionAsync(hitProjection, ct);
+                    await FlushPendingShuffleAsync(ct);
+                }
+                else
+                {
+                    await FlushPendingShuffleAsync(ct);
+                }
             }
             catch (OperationCanceledException)
             {
@@ -448,6 +467,8 @@ namespace NineGrid.Cards
                 {
                     // ignore
                 }
+
+                ResolveBattleSession()?.EnsureBattleEndedIfAvatarDefeated(hitProjection, ct);
 
                 _isBusy = false;
                 PresentationMainlineHold.Release(holdAcquired, "FieldBattlePresent");

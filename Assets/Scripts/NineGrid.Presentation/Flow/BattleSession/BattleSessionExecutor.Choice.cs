@@ -46,45 +46,53 @@ namespace NineGrid.Flow
             PresentationInputGates.SetChoiceOverlay(true);
             try
             {
-                // 点选即推进 Core；退场动画（约 5s 掉落）在后台播，不再锁输入。
-                var pick = await WaitBouncePickAsync(
-                    selector,
-                    defIds,
-                    allowEscapeSkip: true,
-                    hoverOnNotice: hoverOnNotice);
-                if (pick.Cancelled)
-                {
-                    return;
-                }
-
                 var pipeline = arch.GetSystem<IActionPipelineSystem>();
-                var startIndex = pipeline.EventLog.Entries.Count;
                 var phaseSystem = arch.GetSystem<IPhaseSystem>();
-                var phaseBefore = phaseSystem.CurrentPhase.ToString();
                 CoreCommandResult result;
                 string chosenDefId;
                 string choiceKind;
-                if (pick.SkipRequested || pick.Index < 0)
+                int pickIndex;
+                int startIndex;
+                string phaseBefore = phaseSystem.CurrentPhase.ToString();
+
+                // 点选即推进 Core；若 Intake/门禁拒收则重开 Bounce，避免孤儿 Pending。
+                while (true)
                 {
-                    chosenDefId = string.Empty;
-                    choiceKind = "skip";
-                    result = SubmitSkipHelpChoice(phaseSystem);
-                    if (!result.Accepted)
+                    var pick = await WaitBouncePickAsync(
+                        selector,
+                        defIds,
+                        allowEscapeSkip: true,
+                        hoverOnNotice: hoverOnNotice);
+                    if (pick.Cancelled)
                     {
-                        Debug.LogWarning($"[BattleSession] SkipHelpChoice 被拒: {result.Reason}");
-                        RecordRewardChosenFlow(
-                            choiceKind,
-                            chosenDefId,
-                            -1,
-                            phaseBefore,
-                            phaseSystem.CurrentPhase.ToString(),
-                            accepted: false,
-                            reason: result.Reason);
                         return;
                     }
-                }
-                else
-                {
+
+                    startIndex = pipeline.EventLog.Entries.Count;
+                    phaseBefore = phaseSystem.CurrentPhase.ToString();
+                    pickIndex = pick.Index;
+                    if (pick.SkipRequested || pick.Index < 0)
+                    {
+                        chosenDefId = string.Empty;
+                        choiceKind = "skip";
+                        result = SubmitSkipHelpChoice(phaseSystem);
+                        if (!result.Accepted)
+                        {
+                            Debug.LogWarning($"[BattleSession] SkipHelpChoice 被拒: {result.Reason}");
+                            RecordRewardChosenFlow(
+                                choiceKind,
+                                chosenDefId,
+                                -1,
+                                phaseBefore,
+                                phaseSystem.CurrentPhase.ToString(),
+                                accepted: false,
+                                reason: result.Reason);
+                            continue;
+                        }
+
+                        break;
+                    }
+
                     chosenDefId = pick.Index >= 0 && pick.Index < defIds.Length
                         ? defIds[pick.Index]
                         : string.Empty;
@@ -101,14 +109,16 @@ namespace NineGrid.Flow
                             phaseSystem.CurrentPhase.ToString(),
                             accepted: false,
                             reason: result.Reason);
-                        return;
+                        continue;
                     }
+
+                    break;
                 }
 
                 RecordRewardChosenFlow(
                     choiceKind,
                     chosenDefId,
-                    pick.Index,
+                    pickIndex,
                     phaseBefore,
                     phaseSystem.CurrentPhase.ToString(),
                     accepted: true,
@@ -160,9 +170,8 @@ namespace NineGrid.Flow
 
                     if (boardDelta.AvatarDefeated)
                     {
-                        ResolveBattlePresentation()?.TryBeginAvatarDefeatPresentation(
-                            EnsurePresentationToken());
-                        RaiseBattleEnded(victory: false);
+                        EnsureBattleEndedIfAvatarDefeated(
+                            boardDelta, EnsurePresentationToken());
                         return;
                     }
 
