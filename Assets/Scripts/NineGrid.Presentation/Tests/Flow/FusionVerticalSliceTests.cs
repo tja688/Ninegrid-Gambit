@@ -169,6 +169,7 @@ namespace NineGrid.Presentation.Tests
         public void ResolveAndProject_WhenNoEmptySlots_SkipFillAccepted()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 99, attack: 0)).Accepted);
+            FillAllEmptyBoardSlots("monster.headless_skeleton");
             SeedDrawPileFiller("monster.headless_skeleton", count: 4);
             Assert.IsFalse(FusionRefillPlanner.HasEmptyBoardSlot(mArch.GetModel<BoardModel>()));
 
@@ -235,7 +236,6 @@ namespace NineGrid.Presentation.Tests
             {
                 director.MutateMainline(timeline =>
                 {
-                    FusionRefillScheduler.ArmRefillGate();
                     scheduler.EnqueueRefillBatches(
                         timeline,
                         mArch,
@@ -244,6 +244,7 @@ namespace NineGrid.Presentation.Tests
                         sAdjacentSlot.Index,
                         exclude,
                         onBoardBatchProjected: null);
+                    FusionRefillScheduler.DisarmRefillGate();
                 });
             });
 
@@ -252,6 +253,7 @@ namespace NineGrid.Presentation.Tests
                 Assert.IsFalse(FusionRefillScheduler.IsRefillGateArmed);
                 Assert.IsTrue(FusionRefillAftermath.TrySchedule(Array.Empty<int>()));
                 Assert.IsTrue(FusionRefillScheduler.IsRefillScheduled);
+                Assert.IsFalse(FusionRefillScheduler.IsRefillGateArmed);
                 Assert.IsTrue(director.IsMainlineBusy);
 
                 var refillStart = mPipeline.EventLog.Entries.Count;
@@ -266,6 +268,134 @@ namespace NineGrid.Presentation.Tests
             {
                 FusionRefillAftermath.Unregister();
             }
+        }
+
+        [Test]
+        public void Aftermath_TrySchedule_WhenGateArmedButNotScheduled_EnqueuesOnce()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 99, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sFarCornerSlot);
+            Assert.IsTrue(mArch.GetModel<BoardModel>().IsEmpty(sAdjacentSlot));
+            SeedDrawPileFiller("monster.headless_skeleton", count: 8);
+
+            var boardPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var director = new PresentationDirector(new NoopIntentScriptFactory());
+            DirectorTrace.BeginChain();
+            var scheduler = new FusionRefillScheduler();
+
+            FusionRefillAftermath.Register(exclude =>
+            {
+                director.MutateMainline(timeline =>
+                {
+                    scheduler.EnqueueRefillBatches(
+                        timeline,
+                        mArch,
+                        mDispatcher,
+                        boardPresent,
+                        sAdjacentSlot.Index,
+                        exclude,
+                        onBoardBatchProjected: null);
+                    FusionRefillScheduler.DisarmRefillGate();
+                });
+            });
+
+            try
+            {
+                FusionRefillScheduler.ArmRefillGate();
+                Assert.IsTrue(FusionRefillScheduler.IsRefillGateArmed);
+                Assert.IsFalse(FusionRefillScheduler.IsRefillScheduled);
+
+                Assert.IsTrue(FusionRefillAftermath.TrySchedule(Array.Empty<int>()));
+                Assert.IsTrue(FusionRefillScheduler.IsRefillScheduled);
+                Assert.IsFalse(FusionRefillScheduler.IsRefillGateArmed);
+                Assert.IsFalse(
+                    FusionRefillAftermath.TrySchedule(Array.Empty<int>()),
+                    "已 MarkRefillScheduled 后不得二次入队");
+
+                director.Tick(0.016f);
+                director.Tick(0.016f);
+                Assert.AreEqual(1, boardPresent.BeginCount);
+            }
+            finally
+            {
+                FusionRefillAftermath.Unregister();
+            }
+        }
+
+        [Test]
+        public void AppendAfter_WhenAlreadyScheduled_DoesNotDoubleEnqueue()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 99, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sFarCornerSlot);
+            Assert.IsTrue(mArch.GetModel<BoardModel>().IsEmpty(sAdjacentSlot));
+            SeedDrawPileFiller("monster.headless_skeleton", count: 8);
+
+            var boardPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var director = new PresentationDirector(new NoopIntentScriptFactory());
+            DirectorTrace.BeginChain();
+            var scheduler = new FusionRefillScheduler();
+            var appendEnqueueCalls = 0;
+
+            director.MutateMainline(timeline =>
+            {
+                scheduler.EnqueueRefillBatches(
+                    timeline,
+                    mArch,
+                    mDispatcher,
+                    boardPresent,
+                    sAdjacentSlot.Index,
+                    Array.Empty<int>(),
+                    onBoardBatchProjected: null);
+                FusionRefillScheduler.DisarmRefillGate();
+            });
+            Assert.IsTrue(FusionRefillScheduler.IsRefillScheduled);
+
+            director.MutateMainline(timeline =>
+            {
+                scheduler.AppendAfterRotatePresent(
+                    timeline,
+                    () => true,
+                    t =>
+                    {
+                        appendEnqueueCalls++;
+                        scheduler.EnqueueRefillBatches(
+                            t,
+                            mArch,
+                            mDispatcher,
+                            boardPresent,
+                            sAdjacentSlot.Index,
+                            Array.Empty<int>(),
+                            onBoardBatchProjected: null);
+                    });
+            });
+
+            // Resolve + Present FusionRefill，再跑 AppendAfter 分支
+            director.Tick(0.016f);
+            director.Tick(0.016f);
+            director.Tick(0.016f);
+            Assert.AreEqual(0, appendEnqueueCalls, "已 scheduled 时 AppendAfter 不得再 enqueue");
+            Assert.AreEqual(1, boardPresent.BeginCount);
+            Assert.IsFalse(director.IsMainlineBusy);
+        }
+
+        [Test]
+        public void TryCollectResultUids_ClearIntoFalse_PreservesPriorOnMiss()
+        {
+            var into = new List<int> { 42 };
+            Assert.IsFalse(FusionRefillPlanner.TryCollectResultUids(
+                mPipeline.EventLog.Entries,
+                startIndex: 0,
+                into,
+                clearInto: false));
+            Assert.AreEqual(1, into.Count);
+            Assert.AreEqual(42, into[0]);
+
+            Assert.IsFalse(FusionRefillPlanner.TryCollectResultUids(
+                mPipeline.EventLog.Entries,
+                startIndex: 0,
+                into,
+                clearInto: true));
+            Assert.AreEqual(0, into.Count);
         }
 
         private sealed class NoopIntentScriptFactory : IIntentScriptFactory
@@ -349,6 +479,22 @@ namespace NineGrid.Presentation.Tests
             Assert.IsTrue(mArch.GetModel<BoardModel>().IsEmpty(slot), "Spawn 目标格应为空: " + slot);
             mPipeline.Enqueue(new SpawnCardAction(defId, CardKind.Monster, ZoneId.Board, slot, 1, "test"));
             Assert.Greater(mPipeline.RunToCompletion(), 0, "应成功生成 " + defId);
+        }
+
+        private void FillAllEmptyBoardSlots(string defId)
+        {
+            var board = mArch.GetModel<BoardModel>();
+            var avatarSlot = board.AvatarSlot.Value;
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var slot = SlotId.Board(i);
+                if (slot == avatarSlot || !board.IsEmpty(slot))
+                {
+                    continue;
+                }
+
+                SpawnOnBoard(defId, slot);
+            }
         }
 
         private void SeedDrawPileFiller(string defId, int count)

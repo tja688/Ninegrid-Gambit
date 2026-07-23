@@ -109,7 +109,11 @@ namespace NineGrid.Cards
                     await onFusionStarted(cancellationToken);
                 }
 
+                PrepareParticipantsForCrash(participants);
                 await CrashParticipantsToCenterAsync(participants, mergeCenter, cancellationToken);
+                HardStickParticipantsAt(participants, mergeCenter);
+                // Crash/Park 后可能仍有亚像素漂移；贴死后用视觉点写死中心，结果卡对齐同一点。
+                mergeCenter = ComputeMergeCenter(participants);
 
                 if (layoutSettings.fusionOverlapHoldDuration > 0f)
                 {
@@ -205,17 +209,86 @@ namespace NineGrid.Cards
             var count = 0;
             for (var i = 0; i < participants.Count; i++)
             {
-                var transform = participants[i].Card.Transform;
-                if (transform == null)
+                var card = participants[i].Card;
+                if (card?.Transform == null)
                 {
                     continue;
                 }
 
-                sum += transform.position;
+                // 用视觉世界坐标（含 L2/L3），禁止只读 L0，否则有残差时中点偏了。
+                sum += SlotFrameConvergence.GetVisualWorldPosition(card);
                 count++;
             }
 
             return count > 0 ? sum / count : Vector3.zero;
+        }
+
+        /// <summary>
+        /// Crash 前杀掉未结束 motion / L2·L3 收敛，避免与撞中点抢写。
+        /// </summary>
+        private static void PrepareParticipantsForCrash(IReadOnlyList<ParticipantView> participants)
+        {
+            for (var i = 0; i < participants.Count; i++)
+            {
+                var card = participants[i].Card;
+                if (card?.Transform == null)
+                {
+                    continue;
+                }
+
+                CardDeckTween.KillMotion(card.Transform, "SkeletonFusion.PrepareCrash", card.Uid);
+                if (SlotFrameConvergence.TryGetDriver(card, out var slotDriver) && slotDriver.IsActive)
+                {
+                    slotDriver.Stop();
+                }
+
+                if (EffectFrameConvergence.TryGetDriver(card, out var effectDriver) && effectDriver.IsActive)
+                {
+                    effectDriver.Stop();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 强制贴死：L0=贴合点，L2/L3 归零。ParkRoot 只清 L3，残差 L2 会导致叠不齐。
+        /// </summary>
+        private static void HardStickParticipantsAt(
+            IReadOnlyList<ParticipantView> participants,
+            Vector3 mergeCenter)
+        {
+            for (var i = 0; i < participants.Count; i++)
+            {
+                var card = participants[i].Card;
+                if (card?.Transform == null)
+                {
+                    continue;
+                }
+
+                SlotFrameConvergence.SnapHome(card, mergeCenter, "Skeleton.HardStick", card.Uid);
+                EffectFrameConvergence.SnapHome(card, "Skeleton.HardStick");
+            }
+
+            if (participants.Count < 2)
+            {
+                return;
+            }
+
+            var first = SlotFrameConvergence.GetVisualWorldPosition(participants[0].Card);
+            for (var i = 1; i < participants.Count; i++)
+            {
+                var other = SlotFrameConvergence.GetVisualWorldPosition(participants[i].Card);
+                var delta = Vector3.Distance(first, other);
+                if (delta > 1e-3f)
+                {
+                    CardPresentationProbe.Anomaly(
+                        participants[i].Card.Uid,
+                        "SkeletonHardStickMisalign",
+                        "delta=" + delta.ToString("0.######"),
+                        "Skeleton.HardStick",
+                        layer: "L0",
+                        verdict: "misaligned");
+                }
+            }
         }
 
         private static void VacateFusionParticipants(
@@ -352,6 +425,9 @@ namespace NineGrid.Cards
                     resultCard.Uid);
             }
 
+            // SnapHome(L2) 不清 L3；结果卡必须与参与卡贴合点同世界位弹出。
+            EffectFrameConvergence.SnapHome(resultCard, "Skeleton.RevealResult");
+
             var baseScale = resultCard.Transform.localScale;
             if (baseScale == Vector3.zero)
             {
@@ -382,7 +458,7 @@ namespace NineGrid.Cards
             try
             {
                 var fieldLayout = fieldManager.LayoutSettings;
-                var exitDuration = fieldLayout != null ? fieldLayout.fieldExitDuration : 0.35f;
+                var exitDuration = fieldLayout != null ? fieldLayout.fieldExitDuration : 0.50f;
 
                 // 若洗入通道曾提前登记入组，合体 reveal 会把 Transform 留在场上；需先卸下再走上飞入组。
                 if (deckManager.ContainsUid(resultCard.Uid))

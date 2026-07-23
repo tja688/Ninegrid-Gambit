@@ -28,11 +28,12 @@ namespace NineGrid.Flow.Presentation
         }
 
         /// <summary>
-        /// 剧本未武装/未入队 FusionRefill 时，尝试向主线追加补牌批次。
+        /// 尚未入队 FusionRefill 时，尝试向主线追加补牌批次。
+        /// 门武装（gateArmed）只表示剧本挂了分支，不阻止 Aftermath 兜底入队。
         /// </summary>
         public static bool TrySchedule(IReadOnlyList<int> excludeResultUids)
         {
-            if (FusionRefillScheduler.IsRefillGateArmed || FusionRefillScheduler.IsRefillScheduled)
+            if (FusionRefillScheduler.IsRefillScheduled)
             {
                 return false;
             }
@@ -43,7 +44,7 @@ namespace NineGrid.Flow.Presentation
             }
 
             sSchedule(excludeResultUids ?? Array.Empty<int>());
-            return FusionRefillScheduler.IsRefillScheduled || FusionRefillScheduler.IsRefillGateArmed;
+            return FusionRefillScheduler.IsRefillScheduled;
         }
 
         /// <summary>生产接线：经 Runtime.MutateMainline 入队 FusionRefill。</summary>
@@ -72,7 +73,7 @@ namespace NineGrid.Flow.Presentation
             var fusionRefill = scheduler ?? new FusionRefillScheduler();
             return excludeUids =>
             {
-                if (FusionRefillScheduler.IsRefillGateArmed || FusionRefillScheduler.IsRefillScheduled)
+                if (FusionRefillScheduler.IsRefillScheduled)
                 {
                     return;
                 }
@@ -118,7 +119,6 @@ namespace NineGrid.Flow.Presentation
 
                 runtime.MutateMainline(timeline =>
                 {
-                    FusionRefillScheduler.ArmRefillGate();
                     fusionRefill.EnqueueRefillBatches(
                         timeline,
                         architecture,
@@ -127,6 +127,7 @@ namespace NineGrid.Flow.Presentation
                         boardSlot: 0,
                         excludeUids,
                         onBoardBatchProjected);
+                    FusionRefillScheduler.DisarmRefillGate();
                 });
             };
         }

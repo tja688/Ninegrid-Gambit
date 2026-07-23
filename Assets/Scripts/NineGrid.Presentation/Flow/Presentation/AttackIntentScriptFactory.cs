@@ -124,7 +124,7 @@ namespace NineGrid.Flow.Presentation
             var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
             var fillGate = PresentationSyncBatchGate.FromSync(
                 sync,
-                () => ResolveAndProject(boardSlot, () => mDispatcher.Send(new ResolvePostKillFillCommand()), trackFusion: false));
+                () => ResolveAndProject(boardSlot, () => mDispatcher.Send(new ResolvePostKillFillCommand()), trackFusion: true));
             var rotateGate = PresentationSyncBatchGate.FromSync(
                 sync,
                 () => ResolveAndProject(boardSlot, () => mDispatcher.Send(new ResolvePostKillRotateCommand()), trackFusion: true));
@@ -238,10 +238,15 @@ namespace NineGrid.Flow.Presentation
 
             if (trackFusion)
             {
-                mLastRotateHadFusion = FusionRefillPlanner.TryCollectResultUids(
-                    pipeline.EventLog.Entries,
-                    startIndex,
-                    mFusionExcludeResultUids);
+                // Fill/Rotate 共用 exclude：追加收集，OR 进 flag，避免后一次 Clear 掉前一次融合。
+                if (FusionRefillPlanner.TryCollectResultUids(
+                        pipeline.EventLog.Entries,
+                        startIndex,
+                        mFusionExcludeResultUids,
+                        clearInto: false))
+                {
+                    mLastRotateHadFusion = true;
+                }
             }
 
             if (mOnBoardBatchProjected != null)

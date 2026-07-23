@@ -189,5 +189,122 @@ namespace NineGrid.Presentation.Tests
                 Object.DestroyImmediate(b);
             }
         }
+
+        [Test]
+        public void HardStick_AfterParkWithL2Residue_ForcesVisualCoincidence()
+        {
+            // 复现病灶：ParkRoot 只清 L3，残留 L2 时两卡叠不齐；HardStick（Slot+Effect SnapHome）必须贴死。
+            DestroyAllSingletonsInScene();
+            var host = new GameObject("HardStickHost");
+            var cardManager = host.AddComponent<CardManagerSingleton>();
+            var prefab = new GameObject("HardStickPrefab");
+            prefab.AddComponent<StandardCardView>();
+            cardManager.RegisterPrefab(CardManagerSingleton.StandardDefId, prefab);
+
+            ManagedCard cardA = null;
+            ManagedCard cardB = null;
+            try
+            {
+                cardA = cardManager.SpawnView(9401, CardManagerSingleton.StandardDefId);
+                cardB = cardManager.SpawnView(9402, CardManagerSingleton.StandardDefId);
+                Assert.IsTrue(SlotFrameConvergence.TryEnsureInfrastructure(cardA, out var towerA, out _, "test"));
+                Assert.IsTrue(EffectFrameConvergence.TryEnsureInfrastructure(cardA, out _, out _, "test"));
+                Assert.IsTrue(SlotFrameConvergence.TryEnsureInfrastructure(cardB, out var towerB, out _, "test"));
+                Assert.IsTrue(EffectFrameConvergence.TryEnsureInfrastructure(cardB, out _, out _, "test"));
+
+                towerA.CardRoot.position = new Vector3(-2f, 0f, 0f);
+                towerB.CardRoot.position = new Vector3(2f, 1f, 0f);
+                towerA.SlotFrame.localPosition = new Vector3(0.4f, -0.2f, 0f);
+                towerA.EffectFrame.localPosition = new Vector3(0.1f, 0.3f, 0f);
+                towerB.SlotFrame.localPosition = new Vector3(-0.5f, 0.25f, 0f);
+                towerB.EffectFrame.localPosition = new Vector3(0.2f, -0.15f, 0f);
+
+                var visualBeforeA = SlotFrameConvergence.GetVisualWorldPosition(cardA);
+                var visualBeforeB = SlotFrameConvergence.GetVisualWorldPosition(cardB);
+                var merge = (visualBeforeA + visualBeforeB) * 0.5f;
+
+                EffectFrameConvergence.ParkRootAtWorld(cardA, merge, "test.Park");
+                EffectFrameConvergence.ParkRootAtWorld(cardB, merge, "test.Park");
+
+                var afterParkA = SlotFrameConvergence.GetVisualWorldPosition(cardA);
+                var afterParkB = SlotFrameConvergence.GetVisualWorldPosition(cardB);
+                Assert.Greater(
+                    Vector3.Distance(afterParkA, afterParkB),
+                    1e-3f,
+                    "ParkRoot alone must leave L2 residue misalignment (documents the bug).");
+
+                SlotFrameConvergence.SnapHome(cardA, merge, "Skeleton.HardStick", cardA.Uid);
+                EffectFrameConvergence.SnapHome(cardA, "Skeleton.HardStick");
+                SlotFrameConvergence.SnapHome(cardB, merge, "Skeleton.HardStick", cardB.Uid);
+                EffectFrameConvergence.SnapHome(cardB, "Skeleton.HardStick");
+
+                var visualA = SlotFrameConvergence.GetVisualWorldPosition(cardA);
+                var visualB = SlotFrameConvergence.GetVisualWorldPosition(cardB);
+                Assert.Less(Vector3.Distance(visualA, visualB), 1e-3f);
+                Assert.Less(Vector3.Distance(visualA, merge), 1e-3f);
+                Assert.AreEqual(0f, towerA.SlotFrame.localPosition.magnitude, ConvergenceCurve1D.PositionEpsilon);
+                Assert.AreEqual(0f, towerB.SlotFrame.localPosition.magnitude, ConvergenceCurve1D.PositionEpsilon);
+                Assert.AreEqual(0f, towerA.EffectFrame.localPosition.magnitude, ConvergenceCurve1D.PositionEpsilon);
+                Assert.AreEqual(0f, towerB.EffectFrame.localPosition.magnitude, ConvergenceCurve1D.PositionEpsilon);
+            }
+            finally
+            {
+                FlightSortingChannel.Disarm(9401);
+                FlightSortingChannel.Disarm(9402);
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(prefab);
+            }
+        }
+
+        [Test]
+        public void RevealResult_SnapHomeSlotAndEffect_LandsOnMergeCenter()
+        {
+            DestroyAllSingletonsInScene();
+            var host = new GameObject("RevealResultHost");
+            var cardManager = host.AddComponent<CardManagerSingleton>();
+            var prefab = new GameObject("RevealResultPrefab");
+            prefab.AddComponent<StandardCardView>();
+            cardManager.RegisterPrefab(CardManagerSingleton.StandardDefId, prefab);
+
+            ManagedCard resultCard = null;
+            try
+            {
+                resultCard = cardManager.SpawnView(9403, CardManagerSingleton.StandardDefId);
+                Assert.IsTrue(SlotFrameConvergence.TryEnsureInfrastructure(resultCard, out var tower, out _, "test"));
+                Assert.IsTrue(EffectFrameConvergence.TryEnsureInfrastructure(resultCard, out _, out _, "test"));
+
+                tower.CardRoot.position = new Vector3(5f, -4f, 0f);
+                tower.SlotFrame.localPosition = new Vector3(1.2f, -0.8f, 0f);
+                tower.EffectFrame.localPosition = new Vector3(-0.3f, 0.6f, 0f);
+
+                var mergeCenter = new Vector3(0.5f, 1.5f, 0f);
+                SlotFrameConvergence.SnapHome(resultCard, mergeCenter, "Skeleton.RevealResult", resultCard.Uid);
+                EffectFrameConvergence.SnapHome(resultCard, "Skeleton.RevealResult");
+
+                var visual = SlotFrameConvergence.GetVisualWorldPosition(resultCard);
+                Assert.Less(Vector3.Distance(visual, mergeCenter), 1e-3f);
+                Assert.AreEqual(0f, tower.EffectFrame.localPosition.magnitude, ConvergenceCurve1D.PositionEpsilon);
+                Assert.AreEqual(0f, tower.SlotFrame.localPosition.magnitude, ConvergenceCurve1D.PositionEpsilon);
+            }
+            finally
+            {
+                FlightSortingChannel.Disarm(9403);
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(prefab);
+            }
+        }
+
+        private static void DestroyAllSingletonsInScene()
+        {
+            foreach (var m in Object.FindObjectsByType<CardManagerSingleton>(FindObjectsSortMode.None))
+            {
+                Object.DestroyImmediate(m.gameObject);
+            }
+
+            var field = typeof(CardManagerSingleton).GetField(
+                "_instance",
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+            field?.SetValue(null, null);
+        }
     }
 }

@@ -16,12 +16,29 @@ namespace NineGrid.Flow.Presentation
             int startIndex,
             List<int> into)
         {
+            return TryCollectResultUids(entries, startIndex, into, clearInto: true);
+        }
+
+        /// <param name="clearInto">
+        /// false 时追加写入（Fill/Rotate 共用 exclude 列表时避免后一次 Clear 掉前一次结果）。
+        /// </param>
+        public static bool TryCollectResultUids(
+            IReadOnlyList<CoreGameEvent> entries,
+            int startIndex,
+            List<int> into,
+            bool clearInto)
+        {
             if (into == null)
             {
                 throw new ArgumentNullException("into");
             }
 
-            into.Clear();
+            if (clearInto)
+            {
+                into.Clear();
+            }
+
+            var beforeCount = into.Count;
             var fusions = SkeletonFusionPresentationScanner.Collect(entries, startIndex);
             if (fusions.Count == 0)
             {
@@ -37,7 +54,7 @@ namespace NineGrid.Flow.Presentation
                 }
             }
 
-            return into.Count > 0;
+            return into.Count > beforeCount;
         }
 
         public static bool HasRefillCandidateExcluding(DeckModel deck, IReadOnlyList<int> excludeUids)

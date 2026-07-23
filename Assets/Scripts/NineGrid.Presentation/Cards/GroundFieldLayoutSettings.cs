@@ -55,17 +55,17 @@ namespace NineGrid.Cards
         public float fieldExitYThreshold = 7f;
 
         [Tooltip("场地卡垂直上飞离画的缓动时长（秒）。")]
-        public float fieldExitDuration = 0.35f;
+        public float fieldExitDuration = 0.50f;
 
         [Header("Burst Scatter Into Deck")]
         [Tooltip("炸牌散点圆半径（世界单位）。同批新生洗入卡从死位炸到圆周上的点。")]
         public float burstScatterRadius = 1.1f;
 
         [Tooltip("炸牌散点飞到圆周的时长（秒）；同批共用此时长以同步停稳。")]
-        public float burstScatterDuration = 0.28f;
+        public float burstScatterDuration = 0.48f;
 
         [Tooltip("炸牌散点停稳后、集体上飞入组前的短暂停顿（秒）。")]
-        public float burstScatterHoldDuration = 0.06f;
+        public float burstScatterHoldDuration = 0.22f;
 
         [Header("Hover")]
         [Tooltip("场地卡 hover 时 localScale 相对基准的放大增量（如 0.05 表示约为 1.05 倍）。")]

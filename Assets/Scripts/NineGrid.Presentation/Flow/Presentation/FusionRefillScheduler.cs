@@ -102,6 +102,12 @@ namespace NineGrid.Flow.Presentation
                 },
                 t =>
                 {
+                    if (IsRefillScheduled)
+                    {
+                        DisarmRefillGate();
+                        return;
+                    }
+
                     enqueueFusionRefill(t);
                     MarkRefillScheduled();
                     DisarmRefillGate();

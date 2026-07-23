@@ -74,7 +74,7 @@ namespace NineGrid.Flow.Presentation
                 () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ClickEmptyCommand(slot)), trackFusion: false));
             var fillGate = PresentationSyncBatchGate.FromSync(
                 sync,
-                () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ResolvePostKillFillCommand()), trackFusion: false));
+                () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ResolvePostKillFillCommand()), trackFusion: true));
             var rotateGate = PresentationSyncBatchGate.FromSync(
                 sync,
                 () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ResolvePostKillRotateCommand()), trackFusion: true));
@@ -113,10 +113,14 @@ namespace NineGrid.Flow.Presentation
 
             if (trackFusion)
             {
-                mLastRotateHadFusion = FusionRefillPlanner.TryCollectResultUids(
-                    pipeline.EventLog.Entries,
-                    startIndex,
-                    mFusionExcludeResultUids);
+                if (FusionRefillPlanner.TryCollectResultUids(
+                        pipeline.EventLog.Entries,
+                        startIndex,
+                        mFusionExcludeResultUids,
+                        clearInto: false))
+                {
+                    mLastRotateHadFusion = true;
+                }
             }
 
             if (mOnBatchProjected != null)

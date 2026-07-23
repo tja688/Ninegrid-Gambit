@@ -1199,10 +1199,11 @@ namespace NineGrid.Flow
                 {
                     ["skillId"] = fusion.SkillId,
                     ["refillDeferredToDirector"] = PresentationInputGates.MainlineBusy ? "1" : "0",
-                    ["refillScheduled"] = alreadyScheduled || gateArmed ? "1" : "0",
+                    // refillScheduled 只信真实入队标记；gateArmed 仅表示剧本挂了分支，不等于已补牌。
+                    ["refillScheduled"] = alreadyScheduled ? "1" : "0",
                     ["refillGateArmed"] = gateArmed ? "1" : "0",
                 });
-            if (!gateArmed && !alreadyScheduled)
+            if (!alreadyScheduled)
             {
                 var exclude = new List<int>(1);
                 if (fusion.ResultUid > 0)
