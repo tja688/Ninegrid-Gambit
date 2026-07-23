@@ -33,7 +33,8 @@ namespace NineGrid.Presentation.Tests.Fixtures
         public static PresentationRuntimeFixture Install(
             PresentationArchitectureFixture architecture,
             IIntentScriptFactory scriptFactory,
-            IUiPickPreviewSink uiPickPreview = null)
+            IUiPickPreviewSink uiPickPreview = null,
+            IBufferedIntentLegality bufferedIntentLegality = null)
         {
             if (architecture == null)
             {
@@ -41,7 +42,8 @@ namespace NineGrid.Presentation.Tests.Fixtures
             }
 
             var root = new PresentationCompositionRoot();
-            var runtime = root.Install(scriptFactory, uiPickPreview);
+            var runtime = root.Install(
+                scriptFactory, uiPickPreview, bufferedIntentLegality: bufferedIntentLegality);
             return new PresentationRuntimeFixture(
                 root,
                 runtime,

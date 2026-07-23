@@ -17,11 +17,13 @@ namespace NineGrid.Presentation.Systems
         }
 
         public void Start(IIntentScriptFactory scriptFactory, IUiPickPreviewSink uiPickPreview = null,
-            ITimelineDiagnosticSink timelineDiagnostics = null)
+            ITimelineDiagnosticSink timelineDiagnostics = null,
+            IBufferedIntentLegality bufferedIntentLegality = null)
         {
             if (scriptFactory == null) throw new ArgumentNullException("scriptFactory");
             if (mDirector != null) throw new InvalidOperationException("Presentation runtime is already started.");
-            mDirector = new PresentationDirector(scriptFactory, uiPickPreview, timelineDiagnostics);
+            mDirector = new PresentationDirector(
+                scriptFactory, uiPickPreview, timelineDiagnostics, bufferedIntentLegality);
             PublishBusy();
         }
 

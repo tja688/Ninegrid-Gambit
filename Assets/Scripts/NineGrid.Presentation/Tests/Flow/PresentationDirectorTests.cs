@@ -343,7 +343,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void Intent_BusyBuffersEarliest_AndEmitsUiPick_ThenDrainsWhenIdle()
+        public void Intent_BusyBuffersLatestWins_AndEmitsUiPick_ThenDrainsWhenIdle()
         {
             var uiPick = new RecordingUiPickSink();
             var factory = new RecordingScriptFactory();
@@ -359,20 +359,74 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(1, uiPick.Previews.Count);
             Assert.AreEqual("explore", uiPick.Previews[0].Kind);
 
-            Assert.IsFalse(director.TrySubmitIntent(new InputIntent("explore", 9), out preview));
-            Assert.IsFalse(preview);
-            Assert.AreEqual(3, director.BufferedIntent.TargetId);
+            Assert.IsTrue(director.TrySubmitIntent(new InputIntent("explore", 9), out preview));
+            Assert.IsTrue(preview);
+            Assert.AreEqual(9, director.BufferedIntent.TargetId);
+            Assert.AreEqual(2, uiPick.Previews.Count);
+            Assert.AreEqual(9, uiPick.Previews[1].TargetId);
 
             director.Tick(0.016f);
             director.Tick(0.016f);
             director.Tick(0.016f);
             Assert.IsFalse(director.HasBufferedIntent);
             Assert.AreEqual(1, factory.Built.Count);
-            Assert.AreEqual(3, factory.Built[0].TargetId);
+            Assert.AreEqual(9, factory.Built[0].TargetId);
             Assert.IsTrue(director.IsMainlineBusy);
 
             director.Tick(0.016f);
             Assert.IsFalse(director.IsMainlineBusy);
+        }
+
+        [Test]
+        public void Intent_BusyNClicks_BufferDepthStaysOne_SameFrameBurstKeepsLatest()
+        {
+            var uiPick = new RecordingUiPickSink();
+            var factory = new RecordingScriptFactory();
+            var director = new PresentationDirector(factory, uiPick);
+
+            director.EnqueueMainline(new ScriptedStep(continueTicks: 2));
+            Assert.IsTrue(director.IsMainlineBusy);
+
+            bool preview;
+            Assert.IsTrue(director.TrySubmitIntent(new InputIntent("explore", 3), out preview));
+            Assert.IsTrue(director.TrySubmitIntent(new InputIntent("explore", 4), out preview));
+            Assert.IsTrue(director.TrySubmitIntent(new InputIntent("explore", 5), out preview));
+            Assert.IsTrue(director.TrySubmitIntent(new InputIntent("explore", 6), out preview));
+            Assert.IsTrue(director.TrySubmitIntent(new InputIntent("explore", 7), out preview));
+
+            Assert.IsTrue(director.HasBufferedIntent);
+            Assert.AreEqual(7, director.BufferedIntent.TargetId);
+            Assert.AreEqual(5, uiPick.Previews.Count);
+            Assert.AreEqual(7, uiPick.Previews[4].TargetId);
+
+            director.Tick(0.016f);
+            director.Tick(0.016f);
+            director.Tick(0.016f);
+            Assert.IsFalse(director.HasBufferedIntent);
+            Assert.AreEqual(1, factory.Built.Count);
+            Assert.AreEqual(7, factory.Built[0].TargetId);
+        }
+
+        [Test]
+        public void Intent_FlushDropsBufferedWhenLegalityFails_DoesNotBuildScript()
+        {
+            var toggleLegality = new ToggleLegality { Legal = true };
+            var factory = new RecordingScriptFactory();
+            var director = new PresentationDirector(factory, null, null, toggleLegality);
+
+            director.EnqueueMainline(new ScriptedStep(continueTicks: 1));
+            bool preview;
+            Assert.IsTrue(director.TrySubmitIntent(new InputIntent("explore", 3), out preview));
+            Assert.IsTrue(preview);
+            Assert.IsTrue(director.HasBufferedIntent);
+
+            toggleLegality.Legal = false;
+
+            director.Tick(0.016f);
+            director.Tick(0.016f);
+            Assert.IsFalse(director.HasBufferedIntent);
+            Assert.IsFalse(director.IsMainlineBusy);
+            Assert.AreEqual(0, factory.Built.Count);
         }
 
         [Test]
@@ -594,6 +648,16 @@ namespace NineGrid.Presentation.Tests
             public void Preview(InputIntent intent)
             {
                 Previews.Add(intent);
+            }
+        }
+
+        private sealed class ToggleLegality : IBufferedIntentLegality
+        {
+            public bool Legal = true;
+
+            public bool IsStillLegal(InputIntent intent)
+            {
+                return Legal;
             }
         }
 

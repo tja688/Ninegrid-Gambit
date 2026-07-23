@@ -8,7 +8,8 @@ namespace NineGrid.Presentation.Systems
     public interface IPresentationRuntimeSystem : IPresentationIntentRuntime
     {
         void Start(IIntentScriptFactory scriptFactory, IUiPickPreviewSink uiPickPreview = null,
-            ITimelineDiagnosticSink timelineDiagnostics = null);
+            ITimelineDiagnosticSink timelineDiagnostics = null,
+            IBufferedIntentLegality bufferedIntentLegality = null);
         void Stop(IntentClearReason reason);
         void HardClearIntents(IntentClearReason reason);
     }

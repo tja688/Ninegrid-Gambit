@@ -5,13 +5,13 @@ using NUnit.Framework;
 namespace NineGrid.Presentation.Tests.BehaviorBaseline
 {
     /// <summary>
-    /// #30 行为基线：主线 busy 时只缓冲最早一条输入，idle 后 drain。
+    /// #48 行为基线：主线 busy 时 latest-wins 缓冲一条输入，idle 后 drain。
     /// 接缝：CompositionRoot → RuntimeSystem → PresentationDirector。
     /// </summary>
     public sealed class BusyBufferBaselineTests
     {
         [Test]
-        public void Runtime_BusyBuffersEarliestIntent_EmitsUiPick_ThenDrainsWhenIdle()
+        public void Runtime_BusyBuffersLatestWins_EmitsUiPick_ThenDrainsWhenIdle()
         {
             using (var arch = PresentationArchitectureFixture.CreateBare())
             using (var runtime = PresentationRuntimeFixture.Install(
@@ -31,16 +31,17 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
                 Assert.AreEqual(1, uiPick.Previews.Count);
                 Assert.AreEqual(3, uiPick.Previews[0].TargetId);
 
-                Assert.IsFalse(runtime.TrySubmitIntent(
+                Assert.IsTrue(runtime.TrySubmitIntent(
                     new InputIntent(InputIntentKinds.Explore, 9), out preview));
-                Assert.IsFalse(preview);
-                Assert.AreEqual(1, uiPick.Previews.Count);
+                Assert.IsTrue(preview);
+                Assert.AreEqual(2, uiPick.Previews.Count);
+                Assert.AreEqual(9, uiPick.Previews[1].TargetId);
 
                 runtime.TickUntilIdle();
                 Assert.IsFalse(runtime.MainlineBusy.Value);
                 Assert.AreEqual(2, runtime.ScriptFactory.Built.Count);
                 Assert.AreEqual(1, runtime.ScriptFactory.Built[0].TargetId);
-                Assert.AreEqual(3, runtime.ScriptFactory.Built[1].TargetId);
+                Assert.AreEqual(9, runtime.ScriptFactory.Built[1].TargetId);
             }
         }
 

@@ -82,7 +82,7 @@ namespace NineGrid.Presentation.Tests.UseItem
         }
 
         [Test]
-        public void Command_BusyBuffersEarliestLegalUseItem_ThirdRejected()
+        public void Command_BusyBuffersLatestWinsLegalUseItem_ThirdOverwritesSecond()
         {
             using (var arch = PresentationArchitectureFixture.CreateStartedGame(seed: 42UL))
             {
@@ -108,15 +108,17 @@ namespace NineGrid.Presentation.Tests.UseItem
                     Assert.AreEqual(1, uiPick.Previews.Count);
                     Assert.AreEqual(knifeB, uiPick.Previews[0].TargetId);
 
-                    Assert.IsFalse(arch.Architecture.SendCommand(
+                    Assert.IsTrue(arch.Architecture.SendCommand(
                         new SubmitUseItemIntentCommand(knifeC, new[] { targetUid }, null)));
+                    Assert.AreEqual(2, uiPick.Previews.Count);
+                    Assert.AreEqual(knifeC, uiPick.Previews[1].TargetId);
                     Assert.AreEqual(1, scriptFactory.Built.Count);
                     Assert.AreEqual(knifeA, scriptFactory.Built[0].TargetId);
                     Assert.AreEqual(InputIntentKinds.UseItem, scriptFactory.Built[0].Kind);
 
                     runtime.TickUntilIdle();
                     Assert.AreEqual(2, scriptFactory.Built.Count);
-                    Assert.AreEqual(knifeB, scriptFactory.Built[1].TargetId);
+                    Assert.AreEqual(knifeC, scriptFactory.Built[1].TargetId);
                 }
             }
         }

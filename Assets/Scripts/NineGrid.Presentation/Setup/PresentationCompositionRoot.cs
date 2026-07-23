@@ -19,9 +19,11 @@ namespace NineGrid.Presentation.Setup
         public IPresentationRuntimeSystem Install(
             IIntentScriptFactory scriptFactory,
             IUiPickPreviewSink uiPickPreview = null,
-            ITimelineDiagnosticSink timelineDiagnostics = null)
+            ITimelineDiagnosticSink timelineDiagnostics = null,
+            IBufferedIntentLegality bufferedIntentLegality = null)
         {
-            return InstallCore(scriptFactory, uiPickPreview, timelineDiagnostics, bindings: null);
+            return InstallCore(
+                scriptFactory, uiPickPreview, timelineDiagnostics, bindings: null, bufferedIntentLegality);
         }
 
         /// <summary>生产入口：由场景绑定构造 Channel / Factory / Director。</summary>
@@ -119,7 +121,8 @@ namespace NineGrid.Presentation.Setup
                 scriptFactory,
                 uiPickPreview: null,
                 timelineDiagnostics: DirectorTrace.TimelineSink,
-                bindings);
+                bindings,
+                new BoardBufferedIntentLegality(architecture));
         }
 
         public void Shutdown(IntentClearReason reason)
@@ -147,7 +150,8 @@ namespace NineGrid.Presentation.Setup
             IIntentScriptFactory scriptFactory,
             IUiPickPreviewSink uiPickPreview,
             ITimelineDiagnosticSink timelineDiagnostics,
-            PresentationSceneBindings bindings)
+            PresentationSceneBindings bindings,
+            IBufferedIntentLegality bufferedIntentLegality)
         {
             if (mRuntime != null)
             {
@@ -175,7 +179,7 @@ namespace NineGrid.Presentation.Setup
                 architecture.RegisterSystem(existing);
             }
 
-            existing.Start(scriptFactory, uiPickPreview, timelineDiagnostics);
+            existing.Start(scriptFactory, uiPickPreview, timelineDiagnostics, bufferedIntentLegality);
             mRuntime = existing;
             mBindings = bindings;
             return mRuntime;

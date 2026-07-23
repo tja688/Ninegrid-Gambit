@@ -80,7 +80,7 @@ namespace NineGrid.Presentation.Tests.Explore
         }
 
         [Test]
-        public void Command_BusyBuffersEarliestLegalExplore_ThirdRejected()
+        public void Command_BusyBuffersLatestWinsLegalExplore_ThirdOverwritesSecond()
         {
             using (var arch = PresentationArchitectureFixture.CreateStartedGame(seed: 42UL))
             {
@@ -101,13 +101,15 @@ namespace NineGrid.Presentation.Tests.Explore
                     Assert.AreEqual(1, uiPick.Previews.Count);
                     Assert.AreEqual(4, uiPick.Previews[0].TargetId);
 
-                    Assert.IsFalse(arch.Architecture.SendCommand(new SubmitExploreIntentCommand(6)));
+                    Assert.IsTrue(arch.Architecture.SendCommand(new SubmitExploreIntentCommand(6)));
+                    Assert.AreEqual(2, uiPick.Previews.Count);
+                    Assert.AreEqual(6, uiPick.Previews[1].TargetId);
                     Assert.AreEqual(1, scriptFactory.Built.Count);
                     Assert.AreEqual(2, scriptFactory.Built[0].TargetId);
 
                     runtime.TickUntilIdle();
                     Assert.AreEqual(2, scriptFactory.Built.Count);
-                    Assert.AreEqual(4, scriptFactory.Built[1].TargetId);
+                    Assert.AreEqual(6, scriptFactory.Built[1].TargetId);
                 }
             }
         }
