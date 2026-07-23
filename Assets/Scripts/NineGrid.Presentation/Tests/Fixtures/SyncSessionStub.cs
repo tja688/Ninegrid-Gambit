@@ -1,4 +1,5 @@
 using NineGrid.Core;
+using NineGrid.Flow.Presentation;
 
 namespace NineGrid.Presentation.Tests.Fixtures
 {
@@ -41,11 +42,11 @@ namespace NineGrid.Presentation.Tests.Fixtures
 
     public static class PresentationSyncGateFactory
     {
-        public static Flow.Presentation.PresentationSyncBatchGate FromSession(
+        public static PresentationSyncBatchGate FromSession(
             SyncSessionStub session,
             System.Func<CoreCommandDispatchResult> resolveAndOpen)
         {
-            return new Flow.Presentation.PresentationSyncBatchGate(
+            return new PresentationSyncBatchGate(
                 () => session.ActiveBatchId > 0,
                 () => session.ActiveBatchId,
                 resolveAndOpen,

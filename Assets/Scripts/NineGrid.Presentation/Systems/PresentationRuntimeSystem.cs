@@ -16,6 +16,11 @@ namespace NineGrid.Presentation.Systems
             get { return mDirector != null && mDirector.HasExternalHold; }
         }
 
+        public bool HasBufferedIntent
+        {
+            get { return mDirector != null && mDirector.HasBufferedIntent; }
+        }
+
         public void Start(IIntentScriptFactory scriptFactory, IUiPickPreviewSink uiPickPreview = null,
             ITimelineDiagnosticSink timelineDiagnostics = null,
             IBufferedIntentLegality bufferedIntentLegality = null)

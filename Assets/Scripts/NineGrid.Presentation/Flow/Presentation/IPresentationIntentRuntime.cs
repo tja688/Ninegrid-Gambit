@@ -12,6 +12,8 @@ namespace NineGrid.Flow.Presentation
         IReadonlyBindableProperty<bool> MainlineBusy { get; }
         /// <summary>导演 external-hold 租约是否仍持有（含嵌套计数归零前）。</summary>
         bool HasExternalHold { get; }
+        /// <summary>是否有缓存的意图等待主线空闲后提交。</summary>
+        bool HasBufferedIntent { get; }
         bool TrySubmitIntent(InputIntent intent, out bool uiPickPreview);
         void Tick(float deltaTime);
         bool TryBeginExternalHold(string reason = null);
