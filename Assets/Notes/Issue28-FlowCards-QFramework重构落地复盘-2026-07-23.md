@@ -226,13 +226,11 @@ PresentationSceneRoot (IController, order -100)
 | 项 | 现状 |
 |----|------|
 | ADR-0001 / ADR-0002 | `status: accepted`，与实现一致 |
-| Spec #28 | **OPEN**，无终验回填评论 |
-| `Assets/Docs/九宫牌局-代码文档/` | Spec 要求最终**弃用**；实际仍自称「代码现状权威」；2026-07-23 仍有提交（`9d544487`） |
-| `现状结论.md` | 部分更新（宿主壳名），仍写「Cards ↛ Core」等过期分层 |
-| `程序集与依赖.md` | **严重过期**（仍画分程序集 Flow/Cards） |
-| 独立轻量 Code Map | **缺失**；「轻量 Code Map」自称仍挂在镜像树内 |
+| Spec #28 | 关闭时见 GitHub 关闭评论（US20 Code Map 落地后收口） |
+| `Assets/Docs/九宫牌局-代码文档/` | **DEPRECATED**（2026-07-23）；冻结，勿再当权威 |
+| 轻量 Code Map | ✅ `docs/code-map/`（按**当前** Flow/Cards+QF 角色目录描述，非未落地目标树） |
 
-**文档结论**：决策层（ADR）健康；导航层（镜像库）与 Spec US20 **冲突**——继续改镜像会加大 AI/人类误读成本。
+**文档结论（收口后）**：决策层（ADR）+ 导航层（`docs/code-map/`）对齐现状；镜像库仅作历史备查。
 
 ---
 
@@ -265,7 +263,7 @@ PresentationSceneRoot (IController, order -100)
 3. 废除或改名 8 个 `*ManagerSingleton`（至少去 Singleton 后缀，职责继续下沉 System）。  
 4. 收敛/替换静态 Hook 矩阵为组合根显式接线（或文档裁定「Hook = 过渡装配，非业务 Sink」）。  
 5. 目录/命名空间平铺：拆除 `Flow/`·`Cards/` 作为边界语义；补 `Events/`（及可选 Models/Views）。  
-6. 按 US20 **弃用** `Assets/Docs/九宫牌局-代码文档/`，另建轻量 Code Map；停更失真镜像。
+6. ~~按 US20 **弃用** 镜像库 + 轻量 Code Map~~ → ✅ `docs/code-map/` + 镜像 DEPRECATED（2026-07-23）。
 
 ### P2 — 质量与可维护性
 

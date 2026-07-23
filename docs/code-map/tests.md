@@ -12,14 +12,23 @@
 | `Lifecycle/` | 卡实体生命周期 / Handoff |
 | `FieldGeometry/` | Geometry / FieldBattle System（含无 Instance 护栏） |
 | `FlowShell/` | 流程壳 Controller |
+| `BattleSession/` | 局内会话 |
 | `Output/` | 描述 / 伤害等输出 |
 | `Cards/` | 卡面 Commit、牌库闸、飞行排序、致死表现回归等 |
+| `Flow/` | Flow 侧遗留/切片 |
 | `Fixtures/` | EditMode 夹具 |
-| `HostContractStructuralTests.cs` | 结构护栏：禁 `*Hook.cs`、禁 `*ManagerSingleton`、禁回流巨型宿主名 |
+| `HostContractStructuralTests.cs` | 结构护栏：禁四大旧宿主名、禁 `CombatHitSink`、禁回流 `new PresentationDirector`、System 不暴露具体 View |
 
-## 关闭门槛（普通票）
+## 关闭门槛（普通实施票）
 
-1. 受影响 EditMode 绿
-2. `unity command recompile` 后 Console 无新增 Error
+1. 受影响 EditMode 绿  
+2. `unity command recompile` 后 Console 无新增 Error / Exception / Assert  
 
-PlayMode 全链终验不属于单张实施票门槛（见 Issue #28 US18）。
+全量真实场景 PlayMode 终验是 Spec 级门禁（历史上由 #42 承接），不属于每张实施票的默认门槛。
+
+## 跑测（Unity CLI）
+
+```bash
+unity command recompile --project-path "<repo>"
+unity command run_tests --mode editor --filter <NameOrNamespace> --project-path "<repo>" --format json
+```

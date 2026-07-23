@@ -1,14 +1,16 @@
 # Code Map（轻量入口）
 
-> 权威长期文档：本目录 + [`docs/adr/`](../adr/)。  
-> `Assets/Docs/九宫牌局-代码文档/` 已 **DEPRECATED**（历史镜像，勿再当现状权威）。
+> **权威长期文档**：本目录 + [`docs/adr/`](../adr/) + 根目录 [`CONTEXT.md`](../../CONTEXT.md)。  
+> `Assets/Docs/九宫牌局-代码文档/` 已 **DEPRECATED**（历史源码镜像，勿再当现状权威；勿继续改写）。
+
+本地图描述 **仓库当下事实**，不描述未落地的目标树。
 
 ## 先读
 
 | 文档 | 用途 |
 |------|------|
-| [presentation.md](./presentation.md) | `NineGrid.Presentation` 角色目录、装配、扩展点 |
-| [tests.md](./tests.md) | EditMode 测试地图 |
+| [presentation.md](./presentation.md) | `NineGrid.Presentation` 目录、装配、QF 边界、扩展点 |
+| [tests.md](./tests.md) | EditMode 测试地图与护栏 |
 | [ADR-0001](../adr/0001-battle-presentation-unified-timeline-batch-ack.md) | 统一时间线 / Batch-ack |
 | [ADR-0002](../adr/0002-card-chassis-and-face-templates.md) | 单底盘四卡面 + Commit |
 
@@ -18,10 +20,12 @@
 |--------|------|------|
 | `NineGrid.Core` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Core/` | 规则核（QF） |
 | `NineGrid.Content` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Content/` | Catalog / Luban |
-| `NineGrid.Presentation` | `Assets/Scripts/NineGrid.Presentation/` | 表现层（原 Flow+Cards） |
+| `NineGrid.Presentation` | `Assets/Scripts/NineGrid.Presentation/` | 表现层（原 Flow+Cards **合并后的单一程序集**） |
 | `NineGrid.Presentation.Tests` | `…/Tests/` | EditMode |
 | `NineGrid.Presentation.Editor` | `…/Editor/` | 编辑器工具 |
 | `NineGrid.DevTest` | `Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/` | 小键盘 DevKeys |
+
+旧程序集 `NineGrid.Flow` / `NineGrid.Cards` 的 **asmdef 已删除**；源码仍以 `Flow/`、`Cards/` **目录 + 命名空间** 共存于 `NineGrid.Presentation` 内（见 presentation.md）。
 
 ## 场景入口
 
@@ -30,7 +34,13 @@ PresentationSceneRoot (IController)
   └─ PresentationCompositionRoot.Install(PresentationSceneBindings)
         ├─ PresentationRuntimeSystem → PresentationDirector → BattleTimeline
         ├─ BattleSession / Geometry / FieldBattle / GameFlowShell / InputState …
-        └─ Controllers 由 SceneRoot 绑定场景 Host
+        └─ Controllers 由 SceneRoot / Hook 接线绑定场景 Host
 ```
 
 主场景：`Assets/Scenes/MainScene.unity`、`Assets/Scenes/UITestSence.unity`。
+
+## 维护约定
+
+- 改表现层结构 / 通信范式 → 先改本目录，再改业务。  
+- 长期行为不变量 → 写 / 改 `docs/adr/`。  
+- 过程笔记 → `Assets/Notes/`（非权威）。
