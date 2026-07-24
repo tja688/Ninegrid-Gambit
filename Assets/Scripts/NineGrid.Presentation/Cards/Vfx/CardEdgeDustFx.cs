@@ -85,7 +85,16 @@ namespace NineGrid.Cards.Vfx
         private bool _loggedFirstPlay;
         private float _nextTrailBudgetProbeUnscaled = -1f;
         private int _trailRecycledThisFrame;
+        private int _trailSkippedThisFrame;
         private int _trailBudgetProbeUid = -1;
+
+        private enum ReserveMode
+        {
+            /// <summary>拖尾：只能回收 Move；绝不强杀 Place。</summary>
+            Trail,
+            /// <summary>落地：优先回收 Move；必要时短时软超限，不强杀其它 Place。</summary>
+            Place,
+        }
 
         public CardEdgeDustFxSettingsSO Settings => _settings;
 
@@ -144,6 +153,7 @@ namespace NineGrid.Cards.Vfx
         private void Update()
         {
             _trailRecycledThisFrame = 0;
+            _trailSkippedThisFrame = 0;
             _trailBudgetProbeUid = -1;
             UpdateTrails();
             UpdateParticles();
@@ -214,8 +224,8 @@ namespace NineGrid.Cards.Vfx
 
                 for (var k = 0; k < perEdge; k++)
                 {
-                    // Place 优先：必要时先回收 Move/最旧粒子，避免落地喷发被拖尾饿死。
-                    if (!TryReserveSlot(preferCullMove: true, out var culled))
+                    // 落地只挤掉拖尾；绝不回收其它 Place（否则先落位烟雾会被后落位强杀）。
+                    if (!TryReserveSlot(ReserveMode.Place, out var culled))
                     {
                         break;
                     }
@@ -378,8 +388,11 @@ namespace NineGrid.Cards.Vfx
 
                 for (var m = 0; m < perCorner; m++)
                 {
-                    if (!TryReserveSlot(preferCullMove: false, out var culled))
+                    // 拖尾绝不能回收 Place：否则先落位烟雾会被仍在飞的后牌拖尾提前清掉。
+                    if (!TryReserveSlot(ReserveMode.Trail, out var culled))
                     {
+                        _trailSkippedThisFrame++;
+                        _trailBudgetProbeUid = uid;
                         return;
                     }
 
@@ -447,9 +460,28 @@ namespace NineGrid.Cards.Vfx
         }
 
         /// <summary>
-        /// 保证有空位可喷。触顶时回收最旧粒子（Place 优先回收 Move），不再静默丢弃。
+        /// Place 软超限上限：给并发落地留出完整喷发配额，避免互相强杀。
         /// </summary>
-        private bool TryReserveSlot(bool preferCullMove, out bool culled)
+        private int PlaceHardCap
+        {
+            get
+            {
+                if (_settings == null)
+                {
+                    return 1024;
+                }
+
+                var burst = Mathf.Max(1, _settings.ParticlesPerEdge) * 4 * 12;
+                return _settings.MaxLiveParticles + burst;
+            }
+        }
+
+        /// <summary>
+        /// 保证有空位可喷。
+        /// Trail：只回收 Move；无 Move 可回收则失败（保护已落地 Place）。
+        /// Place：优先回收 Move；无 Move 时允许短时软超限，仍不回收其它 Place。
+        /// </summary>
+        private bool TryReserveSlot(ReserveMode mode, out bool culled)
         {
             culled = false;
             if (_settings == null)
@@ -457,38 +489,37 @@ namespace NineGrid.Cards.Vfx
                 return false;
             }
 
-            if (_live.Count < _settings.MaxLiveParticles)
+            var softCap = mode == ReserveMode.Place ? PlaceHardCap : _settings.MaxLiveParticles;
+            if (_live.Count < softCap && _live.Count < _settings.MaxLiveParticles)
             {
                 return true;
             }
 
-            var idx = -1;
-            if (preferCullMove)
+            // 触顶或进入 Place 软区：先挤掉 Move。
+            if (_live.Count >= _settings.MaxLiveParticles)
             {
                 for (var i = 0; i < _live.Count; i++)
                 {
-                    if (_live[i].Kind == DustKind.Move)
+                    if (_live[i].Kind != DustKind.Move)
                     {
-                        idx = i;
-                        break;
+                        continue;
                     }
+
+                    ReleasePair(_live[i]);
+                    _live.RemoveAt(i);
+                    culled = true;
+                    return true;
                 }
             }
 
-            if (idx < 0)
+            if (mode == ReserveMode.Trail)
             {
-                idx = 0;
-            }
-
-            if (idx >= _live.Count)
-            {
+                // 池里只剩 Place（或未超硬顶但已无 Move 可挤）→ 拖尾让路。
                 return false;
             }
 
-            ReleasePair(_live[idx]);
-            _live.RemoveAt(idx);
-            culled = true;
-            return true;
+            // Place：允许软超限，让先/后落位烟雾都走完 TTL。
+            return _live.Count < softCap;
         }
 
         private void ProbePlace(int uid, int requested, int spawned, int liveBefore, int recycled)
@@ -504,8 +535,9 @@ namespace NineGrid.Cards.Vfx
                     recycled,
                     PerfTraceSites.CardEdgeDustPlace);
 
-                if (recycled > 0 || spawned < requested)
+                if (recycled > 0 || spawned < requested || _live.Count > _settings.MaxLiveParticles)
                 {
+                    var soft = _live.Count > _settings.MaxLiveParticles;
                     CardPresentationProbe.Anomaly(
                         uid,
                         PerfTraceAnomalyCodes.DustBudgetPressure,
@@ -514,12 +546,16 @@ namespace NineGrid.Cards.Vfx
                         + "/" + requested.ToString(CultureInfo.InvariantCulture)
                         + " liveBefore=" + liveBefore.ToString(CultureInfo.InvariantCulture)
                         + " liveAfter=" + _live.Count.ToString(CultureInfo.InvariantCulture)
-                        + " max=" + (_settings != null
-                            ? _settings.MaxLiveParticles.ToString(CultureInfo.InvariantCulture)
-                            : "?"),
+                        + " max=" + _settings.MaxLiveParticles.ToString(CultureInfo.InvariantCulture)
+                        + " hardCap=" + PlaceHardCap.ToString(CultureInfo.InvariantCulture)
+                        + " softOverflow=" + (soft ? "1" : "0"),
                         PerfTraceSites.CardEdgeDustPlace,
                         layer: "Vfx",
-                        verdict: recycled > 0 ? "recycled" : "short");
+                        verdict: spawned < requested
+                            ? "short"
+                            : soft
+                                ? "softOverflow"
+                                : "recycledMove");
                 }
             }
             catch
@@ -530,7 +566,7 @@ namespace NineGrid.Cards.Vfx
 
         private void FlushTrailBudgetProbe()
         {
-            if (_trailRecycledThisFrame <= 0 || _settings == null)
+            if ((_trailRecycledThisFrame <= 0 && _trailSkippedThisFrame <= 0) || _settings == null)
             {
                 return;
             }
@@ -552,6 +588,21 @@ namespace NineGrid.Cards.Vfx
                     _trails.Count,
                     _settings.MaxLiveParticles,
                     PerfTraceSites.CardEdgeDustTrail);
+
+                if (_trailSkippedThisFrame > 0)
+                {
+                    CardPresentationProbe.Anomaly(
+                        _trailBudgetProbeUid,
+                        PerfTraceAnomalyCodes.DustBudgetPressure,
+                        "trail skipped=" + _trailSkippedThisFrame.ToString(CultureInfo.InvariantCulture)
+                        + " recycledMove=" + _trailRecycledThisFrame.ToString(CultureInfo.InvariantCulture)
+                        + " live=" + _live.Count.ToString(CultureInfo.InvariantCulture)
+                        + " trails=" + _trails.Count.ToString(CultureInfo.InvariantCulture)
+                        + " (protect Place)",
+                        PerfTraceSites.CardEdgeDustTrail,
+                        layer: "Vfx",
+                        verdict: "trailYieldToPlace");
+                }
             }
             catch
             {
