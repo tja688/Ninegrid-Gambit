@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0001 — 几何吸附 vs 采样吸附</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+  <main class="page">
+    <header class="lesson-head">
+      <p class="kicker">Lesson 0001 · TableNine Pixel Snap</p>
+      <h1>为什么关全屏 snap、改材质 snap，字就清晰了</h1>
+      <p class="lede">你已经亲眼看见效果。本课只钉死一件事：snap 发生在<strong>几何</strong>还是<strong>采样</strong>——这决定它打不打到 TMP。</p>
+    </header>
+
+    <h2>先记住一句话</h2>
+    <p>
+      <strong>Sprite 要的是「方块落在整像素上」；SDF 文字要的是「边缘仍能按亚像素采样」。 </strong>
+      全屏 UV snap 把第二种也干掉了；顶点 snap 只做第一种。
+    </p>
+
+    <h2>两条管线，打在不同的东西上</h2>
+    <p>你们仓库里其实同时存在过两种 snap（现在全屏那条默认关着）：</p>
+    <ol>
+      <li>
+        <a href="../reference/glossary.html#uv-snap">采样吸附</a> —
+        SelectiveLook Pass1 用量化 UV 重读整屏颜色：
+        <pre>float2 snapped = (floor(uv * res) + 0.5) / res;
+return tex2D(_BlitTexture, snapped);</pre>
+        卡面、文字、特效……凡是已经画进颜色缓冲的，一律被「按格重采样」。
+      </li>
+      <li>
+        <a href="../reference/glossary.html#vertex-snap">几何吸附</a> —
+        Sprite 材质在顶点阶段把 clip 坐标折到 960×540 格：
+        <pre>ndc = positionCS.xy / positionCS.w;
+pixel = (ndc * 0.5 + 0.5) * res;
+snapped = floor(pixel) + 0.5;
+// 写回 positionCS.xy</pre>
+        只移动<strong>这个 mesh 的四个角</strong>。TMP 用另一套材质，根本不进这个函数。
+      </li>
+    </ol>
+    <p class="cite">
+      对应代码：
+      <a href="../../../Assets/Arts/VisualProfiles/TableNineSelectiveLook.shader">TableNineSelectiveLook.shader</a>
+      Pass1；
+      <a href="../../../Assets/Arts/VisualProfiles/TableNinePixelSnapVertex.hlsl">TableNinePixelSnapVertex.hlsl</a>。
+    </p>
+
+    <div class="callout bad">
+      <strong>为什么小字灾难？</strong>
+      TMP 的 <a href="../reference/glossary.html#sdf">SDF</a> 把字形边缘存在距离场的灰度渐变里，靠连续采样做出 AA
+      （见 <a href="https://docs.unity3d.com/Packages/com.unity.textmeshpro@4.0/manual/FontAssetsSDF.html">TMP · About SDF fonts</a>）。
+      全屏 UV snap 等于把已经画好的细边缘，再按低分辨率格「取一个代表色填一整块」——笔画宽度只有几个屏幕像素时，边缘信息直接被踩碎。
+    </div>
+
+    <div class="callout good">
+      <strong>为什么卡面还行？</strong>
+      像素卡面的「硬边」主要来自 nearest 贴图本身。把四边形顶点吸到像素格，减少的是<strong>整张牌在亚像素上左右蹭</strong>造成的抖边；
+      它没有去量化已经画好的 framebuffer，所以不会误伤旁边的字。
+      Unity 的 Pixel Perfect Camera 也把 Pixel Snapping 描述为渲染时对齐、不改 Transform
+      （<a href="https://docs.unity3d.com/Manual/urp/2d-pixelperfect-ref.html">PPC 参考</a>）——同属「对齐几何」，不是「压扁整屏」。
+    </div>
+
+    <h2>动手：同一亚像素偏移，两种 snap</h2>
+    <p>拖亚像素滑杆，分别开关两种 snap。目标：左栏 Sprite 变稳，右栏字边缘在 UV snap 打开时明显变糊。</p>
+    <div class="lab" id="snap-lab"></div>
+
+    <h2>和 Godot「取经」到底取了什么</h2>
+    <p>
+      Lost For Swords / Godot 4 的常见做法是<strong>变换或顶点对齐到像素</strong>
+      （项目设置 <code>snap_2d_transforms_to_pixel</code>，见
+      <a href="https://docs.godotengine.org/en/stable/classes/class_projectsettings.html">ProjectSettings</a>），
+      而不是用一张全屏 shader 把颜色缓冲量化。CRT grille 可以打在文字上——糊的元凶几乎总是破坏性 snap。
+    </p>
+    <p>
+      你们落地的同构版：<code>LookRig.pixelSnap = 0</code>（全屏关）+
+      <code>spritePixelSnap = 1</code>（材质开）+ TMP 继续用自己的材质。扫描线仍可全屏。
+    </p>
+
+    <section class="quiz" data-quiz="q1">
+      <h3>检索练习 · 1</h3>
+      <p>全屏 UV snap 糊掉 TMP 的直接原因是什么？</p>
+      <button data-answer="wrong">四边形顶点没吸到整像素格点上</button>
+      <button data-answer="correct">颜色缓冲被按低分辨率格重采样</button>
+      <button data-answer="wrong">扫描线把字形距离场改成了位图</button>
+      <button data-answer="wrong">世界空间 TMP 不能和 Sprite 共相机</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <section class="quiz" data-quiz="q2">
+      <h3>检索练习 · 2</h3>
+      <p>Sprite 顶点 snap 不会毁字，是因为？</p>
+      <button data-answer="wrong">它自动跳过所有半透明物体</button>
+      <button data-answer="wrong">它只在 Overlay 相机上运行</button>
+      <button data-answer="correct">它只改 Sprite 材质的顶点，TMP 不走该 shader</button>
+      <button data-answer="wrong">它把文字先画进 NoSnapMask 再合成</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <h2>本课主读</h2>
+    <p>
+      先读官方这一页，把「SDF 存的是距离、边缘靠连续采样」钉死：
+      <a href="https://docs.unity3d.com/Packages/com.unity.textmeshpro@4.0/manual/FontAssetsSDF.html">TextMesh Pro · About SDF fonts</a>。
+      读完后对照你们关掉的 Pass1：它正是在破坏这种连续采样。
+    </p>
+
+    <div class="note">
+      有任何一句「听懂了但说不清」的地方，直接在对话里追问我——我是你的老师，可以对照仓库里的具体行号拆。
+      下一课预定：把 <code>TableNineSnapClipToPixelGrid</code> 从 NDC 推到像素格，逐步手算一遍。
+    </div>
+
+    <footer class="lesson-foot">
+      <div class="nav-links">
+        <a href="../reference/glossary.html">术语表</a>
+        <a href="../MISSION.md">Mission</a>
+        <a href="../RESOURCES.md">Resources</a>
+      </div>
+      <p>完成后：用自己的话回我一句——「全屏 snap 打的是 ___，材质 snap 打的是 ___。」</p>
+    </footer>
+  </main>
+
+  <script src="../assets/pixel-snap-lab.js"></script>
+  <script>
+    PixelSnapLab.mount(document.getElementById("snap-lab"));
+
+    document.querySelectorAll(".quiz").forEach((quiz) => {
+      const feedback = quiz.querySelector(".feedback");
+      quiz.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          quiz.querySelectorAll("button").forEach((b) => {
+            b.classList.remove("correct", "wrong");
+            b.disabled = true;
+          });
+          const ok = btn.dataset.answer === "correct";
+          btn.classList.add(ok ? "correct" : "wrong");
+          quiz.querySelectorAll('button[data-answer="correct"]').forEach((b) => b.classList.add("correct"));
+          feedback.textContent = ok
+            ? "对。记住：量化发生在采样阶段，才会无差别地打到字上。"
+            : "再看一眼：UV snap 重读的是整屏颜色，不是只动 Sprite 顶点。";
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Glossary — Pixel Snap</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+  <main class="page">
+    <header class="lesson-head">
+      <p class="kicker">Reference</p>
+      <h1>术语表</h1>
+      <p class="lede">本课与后续课统一用这些词。撞到陌生词先回这里。</p>
+    </header>
+
+    <h2 id="vertex-snap">Vertex snap（顶点 / 几何吸附）</h2>
+    <p>在顶点着色器里把裁剪空间坐标折到像素格。改变的是<strong>方块画在哪</strong>，不改变纹理内部怎么采样。你们的 <code>TableNineSnapClipToPixelGrid</code> 属于这一类。</p>
+
+    <h2 id="uv-snap">UV / framebuffer snap（采样吸附）</h2>
+    <p>全屏 blit 时用量化后的 UV 去读颜色缓冲：<code>floor(uv * res) / res</code>。每个屏幕像素都被迫对齐低分辨率格。旧的 SelectiveLook Pass1 属于这一类。</p>
+
+    <h2 id="sdf">SDF（Signed Distance Field）</h2>
+    <p>TMP 字形 atlas 存的是到轮廓的距离，不是「实心黑白位图」。边缘锐利度靠距离场的连续采样产生 AA。<a href="https://docs.unity3d.com/Packages/com.unity.textmeshpro@4.0/manual/FontAssetsSDF.html">TMP 文档</a>。</p>
+
+    <h2 id="subpixel">Subpixel position（亚像素位置）</h2>
+    <p>物体落在两个屏幕像素之间。Pixel art 用 nearest 时常见后果是闪烁/抖边；文字用 SDF 时则需要亚像素来保持边缘平滑。</p>
+
+    <h2 id="ppc">Pixel Perfect Camera</h2>
+    <p>URP 组件：按 Reference Resolution / PPU 控制 ortho 与可选的 Pixel Snapping。<a href="https://docs.unity3d.com/Manual/urp/2d-pixelperfect-ref.html">官方参考</a>。注意：其 Pixel Snapping「不改 Transform」，是渲染时对齐。</p>
+
+    <h2 id="scanline">Scanline（扫描线）</h2>
+    <p>全屏后处理暗线/栅格。轻度时文字通常仍可读；糊的元凶几乎总是 snap，不是 grille。你们的 Pass2 仍可打在文字上。</p>
+
+    <footer class="lesson-foot">
+      <div class="nav-links">
+        <a href="../lessons/0001-geometry-vs-sample-snap.html">← 第 1 课</a>
+        <a href="../MISSION.md">Mission</a>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>

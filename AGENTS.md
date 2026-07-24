@@ -51,6 +51,10 @@ Prefer `unity command` over MCP for Editor automation. See `docs/agents/unity-cl
 
 Start/restart Editor with `-automated` via `.cursor/skills/unity-automated-launch/` (portable; copy the folder to other repos).
 
+### Sprite-owned pixel snap
+
+Pixel-art snap without blurring SDF/TMP text: geometry snap on sprite materials only, fullscreen sample snap off. Portable: `.cursor/skills/sprite-owned-pixel-snap/` (copy the folder to other Unity URP 2D repos).
+
 ### AI workspace coordinator
 
 Multi-agent claims + EditMode test mutex: `.cursor/skills/ai-workspace/` (PowerShell CLI `scripts/ai-workspace.ps1`). Claim on start; run EditMode only via `test`; `gate-restart` before relaunching Editor.
