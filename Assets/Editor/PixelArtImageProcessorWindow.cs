@@ -196,7 +196,8 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         EditorGUILayout.LabelField("Pixel Art Image Processor", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
             "按路径批量设置像素图导入参数。已处理且指纹匹配的资源会跳过；改参数后会自动重处理。\n" +
-            "AssetDatabase 只能在主线程写 importer；加速靠：磁盘并行扫描、变更检测、批量 StartAssetEditing、减少无意义 Reimport。",
+            "AssetDatabase 只能在主线程写 importer；加速靠：磁盘并行扫描、变更检测、批量 StartAssetEditing、减少无意义 Reimport。\n" +
+            "新拖入资源后请等 Console 导入完成再点处理，否则易触发 SourceAssetDB mtime 警告（Import Error 4）。",
             MessageType.Info
         );
     }
@@ -491,6 +492,14 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
             return;
         }
 
+        // 新导入资源若仍在并行 Worker 中，立刻 WriteImportSettingsIfDirty 会改写 .meta mtime，
+        // 与 SourceAssetDB 登记时间错位 → Import Error Code (4) Build asset version error。
+        if (!WaitForAssetDatabaseIdle(120f, "等待资源导入空闲…"))
+        {
+            AddLog("[错误] 等待 AssetDatabase 空闲超时。请等 Console 导入结束后再重试。");
+            return;
+        }
+
         foreach (PathEntry entry in enabledPaths)
         {
             string normalized = NormalizeAssetFolder(entry.path);
@@ -564,11 +573,78 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
             AssetDatabase.SaveAssets();
         }
 
+        // 3) 等本轮批量导入落地，再显式 ForceUpdate 脏资源，把 SourceAssetDB mtime 对齐到磁盘。
+        WaitForAssetDatabaseIdle(120f, "等待批量导入完成…");
+        if (dirtyPaths.Count > 0)
+            ForceReimportPaths(dirtyPaths);
+
         AddLog("");
         AddLog(
             $"完成：处理 {counters.Processed}，未变更跳过 {counters.Unchanged}，已处理跳过 {counters.Skipped}，" +
             $"告警 {counters.Warnings}，错误 {counters.Errors}；实际标记脏资源 {dirtyPaths.Count}。"
         );
+    }
+
+    private bool WaitForAssetDatabaseIdle(float timeoutSeconds, string progressLabel)
+    {
+        double start = EditorApplication.timeSinceStartup;
+        while (EditorApplication.isUpdating)
+        {
+            float elapsed = (float)(EditorApplication.timeSinceStartup - start);
+            if (elapsed > timeoutSeconds)
+                return false;
+
+            float progress = timeoutSeconds <= 0f ? 1f : Mathf.Clamp01(elapsed / timeoutSeconds);
+            if (EditorUtility.DisplayCancelableProgressBar(
+                    "Pixel Art Processor",
+                    progressLabel,
+                    progress))
+            {
+                AddLog("[取消] 等待导入时空闲中止。");
+                return false;
+            }
+
+            // 批量工具本身阻塞主线程；短睡让导入 Worker / 主线程队列有机会推进。
+            System.Threading.Thread.Sleep(50);
+        }
+
+        return true;
+    }
+
+    private void ForceReimportPaths(List<string> assetPaths)
+    {
+        if (assetPaths == null || assetPaths.Count == 0)
+            return;
+
+        AddLog($"对齐 SourceAssetDB：强制重导 {assetPaths.Count} 个已变更资源…");
+        AssetDatabase.StartAssetEditing();
+        try
+        {
+            for (int i = 0; i < assetPaths.Count; i++)
+            {
+                string assetPath = assetPaths[i];
+                if (i == 0 || (i + 1) % 8 == 0 || i + 1 == assetPaths.Count)
+                {
+                    float progress = (i + 1f) / assetPaths.Count;
+                    if (EditorUtility.DisplayCancelableProgressBar(
+                            "Pixel Art Processor",
+                            $"强制重导 {i + 1}/{assetPaths.Count}\n{assetPath}",
+                            progress))
+                    {
+                        AddLog("[取消] 强制重导中止。");
+                        break;
+                    }
+                }
+
+                AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+            }
+        }
+        finally
+        {
+            AssetDatabase.StopAssetEditing();
+        }
+
+        WaitForAssetDatabaseIdle(120f, "等待强制重导完成…");
     }
 
     private void ProcessOneAsset(

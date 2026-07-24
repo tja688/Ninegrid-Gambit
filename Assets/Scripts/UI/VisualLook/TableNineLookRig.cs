@@ -6,11 +6,12 @@ using UnityEngine.UI;
 namespace NineGrid.VisualLook
 {
     /// <summary>
-    /// 把「全屏 PixelSnap + Overlay 文字逃逸」收敛为：
-    /// - 世界默认走 PixelSnap + 扫描线（Base 相机）
-    /// - NoPixelSnap 层（文字等）由 Overlay UICamera 渲染，不吃 snap
-    /// - 文字扫描线默认由 TMP Scanline 材质补齐（与 Rig 参数同步）
-    /// - 可选 useUnifiedScanline：关掉 TMP 扫描线，改由 Overlay 末相机统一 blit（需 Feature.overlayOwnsScanline，实验性）
+    /// TableNine Look 权威路径（单相机 + NoSnap Mask）：
+    /// - Base 相机绘制世界与世界空间 TMP（同 SortingLayer，卡牌/书可挡字）
+    /// - NoPixelSnap 层由 Feature.buildNoSnapMask 保护，逃全屏 PixelSnap
+    /// - 扫描线由 SelectiveLook Pass2 全屏施加（单相机下 TMP 自带扫描线关闭，避免叠双份）
+    /// Legacy：useSnapMaskSingleCamera=false 时 Base 剔除 NoPixelSnap，Overlay UICamera 只画字（字永在最上，无法挡字）
+    /// 实验：useUnifiedScanline + Feature.overlayOwnsScanline（当前 URP 栈上不稳定，默认关）
     /// </summary>
     [DisallowMultipleComponent]
     [ExecuteAlways]

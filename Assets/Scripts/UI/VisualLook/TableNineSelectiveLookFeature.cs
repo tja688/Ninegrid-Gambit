@@ -25,7 +25,7 @@ namespace NineGrid.VisualLook
             [Tooltip("Reserved for same-camera mesh mask path; UGUI 主路径请用相机栈。")]
             public Material maskMaterial;
             public LayerMask noSnapLayers;
-            [Tooltip("同相机 mask 路径（Canvas 无效）；相机栈方案请保持 false。")]
+            [Tooltip("权威路径：同相机重绘 NoPixelSnap（世界 TMP）到 _NoSnapMask，Snap 时保护这些像素。需 TableNine TMP 带 LightMode=Universal2D。相机栈逃 Snap 时保持 false。")]
             public bool buildNoSnapMask;
             [Tooltip("实验：由带 TableNineFinalScanlineMarker 的 Overlay 相机在栈末做 scanline-only blit。默认关闭（当前 URP 栈上不稳定）。")]
             public bool overlayOwnsScanline;
@@ -182,6 +182,8 @@ namespace NineGrid.VisualLook
         /// <see cref="Settings.maskMaterial"/>, then binds it as the global _NoSnapMask so the
         /// snap pass can leave those pixels un-snapped. Text stays on the base camera, so world
         /// sorting layers still occlude it naturally (cards over text, book over text, etc.).
+        /// TableNine TMP shaders declare LightMode=Universal2D so this list can find them;
+        /// SRPDefaultUnlit / UniversalForward remain for other unlit/legacy meshes on NoPixelSnap.
         /// </summary>
         sealed class NoSnapMaskPass : ScriptableRenderPass
         {
