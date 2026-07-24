@@ -827,6 +827,11 @@ namespace NineGrid.Content.Editor
             ApplyPostRebuildExtras(entry.Dto);
             ApplyFaceVisibility(previewHost.PreviewRoot != null ? previewHost.PreviewRoot.transform : null, faceUp);
             RestartPreviewAnim(entry);
+            // Play() 可能再次打开 VisibleInsideMask；预览末尾统一关掉 Mask 交互。
+            if (previewHost.PreviewRoot != null)
+            {
+                CardMainVisualMaskAnchor.DisableMaskingForEditorPreview(previewHost.PreviewRoot.transform);
+            }
         }
 
         private static void ApplyFaceVisibility(Transform root, bool showFront)

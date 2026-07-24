@@ -24,27 +24,16 @@ namespace NineGrid.Cards.Anim
         public Bounds GetWorldBounds()
         {
             CacheRefsIfNeeded();
-            if (spriteMask != null)
+
+            // SpriteMask.bounds 在 Renderer 禁用时仍可用；优先它，避免依赖已隐藏的调试 SpriteRenderer。
+            if (spriteMask != null && spriteMask.sprite != null)
             {
-                var maskRendererOnMask = spriteMask.GetComponent<SpriteRenderer>();
-                if (maskRendererOnMask != null && maskRendererOnMask.sprite != null)
-                {
-                    return maskRendererOnMask.bounds;
-                }
+                return spriteMask.bounds;
             }
 
             if (maskRenderer != null && maskRenderer.sprite != null)
             {
                 return maskRenderer.bounds;
-            }
-
-            var renderers = GetComponentsInChildren<SpriteRenderer>(true);
-            for (var i = 0; i < renderers.Length; i++)
-            {
-                if (renderers[i] != null && renderers[i].sprite != null)
-                {
-                    return renderers[i].bounds;
-                }
             }
 
             return new Bounds(transform.position, Vector3.one);
@@ -86,10 +75,71 @@ namespace NineGrid.Cards.Anim
             }
 
             CacheRefsIfNeeded();
-            if (spriteMask != null)
+            if (spriteMask == null)
             {
-                visual.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
+                return;
             }
+
+            // URP / SortingGroup：Mask 必须与被裁剪 Sprite 同 Sorting Layer，
+            // 并用 Custom Range 罩住其 order，否则 VisibleInsideMask 会整段消失。
+            SyncMaskSortingTo(visual);
+            visual.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
+        }
+
+        /// <summary>
+        /// 编辑器 PreviewRenderUtility 往往不跑 URP 2D Mask 模板，导致 VisibleInsideMask 全灭。
+        /// 预览实例上关掉 Mask 交互，仅保留定位；Play/运行时仍走真实裁剪。
+        /// </summary>
+        public static void DisableMaskingForEditorPreview(Transform faceRoot)
+        {
+            if (faceRoot == null)
+            {
+                return;
+            }
+
+            var masks = faceRoot.GetComponentsInChildren<SpriteMask>(true);
+            for (var i = 0; i < masks.Length; i++)
+            {
+                if (masks[i] != null)
+                {
+                    masks[i].enabled = false;
+                }
+            }
+
+            var renderers = faceRoot.GetComponentsInChildren<SpriteRenderer>(true);
+            for (var i = 0; i < renderers.Length; i++)
+            {
+                var sr = renderers[i];
+                if (sr != null && sr.maskInteraction != SpriteMaskInteraction.None)
+                {
+                    sr.maskInteraction = SpriteMaskInteraction.None;
+                }
+            }
+        }
+
+        public void SyncMaskSortingTo(SpriteRenderer visual)
+        {
+            if (visual == null)
+            {
+                return;
+            }
+
+            CacheRefsIfNeeded();
+            if (spriteMask == null)
+            {
+                return;
+            }
+
+            spriteMask.frontSortingLayerID = visual.sortingLayerID;
+            spriteMask.backSortingLayerID = visual.sortingLayerID;
+            var order = visual.sortingOrder;
+            spriteMask.frontSortingOrder = order + 32;
+            spriteMask.backSortingOrder = order - 32;
+            spriteMask.isCustomRangeActive = true;
+
+            // SpriteMask 自身也挂在同一层，避免 Default 层与卡面层脱节。
+            spriteMask.sortingLayerID = visual.sortingLayerID;
+            spriteMask.sortingOrder = order;
         }
 
         public static CardMainVisualMaskAnchor FindOrAdd(Transform faceRoot)

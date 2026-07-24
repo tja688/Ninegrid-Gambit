@@ -126,7 +126,6 @@ public static class CardMainVisualMaskSetup
             }
 
             spriteMask.alphaCutoff = 0.1f;
-            spriteMask.isCustomRangeActive = false;
 
             var anchor = maskTf.GetComponent<CardMainVisualMaskAnchor>();
             if (anchor == null)
@@ -143,9 +142,30 @@ public static class CardMainVisualMaskSetup
                 }
             }
 
+            // 只有主视觉吃 Mask；其它层（背景等）若误开 VisibleInsideMask 会整卡「空心」。
+            foreach (var sr in root.GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                if (sr == null || sr == maskSr)
+                {
+                    continue;
+                }
+
+                if (main != null && sr == main)
+                {
+                    continue;
+                }
+
+                sr.maskInteraction = SpriteMaskInteraction.None;
+            }
+
             if (main != null)
             {
+                anchor.SyncMaskSortingTo(main);
                 main.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
+            }
+            else
+            {
+                spriteMask.isCustomRangeActive = false;
             }
 
             PrefabUtility.SaveAsPrefabAsset(root, path);

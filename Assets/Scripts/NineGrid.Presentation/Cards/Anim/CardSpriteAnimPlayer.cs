@@ -175,7 +175,7 @@ namespace NineGrid.Cards.Anim
             _playing = _frames.Length > 1;
             looping = ShouldLoop(resolvedSlotId);
             ApplySlotTransformOnce(slotDto);
-            ApplyMaskInteraction();
+            ApplyMaskInteractionForContext();
             ApplyCurrentFrame();
             target.enabled = true;
         }
@@ -210,12 +210,48 @@ namespace NineGrid.Cards.Anim
             }
 
             ApplySlotTransformOnce(null);
-            ApplyMaskInteraction();
+            ApplyMaskInteractionForContext();
             if (sprite != null && target != null)
             {
                 target.sprite = sprite;
                 target.enabled = true;
             }
+        }
+
+        private void ApplyMaskInteractionForContext()
+        {
+            // PreviewRenderUtility 不跑 URP 2D Mask 模板：VisibleInsideMask → 全透明。
+            // 预览实例只定位不裁剪；Play Mode / 局内仍走真实 SpriteMask。
+            if (!Application.isPlaying && IsEditorPreviewInstance())
+            {
+                if (target != null)
+                {
+                    target.maskInteraction = SpriteMaskInteraction.None;
+                }
+
+                return;
+            }
+
+            ApplyMaskInteraction();
+        }
+
+        private bool IsEditorPreviewInstance()
+        {
+            if (target == null)
+            {
+                return false;
+            }
+
+            // CardFacePreviewHost 用 PreviewRenderUtility.AddSingleGO，实例 hideFlags 含 DontSave。
+            var flags = target.gameObject.hideFlags;
+            if ((flags & HideFlags.DontSave) != 0 || (flags & HideFlags.HideAndDontSave) != 0)
+            {
+                return true;
+            }
+
+            var root = transform.root != null ? transform.root.gameObject : gameObject;
+            flags = root.hideFlags;
+            return (flags & HideFlags.DontSave) != 0 || (flags & HideFlags.HideAndDontSave) != 0;
         }
 
         private void ApplyCurrentFrame()

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -22,10 +23,40 @@ namespace NineGrid.Content.CardPresentation
             var normalized = assetPath.Replace('\\', '/').Trim();
 
 #if UNITY_EDITOR
+            // Single 模式：主资产就是 Sprite。
             var editorSprite = AssetDatabase.LoadAssetAtPath<Sprite>(normalized);
             if (editorSprite != null)
             {
                 return editorSprite;
+            }
+
+            // Multiple / 图集：主资产是 Texture2D，子资产才是 Sprite。
+            var subAssets = AssetDatabase.LoadAllAssetsAtPath(normalized);
+            if (subAssets != null && subAssets.Length > 0)
+            {
+                Sprite first = null;
+                for (var i = 0; i < subAssets.Length; i++)
+                {
+                    if (subAssets[i] is Sprite sprite)
+                    {
+                        if (first == null)
+                        {
+                            first = sprite;
+                        }
+
+                        // 优先同名切片（去掉扩展名）。
+                        var texName = System.IO.Path.GetFileNameWithoutExtension(normalized);
+                        if (string.Equals(sprite.name, texName, StringComparison.Ordinal))
+                        {
+                            return sprite;
+                        }
+                    }
+                }
+
+                if (first != null)
+                {
+                    return first;
+                }
             }
 #endif
 
