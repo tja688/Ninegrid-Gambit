@@ -13,6 +13,13 @@ namespace NineGrid.Core.Systems
         int ResolveRoom(RoomKind roomKind);
 
         /// <summary>
+        /// 遗物三选一结算后：未选中的遗物记入「连续再出现」降权，仅作用于下一次遗物池抽取。
+        /// </summary>
+        /// <param name="offered">本次选项。</param>
+        /// <param name="selectedDefId">选中的遗物 DefId；跳过时传 null/空。</param>
+        void RememberUnselectedRelics(IReadOnlyList<RewardEntry> offered, string selectedDefId);
+
+        /// <summary>
         /// 重绑系统级 Trigger（InitialGameFactory 若 Clear 了 TriggerSystem 后必须调用）。
         /// </summary>
         void RebindSystemTriggers();
@@ -20,9 +27,16 @@ namespace NineGrid.Core.Systems
 
     public sealed class RewardSystem : AbstractSystem, IRewardSystem
     {
+        /// <summary>
+        /// 上一次出现但未选中的遗物，在紧接着的下一次遗物池抽取中权重降为 1/2；抽完即清除，后续不再降权。
+        /// </summary>
+        private const int ConsecutiveAppearanceWeightNumerator = 1;
+        private const int ConsecutiveAppearanceWeightDenominator = 2;
+
         private IUnRegister mKillRewardUnregister;
         private readonly Dictionary<string, string> mFloorMonsterDeckCache = new Dictionary<string, string>();
         private ulong mFloorMonsterDeckCacheSeed = ulong.MaxValue;
+        private readonly HashSet<string> mConsecutiveAppearancePenaltyRelics = new HashSet<string>();
 
         protected override void OnInit()
         {
@@ -52,22 +66,66 @@ namespace NineGrid.Core.Systems
                 return new RewardEntry[0];
             }
 
-            var candidates = new List<RewardEntry>(pool.Entries);
+            var isRelicPool = IsRelicRewardPool(poolId);
+            var applyConsecutivePenalty = isRelicPool && mConsecutiveAppearancePenaltyRelics.Count > 0;
+            var candidates = BuildRollCandidates(pool.Entries, excludeOwnedRelics: true);
             var count = pool.PickCount;
+            IReadOnlyList<RewardEntry> rolled;
             if (TryGetRarityWeights(poolId, out var white, out var blue, out var gold, out var red))
             {
-                return RollPoolByRarity(catalog, candidates, count, white, blue, gold, red);
+                rolled = RollPoolByRarity(
+                    catalog,
+                    candidates,
+                    count,
+                    white,
+                    blue,
+                    gold,
+                    red,
+                    applyConsecutivePenalty);
             }
-
-            var result = new List<RewardEntry>();
-            for (var i = 0; i < count && candidates.Count > 0; i++)
+            else
             {
-                var index = RollWeightedIndex(candidates);
-                result.Add(candidates[index]);
-                candidates.RemoveAt(index);
+                var result = new List<RewardEntry>();
+                for (var i = 0; i < count && candidates.Count > 0; i++)
+                {
+                    var index = RollWeightedIndex(candidates, applyConsecutivePenalty);
+                    result.Add(candidates[index]);
+                    candidates.RemoveAt(index);
+                }
+
+                rolled = result;
             }
 
-            return result;
+            if (applyConsecutivePenalty)
+            {
+                mConsecutiveAppearancePenaltyRelics.Clear();
+            }
+
+            return rolled;
+        }
+
+        public void RememberUnselectedRelics(IReadOnlyList<RewardEntry> offered, string selectedDefId)
+        {
+            mConsecutiveAppearancePenaltyRelics.Clear();
+            if (offered == null || offered.Count == 0)
+            {
+                return;
+            }
+
+            var selected = selectedDefId ?? string.Empty;
+            for (var i = 0; i < offered.Count; i++)
+            {
+                var entry = offered[i];
+                if (entry == null
+                    || entry.Kind != CardKind.Relic
+                    || string.IsNullOrEmpty(entry.DefId)
+                    || entry.DefId == selected)
+                {
+                    continue;
+                }
+
+                mConsecutiveAppearancePenaltyRelics.Add(entry.DefId);
+            }
         }
 
         public IReadOnlyList<RoomKind> RollRoomChoices(int count)
@@ -465,6 +523,65 @@ namespace NineGrid.Core.Systems
             return false;
         }
 
+        private static bool IsRelicRewardPool(string poolId)
+        {
+            return !string.IsNullOrEmpty(poolId)
+                && poolId.StartsWith("relic.", System.StringComparison.Ordinal);
+        }
+
+        private List<RewardEntry> BuildRollCandidates(IReadOnlyList<RewardEntry> entries, bool excludeOwnedRelics)
+        {
+            var candidates = new List<RewardEntry>();
+            if (entries == null || entries.Count == 0)
+            {
+                return candidates;
+            }
+
+            IReadOnlyList<string> ownedRelics = null;
+            if (excludeOwnedRelics)
+            {
+                ownedRelics = this.GetModel<PlayerModel>().RelicDefIds;
+            }
+
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                if (entry == null || string.IsNullOrEmpty(entry.DefId))
+                {
+                    continue;
+                }
+
+                if (excludeOwnedRelics
+                    && entry.Kind == CardKind.Relic
+                    && ContainsDefId(ownedRelics, entry.DefId))
+                {
+                    continue;
+                }
+
+                candidates.Add(entry);
+            }
+
+            return candidates;
+        }
+
+        private static bool ContainsDefId(IReadOnlyList<string> defIds, string defId)
+        {
+            if (defIds == null || defIds.Count == 0)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < defIds.Count; i++)
+            {
+                if (defIds[i] == defId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private IReadOnlyList<RewardEntry> RollPoolByRarity(
             GameContentCatalog catalog,
             List<RewardEntry> candidates,
@@ -472,7 +589,8 @@ namespace NineGrid.Core.Systems
             int whiteWeight,
             int blueWeight,
             int goldWeight,
-            int redWeight)
+            int redWeight,
+            bool applyConsecutivePenalty)
         {
             var result = new List<RewardEntry>();
             for (var i = 0; i < count && candidates.Count > 0; i++)
@@ -498,7 +616,7 @@ namespace NineGrid.Core.Systems
                     ofRarity.AddRange(candidates);
                 }
 
-                var index = RollWeightedIndex(ofRarity);
+                var index = RollWeightedIndex(ofRarity, applyConsecutivePenalty);
                 var picked = ofRarity[index];
                 result.Add(picked);
                 candidates.Remove(picked);
@@ -626,12 +744,12 @@ namespace NineGrid.Core.Systems
             return this.GetUtility<IRngUtility>().Range(min, max + 1);
         }
 
-        private int RollWeightedIndex(IReadOnlyList<RewardEntry> entries)
+        private int RollWeightedIndex(IReadOnlyList<RewardEntry> entries, bool applyConsecutivePenalty)
         {
             var total = 0;
             for (var i = 0; i < entries.Count; i++)
             {
-                total += entries[i].Weight > 0 ? entries[i].Weight : 0;
+                total += ResolveRollWeight(entries[i], applyConsecutivePenalty);
             }
 
             if (total <= 0)
@@ -643,7 +761,7 @@ namespace NineGrid.Core.Systems
             var cursor = 0;
             for (var i = 0; i < entries.Count; i++)
             {
-                cursor += entries[i].Weight > 0 ? entries[i].Weight : 0;
+                cursor += ResolveRollWeight(entries[i], applyConsecutivePenalty);
                 if (roll < cursor)
                 {
                     return i;
@@ -651,6 +769,22 @@ namespace NineGrid.Core.Systems
             }
 
             return entries.Count - 1;
+        }
+
+        private int ResolveRollWeight(RewardEntry entry, bool applyConsecutivePenalty)
+        {
+            var weight = entry != null && entry.Weight > 0 ? entry.Weight : 0;
+            if (!applyConsecutivePenalty || weight <= 0 || entry == null)
+            {
+                return weight;
+            }
+
+            if (mConsecutiveAppearancePenaltyRelics.Contains(entry.DefId))
+            {
+                return weight * ConsecutiveAppearanceWeightNumerator;
+            }
+
+            return weight * ConsecutiveAppearanceWeightDenominator;
         }
 
         private int RollWeightedRoomIndex(IReadOnlyList<RoomDefinition> rooms)

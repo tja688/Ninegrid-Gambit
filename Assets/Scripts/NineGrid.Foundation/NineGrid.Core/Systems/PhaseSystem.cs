@@ -489,6 +489,13 @@ namespace NineGrid.Core.Systems
 
             var entry = pending.RewardOptions[optionIndex];
             var poolId = pending.PoolId.Value ?? string.Empty;
+            if (IsRelicRewardPool(poolId))
+            {
+                this.GetSystem<IRewardSystem>().RememberUnselectedRelics(
+                    pending.RewardOptions,
+                    entry != null ? entry.DefId : null);
+            }
+
             var pipeline = this.GetSystem<IActionPipelineSystem>();
 
             // 商店购买：按卡牌 Price 扣金；通关/宝箱等免费池不扣。
@@ -528,7 +535,13 @@ namespace NineGrid.Core.Systems
             }
 
             var pending = this.GetModel<PendingChoiceModel>();
-            var isShop = (pending.PoolId.Value ?? string.Empty) == ShopHelpCardsPoolId;
+            var poolId = pending.PoolId.Value ?? string.Empty;
+            var isShop = poolId == ShopHelpCardsPoolId;
+            if (IsRelicRewardPool(poolId))
+            {
+                this.GetSystem<IRewardSystem>().RememberUnselectedRelics(pending.RewardOptions, null);
+            }
+
             // 商店离开：不发跳过帮助卡选择的 +金币；通关帮助三选一跳过仍发。
             var resolved = isShop ? 0 : this.GetSystem<IEconomySystem>().AwardSkipHelpChoice();
             var pipeline = this.GetSystem<IActionPipelineSystem>();
@@ -702,6 +715,12 @@ namespace NineGrid.Core.Systems
         }
 
         private const string ShopHelpCardsPoolId = "shop.helpCards";
+
+        private static bool IsRelicRewardPool(string poolId)
+        {
+            return !string.IsNullOrEmpty(poolId)
+                && poolId.StartsWith("relic.", System.StringComparison.Ordinal);
+        }
 
         private int ResolveShopPrice(string defId)
         {

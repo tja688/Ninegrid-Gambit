@@ -10,7 +10,7 @@ namespace NineGrid.Flow
 {
     /// <summary>
     /// 局内「玩家信息」HUD：血槽血管 + 当前/最大血量、有效护甲、金币。
-    /// 血槽长度随 MaxHp 相对基础上限伸长（每点 +0.1）；最大血量文案仅悬停血槽时显示。
+    /// 血槽长度随 MaxHp 相对基础上限伸长（每点 +0.05），总宽封顶 5.5；最大血量文案仅悬停血槽时显示。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PlayerInfoHudPresenter : MonoBehaviour
@@ -24,7 +24,8 @@ namespace NineGrid.Flow
         private const string ArmorValueName = "防御数值";
         private const string GoldValueName = "金币数值";
 
-        private const float SlotWidthPerMaxHp = 0.1f;
+        private const float SlotWidthPerMaxHp = 0.05f;
+        private const float MaxVesselWidth = 5.5f;
         private const float DefaultBaseMaxHp = 10f;
         private const float HpFillAnimDuration = 0.38f;
         private const float SlotGrowDuration = 0.45f;
@@ -397,14 +398,33 @@ namespace NineGrid.Flow
 
         private float ResolveSlotWidth(int maxHp)
         {
-            var delta = maxHp - baseMaxHp;
-            return Mathf.Max(0.05f, _baseSlotWidth + delta * SlotWidthPerMaxHp);
+            return Mathf.Clamp(_baseSlotWidth + ResolveVesselGrowth(maxHp), 0.05f, MaxVesselWidth);
         }
 
         private float ResolveFullFillWidth(int maxHp)
         {
+            return Mathf.Max(0.02f, _baseFillWidth + ResolveVesselGrowth(maxHp));
+        }
+
+        /// <summary>
+        /// 相对基础上限的血管伸长量；与血槽共用封顶，避免血量再涨时 fill 继续变宽。
+        /// </summary>
+        private float ResolveVesselGrowth(int maxHp)
+        {
             var delta = maxHp - baseMaxHp;
-            return Mathf.Max(0.02f, _baseFillWidth + delta * SlotWidthPerMaxHp);
+            var uncapped = delta * SlotWidthPerMaxHp;
+            var maxGrowth = MaxVesselWidth - _baseSlotWidth;
+            if (maxGrowth < 0f)
+            {
+                maxGrowth = 0f;
+            }
+
+            if (uncapped <= 0f)
+            {
+                return uncapped;
+            }
+
+            return Mathf.Min(uncapped, maxGrowth);
         }
 
         private void ApplySlotWidth(float width)
