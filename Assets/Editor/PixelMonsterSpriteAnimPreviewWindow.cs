@@ -20,10 +20,8 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
     private const string PrefsZoomKey = "TableNine.MonsterSpriteAnimPreview.Zoom";
     private const string PrefsSearchKey = "TableNine.MonsterSpriteAnimPreview.Search";
     private const string PrefsModeKey = "TableNine.MonsterSpriteAnimPreview.Mode";
-    private const string PrefsSlotWKey = "TableNine.MonsterSpriteAnimPreview.SlotW";
-    private const string PrefsSlotHKey = "TableNine.MonsterSpriteAnimPreview.SlotH";
-    private const string PrefsSlackKey = "TableNine.MonsterSpriteAnimPreview.Slack";
     private const string PrefsAlphaKey = "TableNine.MonsterSpriteAnimPreview.Alpha";
+    private const string PrefsCardFitViewKey = "TableNine.MonsterSpriteAnimPreview.CardFitView";
     private const float DefaultSpritePpu = 32f;
 
     private static readonly Color CanvasBg = new(0.14f, 0.15f, 0.17f, 1f);
@@ -48,6 +46,13 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
         CardFit = 1,
     }
 
+    /// <summary>Card Fit 下的主预览：虚拟线框 vs 真实怪物卡面。</summary>
+    private enum CardFitViewMode
+    {
+        Wireframe = 0,
+        RealCard = 1,
+    }
+
     private enum FitListFilter
     {
         All = 0,
@@ -69,13 +74,15 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
     [SerializeField] private Vector2 listScroll;
     [SerializeField] private int scrubFrame;
     [SerializeField] private PreviewMode previewMode = PreviewMode.CardFit;
-    [SerializeField] private int slotW = SpriteClipCardFitCatalog.DefaultSlotW;
-    [SerializeField] private int slotH = SpriteClipCardFitCatalog.DefaultSlotH;
-    [SerializeField] private float slackPx = SpriteClipCardFitCatalog.DefaultSlackPx;
+    [SerializeField] private CardFitViewMode cardFitView = CardFitViewMode.Wireframe;
     [SerializeField] private int alphaThreshold = SpriteClipCardFitCatalog.DefaultAlphaThreshold;
     [SerializeField] private bool writePerClipFiles;
     [SerializeField] private bool showUnionOutline = true;
+    [SerializeField] private bool showSlotOverlay = true;
+    [SerializeField] private bool showCalibrationPanel = true;
     [SerializeField] private FitListFilter fitListFilter = FitListFilter.All;
+
+    private MonsterCardSlotCalibration calibration = MonsterCardSlotCalibration.CreateDefault();
 
     private readonly List<ClipInfo> allClips = new();
     private readonly List<int> filteredIndices = new();
@@ -97,7 +104,11 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
     private CardFacePreviewHost cardFaceHost;
     private SpriteRenderer cardIconRenderer;
     private Transform cardIconTransform;
-    private bool cardFaceLive;
+    private Transform cardFaceRoot;
+
+    private int slotW => Math.Max(1, calibration.slotW);
+    private int slotH => Math.Max(1, calibration.slotH);
+    private float slackPx => Math.Max(0f, calibration.slackPx);
 
     private sealed class ClipInfo
     {
@@ -125,10 +136,9 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
         zoom = EditorPrefs.GetFloat(PrefsZoomKey, 3f);
         searchQuery = EditorPrefs.GetString(PrefsSearchKey, string.Empty);
         previewMode = (PreviewMode)EditorPrefs.GetInt(PrefsModeKey, (int)PreviewMode.CardFit);
-        slotW = EditorPrefs.GetInt(PrefsSlotWKey, SpriteClipCardFitCatalog.DefaultSlotW);
-        slotH = EditorPrefs.GetInt(PrefsSlotHKey, SpriteClipCardFitCatalog.DefaultSlotH);
-        slackPx = EditorPrefs.GetFloat(PrefsSlackKey, SpriteClipCardFitCatalog.DefaultSlackPx);
+        cardFitView = (CardFitViewMode)EditorPrefs.GetInt(PrefsCardFitViewKey, (int)CardFitViewMode.Wireframe);
         alphaThreshold = EditorPrefs.GetInt(PrefsAlphaKey, SpriteClipCardFitCatalog.DefaultAlphaThreshold);
+        calibration = MonsterCardSlotCalibration.Load();
         needsRescan = true;
         ReloadCatalog();
         EditorApplication.update += OnEditorUpdate;
@@ -143,10 +153,9 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
         EditorPrefs.SetFloat(PrefsZoomKey, zoom);
         EditorPrefs.SetString(PrefsSearchKey, searchQuery ?? string.Empty);
         EditorPrefs.SetInt(PrefsModeKey, (int)previewMode);
-        EditorPrefs.SetInt(PrefsSlotWKey, slotW);
-        EditorPrefs.SetInt(PrefsSlotHKey, slotH);
-        EditorPrefs.SetFloat(PrefsSlackKey, slackPx);
+        EditorPrefs.SetInt(PrefsCardFitViewKey, (int)cardFitView);
         EditorPrefs.SetInt(PrefsAlphaKey, alphaThreshold);
+        calibration?.Save();
         DisposeCardFacePreview();
         UnloadCurrentFrames();
     }
@@ -168,7 +177,7 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
                 Repaint();
             }
         }
-        else if (cardFaceLive)
+        else if (cardFitView == CardFitViewMode.RealCard && cardFaceHost != null)
         {
             PushCardFaceFrame();
         }
@@ -187,7 +196,10 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
 
         DrawToolbar();
         if (previewMode == PreviewMode.CardFit)
+        {
             DrawCardFitToolbar();
+            DrawCalibrationPanel();
+        }
 
         EditorGUILayout.Space(4f);
 
@@ -366,12 +378,20 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
     {
         using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
         {
-            GUILayout.Label("Slot", GUILayout.Width(28f));
-            slotW = EditorGUILayout.IntField(slotW, GUILayout.Width(36f));
-            GUILayout.Label("×", GUILayout.Width(12f));
-            slotH = EditorGUILayout.IntField(slotH, GUILayout.Width(36f));
-            GUILayout.Label("Slack", GUILayout.Width(36f));
-            slackPx = EditorGUILayout.FloatField(slackPx, GUILayout.Width(40f));
+            EditorGUI.BeginChangeCheck();
+            cardFitView = (CardFitViewMode)EditorGUILayout.EnumPopup(cardFitView, EditorStyles.toolbarPopup, GUILayout.Width(100f));
+            if (EditorGUI.EndChangeCheck())
+            {
+                if (cardFitView == CardFitViewMode.RealCard)
+                    EnsureCardFacePreview();
+                else
+                    DisposeCardFacePreview();
+                GUI.FocusControl(null);
+            }
+
+            GUILayout.Label(cardFitView == CardFitViewMode.RealCard ? "真实卡面" : "虚拟线框", EditorStyles.miniLabel, GUILayout.Width(56f));
+
+            GUILayout.Space(8f);
             GUILayout.Label("α≥", GUILayout.Width(22f));
             alphaThreshold = EditorGUILayout.IntField(alphaThreshold, GUILayout.Width(32f));
             writePerClipFiles = GUILayout.Toggle(writePerClipFiles, "Per-clip JSON", EditorStyles.toolbarButton, GUILayout.Width(92f));
@@ -397,14 +417,71 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
 
             if (GUILayout.Button("Ping Face Prefab", EditorStyles.toolbarButton, GUILayout.Width(108f)))
                 PingMonsterFacePrefab();
+        }
+    }
 
-            bool live = GUILayout.Toggle(cardFaceLive, "Live Card Face", EditorStyles.toolbarButton, GUILayout.Width(100f));
-            if (live != cardFaceLive)
+    private void DrawCalibrationPanel()
+    {
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            showCalibrationPanel = EditorGUILayout.Foldout(showCalibrationPanel, "卡面合法显示区标定（线框 ↔ 真实卡）", true);
+            if (!showCalibrationPanel)
+                return;
+
+            EditorGUILayout.HelpBox(
+                "线框模式用「Slot px」做 catalog 溢出判定；真实卡面模式把同一块合法区画在 怪物卡标准模板 上。" +
+                "请先 Snap 到「背景」或手动调 World Size / Offset，使蓝框贴合卡上怪物窗口。",
+                MessageType.Info);
+
+            EditorGUI.BeginChangeCheck();
+            using (new EditorGUILayout.HorizontalScope())
             {
-                if (live)
-                    EnsureCardFacePreview();
-                else
-                    DisposeCardFacePreview();
+                GUILayout.Label("Slot px", GUILayout.Width(52f));
+                calibration.slotW = EditorGUILayout.IntField(calibration.slotW, GUILayout.Width(40f));
+                GUILayout.Label("×", GUILayout.Width(12f));
+                calibration.slotH = EditorGUILayout.IntField(calibration.slotH, GUILayout.Width(40f));
+                GUILayout.Label("Slack", GUILayout.Width(36f));
+                calibration.slackPx = EditorGUILayout.FloatField(calibration.slackPx, GUILayout.Width(40f));
+                GUILayout.FlexibleSpace();
+                showSlotOverlay = GUILayout.Toggle(showSlotOverlay, "Overlay slot", GUILayout.Width(90f));
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUILayout.Label("World size", GUILayout.Width(70f));
+                calibration.worldW = EditorGUILayout.FloatField(calibration.worldW, GUILayout.Width(56f));
+                GUILayout.Label("×", GUILayout.Width(12f));
+                calibration.worldH = EditorGUILayout.FloatField(calibration.worldH, GUILayout.Width(56f));
+                GUILayout.Label("Offset", GUILayout.Width(44f));
+                calibration.offsetX = EditorGUILayout.FloatField(calibration.offsetX, GUILayout.Width(56f));
+                calibration.offsetY = EditorGUILayout.FloatField(calibration.offsetY, GUILayout.Width(56f));
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("Snap ← 背景", GUILayout.Width(100f)))
+                    SnapCalibrationFromNode("背景");
+                if (GUILayout.Button("Snap ← 核心图标", GUILayout.Width(110f)))
+                    SnapCalibrationFromNode("核心图标");
+                if (GUILayout.Button("Reset defaults", GUILayout.Width(100f)))
+                {
+                    float keepSlack = calibration.slackPx;
+                    calibration = MonsterCardSlotCalibration.CreateDefault();
+                    calibration.slackPx = keepSlack;
+                }
+
+                GUILayout.FlexibleSpace();
+                GUILayout.Label(
+                    $"maps {slotW}×{slotH}px → world {calibration.worldW:0.###}×{calibration.worldH:0.###} @ ({calibration.offsetX:0.###}, {calibration.offsetY:0.###})",
+                    EditorStyles.miniLabel);
+            }
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                calibration.Save();
+                if (cardFitView == CardFitViewMode.RealCard)
+                    PushCardFaceFrame();
+                Repaint();
             }
         }
     }
@@ -520,16 +597,15 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
 
             DrawPlaybackControls();
             if (previewMode == PreviewMode.CardFit)
-                DrawPreviewCanvasCardFit(entry);
-            else
-                DrawPreviewCanvasBody();
-
-            if (cardFaceLive && cardFaceHost != null)
             {
-                EditorGUILayout.Space(4f);
-                GUILayout.Label("Live Monster Card Face", EditorStyles.boldLabel);
-                Rect faceRect = GUILayoutUtility.GetRect(220f, 280f, GUILayout.ExpandWidth(true));
-                cardFaceHost.Draw(faceRect);
+                if (cardFitView == CardFitViewMode.RealCard)
+                    DrawPreviewCanvasRealCard(entry);
+                else
+                    DrawPreviewCanvasCardFit(entry);
+            }
+            else
+            {
+                DrawPreviewCanvasBody();
             }
 
             DrawFooterHints();
@@ -649,7 +725,7 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
     private void DrawPreviewCanvasCardFit(SpriteClipCardFitCatalog.ClipEntry entry)
     {
         float stageWidth = Mathf.Max(280f, position.width * 0.58f);
-        float stageHeight = Mathf.Clamp(position.height - 280f, 280f, 520f);
+        float stageHeight = Mathf.Clamp(position.height - 320f, 260f, 520f);
         Rect stage = GUILayoutUtility.GetRect(stageWidth, stageHeight, GUILayout.ExpandWidth(true));
         if (Event.current.type != EventType.Repaint)
             return;
@@ -662,12 +738,11 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
         float cx = stage.center.x;
         float cy = stage.center.y;
 
-        int sw = entry?.slotW > 0 ? entry.slotW : Math.Max(1, slotW);
-        int sh = entry?.slotH > 0 ? entry.slotH : Math.Max(1, slotH);
+        int sw = entry?.slotW > 0 ? entry.slotW : slotW;
+        int sh = entry?.slotH > 0 ? entry.slotH : slotH;
         float ox = entry?.offsetPx?.x ?? 0f;
         float oy = entry?.offsetPx?.y ?? 0f;
 
-        // Card slot centered on stage (GUI Y down).
         var slotRect = new Rect(cx - sw * z * 0.5f, cy - sh * z * 0.5f, sw * z, sh * z);
         EditorGUI.DrawRect(slotRect, SlotFill);
         DrawRectOutline(slotRect, SlotBorder, 2f);
@@ -693,7 +768,6 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
         Texture2D tex = CurrentTexture;
         if (tex != null)
         {
-            // Texture center sits at card center + clip offset (Y flipped for GUI).
             float texCx = cx + ox * z;
             float texCy = cy - oy * z;
             float drawW = tex.width * z;
@@ -703,24 +777,100 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
         }
 
         if (showUnionOutline && entry?.opaqueUnion != null && entry.opaqueUnion.width > 0f)
+            DrawUnionOutlineGui(cx, cy, z, entry, ox, oy);
+
+        GUI.Label(
+            new Rect(stage.xMin + 8f, stage.yMin + 6f, 320f, 32f),
+            $"Wireframe slot {sw}×{sh}px  slack {slackPx:0.#}  zoom ×{z:0.#}\ncenter = abstract card frame center",
+            EditorStyles.miniLabel);
+    }
+
+    private void DrawPreviewCanvasRealCard(SpriteClipCardFitCatalog.ClipEntry entry)
+    {
+        if (cardFaceHost == null)
+            EnsureCardFacePreview();
+
+        float stageWidth = Mathf.Max(280f, position.width * 0.58f);
+        float stageHeight = Mathf.Clamp(position.height - 320f, 280f, 560f);
+        Rect stage = GUILayoutUtility.GetRect(stageWidth, stageHeight, GUILayout.ExpandWidth(true));
+
+        if (cardFaceHost == null)
         {
-            float uminX = entry.opaqueUnion.minX + ox;
-            float umaxX = entry.opaqueUnion.maxX + ox;
-            float uminY = entry.opaqueUnion.minY + oy;
-            float umaxY = entry.opaqueUnion.maxY + oy;
-            // Clip Y-up → GUI Y-down relative to stage center.
-            var unionGui = Rect.MinMaxRect(
-                cx + uminX * z,
-                cy - umaxY * z,
-                cx + umaxX * z,
-                cy - uminY * z);
-            DrawRectOutline(unionGui, UnionOutline, 1f);
+            EditorGUI.LabelField(stage, statusMessage, EditorStyles.centeredGreyMiniLabel);
+            return;
+        }
+
+        PushCardFaceFrame();
+        cardFaceHost.Draw(stage);
+
+        if (Event.current.type != EventType.Repaint)
+            return;
+
+        if (showSlotOverlay && cardFaceRoot != null)
+        {
+            Bounds slotBounds = calibration.ToWorldBounds(cardFaceRoot);
+            if (cardFaceHost.TryWorldBoundsToGui(stage, slotBounds, out Rect slotGui))
+            {
+                EditorGUI.DrawRect(slotGui, SlotFill);
+                DrawRectOutline(slotGui, SlotBorder, 2f);
+
+                if (slackPx > 0.01f && slotW > 0 && slotH > 0)
+                {
+                    float slackWorldX = slackPx * (calibration.worldW / slotW);
+                    float slackWorldY = slackPx * (calibration.worldH / slotH);
+                    var slackBounds = new Bounds(
+                        slotBounds.center,
+                        new Vector3(slotBounds.size.x + slackWorldX * 2f, slotBounds.size.y + slackWorldY * 2f, 0.01f));
+                    if (cardFaceHost.TryWorldBoundsToGui(stage, slackBounds, out Rect slackGui))
+                        DrawRectOutline(slackGui, SlackBorder, 1f);
+                }
+            }
+
+            if (showUnionOutline && entry?.opaqueUnion != null && entry.opaqueUnion.width > 0f &&
+                slotW > 0 && slotH > 0)
+            {
+                float sx = calibration.worldW / slotW;
+                float sy = calibration.worldH / slotH;
+                float ox = entry.offsetPx?.x ?? 0f;
+                float oy = entry.offsetPx?.y ?? 0f;
+                float uminX = (entry.opaqueUnion.minX + ox) * sx;
+                float umaxX = (entry.opaqueUnion.maxX + ox) * sx;
+                float uminY = (entry.opaqueUnion.minY + oy) * sy;
+                float umaxY = (entry.opaqueUnion.maxY + oy) * sy;
+                Vector3 center = slotBounds.center;
+                var unionBounds = new Bounds(
+                    center + new Vector3((uminX + umaxX) * 0.5f, (uminY + umaxY) * 0.5f, 0f),
+                    new Vector3(Mathf.Abs(umaxX - uminX), Mathf.Abs(umaxY - uminY), 0.01f));
+                if (cardFaceHost.TryWorldBoundsToGui(stage, unionBounds, out Rect unionGui))
+                    DrawRectOutline(unionGui, UnionOutline, 1f);
+            }
         }
 
         GUI.Label(
-            new Rect(stage.xMin + 8f, stage.yMin + 6f, 280f, 32f),
-            $"slot {sw}×{sh}  slack {slackPx:0.#}  zoom ×{z:0.#}\ncenter = card frame center",
+            new Rect(stage.xMin + 8f, stage.yMin + 6f, 380f, 36f),
+            "Real card: 怪物卡标准模板.prefab\n" +
+            $"legal slot world {calibration.worldW:0.###}×{calibration.worldH:0.###} ↔ {slotW}×{slotH}px",
             EditorStyles.miniLabel);
+    }
+
+    private static void DrawUnionOutlineGui(
+        float cx,
+        float cy,
+        float z,
+        SpriteClipCardFitCatalog.ClipEntry entry,
+        float ox,
+        float oy)
+    {
+        float uminX = entry.opaqueUnion.minX + ox;
+        float umaxX = entry.opaqueUnion.maxX + ox;
+        float uminY = entry.opaqueUnion.minY + oy;
+        float umaxY = entry.opaqueUnion.maxY + oy;
+        var unionGui = Rect.MinMaxRect(
+            cx + uminX * z,
+            cy - umaxY * z,
+            cx + umaxX * z,
+            cy - uminY * z);
+        DrawRectOutline(unionGui, UnionOutline, 1f);
     }
 
     private static void DrawTexturePoint(Rect stage, Rect dest, Texture2D tex)
@@ -745,11 +895,20 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
     private void DrawFooterHints()
     {
         EditorGUILayout.Space(2f);
-        string modeHint = previewMode == PreviewMode.CardFit
-            ? "Card Fit：整段 clip 用联合不透明包围盒中心对齐卡框中心；蓝框=比对窗，黄框=slack，粉框=union。不改源素材。"
-            : "Body Compare：固定底边中心落脚，便于横向体型对比。";
+        string modeHint;
+        if (previewMode == PreviewMode.CardFit)
+        {
+            modeHint = cardFitView == CardFitViewMode.RealCard
+                ? "真实卡面：怪物卡标准模板 + 蓝框=标定合法区。用上方「卡面合法显示区标定」对齐线框与卡窗。"
+                : "虚拟线框：抽象 Slot px 比对；蓝框=比对窗，黄框=slack，粉框=union。";
+        }
+        else
+        {
+            modeHint = "Body Compare：固定底边中心落脚，便于横向体型对比。";
+        }
+
         EditorGUILayout.HelpBox(
-            "← →：切换动画  ·  Space：播放/暂停  ·  Tab：切换模式  ·  Ctrl+F：搜索\n" + modeHint,
+            "← →：切换动画  ·  Space：播放/暂停  ·  Tab：Body/CardFit  ·  Ctrl+F：搜索\n" + modeHint,
             MessageType.None);
     }
 
@@ -1107,6 +1266,12 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
 
     private void EnsureCardFacePreview()
     {
+        if (cardFaceHost != null && cardIconRenderer != null)
+        {
+            PushCardFaceFrame();
+            return;
+        }
+
         DisposeCardFacePreview();
 
         var request = new CardFacePreviewRequest
@@ -1133,7 +1298,11 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
             return;
         }
 
-        cardIconTransform = FindChildByName(cardFaceHost.Build.Root.transform, "核心图标");
+        cardFaceRoot = cardFaceHost.Build?.FaceRoot;
+        if (cardFaceRoot == null)
+            cardFaceRoot = cardFaceHost.FindChild("怪物卡标准模板");
+
+        cardIconTransform = cardFaceHost.FindChild("核心图标");
         cardIconRenderer = cardIconTransform != null
             ? cardIconTransform.GetComponent<SpriteRenderer>()
             : null;
@@ -1145,18 +1314,45 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
             return;
         }
 
-        cardFaceLive = true;
         PushCardFaceFrame();
-        statusMessage = "Live card face preview active. Toggle off to dispose. " + cardFaceHost.Status;
+        statusMessage = "Real card face ready (" + CardChassisPaths.MonsterFacePrefab + "). " + cardFaceHost.Status;
     }
 
     private void DisposeCardFacePreview()
     {
-        cardFaceLive = false;
         cardIconRenderer = null;
         cardIconTransform = null;
+        cardFaceRoot = null;
         cardFaceHost?.Dispose();
         cardFaceHost = null;
+    }
+
+    private void SnapCalibrationFromNode(string nodeName)
+    {
+        if (cardFaceHost == null)
+            EnsureCardFacePreview();
+        if (cardFaceHost == null)
+        {
+            statusMessage = "Cannot snap: card face preview unavailable.";
+            return;
+        }
+
+        if (cardFaceRoot == null)
+            cardFaceRoot = cardFaceHost.Build?.FaceRoot ?? cardFaceHost.FindChild("怪物卡标准模板");
+
+        SpriteRenderer sr = cardFaceHost.FindSpriteRenderer(nodeName);
+        if (sr == null || cardFaceRoot == null)
+        {
+            statusMessage = "Snap failed: missing node " + nodeName;
+            return;
+        }
+
+        calibration.SnapFromRenderer(sr, cardFaceRoot);
+        calibration.Save();
+        PushCardFaceFrame();
+        statusMessage =
+            $"Snapped legal slot from '{nodeName}' → {slotW}×{slotH}px, world {calibration.worldW:0.###}×{calibration.worldH:0.###}";
+        Repaint();
     }
 
     private Sprite CurrentSprite =>
@@ -1164,7 +1360,7 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
 
     private void PushCardFaceFrame()
     {
-        if (!cardFaceLive || cardIconRenderer == null)
+        if (cardFaceHost == null || cardIconRenderer == null)
             return;
 
         Sprite sprite = CurrentSprite;
@@ -1174,30 +1370,28 @@ public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
         if (cardIconTransform == null)
             return;
 
+        if (cardFaceRoot == null)
+            cardFaceRoot = cardFaceHost.Build?.FaceRoot ?? cardFaceHost.FindChild("怪物卡标准模板");
+
         SpriteClipCardFitCatalog.ClipEntry entry = null;
         if (selectedIndex >= 0 && selectedIndex < allClips.Count)
             entry = FindCatalogEntry(allClips[selectedIndex].FolderName);
 
         float ox = entry?.offsetPx?.x ?? 0f;
         float oy = entry?.offsetPx?.y ?? 0f;
-        // World units: sprite PPU (pack default 32). Offset is in texture pixels (Y-up).
-        cardIconTransform.localPosition = new Vector3(ox / DefaultSpritePpu, oy / DefaultSpritePpu, 0f);
-    }
 
-    private static Transform FindChildByName(Transform root, string name)
-    {
-        if (root == null)
-            return null;
-        if (root.name == name)
-            return root;
-        for (int i = 0; i < root.childCount; i++)
-        {
-            Transform found = FindChildByName(root.GetChild(i), name);
-            if (found != null)
-                return found;
-        }
+        Vector3 slotCenterWorld = cardFaceRoot != null
+            ? cardFaceRoot.TransformPoint(new Vector3(calibration.offsetX, calibration.offsetY, 0f))
+            : cardIconTransform.position;
 
-        return null;
+        Transform parent = cardIconTransform.parent;
+        Vector3 local = parent != null
+            ? parent.InverseTransformPoint(slotCenterWorld)
+            : slotCenterWorld;
+
+        local.x += ox / DefaultSpritePpu;
+        local.y += oy / DefaultSpritePpu;
+        cardIconTransform.localPosition = local;
     }
 
     private static int CountPngsInFolder(string folder)

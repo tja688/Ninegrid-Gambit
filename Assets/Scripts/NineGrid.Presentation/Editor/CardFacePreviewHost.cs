@@ -17,11 +17,14 @@ namespace NineGrid.Presentation.Editor
         private string _status = "就绪";
         private readonly List<string> _warnings = new List<string>();
         private bool _disposed;
+        private Bounds _framedBounds;
 
         public string Status => _status;
         public IReadOnlyList<string> Warnings => _warnings;
         public GameObject PreviewRoot => _build?.Root;
         public CardFacePreviewBuilder.BuildResult Build => _build;
+        public Camera PreviewCamera => _previewUtility != null ? _previewUtility.camera : null;
+        public Bounds FramedBounds => _framedBounds;
 
         public bool Rebuild(CardFacePreviewRequest request)
         {
@@ -100,8 +103,63 @@ namespace NineGrid.Presentation.Editor
             var texture = _previewUtility.EndPreview();
             if (texture != null)
             {
-                GUI.DrawTexture(rect, texture, ScaleMode.ScaleToFit, false);
+                GUI.DrawTexture(rect, texture, ScaleMode.StretchToFill, false);
             }
+        }
+
+        /// <summary>
+        /// 将预览相机世界坐标映射到 <see cref="Draw"/> 所用的 GUI 矩形（假定 StretchToFill / RT 与 rect 同宽高比）。
+        /// </summary>
+        public bool TryWorldToGui(Rect drawRect, Vector3 world, out Vector2 gui)
+        {
+            gui = default;
+            var cam = PreviewCamera;
+            if (cam == null || drawRect.width < 1f || drawRect.height < 1f)
+                return false;
+
+            float viewH = cam.orthographicSize * 2f;
+            float viewW = viewH * (drawRect.width / drawRect.height);
+            Vector3 camPos = cam.transform.position;
+
+            float nx = (world.x - camPos.x) / viewW + 0.5f;
+            float ny = (world.y - camPos.y) / viewH + 0.5f;
+            gui = new Vector2(
+                drawRect.x + nx * drawRect.width,
+                drawRect.yMax - ny * drawRect.height);
+            return true;
+        }
+
+        public bool TryWorldBoundsToGui(Rect drawRect, Bounds worldBounds, out Rect guiRect)
+        {
+            guiRect = default;
+            if (!TryWorldToGui(drawRect, worldBounds.min, out Vector2 a) ||
+                !TryWorldToGui(drawRect, worldBounds.max, out Vector2 b))
+                return false;
+
+            float xMin = Math.Min(a.x, b.x);
+            float xMax = Math.Max(a.x, b.x);
+            float yMin = Math.Min(a.y, b.y);
+            float yMax = Math.Max(a.y, b.y);
+            guiRect = Rect.MinMaxRect(xMin, yMin, xMax, yMax);
+            return true;
+        }
+
+        public Transform FindChild(string name)
+        {
+            if (_build?.Root == null || string.IsNullOrEmpty(name))
+                return null;
+            return FindChildRecursive(_build.Root.transform, name);
+        }
+
+        public SpriteRenderer FindSpriteRenderer(string name)
+        {
+            Transform t = FindChild(name);
+            return t != null ? t.GetComponent<SpriteRenderer>() : null;
+        }
+
+        public void Reframe()
+        {
+            FrameCameraOnRoot();
         }
 
         public void Dispose()
@@ -147,16 +205,16 @@ namespace NineGrid.Presentation.Editor
                 return;
             }
 
-            var bounds = CalculateBounds(_build.Root);
+            _framedBounds = CalculateBounds(_build.Root);
             var cam = _previewUtility.camera;
             cam.orthographic = true;
-            cam.orthographicSize = Mathf.Max(bounds.extents.y, bounds.extents.x * 0.75f) * 1.15f;
+            cam.orthographicSize = Mathf.Max(_framedBounds.extents.y, _framedBounds.extents.x * 0.75f) * 1.15f;
             if (cam.orthographicSize < 0.6f)
             {
                 cam.orthographicSize = 1.2f;
             }
 
-            cam.transform.position = bounds.center + new Vector3(0f, 0f, -10f);
+            cam.transform.position = _framedBounds.center + new Vector3(0f, 0f, -10f);
             cam.transform.rotation = Quaternion.identity;
         }
 
@@ -178,6 +236,20 @@ namespace NineGrid.Presentation.Editor
             }
 
             return bounds;
+        }
+
+        private static Transform FindChildRecursive(Transform root, string name)
+        {
+            if (root.name == name)
+                return root;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform found = FindChildRecursive(root.GetChild(i), name);
+                if (found != null)
+                    return found;
+            }
+
+            return null;
         }
 
         private void DestroyBuildOnly()
