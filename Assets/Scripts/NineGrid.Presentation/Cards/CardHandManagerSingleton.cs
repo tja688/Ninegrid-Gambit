@@ -1305,20 +1305,26 @@ namespace NineGrid.Cards
             _isBusy = true;
             try
             {
-                CardEntityLifecycleHook.CardsOrNull()?.SetDisplayMode(card, CardDisplayMode.RemovedMode);
-                if (card.TryGetEffectManager(out var effectManager))
+                // StatBoost 等 Choice 路径会先 HideHandCardForChoice(scale=0)；
+                // SetDisplayMode(RemovedMode) 会把缩放弹回 1.08，造成「用完后又闪一下」。
+                var alreadyHidden = card.Transform.localScale.sqrMagnitude <= 0.0001f;
+                if (!alreadyHidden)
                 {
-                    await effectManager.PlayUseAsync(CardBoardDirection.None, CancellationToken.None);
-                }
-                else
-                {
-                    var initialScale = card.Transform.localScale;
-                    await RunViewTweenAsync(
-                        CardViewTween.ScaleDisappear(
-                            card.Transform,
-                            initialScale,
-                            layoutSettings.applyVanishDuration),
-                        CancellationToken.None);
+                    CardEntityLifecycleHook.CardsOrNull()?.SetDisplayMode(card, CardDisplayMode.RemovedMode);
+                    if (card.TryGetEffectManager(out var effectManager))
+                    {
+                        await effectManager.PlayUseAsync(CardBoardDirection.None, CancellationToken.None);
+                    }
+                    else
+                    {
+                        var initialScale = card.Transform.localScale;
+                        await RunViewTweenAsync(
+                            CardViewTween.ScaleDisappear(
+                                card.Transform,
+                                initialScale,
+                                layoutSettings.applyVanishDuration),
+                            CancellationToken.None);
+                    }
                 }
 
                 var field = GroundFieldGeometryHook.FieldOrNull();
