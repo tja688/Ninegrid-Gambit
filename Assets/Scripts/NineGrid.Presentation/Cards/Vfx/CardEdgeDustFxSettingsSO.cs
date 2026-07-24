@@ -17,8 +17,8 @@ namespace NineGrid.Cards.Vfx
         [Range(0f, 3f)]
         [SerializeField] private float intensity = 1f;
 
-        [Tooltip("全局开关；关闭后 Play / Trail 直接 no-op。")]
-        [SerializeField] private bool fxEnabled = true;
+        [Tooltip("全局开关；关闭后 Play / Trail 直接 no-op。默认关，需要时再开。")]
+        [SerializeField] private bool fxEnabled = false;
 
         [Header("贴图 / 排序")]
         [SerializeField] private Sprite dustSprite;
