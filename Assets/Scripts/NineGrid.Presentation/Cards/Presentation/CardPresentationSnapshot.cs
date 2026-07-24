@@ -19,6 +19,8 @@ namespace NineGrid.Cards.Presentation
         public Sprite BackBorder;
         public Sprite BackShirt;
         public Sprite BackLogo;
+        public Sprite CardFrame;
+        public Sprite Banner;
 
         public int Attack;
         public int Armor;

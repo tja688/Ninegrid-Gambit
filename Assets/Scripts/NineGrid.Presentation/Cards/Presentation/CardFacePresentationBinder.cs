@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Text;
+using NineGrid.Cards.Anim;
 using NineGrid.Cards.Slots;
+using NineGrid.Content.CardPresentation;
 using TMPro;
 using UnityEngine;
 
@@ -50,6 +52,29 @@ namespace NineGrid.Cards.Presentation
             ApplyStats(snapshot);
             ApplyBasicDescription(snapshot);
             ApplyFaceOrientation(snapshot.FaceUp);
+            TryPlayIdleOrStatic(snapshot);
+        }
+
+        private void TryPlayIdleOrStatic(CardPresentationSnapshot snapshot)
+        {
+            if (snapshot == null || string.IsNullOrWhiteSpace(snapshot.DefId))
+            {
+                return;
+            }
+
+            if (!CardPresentationConfigCatalog.TryGet(snapshot.DefId, out var config) || config == null)
+            {
+                return;
+            }
+
+            var player = GetComponent<CardSpriteAnimPlayer>();
+            if (player == null)
+            {
+                player = gameObject.AddComponent<CardSpriteAnimPlayer>();
+            }
+
+            player.BindConfig(config);
+            player.PlayIdleOrStatic();
         }
 
         public void ApplyFaceOrientation(bool faceUp)
@@ -113,6 +138,8 @@ namespace NineGrid.Cards.Presentation
             TryApplySprite(CardFaceSlotCodes.BackBorder, snapshot.BackBorder);
             TryApplySprite(CardFaceSlotCodes.BackShirt, snapshot.BackShirt);
             TryApplySprite(CardFaceSlotCodes.BackLogo, snapshot.BackLogo);
+            TryApplySprite(CardFaceSlotCodes.CardFrame, snapshot.CardFrame);
+            TryApplySprite(CardFaceSlotCodes.Banner, snapshot.Banner);
         }
 
         private void TryApplySprite(string slotCode, Sprite sprite)

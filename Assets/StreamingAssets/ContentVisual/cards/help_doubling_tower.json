@@ -1,0 +1,70 @@
+{
+    "schemaVersion": 1,
+    "contentId": "help.doubling_tower",
+    "kind": "HelpCard",
+    "deckId": "",
+    "displayName": "倍增塔",
+    "description": "��������[����] ���ڸ�1ʱ���Թ��￨ʹ�õİ������������Σ�[�����Ƹ�] ����ҿ�ʹ�õİ�������Ч���Σ������������Ƴ�����",
+    "gold": 150,
+    "stats": {
+        "hp": 0,
+        "armor": 0,
+        "attack": 0,
+        "action": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Arts/Images/Png/Items/widget_width.png",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": [
+            {
+                "id": "idle",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "attack",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "hurt",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "death",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "lunch",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            }
+        ]
+    },
+    "extraSlots": []
+}

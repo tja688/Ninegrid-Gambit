@@ -98,7 +98,7 @@ namespace NineGrid.Core.Systems
         private IEnumerable<GameAction> ReactToRemovedCards(TriggerContext context)
         {
             var catalog = CatalogOrNull();
-            if (catalog == null || catalog.Economy.MonsterRemovedGold == 0 || context.Events == null)
+            if (catalog == null || context.Events == null)
             {
                 return null;
             }
@@ -125,7 +125,23 @@ namespace NineGrid.Core.Systems
                     continue;
                 }
 
-                result.Add(new ModifyGoldAction(catalog.Economy.MonsterRemovedGold, "remove:" + card.DefId));
+                var amount = catalog.Economy != null ? catalog.Economy.MonsterRemovedGold : 0;
+                CardContentDefinition def;
+                if (!string.IsNullOrEmpty(card.DefId)
+                    && catalog.Cards != null
+                    && catalog.Cards.TryGetValue(card.DefId, out def)
+                    && def != null
+                    && def.KillGold > 0)
+                {
+                    amount = def.KillGold;
+                }
+
+                if (amount == 0)
+                {
+                    continue;
+                }
+
+                result.Add(new ModifyGoldAction(amount, "remove:" + card.DefId));
             }
 
             return result;

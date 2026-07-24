@@ -63,7 +63,7 @@ namespace NineGrid.Content
         {
             if (source == ContentCatalogSourceKind.Hardcoded)
             {
-                return TableNineContentCatalog.CreateDefault();
+                return ApplyPresentationOverlay(TableNineContentCatalog.CreateDefault());
             }
 
             if (source == ContentCatalogSourceKind.Luban)
@@ -71,7 +71,7 @@ namespace NineGrid.Content
                 GameContentCatalog lubanCatalog;
                 if (TryLoadLubanCatalog(lubanDataDirectory ?? ResolveLubanDataDirectory(), out lubanCatalog))
                 {
-                    return lubanCatalog;
+                    return ApplyPresentationOverlay(lubanCatalog);
                 }
 
                 throw new InvalidOperationException("Luban content data is unavailable.");
@@ -80,10 +80,16 @@ namespace NineGrid.Content
             GameContentCatalog autoCatalog;
             if (TryLoadLubanCatalog(lubanDataDirectory ?? ResolveLubanDataDirectory(), out autoCatalog))
             {
-                return autoCatalog;
+                return ApplyPresentationOverlay(autoCatalog);
             }
 
-            return TableNineContentCatalog.CreateDefault();
+            return ApplyPresentationOverlay(TableNineContentCatalog.CreateDefault());
+        }
+
+        private static GameContentCatalog ApplyPresentationOverlay(GameContentCatalog catalog)
+        {
+            CardPresentationBusinessOverlay.ApplyToCatalog(catalog);
+            return catalog;
         }
     }
 }

@@ -1,0 +1,70 @@
+{
+    "schemaVersion": 1,
+    "contentId": "help.healing_spring",
+    "kind": "HelpCard",
+    "deckId": "",
+    "displayName": "治疗泉",
+    "description": "����Ȫ��[����] �ƶ�����ҿ��������ڸ�ʱ��Ϊ��һָ�2��Ѫ����[�����Ƹ�] ��������ս��ʱ���ָ�1��Ѫ����[ʹ��ʱ] ֱ���Ƴ�����������������Ч��",
+    "gold": 80,
+    "stats": {
+        "hp": 0,
+        "armor": 0,
+        "attack": 0,
+        "action": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Arts/Images/Png/Items/tree_collapse.png",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": [
+            {
+                "id": "idle",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "attack",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "hurt",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "death",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "lunch",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            }
+        ]
+    },
+    "extraSlots": []
+}

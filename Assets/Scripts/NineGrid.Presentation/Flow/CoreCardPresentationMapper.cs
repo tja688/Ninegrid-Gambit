@@ -1,6 +1,7 @@
 using NineGrid.Cards;
 using NineGrid.Cards.Presentation;
 using NineGrid.Content;
+using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
@@ -214,6 +215,12 @@ namespace NineGrid.Flow
                 return;
             }
 
+            // JSON 权威：有配置则优先覆盖名字 / 描述 / 槽图。
+            if (TryApplyJsonPresentation(snapshot, defId))
+            {
+                return;
+            }
+
             EnsureVisualsLoaded();
 
             var arch = NineGridArchitecture.Current;
@@ -228,9 +235,7 @@ namespace NineGrid.Flow
                     _spriteCatalogs,
                     out var resolved))
             {
-                // 首波回填范围：仅名字 + 主图标（数值由 Core 读入）。
-                // Face_Background / Back_* / Basic_Description 仅在 Catalog 显式装配时覆盖；
-                // 不把 ContentVisual 旧长文案灌进卡面描述（空则 Binder 保留模板兜底）。
+                // Luban/SO fallback：名字 + 主图标；显式装配的 Face/Back 覆盖。
                 snapshot.DisplayName = resolved.DisplayName ?? string.Empty;
                 snapshot.MainIcon = resolved.Icon;
                 snapshot.FaceBackground = resolved.Face;
@@ -248,6 +253,78 @@ namespace NineGrid.Flow
             if (string.IsNullOrEmpty(snapshot.DisplayName))
             {
                 snapshot.DisplayName = defId;
+            }
+        }
+
+        private static bool TryApplyJsonPresentation(CardPresentationSnapshot snapshot, string defId)
+        {
+            if (!CardPresentationConfigCatalog.TryGet(defId, out var dto) || dto == null)
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.displayName))
+            {
+                snapshot.DisplayName = dto.displayName;
+            }
+            else if (string.IsNullOrEmpty(snapshot.DisplayName))
+            {
+                snapshot.DisplayName = defId;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.description))
+            {
+                snapshot.BasicDescription = dto.description;
+            }
+
+            if (dto.sprites != null)
+            {
+                ApplyJsonSprite(ref snapshot.MainIcon, dto.sprites.mainIcon);
+                ApplyJsonSprite(ref snapshot.FaceBackground, dto.sprites.faceBackground);
+                ApplyJsonSprite(ref snapshot.BackBorder, dto.sprites.backBorder);
+                ApplyJsonSprite(ref snapshot.BackShirt, dto.sprites.backShirt);
+                ApplyJsonSprite(ref snapshot.BackLogo, dto.sprites.backLogo);
+                ApplyJsonSprite(ref snapshot.CardFrame, dto.sprites.cardFrame);
+                ApplyJsonSprite(ref snapshot.Banner, dto.sprites.banner);
+            }
+
+            if (dto.stats != null)
+            {
+                if (dto.stats.attack > 0)
+                {
+                    snapshot.Attack = dto.stats.attack;
+                }
+
+                if (dto.stats.armor > 0)
+                {
+                    snapshot.Armor = dto.stats.armor;
+                }
+
+                if (dto.stats.hp > 0)
+                {
+                    snapshot.Hp = dto.stats.hp;
+                }
+
+                if (dto.stats.action > 0)
+                {
+                    snapshot.ActionCount = dto.stats.action;
+                }
+            }
+
+            return true;
+        }
+
+        private static void ApplyJsonSprite(ref Sprite target, string assetPath)
+        {
+            if (string.IsNullOrWhiteSpace(assetPath))
+            {
+                return;
+            }
+
+            var sprite = CardPresentationSpritePath.LoadSprite(assetPath);
+            if (sprite != null)
+            {
+                target = sprite;
             }
         }
 

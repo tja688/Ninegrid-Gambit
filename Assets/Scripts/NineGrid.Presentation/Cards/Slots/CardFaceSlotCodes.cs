@@ -9,6 +9,8 @@ namespace NineGrid.Cards.Slots
     {
         public const string MainIcon = "Main_Icon";
         public const string FaceBackground = "Face_Background";
+        public const string CardFrame = "Card_Frame";
+        public const string Banner = "Banner";
         public const string BackBorder = "Back_Border";
         public const string BackShirt = "Back_Shirt";
         public const string BackLogo = "Back_Logo";

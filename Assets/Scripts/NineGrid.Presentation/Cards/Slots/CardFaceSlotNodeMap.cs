@@ -18,6 +18,14 @@ namespace NineGrid.Cards.Slots
                     new[] { "主图标", "核心图标", "遗物主图标", "MainIcon", "Main Icon" }
                 },
                 { CardFaceSlotCodes.FaceBackground, new[] { "背景", "背景图", "Card Background", "CardBackground" } },
+                {
+                    CardFaceSlotCodes.CardFrame,
+                    new[] { "卡框", "Frame", "CardFrame", "Card_Frame", "卡牌框" }
+                },
+                {
+                    CardFaceSlotCodes.Banner,
+                    new[] { "横幅", "Banner", "NameBanner", "标题横幅" }
+                },
                 { CardFaceSlotCodes.BackBorder, new[] { "边框", "Card_Border_rectangle_bronze", "Card_Border_rectangle_dark" } },
                 { CardFaceSlotCodes.BackShirt, new[] { "CardShirts_8", "CardShirts", "背纹" } },
                 { CardFaceSlotCodes.BackLogo, new[] { "logo", "Logo" } },

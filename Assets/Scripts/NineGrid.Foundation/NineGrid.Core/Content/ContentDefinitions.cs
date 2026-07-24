@@ -89,6 +89,8 @@ namespace NineGrid.Core.Content
         public CardKind Kind { get; private set; }
         public ContentRarity Rarity { get; set; }
         public int Price { get; set; }
+        /// <summary>怪物击杀金币；0 表示回退 Economy.MonsterRemovedGold。</summary>
+        public int KillGold { get; set; }
         public int Level { get; set; }
         public bool IsElite { get; set; }
         public bool IsBoss { get; set; }
