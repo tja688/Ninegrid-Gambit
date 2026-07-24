@@ -9,8 +9,8 @@ namespace NineGrid.Content.Editor
 {
     public static class ContentVisualLubanMenu
     {
-        public const string OpenEditorMenu = "TableNine/Content/Content Visual Editor";
-        public const string RegenerateMenu = "TableNine/Content/Regenerate Luban";
+        public const string OpenEditorMenu = "NineGrid/归档/Content Visual Editor";
+        public const string RegenerateMenu = "NineGrid/归档/Regenerate Luban";
         private const string GenScriptRelative = "Assets/Tools/Luban/gen_table_nine.ps1";
 
         [MenuItem(OpenEditorMenu)]

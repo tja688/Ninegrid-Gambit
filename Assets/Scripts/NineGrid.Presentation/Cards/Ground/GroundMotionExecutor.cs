@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards.Convergence;
+using NineGrid.Cards.Vfx;
 using NineGrid.Core;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
@@ -347,6 +348,7 @@ namespace NineGrid.Cards
             if (snapToAnchor)
             {
                 SlotFrameConvergence.SnapHome(card, anchor.position, "Ground.Place.Snap", card.Uid);
+                CardEdgeDustFx.PlayPlace(card);
                 CardPresentationProbe.SnapSet(
                     card.Uid,
                     anchor.position,

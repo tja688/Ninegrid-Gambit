@@ -12,40 +12,6 @@ namespace NineGrid.Presentation.Editor
     {
         private const string DotweenAnimationTypeName = "DG.Tweening.DOTweenAnimation, DOTweenPro";
 
-        [MenuItem("NineGrid/Cards/Effects/Bake Tween Clips From Selected Object")]
-        public static void BakeFromSelectedObjectMenu()
-        {
-            GameObject source = null;
-            CardDOTweenSequenceEffectSO asset = null;
-            var objects = Selection.objects;
-            for (var i = 0; i < objects.Length; i++)
-            {
-                if (source == null && objects[i] is GameObject gameObject)
-                {
-                    source = gameObject;
-                }
-
-                if (asset == null && objects[i] is CardDOTweenSequenceEffectSO sequenceAsset)
-                {
-                    asset = sequenceAsset;
-                }
-            }
-
-            if (source == null)
-            {
-                Debug.LogWarning("[CardDOTweenSequenceBake] 请在 Hierarchy 中选中带 DOTweenAnimation 的 GameObject。");
-                return;
-            }
-
-            if (asset == null)
-            {
-                Debug.LogWarning("[CardDOTweenSequenceBake] 请在 Project 中同时选中目标 CardDOTweenSequenceEffectSO 资产。");
-                return;
-            }
-
-            BakeFromGameObject(source, asset);
-        }
-
         public static bool BakeFromGameObject(GameObject source, CardDOTweenSequenceEffectSO asset)
         {
             if (source == null || asset == null)

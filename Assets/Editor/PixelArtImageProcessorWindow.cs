@@ -144,7 +144,7 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         public int Unchanged;
     }
 
-    [MenuItem("Tools/Pixel Art/Image Import Processor")]
+    [MenuItem("NineGrid/Tools/Image Import Processor")]
     public static void Open()
     {
         PixelArtImageProcessorWindow window = GetWindow<PixelArtImageProcessorWindow>();

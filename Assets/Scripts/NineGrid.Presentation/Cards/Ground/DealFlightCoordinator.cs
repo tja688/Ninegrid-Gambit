@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards.Convergence;
+using NineGrid.Cards.Vfx;
 using UnityEngine;
 
 namespace NineGrid.Cards
@@ -376,6 +377,7 @@ namespace NineGrid.Cards
                 }
 
                 SlotFrameConvergence.SnapHome(probe.Card, settlePos, "DealFlight.ExploreSettle", probe.Card.Uid);
+                CardEdgeDustFx.PlayPlace(probe.Card);
 
                 if (!_host.PlaceForExplore(probe.TrackedSlot, probe.Card))
                 {
@@ -449,6 +451,7 @@ namespace NineGrid.Cards
                 }
 
                 SlotFrameConvergence.SnapHome(probe.Card, settlePos, "DealFlight.DrainSettle", uid);
+                CardEdgeDustFx.PlayPlace(probe.Card);
                 CardEntityLifecycleHook.CardsOrNull()?.RefreshDisplayMode(probe.Card);
                 probe.Handle.Complete(true);
             }

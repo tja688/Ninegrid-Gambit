@@ -13,7 +13,7 @@ using UnityEngine;
 public sealed class NineGridSpriteBatchWindow : EditorWindow
 {
     private const string PrefsKey = "TableNine.NineGridSpriteBatch.Settings.V2";
-    private const string MenuPath = "Tools/Pixel Art/Nine Grid Batch Slicer";
+    private const string MenuPath = "NineGrid/Tools/Nine Grid Batch Slicer";
 
     private static readonly int[] BorderQuickChoices = { 4, 8, 12, 16, 24, 32, 48, 64 };
 

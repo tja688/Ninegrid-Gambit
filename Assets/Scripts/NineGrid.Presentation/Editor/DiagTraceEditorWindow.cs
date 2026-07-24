@@ -16,7 +16,7 @@ namespace NineGrid.Presentation.Editor
     /// </summary>
     public sealed class DiagTraceEditorWindow : EditorWindow
     {
-        private const string MenuPath = "NineGrid/Diagnostics/诊断日志控制台";
+        private const string MenuPath = "NineGrid/归档/诊断日志控制台";
 
         private static readonly (DiagTraceTrack Track, string Label, string Dir, string Prefix)[] TrackDefs =
         {

@@ -13,7 +13,7 @@ using UnityEngine;
 /// </summary>
 public sealed class PixelMonsterSpriteAnimPreviewWindow : EditorWindow
 {
-    private const string MenuPath = "Tools/Pixel Art/Monster Sprite Anim Preview";
+    private const string MenuPath = "NineGrid/归档/Monster Sprite Anim Preview";
     private const string DefaultSpritesRoot = "Assets/Arts/Images/Png/像素怪物合集/sprites";
     private const string PrefsRootKey = "TableNine.MonsterSpriteAnimPreview.Root";
     private const string PrefsFpsKey = "TableNine.MonsterSpriteAnimPreview.Fps";
