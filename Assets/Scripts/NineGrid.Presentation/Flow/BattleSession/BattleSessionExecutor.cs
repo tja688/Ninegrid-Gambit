@@ -284,8 +284,16 @@ namespace NineGrid.Flow
             }
         }
 
-        public InitialGameSnapshot BootstrapRun(InitialGameOptions options = null)
+        public InitialGameSnapshot BootstrapRun(
+            InitialGameOptions options = null,
+            bool preserveRunInventory = false)
         {
+            RunInventorySnapshot inventory = null;
+            if (preserveRunInventory)
+            {
+                inventory = CaptureRunInventory(NineGridArchitecture.Current);
+            }
+
             TeardownPresentationRuntime(IntentClearReason.LayerChange);
             ResetPresentationSurface();
             CoreCardPresentationMapper.EnsureContentCatalogLoaded();
@@ -294,6 +302,11 @@ namespace NineGrid.Flow
             var snapshot = options != null
                 ? InitialGameFactory.Create(arch, options)
                 : InitialGameFactory.Create(arch);
+
+            if (inventory != null)
+            {
+                RestoreRunInventory(arch, inventory);
+            }
 
             RefreshPersistentInBattleUi(animate: false);
             _settlementRaised = false;
@@ -311,8 +324,121 @@ namespace NineGrid.Flow
                 Debug.LogWarning("[BattleSession] BattleTrace BootstrapRun: " + ex.Message);
             }
 
-            Debug.Log($"[BattleSession] BootstrapRun 完成 avatar=#{snapshot.AvatarUid} @{snapshot.AvatarSlot}");
+            Debug.Log(
+                $"[BattleSession] BootstrapRun 完成 avatar=#{snapshot.AvatarUid} @{snapshot.AvatarSlot}"
+                + (preserveRunInventory ? " preserveRunInventory=true" : string.Empty));
             return snapshot;
+        }
+
+        private sealed class RunInventorySnapshot
+        {
+            public string[] RelicDefIds;
+            public HelpCardStackEntry[] HelpCardStacks;
+            public int Coins;
+            public int InteractionCount;
+            public string ProfessionId;
+            public int Floor;
+            public int NodeIndex;
+            public ulong Seed;
+        }
+
+        private static RunInventorySnapshot CaptureRunInventory(IArchitecture arch)
+        {
+            if (arch == null)
+            {
+                return null;
+            }
+
+            var player = arch.GetModel<PlayerModel>();
+            var run = arch.GetModel<RunModel>();
+            var relics = player.RelicDefIds;
+            var helps = player.HelpCardStacks;
+            var snapshot = new RunInventorySnapshot
+            {
+                RelicDefIds = new string[relics.Count],
+                HelpCardStacks = new HelpCardStackEntry[helps.Count],
+                Coins = player.Coins.Value,
+                InteractionCount = player.InteractionCount.Value,
+                ProfessionId = player.ProfessionId.Value ?? string.Empty,
+                Floor = run.Floor.Value,
+                NodeIndex = run.NodeIndex.Value,
+                Seed = run.Seed.Value,
+            };
+            for (var i = 0; i < relics.Count; i++)
+            {
+                snapshot.RelicDefIds[i] = relics[i];
+            }
+
+            for (var i = 0; i < helps.Count; i++)
+            {
+                snapshot.HelpCardStacks[i] = helps[i];
+            }
+
+            return snapshot;
+        }
+
+        private static void RestoreRunInventory(IArchitecture arch, RunInventorySnapshot inventory)
+        {
+            if (arch == null || inventory == null)
+            {
+                return;
+            }
+
+            var player = arch.GetModel<PlayerModel>();
+            var run = arch.GetModel<RunModel>();
+            var content = arch.GetSystem<IContentSystem>();
+
+            if (!string.IsNullOrEmpty(inventory.ProfessionId))
+            {
+                player.SetProfession(inventory.ProfessionId);
+            }
+
+            player.AddCoins(inventory.Coins - player.Coins.Value);
+            player.AddInteractionCount(inventory.InteractionCount - player.InteractionCount.Value);
+
+            if (inventory.RelicDefIds != null)
+            {
+                var alreadyActive = new System.Collections.Generic.HashSet<string>();
+                var existing = player.RelicDefIds;
+                for (var i = 0; i < existing.Count; i++)
+                {
+                    alreadyActive.Add(existing[i]);
+                }
+
+                for (var i = 0; i < inventory.RelicDefIds.Length; i++)
+                {
+                    var defId = inventory.RelicDefIds[i];
+                    if (string.IsNullOrEmpty(defId))
+                    {
+                        continue;
+                    }
+
+                    player.AddRelic(defId);
+                    if (!alreadyActive.Contains(defId))
+                    {
+                        content?.ActivateRelic(defId);
+                    }
+                }
+            }
+
+            if (inventory.HelpCardStacks != null)
+            {
+                for (var i = 0; i < inventory.HelpCardStacks.Length; i++)
+                {
+                    var stack = inventory.HelpCardStacks[i];
+                    if (string.IsNullOrEmpty(stack.DefId) || stack.Count <= 0)
+                    {
+                        continue;
+                    }
+
+                    player.AddHelpCard(stack.DefId, stack.Count);
+                }
+            }
+
+            // Create 会 Reset RunModel；跨关恢复时保留进度，避免内容节点回绕。
+            run.Floor.Value = inventory.Floor;
+            run.NodeIndex.Value = inventory.NodeIndex;
+            run.Seed.Value = inventory.Seed;
         }
 
         public void ClearPresentationSurface()

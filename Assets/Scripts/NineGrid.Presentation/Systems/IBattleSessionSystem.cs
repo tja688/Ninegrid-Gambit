@@ -39,7 +39,9 @@ namespace NineGrid.Presentation.Systems
 
         CancellationToken EnsurePresentationToken();
 
-        InitialGameSnapshot BootstrapRun(InitialGameOptions options = null);
+        InitialGameSnapshot BootstrapRun(
+            InitialGameOptions options = null,
+            bool preserveRunInventory = false);
 
         UniTask StartBattleNodeAsync(
             NodeDeckOptions options = null,

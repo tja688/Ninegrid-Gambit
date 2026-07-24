@@ -144,9 +144,11 @@ namespace NineGrid.Flow
             session?.UnbindIfView(this);
         }
 
-        public InitialGameSnapshot BootstrapRun(InitialGameOptions options = null)
+        public InitialGameSnapshot BootstrapRun(
+            InitialGameOptions options = null,
+            bool preserveRunInventory = false)
         {
-            return RequireSession().BootstrapRun(options);
+            return RequireSession().BootstrapRun(options, preserveRunInventory);
         }
 
         public void ClearPresentationSurface()

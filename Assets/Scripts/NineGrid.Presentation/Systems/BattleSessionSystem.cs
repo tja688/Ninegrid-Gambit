@@ -72,9 +72,11 @@ namespace NineGrid.Presentation.Systems
             return mExecutor.EnsurePresentationToken();
         }
 
-        public InitialGameSnapshot BootstrapRun(InitialGameOptions options = null)
+        public InitialGameSnapshot BootstrapRun(
+            InitialGameOptions options = null,
+            bool preserveRunInventory = false)
         {
-            return mExecutor.BootstrapRun(options);
+            return mExecutor.BootstrapRun(options, preserveRunInventory);
         }
 
         public UniTask StartBattleNodeAsync(

@@ -238,10 +238,7 @@ namespace NineGrid.Flow
 
             var arch = NineGridArchitecture.Current;
             var phase = arch.GetSystem<IPhaseSystem>();
-            if (mShell.NodeIndex <= 1 || !phase.CanExecute(GameCommandKind.StartNode))
-            {
-                session.BootstrapRun();
-            }
+            EnsureBattleNodeBootstrap(session, phase);
 
             CoreCardPresentationMapper.EnsureContentCatalogLoaded();
 
@@ -439,7 +436,13 @@ namespace NineGrid.Flow
             var pickedId = string.Empty;
             var finished = false;
             BoardCardSelectModeController.RequestAbort("mainloop-room-choice");
+            // SelectRoom 必须在 ChoiceOverlay 仍持有时提交：结算 Drain 可能仍 mainlineBusy，
+            // 先关 overlay 再 Submit 会被 IntentIntake 拒成 intentIntakeReject，
+            // phase 卡在 RoomChoice → 下一节点 BootstrapRun 清空中途遗物。
             PresentationInputGates.SetChoiceOverlay(true);
+            CoreCommandResult result = CoreCommandResult.Reject("roomChoiceNotSubmitted");
+            var phaseBeforeSelect = phaseSystem.CurrentPhase.ToString();
+            var goldEventStart = 0;
             try
             {
                 if (view != null)
@@ -458,6 +461,25 @@ namespace NineGrid.Flow
 
                     await UniTask.WaitUntil(() => finished || ct.IsCancellationRequested, cancellationToken: ct);
                 }
+
+                if (ct.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                if (pickedIndex < 0)
+                {
+                    pickedIndex = 0;
+                }
+
+                phaseBeforeSelect = phaseSystem.CurrentPhase.ToString();
+                var pipeline = arch.GetSystem<IActionPipelineSystem>();
+                goldEventStart = pipeline.EventLog.Entries.Count;
+                result = SubmitSelectRoom(phaseSystem, pickedIndex);
+                if (!result.Accepted)
+                {
+                    Debug.LogWarning($"[GameFlow] SelectRoom 被拒: {result.Reason}");
+                }
             }
             finally
             {
@@ -468,20 +490,6 @@ namespace NineGrid.Flow
             if (ct.IsCancellationRequested)
             {
                 return;
-            }
-
-            if (pickedIndex < 0)
-            {
-                pickedIndex = 0;
-            }
-
-            var phaseBeforeSelect = phaseSystem.CurrentPhase.ToString();
-            var pipeline = arch.GetSystem<IActionPipelineSystem>();
-            var goldEventStart = pipeline.EventLog.Entries.Count;
-            var result = SubmitSelectRoom(phaseSystem, pickedIndex);
-            if (!result.Accepted)
-            {
-                Debug.LogWarning($"[GameFlow] SelectRoom 被拒: {result.Reason}");
             }
 
             try
@@ -495,6 +503,7 @@ namespace NineGrid.Flow
                         { "optionId", string.IsNullOrEmpty(pickedId) ? pickedIndex.ToString() : pickedId },
                         { "reason", result.Reason ?? string.Empty },
                         { "nodeIndex", mShell.NodeIndex.ToString() },
+                        { "choiceOverlayHeld", "true" },
                     },
                     loopState: mShell.State.Value.ToString(),
                     phaseBefore: phaseBeforeSelect,
@@ -506,8 +515,11 @@ namespace NineGrid.Flow
                 Debug.LogWarning("[GameFlow] FlowTrace RoomChosen: " + ex.Message);
             }
 
-            PresentationOutputProjector.PresentGoldGainsFromEventLog(goldEventStart);
-            ResolveSession()?.RefreshPersistentInBattleUi(animate: false);
+            if (result.Accepted)
+            {
+                PresentationOutputProjector.PresentGoldGainsFromEventLog(goldEventStart);
+                ResolveSession()?.RefreshPersistentInBattleUi(animate: false);
+            }
         }
 
         private async UniTask PlayRoomEventAsync(CancellationToken ct)
@@ -530,7 +542,19 @@ namespace NineGrid.Flow
             var phaseBeforeEnter = phaseSystem.CurrentPhase.ToString();
             var pipeline = arch.GetSystem<IActionPipelineSystem>();
             var goldEventStart = pipeline.EventLog.Entries.Count;
-            var enter = SubmitEnterRoom(phaseSystem);
+            // 与 SelectRoom 同理：壳层自动 EnterRoom 也须持有 ChoiceOverlay，
+            // 否则结算 Drain 未尽时会被 IntentIntake 拒掉，卡死跨关。
+            PresentationInputGates.SetChoiceOverlay(true);
+            CoreCommandResult enter;
+            try
+            {
+                enter = SubmitEnterRoom(phaseSystem);
+            }
+            finally
+            {
+                PresentationInputGates.SetChoiceOverlay(false);
+            }
+
             if (!enter.Accepted)
             {
                 Debug.LogWarning($"[GameFlow] EnterRoom 被拒: {enter.Reason}");
@@ -853,6 +877,143 @@ namespace NineGrid.Flow
             {
                 Debug.LogWarning("[GameFlow] FlowTrace SetState: " + ex.Message);
             }
+        }
+
+        private void EnsureBattleNodeBootstrap(IBattleSessionSystem session, IPhaseSystem phase)
+        {
+            if (mShell.NodeIndex <= 1)
+            {
+                session.BootstrapRun();
+                return;
+            }
+
+            if (phase.CanExecute(GameCommandKind.StartNode))
+            {
+                return;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            var sync = arch.GetSystem<IPresentationSyncSystem>();
+            var player = arch.GetModel<PlayerModel>();
+            var phaseBefore = phase.CurrentPhase.ToString();
+            var relicsBefore = FormatRelicIds(player);
+            var locked = sync != null && sync.IsInputLocked;
+
+            // 粘连 Present 锁会使 StartNode 非法；先清锁再决定是否必须 BootstrapRun。
+            sync?.Clear();
+            PresentationInputGates.ForceEndExternalHold("EnsureBattleNodeBootstrap.unlock");
+
+            if (phase.CanExecute(GameCommandKind.StartNode))
+            {
+                RecordBootstrapDecision(
+                    "avoided_clearedPresentationLock",
+                    phaseBefore,
+                    locked,
+                    relicsBefore,
+                    bootstrapped: false);
+                return;
+            }
+
+            if (TryRecoverStuckRoomTransition(phase)
+                && phase.CanExecute(GameCommandKind.StartNode))
+            {
+                RecordBootstrapDecision(
+                    "avoided_recoveredRoomTransition",
+                    phaseBefore,
+                    locked,
+                    relicsBefore,
+                    bootstrapped: false);
+                return;
+            }
+
+            // 末路：BootstrapRun 会 player.Reset；跨关必须带回遗物/金币/帮助卡。
+            RecordBootstrapDecision(
+                "forced_preserveRunInventory",
+                phaseBefore,
+                locked,
+                relicsBefore,
+                bootstrapped: true);
+            session.BootstrapRun(preserveRunInventory: true);
+        }
+
+        private static bool TryRecoverStuckRoomTransition(IPhaseSystem phase)
+        {
+            if (phase.CurrentPhase == GamePhase.RoomChoice
+                && phase.CanExecute(GameCommandKind.SelectRoom))
+            {
+                PresentationInputGates.SetChoiceOverlay(true);
+                try
+                {
+                    var select = SubmitSelectRoom(phase, 0);
+                    if (!select.Accepted)
+                    {
+                        return false;
+                    }
+                }
+                finally
+                {
+                    PresentationInputGates.SetChoiceOverlay(false);
+                }
+            }
+
+            if (phase.CurrentPhase != GamePhase.RoomEvent
+                || !phase.CanExecute(GameCommandKind.EnterRoom))
+            {
+                return phase.CanExecute(GameCommandKind.StartNode);
+            }
+
+            PresentationInputGates.SetChoiceOverlay(true);
+            try
+            {
+                return SubmitEnterRoom(phase).Accepted;
+            }
+            finally
+            {
+                PresentationInputGates.SetChoiceOverlay(false);
+            }
+        }
+
+        private void RecordBootstrapDecision(
+            string decision,
+            string phaseBefore,
+            bool wasInputLocked,
+            string relicsBefore,
+            bool bootstrapped)
+        {
+            try
+            {
+                var player = NineGridArchitecture.Current.GetModel<PlayerModel>();
+                FlowTraceRecorder.Record(
+                    FlowTraceCategory.CoreGate,
+                    FlowTraceNames.BootstrapRun,
+                    new Dictionary<string, string>
+                    {
+                        { "decision", decision },
+                        { "nodeIndex", mShell.NodeIndex.ToString() },
+                        { "wasInputLocked", wasInputLocked ? "true" : "false" },
+                        { "relicsBefore", relicsBefore ?? string.Empty },
+                        { "relicsAfter", FormatRelicIds(player) },
+                        { "bootstrapped", bootstrapped ? "true" : "false" },
+                    },
+                    loopState: mShell.State.Value.ToString(),
+                    phaseBefore: phaseBefore,
+                    phaseAfter: NineGridArchitecture.Current.GetSystem<IPhaseSystem>().CurrentPhase.ToString(),
+                    accepted: !bootstrapped || !string.IsNullOrEmpty(FormatRelicIds(player)));
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[GameFlow] FlowTrace BootstrapRun: " + ex.Message);
+            }
+        }
+
+        private static string FormatRelicIds(PlayerModel player)
+        {
+            if (player == null || player.RelicDefIds == null || player.RelicDefIds.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            return string.Join(",", player.RelicDefIds);
         }
 
         private static CoreCommandResult SubmitSelectRoom(IPhaseSystem phaseSystem, int optionIndex)

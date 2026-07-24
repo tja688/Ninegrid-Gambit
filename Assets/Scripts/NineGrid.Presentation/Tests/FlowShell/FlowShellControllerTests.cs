@@ -73,6 +73,46 @@ namespace NineGrid.Presentation.Tests.FlowShell
         }
 
         [Test]
+        public void RoomChoiceController_HandleSelectRoom_WhileMainlineBusy_RequiresOverlay()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateStartedGameWithCatalog(seed: 11UL))
+            using (var runtime = PresentationRuntimeFixture.Install(
+                       arch, new RecordingScriptFactory(continueTicks: 2)))
+            {
+                Assert.IsTrue(arch.Phase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
+                arch.PlaceSoleBoardCardAt(sAdjacentSlot);
+                Assert.IsTrue(arch.Phase.Attack(sAdjacentSlot).Accepted);
+                Assert.IsTrue(arch.Phase.SkipHelpChoice().Accepted);
+                Assert.AreEqual(GamePhase.RoomChoice, arch.Phase.CurrentPhase);
+
+                Assert.IsTrue(runtime.Runtime.TryBeginExternalHold("settlement-drain"));
+                Assert.IsTrue(runtime.MainlineBusy.Value);
+
+                var input = PresentationInputStateSystem.EnsureRegistered(arch.Architecture);
+                var go = new GameObject(nameof(RoomChoiceInputController));
+                var controller = go.AddComponent<RoomChoiceInputController>();
+                try
+                {
+                    // 无 overlay：复现跨关 SelectRoom 被拒。
+                    var rejected = controller.HandleSelectRoom(0);
+                    Assert.IsFalse(rejected.Accepted);
+                    Assert.AreEqual("intentIntakeReject", rejected.Reason);
+                    Assert.AreEqual(GamePhase.RoomChoice, arch.Phase.CurrentPhase);
+
+                    // 持有 overlay：结算 Drain 未尽也能推进。
+                    input.SetChoiceOverlayActive(true);
+                    var accepted = controller.HandleSelectRoom(0);
+                    Assert.IsTrue(accepted.Accepted, accepted.Reason);
+                    Assert.AreEqual(GamePhase.RoomEvent, arch.Phase.CurrentPhase);
+                }
+                finally
+                {
+                    Object.DestroyImmediate(go);
+                }
+            }
+        }
+
+        [Test]
         public void RewardChoiceController_HandleSelectReward_UsesCommand()
         {
             using (var arch = PresentationArchitectureFixture.CreateStartedGameWithCatalog(seed: 11UL))

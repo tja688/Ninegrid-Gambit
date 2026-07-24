@@ -130,17 +130,26 @@ namespace NineGrid.Flow
 
                 var arch = NineGridArchitecture.Current;
                 var phase = arch.GetSystem<IPhaseSystem>();
+                var phaseBeforeStartNode = phase.CurrentPhase;
                 if (!phase.CanExecute(GameCommandKind.StartNode))
                 {
-                    Debug.LogWarning(
-                        $"[BattleSession] StartNode 非法 phase={phase.CurrentPhase}，先 BootstrapRun。");
-                    BootstrapRun();
-                    if (!EnsurePresentationRuntimeInstalled())
+                    // 粘连 Present 锁 / 卡在房间相位时先解锁；仍非法才 Bootstrap，并保留中途遗物。
+                    arch.GetSystem<IPresentationSyncSystem>()?.Clear();
+                    PresentationInputGates.ForceEndExternalHold("StartBattleNode.unlock");
+                    if (!phase.CanExecute(GameCommandKind.StartNode))
                     {
-                        Debug.LogError(
-                            "[BattleSession] BootstrapRun 后表现意图运行时未启动，中止入场。");
-                        return;
+                        Debug.LogWarning(
+                            $"[BattleSession] StartNode 非法 phase={phase.CurrentPhase}，先 BootstrapRun(preserve)。");
+                        BootstrapRun(preserveRunInventory: true);
+                        if (!EnsurePresentationRuntimeInstalled())
+                        {
+                            Debug.LogError(
+                                "[BattleSession] BootstrapRun 后表现意图运行时未启动，中止入场。");
+                            return;
+                        }
                     }
+
+                    phaseBeforeStartNode = phase.CurrentPhase;
                 }
 
                 options ??= NodeDeckOptions.CreateDefaultBattle();
@@ -170,7 +179,7 @@ namespace NineGrid.Flow
                         opKind = "StartNode",
                         reason = "StartNode",
                         apiPath = "PhaseSystem.StartNode",
-                        phaseBefore = GamePhase.None.ToString(),
+                        phaseBefore = phaseBeforeStartNode.ToString(),
                         phaseAfter = phase.CurrentPhase.ToString(),
                         attacker = null,
                         target = BattleTraceRecorder.TryCaptureCard(board.AvatarUid.Value),
@@ -190,7 +199,7 @@ namespace NineGrid.Flow
                             deckCount,
                             boardOcc,
                             presOcc),
-                        phaseBefore: GamePhase.None.ToString(),
+                        phaseBefore: phaseBeforeStartNode.ToString(),
                         phaseAfter: phase.CurrentPhase.ToString(),
                         accepted: true,
                         refBattleOpIndex: BattleTraceRecorder.LastOpIndex);

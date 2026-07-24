@@ -24,6 +24,7 @@
 - **Unity CLI（首选）**：与 Editor 协作一律用 `unity` CLI + `com.unity.pipeline`（`unity command …`），改场景/组件优先走 Pipeline 命令；改脚本后 `unity command recompile`（或等自动编译）并用 `unity command console` 读 Console。详见 `docs/agents/unity-cli.md`；硬规则 `.cursor/rules/unity-cli.mdc`。
 - **禁止 Safe Mode**：不准以 Safe Mode 启动或在 Safe Mode 下操作；遇编译错误选 Ignore/Quit 并修脚本，再用 `-automated` 正常重开。
 - **Unity `-automated` 启动**：Agent 开/重开 Editor 用 `.cursor/skills/unity-automated-launch/`（直启 + `-automated`，避免外部改 `.unity` 弹窗卡死 Pipeline；可整夹移植到其他工程）。若编辑器已打开，重启编辑器时必须保存当前工作再重启。
+- **多 AI 工作区协调**：同仓多 Agent 先 `claim`，EditMode 测走 `ai-workspace test`，关/重开 Editor 前先 `gate-restart`。见 `.cursor/skills/ai-workspace/`。
 - **战斗 / 流程 / 表现日志分析**：Play 结束导出至 `Assets/Notes/Logs/`；分析见 `.cursor/skills/table-nine-battlelog-analysis/`。
 
 ---
@@ -49,4 +50,8 @@ Prefer `unity command` over MCP for Editor automation. See `docs/agents/unity-cl
 ### Unity `-automated` launch
 
 Start/restart Editor with `-automated` via `.cursor/skills/unity-automated-launch/` (portable; copy the folder to other repos).
+
+### AI workspace coordinator
+
+Multi-agent claims + EditMode test mutex: `.cursor/skills/ai-workspace/` (PowerShell CLI `scripts/ai-workspace.ps1`). Claim on start; run EditMode only via `test`; `gate-restart` before relaunching Editor.
 

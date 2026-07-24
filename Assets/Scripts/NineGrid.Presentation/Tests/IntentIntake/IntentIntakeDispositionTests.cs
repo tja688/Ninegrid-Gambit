@@ -173,6 +173,61 @@ namespace NineGrid.Presentation.Tests.IntentIntake
         }
 
         [Test]
+        public void Busy_SelectRoom_OnChoiceOverlay_Allows()
+        {
+            // 通关后房间选择与结算 Drain 重叠时，overlay 持有期间必须仍能 SelectRoom。
+            using (var arch = PresentationArchitectureFixture.CreateBare())
+            using (var runtime = PresentationRuntimeFixture.Install(
+                       arch, new RecordingScriptFactory(continueTicks: 2)))
+            {
+                var accel = new RecordingAccelerationSink();
+                var intake = IntentIntakeSystem.EnsureRegistered(
+                    arch.Architecture, accel, _ => true);
+                var input = PresentationInputStateSystem.EnsureRegistered(arch.Architecture);
+
+                Assert.IsTrue(runtime.Runtime.TryBeginExternalHold("settlement-drain"));
+                Assert.IsTrue(runtime.MainlineBusy.Value);
+                input.SetChoiceOverlayActive(true);
+
+                bool preview;
+                Assert.AreEqual(
+                    IntentDisposition.Allow,
+                    intake.Submit(
+                        new InputIntent(InputIntentKinds.SelectRoom, 0),
+                        InputOwner.ChoiceOverlay,
+                        out preview));
+                Assert.IsFalse(preview);
+            }
+        }
+
+        [Test]
+        public void Busy_SelectRoom_WithoutChoiceOverlay_Rejects()
+        {
+            // 复现：GameFlow 先关 overlay 再 SubmitSelectRoom → intentIntakeReject → Bootstrap 清遗物。
+            using (var arch = PresentationArchitectureFixture.CreateBare())
+            using (var runtime = PresentationRuntimeFixture.Install(
+                       arch, new RecordingScriptFactory(continueTicks: 2)))
+            {
+                var accel = new RecordingAccelerationSink();
+                var intake = IntentIntakeSystem.EnsureRegistered(
+                    arch.Architecture, accel, _ => true);
+                PresentationInputStateSystem.EnsureRegistered(arch.Architecture);
+
+                Assert.IsTrue(runtime.Runtime.TryBeginExternalHold("settlement-drain"));
+                Assert.IsTrue(runtime.MainlineBusy.Value);
+
+                bool preview;
+                Assert.AreEqual(
+                    IntentDisposition.Reject,
+                    intake.Submit(
+                        new InputIntent(InputIntentKinds.SelectRoom, 0),
+                        InputOwner.ChoiceOverlay,
+                        out preview));
+                Assert.IsFalse(preview);
+            }
+        }
+
+        [Test]
         public void Idle_ModalOnOverlay_Allows()
         {
             using (var arch = PresentationArchitectureFixture.CreateBare())

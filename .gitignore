@@ -102,3 +102,6 @@ Thumbs.db
 
 # Luban bootstrap venv
 /[Aa]ssets/[Tt]ools/[Ll]uban/.venv/
+
+# Local multi-AI workspace state (claims / EditMode test lock)
+.cursor/ai-workspace/

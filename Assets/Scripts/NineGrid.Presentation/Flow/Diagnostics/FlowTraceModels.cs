@@ -67,6 +67,7 @@ namespace NineGrid.Flow.Diagnostics
         public const string RoomChosen = "RoomChosen";
         public const string EnterRoom = "EnterRoom";
         public const string StartNode = "StartNode";
+        public const string BootstrapRun = "BootstrapRun";
         public const string CombatHitSummary = "CombatHitSummary";
         public const string PostKillBoard = "PostKillBoard";
         public const string Victory = "Victory";
