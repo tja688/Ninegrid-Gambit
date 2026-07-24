@@ -182,6 +182,12 @@ namespace NineGrid.Cards.Convergence
             }
 
             CardDeckTween.KillMotion(card.Transform, reason ?? "SlotFrame.SnapHome", probeUid);
+            // HopComplete 与 L4 跳起缩放并行；缩放由 PlayHopScalePulse 自己收束，勿在此 Kill。
+            if (!string.Equals(reason, "SlotFrame.HopComplete", StringComparison.Ordinal))
+            {
+                ResetCardVisualScale(tower, reason ?? "SlotFrame.SnapHome", probeUid);
+            }
+
             EndMotionDiag(driver, card, "snap");
             driver.Admit(HandoffState.AtRest(Vector3.zero));
             tower.CardRoot.position = anchorWorld;
@@ -191,6 +197,23 @@ namespace NineGrid.Cards.Convergence
             }
 
             FlightSortingChannel.Restore(card);
+        }
+
+        /// <summary>
+        /// 杀掉 L4 跳起缩放 tween 并回到 identity（显示倍率在 L0）。
+        /// </summary>
+        public static void ResetCardVisualScale(
+            CardTransformTower tower,
+            string site = null,
+            int uid = 0)
+        {
+            if (tower?.CardVisual == null)
+            {
+                return;
+            }
+
+            CardDeckTween.KillMotion(tower.CardVisual, site ?? "SlotFrame.ResetVisualScale", uid);
+            tower.CardVisual.localScale = Vector3.one;
         }
 
         private const float SanctuaryResidueEpsilon = 0.01f;
@@ -251,6 +274,8 @@ namespace NineGrid.Cards.Convergence
 
             if (TryGetTower(card, out var tower) || TryEnsureInfrastructure(card, out tower, out _, site))
             {
+                ResetCardVisualScale(tower, site, probeUid);
+
                 if (tower.SlotFrame != null)
                 {
                     tower.SlotFrame.localPosition = Vector3.zero;

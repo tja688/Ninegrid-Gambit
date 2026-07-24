@@ -1537,6 +1537,20 @@ namespace NineGrid.Cards
                 if (moveTasks.Count > 0)
                 {
                     await UniTask.WhenAll(moveTasks);
+
+                    // 全体落位后统一喷一次落地尘雾。
+                    for (var i = 0; i < ring.Count; i++)
+                    {
+                        var uid = uids[i];
+                        if (uid == 0
+                            || !CardEntityLifecycleHook.CardsOrNull().TryGet(uid, out var landed)
+                            || landed?.Transform == null)
+                        {
+                            continue;
+                        }
+
+                        CardEdgeDustFx.PlayPlace(landed);
+                    }
                 }
                 else
                 {
@@ -1647,13 +1661,46 @@ namespace NineGrid.Cards
 
             try
             {
-                await SlotFrameConvergence.ConvergeVisualToWorldAsync(
-                    card,
-                    toAnchor.position,
-                    sourceTime,
-                    cancellationToken,
-                    snapHomeOnComplete: true,
-                    commitment: commitment);
+                // L2 收敛只负责位移；跳起/落下质感缩放落在 L4 CardVisual（塔范式分层）。
+                var hopScaleTask = UniTask.CompletedTask;
+                if (SlotFrameConvergence.TryGetTower(card, out var hopTower)
+                    || SlotFrameConvergence.TryEnsureInfrastructure(
+                        card,
+                        out hopTower,
+                        out _,
+                        "Ground.HopScale"))
+                {
+                    if (hopTower?.CardVisual != null)
+                    {
+                        var visualDriver = card.View != null
+                            ? card.View.GetComponent<CardVisualDriver>()
+                            : null;
+                        visualDriver?.InterruptFeedbackMotion();
+
+                        var peak = LayoutSettings != null
+                            ? LayoutSettings.hopPeakScaleIntensity
+                            : 0.06f;
+                        var land = LayoutSettings != null
+                            ? LayoutSettings.hopLandScaleIntensity
+                            : 0.04f;
+                        hopScaleTask = CardDeckTween.PlayHopScalePulseAsync(
+                            hopTower.CardVisual,
+                            sourceTime,
+                            peak,
+                            land,
+                            cancellationToken);
+                    }
+                }
+
+                await UniTask.WhenAll(
+                    SlotFrameConvergence.ConvergeVisualToWorldAsync(
+                        card,
+                        toAnchor.position,
+                        sourceTime,
+                        cancellationToken,
+                        snapHomeOnComplete: true,
+                        commitment: commitment),
+                    hopScaleTask);
             }
             finally
             {

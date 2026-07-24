@@ -190,6 +190,79 @@ namespace NineGrid.Cards
                 cancellationToken: cancellationToken);
         }
 
+        /// <summary>
+        /// 跳跃质感缩放脉冲：中途放大（起跳）→ 落地略缩 → 回到基准。
+        /// 塔范式下应对 L4 CardVisual 播放，不写 L0/L2 位移层。
+        /// </summary>
+        public static async UniTask PlayHopScalePulseAsync(
+            Transform target,
+            float duration,
+            float peakScaleIntensity,
+            float landScaleIntensity,
+            CancellationToken cancellationToken = default)
+        {
+            if (target == null || duration <= 0f)
+            {
+                return;
+            }
+
+            KillMotion(target, "DeckTween.HopScale");
+
+            var baseScale = target.localScale;
+            if (baseScale.sqrMagnitude <= 0.0001f)
+            {
+                baseScale = Vector3.one;
+                target.localScale = baseScale;
+            }
+
+            var peakScale = baseScale * (1f + Mathf.Max(0f, peakScaleIntensity));
+            var landScale = baseScale * (1f - Mathf.Clamp01(landScaleIntensity));
+            var halfDuration = duration * 0.5f;
+            var landDuration = halfDuration * 0.72f;
+            var settleDuration = halfDuration - landDuration;
+
+            var sequence = DOTween.Sequence()
+                .SetLink(target.gameObject, LinkBehaviour.KillOnDestroy);
+
+            sequence.Append(target.DOScale(peakScale, halfDuration).SetEase(Ease.OutSine));
+            sequence.Append(target.DOScale(landScale, landDuration).SetEase(Ease.InQuad));
+            sequence.Append(target.DOScale(baseScale, settleDuration).SetEase(Ease.OutSine));
+
+            var completed = false;
+            sequence.OnComplete(() =>
+            {
+                completed = true;
+                if (target != null)
+                {
+                    target.localScale = baseScale;
+                }
+            });
+            sequence.OnKill(() =>
+            {
+                completed = true;
+            });
+
+            try
+            {
+                await UniTask.WaitUntil(() => completed, cancellationToken: cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                KillMotion(target, "DeckTween.HopScale.Cancel");
+                if (target != null)
+                {
+                    target.localScale = baseScale;
+                }
+
+                throw;
+            }
+
+            if (target != null)
+            {
+                target.localScale = baseScale;
+            }
+        }
+
         public static async UniTask MoveHopToWorldAsync(
             Transform target,
             Vector3 worldStart,
@@ -226,8 +299,14 @@ namespace NineGrid.Cards
             }
 
             var baseScale = target.localScale;
-            var peakScale = baseScale * (1f + peakScaleIntensity);
-            var landScale = baseScale * (1f - landScaleIntensity);
+            if (baseScale.sqrMagnitude <= 0.0001f)
+            {
+                baseScale = Vector3.one;
+                target.localScale = baseScale;
+            }
+
+            var peakScale = baseScale * (1f + Mathf.Max(0f, peakScaleIntensity));
+            var landScale = baseScale * (1f - Mathf.Clamp01(landScaleIntensity));
             var halfDuration = duration * 0.5f;
             var landDuration = halfDuration * 0.72f;
             var settleDuration = halfDuration - landDuration;

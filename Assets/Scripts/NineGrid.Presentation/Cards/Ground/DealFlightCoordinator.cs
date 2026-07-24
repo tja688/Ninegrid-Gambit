@@ -350,7 +350,15 @@ namespace NineGrid.Cards
                     launchPos,
                     targetPos,
                     probe.SourceTime);
-                await WaitProbeConvergenceAsync(probe, probe.LinkedCts.Token);
+                CardEdgeDustFx.BeginTrail(card);
+                try
+                {
+                    await WaitProbeConvergenceAsync(probe, probe.LinkedCts.Token);
+                }
+                finally
+                {
+                    CardEdgeDustFx.EndTrail(card);
+                }
                 TraceProbe(probe, "flightEnd", card.Uid);
 
                 if (token.IsCancellationRequested || probe.Card == null)
@@ -434,7 +442,15 @@ namespace NineGrid.Cards
                     slotPos,
                     probe.SourceTime);
                 TraceProbe(probe, "flightStart", uid);
-                await WaitProbeConvergenceAsync(probe, probe.LinkedCts.Token);
+                CardEdgeDustFx.BeginTrail(probe.Card);
+                try
+                {
+                    await WaitProbeConvergenceAsync(probe, probe.LinkedCts.Token);
+                }
+                finally
+                {
+                    CardEdgeDustFx.EndTrail(probe.Card);
+                }
                 TraceProbe(probe, "flightEnd", uid);
 
                 if (_destroyToken.IsCancellationRequested || probe.Card?.Transform == null)
