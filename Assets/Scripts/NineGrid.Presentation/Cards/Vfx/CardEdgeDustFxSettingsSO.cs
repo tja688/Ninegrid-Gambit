@@ -78,9 +78,10 @@ namespace NineGrid.Cards.Vfx
         [SerializeField] private Color lightColor = new(0.96f, 0.96f, 0.96f, 1f);
 
         [Header("池")]
-        [SerializeField] private int prewarmPairs = 96;
+        [SerializeField] private int prewarmPairs = 128;
 
-        [SerializeField] private int maxLiveParticles = 512;
+        [Tooltip("同时存活粒子上限。触顶时回收最旧粒子，不再静默丢弃新喷发。")]
+        [SerializeField] private int maxLiveParticles = 1024;
 
         public bool Enabled => fxEnabled;
         public float Intensity => intensity;

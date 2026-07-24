@@ -334,6 +334,46 @@ namespace NineGrid.Cards
                 "verdict", verdict ?? string.Empty);
         }
 
+        /// <summary>边沿尘雾 Place 喷发结果（PerfLog）。</summary>
+        public static void DustPlace(
+            int uid,
+            int requested,
+            int spawned,
+            int liveBefore,
+            int liveAfter,
+            int recycled,
+            string site = null)
+        {
+            Emit(
+                "DustPlace",
+                uid,
+                site ?? "CardEdgeDust.Place",
+                "requested", requested.ToString(CultureInfo.InvariantCulture),
+                "spawned", spawned.ToString(CultureInfo.InvariantCulture),
+                "liveBefore", liveBefore.ToString(CultureInfo.InvariantCulture),
+                "liveAfter", liveAfter.ToString(CultureInfo.InvariantCulture),
+                "recycled", recycled.ToString(CultureInfo.InvariantCulture));
+        }
+
+        /// <summary>边沿尘雾拖尾预算压力（PerfLog；仅在回收发生时打点）。</summary>
+        public static void DustTrailBudget(
+            int uid,
+            int live,
+            int recycled,
+            int activeTrails,
+            int maxLive,
+            string site = null)
+        {
+            Emit(
+                "DustTrailBudget",
+                uid,
+                site ?? "CardEdgeDust.Trail",
+                "live", live.ToString(CultureInfo.InvariantCulture),
+                "recycled", recycled.ToString(CultureInfo.InvariantCulture),
+                "activeTrails", activeTrails.ToString(CultureInfo.InvariantCulture),
+                "maxLive", maxLive.ToString(CultureInfo.InvariantCulture));
+        }
+
         public static void LeaseAcquire(
             int uid,
             string layer,

@@ -124,6 +124,11 @@ namespace NineGrid.Flow.Diagnostics
         public const string DirectorBypassStart = "DirectorBypassStart";
         /// <summary>FX/音效 Trigger 脉冲（发即完成；可 degraded）。</summary>
         public const string DirectorTriggerPulse = "DirectorTriggerPulse";
+
+        /// <summary>卡牌边沿尘雾 Place 喷发。</summary>
+        public const string DustPlace = "DustPlace";
+        /// <summary>卡牌边沿尘雾拖尾触预算并回收最旧粒子。</summary>
+        public const string DustTrailBudget = "DustTrailBudget";
     }
 
     public static class PerfTraceSites
@@ -163,6 +168,8 @@ namespace NineGrid.Flow.Diagnostics
         public const string DirectorTimeline = "Director.Timeline";
         public const string DirectorFork = "Director.Fork";
         public const string DirectorBypass = "Director.Bypass";
+        public const string CardEdgeDustPlace = "CardEdgeDust.Place";
+        public const string CardEdgeDustTrail = "CardEdgeDust.Trail";
     }
 
     public static class PerfTraceAnomalyCodes
@@ -209,5 +216,7 @@ namespace NineGrid.Flow.Diagnostics
         public const string TowerResidueOnSanctuary = "TowerResidueOnSanctuary";
         /// <summary>Sync Phase2 试图在开放 DeckTween 期间 reanchor（门禁失效时报警）。</summary>
         public const string SyncReanchorDuringDeckTween = "SyncReanchorDuringDeckTween";
+        /// <summary>尘雾 Place 喷发时因预算触顶回收了拖尾/旧粒子。</summary>
+        public const string DustBudgetPressure = "DustBudgetPressure";
     }
 }

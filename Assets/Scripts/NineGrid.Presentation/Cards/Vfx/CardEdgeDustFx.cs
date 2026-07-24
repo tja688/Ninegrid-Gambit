@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Globalization;
 using NineGrid.Cards.Convergence;
+using NineGrid.Flow.Diagnostics;
 using UnityEngine;
 
 namespace NineGrid.Cards.Vfx
@@ -22,7 +24,7 @@ namespace NineGrid.Cards.Vfx
 
         public static void PlayPlaceAt(Vector3 center, Vector2 size, float intensityOverride = -1f)
         {
-            CardEdgeDustFxRunner.Ensure().PlayPlaceAt(center, size, intensityOverride);
+            CardEdgeDustFxRunner.Ensure().PlayPlaceAt(center, size, intensityOverride, uid: -1);
         }
 
         /// <summary>飞牌出场开始：跟随卡牌洒双尾迹，粒子先后消散形成连续轨迹。</summary>
@@ -81,6 +83,9 @@ namespace NineGrid.Cards.Vfx
         private Sprite _runtimeSprite;
         private bool _loggedMissingSprite;
         private bool _loggedFirstPlay;
+        private float _nextTrailBudgetProbeUnscaled = -1f;
+        private int _trailRecycledThisFrame;
+        private int _trailBudgetProbeUid = -1;
 
         public CardEdgeDustFxSettingsSO Settings => _settings;
 
@@ -138,8 +143,11 @@ namespace NineGrid.Cards.Vfx
 
         private void Update()
         {
+            _trailRecycledThisFrame = 0;
+            _trailBudgetProbeUid = -1;
             UpdateTrails();
             UpdateParticles();
+            FlushTrailBudgetProbe();
         }
 
         public void PlayPlace(ManagedCard card, float intensityOverride)
@@ -149,10 +157,10 @@ namespace NineGrid.Cards.Vfx
                 return;
             }
 
-            PlayPlaceAt(center, size, intensityOverride);
+            PlayPlaceAt(center, size, intensityOverride, card.Uid);
         }
 
-        public void PlayPlaceAt(Vector3 center, Vector2 size, float intensityOverride)
+        public void PlayPlaceAt(Vector3 center, Vector2 size, float intensityOverride, int uid)
         {
             EnsureInfrastructure();
             if (_settings == null || !_settings.Enabled)
@@ -178,6 +186,11 @@ namespace NineGrid.Cards.Vfx
             size.y = Mathf.Max(0.05f, Mathf.Abs(size.y));
 
             var perEdge = Mathf.Max(1, Mathf.RoundToInt(_settings.ParticlesPerEdge * intensity));
+            var requested = perEdge * 4;
+            var liveBefore = _live.Count;
+            var recycled = 0;
+            var spawned = 0;
+
             if (!_loggedFirstPlay)
             {
                 _loggedFirstPlay = true;
@@ -201,10 +214,13 @@ namespace NineGrid.Cards.Vfx
 
                 for (var k = 0; k < perEdge; k++)
                 {
-                    if (_live.Count >= _settings.MaxLiveParticles)
+                    // Place 优先：必要时先回收 Move/最旧粒子，避免落地喷发被拖尾饿死。
+                    if (!TryReserveSlot(preferCullMove: true, out var culled))
                     {
-                        return;
+                        break;
                     }
+
+                    recycled += culled ? 1 : 0;
 
                     var r = new Vector2(
                         (Random.value * 2f - 1f) * jitter,
@@ -225,8 +241,11 @@ namespace NineGrid.Cards.Vfx
                         vel * Mathf.Lerp(speedRange.x, speedRange.y, Random.value) * intensity,
                         Mathf.Lerp(ttlRange.x, ttlRange.y, Random.value),
                         Mathf.Lerp(scaleRange.x, scaleRange.y, Random.value));
+                    spawned++;
                 }
             }
+
+            ProbePlace(uid, requested, spawned, liveBefore, recycled);
         }
 
         public void BeginTrail(ManagedCard card)
@@ -289,28 +308,30 @@ namespace NineGrid.Cards.Vfx
 
                 var pos = SlotFrameConvergence.GetVisualWorldPosition(card);
                 pos.z = 0f;
-                var delta = (Vector2)(pos - state.LastPos);
+                var segmentStart = state.LastPos;
+                var delta = (Vector2)(pos - segmentStart);
                 var dist = delta.magnitude;
+                state.LastPos = pos;
+                TryResolveCardRect(card, out _, out state.Size);
+
                 if (dist < 0.0001f)
                 {
                     continue;
                 }
 
                 state.Carry += dist;
-                state.LastPos = pos;
-                TryResolveCardRect(card, out _, out state.Size);
-
                 if (state.Carry < emitDist)
                 {
                     continue;
                 }
 
-                var steps = Mathf.FloorToInt(state.Carry / emitDist);
-                state.Carry -= steps * emitDist;
                 var velDir = delta / dist;
-                for (var s = 0; s < steps; s++)
+                while (state.Carry >= emitDist)
                 {
-                    EmitMoveAt(sprite, pos, state.Size, velDir, intensity);
+                    state.Carry -= emitDist;
+                    // 沿本帧位移段回推喷点，避免大步进时全堆在末端。
+                    var emitPos = pos - (Vector3)(velDir * state.Carry);
+                    EmitMoveAt(sprite, emitPos, state.Size, velDir, intensity, kv.Key);
                 }
             }
 
@@ -333,7 +354,8 @@ namespace NineGrid.Cards.Vfx
             Vector3 center,
             Vector2 size,
             Vector2 velDir,
-            float intensity)
+            float intensity,
+            int uid)
         {
             size.x = Mathf.Max(0.05f, Mathf.Abs(size.x));
             size.y = Mathf.Max(0.05f, Mathf.Abs(size.y));
@@ -356,9 +378,15 @@ namespace NineGrid.Cards.Vfx
 
                 for (var m = 0; m < perCorner; m++)
                 {
-                    if (_live.Count >= _settings.MaxLiveParticles)
+                    if (!TryReserveSlot(preferCullMove: false, out var culled))
                     {
                         return;
+                    }
+
+                    if (culled)
+                    {
+                        _trailRecycledThisFrame++;
+                        _trailBudgetProbeUid = uid;
                     }
 
                     var pull = Random.value * inward;
@@ -415,6 +443,119 @@ namespace NineGrid.Cards.Vfx
                     ? EvaluateMoveScale(dp.BaseScale, ttlN)
                     : EvaluatePlaceScale(dp.BaseScale, ttlN);
                 ApplyVisuals(dp);
+            }
+        }
+
+        /// <summary>
+        /// 保证有空位可喷。触顶时回收最旧粒子（Place 优先回收 Move），不再静默丢弃。
+        /// </summary>
+        private bool TryReserveSlot(bool preferCullMove, out bool culled)
+        {
+            culled = false;
+            if (_settings == null)
+            {
+                return false;
+            }
+
+            if (_live.Count < _settings.MaxLiveParticles)
+            {
+                return true;
+            }
+
+            var idx = -1;
+            if (preferCullMove)
+            {
+                for (var i = 0; i < _live.Count; i++)
+                {
+                    if (_live[i].Kind == DustKind.Move)
+                    {
+                        idx = i;
+                        break;
+                    }
+                }
+            }
+
+            if (idx < 0)
+            {
+                idx = 0;
+            }
+
+            if (idx >= _live.Count)
+            {
+                return false;
+            }
+
+            ReleasePair(_live[idx]);
+            _live.RemoveAt(idx);
+            culled = true;
+            return true;
+        }
+
+        private void ProbePlace(int uid, int requested, int spawned, int liveBefore, int recycled)
+        {
+            try
+            {
+                CardPresentationProbe.DustPlace(
+                    uid,
+                    requested,
+                    spawned,
+                    liveBefore,
+                    _live.Count,
+                    recycled,
+                    PerfTraceSites.CardEdgeDustPlace);
+
+                if (recycled > 0 || spawned < requested)
+                {
+                    CardPresentationProbe.Anomaly(
+                        uid,
+                        PerfTraceAnomalyCodes.DustBudgetPressure,
+                        "place recycled=" + recycled.ToString(CultureInfo.InvariantCulture)
+                        + " spawned=" + spawned.ToString(CultureInfo.InvariantCulture)
+                        + "/" + requested.ToString(CultureInfo.InvariantCulture)
+                        + " liveBefore=" + liveBefore.ToString(CultureInfo.InvariantCulture)
+                        + " liveAfter=" + _live.Count.ToString(CultureInfo.InvariantCulture)
+                        + " max=" + (_settings != null
+                            ? _settings.MaxLiveParticles.ToString(CultureInfo.InvariantCulture)
+                            : "?"),
+                        PerfTraceSites.CardEdgeDustPlace,
+                        layer: "Vfx",
+                        verdict: recycled > 0 ? "recycled" : "short");
+                }
+            }
+            catch
+            {
+                // swallow
+            }
+        }
+
+        private void FlushTrailBudgetProbe()
+        {
+            if (_trailRecycledThisFrame <= 0 || _settings == null)
+            {
+                return;
+            }
+
+            var now = Time.unscaledTime;
+            if (now < _nextTrailBudgetProbeUnscaled)
+            {
+                return;
+            }
+
+            // 拖尾预算压力节流：约 0.25s 一条，避免 PerfLog 刷屏。
+            _nextTrailBudgetProbeUnscaled = now + 0.25f;
+            try
+            {
+                CardPresentationProbe.DustTrailBudget(
+                    _trailBudgetProbeUid,
+                    _live.Count,
+                    _trailRecycledThisFrame,
+                    _trails.Count,
+                    _settings.MaxLiveParticles,
+                    PerfTraceSites.CardEdgeDustTrail);
+            }
+            catch
+            {
+                // swallow
             }
         }
 
