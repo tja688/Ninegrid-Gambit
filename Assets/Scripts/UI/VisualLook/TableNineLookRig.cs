@@ -6,12 +6,11 @@ using UnityEngine.UI;
 namespace NineGrid.VisualLook
 {
     /// <summary>
-    /// TableNine Look 权威路径（单相机 + NoSnap Mask）：
-    /// - Base 相机绘制世界与世界空间 TMP（同 SortingLayer，卡牌/书可挡字）
-    /// - NoPixelSnap 层由 Feature.buildNoSnapMask 保护，逃全屏 PixelSnap
-    /// - 扫描线由 SelectiveLook Pass2 全屏施加（单相机下 TMP 自带扫描线关闭，避免叠双份）
-    /// Legacy：useSnapMaskSingleCamera=false 时 Base 剔除 NoPixelSnap，Overlay UICamera 只画字（字永在最上，无法挡字）
-    /// 实验：useUnifiedScanline + Feature.overlayOwnsScanline（当前 URP 栈上不稳定，默认关）
+    /// TableNine Look（Godot 同构实验路径）：
+    /// - 全屏 PixelSnap 默认关闭；像素感由 Sprite 材质顶点 snap 提供
+    /// - 世界 TMP / 文字材质永不进 snap；扫描线仍由 SelectiveLook Pass2 全屏施加
+    /// - 单相机下 TMP 自带扫描线关闭，避免叠双份
+    /// Legacy：全屏 snap + NoSnap Mask / 双相机栈仍可手动打开做对比
     /// </summary>
     [DisallowMultipleComponent]
     [ExecuteAlways]
@@ -21,7 +20,7 @@ namespace NineGrid.VisualLook
 
         [Header("Look Material")]
         [SerializeField]
-        [Tooltip("手动装配：Assets/Arts/VisualProfiles/TableNineSelectiveLook.mat；控制 snap/scanline 参数。")]
+        [Tooltip("手动装配：Assets/Arts/VisualProfiles/TableNineSelectiveLook.mat；控制全屏 snap/scanline 参数。")]
         Material lookMaterial;
 
         [SerializeField]
@@ -29,13 +28,22 @@ namespace NineGrid.VisualLook
         Material legacyPixelSnapMaterial;
 
         [SerializeField]
+        [Tooltip("Sprite 默认顶点 snap 材质（TableNineSpriteLitPixelSnap.mat）。全屏 snap 关闭时由它提供像素感。")]
+        Material spritePixelSnapMaterial;
+
+        [SerializeField]
         [Tooltip("像素网格分辨率，默认与 PixelPerfectCamera 参考分辨率一致。")]
         Vector2 pixelResolution = new Vector2(960f, 540f);
 
         [SerializeField]
-        [Tooltip("是否启用 UV Pixel Snap（对未受保护像素）。")]
+        [Tooltip("全屏 UV Pixel Snap（会毁掉 TMP）。Godot 路径请保持 0；像素感改走 Sprite 材质。")]
         [Range(0f, 1f)]
-        float pixelSnap = 1f;
+        float pixelSnap = 0f;
+
+        [SerializeField]
+        [Tooltip("Sprite 材质顶点 Pixel Snap（不影响文字）。")]
+        [Range(0f, 1f)]
+        float spritePixelSnap = 1f;
 
         [SerializeField]
         [Tooltip("是否启用全局扫描线（写入 Look 材质；文字侧默认由 TMP 材质同步同一参数）。")]
@@ -271,11 +279,12 @@ namespace NineGrid.VisualLook
 
         void ApplyLookParams()
         {
-            ApplyToMaterial(lookMaterial);
-            ApplyToMaterial(legacyPixelSnapMaterial);
+            ApplyFullscreenLookParams(lookMaterial);
+            ApplyFullscreenLookParams(legacyPixelSnapMaterial);
+            ApplySpriteSnapParams(spritePixelSnapMaterial);
         }
 
-        void ApplyToMaterial(Material mat)
+        void ApplyFullscreenLookParams(Material mat)
         {
             if (mat == null)
             {
@@ -305,6 +314,24 @@ namespace NineGrid.VisualLook
             if (mat.HasProperty("_ScanlineSpacing"))
             {
                 mat.SetFloat("_ScanlineSpacing", scanlineSpacing);
+            }
+        }
+
+        void ApplySpriteSnapParams(Material mat)
+        {
+            if (mat == null)
+            {
+                return;
+            }
+
+            if (mat.HasProperty("_PixelResolution"))
+            {
+                mat.SetVector("_PixelResolution", new Vector4(pixelResolution.x, pixelResolution.y, 0f, 0f));
+            }
+
+            if (mat.HasProperty("_PixelSnap"))
+            {
+                mat.SetFloat("_PixelSnap", spritePixelSnap);
             }
         }
 

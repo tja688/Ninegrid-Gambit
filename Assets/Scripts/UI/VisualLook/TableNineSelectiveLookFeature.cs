@@ -83,7 +83,7 @@ namespace NineGrid.VisualLook
                 return;
             }
 
-            if (settings.buildNoSnapMask && settings.maskMaterial != null)
+            if (settings.buildNoSnapMask && settings.maskMaterial != null && FullscreenSnapEnabled())
             {
                 _maskPass.Setup(settings);
                 _maskPass.renderPassEvent = RenderPassEvent.AfterRenderingTransparents;
@@ -92,15 +92,45 @@ namespace NineGrid.VisualLook
 
             if (settings.overlayOwnsScanline)
             {
-                _basePass.Setup(settings, PassMode.SnapOnly);
+                if (FullscreenSnapEnabled())
+                {
+                    _basePass.Setup(settings, PassMode.SnapOnly);
+                    _basePass.renderPassEvent = settings.passEvent;
+                    renderer.EnqueuePass(_basePass);
+                }
+
+                return;
+            }
+
+            if (FullscreenSnapEnabled())
+            {
+                _basePass.Setup(settings, PassMode.SnapThenScanline);
+            }
+            else if (FullscreenScanlineEnabled())
+            {
+                _basePass.Setup(settings, PassMode.ScanlineOnly);
             }
             else
             {
-                _basePass.Setup(settings, PassMode.SnapThenScanline);
+                return;
             }
 
             _basePass.renderPassEvent = settings.passEvent;
             renderer.EnqueuePass(_basePass);
+        }
+
+        bool FullscreenSnapEnabled()
+        {
+            return settings.lookMaterial != null
+                && settings.lookMaterial.HasProperty("_PixelSnap")
+                && settings.lookMaterial.GetFloat("_PixelSnap") > 0.001f;
+        }
+
+        bool FullscreenScanlineEnabled()
+        {
+            return settings.lookMaterial == null
+                || !settings.lookMaterial.HasProperty("_ScanlineEnabled")
+                || settings.lookMaterial.GetFloat("_ScanlineEnabled") > 0.001f;
         }
 
         enum PassMode
