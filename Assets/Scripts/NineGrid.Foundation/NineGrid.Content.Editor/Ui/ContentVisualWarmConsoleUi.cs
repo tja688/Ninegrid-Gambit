@@ -98,6 +98,108 @@ namespace NineGrid.Content.Editor.Ui
             return row;
         }
 
+        /// <summary>标签与控件同一行，用于高密度配置面板。</summary>
+        public static VisualElement WrapControlRow(
+            string label,
+            VisualElement field,
+            float labelWidth = 118f,
+            string tooltip = null)
+        {
+            var row = new VisualElement();
+            row.style.flexDirection = FlexDirection.Row;
+            row.style.alignItems = Align.Center;
+            row.style.marginBottom = 2;
+            row.style.paddingTop = 1;
+            row.style.paddingBottom = 1;
+            row.style.minHeight = 22;
+
+            var lbl = CreateTitleLabel(label, 11, false, Theme.TextSecondary);
+            lbl.style.width = labelWidth;
+            lbl.style.flexShrink = 0;
+            lbl.style.unityTextAlign = TextAnchor.MiddleLeft;
+            if (!string.IsNullOrEmpty(tooltip))
+            {
+                lbl.tooltip = tooltip;
+                field.tooltip = tooltip;
+            }
+
+            row.Add(lbl);
+            field.style.flexGrow = 1;
+            field.style.flexShrink = 1;
+            field.style.minWidth = 40;
+            row.Add(field);
+            return row;
+        }
+
+        public static void AddTwoColumnGrid(VisualElement column, IReadOnlyList<VisualElement> items, float columnGap = 8f)
+        {
+            VisualElement row = null;
+            for (var i = 0; i < items.Count; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    row = new VisualElement();
+                    row.style.flexDirection = FlexDirection.Row;
+                    row.style.marginBottom = 2;
+                    column.Add(row);
+                }
+
+                var cell = new VisualElement();
+                cell.style.flexGrow = 1;
+                cell.style.flexBasis = 0;
+                cell.style.minWidth = 0;
+                if (i % 2 == 0)
+                {
+                    cell.style.marginRight = columnGap;
+                }
+
+                cell.Add(items[i]);
+                row.Add(cell);
+            }
+        }
+
+        public static VisualElement CreateInlineFieldGroup(params VisualElement[] fields)
+        {
+            var row = new VisualElement();
+            row.style.flexDirection = FlexDirection.Row;
+            row.style.alignItems = Align.Center;
+            row.style.marginBottom = 4;
+            row.style.flexWrap = Wrap.Wrap;
+
+            for (var i = 0; i < fields.Length; i++)
+            {
+                var wrap = fields[i];
+                wrap.style.flexGrow = 1;
+                wrap.style.flexBasis = 0;
+                wrap.style.minWidth = 72;
+                if (i < fields.Length - 1)
+                {
+                    wrap.style.marginRight = 6;
+                }
+
+                row.Add(wrap);
+            }
+
+            return row;
+        }
+
+        public static VisualElement CreatePageHeaderCompact(string title, string description)
+        {
+            var block = new VisualElement();
+            block.style.marginBottom = 8;
+            block.Add(CreateTitleLabel(title, 18, true, Theme.PageTitle));
+
+            if (!string.IsNullOrEmpty(description))
+            {
+                var desc = CreateTitleLabel(description, 11, false, Theme.PageDesc);
+                desc.style.marginTop = 2;
+                desc.style.marginBottom = 6;
+                block.Add(desc);
+            }
+
+            return block;
+        }
+
         public static VisualElement CreateStatCard(string title, string value, string description)
         {
             var card = new VisualElement();
@@ -152,7 +254,7 @@ namespace NineGrid.Content.Editor.Ui
         {
             var outer = new VisualElement();
             outer.style.flexDirection = FlexDirection.Row;
-            outer.style.marginBottom = 12;
+            outer.style.marginBottom = 6;
             outer.style.backgroundColor = Theme.SectionCardBg;
             outer.style.borderTopLeftRadius = outer.style.borderTopRightRadius = 8;
             outer.style.borderBottomLeftRadius = outer.style.borderBottomRightRadius = 8;
@@ -165,10 +267,10 @@ namespace NineGrid.Content.Editor.Ui
 
             var inner = new VisualElement();
             inner.style.flexGrow = 1;
-            inner.style.paddingTop = 8;
-            inner.style.paddingBottom = 10;
-            inner.style.paddingLeft = 8;
-            inner.style.paddingRight = 10;
+            inner.style.paddingTop = 6;
+            inner.style.paddingBottom = 6;
+            inner.style.paddingLeft = 6;
+            inner.style.paddingRight = 8;
 
             var foldout = new Foldout { text = title, value = true };
             foldout.style.unityFontStyleAndWeight = FontStyle.Bold;
