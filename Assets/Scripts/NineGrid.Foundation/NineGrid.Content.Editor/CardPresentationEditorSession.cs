@@ -363,7 +363,7 @@ namespace NineGrid.Content.Editor
             var other = new CardPresentationSidebarGroup
             {
                 Category = CardPresentationSidebarCategory.Other,
-                Title = "其他",
+                Title = "描述富文本",
                 ExpandByDefault = false,
             };
 

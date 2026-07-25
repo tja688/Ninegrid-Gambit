@@ -1,0 +1,67 @@
+﻿{
+  "success": true,
+  "command": "command eval",
+  "data": {
+    "command": "eval",
+    "parameters": {
+      "format": "json",
+      "code": "var path = NineGrid.Cards.CardChassisPaths.MonsterFacePrefab;\r\nvar root = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(path);\r\nif (root == null)\r\n{\r\n    return missing"
+    },
+    "result": {
+      "output": null,
+      "diagnostics": [
+        {
+          "severity": "error",
+          "message": "; expected",
+          "line": 5,
+          "column": 18,
+          "id": "CS1002"
+        },
+        {
+          "severity": "error",
+          "message": "} expected",
+          "line": 9,
+          "column": 1,
+          "id": "CS1513"
+        },
+        {
+          "severity": "error",
+          "message": "The name 'missing' does not exist in the current context",
+          "line": 5,
+          "column": 11,
+          "id": "CS0103"
+        },
+        {
+          "severity": "warning",
+          "message": "Unreachable code detected",
+          "line": 6,
+          "column": 12,
+          "id": "CS0162"
+        },
+        {
+          "severity": "error",
+          "message": "'PipelineEval_3521b7b3.Execute()': not all code paths return a value",
+          "line": 0,
+          "column": 29,
+          "id": "CS0161"
+        }
+      ],
+      "success": false,
+      "command": null,
+      "result": null,
+      "executionTimeMs": 359,
+      "message": null,
+      "error": "Compilation Failed",
+      "errorDetails": "Code compilation failed",
+      "executedAt": "0001-01-01T00:00:00"
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\Users\\jinji\\Documents\\GitHub\\Ninegrid-Gambit"
+    },
+    "success": true
+  },
+  "errors": [],
+  "warnings": []
+}

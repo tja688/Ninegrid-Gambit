@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using NineGrid.Cards;
 using NineGrid.Cards.Anim;
+using NineGrid.Cards.Presentation;
 using NineGrid.Cards.Slots;
 using NineGrid.Content;
 using NineGrid.Content.CardPresentation;
@@ -37,6 +38,13 @@ namespace NineGrid.Content.Editor
         private readonly Dictionary<string, bool> foldoutState =
             new Dictionary<string, bool>(StringComparer.Ordinal);
 
+        private bool descriptionRichTextFocused;
+        private CardPresentationKind richTextPreviewKind = CardPresentationKind.Monster;
+        private string richTextSelectedCode = CardFaceSlotCodes.ActionIcon;
+        private string richTextSampleDescription = "在[Action_Icon]后攻击玩家";
+        private CardFaceDescriptionInlineIconStyleSO inlineIconStyle;
+        private bool inlineIconStyleDirty;
+
         [MenuItem("NineGrid/表现层配置")]
         public static void ShowWindow()
         {
@@ -69,6 +77,8 @@ namespace NineGrid.Content.Editor
             previewAnimPlayer = null;
             previewHost.Dispose();
             previewFingerprint = string.Empty;
+            CardFacePresentationBinder.SetInlineIconStyleOverride(null);
+            TryPersistInlineIconStyle();
         }
 
         private void HookEditorTick(bool enable)
@@ -238,6 +248,7 @@ namespace NineGrid.Content.Editor
             }
             else if (group.Category == CardPresentationSidebarCategory.Other)
             {
+                foldout.contentContainer.Add(BuildDescriptionRichTextNavButton());
                 var icons = session.GetInsertableIcons();
                 if (icons.Count == 0)
                 {
@@ -294,6 +305,57 @@ namespace NineGrid.Content.Editor
             return foldout;
         }
 
+        private VisualElement BuildDescriptionRichTextNavButton()
+        {
+            var selected = descriptionRichTextFocused;
+            var btn = new VisualElement();
+            btn.style.flexDirection = FlexDirection.Row;
+            btn.style.marginBottom = 4;
+            btn.style.overflow = Overflow.Hidden;
+            btn.style.borderTopLeftRadius = btn.style.borderTopRightRadius = 4;
+            btn.style.borderBottomLeftRadius = btn.style.borderBottomRightRadius = 4;
+            btn.style.backgroundColor = selected
+                ? ContentVisualWarmConsoleUi.Theme.NavSelectedBg
+                : ContentVisualWarmConsoleUi.Theme.NavNormalBg;
+
+            var stripe = new VisualElement();
+            stripe.style.width = 3;
+            stripe.style.backgroundColor = selected
+                ? ContentVisualWarmConsoleUi.Theme.AccentStrong
+                : ContentVisualWarmConsoleUi.Theme.NavStripeNormal;
+            btn.Add(stripe);
+
+            var body = new VisualElement();
+            body.style.flexGrow = 1;
+            body.style.paddingTop = 6;
+            body.style.paddingBottom = 6;
+            body.style.paddingLeft = 6;
+            body.style.paddingRight = 4;
+            body.Add(ContentVisualWarmConsoleUi.CreateTitleLabel(
+                "打开详情页", 12, true, ContentVisualWarmConsoleUi.Theme.TextPrimary));
+            body.Add(ContentVisualWarmConsoleUi.CreateTinyPathLabel("内联图标 · 基础预制体预览"));
+            btn.Add(body);
+
+            btn.RegisterCallback<ClickEvent>(_ => OpenDescriptionRichTextPage());
+            return btn;
+        }
+
+        private void OpenDescriptionRichTextPage(string selectCode = null)
+        {
+            descriptionRichTextFocused = true;
+            session.FocusedContentId = string.Empty;
+            if (!string.IsNullOrEmpty(selectCode))
+            {
+                richTextSelectedCode = selectCode;
+            }
+
+            EnsureInlineIconStyleLoaded();
+            CardFacePresentationBinder.SetInlineIconStyleOverride(inlineIconStyle);
+            previewFingerprint = string.Empty;
+            RefreshSidebar();
+            RefreshContent();
+        }
+
         private VisualElement BuildInsertableRow(CardPresentationInsertableIcon icon)
         {
             var row = new VisualElement();
@@ -304,7 +366,10 @@ namespace NineGrid.Content.Editor
             row.style.paddingRight = 4;
             row.style.paddingTop = 2;
             row.style.paddingBottom = 2;
-            row.style.backgroundColor = ContentVisualWarmConsoleUi.Theme.NavNormalBg;
+            row.style.backgroundColor = descriptionRichTextFocused
+                && string.Equals(richTextSelectedCode, icon.Code, StringComparison.Ordinal)
+                ? ContentVisualWarmConsoleUi.Theme.NavSelectedBg
+                : ContentVisualWarmConsoleUi.Theme.NavNormalBg;
             row.style.borderTopLeftRadius = row.style.borderTopRightRadius = 4;
             row.style.borderBottomLeftRadius = row.style.borderBottomRightRadius = 4;
 
@@ -321,12 +386,15 @@ namespace NineGrid.Content.Editor
                 EditorGUIUtility.systemCopyBuffer = icon.Token;
             });
             row.Add(tokenField);
+
+            row.RegisterCallback<ClickEvent>(_ => OpenDescriptionRichTextPage(icon.Code));
             return row;
         }
 
         private VisualElement BuildEntryButton(CardPresentationEditorEntry entry)
         {
-            var selected = string.Equals(entry.ContentId, session.FocusedContentId, StringComparison.Ordinal);
+            var selected = !descriptionRichTextFocused
+                           && string.Equals(entry.ContentId, session.FocusedContentId, StringComparison.Ordinal);
             var btn = new VisualElement();
             btn.style.flexDirection = FlexDirection.Row;
             btn.style.marginBottom = 2;
@@ -369,6 +437,8 @@ namespace NineGrid.Content.Editor
 
             btn.RegisterCallback<ClickEvent>(_ =>
             {
+                descriptionRichTextFocused = false;
+                CardFacePresentationBinder.SetInlineIconStyleOverride(null);
                 session.FocusedContentId = entry.ContentId;
                 faceUp = true;
                 previewAnimSlot = CardAnimSlotIds.Idle;
@@ -383,12 +453,18 @@ namespace NineGrid.Content.Editor
         private void RefreshContent()
         {
             contentRoot.Clear();
+            if (descriptionRichTextFocused)
+            {
+                BuildDescriptionRichTextContent();
+                return;
+            }
+
             var entry = session.GetFocused();
             if (entry?.Dto == null)
             {
                 contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeader(
                     "未选择",
-                    "从左侧树选择一张卡进行编辑。"));
+                    "从左侧树选择一张卡，或打开「描述富文本」配置内联图标。"));
                 previewFingerprint = string.Empty;
                 return;
             }
@@ -451,7 +527,7 @@ namespace NineGrid.Content.Editor
 
             var descriptionCard = ContentVisualWarmConsoleUi.CreateSectionCard(
                 "描述",
-                "[SlotCode] 见左侧「其他」",
+                "[SlotCode] 见左侧「描述富文本」；输入框为代码，预览显示真实图标",
                 column =>
                 {
                     descriptionField = new TextField
@@ -518,6 +594,305 @@ namespace NineGrid.Content.Editor
             contentRoot.Add(extraOuter);
 
             EnsurePreview(entry);
+        }
+
+        private void BuildDescriptionRichTextContent()
+        {
+            EnsureInlineIconStyleLoaded();
+            CardFacePresentationBinder.SetInlineIconStyleOverride(inlineIconStyle);
+
+            contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeaderCompact(
+                "描述富文本",
+                "全局内联图标布局 · 四套基础卡面预制体预览"
+                + (inlineIconStyleDirty ? " · 样式未保存" : string.Empty)));
+
+            var topRow = new VisualElement();
+            topRow.style.flexDirection = FlexDirection.Row;
+            topRow.style.marginBottom = 6;
+            topRow.style.alignItems = Align.Stretch;
+            contentRoot.Add(topRow);
+
+            var previewCard = ContentVisualWarmConsoleUi.CreateSectionCard(
+                "基础预制体预览",
+                "不读已有卡牌 JSON，仅看描述内嵌图标效果",
+                column =>
+                {
+                    var kindChoices = new List<string> { "玩家卡", "怪物卡", "道具卡", "遗物卡" };
+                    var kindIndex = RichTextKindToIndex(richTextPreviewKind);
+                    var kindField = new PopupField<string>(kindChoices, kindIndex);
+                    kindField.RegisterValueChangedCallback(evt =>
+                    {
+                        richTextPreviewKind = RichTextIndexToKind(kindChoices.IndexOf(evt.newValue));
+                        previewFingerprint = string.Empty;
+                        RefreshContent();
+                    });
+                    column.Add(ContentVisualWarmConsoleUi.WrapControlRow("卡种", kindField, 72f));
+
+                    previewContainer = new IMGUIContainer(() =>
+                    {
+                        EnsureRichTextPreview();
+                        var rect = GUILayoutUtility.GetRect(
+                            1f, 1f, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                        previewHost.Draw(rect);
+                    });
+                    previewContainer.style.minHeight = 340;
+                    previewContainer.style.minWidth = 260;
+                    column.Add(previewContainer);
+
+                    column.Add(ContentVisualWarmConsoleUi.CreateButtonRow(
+                        new Button(() =>
+                        {
+                            previewFingerprint = string.Empty;
+                            EnsureRichTextPreview(force: true);
+                            previewContainer?.MarkDirtyRepaint();
+                        }) { text = "刷新预览" },
+                        new Button(() =>
+                        {
+                            TryPersistInlineIconStyle();
+                            RefreshContent();
+                        }) { text = "保存样式" }));
+                });
+            previewCard.style.flexGrow = 1;
+            previewCard.style.flexBasis = 0;
+            previewCard.style.marginRight = 6;
+            topRow.Add(previewCard);
+
+            var paramsCard = ContentVisualWarmConsoleUi.CreateSectionCard(
+                "内联图标参数",
+                "em 相对；调好后随字号 / 描述节点缩放自动跟从",
+                column => BuildRichTextParams(column));
+            paramsCard.style.flexGrow = 1;
+            paramsCard.style.flexBasis = 0;
+            topRow.Add(paramsCard);
+
+            var sampleCard = ContentVisualWarmConsoleUi.CreateSectionCard(
+                "样例描述",
+                "输入框为 [SlotCode]；预览解析为真实图标",
+                column =>
+                {
+                    var sampleField = new TextField
+                    {
+                        multiline = true,
+                        value = richTextSampleDescription ?? string.Empty,
+                    };
+                    sampleField.style.minHeight = 72;
+                    sampleField.RegisterValueChangedCallback(evt =>
+                    {
+                        richTextSampleDescription = evt.newValue ?? string.Empty;
+                        previewFingerprint = string.Empty;
+                        EnsureRichTextPreview(force: true);
+                        previewContainer?.MarkDirtyRepaint();
+                    });
+                    column.Add(sampleField);
+                });
+            sampleCard.style.marginBottom = 12;
+            contentRoot.Add(sampleCard);
+        }
+
+        private void BuildRichTextParams(VisualElement column)
+        {
+            EnsureInlineIconStyleLoaded();
+            var icons = session.GetInsertableIcons();
+            var templateSprites = CaptureTemplateSpritesForKind(richTextPreviewKind);
+
+            if (icons.Count == 0)
+            {
+                column.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel("（无 Insertable 槽）"));
+                return;
+            }
+
+            if (string.IsNullOrEmpty(richTextSelectedCode))
+            {
+                richTextSelectedCode = icons[0].Code;
+            }
+
+            var codeChoices = new List<string>(icons.Count);
+            var labels = new List<string>(icons.Count);
+            var selectedIndex = 0;
+            for (var i = 0; i < icons.Count; i++)
+            {
+                codeChoices.Add(icons[i].Code);
+                labels.Add(icons[i].DisplayNameZh + "  " + icons[i].Token);
+                if (string.Equals(icons[i].Code, richTextSelectedCode, StringComparison.Ordinal))
+                {
+                    selectedIndex = i;
+                }
+            }
+
+            var codeField = new PopupField<string>(labels, selectedIndex);
+            codeField.RegisterValueChangedCallback(evt =>
+            {
+                var idx = labels.IndexOf(evt.newValue);
+                if (idx >= 0 && idx < codeChoices.Count)
+                {
+                    richTextSelectedCode = codeChoices[idx];
+                    RefreshContent();
+                }
+            });
+            column.Add(ContentVisualWarmConsoleUi.WrapControlRow("代号", codeField, 72f));
+
+            Sprite previewSprite = null;
+            templateSprites.TryGetValue(richTextSelectedCode, out previewSprite);
+            column.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel(
+                previewSprite != null
+                    ? "当前卡种模板默认 Sprite：" + previewSprite.name
+                    : "当前卡种模板无此图标（描述中将保留字面量）"));
+
+            inlineIconStyle.Resolve(richTextSelectedCode, out var bx, out var by, out var scale);
+            var bearingX = new FloatField("Offset X (em)") { value = bx };
+            bearingX.RegisterValueChangedCallback(evt =>
+            {
+                inlineIconStyle.Resolve(richTextSelectedCode, out _, out var curBy, out var curScale);
+                ApplyRichTextLayout(evt.newValue, curBy, curScale);
+            });
+            column.Add(bearingX);
+
+            var bearingY = new FloatField("Offset Y (em)") { value = by };
+            bearingY.RegisterValueChangedCallback(evt =>
+            {
+                inlineIconStyle.Resolve(richTextSelectedCode, out var curBx, out _, out var curScale);
+                ApplyRichTextLayout(curBx, evt.newValue, curScale);
+            });
+            column.Add(bearingY);
+
+            var baseScale = new FloatField("Base Scale") { value = scale };
+            baseScale.RegisterValueChangedCallback(evt =>
+            {
+                inlineIconStyle.Resolve(richTextSelectedCode, out var curBx, out var curBy, out _);
+                ApplyRichTextLayout(curBx, curBy, evt.newValue);
+            });
+            column.Add(baseScale);
+        }
+
+        private void ApplyRichTextLayout(float bearingX, float bearingY, float baseScale)
+        {
+            EnsureInlineIconStyleLoaded();
+            inlineIconStyle.SetEntry(richTextSelectedCode, bearingX, bearingY, baseScale);
+            inlineIconStyleDirty = true;
+            CardFacePresentationBinder.SetInlineIconStyleOverride(inlineIconStyle);
+            CardFacePresentationBinder.InvalidateInlineIconStyleCache();
+            previewFingerprint = string.Empty;
+            EnsureRichTextPreview(force: true);
+            previewContainer?.MarkDirtyRepaint();
+            UpdateStatus();
+        }
+
+        private void EnsureRichTextPreview(bool force = false)
+        {
+            var fingerprint = "richtext|" + richTextPreviewKind + "|"
+                              + (richTextSampleDescription ?? string.Empty) + "|"
+                              + richTextSelectedCode + "|"
+                              + (inlineIconStyle != null ? inlineIconStyle.GetInstanceID() : 0);
+            if (inlineIconStyle != null)
+            {
+                inlineIconStyle.Resolve(richTextSelectedCode, out var bx, out var by, out var scale);
+                fingerprint += "|" + bx + "," + by + "," + scale;
+            }
+
+            if (!force && fingerprint == previewFingerprint && previewHost.PreviewRoot != null)
+            {
+                return;
+            }
+
+            previewFingerprint = fingerprint;
+            flipPreview.Stop(resetRotation: true);
+            previewAnimPlayer = null;
+
+            var request = new CardFacePreviewRequest
+            {
+                DefId = "preview.richtext." + richTextPreviewKind,
+                Kind = richTextPreviewKind == CardPresentationKind.Unknown
+                    ? CardPresentationKind.Monster
+                    : richTextPreviewKind,
+                DisplayName = "描述富文本预览",
+                BasicDescription = richTextSampleDescription ?? string.Empty,
+                FaceUp = true,
+            };
+
+            previewHost.Rebuild(request);
+            if (previewHost.PreviewRoot != null)
+            {
+                CardMainVisualMaskAnchor.DisableMaskingForEditorPreview(previewHost.PreviewRoot.transform);
+                ApplyFaceVisibility(previewHost.PreviewRoot.transform, true);
+            }
+        }
+
+        private void EnsureInlineIconStyleLoaded()
+        {
+            if (inlineIconStyle != null)
+            {
+                return;
+            }
+
+            inlineIconStyle = AssetDatabase.LoadAssetAtPath<CardFaceDescriptionInlineIconStyleSO>(
+                CardChassisPaths.DescriptionInlineIconStyleAsset);
+            if (inlineIconStyle != null)
+            {
+                return;
+            }
+
+            inlineIconStyle = ScriptableObject.CreateInstance<CardFaceDescriptionInlineIconStyleSO>();
+            inlineIconStyle.name = "CardFaceDescriptionInlineIconStyle";
+            AssetDatabase.CreateAsset(inlineIconStyle, CardChassisPaths.DescriptionInlineIconStyleAsset);
+            AssetDatabase.SaveAssets();
+            CardFacePresentationBinder.InvalidateInlineIconStyleCache();
+        }
+
+        private void TryPersistInlineIconStyle()
+        {
+            if (!inlineIconStyleDirty || inlineIconStyle == null)
+            {
+                return;
+            }
+
+            EditorUtility.SetDirty(inlineIconStyle);
+            AssetDatabase.SaveAssets();
+            inlineIconStyleDirty = false;
+            CardFacePresentationBinder.InvalidateInlineIconStyleCache();
+        }
+
+        private static Dictionary<string, Sprite> CaptureTemplateSpritesForKind(CardPresentationKind kind)
+        {
+            var path = kind switch
+            {
+                CardPresentationKind.Avatar => CardChassisPaths.AvatarFacePrefab,
+                CardPresentationKind.Monster => CardChassisPaths.MonsterFacePrefab,
+                CardPresentationKind.HelpCard => CardChassisPaths.ItemFacePrefab,
+                CardPresentationKind.Relic => CardChassisPaths.RelicFacePrefab,
+                _ => CardChassisPaths.MonsterFacePrefab,
+            };
+
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab == null)
+            {
+                return new Dictionary<string, Sprite>();
+            }
+
+            return CardFaceSlotNodeMap.CaptureTemplateDefaults(prefab.transform);
+        }
+
+        private static int RichTextKindToIndex(CardPresentationKind kind)
+        {
+            return kind switch
+            {
+                CardPresentationKind.Avatar => 0,
+                CardPresentationKind.Monster => 1,
+                CardPresentationKind.HelpCard => 2,
+                CardPresentationKind.Relic => 3,
+                _ => 1,
+            };
+        }
+
+        private static CardPresentationKind RichTextIndexToKind(int index)
+        {
+            return index switch
+            {
+                0 => CardPresentationKind.Avatar,
+                1 => CardPresentationKind.Monster,
+                2 => CardPresentationKind.HelpCard,
+                3 => CardPresentationKind.Relic,
+                _ => CardPresentationKind.Monster,
+            };
         }
 
         private void BuildInstantParams(VisualElement column, CardPresentationEditorEntry entry)
@@ -1286,8 +1661,18 @@ namespace NineGrid.Content.Editor
                 return;
             }
 
-            var focused = session.GetFocused();
-            var focusText = focused != null ? focused.ContentId : "（未选）";
+            string focusText;
+            if (descriptionRichTextFocused)
+            {
+                focusText = "描述富文本 · " + richTextPreviewKind
+                            + (inlineIconStyleDirty ? " · 样式脏" : string.Empty);
+            }
+            else
+            {
+                var focused = session.GetFocused();
+                focusText = focused != null ? focused.ContentId : "（未选）";
+            }
+
             statusHelpBox.text = "条目 " + session.Entries.Count
                                  + " · 脏 " + session.DirtyCount
                                  + " · 焦点 " + focusText
@@ -1296,6 +1681,7 @@ namespace NineGrid.Content.Editor
 
         private void SaveAll()
         {
+            TryPersistInlineIconStyle();
             if (!session.TrySaveAll(out var error))
             {
                 EditorUtility.DisplayDialog("保存失败", error ?? "未知错误", "确定");

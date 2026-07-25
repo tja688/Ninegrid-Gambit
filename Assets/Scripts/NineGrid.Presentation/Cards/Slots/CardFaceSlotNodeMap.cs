@@ -31,7 +31,7 @@ namespace NineGrid.Cards.Slots
                 { CardFaceSlotCodes.BackLogo, new[] { "logo", "Logo" } },
                 {
                     CardFaceSlotCodes.ActionIcon,
-                    new[] { "行动图标", "Action_Icon", "ActionIcon" }
+                    new[] { "行动图标", "行动", "Action_Icon", "ActionIcon" }
                 },
             };
 

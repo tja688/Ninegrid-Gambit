@@ -12,5 +12,7 @@ namespace NineGrid.Cards
         public const string ItemFacePrefab = "Assets/Prefabs/道具卡标准模版.prefab";
         public const string RelicFacePrefab = "Assets/Prefabs/遗物卡标准模版.prefab";
         public const string SlotRegistryAsset = "Assets/Arts/Cards/CardFaceSlotRegistry.asset";
+        public const string DescriptionInlineIconStyleAsset =
+            "Assets/Arts/Cards/CardFaceDescriptionInlineIconStyle.asset";
     }
 }

@@ -152,6 +152,102 @@ namespace NineGrid.Presentation.Tests
             Assert.IsTrue(slots.Exists(s => s.Code == CardFaceSlotCodes.ActionIcon));
         }
 
+        [Test]
+        public void CaptureTemplateDefaults_ResolvesActionNodeNamed行动()
+        {
+            var face = new GameObject("CaptureActionFace");
+            try
+            {
+                var front = new GameObject("Front");
+                front.transform.SetParent(face.transform, false);
+                CreateSpriteChild(front.transform, "行动");
+                if (CardFaceSlotNodeMap.TryFindRenderer(
+                        face.transform,
+                        CardFaceSlotCodes.ActionIcon,
+                        out var renderer))
+                {
+                    renderer.sprite = _actionIcon;
+                }
+
+                var defaults = CardFaceSlotNodeMap.CaptureTemplateDefaults(face.transform);
+                Assert.IsTrue(
+                    defaults.TryGetValue(CardFaceSlotCodes.ActionIcon, out var captured),
+                    "节点名「行动」应映射到 Action_Icon");
+                Assert.AreSame(_actionIcon, captured);
+            }
+            finally
+            {
+                Object.DestroyImmediate(face);
+            }
+        }
+
+        [Test]
+        public void TryBuild_Monster_ActionNodeNamed行动_ResolvesInDescription()
+        {
+            var face = new GameObject("PreviewMonsterFace_行动");
+            try
+            {
+                var front = new GameObject("Front");
+                front.transform.SetParent(face.transform, false);
+                new GameObject("back").transform.SetParent(face.transform, false);
+                CreateSpriteChild(front.transform, "核心图标");
+                CreateSpriteChild(front.transform, "行动");
+                if (CardFaceSlotNodeMap.TryFindRenderer(
+                        face.transform,
+                        CardFaceSlotCodes.ActionIcon,
+                        out var actionRenderer))
+                {
+                    actionRenderer.sprite = _actionIcon;
+                }
+
+                var nameRoot = new GameObject("名字");
+                nameRoot.transform.SetParent(front.transform, false);
+                CreateTmpChild(nameRoot.transform, "标准世界文字", "模板怪");
+                CreateTmpChild(front.transform, "攻击数值", "0");
+                CreateTmpChild(front.transform, "护甲数值", "0");
+                CreateTmpChild(front.transform, "血量数值", "0");
+                CreateTmpChild(front.transform, "行动计数", "0");
+                CreateTmpChild(front.transform, "描述", string.Empty);
+
+                var request = new CardFacePreviewRequest
+                {
+                    DefId = "monster.preview_action_node",
+                    Kind = CardPresentationKind.Monster,
+                    DisplayName = "行动节点怪",
+                    BasicDescription = "在[Action_Icon]后攻击",
+                    MainIcon = _mainIcon,
+                    FaceUp = true,
+                };
+
+                Assert.IsTrue(
+                    CardFacePreviewBuilder.TryBuild(
+                        request,
+                        out var build,
+                        out var error,
+                        _chassis,
+                        face),
+                    error);
+
+                try
+                {
+                    Assert.IsTrue(
+                        CardFaceSlotNodeMap.TryReadText(
+                            build.FaceRoot,
+                            CardFaceSlotCodes.BasicDescription,
+                            out var tmpText));
+                    Assert.AreEqual("在<sprite name=\"Action_Icon\">后攻击", tmpText);
+                }
+                finally
+                {
+                    CardFacePreviewBuilder.DestroyBuild(build);
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(face);
+            }
+        }
+
         private static GameObject CreateChassisPrefab(string name)
         {
             var go = new GameObject(name);

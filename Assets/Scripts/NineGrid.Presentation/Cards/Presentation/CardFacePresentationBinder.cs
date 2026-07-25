@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using NineGrid.Cards;
 using NineGrid.Cards.Anim;
 using NineGrid.Cards.Slots;
 using NineGrid.Content.CardPresentation;
@@ -24,6 +25,8 @@ namespace NineGrid.Cards.Presentation
         private string _lastIconFingerprint;
         private TMP_SpriteAsset _descriptionSpriteAsset;
         private static CardFaceSlotRegistrySO _defaultRegistry;
+        private static CardFaceDescriptionInlineIconStyleSO _cachedInlineIconStyle;
+        private static CardFaceDescriptionInlineIconStyleSO _inlineIconStyleOverride;
 
         /// <summary>最近一次 Commit 的朝向镜像（供后续翻牌专题读取；本波不驱动演出）。</summary>
         public bool CommittedFaceUp => _committedFaceUp;
@@ -207,7 +210,9 @@ namespace NineGrid.Cards.Presentation
             ReleaseDescriptionSpriteAsset();
             if (composed.Icons.Count > 0)
             {
-                _descriptionSpriteAsset = CardFaceDescriptionSpriteAssetBuilder.Build(composed.Icons);
+                _descriptionSpriteAsset = CardFaceDescriptionSpriteAssetBuilder.Build(
+                    composed.Icons,
+                    GetInlineIconStyle());
                 text.spriteAsset = _descriptionSpriteAsset;
             }
             else
@@ -262,6 +267,20 @@ namespace NineGrid.Cards.Presentation
                 sb.Append(';');
             }
 
+            var style = GetInlineIconStyle();
+            if (style != null)
+            {
+                sb.Append("|style=").Append(style.GetInstanceID());
+                for (var i = 0; i < codes.Count; i++)
+                {
+                    style.Resolve(codes[i], out var bx, out var by, out var scale);
+                    sb.Append(codes[i]).Append(':')
+                        .Append(bx.ToString("R")).Append(',')
+                        .Append(by.ToString("R")).Append(',')
+                        .Append(scale.ToString("R")).Append(';');
+                }
+            }
+
             return sb.ToString();
         }
 
@@ -286,6 +305,37 @@ namespace NineGrid.Cards.Presentation
             }
 
             return _defaultRegistry;
+        }
+
+        private static CardFaceDescriptionInlineIconStyleSO GetInlineIconStyle()
+        {
+            if (_inlineIconStyleOverride != null)
+            {
+                return _inlineIconStyleOverride;
+            }
+
+            if (_cachedInlineIconStyle != null)
+            {
+                return _cachedInlineIconStyle;
+            }
+
+#if UNITY_EDITOR
+            _cachedInlineIconStyle = UnityEditor.AssetDatabase.LoadAssetAtPath<CardFaceDescriptionInlineIconStyleSO>(
+                CardChassisPaths.DescriptionInlineIconStyleAsset);
+#endif
+            return _cachedInlineIconStyle;
+        }
+
+        /// <summary>编辑器专页可注入未落盘草稿 style；传 null 清除覆盖。</summary>
+        public static void SetInlineIconStyleOverride(CardFaceDescriptionInlineIconStyleSO style)
+        {
+            _inlineIconStyleOverride = style;
+        }
+
+        /// <summary>编辑器改 style 资产后清缓存，下次重新 Load。</summary>
+        public static void InvalidateInlineIconStyleCache()
+        {
+            _cachedInlineIconStyle = null;
         }
 
         private void ApplyStats(CardPresentationSnapshot snapshot)

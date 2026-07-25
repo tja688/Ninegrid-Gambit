@@ -8,6 +8,7 @@
         "NineGrid.Core",
         "QFramework",
         "UniTask",
+        "Unity.TextMeshPro",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

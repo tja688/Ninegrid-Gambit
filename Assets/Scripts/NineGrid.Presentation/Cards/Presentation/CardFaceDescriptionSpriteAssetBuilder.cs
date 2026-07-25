@@ -7,16 +7,31 @@ namespace NineGrid.Cards.Presentation
 {
     /// <summary>
     /// 将装配得到的图标打成运行时 <see cref="TMP_SpriteAsset"/>，供基础描述 `<sprite name="…">` 消费。
+    /// 像素框归一到 1em × aspect，再乘 style.baseScale；bearing 为 em 相对偏移，随字号/描述节点缩放自动跟从。
     /// </summary>
     public static class CardFaceDescriptionSpriteAssetBuilder
     {
+        /// <summary>SpriteAsset faceInfo.pointSize；glyph 高度以 em 计，渲染时 × (fontSize / EmPointSize)。</summary>
+        public const float EmPointSize = 1f;
+
+        /// <summary>未加 bearingY 偏移时，图标顶相对基线的默认高度比例（≈西文大写高度）。</summary>
+        public const float DefaultBaselineBearingFactor = 0.85f;
+
         private static Shader _spriteShader;
 
         public static TMP_SpriteAsset Build(IReadOnlyList<CardFaceDescriptionComposer.InlineIcon> icons)
         {
+            return Build(icons, style: null);
+        }
+
+        public static TMP_SpriteAsset Build(
+            IReadOnlyList<CardFaceDescriptionComposer.InlineIcon> icons,
+            CardFaceDescriptionInlineIconStyleSO style)
+        {
             var asset = ScriptableObject.CreateInstance<TMP_SpriteAsset>();
             asset.name = "CardFaceDescriptionSprites";
             asset.hideFlags = HideFlags.HideAndDontSave;
+            ApplyFaceInfo(asset);
 
             if (icons == null || icons.Count == 0)
             {
@@ -44,6 +59,7 @@ namespace NineGrid.Cards.Presentation
                 cell.SlotCode = icon.SlotCode;
                 cell.Source = icon.Sprite;
                 cell.X = totalW;
+                ResolveLayout(style, icon.SlotCode, cell.Width, cell.Height, out cell.Metrics);
                 cells.Add(cell);
                 totalW += cell.Width;
                 if (cell.Height > maxH)
@@ -77,7 +93,7 @@ namespace NineGrid.Cards.Presentation
                 {
                     index = (uint)i,
                     sprite = cell.Source,
-                    metrics = new GlyphMetrics(cell.Width, cell.Height, 0, cell.Height - 1, cell.Width),
+                    metrics = cell.Metrics,
                     glyphRect = new GlyphRect(cell.X, 0, cell.Width, cell.Height),
                     scale = 1f,
                     atlasIndex = 0
@@ -102,6 +118,26 @@ namespace NineGrid.Cards.Presentation
             return asset;
         }
 
+        /// <summary>
+        /// 将像素框归一到 em：高度 = baseScale，宽度按宽高比；bearing 为 em 相对偏移。
+        /// </summary>
+        public static GlyphMetrics ComputeEmMetrics(
+            int pixelWidth,
+            int pixelHeight,
+            float bearingX,
+            float bearingY,
+            float baseScale)
+        {
+            var scale = baseScale > 0.0001f ? baseScale : 1f;
+            var pw = Mathf.Max(1, pixelWidth);
+            var ph = Mathf.Max(1, pixelHeight);
+            var height = scale;
+            var width = height * (pw / (float)ph);
+            var bx = bearingX;
+            var by = height * DefaultBaselineBearingFactor + bearingY;
+            return new GlyphMetrics(width, height, bx, by, width);
+        }
+
         public static void DestroyBuilt(TMP_SpriteAsset asset)
         {
             if (asset == null)
@@ -112,6 +148,53 @@ namespace NineGrid.Cards.Presentation
             DestroyOwned(asset.material);
             DestroyOwned(asset.spriteSheet);
             DestroyOwned(asset);
+        }
+
+        private static void ResolveLayout(
+            CardFaceDescriptionInlineIconStyleSO style,
+            string slotCode,
+            int pixelWidth,
+            int pixelHeight,
+            out GlyphMetrics metrics)
+        {
+            float bearingX;
+            float bearingY;
+            float baseScale;
+            if (style != null)
+            {
+                style.Resolve(slotCode, out bearingX, out bearingY, out baseScale);
+            }
+            else
+            {
+                bearingX = 0f;
+                bearingY = 0f;
+                baseScale = 1f;
+            }
+
+            metrics = ComputeEmMetrics(pixelWidth, pixelHeight, bearingX, bearingY, baseScale);
+        }
+
+        private static void ApplyFaceInfo(TMP_SpriteAsset asset)
+        {
+            var face = new FaceInfo();
+            face.familyName = "CardFaceDescription";
+            face.styleName = "Regular";
+            face.pointSize = EmPointSize;
+            face.scale = 1f;
+            face.lineHeight = 1.25f;
+            face.ascentLine = 1f;
+            face.capLine = DefaultBaselineBearingFactor;
+            face.meanLine = 0.5f;
+            face.baseline = 0f;
+            face.descentLine = -0.25f;
+            face.superscriptOffset = 0.5f;
+            face.subscriptOffset = -0.2f;
+            face.underlineOffset = -0.1f;
+            face.underlineThickness = 0.05f;
+            face.strikethroughOffset = 0.3f;
+            face.strikethroughThickness = 0.05f;
+            face.tabWidth = 1f;
+            asset.faceInfo = face;
         }
 
         private static void DestroyOwned(Object obj)
@@ -199,6 +282,7 @@ namespace NineGrid.Cards.Presentation
             public int Width;
             public int Height;
             public int X;
+            public GlyphMetrics Metrics;
         }
     }
 }
