@@ -3,8 +3,8 @@
     "contentId": "avatar.default",
     "kind": "Avatar",
     "deckId": "",
-    "displayName": "玩家",
-    "description": "��һ���",
+    "displayName": "战士",
+    "description": "",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -22,9 +22,9 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
-        "offsetY": 0.0,
-        "uniformScale": 1.0
+        "offsetX": 0.10000000149011612,
+        "offsetY": -2.0,
+        "uniformScale": 2.0
     },
     "animations": {
         "defaultFps": 8.0,

@@ -3,8 +3,8 @@
     "contentId": "monster.big_orc",
     "kind": "Monster",
     "deckId": "deck.orc_legion",
-    "displayName": "兽人大只佬",
-    "description": "",
+    "displayName": "兽人",
+    "description": "在[Action_Icon]后攻击玩家",
     "gold": 5,
     "stats": {
         "hp": 14,
@@ -22,9 +22,9 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
-        "offsetY": 0.0,
-        "uniformScale": 1.0
+        "offsetX": -0.10000000149011612,
+        "offsetY": -2.5999999046325685,
+        "uniformScale": 2.0
     },
     "animations": {
         "defaultFps": 8.0,
