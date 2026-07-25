@@ -10,6 +10,7 @@ namespace NineGrid.Content.Editor
 {
     /// <summary>
     /// 从 ContentVisual Catalog SO / xlsx / Core Catalog 填充缺失的卡牌表现 JSON。
+    /// 仅旧→JSON 单向 seed；禁止把 JSON 重叠字段回写 Luban / xlsx。
     /// </summary>
     public static class CardPresentationMigration
     {

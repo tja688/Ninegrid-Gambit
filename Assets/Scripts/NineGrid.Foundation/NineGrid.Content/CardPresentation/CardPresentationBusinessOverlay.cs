@@ -5,7 +5,9 @@ using NineGrid.Core.Content;
 namespace NineGrid.Content
 {
     /// <summary>
-    /// 将卡牌表现 JSON 的 gold/name/stats 覆盖进 Core 内容目录（JSON 权威）。
+    /// 将卡牌表现 JSON 的 displayName / gold / stats 覆盖进 Core 内容目录。
+    /// 规则见 <see cref="CardPresentationAuthority"/>：非空白 / &gt;0 才覆盖，空或 0 不冲掉 Luban 底数。
+    /// 不覆盖 rarity、effectIds、skillIds、recovery 等玩法字段。
     /// </summary>
     public static class CardPresentationBusinessOverlay
     {
@@ -31,7 +33,7 @@ namespace NineGrid.Content
 
                 if (!string.IsNullOrWhiteSpace(dto.displayName))
                 {
-                    // DisplayName 为 private set；仅覆盖可写业务字段。
+                    card.WithDisplayName(dto.displayName.Trim());
                 }
 
                 if (dto.gold > 0)

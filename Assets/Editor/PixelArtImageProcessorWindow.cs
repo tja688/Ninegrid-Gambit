@@ -44,7 +44,9 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
     {
         Single = 0,
         Multiple = 1,
-        Aseprite = 2
+        Aseprite = 2,
+        [InspectorName("站立角色·智能导入")]
+        GroundCharacterSmart = 3,
     }
 
     [Serializable]
@@ -91,8 +93,8 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
                     new PathEntry
                     {
                         enabled = true,
-                        path = "Assets/Arts/Images/Multiple",
-                        mode = ProcessMode.Multiple
+                        path = "Assets/Arts/Images/Multiple/SpriteSheets(96x96)",
+                        mode = ProcessMode.GroundCharacterSmart
                     },
                     new PathEntry
                     {
@@ -131,6 +133,7 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         public ProcessMode Mode;
         public string Folder;
         public List<string> AssetPaths = new();
+        public List<PixelArtGroundCharacterImportUtility.SmartImportJob> SmartJobs = new();
         public int WrongFolderCount;
         public List<string> WrongFolderSamples = new();
     }
@@ -293,7 +296,8 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         }
 
         EditorGUILayout.HelpBox(
-            "每个路径独立选择模式：Single（整图精灵）/ Multiple（图集切片）/ Aseprite（.ase/.aseprite）。",
+            "每个路径独立选择模式：Single（整图精灵）/ Multiple（图集切片）/ Aseprite（.ase/.aseprite）/" +
+            "站立角色·智能导入（递归子文件夹，自动识别图集 vs 序列帧，统一脚底 Pivot）。",
             MessageType.None
         );
 
@@ -387,7 +391,7 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
                 float h = EditorGUIUtility.singleLineHeight;
 
                 Rect enabledRect = new Rect(rect.x, rect.y, 18f, h);
-                Rect modeRect = new Rect(rect.x + 22f, rect.y, 96f, h);
+                Rect modeRect = new Rect(rect.x + 22f, rect.y, 132f, h);
                 Rect browseRect = new Rect(rect.xMax - 56f, rect.y, 56f, h);
                 Rect pathRect = new Rect(modeRect.xMax + 4f, rect.y, browseRect.x - modeRect.xMax - 8f, h);
 
@@ -449,8 +453,9 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         string name = Path.GetFileName(path.TrimEnd('/', '\\'));
         if (name.IndexOf("aseprite", StringComparison.OrdinalIgnoreCase) >= 0)
             return ProcessMode.Aseprite;
-        if (name.IndexOf("multiple", StringComparison.OrdinalIgnoreCase) >= 0)
-            return ProcessMode.Multiple;
+        if (name.IndexOf("spritesheet", StringComparison.OrdinalIgnoreCase) >= 0
+            || name.IndexOf("sprite sheets", StringComparison.OrdinalIgnoreCase) >= 0)
+            return ProcessMode.GroundCharacterSmart;
         return ProcessMode.Single;
     }
 
@@ -513,8 +518,21 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         EditorUtility.DisplayProgressBar("Pixel Art Processor", "并行扫描文件…", 0.02f);
         List<CollectResult> collections = CollectAssetPathsParallel(enabledPaths);
 
-        int totalCandidates = collections.Sum(c => c.AssetPaths.Count);
+        int totalCandidates = collections.Sum(c => c.Mode == ProcessMode.GroundCharacterSmart
+            ? c.SmartJobs.Count
+            : c.AssetPaths.Count);
         AddLog($"扫描完成：{totalCandidates} 个候选资源，覆盖 {collections.Count} 个路径。");
+        foreach (CollectResult collection in collections)
+        {
+            if (collection.Mode != ProcessMode.GroundCharacterSmart || collection.SmartJobs.Count == 0)
+            {
+                continue;
+            }
+
+            int sheets = collection.SmartJobs.Count(j => j.Kind == PixelArtGroundCharacterImportUtility.GroundAssetKind.SpriteSheet);
+            int frames = collection.SmartJobs.Count - sheets;
+            AddLog($"  智能导入 {collection.Folder}：图集 {sheets}，序列帧 {frames}");
+        }
 
         foreach (CollectResult collection in collections)
         {
@@ -536,6 +554,39 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
             int done = 0;
             foreach (CollectResult collection in collections)
             {
+                if (collection.Mode == ProcessMode.GroundCharacterSmart)
+                {
+                    foreach (PixelArtGroundCharacterImportUtility.SmartImportJob job in collection.SmartJobs)
+                    {
+                        done++;
+                        if (done == 1 || done % 8 == 0 || done == totalCandidates)
+                        {
+                            float progress = totalCandidates <= 0 ? 1f : done / (float)totalCandidates;
+                            if (EditorUtility.DisplayCancelableProgressBar(
+                                    "Pixel Art Processor",
+                                    $"站立角色智能导入 {done}/{totalCandidates}\n{job.AssetPath}",
+                                    progress))
+                            {
+                                AddLog("[取消] 用户中止处理。");
+                                goto FinishBatch;
+                            }
+                        }
+
+                        try
+                        {
+                            ProcessOneGroundCharacterJob(job, mark, ref counters, dirtyPaths);
+                        }
+                        catch (Exception exception)
+                        {
+                            counters.Errors++;
+                            AddLog($"[错误] 处理失败：{job.AssetPath}");
+                            AddLog(exception.Message);
+                        }
+                    }
+
+                    continue;
+                }
+
                 foreach (string assetPath in collection.AssetPaths)
                 {
                     done++;
@@ -723,6 +774,70 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         dirtyPaths.Add(assetPath);
         counters.Processed++;
         AddLog($"[处理] {assetPath}");
+    }
+
+    private void ProcessOneGroundCharacterJob(
+        PixelArtGroundCharacterImportUtility.SmartImportJob job,
+        string mark,
+        ref ProcessCounters counters,
+        List<string> dirtyPaths)
+    {
+        bool changed;
+        string logLine;
+        var snapshot = BuildImportSettingsSnapshot();
+        if (!PixelArtGroundCharacterImportUtility.TryApplyImport(
+                job.AssetPath,
+                job.Kind,
+                snapshot,
+                mark,
+                settings.forceReprocess,
+                out changed,
+                out logLine))
+        {
+            counters.Errors++;
+            if (!string.IsNullOrEmpty(logLine))
+                AddLog(logLine);
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(logLine) && (changed || settings.verboseLogs))
+            AddLog(logLine + $"  ← {job.SourceFolder} ({job.Kind})");
+
+        if (!changed)
+        {
+            counters.Unchanged++;
+            if (settings.verboseLogs)
+                AddLog($"[未变更] {job.AssetPath}");
+            return;
+        }
+
+        AssetImporter importer = AssetImporter.GetAtPath(job.AssetPath);
+        if (importer == null)
+        {
+            counters.Errors++;
+            AddLog($"[错误] 找不到 importer：{job.AssetPath}");
+            return;
+        }
+
+        EditorUtility.SetDirty(importer);
+        AssetDatabase.WriteImportSettingsIfDirty(job.AssetPath);
+        dirtyPaths.Add(job.AssetPath);
+        counters.Processed++;
+    }
+
+    private PixelArtGroundCharacterImportUtility.ImportSettingsSnapshot BuildImportSettingsSnapshot()
+    {
+        return new PixelArtGroundCharacterImportUtility.ImportSettingsSnapshot
+        {
+            PixelsPerUnit = settings.pixelsPerUnit,
+            MaxTextureSize = settings.maxTextureSize,
+            FilterMode = settings.filterMode,
+            TextureCompression = settings.textureCompression,
+            TextureFormat = settings.textureFormat,
+            MipmapEnabled = settings.mipmapEnabled,
+            AlphaIsTransparency = settings.alphaIsTransparency,
+            WrapMode = settings.wrapMode,
+        };
     }
 
     private bool TryProcessPngAsset(string assetPath, SpriteImportMode spriteImportMode, string mark, out bool changed)
@@ -937,6 +1052,15 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
                     Folder = NormalizeAssetFolder(entry.path)
                 };
 
+                if (entry.mode == ProcessMode.GroundCharacterSmart)
+                {
+                    collect.SmartJobs = PixelArtGroundCharacterImportUtility.CollectJobs(
+                        collect.Folder,
+                        projectRoot);
+                    results.Add((index, collect));
+                    return;
+                }
+
                 string absFolder = AssetPathToAbsolute(collect.Folder, projectRoot);
                 if (!Directory.Exists(absFolder))
                 {
@@ -1041,6 +1165,7 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
             ProcessMode.Aseprite => extension is ".ase" or ".aseprite",
             ProcessMode.Multiple => extension == ".png",
             ProcessMode.Single => extension == ".png",
+            ProcessMode.GroundCharacterSmart => extension == ".png",
             _ => false
         };
     }

@@ -1,5 +1,6 @@
 using NineGrid.Cards;
 using NineGrid.Content;
+using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Stats;
@@ -13,8 +14,9 @@ using NineGrid.Presentation;
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 局内描述管理单例：合法 hover/drag 对象时，把 ContentVisual 描述写入 Card Info Text；
-    /// 主流程选择悬停可写入 Notice Text。
+    /// 局内描述管理单例：合法 hover/drag 对象时写入 Card Info Text / Notice Text。
+    /// 描述重叠字段优先 CardPresentation JSON（<see cref="CardPresentationAuthority"/>），
+    /// 无 JSON 描述时才回退 ContentVisual（Luban）。
     /// <para>
     /// 遗留 UI：Card Info Text 不再作为卡面基础描述权威（权威在卡面 <c>Basic_Description</c> 槽 +
     /// 投影 Commit）。本类可残存供选择/拖拽提示，但不得与卡面双写真相源。
@@ -449,8 +451,31 @@ namespace NineGrid.Flow
                 return true;
             }
 
-            EnsureVisualsLoaded();
             CoreCardPresentationMapper.EnsureContentCatalogLoaded();
+
+            // 重叠字段单真相：有 CardPresentation JSON 描述则不再读 TbContentVisual。
+            if (CardPresentationAuthority.TryGetOwnedDescription(defId, out description))
+            {
+                var archForJson = NineGridArchitecture.Current;
+                if (archForJson != null)
+                {
+                    var contentForJson = archForJson.GetSystem<IContentSystem>();
+                    if (contentForJson.HasCatalog)
+                    {
+                        var avatarEnrichedJson = TryAppendAvatarRuntimeDescription(
+                            defId,
+                            contentForJson.Catalog,
+                            ref description);
+                        isCardFaceBasicDescription = !avatarEnrichedJson;
+                        return !string.IsNullOrWhiteSpace(description);
+                    }
+                }
+
+                isCardFaceBasicDescription = true;
+                return true;
+            }
+
+            EnsureVisualsLoaded();
 
             var arch = NineGridArchitecture.Current;
             if (arch == null || _visualCatalog == null)

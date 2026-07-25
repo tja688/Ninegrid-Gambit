@@ -125,6 +125,15 @@ namespace NineGrid.Core.Content
             return this;
         }
 
+        /// <summary>
+        /// 覆盖显示名（供 CardPresentation JSON overlay；非空白才应由调用方写入）。
+        /// </summary>
+        public CardContentDefinition WithDisplayName(string displayName)
+        {
+            DisplayName = displayName ?? string.Empty;
+            return this;
+        }
+
         public CardContentDefinition WithStats(int maxHp, int attack, int armor)
         {
             Stats.MaxHp = maxHp;

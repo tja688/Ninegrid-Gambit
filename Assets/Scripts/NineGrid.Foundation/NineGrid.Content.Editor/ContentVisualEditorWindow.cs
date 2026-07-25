@@ -5,6 +5,7 @@ using NineGrid.Cards;
 using NineGrid.Presentation.Editor;
 using NineGrid.Cards.Slots;
 using NineGrid.Content;
+using NineGrid.Content.CardPresentation;
 using NineGrid.Content.Editor.Ui;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -85,8 +86,8 @@ namespace NineGrid.Content.Editor
             rootElement.style.backgroundColor = ContentVisualWarmConsoleUi.Theme.RootBg;
 
             rootElement.Add(ContentVisualWarmConsoleUi.BuildHeader(
-                "表现层配图",
-                "本窗为卡面权威预览（底盘+L4+ApplyPresentation）。description 可编辑写回 xlsx；图标写入 Catalog SO。"));
+                "表现层配图（归档）",
+                "已有 CardPresentation JSON 的条目：描述/名/金/数值以「NineGrid/表现层配置」为准，本窗不再写回 xlsx 描述。无 JSON 时仍可编辑 description→xlsx；图标 SO 仅作缺 JSON 时的 fallback。"));
 
             tabToolbar = new Toolbar();
             var contentTabButton = new ToolbarButton(() => SetActiveTab(0)) { text = "内容配图" };
@@ -96,9 +97,9 @@ namespace NineGrid.Content.Editor
             rootElement.Add(tabToolbar);
 
             saveButton = new ToolbarButton(SaveChanges) { text = "保存" };
-            saveButton.tooltip = "保存 Catalog SO 图引用 + PATCH description / card_frame_style";
+            saveButton.tooltip = "保存 Catalog SO 图引用 +（无 JSON 时）PATCH description / card_frame_style";
             regenerateButton = new ToolbarButton(RegenerateLuban) { text = "Regenerate Luban" };
-            regenerateButton.tooltip = "运行 gen_table_nine.ps1 刷新 StreamingAssets 与 Generated 代码（描述进 Play 前须执行）";
+            regenerateButton.tooltip = "运行 gen_table_nine.ps1 刷新 StreamingAssets 与 Generated 代码（无 JSON 的描述进 Play 前须执行）";
 
             rootElement.Add(ContentVisualWarmConsoleUi.BuildToolbar(
                 ("保存", SaveChanges, saveButton.tooltip),
@@ -228,7 +229,7 @@ namespace NineGrid.Content.Editor
         {
             var scroll = ContentVisualWarmConsoleUi.CreateContentScroll(out contentRoot);
             statusHelpBox = ContentVisualWarmConsoleUi.CreateStatusHelpBox(
-                "description 在 Excel 维护；图标/卡面写入 Assets/Arts/ContentVisual/*.asset；框色仍走 card_frame_style.xlsx。");
+                "重叠字段权威：CardPresentation JSON（有则优先）。本窗 SO 图 / xlsx 描述仅服务尚未迁 JSON 的条目；框色仍走 card_frame_style.xlsx。");
             contentRoot.Add(statusHelpBox);
             return scroll;
         }
@@ -565,11 +566,16 @@ namespace NineGrid.Content.Editor
         {
             ContentVisualResolvedView resolved;
             TryBuildPreviewView(row, out resolved);
-            var displayName = session.GetDisplayName(row.ContentId, row.ContentKind);
+            var displayName = CardPresentationAuthority.TryGetOwnedDisplayName(row.ContentId, out var jsonName)
+                ? jsonName
+                : session.GetDisplayName(row.ContentId, row.ContentKind);
+            var jsonOwned = CardPresentationAuthority.HasConfig(row.ContentId);
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeader(
                 displayName,
-                row.ContentId + "  ·  " + row.ContentKind + (row.IsDirty ? "  ·  未保存" : string.Empty)));
+                row.ContentId + "  ·  " + row.ContentKind
+                + (jsonOwned ? "  ·  JSON权威" : string.Empty)
+                + (row.IsDirty ? "  ·  未保存" : string.Empty)));
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
                 "卡面终态预览",
@@ -676,54 +682,71 @@ namespace NineGrid.Content.Editor
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
                 "静态基础描述",
-                "写入 content_visual.xlsx description；可用 [SlotCode] 插入装配图标。保存后须 Regenerate Luban 才进 Play。",
+                jsonOwned
+                    ? "本 contentId 已有 CardPresentation JSON：描述权威在「NineGrid/表现层配置」，此处只读预览，保存不会写回 content_visual.xlsx。"
+                    : "尚无 CardPresentation JSON：可写入 content_visual.xlsx description；可用 [SlotCode] 插入装配图标。保存后须 Regenerate Luban 才进 Play。",
                 column =>
                 {
+                    var previewDescription = jsonOwned
+                        && CardPresentationAuthority.TryGetOwnedDescription(row.ContentId, out var ownedDesc)
+                        ? ownedDesc
+                        : (row.DraftDescription ?? string.Empty);
+
                     descriptionField = new TextField
                     {
                         multiline = true,
-                        value = row.DraftDescription ?? string.Empty
+                        value = previewDescription
                     };
                     descriptionField.style.minHeight = 88;
-                    descriptionField.RegisterValueChangedCallback(evt =>
+                    descriptionField.SetEnabled(!jsonOwned);
+                    if (!jsonOwned)
                     {
-                        row.DraftDescription = evt.newValue ?? string.Empty;
-                        InvalidateAndRefreshPreview(row);
-                    });
+                        descriptionField.RegisterValueChangedCallback(evt =>
+                        {
+                            row.DraftDescription = evt.newValue ?? string.Empty;
+                            InvalidateAndRefreshPreview(row);
+                        });
+                    }
+
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
                         "Basic_Description",
-                        "静态卡面描述（不进数值 Commit）",
+                        jsonOwned
+                            ? "只读（JSON 权威）"
+                            : "静态卡面描述（不进数值 Commit）",
                         descriptionField));
 
-                    var insertables = CardFacePreviewBuilder.ListInsertableSlots();
-                    if (insertables.Count > 0)
+                    if (!jsonOwned)
                     {
-                        var buttonRow = new VisualElement();
-                        buttonRow.style.flexDirection = FlexDirection.Row;
-                        buttonRow.style.flexWrap = Wrap.Wrap;
-                        for (var i = 0; i < insertables.Count; i++)
+                        var insertables = CardFacePreviewBuilder.ListInsertableSlots();
+                        if (insertables.Count > 0)
                         {
-                            var slot = insertables[i];
-                            var code = slot.Code;
-                            var label = string.IsNullOrEmpty(slot.DisplayNameZh)
-                                ? code
-                                : slot.DisplayNameZh + " [" + code + "]";
-                            var button = new Button(() => InsertSlotCode(row, code))
+                            var buttonRow = new VisualElement();
+                            buttonRow.style.flexDirection = FlexDirection.Row;
+                            buttonRow.style.flexWrap = Wrap.Wrap;
+                            for (var i = 0; i < insertables.Count; i++)
                             {
-                                text = "插入 " + label,
-                                tooltip = "插入 [" + code + "] 到描述框，并复制到剪贴板"
-                            };
-                            button.style.marginRight = 4;
-                            button.style.marginBottom = 4;
-                            buttonRow.Add(button);
-                        }
+                                var slot = insertables[i];
+                                var code = slot.Code;
+                                var label = string.IsNullOrEmpty(slot.DisplayNameZh)
+                                    ? code
+                                    : slot.DisplayNameZh + " [" + code + "]";
+                                var button = new Button(() => InsertSlotCode(row, code))
+                                {
+                                    text = "插入 " + label,
+                                    tooltip = "插入 [" + code + "] 到描述框，并复制到剪贴板"
+                                };
+                                button.style.marginRight = 4;
+                                button.style.marginBottom = 4;
+                                buttonRow.Add(button);
+                            }
 
-                        column.Add(buttonRow);
+                            column.Add(buttonRow);
+                        }
                     }
 
                     column.Add(ContentVisualWarmConsoleUi.WrapControl(
                         "display_name",
-                        "来自内核 Catalog",
+                        jsonOwned ? "来自 CardPresentation JSON" : "来自内核 Catalog",
                         ContentVisualWarmConsoleUi.CreateTinyPathLabel(displayName)));
 
                     if (resolved != null)
@@ -910,12 +933,19 @@ namespace NineGrid.Content.Editor
                 return false;
             }
 
+            var displayName = CardPresentationAuthority.TryGetOwnedDisplayName(row.ContentId, out var jsonName)
+                ? jsonName
+                : session.GetDisplayName(row.ContentId, row.ContentKind);
+            var description = CardPresentationAuthority.TryGetOwnedDescription(row.ContentId, out var jsonDesc)
+                ? jsonDesc
+                : (row.DraftDescription ?? string.Empty);
+
             request = new CardFacePreviewRequest
             {
                 DefId = row.ContentId,
                 Kind = kind,
-                DisplayName = session.GetDisplayName(row.ContentId, row.ContentKind),
-                BasicDescription = row.DraftDescription ?? string.Empty,
+                DisplayName = displayName,
+                BasicDescription = description,
                 MainIcon = row.Icon,
                 FaceBackground = row.Face,
                 BackBorder = row.BackBorder,
@@ -1032,7 +1062,7 @@ namespace NineGrid.Content.Editor
             session.ReloadCatalogs();
             previewFingerprint = string.Empty;
             RefreshAll();
-            ShowNotification(new GUIContent("已保存 Catalog SO / description / 框色表"));
+            ShowNotification(new GUIContent("已保存 Catalog SO /（无JSON描述）xlsx / 框色表"));
         }
 
         private void RegenerateLuban()

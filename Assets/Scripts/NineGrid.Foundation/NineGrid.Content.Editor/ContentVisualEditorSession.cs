@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using NineGrid.Content;
+using NineGrid.Content.CardPresentation;
 using NineGrid.Core.Content;
 using UnityEditor;
 using UnityEngine;
@@ -388,6 +389,25 @@ namespace NineGrid.Content.Editor
             var dirtySpriteRows = rows.Where(row => row.IsSpriteDirty).ToList();
             var dirtyDescriptionRows = rows.Where(row => row.IsDescriptionDirty).ToList();
             var dirtyFrameRows = frameStyleRows.Where(row => row.IsDirty).Select(row => row.ToPatchRow()).ToList();
+
+            // 已有 CardPresentation JSON：description 归 JSON，丢弃对本窗的描述脏标记，禁止写 xlsx。
+            for (var i = 0; i < dirtyDescriptionRows.Count; i++)
+            {
+                var owned = dirtyDescriptionRows[i];
+                if (!CardPresentationAuthority.HasConfig(owned.ContentId))
+                {
+                    continue;
+                }
+
+                owned.DraftDescription = owned.SavedDescription ?? string.Empty;
+                owned.MarkDescriptionSaved();
+            }
+
+            dirtyDescriptionRows = rows
+                .Where(row => row.IsDescriptionDirty)
+                .Where(row => !CardPresentationAuthority.HasConfig(row.ContentId))
+                .ToList();
+
             if (dirtySpriteRows.Count == 0 && dirtyDescriptionRows.Count == 0 && dirtyFrameRows.Count == 0)
             {
                 return true;

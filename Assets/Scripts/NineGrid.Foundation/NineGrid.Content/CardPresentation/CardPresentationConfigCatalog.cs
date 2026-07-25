@@ -48,6 +48,20 @@ namespace NineGrid.Content.CardPresentation
             EnsureLoaded();
         }
 
+        /// <summary>
+        /// EditMode / 单测注入：不经磁盘加载，写入内存目录（TearDown 须 <see cref="Invalidate"/>）。
+        /// </summary>
+        public static void UpsertForTests(CardPresentationConfigDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.contentId))
+            {
+                return;
+            }
+
+            _loaded = true;
+            ByContentId[dto.contentId] = dto;
+        }
+
         private static void EnsureLoaded()
         {
             if (_loaded)

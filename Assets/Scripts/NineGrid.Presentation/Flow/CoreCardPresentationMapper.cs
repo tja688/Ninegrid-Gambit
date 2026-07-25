@@ -215,12 +215,14 @@ namespace NineGrid.Flow
                 return;
             }
 
-            // JSON 权威：有配置则优先覆盖名字 / 描述 / 槽图。
+            // 重叠字段单真相：有 CardPresentation JSON 则整段用 JSON（不混读 SO/Luban 同名字段）。
+            // 缺图/缺名时在 JSON 分支内用 defId 填空，不回落半套旧源。
             if (TryApplyJsonPresentation(snapshot, defId))
             {
                 return;
             }
 
+            // 无 JSON：Luban ContentVisual + SO 图作为过渡 fallback。
             EnsureVisualsLoaded();
 
             var arch = NineGridArchitecture.Current;
