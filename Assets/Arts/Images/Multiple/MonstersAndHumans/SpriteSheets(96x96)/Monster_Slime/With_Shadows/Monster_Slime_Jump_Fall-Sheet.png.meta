@@ -137,10 +137,10 @@ TextureImporter:
       name: Monster_Slime_Jump_Fall-Sheet_0
       rect:
         serializedVersion: 2
-        x: 38
-        y: 35
-        width: 19
-        height: 16
+        x: 0
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -159,10 +159,10 @@ TextureImporter:
       name: Monster_Slime_Jump_Fall-Sheet_1
       rect:
         serializedVersion: 2
-        x: 134
-        y: 35
-        width: 19
-        height: 16
+        x: 96
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -181,10 +181,10 @@ TextureImporter:
       name: Monster_Slime_Jump_Fall-Sheet_2
       rect:
         serializedVersion: 2
-        x: 231
-        y: 35
-        width: 17
-        height: 22
+        x: 192
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -203,10 +203,10 @@ TextureImporter:
       name: Monster_Slime_Jump_Fall-Sheet_3
       rect:
         serializedVersion: 2
-        x: 328
-        y: 41
-        width: 14
-        height: 18
+        x: 288
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -225,10 +225,10 @@ TextureImporter:
       name: Monster_Slime_Jump_Fall-Sheet_4
       rect:
         serializedVersion: 2
-        x: 328
-        y: 35
-        width: 15
-        height: 7
+        x: 384
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -247,10 +247,10 @@ TextureImporter:
       name: Monster_Slime_Jump_Fall-Sheet_5
       rect:
         serializedVersion: 2
-        x: 424
-        y: 41
-        width: 14
-        height: 18
+        x: 480
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -261,50 +261,6 @@ TextureImporter:
       bones: []
       spriteID: 13de2f9dd08ca34c0800000000000000
       internalID: -4306910131809751759
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Monster_Slime_Jump_Fall-Sheet_6
-      rect:
-        serializedVersion: 2
-        x: 424
-        y: 35
-        width: 15
-        height: 7
-      alignment: 7
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 02ab34f4394a67db0800000000000000
-      internalID: -4794463800692327904
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Monster_Slime_Jump_Fall-Sheet_7
-      rect:
-        serializedVersion: 2
-        x: 519
-        y: 35
-        width: 17
-        height: 22
-      alignment: 7
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: dd91143fc41d33cb0800000000000000
-      internalID: -4885331042338006563
       vertices: []
       indices: 
       edges: []

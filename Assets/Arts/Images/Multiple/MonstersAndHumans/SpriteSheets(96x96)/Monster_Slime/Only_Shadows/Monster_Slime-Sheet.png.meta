@@ -170,6 +170,78 @@ TextureImporter:
   - first:
       213: 6218948284291759301
     second: Monster_Slime-Sheet_55
+  - first:
+      213: 1133853191215496305
+    second: Monster_Slime-Sheet_56
+  - first:
+      213: 5662774102363944932
+    second: Monster_Slime-Sheet_57
+  - first:
+      213: 1517521035554265201
+    second: Monster_Slime-Sheet_58
+  - first:
+      213: 8334265471789476665
+    second: Monster_Slime-Sheet_59
+  - first:
+      213: -2321307642821441715
+    second: Monster_Slime-Sheet_60
+  - first:
+      213: -2329220980141157691
+    second: Monster_Slime-Sheet_61
+  - first:
+      213: -5564581718959869220
+    second: Monster_Slime-Sheet_62
+  - first:
+      213: -6958182053295176910
+    second: Monster_Slime-Sheet_63
+  - first:
+      213: -5678366754169978940
+    second: Monster_Slime-Sheet_64
+  - first:
+      213: -7003742498730168219
+    second: Monster_Slime-Sheet_65
+  - first:
+      213: -9217913345708606745
+    second: Monster_Slime-Sheet_66
+  - first:
+      213: 6619711432234228105
+    second: Monster_Slime-Sheet_67
+  - first:
+      213: -5558330398537514314
+    second: Monster_Slime-Sheet_68
+  - first:
+      213: 1510098156368760875
+    second: Monster_Slime-Sheet_69
+  - first:
+      213: 7116163744845501319
+    second: Monster_Slime-Sheet_70
+  - first:
+      213: -4673158345962429398
+    second: Monster_Slime-Sheet_71
+  - first:
+      213: 7605279905124712625
+    second: Monster_Slime-Sheet_72
+  - first:
+      213: 7164521311427541913
+    second: Monster_Slime-Sheet_73
+  - first:
+      213: 6529449205750869289
+    second: Monster_Slime-Sheet_74
+  - first:
+      213: -8264622646412410876
+    second: Monster_Slime-Sheet_75
+  - first:
+      213: 8438065784907173897
+    second: Monster_Slime-Sheet_76
+  - first:
+      213: -537701641820437511
+    second: Monster_Slime-Sheet_77
+  - first:
+      213: -2734218970241827798
+    second: Monster_Slime-Sheet_78
+  - first:
+      213: -3760047359671578381
+    second: Monster_Slime-Sheet_79
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -281,10 +353,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_0
       rect:
         serializedVersion: 2
-        x: 38
-        y: 707
-        width: 19
-        height: 7
+        x: 0
+        y: 672
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -303,10 +375,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_1
       rect:
         serializedVersion: 2
-        x: 134
-        y: 707
-        width: 19
-        height: 7
+        x: 96
+        y: 672
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -325,10 +397,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_2
       rect:
         serializedVersion: 2
-        x: 230
-        y: 707
-        width: 19
-        height: 7
+        x: 192
+        y: 672
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -347,10 +419,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_3
       rect:
         serializedVersion: 2
-        x: 325
-        y: 707
-        width: 21
-        height: 7
+        x: 288
+        y: 672
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -369,10 +441,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_4
       rect:
         serializedVersion: 2
-        x: 421
-        y: 707
-        width: 21
-        height: 7
+        x: 384
+        y: 672
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -391,10 +463,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_5
       rect:
         serializedVersion: 2
-        x: 517
-        y: 707
-        width: 21
-        height: 7
+        x: 480
+        y: 672
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -413,10 +485,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_6
       rect:
         serializedVersion: 2
-        x: 38
-        y: 611
-        width: 19
-        height: 7
+        x: 576
+        y: 672
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -435,10 +507,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_7
       rect:
         serializedVersion: 2
-        x: 134
-        y: 611
-        width: 19
-        height: 7
+        x: 672
+        y: 672
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -457,10 +529,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_8
       rect:
         serializedVersion: 2
-        x: 231
-        y: 611
-        width: 18
-        height: 7
+        x: 768
+        y: 672
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -479,10 +551,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_9
       rect:
         serializedVersion: 2
-        x: 327
-        y: 611
-        width: 18
-        height: 7
+        x: 864
+        y: 672
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -501,10 +573,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_10
       rect:
         serializedVersion: 2
-        x: 423
-        y: 611
-        width: 18
-        height: 7
+        x: 0
+        y: 576
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -523,10 +595,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_11
       rect:
         serializedVersion: 2
-        x: 519
-        y: 611
-        width: 18
-        height: 7
+        x: 96
+        y: 576
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -545,10 +617,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_12
       rect:
         serializedVersion: 2
-        x: 614
-        y: 611
-        width: 20
-        height: 7
+        x: 192
+        y: 576
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -567,10 +639,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_13
       rect:
         serializedVersion: 2
-        x: 709
-        y: 611
-        width: 21
-        height: 7
+        x: 288
+        y: 576
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -589,10 +661,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_14
       rect:
         serializedVersion: 2
-        x: 38
-        y: 515
-        width: 19
-        height: 7
+        x: 384
+        y: 576
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -611,10 +683,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_15
       rect:
         serializedVersion: 2
-        x: 134
-        y: 515
-        width: 19
-        height: 7
+        x: 480
+        y: 576
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -633,10 +705,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_16
       rect:
         serializedVersion: 2
-        x: 231
-        y: 515
-        width: 17
-        height: 7
+        x: 576
+        y: 576
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -655,10 +727,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_17
       rect:
         serializedVersion: 2
-        x: 328
-        y: 515
-        width: 15
-        height: 7
+        x: 672
+        y: 576
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -677,10 +749,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_18
       rect:
         serializedVersion: 2
-        x: 424
-        y: 515
-        width: 15
-        height: 7
+        x: 768
+        y: 576
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -699,10 +771,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_19
       rect:
         serializedVersion: 2
-        x: 519
-        y: 515
-        width: 17
-        height: 7
+        x: 864
+        y: 576
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -721,10 +793,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_20
       rect:
         serializedVersion: 2
-        x: 38
-        y: 419
-        width: 19
-        height: 7
+        x: 0
+        y: 480
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -743,10 +815,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_21
       rect:
         serializedVersion: 2
-        x: 134
-        y: 419
-        width: 19
-        height: 7
+        x: 96
+        y: 480
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -765,10 +837,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_22
       rect:
         serializedVersion: 2
-        x: 230
-        y: 419
-        width: 21
-        height: 7
+        x: 192
+        y: 480
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -787,10 +859,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_23
       rect:
         serializedVersion: 2
-        x: 325
-        y: 419
-        width: 21
-        height: 7
+        x: 288
+        y: 480
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -809,10 +881,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_24
       rect:
         serializedVersion: 2
-        x: 420
-        y: 419
-        width: 21
-        height: 7
+        x: 384
+        y: 480
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -831,10 +903,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_25
       rect:
         serializedVersion: 2
-        x: 517
-        y: 419
-        width: 20
-        height: 7
+        x: 480
+        y: 480
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -853,10 +925,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_26
       rect:
         serializedVersion: 2
-        x: 38
-        y: 323
-        width: 19
-        height: 7
+        x: 576
+        y: 480
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -875,10 +947,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_27
       rect:
         serializedVersion: 2
-        x: 134
-        y: 323
-        width: 19
-        height: 7
+        x: 672
+        y: 480
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -897,10 +969,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_28
       rect:
         serializedVersion: 2
-        x: 231
-        y: 323
-        width: 19
-        height: 7
+        x: 768
+        y: 480
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -919,10 +991,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_29
       rect:
         serializedVersion: 2
-        x: 328
-        y: 323
-        width: 19
-        height: 7
+        x: 864
+        y: 480
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -941,10 +1013,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_30
       rect:
         serializedVersion: 2
-        x: 425
-        y: 323
-        width: 32
-        height: 7
+        x: 0
+        y: 384
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -963,10 +1035,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_31
       rect:
         serializedVersion: 2
-        x: 521
-        y: 323
-        width: 32
-        height: 7
+        x: 96
+        y: 384
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -985,10 +1057,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_32
       rect:
         serializedVersion: 2
-        x: 610
-        y: 323
-        width: 30
-        height: 7
+        x: 192
+        y: 384
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1007,10 +1079,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_33
       rect:
         serializedVersion: 2
-        x: 709
-        y: 323
-        width: 21
-        height: 7
+        x: 288
+        y: 384
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1029,10 +1101,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_34
       rect:
         serializedVersion: 2
-        x: 38
-        y: 227
-        width: 19
-        height: 7
+        x: 384
+        y: 384
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1051,10 +1123,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_35
       rect:
         serializedVersion: 2
-        x: 133
-        y: 227
-        width: 21
-        height: 7
+        x: 480
+        y: 384
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1073,10 +1145,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_36
       rect:
         serializedVersion: 2
-        x: 228
-        y: 227
-        width: 22
-        height: 7
+        x: 576
+        y: 384
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1095,10 +1167,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_37
       rect:
         serializedVersion: 2
-        x: 323
-        y: 227
-        width: 34
-        height: 7
+        x: 672
+        y: 384
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1117,10 +1189,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_38
       rect:
         serializedVersion: 2
-        x: 420
-        y: 227
-        width: 34
-        height: 7
+        x: 768
+        y: 384
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1139,10 +1211,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_39
       rect:
         serializedVersion: 2
-        x: 517
-        y: 227
-        width: 30
-        height: 7
+        x: 864
+        y: 384
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1161,10 +1233,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_40
       rect:
         serializedVersion: 2
-        x: 613
-        y: 227
-        width: 22
-        height: 7
+        x: 0
+        y: 288
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1183,10 +1255,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_41
       rect:
         serializedVersion: 2
-        x: 709
-        y: 227
-        width: 20
-        height: 7
+        x: 96
+        y: 288
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1205,10 +1277,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_42
       rect:
         serializedVersion: 2
-        x: 38
-        y: 131
-        width: 19
-        height: 7
+        x: 192
+        y: 288
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1227,10 +1299,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_43
       rect:
         serializedVersion: 2
-        x: 133
-        y: 131
-        width: 20
-        height: 7
+        x: 288
+        y: 288
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1249,10 +1321,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_44
       rect:
         serializedVersion: 2
-        x: 228
-        y: 131
-        width: 21
-        height: 7
+        x: 384
+        y: 288
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1271,10 +1343,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_45
       rect:
         serializedVersion: 2
-        x: 325
-        y: 131
-        width: 20
-        height: 7
+        x: 480
+        y: 288
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1293,10 +1365,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_46
       rect:
         serializedVersion: 2
-        x: 38
-        y: 35
-        width: 19
-        height: 7
+        x: 576
+        y: 288
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1315,10 +1387,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_47
       rect:
         serializedVersion: 2
-        x: 134
-        y: 35
-        width: 19
-        height: 7
+        x: 672
+        y: 288
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1337,10 +1409,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_48
       rect:
         serializedVersion: 2
-        x: 229
-        y: 35
-        width: 21
-        height: 7
+        x: 768
+        y: 288
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1359,10 +1431,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_49
       rect:
         serializedVersion: 2
-        x: 324
-        y: 35
-        width: 23
-        height: 7
+        x: 864
+        y: 288
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1381,10 +1453,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_50
       rect:
         serializedVersion: 2
-        x: 420
-        y: 35
-        width: 23
-        height: 7
+        x: 0
+        y: 192
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1403,10 +1475,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_51
       rect:
         serializedVersion: 2
-        x: 516
-        y: 35
-        width: 23
-        height: 7
+        x: 96
+        y: 192
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1425,10 +1497,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_52
       rect:
         serializedVersion: 2
-        x: 612
-        y: 35
-        width: 23
-        height: 7
+        x: 192
+        y: 192
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1447,10 +1519,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_53
       rect:
         serializedVersion: 2
-        x: 708
-        y: 35
-        width: 23
-        height: 7
+        x: 288
+        y: 192
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1469,10 +1541,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_54
       rect:
         serializedVersion: 2
-        x: 804
-        y: 35
-        width: 23
-        height: 7
+        x: 384
+        y: 192
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1491,10 +1563,10 @@ TextureImporter:
       name: Monster_Slime-Sheet_55
       rect:
         serializedVersion: 2
-        x: 900
-        y: 35
-        width: 23
-        height: 7
+        x: 480
+        y: 192
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1505,6 +1577,534 @@ TextureImporter:
       bones: []
       spriteID: 5cc3cb1e3842e4650800000000000000
       internalID: 6218948284291759301
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_56
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 192
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17cb7d158714cbf00800000000000000
+      internalID: 1133853191215496305
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_57
+      rect:
+        serializedVersion: 2
+        x: 672
+        y: 192
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e73fae1b07369e40800000000000000
+      internalID: 5662774102363944932
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_58
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 192
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 178156777515f0510800000000000000
+      internalID: 1517521035554265201
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_59
+      rect:
+        serializedVersion: 2
+        x: 864
+        y: 192
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 93ba0dd2a4249a370800000000000000
+      internalID: 8334265471789476665
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_60
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 96
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d478a376ffe09cfd0800000000000000
+      internalID: -2321307642821441715
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_61
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 96
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c29c4bfbd1fcafd0800000000000000
+      internalID: -2329220980141157691
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_62
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 96
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd2b3c5b862a6c2b0800000000000000
+      internalID: -5564581718959869220
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_63
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 96
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 233c7ded9429f6f90800000000000000
+      internalID: -6958182053295176910
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_64
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 96
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4cf7f49b5836231b0800000000000000
+      internalID: -5678366754169978940
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_65
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 96
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 560b1e80e45bdce90800000000000000
+      internalID: -7003742498730168219
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_66
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 96
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7eab4b296a4631080800000000000000
+      internalID: -9217913345708606745
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_67
+      rect:
+        serializedVersion: 2
+        x: 672
+        y: 96
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 989d9e19970fddb50800000000000000
+      internalID: 6619711432234228105
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_68
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 96
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6b28aeaa3f7dcd2b0800000000000000
+      internalID: -5558330398537514314
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_69
+      rect:
+        serializedVersion: 2
+        x: 864
+        y: 96
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b20155ab542f4f410800000000000000
+      internalID: 1510098156368760875
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_70
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 783970f0931b1c260800000000000000
+      internalID: 7116163744845501319
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_71
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 0
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a24e1c96e3b952fb0800000000000000
+      internalID: -4673158345962429398
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_72
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 0
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1b0006a77c16b8960800000000000000
+      internalID: 7605279905124712625
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_73
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 0
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 99bba596c2e7d6360800000000000000
+      internalID: 7164521311427541913
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_74
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 0
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 92dacb745734d9a50800000000000000
+      internalID: 6529449205750869289
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_75
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 0
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 40080fdad792e4d80800000000000000
+      internalID: -8264622646412410876
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_76
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 0
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 90015c4ef180a1570800000000000000
+      internalID: 8438065784907173897
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_77
+      rect:
+        serializedVersion: 2
+        x: 672
+        y: 0
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9f30624a433b988f0800000000000000
+      internalID: -537701641820437511
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_78
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 0
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a2cf994455a1e0ad0800000000000000
+      internalID: -2734218970241827798
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_Slime-Sheet_79
+      rect:
+        serializedVersion: 2
+        x: 864
+        y: 0
+        width: 96
+        height: 96
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f0512419d0a1dbc0800000000000000
+      internalID: -3760047359671578381
       vertices: []
       indices: 
       edges: []
@@ -1575,8 +2175,32 @@ TextureImporter:
       Monster_Slime-Sheet_53: -6515997853558721647
       Monster_Slime-Sheet_54: 8283220398293153523
       Monster_Slime-Sheet_55: 6218948284291759301
+      Monster_Slime-Sheet_56: 1133853191215496305
+      Monster_Slime-Sheet_57: 5662774102363944932
+      Monster_Slime-Sheet_58: 1517521035554265201
+      Monster_Slime-Sheet_59: 8334265471789476665
       Monster_Slime-Sheet_6: -8876223686173942898
+      Monster_Slime-Sheet_60: -2321307642821441715
+      Monster_Slime-Sheet_61: -2329220980141157691
+      Monster_Slime-Sheet_62: -5564581718959869220
+      Monster_Slime-Sheet_63: -6958182053295176910
+      Monster_Slime-Sheet_64: -5678366754169978940
+      Monster_Slime-Sheet_65: -7003742498730168219
+      Monster_Slime-Sheet_66: -9217913345708606745
+      Monster_Slime-Sheet_67: 6619711432234228105
+      Monster_Slime-Sheet_68: -5558330398537514314
+      Monster_Slime-Sheet_69: 1510098156368760875
       Monster_Slime-Sheet_7: 1142398314566411327
+      Monster_Slime-Sheet_70: 7116163744845501319
+      Monster_Slime-Sheet_71: -4673158345962429398
+      Monster_Slime-Sheet_72: 7605279905124712625
+      Monster_Slime-Sheet_73: 7164521311427541913
+      Monster_Slime-Sheet_74: 6529449205750869289
+      Monster_Slime-Sheet_75: -8264622646412410876
+      Monster_Slime-Sheet_76: 8438065784907173897
+      Monster_Slime-Sheet_77: -537701641820437511
+      Monster_Slime-Sheet_78: -2734218970241827798
+      Monster_Slime-Sheet_79: -3760047359671578381
       Monster_Slime-Sheet_8: 363480444953554764
       Monster_Slime-Sheet_9: -645360039901350879
   mipmapLimitGroupName: 

@@ -131,6 +131,66 @@ TextureImporter:
   - first:
       213: 7050324879617185217
     second: Soldier_42
+  - first:
+      213: -2607639254268547159
+    second: Soldier_43
+  - first:
+      213: 5653757908176306338
+    second: Soldier_44
+  - first:
+      213: 7927456554719778392
+    second: Soldier_45
+  - first:
+      213: 449206504547973828
+    second: Soldier_46
+  - first:
+      213: 6810723495125567110
+    second: Soldier_47
+  - first:
+      213: -642152069011884208
+    second: Soldier_48
+  - first:
+      213: -6214945519075569275
+    second: Soldier_49
+  - first:
+      213: -3710885130930908971
+    second: Soldier_50
+  - first:
+      213: 8598842666268618451
+    second: Soldier_51
+  - first:
+      213: -3540987017898227895
+    second: Soldier_52
+  - first:
+      213: -1783535810177115791
+    second: Soldier_53
+  - first:
+      213: -3002747679659128181
+    second: Soldier_54
+  - first:
+      213: -2092587461042694401
+    second: Soldier_55
+  - first:
+      213: -21116039098738599
+    second: Soldier_56
+  - first:
+      213: 4471757998009841481
+    second: Soldier_57
+  - first:
+      213: 7270017381381783327
+    second: Soldier_58
+  - first:
+      213: 7811362304065029658
+    second: Soldier_59
+  - first:
+      213: -8802366645767485968
+    second: Soldier_60
+  - first:
+      213: -9168300959339212435
+    second: Soldier_61
+  - first:
+      213: -4814303597096807251
+    second: Soldier_62
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -172,7 +232,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -242,12 +302,12 @@ TextureImporter:
       name: Soldier_0
       rect:
         serializedVersion: 2
-        x: 40
-        y: 642
-        width: 17
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 0
+        y: 600
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -264,12 +324,12 @@ TextureImporter:
       name: Soldier_1
       rect:
         serializedVersion: 2
-        x: 140
-        y: 642
-        width: 17
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 100
+        y: 600
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -286,12 +346,12 @@ TextureImporter:
       name: Soldier_2
       rect:
         serializedVersion: 2
-        x: 240
-        y: 642
-        width: 17
-        height: 21
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 200
+        y: 600
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -308,12 +368,12 @@ TextureImporter:
       name: Soldier_3
       rect:
         serializedVersion: 2
-        x: 340
-        y: 642
-        width: 17
-        height: 21
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 300
+        y: 600
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -330,12 +390,12 @@ TextureImporter:
       name: Soldier_4
       rect:
         serializedVersion: 2
-        x: 440
-        y: 642
-        width: 17
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 400
+        y: 600
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -352,12 +412,12 @@ TextureImporter:
       name: Soldier_5
       rect:
         serializedVersion: 2
-        x: 540
-        y: 642
-        width: 17
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 500
+        y: 600
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -374,12 +434,12 @@ TextureImporter:
       name: Soldier_6
       rect:
         serializedVersion: 2
-        x: 40
-        y: 542
-        width: 17
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 600
+        y: 600
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -396,12 +456,12 @@ TextureImporter:
       name: Soldier_7
       rect:
         serializedVersion: 2
-        x: 140
-        y: 543
-        width: 17
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 700
+        y: 600
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -418,12 +478,12 @@ TextureImporter:
       name: Soldier_8
       rect:
         serializedVersion: 2
-        x: 240
-        y: 542
-        width: 17
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 800
+        y: 600
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -440,12 +500,12 @@ TextureImporter:
       name: Soldier_9
       rect:
         serializedVersion: 2
-        x: 340
-        y: 542
-        width: 17
-        height: 19
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 0
+        y: 500
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -462,12 +522,12 @@ TextureImporter:
       name: Soldier_10
       rect:
         serializedVersion: 2
-        x: 440
-        y: 542
-        width: 17
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 100
+        y: 500
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -484,12 +544,12 @@ TextureImporter:
       name: Soldier_11
       rect:
         serializedVersion: 2
-        x: 540
-        y: 542
-        width: 17
-        height: 21
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 200
+        y: 500
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -506,12 +566,12 @@ TextureImporter:
       name: Soldier_12
       rect:
         serializedVersion: 2
-        x: 640
-        y: 541
-        width: 17
-        height: 21
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 300
+        y: 500
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -528,12 +588,12 @@ TextureImporter:
       name: Soldier_13
       rect:
         serializedVersion: 2
-        x: 740
-        y: 542
-        width: 17
-        height: 19
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 400
+        y: 500
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -550,12 +610,12 @@ TextureImporter:
       name: Soldier_14
       rect:
         serializedVersion: 2
-        x: 40
-        y: 442
-        width: 17
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 500
+        y: 500
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -572,12 +632,12 @@ TextureImporter:
       name: Soldier_15
       rect:
         serializedVersion: 2
-        x: 140
-        y: 442
-        width: 21
-        height: 26
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 600
+        y: 500
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -594,12 +654,12 @@ TextureImporter:
       name: Soldier_16
       rect:
         serializedVersion: 2
-        x: 240
-        y: 442
-        width: 22
-        height: 25
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 700
+        y: 500
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -616,12 +676,12 @@ TextureImporter:
       name: Soldier_17
       rect:
         serializedVersion: 2
-        x: 335
-        y: 439
-        width: 36
-        height: 22
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 800
+        y: 500
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -638,12 +698,12 @@ TextureImporter:
       name: Soldier_18
       rect:
         serializedVersion: 2
-        x: 435
-        y: 439
-        width: 36
-        height: 22
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 0
+        y: 400
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -660,12 +720,12 @@ TextureImporter:
       name: Soldier_19
       rect:
         serializedVersion: 2
-        x: 535
-        y: 441
-        width: 24
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 100
+        y: 400
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -682,12 +742,12 @@ TextureImporter:
       name: Soldier_20
       rect:
         serializedVersion: 2
-        x: 40
-        y: 342
-        width: 17
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 200
+        y: 400
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -704,12 +764,12 @@ TextureImporter:
       name: Soldier_21
       rect:
         serializedVersion: 2
-        x: 140
-        y: 346
-        width: 21
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 300
+        y: 400
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -726,12 +786,12 @@ TextureImporter:
       name: Soldier_22
       rect:
         serializedVersion: 2
-        x: 242
-        y: 347
-        width: 20
-        height: 22
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 400
+        y: 400
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -748,12 +808,12 @@ TextureImporter:
       name: Soldier_23
       rect:
         serializedVersion: 2
-        x: 341
-        y: 340
-        width: 30
-        height: 25
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 500
+        y: 400
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -770,12 +830,12 @@ TextureImporter:
       name: Soldier_24
       rect:
         serializedVersion: 2
-        x: 441
-        y: 340
-        width: 30
-        height: 19
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 600
+        y: 400
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -792,12 +852,12 @@ TextureImporter:
       name: Soldier_25
       rect:
         serializedVersion: 2
-        x: 541
-        y: 340
-        width: 30
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 700
+        y: 400
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -814,12 +874,12 @@ TextureImporter:
       name: Soldier_26
       rect:
         serializedVersion: 2
-        x: 40
-        y: 242
-        width: 21
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 800
+        y: 400
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -836,12 +896,12 @@ TextureImporter:
       name: Soldier_27
       rect:
         serializedVersion: 2
-        x: 140
-        y: 242
-        width: 19
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 0
+        y: 300
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -858,12 +918,12 @@ TextureImporter:
       name: Soldier_28
       rect:
         serializedVersion: 2
-        x: 240
-        y: 242
-        width: 19
-        height: 21
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 100
+        y: 300
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -880,12 +940,12 @@ TextureImporter:
       name: Soldier_29
       rect:
         serializedVersion: 2
-        x: 340
-        y: 242
-        width: 19
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 200
+        y: 300
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -902,12 +962,12 @@ TextureImporter:
       name: Soldier_30
       rect:
         serializedVersion: 2
-        x: 440
-        y: 242
-        width: 24
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 300
+        y: 300
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -924,12 +984,12 @@ TextureImporter:
       name: Soldier_31
       rect:
         serializedVersion: 2
-        x: 540
-        y: 242
-        width: 23
-        height: 19
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 400
+        y: 300
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -946,12 +1006,12 @@ TextureImporter:
       name: Soldier_32
       rect:
         serializedVersion: 2
-        x: 640
-        y: 242
-        width: 22
-        height: 19
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 500
+        y: 300
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -968,12 +1028,12 @@ TextureImporter:
       name: Soldier_33
       rect:
         serializedVersion: 2
-        x: 740
-        y: 242
-        width: 38
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 600
+        y: 300
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -990,12 +1050,12 @@ TextureImporter:
       name: Soldier_34
       rect:
         serializedVersion: 2
-        x: 840
-        y: 241
-        width: 25
-        height: 21
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 700
+        y: 300
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1012,12 +1072,12 @@ TextureImporter:
       name: Soldier_35
       rect:
         serializedVersion: 2
-        x: 39
-        y: 142
-        width: 18
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 800
+        y: 300
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1034,12 +1094,12 @@ TextureImporter:
       name: Soldier_36
       rect:
         serializedVersion: 2
-        x: 139
-        y: 142
-        width: 18
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 0
+        y: 200
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1056,12 +1116,12 @@ TextureImporter:
       name: Soldier_37
       rect:
         serializedVersion: 2
-        x: 239
-        y: 142
-        width: 18
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 100
+        y: 200
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1078,12 +1138,12 @@ TextureImporter:
       name: Soldier_38
       rect:
         serializedVersion: 2
-        x: 339
-        y: 142
-        width: 18
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 200
+        y: 200
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1100,12 +1160,12 @@ TextureImporter:
       name: Soldier_39
       rect:
         serializedVersion: 2
-        x: 40
-        y: 42
-        width: 17
-        height: 20
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 300
+        y: 200
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1122,12 +1182,12 @@ TextureImporter:
       name: Soldier_40
       rect:
         serializedVersion: 2
-        x: 140
-        y: 42
-        width: 18
-        height: 18
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 400
+        y: 200
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1144,12 +1204,12 @@ TextureImporter:
       name: Soldier_41
       rect:
         serializedVersion: 2
-        x: 245
-        y: 42
-        width: 17
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 500
+        y: 200
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1166,12 +1226,12 @@ TextureImporter:
       name: Soldier_42
       rect:
         serializedVersion: 2
-        x: 347
-        y: 42
-        width: 21
-        height: 12
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 600
+        y: 200
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1180,6 +1240,446 @@ TextureImporter:
       bones: []
       spriteID: 1c55ea0bf19c7d160800000000000000
       internalID: 7050324879617185217
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_43
+      rect:
+        serializedVersion: 2
+        x: 700
+        y: 200
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9af65f20aedcfcbd0800000000000000
+      internalID: -2607639254268547159
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_44
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 200
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a087e2dcde267e40800000000000000
+      internalID: 5653757908176306338
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_45
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 100
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8561a6c2cbbf30e60800000000000000
+      internalID: 7927456554719778392
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_46
+      rect:
+        serializedVersion: 2
+        x: 100
+        y: 100
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ca70669fe6eb3600800000000000000
+      internalID: 449206504547973828
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_47
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 100
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 686cd5e1fec848e50800000000000000
+      internalID: 6810723495125567110
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_48
+      rect:
+        serializedVersion: 2
+        x: 300
+        y: 100
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 057b3c2781e9617f0800000000000000
+      internalID: -642152069011884208
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_49
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 100
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 58158158af310c9a0800000000000000
+      internalID: -6214945519075569275
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_50
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 100
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5d0959072a9408cc0800000000000000
+      internalID: -3710885130930908971
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_51
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 100
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3dee96aa8d9355770800000000000000
+      internalID: 8598842666268618451
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_52
+      rect:
+        serializedVersion: 2
+        x: 700
+        y: 100
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 94708e37113ebdec0800000000000000
+      internalID: -3540987017898227895
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_53
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 100
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 179543651ab9f37e0800000000000000
+      internalID: -1783535810177115791
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_54
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b8a0ac305e81456d0800000000000000
+      internalID: -3002747679659128181
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_55
+      rect:
+        serializedVersion: 2
+        x: 100
+        y: 0
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ff61d1b8ac2a5f2e0800000000000000
+      internalID: -2092587461042694401
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_56
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 0
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 958d476031bf4bff0800000000000000
+      internalID: -21116039098738599
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_57
+      rect:
+        serializedVersion: 2
+        x: 300
+        y: 0
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 94773e0f430ee0e30800000000000000
+      internalID: 4471757998009841481
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_58
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 0
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f1f3d284a4a44e460800000000000000
+      internalID: 7270017381381783327
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_59
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 0
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a164ca111a8876c60800000000000000
+      internalID: 7811362304065029658
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_60
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 0
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0f548403c26b7d580800000000000000
+      internalID: -8802366645767485968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_61
+      rect:
+        serializedVersion: 2
+        x: 700
+        y: 0
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d6196bc6ad6a3c080800000000000000
+      internalID: -9168300959339212435
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Soldier_62
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 0
+        width: 100
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da4d82eb268203db0800000000000000
+      internalID: -4814303597096807251
       vertices: []
       indices: 
       edges: []
@@ -1236,8 +1736,28 @@ TextureImporter:
       Soldier_40: 5816303354900572512
       Soldier_41: 6284592324512227996
       Soldier_42: 7050324879617185217
+      Soldier_43: -2607639254268547159
+      Soldier_44: 5653757908176306338
+      Soldier_45: 7927456554719778392
+      Soldier_46: 449206504547973828
+      Soldier_47: 6810723495125567110
+      Soldier_48: -642152069011884208
+      Soldier_49: -6214945519075569275
       Soldier_5: 152417265559848108
+      Soldier_50: -3710885130930908971
+      Soldier_51: 8598842666268618451
+      Soldier_52: -3540987017898227895
+      Soldier_53: -1783535810177115791
+      Soldier_54: -3002747679659128181
+      Soldier_55: -2092587461042694401
+      Soldier_56: -21116039098738599
+      Soldier_57: 4471757998009841481
+      Soldier_58: 7270017381381783327
+      Soldier_59: 7811362304065029658
       Soldier_6: -5572970920532211618
+      Soldier_60: -8802366645767485968
+      Soldier_61: -9168300959339212435
+      Soldier_62: -4814303597096807251
       Soldier_7: -2880666656720651278
       Soldier_8: -1733617733217763490
       Soldier_9: -7227817022452064393

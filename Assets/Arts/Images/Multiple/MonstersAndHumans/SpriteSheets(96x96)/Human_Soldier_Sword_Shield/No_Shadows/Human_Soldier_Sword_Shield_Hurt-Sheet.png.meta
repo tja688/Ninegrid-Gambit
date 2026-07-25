@@ -125,10 +125,10 @@ TextureImporter:
       name: Human_Soldier_Sword_Shield_Hurt-Sheet_0
       rect:
         serializedVersion: 2
-        x: 33
-        y: 37
-        width: 23
-        height: 21
+        x: 0
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -147,10 +147,10 @@ TextureImporter:
       name: Human_Soldier_Sword_Shield_Hurt-Sheet_1
       rect:
         serializedVersion: 2
-        x: 126
-        y: 38
-        width: 27
-        height: 21
+        x: 96
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -169,10 +169,10 @@ TextureImporter:
       name: Human_Soldier_Sword_Shield_Hurt-Sheet_2
       rect:
         serializedVersion: 2
-        x: 221
-        y: 38
-        width: 27
-        height: 21
+        x: 192
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -191,10 +191,10 @@ TextureImporter:
       name: Human_Soldier_Sword_Shield_Hurt-Sheet_3
       rect:
         serializedVersion: 2
-        x: 319
-        y: 38
-        width: 24
-        height: 20
+        x: 288
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}

@@ -47,6 +47,12 @@ public static class PixelArtGroundCharacterImportUtility
         @"\((\d+)x(\d+)\)",
         RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
+    /// <summary>常见像素角色格尺寸；用于总览网格图推断。</summary>
+    private static readonly int[] CommonCellSizes =
+    {
+        16, 24, 32, 48, 64, 72, 80, 96, 100, 128,
+    };
+
     /// <summary>
     /// 递归扫描根目录下每个含 PNG 的文件夹，按「图集 / 序列帧」分类。
     /// </summary>
@@ -121,7 +127,8 @@ public static class PixelArtGroundCharacterImportUtility
         string projectRoot,
         List<SmartImportJob> jobs)
     {
-        var entries = new List<(string abs, string asset, string fileName)>(absPngFiles.Length);
+        var entries = new List<(string abs, string asset, string fileName, int width, int height)>(
+            absPngFiles.Length);
         for (var i = 0; i < absPngFiles.Length; i++)
         {
             string abs = absPngFiles[i];
@@ -131,7 +138,8 @@ public static class PixelArtGroundCharacterImportUtility
                 continue;
             }
 
-            entries.Add((abs, asset, Path.GetFileName(abs)));
+            TryReadPngSize(abs, out int width, out int height);
+            entries.Add((abs, asset, Path.GetFileName(abs), width, height));
         }
 
         if (entries.Count == 0)
@@ -139,45 +147,91 @@ public static class PixelArtGroundCharacterImportUtility
             return;
         }
 
-        int sheetLike = entries.Count(e => IsSheetLikeFileName(e.fileName));
-        GroundAssetKind folderKind;
+        // 同目录横条图集的格边长：用于把同角色总览拼图（非横条）也判成图集。
+        int? folderStripCell = InferDominantStripCell(entries);
 
-        if (entries.Count == 1 || sheetLike == entries.Count)
-        {
-            folderKind = GroundAssetKind.SpriteSheet;
-        }
-        else if (sheetLike > 0)
-        {
-            // 混合目录：Sheet 走图集，其余走单帧。
-            for (var i = 0; i < entries.Count; i++)
-            {
-                var e = entries[i];
-                var kind = IsSheetLikeFileName(e.fileName)
-                    ? GroundAssetKind.SpriteSheet
-                    : GroundAssetKind.FrameSequence;
-                jobs.Add(new SmartImportJob(e.asset, kind, assetFolder));
-            }
-
-            return;
-        }
-        else if (entries.Count >= 2 && LooksLikeNumberedFrameSet(entries.Select(e => e.fileName)))
-        {
-            folderKind = GroundAssetKind.FrameSequence;
-        }
-        else if (entries.Count >= 2)
-        {
-            // 多 PNG 但命名不像 Sheet → 视为序列帧文件夹。
-            folderKind = GroundAssetKind.FrameSequence;
-        }
-        else
-        {
-            folderKind = GroundAssetKind.SpriteSheet;
-        }
+        bool numberedFrames = entries.Count >= 2
+                              && LooksLikeNumberedFrameSet(entries.Select(e => e.fileName));
 
         for (var i = 0; i < entries.Count; i++)
         {
-            jobs.Add(new SmartImportJob(entries[i].asset, folderKind, assetFolder));
+            var e = entries[i];
+            GroundAssetKind kind = ClassifyAsset(
+                e.fileName,
+                e.asset,
+                e.width,
+                e.height,
+                folderStripCell,
+                numberedFrames);
+            jobs.Add(new SmartImportJob(e.asset, kind, assetFolder));
         }
+    }
+
+    /// <summary>
+    /// 按「像素几何优先、文件名次之」区分图集与单帧序列。
+    /// 典型误判源：Soldier_Idle.png（600×100 横条）文件名无 sheet，旧逻辑整夹判成序列帧 → Single。
+    /// </summary>
+    private static GroundAssetKind ClassifyAsset(
+        string fileName,
+        string assetPath,
+        int width,
+        int height,
+        int? folderStripCell,
+        bool folderLooksLikeNumberedFrames)
+    {
+        if (LooksLikeSpriteSheet(fileName, assetPath, width, height, folderStripCell))
+        {
+            return GroundAssetKind.SpriteSheet;
+        }
+
+        // 编号帧文件夹里偶发「看起来像格」的单图仍跟序列走，避免把单帧肖像切碎。
+        if (folderLooksLikeNumberedFrames && width > 0 && height > 0 && !IsStripGeometry(width, height))
+        {
+            return GroundAssetKind.FrameSequence;
+        }
+
+        return GroundAssetKind.FrameSequence;
+    }
+
+    public static bool LooksLikeSpriteSheet(
+        string fileName,
+        string assetPath,
+        int width,
+        int height,
+        int? folderStripCell = null)
+    {
+        if (IsSheetLikeFileName(fileName))
+        {
+            return true;
+        }
+
+        if (width > 0 && height > 0 && IsStripGeometry(width, height))
+        {
+            return true;
+        }
+
+        int? pathCell = InferCellSizeFromAssetPath(assetPath);
+        if (pathCell.HasValue
+            && width > 0
+            && height > 0
+            && width % pathCell.Value == 0
+            && height % pathCell.Value == 0
+            && (width / pathCell.Value) * (height / pathCell.Value) >= 2)
+        {
+            return true;
+        }
+
+        if (folderStripCell.HasValue
+            && width > 0
+            && height > 0
+            && width % folderStripCell.Value == 0
+            && height % folderStripCell.Value == 0
+            && (width / folderStripCell.Value) * (height / folderStripCell.Value) >= 2)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     public static bool IsSheetLikeFileName(string fileName)
@@ -197,7 +251,78 @@ public static class PixelArtGroundCharacterImportUtility
             return true;
         }
 
+        if (fileName.IndexOf("_strip", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            return true;
+        }
+
         return false;
+    }
+
+    /// <summary>横条（宽≥2×高且整除）或竖条（高≥2×宽且整除）。</summary>
+    public static bool IsStripGeometry(int width, int height)
+    {
+        if (height >= 16 && width >= height * 2 && width % height == 0)
+        {
+            return true;
+        }
+
+        if (width >= 16 && height >= width * 2 && height % width == 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static int? InferStripCellSize(int width, int height)
+    {
+        if (height >= 16 && width >= height * 2 && width % height == 0)
+        {
+            return height;
+        }
+
+        if (width >= 16 && height >= width * 2 && height % width == 0)
+        {
+            return width;
+        }
+
+        return null;
+    }
+
+    private static int? InferDominantStripCell(
+        List<(string abs, string asset, string fileName, int width, int height)> entries)
+    {
+        var counts = new Dictionary<int, int>();
+        for (var i = 0; i < entries.Count; i++)
+        {
+            int? cell = InferStripCellSize(entries[i].width, entries[i].height);
+            if (!cell.HasValue)
+            {
+                continue;
+            }
+
+            counts.TryGetValue(cell.Value, out int n);
+            counts[cell.Value] = n + 1;
+        }
+
+        if (counts.Count == 0)
+        {
+            return null;
+        }
+
+        int bestCell = 0;
+        int bestCount = 0;
+        foreach (KeyValuePair<int, int> pair in counts)
+        {
+            if (pair.Value > bestCount || (pair.Value == bestCount && pair.Key > bestCell))
+            {
+                bestCount = pair.Value;
+                bestCell = pair.Key;
+            }
+        }
+
+        return bestCell > 0 ? bestCell : (int?)null;
     }
 
     private static bool LooksLikeNumberedFrameSet(IEnumerable<string> fileNames)
@@ -214,6 +339,56 @@ public static class PixelArtGroundCharacterImportUtility
         }
 
         return total >= 2 && matched >= Mathf.Max(2, total / 2);
+    }
+
+    /// <summary>读 PNG IHDR，不依赖 Unity AssetDatabase / System.Drawing。</summary>
+    public static bool TryReadPngSize(string absolutePath, out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+        if (string.IsNullOrEmpty(absolutePath) || !File.Exists(absolutePath))
+        {
+            return false;
+        }
+
+        try
+        {
+            using (var stream = File.OpenRead(absolutePath))
+            {
+                // signature(8) + length(4) + type(4) + width(4) + height(4)
+                if (stream.Length < 24)
+                {
+                    return false;
+                }
+
+                var header = new byte[24];
+                if (stream.Read(header, 0, 24) < 24)
+                {
+                    return false;
+                }
+
+                if (header[0] != 0x89 || header[1] != 0x50 || header[2] != 0x4E || header[3] != 0x47)
+                {
+                    return false;
+                }
+
+                if (header[12] != (byte)'I' || header[13] != (byte)'H'
+                    || header[14] != (byte)'D' || header[15] != (byte)'R')
+                {
+                    return false;
+                }
+
+                width = (header[16] << 24) | (header[17] << 16) | (header[18] << 8) | header[19];
+                height = (header[20] << 24) | (header[21] << 16) | (header[22] << 8) | header[23];
+                return width > 0 && height > 0;
+            }
+        }
+        catch
+        {
+            width = 0;
+            height = 0;
+            return false;
+        }
     }
 
     public struct ImportSettingsSnapshot
@@ -457,52 +632,51 @@ public static class PixelArtGroundCharacterImportUtility
     }
 
     /// <summary>
-    /// 无现有切片时，按路径 (96x96) 或均匀横条尝试自动切片。
+    /// 无现有均匀切片时，按路径 (96x96) / 横竖条 / 常见格尺寸尝试自动切片。
+    /// 已有 alpha 紧裁切片但几何上是标准横条时，改为均匀格，保证脚底 Pivot 跨帧一致。
     /// </summary>
     private static bool EnsureSpriteSheetSlices(TextureImporter importer, string assetPath)
     {
-        SpriteMetaData[] existing = importer.spritesheet;
-        if (existing != null && existing.Length > 0)
-        {
-            return true;
-        }
-
         importer.GetSourceTextureWidthAndHeight(out int width, out int height);
         if (width <= 0 || height <= 0)
         {
             return false;
         }
 
-        int? cell = InferCellSizeFromAssetPath(assetPath);
-        if (!cell.HasValue)
+        int? cell = InferCellSizeForSlicing(width, height, assetPath);
+        SpriteMetaData[] existing = importer.spritesheet;
+        bool hasExisting = existing != null && existing.Length > 0;
+
+        if (hasExisting)
         {
-            if (height >= 16 && width >= height * 2 && width % height == 0)
+            if (!cell.HasValue)
             {
-                cell = height;
+                return true;
             }
-            else
+
+            if (IsUniformCellLayout(existing, cell.Value, width, height))
             {
-                return false;
+                return true;
             }
+
+            // 有可推断的均匀格，但现有切片不是该格 → 重切。
+        }
+        else if (!cell.HasValue)
+        {
+            return false;
         }
 
         int cellSize = cell.Value;
-        if (cellSize <= 0 || width < cellSize)
+        if (cellSize <= 0 || width < cellSize || height < cellSize)
         {
             return false;
         }
 
         int columns = width / cellSize;
-        if (columns <= 0)
+        int rows = height / cellSize;
+        if (columns <= 0 || rows <= 0)
         {
             return false;
-        }
-
-        // 横条图集：单行多列（与常见 Sprite Sheet 包一致）。
-        int rows = height / cellSize;
-        if (rows <= 0)
-        {
-            rows = 1;
         }
 
         var metas = new List<SpriteMetaData>(columns * rows);
@@ -538,6 +712,101 @@ public static class PixelArtGroundCharacterImportUtility
 
         importer.spritesheet = metas.ToArray();
         return true;
+    }
+
+    private static int? InferCellSizeForSlicing(int width, int height, string assetPath)
+    {
+        int? pathCell = InferCellSizeFromAssetPath(assetPath);
+        if (pathCell.HasValue
+            && width % pathCell.Value == 0
+            && height % pathCell.Value == 0
+            && (width / pathCell.Value) * (height / pathCell.Value) >= 2)
+        {
+            return pathCell;
+        }
+
+        int? stripCell = InferStripCellSize(width, height);
+        if (stripCell.HasValue)
+        {
+            return stripCell;
+        }
+
+        return InferCommonGridCell(width, height);
+    }
+
+    private static int? InferCommonGridCell(int width, int height)
+    {
+        if (width <= 0 || height <= 0)
+        {
+            return null;
+        }
+
+        int g = GreatestCommonDivisor(width, height);
+        int best = 0;
+        for (var i = 0; i < CommonCellSizes.Length; i++)
+        {
+            int c = CommonCellSizes[i];
+            if (c > g || g % c != 0)
+            {
+                continue;
+            }
+
+            int cells = (width / c) * (height / c);
+            if (cells >= 2 && c > best)
+            {
+                best = c;
+            }
+        }
+
+        return best > 0 ? best : (int?)null;
+    }
+
+    private static bool IsUniformCellLayout(
+        SpriteMetaData[] sheet,
+        int cellSize,
+        int textureWidth,
+        int textureHeight)
+    {
+        if (sheet == null || sheet.Length == 0 || cellSize <= 0)
+        {
+            return false;
+        }
+
+        int expected = (textureWidth / cellSize) * (textureHeight / cellSize);
+        if (expected <= 0 || sheet.Length != expected)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < sheet.Length; i++)
+        {
+            Rect r = sheet[i].rect;
+            if (!Mathf.Approximately(r.width, cellSize) || !Mathf.Approximately(r.height, cellSize))
+            {
+                return false;
+            }
+
+            if (Mathf.Abs(r.x % cellSize) > 0.01f || Mathf.Abs(r.y % cellSize) > 0.01f)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static int GreatestCommonDivisor(int a, int b)
+    {
+        a = Mathf.Abs(a);
+        b = Mathf.Abs(b);
+        while (b != 0)
+        {
+            int t = a % b;
+            a = b;
+            b = t;
+        }
+
+        return a;
     }
 
     private static int? InferCellSizeFromAssetPath(string assetPath)

@@ -137,10 +137,10 @@ TextureImporter:
       name: Human_Soldier_Sword_Shield_Attack2-Sheet_0
       rect:
         serializedVersion: 2
-        x: 40
-        y: 35
-        width: 16
-        height: 7
+        x: 0
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -149,8 +149,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e59bd4cfb9a290640800000000000000
-      internalID: 5046611706886601054
+      spriteID: 
+      internalID: 0
       vertices: []
       indices: 
       edges: []
@@ -159,10 +159,10 @@ TextureImporter:
       name: Human_Soldier_Sword_Shield_Attack2-Sheet_1
       rect:
         serializedVersion: 2
-        x: 134
-        y: 35
-        width: 16
-        height: 7
+        x: 96
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -171,8 +171,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ecf9ba74a8c4a1870800000000000000
-      internalID: 8654313790737457102
+      spriteID: 
+      internalID: 0
       vertices: []
       indices: 
       edges: []
@@ -181,10 +181,10 @@ TextureImporter:
       name: Human_Soldier_Sword_Shield_Attack2-Sheet_2
       rect:
         serializedVersion: 2
-        x: 229
-        y: 35
-        width: 16
-        height: 7
+        x: 192
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -193,8 +193,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f7d041b9116060ea0800000000000000
-      internalID: -5907027188563833473
+      spriteID: 
+      internalID: 0
       vertices: []
       indices: 
       edges: []
@@ -203,10 +203,10 @@ TextureImporter:
       name: Human_Soldier_Sword_Shield_Attack2-Sheet_3
       rect:
         serializedVersion: 2
-        x: 329
-        y: 35
-        width: 15
-        height: 7
+        x: 288
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -215,8 +215,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 04fa94080e8c4ded0800000000000000
-      internalID: -2390064635676348608
+      spriteID: 
+      internalID: 0
       vertices: []
       indices: 
       edges: []
@@ -225,10 +225,10 @@ TextureImporter:
       name: Human_Soldier_Sword_Shield_Attack2-Sheet_4
       rect:
         serializedVersion: 2
-        x: 425
-        y: 35
-        width: 15
-        height: 7
+        x: 384
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -237,8 +237,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1ee9eab579cfb7690800000000000000
-      internalID: -7603205818876518687
+      spriteID: 
+      internalID: 0
       vertices: []
       indices: 
       edges: []
@@ -247,10 +247,10 @@ TextureImporter:
       name: Human_Soldier_Sword_Shield_Attack2-Sheet_5
       rect:
         serializedVersion: 2
-        x: 521
-        y: 35
-        width: 15
-        height: 7
+        x: 480
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -259,8 +259,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 29af236c0dfed8ca0800000000000000
-      internalID: -6012886247512278382
+      spriteID: 
+      internalID: 0
       vertices: []
       indices: 
       edges: []
@@ -269,10 +269,10 @@ TextureImporter:
       name: Human_Soldier_Sword_Shield_Attack2-Sheet_6
       rect:
         serializedVersion: 2
-        x: 617
-        y: 35
-        width: 15
-        height: 7
+        x: 576
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -281,8 +281,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e1fc3aaf43123f2b0800000000000000
-      internalID: -5552057404190634210
+      spriteID: 
+      internalID: 0
       vertices: []
       indices: 
       edges: []
@@ -291,10 +291,10 @@ TextureImporter:
       name: Human_Soldier_Sword_Shield_Attack2-Sheet_7
       rect:
         serializedVersion: 2
-        x: 712
-        y: 35
-        width: 16
-        height: 7
+        x: 672
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -303,8 +303,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1219ac379f9534060800000000000000
-      internalID: 6936486779005079841
+      spriteID: 
+      internalID: 0
       vertices: []
       indices: 
       edges: []

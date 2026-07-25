@@ -93,7 +93,7 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
                     new PathEntry
                     {
                         enabled = true,
-                        path = "Assets/Arts/Images/Multiple/SpriteSheets(96x96)",
+                        path = "Assets/Arts/Images/Multiple/MonstersAndHumans",
                         mode = ProcessMode.GroundCharacterSmart
                     },
                     new PathEntry
@@ -297,7 +297,7 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
 
         EditorGUILayout.HelpBox(
             "每个路径独立选择模式：Single（整图精灵）/ Multiple（图集切片）/ Aseprite（.ase/.aseprite）/" +
-            "站立角色·智能导入（递归子文件夹，自动识别图集 vs 序列帧，统一脚底 Pivot）。",
+            "站立角色·智能导入（递归子文件夹；按像素几何识别横条/网格图集 vs 单帧序列文件夹，统一脚底 Pivot）。",
             MessageType.None
         );
 
@@ -454,7 +454,9 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         if (name.IndexOf("aseprite", StringComparison.OrdinalIgnoreCase) >= 0)
             return ProcessMode.Aseprite;
         if (name.IndexOf("spritesheet", StringComparison.OrdinalIgnoreCase) >= 0
-            || name.IndexOf("sprite sheets", StringComparison.OrdinalIgnoreCase) >= 0)
+            || name.IndexOf("sprite sheets", StringComparison.OrdinalIgnoreCase) >= 0
+            || name.IndexOf("MonstersAndHumans", StringComparison.OrdinalIgnoreCase) >= 0
+            || name.IndexOf("ground", StringComparison.OrdinalIgnoreCase) >= 0)
             return ProcessMode.GroundCharacterSmart;
         return ProcessMode.Single;
     }

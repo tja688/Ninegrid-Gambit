@@ -125,10 +125,10 @@ TextureImporter:
       name: Monster_Slime_Hurt-Sheet_0
       rect:
         serializedVersion: 2
-        x: 38
-        y: 35
-        width: 19
-        height: 16
+        x: 0
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -147,10 +147,10 @@ TextureImporter:
       name: Monster_Slime_Hurt-Sheet_1
       rect:
         serializedVersion: 2
-        x: 133
-        y: 35
-        width: 20
-        height: 17
+        x: 96
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -169,10 +169,10 @@ TextureImporter:
       name: Monster_Slime_Hurt-Sheet_2
       rect:
         serializedVersion: 2
-        x: 228
-        y: 35
-        width: 21
-        height: 17
+        x: 192
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -191,10 +191,10 @@ TextureImporter:
       name: Monster_Slime_Hurt-Sheet_3
       rect:
         serializedVersion: 2
-        x: 325
-        y: 35
-        width: 20
-        height: 16
+        x: 288
+        y: 0
+        width: 96
+        height: 96
       alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
