@@ -129,16 +129,16 @@ TextureImporter:
         y: 38
         width: 17
         height: 13
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 6ff5b35416e904f80800000000000000
-      internalID: -8124319587165839370
+      spriteID: 
+      internalID: 0
       vertices: []
       indices: 
       edges: []
@@ -151,16 +151,16 @@ TextureImporter:
         y: 38
         width: 20
         height: 14
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 9da78d6c5adda8b80800000000000000
-      internalID: -8391651251576079655
+      spriteID: 
+      internalID: 0
       vertices: []
       indices: 
       edges: []
@@ -173,16 +173,16 @@ TextureImporter:
         y: 38
         width: 21
         height: 14
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c24f4dbe828e97be0800000000000000
-      internalID: -1478895740161559508
+      spriteID: 
+      internalID: 0
       vertices: []
       indices: 
       edges: []
@@ -195,16 +195,16 @@ TextureImporter:
         y: 38
         width: 18
         height: 13
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 80434f9e4a81f0de0800000000000000
-      internalID: -1364845065491172344
+      spriteID: 
+      internalID: 0
       vertices: []
       indices: 
       edges: []
@@ -229,6 +229,6 @@ TextureImporter:
       Monster_Slime_Hurt-Sheet_3: -1364845065491172344
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0
+  userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom
   assetBundleName: 
   assetBundleVariant: 
