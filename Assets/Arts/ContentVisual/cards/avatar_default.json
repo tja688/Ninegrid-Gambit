@@ -4,7 +4,7 @@
     "kind": "Avatar",
     "deckId": "",
     "displayName": "玩家",
-    "description": "",
+    "description": "��һ���",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -32,7 +32,7 @@
             {
                 "id": "idle",
                 "sourceType": "atlas",
-                "path": "Assets/Arts/Images/Multiple/SpriteSheets(96x96)/Human_Soldier_Sword_Shield/No_Shadows/Human_Soldier_Sword_Shield_Idle-Sheet.png",
+                "path": "Assets/Arts/Images/Multiple/MonstersAndHumans/SpriteSheets(96x96)/Human_Soldier_Sword_Shield/No_Shadows/Human_Soldier_Sword_Shield_Idle-Sheet.png",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },
