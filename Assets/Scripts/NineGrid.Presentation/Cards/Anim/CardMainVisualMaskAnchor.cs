@@ -40,6 +40,44 @@ namespace NineGrid.Cards.Anim
         }
 
         /// <summary>
+        /// 按锚点模式将 visual（需已赋参考 sprite 与 scale）摆到 Mask 内；返回父节点下 localPosition。
+        /// </summary>
+        public Vector3 GetAnchoredLocalPosition(
+            SpriteRenderer visual,
+            CardMainVisualAnchorMode mode = CardMainVisualAnchorMode.BottomCenter)
+        {
+            if (visual == null)
+            {
+                return Vector3.zero;
+            }
+
+            if (mode == CardMainVisualAnchorMode.TransformOrigin)
+            {
+                return GetSuggestedLocalPosition(visual.transform);
+            }
+
+            if (visual.sprite == null)
+            {
+                return GetSuggestedLocalPosition(visual.transform);
+            }
+
+            var maskBounds = GetWorldBounds();
+            var targetWorld = ComputeWorldPositionForAnchor(
+                visual.transform.position,
+                visual.bounds,
+                maskBounds,
+                mode);
+
+            var parent = visual.transform.parent;
+            if (parent == null)
+            {
+                return targetWorld;
+            }
+
+            return parent.InverseTransformPoint(targetWorld);
+        }
+
+        /// <summary>
         /// 将 visual 中心对齐到 Mask 中心；可选叠加 contentBounds 修正（世界空间内容包围盒）。
         /// </summary>
         public Vector3 GetSuggestedLocalPosition(Transform visual, Bounds? contentBounds = null)
@@ -49,22 +87,61 @@ namespace NineGrid.Cards.Anim
                 return Vector3.zero;
             }
 
-            var maskBounds = GetWorldBounds();
-            var targetWorld = maskBounds.center;
             if (contentBounds.HasValue)
             {
-                var content = contentBounds.Value;
-                var delta = maskBounds.center - content.center;
-                targetWorld = visual.position + delta;
+                var maskBounds = GetWorldBounds();
+                var targetWorld = ComputeWorldPositionForAnchor(
+                    visual.position,
+                    contentBounds.Value,
+                    maskBounds,
+                    CardMainVisualAnchorMode.BoundsCenter);
+
+                var parent = visual.parent;
+                if (parent == null)
+                {
+                    return targetWorld;
+                }
+
+                return parent.InverseTransformPoint(targetWorld);
             }
 
-            var parent = visual.parent;
-            if (parent == null)
+            var maskBoundsCenter = GetWorldBounds();
+            var targetWorldOrigin = maskBoundsCenter.center;
+            var parentTransform = visual.parent;
+            if (parentTransform == null)
             {
-                return targetWorld;
+                return targetWorldOrigin;
             }
 
-            return parent.InverseTransformPoint(targetWorld);
+            return parentTransform.InverseTransformPoint(targetWorldOrigin);
+        }
+
+        /// <summary>
+        /// 纯数学：移动 visual 原点后，content 包围盒按 mode 与 mask 对齐。
+        /// </summary>
+        public static Vector3 ComputeWorldPositionForAnchor(
+            Vector3 visualWorldPosition,
+            Bounds contentWorldBounds,
+            Bounds maskWorldBounds,
+            CardMainVisualAnchorMode mode)
+        {
+            Vector3 delta;
+            switch (mode)
+            {
+                case CardMainVisualAnchorMode.BoundsCenter:
+                    delta = maskWorldBounds.center - contentWorldBounds.center;
+                    break;
+                case CardMainVisualAnchorMode.BottomCenter:
+                    delta.x = maskWorldBounds.center.x - contentWorldBounds.center.x;
+                    delta.y = maskWorldBounds.min.y - contentWorldBounds.min.y;
+                    delta.z = maskWorldBounds.center.z - contentWorldBounds.center.z;
+                    break;
+                default:
+                    delta = Vector3.zero;
+                    break;
+            }
+
+            return visualWorldPosition + delta;
         }
 
         public void ApplyMaskInteraction(SpriteRenderer visual)

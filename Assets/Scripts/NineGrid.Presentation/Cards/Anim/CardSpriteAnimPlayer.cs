@@ -6,7 +6,7 @@ namespace NineGrid.Cards.Anim
 {
     /// <summary>
     /// 卡面主视图帧动画播放器：只改 sprite，不按帧改 transform；
-    /// 切槽时一次写入 mainVisual + slot offset（相对 Mask 中心）。
+    /// 切槽时一次写入 mainVisual + slot offset（相对 Mask 脚底锚定 + 偏移）。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CardSpriteAnimPlayer : MonoBehaviour
@@ -174,7 +174,8 @@ namespace NineGrid.Cards.Anim
             _elapsed = 0f;
             _playing = _frames.Length > 1;
             looping = ShouldLoop(resolvedSlotId);
-            ApplySlotTransformOnce(slotDto);
+            var referenceSprite = _frames[0];
+            ApplySlotTransformOnce(slotDto, referenceSprite);
             ApplyMaskInteractionForContext();
             ApplyCurrentFrame();
             target.enabled = true;
@@ -209,12 +210,11 @@ namespace NineGrid.Cards.Anim
                 sprite = target.sprite;
             }
 
-            ApplySlotTransformOnce(null);
+            ApplySlotTransformOnce(null, sprite);
             ApplyMaskInteractionForContext();
-            if (sprite != null && target != null)
+            if (target != null)
             {
-                target.sprite = sprite;
-                target.enabled = true;
+                target.enabled = sprite != null || target.sprite != null;
             }
         }
 
@@ -273,7 +273,7 @@ namespace NineGrid.Cards.Anim
             }
         }
 
-        private void ApplySlotTransformOnce(CardPresentationAnimSlotDto slotDto)
+        private void ApplySlotTransformOnce(CardPresentationAnimSlotDto slotDto, Sprite referenceSprite)
         {
             EnsureTarget();
             if (target == null)
@@ -287,28 +287,17 @@ namespace NineGrid.Cards.Anim
             }
 
             var main = _config != null ? _config.mainVisual : null;
-            var scale = main != null && main.uniformScale > 0.0001f ? main.uniformScale : 1f;
-            target.transform.localScale = new Vector3(scale, scale, 1f);
-
+            var scale = main != null ? main.uniformScale : 1f;
             var offsetX = (main != null ? main.offsetX : 0f) + (slotDto != null ? slotDto.offsetX : 0f);
             var offsetY = (main != null ? main.offsetY : 0f) + (slotDto != null ? slotDto.offsetY : 0f);
 
-            Vector3 local;
-            if (_maskAnchor != null)
-            {
-                local = _maskAnchor.GetSuggestedLocalPosition(target.transform);
-                local.x += offsetX;
-                local.y += offsetY;
-            }
-            else
-            {
-                // 无 Mask 时直接写入合成偏移，避免多次 Play 累加。
-                local = target.transform.localPosition;
-                local.x = offsetX;
-                local.y = offsetY;
-            }
-
-            target.transform.localPosition = local;
+            CardMainVisualPlacement.ApplyToRenderer(
+                target,
+                _maskAnchor,
+                referenceSprite,
+                scale,
+                offsetX,
+                offsetY);
         }
 
         private void ApplyMaskInteraction()

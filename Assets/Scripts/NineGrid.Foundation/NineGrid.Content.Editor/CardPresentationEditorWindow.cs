@@ -960,32 +960,7 @@ namespace NineGrid.Content.Editor
                 TryApplySpritePath(root.transform, CardFaceSlotCodes.Banner, dto.sprites.banner);
             }
 
-            // mainVisual 由 CardSpriteAnimPlayer.Play 写入；此处再保险应用一次静态偏移。
-            if (CardFaceSlotNodeMap.TryFindRenderer(
-                    root.transform,
-                    CardFaceSlotCodes.MainIcon,
-                    out var mainRenderer)
-                && dto.mainVisual != null)
-            {
-                var scale = dto.mainVisual.uniformScale > 0.0001f ? dto.mainVisual.uniformScale : 1f;
-                mainRenderer.transform.localScale = new Vector3(scale, scale, 1f);
-                var mask = CardMainVisualMaskAnchor.FindOrAdd(root.transform);
-                Vector3 local;
-                if (mask != null)
-                {
-                    local = mask.GetSuggestedLocalPosition(mainRenderer.transform);
-                    local.x += dto.mainVisual.offsetX;
-                    local.y += dto.mainVisual.offsetY;
-                }
-                else
-                {
-                    local = mainRenderer.transform.localPosition;
-                    local.x = dto.mainVisual.offsetX;
-                    local.y = dto.mainVisual.offsetY;
-                }
-
-                mainRenderer.transform.localPosition = local;
-            }
+            // mainVisual 定位由紧随其后的 RestartPreviewAnim → CardSpriteAnimPlayer.Play 统一处理。
         }
 
         private static void TryApplySpritePath(Transform root, string slotCode, string path)
