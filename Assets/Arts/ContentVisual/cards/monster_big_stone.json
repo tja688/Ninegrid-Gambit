@@ -13,7 +13,7 @@
         "action": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png",
+        "mainIcon": "",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -31,8 +31,8 @@
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/001insect_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },
