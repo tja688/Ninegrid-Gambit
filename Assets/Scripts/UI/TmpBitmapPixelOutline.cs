@@ -6,6 +6,7 @@ namespace NineGrid.UI
     /// <summary>
     /// Bitmap TMP 像素黑边：在 OnPreRenderText 把每个可见字形做八向平移复制上色。
     /// 不采样 atlas 邻域，避免相邻字形串色噪音。
+    /// 内联 Sprite（描述图标等）跳过描边，只保留本体。
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(TMP_Text))]
@@ -200,6 +201,12 @@ namespace NineGrid.UI
                     {
                         TMP_CharacterInfo ch = textInfo.characterInfo[ci];
                         if (!ch.isVisible || ch.materialReferenceIndex != materialIndex)
+                        {
+                            continue;
+                        }
+
+                        // 内联 Sprite 不走像素描边：八向复制会在图标外形成随 scale 变大的黑边噪点。
+                        if (isOutline && ch.elementType == TMP_TextElementType.Sprite)
                         {
                             continue;
                         }

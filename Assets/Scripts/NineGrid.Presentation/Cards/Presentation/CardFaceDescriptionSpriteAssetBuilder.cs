@@ -42,6 +42,7 @@ namespace NineGrid.Cards.Presentation
             var cells = new List<PackedCell>(icons.Count);
             var maxH = 1;
             var totalW = 0;
+            const int pad = 1;
             for (var i = 0; i < icons.Count; i++)
             {
                 var icon = icons[i];
@@ -56,15 +57,18 @@ namespace NineGrid.Cards.Presentation
                     continue;
                 }
 
+                SanitizePackedPixels(cell.Pixels);
                 cell.SlotCode = icon.SlotCode;
                 cell.Source = icon.Sprite;
                 cell.X = totalW;
+                cell.Pad = pad;
                 ResolveLayout(style, icon.SlotCode, cell.Width, cell.Height, out cell.Metrics);
                 cells.Add(cell);
-                totalW += cell.Width;
-                if (cell.Height > maxH)
+                totalW += cell.Width + pad * 2;
+                var cellH = cell.Height + pad * 2;
+                if (cellH > maxH)
                 {
-                    maxH = cell.Height;
+                    maxH = cellH;
                 }
             }
 
@@ -87,14 +91,16 @@ namespace NineGrid.Cards.Presentation
             for (var i = 0; i < cells.Count; i++)
             {
                 var cell = cells[i];
-                atlas.SetPixels(cell.X, 0, cell.Width, cell.Height, cell.Pixels);
+                var drawX = cell.X + cell.Pad;
+                var drawY = cell.Pad;
+                atlas.SetPixels(drawX, drawY, cell.Width, cell.Height, cell.Pixels);
 
                 var glyph = new TMP_SpriteGlyph
                 {
                     index = (uint)i,
                     sprite = cell.Source,
                     metrics = cell.Metrics,
-                    glyphRect = new GlyphRect(cell.X, 0, cell.Width, cell.Height),
+                    glyphRect = new GlyphRect(drawX, drawY, cell.Width, cell.Height),
                     scale = 1f,
                     atlasIndex = 0
                 };
@@ -249,13 +255,16 @@ namespace NineGrid.Cards.Presentation
             var x = Mathf.RoundToInt(rect.x);
             var y = Mathf.RoundToInt(rect.y);
 
-            try
+            cell.Pixels = TryGetPixelsReadable(sprite.texture, x, y, width, height);
+            if (cell.Pixels == null)
             {
-                cell.Pixels = sprite.texture.GetPixels(x, y, width, height);
+                // 导入贴图默认不可读：Blit 子矩形到临时 RT 再 ReadPixels。
+                cell.Pixels = CopySpritePixelsViaBlit(sprite, width, height);
             }
-            catch
+
+            if (cell.Pixels == null || cell.Pixels.Length != width * height)
             {
-                // 不可读贴图时退化为纯色块，仍保留代号→槽位契约（非裸路径）。
+                // 仍失败时才退白色块，避免完全丢代号。
                 cell.Pixels = new Color[width * height];
                 for (var i = 0; i < cell.Pixels.Length; i++)
                 {
@@ -268,9 +277,116 @@ namespace NineGrid.Cards.Presentation
             return cell;
         }
 
+        private static Color[] TryGetPixelsReadable(Texture2D texture, int x, int y, int width, int height)
+        {
+            if (texture == null || !texture.isReadable)
+            {
+                return null;
+            }
+
+            try
+            {
+                return texture.GetPixels(x, y, width, height);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 从不可读图集/贴图中拷贝 Sprite.textureRect 像素（编辑器与运行时均可用）。
+        /// </summary>
+        private static Color[] CopySpritePixelsViaBlit(Sprite sprite, int width, int height)
+        {
+            var source = sprite != null ? sprite.texture : null;
+            if (source == null || width <= 0 || height <= 0)
+            {
+                return null;
+            }
+
+            var rect = sprite.textureRect;
+            var scale = new Vector2(rect.width / source.width, rect.height / source.height);
+            var offset = new Vector2(rect.x / source.width, rect.y / source.height);
+
+            RenderTexture rt = null;
+            Texture2D readable = null;
+            var prev = RenderTexture.active;
+            try
+            {
+                rt = RenderTexture.GetTemporary(
+                    width,
+                    height,
+                    0,
+                    RenderTextureFormat.ARGB32,
+                    RenderTextureReadWrite.sRGB);
+                Graphics.Blit(source, rt, scale, offset);
+
+                readable = new Texture2D(width, height, TextureFormat.RGBA32, false);
+                readable.hideFlags = HideFlags.HideAndDontSave;
+                RenderTexture.active = rt;
+                readable.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                readable.Apply(false, false);
+                return readable.GetPixels();
+            }
+            catch
+            {
+                return null;
+            }
+            finally
+            {
+                RenderTexture.active = prev;
+                if (rt != null)
+                {
+                    RenderTexture.ReleaseTemporary(rt);
+                }
+
+                if (readable != null)
+                {
+                    DestroyOwned(readable);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 图集透明区常带黑 RGB（或等价于相对黑底的预乘）。TMP Sprite 按直通 Alpha 混合时会现黑边/黑点，
+        /// 且随 glyph scale 一起放大。这里还原直通色，并把全透明写成白透明。
+        /// </summary>
+        public static void SanitizePackedPixels(Color[] pixels)
+        {
+            if (pixels == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < pixels.Length; i++)
+            {
+                var c = pixels[i];
+                if (c.a <= 0.001f)
+                {
+                    pixels[i] = new Color(1f, 1f, 1f, 0f);
+                    continue;
+                }
+
+                // 相对黑底绘制/压缩后的 RGB≈coverage*fg → 反预乘得纯色。
+                var inv = 1f / c.a;
+                pixels[i] = new Color(
+                    Mathf.Clamp01(c.r * inv),
+                    Mathf.Clamp01(c.g * inv),
+                    Mathf.Clamp01(c.b * inv),
+                    c.a);
+            }
+        }
+
         private static void ClearAtlas(Texture2D atlas)
         {
+            // 白透明：即便 UV 蹭到 padding，也不会冒出黑边。
             var clear = new Color[atlas.width * atlas.height];
+            for (var i = 0; i < clear.Length; i++)
+            {
+                clear[i] = new Color(1f, 1f, 1f, 0f);
+            }
+
             atlas.SetPixels(clear);
         }
 
@@ -282,6 +398,7 @@ namespace NineGrid.Cards.Presentation
             public int Width;
             public int Height;
             public int X;
+            public int Pad;
             public GlyphMetrics Metrics;
         }
     }
