@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "属性提升卡",
-    "description": "属性提升卡：[使用时] 选择攻击+1、护甲+1或血量上限与当前血量+2",
+    "description": "攻击+1/护甲+1/血量+2",
     "gold": 100,
     "stats": {
         "hp": 0,

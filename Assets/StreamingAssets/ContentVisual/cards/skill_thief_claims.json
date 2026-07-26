@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "东西归我了！",
-    "description": "东西归我了！：每移动3次移除相邻帮助卡",
+    "description": "每移动3次移除相邻帮助卡",
     "gold": 0,
     "stats": {
         "hp": 0,

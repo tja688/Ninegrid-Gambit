@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "吞石",
-    "description": "吞石：每移动2次吸相邻怪物护甲",
+    "description": "每移动2次吸相邻怪物护甲",
     "gold": 0,
     "stats": {
         "hp": 0,

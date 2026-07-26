@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "先攻",
-    "description": "先攻：持有先攻技能",
+    "description": "持有先攻技能",
     "gold": 0,
     "stats": {
         "hp": 0,

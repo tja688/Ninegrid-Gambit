@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
     "displayName": "蓝纹骷髅",
-    "description": "蓝纹骷髅",
+    "description": "",
     "gold": 5,
     "stats": {
         "hp": 10,

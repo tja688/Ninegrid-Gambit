@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "火之力",
-    "description": "火之力：每有一张烈焰，本卡攻击+2",
+    "description": "每有一张烈焰，本卡攻击+2",
     "gold": 0,
     "stats": {
         "hp": 0,

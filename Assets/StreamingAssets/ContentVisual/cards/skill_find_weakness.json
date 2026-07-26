@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "发现弱点",
-    "description": "发现弱点：福地达到3后下一次移动造成99伤害",
+    "description": "3福地下次移动99伤",
     "gold": 0,
     "stats": {
         "hp": 0,

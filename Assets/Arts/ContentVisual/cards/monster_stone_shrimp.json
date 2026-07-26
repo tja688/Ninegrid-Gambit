@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.stone_legion",
     "displayName": "紫壳蟹",
-    "description": "紫壳蟹：玩家卡和怪物卡损失护甲时本卡攻击+1",
+    "description": "双方损护甲时攻击+1",
     "gold": 5,
     "stats": {
         "hp": 2,
@@ -23,8 +23,8 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0,
-        "uniformScale": 0.97
+        "offsetY": -0.20000000298023225,
+        "uniformScale": 0.9700000286102295
     },
     "animations": {
         "defaultFps": 8.0,

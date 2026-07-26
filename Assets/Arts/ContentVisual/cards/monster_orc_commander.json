@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.orc_legion",
     "displayName": "野猪骑士",
-    "description": "野猪骑士：每移动1次，相邻怪物攻击+1",
+    "description": "每移动1次，相邻怪物攻击+1",
     "gold": 5,
     "stats": {
         "hp": 10,
@@ -22,9 +22,9 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
-        "offsetY": 0.0,
-        "uniformScale": 0.95
+        "offsetX": 0.30000001192092898,
+        "offsetY": -0.30000001192092898,
+        "uniformScale": 0.949999988079071
     },
     "animations": {
         "defaultFps": 8.0,

@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "",
     "displayName": "凤凰羽毛",
-    "description": "凤凰羽毛：血量上限+8，致命伤害免死",
+    "description": "血量上限+8，致命伤害免死",
     "gold": 0,
     "stats": {
         "hp": 0,

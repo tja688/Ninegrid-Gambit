@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "混合骨头",
-    "description": "混合骨头：每移动5次移除随机两张其他怪物并洗入等级2/3随机怪物",
+    "description": "每移5次换2只Lv2/3怪",
     "gold": 0,
     "stats": {
         "hp": 0,

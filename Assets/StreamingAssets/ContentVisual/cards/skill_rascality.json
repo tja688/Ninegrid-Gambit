@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "痞气",
-    "description": "痞气：每损失3点护甲，相邻怪物攻击+1",
+    "description": "每损失3点护甲，相邻怪物攻击+1",
     "gold": 0,
     "stats": {
         "hp": 0,

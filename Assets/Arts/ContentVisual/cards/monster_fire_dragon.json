@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.dragon",
     "displayName": "赤背剑龙",
-    "description": "赤背剑龙：每移动4次移除其他普通怪物并按数量加入烈焰；烈焰帮助卡造成的伤害+1",
+    "description": "每移4次换怪为烈焰；烈焰伤害+1",
     "gold": 5,
     "stats": {
         "hp": 50,

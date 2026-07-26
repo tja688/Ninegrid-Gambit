@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "生存智慧",
-    "description": "生存智慧：战斗时恢复1且攻击+1",
+    "description": "战斗时恢复1且攻击+1",
     "gold": 0,
     "stats": {
         "hp": 0,

@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.orc_legion",
     "displayName": "狼骑哥布林",
-    "description": "狼骑哥布林：战斗时每造成2点伤害，本卡攻击+1",
+    "description": "每造成2伤攻击+1",
     "gold": 5,
     "stats": {
         "hp": 10,

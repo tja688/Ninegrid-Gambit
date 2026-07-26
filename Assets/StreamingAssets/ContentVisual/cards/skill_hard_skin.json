@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "skill.hard_skin",
-    "description": "硬皮：血量上限+10，关卡结束恢复10",
+    "description": "血量+10，关卡结束恢复10",
     "gold": 0,
     "stats": {
         "hp": 0,

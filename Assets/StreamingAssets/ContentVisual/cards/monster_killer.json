@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
     "displayName": "灰狼",
-    "description": "灰狼：移动到玩家相邻格时强制战斗",
+    "description": "移动到玩家相邻格时强制战斗",
     "gold": 5,
     "stats": {
         "hp": 6,

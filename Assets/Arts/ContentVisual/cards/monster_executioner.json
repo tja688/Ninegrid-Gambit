@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.dragon",
     "displayName": "灰鬃狼",
-    "description": "灰鬃狼：每移动2次，移除九宫格上所有的龙信徒",
+    "description": "每移2次移除所有龙信徒",
     "gold": 5,
     "stats": {
         "hp": 14,

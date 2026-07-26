@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.dragon",
     "displayName": "红焰花",
-    "description": "红焰花：每有一张烈焰，本卡攻击+2",
+    "description": "每有一张烈焰，本卡攻击+2",
     "gold": 5,
     "stats": {
         "hp": 12,

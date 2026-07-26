@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "吸骨",
-    "description": "吸骨：相邻怪物被移除时获得其移除前攻击和护甲",
+    "description": "相邻移除获攻击护甲",
     "gold": 0,
     "stats": {
         "hp": 0,

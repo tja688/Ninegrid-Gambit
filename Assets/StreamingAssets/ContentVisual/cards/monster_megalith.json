@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.stone_legion",
     "displayName": "蜂窝岩",
-    "description": "蜂窝岩：每次移动吸取相邻怪物全部护甲；累计损失10护甲洗入石人",
+    "description": "移动吸相邻护甲；损10护甲洗石人",
     "gold": 5,
     "stats": {
         "hp": 8,

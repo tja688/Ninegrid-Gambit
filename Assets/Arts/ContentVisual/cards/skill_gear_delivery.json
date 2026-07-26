@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "发装备了！",
-    "description": "发装备了！：每移动2次随机强化其他怪物",
+    "description": "每移动2次随机强化其他怪物",
     "gold": 0,
     "stats": {
         "hp": 0,

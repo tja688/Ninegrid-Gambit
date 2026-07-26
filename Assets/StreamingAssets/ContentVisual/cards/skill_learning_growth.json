@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "学习成长",
-    "description": "学习成长：其他怪物获得攻击时本卡攻击+1",
+    "description": "其他怪物获得攻击时本卡攻击+1",
     "gold": 0,
     "stats": {
         "hp": 0,

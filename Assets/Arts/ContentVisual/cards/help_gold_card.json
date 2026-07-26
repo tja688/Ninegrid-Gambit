@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "金币卡",
-    "description": "金币卡：[使用时] 为玩家提供50金币",
+    "description": "[使用时] 为玩家提供50金币",
     "gold": 30,
     "stats": {
         "hp": 0,

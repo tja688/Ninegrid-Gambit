@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "滚动碾压",
-    "description": "滚动碾压：移动到格3时移除格6帮助卡",
+    "description": "移动到格3时移除格6帮助卡",
     "gold": 0,
     "stats": {
         "hp": 0,

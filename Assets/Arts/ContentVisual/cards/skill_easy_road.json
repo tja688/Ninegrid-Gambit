@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "skill.easy_road",
-    "description": "轻车熟路：关卡结束白色帮助卡三选一",
+    "description": "关卡结束白帮助卡三选一",
     "gold": 0,
     "stats": {
         "hp": 0,

@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "快递",
-    "description": "快递：每移动2次，将相邻帮助卡与战斗卡组怪物交换",
+    "description": "每移2次交换相邻帮助卡与怪物",
     "gold": 0,
     "stats": {
         "hp": 0,

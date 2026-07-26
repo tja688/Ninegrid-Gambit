@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "石头爱好者",
-    "description": "石头爱好者：玩家卡和怪物卡损失护甲时本卡攻击+1",
+    "description": "双方损护甲时攻击+1",
     "gold": 0,
     "stats": {
         "hp": 0,

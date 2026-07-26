@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "飞刀",
-    "description": "飞刀：[使用时] 对目标怪物卡造成6点伤害",
+    "description": "对怪物造成6伤",
     "gold": 20,
     "stats": {
         "hp": 0,

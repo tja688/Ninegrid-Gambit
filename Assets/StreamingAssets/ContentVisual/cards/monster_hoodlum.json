@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
     "displayName": "酒馆汉子",
-    "description": "酒馆汉子：每次移动到格1时对玩家造成2点伤害",
+    "description": "到格1对玩家2伤",
     "gold": 5,
     "stats": {
         "hp": 6,

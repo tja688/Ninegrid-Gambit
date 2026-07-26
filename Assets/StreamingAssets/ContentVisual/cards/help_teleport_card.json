@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "传送卡",
-    "description": "传送卡：[使用时] 选择除玩家卡外的一张卡牌洗回战斗卡组",
+    "description": "选一张卡洗回卡组",
     "gold": 30,
     "stats": {
         "hp": 0,

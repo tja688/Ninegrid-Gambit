@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.void",
     "displayName": "青翅蜂",
-    "description": "青翅蜂：移动到角格时对玩家造成2点伤害",
+    "description": "移动到角格时对玩家造成2点伤害",
     "gold": 5,
     "stats": {
         "hp": 14,

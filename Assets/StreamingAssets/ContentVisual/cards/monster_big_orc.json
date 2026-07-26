@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.orc_legion",
     "displayName": "红毛巨熊",
-    "description": "在[Action_Icon]后攻击玩家",
+    "description": "行动后攻击玩家",
     "gold": 5,
     "stats": {
         "hp": 14,

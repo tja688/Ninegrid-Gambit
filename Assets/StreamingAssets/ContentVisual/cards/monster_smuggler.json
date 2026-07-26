@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
     "displayName": "围裙铁匠",
-    "description": "围裙铁匠：累计移动到玩家相邻3次时移除帮助卡并获得护甲",
+    "description": "累计邻玩家3次移除帮助得护甲",
     "gold": 5,
     "stats": {
         "hp": 4,

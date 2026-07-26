@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
     "displayName": "蓝甲武士",
-    "description": "蓝甲武士：每移动3次创建福地，怪物进入福地获得护甲和攻击；福地达到3后下一次移动造成99伤害",
+    "description": "每移3次创福地；3福地后99伤",
     "gold": 5,
     "stats": {
         "hp": 14,

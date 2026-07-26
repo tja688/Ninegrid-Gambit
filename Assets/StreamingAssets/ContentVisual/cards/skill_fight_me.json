@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "和我打！",
-    "description": "和我打！：相邻玩家与其他怪物战斗时改为与本卡战斗",
+    "description": "邻玩家战斗改为本卡",
     "gold": 0,
     "stats": {
         "hp": 0,

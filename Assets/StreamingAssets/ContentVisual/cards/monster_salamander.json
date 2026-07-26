@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.dragon",
     "displayName": "棕鳞蜥人",
-    "description": "棕鳞蜥人：每移动3次放烈焰",
+    "description": "每移动3次放烈焰",
     "gold": 5,
     "stats": {
         "hp": 9,

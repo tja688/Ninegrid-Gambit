@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.orc_legion",
     "displayName": "巨角野牛",
-    "description": "巨角野牛：每移动2次，移除相邻格子上的怪物卡和帮助卡；依靠暴力狂移除怪物得攻击，移除帮助卡得护甲",
+    "description": "每移2次移除相邻；靠暴力狂获属性",
     "gold": 5,
     "stats": {
         "hp": 22,

@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.void",
     "displayName": "绿雾团",
-    "description": "绿雾团：每移动1次攻击+2",
+    "description": "每移动1次攻击+2",
     "gold": 5,
     "stats": {
         "hp": 10,

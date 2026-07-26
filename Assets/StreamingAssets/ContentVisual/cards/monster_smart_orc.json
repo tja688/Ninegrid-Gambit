@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.orc_legion",
     "displayName": "灰甲哥布林",
-    "description": "灰甲哥布林：每次获得攻击时，本卡额外攻击+1且不递归",
+    "description": "获攻击时额外+1",
     "gold": 5,
     "stats": {
         "hp": 9,

@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
     "displayName": "紫背巨蛛",
-    "description": "紫背巨蛛：所有怪物卡视为与本卡正交相邻",
+    "description": "所有怪物卡视为与本卡正交相邻",
     "gold": 5,
     "stats": {
         "hp": 6,

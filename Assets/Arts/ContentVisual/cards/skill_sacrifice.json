@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "献祭",
-    "description": "献祭：每移动2次，移除九宫格上所有的龙信徒",
+    "description": "每移2次移除所有龙信徒",
     "gold": 0,
     "stats": {
         "hp": 0,

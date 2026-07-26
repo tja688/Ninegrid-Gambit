@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "石庇护",
-    "description": "石庇护：其他怪物卡受到的伤害减少1点",
+    "description": "其他怪物卡受到的伤害减少1点",
     "gold": 0,
     "stats": {
         "hp": 0,

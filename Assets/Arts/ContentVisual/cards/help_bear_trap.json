@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "捕熊陷阱",
-    "description": "捕熊陷阱：[场上] 当正交相邻格补牌为怪物卡时，对其造成10点伤害，之后移除本卡",
+    "description": "相邻补怪时造成10伤并移除",
     "gold": 50,
     "stats": {
         "hp": 0,

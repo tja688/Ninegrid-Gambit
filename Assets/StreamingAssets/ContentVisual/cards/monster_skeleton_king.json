@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
     "displayName": "紫袍死灵",
-    "description": "紫袍死灵：相邻怪物被移除时获得其移除前攻击和护甲；每移动5次移除随机两张其他怪物并洗入等级2/3随机怪物",
+    "description": "相邻移除获属性；每移5次换2怪",
     "gold": 5,
     "stats": {
         "hp": 12,

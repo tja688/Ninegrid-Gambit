@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.dragon",
     "displayName": "赤红蛙",
-    "description": "赤红蛙：每有一张烈焰加入战斗卡组，额外加入一张且不递归",
+    "description": "每加入烈焰额外加一张",
     "gold": 5,
     "stats": {
         "hp": 18,

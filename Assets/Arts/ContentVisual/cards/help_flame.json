@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "烈焰",
-    "description": "烈焰：[使用时] 对玩家造成4点伤害并永久移除本卡",
+    "description": "对玩家4伤并移除",
     "gold": 400,
     "stats": {
         "hp": 0,

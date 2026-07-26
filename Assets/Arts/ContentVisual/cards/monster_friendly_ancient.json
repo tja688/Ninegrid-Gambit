@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.void",
     "displayName": "金光精灵",
-    "description": "金光精灵：每移动3次放旋转轮",
+    "description": "每移动3次放旋转轮",
     "gold": 5,
     "stats": {
         "hp": 18,

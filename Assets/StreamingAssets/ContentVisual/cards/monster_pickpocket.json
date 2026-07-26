@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
     "displayName": "黄帽少女",
-    "description": "黄帽少女：每移动3次移除相邻帮助卡",
+    "description": "每移动3次移除相邻帮助卡",
     "gold": 5,
     "stats": {
         "hp": 4,

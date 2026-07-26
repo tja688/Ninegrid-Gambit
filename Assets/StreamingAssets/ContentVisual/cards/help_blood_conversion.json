@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "血液转换",
-    "description": "血液转换：[使用时] 扣除5点血量上限并随机获得攻击+1、护甲+1、50金币或随机遗物",
+    "description": "血量上限-5，随机得奖励",
     "gold": 50,
     "stats": {
         "hp": 0,

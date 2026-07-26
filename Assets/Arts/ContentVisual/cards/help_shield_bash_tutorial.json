@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "盾击教程",
-    "description": "盾击教程：[使用时] 对目标怪物卡造成等同于玩家当前护甲的伤害",
+    "description": "对怪物造成=当前护甲伤害",
     "gold": 80,
     "stats": {
         "hp": 0,

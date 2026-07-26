@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
     "displayName": "节节沙虫",
-    "description": "节节沙虫：移动时与相邻两张怪物合成为巨大骷髅",
+    "description": "移动时与相邻2怪合成巨骷髅",
     "gold": 5,
     "stats": {
         "hp": 3,

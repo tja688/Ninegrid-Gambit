@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "大聪明",
-    "description": "大聪明：每次获得攻击时，本卡额外攻击+1且不递归",
+    "description": "获攻击时额外+1",
     "gold": 0,
     "stats": {
         "hp": 0,

@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "skill.thorn_skin",
-    "description": "刺皮：战斗时对怪物造成等同其攻击的伤害",
+    "description": "战斗对怪物反伤=其攻击",
     "gold": 0,
     "stats": {
         "hp": 0,

@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
     "displayName": "枯木巨妖",
-    "description": "枯木巨妖：被移除时洗入多骨虫和等级2随机怪物",
+    "description": "移除时洗入多骨虫和Lv2怪",
     "gold": 5,
     "stats": {
         "hp": 12,

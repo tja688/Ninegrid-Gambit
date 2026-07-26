@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "混的人",
-    "description": "混的人：每次移动到格1时对玩家造成2点伤害",
+    "description": "到格1对玩家2伤",
     "gold": 0,
     "stats": {
         "hp": 0,

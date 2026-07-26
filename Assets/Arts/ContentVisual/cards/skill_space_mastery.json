@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "空间掌握",
-    "description": "空间掌握：玩家与本卡战斗后旋转一次",
+    "description": "玩家与本卡战斗后旋转一次",
     "gold": 0,
     "stats": {
         "hp": 0,

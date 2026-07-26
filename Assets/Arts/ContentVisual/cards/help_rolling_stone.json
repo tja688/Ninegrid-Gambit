@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "滚石",
-    "description": "滚石：[场上] 移动到格3时，若格6为非精英非层主怪物，则移除该怪物和本卡；[使用时] 直接移除本卡，不触发其他效果",
+    "description": "格3对格6移除怪物；使用则移除",
     "gold": 50,
     "stats": {
         "hp": 0,

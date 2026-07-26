@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "引路",
-    "description": "引路：每移动3次创建福地，怪物进入福地获得护甲和攻击",
+    "description": "每移3次创福地加属性",
     "gold": 0,
     "stats": {
         "hp": 0,

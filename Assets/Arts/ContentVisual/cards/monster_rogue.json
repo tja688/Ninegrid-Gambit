@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
     "displayName": "蓝帽枪手",
-    "description": "蓝帽枪手：每损失3点护甲，相邻怪物攻击+1",
+    "description": "每损失3点护甲，相邻怪物攻击+1",
     "gold": 5,
     "stats": {
         "hp": 2,

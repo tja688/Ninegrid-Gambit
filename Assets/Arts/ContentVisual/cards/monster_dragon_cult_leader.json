@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.dragon",
     "displayName": "绿甲蜥人",
-    "description": "绿甲蜥人：每移动3次加入龙信徒",
+    "description": "每移动3次加入龙信徒",
     "gold": 5,
     "stats": {
         "hp": 18,

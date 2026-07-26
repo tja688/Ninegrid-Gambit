@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "烈焰沸腾",
-    "description": "烈焰沸腾：烈焰帮助卡造成的伤害+1",
+    "description": "烈焰帮助卡造成的伤害+1",
     "gold": 0,
     "stats": {
         "hp": 0,

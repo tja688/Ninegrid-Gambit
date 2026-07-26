@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
     "displayName": "棕毛土狗",
-    "description": "棕毛土狗：每移动5次洗入乞丐",
+    "description": "每移动5次洗入乞丐",
     "gold": 5,
     "stats": {
         "hp": 4,

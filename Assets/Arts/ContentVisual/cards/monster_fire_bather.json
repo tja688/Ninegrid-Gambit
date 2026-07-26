@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.dragon",
     "displayName": "红瓣行花",
-    "description": "红瓣行花：有烈焰时攻击+4",
+    "description": "有烈焰时攻击+4",
     "gold": 5,
     "stats": {
         "hp": 10,

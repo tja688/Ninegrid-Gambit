@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.void",
     "displayName": "竖耳兔",
-    "description": "竖耳兔：每移动3次与随机帮助卡交换",
+    "description": "每移动3次与随机帮助卡交换",
     "gold": 5,
     "stats": {
         "hp": 9,

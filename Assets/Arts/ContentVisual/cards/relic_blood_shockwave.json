@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "",
     "displayName": "血液冲击波",
-    "description": "血液冲击波：血量上限+4，关卡开始放入撞击教程，低血再放一张",
+    "description": "血量+4，关卡放撞击教程",
     "gold": 0,
     "stats": {
         "hp": 0,

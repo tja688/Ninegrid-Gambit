@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "兽人战术",
-    "description": "兽人战术：每移动1次，相邻怪物攻击+1",
+    "description": "每移动1次，相邻怪物攻击+1",
     "gold": 0,
     "stats": {
         "hp": 0,

@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "礼物",
-    "description": "礼物：每移动3次放旋转轮",
+    "description": "每移动3次放旋转轮",
     "gold": 0,
     "stats": {
         "hp": 0,

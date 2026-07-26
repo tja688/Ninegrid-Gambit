@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.void",
     "displayName": "金树灵",
-    "description": "金树灵：登场旋转一次",
+    "description": "登场旋转一次",
     "gold": 5,
     "stats": {
         "hp": 12,

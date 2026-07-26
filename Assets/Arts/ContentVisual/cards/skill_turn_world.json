@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "转动",
-    "description": "转动：登场旋转一次",
+    "description": "登场旋转一次",
     "gold": 0,
     "stats": {
         "hp": 0,

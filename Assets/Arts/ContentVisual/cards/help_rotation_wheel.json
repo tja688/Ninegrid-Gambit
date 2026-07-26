@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "旋转轮",
-    "description": "旋转轮：[使用时] 逆时针旋转一次",
+    "description": "[使用时] 逆时针旋转一次",
     "gold": 20,
     "stats": {
         "hp": 0,

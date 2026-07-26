@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
     "displayName": "白发刀客",
-    "description": "白发刀客：登场在偶数边位时伤害玩家",
+    "description": "登场在偶数边位时伤害玩家",
     "gold": 5,
     "stats": {
         "hp": 6,

@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "暴力卡",
-    "description": "暴力卡：[使用时] 玩家下一次对怪物造成的战斗伤害翻倍",
+    "description": "下次战斗伤害翻倍",
     "gold": 30,
     "stats": {
         "hp": 0,

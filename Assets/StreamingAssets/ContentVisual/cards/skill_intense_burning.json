@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "剧烈燃烧",
-    "description": "剧烈燃烧：每有一张烈焰加入战斗卡组，额外加入一张且不递归",
+    "description": "每加入烈焰额外加一张",
     "gold": 0,
     "stats": {
         "hp": 0,

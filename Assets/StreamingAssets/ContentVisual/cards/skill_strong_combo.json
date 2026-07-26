@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "强力组合",
-    "description": "强力组合：移动时与相邻两张怪物合成为巨大骷髅",
+    "description": "移动时与相邻2怪合成巨骷髅",
     "gold": 0,
     "stats": {
         "hp": 0,

@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "呼唤信徒",
-    "description": "呼唤信徒：每移动3次加入龙信徒",
+    "description": "每移动3次加入龙信徒",
     "gold": 0,
     "stats": {
         "hp": 0,

@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "暴力狂",
-    "description": "暴力狂：每移动2次，移除相邻格子上的怪物卡和帮助卡",
+    "description": "每移2次移除相邻",
     "gold": 0,
     "stats": {
         "hp": 0,

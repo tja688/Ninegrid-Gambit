@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.dragon",
     "displayName": "红首鼠",
-    "description": "红首鼠：左列战斗时按损失护甲伤害玩家",
+    "description": "左列战斗时按损失护甲伤害玩家",
     "gold": 5,
     "stats": {
         "hp": 8,

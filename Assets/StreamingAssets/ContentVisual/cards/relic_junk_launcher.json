@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "",
     "displayName": "废物发射器",
-    "description": "废物发射器：使用帮助卡时随机伤害",
+    "description": "使用帮助卡时随机伤害",
     "gold": 0,
     "stats": {
         "hp": 0,

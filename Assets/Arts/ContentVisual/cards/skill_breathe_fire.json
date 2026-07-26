@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "喷火",
-    "description": "喷火：每移动3次放烈焰",
+    "description": "每移动3次放烈焰",
     "gold": 0,
     "stats": {
         "hp": 0,

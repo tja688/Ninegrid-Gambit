@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "烈焰吐息",
-    "description": "烈焰吐息：每移动4次移除其他普通怪物并按数量加入烈焰",
+    "description": "每移4次换怪为烈焰",
     "gold": 0,
     "stats": {
         "hp": 0,

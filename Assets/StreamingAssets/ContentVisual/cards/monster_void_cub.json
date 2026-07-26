@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.void",
     "displayName": "青史莱姆",
-    "description": "青史莱姆：每移动3次随机交换怪物",
+    "description": "每移动3次随机交换怪物",
     "gold": 5,
     "stats": {
         "hp": 10,

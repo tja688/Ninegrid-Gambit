@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
     "displayName": "棕骨骷髅",
-    "description": "棕骨骷髅：被移除时洗入骷髅头与无头骷髅",
+    "description": "被移除时洗入骷髅头与无头骷髅",
     "gold": 5,
     "stats": {
         "hp": 10,
@@ -23,8 +23,8 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0,
-        "uniformScale": 0.79
+        "offsetY": -0.6000000238418579,
+        "uniformScale": 0.7900000214576721
     },
     "animations": {
         "defaultFps": 8.0,
