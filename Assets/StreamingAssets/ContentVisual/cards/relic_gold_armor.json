@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "",
     "displayName": "金币盔甲",
-    "description": "��ҿ��ף���������+1����ҵ��������˺�",
+    "description": "金币盔甲：基础护甲+1，金币抵消护甲伤害",
     "gold": 0,
     "stats": {
         "hp": 0,

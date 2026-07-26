@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "庇佑",
-    "description": "���ӣ���һ���ܵ��˺�ʱ���ô��˺���Ϊ0",
+    "description": "庇佑：下一次受到伤害时，该次伤害变为0",
     "gold": 0,
     "stats": {
         "hp": 0,

@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "火球术",
-    "description": "��������[ʹ��ʱ] ��Ŀ����￨��ɵ�ͬ����ҹ������˺�",
+    "description": "火球术：[使用时] 对目标怪物卡造成等同于玩家攻击的伤害",
     "gold": 30,
     "stats": {
         "hp": 0,

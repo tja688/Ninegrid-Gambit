@@ -3,8 +3,8 @@
     "contentId": "monster.killer",
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
-    "displayName": "杀手",
-    "description": "ɱ�֣��ƶ���������ڸ�ʱǿ��ս��",
+    "displayName": "灰狼",
+    "description": "灰狼：移动到玩家相邻格时强制战斗",
     "gold": 5,
     "stats": {
         "hp": 6,
@@ -31,8 +31,8 @@
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/02wolf_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

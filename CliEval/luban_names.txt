@@ -1,0 +1,12 @@
+== skills.json type=list
+len=61
+{"def_id": "skill.absorb_bone", "display_name": "吸骨", "container_type": "MonsterSkill", "design_text": "相邻怪物被移除时获得其移除前攻击和护甲", "effect_ids": "skill.absorb_bone.remove"}
+== relics.json type=list
+len=29
+{"def_id": "relic.arsenal", "display_name": "军械库", "rarity": "Blue", "design_text": "关卡结束加入飞刀/爆弹/破击锤之一", "tags": "", "effect_ids": "relic.arsenal.node_end"}
+== cards.json type=list
+len=88
+{"def_id": "help.armor_breaking_hammer", "display_name": "破击锤", "kind": "HelpCard", "rarity": "White", "price": 50, "level": 0, "is_elite": false, "is_boss": false, "is_reserve": false, "deck_id": "", "max_hp": 0, "attack": 0, "armor": 0, "recovery":
+== monster_decks.json type=list
+len=6
+{"id": "deck.dragon", "display_name": "巨龙牌组", "kind": "Boss", "monster_def_ids": "monster.dragon_follower|monster.fire_bather|monster.salamander|monster.stone_golem|monster.fire_priest|monster.fire_swallower|monster.executioner|monster.dragon_cult_le

@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "重新组合头",
-    "description": "�������ͷ����������ͷ���",
+    "description": "重新组合头：相邻骷髅头组合",
     "gold": 0,
     "stats": {
         "hp": 0,

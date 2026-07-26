@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "尖石",
-    "description": "��ʯ�����׹���ʱ�˺����",
+    "description": "尖石：护甲归零时伤害玩家",
     "gold": 0,
     "stats": {
         "hp": 0,

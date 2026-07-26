@@ -3,8 +3,8 @@
     "contentId": "monster.fire_cult_leader",
     "kind": "Monster",
     "deckId": "deck.dragon",
-    "displayName": "火教主",
-    "description": "�������ÿ��һ���������ս�����飬�������һ���Ҳ��ݹ�",
+    "displayName": "赤红蛙",
+    "description": "赤红蛙：每有一张烈焰加入战斗卡组，额外加入一张且不递归",
     "gold": 5,
     "stats": {
         "hp": 18,
@@ -31,8 +31,8 @@
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/17frog_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "蓝色宝箱卡",
-    "description": "��ɫ���俨��[ʹ��ʱ] ������������ѡ��һ�����",
+    "description": "蓝色宝箱卡：[使用时] 从三个遗物中选择一个获得",
     "gold": 150,
     "stats": {
         "hp": 0,

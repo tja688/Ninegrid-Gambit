@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "折损散架",
-    "description": "����ɢ�ܣ����Ƴ�ʱϴ���ǳ�͵ȼ�2�������",
+    "description": "折损散架：被移除时洗入多骨虫和等级2随机怪物",
     "gold": 0,
     "stats": {
         "hp": 0,

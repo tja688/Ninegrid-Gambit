@@ -3,8 +3,8 @@
     "contentId": "monster.skull_head",
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
-    "displayName": "骷髅头",
-    "description": "����ͷ��������ͷ�������",
+    "displayName": "蓝焰骷髅",
+    "description": "蓝焰骷髅：相邻无头骷髅组合",
     "gold": 5,
     "stats": {
         "hp": 3,
@@ -24,15 +24,15 @@
     "mainVisual": {
         "offsetX": 0.0,
         "offsetY": 0.0,
-        "uniformScale": 1.0
+        "uniformScale": 0.82
     },
     "animations": {
         "defaultFps": 8.0,
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/003skull_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

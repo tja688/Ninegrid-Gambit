@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "",
     "displayName": "药水袋",
-    "description": "ҩˮ����ÿ�ؿ���ʼ�������Żָ�ҩˮ",
+    "description": "药水袋：每关卡开始加入两张恢复药水",
     "gold": 0,
     "stats": {
         "hp": 0,

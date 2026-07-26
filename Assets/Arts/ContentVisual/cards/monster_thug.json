@@ -3,8 +3,8 @@
     "contentId": "monster.thug",
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
-    "displayName": "打手",
-    "description": "���֣��ǳ���ż����λʱ�˺����",
+    "displayName": "白发刀客",
+    "description": "白发刀客：登场在偶数边位时伤害玩家",
     "gold": 5,
     "stats": {
         "hp": 6,
@@ -24,15 +24,15 @@
     "mainVisual": {
         "offsetX": 0.0,
         "offsetY": 0.0,
-        "uniformScale": 1.0
+        "uniformScale": 0.88
     },
     "animations": {
         "defaultFps": 8.0,
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/Icey_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

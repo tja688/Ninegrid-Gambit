@@ -1,0 +1,190 @@
+=== XLSX rows: 190
+  avatar.default | 鐜╁鍖栬韩
+  help.armor_breaking_hammer | 鐮村嚮閿わ細[浣跨敤鏃禲 灏嗙洰鏍囨€墿鍗℃姢鐢查檷浣?0鐐?
+  help.bear_trap | 鎹曠唺闄烽槺锛歔鍦轰笂] 褰撴浜ょ浉閭绘牸琛ョ墝涓烘€墿鍗℃椂锛屽鍏堕€犳垚10鐐逛激瀹筹紝涔嬪悗绉婚櫎鏈崱
+  help.blood_conversion | 琛€娑茶浆鎹細[浣跨敤鏃禲 鎵ｉ櫎5鐐硅閲忎笂闄愬苟闅忔満鑾峰緱鏀诲嚮+1銆佹姢鐢?1銆?0閲戝竵鎴栭殢鏈洪仐鐗?
+  help.blue_chest_card | 钃濊壊瀹濈鍗★細[浣跨敤鏃禲 浠庝笁涓仐鐗╀腑閫夋嫨涓€涓幏寰?
+  help.bomb | 鐖嗗脊锛歔浣跨敤鏃禲 瀵规墍鏈夋€墿鍗￠€犳垚4鐐逛激瀹?
+
+=== JSON: total 179 | mojibake 177 | good 1 | empty 1
+good samples:
+   monster.big_orc | 鍦╗Action_Icon]鍚庢敾鍑荤帺瀹?
+empty: ['avatar.default']
+bad-json without xlsx desc: 0 []
+xlsx desc itself mojibake: 0 []
+sample fix: help.armor_breaking_hammer | json: 锟狡伙拷锟斤拷锟斤拷[使锟斤拷时] 锟斤拷目锟斤拷锟斤拷锟拷锟斤拷捉锟斤拷锟? | xlsx: 鐮村嚮閿わ細[浣跨敤鏃禲 灏嗙洰鏍囨€墿鍗℃姢鐢查檷浣?0鐐?
+HAS-IDLE: avatar.default atlas Assets/Arts/Images/Multiple/MonstersAndHumans/SpriteSheets(96x96)/Human_Soldier_Sword_Shield/No_Shadows/Human_Soldier_Sword_Shield_Idle-Sheet.png
+HAS-IDLE: monster.big_orc atlas Assets/Arts/Images/Multiple/MonstersAndHumans/Demon_A/Demon_A_Idle.png
+HAS-IDLE: monster.big_stone folder Assets/Arts/Images/Png/鍍忕礌鎬墿鍚堥泦/sprites/001insect_idle_01
+
+=== decks ===
+('Avatar', '-') 1
+('HelpCard', '-') 27
+('Monster', 'deck.dragon') 10
+('Monster', 'deck.orc_legion') 10
+('Monster', 'deck.skeleton_legion') 11
+('Monster', 'deck.stone_legion') 10
+('Monster', 'deck.void') 10
+('Monster', 'deck.wandering_legion') 10
+('Relic', '-') 22
+('Skill', '-') 68
+idle already set: 3
+
+=== baseline 001insect_attack_01_M: (55, 24) content bbox: (12, 7, 45, 22) content wh: (33, 15) frames: 6
+
+=== idle folders: 155
+001insect_idle_01	(55, 24)	(33, 15)	4
+002bat_idle_01	(43, 37)	(34, 20)	5
+003skull_idle_01	(78, 63)	(43, 40)	5
+004skull_idle_01	(80, 65)	(43, 40)	5
+005skull_idle_01	(52, 39)	(41, 31)	5
+006guard_idle_01	(65, 75)	(54, 73)	7
+007guard_idle_01	(94, 85)	(58, 73)	7
+008guard_idle_01	(115, 108)	(112, 92)	6
+009skull_idle_01	(88, 81)	(47, 38)	5
+01rabit_idle_01	(49, 25)	(19, 18)	4
+01rabit_new_idle_01	(49, 25)	(19, 18)	4
+01rabit_new_idle_02	(49, 25)	(14, 24)	5
+02wildboar_idle	(68, 35)	(38, 23)	5
+02wildboar_idle_01	(68, 35)	(38, 23)	5
+02wolf_attack_idle	(71, 42)	(71, 42)	4
+02wolf_idle_01	(71, 42)	(71, 29)	4
+03slime_idle_01	(44, 25)	(19, 18)	5
+03wolf_new_idle_01	(68, 36)	(37, 22)	7
+04mushroom_idle_01	(47, 25)	(21, 18)	4
+04slime_idle_01	(68, 32)	(22, 21)	5
+05fly_idle_01	(56, 33)	(24, 15)	3
+05mouse_idle_01	(53, 27)	(36, 16)	5
+06goblin_idle_01	(61, 44)	(34, 20)	5
+06spider_idle_01	(72, 37)	(37, 18)	4
+07bearBoss_attack_idle	(87, 60)	(35, 39)	4
+07bearBoss_idle_01	(87, 60)	(59, 35)	6
+07goblin_idle_01	(71, 41)	(32, 25)	5
+08flower_idle_01	(64, 39)	(24, 34)	5
+08goblin_idle_01	(51, 36)	(24, 28)	5
+09bat_idle_01	(48, 43)	(42, 34)	5
+09bear_idle_01	(84, 63)	(56, 33)	6
+10mouse_idle_01	(68, 38)	(34, 20)	4
+11stoneman_idle_01	(111, 85)	(98, 85)	6
+12spider_idle_01	(72, 37)	(37, 18)	4
+13wasp_idle_01	(57, 48)	(37, 27)	4
+14wildboarBoss_idle_01	(77, 50)	(50, 29)	5
+15WolfGobin_idle	(77, 44)	(37, 33)	7
+15WolfGobin_idle_01	(77, 44)	(37, 33)	7
+16walkflower_idle_01	(64, 47)	(28, 42)	6
+17frog_idle_01	(68, 38)	(29, 17)	5
+18sandworm_idle_01	(69, 39)	(33, 16)	4
+19redfrogBoss_idle_01	(87, 53)	(67, 39)	4
+20bigslime_idle_01	(83, 52)	(43, 35)	7
+21sandmonster_idle_01	(83, 52)	(43, 35)	7
+22cyclops_idle_01	(165, 102)	(75, 58)	6
+23birdboss_idle_01	(91, 73)	(53, 51)	6
+24stoneman_idle_01	(111, 115)	(87, 67)	6
+25WolfGobin_idle_01	(77, 44)	(55, 35)	7
+26wildboardknight_idle_01	(110, 60)	(39, 46)	5
+27bear_idle_01	(88, 53)	(88, 53)	6
+28stegosaurus_idle_01	(74, 37)	(48, 28)	4
+29wildboar_idle_01	(68, 35)	(38, 23)	5
+30treemonster_idle_01	(68, 35)	(34, 28)	4
+31snake_idle_01	(92, 39)	(39, 35)	4
+32crab_idle_01	(68, 40)	(37, 27)	4
+33watchtower_idle_01	(74, 105)	(65, 105)	4
+34scorpion_idle_01	(68, 35)	(33, 20)	4
+35crocodile_idle_01	(79, 30)	(56, 15)	4
+37goldenslime_idle_01	(68, 32)	(22, 21)	5
+38pangolin_attack_01_attack_idle	(77, 39)	(29, 30)	4
+38pangolin_idle_01	(77, 39)	(36, 20)	4
+39bigspider_idle_01	(93, 43)	(88, 38)	6
+40slime_idle_01	(68, 35)	(19, 21)	5
+41slime_idle_01	(68, 37)	(26, 27)	5
+42bat_idle_01	(72, 54)	(45, 29)	5
+43bat_idle_01	(83, 71)	(57, 43)	5
+44bat_idle_01	(83, 58)	(57, 43)	5
+45bird_idle_01	(72, 54)	(38, 27)	7
+46bird_idle_01	(72, 54)	(38, 31)	7
+47treemonster_idle	(87, 47)	(49, 43)	5
+48treemonster_idle_01	(89, 62)	(61, 59)	5
+49buffalo_idle_01	(91, 41)	(47, 27)	4
+50ballcactus_idle_01	(88, 78)	(39, 31)	6
+50flowermonster_idle_01	(68, 42)	(20, 40)	5
+51LizardMan01_idle_01	(87, 48)	(61, 45)	6
+52LizardMan02_idle_01	(87, 48)	(49, 40)	6
+53LizardMan03_idle_01	(97, 61)	(44, 51)	6
+54tortoise_idle_01	(68, 32)	(45, 22)	4
+55tortoise_idle_01	(68, 32)	(45, 23)	4
+56Longhairpig_idle_01	(91, 44)	(52, 30)	6
+57Longhairpig_idle_01	(91, 44)	(52, 30)	6
+58ballcactusBoss_idle_01	(88, 76)	(78, 72)	5
+59goldenbigslime_idle_01	(83, 52)	(43, 35)	7
+Alicia_idle_01	(96, 116)	(47, 34)	6
+Bird_attack_idle	(80, 74)	(73, 56)	5
+Bird_idle_01	(80, 74)	(43, 47)	6
+buff_bee_idle_01	(56, 34)	(26, 19)	5
+buff_golem_idle_01	(50, 35)	(29, 29)	6
+buff_honeycombe_idle_01	(49, 45)	(31, 42)	4
+Buket_attack_idle	(81, 71)	(45, 56)	4
+Buket_idle_01	(81, 71)	(81, 36)	5
+Corvyn_idle_01	(77, 79)	(29, 39)	6
+Devina_attack_idle	(104, 138)	(40, 37)	5
+Devina_idle_01	(104, 138)	(37, 37)	5
+Dogge_attack_idle	(61, 40)	(53, 31)	4
+Dogge_idle_01	(61, 40)	(27, 21)	5
+Dogge_idle_02	(61, 40)	(47, 35)	5
+Draven_attack_idle	(128, 91)	(68, 59)	4
+Draven_idle_01	(128, 91)	(67, 67)	6
+DungeonEntrance01_idle	(104, 91)	(104, 91)	5
+DungeonEntrance_idle	(95, 90)	(95, 90)	6
+Elise_attack_idle	(73, 54)	(41, 41)	5
+Elise_idle_01	(73, 54)	(41, 41)	5
+Eric_attack_idle	(81, 77)	(64, 49)	6
+Eric_idle_01	(81, 77)	(64, 49)	6
+HotAirBalloon_idle	(93, 152)	(93, 152)	16
+Icey_attack_idle	(89, 54)	(60, 43)	3
+Icey_idle_01	(89, 54)	(74, 40)	5
+InteractItem_idle	(59, 31)	(54, 27)	9
+Kyle_attack_idle	(82, 53)	(34, 33)	4
+Kyle_idle_01	(82, 53)	(30, 33)	4
+Layla_attack_idle	(55, 50)	(34, 23)	4
+Layla_idle_01	(55, 50)	(31, 23)	5
+LeadRole_Bow_hit_idle	(48, 16)	(15, 4)	6
+LeadRole_Bow_idle_01	(8, 8)	(8, 8)	2
+LeadRole_Gun_idle_01	(7, 9)	(7, 9)	2
+LeadRole_idle_01	(8, 8)	(8, 8)	1
+LeadRole_Sword_hit_idle	(48, 16)	(15, 4)	4
+LeadRole_Wand_hit_idle	(48, 16)	(15, 4)	4
+Luke_attack_idle	(87, 56)	(51, 35)	4
+Luke_idle_01	(87, 56)	(53, 35)	6
+Map01_monster01_attack_idle	(38, 25)	(20, 19)	4
+Map01_monster01_idle_01	(38, 25)	(20, 19)	5
+Map01_monster02_idle_01	(30, 24)	(16, 11)	4
+Musashi_idle_01	(126, 62)	(67, 43)	5
+Nathan_attack_idle	(118, 73)	(37, 35)	4
+Nathan_copy_attack_idle	(71, 67)	(41, 35)	4
+Nathan_copy_idle_01	(71, 67)	(42, 35)	5
+Nathan_idle_01	(118, 73)	(36, 35)	5
+Nina_attack_idle	(64, 78)	(43, 31)	4
+Nina_idle_01	(64, 78)	(39, 39)	4
+Novia_idle_01	(73, 98)	(33, 37)	5
+NPC_Dryad_golden_idle	(45, 42)	(33, 28)	4
+NPC_smithy_idle	(36, 30)	(30, 28)	5
+NPC_tavern_idle	(37, 40)	(26, 32)	5
+NPC_tavern_idle01	(37, 40)	(34, 32)	5
+NPC_trainingcamp_idle	(42, 37)	(40, 31)	5
+NPC_VillageTrainingCamp_idle	(40, 28)	(40, 28)	6
+Nyssa_idle_01	(77, 48)	(44, 36)	6
+Philip_attack_idle	(63, 52)	(35, 27)	4
+Philip_idle_01	(63, 52)	(31, 26)	5
+Philip_idle_02	(63, 52)	(36, 26)	4
+Rambo_attack_idle	(78, 78)	(41, 40)	5
+Rambo_idle_01	(78, 78)	(41, 40)	5
+reddot_idle	(25, 39)	(25, 34)	14
+Sakura_attack_idle	(100, 105)	(41, 36)	4
+Sakura_idle_01	(100, 105)	(41, 36)	5
+Sum_Elf_golden_idle_01	(45, 42)	(33, 28)	8
+Sylvia_attack_idle	(79, 52)	(60, 52)	4
+Sylvia_idle_01	(79, 52)	(74, 52)	5
+trainingcamp_idle	(76, 98)	(76, 98)	4
+TransferArray_idle	(27, 61)	(27, 58)	24
+TransferArray_idle_damaged	(77, 47)	(77, 47)	6
+TransferArray_small_idle	(27, 61)	(27, 58)	12
+UnidirectionalTransferArray_idle	(45, 64)	(45, 64)	4

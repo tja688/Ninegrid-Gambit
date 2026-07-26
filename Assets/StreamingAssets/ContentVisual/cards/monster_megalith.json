@@ -3,8 +3,8 @@
     "contentId": "monster.megalith",
     "kind": "Monster",
     "deckId": "deck.stone_legion",
-    "displayName": "巨石人",
-    "description": "��ʯ�ˣ�ÿ���ƶ���ȡ���ڹ���ȫ�����ף��ۼ���ʧ10����ϴ��ʯ��",
+    "displayName": "蜂窝岩",
+    "description": "蜂窝岩：每次移动吸取相邻怪物全部护甲；累计损失10护甲洗入石人",
     "gold": 5,
     "stats": {
         "hp": 8,
@@ -31,8 +31,8 @@
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/buff_honeycombe_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

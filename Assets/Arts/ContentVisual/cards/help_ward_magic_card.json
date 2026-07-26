@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "庇佑魔法卡",
-    "description": "����ħ������[ʹ��ʱ] ��һ������ܵ��˺�ʱ���ô��˺���Ϊ0",
+    "description": "庇佑魔法卡：[使用时] 下一次玩家受到伤害时，该次伤害变为0",
     "gold": 20,
     "stats": {
         "hp": 0,

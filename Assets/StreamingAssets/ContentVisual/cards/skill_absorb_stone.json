@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "吸石",
-    "description": "��ʯ��ÿ���ƶ���ȡ���ڹ���ȫ������",
+    "description": "吸石：每次移动吸取相邻怪物全部护甲",
     "gold": 0,
     "stats": {
         "hp": 0,

@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "丐帮同心",
-    "description": "ؤ��ͬ�ģ�ÿ�ƶ�5��ϴ����ؤ",
+    "description": "丐帮同心：每移动5次洗入乞丐",
     "gold": 0,
     "stats": {
         "hp": 0,

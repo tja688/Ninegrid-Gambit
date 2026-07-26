@@ -3,8 +3,8 @@
     "contentId": "monster.headless_skeleton",
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
-    "displayName": "无头骷髅",
-    "description": "��ͷ���ã���������ͷ���",
+    "displayName": "青焰骷髅",
+    "description": "青焰骷髅：相邻骷髅头组合",
     "gold": 5,
     "stats": {
         "hp": 6,
@@ -24,15 +24,15 @@
     "mainVisual": {
         "offsetX": 0.0,
         "offsetY": 0.0,
-        "uniformScale": 1.0
+        "uniformScale": 0.82
     },
     "animations": {
         "defaultFps": 8.0,
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/004skull_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

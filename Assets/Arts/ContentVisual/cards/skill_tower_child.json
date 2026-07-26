@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "skill.tower_child",
-    "description": "��֮�ӣ��ؿ���ʼ���뱶����",
+    "description": "塔之子：关卡开始放入倍增塔",
     "gold": 0,
     "stats": {
         "hp": 0,

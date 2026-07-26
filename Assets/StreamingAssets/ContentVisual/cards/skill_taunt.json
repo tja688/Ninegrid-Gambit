@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "嘲讽",
-    "description": "���������ʱֻ���뱾��ս��",
+    "description": "嘲讽：相邻时只能与本卡战斗",
     "gold": 0,
     "stats": {
         "hp": 0,

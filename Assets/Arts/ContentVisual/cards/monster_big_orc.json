@@ -3,7 +3,7 @@
     "contentId": "monster.big_orc",
     "kind": "Monster",
     "deckId": "deck.orc_legion",
-    "displayName": "兽人",
+    "displayName": "红毛巨熊",
     "description": "在[Action_Icon]后攻击玩家",
     "gold": 5,
     "stats": {
@@ -22,17 +22,17 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": -0.10000000149011612,
-        "offsetY": -2.5999999046325685,
-        "uniformScale": 2.0
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
     },
     "animations": {
         "defaultFps": 8.0,
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "atlas",
-                "path": "Assets/Arts/Images/Multiple/MonstersAndHumans/Demon_A/Demon_A_Idle.png",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/07bearBoss_attack_idle",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

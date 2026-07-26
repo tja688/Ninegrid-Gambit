@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "不休追击",
-    "description": "����׷�����ƶ���������ڸ�ʱǿ��ս��",
+    "description": "不休追击：移动到玩家相邻格时强制战斗",
     "gold": 0,
     "stats": {
         "hp": 0,

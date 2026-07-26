@@ -3,8 +3,8 @@
     "contentId": "monster.observer",
     "kind": "Monster",
     "deckId": "deck.void",
-    "displayName": "观察者",
-    "description": "�۲��ߣ����￨����＼��λ��ʱ�˺����",
+    "displayName": "大耳蝠",
+    "description": "大耳蝠：怪物卡因怪物技能位移时伤害玩家",
     "gold": 5,
     "stats": {
         "hp": 8,
@@ -24,15 +24,15 @@
     "mainVisual": {
         "offsetX": 0.0,
         "offsetY": 0.0,
-        "uniformScale": 1.0
+        "uniformScale": 0.88
     },
     "animations": {
         "defaultFps": 8.0,
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/09bat_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

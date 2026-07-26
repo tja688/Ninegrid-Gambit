@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "skill.arsenal",
-    "description": "��е�⣺�ؿ���������ɵ�/����/�ƻ���֮һ",
+    "description": "军械库：关卡结束加入飞刀/爆弹/破击锤之一",
     "gold": 0,
     "stats": {
         "hp": 0,

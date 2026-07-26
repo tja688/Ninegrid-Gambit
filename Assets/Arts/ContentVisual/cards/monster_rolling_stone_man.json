@@ -3,8 +3,8 @@
     "contentId": "monster.rolling_stone_man",
     "kind": "Monster",
     "deckId": "deck.stone_legion",
-    "displayName": "滚石人",
-    "description": "��ʯ�ˣ��ƶ�����3ʱ�Ƴ���6������",
+    "displayName": "黄鳞穿山甲",
+    "description": "黄鳞穿山甲：移动到格3时移除格6帮助卡",
     "gold": 5,
     "stats": {
         "hp": 4,
@@ -31,8 +31,8 @@
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/38pangolin_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

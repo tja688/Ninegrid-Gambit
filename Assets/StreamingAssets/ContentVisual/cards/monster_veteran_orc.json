@@ -3,8 +3,8 @@
     "contentId": "monster.veteran_orc",
     "kind": "Monster",
     "deckId": "deck.orc_legion",
-    "displayName": "历战兽人",
-    "description": "��ս����",
+    "displayName": "灰狼骑兵",
+    "description": "灰狼骑兵",
     "gold": 5,
     "stats": {
         "hp": 10,
@@ -24,15 +24,15 @@
     "mainVisual": {
         "offsetX": 0.0,
         "offsetY": 0.0,
-        "uniformScale": 1.0
+        "uniformScale": 0.86
     },
     "animations": {
         "defaultFps": 8.0,
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/25WolfGobin_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "耐用盾牌",
-    "description": "���ö��ƣ�[ʹ��ʱ] ��һ��5�㻤��",
+    "description": "耐用盾牌：[使用时] 玩家获得5点护甲",
     "gold": 50,
     "stats": {
         "hp": 0,

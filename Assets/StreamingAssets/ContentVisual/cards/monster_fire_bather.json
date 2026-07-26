@@ -3,8 +3,8 @@
     "contentId": "monster.fire_bather",
     "kind": "Monster",
     "deckId": "deck.dragon",
-    "displayName": "浴火者",
-    "description": "ԡ���ߣ�������ʱ����+4",
+    "displayName": "红瓣行花",
+    "description": "红瓣行花：有烈焰时攻击+4",
     "gold": 5,
     "stats": {
         "hp": 10,
@@ -31,8 +31,8 @@
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/16walkflower_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

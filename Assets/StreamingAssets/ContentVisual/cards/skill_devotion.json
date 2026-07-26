@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "献身",
-    "description": "��������Ƴ�ʱ��������",
+    "description": "献身：被移除时加入烈焰",
     "gold": 0,
     "stats": {
         "hp": 0,

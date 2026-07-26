@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "漫步",
-    "description": "������ÿ�ƶ�1�ι���+2",
+    "description": "漫步：每移动1次攻击+2",
     "gold": 0,
     "stats": {
         "hp": 0,

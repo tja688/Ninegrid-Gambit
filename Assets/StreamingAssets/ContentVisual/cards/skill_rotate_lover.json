@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "爱好旋转",
-    "description": "������ת��ÿ�ƶ�3����ת",
+    "description": "爱好旋转：每移动3次旋转",
     "gold": 0,
     "stats": {
         "hp": 0,

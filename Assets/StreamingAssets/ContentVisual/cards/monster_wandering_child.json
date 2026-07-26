@@ -3,8 +3,8 @@
     "contentId": "monster.wandering_child",
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
-    "displayName": "流浪孩童",
-    "description": "���˺�ͯ����6����+2������ȹ�",
+    "displayName": "棕毛小兔",
+    "description": "棕毛小兔：格6攻击+2并获得先攻",
     "gold": 5,
     "stats": {
         "hp": 1,
@@ -31,8 +31,8 @@
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/01rabit_new_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

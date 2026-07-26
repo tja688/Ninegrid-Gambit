@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "交换卡",
-    "description": "��������[ʹ��ʱ] ѡ�����ҿ�������ſ��ƻ������ڸ���λ��",
+    "description": "交换卡：[使用时] 选择除玩家卡外的两张卡牌互换所在格子位置",
     "gold": 50,
     "stats": {
         "hp": 0,

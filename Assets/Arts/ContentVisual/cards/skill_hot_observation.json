@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "灼热观察",
-    "description": "���ȹ۲죺���￨����＼��λ��ʱ�˺����",
+    "description": "灼热观察：怪物卡因怪物技能位移时伤害玩家",
     "gold": 0,
     "stats": {
         "hp": 0,

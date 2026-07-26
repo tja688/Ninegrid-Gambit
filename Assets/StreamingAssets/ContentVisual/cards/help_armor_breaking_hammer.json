@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "破击锤",
-    "description": "�ƻ�����[ʹ��ʱ] ��Ŀ����￨���׽���10��",
+    "description": "破击锤：[使用时] 将目标怪物卡护甲降低10点",
     "gold": 50,
     "stats": {
         "hp": 0,

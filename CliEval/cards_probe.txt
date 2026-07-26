@@ -1,0 +1,2 @@
+<class 'list'> 88
+{"def_id": "help.armor_breaking_hammer", "display_name": "鐮村嚮閿?, "kind": "HelpCard", "rarity": "White", "price": 50, "level": 0, "is_elite": false, "is_boss": false, "is_reserve": false, "deck_id": "", "max_hp": 0, "attack": 0, "armor": 0, "recovery": 0, "tags": "鐩翠激", "effect_ids": "help.armor_breaking_hammer.use", "skill_ids": ""}

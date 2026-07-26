@@ -3,8 +3,8 @@
     "contentId": "monster.executioner",
     "kind": "Monster",
     "deckId": "deck.dragon",
-    "displayName": "刽子手",
-    "description": "�����֣�ÿ�ƶ�2�Σ��Ƴ��Ź��������е�����ͽ",
+    "displayName": "灰鬃狼",
+    "description": "灰鬃狼：每移动2次，移除九宫格上所有的龙信徒",
     "gold": 5,
     "stats": {
         "hp": 14,
@@ -24,15 +24,15 @@
     "mainVisual": {
         "offsetX": 0.0,
         "offsetY": 0.0,
-        "uniformScale": 1.0
+        "uniformScale": 0.97
     },
     "animations": {
         "defaultFps": 8.0,
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/03wolf_new_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

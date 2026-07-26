@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "给你一拳",
-    "description": "����һȭ���ǳ���ż����λʱ�˺����",
+    "description": "给你一拳：登场在偶数边位时伤害玩家",
     "gold": 0,
     "stats": {
         "hp": 0,

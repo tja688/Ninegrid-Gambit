@@ -3,8 +3,8 @@
     "contentId": "monster.old_orc",
     "kind": "Monster",
     "deckId": "deck.orc_legion",
-    "displayName": "年迈兽人",
-    "description": "�������ˣ�ս��ʱ�ָ�1�ҹ���+1",
+    "displayName": "棕鬃野猪",
+    "description": "棕鬃野猪：战斗时恢复1且攻击+1",
     "gold": 5,
     "stats": {
         "hp": 9,
@@ -24,15 +24,15 @@
     "mainVisual": {
         "offsetX": 0.0,
         "offsetY": 0.0,
-        "uniformScale": 1.0
+        "uniformScale": 0.97
     },
     "animations": {
         "defaultFps": 8.0,
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/02wildboar_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

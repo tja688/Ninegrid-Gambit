@@ -1,0 +1,67 @@
+== deck.dragon (10)
+  monster.dragon_cult_leader	龙教主	monster_dragon_cult_leader.json
+  monster.dragon_follower	龙信徒	monster_dragon_follower.json
+  monster.executioner	刽子手	monster_executioner.json
+  monster.fire_bather	浴火者	monster_fire_bather.json
+  monster.fire_cult_leader	火教主	monster_fire_cult_leader.json
+  monster.fire_dragon	火龙	monster_fire_dragon.json
+  monster.fire_priest	火焰祭司	monster_fire_priest.json
+  monster.fire_swallower	吞火者	monster_fire_swallower.json
+  monster.salamander	火蜥蜴	monster_salamander.json
+  monster.stone_golem	石傀儡	monster_stone_golem.json
+== deck.orc_legion (10)
+  monster.big_orc	兽人	monster_big_orc.json
+  monster.brainless_orc	无脑兽人	monster_brainless_orc.json
+  monster.old_orc	年迈兽人	monster_old_orc.json
+  monster.orc_boss	兽人老大	monster_orc_boss.json
+  monster.orc_commander	兽人指挥官	monster_orc_commander.json
+  monster.orc_quartermaster	兽人军需官	monster_orc_quartermaster.json
+  monster.orc_warrior	兽人战士	monster_orc_warrior.json
+  monster.smart_orc	聪明兽人	monster_smart_orc.json
+  monster.veteran_orc	历战兽人	monster_veteran_orc.json
+  monster.young_orc	年轻兽人	monster_young_orc.json
+== deck.skeleton_legion (11)
+  monster.big_skeleton	大骷髅	monster_big_skeleton.json
+  monster.big_skeleton_reborn	重组大骷髅	monster_big_skeleton_reborn.json
+  monster.bone_club_skeleton	骨棒骷髅	monster_bone_club_skeleton.json
+  monster.bone_courier	骨头快递员	monster_bone_courier.json
+  monster.giant_skeleton	巨大骷髅	monster_giant_skeleton.json
+  monster.headless_skeleton	无头骷髅	monster_headless_skeleton.json
+  monster.multi_bone_worm	多骨虫	monster_multi_bone_worm.json
+  monster.skeleton_king	骷髅王	monster_skeleton_king.json
+  monster.skeleton_mage	骷髅法师	monster_skeleton_mage.json
+  monster.skeleton_taunter	骷髅嘲讽子	monster_skeleton_taunter.json
+  monster.skull_head	骷髅头	monster_skull_head.json
+== deck.stone_legion (10)
+  monster.big_stone	大石头	monster_big_stone.json
+  monster.growing_stone	增生石块	monster_growing_stone.json
+  monster.megalith	巨石人	monster_megalith.json
+  monster.rolling_stone_man	滚石人	monster_rolling_stone_man.json
+  monster.sharp_stone	尖石	monster_sharp_stone.json
+  monster.shelter_stone	庇护石	monster_shelter_stone.json
+  monster.stone_man	石头人	monster_stone_man.json
+  monster.stone_shrimp	石虾	monster_stone_shrimp.json
+  monster.stone_swallower	吞石者	monster_stone_swallower.json
+  monster.stone_thrower	丢石人	monster_stone_thrower.json
+== deck.void (10)
+  monster.friendly_ancient	友好的远古生物	monster_friendly_ancient.json
+  monster.mist	迷雾	monster_mist.json
+  monster.observer	观察者	monster_observer.json
+  monster.rotating_cub	旋转幼崽	monster_rotating_cub.json
+  monster.sky_eye	空中巨眼	monster_sky_eye.json
+  monster.space_master	空间大师	monster_space_master.json
+  monster.stepwalker	踏步行者	monster_stepwalker.json
+  monster.void_cub	虚空幼崽	monster_void_cub.json
+  monster.void_lost	误入虚空者	monster_void_lost.json
+  monster.world_turning_hand	转动世界的手	monster_world_turning_hand.json
+== deck.wandering_legion (10)
+  monster.beggar	乞丐	monster_beggar.json
+  monster.hoodlum	混混	monster_hoodlum.json
+  monster.killer	杀手	monster_killer.json
+  monster.pickpocket	扒手	monster_pickpocket.json
+  monster.ringleader	领头人	monster_ringleader.json
+  monster.rogue	流氓	monster_rogue.json
+  monster.smuggler	走私者	monster_smuggler.json
+  monster.thug	打手	monster_thug.json
+  monster.vagrant	流浪汉	monster_vagrant.json
+  monster.wandering_child	流浪孩童	monster_wandering_child.json

@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "乱步",
-    "description": "�Ҳ���ÿ�ƶ�3�����������������",
+    "description": "乱步：每移动3次与随机帮助卡交换",
     "gold": 0,
     "stats": {
         "hp": 0,

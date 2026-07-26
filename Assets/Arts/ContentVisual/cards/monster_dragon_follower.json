@@ -3,8 +3,8 @@
     "contentId": "monster.dragon_follower",
     "kind": "Monster",
     "deckId": "deck.dragon",
-    "displayName": "龙信徒",
-    "description": "����ͽ�����Ƴ�ʱ��������",
+    "displayName": "绿鳞蜥人",
+    "description": "绿鳞蜥人：被移除时加入烈焰",
     "gold": 5,
     "stats": {
         "hp": 6,
@@ -24,15 +24,15 @@
     "mainVisual": {
         "offsetX": 0.0,
         "offsetY": 0.0,
-        "uniformScale": 1.0
+        "uniformScale": 0.97
     },
     "animations": {
         "defaultFps": 8.0,
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/51LizardMan01_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

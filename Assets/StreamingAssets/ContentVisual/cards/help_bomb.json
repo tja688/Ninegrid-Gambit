@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "爆弹",
-    "description": "������[ʹ��ʱ] �����й��￨���4���˺�",
+    "description": "爆弹：[使用时] 对所有怪物卡造成4点伤害",
     "gold": 50,
     "stats": {
         "hp": 0,

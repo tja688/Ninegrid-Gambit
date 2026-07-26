@@ -3,8 +3,8 @@
     "contentId": "monster.smart_orc",
     "kind": "Monster",
     "deckId": "deck.orc_legion",
-    "displayName": "聪明兽人",
-    "description": "�������ˣ�ÿ�λ�ù���ʱ���������⹥��+1�Ҳ��ݹ�",
+    "displayName": "灰甲哥布林",
+    "description": "灰甲哥布林：每次获得攻击时，本卡额外攻击+1且不递归",
     "gold": 5,
     "stats": {
         "hp": 9,
@@ -31,8 +31,8 @@
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/07goblin_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

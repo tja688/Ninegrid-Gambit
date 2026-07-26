@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "异界帮助",
-    "description": "��������ÿ�ƶ�9�δ������������������ͨ����",
+    "description": "异界帮助：每移动9次从其他怪物牌组加入普通怪物",
     "gold": 0,
     "stats": {
         "hp": 0,

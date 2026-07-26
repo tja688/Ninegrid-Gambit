@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "",
     "displayName": "食品卡",
-    "description": "ʳƷ����[ʹ��ʱ] ����ҿ�Ѫ������",
+    "description": "食品卡：[使用时] 将玩家卡血量回满",
     "gold": 50,
     "stats": {
         "hp": 0,

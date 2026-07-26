@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "skill.even_hatred",
-    "description": "ż����ޣ���ż���ȼ��������˫���˺�",
+    "description": "偶数仇恨：对偶数等级怪物造成双倍伤害",
     "gold": 0,
     "stats": {
         "hp": 0,

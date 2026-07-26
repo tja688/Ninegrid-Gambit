@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "石增长",
-    "description": "ʯ�������ƶ�������ʱ����������2�㻤��",
+    "description": "石增长：移动到左列时其他怪物获得2点护甲",
     "gold": 0,
     "stats": {
         "hp": 0,

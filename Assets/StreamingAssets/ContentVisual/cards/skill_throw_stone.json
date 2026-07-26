@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "丢石头",
-    "description": "��ʯͷ��ÿ�ƶ�2�����ı���2���ײ��˺����",
+    "description": "丢石头：每移动2次消耗本卡2护甲并伤害玩家",
     "gold": 0,
     "stats": {
         "hp": 0,

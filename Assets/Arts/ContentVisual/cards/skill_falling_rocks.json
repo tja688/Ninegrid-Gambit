@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "落石",
-    "description": "��ʯ���ۼ���ʧ10����ϴ��ʯ��",
+    "description": "落石：累计损失10护甲洗入石人",
     "gold": 0,
     "stats": {
         "hp": 0,

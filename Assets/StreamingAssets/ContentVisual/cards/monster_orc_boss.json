@@ -3,8 +3,8 @@
     "contentId": "monster.orc_boss",
     "kind": "Monster",
     "deckId": "deck.orc_legion",
-    "displayName": "兽人老大",
-    "description": "�����ϴ�ÿ�ƶ�2�Σ��Ƴ����ڸ����ϵĹ��￨�Ͱ������������������Ƴ�����ù������Ƴ��������û���",
+    "displayName": "巨角野牛",
+    "description": "巨角野牛：每移动2次，移除相邻格子上的怪物卡和帮助卡；依靠暴力狂移除怪物得攻击，移除帮助卡得护甲",
     "gold": 5,
     "stats": {
         "hp": 22,
@@ -24,15 +24,15 @@
     "mainVisual": {
         "offsetX": 0.0,
         "offsetY": 0.0,
-        "uniformScale": 1.0
+        "uniformScale": 0.77
     },
     "animations": {
         "defaultFps": 8.0,
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/49buffalo_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

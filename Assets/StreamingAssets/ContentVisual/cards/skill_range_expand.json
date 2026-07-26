@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "范围扩大",
-    "description": "��Χ�������й��￨��Ϊ�뱾����������",
+    "description": "范围扩大：所有怪物卡视为与本卡正交相邻",
     "gold": 0,
     "stats": {
         "hp": 0,

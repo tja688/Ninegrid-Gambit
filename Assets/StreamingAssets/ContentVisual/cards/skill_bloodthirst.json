@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "嗜血",
-    "description": "��Ѫ��ս��ʱÿ���2���˺�����������+1",
+    "description": "嗜血：战斗时每造成2点伤害，本卡攻击+1",
     "gold": 0,
     "stats": {
         "hp": 0,

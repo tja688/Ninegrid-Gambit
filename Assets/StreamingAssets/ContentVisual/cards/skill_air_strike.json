@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "空中打击",
-    "description": "���д�����ƶ����Ǹ�ʱ��������2���˺�",
+    "description": "空中打击：移动到角格时对玩家造成2点伤害",
     "gold": 0,
     "stats": {
         "hp": 0,

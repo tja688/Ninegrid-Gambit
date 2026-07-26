@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "坚硬",
-    "description": "��Ӳ������ս��ʱ����ʧ�����˺����",
+    "description": "坚硬：左列战斗时按损失护甲伤害玩家",
     "gold": 0,
     "stats": {
         "hp": 0,

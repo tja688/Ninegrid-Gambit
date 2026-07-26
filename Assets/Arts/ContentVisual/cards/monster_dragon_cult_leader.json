@@ -3,8 +3,8 @@
     "contentId": "monster.dragon_cult_leader",
     "kind": "Monster",
     "deckId": "deck.dragon",
-    "displayName": "龙教主",
-    "description": "��������ÿ�ƶ�3�μ�������ͽ",
+    "displayName": "绿甲蜥人",
+    "description": "绿甲蜥人：每移动3次加入龙信徒",
     "gold": 5,
     "stats": {
         "hp": 18,
@@ -24,15 +24,15 @@
     "mainVisual": {
         "offsetX": 0.0,
         "offsetY": 0.0,
-        "uniformScale": 1.0
+        "uniformScale": 0.73
     },
     "animations": {
         "defaultFps": 8.0,
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/52LizardMan02_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

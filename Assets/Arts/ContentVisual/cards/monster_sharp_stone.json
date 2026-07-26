@@ -3,8 +3,8 @@
     "contentId": "monster.sharp_stone",
     "kind": "Monster",
     "deckId": "deck.stone_legion",
-    "displayName": "尖石",
-    "description": "��ʯ�����׹���ʱ�˺����",
+    "displayName": "蓝尾蝎",
+    "description": "蓝尾蝎：护甲归零时伤害玩家",
     "gold": 5,
     "stats": {
         "hp": 3,
@@ -31,8 +31,8 @@
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/34scorpion_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "不稳定",
-    "description": "���ȶ���ÿ�ƶ�3�������������",
+    "description": "不稳定：每移动3次随机交换怪物",
     "gold": 0,
     "stats": {
         "hp": 0,

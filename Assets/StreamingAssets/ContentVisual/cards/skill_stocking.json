@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "进货",
-    "description": "�������ۼ��ƶ����������3��ʱ�Ƴ�����������û���",
+    "description": "进货：累计移动到玩家相邻3次时移除帮助卡并获得护甲",
     "gold": 0,
     "stats": {
         "hp": 0,

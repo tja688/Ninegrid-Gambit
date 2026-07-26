@@ -3,8 +3,8 @@
     "contentId": "monster.bone_courier",
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
-    "displayName": "骨头快递员",
-    "description": "��ͷ���Ա��ÿ�ƶ�2�Σ������ڰ�������ս��������ｻ��",
+    "displayName": "棕野鼠",
+    "description": "棕野鼠：每移动2次，将相邻帮助卡与战斗卡组怪物交换",
     "gold": 5,
     "stats": {
         "hp": 7,
@@ -31,8 +31,8 @@
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/10mouse_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },
