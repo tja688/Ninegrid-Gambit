@@ -5,6 +5,9 @@ TextureImporter:
   - first:
       213: 4908373432480690098
     second: 28stegosaurus_attack_01_M_02_0
+  - first:
+      213: 9189031456102224930
+    second: 28stegosaurus_attack_01_M_02_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +49,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -116,12 +119,12 @@ TextureImporter:
       name: 28stegosaurus_attack_01_M_02_0
       rect:
         serializedVersion: 2
-        x: 22
-        y: 2
-        width: 52
-        height: 29
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 0
+        y: 0
+        width: 37
+        height: 37
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -130,6 +133,28 @@ TextureImporter:
       bones: []
       spriteID: 2bfe9f391ab0e1440800000000000000
       internalID: 4908373432480690098
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 28stegosaurus_attack_01_M_02_1
+      rect:
+        serializedVersion: 2
+        x: 37
+        y: 0
+        width: 37
+        height: 37
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2241dda7c6ff58f70800000000000000
+      internalID: 9189031456102224930
       vertices: []
       indices: 
       edges: []
@@ -149,8 +174,9 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       28stegosaurus_attack_01_M_02_0: 4908373432480690098
+      28stegosaurus_attack_01_M_02_1: 9189031456102224930
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0
+  userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom
   assetBundleName: 
   assetBundleVariant: 

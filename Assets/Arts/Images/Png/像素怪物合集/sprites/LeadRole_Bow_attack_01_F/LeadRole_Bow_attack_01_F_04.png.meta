@@ -5,6 +5,12 @@ TextureImporter:
   - first:
       213: 3003993617428550808
     second: LeadRole_Bow_attack_01_F_04_0
+  - first:
+      213: -3141337301200744342
+    second: LeadRole_Bow_attack_01_F_04_1
+  - first:
+      213: -8757240099929242761
+    second: LeadRole_Bow_attack_01_F_04_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +52,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -116,12 +122,12 @@ TextureImporter:
       name: LeadRole_Bow_attack_01_F_04_0
       rect:
         serializedVersion: 2
-        x: 12
+        x: 0
         y: 0
-        width: 18
-        height: 5
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        width: 16
+        height: 16
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -130,6 +136,50 @@ TextureImporter:
       bones: []
       spriteID: 8949e5a774450b920800000000000000
       internalID: 3003993617428550808
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeadRole_Bow_attack_01_F_04_1
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 0
+        width: 16
+        height: 16
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a60de3a3e5ab764d0800000000000000
+      internalID: -3141337301200744342
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeadRole_Bow_attack_01_F_04_2
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 16
+        height: 16
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 77349e6e688087680800000000000000
+      internalID: -8757240099929242761
       vertices: []
       indices: 
       edges: []
@@ -149,8 +199,10 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       LeadRole_Bow_attack_01_F_04_0: 3003993617428550808
+      LeadRole_Bow_attack_01_F_04_1: -3141337301200744342
+      LeadRole_Bow_attack_01_F_04_2: -8757240099929242761
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0
+  userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom
   assetBundleName: 
   assetBundleVariant: 

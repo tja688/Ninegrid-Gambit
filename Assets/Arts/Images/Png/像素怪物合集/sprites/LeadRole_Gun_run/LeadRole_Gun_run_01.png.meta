@@ -5,6 +5,12 @@ TextureImporter:
   - first:
       213: 8106669504418058003
     second: LeadRole_Gun_run_01_0
+  - first:
+      213: 1569179083072310211
+    second: LeadRole_Gun_run_01_1
+  - first:
+      213: 7735725606155800721
+    second: LeadRole_Gun_run_01_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +52,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -116,12 +122,12 @@ TextureImporter:
       name: LeadRole_Gun_run_01_0
       rect:
         serializedVersion: 2
-        x: 16
+        x: 0
         y: 0
-        width: 14
-        height: 5
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        width: 16
+        height: 16
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -130,6 +136,50 @@ TextureImporter:
       bones: []
       spriteID: 31f845a96fca08070800000000000000
       internalID: 8106669504418058003
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeadRole_Gun_run_01_1
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 0
+        width: 16
+        height: 16
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3cb8f7bef08d6c510800000000000000
+      internalID: 1569179083072310211
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeadRole_Gun_run_01_2
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 16
+        height: 16
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1905fc20471da5b60800000000000000
+      internalID: 7735725606155800721
       vertices: []
       indices: 
       edges: []
@@ -149,8 +199,10 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       LeadRole_Gun_run_01_0: 8106669504418058003
+      LeadRole_Gun_run_01_1: 1569179083072310211
+      LeadRole_Gun_run_01_2: 7735725606155800721
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0
+  userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom
   assetBundleName: 
   assetBundleVariant: 

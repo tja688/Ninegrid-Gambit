@@ -5,6 +5,12 @@ TextureImporter:
   - first:
       213: 3930720378924552954
     second: LeadRole_Wand_run_02_0
+  - first:
+      213: 127141264090828546
+    second: LeadRole_Wand_run_02_1
+  - first:
+      213: 6924269969950764697
+    second: LeadRole_Wand_run_02_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +52,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -116,12 +122,12 @@ TextureImporter:
       name: LeadRole_Wand_run_02_0
       rect:
         serializedVersion: 2
-        x: 16
+        x: 0
         y: 0
         width: 16
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        height: 16
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -130,6 +136,50 @@ TextureImporter:
       bones: []
       spriteID: af2df29db59bc8630800000000000000
       internalID: 3930720378924552954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeadRole_Wand_run_02_1
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 0
+        width: 16
+        height: 16
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 20f8d6a5e42b3c100800000000000000
+      internalID: 127141264090828546
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeadRole_Wand_run_02_2
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 16
+        height: 16
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 99ee1dfe9d2f71060800000000000000
+      internalID: 6924269969950764697
       vertices: []
       indices: 
       edges: []
@@ -149,8 +199,10 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       LeadRole_Wand_run_02_0: 3930720378924552954
+      LeadRole_Wand_run_02_1: 127141264090828546
+      LeadRole_Wand_run_02_2: 6924269969950764697
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0
+  userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom
   assetBundleName: 
   assetBundleVariant: 

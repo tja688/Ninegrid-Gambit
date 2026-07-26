@@ -61,7 +61,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -131,12 +131,12 @@ TextureImporter:
       name: 28stegosaurus_die_04_0
       rect:
         serializedVersion: 2
-        x: 2
+        x: 0
         y: 0
-        width: 66
-        height: 25
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        width: 37
+        height: 37
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -153,12 +153,12 @@ TextureImporter:
       name: 28stegosaurus_die_04_1
       rect:
         serializedVersion: 2
-        x: 4
-        y: 23
-        width: 10
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 37
+        y: 0
+        width: 37
+        height: 37
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -167,94 +167,6 @@ TextureImporter:
       bones: []
       spriteID: 9859eeaa2a157d0e0800000000000000
       internalID: -2245236130126588535
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: 28stegosaurus_die_04_2
-      rect:
-        serializedVersion: 2
-        x: 24
-        y: 23
-        width: 24
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 298dde2e2e2d65140800000000000000
-      internalID: 4708182332374112402
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: 28stegosaurus_die_04_3
-      rect:
-        serializedVersion: 2
-        x: 56
-        y: 24
-        width: 11
-        height: 10
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 23049209d53cd9b00800000000000000
-      internalID: 837039912378777650
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: 28stegosaurus_die_04_4
-      rect:
-        serializedVersion: 2
-        x: 4
-        y: 9
-        width: 8
-        height: 12
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: a43fadb09455fedb0800000000000000
-      internalID: -4760492508887452854
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: 28stegosaurus_die_04_5
-      rect:
-        serializedVersion: 2
-        x: 60
-        y: 12
-        width: 9
-        height: 10
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: fd0bfee2940c967d0800000000000000
-      internalID: -2924595062447820577
       vertices: []
       indices: 
       edges: []
@@ -281,6 +193,6 @@ TextureImporter:
       28stegosaurus_die_04_5: -2924595062447820577
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0
+  userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom
   assetBundleName: 
   assetBundleVariant: 
