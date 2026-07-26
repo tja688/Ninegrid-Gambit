@@ -27,6 +27,8 @@ namespace NineGrid.Cards.Presentation
         private static CardFaceSlotRegistrySO _defaultRegistry;
         private static CardFaceDescriptionInlineIconStyleSO _cachedInlineIconStyle;
         private static CardFaceDescriptionInlineIconStyleSO _inlineIconStyleOverride;
+        private static CardFaceDescriptionIconCatalogSO _cachedIconCatalog;
+        private static CardFaceDescriptionIconCatalogSO _iconCatalogOverride;
 
         /// <summary>最近一次 Commit 的朝向镜像（供后续翻牌专题读取；本波不驱动演出）。</summary>
         public bool CommittedFaceUp => _committedFaceUp;
@@ -180,11 +182,12 @@ namespace NineGrid.Cards.Presentation
             }
 
             var assembled = BuildAssembledIcons(snapshot);
+            var catalog = GetIconCatalog();
             // 空描述 = 未接线：保留模板自带文案，不把旧 ContentVisual 长文案盖上来。
             var source = string.IsNullOrEmpty(snapshot.BasicDescription)
                 ? (_hasTemplateBasicDescription ? _templateBasicDescription : string.Empty)
                 : snapshot.BasicDescription;
-            var fingerprint = BuildIconFingerprint(assembled);
+            var fingerprint = BuildIconFingerprint(assembled, catalog, source);
             if (source == _lastBasicDescriptionSource
                 && fingerprint == _lastIconFingerprint)
             {
@@ -205,7 +208,8 @@ namespace NineGrid.Cards.Presentation
             var composed = CardFaceDescriptionComposer.Compose(
                 source,
                 assembled,
-                GetDefaultRegistry());
+                GetDefaultRegistry(),
+                catalog);
 
             ReleaseDescriptionSpriteAsset();
             if (composed.Icons.Count > 0)
@@ -245,26 +249,67 @@ namespace NineGrid.Cards.Presentation
             return map;
         }
 
-        private static string BuildIconFingerprint(IReadOnlyDictionary<string, Sprite> assembled)
+        private static string BuildIconFingerprint(
+            IReadOnlyDictionary<string, Sprite> assembled,
+            CardFaceDescriptionIconCatalogSO catalog,
+            string sourceDescription)
         {
-            if (assembled == null || assembled.Count == 0)
+            var codeSet = new HashSet<string>(System.StringComparer.Ordinal);
+            if (assembled != null)
             {
-                return string.Empty;
+                foreach (var key in assembled.Keys)
+                {
+                    codeSet.Add(key);
+                }
             }
 
-            var codes = new List<string>(assembled.Keys);
+            if (catalog?.Entries != null)
+            {
+                for (var i = 0; i < catalog.Entries.Count; i++)
+                {
+                    var entry = catalog.Entries[i];
+                    if (entry == null
+                        || string.IsNullOrEmpty(entry.code)
+                        || CardFaceDescriptionIconCatalogSO.IsReservedAssemblySlotCode(entry.code))
+                    {
+                        continue;
+                    }
+
+                    codeSet.Add(entry.code);
+                }
+            }
+
+            var codes = new List<string>(codeSet);
             codes.Sort(System.StringComparer.Ordinal);
-            var sb = new StringBuilder(codes.Count * 24);
+            var sb = new StringBuilder(codes.Count * 32 + 32);
+            sb.Append("src=").Append(sourceDescription ?? string.Empty).Append('|');
+
             for (var i = 0; i < codes.Count; i++)
             {
                 var code = codes[i];
                 sb.Append(code).Append('=');
-                if (assembled.TryGetValue(code, out var sprite) && sprite != null)
+                Sprite sprite = null;
+                if (assembled != null)
+                {
+                    assembled.TryGetValue(code, out sprite);
+                }
+
+                if (sprite == null && catalog != null)
+                {
+                    catalog.TryGet(code, out sprite);
+                }
+
+                if (sprite != null)
                 {
                     sb.Append(sprite.GetInstanceID());
                 }
 
                 sb.Append(';');
+            }
+
+            if (catalog != null)
+            {
+                sb.Append("|catalog=").Append(catalog.GetInstanceID());
             }
 
             var style = GetInlineIconStyle();
@@ -326,16 +371,47 @@ namespace NineGrid.Cards.Presentation
             return _cachedInlineIconStyle;
         }
 
+        private static CardFaceDescriptionIconCatalogSO GetIconCatalog()
+        {
+            if (_iconCatalogOverride != null)
+            {
+                return _iconCatalogOverride;
+            }
+
+            if (_cachedIconCatalog != null)
+            {
+                return _cachedIconCatalog;
+            }
+
+#if UNITY_EDITOR
+            _cachedIconCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<CardFaceDescriptionIconCatalogSO>(
+                CardChassisPaths.DescriptionIconCatalogAsset);
+#endif
+            return _cachedIconCatalog;
+        }
+
         /// <summary>编辑器专页可注入未落盘草稿 style；传 null 清除覆盖。</summary>
         public static void SetInlineIconStyleOverride(CardFaceDescriptionInlineIconStyleSO style)
         {
             _inlineIconStyleOverride = style;
         }
 
+        /// <summary>编辑器专页可注入未落盘草稿 catalog；传 null 清除覆盖。</summary>
+        public static void SetDescriptionIconCatalogOverride(CardFaceDescriptionIconCatalogSO catalog)
+        {
+            _iconCatalogOverride = catalog;
+        }
+
         /// <summary>编辑器改 style 资产后清缓存，下次重新 Load。</summary>
         public static void InvalidateInlineIconStyleCache()
         {
             _cachedInlineIconStyle = null;
+        }
+
+        /// <summary>编辑器改 catalog 资产后清缓存，下次重新 Load。</summary>
+        public static void InvalidateDescriptionIconCatalogCache()
+        {
+            _cachedIconCatalog = null;
         }
 
         private void ApplyStats(CardPresentationSnapshot snapshot)

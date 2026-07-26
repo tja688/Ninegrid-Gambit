@@ -41,9 +41,11 @@ namespace NineGrid.Content.Editor
         private bool descriptionRichTextFocused;
         private CardPresentationKind richTextPreviewKind = CardPresentationKind.Monster;
         private string richTextSelectedCode = CardFaceSlotCodes.ActionIcon;
-        private string richTextSampleDescription = "在[Action_Icon]后攻击玩家";
+        private string richTextSampleDescription = "在[Action_Icon]后攻击玩家；施加[Poison]";
         private CardFaceDescriptionInlineIconStyleSO inlineIconStyle;
+        private CardFaceDescriptionIconCatalogSO iconCatalog;
         private bool inlineIconStyleDirty;
+        private bool iconCatalogDirty;
 
         [MenuItem("NineGrid/表现层配置")]
         public static void ShowWindow()
@@ -78,7 +80,9 @@ namespace NineGrid.Content.Editor
             previewHost.Dispose();
             previewFingerprint = string.Empty;
             CardFacePresentationBinder.SetInlineIconStyleOverride(null);
+            CardFacePresentationBinder.SetDescriptionIconCatalogOverride(null);
             TryPersistInlineIconStyle();
+            TryPersistIconCatalog();
         }
 
         private void HookEditorTick(bool enable)
@@ -350,7 +354,9 @@ namespace NineGrid.Content.Editor
             }
 
             EnsureInlineIconStyleLoaded();
+            EnsureIconCatalogLoaded();
             CardFacePresentationBinder.SetInlineIconStyleOverride(inlineIconStyle);
+            CardFacePresentationBinder.SetDescriptionIconCatalogOverride(iconCatalog);
             previewFingerprint = string.Empty;
             RefreshSidebar();
             RefreshContent();
@@ -439,6 +445,7 @@ namespace NineGrid.Content.Editor
             {
                 descriptionRichTextFocused = false;
                 CardFacePresentationBinder.SetInlineIconStyleOverride(null);
+                CardFacePresentationBinder.SetDescriptionIconCatalogOverride(null);
                 session.FocusedContentId = entry.ContentId;
                 faceUp = true;
                 previewAnimSlot = CardAnimSlotIds.Idle;
@@ -599,12 +606,14 @@ namespace NineGrid.Content.Editor
         private void BuildDescriptionRichTextContent()
         {
             EnsureInlineIconStyleLoaded();
+            EnsureIconCatalogLoaded();
             CardFacePresentationBinder.SetInlineIconStyleOverride(inlineIconStyle);
+            CardFacePresentationBinder.SetDescriptionIconCatalogOverride(iconCatalog);
 
+            var dirtyHint = (inlineIconStyleDirty || iconCatalogDirty) ? " · 未保存" : string.Empty;
             contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeaderCompact(
                 "描述富文本",
-                "全局内联图标布局 · 四套基础卡面预制体预览"
-                + (inlineIconStyleDirty ? " · 样式未保存" : string.Empty)));
+                "全局描述图标表 · 装配槽只读下行 · 四套基础卡面预览" + dirtyHint));
 
             var topRow = new VisualElement();
             topRow.style.flexDirection = FlexDirection.Row;
@@ -649,8 +658,9 @@ namespace NineGrid.Content.Editor
                         new Button(() =>
                         {
                             TryPersistInlineIconStyle();
+                            TryPersistIconCatalog();
                             RefreshContent();
-                        }) { text = "保存样式" }));
+                        }) { text = "保存样式与图标表" }));
                 });
             previewCard.style.flexGrow = 1;
             previewCard.style.flexBasis = 0;
@@ -658,16 +668,16 @@ namespace NineGrid.Content.Editor
             topRow.Add(previewCard);
 
             var paramsCard = ContentVisualWarmConsoleUi.CreateSectionCard(
-                "内联图标参数",
-                "em 相对；调好后随字号 / 描述节点缩放自动跟从",
+                "图标映射",
+                "描述专用可改 Sprite；装配下行只读，布局仍用 em",
                 column => BuildRichTextParams(column));
-            paramsCard.style.flexGrow = 1;
+            paramsCard.style.flexGrow = 1.35f;
             paramsCard.style.flexBasis = 0;
             topRow.Add(paramsCard);
 
             var sampleCard = ContentVisualWarmConsoleUi.CreateSectionCard(
                 "样例描述",
-                "输入框为 [SlotCode]；预览解析为真实图标",
+                "输入框为 [Code]；装配槽走模板，自定义码走描述图标表",
                 column =>
                 {
                     var sampleField = new TextField
@@ -692,82 +702,251 @@ namespace NineGrid.Content.Editor
         private void BuildRichTextParams(VisualElement column)
         {
             EnsureInlineIconStyleLoaded();
-            var icons = session.GetInsertableIcons();
+            EnsureIconCatalogLoaded();
             var templateSprites = CaptureTemplateSpritesForKind(richTextPreviewKind);
 
+            column.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel(
+                "装配下行（只读 Sprite）：改图请走预制体 / 单卡装配，描述侧不可反向覆盖。"));
+            BuildAssemblyDownlinkRows(column, templateSprites);
+
+            column.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel(
+                "描述专用图标表（全局）：可新建代号并选任意 Sprite，不写回预制体。"));
+
+            var listHost = new VisualElement();
+            listHost.style.flexDirection = FlexDirection.Column;
+            column.Add(listHost);
+
+            var entries = iconCatalog.Entries;
+            if (entries == null || entries.Count == 0)
+            {
+                listHost.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel("（表空 · 点下方添加）"));
+            }
+            else
+            {
+                for (var i = 0; i < entries.Count; i++)
+                {
+                    var entry = entries[i];
+                    if (entry == null)
+                    {
+                        continue;
+                    }
+
+                    listHost.Add(BuildCatalogEntryRow(entry, i));
+                }
+            }
+
+            column.Add(ContentVisualWarmConsoleUi.CreateButtonRow(
+                new Button(() =>
+                {
+                    EnsureIconCatalogLoaded();
+                    var created = iconCatalog.AddBlankEntry();
+                    created.code = AllocateNewCatalogCode();
+                    iconCatalog.InvalidateLookup();
+                    iconCatalogDirty = true;
+                    CardFacePresentationBinder.SetDescriptionIconCatalogOverride(iconCatalog);
+                    CardFacePresentationBinder.InvalidateDescriptionIconCatalogCache();
+                    RefreshContent();
+                }) { text = "添加图标" }));
+        }
+
+        private void BuildAssemblyDownlinkRows(
+            VisualElement column,
+            Dictionary<string, Sprite> templateSprites)
+        {
+            var icons = session.GetInsertableIcons();
             if (icons.Count == 0)
             {
-                column.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel("（无 Insertable 槽）"));
+                column.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel("（无 Insertable 装配槽）"));
                 return;
             }
 
-            if (string.IsNullOrEmpty(richTextSelectedCode))
-            {
-                richTextSelectedCode = icons[0].Code;
-            }
-
-            var codeChoices = new List<string>(icons.Count);
-            var labels = new List<string>(icons.Count);
-            var selectedIndex = 0;
             for (var i = 0; i < icons.Count; i++)
             {
-                codeChoices.Add(icons[i].Code);
-                labels.Add(icons[i].DisplayNameZh + "  " + icons[i].Token);
-                if (string.Equals(icons[i].Code, richTextSelectedCode, StringComparison.Ordinal))
-                {
-                    selectedIndex = i;
-                }
-            }
+                var icon = icons[i];
+                var row = new VisualElement();
+                row.style.flexDirection = FlexDirection.Column;
+                row.style.marginBottom = 8;
+                row.style.paddingLeft = 4;
+                row.style.paddingRight = 4;
+                row.style.paddingTop = 4;
+                row.style.paddingBottom = 4;
+                row.style.backgroundColor = ContentVisualWarmConsoleUi.Theme.NavNormalBg;
+                row.style.borderTopLeftRadius = row.style.borderTopRightRadius = 4;
+                row.style.borderBottomLeftRadius = row.style.borderBottomRightRadius = 4;
 
-            var codeField = new PopupField<string>(labels, selectedIndex);
+                Sprite previewSprite = null;
+                templateSprites.TryGetValue(icon.Code, out previewSprite);
+                var title = icon.DisplayNameZh + "  " + icon.Token;
+                row.Add(ContentVisualWarmConsoleUi.CreateTitleLabel(
+                    title, 12, true, ContentVisualWarmConsoleUi.Theme.TextPrimary));
+                row.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel(
+                    previewSprite != null
+                        ? "模板默认 Sprite（只读）：" + previewSprite.name
+                        : "当前卡种模板无此图标（描述中将保留字面量）"));
+
+                var spriteField = new ObjectField
+                {
+                    objectType = typeof(Sprite),
+                    allowSceneObjects = false,
+                    value = previewSprite,
+                };
+                spriteField.SetEnabled(false);
+                row.Add(ContentVisualWarmConsoleUi.WrapControlRow("Sprite", spriteField, 72f));
+
+                inlineIconStyle.Resolve(icon.Code, out var bx, out var by, out var scale);
+                var code = icon.Code;
+                row.Add(BuildLayoutFields(code, bx, by, scale));
+                column.Add(row);
+            }
+        }
+
+        private VisualElement BuildCatalogEntryRow(
+            CardFaceDescriptionIconCatalogSO.Entry entry,
+            int index)
+        {
+            var row = new VisualElement();
+            row.style.flexDirection = FlexDirection.Column;
+            row.style.marginBottom = 8;
+            row.style.paddingLeft = 4;
+            row.style.paddingRight = 4;
+            row.style.paddingTop = 4;
+            row.style.paddingBottom = 4;
+            row.style.backgroundColor = ContentVisualWarmConsoleUi.Theme.NavNormalBg;
+            row.style.borderTopLeftRadius = row.style.borderTopRightRadius = 4;
+            row.style.borderBottomLeftRadius = row.style.borderBottomRightRadius = 4;
+
+            var header = new VisualElement();
+            header.style.flexDirection = FlexDirection.Row;
+            header.style.alignItems = Align.Center;
+            header.Add(ContentVisualWarmConsoleUi.CreateTitleLabel(
+                "条目 #" + (index + 1), 12, true, ContentVisualWarmConsoleUi.Theme.TextPrimary));
+            var spacer = new VisualElement();
+            spacer.style.flexGrow = 1;
+            header.Add(spacer);
+            var removeBtn = new Button(() =>
+            {
+                iconCatalog.TryRemoveEntry(entry);
+                iconCatalogDirty = true;
+                CardFacePresentationBinder.SetDescriptionIconCatalogOverride(iconCatalog);
+                CardFacePresentationBinder.InvalidateDescriptionIconCatalogCache();
+                previewFingerprint = string.Empty;
+                RefreshContent();
+            })
+            {
+                text = "删除",
+            };
+            header.Add(removeBtn);
+            row.Add(header);
+
+            var codeField = new TextField { value = entry.code ?? string.Empty };
             codeField.RegisterValueChangedCallback(evt =>
             {
-                var idx = labels.IndexOf(evt.newValue);
-                if (idx >= 0 && idx < codeChoices.Count)
+                var next = (evt.newValue ?? string.Empty).Trim();
+                if (CardFaceDescriptionIconCatalogSO.IsReservedAssemblySlotCode(next))
                 {
-                    richTextSelectedCode = codeChoices[idx];
-                    RefreshContent();
+                    EditorUtility.DisplayDialog(
+                        "保留代号",
+                        "不能占用装配槽代号：" + next,
+                        "确定");
+                    codeField.SetValueWithoutNotify(entry.code ?? string.Empty);
+                    return;
                 }
+
+                entry.code = next;
+                iconCatalog.InvalidateLookup();
+                iconCatalogDirty = true;
+                MarkCatalogDraftAndRefreshPreview();
             });
-            column.Add(ContentVisualWarmConsoleUi.WrapControlRow("代号", codeField, 72f));
+            row.Add(ContentVisualWarmConsoleUi.WrapControlRow("代号", codeField, 72f));
 
-            Sprite previewSprite = null;
-            templateSprites.TryGetValue(richTextSelectedCode, out previewSprite);
-            column.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel(
-                previewSprite != null
-                    ? "当前卡种模板默认 Sprite：" + previewSprite.name
-                    : "当前卡种模板无此图标（描述中将保留字面量）"));
+            var nameField = new TextField { value = entry.displayNameZh ?? string.Empty };
+            nameField.RegisterValueChangedCallback(evt =>
+            {
+                entry.displayNameZh = evt.newValue ?? string.Empty;
+                iconCatalogDirty = true;
+                UpdateStatus();
+            });
+            row.Add(ContentVisualWarmConsoleUi.WrapControlRow("中文名", nameField, 72f));
 
-            inlineIconStyle.Resolve(richTextSelectedCode, out var bx, out var by, out var scale);
+            var token = string.IsNullOrEmpty(entry.code) ? "[?]" : "[" + entry.code + "]";
+            var tokenField = new TextField { value = token, isReadOnly = true };
+            row.Add(ContentVisualWarmConsoleUi.WrapControlRow("Token", tokenField, 72f));
+
+            var spriteField = new ObjectField
+            {
+                objectType = typeof(Sprite),
+                allowSceneObjects = false,
+                value = entry.sprite,
+            };
+            spriteField.RegisterValueChangedCallback(evt =>
+            {
+                entry.sprite = evt.newValue as Sprite;
+                iconCatalog.InvalidateLookup();
+                iconCatalogDirty = true;
+                MarkCatalogDraftAndRefreshPreview();
+            });
+            row.Add(ContentVisualWarmConsoleUi.WrapControlRow("Sprite", spriteField, 72f));
+
+            var layoutCode = string.IsNullOrEmpty(entry.code) ? string.Empty : entry.code;
+            if (!string.IsNullOrEmpty(layoutCode))
+            {
+                inlineIconStyle.Resolve(layoutCode, out var bx, out var by, out var scale);
+                row.Add(BuildLayoutFields(layoutCode, bx, by, scale));
+            }
+
+            return row;
+        }
+
+        private VisualElement BuildLayoutFields(string code, float bx, float by, float scale)
+        {
+            var box = new VisualElement();
+            box.style.flexDirection = FlexDirection.Column;
+
             var bearingX = new FloatField("Offset X (em)") { value = bx };
             bearingX.RegisterValueChangedCallback(evt =>
             {
-                inlineIconStyle.Resolve(richTextSelectedCode, out _, out var curBy, out var curScale);
-                ApplyRichTextLayout(evt.newValue, curBy, curScale);
+                inlineIconStyle.Resolve(code, out _, out var curBy, out var curScale);
+                ApplyRichTextLayout(code, evt.newValue, curBy, curScale);
             });
-            column.Add(bearingX);
+            box.Add(bearingX);
 
             var bearingY = new FloatField("Offset Y (em)") { value = by };
             bearingY.RegisterValueChangedCallback(evt =>
             {
-                inlineIconStyle.Resolve(richTextSelectedCode, out var curBx, out _, out var curScale);
-                ApplyRichTextLayout(curBx, evt.newValue, curScale);
+                inlineIconStyle.Resolve(code, out var curBx, out _, out var curScale);
+                ApplyRichTextLayout(code, curBx, evt.newValue, curScale);
             });
-            column.Add(bearingY);
+            box.Add(bearingY);
 
             var baseScale = new FloatField("Base Scale") { value = scale };
             baseScale.RegisterValueChangedCallback(evt =>
             {
-                inlineIconStyle.Resolve(richTextSelectedCode, out var curBx, out var curBy, out _);
-                ApplyRichTextLayout(curBx, curBy, evt.newValue);
+                inlineIconStyle.Resolve(code, out var curBx, out var curBy, out _);
+                ApplyRichTextLayout(code, curBx, curBy, evt.newValue);
             });
-            column.Add(baseScale);
+            box.Add(baseScale);
+            return box;
         }
 
-        private void ApplyRichTextLayout(float bearingX, float bearingY, float baseScale)
+        private void MarkCatalogDraftAndRefreshPreview()
         {
+            CardFacePresentationBinder.SetDescriptionIconCatalogOverride(iconCatalog);
+            CardFacePresentationBinder.InvalidateDescriptionIconCatalogCache();
+            previewFingerprint = string.Empty;
+            EnsureRichTextPreview(force: true);
+            previewContainer?.MarkDirtyRepaint();
+            UpdateStatus();
+        }
+
+        private void ApplyRichTextLayout(string code, float bearingX, float bearingY, float baseScale)
+        {
+            if (string.IsNullOrEmpty(code))
+            {
+                return;
+            }
+
             EnsureInlineIconStyleLoaded();
-            inlineIconStyle.SetEntry(richTextSelectedCode, bearingX, bearingY, baseScale);
+            inlineIconStyle.SetEntry(code, bearingX, bearingY, baseScale);
             inlineIconStyleDirty = true;
             CardFacePresentationBinder.SetInlineIconStyleOverride(inlineIconStyle);
             CardFacePresentationBinder.InvalidateInlineIconStyleCache();
@@ -779,14 +958,30 @@ namespace NineGrid.Content.Editor
 
         private void EnsureRichTextPreview(bool force = false)
         {
+            EnsureIconCatalogLoaded();
             var fingerprint = "richtext|" + richTextPreviewKind + "|"
                               + (richTextSampleDescription ?? string.Empty) + "|"
-                              + richTextSelectedCode + "|"
-                              + (inlineIconStyle != null ? inlineIconStyle.GetInstanceID() : 0);
+                              + (inlineIconStyle != null ? inlineIconStyle.GetInstanceID() : 0) + "|"
+                              + (iconCatalog != null ? iconCatalog.GetInstanceID() : 0);
             if (inlineIconStyle != null)
             {
-                inlineIconStyle.Resolve(richTextSelectedCode, out var bx, out var by, out var scale);
-                fingerprint += "|" + bx + "," + by + "," + scale;
+                fingerprint += "|styleEntries=" + inlineIconStyle.Entries.Count;
+            }
+
+            if (iconCatalog != null)
+            {
+                fingerprint += "|catalogEntries=" + iconCatalog.Entries.Count;
+                for (var i = 0; i < iconCatalog.Entries.Count; i++)
+                {
+                    var entry = iconCatalog.Entries[i];
+                    if (entry == null)
+                    {
+                        continue;
+                    }
+
+                    fingerprint += ";" + (entry.code ?? string.Empty) + "="
+                                   + (entry.sprite != null ? entry.sprite.GetInstanceID() : 0);
+                }
             }
 
             if (!force && fingerprint == previewFingerprint && previewHost.PreviewRoot != null)
@@ -838,6 +1033,27 @@ namespace NineGrid.Content.Editor
             CardFacePresentationBinder.InvalidateInlineIconStyleCache();
         }
 
+        private void EnsureIconCatalogLoaded()
+        {
+            if (iconCatalog != null)
+            {
+                return;
+            }
+
+            iconCatalog = AssetDatabase.LoadAssetAtPath<CardFaceDescriptionIconCatalogSO>(
+                CardChassisPaths.DescriptionIconCatalogAsset);
+            if (iconCatalog != null)
+            {
+                return;
+            }
+
+            iconCatalog = ScriptableObject.CreateInstance<CardFaceDescriptionIconCatalogSO>();
+            iconCatalog.name = "CardFaceDescriptionIconCatalog";
+            AssetDatabase.CreateAsset(iconCatalog, CardChassisPaths.DescriptionIconCatalogAsset);
+            AssetDatabase.SaveAssets();
+            CardFacePresentationBinder.InvalidateDescriptionIconCatalogCache();
+        }
+
         private void TryPersistInlineIconStyle()
         {
             if (!inlineIconStyleDirty || inlineIconStyle == null)
@@ -849,6 +1065,63 @@ namespace NineGrid.Content.Editor
             AssetDatabase.SaveAssets();
             inlineIconStyleDirty = false;
             CardFacePresentationBinder.InvalidateInlineIconStyleCache();
+        }
+
+        private void TryPersistIconCatalog()
+        {
+            if (!iconCatalogDirty || iconCatalog == null)
+            {
+                return;
+            }
+
+            // 保存前丢掉保留代号与空代号行。
+            var keep = new List<CardFaceDescriptionIconCatalogSO.Entry>();
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            for (var i = 0; i < iconCatalog.Entries.Count; i++)
+            {
+                var entry = iconCatalog.Entries[i];
+                if (entry == null || string.IsNullOrWhiteSpace(entry.code))
+                {
+                    continue;
+                }
+
+                var code = entry.code.Trim();
+                if (CardFaceDescriptionIconCatalogSO.IsReservedAssemblySlotCode(code)
+                    || !seen.Add(code))
+                {
+                    continue;
+                }
+
+                entry.code = code;
+                keep.Add(entry);
+            }
+
+            iconCatalog.ReplaceEntries(keep);
+            EditorUtility.SetDirty(iconCatalog);
+            AssetDatabase.SaveAssets();
+            iconCatalogDirty = false;
+            CardFacePresentationBinder.InvalidateDescriptionIconCatalogCache();
+        }
+
+        private string AllocateNewCatalogCode()
+        {
+            EnsureIconCatalogLoaded();
+            const string prefix = "New_Icon";
+            if (!iconCatalog.TryGetEntry(prefix, out _))
+            {
+                return prefix;
+            }
+
+            for (var i = 2; i < 1000; i++)
+            {
+                var candidate = prefix + "_" + i;
+                if (!iconCatalog.TryGetEntry(candidate, out _))
+                {
+                    return candidate;
+                }
+            }
+
+            return prefix + "_" + Guid.NewGuid().ToString("N").Substring(0, 6);
         }
 
         private static Dictionary<string, Sprite> CaptureTemplateSpritesForKind(CardPresentationKind kind)
@@ -1665,7 +1938,7 @@ namespace NineGrid.Content.Editor
             if (descriptionRichTextFocused)
             {
                 focusText = "描述富文本 · " + richTextPreviewKind
-                            + (inlineIconStyleDirty ? " · 样式脏" : string.Empty);
+                            + (inlineIconStyleDirty || iconCatalogDirty ? " · 脏" : string.Empty);
             }
             else
             {
@@ -1682,6 +1955,7 @@ namespace NineGrid.Content.Editor
         private void SaveAll()
         {
             TryPersistInlineIconStyle();
+            TryPersistIconCatalog();
             if (!session.TrySaveAll(out var error))
             {
                 EditorUtility.DisplayDialog("保存失败", error ?? "未知错误", "确定");

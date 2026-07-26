@@ -247,8 +247,8 @@ _Avoid_: 用悬停描述顶替详细描述面板、把详述长文塞进卡面�
 _Avoid_: 中文当主键、描述写资源路径、缺省找全局图、缺省数值用 -1 或隐藏当「无」
 
 **描述图标引用**：
-卡面基础描述中用方括号包裹装配槽代号以插入图标，形如 `在[Action_Icon]回合后攻击玩家`；输入/JSON 始终保留代码，运行时与表现层预览按该卡装配结果（模板缺省图标）解析为 TMP 内联 sprite。内联布局（em 相对 Offset / Base Scale）由项目级 `CardFaceDescriptionInlineIconStyle` 管，调好后随描述字号与描述节点缩放自动跟从；编辑入口为「NineGrid/表现层配置 → 描述富文本」。
-_Avoid_: `{icon:…}` 与槽表脱节、表情字符、裸路径、把内联布局写进单卡 JSON、字号一变就重调绝对像素偏移
+卡面基础描述中用方括号包裹代号以插入图标。两类来源单向分层：① 装配 Insertable 槽（如 `[Action_Icon]` / `[Main_Icon]`）只由高层装配/模板缺省下行解析，描述侧**不可**改其 Sprite；② 项目级描述专用图标表 `CardFaceDescriptionIconCatalog` 登记与装配无关的自定义码（如 `[Poison]`），直接绑 Sprite，全局共用、不写回预制体。输入/JSON 始终保留代码；运行时与表现层预览解析为 TMP 内联 sprite。内联布局（em 相对 Offset / Base Scale）仍由项目级 `CardFaceDescriptionInlineIconStyle` 按代号管理。编辑入口：「NineGrid/表现层配置 → 描述富文本」。
+_Avoid_: 用描述表覆盖 `Main_Icon`/`Action_Icon`、占用装配槽保留代号、`{icon:…}` 与槽表脱节、表情字符、裸路径、把内联布局或描述图标映射写进单卡 JSON、字号一变就重调绝对像素偏移
 
 **装配槽注册表**：
 项目级 ScriptableObject，登记全部卡面装配槽代号、中文注释与槽角色（直接暴露/收纳/可插入描述/数值等）；卡面模板选用并绑定节点，内容条目按代号填值。

@@ -8,9 +8,9 @@ using UnityEngine;
 namespace NineGrid.Cards.Presentation
 {
     /// <summary>
-    /// 旁路纯数据 seam：把基础描述中的 `[SlotCode]` 解析为 TMP 内联图标标签。
-    /// 仅替换注册表中带 <see cref="CardFaceSlotRole.InsertableInDescription"/> 且已装配到 Sprite 的代号；
-    /// 普通语义括号（如 `[使用时]`）原样保留。不进数值 Commit 跳动。
+    /// 旁路纯数据 seam：把基础描述中的 `[SlotCode]` / `[CatalogCode]` 解析为 TMP 内联图标标签。
+    /// 装配 Insertable 槽只走 assembledIcons（高层下行，catalog 不可覆盖）；
+    /// 其余代号走项目级描述图标表。普通语义括号（如 `[使用时]`）原样保留。
     /// </summary>
     public static class CardFaceDescriptionComposer
     {
@@ -46,14 +46,18 @@ namespace NineGrid.Cards.Presentation
             IReadOnlyDictionary<string, Sprite> assembledIcons,
             CardFaceSlotRegistrySO registry)
         {
+            return Compose(basicDescription, assembledIcons, registry, catalog: null);
+        }
+
+        public static Result Compose(
+            string basicDescription,
+            IReadOnlyDictionary<string, Sprite> assembledIcons,
+            CardFaceSlotRegistrySO registry,
+            CardFaceDescriptionIconCatalogSO catalog)
+        {
             if (string.IsNullOrWhiteSpace(basicDescription))
             {
                 return new Result(string.Empty, Array.Empty<InlineIcon>());
-            }
-
-            if (registry == null)
-            {
-                return new Result(basicDescription, Array.Empty<InlineIcon>());
             }
 
             var icons = new List<InlineIcon>();
@@ -64,7 +68,7 @@ namespace NineGrid.Cards.Presentation
             {
                 builder.Append(basicDescription, offset, match.Index - offset);
                 var code = match.Groups[1].Value;
-                if (TryResolveInsertable(code, assembledIcons, registry, out var sprite))
+                if (TryResolve(code, assembledIcons, registry, catalog, out var sprite))
                 {
                     builder.Append("<sprite name=\"").Append(code).Append("\">");
                     if (seen.Add(code))
@@ -84,30 +88,44 @@ namespace NineGrid.Cards.Presentation
             return new Result(builder.ToString(), icons);
         }
 
-        private static bool TryResolveInsertable(
+        private static bool TryResolve(
             string slotCode,
             IReadOnlyDictionary<string, Sprite> assembledIcons,
             CardFaceSlotRegistrySO registry,
+            CardFaceDescriptionIconCatalogSO catalog,
             out Sprite sprite)
         {
             sprite = null;
-            if (string.IsNullOrEmpty(slotCode)
-                || !registry.TryGet(slotCode, out var definition)
-                || definition == null
-                || !definition.HasRole(CardFaceSlotRole.InsertableInDescription))
+            if (string.IsNullOrEmpty(slotCode))
             {
                 return false;
             }
 
-            if (assembledIcons == null
-                || !assembledIcons.TryGetValue(slotCode, out sprite)
-                || sprite == null)
+            // 装配 Insertable：只看高层 assembled，catalog 不可反向覆盖。
+            if (registry != null
+                && registry.TryGet(slotCode, out var definition)
+                && definition != null
+                && definition.HasRole(CardFaceSlotRole.InsertableInDescription))
             {
-                sprite = null;
-                return false;
+                if (assembledIcons == null
+                    || !assembledIcons.TryGetValue(slotCode, out sprite)
+                    || sprite == null)
+                {
+                    sprite = null;
+                    return false;
+                }
+
+                return true;
             }
 
-            return true;
+            // 描述专用表：自定义代号；保留装配槽名时 TryGet 会拒绝。
+            if (catalog != null && catalog.TryGet(slotCode, out sprite) && sprite != null)
+            {
+                return true;
+            }
+
+            sprite = null;
+            return false;
         }
     }
 }

@@ -3,7 +3,6 @@ using NUnit.Framework;
 using NineGrid.Cards.Presentation;
 using NineGrid.Cards.Slots;
 using UnityEngine;
-using NineGrid.Cards;
 
 namespace NineGrid.Presentation.Tests
 {
@@ -14,16 +13,21 @@ namespace NineGrid.Presentation.Tests
     public sealed class CardFaceDescriptionComposerTests
     {
         private CardFaceSlotRegistrySO _registry;
+        private CardFaceDescriptionIconCatalogSO _catalog;
         private Sprite _actionIcon;
         private Sprite _mainIcon;
+        private Sprite _poisonIcon;
 
         [SetUp]
         public void SetUp()
         {
             _registry = ScriptableObject.CreateInstance<CardFaceSlotRegistrySO>();
             _registry.ApplyDefaultCatalog();
+            _catalog = ScriptableObject.CreateInstance<CardFaceDescriptionIconCatalogSO>();
             _actionIcon = CreateSprite("assembled-action-icon");
             _mainIcon = CreateSprite("assembled-main-icon");
+            _poisonIcon = CreateSprite("catalog-poison-icon");
+            Assert.IsTrue(_catalog.TryAddOrUpdate("Poison", _poisonIcon, "毒素", out _));
         }
 
         [TearDown]
@@ -35,8 +39,15 @@ namespace NineGrid.Presentation.Tests
                 _registry = null;
             }
 
+            if (_catalog != null)
+            {
+                Object.DestroyImmediate(_catalog);
+                _catalog = null;
+            }
+
             DestroySprite(ref _actionIcon);
             DestroySprite(ref _mainIcon);
+            DestroySprite(ref _poisonIcon);
         }
 
         [Test]
@@ -134,6 +145,113 @@ namespace NineGrid.Presentation.Tests
 
             var blank = CardFaceDescriptionComposer.Compose("   ", null, _registry);
             Assert.AreEqual(string.Empty, blank.TmpRichText);
+        }
+
+        [Test]
+        public void Compose_CatalogCode_ResolvesFromDescriptionIconCatalog()
+        {
+            var result = CardFaceDescriptionComposer.Compose(
+                "施加[Poison]",
+                null,
+                _registry,
+                _catalog);
+
+            Assert.AreEqual("施加<sprite name=\"Poison\">", result.TmpRichText);
+            Assert.AreEqual(1, result.Icons.Count);
+            Assert.AreEqual("Poison", result.Icons[0].SlotCode);
+            Assert.AreSame(_poisonIcon, result.Icons[0].Sprite);
+        }
+
+        [Test]
+        public void Compose_CatalogCannotOverrideInsertableAssemblySlot()
+        {
+            Assert.IsFalse(
+                _catalog.TryAddOrUpdate(CardFaceSlotCodes.ActionIcon, _poisonIcon, null, out _),
+                "catalog API 应拒绝保留装配槽代号");
+
+            // 即便强行塞入条目，Compose 也只走 assembled。
+            _catalog.ReplaceEntries(new[]
+            {
+                new CardFaceDescriptionIconCatalogSO.Entry
+                {
+                    code = CardFaceSlotCodes.ActionIcon,
+                    sprite = _poisonIcon,
+                },
+                new CardFaceDescriptionIconCatalogSO.Entry
+                {
+                    code = "Poison",
+                    sprite = _poisonIcon,
+                },
+            });
+
+            var assembled = new Dictionary<string, Sprite>
+            {
+                { CardFaceSlotCodes.ActionIcon, _actionIcon }
+            };
+            var result = CardFaceDescriptionComposer.Compose(
+                "在[Action_Icon]后",
+                assembled,
+                _registry,
+                _catalog);
+
+            Assert.AreEqual("在<sprite name=\"Action_Icon\">后", result.TmpRichText);
+            Assert.AreSame(_actionIcon, result.Icons[0].Sprite);
+        }
+
+        [Test]
+        public void Compose_CatalogEntryForMissingInsertable_DoesNotFillGap()
+        {
+            _catalog.ReplaceEntries(new[]
+            {
+                new CardFaceDescriptionIconCatalogSO.Entry
+                {
+                    code = CardFaceSlotCodes.ActionIcon,
+                    sprite = _poisonIcon,
+                },
+            });
+
+            var result = CardFaceDescriptionComposer.Compose(
+                "在[Action_Icon]后",
+                new Dictionary<string, Sprite>(),
+                _registry,
+                _catalog);
+
+            Assert.AreEqual("在[Action_Icon]后", result.TmpRichText);
+            Assert.AreEqual(0, result.Icons.Count);
+        }
+
+        [Test]
+        public void Compose_MixedAssemblyAndCatalog_ResolvesBoth()
+        {
+            var assembled = new Dictionary<string, Sprite>
+            {
+                { CardFaceSlotCodes.ActionIcon, _actionIcon }
+            };
+
+            var result = CardFaceDescriptionComposer.Compose(
+                "在[Action_Icon]后施加[Poison]",
+                assembled,
+                _registry,
+                _catalog);
+
+            Assert.AreEqual(
+                "在<sprite name=\"Action_Icon\">后施加<sprite name=\"Poison\">",
+                result.TmpRichText);
+            Assert.AreEqual(2, result.Icons.Count);
+        }
+
+        [Test]
+        public void Compose_CatalogEmptySprite_LeavesBracketLiteral()
+        {
+            Assert.IsTrue(_catalog.TryAddOrUpdate("EmptyIcon", null, null, out _));
+            var result = CardFaceDescriptionComposer.Compose(
+                "看[EmptyIcon]",
+                null,
+                _registry,
+                _catalog);
+
+            Assert.AreEqual("看[EmptyIcon]", result.TmpRichText);
+            Assert.AreEqual(0, result.Icons.Count);
         }
 
         private static Sprite CreateSprite(string name)

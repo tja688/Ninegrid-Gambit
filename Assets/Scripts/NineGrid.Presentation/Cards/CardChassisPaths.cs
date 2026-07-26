@@ -14,5 +14,7 @@ namespace NineGrid.Cards
         public const string SlotRegistryAsset = "Assets/Arts/Cards/CardFaceSlotRegistry.asset";
         public const string DescriptionInlineIconStyleAsset =
             "Assets/Arts/Cards/CardFaceDescriptionInlineIconStyle.asset";
+        public const string DescriptionIconCatalogAsset =
+            "Assets/Arts/Cards/CardFaceDescriptionIconCatalog.asset";
     }
 }
