@@ -1,27 +1,47 @@
 using NineGrid.Cards.Convergence;
-using UnityEngine;
+using NineGrid.Flow;
 using NineGrid.Presentation;
+using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace NineGrid.Cards
 {
     /// <summary>
     /// 场地卡牌 hover 命中代理：挂在 Standard Card 根节点，由预制体或运行时装配。
+    /// 由 <see cref="PointerHitRouter"/> 轮询驱动（不再使用 OnMouse*）。
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(BoxCollider2D))]
     [RequireComponent(typeof(CardVisualDriver))]
-    public sealed class GroundCardHitProxy : MonoBehaviour
+    public sealed class GroundCardHitProxy : MonoBehaviour, IPointerHitTarget
     {
         private const float InputRootAlignEpsilonSqr = 0.01f;
+        private const int TypePriority = 30;
 
         private BoxCollider2D _collider;
         private CardVisualDriver _driver;
+
+        public Collider2D HitCollider => _collider != null ? _collider : (_collider = GetComponent<BoxCollider2D>());
+
+        public int HitSortOrder => ResolveHitSortOrder();
+
+        public int HitTypePriority => TypePriority;
 
         private void Awake()
         {
             _collider = GetComponent<BoxCollider2D>();
             _driver = GetComponent<CardVisualDriver>();
             ApplyColliderSize();
+        }
+
+        private void OnEnable()
+        {
+            PointerHitRegistry.Register(this);
+        }
+
+        private void OnDisable()
+        {
+            PointerHitRegistry.Unregister(this);
         }
 
         public void ApplyColliderSize()
@@ -41,7 +61,7 @@ namespace NineGrid.Cards
             _collider.isTrigger = false;
         }
 
-        private void OnMouseEnter()
+        public void HandlePointerEnter()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (NineGrid.Presentation.Diagnostics.PerfHoverKillSwitch.SuppressGroundOnMouseHover)
@@ -63,7 +83,7 @@ namespace NineGrid.Cards
             _driver?.SetTarget(CardVisualTarget.Hover);
         }
 
-        private void OnMouseExit()
+        public void HandlePointerExit()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (NineGrid.Presentation.Diagnostics.PerfHoverKillSwitch.SuppressGroundOnMouseHover)
@@ -85,7 +105,7 @@ namespace NineGrid.Cards
             _driver?.SetTarget(CardVisualTarget.Base);
         }
 
-        private void OnMouseDown()
+        public void HandlePointerDown()
         {
             _driver ??= GetComponent<CardVisualDriver>();
             var card = _driver?.BoundCard;
@@ -128,6 +148,18 @@ namespace NineGrid.Cards
             RecordPickupEligibility(card, canRespond: true);
             // 道具卡 / 帮助卡等：场地仅允许点击入手，禁止拖拽
             CardEntityLifecycleHook.HandOrNull()?.TryPickupFromGround(card);
+        }
+
+        private int ResolveHitSortOrder()
+        {
+            var group = GetComponent<SortingGroup>();
+            if (group != null)
+            {
+                return group.sortingOrder;
+            }
+
+            var renderer = GetComponentInChildren<SpriteRenderer>(true);
+            return renderer != null ? renderer.sortingOrder : 0;
         }
 
         private void RecordPickupEligibility(ManagedCard card, bool canRespond, string blockReason = null)
@@ -219,8 +251,8 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            return TryPassGroundInputGate(card, out _)
-                   && _driver.IsGroundHoverEligible;
+            return _driver.IsGroundHoverEligible
+                   && TryPassGroundInputGate(card, out _);
         }
 
         private bool CanRespondToPickup()

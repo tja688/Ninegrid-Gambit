@@ -50,15 +50,15 @@ namespace NineGrid.Flow
         {
             if (panelRouter == null) return;
 
-            if (Input.GetKeyDown(KeyCode.Alpha1)) ToggleInGameMain();
-            if (Input.GetKeyDown(KeyCode.Alpha2)) ToggleRewardOverlay();
-            if (Input.GetKeyDown(KeyCode.Alpha3)) ToggleRoomChoiceOverlay();
-            if (Input.GetKeyDown(KeyCode.Alpha4)) ToggleRoomEventOverlay();
-            if (Input.GetKeyDown(KeyCode.Alpha5)) ToggleInfoOverlay();
-            if (Input.GetKeyDown(KeyCode.Alpha6)) ToggleMainBackground();
-            if (Input.GetKeyDown(KeyCode.Alpha7)) ToggleInGameInfoText();
-            if (Input.GetKeyDown(KeyCode.Alpha0)) DumpPanelStates();
-            if (Input.GetKeyDown(KeyCode.Keypad1)) _livingFormChoiceConsumer?.HandleKeypad1();
+            if (KeyboardUtility.GetKeyDown(KeyCode.Alpha1)) ToggleInGameMain();
+            if (KeyboardUtility.GetKeyDown(KeyCode.Alpha2)) ToggleRewardOverlay();
+            if (KeyboardUtility.GetKeyDown(KeyCode.Alpha3)) ToggleRoomChoiceOverlay();
+            if (KeyboardUtility.GetKeyDown(KeyCode.Alpha4)) ToggleRoomEventOverlay();
+            if (KeyboardUtility.GetKeyDown(KeyCode.Alpha5)) ToggleInfoOverlay();
+            if (KeyboardUtility.GetKeyDown(KeyCode.Alpha6)) ToggleMainBackground();
+            if (KeyboardUtility.GetKeyDown(KeyCode.Alpha7)) ToggleInGameInfoText();
+            if (KeyboardUtility.GetKeyDown(KeyCode.Alpha0)) DumpPanelStates();
+            if (KeyboardUtility.GetKeyDown(KeyCode.Keypad1)) _livingFormChoiceConsumer?.HandleKeypad1();
         }
 
         [ContextMenu("1. 切换 主菜单/局内")]

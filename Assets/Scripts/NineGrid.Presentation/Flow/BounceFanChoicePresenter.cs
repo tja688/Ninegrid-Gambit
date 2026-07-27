@@ -137,7 +137,7 @@ namespace NineGrid.Flow
             var hovered = DetermineHoveredIndex();
             if (hovered == _hoveredIndex)
             {
-                if (hovered >= 0 && Input.GetMouseButtonDown(0))
+                if (hovered >= 0 && WorldPointerUtility.WasPrimaryPressedThisFrame())
                 {
                     BeginSelection(hovered);
                 }
@@ -570,17 +570,7 @@ namespace NineGrid.Flow
 
         private bool TryGetPointerWorld(out Vector3 worldPoint)
         {
-            worldPoint = Vector3.zero;
-            if (worldCamera == null)
-            {
-                return false;
-            }
-
-            var screen = Input.mousePosition;
-            worldPoint = worldCamera.ScreenToWorldPoint(
-                new Vector3(screen.x, screen.y, Mathf.Abs(worldCamera.transform.position.z)));
-            worldPoint.z = 0f;
-            return true;
+            return WorldPointerUtility.TryGetPointerWorld(worldCamera, out worldPoint);
         }
 
         private static void ApplySortingOrder(BounceEntry entry, int order)

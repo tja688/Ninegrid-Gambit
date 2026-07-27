@@ -315,7 +315,7 @@ namespace NineGrid.Flow
 
             while (!pickedDone)
             {
-                if (allowEscapeSkip && Input.GetKeyDown(KeyCode.Escape))
+                if (allowEscapeSkip && KeyboardUtility.GetKeyDown(KeyCode.Escape))
                 {
                     selector.HideChoice();
                     return new BouncePickResult(-1, skipRequested: true, cancelled: false);

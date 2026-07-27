@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
+using NineGrid.Flow;
 using NineGrid.Flow.Diagnostics;
 using UnityEngine;
 
@@ -29,7 +30,7 @@ namespace NineGrid.DevTest.Flow
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.F1))
+            if (KeyboardUtility.GetKeyDown(KeyCode.F1))
                 mVisible = !mVisible;
         }
 

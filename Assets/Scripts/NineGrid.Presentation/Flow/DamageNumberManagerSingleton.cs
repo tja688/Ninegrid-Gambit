@@ -118,7 +118,12 @@ namespace NineGrid.Flow
         /// </summary>
         public DamageNumber SpawnAtMousePosition(float number)
         {
-            return SpawnAtWorldPosition(ScreenToWorld(Input.mousePosition), number);
+            if (!WorldPointerUtility.TryGetPointerScreen(out var screen))
+            {
+                return null;
+            }
+
+            return SpawnAtWorldPosition(ScreenToWorld(screen), number);
         }
 
         /// <summary>

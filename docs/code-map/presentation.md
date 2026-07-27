@@ -11,6 +11,7 @@
 | 目录 | 约 `.cs` | 命名空间（主） | 放什么 |
 |------|----------|----------------|--------|
 | `Setup/` | 3 | `NineGrid.Presentation.Setup` | `PresentationSceneRoot`、`PresentationCompositionRoot`、`PresentationSceneBindings` |
+| `Platform/` | 1 | `NineGrid.Presentation.Platform` | Windows Player 高回报率鼠标 mitigation（ADR-0006；仅 Standalone Win 非 Editor 生效） |
 | `Controllers/` | 18 | `NineGrid.Presentation.Controllers` | QF `PresentationController` 场景入口 |
 | `Commands/` | 25 | `NineGrid.Presentation.Commands` | 写意图 |
 | `Queries/` | 10 | `NineGrid.Presentation.Queries` | 读裁决（合法性等） |
@@ -28,7 +29,7 @@
 | `BattleSession/` | 局内会话相关类型 / 接口 |
 | `GameFlow/` | 流程壳运行选项等 |
 | `Diagnostics/` | Battle/Flow/Perf/Registry Trace Recorder 与 Sink |
-| （根下） | `BattleSessionController`、`GameFlowController`、若干 `*ManagerSingleton`（Presenter 壳名） |
+| （根下） | `BattleSessionController`、`GameFlowController`、若干 `*ManagerSingleton`（Presenter 壳名）；**指针缝** `WorldPointerUtility`、**命中路由** `PointerHitRouter` / `IPointerHitTarget` / `PointerHitRegistry`（替代 OnMouse*，ADR-0006） |
 
 ### `Cards/` 子树
 
@@ -115,8 +116,19 @@
 - Batch/ack：表演未就位前 Core 不推进下一批（ADR-0001）  
 - 逻辑占格唯一归 Core `BoardModel`  
 - 卡面可见值经投影 Commit（ADR-0002）；禁止队列外正式 Setter 通路  
-- 卡面**数值**只经结算指令在表演锚点提交，不直读 Core（ADR-0005）
+- 输入唯一收口 IntentIntake + 两轴门禁（ADR-0004）  
+- 卡面**数值**只经结算指令在表演锚点提交，不直读 Core（ADR-0005）  
+- Windows Player 高回报率鼠标：`RIDEV_NOLEGACY` + 轮询注入 Input System；命中走 `PointerHitRouter`，禁 `OnMouse*`（ADR-0006）
 
+## 指针与命中（ADR-0006）
+
+- **读口**：`Flow/WorldPointerUtility` —— 屏幕/世界/主键边沿；优先 New Input `Mouse.current`，可 `SetOverrideSource`（测试 / 未来平台）
+- **键盘**：`Flow/KeyboardUtility` —— New Input only 下替代 `Input.GetKey*`（DevTest 热键 / UITestBootstrap / Escape Esc 跳过）
+- **命中**：`Flow/PointerHitRouter`（`RuntimeInitializeOnLoad` 自举；`-40`）轮询 `PointerHitRegistry`；**手牌按下优先** `CardHandManagerSingleton.TryBeginDragFromHoveredCard`（Hand `-50` 先刷 hover 槽位带）
+- **代理**：`GroundCardHitProxy` / `GroundSlotHitProxy` / `HandCardHitProxy` / `BoardSelectParkedCardHitProxy` 实现 `IPointerHitTarget`，**无** `OnMouse*`；命中按目标平面 Z 做 Overlap，避免与手牌深度不一致漏检
+- **Win Player mitigation**：`Platform/WindowsHighPollingMouseMitigation`（`#if UNITY_STANDALONE_WIN && !UNITY_EDITOR`）
+- **工程设置**：`activeInputHandler = 1`（New Input System only）
+- **专项回归**：125 / 1000 / 4000+ Hz × 窗口/无边框/全屏；hover、空槽、点怪、手牌拖放、BoardSelect、BounceFan
 ## Core 表演契约与卡面锚点（#54 / #55 / #56 / #57 / #58）
 
 - `NineGrid.Core.PresentationBeat`：`Impact` / `Settled` / `None`（升级路径注释在枚举旁）
@@ -130,4 +142,4 @@
 - **报点**：攻击/反击命中帧 → `Impact`；`PresentStep` 通道完成后先冲刷 `Impact` 再报 `Settled`，然后 `TryAcknowledge`（探索/用道具无帧级回调，收尾时一并冲刷）
 - **组合根**：`PresentationCompositionRoot` 注册排期器并订阅 `Evt_PresentationBatchOpened`
 - **读写约定补则**：卡面数值只经排期器/生成引导，禁止 Mapper 首次 `TryRead` 写数值；JSON `stats` 仅 Catalog 造卡用；用道具 Present 只 `RefreshVisualsPreservingCommittedStatsOnAllSpawned`；探索/用道具批次投影不写卡面数值；`MarkFieldDead` 只标死亡态不改血量；底盘数值 Setter 非公开
-- **ADR**：[ADR-0005](../adr/0005-card-face-beat-commit.md)（与 0001/0002/0004 交叉引用）
+- **ADR**：[ADR-0005](../adr/0005-card-face-beat-commit.md)（与 0001/0002/0004 交叉引用）；指针/高回报率见 [ADR-0006](../adr/0006-windows-high-polling-mouse-mitigation.md)

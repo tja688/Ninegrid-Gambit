@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards.Convergence;
+using NineGrid.Flow;
 using UnityEngine;
 
 namespace NineGrid.Cards
@@ -1647,8 +1648,13 @@ namespace NineGrid.Cards
                 return;
             }
 
+            if (!WorldPointerUtility.TryGetPointerScreen(out var pointerScreen))
+            {
+                return;
+            }
+
             var pointerWorld = ScreenToWorldOnPlane(
-                Input.mousePosition,
+                pointerScreen,
                 camera,
                 ResolveDeckHoverPlaneZ());
             var resolved = ResolveDeckHoverTarget(pointerWorld.x, pointerWorld.y);

@@ -13,6 +13,9 @@
 | [tests.md](./tests.md) | EditMode 测试地图与护栏 |
 | [ADR-0001](../adr/0001-battle-presentation-unified-timeline-batch-ack.md) | 统一时间线 / Batch-ack |
 | [ADR-0002](../adr/0002-card-chassis-and-face-templates.md) | 单底盘四卡面 + Commit |
+| [ADR-0004](../adr/0004-input-intake-two-axis-gating.md) | IntentIntake 两轴门禁 |
+| [ADR-0005](../adr/0005-card-face-beat-commit.md) | 卡面数值表演锚点提交 |
+| [ADR-0006](../adr/0006-windows-high-polling-mouse-mitigation.md) | Win Player 高回报率鼠标兜底 |
 
 ## 程序集一览
 

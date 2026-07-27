@@ -1,0 +1,161 @@
+using NineGrid.Cards;
+using UnityEngine;
+
+namespace NineGrid.Flow
+{
+    /// <summary>
+    /// 每帧轮询指针命中：合成 Enter / Exit / Down，替代 legacy OnMouse*。
+    /// 与 ADR-0006 配套——RIDEV_NOLEGACY 后 OnMouse* 不再可用。
+    /// 手牌拖拽优先走本帧已刷新的 hover 槽位带（Hand 在 -50 先于本路由），
+    /// 避免 Overlap 与 band 不一致导致「能悬停不能拖」。
+    /// </summary>
+    [DisallowMultipleComponent]
+    [DefaultExecutionOrder(-40)]
+    public sealed class PointerHitRouter : MonoBehaviour
+    {
+        private IPointerHitTarget _hovered;
+        private Camera _camera;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void EnsureExists()
+        {
+            if (FindFirstObjectByType<PointerHitRouter>() != null)
+            {
+                return;
+            }
+
+            var go = new GameObject(nameof(PointerHitRouter));
+            DontDestroyOnLoad(go);
+            go.AddComponent<PointerHitRouter>();
+        }
+
+        private void Update()
+        {
+            Tick();
+        }
+
+        /// <summary>EditMode / 测试可直接驱动一帧。</summary>
+        public void Tick()
+        {
+            var cam = ResolveCamera();
+            if (cam == null || !WorldPointerUtility.TryGetPointerScreen(out var screen))
+            {
+                ClearHover();
+                return;
+            }
+
+            var best = ResolveBestTarget(cam, screen);
+            if (!ReferenceEquals(best, _hovered))
+            {
+                if (_hovered != null)
+                {
+                    _hovered.HandlePointerExit();
+                }
+
+                _hovered = best;
+                _hovered?.HandlePointerEnter();
+            }
+
+            if (!WorldPointerUtility.WasPrimaryPressedThisFrame())
+            {
+                return;
+            }
+
+            // 手牌：按下时拖当前 hover 卡（上一帧槽位带结果），优先于 collider Down。
+            var hand = CardEntityLifecycleHook.HandOrNull();
+            if (hand != null && hand.TryBeginDragFromHoveredCard())
+            {
+                return;
+            }
+
+            best?.HandlePointerDown();
+        }
+
+        /// <summary>EditMode：强制清 hover 状态。</summary>
+        public void ResetHoverStateForTests()
+        {
+            ClearHover();
+        }
+
+        private void ClearHover()
+        {
+            if (_hovered == null)
+            {
+                return;
+            }
+
+            _hovered.HandlePointerExit();
+            _hovered = null;
+        }
+
+        private Camera ResolveCamera()
+        {
+            if (_camera != null)
+            {
+                return _camera;
+            }
+
+            _camera = Camera.main;
+            return _camera;
+        }
+
+        private static IPointerHitTarget ResolveBestTarget(Camera camera, Vector2 screen)
+        {
+            IPointerHitTarget best = null;
+            var bestSort = int.MinValue;
+            var bestType = int.MinValue;
+            var targets = PointerHitRegistry.All;
+            for (var i = 0; i < targets.Count; i++)
+            {
+                var target = targets[i];
+                if (target == null)
+                {
+                    continue;
+                }
+
+                var collider = target.HitCollider;
+                if (collider == null || !collider.enabled || !collider.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                // 按目标所在平面还原世界坐标，避免与手牌/场地 Z 不一致导致 Overlap 漏检。
+                var planeZ = collider.transform.position.z;
+                if (!TryScreenToWorldOnPlane(camera, screen, planeZ, out var world))
+                {
+                    continue;
+                }
+
+                if (!collider.OverlapPoint(world))
+                {
+                    continue;
+                }
+
+                var sort = target.HitSortOrder;
+                var type = target.HitTypePriority;
+                if (best == null
+                    || sort > bestSort
+                    || (sort == bestSort && type > bestType))
+                {
+                    best = target;
+                    bestSort = sort;
+                    bestType = type;
+                }
+            }
+
+            return best;
+        }
+
+        private static bool TryScreenToWorldOnPlane(
+            Camera camera,
+            Vector2 screen,
+            float planeZ,
+            out Vector3 world)
+        {
+            var depth = camera.WorldToScreenPoint(new Vector3(0f, 0f, planeZ)).z;
+            world = camera.ScreenToWorldPoint(new Vector3(screen.x, screen.y, depth));
+            world.z = planeZ;
+            return true;
+        }
+    }
+}

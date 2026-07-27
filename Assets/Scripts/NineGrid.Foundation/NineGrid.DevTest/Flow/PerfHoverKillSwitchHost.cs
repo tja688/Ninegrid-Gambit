@@ -1,6 +1,7 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 
 using System.Text;
+using NineGrid.Flow;
 using NineGrid.Presentation.Diagnostics;
 using UnityEngine;
 
@@ -67,23 +68,23 @@ namespace NineGrid.DevTest.Flow
                 AccumulateSample(dt);
             }
 
-            if (Input.GetKeyDown(KeyCode.F5))
+            if (KeyboardUtility.GetKeyDown(KeyCode.F5))
             {
                 LogHelpAndStatus();
                 FlashOverlay();
             }
 
-            if (Input.GetKeyDown(KeyCode.F6))
+            if (KeyboardUtility.GetKeyDown(KeyCode.F6))
             {
                 CycleMode(+1);
             }
 
-            if (Input.GetKeyDown(KeyCode.F8))
+            if (KeyboardUtility.GetKeyDown(KeyCode.F8))
             {
                 CycleMode(-1);
             }
 
-            if (Input.GetKeyDown(KeyCode.F7))
+            if (KeyboardUtility.GetKeyDown(KeyCode.F7))
             {
                 BeginSample(manual: true);
             }

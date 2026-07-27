@@ -5,6 +5,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using NineGrid.Cards.Convergence;
+using NineGrid.Flow;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using UnityEngine;
@@ -18,7 +19,9 @@ namespace NineGrid.Cards
     /// 手牌管理器单例：最多 5 张，CardHandAnchors 布局，hover / 拖拽 / 回手 / 场地抓取。
     /// 净土域：内部布局黑盒；仅暴露 C 阶段 Evict/Admit（速度恒 0）。
     /// V6 compat shell — Cards/Deck 解析优先 <see cref="CardEntityLifecycleHook"/>。
+    /// ExecutionOrder -50：先于 <see cref="NineGrid.Flow.PointerHitRouter"/> 刷新 hover，保证按下拖的是本帧悬停牌。
     /// </summary>
+    [DefaultExecutionOrder(-50)]
     public sealed class CardHandManagerSingleton : MonoBehaviour, IHandoffEndpoint
     {
         private sealed class DragSession
@@ -389,6 +392,19 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 按下时拖起当前 hover 手牌（与槽位带 hover 语义对齐；不依赖 collider Overlap）。
+        /// </summary>
+        public bool TryBeginDragFromHoveredCard()
+        {
+            if (_hoveredCard == null || !IsLiveHandCard(_hoveredCard))
+            {
+                return false;
+            }
+
+            return TryBeginDragFromHand(_hoveredCard);
+        }
+
+        /// <summary>
         /// 场地卡点击入手：道具卡 / 帮助卡等不可从场地拖拽，只能点击直接入手牌。
         /// idle：Controller 内 IntentIntake→ExternalHold→Core Apply 后，此处只播表现；
         /// busy：IntentIntake 缓冲，flush 后经 <see cref="OnPickupIntentFlushed"/> 承接。
@@ -711,8 +727,13 @@ namespace NineGrid.Cards
                 return;
             }
 
+            if (!WorldPointerUtility.TryGetPointerScreen(out var pointerScreen))
+            {
+                return;
+            }
+
             var pointerWorld = ScreenToWorldOnPlane(
-                Input.mousePosition,
+                pointerScreen,
                 camera,
                 ResolveHandHoverPlaneZ());
             var resolved = ResolveHandHoverTarget(pointerWorld.x, pointerWorld.y);
@@ -1108,11 +1129,17 @@ namespace NineGrid.Cards
 
             try
             {
-                while (Input.GetMouseButton(0))
+                while (WorldPointerUtility.IsPrimaryHeld())
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    var world = ScreenToWorldOnPlane(Input.mousePosition, camera, dragZ);
+                    if (!WorldPointerUtility.TryGetPointerScreen(out var dragScreen))
+                    {
+                        await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                        continue;
+                    }
+
+                    var world = ScreenToWorldOnPlane(dragScreen, camera, dragZ);
                     card.Transform.position = world;
 
                     var inZone = IsPointInApplyZone(world);
@@ -1124,7 +1151,13 @@ namespace NineGrid.Cards
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                 }
 
-                var releaseWorld = ScreenToWorldOnPlane(Input.mousePosition, camera, dragZ);
+                if (!WorldPointerUtility.TryGetPointerScreen(out var releaseScreen))
+                {
+                    await FinishDragWithReturnAsync(session);
+                    return;
+                }
+
+                var releaseWorld = ScreenToWorldOnPlane(releaseScreen, camera, dragZ);
                 session.PointerReleasedInZone = IsPointInApplyZone(releaseWorld);
 
                 if (!session.PointerReleasedInZone)

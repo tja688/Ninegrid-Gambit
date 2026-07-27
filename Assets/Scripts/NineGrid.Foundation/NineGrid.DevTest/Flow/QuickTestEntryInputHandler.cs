@@ -77,7 +77,7 @@ namespace NineGrid.DevTest.Flow
 
         private void PollIdle()
         {
-            if (!Input.GetKeyDown(KeyCode.Backslash))
+            if (!KeyboardUtility.GetKeyDown(KeyCode.Backslash))
             {
                 return;
             }
@@ -90,7 +90,7 @@ namespace NineGrid.DevTest.Flow
         private void PollPendingLongPress()
         {
             if (!_longPressTriggered
-                && Input.GetKey(KeyCode.Backslash)
+                && KeyboardUtility.GetKey(KeyCode.Backslash)
                 && Time.unscaledTime - _backslashDownRealtime >= LongPressSeconds)
             {
                 _longPressTriggered = true;
@@ -98,7 +98,7 @@ namespace NineGrid.DevTest.Flow
                 return;
             }
 
-            if (!Input.GetKey(KeyCode.Backslash))
+            if (!KeyboardUtility.GetKey(KeyCode.Backslash))
             {
                 ResetToIdle();
             }
@@ -107,13 +107,13 @@ namespace NineGrid.DevTest.Flow
         private void PollPicker()
         {
             // 释放 \ 键：确认选择并关闭
-            if (!Input.GetKey(KeyCode.Backslash))
+            if (!KeyboardUtility.GetKey(KeyCode.Backslash))
             {
                 ConfirmAndClose();
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.Escape))
+            if (KeyboardUtility.GetKeyDown(KeyCode.Escape))
             {
                 loopManager.HideQuickTestPickerNotice();
                 ResetToIdle();
@@ -163,7 +163,7 @@ namespace NineGrid.DevTest.Flow
             {
                 var alpha = KeyCode.Alpha0 + value;
                 var keypad = KeyCode.Keypad0 + value;
-                if (Input.GetKeyDown(alpha) || Input.GetKeyDown(keypad))
+                if (KeyboardUtility.GetKeyDown(alpha) || KeyboardUtility.GetKeyDown(keypad))
                 {
                     digit = (char)('0' + value);
                     return true;

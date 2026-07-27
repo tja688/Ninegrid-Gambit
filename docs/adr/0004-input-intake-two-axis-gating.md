@@ -30,3 +30,4 @@ status: accepted
 ## 相关
 
 - [ADR-0005](0005-card-face-beat-commit.md) — 输出侧唯一出口（排期器 → 卡面数值处理器），与本 ADR 输入唯一收口结构同源
+- [ADR-0006](0006-windows-high-polling-mouse-mitigation.md) — Win Player 高回报率鼠标兜底；命中改轮询，不改本 ADR 门禁

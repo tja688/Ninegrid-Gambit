@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using NineGrid.Flow;
 using UnityEngine;
 
 namespace NineGrid.DevTest
@@ -273,7 +274,7 @@ namespace NineGrid.DevTest
             for (var i = 0; i < snapshot.Count; i++)
             {
                 var pair = snapshot[i];
-                if (Input.GetKeyDown(pair.Key))
+                if (KeyboardUtility.GetKeyDown(pair.Key))
                 {
                     pair.Value.Invoke();
                 }

@@ -1,0 +1,58 @@
+using System.IO;
+using System.Text.RegularExpressions;
+using NineGrid.Presentation.Platform;
+using NUnit.Framework;
+using UnityEngine;
+
+namespace NineGrid.Presentation.Tests
+{
+    /// <summary>
+    /// ADR-0006：命中代理禁用 OnMouse*；指针读口与 Win Player mitigation 标记存在。
+    /// </summary>
+    public sealed class PointerInputStructuralTests
+    {
+        private static readonly string[] HitProxyFiles =
+        {
+            "Cards/GroundCardHitProxy.cs",
+            "Cards/GroundSlotHitProxy.cs",
+            "Cards/HandCardHitProxy.cs",
+            "Cards/BoardSelectParkedCardHitProxy.cs",
+        };
+
+        [Test]
+        public void Adr0006_StatusIsAccepted()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath, "..", "docs", "adr", "0006-windows-high-polling-mouse-mitigation.md"));
+            Assert.IsTrue(File.Exists(path), "missing ADR-0006");
+            var text = File.ReadAllText(path);
+            Assert.IsTrue(
+                Regex.IsMatch(text, @"^---\s*\r?\nstatus:\s*accepted\s*\r?\n---", RegexOptions.Multiline),
+                "ADR-0006 status 应为 accepted");
+        }
+
+        [Test]
+        public void HitProxies_DoNotDeclareOnMouseCallbacks()
+        {
+            var root = Path.GetFullPath(Path.Combine(Application.dataPath, "Scripts", "NineGrid.Presentation"));
+            var ban = new Regex(@"\bvoid\s+OnMouse(Enter|Exit|Down|Up|Over|Drag)\s*\(", RegexOptions.CultureInvariant);
+            foreach (var relative in HitProxyFiles)
+            {
+                var path = Path.Combine(root, relative.Replace('/', Path.DirectorySeparatorChar));
+                Assert.IsTrue(File.Exists(path), "missing " + relative);
+                Assert.IsFalse(
+                    ban.IsMatch(File.ReadAllText(path)),
+                    relative + " 禁止 OnMouse*（须走 PointerHitRouter）");
+            }
+        }
+
+        [Test]
+        public void PointerSeam_AndMitigationMarker_Exist()
+        {
+            Assert.IsNotNull(typeof(NineGrid.Flow.WorldPointerUtility));
+            Assert.IsNotNull(typeof(NineGrid.Flow.PointerHitRouter));
+            Assert.IsNotNull(typeof(NineGrid.Flow.IPointerHitTarget));
+            Assert.AreEqual("0006", WindowsHighPollingMouseMitigationInfo.AdrId);
+        }
+    }
+}
