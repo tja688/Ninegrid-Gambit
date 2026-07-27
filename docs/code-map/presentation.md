@@ -121,7 +121,7 @@
 - `PresentationEventMapEntry.Beat` + `NoneReason`：每个 `CoreEventType` 显式锚点归属；不上卡面必须写理由
 - 数值类指令绝对值：血甲用既有 `RemainingHp`/`RemainingArmor`；`BaseStatModified` / 生成类事件攻用 `ResultValue`（`Amount` 仍为 StatId，`Delta` 仍为增量）；`CardKilled` 携带 `RemainingHp`
 - 穷尽性：`NineGrid.Core.Tests.PresentationEventMapBeatExhaustivenessTests`
-- **排期器** `Flow/Presentation/BattleBeatScheduler`：批次开启装载未消费指令；`ReportBeat` 分发；Settled 后未消费只报不改
+- **排期器** `Flow/Presentation/BattleBeatScheduler`：批次开启装载未消费指令；`ReportBeat` 分发；Settled 后未消费只报不改；消费 **Avatar** 数值指令的同拍旁路调用 `PlayerInfoHudPresenter.SyncFromCore`（HUD 仍直读内核，非卡面第二条路径）
 - **卡面数值处理器** `Flow/Presentation/CardFaceStatHandler`：只从指令赋值 → `ManagedCard.CommitPresentation`；不碰 `CardRegistry` / `IStatSystem`；`SpawnCard` / `DealCard` / `ShowAvatar` 走同一 `ApplySpawnFace`；`KillCard` 取 `RemainingHp`
 - **生成绝对值** `CardFaceEventValues.WithFaceAbsolutes`：`CardSpawned` / 带 uid 的 `CardDealt` / `AvatarAppeared` 写入造卡/发牌时攻甲血
 - **开局引导** `Flow/Presentation/CardFaceGenerationBootstrap`：非锁步 Opening 从事件日志重放生成类指令；BoardSelect 视图重 Spawn 用 `ApplyFaceHistoryForUid` 重放该 uid 的生成+后续数值指令（与 Settled 同一 Handler）

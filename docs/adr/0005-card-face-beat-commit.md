@@ -44,6 +44,7 @@ v1 锚点：
 - `CoreCardPresentationMapper` 保留视觉投影；已提交卡面的数值不被直读 Core 覆写；JSON `stats` 不再盖写运行时卡面。
 - `MarkFieldDead` 只标死亡态；可见血量归零走 `KillCard` 指令的 `RemainingHp`。
 - 玩家信息 HUD、飘字、Bounce 候选项等其它消费者仍可直读，属后续迁移，不构成本票卡面数值新旧并存。
+- **衔接补丁**：命中帧摘掉 `SyncManagedCardPresentation` 后，Avatar 血甲 HUD 改由 `BattleBeatScheduler` 在消费 Avatar 数值指令的同拍调用 `PlayerInfoHudPresenter.SyncFromCore`（仍直读内核；时机与卡面锚点对齐）。
 
 ## 相关
 

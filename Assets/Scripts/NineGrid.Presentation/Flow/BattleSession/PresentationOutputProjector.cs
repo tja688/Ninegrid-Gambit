@@ -170,23 +170,12 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 视觉对账（保留已提交数值，不从 Core 覆写攻防血）。Avatar HUD 仍可旁路刷新。
+        /// 视觉对账（保留已提交数值，不从 Core 覆写攻防血）。
+        /// Avatar 血甲 HUD 改由 <see cref="BattleBeatScheduler"/> 在消费 Avatar 数值指令同拍刷新。
         /// </summary>
         public static void SyncManagedCardPresentation(ManagedCard card)
         {
             CoreCardPresentationMapper.ApplyVisualsPreservingCommittedStats(card);
-
-            var arch = NineGridArchitecture.Current;
-            if (arch == null || card == null)
-            {
-                return;
-            }
-
-            var avatarUid = arch.GetModel<BoardModel>().AvatarUid.Value;
-            if (avatarUid > 0 && card.Uid == avatarUid)
-            {
-                PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
-            }
         }
 
         /// <summary>刷新 Avatar 调试文本；面板路由静态缓存，留空则场景查找。</summary>

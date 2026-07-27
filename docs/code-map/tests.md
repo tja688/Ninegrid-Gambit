@@ -34,7 +34,7 @@
 
 | 测试 | 保护什么 |
 |------|----------|
-| `CardFaceBeatCommitBaselineTests` | #55/#56/#57/#58：攻击/反击 Present 命中后护甲已变、观察型加攻仍旧，收尾后才变；用道具解算后卡面仍旧、Present 收尾才提交；四条剧本均报 Settled；handler 不读内核；SpawnCard Settled 后卡面等于指令绝对值而非 JSON 出生值；KillCard 取 RemainingHp；Settled 漏接 Impact 值不动 |
+| `CardFaceBeatCommitBaselineTests` | #55/#56/#57/#58：攻击/反击 Present 命中后护甲已变、观察型加攻仍旧，收尾后才变；用道具解算后卡面仍旧、Present 收尾才提交；四条剧本均报 Settled；handler 不读内核；SpawnCard Settled 后卡面等于指令绝对值而非 JSON 出生值；KillCard 取 RemainingHp；Settled 漏接 Impact 值不动；Avatar HpChanged 在 Impact 后刷新 PlayerInfo HUD |
 
 ## 关闭门槛（普通实施票）
 

@@ -7,12 +7,14 @@ using NineGrid.Core.Content;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using NineGrid.Core.Utilities;
+using NineGrid.Flow;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Setup;
 using NineGrid.Presentation.Systems;
 using NineGrid.Presentation.Tests.Fixtures;
 using NUnit.Framework;
 using QFramework;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -33,6 +35,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
         private CardManagerSingleton mCardManager;
         private GameObject mChassis;
         private GameObject mMonsterFace;
+        private GameObject mPlayerInfoHudGo;
         private PresentationCompositionRoot mRoot;
 
         [SetUp]
@@ -84,8 +87,62 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
                 mMonsterFace = null;
             }
 
+            if (mPlayerInfoHudGo != null)
+            {
+                Object.DestroyImmediate(mPlayerInfoHudGo);
+                mPlayerInfoHudGo = null;
+            }
+
             DestroyAllCardManagers();
             NineGridArchitecture.ResetForTests();
+        }
+
+        [Test]
+        public void Impact_OnAvatarHpChanged_SyncsPlayerInfoHudFromCore()
+        {
+            // 回归：卡面改走锚点排期后，命中帧不再 SyncManagedCardPresentation，
+            // Avatar 血量指令须在同一 Impact 拍刷新 PlayerInfo HUD。
+            NineGridArchitecture.ResetForTests();
+            var architecture = NineGridArchitecture.Current;
+            architecture.GetUtility<IConfigUtility>().Set(
+                ContentConfigKeys.DefaultCatalog,
+                TableNineContentCatalog.CreateDefault());
+            InitialGameFactory.Create(architecture, new InitialGameOptions
+            {
+                Seed = 5610UL,
+                AvatarMaxHp = 10,
+            });
+
+            var board = architecture.GetModel<BoardModel>();
+            var avatarUid = board.AvatarUid.Value;
+            Assert.Greater(avatarUid, 0);
+            var avatar = architecture.GetModel<CardRegistry>().Get(avatarUid);
+            avatar.Stats.SetBase(StatId.Hp, 7);
+            avatar.Stats.SetBase(StatId.MaxHp, 10);
+
+            mPlayerInfoHudGo = new GameObject("PlayerInfoHud_CardFaceBeatTest");
+            var hud = mPlayerInfoHudGo.AddComponent<PlayerInfoHudPresenter>();
+            hud.ClearSnapshot();
+
+            var hpEvt = new CoreGameEvent(CoreEventType.HpChanged, 5610, "test")
+                .WithCard(avatarUid)
+                .WithTarget(avatarUid)
+                .WithRemaining(7, 0);
+            var batch = new PresentationBatch(
+                5610,
+                new[]
+                {
+                    new PresentationInstruction(hpEvt, PresentationEventMap.Get(CoreEventType.HpChanged)),
+                },
+                snapshot: null);
+            var scheduler = new BattleBeatScheduler(new CardFaceStatHandler());
+            scheduler.OnBatchOpened(batch);
+            scheduler.ReportBeat(PresentationBeat.Impact);
+
+            var coreHp = (int)typeof(PlayerInfoHudPresenter)
+                .GetField("_coreHp", BindingFlags.Instance | BindingFlags.NonPublic)
+                .GetValue(hud);
+            Assert.AreEqual(7, coreHp, "Avatar HpChanged 在 Impact 后 PlayerInfo HUD 应对齐内核血量");
         }
 
         [Test]
