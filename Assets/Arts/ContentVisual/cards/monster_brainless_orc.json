@@ -23,7 +23,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetY": -0.15000000596046449,
         "uniformScale": 1.0
     },
     "animations": {
