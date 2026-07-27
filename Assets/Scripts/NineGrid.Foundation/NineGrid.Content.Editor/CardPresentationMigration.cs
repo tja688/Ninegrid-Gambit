@@ -14,6 +14,10 @@ namespace NineGrid.Content.Editor
     /// </summary>
     public static class CardPresentationMigration
     {
+        /// <summary>
+        /// 可 Spawn / 挂卡面的内容种。不含 Skill：怪物技能不进卡面，也不进表现层配置器。
+        /// HelpCard / Item / PlayerCard 仍为道具侧真卡。
+        /// </summary>
         public static bool IsCardLikeKind(string contentKind)
         {
             if (string.IsNullOrWhiteSpace(contentKind))
@@ -29,7 +33,6 @@ namespace NineGrid.Content.Editor
                     case ContentVisualKind.Monster:
                     case ContentVisualKind.HelpCard:
                     case ContentVisualKind.Relic:
-                    case ContentVisualKind.Skill:
                         return true;
                 }
             }
@@ -38,6 +41,20 @@ namespace NineGrid.Content.Editor
             return string.Equals(k, "PlayerCard", StringComparison.OrdinalIgnoreCase)
                    || string.Equals(k, "Item", StringComparison.OrdinalIgnoreCase)
                    || string.Equals(k, "HelpCard", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// 表现层配置器条目门槛：卡面种 + 排除 <c>skill.*</c>（防 Kind 误标仍混入道具卡侧栏）。
+        /// </summary>
+        public static bool IsPresentationEditorEntry(string contentKind, string contentId)
+        {
+            if (!string.IsNullOrEmpty(contentId)
+                && contentId.StartsWith("skill.", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return IsCardLikeKind(contentKind);
         }
 
         public static CardPresentationConfigDto CreateFilledDefault(
@@ -204,7 +221,6 @@ namespace NineGrid.Content.Editor
             }
 
             return string.Equals(kind, "HelpCard", StringComparison.OrdinalIgnoreCase)
-                   || string.Equals(kind, "Skill", StringComparison.OrdinalIgnoreCase)
                    || string.Equals(kind, "Item", StringComparison.OrdinalIgnoreCase)
                    || string.Equals(kind, "PlayerCard", StringComparison.OrdinalIgnoreCase)
                    || string.Equals(kind, "Relic", StringComparison.OrdinalIgnoreCase);

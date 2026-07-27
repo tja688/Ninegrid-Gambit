@@ -122,7 +122,7 @@ namespace NineGrid.Content.Editor
                     continue;
                 }
 
-                if (!CardPresentationMigration.IsCardLikeKind(row.ContentKind))
+                if (!CardPresentationMigration.IsPresentationEditorEntry(row.ContentKind, row.ContentId))
                 {
                     continue;
                 }
@@ -484,8 +484,10 @@ namespace NineGrid.Content.Editor
                     case ContentVisualKind.Monster:
                         return CardPresentationSidebarCategory.Monster;
                     case ContentVisualKind.HelpCard:
-                    case ContentVisualKind.Skill:
                         return CardPresentationSidebarCategory.Item;
+                    case ContentVisualKind.Skill:
+                        // 技能不进配置器；若泄漏也不进道具卡侧栏。
+                        return CardPresentationSidebarCategory.Other;
                     case ContentVisualKind.Relic:
                         return CardPresentationSidebarCategory.Relic;
                 }
@@ -616,7 +618,7 @@ namespace NineGrid.Content.Editor
                     continue;
                 }
 
-                if (!CardPresentationMigration.IsCardLikeKind(dto.kind))
+                if (!CardPresentationMigration.IsPresentationEditorEntry(dto.kind, id))
                 {
                     continue;
                 }

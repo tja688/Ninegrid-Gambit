@@ -1697,7 +1697,8 @@ namespace NineGrid.Content.Editor
             var kind = CardFacePreviewBuilder.ToPresentationKind(contentKind, dto.contentId);
             if (kind == CardPresentationKind.Unknown)
             {
-                // Skill / 其它道具侧 → HelpCard 预览模板。
+                // 道具侧（HelpCard / Item / PlayerCard）无显式 PresentationKind 时用道具卡面预览。
+                // Skill 已排除出配置器，不走此兜底。
                 if (CardPresentationEditorSession.MapSidebarCategory(dto.kind)
                     == CardPresentationSidebarCategory.Item)
                 {

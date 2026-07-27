@@ -5,6 +5,7 @@
         "NineGrid.Presentation",
         "NineGrid.Presentation.Editor",
         "NineGrid.Content",
+        "NineGrid.Content.Editor",
         "NineGrid.Core",
         "QFramework",
         "UniTask",
