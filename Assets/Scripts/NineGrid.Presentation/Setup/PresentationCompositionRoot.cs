@@ -14,6 +14,8 @@ namespace NineGrid.Presentation.Setup
     {
         private IPresentationRuntimeSystem mRuntime;
         private PresentationSceneBindings mBindings;
+        private BattleBeatScheduler mBeatScheduler;
+        private IUnRegister mBatchOpenedUnRegister;
 
         /// <summary>测试夹具：直接注入剧本工厂。</summary>
         public IPresentationRuntimeSystem Install(
@@ -156,6 +158,7 @@ namespace NineGrid.Presentation.Setup
             }
 
             FusionRefillAftermath.Unregister();
+            TeardownBattleBeatScheduler();
 
             if (mBindings != null)
             {
@@ -188,6 +191,7 @@ namespace NineGrid.Presentation.Setup
             ChoicePresentationSystem.EnsureRegistered(architecture);
             BoardSelectionSystem.EnsureRegistered(architecture);
             GameFlowShellSystem.EnsureRegistered(architecture);
+            InstallBattleBeatScheduler(architecture);
 
             var existing = architecture.GetSystem<IPresentationRuntimeSystem>();
             if (existing != null && existing.IsStarted)
@@ -207,6 +211,32 @@ namespace NineGrid.Presentation.Setup
             mRuntime = existing;
             mBindings = bindings;
             return mRuntime;
+        }
+
+        private void InstallBattleBeatScheduler(IArchitecture architecture)
+        {
+            TeardownBattleBeatScheduler();
+            mBeatScheduler = new BattleBeatScheduler(new CardFaceStatHandler());
+            BattleBeatHook.OnBatchOpened = mBeatScheduler.OnBatchOpened;
+            BattleBeatHook.ReportBeat = mBeatScheduler.ReportBeat;
+            if (architecture != null)
+            {
+                mBatchOpenedUnRegister = architecture.RegisterEvent<Evt_PresentationBatchOpened>(e =>
+                {
+                    if (e != null)
+                    {
+                        BattleBeatHook.NotifyBatchOpened(e.Batch);
+                    }
+                });
+            }
+        }
+
+        private void TeardownBattleBeatScheduler()
+        {
+            mBatchOpenedUnRegister?.UnRegister();
+            mBatchOpenedUnRegister = null;
+            BattleBeatHook.Reset();
+            mBeatScheduler = null;
         }
     }
 }

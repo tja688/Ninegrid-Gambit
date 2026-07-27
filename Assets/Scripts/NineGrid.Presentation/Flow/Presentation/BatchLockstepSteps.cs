@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NineGrid.Core;
 using UnityEngine;
 using NineGrid.Flow.Diagnostics;
 
@@ -157,6 +158,12 @@ namespace NineGrid.Flow.Presentation
                 MaybeStall(DirectorTrace.StallPhaseNotComplete);
                 return TimelineStepStatus.Continue;
             }
+
+            // 表演通道完成后、就位回执前：
+            // 先冲刷 Impact（探索/道具无命中帧回调；攻击/反击若已在命中帧报过则为空操作），
+            // 再报 Settled 消费观察型加攻等收尾归属。
+            BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
+            BattleBeatHook.NotifyBeat(PresentationBeat.Settled);
 
             if (!mGate.TryAcknowledge(mBatchId))
             {

@@ -24,7 +24,7 @@
 
 | 子目录 | 内容 |
 |--------|------|
-| `Presentation/` | `PresentationDirector`、`BattleTimeline`、`IPresentChannel` 实现、Intent Script Factory、Scheduler 等编排深模块；部分 struct Event |
+| `Presentation/` | `PresentationDirector`、`BattleTimeline`、`IPresentChannel` 实现、Intent Script Factory、`BattleBeatScheduler` / `CardFaceStatHandler`、Scheduler 等编排深模块；部分 struct Event |
 | `BattleSession/` | 局内会话相关类型 / 接口 |
 | `GameFlow/` | 流程壳运行选项等 |
 | `Diagnostics/` | Battle/Flow/Perf/Registry Trace Recorder 与 Sink |
@@ -72,14 +72,14 @@
 | `ChoicePresentationSystem` | 房间/奖励选择表现 |
 | `GroundPresentation` | 场地表现辅助 |
 
-## 静态 Hook（16）——装配缝，不是业务 Sink
+## 静态 Hook（17）——装配缝，不是业务 Sink
 
-`CombatHitSink` 已删除。现存 `*Hook` 是 **Cards/Flow 目录代码 ↔ Presentation Controllers** 的窄接线（避免历史环依赖），由 Controller 在 `RuntimeInitializeOnLoad` / `OnBind` 注册委托。
+`CombatHitSink` 已删除。现存 `*Hook` 是 **Cards/Flow 目录代码 ↔ Presentation Controllers** 的窄接线（避免历史环依赖），由 Controller 在 `RuntimeInitializeOnLoad` / `OnBind` 注册委托；卡面锚点报点桥由组合根注入。
 
 | 位置 | 示例 |
 |------|------|
 | `Cards/` | `AttackInputHook`、`ExploreInputHook`、`PickupInputHook`、`UseItemInputHook`、`FieldBattlePresentationHook`、`GroundFieldGeometryHook`、`CardEntityLifecycleHook`、`CardZoneOwnershipHook`、输出类 Hook… |
-| `Flow/` | `GameFlowShellHook`、`RelicHudHook`、`RoomChoiceCoreHook`、`RewardChoiceCoreHook` |
+| `Flow/` | `GameFlowShellHook`、`RelicHudHook`、`RoomChoiceCoreHook`、`RewardChoiceCoreHook`、`BattleBeatHook`（排期器报点） |
 
 **禁止**新增业务静态 Sink（跨层读写规则状态）。新交互优先走 Command / Query / Event / System。
 
@@ -103,19 +103,26 @@
 
 1. `Commands/` / `Queries/` / Event  
 2. `ITimelineStep` / `IPresentChannel`（`Flow/Presentation/`）  
-3. 卡面视觉 SO（`Cards/Effects/`）  
+3. `BattleBeatScheduler` / `CardFaceStatHandler`（卡面数值锚点；新事件须在 `PresentationEventMap` 声明 Beat）  
+4. 卡面视觉 SO（`Cards/Effects/`）  
 
-不要接回静态业务 Sink，也不要在 View 上直接改 Core 规则状态。
+不要接回静态业务 Sink，也不要在 View 上直接改 Core 规则状态，也不要旁路直读 Core 写卡面数值。
 
 ## ADR 不变量（摘要）
 
 - Batch/ack：表演未就位前 Core 不推进下一批（ADR-0001）  
 - 逻辑占格唯一归 Core `BoardModel`  
-- 卡面可见值经投影 Commit（ADR-0002）；禁止队列外正式 Setter 通路
+- 卡面可见值经投影 Commit（ADR-0002）；禁止队列外正式 Setter 通路  
+- 卡面**数值**只经结算指令在表演锚点提交，不直读 Core（ADR-0005）
 
-## Core 表演契约（#54 已落地；排期器消费属后续票）
+## Core 表演契约与卡面锚点（#54 / #55）
 
 - `NineGrid.Core.PresentationBeat`：`Impact` / `Settled` / `None`（升级路径注释在枚举旁）
 - `PresentationEventMapEntry.Beat` + `NoneReason`：每个 `CoreEventType` 显式锚点归属；不上卡面必须写理由
-- 数值类指令绝对值：血甲用既有 `RemainingHp`/`RemainingArmor`；`BaseStatModified` 追加 `CoreGameEvent.ResultValue`（`Amount` 仍为 StatId，`Delta` 仍为增量）
+- 数值类指令绝对值：血甲用既有 `RemainingHp`/`RemainingArmor`；`BaseStatModified` 用 `ResultValue`（`Amount` 仍为 StatId，`Delta` 仍为增量）
 - 穷尽性：`NineGrid.Core.Tests.PresentationEventMapBeatExhaustivenessTests`
+- **排期器** `Flow/Presentation/BattleBeatScheduler`：批次开启装载未消费指令；`ReportBeat` 分发；Settled 后未消费只报不改
+- **卡面数值处理器** `Flow/Presentation/CardFaceStatHandler`：只从指令赋值 → `ManagedCard.CommitPresentation`；不碰 `CardRegistry` / `IStatSystem`
+- **报点**：攻击/反击命中帧 → `Impact`；`PresentStep` 通道完成后先冲刷 `Impact` 再报 `Settled`，然后 `TryAcknowledge`
+- **组合根**：`PresentationCompositionRoot` 注册排期器并订阅 `Evt_PresentationBatchOpened`
+- **读写约定补则**：卡面数值只经排期器，禁止命中帧/观察型旁路直读提交

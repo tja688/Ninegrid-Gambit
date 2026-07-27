@@ -11,14 +11,11 @@ using UnityEngine;
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 局内单向输出投影：伤害飘字、金币、Trigger 脉冲、拾取后旁路演出、卡面 Commit 路由。
-    /// 全静态、无 Unity 场景所有权；卡牌宿主经 <see cref="CardEntityLifecycleHook"/> 兜底解析。
+    /// 局内单向输出投影：伤害飘字、金币、Trigger 脉冲、拾取后旁路演出。
+    /// 卡面数值提交改由 <see cref="BattleBeatScheduler"/> 在表演锚点消费结算指令；本类不再直读同步卡面攻防血。
     /// </summary>
     public static class PresentationOutputProjector
     {
-        private const string StoneLoverSkillDefId = "skill.stone_lover";
-        private const string StoneLoverArmorLostCause = "skill.stone_lover.armor_lost";
-
         private static UiPanelRouter _panelRouter;
 
         public static CombatDamagePopup[] CollectDamagePopups(
@@ -118,7 +115,7 @@ namespace NineGrid.Flow
         /// <summary>
         /// 扫描 EffectTriggered：经 TriggerPulseHub 发 FX/音效脉冲（发即完成、可降级）。
         /// 仅九宫格在场卡；卡组 / 手牌 / 已移除不播。不占主时间线控制权。
-        /// 石头爱好者：额外同拍刷新卡面攻（观察型加攻不走受击 Sync）。
+        /// 卡面数值不在此同步——观察型加攻等走收尾锚点。
         /// </summary>
         public static void PresentEffectTriggersFromEventLog(int startIndex)
         {
@@ -135,7 +132,6 @@ namespace NineGrid.Flow
             }
 
             var seen = new HashSet<int>();
-            var stoneLoverSynced = new HashSet<int>();
             for (var i = startIndex; i < entries.Count; i++)
             {
                 var e = entries[i];
@@ -147,11 +143,6 @@ namespace NineGrid.Flow
                 if (!IsCoreCardOnBoardForEffectPresentation(e.CardUid))
                 {
                     continue;
-                }
-
-                if (IsStoneLoverArmorLostTrigger(e) && stoneLoverSynced.Add(e.CardUid))
-                {
-                    TrySyncStoneLoverCardPresentation(e.CardUid);
                 }
 
                 if (!seen.Add(e.CardUid))
@@ -178,9 +169,12 @@ namespace NineGrid.Flow
             PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
         }
 
+        /// <summary>
+        /// 视觉对账（保留已提交数值，不从 Core 覆写攻防血）。Avatar HUD 仍可旁路刷新。
+        /// </summary>
         public static void SyncManagedCardPresentation(ManagedCard card)
         {
-            CoreCardPresentationMapper.ApplyToManagedCard(card, animate: true);
+            CoreCardPresentationMapper.ApplyVisualsPreservingCommittedStats(card);
 
             var arch = NineGridArchitecture.Current;
             if (arch == null || card == null)
@@ -245,28 +239,6 @@ namespace NineGrid.Flow
             }
 
             return null;
-        }
-
-        private static bool IsStoneLoverArmorLostTrigger(CoreGameEvent gameEvent)
-        {
-            if (string.Equals(gameEvent.SourceDefId, StoneLoverSkillDefId, StringComparison.Ordinal))
-            {
-                return true;
-            }
-
-            return !string.IsNullOrEmpty(gameEvent.Cause)
-                   && gameEvent.Cause.IndexOf(StoneLoverArmorLostCause, StringComparison.Ordinal) >= 0;
-        }
-
-        private static void TrySyncStoneLoverCardPresentation(int cardUid)
-        {
-            var manager = CardEntityLifecycleHook.CardsOrNull();
-            if (manager == null || !manager.TryGet(cardUid, out var card) || card == null)
-            {
-                return;
-            }
-
-            CoreCardPresentationMapper.ApplyToManagedCard(card, animate: true);
         }
 
         private static bool IsCoreCardOnBoardForEffectPresentation(int uid)

@@ -80,6 +80,8 @@ namespace NineGrid.Flow
 
         /// <summary>
         /// 编排串行主线 Commit：读 Core/Content → 胖投影 → 底盘宿主分发 Binder。
+        /// 若卡面已有提交投影，数值字段保留已提交值（不直读 Core 覆写）；仅刷新视觉。
+        /// 战中数值变更唯一出口：<see cref="NineGrid.Flow.Presentation.CardFaceStatHandler"/>。
         /// </summary>
         public static void ApplyToManagedCard(ManagedCard card, bool animate = false)
         {
@@ -87,6 +89,12 @@ namespace NineGrid.Flow
             _ = animate;
             if (card?.View == null)
             {
+                return;
+            }
+
+            if (card.CommittedPresentation != null)
+            {
+                ApplyVisualsPreservingCommittedStats(card);
                 return;
             }
 
@@ -101,6 +109,55 @@ namespace NineGrid.Flow
             {
                 ApplyVisualsByDefId(card, card.CoreKind, clearCombatStats: false);
             }
+        }
+
+        /// <summary>
+        /// 只刷新视觉字段，保留已提交的攻/甲/血/行动计数；无已提交快照时回退首次读 Core。
+        /// </summary>
+        public static void ApplyVisualsPreservingCommittedStats(ManagedCard card)
+        {
+            if (card?.View == null)
+            {
+                return;
+            }
+
+            var previous = card.CommittedPresentation;
+            if (previous == null)
+            {
+                ApplyToManagedCard(card, animate: false);
+                return;
+            }
+
+            var snapshot = new CardPresentationSnapshot
+            {
+                Kind = previous.Kind != CardPresentationKind.Unknown
+                    ? previous.Kind
+                    : card.CoreKind,
+                DefId = !string.IsNullOrEmpty(previous.DefId) ? previous.DefId : card.DefId,
+                DisplayName = previous.DisplayName,
+                MainIcon = previous.MainIcon,
+                FaceBackground = previous.FaceBackground,
+                BackBorder = previous.BackBorder,
+                BackShirt = previous.BackShirt,
+                BackLogo = previous.BackLogo,
+                CardFrame = previous.CardFrame,
+                Banner = previous.Banner,
+                Attack = previous.Attack,
+                Armor = previous.Armor,
+                Hp = previous.Hp,
+                ActionCount = previous.ActionCount,
+                FaceUp = previous.FaceUp,
+                BasicDescription = previous.BasicDescription,
+                DetailDescription = previous.DetailDescription,
+            };
+
+            ApplyVisualFields(snapshot, snapshot.DefId, snapshot.Kind);
+            // JSON/视觉刷新后强制写回已提交数值，防止视觉路径误带出生值。
+            snapshot.Attack = previous.Attack;
+            snapshot.Armor = previous.Armor;
+            snapshot.Hp = previous.Hp;
+            snapshot.ActionCount = previous.ActionCount;
+            card.CommitPresentation(snapshot);
         }
 
         /// <summary>
@@ -290,29 +347,7 @@ namespace NineGrid.Flow
                 ApplyJsonSprite(ref snapshot.Banner, dto.sprites.banner);
             }
 
-            if (dto.stats != null)
-            {
-                if (dto.stats.attack > 0)
-                {
-                    snapshot.Attack = dto.stats.attack;
-                }
-
-                if (dto.stats.armor > 0)
-                {
-                    snapshot.Armor = dto.stats.armor;
-                }
-
-                if (dto.stats.hp > 0)
-                {
-                    snapshot.Hp = dto.stats.hp;
-                }
-
-                if (dto.stats.action > 0)
-                {
-                    snapshot.ActionCount = dto.stats.action;
-                }
-            }
-
+            // stats 是内容作者定义的出生值，经 Catalog 造卡用；表现层投影提交不读 JSON stats。
             return true;
         }
 

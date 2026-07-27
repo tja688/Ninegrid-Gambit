@@ -19,6 +19,7 @@
 | `Fixtures/` | EditMode 夹具 |
 | `HostContractStructuralTests.cs` | 结构护栏：禁四大旧宿主名、禁 `CombatHitSink`、禁回流 `new PresentationDirector`、System 不暴露具体 View |
 | `IntentIntakeStructuralTests.cs` | 结构护栏（#52）：输入路径须经 IntentIntake；门禁/收口决策禁用壁钟；ADR-0004 accepted |
+| `CardFaceBeatStructuralTests.cs` | 结构护栏（#55）：禁石头爱好者卡面提前同步；命中帧须报 Impact 且不得 Sync；PresentStep 在 ack 前报 Settled；禁 JSON stats 盖写 |
 
 ### Core 契约护栏（`NineGrid.Core.Tests`）
 
@@ -26,6 +27,12 @@
 |------|----------|
 | `PresentationEventMapBeatExhaustivenessTests` | #54：每个 `CoreEventType` 须有表演映射与显式 `PresentationBeat`；`None` 必须带理由；观察型 `BaseStatModified` 不得落在 `Impact` |
 | `BaseStatModifiedResultValueTests` | #54：`BaseStatModified` 携带结算后 `ResultValue`，且保留 `Amount=StatId` / `Delta` 增量约定 |
+
+### 行为基线（节选）
+
+| 测试 | 保护什么 |
+|------|----------|
+| `CardFaceBeatCommitBaselineTests` | #55：攻击 Present 第 N 拍命中后护甲已变、攻击仍旧；第 N+1 拍收尾后观察型加攻才变；handler 不读内核 |
 
 ## 关闭门槛（普通实施票）
 

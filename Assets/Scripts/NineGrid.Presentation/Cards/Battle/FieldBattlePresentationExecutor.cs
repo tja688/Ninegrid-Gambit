@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using NineGrid.Cards.Convergence;
 using NineGrid.Core;
 using NineGrid.Flow;
+using NineGrid.Flow.Presentation;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
@@ -273,7 +274,7 @@ namespace NineGrid.Cards
                 }
 
                 hitFrameApplied = true;
-                PresentationOutputProjector.SyncManagedCardPresentation(avatar);
+                BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
                 SpawnDamagePopups(counterProjection.DamagePopups, avatar, 0);
             }
 
@@ -384,7 +385,7 @@ namespace NineGrid.Cards
                 }
 
                 hitFrameApplied = true;
-                PresentationOutputProjector.SyncManagedCardPresentation(combatVictim);
+                BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
                 SpawnDamagePopups(hitProjection.DamagePopups, combatVictim, 0);
             }
 
@@ -599,10 +600,6 @@ namespace NineGrid.Cards
                         && target?.Transform != null)
                     {
                         pos = target.Transform.position;
-                        if (fallbackVictim == null || target.Uid != fallbackVictim.Uid)
-                        {
-                            PresentationOutputProjector.SyncManagedCardPresentation(target);
-                        }
                     }
                     else if (fallbackVictim != null
                              && fallbackVictim.Uid == popup.TargetUid
