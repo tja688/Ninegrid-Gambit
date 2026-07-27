@@ -3,7 +3,7 @@
     "contentId": "monster.ringleader",
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
-    "displayName": "蓝甲武士",
+    "displayName": "蓝发武士",
     "description": "每移3次创福地；3福地后99伤",
     "gold": 5,
     "stats": {
@@ -22,8 +22,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetX": 0.3499999940395355,
+        "offsetY": -0.3400000035762787,
         "uniformScale": 1.0
     },
     "animations": {

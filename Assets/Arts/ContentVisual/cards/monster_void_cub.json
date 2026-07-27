@@ -3,7 +3,7 @@
     "contentId": "monster.void_cub",
     "kind": "Monster",
     "deckId": "deck.void",
-    "displayName": "青史莱姆",
+    "displayName": "青莱姆",
     "description": "每移动3次随机交换怪物",
     "gold": 5,
     "stats": {
@@ -23,7 +23,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetY": -0.10000000149011612,
         "uniformScale": 1.0
     },
     "animations": {

@@ -3,7 +3,7 @@
     "contentId": "monster.headless_skeleton",
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
-    "displayName": "青焰骷髅",
+    "displayName": "斧骷髅",
     "description": "相邻骷髅头组合",
     "gold": 5,
     "stats": {

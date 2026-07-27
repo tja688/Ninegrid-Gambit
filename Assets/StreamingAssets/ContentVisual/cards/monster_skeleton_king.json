@@ -3,7 +3,7 @@
     "contentId": "monster.skeleton_king",
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
-    "displayName": "紫袍死灵",
+    "displayName": "紫袍鹰",
     "description": "相邻移除获属性；每移5次换2怪",
     "gold": 5,
     "stats": {
@@ -23,7 +23,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetY": -0.5299999713897705,
         "uniformScale": 1.0
     },
     "animations": {

@@ -3,7 +3,7 @@
     "contentId": "monster.skull_head",
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
-    "displayName": "蓝焰骷髅",
+    "displayName": "剑骷髅",
     "description": "相邻无头骷髅组合",
     "gold": 5,
     "stats": {

@@ -3,7 +3,7 @@
     "contentId": "monster.dragon_cult_leader",
     "kind": "Monster",
     "deckId": "deck.dragon",
-    "displayName": "绿甲蜥人",
+    "displayName": "炸弹蜥",
     "description": "每移动3次加入龙信徒",
     "gold": 5,
     "stats": {
@@ -22,9 +22,9 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
-        "offsetY": -0.05000000074505806,
-        "uniformScale": 0.7300000190734863
+        "offsetX": -0.10000000149011612,
+        "offsetY": -0.10000000149011612,
+        "uniformScale": 1.0
     },
     "animations": {
         "defaultFps": 8.0,

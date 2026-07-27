@@ -3,7 +3,7 @@
     "contentId": "monster.dragon_follower",
     "kind": "Monster",
     "deckId": "deck.dragon",
-    "displayName": "绿鳞蜥人",
+    "displayName": "爪蜥",
     "description": "被移除时加入烈焰",
     "gold": 5,
     "stats": {
@@ -24,7 +24,7 @@
     "mainVisual": {
         "offsetX": 0.0,
         "offsetY": -0.10000000149011612,
-        "uniformScale": 0.9700000286102295
+        "uniformScale": 1.0
     },
     "animations": {
         "defaultFps": 8.0,

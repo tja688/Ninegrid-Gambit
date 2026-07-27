@@ -3,7 +3,7 @@
     "contentId": "monster.big_skeleton",
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
-    "displayName": "棕骨骷髅",
+    "displayName": "巨剑骷髅",
     "description": "被移除时洗入骷髅头与无头骷髅",
     "gold": 5,
     "stats": {
@@ -22,7 +22,7 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
+        "offsetX": 0.10000000149011612,
         "offsetY": -0.6000000238418579,
         "uniformScale": 0.7900000214576721
     },

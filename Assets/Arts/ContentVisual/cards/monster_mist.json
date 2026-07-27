@@ -3,7 +3,7 @@
     "contentId": "monster.mist",
     "kind": "Monster",
     "deckId": "deck.void",
-    "displayName": "绿雾团",
+    "displayName": "绿莱姆",
     "description": "每移动1次攻击+2",
     "gold": 5,
     "stats": {
@@ -22,8 +22,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetX": 0.032999999821186069,
+        "offsetY": -0.10000000149011612,
         "uniformScale": 1.0
     },
     "animations": {

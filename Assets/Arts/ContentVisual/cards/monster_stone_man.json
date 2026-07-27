@@ -3,7 +3,7 @@
     "contentId": "monster.stone_man",
     "kind": "Monster",
     "deckId": "deck.stone_legion",
-    "displayName": "沙岩怪",
+    "displayName": "黄莱姆",
     "description": "无",
     "gold": 5,
     "stats": {
@@ -22,9 +22,9 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
-        "offsetY": -0.10000000149011612,
-        "uniformScale": 0.7900000214576721
+        "offsetX": 0.05400000140070915,
+        "offsetY": -0.15000000596046449,
+        "uniformScale": 1.0
     },
     "animations": {
         "defaultFps": 8.0,

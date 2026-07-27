@@ -13,7 +13,7 @@
         "action": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -23,7 +23,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetY": -0.019999999552965165,
         "uniformScale": 1.0
     },
     "animations": {

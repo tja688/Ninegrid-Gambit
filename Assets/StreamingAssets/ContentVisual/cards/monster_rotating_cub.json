@@ -3,7 +3,7 @@
     "contentId": "monster.rotating_cub",
     "kind": "Monster",
     "deckId": "deck.void",
-    "displayName": "绿芽史莱姆",
+    "displayName": "双球绿莱姆",
     "description": "每移动3次旋转",
     "gold": 5,
     "stats": {
@@ -23,7 +23,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetY": -0.10000000149011612,
         "uniformScale": 1.0
     },
     "animations": {

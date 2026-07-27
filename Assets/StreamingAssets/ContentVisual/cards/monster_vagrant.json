@@ -3,8 +3,8 @@
     "contentId": "monster.vagrant",
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
-    "displayName": "绿帽猎人",
-    "description": "",
+    "displayName": "绿发德鲁伊",
+    "description": "无",
     "gold": 5,
     "stats": {
         "hp": 5,
@@ -23,7 +23,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetY": -0.4000000059604645,
         "uniformScale": 1.0
     },
     "animations": {

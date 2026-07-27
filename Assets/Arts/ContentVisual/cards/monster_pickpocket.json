@@ -3,7 +3,7 @@
     "contentId": "monster.pickpocket",
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
-    "displayName": "黄帽少女",
+    "displayName": "黄发精灵",
     "description": "每移动3次移除相邻帮助卡",
     "gold": 5,
     "stats": {
@@ -23,7 +23,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetY": -0.5,
         "uniformScale": 1.0
     },
     "animations": {

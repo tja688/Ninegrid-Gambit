@@ -3,7 +3,7 @@
     "contentId": "monster.brainless_orc",
     "kind": "Monster",
     "deckId": "deck.orc_legion",
-    "displayName": "橙帽哥布林",
+    "displayName": "火把哥布林",
     "description": "战斗时本卡攻击+2",
     "gold": 5,
     "stats": {

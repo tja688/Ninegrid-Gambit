@@ -3,7 +3,7 @@
     "contentId": "monster.orc_commander",
     "kind": "Monster",
     "deckId": "deck.orc_legion",
-    "displayName": "野猪骑士",
+    "displayName": "猪猪哥布林",
     "description": "每移动1次，相邻怪物攻击+1",
     "gold": 5,
     "stats": {

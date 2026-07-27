@@ -23,8 +23,8 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0,
-        "uniformScale": 0.97
+        "offsetY": -0.03999999910593033,
+        "uniformScale": 1.0
     },
     "animations": {
         "defaultFps": 8.0,

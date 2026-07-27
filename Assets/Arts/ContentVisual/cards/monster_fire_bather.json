@@ -3,7 +3,7 @@
     "contentId": "monster.fire_bather",
     "kind": "Monster",
     "deckId": "deck.dragon",
-    "displayName": "红瓣行花",
+    "displayName": "三腿花",
     "description": "有烈焰时攻击+4",
     "gold": 5,
     "stats": {

@@ -3,7 +3,7 @@
     "contentId": "monster.friendly_ancient",
     "kind": "Monster",
     "deckId": "deck.void",
-    "displayName": "金光精灵",
+    "displayName": "双角毛怪",
     "description": "每移动3次放旋转轮",
     "gold": 5,
     "stats": {
@@ -23,7 +23,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetY": -0.15000000596046449,
         "uniformScale": 1.0
     },
     "animations": {
@@ -32,7 +32,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/Sum_Elf_golden_idle_01",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/56Longhairpig_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

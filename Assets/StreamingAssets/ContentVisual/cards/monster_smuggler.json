@@ -3,7 +3,7 @@
     "contentId": "monster.smuggler",
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
-    "displayName": "围裙铁匠",
+    "displayName": "帽子铁匠",
     "description": "累计邻玩家3次移除帮助得护甲",
     "gold": 5,
     "stats": {
@@ -22,7 +22,7 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
+        "offsetX": 0.10000000149011612,
         "offsetY": 0.0,
         "uniformScale": 1.0
     },

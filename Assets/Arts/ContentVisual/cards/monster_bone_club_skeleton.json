@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
     "displayName": "枯木妖",
-    "description": "",
+    "description": "无",
     "gold": 5,
     "stats": {
         "hp": 8,
@@ -22,8 +22,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetX": -0.10000000149011612,
+        "offsetY": -0.10000000149011612,
         "uniformScale": 1.0
     },
     "animations": {

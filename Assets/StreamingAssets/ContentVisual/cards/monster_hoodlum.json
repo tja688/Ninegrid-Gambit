@@ -3,7 +3,7 @@
     "contentId": "monster.hoodlum",
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
-    "displayName": "酒馆汉子",
+    "displayName": "兔耳醉鬼",
     "description": "到格1对玩家2伤",
     "gold": 5,
     "stats": {
@@ -22,8 +22,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetX": 0.10000000149011612,
+        "offsetY": -0.20000000298023225,
         "uniformScale": 1.0
     },
     "animations": {

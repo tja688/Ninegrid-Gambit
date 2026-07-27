@@ -3,7 +3,7 @@
     "contentId": "monster.young_orc",
     "kind": "Monster",
     "deckId": "deck.orc_legion",
-    "displayName": "绿皮哥布林",
+    "displayName": "巨棒哥布林",
     "description": "其他怪物获得攻击时本卡攻击+1",
     "gold": 5,
     "stats": {

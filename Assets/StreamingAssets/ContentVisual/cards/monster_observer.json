@@ -3,7 +3,7 @@
     "contentId": "monster.observer",
     "kind": "Monster",
     "deckId": "deck.void",
-    "displayName": "大耳蝠",
+    "displayName": "糖心莱姆",
     "description": "怪物卡因怪物技能位移时伤害玩家",
     "gold": 5,
     "stats": {
@@ -22,9 +22,9 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
-        "offsetY": 0.0,
-        "uniformScale": 0.88
+        "offsetX": 0.03999999910593033,
+        "offsetY": -0.17000000178813935,
+        "uniformScale": 1.0
     },
     "animations": {
         "defaultFps": 8.0,
@@ -32,7 +32,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/09bat_idle_01",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/59goldenbigslime_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

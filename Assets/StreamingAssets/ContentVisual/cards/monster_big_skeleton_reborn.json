@@ -3,8 +3,8 @@
     "contentId": "monster.big_skeleton_reborn",
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
-    "displayName": "蓝纹骷髅",
-    "description": "",
+    "displayName": "箭骷髅",
+    "description": "无",
     "gold": 5,
     "stats": {
         "hp": 10,
@@ -23,8 +23,8 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0,
-        "uniformScale": 0.9
+        "offsetY": -0.15000000596046449,
+        "uniformScale": 0.8999999761581421
     },
     "animations": {
         "defaultFps": 8.0,

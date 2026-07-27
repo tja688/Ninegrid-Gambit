@@ -22,8 +22,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetX": 0.20000000298023225,
+        "offsetY": -0.2800000011920929,
         "uniformScale": 1.0
     },
     "animations": {

@@ -3,7 +3,7 @@
     "contentId": "monster.big_orc",
     "kind": "Monster",
     "deckId": "deck.orc_legion",
-    "displayName": "红毛巨熊",
+    "displayName": "巨熊",
     "description": "行动后攻击玩家",
     "gold": 5,
     "stats": {

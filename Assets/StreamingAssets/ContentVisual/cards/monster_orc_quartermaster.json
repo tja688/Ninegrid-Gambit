@@ -3,7 +3,7 @@
     "contentId": "monster.orc_quartermaster",
     "kind": "Monster",
     "deckId": "deck.orc_legion",
-    "displayName": "红果小贩",
+    "displayName": "袋熊小子",
     "description": "每移动2次随机强化其他怪物",
     "gold": 5,
     "stats": {
