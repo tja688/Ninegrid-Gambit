@@ -188,15 +188,12 @@ namespace NineGrid.Content.Editor
             return !string.IsNullOrEmpty(abs) && System.IO.File.Exists(abs);
         }
 
+        /// <summary>
+        /// Sprite 引用序列化：Multiple 图集写 <c>path#spriteName</c>，避免只留纹理路径导致永远落到首切片。
+        /// </summary>
         public static string AssetPathOrEmpty(UnityEngine.Object asset)
         {
-            if (asset == null)
-            {
-                return string.Empty;
-            }
-
-            var path = AssetDatabase.GetAssetPath(asset);
-            return string.IsNullOrEmpty(path) ? string.Empty : path.Replace('\\', '/');
+            return CardPresentationSpritePath.EncodeAssetReference(asset);
         }
 
         private static bool IsHelpLikeKind(string kind)

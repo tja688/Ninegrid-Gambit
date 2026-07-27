@@ -3,7 +3,7 @@
     "contentId": "help.blue_chest_card",
     "kind": "HelpCard",
     "deckId": "",
-    "displayName": "蓝色宝箱卡",
+    "displayName": "进阶宝箱",
     "description": "三选一获得遗物",
     "gold": 150,
     "stats": {
@@ -13,7 +13,7 @@
         "action": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Png/Items/arrow_blue_first.png",
+        "mainIcon": "Assets/Arts/Images/Multiple/icons_full_32.png#icons_full_32_261",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",

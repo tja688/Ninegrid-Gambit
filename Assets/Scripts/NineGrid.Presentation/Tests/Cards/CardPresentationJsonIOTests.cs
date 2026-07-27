@@ -184,5 +184,48 @@ namespace NineGrid.Presentation.Tests
             Assert.IsNull(dto);
             Assert.IsFalse(string.IsNullOrEmpty(error));
         }
+
+        [Test]
+        public void SpritePath_SplitAndCompose_RoundTripSubSpriteKey()
+        {
+            CardPresentationSpritePath.SplitPath(
+                "Assets/Arts/Images/Multiple/icons_full_32.png#icons_full_32_42",
+                out var path,
+                out var spriteName);
+            Assert.AreEqual("Assets/Arts/Images/Multiple/icons_full_32.png", path);
+            Assert.AreEqual("icons_full_32_42", spriteName);
+            Assert.AreEqual(
+                "Assets/Arts/Images/Multiple/icons_full_32.png#icons_full_32_42",
+                CardPresentationSpritePath.ComposePath(path, spriteName));
+
+            CardPresentationSpritePath.SplitPath(
+                "Assets/Arts/Images/Png/Items/platform.png",
+                out path,
+                out spriteName);
+            Assert.AreEqual("Assets/Arts/Images/Png/Items/platform.png", path);
+            Assert.IsNull(spriteName);
+        }
+
+#if UNITY_EDITOR
+        [Test]
+        public void LoadSprite_MultipleAtlas_NamedSubSprite_NotFirstSlice()
+        {
+            const string sheet = "Assets/Arts/Images/Multiple/icons_full_32.png";
+            const string namedKey = sheet + "#icons_full_32_42";
+
+            var first = CardPresentationSpritePath.LoadSprite(sheet);
+            var named = CardPresentationSpritePath.LoadSprite(namedKey);
+
+            Assert.IsNotNull(first, "图集应至少能回退到首切片");
+            Assert.IsNotNull(named, "带 #spriteName 应能加载指定切片");
+            Assert.AreEqual("icons_full_32_0", first.name);
+            Assert.AreEqual("icons_full_32_42", named.name);
+            Assert.AreNotSame(first, named);
+
+            var encoded = CardPresentationSpritePath.EncodeAssetReference(named);
+            Assert.AreEqual(namedKey, encoded);
+            Assert.AreSame(named, CardPresentationSpritePath.LoadSprite(encoded));
+        }
+#endif
     }
 }

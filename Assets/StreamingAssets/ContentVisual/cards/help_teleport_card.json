@@ -3,7 +3,7 @@
     "contentId": "help.teleport_card",
     "kind": "HelpCard",
     "deckId": "",
-    "displayName": "传送卡",
+    "displayName": "传送",
     "description": "选一张卡洗回卡组",
     "gold": 30,
     "stats": {
@@ -13,7 +13,7 @@
         "action": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Png/Items/number.png",
+        "mainIcon": "Assets/Arts/Images/Multiple/icons_full_32.png#icons_full_32_240",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",

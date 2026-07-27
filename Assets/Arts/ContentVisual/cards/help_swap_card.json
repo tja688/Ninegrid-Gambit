@@ -3,7 +3,7 @@
     "contentId": "help.swap_card",
     "kind": "HelpCard",
     "deckId": "",
-    "displayName": "交换卡",
+    "displayName": "交换",
     "description": "选两张卡互换位置",
     "gold": 50,
     "stats": {
@@ -13,7 +13,7 @@
         "action": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Png/Items/mac_logo.png",
+        "mainIcon": "Assets/Arts/Images/Multiple/icons_full_32.png#icons_full_32_241",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",

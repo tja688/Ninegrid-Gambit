@@ -3,7 +3,7 @@
     "contentId": "help.healing_spring",
     "kind": "HelpCard",
     "deckId": "",
-    "displayName": "治疗泉",
+    "displayName": "治疗圣光",
     "description": "相邻回2血，道具回1血，使用移除",
     "gold": 80,
     "stats": {
@@ -13,7 +13,7 @@
         "action": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Png/Items/tree_collapse.png",
+        "mainIcon": "Assets/Arts/Images/Multiple/icons_full_32.png#icons_full_32_116",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",

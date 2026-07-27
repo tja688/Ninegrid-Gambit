@@ -3,7 +3,7 @@
     "contentId": "help.golden_chest_card",
     "kind": "HelpCard",
     "deckId": "",
-    "displayName": "金色宝箱卡",
+    "displayName": "高级宝箱",
     "description": "三选一获得遗物",
     "gold": 400,
     "stats": {
@@ -13,7 +13,7 @@
         "action": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Png/Items/chest.png",
+        "mainIcon": "Assets/Arts/Images/Multiple/icons_full_32.png#icons_full_32_262",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",

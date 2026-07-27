@@ -3,7 +3,7 @@
     "contentId": "help.stat_boost_card",
     "kind": "HelpCard",
     "deckId": "",
-    "displayName": "属性提升卡",
+    "displayName": "属性提升",
     "description": "攻击+1/护甲+1/血量+2",
     "gold": 100,
     "stats": {
@@ -13,7 +13,7 @@
         "action": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Png/Items/character_add.png",
+        "mainIcon": "Assets/Arts/Images/Multiple/icons_full_32.png#icons_full_32_249",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",

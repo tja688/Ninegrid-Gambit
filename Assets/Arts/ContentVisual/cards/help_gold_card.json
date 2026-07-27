@@ -3,7 +3,7 @@
     "contentId": "help.gold_card",
     "kind": "HelpCard",
     "deckId": "",
-    "displayName": "金币卡",
+    "displayName": "钱袋子",
     "description": "[使用时] 为玩家提供50金币",
     "gold": 30,
     "stats": {
@@ -13,7 +13,7 @@
         "action": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Png/Items/light.png",
+        "mainIcon": "Assets/Arts/Images/Multiple/icons_full_32.png#icons_full_32_358",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",

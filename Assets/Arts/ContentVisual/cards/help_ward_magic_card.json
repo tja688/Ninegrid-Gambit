@@ -3,7 +3,7 @@
     "contentId": "help.ward_magic_card",
     "kind": "HelpCard",
     "deckId": "",
-    "displayName": "庇佑魔法卡",
+    "displayName": "庇佑",
     "description": "下次受伤变为0",
     "gold": 20,
     "stats": {
@@ -13,7 +13,7 @@
         "action": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Png/Items/anim_frame_move_right.png",
+        "mainIcon": "Assets/Arts/Images/Multiple/icons_full_32.png#icons_full_32_202",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",

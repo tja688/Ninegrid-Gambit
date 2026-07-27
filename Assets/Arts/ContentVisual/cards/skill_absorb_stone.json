@@ -3,7 +3,7 @@
     "contentId": "skill.absorb_stone",
     "kind": "Skill",
     "deckId": "",
-    "displayName": "吸石",
+    "displayName": "吸髓",
     "description": "每次移动吸取相邻怪物全部护甲",
     "gold": 0,
     "stats": {
@@ -13,7 +13,7 @@
         "action": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Png/Icons/white_node/spade_outline.png",
+        "mainIcon": "Assets/Arts/Images/Multiple/icons_full_32.png#icons_full_32_712",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
