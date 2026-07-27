@@ -32,7 +32,7 @@ namespace NineGrid.Presentation.Diagnostics
     /// </summary>
     public static class PerfHoverKillSwitch
     {
-        private static readonly Dictionary<int, bool> sColliderEnabledByInstanceId = new();
+        private static readonly Dictionary<Collider2D, bool> sColliderEnabledByRef = new();
 
         public static PerfHoverKillMode ActiveMode { get; private set; } = PerfHoverKillMode.Off;
 
@@ -41,6 +41,13 @@ namespace NineGrid.Presentation.Diagnostics
 
         public static bool InstantHoverNoTween =>
             ActiveMode == PerfHoverKillMode.InstantHoverNoTween;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            ActiveMode = PerfHoverKillMode.Off;
+            sColliderEnabledByRef.Clear();
+        }
 
         public static string Describe(PerfHoverKillMode mode)
         {
@@ -139,19 +146,15 @@ namespace NineGrid.Presentation.Diagnostics
 
         private static void RestoreSideEffects(StringBuilder sb)
         {
-            if (ActiveMode == PerfHoverKillMode.SoftCursorAuto
-                || ActiveMode == PerfHoverKillMode.Off)
-            {
-                // SoftCursor 离开时一律尝试恢复软件光标；Off 也无所谓多调一次。
-            }
+            var leaving = ActiveMode;
 
-            if (sColliderEnabledByInstanceId.Count > 0)
+            if (sColliderEnabledByRef.Count > 0)
             {
                 var restored = 0;
                 var missing = 0;
-                foreach (var pair in sColliderEnabledByInstanceId)
+                foreach (var pair in sColliderEnabledByRef)
                 {
-                    var collider = ResolveCollider(pair.Key);
+                    var collider = pair.Key;
                     if (collider == null)
                     {
                         missing++;
@@ -162,13 +165,13 @@ namespace NineGrid.Presentation.Diagnostics
                     restored++;
                 }
 
-                sColliderEnabledByInstanceId.Clear();
+                sColliderEnabledByRef.Clear();
                 sb.Append("restoredColliders=").Append(restored)
                     .Append(" missing=").Append(missing)
                     .Append("; ");
             }
 
-            if (ActiveMode == PerfHoverKillMode.SoftCursorAuto)
+            if (leaving == PerfHoverKillMode.SoftCursorAuto)
             {
                 SoftwareCursorBootstrap.ReapplyForceSoftware();
                 sb.Append("cursor=ForceSoftware.reapplied; ");
@@ -189,10 +192,9 @@ namespace NineGrid.Presentation.Diagnostics
                     continue;
                 }
 
-                var id = collider.GetInstanceID();
-                if (!sColliderEnabledByInstanceId.ContainsKey(id))
+                if (!sColliderEnabledByRef.ContainsKey(collider))
                 {
-                    sColliderEnabledByInstanceId[id] = collider.enabled;
+                    sColliderEnabledByRef[collider] = collider.enabled;
                 }
 
                 if (collider.enabled)
@@ -214,12 +216,6 @@ namespace NineGrid.Presentation.Diagnostics
 
             return collider.GetComponent<GroundSlotHitProxy>() != null
                    || collider.GetComponent<ContentIconSlotHitProxy>() != null;
-        }
-
-        private static Collider2D ResolveCollider(int instanceId)
-        {
-            var obj = Resources.InstanceIDToObject(instanceId);
-            return obj as Collider2D;
         }
     }
 }

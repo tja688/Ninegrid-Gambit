@@ -39,6 +39,13 @@ namespace NineGrid.DevTest.Flow
                 return;
             }
 
+            var existing = Object.FindFirstObjectByType<PerfHoverKillSwitchHost>();
+            if (existing != null)
+            {
+                sInstance = existing;
+                return;
+            }
+
             var go = new GameObject("[Dev] PerfHoverKillSwitchHost");
             DontDestroyOnLoad(go);
             sInstance = go.AddComponent<PerfHoverKillSwitchHost>();
@@ -46,6 +53,8 @@ namespace NineGrid.DevTest.Flow
                 "[PerfHoverKill] host ready | F5=帮助 F6=下一模式 F8=上一模式 F7=采3sFPS | "
                 + "模式互斥：0基线 A光标 B全Collider C禁OnMouseHover D无Tween E槽+Relic");
         }
+
+        private GUIStyle _overlayStyle;
 
         private void Update()
         {
@@ -96,14 +105,18 @@ namespace NineGrid.DevTest.Flow
                 ? $"采样中… {_sampleElapsed:0.0}/{SampleSeconds:0}s  F5帮助 F6/F8切模式 F7重采"
                 : "F5帮助  F6下一模式  F8上一模式  F7采3sFPS";
 
-            var style = new GUIStyle(GUI.skin.box)
+            if (_overlayStyle == null)
             {
-                alignment = TextAnchor.UpperLeft,
-                fontSize = 14,
-                normal = { textColor = Color.white },
-            };
+                _overlayStyle = new GUIStyle(GUI.skin.box)
+                {
+                    alignment = TextAnchor.UpperLeft,
+                    fontSize = 14,
+                    normal = { textColor = Color.white },
+                };
+            }
+
             var text = line1 + "\n" + line2 + "\n" + line3;
-            GUI.Box(new Rect(12, 12, 620, 72), text, style);
+            GUI.Box(new Rect(12, 12, 620, 72), text, _overlayStyle);
         }
 
         private void CycleMode(int delta)
