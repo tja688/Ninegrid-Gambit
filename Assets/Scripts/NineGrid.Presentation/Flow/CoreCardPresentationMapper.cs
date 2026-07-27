@@ -79,9 +79,9 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 编排串行主线 Commit：读 Core/Content → 胖投影 → 底盘宿主分发 Binder。
+        /// 编排串行主线 Commit：读 Content 视觉 → 胖投影 → 底盘宿主分发 Binder。
         /// 若卡面已有提交投影，数值字段保留已提交值（不直读 Core 覆写）；仅刷新视觉。
-        /// 战中数值变更唯一出口：<see cref="NineGrid.Flow.Presentation.CardFaceStatHandler"/>。
+        /// 战中/生成数值唯一出口：<see cref="NineGrid.Flow.Presentation.CardFaceStatHandler"/>。
         /// </summary>
         public static void ApplyToManagedCard(ManagedCard card, bool animate = false)
         {
@@ -98,21 +98,15 @@ namespace NineGrid.Flow
                 return;
             }
 
-            if (card.Uid > 0 && TryRead(card.Uid, out var read))
-            {
-                var snapshot = BuildSnapshot(read);
-                card.CommitPresentation(snapshot);
-                return;
-            }
-
+            // 首次只刷视觉；攻/甲/血等 Settled 的 SpawnCard/DealCard/ShowAvatar 指令赋值。
             if (!string.IsNullOrEmpty(card.DefId))
             {
-                ApplyVisualsByDefId(card, card.CoreKind, clearCombatStats: false);
+                ApplyVisualsByDefId(card, card.CoreKind, clearCombatStats: true);
             }
         }
 
         /// <summary>
-        /// 只刷新视觉字段，保留已提交的攻/甲/血/行动计数；无已提交快照时回退首次读 Core。
+        /// 只刷新视觉字段，保留已提交的攻/甲/血/行动计数；无已提交快照时回退首次视觉 Commit。
         /// </summary>
         public static void ApplyVisualsPreservingCommittedStats(ManagedCard card)
         {
@@ -182,8 +176,8 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 编排主线全场 Commit：无已提交投影时首次读 Core；已提交则只刷视觉。
-        /// 战中数值变更请走锚点排期，勿在 Present 开头用本方法「对齐终值」。
+        /// 编排主线全场 Commit：无已提交投影时只刷视觉；已提交则只刷视觉。
+        /// 战中/生成数值请走锚点排期或 <see cref="NineGrid.Flow.Presentation.CardFaceGenerationBootstrap"/>。
         /// </summary>
         public static void CommitAllSpawnedCards()
         {

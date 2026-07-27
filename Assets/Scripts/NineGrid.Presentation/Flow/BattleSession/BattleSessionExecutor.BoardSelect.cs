@@ -356,6 +356,7 @@ namespace NineGrid.Flow
                 if (card != null)
                 {
                     CoreCardPresentationMapper.ApplyToManagedCard(card);
+                    CardFaceGenerationBootstrap.ApplyLatestForUid(arch, itemUid);
                 }
             }
             else

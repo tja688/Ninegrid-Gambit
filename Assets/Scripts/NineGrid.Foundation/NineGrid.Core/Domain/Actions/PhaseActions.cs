@@ -37,8 +37,9 @@ namespace NineGrid.Core
         public override GameActionResult Apply(GameActionContext context)
         {
             var board = context.GetModel<BoardModel>();
+            var registry = context.GetModel<CardRegistry>();
             int avatarUid = board.AvatarUid.Value;
-            if (avatarUid <= 0)
+            if (avatarUid <= 0 || !registry.TryGet(avatarUid, out var avatar))
             {
                 return GameActionResult.Empty;
             }
@@ -46,7 +47,8 @@ namespace NineGrid.Core
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.AvatarAppeared, context.ActionId, ActionName)
                     .WithCard(avatarUid)
-                    .WithSlots(SlotId.None, board.AvatarSlot.Value));
+                    .WithSlots(SlotId.None, board.AvatarSlot.Value)
+                    .WithFaceAbsolutes(context, avatar));
         }
     }
 

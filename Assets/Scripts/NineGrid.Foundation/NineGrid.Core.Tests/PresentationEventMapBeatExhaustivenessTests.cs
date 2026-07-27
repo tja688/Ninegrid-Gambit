@@ -31,6 +31,8 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(PresentationBeat.Impact, PresentationEventMap.Get(CoreEventType.Healed).Beat);
             Assert.AreEqual(PresentationBeat.Settled, PresentationEventMap.Get(CoreEventType.BaseStatModified).Beat);
             Assert.AreEqual(PresentationBeat.Settled, PresentationEventMap.Get(CoreEventType.CardSpawned).Beat);
+            Assert.AreEqual(PresentationBeat.Settled, PresentationEventMap.Get(CoreEventType.CardDealt).Beat);
+            Assert.AreEqual(PresentationBeat.Settled, PresentationEventMap.Get(CoreEventType.AvatarAppeared).Beat);
             Assert.AreEqual(PresentationBeat.Settled, PresentationEventMap.Get(CoreEventType.CardKilled).Beat);
         }
 

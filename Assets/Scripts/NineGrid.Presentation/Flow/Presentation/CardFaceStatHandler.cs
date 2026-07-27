@@ -32,7 +32,9 @@ namespace NineGrid.Flow.Presentation
                     ApplyKill(instruction.Event);
                     break;
                 case PresentationInstructionKind.SpawnCard:
-                    // 首次数值由 Spawn 路径首次 Commit / 后续指令覆盖；本版不回头读 Core。
+                case PresentationInstructionKind.DealCard:
+                case PresentationInstructionKind.ShowAvatar:
+                    ApplySpawnFace(instruction.Event);
                     break;
             }
         }
@@ -91,6 +93,21 @@ namespace NineGrid.Flow.Presentation
 
             // CardKilled 语义：可见血量归零（绝对值由命中帧 HpChanged 通常已写入；此处兜底）。
             CommitNumeric(card, attack: null, armor: null, hp: 0);
+        }
+
+        private static void ApplySpawnFace(CoreGameEvent gameEvent)
+        {
+            if (!TryResolveCard(gameEvent, out var card))
+            {
+                return;
+            }
+
+            // 生成/发牌/亮相：攻=ResultValue，血/甲=Remaining*，与后续增量同一 Commit 出口。
+            CommitNumeric(
+                card,
+                attack: Mathf.Max(0, gameEvent.ResultValue),
+                armor: Mathf.Max(0, gameEvent.RemainingArmor),
+                hp: Mathf.Max(0, gameEvent.RemainingHp));
         }
 
         private static bool TryResolveCard(CoreGameEvent gameEvent, out ManagedCard card)

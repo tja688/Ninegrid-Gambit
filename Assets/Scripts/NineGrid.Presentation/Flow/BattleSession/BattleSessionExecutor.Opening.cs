@@ -847,8 +847,9 @@ namespace NineGrid.Flow
             {
                 PresentationInputGates.SetOpening(false);
                 // #10：开局不再靠 Sync 自愈占格镜像；几何登记由发牌表演维护，合法性由 Flow idle 裁决。
-                // 开局表演收束：编排主线全场 Commit 投影（非旁路 Set*）。
+                // 开局表演收束：先刷视觉，再经生成类指令（与 Settled 同一 Handler）写卡面数值。
                 CoreCardPresentationMapper.CommitAllSpawnedCards();
+                CardFaceGenerationBootstrap.ApplyFromEventLog(NineGridArchitecture.Current, _nodeEventLogStart);
                 PresentationOutputProjector.UpdateAvatarDebugText();
             }
         }

@@ -537,6 +537,73 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             Assert.AreEqual(10, spawned.CommittedPresentation.Hp);
         }
 
+        [Test]
+        public void SpawnCard_Settled_Commits_InstructionAbsolutes_NotJsonBirthValues()
+        {
+            // JSON / 出生展示值（模拟钉回）：攻 2 / 甲 0 / 血 4
+            const int jsonBirthAttack = 2;
+            const int jsonBirthArmor = 0;
+            const int jsonBirthHp = 4;
+            // 结算指令绝对值（与出生值不同）
+            const int instructionAttack = 7;
+            const int instructionArmor = 3;
+            const int instructionHp = 99;
+
+            var spawned = mCardManager.SpawnView(9057, "monster.beggar", kind: CardPresentationKind.Monster);
+            spawned.CommitPresentation(new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.Monster,
+                DefId = "monster.beggar",
+                DisplayName = "棕毛土狗",
+                Attack = jsonBirthAttack,
+                Armor = jsonBirthArmor,
+                Hp = jsonBirthHp,
+                FaceUp = true,
+            });
+
+            CardEntityLifecycleHook.TryGet = (int uid, out ManagedCard found) =>
+            {
+                if (uid == spawned.Uid)
+                {
+                    found = spawned;
+                    return true;
+                }
+
+                found = null;
+                return false;
+            };
+
+            NineGridArchitecture.ResetForTests();
+
+            var spawnEvt = new CoreGameEvent(CoreEventType.CardSpawned, 57, "SpawnCard")
+                .WithCard(spawned.Uid)
+                .WithRemaining(instructionHp, instructionArmor)
+                .WithResultValue(instructionAttack)
+                .WithMessage("monster.beggar")
+                .WithSource("monster.beggar", "test:#57");
+
+            var batch = new PresentationBatch(
+                57,
+                new[]
+                {
+                    new PresentationInstruction(spawnEvt, PresentationEventMap.Get(CoreEventType.CardSpawned)),
+                },
+                snapshot: null);
+            var scheduler = new BattleBeatScheduler(new CardFaceStatHandler());
+            scheduler.OnBatchOpened(batch);
+
+            Assert.AreEqual(jsonBirthAttack, spawned.CommittedPresentation.Attack, "Settled 前仍是出生展示值");
+            Assert.AreEqual(jsonBirthHp, spawned.CommittedPresentation.Hp);
+
+            scheduler.ReportBeat(PresentationBeat.Settled);
+
+            Assert.AreEqual(instructionAttack, spawned.CommittedPresentation.Attack);
+            Assert.AreEqual(instructionArmor, spawned.CommittedPresentation.Armor);
+            Assert.AreEqual(instructionHp, spawned.CommittedPresentation.Hp);
+            Assert.AreNotEqual(jsonBirthAttack, spawned.CommittedPresentation.Attack);
+            Assert.AreNotEqual(jsonBirthHp, spawned.CommittedPresentation.Hp);
+        }
+
         private static NodeDeckOptions CreateStoneLoverNode()
         {
             return new NodeDeckOptions

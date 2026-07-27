@@ -171,5 +171,69 @@ namespace NineGrid.Presentation.Tests
                 Regex.IsMatch(text, @"dto\.stats\.attack\s*>\s*0"),
                 "JSON stats 不得盖写运行时卡面数值");
         }
+
+        [Test]
+        public void ApplyToManagedCard_FirstCommit_DoesNotTryRead_CoreStats()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "CoreCardPresentationMapper.cs"));
+            var text = File.ReadAllText(path);
+            var methodStart = text.IndexOf(
+                "public static void ApplyToManagedCard(ManagedCard card",
+                StringComparison.Ordinal);
+            Assert.Greater(methodStart, 0);
+            var brace = text.IndexOf('{', methodStart);
+            Assert.Greater(brace, 0);
+            var depth = 0;
+            var end = -1;
+            for (var i = brace; i < text.Length; i++)
+            {
+                if (text[i] == '{')
+                {
+                    depth++;
+                }
+                else if (text[i] == '}')
+                {
+                    depth--;
+                    if (depth == 0)
+                    {
+                        end = i;
+                        break;
+                    }
+                }
+            }
+
+            Assert.Greater(end, brace);
+            var body = text.Substring(brace, end - brace + 1);
+            Assert.IsFalse(
+                body.IndexOf("TryRead(", StringComparison.Ordinal) >= 0,
+                "首次 ApplyToManagedCard 不得 TryRead Core 写数值；生成类指令走 CardFaceStatHandler");
+            Assert.IsTrue(
+                body.IndexOf("ApplyVisualsByDefId", StringComparison.Ordinal) >= 0,
+                "首次应只刷视觉");
+        }
+
+        [Test]
+        public void CardFaceStatHandler_Consumes_SpawnDealAvatar_Kinds()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "Presentation",
+                "CardFaceStatHandler.cs"));
+            var text = File.ReadAllText(path);
+            Assert.IsTrue(
+                text.IndexOf("ApplySpawnFace", StringComparison.Ordinal) >= 0,
+                "生成类指令应走 ApplySpawnFace");
+            Assert.IsTrue(
+                Regex.IsMatch(text, @"SpawnCard[\s\S]{0,120}DealCard[\s\S]{0,120}ShowAvatar"),
+                "SpawnCard / DealCard / ShowAvatar 应同一提交出口");
+        }
     }
 }

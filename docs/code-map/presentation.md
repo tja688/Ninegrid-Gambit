@@ -115,14 +115,16 @@
 - 卡面可见值经投影 Commit（ADR-0002）；禁止队列外正式 Setter 通路  
 - 卡面**数值**只经结算指令在表演锚点提交，不直读 Core（ADR-0005）
 
-## Core 表演契约与卡面锚点（#54 / #55 / #56）
+## Core 表演契约与卡面锚点（#54 / #55 / #56 / #57）
 
 - `NineGrid.Core.PresentationBeat`：`Impact` / `Settled` / `None`（升级路径注释在枚举旁）
 - `PresentationEventMapEntry.Beat` + `NoneReason`：每个 `CoreEventType` 显式锚点归属；不上卡面必须写理由
-- 数值类指令绝对值：血甲用既有 `RemainingHp`/`RemainingArmor`；`BaseStatModified` 用 `ResultValue`（`Amount` 仍为 StatId，`Delta` 仍为增量）
+- 数值类指令绝对值：血甲用既有 `RemainingHp`/`RemainingArmor`；`BaseStatModified` / 生成类事件攻用 `ResultValue`（`Amount` 仍为 StatId，`Delta` 仍为增量）
 - 穷尽性：`NineGrid.Core.Tests.PresentationEventMapBeatExhaustivenessTests`
 - **排期器** `Flow/Presentation/BattleBeatScheduler`：批次开启装载未消费指令；`ReportBeat` 分发；Settled 后未消费只报不改
-- **卡面数值处理器** `Flow/Presentation/CardFaceStatHandler`：只从指令赋值 → `ManagedCard.CommitPresentation`；不碰 `CardRegistry` / `IStatSystem`
+- **卡面数值处理器** `Flow/Presentation/CardFaceStatHandler`：只从指令赋值 → `ManagedCard.CommitPresentation`；不碰 `CardRegistry` / `IStatSystem`；`SpawnCard` / `DealCard` / `ShowAvatar` 走同一 `ApplySpawnFace`
+- **生成绝对值** `CardFaceEventValues.WithFaceAbsolutes`：`CardSpawned` / 带 uid 的 `CardDealt` / `AvatarAppeared` 写入造卡/发牌时攻甲血
+- **开局引导** `Flow/Presentation/CardFaceGenerationBootstrap`：非锁步 Opening 从事件日志重放生成类指令（与 Settled 同一 Handler）
 - **报点**：攻击/反击命中帧 → `Impact`；`PresentStep` 通道完成后先冲刷 `Impact` 再报 `Settled`，然后 `TryAcknowledge`（探索/用道具无帧级回调，收尾时一并冲刷）
 - **组合根**：`PresentationCompositionRoot` 注册排期器并订阅 `Evt_PresentationBatchOpened`
-- **读写约定补则**：卡面数值只经排期器，禁止命中帧/观察型/用道具 Present 开头旁路直读提交；用道具 Present 只 `RefreshVisualsPreservingCommittedStatsOnAllSpawned`；探索/用道具批次投影（`OnExploreBatchProjected` / `OnUseItemBatchProjected`）不写卡面数值（`EmptyClicked`/`ItemUsed` 等为 `Beat=None`）
+- **读写约定补则**：卡面数值只经排期器/生成引导，禁止 Mapper 首次 `TryRead` 写数值；JSON `stats` 仅 Catalog 造卡用；用道具 Present 只 `RefreshVisualsPreservingCommittedStatsOnAllSpawned`；探索/用道具批次投影不写卡面数值

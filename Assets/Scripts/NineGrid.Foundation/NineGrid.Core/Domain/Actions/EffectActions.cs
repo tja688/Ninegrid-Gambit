@@ -327,7 +327,8 @@ namespace NineGrid.Core
                 result.AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
                     .WithCard(card.Uid)
                     .WithMessage("shuffleInto:" + DefId)
-                    .WithSource(DefId, Cause));
+                    .WithSource(DefId, Cause)
+                    .WithFaceAbsolutes(context, card));
             }
 
             if (!Top && Count > 0)
@@ -412,7 +413,8 @@ namespace NineGrid.Core
                     .WithCard(card.Uid)
                     .WithSlots(fromSlot, SlotId.None)
                     .WithMessage("shuffleExisting:" + card.DefId)
-                    .WithSource(card.DefId, Cause));
+                    .WithSource(card.DefId, Cause)
+                    .WithFaceAbsolutes(context, card));
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
@@ -491,7 +493,8 @@ namespace NineGrid.Core
                     result.AddEvent(new CoreGameEvent(CoreEventType.CardSpawned, context.ActionId, ActionName)
                         .WithCard(grantCard.Uid)
                         .WithMessage(DefId)
-                        .WithSource(DefId, Cause));
+                        .WithSource(DefId, Cause)
+                        .WithFaceAbsolutes(context, grantCard));
                     continue;
                 }
 
@@ -512,13 +515,15 @@ namespace NineGrid.Core
                     .WithCard(card.Uid)
                     .WithSlots(SlotId.None, card.Slot.Value)
                     .WithMessage(DefId)
-                    .WithSource(DefId, Cause));
+                    .WithSource(DefId, Cause)
+                    .WithFaceAbsolutes(context, card));
                 if (card.Zone.Value == ZoneId.Board)
                 {
                     result.AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
                         .WithCard(card.Uid)
                         .WithSlots(SlotId.None, card.Slot.Value)
-                        .WithSource(DefId, Cause));
+                        .WithSource(DefId, Cause)
+                        .WithFaceAbsolutes(context, card));
                 }
             }
 
@@ -627,7 +632,8 @@ namespace NineGrid.Core
                 result.AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
                     .WithCard(card.Uid)
                     .WithMessage("shuffleRandom:" + definition.DefId)
-                    .WithSource(definition.DefId, SourceDefId));
+                    .WithSource(definition.DefId, SourceDefId)
+                    .WithFaceAbsolutes(context, card));
             }
 
             if (!Top)
@@ -787,12 +793,14 @@ namespace NineGrid.Core
                     .WithCard(target.Uid)
                     .WithSlots(fromSlot, SlotId.None)
                     .WithMessage("exchangeToDraw:" + target.DefId)
-                    .WithSource(target.DefId, SourceDefId))
+                    .WithSource(target.DefId, SourceDefId)
+                    .WithFaceAbsolutes(context, target))
                 .AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
                     .WithCard(drawn.Uid)
                     .WithSlots(SlotId.None, fromSlot)
                     .WithMessage("exchangeDraw:" + drawn.DefId)
-                    .WithSource(drawn.DefId, SourceDefId));
+                    .WithSource(drawn.DefId, SourceDefId)
+                    .WithFaceAbsolutes(context, drawn));
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)

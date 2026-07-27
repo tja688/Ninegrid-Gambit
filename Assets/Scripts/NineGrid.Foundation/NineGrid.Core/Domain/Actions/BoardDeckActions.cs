@@ -26,6 +26,7 @@ namespace NineGrid.Core
             deck.Clear();
             RemoveNonAvatarCards(registry);
 
+            var result = new GameActionResult();
             for (var i = 0; i < Options.PlayerCards.Count; i++)
             {
                 var card = CreateConfiguredCard(context, Options.PlayerCards[i], registry);
@@ -35,14 +36,34 @@ namespace NineGrid.Core
                 }
 
                 deck.AddToPlayerCardPool(card);
+                result.AddEvent(new CoreGameEvent(CoreEventType.CardSpawned, context.ActionId, ActionName)
+                    .WithCard(card.Uid)
+                    .WithMessage(card.DefId)
+                    .WithSource(card.DefId, "setupNodeDeck")
+                    .WithFaceAbsolutes(context, card));
             }
 
             for (var i = 0; i < Options.EnemyCards.Count; i++)
             {
-                deck.AddToEnemyCardPool(CreateConfiguredCard(context, Options.EnemyCards[i], registry));
+                var card = CreateConfiguredCard(context, Options.EnemyCards[i], registry);
+                deck.AddToEnemyCardPool(card);
+                result.AddEvent(new CoreGameEvent(CoreEventType.CardSpawned, context.ActionId, ActionName)
+                    .WithCard(card.Uid)
+                    .WithMessage(card.DefId)
+                    .WithSource(card.DefId, "setupNodeDeck")
+                    .WithFaceAbsolutes(context, card));
             }
 
-            return BuildDeactivationResult(context, deactivatedEffects);
+            var deactivation = BuildDeactivationResult(context, deactivatedEffects);
+            if (deactivation.Events != null)
+            {
+                for (var i = 0; i < deactivation.Events.Count; i++)
+                {
+                    result.AddEvent(deactivation.Events[i]);
+                }
+            }
+
+            return result;
         }
 
         private static CardInstance CreateConfiguredCard(GameActionContext context, CardDraft draft, CardRegistry registry)
@@ -305,9 +326,11 @@ namespace NineGrid.Core
 
             if (run.Phase.Value == GamePhase.DealOpeningCards && board.AvatarUid.Value > 0)
             {
+                var avatar = registry.Get(board.AvatarUid.Value);
                 result.AddEvent(new CoreGameEvent(CoreEventType.AvatarAppeared, context.ActionId, ActionName)
                     .WithCard(board.AvatarUid.Value)
-                    .WithSlots(SlotId.None, board.AvatarSlot.Value));
+                    .WithSlots(SlotId.None, board.AvatarSlot.Value)
+                    .WithFaceAbsolutes(context, avatar));
             }
 
             for (var i = 0; i < fillOrder.Count; i++)
@@ -332,7 +355,8 @@ namespace NineGrid.Core
                 result.AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
                     .WithCard(uid)
                     .WithSlots(SlotId.None, slot)
-                    .WithAmount(filled));
+                    .WithAmount(filled)
+                    .WithFaceAbsolutes(context, card));
             }
 
             result.AddEvent(new CoreGameEvent(CoreEventType.SlotsFilled, context.ActionId, ActionName)

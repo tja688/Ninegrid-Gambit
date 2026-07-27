@@ -14,7 +14,7 @@ v1 锚点三个（枚举住在 `NineGrid.Core.PresentationBeat`，归属列并�
 - **Settled（收尾）**：`PresentStep` 在表演通道完成之后、就位回执之前报点；观察型 `BaseStatModified` 等在此消费。探索/道具无命中帧时，收尾前先冲刷剩余 Impact 归属。
 - **None（不上卡面）**：显式弃权，映射表必须附带非空理由。
 
-漏接指令的后果是卡面停在旧值；`Settled` 后未消费的卡面归属指令只报诊断、不做强制对账或静默刷新。数值类指令携带结算后绝对值，卡面做赋值不做累加。JSON `stats` 仅为内容作者出生值（经 Catalog 造卡），不参与投影提交。
+漏接指令的后果是卡面停在旧值；`Settled` 后未消费的卡面归属指令只报诊断、不做强制对账或静默刷新。数值类指令携带结算后绝对值，卡面做赋值不做累加。JSON `stats` 仅为内容作者出生值（经 Catalog 造卡），不参与投影提交。生成类事件（`CardSpawned` / 带 uid 的 `CardDealt` / `AvatarAppeared`）在造卡或发牌时写入攻/甲/血绝对值，经 `CardFaceStatHandler` 与后续增量同一提交出口；Mapper 首次 Commit 只刷视觉。
 
 ## 为什么
 
