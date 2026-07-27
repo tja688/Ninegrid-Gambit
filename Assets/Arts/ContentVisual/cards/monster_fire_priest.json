@@ -3,7 +3,7 @@
     "contentId": "monster.fire_priest",
     "kind": "Monster",
     "deckId": "deck.dragon",
-    "displayName": "红焰花",
+    "displayName": "闭嘴花",
     "description": "每有一张烈焰，本卡攻击+2",
     "gold": 5,
     "stats": {

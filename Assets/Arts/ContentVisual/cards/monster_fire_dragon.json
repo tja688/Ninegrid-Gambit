@@ -3,7 +3,7 @@
     "contentId": "monster.fire_dragon",
     "kind": "Monster",
     "deckId": "deck.dragon",
-    "displayName": "赤背剑龙",
+    "displayName": "紫鸟",
     "description": "每移4次换怪为烈焰；烈焰伤害+1",
     "gold": 5,
     "stats": {
@@ -24,7 +24,7 @@
     "mainVisual": {
         "offsetX": 0.0,
         "offsetY": 0.0,
-        "uniformScale": 0.77
+        "uniformScale": 0.7699999809265137
     },
     "animations": {
         "defaultFps": 8.0,
@@ -32,7 +32,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/28stegosaurus_idle_01",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/46bird_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

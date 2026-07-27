@@ -22,9 +22,9 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
-        "offsetY": 0.0,
-        "uniformScale": 0.84
+        "offsetX": 0.20000000298023225,
+        "offsetY": -0.20000000298023225,
+        "uniformScale": 1.0
     },
     "animations": {
         "defaultFps": 8.0,

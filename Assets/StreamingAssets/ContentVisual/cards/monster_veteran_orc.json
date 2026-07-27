@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.orc_legion",
     "displayName": "灰狼骑兵",
-    "description": "",
+    "description": "��ս����",
     "gold": 5,
     "stats": {
         "hp": 10,
@@ -22,9 +22,9 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
-        "offsetY": 0.0,
-        "uniformScale": 0.86
+        "offsetX": 0.10000000149011612,
+        "offsetY": -0.05000000074505806,
+        "uniformScale": 0.8600000143051148
     },
     "animations": {
         "defaultFps": 8.0,
