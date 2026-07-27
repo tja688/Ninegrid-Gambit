@@ -56,11 +56,6 @@ namespace NineGrid.Flow
                     return false;
                 }
 
-                if (HelpCardBoardSelectResolver.TryGetBoardSelectPrompt(card.DefId, out var prompt))
-                {
-                    DescriptionDisplayHook.RequestShowText(prompt, DescriptionShowRoute.BoardSelect);
-                }
-
                 return true;
             }
 

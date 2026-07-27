@@ -384,7 +384,6 @@ namespace NineGrid.Cards
                 WasHovering = wasHovering,
             };
 
-            DescriptionDisplayHook.RequestShow(removed.DefId, DescriptionShowRoute.Drag);
             BeginDragLoop();
             return true;
         }
@@ -603,7 +602,6 @@ namespace NineGrid.Cards
 
             var driver = card.View?.GetComponent<CardVisualDriver>();
             driver?.SetTarget(CardVisualTarget.Base);
-            DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Hover);
 
             RunPickupFromGroundAsync(card, pickup).Forget();
             FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "ok", true, null);
@@ -864,7 +862,6 @@ namespace NineGrid.Cards
             if (_hoveredCard != null && !IsLiveHandCard(_hoveredCard))
             {
                 _hoveredCard = null;
-                DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Hover);
             }
 
             if (_hoveredCard == card)
@@ -872,8 +869,6 @@ namespace NineGrid.Cards
                 if (card != null)
                 {
                     RefreshHandHoverAlphas(card);
-                    // 每帧重申：防止场地卡 OnMouseExit 等把 Hover 描述清掉后不再恢复
-                    DescriptionDisplayHook.RequestShow(card.DefId, DescriptionShowRoute.Hover);
                 }
 
                 return;
@@ -888,7 +883,6 @@ namespace NineGrid.Cards
             if (card == null)
             {
                 ResetAllHandAlphas();
-                DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Hover);
                 return;
             }
 
@@ -897,7 +891,6 @@ namespace NineGrid.Cards
             {
                 _hoveredCard = null;
                 ResetAllHandAlphas();
-                DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Hover);
                 return;
             }
 
@@ -905,7 +898,6 @@ namespace NineGrid.Cards
             driver?.SetTarget(CardVisualTarget.Hover);
             BoostHandCardHoverSorting(card);
             RefreshHandHoverAlphas(card);
-            DescriptionDisplayHook.RequestShow(card.DefId, DescriptionShowRoute.Hover);
         }
 
         /// <summary>
@@ -1129,9 +1121,6 @@ namespace NineGrid.Cards
                         card,
                         overGround ? layoutSettings.dragAlphaWhenOverGround : 1f);
 
-                    // 拖拽期间每帧重申 Drag 描述，防止被其它 Clear/Show 冲掉
-                    DescriptionDisplayHook.RequestShow(card.DefId, DescriptionShowRoute.Drag);
-
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                 }
 
@@ -1290,7 +1279,6 @@ namespace NineGrid.Cards
         {
             DisarmBoardSelectParkedHitProxy(card);
             BoardCardSelectModeController.ClearParkedItem();
-            DescriptionDisplayHook.RequestClear(DescriptionShowRoute.BoardSelect);
             await VanishCardAfterApplyAsync(card);
         }
 
@@ -1417,11 +1405,6 @@ namespace NineGrid.Cards
 
         private void ClearDragSession()
         {
-            if (_dragSession != null)
-            {
-                DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Drag);
-            }
-
             _dragSession = null;
         }
 
@@ -1435,7 +1418,6 @@ namespace NineGrid.Cards
             if (_hoveredCard == card)
             {
                 _hoveredCard = null;
-                DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Hover);
             }
 
             ResetAllHandAlphas();

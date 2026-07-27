@@ -1639,7 +1639,6 @@ namespace NineGrid.Cards
             if (_hoveredDeckCard != null && (!ContainsUid(_hoveredDeckCard.Uid) || !IsLiveDeckCard(_hoveredDeckCard)))
             {
                 _hoveredDeckCard = null;
-                DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Hover);
             }
 
             var camera = Camera.main;
@@ -1665,29 +1664,14 @@ namespace NineGrid.Cards
 
             if (_hoveredDeckCard == card)
             {
-                if (card != null)
-                {
-                    DescriptionDisplayHook.RequestShow(card.DefId, DescriptionShowRoute.Hover);
-                }
-
                 return;
             }
 
             _hoveredDeckCard = card;
-            if (card == null)
-            {
-                DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Hover);
-                return;
-            }
-
-            if (string.IsNullOrEmpty(card.DefId))
+            if (card != null && string.IsNullOrEmpty(card.DefId))
             {
                 _hoveredDeckCard = null;
-                DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Hover);
-                return;
             }
-
-            DescriptionDisplayHook.RequestShow(card.DefId, DescriptionShowRoute.Hover);
         }
 
         private ManagedCard ResolveDeckHoverTarget(float pointerX, float pointerY)

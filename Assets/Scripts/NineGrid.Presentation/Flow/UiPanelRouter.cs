@@ -82,7 +82,7 @@ namespace NineGrid.Flow
             EnsureBindings();
             SetActiveSafe(mainPanel, false);
             SetActiveSafe(inGamePanels, true);
-            // 奖励选择需悬停写 Card Info Text，保持信息栏可见。
+            // 动态描述 TMP 已退役；信息栏仍用于玩家数值等。
             SetInGameInfoTextVisible(true);
             SetActiveSafe(rewardPanel, true);
             SetActiveSafe(roomChoicePanel, false);
@@ -95,7 +95,7 @@ namespace NineGrid.Flow
             EnsureBindings();
             SetActiveSafe(mainPanel, false);
             SetActiveSafe(inGamePanels, true);
-            // 房间选择需悬停写 Card Info Text，保持信息栏可见。
+            // 动态描述 TMP 已退役；信息栏仍用于玩家数值等。
             SetInGameInfoTextVisible(true);
             SetActiveSafe(rewardPanel, false);
             SetActiveSafe(roomChoicePanel, true);

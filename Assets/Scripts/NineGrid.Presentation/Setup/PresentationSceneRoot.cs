@@ -149,15 +149,11 @@ namespace NineGrid.Presentation.Setup
             RelicHudHook.RequestWire();
 
             DamageNumberOutputController.EnsureInstalled();
-            DescriptionOutputController.EnsureInstalled();
             TriggerPulseOutputController.EnsureInstalled();
             DiagnosticOutputController.EnsureInstalled();
             GoldGainPresentationBinder.EnsureInstalled();
 
-            if (descriptionManager == null)
-            {
-                Debug.LogWarning("[PresentationSceneRoot] descriptionManager 未绑定。");
-            }
+            // DescriptionManagerSingleton / DescriptionOutputController：动态 HUD 描述 TMP 已退役，场景字段可留作序列化兼容。
 
             if (damageNumberManager == null)
             {

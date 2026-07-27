@@ -652,34 +652,11 @@ namespace NineGrid.Flow
 
         private void ShowHoverDescription(string defId)
         {
-            var mgr = UnityEngine.Object.FindFirstObjectByType<DescriptionManagerSingleton>();
-            if (mgr == null)
-            {
-                return;
-            }
-
-            _descriptionGeneration = _hoverOnNotice
-                ? mgr.ShowOnNotice(defId)
-                : mgr.Show(defId);
+            // 动态描述 TMP 已退役；卡面 Basic_Description 为静态权威。
         }
 
         private void ClearHoverDescription()
         {
-            if (_descriptionGeneration < 0)
-            {
-                return;
-            }
-
-            var mgr = UnityEngine.Object.FindFirstObjectByType<DescriptionManagerSingleton>();
-            if (_hoverOnNotice)
-            {
-                mgr?.ClearNotice(_descriptionGeneration);
-            }
-            else
-            {
-                mgr?.Clear(_descriptionGeneration);
-            }
-
             _descriptionGeneration = -1;
         }
 

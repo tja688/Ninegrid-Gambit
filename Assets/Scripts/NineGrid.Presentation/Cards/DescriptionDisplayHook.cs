@@ -3,7 +3,8 @@ using System;
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 描述展示路由：Hover 为默认悬停；Drag 预留给拖拽专属文案；BoardSelect 为多选提示。
+    /// 描述展示路由（遗留枚举，供编译兼容）。
+    /// 动态 HUD 描述 TMP 管道已退役；卡面基础描述权威在 Presentation Commit（Basic_Description）。
     /// </summary>
     public enum DescriptionShowRoute : byte
     {
@@ -13,12 +14,12 @@ namespace NineGrid.Cards
     }
 
     /// <summary>
-    /// 描述输出统一入口：由 NineGrid.Presentation Controller 接线为 QF Event。
-    /// 卡面基础描述权威仍在 Presentation Commit（Basic_Description）；本 Hook 只驱动遗留 HUD/提示文案。
+    /// 描述输出入口（已退役）：不再驱动 Card Info Text / NoticeText 等动态 TMP。
+    /// 保留类型与空实现，避免场景与旧调用点编译断裂；卡面静态描述走 Basic_Description Commit。
     /// </summary>
     public static class DescriptionDisplayHook
     {
-        /// <summary>由 Presentation Controller 注册，确保 Hook→Event 接线已安装。</summary>
+        /// <summary>遗留接线位；退役后恒为 null。</summary>
         public static Action EnsureWired;
 
         public static Action<string, DescriptionShowRoute> Show;
@@ -27,32 +28,17 @@ namespace NineGrid.Cards
 
         public static void RequestShow(string defId, DescriptionShowRoute route = DescriptionShowRoute.Hover)
         {
-            EnsureWired?.Invoke();
-            if (string.IsNullOrEmpty(defId))
-            {
-                RequestClear(route);
-                return;
-            }
-
-            Show?.Invoke(defId, route);
+            // no-op：动态描述 TMP 已砍；勿在此恢复 Card Info Text 写入。
         }
 
         public static void RequestShowText(string text, DescriptionShowRoute route)
         {
-            EnsureWired?.Invoke();
-            if (string.IsNullOrEmpty(text))
-            {
-                RequestClear(route);
-                return;
-            }
-
-            ShowText?.Invoke(text, route);
+            // no-op
         }
 
         public static void RequestClear(DescriptionShowRoute route = DescriptionShowRoute.Hover)
         {
-            EnsureWired?.Invoke();
-            Clear?.Invoke(route);
+            // no-op
         }
     }
 }

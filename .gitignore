@@ -83,6 +83,9 @@ Thumbs.db
 # Memory capture
 /[Mm]emoryCaptures/
 
+# Unity Profiler captures (often 100MB+)
+/[Pp]rofilerCaptures/
+
 # Recordings
 /[Aa]ssets/[Ss]treamingAssets/Recordings/
 

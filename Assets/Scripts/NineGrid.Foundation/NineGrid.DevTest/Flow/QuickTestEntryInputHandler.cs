@@ -1,3 +1,5 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+
 using NineGrid.Core;
 using NineGrid.DevTest.Commands;
 using NineGrid.Flow;
@@ -173,3 +175,5 @@ namespace NineGrid.DevTest.Flow
         }
     }
 }
+
+#endif

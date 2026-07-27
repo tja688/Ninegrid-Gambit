@@ -109,7 +109,6 @@ namespace NineGrid.Cards
             _active = false;
             _committing = false;
             PresentationInputGates.SetBoardSelect(false);
-            DescriptionDisplayHook.RequestClear(DescriptionShowRoute.BoardSelect);
             if (hadSession || gateStuck)
             {
                 Debug.Log("[BoardCardSelectMode] End");

@@ -18,6 +18,14 @@ namespace NineGrid.Presentation.Setup
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Apply()
         {
+            ReapplyForceSoftware();
+        }
+
+        /// <summary>
+        /// 重新套用 ForceSoftware 软件光标（供 Dev kill-switch 还原）。
+        /// </summary>
+        public static void ReapplyForceSoftware()
+        {
             var settings = Resources.Load<SoftwareCursorSettingsSO>(SoftwareCursorSettingsSO.ResourcePath);
             if (settings == null || settings.CursorTexture == null)
             {
@@ -27,9 +35,14 @@ namespace NineGrid.Presentation.Setup
             if (sDisplayTexture != null && sDisplayTexture != settings.CursorTexture)
             {
                 Object.Destroy(sDisplayTexture);
+                sDisplayTexture = null;
             }
 
-            sDisplayTexture = settings.BuildDisplayTexture();
+            if (sDisplayTexture == null)
+            {
+                sDisplayTexture = settings.BuildDisplayTexture();
+            }
+
             if (sDisplayTexture == null)
             {
                 return;

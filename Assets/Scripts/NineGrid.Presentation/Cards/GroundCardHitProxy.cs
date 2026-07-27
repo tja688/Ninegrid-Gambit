@@ -43,6 +43,12 @@ namespace NineGrid.Cards
 
         private void OnMouseEnter()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (NineGrid.Presentation.Diagnostics.PerfHoverKillSwitch.SuppressGroundOnMouseHover)
+            {
+                return;
+            }
+#endif
             if (!CanRespondToHover())
             {
                 return;
@@ -55,18 +61,16 @@ namespace NineGrid.Cards
             }
 
             _driver?.SetTarget(CardVisualTarget.Hover);
-
-            var defId = _driver?.BoundCard?.DefId;
-            if (!string.IsNullOrEmpty(defId))
-            {
-                DescriptionDisplayHook.RequestShow(defId, DescriptionShowRoute.Hover);
-            }
         }
 
         private void OnMouseExit()
         {
-            DescriptionDisplayHook.RequestClear(DescriptionShowRoute.Hover);
-
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (NineGrid.Presentation.Diagnostics.PerfHoverKillSwitch.SuppressGroundOnMouseHover)
+            {
+                return;
+            }
+#endif
             if (!CanRespondToHover())
             {
                 return;
