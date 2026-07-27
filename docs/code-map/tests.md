@@ -20,6 +20,13 @@
 | `HostContractStructuralTests.cs` | 结构护栏：禁四大旧宿主名、禁 `CombatHitSink`、禁回流 `new PresentationDirector`、System 不暴露具体 View |
 | `IntentIntakeStructuralTests.cs` | 结构护栏（#52）：输入路径须经 IntentIntake；门禁/收口决策禁用壁钟；ADR-0004 accepted |
 
+### Core 契约护栏（`NineGrid.Core.Tests`）
+
+| 测试 | 保护什么 |
+|------|----------|
+| `PresentationEventMapBeatExhaustivenessTests` | #54：每个 `CoreEventType` 须有表演映射与显式 `PresentationBeat`；`None` 必须带理由；观察型 `BaseStatModified` 不得落在 `Impact` |
+| `BaseStatModifiedResultValueTests` | #54：`BaseStatModified` 携带结算后 `ResultValue`，且保留 `Amount=StatId` / `Delta` 增量约定 |
+
 ## 关闭门槛（普通实施票）
 
 1. 受影响 EditMode 绿  

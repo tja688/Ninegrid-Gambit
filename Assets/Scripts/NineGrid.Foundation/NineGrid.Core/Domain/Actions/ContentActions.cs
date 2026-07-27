@@ -48,6 +48,7 @@ namespace NineGrid.Core
                     .WithTarget(TargetUid)
                     .WithAmount((int)Stat)
                     .WithDelta(Delta)
+                    .WithResultValue(next)
                     .WithMessage(Reason)
                     .WithSource(SourceDefId, Reason));
         }

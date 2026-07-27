@@ -28,6 +28,11 @@ namespace NineGrid.Core
         public SlotId ToSlot { get; private set; }
         public int Amount { get; private set; }
         public int Delta { get; private set; }
+        /// <summary>
+        /// 结算后绝对值（赋值用，非增量）。血甲类事件继续用 <see cref="RemainingHp"/> /
+        /// <see cref="RemainingArmor"/>；基础数值修改等用本字段。
+        /// </summary>
+        public int ResultValue { get; private set; }
         public int RemainingHp { get; private set; }
         public int RemainingArmor { get; private set; }
         public int RemovedAttack { get; private set; }
@@ -70,6 +75,12 @@ namespace NineGrid.Core
         public CoreGameEvent WithDelta(int delta)
         {
             Delta = delta;
+            return this;
+        }
+
+        public CoreGameEvent WithResultValue(int resultValue)
+        {
+            ResultValue = resultValue;
             return this;
         }
 

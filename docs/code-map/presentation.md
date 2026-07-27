@@ -112,3 +112,10 @@
 - Batch/ack：表演未就位前 Core 不推进下一批（ADR-0001）  
 - 逻辑占格唯一归 Core `BoardModel`  
 - 卡面可见值经投影 Commit（ADR-0002）；禁止队列外正式 Setter 通路
+
+## Core 表演契约（#54 已落地；排期器消费属后续票）
+
+- `NineGrid.Core.PresentationBeat`：`Impact` / `Settled` / `None`（升级路径注释在枚举旁）
+- `PresentationEventMapEntry.Beat` + `NoneReason`：每个 `CoreEventType` 显式锚点归属；不上卡面必须写理由
+- 数值类指令绝对值：血甲用既有 `RemainingHp`/`RemainingArmor`；`BaseStatModified` 追加 `CoreGameEvent.ResultValue`（`Amount` 仍为 StatId，`Delta` 仍为增量）
+- 穷尽性：`NineGrid.Core.Tests.PresentationEventMapBeatExhaustivenessTests`
