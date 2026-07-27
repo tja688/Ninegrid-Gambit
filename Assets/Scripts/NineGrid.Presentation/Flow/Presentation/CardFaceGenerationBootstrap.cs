@@ -26,15 +26,7 @@ namespace NineGrid.Flow.Presentation
             for (var i = startIndex; i < entries.Count; i++)
             {
                 var entry = entries[i];
-                if (entry.CardUid <= 0
-                    && entry.TargetUid <= 0)
-                {
-                    continue;
-                }
-
-                if (entry.Type != CoreEventType.CardSpawned
-                    && entry.Type != CoreEventType.CardDealt
-                    && entry.Type != CoreEventType.AvatarAppeared)
+                if (!IsGenerationFaceEvent(entry))
                 {
                     continue;
                 }
@@ -49,7 +41,10 @@ namespace NineGrid.Flow.Presentation
             }
         }
 
-        public static void ApplyLatestForUid(IArchitecture architecture, int uid)
+        /// <summary>
+        /// 手牌等视图重 Spawn：按事件日志顺序重放该 uid 的卡面数值指令，避免只套生成绝对值钉回战斗中变化。
+        /// </summary>
+        public static void ApplyFaceHistoryForUid(IArchitecture architecture, int uid)
         {
             if (architecture == null || uid <= 0)
             {
@@ -62,33 +57,53 @@ namespace NineGrid.Flow.Presentation
                 return;
             }
 
-            CoreGameEvent latest = null;
+            var handler = new CardFaceStatHandler();
             for (var i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
-                if (entry.Type != CoreEventType.CardSpawned
-                    && entry.Type != CoreEventType.CardDealt
-                    && entry.Type != CoreEventType.AvatarAppeared)
+                if (!BelongsToUid(entry, uid) || !IsCardFaceStatEvent(entry.Type))
                 {
                     continue;
                 }
 
-                var eventUid = entry.CardUid > 0 ? entry.CardUid : entry.TargetUid;
-                if (eventUid != uid)
+                var map = PresentationEventMap.Get(entry.Type);
+                if (map.Beat == PresentationBeat.None)
                 {
                     continue;
                 }
 
-                latest = entry;
+                handler.Apply(new PresentationInstruction(entry, map));
             }
+        }
 
-            if (latest == null)
+        private static bool IsGenerationFaceEvent(CoreGameEvent entry)
+        {
+            if (entry == null || (entry.CardUid <= 0 && entry.TargetUid <= 0))
             {
-                return;
+                return false;
             }
 
-            var map = PresentationEventMap.Get(latest.Type);
-            new CardFaceStatHandler().Apply(new PresentationInstruction(latest, map));
+            return entry.Type == CoreEventType.CardSpawned
+                || entry.Type == CoreEventType.CardDealt
+                || entry.Type == CoreEventType.AvatarAppeared;
+        }
+
+        private static bool IsCardFaceStatEvent(CoreEventType type)
+        {
+            return type == CoreEventType.CardSpawned
+                || type == CoreEventType.CardDealt
+                || type == CoreEventType.AvatarAppeared
+                || type == CoreEventType.HpChanged
+                || type == CoreEventType.Healed
+                || type == CoreEventType.ArmorChanged
+                || type == CoreEventType.BaseStatModified
+                || type == CoreEventType.CardKilled;
+        }
+
+        private static bool BelongsToUid(CoreGameEvent entry, int uid)
+        {
+            return entry != null
+                && (entry.CardUid == uid || entry.TargetUid == uid);
         }
     }
 }
