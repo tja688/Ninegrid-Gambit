@@ -88,12 +88,12 @@ unity command build --project-path "<本仓库>" --format json `
 # 再 poll: unity command build_status ...
 ```
 
-打完后自检（期望 DevTest DLL 远大于 4KB，且含 `PerfHoverKill`；`boot.config` 应有 `player-connection-debug=1`）：
+打完后自检（期望 DevTest DLL 远大于 4KB；`boot.config` 应有 `player-connection-debug=1`）：
 
 ```powershell
 $dev = "Builds/DevWin64/NinegridGambit_Data/Managed/NineGrid.DevTest.dll"
 $ascii = [Text.Encoding]::ASCII.GetString([IO.File]::ReadAllBytes($dev))
-"size=$((Get-Item $dev).Length) PerfHover=$($ascii.Contains('PerfHoverKill'))"
+"size=$((Get-Item $dev).Length) DevTestGate=$($ascii.Contains('DevTestCompileGate'))"
 ```
 
 不要写 `unity command build --options Development`（无方括号）——那不会带上 Development。

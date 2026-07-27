@@ -67,15 +67,6 @@ namespace NineGrid.Cards
             _currentTarget = target;
             KillFeedbackMotion();
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (NineGrid.Presentation.Diagnostics.PerfHoverKillSwitch.InstantHoverNoTween
-                && target != CardVisualTarget.Selected)
-            {
-                SnapInstantVisual(target);
-                return;
-            }
-#endif
-
             switch (target)
             {
                 case CardVisualTarget.Hover:
@@ -91,46 +82,6 @@ namespace NineGrid.Cards
                     break;
             }
         }
-
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        private void SnapInstantVisual(CardVisualTarget target)
-        {
-            var baseScale = GetBaseScale();
-            _transform.localRotation = Quaternion.identity;
-
-            if (_card?.DisplayMode == CardDisplayMode.HandCardMode)
-            {
-                if (!TryResolveHandLayoutPosition(out _handHoverBaseWorldPosition))
-                {
-                    _handHoverBaseWorldPosition = _transform.position;
-                }
-
-                if (target == CardVisualTarget.Hover)
-                {
-                    var settings = ResolveHandLayoutSettings();
-                    _transform.position = _handHoverBaseWorldPosition + Vector3.up * settings.hoverPopYOffset;
-                    _transform.localScale = baseScale * (1f + settings.hoverScaleIntensity);
-                }
-                else
-                {
-                    _transform.position = _handHoverBaseWorldPosition;
-                    _transform.localScale = baseScale;
-                }
-
-                return;
-            }
-
-            if (target == CardVisualTarget.Hover)
-            {
-                var settings = ResolveGroundLayoutSettings();
-                _transform.localScale = baseScale * (1f + settings.hoverScaleIntensity);
-            }
-            else
-            {
-                _transform.localScale = baseScale;
-            }
-        }
-#endif
 
         public bool IsSelectedVisual => _currentTarget == CardVisualTarget.Selected;
 

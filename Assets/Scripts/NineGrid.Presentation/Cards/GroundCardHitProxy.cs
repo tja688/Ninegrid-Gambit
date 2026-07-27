@@ -63,12 +63,6 @@ namespace NineGrid.Cards
 
         public void HandlePointerEnter()
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (NineGrid.Presentation.Diagnostics.PerfHoverKillSwitch.SuppressGroundOnMouseHover)
-            {
-                return;
-            }
-#endif
             if (!CanRespondToHover())
             {
                 return;
@@ -85,12 +79,6 @@ namespace NineGrid.Cards
 
         public void HandlePointerExit()
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (NineGrid.Presentation.Diagnostics.PerfHoverKillSwitch.SuppressGroundOnMouseHover)
-            {
-                return;
-            }
-#endif
             if (!CanRespondToHover())
             {
                 return;
