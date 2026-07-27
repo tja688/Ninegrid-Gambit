@@ -61,6 +61,43 @@ unity command run_tests --mode editor --filter <Name> --project-path "<本仓库
 
 改场景 / GameObject / 组件：用 `create_gameobject`、`find_gameobjects`、`add_component`、`set_component_properties` 等 Pipeline 命令。
 
+## Development Player 打包（重要）
+
+Pipeline 的 `build --options Development`（普通字符串）**不可靠**：CLI 把 `options` 当 `string` 传入，服务端转 `string[]` 失败后**静默丢弃**，落到默认的 `DetailedBuildReport`（不含 `BuildOptions.Development`）。重复 `--options` 也只留最后一个。结果是包能打出来，但 `DEVELOPMENT_BUILD` 未定义，`#if DEVELOPMENT_BUILD` 热键/DevTest 被剥掉（典型症状：`NineGrid.DevTest.dll` ≈ 4KB）。
+
+**推荐**：项目内 `DevPlayerBuild`（菜单或 eval），不依赖 CLI 数组绑定：
+
+```bash
+# 排队异步 Development 包（含 CleanBuildCache）
+unity command eval "return NineGrid.Presentation.Editor.DevPlayerBuild.QueueDevelopmentWindows64(\"Builds/DevWin64/NinegridGambit.exe\", true);" --project-path "<本仓库>" --format json
+
+# 轮询至 completed
+unity command eval "return NineGrid.Presentation.Editor.DevPlayerBuild.GetStatusJson();" --project-path "<本仓库>" --format json
+```
+
+菜单：`NineGrid/Build/Development Windows64 Player`。
+
+**也可用** Pipeline `build`，但必须把 options 写成 JSON 数组字符串（服务端见 `[` 才会重解析）：
+
+```powershell
+unity command build --project-path "<本仓库>" --format json `
+  --target StandaloneWindows64 `
+  --outputPath "Builds/DevWin64/NinegridGambit.exe" `
+  --options '["Development","CleanBuildCache","AllowDebugging","DetailedBuildReport"]' `
+  --confirm true
+# 再 poll: unity command build_status ...
+```
+
+打完后自检（期望 DevTest DLL 远大于 4KB，且含 `PerfHoverKill`；`boot.config` 应有 `player-connection-debug=1`）：
+
+```powershell
+$dev = "Builds/DevWin64/NinegridGambit_Data/Managed/NineGrid.DevTest.dll"
+$ascii = [Text.Encoding]::ASCII.GetString([IO.File]::ReadAllBytes($dev))
+"size=$((Get-Item $dev).Length) PerfHover=$($ascii.Contains('PerfHoverKill'))"
+```
+
+不要写 `unity command build --options Development`（无方括号）——那不会带上 Development。
+
 ## 与 MCP 的关系
 
 | | Unity CLI (`unity command`) | Unity MCP |

@@ -51,7 +51,7 @@ namespace NineGrid.DevTest.Flow
             sInstance = go.AddComponent<PerfHoverKillSwitchHost>();
             Debug.Log(
                 "[PerfHoverKill] host ready | F5=帮助 F6=下一模式 F8=上一模式 F7=采3sFPS | "
-                + "模式互斥：0基线 A光标 B全Collider C禁OnMouseHover D无Tween E槽+Relic");
+                + "模式互斥：0基线 A全Collider B禁OnMouseHover C无Tween D槽+Relic");
         }
 
         private GUIStyle _overlayStyle;
@@ -235,11 +235,10 @@ namespace NineGrid.DevTest.Flow
                 "[PerfHoverKill] HELP\n"
                 + "  F6 = 下一模式（互斥）  F8 = 上一模式  F7 = 立刻采 3s FPS  F5 = 本帮助\n"
                 + "  0 Off 基线\n"
-                + "  A SoftCursorAuto — 若掉帧消失 → 软件光标主因/放大器\n"
-                + "  B DisableAllColliders — 若消失 → SendMouseEvents/命中面主因\n"
-                + "  C SuppressGroundOnMouseHover — 若消失 → OnMouseEnter/Exit 回调主因\n"
-                + "  D InstantHoverNoTween — 若消失 → DOTween hover 风暴主因\n"
-                + "  E DisableSlotAndRelicColliders — 若消失 → 主菜单空槽+Relic 盒主因\n"
+                + "  A DisableAllColliders — 若消失 → SendMouseEvents/命中面主因\n"
+                + "  B SuppressGroundOnMouseHover — 若消失 → OnMouseEnter/Exit 回调主因\n"
+                + "  C InstantHoverNoTween — 若消失 → DOTween hover 风暴主因\n"
+                + "  D DisableSlotAndRelicColliders — 若消失 → 主菜单空槽+Relic 盒主因\n"
                 + "  建议：每模式切完后在热区快扫；等 SAMPLE end 日志再切下一档。\n"
                 + $"  当前: {PerfHoverKillSwitch.Describe(PerfHoverKillSwitch.ActiveMode)} "
                 + $"FPS≈{liveFps:0.#} min≈{liveMin:0.#} "
