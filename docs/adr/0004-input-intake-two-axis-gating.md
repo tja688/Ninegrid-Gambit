@@ -26,3 +26,7 @@ status: accepted
 - `OccupancyDesyncLatched` 退出运行时门禁，降为断言；真出 desync 视为 bug 修根因。
 - 玩家可见反馈（缓冲/非法/非当前所有者的差异化提示）**不在本轮**，保持现状。
 - 禁用壁钟为硬约束：未来 debounce/加速需注入时钟 `Func<float>`，以保门禁边界测试可确定、不 flaky。由 `IntentIntakeStructuralTests` 对门禁/收口决策面做源码扫描护栏（#52）。
+
+## 相关
+
+- [ADR-0005](0005-card-face-beat-commit.md) — 输出侧唯一出口（排期器 → 卡面数值处理器），与本 ADR 输入唯一收口结构同源

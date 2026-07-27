@@ -6,21 +6,28 @@ status: accepted
 
 ## 决策
 
-卡面显示值**只**来自解算批次产出的结算指令，在表演编排声明的锚点处赋值提交；**永不**回头读规则内核权威值做卡面数值同步。
+记录 Spec #53 决策 1–6（输出侧唯一提交出口）：
 
-v1 锚点三个（枚举住在 `NineGrid.Core.PresentationBeat`，归属列并入既有 `PresentationEventMap`，不另建第二张表）：
+1. **卡面显示值只来自结算指令，永不回头读规则内核权威值。** 数值类指令携带结算后绝对值，卡面赋值不累加。权威值与卡面显示值分层；显示值有意滞后于权威值。
+2. **不做兜底、不做强制对账。** 漏接指令 → 卡面停在旧值；`Settled` 后未消费的卡面归属指令只报诊断与断言，值一动不动。穷尽性靠测试期映射表，不靠运行时补救。
+3. **锚点归属并入既有 `PresentationEventMap`，不另建第二张表。** 锚点枚举住在 `NineGrid.Core.PresentationBeat`；表演层新增节拍须改内核。
+4. **v1 只要三个锚点**（命中 / 收尾 / 不上卡面）；升级路径写在枚举注释（若观感嫌晚可加 `PostImpact`，命中回调内延时二次报点即可）。
+5. **不存在「定义值路径」。** 全世界只有一条路：卡面显示值一律来自结算指令。JSON `stats` 仅为内容作者出生值（经 Catalog 造卡），不参与投影提交。
+6. **投影提交是瞬时的，数字跳动是装饰。** 锚点处赋值瞬时完成；滚动/回弹属旁路装饰道，不占编排主线、不参与就位回执。
+
+v1 锚点：
 
 - **Impact（命中）**：攻击/反击 `onCombatHit` 报点；血量/护甲类指令在此消费。
 - **Settled（收尾）**：`PresentStep` 在表演通道完成之后、就位回执之前报点；观察型 `BaseStatModified` 等在此消费。探索/道具无命中帧时，收尾前先冲刷剩余 Impact 归属。
 - **None（不上卡面）**：显式弃权，映射表必须附带非空理由。
 
-漏接指令的后果是卡面停在旧值；`Settled` 后未消费的卡面归属指令只报诊断、不做强制对账或静默刷新。数值类指令携带结算后绝对值，卡面做赋值不做累加。JSON `stats` 仅为内容作者出生值（经 Catalog 造卡），不参与投影提交。生成类事件（`CardSpawned` / 带 uid 的 `CardDealt` / `AvatarAppeared`）在造卡或发牌时写入攻/甲/血绝对值，经 `CardFaceStatHandler` 与后续增量同一提交出口；Mapper 首次 Commit 只刷视觉。
+生成类事件（`CardSpawned` / 带 uid 的 `CardDealt` / `AvatarAppeared`）在造卡或发牌时写入攻/甲/血绝对值，经 `CardFaceStatHandler` 与后续增量同一提交出口；`CardKilled` 携带 `RemainingHp` 做可见归零。Mapper 首次 Commit 只刷视觉。公开底盘数值 Setter 与 `MarkFieldDead` 直置零旁路已删除。
 
 ## 为什么
 
 规则内核一批解算会算完本拍与全部连锁，表演开始时权威值已是终值。若卡面仍「现场问内核此刻多少」，物理上不可能取到中间值，于是出现「抬手蓄力时观察型加攻已涨、命中后才掉甲」的因果倒置。提交时机散落在命中帧直读与解算投影旁路时，作者无法预期新数值事件何时上卡面。
 
-单一出口（排期器 → 卡面数值处理器 → `CommitPresentation`）与「无兜底」政策，对齐 ADR-0002「投影提交只由阻塞串行队列触发」与 ADR-0004「输入唯一收口」的结构：输出侧建立唯一出口，穷尽性靠测试期映射表护栏，不靠运行时补救。
+单一出口（排期器 → 卡面数值处理器 → `CommitPresentation`）与「无兜底」政策，对齐 [ADR-0002](0002-card-chassis-and-face-templates.md)「投影提交只由阻塞串行队列触发」与 [ADR-0004](0004-input-intake-two-axis-gating.md)「输入唯一收口」的结构：输出侧建立唯一出口，穷尽性靠测试期映射表护栏，不靠运行时补救。本票完全建立在 [ADR-0001](0001-battle-presentation-unified-timeline-batch-ack.md) 统一时间线与批次就位回执之上，不改动其结论。
 
 ## 考虑过的替代
 
@@ -35,4 +42,11 @@ v1 锚点三个（枚举住在 `NineGrid.Core.PresentationBeat`，归属列并�
 - 删除攻击路径命中帧 `SyncManagedCardPresentation` 与石头爱好者观察型提前同步。
 - 用道具 Present 开头改为 `RefreshVisualsPreservingCommittedStatsOnAllSpawned`（只刷视觉）；数值仍由通道完成时的 Impact/Settled 消费。
 - `CoreCardPresentationMapper` 保留视觉投影；已提交卡面的数值不被直读 Core 覆写；JSON `stats` 不再盖写运行时卡面。
+- `MarkFieldDead` 只标死亡态；可见血量归零走 `KillCard` 指令的 `RemainingHp`。
 - 玩家信息 HUD、飘字、Bounce 候选项等其它消费者仍可直读，属后续迁移，不构成本票卡面数值新旧并存。
+
+## 相关
+
+- [ADR-0001](0001-battle-presentation-unified-timeline-batch-ack.md) — 统一时间线与批次就位回执（本决策建立其上）
+- [ADR-0002](0002-card-chassis-and-face-templates.md) — 卡牌底盘与投影 Commit；本决策真正落地「禁止队列外直刷」
+- [ADR-0004](0004-input-intake-two-axis-gating.md) — 输入唯一收口；本决策为输出建立唯一出口（结构同源）

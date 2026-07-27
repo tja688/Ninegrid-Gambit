@@ -23,3 +23,7 @@ status: accepted
 - `_uidBySlot` 占格镜像与 `SyncBoardOccupancyFromCore(force)` 硬对账退场；后者降级为"永不应触发"的断言。
 - 位置收敛基元全域统一（手牌/卡组迁到收敛）明确**不在本轮**，净土域保留 DOTween 黑盒、边界走 Evict/Admit。
 - tick 加速（忙时连点整线提速）留作未来门，本轮输入缓冲不变速。
+
+## 相关
+
+- [ADR-0005](0005-card-face-beat-commit.md) — 卡面显示值在表演锚点经结算指令提交（建立在本 ADR 的时间线 / batch-ack 之上）

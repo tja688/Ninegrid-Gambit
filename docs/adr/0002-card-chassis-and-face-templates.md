@@ -29,3 +29,7 @@ status: accepted
 - `RegisterPrefab(defId)` 降为特例；主路径为底盘 + Kind→卡面表。
 - 首波回填既有主图标/名字/数值即可玩；描述、行动计数等槽口预留走默认，详细描述与翻牌规则门闩后续专题。
 - 编辑器 Cards 管线必须按「底盘 + L4 卡面」预览终态，并修复已失效的 `Standard Card.prefab` 路径。
+
+## 相关
+
+- [ADR-0005](0005-card-face-beat-commit.md) — 真正落地「投影提交只由阻塞串行队列 / 事件流触发」：删除直读 Core 与公开底盘数值 Setter 旁路

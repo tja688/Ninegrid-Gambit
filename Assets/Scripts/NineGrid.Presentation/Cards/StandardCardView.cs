@@ -7,7 +7,7 @@ namespace NineGrid.Cards
 {
     /// <summary>
     /// 卡牌底盘宿主：SortingGroup / 卡面挂载 / 分发已提交投影给 Kind Binder。
-    /// 正式可见值路径为 <see cref="ApplyPresentation"/>；旧 Set* 仅过渡 / 测试兼容。
+    /// 正式可见值路径为 <see cref="ApplyPresentation"/>；数值 Set* 仅供无 Binder 过渡回退，不对外公开。
     /// 朝向：Core 权威 → 投影 Commit 镜像 → 卡面消费；禁止 DisplayMode→朝向隐式通道。
     /// </summary>
     [DisallowMultipleComponent]
@@ -138,37 +138,22 @@ namespace NineGrid.Cards
             RefreshAll(false);
         }
 
-        public void SetAttack(int value, bool animate = true)
+        private void SetAttack(int value, bool animate = true)
         {
             attack = Mathf.Max(0, value);
             _attackDigits?.SetValue(attack, animate);
         }
 
-        public void SetHealth(int value, bool animate = true)
+        private void SetHealth(int value, bool animate = true)
         {
             health = Mathf.Max(0, value);
             _lifeDigits?.SetValue(health, animate);
         }
 
-        public void SetArmor(int value, bool animate = true)
+        private void SetArmor(int value, bool animate = true)
         {
             armor = Mathf.Clamp(value, 0, MaxArmor);
             RefreshArmorDisplay(animate);
-        }
-
-        public void AddAttack(int delta, bool animate = true)
-        {
-            SetAttack(attack + delta, animate);
-        }
-
-        public void AddHealth(int delta, bool animate = true)
-        {
-            SetHealth(health + delta, animate);
-        }
-
-        public void AddArmor(int delta, bool animate = true)
-        {
-            SetArmor(armor + delta, animate);
         }
 
         public void SetMainIcon(Sprite sprite)

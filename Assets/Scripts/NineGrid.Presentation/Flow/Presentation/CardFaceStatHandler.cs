@@ -91,8 +91,8 @@ namespace NineGrid.Flow.Presentation
                 return;
             }
 
-            // CardKilled 语义：可见血量归零（绝对值由命中帧 HpChanged 通常已写入；此处兜底）。
-            CommitNumeric(card, attack: null, armor: null, hp: 0);
+            // CardKilled：可见血量取指令携带的剩余血量（通常为 0）；禁止本地硬编码置零旁路。
+            CommitNumeric(card, attack: null, armor: null, hp: Mathf.Max(0, gameEvent.RemainingHp));
         }
 
         private static void ApplySpawnFace(CoreGameEvent gameEvent)

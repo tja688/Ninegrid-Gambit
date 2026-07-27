@@ -13,6 +13,7 @@ using NineGrid.Presentation.Systems;
 using NineGrid.Presentation.Tests.Fixtures;
 using NUnit.Framework;
 using QFramework;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -602,6 +603,102 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             Assert.AreEqual(instructionHp, spawned.CommittedPresentation.Hp);
             Assert.AreNotEqual(jsonBirthAttack, spawned.CommittedPresentation.Attack);
             Assert.AreNotEqual(jsonBirthHp, spawned.CommittedPresentation.Hp);
+        }
+
+        [Test]
+        public void KillCard_Settled_Commits_InstructionRemainingHp()
+        {
+            var spawned = mCardManager.SpawnView(9058, "monster.guard", kind: CardPresentationKind.Monster);
+            spawned.CommitPresentation(new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.Monster,
+                DefId = "monster.guard",
+                Attack = 4,
+                Armor = 2,
+                Hp = 10,
+                FaceUp = true,
+            });
+
+            CardEntityLifecycleHook.TryGet = (int uid, out ManagedCard found) =>
+            {
+                if (uid == spawned.Uid)
+                {
+                    found = spawned;
+                    return true;
+                }
+
+                found = null;
+                return false;
+            };
+
+            NineGridArchitecture.ResetForTests();
+
+            const int remainingHp = 0;
+            var killEvt = new CoreGameEvent(CoreEventType.CardKilled, 58, "KillCard")
+                .WithCard(spawned.Uid)
+                .WithTarget(spawned.Uid)
+                .WithRemaining(remainingHp, 0);
+
+            var handler = new CardFaceStatHandler();
+            handler.Apply(new PresentationInstruction(killEvt, PresentationEventMap.Get(CoreEventType.CardKilled)));
+
+            Assert.AreEqual(remainingHp, spawned.CommittedPresentation.Hp);
+            Assert.AreEqual(4, spawned.CommittedPresentation.Attack, "击杀只写血量，攻不变");
+            Assert.AreEqual(2, spawned.CommittedPresentation.Armor, "击杀只写血量，甲不变");
+        }
+
+        [Test]
+        public void Settled_WithUnconsumedImpact_LeavesFaceValuesUnchanged()
+        {
+            var spawned = mCardManager.SpawnView(9059, "monster.guard", kind: CardPresentationKind.Monster);
+            spawned.CommitPresentation(new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.Monster,
+                DefId = "monster.guard",
+                Attack = 8,
+                Armor = 5,
+                Hp = 10,
+                FaceUp = true,
+            });
+
+            CardEntityLifecycleHook.TryGet = (int uid, out ManagedCard found) =>
+            {
+                if (uid == spawned.Uid)
+                {
+                    found = spawned;
+                    return true;
+                }
+
+                found = null;
+                return false;
+            };
+
+            NineGridArchitecture.ResetForTests();
+
+            var armorEvt = new CoreGameEvent(CoreEventType.ArmorChanged, 59, "test")
+                .WithCard(spawned.Uid)
+                .WithTarget(spawned.Uid)
+                .WithRemaining(10, 1);
+            var batch = new PresentationBatch(
+                59,
+                new[]
+                {
+                    new PresentationInstruction(armorEvt, PresentationEventMap.Get(CoreEventType.ArmorChanged)),
+                },
+                snapshot: null);
+            var scheduler = new BattleBeatScheduler(new CardFaceStatHandler());
+            scheduler.OnBatchOpened(batch);
+
+            // 故意不报 Impact，只报 Settled：未消费指令只诊断，值不动。
+            var unconsumed = new Regex(
+                @"\[BattleBeatScheduler\] Unconsumed card-face instruction after Settled.*type=ArmorChanged.*beat=Impact");
+            UnityEngine.TestTools.LogAssert.Expect(LogType.Error, unconsumed);
+            UnityEngine.TestTools.LogAssert.Expect(LogType.Assert, unconsumed);
+            scheduler.ReportBeat(PresentationBeat.Settled);
+
+            Assert.AreEqual(5, spawned.CommittedPresentation.Armor, "漏接 Impact 不得静默刷新护甲");
+            Assert.AreEqual(8, spawned.CommittedPresentation.Attack);
+            Assert.AreEqual(10, spawned.CommittedPresentation.Hp);
         }
 
         private static NodeDeckOptions CreateStoneLoverNode()

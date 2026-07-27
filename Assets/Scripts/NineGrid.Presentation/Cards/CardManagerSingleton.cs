@@ -667,20 +667,8 @@ namespace NineGrid.Cards
                 return;
             }
 
+            // 仅标记场地死亡；可见血量归零由 KillCard 结算指令在表演锚点提交（ADR-0005）。
             card.IsFieldDead = true;
-
-            // 正式路径：改已提交投影再重放；无投影时才回退底盘 SetHealth（特例过渡）。
-            if (card.CommittedPresentation != null)
-            {
-                card.CommittedPresentation.Hp = 0;
-                card.ReapplyCommittedPresentation();
-                return;
-            }
-
-            if (card.View != null)
-            {
-                card.View.SetHealth(0, animate: false);
-            }
         }
 
         /// <summary>
