@@ -9,6 +9,7 @@ using NineGrid.Core.Systems;
 using NineGrid.Core.Utilities;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Setup;
+using NineGrid.Presentation.Systems;
 using NineGrid.Presentation.Tests.Fixtures;
 using NUnit.Framework;
 using QFramework;
@@ -18,12 +19,14 @@ using Object = UnityEngine.Object;
 namespace NineGrid.Presentation.Tests.BehaviorBaseline
 {
     /// <summary>
-    /// #55 主缝：Runtime 逐拍推进 → 已提交卡面投影。
-    /// 护甲在命中锚点提交；观察型加攻只在收尾锚点提交。
+    /// #55/#56 主缝：Runtime 逐拍推进 → 已提交卡面投影。
+    /// 攻击/反击：护甲在命中锚点提交；观察型加攻只在收尾锚点提交。
+    /// 探索/用道具：表演通道完成后才消费 Impact/Settled（无帧级回调）。
     /// </summary>
     public sealed class CardFaceBeatCommitBaselineTests
     {
         private static readonly SlotId sAdjacentSlot = SlotId.Board(2);
+        private static readonly SlotId sFarCornerSlot = SlotId.Board(1);
 
         private GameObject mManagerGo;
         private CardManagerSingleton mCardManager;
@@ -171,6 +174,321 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
         }
 
         [Test]
+        public void CounterPresent_ImpactThenSettled_ArmorBeforeObserverAttackOnCommittedFace()
+        {
+            NineGridArchitecture.ResetForTests();
+            var architecture = NineGridArchitecture.Current;
+            architecture.GetUtility<IConfigUtility>().Set(
+                ContentConfigKeys.DefaultCatalog,
+                TableNineContentCatalog.CreateDefault());
+            InitialGameFactory.Create(architecture, new InitialGameOptions { Seed = 56UL });
+
+            var phase = architecture.GetSystem<IPhaseSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var sync = architecture.GetSystem<IPresentationSyncSystem>();
+            var dispatcher = new CoreCommandDispatcher(architecture);
+
+            Assert.IsTrue(phase.StartNode(CreateStoneLoverNode()).Accepted);
+            PlaceSoleBoardCardAt(architecture, sAdjacentSlot);
+
+            var board = architecture.GetModel<BoardModel>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+            avatar.Stats.SetBase(StatId.Attack, 1);
+            avatar.Stats.SetBase(StatId.CurrentArmor, 5);
+
+            var monsterUid = board.GetCardUid(sAdjacentSlot);
+            Assert.Greater(monsterUid, 0);
+            var monster = registry.Get(monsterUid);
+            var attackBefore = (int)monster.Stats.GetBase(StatId.Attack);
+            Assert.AreEqual(2, attackBefore);
+
+            var avatarArmorBefore = StatArmorUtility.GetCurrentArmor(avatar);
+            Assert.Greater(avatarArmorBefore, 0);
+
+            var monsterFace = mCardManager.SpawnView(
+                monsterUid,
+                defId: monster.DefId,
+                kind: CardPresentationKind.Monster);
+            monsterFace.CommitPresentation(new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.Monster,
+                DefId = monster.DefId,
+                DisplayName = "石虾",
+                Attack = attackBefore,
+                Armor = StatArmorUtility.GetCurrentArmor(monster),
+                Hp = (int)monster.Stats.GetBase(StatId.Hp),
+                FaceUp = true,
+            });
+
+            var avatarFace = mCardManager.SpawnView(
+                avatar.Uid,
+                defId: avatar.DefId,
+                kind: CardPresentationKind.Avatar);
+            avatarFace.CommitPresentation(new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.Avatar,
+                DefId = avatar.DefId ?? string.Empty,
+                Attack = (int)avatar.Stats.GetBase(StatId.Attack),
+                Armor = avatarArmorBefore,
+                Hp = (int)avatar.Stats.GetBase(StatId.Hp),
+                FaceUp = true,
+            });
+
+            var hitPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var boardPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var counterPresent = new ImpactReportingPresentChannel(ticksUntilComplete: 2);
+            var factory = new AttackIntentScriptFactory(
+                architecture,
+                dispatcher,
+                hitPresent,
+                boardPresent,
+                counterPresent);
+            mRoot = new PresentationCompositionRoot();
+            var runtime = mRoot.Install(factory);
+
+            bool preview;
+            Assert.IsTrue(runtime.TrySubmitIntent(
+                new InputIntent(InputIntentKinds.Attack, sAdjacentSlot.Index),
+                out preview));
+
+            runtime.Tick(0.016f); // resolve hit
+            runtime.Tick(0.016f); // present hit → Impact + Settled（怪物掉甲触发的观察型 +1 已上卡面）
+            var attackAfterHitSettled = monsterFace.CommittedPresentation.Attack;
+            Assert.AreEqual(attackBefore + 1, attackAfterHitSettled, "正面命中收尾后石头爱好者应已 +1");
+
+            runtime.Tick(0.016f); // branch → counter
+            runtime.Tick(0.016f); // resolve counter
+            Assert.AreEqual(2, sync.ActiveBatchId);
+            Assert.AreEqual(avatarArmorBefore, avatarFace.CommittedPresentation.Armor, "反击解算后、命中前 Avatar 护甲仍旧");
+            Assert.AreEqual(attackAfterHitSettled, monsterFace.CommittedPresentation.Attack, "反击解算后、收尾前观察型加攻仍旧");
+
+            var expectedAvatarArmor = FindLastRemainingArmor(pipeline, avatar.Uid);
+            var expectedAttack = FindLastBaseStatResult(pipeline, monsterUid, StatId.Attack);
+            Assert.Less(expectedAvatarArmor, avatarArmorBefore, "反击应掉 Avatar 护甲");
+            Assert.AreEqual(attackAfterHitSettled + 1, expectedAttack, "石头爱好者应在反击掉甲后再 +1 攻");
+
+            runtime.Tick(0.016f); // counter present tick 1 → Impact
+            Assert.AreEqual(expectedAvatarArmor, avatarFace.CommittedPresentation.Armor, "反击命中锚点护甲应变");
+            Assert.AreEqual(attackAfterHitSettled, monsterFace.CommittedPresentation.Attack, "反击命中锚点不得消费观察型加攻");
+
+            runtime.Tick(0.016f); // counter present tick 2 → Settled
+            Assert.AreEqual(expectedAttack, monsterFace.CommittedPresentation.Attack, "反击收尾锚点才提交观察型加攻");
+            Assert.AreEqual(0, sync.ActiveBatchId);
+        }
+
+        [Test]
+        public void UseItemPresent_Settled_CommitsHpAfterPresentNotAtResolve()
+        {
+            NineGridArchitecture.ResetForTests();
+            var architecture = NineGridArchitecture.Current;
+            architecture.GetUtility<IConfigUtility>().Set(
+                ContentConfigKeys.DefaultCatalog,
+                TableNineContentCatalog.CreateDefault());
+            InitialGameFactory.Create(architecture, new InitialGameOptions { Seed = 5601UL });
+
+            var phase = architecture.GetSystem<IPhaseSystem>();
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var sync = architecture.GetSystem<IPresentationSyncSystem>();
+            var dispatcher = new CoreCommandDispatcher(architecture);
+
+            Assert.IsTrue(phase.StartNode(CreateHighHpMonsterNode()).Accepted);
+            PlaceSoleBoardCardAt(architecture, sAdjacentSlot);
+
+            var board = architecture.GetModel<BoardModel>();
+            var registry = architecture.GetModel<CardRegistry>();
+            var monsterUid = board.GetCardUid(sAdjacentSlot);
+            var monster = registry.Get(monsterUid);
+            var hpBefore = (int)monster.Stats.GetBase(StatId.Hp);
+            var armorBefore = StatArmorUtility.GetCurrentArmor(monster);
+
+            var face = mCardManager.SpawnView(
+                monsterUid,
+                defId: monster.DefId,
+                kind: CardPresentationKind.Monster);
+            face.CommitPresentation(new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.Monster,
+                DefId = monster.DefId,
+                DisplayName = "靶子",
+                Attack = (int)monster.Stats.GetBase(StatId.Attack),
+                Armor = armorBefore,
+                Hp = hpBefore,
+                FaceUp = true,
+            });
+
+            var knifeUid = SpawnHelpIntoItemSlots(architecture, pipeline, "help.throwing_knife");
+            var usePresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var boardPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var factory = new UseItemIntentScriptFactory(
+                architecture,
+                dispatcher,
+                usePresent,
+                boardPresent);
+            mRoot = new PresentationCompositionRoot();
+            var runtime = mRoot.Install(factory);
+
+            bool preview;
+            Assert.IsTrue(runtime.TrySubmitIntent(
+                new InputIntent(InputIntentKinds.UseItem, knifeUid, new[] { monsterUid }, null),
+                out preview));
+
+            runtime.Tick(0.016f); // resolve use
+            Assert.AreEqual(1, sync.ActiveBatchId);
+            Assert.AreEqual(hpBefore, face.CommittedPresentation.Hp, "用道具解算后、表演前卡面血量仍旧");
+            Assert.AreEqual(armorBefore, face.CommittedPresentation.Armor, "用道具解算后、表演前卡面护甲仍旧");
+
+            var expectedHp = FindLastRemainingHp(pipeline, monsterUid);
+            var expectedArmor = FindLastRemainingArmorOrDefault(pipeline, monsterUid, armorBefore);
+            Assert.IsTrue(
+                expectedHp >= 0 && expectedHp < hpBefore || expectedArmor < armorBefore,
+                "飞刀本批应改血或甲");
+
+            runtime.Tick(0.016f); // present use → Impact flush + Settled
+            if (expectedHp >= 0)
+            {
+                Assert.AreEqual(expectedHp, face.CommittedPresentation.Hp, "用道具收尾后血量应按指令赋值");
+            }
+
+            Assert.AreEqual(expectedArmor, face.CommittedPresentation.Armor, "用道具收尾后护甲应按指令赋值");
+            Assert.AreEqual(0, sync.ActiveBatchId);
+        }
+
+        [Test]
+        public void FourScripts_ReportSettled_BeforeAcknowledge()
+        {
+            AssertScriptReportsSettled(
+                "attack+counter",
+                architecture =>
+                {
+                    Assert.IsTrue(architecture.GetSystem<IPhaseSystem>()
+                        .StartNode(CreateHighHpMonsterNode()).Accepted);
+                    PlaceSoleBoardCardAt(architecture, sAdjacentSlot);
+                    var avatar = architecture.GetModel<CardRegistry>()
+                        .Get(architecture.GetModel<BoardModel>().AvatarUid.Value);
+                    avatar.Stats.SetBase(StatId.Attack, 1);
+                },
+                (architecture, dispatcher) => new AttackIntentScriptFactory(
+                    architecture,
+                    dispatcher,
+                    new RecordingPresentChannel(1),
+                    new RecordingPresentChannel(1),
+                    new RecordingPresentChannel(1)),
+                (runtime, architecture, settledCounts) =>
+                {
+                    runtime.TrySubmitIntent(
+                        new InputIntent(InputIntentKinds.Attack, sAdjacentSlot.Index),
+                        out _);
+                    runtime.Tick(0.016f); // resolve hit
+                    runtime.Tick(0.016f); // present hit → Settled
+                    Assert.AreEqual(1, settledCounts[0], "攻击 Present 应报 Settled");
+                    settledCounts[0] = 0;
+
+                    runtime.Tick(0.016f); // branch
+                    runtime.Tick(0.016f); // resolve counter
+                    runtime.Tick(0.016f); // present counter → Settled
+                    Assert.AreEqual(1, settledCounts[0], "反击 Present 应报 Settled");
+                });
+
+            AssertScriptReportsSettled(
+                "explore",
+                architecture =>
+                {
+                    Assert.IsTrue(architecture.GetSystem<IPhaseSystem>()
+                        .StartNode(CreateHighHpMonsterNode()).Accepted);
+                    PlaceSoleBoardCardAt(architecture, sFarCornerSlot);
+                    Assert.IsTrue(architecture.GetModel<BoardModel>().IsEmpty(sAdjacentSlot));
+                },
+                (architecture, dispatcher) => new ExploreIntentScriptFactory(
+                    architecture,
+                    dispatcher,
+                    new RecordingPresentChannel(1)),
+                (runtime, architecture, settledCounts) =>
+                {
+                    runtime.TrySubmitIntent(
+                        new InputIntent(InputIntentKinds.Explore, sAdjacentSlot.Index),
+                        out _);
+                    runtime.Tick(0.016f);
+                    runtime.Tick(0.016f);
+                    Assert.AreEqual(1, settledCounts[0], "探索 Present 应报 Settled");
+                });
+
+            AssertScriptReportsSettled(
+                "useItem",
+                architecture =>
+                {
+                    Assert.IsTrue(architecture.GetSystem<IPhaseSystem>()
+                        .StartNode(CreateHighHpMonsterNode()).Accepted);
+                    PlaceSoleBoardCardAt(architecture, sAdjacentSlot);
+                },
+                (architecture, dispatcher) => new UseItemIntentScriptFactory(
+                    architecture,
+                    dispatcher,
+                    new RecordingPresentChannel(1),
+                    new RecordingPresentChannel(1)),
+                (runtime, architecture, settledCounts) =>
+                {
+                    var monsterUid = architecture.GetModel<BoardModel>().GetCardUid(sAdjacentSlot);
+                    var knifeUid = SpawnHelpIntoItemSlots(
+                        architecture,
+                        architecture.GetSystem<IActionPipelineSystem>(),
+                        "help.throwing_knife");
+                    runtime.TrySubmitIntent(
+                        new InputIntent(InputIntentKinds.UseItem, knifeUid, new[] { monsterUid }, null),
+                        out _);
+                    runtime.Tick(0.016f);
+                    runtime.Tick(0.016f);
+                    Assert.AreEqual(1, settledCounts[0], "用道具 Present 应报 Settled");
+                });
+        }
+
+        private void AssertScriptReportsSettled(
+            string label,
+            System.Action<IArchitecture> arrange,
+            System.Func<IArchitecture, CoreCommandDispatcher, IIntentScriptFactory> createFactory,
+            System.Action<IPresentationRuntimeSystem, IArchitecture, int[]> drive)
+        {
+            if (mRoot != null)
+            {
+                mRoot.Shutdown(IntentClearReason.PhaseChange);
+                mRoot = null;
+            }
+
+            NineGridArchitecture.ResetForTests();
+            BattleBeatHook.Reset();
+            var architecture = NineGridArchitecture.Current;
+            architecture.GetUtility<IConfigUtility>().Set(
+                ContentConfigKeys.DefaultCatalog,
+                TableNineContentCatalog.CreateDefault());
+            InitialGameFactory.Create(architecture, new InitialGameOptions { Seed = 5602UL });
+            arrange(architecture);
+
+            var dispatcher = new CoreCommandDispatcher(architecture);
+            mRoot = new PresentationCompositionRoot();
+            var runtime = mRoot.Install(createFactory(architecture, dispatcher));
+
+            var settledCounts = new[] { 0 };
+            var previous = BattleBeatHook.ReportBeat;
+            BattleBeatHook.ReportBeat = beat =>
+            {
+                previous?.Invoke(beat);
+                if (beat == PresentationBeat.Settled)
+                {
+                    settledCounts[0]++;
+                }
+            };
+
+            try
+            {
+                drive(runtime, architecture, settledCounts);
+            }
+            catch (AssertionException ex)
+            {
+                throw new AssertionException("[" + label + "] " + ex.Message, ex);
+            }
+        }
+
+        [Test]
         public void CardFaceStatHandler_DoesNotTouch_CardRegistry_Or_StatSystem()
         {
             var spawned = mCardManager.SpawnView(9001, "monster.guard", kind: CardPresentationKind.Monster);
@@ -232,6 +550,55 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
                 Armor = 5,
                 GoldReward = 1
             }.AddEffect("skill.stone_lover.armor_lost"));
+        }
+
+        private static NodeDeckOptions CreateHighHpMonsterNode()
+        {
+            return new NodeDeckOptions
+            {
+                PlayerOpeningCount = 0,
+                EnemyOpeningCount = 1
+            }.AddEnemyCard(new CardDraft("monster.test", CardKind.Monster)
+            {
+                MaxHp = 99,
+                Attack = 1,
+                Armor = 3,
+                GoldReward = 0
+            });
+        }
+
+        private static int SpawnHelpIntoItemSlots(
+            IArchitecture architecture,
+            IActionPipelineSystem pipeline,
+            string defId)
+        {
+            pipeline.Enqueue(new SpawnCardAction(defId, CardKind.HelpCard, ZoneId.ItemSlots, SlotId.None, 1, "test"));
+            Assert.Greater(pipeline.RunToCompletion(), 0);
+            var deck = architecture.GetModel<DeckModel>();
+            Assert.Greater(deck.ItemSlotUids.Count, 0);
+            return deck.ItemSlotUids[deck.ItemSlotUids.Count - 1];
+        }
+
+        private static int FindLastRemainingArmorOrDefault(
+            IActionPipelineSystem pipeline,
+            int uid,
+            int fallback)
+        {
+            var entries = pipeline.EventLog.Entries;
+            var armor = fallback;
+            var found = false;
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var e = entries[i];
+                if (e.Type == CoreEventType.ArmorChanged
+                    && (e.CardUid == uid || e.TargetUid == uid))
+                {
+                    found = true;
+                    armor = e.RemainingArmor;
+                }
+            }
+
+            return found ? armor : fallback;
         }
 
         private static void PlaceSoleBoardCardAt(IArchitecture architecture, SlotId targetSlot)

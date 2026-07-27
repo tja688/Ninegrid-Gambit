@@ -19,7 +19,7 @@
 | `Fixtures/` | EditMode 夹具 |
 | `HostContractStructuralTests.cs` | 结构护栏：禁四大旧宿主名、禁 `CombatHitSink`、禁回流 `new PresentationDirector`、System 不暴露具体 View |
 | `IntentIntakeStructuralTests.cs` | 结构护栏（#52）：输入路径须经 IntentIntake；门禁/收口决策禁用壁钟；ADR-0004 accepted |
-| `CardFaceBeatStructuralTests.cs` | 结构护栏（#55）：禁石头爱好者卡面提前同步；命中帧须报 Impact 且不得 Sync；PresentStep 在 ack 前报 Settled；禁 JSON stats 盖写 |
+| `CardFaceBeatStructuralTests.cs` | 结构护栏（#55/#56）：禁石头爱好者卡面提前同步；攻击/反击命中帧须报 Impact 且不得 Sync；PresentStep 在 ack 前报 Settled；用道具 Present 禁 CommitAllSpawnedCards；探索/用道具批次投影禁写卡面数值；禁 JSON stats 盖写 |
 
 ### Core 契约护栏（`NineGrid.Core.Tests`）
 
@@ -32,7 +32,7 @@
 
 | 测试 | 保护什么 |
 |------|----------|
-| `CardFaceBeatCommitBaselineTests` | #55：攻击 Present 第 N 拍命中后护甲已变、攻击仍旧；第 N+1 拍收尾后观察型加攻才变；handler 不读内核 |
+| `CardFaceBeatCommitBaselineTests` | #55/#56：攻击/反击 Present 命中后护甲已变、观察型加攻仍旧，收尾后才变；用道具解算后卡面仍旧、Present 收尾才提交；四条剧本均报 Settled；handler 不读内核 |
 
 ## 关闭门槛（普通实施票）
 

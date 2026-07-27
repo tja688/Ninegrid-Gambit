@@ -182,8 +182,8 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 编排主线全场 Commit：从 Core/Content 重建投影并提交。
-        /// 用于 Present 节拍需要把逻辑结算推到卡面的出口（非队列外旁路）。
+        /// 编排主线全场 Commit：无已提交投影时首次读 Core；已提交则只刷视觉。
+        /// 战中数值变更请走锚点排期，勿在 Present 开头用本方法「对齐终值」。
         /// </summary>
         public static void CommitAllSpawnedCards()
         {
@@ -196,6 +196,30 @@ namespace NineGrid.Flow
             foreach (var pair in cardManager.CardsByUid)
             {
                 ApplyToManagedCard(pair.Value, animate: false);
+            }
+        }
+
+        /// <summary>
+        /// 只刷新已有提交投影的视觉字段；无投影的卡跳过（不直读 Core 写数值）。
+        /// 用牌等 Present 开头用此出口，把数值留给 Impact/Settled 锚点。
+        /// </summary>
+        public static void RefreshVisualsPreservingCommittedStatsOnAllSpawned()
+        {
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
+            if (cardManager == null)
+            {
+                return;
+            }
+
+            foreach (var pair in cardManager.CardsByUid)
+            {
+                var card = pair.Value;
+                if (card?.CommittedPresentation == null)
+                {
+                    continue;
+                }
+
+                ApplyVisualsPreservingCommittedStats(card);
             }
         }
 

@@ -33,5 +33,6 @@ v1 锚点三个（枚举住在 `NineGrid.Core.PresentationBeat`，归属列并�
 
 - 新增 `BattleBeatScheduler` / `CardFaceStatHandler`，由 `PresentationCompositionRoot` 注册；命中帧与 `PresentStep` 报点。
 - 删除攻击路径命中帧 `SyncManagedCardPresentation` 与石头爱好者观察型提前同步。
+- 用道具 Present 开头改为 `RefreshVisualsPreservingCommittedStatsOnAllSpawned`（只刷视觉）；数值仍由通道完成时的 Impact/Settled 消费。
 - `CoreCardPresentationMapper` 保留视觉投影；已提交卡面的数值不被直读 Core 覆写；JSON `stats` 不再盖写运行时卡面。
 - 玩家信息 HUD、飘字、Bounce 候选项等其它消费者仍可直读，属后续迁移，不构成本票卡面数值新旧并存。

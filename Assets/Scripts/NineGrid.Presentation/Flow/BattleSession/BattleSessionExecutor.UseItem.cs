@@ -55,8 +55,8 @@ namespace NineGrid.Flow
             UseItemPresentationResult useResult,
             CancellationToken ct)
         {
-                        // UseItem Present 节拍：编排主线 Commit（对齐已结算 Core → 投影），非队列外直刷。
-            CoreCardPresentationMapper.CommitAllSpawnedCards();
+            // UseItem Present：只刷已提交投影的视觉；数值等通道完成时 Impact/Settled 锚点消费。
+            CoreCardPresentationMapper.RefreshVisualsPreservingCommittedStatsOnAllSpawned();
             PresentationOutputProjector.UpdateAvatarDebugText();
 
             // 飞刀等 UseItem 直伤：对齐 FieldBattle 强兜底（本段 popups + 主目标 DamageAmount）。

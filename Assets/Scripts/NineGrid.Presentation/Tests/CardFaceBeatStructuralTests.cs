@@ -8,7 +8,7 @@ using UnityEngine;
 namespace NineGrid.Presentation.Tests
 {
     /// <summary>
-    /// #55 结构护栏：卡面数值提交入口与攻击路径直读捷径。
+    /// #55/#56 结构护栏：卡面数值提交入口与攻击/反击/用道具路径直读捷径。
     /// </summary>
     public sealed class CardFaceBeatStructuralTests
     {
@@ -52,9 +52,10 @@ namespace NineGrid.Presentation.Tests
             Assert.IsFalse(
                 Regex.IsMatch(text, @"ApplyHitFrameVisuals[\s\S]{0,400}SyncManagedCardPresentation"),
                 "命中帧不得直读 SyncManagedCardPresentation");
-            Assert.IsTrue(
-                text.IndexOf("BattleBeatHook.NotifyBeat(PresentationBeat.Impact)", StringComparison.Ordinal) >= 0,
-                "命中帧应报 Impact 锚点");
+            Assert.AreEqual(
+                2,
+                Regex.Matches(text, @"BattleBeatHook\.NotifyBeat\(PresentationBeat\.Impact\)").Count,
+                "攻击与反击两处命中帧均应报 Impact 锚点");
         }
 
         [Test]
@@ -74,6 +75,86 @@ namespace NineGrid.Presentation.Tests
             var ack = text.IndexOf("mGate.TryAcknowledge(mBatchId)", StringComparison.Ordinal);
             Assert.Greater(settled, 0, "PresentStep 应报 Settled");
             Assert.Greater(ack, settled, "Settled 须在 TryAcknowledge 之前");
+        }
+
+        [Test]
+        public void UseItemPresent_DoesNotCommitAllSpawnedCards_ForNumericAlign()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "BattleSession",
+                "BattleSessionExecutor.UseItem.cs"));
+            var text = File.ReadAllText(path);
+            Assert.IsFalse(
+                text.IndexOf("CommitAllSpawnedCards()", StringComparison.Ordinal) >= 0,
+                "用道具 Present 不得 CommitAllSpawnedCards 对齐终值");
+            Assert.IsTrue(
+                text.IndexOf(
+                    "RefreshVisualsPreservingCommittedStatsOnAllSpawned()",
+                    StringComparison.Ordinal) >= 0,
+                "用道具 Present 只刷新已提交投影的视觉");
+        }
+
+        [Test]
+        public void ExploreAndUseItem_BatchProjection_DoesNotCommitCardFaceStats()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "BattleSession",
+                "CoreBatchProjectionCoordinator.cs"));
+            var text = File.ReadAllText(path);
+
+            string MethodBody(string methodName)
+            {
+                var start = text.IndexOf("public void " + methodName + "(", StringComparison.Ordinal);
+                Assert.Greater(start, 0, "缺少 " + methodName);
+                var brace = text.IndexOf('{', start);
+                Assert.Greater(brace, 0);
+                var depth = 0;
+                for (var i = brace; i < text.Length; i++)
+                {
+                    if (text[i] == '{')
+                    {
+                        depth++;
+                    }
+                    else if (text[i] == '}')
+                    {
+                        depth--;
+                        if (depth == 0)
+                        {
+                            return text.Substring(brace, i - brace + 1);
+                        }
+                    }
+                }
+
+                Assert.Fail("未闭合 " + methodName);
+                return string.Empty;
+            }
+
+            var explore = MethodBody("OnExploreBatchProjected");
+            var useItem = MethodBody("OnUseItemBatchProjected");
+            var banned = new[]
+            {
+                "CommitAllSpawnedCards",
+                "ApplyToManagedCard",
+                "SyncManagedCardPresentation",
+                "TryRead(",
+            };
+            foreach (var token in banned)
+            {
+                Assert.IsFalse(
+                    explore.IndexOf(token, StringComparison.Ordinal) >= 0,
+                    "探索批次投影不得 " + token + "（解算结束即写卡面）");
+                Assert.IsFalse(
+                    useItem.IndexOf(token, StringComparison.Ordinal) >= 0,
+                    "用道具批次投影不得 " + token + "（解算结束即写卡面）");
+            }
         }
 
         [Test]
