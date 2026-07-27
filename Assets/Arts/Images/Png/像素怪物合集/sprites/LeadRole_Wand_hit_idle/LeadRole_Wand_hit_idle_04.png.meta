@@ -5,6 +5,12 @@ TextureImporter:
   - first:
       213: 1464903570043871297
     second: LeadRole_Wand_hit_idle_04_0
+  - first:
+      213: 1739417175662955020
+    second: LeadRole_Wand_hit_idle_04_1
+  - first:
+      213: -3779659382919515983
+    second: LeadRole_Wand_hit_idle_04_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -128,8 +134,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: 140aaaa1902645410800000000000000
+      internalID: 1464903570043871297
       vertices: []
       indices: 
       edges: []
@@ -150,8 +156,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: c0a8a9794b6a32810800000000000000
+      internalID: 1739417175662955020
       vertices: []
       indices: 
       edges: []
@@ -172,8 +178,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: 1b03c1511d3fb8bc0800000000000000
+      internalID: -3779659382919515983
       vertices: []
       indices: 
       edges: []
@@ -193,6 +199,8 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       LeadRole_Wand_hit_idle_04_0: 1464903570043871297
+      LeadRole_Wand_hit_idle_04_1: 1739417175662955020
+      LeadRole_Wand_hit_idle_04_2: -3779659382919515983
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom

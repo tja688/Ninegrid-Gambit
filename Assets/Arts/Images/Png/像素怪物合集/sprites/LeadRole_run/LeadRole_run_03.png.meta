@@ -5,6 +5,12 @@ TextureImporter:
   - first:
       213: -8543713862937913494
     second: LeadRole_run_03_0
+  - first:
+      213: -1758285925015297272
+    second: LeadRole_run_03_1
+  - first:
+      213: 3731555462541446852
+    second: LeadRole_run_03_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -128,8 +134,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: a6751091281ae6980800000000000000
+      internalID: -8543713862937913494
       vertices: []
       indices: 
       edges: []
@@ -150,8 +156,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: 803e4e954405997e0800000000000000
+      internalID: -1758285925015297272
       vertices: []
       indices: 
       edges: []
@@ -172,8 +178,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: 4ce837c2ce529c330800000000000000
+      internalID: 3731555462541446852
       vertices: []
       indices: 
       edges: []
@@ -193,6 +199,8 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       LeadRole_run_03_0: -8543713862937913494
+      LeadRole_run_03_1: -1758285925015297272
+      LeadRole_run_03_2: 3731555462541446852
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom

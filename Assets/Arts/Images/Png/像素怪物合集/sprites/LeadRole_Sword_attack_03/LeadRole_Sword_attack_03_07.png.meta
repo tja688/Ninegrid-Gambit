@@ -5,6 +5,12 @@ TextureImporter:
   - first:
       213: -8322563197263443486
     second: LeadRole_Sword_attack_03_07_0
+  - first:
+      213: -4778632063884452552
+    second: LeadRole_Sword_attack_03_07_1
+  - first:
+      213: 3736471966526486158
+    second: LeadRole_Sword_attack_03_07_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -128,8 +134,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: 2e98f5eedd0508c80800000000000000
+      internalID: -8322563197263443486
       vertices: []
       indices: 
       edges: []
@@ -150,8 +156,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: 83d10e7c473eeadb0800000000000000
+      internalID: -4778632063884452552
       vertices: []
       indices: 
       edges: []
@@ -172,8 +178,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: e863406f47d9ad330800000000000000
+      internalID: 3736471966526486158
       vertices: []
       indices: 
       edges: []
@@ -193,6 +199,8 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       LeadRole_Sword_attack_03_07_0: -8322563197263443486
+      LeadRole_Sword_attack_03_07_1: -4778632063884452552
+      LeadRole_Sword_attack_03_07_2: 3736471966526486158
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom

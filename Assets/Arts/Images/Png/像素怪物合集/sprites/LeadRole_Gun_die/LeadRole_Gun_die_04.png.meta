@@ -5,6 +5,12 @@ TextureImporter:
   - first:
       213: 6892098485029102741
     second: LeadRole_Gun_die_04_0
+  - first:
+      213: -8971255552557499806
+    second: LeadRole_Gun_die_04_1
+  - first:
+      213: -3357897781028432847
+    second: LeadRole_Gun_die_04_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -128,8 +134,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: 594ea256e07a5af50800000000000000
+      internalID: 6892098485029102741
       vertices: []
       indices: 
       edges: []
@@ -150,8 +156,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: 26a3f805b92bf7380800000000000000
+      internalID: -8971255552557499806
       vertices: []
       indices: 
       edges: []
@@ -172,8 +178,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: 1345ab152c95661d0800000000000000
+      internalID: -3357897781028432847
       vertices: []
       indices: 
       edges: []
@@ -193,6 +199,8 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       LeadRole_Gun_die_04_0: 6892098485029102741
+      LeadRole_Gun_die_04_1: -8971255552557499806
+      LeadRole_Gun_die_04_2: -3357897781028432847
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom

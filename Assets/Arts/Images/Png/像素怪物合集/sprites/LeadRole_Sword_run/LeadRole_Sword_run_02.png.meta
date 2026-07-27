@@ -5,6 +5,12 @@ TextureImporter:
   - first:
       213: 1717261344004375377
     second: LeadRole_Sword_run_02_0
+  - first:
+      213: 3747576833982259324
+    second: LeadRole_Sword_run_02_1
+  - first:
+      213: 2444428503608935033
+    second: LeadRole_Sword_run_02_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -128,8 +134,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: 15304eb0810f4d710800000000000000
+      internalID: 1717261344004375377
       vertices: []
       indices: 
       edges: []
@@ -150,8 +156,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: c70eef56641120430800000000000000
+      internalID: 3747576833982259324
       vertices: []
       indices: 
       edges: []
@@ -172,8 +178,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: 972437cd5ca5ce120800000000000000
+      internalID: 2444428503608935033
       vertices: []
       indices: 
       edges: []
@@ -193,6 +199,8 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       LeadRole_Sword_run_02_0: 1717261344004375377
+      LeadRole_Sword_run_02_1: 3747576833982259324
+      LeadRole_Sword_run_02_2: 2444428503608935033
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom

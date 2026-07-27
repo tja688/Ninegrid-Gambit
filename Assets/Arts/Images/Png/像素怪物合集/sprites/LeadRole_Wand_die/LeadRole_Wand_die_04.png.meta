@@ -5,6 +5,12 @@ TextureImporter:
   - first:
       213: 462282305710310190
     second: LeadRole_Wand_die_04_0
+  - first:
+      213: 7062357174820989062
+    second: LeadRole_Wand_die_04_1
+  - first:
+      213: -2301035269962924221
+    second: LeadRole_Wand_die_04_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -128,8 +134,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: e23cfc9ce4b5a6600800000000000000
+      internalID: 462282305710310190
       vertices: []
       indices: 
       edges: []
@@ -150,8 +156,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: 688e22abe68820260800000000000000
+      internalID: 7062357174820989062
       vertices: []
       indices: 
       edges: []
@@ -172,8 +178,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: 34ff6360d941110e0800000000000000
+      internalID: -2301035269962924221
       vertices: []
       indices: 
       edges: []
@@ -193,6 +199,8 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       LeadRole_Wand_die_04_0: 462282305710310190
+      LeadRole_Wand_die_04_1: 7062357174820989062
+      LeadRole_Wand_die_04_2: -2301035269962924221
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom

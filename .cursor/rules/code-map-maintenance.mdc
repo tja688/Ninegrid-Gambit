@@ -1,0 +1,62 @@
+---
+description: Code Map 与 ADR 的开发后维护义务；改表现层结构须同步 docs/code-map/
+alwaysApply: true
+---
+
+# Code Map 维护规范
+
+本仓库代码现状的**权威导航**是 [`docs/code-map/`](../../docs/code-map/)，配合 [`docs/adr/`](../../docs/adr/) 与根目录 [`CONTEXT.md`](../../CONTEXT.md)。细则入口见 [`docs/code-map/README.md`](../../docs/code-map/README.md)。
+
+## 权威层级
+
+| 层级 | 路径 | 角色 |
+|------|------|------|
+| 代码现状 | `docs/code-map/` | 程序集、目录、装配、测试地图——**只写当下事实** |
+| 长期决策 | `docs/adr/`、`CONTEXT.md` | 行为不变量、领域词汇 |
+| 过程笔记 | `Assets/Notes/` | 复盘与 Spec 草稿，**非权威** |
+
+旧源码镜像库 `Assets/Docs/九宫牌局-代码文档/` 已删除。**禁止**恢复为权威或在 Notes 里维护重复的「代码现状镜像」。
+
+## 必须同步 Code Map 的改动
+
+改下列内容时，**先改或同 PR 改** `docs/code-map/`，再改业务代码：
+
+- `NineGrid.Presentation` 顶层目录、程序集边界、场景装配（`Setup/`、`PresentationCompositionRoot`、`PresentationSceneBindings`）
+- 新增/删除/重命名 Controller、System、Command、Query，或变更通信范式（Command / Query / Event / IntentIntake）
+- 静态 Hook 矩阵、`*ManagerSingleton` 壳、效果扩展点
+- EditMode 测试分层、结构护栏（`HostContractStructuralTests`、`IntentIntakeStructuralTests` 等）
+
+| 改什么 | 改哪个文件 |
+|--------|------------|
+| 程序集一览、场景入口、维护约定 | `docs/code-map/README.md` |
+| Presentation 目录、装配、读写约定、扩展点 | `docs/code-map/presentation.md` |
+| 测试地图、关闭门槛 | `docs/code-map/tests.md` |
+
+## 必须写 ADR 的改动
+
+下列属于**长期行为不变量**，不能只改 code-map 摘要：
+
+- 时间线 / Batch-ack、占格权威、卡面 Commit 时机
+- 输入门禁 / IntentIntake 两轴裁决
+- 诊断关联层、跨层通信禁令（如禁业务静态 Sink、禁绕过 IntentIntake）
+
+新增或修订 `docs/adr/`，并在相关 code-map 段落引用 ADR 编号。
+
+## 实施票关闭门槛
+
+每张普通实施票合并前：
+
+1. 受影响 EditMode 测试绿（经 `ai-workspace test`，勿直接 `unity command run_tests`）
+2. `unity command recompile` 后 Console 无新增 Error / Exception / Assert
+
+全量真实场景 PlayMode 终验是 Spec 级门禁，**不是**每张票的默认门槛。
+
+## 禁止
+
+- 把未落地的 Spec 目标树（如平铺 `Architecture/`、`Views/`、`Events/` 顶层目录）写入 code-map 当作既成事实
+- 新增业务静态 Sink，或在 View 上直接改 Core 规则状态（见 `presentation.md`）
+- 仅改 `Assets/Notes/` 而不更新 code-map/ADR，却声称架构或目录已变更
+
+## 结构护栏
+
+`NineGrid.Presentation.Tests` 中的结构测试会拦截架构回流；若改动触发护栏失败，修代码或（在确属有意演进时）更新护栏 **并** 同步 code-map / ADR，勿静默删断言。

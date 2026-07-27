@@ -5,6 +5,12 @@ TextureImporter:
   - first:
       213: -1875305266541445306
     second: LeadRole_Bow_attack_01_F_02_0
+  - first:
+      213: 4022334570978683155
+    second: LeadRole_Bow_attack_01_F_02_1
+  - first:
+      213: 6336710708874082924
+    second: LeadRole_Bow_attack_01_F_02_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -128,8 +134,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: 64fb06ebbc399f5e0800000000000000
+      internalID: -1875305266541445306
       vertices: []
       indices: 
       edges: []
@@ -150,8 +156,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: 31925f62bf332d730800000000000000
+      internalID: 4022334570978683155
       vertices: []
       indices: 
       edges: []
@@ -172,8 +178,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: c6a7adef0d480f750800000000000000
+      internalID: 6336710708874082924
       vertices: []
       indices: 
       edges: []
@@ -193,6 +199,8 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       LeadRole_Bow_attack_01_F_02_0: -1875305266541445306
+      LeadRole_Bow_attack_01_F_02_1: 4022334570978683155
+      LeadRole_Bow_attack_01_F_02_2: 6336710708874082924
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom

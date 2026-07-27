@@ -5,6 +5,12 @@ TextureImporter:
   - first:
       213: -8826318235527291510
     second: LeadRole_BuffRelease_06_0
+  - first:
+      213: 3987890499881270823
+    second: LeadRole_BuffRelease_06_1
+  - first:
+      213: -4220489395186249042
+    second: LeadRole_BuffRelease_06_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -128,8 +134,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: a8dd7d0245e928580800000000000000
+      internalID: -8826318235527291510
       vertices: []
       indices: 
       edges: []
@@ -150,8 +156,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: 72ef398e745d75730800000000000000
+      internalID: 3987890499881270823
       vertices: []
       indices: 
       edges: []
@@ -172,8 +178,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 
-      internalID: 0
+      spriteID: ea2de95914fcd65c0800000000000000
+      internalID: -4220489395186249042
       vertices: []
       indices: 
       edges: []
@@ -193,6 +199,8 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       LeadRole_BuffRelease_06_0: -8826318235527291510
+      LeadRole_BuffRelease_06_1: 3987890499881270823
+      LeadRole_BuffRelease_06_2: -4220489395186249042
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom

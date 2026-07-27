@@ -16,6 +16,25 @@
 | [`docs/adr/`](docs/adr/) | 长期架构决策（时间线 Batch-ack、卡牌底盘） |
 | `Assets/Notes/` | 进行时过程性开发笔记；归档里有历史记录 |
 
+### Code Map 维护（开发后必做）
+
+权威层级：`docs/code-map/` + `docs/adr/` + 根目录 [`CONTEXT.md`](CONTEXT.md) 描述**仓库当下事实**；`Assets/Notes/` 仅过程笔记，**非权威**。旧源码镜像库 `Assets/Docs/九宫牌局-代码文档/` 已删除，**勿恢复**。
+
+**何时同步 Code Map（先文档、后或同 PR 改代码）**
+
+| 改动类型 | 更新目标 |
+|----------|----------|
+| 表现层目录 / 程序集边界 / 装配入口（`Setup/`、`CompositionRoot`、场景绑定） | [`docs/code-map/README.md`](docs/code-map/README.md) |
+| Controller / System / Command·Query 边界、Hook 矩阵、读写与扩展点 | [`docs/code-map/presentation.md`](docs/code-map/presentation.md) |
+| 测试分层、结构护栏、关闭门槛 | [`docs/code-map/tests.md`](docs/code-map/tests.md) |
+| 长期行为不变量（Batch-ack、占格权威、IntentIntake、卡面 Commit 等） | 新增或修订 [`docs/adr/`](docs/adr/)，并在 code-map 中引用 |
+
+**普通实施票关闭门槛**（见 [`docs/code-map/tests.md`](docs/code-map/tests.md)）：受影响 EditMode 绿；`unity command recompile` 后 Console 无新增 Error / Exception / Assert。全量 PlayMode 终验属 Spec 级，非每张票的默认门槛。
+
+**禁止**：在 `Assets/Notes/` 或新镜像库里维护与 code-map 重复的「代码现状」；未落地 Spec 目标树（如平铺 `Architecture/`、`Views/`）写入 code-map 当作既成事实。
+
+项目级硬规则见 [`.cursor/rules/code-map-maintenance.mdc`](.cursor/rules/code-map-maintenance.mdc)。
+
 ---
 
 ## 工具与工作流
