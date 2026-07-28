@@ -136,7 +136,7 @@
 - 数值类指令绝对值：血甲用既有 `RemainingHp`/`RemainingArmor`；`BaseStatModified` / 生成类事件攻用 `ResultValue`（`Amount` 仍为 StatId，`Delta` 仍为增量）；`CardKilled` 携带 `RemainingHp`；`RewardOffered` Message 携带候选项攻/甲/血（`RewardOfferFaceEncoding`）
 - 穷尽性：`NineGrid.Core.Tests.PresentationEventMapBeatExhaustivenessTests`
 - **排期器** `Flow/Presentation/BattleBeatScheduler`：批次开启装载非 `None` 指令；`ReportBeat` 交给第一个 `IBattleBeatHandler.TryApply` 成功者；Settled 后未消费只报不改；支持 `PresentStandalone`（非锁步旁路冲刷，恢复当批 pending）
-- **处理器** `IBattleBeatHandler`：`CardFaceStatHandler` 只从指令赋值 → `ManagedCard.CommitPresentation`（含 `OfferReward` 按 DefId 匹配 Bounce 负 uid 卡）；`PlayerInfoHudBeatHandler` 对 Avatar 血甲旁路写 HUD（return false 留给卡面认领）；装饰 `DamageFloaterBeatHandler` / `EffectTriggerPulseBeatHandler` / `GoldGainBeatHandler` 分别在 Impact / Settled 消费飘字、FX、金币，不占主线 ack
+- **处理器** `IBattleBeatHandler`：`CardFaceStatHandler` 只从指令赋值 → `ManagedCard.CommitPresentation`（含 `OfferReward` 按 DefId 匹配 Bounce 负 uid 卡）；`PlayerInfoHudBeatHandler` 对 Avatar 血甲旁路写 HUD（return false 留给卡面认领）；装饰 `DamageFloaterBeatHandler` / `EffectTriggerPulseBeatHandler` / `GoldGainBeatHandler` 分别在 Impact / Settled 消费飘字、FX、金币，不占主线 ack；数值 Commit 后 `CardFacePresentationBinder` 可对配对图标做非阻塞缩放装饰（不占 ack）
 - **统一冲刷** `BattleBeatFlush.FlushBeats`（Impact→Settled）：`PresentStep` 就位回执前调用；非锁步（房间/选择/拾取）走 `PresentEventLogSlice`；Bounce spawn 后走 `PresentLatestEventOfType(RewardOffered)`（单条 PresentStandalone）
 - **生成绝对值** `CardFaceEventValues.WithFaceAbsolutes`：`CardSpawned` / 带 uid 的 `CardDealt` / `AvatarAppeared` 写入造卡/发牌时攻甲血
 - **奖励候选项** `RewardEntry` 投影绝对值 + `RewardOffered` Settled；Bounce spawn 后 `PresentLatestEventOfType` 二次提交；禁 `clearCombatStats` 数值旁路

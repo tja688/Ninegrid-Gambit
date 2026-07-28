@@ -49,6 +49,18 @@ namespace NineGrid.Cards.Slots
                 { CardFaceSlotCodes.BasicDescription, new[] { "描述", "介绍区域", "描述面板", "BasicDescription" } },
             };
 
+        /// <summary>
+        /// 数值槽 → 旁路装饰图标节点名（预制体配对：攻击数值↔攻击 等）。
+        /// Action_Count 复用 <see cref="CardFaceSlotCodes.ActionIcon"/> 候选，不重复登记。
+        /// </summary>
+        private static readonly Dictionary<string, string[]> NumericCompanionIconCandidates =
+            new Dictionary<string, string[]>
+            {
+                { CardFaceSlotCodes.Attack, new[] { "攻击", "Attack_Icon", "AttackIcon" } },
+                { CardFaceSlotCodes.Armor, new[] { "护甲", "Armor_Icon", "ArmorIcon" } },
+                { CardFaceSlotCodes.Hp, new[] { "血量", "Hp_Icon", "HpIcon", "Life_Icon" } },
+            };
+
         public static bool TryFindRenderer(Transform faceRoot, string slotCode, out SpriteRenderer renderer)
         {
             renderer = null;
@@ -73,6 +85,53 @@ namespace NineGrid.Cards.Slots
                 renderer = node.GetComponent<SpriteRenderer>();
                 if (renderer != null)
                 {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 数值槽配对的装饰图标 Transform（SpriteRenderer 节点）。
+        /// 用于数值 Commit 后的非阻塞缩放反馈；找不到则 false。
+        /// </summary>
+        public static bool TryFindCompanionIcon(Transform faceRoot, string numericSlotCode, out Transform icon)
+        {
+            icon = null;
+            if (faceRoot == null || string.IsNullOrEmpty(numericSlotCode))
+            {
+                return false;
+            }
+
+            if (numericSlotCode == CardFaceSlotCodes.ActionCount)
+            {
+                if (!TryFindRenderer(faceRoot, CardFaceSlotCodes.ActionIcon, out var actionRenderer)
+                    || actionRenderer == null)
+                {
+                    return false;
+                }
+
+                icon = actionRenderer.transform;
+                return true;
+            }
+
+            if (!NumericCompanionIconCandidates.TryGetValue(numericSlotCode, out var names))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < names.Length; i++)
+            {
+                var node = FindDeep(faceRoot, names[i]);
+                if (node == null)
+                {
+                    continue;
+                }
+
+                if (node.GetComponent<SpriteRenderer>() != null)
+                {
+                    icon = node;
                     return true;
                 }
             }

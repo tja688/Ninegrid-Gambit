@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using DG.Tweening;
 using NineGrid.Cards;
 using NineGrid.Cards.Anim;
 using NineGrid.Cards.Slots;
@@ -17,6 +18,11 @@ namespace NineGrid.Cards.Presentation
     [DisallowMultipleComponent]
     public sealed class CardFacePresentationBinder : MonoBehaviour, ICardFaceBinder
     {
+        private const float StatIconPulsePeak = 1.1f;
+        private const float StatIconPulseOutDuration = 0.08f;
+        private const float StatIconPulseInDuration = 0.14f;
+        private const string StatIconPulseTweenIdPrefix = "CardFaceStatIconPulse.";
+
         private bool _committedFaceUp = true;
         private Dictionary<string, Sprite> _templateDefaults;
         private string _templateBasicDescription;
@@ -24,6 +30,9 @@ namespace NineGrid.Cards.Presentation
         private string _lastBasicDescriptionSource;
         private string _lastIconFingerprint;
         private TMP_SpriteAsset _descriptionSpriteAsset;
+        private Dictionary<string, int> _lastNumericValues;
+        private readonly Dictionary<string, Tween> _statIconTweens = new Dictionary<string, Tween>();
+        private readonly Dictionary<string, Vector3> _statIconBaseScales = new Dictionary<string, Vector3>();
         private static CardFaceSlotRegistrySO _defaultRegistry;
         private static CardFaceDescriptionInlineIconStyleSO _cachedInlineIconStyle;
         private static CardFaceDescriptionInlineIconStyleSO _inlineIconStyleOverride;
@@ -40,6 +49,7 @@ namespace NineGrid.Cards.Presentation
 
         private void OnDestroy()
         {
+            KillAllStatIconPulses();
             ReleaseDescriptionSpriteAsset();
         }
 
@@ -445,7 +455,99 @@ namespace NineGrid.Cards.Presentation
                 return;
             }
 
-            text.text = Mathf.Max(0, value).ToString();
+            var clamped = Mathf.Max(0, value);
+            var hadPrevious = false;
+            var previous = 0;
+            if (_lastNumericValues != null
+                && _lastNumericValues.TryGetValue(slotCode, out previous))
+            {
+                hadPrevious = true;
+            }
+
+            text.text = clamped.ToString();
+
+            if (_lastNumericValues == null)
+            {
+                _lastNumericValues = new Dictionary<string, int>();
+            }
+
+            _lastNumericValues[slotCode] = clamped;
+
+            // 首次写入 / 同值重 Commit：不脉冲（Spawn、Bootstrap、视觉重刷）。
+            if (hadPrevious && previous != clamped)
+            {
+                TryPulseCompanionIcon(slotCode);
+            }
+        }
+
+        private void TryPulseCompanionIcon(string numericSlotCode)
+        {
+            if (!CardFaceSlotNodeMap.TryFindCompanionIcon(transform, numericSlotCode, out var icon)
+                || icon == null)
+            {
+                return;
+            }
+
+            if (_statIconTweens.TryGetValue(numericSlotCode, out var existing)
+                && existing != null
+                && existing.IsActive())
+            {
+                existing.Kill(complete: false);
+            }
+
+            if (!_statIconBaseScales.TryGetValue(numericSlotCode, out var baseScale))
+            {
+                baseScale = icon.localScale;
+                _statIconBaseScales[numericSlotCode] = baseScale;
+            }
+            else
+            {
+                icon.localScale = baseScale;
+            }
+
+            var peak = baseScale * Mathf.Max(1.01f, StatIconPulsePeak);
+            var tweenId = StatIconPulseTweenIdPrefix + numericSlotCode;
+            var seq = DOTween.Sequence()
+                .SetId(tweenId)
+                .SetUpdate(true)
+                .SetLink(icon.gameObject, LinkBehaviour.KillOnDestroy);
+            seq.Append(icon.DOScale(peak, StatIconPulseOutDuration).SetEase(Ease.OutQuad));
+            seq.Append(icon.DOScale(baseScale, StatIconPulseInDuration).SetEase(Ease.OutQuad));
+            seq.OnKill(() =>
+            {
+                if (icon != null && _statIconBaseScales.TryGetValue(numericSlotCode, out var restore))
+                {
+                    icon.localScale = restore;
+                }
+
+                _statIconTweens.Remove(numericSlotCode);
+            });
+            _statIconTweens[numericSlotCode] = seq;
+        }
+
+        private void KillAllStatIconPulses()
+        {
+            if (_statIconTweens.Count == 0)
+            {
+                return;
+            }
+
+            var keys = new List<string>(_statIconTweens.Keys);
+            for (var i = 0; i < keys.Count; i++)
+            {
+                var key = keys[i];
+                if (!_statIconTweens.TryGetValue(key, out var tween) || tween == null)
+                {
+                    continue;
+                }
+
+                if (tween.IsActive())
+                {
+                    tween.Kill(complete: false);
+                }
+            }
+
+            _statIconTweens.Clear();
         }
 
         private Transform FindFrontRoot()
