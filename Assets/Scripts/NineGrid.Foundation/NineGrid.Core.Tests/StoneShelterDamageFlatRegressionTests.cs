@@ -17,7 +17,8 @@ namespace NineGrid.Core.Tests
         private const string StoneShelterRuleJson =
             "{\"id\":\"skill.stone_shelter.rule\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
             + "\"kind\":\"RuleModifier\","
-            + "\"conditions\":[{\"atom\":\"EventFilter\",\"targetKind\":\"Monster\",\"targetNot\":\"Self\"}],"
+            + "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\"],"
+            + "\"conditions\":[{\"atom\":\"EventFilterTargetNotSelf\",\"targetKind\":\"Monster\"}],"
             + "\"ruleModifier\":{\"rule\":\"DamageFlatDelta\",\"op\":\"Add\",\"value\":-1,"
             + "\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"skill.stone_shelter\"}}";
 

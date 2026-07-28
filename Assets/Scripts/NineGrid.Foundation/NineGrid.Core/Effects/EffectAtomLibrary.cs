@@ -139,17 +139,10 @@ namespace NineGrid.Core.Effects
     }
 
     [EffectAtom("OnRemove", EffectAtomKind.Trigger)]
-    public sealed class OnRemoveTrigger : TriggerAtomBase
+    [EffectAtom("OnSelfRemoved", EffectAtomKind.Trigger)]
+    public sealed class OnSelfRemovedTrigger : TriggerAtomBase
     {
-        private bool mOwnerOnly = true;
-
         public override TriggerPoint Point { get { return TriggerPoint.OnRemove; } }
-
-        public override void Configure(EffectDslNode config)
-        {
-            base.Configure(config);
-            mOwnerOnly = config.Get("ownerOnly").AsBool(true);
-        }
 
         public override bool Matches(EffectRuntimeContext context)
         {
@@ -166,7 +159,32 @@ namespace NineGrid.Core.Effects
                     continue;
                 }
 
-                if (!mOwnerOnly || context.OwnerUid == 0 || events[i].CardUid == context.OwnerUid)
+                if (context.OwnerUid == 0 || events[i].CardUid == context.OwnerUid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    [EffectAtom("OnAnyCardRemoved", EffectAtomKind.Trigger)]
+    public sealed class OnAnyCardRemovedTrigger : TriggerAtomBase
+    {
+        public override TriggerPoint Point { get { return TriggerPoint.OnRemove; } }
+
+        public override bool Matches(EffectRuntimeContext context)
+        {
+            if (!base.Matches(context))
+            {
+                return false;
+            }
+
+            var events = context.Events;
+            for (var i = 0; i < events.Count; i++)
+            {
+                if (events[i].Type == CoreEventType.CardRemoved)
                 {
                     return true;
                 }
@@ -177,19 +195,10 @@ namespace NineGrid.Core.Effects
     }
 
     [EffectAtom("OnUseHelpCard", EffectAtomKind.Trigger)]
-    public sealed class OnUseHelpCardTrigger : TriggerAtomBase
+    [EffectAtom("OnSelfUsed", EffectAtomKind.Trigger)]
+    public sealed class OnSelfUsedTrigger : TriggerAtomBase
     {
-        private bool mOwnerOnly = true;
-        private bool mExcludeSelf;
-
         public override TriggerPoint Point { get { return TriggerPoint.OnUseHelpCard; } }
-
-        public override void Configure(EffectDslNode config)
-        {
-            base.Configure(config);
-            mOwnerOnly = config.Get("ownerOnly").AsBool(true);
-            mExcludeSelf = config.Get("excludeSelf").AsBool(false);
-        }
 
         public override bool Matches(EffectRuntimeContext context)
         {
@@ -202,8 +211,58 @@ namespace NineGrid.Core.Effects
             for (var i = 0; i < events.Count; i++)
             {
                 if (events[i].Type == CoreEventType.ItemUsed
-                    && (!mOwnerOnly || context.OwnerUid == 0 || events[i].CardUid == context.OwnerUid)
-                    && (!mExcludeSelf || events[i].CardUid != context.OwnerUid))
+                    && (context.OwnerUid == 0 || events[i].CardUid == context.OwnerUid))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    [EffectAtom("OnOtherHelpCardUsed", EffectAtomKind.Trigger)]
+    public sealed class OnOtherHelpCardUsedTrigger : TriggerAtomBase
+    {
+        public override TriggerPoint Point { get { return TriggerPoint.OnUseHelpCard; } }
+
+        public override bool Matches(EffectRuntimeContext context)
+        {
+            if (!base.Matches(context))
+            {
+                return false;
+            }
+
+            var events = context.Events;
+            for (var i = 0; i < events.Count; i++)
+            {
+                if (events[i].Type == CoreEventType.ItemUsed
+                    && events[i].CardUid != context.OwnerUid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    [EffectAtom("OnAnyHelpCardUsed", EffectAtomKind.Trigger)]
+    public sealed class OnAnyHelpCardUsedTrigger : TriggerAtomBase
+    {
+        public override TriggerPoint Point { get { return TriggerPoint.OnUseHelpCard; } }
+
+        public override bool Matches(EffectRuntimeContext context)
+        {
+            if (!base.Matches(context))
+            {
+                return false;
+            }
+
+            var events = context.Events;
+            for (var i = 0; i < events.Count; i++)
+            {
+                if (events[i].Type == CoreEventType.ItemUsed)
                 {
                     return true;
                 }
@@ -662,21 +721,20 @@ namespace NineGrid.Core.Effects
     }
 
     [EffectAtom("OnCumulative", EffectAtomKind.Trigger)]
-    public sealed class OnCumulativeTrigger : TriggerAtomBase
+    public class OnCumulativeTrigger : TriggerAtomBase
     {
         private string mMetric = "armorLost";
         private int mThreshold = 1;
         private string mCounterKey = string.Empty;
         private CoreEventType mEventType = CoreEventType.ActionStarted;
         private bool mHasEventType;
-        private string mTargetIsRef = string.Empty;
-        private string mTargetNotRef = string.Empty;
-        private string mActorIsRef = string.Empty;
         private string mSourceDefId = string.Empty;
         private string mExcludeSourceDefId = string.Empty;
-        private string mSourcePrefix = string.Empty;
         private string mCause = string.Empty;
-        private string mExcludeCause = string.Empty;
+        private bool mTargetIsSelf;
+        private bool mActorIsSelf;
+        private bool mTargetIsPlayer;
+        private bool mActorIsPlayer;
 
         public override TriggerPoint Point { get { return TriggerPoint.OnCumulative; } }
 
@@ -688,14 +746,31 @@ namespace NineGrid.Core.Effects
             mCounterKey = config.Get("counterKey").AsString(string.Empty);
             mHasEventType = config.Has("eventType");
             mEventType = config.Get("eventType").AsEnum(CoreEventType.ActionStarted);
-            mTargetIsRef = config.Get("targetIs").AsString(string.Empty);
-            mTargetNotRef = config.Get("targetNot").AsString(string.Empty);
-            mActorIsRef = config.Get("actorIs").AsString(string.Empty);
             mSourceDefId = config.Get("sourceDefId").AsString(string.Empty);
             mExcludeSourceDefId = config.Get("excludeSourceDefId").AsString(string.Empty);
-            mSourcePrefix = config.Get("sourcePrefix").AsString(string.Empty);
             mCause = config.Get("cause").AsString(string.Empty);
-            mExcludeCause = config.Get("excludeCause").AsString(string.Empty);
+            ConfigureMorphology(config);
+        }
+
+        protected virtual void ConfigureMorphology(EffectDslNode config)
+        {
+            mTargetIsSelf = false;
+            mActorIsSelf = false;
+            mTargetIsPlayer = false;
+            mActorIsPlayer = false;
+        }
+
+        protected void SetSelfArmorLostMorphology()
+        {
+            mMetric = "armorLost";
+            mTargetIsSelf = true;
+        }
+
+        protected void SetSelfDamageDealtToPlayerMorphology()
+        {
+            mMetric = "damageDealt";
+            mActorIsSelf = true;
+            mTargetIsPlayer = true;
         }
 
         public override bool Matches(EffectRuntimeContext context)
@@ -775,36 +850,28 @@ namespace NineGrid.Core.Effects
                 return false;
             }
 
-            if (!string.IsNullOrEmpty(mSourcePrefix) && !StartsWith(gameEvent.SourceDefId, mSourcePrefix))
-            {
-                return false;
-            }
-
             if (!string.IsNullOrEmpty(mCause) && !Same(gameEvent.Cause, mCause))
             {
                 return false;
             }
 
-            if (!string.IsNullOrEmpty(mExcludeCause) && Same(gameEvent.Cause, mExcludeCause))
-            {
-                return false;
-            }
-
-            var expectedTarget = TargetResolver.ResolveSingleCardRef(context, mTargetIsRef);
             var eventTargetUid = gameEvent.TargetUid != 0 ? gameEvent.TargetUid : gameEvent.CardUid;
-            if (expectedTarget != 0 && eventTargetUid != expectedTarget)
+            if (mTargetIsSelf && (context.OwnerUid == 0 || eventTargetUid != context.OwnerUid))
             {
                 return false;
             }
 
-            var forbiddenTarget = TargetResolver.ResolveSingleCardRef(context, mTargetNotRef);
-            if (forbiddenTarget != 0 && eventTargetUid == forbiddenTarget)
+            if (mTargetIsPlayer && (context.AvatarUid == 0 || eventTargetUid != context.AvatarUid))
             {
                 return false;
             }
 
-            var expectedActor = TargetResolver.ResolveSingleCardRef(context, mActorIsRef);
-            if (expectedActor != 0 && gameEvent.ActorUid != expectedActor)
+            if (mActorIsSelf && (context.OwnerUid == 0 || gameEvent.ActorUid != context.OwnerUid))
+            {
+                return false;
+            }
+
+            if (mActorIsPlayer && (context.AvatarUid == 0 || gameEvent.ActorUid != context.AvatarUid))
             {
                 return false;
             }
@@ -816,10 +883,23 @@ namespace NineGrid.Core.Effects
         {
             return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
         }
+    }
 
-        private static bool StartsWith(string value, string prefix)
+    [EffectAtom("OnSelfArmorLostCumulative", EffectAtomKind.Trigger)]
+    public sealed class OnSelfArmorLostCumulativeTrigger : OnCumulativeTrigger
+    {
+        protected override void ConfigureMorphology(EffectDslNode config)
         {
-            return value != null && prefix != null && value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
+            SetSelfArmorLostMorphology();
+        }
+    }
+
+    [EffectAtom("OnSelfDamageDealtToPlayerCumulative", EffectAtomKind.Trigger)]
+    public sealed class OnSelfDamageDealtToPlayerCumulativeTrigger : OnCumulativeTrigger
+    {
+        protected override void ConfigureMorphology(EffectDslNode config)
+        {
+            SetSelfDamageDealtToPlayerMorphology();
         }
     }
 
@@ -1768,6 +1848,13 @@ namespace NineGrid.Core.Effects
     }
 
     [EffectAtom("EventFilter", EffectAtomKind.Condition)]
+    [EffectAtom("EventFilterActorIsPlayer", EffectAtomKind.Condition)]
+    [EffectAtom("EventFilterTargetIsSelf", EffectAtomKind.Condition)]
+    [EffectAtom("EventFilterTargetNotSelf", EffectAtomKind.Condition)]
+    [EffectAtom("EventFilterActorIsPlayerTargetIsSelf", EffectAtomKind.Condition)]
+    [EffectAtom("EventFilterActorIsPlayerTargetNotSelf", EffectAtomKind.Condition)]
+    [EffectAtom("EventFilterSourcePrefix", EffectAtomKind.Condition)]
+    [EffectAtom("EventFilterExcludeCause", EffectAtomKind.Condition)]
     public sealed class EventFilterEffectCondition : ICondition
     {
         private readonly List<CoreEventType> mEventTypes = new List<CoreEventType>();
@@ -1776,14 +1863,14 @@ namespace NineGrid.Core.Effects
         private int mMinDelta = int.MinValue;
         private int mMaxDelta = int.MaxValue;
         private CardKind mTargetKind = CardKind.Unknown;
-        private string mTargetIsRef = string.Empty;
-        private string mTargetNotRef = string.Empty;
-        private string mActorIsRef = string.Empty;
         private string mSourceDefId = string.Empty;
         private string mExcludeSourceDefId = string.Empty;
-        private string mSourcePrefix = string.Empty;
         private string mCause = string.Empty;
+        private string mSourcePrefix = string.Empty;
         private string mExcludeCause = string.Empty;
+        private bool mActorIsPlayer;
+        private bool mTargetIsSelf;
+        private bool mTargetNotSelf;
 
         public void Configure(EffectDslNode config)
         {
@@ -1799,14 +1886,36 @@ namespace NineGrid.Core.Effects
             mMinDelta = config.Has("minDelta") ? config.Get("minDelta").AsInt(0) : int.MinValue;
             mMaxDelta = config.Has("maxDelta") ? config.Get("maxDelta").AsInt(0) : int.MaxValue;
             mTargetKind = config.Get("targetKind").AsEnum(CardKind.Unknown);
-            mTargetIsRef = config.Get("targetIs").AsString(string.Empty);
-            mTargetNotRef = config.Get("targetNot").AsString(string.Empty);
-            mActorIsRef = config.Get("actorIs").AsString(string.Empty);
             mSourceDefId = config.Get("sourceDefId").AsString(string.Empty);
             mExcludeSourceDefId = config.Get("excludeSourceDefId").AsString(string.Empty);
-            mSourcePrefix = config.Get("sourcePrefix").AsString(string.Empty);
-            mCause = config.Get("cause").AsString(string.Empty);
-            mExcludeCause = config.Get("excludeCause").AsString(string.Empty);
+            var atomName = config.Get("atom").AsString(config.Get("type").AsString(string.Empty));
+            if (!Same(atomName, "EventFilterExcludeCause"))
+            {
+                mCause = config.Get("cause").AsString(string.Empty);
+            }
+
+            ApplyMorphology(atomName, config);
+        }
+
+        private void ApplyMorphology(string atom, EffectDslNode config)
+        {
+            mActorIsPlayer = Same(atom, "EventFilterActorIsPlayer")
+                || Same(atom, "EventFilterActorIsPlayerTargetIsSelf")
+                || Same(atom, "EventFilterActorIsPlayerTargetNotSelf");
+            mTargetIsSelf = Same(atom, "EventFilterTargetIsSelf")
+                || Same(atom, "EventFilterActorIsPlayerTargetIsSelf");
+            mTargetNotSelf = Same(atom, "EventFilterTargetNotSelf")
+                || Same(atom, "EventFilterActorIsPlayerTargetNotSelf");
+
+            if (Same(atom, "EventFilterSourcePrefix"))
+            {
+                mSourcePrefix = config.Get("prefix").AsString(string.Empty);
+            }
+
+            if (Same(atom, "EventFilterExcludeCause"))
+            {
+                mExcludeCause = config.Get("cause").AsString(string.Empty);
+            }
         }
 
         public bool IsMet(EffectRuntimeContext context)
@@ -1825,10 +1934,16 @@ namespace NineGrid.Core.Effects
 
         public IStatCondition CreateStatCondition(EffectBuildContext context)
         {
+            var ownerUid = context == null || context.Instance == null || context.Instance.Owner == null
+                ? 0
+                : context.Instance.Owner.OwnerUid;
+            var avatarUid = context == null || context.Architecture == null
+                ? 0
+                : context.Architecture.GetModel<BoardModel>().AvatarUid.Value;
             return new EventFilterStatCondition(
-                ResolveBuildRef(context, mTargetIsRef),
-                ResolveBuildRef(context, mTargetNotRef),
-                ResolveBuildRef(context, mActorIsRef),
+                mTargetIsSelf ? ownerUid : 0,
+                mTargetNotSelf ? ownerUid : 0,
+                mActorIsPlayer ? avatarUid : 0,
                 mTargetKind,
                 mSourceDefId,
                 mExcludeSourceDefId,
@@ -1869,7 +1984,9 @@ namespace NineGrid.Core.Effects
                 return false;
             }
 
-            if (!string.IsNullOrEmpty(mSourcePrefix) && !StartsWith(gameEvent.SourceDefId, mSourcePrefix))
+            if (!string.IsNullOrEmpty(mSourcePrefix)
+                && (gameEvent.SourceDefId == null
+                    || !gameEvent.SourceDefId.StartsWith(mSourcePrefix, StringComparison.OrdinalIgnoreCase)))
             {
                 return false;
             }
@@ -1885,14 +2002,17 @@ namespace NineGrid.Core.Effects
             }
 
             var eventTargetUid = gameEvent.TargetUid != 0 ? gameEvent.TargetUid : gameEvent.CardUid;
-            var expectedUid = TargetResolver.ResolveSingleCardRef(context, mTargetIsRef);
-            if (expectedUid != 0 && eventTargetUid != expectedUid)
+            if (mTargetIsSelf && (context.OwnerUid == 0 || eventTargetUid != context.OwnerUid))
             {
                 return false;
             }
 
-            var expectedActorUid = TargetResolver.ResolveSingleCardRef(context, mActorIsRef);
-            if (expectedActorUid != 0 && gameEvent.ActorUid != expectedActorUid)
+            if (mTargetNotSelf && context.OwnerUid != 0 && eventTargetUid == context.OwnerUid)
+            {
+                return false;
+            }
+
+            if (mActorIsPlayer && (context.AvatarUid == 0 || gameEvent.ActorUid != context.AvatarUid))
             {
                 return false;
             }
@@ -1904,12 +2024,6 @@ namespace NineGrid.Core.Effects
                 {
                     return false;
                 }
-            }
-
-            var forbiddenUid = TargetResolver.ResolveSingleCardRef(context, mTargetNotRef);
-            if (forbiddenUid != 0 && eventTargetUid == forbiddenUid)
-            {
-                return false;
             }
 
             return true;
@@ -1942,34 +2056,9 @@ namespace NineGrid.Core.Effects
             return false;
         }
 
-        private static int ResolveBuildRef(EffectBuildContext context, string reference)
-        {
-            if (context == null || string.IsNullOrEmpty(reference))
-            {
-                return 0;
-            }
-
-            if (Same(reference, "Self") || Same(reference, "Owner"))
-            {
-                return context.Instance == null || context.Instance.Owner == null ? 0 : context.Instance.Owner.OwnerUid;
-            }
-
-            if (Same(reference, "Player"))
-            {
-                return context.Architecture.GetModel<BoardModel>().AvatarUid.Value;
-            }
-
-            return 0;
-        }
-
         private static bool Same(string left, string right)
         {
             return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static bool StartsWith(string value, string prefix)
-        {
-            return value != null && prefix != null && value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -1980,7 +2069,6 @@ namespace NineGrid.Core.Effects
         private string mSourceDefId = string.Empty;
         private string mExcludeSourceDefId = string.Empty;
         private string mCause = string.Empty;
-        private string mExcludeCause = string.Empty;
 
         public void Configure(EffectDslNode config)
         {
@@ -1988,7 +2076,6 @@ namespace NineGrid.Core.Effects
             mSourceDefId = config.Get("sourceDefId").AsString(string.Empty);
             mExcludeSourceDefId = config.Get("excludeSourceDefId").AsString(string.Empty);
             mCause = config.Get("cause").AsString(string.Empty);
-            mExcludeCause = config.Get("excludeCause").AsString(string.Empty);
         }
 
         public bool IsMet(EffectRuntimeContext context)
@@ -2011,8 +2098,7 @@ namespace NineGrid.Core.Effects
             {
                 return string.IsNullOrEmpty(mSourceDefId)
                     && string.IsNullOrEmpty(mExcludeSourceDefId)
-                    && string.IsNullOrEmpty(mCause)
-                    && string.IsNullOrEmpty(mExcludeCause);
+                    && string.IsNullOrEmpty(mCause);
             }
 
             for (var i = 0; i < events.Count; i++)
@@ -2028,7 +2114,7 @@ namespace NineGrid.Core.Effects
 
         public IStatCondition CreateStatCondition(EffectBuildContext context)
         {
-            return new ActionSourceCondition(mActionName, mSourceDefId, mExcludeSourceDefId, mCause, mExcludeCause);
+            return new ActionSourceCondition(mActionName, mSourceDefId, mExcludeSourceDefId, mCause, string.Empty);
         }
 
         private bool MatchesAction(string actionName)
@@ -2049,11 +2135,6 @@ namespace NineGrid.Core.Effects
             }
 
             if (!string.IsNullOrEmpty(mCause) && !Same(cause, mCause))
-            {
-                return false;
-            }
-
-            if (!string.IsNullOrEmpty(mExcludeCause) && Same(cause, mExcludeCause))
             {
                 return false;
             }

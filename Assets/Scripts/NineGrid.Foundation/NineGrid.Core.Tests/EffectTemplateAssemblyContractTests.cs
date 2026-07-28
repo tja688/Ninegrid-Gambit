@@ -38,7 +38,8 @@ namespace NineGrid.Core.Tests
         {
             const string json =
                 "{\"id\":\"test.no_typetag\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\","
-                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"requires\":[\"ActivatedByUse\",\"HasOwnerEntity\"],"
+                + "\"trigger\":{\"atom\":\"OnSelfUsed\"},"
                 + "\"target\":{\"atom\":\"Player\"},"
                 + "\"action\":{\"atom\":\"Heal\",\"amount\":3,\"actor\":\"Player\"}}";
 
@@ -55,7 +56,8 @@ namespace NineGrid.Core.Tests
         {
             const string json =
                 "{\"id\":\"test.relic.verb\",\"containerType\":\"Relic\",\"kind\":\"Triggered\",\"verb\":\"Use\","
-                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"requires\":[\"NoOwnerEntity\"],"
+                + "\"trigger\":{\"atom\":\"OnSelfUsed\"},"
                 + "\"target\":{\"atom\":\"Player\"},"
                 + "\"action\":{\"atom\":\"Heal\",\"amount\":1,\"actor\":\"Player\"}}";
 
@@ -76,7 +78,7 @@ namespace NineGrid.Core.Tests
             const string json =
                 "{\"id\":\"test.requires\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\","
                 + "\"requires\":[\"ActivatedByUse\",\"HasOwnerEntity\"],"
-                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"trigger\":{\"atom\":\"OnSelfUsed\"},"
                 + "\"target\":{\"atom\":\"Player\"},"
                 + "\"action\":{\"atom\":\"Heal\",\"amount\":1,\"actor\":\"Player\"}}";
 
@@ -94,7 +96,7 @@ namespace NineGrid.Core.Tests
                 "tpl.heal_player_on_use_help_card",
                 new[] { "ActivatedByUse" },
                 System.Array.Empty<string>(),
-                "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},"
                 + "\"target\":{\"atom\":\"Player\"},"
                 + "\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}",
                 ContentImplementationState.Implemented,
@@ -127,7 +129,7 @@ namespace NineGrid.Core.Tests
                 "tpl.heal_player_on_use_help_card",
                 new[] { "ActivatedByUse" },
                 System.Array.Empty<string>(),
-                "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},"
                 + "\"target\":{\"atom\":\"Player\"},"
                 + "\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}",
                 ContentImplementationState.Implemented,

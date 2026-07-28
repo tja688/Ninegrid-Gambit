@@ -5,6 +5,7 @@ namespace NineGrid.Core.Effects
     /// <summary>
     /// 卡牌挂载效果（MonsterSkill/HelpCard）的统一本卡 scope 薄层门禁。
     /// 在区域门禁之后、Trigger.Matches 之前执行，对已修补 Atom 形成二验，对未声明 scope 的触发器兜底。
+    /// #72：识别单形态原子名；上下文开关形参已退役。
     /// </summary>
     internal static class EffectOwnerScopeGate
     {
@@ -52,24 +53,15 @@ namespace NineGrid.Core.Effects
 
         private static bool HasExplicitGlobalScope(EffectDslNode trigger, EffectDefinition definition)
         {
-            // S1/S2：ownerOnly:false（吸骨、暴力营养等听他卡移除）
-            if (trigger.Has("ownerOnly") && !trigger.Get("ownerOnly").AsBool(true))
-            {
-                return true;
-            }
-
-            if (trigger.Get("excludeSelf").AsBool(false))
-            {
-                return true;
-            }
-
-            if (!string.IsNullOrEmpty(trigger.Get("targetNot").AsString(string.Empty)))
+            var atom = ReadAtom(trigger);
+            if (Same(atom, "OnAnyCardRemoved")
+                || Same(atom, "OnOtherHelpCardUsed")
+                || Same(atom, "OnAnyHelpCardUsed"))
             {
                 return true;
             }
 
             // S3：OnEvent + 观察型 EventFilter（石头爱好者/学习成长/灼热观察等）
-            var atom = ReadAtom(trigger);
             if (Same(atom, "OnEvent") && HasObservationOrGlobalEventFilter(definition))
             {
                 return true;
@@ -84,7 +76,22 @@ namespace NineGrid.Core.Effects
             for (var i = 0; i < conditions.Count; i++)
             {
                 var condition = conditions[i];
-                if (condition == null || condition.IsNull || !Same(ReadAtom(condition), "EventFilter"))
+                if (condition == null || condition.IsNull)
+                {
+                    continue;
+                }
+
+                var atom = ReadAtom(condition);
+                if (Same(atom, "TargetNotSelf")
+                    || Same(atom, "SourcePrefix")
+                    || Same(atom, "EventFilterTargetNotSelf")
+                    || Same(atom, "EventFilterActorIsPlayerTargetNotSelf")
+                    || Same(atom, "EventFilterSourcePrefix"))
+                {
+                    return true;
+                }
+
+                if (!IsEventFilterFamily(atom))
                 {
                     continue;
                 }
@@ -100,19 +107,9 @@ namespace NineGrid.Core.Effects
 
         private static bool IsObservationOrGlobalEventFilter(EffectDslNode filter)
         {
-            if (HasNonEmpty(filter, "targetNot"))
-            {
-                return true;
-            }
-
-            if (HasNonEmpty(filter, "targetIs"))
-            {
-                return false;
-            }
-
             if (HasNonEmpty(filter, "targetKind")
-                || HasNonEmpty(filter, "sourcePrefix")
-                || HasNonEmpty(filter, "sourceDefId"))
+                || HasNonEmpty(filter, "sourceDefId")
+                || HasNonEmpty(filter, "excludeSourceDefId"))
             {
                 return true;
             }
@@ -128,17 +125,19 @@ namespace NineGrid.Core.Effects
         private static bool TriggerHasBuiltInOwnerScope(EffectDslNode trigger)
         {
             var atom = ReadAtom(trigger);
-            if (Same(atom, "OnArmorBreak") || Same(atom, "OnSelfMove") || Same(atom, "OnEnter"))
+            if (Same(atom, "OnArmorBreak")
+                || Same(atom, "OnSelfMove")
+                || Same(atom, "OnEnter")
+                || Same(atom, "OnSelfRemoved")
+                || Same(atom, "OnSelfUsed")
+                || Same(atom, "OnSelfArmorLostCumulative")
+                || Same(atom, "OnSelfDamageDealtToPlayerCumulative"))
             {
                 return true;
             }
 
-            if (Same(atom, "OnRemove") && trigger.Get("ownerOnly").AsBool(true))
-            {
-                return true;
-            }
-
-            if (Same(atom, "OnUseHelpCard") && trigger.Get("ownerOnly").AsBool(true))
+            // 兼容期：无开关形参的旧名等价于本卡语义。
+            if (Same(atom, "OnRemove") || Same(atom, "OnUseHelpCard"))
             {
                 return true;
             }
@@ -151,11 +150,8 @@ namespace NineGrid.Core.Effects
             var atom = ReadAtom(trigger);
             if (Same(atom, "OnCumulative"))
             {
-                return HasNonEmpty(trigger, "targetIs")
-                    || HasNonEmpty(trigger, "targetNot")
-                    || HasNonEmpty(trigger, "actorIs")
-                    || HasNonEmpty(trigger, "sourceDefId")
-                    || HasNonEmpty(trigger, "sourcePrefix");
+                // 无上下文开关后，裸 OnCumulative 走 BatchConcernsOwner 兜底。
+                return false;
             }
 
             if (Same(atom, "OnMoveToSlot"))
@@ -185,22 +181,33 @@ namespace NineGrid.Core.Effects
                 }
 
                 var atom = ReadAtom(condition);
-                if (Same(atom, "Adjacent") || Same(atom, "AtSlot"))
+                if (Same(atom, "Adjacent")
+                    || Same(atom, "AtSlot")
+                    || Same(atom, "ActorIsPlayer")
+                    || Same(atom, "ActorIsSelf")
+                    || Same(atom, "TargetIsSelf")
+                    || Same(atom, "TargetNotSelf")
+                    || Same(atom, "SourcePrefix")
+                    || Same(atom, "ExcludeCause")
+                    || Same(atom, "EventFilterActorIsPlayer")
+                    || Same(atom, "EventFilterTargetIsSelf")
+                    || Same(atom, "EventFilterTargetNotSelf")
+                    || Same(atom, "EventFilterActorIsPlayerTargetIsSelf")
+                    || Same(atom, "EventFilterActorIsPlayerTargetNotSelf")
+                    || Same(atom, "EventFilterSourcePrefix")
+                    || Same(atom, "EventFilterExcludeCause"))
                 {
                     return true;
                 }
 
-                if (!Same(atom, "EventFilter"))
+                if (!IsEventFilterFamily(atom))
                 {
                     continue;
                 }
 
-                if (HasNonEmpty(condition, "targetIs")
-                    || HasNonEmpty(condition, "targetNot")
-                    || HasNonEmpty(condition, "actorIs")
-                    || HasNonEmpty(condition, "targetKind")
+                if (HasNonEmpty(condition, "targetKind")
                     || HasNonEmpty(condition, "sourceDefId")
-                    || HasNonEmpty(condition, "sourcePrefix"))
+                    || HasNonEmpty(condition, "excludeSourceDefId"))
                 {
                     return true;
                 }
@@ -238,6 +245,12 @@ namespace NineGrid.Core.Effects
         private static string ReadAtom(EffectDslNode node)
         {
             return node.Get("atom").AsString(node.Get("type").AsString(string.Empty));
+        }
+
+        private static bool IsEventFilterFamily(string atom)
+        {
+            return !string.IsNullOrEmpty(atom)
+                && atom.StartsWith("EventFilter", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool Same(string left, string right)

@@ -28,7 +28,7 @@ namespace NineGrid.Core.Effects
 
         /// <summary>
         /// ADR-0010 适用声明（需场上实体 / 需被使用 / 需处于某区域）。
-        /// #70 写入字段；校验与运行时消费属 #72。
+        /// #72：校验与运行时由 <see cref="EffectRequiresValidator"/> / <see cref="EffectRequiresRuntime"/> 消费。
         /// </summary>
         public IReadOnlyList<string> Requires
         {
@@ -182,6 +182,7 @@ namespace NineGrid.Core.Effects
             ValidateIdentity(definition, result);
             ValidateRequiredFields(definition, result);
             ValidateMutualExclusion(definition, result);
+            EffectRequiresValidator.Validate(definition, result);
             // ADR-0009 / #70：取消 typeTag / verb 纯字符串门禁；容器边界改由 ADR-0010 自陈接管。
             if (mRegistry != null)
             {

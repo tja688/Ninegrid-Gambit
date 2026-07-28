@@ -17,7 +17,8 @@ namespace NineGrid.Core.Tests
         private const string FallingRocksEffectJson =
             "{\"id\":\"skill.falling_rocks.cumulative\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
             + "\"kind\":\"Triggered\","
-            + "\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"armorLost\",\"threshold\":10,\"targetIs\":\"Self\"},"
+            + "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\",\"CardZone:Board\"],"
+            + "\"trigger\":{\"atom\":\"OnSelfArmorLostCumulative\",\"threshold\":10},"
             + "\"conditions\":[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"Board\"}],"
             + "\"target\":{\"atom\":\"Player\"},"
             + "\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_man\",\"kind\":\"Monster\",\"count\":1,\"top\":false}}";

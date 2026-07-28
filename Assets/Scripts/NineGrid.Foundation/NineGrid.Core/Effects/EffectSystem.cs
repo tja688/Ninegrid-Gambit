@@ -356,6 +356,12 @@ namespace NineGrid.Core.Effects
                 return false;
             }
 
+            // ADR-0010 / #72：适用声明运行时求值（与门禁并行，只紧不松）。
+            if (!EffectRequiresRuntime.Passes(instance, runtime))
+            {
+                return false;
+            }
+
             if (!instance.Trigger.Matches(runtime))
             {
                 return false;
@@ -455,7 +461,10 @@ namespace NineGrid.Core.Effects
             if (trigger != null && !trigger.IsNull)
             {
                 var atom = trigger.Get("atom").AsString(string.Empty);
-                if (string.Equals(atom, "OnUseHelpCard", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(atom, "OnUseHelpCard", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(atom, "OnSelfUsed", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(atom, "OnOtherHelpCardUsed", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(atom, "OnAnyHelpCardUsed", StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }

@@ -289,7 +289,7 @@ namespace NineGrid.Core.Tests
                 EffectContainerType.HelpCard,
                 TriggeredJson(
                     "help.common_chest_card.use",
-                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"OnSelfUsed\"}",
                     "{\"atom\":\"Player\"}",
                     "{\"atom\":\"OfferRewardChoice\",\"poolId\":\"relic.common_chest\"}"),
                 ContentImplementationState.Implemented,
@@ -299,7 +299,7 @@ namespace NineGrid.Core.Tests
                 EffectContainerType.HelpCard,
                 TriggeredJson(
                     "help.stat_boost_card.use",
-                    "{\"atom\":\"OnUseHelpCard\"}",
+                    "{\"atom\":\"OnSelfUsed\"}",
                     "{\"atom\":\"Player\"}",
                     "{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"SelectedOption\",\"option\":\"Attack\"},"
                     + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"statBoost.attack\"},"
@@ -347,6 +347,7 @@ namespace NineGrid.Core.Tests
                 + "\"typeTag\":\"【类型帮助卡】\","
                 + "\"containerType\":\"HelpCard\","
                 + "\"kind\":\"Triggered\","
+                + "\"requires\":[\"ActivatedByUse\",\"HasOwnerEntity\"],"
                 + "\"trigger\":" + trigger + ","
                 + "\"target\":" + target + ","
                 + "\"action\":" + action

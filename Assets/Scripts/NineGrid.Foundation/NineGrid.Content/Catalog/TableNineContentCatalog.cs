@@ -25,7 +25,7 @@ namespace NineGrid.Content
                 EffectContainerType.HelpCard,
                 "{\"id\":\"fixture.heal.use\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\","
                 + "\"requires\":[\"ActivatedByUse\",\"HasOwnerEntity\"],"
-                + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
+                + "\"trigger\":{\"atom\":\"OnSelfUsed\"},"
                 + "\"target\":{\"atom\":\"Player\"},"
                 + "\"action\":{\"atom\":\"Heal\",\"amount\":5,\"actor\":\"Player\"}}",
                 ContentImplementationState.Implemented,

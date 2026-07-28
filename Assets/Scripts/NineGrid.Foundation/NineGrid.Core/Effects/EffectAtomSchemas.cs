@@ -60,14 +60,12 @@ namespace NineGrid.Core.Effects
                     "MonsterSkill OnBattle requires EventFilter or AtSlot scope in conditions.");
             }
 
-            if (Same(atom, "OnRemove")
-                && trigger.Has("ownerOnly")
-                && !trigger.Get("ownerOnly").AsBool(true)
-                && !ConditionsDeclareAdjacentOrEventFilter(definition))
+            // ADR-0010 / #72：全局移除监听改由 OnAnyCardRemoved 自陈，不再用 ownerOnly:false。
+            if (Same(atom, "OnAnyCardRemoved") && !ConditionsDeclareAdjacentOrEventFilter(definition))
             {
                 result.Add(
                     "scope.remove-global",
-                    "OnRemove with ownerOnly:false requires EventFilter or Adjacent in conditions.");
+                    "OnAnyCardRemoved requires EventFilter or Adjacent in conditions.");
             }
         }
 
@@ -83,7 +81,14 @@ namespace NineGrid.Core.Effects
                 }
 
                 var atom = ReadAtomName(condition);
-                if (Same(atom, "AtSlot") || Same(atom, "EventFilter"))
+                if (Same(atom, "AtSlot")
+                    || IsEventFilterFamily(atom)
+                    || Same(atom, "ActorIsPlayer")
+                    || Same(atom, "ActorIsSelf")
+                    || Same(atom, "TargetIsSelf")
+                    || Same(atom, "TargetNotSelf")
+                    || Same(atom, "SourcePrefix")
+                    || Same(atom, "ExcludeCause"))
                 {
                     return true;
                 }
@@ -104,7 +109,7 @@ namespace NineGrid.Core.Effects
                 }
 
                 var atom = ReadAtomName(condition);
-                if (Same(atom, "Adjacent") || Same(atom, "EventFilter"))
+                if (Same(atom, "Adjacent") || IsEventFilterFamily(atom))
                 {
                     return true;
                 }
@@ -138,6 +143,7 @@ namespace NineGrid.Core.Effects
                 return;
             }
 
+            EffectContextSwitchParams.RejectBannedParams(node, path, result);
             ValidateRequiredFields(atom, expectedKind, node, path, result);
             ValidateRanges(atom, expectedKind, node, path, result);
 
@@ -283,16 +289,18 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.trigger.mark", path + ".mark is required for OnMoveToBoardMark.");
                 }
 
-                if (Same(atom, "OnCumulative"))
+                if (Same(atom, "OnCumulative")
+                    || Same(atom, "OnSelfArmorLostCumulative")
+                    || Same(atom, "OnSelfDamageDealtToPlayerCumulative"))
                 {
-                    if (!node.Has("metric"))
+                    if (Same(atom, "OnCumulative") && !node.Has("metric"))
                     {
                         result.Add("schema.trigger.metric", path + ".metric is required for OnCumulative.");
                     }
 
                     if (!node.Has("threshold"))
                     {
-                        result.Add("schema.trigger.threshold", path + ".threshold is required for OnCumulative.");
+                        result.Add("schema.trigger.threshold", path + ".threshold is required for " + atom + ".");
                     }
                 }
 
@@ -342,6 +350,28 @@ namespace NineGrid.Core.Effects
                 if (Same(atom, "CardZone") && !node.Has("zone"))
                 {
                     result.Add("schema.condition.zone", path + ".zone is required for CardZone.");
+                }
+
+                if (Same(atom, "SourcePrefix") && string.IsNullOrEmpty(node.Get("prefix").AsString(string.Empty)))
+                {
+                    result.Add("schema.condition.prefix", path + ".prefix is required for SourcePrefix.");
+                }
+
+                if (Same(atom, "EventFilterSourcePrefix")
+                    && string.IsNullOrEmpty(node.Get("prefix").AsString(string.Empty)))
+                {
+                    result.Add("schema.condition.prefix", path + ".prefix is required for EventFilterSourcePrefix.");
+                }
+
+                if (Same(atom, "ExcludeCause") && string.IsNullOrEmpty(node.Get("cause").AsString(string.Empty)))
+                {
+                    result.Add("schema.condition.cause", path + ".cause is required for ExcludeCause.");
+                }
+
+                if (Same(atom, "EventFilterExcludeCause")
+                    && string.IsNullOrEmpty(node.Get("cause").AsString(string.Empty)))
+                {
+                    result.Add("schema.condition.cause", path + ".cause is required for EventFilterExcludeCause.");
                 }
 
                 if (Same(atom, "SelectedOption") && !node.Has("option"))
@@ -988,6 +1018,12 @@ namespace NineGrid.Core.Effects
 
             StatId ignored;
             return Enum.TryParse(stat, true, out ignored);
+        }
+
+        private static bool IsEventFilterFamily(string atom)
+        {
+            return !string.IsNullOrEmpty(atom)
+                && atom.StartsWith("EventFilter", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool Same(string left, string right)

@@ -19,6 +19,7 @@ namespace NineGrid.Core.Tests
         private const string DamageTakenGateJson =
             "{\"id\":\"test.gate.damage_taken\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
             + "\"kind\":\"Triggered\","
+            + "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\"],"
             + "\"trigger\":{\"atom\":\"OnDamageTaken\"},"
             + "\"target\":{\"atom\":\"Self\"},"
             + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"test.gate.damage_taken\"}}";
@@ -26,6 +27,7 @@ namespace NineGrid.Core.Tests
         private const string UnscopedCumulativeJson =
             "{\"id\":\"test.gate.cumulative\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
             + "\"kind\":\"Triggered\","
+            + "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\"],"
             + "\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"armorLost\",\"threshold\":1},"
             + "\"target\":{\"atom\":\"Self\"},"
             + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"test.gate.cumulative\"}}";
@@ -33,6 +35,7 @@ namespace NineGrid.Core.Tests
         private const string BadBareOnBattleJson =
             "{\"id\":\"test.gate.bad_battle\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
             + "\"kind\":\"Triggered\","
+            + "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\"],"
             + "\"trigger\":{\"atom\":\"OnBattle\",\"targetKind\":\"Monster\"},"
             + "\"target\":{\"atom\":\"Self\"},"
             + "\"action\":{\"atom\":\"Rotate\",\"count\":1}}";
@@ -40,16 +43,21 @@ namespace NineGrid.Core.Tests
         private const string BadGlobalRemoveJson =
             "{\"id\":\"test.gate.bad_remove\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
             + "\"kind\":\"Triggered\","
-            + "\"trigger\":{\"atom\":\"OnRemove\",\"ownerOnly\":false},"
+            + "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\"],"
+            + "\"trigger\":{\"atom\":\"OnAnyCardRemoved\"},"
             + "\"target\":{\"atom\":\"Self\"},"
             + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"test.gate.bad_remove\"}}";
 
         private const string SharpStoneEffectJson =
-            "{\"id\":\"skill.sharp_stone.armor_break\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnArmorBreak\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":1,\"actor\":\"Self\"}}";
+            "{\"id\":\"skill.sharp_stone.armor_break\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\","
+            + "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\"],"
+            + "\"trigger\":{\"atom\":\"OnArmorBreak\"},\"target\":{\"atom\":\"Player\"},"
+            + "\"action\":{\"atom\":\"DealDamage\",\"amount\":1,\"actor\":\"Self\"}}";
 
         private const string UnscopedMoveToSlotJson =
             "{\"id\":\"test.gate.move_slot\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
             + "\"kind\":\"Triggered\","
+            + "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\"],"
             + "\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":3,\"target\":\"Any\"},"
             + "\"target\":{\"atom\":\"Self\"},"
             + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"test.gate.move_slot\"}}";

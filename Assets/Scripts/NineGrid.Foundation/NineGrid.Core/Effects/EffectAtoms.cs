@@ -106,13 +106,22 @@ namespace NineGrid.Core.Effects
                     continue;
                 }
 
-                var attribute = (EffectAtomAttribute)Attribute.GetCustomAttribute(type, typeof(EffectAtomAttribute));
-                if (attribute == null || string.IsNullOrEmpty(attribute.Id))
+                var attributes = (EffectAtomAttribute[])Attribute.GetCustomAttributes(type, typeof(EffectAtomAttribute));
+                if (attributes == null || attributes.Length == 0)
                 {
                     continue;
                 }
 
-                Register(attribute, type);
+                for (var a = 0; a < attributes.Length; a++)
+                {
+                    var attribute = attributes[a];
+                    if (attribute == null || string.IsNullOrEmpty(attribute.Id))
+                    {
+                        continue;
+                    }
+
+                    Register(attribute, type);
+                }
             }
         }
 

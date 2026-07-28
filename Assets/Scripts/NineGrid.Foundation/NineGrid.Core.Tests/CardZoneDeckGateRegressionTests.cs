@@ -18,6 +18,7 @@ namespace NineGrid.Core.Tests
         private const string StoneLoverEffectJson =
             "{\"id\":\"skill.stone_lover.armor_lost\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
             + "\"kind\":\"Triggered\","
+            + "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\"],"
             + "\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"ArmorChanged\"},"
             + "\"target\":{\"atom\":\"Self\"},"
             + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"skill.stone_lover\"},"

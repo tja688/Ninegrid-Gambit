@@ -26,7 +26,7 @@ namespace NineGrid.Core.Effects
         Action
     }
 
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class EffectAtomAttribute : Attribute
     {
         public EffectAtomAttribute(string id, EffectAtomKind kind)

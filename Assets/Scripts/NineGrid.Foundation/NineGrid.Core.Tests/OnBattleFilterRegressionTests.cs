@@ -19,16 +19,18 @@ namespace NineGrid.Core.Tests
         private const string BattleHardenedEffectJson =
             "{\"id\":\"relic.battle_hardened.battle\",\"typeTag\":\"【类型遗物】\",\"containerType\":\"Relic\","
             + "\"kind\":\"Triggered\","
+            + "\"requires\":[\"NoOwnerEntity\"],"
             + "\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},"
-            + "\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetKind\":\"Monster\"}],"
+            + "\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"}],"
             + "\"target\":{\"atom\":\"Player\"},"
             + "\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":2,\"layer\":\"Temporary\",\"scope\":\"UntilEnemyChanges\",\"source\":\"relic.battle_hardened\"}}";
 
         private const string SpaceMasteryEffectJson =
             "{\"id\":\"skill.space_mastery.battle\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
             + "\"kind\":\"Triggered\","
+            + "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\"],"
             + "\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},"
-            + "\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"DamageDealt\",\"actorIs\":\"Player\",\"targetIs\":\"Self\"}],"
+            + "\"conditions\":[{\"atom\":\"EventFilterActorIsPlayerTargetIsSelf\",\"eventType\":\"DamageDealt\"}],"
             + "\"target\":{\"atom\":\"Self\"},"
             + "\"action\":{\"atom\":\"Rotate\",\"count\":1}}";
 

@@ -16,9 +16,10 @@ namespace NineGrid.Core.Tests
     {
         private const string HardSlot4EffectJson =
             "{\"id\":\"skill.hard.slot4\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\","
+            + "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\"],"
             + "\"trigger\":{\"atom\":\"OnBattle\",\"targetKind\":\"Monster\"},"
             + "\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":4},"
-            + "{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"targetIs\":\"Self\",\"maxDelta\":-1}],"
+            + "{\"atom\":\"EventFilterTargetIsSelf\",\"eventType\":\"ArmorChanged\",\"maxDelta\":-1}],"
             + "\"target\":{\"atom\":\"Player\"},"
             + "\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]},\"actor\":\"Self\"}}";
 
