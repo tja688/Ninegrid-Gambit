@@ -383,7 +383,7 @@ namespace NineGrid.Content.Editor
         }
 
         /// <summary>
-        /// 装配下拉用：Label 优先 <c>design_text</c>（中文），Value 仍为 templateId。
+        /// 装配下拉用：Label = design_text + 过渡来源后缀（原帮助卡/怪物技能/遗物），Value 仍为 templateId。
         /// </summary>
         public List<EffectTemplateChoice> GetEffectTemplateChoices()
         {
@@ -397,9 +397,7 @@ namespace NineGrid.Content.Editor
                     continue;
                 }
 
-                var rawLabel = string.IsNullOrWhiteSpace(row.design_text)
-                    ? row.id
-                    : row.design_text.Trim();
+                var rawLabel = FormatEffectTemplateChoiceLabel(row.id, row.design_text);
                 if (!labelCounts.TryGetValue(rawLabel, out var count))
                 {
                     count = 0;
@@ -425,6 +423,146 @@ namespace NineGrid.Content.Editor
 
             choices.Sort((a, b) => string.CompareOrdinal(a.Label, b.Label));
             return choices;
+        }
+
+        /// <summary>
+        /// 统一效果池显示名：中文 design_text + 过渡性来源标注（收束前便于辨认旧容器）。
+        /// </summary>
+        public static string FormatEffectTemplateChoiceLabel(string templateId, string designText)
+        {
+            var body = string.IsNullOrWhiteSpace(designText)
+                ? (string.IsNullOrWhiteSpace(templateId) ? "（无模板）" : templateId.Trim())
+                : designText.Trim();
+            var origin = ResolveEffectOriginSuffix(templateId);
+            return string.IsNullOrEmpty(origin) ? body : body + origin;
+        }
+
+        /// <summary>tpl.help.* →（原帮助卡效果）；tpl.skill.* →（原怪物技能效果）；tpl.relic.* →（原遗物效果）。</summary>
+        public static string ResolveEffectOriginSuffix(string templateId)
+        {
+            if (string.IsNullOrWhiteSpace(templateId))
+            {
+                return string.Empty;
+            }
+
+            var id = templateId.Trim();
+            if (id.StartsWith("tpl.help.", StringComparison.OrdinalIgnoreCase))
+            {
+                return "（原帮助卡效果）";
+            }
+
+            if (id.StartsWith("tpl.skill.", StringComparison.OrdinalIgnoreCase))
+            {
+                return "（原怪物技能效果）";
+            }
+
+            if (id.StartsWith("tpl.relic.", StringComparison.OrdinalIgnoreCase))
+            {
+                return "（原遗物效果）";
+            }
+
+            return "（原效果）";
+        }
+
+        /// <summary>
+        /// 把怪物 <c>skillIds</c> 展开进 <c>effectAssemblies</c> 并清空 skillIds，编辑器内只保留单一效果装配源。
+        /// </summary>
+        /// <returns>是否发生了展开（调用方可标脏）。</returns>
+        public bool TryExpandSkillIdsIntoAssemblies(CardPresentationConfigDto dto)
+        {
+            if (dto == null || dto.skillIds == null || dto.skillIds.Length == 0)
+            {
+                return false;
+            }
+
+            var existing = dto.effectAssemblies != null
+                ? new List<EffectAssemblyDto>(dto.effectAssemblies)
+                : new List<EffectAssemblyDto>();
+            var seenIds = new HashSet<string>(StringComparer.Ordinal);
+            for (var i = 0; i < existing.Count; i++)
+            {
+                var row = existing[i];
+                if (row != null && !string.IsNullOrWhiteSpace(row.id))
+                {
+                    seenIds.Add(row.id.Trim());
+                }
+            }
+
+            var loadedAnySkill = false;
+            for (var s = 0; s < dto.skillIds.Length; s++)
+            {
+                var skillId = dto.skillIds[s];
+                if (string.IsNullOrWhiteSpace(skillId))
+                {
+                    continue;
+                }
+
+                if (!TryLoadSkillDto(skillId.Trim(), out var skillDto) || skillDto == null)
+                {
+                    continue;
+                }
+
+                loadedAnySkill = true;
+                if (skillDto.effectAssemblies == null)
+                {
+                    continue;
+                }
+
+                for (var a = 0; a < skillDto.effectAssemblies.Length; a++)
+                {
+                    var src = skillDto.effectAssemblies[a];
+                    if (src == null || string.IsNullOrWhiteSpace(src.templateId))
+                    {
+                        continue;
+                    }
+
+                    var mountId = string.IsNullOrWhiteSpace(src.id)
+                        ? skillId.Trim() + ".fx" + a
+                        : src.id.Trim();
+                    if (!seenIds.Add(mountId))
+                    {
+                        continue;
+                    }
+
+                    existing.Add(new EffectAssemblyDto
+                    {
+                        id = mountId,
+                        templateId = src.templateId.Trim(),
+                        containerType = string.IsNullOrWhiteSpace(src.containerType)
+                            ? "MonsterSkill"
+                            : src.containerType.Trim(),
+                        argsJson = string.IsNullOrWhiteSpace(src.argsJson) ? "{}" : src.argsJson,
+                    });
+                }
+            }
+
+            // 技能 JSON 全找不到时保留 skillIds，避免静默丢挂载。
+            if (!loadedAnySkill)
+            {
+                return false;
+            }
+
+            dto.effectAssemblies = existing.ToArray();
+            dto.skillIds = Array.Empty<string>();
+            return true;
+        }
+
+        private static bool TryLoadSkillDto(string skillContentId, out CardPresentationConfigDto dto)
+        {
+            dto = null;
+            if (string.IsNullOrWhiteSpace(skillContentId))
+            {
+                return false;
+            }
+
+            var authoringPath = CardPresentationJsonIO.GetAuthoringPath(skillContentId);
+            if (CardPresentationJsonIO.TryLoad(authoringPath, out dto, out _) && dto != null)
+            {
+                return true;
+            }
+
+            var streamingPath = CardPresentationJsonIO.GetStreamingPath(skillContentId);
+            return CardPresentationJsonIO.TryLoad(streamingPath, out dto, out _) && dto != null;
         }
 
         public bool TryGetEffectTemplateDesignText(string templateId, out string designText)
@@ -504,6 +642,7 @@ namespace NineGrid.Content.Editor
                         continue;
                     }
 
+                    TryExpandSkillIdsIntoAssemblies(entry.Dto);
                     NormalizeLogicMounts(entry.Dto);
                     CardPresentationJsonIO.SaveAuthoring(entry.Dto);
                     entry.MarkSaved();
@@ -586,6 +725,7 @@ namespace NineGrid.Content.Editor
                 CardPresentationJsonIO.EnsureDirectoriesExist();
                 if (focusKind == CardPresentationEditorFocusKind.Face)
                 {
+                    TryExpandSkillIdsIntoAssemblies(entry.Dto);
                     NormalizeLogicMounts(entry.Dto);
                 }
 

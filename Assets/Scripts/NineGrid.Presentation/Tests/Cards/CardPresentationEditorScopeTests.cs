@@ -134,42 +134,96 @@ namespace NineGrid.Presentation.Tests.Cards
         }
 
         [Test]
-        public void ProjectCard_WithAssembly_ResolvesIntoCatalogEffects()
+        public void FormatEffectTemplateChoiceLabel_AppendsTransitionalOriginSuffix()
+        {
+            Assert.AreEqual(
+                "造成伤害（原帮助卡效果）",
+                CardPresentationEditorSession.FormatEffectTemplateChoiceLabel(
+                    "tpl.help.fireball.use",
+                    "造成伤害"));
+            Assert.AreEqual(
+                "掉甲加攻（原怪物技能效果）",
+                CardPresentationEditorSession.FormatEffectTemplateChoiceLabel(
+                    "tpl.skill.stone_lover.armor_lost",
+                    "掉甲加攻"));
+            Assert.AreEqual(
+                "基础护甲+1（原遗物效果）",
+                CardPresentationEditorSession.FormatEffectTemplateChoiceLabel(
+                    "tpl.relic.wood_shield.stat",
+                    "基础护甲+1"));
+            Assert.AreEqual(
+                "其它（原效果）",
+                CardPresentationEditorSession.FormatEffectTemplateChoiceLabel("tpl.misc.foo", "其它"));
+            Assert.AreEqual(
+                "（原帮助卡效果）",
+                CardPresentationEditorSession.ResolveEffectOriginSuffix("tpl.help.x"));
+        }
+
+        [Test]
+        public void TryExpandSkillIdsIntoAssemblies_FlattensStoneLoverOntoMonster()
+        {
+            var authoring = CardPresentationJsonIO.GetAuthoringAbsolutePath("skill.stone_lover");
+            if (!System.IO.File.Exists(authoring)
+                && !System.IO.File.Exists(CardPresentationJsonIO.GetStreamingAbsolutePath("skill.stone_lover")))
+            {
+                Assert.Ignore("skill.stone_lover JSON 不在磁盘");
+            }
+
+            var session = new CardPresentationEditorSession();
+            var dto = new CardPresentationConfigDto
+            {
+                schemaVersion = 2,
+                contentId = "monster.blank_expand_demo",
+                kind = "Monster",
+                displayName = "展开演示",
+                effectAssemblies = Array.Empty<EffectAssemblyDto>(),
+                skillIds = new[] { "skill.stone_lover" },
+            };
+
+            Assert.IsTrue(session.TryExpandSkillIdsIntoAssemblies(dto));
+            Assert.AreEqual(0, dto.skillIds.Length);
+            Assert.GreaterOrEqual(dto.effectAssemblies.Length, 1);
+            Assert.AreEqual("tpl.skill.stone_lover.armor_lost", dto.effectAssemblies[0].templateId);
+            Assert.AreEqual("MonsterSkill", dto.effectAssemblies[0].containerType);
+        }
+
+        [Test]
+        public void ProjectMonster_WithDirectAssembly_ResolvesWithoutSkillIds()
         {
             EffectTemplateCatalog.Invalidate();
-            if (!EffectTemplateCatalog.TryGet("tpl.heal_player_on_use_help_card", out var template)
+            if (!EffectTemplateCatalog.TryGet("tpl.skill.stone_lover.armor_lost", out var template)
                 || template == null)
             {
-                Assert.Ignore("生产 effect_templates.json 未加载 tpl.heal_player_on_use_help_card");
+                Assert.Ignore("生产 effect_templates.json 未加载 tpl.skill.stone_lover.armor_lost");
             }
 
             var dto = new CardPresentationConfigDto
             {
                 schemaVersion = 2,
-                contentId = "help.editor_mount_demo",
-                kind = "HelpCard",
-                displayName = "装配演示",
-                deckId = "deck.help",
+                contentId = "monster.editor_direct_mount",
+                kind = "Monster",
+                displayName = "直挂演示",
+                deckId = "deck.monster",
                 effectAssemblies = new[]
                 {
                     new EffectAssemblyDto
                     {
-                        id = "help.editor_mount_demo.use",
-                        templateId = "tpl.heal_player_on_use_help_card",
-                        containerType = "HelpCard",
-                        argsJson = "{\"amount\":3}",
+                        id = "monster.editor_direct_mount.armor_lost",
+                        templateId = "tpl.skill.stone_lover.armor_lost",
+                        containerType = "MonsterSkill",
+                        argsJson = "{\"delta\":1,\"reason\":\"direct\"}",
                     },
                 },
                 effectIds = Array.Empty<string>(),
+                skillIds = Array.Empty<string>(),
             };
 
             var catalog = new GameContentCatalog();
             Assert.IsTrue(ContentJsonCatalogProjector.TryProjectCard(dto, catalog, out var card));
             Assert.AreEqual(1, card.EffectIds.Count);
-            Assert.AreEqual("help.editor_mount_demo.use", card.EffectIds[0]);
-            Assert.IsTrue(catalog.TryGetEffect("help.editor_mount_demo.use", out var effect));
-            Assert.IsNotNull(effect);
-            Assert.AreEqual(EffectContainerType.HelpCard, effect.ContainerType);
+            Assert.AreEqual(0, card.SkillIds.Count);
+            Assert.IsTrue(catalog.TryGetEffect("monster.editor_direct_mount.armor_lost", out var effect));
+            Assert.AreEqual(EffectContainerType.MonsterSkill, effect.ContainerType);
         }
     }
 }

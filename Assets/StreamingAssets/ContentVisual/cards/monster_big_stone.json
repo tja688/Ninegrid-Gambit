@@ -3,6 +3,7 @@
     "contentId": "monster.big_stone",
     "kind": "Monster",
     "deckId": "deck.stone_legion",
+    "role": "",
     "displayName": "大石头",
     "description": "左列战斗时按损失护甲伤害玩家",
     "gold": 5,
@@ -24,7 +25,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.019999999552965164,
+        "offsetY": -0.019999999552965165,
         "uniformScale": 1.0
     },
     "animations": {
@@ -70,10 +71,28 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.hard"
+    "effectAssemblies": [
+        {
+            "id": "skill.hard.slot1",
+            "templateId": "tpl.skill.hard.slot1",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"source\":\"Event\"}"
+        },
+        {
+            "id": "skill.hard.slot4",
+            "templateId": "tpl.skill.hard.slot4",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"source\":\"Event\"}"
+        },
+        {
+            "id": "skill.hard.slot7",
+            "templateId": "tpl.skill.hard.slot7",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"source\":\"Event\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 1,
     "isElite": false,
     "isBoss": false,
@@ -86,7 +105,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

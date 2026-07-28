@@ -3,6 +3,7 @@
     "contentId": "monster.megalith",
     "kind": "Monster",
     "deckId": "deck.stone_legion",
+    "role": "",
     "displayName": "巨石人",
     "description": "移动吸相邻护甲；损10护甲洗石人",
     "gold": 5,
@@ -70,11 +71,22 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.absorb_stone",
-        "skill.falling_rocks"
+    "effectAssemblies": [
+        {
+            "id": "skill.absorb_stone.move",
+            "templateId": "tpl.skill.absorb_stone.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"cause\":\"skill.absorb_stone\"}"
+        },
+        {
+            "id": "skill.falling_rocks.cumulative",
+            "templateId": "tpl.skill.falling_rocks.cumulative",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"weight\":1,\"count\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 0,
     "isElite": true,
     "isBoss": false,
@@ -87,7 +99,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

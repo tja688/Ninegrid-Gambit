@@ -3,6 +3,7 @@
     "contentId": "monster.shelter_stone",
     "kind": "Monster",
     "deckId": "deck.stone_legion",
+    "role": "",
     "displayName": "庇护石",
     "description": "其他怪物卡受到的伤害减少1点",
     "gold": 5,
@@ -70,10 +71,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.stone_shelter"
+    "effectAssemblies": [
+        {
+            "id": "skill.stone_shelter.rule",
+            "templateId": "tpl.skill.stone_shelter.rule",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":-1,\"source\":\"skill.stone_shelter\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 3,
     "isElite": false,
     "isBoss": false,
@@ -86,7 +93,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

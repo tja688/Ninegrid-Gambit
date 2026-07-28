@@ -3,6 +3,7 @@
     "contentId": "monster.stone_swallower",
     "kind": "Monster",
     "deckId": "deck.stone_legion",
+    "role": "",
     "displayName": "吞石者",
     "description": "每移动2次吸相邻怪物护甲",
     "gold": 5,
@@ -24,7 +25,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.019999999552965164,
+        "offsetY": -0.019999999552965165,
         "uniformScale": 0.8199999928474426
     },
     "animations": {
@@ -70,10 +71,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.swallow_stone"
+    "effectAssemblies": [
+        {
+            "id": "skill.swallow_stone.move",
+            "templateId": "tpl.skill.swallow_stone.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":1,\"cause\":\"skill.swallow_stone\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 1,
     "isElite": false,
     "isBoss": false,
@@ -86,7 +93,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

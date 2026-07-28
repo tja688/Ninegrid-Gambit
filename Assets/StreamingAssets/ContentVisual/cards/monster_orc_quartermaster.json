@@ -3,6 +3,7 @@
     "contentId": "monster.orc_quartermaster",
     "kind": "Monster",
     "deckId": "deck.orc_legion",
+    "role": "",
     "displayName": "兽人军需官",
     "description": "每移动2次随机强化其他怪物",
     "gold": 5,
@@ -23,8 +24,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.30000001192092896,
-        "offsetY": -0.44999998807907104,
+        "offsetX": 0.30000001192092898,
+        "offsetY": -0.44999998807907107,
         "uniformScale": 1.0
     },
     "animations": {
@@ -70,10 +71,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.gear_delivery"
+    "effectAssemblies": [
+        {
+            "id": "skill.gear_delivery.move",
+            "templateId": "tpl.skill.gear_delivery.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1,\"weight\":1,\"delta\":1,\"reason\":\"skill.gear_delivery\",\"action_choices_1_action_delta\":2}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 2,
     "isElite": false,
     "isBoss": false,
@@ -86,7 +93,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

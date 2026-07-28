@@ -472,13 +472,13 @@ namespace NineGrid.Content.Editor
         {
             var selected = session.FocusKind == CardPresentationEditorFocusKind.EffectTemplate
                            && string.Equals(row.id, session.FocusedTemplateId, StringComparison.Ordinal);
-            var design = string.IsNullOrWhiteSpace(row.design_text)
-                ? "（无 design_text）"
-                : row.design_text.Trim();
+            var design = CardPresentationEditorSession.FormatEffectTemplateChoiceLabel(
+                row.id,
+                row.design_text);
             var title = design;
-            if (title.Length > 32)
+            if (title.Length > 36)
             {
-                title = title.Substring(0, 32) + "…";
+                title = title.Substring(0, 36) + "…";
             }
 
             if (row.IsDirty)
@@ -609,6 +609,11 @@ namespace NineGrid.Content.Editor
             }
 
             var dto = entry.Dto;
+            if (session.TryExpandSkillIdsIntoAssemblies(dto))
+            {
+                OnDtoEdited(entry);
+            }
+
             contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeaderCompact(
                 string.IsNullOrWhiteSpace(dto.displayName) ? dto.contentId : dto.displayName,
                 dto.contentId + " · " + dto.kind
@@ -701,20 +706,10 @@ namespace NineGrid.Content.Editor
 
             var effectAssemblyCard = ContentVisualWarmConsoleUi.CreateSectionCard(
                 "效果装配",
-                "templateId + 实参；清空装配会同步清空 effectIds",
+                "统一效果池：选模板即可挂载；清空后白板。旧 skillIds 打开时会展开进本列表",
                 column => BuildEffectAssemblySection(column, entry));
             effectAssemblyCard.style.marginBottom = 6;
             contentRoot.Add(effectAssemblyCard);
-
-            if (CardPresentationEditorSession.IsMonsterKind(dto.kind))
-            {
-                var skillCard = ContentVisualWarmConsoleUi.CreateSectionCard(
-                    "技能挂载",
-                    "Monster schema≥2 投影进 Catalog.SkillIds",
-                    column => BuildSkillMountsSection(column, entry));
-                skillCard.style.marginBottom = 6;
-                contentRoot.Add(skillCard);
-            }
 
             var extraOuter = new VisualElement();
             extraOuter.style.flexDirection = FlexDirection.Row;
@@ -976,6 +971,7 @@ namespace NineGrid.Content.Editor
             void CommitAssemblies()
             {
                 dto.effectAssemblies = list.ToArray();
+                dto.skillIds = Array.Empty<string>();
                 if (dto.effectAssemblies.Length == 0)
                 {
                     dto.effectIds = Array.Empty<string>();
@@ -995,6 +991,11 @@ namespace NineGrid.Content.Editor
                     {
                         assembly = new EffectAssemblyDto();
                         list[i] = assembly;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(assembly.containerType))
+                    {
+                        assembly.containerType = InferDefaultContainerType(dto.kind);
                     }
 
                     var row = new VisualElement();
@@ -1022,13 +1023,10 @@ namespace NineGrid.Content.Editor
                     var tplIndex = rowIds.IndexOf(currentTpl);
                     if (tplIndex < 0 && !string.IsNullOrEmpty(currentTpl))
                     {
-                        var orphanLabel = currentTpl;
-                        if (session.TryGetEffectTemplateDesignText(currentTpl, out var orphanDesign)
-                            && !string.IsNullOrWhiteSpace(orphanDesign))
-                        {
-                            orphanLabel = orphanDesign.Trim() + " · " + currentTpl;
-                        }
-
+                        session.TryGetEffectTemplateDesignText(currentTpl, out var orphanDesign);
+                        var orphanLabel = CardPresentationEditorSession.FormatEffectTemplateChoiceLabel(
+                            currentTpl,
+                            orphanDesign);
                         rowLabels.Insert(0, orphanLabel);
                         rowIds.Insert(0, currentTpl);
                         tplIndex = 0;
@@ -1046,22 +1044,15 @@ namespace NineGrid.Content.Editor
                         assembly.templateId = picked >= 0 && picked < rowIds.Count
                             ? rowIds[picked]
                             : string.Empty;
+                        assembly.containerType = InferDefaultContainerType(dto.kind);
                         CommitAssemblies();
                     });
-                    row.Add(ContentVisualWarmConsoleUi.WrapControlRow("效果（design_text）", tplField, 96f));
+                    row.Add(ContentVisualWarmConsoleUi.WrapControlRow("效果", tplField, 96f));
 
                     if (!string.IsNullOrEmpty(currentTpl))
                     {
                         row.Add(ContentVisualWarmConsoleUi.CreateTinyPathLabel(currentTpl));
                     }
-
-                    var containerField = new TextField { value = assembly.containerType ?? string.Empty };
-                    containerField.RegisterValueChangedCallback(evt =>
-                    {
-                        assembly.containerType = evt.newValue ?? string.Empty;
-                        CommitAssemblies();
-                    });
-                    row.Add(ContentVisualWarmConsoleUi.WrapControlRow("containerType", containerField, 72f));
 
                     var argsField = new TextField { value = assembly.argsJson ?? string.Empty };
                     argsField.RegisterValueChangedCallback(evt =>
@@ -1099,7 +1090,7 @@ namespace NineGrid.Content.Editor
                     });
                     CommitAssemblies();
                     RebuildList();
-                }) { text = "添加装配" },
+                }) { text = "添加效果" },
                 new Button(() =>
                 {
                     if (list.Count == 0 && (dto.effectIds == null || dto.effectIds.Length == 0))
@@ -1111,7 +1102,7 @@ namespace NineGrid.Content.Editor
                     dto.effectIds = Array.Empty<string>();
                     CommitAssemblies();
                     RebuildList();
-                }) { text = "清空全部装配" }));
+                }) { text = "清空全部效果" }));
         }
 
         private static string InferDefaultContainerType(string kind)
@@ -1132,93 +1123,6 @@ namespace NineGrid.Content.Editor
             }
 
             return string.Empty;
-        }
-
-        private void BuildSkillMountsSection(VisualElement column, CardPresentationEditorEntry entry)
-        {
-            var dto = entry.Dto;
-            if (dto.skillIds == null)
-            {
-                dto.skillIds = Array.Empty<string>();
-            }
-
-            var list = new List<string>(dto.skillIds);
-            var skillChoices = session.KnownSkillIds.ToList();
-            if (skillChoices.Count == 0)
-            {
-                skillChoices.Add(string.Empty);
-            }
-
-            var listRoot = new VisualElement();
-            column.Add(listRoot);
-
-            void CommitSkills()
-            {
-                dto.skillIds = list.ToArray();
-                OnDtoEdited(entry);
-            }
-
-            void RebuildList()
-            {
-                listRoot.Clear();
-                for (var i = 0; i < list.Count; i++)
-                {
-                    var index = i;
-                    var skillId = list[i] ?? string.Empty;
-                    var row = new VisualElement();
-                    row.style.flexDirection = FlexDirection.Row;
-                    row.style.alignItems = Align.Center;
-                    row.style.marginBottom = 4;
-
-                    var skillIndex = skillChoices.IndexOf(skillId);
-                    if (skillIndex < 0)
-                    {
-                        skillIndex = 0;
-                    }
-
-                    var popup = new PopupField<string>(skillChoices, skillIndex);
-                    popup.style.flexGrow = 1;
-                    popup.RegisterValueChangedCallback(evt =>
-                    {
-                        list[index] = evt.newValue ?? string.Empty;
-                        CommitSkills();
-                    });
-                    row.Add(popup);
-
-                    var remove = new Button(() =>
-                    {
-                        list.RemoveAt(index);
-                        CommitSkills();
-                        RebuildList();
-                    })
-                    {
-                        text = "删",
-                    };
-                    row.Add(remove);
-                    listRoot.Add(row);
-                }
-            }
-
-            RebuildList();
-
-            column.Add(ContentVisualWarmConsoleUi.CreateButtonRow(
-                new Button(() =>
-                {
-                    list.Add(skillChoices.Count > 0 ? skillChoices[0] : string.Empty);
-                    CommitSkills();
-                    RebuildList();
-                }) { text = "添加技能" },
-                new Button(() =>
-                {
-                    if (list.Count == 0)
-                    {
-                        return;
-                    }
-
-                    list.Clear();
-                    CommitSkills();
-                    RebuildList();
-                }) { text = "清空技能" }));
         }
 
         private void BuildDescriptionRichTextContent()

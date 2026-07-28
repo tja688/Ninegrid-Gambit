@@ -3,6 +3,7 @@
     "contentId": "monster.stone_thrower",
     "kind": "Monster",
     "deckId": "deck.stone_legion",
+    "role": "",
     "displayName": "丢石人",
     "description": "每移2次耗2护甲伤玩家",
     "gold": 5,
@@ -25,7 +26,7 @@
     "mainVisual": {
         "offsetX": 0.05999999865889549,
         "offsetY": -0.6000000238418579,
-        "uniformScale": 0.8600000143051147
+        "uniformScale": 0.8600000143051148
     },
     "animations": {
         "defaultFps": 8.0,
@@ -70,10 +71,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.throw_stone"
+    "effectAssemblies": [
+        {
+            "id": "skill.throw_stone.move",
+            "templateId": "tpl.skill.throw_stone.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":2,\"amount\":2,\"cause\":\"skill.throw_stone\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 2,
     "isElite": false,
     "isBoss": false,
@@ -86,7 +93,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

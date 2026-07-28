@@ -3,6 +3,7 @@
     "contentId": "monster.sharp_stone",
     "kind": "Monster",
     "deckId": "deck.stone_legion",
+    "role": "",
     "displayName": "尖石",
     "description": "护甲归零时伤害玩家",
     "gold": 5,
@@ -70,10 +71,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.sharp_stone"
+    "effectAssemblies": [
+        {
+            "id": "skill.sharp_stone.armor_break",
+            "templateId": "tpl.skill.sharp_stone.armor_break",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 1,
     "isElite": false,
     "isBoss": false,
@@ -86,7 +93,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

@@ -3,6 +3,7 @@
     "contentId": "monster.growing_stone",
     "kind": "Monster",
     "deckId": "deck.stone_legion",
+    "role": "",
     "displayName": "增生石块",
     "description": "移动到左列时其他怪物获得2点护甲",
     "gold": 5,
@@ -70,10 +71,28 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.stone_growth"
+    "effectAssemblies": [
+        {
+            "id": "skill.stone_growth.slot1",
+            "templateId": "tpl.skill.stone_growth.slot1",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        },
+        {
+            "id": "skill.stone_growth.slot4",
+            "templateId": "tpl.skill.stone_growth.slot4",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        },
+        {
+            "id": "skill.stone_growth.slot7",
+            "templateId": "tpl.skill.stone_growth.slot7",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 3,
     "isElite": false,
     "isBoss": false,
@@ -86,7 +105,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

@@ -3,8 +3,9 @@
     "contentId": "monster.stone_shrimp",
     "kind": "Monster",
     "deckId": "deck.stone_legion",
+    "role": "",
     "displayName": "石虾",
-    "description": "双方损护甲时攻击+1",
+    "description": "无",
     "gold": 5,
     "stats": {
         "hp": 2,
@@ -24,7 +25,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.20000000298023224,
+        "offsetY": -0.20000000298023225,
         "uniformScale": 0.9700000286102295
     },
     "animations": {
@@ -70,10 +71,9 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
+    "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [
-        "skill.stone_lover"
-    ],
+    "skillIds": [],
     "level": 2,
     "isElite": false,
     "isBoss": false,
@@ -86,7 +86,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }
