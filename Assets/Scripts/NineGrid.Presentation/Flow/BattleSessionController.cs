@@ -197,14 +197,6 @@ namespace NineGrid.Flow
                 cancellationToken);
         }
 
-        public static void PresentGoldGainsFromEventLog(
-            int startIndex,
-            Vector3? originWorld = null,
-            string skipReason = null)
-        {
-            PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex, originWorld, skipReason);
-        }
-
         public static void PresentPickupPostApplyEffects(int startIndex, int pickedUid)
         {
             PresentationOutputProjector.PresentPickupPostApplyEffects(startIndex, pickedUid);

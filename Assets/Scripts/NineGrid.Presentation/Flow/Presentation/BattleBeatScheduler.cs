@@ -7,7 +7,6 @@ namespace NineGrid.Flow.Presentation
     /// <summary>
     /// 战斗锚点排期器：一批结算指令的唯一分发出口，按报点交给已注册的表演处理器。
     /// Settled 后仍有已装载未消费指令：只报不改（无强制对账）。
-    /// Avatar 数值指令在卡面处理器认领同拍旁路刷新 PlayerInfo HUD（仍 SyncFromCore；见 ADR-0007 / 后续票收口）。
     /// </summary>
     public sealed class BattleBeatScheduler
     {
@@ -60,7 +59,6 @@ namespace NineGrid.Flow.Presentation
                 return;
             }
 
-            var avatarHudDirty = false;
             for (var i = 0; i < mPending.Count;)
             {
                 var instruction = mPending[i];
@@ -76,23 +74,33 @@ namespace NineGrid.Flow.Presentation
                     continue;
                 }
 
-                if (AffectsAvatarHud(instruction))
-                {
-                    avatarHudDirty = true;
-                }
-
                 mPending.RemoveAt(i);
-            }
-
-            if (avatarHudDirty)
-            {
-                // 与旧命中帧 SyncManagedCardPresentation(avatar) 同拍；HUD 仍直读内核（ADR-0005 后续迁移 / ADR-0007）。
-                PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
             }
 
             if (beat == PresentationBeat.Settled)
             {
                 DiagnoseUnconsumed();
+            }
+        }
+
+        /// <summary>
+        /// 非锁步旁路：临时装载一批并冲刷 Impact→Settled，恢复原先 pending（不搅乱锁步当批）。
+        /// </summary>
+        public void PresentStandalone(PresentationBatch batch)
+        {
+            var savedPending = new List<PresentationInstruction>(mPending);
+            var savedBatchId = mActiveBatchId;
+            try
+            {
+                OnBatchOpened(batch);
+                ReportBeat(PresentationBeat.Impact);
+                ReportBeat(PresentationBeat.Settled);
+            }
+            finally
+            {
+                mPending.Clear();
+                mPending.AddRange(savedPending);
+                mActiveBatchId = savedBatchId;
             }
         }
 
@@ -108,32 +116,6 @@ namespace NineGrid.Flow.Presentation
             }
 
             return false;
-        }
-
-        private static bool AffectsAvatarHud(PresentationInstruction instruction)
-        {
-            var gameEvent = instruction?.Event;
-            if (gameEvent == null)
-            {
-                return false;
-            }
-
-            var uid = gameEvent.CardUid > 0 ? gameEvent.CardUid : gameEvent.TargetUid;
-            if (uid <= 0)
-            {
-                return false;
-            }
-
-            var arch = NineGridArchitecture.Current;
-            if (arch == null)
-            {
-                return false;
-            }
-
-            var avatarUid = arch.GetModel<BoardModel>().AvatarUid != null
-                ? arch.GetModel<BoardModel>().AvatarUid.Value
-                : 0;
-            return avatarUid > 0 && uid == avatarUid;
         }
 
         private void DiagnoseUnconsumed()

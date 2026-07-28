@@ -37,6 +37,15 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void Gold_Decorative_Event_Is_Settled()
+        {
+            Assert.AreEqual(
+                PresentationBeat.Settled,
+                PresentationEventMap.Get(CoreEventType.GoldModified).Beat,
+                "金币飞字/HUD 须在 Settled 消费结算指令");
+        }
+
+        [Test]
         public void Damage_And_Effect_Decorative_Events_Are_Impact()
         {
             Assert.AreEqual(

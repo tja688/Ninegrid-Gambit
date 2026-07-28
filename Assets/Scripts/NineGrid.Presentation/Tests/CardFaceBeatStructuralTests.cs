@@ -8,8 +8,8 @@ using UnityEngine;
 namespace NineGrid.Presentation.Tests
 {
     /// <summary>
-    /// #55/#56/#57/#58/#59/#60 结构护栏：卡面数值提交入口、多处理器排期器与攻击/反击/用道具路径直读捷径；
-    /// 飘字/FX 须经 Impact 装饰处理器，禁投影瞬间 EventLog 旁路。
+    /// #55/#56/#57/#58/#59/#60/#61 结构护栏：卡面数值提交入口、多处理器排期器与攻击/反击/用道具路径直读捷径；
+    /// 飘字/FX/金币须经表演锚点装饰处理器，禁投影瞬间 EventLog 旁路；排期器禁 SyncFromCore。
     /// </summary>
     public sealed class CardFaceBeatStructuralTests
     {
@@ -121,10 +121,20 @@ namespace NineGrid.Presentation.Tests
                 text.IndexOf("new EffectTriggerPulseBeatHandler()", StringComparison.Ordinal) >= 0,
                 "组合根须注册 FX 脉冲装饰处理器");
             Assert.IsTrue(
-                Regex.IsMatch(
-                    text,
-                    @"new\s+BattleBeatScheduler\s*\(\s*new\s+CardFaceStatHandler\s*\(\s*\)\s*,\s*new\s+DamageFloaterBeatHandler\s*\(\s*\)\s*,\s*new\s+EffectTriggerPulseBeatHandler\s*\(\s*\)\s*\)"),
+                text.IndexOf("new BattleBeatScheduler(", StringComparison.Ordinal) >= 0
+                && text.IndexOf("new CardFaceStatHandler()", StringComparison.Ordinal) >= 0
+                && text.IndexOf("new DamageFloaterBeatHandler()", StringComparison.Ordinal) >= 0
+                && text.IndexOf("new EffectTriggerPulseBeatHandler()", StringComparison.Ordinal) >= 0,
                 "装饰处理器须注入排期器且不占主线 ack");
+            Assert.IsTrue(
+                text.IndexOf("new GoldGainBeatHandler()", StringComparison.Ordinal) >= 0,
+                "组合根须注册金币装饰处理器");
+            Assert.IsTrue(
+                text.IndexOf("new PlayerInfoHudBeatHandler()", StringComparison.Ordinal) >= 0,
+                "组合根须注册 Avatar HUD 处理器");
+            Assert.IsTrue(
+                text.IndexOf("BattleBeatHook.PresentStandalone", StringComparison.Ordinal) >= 0,
+                "组合根须接线非锁步 PresentStandalone");
         }
 
         [Test]
@@ -160,12 +170,54 @@ namespace NineGrid.Presentation.Tests
                 "Presentation",
                 "BatchLockstepSteps.cs"));
             var text = File.ReadAllText(path);
-            var settled = text.IndexOf(
-                "BattleBeatHook.NotifyBeat(PresentationBeat.Settled)",
-                StringComparison.Ordinal);
+            var flush = text.IndexOf("BattleBeatFlush.FlushBeats()", StringComparison.Ordinal);
             var ack = text.IndexOf("mGate.TryAcknowledge(mBatchId)", StringComparison.Ordinal);
-            Assert.Greater(settled, 0, "PresentStep 应报 Settled");
-            Assert.Greater(ack, settled, "Settled 须在 TryAcknowledge 之前");
+            Assert.Greater(flush, 0, "PresentStep 应调用统一 FlushBeats");
+            Assert.Greater(ack, flush, "FlushBeats 须在 TryAcknowledge 之前");
+        }
+
+        [Test]
+        public void ProductionSources_DoNotCall_PresentGoldGainsFromEventLog()
+        {
+            var root = Path.GetFullPath(Path.Combine(Application.dataPath, "Scripts", "NineGrid.Presentation"));
+            var offenders = Directory
+                .EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
+                .Where(path => path.IndexOf("\\Tests\\", StringComparison.OrdinalIgnoreCase) < 0
+                               && path.IndexOf("/Tests/", StringComparison.OrdinalIgnoreCase) < 0)
+                .Where(path =>
+                {
+                    var name = Path.GetFileName(path);
+                    if (name.Equals("GoldGainPresentationScheduler.cs", StringComparison.Ordinal))
+                    {
+                        return false;
+                    }
+
+                    var text = File.ReadAllText(path);
+                    return text.IndexOf("PresentGoldGainsFromEventLog", StringComparison.Ordinal) >= 0;
+                })
+                .Select(path => path.Substring(Application.dataPath.Length).TrimStart('\\', '/'))
+                .ToArray();
+
+            Assert.IsEmpty(
+                offenders,
+                "金币不得再扫 EventLog 旁路，须经 Settled 装饰处理器 / BattleBeatFlush：\n"
+                + string.Join("\n", offenders));
+        }
+
+        [Test]
+        public void BattleBeatScheduler_DoesNot_SyncFromCore_PlayerInfo()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "Presentation",
+                "BattleBeatScheduler.cs"));
+            var text = File.ReadAllText(path);
+            Assert.IsFalse(
+                text.IndexOf("SyncFromCore", StringComparison.Ordinal) >= 0,
+                "排期器不得再 SyncFromCore 衔接补丁；Avatar HUD 改由指令处理器驱动");
         }
 
         [Test]

@@ -216,13 +216,17 @@ namespace NineGrid.Presentation.Setup
         private void InstallBattleBeatScheduler(IArchitecture architecture)
         {
             TeardownBattleBeatScheduler();
-            // 装饰处理器（飘字 / FX）不占主线 ack；金币 / Bounce 等后续票继续追加。
+            // 装饰处理器（飘字 / FX / 金币 / Avatar HUD）不占主线 ack；Bounce 等后续票继续追加。
+            // PlayerInfoHud 对 Avatar 血甲只旁路写 HUD 并 return false，留给 CardFace 认领。
             mBeatScheduler = new BattleBeatScheduler(
+                new PlayerInfoHudBeatHandler(),
                 new CardFaceStatHandler(),
                 new DamageFloaterBeatHandler(),
-                new EffectTriggerPulseBeatHandler());
+                new EffectTriggerPulseBeatHandler(),
+                new GoldGainBeatHandler());
             BattleBeatHook.OnBatchOpened = mBeatScheduler.OnBatchOpened;
             BattleBeatHook.ReportBeat = mBeatScheduler.ReportBeat;
+            BattleBeatHook.PresentStandalone = mBeatScheduler.PresentStandalone;
             if (architecture != null)
             {
                 mBatchOpenedUnRegister = architecture.RegisterEvent<Evt_PresentationBatchOpened>(e =>

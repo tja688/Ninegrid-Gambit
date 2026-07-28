@@ -130,7 +130,7 @@ namespace NineGrid.Flow
                 try
                 {
                     CoreBatchProjectionCoordinator.FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids, out var rewardSteps);
-                    PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex);
+                    BattleBeatFlush.PresentEventLogSlice(NineGridArchitecture.Current, startIndex);
                     BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
                     var phase = phaseSystem.CurrentPhase;
                     var boardDelta = new PostKillBoardPresentationResult

@@ -159,11 +159,8 @@ namespace NineGrid.Flow.Presentation
                 return TimelineStepStatus.Continue;
             }
 
-            // 表演通道完成后、就位回执前：
-            // 先冲刷 Impact（探索/道具无命中帧回调；攻击/反击若已在命中帧报过则为空操作），
-            // 再报 Settled 消费观察型加攻等收尾归属。
-            BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
-            BattleBeatHook.NotifyBeat(PresentationBeat.Settled);
+            // 表演通道完成后、就位回执前：与非锁步路径同构的统一冲刷报点。
+            BattleBeatFlush.FlushBeats();
 
             if (!mGate.TryAcknowledge(mBatchId))
             {

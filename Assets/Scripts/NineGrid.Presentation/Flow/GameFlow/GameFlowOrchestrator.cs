@@ -517,7 +517,7 @@ namespace NineGrid.Flow
 
             if (result.Accepted)
             {
-                PresentationOutputProjector.PresentGoldGainsFromEventLog(goldEventStart);
+                BattleBeatFlush.PresentEventLogSlice(NineGridArchitecture.Current, goldEventStart);
                 ResolveSession()?.RefreshPersistentInBattleUi(animate: false);
             }
         }
@@ -603,7 +603,7 @@ namespace NineGrid.Flow
                 Debug.LogWarning("[GameFlow] FlowTrace EnterRoom: " + ex.Message);
             }
 
-            PresentationOutputProjector.PresentGoldGainsFromEventLog(goldEventStart);
+            BattleBeatFlush.PresentEventLogSlice(NineGridArchitecture.Current, goldEventStart);
             ResolveSession()?.RefreshPersistentInBattleUi(animate: false);
 
             var pending = arch.GetModel<PendingChoiceModel>();

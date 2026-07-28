@@ -168,6 +168,7 @@ namespace NineGrid.Flow
 
                 // StartNode 后立即对齐持久 HUD，避免 Opening 期间遗物/技能/数值栏断口。
                 RefreshPersistentInBattleUi(animate: false);
+                PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
 
                 try
                 {
@@ -236,6 +237,7 @@ namespace NineGrid.Flow
                 }
 
                 RefreshPersistentInBattleUi(animate: false);
+                PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
 
                 // 开局即空怪：IsNodeCleared 但尚未 OfferReward，先走 PostKill→CompleteNodeIfCleared。
                 if (phase.CurrentPhase == GamePhase.InteractionLoop

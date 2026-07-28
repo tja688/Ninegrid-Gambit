@@ -168,7 +168,9 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 从内核刷新玩家信息；<paramref name="animate"/> 为 true 时播放血槽/数值动效。
+        /// 从内核刷新玩家信息；仅开局 / 作弊等白名单路径使用。
+        /// 战中血甲金改由结算指令经 <see cref="NineGrid.Flow.Presentation.PlayerInfoHudBeatHandler"/> /
+        /// <see cref="NineGrid.Flow.Presentation.GoldGainBeatHandler"/> 在表演锚点驱动。
         /// </summary>
         public void SyncFromCore(bool animate = true)
         {
@@ -187,6 +189,40 @@ namespace NineGrid.Flow
             ApplyHpVessel(hp, maxHp, shouldAnimate, firstPaint);
             ApplyIntStat(_armor, armorText, armor, armor.ToString(), shouldAnimate);
             ApplyGold(gold, shouldAnimate);
+        }
+
+        /// <summary>指令驱动：写入当前血量（保留已显示的 MaxHp）。</summary>
+        public void ApplyHp(int hp, bool animate = true)
+        {
+            EnsureBindings();
+            CaptureVesselBaseIfNeeded();
+            var maxHp = _hasSnapshot && _coreMaxHp > 0 ? _coreMaxHp : Mathf.Max(1, hp);
+            var firstPaint = !_hasSnapshot;
+            var shouldAnimate = animate && !firstPaint;
+            _hasSnapshot = true;
+            ApplyHpVessel(hp, maxHp, shouldAnimate, firstPaint);
+        }
+
+        /// <summary>指令驱动：写入最大血量（保留已显示的当前血）。</summary>
+        public void ApplyMaxHp(int maxHp, bool animate = true)
+        {
+            EnsureBindings();
+            CaptureVesselBaseIfNeeded();
+            var hp = _hasSnapshot ? _coreHp : Mathf.Max(0, maxHp);
+            var firstPaint = !_hasSnapshot;
+            var shouldAnimate = animate && !firstPaint;
+            _hasSnapshot = true;
+            ApplyHpVessel(hp, Mathf.Max(1, maxHp), shouldAnimate, firstPaint);
+        }
+
+        /// <summary>指令驱动：写入有效护甲。</summary>
+        public void ApplyArmor(int armor, bool animate = true)
+        {
+            EnsureBindings();
+            var firstPaint = !_hasSnapshot;
+            var shouldAnimate = animate && !firstPaint;
+            _hasSnapshot = true;
+            ApplyIntStat(_armor, armorText, Mathf.Max(0, armor), Mathf.Max(0, armor).ToString(), shouldAnimate);
         }
 
         public void ClearSnapshot()

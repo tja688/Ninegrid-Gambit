@@ -309,6 +309,7 @@ namespace NineGrid.Flow
             }
 
             RefreshPersistentInBattleUi(animate: false);
+            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
             _settlementRaised = false;
             _battleEndRaised = false;
             _nodeEventLogStart = 0;
@@ -477,7 +478,8 @@ namespace NineGrid.Flow
                 Relic?.SyncFromCore();
             }
 
-            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate);
+            // PlayerInfo 战中改由结算指令在表演锚点驱动；开局/作弊白名单仍可 SyncFromCore。
+            _ = animate;
         }
 
         public UniTask StartBattleNodeAsync(

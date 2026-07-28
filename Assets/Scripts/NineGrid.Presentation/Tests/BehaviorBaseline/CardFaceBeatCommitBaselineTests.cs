@@ -98,10 +98,9 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
         }
 
         [Test]
-        public void Impact_OnAvatarHpChanged_SyncsPlayerInfoHudFromCore()
+        public void Impact_OnAvatarHpChanged_AppliesPlayerInfoHudFromInstruction()
         {
-            // 回归：卡面改走锚点排期后，命中帧不再 SyncManagedCardPresentation，
-            // Avatar 血量指令须在同一 Impact 拍刷新 PlayerInfo HUD。
+            // Avatar 血量指令须在同一 Impact 拍刷新 PlayerInfo HUD，且取值来自指令而非 SyncFromCore。
             NineGridArchitecture.ResetForTests();
             var architecture = NineGridArchitecture.Current;
             architecture.GetUtility<IConfigUtility>().Set(
@@ -116,8 +115,9 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             var board = architecture.GetModel<BoardModel>();
             var avatarUid = board.AvatarUid.Value;
             Assert.Greater(avatarUid, 0);
+            // 内核故意写成不同值：若仍 SyncFromCore 会刷成 3，指令路径应显示 RemainingHp=7。
             var avatar = architecture.GetModel<CardRegistry>().Get(avatarUid);
-            avatar.Stats.SetBase(StatId.Hp, 7);
+            avatar.Stats.SetBase(StatId.Hp, 3);
             avatar.Stats.SetBase(StatId.MaxHp, 10);
 
             mPlayerInfoHudGo = new GameObject("PlayerInfoHud_CardFaceBeatTest");
@@ -135,14 +135,113 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
                     new PresentationInstruction(hpEvt, PresentationEventMap.Get(CoreEventType.HpChanged)),
                 },
                 snapshot: null);
-            var scheduler = new BattleBeatScheduler(new CardFaceStatHandler());
+            var scheduler = new BattleBeatScheduler(
+                new PlayerInfoHudBeatHandler(),
+                new CardFaceStatHandler());
             scheduler.OnBatchOpened(batch);
             scheduler.ReportBeat(PresentationBeat.Impact);
 
             var coreHp = (int)typeof(PlayerInfoHudPresenter)
                 .GetField("_coreHp", BindingFlags.Instance | BindingFlags.NonPublic)
                 .GetValue(hud);
-            Assert.AreEqual(7, coreHp, "Avatar HpChanged 在 Impact 后 PlayerInfo HUD 应对齐内核血量");
+            Assert.AreEqual(7, coreHp, "Avatar HpChanged 在 Impact 后 HUD 应对齐指令 RemainingHp，而非内核 3");
+        }
+
+        [Test]
+        public void Settled_OnGoldModified_EmitsGoldGainFromInstruction_NotAtOpen()
+        {
+            NineGridArchitecture.ResetForTests();
+            var architecture = NineGridArchitecture.Current;
+            architecture.GetUtility<IConfigUtility>().Set(
+                ContentConfigKeys.DefaultCatalog,
+                TableNineContentCatalog.CreateDefault());
+            InitialGameFactory.Create(architecture, new InitialGameOptions { Seed = 6101UL });
+
+            GoldGainPresentationBinder.EnsureInstalled();
+            var received = new System.Collections.Generic.List<GoldGainPresentationRequested>();
+            var unreg = architecture.RegisterEvent<GoldGainPresentationRequested>(e => received.Add(e));
+            try
+            {
+                var goldEvt = new CoreGameEvent(CoreEventType.GoldModified, 6101, "ModifyGold")
+                    .WithDelta(5)
+                    .WithAmount(12)
+                    .WithMessage("test.gain");
+                var batch = new PresentationBatch(
+                    6101,
+                    new[]
+                    {
+                        new PresentationInstruction(goldEvt, PresentationEventMap.Get(CoreEventType.GoldModified)),
+                    },
+                    snapshot: null);
+                var scheduler = new BattleBeatScheduler(
+                    new CardFaceStatHandler(),
+                    new GoldGainBeatHandler());
+                scheduler.OnBatchOpened(batch);
+
+                Assert.AreEqual(0, received.Count, "投影/开批瞬间不得飞币");
+                scheduler.ReportBeat(PresentationBeat.Impact);
+                Assert.AreEqual(0, received.Count, "Impact 不得消费金币（Settled 归属）");
+                scheduler.ReportBeat(PresentationBeat.Settled);
+                Assert.AreEqual(1, received.Count, "Settled 后应有一条飞币请求");
+                Assert.AreEqual(5, received[0].Delta);
+                Assert.AreEqual(12, received[0].AmountAfter);
+                Assert.IsFalse(received[0].IsSpend);
+            }
+            finally
+            {
+                unreg.UnRegister();
+            }
+        }
+
+        [Test]
+        public void NonLockstep_PresentEventLogSlice_ConsumesGold_WithoutUnconsumedAssert()
+        {
+            NineGridArchitecture.ResetForTests();
+            var architecture = NineGridArchitecture.Current;
+            architecture.GetUtility<IConfigUtility>().Set(
+                ContentConfigKeys.DefaultCatalog,
+                TableNineContentCatalog.CreateDefault());
+            InitialGameFactory.Create(architecture, new InitialGameOptions { Seed = 6102UL });
+
+            var scheduler = new BattleBeatScheduler(
+                new PlayerInfoHudBeatHandler(),
+                new CardFaceStatHandler(),
+                new DamageFloaterBeatHandler(),
+                new EffectTriggerPulseBeatHandler(),
+                new GoldGainBeatHandler());
+            BattleBeatHook.OnBatchOpened = scheduler.OnBatchOpened;
+            BattleBeatHook.ReportBeat = scheduler.ReportBeat;
+            BattleBeatHook.PresentStandalone = scheduler.PresentStandalone;
+            var batchOpenedUnreg = architecture.RegisterEvent<Evt_PresentationBatchOpened>(e =>
+            {
+                if (e != null)
+                {
+                    BattleBeatHook.NotifyBatchOpened(e.Batch);
+                }
+            });
+
+            GoldGainPresentationBinder.EnsureInstalled();
+            var received = new System.Collections.Generic.List<GoldGainPresentationRequested>();
+            var unreg = architecture.RegisterEvent<GoldGainPresentationRequested>(e => received.Add(e));
+            try
+            {
+                var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+                var start = pipeline.EventLog.Entries.Count;
+                pipeline.Enqueue(new ModifyGoldAction(4, "room:gold"));
+                Assert.Greater(pipeline.RunToCompletion(), 0);
+
+                BattleBeatFlush.PresentEventLogSlice(architecture, start);
+
+                Assert.AreEqual(1, received.Count, "非锁步切片冲刷应消费金币指令");
+                Assert.AreEqual(4, received[0].Delta);
+                Assert.AreEqual(0, architecture.GetSystem<IPresentationSyncSystem>().ActiveBatchId);
+            }
+            finally
+            {
+                unreg.UnRegister();
+                batchOpenedUnreg.UnRegister();
+                BattleBeatHook.Reset();
+            }
         }
 
         [Test]

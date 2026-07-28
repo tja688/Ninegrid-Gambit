@@ -236,10 +236,9 @@ namespace NineGrid.Flow
 
         public static void UpdateAvatarDebugText(UiPanelRouter router, bool animate = true)
         {
-            // Card Info Text 已专用于悬停描述；玩家数值走 PlayerInfoText（Hp/Attack/防御=有效护甲/Gold/Name）。
+            // Card Info Text 已专用于悬停描述；玩家数值走 PlayerInfo HUD（指令锚点驱动，不在此 SyncFromCore）。
             _ = router;
-            var hud = PlayerInfoHudPresenter.TryGetInstance() ?? PlayerInfoHudPresenter.Instance;
-            hud.SyncFromCore(animate);
+            _ = animate;
         }
 
         public static CardPresentationSnapshot BuildSnapshot(CardPresentationRead read)

@@ -55,7 +55,7 @@ namespace NineGrid.Core
             Entry(CoreEventType.HpChanged, PresentationInstructionKind.UpdateHp, PresentationEventCategory.Stat, true, true, PresentationBeat.Impact, "HP changed"),
             Entry(CoreEventType.ArmorChanged, PresentationInstructionKind.UpdateArmor, PresentationEventCategory.Stat, true, true, PresentationBeat.Impact, "Armor changed"),
             Entry(CoreEventType.Healed, PresentationInstructionKind.UpdateHp, PresentationEventCategory.Stat, true, true, PresentationBeat.Impact, "Healed"),
-            Entry(CoreEventType.GoldModified, PresentationInstructionKind.UpdateGold, PresentationEventCategory.Economy, true, true, PresentationBeat.None, "Gold changed", "Gold HUD/floater — not card-face stats"),
+            Entry(CoreEventType.GoldModified, PresentationInstructionKind.UpdateGold, PresentationEventCategory.Economy, true, true, PresentationBeat.Settled, "Gold changed"),
             Entry(CoreEventType.CardRemoved, PresentationInstructionKind.RemoveCard, PresentationEventCategory.Remove, true, true, PresentationBeat.None, "Card removed", "Removal animation — no card-face numeric commit"),
             Entry(CoreEventType.CardKilled, PresentationInstructionKind.KillCard, PresentationEventCategory.Kill, true, true, PresentationBeat.Settled, "Card killed"),
             Entry(CoreEventType.CardMoved, PresentationInstructionKind.MoveCard, PresentationEventCategory.Move, true, true, PresentationBeat.None, "Card moved", "Layout move — no card-face stats"),

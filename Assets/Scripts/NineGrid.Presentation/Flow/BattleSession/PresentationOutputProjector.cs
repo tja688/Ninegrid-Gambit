@@ -11,8 +11,8 @@ using UnityEngine;
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 局内单向输出投影：金币、拾取后旁路演出、世界坐标解析。
-    /// 卡面数值 / 伤害飘字 / FX 脉冲改由 <see cref="BattleBeatScheduler"/> 在表演锚点经处理器消费。
+    /// 局内单向输出投影：拾取后旁路演出、世界坐标解析。
+    /// 卡面数值 / 伤害飘字 / FX 脉冲 / 金币 / Avatar HUD 改由 <see cref="BattleBeatScheduler"/> 在表演锚点经处理器消费。
     /// </summary>
     public static class PresentationOutputProjector
     {
@@ -41,44 +41,19 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 扫描 EventLog 中的 GoldModified：经 Scheduler 广播单向表现事件，Binder 消费飞币/HUD。
-        /// </summary>
-        /// <param name="skipReason">若与事件 Message 相同则跳过（已由专用演出处理）。</param>
-        public static void PresentGoldGainsFromEventLog(
-            int startIndex,
-            Vector3? originWorld = null,
-            string skipReason = null)
-        {
-            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
-            if (arch == null)
-            {
-                return;
-            }
-
-            GoldGainPresentationBinder.EnsureInstalled();
-            new GoldGainPresentationScheduler().PresentFromEventLog(
-                arch,
-                startIndex,
-                originWorld,
-                skipReason,
-                ResolveCardWorldPosition);
-        }
-
-        /// <summary>
-        /// Pickup Command 写 Core 后的旁路演出（金币/洗牌/HUD）；效果脉冲改经 Impact 装饰处理器。
+        /// Pickup Command 写 Core 后的旁路演出：经统一 FlushBeats 消费金币/HUD；洗牌仍旁路。
         /// </summary>
         public static void PresentPickupPostApplyEffects(int startIndex, int pickedUid)
         {
-            PresentGoldGainsFromEventLog(startIndex, ResolveCardWorldPosition(pickedUid));
-            (NineGridArchitecture.Interface ?? NineGridArchitecture.Current)?
-                .GetSystem<IBattleSessionSystem>()?
-                .PresentShuffleIntoDeckFromEventLog(startIndex);
-            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
+            _ = pickedUid;
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            BattleBeatFlush.PresentEventLogSlice(arch, startIndex);
+            arch?.GetSystem<IBattleSessionSystem>()?.PresentShuffleIntoDeckFromEventLog(startIndex);
         }
 
         /// <summary>
         /// 视觉对账（保留已提交数值，不从 Core 覆写攻防血）。
-        /// Avatar 血甲 HUD 改由 <see cref="BattleBeatScheduler"/> 在消费 Avatar 数值指令同拍刷新。
+        /// Avatar 血甲 HUD 由 <see cref="PlayerInfoHudBeatHandler"/> 在 Impact 用指令刷新。
         /// </summary>
         public static void SyncManagedCardPresentation(ManagedCard card)
         {

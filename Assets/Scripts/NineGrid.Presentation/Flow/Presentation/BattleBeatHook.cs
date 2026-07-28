@@ -10,11 +10,13 @@ namespace NineGrid.Flow.Presentation
     {
         public static Action<PresentationBatch> OnBatchOpened;
         public static Action<PresentationBeat> ReportBeat;
+        public static Action<PresentationBatch> PresentStandalone;
 
         public static void Reset()
         {
             OnBatchOpened = null;
             ReportBeat = null;
+            PresentStandalone = null;
         }
 
         public static void NotifyBatchOpened(PresentationBatch batch)
@@ -25,6 +27,11 @@ namespace NineGrid.Flow.Presentation
         public static void NotifyBeat(PresentationBeat beat)
         {
             ReportBeat?.Invoke(beat);
+        }
+
+        public static void NotifyPresentStandalone(PresentationBatch batch)
+        {
+            PresentStandalone?.Invoke(batch);
         }
     }
 }

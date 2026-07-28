@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using NineGrid.Core;
 using NineGrid.Flow.Presentation;
-using NineGrid.Presentation.Commands;
 using NineGrid.Presentation.Tests.Fixtures;
 using NUnit.Framework;
 using QFramework;
@@ -9,33 +8,32 @@ using QFramework;
 namespace NineGrid.Presentation.Tests.Output
 {
     /// <summary>
-    /// V9：金币反馈经 Command 扫描 EventLog，并广播单向表现事件。
+    /// #61：金币经 Settled 装饰处理器广播单向表现事件，不再扫 EventLog Command。
     /// </summary>
-    public sealed class PresentGoldGainsFromEventLogCommandTests
+    public sealed class GoldGainBeatHandlerTests
     {
         [Test]
-        public void Command_PositiveGoldModified_EmitsGoldGainPresentationRequested()
+        public void Handler_PositiveGold_EmitsGoldGainPresentationRequested()
         {
             using (var arch = PresentationArchitectureFixture.CreateStartedGame(seed: 42UL))
             {
                 Assert.IsTrue(arch.Phase.StartNode(CreateEmptyNode()).Accepted);
-                var start = arch.Pipeline.EventLog.Entries.Count;
-                arch.Pipeline.Enqueue(new ModifyGoldAction(5, "test.gain"));
-                Assert.Greater(arch.Pipeline.RunToCompletion(), 0);
 
                 var received = new List<GoldGainPresentationRequested>();
                 var unreg = arch.Architecture.RegisterEvent<GoldGainPresentationRequested>(
                     e => received.Add(e));
-
                 try
                 {
-                    var count = arch.Architecture.SendCommand(
-                        new PresentGoldGainsFromEventLogCommand(start));
-
-                    Assert.AreEqual(1, count);
+                    var instruction = new PresentationInstruction(
+                        new CoreGameEvent(CoreEventType.GoldModified, 1, "ModifyGold")
+                            .WithDelta(5)
+                            .WithAmount(9)
+                            .WithMessage("test.gain"),
+                        PresentationEventMap.Get(CoreEventType.GoldModified));
+                    Assert.IsTrue(new GoldGainBeatHandler().TryApply(instruction));
                     Assert.AreEqual(1, received.Count);
                     Assert.AreEqual(5, received[0].Delta);
-                    Assert.Greater(received[0].AmountAfter, 0);
+                    Assert.AreEqual(9, received[0].AmountAfter);
                     Assert.AreEqual("test.gain", received[0].Reason);
                     Assert.IsFalse(received[0].IsSpend);
                 }
@@ -47,27 +45,24 @@ namespace NineGrid.Presentation.Tests.Output
         }
 
         [Test]
-        public void Command_NegativeGoldModified_EmitsSpendEvent()
+        public void Handler_NegativeGold_EmitsSpendEvent()
         {
             using (var arch = PresentationArchitectureFixture.CreateStartedGame(seed: 42UL))
             {
                 Assert.IsTrue(arch.Phase.StartNode(CreateEmptyNode()).Accepted);
-                arch.Pipeline.Enqueue(new ModifyGoldAction(10, "seed"));
-                Assert.Greater(arch.Pipeline.RunToCompletion(), 0);
-                var start = arch.Pipeline.EventLog.Entries.Count;
-                arch.Pipeline.Enqueue(new ModifyGoldAction(-3, "test.spend"));
-                Assert.Greater(arch.Pipeline.RunToCompletion(), 0);
 
                 var received = new List<GoldGainPresentationRequested>();
                 var unreg = arch.Architecture.RegisterEvent<GoldGainPresentationRequested>(
                     e => received.Add(e));
-
                 try
                 {
-                    var count = arch.Architecture.SendCommand(
-                        new PresentGoldGainsFromEventLogCommand(start));
-
-                    Assert.AreEqual(1, count);
+                    var instruction = new PresentationInstruction(
+                        new CoreGameEvent(CoreEventType.GoldModified, 1, "ModifyGold")
+                            .WithDelta(-3)
+                            .WithAmount(7)
+                            .WithMessage("test.spend"),
+                        PresentationEventMap.Get(CoreEventType.GoldModified));
+                    Assert.IsTrue(new GoldGainBeatHandler().TryApply(instruction));
                     Assert.AreEqual(1, received.Count);
                     Assert.AreEqual(-3, received[0].Delta);
                     Assert.IsTrue(received[0].IsSpend);
@@ -80,25 +75,23 @@ namespace NineGrid.Presentation.Tests.Output
         }
 
         [Test]
-        public void Command_SkipUnusedHelpCardsReason_DoesNotEmit()
+        public void Handler_SkipUnusedHelpCardsReason_DoesNotEmit()
         {
             using (var arch = PresentationArchitectureFixture.CreateStartedGame(seed: 42UL))
             {
                 Assert.IsTrue(arch.Phase.StartNode(CreateEmptyNode()).Accepted);
-                var start = arch.Pipeline.EventLog.Entries.Count;
-                arch.Pipeline.Enqueue(
-                    new ModifyGoldAction(4, GoldGainPresentationScheduler.UnusedHelpCardsGoldReason));
-                Assert.Greater(arch.Pipeline.RunToCompletion(), 0);
 
                 var count = 0;
                 var unreg = arch.Architecture.RegisterEvent<GoldGainPresentationRequested>(_ => count++);
-
                 try
                 {
-                    var emitted = arch.Architecture.SendCommand(
-                        new PresentGoldGainsFromEventLogCommand(start));
-
-                    Assert.AreEqual(0, emitted);
+                    var instruction = new PresentationInstruction(
+                        new CoreGameEvent(CoreEventType.GoldModified, 1, "ModifyGold")
+                            .WithDelta(4)
+                            .WithAmount(4)
+                            .WithMessage(GoldGainPresentationScheduler.UnusedHelpCardsGoldReason),
+                        PresentationEventMap.Get(CoreEventType.GoldModified));
+                    Assert.IsTrue(new GoldGainBeatHandler().TryApply(instruction));
                     Assert.AreEqual(0, count);
                 }
                 finally

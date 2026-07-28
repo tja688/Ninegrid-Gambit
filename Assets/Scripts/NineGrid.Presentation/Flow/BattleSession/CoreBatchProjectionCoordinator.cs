@@ -126,8 +126,6 @@ namespace NineGrid.Flow
             }
 
             summary.DamagePopups = popups.Count > 0 ? popups.ToArray() : Array.Empty<CombatDamagePopup>();
-
-            PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex, PresentationOutputProjector.ResolveCardWorldPosition(targetUid));
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
 
             if (!summary.TargetKilled
@@ -351,7 +349,6 @@ namespace NineGrid.Flow
             summary.Deals = deals;
             summary.RemovedUids = removedUids;
             summary.DamagePopups = PresentationOutputProjector.CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
-            PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex);
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
 
             try
@@ -517,8 +514,6 @@ namespace NineGrid.Flow
             result.DamagePopups = PresentationOutputProjector.CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
 
             _session.ExplorePresentChannel?.Enqueue(result);
-
-            PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex, PresentationOutputProjector.ResolveBoardSlotWorldPosition(boardSlot));
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
         }
 
@@ -532,8 +527,6 @@ namespace NineGrid.Flow
             result.DamagePopups = PresentationOutputProjector.CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
 
             _session.AttackHitPresentChannel?.Enqueue(boardSlot, resolvedCombatUid, result);
-
-            PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex, PresentationOutputProjector.ResolveBoardSlotWorldPosition(boardSlot));
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
         }
 
@@ -546,8 +539,6 @@ namespace NineGrid.Flow
             result.DamagePopups = PresentationOutputProjector.CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
 
             _session.AttackBoardPresentChannel?.Enqueue(result);
-
-            PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex, PresentationOutputProjector.ResolveBoardSlotWorldPosition(boardSlot));
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
 
             if (result.NodeClearedOrRewardPhase)
@@ -566,8 +557,6 @@ namespace NineGrid.Flow
             result.DamagePopups = PresentationOutputProjector.CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
 
             _session.AttackCounterPresentChannel?.Enqueue(attackerBoardSlot, attackerUid, result);
-
-            PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex, PresentationOutputProjector.ResolveBoardSlotWorldPosition(attackerBoardSlot));
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
         }
 
@@ -581,12 +570,6 @@ namespace NineGrid.Flow
             _session.PendingUseItemPresent = BuildUseItemPresentationFromBatch(startIndex, result);
 
             _session.UseItemPresentChannel?.Enqueue(result);
-
-            PresentationOutputProjector.PresentGoldGainsFromEventLog(
-                startIndex,
-                boardSlot > 0
-                    ? PresentationOutputProjector.ResolveBoardSlotWorldPosition(boardSlot)
-                    : PresentationOutputProjector.ResolveCardWorldPosition(_session.PendingUseItemPresent.PrimaryTargetUid));
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
         }
 
@@ -599,8 +582,6 @@ namespace NineGrid.Flow
             result.DamagePopups = PresentationOutputProjector.CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
 
             _session.UseItemBoardPresentChannel?.Enqueue(result);
-
-            PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex, PresentationOutputProjector.ResolveBoardSlotWorldPosition(boardSlot));
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
 
             if (result.NodeClearedOrRewardPhase)
