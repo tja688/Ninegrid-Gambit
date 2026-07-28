@@ -1,5 +1,5 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "help.fireball",
     "kind": "HelpCard",
     "deckId": "",
@@ -66,5 +66,12 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "White",
+    "tags": [
+        "直伤"
+    ],
+    "effectIds": [
+        "help.fireball.use"
+    ]
 }

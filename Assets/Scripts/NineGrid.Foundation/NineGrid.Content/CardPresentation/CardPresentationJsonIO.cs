@@ -255,6 +255,21 @@ namespace NineGrid.Content.CardPresentation
                 dto.extraSlots = Array.Empty<CardPresentationExtraSlotDto>();
             }
 
+            if (dto.tags == null)
+            {
+                dto.tags = Array.Empty<string>();
+            }
+
+            if (dto.effectIds == null)
+            {
+                dto.effectIds = Array.Empty<string>();
+            }
+
+            if (dto.rarity == null)
+            {
+                dto.rarity = string.Empty;
+            }
+
             if (dto.contentId == null)
             {
                 dto.contentId = string.Empty;

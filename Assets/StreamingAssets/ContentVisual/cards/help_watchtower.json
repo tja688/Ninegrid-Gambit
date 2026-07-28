@@ -1,5 +1,5 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "help.watchtower",
     "kind": "HelpCard",
     "deckId": "",
@@ -66,5 +66,14 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "Gold",
+    "tags": [
+        "直伤"
+    ],
+    "effectIds": [
+        "help.watchtower.board_corner",
+        "help.watchtower.item_battle",
+        "help.watchtower.use"
+    ]
 }

@@ -1,5 +1,5 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "help.food_card",
     "kind": "HelpCard",
     "deckId": "",
@@ -66,5 +66,12 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "Blue",
+    "tags": [
+        "恢复"
+    ],
+    "effectIds": [
+        "help.food_card.use"
+    ]
 }

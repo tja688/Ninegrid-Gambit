@@ -24,7 +24,7 @@
 | 程序集 | 路径 | 职责 |
 |--------|------|------|
 | `NineGrid.Core` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Core/` | 规则核（QF） |
-| `NineGrid.Content` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Content/` | Catalog / Luban；卡牌表现 JSON + **ContentArt** Resources 根约定（ADR-0008） |
+| `NineGrid.Content` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Content/` | Catalog：**Luban 与帮助卡 JSON 投影双轨**（业务只消费 `GameContentCatalog`）；卡牌表现 JSON + **ContentArt** Resources 根（ADR-0008 / #67） |
 | `NineGrid.Content.Editor` | `…/NineGrid.Content.Editor/` | 卡牌表现编辑器；`ContentArtBreakLinkValidator` 断链扫描 |
 | `NineGrid.Presentation` | `Assets/Scripts/NineGrid.Presentation/` | 表现层（原 Flow+Cards **合并后的单一程序集**） |
 | `NineGrid.Presentation.Tests` | `…/Tests/` | EditMode |

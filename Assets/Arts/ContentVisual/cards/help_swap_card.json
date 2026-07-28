@@ -1,5 +1,5 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "help.swap_card",
     "kind": "HelpCard",
     "deckId": "",
@@ -66,5 +66,12 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "White",
+    "tags": [
+        "位移"
+    ],
+    "effectIds": [
+        "help.swap_card.use"
+    ]
 }

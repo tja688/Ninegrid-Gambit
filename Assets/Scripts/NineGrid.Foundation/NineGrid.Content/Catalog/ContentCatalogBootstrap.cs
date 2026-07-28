@@ -63,7 +63,7 @@ namespace NineGrid.Content
         {
             if (source == ContentCatalogSourceKind.Hardcoded)
             {
-                return ApplyPresentationOverlay(TableNineContentCatalog.CreateDefault());
+                return FinalizeCatalog(TableNineContentCatalog.CreateDefault());
             }
 
             if (source == ContentCatalogSourceKind.Luban)
@@ -71,7 +71,7 @@ namespace NineGrid.Content
                 GameContentCatalog lubanCatalog;
                 if (TryLoadLubanCatalog(lubanDataDirectory ?? ResolveLubanDataDirectory(), out lubanCatalog))
                 {
-                    return ApplyPresentationOverlay(lubanCatalog);
+                    return FinalizeCatalog(lubanCatalog);
                 }
 
                 throw new InvalidOperationException("Luban content data is unavailable.");
@@ -80,14 +80,19 @@ namespace NineGrid.Content
             GameContentCatalog autoCatalog;
             if (TryLoadLubanCatalog(lubanDataDirectory ?? ResolveLubanDataDirectory(), out autoCatalog))
             {
-                return ApplyPresentationOverlay(autoCatalog);
+                return FinalizeCatalog(autoCatalog);
             }
 
-            return ApplyPresentationOverlay(TableNineContentCatalog.CreateDefault());
+            return FinalizeCatalog(TableNineContentCatalog.CreateDefault());
         }
 
-        private static GameContentCatalog ApplyPresentationOverlay(GameContentCatalog catalog)
+        /// <summary>
+        /// Luban/Hardcoded 底数 → 帮助卡 JSON 投影覆盖 → 非帮助卡 Presentation Overlay。
+        /// 业务仍只消费返回的 <see cref="GameContentCatalog"/>。
+        /// </summary>
+        private static GameContentCatalog FinalizeCatalog(GameContentCatalog catalog)
         {
+            HelpCardJsonCatalogProjector.ApplyToCatalog(catalog);
             CardPresentationBusinessOverlay.ApplyToCatalog(catalog);
             return catalog;
         }

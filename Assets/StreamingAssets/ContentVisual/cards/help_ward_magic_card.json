@@ -1,5 +1,5 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "help.ward_magic_card",
     "kind": "HelpCard",
     "deckId": "",
@@ -66,5 +66,12 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "White",
+    "tags": [
+        "护甲"
+    ],
+    "effectIds": [
+        "help.ward_magic_card.use"
+    ]
 }

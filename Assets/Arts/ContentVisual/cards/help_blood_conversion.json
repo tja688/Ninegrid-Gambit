@@ -1,5 +1,5 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "help.blood_conversion",
     "kind": "HelpCard",
     "deckId": "",
@@ -66,5 +66,12 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "White",
+    "tags": [
+        "特殊"
+    ],
+    "effectIds": [
+        "help.blood_conversion.use"
+    ]
 }

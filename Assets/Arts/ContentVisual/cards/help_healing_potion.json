@@ -1,5 +1,5 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "help.healing_potion",
     "kind": "HelpCard",
     "deckId": "",
@@ -66,5 +66,12 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "White",
+    "tags": [
+        "恢复"
+    ],
+    "effectIds": [
+        "help.healing_potion.use"
+    ]
 }

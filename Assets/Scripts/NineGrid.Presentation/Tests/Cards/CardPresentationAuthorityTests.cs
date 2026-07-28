@@ -46,7 +46,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void Overlay_AppliesDisplayNameGoldStats_WhenPositive()
+        public void Overlay_AppliesDisplayNameGoldStats_WhenPositive_ForNonHelp()
         {
             var catalog = new GameContentCatalog();
             var monster = new CardContentDefinition("monster.overlay_demo", "LubanName", CardKind.Monster)
@@ -55,11 +55,6 @@ namespace NineGrid.Presentation.Tests
             monster.KillGold = 3;
             catalog.AddCard(monster);
 
-            var help = new CardContentDefinition("help.overlay_demo", "HelpLuban", CardKind.HelpCard)
-                .WithPrice(5)
-                .WithStats(1, 1, 0);
-            catalog.AddCard(help);
-
             CardPresentationConfigCatalog.UpsertForTests(new CardPresentationConfigDto
             {
                 contentId = "monster.overlay_demo",
@@ -67,14 +62,6 @@ namespace NineGrid.Presentation.Tests
                 displayName = "JsonMonster",
                 gold = 99,
                 stats = new CardPresentationStatsDto { hp = 20, attack = 7, armor = 4 },
-            });
-            CardPresentationConfigCatalog.UpsertForTests(new CardPresentationConfigDto
-            {
-                contentId = "help.overlay_demo",
-                kind = "HelpCard",
-                displayName = "JsonHelp",
-                gold = 42,
-                stats = new CardPresentationStatsDto { hp = 0, attack = 0, armor = 0 },
             });
 
             CardPresentationBusinessOverlay.ApplyToCatalog(catalog);
@@ -85,9 +72,30 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(20, catalog.Cards["monster.overlay_demo"].Stats.Hp);
             Assert.AreEqual(7, catalog.Cards["monster.overlay_demo"].Stats.Attack);
             Assert.AreEqual(4, catalog.Cards["monster.overlay_demo"].Stats.Armor);
+        }
 
-            Assert.AreEqual("JsonHelp", catalog.Cards["help.overlay_demo"].DisplayName);
-            Assert.AreEqual(42, catalog.Cards["help.overlay_demo"].Price);
+        [Test]
+        public void Overlay_SkipsHelpCard_EvenWhenJsonDiffers()
+        {
+            var catalog = new GameContentCatalog();
+            catalog.AddCard(
+                new CardContentDefinition("help.overlay_demo", "HelpFromProjection", CardKind.HelpCard)
+                    .WithPrice(5)
+                    .WithStats(1, 1, 0));
+
+            CardPresentationConfigCatalog.UpsertForTests(new CardPresentationConfigDto
+            {
+                contentId = "help.overlay_demo",
+                kind = "HelpCard",
+                displayName = "JsonHelp",
+                gold = 42,
+                stats = new CardPresentationStatsDto { hp = 9, attack = 8, armor = 7 },
+            });
+
+            CardPresentationBusinessOverlay.ApplyToCatalog(catalog);
+
+            Assert.AreEqual("HelpFromProjection", catalog.Cards["help.overlay_demo"].DisplayName);
+            Assert.AreEqual(5, catalog.Cards["help.overlay_demo"].Price);
             Assert.AreEqual(1, catalog.Cards["help.overlay_demo"].Stats.MaxHp);
             Assert.AreEqual(1, catalog.Cards["help.overlay_demo"].Stats.Attack);
         }
