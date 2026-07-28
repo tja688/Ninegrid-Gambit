@@ -70,6 +70,12 @@ namespace NineGrid.Cards.Presentation
             TryPlayIdleOrStatic(snapshot);
         }
 
+        /// <summary>供 Mapper 合成详情时读取词条表（可无）。</summary>
+        public static CardFaceDescriptionIconCatalogSO PeekDescriptionIconCatalog()
+        {
+            return GetIconCatalog();
+        }
+
         private void TryPlayIdleOrStatic(CardPresentationSnapshot snapshot)
         {
             if (snapshot == null || string.IsNullOrWhiteSpace(snapshot.DefId))

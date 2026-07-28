@@ -20,10 +20,17 @@ namespace NineGrid.Cards.Presentation
             [Tooltip("描述占位代号，例如 Poison（写入文案为 [Poison]）。")]
             public string code = string.Empty;
 
-            [Tooltip("可选中文名，编辑器列表显示。")]
+            [Tooltip("可选中文名，编辑器列表与详情展开显示。")]
             public string displayNameZh = string.Empty;
 
-            [Tooltip("描述内联使用的 Sprite；空则该代号不解析。")]
+            [Tooltip("词条解释；详情页展开，与卡面图标同源。")]
+            [TextArea(2, 6)]
+            public string explanation = string.Empty;
+
+            [Tooltip("认知分区（产品编排）；空则 Others。")]
+            public string partition = "Others";
+
+            [Tooltip("描述内联使用的 Sprite；空则该代号不解析为图标。")]
             public Sprite sprite;
         }
 
@@ -121,6 +128,8 @@ namespace NineGrid.Cards.Presentation
                 code = code,
                 sprite = sprite,
                 displayNameZh = displayNameZh ?? string.Empty,
+                explanation = string.Empty,
+                partition = "Others",
             };
             entries.Add(created);
             InvalidateLookup();
@@ -178,6 +187,8 @@ namespace NineGrid.Cards.Presentation
             {
                 code = string.Empty,
                 displayNameZh = string.Empty,
+                explanation = string.Empty,
+                partition = "Others",
                 sprite = null,
             };
             entries.Add(created);

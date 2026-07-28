@@ -67,5 +67,6 @@
         ]
     },
     "extraSlots": [],
-    "effectAssemblies": []
+    "effectAssemblies": [],
+    "role": ""
 }

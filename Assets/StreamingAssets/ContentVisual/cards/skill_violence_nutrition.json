@@ -98,5 +98,6 @@
             "containerType": "MonsterSkill",
             "argsJson": "{\"delta\":5,\"reason\":\"skill.violence_nutrition\"}"
         }
-    ]
+    ],
+    "role": ""
 }

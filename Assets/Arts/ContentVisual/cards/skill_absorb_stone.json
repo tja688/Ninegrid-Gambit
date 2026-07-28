@@ -92,5 +92,6 @@
             "containerType": "MonsterSkill",
             "argsJson": "{\"cause\":\"skill.absorb_stone\"}"
         }
-    ]
+    ],
+    "role": ""
 }

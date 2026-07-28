@@ -2,9 +2,9 @@
     "schemaVersion": 2,
     "contentId": "help.blood_conversion",
     "kind": "HelpCard",
-    "deckId": "",
+    "deckId": "deck.help",
     "displayName": "血液转换",
-    "description": "血量上限-5，随机得奖励",
+    "description": "血量上限{delta}，随机得奖励",
     "gold": 50,
     "stats": {
         "hp": 0,
@@ -70,7 +70,7 @@
     "extraSlots": [],
     "rarity": "White",
     "tags": [
-        "特殊"
+        "tag.special"
     ],
     "effectIds": [],
     "skillIds": [],
@@ -94,5 +94,6 @@
             "containerType": "HelpCard",
             "argsJson": "{\"delta\":-5,\"reason\":\"bloodConversion\",\"weight\":1,\"action_actions_1_choices_0_action_delta\":1,\"action_actions_1_choices_0_action_reason\":\"bloodConversion.attack\",\"action_actions_1_choices_1_action_delta\":1,\"action_actions_1_choices_1_action_reason\":\"bloodConversion.armor\",\"action_actions_1_choices_2_action_delta\":50,\"action_actions_1_choices_2_action_reason\":\"bloodConversion.gold\",\"poolId\":\"relic.blood_conversion\"}"
         }
-    ]
+    ],
+    "role": "Utility"
 }

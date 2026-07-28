@@ -2,9 +2,9 @@
     "schemaVersion": 2,
     "contentId": "help.healing_spring",
     "kind": "HelpCard",
-    "deckId": "",
+    "deckId": "deck.help",
     "displayName": "治疗圣光",
-    "description": "相邻回2血，道具回1血，使用移除",
+    "description": "相邻回{amount}血，道具回1血，使用移除",
     "gold": 80,
     "stats": {
         "hp": 0,
@@ -70,7 +70,7 @@
     "extraSlots": [],
     "rarity": "Blue",
     "tags": [
-        "恢复"
+        "tag.heal"
     ],
     "effectIds": [],
     "skillIds": [],
@@ -106,5 +106,6 @@
             "containerType": "HelpCard",
             "argsJson": "{\"reason\":\"help.healing_spring.use\"}"
         }
-    ]
+    ],
+    "role": "Utility"
 }

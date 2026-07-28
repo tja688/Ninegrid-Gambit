@@ -1,5 +1,6 @@
 using NineGrid.Core;
 using NineGrid.Core.Content;
+using System;
 using UnityEngine;
 
 namespace NineGrid.Content
@@ -107,7 +108,7 @@ namespace NineGrid.Content
         {
             if (frameStyleCatalog == null || string.IsNullOrEmpty(frameStyleId))
             {
-                return ContentColor.White;
+                return ResolveDefaultFrameColor(frameStyleId);
             }
 
             CardFrameStyleDefinition style;
@@ -122,10 +123,16 @@ namespace NineGrid.Content
                 return fallback.Color;
             }
 
-            return ContentColor.White;
+            return ResolveDefaultFrameColor(frameStyleId);
         }
 
-        private static string FrameStyleIdFromRarity(ContentRarity rarity)
+        /// <summary>稀有度 → 框色（无 Catalog 时用内建默认色）。</summary>
+        public static ContentColor ResolveFrameColorForRarity(ContentRarity rarity)
+        {
+            return ResolveDefaultFrameColor(FrameStyleIdFromRarity(rarity));
+        }
+
+        public static string FrameStyleIdFromRarity(ContentRarity rarity)
         {
             switch (rarity)
             {
@@ -140,6 +147,36 @@ namespace NineGrid.Content
                 default:
                     return CardFrameStyleCatalog.StyleNormal;
             }
+        }
+
+        private static ContentColor ResolveDefaultFrameColor(string frameStyleId)
+        {
+            if (string.Equals(frameStyleId, CardFrameStyleCatalog.StyleBlue, StringComparison.Ordinal))
+            {
+                return new ContentColor(0.45f, 0.65f, 1f, 1f);
+            }
+
+            if (string.Equals(frameStyleId, CardFrameStyleCatalog.StyleGold, StringComparison.Ordinal))
+            {
+                return new ContentColor(1f, 0.84f, 0.3f, 1f);
+            }
+
+            if (string.Equals(frameStyleId, CardFrameStyleCatalog.StyleRed, StringComparison.Ordinal))
+            {
+                return new ContentColor(1f, 0.35f, 0.35f, 1f);
+            }
+
+            if (string.Equals(frameStyleId, CardFrameStyleCatalog.StyleElite, StringComparison.Ordinal))
+            {
+                return new ContentColor(0.85f, 0.55f, 1f, 1f);
+            }
+
+            if (string.Equals(frameStyleId, CardFrameStyleCatalog.StyleBoss, StringComparison.Ordinal))
+            {
+                return new ContentColor(1f, 0.45f, 0.2f, 1f);
+            }
+
+            return ContentColor.White;
         }
 
         private static string ResolveDisplayName(string contentId, ContentVisualKind kind, GameContentCatalog coreCatalog)

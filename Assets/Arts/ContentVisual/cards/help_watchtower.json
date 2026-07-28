@@ -2,9 +2,9 @@
     "schemaVersion": 2,
     "contentId": "help.watchtower",
     "kind": "HelpCard",
-    "deckId": "",
+    "deckId": "deck.help",
     "displayName": "瞭望塔",
-    "description": "角格伤3，4次移除；道具伤2",
+    "description": "角格伤{amount}，4次移除；道具伤2",
     "gold": 150,
     "stats": {
         "hp": 0,
@@ -70,7 +70,7 @@
     "extraSlots": [],
     "rarity": "Gold",
     "tags": [
-        "直伤"
+        "tag.direct_damage"
     ],
     "effectIds": [],
     "skillIds": [],
@@ -106,5 +106,6 @@
             "containerType": "HelpCard",
             "argsJson": "{\"reason\":\"help.watchtower.use\"}"
         }
-    ]
+    ],
+    "role": "Attack"
 }

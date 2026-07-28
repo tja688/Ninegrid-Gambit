@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using NineGrid.Core.Effects;
 
 namespace NineGrid.Core.Content
@@ -15,6 +16,17 @@ namespace NineGrid.Core.Content
         Blue,
         Gold,
         Red
+    }
+
+    /// <summary>
+    /// 功能角色粗轴（ADR-0009）：攻 / 防 / 功能；投放均衡用，代号主键。
+    /// </summary>
+    public enum ContentRole
+    {
+        None,
+        Attack,
+        Defense,
+        Utility
     }
 
     public enum ContentImplementationState
@@ -96,6 +108,8 @@ namespace NineGrid.Core.Content
         public bool IsBoss { get; set; }
         public bool IsReserve { get; set; }
         public string DeckId { get; set; }
+        /// <summary>功能角色（攻/防/功能）；代号主键，中文仅显示名。</summary>
+        public ContentRole Role { get; set; }
         public ContentStatLine Stats { get; private set; }
 
         public IReadOnlyList<string> Tags
@@ -170,6 +184,12 @@ namespace NineGrid.Core.Content
         public CardContentDefinition InDeck(string deckId)
         {
             DeckId = deckId ?? string.Empty;
+            return this;
+        }
+
+        public CardContentDefinition WithRole(ContentRole role)
+        {
+            Role = role;
             return this;
         }
 
@@ -253,6 +273,10 @@ namespace NineGrid.Core.Content
         public string DefId { get; private set; }
         public string DisplayName { get; private set; }
         public ContentRarity Rarity { get; private set; }
+        /// <summary>功能角色（攻/防/功能）；代号主键。</summary>
+        public ContentRole Role { get; set; }
+        /// <summary>卡组归属（决定卡背）；遗物默认 deck.relic。</summary>
+        public string DeckId { get; set; }
         public string DesignText { get; private set; }
 
         public IReadOnlyList<string> Tags
@@ -263,6 +287,18 @@ namespace NineGrid.Core.Content
         public IReadOnlyList<string> EffectIds
         {
             get { return mEffectIds; }
+        }
+
+        public RelicContentDefinition WithRole(ContentRole role)
+        {
+            Role = role;
+            return this;
+        }
+
+        public RelicContentDefinition InDeck(string deckId)
+        {
+            DeckId = deckId ?? string.Empty;
+            return this;
         }
 
         public RelicContentDefinition AddTag(string tag)
@@ -324,6 +360,81 @@ namespace NineGrid.Core.Content
         }
     }
 
+    /// <summary>
+    /// 奖池查询规则（ADR-0009 / #71）：按 kind/rarity/role/tags 从 Catalog 展开候选，替代手工白名单。
+    /// </summary>
+    public sealed class RewardPoolQueryRule
+    {
+        private readonly List<ContentRarity> mRarities = new List<ContentRarity>();
+        private readonly List<ContentRole> mRoles = new List<ContentRole>();
+        private readonly List<string> mTagsAny = new List<string>();
+
+        public CardKind Kind { get; set; }
+        public int DefaultWeight { get; set; }
+        public int RarityWeightWhite { get; set; }
+        public int RarityWeightBlue { get; set; }
+        public int RarityWeightGold { get; set; }
+        public int RarityWeightRed { get; set; }
+        public int BalanceMinAttack { get; set; }
+        public int BalanceMinDefense { get; set; }
+
+        public IReadOnlyList<ContentRarity> Rarities
+        {
+            get { return mRarities; }
+        }
+
+        public IReadOnlyList<ContentRole> Roles
+        {
+            get { return mRoles; }
+        }
+
+        public IReadOnlyList<string> TagsAny
+        {
+            get { return mTagsAny; }
+        }
+
+        public bool HasRarityWeights
+        {
+            get
+            {
+                return RarityWeightWhite > 0
+                    || RarityWeightBlue > 0
+                    || RarityWeightGold > 0
+                    || RarityWeightRed > 0;
+            }
+        }
+
+        public RewardPoolQueryRule AllowRarity(ContentRarity rarity)
+        {
+            if (rarity != ContentRarity.None && !mRarities.Contains(rarity))
+            {
+                mRarities.Add(rarity);
+            }
+
+            return this;
+        }
+
+        public RewardPoolQueryRule AllowRole(ContentRole role)
+        {
+            if (role != ContentRole.None && !mRoles.Contains(role))
+            {
+                mRoles.Add(role);
+            }
+
+            return this;
+        }
+
+        public RewardPoolQueryRule AllowTag(string tag)
+        {
+            if (!string.IsNullOrEmpty(tag) && !mTagsAny.Contains(tag))
+            {
+                mTagsAny.Add(tag);
+            }
+
+            return this;
+        }
+    }
+
     public sealed class RewardPoolDefinition
     {
         private readonly List<RewardEntry> mEntries = new List<RewardEntry>();
@@ -337,9 +448,24 @@ namespace NineGrid.Core.Content
         public string Id { get; private set; }
         public int PickCount { get; private set; }
 
+        /// <summary>非空时由 <see cref="RewardPoolQueryExpander"/> 从 Catalog 展开 Entries。</summary>
+        public RewardPoolQueryRule Query { get; set; }
+
         public IReadOnlyList<RewardEntry> Entries
         {
             get { return mEntries; }
+        }
+
+        public RewardPoolDefinition WithQuery(RewardPoolQueryRule query)
+        {
+            Query = query;
+            return this;
+        }
+
+        public RewardPoolDefinition ClearEntries()
+        {
+            mEntries.Clear();
+            return this;
         }
 
         public RewardPoolDefinition Add(string defId, CardKind kind, int weight)
@@ -351,6 +477,119 @@ namespace NineGrid.Core.Content
         {
             mEntries.Add(new RewardEntry(defId, kind, weight, count));
             return this;
+        }
+    }
+
+    /// <summary>按查询规则从 Catalog 展开奖池候选条目。</summary>
+    public static class RewardPoolQueryExpander
+    {
+        public static void ExpandAll(GameContentCatalog catalog)
+        {
+            if (catalog == null)
+            {
+                return;
+            }
+
+            foreach (var pair in catalog.Rewards.Pools)
+            {
+                Expand(catalog, pair.Value);
+            }
+        }
+
+        public static void Expand(GameContentCatalog catalog, RewardPoolDefinition pool)
+        {
+            if (catalog == null || pool == null || pool.Query == null)
+            {
+                return;
+            }
+
+            pool.ClearEntries();
+            var query = pool.Query;
+            var weight = query.DefaultWeight > 0 ? query.DefaultWeight : 1;
+
+            if (query.Kind == CardKind.Relic)
+            {
+                foreach (var pair in catalog.Relics)
+                {
+                    var relic = pair.Value;
+                    if (relic == null || !MatchesRelic(relic, query))
+                    {
+                        continue;
+                    }
+
+                    pool.Add(relic.DefId, CardKind.Relic, weight, 1);
+                }
+
+                return;
+            }
+
+            foreach (var pair in catalog.Cards)
+            {
+                var card = pair.Value;
+                if (card == null || card.Kind != query.Kind || !MatchesCard(card, query))
+                {
+                    continue;
+                }
+
+                pool.Add(card.DefId, card.Kind, weight, 1);
+            }
+        }
+
+        private static bool MatchesCard(CardContentDefinition card, RewardPoolQueryRule query)
+        {
+            if (query.Rarities.Count > 0 && !query.Rarities.Contains(card.Rarity))
+            {
+                return false;
+            }
+
+            if (query.Roles.Count > 0 && !query.Roles.Contains(card.Role))
+            {
+                return false;
+            }
+
+            return MatchesTags(card.Tags, query.TagsAny);
+        }
+
+        private static bool MatchesRelic(RelicContentDefinition relic, RewardPoolQueryRule query)
+        {
+            if (query.Rarities.Count > 0 && !query.Rarities.Contains(relic.Rarity))
+            {
+                return false;
+            }
+
+            if (query.Roles.Count > 0 && !query.Roles.Contains(relic.Role))
+            {
+                return false;
+            }
+
+            return MatchesTags(relic.Tags, query.TagsAny);
+        }
+
+        private static bool MatchesTags(IReadOnlyList<string> tags, IReadOnlyList<string> tagsAny)
+        {
+            if (tagsAny == null || tagsAny.Count == 0)
+            {
+                return true;
+            }
+
+            if (tags == null || tags.Count == 0)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < tagsAny.Count; i++)
+            {
+                var want = tagsAny[i];
+                for (var j = 0; j < tags.Count; j++)
+                {
+                    if (string.Equals(tags[j], want, System.StringComparison.Ordinal))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
     }
 

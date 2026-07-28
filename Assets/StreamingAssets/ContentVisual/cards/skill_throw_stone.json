@@ -92,5 +92,6 @@
             "containerType": "MonsterSkill",
             "argsJson": "{\"value\":2,\"amount\":2,\"cause\":\"skill.throw_stone\"}"
         }
-    ]
+    ],
+    "role": ""
 }

@@ -94,6 +94,11 @@ namespace NineGrid.Cards
             if (_faceBinder != null)
             {
                 _faceBinder.ApplyPresentation(snapshot);
+                if (snapshot.FrameColor.a > 0f)
+                {
+                    SetFrameColor(snapshot.FrameColor);
+                }
+
                 return;
             }
 
@@ -106,6 +111,11 @@ namespace NineGrid.Cards
             if (snapshot.FaceBackground != null)
             {
                 SetCardFace(snapshot.FaceBackground);
+            }
+
+            if (snapshot.FrameColor.a > 0f)
+            {
+                SetFrameColor(snapshot.FrameColor);
             }
 
             SetAttack(snapshot.Attack, animate: false);

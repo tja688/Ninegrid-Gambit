@@ -2,9 +2,9 @@
     "schemaVersion": 2,
     "contentId": "help.armor_breaking_hammer",
     "kind": "HelpCard",
-    "deckId": "",
+    "deckId": "deck.help",
     "displayName": "破击锤",
-    "description": "目标怪物护甲-10",
+    "description": "目标怪物护甲-{amount}",
     "gold": 50,
     "stats": {
         "hp": 0,
@@ -70,7 +70,7 @@
     "extraSlots": [],
     "rarity": "White",
     "tags": [
-        "直伤"
+        "tag.direct_damage"
     ],
     "effectIds": [],
     "skillIds": [],
@@ -94,5 +94,6 @@
             "containerType": "HelpCard",
             "argsJson": "{\"count\":1,\"amount\":10,\"cause\":\"help.armor_breaking_hammer\"}"
         }
-    ]
+    ],
+    "role": "Attack"
 }

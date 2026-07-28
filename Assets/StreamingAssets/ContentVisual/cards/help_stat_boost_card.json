@@ -2,9 +2,9 @@
     "schemaVersion": 2,
     "contentId": "help.stat_boost_card",
     "kind": "HelpCard",
-    "deckId": "",
+    "deckId": "deck.help",
     "displayName": "属性提升",
-    "description": "攻击+1/护甲+1/血量+2",
+    "description": "攻击+{delta}/护甲+1/血量+2",
     "gold": 100,
     "stats": {
         "hp": 0,
@@ -70,7 +70,9 @@
     "extraSlots": [],
     "rarity": "Gold",
     "tags": [
-        "特殊"
+        "tag.special",
+        "tag.kill_boss",
+        "tag.kill_elite"
     ],
     "effectIds": [],
     "skillIds": [],
@@ -94,5 +96,6 @@
             "containerType": "HelpCard",
             "argsJson": "{\"option\":\"Attack\",\"delta\":1,\"reason\":\"statBoost.attack\",\"action_elseAction_condition_option\":\"Armor\",\"action_elseAction_action_reason\":\"statBoost.armor\",\"action_elseAction_elseAction_condition_option\":\"Hp\",\"action_elseAction_elseAction_action_delta\":2,\"action_elseAction_elseAction_action_reason\":\"statBoost.hp\"}"
         }
-    ]
+    ],
+    "role": "Utility"
 }

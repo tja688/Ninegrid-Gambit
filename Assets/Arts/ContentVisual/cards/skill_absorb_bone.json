@@ -92,5 +92,6 @@
             "containerType": "MonsterSkill",
             "argsJson": "{\"source\":\"Event\",\"reason\":\"skill.absorb_bone.attack\",\"action_actions_1_reason\":\"skill.absorb_bone.armor\"}"
         }
-    ]
+    ],
+    "role": ""
 }

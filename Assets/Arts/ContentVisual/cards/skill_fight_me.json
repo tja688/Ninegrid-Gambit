@@ -92,5 +92,6 @@
             "containerType": "MonsterSkill",
             "argsJson": "{\"sourceAction\":\"DealDamage\"}"
         }
-    ]
+    ],
+    "role": ""
 }

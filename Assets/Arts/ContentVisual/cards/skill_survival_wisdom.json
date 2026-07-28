@@ -92,5 +92,6 @@
             "containerType": "MonsterSkill",
             "argsJson": "{\"sourceAction\":\"DealDamage\",\"value\":1,\"amount\":1,\"source\":\"skill.survival_wisdom\"}"
         }
-    ]
+    ],
+    "role": ""
 }

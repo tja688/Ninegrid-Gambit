@@ -92,5 +92,6 @@
             "containerType": "MonsterSkill",
             "argsJson": "{\"sourceAction\":\"DealDamage\",\"value\":2,\"source\":\"skill.monster_battle_hardened\"}"
         }
-    ]
+    ],
+    "role": ""
 }

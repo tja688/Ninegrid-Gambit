@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "help.golden_chest_card",
     "kind": "HelpCard",
-    "deckId": "",
+    "deckId": "deck.help",
     "displayName": "高级宝箱",
     "description": "三选一获得遗物",
     "gold": 400,
@@ -70,7 +70,8 @@
     "extraSlots": [],
     "rarity": "Red",
     "tags": [
-        "特殊"
+        "tag.special",
+        "tag.kill_boss"
     ],
     "effectIds": [],
     "skillIds": [],
@@ -94,5 +95,6 @@
             "containerType": "HelpCard",
             "argsJson": "{\"poolId\":\"relic.golden_chest\"}"
         }
-    ]
+    ],
+    "role": "Utility"
 }

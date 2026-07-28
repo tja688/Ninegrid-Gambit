@@ -92,5 +92,6 @@
             "containerType": "MonsterSkill",
             "argsJson": "{\"count\":1,\"weight\":1,\"delta\":1,\"reason\":\"skill.gear_delivery\",\"action_choices_1_action_delta\":2}"
         }
-    ]
+    ],
+    "role": ""
 }

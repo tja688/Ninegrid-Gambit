@@ -104,5 +104,6 @@
             "containerType": "MonsterSkill",
             "argsJson": "{\"amount\":2}"
         }
-    ]
+    ],
+    "role": ""
 }

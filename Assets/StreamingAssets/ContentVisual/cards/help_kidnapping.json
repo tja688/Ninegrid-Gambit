@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "help.kidnapping",
     "kind": "HelpCard",
-    "deckId": "",
+    "deckId": "deck.help",
     "displayName": "绑票",
     "description": "移除非BOSS怪得等量护甲",
     "gold": 100,
@@ -70,7 +70,7 @@
     "extraSlots": [],
     "rarity": "Blue",
     "tags": [
-        "护甲"
+        "tag.armor"
     ],
     "effectIds": [],
     "skillIds": [],
@@ -94,5 +94,6 @@
             "containerType": "HelpCard",
             "argsJson": "{\"count\":1,\"cause\":\"help.kidnapping\",\"reason\":\"help.kidnapping\"}"
         }
-    ]
+    ],
+    "role": "Defense"
 }

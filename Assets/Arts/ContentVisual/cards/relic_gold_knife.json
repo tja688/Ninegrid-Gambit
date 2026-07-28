@@ -2,9 +2,9 @@
     "schemaVersion": 2,
     "contentId": "relic.gold_knife",
     "kind": "Relic",
-    "deckId": "",
+    "deckId": "deck.relic",
     "displayName": "打金刀",
-    "description": "击杀怪物时获得2金币",
+    "description": "击杀怪物时获得{delta}金币",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -69,7 +69,9 @@
     },
     "extraSlots": [],
     "rarity": "White",
-    "tags": [],
+    "tags": [
+        "tag.attack"
+    ],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -92,5 +94,6 @@
             "containerType": "Relic",
             "argsJson": "{\"delta\":2,\"reason\":\"goldKnife\"}"
         }
-    ]
+    ],
+    "role": "Attack"
 }

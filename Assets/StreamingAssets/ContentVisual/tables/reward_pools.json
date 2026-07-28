@@ -1,38 +1,137 @@
 [
   {
     "id": "help.choice",
-    "pick_count": 3
+    "pick_count": 3,
+    "kind": "HelpCard",
+    "rarities": ["White", "Blue", "Gold"],
+    "roles": [],
+    "tags_any": [],
+    "default_weight": 1,
+    "rarity_weight_white": 65,
+    "rarity_weight_blue": 30,
+    "rarity_weight_gold": 5,
+    "rarity_weight_red": 0,
+    "balance_min_attack": 1,
+    "balance_min_defense": 1
   },
   {
     "id": "help.white.choice",
-    "pick_count": 3
+    "pick_count": 3,
+    "kind": "HelpCard",
+    "rarities": ["White"],
+    "roles": [],
+    "tags_any": [],
+    "default_weight": 1,
+    "rarity_weight_white": 100,
+    "rarity_weight_blue": 0,
+    "rarity_weight_gold": 0,
+    "rarity_weight_red": 0,
+    "balance_min_attack": 0,
+    "balance_min_defense": 0
   },
   {
     "id": "kill.boss",
-    "pick_count": 3
+    "pick_count": 3,
+    "kind": "HelpCard",
+    "rarities": [],
+    "roles": [],
+    "tags_any": ["tag.kill_boss"],
+    "default_weight": 1,
+    "rarity_weight_white": 0,
+    "rarity_weight_blue": 0,
+    "rarity_weight_gold": 0,
+    "rarity_weight_red": 0,
+    "balance_min_attack": 0,
+    "balance_min_defense": 0
   },
   {
     "id": "kill.elite",
-    "pick_count": 3
+    "pick_count": 3,
+    "kind": "HelpCard",
+    "rarities": [],
+    "roles": [],
+    "tags_any": ["tag.kill_elite"],
+    "default_weight": 1,
+    "rarity_weight_white": 0,
+    "rarity_weight_blue": 0,
+    "rarity_weight_gold": 0,
+    "rarity_weight_red": 0,
+    "balance_min_attack": 0,
+    "balance_min_defense": 0
   },
   {
     "id": "relic.blood_conversion",
-    "pick_count": 1
+    "pick_count": 1,
+    "kind": "Relic",
+    "rarities": ["White", "Blue", "Gold"],
+    "roles": [],
+    "tags_any": [],
+    "default_weight": 1,
+    "rarity_weight_white": 65,
+    "rarity_weight_blue": 30,
+    "rarity_weight_gold": 5,
+    "rarity_weight_red": 0,
+    "balance_min_attack": 0,
+    "balance_min_defense": 0
   },
   {
     "id": "relic.blue_chest",
-    "pick_count": 3
+    "pick_count": 3,
+    "kind": "Relic",
+    "rarities": ["White", "Blue", "Gold"],
+    "roles": [],
+    "tags_any": [],
+    "default_weight": 1,
+    "rarity_weight_white": 40,
+    "rarity_weight_blue": 50,
+    "rarity_weight_gold": 10,
+    "rarity_weight_red": 0,
+    "balance_min_attack": 0,
+    "balance_min_defense": 0
   },
   {
     "id": "relic.common_chest",
-    "pick_count": 3
+    "pick_count": 3,
+    "kind": "Relic",
+    "rarities": ["White", "Blue", "Gold"],
+    "roles": [],
+    "tags_any": [],
+    "default_weight": 1,
+    "rarity_weight_white": 65,
+    "rarity_weight_blue": 30,
+    "rarity_weight_gold": 5,
+    "rarity_weight_red": 0,
+    "balance_min_attack": 0,
+    "balance_min_defense": 0
   },
   {
     "id": "relic.golden_chest",
-    "pick_count": 3
+    "pick_count": 3,
+    "kind": "Relic",
+    "rarities": ["Blue", "Gold"],
+    "roles": [],
+    "tags_any": [],
+    "default_weight": 1,
+    "rarity_weight_white": 0,
+    "rarity_weight_blue": 50,
+    "rarity_weight_gold": 50,
+    "rarity_weight_red": 0,
+    "balance_min_attack": 0,
+    "balance_min_defense": 0
   },
   {
     "id": "shop.helpCards",
-    "pick_count": 6
+    "pick_count": 6,
+    "kind": "HelpCard",
+    "rarities": ["White", "Blue", "Gold"],
+    "roles": [],
+    "tags_any": [],
+    "default_weight": 1,
+    "rarity_weight_white": 65,
+    "rarity_weight_blue": 30,
+    "rarity_weight_gold": 5,
+    "rarity_weight_red": 0,
+    "balance_min_attack": 1,
+    "balance_min_defense": 1
   }
 ]

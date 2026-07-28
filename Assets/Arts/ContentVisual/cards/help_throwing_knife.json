@@ -2,9 +2,9 @@
     "schemaVersion": 2,
     "contentId": "help.throwing_knife",
     "kind": "HelpCard",
-    "deckId": "",
+    "deckId": "deck.help",
     "displayName": "飞刀",
-    "description": "对怪物造成6伤",
+    "description": "对怪物造成{amount}伤",
     "gold": 20,
     "stats": {
         "hp": 0,
@@ -70,7 +70,7 @@
     "extraSlots": [],
     "rarity": "White",
     "tags": [
-        "直伤"
+        "tag.direct_damage"
     ],
     "effectIds": [],
     "skillIds": [],
@@ -94,5 +94,6 @@
             "containerType": "HelpCard",
             "argsJson": "{\"count\":1,\"amount\":6}"
         }
-    ]
+    ],
+    "role": "Attack"
 }

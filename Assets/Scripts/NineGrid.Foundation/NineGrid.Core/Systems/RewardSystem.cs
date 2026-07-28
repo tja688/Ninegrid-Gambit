@@ -71,7 +71,7 @@ namespace NineGrid.Core.Systems
             var candidates = BuildRollCandidates(pool.Entries, excludeOwnedRelics: true);
             var count = pool.PickCount;
             IReadOnlyList<RewardEntry> rolled;
-            if (TryGetRarityWeights(poolId, out var white, out var blue, out var gold, out var red))
+            if (TryGetRarityWeights(pool, out var white, out var blue, out var gold, out var red))
             {
                 rolled = RollPoolByRarity(
                     catalog,
@@ -95,6 +95,8 @@ namespace NineGrid.Core.Systems
 
                 rolled = result;
             }
+
+            rolled = EnforceRoleBalance(catalog, pool, candidates, rolled, applyConsecutivePenalty);
 
             if (applyConsecutivePenalty)
             {
@@ -468,6 +470,35 @@ namespace NineGrid.Core.Systems
         /// 设计品质表：通关/商店帮助卡白65蓝30金5；普通箱/血液转换同；蓝箱白40蓝50金10；金箱蓝50金50。
         /// </summary>
         private static bool TryGetRarityWeights(
+            RewardPoolDefinition pool,
+            out int white,
+            out int blue,
+            out int gold,
+            out int red)
+        {
+            white = 0;
+            blue = 0;
+            gold = 0;
+            red = 0;
+            if (pool == null)
+            {
+                return false;
+            }
+
+            if (pool.Query != null && pool.Query.HasRarityWeights)
+            {
+                white = pool.Query.RarityWeightWhite;
+                blue = pool.Query.RarityWeightBlue;
+                gold = pool.Query.RarityWeightGold;
+                red = pool.Query.RarityWeightRed;
+                return true;
+            }
+
+            // legacy poolId 硬编码回退（测试夹具仍可无 Query）。
+            return TryGetLegacyRarityWeights(pool.Id, out white, out blue, out gold, out red);
+        }
+
+        private static bool TryGetLegacyRarityWeights(
             string poolId,
             out int white,
             out int blue,
@@ -521,6 +552,148 @@ namespace NineGrid.Core.Systems
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 投放均衡：若 Query 要求最少 Attack/Defense 张数，而当前抽签不足，则从剩余候选中替换补足。
+        /// </summary>
+        private IReadOnlyList<RewardEntry> EnforceRoleBalance(
+            GameContentCatalog catalog,
+            RewardPoolDefinition pool,
+            List<RewardEntry> remainingCandidates,
+            IReadOnlyList<RewardEntry> rolled,
+            bool applyConsecutivePenalty)
+        {
+            if (catalog == null || pool == null || pool.Query == null || rolled == null)
+            {
+                return rolled;
+            }
+
+            var minAttack = pool.Query.BalanceMinAttack;
+            var minDefense = pool.Query.BalanceMinDefense;
+            if (minAttack <= 0 && minDefense <= 0)
+            {
+                return rolled;
+            }
+
+            var result = new List<RewardEntry>(rolled);
+            var leftover = new List<RewardEntry>();
+            if (remainingCandidates != null)
+            {
+                leftover.AddRange(remainingCandidates);
+            }
+
+            // 把已抽中的从 leftover 去掉（BuildRollCandidates 已就地 Remove，但 rarity 路径可能不同）。
+            for (var i = 0; i < result.Count; i++)
+            {
+                leftover.RemoveAll(e => e != null && e.DefId == result[i].DefId);
+            }
+
+            EnsureRoleCount(catalog, result, leftover, ContentRole.Attack, minAttack);
+            EnsureRoleCount(catalog, result, leftover, ContentRole.Defense, minDefense);
+            return result;
+        }
+
+        private void EnsureRoleCount(
+            GameContentCatalog catalog,
+            List<RewardEntry> result,
+            List<RewardEntry> leftover,
+            ContentRole role,
+            int minCount)
+        {
+            if (minCount <= 0 || result == null)
+            {
+                return;
+            }
+
+            var have = 0;
+            for (var i = 0; i < result.Count; i++)
+            {
+                if (ResolveEntryRole(catalog, result[i]) == role)
+                {
+                    have++;
+                }
+            }
+
+            while (have < minCount && leftover.Count > 0)
+            {
+                var replaceIndex = -1;
+                for (var i = 0; i < leftover.Count; i++)
+                {
+                    if (ResolveEntryRole(catalog, leftover[i]) == role)
+                    {
+                        replaceIndex = i;
+                        break;
+                    }
+                }
+
+                if (replaceIndex < 0)
+                {
+                    break;
+                }
+
+                var donor = leftover[replaceIndex];
+                leftover.RemoveAt(replaceIndex);
+
+                var victim = -1;
+                for (var i = 0; i < result.Count; i++)
+                {
+                    var existingRole = ResolveEntryRole(catalog, result[i]);
+                    if (existingRole != ContentRole.Attack && existingRole != ContentRole.Defense)
+                    {
+                        victim = i;
+                        break;
+                    }
+                }
+
+                if (victim < 0)
+                {
+                    for (var i = 0; i < result.Count; i++)
+                    {
+                        if (ResolveEntryRole(catalog, result[i]) != role)
+                        {
+                            victim = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (victim < 0)
+                {
+                    break;
+                }
+
+                leftover.Add(result[victim]);
+                result[victim] = donor;
+                have++;
+            }
+        }
+
+        private static ContentRole ResolveEntryRole(GameContentCatalog catalog, RewardEntry entry)
+        {
+            if (entry == null || catalog == null)
+            {
+                return ContentRole.None;
+            }
+
+            if (entry.Kind == CardKind.Relic)
+            {
+                RelicContentDefinition relic;
+                if (catalog.Relics.TryGetValue(entry.DefId, out relic) && relic != null)
+                {
+                    return relic.Role;
+                }
+
+                return ContentRole.None;
+            }
+
+            CardContentDefinition card;
+            if (catalog.Cards.TryGetValue(entry.DefId, out card) && card != null)
+            {
+                return card.Role;
+            }
+
+            return ContentRole.None;
         }
 
         private static bool IsRelicRewardPool(string poolId)

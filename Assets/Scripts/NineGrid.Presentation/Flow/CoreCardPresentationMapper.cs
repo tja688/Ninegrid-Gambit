@@ -3,6 +3,7 @@ using NineGrid.Cards.Presentation;
 using NineGrid.Content;
 using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
+using NineGrid.Core.Content;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using QFramework;
@@ -131,6 +132,7 @@ namespace NineGrid.Flow
                 FaceUp = previous.FaceUp,
                 BasicDescription = previous.BasicDescription,
                 DetailDescription = previous.DetailDescription,
+                FrameColor = previous.FrameColor,
             };
 
             ApplyVisualFields(snapshot, snapshot.DefId, snapshot.Kind);
@@ -307,11 +309,8 @@ namespace NineGrid.Flow
                 snapshot.DisplayName = defId;
             }
 
-            if (!string.IsNullOrWhiteSpace(dto.description))
-            {
-                snapshot.BasicDescription = dto.description;
-            }
-
+            // 卡背：卡组级优先，单卡 sprites.back* 可覆写；皆空则留 null 由模板兜底。
+            ApplyDeckBackSprites(snapshot, dto.deckId);
             if (dto.sprites != null)
             {
                 ApplyJsonSprite(ref snapshot.MainIcon, dto.sprites.mainIcon);
@@ -323,8 +322,70 @@ namespace NineGrid.Flow
                 ApplyJsonSprite(ref snapshot.Banner, dto.sprites.banner);
             }
 
+            var filledDescription = CardFaceDescriptionParamFiller.FillFromAssemblies(
+                dto.description,
+                dto.effectAssemblies);
+            if (!string.IsNullOrWhiteSpace(filledDescription))
+            {
+                snapshot.BasicDescription = filledDescription;
+            }
+
+            snapshot.DetailDescription = CardDetailDescriptionComposer.Compose(
+                snapshot.BasicDescription,
+                CardFacePresentationBinder.PeekDescriptionIconCatalog());
+
+            snapshot.FrameColor = ResolveFrameColor(dto);
             // stats 是内容作者定义的出生值，经 Catalog 造卡用；表现层投影提交不读 JSON stats。
             return true;
+        }
+
+        private static void ApplyDeckBackSprites(CardPresentationSnapshot snapshot, string deckId)
+        {
+            if (string.IsNullOrWhiteSpace(deckId)
+                || !CardPresentationConfigCatalog.TryGet(deckId.Trim(), out var deck)
+                || deck?.sprites == null)
+            {
+                return;
+            }
+
+            ApplyJsonSprite(ref snapshot.BackBorder, deck.sprites.backBorder);
+            ApplyJsonSprite(ref snapshot.BackShirt, deck.sprites.backShirt);
+            ApplyJsonSprite(ref snapshot.BackLogo, deck.sprites.backLogo);
+        }
+
+        private static Color ResolveFrameColor(CardPresentationConfigDto dto)
+        {
+            if (dto == null)
+            {
+                return new Color(0f, 0f, 0f, 0f);
+            }
+
+            if (System.Enum.TryParse(dto.rarity ?? string.Empty, ignoreCase: true, out ContentRarity rarity)
+                && rarity != ContentRarity.None)
+            {
+                return ToUnityColor(ContentVisualResolver.ResolveFrameColorForRarity(rarity));
+            }
+
+            if (dto.isBoss)
+            {
+                return ToUnityColor(ContentVisualResolver.ResolveFrameColor(
+                    CardFrameStyleCatalog.StyleBoss,
+                    null));
+            }
+
+            if (dto.isElite)
+            {
+                return ToUnityColor(ContentVisualResolver.ResolveFrameColor(
+                    CardFrameStyleCatalog.StyleElite,
+                    null));
+            }
+
+            return new Color(0f, 0f, 0f, 0f);
+        }
+
+        private static Color ToUnityColor(ContentColor color)
+        {
+            return new Color(color.R, color.G, color.B, color.A);
         }
 
         private static void ApplyJsonSprite(ref Sprite target, string path)

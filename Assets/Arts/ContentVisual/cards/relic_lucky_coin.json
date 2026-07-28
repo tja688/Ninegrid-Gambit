@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "relic.lucky_coin",
     "kind": "Relic",
-    "deckId": "",
+    "deckId": "deck.relic",
     "displayName": "幸运硬币",
     "description": "击杀精英/层主时加入金币卡",
     "gold": 0,
@@ -69,7 +69,9 @@
     },
     "extraSlots": [],
     "rarity": "White",
-    "tags": [],
+    "tags": [
+        "tag.special"
+    ],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -98,5 +100,6 @@
             "containerType": "Relic",
             "argsJson": "{\"count\":1}"
         }
-    ]
+    ],
+    "role": "Utility"
 }

@@ -2,9 +2,9 @@
     "schemaVersion": 2,
     "contentId": "help.flame",
     "kind": "HelpCard",
-    "deckId": "",
+    "deckId": "deck.help",
     "displayName": "烈焰",
-    "description": "对玩家4伤并移除",
+    "description": "对玩家{amount}伤并移除",
     "gold": 400,
     "stats": {
         "hp": 0,
@@ -70,7 +70,7 @@
     "extraSlots": [],
     "rarity": "Red",
     "tags": [
-        "特殊"
+        "tag.special"
     ],
     "effectIds": [],
     "skillIds": [],
@@ -94,5 +94,6 @@
             "containerType": "HelpCard",
             "argsJson": "{\"amount\":4}"
         }
-    ]
+    ],
+    "role": "Utility"
 }

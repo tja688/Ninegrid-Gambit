@@ -92,5 +92,6 @@
             "containerType": "MonsterSkill",
             "argsJson": "{\"reason\":\"skill.violence_maniac\"}"
         }
-    ]
+    ],
+    "role": ""
 }

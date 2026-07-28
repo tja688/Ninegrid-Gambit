@@ -17,8 +17,10 @@ namespace NineGrid.Content.CardPresentation
         public string contentId;
         /// <summary>卡种类；投影以本字段为准（HelpCard/Monster/Skill/Relic/Deck/Room/…）。</summary>
         public string kind;
-        /// <summary>deck 归属；怪物卡投影写入 Catalog.DeckId。</summary>
+        /// <summary>deck 归属（全卡种必填语义）；决定卡背，特殊卡可在 sprites.back* 覆写。</summary>
         public string deckId;
+        /// <summary>功能角色粗轴：Attack / Defense / Utility（代号主键）。</summary>
+        public string role;
         /// <summary>显示名；schema≥2 投影写入 Catalog，已投影卡种不再由 Overlay 覆盖。</summary>
         public string displayName;
         /// <summary>描述权威（有值时覆盖 TbContentVisual.description）；Relic/Skill 亦作 designText。</summary>

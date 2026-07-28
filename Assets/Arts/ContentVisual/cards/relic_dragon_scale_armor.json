@@ -2,9 +2,9 @@
     "schemaVersion": 2,
     "contentId": "relic.dragon_scale_armor",
     "kind": "Relic",
-    "deckId": "",
+    "deckId": "deck.relic",
     "displayName": "龙鳞甲",
-    "description": "基础护甲+1，血量上限+6，怪物攻击-1",
+    "description": "基础护甲+1，血量上限+{delta}，怪物攻击-1",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -69,7 +69,9 @@
     },
     "extraSlots": [],
     "rarity": "Gold",
-    "tags": [],
+    "tags": [
+        "tag.armor"
+    ],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -104,5 +106,6 @@
             "containerType": "Relic",
             "argsJson": "{\"value\":-1}"
         }
-    ]
+    ],
+    "role": "Defense"
 }

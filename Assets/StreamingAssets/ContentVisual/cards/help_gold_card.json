@@ -2,9 +2,9 @@
     "schemaVersion": 2,
     "contentId": "help.gold_card",
     "kind": "HelpCard",
-    "deckId": "",
+    "deckId": "deck.help",
     "displayName": "钱袋子",
-    "description": "[使用时] 为玩家提供50金币",
+    "description": "[使用时] 为玩家提供{delta}金币",
     "gold": 30,
     "stats": {
         "hp": 0,
@@ -70,7 +70,9 @@
     "extraSlots": [],
     "rarity": "Blue",
     "tags": [
-        "经济"
+        "tag.economy",
+        "tag.kill_boss",
+        "tag.kill_elite"
     ],
     "effectIds": [],
     "skillIds": [],
@@ -94,5 +96,6 @@
             "containerType": "HelpCard",
             "argsJson": "{\"delta\":50,\"reason\":\"goldCard\"}"
         }
-    ]
+    ],
+    "role": "Utility"
 }

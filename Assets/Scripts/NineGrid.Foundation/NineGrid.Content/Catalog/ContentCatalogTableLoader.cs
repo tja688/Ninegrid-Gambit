@@ -36,7 +36,13 @@ namespace NineGrid.Content
             var applied = 0;
             applied += EffectTemplateCatalog.Count; // ensure templates load; mounts resolved in projector
             applied += ApplyRewardPools(catalog, Path.Combine(folder, "reward_pools.json"));
-            applied += ApplyRewardEntries(catalog, Path.Combine(folder, "reward_entries.json"));
+            // legacy whitelist（若仍存在则合并）；生产以查询规则为主（#71）。
+            var entriesPath = Path.Combine(folder, "reward_entries.json");
+            if (File.Exists(entriesPath))
+            {
+                applied += ApplyRewardEntries(catalog, entriesPath);
+            }
+
             applied += ApplyEconomy(catalog, Path.Combine(folder, "economy.json"));
             applied += ApplyNodeDeckRules(catalog, Path.Combine(folder, "node_deck_rules.json"));
             return applied;
@@ -80,11 +86,82 @@ namespace NineGrid.Content
                     continue;
                 }
 
-                catalog.Rewards.AddPool(new RewardPoolDefinition(row.id, row.pick_count));
+                var pool = new RewardPoolDefinition(row.id, row.pick_count);
+                if (!string.IsNullOrWhiteSpace(row.kind))
+                {
+                    var query = new RewardPoolQueryRule
+                    {
+                        Kind = ParseEnum(row.kind, CardKind.Unknown),
+                        DefaultWeight = row.default_weight > 0 ? row.default_weight : 1,
+                        RarityWeightWhite = row.rarity_weight_white,
+                        RarityWeightBlue = row.rarity_weight_blue,
+                        RarityWeightGold = row.rarity_weight_gold,
+                        RarityWeightRed = row.rarity_weight_red,
+                        BalanceMinAttack = row.balance_min_attack,
+                        BalanceMinDefense = row.balance_min_defense,
+                    };
+
+                    AddRarityTokens(row.rarities, query);
+                    AddRoleTokens(row.roles, query);
+                    AddTagTokens(row.tags_any, query);
+                    pool.WithQuery(query);
+                }
+
+                catalog.Rewards.AddPool(pool);
                 count++;
             }
 
             return count;
+        }
+
+        private static void AddRarityTokens(string[] tokens, RewardPoolQueryRule query)
+        {
+            if (tokens == null || query == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < tokens.Length; i++)
+            {
+                var rarity = ParseEnum(tokens[i], ContentRarity.None);
+                if (rarity != ContentRarity.None)
+                {
+                    query.AllowRarity(rarity);
+                }
+            }
+        }
+
+        private static void AddRoleTokens(string[] tokens, RewardPoolQueryRule query)
+        {
+            if (tokens == null || query == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < tokens.Length; i++)
+            {
+                var role = ParseEnum(tokens[i], ContentRole.None);
+                if (role != ContentRole.None)
+                {
+                    query.AllowRole(role);
+                }
+            }
+        }
+
+        private static void AddTagTokens(string[] tokens, RewardPoolQueryRule query)
+        {
+            if (tokens == null || query == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < tokens.Length; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(tokens[i]))
+                {
+                    query.AllowTag(tokens[i].Trim());
+                }
+            }
         }
 
         private static int ApplyRewardEntries(GameContentCatalog catalog, string path)
@@ -235,6 +312,17 @@ namespace NineGrid.Content
         {
             public string id;
             public int pick_count;
+            public string kind;
+            public string[] rarities;
+            public string[] roles;
+            public string[] tags_any;
+            public int default_weight;
+            public int rarity_weight_white;
+            public int rarity_weight_blue;
+            public int rarity_weight_gold;
+            public int rarity_weight_red;
+            public int balance_min_attack;
+            public int balance_min_defense;
         }
 
         [Serializable]

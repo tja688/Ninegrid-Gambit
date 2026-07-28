@@ -1,0 +1,54 @@
+{
+    "schemaVersion": 2,
+    "contentId": "deck.relic",
+    "kind": "Deck",
+    "deckId": "",
+    "displayName": "遗物卡组",
+    "description": "",
+    "gold": 0,
+    "stats": {
+        "hp": 0,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "",
+    "tags": [],
+    "effectIds": [],
+    "skillIds": [],
+    "level": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "Presentation",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "effectAssemblies": [],
+    "role": ""
+}

@@ -2,9 +2,9 @@
     "schemaVersion": 2,
     "contentId": "relic.wood_shield",
     "kind": "Relic",
-    "deckId": "",
+    "deckId": "deck.relic",
     "displayName": "木盾",
-    "description": "基础护甲+1，木套装额外+2",
+    "description": "基础护甲+{value}，木套装额外+2",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -69,7 +69,9 @@
     },
     "extraSlots": [],
     "rarity": "White",
-    "tags": [],
+    "tags": [
+        "tag.armor"
+    ],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -98,5 +100,6 @@
             "containerType": "Relic",
             "argsJson": "{\"value\":2}"
         }
-    ]
+    ],
+    "role": "Defense"
 }

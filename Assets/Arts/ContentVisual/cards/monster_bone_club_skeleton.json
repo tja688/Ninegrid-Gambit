@@ -85,5 +85,6 @@
     "healToFull": false,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "effectAssemblies": []
+    "effectAssemblies": [],
+    "role": ""
 }

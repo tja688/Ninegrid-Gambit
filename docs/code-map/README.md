@@ -18,13 +18,14 @@
 | [ADR-0006](../adr/0006-windows-high-polling-mouse-mitigation.md) | Win Player 高回报率鼠标兜底 |
 | [ADR-0007](../adr/0007-unified-presentation-pipeline.md) | 多处理器统一表现管线 |
 | [ADR-0008](../adr/0008-single-source-content-and-resources-loading.md) | 一卡一文件 JSON + ContentArt Resources 加载 |
+| [ADR-0009](../adr/0009-parameterized-effect-templates.md) | 效果参数化模板、分类三轴、词条、奖池查询 |
 
 ## 程序集一览
 
 | 程序集 | 路径 | 职责 |
 |--------|------|------|
 | `NineGrid.Core` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Core/` | 规则核（QF） |
-| `NineGrid.Content` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Content/` | Catalog：**schema≥2 一卡一文件 JSON 投影** + **tables JSON**（效果模板 / 奖励 / 经济 / 节点规则；卡上 `effectAssemblies` 解析进 `Catalog.Effects`；`ContentCatalogBootstrap.Load`；业务只消费 `GameContentCatalog`）；`TableNineContentCatalog.CreateDefault` 为小型测试夹具；卡牌表现 JSON + **ContentArt** Resources 根（ADR-0008 / ADR-0009 / #69/#70） |
+| `NineGrid.Content` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Content/` | Catalog：**schema≥2 一卡一文件 JSON 投影** + **tables JSON**（效果模板 / **奖池查询规则** / 经济 / 节点规则；卡上 `effectAssemblies` 解析进 `Catalog.Effects`；分类三轴 `deckId`/`role`/`tags`+`rarity`；`ContentCatalogBootstrap.Load` 末尾 `RewardPoolQueryExpander`；业务只消费 `GameContentCatalog`）；`TableNineContentCatalog.CreateDefault` 为小型测试夹具；卡牌表现 JSON + **ContentArt** Resources 根（ADR-0008 / ADR-0009 / #69–#71） |
 | `NineGrid.Content.Editor` | `…/NineGrid.Content.Editor/` | 卡牌表现编辑器；`ContentArtBreakLinkValidator` 断链扫描 |
 | `NineGrid.Presentation` | `Assets/Scripts/NineGrid.Presentation/` | 表现层（原 Flow+Cards **合并后的单一程序集**） |
 | `NineGrid.Presentation.Tests` | `…/Tests/` | EditMode |

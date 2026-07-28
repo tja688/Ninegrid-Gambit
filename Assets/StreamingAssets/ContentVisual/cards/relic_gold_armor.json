@@ -2,9 +2,9 @@
     "schemaVersion": 2,
     "contentId": "relic.gold_armor",
     "kind": "Relic",
-    "deckId": "",
+    "deckId": "deck.relic",
     "displayName": "金币盔甲",
-    "description": "基础护甲+1，金币抵消护甲伤害",
+    "description": "基础护甲+{value}，金币抵消护甲伤害",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -69,7 +69,9 @@
     },
     "extraSlots": [],
     "rarity": "White",
-    "tags": [],
+    "tags": [
+        "tag.armor"
+    ],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -98,5 +100,6 @@
             "containerType": "Relic",
             "argsJson": "{\"value\":1}"
         }
-    ]
+    ],
+    "role": "Defense"
 }

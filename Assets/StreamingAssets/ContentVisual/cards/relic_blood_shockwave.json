@@ -2,9 +2,9 @@
     "schemaVersion": 2,
     "contentId": "relic.blood_shockwave",
     "kind": "Relic",
-    "deckId": "",
+    "deckId": "deck.relic",
     "displayName": "血液冲击波",
-    "description": "血量上限+4，关卡开始放入撞击教程，低血再放一张",
+    "description": "血量上限+{delta}，关卡开始放入撞击教程，低血再放一张",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -69,7 +69,9 @@
     },
     "extraSlots": [],
     "rarity": "Gold",
-    "tags": [],
+    "tags": [
+        "tag.attack"
+    ],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -104,5 +106,6 @@
             "containerType": "Relic",
             "argsJson": "{}"
         }
-    ]
+    ],
+    "role": "Attack"
 }

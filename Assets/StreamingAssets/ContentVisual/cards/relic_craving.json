@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "relic.craving",
     "kind": "Relic",
-    "deckId": "",
+    "deckId": "deck.relic",
     "displayName": "渴望",
     "description": "所有恢复血量效果翻倍",
     "gold": 0,
@@ -69,7 +69,9 @@
     },
     "extraSlots": [],
     "rarity": "Gold",
-    "tags": [],
+    "tags": [
+        "tag.special"
+    ],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -92,5 +94,6 @@
             "containerType": "Relic",
             "argsJson": "{\"value\":2}"
         }
-    ]
+    ],
+    "role": "Utility"
 }

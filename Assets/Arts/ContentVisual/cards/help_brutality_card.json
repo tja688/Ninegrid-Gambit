@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "help.brutality_card",
     "kind": "HelpCard",
-    "deckId": "",
+    "deckId": "deck.help",
     "displayName": "暴力",
     "description": "下次战斗伤害翻倍",
     "gold": 30,
@@ -70,7 +70,7 @@
     "extraSlots": [],
     "rarity": "White",
     "tags": [
-        "攻击"
+        "tag.attack_buff"
     ],
     "effectIds": [],
     "skillIds": [],
@@ -94,5 +94,6 @@
             "containerType": "HelpCard",
             "argsJson": "{\"value\":2,\"source\":\"help.brutality_card\",\"sourceAction\":\"DealDamage\",\"excludeSourcePrefix\":\"help.\"}"
         }
-    ]
+    ],
+    "role": "Attack"
 }

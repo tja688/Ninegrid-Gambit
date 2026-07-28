@@ -2,9 +2,9 @@
     "schemaVersion": 2,
     "contentId": "relic.battle_hardened",
     "kind": "Relic",
-    "deckId": "",
+    "deckId": "deck.relic",
     "displayName": "历战",
-    "description": "战斗时攻击+2，换敌复原",
+    "description": "战斗时攻击+{value}，换敌复原",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -69,7 +69,9 @@
     },
     "extraSlots": [],
     "rarity": "Blue",
-    "tags": [],
+    "tags": [
+        "tag.attack"
+    ],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -92,5 +94,6 @@
             "containerType": "Relic",
             "argsJson": "{\"sourceAction\":\"DealDamage\",\"value\":2,\"source\":\"relic.battle_hardened\"}"
         }
-    ]
+    ],
+    "role": "Attack"
 }

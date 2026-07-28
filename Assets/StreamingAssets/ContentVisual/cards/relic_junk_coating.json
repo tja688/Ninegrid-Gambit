@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "relic.junk_coating",
     "kind": "Relic",
-    "deckId": "",
+    "deckId": "deck.relic",
     "displayName": "废物涂层",
     "description": "使用帮助卡时获得护甲",
     "gold": 0,
@@ -69,7 +69,9 @@
     },
     "extraSlots": [],
     "rarity": "White",
-    "tags": [],
+    "tags": [
+        "tag.armor"
+    ],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -92,5 +94,6 @@
             "containerType": "Relic",
             "argsJson": "{\"amount\":1}"
         }
-    ]
+    ],
+    "role": "Defense"
 }

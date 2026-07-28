@@ -92,5 +92,6 @@
             "containerType": "MonsterSkill",
             "argsJson": "{\"value\":1,\"source\":\"skill.rascality\"}"
         }
-    ]
+    ],
+    "role": ""
 }

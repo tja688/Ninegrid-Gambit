@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "help.doubling_tower",
     "kind": "HelpCard",
-    "deckId": "",
+    "deckId": "deck.help",
     "displayName": "倍增塔",
     "description": "格1帮助卡双倍；道具双倍后移除",
     "gold": 150,
@@ -70,7 +70,7 @@
     "extraSlots": [],
     "rarity": "Gold",
     "tags": [
-        "特殊"
+        "tag.special"
     ],
     "effectIds": [],
     "skillIds": [],
@@ -100,5 +100,6 @@
             "containerType": "HelpCard",
             "argsJson": "{}"
         }
-    ]
+    ],
+    "role": "Utility"
 }

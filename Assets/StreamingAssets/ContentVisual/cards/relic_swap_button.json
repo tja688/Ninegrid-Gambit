@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "relic.swap_button",
     "kind": "Relic",
-    "deckId": "",
+    "deckId": "deck.relic",
     "displayName": "交换按钮",
     "description": "每关卡开始放入交换卡",
     "gold": 0,
@@ -69,7 +69,9 @@
     },
     "extraSlots": [],
     "rarity": "White",
-    "tags": [],
+    "tags": [
+        "tag.special"
+    ],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -92,5 +94,6 @@
             "containerType": "Relic",
             "argsJson": "{}"
         }
-    ]
+    ],
+    "role": "Utility"
 }

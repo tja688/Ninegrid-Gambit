@@ -109,6 +109,8 @@ namespace NineGrid.Content
                 card.InDeck(dto.deckId.Trim());
             }
 
+            card.WithRole(ParseRole(dto.role));
+
             if (dto.level > 0)
             {
                 card.WithLevel(dto.level);
@@ -196,6 +198,13 @@ namespace NineGrid.Content
                 ParseRarity(dto.rarity),
                 dto.description ?? string.Empty);
 
+            if (!string.IsNullOrWhiteSpace(dto.deckId))
+            {
+                relic.InDeck(dto.deckId.Trim());
+            }
+
+            relic.WithRole(ParseRole(dto.role));
+
             var projected = relic;
             AddTokens(dto.tags, value => projected.AddTag(value));
             ApplyEffectMounts(dto, catalog, id => projected.AddEffect(id));
@@ -206,6 +215,13 @@ namespace NineGrid.Content
         {
             deck = null;
             if (!IsReady(dto) || !IsKind(dto.kind, "Deck"))
+            {
+                return false;
+            }
+
+            // 纯表现卡组（帮助卡/遗物卡背归属）不进入遭遇编排 MonsterDecks。
+            if (IsKind(dto.deckKind, "Presentation")
+                || string.IsNullOrWhiteSpace(dto.deckKind))
             {
                 return false;
             }
@@ -301,6 +317,11 @@ namespace NineGrid.Content
         private static ContentRarity ParseRarity(string raw)
         {
             return ParseEnum(raw, ContentRarity.None);
+        }
+
+        private static ContentRole ParseRole(string raw)
+        {
+            return ParseEnum(raw, ContentRole.None);
         }
 
         private static T ParseEnum<T>(string raw, T fallback) where T : struct

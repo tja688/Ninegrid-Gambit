@@ -92,5 +92,6 @@
             "containerType": "MonsterSkill",
             "argsJson": "{\"count\":2,\"reason\":\"skill.mixed_bones\",\"action_actions_1_count\":1}"
         }
-    ]
+    ],
+    "role": ""
 }
