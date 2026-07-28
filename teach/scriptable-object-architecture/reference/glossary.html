@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>术语表 · SO 架构对比</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+  <main class="page">
+    <header class="lesson-head">
+      <p class="kicker">Reference · Glossary</p>
+      <h1>术语表</h1>
+      <p class="lede">本课与后续课共用的词汇。左右对照时，优先用这里的定义，避免把「MVC」当万能标签。</p>
+    </header>
+
+    <h2 id="concern-split">职责拆分</h2>
+    <p>把输入、规则、状态、事件、表现分成不同对象/模块。SO 玩法与 NineGrid <strong>都做</strong>这件事。它本身不等于「用了 ScriptableObject」。</p>
+
+    <h2 id="asset-wiring">资产接线</h2>
+    <p>多个 Prefab / 场景对象通过引用<strong>同一个</strong> <code>.asset</code> 来共享状态或事件，从而解耦。这是 SO 玩法相对你们组合根装配的独特手段。</p>
+
+    <h2 id="config-so">配置 SO</h2>
+    <p>相对稳定的数据资产（技能伤害、特效参数、遭遇配置）。通常不持有战斗中的「当前选中」这类运行时事实。NineGrid 大量已有（如 <code>CardEffectSO</code>）。</p>
+
+    <h2 id="field-so">Field SO</h2>
+    <p>带读写与变化通知的共享变量资产（「当前选中技能」）。表达的是<strong>当前事实</strong>，不是「刚刚发生了一下」。</p>
+
+    <h2 id="event-channel">Event Channel SO</h2>
+    <p>通常不保存当前值，只 <code>Raise</code> / <code>Register</code>。表达「发生了一件事」。经典原型见 Hipple 的 <code>GameEvent</code>。</p>
+
+    <h2 id="rules-model">Rules Model SO</h2>
+    <p>作者扩展层：把业务规则做成可引用的 SO 服务（合法性、应用、回滚）。功能上靠近你们的 Core + Intake，形态上是资产而非程序集内 System。</p>
+
+    <h2 id="bridge">Bridge</h2>
+    <p>场景侧 MonoBehaviour：吃 Unity 生命周期 / 输入 / 动画事件，转发到规则或事件。对应你们的 Controller / HitProxy / 部分 Hook。</p>
+
+    <h2 id="composition-root">Composition Root</h2>
+    <p>NineGrid：<code>PresentationCompositionRoot.Install</code> —— 唯一生产装配入口，用代码把 System / Controller 与场景绑定接到一起。</p>
+
+    <h2 id="intent-intake">IntentIntake</h2>
+    <p>NineGrid 输入唯一收口（ADR-0004）：两轴门禁（MainlineBusy × 输入所有权）后再进编排。功能角色接近「所有 Bridge 必须经过的规则门」，实现不是 SO。</p>
+
+    <footer class="lesson-foot">
+      <div class="nav-links">
+        <a href="../lessons/0001-dual-map-so-vs-ninegrid.html">Lesson 0001</a>
+        <a href="../MISSION.md">Mission</a>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0001 — 总图：SO 玩法 vs NineGrid</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+  <main class="page">
+    <header class="lesson-head">
+      <p class="kicker">Lesson 0001 · ScriptableObject 玩法</p>
+      <h1>不是「松散 MVC」，是「同一职责、不同接线」</h1>
+      <p class="lede">你的直觉抓住了职责拆分；本课只钉死一件事——两边拆的是同一类活，差别在「模块之间怎么连上」。</p>
+    </header>
+
+    <h2>先纠正半步</h2>
+    <p>
+      「有点像 MVC」之所以似曾相识，是因为两边都在避免
+      <em>一个 BattleManager 包办输入、规则、状态、表现</em>。
+      但 MVC 标签帮不上忙：它说不清 Field SO 和 Event Channel 的差别，也说不清你们为什么有 IntentIntake 却几乎不用 Runtime Field.asset。
+    </p>
+    <div class="callout good">
+      <strong>本课硬钉子：</strong>
+      <a href="../reference/glossary.html#concern-split">职责拆分</a>两边都有；
+      SO 玩法多出来的是
+      <a href="../reference/glossary.html#asset-wiring">资产接线</a>
+      ——用同一个 <code>.asset</code> 当通信节点。
+      NineGrid 用的是
+      <a href="../reference/glossary.html#composition-root">CompositionRoot</a>
+      + Command / Query / Event / System。
+    </div>
+
+    <h2>作者那条链，翻译成你们的话</h2>
+    <p>总结里的主路径是：</p>
+<pre>场景输入 → Bridge → Rules Model SO → State/Field SO
+         → Event Channel → Visual / UI</pre>
+    <p>换成 NineGrid 的生产路径（见
+      <a href="../../../docs/code-map/presentation.md">presentation.md</a>）：</p>
+<pre>HitProxy / 场景 Host → Controller → IntentIntake.Submit
+  → Director / Core Command → 事件与 Present Channel → View</pre>
+    <p class="cite">
+      输入唯一收口：
+      <a href="../../../docs/adr/0004-input-intake-two-axis-gating.md">ADR-0004</a>。
+      SO 经典胶水源头：
+      <a href="https://www.youtube.com/watch?v=raQ3iHhE_Kk">Ryan Hipple · Unite 2017</a>。
+    </p>
+
+    <div class="callout so">
+      <strong>SO 侧怎么「玩」：</strong>
+      Prefab A 与 Prefab B 不互相 <code>GetComponent</code>，而是都拖同一份
+      <code>CurrentAbility.asset</code> 或 <code>AbilitySelected.asset</code>。
+      解耦发生在 Project 窗口的引用上。
+    </div>
+    <div class="callout ng">
+      <strong>你们怎么「玩」：</strong>
+      <code>PresentationCompositionRoot.Install(bindings)</code>
+      把 System 与场景 Host 装好；写走 Command，读走 Query，输入必须过 IntentIntake。
+      解耦发生在接口与装配代码上；结构测试防止回流巨型宿主 / 业务静态 Sink。
+    </div>
+
+    <h2>动手：点开对照图</h2>
+    <p>每一行是<strong>同一职责</strong>。先点左边看 SO 怎么组织，再点右边看你们仓库对应角色。目标：能口述「接线」那一行的差异。</p>
+    <div id="dual-map-lab"></div>
+
+    <h2>一张表压进长期记忆</h2>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th>职责</th>
+          <th class="so">SO 玩法</th>
+          <th class="ng">NineGrid</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>静态配置</td>
+          <td>Config SO</td>
+          <td>Catalog / Luban + 已有特效·遭遇 SO</td>
+        </tr>
+        <tr>
+          <td>当前事实</td>
+          <td>Field / State SO</td>
+          <td>System / Director 持有的运行时</td>
+        </tr>
+        <tr>
+          <td>一次事件</td>
+          <td>Event Channel SO</td>
+          <td>struct Event / 窄 Hook</td>
+        </tr>
+        <tr>
+          <td>业务规则</td>
+          <td>Rules Model SO</td>
+          <td>Core + Query + IntentIntake</td>
+        </tr>
+        <tr>
+          <td>场景缝</td>
+          <td>Bridge MB</td>
+          <td>Controller / HitProxy / Hook</td>
+        </tr>
+        <tr>
+          <td>模块怎么连</td>
+          <td>拖同一 .asset</td>
+          <td>CompositionRoot + Bindings</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout bad">
+      <strong>常见误判：</strong>
+      「可拖拽、可视化」是资产接线的副产品，不是架构的全部优点。
+      真正共同优点是：输入 / 规则 / 表现不再堆在一个 Manager 里。
+      真正分歧是：共享节点放在磁盘资产上，还是放在代码装配出的 System 上。
+    </div>
+
+    <section class="quiz" data-quiz="q1">
+      <h3>检索练习 · 1</h3>
+      <p>SO 玩法相对你们架构，多出来的核心手段是什么？</p>
+      <button data-answer="wrong">把规则写进 MonoBehaviour 方便拖拽</button>
+      <button data-answer="correct">用同一份 .asset 当模块间通信节点</button>
+      <button data-answer="wrong">用 MVC 三层替换 CompositionRoot</button>
+      <button data-answer="wrong">禁止一切 ScriptableObject 配置</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <section class="quiz" data-quiz="q2">
+      <h3>检索练习 · 2</h3>
+      <p>「当前选中的技能」在 SO 玩法里更像哪一类？在你们项目里功能上更靠近？</p>
+      <button data-answer="wrong">Config SO；对应 CardEffectSO 配置表</button>
+      <button data-answer="wrong">Event Channel；对应一次点击的 struct Event</button>
+      <button data-answer="correct">Field SO；对应 System/Director 持有的共享运行时事实</button>
+      <button data-answer="wrong">Bridge；对应 PointerHitRouter 本身</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <section class="quiz" data-quiz="q3">
+      <h3>检索练习 · 3</h3>
+      <p>作者「多个 Bridge 共用一个 RulesModel」——在你们仓库里最接近的不变量是？</p>
+      <button data-answer="wrong">所有 UI 必须挂在同一个 Prefab 上</button>
+      <button data-answer="correct">玩家意图一律经 IntentIntake，规则真相在 Core</button>
+      <button data-answer="wrong">表现层可以直接改 BoardModel 占格</button>
+      <button data-answer="wrong">每个输入 Controller 各自复制一套合法性判断</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <h2>本课主读</h2>
+    <p>
+      先看 Hipple 讲座前 15 分钟（变量 SO + GameEvent 动机），建立「资产当胶水」的原始画面：
+      <a href="https://www.youtube.com/watch?v=raQ3iHhE_Kk">Unite 2017 · Game Architecture with Scriptable Objects</a>。
+      再扫一眼你们的
+      <a href="../../../docs/code-map/presentation.md">presentation.md · 装配与读写约定</a>，
+      确认「胶水」落在 CompositionRoot，而不是 Runtime Field.asset。
+    </p>
+
+    <div class="note">
+      有哪一行对照「对上了但说不顺」——直接在对话里追问，我可以对着仓库具体类型拆。
+      下一课预定：<strong>配置 SO</strong>——你们已经在用的那一块，先分清「该做成资产的配置」和「不该做成资产的运行时」。
+    </div>
+
+    <footer class="lesson-foot">
+      <div class="nav-links">
+        <a href="../reference/glossary.html">术语表</a>
+        <a href="../MISSION.md">Mission</a>
+        <a href="../RESOURCES.md">Resources</a>
+      </div>
+      <p>完成后：用自己的话回我一句——「两边都拆 ___；SO 多出来的是 ___，我们用的是 ___。」</p>
+    </footer>
+  </main>
+
+  <script src="../assets/dual-map.js"></script>
+  <script>
+    SoDualMap.mount(document.getElementById("dual-map-lab"));
+
+    const feedbackOk = {
+      q1: "对。职责拆分是共享前提；资产接线才是 SO 玩法的独特手段。",
+      q2: "对。Field 存『当前事实』；你们把这类事实放在 System/Director，而不是 Runtime Field.asset。",
+      q3: "对。多入口共用规则中心——你们用 Intake + Core 钉死，而不是拖同一个 RulesModel.asset。",
+    };
+    const feedbackBad = {
+      q1: "再想：作者强调的不是 MVC 标签，而是大家引用同一资产来解耦。",
+      q2: "配置 SO 是静态数据；事件是一次性通知。『当前选中』是持续事实 → Field。",
+      q3: "回想 ADR-0004：意图唯一收口，避免每条输入路径各玩各的门禁。",
+    };
+
+    document.querySelectorAll(".quiz").forEach((quiz) => {
+      const id = quiz.dataset.quiz;
+      const feedback = quiz.querySelector(".feedback");
+      quiz.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          quiz.querySelectorAll("button").forEach((b) => {
+            b.classList.remove("correct", "wrong");
+            b.disabled = true;
+          });
+          const ok = btn.dataset.answer === "correct";
+          btn.classList.add(ok ? "correct" : "wrong");
+          quiz.querySelectorAll('button[data-answer="correct"]').forEach((b) =>
+            b.classList.add("correct")
+          );
+          feedback.textContent = ok ? feedbackOk[id] : feedbackBad[id];
+        });
+      });
+    });
+  </script>
+</body>
+</html>
