@@ -14,7 +14,8 @@ namespace NineGrid.Cards.Anim
             float uniformScale,
             float offsetX,
             float offsetY,
-            CardMainVisualAnchorMode anchorMode = CardMainVisualAnchorMode.BottomCenter)
+            CardMainVisualAnchorMode anchorMode = CardMainVisualAnchorMode.BottomCenter,
+            bool mirrorX = false)
         {
             if (target == null)
             {
@@ -22,7 +23,8 @@ namespace NineGrid.Cards.Anim
             }
 
             var scale = uniformScale > 0.0001f ? uniformScale : 1f;
-            target.transform.localScale = new Vector3(scale, scale, 1f);
+            var scaleX = mirrorX ? -scale : scale;
+            target.transform.localScale = new Vector3(scaleX, scale, 1f);
 
             if (referenceSprite != null)
             {

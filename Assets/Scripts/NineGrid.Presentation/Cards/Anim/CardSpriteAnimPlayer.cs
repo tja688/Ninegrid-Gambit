@@ -26,12 +26,42 @@ namespace NineGrid.Cards.Anim
         private int _frameIndex;
         private float _elapsed;
         private bool _playing;
+        private bool _mirrorX;
         private string _activeSlotId = CardAnimSlotIds.Idle;
         private CardPresentationAnimSlotDto _activeSlot;
 
         public SpriteRenderer Target => target;
         public bool IsPlaying => _playing;
         public string ActiveSlotId => _activeSlotId;
+        public bool MirrorX => _mirrorX;
+
+        /// <summary>
+        /// 主视觉水平镜像（scale.x 取反）。仅改符号，不重算 Mask 锚点。
+        /// </summary>
+        public void SetMirrorX(bool mirrorX)
+        {
+            if (_mirrorX == mirrorX)
+            {
+                return;
+            }
+
+            _mirrorX = mirrorX;
+            EnsureTarget();
+            if (target == null)
+            {
+                return;
+            }
+
+            var scale = target.transform.localScale;
+            var absX = Mathf.Abs(scale.x);
+            if (absX < 0.0001f)
+            {
+                absX = 1f;
+            }
+
+            scale.x = mirrorX ? -absX : absX;
+            target.transform.localScale = scale;
+        }
 
         private void Awake()
         {
@@ -297,7 +327,9 @@ namespace NineGrid.Cards.Anim
                 referenceSprite,
                 scale,
                 offsetX,
-                offsetY);
+                offsetY,
+                CardMainVisualAnchorMode.BottomCenter,
+                _mirrorX);
         }
 
         private void ApplyMaskInteraction()

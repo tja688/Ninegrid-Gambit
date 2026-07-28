@@ -1,3 +1,4 @@
+using NineGrid.Cards.Anim;
 using NineGrid.Cards.Convergence;
 using NineGrid.Flow;
 using NineGrid.Presentation;
@@ -20,6 +21,8 @@ namespace NineGrid.Cards
 
         private BoxCollider2D _collider;
         private CardVisualDriver _driver;
+        private CardSpriteAnimPlayer _animPlayer;
+        private bool _pointerOver;
 
         public Collider2D HitCollider => _collider != null ? _collider : (_collider = GetComponent<BoxCollider2D>());
 
@@ -42,6 +45,13 @@ namespace NineGrid.Cards
         private void OnDisable()
         {
             PointerHitRegistry.Unregister(this);
+            _pointerOver = false;
+            ResetAvatarFacingMirror();
+        }
+
+        private void Update()
+        {
+            TickAvatarFacingMirror();
         }
 
         public void ApplyColliderSize()
@@ -63,6 +73,8 @@ namespace NineGrid.Cards
 
         public void HandlePointerEnter()
         {
+            _pointerOver = true;
+
             if (!CanRespondToHover())
             {
                 return;
@@ -79,6 +91,9 @@ namespace NineGrid.Cards
 
         public void HandlePointerExit()
         {
+            _pointerOver = false;
+            ResetAvatarFacingMirror();
+
             if (!CanRespondToHover())
             {
                 return;
@@ -91,6 +106,49 @@ namespace NineGrid.Cards
             }
 
             _driver?.SetTarget(CardVisualTarget.Base);
+        }
+
+        /// <summary>
+        /// 局内 Avatar：指针在卡左侧时主视觉瞬间水平翻转，右侧恢复；上下无关。
+        /// </summary>
+        private void TickAvatarFacingMirror()
+        {
+            _driver ??= GetComponent<CardVisualDriver>();
+            var card = _driver?.BoundCard;
+            if (card == null || card.CoreKind != CardPresentationKind.Avatar)
+            {
+                return;
+            }
+
+            if (!_pointerOver)
+            {
+                ResetAvatarFacingMirror();
+                return;
+            }
+
+            if (!WorldPointerUtility.TryGetPointerWorld(null, out var pointer))
+            {
+                return;
+            }
+
+            _collider ??= GetComponent<BoxCollider2D>();
+            var centerX = _collider != null ? _collider.bounds.center.x : transform.position.x;
+            ApplyAvatarFacingMirror(pointer.x < centerX);
+        }
+
+        private void ResetAvatarFacingMirror()
+        {
+            ApplyAvatarFacingMirror(false);
+        }
+
+        private void ApplyAvatarFacingMirror(bool mirrorX)
+        {
+            if (_animPlayer == null)
+            {
+                _animPlayer = GetComponentInChildren<CardSpriteAnimPlayer>(true);
+            }
+
+            _animPlayer?.SetMirrorX(mirrorX);
         }
 
         public void HandlePointerDown()
