@@ -17,13 +17,15 @@
 | [ADR-0005](../adr/0005-card-face-beat-commit.md) | 卡面数值表演锚点提交 |
 | [ADR-0006](../adr/0006-windows-high-polling-mouse-mitigation.md) | Win Player 高回报率鼠标兜底 |
 | [ADR-0007](../adr/0007-unified-presentation-pipeline.md) | 多处理器统一表现管线 |
+| [ADR-0008](../adr/0008-single-source-content-and-resources-loading.md) | 一卡一文件 JSON + ContentArt Resources 加载 |
 
 ## 程序集一览
 
 | 程序集 | 路径 | 职责 |
 |--------|------|------|
 | `NineGrid.Core` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Core/` | 规则核（QF） |
-| `NineGrid.Content` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Content/` | Catalog / Luban |
+| `NineGrid.Content` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Content/` | Catalog / Luban；卡牌表现 JSON + **ContentArt** Resources 根约定（ADR-0008） |
+| `NineGrid.Content.Editor` | `…/NineGrid.Content.Editor/` | 卡牌表现编辑器；`ContentArtBreakLinkValidator` 断链扫描 |
 | `NineGrid.Presentation` | `Assets/Scripts/NineGrid.Presentation/` | 表现层（原 Flow+Cards **合并后的单一程序集**） |
 | `NineGrid.Presentation.Tests` | `…/Tests/` | EditMode |
 | `NineGrid.Presentation.Editor` | `…/Editor/` | 编辑器工具 |

@@ -216,15 +216,34 @@ namespace NineGrid.Presentation.Tests
             var first = CardPresentationSpritePath.LoadSprite(sheet);
             var named = CardPresentationSpritePath.LoadSprite(namedKey);
 
+            // 迁移后权威路径在 ContentArt；若 Arts 已搬走则用改写路径再试。
+            if (first == null || named == null)
+            {
+                var migratedSheet = CardPresentationContentArt.RewriteLegacyArtsImagesPath(sheet);
+                var migratedNamed = CardPresentationContentArt.RewriteLegacyArtsImagesPath(namedKey);
+                first = CardPresentationSpritePath.LoadSprite(migratedSheet);
+                named = CardPresentationSpritePath.LoadSprite(migratedNamed);
+                Assert.IsNotNull(first, "图集应至少能回退到首切片");
+                Assert.IsNotNull(named, "带 #spriteName 应能加载指定切片");
+                Assert.AreEqual("icons_full_32_0", first.name);
+                Assert.AreEqual("icons_full_32_42", named.name);
+                Assert.AreNotSame(first, named);
+
+                var encoded = CardPresentationSpritePath.EncodeAssetReference(named);
+                Assert.AreEqual(migratedNamed, encoded);
+                Assert.AreSame(named, CardPresentationSpritePath.LoadSprite(encoded));
+                return;
+            }
+
             Assert.IsNotNull(first, "图集应至少能回退到首切片");
             Assert.IsNotNull(named, "带 #spriteName 应能加载指定切片");
             Assert.AreEqual("icons_full_32_0", first.name);
             Assert.AreEqual("icons_full_32_42", named.name);
             Assert.AreNotSame(first, named);
 
-            var encoded = CardPresentationSpritePath.EncodeAssetReference(named);
-            Assert.AreEqual(namedKey, encoded);
-            Assert.AreSame(named, CardPresentationSpritePath.LoadSprite(encoded));
+            var encodedLegacy = CardPresentationSpritePath.EncodeAssetReference(named);
+            Assert.AreEqual(namedKey, encodedLegacy);
+            Assert.AreSame(named, CardPresentationSpritePath.LoadSprite(encodedLegacy));
         }
 #endif
     }

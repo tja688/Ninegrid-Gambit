@@ -14,7 +14,7 @@
 | `FlowShell/` | 流程壳 Controller |
 | `BattleSession/` | 局内会话 |
 | `Output/` | 描述 / 伤害等输出 |
-| `Cards/` | 卡面 Commit、牌库闸、飞行排序、致死表现回归；表现层配置器条目门槛（Skill 不进窗口、HelpCard/Item 保留）等 |
+| `Cards/` | 卡面 Commit、牌库闸、飞行排序、致死表现回归；表现层配置器条目门槛（Skill 不进窗口、HelpCard/Item 保留）等；**ContentArt** 路径约定 / Resources 帧加载 / 断链校验（#66、ADR-0008） |
 | `Flow/` | Flow 侧遗留/切片 |
 | `Fixtures/` | EditMode 夹具 |
 | `HostContractStructuralTests.cs` | 结构护栏：禁四大旧宿主名、禁 `CombatHitSink`、禁回流 `new PresentationDirector`、System 不暴露具体 View |

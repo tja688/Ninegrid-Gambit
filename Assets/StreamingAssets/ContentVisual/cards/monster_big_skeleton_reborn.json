@@ -32,7 +32,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/005skull_idle_01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/005skull_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

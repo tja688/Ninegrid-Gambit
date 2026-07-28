@@ -13,7 +13,7 @@
         "action": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Png/Icons/blue_2d/club_outline.png",
+        "mainIcon": "Assets/Resources/ContentArt/Png/Icons/blue_2d/club_outline.png",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",

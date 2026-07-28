@@ -13,7 +13,7 @@
         "action": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Png/Icons/white_node/card.png",
+        "mainIcon": "Assets/Resources/ContentArt/Png/Icons/white_node/card.png",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",

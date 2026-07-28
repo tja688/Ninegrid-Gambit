@@ -11,8 +11,8 @@ using UnityEditor;
 namespace NineGrid.Cards.Anim
 {
     /// <summary>
-    /// 从 folder / atlas 源加载帧序列。folder/atlas 路径为 Assets/...；
-    /// 首版依赖 Editor AssetDatabase（含 Play Mode in Editor）。
+    /// 从 folder / atlas 源加载帧序列。路径约定见 <see cref="CardPresentationContentArt"/>。
+    /// Editor 优先 AssetDatabase；Player（及 Resources 回退）走 <c>Resources.LoadAll</c> + 按名排序保帧序。
     /// </summary>
     public static class CardAnimFrameSource
     {
@@ -47,6 +47,92 @@ namespace NineGrid.Cards.Anim
         private static Sprite[] LoadFolderFrames(string folderAssetPath)
         {
 #if UNITY_EDITOR
+            var editorFrames = LoadFolderFramesEditor(folderAssetPath);
+            if (editorFrames.Length > 0)
+            {
+                return editorFrames;
+            }
+#endif
+            return LoadFolderFramesFromResources(folderAssetPath);
+        }
+
+        private static Sprite[] LoadAtlasFrames(string atlasAssetPath)
+        {
+#if UNITY_EDITOR
+            var editorFrames = LoadAtlasFramesEditor(atlasAssetPath);
+            if (editorFrames.Length > 0)
+            {
+                return editorFrames;
+            }
+#endif
+            return LoadAtlasFramesFromResources(atlasAssetPath);
+        }
+
+        /// <summary>
+        /// Player / Resources 回退：对 Resources 相对键 <c>LoadAll&lt;Sprite&gt;</c> 后按帧名排序。
+        /// </summary>
+        public static Sprite[] LoadFolderFramesFromResources(string folderAssetPath)
+        {
+            if (!CardPresentationContentArt.TryGetResourcesRelativeKey(folderAssetPath, out var key))
+            {
+                return Empty;
+            }
+
+            var loaded = Resources.LoadAll<Sprite>(key);
+            if (loaded == null || loaded.Length == 0)
+            {
+                return Empty;
+            }
+
+            var sprites = new List<Sprite>(loaded.Length);
+            for (var i = 0; i < loaded.Length; i++)
+            {
+                if (loaded[i] != null)
+                {
+                    sprites.Add(loaded[i]);
+                }
+            }
+
+            sprites.Sort((a, b) => CompareFramePaths(
+                a != null ? a.name : string.Empty,
+                b != null ? b.name : string.Empty));
+            return sprites.Count > 0 ? sprites.ToArray() : Empty;
+        }
+
+        /// <summary>
+        /// Player / Resources 回退：图集纹理的 Resources 键上 LoadAll 全部 Sprite，按名排序。
+        /// </summary>
+        public static Sprite[] LoadAtlasFramesFromResources(string atlasAssetPath)
+        {
+            if (!CardPresentationContentArt.TryGetResourcesRelativeKey(atlasAssetPath, out var key))
+            {
+                return Empty;
+            }
+
+            var loaded = Resources.LoadAll<Sprite>(key);
+            if (loaded == null || loaded.Length == 0)
+            {
+                return Empty;
+            }
+
+            var sprites = new List<Sprite>(loaded.Length);
+            for (var i = 0; i < loaded.Length; i++)
+            {
+                if (loaded[i] != null)
+                {
+                    sprites.Add(loaded[i]);
+                }
+            }
+
+            sprites.Sort((a, b) => CompareFramePaths(
+                a != null ? a.name : string.Empty,
+                b != null ? b.name : string.Empty));
+            return sprites.Count > 0 ? sprites.ToArray() : Empty;
+        }
+
+#if UNITY_EDITOR
+        private static Sprite[] LoadFolderFramesEditor(string folderAssetPath)
+        {
             if (string.IsNullOrEmpty(folderAssetPath))
             {
                 return Empty;
@@ -94,14 +180,10 @@ namespace NineGrid.Cards.Anim
             }
 
             return sprites.Count > 0 ? sprites.ToArray() : Empty;
-#else
-            return Empty;
-#endif
         }
 
-        private static Sprite[] LoadAtlasFrames(string atlasAssetPath)
+        private static Sprite[] LoadAtlasFramesEditor(string atlasAssetPath)
         {
-#if UNITY_EDITOR
             if (string.IsNullOrEmpty(atlasAssetPath))
             {
                 return Empty;
@@ -124,10 +206,8 @@ namespace NineGrid.Cards.Anim
 
             sprites.Sort((a, b) => CompareFramePaths(a != null ? a.name : string.Empty, b != null ? b.name : string.Empty));
             return sprites.Count > 0 ? sprites.ToArray() : Empty;
-#else
-            return Empty;
-#endif
         }
+#endif
 
         public static int CompareFramePaths(string a, string b)
         {

@@ -41,6 +41,7 @@
 | `Effects/` | 卡面 DOTween / Timeline 特效 SO |
 | `Slots/` | 卡面槽表 |
 | `Presentation/` | 卡面描述合成等 |
+| `Anim/` | `CardSpriteAnimPlayer`、`CardAnimFrameSource`（folder/atlas；Player 走 Resources.LoadAll + 帧名排序，ADR-0008） |
 | （根下） | `FieldBattleView`、手牌/牌库管理器、静态 `*Hook` |
 
 ## 装配

@@ -11,7 +11,8 @@ namespace NineGrid.Content.CardPresentation
     /// Multiple 图集子切片使用 <c>Assets/.../sheet.png#spriteName</c>；
     /// 无 <c>#</c> 时保持旧行为（Single 主资产，或 Multiple 回退首切片）。
     /// Editor / Play Mode in Editor 走 AssetDatabase；
-    /// 路径含 /Resources/ 时尝试 Resources.Load；正式包体加载后续再接 Addressables。
+    /// 路径含 /Resources/ 时走 Resources.Load（Player 包体同源；ADR-0008，不用 Addressables）。
+    /// 卡牌内容美术约定根见 <see cref="CardPresentationContentArt"/>。
     /// </summary>
     public static class CardPresentationSpritePath
     {

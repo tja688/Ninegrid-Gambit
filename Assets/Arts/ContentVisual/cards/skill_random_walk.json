@@ -13,7 +13,7 @@
         "action": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Png/Icons/white_node/bowling_ball.png",
+        "mainIcon": "Assets/Resources/ContentArt/Png/Icons/white_node/bowling_ball.png",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",

@@ -13,7 +13,7 @@
         "action": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Multiple/pixel_art_card_pack 1.png",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -32,7 +32,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/Corvyn_idle_01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/Corvyn_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },
