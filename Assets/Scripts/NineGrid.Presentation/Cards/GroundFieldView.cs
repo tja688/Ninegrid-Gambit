@@ -82,6 +82,7 @@ namespace NineGrid.Cards
             ResolveSkeletonDeckPresentation();
             GroundFieldGeometryHook.RequestWire(this);
             ExploreInputHook.RequestWire(this);
+            AvatarBoardFacingHook.RequestWire(this);
         }
 
         private void OnDestroy()

@@ -1,0 +1,53 @@
+using NUnit.Framework;
+using NineGrid.Cards;
+
+namespace NineGrid.Presentation.Tests
+{
+    public sealed class AvatarBoardFacingStateTests
+    {
+        [TearDown]
+        public void TearDown()
+        {
+            AvatarBoardFacingState.Reset();
+        }
+
+        [Test]
+        public void ResolveFromPointerX_LeftOfAvatar_IsLeft()
+        {
+            Assert.AreEqual(
+                AvatarBoardFacing.Left,
+                AvatarBoardFacingState.ResolveFromPointerX(pointerX: -1f, avatarCenterX: 0f));
+        }
+
+        [Test]
+        public void ResolveFromPointerX_RightOfAvatar_IsRight()
+        {
+            Assert.AreEqual(
+                AvatarBoardFacing.Right,
+                AvatarBoardFacingState.ResolveFromPointerX(pointerX: 1f, avatarCenterX: 0f));
+        }
+
+        [Test]
+        public void ResolveFromPointerX_ExactCenter_IsRight()
+        {
+            Assert.AreEqual(
+                AvatarBoardFacing.Right,
+                AvatarBoardFacingState.ResolveFromPointerX(pointerX: 0f, avatarCenterX: 0f));
+        }
+
+        [Test]
+        public void SetFacing_Left_EnablesMirrorX()
+        {
+            Assert.IsTrue(AvatarBoardFacingState.SetFacing(AvatarBoardFacing.Left));
+            Assert.AreEqual(AvatarBoardFacing.Left, AvatarBoardFacingState.Facing);
+            Assert.IsTrue(AvatarBoardFacingState.MirrorX);
+        }
+
+        [Test]
+        public void SetFacing_SameValue_ReturnsFalse()
+        {
+            AvatarBoardFacingState.SetFacing(AvatarBoardFacing.Right);
+            Assert.IsFalse(AvatarBoardFacingState.SetFacing(AvatarBoardFacing.Right));
+        }
+    }
+}
