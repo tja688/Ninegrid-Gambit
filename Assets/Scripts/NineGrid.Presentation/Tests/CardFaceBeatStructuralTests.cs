@@ -8,7 +8,8 @@ using UnityEngine;
 namespace NineGrid.Presentation.Tests
 {
     /// <summary>
-    /// #55/#56/#57/#58/#59 结构护栏：卡面数值提交入口、多处理器排期器与攻击/反击/用道具路径直读捷径。
+    /// #55/#56/#57/#58/#59/#60 结构护栏：卡面数值提交入口、多处理器排期器与攻击/反击/用道具路径直读捷径；
+    /// 飘字/FX 须经 Impact 装饰处理器，禁投影瞬间 EventLog 旁路。
     /// </summary>
     public sealed class CardFaceBeatStructuralTests
     {
@@ -56,6 +57,96 @@ namespace NineGrid.Presentation.Tests
                 2,
                 Regex.Matches(text, @"BattleBeatHook\.NotifyBeat\(PresentationBeat\.Impact\)").Count,
                 "攻击与反击两处命中帧均应报 Impact 锚点");
+            Assert.IsFalse(
+                Regex.IsMatch(text, @"ApplyHitFrameVisuals[\s\S]{0,400}SpawnDamagePopups"),
+                "命中帧不得另行 SpawnDamagePopups（飘字改由 Impact 装饰处理器消费）");
+        }
+
+        [Test]
+        public void ProductionSources_DoNotCall_PresentEffectTriggersFromEventLog()
+        {
+            var root = Path.GetFullPath(Path.Combine(Application.dataPath, "Scripts", "NineGrid.Presentation"));
+            var offenders = Directory
+                .EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
+                .Where(path => path.IndexOf("\\Tests\\", StringComparison.OrdinalIgnoreCase) < 0
+                               && path.IndexOf("/Tests/", StringComparison.OrdinalIgnoreCase) < 0)
+                .Where(path =>
+                {
+                    var text = File.ReadAllText(path);
+                    return text.IndexOf("PresentEffectTriggersFromEventLog", StringComparison.Ordinal) >= 0;
+                })
+                .Select(path => path.Substring(Application.dataPath.Length).TrimStart('\\', '/'))
+                .ToArray();
+
+            Assert.IsEmpty(
+                offenders,
+                "效果脉冲不得再扫 EventLog 旁路，须经 Impact 装饰处理器：\n" + string.Join("\n", offenders));
+        }
+
+        [Test]
+        public void ProductionSources_DoNotCall_SpawnDamagePopups()
+        {
+            var root = Path.GetFullPath(Path.Combine(Application.dataPath, "Scripts", "NineGrid.Presentation"));
+            var offenders = Directory
+                .EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
+                .Where(path => path.IndexOf("\\Tests\\", StringComparison.OrdinalIgnoreCase) < 0
+                               && path.IndexOf("/Tests/", StringComparison.OrdinalIgnoreCase) < 0)
+                .Where(path =>
+                {
+                    var text = File.ReadAllText(path);
+                    return text.IndexOf("SpawnDamagePopups", StringComparison.Ordinal) >= 0;
+                })
+                .Select(path => path.Substring(Application.dataPath.Length).TrimStart('\\', '/'))
+                .ToArray();
+
+            Assert.IsEmpty(
+                offenders,
+                "伤害飘字不得再经 SpawnDamagePopups 双轨，须经 Impact 装饰处理器：\n" + string.Join("\n", offenders));
+        }
+
+        [Test]
+        public void CompositionRoot_Registers_DamageAndEffect_DecorativeHandlers()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Setup",
+                "PresentationCompositionRoot.cs"));
+            var text = File.ReadAllText(path);
+            Assert.IsTrue(
+                text.IndexOf("new DamageFloaterBeatHandler()", StringComparison.Ordinal) >= 0,
+                "组合根须注册飘字装饰处理器");
+            Assert.IsTrue(
+                text.IndexOf("new EffectTriggerPulseBeatHandler()", StringComparison.Ordinal) >= 0,
+                "组合根须注册 FX 脉冲装饰处理器");
+            Assert.IsTrue(
+                Regex.IsMatch(
+                    text,
+                    @"new\s+BattleBeatScheduler\s*\(\s*new\s+CardFaceStatHandler\s*\(\s*\)\s*,\s*new\s+DamageFloaterBeatHandler\s*\(\s*\)\s*,\s*new\s+EffectTriggerPulseBeatHandler\s*\(\s*\)\s*\)"),
+                "装饰处理器须注入排期器且不占主线 ack");
+        }
+
+        [Test]
+        public void UseItemPresent_ReportsImpact_BeforeLethalVacate()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "BattleSession",
+                "BattleSessionExecutor.UseItem.cs"));
+            var text = File.ReadAllText(path);
+            var impact = text.IndexOf(
+                "BattleBeatHook.NotifyBeat(PresentationBeat.Impact)",
+                StringComparison.Ordinal);
+            var vacate = text.IndexOf("BeginUseItemLethalVictims", StringComparison.Ordinal);
+            Assert.Greater(impact, 0, "用道具 Present 须在 Vacate 前报 Impact（飘字定位）");
+            Assert.Greater(vacate, impact, "Impact 须在 BeginUseItemLethalVictims 之前");
+            Assert.IsFalse(
+                text.IndexOf("SpawnDamagePopups", StringComparison.Ordinal) >= 0,
+                "用道具 Present 不得 SpawnDamagePopups");
         }
 
         [Test]

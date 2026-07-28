@@ -131,7 +131,6 @@ namespace NineGrid.Flow
                 {
                     CoreBatchProjectionCoordinator.FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids, out var rewardSteps);
                     PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex);
-                    PresentationOutputProjector.PresentEffectTriggersFromEventLog(startIndex);
                     BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
                     var phase = phaseSystem.CurrentPhase;
                     var boardDelta = new PostKillBoardPresentationResult

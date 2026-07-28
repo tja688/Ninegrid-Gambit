@@ -11,8 +11,8 @@ using UnityEngine;
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 局内单向输出投影：伤害飘字、金币、Trigger 脉冲、拾取后旁路演出。
-    /// 卡面数值提交改由 <see cref="BattleBeatScheduler"/> 在表演锚点消费结算指令；本类不再直读同步卡面攻防血。
+    /// 局内单向输出投影：金币、拾取后旁路演出、世界坐标解析。
+    /// 卡面数值 / 伤害飘字 / FX 脉冲改由 <see cref="BattleBeatScheduler"/> 在表演锚点经处理器消费。
     /// </summary>
     public static class PresentationOutputProjector
     {
@@ -41,54 +41,6 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 按 DamageDealt 事件序分别飘字；无 popups 时回退主目标 DamageAmount（对齐 FieldBattle 强兜底）。
-        /// </summary>
-        public static void SpawnDamagePopups(
-            CombatDamagePopup[] popups,
-            ManagedCard fallbackVictim,
-            int fallbackAmount)
-        {
-            var cardManager = CardEntityLifecycleHook.CardsOrNull();
-            if (popups != null && popups.Length > 0)
-            {
-                for (var i = 0; i < popups.Length; i++)
-                {
-                    var popup = popups[i];
-                    if (popup.Amount <= 0 || popup.TargetUid <= 0)
-                    {
-                        continue;
-                    }
-
-                    Vector3? pos = null;
-                    if (cardManager != null
-                        && cardManager.TryGet(popup.TargetUid, out var view)
-                        && view?.Transform != null)
-                    {
-                        pos = view.Transform.position;
-                    }
-                    else if (fallbackVictim != null
-                             && fallbackVictim.Uid == popup.TargetUid
-                             && fallbackVictim.Transform != null)
-                    {
-                        pos = fallbackVictim.Transform.position;
-                    }
-
-                    if (pos.HasValue)
-                    {
-                        DamageNumberHook.RequestSpawn(pos.Value, popup.Amount);
-                    }
-                }
-
-                return;
-            }
-
-            if (fallbackAmount > 0 && fallbackVictim?.Transform != null)
-            {
-                DamageNumberHook.RequestSpawn(fallbackVictim.Transform.position, fallbackAmount);
-            }
-        }
-
-        /// <summary>
         /// 扫描 EventLog 中的 GoldModified：经 Scheduler 广播单向表现事件，Binder 消费飞币/HUD。
         /// </summary>
         /// <param name="skipReason">若与事件 Message 相同则跳过（已由专用演出处理）。</param>
@@ -113,56 +65,11 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 扫描 EffectTriggered：经 TriggerPulseHub 发 FX/音效脉冲（发即完成、可降级）。
-        /// 仅九宫格在场卡；卡组 / 手牌 / 已移除不播。不占主时间线控制权。
-        /// 卡面数值不在此同步——观察型加攻等走收尾锚点。
-        /// </summary>
-        public static void PresentEffectTriggersFromEventLog(int startIndex)
-        {
-            if (startIndex < 0)
-            {
-                return;
-            }
-
-            var arch = NineGridArchitecture.Current;
-            var entries = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
-            if (startIndex >= entries.Count)
-            {
-                return;
-            }
-
-            var seen = new HashSet<int>();
-            for (var i = startIndex; i < entries.Count; i++)
-            {
-                var e = entries[i];
-                if (e.Type != CoreEventType.EffectTriggered || e.CardUid <= 0)
-                {
-                    continue;
-                }
-
-                if (!IsCoreCardOnBoardForEffectPresentation(e.CardUid))
-                {
-                    continue;
-                }
-
-                if (!seen.Add(e.CardUid))
-                {
-                    continue;
-                }
-
-                var fxId = CardEffectTriggerPulseSink.IdForCard(e.CardUid);
-                TriggerPulseHub.PulseFx(fxId);
-                TriggerPulseHub.PulseAudio("sfx.effect." + e.CardUid.ToString());
-            }
-        }
-
-        /// <summary>
-        /// Pickup Command 写 Core 后的旁路演出（金币/触发/洗牌/HUD）；不承担规则写。
+        /// Pickup Command 写 Core 后的旁路演出（金币/洗牌/HUD）；效果脉冲改经 Impact 装饰处理器。
         /// </summary>
         public static void PresentPickupPostApplyEffects(int startIndex, int pickedUid)
         {
             PresentGoldGainsFromEventLog(startIndex, ResolveCardWorldPosition(pickedUid));
-            PresentEffectTriggersFromEventLog(startIndex);
             (NineGridArchitecture.Interface ?? NineGridArchitecture.Current)?
                 .GetSystem<IBattleSessionSystem>()?
                 .PresentShuffleIntoDeckFromEventLog(startIndex);
@@ -228,28 +135,6 @@ namespace NineGrid.Flow
             }
 
             return null;
-        }
-
-        private static bool IsCoreCardOnBoardForEffectPresentation(int uid)
-        {
-            if (uid <= 0)
-            {
-                return false;
-            }
-
-            var arch = NineGridArchitecture.Current;
-            if (arch == null)
-            {
-                return false;
-            }
-
-            var registry = arch.GetModel<CardRegistry>();
-            if (!registry.TryGet(uid, out var coreCard))
-            {
-                return false;
-            }
-
-            return coreCard.Zone.Value == ZoneId.Board;
         }
     }
 }

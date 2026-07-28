@@ -759,6 +759,107 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
         }
 
         [Test]
+        public void DamageFloaterHandler_AtImpact_SpawnsFromInstruction_NotProjectionBypass()
+        {
+            var spawned = new System.Collections.Generic.List<(Vector3 pos, int amount)>();
+            var previousSpawn = DamageNumberHook.Spawn;
+            DamageNumberHook.Spawn = (pos, amount) => spawned.Add((pos, amount));
+            try
+            {
+                var face = mCardManager.SpawnView(
+                    77,
+                    defId: "monster.test",
+                    kind: CardPresentationKind.Monster);
+                face.Transform.position = new Vector3(3f, 4f, 0f);
+
+                var map = new PresentationEventMapEntry(
+                    CoreEventType.DamageDealt,
+                    PresentationInstructionKind.ShowDamage,
+                    PresentationEventCategory.Damage,
+                    requiresPlayback: true,
+                    locksInput: true,
+                    beat: PresentationBeat.Impact,
+                    label: "Damage");
+                var batch = new PresentationBatch(
+                    70,
+                    new[]
+                    {
+                        new PresentationInstruction(
+                            new CoreGameEvent(CoreEventType.DamageDealt, 1, "test")
+                                .WithTarget(77)
+                                .WithAmount(5),
+                            map),
+                    },
+                    snapshot: null);
+
+                var scheduler = new BattleBeatScheduler(
+                    new CardFaceStatHandler(),
+                    new DamageFloaterBeatHandler(),
+                    new EffectTriggerPulseBeatHandler());
+                scheduler.OnBatchOpened(batch);
+
+                Assert.AreEqual(0, spawned.Count, "Impact 前不得飘字");
+                scheduler.ReportBeat(PresentationBeat.Impact);
+                Assert.AreEqual(1, spawned.Count, "Impact 后应有一条飘字");
+                Assert.AreEqual(5, spawned[0].amount);
+                Assert.AreEqual(new Vector3(3f, 4f, 0f), spawned[0].pos);
+
+                scheduler.ReportBeat(PresentationBeat.Settled);
+            }
+            finally
+            {
+                DamageNumberHook.Spawn = previousSpawn;
+            }
+        }
+
+        [Test]
+        public void EffectTriggerPulseHandler_AtImpact_PulsesFromInstruction()
+        {
+            var pulsed = new System.Collections.Generic.List<string>();
+            TriggerPulseHub.Configure(
+                new RecordingTriggerPulseSink(pulsed),
+                NullTriggerPulseSink.Instance);
+            try
+            {
+                var map = new PresentationEventMapEntry(
+                    CoreEventType.EffectTriggered,
+                    PresentationInstructionKind.TriggerEffect,
+                    PresentationEventCategory.Effect,
+                    requiresPlayback: true,
+                    locksInput: true,
+                    beat: PresentationBeat.Impact,
+                    label: "Effect");
+                var batch = new PresentationBatch(
+                    71,
+                    new[]
+                    {
+                        new PresentationInstruction(
+                            new CoreGameEvent(CoreEventType.EffectTriggered, 1, "test")
+                                .WithCard(12),
+                            map),
+                    },
+                    snapshot: null);
+
+                var scheduler = new BattleBeatScheduler(
+                    new CardFaceStatHandler(),
+                    new DamageFloaterBeatHandler(),
+                    new EffectTriggerPulseBeatHandler());
+                scheduler.OnBatchOpened(batch);
+
+                Assert.AreEqual(0, pulsed.Count, "Impact 前不得发 FX 脉冲");
+                scheduler.ReportBeat(PresentationBeat.Impact);
+                Assert.AreEqual(1, pulsed.Count, "Impact 后应有 FX 脉冲");
+                Assert.AreEqual(CardEffectTriggerPulseSink.IdForCard(12), pulsed[0]);
+
+                scheduler.ReportBeat(PresentationBeat.Settled);
+            }
+            finally
+            {
+                TriggerPulseHub.ResetToNull();
+            }
+        }
+
+        [Test]
         public void MultiHandler_FirstClaimantConsumes_AtImpact_NoSettledDiagnosis()
         {
             var claimed = 0;
@@ -1069,6 +1170,21 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
                     mImpactReported = true;
                     BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
                 }
+            }
+        }
+
+        private sealed class RecordingTriggerPulseSink : ITriggerPulseSink
+        {
+            private readonly System.Collections.Generic.List<string> mPulsed;
+
+            public RecordingTriggerPulseSink(System.Collections.Generic.List<string> pulsed)
+            {
+                mPulsed = pulsed;
+            }
+
+            public void Pulse(string triggerId)
+            {
+                mPulsed.Add(triggerId);
             }
         }
     }

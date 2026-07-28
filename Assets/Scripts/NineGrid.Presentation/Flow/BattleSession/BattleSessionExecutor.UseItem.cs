@@ -55,22 +55,12 @@ namespace NineGrid.Flow
             UseItemPresentationResult useResult,
             CancellationToken ct)
         {
-            // UseItem Present：只刷已提交投影的视觉；数值等通道完成时 Impact/Settled 锚点消费。
+            // UseItem Present：只刷已提交投影的视觉；数值与飘字/脉冲在 Vacate 前报 Impact 消费。
             CoreCardPresentationMapper.RefreshVisualsPreservingCommittedStatsOnAllSpawned();
             PresentationOutputProjector.UpdateAvatarDebugText();
 
-            // 飞刀等 UseItem 直伤：对齐 FieldBattle 强兜底（本段 popups + 主目标 DamageAmount）。
-            // 必须在 Vacate 尸体之前飘字，否则目标 Transform 可能已卸。
-            ManagedCard fallbackVictim = null;
-            if (useResult.PrimaryTargetUid > 0
-                && Cards != null
-                && Cards.TryGet(useResult.PrimaryTargetUid, out var primary)
-                && primary != null)
-            {
-                fallbackVictim = primary;
-            }
-
-            PresentationOutputProjector.SpawnDamagePopups(useResult.DamagePopups, fallbackVictim, useResult.DamageAmount);
+            // 无命中帧：在 Vacate 前冲刷 Impact，保证飘字仍能解析目标世界坐标。
+            BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
 
             // 击杀必须先 Vacate 尸体，再 Drain/Sync；否则 Register 会静默挤占格留下钉住幽灵。
             if (useResult.TargetKilled)

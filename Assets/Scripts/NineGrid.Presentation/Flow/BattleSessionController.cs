@@ -205,11 +205,6 @@ namespace NineGrid.Flow
             PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex, originWorld, skipReason);
         }
 
-        public static void PresentEffectTriggersFromEventLog(int startIndex)
-        {
-            PresentationOutputProjector.PresentEffectTriggersFromEventLog(startIndex);
-        }
-
         public static void PresentPickupPostApplyEffects(int startIndex, int pickedUid)
         {
             PresentationOutputProjector.PresentPickupPostApplyEffects(startIndex, pickedUid);

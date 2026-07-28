@@ -128,7 +128,6 @@ namespace NineGrid.Flow
             summary.DamagePopups = popups.Count > 0 ? popups.ToArray() : Array.Empty<CombatDamagePopup>();
 
             PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex, PresentationOutputProjector.ResolveCardWorldPosition(targetUid));
-            PresentationOutputProjector.PresentEffectTriggersFromEventLog(startIndex);
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
 
             if (!summary.TargetKilled
@@ -353,7 +352,6 @@ namespace NineGrid.Flow
             summary.RemovedUids = removedUids;
             summary.DamagePopups = PresentationOutputProjector.CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
             PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex);
-            PresentationOutputProjector.PresentEffectTriggersFromEventLog(startIndex);
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
 
             try
@@ -521,7 +519,6 @@ namespace NineGrid.Flow
             _session.ExplorePresentChannel?.Enqueue(result);
 
             PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex, PresentationOutputProjector.ResolveBoardSlotWorldPosition(boardSlot));
-            PresentationOutputProjector.PresentEffectTriggersFromEventLog(startIndex);
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
         }
 
@@ -537,7 +534,6 @@ namespace NineGrid.Flow
             _session.AttackHitPresentChannel?.Enqueue(boardSlot, resolvedCombatUid, result);
 
             PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex, PresentationOutputProjector.ResolveBoardSlotWorldPosition(boardSlot));
-            PresentationOutputProjector.PresentEffectTriggersFromEventLog(startIndex);
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
         }
 
@@ -552,7 +548,6 @@ namespace NineGrid.Flow
             _session.AttackBoardPresentChannel?.Enqueue(result);
 
             PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex, PresentationOutputProjector.ResolveBoardSlotWorldPosition(boardSlot));
-            PresentationOutputProjector.PresentEffectTriggersFromEventLog(startIndex);
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
 
             if (result.NodeClearedOrRewardPhase)
@@ -573,7 +568,6 @@ namespace NineGrid.Flow
             _session.AttackCounterPresentChannel?.Enqueue(attackerBoardSlot, attackerUid, result);
 
             PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex, PresentationOutputProjector.ResolveBoardSlotWorldPosition(attackerBoardSlot));
-            PresentationOutputProjector.PresentEffectTriggersFromEventLog(startIndex);
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
         }
 
@@ -593,7 +587,6 @@ namespace NineGrid.Flow
                 boardSlot > 0
                     ? PresentationOutputProjector.ResolveBoardSlotWorldPosition(boardSlot)
                     : PresentationOutputProjector.ResolveCardWorldPosition(_session.PendingUseItemPresent.PrimaryTargetUid));
-            PresentationOutputProjector.PresentEffectTriggersFromEventLog(startIndex);
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
         }
 
@@ -608,7 +601,6 @@ namespace NineGrid.Flow
             _session.UseItemBoardPresentChannel?.Enqueue(result);
 
             PresentationOutputProjector.PresentGoldGainsFromEventLog(startIndex, PresentationOutputProjector.ResolveBoardSlotWorldPosition(boardSlot));
-            PresentationOutputProjector.PresentEffectTriggersFromEventLog(startIndex);
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
 
             if (result.NodeClearedOrRewardPhase)

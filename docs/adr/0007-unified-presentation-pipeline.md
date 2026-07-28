@@ -14,7 +14,7 @@ status: accepted
 4. **无人认领的已装载指令在 Settled 后仍只报诊断与断言，不做强制对账。** 沿用 ADR-0005 无兜底政策；措辞从「card-face」扩为「presentation instruction」。
 5. **后续消费者只注册 handler + 改映射表 Beat，不改排期器骨架。** 卡面路径由既有 `CardFaceStatHandler` 在 Impact / Settled 消费，观感与行为不变。
 
-本票只落地多处理器基础设施与文档；具体 Beat 重填与删 EventLog 旁路见后续实施票（伤害飘字 / 金币·HUD / Bounce）。
+本票落地多处理器基础设施与文档；#60 已将伤害飘字 / FX 脉冲收口到 Impact 并删除 EventLog 旁路。仍遗留：金币·HUD / Bounce 等消费者迁移。
 
 ## 为什么
 
@@ -32,12 +32,13 @@ ADR-0005 消灭了卡面直读 Core，但伤害飘字、FX 脉冲、金币、Pla
 ## 后果
 
 - 新增 `IBattleBeatHandler`；`CardFaceStatHandler` 实现 `TryApply`；`BattleBeatScheduler` 构造注入 `params IBattleBeatHandler[]`。
-- `PresentationBeat` / `NoneReason` 文档措辞改为表演消费归属；组合根仍先只注册卡面处理器，后续票追加装饰 handler。
+- `PresentationBeat` / `NoneReason` 文档措辞改为表演消费归属；组合根注册卡面 + 飘字/FX 装饰处理器（#60）；金币 / Bounce 后续票继续追加。
 - Avatar HUD 的 `SyncFromCore` 衔接补丁仍暂留排期器（战中收口见后续票）。
-- 已知遗留（本 ADR 不关闭）：`PresentEffectTriggersFromEventLog` / `PresentGoldGainsFromEventLog` / `SpawnDamagePopups` / Bounce `ApplyVisualsByDefId` / Relic HUD 直读——由后续票删除并收紧结构护栏。
+- #60 已关闭：`PresentEffectTriggersFromEventLog` / `SpawnDamagePopups` 生产旁路删除，`DamageDealt`/`EffectTriggered` → Impact。仍遗留：`PresentGoldGainsFromEventLog` / Bounce `ApplyVisualsByDefId` / Relic HUD 直读。
 
 ## 相关
 
 - [ADR-0001](0001-battle-presentation-unified-timeline-batch-ack.md) — 统一时间线与批次就位回执
 - [ADR-0005](0005-card-face-beat-commit.md) — 卡面数值锚点提交（本决策将其泛化为统一管线）
 - [ADR-0004](0004-input-intake-two-axis-gating.md) — 输入唯一收口；输出侧结构同源
+- Issue #60 — 伤害飘字与 FX 脉冲收口到 Impact

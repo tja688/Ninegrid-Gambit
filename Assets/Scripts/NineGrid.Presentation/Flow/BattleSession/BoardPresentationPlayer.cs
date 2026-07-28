@@ -185,7 +185,7 @@ namespace NineGrid.Flow
 
                         // #7 / #9 / V4：融合与 drain 补牌只经导演 Scheduler 离散批次；
                         // 禁止 Present 内 presentAdapter in-flight FillEmptySlots。
-                        PresentationOutputProjector.SpawnDamagePopups(result.DamagePopups, fallbackVictim: null, fallbackAmount: 0);
+                        // 伤害飘字改由 Impact 装饰处理器消费，不在 Drain 内双轨 Spawn。
                         PresentationOutputProjector.UpdateAvatarDebugText();
 
                         if (result.NodeClearedOrRewardPhase)

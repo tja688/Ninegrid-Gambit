@@ -37,6 +37,19 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void Damage_And_Effect_Decorative_Events_Are_Impact()
+        {
+            Assert.AreEqual(
+                PresentationBeat.Impact,
+                PresentationEventMap.Get(CoreEventType.DamageDealt).Beat,
+                "伤害飘字须在 Impact 消费结算指令");
+            Assert.AreEqual(
+                PresentationBeat.Impact,
+                PresentationEventMap.Get(CoreEventType.EffectTriggered).Beat,
+                "效果 FX 脉冲须在 Impact 消费结算指令");
+        }
+
+        [Test]
         public void Observer_Style_BaseStat_Is_Not_Impact()
         {
             Assert.AreNotEqual(

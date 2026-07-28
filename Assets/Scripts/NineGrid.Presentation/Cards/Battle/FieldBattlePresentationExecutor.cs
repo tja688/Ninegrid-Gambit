@@ -275,7 +275,6 @@ namespace NineGrid.Cards
 
                 hitFrameApplied = true;
                 BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
-                SpawnDamagePopups(counterProjection.DamagePopups, avatar, 0);
             }
 
             var holdAcquired = false;
@@ -386,7 +385,6 @@ namespace NineGrid.Cards
 
                 hitFrameApplied = true;
                 BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
-                SpawnDamagePopups(hitProjection.DamagePopups, combatVictim, 0);
             }
 
             var holdAcquired = false;
@@ -575,51 +573,6 @@ namespace NineGrid.Cards
             if (geometry != null && geometry.ConsumeOccupancyConflictFlag())
             {
                 ResolveBattleSession()?.RequestSyncBoardFromCore();
-            }
-        }
-
-        private static void SpawnDamagePopups(
-            CombatDamagePopup[] popups,
-            ManagedCard fallbackVictim,
-            int fallbackAmount)
-        {
-            var cards = CardEntityLifecycleHook.CardsOrNull();
-            if (popups != null && popups.Length > 0)
-            {
-                for (var i = 0; i < popups.Length; i++)
-                {
-                    var popup = popups[i];
-                    if (popup.Amount <= 0)
-                    {
-                        continue;
-                    }
-
-                    Vector3? pos = null;
-                    if (cards != null
-                        && cards.TryGet(popup.TargetUid, out var target)
-                        && target?.Transform != null)
-                    {
-                        pos = target.Transform.position;
-                    }
-                    else if (fallbackVictim != null
-                             && fallbackVictim.Uid == popup.TargetUid
-                             && fallbackVictim.Transform != null)
-                    {
-                        pos = fallbackVictim.Transform.position;
-                    }
-
-                    if (pos.HasValue)
-                    {
-                        DamageNumberHook.RequestSpawn(pos.Value, popup.Amount);
-                    }
-                }
-
-                return;
-            }
-
-            if (fallbackAmount > 0 && fallbackVictim?.Transform != null)
-            {
-                DamageNumberHook.RequestSpawn(fallbackVictim.Transform.position, fallbackAmount);
             }
         }
 
