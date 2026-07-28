@@ -1,16 +1,17 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "monster.skeleton_mage",
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
-    "displayName": "紫背巨蛛",
+    "displayName": "骷髅法师",
     "description": "所有怪物卡视为与本卡正交相邻",
     "gold": 5,
     "stats": {
         "hp": 6,
         "armor": 5,
         "attack": 3,
-        "action": 0
+        "action": 0,
+        "recovery": 0
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
@@ -66,5 +67,24 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectIds": [],
+    "skillIds": [
+        "skill.range_expand"
+    ],
+    "level": 3,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
 }

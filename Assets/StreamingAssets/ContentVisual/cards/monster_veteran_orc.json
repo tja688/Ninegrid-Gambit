@@ -1,16 +1,17 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "monster.veteran_orc",
     "kind": "Monster",
     "deckId": "deck.orc_legion",
-    "displayName": "灰狼骑兵",
+    "displayName": "历战兽人",
     "description": "��ս����",
     "gold": 5,
     "stats": {
         "hp": 10,
         "armor": 0,
         "attack": 2,
-        "action": 0
+        "action": 0,
+        "recovery": 0
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
@@ -24,7 +25,7 @@
     "mainVisual": {
         "offsetX": 0.10000000149011612,
         "offsetY": -0.05000000074505806,
-        "uniformScale": 0.8600000143051148
+        "uniformScale": 0.8600000143051147
     },
     "animations": {
         "defaultFps": 8.0,
@@ -66,5 +67,22 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectIds": [],
+    "skillIds": [],
+    "level": 1,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
 }

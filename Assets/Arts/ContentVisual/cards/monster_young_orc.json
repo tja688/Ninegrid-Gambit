@@ -1,16 +1,17 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "monster.young_orc",
     "kind": "Monster",
     "deckId": "deck.orc_legion",
-    "displayName": "巨棒哥布林",
+    "displayName": "年轻兽人",
     "description": "其他怪物获得攻击时本卡攻击+1",
     "gold": 5,
     "stats": {
         "hp": 6,
         "armor": 4,
         "attack": 2,
-        "action": 0
+        "action": 0,
+        "recovery": 0
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
@@ -66,5 +67,24 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectIds": [],
+    "skillIds": [
+        "skill.learning_growth"
+    ],
+    "level": 1,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
 }

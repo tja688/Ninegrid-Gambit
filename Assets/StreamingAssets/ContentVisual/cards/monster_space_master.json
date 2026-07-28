@@ -1,16 +1,17 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "monster.space_master",
     "kind": "Monster",
     "deckId": "deck.void",
-    "displayName": "幽蓝异花",
+    "displayName": "空间大师",
     "description": "战后旋转；每移9次加入怪物",
     "gold": 5,
     "stats": {
         "hp": 42,
         "armor": 10,
         "attack": 4,
-        "action": 0
+        "action": 0,
+        "recovery": 0
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
@@ -66,5 +67,25 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectIds": [],
+    "skillIds": [
+        "skill.space_mastery",
+        "skill.otherworld_help"
+    ],
+    "level": 0,
+    "isElite": false,
+    "isBoss": true,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
 }

@@ -1,16 +1,17 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "monster.dragon_follower",
     "kind": "Monster",
     "deckId": "deck.dragon",
-    "displayName": "爪蜥",
+    "displayName": "龙信徒",
     "description": "被移除时加入烈焰",
     "gold": 5,
     "stats": {
         "hp": 6,
         "armor": 0,
         "attack": 2,
-        "action": 0
+        "action": 0,
+        "recovery": 0
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
@@ -66,5 +67,24 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectIds": [],
+    "skillIds": [
+        "skill.devotion"
+    ],
+    "level": 1,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
 }

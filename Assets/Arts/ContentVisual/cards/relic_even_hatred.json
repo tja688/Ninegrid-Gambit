@@ -1,0 +1,90 @@
+{
+    "schemaVersion": 2,
+    "contentId": "relic.even_hatred",
+    "kind": "Relic",
+    "deckId": "",
+    "displayName": "偶数仇恨",
+    "description": "对偶数等级怪物造成双倍伤害",
+    "gold": 0,
+    "stats": {
+        "hp": 0,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": [
+            {
+                "id": "idle",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "attack",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "hurt",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "death",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "lunch",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            }
+        ]
+    },
+    "extraSlots": [],
+    "rarity": "Blue",
+    "tags": [],
+    "effectIds": [
+        "relic.even_hatred.rule"
+    ],
+    "skillIds": [],
+    "level": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
+}

@@ -1,16 +1,17 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "monster.stone_thrower",
     "kind": "Monster",
     "deckId": "deck.stone_legion",
-    "displayName": "球仙人掌",
+    "displayName": "丢石人",
     "description": "每移2次耗2护甲伤玩家",
     "gold": 5,
     "stats": {
         "hp": 2,
         "armor": 6,
         "attack": 1,
-        "action": 0
+        "action": 0,
+        "recovery": 0
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
@@ -24,7 +25,7 @@
     "mainVisual": {
         "offsetX": 0.05999999865889549,
         "offsetY": -0.6000000238418579,
-        "uniformScale": 0.8600000143051148
+        "uniformScale": 0.8600000143051147
     },
     "animations": {
         "defaultFps": 8.0,
@@ -66,5 +67,24 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectIds": [],
+    "skillIds": [
+        "skill.throw_stone"
+    ],
+    "level": 2,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
 }

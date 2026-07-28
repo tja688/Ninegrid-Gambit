@@ -4,40 +4,61 @@ namespace NineGrid.Content.CardPresentation
 {
     /// <summary>
     /// 卡牌内容/表现 JSON（JsonUtility 友好：无 Dictionary，字段 camelCase）。
-    /// 帮助卡（schemaVersion≥2）：身份、数值、效果挂载与表现引用同文件，经
-    /// <see cref="NineGrid.Content.HelpCardJsonCatalogProjector"/> 投影进
-    /// <c>GameContentCatalog</c>；Overlay 不再盖写帮助卡 stats/gold/displayName。
-    /// 非帮助卡：重叠表现字段权威见 <see cref="CardPresentationAuthority"/>；
-    /// kind/deckId/rarity/tags/effectIds 玩法身份仍以 Luban 为准（#68/#69 迁移）。
+    /// schemaVersion≥2：身份、数值、效果挂载与表现引用同文件，经
+    /// <see cref="NineGrid.Content.ContentJsonCatalogProjector"/> 投影进
+    /// <c>GameContentCatalog</c>（HelpCard/Monster/Skill/Relic/Deck/Room）；
+    /// Overlay 不再盖写已投影卡种的 stats/gold/displayName。
+    /// ChoiceOption / Avatar 等仅表现 contentId 可有 JSON，不进玩法 Catalog。
+    /// 效果 DSL 本体与奖励池/经济/节点规则仍可 Luban（#69 再退）。
     /// </summary>
     [Serializable]
     public sealed class CardPresentationConfigDto
     {
         public int schemaVersion = 1;
         public string contentId;
-        /// <summary>卡种类；帮助卡投影以本字段为准（须为 HelpCard）。</summary>
+        /// <summary>卡种类；投影以本字段为准（HelpCard/Monster/Skill/Relic/Deck/Room/…）。</summary>
         public string kind;
-        /// <summary>deck 归属；帮助卡多为空；非帮助卡玩法仍以 Luban 为准。</summary>
+        /// <summary>deck 归属；怪物卡投影写入 Catalog.DeckId。</summary>
         public string deckId;
-        /// <summary>显示名；帮助卡经投影写入 Catalog，非帮助卡可由 Overlay 覆盖。</summary>
+        /// <summary>显示名；schema≥2 投影写入 Catalog，已投影卡种不再由 Overlay 覆盖。</summary>
         public string displayName;
-        /// <summary>描述权威（有值时覆盖 TbContentVisual.description）。</summary>
+        /// <summary>描述权威（有值时覆盖 TbContentVisual.description）；Relic/Skill 亦作 designText。</summary>
         public string description;
-        /// <summary>金币：帮助卡→Price（投影）；非帮助卡 Overlay 怪物→KillGold、其它→Price（&gt;0）。</summary>
+        /// <summary>金币：HelpCard→Price；Monster→KillGold；其它 Price（&gt;0）。</summary>
         public int gold;
-        /// <summary>基础数值：帮助卡投影写入；非帮助卡 Overlay 对 hp/attack/armor &gt;0 才覆盖；action 仅表现。</summary>
+        /// <summary>基础数值；schema≥2 投影写入；action 仅表现。</summary>
         public CardPresentationStatsDto stats;
         /// <summary>槽位图权威（有路径则不再读 ContentVisual SO）。</summary>
         public CardPresentationSpritesDto sprites;
         public CardPresentationMainVisualDto mainVisual;
         public CardPresentationAnimationsDto animations;
         public CardPresentationExtraSlotDto[] extraSlots;
-        /// <summary>稀有度（如 White/Blue/Gold/Red）；帮助卡 schema≥2 时投影进 Catalog。</summary>
+        /// <summary>稀有度（如 White/Blue/Gold/Red）；schema≥2 时投影进 Catalog。</summary>
         public string rarity;
-        /// <summary>标签列表；帮助卡 schema≥2 时投影进 Catalog。</summary>
+        /// <summary>标签列表；schema≥2 时投影进 Catalog。</summary>
         public string[] tags;
-        /// <summary>效果挂载 id 列表；帮助卡 schema≥2 时投影进 Catalog（效果 DSL 本体仍可在 Luban）。</summary>
+        /// <summary>效果挂载 id 列表；schema≥2 时投影进 Catalog（效果 DSL 本体仍可在 Luban）。</summary>
         public string[] effectIds;
+        /// <summary>怪物技能挂载；Monster schema≥2 投影进 Catalog.SkillIds。</summary>
+        public string[] skillIds;
+        /// <summary>怪物等级；Monster schema≥2。</summary>
+        public int level;
+        public bool isElite;
+        public bool isBoss;
+        public bool isReserve;
+        /// <summary>技能容器类型（如 MonsterSkill）；Skill schema≥2。</summary>
+        public string containerType;
+        /// <summary>牌组种类（WeakElite/StrongElite/Boss/Reserve）；Deck schema≥2。</summary>
+        public string deckKind;
+        /// <summary>牌组怪物 defId 列表；Deck schema≥2。</summary>
+        public string[] monsterDefIds;
+        /// <summary>房间权重与效果字段；Room schema≥2。</summary>
+        public int weight;
+        public int goldDelta;
+        public int maxHpDelta;
+        public bool healToFull;
+        public string rewardPoolId;
+        public int shopOfferCount;
     }
 
     [Serializable]
@@ -47,6 +68,8 @@ namespace NineGrid.Content.CardPresentation
         public int armor;
         public int attack;
         public int action;
+        /// <summary>怪物恢复；schema≥2 投影进 Catalog.Stats.Recovery。</summary>
+        public int recovery;
     }
 
     [Serializable]

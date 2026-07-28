@@ -10,7 +10,8 @@
         "hp": 0,
         "armor": 0,
         "attack": 0,
-        "action": 0
+        "action": 0,
+        "recovery": 0
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_272",
@@ -73,5 +74,19 @@
     ],
     "effectIds": [
         "help.healing_potion.use"
-    ]
+    ],
+    "skillIds": [],
+    "level": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
 }

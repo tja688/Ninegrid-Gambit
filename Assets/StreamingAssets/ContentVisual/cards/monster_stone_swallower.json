@@ -1,16 +1,17 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "monster.stone_swallower",
     "kind": "Monster",
     "deckId": "deck.stone_legion",
-    "displayName": "红壳龟",
+    "displayName": "吞石者",
     "description": "每移动2次吸相邻怪物护甲",
     "gold": 5,
     "stats": {
         "hp": 1,
         "armor": 3,
         "attack": 2,
-        "action": 0
+        "action": 0,
+        "recovery": 0
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
@@ -23,7 +24,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.019999999552965165,
+        "offsetY": -0.019999999552965164,
         "uniformScale": 0.8199999928474426
     },
     "animations": {
@@ -66,5 +67,24 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectIds": [],
+    "skillIds": [
+        "skill.swallow_stone"
+    ],
+    "level": 1,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
 }

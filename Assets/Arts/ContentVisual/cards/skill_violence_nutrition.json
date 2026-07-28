@@ -1,16 +1,17 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "skill.violence_nutrition",
     "kind": "Skill",
     "deckId": "",
     "displayName": "暴力即养分",
-    "description": "靠暴力狂获属性",
+    "description": "依靠暴力狂移除怪物得攻击，移除帮助卡得护甲",
     "gold": 0,
     "stats": {
         "hp": 0,
         "armor": 0,
         "attack": 0,
-        "action": 0
+        "action": 0,
+        "recovery": 0
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Png/Icons/white_node/spinner.png",
@@ -66,5 +67,25 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "",
+    "tags": [],
+    "effectIds": [
+        "skill.violence_nutrition.monster_remove",
+        "skill.violence_nutrition.help_remove"
+    ],
+    "skillIds": [],
+    "level": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "MonsterSkill",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
 }

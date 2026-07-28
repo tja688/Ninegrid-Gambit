@@ -265,9 +265,34 @@ namespace NineGrid.Content.CardPresentation
                 dto.effectIds = Array.Empty<string>();
             }
 
+            if (dto.skillIds == null)
+            {
+                dto.skillIds = Array.Empty<string>();
+            }
+
+            if (dto.monsterDefIds == null)
+            {
+                dto.monsterDefIds = Array.Empty<string>();
+            }
+
             if (dto.rarity == null)
             {
                 dto.rarity = string.Empty;
+            }
+
+            if (dto.containerType == null)
+            {
+                dto.containerType = string.Empty;
+            }
+
+            if (dto.deckKind == null)
+            {
+                dto.deckKind = string.Empty;
+            }
+
+            if (dto.rewardPoolId == null)
+            {
+                dto.rewardPoolId = string.Empty;
             }
 
             if (dto.contentId == null)

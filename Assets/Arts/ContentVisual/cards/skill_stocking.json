@@ -1,16 +1,17 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "skill.stocking",
     "kind": "Skill",
     "deckId": "",
     "displayName": "进货",
-    "description": "累计邻玩家3次移除帮助得护甲",
+    "description": "累计移动到玩家相邻3次时移除帮助卡并获得护甲",
     "gold": 0,
     "stats": {
         "hp": 0,
         "armor": 0,
         "attack": 0,
-        "action": 0
+        "action": 0,
+        "recovery": 0
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Png/Icons/white_node/king.png",
@@ -66,5 +67,24 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "",
+    "tags": [],
+    "effectIds": [
+        "skill.stocking.move"
+    ],
+    "skillIds": [],
+    "level": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "MonsterSkill",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
 }

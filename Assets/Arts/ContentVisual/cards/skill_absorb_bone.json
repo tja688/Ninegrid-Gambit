@@ -1,16 +1,17 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "skill.absorb_bone",
     "kind": "Skill",
     "deckId": "",
-    "displayName": "敲骨",
-    "description": "相邻移除获攻击护甲",
+    "displayName": "吸骨",
+    "description": "相邻怪物被移除时获得其移除前攻击和护甲",
     "gold": 0,
     "stats": {
         "hp": 0,
         "armor": 0,
         "attack": 0,
-        "action": 0
+        "action": 0,
+        "recovery": 0
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_707",
@@ -66,5 +67,24 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "",
+    "tags": [],
+    "effectIds": [
+        "skill.absorb_bone.remove"
+    ],
+    "skillIds": [],
+    "level": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "MonsterSkill",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
 }

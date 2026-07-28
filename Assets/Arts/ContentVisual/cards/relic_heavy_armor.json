@@ -1,16 +1,17 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "relic.heavy_armor",
     "kind": "Relic",
     "deckId": "",
     "displayName": "重盔甲",
-    "description": "护甲+1，按基础补当前",
+    "description": "基础护甲+1，按基础护甲补当前护甲",
     "gold": 0,
     "stats": {
         "hp": 0,
         "armor": 0,
         "attack": 0,
-        "action": 0
+        "action": 0,
+        "recovery": 0
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_643",
@@ -66,5 +67,25 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "White",
+    "tags": [],
+    "effectIds": [
+        "relic.heavy_armor.base",
+        "relic.heavy_armor.node_start"
+    ],
+    "skillIds": [],
+    "level": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
 }

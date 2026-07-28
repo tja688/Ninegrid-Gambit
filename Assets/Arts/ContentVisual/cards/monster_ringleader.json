@@ -1,16 +1,17 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "monster.ringleader",
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
-    "displayName": "蓝发武士",
+    "displayName": "领头人",
     "description": "每移3次创福地；3福地后99伤",
     "gold": 5,
     "stats": {
         "hp": 14,
         "armor": 4,
         "attack": 3,
-        "action": 0
+        "action": 0,
+        "recovery": 0
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
@@ -66,5 +67,25 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectIds": [],
+    "skillIds": [
+        "skill.guide",
+        "skill.find_weakness"
+    ],
+    "level": 0,
+    "isElite": true,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
 }

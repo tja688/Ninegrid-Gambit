@@ -11,7 +11,7 @@ namespace NineGrid.Core.Tests
 {
     /// <summary>
     /// 阶段一门禁：默认 catalog 全量 DSL 可解析、引用完整、无 Pending。
-    /// #67：生产 Bootstrap（Luban/Hardcoded + 帮助卡 JSON 投影）同样须绿。
+    /// #67/#68：生产 Bootstrap（Luban/Hardcoded + schema≥2 JSON 投影）同样须绿。
     /// </summary>
     public sealed class ContentCatalogValidationTests
     {
@@ -43,7 +43,7 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void BootstrapCatalog_ValidateCatalog_IsValidWithHelpCardsFromJson()
+        public void BootstrapCatalog_ValidateCatalog_IsValidWithProductionJsonProjection()
         {
             CardPresentationConfigCatalog.Invalidate();
             var catalog = ContentCatalogBootstrap.Load(ContentCatalogSourceKind.Hardcoded);
@@ -67,10 +67,29 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(2, tower.EffectIds.Count);
             Assert.AreEqual("help.doubling_tower.board_monster", tower.EffectIds[0]);
             Assert.AreEqual("help.doubling_tower.item_player", tower.EffectIds[1]);
+
+            Assert.IsTrue(catalog.Relics.TryGetValue("relic.arsenal", out var arsenal));
+            Assert.AreEqual("军械库", arsenal.DisplayName);
+            Assert.AreEqual(1, arsenal.EffectIds.Count);
+            Assert.AreEqual("relic.arsenal.node_end", arsenal.EffectIds[0]);
+
+            Assert.IsTrue(catalog.Skills.TryGetValue("skill.absorb_bone", out var absorb));
+            Assert.Greater(absorb.EffectIds.Count, 0);
+
+            Assert.IsTrue(catalog.Cards.TryGetValue("monster.beggar", out var beggar));
+            Assert.AreEqual(CardKind.Monster, beggar.Kind);
+            Assert.AreEqual(1, beggar.SkillIds.Count);
+            Assert.AreEqual("skill.beggar_bond", beggar.SkillIds[0]);
+
+            Assert.IsTrue(catalog.MonsterDecks.TryGetValue("deck.dragon", out var dragon));
+            Assert.Greater(dragon.MonsterDefIds.Count, 0);
+
+            Assert.IsTrue(catalog.Rewards.TryGetRoom(RoomKind.Fountain, out var fountain));
+            Assert.IsTrue(fountain.HealToFull);
         }
 
         [Test]
-        public void BootstrapLubanCatalog_WhenAvailable_ValidateCatalog_IsValidWithHelpJsonProjection()
+        public void BootstrapLubanCatalog_WhenAvailable_ValidateCatalog_IsValidWithJsonProjection()
         {
             CardPresentationConfigCatalog.Invalidate();
             if (string.IsNullOrEmpty(ContentCatalogBootstrap.ResolveLubanDataDirectory()))
@@ -88,6 +107,9 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(catalog.Cards.TryGetValue("help.healing_spring", out var spring));
             Assert.AreEqual("治疗圣光", spring.DisplayName);
             Assert.AreEqual(3, spring.EffectIds.Count);
+
+            Assert.IsTrue(catalog.Relics.TryGetValue("relic.arsenal", out var arsenal));
+            Assert.AreEqual("relic.arsenal.node_end", arsenal.EffectIds[0]);
         }
 
         private static string FormatIssues(ContentValidationReport report)

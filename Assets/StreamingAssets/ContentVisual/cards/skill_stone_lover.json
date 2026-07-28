@@ -1,16 +1,17 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "skill.stone_lover",
     "kind": "Skill",
     "deckId": "",
     "displayName": "石头爱好者",
-    "description": "双方损护甲时攻击+1",
+    "description": "玩家卡和怪物卡损失护甲时本卡攻击+1",
     "gold": 0,
     "stats": {
         "hp": 0,
         "armor": 0,
         "attack": 0,
-        "action": 0
+        "action": 0,
+        "recovery": 0
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Png/Icons/white_node/joker.png",
@@ -66,5 +67,24 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "",
+    "tags": [],
+    "effectIds": [
+        "skill.stone_lover.armor_lost"
+    ],
+    "skillIds": [],
+    "level": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "MonsterSkill",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
 }

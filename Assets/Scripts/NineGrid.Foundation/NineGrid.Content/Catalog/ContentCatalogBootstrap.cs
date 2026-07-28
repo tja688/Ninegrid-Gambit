@@ -87,12 +87,12 @@ namespace NineGrid.Content
         }
 
         /// <summary>
-        /// Luban/Hardcoded 底数 → 帮助卡 JSON 投影覆盖 → 非帮助卡 Presentation Overlay。
-        /// 业务仍只消费返回的 <see cref="GameContentCatalog"/>。
+        /// Luban/Hardcoded 底数 → schema≥2 JSON 投影覆盖（帮助卡/怪物/技能/遗物/牌组/房间）
+        /// → 未投影卡种 Presentation Overlay。业务仍只消费返回的 <see cref="GameContentCatalog"/>。
         /// </summary>
         private static GameContentCatalog FinalizeCatalog(GameContentCatalog catalog)
         {
-            HelpCardJsonCatalogProjector.ApplyToCatalog(catalog);
+            ContentJsonCatalogProjector.ApplyToCatalog(catalog);
             CardPresentationBusinessOverlay.ApplyToCatalog(catalog);
             return catalog;
         }

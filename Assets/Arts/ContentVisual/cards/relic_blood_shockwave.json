@@ -1,16 +1,17 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "contentId": "relic.blood_shockwave",
     "kind": "Relic",
     "deckId": "",
     "displayName": "血液冲击波",
-    "description": "血量+4，关卡放撞击教程",
+    "description": "血量上限+4，关卡开始放入撞击教程，低血再放一张",
     "gold": 0,
     "stats": {
         "hp": 0,
         "armor": 0,
         "attack": 0,
-        "action": 0
+        "action": 0,
+        "recovery": 0
     },
     "sprites": {
         "mainIcon": "",
@@ -66,5 +67,26 @@
             }
         ]
     },
-    "extraSlots": []
+    "extraSlots": [],
+    "rarity": "Gold",
+    "tags": [],
+    "effectIds": [
+        "relic.blood_shockwave.max_hp",
+        "relic.blood_shockwave.node_start",
+        "relic.blood_shockwave.node_start_low_hp"
+    ],
+    "skillIds": [],
+    "level": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
 }

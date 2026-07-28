@@ -7,8 +7,8 @@ namespace NineGrid.Content
     /// <summary>
     /// 将卡牌表现 JSON 的 displayName / gold / stats 覆盖进 Core 内容目录。
     /// 规则见 <see cref="CardPresentationAuthority"/>：非空白 / &gt;0 才覆盖，空或 0 不冲掉 Luban 底数。
-    /// 不覆盖 rarity、effectIds、skillIds、recovery 等玩法字段。
-    /// 帮助卡（#67）：一卡一文件已经 <see cref="HelpCardJsonCatalogProjector"/> 写入 Catalog，本 Overlay 跳过。
+    /// 不覆盖 rarity、effectIds、skillIds 等未列入 Overlay 的玩法字段（recovery 由 schema≥2 投影写入）。
+    /// 帮助卡一律跳过；其它 schema≥2 已投影卡种（如 Monster）亦跳过。
     /// </summary>
     public static class CardPresentationBusinessOverlay
     {
@@ -27,12 +27,19 @@ namespace NineGrid.Content
                     continue;
                 }
 
+                // #67：帮助卡一律不 Overlay（即便 JSON 仍为旧 schema）。
+                // #68：其它 schema≥2 已投影卡种（如 Monster）同样跳过。
                 if (card.Kind == CardKind.HelpCard)
                 {
                     continue;
                 }
 
                 if (!CardPresentationConfigCatalog.TryGet(card.DefId, out var dto) || dto == null)
+                {
+                    continue;
+                }
+
+                if (ContentJsonCatalogProjector.IsProjectedCardOverlaySkip(dto))
                 {
                     continue;
                 }
