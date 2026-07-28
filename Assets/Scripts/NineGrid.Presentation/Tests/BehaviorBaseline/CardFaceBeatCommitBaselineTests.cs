@@ -815,12 +815,25 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
         [Test]
         public void EffectTriggerPulseHandler_AtImpact_PulsesFromInstruction()
         {
+            NineGridArchitecture.ResetForTests();
+            var architecture = NineGridArchitecture.Current;
+            architecture.GetUtility<IConfigUtility>().Set(
+                ContentConfigKeys.DefaultCatalog,
+                TableNineContentCatalog.CreateDefault());
+            InitialGameFactory.Create(architecture, new InitialGameOptions { Seed = 6011UL });
+
             var pulsed = new System.Collections.Generic.List<string>();
             TriggerPulseHub.Configure(
                 new RecordingTriggerPulseSink(pulsed),
                 NullTriggerPulseSink.Instance);
             try
             {
+                Assert.IsTrue(architecture.GetSystem<IPhaseSystem>()
+                    .StartNode(CreateHighHpMonsterNode()).Accepted);
+                PlaceSoleBoardCardAt(architecture, sAdjacentSlot);
+                var boardUid = architecture.GetModel<BoardModel>().GetCardUid(sAdjacentSlot);
+                Assert.Greater(boardUid, 0);
+
                 var map = new PresentationEventMapEntry(
                     CoreEventType.EffectTriggered,
                     PresentationInstructionKind.TriggerEffect,
@@ -835,7 +848,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
                     {
                         new PresentationInstruction(
                             new CoreGameEvent(CoreEventType.EffectTriggered, 1, "test")
-                                .WithCard(12),
+                                .WithCard(boardUid),
                             map),
                     },
                     snapshot: null);
@@ -849,13 +862,14 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
                 Assert.AreEqual(0, pulsed.Count, "Impact 前不得发 FX 脉冲");
                 scheduler.ReportBeat(PresentationBeat.Impact);
                 Assert.AreEqual(1, pulsed.Count, "Impact 后应有 FX 脉冲");
-                Assert.AreEqual(CardEffectTriggerPulseSink.IdForCard(12), pulsed[0]);
+                Assert.AreEqual(CardEffectTriggerPulseSink.IdForCard(boardUid), pulsed[0]);
 
                 scheduler.ReportBeat(PresentationBeat.Settled);
             }
             finally
             {
                 TriggerPulseHub.ResetToNull();
+                NineGridArchitecture.ResetForTests();
             }
         }
 

@@ -128,6 +128,10 @@ namespace NineGrid.Flow
                 return;
             }
 
+            // 探索等无命中帧：在 Drain/Vacate 前冲刷 Impact，避免飘字/脉冲目标已卸。
+            // 攻击/反击若已在命中帧消费则为空操作；用道具若已在 Present 开头报过亦同。
+            BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
+
             var stepCount = result.Steps?.Length ?? 0;
             var moveCount = stepCount > 0 ? stepCount : (result.Moves?.Length ?? 0);
             var dealCount = result.Deals?.Length ?? 0;

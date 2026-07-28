@@ -45,7 +45,7 @@ namespace NineGrid.Flow.Presentation
             var registry = arch.GetModel<CardRegistry>();
             if (!registry.TryGet(uid, out var coreCard) || coreCard == null)
             {
-                return true;
+                return false;
             }
 
             return coreCard.Zone.Value == ZoneId.Board;
