@@ -189,6 +189,52 @@ namespace NineGrid.Core.Tests
                 EffectAssemblyResolver.SuggestArgsJson(body, "{}"));
         }
 
+        [Test]
+        public void DesignTextParameterizer_ReplacesPresetAmountWithParamToken()
+        {
+            var body = "{\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\"}}";
+            var text = EffectDesignTextParameterizer.Parameterize(
+                "[击杀怪物时] 对随机一张怪物卡造成4点伤害",
+                body,
+                "{\"amount\":4}");
+
+            Assert.AreEqual("[击杀怪物时] 对随机一张怪物卡造成{amount}点伤害", text);
+            StringAssert.DoesNotContain("造成4点", text);
+        }
+
+        [Test]
+        public void DesignTextParameterizer_FallbackWithoutArgs_UsesArabicLiteral()
+        {
+            var body = "{\"action\":{\"amount\":\"{{amount}}\"}}";
+            var text = EffectDesignTextParameterizer.Parameterize(
+                "[使用时] 恢复10点血量",
+                body,
+                (IReadOnlyDictionary<string, object>)null);
+
+            Assert.AreEqual("[使用时] 恢复{amount}点血量", text);
+        }
+
+        [Test]
+        public void DesignTextParameterizer_DoesNotTreatClassifierYiZhangAsAmount()
+        {
+            var body = "{\"action\":{\"amount\":\"{{amount}}\"}}";
+            var text = EffectDesignTextParameterizer.Parameterize(
+                "[击杀怪物时] 对随机一张怪物卡造成4点伤害",
+                body,
+                (IReadOnlyDictionary<string, object>)null);
+
+            StringAssert.Contains("一张", text);
+            StringAssert.Contains("{amount}点", text);
+        }
+
+        [Test]
+        public void DesignTextParameterizer_JoinBriefs_UsesChineseSemicolon()
+        {
+            Assert.AreEqual(
+                "甲；乙",
+                EffectDesignTextParameterizer.JoinBriefs(new[] { "甲", "乙" }));
+        }
+
         private static IEnumerable<string> Format(EffectValidationResult result)
         {
             for (var i = 0; i < result.Issues.Count; i++)

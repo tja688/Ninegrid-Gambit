@@ -444,7 +444,9 @@ namespace NineGrid.Content.Editor.Ui
         }
 
         /// <summary>
-        /// 悬停在 PopupField 上时用滚轮上下切换选项，并拦住外层 ScrollView 抢事件。
+        /// 悬停在<strong>已收起</strong>的 PopupField 上时，用滚轮切换当前选项（并拦住外层 ScrollView）。
+        /// 无法驱动 Unity 展开后的原生下拉列表滚动——长列表请改用
+        /// <see cref="SearchableChoiceField"/>（内部 ScrollView 原生支持滚轮）。
         /// </summary>
         public static void EnablePopupWheelScroll<T>(PopupField<T> field)
         {

@@ -48,6 +48,12 @@ namespace NineGrid.Content.Editor
         public CardPresentationConfigDto Dto { get; set; }
         public string SavedJson { get; set; } = string.Empty;
 
+        /// <summary>
+        /// 编辑器会话态：卡面描述是否已手改为自定义（不落盘）。
+        /// 清空描述框后放权，重新跟随效果装配自动增删。
+        /// </summary>
+        public bool DescriptionCustomLocked { get; set; }
+
         public string ContentId => Dto?.contentId ?? string.Empty;
         public string Kind => Dto?.kind ?? string.Empty;
         public string DeckId => Dto?.deckId ?? string.Empty;
@@ -383,7 +389,8 @@ namespace NineGrid.Content.Editor
         }
 
         /// <summary>
-        /// 装配下拉用：Label = design_text + 过渡来源后缀（原帮助卡/怪物技能/遗物），Value 仍为 templateId。
+        /// 装配下拉用：Label = 参数化 design_text（<c>{amount}</c> 而非 peer 预设数字）
+        /// + 过渡来源后缀；Value 仍为 templateId。
         /// </summary>
         public List<EffectTemplateChoice> GetEffectTemplateChoices()
         {
@@ -397,7 +404,11 @@ namespace NineGrid.Content.Editor
                     continue;
                 }
 
-                var rawLabel = FormatEffectTemplateChoiceLabel(row.id, row.design_text);
+                var parameterized = EffectDesignTextParameterizer.Parameterize(
+                    row.design_text,
+                    row.body,
+                    (IReadOnlyDictionary<string, object>)null);
+                var rawLabel = FormatEffectTemplateChoiceLabel(row.id, parameterized);
                 if (!labelCounts.TryGetValue(rawLabel, out var count))
                 {
                     count = 0;
@@ -435,6 +446,116 @@ namespace NineGrid.Content.Editor
                 : designText.Trim();
             var origin = ResolveEffectOriginSuffix(templateId);
             return string.IsNullOrEmpty(origin) ? body : body + origin;
+        }
+
+        /// <summary>
+        /// 模板简要描述参数化：用实参字面量把 design_text 里的预设数换成 <c>{param}</c>。
+        /// </summary>
+        public string GetParameterizedDesignText(string templateId, string argsJson)
+        {
+            if (!TryGetEffectTemplateRow(templateId, out var designText, out var bodyJson))
+            {
+                return string.IsNullOrWhiteSpace(templateId) ? string.Empty : templateId.Trim();
+            }
+
+            var sourceArgs = string.IsNullOrWhiteSpace(argsJson)
+                ? SuggestArgsJsonForTemplate(templateId)
+                : argsJson;
+            return EffectDesignTextParameterizer.Parameterize(designText, bodyJson, sourceArgs);
+        }
+
+        /// <summary>
+        /// 按当前装配列表拼自动卡面描述（多条用中文分号连接；空装配 → 空串）。
+        /// </summary>
+        public string BuildAutoCardDescription(IReadOnlyList<EffectAssemblyDto> assemblies)
+        {
+            if (assemblies == null || assemblies.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var briefs = new List<string>(assemblies.Count);
+            for (var i = 0; i < assemblies.Count; i++)
+            {
+                var assembly = assemblies[i];
+                if (assembly == null || string.IsNullOrWhiteSpace(assembly.templateId))
+                {
+                    continue;
+                }
+
+                var brief = GetParameterizedDesignText(assembly.templateId, assembly.argsJson);
+                if (!string.IsNullOrWhiteSpace(brief))
+                {
+                    briefs.Add(brief);
+                }
+            }
+
+            return EffectDesignTextParameterizer.JoinBriefs(briefs);
+        }
+
+        /// <summary>
+        /// 根据当前描述推断是否应锁定自定义：空 / 与自动文案全等 → 不锁；否则锁定。
+        /// </summary>
+        public bool InferDescriptionCustomLocked(CardPresentationConfigDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.description))
+            {
+                return false;
+            }
+
+            var auto = BuildAutoCardDescription(dto.effectAssemblies);
+            return !string.Equals(dto.description.Trim(), auto.Trim(), StringComparison.Ordinal);
+        }
+
+        /// <summary>未锁定时把卡面描述写成装配简要拼接。</summary>
+        public bool TrySyncAutoDescription(CardPresentationConfigDto dto, bool customLocked)
+        {
+            if (dto == null || customLocked)
+            {
+                return false;
+            }
+
+            var auto = BuildAutoCardDescription(dto.effectAssemblies);
+            if (string.Equals(dto.description ?? string.Empty, auto, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            dto.description = auto;
+            return true;
+        }
+
+        private bool TryGetEffectTemplateRow(string templateId, out string designText, out string bodyJson)
+        {
+            designText = string.Empty;
+            bodyJson = string.Empty;
+            if (string.IsNullOrWhiteSpace(templateId))
+            {
+                return false;
+            }
+
+            var id = templateId.Trim();
+            for (var i = 0; i < effectTemplates.Count; i++)
+            {
+                var row = effectTemplates[i];
+                if (row == null || !string.Equals(row.id, id, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                designText = row.design_text ?? string.Empty;
+                bodyJson = row.body ?? string.Empty;
+                return true;
+            }
+
+            if (EffectTemplateCatalog.TryGet(id, out var template) && template != null)
+            {
+                designText = template.DesignText ?? string.Empty;
+                bodyJson = template.BodyJson ?? string.Empty;
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>tpl.help.* →（原帮助卡效果）；tpl.skill.* →（原怪物技能效果）；tpl.relic.* →（原遗物效果）。</summary>

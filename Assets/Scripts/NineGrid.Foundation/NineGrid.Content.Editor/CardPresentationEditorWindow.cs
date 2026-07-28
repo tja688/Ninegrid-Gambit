@@ -29,6 +29,8 @@ namespace NineGrid.Content.Editor
         private HelpBox statusHelpBox;
         private IMGUIContainer previewContainer;
         private TextField descriptionField;
+        private Label descriptionModeLabel;
+        private bool suppressDescriptionCallback;
         private string previewFingerprint = string.Empty;
         private bool faceUp = true;
         private string previewAnimSlot = CardAnimSlotIds.Idle;
@@ -671,10 +673,21 @@ namespace NineGrid.Content.Editor
 
             var descriptionCard = ContentVisualWarmConsoleUi.CreateSectionCard(
                 "描述",
-                "[Code] 词条图标见左侧「效果池 → 描述词条 / 可插入编码」；预览会展开真实图标",
+                "[Code] 词条图标见左侧「效果池 → 描述词条 / 可插入编码」；装配效果时自动写入参数化简要描述；手改后锁定自定义，清空后恢复自动",
                 column =>
                 {
                     EnsureDescriptionIconPipeline();
+                    entry.DescriptionCustomLocked = session.InferDescriptionCustomLocked(dto);
+                    if (!entry.DescriptionCustomLocked)
+                    {
+                        session.TrySyncAutoDescription(dto, customLocked: false);
+                    }
+
+                    descriptionModeLabel = ContentVisualWarmConsoleUi.CreateDescriptionLabel(string.Empty);
+                    descriptionModeLabel.style.marginBottom = 4;
+                    column.Add(descriptionModeLabel);
+                    RefreshDescriptionModeLabel(entry);
+
                     descriptionField = new TextField
                     {
                         multiline = true,
@@ -684,7 +697,31 @@ namespace NineGrid.Content.Editor
                     descriptionField.style.maxHeight = 96;
                     descriptionField.RegisterValueChangedCallback(evt =>
                     {
-                        dto.description = evt.newValue ?? string.Empty;
+                        if (suppressDescriptionCallback)
+                        {
+                            return;
+                        }
+
+                        var text = evt.newValue ?? string.Empty;
+                        dto.description = text;
+                        if (string.IsNullOrWhiteSpace(text))
+                        {
+                            entry.DescriptionCustomLocked = false;
+                            if (session.TrySyncAutoDescription(dto, customLocked: false))
+                            {
+                                SetDescriptionFieldValue(dto.description);
+                            }
+                        }
+                        else
+                        {
+                            var auto = session.BuildAutoCardDescription(dto.effectAssemblies);
+                            entry.DescriptionCustomLocked = !string.Equals(
+                                text.Trim(),
+                                auto.Trim(),
+                                StringComparison.Ordinal);
+                        }
+
+                        RefreshDescriptionModeLabel(entry);
                         session.MarkDirty(dto.contentId);
                         InvalidateAndRefreshPreview(entry);
                         UpdateStatus();
@@ -706,7 +743,7 @@ namespace NineGrid.Content.Editor
 
             var effectAssemblyCard = ContentVisualWarmConsoleUi.CreateSectionCard(
                 "效果装配",
-                "统一效果池：选模板即可挂载；清空后白板。旧 skillIds 打开时会展开进本列表",
+                "统一效果池：可搜索选模板挂载；下拉文案用 {amount} 等参数位，数值只看下方 argsJson。清空后白板。旧 skillIds 打开时会展开进本列表",
                 column => BuildEffectAssemblySection(column, entry));
             effectAssemblyCard.style.marginBottom = 6;
             contentRoot.Add(effectAssemblyCard);
@@ -945,8 +982,7 @@ namespace NineGrid.Content.Editor
 
             var list = new List<EffectAssemblyDto>(dto.effectAssemblies);
             var templateChoices = session.GetEffectTemplateChoices();
-            var templateLabels = new List<string>();
-            var templateIds = new List<string>();
+            var searchableChoices = new List<SearchableChoiceField.Choice>(templateChoices.Count);
             for (var i = 0; i < templateChoices.Count; i++)
             {
                 var choice = templateChoices[i];
@@ -955,20 +991,28 @@ namespace NineGrid.Content.Editor
                     continue;
                 }
 
-                templateLabels.Add(choice.Label);
-                templateIds.Add(choice.TemplateId);
+                searchableChoices.Add(new SearchableChoiceField.Choice
+                {
+                    Label = choice.Label,
+                    Value = choice.TemplateId,
+                    SearchHaystack = (choice.Label ?? string.Empty) + " " + choice.TemplateId,
+                });
             }
 
-            if (templateLabels.Count == 0)
+            if (searchableChoices.Count == 0)
             {
-                templateLabels.Add("（无效果模板）");
-                templateIds.Add(string.Empty);
+                searchableChoices.Add(new SearchableChoiceField.Choice
+                {
+                    Label = "（无效果模板）",
+                    Value = "__none__",
+                    SearchHaystack = "无效果模板",
+                });
             }
 
             var listRoot = new VisualElement();
             column.Add(listRoot);
 
-            void CommitAssemblies()
+            void CommitAssemblies(bool rebuildUi)
             {
                 dto.effectAssemblies = list.ToArray();
                 dto.skillIds = Array.Empty<string>();
@@ -977,7 +1021,17 @@ namespace NineGrid.Content.Editor
                     dto.effectIds = Array.Empty<string>();
                 }
 
+                if (session.TrySyncAutoDescription(dto, entry.DescriptionCustomLocked))
+                {
+                    SetDescriptionFieldValue(dto.description);
+                    RefreshDescriptionModeLabel(entry);
+                }
+
                 OnDtoEdited(entry);
+                if (rebuildUi)
+                {
+                    RebuildList();
+                }
             }
 
             void RebuildList()
@@ -1013,43 +1067,46 @@ namespace NineGrid.Content.Editor
                     idField.RegisterValueChangedCallback(evt =>
                     {
                         assembly.id = evt.newValue ?? string.Empty;
-                        CommitAssemblies();
+                        CommitAssemblies(rebuildUi: false);
                     });
                     row.Add(ContentVisualWarmConsoleUi.WrapControlRow("挂载 id", idField, 56f));
 
                     var currentTpl = assembly.templateId ?? string.Empty;
-                    var rowLabels = new List<string>(templateLabels);
-                    var rowIds = new List<string>(templateIds);
-                    var tplIndex = rowIds.IndexOf(currentTpl);
-                    if (tplIndex < 0 && !string.IsNullOrEmpty(currentTpl))
+                    var rowChoices = new List<SearchableChoiceField.Choice>(searchableChoices);
+                    var hasCurrent = false;
+                    for (var c = 0; c < rowChoices.Count; c++)
                     {
-                        session.TryGetEffectTemplateDesignText(currentTpl, out var orphanDesign);
-                        var orphanLabel = CardPresentationEditorSession.FormatEffectTemplateChoiceLabel(
-                            currentTpl,
-                            orphanDesign);
-                        rowLabels.Insert(0, orphanLabel);
-                        rowIds.Insert(0, currentTpl);
-                        tplIndex = 0;
+                        if (string.Equals(rowChoices[c].Value, currentTpl, StringComparison.Ordinal))
+                        {
+                            hasCurrent = true;
+                            break;
+                        }
                     }
 
-                    if (tplIndex < 0)
+                    if (!hasCurrent && !string.IsNullOrEmpty(currentTpl))
                     {
-                        tplIndex = 0;
+                        var orphanLabel = session.GetParameterizedDesignText(currentTpl, assembly.argsJson);
+                        rowChoices.Insert(0, new SearchableChoiceField.Choice
+                        {
+                            Label = CardPresentationEditorSession.FormatEffectTemplateChoiceLabel(
+                                currentTpl,
+                                orphanLabel),
+                            Value = currentTpl,
+                            SearchHaystack = orphanLabel + " " + currentTpl,
+                        });
                     }
 
-                    var tplField = new PopupField<string>(rowLabels, tplIndex);
-                    ContentVisualWarmConsoleUi.EnablePopupWheelScroll(tplField);
-                    tplField.RegisterValueChangedCallback(evt =>
+                    var tplField = new SearchableChoiceField();
+                    tplField.SetChoices(rowChoices, string.IsNullOrEmpty(currentTpl) ? rowChoices[0].Value : currentTpl);
+                    tplField.ValueChanged += picked =>
                     {
-                        var picked = rowLabels.IndexOf(evt.newValue);
-                        assembly.templateId = picked >= 0 && picked < rowIds.Count
-                            ? rowIds[picked]
-                            : string.Empty;
+                        assembly.templateId = string.Equals(picked, "__none__", StringComparison.Ordinal)
+                            ? string.Empty
+                            : (picked ?? string.Empty);
                         assembly.containerType = InferDefaultContainerType(dto.kind);
                         assembly.argsJson = session.SuggestArgsJsonForTemplate(assembly.templateId);
-                        CommitAssemblies();
-                        RebuildList();
-                    });
+                        CommitAssemblies(rebuildUi: true);
+                    };
                     row.Add(ContentVisualWarmConsoleUi.WrapControlRow("效果", tplField, 96f));
 
                     if (!string.IsNullOrEmpty(currentTpl))
@@ -1061,15 +1118,15 @@ namespace NineGrid.Content.Editor
                     argsField.RegisterValueChangedCallback(evt =>
                     {
                         assembly.argsJson = evt.newValue ?? string.Empty;
-                        CommitAssemblies();
+                        // args 只影响预览插值；自动描述存 {param}，无需因改数重写描述。
+                        CommitAssemblies(rebuildUi: false);
                     });
                     row.Add(ContentVisualWarmConsoleUi.WrapControlRow("argsJson", argsField, 72f));
 
                     var removeBtn = new Button(() =>
                     {
                         list.RemoveAt(index);
-                        CommitAssemblies();
-                        RebuildList();
+                        CommitAssemblies(rebuildUi: true);
                     })
                     {
                         text = "删除",
@@ -1084,7 +1141,10 @@ namespace NineGrid.Content.Editor
             column.Add(ContentVisualWarmConsoleUi.CreateButtonRow(
                 new Button(() =>
                 {
-                    var templateId = templateIds.Count > 0 ? templateIds[0] : string.Empty;
+                    var templateId = searchableChoices.Count > 0
+                        && !string.Equals(searchableChoices[0].Value, "__none__", StringComparison.Ordinal)
+                        ? searchableChoices[0].Value
+                        : string.Empty;
                     list.Add(new EffectAssemblyDto
                     {
                         id = "fx." + Guid.NewGuid().ToString("N").Substring(0, 8),
@@ -1092,8 +1152,7 @@ namespace NineGrid.Content.Editor
                         containerType = InferDefaultContainerType(dto.kind),
                         argsJson = session.SuggestArgsJsonForTemplate(templateId),
                     });
-                    CommitAssemblies();
-                    RebuildList();
+                    CommitAssemblies(rebuildUi: true);
                 }) { text = "添加效果" },
                 new Button(() =>
                 {
@@ -1104,9 +1163,41 @@ namespace NineGrid.Content.Editor
 
                     list.Clear();
                     dto.effectIds = Array.Empty<string>();
-                    CommitAssemblies();
-                    RebuildList();
+                    CommitAssemblies(rebuildUi: true);
                 }) { text = "清空全部效果" }));
+        }
+
+        private void SetDescriptionFieldValue(string value)
+        {
+            if (descriptionField == null)
+            {
+                return;
+            }
+
+            suppressDescriptionCallback = true;
+            try
+            {
+                descriptionField.SetValueWithoutNotify(value ?? string.Empty);
+            }
+            finally
+            {
+                suppressDescriptionCallback = false;
+            }
+        }
+
+        private void RefreshDescriptionModeLabel(CardPresentationEditorEntry entry)
+        {
+            if (descriptionModeLabel == null)
+            {
+                return;
+            }
+
+            descriptionModeLabel.text = entry != null && entry.DescriptionCustomLocked
+                ? "模式：自定义（手改已锁定；清空描述框后恢复自动同步）"
+                : "模式：自动同步（跟随效果装配增删；文案为 {param} 参数位）";
+            descriptionModeLabel.style.color = entry != null && entry.DescriptionCustomLocked
+                ? ContentVisualWarmConsoleUi.Theme.AccentGoldValue
+                : ContentVisualWarmConsoleUi.Theme.TextSecondary;
         }
 
         private static string InferDefaultContainerType(string kind)
@@ -2434,7 +2525,9 @@ namespace NineGrid.Content.Editor
                 DisplayName = string.IsNullOrWhiteSpace(dto.displayName)
                     ? session.GetDisplayName(dto.contentId, dto.kind)
                     : dto.displayName,
-                BasicDescription = dto.description ?? string.Empty,
+                BasicDescription = CardFaceDescriptionParamFiller.FillFromAssemblies(
+                    dto.description ?? string.Empty,
+                    dto.effectAssemblies),
                 MainIcon = CardPresentationSpritePath.LoadSprite(sprites.mainIcon),
                 FaceBackground = CardPresentationSpritePath.LoadSprite(sprites.faceBackground),
                 BackBorder = CardPresentationSpritePath.LoadSprite(backBorderPath),
@@ -2454,12 +2547,29 @@ namespace NineGrid.Content.Editor
             var sprites = dto.sprites ?? new CardPresentationSpritesDto();
             var stats = dto.stats ?? new CardPresentationStatsDto();
             var mv = dto.mainVisual ?? new CardPresentationMainVisualDto();
+            var assemblies = dto.effectAssemblies;
+            var assemblyFp = string.Empty;
+            if (assemblies != null)
+            {
+                for (var i = 0; i < assemblies.Length; i++)
+                {
+                    var a = assemblies[i];
+                    if (a == null)
+                    {
+                        continue;
+                    }
+
+                    assemblyFp += a.templateId + "#" + a.argsJson + ";";
+                }
+            }
+
             return string.Join("|",
                 dto.contentId,
                 dto.kind,
                 dto.deckId,
                 dto.displayName,
                 dto.description,
+                assemblyFp,
                 dto.gold,
                 stats.hp,
                 stats.armor,

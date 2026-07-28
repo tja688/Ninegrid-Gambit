@@ -3,8 +3,9 @@
     "contentId": "monster.dragon_follower",
     "kind": "Monster",
     "deckId": "deck.dragon",
+    "role": "",
     "displayName": "龙信徒",
-    "description": "被移除时加入烈焰",
+    "description": "[被移除时] 将{count}张烈焰加入战斗卡组",
     "gold": 5,
     "stats": {
         "hp": 6,
@@ -70,10 +71,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.devotion"
+    "effectAssemblies": [
+        {
+            "id": "skill.devotion.remove",
+            "templateId": "tpl.skill.devotion.remove",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":2}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 1,
     "isElite": false,
     "isBoss": false,
@@ -86,7 +93,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

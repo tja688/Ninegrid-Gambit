@@ -2,6 +2,7 @@ using System;
 using NineGrid.Content;
 using NineGrid.Content.CardPresentation;
 using NineGrid.Content.Editor;
+using NineGrid.Content.Editor.Ui;
 using NineGrid.Core.Content;
 using NineGrid.Core.Effects;
 using NUnit.Framework;
@@ -266,6 +267,64 @@ namespace NineGrid.Presentation.Tests.Cards
             Assert.IsTrue(catalog.TryGetEffect(card.EffectIds[0], out var effect));
             var parsed = EffectJson.Parse(effect.Json);
             Assert.AreEqual(2, parsed.Get("modifier").Get("value").AsInt(0), effect.Json);
+        }
+
+        [Test]
+        public void BuildAutoCardDescription_JoinsParameterizedBriefs_AndUnlocksWhenCleared()
+        {
+            EffectTemplateCatalog.Invalidate();
+            if (!EffectTemplateCatalog.TryGet("tpl.relic.sling.kill", out var sling) || sling == null)
+            {
+                Assert.Ignore("生产 effect_templates.json 未加载 tpl.relic.sling.kill");
+            }
+
+            var session = new CardPresentationEditorSession();
+            // Session 下拉/自动描述依赖已加载的 effectTemplates 列表；手动走 Catalog 路径亦可。
+            var dto = new CardPresentationConfigDto
+            {
+                contentId = "relic.editor_auto_desc",
+                kind = "Relic",
+                description = string.Empty,
+                effectAssemblies = new[]
+                {
+                    new EffectAssemblyDto
+                    {
+                        id = "fx.a",
+                        templateId = "tpl.relic.sling.kill",
+                        argsJson = "{\"amount\":4}",
+                    },
+                },
+            };
+
+            var auto = EffectDesignTextParameterizer.Parameterize(
+                sling.DesignText,
+                sling.BodyJson,
+                dto.effectAssemblies[0].argsJson);
+            Assert.IsTrue(auto.Contains("{amount}"), auto);
+            Assert.IsFalse(auto.Contains("造成4点"), auto);
+
+            dto.description = auto;
+            Assert.IsFalse(session.InferDescriptionCustomLocked(dto));
+
+            dto.description = "人手写的自定义概括";
+            Assert.IsTrue(session.InferDescriptionCustomLocked(dto));
+            Assert.IsFalse(session.TrySyncAutoDescription(dto, customLocked: true));
+            Assert.AreEqual("人手写的自定义概括", dto.description);
+
+            dto.description = string.Empty;
+            Assert.IsFalse(session.InferDescriptionCustomLocked(dto));
+            Assert.IsTrue(session.TrySyncAutoDescription(dto, customLocked: false));
+            Assert.IsFalse(string.IsNullOrWhiteSpace(dto.description));
+            Assert.IsTrue(dto.description.Contains("{amount}"), dto.description);
+        }
+
+        [Test]
+        public void SearchableChoiceField_FuzzyMatch_ContainsAndSubsequence()
+        {
+            Assert.IsTrue(SearchableChoiceField.FuzzyMatch("造成{amount}点伤害（原遗物效果）", "amount"));
+            Assert.IsTrue(SearchableChoiceField.FuzzyMatch("tpl.relic.sling.kill", "sling"));
+            Assert.IsTrue(SearchableChoiceField.FuzzyMatch("击杀怪物时伤害", "击怪伤"));
+            Assert.IsFalse(SearchableChoiceField.FuzzyMatch("击杀怪物时伤害", "xyz"));
         }
     }
 }

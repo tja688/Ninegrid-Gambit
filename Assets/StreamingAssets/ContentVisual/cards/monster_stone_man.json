@@ -5,7 +5,7 @@
     "deckId": "deck.stone_legion",
     "role": "",
     "displayName": "石头人",
-    "description": "[action]",
+    "description": "[场上] 每次移动时，扣除相邻怪物卡全部护甲并使本卡获得等量护甲",
     "gold": 5,
     "stats": {
         "hp": 1,
@@ -74,9 +74,9 @@
     "effectAssemblies": [
         {
             "id": "fx.8a4044a8",
-            "templateId": "tpl.skill.stray_cub.slot6",
+            "templateId": "tpl.skill.absorb_stone.move",
             "containerType": "MonsterSkill",
-            "argsJson": "{\"value\":2}"
+            "argsJson": "{\"cause\":\"skill.absorb_stone\"}"
         }
     ],
     "effectIds": [],
