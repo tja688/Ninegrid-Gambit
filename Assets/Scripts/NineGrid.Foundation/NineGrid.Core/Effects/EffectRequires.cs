@@ -132,12 +132,26 @@ namespace NineGrid.Core.Effects
     }
 
     /// <summary>
-    /// 运行时 requires：与区域门禁并行、只紧不松。静态 mount 错配应已在 Validate 拦截。
+    /// 运行时 requires：区域/实体适用声明（ADR-0010）。静态 mount 错配应已在 Validate 拦截。
+    /// #73 起外部门禁已拆除；本卡移除帧与道具格被动限制由本类承接。
     /// </summary>
     public static class EffectRequiresRuntime
     {
         public static bool Passes(EffectInstance instance, EffectRuntimeContext runtime)
         {
+            string unused;
+            return TryExplainFailure(instance, runtime, out unused);
+        }
+
+        /// <summary>
+        /// 全部 requires 成立时返回 true（failedToken 为空）；否则返回 false 并写出失败 token。
+        /// </summary>
+        public static bool TryExplainFailure(
+            EffectInstance instance,
+            EffectRuntimeContext runtime,
+            out string failedToken)
+        {
+            failedToken = string.Empty;
             if (instance?.Definition == null || runtime == null)
             {
                 return true;
@@ -146,8 +160,10 @@ namespace NineGrid.Core.Effects
             var requires = instance.Definition.Requires;
             for (var i = 0; i < requires.Count; i++)
             {
-                if (!PassesToken(requires[i], instance, runtime))
+                var token = requires[i];
+                if (!PassesToken(token, instance, runtime))
                 {
+                    failedToken = string.IsNullOrEmpty(token) ? "(empty)" : token;
                     return false;
                 }
             }
@@ -215,7 +231,8 @@ namespace NineGrid.Core.Effects
                 return zone == ZoneId.ItemSlots;
             }
 
-            // CardZoneTriggerable：与区域门禁同向——Board 可；ItemSlots 仅 HelpCard；其余否（本卡移除帧由门禁特例放行）。
+            // CardZoneTriggerable：Board 可；ItemSlots 仅帮助卡「使用时」或显式 ItemSlots 条件；
+            // 卡组/坟场/移除区否（本卡移除帧特例放行）。
             if (zone == ZoneId.Board)
             {
                 return true;
@@ -223,12 +240,63 @@ namespace NineGrid.Core.Effects
 
             if (zone == ZoneId.ItemSlots && owner.ContainerType == EffectContainerType.HelpCard)
             {
-                return true;
+                return IsHelpCardItemSlotTriggerable(instance);
             }
 
             if (zone == ZoneId.Graveyard || zone == ZoneId.Removed || zone == ZoneId.DrawPile)
             {
                 return IsOwnerSelfRemoveBatch(instance, runtime);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 道具格帮助卡：仅「使用时」族触发，或声明 CardZone:ItemSlots 条件的被动。
+        /// </summary>
+        private static bool IsHelpCardItemSlotTriggerable(EffectInstance instance)
+        {
+            var trigger = instance.Definition?.Trigger;
+            if (trigger != null && !trigger.IsNull)
+            {
+                var atom = trigger.Get("atom").AsString(string.Empty);
+                if (Same(atom, "OnUseHelpCard")
+                    || Same(atom, "OnSelfUsed")
+                    || Same(atom, "OnOtherHelpCardUsed")
+                    || Same(atom, "OnAnyHelpCardUsed"))
+                {
+                    return true;
+                }
+            }
+
+            return HasCardZoneCondition(instance, ZoneId.ItemSlots);
+        }
+
+        private static bool HasCardZoneCondition(EffectInstance instance, ZoneId zone)
+        {
+            var conditions = instance.Definition?.Conditions;
+            if (conditions == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < conditions.Count; i++)
+            {
+                var node = conditions[i];
+                if (node == null || node.IsNull)
+                {
+                    continue;
+                }
+
+                if (!Same(node.Get("atom").AsString(string.Empty), "CardZone"))
+                {
+                    continue;
+                }
+
+                if (node.Get("zone").AsEnum(ZoneId.None) == zone)
+                {
+                    return true;
+                }
             }
 
             return false;

@@ -11,7 +11,7 @@ using QFramework;
 namespace NineGrid.Core.Tests
 {
     /// <summary>
-    /// 全局区域门禁：卡组 / 坟场实例不得触发卡牌挂载效果；场上实例正常触发。
+    /// #73 / ADR-0010：区域适用由 requires（CardZoneTriggerable / CardZone:Board）自陈；卡组实例不得触发。
     /// </summary>
     public sealed class CardZoneDeckGateRegressionTests
     {

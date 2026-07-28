@@ -19,6 +19,11 @@ namespace NineGrid.Core.Effects
         int DeactivateByOwner(int ownerUid);
         bool TryGetInstance(string instanceId, out EffectInstance instance);
         IReadOnlyList<GameAction> BuildTriggeredActions(string instanceId, TriggerContext triggerContext);
+        /// <summary>
+        /// ADR-0010 / #73：未触发探查——按效果实例 + 触发上下文返回失败类别（requires vs conditions 等）。
+        /// 不改写正向 EffectTriggered / ChainId 管线。
+        /// </summary>
+        EffectNonTriggerProbeResult ProbeWhyNotTriggered(string instanceId, TriggerContext triggerContext);
         void Clear();
     }
 
@@ -245,6 +250,24 @@ namespace NineGrid.Core.Effects
             return BuildActionsForMatchedInstance(instance, runtime);
         }
 
+        public EffectNonTriggerProbeResult ProbeWhyNotTriggered(string instanceId, TriggerContext triggerContext)
+        {
+            EffectInstance instance;
+            if (!TryGetInstance(instanceId, out instance))
+            {
+                return EffectNonTriggerProbeResult.Failed(
+                    EffectNonTriggerFailureKind.Other,
+                    "instance.missing",
+                    "Effect instance '" + (instanceId ?? string.Empty) + "' was not found.");
+            }
+
+            var runtime = new EffectRuntimeContext(
+                ((IBelongToArchitecture)this).GetArchitecture(),
+                instance,
+                triggerContext);
+            return EffectNonTriggerProbe.Evaluate(instance, runtime);
+        }
+
         internal IReadOnlyList<GameAction> BuildActionsForMatchedInstance(EffectInstance instance, EffectRuntimeContext runtime)
         {
             var targets = instance.Target.Resolve(runtime);
@@ -346,17 +369,7 @@ namespace NineGrid.Core.Effects
             }
 
             // 必须在 Trigger.Matches 之前检查：OnCumulative 等在 Matches 内会改写计数器。
-            if (!IsCardOwnedEffectInTriggerableZone(instance, runtime))
-            {
-                return false;
-            }
-
-            if (!EffectOwnerScopeGate.Passes(instance, runtime))
-            {
-                return false;
-            }
-
-            // ADR-0010 / #72：适用声明运行时求值（与门禁并行，只紧不松）。
+            // ADR-0010 / #73：外部门禁已拆除；区域/实体适用由 requires 自陈。
             if (!EffectRequiresRuntime.Passes(instance, runtime))
             {
                 return false;
@@ -381,126 +394,6 @@ namespace NineGrid.Core.Effects
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// 卡牌挂载效果（怪物技能 / 帮助卡）的区域门禁：
-        /// 卡组、坟场、移除区永不触发；九宫格可触发；
-        /// 道具牌格仅允许「使用时」或显式声明 ItemSlots 的被动效果。
-        /// 遗物 / 玩家技能（无 ownerUid）不受此限。
-        /// </summary>
-        private static bool IsCardOwnedEffectInTriggerableZone(EffectInstance instance, EffectRuntimeContext runtime)
-        {
-            if (instance?.Owner == null || instance.Owner.OwnerUid == 0)
-            {
-                return true;
-            }
-
-            var container = instance.Owner.ContainerType;
-            if (container != EffectContainerType.MonsterSkill && container != EffectContainerType.HelpCard)
-            {
-                return true;
-            }
-
-            CardInstance ownerCard;
-            if (!runtime.TryGetCard(instance.Owner.OwnerUid, out ownerCard))
-            {
-                return false;
-            }
-
-            var zone = ownerCard.Zone.Value;
-            if (zone == ZoneId.Graveyard || zone == ZoneId.Removed || zone == ZoneId.DrawPile)
-            {
-                return IsOwnerSelfRemoveTrigger(instance, runtime);
-            }
-
-            if (zone == ZoneId.Board)
-            {
-                return true;
-            }
-
-            if (zone == ZoneId.ItemSlots && container == EffectContainerType.HelpCard)
-            {
-                return IsHelpCardItemSlotTriggerable(instance);
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// [被移除时] 类效果：Kill/Remove 后 owner 已进入坟场，仍须允许本帧 OnRemove 触发。
-        /// </summary>
-        private static bool IsOwnerSelfRemoveTrigger(EffectInstance instance, EffectRuntimeContext runtime)
-        {
-            if (instance?.Trigger == null || instance.Trigger.Point != TriggerPoint.OnRemove)
-            {
-                return false;
-            }
-
-            var ownerUid = instance.Owner == null ? 0 : instance.Owner.OwnerUid;
-            if (ownerUid == 0)
-            {
-                return false;
-            }
-
-            var events = runtime.Events;
-            for (var i = 0; i < events.Count; i++)
-            {
-                if (events[i].Type == CoreEventType.CardRemoved && events[i].CardUid == ownerUid)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static bool IsHelpCardItemSlotTriggerable(EffectInstance instance)
-        {
-            var trigger = instance.Definition?.Trigger;
-            if (trigger != null && !trigger.IsNull)
-            {
-                var atom = trigger.Get("atom").AsString(string.Empty);
-                if (string.Equals(atom, "OnUseHelpCard", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(atom, "OnSelfUsed", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(atom, "OnOtherHelpCardUsed", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(atom, "OnAnyHelpCardUsed", StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-
-            return HasCardZoneCondition(instance, ZoneId.ItemSlots);
-        }
-
-        private static bool HasCardZoneCondition(EffectInstance instance, ZoneId zone)
-        {
-            var conditions = instance.Definition?.Conditions;
-            if (conditions == null)
-            {
-                return false;
-            }
-
-            for (var i = 0; i < conditions.Count; i++)
-            {
-                var node = conditions[i];
-                if (node.IsNull)
-                {
-                    continue;
-                }
-
-                if (!string.Equals(node.Get("atom").AsString(string.Empty), "CardZone", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                if (node.Get("zone").AsEnum(ZoneId.None) == zone)
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         private StatModifier CreateStatModifier(EffectInstance instance)

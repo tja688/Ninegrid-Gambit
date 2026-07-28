@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using NineGrid.Content;
 using NineGrid.Core;
 using NineGrid.Core.Content;
@@ -8,29 +9,31 @@ using NineGrid.Core.Systems;
 using NineGrid.Core.Utilities;
 using NUnit.Framework;
 using QFramework;
+using UnityEngine;
 
 namespace NineGrid.Core.Tests
 {
     /// <summary>
-    /// EffectOwnerScopeGate 薄层：双怪误触拦截、本卡事件放行、schema 硬规则、与已修补 Atom 二验。
+    /// #73 / ADR-0010 Phase C：外部门禁拆除后，自陈（单形态原子 / EventFilter / requires）须行为等价地挡住误触。
     /// </summary>
     public sealed class CardOwnedTriggerScopeGateRegressionTests
     {
-        private const string DamageTakenGateJson =
-            "{\"id\":\"test.gate.damage_taken\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
+        private const string DamageTakenSelfScopedJson =
+            "{\"id\":\"test.self.damage_taken\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
             + "\"kind\":\"Triggered\","
             + "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\"],"
             + "\"trigger\":{\"atom\":\"OnDamageTaken\"},"
+            + "\"conditions\":[{\"atom\":\"EventFilterTargetIsSelf\",\"eventType\":\"HpChanged\",\"maxDelta\":-1}],"
             + "\"target\":{\"atom\":\"Self\"},"
-            + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"test.gate.damage_taken\"}}";
+            + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"test.self.damage_taken\"}}";
 
-        private const string UnscopedCumulativeJson =
-            "{\"id\":\"test.gate.cumulative\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
+        private const string SelfArmorLostCumulativeJson =
+            "{\"id\":\"test.self.cumulative\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
             + "\"kind\":\"Triggered\","
             + "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\"],"
-            + "\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"armorLost\",\"threshold\":1},"
+            + "\"trigger\":{\"atom\":\"OnSelfArmorLostCumulative\",\"threshold\":1},"
             + "\"target\":{\"atom\":\"Self\"},"
-            + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"test.gate.cumulative\"}}";
+            + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"test.self.cumulative\"}}";
 
         private const string BadBareOnBattleJson =
             "{\"id\":\"test.gate.bad_battle\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
@@ -54,13 +57,27 @@ namespace NineGrid.Core.Tests
             + "\"trigger\":{\"atom\":\"OnArmorBreak\"},\"target\":{\"atom\":\"Player\"},"
             + "\"action\":{\"atom\":\"DealDamage\",\"amount\":1,\"actor\":\"Self\"}}";
 
-        private const string UnscopedMoveToSlotJson =
-            "{\"id\":\"test.gate.move_slot\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
+        private const string SelfMoveToSlotJson =
+            "{\"id\":\"test.self.move_slot\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\","
             + "\"kind\":\"Triggered\","
             + "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\"],"
-            + "\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":3,\"target\":\"Any\"},"
+            + "\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":3,\"target\":\"Self\"},"
             + "\"target\":{\"atom\":\"Self\"},"
-            + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"test.gate.move_slot\"}}";
+            + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"test.self.move_slot\"}}";
+
+        private const string OnSelfRemovedJson =
+            "{\"id\":\"test.self.removed\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\","
+            + "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\"],"
+            + "\"trigger\":{\"atom\":\"OnSelfRemoved\"},"
+            + "\"target\":{\"atom\":\"Self\"},"
+            + "\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":1,\"reason\":\"test.self.removed\"}}";
+
+        private const string OnSelfUsedJson =
+            "{\"id\":\"test.self.used\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\","
+            + "\"requires\":[\"HasOwnerEntity\",\"ActivatedByUse\",\"CardZoneTriggerable\"],"
+            + "\"trigger\":{\"atom\":\"OnSelfUsed\"},"
+            + "\"target\":{\"atom\":\"Player\"},"
+            + "\"action\":{\"atom\":\"ModifyGold\",\"delta\":1}}";
 
         private static readonly SlotId sObserverSlot = SlotId.Board(2);
         private static readonly SlotId sVictimSlot = SlotId.Board(4);
@@ -90,7 +107,21 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void OnDamageTaken_OtherMonsterDamaged_ObserverDoesNotGainAttack()
+        public void EffectOwnerScopeGate_SourceFile_IsRemoved()
+        {
+            var root = Path.GetFullPath(Path.Combine(Application.dataPath, "Scripts/NineGrid.Foundation/NineGrid.Core/Effects"));
+            Assert.IsFalse(
+                File.Exists(Path.Combine(root, "EffectOwnerScopeGate.cs")),
+                "EffectOwnerScopeGate.cs must be deleted (#73)");
+            var effectSystem = File.ReadAllText(Path.Combine(root, "EffectSystem.cs"));
+            Assert.IsFalse(effectSystem.Contains("EffectOwnerScopeGate"), "EffectSystem must not call EffectOwnerScopeGate");
+            Assert.IsFalse(
+                effectSystem.Contains("IsCardOwnedEffectInTriggerableZone"),
+                "EffectSystem must not keep zone gate helper");
+        }
+
+        [Test]
+        public void OnDamageTaken_WithTargetIsSelf_OtherMonsterDamaged_ObserverDoesNotGainAttack()
         {
             Assert.IsTrue(mPhase.StartNode(CreateEmptyEnemyNode()).Accepted);
             var board = mArch.GetModel<BoardModel>();
@@ -98,18 +129,18 @@ namespace NineGrid.Core.Tests
 
             var observerUid = SpawnOnBoardReturnUid("monster.big_skeleton", sObserverSlot);
             var victimUid = SpawnOnBoardReturnUid("monster.headless_skeleton", sVictimSlot);
-            ActivateEffect(DamageTakenGateJson, observerUid, "test.gate.damage_taken");
+            ActivateEffect(DamageTakenSelfScopedJson, observerUid, "test.self.damage_taken");
 
             var atkBefore = (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack);
             PrepareAvatarAttack(5);
 
             var hit = mPhase.ApplyCombatHit(board.AvatarUid.Value, victimUid);
             Assert.IsTrue(hit.Accepted, hit.Reason);
-            Assert.AreEqual(atkBefore, (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack), "他怪受伤时观察者不得触发 OnDamageTaken");
+            Assert.AreEqual(atkBefore, (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack), "他怪受伤时观察者不得触发自陈 OnDamageTaken");
         }
 
         [Test]
-        public void OnDamageTaken_SelfDamaged_TriggersOnce()
+        public void OnDamageTaken_WithTargetIsSelf_SelfDamaged_TriggersOnce()
         {
             Assert.IsTrue(mPhase.StartNode(CreateEmptyEnemyNode()).Accepted);
             var board = mArch.GetModel<BoardModel>();
@@ -117,18 +148,18 @@ namespace NineGrid.Core.Tests
 
             var observerUid = SpawnOnBoardReturnUid("monster.big_skeleton", sObserverSlot);
             SpawnOnBoardReturnUid("monster.headless_skeleton", sVictimSlot);
-            ActivateEffect(DamageTakenGateJson, observerUid, "test.gate.damage_taken");
+            ActivateEffect(DamageTakenSelfScopedJson, observerUid, "test.self.damage_taken");
 
             var atkBefore = (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack);
             PrepareAvatarAttack(5);
 
             var hit = mPhase.ApplyCombatHit(board.AvatarUid.Value, observerUid);
             Assert.IsTrue(hit.Accepted, hit.Reason);
-            Assert.AreEqual(atkBefore + 1, (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack), "本怪受伤应触发 OnDamageTaken 一次");
+            Assert.AreEqual(atkBefore + 1, (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack), "本怪受伤应触发一次");
         }
 
         [Test]
-        public void OnCumulative_Unscoped_OtherMonsterArmorLost_DoesNotTriggerObserver()
+        public void OnSelfArmorLostCumulative_OtherMonsterArmorLost_DoesNotTriggerObserver()
         {
             Assert.IsTrue(mPhase.StartNode(CreateEmptyEnemyNode()).Accepted);
             var board = mArch.GetModel<BoardModel>();
@@ -137,14 +168,14 @@ namespace NineGrid.Core.Tests
             var observerUid = SpawnOnBoardReturnUid("monster.big_skeleton", sObserverSlot);
             var victimUid = SpawnOnBoardReturnUid("monster.headless_skeleton", sVictimSlot);
             registry.Get(victimUid).Stats.SetBase(StatId.Armor, 2);
-            ActivateEffect(UnscopedCumulativeJson, observerUid, "test.gate.cumulative");
+            ActivateEffect(SelfArmorLostCumulativeJson, observerUid, "test.self.cumulative");
 
             var atkBefore = (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack);
             PrepareAvatarAttack(3);
 
             var hit = mPhase.ApplyCombatHit(board.AvatarUid.Value, victimUid);
             Assert.IsTrue(hit.Accepted, hit.Reason);
-            Assert.AreEqual(atkBefore, (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack), "无 scope 的 OnCumulative 不得因他怪掉甲误触");
+            Assert.AreEqual(atkBefore, (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack), "OnSelfArmorLostCumulative 不得因他怪掉甲误触");
         }
 
         [Test]
@@ -166,41 +197,41 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void OnMoveToSlot_TargetAny_OtherMonsterMoves_ObserverDoesNotGainAttack()
+        public void OnMoveToSlot_TargetSelf_OtherMonsterMoves_ObserverDoesNotGainAttack()
         {
             Assert.IsTrue(mPhase.StartNode(CreateEmptyEnemyNode()).Accepted);
             var registry = mArch.GetModel<CardRegistry>();
 
             var observerUid = SpawnOnBoardReturnUid("monster.big_skeleton", sObserverSlot);
             var victimUid = SpawnOnBoardReturnUid("monster.headless_skeleton", sVictimSlot);
-            ActivateEffect(UnscopedMoveToSlotJson, observerUid, "test.gate.move_slot");
+            ActivateEffect(SelfMoveToSlotJson, observerUid, "test.self.move_slot");
 
             var atkBefore = (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack);
             mPipeline.Enqueue(new MoveCardAction(victimUid, sMoveTargetSlot, "test", "test"));
             Assert.Greater(mPipeline.RunToCompletion(), 0);
 
-            Assert.AreEqual(atkBefore, (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack), "target:Any 时他怪移动到目标格不得触发观察者");
+            Assert.AreEqual(atkBefore, (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack), "target:Self 时他怪移动不得触发观察者");
         }
 
         [Test]
-        public void OnMoveToSlot_TargetAny_SelfMoves_TriggersOnce()
+        public void OnMoveToSlot_TargetSelf_SelfMoves_TriggersOnce()
         {
             Assert.IsTrue(mPhase.StartNode(CreateEmptyEnemyNode()).Accepted);
             var registry = mArch.GetModel<CardRegistry>();
 
             var observerUid = SpawnOnBoardReturnUid("monster.big_skeleton", sObserverSlot);
             SpawnOnBoardReturnUid("monster.headless_skeleton", sVictimSlot);
-            ActivateEffect(UnscopedMoveToSlotJson, observerUid, "test.gate.move_slot");
+            ActivateEffect(SelfMoveToSlotJson, observerUid, "test.self.move_slot");
 
             var atkBefore = (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack);
             mPipeline.Enqueue(new MoveCardAction(observerUid, sMoveTargetSlot, "test", "test"));
             Assert.Greater(mPipeline.RunToCompletion(), 0);
 
-            Assert.AreEqual(atkBefore + 1, (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack), "target:Any 视同 Self：本怪移动到目标格应触发一次");
+            Assert.AreEqual(atkBefore + 1, (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack), "本怪移动到目标格应触发一次");
         }
 
         [Test]
-        public void AbsorbBone_AdjacentRemoved_GateDoesNotBlock()
+        public void AbsorbBone_AdjacentRemoved_SelfDeclarationDoesNotBlock()
         {
             Assert.IsTrue(mPhase.StartNode(new NodeDeckOptions
             {
@@ -226,7 +257,66 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(
                 ContainsEffectTriggeredSince(startIndex, "skill.absorb_bone")
                 || (int)king.Stats.GetBase(StatId.Attack) > atkBefore,
-                "S1 白名单：吸骨相邻怪物被移除时薄层不得误拦");
+                "吸骨相邻怪物被移除时应触发（自陈 Adjacent，无外部门禁）");
+        }
+
+        [Test]
+        public void OneMonsterDeath_DoesNotFireUnrelatedOnSelfRemoved()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateEmptyEnemyNode()).Accepted);
+            var board = mArch.GetModel<BoardModel>();
+            var registry = mArch.GetModel<CardRegistry>();
+
+            var observerUid = SpawnOnBoardReturnUid("monster.big_skeleton", sObserverSlot);
+            var victimUid = SpawnOnBoardReturnUid("monster.headless_skeleton", sVictimSlot);
+            registry.Get(victimUid).Stats.SetBase(StatId.Hp, 1);
+            registry.Get(victimUid).Stats.SetBase(StatId.MaxHp, 1);
+            registry.Get(victimUid).Stats.SetBase(StatId.Armor, 0);
+            ActivateEffect(OnSelfRemovedJson, observerUid, "test.self.removed");
+
+            var atkBefore = (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack);
+            PrepareAvatarAttack(10);
+            var hit = mPhase.ApplyCombatHit(board.AvatarUid.Value, victimUid);
+            Assert.IsTrue(hit.Accepted, hit.Reason);
+            Assert.AreEqual(atkBefore, (int)registry.Get(observerUid).Stats.GetBase(StatId.Attack), "他怪死亡不得触发观察者 OnSelfRemoved");
+        }
+
+        [Test]
+        public void UseOneHelpCard_DoesNotFireOtherHelpCardOnSelfUsed()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateEmptyEnemyNode()).Accepted);
+            var usedUid = SpawnHelpIntoItemSlots("help.healing_potion");
+            var idleUid = SpawnHelpIntoItemSlots("help.healing_potion");
+            Assert.AreNotEqual(usedUid, idleUid);
+
+            var usedInstance = ActivateHelpEffect(OnSelfUsedJson, usedUid, "test.self.used.a");
+            var idleInstance = ActivateHelpEffect(OnSelfUsedJson, idleUid, "test.self.used.b");
+
+            var events = new List<CoreGameEvent>
+            {
+                new CoreGameEvent(CoreEventType.ItemUsed, 1, "UseItem").WithCard(usedUid)
+            };
+            var ctx = new TriggerContext(TriggerPoint.OnUseHelpCard, TriggerTiming.Post, null, events, null);
+
+            var usedProbe = mEffects.ProbeWhyNotTriggered(usedInstance.InstanceId, ctx);
+            var idleProbe = mEffects.ProbeWhyNotTriggered(idleInstance.InstanceId, ctx);
+            Assert.IsTrue(usedProbe.WouldHaveTriggered, usedProbe.Code + ": " + usedProbe.Message);
+            Assert.AreEqual(
+                EffectNonTriggerFailureKind.TriggerMismatch,
+                idleProbe.Kind,
+                "他卡被使用时，本卡 OnSelfUsed 不得匹配");
+
+            Assert.Greater(mEffects.BuildTriggeredActions(usedInstance.InstanceId, ctx).Count, 0, "被使用帮助卡应能建出动作");
+            Assert.AreEqual(0, mEffects.BuildTriggeredActions(idleInstance.InstanceId, ctx).Count, "未使用帮助卡不得建出动作");
+        }
+
+        private int SpawnHelpIntoItemSlots(string defId)
+        {
+            mPipeline.Enqueue(new SpawnCardAction(defId, CardKind.HelpCard, ZoneId.ItemSlots, SlotId.None, 1, "test"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+            var deck = mArch.GetModel<DeckModel>();
+            Assert.Greater(deck.ItemSlotUids.Count, 0);
+            return deck.ItemSlotUids[deck.ItemSlotUids.Count - 1];
         }
 
         [Test]
@@ -237,7 +327,7 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void PatchedOnRemoveAndOnArmorBreak_StillWorkWithGateSecondCheck()
+        public void PatchedOnRemoveAndOnArmorBreak_StillWorkWithoutExternalGate()
         {
             Assert.IsTrue(mPhase.StartNode(new NodeDeckOptions
             {
@@ -259,7 +349,7 @@ namespace NineGrid.Core.Tests
             var victimUid = board.GetCardUid(sVictimSlot);
             var hit = mPhase.ApplyCombatHit(board.AvatarUid.Value, victimUid);
             Assert.IsTrue(hit.Accepted, hit.Reason);
-            Assert.AreEqual(skullBefore, CountDefInDrawPile("monster.skull_head"), "二验：他卡移除不得触发散架");
+            Assert.AreEqual(skullBefore, CountDefInDrawPile("monster.skull_head"), "他卡移除不得触发散架");
 
             registry.Get(sharpUid).Stats.SetBase(StatId.Armor, 1);
             var avatarUid = board.AvatarUid.Value;
@@ -271,7 +361,7 @@ namespace NineGrid.Core.Tests
             var startIndex = mPipeline.EventLog.Entries.Count;
             var tankHit = mPhase.ApplyCombatHit(avatarUid, tankUid);
             Assert.IsTrue(tankHit.Accepted, tankHit.Reason);
-            Assert.AreEqual(0, CountDamageToPlayerSince(startIndex), "二验：他怪碎甲不得触发尖石");
+            Assert.AreEqual(0, CountDamageToPlayerSince(startIndex), "他怪碎甲不得触发尖石");
         }
 
         private void ActivateEffect(string json, int ownerUid, string sourceDefId)
@@ -279,6 +369,13 @@ namespace NineGrid.Core.Tests
             var definition = mEffects.ParseJson(json);
             Assert.IsTrue(mEffects.Validate(definition).IsValid, json);
             mEffects.Activate(definition, new EffectOwner(EffectContainerType.MonsterSkill, sourceDefId, ownerUid));
+        }
+
+        private EffectInstance ActivateHelpEffect(string json, int ownerUid, string sourceDefId)
+        {
+            var definition = mEffects.ParseJson(json);
+            Assert.IsTrue(mEffects.Validate(definition).IsValid, json);
+            return mEffects.Activate(definition, new EffectOwner(EffectContainerType.HelpCard, sourceDefId, ownerUid));
         }
 
         private static NodeDeckOptions CreateEmptyEnemyNode()

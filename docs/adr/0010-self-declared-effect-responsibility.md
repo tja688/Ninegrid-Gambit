@@ -37,8 +37,9 @@ status: accepted
 - **风险方向反转，且面很大。** 卡挂载效果（HelpCard 33 + MonsterSkill 74）共 107 条，其中 **78 条没有任何显式场景声明**（`CardZone` 仅 5 条、`EventFilter` 21 条、`AtSlot` 10 条），完全靠隐式门禁兜着。例：`help.fireball.use` 的 DSL 只说「触发：帮助卡被使用 / 目标：选中怪物 / 造成伤害」，「只在我自己被使用时」那句是门禁与 `ownerOnly` 默认值替它说的。门禁拆掉而声明没补，失败模式从「静默不触发」翻转为「乱触发」——用一张药水，手牌里的火球炸弹破击锤全放一遍；一只怪物死亡，场上所有亡语一起响。乱触发会污染整局状态，且症状看起来像别的系统坏了。
 - **因此强制实施顺序：先补声明，后拆门禁。** 门禁在场时补声明只会更严格，最坏症状是「该触发的没触发」，能被 EditMode 与试玩发现；78 条全部补完、测试全绿后再摘门禁，那一步是行为等价的。顺序反过来会有一段时间游戏不可玩。
 - 31 处上下文开关参数对应的原子需拆分并重新校验 `EffectAtomSchemas`。
-- 未触发探查是新建能力：ADR-0003 的诊断关联层（ChainId / ChoreoSeqId）记的是「发生了什么」，不记「为什么没发生」。
+- 未触发探查是新建能力：ADR-0003 的诊断关联层（ChainId / ChoreoSeqId）记的是「发生了什么」，不记「为什么没发生」。落地 API：`IEffectSystem.ProbeWhyNotTriggered` → `EffectNonTriggerProbeResult`（`Requires` / `Conditions` / `TriggerMismatch` / `Other`）。
 - `EffectAtomSchemas.ValidateCardOwnedTriggerScope`（怪物技能 `OnBattle` 须带 `EventFilter`/`AtSlot` 等）从「外部强制」改写为自陈校验。
+- **#73 落地后**：`EffectOwnerScopeGate` 与 `IsCardOwnedEffectInTriggerableZone` 已删除；区域适用由 `EffectRequiresRuntime`（含道具格使用族 / 本卡移除帧特例）承接；门禁回归改写为自陈等价断言。
 
 ## 相关
 
