@@ -1,10 +1,11 @@
 namespace NineGrid.Core
 {
     /// <summary>
-    /// 表演锚点：结算指令在卡面数值提交时间轴上的归属。
+    /// 表演锚点：结算指令在表演时间轴上的<strong>表演消费归属</strong>
+    ///（卡面数值、旁路装饰如飘字/FX/金币等共用；非仅卡面）。
     /// <para>
     /// v1 只有三个：<see cref="Impact"/>（命中帧）、<see cref="Settled"/>（本批表演收尾）、
-    /// <see cref="None"/>（不上卡面，须在映射表写明理由）。
+    /// <see cref="None"/>（无表演消费，须在映射表写明理由）。
     /// </para>
     /// <para>
     /// 升级路径：若观察型加攻等 Settled 归属在观感上嫌晚，可增加「命中后」锚点（建议名
@@ -13,7 +14,7 @@ namespace NineGrid.Core
     /// </summary>
     public enum PresentationBeat
     {
-        /// <summary>不上卡面。映射表必须附带非空理由。</summary>
+        /// <summary>无表演消费（排期器不装载）。映射表必须附带非空理由。</summary>
         None = 0,
 
         /// <summary>命中帧（攻击/反击 onCombatHit）。</summary>

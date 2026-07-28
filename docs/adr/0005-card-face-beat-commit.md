@@ -44,10 +44,11 @@ v1 锚点：
 - `CoreCardPresentationMapper` 保留视觉投影；已提交卡面的数值不被直读 Core 覆写；JSON `stats` 不再盖写运行时卡面。
 - `MarkFieldDead` 只标死亡态；可见血量归零走 `KillCard` 指令的 `RemainingHp`。
 - 玩家信息 HUD、飘字、Bounce 候选项等其它消费者仍可直读，属后续迁移，不构成本票卡面数值新旧并存。
-- **衔接补丁**：命中帧摘掉 `SyncManagedCardPresentation` 后，Avatar 血甲 HUD 改由 `BattleBeatScheduler` 在消费 Avatar 数值指令的同拍调用 `PlayerInfoHudPresenter.SyncFromCore`（仍直读内核；时机与卡面锚点对齐）。
+- **衔接补丁**：命中帧摘掉 `SyncManagedCardPresentation` 后，Avatar 血甲 HUD 改由 `BattleBeatScheduler` 在消费 Avatar 数值指令的同拍调用 `PlayerInfoHudPresenter.SyncFromCore`（仍直读内核；时机与卡面锚点对齐）。战中收口与装饰消费者见 [ADR-0007](0007-unified-presentation-pipeline.md)。
 
 ## 相关
 
 - [ADR-0001](0001-battle-presentation-unified-timeline-batch-ack.md) — 统一时间线与批次就位回执（本决策建立其上）
 - [ADR-0002](0002-card-chassis-and-face-templates.md) — 卡牌底盘与投影 Commit；本决策真正落地「禁止队列外直刷」
 - [ADR-0004](0004-input-intake-two-axis-gating.md) — 输入唯一收口；本决策为输出建立唯一出口（结构同源）
+- [ADR-0007](0007-unified-presentation-pipeline.md) — 多处理器统一表现管线（卡面之外的装饰消费者）

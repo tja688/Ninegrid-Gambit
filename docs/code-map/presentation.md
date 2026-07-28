@@ -25,7 +25,7 @@
 
 | 子目录 | 内容 |
 |--------|------|
-| `Presentation/` | `PresentationDirector`、`BattleTimeline`、`IPresentChannel` 实现、Intent Script Factory、`BattleBeatScheduler` / `CardFaceStatHandler`、Scheduler 等编排深模块；部分 struct Event |
+| `Presentation/` | `PresentationDirector`、`BattleTimeline`、`IPresentChannel` 实现、Intent Script Factory、`BattleBeatScheduler` / `IBattleBeatHandler` / `CardFaceStatHandler`、Scheduler 等编排深模块；部分 struct Event |
 | `BattleSession/` | 局内会话相关类型 / 接口 |
 | `GameFlow/` | 流程壳运行选项等 |
 | `Diagnostics/` | Battle/Flow/Perf/Registry Trace Recorder 与 Sink |
@@ -106,7 +106,7 @@
 
 1. `Commands/` / `Queries/` / Event  
 2. `ITimelineStep` / `IPresentChannel`（`Flow/Presentation/`）  
-3. `BattleBeatScheduler` / `CardFaceStatHandler`（卡面数值锚点；新事件须在 `PresentationEventMap` 声明 Beat）  
+3. `BattleBeatScheduler` / `IBattleBeatHandler`（多处理器唯一分发；`CardFaceStatHandler` 为卡面数值；新事件须在 `PresentationEventMap` 声明 Beat）  
 4. 卡面视觉 SO（`Cards/Effects/`）  
 
 不要接回静态业务 Sink，也不要在 View 上直接改 Core 规则状态，也不要旁路直读 Core 写卡面数值。
@@ -117,7 +117,7 @@
 - 逻辑占格唯一归 Core `BoardModel`  
 - 卡面可见值经投影 Commit（ADR-0002）；禁止队列外正式 Setter 通路  
 - 输入唯一收口 IntentIntake + 两轴门禁（ADR-0004）  
-- 卡面**数值**只经结算指令在表演锚点提交，不直读 Core（ADR-0005）  
+- 卡面**数值**只经结算指令在表演锚点提交，不直读 Core（ADR-0005）；装饰消费者经同一排期器多处理器分发（ADR-0007）  
 - Windows Player 高回报率鼠标：`RIDEV_NOLEGACY` + 轮询注入 Input System；命中走 `PointerHitRouter`，禁 `OnMouse*`（ADR-0006）
 
 ## 指针与命中（ADR-0006）
@@ -129,17 +129,17 @@
 - **Win Player mitigation**：`Platform/WindowsHighPollingMouseMitigation`（`#if UNITY_STANDALONE_WIN && !UNITY_EDITOR`）
 - **工程设置**：`activeInputHandler = 1`（New Input System only）
 - **专项回归**：125 / 1000 / 4000+ Hz × 窗口/无边框/全屏；hover、空槽、点怪、手牌拖放、BoardSelect、BounceFan
-## Core 表演契约与卡面锚点（#54 / #55 / #56 / #57 / #58）
+## Core 表演契约与统一表现管线（#54–#59）
 
-- `NineGrid.Core.PresentationBeat`：`Impact` / `Settled` / `None`（升级路径注释在枚举旁）
-- `PresentationEventMapEntry.Beat` + `NoneReason`：每个 `CoreEventType` 显式锚点归属；不上卡面必须写理由
+- `NineGrid.Core.PresentationBeat`：`Impact` / `Settled` / `None`（**表演消费归属**，非仅卡面；升级路径注释在枚举旁）
+- `PresentationEventMapEntry.Beat` + `NoneReason`：每个 `CoreEventType` 显式锚点归属；`None` 必须写「为何无表演消费」
 - 数值类指令绝对值：血甲用既有 `RemainingHp`/`RemainingArmor`；`BaseStatModified` / 生成类事件攻用 `ResultValue`（`Amount` 仍为 StatId，`Delta` 仍为增量）；`CardKilled` 携带 `RemainingHp`
 - 穷尽性：`NineGrid.Core.Tests.PresentationEventMapBeatExhaustivenessTests`
-- **排期器** `Flow/Presentation/BattleBeatScheduler`：批次开启装载未消费指令；`ReportBeat` 分发；Settled 后未消费只报不改；消费 **Avatar** 数值指令的同拍旁路调用 `PlayerInfoHudPresenter.SyncFromCore`（HUD 仍直读内核，非卡面第二条路径）
-- **卡面数值处理器** `Flow/Presentation/CardFaceStatHandler`：只从指令赋值 → `ManagedCard.CommitPresentation`；不碰 `CardRegistry` / `IStatSystem`；`SpawnCard` / `DealCard` / `ShowAvatar` 走同一 `ApplySpawnFace`；`KillCard` 取 `RemainingHp`
+- **排期器** `Flow/Presentation/BattleBeatScheduler`：批次开启装载非 `None` 指令；`ReportBeat` 交给第一个 `IBattleBeatHandler.TryApply` 成功者；Settled 后未消费只报不改；消费 **Avatar** 数值指令的同拍旁路调用 `PlayerInfoHudPresenter.SyncFromCore`（HUD 仍直读内核，战中收口见后续票）
+- **处理器** `IBattleBeatHandler`：`CardFaceStatHandler` 只从指令赋值 → `ManagedCard.CommitPresentation`；不碰 `CardRegistry` / `IStatSystem`；装饰 handler 后续票注册，不占主线 ack
 - **生成绝对值** `CardFaceEventValues.WithFaceAbsolutes`：`CardSpawned` / 带 uid 的 `CardDealt` / `AvatarAppeared` 写入造卡/发牌时攻甲血
 - **开局引导** `Flow/Presentation/CardFaceGenerationBootstrap`：非锁步 Opening 从事件日志重放生成类指令；BoardSelect 视图重 Spawn 用 `ApplyFaceHistoryForUid` 重放该 uid 的生成+后续数值指令（与 Settled 同一 Handler）
 - **报点**：攻击/反击命中帧 → `Impact`；`PresentStep` 通道完成后先冲刷 `Impact` 再报 `Settled`，然后 `TryAcknowledge`（探索/用道具无帧级回调，收尾时一并冲刷）
-- **组合根**：`PresentationCompositionRoot` 注册排期器并订阅 `Evt_PresentationBatchOpened`
+- **组合根**：`PresentationCompositionRoot` 注册排期器（当前注入 `CardFaceStatHandler`）并订阅 `Evt_PresentationBatchOpened`
 - **读写约定补则**：卡面数值只经排期器/生成引导，禁止 Mapper 首次 `TryRead` 写数值；JSON `stats` 仅 Catalog 造卡用；用道具 Present 只 `RefreshVisualsPreservingCommittedStatsOnAllSpawned`；探索/用道具批次投影不写卡面数值；`MarkFieldDead` 只标死亡态不改血量；底盘数值 Setter 非公开
-- **ADR**：[ADR-0005](../adr/0005-card-face-beat-commit.md)（与 0001/0002/0004 交叉引用）；指针/高回报率见 [ADR-0006](../adr/0006-windows-high-polling-mouse-mitigation.md)
+- **ADR**：[ADR-0005](../adr/0005-card-face-beat-commit.md)、[ADR-0007](../adr/0007-unified-presentation-pipeline.md)（与 0001/0002/0004 交叉引用）；指针/高回报率见 [ADR-0006](../adr/0006-windows-high-polling-mouse-mitigation.md)

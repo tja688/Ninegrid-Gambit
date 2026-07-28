@@ -8,35 +8,43 @@ namespace NineGrid.Flow.Presentation
     /// <summary>
     /// 卡面数值处理器：只从结算指令绝对值赋值，不回头读 CardRegistry / IStatSystem。
     /// </summary>
-    public sealed class CardFaceStatHandler
+    public sealed class CardFaceStatHandler : IBattleBeatHandler
     {
-        public void Apply(PresentationInstruction instruction)
+        public bool TryApply(PresentationInstruction instruction)
         {
             if (instruction == null || instruction.Event == null)
             {
-                return;
+                return false;
             }
 
             switch (instruction.Kind)
             {
                 case PresentationInstructionKind.UpdateHp:
                     ApplyHp(instruction.Event);
-                    break;
+                    return true;
                 case PresentationInstructionKind.UpdateArmor:
                     ApplyArmor(instruction.Event);
-                    break;
+                    return true;
                 case PresentationInstructionKind.ModifyBaseStat:
                     ApplyBaseStat(instruction.Event);
-                    break;
+                    return true;
                 case PresentationInstructionKind.KillCard:
                     ApplyKill(instruction.Event);
-                    break;
+                    return true;
                 case PresentationInstructionKind.SpawnCard:
                 case PresentationInstructionKind.DealCard:
                 case PresentationInstructionKind.ShowAvatar:
                     ApplySpawnFace(instruction.Event);
-                    break;
+                    return true;
+                default:
+                    return false;
             }
+        }
+
+        /// <summary>测试与开局引导用：等价于 <see cref="TryApply"/> 且忽略返回值。</summary>
+        public void Apply(PresentationInstruction instruction)
+        {
+            TryApply(instruction);
         }
 
         private static void ApplyHp(CoreGameEvent gameEvent)

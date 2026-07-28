@@ -8,7 +8,7 @@ using UnityEngine;
 namespace NineGrid.Presentation.Tests
 {
     /// <summary>
-    /// #55/#56/#57/#58 结构护栏：卡面数值提交入口与攻击/反击/用道具路径直读捷径。
+    /// #55/#56/#57/#58/#59 结构护栏：卡面数值提交入口、多处理器排期器与攻击/反击/用道具路径直读捷径。
     /// </summary>
     public sealed class CardFaceBeatStructuralTests
     {
@@ -402,10 +402,71 @@ namespace NineGrid.Presentation.Tests
             Assert.IsTrue(text.IndexOf("ADR-0001", StringComparison.Ordinal) >= 0, "须交叉引用 ADR-0001");
             Assert.IsTrue(text.IndexOf("ADR-0002", StringComparison.Ordinal) >= 0, "须交叉引用 ADR-0002");
             Assert.IsTrue(text.IndexOf("ADR-0004", StringComparison.Ordinal) >= 0, "须交叉引用 ADR-0004");
+            Assert.IsTrue(text.IndexOf("ADR-0007", StringComparison.Ordinal) >= 0, "须交叉引用 ADR-0007（装饰消费者）");
             Assert.IsTrue(text.IndexOf("决策 1", StringComparison.Ordinal) >= 0
                           || text.IndexOf("决策1", StringComparison.Ordinal) >= 0
                           || text.IndexOf("D1", StringComparison.Ordinal) >= 0,
                 "须显式记录 #53 决策 1–6");
+        }
+
+        [Test]
+        public void BattleBeatScheduler_Accepts_Multiple_IBattleBeatHandlers()
+        {
+            var schedulerPath = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "Presentation",
+                "BattleBeatScheduler.cs"));
+            var handlerPath = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "Presentation",
+                "CardFaceStatHandler.cs"));
+            var ifacePath = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "Presentation",
+                "IBattleBeatHandler.cs"));
+            Assert.IsTrue(File.Exists(ifacePath), "missing IBattleBeatHandler");
+            var iface = File.ReadAllText(ifacePath);
+            Assert.IsTrue(iface.IndexOf("bool TryApply(", StringComparison.Ordinal) >= 0);
+            var handler = File.ReadAllText(handlerPath);
+            Assert.IsTrue(
+                handler.IndexOf(": IBattleBeatHandler", StringComparison.Ordinal) >= 0,
+                "CardFaceStatHandler 须实现 IBattleBeatHandler");
+            var scheduler = File.ReadAllText(schedulerPath);
+            Assert.IsTrue(
+                Regex.IsMatch(scheduler, @"params\s+IBattleBeatHandler\[\]"),
+                "排期器须可注入多个 IBattleBeatHandler");
+            Assert.IsTrue(
+                scheduler.IndexOf("Unconsumed presentation instruction after Settled", StringComparison.Ordinal) >= 0,
+                "未消费诊断须使用 presentation instruction 措辞");
+        }
+
+        [Test]
+        public void Adr0007_Accepted_MultiHandler_And_CrossRefs_0005()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath, "..", "docs", "adr", "0007-unified-presentation-pipeline.md"));
+            Assert.IsTrue(File.Exists(path), "missing ADR-0007");
+            var text = File.ReadAllText(path);
+            Assert.IsTrue(
+                Regex.IsMatch(text, @"^---\s*\r?\nstatus:\s*accepted\s*\r?\n---", RegexOptions.Multiline),
+                "ADR-0007 status 应为 accepted");
+            Assert.IsTrue(text.IndexOf("IBattleBeatHandler", StringComparison.Ordinal) >= 0);
+            Assert.IsTrue(text.IndexOf("表演消费归属", StringComparison.Ordinal) >= 0);
+            Assert.IsTrue(text.IndexOf("ADR-0005", StringComparison.Ordinal) >= 0, "须交叉引用 ADR-0005");
+            Assert.IsTrue(
+                text.IndexOf("不另建第二张", StringComparison.Ordinal) >= 0
+                || text.IndexOf("不新建第二张", StringComparison.Ordinal) >= 0
+                || text.IndexOf("不另建第二张锚点表", StringComparison.Ordinal) >= 0,
+                "须否决第二张锚点表");
         }
     }
 }

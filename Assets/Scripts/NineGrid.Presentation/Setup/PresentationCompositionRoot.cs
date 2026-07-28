@@ -216,6 +216,7 @@ namespace NineGrid.Presentation.Setup
         private void InstallBattleBeatScheduler(IArchitecture architecture)
         {
             TeardownBattleBeatScheduler();
+            // 后续票在此追加装饰处理器（飘字 / FX / 金币 / HUD）；不占主线 ack。
             mBeatScheduler = new BattleBeatScheduler(new CardFaceStatHandler());
             BattleBeatHook.OnBatchOpened = mBeatScheduler.OnBatchOpened;
             BattleBeatHook.ReportBeat = mBeatScheduler.ReportBeat;

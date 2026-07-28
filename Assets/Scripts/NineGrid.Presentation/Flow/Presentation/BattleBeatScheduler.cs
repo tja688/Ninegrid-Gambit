@@ -5,19 +5,26 @@ using UnityEngine;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// 战斗锚点排期器：持有当批未消费结算指令，按报点归属交给卡面数值处理器。
-    /// Settled 后仍有卡面归属未消费：只报不改（无强制对账）。
-    /// Avatar 数值指令在同一拍旁路刷新 PlayerInfo HUD（仍 SyncFromCore；非卡面第二条路径）。
+    /// 战斗锚点排期器：一批结算指令的唯一分发出口，按报点交给已注册的表演处理器。
+    /// Settled 后仍有已装载未消费指令：只报不改（无强制对账）。
+    /// Avatar 数值指令在卡面处理器认领同拍旁路刷新 PlayerInfo HUD（仍 SyncFromCore；见 ADR-0007 / 后续票收口）。
     /// </summary>
     public sealed class BattleBeatScheduler
     {
-        private readonly CardFaceStatHandler mHandler;
+        private readonly IBattleBeatHandler[] mHandlers;
         private readonly List<PresentationInstruction> mPending = new List<PresentationInstruction>(16);
         private int mActiveBatchId;
 
-        public BattleBeatScheduler(CardFaceStatHandler handler)
+        public BattleBeatScheduler(params IBattleBeatHandler[] handlers)
         {
-            mHandler = handler ?? new CardFaceStatHandler();
+            if (handlers == null || handlers.Length == 0)
+            {
+                mHandlers = new IBattleBeatHandler[] { new CardFaceStatHandler() };
+            }
+            else
+            {
+                mHandlers = handlers;
+            }
         }
 
         public void OnBatchOpened(PresentationBatch batch)
@@ -63,7 +70,12 @@ namespace NineGrid.Flow.Presentation
                     continue;
                 }
 
-                mHandler.Apply(instruction);
+                if (!TryDispatch(instruction))
+                {
+                    i++;
+                    continue;
+                }
+
                 if (AffectsAvatarHud(instruction))
                 {
                     avatarHudDirty = true;
@@ -74,7 +86,7 @@ namespace NineGrid.Flow.Presentation
 
             if (avatarHudDirty)
             {
-                // 与旧命中帧 SyncManagedCardPresentation(avatar) 同拍；HUD 仍直读内核（ADR-0005 后续迁移）。
+                // 与旧命中帧 SyncManagedCardPresentation(avatar) 同拍；HUD 仍直读内核（ADR-0005 后续迁移 / ADR-0007）。
                 PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: true);
             }
 
@@ -82,6 +94,20 @@ namespace NineGrid.Flow.Presentation
             {
                 DiagnoseUnconsumed();
             }
+        }
+
+        private bool TryDispatch(PresentationInstruction instruction)
+        {
+            for (var h = 0; h < mHandlers.Length; h++)
+            {
+                var handler = mHandlers[h];
+                if (handler != null && handler.TryApply(instruction))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static bool AffectsAvatarHud(PresentationInstruction instruction)
@@ -122,7 +148,7 @@ namespace NineGrid.Flow.Presentation
                 var instruction = mPending[i];
                 var type = instruction.Event != null ? instruction.Event.Type.ToString() : "?";
                 var message =
-                    "[BattleBeatScheduler] Unconsumed card-face instruction after Settled"
+                    "[BattleBeatScheduler] Unconsumed presentation instruction after Settled"
                     + " batchId=" + mActiveBatchId
                     + " type=" + type
                     + " beat=" + instruction.MapEntry.Beat

@@ -748,7 +748,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
 
             // 故意不报 Impact，只报 Settled：未消费指令只诊断，值不动。
             var unconsumed = new Regex(
-                @"\[BattleBeatScheduler\] Unconsumed card-face instruction after Settled.*type=ArmorChanged.*beat=Impact");
+                @"\[BattleBeatScheduler\] Unconsumed presentation instruction after Settled.*type=ArmorChanged.*beat=Impact");
             UnityEngine.TestTools.LogAssert.Expect(LogType.Error, unconsumed);
             UnityEngine.TestTools.LogAssert.Expect(LogType.Assert, unconsumed);
             scheduler.ReportBeat(PresentationBeat.Settled);
@@ -756,6 +756,96 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             Assert.AreEqual(5, spawned.CommittedPresentation.Armor, "漏接 Impact 不得静默刷新护甲");
             Assert.AreEqual(8, spawned.CommittedPresentation.Attack);
             Assert.AreEqual(10, spawned.CommittedPresentation.Hp);
+        }
+
+        [Test]
+        public void MultiHandler_FirstClaimantConsumes_AtImpact_NoSettledDiagnosis()
+        {
+            var claimed = 0;
+            IBattleBeatHandler decorative = new DelegateBattleBeatHandler(instruction =>
+            {
+                if (instruction == null || instruction.Kind != PresentationInstructionKind.ShowDamage)
+                {
+                    return false;
+                }
+
+                claimed++;
+                return true;
+            });
+
+            var map = new PresentationEventMapEntry(
+                CoreEventType.DamageDealt,
+                PresentationInstructionKind.ShowDamage,
+                PresentationEventCategory.Damage,
+                requiresPlayback: true,
+                locksInput: true,
+                beat: PresentationBeat.Impact,
+                label: "Damage test");
+            var batch = new PresentationBatch(
+                60,
+                new[]
+                {
+                    new PresentationInstruction(
+                        new CoreGameEvent(CoreEventType.DamageDealt, 1, "test").WithAmount(3),
+                        map),
+                },
+                snapshot: null);
+
+            var scheduler = new BattleBeatScheduler(new CardFaceStatHandler(), decorative);
+            scheduler.OnBatchOpened(batch);
+            scheduler.ReportBeat(PresentationBeat.Impact);
+            Assert.AreEqual(1, claimed, "装饰处理器应在 Impact 认领 ShowDamage");
+
+            // 已消费：Settled 不得再报未消费。
+            scheduler.ReportBeat(PresentationBeat.Settled);
+        }
+
+        [Test]
+        public void MultiHandler_UnclaimedLoadedInstruction_DiagnosedAtSettled_Only()
+        {
+            var map = new PresentationEventMapEntry(
+                CoreEventType.DamageDealt,
+                PresentationInstructionKind.ShowDamage,
+                PresentationEventCategory.Damage,
+                requiresPlayback: true,
+                locksInput: true,
+                beat: PresentationBeat.Impact,
+                label: "Damage unclaimed");
+            var batch = new PresentationBatch(
+                61,
+                new[]
+                {
+                    new PresentationInstruction(
+                        new CoreGameEvent(CoreEventType.DamageDealt, 1, "test").WithAmount(2),
+                        map),
+                },
+                snapshot: null);
+
+            // 只有卡面处理器：ShowDamage 无人认领，留到 Settled 诊断。
+            var scheduler = new BattleBeatScheduler(new CardFaceStatHandler());
+            scheduler.OnBatchOpened(batch);
+            scheduler.ReportBeat(PresentationBeat.Impact);
+
+            var unconsumed = new Regex(
+                @"\[BattleBeatScheduler\] Unconsumed presentation instruction after Settled.*type=DamageDealt.*beat=Impact");
+            UnityEngine.TestTools.LogAssert.Expect(LogType.Error, unconsumed);
+            UnityEngine.TestTools.LogAssert.Expect(LogType.Assert, unconsumed);
+            scheduler.ReportBeat(PresentationBeat.Settled);
+        }
+
+        private sealed class DelegateBattleBeatHandler : IBattleBeatHandler
+        {
+            private readonly System.Func<PresentationInstruction, bool> mTryApply;
+
+            public DelegateBattleBeatHandler(System.Func<PresentationInstruction, bool> tryApply)
+            {
+                mTryApply = tryApply;
+            }
+
+            public bool TryApply(PresentationInstruction instruction)
+            {
+                return mTryApply != null && mTryApply(instruction);
+            }
         }
 
         private static NodeDeckOptions CreateStoneLoverNode()

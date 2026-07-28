@@ -40,7 +40,7 @@ namespace NineGrid.Core
         public PresentationBeat Beat { get; private set; }
         public string Label { get; private set; }
 
-        /// <summary>仅当 <see cref="Beat"/> 为 <see cref="PresentationBeat.None"/> 时有意义；说明为何不上卡面。</summary>
+        /// <summary>仅当 <see cref="Beat"/> 为 <see cref="PresentationBeat.None"/> 时有意义；说明为何无表演消费。</summary>
         public string NoneReason { get; private set; }
     }
 

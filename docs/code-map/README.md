@@ -16,6 +16,7 @@
 | [ADR-0004](../adr/0004-input-intake-two-axis-gating.md) | IntentIntake 两轴门禁 |
 | [ADR-0005](../adr/0005-card-face-beat-commit.md) | 卡面数值表演锚点提交 |
 | [ADR-0006](../adr/0006-windows-high-polling-mouse-mitigation.md) | Win Player 高回报率鼠标兜底 |
+| [ADR-0007](../adr/0007-unified-presentation-pipeline.md) | 多处理器统一表现管线 |
 
 ## 程序集一览
 
