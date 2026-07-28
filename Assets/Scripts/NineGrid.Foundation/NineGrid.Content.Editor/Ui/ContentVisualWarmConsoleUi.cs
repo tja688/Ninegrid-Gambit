@@ -442,6 +442,48 @@ namespace NineGrid.Content.Editor.Ui
             contentRoot = scroll.contentContainer;
             return scroll;
         }
+
+        /// <summary>
+        /// 悬停在 PopupField 上时用滚轮上下切换选项，并拦住外层 ScrollView 抢事件。
+        /// </summary>
+        public static void EnablePopupWheelScroll<T>(PopupField<T> field)
+        {
+            if (field == null)
+            {
+                return;
+            }
+
+            field.RegisterCallback<WheelEvent>(evt =>
+            {
+                var choices = field.choices;
+                if (choices == null || choices.Count <= 1)
+                {
+                    return;
+                }
+
+                if (Mathf.Approximately(evt.delta.y, 0f))
+                {
+                    return;
+                }
+
+                var index = choices.IndexOf(field.value);
+                if (index < 0)
+                {
+                    index = 0;
+                }
+
+                // delta.y > 0：滚轮向下 → 下一项
+                var next = evt.delta.y > 0f ? index + 1 : index - 1;
+                next = Mathf.Clamp(next, 0, choices.Count - 1);
+                if (next != index)
+                {
+                    field.value = choices[next];
+                }
+
+                evt.StopPropagation();
+                evt.PreventDefault();
+            }, TrickleDown.TrickleDown);
+        }
     }
 }
 #endif

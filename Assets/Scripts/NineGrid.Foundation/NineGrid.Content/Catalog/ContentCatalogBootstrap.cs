@@ -1,3 +1,4 @@
+using NineGrid.Content.CardPresentation;
 using NineGrid.Core.Content;
 
 namespace NineGrid.Content
@@ -10,6 +11,8 @@ namespace NineGrid.Content
     {
         public static GameContentCatalog Load()
         {
+            // Disable Domain Reload 下静态缓存会跨 Play 残留；每次 Load 必须重读盘。
+            CardPresentationConfigCatalog.Invalidate();
             EffectTemplateCatalog.Invalidate();
             var catalog = new GameContentCatalog();
             ContentCatalogTableLoader.ApplyToCatalog(catalog);

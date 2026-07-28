@@ -73,10 +73,10 @@
     "tags": [],
     "effectAssemblies": [
         {
-            "id": "fx.2adcd1ba",
-            "templateId": "tpl.shared.2.skill_air_strike_slot1",
+            "id": "fx.8a4044a8",
+            "templateId": "tpl.skill.stray_cub.slot6",
             "containerType": "MonsterSkill",
-            "argsJson": "{}"
+            "argsJson": "{\"value\":2}"
         }
     ],
     "effectIds": [],

@@ -225,5 +225,47 @@ namespace NineGrid.Presentation.Tests.Cards
             Assert.IsTrue(catalog.TryGetEffect("monster.editor_direct_mount.armor_lost", out var effect));
             Assert.AreEqual(EffectContainerType.MonsterSkill, effect.ContainerType);
         }
+
+        [Test]
+        public void SuggestArgsJsonForTemplate_StrayCubSlot6_ReusesPeerValue2()
+        {
+            CardPresentationConfigCatalog.Invalidate();
+            EffectTemplateCatalog.Invalidate();
+            if (!EffectTemplateCatalog.TryGet("tpl.skill.stray_cub.slot6", out _)
+                || (!System.IO.File.Exists(CardPresentationJsonIO.GetAuthoringAbsolutePath("skill.stray_cub"))
+                    && !System.IO.File.Exists(CardPresentationJsonIO.GetStreamingAbsolutePath("skill.stray_cub"))))
+            {
+                Assert.Ignore("生产 stray_cub 模板/技能 JSON 未加载");
+            }
+
+            var session = new CardPresentationEditorSession();
+            var args = session.SuggestArgsJsonForTemplate("tpl.skill.stray_cub.slot6");
+            Assert.IsTrue(args.Contains("\"value\""), args);
+            Assert.IsTrue(args.Contains("2"), args);
+            Assert.AreNotEqual("{}", args);
+        }
+
+        [Test]
+        public void ProjectStoneMan_StrayCubSlot6_ResolvesAttackValue2()
+        {
+            CardPresentationConfigCatalog.Invalidate();
+            EffectTemplateCatalog.Invalidate();
+            if (!CardPresentationConfigCatalog.TryGet("monster.stone_man", out var dto) || dto == null)
+            {
+                Assert.Ignore("monster.stone_man JSON 未加载");
+            }
+
+            Assert.IsNotNull(dto.effectAssemblies);
+            Assert.GreaterOrEqual(dto.effectAssemblies.Length, 1);
+            Assert.AreEqual("tpl.skill.stray_cub.slot6", dto.effectAssemblies[0].templateId);
+            Assert.IsTrue(dto.effectAssemblies[0].argsJson.Contains("2"), dto.effectAssemblies[0].argsJson);
+
+            var catalog = ContentCatalogBootstrap.Load();
+            Assert.IsTrue(catalog.TryGetCard("monster.stone_man", out var card));
+            Assert.AreEqual(1, card.EffectIds.Count);
+            Assert.IsTrue(catalog.TryGetEffect(card.EffectIds[0], out var effect));
+            var parsed = EffectJson.Parse(effect.Json);
+            Assert.AreEqual(2, parsed.Get("modifier").Get("value").AsInt(0), effect.Json);
+        }
     }
 }

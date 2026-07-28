@@ -234,7 +234,7 @@ namespace NineGrid.Content.Editor
         {
             if (!foldoutState.TryGetValue(key, out var expanded))
             {
-                expanded = true;
+                expanded = false;
                 foldoutState[key] = expanded;
             }
 
@@ -272,7 +272,7 @@ namespace NineGrid.Content.Editor
             var key = "faceDeck:" + deck.DeckId;
             if (!foldoutState.TryGetValue(key, out var expanded))
             {
-                expanded = true;
+                expanded = false;
                 foldoutState[key] = expanded;
             }
 
@@ -1038,6 +1038,7 @@ namespace NineGrid.Content.Editor
                     }
 
                     var tplField = new PopupField<string>(rowLabels, tplIndex);
+                    ContentVisualWarmConsoleUi.EnablePopupWheelScroll(tplField);
                     tplField.RegisterValueChangedCallback(evt =>
                     {
                         var picked = rowLabels.IndexOf(evt.newValue);
@@ -1045,7 +1046,9 @@ namespace NineGrid.Content.Editor
                             ? rowIds[picked]
                             : string.Empty;
                         assembly.containerType = InferDefaultContainerType(dto.kind);
+                        assembly.argsJson = session.SuggestArgsJsonForTemplate(assembly.templateId);
                         CommitAssemblies();
+                        RebuildList();
                     });
                     row.Add(ContentVisualWarmConsoleUi.WrapControlRow("效果", tplField, 96f));
 
@@ -1081,12 +1084,13 @@ namespace NineGrid.Content.Editor
             column.Add(ContentVisualWarmConsoleUi.CreateButtonRow(
                 new Button(() =>
                 {
+                    var templateId = templateIds.Count > 0 ? templateIds[0] : string.Empty;
                     list.Add(new EffectAssemblyDto
                     {
                         id = "fx." + Guid.NewGuid().ToString("N").Substring(0, 8),
-                        templateId = templateIds.Count > 0 ? templateIds[0] : string.Empty,
+                        templateId = templateId,
                         containerType = InferDefaultContainerType(dto.kind),
-                        argsJson = "{}",
+                        argsJson = session.SuggestArgsJsonForTemplate(templateId),
                     });
                     CommitAssemblies();
                     RebuildList();

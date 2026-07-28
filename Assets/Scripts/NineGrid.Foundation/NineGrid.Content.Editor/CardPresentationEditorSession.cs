@@ -588,6 +588,70 @@ namespace NineGrid.Content.Editor
             return false;
         }
 
+        /// <summary>
+        /// 选中效果模板时填充 argsJson：优先复用同模板已有装配实参（如 skill.stray_cub），
+        /// 否则按 body 占位符生成最小 JSON。避免 UI 默认 <c>{}</c> 把 <c>{{value}}</c> 落成加 0。
+        /// </summary>
+        public string SuggestArgsJsonForTemplate(string templateId)
+        {
+            if (string.IsNullOrWhiteSpace(templateId))
+            {
+                return "{}";
+            }
+
+            var id = templateId.Trim();
+            string bodyJson = null;
+            for (var i = 0; i < effectTemplates.Count; i++)
+            {
+                var row = effectTemplates[i];
+                if (row != null && string.Equals(row.id, id, StringComparison.Ordinal))
+                {
+                    bodyJson = row.body;
+                    break;
+                }
+            }
+
+            if (bodyJson == null
+                && EffectTemplateCatalog.TryGet(id, out var template)
+                && template != null)
+            {
+                bodyJson = template.BodyJson;
+            }
+
+            var peerArgs = FindPeerArgsJsonForTemplate(id);
+            return EffectAssemblyResolver.SuggestArgsJson(bodyJson, peerArgs);
+        }
+
+        private static string FindPeerArgsJsonForTemplate(string templateId)
+        {
+            foreach (var contentId in CardPresentationConfigCatalog.AllContentIds)
+            {
+                if (!CardPresentationConfigCatalog.TryGet(contentId, out var dto)
+                    || dto?.effectAssemblies == null)
+                {
+                    continue;
+                }
+
+                for (var i = 0; i < dto.effectAssemblies.Length; i++)
+                {
+                    var assembly = dto.effectAssemblies[i];
+                    if (assembly == null
+                        || !string.Equals(assembly.templateId, templateId, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    var args = assembly.argsJson;
+                    if (!string.IsNullOrWhiteSpace(args) && args.Trim() != "{}")
+                    {
+                        return args.Trim();
+                    }
+                }
+            }
+
+            return null;
+        }
+
         public bool TryGetDeckDto(string deckId, out CardPresentationConfigDto dto)
         {
             dto = null;

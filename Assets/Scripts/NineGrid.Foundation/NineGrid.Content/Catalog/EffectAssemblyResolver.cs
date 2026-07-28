@@ -84,6 +84,16 @@ namespace NineGrid.Content
             }
 
             var substituted = SubstitutePlaceholders(template.BodyJson, args);
+            if (HasUnresolvedPlaceholders(substituted))
+            {
+                throw new FormatException(
+                    "Effect assembly missing args for placeholders in template "
+                    + template.Id
+                    + " (mountId="
+                    + mountId
+                    + "). args must fill every {{name}} in the body.");
+            }
+
             var body = EffectJson.Parse(substituted);
             var bodyObj = body != null ? body.RawValue as Dictionary<string, object> : null;
             if (bodyObj == null)
@@ -136,6 +146,102 @@ namespace NineGrid.Content
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// 模板 body 中尚未被实参替换的 <c>{{name}}</c> 占位符名（去重、保序）。
+        /// </summary>
+        public static List<string> ExtractPlaceholderNames(string bodyJson)
+        {
+            var names = new List<string>();
+            if (string.IsNullOrEmpty(bodyJson))
+            {
+                return names;
+            }
+
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            var index = 0;
+            while (index < bodyJson.Length)
+            {
+                var open = bodyJson.IndexOf("{{", index, StringComparison.Ordinal);
+                if (open < 0)
+                {
+                    break;
+                }
+
+                var close = bodyJson.IndexOf("}}", open + 2, StringComparison.Ordinal);
+                if (close < 0)
+                {
+                    break;
+                }
+
+                var name = bodyJson.Substring(open + 2, close - open - 2).Trim();
+                if (!string.IsNullOrEmpty(name) && seen.Add(name))
+                {
+                    names.Add(name);
+                }
+
+                index = close + 2;
+            }
+
+            return names;
+        }
+
+        public static bool HasUnresolvedPlaceholders(string json)
+        {
+            return !string.IsNullOrEmpty(json) && json.IndexOf("{{", StringComparison.Ordinal) >= 0;
+        }
+
+        /// <summary>
+        /// 装配 UI 用：优先复用同模板既有实参；否则按占位符名生成最小 JSON（数值键默认 0）。
+        /// </summary>
+        public static string SuggestArgsJson(string bodyJson, string peerArgsJson)
+        {
+            if (!string.IsNullOrWhiteSpace(peerArgsJson))
+            {
+                var trimmed = peerArgsJson.Trim();
+                if (trimmed.Length > 2 && trimmed != "{}")
+                {
+                    return trimmed;
+                }
+            }
+
+            var names = ExtractPlaceholderNames(bodyJson);
+            if (names.Count == 0)
+            {
+                return "{}";
+            }
+
+            var builder = new StringBuilder();
+            builder.Append('{');
+            for (var i = 0; i < names.Count; i++)
+            {
+                if (i > 0)
+                {
+                    builder.Append(',');
+                }
+
+                var key = names[i];
+                builder.Append('"').Append(Escape(key)).Append('"').Append(':');
+                builder.Append(IsNumericArgKey(key) ? "0" : "\"\"");
+            }
+
+            builder.Append('}');
+            return builder.ToString();
+        }
+
+        private static bool IsNumericArgKey(string key)
+        {
+            return string.Equals(key, "value", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(key, "amount", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(key, "delta", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(key, "count", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(key, "weight", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(key, "every", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(key, "threshold", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(key, "min", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(key, "max", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(key, "slot", StringComparison.OrdinalIgnoreCase);
         }
 
         private static object CloneJsonValue(object value)

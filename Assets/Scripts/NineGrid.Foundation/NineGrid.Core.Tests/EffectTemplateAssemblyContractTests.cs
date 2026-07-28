@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NineGrid.Content;
 using NineGrid.Core;
@@ -155,6 +156,37 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(EffectContainerType.Relic, relicDef.ContainerType);
             Assert.IsTrue(mEffects.Validate(helpDef).IsValid);
             Assert.IsTrue(mEffects.Validate(relicDef).IsValid);
+        }
+
+        [Test]
+        public void EffectAssemblyResolver_EmptyArgs_WithPlaceholders_Throws()
+        {
+            var template = new EffectTemplateDefinition(
+                "tpl.skill.stray_cub.slot6",
+                new[] { "HasOwnerEntity", "CardZoneTriggerable" },
+                new[] { "AtSlot" },
+                "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Self\"},"
+                + "\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":6}],"
+                + "\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\","
+                + "\"layer\":\"Conditional\",\"scope\":\"Permanent\"}}",
+                ContentImplementationState.Implemented,
+                "[场上] 处于格6时，本卡攻击力+2");
+
+            Assert.Throws<FormatException>(() => EffectAssemblyResolver.Resolve(
+                template,
+                "fx.empty_args",
+                EffectContainerType.MonsterSkill,
+                new Dictionary<string, object>()));
+        }
+
+        [Test]
+        public void EffectAssemblyResolver_SuggestArgsJson_PrefersPeerThenPlaceholderDefaults()
+        {
+            var body = "{\"modifier\":{\"value\":\"{{value}}\",\"reason\":\"{{reason}}\"}}";
+            Assert.AreEqual("{\"value\":2}", EffectAssemblyResolver.SuggestArgsJson(body, "{\"value\":2}"));
+            Assert.AreEqual(
+                "{\"value\":0,\"reason\":\"\"}",
+                EffectAssemblyResolver.SuggestArgsJson(body, "{}"));
         }
 
         private static IEnumerable<string> Format(EffectValidationResult result)

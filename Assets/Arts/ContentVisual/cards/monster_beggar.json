@@ -3,8 +3,9 @@
     "contentId": "monster.beggar",
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
+    "role": "",
     "displayName": "乞丐",
-    "description": "每移动5次洗入乞丐",
+    "description": "无",
     "gold": 5,
     "stats": {
         "hp": 4,
@@ -23,7 +24,7 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.20000000298023224,
+        "offsetX": 0.20000000298023225,
         "offsetY": -0.2800000011920929,
         "uniformScale": 1.0
     },
@@ -70,10 +71,9 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
+    "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [
-        "skill.beggar_bond"
-    ],
+    "skillIds": [],
     "level": 1,
     "isElite": false,
     "isBoss": false,
@@ -86,7 +86,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

@@ -6,6 +6,7 @@ using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
+using NineGrid.Core.Utilities;
 using QFramework;
 using UnityEngine;
 namespace NineGrid.Flow
@@ -26,17 +27,40 @@ namespace NineGrid.Flow
     /// </summary>
     public static class CoreCardPresentationMapper
     {
+        /// <summary>
+        /// 绑定生产内容 Catalog。Editor 下（含 Disable Domain Reload）每次从磁盘重载，
+        /// 避免「JSON 已改 / 已清空挂载，战斗仍用上一局内存 Catalog」。
+        /// Player 仍只在尚未绑定时装载一次。
+        /// </summary>
         public static void EnsureContentCatalogLoaded()
         {
             var arch = NineGridArchitecture.Current;
             var content = arch.GetSystem<IContentSystem>();
+#if !UNITY_EDITOR
             if (content.HasCatalog)
             {
                 return;
             }
+#endif
+            BindFreshContentCatalog(arch, content);
+        }
 
+        /// <summary>
+        /// 强制从 Arts/StreamingAssets 重投影并写入 ContentSystem + DefaultCatalog。
+        /// </summary>
+        public static void ReloadContentCatalog()
+        {
+            var arch = NineGridArchitecture.Current;
+            BindFreshContentCatalog(arch, arch.GetSystem<IContentSystem>());
+        }
+
+        private static void BindFreshContentCatalog(IArchitecture arch, IContentSystem content)
+        {
             var catalog = ContentCatalogBootstrap.Load();
             content.Load(catalog);
+            // CreateDraft 等路径会 TryReloadFromConfig；必须与刚绑定的 Catalog 同源，
+            // 否则 Disable Domain Reload 下可能被 EditMode 测试残留的 DefaultCatalog 盖回旧表。
+            arch.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, catalog);
         }
 
         public static bool TryRead(int uid, out CardPresentationRead read)
