@@ -78,7 +78,7 @@ namespace NineGrid.Core
             Entry(CoreEventType.AvatarAppeared, PresentationInstructionKind.ShowAvatar, PresentationEventCategory.Node, true, true, PresentationBeat.Settled, "Avatar appeared"),
             Entry(CoreEventType.BaseStatModified, PresentationInstructionKind.ModifyBaseStat, PresentationEventCategory.Stat, true, true, PresentationBeat.Settled, "Base stat modified"),
             Entry(CoreEventType.RelicGranted, PresentationInstructionKind.GrantRelic, PresentationEventCategory.Content, true, false, PresentationBeat.None, "Relic granted", "Relic grant UX — stats via follow-up Stat events"),
-            Entry(CoreEventType.RewardOffered, PresentationInstructionKind.OfferReward, PresentationEventCategory.Reward, true, true, PresentationBeat.None, "Reward offered", "Reward Bounce face deferred — not card-face commit yet"),
+            Entry(CoreEventType.RewardOffered, PresentationInstructionKind.OfferReward, PresentationEventCategory.Reward, true, true, PresentationBeat.Settled, "Reward offered"),
             Entry(CoreEventType.RewardSelected, PresentationInstructionKind.SelectReward, PresentationEventCategory.Reward, true, true, PresentationBeat.None, "Reward selected", "Reward UI — no card-face stats"),
             Entry(CoreEventType.RewardSkipped, PresentationInstructionKind.SkipReward, PresentationEventCategory.Reward, true, true, PresentationBeat.None, "Reward skipped", "Reward UI — no card-face stats"),
             Entry(CoreEventType.RoomChoicesOffered, PresentationInstructionKind.OfferRooms, PresentationEventCategory.Room, true, true, PresentationBeat.None, "Room choices offered", "Room options are not cards — no card-face stats"),

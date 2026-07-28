@@ -14,7 +14,7 @@ status: accepted
 4. **无人认领的已装载指令在 Settled 后仍只报诊断与断言，不做强制对账。** 沿用 ADR-0005 无兜底政策；措辞从「card-face」扩为「presentation instruction」。
 5. **后续消费者只注册 handler + 改映射表 Beat，不改排期器骨架。** 卡面路径由既有 `CardFaceStatHandler` 在 Impact / Settled 消费，观感与行为不变。
 
-本票落地多处理器基础设施与文档；#60 已将伤害飘字 / FX 脉冲收口到 Impact 并删除 EventLog 旁路；#61 已将金币 / PlayerInfo HUD 收口到 Settled / Impact 指令并统一 FlushBeats。仍遗留：Bounce 等消费者迁移。
+本票落地多处理器基础设施与文档；#60 已将伤害飘字 / FX 脉冲收口到 Impact 并删除 EventLog 旁路；#61 已将金币 / PlayerInfo HUD 收口到 Settled / Impact 指令并统一 FlushBeats；#62 已将 Bounce 候选项收口到 `RewardOffered` 投影。仍遗留：Relic HUD 直读等其它消费者。
 
 ## 为什么
 
@@ -32,9 +32,10 @@ ADR-0005 消灭了卡面直读 Core，但伤害飘字、FX 脉冲、金币、Pla
 ## 后果
 
 - 新增 `IBattleBeatHandler`；`CardFaceStatHandler` 实现 `TryApply`；`BattleBeatScheduler` 构造注入 `params IBattleBeatHandler[]`。
-- `PresentationBeat` / `NoneReason` 文档措辞改为表演消费归属；组合根注册卡面 + 飘字/FX/金币/Avatar HUD 处理器（#60/#61）；Bounce 后续票继续追加。
+- `PresentationBeat` / `NoneReason` 文档措辞改为表演消费归属；组合根注册卡面 + 飘字/FX/金币/Avatar HUD 处理器（#60/#61）；Bounce OfferReward 由 `CardFaceStatHandler` 消费（#62）。
 - #60：`PresentEffectTriggersFromEventLog` / `SpawnDamagePopups` 生产旁路删除，`DamageDealt`/`EffectTriggered` → Impact。
-- #61：`PresentGoldGainsFromEventLog` 生产旁路删除，`GoldModified` → Settled；排期器 `SyncFromCore` 衔接补丁删除；非锁步路径经 `BattleBeatFlush.PresentEventLogSlice`。仍遗留：Bounce `ApplyVisualsByDefId` / Relic HUD 直读。
+- #61：`PresentGoldGainsFromEventLog` 生产旁路删除，`GoldModified` → Settled；排期器 `SyncFromCore` 衔接补丁删除；非锁步路径经 `BattleBeatFlush.PresentEventLogSlice`。
+- #62：`RewardOffered` → Settled；`RewardEntry` 投影绝对值；Bounce 删除 `ApplyVisualsByDefId(..., clearCombatStats: true)` 数值旁路。仍遗留：Relic HUD 直读。
 
 ## 相关
 
@@ -43,3 +44,4 @@ ADR-0005 消灭了卡面直读 Core，但伤害飘字、FX 脉冲、金币、Pla
 - [ADR-0004](0004-input-intake-two-axis-gating.md) — 输入唯一收口；输出侧结构同源
 - Issue #60 — 伤害飘字与 FX 脉冲收口到 Impact
 - Issue #61 — 金币与 PlayerInfo HUD 收口到指令 + FlushBeats
+- Issue #62 — Bounce 候选项走结算指令投影

@@ -46,6 +46,15 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void RewardOffered_Is_Settled_For_Bounce_Face_Commit()
+        {
+            Assert.AreEqual(
+                PresentationBeat.Settled,
+                PresentationEventMap.Get(CoreEventType.RewardOffered).Beat,
+                "奖励 Bounce 候选项须在 Settled 经排期器提交卡面投影");
+        }
+
+        [Test]
         public void Damage_And_Effect_Decorative_Events_Are_Impact()
         {
             Assert.AreEqual(

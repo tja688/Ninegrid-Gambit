@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 
@@ -108,11 +107,11 @@ namespace NineGrid.Core
 
         public override GameActionResult Apply(GameActionContext context)
         {
-            var offered = context.GetSystem<IRewardSystem>().RollPool(PoolId);
+            var offered = RewardOfferFaceProjection.Project(context, context.GetSystem<IRewardSystem>().RollPool(PoolId));
             var result = new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.RewardOffered, context.ActionId, ActionName)
                     .WithAmount(offered.Count)
-                    .WithMessage(FormatOfferedRewards(PoolId, offered)));
+                    .WithMessage(RewardOfferFaceEncoding.Format(PoolId, offered)));
 
             var toPlayerSideDeck = HelpCardGrantRouting.ShouldGrantToPlayerSideDeck(context);
             for (var i = 0; i < offered.Count; i++)
@@ -121,27 +120,6 @@ namespace NineGrid.Core
             }
 
             return result;
-        }
-
-        private static string FormatOfferedRewards(string poolId, IReadOnlyList<RewardEntry> offered)
-        {
-            var builder = new StringBuilder(poolId ?? string.Empty);
-            builder.Append("|");
-            for (var i = 0; i < offered.Count; i++)
-            {
-                if (i > 0)
-                {
-                    builder.Append(",");
-                }
-
-                builder.Append(offered[i].DefId);
-                builder.Append(":");
-                builder.Append(offered[i].Kind);
-                builder.Append(":");
-                builder.Append(offered[i].Count);
-            }
-
-            return builder.ToString();
         }
     }
 
@@ -159,35 +137,14 @@ namespace NineGrid.Core
 
         public override GameActionResult Apply(GameActionContext context)
         {
-            var offered = context.GetSystem<IRewardSystem>().RollPool(PoolId);
+            var offered = RewardOfferFaceProjection.Project(context, context.GetSystem<IRewardSystem>().RollPool(PoolId));
             var amount = offered.Count > 0 ? offered.Count : OptionCount;
-            var message = offered.Count > 0 ? FormatOfferedRewards(PoolId, offered) : PoolId;
+            var message = offered.Count > 0 ? RewardOfferFaceEncoding.Format(PoolId, offered) : PoolId;
             context.GetModel<PendingChoiceModel>().OfferRewards(PoolId, offered);
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.RewardOffered, context.ActionId, ActionName)
                     .WithAmount(amount)
                     .WithMessage(message));
-        }
-
-        private static string FormatOfferedRewards(string poolId, IReadOnlyList<RewardEntry> offered)
-        {
-            var builder = new StringBuilder(poolId ?? string.Empty);
-            builder.Append("|");
-            for (var i = 0; i < offered.Count; i++)
-            {
-                if (i > 0)
-                {
-                    builder.Append(",");
-                }
-
-                builder.Append(offered[i].DefId);
-                builder.Append(":");
-                builder.Append(offered[i].Kind);
-                builder.Append(":");
-                builder.Append(offered[i].Count);
-            }
-
-            return builder.ToString();
         }
     }
 
@@ -252,6 +209,44 @@ namespace NineGrid.Core
                 .AddEvent(new CoreGameEvent(CoreEventType.RoomResolved, context.ActionId, ActionName)
                     .WithAmount((int)RoomKind)
                     .WithMessage(DisplayName));
+        }
+    }
+
+    internal static class RewardOfferFaceProjection
+    {
+        /// <summary>
+        /// 用 CreateDraft 填「拿了就是」攻/甲/血；不造卡进 Registry。
+        /// </summary>
+        public static IReadOnlyList<RewardEntry> Project(GameActionContext context, IReadOnlyList<RewardEntry> offered)
+        {
+            if (offered == null || offered.Count == 0)
+            {
+                return offered ?? Array.Empty<RewardEntry>();
+            }
+
+            var content = context.GetSystem<IContentSystem>();
+            var projected = new List<RewardEntry>(offered.Count);
+            for (var i = 0; i < offered.Count; i++)
+            {
+                var entry = offered[i];
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                var draft = content.CreateDraft(entry.DefId);
+                var hp = draft.Hp > 0 ? draft.Hp : draft.MaxHp;
+                if (hp < 0)
+                {
+                    hp = 0;
+                }
+
+                var attack = draft.Attack < 0 ? 0 : draft.Attack;
+                var armor = draft.Armor < 0 ? 0 : draft.Armor;
+                projected.Add(entry.WithFaceProjection(attack, armor, hp));
+            }
+
+            return projected;
         }
     }
 

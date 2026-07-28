@@ -148,6 +148,60 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
         }
 
         [Test]
+        public void Settled_OnOfferReward_CommitsBounceFacesFromInstruction()
+        {
+            // Bounce 负 uid 展示卡：Settled 消费 OfferReward Message 投影，不得靠 DefId 清零旁路。
+            var knife = mCardManager.SpawnPresentationOnly(
+                "help.throwing_knife",
+                parent: null,
+                initialMode: CardDisplayMode.RemovedMode,
+                kind: CardPresentationKind.HelpCard);
+            Assert.IsNotNull(knife);
+            Assert.Less(knife.Uid, 0);
+            CoreCardPresentationMapper.ApplyVisualsByDefId(knife, CardPresentationKind.HelpCard);
+            Assert.AreEqual(0, knife.CommittedPresentation.Attack);
+
+            var potion = mCardManager.SpawnPresentationOnly(
+                "help.healing_potion",
+                parent: null,
+                initialMode: CardDisplayMode.RemovedMode,
+                kind: CardPresentationKind.HelpCard);
+            Assert.IsNotNull(potion);
+            CoreCardPresentationMapper.ApplyVisualsByDefId(potion, CardPresentationKind.HelpCard);
+
+            var entries = new System.Collections.Generic.List<NineGrid.Core.Content.RewardEntry>
+            {
+                new NineGrid.Core.Content.RewardEntry(
+                    "help.throwing_knife", CardKind.HelpCard, 1, 1, attack: 3, armor: 2, hp: 1),
+                new NineGrid.Core.Content.RewardEntry(
+                    "help.healing_potion", CardKind.HelpCard, 1, 1, attack: 0, armor: 1, hp: 4),
+            };
+            var offerEvt = new CoreGameEvent(CoreEventType.RewardOffered, 6201, "OfferRewardChoice")
+                .WithAmount(2)
+                .WithMessage(RewardOfferFaceEncoding.Format("help.choice", entries));
+
+            var scheduler = new BattleBeatScheduler(new CardFaceStatHandler());
+            scheduler.OnBatchOpened(new PresentationBatch(
+                6201,
+                new[]
+                {
+                    new PresentationInstruction(offerEvt, PresentationEventMap.Get(CoreEventType.RewardOffered)),
+                },
+                snapshot: null));
+
+            scheduler.ReportBeat(PresentationBeat.Impact);
+            Assert.AreEqual(0, knife.CommittedPresentation.Attack, "OfferReward 不得在 Impact 提交");
+
+            scheduler.ReportBeat(PresentationBeat.Settled);
+            Assert.AreEqual(3, knife.CommittedPresentation.Attack);
+            Assert.AreEqual(2, knife.CommittedPresentation.Armor);
+            Assert.AreEqual(1, knife.CommittedPresentation.Hp);
+            Assert.AreEqual(0, potion.CommittedPresentation.Attack);
+            Assert.AreEqual(1, potion.CommittedPresentation.Armor);
+            Assert.AreEqual(4, potion.CommittedPresentation.Hp);
+        }
+
+        [Test]
         public void Settled_OnGoldModified_EmitsGoldGainFromInstruction_NotAtOpen()
         {
             NineGridArchitecture.ResetForTests();

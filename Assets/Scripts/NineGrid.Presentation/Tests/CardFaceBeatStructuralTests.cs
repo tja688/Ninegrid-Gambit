@@ -377,6 +377,30 @@ namespace NineGrid.Presentation.Tests
             Assert.IsTrue(
                 Regex.IsMatch(text, @"SpawnCard[\s\S]{0,120}DealCard[\s\S]{0,120}ShowAvatar"),
                 "SpawnCard / DealCard / ShowAvatar 应同一提交出口");
+            Assert.IsTrue(
+                text.IndexOf("OfferReward", StringComparison.Ordinal) >= 0
+                && text.IndexOf("ApplyOfferReward", StringComparison.Ordinal) >= 0,
+                "OfferReward 须由 CardFaceStatHandler 消费");
+        }
+
+        [Test]
+        public void BounceFan_DoesNot_Use_ClearCombatStats_NumericBypass()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "BounceFanChoicePresenter.cs"));
+            var text = File.ReadAllText(path);
+            Assert.IsFalse(
+                text.IndexOf("clearCombatStats: true", StringComparison.Ordinal) >= 0,
+                "Bounce 不得再用 clearCombatStats 清战斗数值旁路");
+            Assert.IsTrue(
+                text.IndexOf("PresentLatestEventOfType", StringComparison.Ordinal) >= 0
+                || text.IndexOf("PresentSingleEvent", StringComparison.Ordinal) >= 0
+                || text.IndexOf("NotifyPresentStandalone", StringComparison.Ordinal) >= 0,
+                "Bounce spawn 后须经排期器提交 OfferReward 投影");
         }
 
         [Test]

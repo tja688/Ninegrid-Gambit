@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using NineGrid.Cards;
+using NineGrid.Core;
+using NineGrid.Flow.Presentation;
+using QFramework;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -187,6 +190,10 @@ namespace NineGrid.Flow
             _sessionLive = true;
 
             BuildEntries(optionDefIds);
+            // 数值只经 RewardOffered 指令 → 排期器/CardFaceStatHandler；视觉 spawn 后再冲刷。
+            BattleBeatFlush.PresentLatestEventOfType(
+                NineGridArchitecture.Current,
+                CoreEventType.RewardOffered);
             PlayEntryAnimation();
         }
 
@@ -264,11 +271,8 @@ namespace NineGrid.Flow
                 managed.View.transform.localPosition = Vector3.zero;
                 managed.View.transform.localRotation = Quaternion.identity;
 
-                // Bounce 选项无 Core uid：按 defId 套 ContentVisual（遗物 / 属性三选一等）。
-                CoreCardPresentationMapper.ApplyVisualsByDefId(
-                    managed,
-                    choiceKind,
-                    clearCombatStats: true);
+                // 只套视觉；攻/甲/血由 OfferReward 指令经排期器提交（禁止 clearCombatStats 数值旁路）。
+                CoreCardPresentationMapper.ApplyVisualsByDefId(managed, choiceKind);
 
                 var sortingGroup = managed.View.GetComponent<SortingGroup>();
                 var sorting = BaseSortingOrder + i;

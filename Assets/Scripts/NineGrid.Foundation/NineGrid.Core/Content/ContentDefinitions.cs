@@ -289,17 +289,39 @@ namespace NineGrid.Core.Content
     public sealed class RewardEntry
     {
         public RewardEntry(string defId, CardKind kind, int weight, int count)
+            : this(defId, kind, weight, count, 0, 0, 0)
+        {
+        }
+
+        public RewardEntry(string defId, CardKind kind, int weight, int count, int attack, int armor, int hp)
         {
             DefId = defId ?? string.Empty;
             Kind = kind;
             Weight = weight;
             Count = count <= 0 ? 1 : count;
+            Attack = attack < 0 ? 0 : attack;
+            Armor = armor < 0 ? 0 : armor;
+            Hp = hp < 0 ? 0 : hp;
         }
 
         public string DefId { get; private set; }
         public CardKind Kind { get; private set; }
         public int Weight { get; private set; }
         public int Count { get; private set; }
+
+        /// <summary>候选项展示用攻击绝对值（「拿了就是」）。</summary>
+        public int Attack { get; private set; }
+
+        /// <summary>候选项展示用护甲绝对值（「拿了就是」）。</summary>
+        public int Armor { get; private set; }
+
+        /// <summary>候选项展示用生命绝对值（「拿了就是」）。</summary>
+        public int Hp { get; private set; }
+
+        public RewardEntry WithFaceProjection(int attack, int armor, int hp)
+        {
+            return new RewardEntry(DefId, Kind, Weight, Count, attack, armor, hp);
+        }
     }
 
     public sealed class RewardPoolDefinition

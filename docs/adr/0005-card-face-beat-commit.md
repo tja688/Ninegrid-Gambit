@@ -43,8 +43,9 @@ v1 锚点：
 - 用道具 Present 开头改为 `RefreshVisualsPreservingCommittedStatsOnAllSpawned`（只刷视觉）；数值仍由通道完成时的 Impact/Settled 消费。
 - `CoreCardPresentationMapper` 保留视觉投影；已提交卡面的数值不被直读 Core 覆写；JSON `stats` 不再盖写运行时卡面。
 - `MarkFieldDead` 只标死亡态；可见血量归零走 `KillCard` 指令的 `RemainingHp`。
-- 玩家信息 HUD、金币已由 #61 收口到指令 + FlushBeats；Bounce 候选项等其它消费者仍可直读，属后续迁移。伤害飘字与 FX 脉冲已由 #60 收口到 Impact。
+- 玩家信息 HUD、金币已由 #61 收口到指令 + FlushBeats；Bounce 候选项已由 #62 收口到 `RewardOffered`/`OfferReward` 投影 + Settled。伤害飘字与 FX 脉冲已由 #60 收口到 Impact。
 - **衔接补丁已移除（#61）**：Avatar 血甲 HUD 改由 `PlayerInfoHudBeatHandler` 在 Impact 用指令绝对值刷新；金币由 `GoldGainBeatHandler` 在 Settled 广播飞币。战中不再 `SyncFromCore`（开局/作弊白名单除外）。见 [ADR-0007](0007-unified-presentation-pipeline.md)。
+- **#62**：`RewardEntry` 携带展示用攻/甲/血；`RewardOffered` Beat=`Settled`；`CardFaceStatHandler` 消费 `OfferReward`；Bounce 删 `clearCombatStats` 数值旁路，spawn 后 `PresentStandalone` 二次提交。
 
 ## 相关
 

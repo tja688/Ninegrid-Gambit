@@ -36,6 +36,9 @@ namespace NineGrid.Flow.Presentation
                 case PresentationInstructionKind.ShowAvatar:
                     ApplySpawnFace(instruction.Event);
                     return true;
+                case PresentationInstructionKind.OfferReward:
+                    ApplyOfferReward(instruction.Event);
+                    return true;
                 default:
                     return false;
             }
@@ -116,6 +119,73 @@ namespace NineGrid.Flow.Presentation
                 attack: Mathf.Max(0, gameEvent.ResultValue),
                 armor: Mathf.Max(0, gameEvent.RemainingArmor),
                 hp: Mathf.Max(0, gameEvent.RemainingHp));
+        }
+
+        /// <summary>
+        /// Bounce 候选项：按 DefId 匹配纯表现卡（负 uid / RemovedMode），提交指令投影绝对值。
+        /// 尚无 Bounce 卡时仍 return true（认领指令），待 spawn 后 PresentStandalone 二次提交。
+        /// </summary>
+        private static void ApplyOfferReward(CoreGameEvent gameEvent)
+        {
+            if (gameEvent == null
+                || !RewardOfferFaceEncoding.TryParse(gameEvent.Message, out _, out var faces))
+            {
+                return;
+            }
+
+            var cards = CardEntityLifecycleHook.CardsOrNull();
+            if (cards == null)
+            {
+                return;
+            }
+
+            var claimedUids = new System.Collections.Generic.HashSet<int>();
+            for (var i = 0; i < faces.Count; i++)
+            {
+                var face = faces[i];
+                if (face == null || string.IsNullOrEmpty(face.DefId))
+                {
+                    continue;
+                }
+
+                if (!TryFindBounceOptionCard(cards, face.DefId, claimedUids, out var card))
+                {
+                    continue;
+                }
+
+                claimedUids.Add(card.Uid);
+                CommitNumeric(
+                    card,
+                    attack: Mathf.Max(0, face.Attack),
+                    armor: Mathf.Max(0, face.Armor),
+                    hp: Mathf.Max(0, face.Hp));
+            }
+        }
+
+        private static bool TryFindBounceOptionCard(
+            CardManagerSingleton cards,
+            string defId,
+            System.Collections.Generic.HashSet<int> claimedUids,
+            out ManagedCard card)
+        {
+            card = null;
+            foreach (var pair in cards.CardsByUid)
+            {
+                var candidate = pair.Value;
+                if (candidate == null
+                    || candidate.Uid >= 0
+                    || candidate.DisplayMode != CardDisplayMode.RemovedMode
+                    || claimedUids.Contains(candidate.Uid)
+                    || !string.Equals(candidate.DefId, defId, System.StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                card = candidate;
+                return true;
+            }
+
+            return false;
         }
 
         private static bool TryResolveCard(CoreGameEvent gameEvent, out ManagedCard card)

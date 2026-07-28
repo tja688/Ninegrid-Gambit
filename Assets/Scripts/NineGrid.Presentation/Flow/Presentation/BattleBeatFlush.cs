@@ -61,5 +61,58 @@ namespace NineGrid.Flow.Presentation
 
             BattleBeatHook.NotifyPresentStandalone(batch);
         }
+
+        /// <summary>
+        /// 非锁步：只冲刷单条结算指令（Bounce spawn 后二次提交 OfferReward）。
+        /// </summary>
+        public static void PresentSingleEvent(CoreGameEvent entry, int batchIdHint = 0)
+        {
+            if (entry == null)
+            {
+                return;
+            }
+
+            var map = PresentationEventMap.Get(entry.Type);
+            if (map.Beat == PresentationBeat.None)
+            {
+                return;
+            }
+
+            var batchId = batchIdHint > 0 ? batchIdHint : System.Math.Max(1, (int)(entry.Sequence % int.MaxValue) + 1);
+            var batch = new PresentationBatch(
+                batchId,
+                new[] { new PresentationInstruction(entry, map) },
+                snapshot: null);
+            BattleBeatHook.NotifyPresentStandalone(batch);
+        }
+
+        /// <summary>
+        /// 从事件日志末尾向前找最近一条指定类型并 PresentSingleEvent。
+        /// </summary>
+        public static bool PresentLatestEventOfType(IArchitecture architecture, CoreEventType type)
+        {
+            var pipeline = architecture != null
+                ? architecture.GetSystem<IActionPipelineSystem>()
+                : null;
+            var entries = pipeline?.EventLog?.Entries;
+            if (entries == null || entries.Count == 0)
+            {
+                return false;
+            }
+
+            for (var i = entries.Count - 1; i >= 0; i--)
+            {
+                var entry = entries[i];
+                if (entry == null || entry.Type != type)
+                {
+                    continue;
+                }
+
+                PresentSingleEvent(entry, batchIdHint: 1_000_000 + i);
+                return true;
+            }
+
+            return false;
+        }
     }
 }
