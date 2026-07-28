@@ -1,28 +1,20 @@
 using System.Collections.Generic;
-using NineGrid.Content;
+using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
 using UnityEngine;
-
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace NineGrid.Flow
 {
     /// <summary>
     /// 局内遗物栏表现单例：从 Core PlayerModel.RelicDefIds 读写，刷到 RelicPanelAnchors 子槽图标。
+    /// 图标权威：一卡一文件 JSON sprites.mainIcon（#69，不再读 RelicVisualCatalogSO）。
     /// </summary>
     public sealed class RelicManagerSingleton : MonoBehaviour
     {
         public const string DefaultAnchorsName = "RelicPanelAnchors";
-        private const string DefaultCatalogAssetPath = "Assets/Arts/ContentVisual/RelicVisualCatalog.asset";
-
 
         [Tooltip("遗物栏锚点根；留空则运行时按名查找 RelicPanelAnchors。")]
         [SerializeField] private Transform panelAnchors;
-
-        [Tooltip("遗物图标 Catalog；留空时 Editor 下自动从 Arts/ContentVisual 加载。")]
-        [SerializeField] private RelicVisualCatalogSO visualCatalog;
 
         private SpriteRenderer[] _slotRenderers = System.Array.Empty<SpriteRenderer>();
         private readonly List<string> _displayedDefIds = new();
@@ -32,10 +24,6 @@ namespace NineGrid.Flow
         private void Awake()
         {
             EnsureBindings();
-        }
-
-        private void OnDestroy()
-        {
         }
 
         /// <summary>
@@ -69,7 +57,7 @@ namespace NineGrid.Flow
                 }
             }
 
-            ContentIconSlotBinder.Apply(_slotRenderers, _displayedDefIds, visualCatalog);
+            ContentIconSlotBinder.ApplyFromPresentationJson(_slotRenderers, _displayedDefIds);
         }
 
         public void Clear()
@@ -109,34 +97,10 @@ namespace NineGrid.Flow
                 }
             }
 
-            if (visualCatalog == null)
-            {
-                TryLoadCatalog();
-            }
-
             if ((_slotRenderers == null || _slotRenderers.Length == 0) && panelAnchors != null)
             {
                 _slotRenderers = ContentIconSlotBinder.CollectChildRenderers(panelAnchors);
             }
-        }
-
-        private void TryLoadCatalog()
-        {
-            if (visualCatalog != null)
-            {
-                return;
-            }
-
-            var catalogSet = ContentVisualSpriteCatalogBootstrapSO.TryLoadCatalogSet();
-            if (catalogSet?.relics != null)
-            {
-                visualCatalog = catalogSet.relics;
-                return;
-            }
-
-#if UNITY_EDITOR
-            visualCatalog = AssetDatabase.LoadAssetAtPath<RelicVisualCatalogSO>(DefaultCatalogAssetPath);
-#endif
         }
     }
 }

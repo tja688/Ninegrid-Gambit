@@ -24,7 +24,7 @@ namespace NineGrid.Core.Tests
             mArch = NineGridArchitecture.Current;
             mArch.GetUtility<IConfigUtility>().Set(
                 ContentConfigKeys.DefaultCatalog,
-                TableNineContentCatalog.CreateDefault());
+                ContentCatalogBootstrap.Load());
             InitialGameFactory.Create(mArch, new InitialGameOptions { Seed = 57UL });
             mPipeline = mArch.GetSystem<IActionPipelineSystem>();
         }

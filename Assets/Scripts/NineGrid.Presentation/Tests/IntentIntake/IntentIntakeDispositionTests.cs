@@ -314,7 +314,7 @@ namespace NineGrid.Presentation.Tests.IntentIntake
             using (PresentationRuntimeFixture.Install(arch, new RecordingScriptFactory()))
             {
                 arch.Architecture.GetSystem<NineGrid.Core.Systems.IContentSystem>()
-                    .Load(NineGrid.Content.TableNineContentCatalog.CreateDefault());
+                    .Load(NineGrid.Content.ContentCatalogBootstrap.Load());
 
                 Assert.IsTrue(arch.Phase.StartNode(new NodeDeckOptions
                 {

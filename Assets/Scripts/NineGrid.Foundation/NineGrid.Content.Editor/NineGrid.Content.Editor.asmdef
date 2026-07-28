@@ -5,8 +5,7 @@
         "NineGrid.Core",
         "NineGrid.Content",
         "NineGrid.Presentation",
-        "NineGrid.Presentation.Editor",
-        "Luban.Runtime"
+        "NineGrid.Presentation.Editor"
     ],
     "includePlatforms": [
         "Editor"

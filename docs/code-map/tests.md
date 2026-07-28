@@ -14,7 +14,7 @@
 | `FlowShell/` | 流程壳 Controller |
 | `BattleSession/` | 局内会话 |
 | `Output/` | 描述 / 伤害等输出 |
-| `Cards/` | 卡面 Commit、牌库闸、飞行排序、致死表现回归；表现层配置器条目门槛（Skill 不进窗口、HelpCard/Item 保留）等；**ContentArt** 路径约定 / Resources 帧加载 / 断链校验（#66）；**JSON→Catalog 投影**（帮助卡/怪物/技能/遗物/牌组/房间）/ Overlay 跳过已投影卡种（#67/#68、ADR-0008） |
+| `Cards/` | 卡面 Commit、牌库闸、飞行排序、致死表现回归；表现层配置器条目门槛（Skill 不进窗口、HelpCard/Item 保留）等；**ContentArt** 路径约定 / Resources 帧加载 / 断链校验（#66）；**JSON→Catalog 投影**（帮助卡/怪物/技能/遗物/牌组/房间）+ 表 JSON 加载；无 BusinessOverlay（#67/#68/#69、ADR-0008） |
 | `Flow/` | Flow 侧遗留/切片 |
 | `Fixtures/` | EditMode 夹具 |
 | `HostContractStructuralTests.cs` | 结构护栏：禁四大旧宿主名、禁 `CombatHitSink`、禁回流 `new PresentationDirector`、System 不暴露具体 View |
@@ -31,7 +31,7 @@
 | `CardSpawnedFaceAbsoluteTests` | #57：`CardSpawned` 携带造卡时攻/甲/血绝对值 |
 | `CardKilledFaceAbsoluteTests` | #58：`CardKilled` 携带 `RemainingHp=0` |
 | `RewardOfferFaceProjectionContractTests` | #62：`OfferRewardChoice` 把 CreateDraft 攻/甲/血写入 `RewardEntry` 与 `RewardOffered` Message |
-| `ContentCatalogValidationTests` | 默认夹具 `ValidateCatalog` 绿；**#67/#68** Bootstrap Hardcoded/Luban + schema≥2 JSON 投影校验绿（帮助卡/遗物/技能/怪物/牌组/房间） |
+| `ContentCatalogValidationTests` | 小型夹具 `ValidateCatalog` 绿；**#69** 生产 Bootstrap（tables + schema≥2 JSON 投影）校验绿（帮助卡/遗物/技能/怪物/牌组/房间/效果/经济） |
 
 ### 行为基线（节选）
 

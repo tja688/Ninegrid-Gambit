@@ -24,7 +24,7 @@ namespace NineGrid.Core.Tests
         {
             NineGridArchitecture.ResetForTests();
             mArch = NineGridArchitecture.Current;
-            mArch.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, TableNineContentCatalog.CreateDefault());
+            mArch.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, ContentCatalogBootstrap.Load());
             InitialGameFactory.Create(mArch, new InitialGameOptions { Seed = 13UL, AvatarMaxHp = 20 });
             mStats = mArch.GetSystem<IStatSystem>();
             mPipeline = mArch.GetSystem<IActionPipelineSystem>();

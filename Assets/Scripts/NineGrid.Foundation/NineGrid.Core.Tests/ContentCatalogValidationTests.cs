@@ -10,8 +10,7 @@ using QFramework;
 namespace NineGrid.Core.Tests
 {
     /// <summary>
-    /// 阶段一门禁：默认 catalog 全量 DSL 可解析、引用完整、无 Pending。
-    /// #67/#68：生产 Bootstrap（Luban/Hardcoded + schema≥2 JSON 投影）同样须绿。
+    /// 内容门禁：小型夹具与生产 JSON Catalog 均须 ValidateCatalog 绿（ADR-0008 / #69）。
     /// </summary>
     public sealed class ContentCatalogValidationTests
     {
@@ -46,7 +45,7 @@ namespace NineGrid.Core.Tests
         public void BootstrapCatalog_ValidateCatalog_IsValidWithProductionJsonProjection()
         {
             CardPresentationConfigCatalog.Invalidate();
-            var catalog = ContentCatalogBootstrap.Load(ContentCatalogSourceKind.Hardcoded);
+            var catalog = ContentCatalogBootstrap.Load();
             mArch.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, catalog);
 
             var report = mArch.GetSystem<IContentSystem>().ValidateCatalog();
@@ -60,7 +59,6 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual("help.healing_spring.board_adjacent", spring.EffectIds[0]);
             Assert.AreEqual("help.healing_spring.item_battle", spring.EffectIds[1]);
             Assert.AreEqual("help.healing_spring.use", spring.EffectIds[2]);
-            // JSON SSOT displayName（与 Luban「治疗泉」可不同）
             Assert.AreEqual("治疗圣光", spring.DisplayName);
 
             Assert.IsTrue(catalog.Cards.TryGetValue("help.doubling_tower", out var tower));
@@ -86,30 +84,10 @@ namespace NineGrid.Core.Tests
 
             Assert.IsTrue(catalog.Rewards.TryGetRoom(RoomKind.Fountain, out var fountain));
             Assert.IsTrue(fountain.HealToFull);
-        }
 
-        [Test]
-        public void BootstrapLubanCatalog_WhenAvailable_ValidateCatalog_IsValidWithJsonProjection()
-        {
-            CardPresentationConfigCatalog.Invalidate();
-            if (string.IsNullOrEmpty(ContentCatalogBootstrap.ResolveLubanDataDirectory()))
-            {
-                Assert.Ignore("Luban data directory unavailable in this environment.");
-            }
-
-            var catalog = ContentCatalogBootstrap.Load(ContentCatalogSourceKind.Luban);
-            mArch.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, catalog);
-
-            var report = mArch.GetSystem<IContentSystem>().ValidateCatalog();
-            Assert.IsTrue(report.IsValid, FormatIssues(report));
-            Assert.AreEqual(0, report.PendingEffectIds.Count);
-
-            Assert.IsTrue(catalog.Cards.TryGetValue("help.healing_spring", out var spring));
-            Assert.AreEqual("治疗圣光", spring.DisplayName);
-            Assert.AreEqual(3, spring.EffectIds.Count);
-
-            Assert.IsTrue(catalog.Relics.TryGetValue("relic.arsenal", out var arsenal));
-            Assert.AreEqual("relic.arsenal.node_end", arsenal.EffectIds[0]);
+            Assert.IsTrue(catalog.Effects.ContainsKey("help.healing_potion.use"));
+            Assert.AreEqual(5, catalog.Economy.MonsterRemovedGold);
+            Assert.Greater(catalog.Rewards.NodeDeckRules.Count, 0);
         }
 
         private static string FormatIssues(ContentValidationReport report)

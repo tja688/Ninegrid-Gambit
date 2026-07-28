@@ -1,0 +1,1250 @@
+[
+  {
+    "id": "help.choice.00.help_healing_potion",
+    "pool_id": "help.choice",
+    "def_id": "help.healing_potion",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.01.help_ward_magic_card",
+    "pool_id": "help.choice",
+    "def_id": "help.ward_magic_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.02.help_throwing_knife",
+    "pool_id": "help.choice",
+    "def_id": "help.throwing_knife",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.03.help_fireball",
+    "pool_id": "help.choice",
+    "def_id": "help.fireball",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.04.help_rotation_wheel",
+    "pool_id": "help.choice",
+    "def_id": "help.rotation_wheel",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.05.help_brutality_card",
+    "pool_id": "help.choice",
+    "def_id": "help.brutality_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.06.help_rolling_stone",
+    "pool_id": "help.choice",
+    "def_id": "help.rolling_stone",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.07.help_bomb",
+    "pool_id": "help.choice",
+    "def_id": "help.bomb",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.08.help_swap_card",
+    "pool_id": "help.choice",
+    "def_id": "help.swap_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.09.help_armor_breaking_hammer",
+    "pool_id": "help.choice",
+    "def_id": "help.armor_breaking_hammer",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.10.help_sturdy_shield",
+    "pool_id": "help.choice",
+    "def_id": "help.sturdy_shield",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.11.help_bear_trap",
+    "pool_id": "help.choice",
+    "def_id": "help.bear_trap",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.12.help_teleport_card",
+    "pool_id": "help.choice",
+    "def_id": "help.teleport_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.13.help_blood_conversion",
+    "pool_id": "help.choice",
+    "def_id": "help.blood_conversion",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.14.help_gold_card",
+    "pool_id": "help.choice",
+    "def_id": "help.gold_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.15.help_food_card",
+    "pool_id": "help.choice",
+    "def_id": "help.food_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.16.help_common_chest_card",
+    "pool_id": "help.choice",
+    "def_id": "help.common_chest_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.17.help_healing_spring",
+    "pool_id": "help.choice",
+    "def_id": "help.healing_spring",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.18.help_impact_tutorial",
+    "pool_id": "help.choice",
+    "def_id": "help.impact_tutorial",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.19.help_shield_bash_tutorial",
+    "pool_id": "help.choice",
+    "def_id": "help.shield_bash_tutorial",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.20.help_kidnapping",
+    "pool_id": "help.choice",
+    "def_id": "help.kidnapping",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.21.help_blue_chest_card",
+    "pool_id": "help.choice",
+    "def_id": "help.blue_chest_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.22.help_watchtower",
+    "pool_id": "help.choice",
+    "def_id": "help.watchtower",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.23.help_doubling_tower",
+    "pool_id": "help.choice",
+    "def_id": "help.doubling_tower",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.choice.24.help_stat_boost_card",
+    "pool_id": "help.choice",
+    "def_id": "help.stat_boost_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.00.help_healing_potion",
+    "pool_id": "help.white.choice",
+    "def_id": "help.healing_potion",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.01.help_ward_magic_card",
+    "pool_id": "help.white.choice",
+    "def_id": "help.ward_magic_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.02.help_throwing_knife",
+    "pool_id": "help.white.choice",
+    "def_id": "help.throwing_knife",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.03.help_fireball",
+    "pool_id": "help.white.choice",
+    "def_id": "help.fireball",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.04.help_rotation_wheel",
+    "pool_id": "help.white.choice",
+    "def_id": "help.rotation_wheel",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.05.help_brutality_card",
+    "pool_id": "help.white.choice",
+    "def_id": "help.brutality_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.06.help_rolling_stone",
+    "pool_id": "help.white.choice",
+    "def_id": "help.rolling_stone",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.07.help_bomb",
+    "pool_id": "help.white.choice",
+    "def_id": "help.bomb",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.08.help_swap_card",
+    "pool_id": "help.white.choice",
+    "def_id": "help.swap_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.09.help_armor_breaking_hammer",
+    "pool_id": "help.white.choice",
+    "def_id": "help.armor_breaking_hammer",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.10.help_sturdy_shield",
+    "pool_id": "help.white.choice",
+    "def_id": "help.sturdy_shield",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.11.help_bear_trap",
+    "pool_id": "help.white.choice",
+    "def_id": "help.bear_trap",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.12.help_teleport_card",
+    "pool_id": "help.white.choice",
+    "def_id": "help.teleport_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "help.white.choice.13.help_blood_conversion",
+    "pool_id": "help.white.choice",
+    "def_id": "help.blood_conversion",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "kill.boss.00.help_golden_chest_card",
+    "pool_id": "kill.boss",
+    "def_id": "help.golden_chest_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "kill.boss.01.help_gold_card",
+    "pool_id": "kill.boss",
+    "def_id": "help.gold_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 2
+  },
+  {
+    "id": "kill.boss.02.help_stat_boost_card",
+    "pool_id": "kill.boss",
+    "def_id": "help.stat_boost_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "kill.elite.00.help_blue_chest_card",
+    "pool_id": "kill.elite",
+    "def_id": "help.blue_chest_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "kill.elite.01.help_gold_card",
+    "pool_id": "kill.elite",
+    "def_id": "help.gold_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "kill.elite.02.help_stat_boost_card",
+    "pool_id": "kill.elite",
+    "def_id": "help.stat_boost_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.00.relic_junk_recycler",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.junk_recycler",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.01.relic_wood_shield",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.wood_shield",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.02.relic_wood_sword",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.wood_sword",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.03.relic_wood_armor",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.wood_armor",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.04.relic_lucky_coin",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.lucky_coin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.05.relic_throwing_knife_bag",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.throwing_knife_bag",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.06.relic_potion_bag",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.potion_bag",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.07.relic_junk_launcher",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.junk_launcher",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.08.relic_junk_coating",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.junk_coating",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.09.relic_sling",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.sling",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.10.relic_shield_knife",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.shield_knife",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.11.relic_gold_knife",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.gold_knife",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.12.relic_heavy_armor",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.heavy_armor",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.13.relic_gold_armor",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.gold_armor",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.14.relic_vitality_amulet",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.vitality_amulet",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.15.relic_thorn_skin",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.thorn_skin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.16.relic_hard_skin",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.hard_skin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.17.relic_battle_hardened",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.battle_hardened",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.18.relic_arsenal",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.arsenal",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.19.relic_even_hatred",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.even_hatred",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.20.relic_tower_child",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.tower_child",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.21.relic_dragon_scale_armor",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.dragon_scale_armor",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.22.relic_phoenix_feather",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.phoenix_feather",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.23.relic_craving",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.craving",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blood_conversion.24.relic_junk_slot_machine",
+    "pool_id": "relic.blood_conversion",
+    "def_id": "relic.junk_slot_machine",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.00.relic_junk_recycler",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.junk_recycler",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.01.relic_wood_shield",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.wood_shield",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.02.relic_wood_sword",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.wood_sword",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.03.relic_wood_armor",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.wood_armor",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.04.relic_lucky_coin",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.lucky_coin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.05.relic_throwing_knife_bag",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.throwing_knife_bag",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.06.relic_potion_bag",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.potion_bag",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.07.relic_junk_launcher",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.junk_launcher",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.08.relic_junk_coating",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.junk_coating",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.09.relic_sling",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.sling",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.10.relic_shield_knife",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.shield_knife",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.11.relic_gold_knife",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.gold_knife",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.12.relic_heavy_armor",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.heavy_armor",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.13.relic_gold_armor",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.gold_armor",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.14.relic_vitality_amulet",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.vitality_amulet",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.15.relic_thorn_skin",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.thorn_skin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.16.relic_hard_skin",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.hard_skin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.17.relic_battle_hardened",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.battle_hardened",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.18.relic_arsenal",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.arsenal",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.19.relic_even_hatred",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.even_hatred",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.20.relic_tower_child",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.tower_child",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.21.relic_dragon_scale_armor",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.dragon_scale_armor",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.22.relic_phoenix_feather",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.phoenix_feather",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.23.relic_craving",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.craving",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.blue_chest.24.relic_junk_slot_machine",
+    "pool_id": "relic.blue_chest",
+    "def_id": "relic.junk_slot_machine",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.00.relic_junk_recycler",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.junk_recycler",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.01.relic_wood_shield",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.wood_shield",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.02.relic_wood_sword",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.wood_sword",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.03.relic_wood_armor",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.wood_armor",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.04.relic_lucky_coin",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.lucky_coin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.05.relic_throwing_knife_bag",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.throwing_knife_bag",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.06.relic_potion_bag",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.potion_bag",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.07.relic_junk_launcher",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.junk_launcher",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.08.relic_junk_coating",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.junk_coating",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.09.relic_sling",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.sling",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.10.relic_shield_knife",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.shield_knife",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.11.relic_gold_knife",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.gold_knife",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.12.relic_heavy_armor",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.heavy_armor",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.13.relic_gold_armor",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.gold_armor",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.14.relic_vitality_amulet",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.vitality_amulet",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.15.relic_thorn_skin",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.thorn_skin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.16.relic_hard_skin",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.hard_skin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.17.relic_battle_hardened",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.battle_hardened",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.18.relic_arsenal",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.arsenal",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.19.relic_even_hatred",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.even_hatred",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.20.relic_tower_child",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.tower_child",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.21.relic_dragon_scale_armor",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.dragon_scale_armor",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.22.relic_phoenix_feather",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.phoenix_feather",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.23.relic_craving",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.craving",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.common_chest.24.relic_junk_slot_machine",
+    "pool_id": "relic.common_chest",
+    "def_id": "relic.junk_slot_machine",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.00.relic_vitality_amulet",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.vitality_amulet",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.01.relic_thorn_skin",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.thorn_skin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.02.relic_hard_skin",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.hard_skin",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.03.relic_battle_hardened",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.battle_hardened",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.04.relic_arsenal",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.arsenal",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.05.relic_even_hatred",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.even_hatred",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.06.relic_tower_child",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.tower_child",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.07.relic_dragon_scale_armor",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.dragon_scale_armor",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.08.relic_phoenix_feather",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.phoenix_feather",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.09.relic_craving",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.craving",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "relic.golden_chest.10.relic_junk_slot_machine",
+    "pool_id": "relic.golden_chest",
+    "def_id": "relic.junk_slot_machine",
+    "kind": "Relic",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.00.help_healing_potion",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.healing_potion",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.01.help_ward_magic_card",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.ward_magic_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.02.help_throwing_knife",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.throwing_knife",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.03.help_fireball",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.fireball",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.04.help_rotation_wheel",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.rotation_wheel",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.05.help_brutality_card",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.brutality_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.06.help_rolling_stone",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.rolling_stone",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.07.help_bomb",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.bomb",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.08.help_swap_card",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.swap_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.09.help_armor_breaking_hammer",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.armor_breaking_hammer",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.10.help_sturdy_shield",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.sturdy_shield",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.11.help_bear_trap",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.bear_trap",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.12.help_teleport_card",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.teleport_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.13.help_blood_conversion",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.blood_conversion",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.14.help_gold_card",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.gold_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.15.help_food_card",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.food_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.16.help_common_chest_card",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.common_chest_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.17.help_healing_spring",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.healing_spring",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.18.help_impact_tutorial",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.impact_tutorial",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.19.help_shield_bash_tutorial",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.shield_bash_tutorial",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.20.help_kidnapping",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.kidnapping",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.21.help_blue_chest_card",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.blue_chest_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.22.help_watchtower",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.watchtower",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.23.help_doubling_tower",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.doubling_tower",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  },
+  {
+    "id": "shop.helpCards.24.help_stat_boost_card",
+    "pool_id": "shop.helpCards",
+    "def_id": "help.stat_boost_card",
+    "kind": "HelpCard",
+    "weight": 1,
+    "count": 1
+  }
+]

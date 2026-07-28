@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using Luban.SimpleJSON;
+using UnityEngine;
 
 namespace NineGrid.Content.Editor
 {
@@ -15,6 +15,9 @@ namespace NineGrid.Content.Editor
         public int SheetRowIndex { get; set; } = -1;
     }
 
+    /// <summary>
+    /// 旧 content_visual.xlsx 桥（#69 Luban 工具链已退休）。脚本缺失时 Read 返回空列表，不抛。
+    /// </summary>
     public static class ContentVisualXlsxIO
     {
         public const string RelativeXlsxPath = "Assets/Tools/Luban/Datas/content_visual.xlsx";
@@ -30,7 +33,7 @@ namespace NineGrid.Content.Editor
             error = null;
             if (!File.Exists(absolutePath))
             {
-                error = "找不到权威表：" + absolutePath;
+                error = "找不到权威表：" + absolutePath + "（Luban/xlsx 已退休，请改一卡一文件 JSON）";
                 return false;
             }
 
@@ -63,15 +66,32 @@ namespace NineGrid.Content.Editor
 
         public static List<ContentVisualXlsxRow> ReadAll(string absolutePath)
         {
+            if (!File.Exists(absolutePath)
+                || !File.Exists(Path.Combine(Directory.GetCurrentDirectory(), RelativeIoScriptPath)))
+            {
+                return new List<ContentVisualXlsxRow>();
+            }
+
             var json = RunPython("read", absolutePath, null);
             return ParseRows(json);
         }
 
         public static (string varRow, string typeRow) ReadHeaderRows(string absolutePath)
         {
+            if (!File.Exists(absolutePath)
+                || !File.Exists(Path.Combine(Directory.GetCurrentDirectory(), RelativeIoScriptPath)))
+            {
+                return (string.Empty, string.Empty);
+            }
+
             var json = RunPython("headers", absolutePath, null);
-            var node = JSON.Parse(json);
-            return (node["var_row"].Value, node["type_row"].Value);
+            var header = JsonUtility.FromJson<HeaderDto>(json);
+            if (header == null)
+            {
+                return (string.Empty, string.Empty);
+            }
+
+            return (header.var_row ?? string.Empty, header.type_row ?? string.Empty);
         }
 
         public static void PatchDescriptions(string absolutePath, IReadOnlyList<ContentVisualXlsxRow> patches)
@@ -83,16 +103,26 @@ namespace NineGrid.Content.Editor
         private static List<ContentVisualXlsxRow> ParseRows(string json)
         {
             var rows = new List<ContentVisualXlsxRow>();
-            var array = JSON.Parse(json).AsArray;
-            for (var i = 0; i < array.Count; i++)
+            var list = JsonUtility.FromJson<RowListWrapper>("{\"items\":" + json + "}");
+            if (list?.items == null)
             {
-                var node = array[i];
+                return rows;
+            }
+
+            for (var i = 0; i < list.items.Length; i++)
+            {
+                var node = list.items[i];
+                if (node == null)
+                {
+                    continue;
+                }
+
                 rows.Add(new ContentVisualXlsxRow
                 {
-                    ContentId = node["content_id"].Value,
-                    ContentKind = node["content_kind"].Value,
-                    Description = node["description"].Value,
-                    SheetRowIndex = node["sheet_row_index"].AsInt
+                    ContentId = node.content_id,
+                    ContentKind = node.content_kind,
+                    Description = node.description,
+                    SheetRowIndex = node.sheet_row_index
                 });
             }
 
@@ -159,7 +189,7 @@ namespace NineGrid.Content.Editor
             var scriptPath = Path.Combine(projectRoot, relativeScriptPath);
             if (!File.Exists(scriptPath))
             {
-                throw new FileNotFoundException("xlsx io script not found.", scriptPath);
+                throw new FileNotFoundException("xlsx io script not found（Luban 已退休）。", scriptPath);
             }
 
             var pythonExe = ResolvePythonExecutable(projectRoot);
@@ -219,6 +249,28 @@ namespace NineGrid.Content.Editor
         private static string EscapeCommandLine(string value)
         {
             return (value ?? string.Empty).Replace("\"", "\\\"");
+        }
+
+        [Serializable]
+        private sealed class RowDto
+        {
+            public string content_id;
+            public string content_kind;
+            public string description;
+            public int sheet_row_index;
+        }
+
+        [Serializable]
+        private sealed class RowListWrapper
+        {
+            public RowDto[] items;
+        }
+
+        [Serializable]
+        private sealed class HeaderDto
+        {
+            public string var_row;
+            public string type_row;
         }
     }
 }

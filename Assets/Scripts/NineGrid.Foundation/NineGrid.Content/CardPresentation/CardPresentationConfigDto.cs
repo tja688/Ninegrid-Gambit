@@ -6,10 +6,9 @@ namespace NineGrid.Content.CardPresentation
     /// 卡牌内容/表现 JSON（JsonUtility 友好：无 Dictionary，字段 camelCase）。
     /// schemaVersion≥2：身份、数值、效果挂载与表现引用同文件，经
     /// <see cref="NineGrid.Content.ContentJsonCatalogProjector"/> 投影进
-    /// <c>GameContentCatalog</c>（HelpCard/Monster/Skill/Relic/Deck/Room）；
-    /// Overlay 不再盖写已投影卡种的 stats/gold/displayName。
+    /// <c>GameContentCatalog</c>（HelpCard/Monster/Skill/Relic/Deck/Room）。
     /// ChoiceOption / Avatar 等仅表现 contentId 可有 JSON，不进玩法 Catalog。
-    /// 效果 DSL 本体与奖励池/经济/节点规则仍可 Luban（#69 再退）。
+    /// 效果 DSL / 奖励池 / 经济 / 节点规则由 <c>ContentCatalogTableLoader</c> 加载（ADR-0008 / #69）。
     /// </summary>
     [Serializable]
     public sealed class CardPresentationConfigDto
@@ -37,7 +36,7 @@ namespace NineGrid.Content.CardPresentation
         public string rarity;
         /// <summary>标签列表；schema≥2 时投影进 Catalog。</summary>
         public string[] tags;
-        /// <summary>效果挂载 id 列表；schema≥2 时投影进 Catalog（效果 DSL 本体仍可在 Luban）。</summary>
+        /// <summary>效果挂载 id 列表；schema≥2 时投影进 Catalog。</summary>
         public string[] effectIds;
         /// <summary>怪物技能挂载；Monster schema≥2 投影进 Catalog.SkillIds。</summary>
         public string[] skillIds;

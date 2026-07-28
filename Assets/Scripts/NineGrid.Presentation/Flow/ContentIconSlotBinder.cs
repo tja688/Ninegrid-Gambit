@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using NineGrid.Content;
+using NineGrid.Content.CardPresentation;
 using UnityEngine;
 
 namespace NineGrid.Flow
@@ -77,6 +78,22 @@ namespace NineGrid.Flow
             IReadOnlyList<string> defIds,
             ContentVisualSpriteCatalogSO catalog)
         {
+            ApplySlots(slots, defIds, catalog);
+        }
+
+        /// <summary>#69：从一卡一文件 JSON 解析主图标（生产路径）。</summary>
+        public static void ApplyFromPresentationJson(
+            SpriteRenderer[] slots,
+            IReadOnlyList<string> defIds)
+        {
+            ApplySlots(slots, defIds, catalog: null);
+        }
+
+        private static void ApplySlots(
+            SpriteRenderer[] slots,
+            IReadOnlyList<string> defIds,
+            ContentVisualSpriteCatalogSO catalog)
+        {
             if (slots == null || slots.Length == 0)
             {
                 return;
@@ -97,14 +114,7 @@ namespace NineGrid.Flow
                     continue;
                 }
 
-                Sprite icon = null;
-                Sprite face = null;
-                if (catalog != null)
-                {
-                    catalog.TryGet(defIds[i], out icon, out face);
-                }
-
-                var sprite = icon != null ? icon : face;
+                var sprite = ResolveSprite(defIds[i], catalog);
                 if (sprite == null)
                 {
                     ClearSlot(slot);
@@ -115,6 +125,23 @@ namespace NineGrid.Flow
                 slot.enabled = true;
                 BindHitProxy(slot, defIds[i]);
             }
+        }
+
+        private static Sprite ResolveSprite(string defId, ContentVisualSpriteCatalogSO catalog)
+        {
+            if (catalog != null && catalog.TryGet(defId, out var icon, out var face))
+            {
+                return icon != null ? icon : face;
+            }
+
+            if (!CardPresentationConfigCatalog.TryGet(defId, out var dto)
+                || dto?.sprites == null
+                || string.IsNullOrWhiteSpace(dto.sprites.mainIcon))
+            {
+                return null;
+            }
+
+            return CardPresentationSpritePath.LoadSprite(dto.sprites.mainIcon);
         }
 
         public static void ClearAll(SpriteRenderer[] slots)

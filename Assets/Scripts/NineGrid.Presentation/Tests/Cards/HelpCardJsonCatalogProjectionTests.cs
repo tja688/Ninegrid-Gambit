@@ -11,6 +11,12 @@ namespace NineGrid.Presentation.Tests.Cards
     /// </summary>
     public sealed class HelpCardJsonCatalogProjectionTests
     {
+        [SetUp]
+        public void SetUp()
+        {
+            CardPresentationConfigCatalog.Invalidate();
+        }
+
         [TearDown]
         public void TearDown()
         {
@@ -110,7 +116,7 @@ namespace NineGrid.Presentation.Tests.Cards
         }
 
         [Test]
-        public void Overlay_DoesNotOverwriteHelpCard_DisplayNameGoldStats()
+        public void PresentationJson_Alone_DoesNotMutateSeededHelpCardStats()
         {
             var catalog = new GameContentCatalog();
             catalog.AddCard(
@@ -123,13 +129,12 @@ namespace NineGrid.Presentation.Tests.Cards
                 schemaVersion = 2,
                 contentId = "help.overlay_skip",
                 kind = "HelpCard",
-                displayName = "OverlayWouldChange",
+                displayName = "WouldChangeIfProjected",
                 gold = 1,
                 stats = new CardPresentationStatsDto { hp = 9, attack = 8, armor = 7 },
             });
 
-            CardPresentationBusinessOverlay.ApplyToCatalog(catalog);
-
+            // #69：无 Overlay；未再投影时 Catalog 种子值不变。
             var card = catalog.Cards["help.overlay_skip"];
             Assert.AreEqual("FromJson", card.DisplayName);
             Assert.AreEqual(80, card.Price);

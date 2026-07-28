@@ -8,7 +8,8 @@ namespace NineGrid.Content
 {
     /// <summary>
     /// 将一卡一文件 JSON（schema≥2）投影进 <see cref="GameContentCatalog"/>（覆盖同 DefId）。
-    /// 支持 HelpCard / Monster / Skill / Relic / Deck / Room；效果 DSL 本体仍可由 Luban 提供。
+    /// 支持 HelpCard / Monster / Skill / Relic / Deck / Room。
+    /// 效果 DSL / 奖励池 / 经济 / 节点规则由 <see cref="ContentCatalogTableLoader"/> 加载。
     /// </summary>
     public static class ContentJsonCatalogProjector
     {
@@ -65,12 +66,6 @@ namespace NineGrid.Content
             }
 
             return applied;
-        }
-
-        /// <summary>已投影进 Catalog 的卡种：Overlay 不得再盖写 displayName/gold/stats。</summary>
-        public static bool IsProjectedCardOverlaySkip(CardPresentationConfigDto dto)
-        {
-            return TryProjectCard(dto, out _);
         }
 
         public static bool TryProjectCard(CardPresentationConfigDto dto, out CardContentDefinition card)

@@ -105,7 +105,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             var architecture = NineGridArchitecture.Current;
             architecture.GetUtility<IConfigUtility>().Set(
                 ContentConfigKeys.DefaultCatalog,
-                TableNineContentCatalog.CreateDefault());
+                ContentCatalogBootstrap.Load());
             InitialGameFactory.Create(architecture, new InitialGameOptions
             {
                 Seed = 5610UL,
@@ -208,7 +208,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             var architecture = NineGridArchitecture.Current;
             architecture.GetUtility<IConfigUtility>().Set(
                 ContentConfigKeys.DefaultCatalog,
-                TableNineContentCatalog.CreateDefault());
+                ContentCatalogBootstrap.Load());
             InitialGameFactory.Create(architecture, new InitialGameOptions { Seed = 6101UL });
 
             GoldGainPresentationBinder.EnsureInstalled();
@@ -254,7 +254,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             var architecture = NineGridArchitecture.Current;
             architecture.GetUtility<IConfigUtility>().Set(
                 ContentConfigKeys.DefaultCatalog,
-                TableNineContentCatalog.CreateDefault());
+                ContentCatalogBootstrap.Load());
             InitialGameFactory.Create(architecture, new InitialGameOptions { Seed = 6102UL });
 
             var scheduler = new BattleBeatScheduler(
@@ -305,7 +305,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             var architecture = NineGridArchitecture.Current;
             architecture.GetUtility<IConfigUtility>().Set(
                 ContentConfigKeys.DefaultCatalog,
-                TableNineContentCatalog.CreateDefault());
+                ContentCatalogBootstrap.Load());
             InitialGameFactory.Create(architecture, new InitialGameOptions { Seed = 55UL });
 
             var phase = architecture.GetSystem<IPhaseSystem>();
@@ -391,7 +391,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             var architecture = NineGridArchitecture.Current;
             architecture.GetUtility<IConfigUtility>().Set(
                 ContentConfigKeys.DefaultCatalog,
-                TableNineContentCatalog.CreateDefault());
+                ContentCatalogBootstrap.Load());
             InitialGameFactory.Create(architecture, new InitialGameOptions { Seed = 56UL });
 
             var phase = architecture.GetSystem<IPhaseSystem>();
@@ -495,7 +495,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             var architecture = NineGridArchitecture.Current;
             architecture.GetUtility<IConfigUtility>().Set(
                 ContentConfigKeys.DefaultCatalog,
-                TableNineContentCatalog.CreateDefault());
+                ContentCatalogBootstrap.Load());
             InitialGameFactory.Create(architecture, new InitialGameOptions { Seed = 5601UL });
 
             var phase = architecture.GetSystem<IPhaseSystem>();
@@ -670,7 +670,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             var architecture = NineGridArchitecture.Current;
             architecture.GetUtility<IConfigUtility>().Set(
                 ContentConfigKeys.DefaultCatalog,
-                TableNineContentCatalog.CreateDefault());
+                ContentCatalogBootstrap.Load());
             InitialGameFactory.Create(architecture, new InitialGameOptions { Seed = 5602UL });
             arrange(architecture);
 
@@ -972,7 +972,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             var architecture = NineGridArchitecture.Current;
             architecture.GetUtility<IConfigUtility>().Set(
                 ContentConfigKeys.DefaultCatalog,
-                TableNineContentCatalog.CreateDefault());
+                ContentCatalogBootstrap.Load());
             InitialGameFactory.Create(architecture, new InitialGameOptions { Seed = 6011UL });
 
             var pulsed = new System.Collections.Generic.List<string>();

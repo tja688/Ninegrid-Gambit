@@ -7,11 +7,6 @@ using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using QFramework;
 using UnityEngine;
-
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 namespace NineGrid.Flow
 {
     public struct CardPresentationRead
@@ -30,13 +25,6 @@ namespace NineGrid.Flow
     /// </summary>
     public static class CoreCardPresentationMapper
     {
-        private const string VisualAssetFolder = "Assets/Arts/ContentVisual/";
-
-        private static ContentVisualCatalog _visualCatalog;
-        private static CardFrameStyleCatalog _frameStyleCatalog;
-        private static ContentVisualSpriteCatalogSet _spriteCatalogs;
-        private static bool _visualsResolved;
-
         public static void EnsureContentCatalogLoaded()
         {
             var arch = NineGridArchitecture.Current;
@@ -289,47 +277,18 @@ namespace NineGrid.Flow
                 return;
             }
 
-            // 重叠字段单真相：有 CardPresentation JSON 则整段用 JSON（不混读 SO/Luban 同名字段）。
-            // 缺图/缺名时在 JSON 分支内用 defId 填空，不回落半套旧源。
+            // #69：表现只读一卡一文件 JSON；不再咨询 Luban ContentVisual / VisualCatalog SO。
             if (TryApplyJsonPresentation(snapshot, defId))
             {
                 return;
-            }
-
-            // 无 JSON：Luban ContentVisual + SO 图作为过渡 fallback。
-            EnsureVisualsLoaded();
-
-            var arch = NineGridArchitecture.Current;
-            var content = arch.GetSystem<IContentSystem>();
-            if (content.HasCatalog
-                && _visualCatalog != null
-                && ContentVisualResolver.TryResolve(
-                    defId,
-                    content.Catalog,
-                    _visualCatalog,
-                    _frameStyleCatalog,
-                    _spriteCatalogs,
-                    out var resolved))
-            {
-                // Luban/SO fallback：名字 + 主图标；显式装配的 Face/Back 覆盖。
-                snapshot.DisplayName = resolved.DisplayName ?? string.Empty;
-                snapshot.MainIcon = resolved.Icon;
-                snapshot.FaceBackground = resolved.Face;
-                snapshot.BackBorder = resolved.BackBorder;
-                snapshot.BackShirt = resolved.BackShirt;
-                snapshot.BackLogo = resolved.BackLogo;
-                return;
-            }
-
-            if (TryGetSpritesDirect(defId, kind, out var directIcon, out _))
-            {
-                snapshot.MainIcon = directIcon;
             }
 
             if (string.IsNullOrEmpty(snapshot.DisplayName))
             {
                 snapshot.DisplayName = defId;
             }
+
+            _ = kind;
         }
 
         private static bool TryApplyJsonPresentation(CardPresentationSnapshot snapshot, string defId)
@@ -368,91 +327,17 @@ namespace NineGrid.Flow
             return true;
         }
 
-        private static void ApplyJsonSprite(ref Sprite target, string assetPath)
+        private static void ApplyJsonSprite(ref Sprite target, string path)
         {
-            if (string.IsNullOrWhiteSpace(assetPath))
+            if (string.IsNullOrWhiteSpace(path))
             {
                 return;
             }
 
-            var sprite = CardPresentationSpritePath.LoadSprite(assetPath);
+            var sprite = CardPresentationSpritePath.LoadSprite(path);
             if (sprite != null)
             {
                 target = sprite;
-            }
-        }
-
-        private static bool TryGetSpritesDirect(
-            string defId,
-            CardPresentationKind kind,
-            out Sprite icon,
-            out Sprite face)
-        {
-            icon = null;
-            face = null;
-            if (_spriteCatalogs == null)
-            {
-                return false;
-            }
-
-            var visualKind = InferVisualKind(defId, kind);
-            return _spriteCatalogs.TryGet(visualKind, defId, out icon, out face);
-        }
-
-        private static ContentVisualKind InferVisualKind(string defId, CardPresentationKind kind)
-        {
-            if (!string.IsNullOrEmpty(defId))
-            {
-                if (defId.StartsWith("monster.", System.StringComparison.Ordinal))
-                {
-                    return ContentVisualKind.Monster;
-                }
-
-                if (defId.StartsWith("help.", System.StringComparison.Ordinal))
-                {
-                    return ContentVisualKind.HelpCard;
-                }
-
-                if (defId.StartsWith("player.", System.StringComparison.Ordinal))
-                {
-                    return ContentVisualKind.HelpCard;
-                }
-
-                if (defId.StartsWith("relic.", System.StringComparison.Ordinal))
-                {
-                    return ContentVisualKind.Relic;
-                }
-
-                if (defId.StartsWith("skill.", System.StringComparison.Ordinal))
-                {
-                    return ContentVisualKind.Skill;
-                }
-
-                if (defId.StartsWith("avatar.", System.StringComparison.Ordinal))
-                {
-                    return ContentVisualKind.Avatar;
-                }
-
-                if (IsChoiceOptionDefId(defId))
-                {
-                    return ContentVisualKind.ChoiceOption;
-                }
-            }
-
-            switch (kind)
-            {
-                case CardPresentationKind.Monster:
-                    return ContentVisualKind.Monster;
-                case CardPresentationKind.HelpCard:
-                case CardPresentationKind.PlayerCard:
-                case CardPresentationKind.Item:
-                    return ContentVisualKind.HelpCard;
-                case CardPresentationKind.Relic:
-                    return ContentVisualKind.Relic;
-                case CardPresentationKind.Avatar:
-                    return ContentVisualKind.Avatar;
-                default:
-                    return ContentVisualKind.Unknown;
             }
         }
 
@@ -479,73 +364,41 @@ namespace NineGrid.Flow
 
         private static CardPresentationKind InferPresentationKind(string defId)
         {
-            var visualKind = InferVisualKind(defId, CardPresentationKind.Unknown);
-            switch (visualKind)
+            if (string.IsNullOrEmpty(defId))
             {
-                case ContentVisualKind.Monster:
-                    return CardPresentationKind.Monster;
-                case ContentVisualKind.HelpCard:
-                    return CardPresentationKind.HelpCard;
-                case ContentVisualKind.Relic:
-                    return CardPresentationKind.Relic;
-                case ContentVisualKind.Avatar:
-                    return CardPresentationKind.Avatar;
-                case ContentVisualKind.ChoiceOption:
-                    return CardPresentationKind.Item;
-                default:
-                    return CardPresentationKind.Unknown;
-            }
-        }
-
-        private static bool IsChoiceOptionDefId(string defId)
-        {
-            return string.Equals(defId, "Attack", System.StringComparison.Ordinal)
-                   || string.Equals(defId, "Armor", System.StringComparison.Ordinal)
-                   || string.Equals(defId, "Hp", System.StringComparison.Ordinal);
-        }
-
-        private static void EnsureVisualsLoaded()
-        {
-            if (_visualsResolved)
-            {
-                return;
+                return CardPresentationKind.Unknown;
             }
 
-            _visualsResolved = true;
-            ContentVisualBootstrap.TryLoad(
-                ContentVisualBootstrap.ResolveLubanDataDirectory(),
-                out _visualCatalog,
-                out _frameStyleCatalog);
-
-            _spriteCatalogs = ContentVisualSpriteCatalogBootstrapSO.TryLoadCatalogSet();
-#if UNITY_EDITOR
-            if (_spriteCatalogs == null)
+            if (defId.StartsWith("monster.", System.StringComparison.Ordinal))
             {
-                _spriteCatalogs = LoadSpriteCatalogsEditorFallback();
+                return CardPresentationKind.Monster;
             }
-#endif
-        }
 
-#if UNITY_EDITOR
-        private static ContentVisualSpriteCatalogSet LoadSpriteCatalogsEditorFallback()
-        {
-            return new ContentVisualSpriteCatalogSet
+            if (defId.StartsWith("help.", System.StringComparison.Ordinal)
+                || defId.StartsWith("player.", System.StringComparison.Ordinal))
             {
-                helpCards = AssetDatabase.LoadAssetAtPath<HelpCardVisualCatalogSO>(
-                    VisualAssetFolder + "HelpCardVisualCatalog.asset"),
-                monsters = AssetDatabase.LoadAssetAtPath<MonsterVisualCatalogSO>(
-                    VisualAssetFolder + "MonsterVisualCatalog.asset"),
-                relics = AssetDatabase.LoadAssetAtPath<RelicVisualCatalogSO>(
-                    VisualAssetFolder + "RelicVisualCatalog.asset"),
-                skills = AssetDatabase.LoadAssetAtPath<SkillVisualCatalogSO>(
-                    VisualAssetFolder + "SkillVisualCatalog.asset"),
-                misc = AssetDatabase.LoadAssetAtPath<MiscVisualCatalogSO>(
-                    VisualAssetFolder + "MiscVisualCatalog.asset"),
-                choiceOptions = AssetDatabase.LoadAssetAtPath<ChoiceOptionVisualCatalogSO>(
-                    VisualAssetFolder + "ChoiceOptionVisualCatalog.asset"),
-            };
+                return CardPresentationKind.HelpCard;
+            }
+
+            if (defId.StartsWith("relic.", System.StringComparison.Ordinal))
+            {
+                return CardPresentationKind.Relic;
+            }
+
+            if (defId.StartsWith("avatar.", System.StringComparison.Ordinal))
+            {
+                return CardPresentationKind.Avatar;
+            }
+
+            if (string.Equals(defId, "Attack", System.StringComparison.Ordinal)
+                || string.Equals(defId, "Armor", System.StringComparison.Ordinal)
+                || string.Equals(defId, "Hp", System.StringComparison.Ordinal))
+            {
+                return CardPresentationKind.Item;
+            }
+
+            return CardPresentationKind.Unknown;
         }
-#endif
 
         private static CardPresentationKind ToPresentationKind(CardKind kind)
         {

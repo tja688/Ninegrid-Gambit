@@ -1,4 +1,5 @@
 using System;
+using NineGrid.Content;
 using NineGrid.Core;
 using NineGrid.Core.Commands;
 using NineGrid.Core.Systems;
@@ -60,7 +61,7 @@ namespace NineGrid.Presentation.Tests.Fixtures
             var architecture = NineGridArchitecture.Current;
             architecture.GetUtility<NineGrid.Core.Utilities.IConfigUtility>().Set(
                 NineGrid.Core.Content.ContentConfigKeys.DefaultCatalog,
-                NineGrid.Content.TableNineContentCatalog.CreateDefault());
+                ContentCatalogBootstrap.Load());
             InitialGameFactory.Create(architecture, new InitialGameOptions { Seed = seed });
             return new PresentationArchitectureFixture(architecture, startedGame: true);
         }

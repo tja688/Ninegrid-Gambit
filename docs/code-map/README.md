@@ -24,7 +24,7 @@
 | 程序集 | 路径 | 职责 |
 |--------|------|------|
 | `NineGrid.Core` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Core/` | 规则核（QF） |
-| `NineGrid.Content` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Content/` | Catalog：**Luban 与 schema≥2 一卡一文件 JSON 投影双轨**（HelpCard/Monster/Skill/Relic/Deck/Room；业务只消费 `GameContentCatalog`）；卡牌表现 JSON + **ContentArt** Resources 根（ADR-0008 / #67/#68） |
+| `NineGrid.Content` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Content/` | Catalog：**schema≥2 一卡一文件 JSON 投影** + **tables JSON**（效果/奖励/经济/节点规则；`ContentCatalogBootstrap.Load`；业务只消费 `GameContentCatalog`）；`TableNineContentCatalog.CreateDefault` 为小型测试夹具；卡牌表现 JSON + **ContentArt** Resources 根（ADR-0008 / #69） |
 | `NineGrid.Content.Editor` | `…/NineGrid.Content.Editor/` | 卡牌表现编辑器；`ContentArtBreakLinkValidator` 断链扫描 |
 | `NineGrid.Presentation` | `Assets/Scripts/NineGrid.Presentation/` | 表现层（原 Flow+Cards **合并后的单一程序集**） |
 | `NineGrid.Presentation.Tests` | `…/Tests/` | EditMode |

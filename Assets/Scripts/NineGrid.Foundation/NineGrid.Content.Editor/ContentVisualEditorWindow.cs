@@ -98,13 +98,13 @@ namespace NineGrid.Content.Editor
 
             saveButton = new ToolbarButton(SaveChanges) { text = "保存" };
             saveButton.tooltip = "保存 Catalog SO 图引用 +（无 JSON 时）PATCH description / card_frame_style";
-            regenerateButton = new ToolbarButton(RegenerateLuban) { text = "Regenerate Luban" };
-            regenerateButton.tooltip = "运行 gen_table_nine.ps1 刷新 StreamingAssets 与 Generated 代码（无 JSON 的描述进 Play 前须执行）";
+            regenerateButton = new ToolbarButton(RegenerateLuban) { text = "Luban（已退休）" };
+            regenerateButton.tooltip = "ADR-0008 / #69：Luban 工具链已移除；内容权威为一卡一文件 JSON + ContentVisual/tables";
 
             rootElement.Add(ContentVisualWarmConsoleUi.BuildToolbar(
                 ("保存", SaveChanges, saveButton.tooltip),
                 ("重新加载", ReloadFromDisk, "丢弃未保存改动并从 xlsx 重读"),
-                ("Regenerate Luban", RegenerateLuban, regenerateButton.tooltip),
+                ("Luban（已退休）", RegenerateLuban, regenerateButton.tooltip),
                 ("导出卡图关联", ExportCardSpriteManifest, "一键保存到 Assets/Notes/CardSprite（语义化 JSON）"),
                 ("全选", SelectAllFiltered, "勾选当前筛选结果"),
                 ("全部取消", DeselectAll, "取消所有勾选")));
@@ -684,7 +684,7 @@ namespace NineGrid.Content.Editor
                 "静态基础描述",
                 jsonOwned
                     ? "本 contentId 已有 CardPresentation JSON：描述权威在「NineGrid/表现层配置」，此处只读预览，保存不会写回 content_visual.xlsx。"
-                    : "尚无 CardPresentation JSON：可写入 content_visual.xlsx description；可用 [SlotCode] 插入装配图标。保存后须 Regenerate Luban 才进 Play。",
+                    : "尚无 CardPresentation JSON：请用卡牌表现编辑器新建一卡一文件 JSON（#69 后不再经 Luban）。",
                 column =>
                 {
                     var previewDescription = jsonOwned

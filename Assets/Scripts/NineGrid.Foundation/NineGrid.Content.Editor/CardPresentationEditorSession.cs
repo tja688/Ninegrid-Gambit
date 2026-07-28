@@ -150,9 +150,8 @@ namespace NineGrid.Content.Editor
 
         public void ReloadCatalogs()
         {
-            var dataDirectory = ContentVisualBootstrap.ResolveLubanDataDirectory();
-            CoreCatalog = TableNineLubanCatalogFactory.CreateFromDirectory(dataDirectory);
-            VisualCatalog = TableNineVisualCatalogFactory.CreateFromDirectory(dataDirectory);
+            CoreCatalog = ContentCatalogBootstrap.Load();
+            VisualCatalog = new ContentVisualCatalog();
         }
 
         public CardPresentationEditorEntry GetFocused()

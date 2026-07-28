@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Luban.SimpleJSON;
 using UnityEngine;
 
 namespace NineGrid.Content.Editor
@@ -17,6 +16,9 @@ namespace NineGrid.Content.Editor
         public int SheetRowIndex { get; set; } = -1;
     }
 
+    /// <summary>
+    /// 旧 card_frame_style.xlsx 桥（#69 Luban 工具链已退休）。脚本缺失时 Read 返回空列表。
+    /// </summary>
     public static class CardFrameStyleXlsxIO
     {
         public const string RelativeXlsxPath = "Assets/Tools/Luban/Datas/card_frame_style.xlsx";
@@ -29,6 +31,12 @@ namespace NineGrid.Content.Editor
 
         public static List<CardFrameStyleXlsxRow> ReadAll(string absolutePath)
         {
+            if (!File.Exists(absolutePath)
+                || !File.Exists(Path.Combine(Directory.GetCurrentDirectory(), RelativeIoScriptPath)))
+            {
+                return new List<CardFrameStyleXlsxRow>();
+            }
+
             var json = RunPython("read", absolutePath, null);
             return ParseRows(json);
         }
@@ -42,18 +50,28 @@ namespace NineGrid.Content.Editor
         private static List<CardFrameStyleXlsxRow> ParseRows(string json)
         {
             var rows = new List<CardFrameStyleXlsxRow>();
-            var array = JSON.Parse(json).AsArray;
-            for (var i = 0; i < array.Count; i++)
+            var list = JsonUtility.FromJson<RowListWrapper>("{\"items\":" + json + "}");
+            if (list?.items == null)
             {
-                var node = array[i];
+                return rows;
+            }
+
+            for (var i = 0; i < list.items.Length; i++)
+            {
+                var node = list.items[i];
+                if (node == null)
+                {
+                    continue;
+                }
+
                 rows.Add(new CardFrameStyleXlsxRow
                 {
-                    StyleId = node["style_id"].Value,
-                    ColorR = node["color_r"].AsFloat,
-                    ColorG = node["color_g"].AsFloat,
-                    ColorB = node["color_b"].AsFloat,
-                    ColorA = node["color_a"].AsFloat,
-                    SheetRowIndex = node["sheet_row_index"].AsInt
+                    StyleId = node.style_id,
+                    ColorR = node.color_r,
+                    ColorG = node.color_g,
+                    ColorB = node.color_b,
+                    ColorA = node.color_a,
+                    SheetRowIndex = node.sheet_row_index
                 });
             }
 
@@ -113,6 +131,23 @@ namespace NineGrid.Content.Editor
         private static string RunPython(string mode, string absolutePath, string payloadJson)
         {
             return ContentVisualXlsxIO.RunPythonScript(RelativeIoScriptPath, mode, absolutePath, payloadJson, "--patches");
+        }
+
+        [Serializable]
+        private sealed class RowDto
+        {
+            public string style_id;
+            public float color_r;
+            public float color_g;
+            public float color_b;
+            public float color_a;
+            public int sheet_row_index;
+        }
+
+        [Serializable]
+        private sealed class RowListWrapper
+        {
+            public RowDto[] items;
         }
     }
 }

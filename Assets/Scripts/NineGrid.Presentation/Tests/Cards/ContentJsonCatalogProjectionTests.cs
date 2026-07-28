@@ -8,10 +8,16 @@ using NineGrid.Core.Effects;
 namespace NineGrid.Presentation.Tests.Cards
 {
     /// <summary>
-    /// #68：遗物 / 怪物 / 技能（及牌组、房间）JSON → GameContentCatalog 投影；Overlay 跳过已投影卡。
+    /// #68/#69：遗物 / 怪物 / 技能（及牌组、房间）JSON → GameContentCatalog 投影；无 BusinessOverlay。
     /// </summary>
     public sealed class ContentJsonCatalogProjectionTests
     {
+        [SetUp]
+        public void SetUp()
+        {
+            CardPresentationConfigCatalog.Invalidate();
+        }
+
         [TearDown]
         public void TearDown()
         {
@@ -190,7 +196,7 @@ namespace NineGrid.Presentation.Tests.Cards
         }
 
         [Test]
-        public void Overlay_DoesNotOverwriteProjectedMonster_DisplayNameGoldStats()
+        public void PresentationJson_Alone_DoesNotMutateSeededMonsterStats()
         {
             var catalog = new GameContentCatalog();
             catalog.AddCard(
@@ -203,13 +209,12 @@ namespace NineGrid.Presentation.Tests.Cards
                 schemaVersion = 2,
                 contentId = "monster.overlay_skip",
                 kind = "Monster",
-                displayName = "OverlayWouldChange",
+                displayName = "WouldChangeIfProjected",
                 gold = 1,
                 stats = new CardPresentationStatsDto { hp = 99, attack = 88, armor = 77 },
             });
 
-            CardPresentationBusinessOverlay.ApplyToCatalog(catalog);
-
+            // #69：无 Overlay；未再投影时 Catalog 种子值不变。
             var card = catalog.Cards["monster.overlay_skip"];
             Assert.AreEqual("FromJson", card.DisplayName);
             Assert.AreEqual(9, card.KillGold);

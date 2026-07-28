@@ -4,6 +4,7 @@ using NineGrid.Cards.Convergence;
 using NineGrid.Cards.Presentation;
 using NineGrid.Cards.Slots;
 using NineGrid.Content;
+using NineGrid.Content.CardPresentation;
 using NineGrid.Core.Content;
 using UnityEditor;
 using UnityEngine;
@@ -269,12 +270,9 @@ namespace NineGrid.Presentation.Editor
             }
 
             GameContentCatalog coreCatalog = null;
-            ContentVisualCatalog visualCatalog = null;
             try
             {
-                var dataDirectory = ContentVisualBootstrap.ResolveLubanDataDirectory();
-                coreCatalog = TableNineLubanCatalogFactory.CreateFromDirectory(dataDirectory);
-                visualCatalog = TableNineVisualCatalogFactory.CreateFromDirectory(dataDirectory);
+                coreCatalog = ContentCatalogBootstrap.Load();
             }
             catch (System.Exception ex)
             {
@@ -282,15 +280,14 @@ namespace NineGrid.Presentation.Editor
                 return false;
             }
 
-            ContentVisualDefinition visual = null;
-            var inVisual = visualCatalog != null && visualCatalog.TryGet(defId, out visual) && visual != null;
-            if (!DefIdExistsInContentCatalog(coreCatalog, defId) && !inVisual)
+            var inPresentation = CardPresentationConfigCatalog.TryGet(defId, out _);
+            if (!DefIdExistsInContentCatalog(coreCatalog, defId) && !inPresentation)
             {
-                error = "ContentCatalog / Content Visual 中无此 DefId：" + defId;
+                error = "ContentCatalog / CardPresentation JSON 中无此 DefId：" + defId;
                 return false;
             }
 
-            contentKind = inVisual ? visual.Kind : GuessContentVisualKind(defId);
+            contentKind = GuessContentVisualKind(defId);
             presentationKind = ToPresentationKind(contentKind, defId);
             if (presentationKind == CardPresentationKind.Unknown)
             {

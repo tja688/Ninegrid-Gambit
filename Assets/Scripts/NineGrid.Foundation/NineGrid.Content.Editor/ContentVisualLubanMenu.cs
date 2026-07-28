@@ -1,17 +1,13 @@
-using System;
-using System.Diagnostics;
-using System.IO;
 using UnityEditor;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace NineGrid.Content.Editor
 {
+    /// <summary>#69：Luban 工具链已退休；菜单仅保留归档入口说明。</summary>
     public static class ContentVisualLubanMenu
     {
         public const string OpenEditorMenu = "NineGrid/归档/Content Visual Editor";
-        public const string RegenerateMenu = "NineGrid/归档/Regenerate Luban";
-        private const string GenScriptRelative = "Assets/Tools/Luban/gen_table_nine.ps1";
+        public const string RegenerateMenu = "NineGrid/归档/Regenerate Luban（已退休）";
 
         [MenuItem(OpenEditorMenu)]
         public static void OpenEditor()
@@ -22,80 +18,16 @@ namespace NineGrid.Content.Editor
         [MenuItem(RegenerateMenu)]
         public static void RegenerateLuban()
         {
-            if (!EditorUtility.DisplayDialog(
-                    "Regenerate Luban",
-                    "将运行 gen_table_nine.ps1 并刷新 StreamingAssets / Generated 代码。继续？",
-                    "运行",
-                    "取消"))
-            {
-                return;
-            }
-
-            string error;
-            if (!TryRunGenScript(out error))
-            {
-                EditorUtility.DisplayDialog("Luban 生成失败", error, "确定");
-                return;
-            }
-
-            AssetDatabase.Refresh();
-            Debug.Log("TableNine Luban regeneration completed.");
+            EditorUtility.DisplayDialog(
+                "Luban 已退休",
+                "ADR-0008 / #69：Luban 工具链与 Generated 层已移除。\n内容权威为一卡一文件 JSON + ContentVisual/tables。",
+                "确定");
         }
 
         public static bool TryRunGenScript(out string error)
         {
-            error = null;
-            var projectRoot = Directory.GetCurrentDirectory();
-            var scriptPath = Path.Combine(projectRoot, GenScriptRelative);
-            if (!File.Exists(scriptPath))
-            {
-                error = "找不到脚本：" + scriptPath;
-                return false;
-            }
-
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = "powershell.exe",
-                Arguments = "-NoProfile -ExecutionPolicy Bypass -File \"" + scriptPath + "\"",
-                WorkingDirectory = Path.GetDirectoryName(scriptPath),
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true
-            };
-
-            try
-            {
-                using (var process = Process.Start(startInfo))
-                {
-                    if (process == null)
-                    {
-                        error = "无法启动 PowerShell 进程。";
-                        return false;
-                    }
-
-                    var stdout = process.StandardOutput.ReadToEnd();
-                    var stderr = process.StandardError.ReadToEnd();
-                    process.WaitForExit();
-                    if (process.ExitCode != 0)
-                    {
-                        error = string.IsNullOrEmpty(stderr) ? stdout : stderr;
-                        if (string.IsNullOrEmpty(error))
-                        {
-                            error = "Luban 退出码：" + process.ExitCode;
-                        }
-
-                        return false;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                error = ex.Message;
-                return false;
-            }
-
-            return true;
+            error = "Luban 工具链已退休（#69）。";
+            return false;
         }
     }
 }

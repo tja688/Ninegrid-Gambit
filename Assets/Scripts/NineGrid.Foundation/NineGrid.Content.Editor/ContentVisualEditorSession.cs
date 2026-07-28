@@ -269,10 +269,9 @@ namespace NineGrid.Content.Editor
 
         public void ReloadCatalogs()
         {
-            var dataDirectory = ContentVisualBootstrap.ResolveLubanDataDirectory();
-            CoreCatalog = TableNineLubanCatalogFactory.CreateFromDirectory(dataDirectory);
-            VisualCatalog = TableNineVisualCatalogFactory.CreateFromDirectory(dataDirectory);
-            FrameStyleCatalog = TableNineCardFrameStyleCatalogFactory.CreateFromDirectory(dataDirectory);
+            CoreCatalog = ContentCatalogBootstrap.Load();
+            VisualCatalog = new ContentVisualCatalog();
+            FrameStyleCatalog = new CardFrameStyleCatalog();
         }
 
         public IEnumerable<ContentVisualEditorRowState> GetFilteredRows()

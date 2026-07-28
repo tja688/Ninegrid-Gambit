@@ -30,7 +30,7 @@ namespace NineGrid.Presentation.Tests
         {
             NineGridArchitecture.ResetForTests();
             mArch = NineGridArchitecture.Current;
-            mArch.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, TableNineContentCatalog.CreateDefault());
+            mArch.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, ContentCatalogBootstrap.Load());
             InitialGameFactory.Create(mArch, new InitialGameOptions { Seed = 13UL });
             mPhase = mArch.GetSystem<IPhaseSystem>();
             mPipeline = mArch.GetSystem<IActionPipelineSystem>();

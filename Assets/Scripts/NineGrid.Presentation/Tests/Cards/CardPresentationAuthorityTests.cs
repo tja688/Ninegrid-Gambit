@@ -7,10 +7,16 @@ using NineGrid.Core.Content;
 namespace NineGrid.Presentation.Tests
 {
     /// <summary>
-    /// CardPresentation 重叠字段单真相：BusinessOverlay + Authority 契约。
+    /// CardPresentation 权威契约：数值/显示名只经投影进 Catalog，无 BusinessOverlay。
     /// </summary>
     public sealed class CardPresentationAuthorityTests
     {
+        [SetUp]
+        public void SetUp()
+        {
+            CardPresentationConfigCatalog.Invalidate();
+        }
+
         [TearDown]
         public void TearDown()
         {
@@ -46,17 +52,11 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void Overlay_AppliesDisplayNameGoldStats_WhenPositive_ForNonHelp()
+        public void Projector_WritesDisplayNameGoldStats_FromSchema2Json()
         {
-            var catalog = new GameContentCatalog();
-            var monster = new CardContentDefinition("monster.overlay_demo", "LubanName", CardKind.Monster)
-                .WithPrice(1)
-                .WithStats(10, 2, 1);
-            monster.KillGold = 3;
-            catalog.AddCard(monster);
-
             CardPresentationConfigCatalog.UpsertForTests(new CardPresentationConfigDto
             {
+                schemaVersion = 2,
                 contentId = "monster.overlay_demo",
                 kind = "Monster",
                 displayName = "JsonMonster",
@@ -64,7 +64,8 @@ namespace NineGrid.Presentation.Tests
                 stats = new CardPresentationStatsDto { hp = 20, attack = 7, armor = 4 },
             });
 
-            CardPresentationBusinessOverlay.ApplyToCatalog(catalog);
+            var catalog = new GameContentCatalog();
+            Assert.AreEqual(1, ContentJsonCatalogProjector.ApplyToCatalog(catalog));
 
             Assert.AreEqual("JsonMonster", catalog.Cards["monster.overlay_demo"].DisplayName);
             Assert.AreEqual(99, catalog.Cards["monster.overlay_demo"].KillGold);
@@ -75,16 +76,17 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void Overlay_SkipsHelpCard_EvenWhenJsonDiffers()
+        public void PresentationJson_DoesNotMutateCatalog_WithoutProjector()
         {
             var catalog = new GameContentCatalog();
             catalog.AddCard(
-                new CardContentDefinition("help.overlay_demo", "HelpFromProjection", CardKind.HelpCard)
+                new CardContentDefinition("help.overlay_demo", "HelpSeed", CardKind.HelpCard)
                     .WithPrice(5)
                     .WithStats(1, 1, 0));
 
             CardPresentationConfigCatalog.UpsertForTests(new CardPresentationConfigDto
             {
+                schemaVersion = 2,
                 contentId = "help.overlay_demo",
                 kind = "HelpCard",
                 displayName = "JsonHelp",
@@ -92,39 +94,11 @@ namespace NineGrid.Presentation.Tests
                 stats = new CardPresentationStatsDto { hp = 9, attack = 8, armor = 7 },
             });
 
-            CardPresentationBusinessOverlay.ApplyToCatalog(catalog);
-
-            Assert.AreEqual("HelpFromProjection", catalog.Cards["help.overlay_demo"].DisplayName);
+            // #69：无 BusinessOverlay；未再跑投影时 Catalog 保持原值。
+            Assert.AreEqual("HelpSeed", catalog.Cards["help.overlay_demo"].DisplayName);
             Assert.AreEqual(5, catalog.Cards["help.overlay_demo"].Price);
             Assert.AreEqual(1, catalog.Cards["help.overlay_demo"].Stats.MaxHp);
             Assert.AreEqual(1, catalog.Cards["help.overlay_demo"].Stats.Attack);
-        }
-
-        [Test]
-        public void Overlay_EmptyOrZero_DoesNotClobberLuban()
-        {
-            var catalog = new GameContentCatalog();
-            var card = new CardContentDefinition("monster.keep_luban", "KeepName", CardKind.Monster)
-                .WithStats(8, 3, 2);
-            card.KillGold = 11;
-            catalog.AddCard(card);
-
-            CardPresentationConfigCatalog.UpsertForTests(new CardPresentationConfigDto
-            {
-                contentId = "monster.keep_luban",
-                kind = "Monster",
-                displayName = "  ",
-                gold = 0,
-                stats = new CardPresentationStatsDto { hp = 0, attack = 0, armor = 0 },
-            });
-
-            CardPresentationBusinessOverlay.ApplyToCatalog(catalog);
-
-            Assert.AreEqual("KeepName", catalog.Cards["monster.keep_luban"].DisplayName);
-            Assert.AreEqual(11, catalog.Cards["monster.keep_luban"].KillGold);
-            Assert.AreEqual(8, catalog.Cards["monster.keep_luban"].Stats.MaxHp);
-            Assert.AreEqual(3, catalog.Cards["monster.keep_luban"].Stats.Attack);
-            Assert.AreEqual(2, catalog.Cards["monster.keep_luban"].Stats.Armor);
         }
     }
 }

@@ -17,7 +17,7 @@ namespace NineGrid.Presentation.Tests
         {
             NineGridArchitecture.ResetForTests();
             var arch = NineGridArchitecture.Current;
-            var catalog = TableNineContentCatalog.CreateDefault();
+            var catalog = ContentCatalogBootstrap.Load();
             arch.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, catalog);
             arch.GetSystem<IContentSystem>().Load(catalog);
         }
