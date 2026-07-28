@@ -1,0 +1,24 @@
+# 术语表 · 速查卡
+
+面向复习。完整说明见 [glossary.html](./glossary.html)。
+
+| 词 | 一句话 |
+|---|---|
+| 职责拆分 | 输入/规则/状态/事件/表现分开——两边都有 |
+| 资产接线 | 用同一 `.asset` 当通信节点——SO 玩法独特处 |
+| 配置 SO | 稳定配方；你们已大量使用 |
+| Field SO | 带通知的当前事实；你们多用 System+Bindable |
+| Event Channel | 一次性通知；你们多用 struct Event |
+| Rules Model | 规则中心资产；你们拆成 Intake+Core |
+| Bridge | 场景翻译器；你们拆 HitProxy+Hook+Controller |
+| State 栈 | 逐层取消；你们用两轴+局部模式 |
+| Hook | 装配缝，不是事件总线 |
+| CompositionRoot | 代码唯一生产装配入口 |
+
+## 迁移口诀
+
+1. 配方可 SO  
+2. 门禁与规则真相不迁资产  
+3. 栈只加在真有多层取消处  
+4. Event Channel 按需  
+5. Bridge 学纪律不学形态  

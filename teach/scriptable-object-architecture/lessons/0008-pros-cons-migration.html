@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0008 — 优缺点与该不该迁</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+  <main class="page">
+    <header class="lesson-head">
+      <p class="kicker">Lesson 0008 · ScriptableObject 玩法 · 收官</p>
+      <h1>不是谁更高级，是接线哲学不同</h1>
+      <p class="lede">八课串起来只为让你能判断：哪一块该继续 SO，哪一块迁了会跟你们的 ADR 打架。</p>
+    </header>
+
+    <h2>一张总图（你已具备的词汇）</h2>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th>职责</th>
+          <th class="so">SO 玩法</th>
+          <th class="ng">NineGrid</th>
+          <th>迁？</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>配方</td>
+          <td>Config SO</td>
+          <td>Effect / Encounter / Catalog SO</td>
+          <td><strong>已在用，保持</strong></td>
+        </tr>
+        <tr>
+          <td>当前事实</td>
+          <td>Field SO</td>
+          <td>System + Bindable</td>
+          <td>一般不迁门禁级事实</td>
+        </tr>
+        <tr>
+          <td>一次通知</td>
+          <td>Event Channel SO</td>
+          <td>struct Event</td>
+          <td>可选，收益看接线需求</td>
+        </tr>
+        <tr>
+          <td>规则 / 进场</td>
+          <td>Rules Model SO</td>
+          <td>Core + IntentIntake</td>
+          <td><strong>不整包迁</strong></td>
+        </tr>
+        <tr>
+          <td>场景缝</td>
+          <td>Bridge MB</td>
+          <td>HitProxy+Hook+Controller</td>
+          <td>保持三段；可学其「不写规则」</td>
+        </tr>
+        <tr>
+          <td>交互层取消</td>
+          <td>State 栈 SO</td>
+          <td>两轴 + 局部模式</td>
+          <td>有多层预览再考虑加栈</td>
+        </tr>
+        <tr>
+          <td>模块怎么连</td>
+          <td>拖同一 .asset</td>
+          <td>CompositionRoot + 护栏</td>
+          <td>核心哲学：保留代码装配</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>两边优点（诚实版）</h2>
+    <div class="callout so">
+      <strong>SO 玩法强在：</strong>
+      设计师可见的共享节点；Prefab 解耦（少 Find/单例）；模式变体可热换资产；
+      小团队「拖一拖就通」。Hipple 三柱：Modular / Editable / Debuggable。
+    </div>
+    <div class="callout ng">
+      <strong>你们强在：</strong>
+      程序集与 ADR 钉死规则/表现边界；IntentIntake 结构测试防旁路；
+      类型化事件可 IDE 追踪；EditMode 测 Core/门禁不必靠场景拖线；
+      适合内容与表演都重的中大型规则核。
+    </div>
+
+    <h2>两边缺点（同样诚实）</h2>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th class="so">SO 玩法痛点</th>
+          <th class="ng">你们的痛点</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>双资产静默分裂；运行时脏值要 Reset</td>
+          <td>装配与心智负担在代码/文档，策划少拖拽</td>
+        </tr>
+        <tr>
+          <td>UnityEvent 调用链藏 Inspector；改名易断</td>
+          <td>跨目录仍需 Hook 缝；历史壳名未清完</td>
+        </tr>
+        <tr>
+          <td>Rules/State 塞进 SO 易成「资产上帝」</td>
+          <td>新同学要先啃 code-map / ADR</td>
+        </tr>
+        <tr>
+          <td>写权限易散（人人 SetValue）</td>
+          <td>纪律靠护栏维持，放松就回流</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>迁移口诀（请背）</h2>
+    <div class="callout good">
+      <ol style="margin:0.3rem 0 0; padding-left:1.2rem;">
+        <li><strong>配方可 SO</strong>——表现曲线、遭遇预设、视觉目录。</li>
+        <li><strong>门禁与规则真相不迁资产</strong>——Intake / Core / Busy / Owner。</li>
+        <li><strong>栈只加在真有多层取消的地方</strong>——且优先 System 内 C# 栈。</li>
+        <li><strong>Event Channel 按需</strong>——已有 struct 总线时，不为「看起来像教程」而搬。</li>
+        <li><strong>Bridge 学纪律不学形态</strong>——翻译场景、不判决规则。</li>
+      </ol>
+    </div>
+
+    <h2>动手：迁移判断六题</h2>
+    <div class="lab" id="migrate-lab"></div>
+
+    <section class="quiz" data-quiz="q1">
+      <h3>检索练习 · 1</h3>
+      <p>SO 玩法与 NineGrid 真正分叉的点是？</p>
+      <button data-answer="wrong">只有一边做职责拆分</button>
+      <button data-answer="correct">共享节点用资产引用接线，还是用组合根/类型总线接线</button>
+      <button data-answer="wrong">只有一边允许 ScriptableObject</button>
+      <button data-answer="wrong">只有一边有输入</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <section class="quiz" data-quiz="q2">
+      <h3>检索练习 · 2</h3>
+      <p>对 TableNine 现状，最不该整包替换成 RulesModel.asset 的原因是？</p>
+      <button data-answer="wrong">ScriptableObject 不能写 C# 方法</button>
+      <button data-answer="correct">会糊掉 Core 边界与 Intake 护栏，且双资产风险高于收益</button>
+      <button data-answer="wrong">你们禁止一切配置 SO</button>
+      <button data-answer="wrong">Unity 6 不再支持 SO</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <section class="quiz" data-quiz="q3">
+      <h3>检索练习 · 3</h3>
+      <p>从作者教程里最值得「迁移认知、少迁代码」的一条是？</p>
+      <button data-answer="wrong">把所有 System 改成 ScriptableObject</button>
+      <button data-answer="correct">多入口必须共用唯一规则/门禁中心，且 Bridge 不写规则</button>
+      <button data-answer="wrong">用 Inspector UnityEvent 取代全部 Command</button>
+      <button data-answer="wrong">删除 CompositionRoot</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <h2>本课主读</h2>
+    <p>
+      回看 Hipple 讲座结论（模块化胶水，不是「SO 宗教」）与你们
+      <a href="../../../docs/code-map/presentation.md">presentation.md</a>
+      读写约定。两者可以共存：<strong>配置层 SO + 运行时代码装配</strong>——你们其实已经在这条路上。
+    </p>
+    <p class="cite">
+      源头：
+      <a href="https://www.youtube.com/watch?v=raQ3iHhE_Kk">Unite 2017 · Hipple</a>
+      · 样例
+      <a href="https://github.com/roboryantron/Unite2017">Unite2017</a>
+    </p>
+
+    <div class="note">
+      课程收官。请回我一句收束：「配方 ___；门禁/规则 ___；我从 SO 玩法带走的纪律是 ___。」
+      之后若你拿着某个具体子系统问「要不要 SO 化」，我们用这套清单烤即可。
+    </div>
+
+    <footer class="lesson-foot">
+      <div class="nav-links">
+        <a href="0007-state-manager-vs-axes.html">← 0007</a>
+        <a href="0001-dual-map-so-vs-ninegrid.html">回 0001</a>
+        <a href="../reference/glossary.html">术语表</a>
+        <a href="../MISSION.md">Mission</a>
+        <a href="../RESOURCES.md">Resources</a>
+      </div>
+    </footer>
+  </main>
+
+  <script src="../assets/migrate-lab.js"></script>
+  <script>
+    SoMigrateLab.mount(document.getElementById("migrate-lab"));
+
+    const feedbackOk = {
+      q1: "对。职责拆分两边都有；分叉在接线介质。",
+      q2: "对。SO 能写方法，问题是边界与唯一真相，不是语法。",
+      q3: "对。认知迁移：唯一中心 + Bridge 不写规则——代码形态可保持现状。",
+    };
+    const feedbackBad = {
+      q1: "你们也有大量配置 SO。想总图课那颗钉子：资产接线 vs 代码装配。",
+      q2: "配置 SO 你们一直在用。整包 Rules 资产化才会跟 ADR/护栏撞车。",
+      q3: "不是把一切改成 SO，而是把『单一收口』纪律学到手。",
+    };
+
+    document.querySelectorAll(".quiz").forEach((quiz) => {
+      const id = quiz.dataset.quiz;
+      const feedback = quiz.querySelector(".feedback");
+      quiz.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          quiz.querySelectorAll("button").forEach((b) => {
+            b.classList.remove("correct", "wrong");
+            b.disabled = true;
+          });
+          const ok = btn.dataset.answer === "correct";
+          btn.classList.add(ok ? "correct" : "wrong");
+          quiz.querySelectorAll('button[data-answer="correct"]').forEach((b) =>
+            b.classList.add("correct")
+          );
+          feedback.textContent = ok ? feedbackOk[id] : feedbackBad[id];
+        });
+      });
+    });
+  </script>
+</body>
+</html>

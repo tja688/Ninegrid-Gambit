@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0007 — State Manager：栈式取消 vs 正交轴</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+  <main class="page">
+    <header class="lesson-head">
+      <p class="kicker">Lesson 0007 · ScriptableObject 玩法</p>
+      <h1>状态栈很好用——但你们用的是正交轴 + 模式</h1>
+      <p class="lede">作者的 State Manager SO 用栈表达「选中→移动预览→瞄准」的逐层进入与右键逐层取消。你们把相近问题拆成了：谁拥有输入、主线忙不忙、是否在 BoardSelect、流程壳在哪一相。</p>
+    </header>
+
+    <h2>作者为什么用 Stack</h2>
+    <p>战棋操作常层层套进：</p>
+<pre>Selected → Moving → Prepare → Applying
+栈顶取消一次 → 回到上一层，并让 Rules 回滚、Visual 重画</pre>
+    <p>
+      对外只暴露 <code>PushState</code> / <code>CancelState</code> / <code>ResetState</code>，
+      内部 Stack + 进入/取消事件。适合「菜单式返回」与「预览可撤销」。
+    </p>
+    <div class="callout so">
+      <strong>取消不只是改 transform：</strong>
+      可能还要恢复逻辑坐标、占格、行动点、临时路径——所以回滚在 Rules，不在 Visual。
+      （你的总结第七、十四节。）
+    </div>
+
+    <h2>你们没有一份「战斗操作栈 SO」，但有四类相近物</h2>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th>作者栈要表达的</th>
+          <th class="ng">NineGrid 落点</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>现在谁在交互</td>
+          <td><code>CurrentOwner</code>（ProtectedField / Overlay / Opening / BoardSelect）</td>
+        </tr>
+        <tr>
+          <td>现在能不能再点主线动作</td>
+          <td><code>MainlineBusy</code>（与所有权正交，ADR-0004）</td>
+        </tr>
+        <tr>
+          <td>进入一层可取消的选目标模式</td>
+          <td><code>BoardCardSelectModeController</code> Begin / End / RequestAbort</td>
+        </tr>
+        <tr>
+          <td>宏观流程在哪一相</td>
+          <td><code>GameFlowShellState</code>（MainMenu / Battle / RoomChoice…）</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout ng">
+      <strong>关键差别：</strong>
+      作者常把「交互层」压成<strong>一条栈</strong>；
+      你们把「谁拥有输入」和「主线忙」做成<strong>两轴</strong>，避免 Busy 与 Owner 缠成一种伪状态机。
+      BoardSelect 更像压入一层模式；Esc/停泊点击 Abort 像 Cancel 一层——但是局部模式，不是全局 PlayerRound 栈。
+    </div>
+<pre>// 进入选卡模式前先过 Intake（像申请进栈）
+intake.Submit(BoardSelectBegin, ProtectedField, ...);
+PresentationInputGates.SetBoardSelect(true);
+
+// 取消
+RequestAbort(reason) → SelectionAbortedAsync → End() 清门禁</pre>
+    <p class="cite">
+      <a href="../../../Assets/Scripts/NineGrid.Presentation/Cards/BoardCardSelectModeController.cs">BoardCardSelectModeController.cs</a>
+      ·
+      <a href="../../../Assets/Scripts/NineGrid.Presentation/Flow/Presentation/GameFlowShellState.cs">GameFlowShellState.cs</a>
+      ·
+      <a href="../../../docs/adr/0004-input-intake-two-axis-gating.md">ADR-0004 · 两轴</a>
+    </p>
+
+    <h2>对照：取消一次发生什么</h2>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="so">State Manager Cancel</th>
+          <th class="ng">BoardSelect Abort / 门禁复位</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>状态结构</td>
+          <td>Pop 栈顶，恢复下层</td>
+          <td>结束模式、清 SelectedUids、SetBoardSelect(false)</td>
+        </tr>
+        <tr>
+          <td>业务回滚</td>
+          <td>RulesModel 撤销预览影响</td>
+          <td>Abort 回调里回手 / 不提交 UseItem 等</td>
+        </tr>
+        <tr>
+          <td>表现恢复</td>
+          <td>听 OnStateEntered(下层)</td>
+          <td>会话/Presenter 按 Abort 路径清预览</td>
+        </tr>
+        <tr>
+          <td>全局形态</td>
+          <td>一份栈 SO 管整段回合操作</td>
+          <td>模式对象 + 两轴 + 壳相位，分散但可测</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>若给 NineGrid 加作者那种栈</h2>
+    <p>适合加在哪里？</p>
+    <ul>
+      <li><strong>较适合：</strong>未来若有「移动预览 → 技能瞄准 → 确认」多层可撤销 UI，且要右键逐层退</li>
+      <li><strong>不适合取代：</strong>MainlineBusy（互斥真相）、GameFlowShellState（宏观相位）、Core 占格</li>
+      <li><strong>形态：</strong>可以是普通 C# 栈（System 持有），不必是 StateManager.asset——除非你真要 Inspector 可视化栈</li>
+    </ul>
+    <div class="callout bad">
+      <strong>不要用栈冒充两轴：</strong>
+      「Busy」不是「Selected 的下一层」。
+      把互斥推进栈，会重新制造 ADR-0004 想拆掉的缠绕状态机。
+    </div>
+
+    <h2>优点 / 缺点（状态层）</h2>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="so">State Manager 栈</th>
+          <th class="ng">两轴 + 模式 + 壳相位</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>逐层取消手感</td>
+          <td>非常自然</td>
+          <td>要在各模式里各自实现 Abort</td>
+        </tr>
+        <tr>
+          <td>概念清晰度</td>
+          <td>一种结构打天下（也易滥用）</td>
+          <td>轴正交，语义硬，学习曲线在 ADR</td>
+        </tr>
+        <tr>
+          <td>与规则回滚</td>
+          <td>约定 Cancel → Rules</td>
+          <td>Abort 回调显式接会话 / Core</td>
+        </tr>
+        <tr>
+          <td>可视化</td>
+          <td>栈可做 SO 调试</td>
+          <td>靠日志 / 测试 / 调试窗</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <section class="quiz" data-quiz="q1">
+      <h3>检索练习 · 1</h3>
+      <p>作者用 Stack 主要解决的交互问题是？</p>
+      <button data-answer="wrong">把伤害公式做成可拖配置</button>
+      <button data-answer="correct">多层进入的操作可逐层取消并恢复上一层</button>
+      <button data-answer="wrong">替代所有 Event Channel</button>
+      <button data-answer="wrong">让 Core 可以直接改 Camera</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <section class="quiz" data-quiz="q2">
+      <h3>检索练习 · 2</h3>
+      <p><code>MainlineBusy</code> 与 <code>CurrentOwner</code> 在你们设计里是？</p>
+      <button data-answer="wrong">同一条栈上的相邻两层</button>
+      <button data-answer="correct">正交两轴：时序互斥 × 输入所有权</button>
+      <button data-answer="wrong">两个 Config SO</button>
+      <button data-answer="wrong">两个 Event Channel 的别名</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <section class="quiz" data-quiz="q3">
+      <h3>检索练习 · 3</h3>
+      <p><code>BoardCardSelectModeController.RequestAbort</code> 功能上最像作者的？</p>
+      <button data-answer="wrong">CreateAssetMenu 配置技能图标</button>
+      <button data-answer="wrong">Raise 一次纯 Event 且不清理模式</button>
+      <button data-answer="correct">CancelState：退出当前层并触发业务/表现回滚路径</button>
+      <button data-answer="wrong">CompositionRoot.Install</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <h2>本课主读</h2>
+    <p>
+      重读 ADR-0004 里「两轴」与「考虑过的替代」——特别是为何不要把 busy 拆成多份并行真相。
+      再扫 BoardSelect 的 Begin/Abort，体会「一层模式」与「全局栈」的差别。
+    </p>
+
+    <div class="note">
+      完成后回我：「作者用栈管 ___；我们用 ___ × ___，外加 ___ 这类可取消模式。」
+      下一课（收官）：总优缺点 + 「NineGrid 该不该迁到 SO 玩法」判断清单。
+    </div>
+
+    <footer class="lesson-foot">
+      <div class="nav-links">
+        <a href="0006-bridge-vs-controller-hook.html">← 0006</a>
+        <a href="../reference/glossary.html">术语表</a>
+        <a href="../MISSION.md">Mission</a>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    const feedbackOk = {
+      q1: "对。栈的甜区是逐层进入/取消，不是配置或事件总线。",
+      q2: "对。ADR-0004 的硬钉子：Busy 与 Owner 正交，不叠成一层状态。",
+      q3: "对。Abort 清模式并走回滚/不提交路径，角色对齐 CancelState。",
+    };
+    const feedbackBad = {
+      q1: "想右键从瞄准退回移动预览那种手感——那是栈。",
+      q2: "它们不是栈的两层；一个是谁收输入，一个是主线互斥。",
+      q3: "Abort 会 End 模式并触发 Aborted 回调，不是只发个脉冲完事。",
+    };
+
+    document.querySelectorAll(".quiz").forEach((quiz) => {
+      const id = quiz.dataset.quiz;
+      const feedback = quiz.querySelector(".feedback");
+      quiz.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          quiz.querySelectorAll("button").forEach((b) => {
+            b.classList.remove("correct", "wrong");
+            b.disabled = true;
+          });
+          const ok = btn.dataset.answer === "correct";
+          btn.classList.add(ok ? "correct" : "wrong");
+          quiz.querySelectorAll('button[data-answer="correct"]').forEach((b) =>
+            b.classList.add("correct")
+          );
+          feedback.textContent = ok ? feedbackOk[id] : feedbackBad[id];
+        });
+      });
+    });
+  </script>
+</body>
+</html>

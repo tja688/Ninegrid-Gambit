@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0002 — 配置 SO：你们已经在玩的那一块</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+  <main class="page">
+    <header class="lesson-head">
+      <p class="kicker">Lesson 0002 · ScriptableObject 玩法</p>
+      <h1>配置 SO：配方资产，不是运行时黑板</h1>
+      <p class="lede">作者那套从「保存伤害、图标」讲起——这一块你们仓库里早就在用。先把它和 Field / Rules 剥开，后面才不会糊成一团。</p>
+    </header>
+
+    <h2>先收紧上一课那句</h2>
+    <p>
+      「可拖拽装配」说对了操作面；更准的钉子是：
+      <strong>拖的是同一份资产引用</strong>。
+      对<strong>配置 SO</strong>，拖的是「用哪份配方」；
+      对 Field / Event，拖的才是「大家共用一块活数据 / 频道」。
+      本课只谈前者。
+    </p>
+
+    <h2>配置 SO 是什么</h2>
+    <p>
+      <a href="../reference/glossary.html#config-so">配置 SO</a>
+      保存相对稳定、可被多处引用的<strong>配方</strong>：数值、图标、时序参数、策略入口。
+      它通常<strong>不</strong>回答「这一局玩家此刻选中了谁」。
+    </p>
+    <div class="callout so">
+      <strong>作者怎么玩：</strong>
+      <code>AbilityDataSO</code> 一类资产挂在按钮上——名字、伤害、距离、图标。
+      多个按钮可以引用不同配方；换数值改资产即可，不必改场景脚本。
+      （见你的总结「一、配置型 SO」。）
+    </div>
+    <div class="callout ng">
+      <strong>你们怎么玩（已经在玩）：</strong>
+      <code>CardEffectSO</code> 及其实现（冲刺、闪白、序列）、
+      <code>BattleEncounterProfileSO</code> / Catalog、
+      <code>CardFaceSlotRegistrySO</code>、
+      各类 <code>*VisualCatalogSO</code>。
+      内容表（Luban / Catalog）管规则侧定义；这些 SO 多半管<strong>表现配方与视觉索引</strong>。
+    </div>
+
+    <h2>一个容易混淆点：带方法的配置仍是配置</h2>
+    <p>
+      <code>CardEffectSO</code> 有 <code>PlayAsync</code>——看起来像「逻辑对象」。
+      它仍是配置/策略资产：描述<strong>怎么播这段反馈</strong>，由编排层选用哪份资产。
+      它不是「当前正在播放的那一次」的共享状态容器；那次播放的上下文在
+      <code>CardEffectPlayContext</code> / 调用方手里。
+    </p>
+<pre>// 配方（资产）——可拖到装配槽
+abstract class CardEffectSO : ScriptableObject {
+  public abstract UniTask PlayAsync(CardEffectPlayContext context);
+}
+
+// 遭遇配方——击退、闪白策略、是否绑死亡回调
+class BattleEncounterProfileSO : ScriptableObject { /* … */ }</pre>
+    <p class="cite">
+      源码：
+      <a href="../../../Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectSO.cs">CardEffectSO.cs</a>、
+      <a href="../../../Assets/Scripts/NineGrid.Presentation/Cards/Battle/BattleEncounterProfileSO.cs">BattleEncounterProfileSO.cs</a>。
+      Unity 官方基线：
+      <a href="https://docs.unity3d.com/Manual/class-ScriptableObject.html">ScriptableObject</a>。
+    </p>
+
+    <h2>作者若只用配置 SO，还缺什么</h2>
+    <p>若整个项目停在配置 SO，仍然会出现：</p>
+    <ul>
+      <li>鼠标指示器要 <code>Find</code> 玩家才能读「当前技能」</li>
+      <li>UI / AI / 教程各自抄一套规则入口</li>
+      <li>模块间靠单例或互相拖 MonoBehaviour 引用</li>
+    </ul>
+    <p>
+      所以作者继续往 Field、Event Channel、Rules Model 长——那些才是「松散 MVC」错觉的来源。
+      你们用 CompositionRoot + IntentIntake + Core 解决了同一批问题，<strong>配置 SO 只负责配方层</strong>。
+    </p>
+
+    <h2>动手：分类六题</h2>
+    <p>判断每条更像配置 SO、Field SO，还是不宜做成可拖运行时 SO。答完再往下。</p>
+    <div class="lab" id="config-lab"></div>
+
+    <section class="quiz" data-quiz="q1">
+      <h3>检索练习 · 1</h3>
+      <p>把「当前悬停格子」做成与 <code>BattleEncounterProfileSO</code> 同类的配置资产，主要错在哪？</p>
+      <button data-answer="wrong">悬停格子不能被 ScriptableObject 序列化</button>
+      <button data-answer="correct">它是会变的会话事实，不是可复用的稳定配方</button>
+      <button data-answer="wrong">配置 SO 不允许被多个对象引用</button>
+      <button data-answer="wrong">NineGrid 禁止一切 ScriptableObject</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <section class="quiz" data-quiz="q2">
+      <h3>检索练习 · 2</h3>
+      <p>你们项目里，和作者 <code>AbilityDataSO</code> 最同构的是？</p>
+      <button data-answer="wrong">IntentIntakeSystem（意图门禁）</button>
+      <button data-answer="wrong">PresentationDirector.IsMainlineBusy</button>
+      <button data-answer="correct">CardEffectSO / EncounterProfile 这类表现配方资产</button>
+      <button data-answer="wrong">PointerHitRouter（命中轮询）</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <h2>若你们「用 SO 去组织」——配置层怎么做</h2>
+    <p>其实<strong>保持现状即可</strong>：配方继续 SO，规则与会话状态不要塞进同一资产。</p>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="so">纯 SO 路线再扩</th>
+          <th class="ng">你们现况（推荐维持）</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>技能/特效参数</td>
+          <td>继续 Config SO</td>
+          <td>已有 Effect / Encounter / Catalog SO</td>
+        </tr>
+        <tr>
+          <td>当前选中</td>
+          <td>另做 Field SO</td>
+          <td>运行时上下文 / System，不升格为配置资产</td>
+        </tr>
+        <tr>
+          <td>合法性</td>
+          <td>Rules Model SO</td>
+          <td>Core Query + IntentIntake</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout good">
+      <strong>优点对照（仅配置层）：</strong>
+      两边相近——可复用、可在 Project 里改、多处引用同一配方、设计师友好。
+      你们还多了 Luban 内容管线与表现 SO 的分层，避免把规则数值和手感曲线揉进一个万能资产。
+    </div>
+    <div class="callout bad">
+      <strong>配置层陷阱：</strong>
+      给 Config SO 加「当前值」「监听列表」「战斗阶段」——它就滑成 Field/State，却仍顶着配置的名字。
+      下一课专门拆这条滑坡。
+    </div>
+
+    <h2>本课主读</h2>
+    <p>
+      官方一页建立「SO = 可引用资产」基线：
+      <a href="https://docs.unity3d.com/Manual/class-ScriptableObject.html">Unity Manual · ScriptableObject</a>。
+      然后打开你们任意一个
+      <code>BattleEncounterProfileSO</code> 资产，看 Inspector 里有没有「当前选中单位」这类字段——按理没有。
+    </p>
+
+    <div class="note">
+      分类题或检索题卡住了就问我。
+      完成后回我一句：「配置 SO 存的是 ___；不该存 ___。」
+      下一课：Field SO——作者说的「SO 当 field」到底是什么，以及你们项目里的功能等价物。
+    </div>
+
+    <footer class="lesson-foot">
+      <div class="nav-links">
+        <a href="0001-dual-map-so-vs-ninegrid.html">← 0001</a>
+        <a href="../reference/glossary.html">术语表</a>
+        <a href="../MISSION.md">Mission</a>
+      </div>
+    </footer>
+  </main>
+
+  <script src="../assets/config-lab.js"></script>
+  <script>
+    SoConfigLab.mount(document.getElementById("config-lab"));
+
+    const feedbackOk = {
+      q1: "对。配置是配方；悬停格子是这一局正在变的事实。",
+      q2: "对。AbilityDataSO ↔ 你们的表现/特效配方 SO，不是门禁或 Director。",
+    };
+    const feedbackBad = {
+      q1: "想：换一场战斗，击退系数配方还在；悬停格子必须清掉或重建。",
+      q2: "AbilityDataSO 是静态技能配方。门禁与 Busy 是运行时真相，不是配置资产。",
+    };
+
+    document.querySelectorAll(".quiz").forEach((quiz) => {
+      const id = quiz.dataset.quiz;
+      const feedback = quiz.querySelector(".feedback");
+      quiz.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          quiz.querySelectorAll("button").forEach((b) => {
+            b.classList.remove("correct", "wrong");
+            b.disabled = true;
+          });
+          const ok = btn.dataset.answer === "correct";
+          btn.classList.add(ok ? "correct" : "wrong");
+          quiz.querySelectorAll('button[data-answer="correct"]').forEach((b) =>
+            b.classList.add("correct")
+          );
+          feedback.textContent = ok ? feedbackOk[id] : feedbackBad[id];
+        });
+      });
+    });
+  </script>
+</body>
+</html>

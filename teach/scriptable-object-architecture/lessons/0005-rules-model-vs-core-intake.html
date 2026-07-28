@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0005 — Rules Model：规则中心 vs Core+Intake</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+  <main class="page">
+    <header class="lesson-head">
+      <p class="kicker">Lesson 0005 · ScriptableObject 玩法</p>
+      <h1>Rules Model：业务规则放哪，入口如何唯一</h1>
+      <p class="lede">作者把「能不能做 / 做了改什么 / 取消怎么回滚」收进一个可拖的规则 SO。你们把<strong>规则真相</strong>放 Core，把<strong>意图门禁</strong>放 IntentIntake——同构的是「多入口共用一个中心」，不是「中心必须是 SO」。</p>
+    </header>
+
+    <h2>作者的 Rules Model SO 在干什么</h2>
+    <p>
+      总结里的
+      <a href="../reference/glossary.html#rules-model">Rules Model</a>
+      更像 Application / Domain Service，而不只是存数据：
+    </p>
+    <ul>
+      <li>判断：单位可选？技能可放？格子合法？</li>
+      <li>应用：改 State / Field，Push 状态</li>
+      <li>回滚：Cancel 时撤销业务影响（占位、路径、行动点……）</li>
+      <li><strong>不</strong>该：直接找 Camera、改 Canvas、播具体动画</li>
+    </ul>
+    <div class="callout so">
+      <strong>为什么多个 Bridge 共用一个 RulesModel：</strong>
+      玩家、AI、教程、部署、回放都调同一套接口，避免「玩家一套规则、AI 复制一套」。
+      共用手段：大家都引用同一份 RulesModel.asset。
+    </div>
+
+    <h2>你们的拆法（更细，但同构）</h2>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th>职责切片</th>
+          <th class="so">Rules Model SO（常揉在一处）</th>
+          <th class="ng">NineGrid</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>规则真相 / 写状态</td>
+          <td>RulesModel 方法内改 State</td>
+          <td><code>NineGrid.Core</code>（BoardModel、Domain Actions、System）</td>
+        </tr>
+        <tr>
+          <td>只读裁决</td>
+          <td>RulesModel.CanXxx</td>
+          <td><code>SendQuery</code>（如预估击杀、槽位查询）</td>
+        </tr>
+        <tr>
+          <td>输入能否进场</td>
+          <td>常写在 RulesModel 前半段</td>
+          <td><code>IntentIntake.Submit</code>（所有权 × MainlineBusy + 合法性）</td>
+        </tr>
+        <tr>
+          <td>多入口</td>
+          <td>各 Bridge → 同一 Rules SO</td>
+          <td>各 Controller → Command → <strong>同一</strong> Intake（结构测试禁绕过）</td>
+        </tr>
+        <tr>
+          <td>表现</td>
+          <td>另属 Visual SO / View</td>
+          <td>Director / Present Channel / 卡面 Commit（ADR-0001/0005）</td>
+        </tr>
+      </tbody>
+    </table>
+<pre>// 你们：写意图必须经 Intake（结构护栏会扫）
+class SubmitExploreIntentCommand {
+  OnExecute() {
+    intake.Submit(new InputIntent(Explore, slot), ProtectedField, out _);
+    // Reject → SendEvent(ExploreIntentRejectedEvent)
+  }
+}
+
+// Intake：先门禁，再谈进编排 / Core
+IntentDisposition Submit(InputIntent intent, InputOwner targetSurface, ...) {
+  if (targetSurface != CurrentOwner) return Reject;
+  // MainlineBusy → Buffer / Reject / Tap…
+}</pre>
+    <p class="cite">
+      <a href="../../../Assets/Scripts/NineGrid.Presentation/Systems/IntentIntakeSystem.cs">IntentIntakeSystem.cs</a>
+      ·
+      <a href="../../../Assets/Scripts/NineGrid.Presentation/Commands/SubmitExploreIntentCommand.cs">SubmitExploreIntentCommand.cs</a>
+      ·
+      <a href="../../../docs/adr/0004-input-intake-two-axis-gating.md">ADR-0004</a>
+      ·
+      <a href="../../../docs/code-map/presentation.md">presentation.md · 读写约定</a>
+    </p>
+
+    <h2>同一条「点一下想做事」</h2>
+    <div class="lab" id="rules-flow-lab"></div>
+
+    <h2>若把 Core 收成 Rules Model SO</h2>
+    <p>理论上能：一个巨大 <code>TableNineRulesModel.asset</code>，Bridge 全拖它。</p>
+    <div class="callout bad">
+      <strong>对你们这种体量，代价不对：</strong>
+      规则与表现程序集边界会被资产引用糊掉；EditMode 测 Core 不必起场景的优势变弱；
+      「拖错第二份 Rules」会比拖错 Field 更致命；和占格唯一归 Core、Batch-ack 等 ADR 更难护栏。
+      <strong>值得迁的是「多入口唯一收口」这一纪律——你们已经用 Intake 落地了。</strong>
+    </div>
+    <div class="callout good">
+      <strong>SO 路线仍有的优点（小项目/强策划接线时）：</strong>
+      规则对象在 Project 可见、可热换不同 Rules 资产做模式变体、少写 GetSystem。
+      Hipple 也把「Systems in SO」当作可选柱子，不是唯一真理。
+      （<a href="https://www.youtube.com/watch?v=raQ3iHhE_Kk">Unite 2017</a>）
+    </div>
+
+    <h2>优点 / 缺点（规则中心这一层）</h2>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="so">Rules Model SO</th>
+          <th class="ng">Core + Query + IntentIntake</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>唯一规则入口</td>
+          <td>靠共用一个资产</td>
+          <td>靠 Intake 护栏 + Core 写口</td>
+        </tr>
+        <tr>
+          <td>规则与表现边界</td>
+          <td>靠约定（Model 不碰 Camera）</td>
+          <td>靠程序集 + ADR + 结构测试</td>
+        </tr>
+        <tr>
+          <td>测试</td>
+          <td>可测 SO 方法；场景仍易缠进来</td>
+          <td>Core / Intake EditMode 成熟</td>
+        </tr>
+        <tr>
+          <td>AI/教程共用规则</td>
+          <td>Bridge 调同一 Model</td>
+          <td>同样应走 Command/Intake，禁止旁路改 Board</td>
+        </tr>
+        <tr>
+          <td>可视化装配</td>
+          <td>强</td>
+          <td>弱（代码装配）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <section class="quiz" data-quiz="q1">
+      <h3>检索练习 · 1</h3>
+      <p>作者「多 Bridge 共用 RulesModel」在你们仓库里最接近的不变量是？</p>
+      <button data-answer="wrong">所有特效必须是 CardEffectSO</button>
+      <button data-answer="correct">玩家意图经同一 IntentIntake；规则写口在 Core</button>
+      <button data-answer="wrong">每个 Controller 内嵌完整合法性副本</button>
+      <button data-answer="wrong">View 可直接改 BoardModel 占格</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <section class="quiz" data-quiz="q2">
+      <h3>检索练习 · 2</h3>
+      <p>IntentIntake 更像 Rules Model 的哪一块，而不是全部？</p>
+      <button data-answer="wrong">完整的伤害结算与占格权威</button>
+      <button data-answer="correct">意图进场前的门禁 / 收口（能否进编排）</button>
+      <button data-answer="wrong">卡面闪白与 Timeline 绑参</button>
+      <button data-answer="wrong">CreateAssetMenu 配置菜单</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <section class="quiz" data-quiz="q3">
+      <h3>检索练习 · 3</h3>
+      <p>Rules Model「不该直接操作 Camera/Canvas」——你们对应的禁令更接近？</p>
+      <button data-answer="wrong">禁止使用 ScriptableObject</button>
+      <button data-answer="correct">表现层不直接改 Core 规则状态；规则不承担具体 View</button>
+      <button data-answer="wrong">禁止一切 struct Event</button>
+      <button data-answer="wrong">禁止 CompositionRoot</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <h2>本课主读</h2>
+    <p>
+      精读
+      <a href="../../../docs/adr/0004-input-intake-two-axis-gating.md">ADR-0004</a>
+      的「决策 / 为什么」两节，对照作者总结第十一节「为什么不同 Bridge 共用 RulesModel」。
+      两者要消灭的是同一类病：入口分裂、规则复制。
+    </p>
+
+    <div class="note">
+      完成后回我：「Rules Model 解决的是 ___；我们用 ___ 管进场，用 ___ 管规则真相。」
+      下一课：Bridge —— 场景缝如何接到规则中心。
+    </div>
+
+    <footer class="lesson-foot">
+      <div class="nav-links">
+        <a href="0004-event-channel-vs-struct-event.html">← 0004</a>
+        <a href="../reference/glossary.html">术语表</a>
+        <a href="../MISSION.md">Mission</a>
+      </div>
+    </footer>
+  </main>
+
+  <script src="../assets/rules-flow.js"></script>
+  <script>
+    SoRulesFlow.mount(document.getElementById("rules-flow-lab"));
+
+    const feedbackOk = {
+      q1: "对。共用的是『唯一收口 + 唯一规则写口』，不是必须共用一个 SO 文件。",
+      q2: "对。Intake 薄前置；占格/结算等真相仍在 Core。",
+      q3: "对。分层纪律：规则不管具体 View，View 不擅自写规则状态。",
+    };
+    const feedbackBad = {
+      q1: "特效 SO 是配置层。想：多入口如何避免各玩各的门禁/规则。",
+      q2: "伤害与占格是 Core。Intake 回答的是『这下点击能不能进场』。",
+      q3: "两边都允许 SO 配置；禁的是规则与表现互相越界。",
+    };
+
+    document.querySelectorAll(".quiz").forEach((quiz) => {
+      const id = quiz.dataset.quiz;
+      const feedback = quiz.querySelector(".feedback");
+      quiz.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          quiz.querySelectorAll("button").forEach((b) => {
+            b.classList.remove("correct", "wrong");
+            b.disabled = true;
+          });
+          const ok = btn.dataset.answer === "correct";
+          btn.classList.add(ok ? "correct" : "wrong");
+          quiz.querySelectorAll('button[data-answer="correct"]').forEach((b) =>
+            b.classList.add("correct")
+          );
+          feedback.textContent = ok ? feedbackOk[id] : feedbackBad[id];
+        });
+      });
+    });
+  </script>
+</body>
+</html>

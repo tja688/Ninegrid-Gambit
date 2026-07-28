@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0003 — Field SO：共享的当前事实</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+  <main class="page">
+    <header class="lesson-head">
+      <p class="kicker">Lesson 0003 · ScriptableObject 玩法</p>
+      <h1>Field SO：把「当前事实」做成可引用变量</h1>
+      <p class="lede">上一课的「运行时参数」再说准一点：作者要的是<strong>会话级当前事实</strong>（此刻选中谁），并带变化通知——不是配方上的可调参数。</p>
+    </header>
+
+    <h2>作者说的「SO 当 field」</h2>
+    <p>
+      普通写法：字段挂在 Player 身上，别人要读就得找到 Player。
+      Field SO 把这个字段<strong>提成一份资产</strong>：
+    </p>
+<pre>[CreateAssetMenu]
+class AbilityFieldSO : ScriptableObject {
+  AbilityDataSO value;
+  event Action&lt;AbilityDataSO&gt; ValueChanged;
+  void SetValue(...) { ...; ValueChanged?.Invoke(value); }
+  void Clear() => SetValue(null);
+}</pre>
+    <p>
+      技能按钮、鼠标范围、Tooltip <strong>都拖同一份</strong>
+      <code>CurrentSelectedAbility.asset</code>。
+      按钮只 <code>SetValue</code>；指示器只订阅 <code>ValueChanged</code>——彼此不认识。
+    </p>
+    <div class="callout so">
+      <strong>Field 表达什么：</strong>
+      「当前事实是什么」（现在选中的是火球）。
+      对比 Event Channel：「发生了一件事」（刚才点了火球按钮）。
+      两者有时一起用；本课只钉 Field。
+      （术语：
+      <a href="../reference/glossary.html#field-so">Field SO</a>）
+    </div>
+
+    <h2>你们项目里的功能等价物</h2>
+    <p>你们几乎不做「CurrentX.asset」，但<strong>同样的职责</strong>在：</p>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th>共享当前事实</th>
+          <th class="so">作者 Field SO</th>
+          <th class="ng">NineGrid</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>谁拥有输入</td>
+          <td><code>CurrentInputOwnerField</code>（若做成）</td>
+          <td><code>PresentationInputStateSystem.CurrentOwner</code></td>
+        </tr>
+        <tr>
+          <td>主线是否忙</td>
+          <td><code>MainlineBusyField</code>（若做成）</td>
+          <td>Director → <code>MainlineBusy</code>；门面 <code>PresentationInputGates</code></td>
+        </tr>
+        <tr>
+          <td>Opening / 覆层 / BoardSelect 索取</td>
+          <td>多个 bool Field</td>
+          <td>System 内 <code>BindableProperty&lt;bool&gt;</code>，经 Command 写</td>
+        </tr>
+        <tr>
+          <td>当前选中技能（战棋例）</td>
+          <td><code>AbilityFieldSO</code></td>
+          <td>无对等资产；意图进 Intake 后由会话/编排持有上下文</td>
+        </tr>
+      </tbody>
+    </table>
+<pre>// 你们：事实在 System 里，带可观察布尔
+class PresentationInputStateSystem {
+  BindableProperty&lt;bool&gt; mOpening, mChoiceOverlay, mBoardSelect;
+  InputOwner CurrentOwner { get { /* 由上述布尔推导 */ } }
+  void ResetGates(...) { /* 显式清会话事实 */ }
+}</pre>
+    <p class="cite">
+      <a href="../../../Assets/Scripts/NineGrid.Presentation/Systems/PresentationInputStateSystem.cs">PresentationInputStateSystem.cs</a>
+      ·
+      <a href="../../../docs/adr/0004-input-intake-two-axis-gating.md">ADR-0004</a>
+      （所有权轴与 MainlineBusy 是正交两轴，权威不落在可拖 Field.asset 上）
+    </p>
+
+    <h2>同一条「选中 → 刷新范围」</h2>
+    <p>点切换，看解耦发生在哪一步。</p>
+    <div class="lab" id="field-flow-lab"></div>
+
+    <h2>若你们用 Field SO 重做，会怎样</h2>
+    <p>例如把 <code>CurrentOwner</code> 做成 <code>InputOwnerFieldSO</code>：</p>
+    <ul>
+      <li>UI / HitProxy / 教程都能拖同一资产，少写 <code>GetSystem&lt;T&gt;</code></li>
+      <li>Inspector 里能看见「当前值」（调试友好，Hipple 也强调 editable / debuggable）</li>
+      <li>但必须保证全项目只引用<strong>一份</strong>资产；开局/结束必须 <code>Reset</code></li>
+      <li>写入者若分散，就和你们故意用 Command 写门禁布尔的纪律打架</li>
+    </ul>
+    <div class="callout bad">
+      <strong>和你们 ADR 最冲的点：</strong>
+      MainlineBusy / 输入所有权需要<strong>单一真相</strong>。
+      Field SO 靠「大家都拖对了同一个 asset」维持单例感——拖错第二份就静默分裂。
+      CompositionRoot 注册一个 System，则实例唯一性由装配保证，结构测试可护栏。
+    </div>
+
+    <h2>优点 / 缺点（只比 Field 这一层）</h2>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="so">Field SO</th>
+          <th class="ng">System + BindableProperty</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>解耦方式</td>
+          <td>拖同一 .asset</td>
+          <td>架构取同一 System</td>
+        </tr>
+        <tr>
+          <td>设计师可见性</td>
+          <td>高（Project 里能点开）</td>
+          <td>低（要看调试器 / 自定义窗）</td>
+        </tr>
+        <tr>
+          <td>唯一真相</td>
+          <td>靠引用纪律</td>
+          <td>靠装配单例 + 测试</td>
+        </tr>
+        <tr>
+          <td>脏值 / PlayMode</td>
+          <td>易残留，要 Reset</td>
+          <td>也要 ResetGates；但资产不会把运行时写回磁盘（若你误序列化 Field 则更惨）</td>
+        </tr>
+        <tr>
+          <td>写权限</td>
+          <td>易变成人人 SetValue</td>
+          <td>你们用 Command / 窄 API 收口写</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="cite">
+      Field 模式源头：
+      <a href="https://www.youtube.com/watch?v=raQ3iHhE_Kk">Hipple · Unite 2017</a>
+      的 ScriptableObject Variables；样例
+      <a href="https://github.com/roboryantron/Unite2017">roboryantron/Unite2017</a>。
+    </p>
+
+    <section class="quiz" data-quiz="q1">
+      <h3>检索练习 · 1</h3>
+      <p>Field SO 相对配置 SO，多出来的关键能力是？</p>
+      <button data-answer="wrong">可以放进 CreateAssetMenu 菜单</button>
+      <button data-answer="correct">保存会变的当前值，并在变化时通知订阅者</button>
+      <button data-answer="wrong">只能被一个 MonoBehaviour 引用</button>
+      <button data-answer="wrong">自动替代 Core 里的全部规则</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <section class="quiz" data-quiz="q2">
+      <h3>检索练习 · 2</h3>
+      <p><code>PresentationInputStateSystem.CurrentOwner</code> 更像？</p>
+      <button data-answer="wrong">BattleEncounterProfileSO（遭遇配方）</button>
+      <button data-answer="wrong">CardTweenDirectionalLungeEffectSO（冲刺曲线）</button>
+      <button data-answer="correct">作者的 Field / 共享运行时事实（谁拥有输入）</button>
+      <button data-answer="wrong">Event Channel（只广播一次、不保留当前值）</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <section class="quiz" data-quiz="q3">
+      <h3>检索练习 · 3</h3>
+      <p>为什么你们不把 MainlineBusy 做成可拖 Field.asset 更稳？</p>
+      <button data-answer="wrong">ScriptableObject 不能保存 bool</button>
+      <button data-answer="correct">门禁需要装配保证的单一真相，避免双资产分裂</button>
+      <button data-answer="wrong">Director 无法被任何系统读取</button>
+      <button data-answer="wrong">ADR 禁止一切可观察状态</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <h2>本课主读</h2>
+    <p>
+      Hipple 讲座里 Variable / 共享数据那段（配合 GitHub 样例里的变量 SO），对照你们
+      <code>PresentationInputStateSystem</code> 的 <code>BindableProperty</code> 与 <code>ResetGates</code>。
+      问自己：变化通知有了；<strong>唯一实例</strong>靠什么保证？
+    </p>
+
+    <div class="note">
+      完成后回我一句：「Field SO 是带通知的 ___；我们把同类事实放在 ___，用 ___ 保证只有一份。」
+      下一课：Event Channel——「发生了」和「现在是」为什么要拆开。
+    </div>
+
+    <footer class="lesson-foot">
+      <div class="nav-links">
+        <a href="0002-config-so-vs-runtime.html">← 0002</a>
+        <a href="../reference/glossary.html">术语表</a>
+        <a href="../MISSION.md">Mission</a>
+      </div>
+    </footer>
+  </main>
+
+  <script src="../assets/field-flow.js"></script>
+  <script>
+    SoFieldFlow.mount(document.getElementById("field-flow-lab"));
+
+    const feedbackOk = {
+      q1: "对。配方稳定；Field 管『此刻是什么』并广播变化。",
+      q2: "对。CurrentOwner 是会话级当前事实，功能角色对齐 Field，只是形态是 System。",
+      q3: "对。Busy 是门禁真相；双份 Field.asset 会静默变成两套世界。",
+    };
+    const feedbackBad = {
+      q1: "CreateAssetMenu 配置 SO 也有。想差异：会不会变、要不要通知。",
+      q2: "前两个是配置配方。Event Channel 通常不保留『当前是谁』。",
+      q3: "bool 当然能存。风险是引用两份资产 → 两套 Busy。",
+    };
+
+    document.querySelectorAll(".quiz").forEach((quiz) => {
+      const id = quiz.dataset.quiz;
+      const feedback = quiz.querySelector(".feedback");
+      quiz.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          quiz.querySelectorAll("button").forEach((b) => {
+            b.classList.remove("correct", "wrong");
+            b.disabled = true;
+          });
+          const ok = btn.dataset.answer === "correct";
+          btn.classList.add(ok ? "correct" : "wrong");
+          quiz.querySelectorAll('button[data-answer="correct"]').forEach((b) =>
+            b.classList.add("correct")
+          );
+          feedback.textContent = ok ? feedbackOk[id] : feedbackBad[id];
+        });
+      });
+    });
+  </script>
+</body>
+</html>

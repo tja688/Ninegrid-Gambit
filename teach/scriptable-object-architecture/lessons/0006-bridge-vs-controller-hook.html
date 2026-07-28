@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0006 — Bridge：场景缝接到规则中心</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+  <main class="page">
+    <header class="lesson-head">
+      <p class="kicker">Lesson 0006 · ScriptableObject 玩法</p>
+      <h1>Bridge：只翻译场景，不判决规则</h1>
+      <p class="lede">Bridge 不是 SO——它是挂在场景里的 MonoBehaviour，把点击、动画结束、生命周期翻成「业务请求」。你们把同一缝拆成了 HitProxy + Hook + Controller。</p>
+    </header>
+
+    <h2>作者的 Bridge 做什么</h2>
+    <p>
+      <a href="../reference/glossary.html#bridge">Bridge</a>
+      连接两个世界：Unity 场景（Collider、Button、Timeline 信号）与 SO 业务世界（Rules / Field / Event）。
+    </p>
+<pre>class UnitSelectionBridge : MonoBehaviour {
+  UnityEvent&lt;Unit&gt; onUnitSelected;
+  void HandleUnitClicked(Unit unit) => onUnitSelected.Invoke(unit);
+}
+// Inspector: OnUnitSelected → RulesModel.ApplySelectedUnit</pre>
+    <div class="callout so">
+      <strong>纪律：</strong>
+      Bridge 可以拿 Camera / Collider / GameObject；
+      不应该内嵌「是否友方、是否已行动」这类规则。
+      判决交给 Rules Model；表现刷新交给 Visual。
+    </div>
+
+    <h2>你们的桥其实是三段</h2>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th>Bridge 子职责</th>
+          <th class="so">常揉在一个 MB</th>
+          <th class="ng">NineGrid</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>吃场景命中 / 指针</td>
+          <td>Bridge OnMouse / 按钮</td>
+          <td><code>GroundCardHitProxy</code> 等 + <code>PointerHitRouter</code></td>
+        </tr>
+        <tr>
+          <td>跨目录装配缝</td>
+          <td>Inspector UnityEvent 拖 Rules</td>
+          <td>静态 <code>*Hook</code>（如 <code>AttackInputHook</code>）</td>
+        </tr>
+        <tr>
+          <td>翻成架构意图</td>
+          <td>直接调 RulesModel 方法</td>
+          <td><code>AttackInputController</code> → <code>Submit*Command</code> → Intake</td>
+        </tr>
+      </tbody>
+    </table>
+<pre>// HitProxy：只活在场景，注册到命中表
+class GroundCardHitProxy : MonoBehaviour, IPointerHitTarget { ... }
+
+// Hook：装配缝（非业务总线）
+AttackInputHook.TrySubmitAttack = ...;
+
+// Controller：翻成 Command
+bool HandleMonsterSlotClicked(int slot) {
+  return SendCommand(new SubmitAttackIntentCommand(slot));
+}</pre>
+    <p class="cite">
+      <a href="../../../Assets/Scripts/NineGrid.Presentation/Cards/GroundCardHitProxy.cs">GroundCardHitProxy.cs</a>
+      ·
+      <a href="../../../Assets/Scripts/NineGrid.Presentation/Controllers/AttackInputController.cs">AttackInputController.cs</a>
+      · 典型路径见
+      <a href="../../../docs/code-map/presentation.md">presentation.md</a>
+      ：Host / Hook → Controller → IntentIntake
+    </p>
+
+    <h2>一条攻击点击怎么过桥</h2>
+    <pre>玩家点怪物格
+  → PointerHitRouter 命中 GroundCardHitProxy
+  →（场地交战路径）AttackInputHook.TrySubmitAttack(slot)
+  → AttackInputController.HandleMonsterSlotClicked
+  → SubmitAttackIntentCommand
+  → IntentIntake.Submit
+  → Allow/Buffer 后进 Director / Core</pre>
+    <p>
+      对照作者：
+      <code>点击 → UnitSelectionBridge → UnityEvent → RulesModel.Apply…</code>
+      少了 Inspector 拖线，多了代码装配与结构护栏「不得绕过 Intake」。
+    </p>
+
+    <h2>UnityEvent 接线 vs 代码接线</h2>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="so">Bridge + Inspector UnityEvent</th>
+          <th class="ng">Hook + Controller + Command</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>谁看得见调用链</td>
+          <td>打开 Prefab/场景才完整</td>
+          <td>IDE 引用 + 结构测试可扫</td>
+        </tr>
+        <tr>
+          <td>改方法名</td>
+          <td>易静默断线</td>
+          <td>编译期失败（通常）</td>
+        </tr>
+        <tr>
+          <td>策划改接线</td>
+          <td>强（拖一拖）</td>
+          <td>弱（要改代码/装配）</td>
+        </tr>
+        <tr>
+          <td>多入口共用规则</td>
+          <td>都拖同一 Rules SO</td>
+          <td>都发 Command 进同一 Intake</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout bad">
+      <strong>作者总结已警告的坑，对你们同样成立：</strong>
+      调用链过长且藏在 Inspector 时，调试成本暴涨。
+      你们用代码接线换可追踪性；代价是「可视化拖拽装配」弱一截——这正是总图课说的取舍。
+    </div>
+
+    <h2>若用纯 Bridge+SO 重做攻击输入</h2>
+    <ol>
+      <li>HitProxy 仍可留（或改回按钮/OnMouse，但你们有 ADR-0006 理由不回去）</li>
+      <li>Bridge 上拖 <code>AttackRequested</code> Event Channel 或直连 RulesModel</li>
+      <li>RulesModel / Core 门面资产执行合法性与写状态</li>
+    </ol>
+    <p>
+      能跑，但会削弱「IntentIntake 结构护栏」与程序集边界。
+      <strong>更现实的混用：</strong>配置/特效继续 SO；Bridge 层保持 Controller+Intake。
+    </p>
+
+    <section class="quiz" data-quiz="q1">
+      <h3>检索练习 · 1</h3>
+      <p>Bridge（或你们的 HitProxy）最不该做的是？</p>
+      <button data-answer="wrong">把世界坐标转成格子索引</button>
+      <button data-answer="correct">在内部复制一套「能否攻击」的完整规则判决</button>
+      <button data-answer="wrong">在 OnEnable 注册到命中表</button>
+      <button data-answer="wrong">拿到 Collider2D 引用</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <section class="quiz" data-quiz="q2">
+      <h3>检索练习 · 2</h3>
+      <p><code>AttackInputController.HandleMonsterSlotClicked</code> 在作者词汇里最像？</p>
+      <button data-answer="wrong">Config SO 配方</button>
+      <button data-answer="wrong">VisualGrid 画范围</button>
+      <button data-answer="correct">Bridge 把场景点击翻成对规则中心的请求</button>
+      <button data-answer="wrong">Field SO 保存当前选中技能</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <section class="quiz" data-quiz="q3">
+      <h3>检索练习 · 3</h3>
+      <p>你们拆出 Hook 的主要工程理由是？</p>
+      <button data-answer="wrong">让策划在 Inspector 拖 UnityEvent</button>
+      <button data-answer="correct">打破 Cards↔Presentation 环依赖的窄装配缝</button>
+      <button data-answer="wrong">替代 IntentIntake 做门禁</button>
+      <button data-answer="wrong">保存 MainlineBusy 当前值</button>
+      <div class="feedback" aria-live="polite"></div>
+    </section>
+
+    <h2>本课主读</h2>
+    <p>
+      读
+      <a href="../../../Assets/Scripts/NineGrid.Presentation/Controllers/AttackInputController.cs">AttackInputController.cs</a>
+      从头到 <code>HandleMonsterSlotClicked</code>，边看边对照作者「Bridge 不写规则」。
+      再扫 ADR-0006 为何命中不走 <code>OnMouse*</code>——那是场景缝的实现细节，不改变 Bridge 职责。
+    </p>
+
+    <div class="note">
+      完成后回我：「Bridge 翻译 ___，不判决 ___；我们把桥拆成 ___ + ___ + ___。」
+      下一课：State Manager（状态栈/取消）↔ 所有权轴与流程相位。
+    </div>
+
+    <footer class="lesson-foot">
+      <div class="nav-links">
+        <a href="0005-rules-model-vs-core-intake.html">← 0005</a>
+        <a href="../reference/glossary.html">术语表</a>
+        <a href="../MISSION.md">Mission</a>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    const feedbackOk = {
+      q1: "对。坐标换算可以；完整规则判决应上交 Intake/Core。",
+      q2: "对。Controller 正是『场景意图 → 架构请求』的桥段。",
+      q3: "对。Hook 注释与 code-map 都钉在装配缝，不是第二门禁。",
+    };
+    const feedbackBad = {
+      q1: "拿 Collider、注册命中、转格子都是场景活。越界的是内嵌完整规则。",
+      q2: "它发 Command，不存配方、不画范围、不持 Field。",
+      q3: "Hook 不是给策划拖 UnityEvent 的；门禁在 Intake，Busy 在 Director。",
+    };
+
+    document.querySelectorAll(".quiz").forEach((quiz) => {
+      const id = quiz.dataset.quiz;
+      const feedback = quiz.querySelector(".feedback");
+      quiz.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          quiz.querySelectorAll("button").forEach((b) => {
+            b.classList.remove("correct", "wrong");
+            b.disabled = true;
+          });
+          const ok = btn.dataset.answer === "correct";
+          btn.classList.add(ok ? "correct" : "wrong");
+          quiz.querySelectorAll('button[data-answer="correct"]').forEach((b) =>
+            b.classList.add("correct")
+          );
+          feedback.textContent = ok ? feedbackOk[id] : feedbackBad[id];
+        });
+      });
+    });
+  </script>
+</body>
+</html>
