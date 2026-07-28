@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using NineGrid.Cards;
 using NineGrid.Cards.Anim;
 using NineGrid.Cards.Presentation;
@@ -38,7 +39,6 @@ namespace NineGrid.Content.Editor
         private readonly Dictionary<string, bool> foldoutState =
             new Dictionary<string, bool>(StringComparer.Ordinal);
 
-        private bool descriptionRichTextFocused;
         private CardPresentationKind richTextPreviewKind = CardPresentationKind.Monster;
         private string richTextSelectedCode = CardFaceSlotCodes.ActionIcon;
         private string richTextSampleDescription = "在[Action_Icon]后攻击玩家；施加[Poison]";
@@ -46,6 +46,18 @@ namespace NineGrid.Content.Editor
         private CardFaceDescriptionIconCatalogSO iconCatalog;
         private bool inlineIconStyleDirty;
         private bool iconCatalogDirty;
+
+        private string newDeckIdDraft = string.Empty;
+        private string newDeckNameDraft = string.Empty;
+
+        private static readonly string[] DeckKindChoices =
+        {
+            "Presentation",
+            "WeakElite",
+            "StrongElite",
+            "Boss",
+            "Reserve",
+        };
 
         [MenuItem("NineGrid/表现层配置")]
         public static void ShowWindow()
@@ -143,7 +155,7 @@ namespace NineGrid.Content.Editor
 
             rootElement.Add(ContentVisualWarmConsoleUi.BuildHeader(
                 "表现层配置",
-                "卡牌表现 JSON 权威编辑：所见即所得预览、主视图偏移、帧动画槽与描述。"));
+                "卡面 / 效果池 / 卡组·卡背 纯装配；卸下效果装配（并清 effectIds）= 白板。"));
 
             rootElement.Add(ContentVisualWarmConsoleUi.BuildToolbar(
                 ("保存", SaveAll, "保存全部脏 JSON（Authoring + StreamingAssets）"),
@@ -213,82 +225,51 @@ namespace NineGrid.Content.Editor
         private void RefreshSidebar()
         {
             listContainer.Clear();
-            var groups = session.GetSidebarGroups();
-            for (var i = 0; i < groups.Count; i++)
-            {
-                listContainer.Add(BuildCategoryFoldout(groups[i]));
-            }
+            listContainer.Add(BuildFacesSectionFoldout());
+            listContainer.Add(BuildEffectPoolSectionFoldout());
+            listContainer.Add(BuildDecksSectionFoldout());
         }
 
-        private VisualElement BuildCategoryFoldout(CardPresentationSidebarGroup group)
+        private VisualElement BuildSectionFoldout(string key, string title, Action<VisualElement> buildContent)
         {
-            var key = "cat:" + group.Category;
             if (!foldoutState.TryGetValue(key, out var expanded))
             {
-                expanded = group.ExpandByDefault;
+                expanded = true;
                 foldoutState[key] = expanded;
             }
 
             var foldout = new Foldout
             {
-                text = group.Title,
+                text = title,
                 value = expanded,
             };
-            foldout.style.marginBottom = 2;
+            foldout.style.marginBottom = 4;
             foldout.RegisterValueChangedCallback(evt => foldoutState[key] = evt.newValue);
-
-            if (group.Category == CardPresentationSidebarCategory.Monster)
-            {
-                for (var d = 0; d < group.DeckGroups.Count; d++)
-                {
-                    foldout.contentContainer.Add(BuildDeckFoldout(group.DeckGroups[d]));
-                }
-
-                if (group.DeckGroups.Count == 0)
-                {
-                    foldout.contentContainer.Add(
-                        ContentVisualWarmConsoleUi.CreateDescriptionLabel("（无怪物条目）"));
-                }
-            }
-            else if (group.Category == CardPresentationSidebarCategory.Other)
-            {
-                foldout.contentContainer.Add(BuildDescriptionRichTextNavButton());
-                var icons = session.GetInsertableIcons();
-                if (icons.Count == 0)
-                {
-                    foldout.contentContainer.Add(
-                        ContentVisualWarmConsoleUi.CreateDescriptionLabel("（无 Insertable 槽）"));
-                }
-                else
-                {
-                    for (var i = 0; i < icons.Count; i++)
-                    {
-                        foldout.contentContainer.Add(BuildInsertableRow(icons[i]));
-                    }
-                }
-            }
-            else
-            {
-                if (group.Entries.Count == 0)
-                {
-                    foldout.contentContainer.Add(
-                        ContentVisualWarmConsoleUi.CreateDescriptionLabel("（无条目）"));
-                }
-                else
-                {
-                    for (var i = 0; i < group.Entries.Count; i++)
-                    {
-                        foldout.contentContainer.Add(BuildEntryButton(group.Entries[i]));
-                    }
-                }
-            }
-
+            buildContent(foldout.contentContainer);
             return foldout;
         }
 
-        private VisualElement BuildDeckFoldout(CardPresentationSidebarDeckGroup deck)
+        private VisualElement BuildFacesSectionFoldout()
         {
-            var key = "deck:" + deck.DeckId;
+            return BuildSectionFoldout("section:faces", "卡面", container =>
+            {
+                var groups = session.GetFaceDeckGroups();
+                if (groups.Count == 0)
+                {
+                    container.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel("（无卡面条目）"));
+                    return;
+                }
+
+                for (var i = 0; i < groups.Count; i++)
+                {
+                    container.Add(BuildFaceDeckGroupFoldout(groups[i]));
+                }
+            });
+        }
+
+        private VisualElement BuildFaceDeckGroupFoldout(CardPresentationSidebarDeckGroup deck)
+        {
+            var key = "faceDeck:" + deck.DeckId;
             if (!foldoutState.TryGetValue(key, out var expanded))
             {
                 expanded = true;
@@ -300,107 +281,246 @@ namespace NineGrid.Content.Editor
                 text = deck.Title + " (" + deck.Entries.Count + ")",
                 value = expanded,
             };
+            foldout.style.marginLeft = 8;
+            foldout.style.marginBottom = 2;
             foldout.RegisterValueChangedCallback(evt => foldoutState[key] = evt.newValue);
+
             for (var i = 0; i < deck.Entries.Count; i++)
             {
-                foldout.contentContainer.Add(BuildEntryButton(deck.Entries[i]));
+                foldout.contentContainer.Add(BuildFaceEntryButton(deck.Entries[i]));
             }
 
             return foldout;
         }
 
-        private VisualElement BuildDescriptionRichTextNavButton()
+        private VisualElement BuildEffectPoolSectionFoldout()
         {
-            var selected = descriptionRichTextFocused;
-            var btn = new VisualElement();
-            btn.style.flexDirection = FlexDirection.Row;
-            btn.style.marginBottom = 4;
-            btn.style.overflow = Overflow.Hidden;
-            btn.style.borderTopLeftRadius = btn.style.borderTopRightRadius = 4;
-            btn.style.borderBottomLeftRadius = btn.style.borderBottomRightRadius = 4;
-            btn.style.backgroundColor = selected
-                ? ContentVisualWarmConsoleUi.Theme.NavSelectedBg
-                : ContentVisualWarmConsoleUi.Theme.NavNormalBg;
+            return BuildSectionFoldout("section:effects", "效果池", container =>
+            {
+                container.Add(BuildDescriptionGlossaryNavButton());
 
-            var stripe = new VisualElement();
-            stripe.style.width = 3;
-            stripe.style.backgroundColor = selected
-                ? ContentVisualWarmConsoleUi.Theme.AccentStrong
-                : ContentVisualWarmConsoleUi.Theme.NavStripeNormal;
-            btn.Add(stripe);
+                var insertables = session.GetInsertableIcons();
+                if (insertables.Count > 0)
+                {
+                    var insertFoldout = new Foldout
+                    {
+                        text = "可插入装配槽编码",
+                        value = false,
+                    };
+                    insertFoldout.style.marginLeft = 4;
+                    insertFoldout.style.marginBottom = 4;
+                    for (var i = 0; i < insertables.Count; i++)
+                    {
+                        insertFoldout.contentContainer.Add(BuildInsertableTokenRow(insertables[i]));
+                    }
 
-            var body = new VisualElement();
-            body.style.flexGrow = 1;
-            body.style.paddingTop = 6;
-            body.style.paddingBottom = 6;
-            body.style.paddingLeft = 6;
-            body.style.paddingRight = 4;
-            body.Add(ContentVisualWarmConsoleUi.CreateTitleLabel(
-                "打开详情页", 12, true, ContentVisualWarmConsoleUi.Theme.TextPrimary));
-            body.Add(ContentVisualWarmConsoleUi.CreateTinyPathLabel("内联图标 · 基础预制体预览"));
-            btn.Add(body);
+                    container.Add(insertFoldout);
+                }
 
-            btn.RegisterCallback<ClickEvent>(_ => OpenDescriptionRichTextPage());
-            return btn;
+                var catalogCodes = ListCatalogIconCodes();
+                if (catalogCodes.Count > 0)
+                {
+                    var catalogFoldout = new Foldout
+                    {
+                        text = "描述词条编码（点复制）",
+                        value = false,
+                    };
+                    catalogFoldout.style.marginLeft = 4;
+                    catalogFoldout.style.marginBottom = 4;
+                    for (var i = 0; i < catalogCodes.Count; i++)
+                    {
+                        catalogFoldout.contentContainer.Add(BuildCatalogTokenRow(catalogCodes[i]));
+                    }
+
+                    container.Add(catalogFoldout);
+                }
+
+                var templates = session.EffectTemplates;
+                if (templates.Count == 0)
+                {
+                    container.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel("（无效果模板）"));
+                    return;
+                }
+
+                for (var i = 0; i < templates.Count; i++)
+                {
+                    var row = templates[i];
+                    if (row == null || string.IsNullOrWhiteSpace(row.id))
+                    {
+                        continue;
+                    }
+
+                    container.Add(BuildTemplateEntryButton(row));
+                }
+            });
         }
 
-        private void OpenDescriptionRichTextPage(string selectCode = null)
+        private VisualElement BuildDecksSectionFoldout()
         {
-            descriptionRichTextFocused = true;
-            session.FocusedContentId = string.Empty;
-            if (!string.IsNullOrEmpty(selectCode))
+            return BuildSectionFoldout("section:decks", "卡组·卡背", container =>
             {
-                richTextSelectedCode = selectCode;
+                var decks = session.DeckEntries;
+                if (decks.Count == 0)
+                {
+                    container.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel("（无卡组条目）"));
+                }
+                else
+                {
+                    for (var i = 0; i < decks.Count; i++)
+                    {
+                        container.Add(BuildDeckEntryButton(decks[i]));
+                    }
+                }
+
+                container.Add(BuildCreateDeckInlineForm());
+            });
+        }
+
+        private VisualElement BuildCreateDeckInlineForm()
+        {
+            var box = new VisualElement();
+            box.style.marginTop = 8;
+            box.style.paddingTop = 6;
+            box.style.paddingBottom = 4;
+            box.style.paddingLeft = 4;
+            box.style.paddingRight = 4;
+            box.style.backgroundColor = ContentVisualWarmConsoleUi.Theme.NavNormalBg;
+            box.style.borderTopLeftRadius = box.style.borderTopRightRadius = 4;
+            box.style.borderBottomLeftRadius = box.style.borderBottomRightRadius = 4;
+
+            box.Add(ContentVisualWarmConsoleUi.CreateTitleLabel(
+                "新建卡组", 11, true, ContentVisualWarmConsoleUi.Theme.TextPrimary));
+
+            var idField = new TextField { value = newDeckIdDraft ?? string.Empty };
+            idField.RegisterValueChangedCallback(evt => newDeckIdDraft = evt.newValue ?? string.Empty);
+            box.Add(ContentVisualWarmConsoleUi.WrapControlRow("deckId", idField, 56f));
+
+            var nameField = new TextField { value = newDeckNameDraft ?? string.Empty };
+            nameField.RegisterValueChangedCallback(evt => newDeckNameDraft = evt.newValue ?? string.Empty);
+            box.Add(ContentVisualWarmConsoleUi.WrapControlRow("显示名", nameField, 56f));
+
+            var createBtn = new Button(() =>
+            {
+                if (!session.TryCreateDeck(newDeckIdDraft, newDeckNameDraft, "Presentation", out var error))
+                {
+                    EditorUtility.DisplayDialog("新建卡组失败", error ?? "未知错误", "确定");
+                    return;
+                }
+
+                newDeckIdDraft = string.Empty;
+                newDeckNameDraft = string.Empty;
+                previewFingerprint = string.Empty;
+                RefreshAll();
+            })
+            {
+                text = "新建卡组",
+            };
+            createBtn.style.marginTop = 4;
+            box.Add(createBtn);
+            return box;
+        }
+
+        private VisualElement BuildDescriptionGlossaryNavButton()
+        {
+            var selected = session.FocusKind == CardPresentationEditorFocusKind.DescriptionGlossary;
+            return BuildNavButton(
+                selected,
+                "描述词条",
+                "内联图标 · 基础预制体预览",
+                () => OpenDescriptionRichTextPage());
+        }
+
+        private VisualElement BuildFaceEntryButton(CardPresentationEditorEntry entry)
+        {
+            var selected = session.FocusKind == CardPresentationEditorFocusKind.Face
+                           && string.Equals(entry.ContentId, session.FocusedContentId, StringComparison.Ordinal);
+            var title = FormatEntryTitle(entry);
+            return BuildNavButton(
+                selected,
+                title,
+                entry.ContentId,
+                () =>
+                {
+                    EnsureDescriptionIconPipeline();
+                    session.FocusFace(entry.ContentId);
+                    faceUp = true;
+                    previewAnimSlot = CardAnimSlotIds.Idle;
+                    previewFingerprint = string.Empty;
+                    RefreshAll();
+                });
+        }
+
+        private VisualElement BuildDeckEntryButton(CardPresentationEditorEntry entry)
+        {
+            var selected = session.FocusKind == CardPresentationEditorFocusKind.Deck
+                           && string.Equals(entry.ContentId, session.FocusedContentId, StringComparison.Ordinal);
+            var title = FormatEntryTitle(entry);
+            return BuildNavButton(
+                selected,
+                title,
+                entry.ContentId,
+                () =>
+                {
+                    EnsureDescriptionIconPipeline();
+                    session.FocusDeck(entry.ContentId);
+                    previewFingerprint = string.Empty;
+                    RefreshAll();
+                });
+        }
+
+        private VisualElement BuildTemplateEntryButton(EffectTemplateEditorIO.TemplateRow row)
+        {
+            var selected = session.FocusKind == CardPresentationEditorFocusKind.EffectTemplate
+                           && string.Equals(row.id, session.FocusedTemplateId, StringComparison.Ordinal);
+            var design = string.IsNullOrWhiteSpace(row.design_text)
+                ? "（无 design_text）"
+                : row.design_text.Trim();
+            var title = design;
+            if (title.Length > 32)
+            {
+                title = title.Substring(0, 32) + "…";
             }
 
-            EnsureInlineIconStyleLoaded();
-            EnsureIconCatalogLoaded();
-            CardFacePresentationBinder.SetInlineIconStyleOverride(inlineIconStyle);
-            CardFacePresentationBinder.SetDescriptionIconCatalogOverride(iconCatalog);
-            previewFingerprint = string.Empty;
-            RefreshSidebar();
-            RefreshContent();
-        }
-
-        private VisualElement BuildInsertableRow(CardPresentationInsertableIcon icon)
-        {
-            var row = new VisualElement();
-            row.style.flexDirection = FlexDirection.Row;
-            row.style.alignItems = Align.Center;
-            row.style.marginBottom = 2;
-            row.style.paddingLeft = 4;
-            row.style.paddingRight = 4;
-            row.style.paddingTop = 2;
-            row.style.paddingBottom = 2;
-            row.style.backgroundColor = descriptionRichTextFocused
-                && string.Equals(richTextSelectedCode, icon.Code, StringComparison.Ordinal)
-                ? ContentVisualWarmConsoleUi.Theme.NavSelectedBg
-                : ContentVisualWarmConsoleUi.Theme.NavNormalBg;
-            row.style.borderTopLeftRadius = row.style.borderTopRightRadius = 4;
-            row.style.borderBottomLeftRadius = row.style.borderBottomRightRadius = 4;
-
-            var name = ContentVisualWarmConsoleUi.CreateTitleLabel(
-                icon.DisplayNameZh, 12, false, ContentVisualWarmConsoleUi.Theme.TextPrimary);
-            name.style.flexGrow = 1;
-            row.Add(name);
-
-            var tokenField = new TextField { value = icon.Token, isReadOnly = true };
-            tokenField.style.width = 120;
-            tokenField.RegisterCallback<FocusInEvent>(_ =>
+            if (row.IsDirty)
             {
-                tokenField.SelectAll();
-                EditorGUIUtility.systemCopyBuffer = icon.Token;
-            });
-            row.Add(tokenField);
+                title = "• " + title;
+            }
 
-            row.RegisterCallback<ClickEvent>(_ => OpenDescriptionRichTextPage(icon.Code));
-            return row;
+            return BuildNavButton(
+                selected,
+                title,
+                row.id,
+                () =>
+                {
+                    EnsureDescriptionIconPipeline();
+                    session.FocusEffectTemplate(row.id);
+                    previewFingerprint = string.Empty;
+                    RefreshAll();
+                });
         }
 
-        private VisualElement BuildEntryButton(CardPresentationEditorEntry entry)
+        private static string FormatEntryTitle(CardPresentationEditorEntry entry)
         {
-            var selected = !descriptionRichTextFocused
-                           && string.Equals(entry.ContentId, session.FocusedContentId, StringComparison.Ordinal);
+            var titleText = entry.DisplayName;
+            if (string.IsNullOrWhiteSpace(titleText))
+            {
+                titleText = entry.ContentId;
+            }
+
+            if (entry.IsDirty)
+            {
+                titleText = "• " + titleText;
+            }
+
+            return titleText;
+        }
+
+        private static VisualElement BuildNavButton(
+            bool selected,
+            string title,
+            string subtitle,
+            Action onClick)
+        {
             var btn = new VisualElement();
             btn.style.flexDirection = FlexDirection.Row;
             btn.style.marginBottom = 2;
@@ -424,54 +544,66 @@ namespace NineGrid.Content.Editor
             body.style.paddingBottom = 4;
             body.style.paddingLeft = 6;
             body.style.paddingRight = 4;
-
-            var titleText = entry.DisplayName;
-            if (string.IsNullOrWhiteSpace(titleText))
-            {
-                titleText = entry.ContentId;
-            }
-
-            if (entry.IsDirty)
-            {
-                titleText = "• " + titleText;
-            }
-
             body.Add(ContentVisualWarmConsoleUi.CreateTitleLabel(
-                titleText, 11, true, ContentVisualWarmConsoleUi.Theme.TextPrimary));
-            body.Add(ContentVisualWarmConsoleUi.CreateTinyPathLabel(entry.ContentId));
+                title, 11, true, ContentVisualWarmConsoleUi.Theme.TextPrimary));
+            body.Add(ContentVisualWarmConsoleUi.CreateTinyPathLabel(subtitle));
             btn.Add(body);
 
-            btn.RegisterCallback<ClickEvent>(_ =>
-            {
-                descriptionRichTextFocused = false;
-                CardFacePresentationBinder.SetInlineIconStyleOverride(null);
-                CardFacePresentationBinder.SetDescriptionIconCatalogOverride(null);
-                session.FocusedContentId = entry.ContentId;
-                faceUp = true;
-                previewAnimSlot = CardAnimSlotIds.Idle;
-                previewFingerprint = string.Empty;
-                RefreshSidebar();
-                RefreshContent();
-            });
-
+            btn.RegisterCallback<ClickEvent>(_ => onClick?.Invoke());
             return btn;
+        }
+
+        private void OpenDescriptionRichTextPage(string selectCode = null)
+        {
+            session.FocusDescriptionGlossary();
+            if (!string.IsNullOrEmpty(selectCode))
+            {
+                richTextSelectedCode = selectCode;
+            }
+
+            EnsureInlineIconStyleLoaded();
+            EnsureIconCatalogLoaded();
+            CardFacePresentationBinder.SetInlineIconStyleOverride(inlineIconStyle);
+            CardFacePresentationBinder.SetDescriptionIconCatalogOverride(iconCatalog);
+            previewFingerprint = string.Empty;
+            RefreshAll();
         }
 
         private void RefreshContent()
         {
             contentRoot.Clear();
-            if (descriptionRichTextFocused)
-            {
-                BuildDescriptionRichTextContent();
-                return;
-            }
 
-            var entry = session.GetFocused();
+            switch (session.FocusKind)
+            {
+                case CardPresentationEditorFocusKind.DescriptionGlossary:
+                    BuildDescriptionRichTextContent();
+                    return;
+                case CardPresentationEditorFocusKind.Face:
+                    BuildFaceContent();
+                    return;
+                case CardPresentationEditorFocusKind.EffectTemplate:
+                    BuildEffectTemplateContent();
+                    return;
+                case CardPresentationEditorFocusKind.Deck:
+                    BuildDeckContent();
+                    return;
+                default:
+                    contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeader(
+                        "未选择",
+                        "从左侧选择卡面、效果模板、卡组，或打开「描述词条」。"));
+                    previewFingerprint = string.Empty;
+                    return;
+            }
+        }
+
+        private void BuildFaceContent()
+        {
+            var entry = session.GetFocusedFace();
             if (entry?.Dto == null)
             {
                 contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeader(
                     "未选择",
-                    "从左侧树选择一张卡，或打开「描述富文本」配置内联图标。"));
+                    "从左侧卡面树选择一张卡。"));
                 previewFingerprint = string.Empty;
                 return;
             }
@@ -534,9 +666,10 @@ namespace NineGrid.Content.Editor
 
             var descriptionCard = ContentVisualWarmConsoleUi.CreateSectionCard(
                 "描述",
-                "[SlotCode] 见左侧「描述富文本」；输入框为代码，预览显示真实图标",
+                "[Code] 词条图标见左侧「效果池 → 描述词条 / 可插入编码」；预览会展开真实图标",
                 column =>
                 {
+                    EnsureDescriptionIconPipeline();
                     descriptionField = new TextField
                     {
                         multiline = true,
@@ -566,7 +699,23 @@ namespace NineGrid.Content.Editor
             animationCard.style.flexBasis = 0;
             bottomRow.Add(animationCard);
 
-            // 「其他配置」默认折叠（extraSlots）。
+            var effectAssemblyCard = ContentVisualWarmConsoleUi.CreateSectionCard(
+                "效果装配",
+                "templateId + 实参；清空装配会同步清空 effectIds",
+                column => BuildEffectAssemblySection(column, entry));
+            effectAssemblyCard.style.marginBottom = 6;
+            contentRoot.Add(effectAssemblyCard);
+
+            if (CardPresentationEditorSession.IsMonsterKind(dto.kind))
+            {
+                var skillCard = ContentVisualWarmConsoleUi.CreateSectionCard(
+                    "技能挂载",
+                    "Monster schema≥2 投影进 Catalog.SkillIds",
+                    column => BuildSkillMountsSection(column, entry));
+                skillCard.style.marginBottom = 6;
+                contentRoot.Add(skillCard);
+            }
+
             var extraOuter = new VisualElement();
             extraOuter.style.flexDirection = FlexDirection.Row;
             extraOuter.style.marginBottom = 12;
@@ -603,6 +752,475 @@ namespace NineGrid.Content.Editor
             EnsurePreview(entry);
         }
 
+        private void BuildEffectTemplateContent()
+        {
+            var row = session.GetFocusedTemplate();
+            if (row == null)
+            {
+                contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeader(
+                    "未选择",
+                    "从左侧效果池选择一条模板。"));
+                previewFingerprint = string.Empty;
+                return;
+            }
+
+            contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeaderCompact(
+                row.id,
+                "效果模板" + (row.IsDirty ? " · 未保存" : string.Empty)));
+
+            var topRow = new VisualElement();
+            topRow.style.flexDirection = FlexDirection.Row;
+            topRow.style.marginBottom = 6;
+            topRow.style.alignItems = Align.Stretch;
+            contentRoot.Add(topRow);
+
+            var previewCard = ContentVisualWarmConsoleUi.CreateSectionCard(
+                "描述预览",
+                "只预览 design_text 内容框；[Code] 走描述词条图标表",
+                column =>
+                {
+                    previewContainer = new IMGUIContainer(() =>
+                    {
+                        EnsureTemplatePreview(row);
+                        var rect = GUILayoutUtility.GetRect(
+                            1f, 1f, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                        previewHost.Draw(rect);
+                    });
+                    previewContainer.style.minHeight = 340;
+                    previewContainer.style.minWidth = 260;
+                    column.Add(previewContainer);
+
+                    column.Add(ContentVisualWarmConsoleUi.CreateButtonRow(
+                        new Button(() =>
+                        {
+                            previewFingerprint = string.Empty;
+                            EnsureTemplatePreview(row, force: true);
+                            previewContainer?.MarkDirtyRepaint();
+                        }) { text = "刷新预览" }));
+                });
+            previewCard.style.flexGrow = 1;
+            previewCard.style.flexBasis = 0;
+            previewCard.style.marginRight = 6;
+            topRow.Add(previewCard);
+
+            var metaCard = ContentVisualWarmConsoleUi.CreateSectionCard(
+                "模板元数据",
+                null,
+                column =>
+                {
+                    var idField = new TextField { value = row.id, isReadOnly = true };
+                    column.Add(ContentVisualWarmConsoleUi.WrapControlRow("id", idField, 72f));
+
+                    var stateField = new TextField { value = row.state ?? string.Empty };
+                    stateField.RegisterValueChangedCallback(evt =>
+                    {
+                        row.state = evt.newValue ?? string.Empty;
+                        previewFingerprint = string.Empty;
+                        UpdateStatus();
+                        RefreshSidebar();
+                    });
+                    column.Add(ContentVisualWarmConsoleUi.WrapControlRow("state", stateField, 72f));
+
+                    var designField = new TextField
+                    {
+                        multiline = true,
+                        value = row.design_text ?? string.Empty,
+                    };
+                    designField.style.minHeight = 72;
+                    designField.RegisterValueChangedCallback(evt =>
+                    {
+                        row.design_text = evt.newValue ?? string.Empty;
+                        previewFingerprint = string.Empty;
+                        EnsureTemplatePreview(row, force: true);
+                        previewContainer?.MarkDirtyRepaint();
+                        UpdateStatus();
+                        RefreshSidebar();
+                    });
+                    column.Add(ContentVisualWarmConsoleUi.WrapControlRow("design_text", designField, 72f));
+
+                    var requiresLabel = new Label(row.requires_json ?? "[]");
+                    requiresLabel.style.whiteSpace = WhiteSpace.Normal;
+                    column.Add(ContentVisualWarmConsoleUi.WrapControlRow("requires", requiresLabel, 72f));
+
+                    var conditionsLabel = new Label(row.conditions_json ?? "[]");
+                    conditionsLabel.style.whiteSpace = WhiteSpace.Normal;
+                    column.Add(ContentVisualWarmConsoleUi.WrapControlRow("conditions", conditionsLabel, 72f));
+
+                    var bodyFoldout = new Foldout { text = "body（只读）", value = false };
+                    var bodyField = new TextField
+                    {
+                        multiline = true,
+                        value = row.body ?? string.Empty,
+                        isReadOnly = true,
+                    };
+                    bodyField.style.minHeight = 120;
+                    bodyFoldout.contentContainer.Add(bodyField);
+                    column.Add(bodyFoldout);
+                });
+            metaCard.style.flexGrow = 1;
+            metaCard.style.flexBasis = 0;
+            topRow.Add(metaCard);
+
+            EnsureTemplatePreview(row);
+        }
+
+        private void BuildDeckContent()
+        {
+            var entry = session.GetFocusedDeck();
+            if (entry?.Dto == null)
+            {
+                contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeader(
+                    "未选择",
+                    "从左侧卡组·卡背选择一条。"));
+                return;
+            }
+
+            var dto = entry.Dto;
+            if (dto.sprites == null)
+            {
+                dto.sprites = new CardPresentationSpritesDto();
+            }
+
+            contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeaderCompact(
+                string.IsNullOrWhiteSpace(dto.displayName) ? dto.contentId : dto.displayName,
+                dto.contentId + " · Deck"
+                + (entry.IsDirty ? " · 未保存" : string.Empty)));
+
+            var card = ContentVisualWarmConsoleUi.CreateSectionCard(
+                "卡组配置",
+                "卡背三槽；卡面 deckId 引用本条目",
+                column =>
+                {
+                    column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
+                        "显示名",
+                        BindText(dto.displayName, v =>
+                        {
+                            dto.displayName = v ?? string.Empty;
+                            OnDeckEdited(entry);
+                        })));
+
+                    var kindIndex = Array.IndexOf(DeckKindChoices, dto.deckKind ?? string.Empty);
+                    if (kindIndex < 0)
+                    {
+                        kindIndex = 0;
+                    }
+
+                    var kindField = new PopupField<string>(
+                        new List<string>(DeckKindChoices),
+                        kindIndex);
+                    kindField.RegisterValueChangedCallback(evt =>
+                    {
+                        dto.deckKind = evt.newValue ?? "Presentation";
+                        OnDeckEdited(entry);
+                    });
+                    column.Add(ContentVisualWarmConsoleUi.WrapControlRow("deckKind", kindField, 72f));
+
+                    column.Add(MakeSpriteField("卡背边框", dto.sprites.backBorder, path =>
+                    {
+                        dto.sprites.backBorder = path;
+                        OnDeckEdited(entry);
+                    }));
+                    column.Add(MakeSpriteField("卡背背纹", dto.sprites.backShirt, path =>
+                    {
+                        dto.sprites.backShirt = path;
+                        OnDeckEdited(entry);
+                    }));
+                    column.Add(MakeSpriteField("卡背 Logo", dto.sprites.backLogo, path =>
+                    {
+                        dto.sprites.backLogo = path;
+                        OnDeckEdited(entry);
+                    }));
+
+                    var status = ContentVisualWarmConsoleUi.CreateDescriptionLabel(
+                        "状态：" + (entry.IsDirty ? "有未保存改动" : "已同步磁盘"));
+                    status.style.marginTop = 8;
+                    column.Add(status);
+                });
+            card.style.marginBottom = 12;
+            contentRoot.Add(card);
+        }
+
+        private void BuildEffectAssemblySection(VisualElement column, CardPresentationEditorEntry entry)
+        {
+            var dto = entry.Dto;
+            if (dto.effectAssemblies == null)
+            {
+                dto.effectAssemblies = Array.Empty<EffectAssemblyDto>();
+            }
+
+            var list = new List<EffectAssemblyDto>(dto.effectAssemblies);
+            var templateChoices = session.GetEffectTemplateChoices();
+            var templateLabels = new List<string>();
+            var templateIds = new List<string>();
+            for (var i = 0; i < templateChoices.Count; i++)
+            {
+                var choice = templateChoices[i];
+                if (choice == null || string.IsNullOrWhiteSpace(choice.TemplateId))
+                {
+                    continue;
+                }
+
+                templateLabels.Add(choice.Label);
+                templateIds.Add(choice.TemplateId);
+            }
+
+            if (templateLabels.Count == 0)
+            {
+                templateLabels.Add("（无效果模板）");
+                templateIds.Add(string.Empty);
+            }
+
+            var listRoot = new VisualElement();
+            column.Add(listRoot);
+
+            void CommitAssemblies()
+            {
+                dto.effectAssemblies = list.ToArray();
+                if (dto.effectAssemblies.Length == 0)
+                {
+                    dto.effectIds = Array.Empty<string>();
+                }
+
+                OnDtoEdited(entry);
+            }
+
+            void RebuildList()
+            {
+                listRoot.Clear();
+                for (var i = 0; i < list.Count; i++)
+                {
+                    var index = i;
+                    var assembly = list[i];
+                    if (assembly == null)
+                    {
+                        assembly = new EffectAssemblyDto();
+                        list[i] = assembly;
+                    }
+
+                    var row = new VisualElement();
+                    row.style.flexDirection = FlexDirection.Column;
+                    row.style.marginBottom = 8;
+                    row.style.paddingLeft = 4;
+                    row.style.paddingRight = 4;
+                    row.style.paddingTop = 4;
+                    row.style.paddingBottom = 4;
+                    row.style.backgroundColor = ContentVisualWarmConsoleUi.Theme.NavNormalBg;
+                    row.style.borderTopLeftRadius = row.style.borderTopRightRadius = 4;
+                    row.style.borderBottomLeftRadius = row.style.borderBottomRightRadius = 4;
+
+                    var idField = new TextField { value = assembly.id ?? string.Empty };
+                    idField.RegisterValueChangedCallback(evt =>
+                    {
+                        assembly.id = evt.newValue ?? string.Empty;
+                        CommitAssemblies();
+                    });
+                    row.Add(ContentVisualWarmConsoleUi.WrapControlRow("挂载 id", idField, 56f));
+
+                    var currentTpl = assembly.templateId ?? string.Empty;
+                    var rowLabels = new List<string>(templateLabels);
+                    var rowIds = new List<string>(templateIds);
+                    var tplIndex = rowIds.IndexOf(currentTpl);
+                    if (tplIndex < 0 && !string.IsNullOrEmpty(currentTpl))
+                    {
+                        var orphanLabel = currentTpl;
+                        if (session.TryGetEffectTemplateDesignText(currentTpl, out var orphanDesign)
+                            && !string.IsNullOrWhiteSpace(orphanDesign))
+                        {
+                            orphanLabel = orphanDesign.Trim() + " · " + currentTpl;
+                        }
+
+                        rowLabels.Insert(0, orphanLabel);
+                        rowIds.Insert(0, currentTpl);
+                        tplIndex = 0;
+                    }
+
+                    if (tplIndex < 0)
+                    {
+                        tplIndex = 0;
+                    }
+
+                    var tplField = new PopupField<string>(rowLabels, tplIndex);
+                    tplField.RegisterValueChangedCallback(evt =>
+                    {
+                        var picked = rowLabels.IndexOf(evt.newValue);
+                        assembly.templateId = picked >= 0 && picked < rowIds.Count
+                            ? rowIds[picked]
+                            : string.Empty;
+                        CommitAssemblies();
+                    });
+                    row.Add(ContentVisualWarmConsoleUi.WrapControlRow("效果（design_text）", tplField, 96f));
+
+                    if (!string.IsNullOrEmpty(currentTpl))
+                    {
+                        row.Add(ContentVisualWarmConsoleUi.CreateTinyPathLabel(currentTpl));
+                    }
+
+                    var containerField = new TextField { value = assembly.containerType ?? string.Empty };
+                    containerField.RegisterValueChangedCallback(evt =>
+                    {
+                        assembly.containerType = evt.newValue ?? string.Empty;
+                        CommitAssemblies();
+                    });
+                    row.Add(ContentVisualWarmConsoleUi.WrapControlRow("containerType", containerField, 72f));
+
+                    var argsField = new TextField { value = assembly.argsJson ?? string.Empty };
+                    argsField.RegisterValueChangedCallback(evt =>
+                    {
+                        assembly.argsJson = evt.newValue ?? string.Empty;
+                        CommitAssemblies();
+                    });
+                    row.Add(ContentVisualWarmConsoleUi.WrapControlRow("argsJson", argsField, 72f));
+
+                    var removeBtn = new Button(() =>
+                    {
+                        list.RemoveAt(index);
+                        CommitAssemblies();
+                        RebuildList();
+                    })
+                    {
+                        text = "删除",
+                    };
+                    row.Add(removeBtn);
+                    listRoot.Add(row);
+                }
+            }
+
+            RebuildList();
+
+            column.Add(ContentVisualWarmConsoleUi.CreateButtonRow(
+                new Button(() =>
+                {
+                    list.Add(new EffectAssemblyDto
+                    {
+                        id = "fx." + Guid.NewGuid().ToString("N").Substring(0, 8),
+                        templateId = templateIds.Count > 0 ? templateIds[0] : string.Empty,
+                        containerType = InferDefaultContainerType(dto.kind),
+                        argsJson = "{}",
+                    });
+                    CommitAssemblies();
+                    RebuildList();
+                }) { text = "添加装配" },
+                new Button(() =>
+                {
+                    if (list.Count == 0 && (dto.effectIds == null || dto.effectIds.Length == 0))
+                    {
+                        return;
+                    }
+
+                    list.Clear();
+                    dto.effectIds = Array.Empty<string>();
+                    CommitAssemblies();
+                    RebuildList();
+                }) { text = "清空全部装配" }));
+        }
+
+        private static string InferDefaultContainerType(string kind)
+        {
+            if (CardPresentationEditorSession.IsMonsterKind(kind))
+            {
+                return "MonsterSkill";
+            }
+
+            if (string.Equals(kind, "Relic", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Relic";
+            }
+
+            if (CardPresentationEditorSession.IsItemLikeKind(kind))
+            {
+                return "HelpCard";
+            }
+
+            return string.Empty;
+        }
+
+        private void BuildSkillMountsSection(VisualElement column, CardPresentationEditorEntry entry)
+        {
+            var dto = entry.Dto;
+            if (dto.skillIds == null)
+            {
+                dto.skillIds = Array.Empty<string>();
+            }
+
+            var list = new List<string>(dto.skillIds);
+            var skillChoices = session.KnownSkillIds.ToList();
+            if (skillChoices.Count == 0)
+            {
+                skillChoices.Add(string.Empty);
+            }
+
+            var listRoot = new VisualElement();
+            column.Add(listRoot);
+
+            void CommitSkills()
+            {
+                dto.skillIds = list.ToArray();
+                OnDtoEdited(entry);
+            }
+
+            void RebuildList()
+            {
+                listRoot.Clear();
+                for (var i = 0; i < list.Count; i++)
+                {
+                    var index = i;
+                    var skillId = list[i] ?? string.Empty;
+                    var row = new VisualElement();
+                    row.style.flexDirection = FlexDirection.Row;
+                    row.style.alignItems = Align.Center;
+                    row.style.marginBottom = 4;
+
+                    var skillIndex = skillChoices.IndexOf(skillId);
+                    if (skillIndex < 0)
+                    {
+                        skillIndex = 0;
+                    }
+
+                    var popup = new PopupField<string>(skillChoices, skillIndex);
+                    popup.style.flexGrow = 1;
+                    popup.RegisterValueChangedCallback(evt =>
+                    {
+                        list[index] = evt.newValue ?? string.Empty;
+                        CommitSkills();
+                    });
+                    row.Add(popup);
+
+                    var remove = new Button(() =>
+                    {
+                        list.RemoveAt(index);
+                        CommitSkills();
+                        RebuildList();
+                    })
+                    {
+                        text = "删",
+                    };
+                    row.Add(remove);
+                    listRoot.Add(row);
+                }
+            }
+
+            RebuildList();
+
+            column.Add(ContentVisualWarmConsoleUi.CreateButtonRow(
+                new Button(() =>
+                {
+                    list.Add(skillChoices.Count > 0 ? skillChoices[0] : string.Empty);
+                    CommitSkills();
+                    RebuildList();
+                }) { text = "添加技能" },
+                new Button(() =>
+                {
+                    if (list.Count == 0)
+                    {
+                        return;
+                    }
+
+                    list.Clear();
+                    CommitSkills();
+                    RebuildList();
+                }) { text = "清空技能" }));
+        }
+
         private void BuildDescriptionRichTextContent()
         {
             EnsureInlineIconStyleLoaded();
@@ -612,7 +1230,7 @@ namespace NineGrid.Content.Editor
 
             var dirtyHint = (inlineIconStyleDirty || iconCatalogDirty) ? " · 未保存" : string.Empty;
             contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeaderCompact(
-                "描述富文本",
+                "描述词条",
                 "全局描述图标表 · 装配槽只读下行 · 四套基础卡面预览" + dirtyHint));
 
             var topRow = new VisualElement();
@@ -725,13 +1343,13 @@ namespace NineGrid.Content.Editor
             {
                 for (var i = 0; i < entries.Count; i++)
                 {
-                    var entry = entries[i];
-                    if (entry == null)
+                    var catalogEntry = entries[i];
+                    if (catalogEntry == null)
                     {
                         continue;
                     }
 
-                    listHost.Add(BuildCatalogEntryRow(entry, i));
+                    listHost.Add(BuildCatalogEntryRow(catalogEntry, i));
                 }
             }
 
@@ -958,7 +1576,7 @@ namespace NineGrid.Content.Editor
 
         private void EnsureRichTextPreview(bool force = false)
         {
-            EnsureIconCatalogLoaded();
+            EnsureDescriptionIconPipeline();
             var fingerprint = "richtext|" + richTextPreviewKind + "|"
                               + (richTextSampleDescription ?? string.Empty) + "|"
                               + (inlineIconStyle != null ? inlineIconStyle.GetInstanceID() : 0) + "|"
@@ -973,14 +1591,14 @@ namespace NineGrid.Content.Editor
                 fingerprint += "|catalogEntries=" + iconCatalog.Entries.Count;
                 for (var i = 0; i < iconCatalog.Entries.Count; i++)
                 {
-                    var entry = iconCatalog.Entries[i];
-                    if (entry == null)
+                    var catalogEntry = iconCatalog.Entries[i];
+                    if (catalogEntry == null)
                     {
                         continue;
                     }
 
-                    fingerprint += ";" + (entry.code ?? string.Empty) + "="
-                                   + (entry.sprite != null ? entry.sprite.GetInstanceID() : 0);
+                    fingerprint += ";" + (catalogEntry.code ?? string.Empty) + "="
+                                   + (catalogEntry.sprite != null ? catalogEntry.sprite.GetInstanceID() : 0);
                 }
             }
 
@@ -1010,6 +1628,142 @@ namespace NineGrid.Content.Editor
                 CardMainVisualMaskAnchor.DisableMaskingForEditorPreview(previewHost.PreviewRoot.transform);
                 ApplyFaceVisibility(previewHost.PreviewRoot.transform, true);
             }
+        }
+
+        private void EnsureTemplatePreview(EffectTemplateEditorIO.TemplateRow row, bool force = false)
+        {
+            EnsureDescriptionIconPipeline();
+            var fingerprint = "template|" + (row?.id ?? string.Empty) + "|"
+                              + (row?.design_text ?? string.Empty) + "|"
+                              + (iconCatalog != null ? iconCatalog.GetInstanceID() : 0) + "|"
+                              + (inlineIconStyle != null ? inlineIconStyle.GetInstanceID() : 0);
+            if (iconCatalog != null)
+            {
+                fingerprint += "|catalogEntries=" + iconCatalog.Entries.Count;
+            }
+
+            if (!force && fingerprint == previewFingerprint && previewHost.PreviewRoot != null)
+            {
+                return;
+            }
+
+            previewFingerprint = fingerprint;
+            flipPreview.Stop(resetRotation: true);
+            previewAnimPlayer = null;
+
+            // 不显示模板 id：名字槽留空，只预览描述内容框（含 [Code] 词条图标）。
+            var request = new CardFacePreviewRequest
+            {
+                DefId = "preview.template",
+                Kind = CardPresentationKind.HelpCard,
+                DisplayName = string.Empty,
+                BasicDescription = row?.design_text ?? string.Empty,
+                FaceUp = true,
+            };
+
+            previewHost.Rebuild(request);
+            if (previewHost.PreviewRoot != null)
+            {
+                CardMainVisualMaskAnchor.DisableMaskingForEditorPreview(previewHost.PreviewRoot.transform);
+                ApplyFaceVisibility(previewHost.PreviewRoot.transform, true);
+            }
+        }
+
+        private void EnsureDescriptionIconPipeline()
+        {
+            EnsureInlineIconStyleLoaded();
+            EnsureIconCatalogLoaded();
+            CardFacePresentationBinder.SetInlineIconStyleOverride(inlineIconStyle);
+            CardFacePresentationBinder.SetDescriptionIconCatalogOverride(iconCatalog);
+        }
+
+        private List<string> ListCatalogIconCodes()
+        {
+            EnsureIconCatalogLoaded();
+            var codes = new List<string>();
+            if (iconCatalog?.Entries == null)
+            {
+                return codes;
+            }
+
+            for (var i = 0; i < iconCatalog.Entries.Count; i++)
+            {
+                var entry = iconCatalog.Entries[i];
+                if (entry == null || string.IsNullOrWhiteSpace(entry.code))
+                {
+                    continue;
+                }
+
+                codes.Add(entry.code.Trim());
+            }
+
+            codes.Sort(StringComparer.OrdinalIgnoreCase);
+            return codes;
+        }
+
+        private VisualElement BuildInsertableTokenRow(CardPresentationInsertableIcon icon)
+        {
+            var row = new VisualElement();
+            row.style.flexDirection = FlexDirection.Row;
+            row.style.alignItems = Align.Center;
+            row.style.marginBottom = 2;
+            row.style.paddingLeft = 4;
+            row.style.paddingRight = 4;
+            row.style.paddingTop = 2;
+            row.style.paddingBottom = 2;
+
+            var name = ContentVisualWarmConsoleUi.CreateTitleLabel(
+                icon.DisplayNameZh, 11, false, ContentVisualWarmConsoleUi.Theme.TextPrimary);
+            name.style.flexGrow = 1;
+            row.Add(name);
+
+            var tokenField = new TextField { value = icon.Token, isReadOnly = true };
+            tokenField.style.width = 110;
+            tokenField.RegisterCallback<FocusInEvent>(_ =>
+            {
+                tokenField.SelectAll();
+                EditorGUIUtility.systemCopyBuffer = icon.Token;
+            });
+            row.Add(tokenField);
+
+            row.RegisterCallback<ClickEvent>(_ =>
+            {
+                EditorGUIUtility.systemCopyBuffer = icon.Token;
+                OpenDescriptionRichTextPage(icon.Code);
+            });
+            return row;
+        }
+
+        private VisualElement BuildCatalogTokenRow(string code)
+        {
+            var token = "[" + code + "]";
+            var row = new VisualElement();
+            row.style.flexDirection = FlexDirection.Row;
+            row.style.alignItems = Align.Center;
+            row.style.marginBottom = 2;
+            row.style.paddingLeft = 4;
+            row.style.paddingRight = 4;
+
+            var name = ContentVisualWarmConsoleUi.CreateTitleLabel(
+                code, 11, false, ContentVisualWarmConsoleUi.Theme.TextPrimary);
+            name.style.flexGrow = 1;
+            row.Add(name);
+
+            var tokenField = new TextField { value = token, isReadOnly = true };
+            tokenField.style.width = 110;
+            tokenField.RegisterCallback<FocusInEvent>(_ =>
+            {
+                tokenField.SelectAll();
+                EditorGUIUtility.systemCopyBuffer = token;
+            });
+            row.Add(tokenField);
+
+            row.RegisterCallback<ClickEvent>(_ =>
+            {
+                EditorGUIUtility.systemCopyBuffer = token;
+                OpenDescriptionRichTextPage(code);
+            });
+            return row;
         }
 
         private void EnsureInlineIconStyleLoaded()
@@ -1074,7 +1828,6 @@ namespace NineGrid.Content.Editor
                 return;
             }
 
-            // 保存前丢掉保留代号与空代号行。
             var keep = new List<CardFaceDescriptionIconCatalogSO.Entry>();
             var seen = new HashSet<string>(StringComparer.Ordinal);
             for (var i = 0; i < iconCatalog.Entries.Count; i++)
@@ -1260,9 +2013,7 @@ namespace NineGrid.Content.Editor
                     OnDtoEdited(entry);
                 })));
 
-            var category = CardPresentationEditorSession.MapSidebarCategory(dto.kind);
-            if (category == CardPresentationSidebarCategory.Monster
-                || category == CardPresentationSidebarCategory.Avatar)
+            if (CardPresentationEditorSession.IsCombatStatsKind(dto.kind))
             {
                 column.Add(ContentVisualWarmConsoleUi.CreateInlineFieldGroup(
                     ContentVisualWarmConsoleUi.WrapControlRow(
@@ -1288,17 +2039,35 @@ namespace NineGrid.Content.Editor
                 BindInt(dto.gold, v => { dto.gold = v; OnDtoEdited(entry); }),
                 tooltip: "HelpCard/Relic 商店价；Monster 击杀金。"));
 
-            if (category == CardPresentationSidebarCategory.Monster)
+            var deckLabels = new List<string> { CardPresentationEditorSession.UngroupedDeckId };
+            var deckValues = new List<string> { string.Empty };
+            var deckChoices = session.GetDeckIdChoices();
+            for (var i = 0; i < deckChoices.Count; i++)
             {
-                column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
-                    "牌组 deckId",
-                    BindText(dto.deckId, v =>
-                    {
-                        dto.deckId = v ?? string.Empty;
-                        OnDtoEdited(entry);
-                        RefreshSidebar();
-                    })));
+                var deckId = deckChoices[i];
+                deckLabels.Add(deckId);
+                deckValues.Add(deckId);
             }
+
+            var currentDeckId = dto.deckId ?? string.Empty;
+            if (!string.IsNullOrEmpty(currentDeckId) && !deckValues.Contains(currentDeckId))
+            {
+                deckLabels.Insert(1, currentDeckId + " (缺失卡组)");
+                deckValues.Insert(1, currentDeckId);
+            }
+
+            var deckIndex = Math.Max(0, deckValues.IndexOf(currentDeckId));
+            var deckField = new PopupField<string>(deckLabels, deckIndex);
+            deckField.RegisterValueChangedCallback(evt =>
+            {
+                var pickedIndex = deckLabels.IndexOf(evt.newValue);
+                dto.deckId = pickedIndex >= 0 && pickedIndex < deckValues.Count
+                    ? deckValues[pickedIndex]
+                    : string.Empty;
+                OnDtoEdited(entry);
+                RefreshSidebar();
+            });
+            column.Add(ContentVisualWarmConsoleUi.WrapControlRow("牌组 deckId", deckField, 72f));
         }
 
         private void BuildAnimationSection(VisualElement column, CardPresentationEditorEntry entry)
@@ -1526,17 +2295,18 @@ namespace NineGrid.Content.Editor
             UpdateStatus();
         }
 
+        private void OnDeckEdited(CardPresentationEditorEntry entry)
+        {
+            session.MarkDirty(entry.ContentId);
+            UpdateStatus();
+            RefreshSidebar();
+        }
+
         private void InvalidateAndRefreshPreview(CardPresentationEditorEntry entry)
         {
             previewFingerprint = string.Empty;
             EnsurePreview(entry, force: true);
             previewContainer?.MarkDirtyRepaint();
-            RefreshSidebarSelectionOnly();
-        }
-
-        private void RefreshSidebarSelectionOnly()
-        {
-            // 轻量：仅刷新侧栏脏标记/选中样式
             RefreshSidebar();
         }
 
@@ -1547,6 +2317,7 @@ namespace NineGrid.Content.Editor
                 return;
             }
 
+            EnsureDescriptionIconPipeline();
             var fingerprint = BuildPreviewFingerprint(entry.Dto, faceUp);
             if (!force && fingerprint == previewFingerprint && previewHost.PreviewRoot != null)
             {
@@ -1567,7 +2338,6 @@ namespace NineGrid.Content.Editor
             ApplyPostRebuildExtras(entry.Dto);
             ApplyFaceVisibility(previewHost.PreviewRoot != null ? previewHost.PreviewRoot.transform : null, faceUp);
             RestartPreviewAnim(entry);
-            // Play() 可能再次打开 VisibleInsideMask；预览末尾统一关掉 Mask 交互。
             if (previewHost.PreviewRoot != null)
             {
                 CardMainVisualMaskAnchor.DisableMaskingForEditorPreview(previewHost.PreviewRoot.transform);
@@ -1607,8 +2377,6 @@ namespace NineGrid.Content.Editor
                 TryApplySpritePath(root.transform, CardFaceSlotCodes.CardFrame, dto.sprites.cardFrame);
                 TryApplySpritePath(root.transform, CardFaceSlotCodes.Banner, dto.sprites.banner);
             }
-
-            // mainVisual 定位由紧随其后的 RestartPreviewAnim → CardSpriteAnimPlayer.Play 统一处理。
         }
 
         private static void TryApplySpritePath(Transform root, string slotCode, string path)
@@ -1668,7 +2436,6 @@ namespace NineGrid.Content.Editor
             flipPreview.Begin(root.transform, target, () =>
             {
                 faceUp = target;
-                // 不强制整页重建，避免打断翻牌后的朝向；仅刷新按钮文案与状态。
                 UpdateStatus();
                 RefreshContent();
             });
@@ -1697,10 +2464,7 @@ namespace NineGrid.Content.Editor
             var kind = CardFacePreviewBuilder.ToPresentationKind(contentKind, dto.contentId);
             if (kind == CardPresentationKind.Unknown)
             {
-                // 道具侧（HelpCard / Item / PlayerCard）无显式 PresentationKind 时用道具卡面预览。
-                // Skill 已排除出配置器，不走此兜底。
-                if (CardPresentationEditorSession.MapSidebarCategory(dto.kind)
-                    == CardPresentationSidebarCategory.Item)
+                if (CardPresentationEditorSession.IsItemLikeKind(dto.kind))
                 {
                     kind = CardPresentationKind.HelpCard;
                 }
@@ -1726,6 +2490,35 @@ namespace NineGrid.Content.Editor
 
             var sprites = dto.sprites ?? new CardPresentationSpritesDto();
             var stats = dto.stats ?? new CardPresentationStatsDto();
+
+            var backBorderPath = sprites.backBorder;
+            var backShirtPath = sprites.backShirt;
+            var backLogoPath = sprites.backLogo;
+            if ((string.IsNullOrWhiteSpace(backBorderPath)
+                 || string.IsNullOrWhiteSpace(backShirtPath)
+                 || string.IsNullOrWhiteSpace(backLogoPath))
+                && session.TryGetDeckDto(dto.deckId, out var deckDto)
+                && deckDto?.sprites != null)
+            {
+                if (string.IsNullOrWhiteSpace(backBorderPath)
+                    && !string.IsNullOrWhiteSpace(deckDto.sprites.backBorder))
+                {
+                    backBorderPath = deckDto.sprites.backBorder;
+                }
+
+                if (string.IsNullOrWhiteSpace(backShirtPath)
+                    && !string.IsNullOrWhiteSpace(deckDto.sprites.backShirt))
+                {
+                    backShirtPath = deckDto.sprites.backShirt;
+                }
+
+                if (string.IsNullOrWhiteSpace(backLogoPath)
+                    && !string.IsNullOrWhiteSpace(deckDto.sprites.backLogo))
+                {
+                    backLogoPath = deckDto.sprites.backLogo;
+                }
+            }
+
             request = new CardFacePreviewRequest
             {
                 DefId = dto.contentId,
@@ -1736,9 +2529,9 @@ namespace NineGrid.Content.Editor
                 BasicDescription = dto.description ?? string.Empty,
                 MainIcon = CardPresentationSpritePath.LoadSprite(sprites.mainIcon),
                 FaceBackground = CardPresentationSpritePath.LoadSprite(sprites.faceBackground),
-                BackBorder = CardPresentationSpritePath.LoadSprite(sprites.backBorder),
-                BackShirt = CardPresentationSpritePath.LoadSprite(sprites.backShirt),
-                BackLogo = CardPresentationSpritePath.LoadSprite(sprites.backLogo),
+                BackBorder = CardPresentationSpritePath.LoadSprite(backBorderPath),
+                BackShirt = CardPresentationSpritePath.LoadSprite(backShirtPath),
+                BackLogo = CardPresentationSpritePath.LoadSprite(backLogoPath),
                 Attack = Mathf.Max(0, stats.attack),
                 Armor = Mathf.Max(0, stats.armor),
                 Hp = Mathf.Max(0, stats.hp),
@@ -1756,6 +2549,7 @@ namespace NineGrid.Content.Editor
             return string.Join("|",
                 dto.contentId,
                 dto.kind,
+                dto.deckId,
                 dto.displayName,
                 dto.description,
                 dto.gold,
@@ -1936,20 +2730,31 @@ namespace NineGrid.Content.Editor
             }
 
             string focusText;
-            if (descriptionRichTextFocused)
+            switch (session.FocusKind)
             {
-                focusText = "描述富文本 · " + richTextPreviewKind
-                            + (inlineIconStyleDirty || iconCatalogDirty ? " · 脏" : string.Empty);
-            }
-            else
-            {
-                var focused = session.GetFocused();
-                focusText = focused != null ? focused.ContentId : "（未选）";
+                case CardPresentationEditorFocusKind.DescriptionGlossary:
+                    focusText = "描述词条 · " + richTextPreviewKind
+                                + (inlineIconStyleDirty || iconCatalogDirty ? " · 脏" : string.Empty);
+                    break;
+                case CardPresentationEditorFocusKind.Face:
+                    var face = session.GetFocusedFace();
+                    focusText = "卡面 · " + (face != null ? face.ContentId : "（未选）");
+                    break;
+                case CardPresentationEditorFocusKind.Deck:
+                    var deck = session.GetFocusedDeck();
+                    focusText = "卡组 · " + (deck != null ? deck.ContentId : "（未选）");
+                    break;
+                case CardPresentationEditorFocusKind.EffectTemplate:
+                    var template = session.GetFocusedTemplate();
+                    focusText = "效果模板 · " + (template != null ? template.id : "（未选）");
+                    break;
+                default:
+                    focusText = "（未选）";
+                    break;
             }
 
-            statusHelpBox.text = "条目 " + session.Entries.Count
+            statusHelpBox.text = "焦点 " + focusText
                                  + " · 脏 " + session.DirtyCount
-                                 + " · 焦点 " + focusText
                                  + " · " + previewHost.Status;
         }
 

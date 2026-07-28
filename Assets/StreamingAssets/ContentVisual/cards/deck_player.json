@@ -1,21 +1,21 @@
 {
     "schemaVersion": 2,
-    "contentId": "monster.stone_man",
-    "kind": "Monster",
-    "deckId": "deck.stone_legion",
+    "contentId": "deck.player",
+    "kind": "Deck",
+    "deckId": "",
     "role": "",
-    "displayName": "石头人",
-    "description": "[action]",
-    "gold": 5,
+    "displayName": "玩家卡组",
+    "description": "",
+    "gold": 0,
     "stats": {
-        "hp": 1,
-        "armor": 4,
-        "attack": 2,
+        "hp": 0,
+        "armor": 0,
+        "attack": 0,
         "action": 0,
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+        "mainIcon": "",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -24,8 +24,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.05400000140070915,
-        "offsetY": -0.15000000596046449,
+        "offsetX": 0.0,
+        "offsetY": 0.0,
         "uniformScale": 1.0
     },
     "animations": {
@@ -33,8 +33,8 @@
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/21sandmonster_idle_01",
+                "sourceType": "none",
+                "path": "",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },
@@ -69,19 +69,17 @@
         ]
     },
     "extraSlots": [],
-    "rarity": "None",
+    "rarity": "",
     "tags": [],
     "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [
-        "skill.stone_lover"
-    ],
-    "level": 1,
+    "skillIds": [],
+    "level": 0,
     "isElite": false,
     "isBoss": false,
     "isReserve": false,
     "containerType": "",
-    "deckKind": "",
+    "deckKind": "Presentation",
     "monsterDefIds": [],
     "weight": 0,
     "goldDelta": 0,

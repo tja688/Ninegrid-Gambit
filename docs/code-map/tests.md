@@ -14,7 +14,7 @@
 | `FlowShell/` | 流程壳 Controller |
 | `BattleSession/` | 局内会话 |
 | `Output/` | 描述 / 伤害等输出 |
-| `Cards/` | 卡面 Commit、牌库闸、飞行排序、致死表现回归；表现层配置器条目门槛（Skill 不进窗口、HelpCard/Item 保留）等；**ContentArt** 路径约定 / Resources 帧加载 / 断链校验（#66）；**JSON→Catalog 投影**（帮助卡/怪物/技能/遗物/牌组/房间）+ 表 JSON（效果模板 + 装配引用，#67–#70、ADR-0008/0009）；**词条/`{param}`/详情合成**（#71） |
+| `Cards/` | 卡面 Commit、牌库闸、飞行排序、致死表现回归；表现层配置器条目门槛（Skill 不进窗口、HelpCard/Item 保留）+ **空装配清 effectIds / 挂装配投影**（解耦装配 IA）等；**ContentArt** 路径约定 / Resources 帧加载 / 断链校验（#66）；**JSON→Catalog 投影**（帮助卡/怪物/技能/遗物/牌组/房间）+ 表 JSON（效果模板 + 装配引用，#67–#70、ADR-0008/0009）；**词条/`{param}`/详情合成**（#71） |
 | `Flow/` | Flow 侧遗留/切片 |
 | `Fixtures/` | EditMode 夹具 |
 | `HostContractStructuralTests.cs` | 结构护栏：禁四大旧宿主名、禁 `CombatHitSink`、禁回流 `new PresentationDirector`、System 不暴露具体 View |

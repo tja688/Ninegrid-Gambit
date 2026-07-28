@@ -13,6 +13,27 @@ using UnityEngine;
 
 namespace NineGrid.Content.Editor
 {
+    /// <summary>侧栏三大类（解耦装配 IA）。</summary>
+    public enum CardPresentationSidebarSection
+    {
+        Faces = 0,
+        EffectPool = 1,
+        Decks = 2,
+    }
+
+    /// <summary>内容区焦点种类。</summary>
+    public enum CardPresentationEditorFocusKind
+    {
+        None = 0,
+        Face = 1,
+        EffectTemplate = 2,
+        Deck = 3,
+        DescriptionGlossary = 4,
+    }
+
+    /// <summary>
+    /// 旧侧栏玩法角色分桶（仅兼容测试 / 预览 Kind 兜底；UI 不再按此分栏）。
+    /// </summary>
     public enum CardPresentationSidebarCategory
     {
         Avatar = 0,
@@ -61,20 +82,18 @@ namespace NineGrid.Content.Editor
         public List<CardPresentationEditorEntry> Entries { get; } = new List<CardPresentationEditorEntry>();
     }
 
-    public sealed class CardPresentationSidebarGroup
-    {
-        public CardPresentationSidebarCategory Category { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public bool ExpandByDefault { get; set; } = true;
-        public List<CardPresentationEditorEntry> Entries { get; } = new List<CardPresentationEditorEntry>();
-        public List<CardPresentationSidebarDeckGroup> DeckGroups { get; } = new List<CardPresentationSidebarDeckGroup>();
-    }
-
     public sealed class CardPresentationInsertableIcon
     {
         public string Code { get; set; } = string.Empty;
         public string DisplayNameZh { get; set; } = string.Empty;
         public string Token => "[" + Code + "]";
+    }
+
+    /// <summary>效果装配下拉：中文 design_text 作显示名，templateId 作持久化值。</summary>
+    public sealed class EffectTemplateChoice
+    {
+        public string TemplateId { get; set; } = string.Empty;
+        public string Label { get; set; } = string.Empty;
     }
 
     [Serializable]
@@ -86,23 +105,69 @@ namespace NineGrid.Content.Editor
 
     public sealed class CardPresentationEditorSession
     {
-        private readonly List<CardPresentationEditorEntry> entries = new List<CardPresentationEditorEntry>();
-        private readonly Dictionary<string, CardPresentationEditorEntry> byId =
-            new Dictionary<string, CardPresentationEditorEntry>(StringComparer.Ordinal);
-        private string focusedContentId = string.Empty;
+        public const string UngroupedDeckId = "(未分组)";
+        public const string PlayerDeckId = "deck.player";
 
-        public IReadOnlyList<CardPresentationEditorEntry> Entries => entries;
+        private readonly List<CardPresentationEditorEntry> faceEntries = new List<CardPresentationEditorEntry>();
+        private readonly List<CardPresentationEditorEntry> deckEntries = new List<CardPresentationEditorEntry>();
+        private readonly Dictionary<string, CardPresentationEditorEntry> faceById =
+            new Dictionary<string, CardPresentationEditorEntry>(StringComparer.Ordinal);
+        private readonly Dictionary<string, CardPresentationEditorEntry> deckById =
+            new Dictionary<string, CardPresentationEditorEntry>(StringComparer.Ordinal);
+        private readonly List<EffectTemplateEditorIO.TemplateRow> effectTemplates =
+            new List<EffectTemplateEditorIO.TemplateRow>();
+        private readonly List<string> knownSkillIds = new List<string>();
+
+        private CardPresentationEditorFocusKind focusKind = CardPresentationEditorFocusKind.None;
+        private string focusedContentId = string.Empty;
+        private string focusedTemplateId = string.Empty;
+
+        public IReadOnlyList<CardPresentationEditorEntry> FaceEntries => faceEntries;
+        public IReadOnlyList<CardPresentationEditorEntry> DeckEntries => deckEntries;
+        public IReadOnlyList<EffectTemplateEditorIO.TemplateRow> EffectTemplates => effectTemplates;
+        public IReadOnlyList<string> KnownSkillIds => knownSkillIds;
         public GameContentCatalog CoreCatalog { get; private set; }
         public ContentVisualCatalog VisualCatalog { get; private set; }
         public ContentVisualSpriteCatalogSet SpriteCatalogs { get; private set; }
         public string XlsxPath { get; private set; }
+
+        public CardPresentationEditorFocusKind FocusKind
+        {
+            get => focusKind;
+            set => focusKind = value;
+        }
+
         public string FocusedContentId
         {
             get => focusedContentId;
             set => focusedContentId = value ?? string.Empty;
         }
 
-        public int DirtyCount => entries.Count(e => e.IsDirty);
+        public string FocusedTemplateId
+        {
+            get => focusedTemplateId;
+            set => focusedTemplateId = value ?? string.Empty;
+        }
+
+        /// <summary>兼容旧调用：卡面条目列表。</summary>
+        public IReadOnlyList<CardPresentationEditorEntry> Entries => faceEntries;
+
+        public int DirtyCount
+        {
+            get
+            {
+                var n = faceEntries.Count(e => e.IsDirty) + deckEntries.Count(e => e.IsDirty);
+                for (var i = 0; i < effectTemplates.Count; i++)
+                {
+                    if (effectTemplates[i] != null && effectTemplates[i].IsDirty)
+                    {
+                        n++;
+                    }
+                }
+
+                return n;
+            }
+        }
 
         public void Reload()
         {
@@ -110,8 +175,12 @@ namespace NineGrid.Content.Editor
             SpriteCatalogs = ContentVisualEditorSession.LoadOrCreateCatalogSet();
             ReloadCatalogs();
 
-            entries.Clear();
-            byId.Clear();
+            faceEntries.Clear();
+            faceById.Clear();
+            deckEntries.Clear();
+            deckById.Clear();
+            effectTemplates.Clear();
+            knownSkillIds.Clear();
 
             var xlsxRows = ContentVisualXlsxIO.ReadAll(XlsxPath);
             for (var i = 0; i < xlsxRows.Count; i++)
@@ -127,24 +196,39 @@ namespace NineGrid.Content.Editor
                     continue;
                 }
 
-                if (byId.ContainsKey(row.ContentId))
+                if (faceById.ContainsKey(row.ContentId))
                 {
                     continue;
                 }
 
                 var entry = LoadOrCreateEntry(row);
-                entries.Add(entry);
-                byId[entry.ContentId] = entry;
+                faceEntries.Add(entry);
+                faceById[entry.ContentId] = entry;
             }
 
-            // 补入仅有 JSON、xlsx 未列的已有卡（罕见）。
             TryAppendOrphanJsonEntries();
+            LoadDeckEntriesFromDisk();
+            EnsurePlayerDeckSeed();
+            LoadKnownSkillIdsFromDisk();
 
-            entries.Sort((a, b) => string.CompareOrdinal(a.ContentId, b.ContentId));
+            faceEntries.Sort((a, b) => string.CompareOrdinal(a.ContentId, b.ContentId));
+            deckEntries.Sort((a, b) => string.CompareOrdinal(a.ContentId, b.ContentId));
 
-            if (!string.IsNullOrEmpty(focusedContentId) && !byId.ContainsKey(focusedContentId))
+            var templates = EffectTemplateEditorIO.LoadAll(out _);
+            effectTemplates.AddRange(templates);
+
+            if (!string.IsNullOrEmpty(focusedContentId)
+                && !faceById.ContainsKey(focusedContentId)
+                && !deckById.ContainsKey(focusedContentId))
             {
                 focusedContentId = string.Empty;
+            }
+
+            if (!string.IsNullOrEmpty(focusedTemplateId)
+                && effectTemplates.All(t => t == null
+                    || !string.Equals(t.id, focusedTemplateId, StringComparison.Ordinal)))
+            {
+                focusedTemplateId = string.Empty;
             }
         }
 
@@ -154,39 +238,296 @@ namespace NineGrid.Content.Editor
             VisualCatalog = new ContentVisualCatalog();
         }
 
-        public CardPresentationEditorEntry GetFocused()
+        public CardPresentationEditorEntry GetFocusedFace()
         {
-            if (string.IsNullOrEmpty(focusedContentId))
+            if (focusKind != CardPresentationEditorFocusKind.Face
+                || string.IsNullOrEmpty(focusedContentId))
             {
                 return null;
             }
 
-            byId.TryGetValue(focusedContentId, out var entry);
+            faceById.TryGetValue(focusedContentId, out var entry);
             return entry;
+        }
+
+        public CardPresentationEditorEntry GetFocusedDeck()
+        {
+            if (focusKind != CardPresentationEditorFocusKind.Deck
+                || string.IsNullOrEmpty(focusedContentId))
+            {
+                return null;
+            }
+
+            deckById.TryGetValue(focusedContentId, out var entry);
+            return entry;
+        }
+
+        public EffectTemplateEditorIO.TemplateRow GetFocusedTemplate()
+        {
+            if (focusKind != CardPresentationEditorFocusKind.EffectTemplate
+                || string.IsNullOrEmpty(focusedTemplateId))
+            {
+                return null;
+            }
+
+            for (var i = 0; i < effectTemplates.Count; i++)
+            {
+                var row = effectTemplates[i];
+                if (row != null && string.Equals(row.id, focusedTemplateId, StringComparison.Ordinal))
+                {
+                    return row;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>兼容旧窗口：仅返回卡面焦点。</summary>
+        public CardPresentationEditorEntry GetFocused()
+        {
+            return GetFocusedFace();
         }
 
         public void MarkDirty(string contentId)
         {
-            // Dirty 由 SavedJson 对比驱动；此方法留给调用方语义占位（可触发布局刷新）。
             _ = contentId;
+        }
+
+        public void FocusFace(string contentId)
+        {
+            focusKind = CardPresentationEditorFocusKind.Face;
+            focusedContentId = contentId ?? string.Empty;
+            focusedTemplateId = string.Empty;
+        }
+
+        public void FocusDeck(string contentId)
+        {
+            focusKind = CardPresentationEditorFocusKind.Deck;
+            focusedContentId = contentId ?? string.Empty;
+            focusedTemplateId = string.Empty;
+        }
+
+        public void FocusEffectTemplate(string templateId)
+        {
+            focusKind = CardPresentationEditorFocusKind.EffectTemplate;
+            focusedTemplateId = templateId ?? string.Empty;
+            focusedContentId = string.Empty;
+        }
+
+        public void FocusDescriptionGlossary()
+        {
+            focusKind = CardPresentationEditorFocusKind.DescriptionGlossary;
+            focusedContentId = string.Empty;
+            focusedTemplateId = string.Empty;
+        }
+
+        public List<CardPresentationSidebarDeckGroup> GetFaceDeckGroups()
+        {
+            var byDeck = new Dictionary<string, CardPresentationSidebarDeckGroup>(StringComparer.Ordinal);
+            for (var i = 0; i < faceEntries.Count; i++)
+            {
+                var entry = faceEntries[i];
+                var deckId = string.IsNullOrWhiteSpace(entry.DeckId)
+                    ? UngroupedDeckId
+                    : entry.DeckId.Trim();
+                if (!byDeck.TryGetValue(deckId, out var group))
+                {
+                    group = new CardPresentationSidebarDeckGroup
+                    {
+                        DeckId = deckId,
+                        Title = ResolveDeckTitle(deckId),
+                    };
+                    byDeck[deckId] = group;
+                }
+
+                group.Entries.Add(entry);
+            }
+
+            return byDeck.Values
+                .OrderBy(g => g.DeckId == UngroupedDeckId ? 1 : 0)
+                .ThenBy(g => g.Title, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        public List<string> GetDeckIdChoices()
+        {
+            var set = new HashSet<string>(StringComparer.Ordinal);
+            for (var i = 0; i < deckEntries.Count; i++)
+            {
+                var id = deckEntries[i]?.ContentId;
+                if (!string.IsNullOrWhiteSpace(id))
+                {
+                    set.Add(id.Trim());
+                }
+            }
+
+            for (var i = 0; i < faceEntries.Count; i++)
+            {
+                var id = faceEntries[i]?.DeckId;
+                if (!string.IsNullOrWhiteSpace(id))
+                {
+                    set.Add(id.Trim());
+                }
+            }
+
+            return set.OrderBy(id => id, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        public List<string> GetEffectTemplateIdChoices()
+        {
+            return effectTemplates
+                .Where(t => t != null && !string.IsNullOrWhiteSpace(t.id))
+                .Select(t => t.id)
+                .OrderBy(id => id, StringComparer.Ordinal)
+                .ToList();
+        }
+
+        /// <summary>
+        /// 装配下拉用：Label 优先 <c>design_text</c>（中文），Value 仍为 templateId。
+        /// </summary>
+        public List<EffectTemplateChoice> GetEffectTemplateChoices()
+        {
+            var labelCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+            var choices = new List<EffectTemplateChoice>();
+            for (var i = 0; i < effectTemplates.Count; i++)
+            {
+                var row = effectTemplates[i];
+                if (row == null || string.IsNullOrWhiteSpace(row.id))
+                {
+                    continue;
+                }
+
+                var rawLabel = string.IsNullOrWhiteSpace(row.design_text)
+                    ? row.id
+                    : row.design_text.Trim();
+                if (!labelCounts.TryGetValue(rawLabel, out var count))
+                {
+                    count = 0;
+                }
+
+                labelCounts[rawLabel] = count + 1;
+                choices.Add(new EffectTemplateChoice
+                {
+                    TemplateId = row.id,
+                    Label = rawLabel,
+                });
+            }
+
+            // 同文案多模板时附加 id，避免下拉无法区分。
+            for (var i = 0; i < choices.Count; i++)
+            {
+                var choice = choices[i];
+                if (labelCounts.TryGetValue(choice.Label, out var count) && count > 1)
+                {
+                    choice.Label = choice.Label + " · " + choice.TemplateId;
+                }
+            }
+
+            choices.Sort((a, b) => string.CompareOrdinal(a.Label, b.Label));
+            return choices;
+        }
+
+        public bool TryGetEffectTemplateDesignText(string templateId, out string designText)
+        {
+            designText = string.Empty;
+            if (string.IsNullOrWhiteSpace(templateId))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < effectTemplates.Count; i++)
+            {
+                var row = effectTemplates[i];
+                if (row == null || !string.Equals(row.id, templateId, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                designText = row.design_text ?? string.Empty;
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool TryGetDeckDto(string deckId, out CardPresentationConfigDto dto)
+        {
+            dto = null;
+            if (string.IsNullOrWhiteSpace(deckId) || deckId == UngroupedDeckId)
+            {
+                return false;
+            }
+
+            if (deckById.TryGetValue(deckId.Trim(), out var entry) && entry?.Dto != null)
+            {
+                dto = entry.Dto;
+                return true;
+            }
+
+            return false;
+        }
+
+        public static void NormalizeLogicMounts(CardPresentationConfigDto dto)
+        {
+            if (dto == null)
+            {
+                return;
+            }
+
+            if (dto.effectAssemblies == null)
+            {
+                dto.effectAssemblies = Array.Empty<EffectAssemblyDto>();
+            }
+
+            if (dto.effectAssemblies.Length == 0)
+            {
+                dto.effectIds = Array.Empty<string>();
+            }
+
+            if (dto.skillIds == null)
+            {
+                dto.skillIds = Array.Empty<string>();
+            }
         }
 
         public bool TrySaveAll(out string error)
         {
             error = null;
-            var dirty = entries.Where(e => e.IsDirty).ToList();
-            if (dirty.Count == 0)
-            {
-                return true;
-            }
-
             try
             {
                 CardPresentationJsonIO.EnsureDirectoriesExist();
-                for (var i = 0; i < dirty.Count; i++)
+                for (var i = 0; i < faceEntries.Count; i++)
                 {
-                    CardPresentationJsonIO.SaveAuthoring(dirty[i].Dto);
-                    dirty[i].MarkSaved();
+                    var entry = faceEntries[i];
+                    if (entry == null || !entry.IsDirty || entry.Dto == null)
+                    {
+                        continue;
+                    }
+
+                    NormalizeLogicMounts(entry.Dto);
+                    CardPresentationJsonIO.SaveAuthoring(entry.Dto);
+                    entry.MarkSaved();
+                }
+
+                for (var i = 0; i < deckEntries.Count; i++)
+                {
+                    var entry = deckEntries[i];
+                    if (entry == null || !entry.IsDirty || entry.Dto == null)
+                    {
+                        continue;
+                    }
+
+                    CardPresentationJsonIO.SaveAuthoring(entry.Dto);
+                    entry.MarkSaved();
+                }
+
+                var dirtyTemplates = effectTemplates.Where(t => t != null && t.IsDirty).ToList();
+                if (dirtyTemplates.Count > 0)
+                {
+                    if (!EffectTemplateEditorIO.TrySaveAll(effectTemplates, out error))
+                    {
+                        return false;
+                    }
                 }
 
                 CardPresentationConfigCatalog.Invalidate();
@@ -202,24 +543,103 @@ namespace NineGrid.Content.Editor
         public bool TrySaveFocused(out string error)
         {
             error = null;
-            var focused = GetFocused();
-            if (focused == null || focused.Dto == null)
+            try
             {
-                error = "无选中条目。";
+                if (focusKind == CardPresentationEditorFocusKind.EffectTemplate)
+                {
+                    var row = GetFocusedTemplate();
+                    if (row == null)
+                    {
+                        error = "无选中效果模板。";
+                        return false;
+                    }
+
+                    if (!row.IsDirty)
+                    {
+                        return true;
+                    }
+
+                    return EffectTemplateEditorIO.TrySaveAll(effectTemplates, out error);
+                }
+
+                CardPresentationEditorEntry entry = null;
+                if (focusKind == CardPresentationEditorFocusKind.Face)
+                {
+                    entry = GetFocusedFace();
+                }
+                else if (focusKind == CardPresentationEditorFocusKind.Deck)
+                {
+                    entry = GetFocusedDeck();
+                }
+
+                if (entry == null || entry.Dto == null)
+                {
+                    error = "无选中条目。";
+                    return false;
+                }
+
+                if (!entry.IsDirty)
+                {
+                    return true;
+                }
+
+                CardPresentationJsonIO.EnsureDirectoriesExist();
+                if (focusKind == CardPresentationEditorFocusKind.Face)
+                {
+                    NormalizeLogicMounts(entry.Dto);
+                }
+
+                CardPresentationJsonIO.SaveAuthoring(entry.Dto);
+                entry.MarkSaved();
+                CardPresentationConfigCatalog.Invalidate();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                error = ex.Message;
+                return false;
+            }
+        }
+
+        public bool TryCreateDeck(string contentId, string displayName, string deckKind, out string error)
+        {
+            error = null;
+            contentId = (contentId ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(contentId))
+            {
+                error = "contentId 不能为空。";
                 return false;
             }
 
-            if (!focused.IsDirty)
+            if (!contentId.StartsWith("deck.", StringComparison.OrdinalIgnoreCase))
             {
-                return true;
+                contentId = "deck." + contentId;
+            }
+
+            if (deckById.ContainsKey(contentId) || faceById.ContainsKey(contentId))
+            {
+                error = "已存在：" + contentId;
+                return false;
             }
 
             try
             {
+                var dto = CardPresentationJsonIO.CreateDefault(contentId, "Deck");
+                dto.schemaVersion = 2;
+                dto.displayName = string.IsNullOrWhiteSpace(displayName) ? contentId : displayName.Trim();
+                dto.deckKind = string.IsNullOrWhiteSpace(deckKind) ? "Presentation" : deckKind.Trim();
+                dto.effectAssemblies = Array.Empty<EffectAssemblyDto>();
+                dto.effectIds = Array.Empty<string>();
+                dto.skillIds = Array.Empty<string>();
                 CardPresentationJsonIO.EnsureDirectoriesExist();
-                CardPresentationJsonIO.SaveAuthoring(focused.Dto);
-                focused.MarkSaved();
+                CardPresentationJsonIO.SaveAuthoring(dto);
+                var entry = new CardPresentationEditorEntry { Dto = dto };
+                entry.MarkSaved();
+                deckEntries.Add(entry);
+                deckById[contentId] = entry;
+                deckEntries.Sort((a, b) => string.CompareOrdinal(a.ContentId, b.ContentId));
                 CardPresentationConfigCatalog.Invalidate();
+                FocusDeck(contentId);
                 return true;
             }
             catch (Exception ex)
@@ -236,9 +656,9 @@ namespace NineGrid.Content.Editor
             try
             {
                 CardPresentationJsonIO.EnsureDirectoriesExist();
-                for (var i = 0; i < entries.Count; i++)
+                for (var i = 0; i < faceEntries.Count; i++)
                 {
-                    var entry = entries[i];
+                    var entry = faceEntries[i];
                     if (entry?.Dto == null)
                     {
                         continue;
@@ -266,7 +686,7 @@ namespace NineGrid.Content.Editor
                         slots,
                         CoreCatalog,
                         GetDisplayName);
-                    entry.SavedJson = string.Empty; // force dirty until save
+                    entry.SavedJson = string.Empty;
                     CardPresentationJsonIO.SaveAuthoring(entry.Dto);
                     entry.MarkSaved();
                     created++;
@@ -288,8 +708,9 @@ namespace NineGrid.Content.Editor
             try
             {
                 CardPresentationJsonIO.EnsureDirectoriesExist();
-                var ids = entries
+                var ids = faceEntries
                     .Select(e => e.ContentId)
+                    .Concat(deckEntries.Select(e => e.ContentId))
                     .Where(id => !string.IsNullOrWhiteSpace(id))
                     .Distinct(StringComparer.Ordinal)
                     .OrderBy(id => id, StringComparer.Ordinal)
@@ -331,81 +752,6 @@ namespace NineGrid.Content.Editor
                 message = "导出索引失败：" + ex.Message;
                 return false;
             }
-        }
-
-        public List<CardPresentationSidebarGroup> GetSidebarGroups()
-        {
-            var avatar = new CardPresentationSidebarGroup
-            {
-                Category = CardPresentationSidebarCategory.Avatar,
-                Title = "玩家卡",
-                ExpandByDefault = true,
-            };
-            var monster = new CardPresentationSidebarGroup
-            {
-                Category = CardPresentationSidebarCategory.Monster,
-                Title = "怪物卡",
-                ExpandByDefault = true,
-            };
-            var item = new CardPresentationSidebarGroup
-            {
-                Category = CardPresentationSidebarCategory.Item,
-                Title = "道具卡",
-                ExpandByDefault = true,
-            };
-            var relic = new CardPresentationSidebarGroup
-            {
-                Category = CardPresentationSidebarCategory.Relic,
-                Title = "遗物卡",
-                ExpandByDefault = true,
-            };
-            var other = new CardPresentationSidebarGroup
-            {
-                Category = CardPresentationSidebarCategory.Other,
-                Title = "描述富文本",
-                ExpandByDefault = false,
-            };
-
-            var monsterByDeck = new Dictionary<string, CardPresentationSidebarDeckGroup>(StringComparer.Ordinal);
-
-            for (var i = 0; i < entries.Count; i++)
-            {
-                var entry = entries[i];
-                var category = MapSidebarCategory(entry.Kind);
-                switch (category)
-                {
-                    case CardPresentationSidebarCategory.Avatar:
-                        avatar.Entries.Add(entry);
-                        break;
-                    case CardPresentationSidebarCategory.Monster:
-                        {
-                            var deckId = string.IsNullOrWhiteSpace(entry.DeckId) ? "(未分组)" : entry.DeckId.Trim();
-                            if (!monsterByDeck.TryGetValue(deckId, out var deckGroup))
-                            {
-                                deckGroup = new CardPresentationSidebarDeckGroup
-                                {
-                                    DeckId = deckId,
-                                    Title = ResolveDeckTitle(deckId),
-                                };
-                                monsterByDeck[deckId] = deckGroup;
-                            }
-
-                            deckGroup.Entries.Add(entry);
-                            break;
-                        }
-                    case CardPresentationSidebarCategory.Item:
-                        item.Entries.Add(entry);
-                        break;
-                    case CardPresentationSidebarCategory.Relic:
-                        relic.Entries.Add(entry);
-                        break;
-                }
-            }
-
-            monster.DeckGroups.AddRange(
-                monsterByDeck.Values.OrderBy(g => g.Title, StringComparer.OrdinalIgnoreCase));
-
-            return new List<CardPresentationSidebarGroup> { avatar, monster, item, relic, other };
         }
 
         public List<CardPresentationInsertableIcon> GetInsertableIcons()
@@ -457,6 +803,14 @@ namespace NineGrid.Content.Editor
                 {
                     return skill.DisplayName;
                 }
+
+                if (CoreCatalog.MonsterDecks != null
+                    && CoreCatalog.MonsterDecks.TryGetValue(contentId ?? string.Empty, out var deck)
+                    && deck != null
+                    && !string.IsNullOrEmpty(deck.DisplayName))
+                {
+                    return deck.DisplayName;
+                }
             }
 
             if (string.Equals(contentKind, "Avatar", StringComparison.OrdinalIgnoreCase))
@@ -467,6 +821,57 @@ namespace NineGrid.Content.Editor
             return contentId ?? string.Empty;
         }
 
+        public static bool IsItemLikeKind(string kind)
+        {
+            if (string.IsNullOrWhiteSpace(kind))
+            {
+                return false;
+            }
+
+            if (Enum.TryParse(kind, true, out ContentVisualKind cvk))
+            {
+                return cvk == ContentVisualKind.HelpCard;
+            }
+
+            var k = kind.Trim();
+            return string.Equals(k, "PlayerCard", StringComparison.OrdinalIgnoreCase)
+                   || string.Equals(k, "Item", StringComparison.OrdinalIgnoreCase)
+                   || string.Equals(k, "HelpCard", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool IsCombatStatsKind(string kind)
+        {
+            if (string.IsNullOrWhiteSpace(kind))
+            {
+                return false;
+            }
+
+            if (Enum.TryParse(kind, true, out ContentVisualKind cvk))
+            {
+                return cvk == ContentVisualKind.Avatar || cvk == ContentVisualKind.Monster;
+            }
+
+            var k = kind.Trim();
+            return string.Equals(k, "Avatar", StringComparison.OrdinalIgnoreCase)
+                   || string.Equals(k, "Monster", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool IsMonsterKind(string kind)
+        {
+            if (string.IsNullOrWhiteSpace(kind))
+            {
+                return false;
+            }
+
+            if (Enum.TryParse(kind, true, out ContentVisualKind cvk))
+            {
+                return cvk == ContentVisualKind.Monster;
+            }
+
+            return string.Equals(kind.Trim(), "Monster", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>兼容旧测试：玩法角色粗分桶（UI 已弃用）。</summary>
         public static CardPresentationSidebarCategory MapSidebarCategory(string kind)
         {
             if (string.IsNullOrWhiteSpace(kind))
@@ -485,37 +890,168 @@ namespace NineGrid.Content.Editor
                     case ContentVisualKind.HelpCard:
                         return CardPresentationSidebarCategory.Item;
                     case ContentVisualKind.Skill:
-                        // 技能不进配置器；若泄漏也不进道具卡侧栏。
                         return CardPresentationSidebarCategory.Other;
                     case ContentVisualKind.Relic:
                         return CardPresentationSidebarCategory.Relic;
                 }
             }
 
-            var k = kind.Trim();
-            if (string.Equals(k, "PlayerCard", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(k, "Item", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(k, "HelpCard", StringComparison.OrdinalIgnoreCase))
+            if (IsItemLikeKind(kind))
             {
                 return CardPresentationSidebarCategory.Item;
             }
 
-            if (string.Equals(k, "Avatar", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(kind.Trim(), "Avatar", StringComparison.OrdinalIgnoreCase))
             {
                 return CardPresentationSidebarCategory.Avatar;
             }
 
-            if (string.Equals(k, "Monster", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(kind.Trim(), "Monster", StringComparison.OrdinalIgnoreCase))
             {
                 return CardPresentationSidebarCategory.Monster;
             }
 
-            if (string.Equals(k, "Relic", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(kind.Trim(), "Relic", StringComparison.OrdinalIgnoreCase))
             {
                 return CardPresentationSidebarCategory.Relic;
             }
 
             return CardPresentationSidebarCategory.Other;
+        }
+
+        private void EnsurePlayerDeckSeed()
+        {
+            if (!deckById.ContainsKey(PlayerDeckId))
+            {
+                var dto = CardPresentationJsonIO.CreateDefault(PlayerDeckId, "Deck");
+                dto.schemaVersion = 2;
+                dto.displayName = "玩家卡组";
+                dto.deckKind = "Presentation";
+                dto.effectAssemblies = Array.Empty<EffectAssemblyDto>();
+                dto.effectIds = Array.Empty<string>();
+                dto.skillIds = Array.Empty<string>();
+                try
+                {
+                    CardPresentationJsonIO.EnsureDirectoriesExist();
+                    CardPresentationJsonIO.SaveAuthoring(dto);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[CardPresentation] seed deck.player 失败：" + ex.Message);
+                }
+
+                var entry = new CardPresentationEditorEntry { Dto = dto };
+                entry.MarkSaved();
+                deckEntries.Add(entry);
+                deckById[PlayerDeckId] = entry;
+            }
+
+            if (faceById.TryGetValue("avatar.default", out var avatar)
+                && avatar?.Dto != null
+                && string.IsNullOrWhiteSpace(avatar.Dto.deckId))
+            {
+                avatar.Dto.deckId = PlayerDeckId;
+                try
+                {
+                    CardPresentationJsonIO.SaveAuthoring(avatar.Dto);
+                    avatar.MarkSaved();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[CardPresentation] 写入 avatar.default.deckId 失败：" + ex.Message);
+                }
+            }
+        }
+
+        private void LoadDeckEntriesFromDisk()
+        {
+            var absFolder = Path.Combine(Application.dataPath, "Arts", "ContentVisual", "cards");
+            if (!Directory.Exists(absFolder))
+            {
+                return;
+            }
+
+            string[] files;
+            try
+            {
+                files = Directory.GetFiles(absFolder, "*.json", SearchOption.TopDirectoryOnly);
+            }
+            catch
+            {
+                return;
+            }
+
+            for (var i = 0; i < files.Length; i++)
+            {
+                var name = Path.GetFileName(files[i]);
+                if (string.Equals(name, CardPresentationJsonIO.IndexFileName, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (!CardPresentationJsonIO.TryLoad(files[i], out var dto, out _) || dto == null)
+                {
+                    continue;
+                }
+
+                if (!string.Equals(dto.kind, "Deck", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var id = dto.contentId;
+                if (string.IsNullOrWhiteSpace(id) || deckById.ContainsKey(id))
+                {
+                    continue;
+                }
+
+                var entry = new CardPresentationEditorEntry { Dto = dto };
+                entry.MarkSaved();
+                deckEntries.Add(entry);
+                deckById[id] = entry;
+            }
+        }
+
+        private void LoadKnownSkillIdsFromDisk()
+        {
+            var absFolder = Path.Combine(Application.dataPath, "Arts", "ContentVisual", "cards");
+            if (!Directory.Exists(absFolder))
+            {
+                return;
+            }
+
+            string[] files;
+            try
+            {
+                files = Directory.GetFiles(absFolder, "*.json", SearchOption.TopDirectoryOnly);
+            }
+            catch
+            {
+                return;
+            }
+
+            var set = new HashSet<string>(StringComparer.Ordinal);
+            for (var i = 0; i < files.Length; i++)
+            {
+                if (!CardPresentationJsonIO.TryLoad(files[i], out var dto, out _) || dto == null)
+                {
+                    continue;
+                }
+
+                if (!string.Equals(dto.kind, "Skill", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(dto.contentId))
+                {
+                    continue;
+                }
+
+                set.Add(dto.contentId.Trim());
+            }
+
+            knownSkillIds.AddRange(set.OrderBy(id => id, StringComparer.Ordinal));
         }
 
         private CardPresentationEditorEntry LoadOrCreateEntry(ContentVisualXlsxRow row)
@@ -570,9 +1106,22 @@ namespace NineGrid.Content.Editor
                 }
 
                 CardPresentationMigration.FillEmptyFromCore(dto, CoreCatalog, GetDisplayName);
-
-                // JSON 缺图槽时用 SO 补缺（不覆盖已有路径）。
                 FillMissingSpritePaths(dto, slots);
+            }
+
+            if (dto.effectAssemblies == null)
+            {
+                dto.effectAssemblies = Array.Empty<EffectAssemblyDto>();
+            }
+
+            if (dto.skillIds == null)
+            {
+                dto.skillIds = Array.Empty<string>();
+            }
+
+            if (dto.effectIds == null)
+            {
+                dto.effectIds = Array.Empty<string>();
             }
 
             var entry = new CardPresentationEditorEntry { Dto = dto };
@@ -612,7 +1161,7 @@ namespace NineGrid.Content.Editor
                 }
 
                 var id = dto.contentId;
-                if (string.IsNullOrWhiteSpace(id) || byId.ContainsKey(id))
+                if (string.IsNullOrWhiteSpace(id) || faceById.ContainsKey(id))
                 {
                     continue;
                 }
@@ -623,10 +1172,20 @@ namespace NineGrid.Content.Editor
                 }
 
                 CardPresentationMigration.FillEmptyFromCore(dto, CoreCatalog, GetDisplayName);
+                if (dto.effectAssemblies == null)
+                {
+                    dto.effectAssemblies = Array.Empty<EffectAssemblyDto>();
+                }
+
+                if (dto.skillIds == null)
+                {
+                    dto.skillIds = Array.Empty<string>();
+                }
+
                 var entry = new CardPresentationEditorEntry { Dto = dto };
                 entry.MarkSaved();
-                entries.Add(entry);
-                byId[id] = entry;
+                faceEntries.Add(entry);
+                faceById[id] = entry;
             }
         }
 
@@ -667,9 +1226,16 @@ namespace NineGrid.Content.Editor
 
         private string ResolveDeckTitle(string deckId)
         {
-            if (string.IsNullOrWhiteSpace(deckId) || deckId == "(未分组)")
+            if (string.IsNullOrWhiteSpace(deckId) || deckId == UngroupedDeckId)
             {
-                return "(未分组)";
+                return UngroupedDeckId;
+            }
+
+            if (deckById.TryGetValue(deckId, out var deckEntry)
+                && deckEntry?.Dto != null
+                && !string.IsNullOrWhiteSpace(deckEntry.Dto.displayName))
+            {
+                return deckEntry.Dto.displayName.Trim() + " (" + deckId + ")";
             }
 
             if (CoreCatalog?.MonsterDecks != null

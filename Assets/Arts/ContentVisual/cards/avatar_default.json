@@ -2,7 +2,8 @@
     "schemaVersion": 1,
     "contentId": "avatar.default",
     "kind": "Avatar",
-    "deckId": "",
+    "deckId": "deck.player",
+    "role": "",
     "displayName": "战士",
     "description": "",
     "gold": 0,
@@ -10,7 +11,8 @@
         "hp": 0,
         "armor": 0,
         "attack": 0,
-        "action": 0
+        "action": 0,
+        "recovery": 0
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/MonstersAndHumans/SpriteSheets(96x96)/Human_Soldier_Sword_Shield/No_Shadows/Human_Soldier_Sword_Shield_Attack1-Sheet.png",
@@ -67,6 +69,22 @@
         ]
     },
     "extraSlots": [],
+    "rarity": "",
+    "tags": [],
     "effectAssemblies": [],
-    "role": ""
+    "effectIds": [],
+    "skillIds": [],
+    "level": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
 }
