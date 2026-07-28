@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const {
+  appendDebug,
   decideSubagentModelPolicy,
   parseHookInput,
   recordFailure,
@@ -34,10 +35,27 @@ function readStdin() {
       clearTimeout(timeout);
       reject(err);
     });
+
+    // Some hosts never emit 'end' if stdin is already drained; also accept
+    // immediate EOF when isTTY or readableLength stays 0 after a short tick.
+    if (process.stdin.isTTY) {
+      clearTimeout(timeout);
+      resolve('');
+      return;
+    }
+    process.stdin.resume();
   });
 }
 
 async function main() {
+  appendDebug({
+    ts: new Date().toISOString(),
+    phase: 'boot',
+    cwd: process.cwd(),
+    script: __filename,
+    pid: process.pid,
+  });
+
   try {
     const raw = await readStdin();
     const input = parseHookInput(raw);
@@ -77,6 +95,13 @@ async function main() {
       exitCode
     );
   } catch (err) {
+    appendDebug({
+      ts: new Date().toISOString(),
+      phase: 'error',
+      cwd: process.cwd(),
+      script: __filename,
+      error: String(err && err.message ? err.message : err),
+    });
     respond(
       {
         permission: 'deny',
