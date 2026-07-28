@@ -70,10 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.guide.create_blessed",
-        "skill.guide.blessed_enter"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -87,5 +84,19 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.guide.create_blessed",
+            "templateId": "tpl.skill.guide.create_blessed",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1}"
+        },
+        {
+            "id": "skill.guide.blessed_enter",
+            "templateId": "tpl.skill.guide.blessed_enter",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2,\"delta\":1,\"reason\":\"skill.guide\"}"
+        }
+    ]
 }

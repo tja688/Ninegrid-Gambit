@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.stroll.move"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.stroll.move",
+            "templateId": "tpl.skill.stroll.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":2,\"source\":\"skill.stroll\"}"
+        }
+    ]
 }

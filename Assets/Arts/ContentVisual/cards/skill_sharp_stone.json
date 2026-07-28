@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.sharp_stone.armor_break"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.sharp_stone.armor_break",
+            "templateId": "tpl.skill.sharp_stone.armor_break",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":1}"
+        }
+    ]
 }

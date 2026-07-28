@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "Gold",
     "tags": [],
-    "effectIds": [
-        "relic.junk_slot_machine.use"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "relic.junk_slot_machine.use",
+            "templateId": "tpl.relic.junk_slot_machine.use",
+            "containerType": "Relic",
+            "argsJson": "{\"weight\":1,\"delta\":9,\"reason\":\"slot\",\"action_choices_1_weight\":0,\"amount\":1,\"action_choices_2_weight\":0,\"action_choices_3_weight\":0,\"action_choices_4_weight\":0,\"action_choices_5_weight\":0,\"action_choices_6_weight\":0,\"action_choices_7_weight\":0,\"action_choices_7_action_delta\":1,\"action_choices_8_weight\":0,\"count\":1}"
+        }
+    ]
 }

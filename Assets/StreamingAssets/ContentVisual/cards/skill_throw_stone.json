@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.throw_stone.move"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.throw_stone.move",
+            "templateId": "tpl.skill.throw_stone.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":2,\"amount\":2,\"cause\":\"skill.throw_stone\"}"
+        }
+    ]
 }

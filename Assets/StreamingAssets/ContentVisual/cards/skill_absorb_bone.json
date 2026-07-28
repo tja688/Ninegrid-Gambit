@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.absorb_bone.remove"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.absorb_bone.remove",
+            "templateId": "tpl.skill.absorb_bone.remove",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"source\":\"Event\",\"reason\":\"skill.absorb_bone.attack\",\"action_actions_1_reason\":\"skill.absorb_bone.armor\"}"
+        }
+    ]
 }

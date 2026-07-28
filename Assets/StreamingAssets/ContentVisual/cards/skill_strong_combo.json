@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.strong_combo.move"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.strong_combo.move",
+            "templateId": "tpl.skill.strong_combo.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"reason\":\"skill.strong_combo.self\",\"action_actions_1_reason\":\"skill.strong_combo.material\",\"count\":2,\"action_actions_2_count\":1}"
+        }
+    ]
 }

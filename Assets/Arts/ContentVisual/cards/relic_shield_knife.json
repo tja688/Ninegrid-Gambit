@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "White",
     "tags": [],
-    "effectIds": [
-        "relic.shield_knife.kill"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "relic.shield_knife.kill",
+            "templateId": "tpl.relic.shield_knife.kill",
+            "containerType": "Relic",
+            "argsJson": "{\"amount\":1}"
+        }
+    ]
 }

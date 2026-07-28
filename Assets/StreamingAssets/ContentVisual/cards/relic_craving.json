@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "Gold",
     "tags": [],
-    "effectIds": [
-        "relic.craving.rule"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "relic.craving.rule",
+            "templateId": "tpl.relic.craving.rule",
+            "containerType": "Relic",
+            "argsJson": "{\"value\":2}"
+        }
+    ]
 }

@@ -2,6 +2,7 @@ using NineGrid.Content;
 using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
 using NineGrid.Core.Content;
+using NineGrid.Core.Effects;
 using NineGrid.Core.Systems;
 using NineGrid.Core.Utilities;
 using NUnit.Framework;
@@ -10,7 +11,7 @@ using QFramework;
 namespace NineGrid.Core.Tests
 {
     /// <summary>
-    /// 内容门禁：小型夹具与生产 JSON Catalog 均须 ValidateCatalog 绿（ADR-0008 / #69）。
+    /// 内容门禁：小型夹具与生产 JSON Catalog 均须 ValidateCatalog 绿（ADR-0008 / ADR-0009 / #70）。
     /// </summary>
     public sealed class ContentCatalogValidationTests
     {
@@ -28,6 +29,7 @@ namespace NineGrid.Core.Tests
         public void TearDown()
         {
             CardPresentationConfigCatalog.Invalidate();
+            EffectTemplateCatalog.Invalidate();
             NineGridArchitecture.ResetForTests();
         }
 
@@ -86,6 +88,16 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(fountain.HealToFull);
 
             Assert.IsTrue(catalog.Effects.ContainsKey("help.healing_potion.use"));
+            Assert.IsTrue(catalog.Effects.ContainsKey("relic.junk_recycler.use"));
+            var potion = catalog.Effects["help.healing_potion.use"];
+            var recycler = catalog.Effects["relic.junk_recycler.use"];
+            Assert.AreEqual(10, EffectDefinitionParser.ParseJson(potion.Json).Action.Get("amount").AsInt(0));
+            Assert.AreEqual(2, EffectDefinitionParser.ParseJson(recycler.Json).Action.Get("amount").AsInt(0));
+            Assert.AreEqual(EffectContainerType.HelpCard, EffectDefinitionParser.ParseJson(potion.Json).ContainerType);
+            Assert.AreEqual(EffectContainerType.Relic, EffectDefinitionParser.ParseJson(recycler.Json).ContainerType);
+            Assert.Greater(EffectTemplateCatalog.Count, 0, "effect templates must load");
+            Assert.IsTrue(EffectTemplateCatalog.TryGet("tpl.heal_player_on_use_help_card", out _));
+
             Assert.AreEqual(5, catalog.Economy.MonsterRemovedGold);
             Assert.Greater(catalog.Rewards.NodeDeckRules.Count, 0);
         }

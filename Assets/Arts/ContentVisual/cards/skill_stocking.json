@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.stocking.move"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.stocking.move",
+            "templateId": "tpl.skill.stocking.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"reason\":\"skill.stocking\",\"count\":1,\"amount\":5}"
+        }
+    ]
 }

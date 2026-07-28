@@ -70,10 +70,7 @@
     "extraSlots": [],
     "rarity": "Blue",
     "tags": [],
-    "effectIds": [
-        "relic.hard_skin.max_hp",
-        "relic.hard_skin.node_end"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -87,5 +84,19 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "relic.hard_skin.max_hp",
+            "templateId": "tpl.shared.5.relic_blood_shockwave_max_hp",
+            "containerType": "Relic",
+            "argsJson": "{\"delta\":10,\"reason\":\"relic.hard_skin.max_hp\"}"
+        },
+        {
+            "id": "relic.hard_skin.node_end",
+            "templateId": "tpl.shared.2.relic_hard_skin_node_end",
+            "containerType": "Relic",
+            "argsJson": "{\"amount\":10}"
+        }
+    ]
 }

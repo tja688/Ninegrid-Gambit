@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "Blue",
     "tags": [],
-    "effectIds": [
-        "relic.thorn_skin.battle"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "relic.thorn_skin.battle",
+            "templateId": "tpl.relic.thorn_skin.battle",
+            "containerType": "Relic",
+            "argsJson": "{\"sourceAction\":\"DealDamage\",\"source\":\"Target\"}"
+        }
+    ]
 }

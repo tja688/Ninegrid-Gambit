@@ -23,7 +23,8 @@ namespace NineGrid.Content
             catalog.AddEffect(new ContentEffectDefinition(
                 "fixture.heal.use",
                 EffectContainerType.HelpCard,
-                "{\"id\":\"fixture.heal.use\",\"typeTag\":\"【类型帮助卡】\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\","
+                "{\"id\":\"fixture.heal.use\",\"containerType\":\"HelpCard\",\"kind\":\"Triggered\","
+                + "\"requires\":[\"ActivatedByUse\",\"HasOwnerEntity\"],"
                 + "\"trigger\":{\"atom\":\"OnUseHelpCard\"},"
                 + "\"target\":{\"atom\":\"Player\"},"
                 + "\"action\":{\"atom\":\"Heal\",\"amount\":5,\"actor\":\"Player\"}}",

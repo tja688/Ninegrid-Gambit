@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.swallow_stone.move"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.swallow_stone.move",
+            "templateId": "tpl.skill.swallow_stone.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":1,\"cause\":\"skill.swallow_stone\"}"
+        }
+    ]
 }

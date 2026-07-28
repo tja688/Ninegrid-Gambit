@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "Blue",
     "tags": [],
-    "effectIds": [
-        "relic.easy_road.node_end"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "relic.easy_road.node_end",
+            "templateId": "tpl.relic.easy_road.node_end",
+            "containerType": "Relic",
+            "argsJson": "{\"poolId\":\"help.white.choice\"}"
+        }
+    ]
 }

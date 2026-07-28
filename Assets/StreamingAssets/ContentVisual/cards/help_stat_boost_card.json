@@ -72,9 +72,7 @@
     "tags": [
         "特殊"
     ],
-    "effectIds": [
-        "help.stat_boost_card.use"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -88,5 +86,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "help.stat_boost_card.use",
+            "templateId": "tpl.help.stat_boost_card.use",
+            "containerType": "HelpCard",
+            "argsJson": "{\"option\":\"Attack\",\"delta\":1,\"reason\":\"statBoost.attack\",\"action_elseAction_condition_option\":\"Armor\",\"action_elseAction_action_reason\":\"statBoost.armor\",\"action_elseAction_elseAction_condition_option\":\"Hp\",\"action_elseAction_elseAction_action_delta\":2,\"action_elseAction_elseAction_action_reason\":\"statBoost.hp\"}"
+        }
+    ]
 }

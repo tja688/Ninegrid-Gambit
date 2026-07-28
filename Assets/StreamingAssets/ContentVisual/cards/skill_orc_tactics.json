@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.orc_tactics.move"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.orc_tactics.move",
+            "templateId": "tpl.skill.orc_tactics.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":1,\"source\":\"skill.orc_tactics\"}"
+        }
+    ]
 }

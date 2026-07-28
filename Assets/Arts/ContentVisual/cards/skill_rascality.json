@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.rascality.armor_lost"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.rascality.armor_lost",
+            "templateId": "tpl.skill.rascality.armor_lost",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":1,\"source\":\"skill.rascality\"}"
+        }
+    ]
 }

@@ -201,5 +201,6 @@
         "skill.unstable",
         "skill.violence_maniac",
         "skill.violence_nutrition"
-    ]
+    ],
+    "effectAssemblies": []
 }

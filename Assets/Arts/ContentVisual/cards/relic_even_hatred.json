@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "Blue",
     "tags": [],
-    "effectIds": [
-        "relic.even_hatred.rule"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "relic.even_hatred.rule",
+            "templateId": "tpl.relic.even_hatred.rule",
+            "containerType": "Relic",
+            "argsJson": "{\"value\":2,\"source\":\"relic.even_hatred\"}"
+        }
+    ]
 }

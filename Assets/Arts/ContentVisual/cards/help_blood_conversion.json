@@ -72,9 +72,7 @@
     "tags": [
         "特殊"
     ],
-    "effectIds": [
-        "help.blood_conversion.use"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -88,5 +86,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "help.blood_conversion.use",
+            "templateId": "tpl.help.blood_conversion.use",
+            "containerType": "HelpCard",
+            "argsJson": "{\"delta\":-5,\"reason\":\"bloodConversion\",\"weight\":1,\"action_actions_1_choices_0_action_delta\":1,\"action_actions_1_choices_0_action_reason\":\"bloodConversion.attack\",\"action_actions_1_choices_1_action_delta\":1,\"action_actions_1_choices_1_action_reason\":\"bloodConversion.armor\",\"action_actions_1_choices_2_action_delta\":50,\"action_actions_1_choices_2_action_reason\":\"bloodConversion.gold\",\"poolId\":\"relic.blood_conversion\"}"
+        }
+    ]
 }

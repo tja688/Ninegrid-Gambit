@@ -72,11 +72,7 @@
     "tags": [
         "直伤"
     ],
-    "effectIds": [
-        "help.watchtower.board_corner",
-        "help.watchtower.item_battle",
-        "help.watchtower.use"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -90,5 +86,25 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "help.watchtower.board_corner",
+            "templateId": "tpl.help.watchtower.board_corner",
+            "containerType": "HelpCard",
+            "argsJson": "{\"count\":1,\"amount\":3,\"reason\":\"help.watchtower.self\"}"
+        },
+        {
+            "id": "help.watchtower.item_battle",
+            "templateId": "tpl.help.watchtower.item_battle",
+            "containerType": "HelpCard",
+            "argsJson": "{\"sourceAction\":\"DealDamage\",\"amount\":2}"
+        },
+        {
+            "id": "help.watchtower.use",
+            "templateId": "tpl.shared.3.help_healing_spring_use",
+            "containerType": "HelpCard",
+            "argsJson": "{\"reason\":\"help.watchtower.use\"}"
+        }
+    ]
 }

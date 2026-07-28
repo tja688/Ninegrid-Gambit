@@ -84,5 +84,6 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 6
+    "shopOfferCount": 6,
+    "effectAssemblies": []
 }

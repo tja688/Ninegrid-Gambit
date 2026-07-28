@@ -72,9 +72,7 @@
     "tags": [
         "直伤"
     ],
-    "effectIds": [
-        "help.throwing_knife.use"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -88,5 +86,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "help.throwing_knife.use",
+            "templateId": "tpl.help.throwing_knife.use",
+            "containerType": "HelpCard",
+            "argsJson": "{\"count\":1,\"amount\":6}"
+        }
+    ]
 }

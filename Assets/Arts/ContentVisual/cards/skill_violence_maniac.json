@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.violence_maniac.move"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.violence_maniac.move",
+            "templateId": "tpl.skill.violence_maniac.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"reason\":\"skill.violence_maniac\"}"
+        }
+    ]
 }

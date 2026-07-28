@@ -70,10 +70,7 @@
     "extraSlots": [],
     "rarity": "Blue",
     "tags": [],
-    "effectIds": [
-        "relic.vitality_amulet.max_hp",
-        "relic.vitality_amulet.node_end"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -87,5 +84,19 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "relic.vitality_amulet.max_hp",
+            "templateId": "tpl.shared.5.relic_blood_shockwave_max_hp",
+            "containerType": "Relic",
+            "argsJson": "{\"delta\":6,\"reason\":\"relic.vitality_amulet.max_hp\"}"
+        },
+        {
+            "id": "relic.vitality_amulet.node_end",
+            "templateId": "tpl.shared.2.relic_hard_skin_node_end",
+            "containerType": "Relic",
+            "argsJson": "{\"amount\":6}"
+        }
+    ]
 }

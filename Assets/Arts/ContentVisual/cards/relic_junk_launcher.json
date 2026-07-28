@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "White",
     "tags": [],
-    "effectIds": [
-        "relic.junk_launcher.use"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "relic.junk_launcher.use",
+            "templateId": "tpl.relic.junk_launcher.use",
+            "containerType": "Relic",
+            "argsJson": "{\"amount\":2}"
+        }
+    ]
 }

@@ -70,11 +70,7 @@
     "extraSlots": [],
     "rarity": "Gold",
     "tags": [],
-    "effectIds": [
-        "relic.blood_shockwave.max_hp",
-        "relic.blood_shockwave.node_start",
-        "relic.blood_shockwave.node_start_low_hp"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -88,5 +84,25 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "relic.blood_shockwave.max_hp",
+            "templateId": "tpl.shared.5.relic_blood_shockwave_max_hp",
+            "containerType": "Relic",
+            "argsJson": "{\"delta\":4,\"reason\":\"relic.blood_shockwave.max_hp\"}"
+        },
+        {
+            "id": "relic.blood_shockwave.node_start",
+            "templateId": "tpl.relic.blood_shockwave.node_start",
+            "containerType": "Relic",
+            "argsJson": "{}"
+        },
+        {
+            "id": "relic.blood_shockwave.node_start_low_hp",
+            "templateId": "tpl.relic.blood_shockwave.node_start_low_hp",
+            "containerType": "Relic",
+            "argsJson": "{}"
+        }
+    ]
 }

@@ -70,10 +70,7 @@
     "extraSlots": [],
     "rarity": "White",
     "tags": [],
-    "effectIds": [
-        "relic.heavy_armor.base",
-        "relic.heavy_armor.node_start"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -87,5 +84,19 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "relic.heavy_armor.base",
+            "templateId": "tpl.shared.4.relic_dragon_scale_armor_base",
+            "containerType": "Relic",
+            "argsJson": "{\"value\":1}"
+        },
+        {
+            "id": "relic.heavy_armor.node_start",
+            "templateId": "tpl.relic.heavy_armor.node_start",
+            "containerType": "Relic",
+            "argsJson": "{\"source\":\"Player\"}"
+        }
+    ]
 }

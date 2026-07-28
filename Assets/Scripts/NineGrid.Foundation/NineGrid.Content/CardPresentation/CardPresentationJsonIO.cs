@@ -260,6 +260,11 @@ namespace NineGrid.Content.CardPresentation
                 dto.tags = Array.Empty<string>();
             }
 
+            if (dto.effectAssemblies == null)
+            {
+                dto.effectAssemblies = Array.Empty<EffectAssemblyDto>();
+            }
+
             if (dto.effectIds == null)
             {
                 dto.effectIds = Array.Empty<string>();

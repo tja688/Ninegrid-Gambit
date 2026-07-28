@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.survival_wisdom.battle"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.survival_wisdom.battle",
+            "templateId": "tpl.skill.survival_wisdom.battle",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"sourceAction\":\"DealDamage\",\"value\":1,\"amount\":1,\"source\":\"skill.survival_wisdom\"}"
+        }
+    ]
 }

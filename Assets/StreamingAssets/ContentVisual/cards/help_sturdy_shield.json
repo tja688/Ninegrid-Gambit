@@ -72,9 +72,7 @@
     "tags": [
         "护甲"
     ],
-    "effectIds": [
-        "help.sturdy_shield.use"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -88,5 +86,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "help.sturdy_shield.use",
+            "templateId": "tpl.gain_armor_on_use_help_card",
+            "containerType": "HelpCard",
+            "argsJson": "{\"amount\":5}"
+        }
+    ]
 }

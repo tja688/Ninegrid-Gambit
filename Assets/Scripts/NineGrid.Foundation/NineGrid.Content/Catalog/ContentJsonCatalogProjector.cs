@@ -3,13 +3,15 @@ using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Effects;
+using UnityEngine;
 
 namespace NineGrid.Content
 {
     /// <summary>
     /// 将一卡一文件 JSON（schema≥2）投影进 <see cref="GameContentCatalog"/>（覆盖同 DefId）。
     /// 支持 HelpCard / Monster / Skill / Relic / Deck / Room。
-    /// 效果 DSL / 奖励池 / 经济 / 节点规则由 <see cref="ContentCatalogTableLoader"/> 加载。
+    /// 效果：优先解析 <c>effectAssemblies</c>（模板+实参）写入 Catalog.Effects；
+    /// 奖励池 / 经济 / 节点规则由 <see cref="ContentCatalogTableLoader"/> 加载。
     /// </summary>
     public static class ContentJsonCatalogProjector
     {
@@ -30,21 +32,21 @@ namespace NineGrid.Content
                     continue;
                 }
 
-                if (TryProjectCard(dto, out var card))
+                if (TryProjectCard(dto, catalog, out var card))
                 {
                     catalog.AddCard(card);
                     applied++;
                     continue;
                 }
 
-                if (TryProjectSkill(dto, out var skill))
+                if (TryProjectSkill(dto, catalog, out var skill))
                 {
                     catalog.AddSkill(skill);
                     applied++;
                     continue;
                 }
 
-                if (TryProjectRelic(dto, out var relic))
+                if (TryProjectRelic(dto, catalog, out var relic))
                 {
                     catalog.AddRelic(relic);
                     applied++;
@@ -69,6 +71,14 @@ namespace NineGrid.Content
         }
 
         public static bool TryProjectCard(CardPresentationConfigDto dto, out CardContentDefinition card)
+        {
+            return TryProjectCard(dto, null, out card);
+        }
+
+        public static bool TryProjectCard(
+            CardPresentationConfigDto dto,
+            GameContentCatalog catalog,
+            out CardContentDefinition card)
         {
             card = null;
             if (!IsReady(dto))
@@ -131,12 +141,20 @@ namespace NineGrid.Content
 
             var projected = card;
             AddTokens(dto.tags, value => projected.AddTag(value));
-            AddTokens(dto.effectIds, value => projected.AddEffect(value));
+            ApplyEffectMounts(dto, catalog, id => projected.AddEffect(id));
             AddTokens(dto.skillIds, value => projected.AddSkill(value));
             return true;
         }
 
         public static bool TryProjectSkill(CardPresentationConfigDto dto, out SkillContentDefinition skill)
+        {
+            return TryProjectSkill(dto, null, out skill);
+        }
+
+        public static bool TryProjectSkill(
+            CardPresentationConfigDto dto,
+            GameContentCatalog catalog,
+            out SkillContentDefinition skill)
         {
             skill = null;
             if (!IsReady(dto) || !IsKind(dto.kind, "Skill"))
@@ -152,11 +170,19 @@ namespace NineGrid.Content
                 dto.description ?? string.Empty);
 
             var projected = skill;
-            AddTokens(dto.effectIds, value => projected.AddEffect(value));
+            ApplyEffectMounts(dto, catalog, id => projected.AddEffect(id));
             return true;
         }
 
         public static bool TryProjectRelic(CardPresentationConfigDto dto, out RelicContentDefinition relic)
+        {
+            return TryProjectRelic(dto, null, out relic);
+        }
+
+        public static bool TryProjectRelic(
+            CardPresentationConfigDto dto,
+            GameContentCatalog catalog,
+            out RelicContentDefinition relic)
         {
             relic = null;
             if (!IsReady(dto) || !IsKind(dto.kind, "Relic"))
@@ -172,7 +198,7 @@ namespace NineGrid.Content
 
             var projected = relic;
             AddTokens(dto.tags, value => projected.AddTag(value));
-            AddTokens(dto.effectIds, value => projected.AddEffect(value));
+            ApplyEffectMounts(dto, catalog, id => projected.AddEffect(id));
             return true;
         }
 
@@ -287,6 +313,77 @@ namespace NineGrid.Content
             return Enum.TryParse(raw.Trim(), ignoreCase: true, out T value)
                 ? value
                 : fallback;
+        }
+
+        private static void ApplyEffectMounts(
+            CardPresentationConfigDto dto,
+            GameContentCatalog catalog,
+            Action<string> addEffectId)
+        {
+            if (dto == null || addEffectId == null)
+            {
+                return;
+            }
+
+            if (dto.effectAssemblies != null && dto.effectAssemblies.Length > 0)
+            {
+                for (var i = 0; i < dto.effectAssemblies.Length; i++)
+                {
+                    var assembly = dto.effectAssemblies[i];
+                    if (assembly == null || string.IsNullOrWhiteSpace(assembly.id))
+                    {
+                        continue;
+                    }
+
+                    var mountId = assembly.id.Trim();
+                    if (catalog != null)
+                    {
+                        TryResolveAssemblyIntoCatalog(assembly, catalog);
+                    }
+
+                    addEffectId(mountId);
+                }
+
+                return;
+            }
+
+            AddTokens(dto.effectIds, addEffectId);
+        }
+
+        private static void TryResolveAssemblyIntoCatalog(EffectAssemblyDto assembly, GameContentCatalog catalog)
+        {
+            if (assembly == null || catalog == null || string.IsNullOrWhiteSpace(assembly.templateId))
+            {
+                return;
+            }
+
+            EffectTemplateDefinition template;
+            if (!EffectTemplateCatalog.TryGet(assembly.templateId.Trim(), out template) || template == null)
+            {
+                UnityEngine.Debug.LogWarning(
+                    "[ContentJsonCatalogProjector] Missing effect template: " + assembly.templateId);
+                return;
+            }
+
+            var container = ParseEnum(assembly.containerType, EffectContainerType.Unknown);
+            if (container == EffectContainerType.Unknown)
+            {
+                UnityEngine.Debug.LogWarning(
+                    "[ContentJsonCatalogProjector] Missing containerType on assembly: " + assembly.id);
+                return;
+            }
+
+            try
+            {
+                var args = EffectAssemblyResolver.ParseArgsJson(assembly.argsJson);
+                var resolved = EffectAssemblyResolver.Resolve(template, assembly.id.Trim(), container, args);
+                catalog.AddEffect(resolved);
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogWarning(
+                    "[ContentJsonCatalogProjector] Failed resolving " + assembly.id + ": " + ex.Message);
+            }
         }
 
         private static void AddTokens(string[] values, Action<string> add)

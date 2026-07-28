@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.fire_power.aura"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.fire_power.aura",
+            "templateId": "tpl.skill.fire_power.aura",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"source\":\"CardCount\"}"
+        }
+    ]
 }

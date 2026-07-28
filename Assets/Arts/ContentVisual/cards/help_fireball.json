@@ -72,9 +72,7 @@
     "tags": [
         "直伤"
     ],
-    "effectIds": [
-        "help.fireball.use"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -88,5 +86,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "help.fireball.use",
+            "templateId": "tpl.help.fireball.use",
+            "containerType": "HelpCard",
+            "argsJson": "{\"count\":1,\"source\":\"Player\"}"
+        }
+    ]
 }

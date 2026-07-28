@@ -9,9 +9,9 @@ using UnityEngine;
 namespace NineGrid.Content
 {
     /// <summary>
-    /// 加载效果 DSL / 奖励池 / 经济 / 节点牌组规则表（非一卡一文件部分）进
-    /// <see cref="GameContentCatalog"/>。权威目录：Arts/ContentVisual/tables（Editor）与
-    /// StreamingAssets/ContentVisual/tables（Player）。不依赖 Luban.Runtime。
+    /// 加载奖励池 / 经济 / 节点牌组规则表进 <see cref="GameContentCatalog"/>。
+    /// 效果改为模板表 + 卡上装配引用解析（ADR-0009 / #70）；不再从 effects.json 灌全量实例。
+    /// 权威目录：Arts/ContentVisual/tables（Editor）与 StreamingAssets/ContentVisual/tables（Player）。
     /// </summary>
     public static class ContentCatalogTableLoader
     {
@@ -32,8 +32,9 @@ namespace NineGrid.Content
                 return 0;
             }
 
+            EffectTemplateCatalog.Invalidate();
             var applied = 0;
-            applied += ApplyEffects(catalog, Path.Combine(folder, "effects.json"));
+            applied += EffectTemplateCatalog.Count; // ensure templates load; mounts resolved in projector
             applied += ApplyRewardPools(catalog, Path.Combine(folder, "reward_pools.json"));
             applied += ApplyRewardEntries(catalog, Path.Combine(folder, "reward_entries.json"));
             applied += ApplyEconomy(catalog, Path.Combine(folder, "economy.json"));
@@ -45,46 +46,22 @@ namespace NineGrid.Content
         {
 #if UNITY_EDITOR
             var authoring = Path.Combine(Application.dataPath, AuthoringRelativeFolder.Replace('/', Path.DirectorySeparatorChar));
-            if (Directory.Exists(authoring) && File.Exists(Path.Combine(authoring, "effects.json")))
+            if (Directory.Exists(authoring)
+                && (File.Exists(Path.Combine(authoring, EffectTemplateCatalog.FileName))
+                    || File.Exists(Path.Combine(authoring, "effects.json"))))
             {
                 return authoring;
             }
 #endif
             var streaming = Path.Combine(Application.streamingAssetsPath, StreamingRelativeFolder.Replace('/', Path.DirectorySeparatorChar));
-            if (Directory.Exists(streaming) && File.Exists(Path.Combine(streaming, "effects.json")))
+            if (Directory.Exists(streaming)
+                && (File.Exists(Path.Combine(streaming, EffectTemplateCatalog.FileName))
+                    || File.Exists(Path.Combine(streaming, "effects.json"))))
             {
                 return streaming;
             }
 
             return string.Empty;
-        }
-
-        private static int ApplyEffects(GameContentCatalog catalog, string path)
-        {
-            if (!TryReadArray(path, out EffectRowDto[] rows) || rows == null)
-            {
-                return 0;
-            }
-
-            var count = 0;
-            for (var i = 0; i < rows.Length; i++)
-            {
-                var row = rows[i];
-                if (row == null || string.IsNullOrEmpty(row.id))
-                {
-                    continue;
-                }
-
-                catalog.AddEffect(new ContentEffectDefinition(
-                    row.id,
-                    ParseEnum(row.container_type, EffectContainerType.Unknown),
-                    row.json,
-                    ParseEnum(row.state, ContentImplementationState.RawDesignOnly),
-                    row.design_text));
-                count++;
-            }
-
-            return count;
         }
 
         private static int ApplyRewardPools(GameContentCatalog catalog, string path)
@@ -251,16 +228,6 @@ namespace NineGrid.Content
         private sealed class JsonArrayWrapper<T>
         {
             public T[] items;
-        }
-
-        [Serializable]
-        private sealed class EffectRowDto
-        {
-            public string id;
-            public string container_type;
-            public string state;
-            public string json;
-            public string design_text;
         }
 
         [Serializable]

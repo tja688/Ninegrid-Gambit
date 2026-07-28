@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "White",
     "tags": [],
-    "effectIds": [
-        "relic.potion_bag.node_start"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "relic.potion_bag.node_start",
+            "templateId": "tpl.relic.potion_bag.node_start",
+            "containerType": "Relic",
+            "argsJson": "{\"count\":2}"
+        }
+    ]
 }

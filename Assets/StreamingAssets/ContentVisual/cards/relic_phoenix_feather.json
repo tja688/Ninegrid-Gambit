@@ -70,10 +70,7 @@
     "extraSlots": [],
     "rarity": "Gold",
     "tags": [],
-    "effectIds": [
-        "relic.phoenix_feather.max_hp",
-        "relic.phoenix_feather.fatal"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -87,5 +84,19 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "relic.phoenix_feather.max_hp",
+            "templateId": "tpl.shared.5.relic_blood_shockwave_max_hp",
+            "containerType": "Relic",
+            "argsJson": "{\"delta\":8,\"reason\":\"relic.phoenix_feather.max_hp\"}"
+        },
+        {
+            "id": "relic.phoenix_feather.fatal",
+            "templateId": "tpl.relic.phoenix_feather.fatal",
+            "containerType": "Relic",
+            "argsJson": "{\"source\":\"Player\"}"
+        }
+    ]
 }

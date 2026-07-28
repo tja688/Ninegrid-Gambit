@@ -70,12 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.air_strike.slot1",
-        "skill.air_strike.slot3",
-        "skill.air_strike.slot7",
-        "skill.air_strike.slot9"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -89,5 +84,31 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.air_strike.slot1",
+            "templateId": "tpl.shared.2.skill_air_strike_slot1",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        },
+        {
+            "id": "skill.air_strike.slot3",
+            "templateId": "tpl.skill.air_strike.slot3",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        },
+        {
+            "id": "skill.air_strike.slot7",
+            "templateId": "tpl.skill.air_strike.slot7",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        },
+        {
+            "id": "skill.air_strike.slot9",
+            "templateId": "tpl.skill.air_strike.slot9",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        }
+    ]
 }

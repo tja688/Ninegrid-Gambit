@@ -7,6 +7,7 @@ namespace NineGrid.Core.Effects
     public sealed class EffectDefinition
     {
         private readonly List<EffectDslNode> mConditions = new List<EffectDslNode>();
+        private readonly List<string> mRequires = new List<string>();
 
         public string Id { get; internal set; }
         public string TypeTag { get; internal set; }
@@ -25,11 +26,28 @@ namespace NineGrid.Core.Effects
             get { return mConditions; }
         }
 
+        /// <summary>
+        /// ADR-0010 适用声明（需场上实体 / 需被使用 / 需处于某区域）。
+        /// #70 写入字段；校验与运行时消费属 #72。
+        /// </summary>
+        public IReadOnlyList<string> Requires
+        {
+            get { return mRequires; }
+        }
+
         internal void AddCondition(EffectDslNode node)
         {
             if (node != null && !node.IsNull)
             {
                 mConditions.Add(node);
+            }
+        }
+
+        internal void AddRequire(string require)
+        {
+            if (!string.IsNullOrEmpty(require) && !mRequires.Contains(require))
+            {
+                mRequires.Add(require);
             }
         }
     }
@@ -87,6 +105,12 @@ namespace NineGrid.Core.Effects
             if (!singleCondition.IsNull)
             {
                 definition.AddCondition(singleCondition);
+            }
+
+            var requires = root.Get("requires").AsArray();
+            for (var i = 0; i < requires.Count; i++)
+            {
+                definition.AddRequire(requires[i].AsString(string.Empty));
             }
 
             return definition;
@@ -155,10 +179,10 @@ namespace NineGrid.Core.Effects
                 return result;
             }
 
-            ValidateTypeTag(definition, result);
+            ValidateIdentity(definition, result);
             ValidateRequiredFields(definition, result);
             ValidateMutualExclusion(definition, result);
-            ValidateVerb(definition, result);
+            // ADR-0009 / #70：取消 typeTag / verb 纯字符串门禁；容器边界改由 ADR-0010 自陈接管。
             if (mRegistry != null)
             {
                 EffectAtomSchemas.ValidateDefinition(definition, mRegistry, result);
@@ -168,7 +192,7 @@ namespace NineGrid.Core.Effects
             return result;
         }
 
-        private static void ValidateTypeTag(EffectDefinition definition, EffectValidationResult result)
+        private static void ValidateIdentity(EffectDefinition definition, EffectValidationResult result)
         {
             if (string.IsNullOrEmpty(definition.Id))
             {
@@ -182,19 +206,7 @@ namespace NineGrid.Core.Effects
 
             if (definition.ContainerType == EffectContainerType.Unknown)
             {
-                result.Add("typeTag.container", "containerType is required.");
-            }
-
-            if (string.IsNullOrEmpty(definition.TypeTag))
-            {
-                result.Add("typeTag.missing", "typeTag is required as the first defense line.");
-                return;
-            }
-
-            var expected = GetExpectedTypeTag(definition.ContainerType);
-            if (!string.IsNullOrEmpty(expected) && !string.Equals(definition.TypeTag, expected, StringComparison.Ordinal))
-            {
-                result.Add("typeTag.mismatch", "typeTag " + definition.TypeTag + " does not match containerType " + definition.ContainerType + ".");
+                result.Add("required.containerType", "containerType is required (classification/search only).");
             }
         }
 
@@ -256,24 +268,6 @@ namespace NineGrid.Core.Effects
             }
         }
 
-        private static void ValidateVerb(EffectDefinition definition, EffectValidationResult result)
-        {
-            if (string.IsNullOrEmpty(definition.Verb))
-            {
-                return;
-            }
-
-            if (definition.ContainerType == EffectContainerType.Relic && Same(definition.Verb, "Use"))
-            {
-                result.Add("verb.relic", "Relic effects must trigger or stay active; they are not used.");
-            }
-
-            if (definition.ContainerType == EffectContainerType.HelpCard && Same(definition.Verb, "Equip"))
-            {
-                result.Add("verb.helpCard", "Help cards are not passive equipment.");
-            }
-        }
-
         public string BuildGoldenSnapshot(EffectDefinition definition)
         {
             if (definition == null)
@@ -291,6 +285,8 @@ namespace NineGrid.Core.Effects
             builder.Append(AtomName(definition.Trigger));
             builder.Append("|conditions=");
             builder.Append(definition.Conditions.Count);
+            builder.Append("|requires=");
+            builder.Append(definition.Requires.Count);
             builder.Append("|target=");
             builder.Append(AtomName(definition.Target));
             builder.Append("|action=");
@@ -310,26 +306,6 @@ namespace NineGrid.Core.Effects
         private static string AtomName(EffectDslNode node)
         {
             return node == null || node.IsNull ? string.Empty : node.Get("atom").AsString(node.Get("type").AsString(string.Empty));
-        }
-
-        private static bool Same(string left, string right)
-        {
-            return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static string GetExpectedTypeTag(EffectContainerType containerType)
-        {
-            switch (containerType)
-            {
-                case EffectContainerType.Relic:
-                    return "【类型遗物】";
-                case EffectContainerType.MonsterSkill:
-                    return "【类型怪物技能】";
-                case EffectContainerType.HelpCard:
-                    return "【类型帮助卡】";
-                default:
-                    return string.Empty;
-            }
         }
     }
 }

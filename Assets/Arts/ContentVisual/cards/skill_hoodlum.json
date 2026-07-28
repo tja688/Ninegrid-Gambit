@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.hoodlum.slot1"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.hoodlum.slot1",
+            "templateId": "tpl.shared.2.skill_air_strike_slot1",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        }
+    ]
 }

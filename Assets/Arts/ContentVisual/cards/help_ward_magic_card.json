@@ -72,9 +72,7 @@
     "tags": [
         "护甲"
     ],
-    "effectIds": [
-        "help.ward_magic_card.use"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -88,5 +86,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "help.ward_magic_card.use",
+            "templateId": "tpl.help.ward_magic_card.use",
+            "containerType": "HelpCard",
+            "argsJson": "{\"value\":0,\"source\":\"help.ward_magic_card\"}"
+        }
+    ]
 }

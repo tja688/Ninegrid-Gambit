@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.rolling_crush.slot3"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.rolling_crush.slot3",
+            "templateId": "tpl.skill.rolling_crush.slot3",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"reason\":\"skill.rolling_crush\"}"
+        }
+    ]
 }

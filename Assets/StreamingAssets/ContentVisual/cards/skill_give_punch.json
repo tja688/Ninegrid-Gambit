@@ -70,12 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.give_punch.enter2",
-        "skill.give_punch.enter4",
-        "skill.give_punch.enter6",
-        "skill.give_punch.enter8"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -89,5 +84,31 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.give_punch.enter2",
+            "templateId": "tpl.skill.give_punch.enter2",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        },
+        {
+            "id": "skill.give_punch.enter4",
+            "templateId": "tpl.skill.give_punch.enter4",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        },
+        {
+            "id": "skill.give_punch.enter6",
+            "templateId": "tpl.skill.give_punch.enter6",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        },
+        {
+            "id": "skill.give_punch.enter8",
+            "templateId": "tpl.skill.give_punch.enter8",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        }
+    ]
 }

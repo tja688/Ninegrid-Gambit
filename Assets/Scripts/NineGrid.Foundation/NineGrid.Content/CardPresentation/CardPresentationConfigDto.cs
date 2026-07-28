@@ -36,7 +36,12 @@ namespace NineGrid.Content.CardPresentation
         public string rarity;
         /// <summary>标签列表；schema≥2 时投影进 Catalog。</summary>
         public string[] tags;
-        /// <summary>效果挂载 id 列表；schema≥2 时投影进 Catalog。</summary>
+        /// <summary>
+        /// 效果装配引用（ADR-0009 / #70）：templateId + 实参；投影时解析进 Catalog.Effects，
+        /// 并把 mount id 写入 EffectIds。优先于 legacy <see cref="effectIds"/>。
+        /// </summary>
+        public EffectAssemblyDto[] effectAssemblies;
+        /// <summary>legacy 效果挂载 id 列表；无 effectAssemblies 时仍投影。</summary>
         public string[] effectIds;
         /// <summary>怪物技能挂载；Monster schema≥2 投影进 Catalog.SkillIds。</summary>
         public string[] skillIds;
@@ -122,5 +127,18 @@ namespace NineGrid.Content.CardPresentation
     {
         public float x;
         public float y;
+    }
+
+    /// <summary>卡上装配引用：模板 id + 实参（argsJson 为对象字面量，无默认值间接层）。</summary>
+    [Serializable]
+    public sealed class EffectAssemblyDto
+    {
+        /// <summary>挂载实例 id（写入 Catalog.EffectIds / Effects 键）。</summary>
+        public string id;
+        public string templateId;
+        /// <summary>分类/检索用；不再做 typeTag 门禁。</summary>
+        public string containerType;
+        /// <summary>实参 JSON 对象，如 {"amount":10}。</summary>
+        public string argsJson;
     }
 }

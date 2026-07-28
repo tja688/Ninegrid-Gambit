@@ -70,11 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.stone_growth.slot1",
-        "skill.stone_growth.slot4",
-        "skill.stone_growth.slot7"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -88,5 +84,25 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.stone_growth.slot1",
+            "templateId": "tpl.skill.stone_growth.slot1",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        },
+        {
+            "id": "skill.stone_growth.slot4",
+            "templateId": "tpl.skill.stone_growth.slot4",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        },
+        {
+            "id": "skill.stone_growth.slot7",
+            "templateId": "tpl.skill.stone_growth.slot7",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        }
+    ]
 }

@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.gear_delivery.move"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.gear_delivery.move",
+            "templateId": "tpl.skill.gear_delivery.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1,\"weight\":1,\"delta\":1,\"reason\":\"skill.gear_delivery\",\"action_choices_1_action_delta\":2}"
+        }
+    ]
 }

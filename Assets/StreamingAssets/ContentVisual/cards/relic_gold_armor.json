@@ -70,10 +70,7 @@
     "extraSlots": [],
     "rarity": "White",
     "tags": [],
-    "effectIds": [
-        "relic.gold_armor.base",
-        "relic.gold_armor.rule"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -87,5 +84,19 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "relic.gold_armor.base",
+            "templateId": "tpl.shared.4.relic_dragon_scale_armor_base",
+            "containerType": "Relic",
+            "argsJson": "{\"value\":1}"
+        },
+        {
+            "id": "relic.gold_armor.rule",
+            "templateId": "tpl.relic.gold_armor.rule",
+            "containerType": "Relic",
+            "argsJson": "{\"value\":1}"
+        }
+    ]
 }

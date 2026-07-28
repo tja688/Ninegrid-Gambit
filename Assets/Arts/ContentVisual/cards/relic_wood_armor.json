@@ -70,10 +70,7 @@
     "extraSlots": [],
     "rarity": "White",
     "tags": [],
-    "effectIds": [
-        "relic.wood_armor.base",
-        "relic.wood_armor.set"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -87,5 +84,19 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "relic.wood_armor.base",
+            "templateId": "tpl.relic.wood_armor.base",
+            "containerType": "Relic",
+            "argsJson": "{\"value\":2}"
+        },
+        {
+            "id": "relic.wood_armor.set",
+            "templateId": "tpl.relic.wood_armor.set",
+            "containerType": "Relic",
+            "argsJson": "{\"value\":8}"
+        }
+    ]
 }

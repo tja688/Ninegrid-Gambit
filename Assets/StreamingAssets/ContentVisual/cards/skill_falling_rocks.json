@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.falling_rocks.cumulative"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.falling_rocks.cumulative",
+            "templateId": "tpl.skill.falling_rocks.cumulative",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"weight\":1,\"count\":1}"
+        }
+    ]
 }

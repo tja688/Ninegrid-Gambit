@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.stone_shelter.rule"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.stone_shelter.rule",
+            "templateId": "tpl.skill.stone_shelter.rule",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":-1,\"source\":\"skill.stone_shelter\"}"
+        }
+    ]
 }

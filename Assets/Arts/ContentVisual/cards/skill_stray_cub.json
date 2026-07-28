@@ -70,10 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.stray_cub.slot6",
-        "skill.stray_cub.first_strike"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -87,5 +84,19 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.stray_cub.slot6",
+            "templateId": "tpl.skill.stray_cub.slot6",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":2}"
+        },
+        {
+            "id": "skill.stray_cub.first_strike",
+            "templateId": "tpl.skill.stray_cub.first_strike",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":1}"
+        }
+    ]
 }

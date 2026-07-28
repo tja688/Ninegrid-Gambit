@@ -37,15 +37,15 @@ public class CardEditorResult
 }
 
 /// <summary>
-/// Locus 卡牌编辑器桥：读一卡一文件 JSON + tables/effects（#69，不再读 StreamingAssets tablenine_tb*）。
+/// Locus 卡牌编辑器桥：读一卡一文件 JSON + effect_templates / 装配挂载（#69/#70）。
 /// </summary>
 public static class CardEditorApi
 {
     private static string CardsFolder =>
         Path.Combine(Application.dataPath, "Arts", "ContentVisual", "cards");
 
-    private static string EffectsPath =>
-        Path.Combine(Application.dataPath, "Arts", "ContentVisual", "tables", "effects.json");
+    private static string EffectTemplatesPath =>
+        Path.Combine(Application.dataPath, "Arts", "ContentVisual", "tables", "effect_templates.json");
 
     public static CardEditorResult ReadCards()
     {
@@ -61,6 +61,7 @@ public static class CardEditorApi
             }
 
             var cards = new List<CardRowData>();
+            var mountIds = new HashSet<string>(StringComparer.Ordinal);
             foreach (var file in Directory.GetFiles(cardsFolder, "*.json", SearchOption.TopDirectoryOnly))
             {
                 var name = Path.GetFileName(file);
@@ -78,18 +79,20 @@ public static class CardEditorApi
                 // 仅卡类进编辑列表（Skill/Relic/Deck/Room 仍可在 effect/skill 引用里出现）
                 if (!IsEditableCardKind(dto.kind))
                 {
+                    CollectMountIds(dto, mountIds);
                     continue;
                 }
 
+                CollectMountIds(dto, mountIds);
                 cards.Add(ToRow(dto));
             }
 
             result.cards = cards.OrderBy(c => c.def_id, StringComparer.Ordinal).ToList();
 
             var effectIds = new List<string>();
-            if (File.Exists(EffectsPath))
+            if (File.Exists(EffectTemplatesPath))
             {
-                var wrapped = "{\"items\":" + File.ReadAllText(EffectsPath) + "}";
+                var wrapped = "{\"items\":" + File.ReadAllText(EffectTemplatesPath) + "}";
                 var effects = JsonUtility.FromJson<IdListWrapper>(wrapped);
                 if (effects?.items != null)
                 {
@@ -98,6 +101,11 @@ public static class CardEditorApi
                         .Select(e => e.id)
                         .ToList();
                 }
+            }
+
+            if (mountIds.Count > 0)
+            {
+                effectIds = effectIds.Concat(mountIds).Distinct(StringComparer.Ordinal).OrderBy(s => s, StringComparer.Ordinal).ToList();
             }
 
             result.effectIds = effectIds;
@@ -233,7 +241,7 @@ public static class CardEditorApi
             armor = dto.stats != null ? dto.stats.armor : 0,
             recovery = dto.stats != null ? dto.stats.recovery : 0,
             tags = JoinTokens(dto.tags),
-            effect_ids = JoinTokens(dto.effectIds),
+            effect_ids = JoinTokens(ResolveMountIds(dto)),
             skill_ids = JoinTokens(dto.skillIds),
         };
     }
@@ -255,12 +263,60 @@ public static class CardEditorApi
         dto.stats.armor = row.armor;
         dto.stats.recovery = row.recovery;
         dto.tags = SplitTokens(row.tags);
-        dto.effectIds = SplitTokens(row.effect_ids);
+        // 装配引用权威：Locus 行编辑只改挂载 id 列表时保留既有 assembly 元数据，删掉的卸下。
+        var nextIds = SplitTokens(row.effect_ids);
+        if (dto.effectAssemblies != null && dto.effectAssemblies.Length > 0)
+        {
+            var keep = new List<EffectAssemblyLiteDto>();
+            for (var i = 0; i < dto.effectAssemblies.Length; i++)
+            {
+                var a = dto.effectAssemblies[i];
+                if (a != null && !string.IsNullOrWhiteSpace(a.id) && nextIds.Contains(a.id.Trim()))
+                {
+                    keep.Add(a);
+                }
+            }
+
+            dto.effectAssemblies = keep.ToArray();
+            dto.effectIds = Array.Empty<string>();
+        }
+        else
+        {
+            dto.effectIds = nextIds;
+        }
+
         dto.skillIds = SplitTokens(row.skill_ids);
         if (dto.schemaVersion < 2)
         {
             dto.schemaVersion = 2;
         }
+    }
+
+    private static void CollectMountIds(CardPresentationLiteDto dto, HashSet<string> sink)
+    {
+        if (dto == null || sink == null)
+        {
+            return;
+        }
+
+        var mounts = ResolveMountIds(dto);
+        for (var i = 0; i < mounts.Length; i++)
+        {
+            sink.Add(mounts[i]);
+        }
+    }
+
+    private static string[] ResolveMountIds(CardPresentationLiteDto dto)
+    {
+        if (dto.effectAssemblies != null && dto.effectAssemblies.Length > 0)
+        {
+            return dto.effectAssemblies
+                .Where(a => a != null && !string.IsNullOrWhiteSpace(a.id))
+                .Select(a => a.id.Trim())
+                .ToArray();
+        }
+
+        return dto.effectIds ?? Array.Empty<string>();
     }
 
     private static string JoinTokens(string[] values)
@@ -303,6 +359,7 @@ public static class CardEditorApi
         public CardPresentationLiteExtraSlotDto[] extraSlots;
         public string rarity;
         public string[] tags;
+        public EffectAssemblyLiteDto[] effectAssemblies;
         public string[] effectIds;
         public string[] skillIds;
         public int level;
@@ -318,6 +375,15 @@ public static class CardEditorApi
         public bool healToFull;
         public string rewardPoolId;
         public int shopOfferCount;
+    }
+
+    [Serializable]
+    private class EffectAssemblyLiteDto
+    {
+        public string id;
+        public string templateId;
+        public string containerType;
+        public string argsJson;
     }
 
     [Serializable]

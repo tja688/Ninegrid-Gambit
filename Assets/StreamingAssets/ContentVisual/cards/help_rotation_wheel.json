@@ -72,9 +72,7 @@
     "tags": [
         "位移"
     ],
-    "effectIds": [
-        "help.rotation_wheel.use"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -88,5 +86,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "help.rotation_wheel.use",
+            "templateId": "tpl.help.rotation_wheel.use",
+            "containerType": "HelpCard",
+            "argsJson": "{}"
+        }
+    ]
 }

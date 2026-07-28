@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "Blue",
     "tags": [],
-    "effectIds": [
-        "relic.battle_hardened.battle"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "relic.battle_hardened.battle",
+            "templateId": "tpl.relic.battle_hardened.battle",
+            "containerType": "Relic",
+            "argsJson": "{\"sourceAction\":\"DealDamage\",\"value\":2,\"source\":\"relic.battle_hardened\"}"
+        }
+    ]
 }

@@ -70,9 +70,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectIds": [
-        "skill.mixed_bones.move"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -86,5 +84,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "skill.mixed_bones.move",
+            "templateId": "tpl.skill.mixed_bones.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":2,\"reason\":\"skill.mixed_bones\",\"action_actions_1_count\":1}"
+        }
+    ]
 }

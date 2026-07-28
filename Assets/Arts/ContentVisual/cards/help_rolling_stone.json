@@ -72,10 +72,7 @@
     "tags": [
         "直伤"
     ],
-    "effectIds": [
-        "help.rolling_stone.board_slot3",
-        "help.rolling_stone.use"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -89,5 +86,19 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "help.rolling_stone.board_slot3",
+            "templateId": "tpl.help.rolling_stone.board_slot3",
+            "containerType": "HelpCard",
+            "argsJson": "{\"reason\":\"help.rolling_stone.target\",\"action_actions_1_reason\":\"help.rolling_stone.self\"}"
+        },
+        {
+            "id": "help.rolling_stone.use",
+            "templateId": "tpl.shared.3.help_healing_spring_use",
+            "containerType": "HelpCard",
+            "argsJson": "{\"reason\":\"help.rolling_stone.use\"}"
+        }
+    ]
 }

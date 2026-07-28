@@ -72,9 +72,7 @@
     "tags": [
         "特殊"
     ],
-    "effectIds": [
-        "help.flame.use"
-    ],
+    "effectIds": [],
     "skillIds": [],
     "level": 0,
     "isElite": false,
@@ -88,5 +86,13 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "effectAssemblies": [
+        {
+            "id": "help.flame.use",
+            "templateId": "tpl.help.flame.use",
+            "containerType": "HelpCard",
+            "argsJson": "{\"amount\":4}"
+        }
+    ]
 }
