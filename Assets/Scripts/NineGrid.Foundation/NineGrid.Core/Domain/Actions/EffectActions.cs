@@ -162,6 +162,14 @@ namespace NineGrid.Core
             var avatarDamage = GetAttackDamage(statSystem, avatar);
             var targetDamage = GetAttackDamage(statSystem, target);
             var result = new GameActionResult();
+            // #78：ForceBattle 本身是交战。外层已在交战窗内（如 OnBattle→ForceBattle）则复用；
+            // 独立触发（如 OnSelfMove→ForceBattle）须自开 Begin…End，否则 OnBattle 不会 raise。
+            var openOwnScope = !context.GetSystem<IBattleScopeSystem>().IsEngagementActive;
+            if (openOwnScope)
+            {
+                result.AddFollowUp(new BeginPlayerMonsterEngagementAction(target.Uid));
+            }
+
             if (CombatEngagementOrder.MonsterStrikesFirst(statSystem, avatar, target))
             {
                 result.AddFollowUp(new DealDamageAction(target.Uid, avatar.Uid, targetDamage, SourceDefId, Cause));
@@ -171,6 +179,11 @@ namespace NineGrid.Core
             {
                 result.AddFollowUp(new DealDamageAction(avatar.Uid, target.Uid, avatarDamage, SourceDefId, Cause));
                 result.AddFollowUp(new ConditionalDealDamageIfAliveAction(target.Uid, avatar.Uid, targetDamage, SourceDefId, Cause));
+            }
+
+            if (openOwnScope)
+            {
+                result.AddFollowUp(new EndBattleScopeCleanupAction());
             }
 
             return result;

@@ -8,10 +8,20 @@ namespace NineGrid.Core
 {
     public sealed class DealDamageAction : GameAction
     {
-        private static readonly TriggerPoint[] sPostTriggers =
+        private static readonly TriggerPoint[] sPostTriggersInEngagement =
         {
             TriggerPoint.AfterAction,
             TriggerPoint.OnBattle,
+            TriggerPoint.OnDamage,
+            TriggerPoint.OnArmorBreak,
+            TriggerPoint.OnDamageTaken,
+            TriggerPoint.OnFatalDamage,
+            TriggerPoint.OnCumulative
+        };
+
+        private static readonly TriggerPoint[] sPostTriggersOutsideEngagement =
+        {
+            TriggerPoint.AfterAction,
             TriggerPoint.OnDamage,
             TriggerPoint.OnArmorBreak,
             TriggerPoint.OnDamageTaken,
@@ -167,7 +177,11 @@ namespace NineGrid.Core
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
         {
-            return sPostTriggers;
+            // #78 / ADR-0012：OnBattle 仅交战作用域（Begin…End）内 raise；单向打击等非交战伤害不触发。
+            var scope = context.GetSystem<IBattleScopeSystem>();
+            return scope != null && scope.IsEngagementActive
+                ? sPostTriggersInEngagement
+                : sPostTriggersOutsideEngagement;
         }
     }
 

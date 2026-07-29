@@ -6,6 +6,7 @@ namespace NineGrid.Core.Systems
     public interface IBattleScopeSystem : ISystem
     {
         int EngagedEnemyUid { get; }
+        bool IsEngagementActive { get; }
         int BeginPlayerMonsterEngagement(int monsterUid);
         int EndCurrentBattle();
         int ClearScopedModifiers(ModifierScope scope);
@@ -16,6 +17,11 @@ namespace NineGrid.Core.Systems
         public int EngagedEnemyUid
         {
             get { return this.GetModel<BattleContextModel>().EngagedEnemyUid.Value; }
+        }
+
+        public bool IsEngagementActive
+        {
+            get { return this.GetModel<BattleContextModel>().IsEngagementActive; }
         }
 
         protected override void OnInit()
@@ -31,6 +37,8 @@ namespace NineGrid.Core.Systems
 
             var context = this.GetModel<BattleContextModel>();
             var previous = context.EngagedEnemyUid.Value;
+            // 同敌再进交战窗口也必须打开 IsEngagementActive（End 后 uid 仍保留）。
+            context.SetEngagementActive(true);
             if (previous == monsterUid)
             {
                 return 0;
@@ -43,6 +51,7 @@ namespace NineGrid.Core.Systems
 
         public int EndCurrentBattle()
         {
+            this.GetModel<BattleContextModel>().SetEngagementActive(false);
             return ClearScopedModifiers(ModifierScope.UntilBattleEnds);
         }
 

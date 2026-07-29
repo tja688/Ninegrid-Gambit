@@ -41,6 +41,7 @@
 | `ActionCountdownSemanticsTests` | #76 / ADR-0013：OnSelfMove / OnCumulative 倒计时拍序；OnInteract.every；外部加减不永久错相；`AttackPatternPrefix` 与 `effect.` 隔离 |
 | `SlotIdDiagonalAdjacencyTests` | #77 / ADR-0011：对角相邻谓词；正交 `IsAdjacentTo` 语义不变 |
 | `AttackPatternDataPlaneTests` | #77 / ADR-0011：五取值与频率；缺省/非法报错；显式「无」通过；进场 `AttackPatternCountdown` 初始化；生产 Catalog 全员已填 |
+| `OnBattleEngagementScopeTests` | #78 / ADR-0012：OnBattle 仅交战作用域；非交战 DealDamage 不触发、不洗 UntilBattleEnds；「每战斗」只数交战 |
 
 ### 行为基线（节选）
 
