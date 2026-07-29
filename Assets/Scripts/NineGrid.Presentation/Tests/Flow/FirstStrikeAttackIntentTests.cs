@@ -237,6 +237,7 @@ namespace NineGrid.Presentation.Tests
             director.Tick(0.016f); // resolve counter
             Assert.IsTrue(counterFirst);
             director.Tick(0.016f); // present counter
+            director.Tick(0.016f); // branch after counter → enqueue interaction advance
             director.Tick(0.016f); // silent AdvanceInteractionCount
             Assert.IsFalse(director.IsMainlineBusy);
             Assert.AreEqual(1, mArch.GetModel<PlayerModel>().InteractionCount.Value);
