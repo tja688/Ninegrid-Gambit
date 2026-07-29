@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.multi_bone_worm",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.skeleton_legion",
     "displayName": "多骨虫",
     "description": "移动时与相邻2怪合成巨骷髅",

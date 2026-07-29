@@ -25,9 +25,14 @@ namespace NineGrid.Content.CardPresentation
         public string displayName;
         /// <summary>描述权威（有值时覆盖 TbContentVisual.description）；Relic/Skill 亦作 designText。</summary>
         public string description;
+        /// <summary>
+        /// 怪物攻击模式（ADR-0011）：普通近战 / 斜角近战 / 全向近战 / 普通远程 / 无。
+        /// 必填；缺省为装配错误，不得静默当「无」。非 Monster 可空。
+        /// </summary>
+        public string attackPattern;
         /// <summary>金币：HelpCard→Price；Monster→KillGold；其它 Price（&gt;0）。</summary>
         public int gold;
-        /// <summary>基础数值；schema≥2 投影写入；action 仅表现。</summary>
+        /// <summary>基础数值；schema≥2 投影写入；action 为攻击模式频率（ADR-0011）。</summary>
         public CardPresentationStatsDto stats;
         /// <summary>槽位图权威（有路径则不再读 ContentVisual SO）。</summary>
         public CardPresentationSpritesDto sprites;

@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.stone_shrimp",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.stone_legion",
     "role": "",
     "displayName": "石虾",

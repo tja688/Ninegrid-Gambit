@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.dragon_follower",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.dragon",
     "role": "",
     "displayName": "龙信徒",

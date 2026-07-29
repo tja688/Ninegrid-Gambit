@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.rotating_cub",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.void",
     "displayName": "旋转幼崽",
     "description": "每移动3次旋转",

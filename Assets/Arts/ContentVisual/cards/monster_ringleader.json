@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.ringleader",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.wandering_legion",
     "displayName": "领头人",
     "description": "每移3次创福地；3福地后99伤",

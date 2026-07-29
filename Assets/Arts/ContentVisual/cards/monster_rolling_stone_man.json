@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.rolling_stone_man",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.stone_legion",
     "role": "",
     "displayName": "滚石人",

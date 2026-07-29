@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.world_turning_hand",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.void",
     "displayName": "转动世界的手",
     "description": "登场旋转一次",

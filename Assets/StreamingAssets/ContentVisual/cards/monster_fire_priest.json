@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.fire_priest",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.dragon",
     "displayName": "火焰祭司",
     "description": "每有一张烈焰，本卡攻击+2",

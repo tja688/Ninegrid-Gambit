@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.beggar",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.wandering_legion",
     "role": "",
     "displayName": "乞丐",

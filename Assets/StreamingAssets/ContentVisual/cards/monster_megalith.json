@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.megalith",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.stone_legion",
     "role": "",
     "displayName": "巨石人",

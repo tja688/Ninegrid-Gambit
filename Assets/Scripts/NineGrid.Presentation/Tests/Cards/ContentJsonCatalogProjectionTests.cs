@@ -88,11 +88,14 @@ namespace NineGrid.Presentation.Tests.Cards
                 skillIds = new[] { "skill.proj_demo" },
                 effectIds = new[] { "monster.proj_demo.aura" },
                 tags = new[] { "火" },
+                attackPattern = "无",
                 stats = new CardPresentationStatsDto { hp = 9, attack = 3, armor = 1, recovery = 2 },
             };
 
             Assert.IsTrue(ContentJsonCatalogProjector.TryProjectCard(dto, out var card));
             Assert.AreEqual(CardKind.Monster, card.Kind);
+            Assert.AreEqual(AttackPattern.None, card.AttackPattern);
+            Assert.AreEqual(0, card.Stats.Action);
             Assert.AreEqual(7, card.KillGold);
             Assert.AreEqual(0, card.Price);
             Assert.AreEqual(2, card.Level);
@@ -179,6 +182,7 @@ namespace NineGrid.Presentation.Tests.Cards
                 kind = "Monster",
                 displayName = "新怪",
                 gold = 11,
+                attackPattern = "无",
                 stats = new CardPresentationStatsDto { hp = 8, attack = 4, armor = 2 },
                 skillIds = new[] { "skill.proj_overwrite" },
             });

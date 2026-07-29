@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.skull_head",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.skeleton_legion",
     "displayName": "骷髅头",
     "description": "相邻无头骷髅组合",

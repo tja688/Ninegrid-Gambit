@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.skeleton_mage",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.skeleton_legion",
     "displayName": "骷髅法师",
     "description": "所有怪物卡视为与本卡正交相邻",

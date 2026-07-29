@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.smuggler",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.wandering_legion",
     "displayName": "走私者",
     "description": "累计邻玩家3次移除帮助得护甲",

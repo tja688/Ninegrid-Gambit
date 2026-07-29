@@ -120,6 +120,7 @@ namespace NineGrid.Core.Systems
 
             ValidateEffectDefinitions(report);
             ValidateReferences(report);
+            ValidateMonsterAttackPatterns(report);
             return report;
         }
 
@@ -142,7 +143,8 @@ namespace NineGrid.Core.Systems
                 Recovery = definition.Stats.Recovery,
                 IsElite = definition.IsElite || definition.IsBoss,
                 Level = definition.Level,
-                IsBoss = definition.IsBoss
+                IsBoss = definition.IsBoss,
+                ActionFrequency = definition.Stats.Action
             };
 
             for (var i = 0; i < definition.EffectIds.Count; i++)
@@ -325,6 +327,23 @@ namespace NineGrid.Core.Systems
             foreach (var pair in Catalog.Relics)
             {
                 ValidateEffectRefs("relic:" + pair.Key, pair.Value.EffectIds, report);
+            }
+        }
+
+        private void ValidateMonsterAttackPatterns(ContentValidationReport report)
+        {
+            foreach (var pair in Catalog.Cards)
+            {
+                var card = pair.Value;
+                if (card.Kind != CardKind.Monster)
+                {
+                    continue;
+                }
+
+                if (card.AttackPattern == AttackPattern.Unspecified)
+                {
+                    report.AddIssue("card:" + pair.Key + ":missing or invalid attackPattern");
+                }
             }
         }
 

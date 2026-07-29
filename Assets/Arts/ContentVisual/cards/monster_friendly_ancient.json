@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.friendly_ancient",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.void",
     "displayName": "友好的远古生物",
     "description": "每移动3次放旋转轮",

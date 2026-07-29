@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.wandering_child",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.wandering_legion",
     "displayName": "流浪孩童",
     "description": "格6攻击+2并获得先攻",

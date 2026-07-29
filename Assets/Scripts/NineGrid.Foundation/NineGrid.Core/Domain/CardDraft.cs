@@ -23,6 +23,8 @@ namespace NineGrid.Core
         public bool IsElite { get; set; }
         public bool IsBoss { get; set; }
         public int Level { get; set; }
+        /// <summary>攻击模式频率；&gt;0 时进场写入行动倒计时。</summary>
+        public int ActionFrequency { get; set; }
 
         public IReadOnlyList<string> EffectIds
         {
@@ -83,6 +85,11 @@ namespace NineGrid.Core
             if (Level > 0)
             {
                 card.Counters.Set(CoreCounterKeys.Level, Level);
+            }
+
+            if (ActionFrequency > 0)
+            {
+                card.Counters.Set(CoreCounterKeys.AttackPatternCountdown, ActionFrequency);
             }
 
             for (var i = 0; i < mEffectIds.Count; i++)

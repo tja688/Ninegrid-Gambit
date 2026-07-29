@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.void_cub",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.void",
     "displayName": "虚空幼崽",
     "description": "每移动3次随机交换怪物",

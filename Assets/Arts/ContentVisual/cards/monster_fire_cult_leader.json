@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.fire_cult_leader",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.dragon",
     "displayName": "火教主",
     "description": "每加入烈焰额外加一张",

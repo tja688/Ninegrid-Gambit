@@ -20,11 +20,11 @@
 | [ADR-0008](../adr/0008-single-source-content-and-resources-loading.md) | 一卡一文件 JSON + ContentArt Resources 加载 |
 | [ADR-0009](../adr/0009-parameterized-effect-templates.md) | 效果参数化模板、分类三轴、词条、奖池查询 |
 | [ADR-0010](../adr/0010-self-declared-effect-responsibility.md) | 效果责任自陈、拆除外部场域门禁 |
-| [ADR-0011](../adr/0011-monster-attack-pattern-intrinsic.md) | 怪物攻击模式为内生必填属性（**未落地**） |
+| [ADR-0011](../adr/0011-monster-attack-pattern-intrinsic.md) | 怪物攻击模式为内生必填属性（**#77 数据面已落地**：必填枚举 / 全员显式「无」/ 对角谓词 / 进场倒计时初始化；敌方齐射消费见 #79+） |
 | [ADR-0012](../adr/0012-enemy-action-phase-volley.md) | 敌方行动阶段：齐射与盘面冻结（**未落地**） |
 | [ADR-0013](../adr/0013-action-countdown-unified.md) | 行动计数统一为倒计时、开火窗口一次性（**#76 Core 效果侧已落地**；攻击模式消费 / 卡面上屏见后续票） |
 
-> ADR-0011 / 0012 仍为**已接受但尚未落地**；ADR-0013 的效果侧倒计时（`ActionCountdown` / OnSelfMove / OnCumulative / OnInteract.every / `AttackPatternPrefix`）已由 #76 落地，攻击模式消费与卡面上屏仍见后续票。目标齐射结构不写入 [presentation.md](./presentation.md)；#76 测试登记见 [tests.md](./tests.md)。落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
+> ADR-0011 数据面（`attackPattern` / `SlotId.IsDiagonallyAdjacentTo` / 进场 `AttackPatternCountdown`）已由 #77 落地；齐射裁决仍见 #79+。ADR-0012 仍为**已接受但尚未落地**；ADR-0013 的效果侧倒计时已由 #76 落地。目标齐射结构不写入 [presentation.md](./presentation.md)；相关测试登记见 [tests.md](./tests.md)。落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
 
 ## 程序集一览
 

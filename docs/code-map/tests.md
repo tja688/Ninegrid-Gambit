@@ -39,6 +39,8 @@
 | `EffectNonTriggerProbeTests` | #73 / ADR-0010 Phase D：未触发探查区分 requires vs conditions；与正向诊断层并存 |
 | `InteractionCountDecoupleTests` | #75：未击杀交战/拾卡/点空格推进 interactionCount；道具使用不计；计数/补牌/旋转可分步 |
 | `ActionCountdownSemanticsTests` | #76 / ADR-0013：OnSelfMove / OnCumulative 倒计时拍序；OnInteract.every；外部加减不永久错相；`AttackPatternPrefix` 与 `effect.` 隔离 |
+| `SlotIdDiagonalAdjacencyTests` | #77 / ADR-0011：对角相邻谓词；正交 `IsAdjacentTo` 语义不变 |
+| `AttackPatternDataPlaneTests` | #77 / ADR-0011：五取值与频率；缺省/非法报错；显式「无」通过；进场 `AttackPatternCountdown` 初始化；生产 Catalog 全员已填 |
 
 ### 行为基线（节选）
 

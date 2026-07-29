@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.thug",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.wandering_legion",
     "displayName": "打手",
     "description": "登场在偶数边位时伤害玩家",

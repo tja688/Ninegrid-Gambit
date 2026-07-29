@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.smart_orc",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.orc_legion",
     "displayName": "聪明兽人",
     "description": "获攻击时额外+1",

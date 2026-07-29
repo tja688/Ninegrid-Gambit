@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.hoodlum",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.wandering_legion",
     "displayName": "混混",
     "description": "到格1对玩家2伤",

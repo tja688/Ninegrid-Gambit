@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.bone_courier",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.skeleton_legion",
     "displayName": "骨头快递员",
     "description": "每移2次交换相邻帮助卡与怪物",

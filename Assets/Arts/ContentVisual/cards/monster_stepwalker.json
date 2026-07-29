@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.stepwalker",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.void",
     "displayName": "踏步行者",
     "description": "每移动3次与随机帮助卡交换",

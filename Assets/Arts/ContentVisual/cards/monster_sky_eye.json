@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.sky_eye",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.void",
     "displayName": "空中巨眼",
     "description": "移动到角格时对玩家造成2点伤害",

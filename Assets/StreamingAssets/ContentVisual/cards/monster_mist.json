@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.mist",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.void",
     "displayName": "迷雾",
     "description": "每移动1次攻击+2",

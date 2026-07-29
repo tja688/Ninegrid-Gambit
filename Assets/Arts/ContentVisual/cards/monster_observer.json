@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.observer",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.void",
     "displayName": "观察者",
     "description": "怪物卡因怪物技能位移时伤害玩家",

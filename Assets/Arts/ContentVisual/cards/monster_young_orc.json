@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.young_orc",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.orc_legion",
     "displayName": "年轻兽人",
     "description": "其他怪物获得攻击时本卡攻击+1",

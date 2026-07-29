@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.orc_quartermaster",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.orc_legion",
     "role": "",
     "displayName": "兽人军需官",

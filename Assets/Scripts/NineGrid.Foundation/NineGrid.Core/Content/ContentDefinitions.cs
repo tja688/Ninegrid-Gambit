@@ -52,10 +52,15 @@ namespace NineGrid.Core.Content
         public int Attack { get; set; }
         public int Armor { get; set; }
         public int Recovery { get; set; }
+        /// <summary>攻击模式频率 N（ADR-0011）；「无」为 0，近战系 3，远程 5。</summary>
+        public int Action { get; set; }
 
         public bool IsEmpty
         {
-            get { return MaxHp == 0 && Hp == 0 && Attack == 0 && Armor == 0 && Recovery == 0; }
+            get
+            {
+                return MaxHp == 0 && Hp == 0 && Attack == 0 && Armor == 0 && Recovery == 0 && Action == 0;
+            }
         }
     }
 
@@ -111,6 +116,8 @@ namespace NineGrid.Core.Content
         /// <summary>功能角色（攻/防/功能）；代号主键，中文仅显示名。</summary>
         public ContentRole Role { get; set; }
         public ContentStatLine Stats { get; private set; }
+        /// <summary>怪物攻击模式（ADR-0011）；非 Monster 保持 Unspecified。</summary>
+        public AttackPattern AttackPattern { get; set; }
 
         public IReadOnlyList<string> Tags
         {
@@ -190,6 +197,17 @@ namespace NineGrid.Core.Content
         public CardContentDefinition WithRole(ContentRole role)
         {
             Role = role;
+            return this;
+        }
+
+        public CardContentDefinition WithAttackPattern(AttackPattern attackPattern)
+        {
+            AttackPattern = attackPattern;
+            if (Kind == CardKind.Monster)
+            {
+                Stats.Action = AttackPatternRules.Frequency(attackPattern);
+            }
+
             return this;
         }
 

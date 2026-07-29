@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.space_master",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.void",
     "displayName": "空间大师",
     "description": "战后旋转；每移9次加入怪物",

@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.salamander",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.dragon",
     "displayName": "火蜥蜴",
     "description": "每移动3次放烈焰",

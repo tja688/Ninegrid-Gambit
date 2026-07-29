@@ -84,6 +84,19 @@ namespace NineGrid.Core
             return Math.Abs(Row - other.Row) + Math.Abs(Column - other.Column) == 1;
         }
 
+        /// <summary>
+        /// 对角相邻（行列差均为 1）。正交邻接见 <see cref="IsAdjacentTo"/>（ADR-0011）。
+        /// </summary>
+        public bool IsDiagonallyAdjacentTo(SlotId other)
+        {
+            if (!IsBoardSlot || !other.IsBoardSlot)
+            {
+                return false;
+            }
+
+            return Math.Abs(Row - other.Row) == 1 && Math.Abs(Column - other.Column) == 1;
+        }
+
         public bool Equals(SlotId other)
         {
             return mIndex == other.mIndex;

@@ -78,8 +78,11 @@ namespace NineGrid.Core.Tests
 
             Assert.IsTrue(catalog.Cards.TryGetValue("monster.beggar", out var beggar));
             Assert.AreEqual(CardKind.Monster, beggar.Kind);
-            Assert.AreEqual(1, beggar.SkillIds.Count);
-            Assert.AreEqual("skill.beggar_bond", beggar.SkillIds[0]);
+            Assert.AreEqual(AttackPattern.None, beggar.AttackPattern);
+            Assert.AreEqual(0, beggar.Stats.Action);
+            // 技能仍以独立 Skill JSON 存在；怪物挂载可为空（当前乞丐无 skillIds）。
+            Assert.IsTrue(catalog.Skills.ContainsKey("skill.beggar_bond"));
+            Assert.AreEqual(0, beggar.SkillIds.Count);
 
             Assert.IsTrue(catalog.MonsterDecks.TryGetValue("deck.dragon", out var dragon));
             Assert.Greater(dragon.MonsterDefIds.Count, 0);

@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.fire_dragon",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.dragon",
     "displayName": "火龙",
     "description": "每移4次换怪为烈焰；烈焰伤害+1",

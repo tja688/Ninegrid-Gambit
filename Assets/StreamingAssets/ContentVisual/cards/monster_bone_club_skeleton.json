@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.bone_club_skeleton",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.skeleton_legion",
     "displayName": "骨棒骷髅",
     "description": "无",

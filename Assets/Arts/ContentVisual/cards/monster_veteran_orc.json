@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.veteran_orc",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.orc_legion",
     "displayName": "历战兽人",
     "description": "��ս����",

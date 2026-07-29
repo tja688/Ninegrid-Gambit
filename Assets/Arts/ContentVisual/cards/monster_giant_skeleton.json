@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.giant_skeleton",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.skeleton_legion",
     "displayName": "巨大骷髅",
     "description": "移除时洗入多骨虫和Lv2怪",

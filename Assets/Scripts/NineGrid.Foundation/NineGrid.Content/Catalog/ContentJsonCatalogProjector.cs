@@ -141,11 +141,29 @@ namespace NineGrid.Content
                 card.Stats.Recovery = Math.Max(0, stats.recovery);
             }
 
+            if (kind == CardKind.Monster)
+            {
+                ApplyMonsterAttackPattern(dto, card);
+            }
+
             var projected = card;
             AddTokens(dto.tags, value => projected.AddTag(value));
             ApplyEffectMounts(dto, catalog, id => projected.AddEffect(id));
             AddTokens(dto.skillIds, value => projected.AddSkill(value));
             return true;
+        }
+
+        private static void ApplyMonsterAttackPattern(CardPresentationConfigDto dto, CardContentDefinition card)
+        {
+            if (AttackPatternRules.TryParse(dto.attackPattern, out var pattern))
+            {
+                card.WithAttackPattern(pattern);
+                return;
+            }
+
+            // 缺省或非法：保持 Unspecified，由 ValidateCatalog 报错（不得静默当「无」）。
+            card.AttackPattern = AttackPattern.Unspecified;
+            card.Stats.Action = 0;
         }
 
         public static bool TryProjectSkill(CardPresentationConfigDto dto, out SkillContentDefinition skill)

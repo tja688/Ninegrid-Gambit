@@ -2,6 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.fire_bather",
     "kind": "Monster",
+    "attackPattern": "无",
     "deckId": "deck.dragon",
     "displayName": "浴火者",
     "description": "有烈焰时攻击+4",
