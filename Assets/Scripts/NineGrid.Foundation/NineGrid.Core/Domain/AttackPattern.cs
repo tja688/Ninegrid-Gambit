@@ -80,7 +80,7 @@ namespace NineGrid.Core
             return pattern != AttackPattern.None && pattern != AttackPattern.Unspecified;
         }
 
-        /// <summary>开火位置条件（ADR-0011）。#79 主测普通近战；其余模式谓词已就绪供 #80。</summary>
+        /// <summary>开火位置条件（ADR-0011）。由敌方行动阶段资格复核消费（#79/#80）。</summary>
         public static bool MeetsPositionRequirement(AttackPattern pattern, SlotId monsterSlot, SlotId avatarSlot)
         {
             if (!monsterSlot.IsBoardSlot || !avatarSlot.IsBoardSlot)

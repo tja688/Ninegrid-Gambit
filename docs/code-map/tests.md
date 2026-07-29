@@ -42,7 +42,7 @@
 | `SlotIdDiagonalAdjacencyTests` | #77 / ADR-0011：对角相邻谓词；正交 `IsAdjacentTo` 语义不变 |
 | `AttackPatternDataPlaneTests` | #77 / ADR-0011：五取值与频率；缺省/非法报错；显式「无」通过；进场 `AttackPatternCountdown` 初始化；生产 Catalog 全员已填 |
 | `OnBattleEngagementScopeTests` | #78 / ADR-0012：OnBattle 仅交战作用域；非交战 DealDamage 不触发、不洗 UntilBattleEnds；「每战斗」只数交战 |
-| `EnemyActionPhaseTests` | #79 / ADR-0012：敌方行动报名/逐条/收尾；普通近战单向打击；盘面冻结；玩家死亡终止；名单冻结；反伤致死伤害仍成立；「无」不开火 |
+| `EnemyActionPhaseTests` | #79/#80 / ADR-0011–0012：敌方行动报名/逐条/收尾；四开火模式位置×频率；窗口错过重置；Avatar 偏心真对角；盘面冻结；玩家死亡终止；名单冻结；反伤致死伤害仍成立；「无」不开火 |
 
 ### 行为基线（节选）
 

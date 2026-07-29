@@ -12,7 +12,7 @@ using QFramework;
 namespace NineGrid.Core.Tests
 {
     /// <summary>
-    /// #79 / ADR-0012：敌方行动阶段（报名 → 逐条 → 收尾）+ 普通近战单向打击。
+    /// #79 / #80 / ADR-0011–0012：敌方行动阶段 + 四开火模式位置×频率 + 「无」。
     /// Seam：IPhaseSystem 互动命令面（见 #74 Testing Decisions）。
     /// </summary>
     public sealed class EnemyActionPhaseTests
@@ -34,9 +34,14 @@ namespace NineGrid.Core.Tests
             + "\"target\":{\"atom\":\"Player\"},"
             + "\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":1,\"layer\":\"Temporary\",\"scope\":\"UntilBattleEnds\",\"source\":\"relic.enemy_action.on_battle\"}}";
 
+        /// <summary>相对中心 Avatar(5) 的正交邻格。</summary>
         private static readonly SlotId sAdjacentSlot = SlotId.Board(2);
-        private static readonly SlotId sFarCornerSlot = SlotId.Board(1);
+        /// <summary>相对中心 Avatar(5) 的对角邻格（对普通近战不合格）。</summary>
+        private static readonly SlotId sDiagonalSlot = SlotId.Board(1);
+        /// <summary>相对中心 Avatar(5) 的另一正交邻格。</summary>
         private static readonly SlotId sOtherAdjacentSlot = SlotId.Board(4);
+        /// <summary>相对中心 Avatar(5) 的另一对角邻格。</summary>
+        private static readonly SlotId sOtherDiagonalSlot = SlotId.Board(9);
 
         private IArchitecture mArch;
         private IPhaseSystem mPhase;
@@ -73,7 +78,7 @@ namespace NineGrid.Core.Tests
             var highUid = SpawnOrthogonalMelee(sOtherAdjacentSlot, hp: 5, attack: 1, countdown: 1);
             Assert.Less(lowUid, highUid);
 
-            var far = SpawnOrthogonalMelee(sFarCornerSlot, hp: 5, attack: 1, countdown: 2);
+            var far = SpawnOrthogonalMelee(sOtherDiagonalSlot, hp: 5, attack: 1, countdown: 2);
             var noneUid = SpawnNonePattern(SlotId.Board(6), hp: 5, attack: 1);
 
             Assert.IsTrue(mPhase.RegisterEnemyActionPhase().Accepted);
@@ -109,7 +114,7 @@ namespace NineGrid.Core.Tests
         public void ResolveNext_NotAdjacent_CancelsAndResetsCountdown_NoDamage()
         {
             Assert.IsTrue(mPhase.StartNode(CreateEmptyNode()).Accepted);
-            var monsterUid = SpawnOrthogonalMelee(sFarCornerSlot, hp: 5, attack: 3, countdown: 1);
+            var monsterUid = SpawnOrthogonalMelee(sDiagonalSlot, hp: 5, attack: 3, countdown: 1);
             PrepareAvatar(hp: 20, armor: 0, attack: 0);
             var avatarHpBefore = AvatarHp();
 
@@ -193,7 +198,7 @@ namespace NineGrid.Core.Tests
         {
             Assert.IsTrue(mPhase.StartNode(CreateEmptyNode()).Accepted);
             var listed = SpawnOrthogonalMelee(sAdjacentSlot, hp: 5, attack: 1, countdown: 1);
-            var waiting = SpawnOrthogonalMelee(sFarCornerSlot, hp: 5, attack: 1, countdown: 3);
+            var waiting = SpawnOrthogonalMelee(sOtherDiagonalSlot, hp: 5, attack: 1, countdown: 3);
             PrepareAvatar(hp: 20, armor: 0, attack: 0);
 
             Assert.IsTrue(mPhase.RegisterEnemyActionPhase().Accepted);
@@ -246,7 +251,7 @@ namespace NineGrid.Core.Tests
         public void AttackChain_RunsEnemyPhaseAfterCountAndConditionalRotate()
         {
             Assert.IsTrue(mPhase.StartNode(CreateLivingNode()).Accepted);
-            PlaceSoleBoardCardAt(sFarCornerSlot);
+            PlaceSoleBoardCardAt(sDiagonalSlot);
             var monsterUid = SpawnOrthogonalMelee(sAdjacentSlot, hp: 99, attack: 2, countdown: 1);
             PrepareAvatar(hp: 20, armor: 0, attack: 1);
             var avatarHpBefore = AvatarHp();
@@ -320,7 +325,7 @@ namespace NineGrid.Core.Tests
         public void Attack_Kill_RotatesOnce_ThenEnemyPhase_WithoutSecondRotate()
         {
             Assert.IsTrue(mPhase.StartNode(CreateLivingNode()).Accepted);
-            PlaceSoleBoardCardAt(sFarCornerSlot);
+            PlaceSoleBoardCardAt(sDiagonalSlot);
             SpawnOrthogonalMelee(sAdjacentSlot, hp: 1, attack: 2, countdown: 1);
             PrepareAvatar(hp: 20, armor: 0, attack: 5);
             var startIndex = mPipeline.EventLog.Entries.Count;
@@ -335,6 +340,171 @@ namespace NineGrid.Core.Tests
             Assert.IsFalse(
                 mPhase.CurrentPhase == GamePhase.Defeat,
                 "击杀路径后敌方阶段不得因多余旋转外的原因卡死");
+        }
+
+        [Test]
+        public void ResolveNext_DiagonalMelee_FiresOnlyOnDiagonal_ResetsToFrequency3()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateEmptyNode()).Accepted);
+            var diagonalUid = SpawnPattern(
+                AttackPattern.DiagonalMelee, sDiagonalSlot, hp: 5, attack: 3, countdown: 1);
+            PrepareAvatar(hp: 20, armor: 0, attack: 0);
+            var hpBefore = AvatarHp();
+
+            Assert.IsTrue(mPhase.RegisterEnemyActionPhase().Accepted);
+            Assert.IsTrue(mPhase.ResolveNextEnemyAction().Accepted);
+
+            Assert.AreEqual(hpBefore - 3, AvatarHp(), "对角相邻应开火");
+            Assert.AreEqual(3, Countdown(diagonalUid));
+        }
+
+        [Test]
+        public void ResolveNext_DiagonalMelee_OrthogonalAdjacent_MissesAndResets()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateEmptyNode()).Accepted);
+            var monsterUid = SpawnPattern(
+                AttackPattern.DiagonalMelee, sAdjacentSlot, hp: 5, attack: 3, countdown: 1);
+            PrepareAvatar(hp: 20, armor: 0, attack: 0);
+            var hpBefore = AvatarHp();
+
+            Assert.IsTrue(mPhase.RegisterEnemyActionPhase().Accepted);
+            Assert.IsTrue(mPhase.ResolveNextEnemyAction().Accepted);
+
+            Assert.AreEqual(hpBefore, AvatarHp(), "正交相邻对斜角近战不合格");
+            Assert.AreEqual(3, Countdown(monsterUid), "错过窗口重置为频率");
+        }
+
+        [Test]
+        public void ResolveNext_DiagonalMelee_AvatarOffCenter_UsesTrueDiagonalNotNonOrthogonal()
+        {
+            // Avatar 挪到上边中格(2)：真对角=4/6；格9 非正交但亦非对角——「非正交」语义会误开火。
+            Assert.IsTrue(mPhase.StartNode(CreateEmptyNode()).Accepted);
+            MoveAvatarTo(SlotId.Board(2));
+            var trueDiagonal = SpawnPattern(
+                AttackPattern.DiagonalMelee, SlotId.Board(4), hp: 5, attack: 2, countdown: 1);
+            var fakeNonOrthogonal = SpawnPattern(
+                AttackPattern.DiagonalMelee, SlotId.Board(9), hp: 5, attack: 4, countdown: 1);
+            PrepareAvatar(hp: 20, armor: 0, attack: 0);
+            var hpBefore = AvatarHp();
+
+            Assert.IsTrue(mPhase.RegisterEnemyActionPhase().Accepted);
+            CollectionAssert.AreEqual(
+                new[] { trueDiagonal, fakeNonOrthogonal },
+                mPhase.PendingEnemyActionUids);
+
+            Assert.IsTrue(mPhase.ResolveNextEnemyAction().Accepted);
+            Assert.AreEqual(hpBefore - 2, AvatarHp(), "真对角应开火");
+            Assert.AreEqual(3, Countdown(trueDiagonal));
+
+            Assert.IsTrue(mPhase.ResolveNextEnemyAction().Accepted);
+            Assert.AreEqual(hpBefore - 2, AvatarHp(), "非正交远位不得按斜角近战开火");
+            Assert.AreEqual(3, Countdown(fakeNonOrthogonal));
+        }
+
+        [Test]
+        public void ResolveNext_OmnidirectionalMelee_FiresOnOrthogonalOrDiagonal_MissesWhenFar()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateEmptyNode()).Accepted);
+            var ortho = SpawnPattern(
+                AttackPattern.OmnidirectionalMelee, sAdjacentSlot, hp: 5, attack: 2, countdown: 1);
+            PrepareAvatar(hp: 20, armor: 0, attack: 0);
+            var hpBefore = AvatarHp();
+
+            Assert.IsTrue(mPhase.RegisterEnemyActionPhase().Accepted);
+            Assert.IsTrue(mPhase.ResolveNextEnemyAction().Accepted);
+            Assert.AreEqual(hpBefore - 2, AvatarHp(), "正交相邻应开火");
+            Assert.AreEqual(3, Countdown(ortho));
+
+            NineGridArchitecture.ResetForTests();
+            SetUp();
+            Assert.IsTrue(mPhase.StartNode(CreateEmptyNode()).Accepted);
+            var diag = SpawnPattern(
+                AttackPattern.OmnidirectionalMelee, sDiagonalSlot, hp: 5, attack: 2, countdown: 1);
+            PrepareAvatar(hp: 20, armor: 0, attack: 0);
+            hpBefore = AvatarHp();
+
+            Assert.IsTrue(mPhase.RegisterEnemyActionPhase().Accepted);
+            Assert.IsTrue(mPhase.ResolveNextEnemyAction().Accepted);
+            Assert.AreEqual(hpBefore - 2, AvatarHp(), "对角相邻应开火");
+            Assert.AreEqual(3, Countdown(diag));
+
+            // Avatar 在角(1) 时格9 非八向相邻。
+            NineGridArchitecture.ResetForTests();
+            SetUp();
+            Assert.IsTrue(mPhase.StartNode(CreateEmptyNode()).Accepted);
+            MoveAvatarTo(SlotId.Board(1));
+            var far = SpawnPattern(
+                AttackPattern.OmnidirectionalMelee, SlotId.Board(9), hp: 5, attack: 2, countdown: 1);
+            PrepareAvatar(hp: 20, armor: 0, attack: 0);
+            hpBefore = AvatarHp();
+
+            Assert.IsTrue(mPhase.RegisterEnemyActionPhase().Accepted);
+            Assert.IsTrue(mPhase.ResolveNextEnemyAction().Accepted);
+            Assert.AreEqual(hpBefore, AvatarHp(), "非八向相邻应错过");
+            Assert.AreEqual(3, Countdown(far));
+        }
+
+        [Test]
+        public void ResolveNext_Ranged_NoPositionGate_ResetsToFrequency5()
+        {
+            // Avatar 在角(1)、怪在对角远位(9)：近战全不合格，远程仍应开火。
+            Assert.IsTrue(mPhase.StartNode(CreateEmptyNode()).Accepted);
+            MoveAvatarTo(SlotId.Board(1));
+            var rangedUid = SpawnPattern(
+                AttackPattern.Ranged, SlotId.Board(9), hp: 5, attack: 3, countdown: 1);
+            PrepareAvatar(hp: 20, armor: 0, attack: 0);
+            var hpBefore = AvatarHp();
+
+            Assert.IsTrue(mPhase.RegisterEnemyActionPhase().Accepted);
+            Assert.IsTrue(mPhase.ResolveNextEnemyAction().Accepted);
+
+            Assert.AreEqual(hpBefore - 3, AvatarHp(), "远程无位置限制");
+            Assert.AreEqual(5, Countdown(rangedUid), "开火后重置为频率 5");
+        }
+
+        [Test]
+        public void MissedWindow_ResetsCountdownToFrequency_ForAllFiringPatterns()
+        {
+            AssertMissedWindowResets(
+                AttackPattern.OrthogonalMelee,
+                avatarSlot: SlotId.Board(5),
+                missSlot: sDiagonalSlot,
+                expectedFrequency: 3);
+            AssertMissedWindowResets(
+                AttackPattern.DiagonalMelee,
+                avatarSlot: SlotId.Board(5),
+                missSlot: sAdjacentSlot,
+                expectedFrequency: 3);
+            AssertMissedWindowResets(
+                AttackPattern.OmnidirectionalMelee,
+                avatarSlot: SlotId.Board(1),
+                missSlot: SlotId.Board(9),
+                expectedFrequency: 3);
+        }
+
+        private void AssertMissedWindowResets(
+            AttackPattern pattern,
+            SlotId avatarSlot,
+            SlotId missSlot,
+            int expectedFrequency)
+        {
+            NineGridArchitecture.ResetForTests();
+            SetUp();
+            Assert.IsTrue(mPhase.StartNode(CreateEmptyNode()).Accepted);
+            if (avatarSlot != SlotId.Board(5))
+            {
+                MoveAvatarTo(avatarSlot);
+            }
+
+            var uid = SpawnPattern(pattern, missSlot, hp: 5, attack: 3, countdown: 1);
+            PrepareAvatar(hp: 20, armor: 0, attack: 0);
+            var hpBefore = AvatarHp();
+
+            Assert.IsTrue(mPhase.RegisterEnemyActionPhase().Accepted);
+            Assert.IsTrue(mPhase.ResolveNextEnemyAction().Accepted);
+
+            Assert.AreEqual(hpBefore, AvatarHp(), pattern + " 位置不合格不得造成伤害");
+            Assert.AreEqual(expectedFrequency, Countdown(uid), pattern + " 错过窗口应重置为频率");
         }
 
         private static int CountType(IReadOnlyList<CoreGameEvent> events, CoreEventType type)
@@ -353,17 +523,31 @@ namespace NineGrid.Core.Tests
 
         private int SpawnOrthogonalMelee(SlotId slot, int hp, int attack, int countdown)
         {
-            var draft = new CardDraft("monster.test.melee", CardKind.Monster)
+            return SpawnPattern(AttackPattern.OrthogonalMelee, slot, hp, attack, countdown);
+        }
+
+        private int SpawnPattern(AttackPattern pattern, SlotId slot, int hp, int attack, int countdown)
+        {
+            var frequency = AttackPatternRules.Frequency(pattern);
+            var draft = new CardDraft("monster.test.pattern." + pattern, CardKind.Monster)
             {
                 MaxHp = hp,
                 Attack = attack,
-                AttackPattern = AttackPattern.OrthogonalMelee,
-                ActionFrequency = 3
+                AttackPattern = pattern,
+                ActionFrequency = frequency
             };
             var card = draft.Create(Registry());
             card.Counters.Set(CoreCounterKeys.AttackPatternCountdown, countdown);
             Board().PlaceCard(card, slot);
             return card.Uid;
+        }
+
+        private void MoveAvatarTo(SlotId slot)
+        {
+            var board = Board();
+            var avatar = Registry().Get(board.AvatarUid.Value);
+            board.SetAvatar(avatar, slot);
+            Assert.AreEqual(slot, board.AvatarSlot.Value);
         }
 
         private int SpawnNonePattern(SlotId slot, int hp, int attack)
