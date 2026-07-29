@@ -96,7 +96,8 @@ namespace NineGrid.Flow
         private Color _maxHpBaseColor = Color.white;
         private bool _hasMaxHpBaseColor;
         private Vector3 _bloodBarBasePos;
-        private bool _hasBloodBarBasePos;
+        private Vector3 _bloodBarBaseScale = Vector3.one;
+        private bool _hasBloodBarBasePose;
         private Tween _fillTween;
         private Tween _slotTween;
         private Tween _hpNumberTween;
@@ -281,11 +282,33 @@ namespace NineGrid.Flow
                 _hasMaxHpBaseColor = true;
             }
 
-            if (bloodBarRoot != null && !_hasBloodBarBasePos)
+            CaptureBloodBarBasePoseIfNeeded();
+        }
+
+        /// <summary>
+        /// 记住场景里血条根的位姿（含 UI 描边加粗后的 scale×2），避免 tween 收尾写回 (1,1,1)。
+        /// </summary>
+        private void CaptureBloodBarBasePoseIfNeeded()
+        {
+            if (bloodBarRoot == null || _hasBloodBarBasePose)
             {
-                _bloodBarBasePos = bloodBarRoot.localPosition;
-                _hasBloodBarBasePos = true;
+                return;
             }
+
+            _bloodBarBasePos = bloodBarRoot.localPosition;
+            _bloodBarBaseScale = bloodBarRoot.localScale;
+            _hasBloodBarBasePose = true;
+        }
+
+        private void RestoreBloodBarBasePose()
+        {
+            if (bloodBarRoot == null || !_hasBloodBarBasePose)
+            {
+                return;
+            }
+
+            bloodBarRoot.localPosition = _bloodBarBasePos;
+            bloodBarRoot.localScale = _bloodBarBaseScale;
         }
 
         private void CaptureVesselBaseIfNeeded()
@@ -545,28 +568,24 @@ namespace NineGrid.Flow
                 return;
             }
 
-            if (!_hasBloodBarBasePos)
-            {
-                _bloodBarBasePos = bloodBarRoot.localPosition;
-                _hasBloodBarBasePos = true;
-            }
-
+            CaptureBloodBarBasePoseIfNeeded();
             _barShakeTween?.Kill();
-            bloodBarRoot.localPosition = _bloodBarBasePos;
+            RestoreBloodBarBasePose();
             if (damage)
             {
                 _barShakeTween = bloodBarRoot
                     .DOShakePosition(0.22f, new Vector3(0.06f, 0.04f, 0f), 18, 90f, false, true)
                     .SetUpdate(true)
                     .SetLink(bloodBarRoot.gameObject, LinkBehaviour.KillOnDestroy)
-                    .OnComplete(() => bloodBarRoot.localPosition = _bloodBarBasePos);
+                    .OnComplete(RestoreBloodBarBasePose);
             }
             else
             {
                 _barShakeTween = bloodBarRoot
                     .DOPunchScale(new Vector3(0.06f, 0.1f, 0f), 0.28f, 8, 0.6f)
                     .SetUpdate(true)
-                    .SetLink(bloodBarRoot.gameObject, LinkBehaviour.KillOnDestroy);
+                    .SetLink(bloodBarRoot.gameObject, LinkBehaviour.KillOnDestroy)
+                    .OnComplete(RestoreBloodBarBasePose);
             }
         }
 
@@ -795,11 +814,7 @@ namespace NineGrid.Flow
                 _displayedHp = _coreHp;
             }
 
-            if (bloodBarRoot != null && _hasBloodBarBasePos)
-            {
-                bloodBarRoot.localPosition = _bloodBarBasePos;
-                bloodBarRoot.localScale = Vector3.one;
-            }
+            RestoreBloodBarBasePose();
 
             if (bloodFill != null)
             {

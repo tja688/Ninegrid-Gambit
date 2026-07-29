@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -20,6 +19,7 @@ namespace NineGrid.Presentation.Editor
             "Assets/Arts/Images/Png/2D Pixel Quest Vol3_ The UI-GUI";
 
         private const float AlreadyProcessedLossyScale = 1.75f;
+        private const string MarkerName = "__UiStroke2x";
 
         private static readonly string[] PrefabPaths =
         {
@@ -57,13 +57,22 @@ namespace NineGrid.Presentation.Editor
             if (EditorSceneManager.GetActiveScene().path != scenePath)
                 EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
 
-            var sceneCount = ProcessOpenSceneRoots(packGuids, dryRun, report);
+            var sceneCount = 0;
+            var sceneMarkers = 0;
+            if (!dryRun)
+                sceneMarkers += StampMarkersOnThickened(packGuids, report, "scene-pre");
+
+            sceneCount = ProcessOpenSceneRoots(packGuids, dryRun, report);
             report.AppendLine($"MainScene processed={sceneCount}");
 
-            if (!dryRun && sceneCount > 0)
+            if (!dryRun)
+                sceneMarkers += StampMarkersOnThickened(packGuids, report, "scene-post");
+
+            if (!dryRun && (sceneCount > 0 || sceneMarkers > 0))
             {
                 EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
                 EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
+                AssetDatabase.SaveAssets();
             }
 
             foreach (var prefabPath in PrefabPaths)
@@ -79,6 +88,42 @@ namespace NineGrid.Presentation.Editor
             }
 
             return report.ToString();
+        }
+
+        private static int StampMarkersOnThickened(
+            HashSet<string> packGuids,
+            StringBuilder report,
+            string context)
+        {
+            var renderers = UnityEngine.Object.FindObjectsByType<SpriteRenderer>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+            var stamped = StampMarkersOnRenderers(renderers, packGuids);
+            report.AppendLine($"{context} markersStamped={stamped}");
+            return stamped;
+        }
+
+        private static int StampMarkersOnRenderers(
+            IEnumerable<SpriteRenderer> renderers,
+            HashSet<string> packGuids)
+        {
+            var stamped = 0;
+            foreach (var sr in renderers)
+            {
+                if (sr == null || sr.sprite == null || !IsPackSprite(sr.sprite, packGuids))
+                    continue;
+                var t = sr.transform;
+                if (HasMarker(t))
+                    continue;
+                if (t.lossyScale.x >= 1.15f || t.lossyScale.y >= 1.15f ||
+                    Mathf.Abs(t.localScale.x) >= 1.15f || Mathf.Abs(t.localScale.y) >= 1.15f)
+                {
+                    EnsureMarker(t);
+                    stamped++;
+                }
+            }
+
+            return stamped;
         }
 
         private static HashSet<string> BuildPackGuidSet()
@@ -111,9 +156,22 @@ namespace NineGrid.Presentation.Editor
             try
             {
                 var renderers = root.GetComponentsInChildren<SpriteRenderer>(true);
+                var pre = 0;
+                if (!dryRun)
+                {
+                    pre = StampMarkersOnRenderers(renderers, packGuids);
+                    report.AppendLine($"  {prefabPath} markersPre={pre}");
+                }
+
                 var count = ProcessRenderers(renderers, packGuids, dryRun, report, prefabPath);
-                if (!dryRun && count > 0)
-                    PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+                if (!dryRun)
+                {
+                    var stamped = StampMarkersOnRenderers(renderers, packGuids);
+                    report.AppendLine($"  {prefabPath} markersPost={stamped}");
+                    if (count > 0 || stamped > 0 || pre > 0)
+                        PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+                }
+
                 return count;
             }
             finally
@@ -143,8 +201,9 @@ namespace NineGrid.Presentation.Editor
                 if (sr == null || sr.sprite == null)
                     continue;
 
-                // 父级已 ×2 时 lossyScale 已加粗，避免重复。
-                if (t.lossyScale.x >= AlreadyProcessedLossyScale ||
+                // 父级已 ×2，或本节点已打标时跳过，避免对原始 scale≠1 的对象二次加倍。
+                if (HasMarker(t) ||
+                    t.lossyScale.x >= AlreadyProcessedLossyScale ||
                     t.lossyScale.y >= AlreadyProcessedLossyScale)
                 {
                     continue;
@@ -208,25 +267,47 @@ namespace NineGrid.Presentation.Editor
                     EditorUtility.SetDirty(col);
                 }
 
-                // 同物体上的 TMP 不随 mesh 变「糊」，但父 scale×2 会放大字，需 ÷2。
-                foreach (var tmp in t.GetComponents<TMP_Text>())
-                {
-                    // TMP 在同一节点时没有独立 transform；靠子节点补偿。此处仅标记 dirty。
-                    EditorUtility.SetDirty(tmp);
-                }
-
                 EditorUtility.SetDirty(t);
                 EditorUtility.SetDirty(sr);
+                EnsureMarker(t);
+                if (PrefabUtility.IsPartOfPrefabInstance(t))
+                    PrefabUtility.RecordPrefabInstancePropertyModifications(t.gameObject);
                 processed++;
             }
 
             return processed;
         }
 
+        private static bool HasMarker(Transform t)
+        {
+            for (var i = 0; i < t.childCount; i++)
+            {
+                if (t.GetChild(i).name == MarkerName)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static void EnsureMarker(Transform t)
+        {
+            if (HasMarker(t))
+                return;
+            var marker = new GameObject(MarkerName);
+            marker.hideFlags = HideFlags.HideInHierarchy;
+            marker.transform.SetParent(t, false);
+            marker.transform.localPosition = Vector3.zero;
+            marker.transform.localScale = Vector3.one;
+        }
+
         private static bool IsPackSprite(Sprite sprite, HashSet<string> packGuids)
         {
             var path = AssetDatabase.GetAssetPath(sprite);
             if (string.IsNullOrEmpty(path))
+                return false;
+            // 手柄示意图不参与描边加粗。
+            if (path.IndexOf("Xbox Controller", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                path.IndexOf("Ps controllers", StringComparison.OrdinalIgnoreCase) >= 0)
                 return false;
             if (path.StartsWith(PackRoot, StringComparison.OrdinalIgnoreCase))
                 return true;
