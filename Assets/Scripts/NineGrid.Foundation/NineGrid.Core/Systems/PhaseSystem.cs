@@ -29,7 +29,11 @@ namespace NineGrid.Core.Systems
             /// </summary>
             CoreCommandResult ResolvePostKillBoard();
             /// <summary>
-            /// 击杀后分拍：交互计数 + 补牌（Fill）。不旋转。
+            /// 九宫格互动分拍：全局 interactionCount +1（触发 OnInteract）。不含补牌/旋转。
+            /// </summary>
+            CoreCommandResult AdvanceInteractionCount();
+            /// <summary>
+            /// 击杀后分拍：仅补牌（Fill）。不含交互计数、不旋转。
             /// </summary>
             CoreCommandResult ResolvePostKillFill();
             /// <summary>
@@ -172,9 +176,12 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new EndBattleScopeCleanupAction());
             var resolved = pipeline.RunToCompletion();
 
+            // 九宫格互动：交战无论是否击杀都推进互动计数（ADR-0012 / #75）。
+            resolved += AdvanceInteractionCountInternal();
             if (ContainsEventSince(startIndex, CoreEventType.CardKilled, targetUid))
             {
-                resolved += ResolveInteractiveRotation();
+                resolved += ResolvePostKillFillInternal();
+                resolved += ResolvePostKillRotateInternal();
             }
 
             return CoreCommandResult.Accept(resolved);
@@ -264,8 +271,13 @@ namespace NineGrid.Core.Systems
 
         public CoreCommandResult ResolvePostKillBoard()
         {
-            // 兼容整拍：与历史 ResolveInteractiveRotation 同语义（单次 RunToCompletion）。
+            // 兼容整拍：计数 + 补牌 + 旋转（单次语义由三步合成）。
             return CoreCommandResult.Accept(ResolveInteractiveRotation());
+        }
+
+        public CoreCommandResult AdvanceInteractionCount()
+        {
+            return CoreCommandResult.Accept(AdvanceInteractionCountInternal());
         }
 
         public CoreCommandResult ResolvePostKillFill()
@@ -661,15 +673,20 @@ namespace NineGrid.Core.Systems
                 return 0;
             }
 
-            // 旧整拍入口（Attack / Pickup / ResolvePostKillBoard）：单次 RunToCompletion 保语义。
-            // 导演分拍请用 ResolvePostKillFill / ResolvePostKillRotate。
+            // 旧整拍入口（Pickup / ResolvePostKillBoard）：三步合成，保既有语义。
+            // 导演分拍请用 AdvanceInteractionCount / ResolvePostKillFill / ResolvePostKillRotate。
+            var resolved = AdvanceInteractionCountInternal();
+            resolved += ResolvePostKillFillInternal();
+            resolved += ResolvePostKillRotateInternal();
+            return resolved;
+        }
+
+        private int AdvanceInteractionCountInternal()
+        {
+            // 即使本拍交战已把相位推到 Defeat，仍计一次九宫格互动（ADR-0012）。
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new ModifyInteractionCountAction(1));
-            pipeline.Enqueue(new FillEmptySlotsAction());
-            pipeline.Enqueue(new RotateBoardClockwiseAction());
-            var resolved = pipeline.RunToCompletion();
-            resolved += CompleteNodeIfCleared();
-            return resolved;
+            return pipeline.RunToCompletion();
         }
 
         private int ResolvePostKillFillInternal()
@@ -680,7 +697,6 @@ namespace NineGrid.Core.Systems
             }
 
             var pipeline = this.GetSystem<IActionPipelineSystem>();
-            pipeline.Enqueue(new ModifyInteractionCountAction(1));
             pipeline.Enqueue(new FillEmptySlotsAction());
             return pipeline.RunToCompletion();
         }

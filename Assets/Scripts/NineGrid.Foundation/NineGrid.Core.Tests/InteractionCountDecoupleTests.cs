@@ -10,10 +10,10 @@ using QFramework;
 namespace NineGrid.Core.Tests
 {
     /// <summary>
-    /// 契约测试：R1（Fill→Rotate）/ E1（ClickEmpty 邻接）/ 击杀旋转。
-    /// 直接走 PhaseSystem + EventLog，不依赖 CoreOperationFacade。
+    /// #75：互动计数与补牌/旋转解耦；未击杀交战漏计修复；道具使用不计互动。
+    /// Seam：IPhaseSystem 互动命令面（见 #74 Testing Decisions）。
     /// </summary>
-    public sealed class CoreOperationContractTests
+    public sealed class InteractionCountDecoupleTests
     {
         private static readonly SlotId sAdjacentSlot = SlotId.Board(2);
         private static readonly SlotId sFarCornerSlot = SlotId.Board(1);
@@ -42,70 +42,80 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void Attack_Kill_EmitsKillThenFillThenRotate_R1()
+        public void Attack_NonKill_AdvancesInteractionCount_WithoutRotate()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 99, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sAdjacentSlot);
+            var player = mArch.GetModel<PlayerModel>();
+            var before = player.InteractionCount.Value;
+            var startIndex = mPipeline.EventLog.Entries.Count;
+
+            Assert.IsTrue(mPhase.Attack(sAdjacentSlot).Accepted);
+
+            Assert.AreEqual(before + 1, player.InteractionCount.Value);
+            var events = SliceEvents(startIndex);
+            Assert.IsTrue(ContainsType(events, CoreEventType.InteractionChanged));
+            Assert.IsFalse(ContainsType(events, CoreEventType.CardKilled));
+            Assert.IsFalse(ContainsType(events, CoreEventType.BoardRotated));
+        }
+
+        [Test]
+        public void Attack_Kill_AdvancesInteractionCountOnce_WithFillAndRotate()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sAdjacentSlot);
+            var player = mArch.GetModel<PlayerModel>();
+            var before = player.InteractionCount.Value;
             var startIndex = mPipeline.EventLog.Entries.Count;
 
-            var result = mPhase.Attack(sAdjacentSlot);
-            Assert.IsTrue(result.Accepted, result.Reason);
+            Assert.IsTrue(mPhase.Attack(sAdjacentSlot).Accepted);
 
+            Assert.AreEqual(before + 1, player.InteractionCount.Value);
             var events = SliceEvents(startIndex);
+            Assert.AreEqual(1, CountType(events, CoreEventType.InteractionChanged));
             Assert.IsTrue(ContainsType(events, CoreEventType.CardKilled));
             AssertFillBeforeRotate(events);
-            Assert.IsTrue(ContainsType(events, CoreEventType.InteractionChanged));
         }
 
         [Test]
-        public void ResolvePostKillBoard_FillBeforeRotate_R1()
+        public void Pickup_AdvancesInteractionCount()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
-            PlaceSoleBoardCardAt(sAdjacentSlot);
-
-            // 先用表现层可信命中清掉怪，再单独测 PostKill 盘面顺序。
+            PlaceSoleBoardCardAt(sFarCornerSlot);
             var board = mArch.GetModel<BoardModel>();
-            var targetUid = board.GetCardUid(sAdjacentSlot);
-            Assert.Greater(targetUid, 0);
-            var avatarUid = board.AvatarUid.Value;
-            Assert.IsTrue(mPhase.ApplyCombatHit(avatarUid, targetUid).Accepted);
+            var registry = mArch.GetModel<CardRegistry>();
+            var monsterUid = board.GetCardUid(sFarCornerSlot);
+            board.RemoveCard(registry.Get(monsterUid));
+            SpawnHelpOnBoard("help.throwing_knife", sAdjacentSlot);
+            Assert.AreEqual(GamePhase.InteractionLoop, mPhase.CurrentPhase);
 
-            var startIndex = mPipeline.EventLog.Entries.Count;
-            var result = mPhase.ResolvePostKillBoard();
+            var player = mArch.GetModel<PlayerModel>();
+            var before = player.InteractionCount.Value;
+
+            var result = mPhase.PickupItem(sAdjacentSlot);
             Assert.IsTrue(result.Accepted, result.Reason);
 
-            var events = SliceEvents(startIndex);
-            AssertFillBeforeRotate(events);
-            Assert.IsTrue(ContainsType(events, CoreEventType.InteractionChanged));
+            Assert.AreEqual(before + 1, player.InteractionCount.Value);
         }
 
         [Test]
-        public void ResolvePostKillFill_ThenRotate_SplitBatches_R1()
+        public void ClickEmpty_ThenResolvePostKillBoard_AdvancesInteractionCount()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
-            PlaceSoleBoardCardAt(sAdjacentSlot);
+            PlaceSoleBoardCardAt(sFarCornerSlot);
+            Assert.IsTrue(mArch.GetModel<BoardModel>().IsEmpty(sAdjacentSlot));
+            var player = mArch.GetModel<PlayerModel>();
+            var before = player.InteractionCount.Value;
 
-            var board = mArch.GetModel<BoardModel>();
-            var targetUid = board.GetCardUid(sAdjacentSlot);
-            Assert.Greater(targetUid, 0);
-            Assert.IsTrue(mPhase.ApplyCombatHit(board.AvatarUid.Value, targetUid).Accepted);
+            Assert.IsTrue(mPhase.ClickEmpty(sAdjacentSlot).Accepted);
+            Assert.AreEqual(before, player.InteractionCount.Value, "ClickEmpty 本身不计；留给盘面分拍");
 
-            var fillStart = mPipeline.EventLog.Entries.Count;
-            Assert.IsTrue(mPhase.ResolvePostKillFill().Accepted);
-            var fillEvents = SliceEvents(fillStart);
-            Assert.IsTrue(ContainsType(fillEvents, CoreEventType.SlotsFilled));
-            Assert.IsFalse(ContainsType(fillEvents, CoreEventType.InteractionChanged));
-            Assert.IsFalse(ContainsType(fillEvents, CoreEventType.BoardRotated));
-
-            var rotateStart = mPipeline.EventLog.Entries.Count;
-            Assert.IsTrue(mPhase.ResolvePostKillRotate().Accepted);
-            var rotateEvents = SliceEvents(rotateStart);
-            Assert.IsTrue(ContainsType(rotateEvents, CoreEventType.BoardRotated));
-            Assert.IsFalse(ContainsType(rotateEvents, CoreEventType.SlotsFilled));
+            Assert.IsTrue(mPhase.ResolvePostKillBoard().Accepted);
+            Assert.AreEqual(before + 1, player.InteractionCount.Value);
         }
 
         [Test]
-        public void ApplyUseItem_Kill_DoesNotRotate_UntilSplitBatches()
+        public void UseItem_DoesNotAdvanceInteractionCount_EvenAfterKillFillRotate()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sAdjacentSlot);
@@ -124,72 +134,52 @@ namespace NineGrid.Core.Tests
             var knifeUid = mArch.GetModel<DeckModel>().ItemSlotUids[
                 mArch.GetModel<DeckModel>().ItemSlotUids.Count - 1];
 
-            var useStart = mPipeline.EventLog.Entries.Count;
+            var player = mArch.GetModel<PlayerModel>();
+            var before = player.InteractionCount.Value;
+
             Assert.IsTrue(
                 mPhase.ApplyUseItem(knifeUid, new List<int> { targetUid }, null).Accepted);
-            var useEvents = SliceEvents(useStart);
-            Assert.IsTrue(ContainsType(useEvents, CoreEventType.CardKilled));
-            Assert.IsFalse(ContainsType(useEvents, CoreEventType.BoardRotated));
-            Assert.IsFalse(ContainsType(useEvents, CoreEventType.SlotsFilled));
-
-            var fillStart = mPipeline.EventLog.Entries.Count;
             Assert.IsTrue(mPhase.ResolvePostKillFill().Accepted);
-            Assert.IsTrue(ContainsType(SliceEvents(fillStart), CoreEventType.SlotsFilled));
-
-            var rotateStart = mPipeline.EventLog.Entries.Count;
             Assert.IsTrue(mPhase.ResolvePostKillRotate().Accepted);
-            Assert.IsTrue(ContainsType(SliceEvents(rotateStart), CoreEventType.BoardRotated));
+
+            Assert.AreEqual(
+                before,
+                player.InteractionCount.Value,
+                "道具使用（含击杀后补牌旋转）不得推进 interactionCount");
         }
 
         [Test]
-        public void ClickEmpty_Adjacent_EmitsEmptyClicked_WithoutRotation()
-        {
-            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
-            // 把唯一怪挪到远角，邻接格空出。
-            PlaceSoleBoardCardAt(sFarCornerSlot);
-            Assert.IsTrue(mArch.GetModel<BoardModel>().IsEmpty(sAdjacentSlot));
-
-            var startIndex = mPipeline.EventLog.Entries.Count;
-            var result = mPhase.ClickEmpty(sAdjacentSlot);
-            Assert.IsTrue(result.Accepted, result.Reason);
-
-            var events = SliceEvents(startIndex);
-            Assert.IsTrue(ContainsType(events, CoreEventType.EmptyClicked));
-            Assert.IsFalse(ContainsType(events, CoreEventType.BoardRotated));
-            Assert.IsFalse(ContainsType(events, CoreEventType.SlotsFilled));
-        }
-
-        [Test]
-        public void ClickEmpty_ThenResolvePostKillBoard_RotatesWithR1Order()
-        {
-            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
-            PlaceSoleBoardCardAt(sFarCornerSlot);
-            Assert.IsTrue(mArch.GetModel<BoardModel>().IsEmpty(sAdjacentSlot));
-
-            Assert.IsTrue(mPhase.ClickEmpty(sAdjacentSlot).Accepted);
-            var startIndex = mPipeline.EventLog.Entries.Count;
-            var result = mPhase.ResolvePostKillBoard();
-            Assert.IsTrue(result.Accepted, result.Reason);
-
-            var events = SliceEvents(startIndex);
-            AssertFillBeforeRotate(events);
-            Assert.IsTrue(ContainsType(events, CoreEventType.InteractionChanged));
-        }
-
-        [Test]
-        public void ClickEmpty_NonAdjacent_Rejects_E1()
+        public void AdvanceFillRotate_AreIndependentlyCallable()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sAdjacentSlot);
-            Assert.IsTrue(mArch.GetModel<BoardModel>().IsEmpty(sFarCornerSlot));
+            var board = mArch.GetModel<BoardModel>();
+            var targetUid = board.GetCardUid(sAdjacentSlot);
+            Assert.IsTrue(mPhase.ApplyCombatHit(board.AvatarUid.Value, targetUid).Accepted);
 
-            var result = mPhase.ClickEmpty(sFarCornerSlot);
-            Assert.IsFalse(result.Accepted);
-            Assert.IsTrue(
-                result.Reason.Contains("outside interaction range")
-                || result.Reason.Contains("not empty")
-                || result.Reason.Contains("not legal"),
-                result.Reason);
+            var player = mArch.GetModel<PlayerModel>();
+            var before = player.InteractionCount.Value;
+
+            var countStart = mPipeline.EventLog.Entries.Count;
+            Assert.IsTrue(mPhase.AdvanceInteractionCount().Accepted);
+            Assert.AreEqual(before + 1, player.InteractionCount.Value);
+            Assert.IsTrue(ContainsType(SliceEvents(countStart), CoreEventType.InteractionChanged));
+            Assert.IsFalse(ContainsType(SliceEvents(countStart), CoreEventType.SlotsFilled));
+            Assert.IsFalse(ContainsType(SliceEvents(countStart), CoreEventType.BoardRotated));
+
+            var fillStart = mPipeline.EventLog.Entries.Count;
+            Assert.IsTrue(mPhase.ResolvePostKillFill().Accepted);
+            var fillEvents = SliceEvents(fillStart);
+            Assert.IsTrue(ContainsType(fillEvents, CoreEventType.SlotsFilled));
+            Assert.IsFalse(ContainsType(fillEvents, CoreEventType.InteractionChanged));
+            Assert.IsFalse(ContainsType(fillEvents, CoreEventType.BoardRotated));
+
+            var rotateStart = mPipeline.EventLog.Entries.Count;
+            Assert.IsTrue(mPhase.ResolvePostKillRotate().Accepted);
+            var rotateEvents = SliceEvents(rotateStart);
+            Assert.IsTrue(ContainsType(rotateEvents, CoreEventType.BoardRotated));
+            Assert.IsFalse(ContainsType(rotateEvents, CoreEventType.SlotsFilled));
+            Assert.IsFalse(ContainsType(rotateEvents, CoreEventType.InteractionChanged));
         }
 
         private static NodeDeckOptions CreateSingleMonsterNode(int hp, int attack)
@@ -199,6 +189,14 @@ namespace NineGrid.Core.Tests
                 PlayerOpeningCount = 0,
                 EnemyOpeningCount = 1
             }.AddEnemyCard(new CardDraft("monster.test", CardKind.Monster) { MaxHp = hp, Attack = attack });
+        }
+
+        private void SpawnHelpOnBoard(string defId, SlotId slot)
+        {
+            mPipeline.Enqueue(
+                new SpawnCardAction(defId, CardKind.HelpCard, ZoneId.Board, slot, 1, "test"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+            Assert.Greater(mArch.GetModel<BoardModel>().GetCardUid(slot), 0);
         }
 
         private void PlaceSoleBoardCardAt(SlotId targetSlot)
@@ -258,6 +256,20 @@ namespace NineGrid.Core.Tests
         private static bool ContainsType(IReadOnlyList<CoreGameEvent> events, CoreEventType type)
         {
             return IndexOfType(events, type) >= 0;
+        }
+
+        private static int CountType(IReadOnlyList<CoreGameEvent> events, CoreEventType type)
+        {
+            var count = 0;
+            for (var i = 0; i < events.Count; i++)
+            {
+                if (events[i].Type == type)
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         private static int IndexOfType(IReadOnlyList<CoreGameEvent> events, CoreEventType type)

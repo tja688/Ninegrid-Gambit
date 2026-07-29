@@ -72,9 +72,17 @@ namespace NineGrid.Flow.Presentation
             var clickGate = PresentationSyncBatchGate.FromSync(
                 sync,
                 () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ClickEmptyCommand(slot)), trackFusion: false));
+            // 点空格属九宫格互动：计数与补牌解耦（#75）；Fill 批解算前直推进计数。
             var fillGate = PresentationSyncBatchGate.FromSync(
                 sync,
-                () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ResolvePostKillFillCommand()), trackFusion: true));
+                () => ResolveAndProject(
+                    slotIndex,
+                    () =>
+                    {
+                        mArchitecture.SendCommand(new AdvanceInteractionCountCommand());
+                        return mDispatcher.Send(new ResolvePostKillFillCommand());
+                    },
+                    trackFusion: true));
             var rotateGate = PresentationSyncBatchGate.FromSync(
                 sync,
                 () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ResolvePostKillRotateCommand()), trackFusion: true));

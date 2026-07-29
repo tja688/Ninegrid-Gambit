@@ -141,6 +141,10 @@ namespace NineGrid.Flow.Presentation
                     {
                         EnqueueCounterAftermath(t, slotIndex, targetUid, attackerUid);
                     }
+                    else
+                    {
+                        EnqueueNonKillInteractionAdvance(t, slotIndex);
+                    }
                 }));
         }
 
@@ -168,7 +172,8 @@ namespace NineGrid.Flow.Presentation
             timeline.Enqueue(new TimelineBranchStep(
                 timeline,
                 () => !mLastAvatarDefeated,
-                t => EnqueuePlayerReplyAfterFirstStrike(t, slotIndex, avatarUid, monsterUid)));
+                t => EnqueuePlayerReplyAfterFirstStrike(t, slotIndex, avatarUid, monsterUid),
+                t => EnqueueNonKillInteractionAdvance(t, slotIndex)));
         }
 
         private void EnqueuePlayerReplyAfterFirstStrike(
@@ -187,15 +192,24 @@ namespace NineGrid.Flow.Presentation
                 timeline,
                 () => mLastHitKilledTarget,
                 t => EnqueueKillAftermath(t, boardSlot),
-                enqueueCounterAftermath: null));
+                t => EnqueueNonKillInteractionAdvance(t, boardSlot)));
         }
 
         private void EnqueueKillAftermath(BattleTimeline timeline, int boardSlot)
         {
             var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
+            // 九宫格互动：击杀路径在补牌前推进互动计数（与 Fill 解耦，#75）。
+            // 计数走 SendCommand（不开 Present 批），Fill 仍走 Dispatcher 开批。
             var fillGate = PresentationSyncBatchGate.FromSync(
                 sync,
-                () => ResolveAndProject(boardSlot, () => mDispatcher.Send(new ResolvePostKillFillCommand()), trackFusion: true));
+                () => ResolveAndProject(
+                    boardSlot,
+                    () =>
+                    {
+                        mArchitecture.SendCommand(new AdvanceInteractionCountCommand());
+                        return mDispatcher.Send(new ResolvePostKillFillCommand());
+                    },
+                    trackFusion: true));
             var rotateGate = PresentationSyncBatchGate.FromSync(
                 sync,
                 () => ResolveAndProject(boardSlot, () => mDispatcher.Send(new ResolvePostKillRotateCommand()), trackFusion: true));
@@ -217,6 +231,12 @@ namespace NineGrid.Flow.Presentation
                     mOnBoardBatchProjected));
         }
 
+        private void EnqueueNonKillInteractionAdvance(BattleTimeline timeline, int boardSlot)
+        {
+            // 未击杀无补牌批可挂载计数：静默推进，不另开 Present（InteractionChanged 为 Beat.None）。
+            timeline.Enqueue(new InteractionCountAdvanceStep(mArchitecture));
+        }
+
         private void EnqueueCounterAftermath(
             BattleTimeline timeline,
             int boardSlot,
@@ -225,6 +245,7 @@ namespace NineGrid.Flow.Presentation
         {
             if (mCounterPresentChannel == null)
             {
+                EnqueueNonKillInteractionAdvance(timeline, boardSlot);
                 return;
             }
 
@@ -245,6 +266,7 @@ namespace NineGrid.Flow.Presentation
 
             if (monsterUid <= 0 || avatarUid <= 0)
             {
+                EnqueueNonKillInteractionAdvance(timeline, boardSlot);
                 return;
             }
 
@@ -255,6 +277,30 @@ namespace NineGrid.Flow.Presentation
                 slice: "AttackCounter");
             timeline.Enqueue(new ResolveBatchStep(counterGate));
             timeline.Enqueue(new PresentStep(counterGate, mCounterPresentChannel, "CounterHit"));
+            EnqueueNonKillInteractionAdvance(timeline, boardSlot);
+        }
+
+        private sealed class InteractionCountAdvanceStep : ITimelineStep
+        {
+            private readonly IArchitecture mArch;
+            private bool mDone;
+
+            public InteractionCountAdvanceStep(IArchitecture architecture)
+            {
+                mArch = architecture;
+            }
+
+            public TimelineStepStatus Tick(float deltaTime)
+            {
+                if (mDone)
+                {
+                    return TimelineStepStatus.Finished;
+                }
+
+                mDone = true;
+                mArch.SendCommand(new AdvanceInteractionCountCommand());
+                return TimelineStepStatus.Finished;
+            }
         }
 
         private CoreCommandDispatchResult ResolveHitAndProject(int boardSlot, int attackerUid, int targetUid)

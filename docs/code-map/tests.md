@@ -37,6 +37,7 @@
 | `EffectSelfDeclarationContractTests` | #72 / ADR-0010：requires 校验（未知 token / mount 错配 / 缺声明）；拒上下文开关旧形；生产卡挂载显式场景声明审计归零；`ValidateCatalog` 绿 |
 | `CardOwnedTriggerScopeGateRegressionTests` / `CardZoneDeckGateRegressionTests` | #73 / ADR-0010 Phase C：外部门禁拆除后自陈等价（无 `EffectOwnerScopeGate` / 区域门禁回流）；帮助卡互不误触、亡语互不误触 |
 | `EffectNonTriggerProbeTests` | #73 / ADR-0010 Phase D：未触发探查区分 requires vs conditions；与正向诊断层并存 |
+| `InteractionCountDecoupleTests` | #75：未击杀交战/拾卡/点空格推进 interactionCount；道具使用不计；计数/补牌/旋转可分步 |
 
 ### 行为基线（节选）
 

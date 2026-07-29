@@ -123,8 +123,10 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(avatarUid, replyActors[0]);
 
             director.Tick(0.016f); // present hit
-            director.Tick(0.016f); // post-hit branch (no kill)
+            director.Tick(0.016f); // post-hit branch (no kill) → enqueue interaction advance
+            director.Tick(0.016f); // silent AdvanceInteractionCount
             Assert.IsFalse(director.IsMainlineBusy);
+            Assert.AreEqual(1, mArch.GetModel<PlayerModel>().InteractionCount.Value);
             Assert.AreEqual(1, counterPresent.BeginCount);
             Assert.AreEqual(1, hitPresent.BeginCount);
             Assert.AreEqual(0, boardPresent.BeginCount);
@@ -167,9 +169,11 @@ namespace NineGrid.Presentation.Tests
             var startIndex = mPipeline.EventLog.Entries.Count;
             director.Tick(0.016f); // resolve first-strike
             director.Tick(0.016f); // present counter
-            director.Tick(0.016f); // branch → avatar defeated, no reply
+            director.Tick(0.016f); // branch → avatar defeated, enqueue interaction advance
+            director.Tick(0.016f); // silent AdvanceInteractionCount
             Assert.IsFalse(hitProjected);
             Assert.IsFalse(director.IsMainlineBusy);
+            Assert.AreEqual(1, mArch.GetModel<PlayerModel>().InteractionCount.Value);
 
             var actors = CollectDamageActors(startIndex);
             Assert.AreEqual(1, actors.Count);
@@ -233,7 +237,9 @@ namespace NineGrid.Presentation.Tests
             director.Tick(0.016f); // resolve counter
             Assert.IsTrue(counterFirst);
             director.Tick(0.016f); // present counter
+            director.Tick(0.016f); // silent AdvanceInteractionCount
             Assert.IsFalse(director.IsMainlineBusy);
+            Assert.AreEqual(1, mArch.GetModel<PlayerModel>().InteractionCount.Value);
         }
 
         private void GrantFirstStrike(int cardUid)

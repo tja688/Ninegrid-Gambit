@@ -55,7 +55,7 @@ namespace NineGrid.Core.Commands
     }
 
     /// <summary>
-    /// 击杀后盘面结算：补牌 + 旋转 + 清场判定（整拍兼容）。
+    /// 击杀后盘面结算：交互计数 + 补牌 + 旋转 + 清场判定（整拍兼容）。
     /// </summary>
     public sealed class ResolvePostKillBoardCommand : AbstractCommand<CoreCommandResult>
     {
@@ -66,7 +66,18 @@ namespace NineGrid.Core.Commands
     }
 
     /// <summary>
-    /// 击杀后分拍：交互计数 + 补牌。
+    /// 九宫格互动分拍：全局 interactionCount +1（触发 OnInteract）。
+    /// </summary>
+    public sealed class AdvanceInteractionCountCommand : AbstractCommand<CoreCommandResult>
+    {
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().AdvanceInteractionCount();
+        }
+    }
+
+    /// <summary>
+    /// 击杀后分拍：仅补牌。不含交互计数。
     /// </summary>
     public sealed class ResolvePostKillFillCommand : AbstractCommand<CoreCommandResult>
     {
