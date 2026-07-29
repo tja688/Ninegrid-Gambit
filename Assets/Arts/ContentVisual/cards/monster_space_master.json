@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.space_master",
     "kind": "Monster",
-    "attackPattern": "全向近战",
     "deckId": "deck.void",
+    "role": "",
     "displayName": "空间大师",
     "description": "战后旋转；每移9次加入怪物",
+    "attackPattern": "全向近战",
     "gold": 5,
     "stats": {
         "hp": 42,
@@ -71,11 +72,22 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.space_mastery",
-        "skill.otherworld_help"
+    "effectAssemblies": [
+        {
+            "id": "skill.space_mastery.battle",
+            "templateId": "tpl.skill.space_mastery.battle",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"sourceAction\":\"DealDamage\",\"count\":1}"
+        },
+        {
+            "id": "skill.otherworld_help.move",
+            "templateId": "tpl.skill.otherworld_help.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 0,
     "isElite": false,
     "isBoss": true,
@@ -88,7 +100,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

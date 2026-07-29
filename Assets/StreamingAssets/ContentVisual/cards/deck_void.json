@@ -3,8 +3,10 @@
     "contentId": "deck.void",
     "kind": "Deck",
     "deckId": "",
-    "displayName": "虚空牌组",
+    "role": "",
+    "displayName": "旅者牌组",
     "description": "",
+    "attackPattern": "",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -70,6 +72,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
+    "effectAssemblies": [],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -95,7 +98,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

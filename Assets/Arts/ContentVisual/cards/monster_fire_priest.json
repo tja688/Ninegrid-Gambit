@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.fire_priest",
     "kind": "Monster",
-    "attackPattern": "无",
     "deckId": "deck.dragon",
+    "role": "",
     "displayName": "火焰祭司",
     "description": "每有一张烈焰，本卡攻击+2",
+    "attackPattern": "无",
     "gold": 5,
     "stats": {
         "hp": 12,
@@ -71,10 +72,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.fire_power"
+    "effectAssemblies": [
+        {
+            "id": "skill.fire_power.aura",
+            "templateId": "tpl.skill.fire_power.aura",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"source\":\"CardCount\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 2,
     "isElite": false,
     "isBoss": false,
@@ -87,7 +94,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

@@ -1296,7 +1296,7 @@ namespace NineGrid.Content.Editor
             var previewKind = ResolveDeckPreviewKind(dto.contentId);
             var previewCard = ContentVisualWarmConsoleUi.CreateSectionCard(
                 "卡背预览",
-                "默认看背面；空槽保留「" + previewKind + "」模板兜底卡背。卡面页翻转时也会按 deckId 回填本组背图。",
+                "默认看背面；空槽保留「" + previewKind + "」模板兜底卡背。卡面所属本组后，预览与运行时跟随本组卡背。",
                 column =>
                 {
                     previewContainer = new IMGUIContainer(() =>
@@ -1326,7 +1326,7 @@ namespace NineGrid.Content.Editor
 
             var card = ContentVisualWarmConsoleUi.CreateSectionCard(
                 "卡组配置",
-                "卡背三槽；卡面 deckId 引用本条目后自动换背",
+                "卡背三槽；卡面所属本组后预览/运行时跟随本组卡背",
                 column =>
                 {
                     column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
@@ -2419,6 +2419,8 @@ namespace NineGrid.Content.Editor
             };
             ContentVisualWarmConsoleUi.AddTwoColumnGrid(column, spriteFields);
 
+            column.Add(BuildDeckBackFollowHint(dto));
+
             column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
                 "显示名",
                 BindText(dto.displayName, v =>
@@ -2455,18 +2457,18 @@ namespace NineGrid.Content.Editor
 
             var deckLabels = new List<string> { CardPresentationEditorSession.UngroupedDeckId };
             var deckValues = new List<string> { string.Empty };
-            var deckChoices = session.GetDeckIdChoices();
+            var deckChoices = session.GetDeckChoices();
             for (var i = 0; i < deckChoices.Count; i++)
             {
-                var deckId = deckChoices[i];
-                deckLabels.Add(deckId);
-                deckValues.Add(deckId);
+                var choice = deckChoices[i];
+                deckLabels.Add(choice.Label);
+                deckValues.Add(choice.DeckId);
             }
 
             var currentDeckId = dto.deckId ?? string.Empty;
             if (!string.IsNullOrEmpty(currentDeckId) && !deckValues.Contains(currentDeckId))
             {
-                deckLabels.Insert(1, currentDeckId + " (缺失卡组)");
+                deckLabels.Insert(1, session.FormatDeckChoiceLabel(currentDeckId) + " (缺失卡组)");
                 deckValues.Insert(1, currentDeckId);
             }
 
@@ -2479,9 +2481,14 @@ namespace NineGrid.Content.Editor
                     ? deckValues[pickedIndex]
                     : string.Empty;
                 OnDtoEdited(entry);
-                RefreshSidebar();
+                // 重建即时参数区（卡背跟随提示）；延迟避免 Popup 回调中销毁自身。
+                rootVisualElement.schedule.Execute(() =>
+                {
+                    RefreshContent();
+                    UpdateStatus();
+                });
             });
-            column.Add(ContentVisualWarmConsoleUi.WrapControlRow("牌组 deckId", deckField, 72f));
+            column.Add(ContentVisualWarmConsoleUi.WrapControlRow("所属卡组", deckField, 72f));
         }
 
         private void BuildAnimationSection(VisualElement column, CardPresentationEditorEntry entry)
@@ -2713,7 +2720,46 @@ namespace NineGrid.Content.Editor
         {
             session.MarkDirty(entry.ContentId);
             InvalidateAndRefreshPreview(entry);
+            // 显示名变更时侧栏卡面分组标题与卡组列表需同步（Invalidate 已 RefreshSidebar）。
             UpdateStatus();
+        }
+
+        private VisualElement BuildDeckBackFollowHint(CardPresentationConfigDto dto)
+        {
+            var sprites = dto?.sprites;
+            var hasOwnBack = sprites != null
+                && (!string.IsNullOrWhiteSpace(sprites.backBorder)
+                    || !string.IsNullOrWhiteSpace(sprites.backShirt)
+                    || !string.IsNullOrWhiteSpace(sprites.backLogo));
+            var deckId = dto?.deckId?.Trim() ?? string.Empty;
+            string text;
+            if (string.IsNullOrEmpty(deckId))
+            {
+                text = hasOwnBack
+                    ? "卡背：自有背图（未选所属卡组）"
+                    : "卡背：未选所属卡组，预览用模板兜底";
+            }
+            else
+            {
+                var label = session.FormatDeckChoiceLabel(deckId);
+                if (session.DeckHasAnyBackSprite(deckId))
+                {
+                    text = hasOwnBack
+                        ? "卡背：跟随 " + label + "（卡组背图覆盖自有槽；运行时同规则）"
+                        : "卡背：跟随 " + label;
+                }
+                else
+                {
+                    text = hasOwnBack
+                        ? "卡背：自有背图（" + label + " 尚未配置卡背）"
+                        : "卡背：跟随 " + label + " — 本组尚未配置卡背，预览用模板兜底";
+                }
+            }
+
+            var hint = ContentVisualWarmConsoleUi.CreateDescriptionLabel(text);
+            hint.style.marginTop = 4;
+            hint.style.marginBottom = 6;
+            return hint;
         }
 
         private void InvalidateAndRefreshPreview(CardPresentationEditorEntry entry)
@@ -2923,27 +2969,22 @@ namespace NineGrid.Content.Editor
             var backShirtPath = sprites.backShirt;
             var backLogoPath = sprites.backLogo;
             var isDeckEntry = string.Equals(dto.kind, "Deck", StringComparison.OrdinalIgnoreCase);
+            // 对齐运行时 ApplyDeckBackSprites：所属卡组背槽有图则覆盖卡面同槽。
             if (!isDeckEntry
-                && (string.IsNullOrWhiteSpace(backBorderPath)
-                    || string.IsNullOrWhiteSpace(backShirtPath)
-                    || string.IsNullOrWhiteSpace(backLogoPath))
                 && session.TryGetDeckDto(dto.deckId, out var deckDto)
                 && deckDto?.sprites != null)
             {
-                if (string.IsNullOrWhiteSpace(backBorderPath)
-                    && !string.IsNullOrWhiteSpace(deckDto.sprites.backBorder))
+                if (!string.IsNullOrWhiteSpace(deckDto.sprites.backBorder))
                 {
                     backBorderPath = deckDto.sprites.backBorder;
                 }
 
-                if (string.IsNullOrWhiteSpace(backShirtPath)
-                    && !string.IsNullOrWhiteSpace(deckDto.sprites.backShirt))
+                if (!string.IsNullOrWhiteSpace(deckDto.sprites.backShirt))
                 {
                     backShirtPath = deckDto.sprites.backShirt;
                 }
 
-                if (string.IsNullOrWhiteSpace(backLogoPath)
-                    && !string.IsNullOrWhiteSpace(deckDto.sprites.backLogo))
+                if (!string.IsNullOrWhiteSpace(deckDto.sprites.backLogo))
                 {
                     backLogoPath = deckDto.sprites.backLogo;
                 }
@@ -3011,7 +3052,7 @@ namespace NineGrid.Content.Editor
             return CardPresentationKind.Monster;
         }
 
-        private static string BuildPreviewFingerprint(CardPresentationConfigDto dto, bool faceUpFlag)
+        private string BuildPreviewFingerprint(CardPresentationConfigDto dto, bool faceUpFlag)
         {
             var sprites = dto.sprites ?? new CardPresentationSpritesDto();
             var stats = dto.stats ?? new CardPresentationStatsDto();
@@ -3049,12 +3090,31 @@ namespace NineGrid.Content.Editor
                 sprites.backBorder,
                 sprites.backShirt,
                 sprites.backLogo,
+                ResolveDeckBackFingerprint(dto),
                 sprites.cardFrame,
                 sprites.banner,
                 mv.offsetX,
                 mv.offsetY,
                 mv.uniformScale,
                 faceUpFlag ? "1" : "0");
+        }
+
+        /// <summary>卡面预览指纹纳入所属卡组背图，改组或改组背图后强制重建。</summary>
+        private string ResolveDeckBackFingerprint(CardPresentationConfigDto dto)
+        {
+            if (dto == null
+                || string.Equals(dto.kind, "Deck", StringComparison.OrdinalIgnoreCase)
+                || string.IsNullOrWhiteSpace(dto.deckId)
+                || !session.TryGetDeckDto(dto.deckId, out var deckDto)
+                || deckDto?.sprites == null)
+            {
+                return string.Empty;
+            }
+
+            return string.Join(";",
+                deckDto.sprites.backBorder ?? string.Empty,
+                deckDto.sprites.backShirt ?? string.Empty,
+                deckDto.sprites.backLogo ?? string.Empty);
         }
 
         private VisualElement MakeSpriteField(string label, string path, Action<string> onPath)

@@ -16,6 +16,11 @@
 | [`docs/adr/`](docs/adr/) | 长期架构决策 |
 | `Assets/Notes/` | 进行时过程性开发笔记；归档里有历史记录 |
 
+### 内容代号与卡组
+
+- **内容代号**：`monster.skull_head`、`deck.dragon`、`SkeletonFusion*` 等主题词是历史残留的虚构命名（不透明主键 / 类名）；以实现效果为准，不要被字面世界观带偏。（见 [ADR-0014](docs/adr/0014-theme-ids-are-legacy-opaque.md)）
+- **卡组**：`deckId` 只作内部渠道（卡背 / 遭遇分组）；玩家可见称呼若需要，用另行映射的显示名即可。
+
 ### Code Map 维护（开发后必做）
 
 权威层级：`docs/code-map/` + `docs/adr/` + 根目录 [`CONTEXT.md`](CONTEXT.md) 描述**仓库当下事实**；`Assets/Notes/` 仅过程笔记，**非权威**。

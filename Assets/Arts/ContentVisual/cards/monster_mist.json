@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.mist",
     "kind": "Monster",
-    "attackPattern": "普通近战",
-    "deckId": "deck.void",
-    "displayName": "迷雾",
+    "deckId": "deck.dragon",
+    "role": "",
+    "displayName": "绿莱姆",
     "description": "每移动1次攻击+2",
+    "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
         "hp": 10,
@@ -24,7 +25,7 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.032999999821186066,
+        "offsetX": 0.032999999821186069,
         "offsetY": -0.10000000149011612,
         "uniformScale": 1.0
     },
@@ -71,10 +72,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.stroll"
+    "effectAssemblies": [
+        {
+            "id": "skill.stroll.move",
+            "templateId": "tpl.skill.stroll.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":2,\"source\":\"skill.stroll\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 3,
     "isElite": false,
     "isBoss": false,
@@ -87,7 +94,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

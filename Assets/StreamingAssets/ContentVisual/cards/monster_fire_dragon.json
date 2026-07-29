@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.fire_dragon",
     "kind": "Monster",
-    "attackPattern": "全向近战",
     "deckId": "deck.dragon",
+    "role": "",
     "displayName": "火龙",
     "description": "每移4次换怪为烈焰；烈焰伤害+1",
+    "attackPattern": "全向近战",
     "gold": 5,
     "stats": {
         "hp": 50,
@@ -71,11 +72,22 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.flame_breath",
-        "skill.flame_boiling"
+    "effectAssemblies": [
+        {
+            "id": "skill.flame_breath.move",
+            "templateId": "tpl.skill.flame_breath.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"reason\":\"skill.flame_breath\",\"count\":1}"
+        },
+        {
+            "id": "skill.flame_boiling.rule",
+            "templateId": "tpl.skill.flame_boiling.rule",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":1,\"source\":\"skill.flame_boiling\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 0,
     "isElite": false,
     "isBoss": true,
@@ -88,7 +100,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

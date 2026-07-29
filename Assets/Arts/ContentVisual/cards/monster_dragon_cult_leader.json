@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.dragon_cult_leader",
     "kind": "Monster",
-    "attackPattern": "全向近战",
     "deckId": "deck.dragon",
+    "role": "",
     "displayName": "龙教主",
     "description": "每移动3次加入龙信徒",
+    "attackPattern": "全向近战",
     "gold": 5,
     "stats": {
         "hp": 18,
@@ -71,10 +72,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.call_followers"
+    "effectAssemblies": [
+        {
+            "id": "skill.call_followers.move",
+            "templateId": "tpl.skill.call_followers.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 3,
     "isElite": false,
     "isBoss": false,
@@ -87,7 +94,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

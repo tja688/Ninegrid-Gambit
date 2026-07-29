@@ -119,6 +119,13 @@ namespace NineGrid.Content.Editor
         public string Label { get; set; } = string.Empty;
     }
 
+    /// <summary>卡组下拉：显示名为主、deckId 作次要提示，持久化值仍为 deckId。</summary>
+    public sealed class DeckChoice
+    {
+        public string DeckId { get; set; } = string.Empty;
+        public string Label { get; set; } = string.Empty;
+    }
+
     /// <summary>
     /// 编辑器效果池分类（道具 / 遗物 / 怪物技能）。JSON 模板仍同构；本枚举只约束默认可见集与同类多载。
     /// </summary>
@@ -625,6 +632,67 @@ namespace NineGrid.Content.Editor
             }
 
             return set.OrderBy(id => id, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        /// <summary>
+        /// 卡面「所属卡组」下拉：Label 显示名优先（编码括号提示），Value 仍为 deckId。
+        /// </summary>
+        public List<DeckChoice> GetDeckChoices()
+        {
+            var ids = GetDeckIdChoices();
+            var list = new List<DeckChoice>(ids.Count);
+            for (var i = 0; i < ids.Count; i++)
+            {
+                var id = ids[i];
+                list.Add(new DeckChoice
+                {
+                    DeckId = id,
+                    Label = FormatDeckChoiceLabel(id),
+                });
+            }
+
+            return list
+                .OrderBy(c => c.Label, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        /// <summary>侧栏分组标题与卡组下拉共用：有显示名则「显示名 (deckId)」，否则裸 id。</summary>
+        public string FormatDeckChoiceLabel(string deckId)
+        {
+            if (string.IsNullOrWhiteSpace(deckId) || deckId == UngroupedDeckId)
+            {
+                return UngroupedDeckId;
+            }
+
+            if (deckById.TryGetValue(deckId, out var deckEntry)
+                && deckEntry?.Dto != null
+                && !string.IsNullOrWhiteSpace(deckEntry.Dto.displayName))
+            {
+                return deckEntry.Dto.displayName.Trim() + " (" + deckId + ")";
+            }
+
+            if (CoreCatalog?.MonsterDecks != null
+                && CoreCatalog.MonsterDecks.TryGetValue(deckId, out var deck)
+                && deck != null
+                && !string.IsNullOrEmpty(deck.DisplayName))
+            {
+                return deck.DisplayName + " (" + deckId + ")";
+            }
+
+            return deckId;
+        }
+
+        /// <summary>所属卡组是否至少配置了一个卡背槽（供编辑器提示）。</summary>
+        public bool DeckHasAnyBackSprite(string deckId)
+        {
+            if (!TryGetDeckDto(deckId, out var deckDto) || deckDto?.sprites == null)
+            {
+                return false;
+            }
+
+            return !string.IsNullOrWhiteSpace(deckDto.sprites.backBorder)
+                   || !string.IsNullOrWhiteSpace(deckDto.sprites.backShirt)
+                   || !string.IsNullOrWhiteSpace(deckDto.sprites.backLogo);
         }
 
         public List<string> GetEffectTemplateIdChoices()
@@ -1938,30 +2006,7 @@ namespace NineGrid.Content.Editor
             }
         }
 
-        private string ResolveDeckTitle(string deckId)
-        {
-            if (string.IsNullOrWhiteSpace(deckId) || deckId == UngroupedDeckId)
-            {
-                return UngroupedDeckId;
-            }
-
-            if (deckById.TryGetValue(deckId, out var deckEntry)
-                && deckEntry?.Dto != null
-                && !string.IsNullOrWhiteSpace(deckEntry.Dto.displayName))
-            {
-                return deckEntry.Dto.displayName.Trim() + " (" + deckId + ")";
-            }
-
-            if (CoreCatalog?.MonsterDecks != null
-                && CoreCatalog.MonsterDecks.TryGetValue(deckId, out var deck)
-                && deck != null
-                && !string.IsNullOrEmpty(deck.DisplayName))
-            {
-                return deck.DisplayName + " (" + deckId + ")";
-            }
-
-            return deckId;
-        }
+        private string ResolveDeckTitle(string deckId) => FormatDeckChoiceLabel(deckId);
 
         private static ContentVisualKind ParseKind(string kind)
         {
