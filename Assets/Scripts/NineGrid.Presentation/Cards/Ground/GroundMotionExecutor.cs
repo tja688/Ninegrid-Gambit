@@ -1537,20 +1537,7 @@ namespace NineGrid.Cards
                 if (moveTasks.Count > 0)
                 {
                     await UniTask.WhenAll(moveTasks);
-
-                    // 全体落位后统一喷一次落地尘雾。
-                    for (var i = 0; i < ring.Count; i++)
-                    {
-                        var uid = uids[i];
-                        if (uid == 0
-                            || !CardEntityLifecycleHook.CardsOrNull().TryGet(uid, out var landed)
-                            || landed?.Transform == null)
-                        {
-                            continue;
-                        }
-
-                        CardEdgeDustFx.PlayPlace(landed);
-                    }
+                    // 旋转落位故意不喷尘雾（发牌落位 / PlaceAtAnchor 仍走 CardEdgeDustFx）。
                 }
                 else
                 {

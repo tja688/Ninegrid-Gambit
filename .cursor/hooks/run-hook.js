@@ -19,30 +19,55 @@ function respond(payload, exitCode) {
 function readStdin() {
   return new Promise((resolve, reject) => {
     let raw = '';
-    const timeout = setTimeout(() => {
-      reject(new Error('Timed out reading hook stdin'));
-    }, 10000);
+    let settled = false;
+    let poll = null;
+    let timeout = null;
+
+    const finish = (value, err) => {
+      if (settled) return;
+      settled = true;
+      if (timeout) clearTimeout(timeout);
+      if (poll) clearInterval(poll);
+      if (err) reject(err);
+      else resolve(value);
+    };
+
+    timeout = setTimeout(() => {
+      // Prefer partial payload over hanging: some hosts never emit 'end'.
+      if (raw.length > 0) finish(raw);
+      else finish('', new Error('Timed out reading hook stdin'));
+    }, 8000);
 
     process.stdin.setEncoding('utf8');
     process.stdin.on('data', (chunk) => {
       raw += chunk;
     });
-    process.stdin.on('end', () => {
-      clearTimeout(timeout);
-      resolve(raw);
-    });
-    process.stdin.on('error', (err) => {
-      clearTimeout(timeout);
-      reject(err);
-    });
+    process.stdin.on('end', () => finish(raw));
+    process.stdin.on('error', (err) => finish('', err));
 
-    // Some hosts never emit 'end' if stdin is already drained; also accept
-    // immediate EOF when isTTY or readableLength stays 0 after a short tick.
     if (process.stdin.isTTY) {
-      clearTimeout(timeout);
-      resolve('');
+      finish('');
       return;
     }
+
+    // If stdin is already fully buffered without 'end', accept after a short quiet period.
+    let lastLen = -1;
+    let quietTicks = 0;
+    poll = setInterval(() => {
+      const len = raw.length;
+      const readable =
+        typeof process.stdin.readableLength === 'number'
+          ? process.stdin.readableLength
+          : 0;
+      if (len > 0 && len === lastLen && readable === 0) {
+        quietTicks += 1;
+        if (quietTicks >= 3) finish(raw);
+      } else {
+        quietTicks = 0;
+        lastLen = len;
+      }
+    }, 15);
+
     process.stdin.resume();
   });
 }
@@ -54,6 +79,7 @@ async function main() {
     cwd: process.cwd(),
     script: __filename,
     pid: process.pid,
+    node: process.execPath,
   });
 
   try {

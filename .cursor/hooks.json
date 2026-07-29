@@ -1,27 +1,27 @@
 {
   "version": 1,
   "hooks": {
-    "subagentStart": [
-      {
-        "type": "command",
-        "command": "node \".cursor/hooks/run-hook.js\"",
-        "failClosed": true,
-        "timeout": 15
-      }
-    ],
     "preToolUse": [
       {
-        "type": "command",
-        "command": "node \".cursor/hooks/run-hook.js\"",
+        "type": "prompt",
+        "prompt": "You are the Ninegrid Gambit subagent model gate (preToolUse/Task).\n\nALLOW when:\n- model is empty/omitted (custom agents like grok-high / composer-standard inherit defaults), OR\n- model normalizes to cursor-grok-4.5-high or composer-2.5 (aliases: composer-2.5[fast=false], Cursor Grok 4.5 High, etc.)\n\nDENY when:\n- model is any *-fast variant (cursor-grok-4.5-high-fast, composer-2.5-fast, fast=true). Tell the agent to use the non-fast twin, and if that already failed, stop spawning subagents and continue in the parent.\n- model is Claude / GPT / Opus / Sonnet / Auto / any other non-allowlisted slug\n\nIf denying, name the rule and the allowed non-fast alternatives.\n\nHook input: $ARGUMENTS",
         "matcher": "Task",
         "failClosed": true,
-        "timeout": 15
+        "timeout": 30
+      }
+    ],
+    "subagentStart": [
+      {
+        "type": "prompt",
+        "prompt": "You are the Ninegrid Gambit subagent model gate (subagentStart).\n\nALLOW empty model or cursor-grok-4.5-high / composer-2.5 (including aliases like composer-2.5[fast=false]).\nDENY any *-fast model and any non-allowlisted vendor (Claude/GPT/Opus/Sonnet/Auto/etc).\nIf denying, say which rule failed.\n\nHook input: $ARGUMENTS",
+        "failClosed": true,
+        "timeout": 30
       }
     ],
     "postToolUseFailure": [
       {
         "type": "command",
-        "command": "node \".cursor/hooks/run-hook.js\"",
+        "command": "C:/nvm4w/nodejs/node.exe .cursor/hooks/run-hook.js",
         "matcher": "Task",
         "failClosed": false,
         "timeout": 10
