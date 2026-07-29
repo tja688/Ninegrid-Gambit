@@ -232,11 +232,14 @@ namespace NineGrid.Cards.Vfx
 
                     recycled += culled ? 1 : 0;
 
+                    // 沿边 t 不再等分：槽位附近 ±0.45 抖动，打破「梳子齿」感。
+                    var edgeT = Mathf.Clamp01((k + Random.Range(-0.45f, 0.45f)) / denom);
                     var r = new Vector2(
                         (Random.value * 2f - 1f) * jitter,
                         (Random.value * 2f - 1f) * jitter);
-                    var dpos = Vector2.Lerp(from, to, k / (float)denom);
-                    var velD = LerpAngleRad(velFrom, velTo, k / (float)denom);
+                    var dpos = Vector2.Lerp(from, to, edgeT);
+                    // 扇形方向再加 ±~20°，避免整排同向喷出。
+                    var velD = LerpAngleRad(velFrom, velTo, edgeT) + Random.Range(-0.35f, 0.35f);
                     var vel = new Vector2(Mathf.Cos(velD), Mathf.Sin(velD));
                     var local = dpos - new Vector2(0.5f, 0.5f) + r;
                     var finalPos = new Vector3(
@@ -405,10 +408,10 @@ namespace NineGrid.Cards.Vfx
                     var pull = Random.value * inward;
                     var dpos = Vector2.Lerp(corner, new Vector2(0.5f, 0.5f), pull);
                     // 沿轨迹略向后错开，强化「先飞出的先淡」的连续感
-                    var along = -velDir * (0.04f * m + Random.value * 0.03f);
+                    var along = -velDir * (0.04f * m + Random.value * 0.05f);
                     var r = new Vector2(
-                        (Random.value - 0.5f) * 0.08f,
-                        (Random.value - 0.5f) * 0.08f);
+                        (Random.value - 0.5f) * 0.14f,
+                        (Random.value - 0.5f) * 0.14f);
                     var local = dpos - new Vector2(0.5f, 0.5f) + r + along;
                     var finalPos = new Vector3(
                         center.x + local.x * size.x,

@@ -11,7 +11,7 @@ using UnityEngine;
 namespace NineGrid.Presentation.Editor
 {
     /// <summary>
-    /// 特效库预览：左侧标准怪物卡参照，右侧精灵表特效（循环播放）。
+    /// 特效库预览：左标准怪物卡参照 + 右精灵表特效；按内容与预览宽高比自动取景。
     /// </summary>
     public sealed class VisualEffectPreviewHost : IDisposable
     {
@@ -24,6 +24,7 @@ namespace NineGrid.Presentation.Editor
         private SpriteSheetLoopPlayer _player;
         private string _status = "就绪";
         private bool _disposed;
+        private float _lastDrawAspect = -1f;
 
         public string Status => _status;
         public SpriteSheetLoopPlayer Player => _player;
@@ -55,13 +56,13 @@ namespace NineGrid.Presentation.Editor
             }
 
             _cardBuild.Root.transform.SetParent(_sceneRoot.transform, false);
-            _cardBuild.Root.transform.localPosition = new Vector3(-1.6f, 0f, 0f);
+            _cardBuild.Root.transform.localPosition = new Vector3(-1.35f, 0f, 0f);
             CardMainVisualMaskAnchor.DisableMaskingForEditorPreview(_cardBuild.Root.transform);
 
             var fxGo = new GameObject("VisualEffectSprite");
             fxGo.hideFlags = HideFlags.HideAndDontSave;
             fxGo.transform.SetParent(_sceneRoot.transform, false);
-            fxGo.transform.localPosition = new Vector3(1.6f, 0f, 0f);
+            fxGo.transform.localPosition = new Vector3(1.35f, 0f, 0f);
             _fxRenderer = fxGo.AddComponent<SpriteRenderer>();
             _fxRenderer.sortingOrder = 200;
             _player = fxGo.AddComponent<SpriteSheetLoopPlayer>();
@@ -75,13 +76,15 @@ namespace NineGrid.Presentation.Editor
             {
                 _status = "无法加载精灵表：" + entry.sheetPath;
                 _previewUtility.AddSingleGO(_sceneRoot);
-                FrameCameraFixed();
+                FrameCameraToContent();
                 return false;
             }
 
             _player.SetFrames(frames, play: true);
+            LayoutCardAndFx();
             _previewUtility.AddSingleGO(_sceneRoot);
-            FrameCameraFixed();
+            _lastDrawAspect = -1f;
+            FrameCameraToContent();
             _status = "特效预览 " + entry.id + " · " + frames.Length + " 帧";
             return true;
         }
@@ -91,6 +94,9 @@ namespace NineGrid.Presentation.Editor
             if (_player != null)
             {
                 _player.UniformScale = scale;
+                LayoutCardAndFx();
+                _lastDrawAspect = -1f;
+                FrameCameraToContent();
             }
         }
 
@@ -129,6 +135,13 @@ namespace NineGrid.Presentation.Editor
                 return;
             }
 
+            var aspect = rect.width / Mathf.Max(1f, rect.height);
+            if (Mathf.Abs(aspect - _lastDrawAspect) > 0.02f)
+            {
+                _lastDrawAspect = aspect;
+                FrameCameraToContent(aspect);
+            }
+
             _previewUtility.BeginPreview(rect, GUIStyle.none);
             _previewUtility.camera.Render();
             var texture = _previewUtility.EndPreview();
@@ -154,19 +167,94 @@ namespace NineGrid.Presentation.Editor
             }
         }
 
-        private void FrameCameraFixed()
+        /// <summary>
+        /// 按卡面 / 特效实际半宽拉开间距，避免大 Scale 时互相叠住。
+        /// </summary>
+        private void LayoutCardAndFx()
         {
-            if (_previewUtility == null)
+            if (_cardBuild?.Root == null || _fxRenderer == null)
             {
                 return;
             }
 
-            // 固定 framing：左卡 + 右特效对照稳定，不随缩放抖动。
+            var cardBounds = CalculateRendererBounds(_cardBuild.Root);
+            var fxExtent = EstimateFxHalfExtent();
+            var cardHalf = Mathf.Max(0.4f, cardBounds.extents.x);
+            var gap = 0.35f;
+            var cardX = -(cardHalf + gap * 0.5f + fxExtent * 0.15f);
+            var fxX = cardHalf + gap + fxExtent;
+            // 以中点为 0，整体居中。
+            var mid = (cardX + fxX) * 0.5f;
+            _cardBuild.Root.transform.localPosition = new Vector3(cardX - mid, 0f, 0f);
+            _fxRenderer.transform.localPosition = new Vector3(fxX - mid, 0f, 0f);
+        }
+
+        private float EstimateFxHalfExtent()
+        {
+            if (_fxRenderer == null)
+            {
+                return 0.8f;
+            }
+
+            var scale = _fxRenderer.transform.localScale.x;
+            if (_fxRenderer.sprite != null)
+            {
+                return Mathf.Max(0.35f, _fxRenderer.bounds.extents.x);
+            }
+
+            return Mathf.Max(0.35f, 0.8f * scale);
+        }
+
+        private void FrameCameraToContent(float aspect = 0.95f)
+        {
+            if (_previewUtility == null || _sceneRoot == null)
+            {
+                return;
+            }
+
+            if (aspect < 0.2f)
+            {
+                aspect = 0.95f;
+            }
+
             var cam = _previewUtility.camera;
             cam.orthographic = true;
-            cam.orthographicSize = 2.1f;
-            cam.transform.position = new Vector3(0f, 0f, -10f);
             cam.transform.rotation = Quaternion.identity;
+
+            var bounds = CalculateRendererBounds(_sceneRoot);
+            if (bounds.size.sqrMagnitude < 0.0001f)
+            {
+                cam.orthographicSize = 2.1f;
+                cam.transform.position = new Vector3(0f, 0f, -10f);
+                return;
+            }
+
+            const float pad = 1.2f;
+            var needHalfH = bounds.extents.y * pad;
+            var needHalfW = bounds.extents.x * pad;
+            // orthoSize 控半高；半宽 = orthoSize * aspect。
+            cam.orthographicSize = Mathf.Max(needHalfH, needHalfW / aspect, 0.85f);
+            cam.transform.position = new Vector3(bounds.center.x, bounds.center.y, -10f);
+        }
+
+        private static Bounds CalculateRendererBounds(GameObject root)
+        {
+            var renderers = root.GetComponentsInChildren<Renderer>(true);
+            if (renderers == null || renderers.Length == 0)
+            {
+                return new Bounds(root.transform.position, Vector3.zero);
+            }
+
+            var bounds = renderers[0].bounds;
+            for (var i = 1; i < renderers.Length; i++)
+            {
+                if (renderers[i] != null)
+                {
+                    bounds.Encapsulate(renderers[i].bounds);
+                }
+            }
+
+            return bounds;
         }
 
         private void EnsurePreviewUtility()

@@ -722,9 +722,49 @@ namespace NineGrid.Content.Editor
                 + (row.IsDirty ? " · 未保存" : string.Empty)));
 
             var leaves = session.GetLeavesForVariant(dto.category, dto.variantId);
-            contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
+
+            var mainRow = new VisualElement();
+            mainRow.style.flexDirection = FlexDirection.Row;
+            mainRow.style.alignItems = Align.Stretch;
+            mainRow.style.flexGrow = 1;
+            mainRow.style.minHeight = 440;
+            contentRoot.Add(mainRow);
+
+            var previewCard = ContentVisualWarmConsoleUi.CreateSectionCard(
+                "预览",
+                "左卡参照 · 右特效（自动取景）",
+                column =>
+                {
+                    vfxPreviewContainer = new IMGUIContainer(() =>
+                    {
+                        EnsureVfxPreview(row);
+                        var rect = GUILayoutUtility.GetRect(
+                            1f, 1f, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                        vfxPreviewHost.Draw(rect);
+                    });
+                    vfxPreviewContainer.style.minHeight = 420;
+                    vfxPreviewContainer.style.flexGrow = 1;
+                    column.Add(vfxPreviewContainer);
+                });
+            previewCard.style.flexGrow = 1.15f;
+            previewCard.style.flexBasis = 0;
+            previewCard.style.flexShrink = 1;
+            previewCard.style.minWidth = 280;
+            previewCard.style.marginRight = 8;
+            previewCard.style.minHeight = 460;
+            mainRow.Add(previewCard);
+
+            var sideColumn = new VisualElement();
+            sideColumn.style.flexGrow = 0.85f;
+            sideColumn.style.flexBasis = 0;
+            sideColumn.style.flexShrink = 1;
+            sideColumn.style.minWidth = 260;
+            sideColumn.style.maxWidth = 420;
+            mainRow.Add(sideColumn);
+
+            sideColumn.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
                 "尺寸 / 颜色",
-                "同一变体下的 large/small 与色板；切换后右侧特效重载",
+                "同一变体下的 large/small 与色板",
                 column =>
                 {
                     var chipRow = new VisualElement();
@@ -758,26 +798,7 @@ namespace NineGrid.Content.Editor
                     column.Add(chipRow);
                 }));
 
-            var previewCard = ContentVisualWarmConsoleUi.CreateSectionCard(
-                "预览",
-                "左：标准怪物卡参照 · 右：特效（默认循环）",
-                column =>
-                {
-                    vfxPreviewContainer = new IMGUIContainer(() =>
-                    {
-                        EnsureVfxPreview(row);
-                        var rect = GUILayoutUtility.GetRect(
-                            1f, 1f, GUILayout.ExpandWidth(true), GUILayout.Height(360f));
-                        vfxPreviewHost.Draw(rect);
-                    });
-                    vfxPreviewContainer.style.minHeight = 360;
-                    vfxPreviewContainer.style.flexGrow = 1;
-                    column.Add(vfxPreviewContainer);
-                });
-            previewCard.style.minHeight = 400;
-            contentRoot.Add(previewCard);
-
-            contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
+            sideColumn.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
                 "播放控制",
                 "所见即所得：速度与大小写回 visual_effects.json",
                 column =>
@@ -785,6 +806,7 @@ namespace NineGrid.Content.Editor
                     var playing = vfxPreviewHost.Player != null && vfxPreviewHost.Player.IsPlaying;
                     var transport = new VisualElement();
                     transport.style.flexDirection = FlexDirection.Row;
+                    transport.style.flexWrap = Wrap.Wrap;
                     transport.style.marginBottom = 8;
                     transport.Add(new Button(() =>
                     {
@@ -840,6 +862,7 @@ namespace NineGrid.Content.Editor
                     {
                         dto.defaultScale = Mathf.Max(0.01f, evt.newValue);
                         vfxPreviewHost.ApplyScale(dto.defaultScale);
+                        vfxPreviewContainer?.MarkDirtyRepaint();
                         UpdateStatus();
                     });
                     column.Add(scaleField);
@@ -855,8 +878,11 @@ namespace NineGrid.Content.Editor
                     });
                     column.Add(nameField);
 
-                    column.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel(
-                        "sheetPath: " + dto.sheetPath));
+                    var pathLabel = ContentVisualWarmConsoleUi.CreateDescriptionLabel(
+                        "sheetPath: " + dto.sheetPath);
+                    pathLabel.style.whiteSpace = WhiteSpace.Normal;
+                    pathLabel.style.marginTop = 6;
+                    column.Add(pathLabel);
                 }));
         }
 
