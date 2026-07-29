@@ -753,6 +753,7 @@ namespace NineGrid.Core.Systems
 
             var board = this.GetModel<BoardModel>();
             var registry = this.GetModel<CardRegistry>();
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
             var candidates = new List<int>();
             foreach (var uid in board.BoardCardUids())
             {
@@ -777,13 +778,13 @@ namespace NineGrid.Core.Systems
                 if (remaining <= 0)
                 {
                     // 已被加速到 0（或仍停在开火窗）：本拍直接进入名单，不钳回频率再 −1。
-                    card.Counters.Set(CoreCounterKeys.AttackPatternCountdown, 0);
+                    pipeline.Enqueue(new SetAttackPatternCountdownAction(uid, 0));
                     candidates.Add(uid);
                     continue;
                 }
 
                 remaining -= 1;
-                card.Counters.Set(CoreCounterKeys.AttackPatternCountdown, remaining);
+                pipeline.Enqueue(new SetAttackPatternCountdownAction(uid, remaining));
                 if (remaining <= 0)
                 {
                     candidates.Add(uid);
@@ -792,7 +793,7 @@ namespace NineGrid.Core.Systems
 
             candidates.Sort();
             mEnemyActionRoster.AddRange(candidates);
-            return 0;
+            return pipeline.RunToCompletion();
         }
 
         private int ResolveNextEnemyActionInternal()
@@ -830,6 +831,7 @@ namespace NineGrid.Core.Systems
                 return 0;
             }
 
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
             var statSystem = this.GetSystem<IStatSystem>();
             if (IsActionBanned(statSystem, monster)
                 || !AttackPatternRules.MeetsPositionRequirement(
@@ -837,18 +839,16 @@ namespace NineGrid.Core.Systems
                     monster.Slot.Value,
                     board.AvatarSlot.Value))
             {
-                ResetAttackPatternCountdown(monster);
-                return 0;
+                return EnqueueResetAttackPatternCountdown(pipeline, monster);
             }
 
             // 单向打击：不开交战作用域；标准伤害管线；玩家不反击（ADR-0012）。
-            var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new DealDamageAction(
                 monster.Uid,
                 avatar.Uid,
                 GetAttackDamage(statSystem, monster)));
             var resolved = pipeline.RunToCompletion();
-            ResetAttackPatternCountdown(monster);
+            resolved += EnqueueResetAttackPatternCountdown(pipeline, monster);
 
             if (IsTerminalPhase(CurrentPhase) || IsAvatarDefeated())
             {
@@ -873,18 +873,25 @@ namespace NineGrid.Core.Systems
             return resolved;
         }
 
-        private static void ResetAttackPatternCountdown(CardInstance monster)
+        private static int EnqueueResetAttackPatternCountdown(
+            IActionPipelineSystem pipeline,
+            CardInstance monster)
         {
-            if (monster == null || !AttackPatternRules.ParticipatesInEnemyAction(monster.AttackPattern))
+            if (pipeline == null
+                || monster == null
+                || !AttackPatternRules.ParticipatesInEnemyAction(monster.AttackPattern))
             {
-                return;
+                return 0;
             }
 
             var frequency = AttackPatternRules.Frequency(monster.AttackPattern);
-            if (frequency > 0)
+            if (frequency <= 0)
             {
-                monster.Counters.Set(CoreCounterKeys.AttackPatternCountdown, frequency);
+                return 0;
             }
+
+            pipeline.Enqueue(new SetAttackPatternCountdownAction(monster.Uid, frequency));
+            return pipeline.RunToCompletion();
         }
 
         private static bool IsCardAlive(CardInstance card)

@@ -18,7 +18,10 @@ namespace NineGrid.Flow.Presentation
         private readonly CoreCommandDispatcher mDispatcher;
         private readonly IPresentChannel mPresentChannel;
         private readonly Action<int, int, PostKillBoardPresentationResult> mOnBatchProjected;
+        private readonly Action<int, int, int, PostKillBoardPresentationResult> mOnCounterBatchProjected;
         private readonly FusionRefillScheduler mFusionRefill;
+        private readonly EnemyActionPhaseScheduler mEnemyAction;
+        private readonly IPresentChannel mCounterPresentChannel;
         private bool mLastRotateHadFusion;
         private readonly List<int> mFusionExcludeResultUids = new List<int>(2);
 
@@ -27,7 +30,10 @@ namespace NineGrid.Flow.Presentation
             CoreCommandDispatcher dispatcher,
             IPresentChannel presentChannel,
             Action<int, int, PostKillBoardPresentationResult> onBatchProjected = null,
-            FusionRefillScheduler fusionRefill = null)
+            FusionRefillScheduler fusionRefill = null,
+            IPresentChannel counterPresentChannel = null,
+            Action<int, int, int, PostKillBoardPresentationResult> onCounterBatchProjected = null,
+            EnemyActionPhaseScheduler enemyAction = null)
         {
             if (architecture == null)
             {
@@ -49,6 +55,9 @@ namespace NineGrid.Flow.Presentation
             mPresentChannel = presentChannel;
             mOnBatchProjected = onBatchProjected;
             mFusionRefill = fusionRefill ?? new FusionRefillScheduler();
+            mCounterPresentChannel = counterPresentChannel;
+            mOnCounterBatchProjected = onCounterBatchProjected;
+            mEnemyAction = enemyAction ?? new EnemyActionPhaseScheduler();
         }
 
         public void BuildScript(InputIntent intent, BattleTimeline timeline)
@@ -96,14 +105,32 @@ namespace NineGrid.Flow.Presentation
             mFusionRefill.AppendAfterRotatePresent(
                 timeline,
                 () => mLastRotateHadFusion,
-                t => mFusionRefill.EnqueueRefillBatches(
-                    t,
-                    mArchitecture,
-                    mDispatcher,
-                    mPresentChannel,
-                    slotIndex,
-                    mFusionExcludeResultUids,
-                    mOnBatchProjected));
+                t =>
+                {
+                    mFusionRefill.EnqueueRefillBatches(
+                        t,
+                        mArchitecture,
+                        mDispatcher,
+                        mPresentChannel,
+                        slotIndex,
+                        mFusionExcludeResultUids,
+                        mOnBatchProjected);
+                    AppendEnemyActionPhase(t, slotIndex);
+                },
+                t => AppendEnemyActionPhase(t, slotIndex));
+        }
+
+        private void AppendEnemyActionPhase(BattleTimeline timeline, int boardSlot)
+        {
+            mEnemyAction.Append(
+                timeline,
+                mArchitecture,
+                mDispatcher,
+                mPresentChannel,
+                mCounterPresentChannel,
+                mOnBatchProjected,
+                mOnCounterBatchProjected,
+                boardSlot);
         }
 
         private CoreCommandDispatchResult ResolveAndProject(

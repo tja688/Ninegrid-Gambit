@@ -330,11 +330,13 @@ namespace NineGrid.Core
             {
                 var card = CreateConfiguredCard(context, registry, DefId, Kind);
                 deck.AddToDrawPile(card, Top);
-                result.AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
-                    .WithCard(card.Uid)
-                    .WithMessage("shuffleInto:" + DefId)
-                    .WithSource(DefId, Cause)
-                    .WithFaceAbsolutes(context, card));
+                result.AddWithFaceAbsolutes(
+                    context,
+                    card,
+                    new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
+                        .WithCard(card.Uid)
+                        .WithMessage("shuffleInto:" + DefId)
+                        .WithSource(DefId, Cause));
             }
 
             if (!Top && Count > 0)
@@ -415,12 +417,14 @@ namespace NineGrid.Core
             }
 
             return new GameActionResult()
-                .AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
-                    .WithCard(card.Uid)
-                    .WithSlots(fromSlot, SlotId.None)
-                    .WithMessage("shuffleExisting:" + card.DefId)
-                    .WithSource(card.DefId, Cause)
-                    .WithFaceAbsolutes(context, card));
+                .AddWithFaceAbsolutes(
+                    context,
+                    card,
+                    new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
+                        .WithCard(card.Uid)
+                        .WithSlots(fromSlot, SlotId.None)
+                        .WithMessage("shuffleExisting:" + card.DefId)
+                        .WithSource(card.DefId, Cause));
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
@@ -496,11 +500,13 @@ namespace NineGrid.Core
                     var grantCard = CreateConfiguredCard(context, registry, DefId, Kind);
                     grantCard.Counters.Set(CoreCounterKeys.PlayerSideDeck, 1);
                     deck.AddToDrawPile(grantCard, false);
-                    result.AddEvent(new CoreGameEvent(CoreEventType.CardSpawned, context.ActionId, ActionName)
-                        .WithCard(grantCard.Uid)
-                        .WithMessage(DefId)
-                        .WithSource(DefId, Cause)
-                        .WithFaceAbsolutes(context, grantCard));
+                    result.AddWithFaceAbsolutes(
+                        context,
+                        grantCard,
+                        new CoreGameEvent(CoreEventType.CardSpawned, context.ActionId, ActionName)
+                            .WithCard(grantCard.Uid)
+                            .WithMessage(DefId)
+                            .WithSource(DefId, Cause));
                     continue;
                 }
 
@@ -517,19 +523,23 @@ namespace NineGrid.Core
 
                 var card = CreateConfiguredCard(context, registry, DefId, Kind);
                 Place(card, board, deck);
-                result.AddEvent(new CoreGameEvent(CoreEventType.CardSpawned, context.ActionId, ActionName)
-                    .WithCard(card.Uid)
-                    .WithSlots(SlotId.None, card.Slot.Value)
-                    .WithMessage(DefId)
-                    .WithSource(DefId, Cause)
-                    .WithFaceAbsolutes(context, card));
-                if (card.Zone.Value == ZoneId.Board)
-                {
-                    result.AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
+                result.AddWithFaceAbsolutes(
+                    context,
+                    card,
+                    new CoreGameEvent(CoreEventType.CardSpawned, context.ActionId, ActionName)
                         .WithCard(card.Uid)
                         .WithSlots(SlotId.None, card.Slot.Value)
-                        .WithSource(DefId, Cause)
-                        .WithFaceAbsolutes(context, card));
+                        .WithMessage(DefId)
+                        .WithSource(DefId, Cause));
+                if (card.Zone.Value == ZoneId.Board)
+                {
+                    result.AddWithFaceAbsolutes(
+                        context,
+                        card,
+                        new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
+                            .WithCard(card.Uid)
+                            .WithSlots(SlotId.None, card.Slot.Value)
+                            .WithSource(DefId, Cause));
                 }
             }
 
@@ -635,11 +645,13 @@ namespace NineGrid.Core
                 var card = draft.Kind == CardKind.Unknown ? registry.Create(definition.DefId, Kind) : draft.Create(registry);
                 content.ApplyContentToCard(card);
                 deck.AddToDrawPile(card, Top);
-                result.AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
-                    .WithCard(card.Uid)
-                    .WithMessage("shuffleRandom:" + definition.DefId)
-                    .WithSource(definition.DefId, SourceDefId)
-                    .WithFaceAbsolutes(context, card));
+                result.AddWithFaceAbsolutes(
+                    context,
+                    card,
+                    new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
+                        .WithCard(card.Uid)
+                        .WithMessage("shuffleRandom:" + definition.DefId)
+                        .WithSource(definition.DefId, SourceDefId));
             }
 
             if (!Top)
@@ -795,18 +807,22 @@ namespace NineGrid.Core
 
             // 换出腿必须先于换入 Deal：Present 投影为 Remove→Deal，避免幽灵占格导致 placeDenied。
             return new GameActionResult()
-                .AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
-                    .WithCard(target.Uid)
-                    .WithSlots(fromSlot, SlotId.None)
-                    .WithMessage("exchangeToDraw:" + target.DefId)
-                    .WithSource(target.DefId, SourceDefId)
-                    .WithFaceAbsolutes(context, target))
-                .AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
-                    .WithCard(drawn.Uid)
-                    .WithSlots(SlotId.None, fromSlot)
-                    .WithMessage("exchangeDraw:" + drawn.DefId)
-                    .WithSource(drawn.DefId, SourceDefId)
-                    .WithFaceAbsolutes(context, drawn));
+                .AddWithFaceAbsolutes(
+                    context,
+                    target,
+                    new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
+                        .WithCard(target.Uid)
+                        .WithSlots(fromSlot, SlotId.None)
+                        .WithMessage("exchangeToDraw:" + target.DefId)
+                        .WithSource(target.DefId, SourceDefId))
+                .AddWithFaceAbsolutes(
+                    context,
+                    drawn,
+                    new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
+                        .WithCard(drawn.Uid)
+                        .WithSlots(SlotId.None, fromSlot)
+                        .WithMessage("exchangeDraw:" + drawn.DefId)
+                        .WithSource(drawn.DefId, SourceDefId));
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)

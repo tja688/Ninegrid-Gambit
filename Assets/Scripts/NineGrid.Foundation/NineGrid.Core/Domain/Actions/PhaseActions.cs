@@ -45,10 +45,12 @@ namespace NineGrid.Core
             }
 
             return new GameActionResult()
-                .AddEvent(new CoreGameEvent(CoreEventType.AvatarAppeared, context.ActionId, ActionName)
-                    .WithCard(avatarUid)
-                    .WithSlots(SlotId.None, board.AvatarSlot.Value)
-                    .WithFaceAbsolutes(context, avatar));
+                .AddWithFaceAbsolutes(
+                    context,
+                    avatar,
+                    new CoreGameEvent(CoreEventType.AvatarAppeared, context.ActionId, ActionName)
+                        .WithCard(avatarUid)
+                        .WithSlots(SlotId.None, board.AvatarSlot.Value));
         }
     }
 
@@ -283,6 +285,39 @@ namespace NineGrid.Core
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
         {
             return sPostTriggers;
+        }
+    }
+
+    /// <summary>
+    /// 写入攻击模式行动倒计时并广播卡面绝对值（ADR-0005 / #81）。
+    /// </summary>
+    public sealed class SetAttackPatternCountdownAction : GameAction
+    {
+        public SetAttackPatternCountdownAction(int cardUid, int remaining)
+        {
+            CardUid = cardUid;
+            Remaining = remaining < 0 ? 0 : remaining;
+        }
+
+        public int CardUid { get; private set; }
+        public int Remaining { get; private set; }
+        public override string ActionName { get { return "SetAttackPatternCountdown"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            CardInstance card;
+            if (!context.GetModel<CardRegistry>().TryGet(CardUid, out card) || card == null)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var previous = card.Counters.Get(CoreCounterKeys.AttackPatternCountdown);
+            card.Counters.Set(CoreCounterKeys.AttackPatternCountdown, Remaining);
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.ActionCountdownChanged, context.ActionId, ActionName)
+                    .WithCard(card.Uid)
+                    .WithDelta(Remaining - previous)
+                    .WithResultValue(Remaining));
         }
     }
 

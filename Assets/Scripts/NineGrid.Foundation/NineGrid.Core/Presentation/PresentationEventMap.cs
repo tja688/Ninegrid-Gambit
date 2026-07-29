@@ -86,7 +86,8 @@ namespace NineGrid.Core
             Entry(CoreEventType.RoomResolved, PresentationInstructionKind.ResolveRoom, PresentationEventCategory.Room, true, true, PresentationBeat.None, "Room resolved", "Room choice UI — no card-face stats"),
             Entry(CoreEventType.NodeAdvanced, PresentationInstructionKind.AdvanceNode, PresentationEventCategory.Node, true, true, PresentationBeat.None, "Node advanced", "Node progression — no card-face stats"),
             Entry(CoreEventType.BoardMarked, PresentationInstructionKind.MarkBoard, PresentationEventCategory.Board, true, true, PresentationBeat.None, "Board marked", "Board mark VFX — no card-face stats"),
-            Entry(CoreEventType.ContentLoaded, PresentationInstructionKind.LoadContent, PresentationEventCategory.Content, true, false, PresentationBeat.None, "Content loaded", "Content bootstrap — no card-face stats")
+            Entry(CoreEventType.ContentLoaded, PresentationInstructionKind.LoadContent, PresentationEventCategory.Content, true, false, PresentationBeat.None, "Content loaded", "Content bootstrap — no card-face stats"),
+            Entry(CoreEventType.ActionCountdownChanged, PresentationInstructionKind.UpdateActionCount, PresentationEventCategory.Stat, true, true, PresentationBeat.Settled, "Action countdown changed")
         };
 
         private static readonly Dictionary<CoreEventType, PresentationEventMapEntry> sByType = BuildLookup();

@@ -156,6 +156,7 @@ namespace NineGrid.Presentation.Tests
             director.Tick(0.016f); // present counter ack
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(1, counterPresent.BeginCount);
+            director.Tick(0.016f); // silent Advance interaction count
             Assert.IsFalse(director.IsMainlineBusy);
         }
 
@@ -200,7 +201,10 @@ namespace NineGrid.Presentation.Tests
             Assert.IsTrue(director.HasBufferedIntent);
             Assert.AreEqual(1, counterPresent.BeginCount);
 
-            director.Tick(0.016f); // counter present complete → flush buffered
+            director.Tick(0.016f); // counter present complete
+            Assert.IsTrue(director.IsMainlineBusy, "计数推进仍占主线，缓冲尚未冲刷");
+            Assert.IsTrue(director.HasBufferedIntent);
+            director.Tick(0.016f); // silent advance interaction count → flush buffered
             Assert.IsFalse(director.HasBufferedIntent);
         }
 

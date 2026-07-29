@@ -106,7 +106,9 @@ namespace NineGrid.Presentation.Setup
                 architecture,
                 dispatcher,
                 explorePresentChannel,
-                session.OnExploreBatchProjected);
+                session.OnExploreBatchProjected,
+                counterPresentChannel: attackCounterPresentChannel,
+                onCounterBatchProjected: session.OnAttackCounterBatchProjected);
             var attackFactory = new AttackIntentScriptFactory(
                 architecture,
                 dispatcher,

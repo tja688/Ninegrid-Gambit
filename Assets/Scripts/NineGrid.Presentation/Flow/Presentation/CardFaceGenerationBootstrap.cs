@@ -85,7 +85,8 @@ namespace NineGrid.Flow.Presentation
 
             return entry.Type == CoreEventType.CardSpawned
                 || entry.Type == CoreEventType.CardDealt
-                || entry.Type == CoreEventType.AvatarAppeared;
+                || entry.Type == CoreEventType.AvatarAppeared
+                || entry.Type == CoreEventType.ActionCountdownChanged;
         }
 
         private static bool IsCardFaceStatEvent(CoreEventType type)
@@ -97,7 +98,8 @@ namespace NineGrid.Flow.Presentation
                 || type == CoreEventType.Healed
                 || type == CoreEventType.ArmorChanged
                 || type == CoreEventType.BaseStatModified
-                || type == CoreEventType.CardKilled;
+                || type == CoreEventType.CardKilled
+                || type == CoreEventType.ActionCountdownChanged;
         }
 
         private static bool BelongsToUid(CoreGameEvent entry, int uid)

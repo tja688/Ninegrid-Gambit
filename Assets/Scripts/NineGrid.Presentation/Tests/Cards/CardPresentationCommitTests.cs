@@ -2,6 +2,8 @@ using NUnit.Framework;
 using NineGrid.Cards.Convergence;
 using NineGrid.Cards.Presentation;
 using NineGrid.Cards.Slots;
+using NineGrid.Core;
+using NineGrid.Flow.Presentation;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
@@ -162,7 +164,112 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(
                 "0",
                 ReadNumericText(card, CardFaceSlotCodes.ActionCount),
-                "未接线行动计数走数值缺省 0");
+                "未写入 ActionCount 时数值缺省 0");
+        }
+
+        [Test]
+        public void Commit_MonsterSnapshot_ActionCount_ShowsCommittedValue()
+        {
+            var card = _cardManager.SpawnView(
+                _nextUid++,
+                defId: "monster.test_countdown",
+                kind: CardPresentationKind.Monster);
+
+            card.CommitPresentation(new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.Monster,
+                DefId = "monster.test_countdown",
+                DisplayName = "倒计时怪",
+                MainIcon = _mainIcon,
+                Attack = 2,
+                Armor = 0,
+                Hp = 5,
+                ActionCount = 3,
+                FaceUp = true,
+            });
+
+            Assert.AreEqual("3", ReadNumericText(card, CardFaceSlotCodes.ActionCount));
+        }
+
+        [Test]
+        public void UpdateActionCount_Instruction_Commits_ResultValue_To_ActionCount()
+        {
+            var card = _cardManager.SpawnView(
+                _nextUid++,
+                defId: "monster.instruction_countdown",
+                kind: CardPresentationKind.Monster);
+            card.CommitPresentation(new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.Monster,
+                DefId = "monster.instruction_countdown",
+                DisplayName = "指令怪",
+                MainIcon = _mainIcon,
+                Attack = 1,
+                Armor = 0,
+                Hp = 4,
+                ActionCount = 3,
+                FaceUp = true,
+            });
+
+            CardEntityLifecycleHook.TryGet = (int uid, out ManagedCard found) =>
+            {
+                if (uid == card.Uid)
+                {
+                    found = card;
+                    return true;
+                }
+
+                found = null;
+                return false;
+            };
+
+            try
+            {
+                var evt = new CoreGameEvent(
+                        CoreEventType.ActionCountdownChanged,
+                        1,
+                        "SetAttackPatternCountdown")
+                    .WithCard(card.Uid)
+                    .WithResultValue(1);
+                var handler = new CardFaceStatHandler();
+                handler.Apply(new PresentationInstruction(
+                    evt,
+                    PresentationEventMap.Get(CoreEventType.ActionCountdownChanged)));
+
+                Assert.AreEqual(1, card.CommittedPresentation.ActionCount);
+                Assert.AreEqual("1", ReadNumericText(card, CardFaceSlotCodes.ActionCount));
+            }
+            finally
+            {
+                CardEntityLifecycleHook.TryGet = null;
+            }
+        }
+
+        [Test]
+        public void Commit_ActionIcon_UsesTemplateFallback_WhenNoModeSprites()
+        {
+            var card = _cardManager.SpawnView(
+                _nextUid++,
+                defId: "monster.action_icon_fallback",
+                kind: CardPresentationKind.Monster);
+
+            card.CommitPresentation(new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.Monster,
+                DefId = "monster.action_icon_fallback",
+                DisplayName = "图标兜底",
+                MainIcon = _mainIcon,
+                Attack = 1,
+                Armor = 0,
+                Hp = 1,
+                ActionCount = 2,
+                FaceUp = true,
+            });
+
+            Assert.AreSame(
+                _actionIcon,
+                ReadActionIcon(card),
+                "五模式素材未齐时 Action_Icon 须回退预制体模板默认图");
         }
 
         [Test]
@@ -473,6 +580,17 @@ namespace NineGrid.Presentation.Tests
                     card.MountedFaceRoot,
                     CardFaceSlotCodes.MainIcon,
                     out var renderer));
+            return renderer.sprite;
+        }
+
+        private static Sprite ReadActionIcon(ManagedCard card)
+        {
+            Assert.IsTrue(
+                CardFaceSlotNodeMap.TryFindRenderer(
+                    card.MountedFaceRoot,
+                    CardFaceSlotCodes.ActionIcon,
+                    out var renderer),
+                "怪物卡面应有 Action_Icon 槽");
             return renderer.sprite;
         }
 

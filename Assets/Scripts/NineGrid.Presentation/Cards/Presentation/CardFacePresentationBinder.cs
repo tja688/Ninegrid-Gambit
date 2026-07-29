@@ -444,7 +444,7 @@ namespace NineGrid.Cards.Presentation
                     SetNumeric(CardFaceSlotCodes.Attack, snapshot.Attack);
                     SetNumeric(CardFaceSlotCodes.Armor, snapshot.Armor);
                     SetNumeric(CardFaceSlotCodes.Hp, snapshot.Hp);
-                    // 行动计数首波未接线 → 缺省 0。
+                    // 行动计数经 UpdateActionCount 指令 Commit；snapshot 缺省为 0。
                     SetNumeric(CardFaceSlotCodes.ActionCount, snapshot.ActionCount);
                     break;
 

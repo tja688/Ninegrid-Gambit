@@ -26,7 +26,7 @@ namespace NineGrid.Cards.Presentation
         public int Armor;
         public int Hp;
 
-        /// <summary>未接线时保持 0。</summary>
+        /// <summary>行动倒计时；经 UpdateActionCount 指令 Commit，缺省 0。</summary>
         public int ActionCount;
 
         /// <summary>

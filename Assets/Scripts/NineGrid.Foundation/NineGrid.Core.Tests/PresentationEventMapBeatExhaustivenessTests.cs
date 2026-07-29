@@ -34,6 +34,10 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(PresentationBeat.Settled, PresentationEventMap.Get(CoreEventType.CardDealt).Beat);
             Assert.AreEqual(PresentationBeat.Settled, PresentationEventMap.Get(CoreEventType.AvatarAppeared).Beat);
             Assert.AreEqual(PresentationBeat.Settled, PresentationEventMap.Get(CoreEventType.CardKilled).Beat);
+            Assert.AreEqual(
+                PresentationBeat.Settled,
+                PresentationEventMap.Get(CoreEventType.ActionCountdownChanged).Beat,
+                "行动倒计时须在 Settled 经指令 Commit 到 ActionCount");
         }
 
         [Test]

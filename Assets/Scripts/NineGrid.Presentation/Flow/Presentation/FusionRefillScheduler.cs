@@ -70,7 +70,8 @@ namespace NineGrid.Flow.Presentation
         public void AppendAfterRotatePresent(
             BattleTimeline timeline,
             Func<bool> hadFusion,
-            Action<BattleTimeline> enqueueFusionRefill)
+            Action<BattleTimeline> enqueueFusionRefill,
+            Action<BattleTimeline> whenNoFusion = null)
         {
             if (timeline == null)
             {
@@ -111,7 +112,8 @@ namespace NineGrid.Flow.Presentation
                     enqueueFusionRefill(t);
                     MarkRefillScheduled();
                     DisarmRefillGate();
-                }));
+                },
+                whenNoFusion));
         }
 
         public void EnqueueRefillBatches(

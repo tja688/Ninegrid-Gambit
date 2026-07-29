@@ -168,7 +168,8 @@ namespace NineGrid.Core
         RoomResolved,
         NodeAdvanced,
         BoardMarked,
-        ContentLoaded
+        ContentLoaded,
+        ActionCountdownChanged
     }
 
     public enum PresentationEventCategory
@@ -234,7 +235,8 @@ namespace NineGrid.Core
         ResolveRoom,
         AdvanceNode,
         MarkBoard,
-        LoadContent
+        LoadContent,
+        UpdateActionCount
     }
 
     public enum GamePhase

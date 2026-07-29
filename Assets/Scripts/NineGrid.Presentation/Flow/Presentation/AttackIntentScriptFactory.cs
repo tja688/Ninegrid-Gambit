@@ -26,6 +26,7 @@ namespace NineGrid.Flow.Presentation
         /// <summary>startIndex, attackerBoardSlot, attackerUid, projection</summary>
         private readonly Action<int, int, int, PostKillBoardPresentationResult> mOnCounterBatchProjected;
         private readonly FusionRefillScheduler mFusionRefill;
+        private readonly EnemyActionPhaseScheduler mEnemyAction;
         private bool mLastHitKilledTarget;
         private bool mLastAvatarDefeated;
         private bool mLastRotateHadFusion;
@@ -41,7 +42,8 @@ namespace NineGrid.Flow.Presentation
             Action<int, int, int, PostKillBoardPresentationResult> onHitBatchProjected = null,
             Action<int, int, PostKillBoardPresentationResult> onBoardBatchProjected = null,
             Action<int, int, int, PostKillBoardPresentationResult> onCounterBatchProjected = null,
-            FusionRefillScheduler fusionRefill = null)
+            FusionRefillScheduler fusionRefill = null,
+            EnemyActionPhaseScheduler enemyAction = null)
         {
             if (architecture == null)
             {
@@ -72,6 +74,7 @@ namespace NineGrid.Flow.Presentation
             mOnBoardBatchProjected = onBoardBatchProjected;
             mOnCounterBatchProjected = onCounterBatchProjected;
             mFusionRefill = fusionRefill ?? new FusionRefillScheduler();
+            mEnemyAction = enemyAction ?? new EnemyActionPhaseScheduler();
         }
 
         public void BuildScript(InputIntent intent, BattleTimeline timeline)
@@ -221,20 +224,39 @@ namespace NineGrid.Flow.Presentation
             mFusionRefill.AppendAfterRotatePresent(
                 timeline,
                 () => mLastRotateHadFusion,
-                t => mFusionRefill.EnqueueRefillBatches(
-                    t,
-                    mArchitecture,
-                    mDispatcher,
-                    mBoardPresentChannel,
-                    boardSlot,
-                    mFusionExcludeResultUids,
-                    mOnBoardBatchProjected));
+                t =>
+                {
+                    mFusionRefill.EnqueueRefillBatches(
+                        t,
+                        mArchitecture,
+                        mDispatcher,
+                        mBoardPresentChannel,
+                        boardSlot,
+                        mFusionExcludeResultUids,
+                        mOnBoardBatchProjected);
+                    AppendEnemyActionPhase(t, boardSlot);
+                },
+                t => AppendEnemyActionPhase(t, boardSlot));
         }
 
         private void EnqueueNonKillInteractionAdvance(BattleTimeline timeline, int boardSlot)
         {
             // 未击杀无补牌批可挂载计数：静默推进，不另开 Present（InteractionChanged 为 Beat.None）。
             timeline.Enqueue(new InteractionCountAdvanceStep(mArchitecture));
+            AppendEnemyActionPhase(timeline, boardSlot);
+        }
+
+        private void AppendEnemyActionPhase(BattleTimeline timeline, int boardSlot)
+        {
+            mEnemyAction.Append(
+                timeline,
+                mArchitecture,
+                mDispatcher,
+                mBoardPresentChannel,
+                mCounterPresentChannel,
+                mOnBoardBatchProjected,
+                mOnCounterBatchProjected,
+                boardSlot);
         }
 
         private void EnqueueCounterAftermath(

@@ -25,6 +25,9 @@ namespace NineGrid.Flow.Presentation
                 case PresentationInstructionKind.UpdateArmor:
                     ApplyArmor(instruction.Event);
                     return true;
+                case PresentationInstructionKind.UpdateActionCount:
+                    ApplyActionCount(instruction.Event);
+                    return true;
                 case PresentationInstructionKind.ModifyBaseStat:
                     ApplyBaseStat(instruction.Event);
                     return true;
@@ -57,7 +60,7 @@ namespace NineGrid.Flow.Presentation
                 return;
             }
 
-            CommitNumeric(card, attack: null, armor: null, hp: Mathf.Max(0, gameEvent.RemainingHp));
+            CommitNumeric(card, attack: null, armor: null, hp: Mathf.Max(0, gameEvent.RemainingHp), actionCount: null);
         }
 
         private static void ApplyArmor(CoreGameEvent gameEvent)
@@ -67,7 +70,22 @@ namespace NineGrid.Flow.Presentation
                 return;
             }
 
-            CommitNumeric(card, attack: null, armor: Mathf.Max(0, gameEvent.RemainingArmor), hp: null);
+            CommitNumeric(card, attack: null, armor: Mathf.Max(0, gameEvent.RemainingArmor), hp: null, actionCount: null);
+        }
+
+        private static void ApplyActionCount(CoreGameEvent gameEvent)
+        {
+            if (!TryResolveCard(gameEvent, out var card))
+            {
+                return;
+            }
+
+            CommitNumeric(
+                card,
+                attack: null,
+                armor: null,
+                hp: null,
+                actionCount: Mathf.Max(0, gameEvent.ResultValue));
         }
 
         private static void ApplyBaseStat(CoreGameEvent gameEvent)
@@ -82,15 +100,15 @@ namespace NineGrid.Flow.Presentation
             switch (stat)
             {
                 case StatId.Attack:
-                    CommitNumeric(card, attack: value, armor: null, hp: null);
+                    CommitNumeric(card, attack: value, armor: null, hp: null, actionCount: null);
                     break;
                 case StatId.Armor:
                 case StatId.CurrentArmor:
-                    CommitNumeric(card, attack: null, armor: value, hp: null);
+                    CommitNumeric(card, attack: null, armor: value, hp: null, actionCount: null);
                     break;
                 case StatId.Hp:
                 case StatId.MaxHp:
-                    CommitNumeric(card, attack: null, armor: null, hp: value);
+                    CommitNumeric(card, attack: null, armor: null, hp: value, actionCount: null);
                     break;
             }
         }
@@ -103,7 +121,7 @@ namespace NineGrid.Flow.Presentation
             }
 
             // CardKilled：可见血量取指令携带的剩余血量（通常为 0）；禁止本地硬编码置零旁路。
-            CommitNumeric(card, attack: null, armor: null, hp: Mathf.Max(0, gameEvent.RemainingHp));
+            CommitNumeric(card, attack: null, armor: null, hp: Mathf.Max(0, gameEvent.RemainingHp), actionCount: null);
         }
 
         private static void ApplySpawnFace(CoreGameEvent gameEvent)
@@ -118,7 +136,8 @@ namespace NineGrid.Flow.Presentation
                 card,
                 attack: Mathf.Max(0, gameEvent.ResultValue),
                 armor: Mathf.Max(0, gameEvent.RemainingArmor),
-                hp: Mathf.Max(0, gameEvent.RemainingHp));
+                hp: Mathf.Max(0, gameEvent.RemainingHp),
+                actionCount: null);
         }
 
         /// <summary>
@@ -158,7 +177,8 @@ namespace NineGrid.Flow.Presentation
                     card,
                     attack: Mathf.Max(0, face.Attack),
                     armor: Mathf.Max(0, face.Armor),
-                    hp: Mathf.Max(0, face.Hp));
+                    hp: Mathf.Max(0, face.Hp),
+                    actionCount: null);
             }
         }
 
@@ -202,7 +222,12 @@ namespace NineGrid.Flow.Presentation
             return CardEntityLifecycleHook.TryGetCard(uid, out card) && card != null;
         }
 
-        private static void CommitNumeric(ManagedCard card, int? attack, int? armor, int? hp)
+        private static void CommitNumeric(
+            ManagedCard card,
+            int? attack,
+            int? armor,
+            int? hp,
+            int? actionCount)
         {
             if (card.View == null)
             {
@@ -232,6 +257,11 @@ namespace NineGrid.Flow.Presentation
             if (hp.HasValue)
             {
                 snapshot.Hp = hp.Value;
+            }
+
+            if (actionCount.HasValue)
+            {
+                snapshot.ActionCount = actionCount.Value;
             }
 
             card.CommitPresentation(snapshot);
