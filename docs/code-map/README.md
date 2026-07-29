@@ -26,7 +26,7 @@
 |--------|------|------|
 | `NineGrid.Core` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Core/` | 规则核（QF） |
 | `NineGrid.Content` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Content/` | Catalog：**schema≥2 一卡一文件 JSON 投影** + **tables JSON**（效果模板 / **奖池查询规则** / 经济 / 节点规则；卡上 `effectAssemblies` 解析进 `Catalog.Effects`；分类三轴 `deckId`/`role`/`tags`+`rarity`；`ContentCatalogBootstrap.Load` 会 Invalidate 表现/模板静态缓存后重读盘，末尾 `RewardPoolQueryExpander`；业务只消费 `GameContentCatalog`）；`TableNineContentCatalog.CreateDefault` 为小型测试夹具；卡牌表现 JSON + **ContentArt** Resources 根（ADR-0008 / ADR-0009 / #69–#71） |
-| `NineGrid.Content.Editor` | `…/NineGrid.Content.Editor/` | 卡牌表现编辑器（侧栏 **卡面 / 效果池 / 卡组·卡背**：按 `deckId` 分组卡面；卡面单一 **效果装配**（可搜索模糊匹配模板池 + `{param}` 参数化下拉文案 + 描述自动同步/自定义锁定；打开怪物时把旧 `skillIds` 展开进 `effectAssemblies`）；效果模板 + 描述词条；Deck 卡背）；`ContentArtBreakLinkValidator` 断链扫描 |
+| `NineGrid.Content.Editor` | `…/NineGrid.Content.Editor/` | 卡牌表现编辑器（侧栏 **卡面 / 效果池 / 特效库 / 卡组·卡背**：按 `deckId` 分组卡面；卡面单一 **效果装配**；效果模板 + 描述词条；**特效库**一级分类+变体二级纯预览（`visual_effects.json`，与 DSL 效果池区分）；Deck 卡背）；`ContentArtBreakLinkValidator` 断链扫描；`VisualEffectsMigrateRunner` 迁 Effects→ContentArt |
 | `NineGrid.Presentation` | `Assets/Scripts/NineGrid.Presentation/` | 表现层（原 Flow+Cards **合并后的单一程序集**） |
 | `NineGrid.Presentation.Tests` | `…/Tests/` | EditMode |
 | `NineGrid.Presentation.Editor` | `…/Editor/` | 编辑器工具 |

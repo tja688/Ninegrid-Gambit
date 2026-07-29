@@ -18,7 +18,7 @@
 | `Systems/` | 18 | `NineGrid.Presentation.Systems` | QF System / 窄能力接口 |
 | `Flow/` | ~118 | `NineGrid.Flow*` | 导演/时间线/Channel/Scheduler、局内会话、流程壳、诊断、部分 Presenter |
 | `Cards/` | ~136 | `NineGrid.Cards*` | 卡视图、场地/手牌/牌库、收敛、特效 SO、静态 Hook |
-| `Editor/` | ~20 | `NineGrid.Presentation.Editor` | 编辑器工具 |
+| `Editor/` | ~22 | `NineGrid.Presentation.Editor` | 编辑器工具；`CardFacePreviewHost` / `VisualEffectPreviewHost`（特效库：左怪物卡参照 + 右精灵表预览） |
 | `Tests/` | ~97 | `NineGrid.Presentation.Tests*` | EditMode |
 
 ### `Flow/` 子树
@@ -41,7 +41,7 @@
 | `Effects/` | 卡面 DOTween / Timeline 特效 SO |
 | `Slots/` | 卡面槽表 |
 | `Presentation/` | 卡面描述合成等 |
-| `Anim/` | `CardSpriteAnimPlayer`、`CardAnimFrameSource`（folder/atlas；Player 走 Resources.LoadAll + 帧名排序，ADR-0008） |
+| `Anim/` | `CardSpriteAnimPlayer`、`CardAnimFrameSource`（folder/atlas；Player 走 Resources.LoadAll + 帧名排序，ADR-0008）、`SpriteSheetLoopPlayer`（特效库精灵表循环） |
 | （根下） | `FieldBattleView`、手牌/牌库管理器、静态 `*Hook` |
 
 ## 装配

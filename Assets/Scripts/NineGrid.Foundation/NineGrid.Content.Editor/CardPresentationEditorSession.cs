@@ -13,12 +13,13 @@ using UnityEngine;
 
 namespace NineGrid.Content.Editor
 {
-    /// <summary>侧栏三大类（解耦装配 IA）。</summary>
+    /// <summary>侧栏分区（解耦装配 IA）。</summary>
     public enum CardPresentationSidebarSection
     {
         Faces = 0,
         EffectPool = 1,
         Decks = 2,
+        VfxLibrary = 3,
     }
 
     /// <summary>内容区焦点种类。</summary>
@@ -29,6 +30,7 @@ namespace NineGrid.Content.Editor
         EffectTemplate = 2,
         Deck = 3,
         DescriptionGlossary = 4,
+        VisualEffect = 5,
     }
 
     /// <summary>
@@ -88,6 +90,21 @@ namespace NineGrid.Content.Editor
         public List<CardPresentationEditorEntry> Entries { get; } = new List<CardPresentationEditorEntry>();
     }
 
+    public sealed class VisualEffectSidebarCategoryGroup
+    {
+        public string Category { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public Dictionary<string, VisualEffectSidebarVariantGroup> Variants { get; } =
+            new Dictionary<string, VisualEffectSidebarVariantGroup>(StringComparer.Ordinal);
+    }
+
+    public sealed class VisualEffectSidebarVariantGroup
+    {
+        public string VariantId { get; set; } = string.Empty;
+        public List<VisualEffectCatalogEditorIO.EditorRow> Entries { get; } =
+            new List<VisualEffectCatalogEditorIO.EditorRow>();
+    }
+
     public sealed class CardPresentationInsertableIcon
     {
         public string Code { get; set; } = string.Empty;
@@ -122,15 +139,19 @@ namespace NineGrid.Content.Editor
             new Dictionary<string, CardPresentationEditorEntry>(StringComparer.Ordinal);
         private readonly List<EffectTemplateEditorIO.TemplateRow> effectTemplates =
             new List<EffectTemplateEditorIO.TemplateRow>();
+        private readonly List<VisualEffectCatalogEditorIO.EditorRow> visualEffects =
+            new List<VisualEffectCatalogEditorIO.EditorRow>();
         private readonly List<string> knownSkillIds = new List<string>();
 
         private CardPresentationEditorFocusKind focusKind = CardPresentationEditorFocusKind.None;
         private string focusedContentId = string.Empty;
         private string focusedTemplateId = string.Empty;
+        private string focusedVisualEffectId = string.Empty;
 
         public IReadOnlyList<CardPresentationEditorEntry> FaceEntries => faceEntries;
         public IReadOnlyList<CardPresentationEditorEntry> DeckEntries => deckEntries;
         public IReadOnlyList<EffectTemplateEditorIO.TemplateRow> EffectTemplates => effectTemplates;
+        public IReadOnlyList<VisualEffectCatalogEditorIO.EditorRow> VisualEffects => visualEffects;
         public IReadOnlyList<string> KnownSkillIds => knownSkillIds;
         public GameContentCatalog CoreCatalog { get; private set; }
         public ContentVisualCatalog VisualCatalog { get; private set; }
@@ -155,6 +176,12 @@ namespace NineGrid.Content.Editor
             set => focusedTemplateId = value ?? string.Empty;
         }
 
+        public string FocusedVisualEffectId
+        {
+            get => focusedVisualEffectId;
+            set => focusedVisualEffectId = value ?? string.Empty;
+        }
+
         /// <summary>兼容旧调用：卡面条目列表。</summary>
         public IReadOnlyList<CardPresentationEditorEntry> Entries => faceEntries;
 
@@ -166,6 +193,14 @@ namespace NineGrid.Content.Editor
                 for (var i = 0; i < effectTemplates.Count; i++)
                 {
                     if (effectTemplates[i] != null && effectTemplates[i].IsDirty)
+                    {
+                        n++;
+                    }
+                }
+
+                for (var i = 0; i < visualEffects.Count; i++)
+                {
+                    if (visualEffects[i] != null && visualEffects[i].IsDirty)
                     {
                         n++;
                     }
@@ -186,6 +221,7 @@ namespace NineGrid.Content.Editor
             deckEntries.Clear();
             deckById.Clear();
             effectTemplates.Clear();
+            visualEffects.Clear();
             knownSkillIds.Clear();
 
             var xlsxRows = ContentVisualXlsxIO.ReadAll(XlsxPath);
@@ -223,6 +259,18 @@ namespace NineGrid.Content.Editor
             var templates = EffectTemplateEditorIO.LoadAll(out _);
             effectTemplates.AddRange(templates);
 
+            var vfxRows = VisualEffectCatalogEditorIO.LoadAll(out _);
+            if (vfxRows.Count == 0)
+            {
+                vfxRows = VisualEffectCatalogEditorIO.ScanAndMerge(null, out _);
+                if (vfxRows.Count > 0)
+                {
+                    VisualEffectCatalogEditorIO.TrySaveAll(vfxRows, out _);
+                }
+            }
+
+            visualEffects.AddRange(vfxRows);
+
             if (!string.IsNullOrEmpty(focusedContentId)
                 && !faceById.ContainsKey(focusedContentId)
                 && !deckById.ContainsKey(focusedContentId))
@@ -235,6 +283,13 @@ namespace NineGrid.Content.Editor
                     || !string.Equals(t.id, focusedTemplateId, StringComparison.Ordinal)))
             {
                 focusedTemplateId = string.Empty;
+            }
+
+            if (!string.IsNullOrEmpty(focusedVisualEffectId)
+                && visualEffects.All(v => v == null
+                    || !string.Equals(v.Id, focusedVisualEffectId, StringComparison.Ordinal)))
+            {
+                focusedVisualEffectId = string.Empty;
             }
         }
 
@@ -304,6 +359,7 @@ namespace NineGrid.Content.Editor
             focusKind = CardPresentationEditorFocusKind.Face;
             focusedContentId = contentId ?? string.Empty;
             focusedTemplateId = string.Empty;
+            focusedVisualEffectId = string.Empty;
         }
 
         public void FocusDeck(string contentId)
@@ -311,6 +367,7 @@ namespace NineGrid.Content.Editor
             focusKind = CardPresentationEditorFocusKind.Deck;
             focusedContentId = contentId ?? string.Empty;
             focusedTemplateId = string.Empty;
+            focusedVisualEffectId = string.Empty;
         }
 
         public void FocusEffectTemplate(string templateId)
@@ -318,6 +375,7 @@ namespace NineGrid.Content.Editor
             focusKind = CardPresentationEditorFocusKind.EffectTemplate;
             focusedTemplateId = templateId ?? string.Empty;
             focusedContentId = string.Empty;
+            focusedVisualEffectId = string.Empty;
         }
 
         public void FocusDescriptionGlossary()
@@ -325,6 +383,185 @@ namespace NineGrid.Content.Editor
             focusKind = CardPresentationEditorFocusKind.DescriptionGlossary;
             focusedContentId = string.Empty;
             focusedTemplateId = string.Empty;
+            focusedVisualEffectId = string.Empty;
+        }
+
+        public void FocusVisualEffect(string visualEffectId)
+        {
+            focusKind = CardPresentationEditorFocusKind.VisualEffect;
+            focusedVisualEffectId = visualEffectId ?? string.Empty;
+            focusedContentId = string.Empty;
+            focusedTemplateId = string.Empty;
+        }
+
+        public VisualEffectCatalogEditorIO.EditorRow GetFocusedVisualEffect()
+        {
+            if (focusKind != CardPresentationEditorFocusKind.VisualEffect
+                || string.IsNullOrEmpty(focusedVisualEffectId))
+            {
+                return null;
+            }
+
+            for (var i = 0; i < visualEffects.Count; i++)
+            {
+                var row = visualEffects[i];
+                if (row != null && string.Equals(row.Id, focusedVisualEffectId, StringComparison.Ordinal))
+                {
+                    return row;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 侧栏：按一级分类 → 变体分组。每个变体挂其下 size×color 叶子条目。
+        /// </summary>
+        public List<VisualEffectSidebarCategoryGroup> GetVisualEffectSidebarGroups()
+        {
+            var byCategory = new Dictionary<string, VisualEffectSidebarCategoryGroup>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < visualEffects.Count; i++)
+            {
+                var row = visualEffects[i];
+                var dto = row?.Dto;
+                if (dto == null || string.IsNullOrWhiteSpace(dto.category) || string.IsNullOrWhiteSpace(dto.variantId))
+                {
+                    continue;
+                }
+
+                if (!byCategory.TryGetValue(dto.category, out var cat))
+                {
+                    cat = new VisualEffectSidebarCategoryGroup
+                    {
+                        Category = dto.category,
+                        Title = VisualEffectCatalogEditorIO.GetCategoryLabel(dto.category),
+                    };
+                    byCategory[dto.category] = cat;
+                }
+
+                if (!cat.Variants.TryGetValue(dto.variantId, out var variant))
+                {
+                    variant = new VisualEffectSidebarVariantGroup
+                    {
+                        VariantId = dto.variantId,
+                    };
+                    cat.Variants[dto.variantId] = variant;
+                }
+
+                variant.Entries.Add(row);
+            }
+
+            var ordered = new List<VisualEffectSidebarCategoryGroup>();
+            for (var i = 0; i < VisualEffectCatalogEditorIO.CategoryLabels.Length; i++)
+            {
+                var folder = VisualEffectCatalogEditorIO.CategoryLabels[i].Folder;
+                if (byCategory.TryGetValue(folder, out var known))
+                {
+                    SortVariantEntries(known);
+                    ordered.Add(known);
+                    byCategory.Remove(folder);
+                }
+            }
+
+            foreach (var orphan in byCategory.Values.OrderBy(c => c.Category, StringComparer.OrdinalIgnoreCase))
+            {
+                SortVariantEntries(orphan);
+                ordered.Add(orphan);
+            }
+
+            return ordered;
+        }
+
+        private static void SortVariantEntries(VisualEffectSidebarCategoryGroup cat)
+        {
+            foreach (var variant in cat.Variants.Values)
+            {
+                variant.Entries.Sort((a, b) =>
+                {
+                    var cmp = string.Compare(a.Dto?.size, b.Dto?.size, StringComparison.OrdinalIgnoreCase);
+                    if (cmp != 0)
+                    {
+                        return cmp;
+                    }
+
+                    return string.Compare(a.Dto?.color, b.Dto?.color, StringComparison.OrdinalIgnoreCase);
+                });
+            }
+        }
+
+        /// <summary>选中某变体时默认叶子：优先 large，其次字典序第一。</summary>
+        public VisualEffectCatalogEditorIO.EditorRow PreferDefaultLeafForVariant(string category, string variantId)
+        {
+            VisualEffectCatalogEditorIO.EditorRow best = null;
+            for (var i = 0; i < visualEffects.Count; i++)
+            {
+                var row = visualEffects[i];
+                var dto = row?.Dto;
+                if (dto == null)
+                {
+                    continue;
+                }
+
+                if (!string.Equals(dto.category, category, StringComparison.OrdinalIgnoreCase)
+                    || !string.Equals(dto.variantId, variantId, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (best == null)
+                {
+                    best = row;
+                    continue;
+                }
+
+                var bestLarge = string.Equals(best.Dto.size, "large", StringComparison.OrdinalIgnoreCase);
+                var curLarge = string.Equals(dto.size, "large", StringComparison.OrdinalIgnoreCase);
+                if (curLarge && !bestLarge)
+                {
+                    best = row;
+                    continue;
+                }
+
+                if (curLarge == bestLarge
+                    && string.CompareOrdinal(dto.id, best.Dto.id) < 0)
+                {
+                    best = row;
+                }
+            }
+
+            return best;
+        }
+
+        public IReadOnlyList<VisualEffectCatalogEditorIO.EditorRow> GetLeavesForVariant(string category, string variantId)
+        {
+            var list = new List<VisualEffectCatalogEditorIO.EditorRow>();
+            for (var i = 0; i < visualEffects.Count; i++)
+            {
+                var row = visualEffects[i];
+                var dto = row?.Dto;
+                if (dto == null)
+                {
+                    continue;
+                }
+
+                if (string.Equals(dto.category, category, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(dto.variantId, variantId, StringComparison.Ordinal))
+                {
+                    list.Add(row);
+                }
+            }
+
+            list.Sort((a, b) =>
+            {
+                var cmp = string.Compare(a.Dto?.size, b.Dto?.size, StringComparison.OrdinalIgnoreCase);
+                if (cmp != 0)
+                {
+                    return cmp;
+                }
+
+                return string.Compare(a.Dto?.color, b.Dto?.color, StringComparison.OrdinalIgnoreCase);
+            });
+            return list;
         }
 
         public List<CardPresentationSidebarDeckGroup> GetFaceDeckGroups()
@@ -854,6 +1091,15 @@ namespace NineGrid.Content.Editor
                     }
                 }
 
+                var dirtyVfx = visualEffects.Where(v => v != null && v.IsDirty).ToList();
+                if (dirtyVfx.Count > 0)
+                {
+                    if (!VisualEffectCatalogEditorIO.TrySaveAll(visualEffects, out error))
+                    {
+                        return false;
+                    }
+                }
+
                 CardPresentationConfigCatalog.Invalidate();
                 return true;
             }
@@ -884,6 +1130,23 @@ namespace NineGrid.Content.Editor
                     }
 
                     return EffectTemplateEditorIO.TrySaveAll(effectTemplates, out error);
+                }
+
+                if (focusKind == CardPresentationEditorFocusKind.VisualEffect)
+                {
+                    var row = GetFocusedVisualEffect();
+                    if (row == null)
+                    {
+                        error = "无选中特效。";
+                        return false;
+                    }
+
+                    if (!row.IsDirty)
+                    {
+                        return true;
+                    }
+
+                    return VisualEffectCatalogEditorIO.TrySaveAll(visualEffects, out error);
                 }
 
                 CardPresentationEditorEntry entry = null;

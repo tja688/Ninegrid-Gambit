@@ -21,6 +21,7 @@ namespace NineGrid.Content.Editor
     {
         private readonly CardPresentationEditorSession session = new CardPresentationEditorSession();
         private readonly CardFacePreviewHost previewHost = new CardFacePreviewHost();
+        private readonly VisualEffectPreviewHost vfxPreviewHost = new VisualEffectPreviewHost();
         private readonly CardPresentationFlipPreview flipPreview = new CardPresentationFlipPreview();
 
         private VisualElement rootElement;
@@ -28,10 +29,12 @@ namespace NineGrid.Content.Editor
         private VisualElement contentRoot;
         private HelpBox statusHelpBox;
         private IMGUIContainer previewContainer;
+        private IMGUIContainer vfxPreviewContainer;
         private TextField descriptionField;
         private Label descriptionModeLabel;
         private bool suppressDescriptionCallback;
         private string previewFingerprint = string.Empty;
+        private string vfxPreviewFingerprint = string.Empty;
         private bool faceUp = true;
         private string previewAnimSlot = CardAnimSlotIds.Idle;
         private CardSpriteAnimPlayer previewAnimPlayer;
@@ -92,7 +95,9 @@ namespace NineGrid.Content.Editor
             flipPreview.Stop();
             previewAnimPlayer = null;
             previewHost.Dispose();
+            vfxPreviewHost.Dispose();
             previewFingerprint = string.Empty;
+            vfxPreviewFingerprint = string.Empty;
             CardFacePresentationBinder.SetInlineIconStyleOverride(null);
             CardFacePresentationBinder.SetDescriptionIconCatalogOverride(null);
             TryPersistInlineIconStyle();
@@ -142,9 +147,19 @@ namespace NineGrid.Content.Editor
                 needsRepaint = true;
             }
 
+            if (session.FocusKind == CardPresentationEditorFocusKind.VisualEffect)
+            {
+                vfxPreviewHost.EditorTick(delta);
+                if (vfxPreviewHost.Player != null && vfxPreviewHost.Player.IsPlaying)
+                {
+                    needsRepaint = true;
+                }
+            }
+
             if (needsRepaint)
             {
                 previewContainer?.MarkDirtyRepaint();
+                vfxPreviewContainer?.MarkDirtyRepaint();
             }
         }
 
@@ -157,7 +172,7 @@ namespace NineGrid.Content.Editor
 
             rootElement.Add(ContentVisualWarmConsoleUi.BuildHeader(
                 "表现层配置",
-                "卡面 / 效果池 / 卡组·卡背 纯装配；卸下效果装配（并清 effectIds）= 白板。"));
+                "卡面 / 效果池 / 特效库 / 卡组·卡背；特效库本阶段纯预览，时机装配后续接线。"));
 
             rootElement.Add(ContentVisualWarmConsoleUi.BuildToolbar(
                 ("保存", SaveAll, "保存全部脏 JSON（Authoring + StreamingAssets）"),
@@ -229,6 +244,7 @@ namespace NineGrid.Content.Editor
             listContainer.Clear();
             listContainer.Add(BuildFacesSectionFoldout());
             listContainer.Add(BuildEffectPoolSectionFoldout());
+            listContainer.Add(BuildVfxLibrarySectionFoldout());
             listContainer.Add(BuildDecksSectionFoldout());
         }
 
@@ -355,6 +371,90 @@ namespace NineGrid.Content.Editor
                     container.Add(BuildTemplateEntryButton(row));
                 }
             });
+        }
+
+        private VisualElement BuildVfxLibrarySectionFoldout()
+        {
+            return BuildSectionFoldout("section:vfx", "特效库", container =>
+            {
+                var groups = session.GetVisualEffectSidebarGroups();
+                if (groups.Count == 0)
+                {
+                    container.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel(
+                        "（无特效条目 — 请先跑 NineGrid/Tools/Migrate Visual Effects To Resources）"));
+                    return;
+                }
+
+                for (var i = 0; i < groups.Count; i++)
+                {
+                    var cat = groups[i];
+                    var catKey = "vfx-cat:" + cat.Category;
+                    if (!foldoutState.TryGetValue(catKey, out var catExpanded))
+                    {
+                        catExpanded = false;
+                        foldoutState[catKey] = catExpanded;
+                    }
+
+                    var catFoldout = new Foldout
+                    {
+                        text = cat.Title + " · " + cat.Variants.Count,
+                        value = catExpanded,
+                    };
+                    catFoldout.style.marginLeft = 4;
+                    catFoldout.style.marginBottom = 2;
+                    catFoldout.RegisterValueChangedCallback(evt => foldoutState[catKey] = evt.newValue);
+
+                    foreach (var variant in cat.Variants.Values.OrderBy(v => v.VariantId, StringComparer.OrdinalIgnoreCase))
+                    {
+                        catFoldout.contentContainer.Add(BuildVfxVariantButton(cat.Category, variant));
+                    }
+
+                    container.Add(catFoldout);
+                }
+            });
+        }
+
+        private VisualElement BuildVfxVariantButton(string category, VisualEffectSidebarVariantGroup variant)
+        {
+            var focused = session.GetFocusedVisualEffect();
+            var selected = focused?.Dto != null
+                && string.Equals(focused.Dto.category, category, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(focused.Dto.variantId, variant.VariantId, StringComparison.Ordinal);
+
+            var button = new Button(() => SelectVisualEffectVariant(category, variant.VariantId))
+            {
+                text = variant.VariantId,
+            };
+            button.style.unityTextAlign = TextAnchor.MiddleLeft;
+            button.style.marginLeft = 8;
+            button.style.marginBottom = 1;
+            button.style.height = 22;
+            if (selected)
+            {
+                button.style.backgroundColor = ContentVisualWarmConsoleUi.Theme.NavSelectedBg;
+            }
+
+            return button;
+        }
+
+        private void SelectVisualEffectVariant(string category, string variantId)
+        {
+            var leaf = session.PreferDefaultLeafForVariant(category, variantId);
+            if (leaf == null)
+            {
+                return;
+            }
+
+            session.FocusVisualEffect(leaf.Id);
+            vfxPreviewFingerprint = string.Empty;
+            RefreshAll();
+        }
+
+        private void SelectVisualEffectLeaf(string visualEffectId)
+        {
+            session.FocusVisualEffect(visualEffectId);
+            vfxPreviewFingerprint = string.Empty;
+            RefreshAll();
         }
 
         private VisualElement BuildDecksSectionFoldout()
@@ -589,12 +689,198 @@ namespace NineGrid.Content.Editor
                 case CardPresentationEditorFocusKind.Deck:
                     BuildDeckContent();
                     return;
+                case CardPresentationEditorFocusKind.VisualEffect:
+                    BuildVisualEffectContent();
+                    return;
                 default:
                     contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeader(
                         "未选择",
-                        "从左侧选择卡面、效果模板、卡组，或打开「描述词条」。"));
+                        "从左侧选择卡面、效果模板、特效、卡组，或打开「描述词条」。"));
                     previewFingerprint = string.Empty;
+                    vfxPreviewFingerprint = string.Empty;
                     return;
+            }
+        }
+
+        private void BuildVisualEffectContent()
+        {
+            var row = session.GetFocusedVisualEffect();
+            var dto = row?.Dto;
+            if (dto == null)
+            {
+                contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeader(
+                    "未选择",
+                    "从左侧特效库选择一个变体。"));
+                vfxPreviewFingerprint = string.Empty;
+                return;
+            }
+
+            var title = string.IsNullOrWhiteSpace(dto.displayName) ? dto.variantId : dto.displayName;
+            contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeaderCompact(
+                title,
+                dto.id + " · " + VisualEffectCatalogEditorIO.GetCategoryLabel(dto.category)
+                + (row.IsDirty ? " · 未保存" : string.Empty)));
+
+            var leaves = session.GetLeavesForVariant(dto.category, dto.variantId);
+            contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
+                "尺寸 / 颜色",
+                "同一变体下的 large/small 与色板；切换后右侧特效重载",
+                column =>
+                {
+                    var chipRow = new VisualElement();
+                    chipRow.style.flexDirection = FlexDirection.Row;
+                    chipRow.style.flexWrap = Wrap.Wrap;
+                    for (var i = 0; i < leaves.Count; i++)
+                    {
+                        var leaf = leaves[i];
+                        if (leaf?.Dto == null)
+                        {
+                            continue;
+                        }
+
+                        var id = leaf.Dto.id;
+                        var selected = string.Equals(id, dto.id, StringComparison.Ordinal);
+                        var chip = new Button(() => SelectVisualEffectLeaf(id))
+                        {
+                            text = leaf.Dto.size + " · " + leaf.Dto.color,
+                        };
+                        chip.style.marginRight = 4;
+                        chip.style.marginBottom = 4;
+                        chip.style.height = 24;
+                        if (selected)
+                        {
+                            chip.style.backgroundColor = ContentVisualWarmConsoleUi.Theme.NavSelectedBg;
+                        }
+
+                        chipRow.Add(chip);
+                    }
+
+                    column.Add(chipRow);
+                }));
+
+            var previewCard = ContentVisualWarmConsoleUi.CreateSectionCard(
+                "预览",
+                "左：标准怪物卡参照 · 右：特效（默认循环）",
+                column =>
+                {
+                    vfxPreviewContainer = new IMGUIContainer(() =>
+                    {
+                        EnsureVfxPreview(row);
+                        var rect = GUILayoutUtility.GetRect(
+                            1f, 1f, GUILayout.ExpandWidth(true), GUILayout.Height(360f));
+                        vfxPreviewHost.Draw(rect);
+                    });
+                    vfxPreviewContainer.style.minHeight = 360;
+                    vfxPreviewContainer.style.flexGrow = 1;
+                    column.Add(vfxPreviewContainer);
+                });
+            previewCard.style.minHeight = 400;
+            contentRoot.Add(previewCard);
+
+            contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
+                "播放控制",
+                "所见即所得：速度与大小写回 visual_effects.json",
+                column =>
+                {
+                    var playing = vfxPreviewHost.Player != null && vfxPreviewHost.Player.IsPlaying;
+                    var transport = new VisualElement();
+                    transport.style.flexDirection = FlexDirection.Row;
+                    transport.style.marginBottom = 8;
+                    transport.Add(new Button(() =>
+                    {
+                        EnsureVfxPreview(row, force: true);
+                        vfxPreviewHost.Player?.Play();
+                        RefreshContent();
+                        UpdateStatus();
+                    })
+                    {
+                        text = "继续",
+                    });
+                    transport.Add(new Button(() =>
+                    {
+                        vfxPreviewHost.Player?.Pause();
+                        RefreshContent();
+                        UpdateStatus();
+                    })
+                    {
+                        text = "暂停",
+                    });
+                    transport.Add(new Button(() =>
+                    {
+                        vfxPreviewHost.Player?.Stop();
+                        vfxPreviewHost.Player?.Play();
+                        UpdateStatus();
+                    })
+                    {
+                        text = "重播",
+                    });
+                    var stateLabel = ContentVisualWarmConsoleUi.CreateDescriptionLabel(
+                        playing ? "状态：播放中（循环）" : "状态：已暂停");
+                    stateLabel.style.marginLeft = 8;
+                    transport.Add(stateLabel);
+                    column.Add(transport);
+
+                    var fpsField = new FloatField("播放速度 (FPS)")
+                    {
+                        value = dto.defaultFps,
+                    };
+                    fpsField.RegisterValueChangedCallback(evt =>
+                    {
+                        dto.defaultFps = Mathf.Max(0.01f, evt.newValue);
+                        vfxPreviewHost.ApplyFps(dto.defaultFps);
+                        UpdateStatus();
+                    });
+                    column.Add(fpsField);
+
+                    var scaleField = new FloatField("大小 (Scale)")
+                    {
+                        value = dto.defaultScale,
+                    };
+                    scaleField.RegisterValueChangedCallback(evt =>
+                    {
+                        dto.defaultScale = Mathf.Max(0.01f, evt.newValue);
+                        vfxPreviewHost.ApplyScale(dto.defaultScale);
+                        UpdateStatus();
+                    });
+                    column.Add(scaleField);
+
+                    var nameField = new TextField("显示名")
+                    {
+                        value = dto.displayName ?? string.Empty,
+                    };
+                    nameField.RegisterValueChangedCallback(evt =>
+                    {
+                        dto.displayName = evt.newValue ?? string.Empty;
+                        UpdateStatus();
+                    });
+                    column.Add(nameField);
+
+                    column.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel(
+                        "sheetPath: " + dto.sheetPath));
+                }));
+        }
+
+        private void EnsureVfxPreview(VisualEffectCatalogEditorIO.EditorRow row, bool force = false)
+        {
+            var dto = row?.Dto;
+            if (dto == null)
+            {
+                return;
+            }
+
+            var fingerprint = dto.id + "|" + dto.sheetPath;
+            if (!force && fingerprint == vfxPreviewFingerprint && vfxPreviewHost.SceneRoot != null)
+            {
+                return;
+            }
+
+            vfxPreviewFingerprint = fingerprint;
+            var request = VisualEffectPreviewHost.BuildFallbackMonsterRequest();
+            vfxPreviewHost.Rebuild(dto, request);
+            if (vfxPreviewHost.Player != null)
+            {
+                vfxPreviewHost.ApplyFps(dto.defaultFps);
+                vfxPreviewHost.ApplyScale(dto.defaultScale);
             }
         }
 
@@ -2766,14 +3052,21 @@ namespace NineGrid.Content.Editor
                     var template = session.GetFocusedTemplate();
                     focusText = "效果模板 · " + (template != null ? template.id : "（未选）");
                     break;
+                case CardPresentationEditorFocusKind.VisualEffect:
+                    var vfx = session.GetFocusedVisualEffect();
+                    focusText = "特效 · " + (vfx != null ? vfx.Id : "（未选）");
+                    break;
                 default:
                     focusText = "（未选）";
                     break;
             }
 
+            var previewStatus = session.FocusKind == CardPresentationEditorFocusKind.VisualEffect
+                ? vfxPreviewHost.Status
+                : previewHost.Status;
             statusHelpBox.text = "焦点 " + focusText
                                  + " · 脏 " + session.DirtyCount
-                                 + " · " + previewHost.Status;
+                                 + " · " + previewStatus;
         }
 
         private void SaveAll()
@@ -2787,6 +3080,7 @@ namespace NineGrid.Content.Editor
             }
 
             previewFingerprint = string.Empty;
+            vfxPreviewFingerprint = string.Empty;
             RefreshAll();
             ShowNotification(new GUIContent("已保存卡牌表现 JSON"));
         }
@@ -2807,6 +3101,7 @@ namespace NineGrid.Content.Editor
             {
                 session.Reload();
                 previewFingerprint = string.Empty;
+                vfxPreviewFingerprint = string.Empty;
                 faceUp = true;
                 previewAnimSlot = CardAnimSlotIds.Idle;
                 RefreshAll();
