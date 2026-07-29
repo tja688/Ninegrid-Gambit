@@ -242,8 +242,12 @@ namespace NineGrid.Flow.Presentation
         private void EnqueueNonKillInteractionAdvance(BattleTimeline timeline, int boardSlot)
         {
             // 未击杀无补牌批可挂载计数：静默推进，不另开 Present（InteractionChanged 为 Beat.None）。
+            // 战败后仍计一次互动（ADR-0012），但不得再挂敌方行动续拍。
             timeline.Enqueue(new InteractionCountAdvanceStep(mArchitecture));
-            AppendEnemyActionPhase(timeline, boardSlot);
+            if (!mLastAvatarDefeated)
+            {
+                AppendEnemyActionPhase(timeline, boardSlot);
+            }
         }
 
         private void AppendEnemyActionPhase(BattleTimeline timeline, int boardSlot)
@@ -299,7 +303,12 @@ namespace NineGrid.Flow.Presentation
                 slice: "AttackCounter");
             timeline.Enqueue(new ResolveBatchStep(counterGate));
             timeline.Enqueue(new PresentStep(counterGate, mCounterPresentChannel, "CounterHit"));
-            EnqueueNonKillInteractionAdvance(timeline, boardSlot);
+            // 反击解算后才知道是否战败：不可在 Present 前无条件挂敌方行动。
+            timeline.Enqueue(new TimelineBranchStep(
+                timeline,
+                () => !mLastAvatarDefeated,
+                t => EnqueueNonKillInteractionAdvance(t, boardSlot),
+                t => t.Enqueue(new InteractionCountAdvanceStep(mArchitecture))));
         }
 
         private sealed class InteractionCountAdvanceStep : ITimelineStep

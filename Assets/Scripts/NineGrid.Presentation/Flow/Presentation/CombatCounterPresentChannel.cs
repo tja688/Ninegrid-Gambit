@@ -70,7 +70,15 @@ namespace NineGrid.Flow.Presentation
                 mPendingAttackerUid = 0;
             }
 
-            if (!has || !result.Accepted)
+            if (!has)
+            {
+                mComplete = true;
+                return;
+            }
+
+            // 与 QueuedBoardPresentChannel 对齐：AvatarDefeated 即使 Accepted=false
+            // 也必须走 play，否则 CompositionRoot finally 无法 EnsureBattleEnded。
+            if (!result.Accepted && !result.AvatarDefeated)
             {
                 mComplete = true;
                 return;

@@ -538,6 +538,9 @@ namespace NineGrid.Flow
                     victory ? IntentClearReason.PhaseChange : IntentClearReason.Defeat);
             }
 
+            // HardClear 清导演租约；同步清 PresentationInputGates 外租约，避免战败留场锁输入。
+            PresentationInputGates.ForceEndExternalHold("RaiseBattleEnded");
+
             var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
             arch?.SendEvent(new BattleSessionEndedEvent(victory));
         }
