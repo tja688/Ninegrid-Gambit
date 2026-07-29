@@ -10,7 +10,7 @@ namespace NineGrid.Flow
 {
     /// <summary>
     /// 局内「玩家信息」HUD：血槽血管 + 当前/最大血量、有效护甲、金币。
-    /// 血槽长度随 MaxHp 相对基础上限伸长（每点 +0.05），总宽封顶 5.5；最大血量文案仅悬停血槽时显示。
+    /// 血槽长度随 MaxHp 相对基础上限伸长（每点 +0.019），总宽封顶 3.2；最大血量文案仅悬停血槽时显示。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PlayerInfoHudPresenter : MonoBehaviour
@@ -24,8 +24,10 @@ namespace NineGrid.Flow
         private const string ArmorValueName = "防御数值";
         private const string GoldValueName = "金币数值";
 
-        private const float SlotWidthPerMaxHp = 0.05f;
-        private const float MaxVesselWidth = 5.5f;
+        // 场景默认：血槽 size.x=1.8、血条≈1.48；布局可伸至 3.2 / 2.9（共增约 1.4）。
+        // 旧参 0.05×封顶 5.5 约 74 点 MaxHp 增量触顶；新增长位 1.4 → 1.4/74≈0.019，触顶 MaxHp≈84。
+        private const float SlotWidthPerMaxHp = 0.019f;
+        private const float MaxVesselWidth = 3.2f;
         private const float DefaultBaseMaxHp = 10f;
         private const float HpFillAnimDuration = 0.38f;
         private const float SlotGrowDuration = 0.45f;
