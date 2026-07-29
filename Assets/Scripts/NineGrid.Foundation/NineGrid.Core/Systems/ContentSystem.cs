@@ -144,7 +144,8 @@ namespace NineGrid.Core.Systems
                 IsElite = definition.IsElite || definition.IsBoss,
                 Level = definition.Level,
                 IsBoss = definition.IsBoss,
-                ActionFrequency = definition.Stats.Action
+                ActionFrequency = definition.Stats.Action,
+                AttackPattern = definition.AttackPattern
             };
 
             for (var i = 0; i < definition.EffectIds.Count; i++)

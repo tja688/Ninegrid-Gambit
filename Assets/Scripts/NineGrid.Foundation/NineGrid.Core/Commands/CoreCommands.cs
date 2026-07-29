@@ -99,6 +99,39 @@ namespace NineGrid.Core.Commands
     }
 
     /// <summary>
+    /// 敌方行动阶段报名：倒计时 −1 并冻结行动名单。
+    /// </summary>
+    public sealed class RegisterEnemyActionPhaseCommand : AbstractCommand<CoreCommandResult>
+    {
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().RegisterEnemyActionPhase();
+        }
+    }
+
+    /// <summary>
+    /// 敌方行动阶段逐条：结算名单下一条（单向打击或窗口作废）。
+    /// </summary>
+    public sealed class ResolveNextEnemyActionCommand : AbstractCommand<CoreCommandResult>
+    {
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().ResolveNextEnemyAction();
+        }
+    }
+
+    /// <summary>
+    /// 敌方行动阶段收尾：补牌 + 通关检查，不旋转。
+    /// </summary>
+    public sealed class ResolveEnemyActionFinaleCommand : AbstractCommand<CoreCommandResult>
+    {
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().ResolveEnemyActionFinale();
+        }
+    }
+
+    /// <summary>
     /// 融合伴随补牌分拍：仅 FillEmptySlots（不含交互计数）。skipFill 用于打开空批 ack。
     /// </summary>
     public sealed class ResolveFusionRefillCommand : AbstractCommand<CoreCommandResult>

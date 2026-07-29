@@ -22,6 +22,8 @@ namespace NineGrid.Core
         public int Uid { get; private set; }
         public string DefId { get; private set; }
         public CardKind Kind { get; private set; }
+        /// <summary>怪物攻击模式（ADR-0011）；非怪保持 <see cref="AttackPattern.Unspecified"/>。</summary>
+        public AttackPattern AttackPattern { get; set; }
         public StatBlock Stats { get; private set; }
         public CounterBag Counters { get; private set; }
         public BindableProperty<ZoneId> Zone { get; private set; }

@@ -68,7 +68,9 @@ namespace NineGrid.Core
         FirstStrike,
         GoldArmorAbsorb,
         AttackTargetRestriction,
-        VirtualAdjacency
+        VirtualAdjacency,
+        /// <summary>禁行：&gt;0 时敌方行动阶段资格复核失败（ADR-0012）。</summary>
+        ActionBanned
     }
 
     public enum BoardMarkId
@@ -260,6 +262,9 @@ namespace NineGrid.Core
         AdvanceInteractionCount,
         ResolvePostKillFill,
         ResolvePostKillRotate,
+        RegisterEnemyActionPhase,
+        ResolveNextEnemyAction,
+        ResolveEnemyActionFinale,
         ResolveFusionRefill,
         ResolveDrainRefill,
         PickupItem,

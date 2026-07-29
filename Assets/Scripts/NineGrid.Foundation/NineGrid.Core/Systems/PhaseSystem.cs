@@ -41,6 +41,20 @@ namespace NineGrid.Core.Systems
             /// </summary>
             CoreCommandResult ResolvePostKillRotate();
             /// <summary>
+            /// 敌方行动阶段报名：非「无」怪倒计时 −1；归零者按 uid 升序冻结名单（ADR-0012）。
+            /// </summary>
+            CoreCommandResult RegisterEnemyActionPhase();
+            /// <summary>
+            /// 敌方行动阶段逐条：复核资格后单向打击或窗口作废重置；每调用结算一条。
+            /// </summary>
+            CoreCommandResult ResolveNextEnemyAction();
+            /// <summary>
+            /// 敌方行动阶段收尾：补牌 + 通关检查，不旋转。
+            /// </summary>
+            CoreCommandResult ResolveEnemyActionFinale();
+            /// <summary>当前冻结行动名单中尚未结算的 uid（升序快照的后缀）。</summary>
+            IReadOnlyList<int> PendingEnemyActionUids { get; }
+            /// <summary>
             /// 融合伴随补牌分拍：仅 FillEmptySlots。skipFill 时不写 Core，仅供导演打开空批。
             /// </summary>
             CoreCommandResult ResolveFusionRefill(bool skipFill = false);
@@ -69,11 +83,28 @@ namespace NineGrid.Core.Systems
     public sealed class PhaseSystem : AbstractSystem, IPhaseSystem
     {
         private readonly List<GameCommandKind> mLegalCommands = new List<GameCommandKind>();
+        private readonly List<int> mEnemyActionRoster = new List<int>();
+        private int mEnemyActionCursor;
         private bool mInRoomRewardContext;
 
         public GamePhase CurrentPhase
         {
             get { return this.GetModel<RunModel>().Phase.Value; }
+        }
+
+        public IReadOnlyList<int> PendingEnemyActionUids
+        {
+            get
+            {
+                if (mEnemyActionCursor >= mEnemyActionRoster.Count)
+                {
+                    return System.Array.Empty<int>();
+                }
+
+                return mEnemyActionRoster.GetRange(
+                    mEnemyActionCursor,
+                    mEnemyActionRoster.Count - mEnemyActionCursor);
+            }
         }
 
         public IReadOnlyList<GameCommandKind> LegalCommands
@@ -184,6 +215,7 @@ namespace NineGrid.Core.Systems
                 resolved += ResolvePostKillRotateInternal();
             }
 
+            resolved += RunEnemyActionPhaseInternal();
             return CoreCommandResult.Accept(resolved);
         }
 
@@ -271,7 +303,7 @@ namespace NineGrid.Core.Systems
 
         public CoreCommandResult ResolvePostKillBoard()
         {
-            // 兼容整拍：计数 + 补牌 + 旋转（单次语义由三步合成）。
+            // 兼容整拍：计数 + 补牌 + 旋转 + 敌方行动（单次语义由分步合成）。
             return CoreCommandResult.Accept(ResolveInteractiveRotation());
         }
 
@@ -288,6 +320,21 @@ namespace NineGrid.Core.Systems
         public CoreCommandResult ResolvePostKillRotate()
         {
             return CoreCommandResult.Accept(ResolvePostKillRotateInternal());
+        }
+
+        public CoreCommandResult RegisterEnemyActionPhase()
+        {
+            return CoreCommandResult.Accept(RegisterEnemyActionPhaseInternal());
+        }
+
+        public CoreCommandResult ResolveNextEnemyAction()
+        {
+            return CoreCommandResult.Accept(ResolveNextEnemyActionInternal());
+        }
+
+        public CoreCommandResult ResolveEnemyActionFinale()
+        {
+            return CoreCommandResult.Accept(ResolveEnemyActionFinaleInternal());
         }
 
         public CoreCommandResult ResolveFusionRefill(bool skipFill = false)
@@ -673,12 +720,212 @@ namespace NineGrid.Core.Systems
                 return 0;
             }
 
-            // 旧整拍入口（Pickup / ResolvePostKillBoard）：三步合成，保既有语义。
-            // 导演分拍请用 AdvanceInteractionCount / ResolvePostKillFill / ResolvePostKillRotate。
+            // 旧整拍入口（Pickup / ResolvePostKillBoard）：计数 + 补牌 + 旋转 + 敌方行动。
+            // 导演分拍请用 AdvanceInteractionCount / ResolvePostKillFill / ResolvePostKillRotate /
+            // RegisterEnemyActionPhase / ResolveNextEnemyAction / ResolveEnemyActionFinale。
             var resolved = AdvanceInteractionCountInternal();
             resolved += ResolvePostKillFillInternal();
             resolved += ResolvePostKillRotateInternal();
+            resolved += RunEnemyActionPhaseInternal();
             return resolved;
+        }
+
+        private int RunEnemyActionPhaseInternal()
+        {
+            var resolved = RegisterEnemyActionPhaseInternal();
+            while (mEnemyActionCursor < mEnemyActionRoster.Count)
+            {
+                resolved += ResolveNextEnemyActionInternal();
+            }
+
+            resolved += ResolveEnemyActionFinaleInternal();
+            return resolved;
+        }
+
+        private int RegisterEnemyActionPhaseInternal()
+        {
+            mEnemyActionRoster.Clear();
+            mEnemyActionCursor = 0;
+            if (IsTerminalPhase(CurrentPhase))
+            {
+                return 0;
+            }
+
+            var board = this.GetModel<BoardModel>();
+            var registry = this.GetModel<CardRegistry>();
+            var candidates = new List<int>();
+            foreach (var uid in board.BoardCardUids())
+            {
+                CardInstance card;
+                if (!registry.TryGet(uid, out card) || card.Kind != CardKind.Monster)
+                {
+                    continue;
+                }
+
+                if (!AttackPatternRules.ParticipatesInEnemyAction(card.AttackPattern))
+                {
+                    continue;
+                }
+
+                var frequency = AttackPatternRules.Frequency(card.AttackPattern);
+                if (frequency <= 0)
+                {
+                    continue;
+                }
+
+                var remaining = card.Counters.Get(CoreCounterKeys.AttackPatternCountdown);
+                if (remaining <= 0)
+                {
+                    // 已被加速到 0（或仍停在开火窗）：本拍直接进入名单，不钳回频率再 −1。
+                    card.Counters.Set(CoreCounterKeys.AttackPatternCountdown, 0);
+                    candidates.Add(uid);
+                    continue;
+                }
+
+                remaining -= 1;
+                card.Counters.Set(CoreCounterKeys.AttackPatternCountdown, remaining);
+                if (remaining <= 0)
+                {
+                    candidates.Add(uid);
+                }
+            }
+
+            candidates.Sort();
+            mEnemyActionRoster.AddRange(candidates);
+            return 0;
+        }
+
+        private int ResolveNextEnemyActionInternal()
+        {
+            if (mEnemyActionCursor >= mEnemyActionRoster.Count)
+            {
+                return 0;
+            }
+
+            if (IsTerminalPhase(CurrentPhase) || IsAvatarDefeated())
+            {
+                mEnemyActionCursor = mEnemyActionRoster.Count;
+                return 0;
+            }
+
+            var monsterUid = mEnemyActionRoster[mEnemyActionCursor];
+            mEnemyActionCursor++;
+
+            var registry = this.GetModel<CardRegistry>();
+            CardInstance monster;
+            if (!registry.TryGet(monsterUid, out monster)
+                || monster.Kind != CardKind.Monster
+                || monster.Zone.Value != ZoneId.Board
+                || !IsCardAlive(monster))
+            {
+                return 0;
+            }
+
+            var board = this.GetModel<BoardModel>();
+            var avatarUid = board.AvatarUid.Value;
+            CardInstance avatar;
+            if (avatarUid <= 0 || !registry.TryGet(avatarUid, out avatar) || !IsCardAlive(avatar))
+            {
+                mEnemyActionCursor = mEnemyActionRoster.Count;
+                return 0;
+            }
+
+            var statSystem = this.GetSystem<IStatSystem>();
+            if (IsActionBanned(statSystem, monster)
+                || !AttackPatternRules.MeetsPositionRequirement(
+                    monster.AttackPattern,
+                    monster.Slot.Value,
+                    board.AvatarSlot.Value))
+            {
+                ResetAttackPatternCountdown(monster);
+                return 0;
+            }
+
+            // 单向打击：不开交战作用域；标准伤害管线；玩家不反击（ADR-0012）。
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new DealDamageAction(
+                monster.Uid,
+                avatar.Uid,
+                GetAttackDamage(statSystem, monster)));
+            var resolved = pipeline.RunToCompletion();
+            ResetAttackPatternCountdown(monster);
+
+            if (IsTerminalPhase(CurrentPhase) || IsAvatarDefeated())
+            {
+                mEnemyActionCursor = mEnemyActionRoster.Count;
+            }
+
+            return resolved;
+        }
+
+        private int ResolveEnemyActionFinaleInternal()
+        {
+            mEnemyActionRoster.Clear();
+            mEnemyActionCursor = 0;
+            if (IsTerminalPhase(CurrentPhase))
+            {
+                return 0;
+            }
+
+            // 收尾：补牌 + 通关检查，不旋转（ADR-0012）。
+            var resolved = ResolvePostKillFillInternal();
+            resolved += CompleteNodeIfCleared();
+            return resolved;
+        }
+
+        private static void ResetAttackPatternCountdown(CardInstance monster)
+        {
+            if (monster == null || !AttackPatternRules.ParticipatesInEnemyAction(monster.AttackPattern))
+            {
+                return;
+            }
+
+            var frequency = AttackPatternRules.Frequency(monster.AttackPattern);
+            if (frequency > 0)
+            {
+                monster.Counters.Set(CoreCounterKeys.AttackPatternCountdown, frequency);
+            }
+        }
+
+        private static bool IsCardAlive(CardInstance card)
+        {
+            if (card == null)
+            {
+                return false;
+            }
+
+            if (card.Zone.Value == ZoneId.Graveyard || card.Zone.Value == ZoneId.Removed)
+            {
+                return false;
+            }
+
+            return (int)System.Math.Round(card.Stats.GetBase(StatId.Hp)) > 0;
+        }
+
+        private bool IsAvatarDefeated()
+        {
+            var board = this.GetModel<BoardModel>();
+            var avatarUid = board.AvatarUid.Value;
+            if (avatarUid <= 0)
+            {
+                return true;
+            }
+
+            CardInstance avatar;
+            if (!this.GetModel<CardRegistry>().TryGet(avatarUid, out avatar))
+            {
+                return true;
+            }
+
+            return !IsCardAlive(avatar);
+        }
+
+        private static bool IsActionBanned(IStatSystem statSystem, CardInstance card)
+        {
+            return statSystem.EvaluateRule(
+                RuleId.ActionBanned,
+                0f,
+                statSystem.CreateContext(card)) > 0f;
         }
 
         private int AdvanceInteractionCountInternal()

@@ -25,6 +25,8 @@ namespace NineGrid.Core
         public int Level { get; set; }
         /// <summary>攻击模式频率；&gt;0 时进场写入行动倒计时。</summary>
         public int ActionFrequency { get; set; }
+        /// <summary>攻击模式（ADR-0011）；写入 <see cref="CardInstance.AttackPattern"/>。</summary>
+        public AttackPattern AttackPattern { get; set; }
 
         public IReadOnlyList<string> EffectIds
         {
@@ -87,9 +89,13 @@ namespace NineGrid.Core
                 card.Counters.Set(CoreCounterKeys.Level, Level);
             }
 
-            if (ActionFrequency > 0)
+            card.AttackPattern = AttackPattern;
+            var frequency = ActionFrequency > 0
+                ? ActionFrequency
+                : AttackPatternRules.Frequency(AttackPattern);
+            if (AttackPatternRules.ParticipatesInEnemyAction(AttackPattern) && frequency > 0)
             {
-                card.Counters.Set(CoreCounterKeys.AttackPatternCountdown, ActionFrequency);
+                card.Counters.Set(CoreCounterKeys.AttackPatternCountdown, frequency);
             }
 
             for (var i = 0; i < mEffectIds.Count; i++)

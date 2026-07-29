@@ -73,5 +73,35 @@ namespace NineGrid.Core
                     return false;
             }
         }
+
+        /// <summary>非「无」/缺省即会参与行动倒计时推进。</summary>
+        public static bool ParticipatesInEnemyAction(AttackPattern pattern)
+        {
+            return pattern != AttackPattern.None && pattern != AttackPattern.Unspecified;
+        }
+
+        /// <summary>开火位置条件（ADR-0011）。#79 主测普通近战；其余模式谓词已就绪供 #80。</summary>
+        public static bool MeetsPositionRequirement(AttackPattern pattern, SlotId monsterSlot, SlotId avatarSlot)
+        {
+            if (!monsterSlot.IsBoardSlot || !avatarSlot.IsBoardSlot)
+            {
+                return false;
+            }
+
+            switch (pattern)
+            {
+                case AttackPattern.OrthogonalMelee:
+                    return monsterSlot.IsAdjacentTo(avatarSlot);
+                case AttackPattern.DiagonalMelee:
+                    return monsterSlot.IsDiagonallyAdjacentTo(avatarSlot);
+                case AttackPattern.OmnidirectionalMelee:
+                    return monsterSlot.IsAdjacentTo(avatarSlot)
+                        || monsterSlot.IsDiagonallyAdjacentTo(avatarSlot);
+                case AttackPattern.Ranged:
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 }
