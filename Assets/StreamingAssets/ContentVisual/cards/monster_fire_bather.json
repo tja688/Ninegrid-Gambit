@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.fire_bather",
     "kind": "Monster",
-    "deckId": "deck.dragon",
+    "deckId": "deck.orc_legion",
     "role": "",
-    "displayName": "浴火者",
+    "displayName": "三足花",
     "description": "有烈焰时攻击+4",
+    "faceIntro": "腿多就是不一样",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {

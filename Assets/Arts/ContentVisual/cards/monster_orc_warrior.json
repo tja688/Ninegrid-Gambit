@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.orc_warrior",
     "kind": "Monster",
-    "deckId": "deck.orc_legion",
+    "deckId": "deck.stone_legion",
     "role": "",
-    "displayName": "兽人战士",
+    "displayName": "狼骑哥布",
     "description": "每造成2伤攻击+1",
+    "faceIntro": "哥布族的精英，机动性极强",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {

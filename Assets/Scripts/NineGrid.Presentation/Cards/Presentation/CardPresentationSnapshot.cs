@@ -43,6 +43,7 @@ namespace NineGrid.Cards.Presentation
 
         /// <summary>
         /// 详细描述（MVP）：人手概括（已插值）+ 词条自动展开。
+        /// 卡面 JSON <c>faceIntro</c> 尚未接入本字段（右键详述面板后续专题）。
         /// </summary>
         public string DetailDescription = string.Empty;
 

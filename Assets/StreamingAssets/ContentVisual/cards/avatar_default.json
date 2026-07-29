@@ -6,6 +6,8 @@
     "role": "",
     "displayName": "战士",
     "description": "",
+    "faceIntro": "深入地下城的战士，渴望建功立业",
+    "attackPattern": "",
     "gold": 0,
     "stats": {
         "hp": 0,

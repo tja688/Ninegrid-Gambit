@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.smart_orc",
     "kind": "Monster",
-    "deckId": "deck.orc_legion",
+    "deckId": "deck.stone_legion",
     "role": "",
-    "displayName": "聪明兽人",
+    "displayName": "小刀哥布",
     "description": "获攻击时额外+1",
+    "faceIntro": "他认为自己的作用比火把哥布大就够了",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {

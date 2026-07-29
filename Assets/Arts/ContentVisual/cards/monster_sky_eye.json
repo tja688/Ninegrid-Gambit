@@ -2,10 +2,12 @@
     "schemaVersion": 2,
     "contentId": "monster.sky_eye",
     "kind": "Monster",
-    "attackPattern": "普通远程",
-    "deckId": "deck.void",
-    "displayName": "空中巨眼",
+    "deckId": "deck.wandering_legion",
+    "role": "",
+    "displayName": "大黄蜂",
     "description": "移动到角格时对玩家造成2点伤害",
+    "faceIntro": "能在人身上蜇出一个大洞",
+    "attackPattern": "普通远程",
     "gold": 5,
     "stats": {
         "hp": 14,
@@ -71,10 +73,34 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.air_strike"
+    "effectAssemblies": [
+        {
+            "id": "skill.air_strike.slot1",
+            "templateId": "tpl.shared.2.skill_air_strike_slot1",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        },
+        {
+            "id": "skill.air_strike.slot3",
+            "templateId": "tpl.skill.air_strike.slot3",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        },
+        {
+            "id": "skill.air_strike.slot7",
+            "templateId": "tpl.skill.air_strike.slot7",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        },
+        {
+            "id": "skill.air_strike.slot9",
+            "templateId": "tpl.skill.air_strike.slot9",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 2,
     "isElite": false,
     "isBoss": false,
@@ -87,7 +113,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

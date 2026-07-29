@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.ringleader",
     "kind": "Monster",
-    "deckId": "deck.wandering_legion",
+    "deckId": "deck.void",
     "role": "",
-    "displayName": "领头人",
+    "displayName": "剑客",
     "description": "每移3次创福地；3福地后99伤",
+    "faceIntro": "面对疾风吧",
     "attackPattern": "全向近战",
     "gold": 5,
     "stats": {

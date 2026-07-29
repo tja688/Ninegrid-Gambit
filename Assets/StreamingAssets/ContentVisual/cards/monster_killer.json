@@ -4,8 +4,9 @@
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
     "role": "",
-    "displayName": "杀手",
+    "displayName": "黑背狼",
     "description": "移动到玩家相邻格时强制战斗",
+    "faceIntro": "他不喜欢别人叫他地包天",
     "attackPattern": "全向近战",
     "gold": 5,
     "stats": {

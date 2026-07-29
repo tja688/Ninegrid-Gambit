@@ -92,7 +92,7 @@
 - Cards：`CardManagerSingleton`、`CardHandManagerSingleton`、`CardDeckManagerSingleton`
 - Flow：`DescriptionManagerSingleton`（**已退役**：不再写 Card InfoText / NoticeText；卡面静态描述权威在 `Basic_Description` Commit）、`DamageNumberManagerSingleton`、`GoldGainFxManagerSingleton`、`RelicManagerSingleton`（#69：图标经一卡一文件 JSON `sprites.mainIcon`，不再读 `RelicVisualCatalogSO`）、`SelectorManagerSingleton`
 
-`DescriptionDisplayHook` 现为 no-op；Hover/Drag/BoardSelect 动态描述 TMP 管道已砍。卡牌运行时持续呈现的描述只走卡面槽 `Basic_Description`（可含 `{param}` 装配实参插值与方括号词条图标）。详情文案由 `CardDetailDescriptionComposer` 合成（概括 + 词条展开）写入 `CardPresentationSnapshot.DetailDescription`。稀有度经 `SetFrameColor` 驱动卡框色；卡背优先读卡组 JSON，单卡 `sprites.back*` 可覆写，否则模板兜底（ADR-0009 / #71）。
+`DescriptionDisplayHook` 现为 no-op；Hover/Drag/BoardSelect 动态描述 TMP 管道已砍。卡牌运行时持续呈现的描述只走卡面槽 `Basic_Description`（可含 `{param}` 装配实参插值与方括号词条图标）。详情文案由 `CardDetailDescriptionComposer` 合成（概括 + 词条展开）写入 `CardPresentationSnapshot.DetailDescription`。卡面 JSON `faceIntro`（编辑器「即时参数」下的「卡面介绍」）仅 Authoring 落盘，运行时投影暂不读；右键详述专门框属后续专题。稀有度经 `SetFrameColor` 驱动卡框色；卡背优先读卡组 JSON，单卡 `sprites.back*` 可覆写，否则模板兜底（ADR-0009 / #71）。
 
 结构护栏见 `Tests/HostContractStructuralTests`（禁回流四大旧名与 `CombatHitSink`）与 `Tests/IntentIntakeStructuralTests`（禁绕过 IntentIntake、门禁/收口禁壁钟）。
 

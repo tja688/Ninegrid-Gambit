@@ -2,10 +2,12 @@
     "schemaVersion": 2,
     "contentId": "monster.bone_club_skeleton",
     "kind": "Monster",
-    "attackPattern": "普通近战",
-    "deckId": "deck.skeleton_legion",
-    "displayName": "骨棒骷髅",
+    "deckId": "deck.orc_legion",
+    "role": "",
+    "displayName": "树苗",
     "description": "无",
+    "faceIntro": "会贴住敌人来一场盛大的爆炸",
+    "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
         "hp": 8,
@@ -71,6 +73,7 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
+    "effectAssemblies": [],
     "effectIds": [],
     "skillIds": [],
     "level": 1,
@@ -85,7 +88,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

@@ -2,10 +2,12 @@
     "schemaVersion": 2,
     "contentId": "monster.vagrant",
     "kind": "Monster",
-    "attackPattern": "普通近战",
-    "deckId": "deck.wandering_legion",
-    "displayName": "流浪汉",
+    "deckId": "deck.void",
+    "role": "",
+    "displayName": "德鲁伊",
     "description": "无",
+    "faceIntro": "虽然右臂做了机械化改装不是很传统，但是德鲁伊也要讲究与时俱进",
+    "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
         "hp": 5,
@@ -71,6 +73,7 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
+    "effectAssemblies": [],
     "effectIds": [],
     "skillIds": [],
     "level": 1,
@@ -85,7 +88,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

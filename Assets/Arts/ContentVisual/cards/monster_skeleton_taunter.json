@@ -2,10 +2,12 @@
     "schemaVersion": 2,
     "contentId": "monster.skeleton_taunter",
     "kind": "Monster",
-    "attackPattern": "普通近战",
-    "deckId": "deck.skeleton_legion",
-    "displayName": "骷髅嘲讽子",
+    "deckId": "deck.wandering_legion",
+    "role": "",
+    "displayName": "黑翼蝙蝠",
     "description": "相邻时只能与本卡战斗",
+    "faceIntro": "靠回声定位，眼睛主要起到装饰作用",
+    "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
         "hp": 7,
@@ -71,10 +73,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.taunt"
+    "effectAssemblies": [
+        {
+            "id": "skill.taunt.rule",
+            "templateId": "tpl.skill.taunt.rule",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":0}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 1,
     "isElite": false,
     "isBoss": false,
@@ -87,7 +95,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

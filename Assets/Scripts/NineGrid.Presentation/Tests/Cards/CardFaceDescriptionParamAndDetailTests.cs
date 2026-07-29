@@ -67,5 +67,27 @@ namespace NineGrid.Presentation.Tests.Cards
             StringAssert.Contains("造成[灼烧]效果", detail);
             StringAssert.Contains("灼烧：每回合受到额外伤害。", detail);
         }
+
+        [Test]
+        public void FaceIntro_FillsParamsLikeBasicDescription()
+        {
+            var assemblies = new[]
+            {
+                new EffectAssemblyDto
+                {
+                    id = "help.fire.use",
+                    templateId = "tpl.burn",
+                    argsJson = "{\"amount\":3}",
+                },
+            };
+
+            var filled = CardFaceDescriptionParamFiller.FillFromAssemblies(
+                "造成{amount}层[灼烧]",
+                assemblies);
+            var detail = CardDetailDescriptionComposer.Compose(filled, _glossary);
+
+            Assert.AreEqual("造成3层[灼烧]", filled);
+            StringAssert.Contains("灼烧：每回合受到额外伤害。", detail);
+        }
     }
 }

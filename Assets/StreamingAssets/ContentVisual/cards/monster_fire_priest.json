@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.fire_priest",
     "kind": "Monster",
-    "deckId": "deck.dragon",
+    "deckId": "deck.orc_legion",
     "role": "",
-    "displayName": "火焰祭司",
+    "displayName": "闭嘴花",
     "description": "每有一张烈焰，本卡攻击+2",
+    "faceIntro": "看到他张嘴的都死了",
     "attackPattern": "无",
     "gold": 5,
     "stats": {

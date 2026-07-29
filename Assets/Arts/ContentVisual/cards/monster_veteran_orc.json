@@ -2,10 +2,12 @@
     "schemaVersion": 2,
     "contentId": "monster.veteran_orc",
     "kind": "Monster",
+    "deckId": "deck.stone_legion",
+    "role": "",
+    "displayName": "弓骑哥布",
+    "description": "无",
+    "faceIntro": "准头不高，但是射得快",
     "attackPattern": "普通近战",
-    "deckId": "deck.orc_legion",
-    "displayName": "历战兽人",
-    "description": "��ս����",
     "gold": 5,
     "stats": {
         "hp": 10,
@@ -26,7 +28,7 @@
     "mainVisual": {
         "offsetX": 0.10000000149011612,
         "offsetY": -0.05000000074505806,
-        "uniformScale": 0.8600000143051147
+        "uniformScale": 0.8600000143051148
     },
     "animations": {
         "defaultFps": 8.0,
@@ -71,6 +73,7 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
+    "effectAssemblies": [],
     "effectIds": [],
     "skillIds": [],
     "level": 1,
@@ -85,7 +88,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

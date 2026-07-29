@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.friendly_ancient",
     "kind": "Monster",
-    "deckId": "deck.void",
+    "deckId": "deck.wandering_legion",
     "role": "",
-    "displayName": "友好的远古生物",
+    "displayName": "双角毛猪",
     "description": "每移动3次放旋转轮",
+    "faceIntro": "由于毛太长了，不太看得清路",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {

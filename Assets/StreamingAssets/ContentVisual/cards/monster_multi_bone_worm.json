@@ -2,10 +2,12 @@
     "schemaVersion": 2,
     "contentId": "monster.multi_bone_worm",
     "kind": "Monster",
-    "attackPattern": "普通近战",
-    "deckId": "deck.skeleton_legion",
-    "displayName": "多骨虫",
+    "deckId": "deck.wandering_legion",
+    "role": "",
+    "displayName": "沙虫",
     "description": "移动时与相邻2怪合成巨骷髅",
+    "faceIntro": "会吐口水（就是沙子）",
+    "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
         "hp": 3,
@@ -71,10 +73,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.strong_combo"
+    "effectAssemblies": [
+        {
+            "id": "skill.strong_combo.move",
+            "templateId": "tpl.skill.strong_combo.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"reason\":\"skill.strong_combo.self\",\"action_actions_1_reason\":\"skill.strong_combo.material\",\"count\":2,\"action_actions_2_count\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 2,
     "isElite": false,
     "isBoss": false,
@@ -87,7 +95,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

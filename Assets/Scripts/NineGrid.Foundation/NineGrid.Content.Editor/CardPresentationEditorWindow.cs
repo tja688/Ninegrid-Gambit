@@ -2489,6 +2489,24 @@ namespace NineGrid.Content.Editor
                 });
             });
             column.Add(ContentVisualWarmConsoleUi.WrapControlRow("所属卡组", deckField, 72f));
+
+            var faceIntroField = new TextField
+            {
+                multiline = true,
+                value = dto.faceIntro ?? string.Empty,
+            };
+            faceIntroField.style.minHeight = 56;
+            faceIntroField.style.maxHeight = 96;
+            faceIntroField.tooltip = "纯跟卡面绑定的介绍文案；右键详述面板会用。可含 {param} 与 [词条]。";
+            faceIntroField.RegisterValueChangedCallback(evt =>
+            {
+                dto.faceIntro = evt.newValue ?? string.Empty;
+                OnDtoEdited(entry);
+            });
+            column.Add(ContentVisualWarmConsoleUi.WrapControl(
+                "卡面介绍",
+                "右键详述用人手写介绍；空则回退卡面基础描述",
+                faceIntroField));
         }
 
         private void BuildAnimationSection(VisualElement column, CardPresentationEditorEntry entry)

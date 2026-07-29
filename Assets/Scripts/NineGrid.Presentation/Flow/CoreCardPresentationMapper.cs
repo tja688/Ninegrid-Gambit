@@ -354,6 +354,7 @@ namespace NineGrid.Flow
                 snapshot.BasicDescription = filledDescription;
             }
 
+            // faceIntro 仅 Authoring 落盘；右键详述面板接线属后续专题，此处不读。
             snapshot.DetailDescription = CardDetailDescriptionComposer.Compose(
                 snapshot.BasicDescription,
                 CardFacePresentationBinder.PeekDescriptionIconCatalog());

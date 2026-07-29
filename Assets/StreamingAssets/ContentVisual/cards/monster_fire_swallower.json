@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.fire_swallower",
     "kind": "Monster",
-    "deckId": "deck.dragon",
+    "deckId": "deck.wandering_legion",
     "role": "",
-    "displayName": "吞火者",
+    "displayName": "田鼠",
     "description": "左列战斗时按损失护甲伤害玩家",
+    "faceIntro": "田鼠不会挖洞，那是鼹鼠干的事情",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {

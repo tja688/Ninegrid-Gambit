@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.rogue",
     "kind": "Monster",
-    "deckId": "deck.wandering_legion",
+    "deckId": "deck.void",
     "role": "",
-    "displayName": "流氓",
+    "displayName": "法师",
     "description": "每损失3点护甲，相邻怪物攻击+1",
+    "faceIntro": "头上的簪子其实是备用法杖",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {

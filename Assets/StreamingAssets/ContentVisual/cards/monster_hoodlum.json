@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.hoodlum",
     "kind": "Monster",
-    "deckId": "deck.wandering_legion",
+    "deckId": "deck.void",
     "role": "",
-    "displayName": "混混",
+    "displayName": "醉鬼",
     "description": "到格1对玩家2伤",
+    "faceIntro": "罗斯福十号？会有酒叫这个名字吗？",
     "attackPattern": "斜角近战",
     "gold": 5,
     "stats": {

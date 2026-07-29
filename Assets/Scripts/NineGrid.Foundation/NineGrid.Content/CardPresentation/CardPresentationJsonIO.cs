@@ -176,6 +176,7 @@ namespace NineGrid.Content.CardPresentation
                 deckId = string.Empty,
                 displayName = string.Empty,
                 description = string.Empty,
+                faceIntro = string.Empty,
                 gold = 0,
                 stats = new CardPresentationStatsDto(),
                 sprites = new CardPresentationSpritesDto(),

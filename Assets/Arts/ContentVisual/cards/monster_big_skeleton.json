@@ -2,10 +2,12 @@
     "schemaVersion": 2,
     "contentId": "monster.big_skeleton",
     "kind": "Monster",
-    "attackPattern": "普通近战",
     "deckId": "deck.skeleton_legion",
-    "displayName": "大骷髅",
+    "role": "",
+    "displayName": "巨剑骷髅",
     "description": "被移除时洗入骷髅头与无头骷髅",
+    "faceIntro": "蝉联三年最帅骷髅的称号",
+    "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
         "hp": 10,
@@ -71,10 +73,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.fall_apart"
+    "effectAssemblies": [
+        {
+            "id": "skill.fall_apart.remove",
+            "templateId": "tpl.skill.fall_apart.remove",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 2,
     "isElite": false,
     "isBoss": false,
@@ -87,7 +95,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.space_master",
     "kind": "Monster",
-    "deckId": "deck.void",
+    "deckId": "deck.dragon",
     "role": "",
-    "displayName": "空间大师",
+    "displayName": "花花莱姆",
     "description": "战后旋转；每移9次加入怪物",
+    "faceIntro": "头顶的花是他的伙伴",
     "attackPattern": "全向近战",
     "gold": 5,
     "stats": {

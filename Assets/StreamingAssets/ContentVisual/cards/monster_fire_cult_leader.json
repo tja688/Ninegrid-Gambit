@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.fire_cult_leader",
     "kind": "Monster",
-    "deckId": "deck.dragon",
+    "deckId": "deck.wandering_legion",
     "role": "",
-    "displayName": "火教主",
+    "displayName": "红蛙",
     "description": "每加入烈焰额外加一张",
+    "faceIntro": "根据常规的游戏逻辑，绿色蛙才有毒，红蛙也是这样想的",
     "attackPattern": "全向近战",
     "gold": 5,
     "stats": {

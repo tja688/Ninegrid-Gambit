@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.big_orc",
     "kind": "Monster",
-    "deckId": "deck.orc_legion",
+    "deckId": "deck.wandering_legion",
     "role": "",
-    "displayName": "兽人大只佬",
+    "displayName": "棕熊",
     "description": "行动后攻击玩家",
+    "faceIntro": "他觉得会招手的同族都是娘炮",
     "attackPattern": "全向近战",
     "gold": 5,
     "stats": {

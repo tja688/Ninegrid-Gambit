@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.old_orc",
     "kind": "Monster",
-    "deckId": "deck.orc_legion",
+    "deckId": "deck.wandering_legion",
     "role": "",
-    "displayName": "年迈兽人",
+    "displayName": "野猪",
     "description": "战斗时恢复1且攻击+1",
+    "faceIntro": "横冲直撞！",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {

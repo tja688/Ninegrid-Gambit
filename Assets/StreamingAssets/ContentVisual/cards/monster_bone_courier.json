@@ -2,10 +2,12 @@
     "schemaVersion": 2,
     "contentId": "monster.bone_courier",
     "kind": "Monster",
-    "attackPattern": "普通近战",
-    "deckId": "deck.skeleton_legion",
-    "displayName": "骨头快递员",
+    "deckId": "deck.wandering_legion",
+    "role": "",
+    "displayName": "绿毛刺猬",
     "description": "每移2次交换相邻帮助卡与怪物",
+    "faceIntro": "他对染发师的色彩审美非常愤怒",
+    "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
         "hp": 7,
@@ -24,8 +26,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetX": -0.06499999761581421,
+        "offsetY": -0.07000000029802323,
         "uniformScale": 1.0
     },
     "animations": {
@@ -71,10 +73,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.delivery"
+    "effectAssemblies": [
+        {
+            "id": "skill.delivery.move",
+            "templateId": "tpl.skill.delivery.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 2,
     "isElite": false,
     "isBoss": false,
@@ -87,7 +95,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

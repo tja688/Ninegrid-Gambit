@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.smuggler",
     "kind": "Monster",
-    "deckId": "deck.wandering_legion",
+    "deckId": "deck.void",
     "role": "",
-    "displayName": "走私者",
+    "displayName": "考古学家",
     "description": "累计邻玩家3次移除帮助得护甲",
+    "faceIntro": "和醉鬼是酒友",
     "attackPattern": "斜角近战",
     "gold": 5,
     "stats": {

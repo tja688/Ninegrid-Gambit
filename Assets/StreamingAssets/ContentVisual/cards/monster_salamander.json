@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.salamander",
     "kind": "Monster",
-    "deckId": "deck.dragon",
+    "deckId": "deck.wandering_legion",
     "role": "",
-    "displayName": "火蜥蜴",
+    "displayName": "战士蜥",
     "description": "每移动3次放烈焰",
+    "faceIntro": "蜥蜴一族中的战士",
     "attackPattern": "普通远程",
     "gold": 5,
     "stats": {

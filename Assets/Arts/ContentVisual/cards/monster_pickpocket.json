@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.pickpocket",
     "kind": "Monster",
-    "deckId": "deck.wandering_legion",
+    "deckId": "deck.void",
     "role": "",
-    "displayName": "扒手",
+    "displayName": "精灵射手",
     "description": "每移动3次移除相邻帮助卡",
+    "faceIntro": "只是一名八千岁的小萝莉",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {

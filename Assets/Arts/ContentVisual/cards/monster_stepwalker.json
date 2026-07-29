@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.stepwalker",
     "kind": "Monster",
-    "deckId": "deck.void",
+    "deckId": "deck.wandering_legion",
     "role": "",
-    "displayName": "踏步行者",
+    "displayName": "直立兔兔",
     "description": "每移动3次与随机帮助卡交换",
+    "faceIntro": "站得更高，看得更远",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {

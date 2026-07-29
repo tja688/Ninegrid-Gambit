@@ -4,8 +4,9 @@
     "kind": "Monster",
     "deckId": "deck.wandering_legion",
     "role": "",
-    "displayName": "流浪孩童",
+    "displayName": "棕兔兔",
     "description": "格6攻击+2并获得先手还击",
+    "faceIntro": "冷知识：兔兔的尾巴很长",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {

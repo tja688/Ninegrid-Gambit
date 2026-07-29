@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.young_orc",
     "kind": "Monster",
-    "deckId": "deck.orc_legion",
+    "deckId": "deck.stone_legion",
     "role": "",
-    "displayName": "年轻兽人",
+    "displayName": "大棒哥布",
     "description": "其他怪物获得攻击时本卡攻击+1",
+    "faceIntro": "头脑简单，四肢发达",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {

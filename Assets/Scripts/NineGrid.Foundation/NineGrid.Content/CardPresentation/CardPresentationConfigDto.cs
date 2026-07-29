@@ -26,6 +26,11 @@ namespace NineGrid.Content.CardPresentation
         /// <summary>描述权威（有值时覆盖 TbContentVisual.description）；Relic/Skill 亦作 designText。</summary>
         public string description;
         /// <summary>
+        /// 卡面介绍：人手写、纯跟卡面绑定（可含 {param} / [词条]）。
+        /// 目前仅 Authoring 落盘；右键详述专门框接线属后续专题，运行时暂不读。
+        /// </summary>
+        public string faceIntro;
+        /// <summary>
         /// 怪物攻击模式（ADR-0011）：普通近战 / 斜角近战 / 全向近战 / 普通远程 / 无。
         /// 必填；缺省为装配错误，不得静默当「无」。非 Monster 可空。
         /// </summary>

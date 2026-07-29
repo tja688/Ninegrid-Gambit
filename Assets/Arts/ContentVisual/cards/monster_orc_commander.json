@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.orc_commander",
     "kind": "Monster",
-    "deckId": "deck.orc_legion",
+    "deckId": "deck.stone_legion",
     "role": "",
-    "displayName": "兽人指挥官",
+    "displayName": "猪骑士哥布",
     "description": "每移动1次，相邻怪物攻击+1",
+    "faceIntro": "哥布中的指挥官，战术素养极高（对于哥布一族而言）",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {

@@ -4,8 +4,9 @@
     "kind": "Monster",
     "deckId": "deck.void",
     "role": "",
-    "displayName": "转动世界的手",
+    "displayName": "黄金精灵",
     "description": "登场旋转一次",
+    "faceIntro": "超稀有的生物",
     "attackPattern": "斜角近战",
     "gold": 5,
     "stats": {

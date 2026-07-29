@@ -2,10 +2,12 @@
     "schemaVersion": 2,
     "contentId": "monster.giant_skeleton",
     "kind": "Monster",
-    "attackPattern": "普通近战",
-    "deckId": "deck.skeleton_legion",
-    "displayName": "巨大骷髅",
+    "deckId": "deck.orc_legion",
+    "role": "",
+    "displayName": "干枯树桩",
     "description": "移除时洗入多骨虫和Lv2怪",
+    "faceIntro": "他始终不明白那个头顶火炬的兄弟是怎么活下来的",
+    "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
         "hp": 12,
@@ -71,10 +73,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.fracture_fall_apart"
+    "effectAssemblies": [
+        {
+            "id": "skill.fracture_fall_apart.remove",
+            "templateId": "tpl.skill.fracture_fall_apart.remove",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 3,
     "isElite": false,
     "isBoss": false,
@@ -87,7 +95,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

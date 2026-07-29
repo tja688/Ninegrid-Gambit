@@ -2,10 +2,12 @@
     "schemaVersion": 2,
     "contentId": "monster.skull_head",
     "kind": "Monster",
-    "attackPattern": "普通近战",
     "deckId": "deck.skeleton_legion",
-    "displayName": "骷髅头",
+    "role": "",
+    "displayName": "短剑骷髅",
     "description": "相邻无头骷髅组合",
+    "faceIntro": "剑是捡的",
+    "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
         "hp": 3,
@@ -71,10 +73,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.recombine_body"
+    "effectAssemblies": [
+        {
+            "id": "skill.recombine_body.move",
+            "templateId": "tpl.skill.recombine_body.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 1,
     "isElite": false,
     "isBoss": false,
@@ -87,7 +95,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }
