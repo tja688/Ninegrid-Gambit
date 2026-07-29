@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.wandering_child",
     "kind": "Monster",
-    "attackPattern": "普通近战",
     "deckId": "deck.wandering_legion",
+    "role": "",
     "displayName": "流浪孩童",
     "description": "格6攻击+2并获得先手还击",
+    "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
         "hp": 1,
@@ -71,10 +72,22 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.stray_cub"
+    "effectAssemblies": [
+        {
+            "id": "skill.stray_cub.slot6",
+            "templateId": "tpl.skill.stray_cub.slot6",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":2}"
+        },
+        {
+            "id": "skill.stray_cub.first_strike",
+            "templateId": "tpl.skill.stray_cub.first_strike",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 1,
     "isElite": false,
     "isBoss": false,
@@ -87,7 +100,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

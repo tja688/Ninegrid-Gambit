@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.orc_warrior",
     "kind": "Monster",
-    "attackPattern": "普通近战",
     "deckId": "deck.orc_legion",
+    "role": "",
     "displayName": "兽人战士",
     "description": "每造成2伤攻击+1",
+    "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
         "hp": 10,
@@ -25,7 +26,7 @@
     },
     "mainVisual": {
         "offsetX": 0.05000000074505806,
-        "offsetY": -0.07000000029802322,
+        "offsetY": -0.07000000029802323,
         "uniformScale": 0.9700000286102295
     },
     "animations": {
@@ -71,10 +72,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.bloodthirst"
+    "effectAssemblies": [
+        {
+            "id": "skill.bloodthirst.damage",
+            "templateId": "tpl.skill.bloodthirst.damage",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"delta\":1,\"reason\":\"skill.bloodthirst\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 2,
     "isElite": false,
     "isBoss": false,
@@ -87,7 +94,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

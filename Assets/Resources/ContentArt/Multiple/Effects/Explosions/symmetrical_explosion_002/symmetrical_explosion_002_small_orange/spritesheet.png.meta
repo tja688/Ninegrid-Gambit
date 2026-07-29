@@ -156,7 +156,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 4096
+    maxTextureSize: 8192
     resizeAlgorithm: 0
     textureFormat: 4
     textureCompression: 0
@@ -483,6 +483,6 @@ TextureImporter:
       spritesheet_9: -5906973516983679737
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom
+  userData: PIXEL_ART_V2|ppu=32|max=8192|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom
   assetBundleName: 
   assetBundleVariant: 

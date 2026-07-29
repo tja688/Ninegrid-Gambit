@@ -114,7 +114,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 4096
+    maxTextureSize: 8192
     resizeAlgorithm: 0
     textureFormat: 4
     textureCompression: 0
@@ -160,7 +160,7 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 35
+        width: 70
         height: 25
       alignment: 7
       pivot: {x: 0.5, y: 0}
@@ -180,9 +180,9 @@ TextureImporter:
       name: spritesheet_1
       rect:
         serializedVersion: 2
-        x: 35
+        x: 70
         y: 0
-        width: 35
+        width: 70
         height: 25
       alignment: 7
       pivot: {x: 0.5, y: 0}
@@ -202,9 +202,9 @@ TextureImporter:
       name: spritesheet_2
       rect:
         serializedVersion: 2
-        x: 70
+        x: 140
         y: 0
-        width: 35
+        width: 70
         height: 25
       alignment: 7
       pivot: {x: 0.5, y: 0}
@@ -224,9 +224,9 @@ TextureImporter:
       name: spritesheet_3
       rect:
         serializedVersion: 2
-        x: 105
+        x: 210
         y: 0
-        width: 35
+        width: 70
         height: 25
       alignment: 7
       pivot: {x: 0.5, y: 0}
@@ -246,9 +246,9 @@ TextureImporter:
       name: spritesheet_4
       rect:
         serializedVersion: 2
-        x: 140
+        x: 280
         y: 0
-        width: 35
+        width: 70
         height: 25
       alignment: 7
       pivot: {x: 0.5, y: 0}
@@ -268,9 +268,9 @@ TextureImporter:
       name: spritesheet_5
       rect:
         serializedVersion: 2
-        x: 175
+        x: 350
         y: 0
-        width: 35
+        width: 70
         height: 25
       alignment: 7
       pivot: {x: 0.5, y: 0}
@@ -290,9 +290,9 @@ TextureImporter:
       name: spritesheet_6
       rect:
         serializedVersion: 2
-        x: 210
+        x: 420
         y: 0
-        width: 35
+        width: 70
         height: 25
       alignment: 7
       pivot: {x: 0.5, y: 0}
@@ -304,160 +304,6 @@ TextureImporter:
       bones: []
       spriteID: 25a502d0b44c21290800000000000000
       internalID: -7921052967969465774
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: spritesheet_7
-      rect:
-        serializedVersion: 2
-        x: 245
-        y: 0
-        width: 35
-        height: 25
-      alignment: 7
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: f0305f9367e6afce0800000000000000
-      internalID: -1370661682523340017
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: spritesheet_8
-      rect:
-        serializedVersion: 2
-        x: 280
-        y: 0
-        width: 35
-        height: 25
-      alignment: 7
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 4cb05a6cd1fc42d80800000000000000
-      internalID: -8276262488406422588
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: spritesheet_9
-      rect:
-        serializedVersion: 2
-        x: 315
-        y: 0
-        width: 35
-        height: 25
-      alignment: 7
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 7054c8ef1e6360ea0800000000000000
-      internalID: -5906973516983679737
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: spritesheet_10
-      rect:
-        serializedVersion: 2
-        x: 350
-        y: 0
-        width: 35
-        height: 25
-      alignment: 7
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 44b0e3cc05dfd2050800000000000000
-      internalID: 5777552420452043588
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: spritesheet_11
-      rect:
-        serializedVersion: 2
-        x: 385
-        y: 0
-        width: 35
-        height: 25
-      alignment: 7
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 148ee0d91605e9110800000000000000
-      internalID: 1269540525142108225
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: spritesheet_12
-      rect:
-        serializedVersion: 2
-        x: 420
-        y: 0
-        width: 35
-        height: 25
-      alignment: 7
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 5576ade39d6ef7bd0800000000000000
-      internalID: -2630129836624287915
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: spritesheet_13
-      rect:
-        serializedVersion: 2
-        x: 455
-        y: 0
-        width: 35
-        height: 25
-      alignment: 7
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 19eb3748437987590800000000000000
-      internalID: -7676219313036738927
       vertices: []
       indices: 
       edges: []
@@ -493,6 +339,6 @@ TextureImporter:
       spritesheet_9: -5906973516983679737
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom
+  userData: PIXEL_ART_V2|ppu=32|max=8192|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0|groundPivot=bottom
   assetBundleName: 
   assetBundleVariant: 

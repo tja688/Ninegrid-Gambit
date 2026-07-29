@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.killer",
     "kind": "Monster",
-    "attackPattern": "全向近战",
     "deckId": "deck.wandering_legion",
+    "role": "",
     "displayName": "杀手",
     "description": "移动到玩家相邻格时强制战斗",
+    "attackPattern": "全向近战",
     "gold": 5,
     "stats": {
         "hp": 6,
@@ -24,8 +25,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.20000000298023224,
-        "offsetY": -0.20000000298023224,
+        "offsetX": 0.20000000298023225,
+        "offsetY": -0.20000000298023225,
         "uniformScale": 1.0
     },
     "animations": {
@@ -71,10 +72,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.relentless_chase"
+    "effectAssemblies": [
+        {
+            "id": "skill.relentless_chase.move",
+            "templateId": "tpl.skill.relentless_chase.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 3,
     "isElite": false,
     "isBoss": false,
@@ -87,7 +94,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

@@ -530,7 +530,7 @@ public static class PixelArtGroundCharacterImportUtility
         importer.textureType = TextureImporterType.Sprite;
         importer.spriteImportMode = SpriteImportMode.Multiple;
 
-        // 先尽量把碎切（Automatic 紧裁）收成均匀格，再判 pivot / 指纹。
+        // 优先 spritesheet.txt 帧表；否则把碎切（Automatic 紧裁）收成均匀格，再判 pivot / 指纹。
         bool slicesTouched = EnsureSpriteSheetSlices(importer, assetPath);
         bool pivotOk = HasBottomCenterSprites(importer);
         bool needsBase = forceReprocess
@@ -711,8 +711,8 @@ public static class PixelArtGroundCharacterImportUtility
     }
 
     /// <summary>
-    /// 无现有均匀切片时，按路径 (96x96) / 横竖条 / 常见格尺寸尝试自动切片。
-    /// 已有 alpha 紧裁切片但几何上可推断均匀格时，改为均匀格，保证脚底 Pivot 跨帧一致。
+    /// 优先按旁路 <c>spritesheet.txt</c>（资源包自带帧表，左上原点）切片；
+    /// 否则按路径 (96x96) / 横竖条 / 常见格尺寸推断均匀格。
     /// 返回 true 表示写入了新的 spritesheet。
     /// </summary>
     private static bool EnsureSpriteSheetSlices(TextureImporter importer, string assetPath)
@@ -721,6 +721,11 @@ public static class PixelArtGroundCharacterImportUtility
         if (width <= 0 || height <= 0)
         {
             return false;
+        }
+
+        if (TryLoadSpritesheetTxtFrames(assetPath, out List<TxtFrame> txtFrames))
+        {
+            return ApplyTxtFramesIfNeeded(importer, assetPath, width, height, txtFrames);
         }
 
         CellSize? cell = InferCellSizeForSlicing(width, height, assetPath);
@@ -794,6 +799,165 @@ public static class PixelArtGroundCharacterImportUtility
         }
 
         importer.spritesheet = metas.ToArray();
+        return true;
+    }
+
+    private readonly struct TxtFrame
+    {
+        public readonly int X;
+        public readonly int Y;
+        public readonly int Width;
+        public readonly int Height;
+
+        public TxtFrame(int x, int y, int width, int height)
+        {
+            X = x;
+            Y = y;
+            Width = width;
+            Height = height;
+        }
+    }
+
+    private static readonly Regex SpritesheetTxtFrameRegex = new Regex(
+        @"=\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*$",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    /// <summary>
+    /// 读取同目录 <c>spritesheet.txt</c>：每行 <c>…/frameNNNN.png = x y w h</c>（x/y 为纹理左上原点）。
+    /// </summary>
+    private static bool TryLoadSpritesheetTxtFrames(string assetPath, out List<TxtFrame> frames)
+    {
+        frames = null;
+        if (string.IsNullOrEmpty(assetPath))
+        {
+            return false;
+        }
+
+        string dir = Path.GetDirectoryName(assetPath);
+        if (string.IsNullOrEmpty(dir))
+        {
+            return false;
+        }
+
+        string projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+        string absTxt = Path.GetFullPath(Path.Combine(projectRoot, dir, "spritesheet.txt"));
+        if (!File.Exists(absTxt))
+        {
+            return false;
+        }
+
+        string[] lines;
+        try
+        {
+            lines = File.ReadAllLines(absTxt);
+        }
+        catch
+        {
+            return false;
+        }
+
+        var parsed = new List<TxtFrame>(lines.Length);
+        for (var i = 0; i < lines.Length; i++)
+        {
+            string line = lines[i];
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            Match match = SpritesheetTxtFrameRegex.Match(line.TrimEnd());
+            if (!match.Success)
+            {
+                continue;
+            }
+
+            if (!int.TryParse(match.Groups[1].Value, out int x)
+                || !int.TryParse(match.Groups[2].Value, out int y)
+                || !int.TryParse(match.Groups[3].Value, out int w)
+                || !int.TryParse(match.Groups[4].Value, out int h)
+                || w <= 0
+                || h <= 0)
+            {
+                continue;
+            }
+
+            parsed.Add(new TxtFrame(x, y, w, h));
+        }
+
+        if (parsed.Count == 0)
+        {
+            return false;
+        }
+
+        frames = parsed;
+        return true;
+    }
+
+    private static bool ApplyTxtFramesIfNeeded(
+        TextureImporter importer,
+        string assetPath,
+        int textureWidth,
+        int textureHeight,
+        List<TxtFrame> frames)
+    {
+        string baseName = Path.GetFileNameWithoutExtension(assetPath);
+        var metas = new List<SpriteMetaData>(frames.Count);
+        for (var i = 0; i < frames.Count; i++)
+        {
+            TxtFrame frame = frames[i];
+            if (frame.X < 0
+                || frame.Y < 0
+                || frame.X + frame.Width > textureWidth
+                || frame.Y + frame.Height > textureHeight)
+            {
+                Debug.LogWarning(
+                    $"[PixelArtGround] spritesheet.txt 帧越界，跳过该图集：{assetPath} "
+                    + $"frame#{i}={frame.X},{frame.Y},{frame.Width},{frame.Height} tex={textureWidth}x{textureHeight}");
+                return false;
+            }
+
+            // txt 为左上原点；Unity Sprite rect 为左下原点。
+            int unityY = textureHeight - frame.Y - frame.Height;
+            metas.Add(new SpriteMetaData
+            {
+                name = baseName + "_" + i,
+                rect = new Rect(frame.X, unityY, frame.Width, frame.Height),
+                alignment = AlignmentBottomCenter,
+                pivot = new Vector2(0.5f, 0f),
+                border = Vector4.zero,
+            });
+        }
+
+        if (SpritesMatchTxtLayout(importer.spritesheet, metas))
+        {
+            return false;
+        }
+
+        importer.spritesheet = metas.ToArray();
+        return true;
+    }
+
+    private static bool SpritesMatchTxtLayout(SpriteMetaData[] existing, List<SpriteMetaData> expected)
+    {
+        if (existing == null || existing.Length != expected.Count)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < expected.Count; i++)
+        {
+            SpriteMetaData a = existing[i];
+            SpriteMetaData b = expected[i];
+            if (!string.Equals(a.name, b.name, StringComparison.Ordinal)
+                || !Mathf.Approximately(a.rect.x, b.rect.x)
+                || !Mathf.Approximately(a.rect.y, b.rect.y)
+                || !Mathf.Approximately(a.rect.width, b.rect.width)
+                || !Mathf.Approximately(a.rect.height, b.rect.height))
+            {
+                return false;
+            }
+        }
+
         return true;
     }
 

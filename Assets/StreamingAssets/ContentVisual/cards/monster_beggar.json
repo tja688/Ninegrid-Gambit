@@ -2,11 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.beggar",
     "kind": "Monster",
-    "attackPattern": "普通近战",
     "deckId": "deck.wandering_legion",
     "role": "",
     "displayName": "乞丐",
     "description": "无",
+    "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
         "hp": 4,
@@ -72,7 +72,14 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
+    "effectAssemblies": [
+        {
+            "id": "fx.aeb3afb3",
+            "templateId": "tpl.skill.fire_power.aura",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"source\":\"CardCount\"}"
+        }
+    ],
     "effectIds": [],
     "skillIds": [],
     "level": 1,

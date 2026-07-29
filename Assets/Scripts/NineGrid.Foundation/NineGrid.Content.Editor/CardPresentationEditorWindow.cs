@@ -360,6 +360,18 @@ namespace NineGrid.Content.Editor
                     return;
                 }
 
+                var buckets = new Dictionary<EffectTemplateOriginCategory, List<EffectTemplateEditorIO.TemplateRow>>();
+                void AddToBucket(EffectTemplateOriginCategory category, EffectTemplateEditorIO.TemplateRow row)
+                {
+                    if (!buckets.TryGetValue(category, out var list))
+                    {
+                        list = new List<EffectTemplateEditorIO.TemplateRow>();
+                        buckets[category] = list;
+                    }
+
+                    list.Add(row);
+                }
+
                 for (var i = 0; i < templates.Count; i++)
                 {
                     var row = templates[i];
@@ -368,7 +380,47 @@ namespace NineGrid.Content.Editor
                         continue;
                     }
 
-                    container.Add(BuildTemplateEntryButton(row));
+                    AddToBucket(CardPresentationEditorSession.ResolveEffectTemplateCategory(row.id), row);
+                }
+
+                var order = new[]
+                {
+                    EffectTemplateOriginCategory.Item,
+                    EffectTemplateOriginCategory.Relic,
+                    EffectTemplateOriginCategory.MonsterSkill,
+                    EffectTemplateOriginCategory.Other,
+                };
+                for (var o = 0; o < order.Length; o++)
+                {
+                    var category = order[o];
+                    if (!buckets.TryGetValue(category, out var list) || list.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    list.Sort((a, b) => string.CompareOrdinal(a.id, b.id));
+                    var catKey = "effect-cat:" + category;
+                    if (!foldoutState.TryGetValue(catKey, out var catExpanded))
+                    {
+                        catExpanded = category != EffectTemplateOriginCategory.Other;
+                        foldoutState[catKey] = catExpanded;
+                    }
+
+                    var catFoldout = new Foldout
+                    {
+                        text = CardPresentationEditorSession.ResolveEffectCategoryTitle(category)
+                               + " · " + list.Count,
+                        value = catExpanded,
+                    };
+                    catFoldout.style.marginLeft = 4;
+                    catFoldout.style.marginBottom = 2;
+                    catFoldout.RegisterValueChangedCallback(evt => foldoutState[catKey] = evt.newValue);
+                    for (var i = 0; i < list.Count; i++)
+                    {
+                        catFoldout.contentContainer.Add(BuildTemplateEntryButton(list[i], includeCategorySuffix: false));
+                    }
+
+                    container.Add(catFoldout);
                 }
             });
         }
@@ -565,18 +617,22 @@ namespace NineGrid.Content.Editor
                 {
                     EnsureDescriptionIconPipeline();
                     session.FocusDeck(entry.ContentId);
+                    faceUp = false;
                     previewFingerprint = string.Empty;
                     RefreshAll();
                 });
         }
 
-        private VisualElement BuildTemplateEntryButton(EffectTemplateEditorIO.TemplateRow row)
+        private VisualElement BuildTemplateEntryButton(
+            EffectTemplateEditorIO.TemplateRow row,
+            bool includeCategorySuffix = true)
         {
             var selected = session.FocusKind == CardPresentationEditorFocusKind.EffectTemplate
                            && string.Equals(row.id, session.FocusedTemplateId, StringComparison.Ordinal);
             var design = CardPresentationEditorSession.FormatEffectTemplateChoiceLabel(
                 row.id,
-                row.design_text);
+                row.design_text,
+                includeCategorySuffix);
             var title = design;
             if (title.Length > 36)
             {
@@ -1055,7 +1111,7 @@ namespace NineGrid.Content.Editor
 
             var effectAssemblyCard = ContentVisualWarmConsoleUi.CreateSectionCard(
                 "效果装配",
-                "统一效果池：可搜索选模板挂载；下拉文案用 {amount} 等参数位，数值只看下方 argsJson。清空后白板。旧 skillIds 打开时会展开进本列表",
+                "按卡种只挂同类效果（道具/遗物/怪物技能）；可搜索选模板多载。下拉文案用 {amount} 等参数位，数值只看下方 argsJson。清空后白板。旧 skillIds 打开时会展开进本列表",
                 column => BuildEffectAssemblySection(column, entry));
             effectAssemblyCard.style.marginBottom = 6;
             contentRoot.Add(effectAssemblyCard);
@@ -1216,6 +1272,7 @@ namespace NineGrid.Content.Editor
                 contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeader(
                     "未选择",
                     "从左侧卡组·卡背选择一条。"));
+                previewFingerprint = string.Empty;
                 return;
             }
 
@@ -1230,9 +1287,46 @@ namespace NineGrid.Content.Editor
                 dto.contentId + " · Deck"
                 + (entry.IsDirty ? " · 未保存" : string.Empty)));
 
+            var topRow = new VisualElement();
+            topRow.style.flexDirection = FlexDirection.Row;
+            topRow.style.marginBottom = 6;
+            topRow.style.alignItems = Align.Stretch;
+            contentRoot.Add(topRow);
+
+            var previewKind = ResolveDeckPreviewKind(dto.contentId);
+            var previewCard = ContentVisualWarmConsoleUi.CreateSectionCard(
+                "卡背预览",
+                "默认看背面；空槽保留「" + previewKind + "」模板兜底卡背。卡面页翻转时也会按 deckId 回填本组背图。",
+                column =>
+                {
+                    previewContainer = new IMGUIContainer(() =>
+                    {
+                        EnsurePreview(entry);
+                        var rect = GUILayoutUtility.GetRect(
+                            1f, 1f, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                        previewHost.Draw(rect);
+                    });
+                    previewContainer.style.minHeight = 340;
+                    previewContainer.style.minWidth = 260;
+                    column.Add(previewContainer);
+
+                    column.Add(ContentVisualWarmConsoleUi.CreateButtonRow(
+                        new Button(() =>
+                        {
+                            previewFingerprint = string.Empty;
+                            EnsurePreview(entry, force: true);
+                            previewContainer?.MarkDirtyRepaint();
+                        }) { text = "刷新预览" },
+                        new Button(() => ToggleFlip(entry)) { text = faceUp ? "翻到背面" : "翻到正面" }));
+                });
+            previewCard.style.flexGrow = 1;
+            previewCard.style.flexBasis = 0;
+            previewCard.style.marginRight = 6;
+            topRow.Add(previewCard);
+
             var card = ContentVisualWarmConsoleUi.CreateSectionCard(
                 "卡组配置",
-                "卡背三槽；卡面 deckId 引用本条目",
+                "卡背三槽；卡面 deckId 引用本条目后自动换背",
                 column =>
                 {
                     column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
@@ -1276,12 +1370,16 @@ namespace NineGrid.Content.Editor
                     }));
 
                     var status = ContentVisualWarmConsoleUi.CreateDescriptionLabel(
-                        "状态：" + (entry.IsDirty ? "有未保存改动" : "已同步磁盘"));
+                        "状态：" + (entry.IsDirty ? "有未保存改动" : "已同步磁盘")
+                        + " · 预览模板 " + previewKind);
                     status.style.marginTop = 8;
                     column.Add(status);
                 });
-            card.style.marginBottom = 12;
-            contentRoot.Add(card);
+            card.style.flexGrow = 1;
+            card.style.flexBasis = 0;
+            topRow.Add(card);
+
+            EnsurePreview(entry);
         }
 
         private void BuildEffectAssemblySection(VisualElement column, CardPresentationEditorEntry entry)
@@ -1293,7 +1391,10 @@ namespace NineGrid.Content.Editor
             }
 
             var list = new List<EffectAssemblyDto>(dto.effectAssemblies);
-            var templateChoices = session.GetEffectTemplateChoices();
+            var containerType = InferDefaultContainerType(dto.kind);
+            var templateChoices = session.GetEffectTemplateChoices(
+                containerType,
+                includeCategorySuffix: false);
             var searchableChoices = new List<SearchableChoiceField.Choice>(templateChoices.Count);
             for (var i = 0; i < templateChoices.Count; i++)
             {
@@ -1315,9 +1416,9 @@ namespace NineGrid.Content.Editor
             {
                 searchableChoices.Add(new SearchableChoiceField.Choice
                 {
-                    Label = "（无效果模板）",
+                    Label = "（无本类效果模板）",
                     Value = "__none__",
-                    SearchHaystack = "无效果模板",
+                    SearchHaystack = "无本类效果模板",
                 });
             }
 
@@ -1361,7 +1462,7 @@ namespace NineGrid.Content.Editor
 
                     if (string.IsNullOrWhiteSpace(assembly.containerType))
                     {
-                        assembly.containerType = InferDefaultContainerType(dto.kind);
+                        assembly.containerType = containerType;
                     }
 
                     var row = new VisualElement();
@@ -1397,12 +1498,14 @@ namespace NineGrid.Content.Editor
 
                     if (!hasCurrent && !string.IsNullOrEmpty(currentTpl))
                     {
+                        // 跨类遗留挂载：保留可选以便查看/改回同类，标注真实分类。
                         var orphanLabel = session.GetParameterizedDesignText(currentTpl, assembly.argsJson);
                         rowChoices.Insert(0, new SearchableChoiceField.Choice
                         {
                             Label = CardPresentationEditorSession.FormatEffectTemplateChoiceLabel(
                                 currentTpl,
-                                orphanLabel),
+                                orphanLabel,
+                                includeCategorySuffix: true),
                             Value = currentTpl,
                             SearchHaystack = orphanLabel + " " + currentTpl,
                         });
@@ -1415,7 +1518,7 @@ namespace NineGrid.Content.Editor
                         assembly.templateId = string.Equals(picked, "__none__", StringComparison.Ordinal)
                             ? string.Empty
                             : (picked ?? string.Empty);
-                        assembly.containerType = InferDefaultContainerType(dto.kind);
+                        assembly.containerType = containerType;
                         assembly.argsJson = session.SuggestArgsJsonForTemplate(assembly.templateId);
                         CommitAssemblies(rebuildUi: true);
                     };
@@ -1461,7 +1564,7 @@ namespace NineGrid.Content.Editor
                     {
                         id = "fx." + Guid.NewGuid().ToString("N").Substring(0, 8),
                         templateId = templateId,
-                        containerType = InferDefaultContainerType(dto.kind),
+                        containerType = containerType,
                         argsJson = session.SuggestArgsJsonForTemplate(templateId),
                     });
                     CommitAssemblies(rebuildUi: true);
@@ -2609,8 +2712,8 @@ namespace NineGrid.Content.Editor
         private void OnDeckEdited(CardPresentationEditorEntry entry)
         {
             session.MarkDirty(entry.ContentId);
+            InvalidateAndRefreshPreview(entry);
             UpdateStatus();
-            RefreshSidebar();
         }
 
         private void InvalidateAndRefreshPreview(CardPresentationEditorEntry entry)
@@ -2719,6 +2822,12 @@ namespace NineGrid.Content.Editor
                 return;
             }
 
+            if (string.Equals(entry.Dto.kind, "Deck", StringComparison.OrdinalIgnoreCase))
+            {
+                previewAnimPlayer = null;
+                return;
+            }
+
             previewAnimPlayer = root.GetComponent<CardSpriteAnimPlayer>();
             if (previewAnimPlayer == null)
             {
@@ -2766,30 +2875,38 @@ namespace NineGrid.Content.Editor
                 return false;
             }
 
-            ContentVisualKind contentKind;
-            if (!Enum.TryParse(dto.kind, true, out contentKind))
+            CardPresentationKind kind;
+            if (string.Equals(dto.kind, "Deck", StringComparison.OrdinalIgnoreCase))
             {
-                contentKind = ContentVisualKind.Unknown;
+                kind = ResolveDeckPreviewKind(dto.contentId);
             }
-
-            var kind = CardFacePreviewBuilder.ToPresentationKind(contentKind, dto.contentId);
-            if (kind == CardPresentationKind.Unknown)
+            else
             {
-                if (CardPresentationEditorSession.IsItemLikeKind(dto.kind))
+                ContentVisualKind contentKind;
+                if (!Enum.TryParse(dto.kind, true, out contentKind))
                 {
-                    kind = CardPresentationKind.HelpCard;
+                    contentKind = ContentVisualKind.Unknown;
                 }
-                else if (string.Equals(dto.kind, "Avatar", StringComparison.OrdinalIgnoreCase))
+
+                kind = CardFacePreviewBuilder.ToPresentationKind(contentKind, dto.contentId);
+                if (kind == CardPresentationKind.Unknown)
                 {
-                    kind = CardPresentationKind.Avatar;
-                }
-                else if (string.Equals(dto.kind, "Monster", StringComparison.OrdinalIgnoreCase))
-                {
-                    kind = CardPresentationKind.Monster;
-                }
-                else if (string.Equals(dto.kind, "Relic", StringComparison.OrdinalIgnoreCase))
-                {
-                    kind = CardPresentationKind.Relic;
+                    if (CardPresentationEditorSession.IsItemLikeKind(dto.kind))
+                    {
+                        kind = CardPresentationKind.HelpCard;
+                    }
+                    else if (string.Equals(dto.kind, "Avatar", StringComparison.OrdinalIgnoreCase))
+                    {
+                        kind = CardPresentationKind.Avatar;
+                    }
+                    else if (string.Equals(dto.kind, "Monster", StringComparison.OrdinalIgnoreCase))
+                    {
+                        kind = CardPresentationKind.Monster;
+                    }
+                    else if (string.Equals(dto.kind, "Relic", StringComparison.OrdinalIgnoreCase))
+                    {
+                        kind = CardPresentationKind.Relic;
+                    }
                 }
             }
 
@@ -2805,9 +2922,11 @@ namespace NineGrid.Content.Editor
             var backBorderPath = sprites.backBorder;
             var backShirtPath = sprites.backShirt;
             var backLogoPath = sprites.backLogo;
-            if ((string.IsNullOrWhiteSpace(backBorderPath)
-                 || string.IsNullOrWhiteSpace(backShirtPath)
-                 || string.IsNullOrWhiteSpace(backLogoPath))
+            var isDeckEntry = string.Equals(dto.kind, "Deck", StringComparison.OrdinalIgnoreCase);
+            if (!isDeckEntry
+                && (string.IsNullOrWhiteSpace(backBorderPath)
+                    || string.IsNullOrWhiteSpace(backShirtPath)
+                    || string.IsNullOrWhiteSpace(backLogoPath))
                 && session.TryGetDeckDto(dto.deckId, out var deckDto)
                 && deckDto?.sprites != null)
             {
@@ -2837,21 +2956,59 @@ namespace NineGrid.Content.Editor
                 DisplayName = string.IsNullOrWhiteSpace(dto.displayName)
                     ? session.GetDisplayName(dto.contentId, dto.kind)
                     : dto.displayName,
-                BasicDescription = CardFaceDescriptionParamFiller.FillFromAssemblies(
-                    dto.description ?? string.Empty,
-                    dto.effectAssemblies),
-                MainIcon = CardPresentationSpritePath.LoadSprite(sprites.mainIcon),
-                FaceBackground = CardPresentationSpritePath.LoadSprite(sprites.faceBackground),
+                BasicDescription = isDeckEntry
+                    ? string.Empty
+                    : CardFaceDescriptionParamFiller.FillFromAssemblies(
+                        dto.description ?? string.Empty,
+                        dto.effectAssemblies),
+                MainIcon = isDeckEntry
+                    ? null
+                    : CardPresentationSpritePath.LoadSprite(sprites.mainIcon),
+                FaceBackground = isDeckEntry
+                    ? null
+                    : CardPresentationSpritePath.LoadSprite(sprites.faceBackground),
                 BackBorder = CardPresentationSpritePath.LoadSprite(backBorderPath),
                 BackShirt = CardPresentationSpritePath.LoadSprite(backShirtPath),
                 BackLogo = CardPresentationSpritePath.LoadSprite(backLogoPath),
-                Attack = Mathf.Max(0, stats.attack),
-                Armor = Mathf.Max(0, stats.armor),
-                Hp = Mathf.Max(0, stats.hp),
-                ActionCount = Mathf.Max(0, stats.action),
+                Attack = isDeckEntry ? 0 : Mathf.Max(0, stats.attack),
+                Armor = isDeckEntry ? 0 : Mathf.Max(0, stats.armor),
+                Hp = isDeckEntry ? 0 : Mathf.Max(0, stats.hp),
+                ActionCount = isDeckEntry ? 0 : Mathf.Max(0, stats.action),
                 FaceUp = faceUp,
             };
             return true;
+        }
+
+        /// <summary>
+        /// 卡组页预览需要挂一套带 back 子树的卡面模板；按 deckId 约定选壳，空背槽保留该模板兜底图。
+        /// </summary>
+        private static CardPresentationKind ResolveDeckPreviewKind(string deckContentId)
+        {
+            if (string.IsNullOrWhiteSpace(deckContentId))
+            {
+                return CardPresentationKind.Monster;
+            }
+
+            var id = deckContentId.Trim();
+            if (string.Equals(id, CardPresentationEditorSession.PlayerDeckId, StringComparison.OrdinalIgnoreCase)
+                || id.IndexOf("player", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return CardPresentationKind.Avatar;
+            }
+
+            if (string.Equals(id, "deck.help", StringComparison.OrdinalIgnoreCase)
+                || id.IndexOf("help", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return CardPresentationKind.HelpCard;
+            }
+
+            if (string.Equals(id, "deck.relic", StringComparison.OrdinalIgnoreCase)
+                || id.IndexOf("relic", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return CardPresentationKind.Relic;
+            }
+
+            return CardPresentationKind.Monster;
         }
 
         private static string BuildPreviewFingerprint(CardPresentationConfigDto dto, bool faceUpFlag)

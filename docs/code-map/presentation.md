@@ -18,7 +18,7 @@
 | `Systems/` | 18 | `NineGrid.Presentation.Systems` | QF System / 窄能力接口 |
 | `Flow/` | ~118 | `NineGrid.Flow*` | 导演/时间线/Channel/Scheduler、局内会话、流程壳、诊断、部分 Presenter |
 | `Cards/` | ~136 | `NineGrid.Cards*` | 卡视图、场地/手牌/牌库、收敛、特效 SO、静态 Hook |
-| `Editor/` | ~22 | `NineGrid.Presentation.Editor` | 编辑器工具；`CardFacePreviewHost` / `VisualEffectPreviewHost`（特效库：左怪物卡参照 + 右精灵表预览） |
+| `Editor/` | ~22 | `NineGrid.Presentation.Editor` | 编辑器工具；`CardFacePreviewHost` / `VisualEffectPreviewHost`（特效库：左怪物卡参照 + 右精灵表预览；卡组·卡背与卡面页共用 `CardFacePreviewHost` 翻牌预览） |
 | `Tests/` | ~97 | `NineGrid.Presentation.Tests*` | EditMode |
 
 ### `Flow/` 子树

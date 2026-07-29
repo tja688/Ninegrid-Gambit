@@ -119,6 +119,17 @@ namespace NineGrid.Content.Editor
         public string Label { get; set; } = string.Empty;
     }
 
+    /// <summary>
+    /// 编辑器效果池分类（道具 / 遗物 / 怪物技能）。JSON 模板仍同构；本枚举只约束默认可见集与同类多载。
+    /// </summary>
+    public enum EffectTemplateOriginCategory
+    {
+        Other = 0,
+        Item = 1,
+        Relic = 2,
+        MonsterSkill = 3,
+    }
+
     [Serializable]
     public sealed class CardPresentationIndexDto
     {
@@ -626,10 +637,21 @@ namespace NineGrid.Content.Editor
         }
 
         /// <summary>
-        /// 装配下拉用：Label = 参数化 design_text（<c>{amount}</c> 而非 peer 预设数字）
-        /// + 过渡来源后缀；Value 仍为 templateId。
+        /// 装配下拉用：Label = 参数化 design_text（<c>{amount}</c> 而非 peer 预设数字）；
+        /// Value 仍为 templateId。未指定容器时返回全库（侧栏/诊断）；指定后只返回同类。
         /// </summary>
         public List<EffectTemplateChoice> GetEffectTemplateChoices()
+        {
+            return GetEffectTemplateChoices(containerTypeFilter: null, includeCategorySuffix: true);
+        }
+
+        /// <param name="containerTypeFilter">
+        /// <c>HelpCard</c> / <c>Relic</c> / <c>MonsterSkill</c>；空则不过滤。
+        /// </param>
+        /// <param name="includeCategorySuffix">同类池内默认 false（分类已由卡种决定）；跨类 orphan 显示可开。</param>
+        public List<EffectTemplateChoice> GetEffectTemplateChoices(
+            string containerTypeFilter,
+            bool includeCategorySuffix = false)
         {
             var labelCounts = new Dictionary<string, int>(StringComparer.Ordinal);
             var choices = new List<EffectTemplateChoice>();
@@ -641,11 +663,20 @@ namespace NineGrid.Content.Editor
                     continue;
                 }
 
+                if (!string.IsNullOrWhiteSpace(containerTypeFilter)
+                    && !TemplateMatchesContainerType(row.id, containerTypeFilter))
+                {
+                    continue;
+                }
+
                 var parameterized = EffectDesignTextParameterizer.Parameterize(
                     row.design_text,
                     row.body,
                     (IReadOnlyDictionary<string, object>)null);
-                var rawLabel = FormatEffectTemplateChoiceLabel(row.id, parameterized);
+                var rawLabel = FormatEffectTemplateChoiceLabel(
+                    row.id,
+                    parameterized,
+                    includeCategorySuffix);
                 if (!labelCounts.TryGetValue(rawLabel, out var count))
                 {
                     count = 0;
@@ -674,15 +705,75 @@ namespace NineGrid.Content.Editor
         }
 
         /// <summary>
-        /// 统一效果池显示名：中文 design_text + 过渡性来源标注（收束前便于辨认旧容器）。
+        /// 效果池显示名：中文 design_text；可选附加「（道具/遗物/怪物技能效果）」分类标注。
         /// </summary>
         public static string FormatEffectTemplateChoiceLabel(string templateId, string designText)
+        {
+            return FormatEffectTemplateChoiceLabel(templateId, designText, includeCategorySuffix: true);
+        }
+
+        public static string FormatEffectTemplateChoiceLabel(
+            string templateId,
+            string designText,
+            bool includeCategorySuffix)
         {
             var body = string.IsNullOrWhiteSpace(designText)
                 ? (string.IsNullOrWhiteSpace(templateId) ? "（无模板）" : templateId.Trim())
                 : designText.Trim();
+            if (!includeCategorySuffix)
+            {
+                return body;
+            }
+
             var origin = ResolveEffectOriginSuffix(templateId);
             return string.IsNullOrEmpty(origin) ? body : body + origin;
+        }
+
+        /// <summary>
+        /// 模板是否属于某装配容器类（编辑器同类多载门禁；运行时 JSON 仍同构可跨类引用）。
+        /// </summary>
+        public static bool TemplateMatchesContainerType(string templateId, string containerType)
+        {
+            if (string.IsNullOrWhiteSpace(containerType))
+            {
+                return true;
+            }
+
+            var category = ResolveEffectTemplateCategory(templateId);
+            var ct = containerType.Trim();
+            if (string.Equals(ct, "HelpCard", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(ct, "Item", StringComparison.OrdinalIgnoreCase))
+            {
+                return category == EffectTemplateOriginCategory.Item;
+            }
+
+            if (string.Equals(ct, "Relic", StringComparison.OrdinalIgnoreCase))
+            {
+                return category == EffectTemplateOriginCategory.Relic;
+            }
+
+            if (string.Equals(ct, "MonsterSkill", StringComparison.OrdinalIgnoreCase))
+            {
+                return category == EffectTemplateOriginCategory.MonsterSkill;
+            }
+
+            return false;
+        }
+
+        /// <summary>侧栏分组标题。</summary>
+        public static string ResolveEffectCategoryTitle(EffectTemplateOriginCategory category)
+        {
+            switch (category)
+            {
+                case EffectTemplateOriginCategory.Item:
+                    return "道具效果";
+                case EffectTemplateOriginCategory.Relic:
+                    return "遗物效果";
+                case EffectTemplateOriginCategory.MonsterSkill:
+                    return "怪物技能效果";
+                default:
+                    return "其他效果";
+            }
         }
 
         /// <summary>
@@ -795,31 +886,66 @@ namespace NineGrid.Content.Editor
             return false;
         }
 
-        /// <summary>tpl.help.* →（原帮助卡效果）；tpl.skill.* →（原怪物技能效果）；tpl.relic.* →（原遗物效果）。</summary>
-        public static string ResolveEffectOriginSuffix(string templateId)
+        /// <summary>
+        /// 按模板 id 推断编辑器分类：标准前缀 <c>tpl.help/relic/skill.*</c>；
+        /// 共享/遗留 id 再按名称中的 help/relic/skill 段启发式归类。
+        /// </summary>
+        public static EffectTemplateOriginCategory ResolveEffectTemplateCategory(string templateId)
         {
             if (string.IsNullOrWhiteSpace(templateId))
             {
-                return string.Empty;
+                return EffectTemplateOriginCategory.Other;
             }
 
             var id = templateId.Trim();
             if (id.StartsWith("tpl.help.", StringComparison.OrdinalIgnoreCase))
             {
-                return "（原帮助卡效果）";
-            }
-
-            if (id.StartsWith("tpl.skill.", StringComparison.OrdinalIgnoreCase))
-            {
-                return "（原怪物技能效果）";
+                return EffectTemplateOriginCategory.Item;
             }
 
             if (id.StartsWith("tpl.relic.", StringComparison.OrdinalIgnoreCase))
             {
-                return "（原遗物效果）";
+                return EffectTemplateOriginCategory.Relic;
             }
 
-            return "（原效果）";
+            if (id.StartsWith("tpl.skill.", StringComparison.OrdinalIgnoreCase))
+            {
+                return EffectTemplateOriginCategory.MonsterSkill;
+            }
+
+            // shared / 遗留无前缀：如 tpl.shared.3.help_…、tpl.gain_armor_on_use_help_card
+            if (id.IndexOf("help", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return EffectTemplateOriginCategory.Item;
+            }
+
+            if (id.IndexOf("relic", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return EffectTemplateOriginCategory.Relic;
+            }
+
+            if (id.IndexOf("skill", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return EffectTemplateOriginCategory.MonsterSkill;
+            }
+
+            return EffectTemplateOriginCategory.Other;
+        }
+
+        /// <summary>tpl.help.* →（道具效果）；tpl.skill.* →（怪物技能效果）；tpl.relic.* →（遗物效果）。</summary>
+        public static string ResolveEffectOriginSuffix(string templateId)
+        {
+            switch (ResolveEffectTemplateCategory(templateId))
+            {
+                case EffectTemplateOriginCategory.Item:
+                    return "（道具效果）";
+                case EffectTemplateOriginCategory.MonsterSkill:
+                    return "（怪物技能效果）";
+                case EffectTemplateOriginCategory.Relic:
+                    return "（遗物效果）";
+                default:
+                    return string.IsNullOrWhiteSpace(templateId) ? string.Empty : "（其他效果）";
+            }
         }
 
         /// <summary>

@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.orc_commander",
     "kind": "Monster",
-    "attackPattern": "普通近战",
     "deckId": "deck.orc_legion",
+    "role": "",
     "displayName": "兽人指挥官",
     "description": "每移动1次，相邻怪物攻击+1",
+    "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
         "hp": 10,
@@ -24,8 +25,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.30000001192092896,
-        "offsetY": -0.30000001192092896,
+        "offsetX": 0.30000001192092898,
+        "offsetY": -0.30000001192092898,
         "uniformScale": 0.949999988079071
     },
     "animations": {
@@ -71,10 +72,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.orc_tactics"
+    "effectAssemblies": [
+        {
+            "id": "skill.orc_tactics.move",
+            "templateId": "tpl.skill.orc_tactics.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":1,\"source\":\"skill.orc_tactics\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 3,
     "isElite": false,
     "isBoss": false,
@@ -87,7 +94,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

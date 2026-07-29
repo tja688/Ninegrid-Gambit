@@ -298,7 +298,8 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         EditorGUILayout.HelpBox(
             "每个路径独立选择模式：Single（整图精灵）/ Multiple（仅改 Multiple，不自动网格切）/ Aseprite（.ase/.aseprite）/" +
             "站立角色·智能导入（递归子文件夹；按像素几何识别横条/网格图集 vs 单帧序列，均匀切片 + 脚底 Pivot）。" +
-            "特效 ContentArt/Multiple/Effects 请用智能导入，勿用 Multiple（否则易留下 Automatic 碎切）。",
+            "特效 ContentArt/Multiple/Effects 请用智能导入，勿用 Multiple（否则易留下 Automatic 碎切）。" +
+            "同目录有 spritesheet.txt 时优先按资源包帧表切片（左上原点→Unity 左下），不再猜均匀格。",
             MessageType.None
         );
 
@@ -465,6 +466,7 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
 
     /// <summary>
     /// 仅处理指定文件夹（智能站立导入）。供菜单 / Unity CLI eval 调用；不会扫其它路径。
+    /// 有旁路 spritesheet.txt 时按帧表切片。
     /// </summary>
     [MenuItem("NineGrid/Tools/Reprocess Effects Smart Import")]
     public static void ReprocessEffectsSmartImportMenu()
@@ -474,6 +476,16 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
             forceReprocess: true);
         Debug.Log("[PixelArtProcessor] Effects smart reprocess\n" + report);
         EditorUtility.DisplayDialog("Pixel Art Processor", report, "OK");
+    }
+
+    /// <summary>
+    /// 同 <see cref="ReprocessEffectsSmartImportMenu"/>：按各特效目录 spritesheet.txt 重切图集。
+    /// CLI：unity command eval "return PixelArtImageProcessorWindow.ProcessFolderSmart(\"Assets/Resources/ContentArt/Multiple/Effects\", true);"
+    /// </summary>
+    [MenuItem("NineGrid/Tools/Reslice Effects From spritesheet.txt")]
+    public static void ResliceEffectsFromSpritesheetTxtMenu()
+    {
+        ReprocessEffectsSmartImportMenu();
     }
 
     /// <summary>
@@ -489,6 +501,11 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
             window.settings.forceReprocess = forceReprocess;
             window.settings.verboseLogs = false;
             window.settings.mirrorToUnityConsole = false;
+            // 部分特效横条超过 4096（如 4800×80），避免 Default 平台缩图。
+            if (window.settings.maxTextureSize < 8192)
+            {
+                window.settings.maxTextureSize = 8192;
+            }
             window.settings.paths = new List<PathEntry>
             {
                 new PathEntry

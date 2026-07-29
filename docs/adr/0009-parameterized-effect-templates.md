@@ -37,7 +37,7 @@ status: accepted
 ## 后果
 
 - 150 条效果需迁移为「模板 + 装配引用」，迁移中会暴露哪些逻辑本可共用。
-- 效果定义上的 `containerType` 语义改变：不再是准入限制，仅作分类/检索信息。
+- 效果定义上的 `containerType` 语义改变：不再是运行时准入限制，仅作分类/检索信息。编辑器 IA 仍按卡种默认只展示/多载同类模板（道具/遗物/怪物技能）；JSON 模板池保持同构，不因此拆三套 schema。
 - `CardFaceDescriptionIconCatalog` 升格为词条表，名称与 `CONTEXT.md` 中「描述图标引用」条目须同步修订。
 - 奖池从白名单改查询规则，`RewardPool` / `RewardEntry` 数据结构变更。
 - 卡组新增视觉消费方（卡背），`CardPresentationConfigDto.deckId` 从「怪物填、其余空串」补齐为全卡种必填。

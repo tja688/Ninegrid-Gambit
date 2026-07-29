@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.orc_boss",
     "kind": "Monster",
-    "attackPattern": "全向近战",
     "deckId": "deck.orc_legion",
+    "role": "",
     "displayName": "兽人老大",
     "description": "每移2次移除相邻；靠暴力狂获属性",
+    "attackPattern": "全向近战",
     "gold": 5,
     "stats": {
         "hp": 22,
@@ -71,11 +72,28 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.violence_maniac",
-        "skill.violence_nutrition"
+    "effectAssemblies": [
+        {
+            "id": "skill.violence_maniac.move",
+            "templateId": "tpl.skill.violence_maniac.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"reason\":\"skill.violence_maniac\"}"
+        },
+        {
+            "id": "skill.violence_nutrition.monster_remove",
+            "templateId": "tpl.skill.violence_nutrition.monster_remove",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"delta\":3,\"reason\":\"skill.violence_nutrition\"}"
+        },
+        {
+            "id": "skill.violence_nutrition.help_remove",
+            "templateId": "tpl.skill.violence_nutrition.help_remove",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"delta\":5,\"reason\":\"skill.violence_nutrition\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 0,
     "isElite": true,
     "isBoss": false,
@@ -88,7 +106,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

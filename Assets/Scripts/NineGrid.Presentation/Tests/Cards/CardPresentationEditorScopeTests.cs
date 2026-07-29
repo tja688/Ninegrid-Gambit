@@ -135,29 +135,100 @@ namespace NineGrid.Presentation.Tests.Cards
         }
 
         [Test]
-        public void FormatEffectTemplateChoiceLabel_AppendsTransitionalOriginSuffix()
+        public void FormatEffectTemplateChoiceLabel_AppendsCategorySuffix()
         {
             Assert.AreEqual(
-                "造成伤害（原帮助卡效果）",
+                "造成伤害（道具效果）",
                 CardPresentationEditorSession.FormatEffectTemplateChoiceLabel(
                     "tpl.help.fireball.use",
                     "造成伤害"));
             Assert.AreEqual(
-                "掉甲加攻（原怪物技能效果）",
+                "掉甲加攻（怪物技能效果）",
                 CardPresentationEditorSession.FormatEffectTemplateChoiceLabel(
                     "tpl.skill.stone_lover.armor_lost",
                     "掉甲加攻"));
             Assert.AreEqual(
-                "基础护甲+1（原遗物效果）",
+                "基础护甲+1（遗物效果）",
                 CardPresentationEditorSession.FormatEffectTemplateChoiceLabel(
                     "tpl.relic.wood_shield.stat",
                     "基础护甲+1"));
             Assert.AreEqual(
-                "其它（原效果）",
+                "其它（其他效果）",
                 CardPresentationEditorSession.FormatEffectTemplateChoiceLabel("tpl.misc.foo", "其它"));
             Assert.AreEqual(
-                "（原帮助卡效果）",
+                "（道具效果）",
                 CardPresentationEditorSession.ResolveEffectOriginSuffix("tpl.help.x"));
+            Assert.AreEqual(
+                "造成伤害",
+                CardPresentationEditorSession.FormatEffectTemplateChoiceLabel(
+                    "tpl.help.fireball.use",
+                    "造成伤害",
+                    includeCategorySuffix: false));
+        }
+
+        [Test]
+        public void ResolveEffectTemplateCategory_MapsSharedAndLegacyIds()
+        {
+            Assert.AreEqual(
+                EffectTemplateOriginCategory.Item,
+                CardPresentationEditorSession.ResolveEffectTemplateCategory("tpl.shared.3.help_blue_chest_card_use"));
+            Assert.AreEqual(
+                EffectTemplateOriginCategory.Relic,
+                CardPresentationEditorSession.ResolveEffectTemplateCategory("tpl.shared.4.relic_dragon_scale_armor_base"));
+            Assert.AreEqual(
+                EffectTemplateOriginCategory.MonsterSkill,
+                CardPresentationEditorSession.ResolveEffectTemplateCategory("tpl.shared.2.skill_air_strike_slot1"));
+            Assert.AreEqual(
+                EffectTemplateOriginCategory.Item,
+                CardPresentationEditorSession.ResolveEffectTemplateCategory("tpl.gain_armor_on_use_help_card"));
+            Assert.IsTrue(CardPresentationEditorSession.TemplateMatchesContainerType(
+                "tpl.help.bomb.use", "HelpCard"));
+            Assert.IsFalse(CardPresentationEditorSession.TemplateMatchesContainerType(
+                "tpl.relic.wood_shield.stat", "HelpCard"));
+            Assert.IsTrue(CardPresentationEditorSession.TemplateMatchesContainerType(
+                "tpl.shared.3.help_healing_spring_use", "HelpCard"));
+        }
+
+        [Test]
+        public void GetEffectTemplateChoices_FiltersByContainerType()
+        {
+            EffectTemplateCatalog.Invalidate();
+            var session = new CardPresentationEditorSession();
+            session.Reload();
+            if (session.EffectTemplates == null || session.EffectTemplates.Count == 0)
+            {
+                Assert.Ignore("效果模板未加载进 EditorSession");
+            }
+
+            var helpChoices = session.GetEffectTemplateChoices("HelpCard", includeCategorySuffix: false);
+            Assert.Greater(helpChoices.Count, 0);
+            for (var i = 0; i < helpChoices.Count; i++)
+            {
+                Assert.IsTrue(
+                    CardPresentationEditorSession.TemplateMatchesContainerType(
+                        helpChoices[i].TemplateId, "HelpCard"),
+                    helpChoices[i].TemplateId);
+            }
+
+            var relicChoices = session.GetEffectTemplateChoices("Relic", includeCategorySuffix: false);
+            Assert.Greater(relicChoices.Count, 0);
+            for (var i = 0; i < relicChoices.Count; i++)
+            {
+                Assert.IsTrue(
+                    CardPresentationEditorSession.TemplateMatchesContainerType(
+                        relicChoices[i].TemplateId, "Relic"),
+                    relicChoices[i].TemplateId);
+            }
+
+            var skillChoices = session.GetEffectTemplateChoices("MonsterSkill", includeCategorySuffix: false);
+            Assert.Greater(skillChoices.Count, 0);
+            for (var i = 0; i < skillChoices.Count; i++)
+            {
+                Assert.IsTrue(
+                    CardPresentationEditorSession.TemplateMatchesContainerType(
+                        skillChoices[i].TemplateId, "MonsterSkill"),
+                    skillChoices[i].TemplateId);
+            }
         }
 
         [Test]
@@ -321,7 +392,7 @@ namespace NineGrid.Presentation.Tests.Cards
         [Test]
         public void SearchableChoiceField_FuzzyMatch_ContainsAndSubsequence()
         {
-            Assert.IsTrue(SearchableChoiceField.FuzzyMatch("造成{amount}点伤害（原遗物效果）", "amount"));
+            Assert.IsTrue(SearchableChoiceField.FuzzyMatch("造成{amount}点伤害（遗物效果）", "amount"));
             Assert.IsTrue(SearchableChoiceField.FuzzyMatch("tpl.relic.sling.kill", "sling"));
             Assert.IsTrue(SearchableChoiceField.FuzzyMatch("击杀怪物时伤害", "击怪伤"));
             Assert.IsFalse(SearchableChoiceField.FuzzyMatch("击杀怪物时伤害", "xyz"));

@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.smuggler",
     "kind": "Monster",
-    "attackPattern": "斜角近战",
     "deckId": "deck.wandering_legion",
+    "role": "",
     "displayName": "走私者",
     "description": "累计邻玩家3次移除帮助得护甲",
+    "attackPattern": "斜角近战",
     "gold": 5,
     "stats": {
         "hp": 4,
@@ -71,10 +72,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.stocking"
+    "effectAssemblies": [
+        {
+            "id": "skill.stocking.move",
+            "templateId": "tpl.skill.stocking.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"reason\":\"skill.stocking\",\"count\":1,\"amount\":5}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 3,
     "isElite": false,
     "isBoss": false,
@@ -87,7 +94,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }

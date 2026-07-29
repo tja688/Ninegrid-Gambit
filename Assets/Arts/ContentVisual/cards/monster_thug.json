@@ -2,10 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.thug",
     "kind": "Monster",
-    "attackPattern": "普通近战",
     "deckId": "deck.wandering_legion",
+    "role": "",
     "displayName": "打手",
     "description": "登场在偶数边位时伤害玩家",
+    "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
         "hp": 6,
@@ -24,7 +25,7 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.30000001192092896,
+        "offsetX": 0.30000001192092898,
         "offsetY": -0.3700000047683716,
         "uniformScale": 0.8799999952316284
     },
@@ -71,10 +72,34 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.give_punch"
+    "effectAssemblies": [
+        {
+            "id": "skill.give_punch.enter2",
+            "templateId": "tpl.skill.give_punch.enter2",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        },
+        {
+            "id": "skill.give_punch.enter4",
+            "templateId": "tpl.skill.give_punch.enter4",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        },
+        {
+            "id": "skill.give_punch.enter6",
+            "templateId": "tpl.skill.give_punch.enter6",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        },
+        {
+            "id": "skill.give_punch.enter8",
+            "templateId": "tpl.skill.give_punch.enter8",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": 2,
     "isElite": false,
     "isBoss": false,
@@ -87,7 +112,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [],
-    "role": ""
+    "shopOfferCount": 0
 }
