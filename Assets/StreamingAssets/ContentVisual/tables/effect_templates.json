@@ -642,7 +642,7 @@
   {
     "id": "tpl.skill.first_strike.rule",
     "state": "Implemented",
-    "design_text": "持有先攻技能",
+    "design_text": "持有先手还击技能",
     "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
     "conditions_json": "[]",
     "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"FirstStrike\",\"target\":\"Self\",\"op\":\"Override\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
@@ -970,7 +970,7 @@
   {
     "id": "tpl.skill.stray_cub.first_strike",
     "state": "Implemented",
-    "design_text": "[场上] 处于格6时，本卡获得先攻",
+    "design_text": "[场上] 处于格6时，本卡获得先手还击",
     "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
     "conditions_json": "[\"AtSlot\"]",
     "body": "{\"kind\":\"RuleModifier\",\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":6}],\"ruleModifier\":{\"rule\":\"FirstStrike\",\"target\":\"Self\",\"op\":\"Override\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\"}}"

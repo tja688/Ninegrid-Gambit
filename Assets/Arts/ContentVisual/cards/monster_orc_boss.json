@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.orc_boss",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "全向近战",
     "deckId": "deck.orc_legion",
     "displayName": "兽人老大",
     "description": "每移2次移除相邻；靠暴力狂获属性",
@@ -11,7 +11,7 @@
         "hp": 22,
         "armor": 4,
         "attack": 4,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

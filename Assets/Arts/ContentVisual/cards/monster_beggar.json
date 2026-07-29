@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.beggar",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "普通近战",
     "deckId": "deck.wandering_legion",
     "role": "",
     "displayName": "乞丐",
@@ -12,7 +12,7 @@
         "hp": 4,
         "armor": 0,
         "attack": 2,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

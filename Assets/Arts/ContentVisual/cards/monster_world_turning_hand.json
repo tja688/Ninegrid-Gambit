@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.world_turning_hand",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "斜角近战",
     "deckId": "deck.void",
     "displayName": "转动世界的手",
     "description": "登场旋转一次",
@@ -11,7 +11,7 @@
         "hp": 12,
         "armor": 0,
         "attack": 3,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

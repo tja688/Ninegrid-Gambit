@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.rogue",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "普通近战",
     "deckId": "deck.wandering_legion",
     "displayName": "流氓",
     "description": "每损失3点护甲，相邻怪物攻击+1",
@@ -11,7 +11,7 @@
         "hp": 2,
         "armor": 6,
         "attack": 2,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

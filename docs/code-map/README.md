@@ -20,7 +20,7 @@
 | [ADR-0008](../adr/0008-single-source-content-and-resources-loading.md) | 一卡一文件 JSON + ContentArt Resources 加载 |
 | [ADR-0009](../adr/0009-parameterized-effect-templates.md) | 效果参数化模板、分类三轴、词条、奖池查询 |
 | [ADR-0010](../adr/0010-self-declared-effect-responsibility.md) | 效果责任自陈、拆除外部场域门禁 |
-| [ADR-0011](../adr/0011-monster-attack-pattern-intrinsic.md) | 怪物攻击模式为内生必填属性（**#77 数据面 + #80 四开火模式位置条件已落地**；表现见 #81） |
+| [ADR-0011](../adr/0011-monster-attack-pattern-intrinsic.md) | 怪物攻击模式为内生必填属性（**#77 数据面 + #80 四开火模式 + #82 内容赋模**；表现见 #81） |
 | [ADR-0012](../adr/0012-enemy-action-phase-volley.md) | 敌方行动阶段：齐射与盘面冻结（**#79/#80/#81 已落地**：Core 报名/逐条/收尾 + 四模式单向打击；表现 Counter 分拍 + ActionCount Commit） |
 | [ADR-0013](../adr/0013-action-countdown-unified.md) | 行动计数统一为倒计时、开火窗口一次性（**#76 Core 效果侧已落地**；攻击模式消费见 #79/#80；卡面上屏见 #81） |
 

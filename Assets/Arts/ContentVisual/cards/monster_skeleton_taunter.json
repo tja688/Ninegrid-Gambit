@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.skeleton_taunter",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "普通近战",
     "deckId": "deck.skeleton_legion",
     "displayName": "骷髅嘲讽子",
     "description": "相邻时只能与本卡战斗",
@@ -11,7 +11,7 @@
         "hp": 7,
         "armor": 1,
         "attack": 2,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.headless_skeleton",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "普通近战",
     "deckId": "deck.skeleton_legion",
     "displayName": "无头骷髅",
     "description": "相邻骷髅头组合",
@@ -11,7 +11,7 @@
         "hp": 6,
         "armor": 0,
         "attack": 2,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

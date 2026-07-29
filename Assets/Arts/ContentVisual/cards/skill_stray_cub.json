@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "流浪幼崽",
-    "description": "格6攻击+2并获得先攻",
+    "description": "格6攻击+2并获得先手还击",
     "gold": 0,
     "stats": {
         "hp": 0,

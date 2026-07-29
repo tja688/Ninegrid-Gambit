@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.skull_head",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "普通近战",
     "deckId": "deck.skeleton_legion",
     "displayName": "骷髅头",
     "description": "相邻无头骷髅组合",
@@ -11,7 +11,7 @@
         "hp": 3,
         "armor": 3,
         "attack": 2,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

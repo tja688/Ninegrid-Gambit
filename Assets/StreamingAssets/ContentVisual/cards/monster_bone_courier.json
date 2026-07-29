@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.bone_courier",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "普通近战",
     "deckId": "deck.skeleton_legion",
     "displayName": "骨头快递员",
     "description": "每移2次交换相邻帮助卡与怪物",
@@ -11,7 +11,7 @@
         "hp": 7,
         "armor": 1,
         "attack": 2,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

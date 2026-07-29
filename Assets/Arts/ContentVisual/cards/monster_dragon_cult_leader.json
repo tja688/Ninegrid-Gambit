@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.dragon_cult_leader",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "全向近战",
     "deckId": "deck.dragon",
     "displayName": "龙教主",
     "description": "每移动3次加入龙信徒",
@@ -11,7 +11,7 @@
         "hp": 18,
         "armor": 3,
         "attack": 3,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

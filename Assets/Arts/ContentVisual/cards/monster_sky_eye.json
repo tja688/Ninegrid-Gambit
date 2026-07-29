@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.sky_eye",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "普通远程",
     "deckId": "deck.void",
     "displayName": "空中巨眼",
     "description": "移动到角格时对玩家造成2点伤害",
@@ -11,7 +11,7 @@
         "hp": 14,
         "armor": 2,
         "attack": 2,
-        "action": 0,
+        "action": 5,
         "recovery": 0
     },
     "sprites": {

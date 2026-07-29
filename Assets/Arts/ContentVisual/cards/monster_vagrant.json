@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.vagrant",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "普通近战",
     "deckId": "deck.wandering_legion",
     "displayName": "流浪汉",
     "description": "无",
@@ -11,7 +11,7 @@
         "hp": 5,
         "armor": 0,
         "attack": 2,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

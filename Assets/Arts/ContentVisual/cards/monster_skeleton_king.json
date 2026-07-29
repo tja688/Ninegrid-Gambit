@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.skeleton_king",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "全向近战",
     "deckId": "deck.skeleton_legion",
     "displayName": "骷髅王",
     "description": "相邻移除获属性；每移5次换2怪",
@@ -11,7 +11,7 @@
         "hp": 12,
         "armor": 10,
         "attack": 3,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

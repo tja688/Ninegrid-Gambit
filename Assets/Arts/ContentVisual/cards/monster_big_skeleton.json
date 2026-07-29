@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.big_skeleton",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "普通近战",
     "deckId": "deck.skeleton_legion",
     "displayName": "大骷髅",
     "description": "被移除时洗入骷髅头与无头骷髅",
@@ -11,7 +11,7 @@
         "hp": 10,
         "armor": 0,
         "attack": 2,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

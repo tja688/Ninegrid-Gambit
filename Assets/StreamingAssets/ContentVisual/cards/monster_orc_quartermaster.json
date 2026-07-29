@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.orc_quartermaster",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "普通近战",
     "deckId": "deck.orc_legion",
     "role": "",
     "displayName": "兽人军需官",
@@ -12,7 +12,7 @@
         "hp": 8,
         "armor": 3,
         "attack": 2,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

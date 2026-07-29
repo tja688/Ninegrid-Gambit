@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.big_orc",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "全向近战",
     "deckId": "deck.orc_legion",
     "displayName": "兽人大只佬",
     "description": "行动后攻击玩家",
@@ -11,7 +11,7 @@
         "hp": 14,
         "armor": 0,
         "attack": 3,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

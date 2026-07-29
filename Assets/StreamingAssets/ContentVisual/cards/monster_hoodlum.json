@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.hoodlum",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "斜角近战",
     "deckId": "deck.wandering_legion",
     "displayName": "混混",
     "description": "到格1对玩家2伤",
@@ -11,7 +11,7 @@
         "hp": 6,
         "armor": 0,
         "attack": 2,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

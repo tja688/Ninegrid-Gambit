@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.killer",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "全向近战",
     "deckId": "deck.wandering_legion",
     "displayName": "杀手",
     "description": "移动到玩家相邻格时强制战斗",
@@ -11,7 +11,7 @@
         "hp": 6,
         "armor": 4,
         "attack": 3,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.megalith",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "全向近战",
     "deckId": "deck.stone_legion",
     "role": "",
     "displayName": "巨石人",
@@ -12,7 +12,7 @@
         "hp": 8,
         "armor": 12,
         "attack": 2,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

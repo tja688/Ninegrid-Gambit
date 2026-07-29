@@ -3,7 +3,7 @@ using NineGrid.Core.Systems;
 namespace NineGrid.Core
 {
     /// <summary>
-    /// 交战先攻裁决：与设计文档「先攻」一致——仅一方有先攻时先攻方先；双方都有/都无时玩家先。
+    /// 交战先手还击裁决：仅一方有先手还击时该方先；双方都有/都无时玩家先。
     /// </summary>
     public static class CombatEngagementOrder
     {
@@ -18,7 +18,7 @@ namespace NineGrid.Core
         }
 
         /// <summary>
-        /// 怪物是否应先于玩家出手（仅怪物有先攻且玩家无先攻）。
+        /// 怪物是否应先于玩家出手（仅怪物有先手还击且玩家无）。
         /// </summary>
         public static bool MonsterStrikesFirst(
             IStatSystem statSystem,

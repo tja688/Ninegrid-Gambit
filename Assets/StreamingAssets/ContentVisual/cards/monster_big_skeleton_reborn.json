@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.big_skeleton_reborn",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "普通近战",
     "deckId": "deck.skeleton_legion",
     "displayName": "重组大骷髅",
     "description": "无",
@@ -11,7 +11,7 @@
         "hp": 10,
         "armor": 0,
         "attack": 2,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.fire_swallower",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "普通近战",
     "deckId": "deck.dragon",
     "displayName": "吞火者",
     "description": "左列战斗时按损失护甲伤害玩家",
@@ -11,7 +11,7 @@
         "hp": 8,
         "armor": 8,
         "attack": 2,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

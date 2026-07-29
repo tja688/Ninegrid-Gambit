@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.orc_warrior",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "普通近战",
     "deckId": "deck.orc_legion",
     "displayName": "兽人战士",
     "description": "每造成2伤攻击+1",
@@ -11,7 +11,7 @@
         "hp": 10,
         "armor": 0,
         "attack": 2,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

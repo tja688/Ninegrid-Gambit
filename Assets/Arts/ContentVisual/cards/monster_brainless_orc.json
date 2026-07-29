@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.brainless_orc",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "普通近战",
     "deckId": "deck.orc_legion",
     "role": "",
     "displayName": "无脑兽人",
@@ -12,7 +12,7 @@
         "hp": 9,
         "armor": 0,
         "attack": 1,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

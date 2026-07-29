@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.void_lost",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "普通近战",
     "deckId": "deck.void",
     "displayName": "误入虚空者",
     "description": "无",
@@ -11,7 +11,7 @@
         "hp": 14,
         "armor": 0,
         "attack": 2,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.sharp_stone",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "普通近战",
     "deckId": "deck.stone_legion",
     "role": "",
     "displayName": "尖石",
@@ -12,7 +12,7 @@
         "hp": 3,
         "armor": 1,
         "attack": 1,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

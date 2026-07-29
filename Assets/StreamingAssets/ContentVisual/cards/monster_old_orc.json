@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.old_orc",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "普通近战",
     "deckId": "deck.orc_legion",
     "displayName": "年迈兽人",
     "description": "战斗时恢复1且攻击+1",
@@ -11,7 +11,7 @@
         "hp": 9,
         "armor": 0,
         "attack": 1,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

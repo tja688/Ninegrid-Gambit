@@ -3,8 +3,8 @@
     "contentId": "skill.first_strike",
     "kind": "Skill",
     "deckId": "",
-    "displayName": "先攻",
-    "description": "持有先攻技能",
+    "displayName": "先手还击",
+    "description": "持有先手还击技能",
     "gold": 0,
     "stats": {
         "hp": 0,

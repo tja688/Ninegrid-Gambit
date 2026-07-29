@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.growing_stone",
     "kind": "Monster",
-    "attackPattern": "无",
+    "attackPattern": "斜角近战",
     "deckId": "deck.stone_legion",
     "role": "",
     "displayName": "增生石块",
@@ -12,7 +12,7 @@
         "hp": 10,
         "armor": 0,
         "attack": 3,
-        "action": 0,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

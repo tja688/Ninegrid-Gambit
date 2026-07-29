@@ -10,8 +10,8 @@ using QFramework;
 namespace NineGrid.Core.Tests
 {
     /// <summary>
-    /// #77 / ADR-0011：攻击模式必填枚举、频率可读、进场倒计时初始化；
-    /// 不进效果装配。Seam：投影 / ValidateCatalog / CreateDraft→Create。
+    /// #77 / #82 / ADR-0011：攻击模式必填枚举、频率可读、进场倒计时初始化；
+    /// #82 内容赋模（非全员「无」）与加载校验。Seam：投影 / ValidateCatalog / CreateDraft→Create。
     /// </summary>
     public sealed class AttackPatternDataPlaneTests
     {
@@ -138,7 +138,7 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void BootstrapCatalog_AllMonstersHaveExplicitAttackPattern_NoneDoesNotFireKey()
+        public void BootstrapCatalog_MonstersHaveDesignAttackPatterns_NotAllNone()
         {
             var catalog = ContentCatalogBootstrap.Load();
             mArch.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, catalog);
@@ -148,14 +148,77 @@ namespace NineGrid.Core.Tests
 
             var monsters = catalog.Cards.Values.Where(card => card.Kind == CardKind.Monster).ToList();
             Assert.GreaterOrEqual(monsters.Count, 61);
+
+            var expected = DesignAttackPatterns();
             foreach (var monster in monsters)
             {
-                Assert.AreEqual(
-                    AttackPattern.None,
+                Assert.AreNotEqual(
+                    AttackPattern.Unspecified,
                     monster.AttackPattern,
-                    monster.DefId + " must be explicit 无 for #77 migration");
-                Assert.AreEqual(0, monster.Stats.Action, monster.DefId);
+                    monster.DefId + " must have explicit attackPattern");
+                Assert.AreEqual(
+                    AttackPatternRules.Frequency(monster.AttackPattern),
+                    monster.Stats.Action,
+                    monster.DefId + " stats.action must match pattern frequency");
+
+                AttackPattern want;
+                if (expected.TryGetValue(monster.DefId, out want))
+                {
+                    Assert.AreEqual(want, monster.AttackPattern, monster.DefId);
+                }
+                else
+                {
+                    Assert.AreEqual(
+                        AttackPattern.OrthogonalMelee,
+                        monster.AttackPattern,
+                        monster.DefId + " default design mode is 普通近战");
+                }
             }
+
+            Assert.AreEqual(AttackPattern.None, expected["monster.big_stone"]);
+            Assert.AreEqual(AttackPattern.None, expected["monster.fire_priest"]);
+            Assert.IsTrue(
+                monsters.Any(m => m.AttackPattern != AttackPattern.None),
+                "content must leave the all-无 migration intermediate");
+            Assert.IsTrue(monsters.Any(m => m.AttackPattern == AttackPattern.Ranged));
+            Assert.IsTrue(monsters.Any(m => m.AttackPattern == AttackPattern.OmnidirectionalMelee));
+            Assert.IsTrue(monsters.Any(m => m.AttackPattern == AttackPattern.DiagonalMelee));
+        }
+
+        /// <summary>
+        /// #82 非默认（非普通近战）的设计赋模；攻 0 怪显式「无」；其余默认普通近战。
+        /// </summary>
+        private static System.Collections.Generic.Dictionary<string, AttackPattern> DesignAttackPatterns()
+        {
+            return new System.Collections.Generic.Dictionary<string, AttackPattern>
+            {
+                { "monster.big_stone", AttackPattern.None },
+                { "monster.fire_priest", AttackPattern.None },
+
+                { "monster.stone_thrower", AttackPattern.Ranged },
+                { "monster.skeleton_mage", AttackPattern.Ranged },
+                { "monster.sky_eye", AttackPattern.Ranged },
+                { "monster.observer", AttackPattern.Ranged },
+                { "monster.salamander", AttackPattern.Ranged },
+
+                { "monster.big_orc", AttackPattern.OmnidirectionalMelee },
+                { "monster.fire_dragon", AttackPattern.OmnidirectionalMelee },
+                { "monster.space_master", AttackPattern.OmnidirectionalMelee },
+                { "monster.megalith", AttackPattern.OmnidirectionalMelee },
+                { "monster.orc_boss", AttackPattern.OmnidirectionalMelee },
+                { "monster.ringleader", AttackPattern.OmnidirectionalMelee },
+                { "monster.skeleton_king", AttackPattern.OmnidirectionalMelee },
+                { "monster.dragon_cult_leader", AttackPattern.OmnidirectionalMelee },
+                { "monster.fire_cult_leader", AttackPattern.OmnidirectionalMelee },
+                { "monster.killer", AttackPattern.OmnidirectionalMelee },
+                { "monster.executioner", AttackPattern.OmnidirectionalMelee },
+
+                { "monster.hoodlum", AttackPattern.DiagonalMelee },
+                { "monster.rolling_stone_man", AttackPattern.DiagonalMelee },
+                { "monster.world_turning_hand", AttackPattern.DiagonalMelee },
+                { "monster.growing_stone", AttackPattern.DiagonalMelee },
+                { "monster.smuggler", AttackPattern.DiagonalMelee },
+            };
         }
 
         private static CardContentDefinition ProjectMonster(string contentId, string attackPattern)
@@ -185,3 +248,4 @@ namespace NineGrid.Core.Tests
         }
     }
 }
+
