@@ -11,6 +11,7 @@ namespace NineGrid.Flow.Presentation
     /// <summary>
     /// 攻击垂直切片剧本：CombatHit → Present →（击杀）Fill → Present → Rotate → Present →（融合）Refill；
     /// 未击杀 → 反击 CombatHit → Present（主线续写，非 Forget 旁路）。
+    /// 怪物先攻时：先 Counter（怪→玩家），Avatar 未败再 Hit（玩家→怪），击杀则走 Fill/Rotate。
     /// </summary>
     public sealed class AttackIntentScriptFactory : IIntentScriptFactory
     {
@@ -109,6 +110,22 @@ namespace NineGrid.Flow.Presentation
             mLastResolvedCombatUid = 0;
             mFusionExcludeResultUids.Clear();
 
+            if (phase.MonsterStrikesFirst(attackerUid, targetUid))
+            {
+                BuildMonsterFirstScript(timeline, sync, slotIndex, attackerUid, targetUid);
+                return;
+            }
+
+            BuildPlayerFirstScript(timeline, sync, slotIndex, attackerUid, targetUid);
+        }
+
+        private void BuildPlayerFirstScript(
+            BattleTimeline timeline,
+            IPresentationSyncSystem sync,
+            int slotIndex,
+            int attackerUid,
+            int targetUid)
+        {
             var hitGate = PresentationSyncBatchGate.FromSync(
                 sync,
                 () => ResolveHitAndProject(slotIndex, attackerUid, targetUid));
@@ -122,9 +139,55 @@ namespace NineGrid.Flow.Presentation
                 {
                     if (!mLastAvatarDefeated)
                     {
-                        EnqueueCounterAftermath(t, slotIndex);
+                        EnqueueCounterAftermath(t, slotIndex, targetUid, attackerUid);
                     }
                 }));
+        }
+
+        private void BuildMonsterFirstScript(
+            BattleTimeline timeline,
+            IPresentationSyncSystem sync,
+            int slotIndex,
+            int avatarUid,
+            int monsterUid)
+        {
+            if (mCounterPresentChannel == null)
+            {
+                // 无反击通道时退化为玩家先打，避免丢交战。
+                BuildPlayerFirstScript(timeline, sync, slotIndex, avatarUid, monsterUid);
+                return;
+            }
+
+            mLastResolvedCombatUid = monsterUid;
+            var firstStrikeGate = PresentationSyncBatchGate.FromSync(
+                sync,
+                () => ResolveCounterAndProject(slotIndex, monsterUid, avatarUid),
+                slice: "AttackCounter");
+            timeline.Enqueue(new ResolveBatchStep(firstStrikeGate));
+            timeline.Enqueue(new PresentStep(firstStrikeGate, mCounterPresentChannel, "CounterHit"));
+            timeline.Enqueue(new TimelineBranchStep(
+                timeline,
+                () => !mLastAvatarDefeated,
+                t => EnqueuePlayerReplyAfterFirstStrike(t, slotIndex, avatarUid, monsterUid)));
+        }
+
+        private void EnqueuePlayerReplyAfterFirstStrike(
+            BattleTimeline timeline,
+            int boardSlot,
+            int avatarUid,
+            int monsterUid)
+        {
+            var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
+            var hitGate = PresentationSyncBatchGate.FromSync(
+                sync,
+                () => ResolveHitAndProject(boardSlot, avatarUid, monsterUid));
+            timeline.Enqueue(new ResolveBatchStep(hitGate));
+            timeline.Enqueue(new PresentStep(hitGate, mHitPresentChannel));
+            timeline.Enqueue(new AttackPostHitBranchStep(
+                timeline,
+                () => mLastHitKilledTarget,
+                t => EnqueueKillAftermath(t, boardSlot),
+                enqueueCounterAftermath: null));
         }
 
         private void EnqueueKillAftermath(BattleTimeline timeline, int boardSlot)
@@ -154,21 +217,32 @@ namespace NineGrid.Flow.Presentation
                     mOnBoardBatchProjected));
         }
 
-        private void EnqueueCounterAftermath(BattleTimeline timeline, int boardSlot)
+        private void EnqueueCounterAftermath(
+            BattleTimeline timeline,
+            int boardSlot,
+            int monsterUid,
+            int avatarUid)
         {
             if (mCounterPresentChannel == null)
             {
                 return;
             }
 
-            var monsterUid = mLastResolvedCombatUid;
             if (monsterUid <= 0)
             {
-                var board = mArchitecture.GetModel<BoardModel>();
-                monsterUid = board.GetCardUid(SlotId.Board(boardSlot));
+                monsterUid = mLastResolvedCombatUid;
             }
 
-            var avatarUid = mArchitecture.GetModel<BoardModel>().AvatarUid.Value;
+            if (monsterUid <= 0)
+            {
+                monsterUid = mArchitecture.GetModel<BoardModel>().GetCardUid(SlotId.Board(boardSlot));
+            }
+
+            if (avatarUid <= 0)
+            {
+                avatarUid = mArchitecture.GetModel<BoardModel>().AvatarUid.Value;
+            }
+
             if (monsterUid <= 0 || avatarUid <= 0)
             {
                 return;
@@ -225,7 +299,9 @@ namespace NineGrid.Flow.Presentation
                 return dispatch;
             }
 
+            mLastResolvedCombatUid = monsterUid;
             var projection = IntentBatchProjection.Build(mArchitecture, pipeline, startIndex);
+            mLastAvatarDefeated = projection.AvatarDefeated;
             if (mOnCounterBatchProjected != null)
             {
                 mOnCounterBatchProjected(startIndex, attackerBoardSlot, monsterUid, projection);

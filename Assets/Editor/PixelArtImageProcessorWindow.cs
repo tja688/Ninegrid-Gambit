@@ -296,8 +296,9 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         }
 
         EditorGUILayout.HelpBox(
-            "每个路径独立选择模式：Single（整图精灵）/ Multiple（图集切片）/ Aseprite（.ase/.aseprite）/" +
-            "站立角色·智能导入（递归子文件夹；按像素几何识别横条/网格图集 vs 单帧序列文件夹，统一脚底 Pivot）。",
+            "每个路径独立选择模式：Single（整图精灵）/ Multiple（仅改 Multiple，不自动网格切）/ Aseprite（.ase/.aseprite）/" +
+            "站立角色·智能导入（递归子文件夹；按像素几何识别横条/网格图集 vs 单帧序列，均匀切片 + 脚底 Pivot）。" +
+            "特效 ContentArt/Multiple/Effects 请用智能导入，勿用 Multiple（否则易留下 Automatic 碎切）。",
             MessageType.None
         );
 
@@ -456,9 +457,66 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         if (name.IndexOf("spritesheet", StringComparison.OrdinalIgnoreCase) >= 0
             || name.IndexOf("sprite sheets", StringComparison.OrdinalIgnoreCase) >= 0
             || name.IndexOf("MonstersAndHumans", StringComparison.OrdinalIgnoreCase) >= 0
-            || name.IndexOf("ground", StringComparison.OrdinalIgnoreCase) >= 0)
+            || name.IndexOf("ground", StringComparison.OrdinalIgnoreCase) >= 0
+            || name.IndexOf("Effects", StringComparison.OrdinalIgnoreCase) >= 0)
             return ProcessMode.GroundCharacterSmart;
         return ProcessMode.Single;
+    }
+
+    /// <summary>
+    /// 仅处理指定文件夹（智能站立导入）。供菜单 / Unity CLI eval 调用；不会扫其它路径。
+    /// </summary>
+    [MenuItem("NineGrid/Tools/Reprocess Effects Smart Import")]
+    public static void ReprocessEffectsSmartImportMenu()
+    {
+        string report = ProcessFolderSmart(
+            "Assets/Resources/ContentArt/Multiple/Effects",
+            forceReprocess: true);
+        Debug.Log("[PixelArtProcessor] Effects smart reprocess\n" + report);
+        EditorUtility.DisplayDialog("Pixel Art Processor", report, "OK");
+    }
+
+    /// <summary>
+    /// 对单一根目录跑 GroundCharacterSmart；返回摘要字符串。CLI：
+    /// unity command eval "return PixelArtImageProcessorWindow.ProcessFolderSmart(\"Assets/Resources/ContentArt/Multiple/Effects\", true);"
+    /// </summary>
+    public static string ProcessFolderSmart(string assetFolder, bool forceReprocess)
+    {
+        var window = CreateInstance<PixelArtImageProcessorWindow>();
+        try
+        {
+            window.LoadSettings();
+            window.settings.forceReprocess = forceReprocess;
+            window.settings.verboseLogs = false;
+            window.settings.mirrorToUnityConsole = false;
+            window.settings.paths = new List<PathEntry>
+            {
+                new PathEntry
+                {
+                    enabled = true,
+                    path = assetFolder,
+                    mode = ProcessMode.GroundCharacterSmart
+                }
+            };
+
+            window.logs.Clear();
+            window.isProcessing = true;
+            try
+            {
+                window.ProcessAll();
+            }
+            finally
+            {
+                window.isProcessing = false;
+                EditorUtility.ClearProgressBar();
+            }
+
+            return string.Join("\n", window.logs);
+        }
+        finally
+        {
+            DestroyImmediate(window);
+        }
     }
 
     private void ProcessAllDeferred()

@@ -17,6 +17,10 @@ namespace NineGrid.Core.Systems
             /// </summary>
             int ResolvePlayerAttackTargetUid(int intendedTargetUid);
             /// <summary>
+            /// 只读：该交战是否应由怪物先出手（仅怪物有 FirstStrike 且玩家无）。
+            /// </summary>
+            bool MonsterStrikesFirst(int avatarUid, int monsterUid);
+            /// <summary>
             /// 表现层可信命中：仅一段伤害（含致死 Kill/Defeat），无门禁、无反击、无旋转。
             /// </summary>
             CoreCommandResult ApplyCombatHit(int attackerUid, int targetUid);
@@ -154,9 +158,7 @@ namespace NineGrid.Core.Systems
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             var startIndex = pipeline.EventLog.Entries.Count;
             pipeline.Enqueue(new BeginPlayerMonsterEngagementAction(targetUid));
-            var avatarFirstStrike = HasFirstStrike(statSystem, avatar);
-            var targetFirstStrike = HasFirstStrike(statSystem, target);
-            if (targetFirstStrike && !avatarFirstStrike)
+            if (CombatEngagementOrder.MonsterStrikesFirst(statSystem, avatar, target))
             {
                 pipeline.Enqueue(new DealDamageAction(target.Uid, avatar.Uid, GetAttackDamage(statSystem, target)));
                 pipeline.Enqueue(new ConditionalDealDamageIfAliveAction(avatar.Uid, target.Uid, GetAttackDamage(statSystem, avatar)));
@@ -193,6 +195,26 @@ namespace NineGrid.Core.Systems
 
             var restrictedUid = GetAttackTargetRestrictionUid(intendedTarget);
             return restrictedUid != 0 ? restrictedUid : intendedTargetUid;
+        }
+
+        public bool MonsterStrikesFirst(int avatarUid, int monsterUid)
+        {
+            if (avatarUid <= 0 || monsterUid <= 0)
+            {
+                return false;
+            }
+
+            var registry = this.GetModel<CardRegistry>();
+            if (!registry.TryGet(avatarUid, out var avatar)
+                || !registry.TryGet(monsterUid, out var monster))
+            {
+                return false;
+            }
+
+            return CombatEngagementOrder.MonsterStrikesFirst(
+                this.GetSystem<IStatSystem>(),
+                avatar,
+                monster);
         }
 
         public CoreCommandResult ApplyCombatHit(int attackerUid, int targetUid)
@@ -825,11 +847,6 @@ namespace NineGrid.Core.Systems
             }
 
             return false;
-        }
-
-        private static bool HasFirstStrike(IStatSystem statSystem, CardInstance card)
-        {
-            return statSystem.EvaluateRule(RuleId.FirstStrike, 0f, statSystem.CreateContext(card)) > 0f;
         }
 
         private bool CanAttackTargetUnderRules(CardInstance target)

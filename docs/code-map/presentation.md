@@ -14,7 +14,7 @@
 | `Platform/` | 1 | `NineGrid.Presentation.Platform` | Windows Player 高回报率鼠标 mitigation（ADR-0006；仅 Standalone Win 非 Editor 生效） |
 | `Controllers/` | 18 | `NineGrid.Presentation.Controllers` | QF `PresentationController` 场景入口 |
 | `Commands/` | 24 | `NineGrid.Presentation.Commands` | 写意图 |
-| `Queries/` | 10 | `NineGrid.Presentation.Queries` | 读裁决（合法性等） |
+| `Queries/` | 11 | `NineGrid.Presentation.Queries` | 读裁决（合法性等） |
 | `Systems/` | 18 | `NineGrid.Presentation.Systems` | QF System / 窄能力接口 |
 | `Flow/` | ~118 | `NineGrid.Flow*` | 导演/时间线/Channel/Scheduler、局内会话、流程壳、诊断、部分 Presenter |
 | `Cards/` | ~136 | `NineGrid.Cards*` | 卡视图、场地/手牌/牌库、收敛、特效 SO、静态 Hook |
@@ -102,6 +102,7 @@
 - **读** → `SendQuery` / `GetSystem<T>()` 只读 API
 - **下→上** → struct Event（多数在 `Flow/Presentation/`）或 BindableProperty
 - **编排** → `PresentationDirector` / `BattleTimeline` / `IPresentChannel`（普通 C# 深模块，由 System 持有）
+- **攻击先攻** → `AttackIntentScriptFactory` 入队前经 `IPhaseSystem.MonsterStrikesFirst`（或 `MonsterStrikesFirstQuery`）裁决；Present 通道按攻方角色选择（Hit=玩家打怪，Counter=怪打玩家），先攻只交换入队顺序，不改通道语义
 
 ## 效果扩展点
 

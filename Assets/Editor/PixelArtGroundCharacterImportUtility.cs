@@ -259,35 +259,72 @@ public static class PixelArtGroundCharacterImportUtility
         return false;
     }
 
-    /// <summary>横条（宽≥2×高且整除）或竖条（高≥2×宽且整除）。</summary>
+    /// <summary>横条（宽≥2×高）或竖条（高≥2×宽）；方格优先，也认接近方格的矩形帧。</summary>
     public static bool IsStripGeometry(int width, int height)
     {
-        if (height >= 16 && width >= height * 2 && width % height == 0)
-        {
-            return true;
-        }
-
-        if (width >= 16 && height >= width * 2 && height % width == 0)
-        {
-            return true;
-        }
-
-        return false;
+        return InferStripCell(width, height).HasValue;
     }
 
     public static int? InferStripCellSize(int width, int height)
     {
+        // 对外仍返回「方格边长」；矩形横条见 InferStripCell。
+        CellSize? cell = InferStripCell(width, height);
+        if (!cell.HasValue)
+        {
+            return null;
+        }
+
+        return cell.Value.Width == cell.Value.Height ? cell.Value.Width : (int?)null;
+    }
+
+    /// <summary>推断横/竖条单帧尺寸（可为非正方形，如 70×50）。</summary>
+    public static CellSize? InferStripCell(int width, int height)
+    {
         if (height >= 16 && width >= height * 2 && width % height == 0)
         {
-            return height;
+            return new CellSize(height, height);
         }
 
         if (width >= 16 && height >= width * 2 && height % width == 0)
         {
-            return width;
+            return new CellSize(width, width);
+        }
+
+        // 非方格横条：帧高=图高，找最接近正方形且整除宽度的帧宽（如 980×50 → 70×50）。
+        if (height >= 16 && width >= height * 2)
+        {
+            int? cellW = InferRectangularStripWidth(width, height);
+            if (cellW.HasValue)
+            {
+                return new CellSize(cellW.Value, height);
+            }
+        }
+
+        // 非方格竖条：帧宽=图宽。
+        if (width >= 16 && height >= width * 2)
+        {
+            int? cellH = InferRectangularStripWidth(height, width);
+            if (cellH.HasValue)
+            {
+                return new CellSize(width, cellH.Value);
+            }
         }
 
         return null;
+    }
+
+    public readonly struct CellSize
+    {
+        public readonly int Width;
+        public readonly int Height;
+
+        public CellSize(int width, int height)
+        {
+            Width = width;
+            Height = height;
+        }
+
+        public bool IsSquare => Width == Height;
     }
 
     private static int? InferDominantStripCell(
@@ -296,14 +333,14 @@ public static class PixelArtGroundCharacterImportUtility
         var counts = new Dictionary<int, int>();
         for (var i = 0; i < entries.Count; i++)
         {
-            int? cell = InferStripCellSize(entries[i].width, entries[i].height);
-            if (!cell.HasValue)
+            CellSize? cell = InferStripCell(entries[i].width, entries[i].height);
+            if (!cell.HasValue || !cell.Value.IsSquare)
             {
                 continue;
             }
 
-            counts.TryGetValue(cell.Value, out int n);
-            counts[cell.Value] = n + 1;
+            counts.TryGetValue(cell.Value.Width, out int n);
+            counts[cell.Value.Width] = n + 1;
         }
 
         if (counts.Count == 0)
@@ -323,6 +360,45 @@ public static class PixelArtGroundCharacterImportUtility
         }
 
         return bestCell > 0 ? bestCell : (int?)null;
+    }
+
+    /// <summary>
+    /// 横条非方格：在 [frameH/2, frameH*3] 内找整除 totalLength 且最接近正方形的帧宽。
+    /// </summary>
+    private static int? InferRectangularStripWidth(int totalLength, int frameThickness)
+    {
+        if (frameThickness <= 0 || totalLength < frameThickness * 2)
+        {
+            return null;
+        }
+
+        int minW = Mathf.Max(8, frameThickness / 2);
+        int maxW = Mathf.Max(minW + 1, frameThickness * 3);
+        int bestW = 0;
+        int bestScore = int.MaxValue;
+        for (int cellW = minW; cellW <= maxW; cellW++)
+        {
+            if (totalLength % cellW != 0)
+            {
+                continue;
+            }
+
+            int frames = totalLength / cellW;
+            if (frames < 2)
+            {
+                continue;
+            }
+
+            int score = Mathf.Abs(cellW - frameThickness);
+            // 同接近度时偏好帧数更合理（避免切成巨宽 2 帧）。
+            if (score < bestScore || (score == bestScore && (bestW == 0 || frames > totalLength / bestW)))
+            {
+                bestScore = score;
+                bestW = cellW;
+            }
+        }
+
+        return bestW > 0 ? bestW : (int?)null;
     }
 
     private static bool LooksLikeNumberedFrameSet(IEnumerable<string> fileNames)
@@ -454,10 +530,13 @@ public static class PixelArtGroundCharacterImportUtility
         importer.textureType = TextureImporterType.Sprite;
         importer.spriteImportMode = SpriteImportMode.Multiple;
 
+        // 先尽量把碎切（Automatic 紧裁）收成均匀格，再判 pivot / 指纹。
+        bool slicesTouched = EnsureSpriteSheetSlices(importer, assetPath);
         bool pivotOk = HasBottomCenterSprites(importer);
         bool needsBase = forceReprocess
                          || !markOk
                          || !pivotOk
+                         || slicesTouched
                          || NeedsCommonSettingsChange(importer, settings, SpriteImportMode.Multiple);
 
         if (!needsBase && markOk && pivotOk)
@@ -465,7 +544,7 @@ public static class PixelArtGroundCharacterImportUtility
             return true;
         }
 
-        if (!EnsureSpriteSheetSlices(importer, assetPath))
+        if (!slicesTouched && importer.spritesheet != null && importer.spritesheet.Length == 0)
         {
             logLine = "[告警] 图集未能切片（需手动 Sprite Editor 或检查尺寸）：" + assetPath;
         }
@@ -633,7 +712,8 @@ public static class PixelArtGroundCharacterImportUtility
 
     /// <summary>
     /// 无现有均匀切片时，按路径 (96x96) / 横竖条 / 常见格尺寸尝试自动切片。
-    /// 已有 alpha 紧裁切片但几何上是标准横条时，改为均匀格，保证脚底 Pivot 跨帧一致。
+    /// 已有 alpha 紧裁切片但几何上可推断均匀格时，改为均匀格，保证脚底 Pivot 跨帧一致。
+    /// 返回 true 表示写入了新的 spritesheet。
     /// </summary>
     private static bool EnsureSpriteSheetSlices(TextureImporter importer, string assetPath)
     {
@@ -643,7 +723,7 @@ public static class PixelArtGroundCharacterImportUtility
             return false;
         }
 
-        int? cell = InferCellSizeForSlicing(width, height, assetPath);
+        CellSize? cell = InferCellSizeForSlicing(width, height, assetPath);
         SpriteMetaData[] existing = importer.spritesheet;
         bool hasExisting = existing != null && existing.Length > 0;
 
@@ -651,12 +731,12 @@ public static class PixelArtGroundCharacterImportUtility
         {
             if (!cell.HasValue)
             {
-                return true;
+                return false;
             }
 
             if (IsUniformCellLayout(existing, cell.Value, width, height))
             {
-                return true;
+                return false;
             }
 
             // 有可推断的均匀格，但现有切片不是该格 → 重切。
@@ -666,15 +746,18 @@ public static class PixelArtGroundCharacterImportUtility
             return false;
         }
 
-        int cellSize = cell.Value;
-        if (cellSize <= 0 || width < cellSize || height < cellSize)
+        CellSize cellSize = cell.Value;
+        if (cellSize.Width <= 0 || cellSize.Height <= 0
+            || width < cellSize.Width || height < cellSize.Height)
         {
             return false;
         }
 
-        int columns = width / cellSize;
-        int rows = height / cellSize;
-        if (columns <= 0 || rows <= 0)
+        int columns = width / cellSize.Width;
+        int rows = height / cellSize.Height;
+        if (columns <= 0 || rows <= 0
+            || width % cellSize.Width != 0
+            || height % cellSize.Height != 0)
         {
             return false;
         }
@@ -686,9 +769,9 @@ public static class PixelArtGroundCharacterImportUtility
         {
             for (var col = 0; col < columns; col++)
             {
-                int x = col * cellSize;
-                int y = height - (row + 1) * cellSize;
-                if (x + cellSize > width || y < 0)
+                int x = col * cellSize.Width;
+                int y = height - (row + 1) * cellSize.Height;
+                if (x + cellSize.Width > width || y < 0)
                 {
                     continue;
                 }
@@ -696,7 +779,7 @@ public static class PixelArtGroundCharacterImportUtility
                 metas.Add(new SpriteMetaData
                 {
                     name = baseName + "_" + index,
-                    rect = new Rect(x, y, cellSize, cellSize),
+                    rect = new Rect(x, y, cellSize.Width, cellSize.Height),
                     alignment = AlignmentBottomCenter,
                     pivot = new Vector2(0.5f, 0f),
                     border = Vector4.zero,
@@ -714,7 +797,7 @@ public static class PixelArtGroundCharacterImportUtility
         return true;
     }
 
-    private static int? InferCellSizeForSlicing(int width, int height, string assetPath)
+    private static CellSize? InferCellSizeForSlicing(int width, int height, string assetPath)
     {
         int? pathCell = InferCellSizeFromAssetPath(assetPath);
         if (pathCell.HasValue
@@ -722,16 +805,17 @@ public static class PixelArtGroundCharacterImportUtility
             && height % pathCell.Value == 0
             && (width / pathCell.Value) * (height / pathCell.Value) >= 2)
         {
-            return pathCell;
+            return new CellSize(pathCell.Value, pathCell.Value);
         }
 
-        int? stripCell = InferStripCellSize(width, height);
+        CellSize? stripCell = InferStripCell(width, height);
         if (stripCell.HasValue)
         {
             return stripCell;
         }
 
-        return InferCommonGridCell(width, height);
+        int? common = InferCommonGridCell(width, height);
+        return common.HasValue ? new CellSize(common.Value, common.Value) : (CellSize?)null;
     }
 
     private static int? InferCommonGridCell(int width, int height)
@@ -763,16 +847,21 @@ public static class PixelArtGroundCharacterImportUtility
 
     private static bool IsUniformCellLayout(
         SpriteMetaData[] sheet,
-        int cellSize,
+        CellSize cellSize,
         int textureWidth,
         int textureHeight)
     {
-        if (sheet == null || sheet.Length == 0 || cellSize <= 0)
+        if (sheet == null || sheet.Length == 0 || cellSize.Width <= 0 || cellSize.Height <= 0)
         {
             return false;
         }
 
-        int expected = (textureWidth / cellSize) * (textureHeight / cellSize);
+        if (textureWidth % cellSize.Width != 0 || textureHeight % cellSize.Height != 0)
+        {
+            return false;
+        }
+
+        int expected = (textureWidth / cellSize.Width) * (textureHeight / cellSize.Height);
         if (expected <= 0 || sheet.Length != expected)
         {
             return false;
@@ -781,12 +870,14 @@ public static class PixelArtGroundCharacterImportUtility
         for (var i = 0; i < sheet.Length; i++)
         {
             Rect r = sheet[i].rect;
-            if (!Mathf.Approximately(r.width, cellSize) || !Mathf.Approximately(r.height, cellSize))
+            if (!Mathf.Approximately(r.width, cellSize.Width)
+                || !Mathf.Approximately(r.height, cellSize.Height))
             {
                 return false;
             }
 
-            if (Mathf.Abs(r.x % cellSize) > 0.01f || Mathf.Abs(r.y % cellSize) > 0.01f)
+            if (Mathf.Abs(r.x % cellSize.Width) > 0.01f
+                || Mathf.Abs(r.y % cellSize.Height) > 0.01f)
             {
                 return false;
             }

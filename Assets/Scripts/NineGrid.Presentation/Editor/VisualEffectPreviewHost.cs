@@ -24,8 +24,6 @@ namespace NineGrid.Presentation.Editor
         private SpriteSheetLoopPlayer _player;
         private string _status = "就绪";
         private bool _disposed;
-        private Bounds _framedBounds;
-        private bool _framedOnce;
 
         public string Status => _status;
         public SpriteSheetLoopPlayer Player => _player;
@@ -34,7 +32,6 @@ namespace NineGrid.Presentation.Editor
         public bool Rebuild(VisualEffectEntryDto entry, CardFacePreviewRequest referenceCardRequest)
         {
             DestroyScene();
-            _framedOnce = false;
             if (entry == null || string.IsNullOrWhiteSpace(entry.sheetPath))
             {
                 _status = "特效条目为空。";
@@ -165,13 +162,11 @@ namespace NineGrid.Presentation.Editor
             }
 
             // 固定 framing：左卡 + 右特效对照稳定，不随缩放抖动。
-            _framedBounds = new Bounds(Vector3.zero, new Vector3(5.2f, 3.6f, 1f));
             var cam = _previewUtility.camera;
             cam.orthographic = true;
             cam.orthographicSize = 2.1f;
             cam.transform.position = new Vector3(0f, 0f, -10f);
             cam.transform.rotation = Quaternion.identity;
-            _framedOnce = true;
         }
 
         private void EnsurePreviewUtility()

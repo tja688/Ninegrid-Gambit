@@ -161,10 +161,8 @@ namespace NineGrid.Core
             var statSystem = context.GetSystem<IStatSystem>();
             var avatarDamage = GetAttackDamage(statSystem, avatar);
             var targetDamage = GetAttackDamage(statSystem, target);
-            var avatarFirstStrike = HasFirstStrike(statSystem, avatar);
-            var targetFirstStrike = HasFirstStrike(statSystem, target);
             var result = new GameActionResult();
-            if (targetFirstStrike && !avatarFirstStrike)
+            if (CombatEngagementOrder.MonsterStrikesFirst(statSystem, avatar, target))
             {
                 result.AddFollowUp(new DealDamageAction(target.Uid, avatar.Uid, targetDamage, SourceDefId, Cause));
                 result.AddFollowUp(new ConditionalDealDamageIfAliveAction(avatar.Uid, target.Uid, avatarDamage, SourceDefId, Cause));
@@ -181,11 +179,6 @@ namespace NineGrid.Core
         private static int GetAttackDamage(IStatSystem statSystem, CardInstance card)
         {
             return Math.Max(0, statSystem.GetEffectiveInt(card, StatId.Attack));
-        }
-
-        private static bool HasFirstStrike(IStatSystem statSystem, CardInstance card)
-        {
-            return statSystem.EvaluateRule(RuleId.FirstStrike, 0f, statSystem.CreateContext(card)) > 0f;
         }
     }
 

@@ -55,6 +55,24 @@ namespace NineGrid.Presentation.Tests.Attack
             }
         }
 
+        [Test]
+        public void MonsterStrikesFirstQuery_DelegatesToPhase()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateStartedGame(seed: 42UL))
+            {
+                Assert.IsTrue(arch.Phase.StartNode(CreateSingleMonsterNode(hp: 10, attack: 1)).Accepted);
+                arch.PlaceSoleBoardCardAt(sAdjacentSlot);
+
+                var avatarUid = arch.Board.AvatarUid.Value;
+                var monsterUid = arch.Board.GetCardUid(sAdjacentSlot);
+                var expected = arch.Architecture.GetSystem<IPhaseSystem>()
+                    .MonsterStrikesFirst(avatarUid, monsterUid);
+                var actual = arch.Architecture.SendQuery(
+                    new MonsterStrikesFirstQuery(avatarUid, monsterUid));
+                Assert.AreEqual(expected, actual);
+            }
+        }
+
         private static void PlaceBoardMonsterAt(PresentationArchitectureFixture arch, SlotId slot)
         {
             for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
