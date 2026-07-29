@@ -7,6 +7,11 @@ namespace NineGrid.Core
         public const string Boss = "boss";
         public const string Level = "level";
         public const string EffectCounterPrefix = "effect.";
+        /// <summary>
+        /// 攻击模式行动倒计时保留前缀（ADR-0013）。与 <see cref="EffectCounterPrefix"/> 隔离，
+        /// 同怪的模式计数与 DSL 效果计数互不偷值。
+        /// </summary>
+        public const string AttackPatternPrefix = "attackPattern.";
         /// <summary>实例来自玩家侧 run 卡组（节点末可回库；局内掉落不带此标记）。</summary>
         public const string PlayerSideDeck = "playerSideDeck";
     }

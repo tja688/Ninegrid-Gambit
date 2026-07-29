@@ -592,7 +592,9 @@ namespace NineGrid.Core.Effects
                     }
                 }
 
-                if (Same(atom, "OnSelfMove") && node.Has("every") && node.Get("every").AsInt(1) < 1)
+                if ((Same(atom, "OnSelfMove") || Same(atom, "OnInteract"))
+                    && node.Has("every")
+                    && node.Get("every").AsInt(1) < 1)
                 {
                     result.Add("schema.range.every", path + ".every must be >= 1.");
                 }

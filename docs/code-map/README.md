@@ -22,9 +22,9 @@
 | [ADR-0010](../adr/0010-self-declared-effect-responsibility.md) | 效果责任自陈、拆除外部场域门禁 |
 | [ADR-0011](../adr/0011-monster-attack-pattern-intrinsic.md) | 怪物攻击模式为内生必填属性（**未落地**） |
 | [ADR-0012](../adr/0012-enemy-action-phase-volley.md) | 敌方行动阶段：齐射与盘面冻结（**未落地**） |
-| [ADR-0013](../adr/0013-action-countdown-unified.md) | 行动计数统一为倒计时、开火窗口一次性（**未落地**） |
+| [ADR-0013](../adr/0013-action-countdown-unified.md) | 行动计数统一为倒计时、开火窗口一次性（**#76 Core 效果侧已落地**；攻击模式消费 / 卡面上屏见后续票） |
 
-> ADR-0011 / 0012 / 0013 是**已接受但尚未落地**的决策。本目录只描述当下事实，因此其目标结构不写入 [presentation.md](./presentation.md) / [tests.md](./tests.md)；落地时再同 PR 补。落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
+> ADR-0011 / 0012 仍为**已接受但尚未落地**；ADR-0013 的效果侧倒计时（`ActionCountdown` / OnSelfMove / OnCumulative / OnInteract.every / `AttackPatternPrefix`）已由 #76 落地，攻击模式消费与卡面上屏仍见后续票。目标齐射结构不写入 [presentation.md](./presentation.md)；#76 测试登记见 [tests.md](./tests.md)。落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
 
 ## 程序集一览
 

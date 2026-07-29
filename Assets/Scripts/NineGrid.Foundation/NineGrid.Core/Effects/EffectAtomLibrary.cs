@@ -304,7 +304,41 @@ namespace NineGrid.Core.Effects
     [EffectAtom("OnInteract", EffectAtomKind.Trigger)]
     public sealed class OnInteractTrigger : TriggerAtomBase
     {
+        private int mEvery = 1;
+        private string mCounterKey = string.Empty;
+
         public override TriggerPoint Point { get { return TriggerPoint.OnInteract; } }
+
+        public override void Configure(EffectDslNode config)
+        {
+            base.Configure(config);
+            mEvery = Math.Max(1, config.Get("every").AsInt(1));
+            mCounterKey = config.Get("counterKey").AsString(string.Empty);
+        }
+
+        public override bool Matches(EffectRuntimeContext context)
+        {
+            if (!base.Matches(context))
+            {
+                return false;
+            }
+
+            if (mEvery <= 1)
+            {
+                return true;
+            }
+
+            var owner = context.OwnerCard ?? context.AvatarCard;
+            if (owner == null)
+            {
+                return false;
+            }
+
+            var key = string.IsNullOrEmpty(mCounterKey)
+                ? CoreCounterKeys.EffectCounterPrefix + context.Instance.InstanceId + ".interact"
+                : mCounterKey;
+            return ActionCountdown.TickOnce(owner.Counters, key, mEvery);
+        }
     }
 
     [EffectAtom("OnSelfMove", EffectAtomKind.Trigger)]
@@ -366,8 +400,7 @@ namespace NineGrid.Core.Effects
                 var key = string.IsNullOrEmpty(mCounterKey)
                     ? CoreCounterKeys.EffectCounterPrefix + context.Instance.InstanceId + ".selfMove"
                     : mCounterKey;
-                owner.Counters.Add(key, 1);
-                return owner.Counters.Get(key) % mEvery == 0;
+                return ActionCountdown.TickOnce(owner.Counters, key, mEvery);
             }
 
             return false;
@@ -795,14 +828,7 @@ namespace NineGrid.Core.Effects
             var key = string.IsNullOrEmpty(mCounterKey)
                 ? CoreCounterKeys.EffectCounterPrefix + context.Instance.InstanceId + ".cumulative." + mMetric
                 : mCounterKey;
-            owner.Counters.Add(key, delta);
-            if (owner.Counters.Get(key) < mThreshold)
-            {
-                return false;
-            }
-
-            owner.Counters.Add(key, -mThreshold);
-            return true;
+            return ActionCountdown.Tick(owner.Counters, key, mThreshold, delta);
         }
 
         private int MeasureDelta(EffectRuntimeContext context)
