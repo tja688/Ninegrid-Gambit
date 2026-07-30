@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using NineGrid.Cards.Convergence;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -497,8 +498,8 @@ namespace NineGrid.Cards
             CancellationToken cancellationToken)
         {
             var root = _view != null ? _view.transform : transform;
-            var selfWorld = root.position;
             Vector3? otherWorld = null;
+            Vector3? slotAnchorWorld = null;
 
             var field = GroundFieldGeometryHook.FieldOrNull();
             if (field != null)
@@ -508,7 +509,7 @@ namespace NineGrid.Cards
                     var selfAnchor = field.GetGroundAnchor(invoke.SelfSlot);
                     if (selfAnchor != null)
                     {
-                        selfWorld = selfAnchor.position;
+                        slotAnchorWorld = selfAnchor.position;
                     }
                 }
 
@@ -522,6 +523,18 @@ namespace NineGrid.Cards
                 }
             }
 
+            var visualWorld = card != null
+                ? SlotFrameConvergence.GetVisualWorldPosition(card)
+                : root.position;
+            var stagedOffAnchor = card != null && card.DisplayMode == CardDisplayMode.RemovedMode;
+            var selfWorld = ResolveSelfWorldPosition(
+                visualWorld,
+                root.position,
+                hasCard: card != null,
+                stagedOffAnchor,
+                invoke.SelfSlot,
+                slotAnchorWorld);
+
             return new CardEffectPlayContext(
                 card,
                 root,
@@ -530,6 +543,30 @@ namespace NineGrid.Cards
                 selfWorld,
                 otherWorld,
                 cancellationToken);
+        }
+
+        /// <summary>
+        /// 效果 Self 世界位：活卡用视觉位（含 L3 击退）；Staging 尸体 + SelfSlot 用格锚。
+        /// </summary>
+        public static Vector3 ResolveSelfWorldPosition(
+            Vector3 visualWorld,
+            Vector3 rootWorld,
+            bool hasCard,
+            bool stagedOffAnchor,
+            int selfSlot,
+            Vector3? slotAnchorWorld)
+        {
+            if (hasCard)
+            {
+                if (stagedOffAnchor && selfSlot > 0 && slotAnchorWorld.HasValue)
+                {
+                    return slotAnchorWorld.Value;
+                }
+
+                return visualWorld;
+            }
+
+            return rootWorld;
         }
 
 #if UNITY_EDITOR

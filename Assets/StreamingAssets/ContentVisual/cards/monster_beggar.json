@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.beggar",
     "kind": "Monster",
-    "deckId": "deck.wandering_legion",
+    "deckId": "deck.smallanimal",
     "role": "",
     "displayName": "大黄",
     "description": "无",

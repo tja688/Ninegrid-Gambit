@@ -168,7 +168,11 @@ namespace NineGrid.Cards
             RebindAttackerMotionTauntRedirect(attacker, windupFacingVictim, lungeTargetVictim);
 
             // 嘲讽目标未必落在本 rig 正交邻格；必须用相对击退，否则会套用点选格烘焙位移导致瞬移。
-            RebindVictimKnockbackFromAttacker(lungeTargetVictim, attacker, bind.VictimKnockbackCoefficient);
+            RebindVictimKnockbackFromAttacker(
+                lungeTargetVictim,
+                attacker,
+                bind.VictimKnockbackCoefficient,
+                holdAtKnockbackEnd: bind.BindDeathCallback);
 
             if (bind.HitFlashTimingPolicy == BattleHitFlashTimingPolicy.Explicit)
             {
@@ -223,7 +227,11 @@ namespace NineGrid.Cards
 
             // L3 击退必须走相对几何重绑：场景烘焙 endValue 是模板占位在 rig 父空间下的绝对 local，
             // 不能直接 DOLocalMove 到 EffectFrame（home 恒为 0），否则会变成「飞到烘焙坐标」再 SnapHome 闪回。
-            RebindVictimKnockbackFromAttacker(victim, attacker, victimKnockbackCoefficient);
+            RebindVictimKnockbackFromAttacker(
+                victim,
+                attacker,
+                victimKnockbackCoefficient,
+                holdAtKnockbackEnd: bindDeathCallback);
 
             if (hitFlashTimingPolicy == BattleHitFlashTimingPolicy.Explicit)
             {
@@ -890,7 +898,8 @@ namespace NineGrid.Cards
         private void RebindVictimKnockbackFromAttacker(
             Transform victim,
             Transform attacker,
-            float knockbackCoefficient)
+            float knockbackCoefficient,
+            bool holdAtKnockbackEnd = false)
         {
             if (victimAnimations == null || victimAnimations.Count == 0)
             {
@@ -911,6 +920,31 @@ namespace NineGrid.Cards
             }
 
             var coefficient = Mathf.Max(0f, knockbackCoefficient);
+            var holdMagnitude = 0f;
+            if (holdAtKnockbackEnd)
+            {
+                for (var i = 0; i < victimAnimations.Count; i++)
+                {
+                    var clip = victimAnimations[i];
+                    if (clip == null)
+                    {
+                        continue;
+                    }
+
+                    var delay = ReadDelay(clip);
+                    if (delay < KnockbackDelayMin || delay > KnockbackDelayMax)
+                    {
+                        continue;
+                    }
+
+                    holdMagnitude = Mathf.Max(holdMagnitude, ReadBakedKnockbackMagnitude(clip) * coefficient);
+                }
+
+                if (holdMagnitude <= 0.001f)
+                {
+                    holdMagnitude = DefaultVictimKnockbackDistance * coefficient;
+                }
+            }
 
             for (var i = 0; i < victimAnimations.Count; i++)
             {
@@ -932,12 +966,17 @@ namespace NineGrid.Cards
                 }
                 else if (delay >= ReturnDelayMin)
                 {
-                    axisMagnitude *= scale;
+                    // Lethal：回原段终点锁在击退点，避免碎亡前被拽回格锚。
+                    axisMagnitude = holdAtKnockbackEnd
+                        ? holdMagnitude
+                        : axisMagnitude * scale;
                 }
 
-                var knockbackWorld = delay >= ReturnDelayMin && axisMagnitude <= 0.001f
-                    ? homeWorld
-                    : homeWorld + flatAway * axisMagnitude;
+                var knockbackWorld = !holdAtKnockbackEnd
+                    && delay >= ReturnDelayMin
+                    && axisMagnitude <= 0.001f
+                        ? homeWorld
+                        : homeWorld + flatAway * axisMagnitude;
                 WriteWorldEndAsLocal(animation, motionTarget, knockbackWorld);
             }
         }

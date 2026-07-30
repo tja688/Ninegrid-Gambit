@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.fire_cult_leader",
     "kind": "Monster",
-    "deckId": "deck.wandering_legion",
+    "deckId": "deck.smallanimal",
     "role": "",
     "displayName": "红蛙",
     "description": "每加入烈焰额外加一张",
@@ -27,7 +27,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.05000000074505806,
+        "offsetY": -0.05999999865889549,
         "uniformScale": 1.0
     },
     "animations": {

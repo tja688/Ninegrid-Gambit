@@ -1,6 +1,8 @@
 using NUnit.Framework;
 using NineGrid.Cards.Anim;
+using NineGrid.Cards.Slots;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace NineGrid.Presentation.Tests
 {
@@ -81,6 +83,128 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(lockedScale, visualGo.transform.localScale);
 
             Object.DestroyImmediate(root);
+        }
+
+        [Test]
+        public void SyncMaskSortingTo_UsesSortingGroupLayer_NotChildLayer()
+        {
+            var root = new GameObject("chassis");
+            var group = root.AddComponent<SortingGroup>();
+            var uiLayerId = SortingLayer.NameToID("UI");
+            if (uiLayerId != 0)
+            {
+                group.sortingLayerName = "UI";
+            }
+            else
+            {
+                group.sortingLayerName = "Default";
+            }
+
+            group.sortingOrder = 6;
+
+            var maskGo = new GameObject(CardMainVisualMaskAnchor.NodeName);
+            maskGo.transform.SetParent(root.transform, false);
+            var spriteMask = maskGo.AddComponent<SpriteMask>();
+            maskGo.AddComponent<SpriteRenderer>().sprite = CreateTestSprite(8, 8, Color.white);
+            var anchor = maskGo.AddComponent<CardMainVisualMaskAnchor>();
+
+            var visualGo = new GameObject("遗物主图标");
+            visualGo.transform.SetParent(root.transform, false);
+            var visual = visualGo.AddComponent<SpriteRenderer>();
+            visual.sprite = CreateTestSprite(16, 16, Color.red);
+            visual.sortingOrder = CardFaceSortingLayers.MainIcon;
+            visual.sortingLayerID = SortingLayer.NameToID("Default");
+
+            group.sortingOrder = 12;
+            // 真实 BounceFan 路径：先传播子节点层，再 Sync。
+            CardMainVisualMaskAnchor.PropagateSortingLayerFromGroup(group);
+            anchor.SyncMaskSortingTo(visual);
+
+            Assert.AreEqual(group.sortingLayerID, visual.sortingLayerID);
+            Assert.AreEqual(group.sortingLayerID, spriteMask.frontSortingLayerID);
+            Assert.AreEqual(group.sortingLayerID, spriteMask.backSortingLayerID);
+            Assert.AreEqual(group.sortingLayerID, spriteMask.sortingLayerID);
+            Assert.AreEqual(
+                CardFaceSortingLayers.MainIcon + CardFaceSortingLayers.MainIconMaskFrontOffset,
+                spriteMask.frontSortingOrder);
+            Assert.AreEqual(
+                CardFaceSortingLayers.MainIcon + CardFaceSortingLayers.MainIconMaskBackOffset,
+                spriteMask.backSortingOrder);
+            Assert.IsTrue(spriteMask.isCustomRangeActive);
+
+            anchor.ApplyMaskInteraction(visual);
+            Assert.AreEqual(SpriteMaskInteraction.VisibleInsideMask, visual.maskInteraction);
+
+            Object.DestroyImmediate(root);
+        }
+
+        [Test]
+        public void PropagateSortingLayerFromGroup_AlignsChildRenderersAndMasks()
+        {
+            var root = new GameObject("chassis");
+            var group = root.AddComponent<SortingGroup>();
+            var uiLayerId = SortingLayer.NameToID("UI");
+            Assert.AreNotEqual(0, uiLayerId, "项目须有 UI Sorting Layer");
+            group.sortingLayerName = "UI";
+
+            var srGo = new GameObject("bg");
+            srGo.transform.SetParent(root.transform, false);
+            var sr = srGo.AddComponent<SpriteRenderer>();
+            sr.sortingLayerID = SortingLayer.NameToID("Default");
+            var sm = srGo.AddComponent<SpriteMask>();
+            sm.sortingLayerID = SortingLayer.NameToID("Default");
+            sm.isCustomRangeActive = true;
+            sm.frontSortingLayerID = sm.sortingLayerID;
+            sm.backSortingLayerID = sm.sortingLayerID;
+
+            CardMainVisualMaskAnchor.PropagateSortingLayerFromGroup(group);
+
+            Assert.AreEqual(group.sortingLayerID, sr.sortingLayerID);
+            Assert.AreEqual(group.sortingLayerID, sm.sortingLayerID);
+            Assert.AreEqual(group.sortingLayerID, sm.frontSortingLayerID);
+            Assert.AreEqual(group.sortingLayerID, sm.backSortingLayerID);
+
+            Object.DestroyImmediate(root);
+        }
+
+        [Test]
+        public void MainIconMaskRange_DoesNotCoverFaceBackgroundOrder()
+        {
+            var back = CardFaceSortingLayers.MainIcon + CardFaceSortingLayers.MainIconMaskBackOffset;
+            var front = CardFaceSortingLayers.MainIcon + CardFaceSortingLayers.MainIconMaskFrontOffset;
+            Assert.Greater(back, CardFaceSortingLayers.FaceBackground);
+            Assert.Greater(back, CardFaceSortingLayers.CardFrame);
+            Assert.LessOrEqual(back, CardFaceSortingLayers.MainIcon);
+            Assert.GreaterOrEqual(front, CardFaceSortingLayers.MainIcon);
+        }
+
+        [Test]
+        public void EnsureFaceBackgroundHexMask_EnablesSelfMaskAndVisibleInside()
+        {
+            var face = new GameObject("遗物卡标准模版");
+            var bg = new GameObject(CardMainVisualMaskAnchor.FaceBackgroundNodeName);
+            bg.transform.SetParent(face.transform, false);
+            var bgSr = bg.AddComponent<SpriteRenderer>();
+            bgSr.sprite = CreateTestSprite(32, 48, Color.blue);
+            bgSr.sortingOrder = CardFaceSortingLayers.FaceBackground;
+            var hexMask = bg.AddComponent<SpriteMask>();
+            hexMask.sprite = CreateTestSprite(32, 48, Color.white);
+            hexMask.enabled = false;
+            bgSr.maskInteraction = SpriteMaskInteraction.None;
+
+            CardMainVisualMaskAnchor.EnsureFaceBackgroundHexMask(face.transform);
+
+            Assert.IsTrue(hexMask.enabled);
+            Assert.AreEqual(SpriteMaskInteraction.VisibleInsideMask, bgSr.maskInteraction);
+            Assert.IsTrue(hexMask.isCustomRangeActive);
+            Assert.AreEqual(
+                CardFaceSortingLayers.FaceBackground + CardFaceSortingLayers.FaceBackgroundMaskFrontOffset,
+                hexMask.frontSortingOrder);
+            Assert.AreEqual(
+                CardFaceSortingLayers.FaceBackground + CardFaceSortingLayers.FaceBackgroundMaskBackOffset,
+                hexMask.backSortingOrder);
+
+            Object.DestroyImmediate(face);
         }
 
         private static Sprite CreateTestSprite(int width, int height, Color fill)

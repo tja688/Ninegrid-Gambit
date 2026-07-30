@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.sharp_stone",
     "kind": "Monster",
-    "deckId": "deck.wandering_legion",
+    "deckId": "deck.insect",
     "role": "",
     "displayName": "紫壳蝎",
     "description": "护甲归零时伤害玩家",

@@ -168,7 +168,8 @@ namespace NineGrid.Cards
 
         private static Vector3 ResolveWorldPosition(CardEffectPlayContext context)
         {
-            // SelfWorldPosition 由 EffectManager 按格锚点填写；击杀前尸体会被 Stage 挪走，不能用 Root.position。
+            // SelfWorldPosition：交战击杀用视觉位（含 L3 击退）；Staging 后备路径用格锚。
+            // 勿直接读 Root.position——击退在 EffectFrame，Root 仍停在格上。
             var worldPos = context.SelfWorldPosition;
             if (worldPos == Vector3.zero && context.Root != null)
             {

@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.rolling_stone_man",
     "kind": "Monster",
-    "deckId": "deck.wandering_legion",
+    "deckId": "deck.insect",
     "role": "",
     "displayName": "黄贝蜗牛",
     "description": "移动到格3时移除格6帮助卡",
@@ -27,7 +27,7 @@
     },
     "mainVisual": {
         "offsetX": -0.20000000298023225,
-        "offsetY": -0.05000000074505806,
+        "offsetY": -0.07000000029802323,
         "uniformScale": 1.0
     },
     "animations": {

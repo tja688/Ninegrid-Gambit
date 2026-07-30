@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.multi_bone_worm",
     "kind": "Monster",
-    "deckId": "deck.wandering_legion",
+    "deckId": "deck.insect",
     "role": "",
     "displayName": "沙虫",
     "description": "移动时与相邻2怪合成巨骷髅",

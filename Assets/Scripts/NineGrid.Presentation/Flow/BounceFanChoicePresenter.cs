@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using NineGrid.Cards;
+using NineGrid.Cards.Anim;
 using NineGrid.Core;
 using NineGrid.Flow.Presentation;
 using QFramework;
@@ -271,15 +272,22 @@ namespace NineGrid.Flow
                 managed.View.transform.localPosition = Vector3.zero;
                 managed.View.transform.localRotation = Quaternion.identity;
 
-                // 只套视觉；攻/甲/血由 OfferReward 指令经排期器提交（禁止 clearCombatStats 数值旁路）。
-                CoreCardPresentationMapper.ApplyVisualsByDefId(managed, choiceKind);
-
+                // 先切 UI SortingGroup，再套视觉：主视图 Mask 才能按有效层 Sync，
+                // 避免 VisibleInsideMask 因层错位整段消失（登场无主图标）。
                 var sortingGroup = managed.View.GetComponent<SortingGroup>();
                 var sorting = BaseSortingOrder + i;
                 if (sortingGroup != null)
                 {
                     ApplySorting(sortingGroup, sorting);
                 }
+
+                // 只套视觉；攻/甲/血由 OfferReward 指令经排期器提交（禁止 clearCombatStats 数值旁路）。
+                CoreCardPresentationMapper.ApplyVisualsByDefId(managed, choiceKind);
+                CardMainVisualMaskAnchor.EnsureFaceBackgroundHexMask(
+                    managed.MountedFaceRoot != null
+                        ? managed.MountedFaceRoot
+                        : managed.View.transform);
+                CardMainVisualMaskAnchor.ResyncAllVisibleInsideMasks(managed.View.transform);
 
                 var collider = managed.View.GetComponent<Collider2D>();
                 _entries.Add(new BounceEntry
@@ -588,6 +596,7 @@ namespace NineGrid.Flow
             if (sortingGroup != null)
             {
                 ApplySorting(sortingGroup, order);
+                CardMainVisualMaskAnchor.ResyncAllVisibleInsideMasks(entry.Card.View.transform);
             }
         }
 
@@ -595,6 +604,8 @@ namespace NineGrid.Flow
         {
             sortingGroup.sortingLayerName = ChoiceSortingLayerName;
             sortingGroup.sortingOrder = order;
+            // SpriteMask custom range 比对子节点 sortingLayerID 属性；必须与 SG 同层。
+            CardMainVisualMaskAnchor.PropagateSortingLayerFromGroup(sortingGroup);
         }
 
         private void ReleaseAllEntries()

@@ -56,7 +56,20 @@ namespace NineGrid.Cards.Slots
 
         public const int TopOverlay = 99;
 
-        public const int MainIconMaskBackOffset = -32;
-        public const int MainIconMaskFrontOffset = 32;
+        /// <summary>
+        /// 主视图 Mask custom range 相对 <see cref="MainIcon"/> 的背侧偏移。
+        /// 须高于 <see cref="FaceBackground"/> / <see cref="CardFrame"/>，
+        /// 否则背景若开 VisibleInsideMask 会被方形主视图 Mask 误裁成「空心」。
+        /// </summary>
+        public const int MainIconMaskBackOffset = -8;
+
+        /// <summary>主视图 Mask custom range 相对 <see cref="MainIcon"/> 的前侧偏移。</summary>
+        public const int MainIconMaskFrontOffset = 8;
+
+        /// <summary>背景六边 Mask custom range 相对 <see cref="FaceBackground"/> 的背侧偏移。</summary>
+        public const int FaceBackgroundMaskBackOffset = -1;
+
+        /// <summary>背景六边 Mask custom range 相对 <see cref="FaceBackground"/> 的前侧偏移。</summary>
+        public const int FaceBackgroundMaskFrontOffset = 1;
     }
 }

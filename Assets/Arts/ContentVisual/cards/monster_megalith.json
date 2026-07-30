@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.megalith",
     "kind": "Monster",
-    "deckId": "deck.wandering_legion",
+    "deckId": "deck.insect",
     "role": "",
     "displayName": "蜂巢",
     "description": "移动吸相邻护甲；损10护甲洗石人",

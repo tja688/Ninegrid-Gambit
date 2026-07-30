@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.orc_quartermaster",
     "kind": "Monster",
-    "deckId": "deck.wandering_legion",
+    "deckId": "deck.smallanimal",
     "role": "",
     "displayName": "大葱袋熊",
     "description": "每移动2次随机强化其他怪物",

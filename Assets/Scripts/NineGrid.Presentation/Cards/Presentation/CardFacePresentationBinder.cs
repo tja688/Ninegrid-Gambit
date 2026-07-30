@@ -63,6 +63,8 @@ namespace NineGrid.Cards.Presentation
             CaptureTemplateDefaultsIfNeeded();
             ApplyMainIcon(snapshot.MainIcon);
             ApplyDirectSprites(snapshot);
+            // 遗物等六边框模板：矩形背景须吃 Mask_hexagon，否则四角漏出卡框。
+            CardMainVisualMaskAnchor.EnsureFaceBackgroundHexMask(transform);
             ApplyName(snapshot.DisplayName);
             ApplyStats(snapshot);
             ApplyBasicDescription(snapshot);

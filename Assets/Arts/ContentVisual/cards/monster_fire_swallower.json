@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.fire_swallower",
     "kind": "Monster",
-    "deckId": "deck.wandering_legion",
+    "deckId": "deck.smallanimal",
     "role": "",
     "displayName": "田鼠",
     "description": "左列战斗时按损失护甲伤害玩家",

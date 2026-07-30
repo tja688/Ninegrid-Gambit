@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.shelter_stone",
     "kind": "Monster",
-    "deckId": "deck.wandering_legion",
+    "deckId": "deck.smallanimal",
     "role": "",
     "displayName": "鳄鳄龟",
     "description": "其他怪物卡受到的伤害减少1点",
@@ -27,7 +27,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetY": -0.019999999552965165,
         "uniformScale": 0.8199999928474426
     },
     "animations": {

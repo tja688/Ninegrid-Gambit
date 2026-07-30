@@ -133,16 +133,24 @@ public static class CardMainVisualMaskSetup
                 anchor = maskTf.gameObject.AddComponent<CardMainVisualMaskAnchor>();
             }
 
-            // Monster face root previously had a loose SpriteMask — disable extras not on 主视图Mask.
+            // Monster face root previously had a loose SpriteMask — disable extras not on 主视图Mask
+            // or 背景图（遗物六边背景裁切专用 Mask_hexagon）。
             foreach (var sm in root.GetComponentsInChildren<SpriteMask>(true))
             {
-                if (sm != null && sm.transform != maskTf)
+                if (sm == null || sm.transform == maskTf)
                 {
-                    sm.enabled = false;
+                    continue;
                 }
+
+                if (sm.gameObject.name == "背景图" || sm.gameObject.name == "背景")
+                {
+                    continue;
+                }
+
+                sm.enabled = false;
             }
 
-            // 只有主视觉吃 Mask；其它层（背景等）若误开 VisibleInsideMask 会整卡「空心」。
+            // 只有主视觉吃主视图 Mask；其它层保持 None。背景六边 Mask 由 EnsureFaceBackgroundHexMask 单独处理。
             foreach (var sr in root.GetComponentsInChildren<SpriteRenderer>(true))
             {
                 if (sr == null || sr == maskSr)
@@ -151,6 +159,12 @@ public static class CardMainVisualMaskSetup
                 }
 
                 if (main != null && sr == main)
+                {
+                    continue;
+                }
+
+                if (sr.GetComponent<SpriteMask>() != null
+                    && (sr.gameObject.name == "背景图" || sr.gameObject.name == "背景"))
                 {
                     continue;
                 }
@@ -167,6 +181,8 @@ public static class CardMainVisualMaskSetup
             {
                 spriteMask.isCustomRangeActive = false;
             }
+
+            CardMainVisualMaskAnchor.EnsureFaceBackgroundHexMask(root.transform);
 
             PrefabUtility.SaveAsPrefabAsset(root, path);
             return path + " OK maskSprite=" + (spriteMask.sprite != null ? spriteMask.sprite.name : "null")

@@ -2,11 +2,11 @@
     "schemaVersion": 2,
     "contentId": "monster.wandering_child",
     "kind": "Monster",
-    "deckId": "deck.wandering_legion",
+    "deckId": "deck.skeleton_legion",
     "role": "",
-    "displayName": "棕兔兔",
-    "description": "格6攻击+2并获得先手还击",
-    "faceIntro": "冷知识：兔兔的尾巴很长",
+    "displayName": "骷髅头骨",
+    "description": "",
+    "faceIntro": "他在等他的另一半",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -17,7 +17,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+        "mainIcon": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/004skull_die/004skull_die_07.png",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -26,8 +26,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetX": 0.10000000149011612,
+        "offsetY": -0.5,
         "uniformScale": 1.0
     },
     "animations": {
@@ -36,7 +36,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/01rabit_new_idle_01",
+                "path": "",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },
@@ -73,20 +73,7 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.stray_cub.slot6",
-            "templateId": "tpl.skill.stray_cub.slot6",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"value\":2}"
-        },
-        {
-            "id": "skill.stray_cub.first_strike",
-            "templateId": "tpl.skill.stray_cub.first_strike",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"value\":1}"
-        }
-    ],
+    "effectAssemblies": [],
     "effectIds": [],
     "skillIds": [],
     "level": 1,

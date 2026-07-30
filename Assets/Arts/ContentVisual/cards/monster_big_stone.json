@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.big_stone",
     "kind": "Monster",
-    "deckId": "deck.wandering_legion",
+    "deckId": "deck.insect",
     "role": "",
     "displayName": "红背甲虫",
     "description": "左列战斗时按损失护甲伤害玩家",

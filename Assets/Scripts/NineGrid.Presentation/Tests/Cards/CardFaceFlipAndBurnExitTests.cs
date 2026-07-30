@@ -141,5 +141,156 @@ namespace NineGrid.Presentation.Tests
                 Object.DestroyImmediate(tex);
             }
         }
+
+        [Test]
+        public void PlayAsync_SpawnsFxAtSelfWorldPosition_NotRoot()
+        {
+            var so = ScriptableObject.CreateInstance<CardSpriteSheetBurnExitEffectSO>();
+            var tex = new Texture2D(4, 4);
+            var sprite = Sprite.Create(tex, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
+            var framesField = typeof(CardSpriteSheetBurnExitEffectSO)
+                .GetField(
+                    "frames",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.IsNotNull(framesField);
+            framesField.SetValue(so, new[] { sprite });
+
+            var root = new GameObject("BurnExitRoot");
+            root.transform.position = new Vector3(1f, 2f, 0f);
+            var knockbackVisual = new Vector3(4f, 2f, 0f);
+            try
+            {
+                var ctx = new CardEffectPlayContext(
+                    card: null,
+                    root: root.transform,
+                    view: null,
+                    invoke: CardEffectInvokeContext.ForDeath(0, CardBoardDirection.None),
+                    selfWorldPosition: knockbackVisual,
+                    otherWorldPosition: null,
+                    cancellationToken: CancellationToken.None);
+
+                so.PlayAsync(ctx).GetAwaiter().GetResult();
+
+                var fx = GameObject.Find("CardBurnExitFx");
+                Assert.IsNotNull(fx);
+                Assert.AreEqual(knockbackVisual.x, fx.transform.position.x, 0.001f);
+                Assert.AreEqual(knockbackVisual.y, fx.transform.position.y, 0.001f);
+                Assert.Greater(
+                    Mathf.Abs(root.transform.position.x - fx.transform.position.x),
+                    0.1f);
+                Object.DestroyImmediate(fx);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(so);
+                Object.DestroyImmediate(sprite);
+                Object.DestroyImmediate(tex);
+            }
+        }
+    }
+
+    public sealed class CardEffectSelfWorldPositionTests
+    {
+        [Test]
+        public void ResolveSelfWorldPosition_LiveCard_UsesVisualNotRoot()
+        {
+            var root = new Vector3(1f, 0f, 0f);
+            var visual = new Vector3(4f, 0f, 0f);
+            var slot = new Vector3(1f, 0f, 0f);
+
+            var resolved = CardEffectManager.ResolveSelfWorldPosition(
+                visualWorld: visual,
+                rootWorld: root,
+                hasCard: true,
+                stagedOffAnchor: false,
+                selfSlot: 0,
+                slotAnchorWorld: slot);
+
+            Assert.AreEqual(visual.x, resolved.x, 0.001f);
+            Assert.AreEqual(visual.y, resolved.y, 0.001f);
+        }
+
+        [Test]
+        public void ResolveSelfWorldPosition_LiveCardWithSlot_StillUsesVisual()
+        {
+            var root = new Vector3(1f, 0f, 0f);
+            var visual = new Vector3(4f, 1f, 0f);
+            var slot = new Vector3(1f, 0f, 0f);
+
+            var resolved = CardEffectManager.ResolveSelfWorldPosition(
+                visualWorld: visual,
+                rootWorld: root,
+                hasCard: true,
+                stagedOffAnchor: false,
+                selfSlot: 5,
+                slotAnchorWorld: slot);
+
+            Assert.AreEqual(visual.x, resolved.x, 0.001f);
+            Assert.AreEqual(visual.y, resolved.y, 0.001f);
+        }
+
+        [Test]
+        public void ResolveSelfWorldPosition_StagedCorpseWithSlot_UsesSlotAnchor()
+        {
+            var root = new Vector3(1f, -80f, 0f);
+            var visual = new Vector3(1f, -80f, 0f);
+            var slot = new Vector3(1f, 0f, 0f);
+
+            var resolved = CardEffectManager.ResolveSelfWorldPosition(
+                visualWorld: visual,
+                rootWorld: root,
+                hasCard: true,
+                stagedOffAnchor: true,
+                selfSlot: 5,
+                slotAnchorWorld: slot);
+
+            Assert.AreEqual(slot.x, resolved.x, 0.001f);
+            Assert.AreEqual(slot.y, resolved.y, 0.001f);
+        }
+
+        [Test]
+        public void ResolveSelfWorldPosition_NoCard_UsesRoot()
+        {
+            var root = new Vector3(2f, 3f, 0f);
+            var visual = new Vector3(9f, 9f, 0f);
+
+            var resolved = CardEffectManager.ResolveSelfWorldPosition(
+                visualWorld: visual,
+                rootWorld: root,
+                hasCard: false,
+                stagedOffAnchor: false,
+                selfSlot: 5,
+                slotAnchorWorld: new Vector3(1f, 0f, 0f));
+
+            Assert.AreEqual(root.x, resolved.x, 0.001f);
+            Assert.AreEqual(root.y, resolved.y, 0.001f);
+        }
+
+        [Test]
+        public void GetVisualWorldPosition_IncludesEffectFrameOffset()
+        {
+            var go = new GameObject("VisualKnockbackCard");
+            try
+            {
+                go.transform.position = new Vector3(1f, 2f, 0f);
+                var tower = go.AddComponent<CardTransformTower>();
+                tower.EnsureTower();
+                tower.EffectFrame.localPosition = new Vector3(3f, 0f, 0f);
+
+                // ManagedCard 不便构造：直接断言塔上视觉位含 L3，且不等于 CardRoot。
+                Assert.AreEqual(
+                    tower.CardVisual.position.x,
+                    go.transform.position.x + 3f,
+                    0.001f);
+                Assert.Greater(
+                    Mathf.Abs(tower.CardRoot.position.x - tower.CardVisual.position.x),
+                    0.1f);
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
     }
 }

@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "monster.stone_swallower",
     "kind": "Monster",
-    "deckId": "deck.wandering_legion",
+    "deckId": "deck.smallanimal",
     "role": "",
     "displayName": "宝石蜥",
     "description": "每移动2次吸相邻怪物护甲",
