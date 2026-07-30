@@ -379,9 +379,18 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.condition.option", path + ".option is required for SelectedOption.");
                 }
 
-                if (Same(atom, "AdjacentHasCard") && !node.Has("defId"))
+                if (Same(atom, "AdjacentHasCard")
+                    && string.IsNullOrEmpty(node.Get("defId").AsString(string.Empty))
+                    && !node.Has("kind"))
                 {
-                    result.Add("schema.condition.defId", path + ".defId is required for AdjacentHasCard.");
+                    result.Add("schema.condition.defId", path + ".defId or .kind is required for AdjacentHasCard.");
+                }
+
+                if (Same(atom, "AdjacentHasCard")
+                    && node.Has("kind")
+                    && !IsSupportedCardKind(node.Get("kind").AsString(string.Empty)))
+                {
+                    result.Add("schema.condition.kind", path + ".kind is not supported.");
                 }
 
                 if (Same(atom, "OwnsRelicSet"))

@@ -1,10 +1,10 @@
 {
     "schemaVersion": 2,
-    "contentId": "skill.thief_claims",
+    "contentId": "skill.chant",
     "kind": "Skill",
     "deckId": "",
-    "displayName": "链接准备",
-    "description": "每互动5次移除相邻道具卡",
+    "displayName": "吟唱",
+    "description": "每互动6次将近战3加入战斗卡组",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -14,7 +14,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Png/Icons/white_node/domino.png",
+        "mainIcon": "Assets/Resources/ContentArt/Png/Icons/white_node/pawn.png",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -87,10 +87,10 @@
     "shopOfferCount": 0,
     "effectAssemblies": [
         {
-            "id": "skill.thief_claims.move",
-            "templateId": "tpl.skill.thief_claims.move",
+            "id": "skill.chant.interact",
+            "templateId": "tpl.skill.chant.interact",
             "containerType": "MonsterSkill",
-            "argsJson": "{\"reason\":\"skill.thief_claims\"}"
+            "argsJson": "{\"count\":1}"
         }
     ],
     "role": ""

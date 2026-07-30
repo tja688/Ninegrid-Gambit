@@ -1,20 +1,23 @@
 {
     "schemaVersion": 2,
-    "contentId": "skill.thief_claims",
-    "kind": "Skill",
-    "deckId": "",
-    "displayName": "链接准备",
-    "description": "每互动5次移除相邻道具卡",
-    "gold": 0,
+    "contentId": "monster.melee_6",
+    "kind": "Monster",
+    "deckId": "deck.orc_legion",
+    "role": "",
+    "displayName": "近战6",
+    "description": "无",
+    "faceIntro": "",
+    "attackPattern": "普通近战",
+    "gold": 5,
     "stats": {
-        "hp": 0,
+        "hp": 4,
         "armor": 0,
-        "attack": 0,
-        "action": 0,
+        "attack": 1,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Png/Icons/white_node/domino.png",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -68,15 +71,16 @@
         ]
     },
     "extraSlots": [],
-    "rarity": "",
+    "rarity": "None",
     "tags": [],
+    "effectAssemblies": [],
     "effectIds": [],
     "skillIds": [],
-    "level": 0,
+    "level": 1,
     "isElite": false,
     "isBoss": false,
     "isReserve": false,
-    "containerType": "MonsterSkill",
+    "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
     "weight": 0,
@@ -84,14 +88,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [
-        {
-            "id": "skill.thief_claims.move",
-            "templateId": "tpl.skill.thief_claims.move",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"reason\":\"skill.thief_claims\"}"
-        }
-    ],
-    "role": ""
+    "shopOfferCount": 0
 }

@@ -142,6 +142,71 @@ namespace NineGrid.Core.Stats
         }
     }
 
+    /// <summary>
+    /// Owner 正交邻接是否存在匹配 defId 和/或 kind 的其他卡（用于 RuleModifier / Conditional 层）。
+    /// </summary>
+    public sealed class OwnerAdjacentHasCardCondition : IStatCondition
+    {
+        public OwnerAdjacentHasCardCondition(string defId, CardKind kind)
+        {
+            DefId = defId ?? string.Empty;
+            Kind = kind;
+        }
+
+        public string DefId { get; private set; }
+        public CardKind Kind { get; private set; }
+
+        public bool IsMet(StatEvaluationContext context)
+        {
+            if (context == null
+                || context.Owner == null
+                || context.Board == null
+                || context.Registry == null
+                || !context.OwnerSlot.IsBoardSlot
+                || (string.IsNullOrEmpty(DefId) && Kind == CardKind.Unknown))
+            {
+                return false;
+            }
+
+            var ownerUid = context.Owner.Uid;
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var slot = SlotId.Board(i);
+                if (!context.OwnerSlot.IsAdjacentTo(slot))
+                {
+                    continue;
+                }
+
+                var cardUid = context.Board.GetCardUid(slot);
+                if (cardUid == 0 || cardUid == ownerUid)
+                {
+                    continue;
+                }
+
+                CardInstance card;
+                if (!context.Registry.TryGet(cardUid, out card))
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrEmpty(DefId)
+                    && !string.Equals(card.DefId, DefId, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (Kind != CardKind.Unknown && card.Kind != Kind)
+                {
+                    continue;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+    }
+
     public sealed class SourceAdjacentToUidCondition : IStatCondition
     {
         public SourceAdjacentToUidCondition(int sourceUid, int targetUid)

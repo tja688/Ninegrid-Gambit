@@ -1443,26 +1443,44 @@ namespace NineGrid.Core.Effects
     {
         private string mOriginRef = "Self";
         private string mDefId = string.Empty;
+        private CardKind mKind = CardKind.Unknown;
 
         public void Configure(EffectDslNode config)
         {
             mOriginRef = config.Get("origin").AsString("Self");
             mDefId = config.Get("defId").AsString(string.Empty);
+            mKind = config.Get("kind").AsEnum(CardKind.Unknown);
         }
 
         public bool IsMet(EffectRuntimeContext context)
         {
-            return ResolveAdjacentCardUid(context, mOriginRef, mDefId) != 0;
+            return ResolveAdjacentCardUid(context, mOriginRef, mDefId, mKind) != 0;
         }
 
         public IStatCondition CreateStatCondition(EffectBuildContext context)
         {
-            return null;
+            if (!TargetResolver.IsSelfRef(mOriginRef)
+                || (string.IsNullOrEmpty(mDefId) && mKind == CardKind.Unknown))
+            {
+                return null;
+            }
+
+            return new OwnerAdjacentHasCardCondition(mDefId, mKind);
         }
 
         internal static int ResolveAdjacentCardUid(EffectRuntimeContext context, string originRef, string defId)
         {
-            if (context == null || string.IsNullOrEmpty(defId))
+            return ResolveAdjacentCardUid(context, originRef, defId, CardKind.Unknown);
+        }
+
+        internal static int ResolveAdjacentCardUid(
+            EffectRuntimeContext context,
+            string originRef,
+            string defId,
+            CardKind kind)
+        {
+            if (context == null
+                || (string.IsNullOrEmpty(defId) && kind == CardKind.Unknown))
             {
                 return 0;
             }
@@ -1479,10 +1497,28 @@ namespace NineGrid.Core.Effects
             {
                 var slot = SlotId.Board(i);
                 var cardUid = context.Board.GetCardUid(slot);
+                if (cardUid == 0 || cardUid == originUid)
+                {
+                    continue;
+                }
+
                 CardInstance card;
-                if (context.TryGetCard(cardUid, out card)
-                    && card.DefId == defId
-                    && boardSystem.AreAdjacent(origin, slot, cardUid))
+                if (!context.TryGetCard(cardUid, out card))
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrEmpty(defId) && !string.Equals(card.DefId, defId, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (kind != CardKind.Unknown && card.Kind != kind)
+                {
+                    continue;
+                }
+
+                if (boardSystem.AreAdjacent(origin, slot, cardUid))
                 {
                     return cardUid;
                 }
@@ -1497,16 +1533,19 @@ namespace NineGrid.Core.Effects
     {
         private string mOriginRef = "Self";
         private string mDefId = string.Empty;
+        private CardKind mKind = CardKind.Unknown;
 
         public void Configure(EffectDslNode config)
         {
             mOriginRef = config.Get("origin").AsString("Self");
             mDefId = config.Get("defId").AsString(string.Empty);
+            mKind = config.Get("kind").AsEnum(CardKind.Unknown);
         }
 
         public IReadOnlyList<int> Resolve(EffectRuntimeContext context)
         {
-            return TargetResolver.Single(AdjacentHasCardEffectCondition.ResolveAdjacentCardUid(context, mOriginRef, mDefId));
+            return TargetResolver.Single(
+                AdjacentHasCardEffectCondition.ResolveAdjacentCardUid(context, mOriginRef, mDefId, mKind));
         }
     }
 
@@ -1889,6 +1928,7 @@ namespace NineGrid.Core.Effects
         private int mMinDelta = int.MinValue;
         private int mMaxDelta = int.MaxValue;
         private CardKind mTargetKind = CardKind.Unknown;
+        private string mTargetDefId = string.Empty;
         private string mSourceDefId = string.Empty;
         private string mExcludeSourceDefId = string.Empty;
         private string mCause = string.Empty;
@@ -1912,6 +1952,7 @@ namespace NineGrid.Core.Effects
             mMinDelta = config.Has("minDelta") ? config.Get("minDelta").AsInt(0) : int.MinValue;
             mMaxDelta = config.Has("maxDelta") ? config.Get("maxDelta").AsInt(0) : int.MaxValue;
             mTargetKind = config.Get("targetKind").AsEnum(CardKind.Unknown);
+            mTargetDefId = config.Get("targetDefId").AsString(string.Empty);
             mSourceDefId = config.Get("sourceDefId").AsString(string.Empty);
             mExcludeSourceDefId = config.Get("excludeSourceDefId").AsString(string.Empty);
             var atomName = config.Get("atom").AsString(config.Get("type").AsString(string.Empty));
@@ -2043,10 +2084,21 @@ namespace NineGrid.Core.Effects
                 return false;
             }
 
-            if (mTargetKind != CardKind.Unknown)
+            if (mTargetKind != CardKind.Unknown || !string.IsNullOrEmpty(mTargetDefId))
             {
                 CardInstance target;
-                if (!context.TryGetCard(eventTargetUid, out target) || target.Kind != mTargetKind)
+                if (!context.TryGetCard(eventTargetUid, out target))
+                {
+                    return false;
+                }
+
+                if (mTargetKind != CardKind.Unknown && target.Kind != mTargetKind)
+                {
+                    return false;
+                }
+
+                if (!string.IsNullOrEmpty(mTargetDefId)
+                    && !Same(target.DefId, mTargetDefId))
                 {
                     return false;
                 }

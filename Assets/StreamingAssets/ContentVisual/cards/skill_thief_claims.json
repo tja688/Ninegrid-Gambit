@@ -3,8 +3,8 @@
     "contentId": "skill.thief_claims",
     "kind": "Skill",
     "deckId": "",
-    "displayName": "东西归我了！",
-    "description": "每移动3次移除相邻帮助卡",
+    "displayName": "链接准备",
+    "description": "每互动5次移除相邻道具卡",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -90,7 +90,7 @@
             "id": "skill.thief_claims.move",
             "templateId": "tpl.skill.thief_claims.move",
             "containerType": "MonsterSkill",
-            "argsJson": "{\"reason\":\"thiefClaims\"}"
+            "argsJson": "{\"reason\":\"skill.thief_claims\"}"
         }
     ],
     "role": ""

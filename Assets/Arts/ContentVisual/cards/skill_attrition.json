@@ -1,10 +1,10 @@
 {
     "schemaVersion": 2,
-    "contentId": "skill.thief_claims",
+    "contentId": "skill.attrition",
     "kind": "Skill",
     "deckId": "",
-    "displayName": "链接准备",
-    "description": "每互动5次移除相邻道具卡",
+    "displayName": "损耗",
+    "description": "怪物被移除时本卡攻击-1血量-10",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -14,7 +14,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Png/Icons/white_node/domino.png",
+        "mainIcon": "Assets/Resources/ContentArt/Png/Icons/white_node/pawn.png",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -87,10 +87,10 @@
     "shopOfferCount": 0,
     "effectAssemblies": [
         {
-            "id": "skill.thief_claims.move",
-            "templateId": "tpl.skill.thief_claims.move",
+            "id": "skill.attrition.remove",
+            "templateId": "tpl.skill.attrition.remove",
             "containerType": "MonsterSkill",
-            "argsJson": "{\"reason\":\"skill.thief_claims\"}"
+            "argsJson": "{\"delta\":-1,\"reason\":\"skill.attrition\",\"action_actions_1_delta\":-10}"
         }
     ],
     "role": ""

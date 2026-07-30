@@ -3,7 +3,7 @@
     "contentId": "skill.devotion",
     "kind": "Skill",
     "deckId": "",
-    "displayName": "献身",
+    "displayName": "献火",
     "description": "被移除时加入烈焰",
     "gold": 0,
     "stats": {
