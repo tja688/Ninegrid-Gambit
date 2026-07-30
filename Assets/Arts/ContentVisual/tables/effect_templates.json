@@ -512,7 +512,7 @@
     "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyCardRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"targetKind\":\"Monster\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"EventCard\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"value\":{\"source\":\"{{source}}\",\"field\":\"RemovedAttack\"},\"reason\":\"{{reason}}\"},{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"value\":{\"source\":\"{{source}}\",\"field\":\"RemovedArmor\"},\"reason\":\"{{action_actions_1_reason}}\"}]}}"
   },
   {
-    "id": "tpl.skill.absorb_random.remove",
+    "id": "tpl.skill.absorb.remove",
     "state": "Implemented",
     "design_text": "[场上] 正交相邻格每有一张怪物卡被移除，本卡从攻击+1/护甲+2/血量+4中随机获得一种",
     "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
@@ -624,7 +624,7 @@
     "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":2},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"ExchangeWithDrawPile\",\"kind\":\"Monster\"}}"
   },
   {
-    "id": "tpl.skill.devotion.remove",
+    "id": "tpl.skill.offer_fire.remove",
     "state": "Implemented",
     "design_text": "[场上] [被移除时]，将一张烈焰加入战斗卡组",
     "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
@@ -816,7 +816,7 @@
     "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"EventFilterExcludeCause\",\"eventType\":\"CardDealt\",\"sourceDefId\":\"help.flame\",\"cause\":\"skill.intense_burning\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"help.flame\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
   },
   {
-    "id": "tpl.skill.invoke.interact",
+    "id": "tpl.skill.call_melee6.interact",
     "state": "Implemented",
     "design_text": "[场上]玩家卡每互动5次，将一张近战6加入战斗卡组",
     "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
@@ -856,7 +856,7 @@
     "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Self\"},\"conditions\":[{\"atom\":\"HasCard\",\"defId\":\"help.flame\"}],\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\"}}"
   },
   {
-    "id": "tpl.skill.martyr.remove",
+    "id": "tpl.skill.sacrifice.remove",
     "state": "Implemented",
     "design_text": "[场上] [被移除时]，使[场上]其他怪物卡攻击+1",
     "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
@@ -960,7 +960,7 @@
     "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":3},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Rotate\",\"count\":\"{{count}}\"}}"
   },
   {
-    "id": "tpl.skill.sacrifice.move",
+    "id": "tpl.skill.purge_followers.move",
     "state": "Implemented",
     "design_text": "每移动2次，移除九宫格上所有的龙信徒",
     "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
@@ -1104,7 +1104,7 @@
     "body": "{\"kind\":\"RuleModifier\",\"conditions\":[{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"Player\"}],\"ruleModifier\":{\"rule\":\"AttackTargetRestriction\",\"target\":\"Self\",\"op\":\"Override\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\"}}"
   },
   {
-    "id": "tpl.skill.thief_claims.move",
+    "id": "tpl.skill.link_prep.move",
     "state": "Implemented",
     "design_text": "[场上]玩家卡每互动5次，移除相邻格子上道具卡",
     "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",

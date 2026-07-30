@@ -67,7 +67,10 @@ namespace NineGrid.Flow
                 mShell.PrepareQuickTest(qt);
                 DiagTraceShared.SetRunTag(
                     DiagTraceShared.QuickTestRunTag,
-                    BuildQuickTestRunTagNote(mShell.QuickTestNodeOrderMode, mShell.PinnedFirstBattleDeckId));
+                    BuildQuickTestRunTagNote(
+                        mShell.QuickTestNodeOrderMode,
+                        mShell.PinnedFirstBattleDeckId,
+                        mShell.QuickTestSkillIds));
             }
             else
             {
@@ -111,11 +114,12 @@ namespace NineGrid.Flow
             if (quickTestMode)
             {
                 Debug.Log(
-                    $"[GameFlow] 快速测试模式：全局速度 x1（局内 \\2 可加速），玩家 HP {GameFlowShellSystem.QuickTestAvatarHp} / ATK {GameFlowShellSystem.QuickTestAvatarAttack} 每关重置，"
+                    $"[GameFlow] 快速测试模式：全局速度 x1，玩家 HP {GameFlowShellSystem.QuickTestAvatarHp} / ATK {GameFlowShellSystem.QuickTestAvatarAttack} 每关重置，"
                     + $"节点顺序 {mShell.QuickTestNodeOrderMode}，队列 {QuickTestRunPlanner.FormatNodeOrder(mShell.QuickTestContentNodeQueue)}"
                     + (string.IsNullOrEmpty(mShell.PinnedFirstBattleDeckId)
                         ? string.Empty
-                        : $"，首关牌组 {mShell.PinnedFirstBattleDeckId}"));
+                        : $"，首关牌组 {mShell.PinnedFirstBattleDeckId}")
+                    + FormatSkillIdsNote(mShell.QuickTestSkillIds));
             }
 
             RunNodeCycleAsync(mLoopCts.Token).Forget();
@@ -273,6 +277,7 @@ namespace NineGrid.Flow
             }
 
             ApplyQuickTestAvatarCheatsIfNeeded();
+            ApplyQuickTestSkillMountsIfNeeded();
             ApplyQuickTestTimeScale();
 
             session.TryEnterNodeSettlement();
@@ -835,9 +840,31 @@ namespace NineGrid.Flow
             }
         }
 
+        private void ApplyQuickTestSkillMountsIfNeeded()
+        {
+            if (!mShell.IsQuickTestMode)
+            {
+                return;
+            }
+
+            var skillIds = mShell.QuickTestSkillIds;
+            if (skillIds == null || skillIds.Count == 0)
+            {
+                return;
+            }
+
+            var hosts = BattleSessionCheat.TryAttachSkillsToBoardMonsters(skillIds);
+            if (hosts <= 0)
+            {
+                Debug.LogWarning(
+                    "[GameFlow] 快速测试挂技能：场上无怪物宿主，skillIds=" + skillIds.Count);
+            }
+        }
+
         private static string BuildQuickTestRunTagNote(
             QuickTestNodeOrderMode orderMode,
-            string pinnedFirstBattleDeckId)
+            string pinnedFirstBattleDeckId,
+            IReadOnlyList<string> skillIds)
         {
             var note = "快速测试：全局速度x1，玩家HP99/ATK5每关重置，节点顺序"
                 + (orderMode == QuickTestNodeOrderMode.Sequential ? "正式" : "乱序");
@@ -846,7 +873,22 @@ namespace NineGrid.Flow
                 note += "，首关固定牌组=" + pinnedFirstBattleDeckId;
             }
 
+            if (skillIds != null && skillIds.Count > 0)
+            {
+                note += "，技能=" + string.Join(",", skillIds);
+            }
+
             return note;
+        }
+
+        private static string FormatSkillIdsNote(IReadOnlyList<string> skillIds)
+        {
+            if (skillIds == null || skillIds.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            return "，技能 " + string.Join(",", skillIds);
         }
 
         private void RequestSetState(GameFlowShellState next)

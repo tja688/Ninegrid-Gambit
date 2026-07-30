@@ -29,7 +29,7 @@
 | `BattleSession/` | 局内会话相关类型 / 接口 |
 | `GameFlow/` | 流程壳运行选项等 |
 | `Diagnostics/` | Battle/Flow/Perf/Registry Trace Recorder 与 Sink |
-| （根下） | `BattleSessionController`、`GameFlowController`、若干 `*ManagerSingleton`（Presenter 壳名）；**指针缝** `WorldPointerUtility`、**命中路由** `PointerHitRouter` / `IPointerHitTarget` / `PointerHitRegistry`（替代 OnMouse*，ADR-0006） |
+| （根下） | `BattleSessionController`、`GameFlowController`、若干 `*ManagerSingleton`（Presenter 壳名）；**指针缝** `WorldPointerUtility`、**命中路由** `PointerHitRouter` / `IPointerHitTarget` / `PointerHitRegistry`（替代 OnMouse*，ADR-0006）；**QuickTest 通道** `QuickTestDeckCatalog` / `QuickTestRunOptions`（主菜单 `\0`–`\9` 技能预设；正式开局不挂怪技能；挂载经 `BattleSessionCheat.TryAttachSkillsToBoardMonsters`） |
 
 ### `Cards/` 子树
 

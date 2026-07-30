@@ -73,9 +73,6 @@ namespace NineGrid.Flow
         public int NodeIndex => ResolveShell()?.NodeIndex ?? 0;
         public bool CanAcceptQuickTestEntry => ResolveShell()?.CanAcceptQuickTestEntry ?? false;
 
-        public bool CanAcceptInBattleDebugQuickMode =>
-            ResolveShell()?.CanAcceptInBattleDebugQuickMode ?? false;
-
         public bool IsRoomChoiceActive =>
             selectorManager != null && selectorManager.IsChoiceActive;
 
@@ -185,31 +182,6 @@ namespace NineGrid.Flow
         public string BuildQuickTestPickerMenuText()
         {
             return GameFlowShellSystem.EnsureRegistered().BuildQuickTestPickerMenuText();
-        }
-
-        public void ShowInBattleDebugQuickModeNotice(string message)
-        {
-            ShowNotice(message);
-        }
-
-        public void HideInBattleDebugQuickModeNotice()
-        {
-            HideNotice();
-        }
-
-        public string BuildInBattleDebugQuickModeMenuText()
-        {
-            return GameFlowShellSystem.EnsureRegistered().BuildInBattleDebugQuickModeMenuText();
-        }
-
-        public void ApplyInBattleDebugQuickModeTimeScaleX1()
-        {
-            GameFlowShellSystem.ApplyInBattleDebugQuickModeTimeScaleX1();
-        }
-
-        public void ApplyInBattleDebugQuickModeTimeScaleX2()
-        {
-            GameFlowShellSystem.ApplyInBattleDebugQuickModeTimeScaleX2();
         }
 
         public bool TryBeginQuickTestFromPickerCode(int code)

@@ -18,6 +18,7 @@ namespace NineGrid.Core.Systems
         CardDraft CreateDraft(string defId);
         void ApplyContentToCard(CardInstance card);
         IReadOnlyList<EffectInstance> ActivateCardEffects(CardInstance card);
+        IReadOnlyList<EffectInstance> ActivateSkillsOnCard(CardInstance card, IReadOnlyList<string> skillIds);
         IReadOnlyList<EffectInstance> ActivateRelic(string relicDefId);
         IReadOnlyList<string> DeactivateRuntimeEffectsByOwner(int ownerUid);
         void ClearRuntimeEffects();
@@ -217,6 +218,36 @@ namespace NineGrid.Core.Systems
             {
                 SkillContentDefinition skill;
                 if (!Catalog.TryGetSkill(definition.SkillIds[i], out skill))
+                {
+                    continue;
+                }
+
+                ActivateEffectIds(skill.EffectIds, skill.ContainerType, skill.DefId, card.Uid, result);
+            }
+
+            return result;
+        }
+
+        public IReadOnlyList<EffectInstance> ActivateSkillsOnCard(
+            CardInstance card,
+            IReadOnlyList<string> skillIds)
+        {
+            var result = new List<EffectInstance>();
+            if (card == null || skillIds == null || skillIds.Count == 0)
+            {
+                return result;
+            }
+
+            TryReloadFromConfig();
+            if (Catalog == null)
+            {
+                return result;
+            }
+
+            for (var i = 0; i < skillIds.Count; i++)
+            {
+                SkillContentDefinition skill;
+                if (!Catalog.TryGetSkill(skillIds[i], out skill))
                 {
                     continue;
                 }

@@ -18,16 +18,16 @@ namespace NineGrid.Core.Tests
         private static readonly string[] TemplateIds =
         {
             "tpl.skill.stack_armor.interact",
-            "tpl.skill.martyr.remove",
-            "tpl.skill.absorb_random.remove",
+            "tpl.skill.sacrifice.remove",
+            "tpl.skill.absorb.remove",
             "tpl.skill.chant.interact",
-            "tpl.skill.invoke.interact",
+            "tpl.skill.call_melee6.interact",
             "tpl.skill.link_armor.interact",
             "tpl.skill.endless_flame.remove",
             "tpl.skill.attrition.remove",
             "tpl.skill.cloud_breath.interact",
             "tpl.skill.link_attack_bonus.rule",
-            "tpl.skill.thief_claims.move",
+            "tpl.skill.link_prep.move",
         };
 
         private IArchitecture mArch;
@@ -56,11 +56,11 @@ namespace NineGrid.Core.Tests
             var argsByTemplate = new Dictionary<string, string>
             {
                 ["tpl.skill.stack_armor.interact"] = "{\"amount\":2}",
-                ["tpl.skill.martyr.remove"] = "{\"delta\":1,\"reason\":\"skill.martyr\"}",
-                ["tpl.skill.absorb_random.remove"] =
-                    "{\"weight\":1,\"delta\":1,\"reason\":\"skill.absorb_random\",\"action_choices_1_action_delta\":2,\"action_choices_2_action_delta\":4}",
+                ["tpl.skill.sacrifice.remove"] = "{\"delta\":1,\"reason\":\"skill.sacrifice\"}",
+                ["tpl.skill.absorb.remove"] =
+                    "{\"weight\":1,\"delta\":1,\"reason\":\"skill.absorb\",\"action_choices_1_action_delta\":2,\"action_choices_2_action_delta\":4}",
                 ["tpl.skill.chant.interact"] = "{\"count\":1}",
-                ["tpl.skill.invoke.interact"] = "{\"count\":1}",
+                ["tpl.skill.call_melee6.interact"] = "{\"count\":1}",
                 ["tpl.skill.link_armor.interact"] = "{\"amount\":1}",
                 ["tpl.skill.endless_flame.remove"] = "{\"count\":1}",
                 ["tpl.skill.attrition.remove"] =
@@ -68,7 +68,7 @@ namespace NineGrid.Core.Tests
                 ["tpl.skill.cloud_breath.interact"] = "{\"reason\":\"skill.cloud_breath\"}",
                 ["tpl.skill.link_attack_bonus.rule"] =
                     "{\"value\":1,\"source\":\"skill.link_attack_bonus\"}",
-                ["tpl.skill.thief_claims.move"] = "{\"reason\":\"skill.thief_claims\"}",
+                ["tpl.skill.link_prep.move"] = "{\"reason\":\"skill.link_prep\"}",
             };
 
             foreach (var templateId in TemplateIds)

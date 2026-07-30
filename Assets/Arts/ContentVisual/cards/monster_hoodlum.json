@@ -1,99 +1,92 @@
 {
-    "schemaVersion": 2,
-    "contentId": "monster.hoodlum",
-    "kind": "Monster",
-    "deckId": "deck.void",
-    "role": "",
-    "displayName": "醉鬼",
-    "description": "到格1对玩家2伤",
-    "faceIntro": "罗斯福十号？会有酒叫这个名字吗？",
-    "attackPattern": "斜角近战",
-    "gold": 5,
-    "stats": {
-        "hp": 6,
-        "armor": 0,
-        "attack": 2,
-        "action": 3,
-        "recovery": 0
-    },
-    "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-        "faceBackground": "",
-        "cardFrame": "",
-        "banner": "",
-        "backBorder": "",
-        "backShirt": "",
-        "backLogo": ""
-    },
-    "mainVisual": {
-        "offsetX": 0.10000000149011612,
-        "offsetY": -0.20000000298023225,
-        "uniformScale": 1.0
-    },
-    "animations": {
-        "defaultFps": 8.0,
-        "slots": [
-            {
-                "id": "idle",
-                "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/NPC_tavern_idle01",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "attack",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "hurt",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "death",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "lunch",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            }
-        ]
-    },
-    "extraSlots": [],
-    "rarity": "None",
-    "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.hoodlum.slot1",
-            "templateId": "tpl.shared.2.skill_air_strike_slot1",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"amount\":2}"
-        }
-    ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 2,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0
+  "schemaVersion": 2,
+  "contentId": "monster.hoodlum",
+  "kind": "Monster",
+  "deckId": "deck.void",
+  "role": "",
+  "displayName": "醉鬼",
+  "description": "到格1对玩家2伤",
+  "faceIntro": "罗斯福十号？会有酒叫这个名字吗？",
+  "attackPattern": "斜角近战",
+  "gold": 5,
+  "stats": {
+    "hp": 6,
+    "armor": 0,
+    "attack": 2,
+    "action": 3,
+    "recovery": 0
+  },
+  "sprites": {
+    "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+    "faceBackground": "",
+    "cardFrame": "",
+    "banner": "",
+    "backBorder": "",
+    "backShirt": "",
+    "backLogo": ""
+  },
+  "mainVisual": {
+    "offsetX": 0.10000000149011612,
+    "offsetY": -0.20000000298023224,
+    "uniformScale": 1.0
+  },
+  "animations": {
+    "defaultFps": 8.0,
+    "slots": [
+      {
+        "id": "idle",
+        "sourceType": "folder",
+        "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/NPC_tavern_idle01",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "attack",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "hurt",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "death",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "lunch",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      }
+    ]
+  },
+  "extraSlots": [],
+  "rarity": "None",
+  "tags": [],
+  "effectAssemblies": [],
+  "effectIds": [],
+  "skillIds": [],
+  "level": 2,
+  "isElite": false,
+  "isBoss": false,
+  "isReserve": false,
+  "containerType": "",
+  "deckKind": "",
+  "monsterDefIds": [],
+  "weight": 0,
+  "goldDelta": 0,
+  "maxHpDelta": 0,
+  "healToFull": false,
+  "rewardPoolId": "",
+  "shopOfferCount": 0
 }

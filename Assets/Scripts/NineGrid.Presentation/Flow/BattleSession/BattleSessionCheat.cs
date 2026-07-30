@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using NineGrid.Cards;
+using NineGrid.Cards.Presentation;
+using NineGrid.Content;
 using NineGrid.Core;
+using NineGrid.Core.Content;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.Presentation;
@@ -88,6 +91,57 @@ namespace NineGrid.Flow
             return true;
         }
 
+        /// <summary>
+        /// QuickTest：把技能挂到场上已有怪物，并用技能 DesignText 覆写卡面描述。
+        /// </summary>
+        public static int TryAttachSkillsToBoardMonsters(IReadOnlyList<string> skillIds)
+        {
+            if (skillIds == null || skillIds.Count == 0)
+            {
+                return 0;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return 0;
+            }
+
+            var content = arch.GetSystem<IContentSystem>();
+            if (content == null || !content.HasCatalog)
+            {
+                Debug.LogWarning("[BattleSessionCheat] ContentSystem 未就绪，无法挂技能。");
+                return 0;
+            }
+
+            var description = BuildSkillDescription(content.Catalog, skillIds);
+            var registry = arch.GetModel<CardRegistry>();
+            var board = arch.GetModel<BoardModel>();
+            var cards = CardEntityLifecycleHook.CardsOrNull();
+            var mountedHosts = 0;
+
+            foreach (var uid in board.BoardCardUids())
+            {
+                if (!registry.TryGet(uid, out var card) || card.Kind != CardKind.Monster)
+                {
+                    continue;
+                }
+
+                content.ActivateSkillsOnCard(card, skillIds);
+                mountedHosts++;
+
+                if (cards != null && cards.TryGet(uid, out var view) && view != null)
+                {
+                    ApplySkillDescription(view, description);
+                }
+            }
+
+            Debug.Log(
+                $"[BattleSessionCheat] QuickTest 挂技能 hosts={mountedHosts} skills={skillIds.Count}"
+                + (string.IsNullOrEmpty(description) ? string.Empty : " desc=" + description));
+            return mountedHosts;
+        }
+
         public static bool TryForceNodeVictory()
         {
             var session = BattleSessionSystem.EnsureRegistered();
@@ -125,6 +179,76 @@ namespace NineGrid.Flow
             Debug.Log("[BattleSessionCheat] 强制节点胜利 → RewardItemChoice");
             session.TryEnterNodeSettlement();
             return true;
+        }
+
+        private static string BuildSkillDescription(GameContentCatalog catalog, IReadOnlyList<string> skillIds)
+        {
+            if (catalog == null || skillIds == null || skillIds.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var briefs = new List<string>(skillIds.Count);
+            for (var i = 0; i < skillIds.Count; i++)
+            {
+                if (!catalog.TryGetSkill(skillIds[i], out var skill)
+                    || string.IsNullOrWhiteSpace(skill.DesignText))
+                {
+                    continue;
+                }
+
+                briefs.Add(skill.DesignText.Trim());
+            }
+
+            return EffectDesignTextParameterizer.JoinBriefs(briefs);
+        }
+
+        private static void ApplySkillDescription(ManagedCard card, string description)
+        {
+            if (card == null || string.IsNullOrWhiteSpace(description))
+            {
+                return;
+            }
+
+            var previous = card.CommittedPresentation;
+            var snapshot = previous != null
+                ? CloneSnapshot(previous)
+                : new CardPresentationSnapshot
+                {
+                    Kind = card.CoreKind,
+                    DefId = card.DefId ?? string.Empty,
+                };
+
+            snapshot.BasicDescription = description;
+            snapshot.DetailDescription = CardDetailDescriptionComposer.Compose(
+                description,
+                CardFacePresentationBinder.PeekDescriptionIconCatalog());
+            card.CommitPresentation(snapshot);
+        }
+
+        private static CardPresentationSnapshot CloneSnapshot(CardPresentationSnapshot source)
+        {
+            return new CardPresentationSnapshot
+            {
+                Kind = source.Kind,
+                DefId = source.DefId,
+                DisplayName = source.DisplayName,
+                MainIcon = source.MainIcon,
+                FaceBackground = source.FaceBackground,
+                BackBorder = source.BackBorder,
+                BackShirt = source.BackShirt,
+                BackLogo = source.BackLogo,
+                CardFrame = source.CardFrame,
+                Banner = source.Banner,
+                Attack = source.Attack,
+                Armor = source.Armor,
+                Hp = source.Hp,
+                ActionCount = source.ActionCount,
+                FaceUp = source.FaceUp,
+                BasicDescription = source.BasicDescription,
+                DetailDescription = source.DetailDescription,
+                FrameColor = source.FrameColor,
+            };
         }
 
         private static void MakeNodeCleared(IArchitecture arch)

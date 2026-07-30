@@ -1,99 +1,92 @@
 {
-    "schemaVersion": 2,
-    "contentId": "monster.stone_thrower",
-    "kind": "Monster",
-    "deckId": "deck.orc_legion",
-    "role": "",
-    "displayName": "仙人掌花",
-    "description": "每移2次耗2护甲伤玩家",
-    "faceIntro": "充满尖刺",
-    "attackPattern": "普通远程",
-    "gold": 5,
-    "stats": {
-        "hp": 2,
-        "armor": 6,
-        "attack": 1,
-        "action": 5,
-        "recovery": 0
-    },
-    "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-        "faceBackground": "",
-        "cardFrame": "",
-        "banner": "",
-        "backBorder": "",
-        "backShirt": "",
-        "backLogo": ""
-    },
-    "mainVisual": {
-        "offsetX": 0.05999999865889549,
-        "offsetY": -0.6000000238418579,
-        "uniformScale": 0.8600000143051148
-    },
-    "animations": {
-        "defaultFps": 8.0,
-        "slots": [
-            {
-                "id": "idle",
-                "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/50ballcactus_idle_01",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "attack",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "hurt",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "death",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "lunch",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            }
-        ]
-    },
-    "extraSlots": [],
-    "rarity": "None",
-    "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.throw_stone.move",
-            "templateId": "tpl.skill.throw_stone.move",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"value\":2,\"amount\":2,\"cause\":\"skill.throw_stone\"}"
-        }
-    ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 2,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0
+  "schemaVersion": 2,
+  "contentId": "monster.stone_thrower",
+  "kind": "Monster",
+  "deckId": "deck.orc_legion",
+  "role": "",
+  "displayName": "仙人掌花",
+  "description": "每移2次耗2护甲伤玩家",
+  "faceIntro": "充满尖刺",
+  "attackPattern": "普通远程",
+  "gold": 5,
+  "stats": {
+    "hp": 2,
+    "armor": 6,
+    "attack": 1,
+    "action": 5,
+    "recovery": 0
+  },
+  "sprites": {
+    "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+    "faceBackground": "",
+    "cardFrame": "",
+    "banner": "",
+    "backBorder": "",
+    "backShirt": "",
+    "backLogo": ""
+  },
+  "mainVisual": {
+    "offsetX": 0.05999999865889549,
+    "offsetY": -0.6000000238418579,
+    "uniformScale": 0.8600000143051147
+  },
+  "animations": {
+    "defaultFps": 8.0,
+    "slots": [
+      {
+        "id": "idle",
+        "sourceType": "folder",
+        "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/50ballcactus_idle_01",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "attack",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "hurt",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "death",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "lunch",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      }
+    ]
+  },
+  "extraSlots": [],
+  "rarity": "None",
+  "tags": [],
+  "effectAssemblies": [],
+  "effectIds": [],
+  "skillIds": [],
+  "level": 2,
+  "isElite": false,
+  "isBoss": false,
+  "isReserve": false,
+  "containerType": "",
+  "deckKind": "",
+  "monsterDefIds": [],
+  "weight": 0,
+  "goldDelta": 0,
+  "maxHpDelta": 0,
+  "healToFull": false,
+  "rewardPoolId": "",
+  "shopOfferCount": 0
 }

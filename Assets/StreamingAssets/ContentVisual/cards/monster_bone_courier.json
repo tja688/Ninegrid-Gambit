@@ -1,99 +1,92 @@
 {
-    "schemaVersion": 2,
-    "contentId": "monster.bone_courier",
-    "kind": "Monster",
-    "deckId": "deck.smallanimal",
-    "role": "",
-    "displayName": "绿毛老鼠",
-    "description": "每移2次交换相邻帮助卡与怪物",
-    "faceIntro": "他坚信自己是刺猬",
-    "attackPattern": "普通近战",
-    "gold": 5,
-    "stats": {
-        "hp": 7,
-        "armor": 1,
-        "attack": 2,
-        "action": 3,
-        "recovery": 0
-    },
-    "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-        "faceBackground": "",
-        "cardFrame": "",
-        "banner": "",
-        "backBorder": "",
-        "backShirt": "",
-        "backLogo": ""
-    },
-    "mainVisual": {
-        "offsetX": -0.06499999761581421,
-        "offsetY": -0.07000000029802323,
-        "uniformScale": 1.0
-    },
-    "animations": {
-        "defaultFps": 8.0,
-        "slots": [
-            {
-                "id": "idle",
-                "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/10mouse_idle_01",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "attack",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "hurt",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "death",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "lunch",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            }
-        ]
-    },
-    "extraSlots": [],
-    "rarity": "None",
-    "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.delivery.move",
-            "templateId": "tpl.skill.delivery.move",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"count\":1}"
-        }
-    ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 2,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0
+  "schemaVersion": 2,
+  "contentId": "monster.bone_courier",
+  "kind": "Monster",
+  "deckId": "deck.smallanimal",
+  "role": "",
+  "displayName": "绿毛老鼠",
+  "description": "每移2次交换相邻帮助卡与怪物",
+  "faceIntro": "他坚信自己是刺猬",
+  "attackPattern": "普通近战",
+  "gold": 5,
+  "stats": {
+    "hp": 7,
+    "armor": 1,
+    "attack": 2,
+    "action": 3,
+    "recovery": 0
+  },
+  "sprites": {
+    "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+    "faceBackground": "",
+    "cardFrame": "",
+    "banner": "",
+    "backBorder": "",
+    "backShirt": "",
+    "backLogo": ""
+  },
+  "mainVisual": {
+    "offsetX": -0.06499999761581421,
+    "offsetY": -0.07000000029802322,
+    "uniformScale": 1.0
+  },
+  "animations": {
+    "defaultFps": 8.0,
+    "slots": [
+      {
+        "id": "idle",
+        "sourceType": "folder",
+        "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/10mouse_idle_01",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "attack",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "hurt",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "death",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "lunch",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      }
+    ]
+  },
+  "extraSlots": [],
+  "rarity": "None",
+  "tags": [],
+  "effectAssemblies": [],
+  "effectIds": [],
+  "skillIds": [],
+  "level": 2,
+  "isElite": false,
+  "isBoss": false,
+  "isReserve": false,
+  "containerType": "",
+  "deckKind": "",
+  "monsterDefIds": [],
+  "weight": 0,
+  "goldDelta": 0,
+  "maxHpDelta": 0,
+  "healToFull": false,
+  "rewardPoolId": "",
+  "shopOfferCount": 0
 }

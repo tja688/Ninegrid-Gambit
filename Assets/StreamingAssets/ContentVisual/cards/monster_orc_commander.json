@@ -1,99 +1,92 @@
 {
-    "schemaVersion": 2,
-    "contentId": "monster.orc_commander",
-    "kind": "Monster",
-    "deckId": "deck.stone_legion",
-    "role": "",
-    "displayName": "猪骑士哥布",
-    "description": "每移动1次，相邻怪物攻击+1",
-    "faceIntro": "哥布中的指挥官，战术素养极高（对于哥布一族而言）",
-    "attackPattern": "普通近战",
-    "gold": 5,
-    "stats": {
-        "hp": 10,
-        "armor": 2,
-        "attack": 2,
-        "action": 3,
-        "recovery": 0
-    },
-    "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-        "faceBackground": "",
-        "cardFrame": "",
-        "banner": "",
-        "backBorder": "",
-        "backShirt": "",
-        "backLogo": ""
-    },
-    "mainVisual": {
-        "offsetX": 0.30000001192092898,
-        "offsetY": -0.30000001192092898,
-        "uniformScale": 0.949999988079071
-    },
-    "animations": {
-        "defaultFps": 8.0,
-        "slots": [
-            {
-                "id": "idle",
-                "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/26wildboardknight_idle_01",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "attack",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "hurt",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "death",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "lunch",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            }
-        ]
-    },
-    "extraSlots": [],
-    "rarity": "None",
-    "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.orc_tactics.move",
-            "templateId": "tpl.skill.orc_tactics.move",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"value\":1,\"source\":\"skill.orc_tactics\"}"
-        }
-    ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 3,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0
+  "schemaVersion": 2,
+  "contentId": "monster.orc_commander",
+  "kind": "Monster",
+  "deckId": "deck.stone_legion",
+  "role": "",
+  "displayName": "猪骑士哥布",
+  "description": "每移动1次，相邻怪物攻击+1",
+  "faceIntro": "哥布中的指挥官，战术素养极高（对于哥布一族而言）",
+  "attackPattern": "普通近战",
+  "gold": 5,
+  "stats": {
+    "hp": 10,
+    "armor": 2,
+    "attack": 2,
+    "action": 3,
+    "recovery": 0
+  },
+  "sprites": {
+    "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+    "faceBackground": "",
+    "cardFrame": "",
+    "banner": "",
+    "backBorder": "",
+    "backShirt": "",
+    "backLogo": ""
+  },
+  "mainVisual": {
+    "offsetX": 0.30000001192092896,
+    "offsetY": -0.30000001192092896,
+    "uniformScale": 0.949999988079071
+  },
+  "animations": {
+    "defaultFps": 8.0,
+    "slots": [
+      {
+        "id": "idle",
+        "sourceType": "folder",
+        "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/26wildboardknight_idle_01",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "attack",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "hurt",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "death",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "lunch",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      }
+    ]
+  },
+  "extraSlots": [],
+  "rarity": "None",
+  "tags": [],
+  "effectAssemblies": [],
+  "effectIds": [],
+  "skillIds": [],
+  "level": 3,
+  "isElite": false,
+  "isBoss": false,
+  "isReserve": false,
+  "containerType": "",
+  "deckKind": "",
+  "monsterDefIds": [],
+  "weight": 0,
+  "goldDelta": 0,
+  "maxHpDelta": 0,
+  "healToFull": false,
+  "rewardPoolId": "",
+  "shopOfferCount": 0
 }

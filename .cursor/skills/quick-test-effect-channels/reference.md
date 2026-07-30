@@ -14,7 +14,7 @@
 | 新版 | 字典 id | 处置 | 易误判旧壳（勿直接当新版挂） |
 |------|---------|------|------------------------------|
 | 吸收 | `skill.absorb` | 同义改名：`skill.absorb_random` → `skill.absorb`（模板已逐字等同） | `absorb_bone` / `absorb_stone` 留储备 |
-| 献身 | `skill.sacrifice` | **新建**模板：`OnSelfRemoved` → 其他怪攻+1 | 旧 `devotion` 实际是献火，不是献身 |
+| 献身 | `skill.sacrifice` | 同义改名：`skill.martyr` → `skill.sacrifice`（模板已等同；旧献祭已腾位） | 旧 `devotion` 实际是献火，不是献身 |
 | 神圣决斗 | `skill.holy_duel` | **延后**：缺跨战记忆原子 | `fight_me` 留储备 |
 | 跳杀 | `skill.leap_kill` | **新建**：`OnFlip` + `IsFaceUp` + 正交邻玩家 → 攻击力伤害 | `relentless_chase` 留储备 |
 | 盗取 | `skill.steal` | **新建**：`OnFlip` + `IsFaceUp` → 邻接帮助卡**随机移除一张** | `thief_claims` 实为链接准备，改名见下 |

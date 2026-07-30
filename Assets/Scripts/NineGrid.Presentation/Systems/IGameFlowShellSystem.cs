@@ -24,8 +24,6 @@ namespace NineGrid.Presentation.Systems
 
         bool CanAcceptQuickTestEntry { get; }
 
-        bool CanAcceptInBattleDebugQuickMode { get; }
-
         bool IsBound { get; }
     }
 }

@@ -34,6 +34,7 @@ namespace NineGrid.Presentation.Systems
         private int mQuickTestContentNodeCursor;
         private QuickTestNodeOrderMode mQuickTestNodeOrderMode = QuickTestNodeOrderMode.Shuffled;
         private string mPinnedFirstBattleDeckId;
+        private IReadOnlyList<string> mQuickTestSkillIds = System.Array.Empty<string>();
 
         public GameFlowShellSystem()
         {
@@ -58,11 +59,6 @@ namespace NineGrid.Presentation.Systems
         public bool CanAcceptQuickTestEntry =>
             mState.Value == GameFlowShellState.MainMenu && !mIsBusy;
 
-        public bool CanAcceptInBattleDebugQuickMode =>
-            mState.Value != GameFlowShellState.MainMenu
-            && mState.Value != GameFlowShellState.VictoryNotice
-            && mState.Value != GameFlowShellState.DefeatNotice;
-
         public bool IsBound => mView != null;
 
         internal IGameFlowView View => mView;
@@ -70,6 +66,8 @@ namespace NineGrid.Presentation.Systems
         internal QuickTestNodeOrderMode QuickTestNodeOrderMode => mQuickTestNodeOrderMode;
 
         internal string PinnedFirstBattleDeckId => mPinnedFirstBattleDeckId;
+
+        internal IReadOnlyList<string> QuickTestSkillIds => mQuickTestSkillIds;
 
         internal IReadOnlyList<int> QuickTestContentNodeQueue => mQuickTestContentNodeQueue;
 
@@ -134,9 +132,7 @@ namespace NineGrid.Presentation.Systems
                 return false;
             }
 
-            CoreCardPresentationMapper.EnsureContentCatalogLoaded();
-            var catalog = NineGridArchitecture.Current.GetSystem<IContentSystem>()?.Catalog;
-            if (!QuickTestDeckCatalog.TryResolvePickerCode(code, catalog, out var deckId, out _))
+            if (!QuickTestDeckCatalog.TryResolvePickerCode(code, out var preset))
             {
                 return false;
             }
@@ -148,10 +144,9 @@ namespace NineGrid.Presentation.Systems
                 QuickTestMode = true,
                 QuickTest = new QuickTestRunOptions
                 {
-                    NodeOrder = code == QuickTestDeckCatalog.FormalOrderPickerCode
-                        ? QuickTestNodeOrderMode.Sequential
-                        : QuickTestNodeOrderMode.Shuffled,
-                    PinnedFirstBattleDeckId = deckId,
+                    NodeOrder = preset.NodeOrder,
+                    PinnedFirstBattleDeckId = preset.PinnedFirstBattleDeckId,
+                    SkillIds = preset.SkillIds,
                 },
             });
             return true;
@@ -162,35 +157,6 @@ namespace NineGrid.Presentation.Systems
             CoreCardPresentationMapper.EnsureContentCatalogLoaded();
             var catalog = NineGridArchitecture.Current.GetSystem<IContentSystem>()?.Catalog;
             return QuickTestDeckCatalog.BuildPickerMenuText(catalog);
-        }
-
-        public string BuildInBattleDebugQuickModeMenuText()
-        {
-            return "局内快速模式\n\n"
-                + "当前全局速度：x" + FormatTimeScale(Time.timeScale) + "\n\n"
-                + "\\1  全局速度 x1\n"
-                + "\\2  全局速度 x2（再按在此基础上 x2）\n\n"
-                + "释放 \\ 键关闭";
-        }
-
-        public static void ApplyInBattleDebugQuickModeTimeScaleX1()
-        {
-            Time.timeScale = 1f;
-            Debug.Log("[GameFlow] 局内 Debug 快速模式：全局速度 x1");
-        }
-
-        public static void ApplyInBattleDebugQuickModeTimeScaleX2()
-        {
-            if (Time.timeScale <= 1.01f)
-            {
-                Time.timeScale = 2f;
-            }
-            else
-            {
-                Time.timeScale *= 2f;
-            }
-
-            Debug.Log("[GameFlow] 局内 Debug 快速模式：全局速度 x" + FormatTimeScale(Time.timeScale));
         }
 
         internal void ApplyRunMode(bool testMode, bool quickTestMode)
@@ -205,6 +171,7 @@ namespace NineGrid.Presentation.Systems
             mQuickTestContentNodeQueue = null;
             mQuickTestContentNodeCursor = 0;
             mPinnedFirstBattleDeckId = null;
+            mQuickTestSkillIds = System.Array.Empty<string>();
             mQuickTestNodeOrderMode = QuickTestNodeOrderMode.Shuffled;
         }
 
@@ -230,6 +197,9 @@ namespace NineGrid.Presentation.Systems
             mPinnedFirstBattleDeckId = string.IsNullOrWhiteSpace(qt.PinnedFirstBattleDeckId)
                 ? null
                 : qt.PinnedFirstBattleDeckId.Trim();
+            mQuickTestSkillIds = qt.SkillIds != null && qt.SkillIds.Count > 0
+                ? qt.SkillIds
+                : System.Array.Empty<string>();
             PrepareQuickTestContentNodeQueue(mQuickTestNodeOrderMode);
         }
 
@@ -237,6 +207,7 @@ namespace NineGrid.Presentation.Systems
         {
             mQuickTestNodeOrderMode = QuickTestNodeOrderMode.Shuffled;
             mPinnedFirstBattleDeckId = null;
+            mQuickTestSkillIds = System.Array.Empty<string>();
             mQuickTestContentNodeQueue = null;
             mQuickTestContentNodeCursor = 0;
         }
@@ -294,13 +265,6 @@ namespace NineGrid.Presentation.Systems
                 ? QuickTestRunPlanner.BuildSequentialContentNodeQueue(ruleIndices)
                 : QuickTestRunPlanner.BuildShuffledContentNodeQueue(ruleIndices);
             mQuickTestContentNodeCursor = 0;
-        }
-
-        private static string FormatTimeScale(float scale)
-        {
-            return Mathf.Approximately(scale, Mathf.Round(scale))
-                ? Mathf.RoundToInt(scale).ToString()
-                : scale.ToString("0.##");
         }
 
         public static GameFlowShellSystem EnsureRegistered(IArchitecture architecture = null)

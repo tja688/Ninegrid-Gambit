@@ -37,7 +37,7 @@
 | `NineGrid.Presentation` | `Assets/Scripts/NineGrid.Presentation/` | 表现层（原 Flow+Cards **合并后的单一程序集**） |
 | `NineGrid.Presentation.Tests` | `…/Tests/` | EditMode |
 | `NineGrid.Presentation.Editor` | `…/Editor/` | 编辑器工具 |
-| `NineGrid.DevTest` | `Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/` | 小键盘 DevKeys |
+| `NineGrid.DevTest` | `Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/` | 小键盘 DevKeys；主菜单 QuickTest 入口（`QuickTestEntryInputHandler`）；**无**局内 `\` 调速 |
 
 旧程序集 `NineGrid.Flow` / `NineGrid.Cards` 的 **asmdef 已删除**；源码仍以 `Flow/`、`Cards/` **目录 + 命名空间** 共存于 `NineGrid.Presentation` 内（见 presentation.md）。
 

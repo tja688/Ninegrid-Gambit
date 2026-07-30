@@ -30,7 +30,6 @@ namespace NineGrid.Presentation.Tests.FlowShell
                 Assert.IsFalse(shell.IsTestMode);
                 Assert.IsFalse(shell.IsQuickTestMode);
                 Assert.IsTrue(shell.CanAcceptQuickTestEntry);
-                Assert.IsFalse(shell.CanAcceptInBattleDebugQuickMode);
             }
         }
 

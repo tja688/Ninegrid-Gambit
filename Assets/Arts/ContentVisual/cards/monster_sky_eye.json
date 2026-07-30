@@ -1,117 +1,92 @@
 {
-    "schemaVersion": 2,
-    "contentId": "monster.sky_eye",
-    "kind": "Monster",
-    "deckId": "deck.insect",
-    "role": "",
-    "displayName": "大黄蜂",
-    "description": "移动到角格时对玩家造成2点伤害",
-    "faceIntro": "能在人身上蜇出一个大洞",
-    "attackPattern": "普通远程",
-    "gold": 5,
-    "stats": {
-        "hp": 14,
-        "armor": 2,
-        "attack": 2,
-        "action": 5,
-        "recovery": 0
-    },
-    "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-        "faceBackground": "",
-        "cardFrame": "",
-        "banner": "",
-        "backBorder": "",
-        "backShirt": "",
-        "backLogo": ""
-    },
-    "mainVisual": {
+  "schemaVersion": 2,
+  "contentId": "monster.sky_eye",
+  "kind": "Monster",
+  "deckId": "deck.insect",
+  "role": "",
+  "displayName": "大黄蜂",
+  "description": "移动到角格时对玩家造成2点伤害",
+  "faceIntro": "能在人身上蜇出一个大洞",
+  "attackPattern": "普通远程",
+  "gold": 5,
+  "stats": {
+    "hp": 14,
+    "armor": 2,
+    "attack": 2,
+    "action": 5,
+    "recovery": 0
+  },
+  "sprites": {
+    "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+    "faceBackground": "",
+    "cardFrame": "",
+    "banner": "",
+    "backBorder": "",
+    "backShirt": "",
+    "backLogo": ""
+  },
+  "mainVisual": {
+    "offsetX": 0.0,
+    "offsetY": 0.0,
+    "uniformScale": 1.0
+  },
+  "animations": {
+    "defaultFps": 8.0,
+    "slots": [
+      {
+        "id": "idle",
+        "sourceType": "folder",
+        "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/13wasp_idle_01",
         "offsetX": 0.0,
-        "offsetY": 0.0,
-        "uniformScale": 1.0
-    },
-    "animations": {
-        "defaultFps": 8.0,
-        "slots": [
-            {
-                "id": "idle",
-                "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/13wasp_idle_01",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "attack",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "hurt",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "death",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "lunch",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            }
-        ]
-    },
-    "extraSlots": [],
-    "rarity": "None",
-    "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.air_strike.slot1",
-            "templateId": "tpl.shared.2.skill_air_strike_slot1",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"amount\":2}"
-        },
-        {
-            "id": "skill.air_strike.slot3",
-            "templateId": "tpl.skill.air_strike.slot3",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"amount\":2}"
-        },
-        {
-            "id": "skill.air_strike.slot7",
-            "templateId": "tpl.skill.air_strike.slot7",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"amount\":2}"
-        },
-        {
-            "id": "skill.air_strike.slot9",
-            "templateId": "tpl.skill.air_strike.slot9",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"amount\":2}"
-        }
-    ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 2,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0
+        "offsetY": 0.0
+      },
+      {
+        "id": "attack",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "hurt",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "death",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "lunch",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      }
+    ]
+  },
+  "extraSlots": [],
+  "rarity": "None",
+  "tags": [],
+  "effectAssemblies": [],
+  "effectIds": [],
+  "skillIds": [],
+  "level": 2,
+  "isElite": false,
+  "isBoss": false,
+  "isReserve": false,
+  "containerType": "",
+  "deckKind": "",
+  "monsterDefIds": [],
+  "weight": 0,
+  "goldDelta": 0,
+  "maxHpDelta": 0,
+  "healToFull": false,
+  "rewardPoolId": "",
+  "shopOfferCount": 0
 }

@@ -1,97 +1,97 @@
 {
-    "schemaVersion": 2,
-    "contentId": "skill.sacrifice",
-    "kind": "Skill",
-    "deckId": "",
-    "displayName": "献祭",
-    "description": "每移动2次，移除九宫格上所有的龙信徒",
-    "gold": 0,
-    "stats": {
-        "hp": 0,
-        "armor": 0,
-        "attack": 0,
-        "action": 0,
-        "recovery": 0
-    },
-    "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Png/Icons/white_node/mahjong_tile.png",
-        "faceBackground": "",
-        "cardFrame": "",
-        "banner": "",
-        "backBorder": "",
-        "backShirt": "",
-        "backLogo": ""
-    },
-    "mainVisual": {
+  "schemaVersion": 2,
+  "contentId": "skill.sacrifice",
+  "kind": "Skill",
+  "deckId": "",
+  "displayName": "献身",
+  "description": "[场上] [被移除时]，使[场上]其他怪物卡攻击+1",
+  "gold": 0,
+  "stats": {
+    "hp": 0,
+    "armor": 0,
+    "attack": 0,
+    "action": 0,
+    "recovery": 0
+  },
+  "sprites": {
+    "mainIcon": "Assets/Resources/ContentArt/Png/Icons/white_node/pawn.png",
+    "faceBackground": "",
+    "cardFrame": "",
+    "banner": "",
+    "backBorder": "",
+    "backShirt": "",
+    "backLogo": ""
+  },
+  "mainVisual": {
+    "offsetX": 0.0,
+    "offsetY": 0.0,
+    "uniformScale": 1.0
+  },
+  "animations": {
+    "defaultFps": 8.0,
+    "slots": [
+      {
+        "id": "idle",
+        "sourceType": "none",
+        "path": "",
         "offsetX": 0.0,
-        "offsetY": 0.0,
-        "uniformScale": 1.0
-    },
-    "animations": {
-        "defaultFps": 8.0,
-        "slots": [
-            {
-                "id": "idle",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "attack",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "hurt",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "death",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "lunch",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            }
-        ]
-    },
-    "extraSlots": [],
-    "rarity": "",
-    "tags": [],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "MonsterSkill",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [
-        {
-            "id": "skill.sacrifice.move",
-            "templateId": "tpl.skill.sacrifice.move",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"reason\":\"skill.sacrifice\"}"
-        }
-    ],
-    "role": ""
+        "offsetY": 0.0
+      },
+      {
+        "id": "attack",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "hurt",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "death",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "lunch",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      }
+    ]
+  },
+  "extraSlots": [],
+  "rarity": "",
+  "tags": [],
+  "effectIds": [],
+  "skillIds": [],
+  "level": 0,
+  "isElite": false,
+  "isBoss": false,
+  "isReserve": false,
+  "containerType": "MonsterSkill",
+  "deckKind": "",
+  "monsterDefIds": [],
+  "weight": 0,
+  "goldDelta": 0,
+  "maxHpDelta": 0,
+  "healToFull": false,
+  "rewardPoolId": "",
+  "shopOfferCount": 0,
+  "effectAssemblies": [
+    {
+      "id": "skill.sacrifice.remove",
+      "templateId": "tpl.skill.sacrifice.remove",
+      "containerType": "MonsterSkill",
+      "argsJson": "{\"delta\":1,\"reason\":\"skill.sacrifice\"}"
+    }
+  ],
+  "role": ""
 }
