@@ -6,6 +6,7 @@
     "role": "",
     "displayName": "绿莱姆",
     "description": "每移动1次攻击+2",
+    "faceIntro": "人畜无害，娇小可爱",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
