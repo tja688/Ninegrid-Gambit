@@ -818,6 +818,12 @@ namespace NineGrid.Core.Systems
                     continue;
                 }
 
+                // ADR-0016：背面冻结攻击倒计时，不报名、不 −1。
+                if (!card.FaceUp)
+                {
+                    continue;
+                }
+
                 if (!AttackPatternRules.ParticipatesInEnemyAction(card.AttackPattern))
                 {
                     continue;
@@ -848,7 +854,11 @@ namespace NineGrid.Core.Systems
 
             candidates.Sort();
             mEnemyActionRoster.AddRange(candidates);
-            return pipeline.RunToCompletion();
+            var resolved = pipeline.RunToCompletion();
+
+            // 独立背面 Tick：仅已 Register 的 faceDownTick.*，与 AttackPatternCountdown 解耦。
+            FaceDownTickCounters.TickFaceDownBoard(board, registry, null);
+            return resolved;
         }
 
         private int ResolveNextEnemyActionInternal()
@@ -888,6 +898,12 @@ namespace NineGrid.Core.Systems
 
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             var statSystem = this.GetSystem<IStatSystem>();
+            // ADR-0016：结算时已背面 → 不开火、不 Reset（倒计时保持冻结）。
+            if (!monster.FaceUp)
+            {
+                return 0;
+            }
+
             if (IsActionBanned(statSystem, monster)
                 || !AttackPatternRules.MeetsPositionRequirement(
                     monster.AttackPattern,

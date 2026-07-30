@@ -214,7 +214,7 @@ namespace NineGrid.Flow
                 { "skill.absorb", "吸收" },
                 { "skill.offer_fire", "献火" },
                 { "skill.call_melee6", "呼唤" },
-                { "skill.link_prep", "链备" },
+                { "skill.link_prep", "链接" },
                 { "skill.leap_kill", "跳杀" },
                 { "skill.steal", "盗取" },
             };

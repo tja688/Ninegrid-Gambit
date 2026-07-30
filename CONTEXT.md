@@ -249,8 +249,8 @@ _Avoid_: 每类表现各建一套排期、装饰 await 进主线 ack
 _Avoid_: Sync 直读 Core 写卡面数值、任意 SetAttack/SetHealth 旁路、用 digit animate 代替提交时机、强制对账静默拉回
 
 **牌面朝向**：
-卡牌实例在逻辑上的明/暗（正面/背面）状态；可参与攻击许可与效果可否触发等规则裁决，权威在 Core，不在显示模式。背面默认不可被攻击且被动不生效；`ActiveWhileFaceDown` 豁免自管翻面技能。详见 ADR-0016。
-_Avoid_: 用 Hand/Deck/Ground 显示模式代替朝向真相、仅把翻牌当 L4 动画
+卡牌实例在逻辑上的明/暗（正面/背面）状态；可参与攻击许可、受击许可、敌方行动与效果可否触发等规则裁决，权威在 Core，不在显示模式。背面默认**双向惰性**：不可被伤害、背面怪不推进/不开火（`AttackPatternCountdown` 冻结），被动默认不生效；需背面计时的效果走独立 `faceDownTick.*`（`FaceDownTickCounters`）。`ActiveWhileFaceDown` 仅豁免被动惰性。详见 ADR-0016。
+_Avoid_: 用 Hand/Deck/Ground 显示模式代替朝向真相、仅把翻牌当 L4 动画、用攻击倒计时兼做翻回计时
 
 **卡面朝向表现**：
 卡面模板上正面/背面节点的可见构型；只消费已提交的牌面朝向，不参与规则裁决；翻牌动画由 `CardFaceFlipPresenter` 驱动。

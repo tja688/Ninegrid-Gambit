@@ -24,6 +24,7 @@
 | [ADR-0012](../adr/0012-enemy-action-phase-volley.md) | 敌方行动阶段：齐射与盘面冻结（**#79/#80/#81 已落地**：Core 报名/逐条/收尾 + 四模式单向打击；表现 Counter 分拍 + ActionCount Commit） |
 | [ADR-0013](../adr/0013-action-countdown-unified.md) | 行动计数统一为倒计时、开火窗口一次性（**#76 Core 效果侧已落地**；攻击模式消费见 #79/#80；卡面上屏见 #81） |
 | [ADR-0014](../adr/0014-theme-ids-are-legacy-opaque.md) | 主题化 contentId/deckId 是历史残留不透明主键；卡组仅内部渠道；勿被虚构命名带偏 |
+| [ADR-0016](../adr/0016-card-face-orientation.md) | 牌面朝向 Core 权威；背面双向惰性（不可伤害 / 不敌方开火 / 攻击倒计时冻结）；独立 `faceDownTick.*` |
 
 > ADR-0011–0013 已落地（含卡面倒计时 Commit 与单向打击 Counter 分拍，#81）。落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
 

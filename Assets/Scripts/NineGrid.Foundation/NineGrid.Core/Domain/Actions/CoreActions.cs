@@ -54,6 +54,12 @@ namespace NineGrid.Core
                 return GameActionResult.Empty;
             }
 
+            // ADR-0016：背面不可被伤害（含爆弹 AllMonsters 等范围伤）；Avatar 恒正面。
+            if (!target.FaceUp)
+            {
+                return GameActionResult.Empty;
+            }
+
             var statSystem = context.GetSystem<IStatSystem>();
             var statContext = statSystem.CreateContext(target)
                 .WithActionSource(ActionName, SourceDefId, Cause)

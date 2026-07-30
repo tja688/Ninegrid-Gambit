@@ -28,7 +28,7 @@
 | 测试 | 保护什么 |
 |------|----------|
 | `PresentationEventMapBeatExhaustivenessTests` | #54/#57/#60/#61/#62：每个 `CoreEventType` 须有表演映射与显式 `PresentationBeat`；`None` 必须带理由；观察型 `BaseStatModified` 不得落在 `Impact`；`CardDealt`/`AvatarAppeared`/`CardFaceChanged` 为 Settled；`DamageDealt`/`EffectTriggered` 为 Impact；`GoldModified`/`RewardOffered` 为 Settled |
-| `CardFaceOrientationTests` | ADR-0016：Flip/Reveal 改 FaceUp 并发 `CardFaceChanged`；攻击拒背面；OnFlip/Flip/IsFaceUp 原子与 `ActiveWhileFaceDown` token |
+| `CardFaceOrientationTests` | ADR-0016：Flip/Reveal 改 FaceUp 并发 `CardFaceChanged`；攻击拒背面；背面怪不 −1/不开火；`DealDamage`/爆弹类不中背面；`FaceDownTickCounters` 注册/Tick/查询；OnFlip/Flip/IsFaceUp 原子与 `ActiveWhileFaceDown` token |
 | `BaseStatModifiedResultValueTests` | #54：`BaseStatModified` 携带结算后 `ResultValue`，且保留 `Amount=StatId` / `Delta` 增量约定 |
 | `CardSpawnedFaceAbsoluteTests` | #57：`CardSpawned` 携带造卡时攻/甲/血绝对值 |
 | `CardKilledFaceAbsoluteTests` | #58：`CardKilled` 携带 `RemainingHp=0` |

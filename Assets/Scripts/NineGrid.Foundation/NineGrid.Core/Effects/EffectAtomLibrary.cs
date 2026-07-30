@@ -3404,7 +3404,10 @@ namespace NineGrid.Core.Effects
             foreach (var uid in context.Board.BoardCardUids())
             {
                 CardInstance card;
-                if (context.TryGetCard(uid, out card) && card.Kind == CardKind.Monster)
+                // ADR-0016：背面怪不进 AllMonsters / RandomMonster（爆弹等全盘伤）。
+                if (context.TryGetCard(uid, out card)
+                    && card.Kind == CardKind.Monster
+                    && card.FaceUp)
                 {
                     result.Add(uid);
                 }
@@ -3575,6 +3578,12 @@ namespace NineGrid.Core.Effects
             }
 
             if (zone != ZoneId.None && card.Zone.Value != zone)
+            {
+                return;
+            }
+
+            // ADR-0016：背面卡不进 FilteredCards 候选（与 AllMonsters 一致）。
+            if (!card.FaceUp)
             {
                 return;
             }
