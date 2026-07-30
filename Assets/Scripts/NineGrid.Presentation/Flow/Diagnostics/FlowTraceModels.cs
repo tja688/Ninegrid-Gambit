@@ -74,6 +74,12 @@ namespace NineGrid.Flow.Diagnostics
         public const string Defeat = "Defeat";
         public const string GoldGained = "GoldGained";
         public const string GoldSpent = "GoldSpent";
+        /// <summary>EventLog 切片内 EffectTriggered（Intent 击杀等路径补点）。</summary>
+        public const string EffectTriggered = "EffectTriggered";
+        /// <summary>EventLog 切片内 BaseStatModified（含献身 ATK+1 等）。</summary>
+        public const string BaseStatModified = "BaseStatModified";
+        /// <summary>卡面 Settled 认领 ModifyBaseStat 后的 Commit 回执。</summary>
+        public const string CardFaceBaseStatCommit = "CardFaceBaseStatCommit";
 
         // V2 Field / Presentation / Hand
         public const string DrainBegin = "DrainBegin";

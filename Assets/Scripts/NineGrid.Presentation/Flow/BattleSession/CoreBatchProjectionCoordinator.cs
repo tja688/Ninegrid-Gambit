@@ -523,11 +523,134 @@ namespace NineGrid.Flow
             int resolvedCombatUid,
             PostKillBoardPresentationResult result)
         {
-            var pipeline = NineGridArchitecture.Current.GetSystem<IActionPipelineSystem>();
+            var arch = NineGridArchitecture.Current;
+            var pipeline = arch.GetSystem<IActionPipelineSystem>();
             result.DamagePopups = PresentationOutputProjector.CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
+
+            RecordIntentCombatHitDiagnostics(arch, pipeline, startIndex, resolvedCombatUid, result);
 
             _session.AttackHitPresentChannel?.Enqueue(boardSlot, resolvedCombatUid, result);
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
+        }
+
+        /// <summary>
+        /// Intent 击杀走 CombatHitCommand，不经 ApplyCombatHitFromCore；此处补 BattleTrace / FlowTrace，
+        /// 否则 battlelog 只有 StartNode，献身等 OnRemove 效果无法从日志核对。
+        /// </summary>
+        private static void RecordIntentCombatHitDiagnostics(
+            IArchitecture arch,
+            IActionPipelineSystem pipeline,
+            int startIndex,
+            int resolvedCombatUid,
+            PostKillBoardPresentationResult result)
+        {
+            try
+            {
+                if (pipeline?.EventLog?.Entries == null)
+                {
+                    return;
+                }
+
+                var endIndex = pipeline.EventLog.Entries.Count;
+                var targetKilled = IntentBatchProjection.ContainsCardKilled(
+                    pipeline, startIndex, resolvedCombatUid);
+                var damageAmount = 0;
+                for (var i = startIndex; i < endIndex; i++)
+                {
+                    var e = pipeline.EventLog.Entries[i];
+                    if (e.Type == CoreEventType.DamageDealt
+                        && e.TargetUid == resolvedCombatUid
+                        && e.Amount > damageAmount)
+                    {
+                        damageAmount = e.Amount;
+                    }
+                }
+
+                if (BattleTraceRecorder.Enabled)
+                {
+                    BattleTraceRecorder.BeginSessionIfNeeded();
+                    var events = BattleTraceRecorder.SliceEvents(startIndex, endIndex);
+                    var targetSnap = BattleTraceRecorder.TryCaptureCard(resolvedCombatUid);
+                    BattleTraceRecorder.RecordOp(new BattleTraceOp
+                    {
+                        opKind = "CombatHit",
+                        reason = "IntentCombatHit",
+                        apiPath = "CombatHitCommand",
+                        phaseBefore = string.Empty,
+                        phaseAfter = arch.GetSystem<IPhaseSystem>().CurrentPhase.ToString(),
+                        target = targetSnap,
+                        eventStartIndex = startIndex,
+                        eventEndIndex = endIndex,
+                        events = events,
+                        presentation = new BattleTracePresentation
+                        {
+                            accepted = result.Accepted,
+                            damageAmount = damageAmount,
+                            targetKilled = targetKilled,
+                            avatarDefeated = result.AvatarDefeated,
+                            nodeClearedOrRewardPhase = result.NodeClearedOrRewardPhase,
+                        },
+                        verdictHints = BattleTraceRecorder.BuildVerdictHints(
+                            events, targetKilled, result.AvatarDefeated),
+                    });
+                }
+
+                if (!FlowTraceRecorder.Enabled)
+                {
+                    return;
+                }
+
+                FlowTraceRecorder.BeginSessionIfNeeded();
+                RecordEffectAndStatFlowEvents(pipeline, startIndex, endIndex);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[InBattleManager] Intent CombatHit diagnostics: " + ex.Message);
+            }
+        }
+
+        private static void RecordEffectAndStatFlowEvents(
+            IActionPipelineSystem pipeline,
+            int startIndex,
+            int endIndex)
+        {
+            var entries = pipeline.EventLog.Entries;
+            for (var i = startIndex; i < endIndex; i++)
+            {
+                var e = entries[i];
+                if (e.Type == CoreEventType.EffectTriggered)
+                {
+                    FlowTraceRecorder.Record(
+                        FlowTraceCategory.CombatSummary,
+                        FlowTraceNames.EffectTriggered,
+                        new Dictionary<string, string>
+                        {
+                            { "sourceDefId", e.SourceDefId ?? string.Empty },
+                            { "cardUid", e.CardUid.ToString() },
+                            { "message", e.Message ?? string.Empty },
+                        },
+                        accepted: true,
+                        refBattleOpIndex: BattleTraceRecorder.LastOpIndex);
+                }
+                else if (e.Type == CoreEventType.BaseStatModified)
+                {
+                    FlowTraceRecorder.Record(
+                        FlowTraceCategory.CombatSummary,
+                        FlowTraceNames.BaseStatModified,
+                        new Dictionary<string, string>
+                        {
+                            { "stat", ((StatId)e.Amount).ToString() },
+                            { "delta", e.Delta.ToString() },
+                            { "resultValue", e.ResultValue.ToString() },
+                            { "cardUid", e.CardUid.ToString() },
+                            { "targetUid", e.TargetUid.ToString() },
+                            { "reason", e.Message ?? string.Empty },
+                            { "sourceDefId", e.SourceDefId ?? string.Empty },
+                        },
+                        accepted: true,
+                        refBattleOpIndex: BattleTraceRecorder.LastOpIndex);
+                }
+            }
         }
 
         public void OnAttackBoardBatchProjected(

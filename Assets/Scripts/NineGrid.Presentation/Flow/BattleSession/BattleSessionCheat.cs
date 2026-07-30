@@ -119,6 +119,7 @@ namespace NineGrid.Flow
             var board = arch.GetModel<BoardModel>();
             var cards = CardEntityLifecycleHook.CardsOrNull();
             var mountedHosts = 0;
+            var activatedInstances = 0;
 
             foreach (var uid in board.BoardCardUids())
             {
@@ -127,8 +128,16 @@ namespace NineGrid.Flow
                     continue;
                 }
 
-                content.ActivateSkillsOnCard(card, skillIds);
+                var instances = content.ActivateSkillsOnCard(card, skillIds);
+                var count = instances != null ? instances.Count : 0;
+                activatedInstances += count;
                 mountedHosts++;
+                if (count <= 0)
+                {
+                    Debug.LogWarning(
+                        $"[BattleSessionCheat] QuickTest 挂技能失败：uid={uid} defId={card.DefId}"
+                        + $" skillIds={skillIds.Count}（卡面描述仍可能写入，但无 Effect 实例）");
+                }
 
                 if (cards != null && cards.TryGet(uid, out var view) && view != null)
                 {
@@ -137,8 +146,15 @@ namespace NineGrid.Flow
             }
 
             Debug.Log(
-                $"[BattleSessionCheat] QuickTest 挂技能 hosts={mountedHosts} skills={skillIds.Count}"
+                $"[BattleSessionCheat] QuickTest 挂技能 hosts={mountedHosts} activatedInstances={activatedInstances}"
+                + $" skills={skillIds.Count}"
                 + (string.IsNullOrEmpty(description) ? string.Empty : " desc=" + description));
+            if (mountedHosts > 0 && activatedInstances <= 0)
+            {
+                Debug.LogError(
+                    "[BattleSessionCheat] QuickTest 场上有宿主但激活实例为 0——技能只会显示描述、不会在移除时生效");
+            }
+
             return mountedHosts;
         }
 

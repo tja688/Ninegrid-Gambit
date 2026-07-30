@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using NineGrid.Cards;
 using NineGrid.Cards.Presentation;
 using NineGrid.Core;
+using NineGrid.Flow.Diagnostics;
 using UnityEngine;
 
 namespace NineGrid.Flow.Presentation
@@ -92,6 +94,13 @@ namespace NineGrid.Flow.Presentation
         {
             if (!TryResolveCard(gameEvent, out var card))
             {
+                Debug.LogWarning(
+                    "[CardFaceStatHandler] ModifyBaseStat 找不到卡面 uid="
+                    + (gameEvent != null
+                        ? (gameEvent.CardUid > 0 ? gameEvent.CardUid : gameEvent.TargetUid)
+                        : 0)
+                    + " reason=" + (gameEvent != null ? gameEvent.Message : string.Empty)
+                    + " source=" + (gameEvent != null ? gameEvent.SourceDefId : string.Empty));
                 return;
             }
 
@@ -101,6 +110,7 @@ namespace NineGrid.Flow.Presentation
             {
                 case StatId.Attack:
                     CommitNumeric(card, attack: value, armor: null, hp: null, actionCount: null);
+                    RecordCardFaceBaseStatCommit(card, gameEvent, stat, value);
                     break;
                 case StatId.Armor:
                 case StatId.CurrentArmor:
@@ -110,6 +120,43 @@ namespace NineGrid.Flow.Presentation
                 case StatId.MaxHp:
                     CommitNumeric(card, attack: null, armor: null, hp: value, actionCount: null);
                     break;
+            }
+        }
+
+        private static void RecordCardFaceBaseStatCommit(
+            ManagedCard card,
+            CoreGameEvent gameEvent,
+            StatId stat,
+            int value)
+        {
+            if (!FlowTraceRecorder.Enabled || gameEvent == null)
+            {
+                return;
+            }
+
+            try
+            {
+                FlowTraceRecorder.BeginSessionIfNeeded();
+                FlowTraceRecorder.Record(
+                    FlowTraceCategory.Presentation,
+                    FlowTraceNames.CardFaceBaseStatCommit,
+                    new Dictionary<string, string>
+                    {
+                        { "uid", card.Uid.ToString() },
+                        { "defId", card.DefId ?? string.Empty },
+                        { "stat", stat.ToString() },
+                        { "resultValue", value.ToString() },
+                        { "delta", gameEvent.Delta.ToString() },
+                        { "reason", gameEvent.Message ?? string.Empty },
+                        { "sourceDefId", gameEvent.SourceDefId ?? string.Empty },
+                        { "hasView", card.View != null ? "1" : "0" },
+                    },
+                    accepted: true,
+                    refBattleOpIndex: BattleTraceRecorder.LastOpIndex);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning("[CardFaceStatHandler] CardFaceBaseStatCommit: " + ex.Message);
             }
         }
 
