@@ -51,7 +51,23 @@ namespace NineGrid.Cards.Anim
                 local.y = offsetY;
             }
 
+            // 拒写 NaN/Inf，避免退化锚定路径把节点甩飞。
+            if (!IsFinite(local))
+            {
+                return;
+            }
+
             target.transform.localPosition = local;
+        }
+
+        private static bool IsFinite(Vector3 value)
+        {
+            return IsFinite(value.x) && IsFinite(value.y) && IsFinite(value.z);
+        }
+
+        private static bool IsFinite(float value)
+        {
+            return !float.IsNaN(value) && !float.IsInfinity(value);
         }
     }
 }

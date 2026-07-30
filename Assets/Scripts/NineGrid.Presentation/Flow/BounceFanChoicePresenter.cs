@@ -254,7 +254,10 @@ namespace NineGrid.Flow
                 wrapper.transform.SetParent(_cardsContainer, false);
                 wrapper.transform.localPosition = new Vector3(GetCenteredOffsetX(i, count), 0f, 0f);
                 wrapper.transform.localRotation = Quaternion.Euler(0f, 0f, GetCenteredRotationZ(i, count));
-                wrapper.transform.localScale = Vector3.zero;
+                // 保持 scale=1 套视觉 / Mask 锚定。入场动画 PlayEntryAnimation 再置 0 弹到 1。
+                // 不得在此置 0：Begin 随后会 PresentLatestEventOfType(RewardOffered) 二次 Commit，
+                // 若祖先 scale=0，世界空间锚定会把主图标钉出 Mask（遗物卡内容偏移时肉眼消失）。
+                wrapper.transform.localScale = Vector3.one;
 
                 // 负 Uid 纯表现卡：勿用 Spawn() 占 Core 正号段，否则会与后续 NewCard 洗回撞号。
                 var choiceKind = InferChoicePresentationKind(defId);

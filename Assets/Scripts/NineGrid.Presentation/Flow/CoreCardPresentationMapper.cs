@@ -306,7 +306,18 @@ namespace NineGrid.Flow
             // #69：表现只读一卡一文件 JSON；不再咨询 Luban ContentVisual / VisualCatalog SO。
             if (TryApplyJsonPresentation(snapshot, defId))
             {
+                // 部分遗物 JSON 仍缺 mainIcon：用 RelicVisualCatalog bootstrap 补洞，避免选择卡/栏位空图标。
+                if (snapshot.MainIcon == null && kind == CardPresentationKind.Relic)
+                {
+                    TryApplyLegacyRelicIcon(snapshot, defId);
+                }
+
                 return;
+            }
+
+            if (kind == CardPresentationKind.Relic)
+            {
+                TryApplyLegacyRelicIcon(snapshot, defId);
             }
 
             if (string.IsNullOrEmpty(snapshot.DisplayName))
@@ -315,6 +326,23 @@ namespace NineGrid.Flow
             }
 
             _ = kind;
+        }
+
+        private static void TryApplyLegacyRelicIcon(CardPresentationSnapshot snapshot, string defId)
+        {
+            if (snapshot == null || snapshot.MainIcon != null || string.IsNullOrEmpty(defId))
+            {
+                return;
+            }
+
+            var set = ContentVisualSpriteCatalogBootstrapSO.TryLoadCatalogSet();
+            if (set?.relics == null
+                || !set.relics.TryGet(defId, out var icon, out var face))
+            {
+                return;
+            }
+
+            snapshot.MainIcon = icon != null ? icon : face;
         }
 
         private static bool TryApplyJsonPresentation(CardPresentationSnapshot snapshot, string defId)

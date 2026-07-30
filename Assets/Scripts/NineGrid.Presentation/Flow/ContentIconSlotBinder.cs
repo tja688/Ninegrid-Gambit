@@ -134,14 +134,41 @@ namespace NineGrid.Flow
                 return icon != null ? icon : face;
             }
 
-            if (!CardPresentationConfigCatalog.TryGet(defId, out var dto)
-                || dto?.sprites == null
-                || string.IsNullOrWhiteSpace(dto.sprites.mainIcon))
+            if (CardPresentationConfigCatalog.TryGet(defId, out var dto)
+                && dto?.sprites != null
+                && !string.IsNullOrWhiteSpace(dto.sprites.mainIcon))
+            {
+                var fromJson = CardPresentationSpritePath.LoadSprite(dto.sprites.mainIcon);
+                if (fromJson != null)
+                {
+                    return fromJson;
+                }
+            }
+
+            // JSON mainIcon 空或加载失败：回退 RelicVisualCatalog（bootstrap），避免遗物栏空槽。
+            return TryLoadLegacyRelicIcon(defId);
+        }
+
+        private static Sprite TryLoadLegacyRelicIcon(string defId)
+        {
+            if (string.IsNullOrEmpty(defId)
+                || !defId.StartsWith("relic.", System.StringComparison.Ordinal))
             {
                 return null;
             }
 
-            return CardPresentationSpritePath.LoadSprite(dto.sprites.mainIcon);
+            var set = ContentVisualSpriteCatalogBootstrapSO.TryLoadCatalogSet();
+            if (set?.relics == null)
+            {
+                return null;
+            }
+
+            if (!set.relics.TryGet(defId, out var icon, out var face))
+            {
+                return null;
+            }
+
+            return icon != null ? icon : face;
         }
 
         public static void ClearAll(SpriteRenderer[] slots)

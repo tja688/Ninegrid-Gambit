@@ -1,0 +1,30 @@
+[
+  {
+    "deck_id": "deck.wandering_legion",
+    "deck_kind": "WeakElite"
+  },
+  {
+    "deck_id": "deck.stone_legion",
+    "deck_kind": "WeakElite"
+  },
+  {
+    "deck_id": "deck.skeleton_legion",
+    "deck_kind": "StrongElite"
+  },
+  {
+    "deck_id": "deck.orc_legion",
+    "deck_kind": "StrongElite"
+  },
+  {
+    "deck_id": "deck.void",
+    "deck_kind": "Boss"
+  },
+  {
+    "deck_id": "deck.dragon",
+    "deck_kind": "Boss"
+  },
+  {
+    "deck_id": "deck.npc",
+    "deck_kind": "Reserve"
+  }
+]

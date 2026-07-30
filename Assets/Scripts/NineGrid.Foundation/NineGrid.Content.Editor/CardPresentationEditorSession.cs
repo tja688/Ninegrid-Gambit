@@ -1383,7 +1383,7 @@ namespace NineGrid.Content.Editor
             }
         }
 
-        public bool TryCreateDeck(string contentId, string displayName, string deckKind, out string error)
+        public bool TryCreateDeck(string contentId, string displayName, out string error)
         {
             error = null;
             contentId = (contentId ?? string.Empty).Trim();
@@ -1409,7 +1409,6 @@ namespace NineGrid.Content.Editor
                 var dto = CardPresentationJsonIO.CreateDefault(contentId, "Deck");
                 dto.schemaVersion = 2;
                 dto.displayName = string.IsNullOrWhiteSpace(displayName) ? contentId : displayName.Trim();
-                dto.deckKind = string.IsNullOrWhiteSpace(deckKind) ? "Presentation" : deckKind.Trim();
                 dto.effectAssemblies = Array.Empty<EffectAssemblyDto>();
                 dto.effectIds = Array.Empty<string>();
                 dto.skillIds = Array.Empty<string>();
@@ -1708,7 +1707,6 @@ namespace NineGrid.Content.Editor
                 var dto = CardPresentationJsonIO.CreateDefault(PlayerDeckId, "Deck");
                 dto.schemaVersion = 2;
                 dto.displayName = "玩家卡组";
-                dto.deckKind = "Presentation";
                 dto.effectAssemblies = Array.Empty<EffectAssemblyDto>();
                 dto.effectIds = Array.Empty<string>();
                 dto.skillIds = Array.Empty<string>();

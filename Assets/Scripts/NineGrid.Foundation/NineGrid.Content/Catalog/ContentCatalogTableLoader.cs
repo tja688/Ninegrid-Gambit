@@ -9,7 +9,7 @@ using UnityEngine;
 namespace NineGrid.Content
 {
     /// <summary>
-    /// 加载奖励池 / 经济 / 节点牌组规则表进 <see cref="GameContentCatalog"/>。
+    /// 加载奖励池 / 经济 / 节点牌组规则 / 遭遇牌组表进 <see cref="GameContentCatalog"/>。
     /// 效果改为模板表 + 卡上装配引用解析（ADR-0009 / #70）；不再从 effects.json 灌全量实例。
     /// 权威目录：Arts/ContentVisual/tables（Editor）与 StreamingAssets/ContentVisual/tables（Player）。
     /// </summary>

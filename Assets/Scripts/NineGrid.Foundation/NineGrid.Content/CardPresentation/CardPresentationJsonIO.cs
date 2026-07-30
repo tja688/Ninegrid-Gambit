@@ -135,6 +135,12 @@ namespace NineGrid.Content.CardPresentation
             }
 
             EnsureNestedDefaults(dto);
+            if (string.Equals(dto.kind, "Deck", StringComparison.OrdinalIgnoreCase))
+            {
+                dto.deckKind = string.Empty;
+                dto.monsterDefIds = Array.Empty<string>();
+            }
+
             return JsonUtility.ToJson(dto, true);
         }
 

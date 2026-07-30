@@ -64,9 +64,9 @@ namespace NineGrid.Content.CardPresentation
         public bool isReserve;
         /// <summary>技能容器类型（如 MonsterSkill）；Skill schema≥2。</summary>
         public string containerType;
-        /// <summary>牌组种类（WeakElite/StrongElite/Boss/Reserve）；Deck schema≥2。</summary>
+        /// <summary>legacy：遭遇编排已迁至 tables/monster_decks.json，表现层不再写入。</summary>
         public string deckKind;
-        /// <summary>牌组怪物 defId 列表；Deck schema≥2。</summary>
+        /// <summary>legacy：遭遇成员改由卡面 deckId 归属推导，表现层不再写入。</summary>
         public string[] monsterDefIds;
         /// <summary>房间权重与效果字段；Room schema≥2。</summary>
         public int weight;

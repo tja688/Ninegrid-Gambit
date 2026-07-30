@@ -404,6 +404,27 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void BounceFan_BuildEntries_DoesNot_ScaleZero_Before_RewardFlush()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "BounceFanChoicePresenter.cs"));
+            var text = File.ReadAllText(path);
+            Assert.IsTrue(
+                text.IndexOf("ApplyVisualsByDefId(managed, choiceKind)", StringComparison.Ordinal) >= 0,
+                "须调用 ApplyVisualsByDefId");
+            // BuildEntries 末尾不得再置 wrapper scale=0：Begin 随后 PresentLatestEventOfType(RewardOffered)
+            // 会二次 Commit；祖先 scale=0 时世界空间锚定会把主图标钉出 Mask。
+            // 入场归零只允许出现在 PlayEntryAnimation（entry.Wrapper.localScale）。
+            Assert.IsFalse(
+                text.IndexOf("wrapper.transform.localScale = Vector3.zero;", StringComparison.Ordinal) >= 0,
+                "BuildEntries 内不得 wrapper.transform.localScale = Vector3.zero");
+        }
+
+        [Test]
         public void ProductionCommitPresentation_Only_From_Handler_Or_VisualMapper()
         {
             var root = Path.GetFullPath(Path.Combine(Application.dataPath, "Scripts", "NineGrid.Presentation"));

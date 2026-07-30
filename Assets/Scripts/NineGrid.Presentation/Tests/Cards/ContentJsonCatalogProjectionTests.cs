@@ -112,20 +112,43 @@ namespace NineGrid.Presentation.Tests.Cards
         }
 
         [Test]
-        public void TryProjectDeckAndRoom_MapsStructuralFields()
+        public void MonsterDeckCatalogBuilder_MapsTableAndCardDeckMembership()
         {
-            Assert.IsTrue(ContentJsonCatalogProjector.TryProjectDeck(new CardPresentationConfigDto
+            var catalog = new GameContentCatalog();
+            catalog.AddCard(new CardContentDefinition("monster.a", "怪A", CardKind.Monster)
+                .WithLevel(1)
+                .InDeck("deck.proj_demo"));
+            catalog.AddCard(new CardContentDefinition("monster.b", "怪B", CardKind.Monster)
+                .WithLevel(2)
+                .InDeck("deck.proj_demo")
+                .AsReserve());
+
+            MonsterDeckTableCatalog.Invalidate();
+            MonsterDeckTableCatalog.UpsertForTests(new MonsterDeckTableRow
+            {
+                deck_id = "deck.proj_demo",
+                deck_kind = "Boss",
+            });
+            CardPresentationConfigCatalog.UpsertForTests(new CardPresentationConfigDto
             {
                 schemaVersion = 2,
                 contentId = "deck.proj_demo",
                 kind = "Deck",
                 displayName = "投影牌组",
-                deckKind = "Boss",
-                monsterDefIds = new[] { "monster.a", "monster.b" },
-            }, out var deck));
+            });
+
+            var applied = MonsterDeckCatalogBuilder.ApplyToCatalog(catalog);
+            Assert.GreaterOrEqual(applied, 1);
+            Assert.IsTrue(catalog.MonsterDecks.TryGetValue("deck.proj_demo", out var deck));
             Assert.AreEqual(MonsterDeckKind.Boss, deck.Kind);
             Assert.AreEqual(2, deck.MonsterDefIds.Count);
+            CollectionAssert.Contains(deck.MonsterDefIds, "monster.a");
+            CollectionAssert.Contains(deck.MonsterDefIds, "monster.b");
+        }
 
+        [Test]
+        public void TryProjectRoom_MapsStructuralFields()
+        {
             Assert.IsTrue(ContentJsonCatalogProjector.TryProjectRoom(new CardPresentationConfigDto
             {
                 schemaVersion = 2,

@@ -9,7 +9,7 @@ namespace NineGrid.Content
 {
     /// <summary>
     /// 将一卡一文件 JSON（schema≥2）投影进 <see cref="GameContentCatalog"/>（覆盖同 DefId）。
-    /// 支持 HelpCard / Monster / Skill / Relic / Deck / Room。
+    /// 支持 HelpCard / Monster / Skill / Relic / Room。遭遇牌组见 <see cref="MonsterDeckCatalogBuilder"/>。
     /// 效果：优先解析 <c>effectAssemblies</c>（模板+实参）写入 Catalog.Effects；
     /// 奖励池 / 经济 / 节点规则由 <see cref="ContentCatalogTableLoader"/> 加载。
     /// </summary>
@@ -49,13 +49,6 @@ namespace NineGrid.Content
                 if (TryProjectRelic(dto, catalog, out var relic))
                 {
                     catalog.AddRelic(relic);
-                    applied++;
-                    continue;
-                }
-
-                if (TryProjectDeck(dto, out var deck))
-                {
-                    catalog.AddMonsterDeck(deck);
                     applied++;
                     continue;
                 }
@@ -226,31 +219,6 @@ namespace NineGrid.Content
             var projected = relic;
             AddTokens(dto.tags, value => projected.AddTag(value));
             ApplyEffectMounts(dto, catalog, id => projected.AddEffect(id));
-            return true;
-        }
-
-        public static bool TryProjectDeck(CardPresentationConfigDto dto, out MonsterDeckDefinition deck)
-        {
-            deck = null;
-            if (!IsReady(dto) || !IsKind(dto.kind, "Deck"))
-            {
-                return false;
-            }
-
-            // 纯表现卡组（帮助卡/遗物卡背归属）不进入遭遇编排 MonsterDecks。
-            if (IsKind(dto.deckKind, "Presentation")
-                || string.IsNullOrWhiteSpace(dto.deckKind))
-            {
-                return false;
-            }
-
-            deck = new MonsterDeckDefinition(
-                dto.contentId.Trim(),
-                ResolveDisplayName(dto),
-                ParseEnum(dto.deckKind, MonsterDeckKind.Unknown));
-
-            var projected = deck;
-            AddTokens(dto.monsterDefIds, value => projected.AddMonster(value));
             return true;
         }
 

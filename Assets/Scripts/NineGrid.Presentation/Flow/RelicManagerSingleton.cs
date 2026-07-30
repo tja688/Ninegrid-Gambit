@@ -7,7 +7,7 @@ namespace NineGrid.Flow
 {
     /// <summary>
     /// 局内遗物栏表现单例：从 Core PlayerModel.RelicDefIds 读写，刷到 RelicPanelAnchors 子槽图标。
-    /// 图标权威：一卡一文件 JSON sprites.mainIcon（#69，不再读 RelicVisualCatalogSO）。
+    /// 图标权威：一卡一文件 JSON sprites.mainIcon（#69）；JSON 缺省时回退 RelicVisualCatalog bootstrap。
     /// </summary>
     public sealed class RelicManagerSingleton : MonoBehaviour
     {

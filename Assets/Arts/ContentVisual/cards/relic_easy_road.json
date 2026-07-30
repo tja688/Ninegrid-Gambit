@@ -1,99 +1,99 @@
 {
-    "schemaVersion": 2,
-    "contentId": "relic.easy_road",
-    "kind": "Relic",
-    "deckId": "deck.relic",
-    "displayName": "轻车熟路",
-    "description": "关卡结束白色帮助卡三选一",
-    "gold": 0,
-    "stats": {
-        "hp": 0,
-        "armor": 0,
-        "attack": 0,
-        "action": 0,
-        "recovery": 0
-    },
-    "sprites": {
-        "mainIcon": "",
-        "faceBackground": "",
-        "cardFrame": "",
-        "banner": "",
-        "backBorder": "",
-        "backShirt": "",
-        "backLogo": ""
-    },
-    "mainVisual": {
+  "schemaVersion": 2,
+  "contentId": "relic.easy_road",
+  "kind": "Relic",
+  "deckId": "deck.relic",
+  "displayName": "轻车熟路",
+  "description": "关卡结束白色帮助卡三选一",
+  "gold": 0,
+  "stats": {
+    "hp": 0,
+    "armor": 0,
+    "attack": 0,
+    "action": 0,
+    "recovery": 0
+  },
+  "sprites": {
+    "mainIcon": "Assets/Resources/ContentArt/Png/Icons/white_node/yen.png#yen",
+    "faceBackground": "",
+    "cardFrame": "",
+    "banner": "",
+    "backBorder": "",
+    "backShirt": "",
+    "backLogo": ""
+  },
+  "mainVisual": {
+    "offsetX": 0.0,
+    "offsetY": 0.0,
+    "uniformScale": 1.0
+  },
+  "animations": {
+    "defaultFps": 8.0,
+    "slots": [
+      {
+        "id": "idle",
+        "sourceType": "none",
+        "path": "",
         "offsetX": 0.0,
-        "offsetY": 0.0,
-        "uniformScale": 1.0
-    },
-    "animations": {
-        "defaultFps": 8.0,
-        "slots": [
-            {
-                "id": "idle",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "attack",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "hurt",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "death",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "lunch",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            }
-        ]
-    },
-    "extraSlots": [],
-    "rarity": "Blue",
-    "tags": [
-        "tag.special"
-    ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [
-        {
-            "id": "relic.easy_road.node_end",
-            "templateId": "tpl.relic.easy_road.node_end",
-            "containerType": "Relic",
-            "argsJson": "{\"poolId\":\"help.white.choice\"}"
-        }
-    ],
-    "role": "Utility"
+        "offsetY": 0.0
+      },
+      {
+        "id": "attack",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "hurt",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "death",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "lunch",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      }
+    ]
+  },
+  "extraSlots": [],
+  "rarity": "Blue",
+  "tags": [
+    "tag.special"
+  ],
+  "effectIds": [],
+  "skillIds": [],
+  "level": 0,
+  "isElite": false,
+  "isBoss": false,
+  "isReserve": false,
+  "containerType": "",
+  "deckKind": "",
+  "monsterDefIds": [],
+  "weight": 0,
+  "goldDelta": 0,
+  "maxHpDelta": 0,
+  "healToFull": false,
+  "rewardPoolId": "",
+  "shopOfferCount": 0,
+  "effectAssemblies": [
+    {
+      "id": "relic.easy_road.node_end",
+      "templateId": "tpl.relic.easy_road.node_end",
+      "containerType": "Relic",
+      "argsJson": "{\"poolId\":\"help.white.choice\"}"
+    }
+  ],
+  "role": "Utility"
 }

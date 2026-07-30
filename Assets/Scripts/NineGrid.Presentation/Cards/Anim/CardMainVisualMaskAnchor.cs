@@ -44,6 +44,7 @@ namespace NineGrid.Cards.Anim
 
         /// <summary>
         /// 按锚点模式将 visual（需已赋参考 sprite 与 scale）摆到 Mask 内；返回父节点下 localPosition。
+        /// 定位在祖先变换无关的局部空间完成，避免 BounceFan 入场 scale=0 / 扇形旋转破坏世界空间锚定。
         /// </summary>
         public Vector3 GetAnchoredLocalPosition(
             SpriteRenderer visual,
@@ -64,24 +65,17 @@ namespace NineGrid.Cards.Anim
                 return GetSuggestedLocalPosition(visual.transform);
             }
 
-            var maskBounds = GetWorldBounds();
-            var targetWorld = ComputeWorldPositionForAnchor(
-                visual.transform.position,
-                visual.bounds,
-                maskBounds,
-                mode);
-
-            var parent = visual.transform.parent;
-            if (parent == null)
+            if (TryGetAnchoredLocalPositionInLocalSpace(visual, mode, out var local))
             {
-                return targetWorld;
+                return local;
             }
 
-            return parent.InverseTransformPoint(targetWorld);
+            return GetAnchoredLocalPositionWorldFallback(visual, mode);
         }
 
         /// <summary>
-        /// 将 visual 中心对齐到 Mask 中心；可选叠加 contentBounds 修正（世界空间内容包围盒）。
+        /// 将 visual 中心对齐到 Mask 中心；可选叠加 contentBounds 修正。
+        /// 优先局部空间；退化时回退世界空间。
         /// </summary>
         public Vector3 GetSuggestedLocalPosition(Transform visual, Bounds? contentBounds = null)
         {
@@ -90,33 +84,12 @@ namespace NineGrid.Cards.Anim
                 return Vector3.zero;
             }
 
-            if (contentBounds.HasValue)
+            if (TryGetSuggestedLocalPositionInLocalSpace(visual, contentBounds, out var local))
             {
-                var maskBounds = GetWorldBounds();
-                var targetWorld = ComputeWorldPositionForAnchor(
-                    visual.position,
-                    contentBounds.Value,
-                    maskBounds,
-                    CardMainVisualAnchorMode.BoundsCenter);
-
-                var parent = visual.parent;
-                if (parent == null)
-                {
-                    return targetWorld;
-                }
-
-                return parent.InverseTransformPoint(targetWorld);
+                return local;
             }
 
-            var maskBoundsCenter = GetWorldBounds();
-            var targetWorldOrigin = maskBoundsCenter.center;
-            var parentTransform = visual.parent;
-            if (parentTransform == null)
-            {
-                return targetWorldOrigin;
-            }
-
-            return parentTransform.InverseTransformPoint(targetWorldOrigin);
+            return GetSuggestedLocalPositionWorldFallback(visual, contentBounds);
         }
 
         /// <summary>
@@ -231,7 +204,9 @@ namespace NineGrid.Cards.Anim
             }
 
             var layerId = group.sortingLayerID;
-            var renderers = group.GetComponentsInChildren<SpriteRenderer>(true);
+            // Sprite + TMP MeshRenderer：子节点 sortingLayerID 须与 SG 同层，
+            // 否则 SpriteMask custom range / 部分相机排序会把字或图标裁没。
+            var renderers = group.GetComponentsInChildren<Renderer>(true);
             for (var i = 0; i < renderers.Length; i++)
             {
                 if (renderers[i] != null)
@@ -454,6 +429,236 @@ namespace NineGrid.Cards.Anim
                     maskRenderer = GetComponentInChildren<SpriteRenderer>(true);
                 }
             }
+        }
+
+        private bool TryGetAnchoredLocalPositionInLocalSpace(
+            SpriteRenderer visual,
+            CardMainVisualAnchorMode mode,
+            out Vector3 local)
+        {
+            local = Vector3.zero;
+            var parent = visual.transform.parent;
+            if (parent == null || !TryGetMaskSprite(out var maskSprite))
+            {
+                return false;
+            }
+
+            if (!TryGetLocalToLocalMatrix(transform, parent, out var maskToParent))
+            {
+                return false;
+            }
+
+            var maskInParent = TransformBounds(maskToParent, maskSprite.bounds);
+            var visualLocal = Matrix4x4.TRS(
+                visual.transform.localPosition,
+                visual.transform.localRotation,
+                visual.transform.localScale);
+            var contentInParent = TransformBounds(visualLocal, visual.sprite.bounds);
+            local = ComputeWorldPositionForAnchor(
+                visual.transform.localPosition,
+                contentInParent,
+                maskInParent,
+                mode);
+            return true;
+        }
+
+        private bool TryGetSuggestedLocalPositionInLocalSpace(
+            Transform visual,
+            Bounds? contentBounds,
+            out Vector3 local)
+        {
+            local = Vector3.zero;
+            var parent = visual.parent;
+            if (parent == null || !TryGetMaskSprite(out var maskSprite))
+            {
+                return false;
+            }
+
+            if (!TryGetLocalToLocalMatrix(transform, parent, out var maskToParent))
+            {
+                return false;
+            }
+
+            var maskInParent = TransformBounds(maskToParent, maskSprite.bounds);
+            if (contentBounds.HasValue)
+            {
+                // contentBounds 约定为世界空间；无局部换算时走退化路径。
+                return false;
+            }
+
+            local = maskInParent.center;
+            return true;
+        }
+
+        private Vector3 GetAnchoredLocalPositionWorldFallback(
+            SpriteRenderer visual,
+            CardMainVisualAnchorMode mode)
+        {
+            var maskBounds = GetWorldBounds();
+            var targetWorld = ComputeWorldPositionForAnchor(
+                visual.transform.position,
+                visual.bounds,
+                maskBounds,
+                mode);
+
+            var parent = visual.transform.parent;
+            if (parent == null)
+            {
+                return targetWorld;
+            }
+
+            return parent.InverseTransformPoint(targetWorld);
+        }
+
+        private Vector3 GetSuggestedLocalPositionWorldFallback(
+            Transform visual,
+            Bounds? contentBounds)
+        {
+            if (contentBounds.HasValue)
+            {
+                var maskBounds = GetWorldBounds();
+                var targetWorld = ComputeWorldPositionForAnchor(
+                    visual.position,
+                    contentBounds.Value,
+                    maskBounds,
+                    CardMainVisualAnchorMode.BoundsCenter);
+
+                var parent = visual.parent;
+                if (parent == null)
+                {
+                    return targetWorld;
+                }
+
+                return parent.InverseTransformPoint(targetWorld);
+            }
+
+            var maskBoundsCenter = GetWorldBounds();
+            var targetWorldOrigin = maskBoundsCenter.center;
+            var parentTransform = visual.parent;
+            if (parentTransform == null)
+            {
+                return targetWorldOrigin;
+            }
+
+            return parentTransform.InverseTransformPoint(targetWorldOrigin);
+        }
+
+        private bool TryGetMaskSprite(out Sprite maskSprite)
+        {
+            CacheRefsIfNeeded();
+            if (spriteMask != null && spriteMask.sprite != null)
+            {
+                maskSprite = spriteMask.sprite;
+                return true;
+            }
+
+            if (maskRenderer != null && maskRenderer.sprite != null)
+            {
+                maskSprite = maskRenderer.sprite;
+                return true;
+            }
+
+            maskSprite = null;
+            return false;
+        }
+
+        /// <summary>
+        /// 将 <paramref name="node"/> 局部空间点变换到 <paramref name="target"/> 局部空间。
+        /// 只累乘两侧 local TRS，不碰 localToWorld / InverseTransformPoint，故共同祖先之上的
+        /// scale=0 / 旋转不影响结果。
+        /// </summary>
+        private static bool TryGetLocalToLocalMatrix(
+            Transform node,
+            Transform target,
+            out Matrix4x4 matrix)
+        {
+            matrix = Matrix4x4.identity;
+            if (node == null || target == null)
+            {
+                return false;
+            }
+
+            if (node == target)
+            {
+                return true;
+            }
+
+            if (!TryFindCommonAncestor(node, target, out var ancestor))
+            {
+                return false;
+            }
+
+            var nodeSide = AccumulateLocalToAncestor(node, ancestor);
+            var targetSide = AccumulateLocalToAncestor(target, ancestor);
+            if (!targetSide.ValidTRS())
+            {
+                // 共同祖先之下若已有退化 scale，仍不应走到这里；保守拒绝。
+                return false;
+            }
+
+            matrix = targetSide.inverse * nodeSide;
+            return true;
+        }
+
+        private static bool TryFindCommonAncestor(
+            Transform a,
+            Transform b,
+            out Transform ancestor)
+        {
+            ancestor = null;
+            var seen = new System.Collections.Generic.HashSet<Transform>();
+            for (var t = a; t != null; t = t.parent)
+            {
+                seen.Add(t);
+            }
+
+            for (var t = b; t != null; t = t.parent)
+            {
+                if (seen.Contains(t))
+                {
+                    ancestor = t;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static Matrix4x4 AccumulateLocalToAncestor(Transform node, Transform ancestor)
+        {
+            var result = Matrix4x4.identity;
+            for (var t = node; t != null && t != ancestor; t = t.parent)
+            {
+                var local = Matrix4x4.TRS(t.localPosition, t.localRotation, t.localScale);
+                result = local * result;
+            }
+
+            return result;
+        }
+
+        private static Bounds TransformBounds(Matrix4x4 matrix, Bounds localBounds)
+        {
+            var center = localBounds.center;
+            var extents = localBounds.extents;
+            var min = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+            var max = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
+            for (var ix = -1; ix <= 1; ix += 2)
+            {
+                for (var iy = -1; iy <= 1; iy += 2)
+                {
+                    for (var iz = -1; iz <= 1; iz += 2)
+                    {
+                        var corner = center + new Vector3(extents.x * ix, extents.y * iy, extents.z * iz);
+                        var world = matrix.MultiplyPoint3x4(corner);
+                        min = Vector3.Min(min, world);
+                        max = Vector3.Max(max, world);
+                    }
+                }
+            }
+
+            var bounds = new Bounds();
+            bounds.SetMinMax(min, max);
+            return bounds;
         }
 
         private static Transform FindDeep(Transform root, string name)

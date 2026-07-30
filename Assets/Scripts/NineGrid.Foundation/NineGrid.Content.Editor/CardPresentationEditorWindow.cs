@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using NineGrid.Cards;
 using NineGrid.Cards.Anim;
 using NineGrid.Cards.Presentation;
@@ -54,15 +55,6 @@ namespace NineGrid.Content.Editor
 
         private string newDeckIdDraft = string.Empty;
         private string newDeckNameDraft = string.Empty;
-
-        private static readonly string[] DeckKindChoices =
-        {
-            "Presentation",
-            "WeakElite",
-            "StrongElite",
-            "Boss",
-            "Reserve",
-        };
 
         [MenuItem("NineGrid/表现层配置")]
         public static void ShowWindow()
@@ -555,7 +547,7 @@ namespace NineGrid.Content.Editor
 
             var createBtn = new Button(() =>
             {
-                if (!session.TryCreateDeck(newDeckIdDraft, newDeckNameDraft, "Presentation", out var error))
+                if (!session.TryCreateDeck(newDeckIdDraft, newDeckNameDraft, out var error))
                 {
                     EditorUtility.DisplayDialog("新建卡组失败", error ?? "未知错误", "确定");
                     return;
@@ -1326,7 +1318,7 @@ namespace NineGrid.Content.Editor
 
             var card = ContentVisualWarmConsoleUi.CreateSectionCard(
                 "卡组配置",
-                "卡背三槽；卡面所属本组后预览/运行时跟随本组卡背",
+                "卡背三槽；卡面 deckId 归属本组后预览/运行时跟随本组卡背",
                 column =>
                 {
                     column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
@@ -1337,21 +1329,7 @@ namespace NineGrid.Content.Editor
                             OnDeckEdited(entry);
                         })));
 
-                    var kindIndex = Array.IndexOf(DeckKindChoices, dto.deckKind ?? string.Empty);
-                    if (kindIndex < 0)
-                    {
-                        kindIndex = 0;
-                    }
-
-                    var kindField = new PopupField<string>(
-                        new List<string>(DeckKindChoices),
-                        kindIndex);
-                    kindField.RegisterValueChangedCallback(evt =>
-                    {
-                        dto.deckKind = evt.newValue ?? "Presentation";
-                        OnDeckEdited(entry);
-                    });
-                    column.Add(ContentVisualWarmConsoleUi.WrapControlRow("deckKind", kindField, 72f));
+                    BuildDeckUsageReadOnlySection(column, dto.contentId);
 
                     column.Add(MakeSpriteField("卡背边框", dto.sprites.backBorder, path =>
                     {
@@ -1380,6 +1358,76 @@ namespace NineGrid.Content.Editor
             topRow.Add(card);
 
             EnsurePreview(entry);
+        }
+
+        private void BuildDeckUsageReadOnlySection(VisualElement column, string deckContentId)
+        {
+            var usageBox = new VisualElement();
+            usageBox.style.marginTop = 6;
+            usageBox.style.marginBottom = 6;
+            usageBox.style.paddingTop = 8;
+            usageBox.style.paddingBottom = 8;
+            usageBox.style.paddingLeft = 10;
+            usageBox.style.paddingRight = 10;
+            usageBox.style.backgroundColor = ContentVisualWarmConsoleUi.Theme.NavNormalBg;
+            usageBox.style.borderTopLeftRadius = usageBox.style.borderTopRightRadius = 4;
+            usageBox.style.borderBottomLeftRadius = usageBox.style.borderBottomRightRadius = 4;
+
+            usageBox.Add(ContentVisualWarmConsoleUi.CreateTitleLabel(
+                "遭遇编排（只读）",
+                11,
+                true,
+                ContentVisualWarmConsoleUi.Theme.TextPrimary));
+
+            var tableHint = ContentVisualWarmConsoleUi.CreateDescriptionLabel(
+                "玩法登记：Assets/Arts/ContentVisual/tables/monster_decks.json");
+            tableHint.style.marginTop = 2;
+            tableHint.style.marginBottom = 6;
+            usageBox.Add(tableHint);
+
+            var summary = MonsterDeckUsageInspector.InspectDeck(deckContentId, session);
+            var headlineColor = summary.Status == MonsterDeckWiringStatus.Wired
+                ? ContentVisualWarmConsoleUi.Theme.AccentGoldValue
+                : summary.Status == MonsterDeckWiringStatus.PresentationOnly
+                    ? ContentVisualWarmConsoleUi.Theme.TextSecondary
+                    : ContentVisualWarmConsoleUi.Theme.AccentStrong;
+
+            var headline = ContentVisualWarmConsoleUi.CreateDescriptionLabel(summary.StatusHeadline ?? string.Empty);
+            headline.style.unityFontStyleAndWeight = FontStyle.Bold;
+            headline.style.color = headlineColor;
+            headline.style.marginBottom = 4;
+            usageBox.Add(headline);
+
+            if (!string.IsNullOrWhiteSpace(summary.DetailLines))
+            {
+                var detail = ContentVisualWarmConsoleUi.CreateDescriptionLabel(summary.DetailLines);
+                detail.style.whiteSpace = WhiteSpace.Normal;
+                usageBox.Add(detail);
+            }
+
+            var unwired = MonsterDeckUsageInspector.ListUnwiredDecks(session);
+            if (unwired.Count > 0)
+            {
+                var builder = new StringBuilder(256);
+                builder.AppendLine("全局未接线卡组：");
+                for (var i = 0; i < unwired.Count; i++)
+                {
+                    var item = unwired[i];
+                    builder.Append("· ").Append(item.DeckId).Append(" — ").Append(item.StatusHeadline);
+                    if (i < unwired.Count - 1)
+                    {
+                        builder.AppendLine();
+                    }
+                }
+
+                var global = ContentVisualWarmConsoleUi.CreateDescriptionLabel(builder.ToString());
+                global.style.marginTop = 8;
+                global.style.whiteSpace = WhiteSpace.Normal;
+                global.style.color = ContentVisualWarmConsoleUi.Theme.AccentStrong;
+                usageBox.Add(global);
+            }
+
+            column.Add(usageBox);
         }
 
         private void BuildEffectAssemblySection(VisualElement column, CardPresentationEditorEntry entry)

@@ -1,105 +1,105 @@
 {
-    "schemaVersion": 2,
-    "contentId": "relic.hard_skin",
-    "kind": "Relic",
-    "deckId": "deck.relic",
-    "displayName": "硬皮",
-    "description": "血量上限+{amount}，关卡结束恢复10",
-    "gold": 0,
-    "stats": {
-        "hp": 0,
-        "armor": 0,
-        "attack": 0,
-        "action": 0,
-        "recovery": 0
-    },
-    "sprites": {
-        "mainIcon": "",
-        "faceBackground": "",
-        "cardFrame": "",
-        "banner": "",
-        "backBorder": "",
-        "backShirt": "",
-        "backLogo": ""
-    },
-    "mainVisual": {
+  "schemaVersion": 2,
+  "contentId": "relic.hard_skin",
+  "kind": "Relic",
+  "deckId": "deck.relic",
+  "displayName": "硬皮",
+  "description": "血量上限+{amount}，关卡结束恢复10",
+  "gold": 0,
+  "stats": {
+    "hp": 0,
+    "armor": 0,
+    "attack": 0,
+    "action": 0,
+    "recovery": 0
+  },
+  "sprites": {
+    "mainIcon": "Assets/Resources/ContentArt/Png/Icons/white_node/spinner.png#spinner",
+    "faceBackground": "",
+    "cardFrame": "",
+    "banner": "",
+    "backBorder": "",
+    "backShirt": "",
+    "backLogo": ""
+  },
+  "mainVisual": {
+    "offsetX": 0.0,
+    "offsetY": 0.0,
+    "uniformScale": 1.0
+  },
+  "animations": {
+    "defaultFps": 8.0,
+    "slots": [
+      {
+        "id": "idle",
+        "sourceType": "none",
+        "path": "",
         "offsetX": 0.0,
-        "offsetY": 0.0,
-        "uniformScale": 1.0
+        "offsetY": 0.0
+      },
+      {
+        "id": "attack",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "hurt",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "death",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "lunch",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      }
+    ]
+  },
+  "extraSlots": [],
+  "rarity": "Blue",
+  "tags": [
+    "tag.armor"
+  ],
+  "effectIds": [],
+  "skillIds": [],
+  "level": 0,
+  "isElite": false,
+  "isBoss": false,
+  "isReserve": false,
+  "containerType": "",
+  "deckKind": "",
+  "monsterDefIds": [],
+  "weight": 0,
+  "goldDelta": 0,
+  "maxHpDelta": 0,
+  "healToFull": false,
+  "rewardPoolId": "",
+  "shopOfferCount": 0,
+  "effectAssemblies": [
+    {
+      "id": "relic.hard_skin.max_hp",
+      "templateId": "tpl.shared.5.relic_blood_shockwave_max_hp",
+      "containerType": "Relic",
+      "argsJson": "{\"delta\":10,\"reason\":\"relic.hard_skin.max_hp\"}"
     },
-    "animations": {
-        "defaultFps": 8.0,
-        "slots": [
-            {
-                "id": "idle",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "attack",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "hurt",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "death",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "lunch",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            }
-        ]
-    },
-    "extraSlots": [],
-    "rarity": "Blue",
-    "tags": [
-        "tag.armor"
-    ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [
-        {
-            "id": "relic.hard_skin.max_hp",
-            "templateId": "tpl.shared.5.relic_blood_shockwave_max_hp",
-            "containerType": "Relic",
-            "argsJson": "{\"delta\":10,\"reason\":\"relic.hard_skin.max_hp\"}"
-        },
-        {
-            "id": "relic.hard_skin.node_end",
-            "templateId": "tpl.shared.2.relic_hard_skin_node_end",
-            "containerType": "Relic",
-            "argsJson": "{\"amount\":10}"
-        }
-    ],
-    "role": "Defense"
+    {
+      "id": "relic.hard_skin.node_end",
+      "templateId": "tpl.shared.2.relic_hard_skin_node_end",
+      "containerType": "Relic",
+      "argsJson": "{\"amount\":10}"
+    }
+  ],
+  "role": "Defense"
 }

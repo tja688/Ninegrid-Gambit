@@ -157,9 +157,15 @@ namespace NineGrid.Presentation.Tests
             sm.frontSortingLayerID = sm.sortingLayerID;
             sm.backSortingLayerID = sm.sortingLayerID;
 
+            var meshGo = new GameObject("tmpLike");
+            meshGo.transform.SetParent(root.transform, false);
+            var mesh = meshGo.AddComponent<MeshRenderer>();
+            mesh.sortingLayerID = SortingLayer.NameToID("Default");
+
             CardMainVisualMaskAnchor.PropagateSortingLayerFromGroup(group);
 
             Assert.AreEqual(group.sortingLayerID, sr.sortingLayerID);
+            Assert.AreEqual(group.sortingLayerID, mesh.sortingLayerID);
             Assert.AreEqual(group.sortingLayerID, sm.sortingLayerID);
             Assert.AreEqual(group.sortingLayerID, sm.frontSortingLayerID);
             Assert.AreEqual(group.sortingLayerID, sm.backSortingLayerID);
@@ -205,6 +211,183 @@ namespace NineGrid.Presentation.Tests
                 hexMask.backSortingOrder);
 
             Object.DestroyImmediate(face);
+        }
+
+        [Test]
+        public void Anchoring_IsInvariant_UnderZeroScaleAncestor()
+        {
+            BuildRelicLikeHierarchy(out var wrapper, out var anchor, out var visualSr);
+            try
+            {
+                wrapper.localScale = Vector3.one;
+                CardMainVisualPlacement.ApplyToRenderer(
+                    visualSr,
+                    anchor,
+                    visualSr.sprite,
+                    uniformScale: 1f,
+                    offsetX: 0f,
+                    offsetY: 0f);
+                var atScaleOne = visualSr.transform.localPosition;
+
+                wrapper.localScale = Vector3.zero;
+                CardMainVisualPlacement.ApplyToRenderer(
+                    visualSr,
+                    anchor,
+                    visualSr.sprite,
+                    uniformScale: 1f,
+                    offsetX: 0f,
+                    offsetY: 0f);
+                var atScaleZero = visualSr.transform.localPosition;
+
+                Assert.AreEqual(atScaleOne.x, atScaleZero.x, 0.0001f);
+                Assert.AreEqual(atScaleOne.y, atScaleZero.y, 0.0001f);
+                Assert.AreEqual(atScaleOne.z, atScaleZero.z, 0.0001f);
+            }
+            finally
+            {
+                Object.DestroyImmediate(wrapper.gameObject);
+            }
+        }
+
+        [Test]
+        public void Anchoring_IsInvariant_UnderRotatedAncestor()
+        {
+            BuildRelicLikeHierarchy(out var wrapper, out var anchor, out var visualSr);
+            try
+            {
+                wrapper.localScale = Vector3.one;
+                wrapper.localRotation = Quaternion.identity;
+                CardMainVisualPlacement.ApplyToRenderer(
+                    visualSr,
+                    anchor,
+                    visualSr.sprite,
+                    uniformScale: 1f,
+                    offsetX: 0f,
+                    offsetY: 0f);
+                var withoutRotation = visualSr.transform.localPosition;
+
+                wrapper.localRotation = Quaternion.Euler(0f, 0f, 18f);
+                CardMainVisualPlacement.ApplyToRenderer(
+                    visualSr,
+                    anchor,
+                    visualSr.sprite,
+                    uniformScale: 1f,
+                    offsetX: 0f,
+                    offsetY: 0f);
+                var withRotation = visualSr.transform.localPosition;
+
+                Assert.AreEqual(withoutRotation.x, withRotation.x, 0.0001f);
+                Assert.AreEqual(withoutRotation.y, withRotation.y, 0.0001f);
+                Assert.AreEqual(withoutRotation.z, withRotation.z, 0.0001f);
+            }
+            finally
+            {
+                Object.DestroyImmediate(wrapper.gameObject);
+            }
+        }
+
+        [Test]
+        public void MainIcon_StaysInsideMask_AfterRecommitAtZeroScale()
+        {
+            BuildRelicLikeHierarchy(out var wrapper, out var anchor, out var visualSr);
+            try
+            {
+                wrapper.localScale = Vector3.one;
+                CardMainVisualPlacement.ApplyToRenderer(
+                    visualSr,
+                    anchor,
+                    visualSr.sprite,
+                    uniformScale: 1f,
+                    offsetX: 0f,
+                    offsetY: 0f);
+
+                wrapper.localScale = Vector3.zero;
+                CardMainVisualPlacement.ApplyToRenderer(
+                    visualSr,
+                    anchor,
+                    visualSr.sprite,
+                    uniformScale: 1f,
+                    offsetX: 0f,
+                    offsetY: 0f);
+
+                // 局部空间 AABB：图标内容须落在 Mask 内（遗物模板 x 偏移场景下旧算法会钉到原点外）。
+                var parent = visualSr.transform.parent;
+                var maskLocal = Matrix4x4.TRS(
+                    anchor.transform.localPosition,
+                    anchor.transform.localRotation,
+                    anchor.transform.localScale);
+                var maskBounds = TransformAabb(maskLocal, anchor.GetComponent<SpriteRenderer>().sprite.bounds);
+                var visualLocal = Matrix4x4.TRS(
+                    visualSr.transform.localPosition,
+                    visualSr.transform.localRotation,
+                    visualSr.transform.localScale);
+                var contentBounds = TransformAabb(visualLocal, visualSr.sprite.bounds);
+
+                Assert.GreaterOrEqual(contentBounds.min.x, maskBounds.min.x - 0.001f, "icon min.x inside mask");
+                Assert.LessOrEqual(contentBounds.max.x, maskBounds.max.x + 0.001f, "icon max.x inside mask");
+                Assert.GreaterOrEqual(contentBounds.min.y, maskBounds.min.y - 0.001f, "icon min.y inside mask");
+                Assert.LessOrEqual(contentBounds.max.y, maskBounds.max.y + 0.001f, "icon max.y inside mask");
+                Assert.AreSame(parent, anchor.transform.parent);
+            }
+            finally
+            {
+                Object.DestroyImmediate(wrapper.gameObject);
+            }
+        }
+
+        /// <summary>
+        /// 按遗物卡标准模版偏移：Mask (-1.2208, 0.4039) scale (1.904, 1.524)；图标 (-1.21875, 0)。
+        /// </summary>
+        private static void BuildRelicLikeHierarchy(
+            out Transform wrapper,
+            out CardMainVisualMaskAnchor anchor,
+            out SpriteRenderer visualSr)
+        {
+            var wrapperGo = new GameObject("bounce_wrapper");
+            wrapper = wrapperGo.transform;
+
+            var face = new GameObject("face");
+            face.transform.SetParent(wrapper, false);
+
+            var maskGo = new GameObject(CardMainVisualMaskAnchor.NodeName);
+            maskGo.transform.SetParent(face.transform, false);
+            maskGo.transform.localPosition = new Vector3(-1.2208f, 0.4039f, 0f);
+            maskGo.transform.localScale = new Vector3(1.904f, 1.524f, 1f);
+            var maskSr = maskGo.AddComponent<SpriteRenderer>();
+            maskSr.sprite = CreateTestSprite(64, 64, Color.white);
+            maskGo.AddComponent<SpriteMask>().sprite = maskSr.sprite;
+            anchor = maskGo.AddComponent<CardMainVisualMaskAnchor>();
+
+            var visualGo = new GameObject("遗物主图标");
+            visualGo.transform.SetParent(face.transform, false);
+            visualGo.transform.localPosition = new Vector3(-1.21875f, 0f, 0f);
+            visualSr = visualGo.AddComponent<SpriteRenderer>();
+            visualSr.sprite = CreateTestSprite(32, 40, Color.red);
+        }
+
+        private static Bounds TransformAabb(Matrix4x4 matrix, Bounds localBounds)
+        {
+            var center = localBounds.center;
+            var extents = localBounds.extents;
+            var min = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+            var max = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
+            for (var ix = -1; ix <= 1; ix += 2)
+            {
+                for (var iy = -1; iy <= 1; iy += 2)
+                {
+                    for (var iz = -1; iz <= 1; iz += 2)
+                    {
+                        var corner = center + new Vector3(extents.x * ix, extents.y * iy, extents.z * iz);
+                        var p = matrix.MultiplyPoint3x4(corner);
+                        min = Vector3.Min(min, p);
+                        max = Vector3.Max(max, p);
+                    }
+                }
+            }
+
+            var bounds = new Bounds();
+            bounds.SetMinMax(min, max);
+            return bounds;
         }
 
         private static Sprite CreateTestSprite(int width, int height, Color fill)
