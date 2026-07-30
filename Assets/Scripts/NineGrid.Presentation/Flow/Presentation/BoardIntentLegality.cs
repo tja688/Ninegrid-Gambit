@@ -99,9 +99,78 @@ namespace NineGrid.Flow.Presentation
                 return false;
             }
 
+            if (!target.FaceUp)
+            {
+                rejectReason = "faceDown uid=" + targetUid;
+                return false;
+            }
+
             // 嘲讽：允许点击非嘲讽邻怪；实际目标由 AttackIntentScriptFactory /
             // ResolvePlayerAttackTargetUid 重定向，Present 播 PlayTauntRedirectAttackAsync。
             // 此处拒点会与重定向演出打架。
+            return true;
+        }
+
+        public static bool TryExplainRevealFace(IArchitecture arch, int groundSlot, out string rejectReason)
+        {
+            rejectReason = null;
+            if (arch == null)
+            {
+                rejectReason = "noArchitecture";
+                return false;
+            }
+
+            if (!TryExplainPhaseAllowsBoardCommand(arch, GameCommandKind.RevealFace, out rejectReason))
+            {
+                return false;
+            }
+
+            if (groundSlot < SlotId.MinBoardIndex || groundSlot > SlotId.MaxBoardIndex)
+            {
+                rejectReason = "slotOutOfRange";
+                return false;
+            }
+
+            var slot = SlotId.Board(groundSlot);
+            var board = arch.GetModel<BoardModel>();
+            if (!slot.IsBoardSlot || slot == board.AvatarSlot.Value)
+            {
+                rejectReason = "notBoardCardSlot";
+                return false;
+            }
+
+            var targetUid = board.GetCardUid(slot);
+            if (targetUid == 0)
+            {
+                rejectReason = "emptySlot";
+                return false;
+            }
+
+            var registry = arch.GetModel<CardRegistry>();
+            if (!registry.TryGet(targetUid, out var target) || target == null)
+            {
+                rejectReason = "missingCard uid=" + targetUid;
+                return false;
+            }
+
+            if (target.Kind == CardKind.Avatar)
+            {
+                rejectReason = "isAvatar";
+                return false;
+            }
+
+            if (target.FaceUp)
+            {
+                rejectReason = "alreadyFaceUp uid=" + targetUid;
+                return false;
+            }
+
+            if (!arch.GetSystem<IBoardSystem>().AreAdjacent(board.AvatarSlot.Value, slot))
+            {
+                rejectReason = "notAdjacent avatarSlot=" + board.AvatarSlot.Value;
+                return false;
+            }
+
             return true;
         }
 

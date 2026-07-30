@@ -304,6 +304,22 @@ namespace NineGrid.Core.Commands
         }
     }
 
+    /// <summary>主动翻开场上邻接背面卡。</summary>
+    public sealed class RevealFaceCommand : AbstractCommand<CoreCommandResult>
+    {
+        private readonly SlotId mTargetSlot;
+
+        public RevealFaceCommand(SlotId targetSlot)
+        {
+            mTargetSlot = targetSlot;
+        }
+
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().RevealFace(mTargetSlot);
+        }
+    }
+
     public sealed class PresentationFinishedCommand : AbstractCommand<CoreCommandResult>
     {
         private readonly int mBatchId;

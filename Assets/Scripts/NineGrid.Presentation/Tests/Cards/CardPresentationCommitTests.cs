@@ -369,7 +369,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void Commit_FaceUpReserved_DoesNotThrow_AndKeepsFrontVisible()
+        public void Commit_FaceUpFalse_ShowsBack()
         {
             var card = _cardManager.SpawnView(
                 _nextUid++,
@@ -382,7 +382,7 @@ namespace NineGrid.Presentation.Tests
                 {
                     Kind = CardPresentationKind.Avatar,
                     DefId = "avatar.faceup",
-                    DisplayName = "朝向预留",
+                    DisplayName = "朝向",
                     MainIcon = _mainIcon,
                     Attack = 2,
                     Armor = 2,
@@ -391,8 +391,11 @@ namespace NineGrid.Presentation.Tests
             });
 
             var front = FindDeep(card.MountedFaceRoot, "front");
+            var back = FindDeep(card.MountedFaceRoot, "back");
             Assert.IsNotNull(front);
-            Assert.IsTrue(front.gameObject.activeSelf, "本波恒正面；FaceUp=false 亦不抛错、不隐式走 DisplayMode");
+            Assert.IsNotNull(back);
+            Assert.IsFalse(front.gameObject.activeSelf, "FaceUp=false 应隐藏正面");
+            Assert.IsTrue(back.gameObject.activeSelf, "FaceUp=false 应显示背面");
         }
 
         [TestCase(CardPresentationKind.HelpCard)]

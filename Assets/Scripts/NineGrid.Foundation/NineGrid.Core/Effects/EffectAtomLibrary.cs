@@ -666,6 +666,32 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    [EffectAtom("OnFlip", EffectAtomKind.Trigger)]
+    public sealed class OnFlipTrigger : TriggerAtomBase
+    {
+        public override TriggerPoint Point { get { return TriggerPoint.OnFlip; } }
+
+        public override bool Matches(EffectRuntimeContext context)
+        {
+            if (!base.Matches(context) || context.OwnerUid == 0)
+            {
+                return false;
+            }
+
+            var events = context.Events;
+            for (var i = 0; i < events.Count; i++)
+            {
+                if (events[i].Type == CoreEventType.CardFaceChanged
+                    && events[i].CardUid == context.OwnerUid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
     [EffectAtom("OnArmorBreak", EffectAtomKind.Trigger)]
     public sealed class OnArmorBreakTrigger : TriggerAtomBase
     {
@@ -1667,6 +1693,36 @@ namespace NineGrid.Core.Effects
         public IStatCondition CreateStatCondition(EffectBuildContext context)
         {
             return TargetResolver.IsSelfRef(mTargetRef) ? new ZoneCondition(mZone) : null;
+        }
+    }
+
+    [EffectAtom("IsFaceUp", EffectAtomKind.Condition)]
+    public sealed class IsFaceUpEffectCondition : ICondition
+    {
+        private string mTargetRef = "Self";
+        private bool mExpected = true;
+
+        public void Configure(EffectDslNode config)
+        {
+            mTargetRef = config.Get("target").AsString("Self");
+            mExpected = config.Get("faceUp").AsBool(config.Get("value").AsBool(true));
+        }
+
+        public bool IsMet(EffectRuntimeContext context)
+        {
+            var uid = TargetResolver.ResolveSingleCardRef(context, mTargetRef);
+            CardInstance card;
+            if (!context.TryGetCard(uid, out card) || card == null)
+            {
+                return false;
+            }
+
+            return card.FaceUp == mExpected;
+        }
+
+        public IStatCondition CreateStatCondition(EffectBuildContext context)
+        {
+            return null;
         }
     }
 
@@ -2781,6 +2837,38 @@ namespace NineGrid.Core.Effects
             for (var i = 0; i < mCount; i++)
             {
                 result.Add(new RotateBoardClockwiseAction(mClockwise, context.SourceDefId, context.EffectId));
+            }
+
+            return result;
+        }
+    }
+
+    [EffectAtom("Flip", EffectAtomKind.Action)]
+    public sealed class FlipEffectAction : IAction
+    {
+        public void Configure(EffectDslNode config)
+        {
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            var result = new List<GameAction>();
+            if (targets == null || targets.Count == 0)
+            {
+                if (context != null && context.OwnerUid != 0)
+                {
+                    result.Add(new FlipCardAction(context.OwnerUid, context.SourceDefId, context.EffectId));
+                }
+
+                return result;
+            }
+
+            for (var i = 0; i < targets.Count; i++)
+            {
+                if (targets[i] != 0)
+                {
+                    result.Add(new FlipCardAction(targets[i], context.SourceDefId, context.EffectId));
+                }
             }
 
             return result;

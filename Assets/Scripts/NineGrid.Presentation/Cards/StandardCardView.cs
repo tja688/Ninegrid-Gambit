@@ -133,6 +133,15 @@ namespace NineGrid.Cards
             _faceBinder?.ApplyFaceOrientation(faceUp);
         }
 
+        /// <summary>只更新 Binder Commit 朝向镜像，不立刻切 front/back。</summary>
+        public void RecordCommittedFaceUp(bool faceUp)
+        {
+            if (_faceBinder is CardFacePresentationBinder binder)
+            {
+                binder.RecordCommittedFaceUp(faceUp);
+            }
+        }
+
         private void Awake()
         {
             _sortingGroup = GetComponent<SortingGroup>();

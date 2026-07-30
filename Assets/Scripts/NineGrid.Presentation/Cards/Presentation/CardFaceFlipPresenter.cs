@@ -6,9 +6,9 @@ using UnityEngine;
 namespace NineGrid.Cards.Presentation
 {
     /// <summary>
-    /// 表现层翻牌 POC：在 FacePivot 上忠实采样 PixelartCardTCG <c>Flip.anim</c>
+    /// 表现层翻牌：在 FacePivot 上忠实采样 PixelartCardTCG <c>Flip.anim</c>
     /// （Y 旋转 + Scale 鼓起；源约 0.444s / 18fps，PlaybackSpeed=2 实播约 0.222s），中点切换 front/back。
-    /// 不写 Core 朝向、不改 Binder Commit 镜像。
+    /// Core 朝向由 <see cref="NineGrid.Flow.Presentation.CardFaceFlipBeatHandler"/> Commit；本组件只驱动视觉。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CardFaceFlipPresenter : MonoBehaviour

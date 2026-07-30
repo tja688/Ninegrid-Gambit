@@ -82,6 +82,20 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 只写入已提交镜像（不立刻 Apply 视觉）；供翻牌动画路径先锁 Commit 再播 Flip。
+        /// </summary>
+        public void StoreCommittedPresentation(CardPresentationSnapshot snapshot)
+        {
+            if (snapshot == null)
+            {
+                return;
+            }
+
+            CommittedPresentation = snapshot;
+            CoreKind = snapshot.Kind;
+        }
+
+        /// <summary>
         /// 全场对账：重放已提交投影到卡面；无已提交快照时 no-op。
         /// </summary>
         public void ReapplyCommittedPresentation()
@@ -92,6 +106,10 @@ namespace NineGrid.Cards
             }
 
             View.ApplyPresentation(CommittedPresentation);
+            var presenter = GameObject != null
+                ? GameObject.GetComponent<CardFaceFlipPresenter>()
+                : null;
+            presenter?.SnapVisualFace(CommittedPresentation.FaceUp);
         }
     }
 

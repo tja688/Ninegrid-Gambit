@@ -74,6 +74,10 @@ namespace NineGrid.Core.Systems
             CoreCommandResult ClickEmpty(SlotId targetSlot);
             CoreCommandResult UseItem(int itemUid);
             CoreCommandResult UseItem(int itemUid, IReadOnlyList<int> selectedCardUids, string selectedOption);
+            /// <summary>
+            /// 主动翻开：场上邻接背面卡 → FaceUp；消耗互动由表现剧本分拍推进。
+            /// </summary>
+            CoreCommandResult RevealFace(SlotId targetSlot);
             CoreCommandResult SelectReward(int optionIndex);
             CoreCommandResult SkipHelpChoice();
             CoreCommandResult SelectRoom(int optionIndex);
@@ -188,6 +192,11 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.Attack, "Attack target is restricted by taunt.", targetSlot, targetUid);
             }
 
+            if (!target.FaceUp)
+            {
+                return Reject(GameCommandKind.Attack, "Attack target is face-down.", targetSlot, targetUid);
+            }
+
             var avatar = registry.Get(board.AvatarUid.Value);
             var statSystem = this.GetSystem<IStatSystem>();
             var pipeline = this.GetSystem<IActionPipelineSystem>();
@@ -276,6 +285,11 @@ namespace NineGrid.Core.Systems
 
             if (attacker.Kind == CardKind.Avatar && target.Kind == CardKind.Monster)
             {
+                if (!target.FaceUp)
+                {
+                    return CoreCommandResult.Reject("Combat hit target is face-down.");
+                }
+
                 var resolvedTargetUid = ResolvePlayerAttackTargetUid(targetUid);
                 if (resolvedTargetUid != targetUid)
                 {
@@ -445,6 +459,47 @@ namespace NineGrid.Core.Systems
             }
 
             return CoreCommandResult.Accept(resolved);
+        }
+
+        public CoreCommandResult RevealFace(SlotId targetSlot)
+        {
+            if (!CanExecute(GameCommandKind.RevealFace))
+            {
+                return Reject(GameCommandKind.RevealFace, "Command is not legal in phase " + CurrentPhase, targetSlot, 0);
+            }
+
+            var registry = this.GetModel<CardRegistry>();
+            var board = this.GetModel<BoardModel>();
+            if (!targetSlot.IsBoardSlot || targetSlot == board.AvatarSlot.Value)
+            {
+                return Reject(GameCommandKind.RevealFace, "Reveal target is not a board card slot.", targetSlot, 0);
+            }
+
+            var targetUid = board.GetCardUid(targetSlot);
+            if (targetUid == 0)
+            {
+                return Reject(GameCommandKind.RevealFace, "Reveal target slot is empty.", targetSlot, 0);
+            }
+
+            var target = registry.Get(targetUid);
+            if (target.Kind == CardKind.Avatar)
+            {
+                return Reject(GameCommandKind.RevealFace, "Cannot reveal avatar.", targetSlot, targetUid);
+            }
+
+            if (target.FaceUp)
+            {
+                return Reject(GameCommandKind.RevealFace, "Target is already face-up.", targetSlot, targetUid);
+            }
+
+            if (!this.GetSystem<IBoardSystem>().AreAdjacent(board.AvatarSlot.Value, targetSlot))
+            {
+                return Reject(GameCommandKind.RevealFace, "Reveal target is outside interaction range.", targetSlot, targetUid);
+            }
+
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new RevealFaceAction(targetUid));
+            return CoreCommandResult.Accept(pipeline.RunToCompletion());
         }
 
         public CoreCommandResult ClickEmpty(SlotId targetSlot)
@@ -1203,6 +1258,7 @@ namespace NineGrid.Core.Systems
                         mLegalCommands.Add(GameCommandKind.PickupItem);
                         mLegalCommands.Add(GameCommandKind.ClickEmpty);
                         mLegalCommands.Add(GameCommandKind.UseItem);
+                        mLegalCommands.Add(GameCommandKind.RevealFace);
                     }
 
                     break;

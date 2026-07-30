@@ -120,6 +120,47 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void Attack_FaceDownMonster_IsIllegal()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sAdjacentSlot);
+            var board = mArch.GetModel<BoardModel>();
+            var registry = mArch.GetModel<CardRegistry>();
+            var uid = board.GetCardUid(sAdjacentSlot);
+            registry.Get(uid).FaceUp = false;
+
+            string reason;
+            Assert.IsFalse(BoardIntentLegality.TryExplainAttack(mArch, sAdjacentSlot.Index, out reason));
+            StringAssert.Contains("faceDown", reason);
+        }
+
+        [Test]
+        public void RevealFace_FaceDownAdjacent_IsLegal()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sAdjacentSlot);
+            var board = mArch.GetModel<BoardModel>();
+            var registry = mArch.GetModel<CardRegistry>();
+            var uid = board.GetCardUid(sAdjacentSlot);
+            registry.Get(uid).FaceUp = false;
+
+            string reason;
+            Assert.IsTrue(BoardIntentLegality.TryExplainRevealFace(mArch, sAdjacentSlot.Index, out reason));
+            Assert.IsNull(reason);
+        }
+
+        [Test]
+        public void RevealFace_FaceUp_IsIllegal()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sAdjacentSlot);
+
+            string reason;
+            Assert.IsFalse(BoardIntentLegality.TryExplainRevealFace(mArch, sAdjacentSlot.Index, out reason));
+            StringAssert.Contains("alreadyFaceUp", reason);
+        }
+
+        [Test]
         public void UseItem_MissingUid_IsIllegal()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);

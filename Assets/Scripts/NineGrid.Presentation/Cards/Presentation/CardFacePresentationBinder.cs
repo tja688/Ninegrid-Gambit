@@ -12,7 +12,7 @@ namespace NineGrid.Cards.Presentation
 {
     /// <summary>
     /// L4 卡面 Kind Binder：按投影 Kind 路由消费图标/名字/数值/基础描述；未绑字段忽略。
-    /// 朝向：本波恒正面（front 显 / back 隐），存储 FaceUp 供后续演出循迹。
+    /// 朝向：Commit 时按 FaceUp 显隐 front/back；翻牌动画由 FlipPresenter 驱动。
     /// 基础描述静态组装（含 `[SlotCode]`→真实图标），不随数值 Commit 重算跳动。
     /// </summary>
     [DisallowMultipleComponent]
@@ -39,7 +39,7 @@ namespace NineGrid.Cards.Presentation
         private static CardFaceDescriptionIconCatalogSO _cachedIconCatalog;
         private static CardFaceDescriptionIconCatalogSO _iconCatalogOverride;
 
-        /// <summary>最近一次 Commit 的朝向镜像（供后续翻牌专题读取；本波不驱动演出）。</summary>
+        /// <summary>最近一次 Commit 的朝向镜像。</summary>
         public bool CommittedFaceUp => _committedFaceUp;
 
         private void Awake()
@@ -102,22 +102,28 @@ namespace NineGrid.Cards.Presentation
 
         public void ApplyFaceOrientation(bool faceUp)
         {
-            // Core：实例级牌面朝向权威（本波可不落地状态机）。
+            // Core：实例级牌面朝向权威。
             // 表现投影：仅 Commit 镜像（本字段）。
-            // 卡面：只消费已提交朝向；本波恒正面，无翻转演出 / 无 DisplayMode→朝向通道。
+            // 卡面：消费已提交朝向；front/back 显隐跟随 faceUp。
             _committedFaceUp = faceUp;
 
             var front = FindFrontRoot();
             var back = FindBackRoot();
             if (front != null)
             {
-                front.gameObject.SetActive(true);
+                front.gameObject.SetActive(faceUp);
             }
 
             if (back != null)
             {
-                back.gameObject.SetActive(false);
+                back.gameObject.SetActive(!faceUp);
             }
+        }
+
+        /// <summary>只更新 Commit 镜像，不立刻切 front/back（翻牌动画路径）。</summary>
+        public void RecordCommittedFaceUp(bool faceUp)
+        {
+            _committedFaceUp = faceUp;
         }
 
         private void CaptureTemplateDefaultsIfNeeded()

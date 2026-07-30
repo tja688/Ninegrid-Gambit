@@ -4,7 +4,7 @@ namespace NineGrid.Cards.Presentation
 {
     /// <summary>
     /// 面向卡面消费的胖投影快照（不按 Kind 裁剪真相；卡面按模板路由，不用则不绑）。
-    /// FaceUp = Core 牌面朝向的镜像，非 DisplayMode 推导；朝向规则门闩属后续专题。
+    /// FaceUp = Core 牌面朝向的镜像，非 DisplayMode 推导。
     /// </summary>
     public sealed class CardPresentationSnapshot
     {
@@ -31,7 +31,6 @@ namespace NineGrid.Cards.Presentation
 
         /// <summary>
         /// Core 牌面朝向镜像（明/暗）。权威在 Core；表现仅 Commit 镜像。
-        /// 本波默认 true 即可玩；规则门闩 / 揭牌演出属后续专题。
         /// </summary>
         public bool FaceUp = true;
 

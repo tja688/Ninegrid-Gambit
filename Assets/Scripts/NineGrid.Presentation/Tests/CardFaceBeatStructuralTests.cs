@@ -121,8 +121,12 @@ namespace NineGrid.Presentation.Tests
                 text.IndexOf("new EffectTriggerPulseBeatHandler()", StringComparison.Ordinal) >= 0,
                 "组合根须注册 FX 脉冲装饰处理器");
             Assert.IsTrue(
+                text.IndexOf("new CardFaceFlipBeatHandler()", StringComparison.Ordinal) >= 0,
+                "组合根须注册翻牌朝向处理器");
+            Assert.IsTrue(
                 text.IndexOf("new BattleBeatScheduler(", StringComparison.Ordinal) >= 0
                 && text.IndexOf("new CardFaceStatHandler()", StringComparison.Ordinal) >= 0
+                && text.IndexOf("new CardFaceFlipBeatHandler()", StringComparison.Ordinal) >= 0
                 && text.IndexOf("new DamageFloaterBeatHandler()", StringComparison.Ordinal) >= 0
                 && text.IndexOf("new EffectTriggerPulseBeatHandler()", StringComparison.Ordinal) >= 0,
                 "装饰处理器须注入排期器且不占主线 ack");
@@ -431,6 +435,7 @@ namespace NineGrid.Presentation.Tests
             var allowed = new[]
             {
                 "CardFaceStatHandler.cs",
+                "CardFaceFlipBeatHandler.cs",
                 "CoreCardPresentationMapper.cs",
             };
             var offenders = Directory
@@ -456,7 +461,7 @@ namespace NineGrid.Presentation.Tests
 
             Assert.IsEmpty(
                 offenders,
-                "卡面 CommitPresentation 生产调用方只允许 CardFaceStatHandler / CoreCardPresentationMapper：\n"
+                "卡面 CommitPresentation 生产调用方只允许 CardFaceStatHandler / CardFaceFlipBeatHandler / CoreCardPresentationMapper：\n"
                 + string.Join("\n", offenders));
         }
 

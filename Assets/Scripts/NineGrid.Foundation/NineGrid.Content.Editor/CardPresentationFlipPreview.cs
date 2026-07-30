@@ -1,17 +1,20 @@
 #if UNITY_EDITOR
 using System;
+using NineGrid.Cards.Convergence;
+using NineGrid.Cards.Presentation;
 using UnityEngine;
 
 namespace NineGrid.Content.Editor
 {
     /// <summary>
-    /// 编辑器翻牌预览：Y 轴 0→-90→0（约 0.45s，对齐 Flip.anim），中点切换正/背面可见性。
+    /// 编辑器翻牌预览：与实战 <see cref="CardFaceFlipPresenter"/> 共用 Flip.anim 阶跃采样
+    /// （Y 旋转 + Scale 鼓起、PlaybackSpeed、中点切正/背），只动 FacePivot。
     /// </summary>
     public sealed class CardPresentationFlipPreview
     {
-        public const float DurationSeconds = 0.45f;
+        public static float DurationSeconds => CardFaceFlipPresenter.DurationSeconds;
 
-        private Transform _root;
+        private Transform _pivot;
         private Transform _front;
         private Transform _back;
         private bool _playing;
@@ -26,27 +29,28 @@ namespace NineGrid.Content.Editor
         public void Begin(Transform previewRoot, bool targetFaceUp, Action onCompleted = null)
         {
             Stop(resetRotation: false);
-            _root = previewRoot;
-            if (_root == null)
+            if (previewRoot == null)
             {
                 onCompleted?.Invoke();
                 return;
             }
 
-            _front = FindFrontRoot(_root);
-            _back = FindBackRoot(_root);
+            _pivot = ResolvePivot(previewRoot);
+            _front = FindFrontRoot(previewRoot);
+            _back = FindBackRoot(previewRoot);
             _targetFaceUp = targetFaceUp;
             _elapsed = 0f;
             _swapped = false;
             _playing = true;
             _onCompleted = onCompleted;
+            // 起手保持当前可见面，中点再切到目标面。
             ApplyOrientation(!_targetFaceUp);
-            SetYRotation(0f);
+            SamplePose(0f);
         }
 
         public void Tick(float deltaTime)
         {
-            if (!_playing || _root == null)
+            if (!_playing || _pivot == null)
             {
                 return;
             }
@@ -57,17 +61,16 @@ namespace NineGrid.Content.Editor
             }
 
             _elapsed += deltaTime;
-            var t = Mathf.Clamp01(_elapsed / DurationSeconds);
-            var y = SampleYRotation(t);
-            SetYRotation(y);
+            var t = Mathf.Min(_elapsed, DurationSeconds);
+            SamplePose(t);
 
-            if (!_swapped && t >= 0.5f)
+            if (!_swapped && t >= CardFaceFlipPresenter.FaceSwapTimeSeconds)
             {
                 _swapped = true;
                 ApplyOrientation(_targetFaceUp);
             }
 
-            if (t >= 1f)
+            if (_elapsed >= DurationSeconds)
             {
                 Complete();
             }
@@ -77,10 +80,14 @@ namespace NineGrid.Content.Editor
         {
             _playing = false;
             _onCompleted = null;
-            if (resetRotation && _root != null)
+            if (resetRotation)
             {
-                SetYRotation(0f);
+                ResetPivotPose();
             }
+
+            _pivot = null;
+            _front = null;
+            _back = null;
         }
 
         public static Transform FindFrontRoot(Transform root)
@@ -96,7 +103,7 @@ namespace NineGrid.Content.Editor
         private void Complete()
         {
             _playing = false;
-            SetYRotation(0f);
+            ResetPivotPose();
             ApplyOrientation(_targetFaceUp);
             var done = _onCompleted;
             _onCompleted = null;
@@ -116,27 +123,56 @@ namespace NineGrid.Content.Editor
             }
         }
 
-        private void SetYRotation(float yDegrees)
+        private void SamplePose(float playbackTimeSeconds)
         {
-            if (_root == null)
+            if (_pivot == null)
             {
                 return;
             }
 
-            var euler = _root.localEulerAngles;
-            euler.y = yDegrees;
-            _root.localEulerAngles = euler;
+            CardFaceFlipPresenter.SampleFlipPose(playbackTimeSeconds, out var y, out var scale);
+            var euler = _pivot.localEulerAngles;
+            euler.y = y;
+            _pivot.localEulerAngles = euler;
+            _pivot.localScale = new Vector3(scale, scale, scale);
         }
 
-        private static float SampleYRotation(float t)
+        private void ResetPivotPose()
         {
-            // Flip.anim：约 0→-90（前半）→0（后半）。
-            if (t <= 0.5f)
+            if (_pivot == null)
             {
-                return Mathf.Lerp(0f, -90f, t * 2f);
+                return;
             }
 
-            return Mathf.Lerp(-90f, 0f, (t - 0.5f) * 2f);
+            var euler = _pivot.localEulerAngles;
+            euler.y = 0f;
+            _pivot.localEulerAngles = euler;
+            _pivot.localScale = Vector3.one;
+        }
+
+        private static Transform ResolvePivot(Transform previewRoot)
+        {
+            if (previewRoot == null)
+            {
+                return null;
+            }
+
+            var tower = previewRoot.GetComponent<CardTransformTower>();
+            if (tower == null)
+            {
+                tower = previewRoot.GetComponentInChildren<CardTransformTower>(true);
+            }
+
+            if (tower != null)
+            {
+                tower.EnsureTower();
+                if (tower.FacePivot != null)
+                {
+                    return tower.FacePivot;
+                }
+            }
+
+            return previewRoot;
         }
 
         private static Transform FindNamedChild(Transform root, params string[] names)

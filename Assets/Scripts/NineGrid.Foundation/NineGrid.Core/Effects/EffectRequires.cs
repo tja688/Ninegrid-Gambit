@@ -14,6 +14,29 @@ namespace NineGrid.Core.Effects
         public const string CardZoneTriggerable = "CardZoneTriggerable";
         public const string CardZoneBoard = "CardZone:Board";
         public const string CardZoneItemSlots = "CardZone:ItemSlots";
+        /// <summary>自管翻面：背面时仍可触发/生效，不受背面惰性门闩。</summary>
+        public const string ActiveWhileFaceDown = "ActiveWhileFaceDown";
+
+        public static bool HasActiveWhileFaceDown(EffectDefinition definition)
+        {
+            if (definition == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < definition.Requires.Count; i++)
+            {
+                if (string.Equals(
+                        definition.Requires[i],
+                        ActiveWhileFaceDown,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 
     public static class EffectRequiresValidator
@@ -72,7 +95,8 @@ namespace NineGrid.Core.Effects
                 || Same(token, EffectRequireTokens.ActivatedByUse)
                 || Same(token, EffectRequireTokens.CardZoneTriggerable)
                 || Same(token, EffectRequireTokens.CardZoneBoard)
-                || Same(token, EffectRequireTokens.CardZoneItemSlots);
+                || Same(token, EffectRequireTokens.CardZoneItemSlots)
+                || Same(token, EffectRequireTokens.ActiveWhileFaceDown);
         }
 
         public static bool HasExplicitSceneDeclaration(EffectDefinition definition)
@@ -192,6 +216,12 @@ namespace NineGrid.Core.Effects
             }
 
             if (Same(token, EffectRequireTokens.ActivatedByUse))
+            {
+                return true;
+            }
+
+            // 能力声明：不作为运行时 requires 门闩，仅供背面惰性豁免读取。
+            if (Same(token, EffectRequireTokens.ActiveWhileFaceDown))
             {
                 return true;
             }

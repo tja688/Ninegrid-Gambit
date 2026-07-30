@@ -24,6 +24,10 @@ namespace NineGrid.Core.Effects
         /// 不改写正向 EffectTriggered / ChainId 管线。
         /// </summary>
         EffectNonTriggerProbeResult ProbeWhyNotTriggered(string instanceId, TriggerContext triggerContext);
+        /// <summary>
+        /// 按 owner 牌面朝向 suppress/restore 非 <c>ActiveWhileFaceDown</c> 的被动修饰。
+        /// </summary>
+        void SyncOwnerFaceSuppression(int ownerUid);
         void Clear();
     }
 
@@ -47,6 +51,8 @@ namespace NineGrid.Core.Effects
         public ITrigger Trigger { get; internal set; }
         public ITarget Target { get; internal set; }
         public IAction Action { get; internal set; }
+        /// <summary>背面惰性：非豁免修饰已被临时卸下。</summary>
+        public bool IsFaceSuppressed { get; internal set; }
 
         public IReadOnlyList<ICondition> Conditions
         {
@@ -155,6 +161,10 @@ namespace NineGrid.Core.Effects
             if (ownerCard != null)
             {
                 ownerCard.AddEffect(definition.Id);
+                if (!ownerCard.FaceUp)
+                {
+                    SyncOwnerFaceSuppression(ownerCard.Uid);
+                }
             }
 
             return instance;
@@ -286,6 +296,105 @@ namespace NineGrid.Core.Effects
             mNextInstanceId = 1;
         }
 
+        public void SyncOwnerFaceSuppression(int ownerUid)
+        {
+            if (ownerUid == 0)
+            {
+                return;
+            }
+
+            CardInstance ownerCard;
+            if (!this.GetModel<CardRegistry>().TryGet(ownerUid, out ownerCard) || ownerCard == null)
+            {
+                return;
+            }
+
+            var shouldSuppress = !ownerCard.FaceUp;
+            var statSystem = this.GetSystem<IStatSystem>();
+            foreach (var pair in mInstances)
+            {
+                var instance = pair.Value;
+                if (instance.Owner == null || instance.Owner.OwnerUid != ownerUid)
+                {
+                    continue;
+                }
+
+                if (EffectRequireTokens.HasActiveWhileFaceDown(instance.Definition))
+                {
+                    if (instance.IsFaceSuppressed)
+                    {
+                        RestoreFaceSuppressedModifiers(instance, statSystem);
+                        instance.IsFaceSuppressed = false;
+                    }
+
+                    continue;
+                }
+
+                if (shouldSuppress && !instance.IsFaceSuppressed)
+                {
+                    SuppressFaceModifiers(instance, statSystem);
+                    instance.IsFaceSuppressed = true;
+                }
+                else if (!shouldSuppress && instance.IsFaceSuppressed)
+                {
+                    RestoreFaceSuppressedModifiers(instance, statSystem);
+                    instance.IsFaceSuppressed = false;
+                }
+            }
+        }
+
+        private static void SuppressFaceModifiers(EffectInstance instance, IStatSystem statSystem)
+        {
+            if (statSystem == null || instance == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < instance.StatModifiers.Count; i++)
+            {
+                var applied = instance.StatModifiers[i];
+                if (applied?.Card != null && applied.Modifier != null)
+                {
+                    statSystem.RemoveModifier(applied.Card, applied.Modifier);
+                }
+            }
+
+            for (var i = 0; i < instance.RuleModifiers.Count; i++)
+            {
+                var rule = instance.RuleModifiers[i];
+                if (rule != null)
+                {
+                    statSystem.RuleModifiers.Remove(rule);
+                }
+            }
+        }
+
+        private static void RestoreFaceSuppressedModifiers(EffectInstance instance, IStatSystem statSystem)
+        {
+            if (statSystem == null || instance == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < instance.StatModifiers.Count; i++)
+            {
+                var applied = instance.StatModifiers[i];
+                if (applied?.Card != null && applied.Modifier != null)
+                {
+                    statSystem.AddModifier(applied.Card, applied.Modifier);
+                }
+            }
+
+            for (var i = 0; i < instance.RuleModifiers.Count; i++)
+            {
+                var rule = instance.RuleModifiers[i];
+                if (rule != null)
+                {
+                    statSystem.RuleModifiers.Add(rule);
+                }
+            }
+        }
+
         private void ActivateTriggered(EffectInstance instance)
         {
             instance.Trigger = AtomRegistry.CreateTrigger(instance.Definition.Trigger);
@@ -375,6 +484,11 @@ namespace NineGrid.Core.Effects
                 return false;
             }
 
+            if (IsBlockedByFaceDown(instance))
+            {
+                return false;
+            }
+
             if (!instance.Trigger.Matches(runtime))
             {
                 return false;
@@ -394,6 +508,27 @@ namespace NineGrid.Core.Effects
             }
 
             return true;
+        }
+
+        private bool IsBlockedByFaceDown(EffectInstance instance)
+        {
+            if (instance?.Owner == null || instance.Owner.OwnerUid == 0)
+            {
+                return false;
+            }
+
+            if (EffectRequireTokens.HasActiveWhileFaceDown(instance.Definition))
+            {
+                return false;
+            }
+
+            CardInstance owner;
+            if (!this.GetModel<CardRegistry>().TryGet(instance.Owner.OwnerUid, out owner) || owner == null)
+            {
+                return false;
+            }
+
+            return !owner.FaceUp;
         }
 
         private StatModifier CreateStatModifier(EffectInstance instance)

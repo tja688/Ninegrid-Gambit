@@ -18,6 +18,7 @@ namespace NineGrid.Flow
         public int Hp;
         public int Armor;
         public string DefId;
+        public bool FaceUp;
     }
 
     /// <summary>
@@ -87,6 +88,7 @@ namespace NineGrid.Flow
                 // 卡面护甲 = 当前护甲（本关临时资源）；PlayerInfoText 防御栏走有效护甲。
                 Armor = StatArmorUtility.GetCurrentArmor(card),
                 DefId = card.DefId ?? string.Empty,
+                FaceUp = card.FaceUp,
             };
             return true;
         }
@@ -265,7 +267,7 @@ namespace NineGrid.Flow
                 Armor = Mathf.Max(0, read.Armor),
                 Hp = Mathf.Max(0, read.Hp),
                 ActionCount = 0,
-                FaceUp = true,
+                FaceUp = read.FaceUp,
             };
 
             ApplyVisualFields(snapshot, read.DefId, read.Kind);

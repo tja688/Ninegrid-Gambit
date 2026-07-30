@@ -78,3 +78,7 @@ Pixel-art snap without blurring SDF/TMP text: geometry snap on sprite materials 
 
 Multi-agent claims + EditMode test mutex: `.cursor/skills/ai-workspace/` (PowerShell CLI `scripts/ai-workspace.ps1`). Claim on start; run EditMode only via `test`; `gate-restart` before relaunching Editor.
 
+### QuickTest effect channels
+
+Main-menu `\` (`Backslash`) `\0`–`\9` effect experience channels: blank monsters in JSON, dynamic skill assembly only on QuickTest, card-face skill descriptions. Near-synonym skill-gap rename/new/reserve rules. See `.cursor/skills/quick-test-effect-channels/`.
+

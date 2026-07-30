@@ -13,6 +13,7 @@ namespace NineGrid.Core
             Uid = uid;
             DefId = defId ?? string.Empty;
             Kind = kind;
+            FaceUp = true;
             Zone = new BindableProperty<ZoneId>(ZoneId.None);
             Slot = new BindableProperty<SlotId>(SlotId.None);
             Stats = new StatBlock();
@@ -22,6 +23,8 @@ namespace NineGrid.Core
         public int Uid { get; private set; }
         public string DefId { get; private set; }
         public CardKind Kind { get; private set; }
+        /// <summary>牌面朝向权威（正面/背面）；默认正面。ADR 牌面朝向。</summary>
+        public bool FaceUp { get; set; }
         /// <summary>怪物攻击模式（ADR-0011）；非怪保持 <see cref="AttackPattern.Unspecified"/>。</summary>
         public AttackPattern AttackPattern { get; set; }
         public StatBlock Stats { get; private set; }

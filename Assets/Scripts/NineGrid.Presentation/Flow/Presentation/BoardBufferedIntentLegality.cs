@@ -48,6 +48,11 @@ namespace NineGrid.Flow.Presentation
                 return BoardIntentLegality.TryExplainPickup(mArch, intent.TargetId, out reason);
             }
 
+            if (string.Equals(intent.Kind, InputIntentKinds.RevealFace, StringComparison.Ordinal))
+            {
+                return BoardIntentLegality.TryExplainRevealFace(mArch, intent.TargetId, out reason);
+            }
+
             return true;
         }
     }

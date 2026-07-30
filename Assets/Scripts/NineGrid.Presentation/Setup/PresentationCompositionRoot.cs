@@ -109,6 +109,13 @@ namespace NineGrid.Presentation.Setup
                 session.OnExploreBatchProjected,
                 counterPresentChannel: attackCounterPresentChannel,
                 onCounterBatchProjected: session.OnAttackCounterBatchProjected);
+            var revealFaceFactory = new RevealFaceIntentScriptFactory(
+                architecture,
+                dispatcher,
+                explorePresentChannel,
+                session.OnExploreBatchProjected,
+                counterPresentChannel: attackCounterPresentChannel,
+                onCounterBatchProjected: session.OnAttackCounterBatchProjected);
             var attackFactory = new AttackIntentScriptFactory(
                 architecture,
                 dispatcher,
@@ -140,6 +147,7 @@ namespace NineGrid.Presentation.Setup
 
             var scriptFactory = new RoutingIntentScriptFactory(
                 exploreFactory,
+                revealFaceFactory,
                 attackFactory,
                 useItemFactory,
                 new PickupIntentScriptFactory(architecture));
@@ -223,6 +231,7 @@ namespace NineGrid.Presentation.Setup
             mBeatScheduler = new BattleBeatScheduler(
                 new PlayerInfoHudBeatHandler(),
                 new CardFaceStatHandler(),
+                new CardFaceFlipBeatHandler(),
                 new DamageFloaterBeatHandler(),
                 new EffectTriggerPulseBeatHandler(),
                 new GoldGainBeatHandler());

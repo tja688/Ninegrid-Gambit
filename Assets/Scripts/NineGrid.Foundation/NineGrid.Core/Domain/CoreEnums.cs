@@ -125,7 +125,8 @@ namespace NineGrid.Core
         OnActivate,
         OnNodeStart,
         OnNodeEnd,
-        OnActionRejected
+        OnActionRejected,
+        OnFlip
     }
 
     public enum CoreEventType
@@ -169,7 +170,8 @@ namespace NineGrid.Core
         NodeAdvanced,
         BoardMarked,
         ContentLoaded,
-        ActionCountdownChanged
+        ActionCountdownChanged,
+        CardFaceChanged
     }
 
     public enum PresentationEventCategory
@@ -236,7 +238,8 @@ namespace NineGrid.Core
         AdvanceNode,
         MarkBoard,
         LoadContent,
-        UpdateActionCount
+        UpdateActionCount,
+        UpdateFaceUp
     }
 
     public enum GamePhase
@@ -277,6 +280,7 @@ namespace NineGrid.Core
         SkipHelpChoice,
         SelectRoom,
         EnterRoom,
+        RevealFace,
         PresentationFinished
     }
 

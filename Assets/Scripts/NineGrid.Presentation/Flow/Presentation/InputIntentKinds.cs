@@ -7,6 +7,8 @@ namespace NineGrid.Flow.Presentation
         public const string Attack = "attack";
         public const string UseItem = "useItem";
         public const string Pickup = "pickup";
+        /// <summary>主动翻开场上邻接背面卡（消耗一次互动）。</summary>
+        public const string RevealFace = "revealFace";
 
         /// <summary>模式切换：进入棋盘选择；忙时 Reject，不进 Director 缓冲。</summary>
         public const string BoardSelectBegin = "boardSelectBegin";
@@ -25,7 +27,8 @@ namespace NineGrid.Flow.Presentation
             return string.Equals(kind, Explore, System.StringComparison.Ordinal)
                 || string.Equals(kind, Attack, System.StringComparison.Ordinal)
                 || string.Equals(kind, UseItem, System.StringComparison.Ordinal)
-                || string.Equals(kind, Pickup, System.StringComparison.Ordinal);
+                || string.Equals(kind, Pickup, System.StringComparison.Ordinal)
+                || string.Equals(kind, RevealFace, System.StringComparison.Ordinal);
         }
 
         public static bool IsModeOrModal(string kind)
