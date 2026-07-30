@@ -711,7 +711,9 @@ namespace NineGrid.Cards
 
             CardEntityLifecycleHook.CardsOrNull()?.StageFieldDeadCorpseOffAnchor(victim);
 
-            if (victim.TryGetEffectManager(out var effectManager) && !effectManager.IsPlaying)
+            // Death 必须播：PlayInternal 会 StopCurrent 顶掉未完成 Hit；
+            // 旧的 !IsPlaying 守卫会在受击特效未结束时整段跳过退场 FX。
+            if (victim.TryGetEffectManager(out var effectManager))
             {
                 effectManager.PlayDeathAsync(
                     hadSlot ? victimSlot : 0,
@@ -758,6 +760,7 @@ namespace NineGrid.Cards
                 }
                 else
                 {
+                    // 击杀同步路径可能已 Forget 播 Death；此处只等到主通道空闲。
                     await WaitForEffectIdleAsync(effectManager, cancellationToken);
                 }
             }

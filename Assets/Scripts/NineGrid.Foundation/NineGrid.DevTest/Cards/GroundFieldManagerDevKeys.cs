@@ -41,12 +41,52 @@ namespace NineGrid.DevTest.Cards
         protected override void ConfigureBindings(TestKeyRegistrationBuilder builder)
         {
             builder
+                .Bind(KeyCode.Alpha4, "场地卡全体翻牌切换", () => ToggleAllFieldFlipsAsync().Forget())
                 .Bind(KeyCode.Keypad1, "导演攻击相邻怪（未击杀走反击锁步）", RunDirectorAttackAdjacent)
                 .Bind(KeyCode.Keypad4, "外圈全体顺时针旋转", () => RunRotateOuterRingAsync().Forget())
                 .Bind(KeyCode.Keypad5, "随机移除场中1张", () => RunRandomRemoveAsync().Forget())
                 .Bind(KeyCode.Keypad6, "即死击杀相邻怪", RunLethalAttackAdjacent)
                 .Bind(KeyCode.Keypad7, "移除1张并立即旋转", () => RunRemoveAndRotateAsync().Forget())
                 .Bind(KeyCode.Keypad8, "下一次交战即死", ArmNextLethalAttack);
+        }
+
+        private async UniTaskVoid ToggleAllFieldFlipsAsync()
+        {
+            var field = ResolveFieldManager();
+            if (field == null)
+            {
+                return;
+            }
+
+            var tasks = new System.Collections.Generic.List<UniTask>();
+            for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
+            {
+                if (!field.TryGetCardAt(slot, out var card) || card == null || card.GameObject == null)
+                {
+                    continue;
+                }
+
+                var presenter = card.GameObject.GetComponent<NineGrid.Cards.Presentation.CardFaceFlipPresenter>();
+                if (presenter == null)
+                {
+                    presenter = card.GameObject.AddComponent<NineGrid.Cards.Presentation.CardFaceFlipPresenter>();
+                }
+
+                if (presenter.IsPlaying)
+                {
+                    continue;
+                }
+
+                tasks.Add(presenter.ToggleFlipAsync());
+            }
+
+            if (tasks.Count == 0)
+            {
+                Debug.LogWarning("[GroundFieldManagerDevKeys] 场上无卡可翻牌。");
+                return;
+            }
+
+            await UniTask.WhenAll(tasks);
         }
 
         /// <summary>

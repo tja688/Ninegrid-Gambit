@@ -276,6 +276,11 @@ namespace NineGrid.Cards
                 instance.AddComponent<CardEffectManager>();
             }
 
+            if (instance.GetComponent<CardFaceFlipPresenter>() == null)
+            {
+                instance.AddComponent<CardFaceFlipPresenter>();
+            }
+
             var hitProxy = instance.GetComponent<GroundCardHitProxy>();
             if (hitProxy != null)
             {

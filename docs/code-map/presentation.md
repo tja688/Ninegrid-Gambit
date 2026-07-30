@@ -38,10 +38,10 @@
 | `Ground/` | 场地视图与运动执行 |
 | `Battle/` | 交战表现默认资产与策略 |
 | `Convergence/` | 场地收敛算法 |
-| `Effects/` | 卡面 DOTween / Timeline 特效 SO |
+| `Effects/` | 卡面 DOTween / Timeline 特效 SO；默认 Death/Use 为 `CardSpriteSheetBurnExitEffectSO`（脱卡 Burning 帧、发射后不管） |
 | `Slots/` | 卡面槽表 |
-| `Presentation/` | 卡面描述合成等 |
-| `Anim/` | `CardSpriteAnimPlayer`、`CardAnimFrameSource`（folder/atlas；Player 走 Resources.LoadAll + 帧名排序，ADR-0008）、`SpriteSheetLoopPlayer`（特效库精灵表循环） |
+| `Presentation/` | 卡面描述合成、`CardFaceFlipPresenter`（FacePivot 采样 Flip.anim Y+Scale；Alpha4 DevKey 全场切换 POC） |
+| `Anim/` | `CardSpriteAnimPlayer`、`CardAnimFrameSource`（folder/atlas；Player 走 Resources.LoadAll + 帧名排序，ADR-0008）、`SpriteSheetLoopPlayer`（特效库精灵表循环；Burn 退场复用） |
 | （根下） | `FieldBattleView`、手牌/牌库管理器、静态 `*Hook` |
 
 ## 装配
@@ -112,7 +112,8 @@
 1. `Commands/` / `Queries/` / Event  
 2. `ITimelineStep` / `IPresentChannel`（`Flow/Presentation/`）  
 3. `BattleBeatScheduler` / `IBattleBeatHandler`（多处理器唯一分发；`CardFaceStatHandler` 为卡面数值；新事件须在 `PresentationEventMap` 声明 Beat）  
-4. 卡面视觉 SO（`Cards/Effects/`）  
+4. 卡面视觉 SO（`Cards/Effects/`）；默认 Death/Use 为 Burning 精灵表退场（`CardSpriteSheetBurnExitEffectSO`，脱卡 FX）
+5. 翻牌 POC：`CardFaceFlipPresenter` 只动 `FacePivot`（Flip.anim Y+Scale 关键帧）；不接 Core FaceUp
 
 不要接回静态业务 Sink，也不要在 View 上直接改 Core 规则状态，也不要旁路直读 Core 写卡面数值。
 
