@@ -12,11 +12,15 @@ namespace NineGrid.Flow.Presentation
         public static Action<PresentationBeat> ReportBeat;
         public static Action<PresentationBatch> PresentStandalone;
 
+        /// <summary>只冲刷 pending 的 UpdateFaceUp（PresentStep 通道 Begin 前）。</summary>
+        public static Action FlushUpdateFaceUp;
+
         public static void Reset()
         {
             OnBatchOpened = null;
             ReportBeat = null;
             PresentStandalone = null;
+            FlushUpdateFaceUp = null;
         }
 
         public static void NotifyBatchOpened(PresentationBatch batch)
@@ -32,6 +36,11 @@ namespace NineGrid.Flow.Presentation
         public static void NotifyPresentStandalone(PresentationBatch batch)
         {
             PresentStandalone?.Invoke(batch);
+        }
+
+        public static void NotifyFlushUpdateFaceUp()
+        {
+            FlushUpdateFaceUp?.Invoke();
         }
     }
 }

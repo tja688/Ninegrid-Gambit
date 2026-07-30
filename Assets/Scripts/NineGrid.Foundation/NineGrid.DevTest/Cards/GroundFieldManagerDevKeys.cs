@@ -2,7 +2,12 @@
 
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
+using NineGrid.Cards.Presentation;
+using NineGrid.Core;
+using NineGrid.Core.Systems;
 using NineGrid.DevTest;
+using NineGrid.Flow;
+using NineGrid.Flow.Presentation;
 using UnityEngine;
 
 namespace NineGrid.DevTest.Cards
@@ -42,12 +47,142 @@ namespace NineGrid.DevTest.Cards
         {
             builder
                 .Bind(KeyCode.Alpha4, "场地卡全体翻牌切换", () => ToggleAllFieldFlipsAsync().Forget())
+                .Bind(KeyCode.Alpha5, "鼠标下场地卡 Core Flip", () => RunCoreFlipUnderPointerAsync().Forget())
                 .Bind(KeyCode.Keypad1, "导演攻击相邻怪（未击杀走反击锁步）", RunDirectorAttackAdjacent)
                 .Bind(KeyCode.Keypad4, "外圈全体顺时针旋转", () => RunRotateOuterRingAsync().Forget())
                 .Bind(KeyCode.Keypad5, "随机移除场中1张", () => RunRandomRemoveAsync().Forget())
                 .Bind(KeyCode.Keypad6, "即死击杀相邻怪", RunLethalAttackAdjacent)
                 .Bind(KeyCode.Keypad7, "移除1张并立即旋转", () => RunRemoveAndRotateAsync().Forget())
                 .Bind(KeyCode.Keypad8, "下一次交战即死", ArmNextLethalAttack);
+        }
+
+        /// <summary>
+        /// Alpha5：鼠标指向场地卡走 Core <see cref="FlipCardAction"/>（触发 OnFlip），
+        /// 再经 <see cref="BattleBeatFlush.PresentEventLogSlice"/> 走正式翻牌表现（ADR-0016），
+        /// 并等待 <see cref="FlipPlaybackCoordinator"/> 播完（同刷仍同步，调用方等 Idle）。
+        /// 与 Alpha4 纯表现 POC 并存。
+        /// </summary>
+        private async UniTaskVoid RunCoreFlipUnderPointerAsync()
+        {
+            var field = ResolveFieldManager();
+            if (field == null)
+            {
+                return;
+            }
+
+            if (!TryResolveFieldCardUnderPointer(field, out var card) || card == null)
+            {
+                Debug.LogWarning("[GroundFieldManagerDevKeys] Alpha5：鼠标下无场地卡，no-op。");
+                return;
+            }
+
+            var uid = card.Uid;
+            if (uid == 0)
+            {
+                Debug.LogWarning("[GroundFieldManagerDevKeys] Alpha5：命中卡无 uid，no-op。");
+                return;
+            }
+
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                Debug.LogWarning("[GroundFieldManagerDevKeys] Alpha5：Architecture 未就绪。");
+                return;
+            }
+
+            var pipeline = arch.GetSystem<IActionPipelineSystem>();
+            if (pipeline == null)
+            {
+                Debug.LogWarning("[GroundFieldManagerDevKeys] Alpha5：IActionPipelineSystem 未就绪。");
+                return;
+            }
+
+            EnsureFlipPresenter(card);
+
+            var startIndex = pipeline.EventLog.Entries.Count;
+            Debug.Log($"[GroundFieldManagerDevKeys] Alpha5 Core Flip uid={uid}");
+            pipeline.Enqueue(new FlipCardAction(uid));
+            pipeline.RunToCompletion();
+            // CardFaceChanged → UpdateFaceUp → CardFaceFlipBeatHandler 入队正式 Flip.anim
+            BattleBeatFlush.PresentEventLogSlice(arch, startIndex);
+            await FlipPlaybackCoordinator.WaitIdleAsync();
+        }
+
+        private static void EnsureFlipPresenter(ManagedCard card)
+        {
+            if (card?.GameObject == null)
+            {
+                return;
+            }
+
+            if (card.GameObject.GetComponent<CardFaceFlipPresenter>() == null)
+            {
+                card.GameObject.AddComponent<CardFaceFlipPresenter>();
+            }
+        }
+
+        private static bool TryResolveFieldCardUnderPointer(GroundFieldView field, out ManagedCard card)
+        {
+            card = null;
+            var cam = WorldPointerUtility.ResolveCamera(null);
+            if (cam == null || !WorldPointerUtility.TryGetPointerScreen(out _))
+            {
+                return false;
+            }
+
+            ManagedCard best = null;
+            var bestSort = int.MinValue;
+            for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
+            {
+                if (!field.TryGetCardAt(slot, out var candidate) || candidate == null || candidate.GameObject == null)
+                {
+                    continue;
+                }
+
+                var collider = candidate.GameObject.GetComponent<BoxCollider2D>();
+                if (collider == null || !collider.enabled || !collider.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                var planeZ = collider.transform.position.z;
+                if (!WorldPointerUtility.TryGetPointerWorldOnPlane(cam, planeZ, out var world))
+                {
+                    continue;
+                }
+
+                if (!collider.OverlapPoint(world))
+                {
+                    continue;
+                }
+
+                var sort = ResolveCardHitSortOrder(candidate.GameObject);
+                if (best == null || sort > bestSort)
+                {
+                    best = candidate;
+                    bestSort = sort;
+                }
+            }
+
+            if (best == null || best.Uid == 0)
+            {
+                return false;
+            }
+
+            card = best;
+            return true;
+        }
+
+        private static int ResolveCardHitSortOrder(GameObject cardGo)
+        {
+            var group = cardGo.GetComponent<UnityEngine.Rendering.SortingGroup>();
+            if (group != null)
+            {
+                return group.sortingOrder;
+            }
+
+            var renderer = cardGo.GetComponentInChildren<SpriteRenderer>(true);
+            return renderer != null ? renderer.sortingOrder : 0;
         }
 
         private async UniTaskVoid ToggleAllFieldFlipsAsync()

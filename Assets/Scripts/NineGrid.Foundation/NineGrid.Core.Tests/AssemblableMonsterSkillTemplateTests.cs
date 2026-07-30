@@ -28,6 +28,8 @@ namespace NineGrid.Core.Tests
             "tpl.skill.cloud_breath.interact",
             "tpl.skill.link_attack_bonus.rule",
             "tpl.skill.link_prep.move",
+            "tpl.skill.leap_kill.flip",
+            "tpl.skill.steal.flip",
         };
 
         private IArchitecture mArch;
@@ -69,6 +71,8 @@ namespace NineGrid.Core.Tests
                 ["tpl.skill.link_attack_bonus.rule"] =
                     "{\"value\":1,\"source\":\"skill.link_attack_bonus\"}",
                 ["tpl.skill.link_prep.move"] = "{\"reason\":\"skill.link_prep\"}",
+                ["tpl.skill.leap_kill.flip"] = "{}",
+                ["tpl.skill.steal.flip"] = "{\"count\":1,\"reason\":\"skill.steal\"}",
             };
 
             foreach (var templateId in TemplateIds)

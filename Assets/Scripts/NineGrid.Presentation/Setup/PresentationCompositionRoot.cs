@@ -235,9 +235,11 @@ namespace NineGrid.Presentation.Setup
                 new DamageFloaterBeatHandler(),
                 new EffectTriggerPulseBeatHandler(),
                 new GoldGainBeatHandler());
+            FlipPlaybackCoordinator.Reset();
             BattleBeatHook.OnBatchOpened = mBeatScheduler.OnBatchOpened;
             BattleBeatHook.ReportBeat = mBeatScheduler.ReportBeat;
             BattleBeatHook.PresentStandalone = mBeatScheduler.PresentStandalone;
+            BattleBeatHook.FlushUpdateFaceUp = mBeatScheduler.FlushUpdateFaceUp;
             if (architecture != null)
             {
                 mBatchOpenedUnRegister = architecture.RegisterEvent<Evt_PresentationBatchOpened>(e =>
@@ -255,6 +257,7 @@ namespace NineGrid.Presentation.Setup
             mBatchOpenedUnRegister?.UnRegister();
             mBatchOpenedUnRegister = null;
             BattleBeatHook.Reset();
+            FlipPlaybackCoordinator.Reset();
             mBeatScheduler = null;
         }
     }

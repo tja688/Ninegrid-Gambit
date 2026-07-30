@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
 using NineGrid.Cards.Presentation;
 using NineGrid.Core;
@@ -7,7 +6,7 @@ using UnityEngine;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// 牌面朝向处理器：Settled 消费 UpdateFaceUp → Commit FaceUp → FlipPresenter 播翻或 Snap。
+    /// 牌面朝向处理器：Settled 消费 UpdateFaceUp → Commit FaceUp → 经 FlipPlaybackCoordinator 串行播翻或 Snap。
     /// </summary>
     public sealed class CardFaceFlipBeatHandler : IBattleBeatHandler
     {
@@ -72,7 +71,7 @@ namespace NineGrid.Flow.Presentation
                     card.View.RecordCommittedFaceUp(targetFaceUp);
                 }
 
-                presenter.PlayFlipAsync(targetFaceUp).Forget();
+                FlipPlaybackCoordinator.Enqueue(presenter, targetFaceUp);
                 return;
             }
 

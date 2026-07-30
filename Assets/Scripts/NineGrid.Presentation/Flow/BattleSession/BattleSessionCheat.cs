@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using NineGrid.Cards;
 using NineGrid.Cards.Presentation;
-using NineGrid.Content;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Stats;
@@ -92,7 +91,7 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// QuickTest：把技能挂到场上已有怪物，并用技能 DesignText 覆写卡面描述。
+        /// QuickTest：把技能挂到场上已有怪物，并用临时短描述覆写卡面（&lt;16 字，非正式权威）。
         /// </summary>
         public static int TryAttachSkillsToBoardMonsters(IReadOnlyList<string> skillIds)
         {
@@ -114,7 +113,7 @@ namespace NineGrid.Flow
                 return 0;
             }
 
-            var description = BuildSkillDescription(content.Catalog, skillIds);
+            var description = QuickTestDeckCatalog.BuildCardFaceDescription(content.Catalog, skillIds);
             var registry = arch.GetModel<CardRegistry>();
             var board = arch.GetModel<BoardModel>();
             var cards = CardEntityLifecycleHook.CardsOrNull();
@@ -195,28 +194,6 @@ namespace NineGrid.Flow
             Debug.Log("[BattleSessionCheat] 强制节点胜利 → RewardItemChoice");
             session.TryEnterNodeSettlement();
             return true;
-        }
-
-        private static string BuildSkillDescription(GameContentCatalog catalog, IReadOnlyList<string> skillIds)
-        {
-            if (catalog == null || skillIds == null || skillIds.Count == 0)
-            {
-                return string.Empty;
-            }
-
-            var briefs = new List<string>(skillIds.Count);
-            for (var i = 0; i < skillIds.Count; i++)
-            {
-                if (!catalog.TryGetSkill(skillIds[i], out var skill)
-                    || string.IsNullOrWhiteSpace(skill.DesignText))
-                {
-                    continue;
-                }
-
-                briefs.Add(skill.DesignText.Trim());
-            }
-
-            return EffectDesignTextParameterizer.JoinBriefs(briefs);
         }
 
         private static void ApplySkillDescription(ManagedCard card, string description)

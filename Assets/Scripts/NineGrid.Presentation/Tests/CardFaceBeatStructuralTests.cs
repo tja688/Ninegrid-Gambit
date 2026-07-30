@@ -139,6 +139,41 @@ namespace NineGrid.Presentation.Tests
             Assert.IsTrue(
                 text.IndexOf("BattleBeatHook.PresentStandalone", StringComparison.Ordinal) >= 0,
                 "组合根须接线非锁步 PresentStandalone");
+            Assert.IsTrue(
+                text.IndexOf("BattleBeatHook.FlushUpdateFaceUp", StringComparison.Ordinal) >= 0,
+                "组合根须接线 FlushUpdateFaceUp（PresentStep 通道前翻牌）");
+            Assert.IsTrue(
+                text.IndexOf("FlipPlaybackCoordinator.Reset()", StringComparison.Ordinal) >= 0,
+                "组合根拆卸须 Reset FlipPlaybackCoordinator");
+        }
+
+        [Test]
+        public void Alpha5_CoreFlip_DevKey_PresentsCardFaceChangedViaBeatFlush()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Foundation",
+                "NineGrid.DevTest",
+                "Cards",
+                "GroundFieldManagerDevKeys.cs"));
+            Assert.IsTrue(File.Exists(path), "missing " + path);
+            var text = File.ReadAllText(path);
+            Assert.IsTrue(
+                text.IndexOf("FlipCardAction", StringComparison.Ordinal) >= 0,
+                "Alpha5 须走 Core FlipCardAction");
+            Assert.IsTrue(
+                text.IndexOf("BattleBeatFlush.PresentEventLogSlice(arch", StringComparison.Ordinal) >= 0,
+                "Alpha5 须经 PresentEventLogSlice 走正式翻牌表现，禁止只改 Core FaceUp");
+            Assert.IsTrue(
+                text.IndexOf("FlipPlaybackCoordinator.WaitIdleAsync", StringComparison.Ordinal) >= 0,
+                "Alpha5 同刷后须 WaitIdleAsync，避免未播完就返回");
+            var flip = text.IndexOf("pipeline.Enqueue(new FlipCardAction", StringComparison.Ordinal);
+            var present = text.IndexOf("BattleBeatFlush.PresentEventLogSlice(arch", StringComparison.Ordinal);
+            var waitIdle = text.IndexOf("FlipPlaybackCoordinator.WaitIdleAsync", StringComparison.Ordinal);
+            Assert.Greater(flip, 0);
+            Assert.Greater(present, flip, "PresentEventLogSlice 调用须在 Enqueue FlipCardAction 之后");
+            Assert.Greater(waitIdle, present, "WaitIdleAsync 须在 PresentEventLogSlice 之后");
         }
 
         [Test]
@@ -174,10 +209,55 @@ namespace NineGrid.Presentation.Tests
                 "Presentation",
                 "BatchLockstepSteps.cs"));
             var text = File.ReadAllText(path);
+            var flushFaceUp = text.IndexOf("BattleBeatFlush.FlushUpdateFaceUp()", StringComparison.Ordinal);
+            var begin = text.IndexOf("mChannel.Begin(mBatchId)", StringComparison.Ordinal);
             var flush = text.IndexOf("BattleBeatFlush.FlushBeats()", StringComparison.Ordinal);
+            var idleGate = text.IndexOf("FlipPlaybackCoordinator.IsIdle", StringComparison.Ordinal);
             var ack = text.IndexOf("mGate.TryAcknowledge(mBatchId)", StringComparison.Ordinal);
-            Assert.Greater(flush, 0, "PresentStep 应调用统一 FlushBeats");
+            Assert.Greater(flushFaceUp, 0, "PresentStep 应通道前 FlushUpdateFaceUp");
+            Assert.Greater(begin, flushFaceUp, "FlushUpdateFaceUp 须在 channel.Begin 之前");
+            Assert.Greater(flush, begin, "FlushBeats 须在 channel.Begin 之后");
+            Assert.Greater(idleGate, 0, "PresentStep 须门控 FlipPlaybackCoordinator.IsIdle");
             Assert.Greater(ack, flush, "FlushBeats 须在 TryAcknowledge 之前");
+            Assert.Greater(ack, idleGate, "Idle 门控须在 TryAcknowledge 之前出现");
+        }
+
+        [Test]
+        public void CardFaceFlipBeatHandler_DoesNot_Forget_PlayFlipAsync()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "Presentation",
+                "CardFaceFlipBeatHandler.cs"));
+            var text = File.ReadAllText(path);
+            Assert.IsFalse(
+                Regex.IsMatch(text, @"PlayFlipAsync\s*\([^)]*\)\s*\.Forget\s*\("),
+                "Handler 不得对 PlayFlipAsync 直接 Forget，须经 FlipPlaybackCoordinator");
+            Assert.IsTrue(
+                text.IndexOf("FlipPlaybackCoordinator.Enqueue", StringComparison.Ordinal) >= 0,
+                "Handler 须 Enqueue 到 FlipPlaybackCoordinator");
+        }
+
+        [Test]
+        public void BattleBeatScheduler_Exposes_FlushUpdateFaceUp()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "Presentation",
+                "BattleBeatScheduler.cs"));
+            var text = File.ReadAllText(path);
+            Assert.IsTrue(
+                text.IndexOf("public void FlushUpdateFaceUp()", StringComparison.Ordinal) >= 0,
+                "排期器须暴露 FlushUpdateFaceUp");
+            Assert.IsTrue(
+                text.IndexOf("PresentationInstructionKind.UpdateFaceUp", StringComparison.Ordinal) >= 0,
+                "FlushUpdateFaceUp 只消费 UpdateFaceUp");
         }
 
         [Test]

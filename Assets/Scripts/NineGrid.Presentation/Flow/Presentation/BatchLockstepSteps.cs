@@ -92,6 +92,8 @@ namespace NineGrid.Flow.Presentation
 
     /// <summary>
     /// Present：播当前已打开批次，完成后 ack 关闭。batchId 取自门上 ActiveBatchId。
+    /// 翻牌门控：通道 Begin 前先 FlushUpdateFaceUp 并等 FlipPlaybackCoordinator.IsIdle；
+    /// FlushBeats 后再等 Idle，再 ack（ADR-0016）。
     /// </summary>
     public sealed class PresentStep : ITimelineStep
     {
@@ -101,6 +103,9 @@ namespace NineGrid.Flow.Presentation
         private readonly string mChoreoKind;
         private int mBatchId;
         private bool mStarted;
+        private bool mFaceUpFlushed;
+        private bool mChannelBegun;
+        private bool mBeatsFlushed;
         private bool mAcknowledged;
         private bool mChoreoOpen;
         private float mWaitStartRealtime = -1f;
@@ -143,12 +148,30 @@ namespace NineGrid.Flow.Presentation
                 }
 
                 mBatchId = mGate.ActiveBatchId;
-                mChannel.Begin(mBatchId);
                 mStarted = true;
                 mWaitStartRealtime = Time.realtimeSinceStartup;
                 mLastStallRealtime = -1f;
+                BattleBeatFlush.FlushUpdateFaceUp();
+                mFaceUpFlushed = true;
+            }
+
+            if (mFaceUpFlushed && !mChannelBegun)
+            {
+                if (!FlipPlaybackCoordinator.IsIdle)
+                {
+                    MaybeStall(DirectorTrace.StallPhaseNotComplete);
+                    return TimelineStepStatus.Continue;
+                }
+
+                mChannel.Begin(mBatchId);
+                mChannelBegun = true;
                 DirectorTrace.PresentBegin(mBatchId, mChannelName);
                 TryBeginChoreo();
+            }
+
+            if (!mChannelBegun)
+            {
+                return TimelineStepStatus.Continue;
             }
 
             mChannel.Tick(deltaTime);
@@ -159,8 +182,18 @@ namespace NineGrid.Flow.Presentation
                 return TimelineStepStatus.Continue;
             }
 
-            // 表演通道完成后、就位回执前：与非锁步路径同构的统一冲刷报点。
-            BattleBeatFlush.FlushBeats();
+            if (!mBeatsFlushed)
+            {
+                // 表演通道完成后、就位回执前：与非锁步路径同构的统一冲刷报点。
+                BattleBeatFlush.FlushBeats();
+                mBeatsFlushed = true;
+            }
+
+            if (!FlipPlaybackCoordinator.IsIdle)
+            {
+                MaybeStall(DirectorTrace.StallPhaseNotComplete);
+                return TimelineStepStatus.Continue;
+            }
 
             if (!mGate.TryAcknowledge(mBatchId))
             {

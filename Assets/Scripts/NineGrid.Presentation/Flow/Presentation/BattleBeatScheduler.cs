@@ -84,6 +84,31 @@ namespace NineGrid.Flow.Presentation
         }
 
         /// <summary>
+        /// 只消费 UpdateFaceUp：供 PresentStep 在 hop 通道 Begin 前先翻牌（ADR-0016）。
+        /// 不报 Impact/Settled，也不做 Settled 未消费诊断。
+        /// </summary>
+        public void FlushUpdateFaceUp()
+        {
+            for (var i = 0; i < mPending.Count;)
+            {
+                var instruction = mPending[i];
+                if (instruction == null || instruction.Kind != PresentationInstructionKind.UpdateFaceUp)
+                {
+                    i++;
+                    continue;
+                }
+
+                if (!TryDispatch(instruction))
+                {
+                    i++;
+                    continue;
+                }
+
+                mPending.RemoveAt(i);
+            }
+        }
+
+        /// <summary>
         /// 非锁步旁路：临时装载一批并冲刷 Impact→Settled，恢复原先 pending（不搅乱锁步当批）。
         /// </summary>
         public void PresentStandalone(PresentationBatch batch)

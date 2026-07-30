@@ -35,8 +35,8 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 批次 A：两通道预算——按触发轴混挂；储备技 <c>purge_followers</c> 不占码。
-        /// <c>\1</c> 移除向；<c>\2</c> 互动向；其余空置留给后续批次。
+        /// 通道预算——按触发轴混挂；储备技 <c>purge_followers</c> 不占码。
+        /// <c>\1</c> 移除向；<c>\2</c> 互动向；<c>\3</c> 翻面向；其余空置。
         /// </summary>
         private static readonly ChannelPreset[] sPresets =
         {
@@ -47,7 +47,9 @@ namespace NineGrid.Flow
             new ChannelPreset(
                 "互动向",
                 new[] { "skill.call_melee6", "skill.link_prep" }),
-            new ChannelPreset("通道3", Array.Empty<string>()),
+            new ChannelPreset(
+                "翻面向",
+                new[] { "skill.leap_kill", "skill.steal" }),
             new ChannelPreset("通道4", Array.Empty<string>()),
             new ChannelPreset("通道5", Array.Empty<string>()),
             new ChannelPreset("通道6", Array.Empty<string>()),
@@ -182,6 +184,190 @@ namespace NineGrid.Flow
             return skillId.StartsWith(prefix, StringComparison.Ordinal)
                 ? skillId.Substring(prefix.Length)
                 : skillId;
+        }
+
+        /// <summary>
+        /// QuickTest 卡面临时短描述上限（严格小于此值）。非正式文案权威，后续整管线废弃。
+        /// </summary>
+        public const int CardFaceDescriptionMaxLength = 16;
+
+        /// <summary>
+        /// 单技能卡面短描述（手动预设，非 DesignText）。多技能时优先拼短描述，塞不下再拼显示名。
+        /// </summary>
+        private static readonly Dictionary<string, string> sCardFaceShortBriefs =
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                { "skill.sacrifice", "移除时友攻+1" },
+                { "skill.absorb", "邻死随机强化" },
+                { "skill.offer_fire", "死时加烈焰" },
+                { "skill.call_melee6", "互动5召近战6" },
+                { "skill.link_prep", "互动5去邻道具" },
+                { "skill.leap_kill", "翻面邻攻伤人" },
+                { "skill.steal", "翻面盗邻帮助" },
+            };
+
+        /// <summary>多技能卡面用的短显示名（catalog 未就绪时兜底）。</summary>
+        private static readonly Dictionary<string, string> sCardFaceShortNames =
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                { "skill.sacrifice", "献身" },
+                { "skill.absorb", "吸收" },
+                { "skill.offer_fire", "献火" },
+                { "skill.call_melee6", "呼唤" },
+                { "skill.link_prep", "链备" },
+                { "skill.leap_kill", "跳杀" },
+                { "skill.steal", "盗取" },
+            };
+
+        /// <summary>
+        /// QuickTest 覆写卡面用：最终文案严格少于 <see cref="CardFaceDescriptionMaxLength"/> 字。
+        /// </summary>
+        public static string BuildCardFaceDescription(
+            GameContentCatalog catalog,
+            IReadOnlyList<string> skillIds)
+        {
+            if (skillIds == null || skillIds.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            string text;
+            if (skillIds.Count == 1)
+            {
+                text = ResolveSingleSkillBrief(catalog, skillIds[0]);
+            }
+            else if (TryJoinShortBriefsUnderLimit(skillIds, out var joinedBriefs))
+            {
+                text = joinedBriefs;
+            }
+            else
+            {
+                text = BuildMultiSkillNameBrief(catalog, skillIds);
+            }
+
+            return ClampCardFaceDescription(text);
+        }
+
+        private static string ResolveSingleSkillBrief(GameContentCatalog catalog, string skillId)
+        {
+            if (!string.IsNullOrEmpty(skillId)
+                && sCardFaceShortBriefs.TryGetValue(skillId, out var brief)
+                && !string.IsNullOrWhiteSpace(brief))
+            {
+                return brief.Trim();
+            }
+
+            if (catalog != null
+                && !string.IsNullOrEmpty(skillId)
+                && catalog.TryGetSkill(skillId, out var skill)
+                && skill != null
+                && !string.IsNullOrWhiteSpace(skill.DisplayName))
+            {
+                return skill.DisplayName.Trim();
+            }
+
+            return ShortSkillId(skillId);
+        }
+
+        /// <summary>
+        /// 多技能时若每条都有短描述且用 · 拼接后仍 &lt;16，则用短描述；否则交给显示名拼接。
+        /// </summary>
+        private static bool TryJoinShortBriefsUnderLimit(
+            IReadOnlyList<string> skillIds,
+            out string joined)
+        {
+            joined = null;
+            var builder = new StringBuilder(24);
+            for (var i = 0; i < skillIds.Count; i++)
+            {
+                var skillId = skillIds[i];
+                if (string.IsNullOrEmpty(skillId)
+                    || !sCardFaceShortBriefs.TryGetValue(skillId, out var brief)
+                    || string.IsNullOrWhiteSpace(brief))
+                {
+                    return false;
+                }
+
+                if (builder.Length > 0)
+                {
+                    builder.Append('·');
+                }
+
+                builder.Append(brief.Trim());
+                if (builder.Length >= CardFaceDescriptionMaxLength)
+                {
+                    return false;
+                }
+            }
+
+            if (builder.Length == 0)
+            {
+                return false;
+            }
+
+            joined = builder.ToString();
+            return true;
+        }
+
+        private static string BuildMultiSkillNameBrief(
+            GameContentCatalog catalog,
+            IReadOnlyList<string> skillIds)
+        {
+            var builder = new StringBuilder(24);
+            for (var i = 0; i < skillIds.Count; i++)
+            {
+                var name = ResolveSkillDisplayName(catalog, skillIds[i]);
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    continue;
+                }
+
+                if (builder.Length > 0)
+                {
+                    builder.Append('·');
+                }
+
+                builder.Append(name);
+            }
+
+            return builder.ToString();
+        }
+
+        private static string ResolveSkillDisplayName(GameContentCatalog catalog, string skillId)
+        {
+            if (!string.IsNullOrEmpty(skillId)
+                && sCardFaceShortNames.TryGetValue(skillId, out var shortName)
+                && !string.IsNullOrWhiteSpace(shortName))
+            {
+                return shortName.Trim();
+            }
+
+            if (catalog != null
+                && !string.IsNullOrEmpty(skillId)
+                && catalog.TryGetSkill(skillId, out var skill)
+                && skill != null
+                && !string.IsNullOrWhiteSpace(skill.DisplayName))
+            {
+                return skill.DisplayName.Trim();
+            }
+
+            return ShortSkillId(skillId);
+        }
+
+        private static string ClampCardFaceDescription(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return string.Empty;
+            }
+
+            text = text.Trim();
+            if (text.Length < CardFaceDescriptionMaxLength)
+            {
+                return text;
+            }
+
+            return text.Substring(0, CardFaceDescriptionMaxLength - 1);
         }
     }
 }

@@ -16,6 +16,12 @@ namespace NineGrid.Flow.Presentation
             BattleBeatHook.NotifyBeat(PresentationBeat.Settled);
         }
 
+        /// <summary>只冲刷 pending UpdateFaceUp（通道 Begin 前；经 Hook 注入排期器）。</summary>
+        public static void FlushUpdateFaceUp()
+        {
+            BattleBeatHook.NotifyFlushUpdateFaceUp();
+        }
+
         /// <summary>
         /// 非锁步：将事件日志切片经排期器消费。
         /// 无打开批次时 OpenBatch → FlushBeats → FinishBatch；

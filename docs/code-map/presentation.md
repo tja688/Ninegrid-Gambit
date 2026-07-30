@@ -40,7 +40,7 @@
 | `Convergence/` | 场地收敛算法 |
 | `Effects/` | 卡面 DOTween / Timeline 特效 SO；默认 Death 为 `CardSpriteSheetBurnExitEffectSO`（脱卡 Burning 帧、落点用视觉世界位含 L3 击退；Staging 尸体才用格锚）；Use 仍为缩小退场 |
 | `Slots/` | 卡面槽表 |
-| `Presentation/` | 卡面描述合成、`CardFaceFlipPresenter`（FacePivot 采样 Flip.anim Y+Scale；Alpha4 DevKey 全场切换 POC） |
+| `Presentation/` | 卡面描述合成、`CardFaceFlipPresenter`（FacePivot 采样 Flip.anim Y+Scale；经 `FlipPlaybackCoordinator` 串行；Alpha4 DevKey 全场切换 POC） |
 | `Anim/` | `CardSpriteAnimPlayer`、`CardAnimFrameSource`（folder/atlas；Player 走 Resources.LoadAll + 帧名排序，ADR-0008）、`SpriteSheetLoopPlayer`（特效库精灵表循环；Burn 退场复用） |
 | （根下） | `FieldBattleView`、手牌/牌库管理器、静态 `*Hook` |
 
@@ -113,7 +113,7 @@
 2. `ITimelineStep` / `IPresentChannel`（`Flow/Presentation/`）  
 3. `BattleBeatScheduler` / `IBattleBeatHandler`（多处理器唯一分发；`CardFaceStatHandler` 为卡面数值；新事件须在 `PresentationEventMap` 声明 Beat）  
 4. 卡面视觉 SO（`Cards/Effects/`）；默认 Death 为 Burning 精灵表退场（`CardSpriteSheetBurnExitEffectSO`，脱卡 FX，落点=视觉世界位）；Use 缩小退场；Lethal 交战不播受击回原段，碎亡留在击退终点
-5. 翻牌：`CardFaceFlipPresenter` 采样 Flip.anim；Core `FaceUp` 经 `CardFaceChanged`→`UpdateFaceUp`→`CardFaceFlipBeatHandler` Commit（ADR-0016）；配置编辑器 `CardPresentationFlipPreview` 同采样同挂点，禁止再写线性假翻牌
+5. 翻牌：`CardFaceFlipPresenter` 采样 Flip.anim；Core `FaceUp` 经 `CardFaceChanged`→`UpdateFaceUp`→`CardFaceFlipBeatHandler` Commit，再经 `FlipPlaybackCoordinator` 全局串行播翻（ADR-0016）；`PresentStep` 通道 Begin 前 `FlushUpdateFaceUp` + 等 Idle，ack 前再等 Idle；配置编辑器 `CardPresentationFlipPreview` 同采样同挂点，禁止再写线性假翻牌
 6. 主动翻开：`InputIntentKinds.RevealFace` + `RevealFaceIntentScriptFactory`；邻接背面卡点击分流（AttackInputController）
 
 不要接回静态业务 Sink，也不要在 View 上直接改 Core 规则状态，也不要旁路直读 Core 写卡面数值。
@@ -145,10 +145,11 @@
 - **排期器** `Flow/Presentation/BattleBeatScheduler`：批次开启装载非 `None` 指令；`ReportBeat` 交给第一个 `IBattleBeatHandler.TryApply` 成功者；Settled 后未消费只报不改；支持 `PresentStandalone`（非锁步旁路冲刷，恢复当批 pending）
 - **处理器** `IBattleBeatHandler`：`CardFaceStatHandler` 只从指令赋值 → `ManagedCard.CommitPresentation`（含 `OfferReward` 按 DefId 匹配 Bounce 负 uid 卡）；`PlayerInfoHudBeatHandler` 对 Avatar 血甲旁路写 HUD（return false 留给卡面认领）；装饰 `DamageFloaterBeatHandler` / `EffectTriggerPulseBeatHandler` / `GoldGainBeatHandler` 分别在 Impact / Settled 消费飘字、FX、金币，不占主线 ack；数值 Commit 后 `CardFacePresentationBinder` 可对配对图标做非阻塞缩放装饰（不占 ack）
 - **统一冲刷** `BattleBeatFlush.FlushBeats`（Impact→Settled）：`PresentStep` 就位回执前调用；非锁步（房间/选择/拾取）走 `PresentEventLogSlice`；Bounce spawn 后走 `PresentLatestEventOfType(RewardOffered)`（单条 PresentStandalone）
+- **翻牌门控** `FlipPlaybackCoordinator`：Handler 入队串行 `PlayFlipAsync`；`BattleBeatScheduler.FlushUpdateFaceUp` / `BattleBeatFlush.FlushUpdateFaceUp` 供 `PresentStep` 在 `channel.Begin` 前只刷 FaceUp；Idle 门控在 Begin 与 ack 两侧（ADR-0016）
 - **生成绝对值** `CardFaceEventValues.WithFaceAbsolutes`：`CardSpawned` / 带 uid 的 `CardDealt` / `AvatarAppeared` 写入造卡/发牌时攻甲血
 - **奖励候选项** `RewardEntry` 投影绝对值 + `RewardOffered` Settled；Bounce spawn 后 `PresentLatestEventOfType` 二次提交；禁 `clearCombatStats` 数值旁路
 - **开局引导** `Flow/Presentation/CardFaceGenerationBootstrap`：非锁步 Opening 从事件日志重放生成类指令；BoardSelect 视图重 Spawn 用 `ApplyFaceHistoryForUid` 重放该 uid 的生成+后续数值指令（与 Settled 同一 Handler）
-- **报点**：攻击/反击命中帧 → `Impact`；用道具 Present 在 Vacate 前报 `Impact`；盘面 Drain 开头再冲刷 `Impact`（探索等）；`PresentStep` 通道完成后 `FlushBeats`，然后 `TryAcknowledge`
-- **组合根**：`PresentationCompositionRoot` 注册排期器（`PlayerInfoHudBeatHandler` + `CardFaceStatHandler` + 飘字/FX/金币装饰处理器）并订阅 `Evt_PresentationBatchOpened`
+- **报点**：攻击/反击命中帧 → `Impact`；用道具 Present 在 Vacate 前报 `Impact`；盘面 Drain 开头再冲刷 `Impact`（探索等）；`PresentStep`：FaceUp 先刷 → 通道 → `FlushBeats` → 等翻牌 Idle → `TryAcknowledge`
+- **组合根**：`PresentationCompositionRoot` 注册排期器（`PlayerInfoHudBeatHandler` + `CardFaceStatHandler` + `CardFaceFlipBeatHandler` + 飘字/FX/金币装饰处理器），接线 `FlushUpdateFaceUp`，并订阅 `Evt_PresentationBatchOpened`
 - **读写约定补则**：卡面数值只经排期器/生成引导，禁止 Mapper 首次 `TryRead` 写数值；JSON `stats` 仅 Catalog 造卡用；用道具 Present 只 `RefreshVisualsPreservingCommittedStatsOnAllSpawned`；探索/用道具批次投影不写卡面数值；`MarkFieldDead` 只标死亡态不改血量；底盘数值 Setter 非公开；禁 `PresentEffectTriggersFromEventLog` / `SpawnDamagePopups` / `PresentGoldGainsFromEventLog` EventLog 旁路；战中 PlayerInfo 不经 `SyncFromCore`（开局/作弊白名单除外）；Bounce 不得靠 DefId 清战斗数值上数
 - **ADR**：[ADR-0005](../adr/0005-card-face-beat-commit.md)、[ADR-0007](../adr/0007-unified-presentation-pipeline.md)（与 0001/0002/0004 交叉引用）；指针/高回报率见 [ADR-0006](../adr/0006-windows-high-polling-mouse-mitigation.md)
