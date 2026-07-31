@@ -202,7 +202,11 @@ namespace NineGrid.Core.Systems
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             var startIndex = pipeline.EventLog.Entries.Count;
             pipeline.Enqueue(new BeginPlayerMonsterEngagementAction(targetUid));
-            if (CombatEngagementOrder.MonsterStrikesFirst(statSystem, avatar, target))
+            ApplyHolyDuelMark(avatar, target, pipeline);
+            // 远程武器：玩家交战该怪时怪不先手也不反击（齐射不受影响）。
+            var monsterStrikes = !HasRule(target, RuleId.CounterAttackBanned)
+                && CombatEngagementOrder.MonsterStrikesFirst(statSystem, avatar, target);
+            if (monsterStrikes)
             {
                 pipeline.Enqueue(new DealDamageAction(target.Uid, avatar.Uid, GetAttackDamage(statSystem, target)));
                 pipeline.Enqueue(new ConditionalDealDamageIfAliveAction(avatar.Uid, target.Uid, GetAttackDamage(statSystem, avatar)));
@@ -210,7 +214,10 @@ namespace NineGrid.Core.Systems
             else
             {
                 pipeline.Enqueue(new DealDamageAction(avatar.Uid, targetUid, GetAttackDamage(statSystem, avatar)));
-                pipeline.Enqueue(new ConditionalDealDamageIfAliveAction(target.Uid, avatar.Uid, GetAttackDamage(statSystem, target)));
+                if (!HasRule(target, RuleId.CounterAttackBanned))
+                {
+                    pipeline.Enqueue(new ConditionalDealDamageIfAliveAction(target.Uid, avatar.Uid, GetAttackDamage(statSystem, target)));
+                }
             }
 
             pipeline.Enqueue(new EndBattleScopeCleanupAction());
@@ -259,10 +266,75 @@ namespace NineGrid.Core.Systems
                 return false;
             }
 
+            // 远程武器：玩家交战时该怪不先手（也不反击，见 ApplyCombatHit 短路）。
+            if (HasRule(monster, RuleId.CounterAttackBanned))
+            {
+                return false;
+            }
+
             return CombatEngagementOrder.MonsterStrikesFirst(
                 this.GetSystem<IStatSystem>(),
                 avatar,
                 monster);
+        }
+
+        private bool HasRule(CardInstance card, RuleId rule)
+        {
+            if (card == null)
+            {
+                return false;
+            }
+
+            var statSystem = this.GetSystem<IStatSystem>();
+            return statSystem.EvaluateRule(rule, 0f, statSystem.CreateContext(card)) > 0f;
+        }
+
+        /// <summary>
+        /// 神圣决斗（skill.holy_duel）标记结算（玩家主动交战入口）：
+        /// 目标为持有者 → 记录标记；否则若标记仍有效（持有者在场正面）→ 对玩家 2 伤；
+        /// 持有者已离场/翻面 → 清标记不惩罚。
+        /// </summary>
+        private void ApplyHolyDuelMark(
+            CardInstance avatar,
+            CardInstance target,
+            IActionPipelineSystem pipeline)
+        {
+            if (avatar == null || target == null || target.Kind != CardKind.Monster)
+            {
+                return;
+            }
+
+            var player = this.GetModel<PlayerModel>();
+            if (HasRule(target, RuleId.HolyDuel))
+            {
+                player.SetDuelMark(target.Uid);
+                return;
+            }
+
+            var markedUid = player.DuelMarkMonsterUid;
+            if (markedUid == 0 || markedUid == target.Uid)
+            {
+                return;
+            }
+
+            var registry = this.GetModel<CardRegistry>();
+            CardInstance holder;
+            if (!registry.TryGet(markedUid, out holder)
+                || holder == null
+                || holder.Zone.Value != ZoneId.Board
+                || !holder.FaceUp
+                || !IsCardAlive(holder))
+            {
+                player.ClearDuelMark();
+                return;
+            }
+
+            pipeline.Enqueue(new DealDamageAction(
+                markedUid,
+                avatar.Uid,
+                2,
+                "skill.holy_duel",
+                "skill.holy_duel"));
         }
 
         public CoreCommandResult ApplyCombatHit(int attackerUid, int targetUid)
@@ -297,12 +369,21 @@ namespace NineGrid.Core.Systems
                 }
             }
 
+            // 远程武器：怪作为攻击方的交战命中（先手/反击段）短路，不造成伤害；齐射不经此入口。
+            if (attacker.Kind == CardKind.Monster
+                && target.Kind == CardKind.Avatar
+                && HasRule(attacker, RuleId.CounterAttackBanned))
+            {
+                return CoreCommandResult.Accept(0);
+            }
+
             var statSystem = this.GetSystem<IStatSystem>();
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             var engagedMonsterUid = 0;
             if (TryGetPlayerMonsterEngagement(registry, attackerUid, targetUid, out engagedMonsterUid))
             {
                 pipeline.Enqueue(new BeginPlayerMonsterEngagementAction(engagedMonsterUid));
+                ApplyHolyDuelMark(attacker, target, pipeline);
             }
 
             pipeline.Enqueue(new DealDamageAction(attackerUid, targetUid, GetAttackDamage(statSystem, attacker)));

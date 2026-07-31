@@ -9,6 +9,11 @@ namespace NineGrid.Core
         private readonly List<string> mRelicDefIds = new List<string>();
         private readonly List<HelpCardStackEntry> mHelpCardStacks = new List<HelpCardStackEntry>();
 
+        // 神圣决斗（skill.holy_duel）：玩家侧交战记忆，先挂简单状态，预留日后 buff 化。
+        // 语义：玩家主动与本卡交战后记下持有者 uid；之后主动与其他怪开战 → 对玩家 2 伤；
+        // 持有者翻面或离场清标记（翻面在 FlipCardAction 清，离场在交战前惰性校验）。
+        private int mDuelMarkMonsterUid;
+
         public PlayerModel()
         {
             Stats = new StatBlock();
@@ -19,6 +24,34 @@ namespace NineGrid.Core
         public BindableProperty<int> InteractionCount { get; private set; }
         public BindableProperty<string> ProfessionId { get; private set; }
         public BindableProperty<int> Version { get; private set; }
+
+        /// <summary>神圣决斗标记的持有者怪物 uid；0 = 未标记。</summary>
+        public int DuelMarkMonsterUid
+        {
+            get { return mDuelMarkMonsterUid; }
+        }
+
+        public void SetDuelMark(int monsterUid)
+        {
+            if (mDuelMarkMonsterUid == monsterUid)
+            {
+                return;
+            }
+
+            mDuelMarkMonsterUid = monsterUid;
+            Touch();
+        }
+
+        public void ClearDuelMark()
+        {
+            if (mDuelMarkMonsterUid == 0)
+            {
+                return;
+            }
+
+            mDuelMarkMonsterUid = 0;
+            Touch();
+        }
 
         public IReadOnlyList<string> RelicDefIds
         {
@@ -188,6 +221,7 @@ namespace NineGrid.Core
             ProfessionId.Value = string.Empty;
             mRelicDefIds.Clear();
             mHelpCardStacks.Clear();
+            mDuelMarkMonsterUid = 0;
             Touch();
         }
 

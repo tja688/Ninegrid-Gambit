@@ -521,6 +521,12 @@ namespace NineGrid.Core
                     continue;
                 }
 
+                // 同槽竞态（如死亡召唤+死亡之主同拍、复活石亡语+死亡之主）：先到先得，后到放弃。
+                if (Zone == ZoneId.Board && Slot.IsBoardSlot && !board.IsEmpty(Slot))
+                {
+                    continue;
+                }
+
                 var card = CreateConfiguredCard(context, registry, DefId, Kind);
                 Place(card, board, deck);
                 result.AddWithFaceAbsolutes(

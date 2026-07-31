@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 2,
+  "contentId": "trap.revive_stone",
+  "kind": "Monster",
+  "deckId": "",
+  "role": "",
+  "displayName": "复活石",
+  "description": "机关卡：玩家互动6次后移除本卡，并将一张特5打出到同格",
+  "faceIntro": "",
+  "attackPattern": "无",
+  "gold": 5,
+  "stats": {
+    "hp": 6,
+    "armor": 0,
+    "attack": 0,
+    "action": 0,
+    "recovery": 0
+  },
+  "sprites": {
+    "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+    "faceBackground": "",
+    "cardFrame": "",
+    "banner": "",
+    "backBorder": "",
+    "backShirt": "",
+    "backLogo": ""
+  },
+  "mainVisual": {
+    "offsetX": 0.0,
+    "offsetY": 0.0,
+    "uniformScale": 1.0
+  },
+  "animations": {
+    "defaultFps": 8.0,
+    "slots": [
+      {
+        "id": "idle",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "attack",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "hurt",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "death",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "lunch",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      }
+    ]
+  },
+  "extraSlots": [],
+  "rarity": "None",
+  "tags": [],
+  "effectAssemblies": [
+    {
+      "id": "trap.revive_stone.interact",
+      "templateId": "tpl.trap.revive_stone.interact",
+      "containerType": "MonsterSkill",
+      "argsJson": "{\"reason\":\"trap.revive_stone\"}"
+    },
+    {
+      "id": "trap.revive_stone.remove",
+      "templateId": "tpl.trap.revive_stone.remove",
+      "containerType": "MonsterSkill",
+      "argsJson": "{\"count\":1}"
+    }
+  ],
+  "effectIds": [
+    "trap.revive_stone.interact",
+    "trap.revive_stone.remove"
+  ],
+  "skillIds": [],
+  "level": 1,
+  "isElite": false,
+  "isBoss": false,
+  "isReserve": false,
+  "containerType": "",
+  "deckKind": "",
+  "monsterDefIds": [],
+  "weight": 0,
+  "goldDelta": 0,
+  "maxHpDelta": 0,
+  "healToFull": false,
+  "rewardPoolId": "",
+  "shopOfferCount": 0
+}

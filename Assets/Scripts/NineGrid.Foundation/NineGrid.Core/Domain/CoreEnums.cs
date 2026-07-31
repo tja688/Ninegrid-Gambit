@@ -70,7 +70,11 @@ namespace NineGrid.Core
         AttackTargetRestriction,
         VirtualAdjacency,
         /// <summary>禁行：&gt;0 时敌方行动阶段资格复核失败（ADR-0012）。</summary>
-        ActionBanned
+        ActionBanned,
+        /// <summary>远程武器：&gt;0 时玩家交战该怪，怪不先手也不反击（齐射不受影响）。</summary>
+        CounterAttackBanned,
+        /// <summary>神圣决斗：&gt;0 标记本卡为决斗持有者（玩家交战记忆挂玩家侧状态）。</summary>
+        HolyDuel
     }
 
     public enum BoardMarkId

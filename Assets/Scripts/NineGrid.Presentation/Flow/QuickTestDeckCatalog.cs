@@ -38,7 +38,8 @@ namespace NineGrid.Flow
         /// 通道预算——同通道多技能按格号升序一怪一技分发（见 <c>BattleSessionCheat</c>）；
         /// 储备技 <c>purge_followers</c> 不占码。
         /// <c>\1</c> 移除向；<c>\2</c> 互动向；<c>\3</c> 翻面向（含休养）；
-        /// <c>\4</c>–<c>\9</c> 批次1 单技能验收（一通道一技）。
+        /// <c>\4</c>–<c>\5</c> 批次1 六技打包（一通道三技、一怪一技）；
+        /// <c>\6</c>–<c>\9</c> 批次2 六技（提速/远程武器/死亡召唤/死亡之主/神圣决斗/潜伏近战）。
         /// 列表顺序 = 挂载顺序（格号小→大）。
         /// </summary>
         private static readonly ChannelPreset[] sPresets =
@@ -53,12 +54,20 @@ namespace NineGrid.Flow
             new ChannelPreset(
                 "翻面向",
                 new[] { "skill.leap_kill", "skill.steal", "skill.recuperate" }),
-            new ChannelPreset("烈焰沸腾", new[] { "skill.flame_boiling" }),
-            new ChannelPreset("起来", new[] { "skill.rise_up" }),
-            new ChannelPreset("逃避", new[] { "skill.evade" }),
-            new ChannelPreset("历战", new[] { "skill.battle_hardened" }),
-            new ChannelPreset("链接战术", new[] { "skill.link_tactics" }),
-            new ChannelPreset("快递", new[] { "skill.delivery" }),
+            new ChannelPreset(
+                "批次1·打伤联动",
+                new[] { "skill.flame_boiling", "skill.rise_up", "skill.evade" }),
+            new ChannelPreset(
+                "批次1·成长移动",
+                new[] { "skill.battle_hardened", "skill.link_tactics", "skill.delivery" }),
+            new ChannelPreset(
+                "提速+远程武器",
+                new[] { "skill.speed_up", "skill.ranged_weapon" }),
+            new ChannelPreset(
+                "死亡召唤+死亡之主",
+                new[] { "skill.death_summon", "skill.lord_of_death" }),
+            new ChannelPreset("神圣决斗", new[] { "skill.holy_duel" }),
+            new ChannelPreset("潜伏近战", new[] { "skill.ambush_melee" }),
         };
 
         public static bool TryResolvePickerCode(int code, out ChannelPreset preset)
@@ -214,6 +223,12 @@ namespace NineGrid.Flow
                 { "skill.evade", "战后换四角" },
                 { "skill.battle_hardened", "伤2自攻+1" },
                 { "skill.flame_boiling", "互动5烈焰+1" },
+                { "skill.speed_up", "伤人他怪倒计时-1" },
+                { "skill.ranged_weapon", "交战不反击" },
+                { "skill.death_summon", "死时召复活石" },
+                { "skill.lord_of_death", "他死召复活石" },
+                { "skill.holy_duel", "战后打他怪伤2" },
+                { "skill.ambush_melee", "互动5邻攻打翻面" },
             };
 
         /// <summary>多技能卡面用的短显示名（catalog 未就绪时兜底）。</summary>
@@ -234,6 +249,12 @@ namespace NineGrid.Flow
                 { "skill.evade", "逃避" },
                 { "skill.battle_hardened", "历战" },
                 { "skill.flame_boiling", "烈焰沸腾" },
+                { "skill.speed_up", "提速" },
+                { "skill.ranged_weapon", "远程武器" },
+                { "skill.death_summon", "死亡召唤" },
+                { "skill.lord_of_death", "死亡之主" },
+                { "skill.holy_duel", "神圣决斗" },
+                { "skill.ambush_melee", "潜伏近战" },
             };
 
         /// <summary>

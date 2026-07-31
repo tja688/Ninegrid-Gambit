@@ -43,6 +43,12 @@ namespace NineGrid.Core
             card.FaceUp = !card.FaceUp;
             context.GetSystem<IEffectSystem>().SyncOwnerFaceSuppression(CardUid);
 
+            // 神圣决斗：持有者翻面即清玩家侧标记（正面也清——翻回后须重新交战才再标记）。
+            if (context.GetModel<PlayerModel>().DuelMarkMonsterUid == CardUid)
+            {
+                context.GetModel<PlayerModel>().ClearDuelMark();
+            }
+
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.CardFaceChanged, context.ActionId, ActionName)
                     .WithCard(CardUid)

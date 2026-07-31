@@ -955,6 +955,42 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    /// <summary>
+    /// 非累计版「本卡对玩家造成一次伤害」：任一 DamageDealt 事件中本卡为攻击方、
+    /// 玩家为承受方且实际扣血/甲（Delta&gt;0）即触发（提速）。
+    /// </summary>
+    [EffectAtom("OnSelfDamageDealtToPlayer", EffectAtomKind.Trigger)]
+    public sealed class OnSelfDamageDealtToPlayerTrigger : TriggerAtomBase
+    {
+        public override TriggerPoint Point { get { return TriggerPoint.OnDamage; } }
+
+        public override bool Matches(EffectRuntimeContext context)
+        {
+            if (!base.Matches(context) || context.OwnerUid == 0 || context.AvatarUid == 0)
+            {
+                return false;
+            }
+
+            var events = context.Events;
+            for (var i = 0; i < events.Count; i++)
+            {
+                var e = events[i];
+                if (e.Type != CoreEventType.DamageDealt || e.Delta <= 0)
+                {
+                    continue;
+                }
+
+                var eventTargetUid = e.TargetUid != 0 ? e.TargetUid : e.CardUid;
+                if (e.ActorUid == context.OwnerUid && eventTargetUid == context.AvatarUid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
     [EffectAtom("Self", EffectAtomKind.Target)]
     public sealed class SelfTarget : ITarget
     {
@@ -2025,6 +2061,8 @@ namespace NineGrid.Core.Effects
         private int mMaxDelta = int.MaxValue;
         private CardKind mTargetKind = CardKind.Unknown;
         private string mTargetDefId = string.Empty;
+        private string mExcludeTargetDefId = string.Empty;
+        private string mExcludeTargetDefPrefix = string.Empty;
         private string mSourceDefId = string.Empty;
         private string mExcludeSourceDefId = string.Empty;
         private string mCause = string.Empty;
@@ -2049,6 +2087,8 @@ namespace NineGrid.Core.Effects
             mMaxDelta = config.Has("maxDelta") ? config.Get("maxDelta").AsInt(0) : int.MaxValue;
             mTargetKind = config.Get("targetKind").AsEnum(CardKind.Unknown);
             mTargetDefId = config.Get("targetDefId").AsString(string.Empty);
+            mExcludeTargetDefId = config.Get("excludeTargetDefId").AsString(string.Empty);
+            mExcludeTargetDefPrefix = config.Get("excludeTargetDefPrefix").AsString(string.Empty);
             mSourceDefId = config.Get("sourceDefId").AsString(string.Empty);
             mExcludeSourceDefId = config.Get("excludeSourceDefId").AsString(string.Empty);
             var atomName = config.Get("atom").AsString(config.Get("type").AsString(string.Empty));
@@ -2180,7 +2220,11 @@ namespace NineGrid.Core.Effects
                 return false;
             }
 
-            if (mTargetKind != CardKind.Unknown || !string.IsNullOrEmpty(mTargetDefId))
+            var needsTargetCard = mTargetKind != CardKind.Unknown
+                || !string.IsNullOrEmpty(mTargetDefId)
+                || !string.IsNullOrEmpty(mExcludeTargetDefId)
+                || !string.IsNullOrEmpty(mExcludeTargetDefPrefix);
+            if (needsTargetCard)
             {
                 CardInstance target;
                 if (!context.TryGetCard(eventTargetUid, out target))
@@ -2195,6 +2239,19 @@ namespace NineGrid.Core.Effects
 
                 if (!string.IsNullOrEmpty(mTargetDefId)
                     && !Same(target.DefId, mTargetDefId))
+                {
+                    return false;
+                }
+
+                if (!string.IsNullOrEmpty(mExcludeTargetDefId)
+                    && Same(target.DefId, mExcludeTargetDefId))
+                {
+                    return false;
+                }
+
+                if (!string.IsNullOrEmpty(mExcludeTargetDefPrefix)
+                    && (target.DefId == null
+                        || target.DefId.StartsWith(mExcludeTargetDefPrefix, StringComparison.OrdinalIgnoreCase)))
                 {
                     return false;
                 }
@@ -2915,6 +2972,45 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    /// <summary>
+    /// 倒计时加减速（ADR-0013 §6）：对每个目标怪的行动倒计时（attackPattern.countdown）
+    /// 增加 delta（提速传 -1）。跳过背面目标——背面期间倒计时冻结（ADR-0016）。
+    /// </summary>
+    [EffectAtom("ModifyActionCountdown", EffectAtomKind.Action)]
+    public sealed class ModifyActionCountdownEffectAction : IAction
+    {
+        private int mDelta = -1;
+
+        public void Configure(EffectDslNode config)
+        {
+            mDelta = config.Get("delta").AsInt(-1);
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            var result = new List<GameAction>();
+            var registry = context.Registry;
+            for (var i = 0; i < targets.Count; i++)
+            {
+                if (targets[i] == 0)
+                {
+                    continue;
+                }
+
+                CardInstance card;
+                if (!registry.TryGet(targets[i], out card) || card == null || !card.FaceUp)
+                {
+                    continue;
+                }
+
+                var remaining = card.Counters.Get(CoreCounterKeys.AttackPatternCountdown);
+                result.Add(new SetAttackPatternCountdownAction(card.Uid, remaining + mDelta));
+            }
+
+            return result;
+        }
+    }
+
     [EffectAtom("ShuffleInto", EffectAtomKind.Action)]
     public sealed class ShuffleIntoEffectAction : IAction
     {
@@ -2972,6 +3068,7 @@ namespace NineGrid.Core.Effects
         private CardKind mKind = CardKind.Monster;
         private ZoneId mZone = ZoneId.DrawPile;
         private SlotId mSlot = SlotId.None;
+        private bool mSlotFromEvent;
         private int mCount = 1;
         private bool mPerTarget;
 
@@ -2982,7 +3079,11 @@ namespace NineGrid.Core.Effects
             mZone = config.Get("zone").AsEnum(ZoneId.DrawPile);
             mCount = Math.Max(0, config.Get("count").AsInt(1));
             mPerTarget = config.Get("perTarget").AsBool(false);
-            if (config.Has("slot"))
+            mSlotFromEvent = string.Equals(
+                config.Get("slot").AsString(string.Empty),
+                "EventFromSlot",
+                StringComparison.OrdinalIgnoreCase);
+            if (!mSlotFromEvent && config.Has("slot"))
             {
                 mSlot = SlotId.Board(config.Get("slot").AsInt(1));
             }
@@ -2995,17 +3096,60 @@ namespace NineGrid.Core.Effects
                 && mKind == CardKind.HelpCard
                 && context.Instance?.Trigger != null
                 && context.Instance.Trigger.Point == TriggerPoint.OnNodeStart;
+
+            // 亡语占原槽：EventFromSlot 取本批移除事件的原格（优先本卡，其次怪物卡）。
+            // 目标格已被占用（如死亡召唤/死亡之主同拍双触发）则放弃本次生成，避免覆盖场上卡。
+            SlotId slot = mSlot;
+            if (mSlotFromEvent)
+            {
+                slot = ResolveEventFromSlot(context);
+                if (slot != SlotId.None && !context.Board.IsEmpty(slot))
+                {
+                    return new GameAction[0];
+                }
+            }
+
             return new[]
             {
                 new SpawnCardAction(
                     mDefId,
                     mKind,
                     mZone,
-                    mSlot,
+                    slot,
                     count,
                     context.SourceDefId,
                     nodeStartDrawPileGrant),
             };
+        }
+
+        private static SlotId ResolveEventFromSlot(EffectRuntimeContext context)
+        {
+            SlotId monsterSlot = SlotId.None;
+            var events = context.Events;
+            for (var i = 0; i < events.Count; i++)
+            {
+                var e = events[i];
+                if (e.Type != CoreEventType.CardRemoved || !e.FromSlot.IsBoardSlot)
+                {
+                    continue;
+                }
+
+                if (context.OwnerUid != 0 && e.CardUid == context.OwnerUid)
+                {
+                    return e.FromSlot;
+                }
+
+                if (monsterSlot == SlotId.None)
+                {
+                    CardInstance card;
+                    if (context.TryGetCard(e.CardUid, out card) && card.Kind == CardKind.Monster)
+                    {
+                        monsterSlot = e.FromSlot;
+                    }
+                }
+            }
+
+            return monsterSlot;
         }
     }
 
