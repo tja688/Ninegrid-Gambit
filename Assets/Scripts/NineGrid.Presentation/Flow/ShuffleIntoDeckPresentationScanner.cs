@@ -51,6 +51,7 @@ namespace NineGrid.Flow
         private const string ShuffleIntoPrefix = "shuffleInto:";
         private const string ShuffleRandomPrefix = "shuffleRandom:";
         private const string ShuffleExistingPrefix = "shuffleExisting:";
+        private const string ExchangeToDrawPrefix = "exchangeToDraw:";
 
         public static bool TryParseShuffleIntoEvent(
             CoreGameEvent entry,
@@ -85,6 +86,15 @@ namespace NineGrid.Flow
             {
                 kind = ShuffleIntoDeckEventKind.ExistingCard;
                 defId = message.Substring(ShuffleExistingPrefix.Length);
+                return !string.IsNullOrEmpty(defId);
+            }
+
+            // 快递交换离场：场上道具卡与卡组怪物交换，道具卡经上飞入组表演回卡组（同 ExistingCard 路径）。
+            if (entry.ActionName == "ExchangeWithDrawPile"
+                && message.StartsWith(ExchangeToDrawPrefix, StringComparison.Ordinal))
+            {
+                kind = ShuffleIntoDeckEventKind.ExistingCard;
+                defId = message.Substring(ExchangeToDrawPrefix.Length);
                 return !string.IsNullOrEmpty(defId);
             }
 

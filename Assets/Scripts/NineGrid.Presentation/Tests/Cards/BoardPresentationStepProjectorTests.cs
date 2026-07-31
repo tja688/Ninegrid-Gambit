@@ -203,7 +203,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void Project_ExchangeToDraw_EmitsRemoveBeforeExchangeDrawDeal()
+        public void Project_ExchangeToDraw_NoRemove_OnlyExchangeDrawDeal()
         {
             var events = new List<CoreGameEvent>
             {
@@ -219,13 +219,12 @@ namespace NineGrid.Presentation.Tests
 
             var result = BoardPresentationStepProjector.Project(events, 0, registry: null);
 
-            Assert.AreEqual(2, result.Steps.Length);
-            Assert.AreEqual(BoardPresentationStepKind.Remove, result.Steps[0].Kind);
-            Assert.AreEqual(9, result.Steps[0].RemovedUids[0]);
-            Assert.AreEqual(BoardPresentationStepKind.Deal, result.Steps[1].Kind);
-            Assert.AreEqual(21, result.Steps[1].Deals[0].Uid);
-            Assert.AreEqual(9, result.Steps[1].Deals[0].Slot);
-            CollectionAssert.Contains(result.LegacyRemovedUids, 9);
+            // exchangeToDraw 由洗入表演系统接管（上飞入组），不得投影 Remove 播碎裂。
+            Assert.AreEqual(1, result.Steps.Length);
+            Assert.AreEqual(BoardPresentationStepKind.Deal, result.Steps[0].Kind);
+            Assert.AreEqual(21, result.Steps[0].Deals[0].Uid);
+            Assert.AreEqual(9, result.Steps[0].Deals[0].Slot);
+            Assert.AreEqual(0, result.LegacyRemovedUids.Length);
             Assert.AreEqual(1, result.LegacyDeals.Length);
             Assert.AreEqual(21, result.LegacyDeals[0].Uid);
         }
@@ -250,7 +249,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void Project_RotateThenExchange_PreservesRemoveBeforeDeal()
+        public void Project_RotateThenExchange_PreservesDealOnly()
         {
             var events = new List<CoreGameEvent>();
             events.AddRange(BuildRotateAction(actionId: 58, clockwise: true, startUid: 100));
@@ -265,12 +264,10 @@ namespace NineGrid.Presentation.Tests
 
             var result = BoardPresentationStepProjector.Project(events, 0, registry: null);
 
-            Assert.AreEqual(3, result.Steps.Length);
+            Assert.AreEqual(2, result.Steps.Length);
             Assert.AreEqual(BoardPresentationStepKind.Rotate, result.Steps[0].Kind);
-            Assert.AreEqual(BoardPresentationStepKind.Remove, result.Steps[1].Kind);
-            Assert.AreEqual(BoardPresentationStepKind.Deal, result.Steps[2].Kind);
-            Assert.AreEqual(9, result.Steps[1].RemovedUids[0]);
-            Assert.AreEqual(21, result.Steps[2].Deals[0].Uid);
+            Assert.AreEqual(BoardPresentationStepKind.Deal, result.Steps[1].Kind);
+            Assert.AreEqual(21, result.Steps[1].Deals[0].Uid);
         }
 
         private static bool ContainsUid(PostKillCardMove[] moves, int uid)

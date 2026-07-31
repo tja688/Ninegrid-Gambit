@@ -104,8 +104,15 @@ namespace NineGrid.Flow
                             ref pendingActionId,
                             multiHopStrategy);
                         // 盘面→非盘面（exchangeToDraw / shuffleExisting 等）：投影为 Remove，避免幽灵占格。
+                        // 快递交换离场除外：exchangeToDraw 由洗入表演系统接管（场上上飞入组），
+                        // 不再投影 Remove，避免碎裂退场与上飞入组表演冲突。
                         if (e.CardUid > 0 && e.FromSlot.IsBoardSlot && !e.ToSlot.IsBoardSlot)
                         {
+                            if (IsExchangeToDrawEvent(e))
+                            {
+                                break;
+                            }
+
                             if (legacyRemovedSet.Add(e.CardUid))
                             {
                                 legacyRemoveList.Add(e.CardUid);
@@ -191,6 +198,12 @@ namespace NineGrid.Flow
                 ? legacyRemoveList.ToArray()
                 : Array.Empty<int>();
             return result;
+        }
+
+        private static bool IsExchangeToDrawEvent(CoreGameEvent e)
+        {
+            return string.Equals(e.ActionName, "ExchangeWithDrawPile", StringComparison.Ordinal)
+                && (e.Message ?? string.Empty).StartsWith("exchangeToDraw:", StringComparison.Ordinal);
         }
 
         private static void FlushPendingMoveStepIfAny(
