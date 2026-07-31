@@ -568,6 +568,14 @@
     "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":5},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.beggar\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}}"
   },
   {
+    "id": "tpl.skill.battle_hardened.damage",
+    "state": "Implemented",
+    "design_text": "[战斗时] 每累计对玩家造成2点伤害，本卡攻击+1",
+    "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+    "conditions_json": "[]",
+    "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfDamageDealtToPlayerCumulative\",\"threshold\":2},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+  },
+  {
     "id": "tpl.skill.blessing.rule",
     "state": "Implemented",
     "design_text": "下一次受到伤害时，该次伤害变为0",
@@ -618,10 +626,10 @@
   {
     "id": "tpl.skill.delivery.move",
     "state": "Implemented",
-    "design_text": "每移动2次，将相邻格上一张帮助卡与战斗卡组里一张怪物卡交换位置",
+    "design_text": "每移动5次，将相邻格上一张帮助卡（道具）与战斗卡组里一张怪物卡交换位置",
     "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
     "conditions_json": "[]",
-    "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":2},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"ExchangeWithDrawPile\",\"kind\":\"Monster\"}}"
+    "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":5},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"ExchangeWithDrawPile\",\"kind\":\"Monster\"}}"
   },
   {
     "id": "tpl.skill.offer_fire.remove",
@@ -638,6 +646,14 @@
     "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
     "conditions_json": "[\"EventFilter:eventType=CardRemoved:targetDefId=help.flame\"]",
     "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyCardRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"targetDefId\":\"help.flame\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"help.flame\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+  },
+  {
+    "id": "tpl.skill.evade.battle",
+    "state": "Implemented",
+    "design_text": "[战斗后]在格1/3/7/9中有非本卡的卡牌时，随机与其中一张交换位置；全无则不触发",
+    "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+    "conditions_json": "[\"EventFilter:eventType=DamageDealt\"]",
+    "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayerTargetIsSelf\",\"eventType\":\"DamageDealt\"}],\"target\":{\"atom\":\"FilteredCards\",\"include\":[\"Self\"],\"zone\":\"Board\",\"slots\":[1,3,7,9],\"exclude\":[\"Self\"],\"random\":true,\"count\":1},\"action\":{\"atom\":\"Swap\"}}"
   },
   {
     "id": "tpl.skill.fall_apart.remove",
@@ -690,10 +706,10 @@
   {
     "id": "tpl.skill.flame_boiling.rule",
     "state": "Implemented",
-    "design_text": "烈焰帮助卡造成的伤害+1",
+    "design_text": "[场上]玩家卡每互动5次，烈焰帮助卡造成的伤害再+1（可叠加）",
     "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
-    "conditions_json": "[\"ActionSource\"]",
-    "body": "{\"kind\":\"RuleModifier\",\"conditions\":[{\"atom\":\"ActionSource\",\"action\":\"DealDamage\",\"sourceDefId\":\"help.flame\"}],\"ruleModifier\":{\"rule\":\"DamageFlatDelta\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
+    "conditions_json": "[]",
+    "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageFlatDelta\",\"op\":\"Add\",\"value\":\"{{value}}\",\"sourceAction\":\"DealDamage\",\"sourceDefId\":\"help.flame\",\"conditionTarget\":\"None\",\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
   },
   {
     "id": "tpl.skill.flame_breath.move",
@@ -960,12 +976,28 @@
     "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":3},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Rotate\",\"count\":\"{{count}}\"}}"
   },
   {
+    "id": "tpl.skill.rise_up.damage",
+    "state": "Implemented",
+    "design_text": "[场上]本卡对玩家造成一次伤害后，随机翻面一张其他怪物卡",
+    "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+    "conditions_json": "[]",
+    "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfDamageDealtToPlayerCumulative\",\"threshold\":1},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"Flip\"}}"
+  },
+  {
     "id": "tpl.skill.purge_followers.move",
     "state": "Implemented",
     "design_text": "每移动2次，移除九宫格上所有的龙信徒",
     "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
     "conditions_json": "[]",
     "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":2},\"target\":{\"atom\":\"FilteredCards\",\"defId\":\"monster.dragon_follower\",\"kind\":\"Monster\",\"zone\":\"Board\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
+  },
+  {
+    "id": "tpl.skill.recuperate.flip",
+    "state": "Implemented",
+    "design_text": "[场上][翻面后]若正面朝上，本卡攻击+1、护甲+2",
+    "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+    "conditions_json": "[\"IsFaceUp:target=Self\"]",
+    "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnFlip\"},\"conditions\":[{\"atom\":\"IsFaceUp\",\"target\":\"Self\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"},{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":\"{{armor}}\",\"reason\":\"{{reason}}\"}]}}"
   },
   {
     "id": "tpl.skill.sharp_stone.armor_break",
@@ -1110,6 +1142,22 @@
     "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
     "conditions_json": "[]",
     "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"Board\",\"adjacentTo\":\"Self\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
+  },
+  {
+    "id": "tpl.skill.link_tactics.activate",
+    "state": "Implemented",
+    "design_text": "[场上]邻接怪物攻击+1；离开邻接后失效（常驻光环，不随移动叠层）",
+    "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+    "conditions_json": "[]",
+    "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"
+  },
+  {
+    "id": "tpl.skill.link_tactics.refresh",
+    "state": "Implemented",
+    "design_text": "[场上]邻接怪物攻击+1；离开邻接后失效（常驻光环，不随移动叠层）；任意卡移动时刷新邻接光环",
+    "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+    "conditions_json": "[]",
+    "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"CardMoved\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"
   },
   {
     "id": "tpl.skill.throw_stone.move",

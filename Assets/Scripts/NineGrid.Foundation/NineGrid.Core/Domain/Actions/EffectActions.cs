@@ -899,7 +899,7 @@ namespace NineGrid.Core
             ModifierScope scope,
             string source,
             string sourceDefId = null)
-            : this(targetUid, stat, op, value, layer, scope, source, sourceDefId, null)
+            : this(targetUid, stat, op, value, layer, scope, source, sourceDefId, null, false)
         {
         }
 
@@ -913,6 +913,21 @@ namespace NineGrid.Core
             string source,
             string sourceDefId,
             IStatCondition condition)
+            : this(targetUid, stat, op, value, layer, scope, source, sourceDefId, condition, false)
+        {
+        }
+
+        public AddStatModifierAction(
+            int targetUid,
+            StatId stat,
+            ModifierOp op,
+            float value,
+            ModifierLayer layer,
+            ModifierScope scope,
+            string source,
+            string sourceDefId,
+            IStatCondition condition,
+            bool replaceSameSource)
         {
             TargetUid = targetUid;
             Stat = stat;
@@ -923,6 +938,7 @@ namespace NineGrid.Core
             Source = source ?? "effect.action";
             SourceDefId = sourceDefId ?? string.Empty;
             Condition = condition;
+            ReplaceSameSource = replaceSameSource;
         }
 
         public int TargetUid { get; private set; }
@@ -934,13 +950,21 @@ namespace NineGrid.Core
         public string Source { get; private set; }
         public string SourceDefId { get; private set; }
         public IStatCondition Condition { get; private set; }
+        public bool ReplaceSameSource { get; private set; }
         public override string ActionName { get { return "AddStatModifier"; } }
 
         public override GameActionResult Apply(GameActionContext context)
         {
             var card = context.GetModel<CardRegistry>().Get(TargetUid);
-            var modifier = new StatModifier(Stat, Op, Value, Layer, new ModifierSource(Source), Scope, Condition);
-            context.GetSystem<IStatSystem>().AddModifier(card, modifier);
+            var statSystem = context.GetSystem<IStatSystem>();
+            var source = new ModifierSource(Source);
+            if (ReplaceSameSource)
+            {
+                statSystem.RemoveModifiersBySource(card, source);
+            }
+
+            var modifier = new StatModifier(Stat, Op, Value, Layer, source, Scope, Condition);
+            statSystem.AddModifier(card, modifier);
 
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.EffectModifierApplied, context.ActionId, ActionName)
@@ -978,7 +1002,7 @@ namespace NineGrid.Core
             ModifierLayer layer,
             ModifierScope scope,
             string source)
-            : this(targetUid, useTargetCondition, actorUid, targetKind, rule, op, value, layer, scope, source, string.Empty, string.Empty)
+            : this(targetUid, useTargetCondition, actorUid, targetKind, rule, op, value, layer, scope, source, string.Empty, string.Empty, string.Empty)
         {
         }
 
@@ -995,6 +1019,24 @@ namespace NineGrid.Core
             string source,
             string sourceAction,
             string excludeSourcePrefix)
+            : this(targetUid, useTargetCondition, actorUid, targetKind, rule, op, value, layer, scope, source, sourceAction, string.Empty, excludeSourcePrefix)
+        {
+        }
+
+        public AddRuleModifierAction(
+            int targetUid,
+            bool useTargetCondition,
+            int actorUid,
+            CardKind targetKind,
+            RuleId rule,
+            ModifierOp op,
+            float value,
+            ModifierLayer layer,
+            ModifierScope scope,
+            string source,
+            string sourceAction,
+            string sourceDefId,
+            string excludeSourcePrefix)
         {
             TargetUid = targetUid;
             UseTargetCondition = useTargetCondition;
@@ -1007,6 +1049,7 @@ namespace NineGrid.Core
             Scope = scope;
             Source = source ?? "effect.action.rule";
             SourceAction = sourceAction ?? string.Empty;
+            SourceDefId = sourceDefId ?? string.Empty;
             ExcludeSourcePrefix = excludeSourcePrefix ?? string.Empty;
         }
 
@@ -1021,6 +1064,7 @@ namespace NineGrid.Core
         public ModifierScope Scope { get; private set; }
         public string Source { get; private set; }
         public string SourceAction { get; private set; }
+        public string SourceDefId { get; private set; }
         public string ExcludeSourcePrefix { get; private set; }
         public override string ActionName { get { return "AddRuleModifier"; } }
 
@@ -1042,9 +1086,9 @@ namespace NineGrid.Core
                 conditions.Add(new CardKindCondition(TargetKind));
             }
 
-            if (!string.IsNullOrEmpty(SourceAction))
+            if (!string.IsNullOrEmpty(SourceAction) || !string.IsNullOrEmpty(SourceDefId))
             {
-                conditions.Add(new ActionSourceCondition(SourceAction, string.Empty, string.Empty, string.Empty, string.Empty));
+                conditions.Add(new ActionSourceCondition(SourceAction, SourceDefId, string.Empty, string.Empty, string.Empty));
             }
 
             if (!string.IsNullOrEmpty(ExcludeSourcePrefix))

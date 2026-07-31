@@ -1075,6 +1075,7 @@ namespace NineGrid.Core.Effects
         private readonly List<string> mIncludeRefs = new List<string>();
         private readonly List<string> mExcludeRefs = new List<string>();
         private readonly List<ZoneId> mZones = new List<ZoneId>();
+        private readonly List<SlotId> mSlots = new List<SlotId>();
         private string mDefId = string.Empty;
         private CardKind mKind = CardKind.Unknown;
         private ZoneId mZone = ZoneId.None;
@@ -1099,6 +1100,7 @@ namespace NineGrid.Core.Effects
             mRandom = config.Get("random").AsBool(false);
             mCount = Math.Max(0, config.Get("count").AsInt(mRandom ? 1 : 0));
             AddZones(config.Get("zones"));
+            AddSlots(config.Get("slots"));
             AddRefs(config.Get("include"), mIncludeRefs);
             AddRefs(config.Get("exclude"), mExcludeRefs);
         }
@@ -1125,7 +1127,7 @@ namespace NineGrid.Core.Effects
                 mExcludeRefs);
             for (var i = candidates.Count - 1; i >= 0; i--)
             {
-                if (Contains(result, candidates[i]))
+                if (Contains(result, candidates[i]) || !MatchesSlotFilter(context, candidates[i]))
                 {
                     candidates.RemoveAt(i);
                 }
@@ -1151,6 +1153,44 @@ namespace NineGrid.Core.Effects
             }
 
             return result;
+        }
+
+        private bool MatchesSlotFilter(EffectRuntimeContext context, int uid)
+        {
+            if (mSlots.Count == 0)
+            {
+                return true;
+            }
+
+            CardInstance card;
+            if (!context.TryGetCard(uid, out card) || !card.Slot.Value.IsBoardSlot)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < mSlots.Count; i++)
+            {
+                if (card.Slot.Value == mSlots[i])
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void AddSlots(EffectDslNode node)
+        {
+            mSlots.Clear();
+            var values = node.AsArray();
+            for (var i = 0; i < values.Count; i++)
+            {
+                var index = values[i].AsInt(0);
+                if (index >= SlotId.MinBoardIndex && index <= SlotId.MaxBoardIndex)
+                {
+                    mSlots.Add(SlotId.Board(index));
+                }
+            }
         }
 
         private static void AddRefs(EffectDslNode node, List<string> refs)
@@ -3083,6 +3123,7 @@ namespace NineGrid.Core.Effects
         private ModifierScope mScope = ModifierScope.UntilBattleEnds;
         private string mSource = "effect.action";
         private string mActiveWhileAdjacentToRef = string.Empty;
+        private bool mReplaceSameSource;
 
         public void Configure(EffectDslNode config)
         {
@@ -3095,6 +3136,7 @@ namespace NineGrid.Core.Effects
             mScope = config.Get("scope").AsEnum(ModifierScope.UntilBattleEnds);
             mSource = config.Get("source").AsString("effect.action");
             mActiveWhileAdjacentToRef = config.Get("activeWhileAdjacentTo").AsString(string.Empty);
+            mReplaceSameSource = config.Get("replaceSameSource").AsBool(false);
         }
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
@@ -3113,7 +3155,8 @@ namespace NineGrid.Core.Effects
                         mScope,
                         mSource,
                         context.SourceDefId,
-                        CreateActionCondition(context, targets[i])));
+                        CreateActionCondition(context, targets[i]),
+                        mReplaceSameSource));
                 }
             }
 
@@ -3145,6 +3188,7 @@ namespace NineGrid.Core.Effects
         private string mConditionActorRef = string.Empty;
         private CardKind mConditionTargetKind = CardKind.Unknown;
         private string mSourceAction = string.Empty;
+        private string mSourceDefId = string.Empty;
         private string mExcludeSourcePrefix = string.Empty;
 
         public void Configure(EffectDslNode config)
@@ -3159,6 +3203,7 @@ namespace NineGrid.Core.Effects
             mConditionActorRef = config.Get("conditionActor").AsString(string.Empty);
             mConditionTargetKind = config.Get("conditionTargetKind").AsEnum(CardKind.Unknown);
             mSourceAction = config.Get("sourceAction").AsString(string.Empty);
+            mSourceDefId = config.Get("sourceDefId").AsString(string.Empty);
             mExcludeSourcePrefix = config.Get("excludeSourcePrefix").AsString(string.Empty);
         }
 
@@ -3183,6 +3228,7 @@ namespace NineGrid.Core.Effects
                         mScope,
                         mSource,
                         mSourceAction,
+                        mSourceDefId,
                         mExcludeSourcePrefix));
                 }
             }

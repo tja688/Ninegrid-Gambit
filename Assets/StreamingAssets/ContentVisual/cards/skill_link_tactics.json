@@ -1,10 +1,10 @@
 {
   "schemaVersion": 2,
-  "contentId": "skill.battle_hardened",
+  "contentId": "skill.link_tactics",
   "kind": "Skill",
   "deckId": "",
-  "displayName": "历战",
-  "description": "[战斗时]每累计对玩家造成2点伤害，本卡攻击+1",
+  "displayName": "链接战术",
+  "description": "[场上]邻接怪物攻击+1；离开邻接后失效（常驻光环）",
   "gold": 0,
   "stats": {
     "hp": 0,
@@ -87,10 +87,16 @@
   "shopOfferCount": 0,
   "effectAssemblies": [
     {
-      "id": "skill.battle_hardened.damage",
-      "templateId": "tpl.skill.battle_hardened.damage",
+      "id": "skill.link_tactics.activate",
+      "templateId": "tpl.skill.link_tactics.activate",
       "containerType": "MonsterSkill",
-      "argsJson": "{\"delta\":1,\"reason\":\"skill.battle_hardened\"}"
+      "argsJson": "{\"value\":1,\"source\":\"skill.link_tactics\"}"
+    },
+    {
+      "id": "skill.link_tactics.refresh",
+      "templateId": "tpl.skill.link_tactics.refresh",
+      "containerType": "MonsterSkill",
+      "argsJson": "{\"value\":1,\"source\":\"skill.link_tactics\"}"
     }
   ],
   "role": ""

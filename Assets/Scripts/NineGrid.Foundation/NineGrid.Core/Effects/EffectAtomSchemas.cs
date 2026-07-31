@@ -787,6 +787,15 @@ namespace NineGrid.Core.Effects
                             result.Add("schema.target.zone", path + ".zones[" + i + "] is not supported.");
                         }
                     }
+
+                    var slots = node.Get("slots").AsArray();
+                    for (var i = 0; i < slots.Count; i++)
+                    {
+                        if (!IsBoardSlot(slots[i].AsInt(0)))
+                        {
+                            result.Add("schema.range.slots", path + ".slots[" + i + "] must be between 1 and 9.");
+                        }
+                    }
                 }
 
                 if (Same(atom, "SelectedCards"))

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 2,
-  "contentId": "skill.battle_hardened",
+  "contentId": "skill.recuperate",
   "kind": "Skill",
   "deckId": "",
-  "displayName": "历战",
-  "description": "[战斗时]每累计对玩家造成2点伤害，本卡攻击+1",
+  "displayName": "休养",
+  "description": "[场上][翻面后]若正面朝上，本卡攻击+1、护甲+2",
   "gold": 0,
   "stats": {
     "hp": 0,
@@ -87,10 +87,10 @@
   "shopOfferCount": 0,
   "effectAssemblies": [
     {
-      "id": "skill.battle_hardened.damage",
-      "templateId": "tpl.skill.battle_hardened.damage",
+      "id": "skill.recuperate.flip",
+      "templateId": "tpl.skill.recuperate.flip",
       "containerType": "MonsterSkill",
-      "argsJson": "{\"delta\":1,\"reason\":\"skill.battle_hardened\"}"
+      "argsJson": "{\"delta\":1,\"armor\":2,\"reason\":\"skill.recuperate\"}"
     }
   ],
   "role": ""

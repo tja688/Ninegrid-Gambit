@@ -30,6 +30,14 @@ namespace NineGrid.Core.Tests
             "tpl.skill.link_prep.move",
             "tpl.skill.leap_kill.flip",
             "tpl.skill.steal.flip",
+            "tpl.skill.recuperate.flip",
+            "tpl.skill.rise_up.damage",
+            "tpl.skill.evade.battle",
+            "tpl.skill.flame_boiling.rule",
+            "tpl.skill.link_tactics.activate",
+            "tpl.skill.link_tactics.refresh",
+            "tpl.skill.delivery.move",
+            "tpl.skill.battle_hardened.damage",
         };
 
         private IArchitecture mArch;
@@ -73,6 +81,19 @@ namespace NineGrid.Core.Tests
                 ["tpl.skill.link_prep.move"] = "{\"reason\":\"skill.link_prep\"}",
                 ["tpl.skill.leap_kill.flip"] = "{}",
                 ["tpl.skill.steal.flip"] = "{\"count\":1,\"reason\":\"skill.steal\"}",
+                ["tpl.skill.recuperate.flip"] =
+                    "{\"delta\":1,\"armor\":2,\"reason\":\"skill.recuperate\"}",
+                ["tpl.skill.rise_up.damage"] = "{\"count\":1}",
+                ["tpl.skill.evade.battle"] = "{\"sourceAction\":\"DealDamage\"}",
+                ["tpl.skill.flame_boiling.rule"] =
+                    "{\"value\":1,\"source\":\"skill.flame_boiling\"}",
+                ["tpl.skill.link_tactics.activate"] =
+                    "{\"value\":1,\"source\":\"skill.link_tactics\"}",
+                ["tpl.skill.link_tactics.refresh"] =
+                    "{\"value\":1,\"source\":\"skill.link_tactics\"}",
+                ["tpl.skill.delivery.move"] = "{\"count\":1}",
+                ["tpl.skill.battle_hardened.damage"] =
+                    "{\"delta\":1,\"reason\":\"skill.battle_hardened\"}",
             };
 
             foreach (var templateId in TemplateIds)

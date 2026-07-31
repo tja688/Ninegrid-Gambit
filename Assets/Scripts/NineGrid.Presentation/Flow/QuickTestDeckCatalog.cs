@@ -36,7 +36,8 @@ namespace NineGrid.Flow
 
         /// <summary>
         /// 通道预算——按触发轴混挂；储备技 <c>purge_followers</c> 不占码。
-        /// <c>\1</c> 移除向；<c>\2</c> 互动向；<c>\3</c> 翻面向；其余空置。
+        /// <c>\1</c> 移除向；<c>\2</c> 互动向；<c>\3</c> 翻面向；
+        /// <c>\4</c> 翻面延伸；<c>\5</c> 移动光环；<c>\6</c> 交战向；<c>\7</c> 烈焰叠层。
         /// </summary>
         private static readonly ChannelPreset[] sPresets =
         {
@@ -50,10 +51,18 @@ namespace NineGrid.Flow
             new ChannelPreset(
                 "翻面向",
                 new[] { "skill.leap_kill", "skill.steal" }),
-            new ChannelPreset("通道4", Array.Empty<string>()),
-            new ChannelPreset("通道5", Array.Empty<string>()),
-            new ChannelPreset("通道6", Array.Empty<string>()),
-            new ChannelPreset("通道7", Array.Empty<string>()),
+            new ChannelPreset(
+                "翻面延伸",
+                new[] { "skill.recuperate", "skill.rise_up" }),
+            new ChannelPreset(
+                "移动光环",
+                new[] { "skill.delivery", "skill.link_tactics" }),
+            new ChannelPreset(
+                "交战向",
+                new[] { "skill.evade", "skill.battle_hardened" }),
+            new ChannelPreset(
+                "烈焰叠层",
+                new[] { "skill.flame_boiling" }),
             new ChannelPreset("通道8", Array.Empty<string>()),
             new ChannelPreset("通道9", Array.Empty<string>()),
         };
@@ -204,6 +213,13 @@ namespace NineGrid.Flow
                 { "skill.link_prep", "互动5去邻道具" },
                 { "skill.leap_kill", "翻面邻攻伤人" },
                 { "skill.steal", "翻面盗邻帮助" },
+                { "skill.recuperate", "翻面攻+1甲+2" },
+                { "skill.rise_up", "伤人翻其他怪" },
+                { "skill.delivery", "移5换邻道具" },
+                { "skill.link_tactics", "邻怪攻+1光环" },
+                { "skill.evade", "战后换四角" },
+                { "skill.battle_hardened", "伤2自攻+1" },
+                { "skill.flame_boiling", "互动5烈焰+1" },
             };
 
         /// <summary>多技能卡面用的短显示名（catalog 未就绪时兜底）。</summary>
@@ -217,6 +233,13 @@ namespace NineGrid.Flow
                 { "skill.link_prep", "链接" },
                 { "skill.leap_kill", "跳杀" },
                 { "skill.steal", "盗取" },
+                { "skill.recuperate", "休养" },
+                { "skill.rise_up", "起来" },
+                { "skill.delivery", "快递" },
+                { "skill.link_tactics", "链接战术" },
+                { "skill.evade", "逃避" },
+                { "skill.battle_hardened", "历战" },
+                { "skill.flame_boiling", "烈焰沸腾" },
             };
 
         /// <summary>

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 2,
-  "contentId": "skill.battle_hardened",
+  "contentId": "skill.rise_up",
   "kind": "Skill",
   "deckId": "",
-  "displayName": "历战",
-  "description": "[战斗时]每累计对玩家造成2点伤害，本卡攻击+1",
+  "displayName": "起来",
+  "description": "[场上]本卡对玩家造成一次伤害后，随机翻面一张其他怪物卡",
   "gold": 0,
   "stats": {
     "hp": 0,
@@ -87,10 +87,10 @@
   "shopOfferCount": 0,
   "effectAssemblies": [
     {
-      "id": "skill.battle_hardened.damage",
-      "templateId": "tpl.skill.battle_hardened.damage",
+      "id": "skill.rise_up.damage",
+      "templateId": "tpl.skill.rise_up.damage",
       "containerType": "MonsterSkill",
-      "argsJson": "{\"delta\":1,\"reason\":\"skill.battle_hardened\"}"
+      "argsJson": "{\"count\":1}"
     }
   ],
   "role": ""
