@@ -301,6 +301,13 @@ namespace NineGrid.Flow.Presentation
                 return;
             }
 
+            // 远程武器：本卡不先手也不反击（齐射不受影响）→ 跳过反击批，直接互动推进。
+            if (HasCounterAttackBan(monsterUid))
+            {
+                EnqueueNonKillInteractionAdvance(timeline, boardSlot);
+                return;
+            }
+
             var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
             var counterGate = PresentationSyncBatchGate.FromSync(
                 sync,
@@ -341,6 +348,19 @@ namespace NineGrid.Flow.Presentation
                 mArch.SendCommand(new AdvanceInteractionCountCommand());
                 return TimelineStepStatus.Finished;
             }
+        }
+
+        private bool HasCounterAttackBan(int monsterUid)
+        {
+            var registry = mArchitecture.GetModel<CardRegistry>();
+            CardInstance monster;
+            if (!registry.TryGet(monsterUid, out monster) || monster == null)
+            {
+                return false;
+            }
+
+            var stats = mArchitecture.GetSystem<IStatSystem>();
+            return stats.EvaluateRule(RuleId.CounterAttackBanned, 0f, stats.CreateContext(monster)) > 0f;
         }
 
         private CoreCommandDispatchResult ResolveHitAndProject(int boardSlot, int attackerUid, int targetUid)

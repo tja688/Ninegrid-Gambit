@@ -102,7 +102,7 @@
 - **读** → `SendQuery` / `GetSystem<T>()` 只读 API
 - **下→上** → struct Event（多数在 `Flow/Presentation/`）或 BindableProperty
 - **编排** → `PresentationDirector` / `BattleTimeline` / `IPresentChannel`（普通 C# 深模块，由 System 持有）
-- **先手还击** → `AttackIntentScriptFactory` 入队前经 `IPhaseSystem.MonsterStrikesFirst`（或 `MonsterStrikesFirstQuery`）裁决；Present 通道按攻方角色选择（Hit=玩家打怪，Counter=怪打玩家），先手还击只交换入队顺序，不改通道语义
+- **先手还击** → `AttackIntentScriptFactory` 入队前经 `IPhaseSystem.MonsterStrikesFirst`（或 `MonsterStrikesFirstQuery`）裁决；Present 通道按攻方角色选择（Hit=玩家打怪，Counter=怪打玩家），先手还击只交换入队顺序，不改通道语义。**反击批入队前另查 `RuleId.CounterAttackBanned`**（远程武器：不先手也不反击，反击动作整批跳过；齐射走 `EnemyActionPhaseScheduler` 不受影响）
 - **命中批盘面 delta** → `FieldBattlePresentationExecutor` 在 lunge 后、Vacate 前必须 `Drain` 同批 OnBattle 步骤（如逃避 `Swap`）；主目标尸体 Remove 经 `BoardPresentationMerge.ForHitPresentDrain` 剥离，仍走 Vacate/FinalizeLethal。Fill/Rotate 仍属击杀后剧本。漏 Drain 会导致 Core/表现占格分叉（`OccupancyDesyncLatched`）
 - **九宫格互动计数** → `IPhaseSystem.AdvanceInteractionCount` 与补牌/旋转分步；攻击/探索剧本在补牌前推进计数，用道具路径不调用（ADR-0012 / #75）
 - **敌方行动阶段** → `RegisterEnemyActionPhase` / `ResolveNextEnemyAction` / `ResolveEnemyActionFinale` 分拍；同步 `Attack` / `ResolvePostKillBoard` 在玩家侧结算后整段跑完；导演由 `EnemyActionPhaseScheduler` 挂在攻击/探索剧本末尾（每怪一拍；单向打击复用 Counter 通道；`ActionCountdownChanged` → Settled → `UpdateActionCount`）（ADR-0012 / #81）

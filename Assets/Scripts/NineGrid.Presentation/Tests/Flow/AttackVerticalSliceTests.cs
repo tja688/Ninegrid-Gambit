@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using NineGrid.Cards;
+using NineGrid.Content;
 using NineGrid.Core;
 using NineGrid.Core.Commands;
 using NineGrid.Core.Systems;
@@ -159,6 +161,59 @@ namespace NineGrid.Presentation.Tests
             director.Tick(0.016f); // branch after counter → enqueue interaction advance
             director.Tick(0.016f); // silent Advance interaction count
             Assert.IsFalse(director.IsMainlineBusy);
+        }
+
+        [Test]
+        public void AttackIntent_RangedWeaponMonster_NoCounterBatch()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 99, attack: 5)).Accepted);
+            PlaceSoleBoardCardAt(sAdjacentSlot);
+            var board = mArch.GetModel<BoardModel>();
+            var registry = mArch.GetModel<CardRegistry>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+            avatar.Stats.SetBase(StatId.Attack, 1);
+
+            var monster = registry.Get(board.GetCardUid(sAdjacentSlot));
+            var avatarHpBefore = (int)avatar.Stats.GetBase(StatId.Hp);
+            mArch.GetSystem<IContentSystem>().Load(ContentCatalogBootstrap.Load());
+            Assert.Greater(
+                mArch.GetSystem<IContentSystem>().ActivateSkillsOnCard(monster, new[] { "skill.ranged_weapon" }).Count,
+                0);
+            if (mPipeline.PendingCount > 0)
+            {
+                Assert.Greater(mPipeline.RunToCompletion(), 0);
+            }
+
+            var counterProjected = false;
+            var hitPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var boardPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var counterPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var factory = new AttackIntentScriptFactory(
+                mArch,
+                mDispatcher,
+                hitPresent,
+                boardPresent,
+                counterPresent,
+                onCounterBatchProjected: (start, slot, attackerUid, result) =>
+                {
+                    counterProjected = true;
+                });
+            var director = new PresentationDirector(factory);
+
+            bool preview;
+            Assert.IsTrue(director.TrySubmitIntent(
+                new InputIntent(InputIntentKinds.Attack, sAdjacentSlot.Index),
+                out preview));
+
+            director.Tick(0.016f); // resolve hit
+            director.Tick(0.016f); // present hit
+            director.Tick(0.016f); // branch → 远程武器跳过反击批，直接入队互动推进
+            Assert.IsFalse(counterProjected, "远程武器怪不得入队反击批");
+            Assert.AreEqual(0, counterPresent.BeginCount);
+            director.Tick(0.016f); // silent Advance interaction count
+            Assert.IsFalse(director.IsMainlineBusy);
+            Assert.AreEqual(1, mArch.GetModel<PlayerModel>().InteractionCount.Value);
+            Assert.AreEqual(avatarHpBefore, (int)avatar.Stats.GetBase(StatId.Hp), "远程武器怪反击段不得伤玩家");
         }
 
         [Test]
