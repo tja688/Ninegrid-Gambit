@@ -196,8 +196,8 @@ namespace NineGrid.Core.Tests
             var board = mArch.GetModel<BoardModel>();
             ActivateSkillAndFlush(registry.Get(lordUid), "skill.lord_of_death");
 
-            // 复活石移除 → 只出特5，不得再被死亡之主盖成新复活石（否则循环）
-            mPipeline.Enqueue(new RemoveCardAction(stoneUid, ZoneId.Removed, "test.removeStone"));
+            // 复活石按倒计时移除（cause=trap.revive_stone）→ 只出特5，不得再被死亡之主盖成新复活石（否则循环）
+            mPipeline.Enqueue(new RemoveCardAction(stoneUid, ZoneId.Removed, "trap.revive_stone"));
             Assert.Greater(mPipeline.RunToCompletion(), 0);
             var spawnedUid = board.GetCardUid(sOtherSlot);
             Assert.AreNotEqual(0, spawnedUid);
@@ -314,6 +314,25 @@ namespace NineGrid.Core.Tests
             Assert.AreNotEqual(0, spawnedUid, "原槽应有特5");
             Assert.AreNotEqual(stoneUid, spawnedUid, "复活石应被移除");
             Assert.AreEqual("monster.summon.special_omni", registry.Get(spawnedUid).DefId, "复活亡者应打出特5到同格");
+        }
+
+        [Test]
+        public void ReviveStone_KilledBeforeSixInteracts_NoSpecial5Spawn()
+        {
+            StartEmptyNode();
+            var stoneUid = SpawnOnBoardReturnUid("trap.revive_stone", CardKind.Monster, sHostSlot);
+            var lordUid = SpawnOnBoardReturnUid("monster.headless_skeleton", CardKind.Monster, sOtherSlot);
+            var board = mArch.GetModel<BoardModel>();
+            var registry = mArch.GetModel<CardRegistry>();
+            ActivateSkillAndFlush(registry.Get(lordUid), "skill.lord_of_death");
+
+            var avatarUid = board.AvatarUid.Value;
+            mPipeline.Enqueue(new KillAction(avatarUid, stoneUid));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+
+            Assert.IsTrue(board.IsEmpty(sHostSlot), "计数前被打死应直接空槽，不得召唤特5");
+            Assert.AreEqual(ZoneId.Graveyard, registry.Get(stoneUid).Zone.Value);
+            Assert.AreEqual(lordUid, board.GetCardUid(sOtherSlot), "死亡之主不得给被打死的复活石补新石");
         }
 
         private void StartEmptyNode()
