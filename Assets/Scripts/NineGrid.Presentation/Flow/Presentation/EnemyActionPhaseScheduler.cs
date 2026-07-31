@@ -133,7 +133,12 @@ namespace NineGrid.Flow.Presentation
                 () => mLastStrikeHadDamage && counterPresentChannel != null,
                 t =>
                 {
-                    t.Enqueue(new PresentStep(nextGate, counterPresentChannel, "CounterHit"));
+                    // 敌方开火同战斗通道：伤人触发的 FaceUp（如 rise_up）延到命中后再翻。
+                    t.Enqueue(new PresentStep(
+                        nextGate,
+                        counterPresentChannel,
+                        "CounterHit",
+                        flushFaceUpBeforeBegin: false));
                     EnqueueContinueAfterStrike(
                         t,
                         architecture,

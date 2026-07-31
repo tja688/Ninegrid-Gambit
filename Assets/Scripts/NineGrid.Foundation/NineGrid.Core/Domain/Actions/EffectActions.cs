@@ -966,7 +966,7 @@ namespace NineGrid.Core
             var modifier = new StatModifier(Stat, Op, Value, Layer, source, Scope, Condition);
             statSystem.AddModifier(card, modifier);
 
-            return new GameActionResult()
+            var result = new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.EffectModifierApplied, context.ActionId, ActionName)
                     .WithCard(TargetUid)
                     .WithTarget(TargetUid)
@@ -974,6 +974,21 @@ namespace NineGrid.Core
                     .WithDelta((int)Math.Round(Value))
                     .WithMessage(Source)
                     .WithSource(SourceDefId, Source));
+
+            // Permanent Attack 光环旁路提交有效攻；Temporary 交战加成不上卡面（ADR-0005 / PresentationEventMap）。
+            if (Stat == StatId.Attack && Scope == ModifierScope.Permanent)
+            {
+                CardFaceEventValues.AppendPermanentAttackFaceCommit(
+                    result,
+                    context,
+                    card,
+                    ActionName,
+                    Source,
+                    SourceDefId,
+                    (int)Math.Round(Value));
+            }
+
+            return result;
         }
     }
 
@@ -1279,6 +1294,40 @@ namespace NineGrid.Core
         }
     }
 
+    /// <summary>
+    /// kind:modifier 等非 AddStatModifier 路径：入队提交 Permanent 有效攻到卡面。
+    /// </summary>
+    public sealed class CommitPermanentAttackFaceAction : GameAction
+    {
+        public CommitPermanentAttackFaceAction(int targetUid, string source = null)
+        {
+            TargetUid = targetUid;
+            Source = source ?? string.Empty;
+        }
+
+        public int TargetUid { get; private set; }
+        public string Source { get; private set; }
+        public override string ActionName { get { return "CommitPermanentAttackFace"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            CardInstance card;
+            if (TargetUid <= 0 || !context.GetModel<CardRegistry>().TryGet(TargetUid, out card) || card == null)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var result = new GameActionResult();
+            CardFaceEventValues.AppendPermanentAttackFaceCommit(
+                result,
+                context,
+                card,
+                ActionName,
+                Source);
+            return result;
+        }
+    }
+
     public sealed class DeactivateOwnerEffectsAction : GameAction
     {
         public DeactivateOwnerEffectsAction(int ownerUid, string reason)
@@ -1306,6 +1355,26 @@ namespace NineGrid.Core
                     .WithCard(OwnerUid)
                     .WithMessage(ids[i])
                     .WithSource(string.Empty, Reason));
+            }
+
+            // 邻接光环残留在友军上：条件翻转补扫。
+            CardFaceEventValues.AppendConditionalPermanentAttackFaceCommitsForBoard(
+                result,
+                context,
+                ActionName);
+
+            // kind:Modifier 自挂 Permanent Attack 被摘掉后条件扫扫不到，宿主本人仍在场则提交有效攻。
+            CardInstance owner;
+            if (context.GetModel<CardRegistry>().TryGet(OwnerUid, out owner)
+                && owner != null
+                && owner.Zone.Value == ZoneId.Board)
+            {
+                CardFaceEventValues.AppendPermanentAttackFaceCommit(
+                    result,
+                    context,
+                    owner,
+                    ActionName,
+                    Reason);
             }
 
             return result;

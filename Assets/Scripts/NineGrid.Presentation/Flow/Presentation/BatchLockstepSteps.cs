@@ -92,8 +92,9 @@ namespace NineGrid.Flow.Presentation
 
     /// <summary>
     /// Present：播当前已打开批次，完成后 ack 关闭。batchId 取自门上 ActiveBatchId。
-    /// 翻牌门控：通道 Begin 前先 FlushUpdateFaceUp 并等 FlipPlaybackCoordinator.IsIdle；
-    /// FlushBeats 后再等 Idle，再 ack（ADR-0016）。
+    /// 翻牌门控（ADR-0016）：默认通道 Begin 前先 FlushUpdateFaceUp 并等 Idle（hop / 移位）；
+    /// 战斗通道可 <see cref="flushFaceUpBeforeBegin"/>=false，把当批 FaceUp 留到通道后 FlushBeats（命中后再翻）；
+    /// FlushBeats 后再等 Idle，再 ack。
     /// </summary>
     public sealed class PresentStep : ITimelineStep
     {
@@ -101,6 +102,7 @@ namespace NineGrid.Flow.Presentation
         private readonly IPresentChannel mChannel;
         private readonly string mChannelName;
         private readonly string mChoreoKind;
+        private readonly bool mFlushFaceUpBeforeBegin;
         private int mBatchId;
         private bool mStarted;
         private bool mFaceUpFlushed;
@@ -115,7 +117,8 @@ namespace NineGrid.Flow.Presentation
             IPresentationBatchGate gate,
             IPresentChannel channel,
             string channelName = null,
-            string choreoKind = null)
+            string choreoKind = null,
+            bool flushFaceUpBeforeBegin = true)
         {
             if (gate == null)
             {
@@ -131,6 +134,7 @@ namespace NineGrid.Flow.Presentation
             mChannel = channel;
             mChannelName = channelName ?? channel.GetType().Name;
             mChoreoKind = choreoKind;
+            mFlushFaceUpBeforeBegin = flushFaceUpBeforeBegin;
         }
 
         public TimelineStepStatus Tick(float deltaTime)
@@ -151,7 +155,11 @@ namespace NineGrid.Flow.Presentation
                 mStarted = true;
                 mWaitStartRealtime = Time.realtimeSinceStartup;
                 mLastStallRealtime = -1f;
-                BattleBeatFlush.FlushUpdateFaceUp();
+                if (mFlushFaceUpBeforeBegin)
+                {
+                    BattleBeatFlush.FlushUpdateFaceUp();
+                }
+
                 mFaceUpFlushed = true;
             }
 

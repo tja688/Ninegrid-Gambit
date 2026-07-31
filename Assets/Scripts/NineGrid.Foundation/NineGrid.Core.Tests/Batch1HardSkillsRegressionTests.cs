@@ -137,15 +137,149 @@ namespace NineGrid.Core.Tests
 
             var mounted = mContent.ActivateSkillsOnCard(host, new[] { "skill.link_tactics" });
             Assert.Greater(mounted.Count, 0);
-            mPipeline.RunToCompletion();
+            Assert.Greater(mPipeline.PendingCount, 0, "OnActivate 应入队 AddStatModifier，调用方必须冲刷");
+            Assert.AreEqual(2, mStats.GetEffectiveInt(ally, StatId.Attack), "未冲刷前邻接光环不应生效");
+
+            var startIndex = mPipeline.EventLog.Entries.Count;
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
 
             Assert.AreEqual(3, mStats.GetEffectiveInt(ally, StatId.Attack), "邻接光环应攻+1");
+            Assert.IsTrue(
+                HasBaseStatModifiedAttackSince(startIndex, allyUid, 3),
+                "Permanent Attack 光环应提交 BaseStatModified(ResultValue=有效攻) 供卡面");
 
             // CardMoved 刷新路径：离开邻接后光环应失效
+            startIndex = mPipeline.EventLog.Entries.Count;
             mPipeline.Enqueue(new SwapBoardSlotsAction(sOtherSlot, sCornerSlot));
             Assert.Greater(mPipeline.RunToCompletion(), 0);
             ally = registry.Get(allyUid);
             Assert.AreEqual(2, mStats.GetEffectiveInt(ally, StatId.Attack), "离开邻接后光环应失效");
+            Assert.IsTrue(
+                HasBaseStatModifiedAttackSince(startIndex, allyUid, 2),
+                "离开邻接后应再提交有效攻=基值到卡面");
+
+            // 宿主移除：拓扑旁路应让邻怪卡面攻回落（不依赖 refresh 再 Apply）
+            mPipeline.Enqueue(new SwapBoardSlotsAction(sCornerSlot, sOtherSlot));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+            ally = registry.Get(allyUid);
+            Assert.AreEqual(3, mStats.GetEffectiveInt(ally, StatId.Attack), "回到邻接应再+1");
+
+            startIndex = mPipeline.EventLog.Entries.Count;
+            mPipeline.Enqueue(new RemoveCardAction(hostUid, ZoneId.Removed, "test.removeHost"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+            ally = registry.Get(allyUid);
+            Assert.AreEqual(2, mStats.GetEffectiveInt(ally, StatId.Attack), "宿主移除后光环应失效");
+            Assert.IsTrue(
+                HasBaseStatModifiedAttackSince(startIndex, allyUid, 2),
+                "宿主移除后应提交有效攻回基值");
+        }
+
+        [Test]
+        public void ActivateSkillsOnCard_Evade_NonLethalHit_SwapsWithCornerCard()
+        {
+            Assert.IsTrue(mPhase.StartNode(new NodeDeckOptions
+            {
+                PlayerOpeningCount = 0,
+                EnemyOpeningCount = 0
+            }).Accepted);
+
+            var hostUid = SpawnOnBoardReturnUid("monster.headless_skeleton", CardKind.Monster, sCornerSlot);
+            var partnerUid = SpawnOnBoardReturnUid("monster.skull_head", CardKind.Monster, SlotId.Board(3));
+            var registry = mArch.GetModel<CardRegistry>();
+            var board = mArch.GetModel<BoardModel>();
+            var host = registry.Get(hostUid);
+            host.Stats.SetBase(StatId.MaxHp, 9);
+            host.Stats.SetBase(StatId.Hp, 9);
+            host.Stats.SetBase(StatId.Armor, 0);
+
+            Assert.Greater(mContent.ActivateSkillsOnCard(host, new[] { "skill.evade" }).Count, 0);
+            PrepareAvatarAttack(1);
+
+            var hit = mPhase.ApplyCombatHit(board.AvatarUid.Value, hostUid);
+            Assert.IsTrue(hit.Accepted, hit.Reason);
+
+            Assert.AreEqual(partnerUid, board.GetCardUid(sCornerSlot), "非致命逃避应与四角卡 Swap");
+            Assert.AreEqual(hostUid, board.GetCardUid(SlotId.Board(3)));
+            Assert.AreEqual(ZoneId.Board, registry.Get(hostUid).Zone.Value);
+        }
+
+        [Test]
+        public void ActivateSkillsOnCard_Evade_LethalHit_DoesNotSwap()
+        {
+            Assert.IsTrue(mPhase.StartNode(new NodeDeckOptions
+            {
+                PlayerOpeningCount = 0,
+                EnemyOpeningCount = 0
+            }).Accepted);
+
+            var hostUid = SpawnOnBoardReturnUid("monster.headless_skeleton", CardKind.Monster, sCornerSlot);
+            var partnerUid = SpawnOnBoardReturnUid("monster.skull_head", CardKind.Monster, SlotId.Board(3));
+            var registry = mArch.GetModel<CardRegistry>();
+            var board = mArch.GetModel<BoardModel>();
+            var host = registry.Get(hostUid);
+            host.Stats.SetBase(StatId.MaxHp, 9);
+            host.Stats.SetBase(StatId.Hp, 1);
+            host.Stats.SetBase(StatId.Armor, 0);
+
+            Assert.Greater(mContent.ActivateSkillsOnCard(host, new[] { "skill.evade" }).Count, 0);
+            PrepareAvatarAttack(5);
+
+            var startIndex = mPipeline.EventLog.Entries.Count;
+            var hit = mPhase.ApplyCombatHit(board.AvatarUid.Value, hostUid);
+            Assert.IsTrue(hit.Accepted, hit.Reason);
+
+            Assert.AreEqual(ZoneId.Graveyard, registry.Get(hostUid).Zone.Value, "致命一击应击杀宿主");
+            Assert.AreEqual(partnerUid, board.GetCardUid(SlotId.Board(3)), "致死后不得 Swap，伙伴应仍在原四角格");
+            Assert.IsFalse(
+                ContainsCardSwappedSince(startIndex),
+                "致死命中不得产生 CardSwapped（逃避）");
+        }
+
+        private void PrepareAvatarAttack(int attack)
+        {
+            var board = mArch.GetModel<BoardModel>();
+            var avatar = mArch.GetModel<CardRegistry>().Get(board.AvatarUid.Value);
+            avatar.Stats.SetBase(StatId.MaxHp, 99);
+            avatar.Stats.SetBase(StatId.Hp, 99);
+            avatar.Stats.SetBase(StatId.Armor, 0);
+            avatar.Stats.SetBase(StatId.Attack, attack);
+        }
+
+        private bool ContainsCardSwappedSince(int startIndex)
+        {
+            var entries = mPipeline.EventLog.Entries;
+            for (var i = startIndex; i < entries.Count; i++)
+            {
+                if (entries[i].Type == CoreEventType.CardSwapped)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool HasBaseStatModifiedAttackSince(int startIndex, int cardUid, int expectedAttack)
+        {
+            var entries = mPipeline.EventLog.Entries;
+            for (var i = startIndex; i < entries.Count; i++)
+            {
+                var e = entries[i];
+                if (e.Type != CoreEventType.BaseStatModified)
+                {
+                    continue;
+                }
+
+                var uid = e.CardUid > 0 ? e.CardUid : e.TargetUid;
+                if (uid == cardUid
+                    && (StatId)e.Amount == StatId.Attack
+                    && e.ResultValue == expectedAttack)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void AssertSkillMounted(string skillId, string effectId)

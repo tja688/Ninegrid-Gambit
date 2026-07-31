@@ -76,6 +76,24 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void PresentStep_DeferFaceUp_DoesNotFlushBeforeBegin_FlushesOnBeats()
+        {
+            var faceUpClaimed = false;
+            BattleBeatHook.FlushUpdateFaceUp = () => faceUpClaimed = true;
+            BattleBeatHook.ReportBeat = _ => { };
+
+            var gate = new FakeBatchGate();
+            gate.Open(11);
+            var channel = new RecordingPresentChannel(ticksUntilComplete: 1);
+            var step = new PresentStep(gate, channel, flushFaceUpBeforeBegin: false);
+
+            Assert.AreEqual(TimelineStepStatus.Finished, step.Tick(0.016f));
+            Assert.IsTrue(channel.Began, "延后 FaceUp 时仍应 Begin");
+            Assert.IsFalse(faceUpClaimed, "战斗通道不得在 Begin 前 FlushUpdateFaceUp");
+            Assert.IsTrue(gate.Acknowledged);
+        }
+
+        [Test]
         public void FlushUpdateFaceUp_ConsumesOnlyFaceUp_LeavesOtherPending()
         {
             var faceUp = new PresentationInstruction(

@@ -468,7 +468,7 @@ namespace NineGrid.Core
                 context.GetModel<PlayerModel>().TryRemoveHelpCard(card.DefId);
             }
 
-            return new GameActionResult()
+            var result = new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.CardRemoved, context.ActionId, ActionName)
                     .WithCard(CardUid)
                     .WithSlots(fromSlot, SlotId.None)
@@ -476,6 +476,11 @@ namespace NineGrid.Core
                     .WithMessage(Reason)
                     .WithSource(SourceDefId, Reason))
                 .AddFollowUp(new DeactivateOwnerEffectsAction(CardUid, "remove:" + Reason));
+            CardFaceEventValues.AppendConditionalPermanentAttackFaceCommitsForBoard(
+                result,
+                context,
+                ActionName);
+            return result;
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
@@ -545,6 +550,10 @@ namespace NineGrid.Core
                 result.AddFollowUp(new ModifyGoldAction(goldReward, "kill:" + target.DefId));
             }
 
+            CardFaceEventValues.AppendConditionalPermanentAttackFaceCommitsForBoard(
+                result,
+                context,
+                ActionName);
             return result;
         }
 

@@ -130,6 +130,8 @@ namespace NineGrid.Flow
             var mountedHosts = 0;
             var activatedInstances = 0;
             var assignCount = skillIds.Count < hosts.Count ? skillIds.Count : hosts.Count;
+            var pipeline = arch.GetSystem<IActionPipelineSystem>();
+            var flushStart = pipeline?.EventLog != null ? pipeline.EventLog.Entries.Count : -1;
 
             for (var i = 0; i < assignCount; i++)
             {
@@ -162,6 +164,16 @@ namespace NineGrid.Flow
                     $"[BattleSessionCheat] QuickTest 一怪一技 slot={card.Slot.Value.Index}"
                     + $" uid={card.Uid} defId={card.DefId} skill={skillId}"
                     + (string.IsNullOrEmpty(description) ? string.Empty : " desc=" + description));
+            }
+
+            // OnActivate（如链接战术光环）只入队 AddStatModifier；必须当场冲刷，否则卡面/有效攻滞后到下一次互动。
+            if (pipeline != null && pipeline.PendingCount > 0)
+            {
+                pipeline.RunToCompletion();
+                if (flushStart >= 0)
+                {
+                    BattleBeatFlush.PresentEventLogSlice(arch, flushStart);
+                }
             }
 
             var blankPeers = hosts.Count - assignCount;

@@ -110,7 +110,8 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 导演命中批 Present：Core 已 CombatHit；此处只播 lunge/受击/飘字，击杀则 Vacate（不含 Fill/Rotate）。
+        /// 导演命中批 Present：Core 已 CombatHit；播 lunge/受击/飘字，
+        /// 再 Drain 同批 OnBattle 盘面 delta（如逃避 Swap；主目标尸体除外），击杀则 Vacate（不含 Fill/Rotate）。
         /// <paramref name="resolvedCombatUid"/> 必须来自 Resolve 批捕获值，禁止在 Hit 后再 Resolve。
         /// </summary>
         public async UniTask PlayDirectorAttackHitPresentAsync(
@@ -429,9 +430,24 @@ namespace NineGrid.Cards
                     ApplyHitFrameVisuals();
                 }
 
+                // OnBattle（逃避 Swap 等）与技能移除写在同一 CombatHit EventLog 窗；
+                // 必须在 Vacate 前 Drain，否则 Core 已换位而表现占格仍旧 → OccupancyDesync。
+                // 交战主目标尸体仍走下方 Vacate，不进 Remove 步。
+                var hitBoardDelta = BoardPresentationMerge.ForHitPresentDrain(
+                    hitProjection,
+                    combatVictim.Uid);
+                await DrainCombatHitBoardDeltaFromProjectionAsync(hitBoardDelta, ct);
+
                 var killed = HasRemovedUid(hitProjection, combatVictim.Uid) || combatVictim.IsFieldDead;
                 if (!hitProjection.AvatarDefeated && killed)
                 {
+                    // Swap 后主目标可能已不在点击格；以 Drain 后的表现占格为准。
+                    if (geometry.TryGetSlotOf(combatVictim.Uid, out var slotAfterDelta)
+                        && slotAfterDelta > 0)
+                    {
+                        combatSlot = slotAfterDelta;
+                    }
+
                     CardEntityLifecycleHook.CardsOrNull()?.MarkFieldDead(combatVictim);
                     geometry.VacateSlotForExplore(
                         combatSlot,
@@ -443,15 +459,7 @@ namespace NineGrid.Cards
                     FinalizeLethalVictimAsync(combatVictim, ct).Forget();
                 }
 
-                if (hitProjection.AvatarDefeated)
-                {
-                    await DrainCombatHitBoardDeltaFromProjectionAsync(hitProjection, ct);
-                    await FlushPendingShuffleAsync(ct);
-                }
-                else
-                {
-                    await FlushPendingShuffleAsync(ct);
-                }
+                await FlushPendingShuffleAsync(ct);
             }
             catch (OperationCanceledException)
             {

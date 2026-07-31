@@ -471,6 +471,10 @@ namespace NineGrid.Core
                 .WithAmount(Clockwise ? 1 : -1)
                 .WithMessage(Clockwise ? "clockwise" : "counterClockwise")
                 .WithSource(SourceDefId, Cause));
+            CardFaceEventValues.AppendConditionalPermanentAttackFaceCommitsForBoard(
+                result,
+                context,
+                ActionName);
             return result;
         }
 
@@ -537,9 +541,14 @@ namespace NineGrid.Core
                     .WithSource(SourceDefId, Cause));
             }
 
-            return result.AddEvent(new CoreGameEvent(CoreEventType.CardSwapped, context.ActionId, ActionName)
+            result.AddEvent(new CoreGameEvent(CoreEventType.CardSwapped, context.ActionId, ActionName)
                     .WithSlots(Left, Right)
                     .WithSource(SourceDefId, Cause));
+            CardFaceEventValues.AppendConditionalPermanentAttackFaceCommitsForBoard(
+                result,
+                context,
+                ActionName);
+            return result;
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)

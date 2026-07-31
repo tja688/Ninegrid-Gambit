@@ -167,6 +167,37 @@ namespace NineGrid.Presentation.Tests.Cards
                 "Hold 失败须返回 lockFail 且不 Apply");
         }
 
+        [Test]
+        public void AttackHitPresent_DrainsOnBattleBoardDeltaBeforeVacate()
+        {
+            var text = ReadPresentationSource("Cards/Battle/FieldBattlePresentationExecutor.cs");
+            var method = Regex.Match(
+                text,
+                @"PlayDirectorAttackHitCoreAsync[\s\S]*?private bool TryResolveDirectorCombatVictim",
+                RegexOptions.CultureInvariant);
+            Assert.IsTrue(method.Success, "找不到 PlayDirectorAttackHitCoreAsync");
+            Assert.IsTrue(
+                method.Value.Contains("ForHitPresentDrain", StringComparison.Ordinal),
+                "命中 Present 须剥离主目标 Remove 后再 Drain OnBattle 盘面 delta");
+            Assert.IsTrue(
+                method.Value.Contains("DrainCombatHitBoardDeltaFromProjectionAsync", StringComparison.Ordinal),
+                "命中 Present 必须 Drain 同批盘面 delta（逃避 Swap 等）");
+
+            var drainIdx = method.Value.IndexOf(
+                "DrainCombatHitBoardDeltaFromProjectionAsync",
+                StringComparison.Ordinal);
+            var vacateIdx = method.Value.IndexOf("VacateSlotForExplore", StringComparison.Ordinal);
+            Assert.GreaterOrEqual(drainIdx, 0);
+            Assert.GreaterOrEqual(vacateIdx, 0);
+            Assert.Less(drainIdx, vacateIdx, "OnBattle Swap Drain 必须在 Vacate 之前，否则占格错位");
+
+            Assert.IsFalse(
+                Regex.IsMatch(
+                    method.Value,
+                    @"if\s*\(\s*hitProjection\.AvatarDefeated\s*\)[\s\S]{0,200}DrainCombatHitBoardDeltaFromProjectionAsync"),
+                "不得仅在 AvatarDefeated 时 Drain；未击杀 OnBattle Swap 同样需要");
+        }
+
         private static string ReadPresentationSource(string relativeUnderPresentation)
         {
             var path = Path.GetFullPath(

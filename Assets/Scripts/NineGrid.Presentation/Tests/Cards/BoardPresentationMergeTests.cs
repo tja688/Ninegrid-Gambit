@@ -10,6 +10,91 @@ namespace NineGrid.Presentation.Tests
         private const int OtherRemovedUid = 200;
 
         [Test]
+        public void ForHitPresentDrain_KeepsSwapAndStripsVictimRemove()
+        {
+            var hit = new PostKillBoardPresentationResult
+            {
+                Accepted = true,
+                Steps = new[]
+                {
+                    new BoardPresentationStep
+                    {
+                        Kind = BoardPresentationStepKind.Swap,
+                        ActionId = 1,
+                        Moves = new[]
+                        {
+                            new PostKillCardMove { Uid = VictimUid, FromSlot = 1, ToSlot = 3 },
+                            new PostKillCardMove { Uid = OtherRemovedUid, FromSlot = 3, ToSlot = 1 },
+                        },
+                    },
+                    new BoardPresentationStep
+                    {
+                        Kind = BoardPresentationStepKind.Remove,
+                        RemovedUids = new[] { VictimUid },
+                    },
+                },
+                RemovedUids = new[] { VictimUid },
+            };
+
+            var drain = BoardPresentationMerge.ForHitPresentDrain(hit, VictimUid);
+
+            Assert.AreEqual(1, drain.Steps.Length);
+            Assert.AreEqual(BoardPresentationStepKind.Swap, drain.Steps[0].Kind);
+            Assert.AreEqual(2, drain.Steps[0].Moves.Length);
+            Assert.AreEqual(0, drain.RemovedUids.Length);
+        }
+
+        [Test]
+        public void ForHitPresentDrain_OnlyVictimRemove_YieldsEmptySteps()
+        {
+            var hit = new PostKillBoardPresentationResult
+            {
+                Accepted = true,
+                Steps = new[]
+                {
+                    new BoardPresentationStep
+                    {
+                        Kind = BoardPresentationStepKind.Remove,
+                        RemovedUids = new[] { VictimUid },
+                    },
+                },
+                RemovedUids = new[] { VictimUid },
+            };
+
+            var drain = BoardPresentationMerge.ForHitPresentDrain(hit, VictimUid);
+
+            Assert.AreEqual(0, drain.Steps.Length);
+            Assert.AreEqual(0, drain.RemovedUids.Length);
+        }
+
+        [Test]
+        public void ForHitPresentDrain_KeepsNonVictimRemove()
+        {
+            var hit = new PostKillBoardPresentationResult
+            {
+                Accepted = true,
+                Steps = new[]
+                {
+                    new BoardPresentationStep
+                    {
+                        Kind = BoardPresentationStepKind.Remove,
+                        RemovedUids = new[] { VictimUid, OtherRemovedUid },
+                    },
+                },
+                RemovedUids = new[] { VictimUid, OtherRemovedUid },
+            };
+
+            var drain = BoardPresentationMerge.ForHitPresentDrain(hit, VictimUid);
+
+            Assert.AreEqual(1, drain.Steps.Length);
+            Assert.AreEqual(BoardPresentationStepKind.Remove, drain.Steps[0].Kind);
+            Assert.AreEqual(1, drain.Steps[0].RemovedUids.Length);
+            Assert.AreEqual(OtherRemovedUid, drain.Steps[0].RemovedUids[0]);
+            Assert.AreEqual(1, drain.RemovedUids.Length);
+            Assert.AreEqual(OtherRemovedUid, drain.RemovedUids[0]);
+        }
+
+        [Test]
         public void MergeLethalHitAndPostKill_PreservesHitBeforePostKillStepOrder()
         {
             var hit = new CombatHitPresentationResult

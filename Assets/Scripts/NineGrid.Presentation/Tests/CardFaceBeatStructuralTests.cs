@@ -214,12 +214,44 @@ namespace NineGrid.Presentation.Tests
             var flush = text.IndexOf("BattleBeatFlush.FlushBeats()", StringComparison.Ordinal);
             var idleGate = text.IndexOf("FlipPlaybackCoordinator.IsIdle", StringComparison.Ordinal);
             var ack = text.IndexOf("mGate.TryAcknowledge(mBatchId)", StringComparison.Ordinal);
-            Assert.Greater(flushFaceUp, 0, "PresentStep 应通道前 FlushUpdateFaceUp");
-            Assert.Greater(begin, flushFaceUp, "FlushUpdateFaceUp 须在 channel.Begin 之前");
+            Assert.Greater(flushFaceUp, 0, "PresentStep 应具备 FlushUpdateFaceUp（默认通道前）");
+            Assert.Greater(begin, flushFaceUp, "FlushUpdateFaceUp 调用点须在 channel.Begin 源码之前");
             Assert.Greater(flush, begin, "FlushBeats 须在 channel.Begin 之后");
             Assert.Greater(idleGate, 0, "PresentStep 须门控 FlipPlaybackCoordinator.IsIdle");
             Assert.Greater(ack, flush, "FlushBeats 须在 TryAcknowledge 之前");
             Assert.Greater(ack, idleGate, "Idle 门控须在 TryAcknowledge 之前出现");
+            Assert.IsTrue(
+                text.IndexOf("mFlushFaceUpBeforeBegin", StringComparison.Ordinal) >= 0,
+                "PresentStep 须支持战斗通道延后当批 FaceUp");
+        }
+
+        [Test]
+        public void CombatPresentSteps_DeferFaceUpUntilAfterChannel()
+        {
+            var attackPath = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "Presentation",
+                "AttackIntentScriptFactory.cs"));
+            var enemyPath = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "Presentation",
+                "EnemyActionPhaseScheduler.cs"));
+            var attack = File.ReadAllText(attackPath);
+            var enemy = File.ReadAllText(enemyPath);
+            Assert.GreaterOrEqual(
+                Regex.Matches(attack, @"flushFaceUpBeforeBegin:\s*false").Count,
+                3,
+                "攻击/反击 Present 须延后当批 FaceUp（命中后再翻）");
+            Assert.GreaterOrEqual(
+                Regex.Matches(enemy, @"flushFaceUpBeforeBegin:\s*false").Count,
+                1,
+                "敌方开火 CounterHit Present 须延后当批 FaceUp");
         }
 
         [Test]

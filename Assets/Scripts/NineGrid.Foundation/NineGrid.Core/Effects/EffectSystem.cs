@@ -439,6 +439,7 @@ namespace NineGrid.Core.Effects
             var runtime = new EffectRuntimeContext(((IBelongToArchitecture)this).GetArchitecture(), instance, null);
             var targets = instance.Target.Resolve(runtime);
             var statSystem = this.GetSystem<IStatSystem>();
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
 
             for (var i = 0; i < targets.Count; i++)
             {
@@ -451,6 +452,14 @@ namespace NineGrid.Core.Effects
                 var modifier = CreateStatModifier(instance);
                 statSystem.AddModifier(card, modifier);
                 instance.StatModifiers.Add(new AppliedStatModifier(card, modifier));
+
+                // kind:Modifier 不经 AddStatModifierAction；Permanent Attack 入队卡面旁路提交。
+                if (pipeline != null
+                    && modifier.Stat == StatId.Attack
+                    && modifier.Scope == ModifierScope.Permanent)
+                {
+                    pipeline.Enqueue(new CommitPermanentAttackFaceAction(card.Uid, modifier.Source.Id));
+                }
             }
         }
 

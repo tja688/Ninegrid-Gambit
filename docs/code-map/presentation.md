@@ -103,6 +103,7 @@
 - **下→上** → struct Event（多数在 `Flow/Presentation/`）或 BindableProperty
 - **编排** → `PresentationDirector` / `BattleTimeline` / `IPresentChannel`（普通 C# 深模块，由 System 持有）
 - **先手还击** → `AttackIntentScriptFactory` 入队前经 `IPhaseSystem.MonsterStrikesFirst`（或 `MonsterStrikesFirstQuery`）裁决；Present 通道按攻方角色选择（Hit=玩家打怪，Counter=怪打玩家），先手还击只交换入队顺序，不改通道语义
+- **命中批盘面 delta** → `FieldBattlePresentationExecutor` 在 lunge 后、Vacate 前必须 `Drain` 同批 OnBattle 步骤（如逃避 `Swap`）；主目标尸体 Remove 经 `BoardPresentationMerge.ForHitPresentDrain` 剥离，仍走 Vacate/FinalizeLethal。Fill/Rotate 仍属击杀后剧本。漏 Drain 会导致 Core/表现占格分叉（`OccupancyDesyncLatched`）
 - **九宫格互动计数** → `IPhaseSystem.AdvanceInteractionCount` 与补牌/旋转分步；攻击/探索剧本在补牌前推进计数，用道具路径不调用（ADR-0012 / #75）
 - **敌方行动阶段** → `RegisterEnemyActionPhase` / `ResolveNextEnemyAction` / `ResolveEnemyActionFinale` 分拍；同步 `Attack` / `ResolvePostKillBoard` 在玩家侧结算后整段跑完；导演由 `EnemyActionPhaseScheduler` 挂在攻击/探索剧本末尾（每怪一拍；单向打击复用 Counter 通道；`ActionCountdownChanged` → Settled → `UpdateActionCount`）（ADR-0012 / #81）
 - **行动倒计时上卡面** → Core `ActionCountdownChanged`（`ResultValue`=剩余）经 `PresentationEventMap` Settled → `CardFaceStatHandler` Commit `ActionCount`；禁止 View 队列外直读 Counters（ADR-0005 / #81）。`Action_Icon` 首版用预制体模板默认图兜底（无五套区分素材）
@@ -113,7 +114,7 @@
 2. `ITimelineStep` / `IPresentChannel`（`Flow/Presentation/`）  
 3. `BattleBeatScheduler` / `IBattleBeatHandler`（多处理器唯一分发；`CardFaceStatHandler` 为卡面数值；新事件须在 `PresentationEventMap` 声明 Beat）  
 4. 卡面视觉 SO（`Cards/Effects/`）；默认 Death 为 Burning 精灵表退场（`CardSpriteSheetBurnExitEffectSO`，脱卡 FX，落点=视觉世界位）；Use 缩小退场；Lethal 交战不播受击回原段，碎亡留在击退终点
-5. 翻牌：`CardFaceFlipPresenter` 采样 Flip.anim；Core `FaceUp` 经 `CardFaceChanged`→`UpdateFaceUp`→`CardFaceFlipBeatHandler` Commit，再经 `FlipPlaybackCoordinator` 全局串行播翻（ADR-0016）；`PresentStep` 通道 Begin 前 `FlushUpdateFaceUp` + 等 Idle，ack 前再等 Idle；配置编辑器 `CardPresentationFlipPreview` 同采样同挂点，禁止再写线性假翻牌
+5. 翻牌：`CardFaceFlipPresenter` 采样 Flip.anim；Core `FaceUp` 经 `CardFaceChanged`→`UpdateFaceUp`→`CardFaceFlipBeatHandler` Commit，再经 `FlipPlaybackCoordinator` 全局串行播翻（ADR-0016）；`PresentStep` 默认通道 Begin 前 `FlushUpdateFaceUp` + 等 Idle，ack 前再等 Idle；**攻击 / 反击 Present** 设 `flushFaceUpBeforeBegin: false`，当批 FaceUp 留到通道后 `FlushBeats`（命中后再翻）；配置编辑器 `CardPresentationFlipPreview` 同采样同挂点，禁止再写线性假翻牌
 6. 主动翻开：`InputIntentKinds.RevealFace` + `RevealFaceIntentScriptFactory`；邻接背面卡点击分流（AttackInputController）
 
 不要接回静态业务 Sink，也不要在 View 上直接改 Core 规则状态，也不要旁路直读 Core 写卡面数值。
@@ -146,8 +147,9 @@
 - **排期器** `Flow/Presentation/BattleBeatScheduler`：批次开启装载非 `None` 指令；`ReportBeat` 交给第一个 `IBattleBeatHandler.TryApply` 成功者；Settled 后未消费只报不改；支持 `PresentStandalone`（非锁步旁路冲刷，恢复当批 pending）
 - **处理器** `IBattleBeatHandler`：`CardFaceStatHandler` 只从指令赋值 → `ManagedCard.CommitPresentation`（含 `OfferReward` 按 DefId 匹配 Bounce 负 uid 卡）；`PlayerInfoHudBeatHandler` 对 Avatar 血甲旁路写 HUD（return false 留给卡面认领）；装饰 `DamageFloaterBeatHandler` / `EffectTriggerPulseBeatHandler` / `GoldGainBeatHandler` 分别在 Impact / Settled 消费飘字、FX、金币，不占主线 ack；数值 Commit 后 `CardFacePresentationBinder` 可对配对图标做非阻塞缩放装饰（不占 ack）
 - **统一冲刷** `BattleBeatFlush.FlushBeats`（Impact→Settled）：`PresentStep` 就位回执前调用；非锁步（房间/选择/拾取）走 `PresentEventLogSlice`；Bounce spawn 后走 `PresentLatestEventOfType(RewardOffered)`（单条 PresentStandalone）
-- **翻牌门控** `FlipPlaybackCoordinator`：Handler 入队串行 `PlayFlipAsync`；`BattleBeatScheduler.FlushUpdateFaceUp` / `BattleBeatFlush.FlushUpdateFaceUp` 供 `PresentStep` 在 `channel.Begin` 前只刷 FaceUp；Idle 门控在 Begin 与 ack 两侧（ADR-0016）
+- **翻牌门控** `FlipPlaybackCoordinator`：Handler 入队串行 `PlayFlipAsync`；`BattleBeatScheduler.FlushUpdateFaceUp` / `BattleBeatFlush.FlushUpdateFaceUp` 供 `PresentStep` 在 hop 通道 `channel.Begin` 前只刷 FaceUp；战斗通道可跳过前置刷、把 FaceUp 留到 `FlushBeats`；Idle 门控在 Begin 与 ack 两侧（ADR-0016）
 - **生成绝对值** `CardFaceEventValues.WithFaceAbsolutes`：`CardSpawned` / 带 uid 的 `CardDealt` / `AvatarAppeared` 写入造卡/发牌时攻甲血
+- **Permanent 有效攻旁路**（ADR-0005 细化，非对账）：Conditional/常驻光环改有效攻时，Core 发 `BaseStatModified(ResultValue=GetEffectiveInt(Attack))`——`AddStatModifier`/`CommitPermanentAttackFace` Apply、以及 Swap/Rotate/Remove/Kill/`DeactivateOwnerEffects` 对盘面「带条件的 Permanent Attack」补扫；Temporary 交战加成仍不上卡面；表现层不对账、不直读 Core
 - **奖励候选项** `RewardEntry` 投影绝对值 + `RewardOffered` Settled；Bounce spawn 后 `PresentLatestEventOfType` 二次提交；禁 `clearCombatStats` 数值旁路
 - **开局引导** `Flow/Presentation/CardFaceGenerationBootstrap`：非锁步 Opening 从事件日志重放生成类指令；BoardSelect 视图重 Spawn 用 `ApplyFaceHistoryForUid` 重放该 uid 的生成+后续数值指令（与 Settled 同一 Handler）
 - **报点**：攻击/反击命中帧 → `Impact`；用道具 Present 在 Vacate 前报 `Impact`；盘面 Drain 开头再冲刷 `Impact`（探索等）；`PresentStep`：FaceUp 先刷 → 通道 → `FlushBeats` → 等翻牌 Idle → `TryAcknowledge`

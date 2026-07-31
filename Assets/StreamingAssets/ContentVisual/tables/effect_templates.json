@@ -650,10 +650,10 @@
   {
     "id": "tpl.skill.evade.battle",
     "state": "Implemented",
-    "design_text": "[战斗后]在格1/3/7/9中有非本卡的卡牌时，随机与其中一张交换位置；全无则不触发",
+    "design_text": "[战斗后]在格1/3/7/9中有非本卡的卡牌时，随机与其中一张交换位置；全无则不触发；致死伤后不触发",
     "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
-    "conditions_json": "[\"EventFilter:eventType=DamageDealt\"]",
-    "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayerTargetIsSelf\",\"eventType\":\"DamageDealt\"}],\"target\":{\"atom\":\"FilteredCards\",\"include\":[\"Self\"],\"zone\":\"Board\",\"slots\":[1,3,7,9],\"exclude\":[\"Self\"],\"random\":true,\"count\":1},\"action\":{\"atom\":\"Swap\"}}"
+    "conditions_json": "[\"EventFilter:eventType=DamageDealt\", \"StatAtLeast:stat=Hp\"]",
+    "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayerTargetIsSelf\",\"eventType\":\"DamageDealt\"},{\"atom\":\"StatAtLeast\",\"target\":\"Self\",\"stat\":\"Hp\",\"value\":1}],\"target\":{\"atom\":\"FilteredCards\",\"include\":[\"Self\"],\"zone\":\"Board\",\"slots\":[1,3,7,9],\"exclude\":[\"Self\"],\"random\":true,\"count\":1},\"action\":{\"atom\":\"Swap\"}}"
   },
   {
     "id": "tpl.skill.fall_apart.remove",

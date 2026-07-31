@@ -9,6 +9,37 @@ namespace NineGrid.Cards
     /// </summary>
     public static class BoardPresentationMerge
     {
+        /// <summary>
+        /// 命中 Present 内 Drain 用：保留 OnBattle Swap/Move/Deal 与其它移除，
+        /// 剥离交战主目标 Remove（尸体仍走 Vacate/FinalizeLethal）。
+        /// </summary>
+        public static PostKillBoardPresentationResult ForHitPresentDrain(
+            PostKillBoardPresentationResult hit,
+            int combatVictimUid)
+        {
+            var result = new PostKillBoardPresentationResult
+            {
+                Accepted = hit.Accepted,
+                AvatarDefeated = hit.AvatarDefeated,
+                NodeClearedOrRewardPhase = hit.NodeClearedOrRewardPhase,
+                DamagePopups = hit.DamagePopups,
+            };
+
+            if (hit.Steps != null && hit.Steps.Length > 0)
+            {
+                var steps = new List<BoardPresentationStep>(hit.Steps.Length);
+                AppendFilteredSteps(steps, hit.Steps, combatVictimUid);
+                result.Steps = steps.Count > 0 ? steps.ToArray() : Array.Empty<BoardPresentationStep>();
+                result.RemovedUids = FilterRemovedUids(hit.RemovedUids, combatVictimUid);
+                return result;
+            }
+
+            result.Moves = hit.Moves ?? Array.Empty<PostKillCardMove>();
+            result.Deals = hit.Deals ?? Array.Empty<PostKillCardDeal>();
+            result.RemovedUids = FilterRemovedUids(hit.RemovedUids, combatVictimUid);
+            return result;
+        }
+
         public static PostKillBoardPresentationResult MergeLethalHitAndPostKill(
             CombatHitPresentationResult hit,
             PostKillBoardPresentationResult postKill,

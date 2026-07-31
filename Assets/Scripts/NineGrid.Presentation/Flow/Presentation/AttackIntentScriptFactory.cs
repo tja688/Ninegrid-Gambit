@@ -133,7 +133,8 @@ namespace NineGrid.Flow.Presentation
                 sync,
                 () => ResolveHitAndProject(slotIndex, attackerUid, targetUid));
             timeline.Enqueue(new ResolveBatchStep(hitGate));
-            timeline.Enqueue(new PresentStep(hitGate, mHitPresentChannel));
+            // 战斗通道延后当批 FaceUp：伤人翻面（如 rise_up）须在命中帧之后，勿抢在攻击前翻。
+            timeline.Enqueue(new PresentStep(hitGate, mHitPresentChannel, flushFaceUpBeforeBegin: false));
             timeline.Enqueue(new AttackPostHitBranchStep(
                 timeline,
                 () => mLastHitKilledTarget,
@@ -171,7 +172,11 @@ namespace NineGrid.Flow.Presentation
                 () => ResolveCounterAndProject(slotIndex, monsterUid, avatarUid),
                 slice: "AttackCounter");
             timeline.Enqueue(new ResolveBatchStep(firstStrikeGate));
-            timeline.Enqueue(new PresentStep(firstStrikeGate, mCounterPresentChannel, "CounterHit"));
+            timeline.Enqueue(new PresentStep(
+                firstStrikeGate,
+                mCounterPresentChannel,
+                "CounterHit",
+                flushFaceUpBeforeBegin: false));
             timeline.Enqueue(new TimelineBranchStep(
                 timeline,
                 () => !mLastAvatarDefeated,
@@ -190,7 +195,7 @@ namespace NineGrid.Flow.Presentation
                 sync,
                 () => ResolveHitAndProject(boardSlot, avatarUid, monsterUid));
             timeline.Enqueue(new ResolveBatchStep(hitGate));
-            timeline.Enqueue(new PresentStep(hitGate, mHitPresentChannel));
+            timeline.Enqueue(new PresentStep(hitGate, mHitPresentChannel, flushFaceUpBeforeBegin: false));
             timeline.Enqueue(new AttackPostHitBranchStep(
                 timeline,
                 () => mLastHitKilledTarget,
@@ -302,7 +307,11 @@ namespace NineGrid.Flow.Presentation
                 () => ResolveCounterAndProject(boardSlot, monsterUid, avatarUid),
                 slice: "AttackCounter");
             timeline.Enqueue(new ResolveBatchStep(counterGate));
-            timeline.Enqueue(new PresentStep(counterGate, mCounterPresentChannel, "CounterHit"));
+            timeline.Enqueue(new PresentStep(
+                counterGate,
+                mCounterPresentChannel,
+                "CounterHit",
+                flushFaceUpBeforeBegin: false));
             // 反击解算后才知道是否战败：不可在 Present 前无条件挂敌方行动。
             timeline.Enqueue(new TimelineBranchStep(
                 timeline,
