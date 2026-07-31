@@ -110,6 +110,7 @@ namespace NineGrid.Cards.Presentation
 
             AppendSkillBlocks(blocks, dto, catalog);
             AppendAssemblyBlocks(blocks, assemblies, catalog);
+            AppendCatalogCardEffectBlocks(blocks, dto, catalog);
 
             if (blocks.Count == 0)
             {
@@ -128,6 +129,43 @@ namespace NineGrid.Cards.Presentation
             }
 
             return builder.ToString();
+        }
+
+        /// <summary>
+        /// 卡 JSON 未挂 skillIds / assemblies 时，仍尝试展开 Catalog 上已投影的卡级效果 DesignText。
+        /// </summary>
+        private static void AppendCatalogCardEffectBlocks(
+            List<string> blocks,
+            CardPresentationConfigDto dto,
+            GameContentCatalog catalog)
+        {
+            if (blocks.Count > 0 || catalog == null || dto == null || string.IsNullOrWhiteSpace(dto.contentId))
+            {
+                return;
+            }
+
+            if (!catalog.TryGetCard(dto.contentId.Trim(), out var card) || card?.EffectIds == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < card.EffectIds.Count; i++)
+            {
+                var effectId = card.EffectIds[i];
+                if (string.IsNullOrWhiteSpace(effectId))
+                {
+                    continue;
+                }
+
+                if (!catalog.TryGetEffect(effectId.Trim(), out var effect)
+                    || effect == null
+                    || string.IsNullOrWhiteSpace(effect.DesignText))
+                {
+                    continue;
+                }
+
+                AddUniqueLine(blocks, effect.DesignText.Trim());
+            }
         }
 
         private static void AppendSkillBlocks(

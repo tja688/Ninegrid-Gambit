@@ -1,4 +1,5 @@
 using NineGrid.Cards;
+using NineGrid.Cards.Anim;
 using NineGrid.Cards.Presentation;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
@@ -22,6 +23,9 @@ namespace NineGrid.Flow
     public sealed class CardInspectOverlayPresenter : MonoBehaviour
     {
         private const string InspectLiveFaceName = "__InspectLiveFace";
+        /// <summary>与半黑屏 / 右键面板同层，高于面板底图（order 0）与槽位（1）。</summary>
+        private const string InspectSortingLayerName = "UI";
+        private const int InspectFaceSortingOrder = 5;
 
         private static CardInspectOverlayPresenter s_instance;
 
@@ -201,6 +205,11 @@ namespace NineGrid.Flow
             {
                 _enemyBinder = EnsureLiveFace(enemyCardFace, card, ref _enemyLiveKind);
                 ApplyFace(_enemyBinder, snapshot);
+                if (_enemyBinder != null)
+                {
+                    ApplyInspectSorting(_enemyBinder.gameObject);
+                }
+
                 SetText(enemyFaceIntro, texts.FaceIntro);
                 SetText(enemyDeckIntro, texts.DeckIntro);
                 SetText(enemySkillDetails, texts.SkillDetails);
@@ -209,6 +218,11 @@ namespace NineGrid.Flow
             {
                 _regularBinder = EnsureLiveFace(regularCardFace, card, ref _regularLiveKind);
                 ApplyFace(_regularBinder, snapshot);
+                if (_regularBinder != null)
+                {
+                    ApplyInspectSorting(_regularBinder.gameObject);
+                }
+
                 SetText(regularFaceIntro, texts.FaceIntro);
                 SetText(regularDeckIntro, texts.DeckIntro);
                 SetText(regularSkillDetails, texts.SkillDetails);
@@ -419,14 +433,28 @@ namespace NineGrid.Flow
             face.transform.localScale = Vector3.one;
             face.SetActive(true);
 
-            // 卡面模板若自带 SortingGroup，会与 UI 叠层抢序；详情预览不需要第二套卡级 SG。
-            var faceSortingGroup = face.GetComponent<SortingGroup>();
-            if (faceSortingGroup != null)
+            // 真卡面预制体默认在 Main 层，会沉到 UI 面板后面；挂 SG 提到 UI 层。
+            ApplyInspectSorting(face);
+            return face;
+        }
+
+        private static void ApplyInspectSorting(GameObject face)
+        {
+            if (face == null)
             {
-                Destroy(faceSortingGroup);
+                return;
             }
 
-            return face;
+            var sortingGroup = face.GetComponent<SortingGroup>();
+            if (sortingGroup == null)
+            {
+                sortingGroup = face.AddComponent<SortingGroup>();
+            }
+
+            sortingGroup.sortingLayerName = InspectSortingLayerName;
+            sortingGroup.sortingOrder = InspectFaceSortingOrder;
+            CardMainVisualMaskAnchor.PropagateSortingLayerFromGroup(sortingGroup);
+            CardMainVisualMaskAnchor.ResyncAllVisibleInsideMasks(face.transform);
         }
 
         private static GameObject LoadFacePrefab(CardPresentationKind kind)
