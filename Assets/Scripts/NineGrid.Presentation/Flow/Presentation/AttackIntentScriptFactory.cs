@@ -207,16 +207,13 @@ namespace NineGrid.Flow.Presentation
         {
             var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
             // 九宫格互动：击杀路径在补牌前推进互动计数（与 Fill 解耦，#75）。
-            // 计数走 SendCommand（不开 Present 批），Fill 仍走 Dispatcher 开批。
+            // 计数须独立 Dispatcher 开批，否则 OnInteract 效果（潜伏近战脉冲等）落在 Fill 窗之外。
+            EnqueueInteractionAdvanceBatch(timeline, boardSlot, "KillInteractionAdvance");
             var fillGate = PresentationSyncBatchGate.FromSync(
                 sync,
                 () => ResolveAndProject(
                     boardSlot,
-                    () =>
-                    {
-                        mArchitecture.SendCommand(new AdvanceInteractionCountCommand());
-                        return mDispatcher.Send(new ResolvePostKillFillCommand());
-                    },
+                    () => mDispatcher.Send(new ResolvePostKillFillCommand()),
                     trackFusion: true));
             var rotateGate = PresentationSyncBatchGate.FromSync(
                 sync,
@@ -246,6 +243,12 @@ namespace NineGrid.Flow.Presentation
 
         private void EnqueueNonKillInteractionAdvance(BattleTimeline timeline, int boardSlot)
         {
+            EnqueueInteractionAdvanceBatch(timeline, boardSlot, "AttackInteractionAdvance");
+            AppendEnemyActionPhase(timeline, boardSlot);
+        }
+
+        private void EnqueueInteractionAdvanceBatch(BattleTimeline timeline, int boardSlot, string slice)
+        {
             // 战败后仍计一次互动（ADR-0012）：静默推进，不投影盘面、不挂敌方行动。
             if (mLastAvatarDefeated)
             {
@@ -255,7 +258,7 @@ namespace NineGrid.Flow.Presentation
 
             // 未击杀无补牌批可挂载计数：仍需投影 OnInteract 效果的盘面 delta
             // （复活石互动6次自移除→同格打出特5等），否则 Core 已换牌而表现层留幽灵占格。
-            // 空批由盘面通道跳过，不另开空 drain。
+            // 空批由盘面通道跳过，不另开空 drain；Impact 由 PresentStep.FlushBeats 消费。
             var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
             var advanceGate = PresentationSyncBatchGate.FromSync(
                 sync,
@@ -263,10 +266,9 @@ namespace NineGrid.Flow.Presentation
                     boardSlot,
                     () => mDispatcher.Send(new AdvanceInteractionCountCommand()),
                     trackFusion: false),
-                slice: "AttackInteractionAdvance");
+                slice: slice);
             timeline.Enqueue(new ResolveBatchStep(advanceGate));
             timeline.Enqueue(new PresentStep(advanceGate, mBoardPresentChannel));
-            AppendEnemyActionPhase(timeline, boardSlot);
         }
 
         private void AppendEnemyActionPhase(BattleTimeline timeline, int boardSlot)

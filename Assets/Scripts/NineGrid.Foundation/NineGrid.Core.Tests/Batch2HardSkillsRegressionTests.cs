@@ -291,6 +291,11 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(96, (int)registry.Get(avatarUid).Stats.GetBase(StatId.Hp), "第5拍应造成等同攻击的伤害");
             Assert.IsFalse(host.FaceUp, "第5拍后本卡应翻面");
 
+            var triggered = mPipeline.EventLog.Entries
+                .Where(e => e.Type == CoreEventType.EffectTriggered && e.CardUid == hostUid)
+                .ToList();
+            Assert.IsNotEmpty(triggered, "潜伏近战触发应发 EffectTriggered（持有者播效果触发脉冲）");
+
             // 翻到背面后停止计数/触发，等外部翻正
             var hpBefore = (int)registry.Get(avatarUid).Stats.GetBase(StatId.Hp);
             for (var i = 0; i < 6; i++)
