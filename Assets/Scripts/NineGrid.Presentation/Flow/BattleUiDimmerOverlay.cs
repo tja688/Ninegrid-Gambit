@@ -20,10 +20,23 @@ namespace NineGrid.Flow
         private BoxCollider2D _collider;
         private SpriteRenderer _renderer;
 
-        public static bool IsActive =>
-            s_refCount > 0 && s_instance != null && s_instance.gameObject.activeInHierarchy;
+        public static bool IsActive
+        {
+            get
+            {
+                if (s_refCount <= 0 || !TryGetLiveInstance(out var live))
+                {
+                    return false;
+                }
 
-        public static BattleUiDimmerOverlay InstanceOrNull() => s_instance;
+                return live.gameObject.activeInHierarchy;
+            }
+        }
+
+        public static BattleUiDimmerOverlay InstanceOrNull()
+        {
+            return TryGetLiveInstance(out var live) ? live : null;
+        }
 
         /// <summary>场景装配：挂在 <c>UI面板/半黑屏BG</c>。</summary>
         public static BattleUiDimmerOverlay EnsureBound(GameObject dimmerGo)
@@ -53,7 +66,7 @@ namespace NineGrid.Flow
         public static bool TryAcquire(string reason)
         {
             EnsureInstanceFromScene();
-            if (s_instance == null)
+            if (!TryGetLiveInstance(out var live))
             {
                 Debug.LogWarning("[BattleUiDimmer] 半黑屏BG 未找到，无法 Acquire reason=" + reason);
                 return false;
@@ -62,7 +75,7 @@ namespace NineGrid.Flow
             s_refCount++;
             if (s_refCount == 1)
             {
-                s_instance.ShowInternal();
+                live.ShowInternal();
             }
 
             return true;
@@ -77,10 +90,15 @@ namespace NineGrid.Flow
             }
 
             s_refCount--;
-            if (s_refCount <= 0)
+            if (s_refCount > 0)
             {
-                s_refCount = 0;
-                s_instance?.HideInternal();
+                return;
+            }
+
+            s_refCount = 0;
+            if (TryGetLiveInstance(out var live))
+            {
+                live.HideInternal();
             }
         }
 
@@ -88,7 +106,10 @@ namespace NineGrid.Flow
         {
             _ = reason;
             s_refCount = 0;
-            s_instance?.HideInternal();
+            if (TryGetLiveInstance(out var live))
+            {
+                live.HideInternal();
+            }
         }
 
         private void Awake()
@@ -101,7 +122,7 @@ namespace NineGrid.Flow
 
         private void OnDestroy()
         {
-            if (ReferenceEquals(s_instance, this))
+            if (s_instance == this)
             {
                 s_instance = null;
                 s_refCount = 0;
@@ -119,6 +140,11 @@ namespace NineGrid.Flow
 
         private void HideInternal()
         {
+            if (this == null)
+            {
+                return;
+            }
+
             if (gameObject.activeSelf)
             {
                 gameObject.SetActive(false);
@@ -160,9 +186,25 @@ namespace NineGrid.Flow
             _collider.enabled = true;
         }
 
+        /// <summary>
+        /// Unity 已销毁对象对 C# <c>?</c> 仍非 null；须走重载 <c>==</c> 并清掉静态残留。
+        /// </summary>
+        private static bool TryGetLiveInstance(out BattleUiDimmerOverlay live)
+        {
+            if (s_instance == null)
+            {
+                s_instance = null;
+                live = null;
+                return false;
+            }
+
+            live = s_instance;
+            return true;
+        }
+
         private static void EnsureInstanceFromScene()
         {
-            if (s_instance != null)
+            if (TryGetLiveInstance(out _))
             {
                 return;
             }
@@ -170,7 +212,6 @@ namespace NineGrid.Flow
             var root = GameObject.Find("UI面板");
             if (root == null)
             {
-                // Find 不含 inactive；半黑屏可能已隐藏，从根扫。
                 var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
                 for (var i = 0; i < roots.Length; i++)
                 {

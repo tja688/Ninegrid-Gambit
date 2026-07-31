@@ -9,6 +9,8 @@ namespace NineGrid.Cards.Presentation
 {
     /// <summary>
     /// 右键详述面板文案：背景介绍 / 牌组介绍 / 技能·效果详述。
+    /// 详述区只展开效果模板 <c>design_text</c>（分门别类的详细效果），
+    /// 不重复卡面简要 <c>description</c>（简要已在展示的真卡面上）。
     /// </summary>
     public static class CardInspectDetailComposer
     {
@@ -40,7 +42,7 @@ namespace NineGrid.Cards.Presentation
             var assemblies = dto?.effectAssemblies;
             var faceIntro = ResolveFaceIntro(dto, snapshot, assemblies);
             var deckIntro = ResolveDeckIntro(dto, catalog);
-            var skills = ResolveSkillDetails(dto, snapshot, catalog, assemblies);
+            var skills = ResolveSkillDetails(dto, catalog, assemblies);
             return new Result(faceIntro, deckIntro, skills);
         }
 
@@ -101,7 +103,6 @@ namespace NineGrid.Cards.Presentation
 
         private static string ResolveSkillDetails(
             CardPresentationConfigDto dto,
-            CardPresentationSnapshot snapshot,
             GameContentCatalog catalog,
             EffectAssemblyDto[] assemblies)
         {
@@ -109,29 +110,6 @@ namespace NineGrid.Cards.Presentation
 
             AppendSkillBlocks(blocks, dto, catalog);
             AppendAssemblyBlocks(blocks, assemblies, catalog);
-
-            if (blocks.Count == 0)
-            {
-                var fallback = snapshot != null ? snapshot.DetailDescription : null;
-                if (string.IsNullOrWhiteSpace(fallback) && snapshot != null)
-                {
-                    fallback = snapshot.BasicDescription;
-                }
-
-                if (string.IsNullOrWhiteSpace(fallback) && dto != null)
-                {
-                    fallback = CardFaceDescriptionParamFiller.FillFromAssemblies(
-                        dto.description,
-                        assemblies);
-                }
-
-                if (!string.IsNullOrWhiteSpace(fallback))
-                {
-                    blocks.Add(CardDetailDescriptionComposer.Compose(
-                        fallback.Trim(),
-                        CardFacePresentationBinder.PeekDescriptionIconCatalog()));
-                }
-            }
 
             if (blocks.Count == 0)
             {
@@ -171,41 +149,84 @@ namespace NineGrid.Cards.Presentation
                 }
 
                 skillId = skillId.Trim();
-                string title = skillId;
-                string body = string.Empty;
-
-                if (catalog != null && catalog.TryGetSkill(skillId, out var skill) && skill != null)
+                var title = skillId;
+                if (catalog != null && catalog.TryGetSkill(skillId, out var skill) && skill != null
+                    && !string.IsNullOrWhiteSpace(skill.DisplayName))
                 {
-                    if (!string.IsNullOrWhiteSpace(skill.DisplayName))
-                    {
-                        title = skill.DisplayName.Trim();
-                    }
-
-                    body = skill.DesignText ?? string.Empty;
+                    title = skill.DisplayName.Trim();
+                }
+                else if (CardPresentationConfigCatalog.TryGet(skillId, out var skillDtoForName)
+                         && skillDtoForName != null
+                         && !string.IsNullOrWhiteSpace(skillDtoForName.displayName))
+                {
+                    title = skillDtoForName.displayName.Trim();
                 }
 
-                if (string.IsNullOrWhiteSpace(body)
-                    && CardPresentationConfigCatalog.TryGet(skillId, out var skillDto)
-                    && skillDto != null)
-                {
-                    if (!string.IsNullOrWhiteSpace(skillDto.displayName))
-                    {
-                        title = skillDto.displayName.Trim();
-                    }
+                var detailLines = new List<string>(4);
+                CollectSkillDetailLines(detailLines, skillId, catalog);
 
-                    body = CardFaceDescriptionParamFiller.FillFromAssemblies(
-                        skillDto.description,
-                        skillDto.effectAssemblies);
-                }
-
-                if (string.IsNullOrWhiteSpace(body))
+                if (detailLines.Count == 0)
                 {
                     blocks.Add("【" + title + "】");
                 }
                 else
                 {
-                    blocks.Add("【" + title + "】\n" + body.Trim());
+                    var body = new StringBuilder(128);
+                    body.Append("【").Append(title).Append("】");
+                    for (var line = 0; line < detailLines.Count; line++)
+                    {
+                        body.Append('\n').Append(detailLines[line]);
+                    }
+
+                    blocks.Add(body.ToString());
                 }
+            }
+        }
+
+        /// <summary>
+        /// 技能详述：只收效果模板 / 已解析效果的 <c>design_text</c>，
+        /// 不用 skill JSON <c>description</c>（那是卡面简要）。
+        /// </summary>
+        private static void CollectSkillDetailLines(
+            List<string> lines,
+            string skillId,
+            GameContentCatalog catalog)
+        {
+            if (CardPresentationConfigCatalog.TryGet(skillId, out var skillDto)
+                && skillDto?.effectAssemblies != null
+                && skillDto.effectAssemblies.Length > 0)
+            {
+                AppendAssemblyLines(lines, skillDto.effectAssemblies, catalog);
+                if (lines.Count > 0)
+                {
+                    return;
+                }
+            }
+
+            if (catalog == null
+                || !catalog.TryGetSkill(skillId, out var skill)
+                || skill?.EffectIds == null
+                || skill.EffectIds.Count == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < skill.EffectIds.Count; i++)
+            {
+                var effectId = skill.EffectIds[i];
+                if (string.IsNullOrWhiteSpace(effectId))
+                {
+                    continue;
+                }
+
+                if (!catalog.TryGetEffect(effectId.Trim(), out var effect)
+                    || effect == null
+                    || string.IsNullOrWhiteSpace(effect.DesignText))
+                {
+                    continue;
+                }
+
+                AddUniqueLine(lines, effect.DesignText.Trim());
             }
         }
 
@@ -214,7 +235,20 @@ namespace NineGrid.Cards.Presentation
             EffectAssemblyDto[] assemblies,
             GameContentCatalog catalog)
         {
-            if (assemblies == null || assemblies.Length == 0 || catalog == null)
+            var lines = new List<string>(8);
+            AppendAssemblyLines(lines, assemblies, catalog);
+            for (var i = 0; i < lines.Count; i++)
+            {
+                blocks.Add(lines[i]);
+            }
+        }
+
+        private static void AppendAssemblyLines(
+            List<string> lines,
+            EffectAssemblyDto[] assemblies,
+            GameContentCatalog catalog)
+        {
+            if (assemblies == null || assemblies.Length == 0)
             {
                 return;
             }
@@ -228,12 +262,33 @@ namespace NineGrid.Cards.Presentation
                 }
 
                 var templateId = assembly.templateId.Trim();
-                if (!catalog.TryGetEffect(templateId, out var effect) || effect == null)
+                string design = null;
+                string bodyJson = null;
+
+                if (catalog != null
+                    && !string.IsNullOrWhiteSpace(assembly.id)
+                    && catalog.TryGetEffect(assembly.id.Trim(), out var mounted)
+                    && mounted != null
+                    && !string.IsNullOrWhiteSpace(mounted.DesignText))
                 {
+                    // 已投影进 Catalog 的挂载效果：DesignText 已按实参参数化。
+                    AddUniqueLine(lines, mounted.DesignText.Trim());
                     continue;
                 }
 
-                var design = effect.DesignText ?? string.Empty;
+                if (EffectTemplateCatalog.TryGet(templateId, out var template) && template != null)
+                {
+                    design = template.DesignText;
+                    bodyJson = template.BodyJson;
+                }
+                else if (catalog != null
+                         && catalog.TryGetEffect(templateId, out var effect)
+                         && effect != null)
+                {
+                    design = effect.DesignText;
+                    bodyJson = effect.Json;
+                }
+
                 if (string.IsNullOrWhiteSpace(design))
                 {
                     continue;
@@ -241,7 +296,7 @@ namespace NineGrid.Cards.Presentation
 
                 var withTokens = EffectDesignTextParameterizer.Parameterize(
                     design,
-                    effect.Json,
+                    bodyJson,
                     assembly.argsJson);
                 var filled = CardFaceDescriptionParamFiller.Fill(
                     withTokens,
@@ -251,8 +306,26 @@ namespace NineGrid.Cards.Presentation
                     continue;
                 }
 
-                blocks.Add(filled.Trim());
+                AddUniqueLine(lines, filled.Trim());
             }
+        }
+
+        private static void AddUniqueLine(List<string> lines, string line)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                return;
+            }
+
+            for (var i = 0; i < lines.Count; i++)
+            {
+                if (string.Equals(lines[i], line, StringComparison.Ordinal))
+                {
+                    return;
+                }
+            }
+
+            lines.Add(line);
         }
     }
 }

@@ -27,7 +27,7 @@ namespace NineGrid.Content.CardPresentation
         public string description;
         /// <summary>
         /// 卡面介绍：人手写、纯跟卡面绑定（可含 {param} / [词条]）。
-        /// 目前仅 Authoring 落盘；右键详述专门框接线属后续专题，运行时暂不读。
+        /// 右键详述「背景介绍」框消费；不进卡面基础描述槽。
         /// </summary>
         public string faceIntro;
         /// <summary>

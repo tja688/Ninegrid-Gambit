@@ -15,7 +15,7 @@ namespace NineGrid.Presentation.Tests.Cards
         }
 
         [Test]
-        public void Compose_UsesFaceIntro_AndDeckDisplayName()
+        public void Compose_UsesFaceIntro_AndDeckDisplayName_WithoutRepeatingBrief()
         {
             CardPresentationConfigCatalog.UpsertForTests(new CardPresentationConfigDto
             {
@@ -52,11 +52,12 @@ namespace NineGrid.Presentation.Tests.Cards
             Assert.AreEqual("背景小传", result.FaceIntro);
             StringAssert.Contains("试作牌组", result.DeckIntro);
             StringAssert.Contains("牌组说明", result.DeckIntro);
-            StringAssert.Contains("卡面概括", result.SkillDetails);
+            // 真卡面已展示简要，详述区不应再抄一遍 description。
+            Assert.AreEqual(string.Empty, result.SkillDetails);
         }
 
         [Test]
-        public void Compose_ExpandsSkillBlocks()
+        public void Compose_ExpandsSkillDesignText_NotBriefDescription()
         {
             CardPresentationConfigCatalog.UpsertForTests(new CardPresentationConfigDto
             {
@@ -64,7 +65,7 @@ namespace NineGrid.Presentation.Tests.Cards
                 kind = "Monster",
                 deckId = "deck.inspect_demo",
                 displayName = "多技能怪",
-                description = "概括",
+                description = "卡面概括勿重复",
                 faceIntro = "intro",
                 skillIds = new[] { "skill.inspect_a", "skill.inspect_b" },
                 effectAssemblies = System.Array.Empty<EffectAssemblyDto>(),
@@ -74,14 +75,34 @@ namespace NineGrid.Presentation.Tests.Cards
                 contentId = "skill.inspect_a",
                 kind = "Skill",
                 displayName = "技能甲",
-                description = "甲的详细效果",
+                description = "甲的简要（卡面用）",
+                effectAssemblies = new[]
+                {
+                    new EffectAssemblyDto
+                    {
+                        id = "skill.inspect_a.rule",
+                        templateId = "tpl.inspect_a",
+                        containerType = "MonsterSkill",
+                        argsJson = "{}",
+                    },
+                },
             });
             CardPresentationConfigCatalog.UpsertForTests(new CardPresentationConfigDto
             {
                 contentId = "skill.inspect_b",
                 kind = "Skill",
                 displayName = "技能乙",
-                description = "乙的详细效果",
+                description = "乙的简要（卡面用）",
+                effectAssemblies = new[]
+                {
+                    new EffectAssemblyDto
+                    {
+                        id = "skill.inspect_b.rule",
+                        templateId = "tpl.inspect_b",
+                        containerType = "MonsterSkill",
+                        argsJson = "{}",
+                    },
+                },
             });
 
             var catalog = new GameContentCatalog();
@@ -89,22 +110,41 @@ namespace NineGrid.Presentation.Tests.Cards
                 "skill.inspect_a",
                 "技能甲",
                 EffectContainerType.MonsterSkill,
-                "甲的详细效果"));
+                "甲的简要（卡面用）"));
             catalog.AddSkill(new SkillContentDefinition(
                 "skill.inspect_b",
                 "技能乙",
                 EffectContainerType.MonsterSkill,
-                "乙的详细效果"));
+                "乙的简要（卡面用）"));
+            catalog.AddEffect(new ContentEffectDefinition(
+                "skill.inspect_a.rule",
+                EffectContainerType.MonsterSkill,
+                "{}",
+                ContentImplementationState.Implemented,
+                "[场上] 甲的详细效果"));
+            catalog.AddEffect(new ContentEffectDefinition(
+                "skill.inspect_b.rule",
+                EffectContainerType.MonsterSkill,
+                "{}",
+                ContentImplementationState.Implemented,
+                "[使用时] 乙的详细效果"));
 
             var result = CardInspectDetailComposer.Compose(
                 "monster.inspect_skills",
-                new CardPresentationSnapshot { DefId = "monster.inspect_skills" },
+                new CardPresentationSnapshot
+                {
+                    DefId = "monster.inspect_skills",
+                    BasicDescription = "卡面概括勿重复",
+                },
                 catalog);
 
             StringAssert.Contains("【技能甲】", result.SkillDetails);
-            StringAssert.Contains("甲的详细效果", result.SkillDetails);
+            StringAssert.Contains("[场上] 甲的详细效果", result.SkillDetails);
             StringAssert.Contains("【技能乙】", result.SkillDetails);
-            StringAssert.Contains("乙的详细效果", result.SkillDetails);
+            StringAssert.Contains("[使用时] 乙的详细效果", result.SkillDetails);
+            StringAssert.DoesNotContain("甲的简要（卡面用）", result.SkillDetails);
+            StringAssert.DoesNotContain("乙的简要（卡面用）", result.SkillDetails);
+            StringAssert.DoesNotContain("卡面概括勿重复", result.SkillDetails);
         }
     }
 }

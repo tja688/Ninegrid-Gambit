@@ -5,15 +5,24 @@ using NineGrid.Core.Systems;
 using NineGrid.Presentation;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Rendering;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace NineGrid.Flow
 {
     /// <summary>
     /// 右键卡牌详述面板：敌方 / 常规两态，半黑屏挡交互，不暂停主线。
+    /// 场景里的「敌人卡模板占位」「道具卡标准模版」只作锚点；成品 mock 图会被关掉，
+    /// 运行时在锚点下挂真卡面预制体并 Commit。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CardInspectOverlayPresenter : MonoBehaviour
     {
+        private const string InspectLiveFaceName = "__InspectLiveFace";
+
         private static CardInspectOverlayPresenter s_instance;
 
         [SerializeField] private GameObject root;
@@ -32,16 +41,39 @@ namespace NineGrid.Flow
         private bool _dimmerHeld;
         private CardFacePresentationBinder _enemyBinder;
         private CardFacePresentationBinder _regularBinder;
+        private CardPresentationKind _enemyLiveKind = CardPresentationKind.Unknown;
+        private CardPresentationKind _regularLiveKind = CardPresentationKind.Unknown;
 
-        public static bool IsOpen => s_instance != null && s_instance._open;
+        public static bool IsOpen
+        {
+            get
+            {
+                if (!TryGetLiveInstance(out var live))
+                {
+                    return false;
+                }
 
-        public static CardInspectOverlayPresenter InstanceOrNull() => s_instance;
+                return live._open;
+            }
+        }
+
+        public static CardInspectOverlayPresenter InstanceOrNull()
+        {
+            return TryGetLiveInstance(out var live) ? live : null;
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void EnsureExists()
         {
-            if (FindFirstObjectByType<CardInspectOverlayPresenter>() != null)
+            if (TryGetLiveInstance(out _))
             {
+                return;
+            }
+
+            var existing = FindFirstObjectByType<CardInspectOverlayPresenter>();
+            if (existing != null)
+            {
+                s_instance = existing;
                 return;
             }
 
@@ -95,24 +127,32 @@ namespace NineGrid.Flow
             WireCloseButton(enemyClose);
             WireCloseButton(regularClose);
 
-            _enemyBinder = EnsureFaceBinder(enemyCardFace);
-            _regularBinder = EnsureFaceBinder(regularCardFace);
+            // 占位只作锚点：关掉场景里放的成品 mock 图，真卡面开面板时再挂。
+            HidePlaceholderMockVisuals(enemyCardFace);
+            HidePlaceholderMockVisuals(regularCardFace);
+            _enemyBinder = null;
+            _regularBinder = null;
+            _enemyLiveKind = CardPresentationKind.Unknown;
+            _regularLiveKind = CardPresentationKind.Unknown;
         }
 
         public static bool TryOpen(ManagedCard card)
         {
             EnsureExists();
-            if (s_instance == null || card == null)
+            if (!TryGetLiveInstance(out var live) || card == null)
             {
                 return false;
             }
 
-            return s_instance.Open(card);
+            return live.Open(card);
         }
 
         public static void CloseIfOpen()
         {
-            s_instance?.Close();
+            if (TryGetLiveInstance(out var live))
+            {
+                live.Close();
+            }
         }
 
         public bool Open(ManagedCard card)
@@ -159,6 +199,7 @@ namespace NineGrid.Flow
 
             if (isMonster)
             {
+                _enemyBinder = EnsureLiveFace(enemyCardFace, card, ref _enemyLiveKind);
                 ApplyFace(_enemyBinder, snapshot);
                 SetText(enemyFaceIntro, texts.FaceIntro);
                 SetText(enemyDeckIntro, texts.DeckIntro);
@@ -166,6 +207,7 @@ namespace NineGrid.Flow
             }
             else
             {
+                _regularBinder = EnsureLiveFace(regularCardFace, card, ref _regularLiveKind);
                 ApplyFace(_regularBinder, snapshot);
                 SetText(regularFaceIntro, texts.FaceIntro);
                 SetText(regularDeckIntro, texts.DeckIntro);
@@ -219,10 +261,26 @@ namespace NineGrid.Flow
                 _dimmerHeld = false;
             }
 
-            if (ReferenceEquals(s_instance, this))
+            if (s_instance == this)
             {
                 s_instance = null;
             }
+        }
+
+        /// <summary>
+        /// Unity 已销毁对象对 C# <c>?</c> 仍非 null；须走重载 <c>==</c> 并清掉静态残留。
+        /// </summary>
+        private static bool TryGetLiveInstance(out CardInspectOverlayPresenter live)
+        {
+            if (s_instance == null)
+            {
+                s_instance = null;
+                live = null;
+                return false;
+            }
+
+            live = s_instance;
+            return true;
         }
 
         private void HideAllImmediate()
@@ -243,6 +301,162 @@ namespace NineGrid.Flow
             }
 
             binder.ApplyPresentation(snapshot);
+        }
+
+        /// <summary>
+        /// 关掉锚点下场景摆的成品 mock（占位图），保留/准备 <see cref="InspectLiveFaceName"/> 真卡面。
+        /// </summary>
+        private static void HidePlaceholderMockVisuals(Transform anchor)
+        {
+            if (anchor == null)
+            {
+                return;
+            }
+
+            // 锚点自身若挂了成品整卡 Sprite，一并关掉。
+            var selfRenderers = anchor.GetComponents<Renderer>();
+            for (var i = 0; i < selfRenderers.Length; i++)
+            {
+                if (selfRenderers[i] != null)
+                {
+                    selfRenderers[i].enabled = false;
+                }
+            }
+
+            for (var i = 0; i < anchor.childCount; i++)
+            {
+                var child = anchor.GetChild(i);
+                if (child == null || child.name == InspectLiveFaceName)
+                {
+                    continue;
+                }
+
+                if (child.gameObject.activeSelf)
+                {
+                    child.gameObject.SetActive(false);
+                }
+            }
+        }
+
+        private CardFacePresentationBinder EnsureLiveFace(
+            Transform anchor,
+            ManagedCard card,
+            ref CardPresentationKind liveKind)
+        {
+            if (anchor == null || card == null)
+            {
+                return null;
+            }
+
+            HidePlaceholderMockVisuals(anchor);
+
+            var kind = card.CoreKind;
+            if (kind == CardPresentationKind.Unknown)
+            {
+                kind = CardPresentationKindResolver.FromDefId(card.DefId);
+            }
+
+            var existing = anchor.Find(InspectLiveFaceName);
+            if (existing != null && liveKind == kind)
+            {
+                var reuse = existing.GetComponent<CardFacePresentationBinder>();
+                if (reuse != null)
+                {
+                    existing.gameObject.SetActive(true);
+                    return reuse;
+                }
+            }
+
+            if (existing != null)
+            {
+                Destroy(existing.gameObject);
+            }
+
+            var faceGo = CreateLiveFaceObject(anchor, card, kind);
+            if (faceGo == null)
+            {
+                liveKind = CardPresentationKind.Unknown;
+                return null;
+            }
+
+            liveKind = kind;
+            var binder = faceGo.GetComponent<CardFacePresentationBinder>();
+            if (binder == null)
+            {
+                binder = faceGo.AddComponent<CardFacePresentationBinder>();
+            }
+
+            return binder;
+        }
+
+        private static GameObject CreateLiveFaceObject(
+            Transform anchor,
+            ManagedCard card,
+            CardPresentationKind kind)
+        {
+            GameObject source = null;
+
+            // 优先克隆场上该卡已挂好的真卡面（与局内一致）。
+            if (card.MountedFaceRoot != null)
+            {
+                source = card.MountedFaceRoot.gameObject;
+            }
+
+            if (source == null)
+            {
+                source = LoadFacePrefab(kind);
+            }
+
+            if (source == null)
+            {
+                return null;
+            }
+
+            var face = Instantiate(source, anchor);
+            face.name = InspectLiveFaceName;
+            face.transform.localPosition = Vector3.zero;
+            face.transform.localRotation = Quaternion.identity;
+            face.transform.localScale = Vector3.one;
+            face.SetActive(true);
+
+            // 卡面模板若自带 SortingGroup，会与 UI 叠层抢序；详情预览不需要第二套卡级 SG。
+            var faceSortingGroup = face.GetComponent<SortingGroup>();
+            if (faceSortingGroup != null)
+            {
+                Destroy(faceSortingGroup);
+            }
+
+            return face;
+        }
+
+        private static GameObject LoadFacePrefab(CardPresentationKind kind)
+        {
+#if UNITY_EDITOR
+            string path;
+            switch (kind)
+            {
+                case CardPresentationKind.Avatar:
+                    path = CardChassisPaths.AvatarFacePrefab;
+                    break;
+                case CardPresentationKind.Monster:
+                    path = CardChassisPaths.MonsterFacePrefab;
+                    break;
+                case CardPresentationKind.HelpCard:
+                case CardPresentationKind.Item:
+                case CardPresentationKind.PlayerCard:
+                    path = CardChassisPaths.ItemFacePrefab;
+                    break;
+                case CardPresentationKind.Relic:
+                    path = CardChassisPaths.RelicFacePrefab;
+                    break;
+                default:
+                    return null;
+            }
+
+            return AssetDatabase.LoadAssetAtPath<GameObject>(path);
+#else
+            return null;
+#endif
         }
 
         private static CardPresentationSnapshot CloneForInspect(
@@ -281,22 +495,6 @@ namespace NineGrid.Flow
                 DefId = card != null ? card.DefId : string.Empty,
                 FaceUp = true,
             };
-        }
-
-        private static CardFacePresentationBinder EnsureFaceBinder(Transform faceRoot)
-        {
-            if (faceRoot == null)
-            {
-                return null;
-            }
-
-            var binder = faceRoot.GetComponent<CardFacePresentationBinder>();
-            if (binder == null)
-            {
-                binder = faceRoot.gameObject.AddComponent<CardFacePresentationBinder>();
-            }
-
-            return binder;
         }
 
         private static void WirePanelSlots(
