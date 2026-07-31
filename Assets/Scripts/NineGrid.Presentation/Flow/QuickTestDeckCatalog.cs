@@ -61,13 +61,15 @@ namespace NineGrid.Flow
                 "批次1·成长移动",
                 new[] { "skill.battle_hardened", "skill.link_tactics", "skill.delivery" }),
             new ChannelPreset(
-                "提速+远程武器",
-                new[] { "skill.speed_up", "skill.ranged_weapon" }),
+                "批次2·交战提速",
+                new[] { "skill.speed_up", "skill.ranged_weapon", "skill.holy_duel" }),
             new ChannelPreset(
-                "死亡召唤+死亡之主",
-                new[] { "skill.death_summon", "skill.lord_of_death" }),
-            new ChannelPreset("神圣决斗", new[] { "skill.holy_duel" }),
-            new ChannelPreset("潜伏近战", new[] { "skill.ambush_melee" }),
+                "批次2·死亡潜伏",
+                new[] { "skill.death_summon", "skill.lord_of_death", "skill.ambush_melee" }),
+            new ChannelPreset("刺客领袖", new[] { "skill.assassin_leader" }),
+            new ChannelPreset(
+                "天涯若比邻",
+                new[] { "skill.world_as_neighbors", "skill.link_tactics" }),
         };
 
         public static bool TryResolvePickerCode(int code, out ChannelPreset preset)
@@ -229,6 +231,8 @@ namespace NineGrid.Flow
                 { "skill.lord_of_death", "他死召复活石" },
                 { "skill.holy_duel", "战后打他怪伤2" },
                 { "skill.ambush_melee", "互动5邻攻打翻面" },
+                { "skill.assassin_leader", "正面发牌背面" },
+                { "skill.world_as_neighbors", "怪技能皆相邻" },
             };
 
         /// <summary>多技能卡面用的短显示名（catalog 未就绪时兜底）。</summary>
@@ -255,6 +259,8 @@ namespace NineGrid.Flow
                 { "skill.lord_of_death", "死亡之主" },
                 { "skill.holy_duel", "神圣决斗" },
                 { "skill.ambush_melee", "潜伏近战" },
+                { "skill.assassin_leader", "刺客领袖" },
+                { "skill.world_as_neighbors", "天涯若比邻" },
             };
 
         /// <summary>

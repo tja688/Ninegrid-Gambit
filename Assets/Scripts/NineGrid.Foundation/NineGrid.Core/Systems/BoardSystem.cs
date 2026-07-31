@@ -91,7 +91,12 @@ namespace NineGrid.Core.Systems
 
         private bool AreVirtuallyAdjacent(int leftUid, int rightUid)
         {
-            return HasVirtualAdjacency(leftUid, rightUid) || HasVirtualAdjacency(rightUid, leftUid);
+            if (HasVirtualAdjacency(leftUid, rightUid) || HasVirtualAdjacency(rightUid, leftUid))
+            {
+                return true;
+            }
+
+            return HasGlobalMonsterAdjacencyBetween(leftUid, rightUid);
         }
 
         private bool HasVirtualAdjacency(int ownerUid, int targetUid)
@@ -115,6 +120,30 @@ namespace NineGrid.Core.Systems
             var statSystem = this.GetSystem<IStatSystem>();
             var context = statSystem.CreateContext(owner).WithTarget(targetUid);
             return statSystem.EvaluateRule(RuleId.VirtualAdjacency, 0f, context) > 0f;
+        }
+
+        private bool HasGlobalMonsterAdjacencyBetween(int leftUid, int rightUid)
+        {
+            if (leftUid == 0 || rightUid == 0 || leftUid == rightUid)
+            {
+                return false;
+            }
+
+            var registry = this.GetModel<CardRegistry>();
+            CardInstance left;
+            CardInstance right;
+            if (!registry.TryGet(leftUid, out left)
+                || !registry.TryGet(rightUid, out right)
+                || left.Kind != CardKind.Monster
+                || right.Kind != CardKind.Monster)
+            {
+                return false;
+            }
+
+            return MonsterBoardRules.HasGlobalMonsterAdjacency(
+                this.GetSystem<IStatSystem>(),
+                this.GetModel<BoardModel>(),
+                registry);
         }
     }
 }

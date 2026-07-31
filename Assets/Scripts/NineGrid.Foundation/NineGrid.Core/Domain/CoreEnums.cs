@@ -74,7 +74,11 @@ namespace NineGrid.Core
         /// <summary>远程武器：&gt;0 时玩家交战该怪，怪不先手也不反击（齐射不受影响）。</summary>
         CounterAttackBanned,
         /// <summary>神圣决斗：&gt;0 标记本卡为决斗持有者（玩家交战记忆挂玩家侧状态）。</summary>
-        HolyDuel
+        HolyDuel,
+        /// <summary>刺客领袖：&gt;0 且持有者正面时，打出到格的怪物卡以背面朝上发射。</summary>
+        AssassinLeaderDealFaceDown,
+        /// <summary>天涯若比邻：&gt;0 时场上怪物彼此视为正交相邻（仅技能邻接；不影响攻击距离/齐射）。</summary>
+        GlobalMonsterAdjacency
     }
 
     public enum BoardMarkId

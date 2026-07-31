@@ -1286,5 +1286,21 @@
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[\"EventFilter:eventType=CardRemoved:cause=trap.revive_stone\"]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"cause\":\"trap.revive_stone\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"monster.summon.special_omni\",\"kind\":\"Monster\",\"zone\":\"Board\",\"slot\":\"EventFromSlot\",\"count\":\"{{count}}\"}}"
+ },
+ {
+  "id": "tpl.skill.assassin_leader.rule",
+  "state": "Implemented",
+  "design_text": "[场上]若本卡处于正面，所有打出到格子上的怪物卡以正面朝下；领袖翻面/离场后新牌默认正面；已在场背面不自动翻回",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"AssassinLeaderDealFaceDown\",\"target\":\"Self\",\"op\":\"Override\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.skill.world_as_neighbors.rule",
+  "state": "Implemented",
+  "design_text": "[场上]所有怪物卡视为正交相邻（仅怪物技能邻接判定；不影响攻击距离/齐射几何）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"GlobalMonsterAdjacency\",\"target\":\"Self\",\"op\":\"Override\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
  }
 ]

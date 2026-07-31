@@ -36,7 +36,8 @@ namespace NineGrid.Core.Systems
                 owner,
                 this.GetModel<CardRegistry>(),
                 this.GetModel<BoardModel>(),
-                this.GetModel<PlayerModel>());
+                this.GetModel<PlayerModel>(),
+                RuleModifiers);
         }
 
         public float GetEffectiveValue(CardInstance card, StatId stat)

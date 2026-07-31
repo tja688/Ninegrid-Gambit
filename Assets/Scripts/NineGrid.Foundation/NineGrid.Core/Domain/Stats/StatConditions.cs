@@ -8,11 +8,22 @@ namespace NineGrid.Core.Stats
     public sealed class StatEvaluationContext
     {
         public StatEvaluationContext(CardInstance owner, CardRegistry registry, BoardModel board, PlayerModel player)
+            : this(owner, registry, board, player, null)
+        {
+        }
+
+        public StatEvaluationContext(
+            CardInstance owner,
+            CardRegistry registry,
+            BoardModel board,
+            PlayerModel player,
+            RuleModifierRegistry ruleModifiers)
         {
             Owner = owner;
             Registry = registry;
             Board = board;
             Player = player;
+            RuleModifiers = ruleModifiers;
             ActionName = string.Empty;
             SourceDefId = string.Empty;
             Cause = string.Empty;
@@ -24,6 +35,7 @@ namespace NineGrid.Core.Stats
         public CardRegistry Registry { get; private set; }
         public BoardModel Board { get; private set; }
         public PlayerModel Player { get; private set; }
+        public RuleModifierRegistry RuleModifiers { get; private set; }
         public string ActionName { get; private set; }
         public string SourceDefId { get; private set; }
         public string Cause { get; private set; }
@@ -227,9 +239,28 @@ namespace NineGrid.Core.Stats
 
             CardInstance source;
             CardInstance target;
-            return context.Registry.TryGet(SourceUid, out source)
-                && context.Registry.TryGet(TargetUid, out target)
-                && source.Slot.Value.IsAdjacentTo(target.Slot.Value);
+            if (!context.Registry.TryGet(SourceUid, out source)
+                || !context.Registry.TryGet(TargetUid, out target)
+                || source == null
+                || target == null)
+            {
+                return false;
+            }
+
+            if (source.Slot.Value.IsAdjacentTo(target.Slot.Value))
+            {
+                return true;
+            }
+
+            // 与 IBoardSystem.AreAdjacent 对齐：VirtualAdjacency + 天涯若比邻（怪-怪技能邻接）。
+            if (source.Kind != CardKind.Monster || target.Kind != CardKind.Monster)
+            {
+                return false;
+            }
+
+            return MonsterBoardRules.HasVirtualAdjacency(context, source, target.Uid)
+                || MonsterBoardRules.HasVirtualAdjacency(context, target, source.Uid)
+                || MonsterBoardRules.HasGlobalMonsterAdjacency(context);
         }
     }
 
