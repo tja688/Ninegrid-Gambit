@@ -2,8 +2,11 @@ using NineGrid.Cards;
 using NineGrid.Cards.Anim;
 using NineGrid.Cards.Presentation;
 using NineGrid.Core;
+using NineGrid.Core.Effects;
 using NineGrid.Core.Systems;
 using NineGrid.Presentation;
+using QFramework;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -179,8 +182,10 @@ namespace NineGrid.Flow
 
             var isMonster = card.CoreKind == CardPresentationKind.Monster;
             var snapshot = CloneForInspect(card.CommittedPresentation, card);
-            var catalog = NineGridArchitecture.Interface?.GetSystem<IContentSystem>()?.Catalog;
-            var texts = CardInspectDetailComposer.Compose(card.DefId, snapshot, catalog);
+            var arch = NineGridArchitecture.Interface;
+            var catalog = arch?.GetSystem<IContentSystem>()?.Catalog;
+            var liveMounts = CollectLiveEffectMounts(arch, card.Uid);
+            var texts = CardInspectDetailComposer.Compose(card.DefId, snapshot, catalog, liveMounts);
 
             if (!_open)
             {
@@ -295,6 +300,48 @@ namespace NineGrid.Flow
 
             live = s_instance;
             return true;
+        }
+
+        /// <summary>
+        /// 从 EffectSystem 收集此卡当局已激活的挂载（含 QuickTest 动态注入技能）。
+        /// </summary>
+        private static IReadOnlyList<CardInspectDetailComposer.LiveEffectMount> CollectLiveEffectMounts(
+            IArchitecture arch,
+            int cardUid)
+        {
+            if (arch == null || cardUid == 0)
+            {
+                return null;
+            }
+
+            var effectSystem = arch.GetSystem<IEffectSystem>();
+            if (effectSystem == null)
+            {
+                return null;
+            }
+
+            var instanceIds = effectSystem.GetInstanceIdsByOwner(cardUid);
+            if (instanceIds == null || instanceIds.Count == 0)
+            {
+                return null;
+            }
+
+            var mounts = new List<CardInspectDetailComposer.LiveEffectMount>(instanceIds.Count);
+            for (var i = 0; i < instanceIds.Count; i++)
+            {
+                if (!effectSystem.TryGetInstance(instanceIds[i], out var instance)
+                    || instance?.Owner == null
+                    || instance.Definition == null)
+                {
+                    continue;
+                }
+
+                mounts.Add(new CardInspectDetailComposer.LiveEffectMount(
+                    instance.Owner.SourceDefId,
+                    instance.Definition.Id));
+            }
+
+            return mounts.Count > 0 ? mounts : null;
         }
 
         private void HideAllImmediate()

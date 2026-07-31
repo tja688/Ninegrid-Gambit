@@ -11,9 +11,24 @@ namespace NineGrid.Cards.Presentation
     /// 右键详述面板文案：背景介绍 / 牌组介绍 / 技能·效果详述。
     /// 详述区只展开效果模板 <c>design_text</c>（分门别类的详细效果），
     /// 不重复卡面简要 <c>description</c>（简要已在展示的真卡面上）。
+    /// 技能列表优先取局内已激活挂载（QuickTest 注入 / 运行时加技），
+    /// 不以怪物 JSON 预设 <c>skillIds</c> 为权威。
     /// </summary>
     public static class CardInspectDetailComposer
     {
+        /// <summary>当局此卡上已激活的效果挂载（EffectOwner.SourceDefId + Definition.Id）。</summary>
+        public readonly struct LiveEffectMount
+        {
+            public readonly string SourceDefId;
+            public readonly string EffectId;
+
+            public LiveEffectMount(string sourceDefId, string effectId)
+            {
+                SourceDefId = sourceDefId ?? string.Empty;
+                EffectId = effectId ?? string.Empty;
+            }
+        }
+
         public readonly struct Result
         {
             public readonly string FaceIntro;
@@ -31,7 +46,8 @@ namespace NineGrid.Cards.Presentation
         public static Result Compose(
             string defId,
             CardPresentationSnapshot snapshot,
-            GameContentCatalog catalog)
+            GameContentCatalog catalog,
+            IReadOnlyList<LiveEffectMount> liveMounts = null)
         {
             CardPresentationConfigDto dto = null;
             if (!string.IsNullOrWhiteSpace(defId))
@@ -42,7 +58,7 @@ namespace NineGrid.Cards.Presentation
             var assemblies = dto?.effectAssemblies;
             var faceIntro = ResolveFaceIntro(dto, snapshot, assemblies);
             var deckIntro = ResolveDeckIntro(dto, catalog);
-            var skills = ResolveSkillDetails(dto, catalog, assemblies);
+            var skills = ResolveSkillDetails(defId, dto, catalog, assemblies, liveMounts);
             return new Result(faceIntro, deckIntro, skills);
         }
 
@@ -102,15 +118,24 @@ namespace NineGrid.Cards.Presentation
         }
 
         private static string ResolveSkillDetails(
+            string defId,
             CardPresentationConfigDto dto,
             GameContentCatalog catalog,
-            EffectAssemblyDto[] assemblies)
+            EffectAssemblyDto[] assemblies,
+            IReadOnlyList<LiveEffectMount> liveMounts)
         {
             var blocks = new List<string>(8);
 
-            AppendSkillBlocks(blocks, dto, catalog);
-            AppendAssemblyBlocks(blocks, assemblies, catalog);
-            AppendCatalogCardEffectBlocks(blocks, dto, catalog);
+            if (liveMounts != null && liveMounts.Count > 0)
+            {
+                AppendLiveMountBlocks(blocks, defId, dto, catalog, liveMounts);
+            }
+            else
+            {
+                AppendSkillBlocks(blocks, dto, catalog);
+                AppendAssemblyBlocks(blocks, assemblies, catalog);
+                AppendCatalogCardEffectBlocks(blocks, dto, catalog);
+            }
 
             if (blocks.Count == 0)
             {
@@ -129,6 +154,115 @@ namespace NineGrid.Cards.Presentation
             }
 
             return builder.ToString();
+        }
+
+        /// <summary>
+        /// 以局内已激活挂载为准：按 SourceDefId 去重保序；技能走技能装配实参，
+        /// 卡本体效果走本卡 assemblies / live effectId 的 design_text。
+        /// </summary>
+        private static void AppendLiveMountBlocks(
+            List<string> blocks,
+            string defId,
+            CardPresentationConfigDto dto,
+            GameContentCatalog catalog,
+            IReadOnlyList<LiveEffectMount> liveMounts)
+        {
+            var seenSources = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var cardDefId = string.IsNullOrWhiteSpace(defId) ? string.Empty : defId.Trim();
+
+            for (var i = 0; i < liveMounts.Count; i++)
+            {
+                var source = liveMounts[i].SourceDefId;
+                if (string.IsNullOrWhiteSpace(source))
+                {
+                    continue;
+                }
+
+                source = source.Trim();
+                if (!seenSources.Add(source))
+                {
+                    continue;
+                }
+
+                if (IsSkillSource(source, catalog))
+                {
+                    AppendOneSkillBlock(blocks, source, catalog);
+                    continue;
+                }
+
+                if (string.Equals(source, cardDefId, StringComparison.OrdinalIgnoreCase)
+                    && dto?.effectAssemblies != null
+                    && dto.effectAssemblies.Length > 0)
+                {
+                    AppendAssemblyBlocks(blocks, dto.effectAssemblies, catalog);
+                    continue;
+                }
+
+                AppendLiveEffectLinesForSource(blocks, source, liveMounts, catalog);
+            }
+        }
+
+        private static bool IsSkillSource(string sourceDefId, GameContentCatalog catalog)
+        {
+            if (string.IsNullOrWhiteSpace(sourceDefId))
+            {
+                return false;
+            }
+
+            if (catalog != null && catalog.TryGetSkill(sourceDefId, out _))
+            {
+                return true;
+            }
+
+            if (CardPresentationConfigCatalog.TryGet(sourceDefId, out var dto)
+                && dto != null
+                && string.Equals(dto.kind, "Skill", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return sourceDefId.StartsWith("skill.", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void AppendLiveEffectLinesForSource(
+            List<string> blocks,
+            string sourceDefId,
+            IReadOnlyList<LiveEffectMount> liveMounts,
+            GameContentCatalog catalog)
+        {
+            var lines = new List<string>(4);
+            var seenEffects = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < liveMounts.Count; i++)
+            {
+                var mount = liveMounts[i];
+                if (!string.Equals(mount.SourceDefId, sourceDefId, StringComparison.OrdinalIgnoreCase)
+                    || string.IsNullOrWhiteSpace(mount.EffectId)
+                    || !seenEffects.Add(mount.EffectId.Trim()))
+                {
+                    continue;
+                }
+
+                AppendSingleEffectDesignLine(lines, mount.EffectId.Trim(), catalog);
+            }
+
+            for (var i = 0; i < lines.Count; i++)
+            {
+                blocks.Add(lines[i]);
+            }
+        }
+
+        private static void AppendSingleEffectDesignLine(
+            List<string> lines,
+            string effectId,
+            GameContentCatalog catalog)
+        {
+            if (catalog != null
+                && catalog.TryGetEffect(effectId, out var effect)
+                && effect != null
+                && !string.IsNullOrWhiteSpace(effect.DesignText))
+            {
+                AddUniqueLine(lines, effect.DesignText.Trim());
+            }
         }
 
         /// <summary>
@@ -180,44 +314,51 @@ namespace NineGrid.Cards.Presentation
 
             for (var i = 0; i < dto.skillIds.Length; i++)
             {
-                var skillId = dto.skillIds[i];
-                if (string.IsNullOrWhiteSpace(skillId))
+                AppendOneSkillBlock(blocks, dto.skillIds[i], catalog);
+            }
+        }
+
+        private static void AppendOneSkillBlock(
+            List<string> blocks,
+            string skillId,
+            GameContentCatalog catalog)
+        {
+            if (string.IsNullOrWhiteSpace(skillId))
+            {
+                return;
+            }
+
+            skillId = skillId.Trim();
+            var title = skillId;
+            if (catalog != null && catalog.TryGetSkill(skillId, out var skill) && skill != null
+                && !string.IsNullOrWhiteSpace(skill.DisplayName))
+            {
+                title = skill.DisplayName.Trim();
+            }
+            else if (CardPresentationConfigCatalog.TryGet(skillId, out var skillDtoForName)
+                     && skillDtoForName != null
+                     && !string.IsNullOrWhiteSpace(skillDtoForName.displayName))
+            {
+                title = skillDtoForName.displayName.Trim();
+            }
+
+            var detailLines = new List<string>(4);
+            CollectSkillDetailLines(detailLines, skillId, catalog);
+
+            if (detailLines.Count == 0)
+            {
+                blocks.Add("【" + title + "】");
+            }
+            else
+            {
+                var body = new StringBuilder(128);
+                body.Append("【").Append(title).Append("】");
+                for (var line = 0; line < detailLines.Count; line++)
                 {
-                    continue;
+                    body.Append('\n').Append(detailLines[line]);
                 }
 
-                skillId = skillId.Trim();
-                var title = skillId;
-                if (catalog != null && catalog.TryGetSkill(skillId, out var skill) && skill != null
-                    && !string.IsNullOrWhiteSpace(skill.DisplayName))
-                {
-                    title = skill.DisplayName.Trim();
-                }
-                else if (CardPresentationConfigCatalog.TryGet(skillId, out var skillDtoForName)
-                         && skillDtoForName != null
-                         && !string.IsNullOrWhiteSpace(skillDtoForName.displayName))
-                {
-                    title = skillDtoForName.displayName.Trim();
-                }
-
-                var detailLines = new List<string>(4);
-                CollectSkillDetailLines(detailLines, skillId, catalog);
-
-                if (detailLines.Count == 0)
-                {
-                    blocks.Add("【" + title + "】");
-                }
-                else
-                {
-                    var body = new StringBuilder(128);
-                    body.Append("【").Append(title).Append("】");
-                    for (var line = 0; line < detailLines.Count; line++)
-                    {
-                        body.Append('\n').Append(detailLines[line]);
-                    }
-
-                    blocks.Add(body.ToString());
-                }
+                blocks.Add(body.ToString());
             }
         }
 
@@ -257,14 +398,7 @@ namespace NineGrid.Cards.Presentation
                     continue;
                 }
 
-                if (!catalog.TryGetEffect(effectId.Trim(), out var effect)
-                    || effect == null
-                    || string.IsNullOrWhiteSpace(effect.DesignText))
-                {
-                    continue;
-                }
-
-                AddUniqueLine(lines, effect.DesignText.Trim());
+                AppendSingleEffectDesignLine(lines, effectId.Trim(), catalog);
             }
         }
 
@@ -309,7 +443,36 @@ namespace NineGrid.Cards.Presentation
                     && mounted != null
                     && !string.IsNullOrWhiteSpace(mounted.DesignText))
                 {
-                    // 已投影进 Catalog 的挂载效果：DesignText 已按实参参数化。
+                    // Catalog 里的 DesignText 多为模板原文；用模板 body + 装配实参参数化再填回。
+                    design = mounted.DesignText;
+                    bodyJson = mounted.Json;
+                    if (EffectTemplateCatalog.TryGet(templateId, out var mountedTemplate)
+                        && mountedTemplate != null)
+                    {
+                        if (!string.IsNullOrWhiteSpace(mountedTemplate.DesignText))
+                        {
+                            design = mountedTemplate.DesignText;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(mountedTemplate.BodyJson))
+                        {
+                            bodyJson = mountedTemplate.BodyJson;
+                        }
+                    }
+
+                    var withTokens = EffectDesignTextParameterizer.Parameterize(
+                        design,
+                        bodyJson,
+                        assembly.argsJson);
+                    var filledMounted = CardFaceDescriptionParamFiller.Fill(
+                        withTokens,
+                        EffectAssemblyResolver.ParseArgsJson(assembly.argsJson));
+                    if (!string.IsNullOrWhiteSpace(filledMounted))
+                    {
+                        AddUniqueLine(lines, filledMounted.Trim());
+                        continue;
+                    }
+
                     AddUniqueLine(lines, mounted.DesignText.Trim());
                     continue;
                 }
@@ -332,12 +495,12 @@ namespace NineGrid.Cards.Presentation
                     continue;
                 }
 
-                var withTokens = EffectDesignTextParameterizer.Parameterize(
+                var withTokensFallback = EffectDesignTextParameterizer.Parameterize(
                     design,
                     bodyJson,
                     assembly.argsJson);
                 var filled = CardFaceDescriptionParamFiller.Fill(
-                    withTokens,
+                    withTokensFallback,
                     EffectAssemblyResolver.ParseArgsJson(assembly.argsJson));
                 if (string.IsNullOrWhiteSpace(filled))
                 {
