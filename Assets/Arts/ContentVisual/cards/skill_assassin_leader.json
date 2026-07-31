@@ -4,7 +4,7 @@
   "kind": "Skill",
   "deckId": "",
   "displayName": "刺客领袖",
-  "description": "[场上]若本卡处于正面，所有打出到格子上的怪物卡以正面朝下",
+  "description": "[场上]若本卡处于正面，怪物打出到格后立刻翻面",
   "gold": 0,
   "stats": {
     "hp": 0,
@@ -92,7 +92,7 @@
       "id": "skill.assassin_leader.rule",
       "templateId": "tpl.skill.assassin_leader.rule",
       "containerType": "MonsterSkill",
-      "argsJson": "{\"value\":1}"
+      "argsJson": "{}"
     }
   ],
   "role": ""

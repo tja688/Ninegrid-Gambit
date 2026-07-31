@@ -529,10 +529,6 @@ namespace NineGrid.Core
 
                 var card = CreateConfiguredCard(context, registry, DefId, Kind);
                 Place(card, board, deck);
-                if (card.Zone.Value == ZoneId.Board)
-                {
-                    MonsterBoardRules.ApplyAssassinLeaderFaceDownIfNeeded(context, card);
-                }
 
                 result.AddWithFaceAbsolutes(
                     context,
@@ -813,7 +809,6 @@ namespace NineGrid.Core
             board.RemoveCard(target);
             deck.RemoveUid(drawnUid);
             board.PlaceCard(drawn, fromSlot);
-            MonsterBoardRules.ApplyAssassinLeaderFaceDownIfNeeded(context, drawn);
             deck.AddToDrawPile(target, false);
             Shuffle(deck, rng);
 

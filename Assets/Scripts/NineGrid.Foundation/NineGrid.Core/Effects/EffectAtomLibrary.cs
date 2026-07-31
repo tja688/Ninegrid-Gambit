@@ -1012,6 +1012,99 @@ namespace NineGrid.Core.Effects
         public IReadOnlyList<int> Resolve(EffectRuntimeContext context) { return TargetResolver.Single(context.FirstEventCardUid()); }
     }
 
+    /// <summary>
+    /// 收集本批落到场上的 CardDealt 怪物（多路补牌）；排除 Self / trap.* / 已背面。
+    /// 形态固定（ADR-0010）：不做 excludeSelf 等上下文开关参数。
+    /// </summary>
+    [EffectAtom("EventCards", EffectAtomKind.Target)]
+    public sealed class EventCardsTarget : ITarget
+    {
+        private CoreEventType mEventType = CoreEventType.CardDealt;
+        private CardKind mTargetKind = CardKind.Unknown;
+        private string mExcludeTargetDefPrefix = string.Empty;
+
+        public void Configure(EffectDslNode config)
+        {
+            mEventType = config.Get("eventType").AsEnum(CoreEventType.CardDealt);
+            mTargetKind = config.Get("targetKind").AsEnum(CardKind.Unknown);
+            mExcludeTargetDefPrefix = config.Get("excludeTargetDefPrefix").AsString(string.Empty);
+        }
+
+        public IReadOnlyList<int> Resolve(EffectRuntimeContext context)
+        {
+            var result = new List<int>();
+            if (context == null)
+            {
+                return result;
+            }
+
+            var events = context.Events;
+            for (var i = 0; i < events.Count; i++)
+            {
+                var gameEvent = events[i];
+                if (gameEvent.Type != mEventType || gameEvent.CardUid == 0)
+                {
+                    continue;
+                }
+
+                if (!gameEvent.ToSlot.IsBoardSlot)
+                {
+                    continue;
+                }
+
+                if (context.OwnerUid != 0 && gameEvent.CardUid == context.OwnerUid)
+                {
+                    continue;
+                }
+
+                CardInstance card;
+                if (!context.TryGetCard(gameEvent.CardUid, out card) || card == null)
+                {
+                    continue;
+                }
+
+                if (mTargetKind != CardKind.Unknown && card.Kind != mTargetKind)
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrEmpty(mExcludeTargetDefPrefix)
+                    && card.DefId != null
+                    && card.DefId.StartsWith(mExcludeTargetDefPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (!card.FaceUp)
+                {
+                    continue;
+                }
+
+                AddUnique(result, card.Uid);
+            }
+
+            return result;
+        }
+
+        private static void AddUnique(List<int> values, int uid)
+        {
+            if (uid == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < values.Count; i++)
+            {
+                if (values[i] == uid)
+                {
+                    return;
+                }
+            }
+
+            values.Add(uid);
+        }
+    }
+
     [EffectAtom("EventTarget", EffectAtomKind.Target)]
     public sealed class EventTargetTarget : ITarget
     {

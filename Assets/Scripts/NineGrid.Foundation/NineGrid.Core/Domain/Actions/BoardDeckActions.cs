@@ -356,7 +356,6 @@ namespace NineGrid.Core
                 var card = registry.Get(uid);
                 deck.RemoveUid(uid);
                 board.PlaceCard(card, slot);
-                MonsterBoardRules.ApplyAssassinLeaderFaceDownIfNeeded(context, card);
                 filled++;
 
                 result.AddWithFaceAbsolutes(

@@ -69,8 +69,11 @@ namespace NineGrid.Core.Tests
             ActivateSkillAndFlush(registry.Get(leaderUid), "skill.assassin_leader");
             Assert.IsTrue(registry.Get(leaderUid).FaceUp);
 
+            var eventStart = mPipeline.EventLog.Entries.Count;
             var dealtUid = SpawnOnBoardReturnUid("monster.skull_head", CardKind.Monster, sFarSlot);
-            Assert.IsFalse(registry.Get(dealtUid).FaceUp, "正面刺客领袖在场时新怪应以背面发射");
+            Assert.IsFalse(registry.Get(dealtUid).FaceUp, "正面刺客领袖在场时新怪应经 OnDeal→Flip 翻到背面");
+            AssertEventLogContainsAfter(eventStart, CoreEventType.EffectTriggered, "skill.assassin_leader.rule");
+            AssertEventLogContainsAfter(eventStart, CoreEventType.CardFaceChanged, null);
         }
 
         [Test]
@@ -87,6 +90,7 @@ namespace NineGrid.Core.Tests
             mContent.ApplyContentToCard(pending);
             deck.AddToDrawPile(pending, false);
 
+            var eventStart = mPipeline.EventLog.Entries.Count;
             mPipeline.Enqueue(new FillEmptySlotsAction());
             Assert.Greater(mPipeline.RunToCompletion(), 0);
 
@@ -101,11 +105,13 @@ namespace NineGrid.Core.Tests
                 }
 
                 Assert.AreEqual("monster.skull_head", registry.Get(uid).DefId);
-                Assert.IsFalse(registry.Get(uid).FaceUp, "FillEmptySlots 也应背面发射");
+                Assert.IsFalse(registry.Get(uid).FaceUp, "FillEmptySlots 也应经 Flip 翻到背面");
                 foundFaceDown = true;
             }
 
             Assert.IsTrue(foundFaceDown, "应至少补出一张新怪");
+            AssertEventLogContainsAfter(eventStart, CoreEventType.EffectTriggered, "skill.assassin_leader.rule");
+            AssertEventLogContainsAfter(eventStart, CoreEventType.CardFaceChanged, null);
         }
 
         [Test]
@@ -157,7 +163,7 @@ namespace NineGrid.Core.Tests
             ActivateSkillAndFlush(registry.Get(leaderUid), "skill.assassin_leader");
 
             var stoneUid = SpawnOnBoardReturnUid("trap.revive_stone", CardKind.Monster, sFarSlot);
-            Assert.IsTrue(registry.Get(stoneUid).FaceUp, "机关卡不应被刺客领袖强制背面");
+            Assert.IsTrue(registry.Get(stoneUid).FaceUp, "机关卡不应被刺客领袖强制翻面");
         }
 
         [Test]
@@ -235,6 +241,27 @@ namespace NineGrid.Core.Tests
             Assert.IsFalse(
                 mBoard.AreAdjacent(board.AvatarSlot.Value, sFarSlot),
                 "天涯不得扩展玩家互动邻接（Avatar 非怪物）");
+        }
+
+        private void AssertEventLogContainsAfter(int startIndex, CoreEventType type, string messageOrNull)
+        {
+            var entries = mPipeline.EventLog.Entries;
+            for (var i = startIndex; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                if (entry.Type != type)
+                {
+                    continue;
+                }
+
+                if (messageOrNull == null || entry.Message == messageOrNull || entry.Cause == messageOrNull)
+                {
+                    return;
+                }
+            }
+
+            Assert.Fail("EventLog after " + startIndex + " missing " + type
+                + (messageOrNull == null ? string.Empty : (" message/cause=" + messageOrNull)));
         }
 
         private void StartEmptyNode()
