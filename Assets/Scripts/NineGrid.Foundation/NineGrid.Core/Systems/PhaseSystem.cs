@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using NineGrid.Core.Content;
+using NineGrid.Core.Effects;
 using NineGrid.Core.Stats;
 using QFramework;
 
@@ -329,12 +330,54 @@ namespace NineGrid.Core.Systems
                 return;
             }
 
-            pipeline.Enqueue(new DealDamageAction(
-                markedUid,
-                avatar.Uid,
-                2,
-                "skill.holy_duel",
-                "skill.holy_duel"));
+            // 走 ExecuteEffectAction（带预备动作）而非裸 DealDamageAction：
+            // 该包装会先发 EffectTriggered 事件 → 表现层在持有者上播效果触发脉冲（缩放）。
+            var holyDuelInstanceId = FindHolyDuelActivateInstanceId(markedUid);
+            if (holyDuelInstanceId == null)
+            {
+                pipeline.Enqueue(new DealDamageAction(
+                    markedUid,
+                    avatar.Uid,
+                    2,
+                    "skill.holy_duel",
+                    "skill.holy_duel"));
+                return;
+            }
+
+            pipeline.Enqueue(new ExecuteEffectAction(
+                holyDuelInstanceId,
+                null,
+                new GameAction[]
+                {
+                    new DealDamageAction(markedUid, avatar.Uid, 2, "skill.holy_duel", "skill.holy_duel"),
+                }));
+        }
+
+        private string FindHolyDuelActivateInstanceId(int holderUid)
+        {
+            if (holderUid == 0)
+            {
+                return null;
+            }
+
+            var effectSystem = this.GetSystem<IEffectSystem>();
+            var ids = effectSystem.GetInstanceIdsByOwner(holderUid);
+            for (var i = 0; i < ids.Count; i++)
+            {
+                EffectInstance instance;
+                if (!effectSystem.TryGetInstance(ids[i], out instance)
+                    || instance.Definition == null)
+                {
+                    continue;
+                }
+
+                if (instance.Definition.Id == "skill.holy_duel.activate")
+                {
+                    return ids[i];
+                }
+            }
+
+            return null;
         }
 
         public CoreCommandResult ApplyCombatHit(int attackerUid, int targetUid)

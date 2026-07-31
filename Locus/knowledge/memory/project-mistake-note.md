@@ -10,7 +10,7 @@ readOnly: false
 aiMaintained: true
 explicitMaintenanceRules: true
 createdAt: 1784026817107
-updatedAt: 1784026817108
+updatedAt: 1785502480457
 ---
 
 # project-mistake-note
@@ -24,4 +24,6 @@ updatedAt: 1784026817108
 <!-- locus:maintain-rules:end -->
 
 <!-- locus:body:start -->
+- 神圣决斗（skill.holy_duel）的 2 伤惩罚若用裸 `DealDamageAction` 入队，EventLog 不会发 `EffectTriggered` → 持有者不播效果触发脉冲（缩放）。惩罚必须走 `ExecuteEffectAction(instanceId, null, new[]{ DealDamageAction(...) })` 包装（PhaseSystem.ApplyHolyDuelMark）。教训：硬编码在 System 里的技能直伤，要主动补 EffectTriggered 事件，表现层脉冲靠它驱动。
+- 效果触发脉冲链路：Core `EffectTriggered` 事件 → PresentationEventMap `TriggerEffect` → `EffectTriggerPulseBeatHandler` → `CardEffectTriggerPulseSink` → `PlayEffectTriggerPulse`。Core 侧只入队 DealDamage 而不发 EffectTriggered 时，战斗日志里看不到任何脉冲依据。
 <!-- locus:body:end -->

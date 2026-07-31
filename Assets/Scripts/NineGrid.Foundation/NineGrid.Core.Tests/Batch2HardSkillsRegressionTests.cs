@@ -1,3 +1,4 @@
+using System.Linq;
 using NineGrid.Content;
 using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
@@ -248,6 +249,12 @@ namespace NineGrid.Core.Tests
             var second = mPhase.ApplyCombatHit(avatarUid, otherUid);
             Assert.IsTrue(second.Accepted, second.Reason);
             Assert.AreEqual(97, (int)registry.Get(avatarUid).Stats.GetBase(StatId.Hp), "决斗惩罚应扣玩家2血");
+
+            // 触发应发 EffectTriggered（持有者触发脉冲表现）
+            var triggered = mPipeline.EventLog.Entries
+                .Where(e => e.Type == CoreEventType.EffectTriggered && e.CardUid == holderUid)
+                .ToList();
+            Assert.IsNotEmpty(triggered, "决斗惩罚应发 EffectTriggered（持有者播效果触发脉冲）");
 
             // 持有者翻面 → 清标记 → 不再惩罚
             mPipeline.Enqueue(new FlipCardAction(holderUid));
