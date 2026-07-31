@@ -246,13 +246,27 @@ namespace NineGrid.Flow.Presentation
 
         private void EnqueueNonKillInteractionAdvance(BattleTimeline timeline, int boardSlot)
         {
-            // 未击杀无补牌批可挂载计数：静默推进，不另开 Present（InteractionChanged 为 Beat.None）。
-            // 战败后仍计一次互动（ADR-0012），但不得再挂敌方行动续拍。
-            timeline.Enqueue(new InteractionCountAdvanceStep(mArchitecture));
-            if (!mLastAvatarDefeated)
+            // 战败后仍计一次互动（ADR-0012）：静默推进，不投影盘面、不挂敌方行动。
+            if (mLastAvatarDefeated)
             {
-                AppendEnemyActionPhase(timeline, boardSlot);
+                timeline.Enqueue(new InteractionCountAdvanceStep(mArchitecture));
+                return;
             }
+
+            // 未击杀无补牌批可挂载计数：仍需投影 OnInteract 效果的盘面 delta
+            // （复活石互动6次自移除→同格打出特5等），否则 Core 已换牌而表现层留幽灵占格。
+            // 空批由盘面通道跳过，不另开空 drain。
+            var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
+            var advanceGate = PresentationSyncBatchGate.FromSync(
+                sync,
+                () => ResolveAndProject(
+                    boardSlot,
+                    () => mDispatcher.Send(new AdvanceInteractionCountCommand()),
+                    trackFusion: false),
+                slice: "AttackInteractionAdvance");
+            timeline.Enqueue(new ResolveBatchStep(advanceGate));
+            timeline.Enqueue(new PresentStep(advanceGate, mBoardPresentChannel));
+            AppendEnemyActionPhase(timeline, boardSlot);
         }
 
         private void AppendEnemyActionPhase(BattleTimeline timeline, int boardSlot)
