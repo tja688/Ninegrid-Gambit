@@ -81,16 +81,19 @@ namespace NineGrid.Flow.Presentation
             var clickGate = PresentationSyncBatchGate.FromSync(
                 sync,
                 () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new ClickEmptyCommand(slot)), trackFusion: false));
-            // 点空格属九宫格互动：计数与补牌解耦（#75）；Fill 批解算前直推进计数。
+            // 点空格属九宫格互动：计数与补牌解耦（#75）；计数须独立开批以免 OnInteract 效果漏进 Fill 窗。
+            var interactGate = PresentationSyncBatchGate.FromSync(
+                sync,
+                () => ResolveAndProject(
+                    slotIndex,
+                    () => mDispatcher.Send(new AdvanceInteractionCountCommand()),
+                    trackFusion: false),
+                slice: "ExploreInteractionAdvance");
             var fillGate = PresentationSyncBatchGate.FromSync(
                 sync,
                 () => ResolveAndProject(
                     slotIndex,
-                    () =>
-                    {
-                        mArchitecture.SendCommand(new AdvanceInteractionCountCommand());
-                        return mDispatcher.Send(new ResolvePostKillFillCommand());
-                    },
+                    () => mDispatcher.Send(new ResolvePostKillFillCommand()),
                     trackFusion: true));
             var rotateGate = PresentationSyncBatchGate.FromSync(
                 sync,
@@ -98,6 +101,8 @@ namespace NineGrid.Flow.Presentation
 
             timeline.Enqueue(new ResolveBatchStep(clickGate));
             timeline.Enqueue(new PresentStep(clickGate, mPresentChannel));
+            timeline.Enqueue(new ResolveBatchStep(interactGate));
+            timeline.Enqueue(new PresentStep(interactGate, mPresentChannel));
             timeline.Enqueue(new ResolveBatchStep(fillGate));
             timeline.Enqueue(new PresentStep(fillGate, mPresentChannel));
             timeline.Enqueue(new ResolveBatchStep(rotateGate));

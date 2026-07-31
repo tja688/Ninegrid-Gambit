@@ -74,29 +74,41 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(1, present.BeginCount);
             Assert.AreEqual(1, present.PresentedBatchIds[0]);
 
-            // Resolve Fill
-            var fillStart = mPipeline.EventLog.Entries.Count;
+            // Resolve interaction advance
+            var interactStart = mPipeline.EventLog.Entries.Count;
             director.Tick(0.016f);
             Assert.AreEqual(2, mSync.ActiveBatchId);
             Assert.AreEqual(1, present.BeginCount);
-            Assert.IsTrue(ContainsEventTypeSince(fillStart, CoreEventType.SlotsFilled));
+            Assert.IsTrue(ContainsEventTypeSince(interactStart, CoreEventType.InteractionChanged));
 
             // Present ack batch 2
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(2, present.BeginCount);
 
-            // Resolve Rotate
-            var rotateStart = mPipeline.EventLog.Entries.Count;
+            // Resolve Fill
+            var fillStart = mPipeline.EventLog.Entries.Count;
             director.Tick(0.016f);
             Assert.AreEqual(3, mSync.ActiveBatchId);
-            Assert.IsTrue(ContainsEventTypeSince(rotateStart, CoreEventType.BoardRotated));
+            Assert.AreEqual(2, present.BeginCount);
+            Assert.IsTrue(ContainsEventTypeSince(fillStart, CoreEventType.SlotsFilled));
 
             // Present ack batch 3
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(3, present.BeginCount);
-            Assert.AreEqual(3, present.PresentedBatchIds[2]);
+
+            // Resolve Rotate
+            var rotateStart = mPipeline.EventLog.Entries.Count;
+            director.Tick(0.016f);
+            Assert.AreEqual(4, mSync.ActiveBatchId);
+            Assert.IsTrue(ContainsEventTypeSince(rotateStart, CoreEventType.BoardRotated));
+
+            // Present ack batch 4
+            director.Tick(0.016f);
+            Assert.AreEqual(0, mSync.ActiveBatchId);
+            Assert.AreEqual(4, present.BeginCount);
+            Assert.AreEqual(4, present.PresentedBatchIds[3]);
 
             // Fusion aftermath branch（无融合则空过）→ idle
             director.Tick(0.016f);

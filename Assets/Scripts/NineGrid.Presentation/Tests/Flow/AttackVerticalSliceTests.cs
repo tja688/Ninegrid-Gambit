@@ -3,7 +3,9 @@ using NineGrid.Cards;
 using NineGrid.Content;
 using NineGrid.Core;
 using NineGrid.Core.Commands;
+using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
+using NineGrid.Core.Utilities;
 using NineGrid.Flow.Presentation;
 using NUnit.Framework;
 using QFramework;
@@ -74,36 +76,89 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(1, hitPresent.BeginCount);
 
-            // Branch enqueues aftermath（本 Tick 只入队，不推进 Fill）
+            // Branch enqueues aftermath（本 Tick 只入队，不推进互动/Fill）
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(0, boardPresent.BeginCount);
 
+            // Resolve interaction advance（击杀路径须独立开批，OnInteract 效果才进 PresentationBatch）
+            var interactStart = mPipeline.EventLog.Entries.Count;
+            director.Tick(0.016f);
+            Assert.AreEqual(2, mSync.ActiveBatchId);
+            Assert.IsTrue(ContainsTypeSince(interactStart, CoreEventType.InteractionChanged));
+
+            // Present interaction ack
+            director.Tick(0.016f);
+            Assert.AreEqual(0, mSync.ActiveBatchId);
+            Assert.AreEqual(1, boardPresent.BeginCount);
+
             // Resolve Fill
             var fillStart = mPipeline.EventLog.Entries.Count;
             director.Tick(0.016f);
-            Assert.AreEqual(2, mSync.ActiveBatchId);
+            Assert.AreEqual(3, mSync.ActiveBatchId);
             Assert.IsTrue(ContainsTypeSince(fillStart, CoreEventType.SlotsFilled));
 
             // Present fill ack
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
-            Assert.AreEqual(1, boardPresent.BeginCount);
+            Assert.AreEqual(2, boardPresent.BeginCount);
 
             // Resolve Rotate
             var rotateStart = mPipeline.EventLog.Entries.Count;
             director.Tick(0.016f);
-            Assert.AreEqual(3, mSync.ActiveBatchId);
+            Assert.AreEqual(4, mSync.ActiveBatchId);
             Assert.IsTrue(ContainsTypeSince(rotateStart, CoreEventType.BoardRotated));
 
             // Present rotate ack
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
-            Assert.AreEqual(2, boardPresent.BeginCount);
+            Assert.AreEqual(3, boardPresent.BeginCount);
 
             // Fusion aftermath branch（无融合则空过）→ idle
             director.Tick(0.016f);
             Assert.IsFalse(director.IsMainlineBusy);
+        }
+
+        [Test]
+        public void AdvanceInteractionCount_DispatcherBatch_IncludesAmbushEffectTriggered()
+        {
+            mArch.GetUtility<IConfigUtility>().Set(
+                ContentConfigKeys.DefaultCatalog,
+                ContentCatalogBootstrap.Load());
+            mArch.GetSystem<IContentSystem>().Load(ContentCatalogBootstrap.Load());
+
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 99, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sAdjacentSlot);
+            var board = mArch.GetModel<BoardModel>();
+            var registry = mArch.GetModel<CardRegistry>();
+            var hostUid = board.GetCardUid(sAdjacentSlot);
+            var host = registry.Get(hostUid);
+            host.Stats.SetBase(StatId.Attack, 3);
+            Assert.Greater(
+                mArch.GetSystem<IContentSystem>().ActivateSkillsOnCard(host, new[] { "skill.ambush_melee" }).Count,
+                0);
+            if (mPipeline.PendingCount > 0)
+            {
+                Assert.Greater(mPipeline.RunToCompletion(), 0);
+            }
+
+            var avatar = registry.Get(board.AvatarUid.Value);
+            avatar.Stats.SetBase(StatId.Hp, 99);
+
+            for (var i = 0; i < 4; i++)
+            {
+                Assert.IsTrue(mPhase.AdvanceInteractionCount().Accepted);
+            }
+
+            var dispatch = mDispatcher.Send(new AdvanceInteractionCountCommand());
+            Assert.IsTrue(dispatch.Accepted);
+            Assert.IsTrue(dispatch.BatchOpened);
+            Assert.IsTrue(
+                BatchContainsEventType(dispatch.Batch, CoreEventType.EffectTriggered),
+                "潜伏近战触发批应含 EffectTriggered（效果触发脉冲）");
+            Assert.IsTrue(
+                BatchContainsEventType(dispatch.Batch, CoreEventType.DamageDealt),
+                "潜伏近战触发批应含 DamageDealt");
         }
 
         [Test]
@@ -284,6 +339,25 @@ namespace NineGrid.Presentation.Tests
             for (var i = startIndex; i < entries.Count; i++)
             {
                 if (entries[i].Type == type)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool BatchContainsEventType(PresentationBatch batch, CoreEventType type)
+        {
+            if (batch?.Instructions == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < batch.Instructions.Count; i++)
+            {
+                var instruction = batch.Instructions[i];
+                if (instruction?.Event != null && instruction.Event.Type == type)
                 {
                     return true;
                 }

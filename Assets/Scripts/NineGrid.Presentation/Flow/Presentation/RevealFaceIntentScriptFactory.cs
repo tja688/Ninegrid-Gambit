@@ -80,15 +80,18 @@ namespace NineGrid.Flow.Presentation
             var revealGate = PresentationSyncBatchGate.FromSync(
                 sync,
                 () => ResolveAndProject(slotIndex, () => mDispatcher.Send(new RevealFaceCommand(slot)), trackFusion: false));
+            var interactGate = PresentationSyncBatchGate.FromSync(
+                sync,
+                () => ResolveAndProject(
+                    slotIndex,
+                    () => mDispatcher.Send(new AdvanceInteractionCountCommand()),
+                    trackFusion: false),
+                slice: "RevealInteractionAdvance");
             var fillGate = PresentationSyncBatchGate.FromSync(
                 sync,
                 () => ResolveAndProject(
                     slotIndex,
-                    () =>
-                    {
-                        mArchitecture.SendCommand(new AdvanceInteractionCountCommand());
-                        return mDispatcher.Send(new ResolvePostKillFillCommand());
-                    },
+                    () => mDispatcher.Send(new ResolvePostKillFillCommand()),
                     trackFusion: true));
             var rotateGate = PresentationSyncBatchGate.FromSync(
                 sync,
@@ -96,6 +99,8 @@ namespace NineGrid.Flow.Presentation
 
             timeline.Enqueue(new ResolveBatchStep(revealGate));
             timeline.Enqueue(new PresentStep(revealGate, mPresentChannel));
+            timeline.Enqueue(new ResolveBatchStep(interactGate));
+            timeline.Enqueue(new PresentStep(interactGate, mPresentChannel));
             timeline.Enqueue(new ResolveBatchStep(fillGate));
             timeline.Enqueue(new PresentStep(fillGate, mPresentChannel));
             timeline.Enqueue(new ResolveBatchStep(rotateGate));
