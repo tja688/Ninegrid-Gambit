@@ -35,9 +35,11 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 通道预算——按触发轴混挂；储备技 <c>purge_followers</c> 不占码。
+        /// 通道预算——同通道多技能按格号升序一怪一技分发（见 <c>BattleSessionCheat</c>）；
+        /// 储备技 <c>purge_followers</c> 不占码。
         /// <c>\1</c> 移除向；<c>\2</c> 互动向；<c>\3</c> 翻面向；
-        /// <c>\4</c> 翻面延伸；<c>\5</c> 移动光环；<c>\6</c> 交战向；<c>\7</c> 烈焰叠层。
+        /// <c>\4</c> 批次1交战翻面；<c>\5</c> 批次1移动互动。
+        /// 列表顺序 = 挂载顺序（格号小→大）。
         /// </summary>
         private static readonly ChannelPreset[] sPresets =
         {
@@ -52,17 +54,24 @@ namespace NineGrid.Flow
                 "翻面向",
                 new[] { "skill.leap_kill", "skill.steal" }),
             new ChannelPreset(
-                "翻面延伸",
-                new[] { "skill.recuperate", "skill.rise_up" }),
+                "批次1交战翻面",
+                new[]
+                {
+                    "skill.recuperate",
+                    "skill.rise_up",
+                    "skill.evade",
+                    "skill.battle_hardened",
+                }),
             new ChannelPreset(
-                "移动光环",
-                new[] { "skill.delivery", "skill.link_tactics" }),
-            new ChannelPreset(
-                "交战向",
-                new[] { "skill.evade", "skill.battle_hardened" }),
-            new ChannelPreset(
-                "烈焰叠层",
-                new[] { "skill.flame_boiling" }),
+                "批次1移动互动",
+                new[]
+                {
+                    "skill.link_tactics",
+                    "skill.delivery",
+                    "skill.flame_boiling",
+                }),
+            new ChannelPreset("通道6", Array.Empty<string>()),
+            new ChannelPreset("通道7", Array.Empty<string>()),
             new ChannelPreset("通道8", Array.Empty<string>()),
             new ChannelPreset("通道9", Array.Empty<string>()),
         };

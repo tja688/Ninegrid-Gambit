@@ -44,6 +44,7 @@ namespace NineGrid.Flow
 
             AbortBoardSelectIfActive("reward-choice");
             PresentationInputGates.SetChoiceOverlay(true);
+            var dimmerHeld = BattleUiDimmerOverlay.TryAcquire("reward-choice");
             try
             {
                 var pipeline = arch.GetSystem<IActionPipelineSystem>();
@@ -127,6 +128,11 @@ namespace NineGrid.Flow
                 // 选完关闭覆盖层；Drain 期间由导演主线租约挡输入（外层已持锁则复用）。
                 var acquiredDrainLock = PresentationInputGates.TryBeginExternalHold("RewardDrain");
                 PresentationInputGates.SetChoiceOverlay(false);
+                if (dimmerHeld)
+                {
+                    BattleUiDimmerOverlay.Release("reward-choice");
+                    dimmerHeld = false;
+                }
                 try
                 {
                     CoreBatchProjectionCoordinator.FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids, out var rewardSteps);
@@ -191,6 +197,10 @@ namespace NineGrid.Flow
             finally
             {
                 PresentationInputGates.SetChoiceOverlay(false);
+                if (dimmerHeld)
+                {
+                    BattleUiDimmerOverlay.Release("reward-choice");
+                }
             }
         }
 
@@ -261,6 +271,7 @@ namespace NineGrid.Flow
 
             AbortBoardSelectIfActive("stat-boost-choice");
             PresentationInputGates.SetChoiceOverlay(true);
+            var dimmerHeld = BattleUiDimmerOverlay.TryAcquire("stat-boost-choice");
             try
             {
                 var pick = await WaitBouncePickAsync(selector, StatBoostOptions, allowEscapeSkip: false);
@@ -274,6 +285,10 @@ namespace NineGrid.Flow
             finally
             {
                 PresentationInputGates.SetChoiceOverlay(false);
+                if (dimmerHeld)
+                {
+                    BattleUiDimmerOverlay.Release("stat-boost-choice");
+                }
             }
         }
 

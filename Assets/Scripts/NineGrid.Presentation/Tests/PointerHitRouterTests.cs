@@ -135,6 +135,7 @@ namespace NineGrid.Presentation.Tests
             public bool Held;
             public bool PressPrimaryThisFrame;
             public bool ReleasePrimaryThisFrame;
+            public bool PressSecondaryThisFrame;
 
             public bool TryGetScreenPosition(out Vector2 screen)
             {
@@ -145,6 +146,7 @@ namespace NineGrid.Presentation.Tests
             public bool IsPrimaryHeld => Held;
             public bool WasPrimaryPressedThisFrame => PressPrimaryThisFrame;
             public bool WasPrimaryReleasedThisFrame => ReleasePrimaryThisFrame;
+            public bool WasSecondaryPressedThisFrame => PressSecondaryThisFrame;
         }
 
         private sealed class FakeHitTarget : MonoBehaviour, IPointerHitTarget

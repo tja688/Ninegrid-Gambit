@@ -100,6 +100,7 @@ namespace NineGrid.Flow.Presentation
                 FaceUp = source.FaceUp,
                 BasicDescription = source.BasicDescription,
                 DetailDescription = source.DetailDescription,
+                FaceIntro = source.FaceIntro,
                 FrameColor = source.FrameColor,
             };
         }

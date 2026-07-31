@@ -91,7 +91,13 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// QuickTest：把技能挂到场上已有怪物，并用临时短描述覆写卡面（&lt;16 字，非正式权威）。
+        /// QuickTest 补宿主用的白板怪。正式配表无技能；仅动态挂载通道技能。
+        /// </summary>
+        private const string QuickTestBlankHostMonsterDefId = "monster.melee_3";
+
+        /// <summary>
+        /// QuickTest：一怪一技分发到场上怪物（按格号升序）；宿主不够则再发白板怪；
+        /// 另保至少一只无技能白板怪作邻接/翻面同伴。卡面短描述按单技能覆写（&lt;16 字）。
         /// </summary>
         public static int TryAttachSkillsToBoardMonsters(IReadOnlyList<string> skillIds)
         {
@@ -113,48 +119,188 @@ namespace NineGrid.Flow
                 return 0;
             }
 
-            var description = QuickTestDeckCatalog.BuildCardFaceDescription(content.Catalog, skillIds);
             var registry = arch.GetModel<CardRegistry>();
             var board = arch.GetModel<BoardModel>();
+            EnsureQuickTestMonsterHosts(arch, board, registry, skillIds.Count);
+
+            var hosts = CollectBoardMonstersBySlot(board, registry);
             var cards = CardEntityLifecycleHook.CardsOrNull();
             var mountedHosts = 0;
             var activatedInstances = 0;
+            var assignCount = skillIds.Count < hosts.Count ? skillIds.Count : hosts.Count;
 
-            foreach (var uid in board.BoardCardUids())
+            for (var i = 0; i < assignCount; i++)
             {
-                if (!registry.TryGet(uid, out var card) || card.Kind != CardKind.Monster)
+                var skillId = skillIds[i];
+                if (string.IsNullOrEmpty(skillId))
                 {
                     continue;
                 }
 
-                var instances = content.ActivateSkillsOnCard(card, skillIds);
+                var single = new[] { skillId };
+                var card = hosts[i];
+                var instances = content.ActivateSkillsOnCard(card, single);
                 var count = instances != null ? instances.Count : 0;
                 activatedInstances += count;
                 mountedHosts++;
                 if (count <= 0)
                 {
                     Debug.LogWarning(
-                        $"[BattleSessionCheat] QuickTest 挂技能失败：uid={uid} defId={card.DefId}"
-                        + $" skillIds={skillIds.Count}（卡面描述仍可能写入，但无 Effect 实例）");
+                        $"[BattleSessionCheat] QuickTest 挂技能失败：uid={card.Uid} defId={card.DefId}"
+                        + $" skillId={skillId}（卡面描述仍可能写入，但无 Effect 实例）");
                 }
 
-                if (cards != null && cards.TryGet(uid, out var view) && view != null)
+                var description = QuickTestDeckCatalog.BuildCardFaceDescription(content.Catalog, single);
+                if (cards != null && cards.TryGet(card.Uid, out var view) && view != null)
                 {
                     ApplySkillDescription(view, description);
                 }
+
+                Debug.Log(
+                    $"[BattleSessionCheat] QuickTest 一怪一技 slot={card.Slot.Value.Index}"
+                    + $" uid={card.Uid} defId={card.DefId} skill={skillId}"
+                    + (string.IsNullOrEmpty(description) ? string.Empty : " desc=" + description));
             }
 
+            var blankPeers = hosts.Count - assignCount;
             Debug.Log(
-                $"[BattleSessionCheat] QuickTest 挂技能 hosts={mountedHosts} activatedInstances={activatedInstances}"
-                + $" skills={skillIds.Count}"
-                + (string.IsNullOrEmpty(description) ? string.Empty : " desc=" + description));
+                $"[BattleSessionCheat] QuickTest 挂技能 mounted={mountedHosts}/{skillIds.Count}"
+                + $" activatedInstances={activatedInstances} boardMonsters={hosts.Count}"
+                + $" blankPeers={blankPeers}");
             if (mountedHosts > 0 && activatedInstances <= 0)
             {
                 Debug.LogError(
-                    "[BattleSessionCheat] QuickTest 场上有宿主但激活实例为 0——技能只会显示描述、不会在移除时生效");
+                    "[BattleSessionCheat] QuickTest 已选宿主但激活实例为 0——技能只会显示描述、不会在规则链生效");
+            }
+
+            if (assignCount < skillIds.Count)
+            {
+                Debug.LogWarning(
+                    $"[BattleSessionCheat] QuickTest 宿主不足：只挂了 {assignCount}/{skillIds.Count}，"
+                    + "空槽或 Spawn 失败，未挂技能无法单验");
             }
 
             return mountedHosts;
+        }
+
+        /// <summary>
+        /// 保证场上至少有 skillCount 只技能宿主 + 1 只白板同伴；不够则 Spawn 白板怪并 Present。
+        /// </summary>
+        private static void EnsureQuickTestMonsterHosts(
+            IArchitecture arch,
+            BoardModel board,
+            CardRegistry registry,
+            int skillCount)
+        {
+            if (skillCount <= 0)
+            {
+                return;
+            }
+
+            var needed = skillCount + 1;
+            var have = CountBoardMonsters(board, registry);
+            while (have < needed)
+            {
+                if (!TrySpawnQuickTestBlankHost(arch, board))
+                {
+                    Debug.LogWarning(
+                        $"[BattleSessionCheat] QuickTest 无法补宿主：have={have} needed={needed}");
+                    break;
+                }
+
+                have++;
+            }
+        }
+
+        private static int CountBoardMonsters(BoardModel board, CardRegistry registry)
+        {
+            var count = 0;
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var uid = board.GetCardUid(SlotId.Board(i));
+                if (uid <= 0 || !registry.TryGet(uid, out var card) || card.Kind != CardKind.Monster)
+                {
+                    continue;
+                }
+
+                count++;
+            }
+
+            return count;
+        }
+
+        private static List<CardInstance> CollectBoardMonstersBySlot(BoardModel board, CardRegistry registry)
+        {
+            var hosts = new List<CardInstance>(SlotId.MaxBoardIndex);
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var uid = board.GetCardUid(SlotId.Board(i));
+                if (uid <= 0 || !registry.TryGet(uid, out var card) || card.Kind != CardKind.Monster)
+                {
+                    continue;
+                }
+
+                hosts.Add(card);
+            }
+
+            return hosts;
+        }
+
+        private static bool TrySpawnQuickTestBlankHost(IArchitecture arch, BoardModel board)
+        {
+            if (!TryFindEmptyBoardSlot(board, out var slot))
+            {
+                return false;
+            }
+
+            var pipeline = arch.GetSystem<IActionPipelineSystem>();
+            if (pipeline?.EventLog == null)
+            {
+                return false;
+            }
+
+            var start = pipeline.EventLog.Entries.Count;
+            pipeline.Enqueue(
+                new SpawnCardAction(
+                    QuickTestBlankHostMonsterDefId,
+                    CardKind.Monster,
+                    ZoneId.Board,
+                    slot,
+                    1,
+                    "QuickTestHost"));
+            pipeline.RunToCompletion();
+            BattleBeatFlush.PresentEventLogSlice(arch, start);
+
+            var uid = board.GetCardUid(slot);
+            if (uid <= 0)
+            {
+                Debug.LogWarning(
+                    $"[BattleSessionCheat] QuickTest 补宿主后格 {slot.Index} 仍空");
+                return false;
+            }
+
+            Debug.Log(
+                $"[BattleSessionCheat] QuickTest 补白板宿主 slot={slot.Index} uid={uid}"
+                + $" defId={QuickTestBlankHostMonsterDefId}");
+            return true;
+        }
+
+        private static bool TryFindEmptyBoardSlot(BoardModel board, out SlotId slot)
+        {
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var candidate = SlotId.Board(i);
+                if (candidate == board.AvatarSlot.Value || !board.IsEmpty(candidate))
+                {
+                    continue;
+                }
+
+                slot = candidate;
+                return true;
+            }
+
+            slot = SlotId.None;
+            return false;
         }
 
         public static bool TryForceNodeVictory()
@@ -240,6 +386,7 @@ namespace NineGrid.Flow
                 FaceUp = source.FaceUp,
                 BasicDescription = source.BasicDescription,
                 DetailDescription = source.DetailDescription,
+                FaceIntro = source.FaceIntro,
                 FrameColor = source.FrameColor,
             };
         }

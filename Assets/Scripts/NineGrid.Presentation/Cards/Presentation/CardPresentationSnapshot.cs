@@ -42,9 +42,13 @@ namespace NineGrid.Cards.Presentation
 
         /// <summary>
         /// 详细描述（MVP）：人手概括（已插值）+ 词条自动展开。
-        /// 卡面 JSON <c>faceIntro</c> 尚未接入本字段（右键详述面板后续专题）。
         /// </summary>
         public string DetailDescription = string.Empty;
+
+        /// <summary>
+        /// 卡面背景介绍（JSON <c>faceIntro</c>）；供右键详述面板，不进卡面 <c>Basic_Description</c> 槽。
+        /// </summary>
+        public string FaceIntro = string.Empty;
 
         /// <summary>稀有度驱动的卡框染色；a=0 表示未接线（Binder/底盘不改色）。</summary>
         public Color FrameColor = new Color(0f, 0f, 0f, 0f);

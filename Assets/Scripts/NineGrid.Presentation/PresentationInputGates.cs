@@ -36,6 +36,11 @@ namespace NineGrid.Presentation
             OrNull()?.BoardSelectModeActive.Value
             ?? NineGrid.Cards.BoardCardSelectModeController.IsActive;
 
+        /// <summary>局内半黑屏 / 右键详述等 UI 叠层（挡射线，不改 CurrentOwner、不暂停主线）。</summary>
+        public static bool BattleUiOverlayActive =>
+            NineGrid.Flow.BattleUiDimmerOverlay.IsActive
+            || NineGrid.Flow.CardInspectOverlayPresenter.IsOpen;
+
         public static bool MainlineBusy => OrNull()?.MainlineBusy ?? false;
 
         public static bool HasExternalHold => OrNull()?.HasExternalHold ?? false;
@@ -82,10 +87,14 @@ namespace NineGrid.Presentation
             if (arch == null)
             {
                 Ensure()?.ResetGates(reason);
-                return;
+            }
+            else
+            {
+                arch.SendCommand(new ResetPresentationInputGatesCommand(reason));
             }
 
-            arch.SendCommand(new ResetPresentationInputGatesCommand(reason));
+            NineGrid.Flow.BattleUiDimmerOverlay.ForceClear(reason ?? "ResetInputGates");
+            NineGrid.Flow.CardInspectOverlayPresenter.CloseIfOpen();
         }
 
         public static bool TryBeginExternalHold(string reason = null)

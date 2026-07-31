@@ -255,6 +255,7 @@ namespace NineGrid.Cards
             if (hand.IsSelfBusy
                 || hand.HandCount >= hand.MaxHandSlots
                 || PresentationInputGates.ChoiceOverlayActive
+                || PresentationInputGates.BattleUiOverlayActive
                 || PresentationInputGates.BoardSelectModeActive)
             {
                 return false;

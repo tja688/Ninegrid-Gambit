@@ -18,6 +18,7 @@ namespace NineGrid.Flow
             bool IsPrimaryHeld { get; }
             bool WasPrimaryPressedThisFrame { get; }
             bool WasPrimaryReleasedThisFrame { get; }
+            bool WasSecondaryPressedThisFrame { get; }
         }
 
         private static IPointerSource s_override;
@@ -169,6 +170,28 @@ namespace NineGrid.Flow
 
 #if ENABLE_LEGACY_INPUT_MANAGER
             return Input.GetMouseButton(0);
+#else
+            return false;
+#endif
+        }
+
+        public static bool WasSecondaryPressedThisFrame()
+        {
+            if (s_override != null)
+            {
+                return s_override.WasSecondaryPressedThisFrame;
+            }
+
+#if ENABLE_INPUT_SYSTEM
+            var mouse = Mouse.current;
+            if (mouse != null)
+            {
+                return mouse.rightButton.wasPressedThisFrame;
+            }
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+            return Input.GetMouseButtonDown(1);
 #else
             return false;
 #endif

@@ -396,12 +396,23 @@ namespace NineGrid.Cards
         /// </summary>
         public bool TryBeginDragFromHoveredCard()
         {
+            if (BattleUiDimmerOverlay.IsActive || CardInspectOverlayPresenter.IsOpen)
+            {
+                return false;
+            }
+
             if (_hoveredCard == null || !IsLiveHandCard(_hoveredCard))
             {
                 return false;
             }
 
             return TryBeginDragFromHand(_hoveredCard);
+        }
+
+        /// <summary>右键详述：读当前槽位带 hover 手牌（可为 null）。</summary>
+        public ManagedCard TryPeekHoveredCardForInspect()
+        {
+            return _hoveredCard != null && IsLiveHandCard(_hoveredCard) ? _hoveredCard : null;
         }
 
         /// <summary>

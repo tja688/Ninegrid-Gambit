@@ -1,4 +1,5 @@
 using NineGrid.Cards;
+using NineGrid.Presentation;
 using UnityEngine;
 
 namespace NineGrid.Flow
@@ -56,8 +57,21 @@ namespace NineGrid.Flow
                 _hovered?.HandlePointerEnter();
             }
 
+            if (WorldPointerUtility.WasSecondaryPressedThisFrame())
+            {
+                TryOpenCardInspect(best);
+                return;
+            }
+
             if (!WorldPointerUtility.WasPrimaryPressedThisFrame())
             {
+                return;
+            }
+
+            // 局内 UI 叠层（半黑屏）期间不拖手牌、不向场面透传。
+            if (BattleUiDimmerOverlay.IsActive || CardInspectOverlayPresenter.IsOpen)
+            {
+                best?.HandlePointerDown();
                 return;
             }
 
@@ -69,6 +83,49 @@ namespace NineGrid.Flow
             }
 
             best?.HandlePointerDown();
+        }
+
+        private static void TryOpenCardInspect(IPointerHitTarget hovered)
+        {
+            if (CardInspectOverlayPresenter.IsOpen)
+            {
+                // 面板已开时右键再点：关面板（半黑屏上也可关）。
+                CardInspectOverlayPresenter.CloseIfOpen();
+                return;
+            }
+
+            if (PresentationInputGates.ChoiceOverlayActive
+                || PresentationInputGates.OpeningPresentationActive)
+            {
+                return;
+            }
+
+            var card = ResolveManagedCard(hovered);
+            if (card == null)
+            {
+                var hand = CardEntityLifecycleHook.HandOrNull();
+                // 手牌槽位带 hover 可能与 collider 不一致时兜底。
+                card = hand != null ? hand.TryPeekHoveredCardForInspect() : null;
+            }
+
+            if (card == null)
+            {
+                return;
+            }
+
+            CardInspectOverlayPresenter.TryOpen(card);
+        }
+
+        private static ManagedCard ResolveManagedCard(IPointerHitTarget target)
+        {
+            if (target == null || target.HitCollider == null)
+            {
+                return null;
+            }
+
+            var driver = target.HitCollider.GetComponent<CardVisualDriver>()
+                ?? target.HitCollider.GetComponentInParent<CardVisualDriver>();
+            return driver != null ? driver.BoundCard : null;
         }
 
         /// <summary>EditMode：强制清 hover 状态。</summary>
