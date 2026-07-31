@@ -5,7 +5,9 @@ description: >-
   experience channels: blank monsters in content JSON, dynamic skill assembly
   only on QuickTest, card-face skill descriptions, no in-battle \ logic.
   Also covers near-synonym skill-gap landing (rename-identical / new-id /
-  reserve-different). Use when landing monster skills or relics for playtest,
+  reserve-different). After user confirms channel assignment, maintain
+  Assets/Notes/QuickTest效果通道-技能测试预期对照.md (interaction + expected
+  feedback per skill). Use when landing monster skills or relics for playtest,
   wiring QuickTest channels, clearing monster effectAssemblies, Alpha5 Core
   flip, or when the user mentions \0–\9 / 快速测试通道 / 白板挂技能 / 近义借壳.
 ---
@@ -40,8 +42,9 @@ Task Progress:
 - [ ] 1. 按内容权威落地 skill_*.json + effect_templates（Arts 双写）
 - [ ] 2. 向用户推荐本批要测的通道划分（优先新机制/新能力；老且稳的可略）
 - [ ] 3. 用户点头后写入 \0–\9 预设表（缺通道逻辑就补）
-- [ ] 4. 卡面描述 = 技能效果全文；道具仍正常发
-- [ ] 5. 说明如何复现：主菜单 \ → 码 → 观察点（含 Alpha5 Core 翻面若相关）
+- [ ] 4. 更新 Living Note：Assets/Notes/QuickTest效果通道-技能测试预期对照.md（见下节）
+- [ ] 5. 卡面描述 = 技能效果全文；道具仍正常发
+- [ ] 6. 说明如何复现：主菜单 \ → 码 → 对照 Living Note 观察点
 ```
 
 ### 推荐通道时怎么说
@@ -49,6 +52,38 @@ Task Progress:
 - 先列本批**新机制**技能，说明为何要验
 - 提案：`\N` = 技能列表（混挂或单开）+ 一句话观察法
 - 等用户点头再改预设表；不要擅自占满 0–9
+- **用户确认分法后**，必须同步更新 Living Note（不是口头说完就停）
+
+### 测试预期 Living Note（用户确认分法后必写）
+
+**唯一活文档**：`Assets/Notes/QuickTest效果通道-技能测试预期对照.md`
+
+- **一篇就够**：所有已分配通道写在同一文件；后续增删通道或技能只改这一篇，**不要**按管道拆多篇、不要按日期另起新稿。
+- **目的**：让用户 Play 时不必反复翻策划案 / `02-技能字典.md`；对照「怎么交互 → 应看到什么反馈」即可验收。
+- **权威来源**：`skill_*.json` description、`effect_templates.json` design_text、本 skill；与字典冲突时以已落地模板为准并在笔记标注。
+
+#### 笔记结构（按此模板写）
+
+1. **文首元信息**：最后更新日期、对应 `QuickTestDeckCatalog` 预设快照（`\N` → skillIds）。
+2. **通用入口**：主菜单长按 `\` → 选码；HP99/ATK5；怪技能仅本通道动态挂；局内无 `\` 换通道。
+3. **Dev 快捷键速查**（与本批相关时写）：Alpha5=Core Flip；Keypad1/5/6 等（见 `GroundFieldManagerDevKeys`）。
+4. **通道总览表**：`| 码 | 主题 | 技能列表 | 混挂理由 |`
+5. **技能对照表**（每个 skillId 一行或一块）：
+
+| 列 | 写什么 |
+|----|--------|
+| 技能 id / 显示名 | `skill.xxx` |
+| 效果摘要 | 字典/模板一句话 |
+| 触发时机 | OnSelfRemoved / OnInteract every 5 / OnFlip … |
+| 你怎么操作 | 摆位、攻击几次、翻哪张、用哪 DevKey |
+| 成功时应看到 | 数值变化、卡进出卡组、伤害数字、移除动画 |
+| 不应发生 | 邻格不对也触发、翻面未朝上也触发等 |
+| 混挂时注意 | 同通道多技能时互相干扰或独立 |
+
+6. **混挂通道**：在通道小节写「先验 A 再验 B」顺序，避免一次操作误判多个技能。
+7. **变更记录**（文末简短）：日期 + 改了哪些 `\N` / 哪些 skill。
+
+写完后在对话里告知用户笔记路径，不必把整表粘贴到聊天。
 
 ### 扩展点（实现时改这些）
 
