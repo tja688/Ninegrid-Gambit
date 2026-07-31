@@ -68,6 +68,14 @@ namespace NineGrid.Flow
                 case UiOverlayHitAction.CloseCardInspect:
                     CardInspectOverlayPresenter.CloseIfOpen();
                     break;
+                case UiOverlayHitAction.Swallow:
+                    // 半黑屏：右键详述打开时点菜单外（BG 图范围外）也退出。
+                    if (CardInspectOverlayPresenter.IsOpen)
+                    {
+                        CardInspectOverlayPresenter.CloseIfOpen();
+                    }
+
+                    break;
                 default:
                     break;
             }

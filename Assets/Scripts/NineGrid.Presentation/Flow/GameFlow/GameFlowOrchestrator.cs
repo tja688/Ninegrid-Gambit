@@ -859,6 +859,8 @@ namespace NineGrid.Flow
                 Debug.LogWarning(
                     "[GameFlow] 快速测试挂技能：场上无怪物宿主，skillIds=" + skillIds.Count);
             }
+
+            BattleSessionCheat.EnsureQuickTestFlamePropsIfNeeded(skillIds);
         }
 
         private static string BuildQuickTestRunTagNote(

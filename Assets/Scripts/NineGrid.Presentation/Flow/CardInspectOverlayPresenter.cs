@@ -133,6 +133,8 @@ namespace NineGrid.Flow
 
             WireCloseButton(enemyClose);
             WireCloseButton(regularClose);
+            WirePanelDismiss(enemyPanel);
+            WirePanelDismiss(regularPanel);
 
             // 占位只作锚点：关掉场景里放的成品 mock 图，真卡面开面板时再挂。
             HidePlaceholderMockVisuals(enemyCardFace);
@@ -617,6 +619,52 @@ namespace NineGrid.Flow
             }
 
             proxy.Configure(UiOverlayHitAction.CloseCardInspect, BattleUiDimmerOverlay.CloseHitSort, 110);
+        }
+
+        /// <summary>
+        /// 点在描述 BG 图范围内（非关闭钮等更高序控件）即可关面板。
+        /// 半黑屏在面板外点击亦关（见 <see cref="BattleUiDimmerOverlay"/> Swallow 分支）。
+        /// </summary>
+        private static void WirePanelDismiss(GameObject panel)
+        {
+            if (panel == null)
+            {
+                return;
+            }
+
+            var col = panel.GetComponent<BoxCollider2D>();
+            if (col == null)
+            {
+                col = panel.AddComponent<BoxCollider2D>();
+            }
+
+            var renderer = panel.GetComponent<SpriteRenderer>();
+            if (renderer != null && renderer.sprite != null)
+            {
+                var size = renderer.sprite.bounds.size;
+                col.size = new Vector2(size.x, size.y);
+                col.offset = renderer.sprite.bounds.center;
+            }
+            else
+            {
+                col.size = new Vector2(8f, 10f);
+                col.offset = Vector2.zero;
+            }
+
+            col.isTrigger = false;
+            col.enabled = true;
+
+            var proxy = panel.GetComponent<UiOverlayHitProxy>();
+            if (proxy == null)
+            {
+                proxy = panel.AddComponent<UiOverlayHitProxy>();
+            }
+
+            // 低于关闭钮 CloseHitSort，高于半黑屏 HitSort，这样点在 BG 图上关面板，点关闭钮仍优先。
+            proxy.Configure(
+                UiOverlayHitAction.CloseCardInspect,
+                BattleUiDimmerOverlay.HitSort + 1,
+                105);
         }
 
         private static TMP_Text FindTmp(Transform root, string name)

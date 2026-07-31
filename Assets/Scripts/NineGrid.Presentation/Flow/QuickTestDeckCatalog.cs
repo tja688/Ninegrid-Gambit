@@ -37,8 +37,8 @@ namespace NineGrid.Flow
         /// <summary>
         /// 通道预算——同通道多技能按格号升序一怪一技分发（见 <c>BattleSessionCheat</c>）；
         /// 储备技 <c>purge_followers</c> 不占码。
-        /// <c>\1</c> 移除向；<c>\2</c> 互动向；<c>\3</c> 翻面向；
-        /// <c>\4</c> 批次1交战翻面；<c>\5</c> 批次1移动互动。
+        /// <c>\1</c> 移除向；<c>\2</c> 互动向；<c>\3</c> 翻面向（含休养）；
+        /// <c>\4</c>–<c>\9</c> 批次1 单技能验收（一通道一技）。
         /// 列表顺序 = 挂载顺序（格号小→大）。
         /// </summary>
         private static readonly ChannelPreset[] sPresets =
@@ -52,28 +52,13 @@ namespace NineGrid.Flow
                 new[] { "skill.call_melee6", "skill.link_prep" }),
             new ChannelPreset(
                 "翻面向",
-                new[] { "skill.leap_kill", "skill.steal" }),
-            new ChannelPreset(
-                "批次1交战翻面",
-                new[]
-                {
-                    "skill.recuperate",
-                    "skill.rise_up",
-                    "skill.evade",
-                    "skill.battle_hardened",
-                }),
-            new ChannelPreset(
-                "批次1移动互动",
-                new[]
-                {
-                    "skill.link_tactics",
-                    "skill.delivery",
-                    "skill.flame_boiling",
-                }),
-            new ChannelPreset("通道6", Array.Empty<string>()),
-            new ChannelPreset("通道7", Array.Empty<string>()),
-            new ChannelPreset("通道8", Array.Empty<string>()),
-            new ChannelPreset("通道9", Array.Empty<string>()),
+                new[] { "skill.leap_kill", "skill.steal", "skill.recuperate" }),
+            new ChannelPreset("烈焰沸腾", new[] { "skill.flame_boiling" }),
+            new ChannelPreset("起来", new[] { "skill.rise_up" }),
+            new ChannelPreset("逃避", new[] { "skill.evade" }),
+            new ChannelPreset("历战", new[] { "skill.battle_hardened" }),
+            new ChannelPreset("链接战术", new[] { "skill.link_tactics" }),
+            new ChannelPreset("快递", new[] { "skill.delivery" }),
         };
 
         public static bool TryResolvePickerCode(int code, out ChannelPreset preset)

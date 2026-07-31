@@ -94,6 +94,8 @@ namespace NineGrid.Flow
         /// QuickTest 补宿主用的白板怪。正式配表无技能；仅动态挂载通道技能。
         /// </summary>
         private const string QuickTestBlankHostMonsterDefId = "monster.melee_3";
+        private const string QuickTestFlameHelpDefId = "help.flame";
+        private const int QuickTestFlamePropCount = 2;
 
         /// <summary>
         /// QuickTest：一怪一技分发到场上怪物（按格号升序）；宿主不够则再发白板怪；
@@ -181,6 +183,86 @@ namespace NineGrid.Flow
             }
 
             return mountedHosts;
+        }
+
+        /// <summary>
+        /// 通道含 <c>skill.flame_boiling</c> 时往道具栏塞烈焰（红卡 weight=0 不会自然出现）。
+        /// 验收：互动满 5 → 用烈焰 → 对玩家伤害 4→5（可再叠）。
+        /// </summary>
+        public static int EnsureQuickTestFlamePropsIfNeeded(IReadOnlyList<string> skillIds)
+        {
+            if (skillIds == null || skillIds.Count == 0)
+            {
+                return 0;
+            }
+
+            var needFlame = false;
+            for (var i = 0; i < skillIds.Count; i++)
+            {
+                if (skillIds[i] == "skill.flame_boiling")
+                {
+                    needFlame = true;
+                    break;
+                }
+            }
+
+            if (!needFlame)
+            {
+                return 0;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return 0;
+            }
+
+            var pipeline = arch.GetSystem<IActionPipelineSystem>();
+            var deck = arch.GetModel<DeckModel>();
+            if (pipeline?.EventLog == null || deck == null)
+            {
+                return 0;
+            }
+
+            var already = 0;
+            for (var i = 0; i < deck.ItemSlotUids.Count; i++)
+            {
+                var uid = deck.ItemSlotUids[i];
+                var registry = arch.GetModel<CardRegistry>();
+                if (registry != null
+                    && registry.TryGet(uid, out var card)
+                    && card != null
+                    && card.DefId == QuickTestFlameHelpDefId)
+                {
+                    already++;
+                }
+            }
+
+            var toSpawn = QuickTestFlamePropCount - already;
+            if (toSpawn <= 0)
+            {
+                return already;
+            }
+
+            var start = pipeline.EventLog.Entries.Count;
+            for (var i = 0; i < toSpawn; i++)
+            {
+                pipeline.Enqueue(
+                    new SpawnCardAction(
+                        QuickTestFlameHelpDefId,
+                        CardKind.HelpCard,
+                        ZoneId.ItemSlots,
+                        SlotId.None,
+                        1,
+                        "QuickTestFlameProp"));
+            }
+
+            pipeline.RunToCompletion();
+            BattleBeatFlush.PresentEventLogSlice(arch, start);
+            Debug.Log(
+                $"[BattleSessionCheat] QuickTest 塞烈焰 props+={toSpawn}"
+                + $" defId={QuickTestFlameHelpDefId}（验沸腾：互动5后用烈焰，玩家受伤 4+N）");
+            return already + toSpawn;
         }
 
         /// <summary>
