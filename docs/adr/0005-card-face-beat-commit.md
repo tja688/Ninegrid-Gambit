@@ -53,3 +53,4 @@ v1 锚点：
 - [ADR-0002](0002-card-chassis-and-face-templates.md) — 卡牌底盘与投影 Commit；本决策真正落地「禁止队列外直刷」
 - [ADR-0004](0004-input-intake-two-axis-gating.md) — 输入唯一收口；本决策为输出建立唯一出口（结构同源）
 - [ADR-0007](0007-unified-presentation-pipeline.md) — 多处理器统一表现管线（卡面之外的装饰消费者）
+- [ADR-0018](0018-trigger-visible-causality.md) — 触发可见因果；运动后 Impact 冲刷服从其产品不变量

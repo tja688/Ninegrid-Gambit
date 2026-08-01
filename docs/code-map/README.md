@@ -26,6 +26,7 @@
 | [ADR-0014](../adr/0014-theme-ids-are-legacy-opaque.md) | 主题化 contentId/deckId 是历史残留不透明主键；卡组仅内部渠道；勿被虚构命名带偏 |
 | [ADR-0016](../adr/0016-card-face-orientation.md) | 牌面朝向 Core 权威；背面双向惰性（不可伤害 / 不敌方开火 / 攻击倒计时冻结）；独立 `faceDownTick.*` |
 | [ADR-0017](../adr/0017-trap-card-kind-and-dual-bucket.md) | 机关卡 `CardKind.Trap`；双桶交战；清关/赏金排除；静默 CounterAttackBanned；五套卡面 |
+| [ADR-0018](../adr/0018-trigger-visible-causality.md) | 触发可见因果；Triggered 卡牌基础触发表现（v1 持有者缩放） |
 
 > ADR-0011–0013 已落地（含卡面倒计时 Commit 与单向打击 Counter 分拍，#81）。落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
 
