@@ -16,7 +16,7 @@ namespace NineGrid.Content.Editor
     {
         /// <summary>
         /// 可 Spawn / 挂卡面的内容种。不含 Skill：怪物技能不进卡面，也不进表现层配置器。
-        /// HelpCard / Item / PlayerCard 仍为道具侧真卡。
+        /// HelpCard / Item / PlayerCard 仍为道具侧真卡；Trap 为机关真卡，进卡面树。
         /// </summary>
         public static bool IsCardLikeKind(string contentKind)
         {
@@ -33,6 +33,7 @@ namespace NineGrid.Content.Editor
                     case ContentVisualKind.Monster:
                     case ContentVisualKind.HelpCard:
                     case ContentVisualKind.Relic:
+                    case ContentVisualKind.Trap:
                         return true;
                 }
             }
@@ -40,7 +41,8 @@ namespace NineGrid.Content.Editor
             var k = contentKind.Trim();
             return string.Equals(k, "PlayerCard", StringComparison.OrdinalIgnoreCase)
                    || string.Equals(k, "Item", StringComparison.OrdinalIgnoreCase)
-                   || string.Equals(k, "HelpCard", StringComparison.OrdinalIgnoreCase);
+                   || string.Equals(k, "HelpCard", StringComparison.OrdinalIgnoreCase)
+                   || string.Equals(k, "Trap", StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>

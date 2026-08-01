@@ -55,13 +55,12 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(report.IsValid, FormatIssues(report));
             Assert.AreEqual(0, report.PendingEffectIds.Count, "Pending effect ids: " + string.Join(", ", report.PendingEffectIds));
 
-            Assert.IsTrue(catalog.Cards.TryGetValue("help.healing_spring", out var spring));
-            Assert.AreEqual(CardKind.HelpCard, spring.Kind);
-            Assert.AreEqual(3, spring.EffectIds.Count, "healing_spring mounts must come from JSON projection");
-            Assert.AreEqual("help.healing_spring.board_adjacent", spring.EffectIds[0]);
-            Assert.AreEqual("help.healing_spring.item_battle", spring.EffectIds[1]);
-            Assert.AreEqual("help.healing_spring.use", spring.EffectIds[2]);
-            Assert.AreEqual("治疗圣光", spring.DisplayName);
+            Assert.IsFalse(catalog.Cards.TryGetValue("help.healing_spring", out _), "help.healing_spring 应已迁 Trap");
+            Assert.IsTrue(catalog.Cards.TryGetValue("trap.healing_spring", out var spring));
+            Assert.AreEqual(CardKind.Trap, spring.Kind);
+            Assert.AreEqual(1, spring.EffectIds.Count, "trap.healing_spring mounts must come from JSON projection");
+            Assert.AreEqual("trap.healing_spring.heal_on_move", spring.EffectIds[0]);
+            Assert.AreEqual("治疗泉", spring.DisplayName);
 
             Assert.IsTrue(catalog.Cards.TryGetValue("help.doubling_tower", out var tower));
             Assert.AreEqual(2, tower.EffectIds.Count);
@@ -78,8 +77,8 @@ namespace NineGrid.Core.Tests
 
             Assert.IsTrue(catalog.Cards.TryGetValue("monster.beggar", out var beggar));
             Assert.AreEqual(CardKind.Monster, beggar.Kind);
-            Assert.AreEqual(AttackPattern.None, beggar.AttackPattern);
-            Assert.AreEqual(0, beggar.Stats.Action);
+            Assert.AreEqual(AttackPattern.OrthogonalMelee, beggar.AttackPattern);
+            Assert.AreEqual(3, beggar.Stats.Action);
             // 技能仍以独立 Skill JSON 存在；怪物挂载可为空（当前乞丐无 skillIds）。
             Assert.IsTrue(catalog.Skills.ContainsKey("skill.beggar_bond"));
             Assert.AreEqual(0, beggar.SkillIds.Count);

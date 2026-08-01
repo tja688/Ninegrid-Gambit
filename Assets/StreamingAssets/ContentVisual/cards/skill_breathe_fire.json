@@ -90,7 +90,7 @@
             "id": "skill.breathe_fire.move",
             "templateId": "tpl.skill.breathe_fire.move",
             "containerType": "MonsterSkill",
-            "argsJson": "{}"
+            "argsJson": "{\"count\":1}"
         }
     ],
     "role": ""

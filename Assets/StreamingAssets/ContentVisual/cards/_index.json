@@ -24,7 +24,6 @@
     "help.gold_card",
     "help.golden_chest_card",
     "help.healing_potion",
-    "help.healing_spring",
     "help.impact_tutorial",
     "help.kidnapping",
     "help.rotation_wheel",
@@ -128,9 +127,14 @@
     "relic.wood_armor",
     "relic.wood_shield",
     "relic.wood_sword",
+    "trap.armor_totem",
+    "trap.attack_totem",
     "trap.bear_trap",
     "trap.flame",
+    "trap.healing_spring",
+    "trap.recovery_totem",
     "trap.revive_stone",
-    "trap.rolling_stone"
+    "trap.rolling_stone",
+    "trap.spike"
   ]
 }

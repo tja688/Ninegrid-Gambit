@@ -88,22 +88,6 @@
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyGold\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
  },
  {
-  "id": "tpl.help.healing_spring.board_adjacent",
-  "state": "Implemented",
-  "design_text": "[场上] 移动到玩家卡正交相邻格时，为玩家恢复2点血量",
-  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\", \"CardZone:Board\"]",
-  "conditions_json": "[\"CardZone:zone=Board\"]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1,\"requireAdjacentTo\":\"Player\"},\"conditions\":[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"Board\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
- },
- {
-  "id": "tpl.help.healing_spring.item_battle",
-  "state": "Implemented",
-  "design_text": "[道具牌格] 玩家与怪物战斗时，恢复1点血量",
-  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\", \"CardZone:ItemSlots\"]",
-  "conditions_json": "[\"CardZone:zone=ItemSlots\", \"EventFilter:eventType=DamageDealt\"]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"ItemSlots\"},{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
- },
- {
   "id": "tpl.help.impact_tutorial.use",
   "state": "Implemented",
   "design_text": "[使用时] 对目标怪物卡造成等同于玩家当前血量的伤害",
@@ -1294,6 +1278,110 @@
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":3},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.trap.attack_totem.aura_player",
+  "state": "Implemented",
+  "design_text": "[场上]邻接玩家攻击+1；离开邻接后失效（上场/发牌时施加）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEnter\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.trap.attack_totem.refresh_player",
+  "state": "Implemented",
+  "design_text": "[场上]邻接玩家攻击+1；任意卡移动时刷新",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"CardMoved\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.trap.armor_totem.aura_player",
+  "state": "Implemented",
+  "design_text": "[场上]邻接玩家护甲+1；离开邻接后失效（上场/发牌时施加）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEnter\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Armor\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.trap.armor_totem.refresh_player",
+  "state": "Implemented",
+  "design_text": "[场上]邻接玩家护甲+1；任意卡移动时刷新",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"CardMoved\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Armor\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.trap.recovery_totem.heal_player_on_move",
+  "state": "Implemented",
+  "design_text": "[场上]本卡移动/旋转落地后，若正交邻玩家则为玩家恢复1点血量",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1,\"requireAdjacentTo\":\"Player\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.spike.move_player",
+  "state": "Implemented",
+  "design_text": "[场上]本卡每移动1次，若正交邻玩家则对玩家造成1点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1,\"requireAdjacentTo\":\"Player\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.attack_totem.aura",
+  "state": "Implemented",
+  "design_text": "[场上]邻接真怪攻击+1；离开邻接后失效（上场/发牌时施加）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEnter\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.trap.attack_totem.refresh",
+  "state": "Implemented",
+  "design_text": "[场上]邻接真怪攻击+1；任意卡移动时刷新",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"CardMoved\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.trap.armor_totem.aura",
+  "state": "Implemented",
+  "design_text": "[场上]邻接真怪护甲+1；离开邻接后失效（上场/发牌时施加）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEnter\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Armor\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.trap.armor_totem.refresh",
+  "state": "Implemented",
+  "design_text": "[场上]邻接真怪护甲+1；任意卡移动时刷新",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"CardMoved\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Armor\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.trap.recovery_totem.heal_on_move",
+  "state": "Implemented",
+  "design_text": "[场上]本卡移动/旋转落地后，邻格真怪各恢复1点血量",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.spike.move",
+  "state": "Implemented",
+  "design_text": "[场上]本卡每移动1次，邻格真怪各受到1点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.healing_spring.heal_on_move",
+  "state": "Implemented",
+  "design_text": "[场上]本卡移动/旋转落地后，若正交邻玩家则为玩家恢复1点血量",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1,\"requireAdjacentTo\":\"Player\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
  },
  {
   "id": "tpl.skill.assassin_leader.rule",

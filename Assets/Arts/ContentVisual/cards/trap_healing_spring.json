@@ -1,0 +1,101 @@
+{
+    "schemaVersion": 2,
+    "contentId": "trap.healing_spring",
+    "kind": "Trap",
+    "deckId": "deck.trap",
+    "role": "",
+    "displayName": "疗愈之光",
+    "description": "机关卡：本卡移动/旋转落地后，若正交邻玩家则为玩家恢复1点血量",
+    "faceIntro": "",
+    "attackPattern": "无",
+    "gold": 0,
+    "stats": {
+        "hp": 6,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_116",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": [
+            {
+                "id": "idle",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "attack",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "hurt",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "death",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "lunch",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            }
+        ]
+    },
+    "extraSlots": [],
+    "rarity": "Red",
+    "tags": [],
+    "effectAssemblies": [
+        {
+            "id": "trap.healing_spring.heal_on_move",
+            "templateId": "tpl.trap.healing_spring.heal_on_move",
+            "containerType": "Trap",
+            "argsJson": "{\"amount\":1}"
+        }
+    ],
+    "effectIds": [
+        "trap.healing_spring.heal_on_move"
+    ],
+    "skillIds": [],
+    "level": 1,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
+}

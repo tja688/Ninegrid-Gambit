@@ -1,20 +1,23 @@
 {
     "schemaVersion": 2,
-    "contentId": "help.healing_spring",
-    "kind": "HelpCard",
-    "deckId": "deck.help",
-    "displayName": "治疗圣光",
-    "description": "相邻回{amount}血，道具回1血，使用移除",
-    "gold": 80,
+    "contentId": "trap.spike",
+    "kind": "Trap",
+    "deckId": "deck.trap",
+    "role": "",
+    "displayName": "刺藤",
+    "description": "机关卡：本卡每移动1次，邻格真怪与玩家各受到1点伤害",
+    "faceIntro": "",
+    "attackPattern": "无",
+    "gold": 0,
     "stats": {
-        "hp": 0,
+        "hp": 6,
         "armor": 0,
         "attack": 0,
         "action": 0,
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_116",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_164",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -68,13 +71,28 @@
         ]
     },
     "extraSlots": [],
-    "rarity": "Blue",
-    "tags": [
-        "tag.heal"
+    "rarity": "White",
+    "tags": [],
+    "effectAssemblies": [
+        {
+            "id": "trap.spike.move",
+            "templateId": "tpl.trap.spike.move",
+            "containerType": "Trap",
+            "argsJson": "{\"amount\":1}"
+        },
+        {
+            "id": "trap.spike.move_player",
+            "templateId": "tpl.trap.spike.move_player",
+            "containerType": "Trap",
+            "argsJson": "{\"amount\":1}"
+        }
     ],
-    "effectIds": [],
+    "effectIds": [
+        "trap.spike.move",
+        "trap.spike.move_player"
+    ],
     "skillIds": [],
-    "level": 0,
+    "level": 1,
     "isElite": false,
     "isBoss": false,
     "isReserve": false,
@@ -86,26 +104,5 @@
     "maxHpDelta": 0,
     "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "effectAssemblies": [
-        {
-            "id": "help.healing_spring.board_adjacent",
-            "templateId": "tpl.help.healing_spring.board_adjacent",
-            "containerType": "HelpCard",
-            "argsJson": "{\"amount\":2}"
-        },
-        {
-            "id": "help.healing_spring.item_battle",
-            "templateId": "tpl.help.healing_spring.item_battle",
-            "containerType": "HelpCard",
-            "argsJson": "{\"sourceAction\":\"DealDamage\",\"amount\":1}"
-        },
-        {
-            "id": "help.healing_spring.use",
-            "templateId": "tpl.shared.3.help_healing_spring_use",
-            "containerType": "HelpCard",
-            "argsJson": "{\"reason\":\"help.healing_spring.use\"}"
-        }
-    ],
-    "role": "Utility"
+    "shopOfferCount": 0
 }

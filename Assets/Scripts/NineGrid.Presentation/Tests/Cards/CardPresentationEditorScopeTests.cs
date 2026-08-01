@@ -24,6 +24,7 @@ namespace NineGrid.Presentation.Tests.Cards
             Assert.IsTrue(CardPresentationMigration.IsCardLikeKind("Monster"));
             Assert.IsTrue(CardPresentationMigration.IsCardLikeKind("Relic"));
             Assert.IsTrue(CardPresentationMigration.IsCardLikeKind("Avatar"));
+            Assert.IsTrue(CardPresentationMigration.IsCardLikeKind("Trap"));
         }
 
         [Test]
@@ -37,6 +38,15 @@ namespace NineGrid.Presentation.Tests.Cards
                 CardPresentationMigration.IsPresentationEditorEntry("HelpCard", "help.bomb"));
             Assert.IsTrue(
                 CardPresentationMigration.IsPresentationEditorEntry("Item", "player.gold_card"));
+            Assert.IsTrue(
+                CardPresentationMigration.IsPresentationEditorEntry("Trap", "trap.revive_stone"));
+        }
+
+        [Test]
+        public void IsCombatStatsKind_IncludesTrap()
+        {
+            Assert.IsTrue(CardPresentationEditorSession.IsCombatStatsKind("Trap"));
+            Assert.IsFalse(CardPresentationEditorSession.IsMonsterKind("Trap"));
         }
 
         [Test]

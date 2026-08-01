@@ -43,7 +43,7 @@ namespace NineGrid.Flow
         /// <c>\1</c> 移除向；<c>\2</c> 互动向；<c>\3</c> 翻面向（含休养）；
         /// <c>\4</c>–<c>\5</c> 批次1 六技打包（一通道三技、一怪一技）；
         /// <c>\6</c>–<c>\9</c> 批次2 六技（提速/远程武器/死亡召唤/死亡之主/神圣决斗/潜伏近战）。
-        /// 机关注入：<c>\1</c> 滚石、<c>\6</c> 捕熊、<c>\8</c> 烈焰、<c>\9</c> 复活石（与 skillIds 并存）。
+        /// 机关注入：<c>\1</c>–<c>\9</c> 九张 Trap 各一（与 skillIds 并存；见机关卡落地计划 §3.2）。
         /// 列表顺序 = 挂载顺序（格号小→大）。
         /// </summary>
         private static readonly ChannelPreset[] sPresets =
@@ -55,23 +55,28 @@ namespace NineGrid.Flow
                 trapContentIds: new[] { "trap.rolling_stone" }),
             new ChannelPreset(
                 "互动向",
-                new[] { "skill.call_melee6", "skill.link_prep" }),
+                new[] { "skill.call_melee6", "skill.link_prep" },
+                trapContentIds: new[] { "trap.attack_totem" }),
             new ChannelPreset(
                 "翻面向",
-                new[] { "skill.leap_kill", "skill.steal", "skill.recuperate" }),
+                new[] { "skill.leap_kill", "skill.steal", "skill.recuperate" },
+                trapContentIds: new[] { "trap.armor_totem" }),
             new ChannelPreset(
                 "批次1·打伤联动",
-                new[] { "skill.flame_boiling", "skill.rise_up", "skill.evade" }),
+                new[] { "skill.flame_boiling", "skill.rise_up", "skill.evade" },
+                trapContentIds: new[] { "trap.recovery_totem" }),
             new ChannelPreset(
                 "批次1·成长移动",
-                new[] { "skill.battle_hardened", "skill.link_tactics", "skill.delivery" }),
+                new[] { "skill.battle_hardened", "skill.link_tactics", "skill.delivery" },
+                trapContentIds: new[] { "trap.spike" }),
             new ChannelPreset(
                 "批次2·交战提速",
                 new[] { "skill.speed_up", "skill.ranged_weapon", "skill.holy_duel" },
                 trapContentIds: new[] { "trap.bear_trap" }),
             new ChannelPreset(
                 "批次2·死亡潜伏",
-                new[] { "skill.death_summon", "skill.lord_of_death", "skill.ambush_melee" }),
+                new[] { "skill.death_summon", "skill.lord_of_death", "skill.ambush_melee" },
+                trapContentIds: new[] { "trap.healing_spring" }),
             new ChannelPreset(
                 "刺客领袖",
                 new[] { "skill.assassin_leader" },
