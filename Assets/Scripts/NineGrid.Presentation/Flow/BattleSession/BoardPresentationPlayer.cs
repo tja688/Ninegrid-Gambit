@@ -128,9 +128,9 @@ namespace NineGrid.Flow
                 return;
             }
 
-            // 探索等无命中帧：在 Drain/Vacate 前冲刷 Impact，避免飘字/脉冲目标已卸。
-            // 攻击/反击若已在命中帧消费则为空操作；用道具若已在 Present 开头报过亦同。
-            BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
+            // Impact 冲刷改到运动步落地之后、Remove/Vacate 之前（见 DrainBoardStepsAsync /
+            // DrainLegacyBoardDeltaAsync）。若在 hop 前冲刷，OnSelfMove / OnMoveToSlot
+            // 的 EffectTriggered 脉冲与 DamageDealt 会抢在移动表现之前，观感倒置。
 
             var stepCount = result.Steps?.Length ?? 0;
             var moveCount = stepCount > 0 ? stepCount : (result.Moves?.Length ?? 0);
@@ -258,22 +258,25 @@ namespace NineGrid.Flow
             PostKillBoardPresentationResult result,
             CancellationToken ct)
         {
-            if (result.Deals != null && result.Deals.Length > 0)
-            {
-                await DrainDealsAsync(result.Deals, ct);
-            }
-
-            if (result.RemovedUids != null && result.RemovedUids.Length > 0)
-            {
-                await PresentSkillRemovedCardsAsync(result.RemovedUids, ct);
-            }
-
+            // 与步骤流一致：先位移落地 → Impact（脉冲/飘字）→ Remove → Deal。
             if (result.Moves != null && result.Moves.Length > 0)
             {
                 await Field.ApplyBoardMovesAndHopAsync(
                     result.Moves,
                     ct,
                     skipBusyGuard: true);
+            }
+
+            BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
+
+            if (result.RemovedUids != null && result.RemovedUids.Length > 0)
+            {
+                await PresentSkillRemovedCardsAsync(result.RemovedUids, ct);
+            }
+
+            if (result.Deals != null && result.Deals.Length > 0)
+            {
+                await DrainDealsAsync(result.Deals, ct);
             }
         }
 
@@ -289,12 +292,22 @@ namespace NineGrid.Flow
             var fieldManager = Field;
             var rotateCount = 0;
             var choreoRotateCount = 0;
+            // 探索等无命中帧：须在运动落地之后冲刷 Impact。
+            // 同批常见 [Deal, Rotate, Remove…]——绝不能在首个 Deal 前抢跑，否则脉冲/扣血会早于旋转。
+            // 规则：首个 Remove 之前冲刷；若无 Remove，则在全部步骤播完后冲刷。
+            var impactFlushed = false;
             for (var i = 0; i < steps.Length; i++)
             {
                 var step = steps[i];
                 if (step.Kind == BoardPresentationStepKind.Rotate)
                 {
                     rotateCount++;
+                }
+
+                if (!impactFlushed && step.Kind == BoardPresentationStepKind.Remove)
+                {
+                    BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
+                    impactFlushed = true;
                 }
 
                 FieldTraceHelper.RecordBoardStepBegin(
@@ -375,6 +388,11 @@ namespace NineGrid.Flow
                         step,
                         ChoreoTraceContext.CurrentSeqId);
                 }
+            }
+
+            if (!impactFlushed)
+            {
+                BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
             }
 
             if (rotateCount > 0 && rotateCount != choreoRotateCount)

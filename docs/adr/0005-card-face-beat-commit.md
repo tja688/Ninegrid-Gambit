@@ -18,7 +18,7 @@ status: accepted
 v1 锚点：
 
 - **Impact（命中）**：攻击/反击 `onCombatHit` 报点；血量/护甲类指令在此消费。
-- **Settled（收尾）**：`PresentStep` 在表演通道完成之后、就位回执之前报点；观察型 `BaseStatModified` 等在此消费。探索/道具无命中帧时，收尾前先冲刷剩余 Impact 归属。
+- **Settled（收尾）**：`PresentStep` 在表演通道完成之后、就位回执之前报点；观察型 `BaseStatModified` 等在此消费。探索/道具无命中帧时，须冲刷剩余 Impact：探索盘面 Drain 锚在**旋转/位移落地之后、Remove 之前**（同批若先有 Deal 补牌，须等 Deal+Rotate 都播完再 Impact，禁止在 Deal 前抢跑）；用道具仍在 Vacate 前报点。`OnSelfMove` / `OnMoveToSlot` 只匹配盘面→盘面 `CardMoved`（卡组入场落地不计）。
 - **None（不上卡面）**：显式弃权，映射表必须附带非空理由。
 
 生成类事件（`CardSpawned` / 带 uid 的 `CardDealt` / `AvatarAppeared`）在造卡或发牌时写入攻/甲/血绝对值，经 `CardFaceStatHandler` 与后续增量同一提交出口；`CardKilled` 携带 `RemainingHp` 做可见归零。Mapper 首次 Commit 只刷视觉。公开底盘数值 Setter 与 `MarkFieldDead` 直置零旁路已删除。

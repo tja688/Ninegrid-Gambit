@@ -374,8 +374,11 @@ namespace NineGrid.Core.Effects
             var events = context.Events;
             for (var i = 0; i < events.Count; i++)
             {
+                // 只计盘面→盘面位移；卡组/手牌入场落地（即便误发 CardMoved）不计入。
                 if (events[i].Type != CoreEventType.CardMoved
                     || events[i].CardUid != context.OwnerUid
+                    || !events[i].FromSlot.IsBoardSlot
+                    || !events[i].ToSlot.IsBoardSlot
                     || !MatchesSource(context, events[i]))
                 {
                     continue;
@@ -495,6 +498,7 @@ namespace NineGrid.Core.Effects
             for (var i = 0; i < events.Count; i++)
             {
                 if (events[i].Type == CoreEventType.CardMoved
+                    && events[i].FromSlot.IsBoardSlot
                     && MatchesSlot(events[i].ToSlot)
                     && (expectedUid == 0 || events[i].CardUid == expectedUid)
                     && MatchesSource(events[i].SourceDefId))

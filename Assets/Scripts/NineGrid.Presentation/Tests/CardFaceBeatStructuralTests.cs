@@ -199,6 +199,60 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void BoardDrain_ReportsImpact_AfterMotion_BeforeNonMotionSteps()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "BattleSession",
+                "BoardPresentationPlayer.cs"));
+            var text = File.ReadAllText(path);
+            var drainCore = text.IndexOf("DrainPostKillBoardCoreAsync", StringComparison.Ordinal);
+            var drainSteps = text.IndexOf("DrainBoardStepsAsync(", StringComparison.Ordinal);
+            Assert.Greater(drainCore, 0);
+            Assert.Greater(drainSteps, drainCore);
+
+            // Core 入口不得在调用 DrainBoardStepsAsync 之前抢跑 Impact。
+            var coreSlice = text.Substring(drainCore, drainSteps - drainCore);
+            Assert.IsFalse(
+                coreSlice.IndexOf(
+                    "BattleBeatHook.NotifyBeat(PresentationBeat.Impact)",
+                    StringComparison.Ordinal) >= 0,
+                "DrainPostKillBoardCoreAsync 不得在运动步前冲刷 Impact（OnSelfMove 观感倒置）");
+
+            var stepsMethod = text.IndexOf(
+                "private async UniTask DrainBoardStepsAsync",
+                StringComparison.Ordinal);
+            Assert.Greater(stepsMethod, 0);
+            var stepsEnd = text.IndexOf(
+                "private async UniTask DrainDealsAsync",
+                stepsMethod,
+                StringComparison.Ordinal);
+            Assert.Greater(stepsEnd, stepsMethod);
+            var stepsBody = text.Substring(stepsMethod, stepsEnd - stepsMethod);
+            var impactInSteps = stepsBody.IndexOf(
+                "BattleBeatHook.NotifyBeat(PresentationBeat.Impact)",
+                StringComparison.Ordinal);
+            Assert.Greater(impactInSteps, 0, "DrainBoardStepsAsync 须冲刷 Impact");
+            Assert.IsTrue(
+                stepsBody.IndexOf("impactFlushed", StringComparison.Ordinal) >= 0,
+                "Impact 须门控");
+            // 同批 [Deal, Rotate] 时不得在 Deal 前抢跑：仅在 Remove 前或尾部冲刷。
+            Assert.IsTrue(
+                stepsBody.IndexOf(
+                    "step.Kind == BoardPresentationStepKind.Remove",
+                    StringComparison.Ordinal) >= 0,
+                "Impact 须绑在 Remove 前（或尾部），不可绑在任意非运动步");
+            Assert.IsFalse(
+                Regex.IsMatch(
+                    stepsBody,
+                    @"step\.Kind\s*!=\s*BoardPresentationStepKind\.Rotate[\s\S]{0,200}NotifyBeat\(PresentationBeat\.Impact\)"),
+                "禁止「首个非 Rotate/Move/Swap 即 Impact」——会把同批 Deal 前置脉冲");
+        }
+
+        [Test]
         public void PresentStep_ReportsSettled_BeforeAcknowledge()
         {
             var path = Path.GetFullPath(Path.Combine(

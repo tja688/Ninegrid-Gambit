@@ -220,6 +220,58 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(ZoneId.Removed, registry.Get(flameUid).Zone.Value, "满3次应自移除");
         }
 
+        [Test]
+        public void Flame_DealFromDrawPile_DoesNotCountAsSelfMove()
+        {
+            StartEmptyNode();
+            PrepareAvatar(99, 0, 0);
+            var board = mArch.GetModel<BoardModel>();
+            var registry = mArch.GetModel<CardRegistry>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+            var hp0 = (int)avatar.Stats.GetBase(StatId.Hp);
+
+            var flameUid = PrepareDrawPileCard("trap.flame", CardKind.Trap, hp: 6);
+            var eventStart = mPipeline.EventLog.Entries.Count;
+            mPipeline.Enqueue(new FillEmptySlotsAction());
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+
+            Assert.AreEqual(ZoneId.Board, registry.Get(flameUid).Zone.Value, "烈焰应从牌库入场");
+            Assert.AreEqual(hp0, (int)avatar.Stats.GetBase(StatId.Hp), "入场落地不计 OnSelfMove，不伤玩家");
+            Assert.IsFalse(
+                ContainsEffectTriggeredSince(eventStart, flameUid),
+                "入场落地不应 EffectTriggered");
+
+            // 入场后强制落到邻中心格，再盘面邻移一次：应只计 1 次，伤 1，仍在场。
+            mPipeline.Enqueue(new MoveCardAction(flameUid, sSlot2, "test", "test"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+            var hpAfterFirstBoardMove = (int)avatar.Stats.GetBase(StatId.Hp);
+            Assert.AreEqual(hp0 - 1, hpAfterFirstBoardMove, "入场后第1次盘面邻移才伤1");
+            Assert.AreEqual(ZoneId.Board, registry.Get(flameUid).Zone.Value, "仅1次盘面移动不应自移除");
+
+            mPipeline.Enqueue(new MoveCardAction(flameUid, sSlot4, "test", "test"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+            mPipeline.Enqueue(new MoveCardAction(flameUid, sSlot2, "test", "test"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+            Assert.AreEqual(hp0 - 3, (int)avatar.Stats.GetBase(StatId.Hp), "满3次盘面移动应共伤3");
+            Assert.AreEqual(ZoneId.Removed, registry.Get(flameUid).Zone.Value, "满3次盘面移动应自移除");
+        }
+
+        [Test]
+        public void RollingStone_NonBoardToSlot3_DoesNotClearSlot6()
+        {
+            StartEmptyNode();
+            var otherUid = SpawnKind("monster.skull_head", CardKind.Monster, sSlot6, hp: 5);
+            var stoneUid = PrepareDrawPileCard("trap.rolling_stone", CardKind.Trap, hp: 6);
+
+            // 直接把牌库中的滚石 Move 到格3（FromSlot 非盘面）：不应视为 OnMoveToSlot。
+            mPipeline.Enqueue(new MoveCardAction(stoneUid, sSlot3, "test", "test"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+
+            var registry = mArch.GetModel<CardRegistry>();
+            Assert.AreEqual(sSlot3, registry.Get(stoneUid).Slot.Value);
+            Assert.AreEqual(ZoneId.Board, registry.Get(otherUid).Zone.Value, "入场到格3不应清格6");
+        }
+
         private bool ContainsEffectTriggeredSince(int startIndex, int ownerUid)
         {
             var entries = mPipeline.EventLog.Entries;
