@@ -20,10 +20,11 @@ namespace NineGrid.Flow
     /// </summary>
     public readonly struct HelpCardSelectedCardsSpec
     {
-        public HelpCardSelectedCardsSpec(int count, string kindFilter)
+        public HelpCardSelectedCardsSpec(int count, string kindFilter, bool trueMonsterOnly = false)
         {
             Count = count;
             KindFilter = kindFilter;
+            TrueMonsterOnly = trueMonsterOnly;
         }
 
         public int Count { get; }
@@ -31,9 +32,19 @@ namespace NineGrid.Flow
         /// <summary>Monster 等；null/空表示任意非 Avatar 盘面卡。</summary>
         public string KindFilter { get; }
 
+        /// <summary>ADR-0017：SelectedCards trueMonsterOnly（绑架等仅真怪）。</summary>
+        public bool TrueMonsterOnly { get; }
+
+        /// <summary>有 kind=Monster 过滤（可交战或真怪）。</summary>
         public bool RequiresMonster =>
             !string.IsNullOrEmpty(KindFilter)
             && string.Equals(KindFilter, "Monster", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>可交战桶 Monster|Trap（飞刀等指向伤）。</summary>
+        public bool RequiresCombatTarget => RequiresMonster && !TrueMonsterOnly;
+
+        /// <summary>仅真怪 Monster。</summary>
+        public bool RequiresTrueMonster => RequiresMonster && TrueMonsterOnly;
     }
 
     /// <summary>
@@ -197,7 +208,7 @@ namespace NineGrid.Flow
             }
 
             var sliceStart = Math.Max(0, atomIdx - 1);
-            var sliceLength = Math.Min(220, json.Length - sliceStart);
+            var sliceLength = Math.Min(360, json.Length - sliceStart);
             var slice = json.Substring(sliceStart, sliceLength);
 
             if (slice.IndexOf("\"Board\"", StringComparison.OrdinalIgnoreCase) < 0)
@@ -211,8 +222,42 @@ namespace NineGrid.Flow
             }
 
             TryParseJsonStringField(slice, "kind", out var kindFilter);
-            spec = new HelpCardSelectedCardsSpec(count, kindFilter);
+            var trueMonsterOnly = TryParseJsonBoolField(slice, "trueMonsterOnly", out var flag) && flag;
+            spec = new HelpCardSelectedCardsSpec(count, kindFilter, trueMonsterOnly);
             return true;
+        }
+
+        private static bool TryParseJsonBoolField(string json, string fieldName, out bool value)
+        {
+            value = false;
+            var key = "\"" + fieldName + "\":";
+            var idx = json.IndexOf(key, StringComparison.OrdinalIgnoreCase);
+            if (idx < 0)
+            {
+                return false;
+            }
+
+            idx += key.Length;
+            while (idx < json.Length && char.IsWhiteSpace(json[idx]))
+            {
+                idx++;
+            }
+
+            if (idx + 4 <= json.Length
+                && string.Compare(json, idx, "true", 0, 4, StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                value = true;
+                return true;
+            }
+
+            if (idx + 5 <= json.Length
+                && string.Compare(json, idx, "false", 0, 5, StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                value = false;
+                return true;
+            }
+
+            return false;
         }
 
         private static bool TryParseJsonIntField(string json, string fieldName, out int value)

@@ -29,7 +29,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void ThrowingKnife_IsSingleDrag_NotMultiSelect()
+        public void ThrowingKnife_IsSingleDrag_CombatTarget()
         {
             Assert.IsFalse(HelpCardBoardSelectResolver.TryGetRequiredBoardSelectCount(
                 "help.throwing_knife",
@@ -39,6 +39,19 @@ namespace NineGrid.Presentation.Tests
                 out var spec));
             Assert.AreEqual(1, spec.Count);
             Assert.IsTrue(spec.RequiresMonster);
+            Assert.IsTrue(spec.RequiresCombatTarget);
+            Assert.IsFalse(spec.RequiresTrueMonster);
+        }
+
+        [Test]
+        public void Kidnapping_IsSingleDrag_TrueMonsterOnly()
+        {
+            Assert.IsTrue(HelpCardBoardSelectResolver.TryGetSingleTargetSpec(
+                "help.kidnapping",
+                out var spec));
+            Assert.AreEqual(1, spec.Count);
+            Assert.IsTrue(spec.RequiresTrueMonster);
+            Assert.IsFalse(spec.RequiresCombatTarget);
         }
 
         [Test]
@@ -53,6 +66,7 @@ namespace NineGrid.Presentation.Tests
                 out var spec);
             Assert.AreEqual(HelpCardPlayKind.SingleDragTarget, kind);
             Assert.AreEqual(1, spec.Count);
+            Assert.IsTrue(spec.RequiresCombatTarget);
         }
 
         [Test]

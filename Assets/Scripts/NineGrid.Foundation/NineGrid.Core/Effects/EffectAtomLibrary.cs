@@ -1407,6 +1407,7 @@ namespace NineGrid.Core.Effects
         private int mMaxLevel;
         private bool mExcludeElite;
         private bool mExcludeBoss;
+        private bool mTrueMonsterOnly;
         private int mCount;
         private bool mAllowAvatar;
 
@@ -1418,6 +1419,7 @@ namespace NineGrid.Core.Effects
             mMaxLevel = Math.Max(0, config.Get("maxLevel").AsInt(0));
             mExcludeElite = config.Get("excludeElite").AsBool(false);
             mExcludeBoss = config.Get("excludeBoss").AsBool(false);
+            mTrueMonsterOnly = config.Get("trueMonsterOnly").AsBool(false);
             mCount = Math.Max(0, config.Get("count").AsInt(0));
             mAllowAvatar = config.Get("allowAvatar").AsBool(false);
         }
@@ -1444,7 +1446,7 @@ namespace NineGrid.Core.Effects
                     continue;
                 }
 
-                if (mKind != CardKind.Unknown && card.Kind != mKind)
+                if (!CardCombatRules.MatchesSelectedKindFilter(card.Kind, mKind, mTrueMonsterOnly))
                 {
                     continue;
                 }

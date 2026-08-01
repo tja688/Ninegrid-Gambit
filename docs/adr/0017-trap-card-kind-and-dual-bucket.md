@@ -8,8 +8,8 @@ status: accepted
 
 1. **一等公民 Kind**：新增 `CardKind.Trap`（枚举末尾追加，不插中间），同步 `CardPresentationKind.Trap = 7`、`EffectContainerType.Trap`、编辑器用 `ContentVisualKind.Trap`。内容 id 前缀 `trap.*`；卡组 `deck.trap`；效果模板 `tpl.trap.*`。
 2. **双桶 helper（集中入口）**：`CardCombatRules`
-   - **可交战 / 可受伤**：`IsBoardCombatTarget` = `Monster | Trap`（普攻门禁、`TargetResolver.MonstersOnBoard` / AllMonsters、场地战斗点击、拒拾取）。
-   - **真怪物**：`IsTrueMonster` = 仅 `Monster`（清关、击杀赏金、遭遇「怪物」语义、`targetKind=Monster` 精确匹配）。
+   - **可交战 / 可受伤**：`IsBoardCombatTarget` = `Monster | Trap`（普攻门禁、`TargetResolver.MonstersOnBoard` / AllMonsters、场地战斗点击、拒拾取、**SelectedCards `kind=Monster` 默认**）。
+   - **真怪物**：`IsTrueMonster` = 仅 `Monster`（清关、击杀赏金、遭遇「怪物」语义、事件 `targetKind=Monster` 精确匹配、SelectedCards `trueMonsterOnly`）。
 3. **清关不含 Trap**：`IDeckSystem.IsNodeCleared` 只看真怪物是否仍在抽牌堆 / 敌池 / 场上；残留 Trap 不挡关。
 4. **无击杀赏金**：`EconomySystem` 移除赏金与 `KillAction` 显式 `GoldReward` follow-up 均跳过 Trap。
 5. **静默 `CounterAttackBanned`**：`ContentSystem.ActivateCardEffects` 成功路径末尾，对 `CardKind.Trap` 向 `IStatSystem.RuleModifiers` 加永久 `CounterAttackBanned`（`TargetUidCondition`，Source `intrinsic.trap:{defId}`）；不挂远程武器技能、不进检视技能列表。
@@ -29,7 +29,8 @@ status: accepted
 
 ## 后果
 
-- 模板 `targetKind=Monster` 保持精确匹配；新机关技能走 `tpl.trap.*` + `EffectContainerType.Trap`。
+- 模板事件过滤 `targetKind=Monster` 保持精确匹配；新机关技能走 `tpl.trap.*` + `EffectContainerType.Trap`。
+- **SelectedCards `kind=Monster`**：默认走可交战桶（Monster|Trap），与 `AllMonsters` / 普攻一致；仅真怪语义（如绑架）须显式 `trueMonsterOnly:true`。表现层 `HelpCardSelectedCardsSpec.RequiresCombatTarget` / `RequiresTrueMonster` 对齐。
 - Help 重叠卡（滚石等）本 ADR **不**强制删除；迁徙另票。
 - QuickTest `trapContentIds` 注入属批次2（`AddEnemyCard` 入敌池，与 skillIds 并存）；开局随机机关入组仍属后续票。
 - 卡面 Kind→模版表与 [ADR-0002](0002-card-chassis-and-face-templates.md) 对齐为五套。

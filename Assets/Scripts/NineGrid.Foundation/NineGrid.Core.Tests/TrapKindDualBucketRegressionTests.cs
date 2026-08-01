@@ -118,6 +118,79 @@ namespace NineGrid.Core.Tests
                 "爆弹仍伤正面怪");
         }
 
+        /// <summary>
+        /// 飞刀等 SelectedCards(kind=Monster) 单目标伤：应走可交战桶（含 Trap）。
+        /// </summary>
+        [Test]
+        public void ThrowingKnife_SelectedCards_DamagesFaceUpTrap()
+        {
+            StartEmptyNode();
+            var stoneUid = SpawnTrap(sAdjacentSlot);
+            var stoneHp = (int)mArch.GetModel<CardRegistry>().Get(stoneUid).Stats.GetBase(StatId.Hp);
+
+            mPipeline.Enqueue(new SpawnCardAction(
+                "help.throwing_knife",
+                CardKind.HelpCard,
+                ZoneId.ItemSlots,
+                SlotId.None,
+                1,
+                "test"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+            var knifeUid = mArch.GetModel<DeckModel>().ItemSlotUids[
+                mArch.GetModel<DeckModel>().ItemSlotUids.Count - 1];
+
+            Assert.IsTrue(
+                mPhase.ApplyUseItem(knifeUid, new System.Collections.Generic.List<int> { stoneUid }, null)
+                    .Accepted,
+                "飞刀 UseItem 应接受");
+            Assert.AreEqual(
+                stoneHp - 6,
+                (int)mArch.GetModel<CardRegistry>().Get(stoneUid).Stats.GetBase(StatId.Hp),
+                "飞刀应对正面机关造成 6 伤（可交战桶）");
+        }
+
+        /// <summary>
+        /// 绑架 trueMonsterOnly：Trap 不得被 SelectedCards 选中移除。
+        /// </summary>
+        [Test]
+        public void Kidnapping_TrueMonsterOnly_DoesNotRemoveTrap()
+        {
+            StartEmptyNode();
+            var stoneUid = SpawnTrap(sAdjacentSlot);
+            Assert.AreEqual(ZoneId.Board, mArch.GetModel<CardRegistry>().Get(stoneUid).Zone.Value);
+
+            mPipeline.Enqueue(new SpawnCardAction(
+                "help.kidnapping",
+                CardKind.HelpCard,
+                ZoneId.ItemSlots,
+                SlotId.None,
+                1,
+                "test"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+            var itemUid = mArch.GetModel<DeckModel>().ItemSlotUids[
+                mArch.GetModel<DeckModel>().ItemSlotUids.Count - 1];
+
+            Assert.IsTrue(
+                mPhase.ApplyUseItem(itemUid, new System.Collections.Generic.List<int> { stoneUid }, null)
+                    .Accepted,
+                "绑架 UseItem 命令可接受，但目标应被滤空");
+            Assert.AreEqual(
+                ZoneId.Board,
+                mArch.GetModel<CardRegistry>().Get(stoneUid).Zone.Value,
+                "真怪桶：机关不得被绑架移除");
+        }
+
+        [Test]
+        public void SelectedKindFilter_MonsterDefaultsToCombatBucket()
+        {
+            Assert.IsTrue(CardCombatRules.MatchesSelectedKindFilter(
+                CardKind.Trap, CardKind.Monster, trueMonsterOnly: false));
+            Assert.IsFalse(CardCombatRules.MatchesSelectedKindFilter(
+                CardKind.Trap, CardKind.Monster, trueMonsterOnly: true));
+            Assert.IsTrue(CardCombatRules.MatchesSelectedKindFilter(
+                CardKind.Monster, CardKind.Monster, trueMonsterOnly: true));
+        }
+
         [Test]
         public void NodeCleared_WhenOnlyTrapRemainsOnBoardAndDrawPile()
         {

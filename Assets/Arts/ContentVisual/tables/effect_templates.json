@@ -101,7 +101,7 @@
   "design_text": "[使用时] 移除一张非精英非层主怪物卡，并获得等同于其当前护甲的护甲",
   "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":\"{{count}}\",\"excludeElite\":true,\"excludeBoss\":true},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"TransferArmor\",\"all\":true,\"receiver\":\"Player\",\"cause\":\"{{cause}}\"},{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}]}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":\"{{count}}\",\"excludeElite\":true,\"excludeBoss\":true,\"trueMonsterOnly\":true},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"TransferArmor\",\"all\":true,\"receiver\":\"Player\",\"cause\":\"{{cause}}\"},{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}]}}"
  },
  {
   "id": "tpl.help.rotation_wheel.use",

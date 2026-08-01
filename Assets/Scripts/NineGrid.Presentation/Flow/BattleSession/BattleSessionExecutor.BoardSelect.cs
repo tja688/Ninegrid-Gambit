@@ -116,7 +116,14 @@ namespace NineGrid.Flow
                 return false;
             }
 
-            if (spec.RequiresMonster && targetCard.CoreKind != CardPresentationKind.Monster)
+            if (spec.RequiresTrueMonster && targetCard.CoreKind != CardPresentationKind.Monster)
+            {
+                return false;
+            }
+
+            if (spec.RequiresCombatTarget
+                && targetCard.CoreKind != CardPresentationKind.Monster
+                && targetCard.CoreKind != CardPresentationKind.Trap)
             {
                 return false;
             }

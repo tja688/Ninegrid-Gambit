@@ -264,7 +264,9 @@ namespace NineGrid.Flow.Presentation
             }
 
             var registry = arch.GetModel<CardRegistry>();
-            if (!registry.TryGet(targetUid, out var target) || target.Kind == CardKind.Monster)
+            // ADR-0017：可交战桶（Monster|Trap）拒拾取，与 PhaseSystem.ApplyPickupItem 对齐。
+            if (!registry.TryGet(targetUid, out var target)
+                || CardCombatRules.IsBoardCombatTarget(target.Kind))
             {
                 rejectReason = "notPickupable uid=" + targetUid;
                 return false;
