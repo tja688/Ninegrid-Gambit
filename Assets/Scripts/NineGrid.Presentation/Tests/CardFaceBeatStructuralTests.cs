@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -143,6 +144,9 @@ namespace NineGrid.Presentation.Tests
                 text.IndexOf("BattleBeatHook.FlushUpdateFaceUp", StringComparison.Ordinal) >= 0,
                 "组合根须接线 FlushUpdateFaceUp（PresentStep 通道前翻牌）");
             Assert.IsTrue(
+                text.IndexOf("BattleBeatHook.FlushImpactExcept", StringComparison.Ordinal) >= 0,
+                "组合根须接线 FlushImpactExcept（ADR-0018 Vacate 前选择性 Impact）");
+            Assert.IsTrue(
                 text.IndexOf("FlipPlaybackCoordinator.Reset()", StringComparison.Ordinal) >= 0,
                 "组合根拆卸须 Reset FlipPlaybackCoordinator");
         }
@@ -177,7 +181,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void UseItemPresent_ReportsImpact_BeforeLethalVacate()
+        public void UseItemPresent_FlushesNonTriggerImpact_BeforeLethalVacate()
         {
             var path = Path.GetFullPath(Path.Combine(
                 Application.dataPath,
@@ -187,12 +191,17 @@ namespace NineGrid.Presentation.Tests
                 "BattleSession",
                 "BattleSessionExecutor.UseItem.cs"));
             var text = File.ReadAllText(path);
-            var impact = text.IndexOf(
-                "BattleBeatHook.NotifyBeat(PresentationBeat.Impact)",
+            var flushExcept = text.IndexOf(
+                "BattleBeatFlush.FlushImpactExcept(PresentationInstructionKind.TriggerEffect)",
                 StringComparison.Ordinal);
             var vacate = text.IndexOf("BeginUseItemLethalVictims", StringComparison.Ordinal);
-            Assert.Greater(impact, 0, "用道具 Present 须在 Vacate 前报 Impact（飘字定位）");
-            Assert.Greater(vacate, impact, "Impact 须在 BeginUseItemLethalVictims 之前");
+            Assert.Greater(flushExcept, 0, "用道具 Present 须在 Vacate 前冲刷非 TriggerEffect Impact（飘字定位）");
+            Assert.Greater(vacate, flushExcept, "FlushImpactExcept 须在 BeginUseItemLethalVictims 之前");
+            Assert.IsFalse(
+                Regex.IsMatch(
+                    text,
+                    @"PlayUseItemPresentCoreAsync[\s\S]{0,800}NotifyBeat\(PresentationBeat\.Impact\)"),
+                "用道具 Present 不得在 Vacate/Drain 前整批 NotifyBeat(Impact)——会提前消费 TriggerEffect（ADR-0018）");
             Assert.IsFalse(
                 text.IndexOf("SpawnDamagePopups", StringComparison.Ordinal) >= 0,
                 "用道具 Present 不得 SpawnDamagePopups");
@@ -344,6 +353,98 @@ namespace NineGrid.Presentation.Tests
             Assert.IsTrue(
                 text.IndexOf("PresentationInstructionKind.UpdateFaceUp", StringComparison.Ordinal) >= 0,
                 "FlushUpdateFaceUp 只消费 UpdateFaceUp");
+            Assert.IsTrue(
+                text.IndexOf("public void FlushImpactExcept(", StringComparison.Ordinal) >= 0,
+                "排期器须暴露 FlushImpactExcept（ADR-0018）");
+        }
+
+        [Test]
+        public void ChoicePresent_DefersTriggerEffect_WhenBoardDrainFollows()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "BattleSession",
+                "BattleSessionExecutor.Choice.cs"));
+            var text = File.ReadAllText(path);
+            var excluding = text.IndexOf(
+                "PresentEventLogSliceExcluding",
+                StringComparison.Ordinal);
+            var drain = text.IndexOf("DrainPostKillBoardAsync", StringComparison.Ordinal);
+            var only = text.IndexOf("PresentEventLogSliceOnly", StringComparison.Ordinal);
+            Assert.Greater(excluding, 0, "有盘面 Drain 时须 PresentEventLogSliceExcluding(TriggerEffect)");
+            Assert.Greater(drain, excluding, "Drain 须在 Excluding Present 之后");
+            Assert.Greater(only, drain, "Drain 后须 PresentEventLogSliceOnly(TriggerEffect)");
+            Assert.IsTrue(
+                text.IndexOf("PresentationInstructionKind.TriggerEffect", StringComparison.Ordinal) >= 0,
+                "Choice 延迟认领须点名 TriggerEffect");
+        }
+
+        [Test]
+        public void ProductionSources_PlayEffectTriggerPulse_IsAllowlisted()
+        {
+            var root = Path.GetFullPath(Path.Combine(Application.dataPath, "Scripts", "NineGrid.Presentation"));
+            var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "CardEffectTriggerPulseSink.cs",
+                "CardEffectManager.cs",
+                "CardEffectManagerExtensions.cs",
+                // P2：嘲讽交战 UX 电报，产品定性前暂留白名单（非 ADR-0018 强制收口）。
+                "CardAttackBasicAdapter.cs",
+            };
+            var offenders = Directory
+                .EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
+                .Where(path => path.IndexOf("\\Tests\\", StringComparison.OrdinalIgnoreCase) < 0
+                               && path.IndexOf("/Tests/", StringComparison.OrdinalIgnoreCase) < 0)
+                .Where(path =>
+                {
+                    var name = Path.GetFileName(path);
+                    if (allowed.Contains(name))
+                    {
+                        return false;
+                    }
+
+                    var text = File.ReadAllText(path);
+                    return text.IndexOf("PlayEffectTriggerPulse(", StringComparison.Ordinal) >= 0;
+                })
+                .Select(path => path.Substring(Application.dataPath.Length).TrimStart('\\', '/'))
+                .ToArray();
+
+            Assert.IsEmpty(
+                offenders,
+                "PlayEffectTriggerPulse 生产调用须走 Impact 装饰 / 白名单：\n"
+                + string.Join("\n", offenders));
+        }
+
+        [Test]
+        public void HolyDuel_Fallback_EmitsEffectTriggered_NotSilentDealDamage()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Foundation",
+                "NineGrid.Core",
+                "Systems",
+                "PhaseSystem.cs"));
+            var text = File.ReadAllText(path);
+            var applyMark = text.IndexOf("private void ApplyHolyDuelMark", StringComparison.Ordinal);
+            Assert.Greater(applyMark, 0);
+            var nextMethod = text.IndexOf(
+                "private string FindHolyDuelActivateInstanceId",
+                applyMark + 1,
+                StringComparison.Ordinal);
+            Assert.Greater(nextMethod, applyMark);
+            var body = text.Substring(applyMark, nextMethod - applyMark);
+            Assert.IsTrue(
+                body.IndexOf("EmitEffectTriggeredAction", StringComparison.Ordinal) >= 0,
+                "神圣决斗 fallback 须 EmitEffectTriggeredAction（ADR-0018）");
+            Assert.IsFalse(
+                Regex.IsMatch(
+                    body,
+                    @"holyDuelInstanceId\s*==\s*null[\s\S]{0,200}pipeline\.Enqueue\(new DealDamageAction"),
+                "fallback 不得在无 EffectTriggered 时直接裸 Enqueue DealDamageAction");
         }
 
         [Test]

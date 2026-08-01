@@ -335,6 +335,11 @@ namespace NineGrid.Core.Systems
             var holyDuelInstanceId = FindHolyDuelActivateInstanceId(markedUid);
             if (holyDuelInstanceId == null)
             {
+                // ADR-0018：无 activate 实例时仍须留下等价 EffectTriggered，禁止 silent 裸伤。
+                pipeline.Enqueue(new EmitEffectTriggeredAction(
+                    markedUid,
+                    "skill.holy_duel.activate",
+                    "skill.holy_duel"));
                 pipeline.Enqueue(new DealDamageAction(
                     markedUid,
                     avatar.Uid,

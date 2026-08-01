@@ -109,6 +109,39 @@ namespace NineGrid.Flow.Presentation
         }
 
         /// <summary>
+        /// 冲刷 Impact 但跳过指定 Kind（ADR-0018）：例如 Vacate 前先认领飘字/血甲，
+        /// 把 TriggerEffect 留给盘面运动落地后的 Drain Impact。
+        /// </summary>
+        public void FlushImpactExcept(PresentationInstructionKind excludedKind)
+        {
+            for (var i = 0; i < mPending.Count;)
+            {
+                var instruction = mPending[i];
+                if (instruction == null
+                    || instruction.MapEntry == null
+                    || instruction.MapEntry.Beat != PresentationBeat.Impact)
+                {
+                    i++;
+                    continue;
+                }
+
+                if (instruction.Kind == excludedKind)
+                {
+                    i++;
+                    continue;
+                }
+
+                if (!TryDispatch(instruction))
+                {
+                    i++;
+                    continue;
+                }
+
+                mPending.RemoveAt(i);
+            }
+        }
+
+        /// <summary>
         /// 非锁步旁路：临时装载一批并冲刷 Impact→Settled，恢复原先 pending（不搅乱锁步当批）。
         /// </summary>
         public void PresentStandalone(PresentationBatch batch)

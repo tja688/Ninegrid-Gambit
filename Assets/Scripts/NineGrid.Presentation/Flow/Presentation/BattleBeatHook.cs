@@ -15,12 +15,16 @@ namespace NineGrid.Flow.Presentation
         /// <summary>只冲刷 pending 的 UpdateFaceUp（PresentStep 通道 Begin 前）。</summary>
         public static Action FlushUpdateFaceUp;
 
+        /// <summary>冲刷 Impact 但跳过指定 Kind（ADR-0018：Vacate 前飘字、TriggerEffect 延迟）。</summary>
+        public static Action<PresentationInstructionKind> FlushImpactExcept;
+
         public static void Reset()
         {
             OnBatchOpened = null;
             ReportBeat = null;
             PresentStandalone = null;
             FlushUpdateFaceUp = null;
+            FlushImpactExcept = null;
         }
 
         public static void NotifyBatchOpened(PresentationBatch batch)
@@ -41,6 +45,11 @@ namespace NineGrid.Flow.Presentation
         public static void NotifyFlushUpdateFaceUp()
         {
             FlushUpdateFaceUp?.Invoke();
+        }
+
+        public static void NotifyFlushImpactExcept(PresentationInstructionKind excludedKind)
+        {
+            FlushImpactExcept?.Invoke(excludedKind);
         }
     }
 }

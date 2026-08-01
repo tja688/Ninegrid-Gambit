@@ -268,6 +268,54 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void HolyDuel_FallbackWithoutActivateInstance_StillEmitsEffectTriggered()
+        {
+            StartEmptyNode();
+            var holderUid = SpawnOnBoardReturnUid("monster.headless_skeleton", CardKind.Monster, sHostSlot);
+            var otherUid = SpawnOnBoardReturnUid("monster.skull_head", CardKind.Monster, sOtherSlot);
+            var registry = mArch.GetModel<CardRegistry>();
+            var board = mArch.GetModel<BoardModel>();
+            var avatarUid = board.AvatarUid.Value;
+            PrepareAvatar(99, 1, 0);
+            ActivateSkillAndFlush(registry.Get(holderUid), "skill.holy_duel");
+
+            var first = mPhase.ApplyCombatHit(avatarUid, holderUid);
+            Assert.IsTrue(first.Accepted, first.Reason);
+            Assert.AreEqual(holderUid, mArch.GetModel<PlayerModel>().DuelMarkMonsterUid);
+
+            // 卸掉 activate 实例，逼出 fallback 裸伤路径。
+            var activateIds = mEffects.GetInstanceIdsByOwner(holderUid)
+                .Where(id =>
+                {
+                    EffectInstance instance;
+                    return mEffects.TryGetInstance(id, out instance)
+                        && instance.Definition != null
+                        && instance.Definition.Id == "skill.holy_duel.activate";
+                })
+                .ToList();
+            Assert.IsNotEmpty(activateIds, "预条件：应存在 holy_duel.activate 实例");
+            for (var i = 0; i < activateIds.Count; i++)
+            {
+                mPipeline.Enqueue(new DeactivateEffectAction(activateIds[i]));
+            }
+
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+
+            var start = mPipeline.EventLog.Entries.Count;
+            var second = mPhase.ApplyCombatHit(avatarUid, otherUid);
+            Assert.IsTrue(second.Accepted, second.Reason);
+            Assert.AreEqual(97, (int)registry.Get(avatarUid).Stats.GetBase(StatId.Hp), "fallback 仍应扣玩家2血");
+
+            var triggered = mPipeline.EventLog.Entries
+                .Skip(start)
+                .Where(e => e.Type == CoreEventType.EffectTriggered && e.CardUid == holderUid)
+                .ToList();
+            Assert.IsNotEmpty(
+                triggered,
+                "无 activate 实例的 fallback 仍须发 EffectTriggered（ADR-0018）");
+        }
+
+        [Test]
         public void AmbushMelee_FiveInteractsAdjacent_DamagesPlayerAndFlipsSelf()
         {
             StartEmptyNode();

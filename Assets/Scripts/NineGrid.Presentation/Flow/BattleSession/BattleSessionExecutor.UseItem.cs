@@ -55,12 +55,13 @@ namespace NineGrid.Flow
             UseItemPresentationResult useResult,
             CancellationToken ct)
         {
-            // UseItem Present：只刷已提交投影的视觉；数值与飘字/脉冲在 Vacate 前报 Impact 消费。
+            // UseItem Present：只刷已提交投影的视觉；飘字/血甲在 Vacate 前认领，TriggerEffect 留给运动后。
             CoreCardPresentationMapper.RefreshVisualsPreservingCommittedStatsOnAllSpawned();
             PresentationOutputProjector.UpdateAvatarDebugText();
 
-            // 无命中帧：在 Vacate 前冲刷 Impact，保证飘字仍能解析目标世界坐标。
-            BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
+            // ADR-0018：Vacate 前只冲刷非 TriggerEffect 的 Impact（保飘字世界坐标）；
+            // TriggerEffect 留在 pending，由后续 Drain 运动落地 Impact（无 delta 则由 PresentStep FlushBeats）消费。
+            BattleBeatFlush.FlushImpactExcept(PresentationInstructionKind.TriggerEffect);
 
             // 击杀必须先 Vacate 尸体，再 Drain/Sync；否则 Register 会静默挤占格留下钉住幽灵。
             if (useResult.TargetKilled)

@@ -240,6 +240,7 @@ namespace NineGrid.Presentation.Setup
             BattleBeatHook.ReportBeat = mBeatScheduler.ReportBeat;
             BattleBeatHook.PresentStandalone = mBeatScheduler.PresentStandalone;
             BattleBeatHook.FlushUpdateFaceUp = mBeatScheduler.FlushUpdateFaceUp;
+            BattleBeatHook.FlushImpactExcept = mBeatScheduler.FlushImpactExcept;
             if (architecture != null)
             {
                 mBatchOpenedUnRegister = architecture.RegisterEvent<Evt_PresentationBatchOpened>(e =>

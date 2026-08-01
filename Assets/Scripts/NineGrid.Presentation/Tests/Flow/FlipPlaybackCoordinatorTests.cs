@@ -122,6 +122,35 @@ namespace NineGrid.Presentation.Tests
             Assert.IsTrue(claimedGold, "Settled 后应消费金币");
         }
 
+        [Test]
+        public void FlushImpactExcept_SkipsTriggerEffect_LeavesItForLaterImpact()
+        {
+            var damage = new PresentationInstruction(
+                new CoreGameEvent(CoreEventType.DamageDealt, 1, "DealDamage")
+                    .WithTarget(1)
+                    .WithAmount(2),
+                PresentationEventMap.Get(CoreEventType.DamageDealt));
+            var trigger = new PresentationInstruction(
+                new CoreGameEvent(CoreEventType.EffectTriggered, 2, "ExecuteEffect")
+                    .WithCard(3),
+                PresentationEventMap.Get(CoreEventType.EffectTriggered));
+
+            var claimedDamage = false;
+            var claimedTrigger = false;
+            var scheduler = new BattleBeatScheduler(
+                new RecordingHandler(PresentationInstructionKind.ShowDamage, () => claimedDamage = true),
+                new RecordingHandler(PresentationInstructionKind.TriggerEffect, () => claimedTrigger = true));
+
+            scheduler.OnBatchOpened(new PresentationBatch(1, new[] { damage, trigger }, null));
+            scheduler.FlushImpactExcept(PresentationInstructionKind.TriggerEffect);
+
+            Assert.IsTrue(claimedDamage, "FlushImpactExcept 应消费 ShowDamage");
+            Assert.IsFalse(claimedTrigger, "不得提前消费 TriggerEffect");
+
+            scheduler.ReportBeat(PresentationBeat.Impact);
+            Assert.IsTrue(claimedTrigger, "后续 Impact 应消费 TriggerEffect");
+        }
+
         private CardFaceFlipPresenter CreatePresenter(string name)
         {
             var go = new GameObject(name);

@@ -136,8 +136,6 @@ namespace NineGrid.Flow
                 try
                 {
                     CoreBatchProjectionCoordinator.FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids, out var rewardSteps);
-                    BattleBeatFlush.PresentEventLogSlice(NineGridArchitecture.Current, startIndex);
-                    BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
                     var phase = phaseSystem.CurrentPhase;
                     var boardDelta = new PostKillBoardPresentationResult
                     {
@@ -156,15 +154,31 @@ namespace NineGrid.Flow
                         AvatarDefeated = phase == GamePhase.Defeat,
                     };
 
-                    if ((boardDelta.Steps != null && boardDelta.Steps.Length > 0)
+                    var hasBoardDrain =
+                        (boardDelta.Steps != null && boardDelta.Steps.Length > 0)
                         || (boardDelta.Moves != null && boardDelta.Moves.Length > 0)
                         || (boardDelta.Deals != null && boardDelta.Deals.Length > 0)
-                        || (boardDelta.RemovedUids != null && boardDelta.RemovedUids.Length > 0))
+                        || (boardDelta.RemovedUids != null && boardDelta.RemovedUids.Length > 0);
+
+                    if (hasBoardDrain)
                     {
+                        // ADR-0018：有盘面 Drain 时勿在运动前整批冲 TriggerEffect；先 Present 非触发类。
+                        BattleBeatFlush.PresentEventLogSliceExcluding(
+                            NineGridArchitecture.Current,
+                            startIndex,
+                            PresentationInstructionKind.TriggerEffect);
+                        BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
                         await DrainPostKillBoardAsync(boardDelta, EnsurePresentationToken());
+                        // 运动落地后再消费本切片 TriggerEffect（脉冲 / 可见因果）。
+                        BattleBeatFlush.PresentEventLogSliceOnly(
+                            NineGridArchitecture.Current,
+                            startIndex,
+                            PresentationInstructionKind.TriggerEffect);
                     }
                     else
                     {
+                        BattleBeatFlush.PresentEventLogSlice(NineGridArchitecture.Current, startIndex);
+                        BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
                         // 空 delta：对账已提交投影（不直读最新 Core 抢刷卡面）。
                         CoreCardPresentationMapper.SyncAllSpawnedCards();
                         PresentationOutputProjector.UpdateAvatarDebugText();

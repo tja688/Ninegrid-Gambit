@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
 using QFramework;
@@ -23,11 +24,50 @@ namespace NineGrid.Flow.Presentation
         }
 
         /// <summary>
+        /// 冲刷 Impact 但跳过指定 Kind（ADR-0018：Vacate 前飘字，TriggerEffect 留待运动后）。
+        /// </summary>
+        public static void FlushImpactExcept(PresentationInstructionKind excludedKind)
+        {
+            BattleBeatHook.NotifyFlushImpactExcept(excludedKind);
+        }
+
+        /// <summary>
         /// 非锁步：将事件日志切片经排期器消费。
         /// 无打开批次时 OpenBatch → FlushBeats → FinishBatch；
         /// 已有打开批次时走旁路 PresentStandalone，避免清掉当批 pending。
         /// </summary>
         public static void PresentEventLogSlice(IArchitecture architecture, int startIndex)
+        {
+            PresentEventLogSliceFiltered(architecture, startIndex, excludeKind: null, onlyKind: null);
+        }
+
+        /// <summary>
+        /// 同 <see cref="PresentEventLogSlice"/>，但跳过指定 Kind（ADR-0018：有盘面运动时先 Present 非触发类）。
+        /// </summary>
+        public static void PresentEventLogSliceExcluding(
+            IArchitecture architecture,
+            int startIndex,
+            PresentationInstructionKind excludeKind)
+        {
+            PresentEventLogSliceFiltered(architecture, startIndex, excludeKind, onlyKind: null);
+        }
+
+        /// <summary>
+        /// 同 <see cref="PresentEventLogSlice"/>，但只消费指定 Kind（ADR-0018：运动落地后再 Present TriggerEffect）。
+        /// </summary>
+        public static void PresentEventLogSliceOnly(
+            IArchitecture architecture,
+            int startIndex,
+            PresentationInstructionKind onlyKind)
+        {
+            PresentEventLogSliceFiltered(architecture, startIndex, excludeKind: null, onlyKind);
+        }
+
+        private static void PresentEventLogSliceFiltered(
+            IArchitecture architecture,
+            int startIndex,
+            PresentationInstructionKind? excludeKind,
+            PresentationInstructionKind? onlyKind)
         {
             if (architecture == null || startIndex < 0)
             {
@@ -56,6 +96,11 @@ namespace NineGrid.Flow.Presentation
                 startIndex,
                 batchId,
                 snapshot: null);
+            batch = FilterBatch(batch, excludeKind, onlyKind);
+            if (batch.Instructions.Count == 0)
+            {
+                return;
+            }
 
             if (sync.ActiveBatchId <= 0)
             {
@@ -66,6 +111,42 @@ namespace NineGrid.Flow.Presentation
             }
 
             BattleBeatHook.NotifyPresentStandalone(batch);
+        }
+
+        private static PresentationBatch FilterBatch(
+            PresentationBatch batch,
+            PresentationInstructionKind? excludeKind,
+            PresentationInstructionKind? onlyKind)
+        {
+            if (batch == null || (excludeKind == null && onlyKind == null))
+            {
+                return batch;
+            }
+
+            var source = batch.Instructions;
+            var filtered = new List<PresentationInstruction>(source.Count);
+            for (var i = 0; i < source.Count; i++)
+            {
+                var instruction = source[i];
+                if (instruction == null)
+                {
+                    continue;
+                }
+
+                if (onlyKind != null && instruction.Kind != onlyKind.Value)
+                {
+                    continue;
+                }
+
+                if (excludeKind != null && instruction.Kind == excludeKind.Value)
+                {
+                    continue;
+                }
+
+                filtered.Add(instruction);
+            }
+
+            return new PresentationBatch(batch.BatchId, filtered, batch.Snapshot);
         }
 
         /// <summary>

@@ -53,6 +53,33 @@ namespace NineGrid.Core
         }
     }
 
+    /// <summary>
+    /// 无效果实例时仍发出 EffectTriggered（ADR-0018 基础触发表现 fallback，如神圣决斗）。
+    /// </summary>
+    public sealed class EmitEffectTriggeredAction : GameAction
+    {
+        public EmitEffectTriggeredAction(int ownerUid, string effectDefId, string sourceDefId = null)
+        {
+            OwnerUid = ownerUid;
+            EffectDefId = effectDefId ?? string.Empty;
+            SourceDefId = sourceDefId ?? effectDefId ?? string.Empty;
+        }
+
+        public int OwnerUid { get; private set; }
+        public string EffectDefId { get; private set; }
+        public string SourceDefId { get; private set; }
+        public override string ActionName { get { return "EmitEffectTriggered"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.EffectTriggered, context.ActionId, ActionName)
+                    .WithCard(OwnerUid)
+                    .WithMessage(EffectDefId)
+                    .WithSource(SourceDefId, EffectDefId));
+        }
+    }
+
     public sealed class KillIfDeadAction : GameAction
     {
         public KillIfDeadAction(int killerUid, int targetUid)
