@@ -12,5 +12,6 @@ namespace NineGrid.Cards
         Relic = 4,
         HelpCard = 5,
         Item = 6,
+        Trap = 7,
     }
 }

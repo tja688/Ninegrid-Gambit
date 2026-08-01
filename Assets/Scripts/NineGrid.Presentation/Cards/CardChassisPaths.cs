@@ -1,7 +1,7 @@
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 卡牌底盘与四套卡面模板的权威资产路径（#13/#14）。
+    /// 卡牌底盘与五套卡面模板的权威资产路径（#13/#14；ADR-0017 含机关）。
     /// 旧路径 Assets/Prefabs/Standard Card.prefab 已失效，一律改用本常量。
     /// </summary>
     public static class CardChassisPaths
@@ -11,6 +11,7 @@ namespace NineGrid.Cards
         public const string MonsterFacePrefab = "Assets/Prefabs/怪物卡标准模板.prefab";
         public const string ItemFacePrefab = "Assets/Prefabs/道具卡标准模版.prefab";
         public const string RelicFacePrefab = "Assets/Prefabs/遗物卡标准模版.prefab";
+        public const string TrapFacePrefab = "Assets/Prefabs/机关卡标准模版.prefab";
         public const string SlotRegistryAsset = "Assets/Arts/Cards/CardFaceSlotRegistry.asset";
         public const string DescriptionInlineIconStyleAsset =
             "Assets/Arts/Cards/CardFaceDescriptionInlineIconStyle.asset";

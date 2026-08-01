@@ -114,7 +114,7 @@ namespace NineGrid.Core.Systems
                 }
 
                 CardInstance card;
-                if (!registry.TryGet(evt.CardUid, out card) || card.Kind != CardKind.Monster)
+                if (!registry.TryGet(evt.CardUid, out card) || !CardCombatRules.IsTrueMonster(card.Kind))
                 {
                     continue;
                 }

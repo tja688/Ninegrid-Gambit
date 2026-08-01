@@ -1245,15 +1245,15 @@
   "design_text": "[场上] [被移除时]，将一张复活石打出到同格（抢在常规补牌前）",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfRemoved\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"trap.revive_stone\",\"kind\":\"Monster\",\"zone\":\"Board\",\"slot\":\"EventFromSlot\",\"count\":\"{{count}}\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfRemoved\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"trap.revive_stone\",\"kind\":\"Trap\",\"zone\":\"Board\",\"slot\":\"EventFromSlot\",\"count\":\"{{count}}\"}}"
  },
  {
   "id": "tpl.skill.lord_of_death.remove",
   "state": "Implemented",
-  "design_text": "[场上] 每有一张怪物卡[被移除时]，将一张复活石打出到同格；自己死不补；机关卡（trap.*）不计怪物",
+  "design_text": "[场上] 每有一张怪物卡[被移除时]，将一张复活石打出到同格；自己死不补；机关卡（CardKind.Trap）不计怪物",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
-  "conditions_json": "[\"EventFilter:eventType=CardRemoved:targetKind=Monster:excludeTargetDefPrefix=trap.\", \"EventFilterTargetNotSelf:eventType=CardRemoved\"]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyCardRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"targetKind\":\"Monster\",\"excludeTargetDefPrefix\":\"trap.\"},{\"atom\":\"EventFilterTargetNotSelf\",\"eventType\":\"CardRemoved\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"trap.revive_stone\",\"kind\":\"Monster\",\"zone\":\"Board\",\"slot\":\"EventFromSlot\",\"count\":\"{{count}}\"}}"
+  "conditions_json": "[\"EventFilter:eventType=CardRemoved:targetKind=Monster\", \"EventFilterTargetNotSelf:eventType=CardRemoved\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyCardRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"targetKind\":\"Monster\"},{\"atom\":\"EventFilterTargetNotSelf\",\"eventType\":\"CardRemoved\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"trap.revive_stone\",\"kind\":\"Trap\",\"zone\":\"Board\",\"slot\":\"EventFromSlot\",\"count\":\"{{count}}\"}}"
  },
  {
   "id": "tpl.skill.holy_duel.activate",
@@ -1290,10 +1290,10 @@
  {
   "id": "tpl.skill.assassin_leader.rule",
   "state": "Implemented",
-  "design_text": "[场上]本卡正面时，怪物打出到格后立刻触发本效果并将该怪翻面（机关 trap.* 除外；领袖翻面/离场后不再触发；已在场背面不自动翻回）",
+  "design_text": "[场上]本卡正面时，怪物打出到格后立刻触发本效果并将该怪翻面（仅 targetKind=Monster；领袖翻面/离场后不再触发；已在场背面不自动翻回）",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
-  "conditions_json": "[\"IsFaceUp:target=Self\", \"EventFilter:eventType=CardDealt:targetKind=Monster:excludeTargetDefPrefix=trap.\"]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"IsFaceUp\",\"target\":\"Self\"},{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"Monster\",\"excludeTargetDefPrefix\":\"trap.\"}],\"target\":{\"atom\":\"EventCards\",\"eventType\":\"CardDealt\",\"targetKind\":\"Monster\",\"excludeTargetDefPrefix\":\"trap.\"},\"action\":{\"atom\":\"Flip\"}}"
+  "conditions_json": "[\"IsFaceUp:target=Self\", \"EventFilter:eventType=CardDealt:targetKind=Monster\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"IsFaceUp\",\"target\":\"Self\"},{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"EventCards\",\"eventType\":\"CardDealt\",\"targetKind\":\"Monster\"},\"action\":{\"atom\":\"Flip\"}}"
  },
  {
   "id": "tpl.skill.world_as_neighbors.rule",

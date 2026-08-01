@@ -134,7 +134,7 @@ namespace NineGrid.Content
                 card.Stats.Recovery = Math.Max(0, stats.recovery);
             }
 
-            if (kind == CardKind.Monster)
+            if (kind == CardKind.Monster || kind == CardKind.Trap)
             {
                 ApplyMonsterAttackPattern(dto, card);
             }

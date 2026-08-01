@@ -8,7 +8,8 @@ namespace NineGrid.Core
         PlayerCard,
         Relic,
         HelpCard,
-        Item
+        Item,
+        Trap
     }
 
     public enum ZoneId

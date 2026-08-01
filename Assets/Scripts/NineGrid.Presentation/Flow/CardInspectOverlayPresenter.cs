@@ -518,6 +518,9 @@ namespace NineGrid.Flow
                 case CardPresentationKind.Monster:
                     path = CardChassisPaths.MonsterFacePrefab;
                     break;
+                case CardPresentationKind.Trap:
+                    path = CardChassisPaths.TrapFacePrefab;
+                    break;
                 case CardPresentationKind.HelpCard:
                 case CardPresentationKind.Item:
                 case CardPresentationKind.PlayerCard:

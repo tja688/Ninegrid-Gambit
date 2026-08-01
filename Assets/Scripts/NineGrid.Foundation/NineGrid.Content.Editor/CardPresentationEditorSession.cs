@@ -127,7 +127,7 @@ namespace NineGrid.Content.Editor
     }
 
     /// <summary>
-    /// 编辑器效果池分类（道具 / 遗物 / 怪物技能）。JSON 模板仍同构；本枚举只约束默认可见集与同类多载。
+    /// 编辑器效果池分类（道具 / 遗物 / 怪物技能 / 机关技能）。JSON 模板仍同构；本枚举只约束默认可见集与同类多载。
     /// </summary>
     public enum EffectTemplateOriginCategory
     {
@@ -135,6 +135,7 @@ namespace NineGrid.Content.Editor
         Item = 1,
         Relic = 2,
         MonsterSkill = 3,
+        TrapSkill = 4,
     }
 
     [Serializable]
@@ -825,6 +826,12 @@ namespace NineGrid.Content.Editor
                 return category == EffectTemplateOriginCategory.MonsterSkill;
             }
 
+            if (string.Equals(ct, "Trap", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(ct, "TrapSkill", StringComparison.OrdinalIgnoreCase))
+            {
+                return category == EffectTemplateOriginCategory.TrapSkill;
+            }
+
             return false;
         }
 
@@ -839,6 +846,8 @@ namespace NineGrid.Content.Editor
                     return "遗物效果";
                 case EffectTemplateOriginCategory.MonsterSkill:
                     return "怪物技能效果";
+                case EffectTemplateOriginCategory.TrapSkill:
+                    return "机关技能效果";
                 default:
                     return "其他效果";
             }
@@ -955,8 +964,8 @@ namespace NineGrid.Content.Editor
         }
 
         /// <summary>
-        /// 按模板 id 推断编辑器分类：标准前缀 <c>tpl.help/relic/skill.*</c>；
-        /// 共享/遗留 id 再按名称中的 help/relic/skill 段启发式归类。
+        /// 按模板 id 推断编辑器分类：标准前缀 <c>tpl.help/relic/skill/trap.*</c>；
+        /// 共享/遗留 id 再按名称中的 help/relic/skill/trap 段启发式归类。
         /// </summary>
         public static EffectTemplateOriginCategory ResolveEffectTemplateCategory(string templateId)
         {
@@ -981,6 +990,11 @@ namespace NineGrid.Content.Editor
                 return EffectTemplateOriginCategory.MonsterSkill;
             }
 
+            if (id.StartsWith("tpl.trap.", StringComparison.OrdinalIgnoreCase))
+            {
+                return EffectTemplateOriginCategory.TrapSkill;
+            }
+
             // shared / 遗留无前缀：如 tpl.shared.3.help_…、tpl.gain_armor_on_use_help_card
             if (id.IndexOf("help", StringComparison.OrdinalIgnoreCase) >= 0)
             {
@@ -997,10 +1011,15 @@ namespace NineGrid.Content.Editor
                 return EffectTemplateOriginCategory.MonsterSkill;
             }
 
+            if (id.IndexOf("trap", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return EffectTemplateOriginCategory.TrapSkill;
+            }
+
             return EffectTemplateOriginCategory.Other;
         }
 
-        /// <summary>tpl.help.* →（道具效果）；tpl.skill.* →（怪物技能效果）；tpl.relic.* →（遗物效果）。</summary>
+        /// <summary>tpl.help.* →（道具效果）；tpl.skill.* →（怪物技能效果）；tpl.relic.* →（遗物效果）；tpl.trap.* →（机关技能效果）。</summary>
         public static string ResolveEffectOriginSuffix(string templateId)
         {
             switch (ResolveEffectTemplateCategory(templateId))
@@ -1011,6 +1030,8 @@ namespace NineGrid.Content.Editor
                     return "（怪物技能效果）";
                 case EffectTemplateOriginCategory.Relic:
                     return "（遗物效果）";
+                case EffectTemplateOriginCategory.TrapSkill:
+                    return "（机关技能效果）";
                 default:
                     return string.IsNullOrWhiteSpace(templateId) ? string.Empty : "（其他效果）";
             }
@@ -1629,12 +1650,15 @@ namespace NineGrid.Content.Editor
 
             if (Enum.TryParse(kind, true, out ContentVisualKind cvk))
             {
-                return cvk == ContentVisualKind.Avatar || cvk == ContentVisualKind.Monster;
+                return cvk == ContentVisualKind.Avatar
+                    || cvk == ContentVisualKind.Monster
+                    || cvk == ContentVisualKind.Trap;
             }
 
             var k = kind.Trim();
             return string.Equals(k, "Avatar", StringComparison.OrdinalIgnoreCase)
-                   || string.Equals(k, "Monster", StringComparison.OrdinalIgnoreCase);
+                   || string.Equals(k, "Monster", StringComparison.OrdinalIgnoreCase)
+                   || string.Equals(k, "Trap", StringComparison.OrdinalIgnoreCase);
         }
 
         public static bool IsMonsterKind(string kind)

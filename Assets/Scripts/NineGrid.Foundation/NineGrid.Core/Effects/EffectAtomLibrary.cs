@@ -3689,7 +3689,7 @@ namespace NineGrid.Core.Effects
                 CardInstance card;
                 // ADR-0016：背面怪不进 AllMonsters / RandomMonster（爆弹等全盘伤）。
                 if (context.TryGetCard(uid, out card)
-                    && card.Kind == CardKind.Monster
+                    && CardCombatRules.IsBoardCombatTarget(card.Kind)
                     && card.FaceUp)
                 {
                     result.Add(uid);

@@ -370,7 +370,7 @@ namespace NineGrid.Core.Systems
                     continue;
                 }
 
-                if (card.Kind != CardKind.Monster || card.IsReserve)
+                if (!CardCombatRules.IsBoardCombatTarget(card.Kind) || card.IsReserve)
                 {
                     continue;
                 }

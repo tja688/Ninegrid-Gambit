@@ -15,7 +15,8 @@ namespace NineGrid.Core.Effects
         Unknown,
         Relic,
         MonsterSkill,
-        HelpCard
+        HelpCard,
+        Trap
     }
 
     public enum EffectAtomKind

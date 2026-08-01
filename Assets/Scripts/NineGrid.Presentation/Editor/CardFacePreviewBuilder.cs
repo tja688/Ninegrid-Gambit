@@ -186,6 +186,9 @@ namespace NineGrid.Presentation.Editor
                 case CardPresentationKind.Monster:
                     path = CardChassisPaths.MonsterFacePrefab;
                     break;
+                case CardPresentationKind.Trap:
+                    path = CardChassisPaths.TrapFacePrefab;
+                    break;
                 case CardPresentationKind.HelpCard:
                 case CardPresentationKind.Item:
                 case CardPresentationKind.PlayerCard:
@@ -209,6 +212,8 @@ namespace NineGrid.Presentation.Editor
                     return CardPresentationKind.Avatar;
                 case ContentVisualKind.Monster:
                     return CardPresentationKind.Monster;
+                case ContentVisualKind.Trap:
+                    return CardPresentationKind.Trap;
                 case ContentVisualKind.HelpCard:
                     return CardPresentationKind.HelpCard;
                 case ContentVisualKind.Relic:
@@ -230,6 +235,11 @@ namespace NineGrid.Presentation.Editor
             if (defId.StartsWith("monster."))
             {
                 return ContentVisualKind.Monster;
+            }
+
+            if (defId.StartsWith("trap."))
+            {
+                return ContentVisualKind.Trap;
             }
 
             if (defId.StartsWith("relic."))

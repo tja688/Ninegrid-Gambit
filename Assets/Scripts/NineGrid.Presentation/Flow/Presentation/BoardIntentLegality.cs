@@ -87,9 +87,10 @@ namespace NineGrid.Flow.Presentation
             }
 
             var registry = arch.GetModel<CardRegistry>();
-            if (!registry.TryGet(targetUid, out var target) || target.Kind != CardKind.Monster)
+            if (!registry.TryGet(targetUid, out var target)
+                || !CardCombatRules.IsBoardCombatTarget(target.Kind))
             {
-                rejectReason = "notMonster uid=" + targetUid;
+                rejectReason = "notCombatTarget uid=" + targetUid;
                 return false;
             }
 

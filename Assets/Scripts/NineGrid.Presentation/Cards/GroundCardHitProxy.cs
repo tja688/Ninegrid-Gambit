@@ -121,7 +121,8 @@ namespace NineGrid.Cards
                 return;
             }
 
-            if (card.CoreKind == CardPresentationKind.Monster)
+            if (card.CoreKind == CardPresentationKind.Monster
+                || card.CoreKind == CardPresentationKind.Trap)
             {
                 FieldBattlePresentationHook.BattleOrNull()?.TryHandleBattleClick(card);
                 return;

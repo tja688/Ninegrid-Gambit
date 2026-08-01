@@ -493,6 +493,11 @@ namespace NineGrid.Flow
                 return CardPresentationKind.Monster;
             }
 
+            if (defId.StartsWith("trap.", System.StringComparison.Ordinal))
+            {
+                return CardPresentationKind.Trap;
+            }
+
             if (defId.StartsWith("help.", System.StringComparison.Ordinal)
                 || defId.StartsWith("player.", System.StringComparison.Ordinal))
             {

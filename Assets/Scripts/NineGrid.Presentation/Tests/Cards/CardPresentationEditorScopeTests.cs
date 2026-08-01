@@ -181,6 +181,11 @@ namespace NineGrid.Presentation.Tests.Cards
             Assert.AreEqual(
                 EffectTemplateOriginCategory.Item,
                 CardPresentationEditorSession.ResolveEffectTemplateCategory("tpl.gain_armor_on_use_help_card"));
+            Assert.AreEqual(
+                EffectTemplateOriginCategory.TrapSkill,
+                CardPresentationEditorSession.ResolveEffectTemplateCategory("tpl.trap.revive_stone.interact"));
+            Assert.IsTrue(CardPresentationEditorSession.TemplateMatchesContainerType(
+                "tpl.trap.revive_stone.interact", "Trap"));
             Assert.IsTrue(CardPresentationEditorSession.TemplateMatchesContainerType(
                 "tpl.help.bomb.use", "HelpCard"));
             Assert.IsFalse(CardPresentationEditorSession.TemplateMatchesContainerType(

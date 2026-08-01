@@ -149,6 +149,10 @@ namespace NineGrid.Cards
         [Tooltip("Relic → 遗物卡面模板，挂入底盘 L4/FacePivot。留空时 Relic Spawn 只出底盘、跳过挂面并 Warning。")]
         private GameObject relicFacePrefab;
 
+        [SerializeField]
+        [Tooltip("Trap → 机关卡面模板，挂入底盘 L4/FacePivot。留空时 Trap Spawn 只出底盘、跳过挂面并 Warning。")]
+        private GameObject trapFacePrefab;
+
         private readonly Dictionary<int, ManagedCard> _cardsByUid = new();
         private readonly Dictionary<string, GameObject> _defPrefabs = new(StringComparer.Ordinal);
 
@@ -194,13 +198,15 @@ namespace NineGrid.Cards
             GameObject avatarFace,
             GameObject monsterFace,
             GameObject itemFace,
-            GameObject relicFace)
+            GameObject relicFace,
+            GameObject trapFace = null)
         {
             standardCardPrefab = chassis;
             avatarFacePrefab = avatarFace;
             monsterFacePrefab = monsterFace;
             itemFacePrefab = itemFace;
             relicFacePrefab = relicFace;
+            trapFacePrefab = trapFace;
         }
 
         /// <summary>
@@ -801,6 +807,13 @@ namespace NineGrid.Cards
                     $"[CardManagerSingleton] 未配置卡牌底盘，请赋值或通过路径 {CardChassisPrefabAssetPath} 提供。");
             }
 
+#if UNITY_EDITOR
+            if (trapFacePrefab == null)
+            {
+                trapFacePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(CardChassisPaths.TrapFacePrefab);
+            }
+#endif
+
             // RegisterPrefab(defId) 仅作特例覆盖；底盘不再注册为 StandardDefId 主回退。
         }
 
@@ -817,6 +830,7 @@ namespace NineGrid.Cards
                 CardPresentationKind.Item => itemFacePrefab,
                 CardPresentationKind.PlayerCard => itemFacePrefab,
                 CardPresentationKind.Relic => relicFacePrefab,
+                CardPresentationKind.Trap => trapFacePrefab,
                 _ => null,
             };
         }

@@ -161,6 +161,7 @@ namespace NineGrid.Core.Tests
             var stoneUid = board.GetCardUid(sHostSlot);
             Assert.AreNotEqual(0, stoneUid, "原槽应被复活石占据");
             Assert.AreEqual("trap.revive_stone", registry.Get(stoneUid).DefId, "死亡召唤应打出复活石到同格");
+            Assert.AreEqual(CardKind.Trap, registry.Get(stoneUid).Kind, "复活石应为 Trap Kind");
             Assert.AreEqual(6, (int)registry.Get(stoneUid).Stats.GetBase(StatId.Hp));
         }
 
@@ -192,7 +193,7 @@ namespace NineGrid.Core.Tests
         {
             StartEmptyNode();
             var lordUid = SpawnOnBoardReturnUid("monster.headless_skeleton", CardKind.Monster, sHostSlot);
-            var stoneUid = SpawnOnBoardReturnUid("trap.revive_stone", CardKind.Monster, sOtherSlot);
+            var stoneUid = SpawnOnBoardReturnUid("trap.revive_stone", CardKind.Trap, sOtherSlot);
             var registry = mArch.GetModel<CardRegistry>();
             var board = mArch.GetModel<BoardModel>();
             ActivateSkillAndFlush(registry.Get(lordUid), "skill.lord_of_death");
@@ -310,7 +311,7 @@ namespace NineGrid.Core.Tests
         public void ReviveStone_SixInteracts_RemovesSelfAndSpawnsSpecial5AtSameSlot()
         {
             StartEmptyNode();
-            var stoneUid = SpawnOnBoardReturnUid("trap.revive_stone", CardKind.Monster, sHostSlot);
+            var stoneUid = SpawnOnBoardReturnUid("trap.revive_stone", CardKind.Trap, sHostSlot);
             var registry = mArch.GetModel<CardRegistry>();
             var board = mArch.GetModel<BoardModel>();
 
@@ -332,7 +333,7 @@ namespace NineGrid.Core.Tests
         public void ReviveStone_KilledBeforeSixInteracts_NoSpecial5Spawn()
         {
             StartEmptyNode();
-            var stoneUid = SpawnOnBoardReturnUid("trap.revive_stone", CardKind.Monster, sHostSlot);
+            var stoneUid = SpawnOnBoardReturnUid("trap.revive_stone", CardKind.Trap, sHostSlot);
             var lordUid = SpawnOnBoardReturnUid("monster.headless_skeleton", CardKind.Monster, sOtherSlot);
             var board = mArch.GetModel<BoardModel>();
             var registry = mArch.GetModel<CardRegistry>();
@@ -387,9 +388,12 @@ namespace NineGrid.Core.Tests
         private void AssertTrapMounted(string trapId, string effectId)
         {
             Assert.IsTrue(mContent.Catalog.TryGetCard(trapId, out var trap), "missing " + trapId);
+            Assert.AreEqual(CardKind.Trap, trap.Kind, trapId + " catalog kind");
+            Assert.AreEqual("deck.trap", trap.DeckId, trapId + " deckId");
             CollectionAssert.Contains(trap.EffectIds, effectId, trapId + " should mount " + effectId);
             Assert.IsTrue(mContent.Catalog.TryGetEffect(effectId, out var fx), "missing effect " + effectId);
             Assert.AreEqual(ContentImplementationState.Implemented, fx.State, effectId);
+            Assert.AreEqual(EffectContainerType.Trap, fx.ContainerType, effectId + " container");
         }
 
         private int SpawnOnBoardReturnUid(string defId, CardKind kind, SlotId slot)

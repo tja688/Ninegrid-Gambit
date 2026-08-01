@@ -178,9 +178,9 @@ namespace NineGrid.Core.Systems
             }
 
             var target = registry.Get(targetUid);
-            if (target.Kind != CardKind.Monster)
+            if (!CardCombatRules.IsBoardCombatTarget(target.Kind))
             {
-                return Reject(GameCommandKind.Attack, "Attack target is not a monster.", targetSlot, targetUid);
+                return Reject(GameCommandKind.Attack, "Attack target is not a combat target.", targetSlot, targetUid);
             }
 
             if (!this.GetSystem<IBoardSystem>().AreAdjacent(board.AvatarSlot.Value, targetSlot))
@@ -398,7 +398,7 @@ namespace NineGrid.Core.Systems
                 return CoreCommandResult.Reject("Combat hit target is already removed.");
             }
 
-            if (attacker.Kind == CardKind.Avatar && target.Kind == CardKind.Monster)
+            if (attacker.Kind == CardKind.Avatar && CardCombatRules.IsBoardCombatTarget(target.Kind))
             {
                 if (!target.FaceUp)
                 {
@@ -568,7 +568,7 @@ namespace NineGrid.Core.Systems
             }
 
             var card = registry.Get(cardUid);
-            if (card.Kind == CardKind.Monster)
+            if (CardCombatRules.IsBoardCombatTarget(card.Kind))
             {
                 return Reject(GameCommandKind.PickupItem, "Monsters must be attacked, not picked up.", targetSlot, cardUid);
             }
@@ -1357,7 +1357,7 @@ namespace NineGrid.Core.Systems
                 return false;
             }
 
-            if (attacker.Kind != CardKind.Avatar || target.Kind != CardKind.Monster)
+            if (attacker.Kind != CardKind.Avatar || !CardCombatRules.IsBoardCombatTarget(target.Kind))
             {
                 return false;
             }

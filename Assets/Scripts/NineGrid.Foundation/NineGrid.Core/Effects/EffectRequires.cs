@@ -146,7 +146,8 @@ namespace NineGrid.Core.Effects
             }
 
             return definition.ContainerType == EffectContainerType.HelpCard
-                || definition.ContainerType == EffectContainerType.MonsterSkill;
+                || definition.ContainerType == EffectContainerType.MonsterSkill
+                || definition.ContainerType == EffectContainerType.Trap;
         }
 
         private static bool Same(string left, string right)

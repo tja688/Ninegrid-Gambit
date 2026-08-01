@@ -12,7 +12,7 @@
 | [presentation.md](./presentation.md) | `NineGrid.Presentation` 目录、装配、QF 边界、扩展点 |
 | [tests.md](./tests.md) | EditMode 测试地图与护栏 |
 | [ADR-0001](../adr/0001-battle-presentation-unified-timeline-batch-ack.md) | 统一时间线 / Batch-ack |
-| [ADR-0002](../adr/0002-card-chassis-and-face-templates.md) | 单底盘四卡面 + Commit |
+| [ADR-0002](../adr/0002-card-chassis-and-face-templates.md) | 单底盘五卡面 + Commit |
 | [ADR-0004](../adr/0004-input-intake-two-axis-gating.md) | IntentIntake 两轴门禁 |
 | [ADR-0005](../adr/0005-card-face-beat-commit.md) | 卡面数值表演锚点提交 |
 | [ADR-0006](../adr/0006-windows-high-polling-mouse-mitigation.md) | Win Player 高回报率鼠标兜底 |
@@ -25,6 +25,7 @@
 | [ADR-0013](../adr/0013-action-countdown-unified.md) | 行动计数统一为倒计时、开火窗口一次性（**#76 Core 效果侧已落地**；攻击模式消费见 #79/#80；卡面上屏见 #81） |
 | [ADR-0014](../adr/0014-theme-ids-are-legacy-opaque.md) | 主题化 contentId/deckId 是历史残留不透明主键；卡组仅内部渠道；勿被虚构命名带偏 |
 | [ADR-0016](../adr/0016-card-face-orientation.md) | 牌面朝向 Core 权威；背面双向惰性（不可伤害 / 不敌方开火 / 攻击倒计时冻结）；独立 `faceDownTick.*` |
+| [ADR-0017](../adr/0017-trap-card-kind-and-dual-bucket.md) | 机关卡 `CardKind.Trap`；双桶交战；清关/赏金排除；静默 CounterAttackBanned；五套卡面 |
 
 > ADR-0011–0013 已落地（含卡面倒计时 Commit 与单向打击 Counter 分拍，#81）。落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
 
@@ -34,7 +35,7 @@
 |--------|------|------|
 | `NineGrid.Core` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Core/` | 规则核（QF） |
 | `NineGrid.Content` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Content/` | Catalog：**schema≥2 一卡一文件 JSON 投影** + **tables JSON**（效果模板 / **奖池查询规则** / 经济 / 节点规则；卡上 `effectAssemblies` 解析进 `Catalog.Effects`；分类三轴 `deckId`/`role`/`tags`+`rarity`；`ContentCatalogBootstrap.Load` 会 Invalidate 表现/模板静态缓存后重读盘，末尾 `RewardPoolQueryExpander`；业务只消费 `GameContentCatalog`）；`TableNineContentCatalog.CreateDefault` 为小型测试夹具；卡牌表现 JSON + **ContentArt** Resources 根（ADR-0008 / ADR-0009 / #69–#71） |
-| `NineGrid.Content.Editor` | `…/NineGrid.Content.Editor/` | 卡牌表现编辑器（侧栏 **卡面 / 效果池 / 特效库 / 卡组·卡背**：按 `deckId` 分组卡面；卡面 **效果装配**默认只挂本卡种同类模板（道具/遗物/怪物技能，可搜索；跨类遗留挂载保留标注）；效果池按三类分组 + 描述词条；**特效库**一级分类+变体二级纯预览（`visual_effects.json`，与 DSL 效果池区分）；**卡组·卡背**页预览+翻转（按 deckId 选四套模板壳，空槽保留模板兜底；卡面页翻转按 `deckId` 回填组背））；`ContentArtBreakLinkValidator` 断链扫描；`VisualEffectsMigrateRunner` 迁 Effects→ContentArt |
+| `NineGrid.Content.Editor` | `…/NineGrid.Content.Editor/` | 卡牌表现编辑器（侧栏 **卡面 / 效果池 / 特效库 / 卡组·卡背**：按 `deckId` 分组卡面（含 `deck.trap`）；卡面 **效果装配**默认只挂本卡种同类模板（道具/遗物/怪物技能/机关技能，可搜索；跨类遗留挂载保留标注）；效果池按四类分组 + 描述词条；**特效库**一级分类+变体二级纯预览（`visual_effects.json`，与 DSL 效果池区分）；**卡组·卡背**页预览+翻转（按 deckId 选五套模板壳，空槽保留模板兜底；卡面页翻转按 `deckId` 回填组背））；`ContentArtBreakLinkValidator` 断链扫描；`VisualEffectsMigrateRunner` 迁 Effects→ContentArt |
 | `NineGrid.Presentation` | `Assets/Scripts/NineGrid.Presentation/` | 表现层（原 Flow+Cards **合并后的单一程序集**） |
 | `NineGrid.Presentation.Tests` | `…/Tests/` | EditMode |
 | `NineGrid.Presentation.Editor` | `…/Editor/` | 编辑器工具 |

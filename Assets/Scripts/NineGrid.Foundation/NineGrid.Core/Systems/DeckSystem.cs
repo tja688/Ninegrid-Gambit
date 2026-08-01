@@ -34,7 +34,7 @@ namespace NineGrid.Core.Systems
             foreach (var uid in board.BoardCardUids())
             {
                 CardInstance card;
-                if (registry.TryGet(uid, out card) && card.Kind == CardKind.Monster)
+                if (registry.TryGet(uid, out card) && CardCombatRules.IsTrueMonster(card.Kind))
                 {
                     return true;
                 }
@@ -50,7 +50,7 @@ namespace NineGrid.Core.Systems
             for (var i = 0; i < deck.DrawPileUids.Count; i++)
             {
                 var card = registry.Get(deck.DrawPileUids[i]);
-                if (card.Kind == CardKind.Monster)
+                if (CardCombatRules.IsTrueMonster(card.Kind))
                 {
                     return true;
                 }
@@ -61,18 +61,32 @@ namespace NineGrid.Core.Systems
 
         public bool HasPendingEnemyCards()
         {
-            var deck = this.GetModel<DeckModel>();
-            // Enemy staging pool should be empty after opening deal; keep check for setup-phase safety.
-            return deck.EnemyCardPoolUids.Count > 0 || HasEnemyInDrawPile() || HasEnemyOnBoard();
+            // ADR-0017：敌池/抽牌/场上残留 Trap 不算「还有敌」。
+            return HasEnemyInEnemyCardPool() || HasEnemyInDrawPile() || HasEnemyOnBoard();
         }
 
         public bool IsNodeCleared()
         {
-            var deck = this.GetModel<DeckModel>();
-            // FLOW_005 / RUL_发牌: runtime draw pile empty, no board enemies; staging pools empty post-opening.
-            return deck.DrawPileUids.Count == 0
-                && deck.EnemyCardPoolUids.Count == 0
+            // ADR-0017：清关只看真怪物；抽牌堆/敌池/场上残留 Trap 不挡关。
+            return !HasEnemyInDrawPile()
+                && !HasEnemyInEnemyCardPool()
                 && !HasEnemyOnBoard();
+        }
+
+        private bool HasEnemyInEnemyCardPool()
+        {
+            var registry = this.GetModel<CardRegistry>();
+            var deck = this.GetModel<DeckModel>();
+            for (var i = 0; i < deck.EnemyCardPoolUids.Count; i++)
+            {
+                var card = registry.Get(deck.EnemyCardPoolUids[i]);
+                if (CardCombatRules.IsTrueMonster(card.Kind))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

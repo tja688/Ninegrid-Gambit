@@ -14,7 +14,7 @@
 | `FlowShell/` | 流程壳 Controller |
 | `BattleSession/` | 局内会话 |
 | `Output/` | 描述 / 伤害等输出 |
-| `Cards/` | 卡面 Commit、牌库闸、飞行排序、致死表现回归；表现层配置器条目门槛（Skill 不进窗口、HelpCard/Item 保留）+ **空装配清 effectIds / 挂装配投影 / 效果分类标注（道具/遗物/怪物技能）/ 同类多载过滤 / skillIds→assemblies 展开**（解耦装配 IA）+ **装配描述自动同步/自定义锁定 / design_text→{param} 参数化** 等；**ContentArt** 路径约定 / Resources 帧加载 / 断链校验（#66）；**JSON→Catalog 投影**（帮助卡/怪物/技能/遗物/牌组/房间）+ 表 JSON（效果模板 + 装配引用，#67–#70、ADR-0008/0009）；**词条/`{param}`/详情合成**（#71）；**右键详述 live 挂载优先**（空白板 JSON + 局内注入技能 / 忽略预设 skillIds）；**Disable Domain Reload 下 Catalog 重绑**；**装配 argsJson 缺占位实参拦截 / 选模板建议实参**；**特效库** `visual_effects.json` 扫描/粘性合并/atlas 帧加载（与 DSL 效果池区分；纯预览阶段） |
+| `Cards/` | 卡面 Commit、牌库闸、飞行排序、致死表现回归；表现层配置器条目门槛（Skill 不进窗口、HelpCard/Item 保留）+ **空装配清 effectIds / 挂装配投影 / 效果分类标注（道具/遗物/怪物技能/机关技能）/ 同类多载过滤 / skillIds→assemblies 展开**（解耦装配 IA）+ **装配描述自动同步/自定义锁定 / design_text→{param} 参数化** 等；**ContentArt** 路径约定 / Resources 帧加载 / 断链校验（#66）；**JSON→Catalog 投影**（帮助卡/怪物/技能/遗物/牌组/房间）+ 表 JSON（效果模板 + 装配引用，#67–#70、ADR-0008/0009）；**词条/`{param}`/详情合成**（#71）；**右键详述 live 挂载优先**（空白板 JSON + 局内注入技能 / 忽略预设 skillIds）；**Disable Domain Reload 下 Catalog 重绑**；**装配 argsJson 缺占位实参拦截 / 选模板建议实参**；**特效库** `visual_effects.json` 扫描/粘性合并/atlas 帧加载（与 DSL 效果池区分；纯预览阶段） |
 | `Flow/` | Flow 侧遗留/切片 |
 | `Fixtures/` | EditMode 夹具 |
 | `HostContractStructuralTests.cs` | 结构护栏：禁四大旧宿主名、禁 `CombatHitSink`、禁回流 `new PresentationDirector`、System 不暴露具体 View |
@@ -29,6 +29,7 @@
 |------|----------|
 | `PresentationEventMapBeatExhaustivenessTests` | #54/#57/#60/#61/#62：每个 `CoreEventType` 须有表演映射与显式 `PresentationBeat`；`None` 必须带理由；观察型 `BaseStatModified` 不得落在 `Impact`；`CardDealt`/`AvatarAppeared`/`CardFaceChanged` 为 Settled；`DamageDealt`/`EffectTriggered` 为 Impact；`GoldModified`/`RewardOffered` 为 Settled |
 | `CardFaceOrientationTests` | ADR-0016：Flip/Reveal 改 FaceUp 并发 `CardFaceChanged`；攻击拒背面；背面怪不 −1/不开火；`DealDamage`/爆弹类不中背面；`FaceDownTickCounters` 注册/Tick/查询；OnFlip/Flip/IsFaceUp 原子与 `ActiveWhileFaceDown` token |
+| `TrapKindDualBucketRegressionTests` / `Batch2HardSkillsRegressionTests`（复活石） | ADR-0017：`CardKind.Trap` 双桶；爆弹可伤 Trap；清关/赏金排除；静默 `CounterAttackBanned`；复活石 Kind/deck/container 迁正 |
 | `BaseStatModifiedResultValueTests` | #54：`BaseStatModified` 携带结算后 `ResultValue`，且保留 `Amount=StatId` / `Delta` 增量约定 |
 | `PermanentAttackFaceCommitTests` | Permanent 有效攻卡面旁路：Apply 发 BaseStatModified；Temporary 不上屏；Swap 条件失效回基值 |
 | `CardSpawnedFaceAbsoluteTests` | #57：`CardSpawned` 携带造卡时攻/甲/血绝对值 |

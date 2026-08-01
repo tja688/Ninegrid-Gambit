@@ -225,6 +225,19 @@ namespace NineGrid.Core.Systems
                 ActivateEffectIds(skill.EffectIds, skill.ContainerType, skill.DefId, card.Uid, result);
             }
 
+            // ADR-0017：Trap 静默挂永久 CounterAttackBanned（不进检视技能列表）。
+            if (card.Kind == CardKind.Trap)
+            {
+                this.GetSystem<IStatSystem>().RuleModifiers.Add(new RuleModifier(
+                    RuleId.CounterAttackBanned,
+                    ModifierOp.Add,
+                    1f,
+                    ModifierLayer.Persistent,
+                    new ModifierSource("intrinsic.trap:" + card.DefId),
+                    ModifierScope.Permanent,
+                    new TargetUidCondition(card.Uid)));
+            }
+
             return result;
         }
 
@@ -440,6 +453,8 @@ namespace NineGrid.Core.Systems
                     return EffectContainerType.HelpCard;
                 case CardKind.Monster:
                     return EffectContainerType.MonsterSkill;
+                case CardKind.Trap:
+                    return EffectContainerType.Trap;
                 case CardKind.Relic:
                     return EffectContainerType.Relic;
                 default:

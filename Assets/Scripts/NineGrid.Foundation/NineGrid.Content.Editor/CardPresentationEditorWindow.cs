@@ -380,6 +380,7 @@ namespace NineGrid.Content.Editor
                     EffectTemplateOriginCategory.Item,
                     EffectTemplateOriginCategory.Relic,
                     EffectTemplateOriginCategory.MonsterSkill,
+                    EffectTemplateOriginCategory.TrapSkill,
                     EffectTemplateOriginCategory.Other,
                 };
                 for (var o = 0; o < order.Length; o++)
@@ -1670,6 +1671,11 @@ namespace NineGrid.Content.Editor
                 return "MonsterSkill";
             }
 
+            if (string.Equals(kind, "Trap", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Trap";
+            }
+
             if (string.Equals(kind, "Relic", StringComparison.OrdinalIgnoreCase))
             {
                 return "Relic";
@@ -2345,6 +2351,7 @@ namespace NineGrid.Content.Editor
             {
                 CardPresentationKind.Avatar => CardChassisPaths.AvatarFacePrefab,
                 CardPresentationKind.Monster => CardChassisPaths.MonsterFacePrefab,
+                CardPresentationKind.Trap => CardChassisPaths.TrapFacePrefab,
                 CardPresentationKind.HelpCard => CardChassisPaths.ItemFacePrefab,
                 CardPresentationKind.Relic => CardChassisPaths.RelicFacePrefab,
                 _ => CardChassisPaths.MonsterFacePrefab,
@@ -2365,6 +2372,7 @@ namespace NineGrid.Content.Editor
             {
                 CardPresentationKind.Avatar => 0,
                 CardPresentationKind.Monster => 1,
+                CardPresentationKind.Trap => 1, // 最小改动：RichText 四项里 Trap 复用怪物索引；Load 仍走机关模版
                 CardPresentationKind.HelpCard => 2,
                 CardPresentationKind.Relic => 3,
                 _ => 1,
@@ -3015,6 +3023,10 @@ namespace NineGrid.Content.Editor
                     {
                         kind = CardPresentationKind.Monster;
                     }
+                    else if (string.Equals(dto.kind, "Trap", StringComparison.OrdinalIgnoreCase))
+                    {
+                        kind = CardPresentationKind.Trap;
+                    }
                     else if (string.Equals(dto.kind, "Relic", StringComparison.OrdinalIgnoreCase))
                     {
                         kind = CardPresentationKind.Relic;
@@ -3107,6 +3119,12 @@ namespace NineGrid.Content.Editor
                 || id.IndexOf("help", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return CardPresentationKind.HelpCard;
+            }
+
+            if (string.Equals(id, "deck.trap", StringComparison.OrdinalIgnoreCase)
+                || id.IndexOf("trap", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return CardPresentationKind.Trap;
             }
 
             if (string.Equals(id, "deck.relic", StringComparison.OrdinalIgnoreCase)

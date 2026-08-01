@@ -545,7 +545,8 @@ namespace NineGrid.Core
 
             var goldReward = target.Counters.Get(CoreCounterKeys.GoldReward);
             result.AddFollowUp(new DeactivateOwnerEffectsAction(TargetUid, "kill"));
-            if (goldReward != 0)
+            // ADR-0017：Trap 无击杀赏金（含显式 GoldReward 计数器）。
+            if (goldReward != 0 && CardCombatRules.IsTrueMonster(target.Kind))
             {
                 result.AddFollowUp(new ModifyGoldAction(goldReward, "kill:" + target.DefId));
             }

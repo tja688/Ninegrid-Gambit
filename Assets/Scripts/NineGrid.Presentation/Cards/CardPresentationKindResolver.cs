@@ -20,6 +20,11 @@ namespace NineGrid.Cards
                 return CardPresentationKind.Monster;
             }
 
+            if (defId.StartsWith("trap.", StringComparison.Ordinal))
+            {
+                return CardPresentationKind.Trap;
+            }
+
             if (defId.StartsWith("help.", StringComparison.Ordinal)
                 || defId.StartsWith("player.", StringComparison.Ordinal))
             {

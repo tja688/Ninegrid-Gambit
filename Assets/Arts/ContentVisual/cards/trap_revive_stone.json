@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "contentId": "trap.revive_stone",
-  "kind": "Monster",
-  "deckId": "",
+  "kind": "Trap",
+  "deckId": "deck.trap",
   "role": "",
   "displayName": "复活石",
   "description": "机关卡：玩家互动6次后移除本卡，并将一张特5打出到同格",
@@ -77,13 +77,13 @@
     {
       "id": "trap.revive_stone.interact",
       "templateId": "tpl.trap.revive_stone.interact",
-      "containerType": "MonsterSkill",
+      "containerType": "Trap",
       "argsJson": "{\"reason\":\"trap.revive_stone\"}"
     },
     {
       "id": "trap.revive_stone.remove",
       "templateId": "tpl.trap.revive_stone.remove",
-      "containerType": "MonsterSkill",
+      "containerType": "Trap",
       "argsJson": "{\"count\":1}"
     }
   ],

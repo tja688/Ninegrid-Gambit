@@ -162,7 +162,7 @@ namespace NineGrid.Core.Tests
             var registry = mArch.GetModel<CardRegistry>();
             ActivateSkillAndFlush(registry.Get(leaderUid), "skill.assassin_leader");
 
-            var stoneUid = SpawnOnBoardReturnUid("trap.revive_stone", CardKind.Monster, sFarSlot);
+            var stoneUid = SpawnOnBoardReturnUid("trap.revive_stone", CardKind.Trap, sFarSlot);
             Assert.IsTrue(registry.Get(stoneUid).FaceUp, "机关卡不应被刺客领袖强制翻面");
         }
 
