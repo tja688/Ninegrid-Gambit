@@ -24,14 +24,6 @@
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":\"{{count}}\"},\"action\":{\"atom\":\"TransferArmor\",\"amount\":\"{{amount}}\",\"receiver\":\"None\",\"cause\":\"{{cause}}\"}}"
  },
  {
-  "id": "tpl.help.bear_trap.use",
-  "state": "Implemented",
-  "design_text": "[场上] 当正交相邻格补牌为怪物卡时，对其造成10点伤害，之后移除本卡",
-  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
-  "conditions_json": "[\"ActionSource\", \"EventFilter:eventType=CardDealt\", \"Adjacent:left=Self:right=EventCard\"]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"ActionSource\",\"action\":\"FillEmptySlots\"},{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"Monster\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"EventCard\"}],\"target\":{\"atom\":\"EventCard\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"Self\"},\"destination\":\"Removed\",\"reason\":\"{{reason}}\"},{\"atom\":\"DeactivateSelfEffect\"}]}}"
- },
- {
   "id": "tpl.help.blood_conversion.use",
   "state": "Implemented",
   "design_text": "[使用时] 扣除5点血量上限并随机获得攻击+1、护甲+1、50金币或随机遗物",
@@ -80,14 +72,6 @@
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":\"{{count}}\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"source\":\"{{source}}\",\"stat\":\"Attack\"},\"actor\":\"Player\"}}"
  },
  {
-  "id": "tpl.help.flame.use",
-  "state": "Implemented",
-  "design_text": "[使用时] 对玩家造成4点伤害并永久移除本卡",
-  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
-  "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
- },
- {
   "id": "tpl.help.food_card.use",
   "state": "Implemented",
   "design_text": "[使用时] 将玩家卡血量回满",
@@ -134,14 +118,6 @@
   "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":\"{{count}}\",\"excludeElite\":true,\"excludeBoss\":true},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"TransferArmor\",\"all\":true,\"receiver\":\"Player\",\"cause\":\"{{cause}}\"},{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}]}}"
- },
- {
-  "id": "tpl.help.rolling_stone.board_slot3",
-  "state": "Implemented",
-  "design_text": "[场上] 移动到格3时，若格6为非精英非层主怪物，则移除该怪物和本卡",
-  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
-  "conditions_json": "[\"TargetCount\"]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":3,\"target\":\"Self\"},\"conditions\":[{\"atom\":\"TargetCount\",\"min\":1,\"target\":{\"atom\":\"SlotCard\",\"slot\":6,\"kind\":\"Monster\",\"excludeElite\":true,\"excludeBoss\":true}}],\"target\":{\"atom\":\"SlotCard\",\"slot\":6,\"kind\":\"Monster\",\"excludeElite\":true,\"excludeBoss\":true},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"},{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{action_actions_1_reason}}\",\"target\":{\"atom\":\"Self\"}},{\"atom\":\"DeactivateSelfEffect\"}]}}"
  },
  {
   "id": "tpl.help.rotation_wheel.use",
@@ -594,10 +570,10 @@
  {
   "id": "tpl.skill.breathe_fire.move",
   "state": "Implemented",
-  "design_text": "每移动3次，将一张烈焰放入道具牌格",
+  "design_text": "每移动3次，将一张烈焰加入战斗卡组",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":3},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.flame\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":3},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"count\":\"{{count}}\",\"top\":false}}"
  },
  {
   "id": "tpl.skill.call_followers.move",
@@ -621,7 +597,7 @@
   "design_text": "[场上]玩家卡每互动5次，移除场上所有烈焰，每移除一张对除本卡外所有卡牌造成2点伤害",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Multiply\",\"values\":[{\"constant\":2},{\"source\":\"CardCount\",\"defId\":\"help.flame\",\"kind\":\"HelpCard\",\"zone\":\"Board\"}]},\"actor\":\"Self\",\"target\":{\"atom\":\"FilteredCards\",\"zone\":\"Board\",\"exclude\":[\"Self\"]}},{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\",\"target\":{\"atom\":\"FilteredCards\",\"defId\":\"help.flame\",\"kind\":\"HelpCard\",\"zone\":\"Board\"}}]}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Multiply\",\"values\":[{\"constant\":2},{\"source\":\"CardCount\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"zone\":\"Board\"}]},\"actor\":\"Self\",\"target\":{\"atom\":\"FilteredCards\",\"zone\":\"Board\",\"exclude\":[\"Self\"]}},{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\",\"target\":{\"atom\":\"FilteredCards\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"zone\":\"Board\"}}]}}"
  },
  {
   "id": "tpl.skill.delivery.move",
@@ -637,15 +613,15 @@
   "design_text": "[场上] [被移除时]，将一张烈焰加入战斗卡组",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfRemoved\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"help.flame\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfRemoved\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"count\":\"{{count}}\",\"top\":false}}"
  },
  {
   "id": "tpl.skill.endless_flame.remove",
   "state": "Implemented",
   "design_text": "[场上]每有一张烈焰[被移除时]，将一张烈焰加入战斗卡组",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
-  "conditions_json": "[\"EventFilter:eventType=CardRemoved:targetDefId=help.flame\"]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyCardRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"targetDefId\":\"help.flame\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"help.flame\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+  "conditions_json": "[\"EventFilter:eventType=CardRemoved:targetDefId=trap.flame\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyCardRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"targetDefId\":\"trap.flame\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"count\":\"{{count}}\",\"top\":false}}"
  },
  {
   "id": "tpl.skill.evade.battle",
@@ -690,10 +666,10 @@
  {
   "id": "tpl.skill.fire_power.aura",
   "state": "Implemented",
-  "design_text": "[场上/道具牌格] 每有一张烈焰，本卡攻击+2",
+  "design_text": "[场上/抽牌堆] 每有一张烈焰，本卡攻击+2",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Self\"},\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":{\"op\":\"Multiply\",\"values\":[{\"constant\":2},{\"source\":\"{{source}}\",\"defId\":\"help.flame\",\"zones\":[\"Board\",\"ItemSlots\"]}]},\"layer\":\"Conditional\",\"scope\":\"Permanent\"}}"
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Self\"},\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":{\"op\":\"Multiply\",\"values\":[{\"constant\":2},{\"source\":\"{{source}}\",\"defId\":\"trap.flame\",\"zones\":[\"Board\",\"DrawPile\"]}]},\"layer\":\"Conditional\",\"scope\":\"Permanent\"}}"
  },
  {
   "id": "tpl.skill.first_strike.rule",
@@ -706,18 +682,18 @@
  {
   "id": "tpl.skill.flame_boiling.rule",
   "state": "Implemented",
-  "design_text": "[场上]玩家卡每互动5次，烈焰帮助卡造成的伤害再+1（可叠加）",
+  "design_text": "[场上]玩家卡每互动5次，烈焰机关造成的伤害再+1（可叠加）",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageFlatDelta\",\"op\":\"Add\",\"value\":\"{{value}}\",\"sourceAction\":\"DealDamage\",\"sourceDefId\":\"help.flame\",\"conditionTarget\":\"None\",\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageFlatDelta\",\"op\":\"Add\",\"value\":\"{{value}}\",\"sourceAction\":\"DealDamage\",\"sourceDefId\":\"trap.flame\",\"conditionTarget\":\"None\",\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
  },
  {
   "id": "tpl.skill.flame_breath.move",
   "state": "Implemented",
-  "design_text": "每移动4次，移除其他所有非精英非层主怪物卡；每移除一张，洗入一张烈焰并放入一张烈焰到道具牌格",
+  "design_text": "每移动4次，移除其他所有非精英非层主怪物卡；每移除一张，洗入两张烈焰到战斗卡组",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":4},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"excludeElite\":true,\"excludeBoss\":true},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"},{\"atom\":\"ShuffleInto\",\"defId\":\"help.flame\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false,\"perTarget\":true},{\"atom\":\"Spawn\",\"defId\":\"help.flame\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\",\"count\":\"{{count}}\",\"perTarget\":true}]}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":4},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"excludeElite\":true,\"excludeBoss\":true},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"},{\"atom\":\"ShuffleInto\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"count\":\"{{count}}\",\"top\":false,\"perTarget\":true},{\"atom\":\"ShuffleInto\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"count\":\"{{count}}\",\"top\":false,\"perTarget\":true}]}}"
  },
  {
   "id": "tpl.skill.fracture_fall_apart.remove",
@@ -829,7 +805,7 @@
   "design_text": "每有一张烈焰加入战斗卡组，额外加入一张；额外加入的烈焰不再触发本效果",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[\"EventFilter:eventType=CardDealt\"]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"EventFilterExcludeCause\",\"eventType\":\"CardDealt\",\"sourceDefId\":\"help.flame\",\"cause\":\"skill.intense_burning\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"help.flame\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"EventFilterExcludeCause\",\"eventType\":\"CardDealt\",\"sourceDefId\":\"trap.flame\",\"cause\":\"skill.intense_burning\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"count\":\"{{count}}\",\"top\":false}}"
  },
  {
   "id": "tpl.skill.call_melee6.interact",
@@ -869,7 +845,7 @@
   "design_text": "[场上] 有烈焰时，本卡攻击+4",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[\"HasCard\"]",
-  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Self\"},\"conditions\":[{\"atom\":\"HasCard\",\"defId\":\"help.flame\"}],\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\"}}"
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Self\"},\"conditions\":[{\"atom\":\"HasCard\",\"defId\":\"trap.flame\"}],\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\"}}"
  },
  {
   "id": "tpl.skill.sacrifice.remove",
@@ -1286,6 +1262,38 @@
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[\"EventFilter:eventType=CardRemoved:cause=trap.revive_stone\"]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"cause\":\"trap.revive_stone\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"monster.summon.special_omni\",\"kind\":\"Monster\",\"zone\":\"Board\",\"slot\":\"EventFromSlot\",\"count\":\"{{count}}\"}}"
+ },
+ {
+  "id": "tpl.trap.rolling_stone.slot3",
+  "state": "Implemented",
+  "design_text": "[场上]移动到格3时，移除格6上的怪物（非精英非层主）/道具/机关；本卡不自移除",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"TargetCount\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":3,\"target\":\"Self\"},\"conditions\":[{\"atom\":\"TargetCount\",\"min\":1,\"target\":{\"atom\":\"SlotCard\",\"slot\":6,\"excludeElite\":true,\"excludeBoss\":true}}],\"target\":{\"atom\":\"SlotCard\",\"slot\":6,\"excludeElite\":true,\"excludeBoss\":true},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.trap.bear_trap.fill",
+  "state": "Implemented",
+  "design_text": "[场上]正交邻格补牌时：真怪造成10点伤害；道具移除该卡；机关不影响；之后移除本卡",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"ActionSource\", \"EventFilter:eventType=CardDealt\", \"Adjacent:left=Self:right=EventCard\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"ActionSource\",\"action\":\"FillEmptySlots\"},{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"EventCard\"}],\"target\":{\"atom\":\"EventCard\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"Monster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"},\"elseAction\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"HelpCard\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"Self\"},\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}]}}"
+ },
+ {
+  "id": "tpl.trap.flame.move",
+  "state": "Implemented",
+  "design_text": "[场上]本卡每移动1次，若正交邻玩家则对玩家造成1点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1,\"requireAdjacentTo\":\"Player\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.flame.remove",
+  "state": "Implemented",
+  "design_text": "[场上]本卡移动满3次后移除本卡",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":3},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
  },
  {
   "id": "tpl.skill.assassin_leader.rule",

@@ -17,5 +17,7 @@ namespace NineGrid.Flow
         public QuickTestNodeOrderMode NodeOrder = QuickTestNodeOrderMode.Shuffled;
         public string PinnedFirstBattleDeckId;
         public IReadOnlyList<string> SkillIds = Array.Empty<string>();
+        /// <summary>机关 contentId，经 <c>AddEnemyCard</c> 注入敌侧发牌池；与 <see cref="SkillIds"/> 并存。</summary>
+        public IReadOnlyList<string> TrapContentIds = Array.Empty<string>();
     }
 }

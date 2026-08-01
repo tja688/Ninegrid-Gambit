@@ -18,9 +18,9 @@ namespace NineGrid.Core.Tests
             "{\"id\":\"test.endless_flame\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\","
             + "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\"],"
             + "\"trigger\":{\"atom\":\"OnAnyCardRemoved\"},"
-            + "\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"targetDefId\":\"help.flame\"}],"
+            + "\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"targetDefId\":\"trap.flame\"}],"
             + "\"target\":{\"atom\":\"Self\"},"
-            + "\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"help.flame\",\"kind\":\"HelpCard\",\"count\":1,\"top\":false}}";
+            + "\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"count\":1,\"top\":false}}";
 
         private static readonly SlotId sOwnerSlot = SlotId.Board(5);
         private static readonly SlotId sFlameSlot = SlotId.Board(2);
@@ -63,8 +63,8 @@ namespace NineGrid.Core.Tests
             var ownerUid = mArch.GetModel<BoardModel>().GetCardUid(sOwnerSlot);
             mEffects.Activate(definition, new EffectOwner(EffectContainerType.MonsterSkill, "test.endless_flame", ownerUid));
 
-            SpawnOnBoard("help.flame", sFlameSlot);
-            var before = CountDefInDrawPile("help.flame");
+            SpawnOnBoard("trap.flame", sFlameSlot);
+            var before = CountDefInDrawPile("trap.flame");
             mPipeline.Enqueue(new RemoveCardAction(
                 mArch.GetModel<BoardModel>().GetCardUid(sFlameSlot),
                 ZoneId.Removed,
@@ -72,7 +72,7 @@ namespace NineGrid.Core.Tests
                 "test"));
             Assert.Greater(mPipeline.RunToCompletion(), 0);
 
-            Assert.AreEqual(before + 1, CountDefInDrawPile("help.flame"));
+            Assert.AreEqual(before + 1, CountDefInDrawPile("trap.flame"));
         }
 
         [Test]
@@ -92,7 +92,7 @@ namespace NineGrid.Core.Tests
             mEffects.Activate(definition, new EffectOwner(EffectContainerType.MonsterSkill, "test.endless_flame", ownerUid));
 
             SpawnOnBoard("help.bomb", sOtherHelpSlot);
-            var before = CountDefInDrawPile("help.flame");
+            var before = CountDefInDrawPile("trap.flame");
             mPipeline.Enqueue(new RemoveCardAction(
                 mArch.GetModel<BoardModel>().GetCardUid(sOtherHelpSlot),
                 ZoneId.Removed,
@@ -100,12 +100,25 @@ namespace NineGrid.Core.Tests
                 "test"));
             Assert.Greater(mPipeline.RunToCompletion(), 0);
 
-            Assert.AreEqual(before, CountDefInDrawPile("help.flame"));
+            Assert.AreEqual(before, CountDefInDrawPile("trap.flame"));
         }
 
         private void SpawnOnBoard(string defId, SlotId slot)
         {
-            var kind = defId.StartsWith("help.") ? CardKind.HelpCard : CardKind.Monster;
+            CardKind kind;
+            if (defId.StartsWith("trap.", System.StringComparison.Ordinal))
+            {
+                kind = CardKind.Trap;
+            }
+            else if (defId.StartsWith("help.", System.StringComparison.Ordinal))
+            {
+                kind = CardKind.HelpCard;
+            }
+            else
+            {
+                kind = CardKind.Monster;
+            }
+
             mPipeline.Enqueue(new SpawnCardAction(defId, kind, ZoneId.Board, slot, 1, "test"));
             Assert.Greater(mPipeline.RunToCompletion(), 0);
         }

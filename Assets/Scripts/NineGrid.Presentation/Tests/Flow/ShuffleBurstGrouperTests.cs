@@ -71,7 +71,7 @@ namespace NineGrid.Presentation.Tests
             var pending = new List<ShuffleIntoDeckPresentationEntry>
             {
                 Entry(201, "help.teleport", 9, ShuffleIntoDeckEventKind.ExistingCard),
-                Entry(202, "help.flame", 9, ShuffleIntoDeckEventKind.ExistingCard),
+                Entry(202, "trap.flame", 9, ShuffleIntoDeckEventKind.ExistingCard),
             };
             var bursts = new List<ShuffleBurstGroup>();
             var leftovers = new List<ShuffleIntoDeckPresentationEntry>();

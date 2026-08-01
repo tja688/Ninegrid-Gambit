@@ -113,7 +113,7 @@ namespace NineGrid.Core.Tests
             }).Accepted);
 
             var hostUid = SpawnOnBoardReturnUid("monster.headless_skeleton", CardKind.Monster, sHostSlot);
-            var helpUid = SpawnOnBoardReturnUid("help.flame", CardKind.HelpCard, sHelpSlot);
+            var helpUid = SpawnOnBoardReturnUid("help.bomb", CardKind.HelpCard, sHelpSlot);
             var registry = mArch.GetModel<CardRegistry>();
             var host = registry.Get(hostUid);
 

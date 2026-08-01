@@ -31,7 +31,7 @@ status: accepted
 
 - 模板 `targetKind=Monster` 保持精确匹配；新机关技能走 `tpl.trap.*` + `EffectContainerType.Trap`。
 - Help 重叠卡（滚石等）本 ADR **不**强制删除；迁徙另票。
-- QuickTest `trapContentIds` 注入、开局随机机关入组属后续批次。
+- QuickTest `trapContentIds` 注入属批次2（`AddEnemyCard` 入敌池，与 skillIds 并存）；开局随机机关入组仍属后续票。
 - 卡面 Kind→模版表与 [ADR-0002](0002-card-chassis-and-face-templates.md) 对齐为五套。
 
 ## 相关

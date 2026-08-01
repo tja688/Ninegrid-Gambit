@@ -20,18 +20,21 @@ namespace NineGrid.Flow
                 string displayName,
                 IReadOnlyList<string> skillIds = null,
                 string pinnedFirstBattleDeckId = null,
-                QuickTestNodeOrderMode nodeOrder = QuickTestNodeOrderMode.Shuffled)
+                QuickTestNodeOrderMode nodeOrder = QuickTestNodeOrderMode.Shuffled,
+                IReadOnlyList<string> trapContentIds = null)
             {
                 DisplayName = displayName ?? string.Empty;
                 SkillIds = skillIds ?? Array.Empty<string>();
                 PinnedFirstBattleDeckId = pinnedFirstBattleDeckId;
                 NodeOrder = nodeOrder;
+                TrapContentIds = trapContentIds ?? Array.Empty<string>();
             }
 
             public string DisplayName { get; }
             public IReadOnlyList<string> SkillIds { get; }
             public string PinnedFirstBattleDeckId { get; }
             public QuickTestNodeOrderMode NodeOrder { get; }
+            public IReadOnlyList<string> TrapContentIds { get; }
         }
 
         /// <summary>
@@ -40,6 +43,7 @@ namespace NineGrid.Flow
         /// <c>\1</c> 移除向；<c>\2</c> 互动向；<c>\3</c> 翻面向（含休养）；
         /// <c>\4</c>–<c>\5</c> 批次1 六技打包（一通道三技、一怪一技）；
         /// <c>\6</c>–<c>\9</c> 批次2 六技（提速/远程武器/死亡召唤/死亡之主/神圣决斗/潜伏近战）。
+        /// 机关注入：<c>\1</c> 滚石、<c>\6</c> 捕熊、<c>\8</c> 烈焰、<c>\9</c> 复活石（与 skillIds 并存）。
         /// 列表顺序 = 挂载顺序（格号小→大）。
         /// </summary>
         private static readonly ChannelPreset[] sPresets =
@@ -47,7 +51,8 @@ namespace NineGrid.Flow
             new ChannelPreset("通道0", Array.Empty<string>()),
             new ChannelPreset(
                 "移除向",
-                new[] { "skill.sacrifice", "skill.absorb", "skill.offer_fire" }),
+                new[] { "skill.sacrifice", "skill.absorb", "skill.offer_fire" },
+                trapContentIds: new[] { "trap.rolling_stone" }),
             new ChannelPreset(
                 "互动向",
                 new[] { "skill.call_melee6", "skill.link_prep" }),
@@ -62,14 +67,19 @@ namespace NineGrid.Flow
                 new[] { "skill.battle_hardened", "skill.link_tactics", "skill.delivery" }),
             new ChannelPreset(
                 "批次2·交战提速",
-                new[] { "skill.speed_up", "skill.ranged_weapon", "skill.holy_duel" }),
+                new[] { "skill.speed_up", "skill.ranged_weapon", "skill.holy_duel" },
+                trapContentIds: new[] { "trap.bear_trap" }),
             new ChannelPreset(
                 "批次2·死亡潜伏",
                 new[] { "skill.death_summon", "skill.lord_of_death", "skill.ambush_melee" }),
-            new ChannelPreset("刺客领袖", new[] { "skill.assassin_leader" }),
+            new ChannelPreset(
+                "刺客领袖",
+                new[] { "skill.assassin_leader" },
+                trapContentIds: new[] { "trap.flame" }),
             new ChannelPreset(
                 "天涯若比邻",
-                new[] { "skill.world_as_neighbors", "skill.link_tactics" }),
+                new[] { "skill.world_as_neighbors", "skill.link_tactics" },
+                trapContentIds: new[] { "trap.revive_stone" }),
         };
 
         public static bool TryResolvePickerCode(int code, out ChannelPreset preset)
@@ -145,17 +155,40 @@ namespace NineGrid.Flow
 
                 builder.Append(code).Append(' ');
                 builder.Append(ResolveDisplayName(catalog, preset));
-                if (preset.SkillIds != null && preset.SkillIds.Count > 0)
+                var hasSkills = preset.SkillIds != null && preset.SkillIds.Count > 0;
+                var hasTraps = preset.TrapContentIds != null && preset.TrapContentIds.Count > 0;
+                if (hasSkills || hasTraps)
                 {
                     builder.Append(" (");
-                    for (var i = 0; i < preset.SkillIds.Count; i++)
+                    if (hasSkills)
                     {
-                        if (i > 0)
+                        for (var i = 0; i < preset.SkillIds.Count; i++)
                         {
-                            builder.Append(',');
+                            if (i > 0)
+                            {
+                                builder.Append(',');
+                            }
+
+                            builder.Append(ShortSkillId(preset.SkillIds[i]));
+                        }
+                    }
+
+                    if (hasTraps)
+                    {
+                        if (hasSkills)
+                        {
+                            builder.Append(" | ");
                         }
 
-                        builder.Append(ShortSkillId(preset.SkillIds[i]));
+                        for (var i = 0; i < preset.TrapContentIds.Count; i++)
+                        {
+                            if (i > 0)
+                            {
+                                builder.Append(',');
+                            }
+
+                            builder.Append(ShortTrapId(preset.TrapContentIds[i]));
+                        }
                     }
 
                     builder.Append(')');
@@ -198,6 +231,19 @@ namespace NineGrid.Flow
             return skillId.StartsWith(prefix, StringComparison.Ordinal)
                 ? skillId.Substring(prefix.Length)
                 : skillId;
+        }
+
+        private static string ShortTrapId(string trapContentId)
+        {
+            if (string.IsNullOrEmpty(trapContentId))
+            {
+                return "?";
+            }
+
+            const string prefix = "trap.";
+            return trapContentId.StartsWith(prefix, StringComparison.Ordinal)
+                ? "trap." + trapContentId.Substring(prefix.Length)
+                : trapContentId;
         }
 
         /// <summary>

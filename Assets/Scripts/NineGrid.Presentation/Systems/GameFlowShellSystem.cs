@@ -35,6 +35,7 @@ namespace NineGrid.Presentation.Systems
         private QuickTestNodeOrderMode mQuickTestNodeOrderMode = QuickTestNodeOrderMode.Shuffled;
         private string mPinnedFirstBattleDeckId;
         private IReadOnlyList<string> mQuickTestSkillIds = System.Array.Empty<string>();
+        private IReadOnlyList<string> mQuickTestTrapContentIds = System.Array.Empty<string>();
 
         public GameFlowShellSystem()
         {
@@ -68,6 +69,8 @@ namespace NineGrid.Presentation.Systems
         internal string PinnedFirstBattleDeckId => mPinnedFirstBattleDeckId;
 
         internal IReadOnlyList<string> QuickTestSkillIds => mQuickTestSkillIds;
+
+        internal IReadOnlyList<string> QuickTestTrapContentIds => mQuickTestTrapContentIds;
 
         internal IReadOnlyList<int> QuickTestContentNodeQueue => mQuickTestContentNodeQueue;
 
@@ -147,6 +150,7 @@ namespace NineGrid.Presentation.Systems
                     NodeOrder = preset.NodeOrder,
                     PinnedFirstBattleDeckId = preset.PinnedFirstBattleDeckId,
                     SkillIds = preset.SkillIds,
+                    TrapContentIds = preset.TrapContentIds,
                 },
             });
             return true;
@@ -172,6 +176,7 @@ namespace NineGrid.Presentation.Systems
             mQuickTestContentNodeCursor = 0;
             mPinnedFirstBattleDeckId = null;
             mQuickTestSkillIds = System.Array.Empty<string>();
+            mQuickTestTrapContentIds = System.Array.Empty<string>();
             mQuickTestNodeOrderMode = QuickTestNodeOrderMode.Shuffled;
         }
 
@@ -200,6 +205,9 @@ namespace NineGrid.Presentation.Systems
             mQuickTestSkillIds = qt.SkillIds != null && qt.SkillIds.Count > 0
                 ? qt.SkillIds
                 : System.Array.Empty<string>();
+            mQuickTestTrapContentIds = qt.TrapContentIds != null && qt.TrapContentIds.Count > 0
+                ? qt.TrapContentIds
+                : System.Array.Empty<string>();
             PrepareQuickTestContentNodeQueue(mQuickTestNodeOrderMode);
         }
 
@@ -208,6 +216,7 @@ namespace NineGrid.Presentation.Systems
             mQuickTestNodeOrderMode = QuickTestNodeOrderMode.Shuffled;
             mPinnedFirstBattleDeckId = null;
             mQuickTestSkillIds = System.Array.Empty<string>();
+            mQuickTestTrapContentIds = System.Array.Empty<string>();
             mQuickTestContentNodeQueue = null;
             mQuickTestContentNodeCursor = 0;
         }

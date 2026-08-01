@@ -265,6 +265,8 @@ namespace NineGrid.Flow
                 options = NodeDeckOptions.CreateDefaultBattle();
             }
 
+            ApplyQuickTestTrapCardsIfNeeded(options);
+
             Debug.Log(mShell.IsQuickTestMode
                 ? $"[GameFlow] 循环节点 {mShell.NodeIndex} 快速测试内容节点 {contentNodeIndex}"
                   + (string.IsNullOrEmpty(monsterDeckId) ? string.Empty : $" 固定牌组 {monsterDeckId}")
@@ -818,6 +820,52 @@ namespace NineGrid.Flow
         private static void ResetQuickTestTimeScale()
         {
             Time.timeScale = 1f;
+        }
+
+        private void ApplyQuickTestTrapCardsIfNeeded(NodeDeckOptions options)
+        {
+            if (!mShell.IsQuickTestMode || options == null)
+            {
+                return;
+            }
+
+            var trapIds = mShell.QuickTestTrapContentIds;
+            if (trapIds == null || trapIds.Count == 0)
+            {
+                return;
+            }
+
+            var content = NineGridArchitecture.Current.GetSystem<IContentSystem>();
+            if (content == null || !content.HasCatalog)
+            {
+                Debug.LogWarning("[GameFlow] 快速测试注入机关失败：ContentSystem 未就绪");
+                return;
+            }
+
+            var injected = 0;
+            for (var i = 0; i < trapIds.Count; i++)
+            {
+                var defId = trapIds[i];
+                if (string.IsNullOrEmpty(defId))
+                {
+                    continue;
+                }
+
+                var draft = content.CreateDraft(defId);
+                if (draft == null || draft.Kind != CardKind.Trap)
+                {
+                    Debug.LogWarning($"[GameFlow] 快速测试机关注入跳过：defId={defId} kind={draft?.Kind}");
+                    continue;
+                }
+
+                options.AddEnemyCard(draft);
+                injected++;
+            }
+
+            if (injected > 0)
+            {
+                Debug.Log($"[GameFlow] 快速测试机关注入 count={injected} ids={string.Join(",", trapIds)}");
+            }
         }
 
         private void ApplyQuickTestAvatarCheatsIfNeeded()

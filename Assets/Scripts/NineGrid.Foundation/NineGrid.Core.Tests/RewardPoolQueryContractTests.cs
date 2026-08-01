@@ -53,6 +53,7 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(ids.Contains("help.brutality_card"));
             Assert.IsTrue(ids.Contains("help.sturdy_shield"));
             Assert.IsFalse(ids.Contains("help.flame"));
+            Assert.IsFalse(ids.Contains("trap.flame"), "烈焰已迁 Trap，不应出现在 help.choice");
         }
 
         [Test]

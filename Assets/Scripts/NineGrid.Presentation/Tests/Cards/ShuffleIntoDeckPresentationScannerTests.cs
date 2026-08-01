@@ -47,7 +47,7 @@ namespace NineGrid.Presentation.Tests
             var entry = new CoreGameEvent(CoreEventType.CardDealt, 4, "ShuffleCardIntoDrawPile")
                 .WithCard(401)
                 .WithSlots(SlotId.Board(2), SlotId.None)
-                .WithMessage("shuffleExisting:help.flame");
+                .WithMessage("shuffleExisting:trap.flame");
 
             Assert.IsTrue(
                 ShuffleIntoDeckPresentationScanner.TryParseShuffleIntoEvent(
@@ -55,7 +55,7 @@ namespace NineGrid.Presentation.Tests
                     out var kind,
                     out var defId));
             Assert.AreEqual(ShuffleIntoDeckEventKind.ExistingCard, kind);
-            Assert.AreEqual("help.flame", defId);
+            Assert.AreEqual("trap.flame", defId);
         }
 
         [Test]

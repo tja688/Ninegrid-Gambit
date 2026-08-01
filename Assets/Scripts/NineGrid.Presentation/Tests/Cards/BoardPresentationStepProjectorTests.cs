@@ -237,7 +237,7 @@ namespace NineGrid.Presentation.Tests
                 new CoreGameEvent(CoreEventType.CardDealt, 3, "ShuffleCardIntoDrawPile")
                     .WithCard(401)
                     .WithSlots(SlotId.Board(2), SlotId.None)
-                    .WithMessage("shuffleExisting:help.flame"),
+                    .WithMessage("shuffleExisting:trap.flame"),
             };
 
             var result = BoardPresentationStepProjector.Project(events, 0, registry: null);

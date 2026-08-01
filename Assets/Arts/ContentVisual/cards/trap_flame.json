@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 2,
+  "contentId": "trap.flame",
+  "kind": "Trap",
+  "deckId": "deck.trap",
+  "role": "",
+  "displayName": "烈焰",
+  "description": "机关卡：本卡每移动1次，若正交邻玩家则造成1伤；移动满3次后自移除",
+  "faceIntro": "",
+  "attackPattern": "无",
+  "gold": 0,
+  "stats": {
+    "hp": 6,
+    "armor": 0,
+    "attack": 0,
+    "action": 0,
+    "recovery": 0
+  },
+  "sprites": {
+    "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_146",
+    "faceBackground": "",
+    "cardFrame": "",
+    "banner": "",
+    "backBorder": "",
+    "backShirt": "",
+    "backLogo": ""
+  },
+  "mainVisual": {
+    "offsetX": 0.0,
+    "offsetY": 0.0,
+    "uniformScale": 1.0
+  },
+  "animations": {
+    "defaultFps": 8.0,
+    "slots": [
+      {
+        "id": "idle",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "attack",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "hurt",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "death",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "lunch",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      }
+    ]
+  },
+  "extraSlots": [],
+  "rarity": "Red",
+  "tags": [],
+  "effectAssemblies": [
+    {
+      "id": "trap.flame.move",
+      "templateId": "tpl.trap.flame.move",
+      "containerType": "Trap",
+      "argsJson": "{\"amount\":1}"
+    },
+    {
+      "id": "trap.flame.remove",
+      "templateId": "tpl.trap.flame.remove",
+      "containerType": "Trap",
+      "argsJson": "{\"reason\":\"trap.flame\"}"
+    }
+  ],
+  "effectIds": [
+    "trap.flame.move",
+    "trap.flame.remove"
+  ],
+  "skillIds": [],
+  "level": 1,
+  "isElite": false,
+  "isBoss": false,
+  "isReserve": false,
+  "containerType": "",
+  "deckKind": "",
+  "monsterDefIds": [],
+  "weight": 0,
+  "goldDelta": 0,
+  "maxHpDelta": 0,
+  "healToFull": false,
+  "rewardPoolId": "",
+  "shopOfferCount": 0
+}
