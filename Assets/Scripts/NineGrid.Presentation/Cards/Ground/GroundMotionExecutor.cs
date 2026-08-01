@@ -728,6 +728,13 @@ namespace NineGrid.Cards
                 return;
             }
 
+            // 同批 Deal→Remove：飞行中卡被 Vacate/Release 前必须取消 probe，否则 WaitAll 挂死。
+            var flightUid = card != null ? card.Uid : occupantUid;
+            if (flightUid > 0)
+            {
+                CancelDealFlightForUid(flightUid, "VacateSlotForExplore");
+            }
+
             _index.Unregister(slot);
             RefreshSlotHitCollider(slot);
             if (startExplore)
@@ -790,6 +797,14 @@ namespace NineGrid.Cards
         public bool IsDealInFlight(int uid)
         {
             return _deal != null && _deal.IsInFlight(uid);
+        }
+
+        /// <summary>
+        /// 移除/卸格前取消该 uid 的补牌飞牌，避免 ActiveCount 粘死与 dealFlight choreo 泄漏。
+        /// </summary>
+        public bool CancelDealFlightForUid(int uid, string reason = null)
+        {
+            return _deal != null && _deal.CancelFlightForUid(uid, reason ?? "vacate");
         }
 
         /// <summary>

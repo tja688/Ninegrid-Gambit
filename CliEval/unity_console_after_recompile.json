@@ -1,0 +1,725 @@
+{
+  "success": true,
+  "command": "command console",
+  "data": {
+    "command": "console",
+    "parameters": {
+      "format": "json"
+    },
+    "result": {
+      "entries": [
+        {
+          "seq": 6115,
+          "timestampUtc": "2026-08-01T04:39:59.9555026Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6116,
+          "timestampUtc": "2026-08-01T04:39:59.9555026Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object 'RelicSlot') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6117,
+          "timestampUtc": "2026-08-01T04:39:59.9555026Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6118,
+          "timestampUtc": "2026-08-01T04:39:59.9555026Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6119,
+          "timestampUtc": "2026-08-01T04:39:59.9555026Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object '淇濆瓨') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6120,
+          "timestampUtc": "2026-08-01T04:39:59.9555026Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6121,
+          "timestampUtc": "2026-08-01T04:39:59.9555026Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6122,
+          "timestampUtc": "2026-08-01T04:39:59.9555026Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object '灞€鍐呭姛鑳借彍鍗旴G') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6123,
+          "timestampUtc": "2026-08-01T04:39:59.9555026Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6124,
+          "timestampUtc": "2026-08-01T04:39:59.9555026Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6125,
+          "timestampUtc": "2026-08-01T04:39:59.9555026Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object 'text (1)') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6126,
+          "timestampUtc": "2026-08-01T04:39:59.9555026Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6127,
+          "timestampUtc": "2026-08-01T04:39:59.9555026Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6128,
+          "timestampUtc": "2026-08-01T04:39:59.9555026Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object 'slot3') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6129,
+          "timestampUtc": "2026-08-01T04:39:59.956022Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6130,
+          "timestampUtc": "2026-08-01T04:39:59.956022Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6131,
+          "timestampUtc": "2026-08-01T04:39:59.956022Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object 'slot6') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6132,
+          "timestampUtc": "2026-08-01T04:39:59.956022Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6133,
+          "timestampUtc": "2026-08-01T04:39:59.956022Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6134,
+          "timestampUtc": "2026-08-01T04:39:59.956022Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object 'slot1') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6135,
+          "timestampUtc": "2026-08-01T04:39:59.956022Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6136,
+          "timestampUtc": "2026-08-01T04:39:59.956022Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6137,
+          "timestampUtc": "2026-08-01T04:39:59.956022Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object 'IntroductionPanel') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6138,
+          "timestampUtc": "2026-08-01T04:39:59.956022Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6139,
+          "timestampUtc": "2026-08-01T04:39:59.956022Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6140,
+          "timestampUtc": "2026-08-01T04:39:59.956022Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object 'RelicSlot') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6141,
+          "timestampUtc": "2026-08-01T04:39:59.956022Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6142,
+          "timestampUtc": "2026-08-01T04:39:59.956022Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6143,
+          "timestampUtc": "2026-08-01T04:39:59.956022Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object 'slot12') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6144,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6145,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6146,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object 'text') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6147,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6148,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6149,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object 'slot9') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6150,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6151,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6152,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object 'slot3') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6153,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6154,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6155,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object 'slot5_Player') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6156,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6157,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6158,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object 'Room1') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6159,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6160,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6161,
+          "timestampUtc": "2026-08-01T04:39:59.9565381Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object 'slot2') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6162,
+          "timestampUtc": "2026-08-01T04:39:59.9570535Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6163,
+          "timestampUtc": "2026-08-01T04:39:59.9570535Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6164,
+          "timestampUtc": "2026-08-01T04:39:59.9570535Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object 'StartRun') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6165,
+          "timestampUtc": "2026-08-01T04:39:59.9570535Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6166,
+          "timestampUtc": "2026-08-01T04:39:59.9570535Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6167,
+          "timestampUtc": "2026-08-01T04:39:59.9570535Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object 'text (4)') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6168,
+          "timestampUtc": "2026-08-01T04:39:59.9570535Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6169,
+          "timestampUtc": "2026-08-01T04:39:59.9570535Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6170,
+          "timestampUtc": "2026-08-01T04:39:59.9570535Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object 'RelicSlot') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6171,
+          "timestampUtc": "2026-08-01T04:39:59.9570535Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6172,
+          "timestampUtc": "2026-08-01T04:39:59.9570535Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6173,
+          "timestampUtc": "2026-08-01T04:39:59.9570535Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6174,
+          "timestampUtc": "2026-08-01T04:39:59.9575713Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6175,
+          "timestampUtc": "2026-08-01T04:39:59.9575713Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object '') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6176,
+          "timestampUtc": "2026-08-01T04:39:59.9575713Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object '鑳屾櫙') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6177,
+          "timestampUtc": "2026-08-01T04:39:59.9575713Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6178,
+          "timestampUtc": "2026-08-01T04:39:59.9575713Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6179,
+          "timestampUtc": "2026-08-01T04:39:59.9575713Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object '搴曞浘') is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6180,
+          "timestampUtc": "2026-08-01T04:39:59.9575713Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6181,
+          "timestampUtc": "2026-08-01T04:39:59.9575713Z",
+          "level": "warn",
+          "message": "The referenced script (Unknown) on this Behaviour is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6182,
+          "timestampUtc": "2026-08-01T04:39:59.9580859Z",
+          "level": "warn",
+          "message": "The referenced script on this Behaviour (Game Object '闃插尽鍔?) is missing!",
+          "stackTrace": ""
+        },
+        {
+          "seq": 6183,
+          "timestampUtc": "2026-08-01T04:39:59.9616841Z",
+          "level": "log",
+          "message": "AudioKit.Architecture Inited",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nQFramework.LogKit:I (object,object[]) (at Assets/QFramework/Toolkits/_CoreKit/LogKit/LogKit.cs:53)\nQFramework.Architecture:AutoInit () (at Assets/QFramework/Toolkits/AudioKit/Scripts/AudioKitArchitecture.cs:27)\n"
+        },
+        {
+          "seq": 6184,
+          "timestampUtc": "2026-08-01T04:39:59.9616841Z",
+          "level": "log",
+          "message": "ResKit.Architecture Inited",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nQFramework.LogKit:I (object,object[]) (at Assets/QFramework/Toolkits/_CoreKit/LogKit/LogKit.cs:53)\nQFramework.Architecture:AutoInit () (at Assets/QFramework/Toolkits/ResKit/Scripts/Architecture/Architecture.cs:20)\n"
+        },
+        {
+          "seq": 6185,
+          "timestampUtc": "2026-08-01T04:39:59.9616841Z",
+          "level": "log",
+          "message": "RegisterAudioLoaderPool:ResKitAudioLoaderPool",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nQFramework.LogKit:I (object,object[]) (at Assets/QFramework/Toolkits/_CoreKit/LogKit/LogKit.cs:53)\nQFramework.AudioLoaderPoolModel:set_AudioLoaderPool (QFramework.IAudioLoaderPool) (at Assets/QFramework/Toolkits/AudioKit/Scripts/Architecture/Model/AudioLoaderPoolModel/AudioLoaderPoolModel.cs:21)\nQFramework.AudioKitWithResKitInit:Init () (at Assets/QFramework/Toolkits/SupportOldQF/Scripts/AudioKitWithResKitInit.cs:11)\n"
+        },
+        {
+          "seq": 6186,
+          "timestampUtc": "2026-08-01T04:40:02.5446318Z",
+          "level": "warn",
+          "message": "[MainGameLoop] NoticeText 缂哄け锛屾枃妗堬細[蹇€熸祴璇?路 鏁堟灉閫氶亾]\r\nHP99 ATK5 路 鎬妧鑳戒粎鏈€氶亾鍔ㄦ€佹寕\r\n0 閫氶亾0\r\n1 绉婚櫎鍚?(sacrifice,absorb,offer_fire | trap.rolling_stone)\r\n2 浜掑姩鍚?(call_melee6,link_prep | trap.attack_totem)\r\n3 缈婚潰鍚?(leap_kill,steal,recuperate | trap.armor_totem)\r\n4 鎵规1路鎵撲激鑱斿姩 (flame_boiling,rise_up,evade | trap.recovery_totem)\r\n5 鎵规1路鎴愰暱绉诲姩 (battle_hardened,link_tactics,delivery | trap.spike)\r\n6 鎵规2路浜ゆ垬鎻愰€?(speed_up,ranged_weapon,holy_duel | trap.bear_trap)\r\n7 鎵规2路姝讳骸娼滀紡 (death_summon,lord_of_death,ambush_melee | trap.healing_spring)\r\n8 鍒哄棰嗚 (assassin_leader | trap.flame)\r\n9 澶╂动鑻ユ瘮閭?(world_as_neighbors,link_tactics | trap.revive_stone)\r\n闀挎寜 \\ 閫夌爜锛岄噴鏀剧‘璁?,
+          "stackTrace": "UnityEngine.Debug:LogWarning (object)\nNineGrid.Flow.GameFlowController:ShowNotice (string) (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlowController.cs:245)\nNineGrid.Flow.GameFlowController:ShowQuickTestPickerNotice (string) (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlowController.cs:174)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:EnterPicker () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:133)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:PollPendingLongPress () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:97)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:Update () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:60)\n"
+        },
+        {
+          "seq": 6187,
+          "timestampUtc": "2026-08-01T04:40:02.9889863Z",
+          "level": "log",
+          "message": "[GameFlow] 蹇€熸祴璇曟ā寮忥細鍏ㄥ眬閫熷害 x1锛岀帺瀹?HP 99 / ATK 5 姣忓叧閲嶇疆锛岃妭鐐归『搴?Shuffled锛岄槦鍒?2,1,8,5,6,4,9,6,2,3,2,1,8,4,1,4,9,7,7,5,5,3,3,9,7,6,8锛屾妧鑳?skill.speed_up,skill.ranged_weapon,skill.holy_duel",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.GameFlowOrchestrator:Start (NineGrid.Flow.GameFlowRunOptions) (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:116)\nNineGrid.Presentation.Systems.GameFlowShellSystem:BeginRun (NineGrid.Flow.GameFlowRunOptions) (at Assets/Scripts/NineGrid.Presentation/Systems/GameFlowShellSystem.cs:107)\nNineGrid.Presentation.Systems.GameFlowShellSystem:TryBeginQuickTestFromPickerCode (int) (at Assets/Scripts/NineGrid.Presentation/Systems/GameFlowShellSystem.cs:144)\nNineGrid.DevTest.Commands.TryBeginQuickTestFromPickerCodeCommand:OnExecute () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Commands/CheatGameFlowCommands.cs:41)\nQFramework.AbstractCommand`1<bool>:QFramework.ICommand<TResult>.Execute () (at Assets/QFramework/Framework/Scripts/QFramework.cs:327)\nQFramework.Architecture`1<NineGrid.Core.NineGridArchitecture>:ExecuteCommand<bool> (QFramework.ICommand`1<bool>) (at Assets/QFramework/Framework/Scripts/QFramework.cs:174)\nQFramework.Architecture`1<NineGrid.Core.NineGridArchitecture>:SendCommand<bool> (QFramework.ICommand`1<bool>) (at Assets/QFramework/Framework/Scripts/QFramework.cs:167)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:ConfirmAndClose () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:141)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:PollPicker () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:112)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:Update () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:63)\n"
+        },
+        {
+          "seq": 6188,
+          "timestampUtc": "2026-08-01T04:40:03.0801159Z",
+          "level": "log",
+          "message": "[BattleSession] BootstrapRun 瀹屾垚 avatar=#1 @Board5",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.BattleSessionExecutor:BootstrapRun (NineGrid.Core.InitialGameOptions,bool) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.cs:328)\nNineGrid.Presentation.Systems.BattleSessionSystem:BootstrapRun (NineGrid.Core.InitialGameOptions,bool) (at Assets/Scripts/NineGrid.Presentation/Systems/BattleSessionSystem.cs:79)\nNineGrid.Flow.GameFlowOrchestrator:EnsureBattleNodeBootstrap (NineGrid.Presentation.Systems.IBattleSessionSystem,NineGrid.Core.Systems.IPhaseSystem) (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:978)\nNineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:245)\nNineGrid.Flow.GameFlowOrchestrator:PlayRealBattleAsync (System.Threading.CancellationToken)\nNineGrid.Flow.GameFlowOrchestrator/<RunNodeCycleAsync>d__9:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:180)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoidMethodBuilder:Start<NineGrid.Flow.GameFlowOrchestrator/<RunNodeCycleAsync>d__9> (NineGrid.Flow.GameFlowOrchestrator/<RunNodeCycleAsync>d__9&) (at Assets/Plugins/UniTask/Runtime/CompilerServices/AsyncUniTaskVoidMethodBuilder.cs:110)\nNineGrid.Flow.GameFlowOrchestrator:RunNodeCycleAsync (System.Threading.CancellationToken)\nNineGrid.Flow.GameFlowOrchestrator:Start (NineGrid.Flow.GameFlowRunOptions) (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:125)\nNineGrid.Presentation.Systems.GameFlowShellSystem:BeginRun (NineGrid.Flow.GameFlowRunOptions) (at Assets/Scripts/NineGrid.Presentation/Systems/GameFlowShellSystem.cs:107)\nNineGrid.Presentation.Systems.GameFlowShellSystem:TryBeginQuickTestFromPickerCode (int) (at Assets/Scripts/NineGrid.Presentation/Systems/GameFlowShellSystem.cs:144)\nNineGrid.DevTest.Commands.TryBeginQuickTestFromPickerCodeCommand:OnExecute () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Commands/CheatGameFlowCommands.cs:41)\nQFramework.AbstractCommand`1<bool>:QFramework.ICommand<TResult>.Execute () (at Assets/QFramework/Framework/Scripts/QFramework.cs:327)\nQFramework.Architecture`1<NineGrid.Core.NineGridArchitecture>:ExecuteCommand<bool> (QFramework.ICommand`1<bool>) (at Assets/QFramework/Framework/Scripts/QFramework.cs:174)\nQFramework.Architecture`1<NineGrid.Core.NineGridArchitecture>:SendCommand<bool> (QFramework.ICommand`1<bool>) (at Assets/QFramework/Framework/Scripts/QFramework.cs:167)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:ConfirmAndClose () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:141)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:PollPicker () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:112)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:Update () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:63)\n"
+        },
+        {
+          "seq": 6189,
+          "timestampUtc": "2026-08-01T04:40:03.1675805Z",
+          "level": "log",
+          "message": "[GameFlow] 蹇€熸祴璇曟満鍏虫敞鍏?count=1 ids=trap.bear_trap",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.GameFlowOrchestrator:ApplyQuickTestTrapCardsIfNeeded (NineGrid.Core.NodeDeckOptions) (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:867)\nNineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:268)\nNineGrid.Flow.GameFlowOrchestrator:PlayRealBattleAsync (System.Threading.CancellationToken)\nNineGrid.Flow.GameFlowOrchestrator/<RunNodeCycleAsync>d__9:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:180)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoidMethodBuilder:Start<NineGrid.Flow.GameFlowOrchestrator/<RunNodeCycleAsync>d__9> (NineGrid.Flow.GameFlowOrchestrator/<RunNodeCycleAsync>d__9&) (at Assets/Plugins/UniTask/Runtime/CompilerServices/AsyncUniTaskVoidMethodBuilder.cs:110)\nNineGrid.Flow.GameFlowOrchestrator:RunNodeCycleAsync (System.Threading.CancellationToken)\nNineGrid.Flow.GameFlowOrchestrator:Start (NineGrid.Flow.GameFlowRunOptions) (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:125)\nNineGrid.Presentation.Systems.GameFlowShellSystem:BeginRun (NineGrid.Flow.GameFlowRunOptions) (at Assets/Scripts/NineGrid.Presentation/Systems/GameFlowShellSystem.cs:107)\nNineGrid.Presentation.Systems.GameFlowShellSystem:TryBeginQuickTestFromPickerCode (int) (at Assets/Scripts/NineGrid.Presentation/Systems/GameFlowShellSystem.cs:144)\nNineGrid.DevTest.Commands.TryBeginQuickTestFromPickerCodeCommand:OnExecute () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Commands/CheatGameFlowCommands.cs:41)\nQFramework.AbstractCommand`1<bool>:QFramework.ICommand<TResult>.Execute () (at Assets/QFramework/Framework/Scripts/QFramework.cs:327)\nQFramework.Architecture`1<NineGrid.Core.NineGridArchitecture>:ExecuteCommand<bool> (QFramework.ICommand`1<bool>) (at Assets/QFramework/Framework/Scripts/QFramework.cs:174)\nQFramework.Architecture`1<NineGrid.Core.NineGridArchitecture>:SendCommand<bool> (QFramework.ICommand`1<bool>) (at Assets/QFramework/Framework/Scripts/QFramework.cs:167)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:ConfirmAndClose () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:141)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:PollPicker () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:112)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:Update () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:63)\n"
+        },
+        {
+          "seq": 6190,
+          "timestampUtc": "2026-08-01T04:40:03.1675805Z",
+          "level": "log",
+          "message": "[GameFlow] 寰幆鑺傜偣 1 蹇€熸祴璇曞唴瀹硅妭鐐?2 鐪熷疄灞€鍐呭叆鍦?,
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:270)\nNineGrid.Flow.GameFlowOrchestrator:PlayRealBattleAsync (System.Threading.CancellationToken)\nNineGrid.Flow.GameFlowOrchestrator/<RunNodeCycleAsync>d__9:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:180)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoidMethodBuilder:Start<NineGrid.Flow.GameFlowOrchestrator/<RunNodeCycleAsync>d__9> (NineGrid.Flow.GameFlowOrchestrator/<RunNodeCycleAsync>d__9&) (at Assets/Plugins/UniTask/Runtime/CompilerServices/AsyncUniTaskVoidMethodBuilder.cs:110)\nNineGrid.Flow.GameFlowOrchestrator:RunNodeCycleAsync (System.Threading.CancellationToken)\nNineGrid.Flow.GameFlowOrchestrator:Start (NineGrid.Flow.GameFlowRunOptions) (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:125)\nNineGrid.Presentation.Systems.GameFlowShellSystem:BeginRun (NineGrid.Flow.GameFlowRunOptions) (at Assets/Scripts/NineGrid.Presentation/Systems/GameFlowShellSystem.cs:107)\nNineGrid.Presentation.Systems.GameFlowShellSystem:TryBeginQuickTestFromPickerCode (int) (at Assets/Scripts/NineGrid.Presentation/Systems/GameFlowShellSystem.cs:144)\nNineGrid.DevTest.Commands.TryBeginQuickTestFromPickerCodeCommand:OnExecute () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Commands/CheatGameFlowCommands.cs:41)\nQFramework.AbstractCommand`1<bool>:QFramework.ICommand<TResult>.Execute () (at Assets/QFramework/Framework/Scripts/QFramework.cs:327)\nQFramework.Architecture`1<NineGrid.Core.NineGridArchitecture>:ExecuteCommand<bool> (QFramework.ICommand`1<bool>) (at Assets/QFramework/Framework/Scripts/QFramework.cs:174)\nQFramework.Architecture`1<NineGrid.Core.NineGridArchitecture>:SendCommand<bool> (QFramework.ICommand`1<bool>) (at Assets/QFramework/Framework/Scripts/QFramework.cs:167)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:ConfirmAndClose () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:141)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:PollPicker () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:112)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:Update () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:63)\n"
+        },
+        {
+          "seq": 6191,
+          "timestampUtc": "2026-08-01T04:40:03.1675805Z",
+          "level": "log",
+          "message": "[DeckProbe] OptionsBeforeStartNode playerOpening=3 enemyOpening=3 playerCards=[help.healing_potion:HelpCard,help.healing_potion:HelpCard,help.healing_potion:HelpCard,help.common_chest_card:HelpCard,help.throwing_knife:HelpCard,help.throwing_knife:HelpCard,help.throwing_knife:HelpCard,help.stat_boost_card:HelpCard] (n=8) enemyCards=[monster.old_orc:Monster,monster.dragon_follower:Monster,monster.old_orc:Monster,monster.old_orc:Monster,monster.skeleton_taunter:Monster,monster.executioner:Monster,monster.executioner:Monster,monster.executioner:Monster,monster.friendly_ancient:Monster,trap.bear_trap:Trap] (n=10)",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.BattleSessionExecutor:LogDeckOptionsProbe (NineGrid.Core.NodeDeckOptions) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:41)\nNineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:156)\nNineGrid.Flow.BattleSessionExecutor:StartBattleNodeInternalAsync (NineGrid.Core.NodeDeckOptions,System.Threading.CancellationToken)\nNineGrid.Flow.BattleSessionExecutor:StartBattleNodeAsync (NineGrid.Core.NodeDeckOptions,System.Threading.CancellationToken) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.cs:489)\nNineGrid.Presentation.Systems.BattleSessionSystem:StartBattleNodeAsync (NineGrid.Core.NodeDeckOptions,System.Threading.CancellationToken) (at Assets/Scripts/NineGrid.Presentation/Systems/BattleSessionSystem.cs:86)\nNineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:275)\nNineGrid.Flow.GameFlowOrchestrator:PlayRealBattleAsync (System.Threading.CancellationToken)\nNineGrid.Flow.GameFlowOrchestrator/<RunNodeCycleAsync>d__9:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:180)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoidMethodBuilder:Start<NineGrid.Flow.GameFlowOrchestrator/<RunNodeCycleAsync>d__9> (NineGrid.Flow.GameFlowOrchestrator/<RunNodeCycleAsync>d__9&) (at Assets/Plugins/UniTask/Runtime/CompilerServices/AsyncUniTaskVoidMethodBuilder.cs:110)\nNineGrid.Flow.GameFlowOrchestrator:RunNodeCycleAsync (System.Threading.CancellationToken)\nNineGrid.Flow.GameFlowOrchestrator:Start (NineGrid.Flow.GameFlowRunOptions) (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:125)\nNineGrid.Presentation.Systems.GameFlowShellSystem:BeginRun (NineGrid.Flow.GameFlowRunOptions) (at Assets/Scripts/NineGrid.Presentation/Systems/GameFlowShellSystem.cs:107)\nNineGrid.Presentation.Systems.GameFlowShellSystem:TryBeginQuickTestFromPickerCode (int) (at Assets/Scripts/NineGrid.Presentation/Systems/GameFlowShellSystem.cs:144)\nNineGrid.DevTest.Commands.TryBeginQuickTestFromPickerCodeCommand:OnExecute () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Commands/CheatGameFlowCommands.cs:41)\nQFramework.AbstractCommand`1<bool>:QFramework.ICommand<TResult>.Execute () (at Assets/QFramework/Framework/Scripts/QFramework.cs:327)\nQFramework.Architecture`1<NineGrid.Core.NineGridArchitecture>:ExecuteCommand<bool> (QFramework.ICommand`1<bool>) (at Assets/QFramework/Framework/Scripts/QFramework.cs:174)\nQFramework.Architecture`1<NineGrid.Core.NineGridArchitecture>:SendCommand<bool> (QFramework.ICommand`1<bool>) (at Assets/QFramework/Framework/Scripts/QFramework.cs:167)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:ConfirmAndClose () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:141)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:PollPicker () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:112)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:Update () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:63)\n"
+        },
+        {
+          "seq": 6192,
+          "timestampUtc": "2026-08-01T04:40:03.169083Z",
+          "level": "log",
+          "message": "[DeckProbe] BoardAfterStartNode drawPile=10 playerPoolRemain=0 enemyPoolRemain=0 itemSlots=0 board=[s1:help.healing_potion:HelpCard,s2:monster.old_orc:Monster,s3:help.throwing_knife:HelpCard,s4:monster.skeleton_taunter:Monster,s5:empty,s6:help.healing_potion:HelpCard,s7:monster.friendly_ancient:Monster,s8:help.healing_potion:HelpCard,s9:help.throwing_knife:HelpCard] tally=[HelpCard=5 Monster=3]",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.BattleSessionExecutor:LogBoardDeckProbe (QFramework.IArchitecture) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:83)\nNineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:167)\nNineGrid.Flow.BattleSessionExecutor:StartBattleNodeInternalAsync (NineGrid.Core.NodeDeckOptions,System.Threading.CancellationToken)\nNineGrid.Flow.BattleSessionExecutor:StartBattleNodeAsync (NineGrid.Core.NodeDeckOptions,System.Threading.CancellationToken) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.cs:489)\nNineGrid.Presentation.Systems.BattleSessionSystem:StartBattleNodeAsync (NineGrid.Core.NodeDeckOptions,System.Threading.CancellationToken) (at Assets/Scripts/NineGrid.Presentation/Systems/BattleSessionSystem.cs:86)\nNineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:275)\nNineGrid.Flow.GameFlowOrchestrator:PlayRealBattleAsync (System.Threading.CancellationToken)\nNineGrid.Flow.GameFlowOrchestrator/<RunNodeCycleAsync>d__9:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:180)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoidMethodBuilder:Start<NineGrid.Flow.GameFlowOrchestrator/<RunNodeCycleAsync>d__9> (NineGrid.Flow.GameFlowOrchestrator/<RunNodeCycleAsync>d__9&) (at Assets/Plugins/UniTask/Runtime/CompilerServices/AsyncUniTaskVoidMethodBuilder.cs:110)\nNineGrid.Flow.GameFlowOrchestrator:RunNodeCycleAsync (System.Threading.CancellationToken)\nNineGrid.Flow.GameFlowOrchestrator:Start (NineGrid.Flow.GameFlowRunOptions) (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:125)\nNineGrid.Presentation.Systems.GameFlowShellSystem:BeginRun (NineGrid.Flow.GameFlowRunOptions) (at Assets/Scripts/NineGrid.Presentation/Systems/GameFlowShellSystem.cs:107)\nNineGrid.Presentation.Systems.GameFlowShellSystem:TryBeginQuickTestFromPickerCode (int) (at Assets/Scripts/NineGrid.Presentation/Systems/GameFlowShellSystem.cs:144)\nNineGrid.DevTest.Commands.TryBeginQuickTestFromPickerCodeCommand:OnExecute () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Commands/CheatGameFlowCommands.cs:41)\nQFramework.AbstractCommand`1<bool>:QFramework.ICommand<TResult>.Execute () (at Assets/QFramework/Framework/Scripts/QFramework.cs:327)\nQFramework.Architecture`1<NineGrid.Core.NineGridArchitecture>:ExecuteCommand<bool> (QFramework.ICommand`1<bool>) (at Assets/QFramework/Framework/Scripts/QFramework.cs:174)\nQFramework.Architecture`1<NineGrid.Core.NineGridArchitecture>:SendCommand<bool> (QFramework.ICommand`1<bool>) (at Assets/QFramework/Framework/Scripts/QFramework.cs:167)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:ConfirmAndClose () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:141)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:PollPicker () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:112)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:Update () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:63)\n"
+        },
+        {
+          "seq": 6193,
+          "timestampUtc": "2026-08-01T04:40:03.21977Z",
+          "level": "log",
+          "message": "[QuickTestEntry] 閫夊叧寮€濮?code=6",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:ConfirmAndClose () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:145)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:PollPicker () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:112)\nNineGrid.DevTest.Flow.QuickTestEntryInputHandler:Update () (at Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Flow/QuickTestEntryInputHandler.cs:63)\n"
+        },
+        {
+          "seq": 6194,
+          "timestampUtc": "2026-08-01T04:40:06.2056852Z",
+          "level": "log",
+          "message": "[CardEdgeDustFx] PlayPlace center=(-5.00, 5.54, 0.00) size=(3.31, 4.69) perEdge=8 intensity=0.6",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Cards.Vfx.CardEdgeDustFxRunner:PlayPlaceAt (UnityEngine.Vector3,UnityEngine.Vector2,single,int) (at Assets/Scripts/NineGrid.Presentation/Cards/Vfx/CardEdgeDustFx.cs:207)\nNineGrid.Cards.Vfx.CardEdgeDustFxRunner:PlayPlace (NineGrid.Cards.ManagedCard,single) (at Assets/Scripts/NineGrid.Presentation/Cards/Vfx/CardEdgeDustFx.cs:170)\nNineGrid.Cards.Vfx.CardEdgeDustFx:PlayPlace (NineGrid.Cards.ManagedCard,single) (at Assets/Scripts/NineGrid.Presentation/Cards/Vfx/CardEdgeDustFx.cs:22)\nNineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:470)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<NineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:536)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<object>:TrySetResult (object) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/YieldPromise:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTask.Delay.cs:292)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:RunCore () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:203)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Update () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:145)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Run () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:104)\n"
+        },
+        {
+          "seq": 6195,
+          "timestampUtc": "2026-08-01T04:40:07.0666289Z",
+          "level": "log",
+          "message": "[BattleSessionCheat] Avatar#1 MaxHp/Hp 鈫?99",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.BattleSessionCheat:TrySetAvatarHp (int) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs:53)\nNineGrid.Flow.GameFlowOrchestrator:ApplyQuickTestAvatarCheatsIfNeeded () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:878)\nNineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:281)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`2<NineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10, bool>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:313)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:255)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:857)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/GroundFieldView.cs:405)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundMotionExecutor.cs:816)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:196)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/WhenAllPromise:TryInvokeContinuation (Cysharp.Threading.Tasks.UniTask/WhenAllPromise,Cysharp.Threading.Tasks.UniTask/Awaiter&) (at Assets/Plugins/UniTask/Runtime/UniTask.WhenAll.cs:210)\nCysharp.Threading.Tasks.UniTask/WhenAllPromise/<>c:<.ctor>b__3_0 (object) (at Assets/Plugins/UniTask/Runtime/UniTask.WhenAll.cs:189)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTaskExtensions/AttachExternalCancellationSource`1/<RunTask>d__5<bool>:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTaskExtensions.cs:318)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<Cysharp.Threading.Tasks.UniTaskExtensions/AttachExternalCancellationSource`1/<RunTask>d__5<bool>>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSource`1<bool>:TrySignalCompletion (Cysharp.Threading.Tasks.UniTaskStatus) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:912)\nCysharp.Threading.Tasks.UniTaskCompletionSource`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:797)\nNineGrid.Cards.DealFlightHandle:Complete (bool) (at Assets/Scripts/NineGrid.Presentation/Cards/DealFlightHandle.cs:38)\nNineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:472)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<NineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:536)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<object>:TrySetResult (object) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/YieldPromise:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTask.Delay.cs:292)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:RunCore () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:175)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Update () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:145)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Run () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:104)\n"
+        },
+        {
+          "seq": 6196,
+          "timestampUtc": "2026-08-01T04:40:07.0666289Z",
+          "level": "log",
+          "message": "[BattleSessionCheat] Avatar#1 Attack 鈫?5",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.BattleSessionCheat:TrySetAvatarAttack (int) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs:89)\nNineGrid.Flow.GameFlowOrchestrator:ApplyQuickTestAvatarCheatsIfNeeded () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:884)\nNineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:281)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`2<NineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10, bool>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:313)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:255)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:857)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/GroundFieldView.cs:405)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundMotionExecutor.cs:816)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:196)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/WhenAllPromise:TryInvokeContinuation (Cysharp.Threading.Tasks.UniTask/WhenAllPromise,Cysharp.Threading.Tasks.UniTask/Awaiter&) (at Assets/Plugins/UniTask/Runtime/UniTask.WhenAll.cs:210)\nCysharp.Threading.Tasks.UniTask/WhenAllPromise/<>c:<.ctor>b__3_0 (object) (at Assets/Plugins/UniTask/Runtime/UniTask.WhenAll.cs:189)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTaskExtensions/AttachExternalCancellationSource`1/<RunTask>d__5<bool>:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTaskExtensions.cs:318)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<Cysharp.Threading.Tasks.UniTaskExtensions/AttachExternalCancellationSource`1/<RunTask>d__5<bool>>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSource`1<bool>:TrySignalCompletion (Cysharp.Threading.Tasks.UniTaskStatus) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:912)\nCysharp.Threading.Tasks.UniTaskCompletionSource`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:797)\nNineGrid.Cards.DealFlightHandle:Complete (bool) (at Assets/Scripts/NineGrid.Presentation/Cards/DealFlightHandle.cs:38)\nNineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:472)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<NineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:536)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<object>:TrySetResult (object) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/YieldPromise:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTask.Delay.cs:292)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:RunCore () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:175)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Update () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:145)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Run () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:104)\n"
+        },
+        {
+          "seq": 6197,
+          "timestampUtc": "2026-08-01T04:40:07.0681321Z",
+          "level": "warn",
+          "message": "[BattleSessionCheat] QuickTest 鏃犳硶琛ュ涓伙細have=3 needed=4",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object)\nNineGrid.Flow.BattleSessionCheat:EnsureQuickTestMonsterHosts (QFramework.IArchitecture,NineGrid.Core.BoardModel,NineGrid.Core.CardRegistry,int) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs:312)\nNineGrid.Flow.BattleSessionCheat:TryAttachSkillsToBoardMonsters (System.Collections.Generic.IReadOnlyList`1<string>) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs:126)\nNineGrid.Flow.GameFlowOrchestrator:ApplyQuickTestSkillMountsIfNeeded () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:904)\nNineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:282)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`2<NineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10, bool>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:313)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:255)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:857)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/GroundFieldView.cs:405)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundMotionExecutor.cs:816)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:196)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/WhenAllPromise:TryInvokeContinuation (Cysharp.Threading.Tasks.UniTask/WhenAllPromise,Cysharp.Threading.Tasks.UniTask/Awaiter&) (at Assets/Plugins/UniTask/Runtime/UniTask.WhenAll.cs:210)\nCysharp.Threading.Tasks.UniTask/WhenAllPromise/<>c:<.ctor>b__3_0 (object) (at Assets/Plugins/UniTask/Runtime/UniTask.WhenAll.cs:189)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTaskExtensions/AttachExternalCancellationSource`1/<RunTask>d__5<bool>:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTaskExtensions.cs:318)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<Cysharp.Threading.Tasks.UniTaskExtensions/AttachExternalCancellationSource`1/<RunTask>d__5<bool>>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSource`1<bool>:TrySignalCompletion (Cysharp.Threading.Tasks.UniTaskStatus) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:912)\nCysharp.Threading.Tasks.UniTaskCompletionSource`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:797)\nNineGrid.Cards.DealFlightHandle:Complete (bool) (at Assets/Scripts/NineGrid.Presentation/Cards/DealFlightHandle.cs:38)\nNineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:472)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<NineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:536)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<object>:TrySetResult (object) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/YieldPromise:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTask.Delay.cs:292)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:RunCore () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:175)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Update () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:145)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Run () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:104)\n"
+        },
+        {
+          "seq": 6198,
+          "timestampUtc": "2026-08-01T04:40:07.0691386Z",
+          "level": "log",
+          "message": "[BattleSessionCheat] QuickTest 涓€鎬竴鎶€ slot=2 uid=13 defId=monster.old_orc skill=skill.speed_up desc=浼や汉浠栨€€掕鏃?1",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.BattleSessionCheat:TryAttachSkillsToBoardMonsters (System.Collections.Generic.IReadOnlyList`1<string>) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs:163)\nNineGrid.Flow.GameFlowOrchestrator:ApplyQuickTestSkillMountsIfNeeded () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:904)\nNineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:282)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`2<NineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10, bool>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:313)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:255)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:857)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/GroundFieldView.cs:405)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundMotionExecutor.cs:816)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:196)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/WhenAllPromise:TryInvokeContinuation (Cysharp.Threading.Tasks.UniTask/WhenAllPromise,Cysharp.Threading.Tasks.UniTask/Awaiter&) (at Assets/Plugins/UniTask/Runtime/UniTask.WhenAll.cs:210)\nCysharp.Threading.Tasks.UniTask/WhenAllPromise/<>c:<.ctor>b__3_0 (object) (at Assets/Plugins/UniTask/Runtime/UniTask.WhenAll.cs:189)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTaskExtensions/AttachExternalCancellationSource`1/<RunTask>d__5<bool>:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTaskExtensions.cs:318)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<Cysharp.Threading.Tasks.UniTaskExtensions/AttachExternalCancellationSource`1/<RunTask>d__5<bool>>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSource`1<bool>:TrySignalCompletion (Cysharp.Threading.Tasks.UniTaskStatus) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:912)\nCysharp.Threading.Tasks.UniTaskCompletionSource`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:797)\nNineGrid.Cards.DealFlightHandle:Complete (bool) (at Assets/Scripts/NineGrid.Presentation/Cards/DealFlightHandle.cs:38)\nNineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:472)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<NineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:536)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<object>:TrySetResult (object) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/YieldPromise:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTask.Delay.cs:292)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:RunCore () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:175)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Update () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:145)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Run () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:104)\n"
+        },
+        {
+          "seq": 6199,
+          "timestampUtc": "2026-08-01T04:40:07.0706472Z",
+          "level": "log",
+          "message": "[BattleSessionCheat] QuickTest 涓€鎬竴鎶€ slot=4 uid=14 defId=monster.skeleton_taunter skill=skill.ranged_weapon desc=浜ゆ垬涓嶅弽鍑?,
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.BattleSessionCheat:TryAttachSkillsToBoardMonsters (System.Collections.Generic.IReadOnlyList`1<string>) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs:163)\nNineGrid.Flow.GameFlowOrchestrator:ApplyQuickTestSkillMountsIfNeeded () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:904)\nNineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:282)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`2<NineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10, bool>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:313)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:255)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:857)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/GroundFieldView.cs:405)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundMotionExecutor.cs:816)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:196)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/WhenAllPromise:TryInvokeContinuation (Cysharp.Threading.Tasks.UniTask/WhenAllPromise,Cysharp.Threading.Tasks.UniTask/Awaiter&) (at Assets/Plugins/UniTask/Runtime/UniTask.WhenAll.cs:210)\nCysharp.Threading.Tasks.UniTask/WhenAllPromise/<>c:<.ctor>b__3_0 (object) (at Assets/Plugins/UniTask/Runtime/UniTask.WhenAll.cs:189)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTaskExtensions/AttachExternalCancellationSource`1/<RunTask>d__5<bool>:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTaskExtensions.cs:318)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<Cysharp.Threading.Tasks.UniTaskExtensions/AttachExternalCancellationSource`1/<RunTask>d__5<bool>>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSource`1<bool>:TrySignalCompletion (Cysharp.Threading.Tasks.UniTaskStatus) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:912)\nCysharp.Threading.Tasks.UniTaskCompletionSource`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:797)\nNineGrid.Cards.DealFlightHandle:Complete (bool) (at Assets/Scripts/NineGrid.Presentation/Cards/DealFlightHandle.cs:38)\nNineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:472)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<NineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:536)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<object>:TrySetResult (object) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/YieldPromise:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTask.Delay.cs:292)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:RunCore () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:175)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Update () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:145)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Run () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:104)\n"
+        },
+        {
+          "seq": 6200,
+          "timestampUtc": "2026-08-01T04:40:07.0716472Z",
+          "level": "log",
+          "message": "[BattleSessionCheat] QuickTest 涓€鎬竴鎶€ slot=7 uid=18 defId=monster.friendly_ancient skill=skill.holy_duel desc=鎴樺悗鎵撲粬鎬激2",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.BattleSessionCheat:TryAttachSkillsToBoardMonsters (System.Collections.Generic.IReadOnlyList`1<string>) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs:163)\nNineGrid.Flow.GameFlowOrchestrator:ApplyQuickTestSkillMountsIfNeeded () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:904)\nNineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:282)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`2<NineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10, bool>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:313)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:255)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:857)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/GroundFieldView.cs:405)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundMotionExecutor.cs:816)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:196)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/WhenAllPromise:TryInvokeContinuation (Cysharp.Threading.Tasks.UniTask/WhenAllPromise,Cysharp.Threading.Tasks.UniTask/Awaiter&) (at Assets/Plugins/UniTask/Runtime/UniTask.WhenAll.cs:210)\nCysharp.Threading.Tasks.UniTask/WhenAllPromise/<>c:<.ctor>b__3_0 (object) (at Assets/Plugins/UniTask/Runtime/UniTask.WhenAll.cs:189)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTaskExtensions/AttachExternalCancellationSource`1/<RunTask>d__5<bool>:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTaskExtensions.cs:318)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<Cysharp.Threading.Tasks.UniTaskExtensions/AttachExternalCancellationSource`1/<RunTask>d__5<bool>>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSource`1<bool>:TrySignalCompletion (Cysharp.Threading.Tasks.UniTaskStatus) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:912)\nCysharp.Threading.Tasks.UniTaskCompletionSource`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:797)\nNineGrid.Cards.DealFlightHandle:Complete (bool) (at Assets/Scripts/NineGrid.Presentation/Cards/DealFlightHandle.cs:38)\nNineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:472)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<NineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:536)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<object>:TrySetResult (object) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/YieldPromise:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTask.Delay.cs:292)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:RunCore () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:175)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Update () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:145)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Run () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:104)\n"
+        },
+        {
+          "seq": 6201,
+          "timestampUtc": "2026-08-01T04:40:07.0716472Z",
+          "level": "log",
+          "message": "[BattleSessionCheat] QuickTest 鎸傛妧鑳?mounted=3/3 activatedInstances=3 boardMonsters=3 blankPeers=0",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.BattleSessionCheat:TryAttachSkillsToBoardMonsters (System.Collections.Generic.IReadOnlyList`1<string>) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs:180)\nNineGrid.Flow.GameFlowOrchestrator:ApplyQuickTestSkillMountsIfNeeded () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:904)\nNineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:282)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`2<NineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10, bool>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:313)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:255)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:857)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/GroundFieldView.cs:405)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundMotionExecutor.cs:816)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:196)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/WhenAllPromise:TryInvokeContinuation (Cysharp.Threading.Tasks.UniTask/WhenAllPromise,Cysharp.Threading.Tasks.UniTask/Awaiter&) (at Assets/Plugins/UniTask/Runtime/UniTask.WhenAll.cs:210)\nCysharp.Threading.Tasks.UniTask/WhenAllPromise/<>c:<.ctor>b__3_0 (object) (at Assets/Plugins/UniTask/Runtime/UniTask.WhenAll.cs:189)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTaskExtensions/AttachExternalCancellationSource`1/<RunTask>d__5<bool>:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTaskExtensions.cs:318)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<Cysharp.Threading.Tasks.UniTaskExtensions/AttachExternalCancellationSource`1/<RunTask>d__5<bool>>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSource`1<bool>:TrySignalCompletion (Cysharp.Threading.Tasks.UniTaskStatus) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:912)\nCysharp.Threading.Tasks.UniTaskCompletionSource`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:797)\nNineGrid.Cards.DealFlightHandle:Complete (bool) (at Assets/Scripts/NineGrid.Presentation/Cards/DealFlightHandle.cs:38)\nNineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:472)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<NineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:536)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<object>:TrySetResult (object) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/YieldPromise:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTask.Delay.cs:292)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:RunCore () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:175)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Update () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:145)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Run () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:104)\n"
+        },
+        {
+          "seq": 6202,
+          "timestampUtc": "2026-08-01T04:40:07.0726478Z",
+          "level": "log",
+          "message": "[GameFlow] 鑺傜偣 1 宸插叆鍦猴紝绛夊緟鑺傜偣缁撶畻",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs:287)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`2<NineGrid.Flow.GameFlowOrchestrator/<PlayRealBattleAsync>d__10, bool>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:313)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:255)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<StartBattleNodeInternalAsync>d__164>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs:857)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Flow.BattleSessionExecutor/<PresentOpeningAsync>d__174>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/GroundFieldView.cs:405)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundFieldView/<WaitDealFlightsSettledAsync>d__64>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundMotionExecutor.cs:816)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.GroundMotionExecutor/<WaitDealFlightsSettledAsync>d__62>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:196)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitAllSettledAsync>d__16>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/WhenAllPromise:TryInvokeContinuation (Cysharp.Threading.Tasks.UniTask/WhenAllPromise,Cysharp.Threading.Tasks.UniTask/Awaiter&) (at Assets/Plugins/UniTask/Runtime/UniTask.WhenAll.cs:210)\nCysharp.Threading.Tasks.UniTask/WhenAllPromise/<>c:<.ctor>b__3_0 (object) (at Assets/Plugins/UniTask/Runtime/UniTask.WhenAll.cs:189)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTaskExtensions/AttachExternalCancellationSource`1/<RunTask>d__5<bool>:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTaskExtensions.cs:318)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<Cysharp.Threading.Tasks.UniTaskExtensions/AttachExternalCancellationSource`1/<RunTask>d__5<bool>>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSource`1<bool>:TrySignalCompletion (Cysharp.Threading.Tasks.UniTaskStatus) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:912)\nCysharp.Threading.Tasks.UniTaskCompletionSource`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:797)\nNineGrid.Cards.DealFlightHandle:Complete (bool) (at Assets/Scripts/NineGrid.Presentation/Cards/DealFlightHandle.cs:38)\nNineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:472)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<NineGrid.Cards.DealFlightCoordinator/<RunDrainProbeAsync>d__21>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/Ground/DealFlightCoordinator.cs:536)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.DealFlightCoordinator/<WaitProbeConvergenceAsync>d__22>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<object>:TrySetResult (object) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/YieldPromise:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTask.Delay.cs:292)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:RunCore () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:175)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Update () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:145)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Run () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:104)\n"
+        },
+        {
+          "seq": 6203,
+          "timestampUtc": "2026-08-01T04:40:40.5469646Z",
+          "level": "log",
+          "message": "[SkeletonFusion] DrainStateBuilt uid=-1 removedInBatch=2 eventLogStart=0 fusionCandidates=0 participantMapped=0 resultUids=0 chainId=0 choreoSeqId=0 refillScheduled=0 refillGateArmed=0",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.BoardPresentationPlayer:RecordSkeletonFusionTrace (string,int,System.Collections.Generic.Dictionary`2<string, string>) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs:1306)\nNineGrid.Flow.BoardPresentationPlayer:BuildFusionDrainState (NineGrid.Cards.PostKillBoardPresentationResult,int) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs:1206)\nNineGrid.Flow.BoardPresentationPlayer/<DrainPostKillBoardCoreAsync>d__19:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs:162)\nNineGrid.Flow.BoardPresentationPlayer:DrainPostKillBoardCoreAsync (NineGrid.Cards.PostKillBoardPresentationResult,System.Threading.CancellationToken)\nNineGrid.Flow.BoardPresentationPlayer/<DrainPostKillBoardAsync>d__18:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs:87)\nNineGrid.Flow.BoardPresentationPlayer:DrainPostKillBoardAsync (NineGrid.Cards.PostKillBoardPresentationResult,System.Threading.CancellationToken)\nNineGrid.Flow.BattleSessionExecutor:DrainPostKillBoardAsync (NineGrid.Cards.PostKillBoardPresentationResult,System.Threading.CancellationToken) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.cs:584)\nNineGrid.Presentation.Systems.BattleSessionSystem:DrainPostKillBoardAsync (NineGrid.Cards.PostKillBoardPresentationResult,System.Threading.CancellationToken) (at Assets/Scripts/NineGrid.Presentation/Systems/BattleSessionSystem.cs:135)\nNineGrid.Cards.CardHandManagerSingleton/<RunPickupFromGroundAsync>d__50:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/CardHandManagerSingleton.cs:687)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<NineGrid.Cards.CardHandManagerSingleton/<RunPickupFromGroundAsync>d__50>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`2<NineGrid.Cards.CardHandManagerSingleton/<PullFromGroundAsync>d__42, bool>:SetResult (bool) (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:328)\nNineGrid.Cards.CardHandManagerSingleton/<PullFromGroundAsync>d__42:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/CardHandManagerSingleton.cs:353)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`2<NineGrid.Cards.CardHandManagerSingleton/<PullFromGroundAsync>d__42, bool>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:313)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.CardDeckTween/<MoveRippleAsync>d__3>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.CardDeckTween/<MoveRippleAsync>d__3:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/CardDeckTween.cs:138)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.CardDeckTween/<MoveRippleAsync>d__3>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<object>:TrySetResult (object) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/DelayPromise:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTask.Delay.cs:810)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:RunCore () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:175)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Update () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:145)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Run () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:104)\n"
+        },
+        {
+          "seq": 6204,
+          "timestampUtc": "2026-08-01T04:40:40.5499677Z",
+          "level": "log",
+          "message": "[SkeletonFusion] RemoveStepMiss uid=10 stepActionId=35 participantMapped=0 chainId=0 choreoSeqId=13 refillScheduled=0 refillGateArmed=0",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.BoardPresentationPlayer:RecordSkeletonFusionTrace (string,int,System.Collections.Generic.Dictionary`2<string, string>) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs:1306)\nNineGrid.Flow.BoardPresentationPlayer/<TryHandleFusionRemoveStepAsync>d__45:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs:1334)\nNineGrid.Flow.BoardPresentationPlayer:TryHandleFusionRemoveStepAsync (NineGrid.Flow.BoardPresentationPlayer/FusionDrainState,NineGrid.Cards.BoardPresentationStep,System.Threading.CancellationToken)\nNineGrid.Flow.BoardPresentationPlayer/<DrainBoardStepsAsync>d__21:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs:363)\nNineGrid.Flow.BoardPresentationPlayer:DrainBoardStepsAsync (NineGrid.Cards.BoardPresentationStep[],int,NineGrid.Flow.BoardPresentationPlayer/FusionDrainState,System.Threading.CancellationToken)\nNineGrid.Flow.BoardPresentationPlayer/<DrainPostKillBoardCoreAsync>d__19:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs:178)\nNineGrid.Flow.BoardPresentationPlayer:DrainPostKillBoardCoreAsync (NineGrid.Cards.PostKillBoardPresentationResult,System.Threading.CancellationToken)\nNineGrid.Flow.BoardPresentationPlayer/<DrainPostKillBoardAsync>d__18:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs:87)\nNineGrid.Flow.BoardPresentationPlayer:DrainPostKillBoardAsync (NineGrid.Cards.PostKillBoardPresentationResult,System.Threading.CancellationToken)\nNineGrid.Flow.BattleSessionExecutor:DrainPostKillBoardAsync (NineGrid.Cards.PostKillBoardPresentationResult,System.Threading.CancellationToken) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.cs:584)\nNineGrid.Presentation.Systems.BattleSessionSystem:DrainPostKillBoardAsync (NineGrid.Cards.PostKillBoardPresentationResult,System.Threading.CancellationToken) (at Assets/Scripts/NineGrid.Presentation/Systems/BattleSessionSystem.cs:135)\nNineGrid.Cards.CardHandManagerSingleton/<RunPickupFromGroundAsync>d__50:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/CardHandManagerSingleton.cs:687)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<NineGrid.Cards.CardHandManagerSingleton/<RunPickupFromGroundAsync>d__50>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`2<NineGrid.Cards.CardHandManagerSingleton/<PullFromGroundAsync>d__42, bool>:SetResult (bool) (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:328)\nNineGrid.Cards.CardHandManagerSingleton/<PullFromGroundAsync>d__42:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/CardHandManagerSingleton.cs:353)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`2<NineGrid.Cards.CardHandManagerSingleton/<PullFromGroundAsync>d__42, bool>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:313)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.CardDeckTween/<MoveRippleAsync>d__3>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.CardDeckTween/<MoveRippleAsync>d__3:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/CardDeckTween.cs:138)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.CardDeckTween/<MoveRippleAsync>d__3>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<object>:TrySetResult (object) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/DelayPromise:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTask.Delay.cs:810)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:RunCore () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:175)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Update () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:145)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Run () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:104)\n"
+        },
+        {
+          "seq": 6205,
+          "timestampUtc": "2026-08-01T04:40:40.5499677Z",
+          "level": "log",
+          "message": "[SkeletonFusion] RemoveStepMiss uid=19 stepActionId=37 participantMapped=0 chainId=0 choreoSeqId=13 refillScheduled=0 refillGateArmed=0",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.BoardPresentationPlayer:RecordSkeletonFusionTrace (string,int,System.Collections.Generic.Dictionary`2<string, string>) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs:1306)\nNineGrid.Flow.BoardPresentationPlayer/<TryHandleFusionRemoveStepAsync>d__45:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs:1334)\nNineGrid.Flow.BoardPresentationPlayer:TryHandleFusionRemoveStepAsync (NineGrid.Flow.BoardPresentationPlayer/FusionDrainState,NineGrid.Cards.BoardPresentationStep,System.Threading.CancellationToken)\nNineGrid.Flow.BoardPresentationPlayer/<DrainBoardStepsAsync>d__21:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs:363)\nNineGrid.Flow.BoardPresentationPlayer:DrainBoardStepsAsync (NineGrid.Cards.BoardPresentationStep[],int,NineGrid.Flow.BoardPresentationPlayer/FusionDrainState,System.Threading.CancellationToken)\nNineGrid.Flow.BoardPresentationPlayer/<DrainPostKillBoardCoreAsync>d__19:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs:178)\nNineGrid.Flow.BoardPresentationPlayer:DrainPostKillBoardCoreAsync (NineGrid.Cards.PostKillBoardPresentationResult,System.Threading.CancellationToken)\nNineGrid.Flow.BoardPresentationPlayer/<DrainPostKillBoardAsync>d__18:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs:87)\nNineGrid.Flow.BoardPresentationPlayer:DrainPostKillBoardAsync (NineGrid.Cards.PostKillBoardPresentationResult,System.Threading.CancellationToken)\nNineGrid.Flow.BattleSessionExecutor:DrainPostKillBoardAsync (NineGrid.Cards.PostKillBoardPresentationResult,System.Threading.CancellationToken) (at Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.cs:584)\nNineGrid.Presentation.Systems.BattleSessionSystem:DrainPostKillBoardAsync (NineGrid.Cards.PostKillBoardPresentationResult,System.Threading.CancellationToken) (at Assets/Scripts/NineGrid.Presentation/Systems/BattleSessionSystem.cs:135)\nNineGrid.Cards.CardHandManagerSingleton/<RunPickupFromGroundAsync>d__50:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/CardHandManagerSingleton.cs:687)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTaskVoid`1<NineGrid.Cards.CardHandManagerSingleton/<RunPickupFromGroundAsync>d__50>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:104)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<bool>:TrySetResult (bool) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`2<NineGrid.Cards.CardHandManagerSingleton/<PullFromGroundAsync>d__42, bool>:SetResult (bool) (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:328)\nNineGrid.Cards.CardHandManagerSingleton/<PullFromGroundAsync>d__42:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/CardHandManagerSingleton.cs:353)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`2<NineGrid.Cards.CardHandManagerSingleton/<PullFromGroundAsync>d__42, bool>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:313)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<Cysharp.Threading.Tasks.AsyncUnit>:TrySetResult (Cysharp.Threading.Tasks.AsyncUnit) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.CardDeckTween/<MoveRippleAsync>d__3>:SetResult () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:204)\nNineGrid.Cards.CardDeckTween/<MoveRippleAsync>d__3:MoveNext () (at Assets/Scripts/NineGrid.Presentation/Cards/CardDeckTween.cs:138)\nCysharp.Threading.Tasks.CompilerServices.AsyncUniTask`1<NineGrid.Cards.CardDeckTween/<MoveRippleAsync>d__3>:Run () (at Assets/Plugins/UniTask/Runtime/CompilerServices/StateMachineRunner.cs:189)\nCysharp.Threading.Tasks.AwaiterActions:Continuation (object) (at Assets/Plugins/UniTask/Runtime/UniTask.cs:25)\nCysharp.Threading.Tasks.UniTaskCompletionSourceCore`1<object>:TrySetResult (object) (at Assets/Plugins/UniTask/Runtime/UniTaskCompletionSource.cs:139)\nCysharp.Threading.Tasks.UniTask/DelayPromise:MoveNext () (at Assets/Plugins/UniTask/Runtime/UniTask.Delay.cs:810)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:RunCore () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:175)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Update () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:145)\nCysharp.Threading.Tasks.Internal.PlayerLoopRunner:Run () (at Assets/Plugins/UniTask/Runtime/Internal/PlayerLoopRunner.cs:104)\n"
+        },
+        {
+          "seq": 6206,
+          "timestampUtc": "2026-08-01T04:40:51.5030601Z",
+          "level": "log",
+          "message": "[BattleTrace] Exported: C:/Users/jinji/Documents/GitHub/Ninegrid Gambit/Assets\\Notes\\Logs\\OtherLog\\BattleLog\\battlelog-QuickTest-20260801-124002-seed1.json\nops=1 | [#0 StartNode/StartNode dmg=0 kill=False defeat=False]",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.Diagnostics.BattleTraceRecorder:ExportJson (bool,bool) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs:400)\nNineGrid.Flow.Diagnostics.BattleTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs:444)\nNineGrid.Presentation.Editor.BattleTracePlayModeExporter:OnPlayModeStateChanged (UnityEditor.PlayModeStateChange) (at Assets/Scripts/NineGrid.Presentation/Editor/BattleTracePlayModeExporter.cs:47)\nUnityEngine.GUIUtility:ProcessEvent (int,intptr,bool&)\n"
+        },
+        {
+          "seq": 6207,
+          "timestampUtc": "2026-08-01T04:40:51.5030601Z",
+          "level": "log",
+          "message": "[BattleTrace] Play 缁撴潫宸插鍑烘垬鏂楁棩蹇楋紙ExitingPlayMode锛夛細C:/Users/jinji/Documents/GitHub/Ninegrid Gambit/Assets\\Notes\\Logs\\OtherLog\\BattleLog\\battlelog-QuickTest-20260801-124002-seed1.json",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.Diagnostics.BattleTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs:447)\nNineGrid.Presentation.Editor.BattleTracePlayModeExporter:OnPlayModeStateChanged (UnityEditor.PlayModeStateChange) (at Assets/Scripts/NineGrid.Presentation/Editor/BattleTracePlayModeExporter.cs:47)\nUnityEngine.GUIUtility:ProcessEvent (int,intptr,bool&)\n"
+        },
+        {
+          "seq": 6208,
+          "timestampUtc": "2026-08-01T04:40:51.5050605Z",
+          "level": "log",
+          "message": "[FlowTrace] Exported CoreLog: C:/Users/jinji/Documents/GitHub/Ninegrid Gambit/Assets\\Notes\\Logs\\CoreLog\\corelog-QuickTest-20260801-124002-seed1.json\nevents=201 | [#197 Hand/PickupAttempt ok=True] | [#198 Field/OccupancySnapshot ok=True] | [#199 Hand/PickupGate ok=True] | [#200 Presentation/SessionChoreoSummary ok=True]",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.Diagnostics.FlowTraceRecorder:ExportJson (bool,bool) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/FlowTraceRecorder.cs:209)\nNineGrid.Flow.Diagnostics.FlowTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/FlowTraceRecorder.cs:239)\nNineGrid.Flow.Diagnostics.BattleTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs:452)\nNineGrid.Presentation.Editor.BattleTracePlayModeExporter:OnPlayModeStateChanged (UnityEditor.PlayModeStateChange) (at Assets/Scripts/NineGrid.Presentation/Editor/BattleTracePlayModeExporter.cs:47)\nUnityEngine.GUIUtility:ProcessEvent (int,intptr,bool&)\n"
+        },
+        {
+          "seq": 6209,
+          "timestampUtc": "2026-08-01T04:40:51.5060612Z",
+          "level": "log",
+          "message": "[FlowTrace] Play 缁撴潫宸插鍑烘祦绋嬫棩蹇楋紙ExitingPlayMode锛夛細C:/Users/jinji/Documents/GitHub/Ninegrid Gambit/Assets\\Notes\\Logs\\CoreLog\\corelog-QuickTest-20260801-124002-seed1.json",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.Diagnostics.FlowTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/FlowTraceRecorder.cs:242)\nNineGrid.Flow.Diagnostics.BattleTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs:452)\nNineGrid.Presentation.Editor.BattleTracePlayModeExporter:OnPlayModeStateChanged (UnityEditor.PlayModeStateChange) (at Assets/Scripts/NineGrid.Presentation/Editor/BattleTracePlayModeExporter.cs:47)\nUnityEngine.GUIUtility:ProcessEvent (int,intptr,bool&)\n"
+        },
+        {
+          "seq": 6210,
+          "timestampUtc": "2026-08-01T04:40:51.5100784Z",
+          "level": "log",
+          "message": "[PerfTrace] Exported: C:/Users/jinji/Documents/GitHub/Ninegrid Gambit/Assets\\Notes\\Logs\\PerfLog\\perflog-QuickTest-20260801-124002-seed1.json events=899",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.Diagnostics.PerfTraceRecorder:ExportJson (bool,bool) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/PerfTraceRecorder.cs:468)\nNineGrid.Flow.Diagnostics.PerfTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/PerfTraceRecorder.cs:489)\nNineGrid.Flow.Diagnostics.BattleTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs:453)\nNineGrid.Presentation.Editor.BattleTracePlayModeExporter:OnPlayModeStateChanged (UnityEditor.PlayModeStateChange) (at Assets/Scripts/NineGrid.Presentation/Editor/BattleTracePlayModeExporter.cs:47)\nUnityEngine.GUIUtility:ProcessEvent (int,intptr,bool&)\n"
+        },
+        {
+          "seq": 6211,
+          "timestampUtc": "2026-08-01T04:40:51.5100784Z",
+          "level": "log",
+          "message": "[PerfTrace] Play 缁撴潫宸插鍑鸿〃鐜版棩蹇楋紙ExitingPlayMode锛夛細C:/Users/jinji/Documents/GitHub/Ninegrid Gambit/Assets\\Notes\\Logs\\PerfLog\\perflog-QuickTest-20260801-124002-seed1.json",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.Diagnostics.PerfTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/PerfTraceRecorder.cs:492)\nNineGrid.Flow.Diagnostics.BattleTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs:453)\nNineGrid.Presentation.Editor.BattleTracePlayModeExporter:OnPlayModeStateChanged (UnityEditor.PlayModeStateChange) (at Assets/Scripts/NineGrid.Presentation/Editor/BattleTracePlayModeExporter.cs:47)\nUnityEngine.GUIUtility:ProcessEvent (int,intptr,bool&)\n"
+        },
+        {
+          "seq": 6212,
+          "timestampUtc": "2026-08-01T04:40:51.5115869Z",
+          "level": "log",
+          "message": "[RegistryTrace] 宸插鍑烘敞鍐岃〃鏃ュ織锛欳:/Users/jinji/Documents/GitHub/Ninegrid Gambit/Assets\\Notes\\Logs\\OtherLog\\RegistryLog\\registrylog-QuickTest-20260801-124002-seed1.json events=147",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.Diagnostics.RegistryTraceRecorder:ExportJson (bool,bool) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/RegistryTraceRecorder.cs:512)\nNineGrid.Flow.Diagnostics.BattleTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs:454)\nNineGrid.Presentation.Editor.BattleTracePlayModeExporter:OnPlayModeStateChanged (UnityEditor.PlayModeStateChange) (at Assets/Scripts/NineGrid.Presentation/Editor/BattleTracePlayModeExporter.cs:47)\nUnityEngine.GUIUtility:ProcessEvent (int,intptr,bool&)\n"
+        },
+        {
+          "seq": 6213,
+          "timestampUtc": "2026-08-01T04:48:23.0311563Z",
+          "level": "log",
+          "message": "[Locus] Native broker bridge active (generation 26).",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nLocus.LocusBridge:NativeStartIfEnabled () (at ./Packages/com.farlocus.locus/Editor/LocusBridge.Native.cs:141)\nLocus.LocusBridge:NativeOnAfterReload () (at ./Packages/com.farlocus.locus/Editor/LocusBridge.Native.cs:168)\nLocus.LocusBridge:OnAfterAssemblyReload () (at ./Packages/com.farlocus.locus/Editor/LocusBridge.cs:743)\nUnityEditor.AssemblyReloadEvents:OnAfterAssemblyReload ()\n"
+        },
+        {
+          "seq": 6214,
+          "timestampUtc": "2026-08-01T04:48:23.0381789Z",
+          "level": "log",
+          "message": "[Locus] Native background hook active (2 symbols).",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nLocus.LocusBridge:NativeApplyBackgroundHook () (at ./Packages/com.farlocus.locus/Editor/LocusBridge.Native.cs:527)\nLocus.LocusBridge:NativeRefreshBackgroundHook (bool) (at ./Packages/com.farlocus.locus/Editor/LocusBridge.Native.cs:541)\nLocus.LocusBridge:NativeStartIfEnabled () (at ./Packages/com.farlocus.locus/Editor/LocusBridge.Native.cs:146)\nLocus.LocusBridge:NativeOnAfterReload () (at ./Packages/com.farlocus.locus/Editor/LocusBridge.Native.cs:168)\nLocus.LocusBridge:OnAfterAssemblyReload () (at ./Packages/com.farlocus.locus/Editor/LocusBridge.cs:743)\nUnityEditor.AssemblyReloadEvents:OnAfterAssemblyReload ()\n"
+        }
+      ],
+      "cursor": 6214,
+      "returned": 100,
+      "dropped": false
+    },
+    "target": {
+      "host": "localhost",
+      "port": 7800,
+      "projectPath": "C:\\Users\\jinji\\Documents\\GitHub\\Ninegrid Gambit"
+    },
+    "success": true
+  },
+  "errors": [],
+  "warnings": []
+}

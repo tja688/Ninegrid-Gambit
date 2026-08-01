@@ -742,6 +742,9 @@ namespace NineGrid.Cards
                 return;
             }
 
+            // 捕熊等同批效果：刚起飞的补牌可能立刻被 Remove；须先取消 dealFlight。
+            geometry?.CancelDealFlightForUid(victim.Uid, "PresentRemovedFieldCard");
+
             var victimSlot = 0;
             var hadSlot = geometry != null
                 && geometry.TryGetSlotOf(victim.Uid, out victimSlot);

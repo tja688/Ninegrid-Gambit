@@ -39,6 +39,9 @@ namespace NineGrid.Presentation.Systems
 
         bool IsDealInFlight(int uid);
 
+        /// <summary>移除前取消该 uid 的补牌飞牌（同步卸 ActiveCount + EndChoreo）。</summary>
+        bool CancelDealFlightForUid(int uid, string reason = null);
+
         bool RequestPlaceCard(int slot, ManagedCard card, bool skipBusyGuard = false);
 
         bool RequestPlaceCardAtAnchor(

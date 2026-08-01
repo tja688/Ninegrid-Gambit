@@ -24,6 +24,10 @@ namespace NineGrid.Cards
             public int PendingNetAtLaunch;
             public float FlightBeginUnscaledTime;
             public bool LoggedFirstRedirect;
+            /// <summary>
+            /// CancelFlightForUid 已同步 EndChoreo：finally 不得再 End，避免弹错栈顶。
+            /// </summary>
+            public bool ChoreoClosedEagerly;
             public ManagedCard Card;
             public DealSettleBudget Budget;
             public DealFlightKind Kind;
@@ -211,6 +215,67 @@ namespace NineGrid.Cards
             {
                 CancelProbe(drain[i], rollback: false);
             }
+        }
+
+        /// <summary>
+        /// 场上移除 / Vacate 前取消该 uid 的 Drain/Explore 飞牌。
+        /// 同步卸 ActiveCount 并 EndChoreo，避免同批 Deal→Remove 后 WaitAll 挂死、choreo 泄漏。
+        /// </summary>
+        public bool CancelFlightForUid(int uid, string reason)
+        {
+            if (uid <= 0)
+            {
+                return false;
+            }
+
+            DealFlightProbe probe = null;
+            if (_drainByUid.TryGetValue(uid, out probe))
+            {
+                _drainByUid.Remove(uid);
+            }
+            else
+            {
+                var birthKey = 0;
+                foreach (var kv in _exploreByBirthSlot)
+                {
+                    var candidate = kv.Value;
+                    if (candidate == null)
+                    {
+                        continue;
+                    }
+
+                    var probeUid = candidate.Card != null
+                        ? candidate.Card.Uid
+                        : candidate.Handle != null ? candidate.Handle.Uid : 0;
+                    if (probeUid != uid)
+                    {
+                        continue;
+                    }
+
+                    birthKey = kv.Key;
+                    probe = candidate;
+                    break;
+                }
+
+                if (probe == null)
+                {
+                    return false;
+                }
+
+                _exploreByBirthSlot.Remove(birthKey);
+            }
+
+            var outcome = string.IsNullOrEmpty(reason) ? "cancel" : "cancel:" + reason;
+            probe.ChoreoClosedEagerly = true;
+            if (probe.Card != null)
+            {
+                SlotFrameConvergence.SanitizeForSanctuary(probe.Card, "DealFlight.Cancel." + (reason ?? "uid"));
+            }
+
+            CancelProbe(probe, rollback: false);
+            TraceDealFlightEnd(probe, outcome);
+            ChoreoTraceSink.SafeEndChoreo(outcome);
+            return true;
         }
 
         private void ShiftProbes(IEnumerable<DealFlightProbe> probes, bool clockwise)
@@ -410,8 +475,11 @@ namespace NineGrid.Cards
             {
                 _exploreByBirthSlot.Remove(probe.BirthSlot);
                 probe.LinkedCts?.Dispose();
-                TraceDealFlightEnd(probe, outcome);
-                ChoreoTraceSink.SafeEndChoreo(outcome);
+                if (!probe.ChoreoClosedEagerly)
+                {
+                    TraceDealFlightEnd(probe, outcome);
+                    ChoreoTraceSink.SafeEndChoreo(outcome);
+                }
             }
         }
 
@@ -492,14 +560,19 @@ namespace NineGrid.Cards
                         "slot=" + probe.TrackedSlot);
                 }
 
-                TraceDealFlightEnd(probe, outcome);
-                ChoreoTraceSink.SafeEndChoreo(outcome);
+                if (!probe.ChoreoClosedEagerly)
+                {
+                    TraceDealFlightEnd(probe, outcome);
+                    ChoreoTraceSink.SafeEndChoreo(outcome);
+                }
             }
         }
 
         private async UniTask WaitProbeConvergenceAsync(DealFlightProbe probe, CancellationToken token)
         {
-            if (probe.Card == null || !SlotFrameConvergence.TryGetDriver(probe.Card, out var driver))
+            if (probe.Card == null
+                || probe.Card.Transform == null
+                || !SlotFrameConvergence.TryGetDriver(probe.Card, out var driver))
             {
                 return;
             }
@@ -507,6 +580,11 @@ namespace NineGrid.Cards
             var tracked = probe.TrackedSlot;
             while (!token.IsCancellationRequested)
             {
+                if (probe.Card == null || probe.Card.Transform == null)
+                {
+                    return;
+                }
+
                 if (probe.TrackedSlot != tracked)
                 {
                     tracked = probe.TrackedSlot;

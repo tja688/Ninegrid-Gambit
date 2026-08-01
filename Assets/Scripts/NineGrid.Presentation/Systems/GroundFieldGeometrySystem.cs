@@ -115,6 +115,11 @@ namespace NineGrid.Presentation.Systems
             return mMotion.IsDealInFlight(uid);
         }
 
+        public bool CancelDealFlightForUid(int uid, string reason = null)
+        {
+            return mMotion.CancelDealFlightForUid(uid, reason);
+        }
+
         public bool RequestPlaceCard(int slot, ManagedCard card, bool skipBusyGuard = false)
         {
             return mMotion.RequestPlaceCard(slot, card, skipBusyGuard);

@@ -390,6 +390,11 @@ namespace NineGrid.Cards
             return Geometry != null && Geometry.IsDealInFlight(uid);
         }
 
+        public bool CancelDealFlightForUid(int uid, string reason = null)
+        {
+            return Geometry != null && Geometry.CancelDealFlightForUid(uid, reason);
+        }
+
         public UniTask WaitAllActiveDealFlightsAsync(CancellationToken cancellationToken)
         {
             return Geometry != null
