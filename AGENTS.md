@@ -40,6 +40,10 @@
 
 项目级硬规则见 [`.cursor/rules/code-map-maintenance.mdc`](.cursor/rules/code-map-maintenance.mdc)。
 
+### 游戏设计文档
+
+[`Assets/Docs/九宫格登神`] 为策划维护的游戏设计文档，在有了解权威设计需求的情况下可以参考，但注意，有时候因为沟通问题会出现项目实现细节、用户开发要求与策划设计冲突，此时需要提出问题让用户确认。
+
 ---
 
 ## 工具与工作流
