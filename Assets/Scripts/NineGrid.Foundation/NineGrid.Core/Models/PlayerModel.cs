@@ -7,6 +7,8 @@ namespace NineGrid.Core
     public sealed class PlayerModel : AbstractModel
     {
         public const int DefaultItemDeckCapacity = 6;
+        /// <summary>装备栏上限（设计案：12）。</summary>
+        public const int MaxRelicSlots = 12;
 
         private readonly List<string> mRelicDefIds = new List<string>();
         private readonly List<string> mItemSourcePoolDefIds = new List<string>();
@@ -62,6 +64,12 @@ namespace NineGrid.Core
         public IReadOnlyList<string> RelicDefIds
         {
             get { return mRelicDefIds; }
+        }
+
+        /// <summary>装备栏是否已满（不可再获得新遗物，需先丢弃）。</summary>
+        public bool IsRelicInventoryFull
+        {
+            get { return mRelicDefIds.Count >= MaxRelicSlots; }
         }
 
         /// <summary>玩家侧卡组容量（初始 6，可扩容）；每关按此数从来源池随机生成。</summary>
@@ -127,11 +135,13 @@ namespace NineGrid.Core
 
         public void AddRelic(string defId)
         {
-            if (!string.IsNullOrEmpty(defId) && !mRelicDefIds.Contains(defId))
+            if (string.IsNullOrEmpty(defId) || mRelicDefIds.Contains(defId) || IsRelicInventoryFull)
             {
-                mRelicDefIds.Add(defId);
-                Touch();
+                return;
             }
+
+            mRelicDefIds.Add(defId);
+            Touch();
         }
 
         public bool RemoveRelic(string defId)

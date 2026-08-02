@@ -24,6 +24,8 @@ namespace NineGrid.Flow.Presentation
         public const string SelectReward = "selectReward";
         public const string SkipHelpChoice = "skipHelpChoice";
         public const string RefreshShop = "refreshShop";
+        /// <summary>右键丢弃装备栏遗物；ChoiceOverlay 下满栏腾空也须放行（#98）。</summary>
+        public const string DiscardRelic = "discardRelic";
 
         public static bool IsBoardAction(string kind)
         {
@@ -42,7 +44,8 @@ namespace NineGrid.Flow.Presentation
                 || string.Equals(kind, EnterRoom, System.StringComparison.Ordinal)
                 || string.Equals(kind, SelectReward, System.StringComparison.Ordinal)
                 || string.Equals(kind, SkipHelpChoice, System.StringComparison.Ordinal)
-                || string.Equals(kind, RefreshShop, System.StringComparison.Ordinal);
+                || string.Equals(kind, RefreshShop, System.StringComparison.Ordinal)
+                || string.Equals(kind, DiscardRelic, System.StringComparison.Ordinal);
         }
     }
 }

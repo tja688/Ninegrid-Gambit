@@ -12,6 +12,9 @@ namespace NineGrid.Flow
 
         public static Action WireController;
 
+        /// <summary>#98 右键丢弃：返回是否已受理（含 IntentIntake 拒收）。</summary>
+        public static Func<string, bool> TryDiscardRelic;
+
         public static void RequestWire()
         {
             WireController?.Invoke();

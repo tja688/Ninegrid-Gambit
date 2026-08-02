@@ -7,6 +7,7 @@ using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
+using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation;
@@ -102,6 +103,11 @@ namespace NineGrid.Flow
                     if (!result.Accepted)
                     {
                         Debug.LogWarning($"[BattleSession] SelectReward 被拒: {result.Reason}");
+                        if (!string.IsNullOrEmpty(result.Reason))
+                        {
+                            BoardBriefTipPresenter.EnsureExists().ShowNotice(result.Reason);
+                        }
+
                         RecordRewardChosenFlow(
                             choiceKind,
                             chosenDefId,

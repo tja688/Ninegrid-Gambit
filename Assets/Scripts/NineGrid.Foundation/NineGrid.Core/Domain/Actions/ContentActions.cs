@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NineGrid.Core.Content;
+using NineGrid.Core.Effects;
 using NineGrid.Core.Systems;
 
 namespace NineGrid.Core
@@ -65,10 +66,73 @@ namespace NineGrid.Core
 
         public override GameActionResult Apply(GameActionContext context)
         {
-            context.GetModel<PlayerModel>().AddRelic(RelicDefId);
+            var player = context.GetModel<PlayerModel>();
+            if (player.IsRelicInventoryFull && !PlayerOwnsRelic(player, RelicDefId))
+            {
+                return GameActionResult.Empty;
+            }
+
+            player.AddRelic(RelicDefId);
             context.GetSystem<IContentSystem>().ActivateRelic(RelicDefId);
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.RelicGranted, context.ActionId, ActionName)
+                    .WithMessage(RelicDefId));
+        }
+
+        private static bool PlayerOwnsRelic(PlayerModel player, string defId)
+        {
+            var relics = player.RelicDefIds;
+            for (var i = 0; i < relics.Count; i++)
+            {
+                if (relics[i] == defId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 玩家丢弃已装备遗物：反激活遗物效果并从装备栏移除（金币由 EconomySystem 另发）。
+    /// </summary>
+    public sealed class DiscardRelicAction : GameAction
+    {
+        public DiscardRelicAction(string relicDefId)
+        {
+            RelicDefId = relicDefId ?? string.Empty;
+        }
+
+        public string RelicDefId { get; private set; }
+        public override string ActionName { get { return "DiscardRelic"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            if (string.IsNullOrEmpty(RelicDefId))
+            {
+                return GameActionResult.Empty;
+            }
+
+            var effectSystem = context.GetSystem<IEffectSystem>();
+            var instances = effectSystem.Instances;
+            for (var i = instances.Count - 1; i >= 0; i--)
+            {
+                var instance = instances[i];
+                if (instance == null
+                    || instance.Owner == null
+                    || instance.Owner.ContainerType != EffectContainerType.Relic
+                    || !string.Equals(instance.Owner.SourceDefId, RelicDefId, System.StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                effectSystem.Deactivate(instance.InstanceId);
+            }
+
+            context.GetModel<PlayerModel>().RemoveRelic(RelicDefId);
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.EffectDeactivated, context.ActionId, ActionName)
                     .WithMessage(RelicDefId));
         }
     }

@@ -59,6 +59,12 @@ namespace NineGrid.Flow
 
             if (WorldPointerUtility.WasSecondaryPressedThisFrame())
             {
+                // 半黑屏 HitSort 盖住遗物栏时仍须能右键丢弃（满栏 Bounce 腾空，#98）。
+                if (TryDiscardEquippedRelicUnderPointer(cam, screen))
+                {
+                    return;
+                }
+
                 TryOpenCardInspect(best);
                 return;
             }
@@ -83,6 +89,59 @@ namespace NineGrid.Flow
             }
 
             best?.HandlePointerDown();
+        }
+
+        /// <summary>
+        /// 在指针下找遗物槽（不看半黑屏最高优先级），供满栏 Bounce 期间右键丢弃。
+        /// </summary>
+        private static bool TryDiscardEquippedRelicUnderPointer(Camera camera, Vector2 screen)
+        {
+            if (RelicHudHook.TryDiscardRelic == null)
+            {
+                RelicHudHook.RequestWire();
+            }
+
+            if (RelicHudHook.TryDiscardRelic == null)
+            {
+                return false;
+            }
+
+            ContentIconSlotHitProxy bestRelic = null;
+            var bestSort = int.MinValue;
+            var targets = PointerHitRegistry.All;
+            for (var i = 0; i < targets.Count; i++)
+            {
+                var target = targets[i];
+                var proxy = target as ContentIconSlotHitProxy;
+                if (proxy == null
+                    || string.IsNullOrEmpty(proxy.DefId)
+                    || !proxy.DefId.StartsWith("relic.", System.StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var collider = proxy.HitCollider;
+                if (collider == null || !collider.enabled || !collider.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                var planeZ = collider.transform.position.z;
+                if (!TryScreenToWorldOnPlane(camera, screen, planeZ, out var world)
+                    || !collider.OverlapPoint(world))
+                {
+                    continue;
+                }
+
+                var sort = proxy.HitSortOrder;
+                if (bestRelic == null || sort > bestSort)
+                {
+                    bestRelic = proxy;
+                    bestSort = sort;
+                }
+            }
+
+            return bestRelic != null && RelicHudHook.TryDiscardRelic(bestRelic.DefId);
         }
 
         private static void TryOpenCardInspect(IPointerHitTarget hovered)

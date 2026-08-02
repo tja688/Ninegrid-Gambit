@@ -101,6 +101,9 @@ namespace NineGrid.Presentation.Tests
                 "Controllers/RewardChoiceInputController.cs",
                 @"intake\.Submit\s*\(");
             AssertSourceMatches(
+                "Controllers/RelicHudController.cs",
+                @"intake\.Submit\s*\(");
+            AssertSourceMatches(
                 "Cards/BoardCardSelectModeController.cs",
                 @"intake\.Submit\s*\(");
         }
@@ -186,14 +189,16 @@ namespace NineGrid.Presentation.Tests
             {
                 "RoomChoiceInputController.cs",
                 "RewardChoiceInputController.cs",
+                "RelicHudController.cs",
                 "SubmitSelectRoomCommand.cs",
                 "SubmitSelectRewardCommand.cs",
                 "SubmitEnterRoomCommand.cs",
                 "SubmitSkipHelpChoiceCommand.cs",
                 "SubmitRefreshShopCommand.cs",
+                "SubmitDiscardRelicCommand.cs",
             };
             var pattern = new Regex(
-                @"\bnew\s+Submit(?:SelectRoom|SelectReward|EnterRoom|SkipHelpChoice|RefreshShop)Command\b",
+                @"\bnew\s+Submit(?:SelectRoom|SelectReward|EnterRoom|SkipHelpChoice|RefreshShop|DiscardRelic)Command\b",
                 RegexOptions.CultureInvariant);
             var offenders = Directory
                 .EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)

@@ -103,6 +103,56 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void Tick_SecondaryOnRelicSlot_DiscardsEvenUnderHigherSortOverlay()
+        {
+            var discarded = new System.Collections.Generic.List<string>();
+            RelicHudHook.TryDiscardRelic = defId =>
+            {
+                discarded.Add(defId);
+                return true;
+            };
+
+            try
+            {
+                var relicGo = new GameObject("RelicSlot");
+                relicGo.SetActive(false);
+                relicGo.transform.position = Vector3.zero;
+                var box = relicGo.AddComponent<BoxCollider2D>();
+                box.size = new Vector2(1.5f, 1.5f);
+                var proxy = relicGo.AddComponent<ContentIconSlotHitProxy>();
+                proxy.DefId = "relic.wood_shield";
+                relicGo.SetActive(true);
+                PointerHitRegistry.Register(proxy);
+                _targets.Add(relicGo);
+
+                CreateTarget("Dimmer", Vector2.zero, sortOrder: BattleUiDimmerOverlay.HitSort, typePriority: 100);
+
+                var registered = false;
+                for (var i = 0; i < PointerHitRegistry.All.Count; i++)
+                {
+                    if (ReferenceEquals(PointerHitRegistry.All[i], proxy))
+                    {
+                        registered = true;
+                        break;
+                    }
+                }
+
+                Assert.IsTrue(registered, "Relic proxy must be registered before secondary tick.");
+
+                _pointer.Screen = WorldToScreen(Vector3.zero);
+                _pointer.PressSecondaryThisFrame = true;
+                _router.Tick();
+
+                Assert.AreEqual(1, discarded.Count, "Expected discard under dimmer; registryCount=" + PointerHitRegistry.All.Count);
+                Assert.AreEqual("relic.wood_shield", discarded[0]);
+            }
+            finally
+            {
+                RelicHudHook.TryDiscardRelic = null;
+            }
+        }
+
+        [Test]
         public void MitigationInfo_AndAdrMarker_Exist()
         {
             Assert.AreEqual("0006", WindowsHighPollingMouseMitigationInfo.AdrId);

@@ -296,6 +296,21 @@ namespace NineGrid.Core.Commands
         }
     }
 
+    public sealed class DiscardRelicCommand : AbstractCommand<CoreCommandResult>
+    {
+        private readonly string mRelicDefId;
+
+        public DiscardRelicCommand(string relicDefId)
+        {
+            mRelicDefId = relicDefId ?? string.Empty;
+        }
+
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().DiscardRelic(mRelicDefId);
+        }
+    }
+
     public sealed class RefreshShopCommand : AbstractCommand<CoreCommandResult>
     {
         protected override CoreCommandResult OnExecute()
