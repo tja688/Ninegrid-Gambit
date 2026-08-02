@@ -19,19 +19,13 @@ namespace NineGrid.Presentation.Tests.FlowShell
         private static readonly SlotId sAdjacentSlot = SlotId.Board(2);
 
         [Test]
-        public void SelectReward_ThenSelectRoom_ThenEnterRoom_AdvancesPhasesViaCommands()
+        public void SelectRoom_ThenEnterRoom_AdvancesPhasesViaCommands()
         {
             using (var arch = PresentationArchitectureFixture.CreateStartedGameWithCatalog(seed: 11UL))
             {
                 Assert.IsTrue(arch.Phase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
                 arch.PlaceSoleBoardCardAt(sAdjacentSlot);
                 Assert.IsTrue(arch.Phase.Attack(sAdjacentSlot).Accepted);
-                Assert.AreEqual(GamePhase.RewardItemChoice, arch.Phase.CurrentPhase);
-
-                var pending = arch.Architecture.GetModel<PendingChoiceModel>();
-                Assert.Greater(pending.RewardOptions.Count, 0);
-                var selectReward = arch.Architecture.SendCommand(new SubmitSelectRewardCommand(0));
-                Assert.IsTrue(selectReward.Accepted);
                 Assert.AreEqual(GamePhase.RoomChoice, arch.Phase.CurrentPhase);
 
                 var selectRoom = arch.Architecture.SendCommand(new SubmitSelectRoomCommand(0));
@@ -45,18 +39,16 @@ namespace NineGrid.Presentation.Tests.FlowShell
         }
 
         [Test]
-        public void SkipHelpChoice_AfterNodeClear_AdvancesTowardRoomChoice()
+        public void ClearNode_OffersRoomChoice_WithoutHelpChoice()
         {
             using (var arch = PresentationArchitectureFixture.CreateStartedGameWithCatalog(seed: 11UL))
             {
                 Assert.IsTrue(arch.Phase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
                 arch.PlaceSoleBoardCardAt(sAdjacentSlot);
                 Assert.IsTrue(arch.Phase.Attack(sAdjacentSlot).Accepted);
-                Assert.AreEqual(GamePhase.RewardItemChoice, arch.Phase.CurrentPhase);
-
-                var skip = arch.Architecture.SendCommand(new SubmitSkipHelpChoiceCommand());
-                Assert.IsTrue(skip.Accepted);
                 Assert.AreEqual(GamePhase.RoomChoice, arch.Phase.CurrentPhase);
+                Assert.IsFalse(arch.Phase.CanExecute(GameCommandKind.SkipHelpChoice));
+                Assert.IsTrue(arch.Phase.CanExecute(GameCommandKind.SelectRoom));
             }
         }
 

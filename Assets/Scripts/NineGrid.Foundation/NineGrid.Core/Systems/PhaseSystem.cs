@@ -145,6 +145,12 @@ namespace NineGrid.Core.Systems
             }
 
             mInRoomRewardContext = false;
+            var run = this.GetModel<RunModel>();
+            if (!MapNodeProgression.EntersInteractionLoop(run.NodeIndex.Value))
+            {
+                return StartNonCombatNode();
+            }
+
             options = options ?? NodeDeckOptions.CreateDefaultBattle();
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new ClearPendingChoicesAction());
@@ -160,6 +166,25 @@ namespace NineGrid.Core.Systems
             var resolved = pipeline.RunToCompletion();
             resolved += CompleteNodeIfCleared();
             return CoreCommandResult.Accept(resolved);
+        }
+
+        private CoreCommandResult StartNonCombatNode()
+        {
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new ClearPendingChoicesAction());
+            pipeline.Enqueue(new ChangePhaseAction(GamePhase.ResetNode));
+            pipeline.Enqueue(new ResetCurrentArmorAction());
+            pipeline.Enqueue(new NodeStartedAction());
+            pipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomChoice));
+            var navigation = MapNodeProgression.GetScheduleOrDefault(this.GetModel<RunModel>().NodeIndex.Value)
+                .NavigationOffer;
+            if (navigation == NavigationKind.None)
+            {
+                navigation = NavigationKind.Leave;
+            }
+
+            pipeline.Enqueue(new OfferNavigationAction(navigation));
+            return CoreCommandResult.Accept(pipeline.RunToCompletion());
         }
 
         public CoreCommandResult Attack(SlotId targetSlot)
@@ -902,6 +927,19 @@ namespace NineGrid.Core.Systems
             }
 
             var pending = this.GetModel<PendingChoiceModel>();
+            if (pending.Kind.Value == PendingChoiceKind.Navigation)
+            {
+                if (optionIndex != 0 || pending.NavigationOffer.Value == NavigationKind.None)
+                {
+                    return Reject(GameCommandKind.SelectRoom, "Navigation option index is out of range.", SlotId.None, 0);
+                }
+
+                var pipelineNav = this.GetSystem<IActionPipelineSystem>();
+                pipelineNav.Enqueue(new SelectNavigationAction(pending.NavigationOffer.Value));
+                pipelineNav.Enqueue(new ChangePhaseAction(GamePhase.RoomEvent));
+                return CoreCommandResult.Accept(pipelineNav.RunToCompletion());
+            }
+
             if (pending.Kind.Value != PendingChoiceKind.Room)
             {
                 return Reject(GameCommandKind.SelectRoom, "No pending room choice.", SlotId.None, 0);
@@ -927,7 +965,23 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.EnterRoom, "Command is not legal in phase " + CurrentPhase, SlotId.None, 0);
             }
 
-            var room = this.GetModel<PendingChoiceModel>().SelectedRoom.Value;
+            var pending = this.GetModel<PendingChoiceModel>();
+            if (pending.SelectedNavigation.Value != NavigationKind.None)
+            {
+                var pipelineNav = this.GetSystem<IActionPipelineSystem>();
+                pipelineNav.Enqueue(new ClearPendingChoicesAction());
+                pipelineNav.Enqueue(new AdvanceNodeAction());
+                var resolvedNav = pipelineNav.RunToCompletion();
+                if (!IsTerminalPhase(CurrentPhase))
+                {
+                    pipelineNav.Enqueue(new ChangePhaseAction(GamePhase.NodeCompleted));
+                    resolvedNav += pipelineNav.RunToCompletion();
+                }
+
+                return CoreCommandResult.Accept(resolvedNav);
+            }
+
+            var room = pending.SelectedRoom.Value;
             if (room == RoomKind.None)
             {
                 return Reject(GameCommandKind.EnterRoom, "No selected room to enter.", SlotId.None, 0);
@@ -936,7 +990,7 @@ namespace NineGrid.Core.Systems
             var resolved = this.GetSystem<IRewardSystem>().ResolveRoom(room);
             var pipeline = this.GetSystem<IActionPipelineSystem>();
 
-            if (this.GetModel<PendingChoiceModel>().Kind.Value == PendingChoiceKind.Reward)
+            if (pending.Kind.Value == PendingChoiceKind.Reward)
             {
                 mInRoomRewardContext = true;
                 pipeline.Enqueue(new ChangePhaseAction(GamePhase.RewardItemChoice));
@@ -1276,12 +1330,25 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.NodeCompleted));
             pipeline.Enqueue(new NodeCompletedAction());
             var resolved = pipeline.RunToCompletion();
-            // 对局结束（通关判定成立）当拍立即结算残留帮助卡；
-            // 先结算再 OfferReward，三选一新获得的帮助卡不参与本次结算。
+            // 清关当拍结算全部未使用道具卡，并清掉残留机关；不再走 help.choice 三选一。
             resolved += this.GetSystem<IEconomySystem>().SettleUnusedHelpCards();
-            pipeline.Enqueue(new ChangePhaseAction(GamePhase.RewardItemChoice));
-            pipeline.Enqueue(new OfferRewardChoiceAction("help.choice", 3));
+            resolved += this.GetSystem<IEconomySystem>().ClearResidualTraps();
+            pipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomChoice));
+            EnqueuePostClearOffers(pipeline);
             return resolved + pipeline.RunToCompletion();
+        }
+
+        private void EnqueuePostClearOffers(IActionPipelineSystem pipeline)
+        {
+            var nodeIndex = this.GetModel<RunModel>().NodeIndex.Value;
+            var schedule = MapNodeProgression.GetScheduleOrDefault(nodeIndex);
+            if (schedule.NavigationOffer != NavigationKind.None)
+            {
+                pipeline.Enqueue(new OfferNavigationAction(schedule.NavigationOffer));
+                return;
+            }
+
+            pipeline.Enqueue(new OfferRoomChoicesAction(RollRoomChoicesOrFallback(nodeIndex)));
         }
 
         private const string ShopHelpCardsPoolId = "shop.helpCards";
@@ -1338,23 +1405,28 @@ namespace NineGrid.Core.Systems
             }
 
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomChoice));
-            pipeline.Enqueue(new OfferRoomChoicesAction(RollRoomChoicesOrFallback()));
+            EnqueuePostClearOffers(pipeline);
             return resolvedSoFar + pipeline.RunToCompletion();
         }
 
-        private IReadOnlyList<RoomKind> RollRoomChoicesOrFallback()
+        private IReadOnlyList<RoomKind> RollRoomChoicesOrFallback(int nodeIndex)
         {
-            var choices = this.GetSystem<IRewardSystem>().RollRoomChoices(2);
+            var choices = this.GetSystem<IRewardSystem>().RollPostClearRoomChoices(nodeIndex);
             if (choices.Count > 0)
             {
                 return choices;
             }
 
-            return new[]
+            var family = MapNodeProgression.GetPostClearOfferFamily(nodeIndex);
+            switch (family)
             {
-                RoomKind.Gold,
-                RoomKind.Fountain
-            };
+                case NodeOfferFamily.ConsumerRooms:
+                    return new[] { RoomKind.Gold, RoomKind.Fountain };
+                case NodeOfferFamily.SpecialRooms:
+                    return new[] { RoomKind.Treasure, RoomKind.Event };
+                default:
+                    return new[] { RoomKind.Battle, RoomKind.Battle };
+            }
         }
 
         private CoreCommandResult Reject(GameCommandKind command, string reason, SlotId slot, int cardUid)
@@ -1511,7 +1583,7 @@ namespace NineGrid.Core.Systems
                 mLegalCommands.Add(GameCommandKind.SelectReward);
                 mLegalCommands.Add(GameCommandKind.SkipHelpChoice);
             }
-            else if (pending == PendingChoiceKind.Room)
+            else if (pending == PendingChoiceKind.Room || pending == PendingChoiceKind.Navigation)
             {
                 mLegalCommands.Add(GameCommandKind.SelectRoom);
             }

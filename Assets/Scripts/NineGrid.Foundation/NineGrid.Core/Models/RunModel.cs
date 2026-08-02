@@ -4,7 +4,7 @@ namespace NineGrid.Core
 {
     public sealed class RunModel : AbstractModel
     {
-        public const int NodesPerFloor = 9;
+        public const int NodesPerFloor = 8;
         public const int FinalFloor = 3;
 
         public BindableProperty<int> Floor { get; private set; }

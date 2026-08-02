@@ -232,6 +232,26 @@ namespace NineGrid.Core
         }
     }
 
+    public sealed class OfferNavigationAction : GameAction
+    {
+        public OfferNavigationAction(NavigationKind kind)
+        {
+            Kind = kind;
+        }
+
+        public NavigationKind Kind { get; private set; }
+        public override string ActionName { get { return "OfferNavigation"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            context.GetModel<PendingChoiceModel>().OfferNavigation(Kind);
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.RoomChoicesOffered, context.ActionId, ActionName)
+                    .WithAmount(1)
+                    .WithMessage(Kind.ToString()));
+        }
+    }
+
     public sealed class SelectRoomChoiceAction : GameAction
     {
         public SelectRoomChoiceAction(int optionIndex, RoomKind roomKind)
@@ -252,6 +272,26 @@ namespace NineGrid.Core
                     .WithAmount((int)RoomKind)
                     .WithDelta(OptionIndex)
                     .WithMessage(RoomKind.ToString()));
+        }
+    }
+
+    public sealed class SelectNavigationAction : GameAction
+    {
+        public SelectNavigationAction(NavigationKind kind)
+        {
+            Kind = kind;
+        }
+
+        public NavigationKind Kind { get; private set; }
+        public override string ActionName { get { return "SelectNavigation"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            context.GetModel<PendingChoiceModel>().SelectNavigation(Kind);
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.RoomSelected, context.ActionId, ActionName)
+                    .WithAmount((int)Kind)
+                    .WithMessage(Kind.ToString()));
         }
     }
 

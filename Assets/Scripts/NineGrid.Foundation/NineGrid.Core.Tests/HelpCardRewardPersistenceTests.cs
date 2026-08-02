@@ -58,22 +58,13 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void SelectReward_AfterNodeClear_PersistsAcrossAdvanceAndStartNode()
+        public void CompleteNodeIfCleared_GoesToRoomChoice_WithoutHelpChoicePersistPath()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sAdjacentSlot);
             Assert.IsTrue(mPhase.Attack(sAdjacentSlot).Accepted);
-            Assert.AreEqual(GamePhase.RewardItemChoice, mPhase.CurrentPhase);
-
-            var optionIndex = FindRewardOptionIndex(RewardDefId);
-            Assert.GreaterOrEqual(optionIndex, 0, "help.choice 应包含测试奖励卡");
-            Assert.IsTrue(mPhase.SelectReward(optionIndex).Accepted);
-
-            var player = mArch.GetModel<PlayerModel>();
-            Assert.GreaterOrEqual(
-                player.CountHelpCardsByDefId(RewardDefId),
-                1,
-                "通关三选一选中后应写入玩家侧 run 卡组");
+            Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
+            Assert.AreEqual(PendingChoiceKind.Room, mArch.GetModel<PendingChoiceModel>().Kind.Value);
 
             AdvancePastRoomChoice();
 
@@ -82,9 +73,6 @@ namespace NineGrid.Core.Tests
             options.EnemyOpeningCount = 1;
             Assert.IsTrue(mPhase.StartNode(options).Accepted);
             Assert.AreEqual(GamePhase.InteractionLoop, mPhase.CurrentPhase);
-            Assert.IsTrue(
-                HasHelpCardInDeck(RewardDefId),
-                "下一节点开局后战斗卡组/物品栏/盘面应可见该奖励卡");
         }
 
         private void AdvancePastRoomChoice()
@@ -211,6 +199,7 @@ namespace NineGrid.Core.Tests
             catalog.Rewards
                 .AddPool(new RewardPoolDefinition("help.choice", 1)
                     .Add(RewardDefId, CardKind.HelpCard, 1))
+                .AddRoom(new RoomDefinition(RoomKind.Battle, "战斗房") { Weight = 1 })
                 .AddRoom(new RoomDefinition(RoomKind.Gold, "金币房")
                 {
                     Weight = 1,

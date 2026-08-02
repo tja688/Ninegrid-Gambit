@@ -145,7 +145,7 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void CompleteNodeIfCleared_StillEntersRewardItemChoice()
+        public void CompleteNodeIfCleared_EntersRoomChoice_WithoutHelpChoice()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sAdjacentSlot);
@@ -153,10 +153,11 @@ namespace NineGrid.Core.Tests
             var result = mPhase.Attack(sAdjacentSlot);
             Assert.IsTrue(result.Accepted, result.Reason);
 
-            Assert.AreEqual(GamePhase.RewardItemChoice, mPhase.CurrentPhase);
-            Assert.AreEqual(PendingChoiceKind.Reward, mArch.GetModel<PendingChoiceModel>().Kind.Value);
-            Assert.AreEqual("help.choice", mArch.GetModel<PendingChoiceModel>().PoolId.Value);
-            Assert.IsTrue(mPhase.CanExecute(GameCommandKind.SelectReward));
+            Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
+            Assert.AreEqual(PendingChoiceKind.Room, mArch.GetModel<PendingChoiceModel>().Kind.Value);
+            Assert.AreNotEqual("help.choice", mArch.GetModel<PendingChoiceModel>().PoolId.Value);
+            Assert.IsTrue(mPhase.CanExecute(GameCommandKind.SelectRoom));
+            Assert.IsFalse(mPhase.CanExecute(GameCommandKind.SelectReward));
             Assert.IsFalse(mPhase.CanExecute(GameCommandKind.ClickEmpty));
         }
 
@@ -176,12 +177,10 @@ namespace NineGrid.Core.Tests
             var player = mArch.GetModel<PlayerModel>();
             Assert.IsTrue(ContainsRelic(player, relicDefId), "局内宝箱选中后应写入 PlayerModel");
 
-            // 清场 → 通关奖励 → 选房 → 入房 → 下一节点，遗物必须仍在。
+            // 清场 → 选房 → 入房 → 下一节点，遗物必须仍在。
             PlaceSoleBoardCardAt(sAdjacentSlot);
             var kill = mPhase.Attack(sAdjacentSlot);
             Assert.IsTrue(kill.Accepted, kill.Reason);
-            Assert.AreEqual(GamePhase.RewardItemChoice, mPhase.CurrentPhase);
-            Assert.IsTrue(mPhase.SelectReward(0).Accepted);
             Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
             Assert.IsTrue(mPhase.SelectRoom(0).Accepted);
             Assert.IsTrue(mPhase.EnterRoom().Accepted);
@@ -331,6 +330,8 @@ namespace NineGrid.Core.Tests
                     .Add("help.gold_card", CardKind.HelpCard, 40)
                     .Add("help.throwing_knife", CardKind.HelpCard, 30)
                     .Add("help.healing_potion", CardKind.HelpCard, 30))
+                .AddRoom(new RoomDefinition(RoomKind.Battle, "战斗房") { Weight = 1 })
+                .AddRoom(new RoomDefinition(RoomKind.Elite, "困难房") { Weight = 1 })
                 .AddRoom(new RoomDefinition(RoomKind.Gold, "金币房")
                 {
                     Weight = 1,

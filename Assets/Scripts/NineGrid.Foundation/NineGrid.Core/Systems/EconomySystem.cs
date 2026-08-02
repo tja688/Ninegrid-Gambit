@@ -9,6 +9,7 @@ namespace NineGrid.Core.Systems
         int AwardSkipHelpChoice();
         int AwardSkipRelicChoice();
         int SettleUnusedHelpCards();
+        int ClearResidualTraps();
         int DeleteHelpCard(int cardUid);
 
         /// <summary>
@@ -72,6 +73,7 @@ namespace NineGrid.Core.Systems
 
             var count = CountUnusedHelpCards();
             ReturnPlayerSideHelpCardsToRunDeck();
+            RemoveLingeringHelpCards();
 
             if (count <= 0 || catalog.Economy.UnusedHelpCardGold == 0)
             {
@@ -79,6 +81,37 @@ namespace NineGrid.Core.Systems
             }
 
             return ExecuteGold(count * catalog.Economy.UnusedHelpCardGold, "unusedHelpCards");
+        }
+
+        public int ClearResidualTraps()
+        {
+            var registry = this.GetModel<CardRegistry>();
+            var board = this.GetModel<BoardModel>();
+            var targets = new List<int>();
+            var seen = new HashSet<int>();
+            foreach (var uid in board.BoardCardUids())
+            {
+                CardInstance card;
+                if (uid == 0 || !seen.Add(uid) || !registry.TryGet(uid, out card) || card.Kind != CardKind.Trap)
+                {
+                    continue;
+                }
+
+                targets.Add(uid);
+            }
+
+            if (targets.Count == 0)
+            {
+                return 0;
+            }
+
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            for (var i = 0; i < targets.Count; i++)
+            {
+                pipeline.Enqueue(new RemoveCardAction(targets[i], ZoneId.Removed, "clearResidualTrap"));
+            }
+
+            return pipeline.RunToCompletion();
         }
 
         public int DeleteHelpCard(int cardUid)
@@ -178,6 +211,63 @@ namespace NineGrid.Core.Systems
             }
 
             pipeline.RunToCompletion();
+        }
+
+        private void RemoveLingeringHelpCards()
+        {
+            var registry = this.GetModel<CardRegistry>();
+            var board = this.GetModel<BoardModel>();
+            var deck = this.GetModel<DeckModel>();
+            var seen = new HashSet<int>();
+            var targets = new List<int>();
+
+            CollectHelpCardUids(registry, deck.DrawPileUids, seen, targets);
+            CollectHelpCardUids(registry, deck.PlayerCardPoolUids, seen, targets);
+            CollectHelpCardUids(registry, deck.ItemSlotUids, seen, targets);
+            foreach (var uid in board.BoardCardUids())
+            {
+                CollectHelpCardUid(registry, uid, seen, targets);
+            }
+
+            if (targets.Count == 0)
+            {
+                return;
+            }
+
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            for (var i = 0; i < targets.Count; i++)
+            {
+                pipeline.Enqueue(new RemoveCardAction(targets[i], ZoneId.Removed, "settleRemove"));
+            }
+
+            pipeline.RunToCompletion();
+        }
+
+        private static void CollectHelpCardUids(
+            CardRegistry registry,
+            IReadOnlyList<int> uids,
+            HashSet<int> seen,
+            List<int> targets)
+        {
+            for (var i = 0; i < uids.Count; i++)
+            {
+                CollectHelpCardUid(registry, uids[i], seen, targets);
+            }
+        }
+
+        private static void CollectHelpCardUid(
+            CardRegistry registry,
+            int uid,
+            HashSet<int> seen,
+            List<int> targets)
+        {
+            CardInstance card;
+            if (uid == 0 || !seen.Add(uid) || !registry.TryGet(uid, out card) || card.Kind != CardKind.HelpCard)
+            {
+                return;
+            }
+
+            targets.Add(uid);
         }
 
         private static void CollectPlayerSideHelpCards(

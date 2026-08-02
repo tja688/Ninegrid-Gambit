@@ -207,13 +207,17 @@ namespace NineGrid.Core
             string poolId,
             IReadOnlyList<RewardEntry> rewardOptions,
             IReadOnlyList<RoomKind> roomOptions,
-            RoomKind selectedRoom)
+            RoomKind selectedRoom,
+            NavigationKind navigationOffer = NavigationKind.None,
+            NavigationKind selectedNavigation = NavigationKind.None)
         {
             Kind = kind;
             PoolId = poolId ?? string.Empty;
             RewardOptions = rewardOptions ?? new RewardEntry[0];
             RoomOptions = roomOptions ?? new RoomKind[0];
             SelectedRoom = selectedRoom;
+            NavigationOffer = navigationOffer;
+            SelectedNavigation = selectedNavigation;
         }
 
         public PendingChoiceKind Kind { get; private set; }
@@ -221,6 +225,8 @@ namespace NineGrid.Core
         public IReadOnlyList<RewardEntry> RewardOptions { get; private set; }
         public IReadOnlyList<RoomKind> RoomOptions { get; private set; }
         public RoomKind SelectedRoom { get; private set; }
+        public NavigationKind NavigationOffer { get; private set; }
+        public NavigationKind SelectedNavigation { get; private set; }
     }
 
     public sealed class CoreViewSnapshot
@@ -372,7 +378,9 @@ namespace NineGrid.Core
                 pending.PoolId.Value,
                 new List<RewardEntry>(pending.RewardOptions),
                 new List<RoomKind>(pending.RoomOptions),
-                pending.SelectedRoom.Value);
+                pending.SelectedRoom.Value,
+                pending.NavigationOffer.Value,
+                pending.SelectedNavigation.Value);
 
             var version = board.Version.Value
                 + registry.Version.Value

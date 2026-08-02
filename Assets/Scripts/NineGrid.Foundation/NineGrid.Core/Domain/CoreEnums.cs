@@ -299,6 +299,7 @@ namespace NineGrid.Core
     {
         None,
         Reward,
-        Room
+        Room,
+        Navigation
     }
 }

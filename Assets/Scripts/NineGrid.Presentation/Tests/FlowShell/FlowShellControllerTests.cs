@@ -1,4 +1,5 @@
 using NineGrid.Core;
+using NineGrid.Core.Systems;
 using NineGrid.Flow;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Controllers;
@@ -48,7 +49,6 @@ namespace NineGrid.Presentation.Tests.FlowShell
                 Assert.IsTrue(arch.Phase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
                 arch.PlaceSoleBoardCardAt(sAdjacentSlot);
                 Assert.IsTrue(arch.Phase.Attack(sAdjacentSlot).Accepted);
-                Assert.IsTrue(arch.Phase.SkipHelpChoice().Accepted);
                 Assert.AreEqual(GamePhase.RoomChoice, arch.Phase.CurrentPhase);
                 PresentationInputStateSystem.EnsureRegistered(arch.Architecture)
                     .SetChoiceOverlayActive(true);
@@ -82,7 +82,6 @@ namespace NineGrid.Presentation.Tests.FlowShell
                 Assert.IsTrue(arch.Phase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
                 arch.PlaceSoleBoardCardAt(sAdjacentSlot);
                 Assert.IsTrue(arch.Phase.Attack(sAdjacentSlot).Accepted);
-                Assert.IsTrue(arch.Phase.SkipHelpChoice().Accepted);
                 Assert.AreEqual(GamePhase.RoomChoice, arch.Phase.CurrentPhase);
 
                 Assert.IsTrue(runtime.Runtime.TryBeginExternalHold("settlement-drain"));
@@ -113,14 +112,17 @@ namespace NineGrid.Presentation.Tests.FlowShell
         }
 
         [Test]
-        public void RewardChoiceController_HandleSelectReward_UsesCommand()
+        public void RewardChoiceController_HandleSelectReward_UsesCommand_WhenRewardPending()
         {
             using (var arch = PresentationArchitectureFixture.CreateStartedGameWithCatalog(seed: 11UL))
             {
-                Assert.IsTrue(arch.Phase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
-                arch.PlaceSoleBoardCardAt(sAdjacentSlot);
-                Assert.IsTrue(arch.Phase.Attack(sAdjacentSlot).Accepted);
-                Assert.AreEqual(GamePhase.RewardItemChoice, arch.Phase.CurrentPhase);
+                Assert.IsTrue(arch.Phase.StartNode(CreateSingleMonsterNode(hp: 5, attack: 0)).Accepted);
+                var pipeline = arch.Architecture.GetSystem<IActionPipelineSystem>();
+                pipeline.Enqueue(new OfferRewardChoiceAction("help.choice", 3));
+                Assert.Greater(pipeline.RunToCompletion(), 0);
+                // InteractionLoop + Reward pending：与局内宝箱门禁一致。
+                Assert.AreEqual(PendingChoiceKind.Reward, arch.Architecture.GetModel<PendingChoiceModel>().Kind.Value);
+
                 PresentationInputStateSystem.EnsureRegistered(arch.Architecture)
                     .SetChoiceOverlayActive(true);
 
@@ -130,7 +132,6 @@ namespace NineGrid.Presentation.Tests.FlowShell
                 {
                     var result = controller.HandleSelectReward(0);
                     Assert.IsTrue(result.Accepted, result.Reason);
-                    Assert.AreEqual(GamePhase.RoomChoice, arch.Phase.CurrentPhase);
                 }
                 finally
                 {

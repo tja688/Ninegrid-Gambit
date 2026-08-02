@@ -9,6 +9,7 @@ namespace NineGrid.Core.Systems
     {
         IReadOnlyList<RewardEntry> RollPool(string poolId);
         IReadOnlyList<RoomKind> RollRoomChoices(int count);
+        IReadOnlyList<RoomKind> RollPostClearRoomChoices(int nodeIndex);
         NodeDeckOptions BuildNodeDeckOptions(int nodeIndex, string monsterDeckId);
         int ResolveRoom(RoomKind roomKind);
 
@@ -132,6 +133,76 @@ namespace NineGrid.Core.Systems
 
         public IReadOnlyList<RoomKind> RollRoomChoices(int count)
         {
+            return RollRoomChoicesFromPool(count, includeAllWeighted: true, allowElite: true);
+        }
+
+        public IReadOnlyList<RoomKind> RollPostClearRoomChoices(int nodeIndex)
+        {
+            var family = MapNodeProgression.GetPostClearOfferFamily(nodeIndex);
+            switch (family)
+            {
+                case NodeOfferFamily.BattleRooms:
+                    return PadRoomChoices(
+                        RollRoomChoicesFromPool(
+                            count: 2,
+                            includeAllWeighted: false,
+                            allowElite: MapNodeProgression.AllowsEliteInBattleOffers(nodeIndex),
+                            predicate: IsBattleOfferRoom),
+                        2,
+                        RoomKind.Battle);
+                case NodeOfferFamily.ConsumerRooms:
+                    return PadRoomChoices(
+                        RollRoomChoicesFromPool(
+                            count: 2,
+                            includeAllWeighted: false,
+                            allowElite: false,
+                            predicate: IsConsumerOfferRoom),
+                        2,
+                        RoomKind.Gold);
+                case NodeOfferFamily.SpecialRooms:
+                    return PadRoomChoices(
+                        RollRoomChoicesFromPool(
+                            count: 2,
+                            includeAllWeighted: false,
+                            allowElite: false,
+                            predicate: IsSpecialOfferRoom),
+                        2,
+                        RoomKind.Treasure);
+                default:
+                    return new RoomKind[0];
+            }
+        }
+
+        private static IReadOnlyList<RoomKind> PadRoomChoices(
+            IReadOnlyList<RoomKind> rolled,
+            int count,
+            RoomKind pad)
+        {
+            if (rolled == null || rolled.Count == 0)
+            {
+                return new RoomKind[0];
+            }
+
+            if (rolled.Count >= count)
+            {
+                return rolled;
+            }
+
+            var result = new List<RoomKind>(rolled);
+            while (result.Count < count)
+            {
+                result.Add(pad);
+            }
+
+            return result;
+        }
+
+        private IReadOnlyList<RoomKind> RollRoomChoicesFromPool(
+            int count,
+            bool includeAllWeighted,
+            bool allowElite,
+            System.Func<RoomKind, bool> predicate = null)
+        {
             var catalog = CatalogOrNull();
             if (catalog == null || count <= 0)
             {
@@ -141,10 +212,26 @@ namespace NineGrid.Core.Systems
             var rooms = new List<RoomDefinition>();
             foreach (var pair in catalog.Rewards.Rooms)
             {
-                if (pair.Value.Weight > 0)
+                var room = pair.Value;
+                if (room.Weight <= 0)
                 {
-                    rooms.Add(pair.Value);
+                    continue;
                 }
+
+                if (!includeAllWeighted)
+                {
+                    if (predicate != null && !predicate(room.Kind))
+                    {
+                        continue;
+                    }
+
+                    if (room.Kind == RoomKind.Elite && !allowElite)
+                    {
+                        continue;
+                    }
+                }
+
+                rooms.Add(room);
             }
 
             var result = new List<RoomKind>();
@@ -156,6 +243,24 @@ namespace NineGrid.Core.Systems
             }
 
             return result;
+        }
+
+        private static bool IsBattleOfferRoom(RoomKind kind)
+        {
+            return kind == RoomKind.Battle || kind == RoomKind.Elite;
+        }
+
+        private static bool IsConsumerOfferRoom(RoomKind kind)
+        {
+            return kind == RoomKind.Shop
+                || kind == RoomKind.Tavern
+                || kind == RoomKind.Fountain
+                || kind == RoomKind.Gold;
+        }
+
+        private static bool IsSpecialOfferRoom(RoomKind kind)
+        {
+            return kind == RoomKind.Treasure || kind == RoomKind.Event;
         }
 
         public NodeDeckOptions BuildNodeDeckOptions(int nodeIndex, string monsterDeckId)
