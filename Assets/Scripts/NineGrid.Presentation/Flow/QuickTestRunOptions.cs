@@ -19,7 +19,5 @@ namespace NineGrid.Flow
         public IReadOnlyList<string> SkillIds = Array.Empty<string>();
         /// <summary>机关 contentId，经 <c>AddEnemyCard</c> 注入敌侧发牌池；与 <see cref="SkillIds"/> 并存。</summary>
         public IReadOnlyList<string> TrapContentIds = Array.Empty<string>();
-        /// <summary>\0 跳格沙盒：拒对战、空盘、只生成玩家可走格。</summary>
-        public bool WalkSandbox;
     }
 }

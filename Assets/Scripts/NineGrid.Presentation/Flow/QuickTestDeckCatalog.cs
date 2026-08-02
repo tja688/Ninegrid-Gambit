@@ -21,15 +21,13 @@ namespace NineGrid.Flow
                 IReadOnlyList<string> skillIds = null,
                 string pinnedFirstBattleDeckId = null,
                 QuickTestNodeOrderMode nodeOrder = QuickTestNodeOrderMode.Shuffled,
-                IReadOnlyList<string> trapContentIds = null,
-                bool walkSandbox = false)
+                IReadOnlyList<string> trapContentIds = null)
             {
                 DisplayName = displayName ?? string.Empty;
                 SkillIds = skillIds ?? Array.Empty<string>();
                 PinnedFirstBattleDeckId = pinnedFirstBattleDeckId;
                 NodeOrder = nodeOrder;
                 TrapContentIds = trapContentIds ?? Array.Empty<string>();
-                WalkSandbox = walkSandbox;
             }
 
             public string DisplayName { get; }
@@ -37,12 +35,12 @@ namespace NineGrid.Flow
             public string PinnedFirstBattleDeckId { get; }
             public QuickTestNodeOrderMode NodeOrder { get; }
             public IReadOnlyList<string> TrapContentIds { get; }
-            public bool WalkSandbox { get; }
         }
 
         /// <summary>
         /// 通道预算——同通道多技能按格号升序一怪一技分发（见 <c>BattleSessionCheat</c>）；
         /// 储备技 <c>purge_followers</c> 不占码。
+        /// <c>\0</c> 流程测试（正式开局内容 + Sequential 节点序 + QuickTest 作弊）；
         /// <c>\1</c> 移除向；<c>\2</c> 互动向；<c>\3</c> 翻面向（含休养）；
         /// <c>\4</c>–<c>\5</c> 批次1 六技打包（一通道三技、一怪一技）；
         /// <c>\6</c>–<c>\9</c> 批次2 六技（提速/远程武器/死亡召唤/死亡之主/神圣决斗/潜伏近战）。
@@ -51,7 +49,10 @@ namespace NineGrid.Flow
         /// </summary>
         private static readonly ChannelPreset[] sPresets =
         {
-            new ChannelPreset("跳格沙盒", Array.Empty<string>(), walkSandbox: true),
+            new ChannelPreset(
+                "流程测试",
+                Array.Empty<string>(),
+                nodeOrder: QuickTestNodeOrderMode.Sequential),
             new ChannelPreset(
                 "移除向",
                 new[] { "skill.sacrifice", "skill.absorb", "skill.offer_fire" },
@@ -154,9 +155,9 @@ namespace NineGrid.Flow
 
                 builder.Append(code).Append(' ');
                 builder.Append(ResolveDisplayName(catalog, preset));
-                if (preset.WalkSandbox)
+                if (code == 0)
                 {
-                    builder.Append(" · 跳格手感（拒对战）");
+                    builder.Append(" · 正式流程连跑");
                 }
 
                 var hasSkills = preset.SkillIds != null && preset.SkillIds.Count > 0;
