@@ -174,6 +174,52 @@ namespace NineGrid.Core
         }
     }
 
+    /// <summary>卡店三项服务会话（#93）：就地选项 + 本次进店刷新价。</summary>
+    public sealed class OfferTavernSessionAction : GameAction
+    {
+        public OfferTavernSessionAction(IReadOnlyList<RewardEntry> services, int refreshPriceGold)
+        {
+            Services = services;
+            RefreshPriceGold = refreshPriceGold < 0 ? 0 : refreshPriceGold;
+        }
+
+        public IReadOnlyList<RewardEntry> Services { get; private set; }
+        public int RefreshPriceGold { get; private set; }
+        public override string ActionName { get { return "OfferTavernSession"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var projected = RewardOfferFaceProjection.Project(context, Services);
+            context.GetModel<PendingChoiceModel>().OfferTavern(projected, RefreshPriceGold);
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.RewardOffered, context.ActionId, ActionName)
+                    .WithAmount(projected != null ? projected.Count : 0)
+                    .WithMessage(RewardOfferFaceEncoding.Format(PendingChoiceModel.TavernPoolId, projected)));
+        }
+    }
+
+    /// <summary>卡店「道具卡固定」二级选择候选（#93）。</summary>
+    public sealed class OfferTavernFixItemAction : GameAction
+    {
+        public OfferTavernFixItemAction(IReadOnlyList<RewardEntry> candidates)
+        {
+            Candidates = candidates;
+        }
+
+        public IReadOnlyList<RewardEntry> Candidates { get; private set; }
+        public override string ActionName { get { return "OfferTavernFixItem"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var projected = RewardOfferFaceProjection.Project(context, Candidates);
+            context.GetModel<PendingChoiceModel>().OfferTavernFixItem(projected);
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.RewardOffered, context.ActionId, ActionName)
+                    .WithAmount(projected != null ? projected.Count : 0)
+                    .WithMessage(RewardOfferFaceEncoding.Format(PendingChoiceModel.TavernFixItemPoolId, projected)));
+        }
+    }
+
     public sealed class GrantRewardChoiceAction : GameAction
     {
         public GrantRewardChoiceAction(RewardEntry entry, int optionIndex)

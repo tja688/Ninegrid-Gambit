@@ -11,6 +11,7 @@ using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using NineGrid.Flow.RoomIcons;
 using NineGrid.Flow.ShopBoard;
+using NineGrid.Flow.TavernBoard;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Commands;
 using NineGrid.Presentation.Systems;
@@ -639,6 +640,11 @@ namespace NineGrid.Flow
                 {
                     await PresentShopBoardAsync(ct);
                 }
+                else if (PendingChoiceModel.IsTavernPool(pending.PoolId.Value)
+                         || PendingChoiceModel.IsTavernFixItemPool(pending.PoolId.Value))
+                {
+                    await PresentTavernBoardAsync(ct);
+                }
                 else
                 {
                     view?.ShowRewardOverlay();
@@ -720,6 +726,55 @@ namespace NineGrid.Flow
                 if (shop.IsActive)
                 {
                     shop.DespawnAll();
+                }
+            }
+        }
+
+        private async UniTask PresentTavernBoardAsync(CancellationToken ct)
+        {
+            var arch = NineGridArchitecture.Current;
+            var phaseSystem = arch.GetSystem<IPhaseSystem>();
+            var walk = AvatarWalkSystem.EnsureRegistered(NineGridArchitecture.Interface);
+            walk?.SetEnabled(true);
+            BoardCardSelectModeController.RequestAbort("mainloop-tavern-board");
+
+            var tavern = TavernBoardPresenter.Current;
+            tavern.Bind(arch);
+            RoomIconBoardPresenter.Current.HardCutAfterEnter(arch);
+            if (!tavern.TrySpawnFromPending(arch))
+            {
+                Debug.LogError("[GameFlow] 卡店服务 Spawn 失败");
+                walk?.SetEnabled(false);
+                return;
+            }
+
+            PresentationInputGates.SetChoiceOverlay(true);
+            try
+            {
+                await UniTask.WaitUntil(
+                    () =>
+                    {
+                        if (ct.IsCancellationRequested)
+                        {
+                            return true;
+                        }
+
+                        var p = phaseSystem.CurrentPhase;
+                        return p == GamePhase.NodeCompleted
+                               || p == GamePhase.Victory
+                               || p == GamePhase.Defeat
+                               || phaseSystem.CanExecute(GameCommandKind.StartNode);
+                    },
+                    cancellationToken: ct);
+            }
+            finally
+            {
+                PresentationInputGates.SetChoiceOverlay(false);
+                walk?.SetEnabled(false);
+                walk?.Cancel();
+                if (tavern.IsActive)
+                {
+                    tavern.DespawnAll();
                 }
             }
         }

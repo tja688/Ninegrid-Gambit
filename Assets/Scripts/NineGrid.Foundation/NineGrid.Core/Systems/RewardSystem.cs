@@ -16,6 +16,9 @@ namespace NineGrid.Core.Systems
         /// <summary>商店四货架草案（宝箱 / 随机属性 / 药水 / 食品）。</summary>
         IReadOnlyList<RewardEntry> BuildShopShelves();
 
+        /// <summary>卡店三项服务草案（数值强化 / 固定 / 扩容）。</summary>
+        IReadOnlyList<RewardEntry> BuildTavernServices();
+
         /// <summary>
         /// 遗物三选一结算后：未选中的遗物记入「连续再出现」降权，仅作用于下一次遗物池抽取。
         /// </summary>
@@ -331,6 +334,14 @@ namespace NineGrid.Core.Systems
                 return pipeline.RunToCompletion();
             }
 
+            if (room.Kind == RoomKind.Tavern)
+            {
+                pipeline.Enqueue(new OfferTavernSessionAction(
+                    BuildTavernServices(),
+                    OfferShopSessionAction.DefaultRefreshPriceGold));
+                return pipeline.RunToCompletion();
+            }
+
             if (!string.IsNullOrEmpty(room.RewardPoolId))
             {
                 pipeline.Enqueue(new OfferRewardChoiceAction(room.RewardPoolId, 0));
@@ -359,9 +370,28 @@ namespace NineGrid.Core.Systems
             return shelves;
         }
 
+        /// <summary>
+        /// 卡店三项服务：道具数值强化 / 道具卡固定 / 道具卡扩容（设计案房间.md · #93）。
+        /// </summary>
+        public IReadOnlyList<RewardEntry> BuildTavernServices()
+        {
+            return new List<RewardEntry>(3)
+            {
+                new RewardEntry(TavernUpgradeDefId, CardKind.HelpCard, 1, 1),
+                new RewardEntry(TavernFixItemDefId, CardKind.HelpCard, 1, 1),
+                new RewardEntry(TavernExpandDefId, CardKind.HelpCard, 1, 1),
+            };
+        }
+
         public const string ShopChestDefId = "help.common_chest_card";
         public const string ShopPotionDefId = "help.healing_potion";
         public const string ShopFoodDefId = "help.food_card";
+
+        public const string TavernUpgradeDefId = "UpgradeItemStats";
+        public const string TavernFixItemDefId = "FixItem";
+        public const string TavernExpandDefId = "ExpandItemCapacity";
+        public const int TavernServicePriceGold = 50;
+        public const int TavernUpgradeStatDelta = 3;
 
         private string RollShopAttributeDefId()
         {

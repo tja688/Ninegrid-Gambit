@@ -13,6 +13,7 @@ namespace NineGrid.Core
         private readonly List<string> mFixedItemCardDefIds = new List<string>();
         private readonly List<string> mCarryPackDefIds = new List<string>();
         private int mItemDeckCapacity = DefaultItemDeckCapacity;
+        private int mItemStatBonus;
 
         // 神圣决斗（skill.holy_duel）：玩家侧交战记忆，先挂简单状态，预留日后 buff 化。
         // 语义：玩家主动与本卡交战后记下持有者 uid；之后主动与其他怪开战 → 对玩家 2 伤；
@@ -79,6 +80,14 @@ namespace NineGrid.Core
         public IReadOnlyList<string> FixedItemCardDefIds
         {
             get { return mFixedItemCardDefIds; }
+        }
+
+        /// <summary>
+        /// 卡店「道具卡数值强化」累计加成（每购一次 +3）；跨节点应用属 #97，本字段本票可写可读。
+        /// </summary>
+        public int ItemStatBonus
+        {
+            get { return mItemStatBonus; }
         }
 
         /// <summary>携带卡包；下一战斗节点开局倒空注入后清空。</summary>
@@ -189,6 +198,34 @@ namespace NineGrid.Core
             Touch();
         }
 
+        public void AddItemStatBonus(int delta)
+        {
+            if (delta == 0)
+            {
+                return;
+            }
+
+            mItemStatBonus += delta;
+            if (mItemStatBonus < 0)
+            {
+                mItemStatBonus = 0;
+            }
+
+            Touch();
+        }
+
+        public void SetItemStatBonus(int bonus)
+        {
+            var next = bonus < 0 ? 0 : bonus;
+            if (mItemStatBonus == next)
+            {
+                return;
+            }
+
+            mItemStatBonus = next;
+            Touch();
+        }
+
         public void ReplaceFixedItemCards(IEnumerable<string> defIds)
         {
             mFixedItemCardDefIds.Clear();
@@ -287,6 +324,7 @@ namespace NineGrid.Core
             mItemSourcePoolDefIds.Clear();
             mFixedItemCardDefIds.Clear();
             mCarryPackDefIds.Clear();
+            mItemStatBonus = 0;
             mDuelMarkMonsterUid = 0;
             Touch();
         }

@@ -15,7 +15,7 @@
 | `BattleSession/` | 局内会话 |
 | `Output/` | 描述 / 伤害等输出 |
 | `Cards/` | 卡面 Commit、牌库闸、飞行排序、致死表现回归；**DealFlightRemoveCancelContractTests**（同批 Deal→Remove 须取消飞牌，防 choreo 泄漏 / Pickup Buffered）；表现层配置器条目门槛（Skill 不进窗口、HelpCard/Item 保留）+ **空装配清 effectIds / 挂装配投影 / 效果分类标注（道具/遗物/怪物技能/机关技能）/ 同类多载过滤 / skillIds→assemblies 展开**（解耦装配 IA）+ **装配描述自动同步/自定义锁定 / design_text→{param} 参数化** 等；**ContentArt** 路径约定 / Resources 帧加载 / 断链校验（#66）；**JSON→Catalog 投影**（帮助卡/怪物/技能/遗物/牌组/房间）+ 表 JSON（效果模板 + 装配引用，#67–#70、ADR-0008/0009）；**词条/`{param}`/详情合成**（#71）；**右键详述 live 挂载优先**（空白板 JSON + 局内注入技能 / 忽略预设 skillIds）；**Disable Domain Reload 下 Catalog 重绑**；**装配 argsJson 缺占位实参拦截 / 选模板建议实参**；**特效库** `visual_effects.json` 扫描/粘性合并/atlas 帧加载（与 DSL 效果池区分；纯预览阶段） |
-| `Flow/` | Flow 侧遗留/切片；**BoardBriefTipCopy / Session**（#89 简要解释与楼层提示文案）；**ShopBoardSlotResolver**（#92 商店六占格） |
+| `Flow/` | Flow 侧遗留/切片；**BoardBriefTipCopy / Session**（#89 简要解释与楼层提示文案）；**ShopBoardSlotResolver**（#92 商店六占格）；**TavernBoardSlotResolver**（#93 卡店服务/二级候选占格） |
 | `Fixtures/` | EditMode 夹具 |
 | `HostContractStructuralTests.cs` | 结构护栏：禁四大旧宿主名、禁 `CombatHitSink`、禁回流 `new PresentationDirector`、System 不暴露具体 View |
 | `RoomChoiceRetirementStructuralTests.cs` | 结构护栏（#90）：无 `RoomChoicePresenter`；`IGameFlowView`/`SelectorManager`/`UiPanelRouter` 无房间浮层 API；无属性三选一 Bounce 入口；BounceFan 仍在 |
@@ -41,6 +41,7 @@
 | `ThemeMonsterDeckContractTests` | #86 / ADR-0022：每层主题卡组不重复绑定、节点按序列 1–5 抽、Reserve 不参与、层主击杀固定 1 金箱+2 金币 |
 | `MapNodeProgressionContractTests` | #84 / ADR-0021：8 节点编排全表、非战斗不进 InteractionLoop、清关跳过 help.choice、道具卡格结算+清 Trap、困难房门槛、第 3 层节点 8 通关 |
 | `ShopBuyGoldContractTests` / `ShopSessionContractTests` | #92：商店四货架、购买留店扣金、刷新翻倍（本次进店）、离开、余额不足拒买 |
+| `TavernSessionContractTests` | #93：卡店三项服务、扩容/强化扣费留店、刷新翻倍、离开、道具卡固定二级选择确认/取消、余额不足拒买 |
 | `ContentCatalogValidationTests` | 小型夹具 `ValidateCatalog` 绿；生产 Bootstrap（模板表 + 装配引用解析 + schema≥2 JSON 投影 + 奖池查询展开 + 节点序列规则）校验绿；跨容器共享模板不同实参（#70 / ADR-0009） |
 | `EffectTemplateAssemblyContractTests` | #70：取消 typeTag/verb 门禁；`requires` 解析；装配实参替换与跨容器共享模板 |
 | `EffectSelfDeclarationContractTests` | #72 / ADR-0010：requires 校验（未知 token / mount 错配 / 缺声明）；拒上下文开关旧形；生产卡挂载显式场景声明审计归零；`ValidateCatalog` 绿 |

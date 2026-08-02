@@ -841,6 +841,18 @@ namespace NineGrid.Core.Systems
 
             var pipeline = this.GetSystem<IActionPipelineSystem>();
 
+            // 卡店「道具卡固定」二级确认：扣费 + 写入固定卡 + 回到三项服务面。
+            if (PendingChoiceModel.IsTavernFixItemPool(poolId))
+            {
+                return SelectTavernFixItemConfirm(entry, pipeline);
+            }
+
+            // 卡店三项服务：扣费写 Model 留店；FixItem 进入二级选择不扣费。
+            if (PendingChoiceModel.IsTavernPool(poolId))
+            {
+                return SelectTavernService(entry, pipeline);
+            }
+
             // 商店购买：按卡牌 Price 扣金；通关/宝箱等免费池不扣。
             var isShop = PendingChoiceModel.IsShopPool(poolId);
             if (isShop)
@@ -879,6 +891,113 @@ namespace NineGrid.Core.Systems
             return CoreCommandResult.Accept(resolved);
         }
 
+        private CoreCommandResult SelectTavernService(RewardEntry entry, IActionPipelineSystem pipeline)
+        {
+            var defId = entry != null ? entry.DefId : null;
+            if (string.Equals(defId, RewardSystem.TavernFixItemDefId, System.StringComparison.Ordinal))
+            {
+                var candidates = BuildTavernFixItemCandidates();
+                if (candidates.Count == 0)
+                {
+                    return Reject(GameCommandKind.SelectReward, "No item source pool", SlotId.None, 0);
+                }
+
+                pipeline.Enqueue(new OfferTavernFixItemAction(candidates));
+                return CoreCommandResult.Accept(pipeline.RunToCompletion());
+            }
+
+            var price = ResolveTavernServicePrice(defId);
+            if (price > 0)
+            {
+                var coins = this.GetModel<PlayerModel>().Coins.Value;
+                if (coins < price)
+                {
+                    return Reject(GameCommandKind.SelectReward, "Not enough gold", SlotId.None, 0);
+                }
+
+                pipeline.Enqueue(new ModifyGoldAction(-price, "tavernBuy:" + defId, defId));
+            }
+
+            var resolved = pipeline.RunToCompletion();
+            ApplyTavernServicePurchase(defId);
+            return CoreCommandResult.Accept(resolved);
+        }
+
+        private CoreCommandResult SelectTavernFixItemConfirm(RewardEntry entry, IActionPipelineSystem pipeline)
+        {
+            var defId = entry != null ? entry.DefId : null;
+            if (string.IsNullOrEmpty(defId))
+            {
+                return Reject(GameCommandKind.SelectReward, "Reward option index is out of range.", SlotId.None, 0);
+            }
+
+            var price = ResolveTavernServicePrice(RewardSystem.TavernFixItemDefId);
+            if (price > 0)
+            {
+                var coins = this.GetModel<PlayerModel>().Coins.Value;
+                if (coins < price)
+                {
+                    return Reject(GameCommandKind.SelectReward, "Not enough gold", SlotId.None, 0);
+                }
+
+                pipeline.Enqueue(new ModifyGoldAction(-price, "tavernBuy:FixItem", defId));
+            }
+
+            var refresh = this.GetModel<PendingChoiceModel>().ShopRefreshPriceGold.Value;
+            pipeline.Enqueue(new OfferTavernSessionAction(
+                this.GetSystem<IRewardSystem>().BuildTavernServices(),
+                refresh));
+            var resolved = pipeline.RunToCompletion();
+            this.GetModel<PlayerModel>().AddFixedItemCard(defId);
+            return CoreCommandResult.Accept(resolved);
+        }
+
+        private void ApplyTavernServicePurchase(string defId)
+        {
+            var player = this.GetModel<PlayerModel>();
+            if (string.Equals(defId, RewardSystem.TavernExpandDefId, System.StringComparison.Ordinal))
+            {
+                player.SetItemDeckCapacity(player.ItemDeckCapacity + 1);
+                return;
+            }
+
+            if (string.Equals(defId, RewardSystem.TavernUpgradeDefId, System.StringComparison.Ordinal))
+            {
+                player.AddItemStatBonus(RewardSystem.TavernUpgradeStatDelta);
+            }
+        }
+
+        private List<RewardEntry> BuildTavernFixItemCandidates()
+        {
+            // 表现侧最多铺 6 个空格（格 1/3/4/6/7/9）；超出截断，避免 Pending 索引与点击索引错位。
+            const int maxCandidates = 6;
+            var pool = this.GetModel<PlayerModel>().ItemSourcePoolDefIds;
+            var list = new List<RewardEntry>(maxCandidates);
+            for (var i = 0; i < pool.Count && list.Count < maxCandidates; i++)
+            {
+                var id = pool[i];
+                if (string.IsNullOrEmpty(id))
+                {
+                    continue;
+                }
+
+                list.Add(new RewardEntry(id, CardKind.HelpCard, 1, 1));
+            }
+
+            return list;
+        }
+
+        private int ResolveTavernServicePrice(string defId)
+        {
+            var catalogPrice = ResolveShopPrice(defId);
+            if (catalogPrice > 0)
+            {
+                return catalogPrice;
+            }
+
+            return RewardSystem.TavernServicePriceGold;
+        }
+
         public CoreCommandResult RefreshShop()
         {
             if (!CanExecute(GameCommandKind.RefreshShop))
@@ -887,8 +1006,9 @@ namespace NineGrid.Core.Systems
             }
 
             var pending = this.GetModel<PendingChoiceModel>();
+            var poolId = pending.PoolId.Value;
             if (pending.Kind.Value != PendingChoiceKind.Reward
-                || !PendingChoiceModel.IsShopPool(pending.PoolId.Value))
+                || !PendingChoiceModel.IsConsumerRefreshPool(poolId))
             {
                 return Reject(GameCommandKind.RefreshShop, "No active shop session.", SlotId.None, 0);
             }
@@ -908,12 +1028,23 @@ namespace NineGrid.Core.Systems
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             if (price > 0)
             {
-                pipeline.Enqueue(new ModifyGoldAction(-price, "shopRefresh", null));
+                var reason = PendingChoiceModel.IsTavernPool(poolId) ? "tavernRefresh" : "shopRefresh";
+                pipeline.Enqueue(new ModifyGoldAction(-price, reason, null));
             }
 
             var nextPrice = price <= 0 ? OfferShopSessionAction.DefaultRefreshPriceGold : price * 2;
-            var shelves = this.GetSystem<IRewardSystem>().BuildShopShelves();
-            pipeline.Enqueue(new OfferShopSessionAction(shelves, nextPrice));
+            if (PendingChoiceModel.IsTavernPool(poolId))
+            {
+                pipeline.Enqueue(new OfferTavernSessionAction(
+                    this.GetSystem<IRewardSystem>().BuildTavernServices(),
+                    nextPrice));
+            }
+            else
+            {
+                var shelves = this.GetSystem<IRewardSystem>().BuildShopShelves();
+                pipeline.Enqueue(new OfferShopSessionAction(shelves, nextPrice));
+            }
+
             return CoreCommandResult.Accept(pipeline.RunToCompletion());
         }
 
@@ -926,14 +1057,26 @@ namespace NineGrid.Core.Systems
 
             var pending = this.GetModel<PendingChoiceModel>();
             var poolId = pending.PoolId.Value ?? string.Empty;
-            var isShop = PendingChoiceModel.IsShopPool(poolId);
+
+            // 卡店二级选择取消：回到三项服务面，不离店、不扣费。
+            if (PendingChoiceModel.IsTavernFixItemPool(poolId))
+            {
+                var refresh = pending.ShopRefreshPriceGold.Value;
+                var pipelineCancel = this.GetSystem<IActionPipelineSystem>();
+                pipelineCancel.Enqueue(new OfferTavernSessionAction(
+                    this.GetSystem<IRewardSystem>().BuildTavernServices(),
+                    refresh));
+                return CoreCommandResult.Accept(pipelineCancel.RunToCompletion());
+            }
+
             if (IsRelicRewardPool(poolId))
             {
                 this.GetSystem<IRewardSystem>().RememberUnselectedRelics(pending.RewardOptions, null);
             }
 
-            // 商店离开：不发跳过帮助卡选择的 +金币；通关帮助三选一跳过仍发。
-            var resolved = isShop ? 0 : this.GetSystem<IEconomySystem>().AwardSkipHelpChoice();
+            // 商店/卡店离开：不发跳过帮助卡选择的 +金币；通关帮助三选一跳过仍发。
+            var isConsumerLeave = PendingChoiceModel.IsConsumerLeavePool(poolId);
+            var resolved = isConsumerLeave ? 0 : this.GetSystem<IEconomySystem>().AwardSkipHelpChoice();
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new SkipRewardChoiceAction());
             pipeline.Enqueue(new ClearPendingRewardChoiceAction());
@@ -1584,7 +1727,7 @@ namespace NineGrid.Core.Systems
                     mLegalCommands.Add(GameCommandKind.SkipHelpChoice);
                     AppendShopRefreshIfActive();
                     // 商店离开图标需 BoardWalk；其它奖励覆盖层不走格。
-                    if (PendingChoiceModel.IsShopPool(this.GetModel<PendingChoiceModel>().PoolId.Value))
+                    if (PendingChoiceModel.IsConsumerBoardPool(this.GetModel<PendingChoiceModel>().PoolId.Value))
                     {
                         mLegalCommands.Add(GameCommandKind.MoveAvatar);
                     }
@@ -1623,7 +1766,7 @@ namespace NineGrid.Core.Systems
         {
             var pending = this.GetModel<PendingChoiceModel>();
             if (pending.Kind.Value == PendingChoiceKind.Reward
-                && PendingChoiceModel.IsShopPool(pending.PoolId.Value))
+                && PendingChoiceModel.IsConsumerRefreshPool(pending.PoolId.Value))
             {
                 mLegalCommands.Add(GameCommandKind.RefreshShop);
             }

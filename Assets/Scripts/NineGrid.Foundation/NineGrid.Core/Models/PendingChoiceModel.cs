@@ -67,7 +67,7 @@ namespace NineGrid.Core
             SelectedRoom.Value = RoomKind.None;
             NavigationOffer.Value = NavigationKind.None;
             SelectedNavigation.Value = NavigationKind.None;
-            if (!IsShopPool(poolId))
+            if (!KeepsVisitRefreshPrice(poolId))
             {
                 ShopRefreshPriceGold.Value = 0;
             }
@@ -80,6 +80,23 @@ namespace NineGrid.Core
         {
             OfferRewards(ShopPoolId, shelves);
             ShopRefreshPriceGold.Value = refreshPriceGold < 0 ? 0 : refreshPriceGold;
+            Touch();
+        }
+
+        /// <summary>卡店服务会话：3 服务选项 + 本次进店刷新价（#93）。</summary>
+        public void OfferTavern(IReadOnlyList<RewardEntry> services, int refreshPriceGold)
+        {
+            OfferRewards(TavernPoolId, services);
+            ShopRefreshPriceGold.Value = refreshPriceGold < 0 ? 0 : refreshPriceGold;
+            Touch();
+        }
+
+        /// <summary>卡店「道具卡固定」二级选择：候选来自道具卡来源池；保留本次进店刷新价。</summary>
+        public void OfferTavernFixItem(IReadOnlyList<RewardEntry> candidates)
+        {
+            var refresh = ShopRefreshPriceGold.Value;
+            OfferRewards(TavernFixItemPoolId, candidates);
+            ShopRefreshPriceGold.Value = refresh;
             Touch();
         }
 
@@ -109,10 +126,45 @@ namespace NineGrid.Core
         }
 
         public const string ShopPoolId = "shop.helpCards";
+        public const string TavernPoolId = "tavern.services";
+        public const string TavernFixItemPoolId = "tavern.fixItem";
 
         public static bool IsShopPool(string poolId)
         {
             return string.Equals(poolId, ShopPoolId, System.StringComparison.Ordinal);
+        }
+
+        public static bool IsTavernPool(string poolId)
+        {
+            return string.Equals(poolId, TavernPoolId, System.StringComparison.Ordinal);
+        }
+
+        public static bool IsTavernFixItemPool(string poolId)
+        {
+            return string.Equals(poolId, TavernFixItemPoolId, System.StringComparison.Ordinal);
+        }
+
+        /// <summary>商店 / 卡店主面：可刷新货架或服务。</summary>
+        public static bool IsConsumerRefreshPool(string poolId)
+        {
+            return IsShopPool(poolId) || IsTavernPool(poolId);
+        }
+
+        /// <summary>商店 / 卡店主面离店（不发跳过帮助卡金币）。</summary>
+        public static bool IsConsumerLeavePool(string poolId)
+        {
+            return IsShopPool(poolId) || IsTavernPool(poolId);
+        }
+
+        /// <summary>消费房场地板（含卡店二级选择）：允许 BoardWalk。</summary>
+        public static bool IsConsumerBoardPool(string poolId)
+        {
+            return IsShopPool(poolId) || IsTavernPool(poolId) || IsTavernFixItemPool(poolId);
+        }
+
+        private static bool KeepsVisitRefreshPrice(string poolId)
+        {
+            return IsShopPool(poolId) || IsTavernPool(poolId) || IsTavernFixItemPool(poolId);
         }
 
         public void OfferRooms(IReadOnlyList<RoomKind> options)
