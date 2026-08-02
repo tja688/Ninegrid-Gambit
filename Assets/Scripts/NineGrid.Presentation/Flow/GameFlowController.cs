@@ -1,5 +1,6 @@
 using System;
 using NineGrid.Core;
+using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Commands;
 using NineGrid.Presentation.Systems;
@@ -240,18 +241,21 @@ namespace NineGrid.Flow
         public void ShowNotice(string message)
         {
             EnsureViewBindings();
-            if (noticeText == null)
-            {
-                Debug.LogWarning($"[MainGameLoop] NoticeText 缺失，文案：{message}");
-                return;
-            }
+            var tip = BoardBriefTipPresenter.EnsureExists();
+            tip.ShowNotice(message ?? string.Empty);
 
-            noticeText.text = message;
-            noticeText.gameObject.SetActive(true);
+            // 旧 NoticeText 通道退役：胜负 / 房间 stub 一律走简要解释文字框（ADR-0020）。
+            if (noticeText != null)
+            {
+                noticeText.gameObject.SetActive(false);
+            }
         }
 
         public void HideNotice()
         {
+            var tip = BoardBriefTipPresenter.InstanceOrNull();
+            tip?.ClearNotice();
+
             if (noticeText != null)
             {
                 noticeText.gameObject.SetActive(false);

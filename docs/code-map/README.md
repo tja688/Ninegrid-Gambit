@@ -28,7 +28,7 @@
 | [ADR-0017](../adr/0017-trap-card-kind-and-dual-bucket.md) | 机关卡 `CardKind.Trap`；双桶交战；清关/赏金排除；静默 CounterAttackBanned；五套卡面 |
 | [ADR-0018](../adr/0018-trigger-visible-causality.md) | 触发可见因果；Triggered 卡牌基础触发表现（v1 持有者缩放） |
 | [ADR-0019](../adr/0019-avatar-board-walk.md) | 非战斗 Avatar 正交跳格；IntentIntake `boardWalk`；终点可图标格 |
-| [ADR-0020](../adr/0020-board-as-interaction-surface.md) | 场地即交互面；场地图标落格 + 驻留 1s 提交 EnterRoom |
+| [ADR-0020](../adr/0020-board-as-interaction-surface.md) | 场地即交互面；场地图标落格 + 驻留提交；简要解释文字框 / 楼层提示（#89） |
 | [ADR-0021](../adr/0021-run-progression-in-core.md) | 跑图进度与节点编排归 Core；8 节点/层；4/7 非战斗 |
 
 > ADR-0011–0013 已落地（含卡面倒计时 Commit 与单向打击 Counter 分拍，#81）。落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。

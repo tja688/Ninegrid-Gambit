@@ -6,6 +6,7 @@ using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
+using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using NineGrid.Flow.RoomIcons;
@@ -907,15 +908,13 @@ namespace NineGrid.Flow
                 var content = arch.GetSystem<IContentSystem>();
                 if (content != null
                     && content.HasCatalog
-                    && content.Catalog.Rewards.TryGetRoom(room, out var def)
-                    && !string.IsNullOrWhiteSpace(def.DisplayName))
+                    && content.Catalog.Rewards.TryGetRoom(room, out var def))
                 {
-                    if (def.OpeningInjects != null && def.OpeningInjects.Count > 0)
+                    var tip = BoardBriefTipCopy.ForRoom(def);
+                    if (!string.IsNullOrEmpty(tip))
                     {
-                        return $"{def.DisplayName}：开局注入 {def.OpeningInjects.Count} 项";
+                        return tip;
                     }
-
-                    return def.DisplayName;
                 }
             }
 

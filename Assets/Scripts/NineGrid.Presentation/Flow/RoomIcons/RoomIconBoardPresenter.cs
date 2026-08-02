@@ -5,8 +5,10 @@ using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
 using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
+using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using NineGrid.Flow;
+using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
@@ -67,6 +69,7 @@ namespace NineGrid.Flow.RoomIcons
 
             mSpawned.Clear();
             RoomIconOccupancy.Current.Clear();
+            BoardBriefTipPresenter.InstanceOrNull()?.ClearHover();
         }
 
         /// <summary>按 PendingChoice 刷出房间/导航图标。</summary>
@@ -121,6 +124,7 @@ namespace NineGrid.Flow.RoomIcons
                 var go = TryInstantiateIcon(path, geometry, slot, contentId);
                 if (go != null)
                 {
+                    AttachBriefTip(go, contentId, arch);
                     mSpawned.Add(go);
                 }
 
@@ -362,6 +366,34 @@ namespace NineGrid.Flow.RoomIcons
             }
 
             return go;
+        }
+
+        private static void AttachBriefTip(GameObject go, string contentId, IArchitecture arch)
+        {
+            if (go == null)
+            {
+                return;
+            }
+
+            var tip = BoardBriefTipCopy.ForContentId(contentId, kind => ResolveRoomDefinition(arch, kind));
+            var proxy = go.GetComponent<BoardBriefTipHitProxy>();
+            if (proxy == null)
+            {
+                proxy = go.AddComponent<BoardBriefTipHitProxy>();
+            }
+
+            proxy.Configure(tip);
+        }
+
+        private static RoomDefinition ResolveRoomDefinition(IArchitecture arch, RoomKind kind)
+        {
+            var content = arch?.GetSystem<IContentSystem>();
+            if (content == null || !content.HasCatalog)
+            {
+                return null;
+            }
+
+            return content.Catalog.Rewards.TryGetRoom(kind, out var def) ? def : null;
         }
 
         private static GameObject LoadPrefab(string path)

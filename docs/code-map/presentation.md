@@ -29,6 +29,7 @@
 | `BattleSession/` | 局内会话相关类型 / 接口 |
 | `GameFlow/` | 流程壳运行选项等 |
 | `RoomIcons/` | 场地图标 Spawn / 占格登记 / 驻留提交 / 进房硬切（#88） |
+| `BoardBriefTip/` | 简要解释文字框 + 楼层提示（#89）：文案纯逻辑、悬停命中代理、胜负 Notice 出口 |
 | `Diagnostics/` | Battle/Flow/Perf/Registry Trace Recorder 与 Sink |
 | （根下） | `BattleSessionController`、`GameFlowController`、若干 `*ManagerSingleton`（Presenter 壳名）；**指针缝** `WorldPointerUtility`、**命中路由** `PointerHitRouter` / `IPointerHitTarget` / `PointerHitRegistry`（替代 OnMouse*，ADR-0006）；**QuickTest 通道** `QuickTestDeckCatalog` / `QuickTestRunOptions`（主菜单 `\0`–`\9`：`skillIds` 一怪一技挂载 + **`trapContentIds` 经 `AddEnemyCard` 注入敌池**；正式开局不挂怪技能/不注机关；挂载经 `BattleSessionCheat.TryAttachSkillsToBoardMonsters`：**一怪一技**按格号升序，不够则 Spawn 白板宿主 + 至少一只无技能同伴）。**批1** `CardKind.Trap` / 双桶 / 五套卡面（ADR-0017）；**批2** 滚石/捕熊/烈焰迁 Trap + QT `\1`/`\6`/`\8`/`\9` 机关注入；**批3** 倒刺/三图腾/治疗泉 + QT `\1`–`\9` 九机关齐全（`help.healing_spring` 已删） |
 
@@ -95,7 +96,7 @@
 - 编辑器扩展壳（非运行时五套）：`CardChassisPaths.RoomOptionFacePrefab`（`房间选项标准模板`）+ `ResolveRoomIconPrefab`（`Assets/Prefabs/*图标.prefab`）；卡牌表现编辑器侧栏「卡面」下另分 **房间图标** / **房间选项**
 - Flow：`DescriptionManagerSingleton`（**已退役**：不再写 Card InfoText / NoticeText；卡面静态描述权威在 `Basic_Description` Commit）、`DamageNumberManagerSingleton`、`GoldGainFxManagerSingleton`、`RelicManagerSingleton`（#69：图标优先一卡一文件 JSON `sprites.mainIcon`；空缺时回退 `RelicVisualCatalog` bootstrap）、`SelectorManagerSingleton`（卡面主视图锚定为祖先变换无关的局部空间计算，见 [ADR-0015](../adr/0015-card-slot-placement-local-space.md)；BounceFan 不得在 `scale=0` 期间提交卡面，`BuildEntries` 保持 `scale=1`，入场归零只在 `PlayEntryAnimation`）
 
-`DescriptionDisplayHook` 现为 no-op；Hover/Drag/BoardSelect 动态描述 TMP 管道已砍。卡牌运行时持续呈现的描述只走卡面槽 `Basic_Description`（可含 `{param}` 装配实参插值与方括号词条图标）。详情文案由 `CardDetailDescriptionComposer` 合成（概括 + 词条展开）写入 `CardPresentationSnapshot.DetailDescription`。卡面 JSON `faceIntro` 经 Mapper 写入 `CardPresentationSnapshot.FaceIntro`，右键详述面板 `CardInspectOverlayPresenter`（场景 `UI面板/右键描述`）消费：敌方 / 常规两态 BG、**占位锚点隐藏成品 mock 后挂真卡面预制体 Commit**、背景/牌组 TMP；**详细效果信息**由 `CardInspectDetailComposer` 展开效果模板 `design_text`（`[场上]`/`[使用时]` 等分门别类），不重复卡面简要 `description`。**技能列表以局内 `IEffectSystem` 已激活挂载为准**（`EffectOwner.SourceDefId`，含 QuickTest 动态注入与未来运行时加技），按技能装配 `argsJson` 填 `design_text` 数值；无 live 挂载时才回退卡 JSON `skillIds` / `effectAssemblies`。半黑屏 `BattleUiDimmerOverlay`（`UI面板/半黑屏BG`）引用计数挡 `PointerHitRouter` 射线、**不**改 `CurrentOwner` / 不暂停主线，局内奖励/属性三选一也 Acquire 同遮罩。稀有度经 `SetFrameColor` 驱动卡框色；卡背优先读卡组 JSON，单卡 `sprites.back*` 可覆写，否则模板兜底（ADR-0009 / #71）。
+`DescriptionDisplayHook` 现为 no-op；Hover/Drag/BoardSelect 动态描述 TMP 管道已砍。**简要解释**（非战斗悬停一句话 + 胜负 Notice）走干净通路 `Flow/BoardBriefTip/` → 场景 `Panels/简要解释文字框`（ADR-0020 / #89），**不得**复活 `DescriptionManagerSingleton`。卡牌运行时持续呈现的描述只走卡面槽 `Basic_Description`（可含 `{param}` 装配实参插值与方括号词条图标）。详情文案由 `CardDetailDescriptionComposer` 合成（概括 + 词条展开）写入 `CardPresentationSnapshot.DetailDescription`。卡面 JSON `faceIntro` 经 Mapper 写入 `CardPresentationSnapshot.FaceIntro`，右键详述面板 `CardInspectOverlayPresenter`（场景 `UI面板/右键描述`）消费：敌方 / 常规两态 BG、**占位锚点隐藏成品 mock 后挂真卡面预制体 Commit**、背景/牌组 TMP；**详细效果信息**由 `CardInspectDetailComposer` 展开效果模板 `design_text`（`[场上]`/`[使用时]` 等分门别类），不重复卡面简要 `description`。**技能列表以局内 `IEffectSystem` 已激活挂载为准**（`EffectOwner.SourceDefId`，含 QuickTest 动态注入与未来运行时加技），按技能装配 `argsJson` 填 `design_text` 数值；无 live 挂载时才回退卡 JSON `skillIds` / `effectAssemblies`。半黑屏 `BattleUiDimmerOverlay`（`UI面板/半黑屏BG`）引用计数挡 `PointerHitRouter` 射线、**不**改 `CurrentOwner` / 不暂停主线，局内奖励/属性三选一也 Acquire 同遮罩。稀有度经 `SetFrameColor` 驱动卡框色；卡背优先读卡组 JSON，单卡 `sprites.back*` 可覆写，否则模板兜底（ADR-0009 / #71）。
 
 结构护栏见 `Tests/HostContractStructuralTests`（禁回流四大旧名与 `CombatHitSink`）与 `Tests/IntentIntakeStructuralTests`（禁绕过 IntentIntake、门禁/收口禁壁钟）。
 
@@ -140,6 +141,17 @@
 - 进房硬切：图标退场 + Avatar `MoveAvatarAction` 至格 5
 - 编辑器：Room 条目「格位」字段；JSON `boardSlot`
 - 旧浮层 `RoomChoicePresenter` 仍保留（#90 退役）；壳层优先走图标路径
+- 悬停：Spawn 时挂 `BoardBriefTipHitProxy`（#89）；战斗真卡不挂
+
+### 简要解释文字框与楼层提示（#89 · ADR-0020）
+
+- 文案：`BoardBriefTipCopy`（房间 DisplayName+注入摘要 / 导航固定文案 / 「第 X 层 · 节点 Y」；另备 `ForOptionOrShelf` 供 M2 货架·就地选项）
+- 会话：`BoardBriefTipSession`（悬停与 Notice；Notice 盖悬停；代数清）
+- 场景：`BoardBriefTipPresenter` → `Panels/简要解释文字框`；`FloorHintPresenter` → `楼层提示`（读 `RunModel`）
+- 命中（已接线）：场地图标 Spawn 挂 `BoardBriefTipHitProxy`；战斗真卡不挂
+- 命中（未接线）：就地选项卡 / 商店货架属 M2（#92/#93），复用同一 `BoardBriefTipHitProxy` + `ForOptionOrShelf`
+- 胜负 / 房间 stub Notice：`GameFlowController.ShowNotice` 改走简要解释文字框，旧 `NoticeText` 不再写出
+- **禁**：复活 `DescriptionManagerSingleton` / `DescriptionDisplayHook`；战斗真卡悬停写简要解释（右键详述另责）
 
 ### Avatar 跳格（已落地 · ADR-0019 / #88 放宽）
 
