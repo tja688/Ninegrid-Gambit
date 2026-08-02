@@ -721,7 +721,7 @@ namespace NineGrid.Core.Content
         Monster = 2
     }
 
-    /// <summary>房间开局注入来源（ADR-0022）。执行在后续票；本层只声明与校验。</summary>
+    /// <summary>房间开局注入来源（ADR-0022）。由 <c>RewardSystem.BuildNodeDeckOptions</c> 执行。</summary>
     public enum RoomInjectSourceKind
     {
         FixedCard = 1,

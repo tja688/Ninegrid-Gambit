@@ -282,6 +282,8 @@ namespace NineGrid.Core.Systems
                 return NodeDeckOptions.CreateDefaultBattle();
             }
 
+            EnsureOpeningRoomAssigned(catalog);
+
             var rule = FindNodeRule(catalog, nodeIndex);
             if (rule == null)
             {
@@ -313,6 +315,7 @@ namespace NineGrid.Core.Systems
                 AddSequenceCards(catalog, deck, options, sequence, rule.GetSequenceCount(sequence));
             }
 
+            AppendRoomOpeningInjectMonsterCards(catalog, deck, options);
             return options;
         }
 
@@ -328,7 +331,7 @@ namespace NineGrid.Core.Systems
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new ResolveRoomAction(room.Kind, room.DisplayName));
 
-            // ADR-0022：进房即改数值已退役；开局注入执行在后续票（T12）。
+            // ADR-0022：进房即改数值已退役；开局注入在 BuildNodeDeckOptions 执行。
             // 房间内交互（奖励池 / 商店货架）仍可在此 enqueue。
 
             if (room.Kind == RoomKind.Shop)
@@ -546,7 +549,7 @@ namespace NineGrid.Core.Systems
                 TryAddPlayerCard(catalog, content, options, fixedCards[i]);
             }
 
-            // 3) 叠房间注入卡（T12/#95 接线；M1 恒为空）
+            // 3) 叠房间注入卡（ADR-0022 / #95）
             AppendRoomOpeningInjectPlayerCards(catalog, content, options);
 
             // 4) 倒空携带卡包
@@ -557,16 +560,211 @@ namespace NineGrid.Core.Systems
             }
         }
 
+        /// <summary>
+        /// 节点 1/5 随机战斗房、节点 8 层主：在装填前把 <see cref="RunModel.Room"/> 对齐到本节点房间来源。
+        /// </summary>
+        private void EnsureOpeningRoomAssigned(GameContentCatalog catalog)
+        {
+            if (catalog == null)
+            {
+                return;
+            }
+
+            var run = this.GetModel<RunModel>();
+            var schedule = MapNodeProgression.GetScheduleOrDefault(run.NodeIndex.Value);
+            if (schedule.RoomSource == NodeRoomSource.Boss)
+            {
+                run.Room.Value = RoomKind.Boss;
+                return;
+            }
+
+            if (schedule.RoomSource != NodeRoomSource.RandomBattle)
+            {
+                return;
+            }
+
+            if (IsBattleOfferRoom(run.Room.Value))
+            {
+                return;
+            }
+
+            var rolled = RollRoomChoicesFromPool(
+                count: 1,
+                includeAllWeighted: false,
+                allowElite: false,
+                predicate: kind => IsBattleOfferRoom(kind) && kind != RoomKind.Elite);
+            if (rolled.Count > 0)
+            {
+                run.Room.Value = rolled[0];
+            }
+            else
+            {
+                run.Room.Value = RoomKind.Gold;
+            }
+        }
+
         private void AppendRoomOpeningInjectPlayerCards(
             GameContentCatalog catalog,
             IContentSystem content,
             NodeDeckOptions options)
         {
-            // ADR-0022：房间开局注入在 T12/#95 生效；此处保留生成顺序槽位。
             if (catalog == null || content == null || options == null)
             {
                 return;
             }
+
+            RoomDefinition room;
+            if (!TryGetOpeningRoom(catalog, out room))
+            {
+                return;
+            }
+
+            var injects = room.OpeningInjects;
+            for (var i = 0; i < injects.Count; i++)
+            {
+                var inject = injects[i];
+                if (inject == null || inject.Side != RoomInjectSide.Player)
+                {
+                    continue;
+                }
+
+                var defIds = RollInjectCardDefIds(inject);
+                for (var j = 0; j < defIds.Count; j++)
+                {
+                    TryAddPlayerCard(catalog, content, options, defIds[j]);
+                }
+            }
+        }
+
+        private void AppendRoomOpeningInjectMonsterCards(
+            GameContentCatalog catalog,
+            MonsterDeckDefinition deck,
+            NodeDeckOptions options)
+        {
+            if (catalog == null || deck == null || options == null)
+            {
+                return;
+            }
+
+            RoomDefinition room;
+            if (!TryGetOpeningRoom(catalog, out room))
+            {
+                return;
+            }
+
+            var injects = room.OpeningInjects;
+            for (var i = 0; i < injects.Count; i++)
+            {
+                var inject = injects[i];
+                if (inject == null || inject.Side != RoomInjectSide.Monster)
+                {
+                    continue;
+                }
+
+                if (inject.SourceKind == RoomInjectSourceKind.FloorMonsterSequence)
+                {
+                    AddSequenceCards(catalog, deck, options, inject.MonsterSequence, inject.Count);
+                    continue;
+                }
+
+                var defIds = RollInjectCardDefIds(inject);
+                var content = this.GetSystem<IContentSystem>();
+                for (var j = 0; j < defIds.Count; j++)
+                {
+                    if (string.IsNullOrEmpty(defIds[j]) || !catalog.Cards.ContainsKey(defIds[j]))
+                    {
+                        continue;
+                    }
+
+                    options.AddEnemyCard(content.CreateDraft(defIds[j]));
+                }
+            }
+        }
+
+        private bool TryGetOpeningRoom(GameContentCatalog catalog, out RoomDefinition room)
+        {
+            room = null;
+            var kind = this.GetModel<RunModel>().Room.Value;
+            if (kind == RoomKind.None || catalog == null)
+            {
+                return false;
+            }
+
+            return catalog.Rewards.TryGetRoom(kind, out room) && room != null;
+        }
+
+        private List<string> RollInjectCardDefIds(RoomInjectDeclaration inject)
+        {
+            var result = new List<string>();
+            if (inject == null || inject.Count <= 0)
+            {
+                return result;
+            }
+
+            switch (inject.SourceKind)
+            {
+                case RoomInjectSourceKind.FixedCard:
+                    if (!string.IsNullOrEmpty(inject.CardDefId))
+                    {
+                        for (var i = 0; i < inject.Count; i++)
+                        {
+                            result.Add(inject.CardDefId);
+                        }
+                    }
+
+                    break;
+
+                case RoomInjectSourceKind.WeightedPool:
+                    RollWeightedInjectPool(inject, result);
+                    break;
+            }
+
+            return result;
+        }
+
+        private void RollWeightedInjectPool(RoomInjectDeclaration inject, List<string> result)
+        {
+            var pool = new List<RoomInjectPoolOption>();
+            for (var i = 0; i < inject.Pool.Count; i++)
+            {
+                var option = inject.Pool[i];
+                if (option != null && !string.IsNullOrEmpty(option.CardDefId) && option.Weight > 0)
+                {
+                    pool.Add(option);
+                }
+            }
+
+            for (var n = 0; n < inject.Count && pool.Count > 0; n++)
+            {
+                var index = RollWeightedInjectPoolIndex(pool);
+                result.Add(pool[index].CardDefId);
+                if (!inject.AllowDuplicates)
+                {
+                    pool.RemoveAt(index);
+                }
+            }
+        }
+
+        private int RollWeightedInjectPoolIndex(IReadOnlyList<RoomInjectPoolOption> pool)
+        {
+            var total = 0;
+            for (var i = 0; i < pool.Count; i++)
+            {
+                total += pool[i].Weight;
+            }
+
+            var roll = this.GetUtility<IRngUtility>().Range(0, total);
+            var cursor = 0;
+            for (var i = 0; i < pool.Count; i++)
+            {
+                cursor += pool[i].Weight;
+                if (roll < cursor)
+                {
+                    return i;
+                }
+            }
+
+            return pool.Count - 1;
         }
 
         private static void TryAddPlayerCard(

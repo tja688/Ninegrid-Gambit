@@ -212,7 +212,7 @@
 
 **已删**：`Battle`（随机战斗房从具体战斗房类型抽）、`Event`（由 `Attribute` 承接）。
 
-**开局注入（ADR-0022）**：`RoomDefinition.OpeningInjects` 声明往玩家侧/怪物侧塞哪些卡；执行在 T12。
+**开局注入（ADR-0022 / #95）**：`RoomDefinition.OpeningInjects` 声明往玩家侧/怪物侧塞哪些卡；`RewardSystem.BuildNodeDeckOptions` 按 `RunModel.Room` 执行（玩家侧在固定卡之后、携带卡包之前；怪物侧在节点序列抽卡之后）。节点 1/5 `RandomBattle` 开局若尚未是战斗房则现场抽一种（不含困难房）。
 
 **勿与选项卡混淆（设计案对照）**
 
