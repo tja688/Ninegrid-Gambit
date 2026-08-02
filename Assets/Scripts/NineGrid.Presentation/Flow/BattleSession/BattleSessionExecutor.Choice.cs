@@ -271,41 +271,6 @@ namespace NineGrid.Flow
             }
         }
 
-        /// <summary>
-        /// 属性提升：UseItem 前 Bounce 三选一，回传 Attack / Armor / Hp。
-        /// </summary>
-        private async UniTask<string> PresentStatBoostChoiceAsync()
-        {
-            var selector = Selector ?? UnityEngine.Object.FindFirstObjectByType<SelectorManagerSingleton>();
-            if (selector == null)
-            {
-                Debug.LogWarning("[BattleSession] 属性提升选择缺少 SelectorManager。");
-                return null;
-            }
-
-            AbortBoardSelectIfActive("stat-boost-choice");
-            PresentationInputGates.SetChoiceOverlay(true);
-            var dimmerHeld = BattleUiDimmerOverlay.TryAcquire("stat-boost-choice");
-            try
-            {
-                var pick = await WaitBouncePickAsync(selector, StatBoostOptions, allowEscapeSkip: false);
-                if (pick.Cancelled || pick.Index < 0 || pick.Index >= StatBoostOptions.Length)
-                {
-                    return null;
-                }
-
-                return StatBoostOptions[pick.Index];
-            }
-            finally
-            {
-                PresentationInputGates.SetChoiceOverlay(false);
-                if (dimmerHeld)
-                {
-                    BattleUiDimmerOverlay.Release("stat-boost-choice");
-                }
-            }
-        }
-
         private readonly struct BouncePickResult
         {
             public readonly int Index;

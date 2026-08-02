@@ -38,7 +38,7 @@ namespace NineGrid.Flow
             _livingFormChoiceConsumer = livingFormChoiceTest as IUITestKeyConsumer
                 ?? GetComponent<IUITestKeyConsumer>();
 
-            Debug.Log("[UITestBootstrap] UI 测试模式就绪。数字 1~7/0 切面板；小键盘 1 切形态选择（3→6→关）。");
+            Debug.Log("[UITestBootstrap] UI 测试模式就绪。数字 1~2/4~7/0 切面板；小键盘 1 切形态选择（3→6→关）。");
         }
 
         private void Start()
@@ -52,7 +52,6 @@ namespace NineGrid.Flow
 
             if (KeyboardUtility.GetKeyDown(KeyCode.Alpha1)) ToggleInGameMain();
             if (KeyboardUtility.GetKeyDown(KeyCode.Alpha2)) ToggleRewardOverlay();
-            if (KeyboardUtility.GetKeyDown(KeyCode.Alpha3)) ToggleRoomChoiceOverlay();
             if (KeyboardUtility.GetKeyDown(KeyCode.Alpha4)) ToggleRoomEventOverlay();
             if (KeyboardUtility.GetKeyDown(KeyCode.Alpha5)) ToggleInfoOverlay();
             if (KeyboardUtility.GetKeyDown(KeyCode.Alpha6)) ToggleMainBackground();
@@ -90,23 +89,6 @@ namespace NineGrid.Flow
             {
                 panelRouter.ShowRewardOverlay();
                 Debug.Log("[UITestBootstrap] → 奖励面板叠层");
-            }
-
-            _inGameVisible = true;
-        }
-
-        [ContextMenu("3. 切换 房间选择叠层")]
-        public void ToggleRoomChoiceOverlay()
-        {
-            if (panelRouter.RoomChoicePanel != null && panelRouter.RoomChoicePanel.activeSelf)
-            {
-                panelRouter.ShowInRunShell(inBattle: true);
-                Debug.Log("[UITestBootstrap] 关闭房间选择面板");
-            }
-            else
-            {
-                panelRouter.ShowRoomChoiceOverlay();
-                Debug.Log("[UITestBootstrap] → 房间选择叠层");
             }
 
             _inGameVisible = true;
@@ -173,7 +155,6 @@ namespace NineGrid.Flow
             LogPanelState("MainPanel", panelRouter.MainPanel);
             LogPanelState("InGamePanels", panelRouter.InGamePanels);
             LogPanelState("RewardPanel", panelRouter.RewardPanel);
-            LogPanelState("RoomChoicePanel", panelRouter.RoomChoicePanel);
             LogPanelState("RoomEventPanel", panelRouter.RoomEventPanel);
             LogPanelState("InfoPanel", panelRouter.InfoPanel);
             LogPanelState("MainBG", GameObject.Find("Panels/MainBG"));

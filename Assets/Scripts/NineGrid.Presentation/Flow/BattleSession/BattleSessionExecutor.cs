@@ -20,9 +20,7 @@ namespace NineGrid.Flow
     /// </summary>
     internal sealed partial class BattleSessionExecutor
     {
-        private const string StatBoostCardDefId = "help.stat_boost_card";
         private const int BoardSelectLockWaitMs = 3000;
-        private static readonly string[] StatBoostOptions = { "Attack", "Armor", "Hp" };
 
         private IBattleSessionView _view;
         private bool _isBusy;

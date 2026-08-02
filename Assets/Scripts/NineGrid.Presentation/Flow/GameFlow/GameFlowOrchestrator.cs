@@ -147,11 +147,6 @@ namespace NineGrid.Flow
             CancelBattleEndWork();
             NineGridArchitecture.Interface?.GetSystem<IAvatarWalkSystem>()?.SetEnabled(false);
             NineGridArchitecture.Interface?.GetSystem<IAvatarWalkSystem>()?.Cancel();
-            var view = mShell.View;
-            if (view != null && view.IsRoomChoiceActive)
-            {
-                view.HideRoomChoice();
-            }
 
             try
             {
@@ -257,10 +252,6 @@ namespace NineGrid.Flow
             var view = mShell.View;
             view?.EnsureViewBindings();
             view?.ShowInRunShell(inBattle: true);
-            if (view != null && view.IsRoomChoiceActive)
-            {
-                view.HideRoomChoice();
-            }
 
             var session = ResolveSession();
             if (session == null || !session.IsBound)
@@ -462,10 +453,6 @@ namespace NineGrid.Flow
             var view = mShell.View;
             view?.EnsureViewBindings();
             view?.ShowInRunShell(inBattle: true);
-            if (view != null && view.IsRoomChoiceActive)
-            {
-                view.HideRoomChoice();
-            }
 
             var session = ResolveSession();
             if (session == null || !session.IsBound)
@@ -499,17 +486,12 @@ namespace NineGrid.Flow
 
         /// <summary>
         /// 场地图标选房 / 导航：Spawn → BoardWalk → 驻留 1s → Select+Enter；进房硬切。
-        /// 旧浮层路径保留在 PlayRoomChoiceAsync，本票以图标为准。
         /// </summary>
         private async UniTask PlayRoomIconChoiceAsync(CancellationToken ct)
         {
             RequestSetState(GameFlowShellState.RoomChoice);
             var view = mShell.View;
             view?.EnsureViewBindings();
-            if (view != null && view.IsRoomChoiceActive)
-            {
-                view.HideRoomChoice();
-            }
 
             var arch = NineGridArchitecture.Current;
             var phaseSystem = arch.GetSystem<IPhaseSystem>();
@@ -538,14 +520,8 @@ namespace NineGrid.Flow
             presenter.Bind(arch);
             if (!presenter.TrySpawnFromPending(arch))
             {
-                Debug.LogWarning("[GameFlow] 房间图标 Spawn 失败，回退浮层路径");
+                Debug.LogError("[GameFlow] 房间图标 Spawn 失败（旧浮层已退役，无回退路径）");
                 walk?.SetEnabled(false);
-                await PlayRoomChoiceAsync(ct);
-                if (!ct.IsCancellationRequested)
-                {
-                    await PlayRoomEventAsync(ct);
-                }
-
                 return;
             }
 
@@ -594,159 +570,6 @@ namespace NineGrid.Flow
                 {
                     presenter.DespawnAll();
                 }
-            }
-        }
-
-        private async UniTask PlayRoomChoiceAsync(CancellationToken ct)
-        {
-            RequestSetState(GameFlowShellState.RoomChoice);
-            var view = mShell.View;
-            view?.EnsureViewBindings();
-
-            var arch = NineGridArchitecture.Current;
-            var phaseSystem = arch.GetSystem<IPhaseSystem>();
-            var pending = arch.GetModel<PendingChoiceModel>();
-            if (phaseSystem.CurrentPhase != GamePhase.RoomChoice
-                || pending.Kind.Value != PendingChoiceKind.Room
-                || pending.RoomOptions == null
-                || pending.RoomOptions.Count < 2)
-            {
-                Debug.LogWarning(
-                    $"[GameFlow] 跳过房间选择 phase={phaseSystem.CurrentPhase} pending={pending.Kind.Value}");
-                try
-                {
-                    FlowTraceRecorder.Record(
-                        FlowTraceCategory.CoreGate,
-                        FlowTraceNames.RoomPresented,
-                        new Dictionary<string, string>
-                        {
-                            { "skipped", "true" },
-                            { "phase", phaseSystem.CurrentPhase.ToString() },
-                            { "pending", pending.Kind.Value.ToString() },
-                            { "nodeIndex", mShell.NodeIndex.ToString() },
-                        },
-                        loopState: mShell.State.Value.ToString(),
-                        phaseBefore: phaseSystem.CurrentPhase.ToString(),
-                        accepted: false);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning("[GameFlow] FlowTrace RoomSkipped: " + ex.Message);
-                }
-
-                return;
-            }
-
-            var left = pending.RoomOptions[0];
-            var right = pending.RoomOptions[1];
-            try
-            {
-                FlowTraceRecorder.Record(
-                    FlowTraceCategory.CoreGate,
-                    FlowTraceNames.RoomPresented,
-                    new Dictionary<string, string>
-                    {
-                        { "left", left.ToString() },
-                        { "right", right.ToString() },
-                        { "nodeIndex", mShell.NodeIndex.ToString() },
-                    },
-                    loopState: mShell.State.Value.ToString(),
-                    phaseBefore: phaseSystem.CurrentPhase.ToString());
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[GameFlow] FlowTrace RoomPresented: " + ex.Message);
-            }
-
-            view?.ShowRoomChoiceOverlay();
-
-            var pickedIndex = -1;
-            var pickedId = string.Empty;
-            var finished = false;
-            BoardCardSelectModeController.RequestAbort("mainloop-room-choice");
-            // SelectRoom 必须在 ChoiceOverlay 仍持有时提交：结算 Drain 可能仍 mainlineBusy，
-            // 先关 overlay 再 Submit 会被 IntentIntake 拒成 intentIntakeReject，
-            // phase 卡在 RoomChoice → 下一节点 BootstrapRun 清空中途遗物。
-            PresentationInputGates.SetChoiceOverlay(true);
-            CoreCommandResult result = CoreCommandResult.Reject("roomChoiceNotSubmitted");
-            var phaseBeforeSelect = phaseSystem.CurrentPhase.ToString();
-            var goldEventStart = 0;
-            try
-            {
-                if (view != null)
-                {
-                    view.BeginRoomChoice(
-                        left.ToString(),
-                        right.ToString(),
-                        (index, optionId) =>
-                        {
-                            pickedIndex = index;
-                            pickedId = optionId ?? string.Empty;
-                            Debug.Log($"[GameFlow] 房间已选 index={index} id={optionId}");
-                        },
-                        () => { finished = true; },
-                        hoverOnNotice: true);
-
-                    await UniTask.WaitUntil(() => finished || ct.IsCancellationRequested, cancellationToken: ct);
-                }
-
-                if (ct.IsCancellationRequested)
-                {
-                    return;
-                }
-
-                if (pickedIndex < 0)
-                {
-                    pickedIndex = 0;
-                }
-
-                phaseBeforeSelect = phaseSystem.CurrentPhase.ToString();
-                var pipeline = arch.GetSystem<IActionPipelineSystem>();
-                goldEventStart = pipeline.EventLog.Entries.Count;
-                result = SubmitSelectRoom(phaseSystem, pickedIndex);
-                if (!result.Accepted)
-                {
-                    Debug.LogWarning($"[GameFlow] SelectRoom 被拒: {result.Reason}");
-                }
-            }
-            finally
-            {
-                PresentationInputGates.SetChoiceOverlay(false);
-                view?.HideAllOverlays();
-            }
-
-            if (ct.IsCancellationRequested)
-            {
-                return;
-            }
-
-            try
-            {
-                FlowTraceRecorder.Record(
-                    FlowTraceCategory.CoreGate,
-                    FlowTraceNames.RoomChosen,
-                    new Dictionary<string, string>
-                    {
-                        { "index", pickedIndex.ToString() },
-                        { "optionId", string.IsNullOrEmpty(pickedId) ? pickedIndex.ToString() : pickedId },
-                        { "reason", result.Reason ?? string.Empty },
-                        { "nodeIndex", mShell.NodeIndex.ToString() },
-                        { "choiceOverlayHeld", "true" },
-                    },
-                    loopState: mShell.State.Value.ToString(),
-                    phaseBefore: phaseBeforeSelect,
-                    phaseAfter: phaseSystem.CurrentPhase.ToString(),
-                    accepted: result.Accepted);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[GameFlow] FlowTrace RoomChosen: " + ex.Message);
-            }
-
-            if (result.Accepted)
-            {
-                BattleBeatFlush.PresentEventLogSlice(NineGridArchitecture.Current, goldEventStart);
-                ResolveSession()?.RefreshPersistentInBattleUi(animate: false);
             }
         }
 

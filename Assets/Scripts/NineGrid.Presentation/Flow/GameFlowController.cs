@@ -1,4 +1,3 @@
-using System;
 using NineGrid.Core;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.Presentation;
@@ -24,9 +23,6 @@ namespace NineGrid.Flow
         [Header("Refs")]
         [Tooltip("面板路由；留空则运行时在同物体上 GetComponent / AddComponent。")]
         [SerializeField] private UiPanelRouter panelRouter;
-
-        [Tooltip("选择器管理；可手动拖入，也可由同场景 SerializeField 解析。")]
-        [SerializeField] private SelectorManagerSingleton selectorManager;
 
         [Tooltip("主菜单「开始」按钮；留空则运行时查找 MainPanel/StartRun。")]
         [SerializeField] private Collider2D startRunHit;
@@ -73,9 +69,6 @@ namespace NineGrid.Flow
         public bool IsQuickTestMode => ResolveShell()?.IsQuickTestMode ?? false;
         public int NodeIndex => ResolveShell()?.NodeIndex ?? 0;
         public bool CanAcceptQuickTestEntry => ResolveShell()?.CanAcceptQuickTestEntry ?? false;
-
-        public bool IsRoomChoiceActive =>
-            selectorManager != null && selectorManager.IsChoiceActive;
 
         private void Awake()
         {
@@ -203,11 +196,6 @@ namespace NineGrid.Flow
 
             panelRouter.EnsureBindings();
 
-            if (selectorManager == null)
-            {
-                selectorManager = FindFirstObjectByType<SelectorManagerSingleton>();
-            }
-
             worldCamera = WorldPointerUtility.ResolveCamera(worldCamera);
 
             if (startRunHit == null)
@@ -280,12 +268,6 @@ namespace NineGrid.Flow
             panelRouter.ShowRewardOverlay();
         }
 
-        public void ShowRoomChoiceOverlay()
-        {
-            EnsureViewBindings();
-            panelRouter.ShowRoomChoiceOverlay();
-        }
-
         public void ShowRoomEventOverlay()
         {
             EnsureViewBindings();
@@ -296,37 +278,6 @@ namespace NineGrid.Flow
         {
             EnsureViewBindings();
             panelRouter.HideAllOverlays();
-        }
-
-        public void BeginRoomChoice(
-            string leftLabel,
-            string rightLabel,
-            Action<int, string> onPicked,
-            Action onFinished,
-            bool hoverOnNotice)
-        {
-            EnsureViewBindings();
-            if (selectorManager == null)
-            {
-                Debug.LogError("[MainGameLoop] 未找到 SelectorManagerSingleton，无法房间选择。");
-                onFinished?.Invoke();
-                return;
-            }
-
-            selectorManager.BeginRoomChoice(
-                leftLabel,
-                rightLabel,
-                onPicked,
-                onFinished,
-                hoverOnNotice);
-        }
-
-        public void HideRoomChoice()
-        {
-            if (selectorManager != null && selectorManager.IsChoiceActive)
-            {
-                selectorManager.HideChoice();
-            }
         }
 
         public void QuitGame()

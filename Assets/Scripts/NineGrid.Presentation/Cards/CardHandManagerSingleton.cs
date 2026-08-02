@@ -1337,7 +1337,7 @@ namespace NineGrid.Cards
             _isBusy = true;
             try
             {
-                // StatBoost 等 Choice 路径会先 HideHandCardForChoice(scale=0)；
+                // Choice 路径可能先把手牌 scale 置 0；
                 // SetDisplayMode(RemovedMode) 会把缩放弹回 1.08，造成「用完后又闪一下」。
                 var alreadyHidden = card.Transform.localScale.sqrMagnitude <= 0.0001f;
                 if (!alreadyHidden)

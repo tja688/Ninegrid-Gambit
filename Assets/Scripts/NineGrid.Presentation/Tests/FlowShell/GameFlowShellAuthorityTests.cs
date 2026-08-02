@@ -134,7 +134,6 @@ namespace NineGrid.Presentation.Tests.FlowShell
             public float DefeatNoticeSeconds => 0.05f;
             public string VictoryMessage => "胜利";
             public string DefeatMessage => "失败";
-            public bool IsRoomChoiceActive => false;
 
             public void EnsureViewBindings()
             {
@@ -160,29 +159,11 @@ namespace NineGrid.Presentation.Tests.FlowShell
             {
             }
 
-            public void ShowRoomChoiceOverlay()
-            {
-            }
-
             public void ShowRoomEventOverlay()
             {
             }
 
             public void HideAllOverlays()
-            {
-            }
-
-            public void BeginRoomChoice(
-                string leftLabel,
-                string rightLabel,
-                Action<int, string> onPicked,
-                Action onFinished,
-                bool hoverOnNotice)
-            {
-                onFinished?.Invoke();
-            }
-
-            public void HideRoomChoice()
             {
             }
 

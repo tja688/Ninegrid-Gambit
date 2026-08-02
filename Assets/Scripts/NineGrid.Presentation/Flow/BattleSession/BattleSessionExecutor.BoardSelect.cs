@@ -25,18 +25,7 @@ namespace NineGrid.Flow
             }
 
             // MainlineBusy 由 IntentIntake（BoardSelect begin / UseItem）裁决，此处不提前短路。
-
-                        string selectedOption = null;
-            if (IsStatBoostCard(card.DefId))
-            {
-                HideHandCardForChoice(card);
-                selectedOption = await PresentStatBoostChoiceAsync();
-                if (string.IsNullOrEmpty(selectedOption))
-                {
-                    RestoreHandCardAfterChoiceCancel(card);
-                    return false;
-                }
-            }
+            // 旧属性三选一（Attack/Armor/Hp Bounce）已退役（#90）；永久属性改由属性房发卡。
 
             HelpCardBoardSelectResolver.TryGetPlayKind(
                 card.DefId,
@@ -48,11 +37,6 @@ namespace NineGrid.Flow
                 if (!HelpCardBoardSelectResolver.TryGetRequiredBoardSelectCount(card.DefId, out var boardSelectCount)
                     || !BoardCardSelectModeController.Begin(card.Uid, card.DefId, boardSelectCount))
                 {
-                    if (IsStatBoostCard(card.DefId))
-                    {
-                        RestoreHandCardAfterChoiceCancel(card);
-                    }
-
                     return false;
                 }
 
@@ -73,21 +57,11 @@ namespace NineGrid.Flow
             if (UseItemInputHook.TrySubmitUseItem == null)
             {
                 Debug.LogWarning("[BattleSession] UseItemInputHook.TrySubmitUseItem 未装配。");
-                if (IsStatBoostCard(card.DefId))
-                {
-                    RestoreHandCardAfterChoiceCancel(card);
-                }
-
                 return false;
             }
 
-            if (!UseItemInputHook.TrySubmitUseItem(card.Uid, selectedUids, selectedOption))
+            if (!UseItemInputHook.TrySubmitUseItem(card.Uid, selectedUids, null))
             {
-                if (IsStatBoostCard(card.DefId))
-                {
-                    RestoreHandCardAfterChoiceCancel(card);
-                }
-
                 return false;
             }
 
@@ -415,32 +389,6 @@ namespace NineGrid.Flow
             }
 
             await hand.VanishParkedBoardSelectItemAsync(card);
-        }
-
-        private static void HideHandCardForChoice(ManagedCard card)
-        {
-            if (card?.Transform == null)
-            {
-                return;
-            }
-
-            CardDeckTween.KillMotion(card.Transform);
-            card.Transform.localScale = Vector3.zero;
-        }
-
-        private static void RestoreHandCardAfterChoiceCancel(ManagedCard card)
-        {
-            if (card?.Transform == null)
-            {
-                return;
-            }
-
-            card.Transform.localScale = Vector3.one;
-        }
-
-        private static bool IsStatBoostCard(string defId)
-        {
-            return string.Equals(defId, StatBoostCardDefId, StringComparison.Ordinal);
         }
     }
 }
