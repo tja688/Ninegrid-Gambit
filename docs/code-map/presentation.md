@@ -28,6 +28,7 @@
 | `Presentation/` | `PresentationDirector`、`BattleTimeline`、`IPresentChannel` 实现、Intent Script Factory、`BattleBeatScheduler` / `IBattleBeatHandler`（`CardFaceStatHandler`、`PlayerInfoHudBeatHandler`、飘字/FX/金币装饰处理器）、`BattleBeatFlush`、Scheduler 等编排深模块；部分 struct Event |
 | `BattleSession/` | 局内会话相关类型 / 接口 |
 | `GameFlow/` | 流程壳运行选项等 |
+| `RoomIcons/` | 场地图标 Spawn / 占格登记 / 驻留提交 / 进房硬切（#88） |
 | `Diagnostics/` | Battle/Flow/Perf/Registry Trace Recorder 与 Sink |
 | （根下） | `BattleSessionController`、`GameFlowController`、若干 `*ManagerSingleton`（Presenter 壳名）；**指针缝** `WorldPointerUtility`、**命中路由** `PointerHitRouter` / `IPointerHitTarget` / `PointerHitRegistry`（替代 OnMouse*，ADR-0006）；**QuickTest 通道** `QuickTestDeckCatalog` / `QuickTestRunOptions`（主菜单 `\0`–`\9`：`skillIds` 一怪一技挂载 + **`trapContentIds` 经 `AddEnemyCard` 注入敌池**；正式开局不挂怪技能/不注机关；挂载经 `BattleSessionCheat.TryAttachSkillsToBoardMonsters`：**一怪一技**按格号升序，不够则 Spawn 白板宿主 + 至少一只无技能同伴）。**批1** `CardKind.Trap` / 双桶 / 五套卡面（ADR-0017）；**批2** 滚石/捕熊/烈焰迁 Trap + QT `\1`/`\6`/`\8`/`\9` 机关注入；**批3** 倒刺/三图腾/治疗泉 + QT `\1`–`\9` 九机关齐全（`help.healing_spring` 已删） |
 
@@ -121,43 +122,56 @@
 
 不要接回静态业务 Sink，也不要在 View 上直接改 Core 规则状态，也不要旁路直读 Core 写卡面数值。
 
-## 房间表现三分法（走格子移动已落地；选图标/选项卡仍后续）
+## 房间表现三分法（场地图标选房已落地 · ADR-0020）
 
 局内「选下一房 / 进房选项 / 商店货架」表现资产分三类，**权威配置**在卡牌表现 JSON + 表现层编辑器（`NineGrid.Content.Editor`）：
 
 | 类 | `kind` | 形态 | 壳 / 预制体 | Catalog 投影 |
 |----|--------|------|-------------|--------------|
-| **A. 场地图标** | `Room` | 下一步房间 **或** 导航（离开/上楼/下楼）：落九宫格，走到即触发 | `iconPrefab` 或 `CardChassisPaths.ResolveRoomIconPrefab` | 仅 `contentId`≡合法 `RoomKind` 时投影 `RoomDefinition`；`Leave`/`GoUp`/`GoDown` 为导航图标，**不**进 Catalog |
+| **A. 场地图标** | `Room` | 下一步房间 **或** 导航（离开/上楼/下楼）：落九宫格，走上去驻留 1s 提交 | `iconPrefab` + `boardSlot`；空 prefab 回退 `CardChassisPaths.ResolveRoomIconPrefab` | 仅 `contentId`≡合法 `RoomKind` 时投影 `RoomDefinition`；`Leave`/`GoUp`/`GoDown` 为导航图标，**不**进 Catalog |
 | **B. 特殊选项卡** | `ChoiceOption` | 进房后就地点选生效（主要是**卡店服务**；另含局内属性三选一 UI） | `房间选项标准模板.prefab` | **不**进玩法 Catalog |
 | **C. 复用真卡** | `HelpCard` 等 | 商店货架 / 战斗房开局塞进卡组的道具与宝箱等 | 既有道具卡模版 | 照常投影 |
 
-### Avatar 跳格（已落地 · ADR-0019）
+### 场地图标选房（#88 · ADR-0020）
+
+- Spawn：`RoomIconBoardPresenter` 读 `PendingChoice`（Room 双选 / Navigation 单选），按 `boardSlot` 落格（撞格回退 1/3/2）；**不**进 `CardKind` 五套 Spawn、**不** `PlaceCard`
+- 登记：`RoomIconOccupancy`（表现侧）供寻路软占与驻留
+- 驻留：踩上图标 → 表现侧 1s（`RoomIconDwellSession`）→ IntentIntake `SelectRoom` + `EnterRoom`；跳走取消；只提交一次；计时器不进门禁
+- 进房硬切：图标退场 + Avatar `MoveAvatarAction` 至格 5
+- 编辑器：Room 条目「格位」字段；JSON `boardSlot`
+- 旧浮层 `RoomChoicePresenter` 仍保留（#90 退役）；壳层优先走图标路径
+
+### Avatar 跳格（已落地 · ADR-0019 / #88 放宽）
 
 - 意图 `InputIntentKinds.BoardWalk` → IntentIntake → `BoardWalkIntentScriptFactory` → `IAvatarWalkSystem.SetDestination`
-- Core：`MoveAvatar`（单邻格）+ `AvatarWalkPathfinder`（正交 BFS，空格途经/终点）；相位仅 `RoomChoice` / `RoomEvent`
+- Core：`MoveAvatar`（单邻格；RoomChoice/RoomEvent 允许踩非空以配合软占回退）+ `AvatarWalkPathfinder` 两阶段 BFS：途经优先完全空置（绕开软占图标/真卡），无空路再允许踩软占；终点可为空格或目标图标格
 - 表现：`HopAvatarToSlotAsync` 复用旋转 hop；半空改目标等落地后重规划
-- `\0` QuickTest：`WalkSandbox` → `StartWalkSandboxNode` 空盘 + 开跳格门禁；拒 Explore/Attack/Pickup/Reveal
+- `\0` QuickTest：`WalkSandbox` → `StartWalkSandboxNode` 空盘 + 开跳格门禁；拒 Explore/Attack/Pickup/Reveal（流程通道落地后沙盒将退役，见 ADR-0019）
 - 空槽 Hit：跳格开启时任意空格可点（`BoardWalkSlotHitPolicy`，含角格与离场后的格5）；关闭时仍仅中心正交邻格（Explore）
 - Avatar 朝向：`AvatarBoardFacingController` 按卡面图标当前世界 X 相对指针，不锁死格5
-- **战斗 `InteractionLoop` 禁走**；开战前 Avatar 须回格 5（交战表现仍有格 5 假设）
+- **战斗 `InteractionLoop` 禁走**；进下一房 Avatar 硬切格 5
+
+### 节点循环（#88 · ADR-0021）
+
+- `GameFlowOrchestrator.RunNodeCycleAsync` 按 `MapNodeProgression.EntersInteractionLoop` 分支：节点 4/7 走 `PlayNonCombatNodeAsync`（跳过战斗），其余战斗 → 奖励 → `PlayRoomIconChoiceAsync`
 
 ### 设计房间名 ↔ `RoomKind`（现状）
 
-| 策划名 | `RoomKind` / JSON `contentId` | 默认图标预制体 | 备注 |
-|--------|-------------------------------|----------------|------|
-| 困难房 | `Elite` | `困难战斗图标` | |
-| 层主房 | `Boss` | `Boss房图标` | |
-| 金币房 | `Gold` | `钱袋图标` | 另有 `金钱图标` 未作默认映射 |
-| 宝箱房 | `Treasure` | `宝箱图标` | |
-| 恢复房 / 温泉 | `Fountain` | `温泉图标` | |
-| 属性房 | `Attribute` | `属性提升图标` | 开局注入属性道具卡（ADR-0022） |
-| 商店 | `Shop` | `商店图标` | 货架复用 HelpCard |
-| 卡店 | `Tavern`（显示名「卡店」） | `牌店图标` | contentId 保持枚举稳定；`酒馆图标` 为旧资产 |
-| 宝箱奖励房 | `TreasureReward` | `宝箱图标`（暂） | 无开局注入；房内交互后续票 |
-| 道具奖励房 | `ItemReward` | （缺图） | JSON `iconPrefab` 空着等人填 |
-| 离开 | `Leave`（非 `RoomKind`） | `离开图标` | 导航图标；走上去触发；不进 Catalog |
-| 上楼 | `GoUp` | `上楼图标` | 同上 |
-| 下楼 | `GoDown` | `下楼图标` | 同上 |
+| 策划名 | `RoomKind` / JSON `contentId` | 默认图标预制体 | 默认格位 |
+|--------|-------------------------------|----------------|----------|
+| 困难房 | `Elite` | `困难战斗图标` | 1 |
+| 层主房 | `Boss` | `Boss房图标` | 3 |
+| 金币房 | `Gold` | `钱袋图标` | 3 |
+| 宝箱房 | `Treasure` | `宝箱图标` | 3 |
+| 恢复房 / 温泉 | `Fountain` | `温泉图标` | 1 |
+| 属性房 | `Attribute` | `属性提升图标` | 1 |
+| 商店 | `Shop` | `商店图标` | 1 |
+| 卡店 | `Tavern`（显示名「卡店」） | `牌店图标` | 3 |
+| 宝箱奖励房 | `TreasureReward` | `宝箱图标`（暂） | 1 |
+| 道具奖励房 | `ItemReward` | （缺图） | 1 |
+| 离开 | `Leave`（非 `RoomKind`） | `离开图标` | 2 |
+| 上楼 | `GoUp` | `上楼图标` | 2 |
+| 下楼 | `GoDown` | `下楼图标` | 2 |
 
 **已删**：`Battle`（随机战斗房从具体战斗房类型抽）、`Event`（由 `Attribute` 承接）。
 
@@ -174,7 +188,7 @@
 
 特殊选项卡种子（`ChoiceOption`）：卡店服务 `UpgradeItemStats`/`FixItem`/`ExpandItemCapacity`/`RefreshShop`；局内属性三选一 UI `Attack`/`Armor`/`Hp`（非房间入口图标）。
 
-当前局内仍走浮层二选一（`RoomChoicePresenter`）与扇形（`BounceFanChoicePresenter`）；**场地走格子选房间/导航图标 / 点卡店选项卡生效**仍后续；**纯跳格移动**已由 ADR-0019 / `\0` 沙盒落地。
+局内选房已走场地图标 + 驻留提交；旧浮层 `RoomChoicePresenter` 仍在代码中（#90 退役）。扇形 `BounceFanChoicePresenter` 仍服务宝箱开遗物。房内货架/就地选项卡点选属 M2。
 
 ## ADR 不变量（摘要）
 

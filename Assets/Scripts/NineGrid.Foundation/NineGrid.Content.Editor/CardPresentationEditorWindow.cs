@@ -2496,6 +2496,15 @@ namespace NineGrid.Content.Editor
                         OnDtoEdited(entry);
                     }),
                     tooltip: "Assets/Prefabs/xxx图标.prefab；空则按 contentId 默认映射。"));
+                column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
+                    "格位",
+                    BindInt(dto.boardSlot, v =>
+                    {
+                        dto.boardSlot = v < 0 ? 0 : (v > 9 ? 9 : v);
+                        OnDtoEdited(entry);
+                    }),
+                    40f,
+                    "场地图标落九宫格位 1–9；0 = 未配（单图标默认 2，双图标按选项序 1/3）。"));
                 column.Add(ContentVisualWarmConsoleUi.CreateInlineFieldGroup(
                     ContentVisualWarmConsoleUi.WrapControlRow(
                         "权重",

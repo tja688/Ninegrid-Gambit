@@ -84,6 +84,7 @@
     "rewardPoolId": "",
     "shopOfferCount": 0,
     "iconPrefab": "Assets/Prefabs/Boss房图标.prefab",
+    "boardSlot": 3,
     "effectAssemblies": [],
     "role": "",
     "openingInjects": []

@@ -84,6 +84,7 @@
     "rewardPoolId": "",
     "shopOfferCount": 0,
     "iconPrefab": "Assets/Prefabs/温泉图标.prefab",
+    "boardSlot": 1,
     "effectAssemblies": [],
     "role": "",
     "openingInjects": [

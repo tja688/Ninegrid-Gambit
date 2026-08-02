@@ -104,6 +104,7 @@ namespace NineGrid.Presentation.Tests.Cards
                     err);
                 Assert.AreEqual("Room", dto.kind, id);
                 Assert.IsFalse(string.IsNullOrWhiteSpace(dto.iconPrefab), id);
+                Assert.AreEqual(2, dto.boardSlot, id);
             }
 
             Assert.IsFalse(

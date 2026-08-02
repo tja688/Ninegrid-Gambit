@@ -716,7 +716,11 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.MoveAvatar, "Target is the current avatar slot.", targetSlot, avatarUid);
             }
 
-            if (!board.IsEmpty(targetSlot))
+            // BoardWalk 相位允许踩非空格（寻路软占回退）；AvatarSlot 与 card uid 独立，不清除格上卡。
+            // InteractionLoop 等相位本就不合法 MoveAvatar；此处仅 RoomChoice/RoomEvent 会走到。
+            if (!board.IsEmpty(targetSlot)
+                && CurrentPhase != GamePhase.RoomChoice
+                && CurrentPhase != GamePhase.RoomEvent)
             {
                 return Reject(GameCommandKind.MoveAvatar, "Target slot is occupied.", targetSlot, avatarUid);
             }

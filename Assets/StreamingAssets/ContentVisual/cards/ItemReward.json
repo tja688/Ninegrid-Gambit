@@ -84,6 +84,7 @@
     "rewardPoolId": "",
     "shopOfferCount": 0,
     "iconPrefab": "",
+    "boardSlot": 1,
     "effectAssemblies": [],
     "role": "",
     "openingInjects": []

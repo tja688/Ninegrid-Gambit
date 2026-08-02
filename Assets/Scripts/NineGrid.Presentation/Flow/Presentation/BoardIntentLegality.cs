@@ -55,14 +55,20 @@ namespace NineGrid.Flow.Presentation
             }
 
             var to = SlotId.Board(groundSlot);
-            if (!board.IsEmpty(to))
-            {
-                rejectReason = "destinationOccupied";
-                return false;
-            }
-
+            var occupancy = RoomIcons.RoomIconOccupancy.Current;
             var path = new List<SlotId>(4);
-            if (!AvatarWalkPathfinder.TryFindPath(board, from, to, path))
+            // 终点：空格或场地图标格；非图标占用格不得作为终点（可软占回退穿途经）。
+            System.Func<SlotId, bool> isDestination = slot =>
+                occupancy != null && occupancy.IsIconSlot(slot.Index);
+            System.Func<SlotId, bool> isSoftBlocked = slot =>
+                occupancy != null && occupancy.IsIconSlot(slot.Index);
+            if (!AvatarWalkPathfinder.TryFindPath(
+                    board,
+                    from,
+                    to,
+                    path,
+                    isDestination,
+                    isSoftBlocked))
             {
                 rejectReason = "noPath";
                 return false;

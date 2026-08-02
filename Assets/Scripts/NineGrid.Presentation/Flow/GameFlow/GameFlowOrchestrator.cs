@@ -8,6 +8,7 @@ using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
+using NineGrid.Flow.RoomIcons;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Commands;
 using NineGrid.Presentation.Systems;
@@ -186,31 +187,46 @@ namespace NineGrid.Flow
                 while (!ct.IsCancellationRequested)
                 {
                     mShell.IncrementNodeIndex();
-                    var battleStarted = await PlayRealBattleAsync(ct);
-                    if (ct.IsCancellationRequested)
+                    var arch = NineGridArchitecture.Current;
+                    var coreNodeIndex = arch.GetModel<RunModel>().NodeIndex.Value;
+                    var entersBattle = MapNodeProgression.EntersInteractionLoop(coreNodeIndex);
+
+                    if (entersBattle)
                     {
-                        return;
+                        var battleStarted = await PlayRealBattleAsync(ct);
+                        if (ct.IsCancellationRequested)
+                        {
+                            return;
+                        }
+
+                        if (!battleStarted)
+                        {
+                            Debug.LogError("[GameFlow] 局内会话未就绪，终止节点循环。");
+                            return;
+                        }
+
+                        await PlayRewardChoiceAsync(ct);
+                        if (ct.IsCancellationRequested)
+                        {
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        var nonCombatOk = await PlayNonCombatNodeAsync(ct);
+                        if (ct.IsCancellationRequested)
+                        {
+                            return;
+                        }
+
+                        if (!nonCombatOk)
+                        {
+                            Debug.LogError("[GameFlow] 非战斗节点未就绪，终止节点循环。");
+                            return;
+                        }
                     }
 
-                    if (!battleStarted)
-                    {
-                        Debug.LogError("[GameFlow] 局内会话未就绪，终止节点循环。");
-                        return;
-                    }
-
-                    await PlayRewardChoiceAsync(ct);
-                    if (ct.IsCancellationRequested)
-                    {
-                        return;
-                    }
-
-                    await PlayRoomChoiceAsync(ct);
-                    if (ct.IsCancellationRequested)
-                    {
-                        return;
-                    }
-
-                    await PlayRoomEventAsync(ct);
+                    await PlayRoomIconChoiceAsync(ct);
                     if (ct.IsCancellationRequested)
                     {
                         return;
@@ -436,6 +452,148 @@ namespace NineGrid.Flow
             }
 
             await UniTask.Yield(cancellationToken: ct);
+        }
+
+        /// <summary>节点 4/7：StartNode → 非战斗 RoomChoice（离开图标），不进 InteractionLoop。</summary>
+        private async UniTask<bool> PlayNonCombatNodeAsync(CancellationToken ct)
+        {
+            RequestSetState(GameFlowShellState.RoomChoice);
+            var view = mShell.View;
+            view?.EnsureViewBindings();
+            view?.ShowInRunShell(inBattle: true);
+            if (view != null && view.IsRoomChoiceActive)
+            {
+                view.HideRoomChoice();
+            }
+
+            var session = ResolveSession();
+            if (session == null || !session.IsBound)
+            {
+                Debug.LogError("[GameFlow] 非战斗节点：未绑定 IBattleSessionSystem。");
+                return false;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            var phase = arch.GetSystem<IPhaseSystem>();
+            EnsureBattleNodeBootstrap(session, phase);
+
+            if (!phase.CanExecute(GameCommandKind.StartNode))
+            {
+                Debug.LogError("[GameFlow] 非战斗节点：StartNode 非法 phase=" + phase.CurrentPhase);
+                return false;
+            }
+
+            var start = phase.StartNode(NodeDeckOptions.CreateDefaultBattle());
+            if (start == null || !start.Accepted)
+            {
+                Debug.LogError("[GameFlow] 非战斗 StartNode 被拒: " + start?.Reason);
+                return false;
+            }
+
+            ApplyQuickTestAvatarCheatsIfNeeded();
+            ApplyQuickTestTimeScale();
+            await UniTask.Yield(ct);
+            return !ct.IsCancellationRequested;
+        }
+
+        /// <summary>
+        /// 场地图标选房 / 导航：Spawn → BoardWalk → 驻留 1s → Select+Enter；进房硬切。
+        /// 旧浮层路径保留在 PlayRoomChoiceAsync，本票以图标为准。
+        /// </summary>
+        private async UniTask PlayRoomIconChoiceAsync(CancellationToken ct)
+        {
+            RequestSetState(GameFlowShellState.RoomChoice);
+            var view = mShell.View;
+            view?.EnsureViewBindings();
+            if (view != null && view.IsRoomChoiceActive)
+            {
+                view.HideRoomChoice();
+            }
+
+            var arch = NineGridArchitecture.Current;
+            var phaseSystem = arch.GetSystem<IPhaseSystem>();
+            var pending = arch.GetModel<PendingChoiceModel>();
+            var kind = pending.Kind.Value;
+            if (phaseSystem.CurrentPhase != GamePhase.RoomChoice
+                || (kind != PendingChoiceKind.Room && kind != PendingChoiceKind.Navigation))
+            {
+                Debug.LogWarning(
+                    $"[GameFlow] 跳过房间图标 phase={phaseSystem.CurrentPhase} pending={kind}");
+                return;
+            }
+
+            if (kind == PendingChoiceKind.Room
+                && (pending.RoomOptions == null || pending.RoomOptions.Count == 0))
+            {
+                Debug.LogWarning("[GameFlow] 跳过房间图标：RoomOptions 为空");
+                return;
+            }
+
+            var walk = AvatarWalkSystem.EnsureRegistered(NineGridArchitecture.Interface);
+            walk?.SetEnabled(true);
+            BoardCardSelectModeController.RequestAbort("mainloop-room-icons");
+
+            var presenter = RoomIconBoardPresenter.Current;
+            presenter.Bind(arch);
+            if (!presenter.TrySpawnFromPending(arch))
+            {
+                Debug.LogWarning("[GameFlow] 房间图标 Spawn 失败，回退浮层路径");
+                walk?.SetEnabled(false);
+                await PlayRoomChoiceAsync(ct);
+                if (!ct.IsCancellationRequested)
+                {
+                    await PlayRoomEventAsync(ct);
+                }
+
+                return;
+            }
+
+            try
+            {
+                FlowTraceRecorder.Record(
+                    FlowTraceCategory.CoreGate,
+                    FlowTraceNames.RoomPresented,
+                    new Dictionary<string, string>
+                    {
+                        { "mode", "boardIcons" },
+                        { "pending", kind.ToString() },
+                        { "nodeIndex", mShell.NodeIndex.ToString() },
+                    },
+                    loopState: mShell.State.Value.ToString(),
+                    phaseBefore: phaseSystem.CurrentPhase.ToString());
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[GameFlow] FlowTrace RoomPresented icons: " + ex.Message);
+            }
+
+            try
+            {
+                await UniTask.WaitUntil(
+                    () =>
+                    {
+                        if (ct.IsCancellationRequested)
+                        {
+                            return true;
+                        }
+
+                        var p = phaseSystem.CurrentPhase;
+                        return p == GamePhase.NodeCompleted
+                               || p == GamePhase.Victory
+                               || p == GamePhase.Defeat
+                               || phaseSystem.CanExecute(GameCommandKind.StartNode);
+                    },
+                    cancellationToken: ct);
+            }
+            finally
+            {
+                walk?.SetEnabled(false);
+                walk?.Cancel();
+                if (RoomIconOccupancy.Current.HasAny)
+                {
+                    presenter.DespawnAll();
+                }
+            }
         }
 
         private async UniTask PlayRoomChoiceAsync(CancellationToken ct)

@@ -89,6 +89,7 @@
     "rewardPoolId": "",
     "shopOfferCount": 0,
     "iconPrefab": "Assets/Prefabs/上楼图标.prefab",
+    "boardSlot": 2,
     "effectAssemblies": [],
     "role": "Navigation"
 }

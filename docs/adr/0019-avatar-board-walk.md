@@ -8,7 +8,7 @@ status: accepted
 
 玩家卡在**非战斗相位**（`RoomChoice` / `RoomEvent`）可通过点击目标格走正交最短路径：逐邻格 `MoveAvatar` + 复用场地 hop 动画。输入一律经 IntentIntake（`boardWalk`），忙时 latest-wins 缓冲；半空改目标等当前跳落地后重规划。`InteractionLoop` **禁止** `MoveAvatar` 与 BoardWalk。逻辑占格权威仍是 Core `BoardModel.AvatarSlot`。
 
-**途经格仅空格；终点可为空格或场地图标格**（ADR-0020 的驻留提交需要踩上图标）。图标格作为终点时不改变图标归属，Avatar 与图标共占一格由几何注册表达。
+**途经格优先完全空置**（绕开其它场地图标 / 可购选项 / 真卡）；**终点可为空格或场地图标格**（ADR-0020 的驻留提交需要踩上图标）。若空途经不存在（盘面堆满，多半设计失误），允许途经踩过软占与真卡到达终点。图标格作为终点时不改变图标归属，Avatar 与图标共占一格由几何注册表达。
 
 ## 为什么
 
@@ -17,7 +17,7 @@ status: accepted
 ## 后果
 
 - 正式开战前 Avatar 须回到格 5（战斗表现仍有 `AvatarReservedSlot=5` 假设）；进入下一房间时无条件复位到格 5，硬切不做走回表现。
-- 终点放宽到图标格后，`AvatarWalkPathfinder.IsWalkable` 对**终点**与**途经**须分别判定，不能再统一用 `board.IsEmpty`。
+- 终点放宽到图标格后，`AvatarWalkPathfinder` 对**终点**与**途经**须分别判定；途经优先空置，无空路再允许软占回退，不能再统一只用 `board.IsEmpty`。
 
 ## 历史
 

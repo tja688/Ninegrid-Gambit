@@ -84,6 +84,7 @@
     "rewardPoolId": "",
     "shopOfferCount": 0,
     "iconPrefab": "Assets/Prefabs/属性提升图标.prefab",
+    "boardSlot": 1,
     "effectAssemblies": [],
     "role": "",
     "openingInjects": [
