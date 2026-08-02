@@ -147,7 +147,7 @@ namespace NineGrid.Presentation.Tests.Cards
         }
 
         [Test]
-        public void TryProjectRoom_MapsStructuralFields()
+        public void TryProjectRoom_MapsOpeningInjects()
         {
             Assert.IsTrue(ContentJsonCatalogProjector.TryProjectRoom(new CardPresentationConfigDto
             {
@@ -156,13 +156,40 @@ namespace NineGrid.Presentation.Tests.Cards
                 kind = "Room",
                 displayName = "温泉房",
                 weight = 20,
-                maxHpDelta = 4,
-                healToFull = true,
+                openingInjects = new[]
+                {
+                    new RoomOpeningInjectDto
+                    {
+                        side = "Player",
+                        source = "FixedCard",
+                        cardDefId = "help.food_card",
+                        count = 1
+                    }
+                }
             }, out var room));
             Assert.AreEqual(RoomKind.Fountain, room.Kind);
             Assert.AreEqual(20, room.Weight);
-            Assert.AreEqual(4, room.MaxHpDelta);
-            Assert.IsTrue(room.HealToFull);
+            Assert.AreEqual(1, room.OpeningInjects.Count);
+            Assert.AreEqual(RoomInjectSide.Player, room.OpeningInjects[0].Side);
+            Assert.AreEqual(RoomInjectSourceKind.FixedCard, room.OpeningInjects[0].SourceKind);
+            Assert.AreEqual("help.food_card", room.OpeningInjects[0].CardDefId);
+            Assert.AreEqual(1, room.OpeningInjects[0].Count);
+        }
+
+        [Test]
+        public void TryProjectRoom_EmptyOpeningInjects_MeansExplicitNone()
+        {
+            Assert.IsTrue(ContentJsonCatalogProjector.TryProjectRoom(new CardPresentationConfigDto
+            {
+                schemaVersion = 2,
+                contentId = "Boss",
+                kind = "Room",
+                displayName = "层主房",
+                weight = 0,
+                openingInjects = new RoomOpeningInjectDto[0]
+            }, out var room));
+            Assert.AreEqual(RoomKind.Boss, room.Kind);
+            Assert.AreEqual(0, room.OpeningInjects.Count);
         }
 
         [Test]

@@ -657,8 +657,61 @@ namespace NineGrid.Core.Content
         public MonsterDeckKind DeckKind { get; set; }
     }
 
+    /// <summary>房间开局注入目标侧（ADR-0022）。</summary>
+    public enum RoomInjectSide
+    {
+        Player = 1,
+        Monster = 2
+    }
+
+    /// <summary>房间开局注入来源（ADR-0022）。执行在后续票；本层只声明与校验。</summary>
+    public enum RoomInjectSourceKind
+    {
+        FixedCard = 1,
+        WeightedPool = 2,
+        FloorMonsterSequence = 3
+    }
+
+    public sealed class RoomInjectPoolOption
+    {
+        public RoomInjectPoolOption(string cardDefId, int weight)
+        {
+            CardDefId = cardDefId ?? string.Empty;
+            Weight = weight;
+        }
+
+        public string CardDefId { get; private set; }
+        public int Weight { get; private set; }
+    }
+
+    /// <summary>房间开局注入声明：往玩家侧 / 怪物侧塞哪些卡（ADR-0022）。</summary>
+    public sealed class RoomInjectDeclaration
+    {
+        private readonly List<RoomInjectPoolOption> mPool = new List<RoomInjectPoolOption>();
+
+        public RoomInjectSide Side { get; set; }
+        public RoomInjectSourceKind SourceKind { get; set; }
+        public string CardDefId { get; set; }
+        public int Count { get; set; }
+        public bool AllowDuplicates { get; set; }
+        public int MonsterSequence { get; set; }
+
+        public IReadOnlyList<RoomInjectPoolOption> Pool
+        {
+            get { return mPool; }
+        }
+
+        public RoomInjectDeclaration AddPoolOption(string cardDefId, int weight)
+        {
+            mPool.Add(new RoomInjectPoolOption(cardDefId, weight));
+            return this;
+        }
+    }
+
     public sealed class RoomDefinition
     {
+        private readonly List<RoomInjectDeclaration> mOpeningInjects = new List<RoomInjectDeclaration>();
+
         public RoomDefinition(RoomKind kind, string displayName)
         {
             Kind = kind;
@@ -668,11 +721,24 @@ namespace NineGrid.Core.Content
         public RoomKind Kind { get; private set; }
         public string DisplayName { get; private set; }
         public int Weight { get; set; }
-        public int GoldDelta { get; set; }
-        public int MaxHpDelta { get; set; }
-        public bool HealToFull { get; set; }
         public string RewardPoolId { get; set; }
         public int ShopOfferCount { get; set; }
+
+        /// <summary>开局注入声明；空列表表示显式无注入。</summary>
+        public IReadOnlyList<RoomInjectDeclaration> OpeningInjects
+        {
+            get { return mOpeningInjects; }
+        }
+
+        public RoomDefinition AddOpeningInject(RoomInjectDeclaration inject)
+        {
+            if (inject != null)
+            {
+                mOpeningInjects.Add(inject);
+            }
+
+            return this;
+        }
     }
 
     public sealed class EconomyConfig

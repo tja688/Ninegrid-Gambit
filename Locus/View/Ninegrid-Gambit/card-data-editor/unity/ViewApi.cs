@@ -370,11 +370,28 @@ public static class CardEditorApi
         public string deckKind;
         public string[] monsterDefIds;
         public int weight;
-        public int goldDelta;
-        public int maxHpDelta;
-        public bool healToFull;
         public string rewardPoolId;
         public int shopOfferCount;
+        public RoomOpeningInjectLiteDto[] openingInjects;
+    }
+
+    [Serializable]
+    private class RoomOpeningInjectLiteDto
+    {
+        public string side;
+        public string source;
+        public string cardDefId;
+        public int count = 1;
+        public bool allowDuplicates;
+        public int monsterSequence;
+        public RoomOpeningInjectPoolOptionLiteDto[] pool;
+    }
+
+    [Serializable]
+    private class RoomOpeningInjectPoolOptionLiteDto
+    {
+        public string cardDefId;
+        public int weight;
     }
 
     [Serializable]

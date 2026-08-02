@@ -70,16 +70,34 @@ namespace NineGrid.Content.CardPresentation
         public string[] monsterDefIds;
         /// <summary>房间权重与效果字段；Room schema≥2。</summary>
         public int weight;
-        public int goldDelta;
-        public int maxHpDelta;
-        public bool healToFull;
         public string rewardPoolId;
         public int shopOfferCount;
+        /// <summary>房间开局注入声明（ADR-0022）；空/缺省 = 显式无注入。</summary>
+        public RoomOpeningInjectDto[] openingInjects;
         /// <summary>
         /// Room 场地图标预制体 Asset 路径（如 Assets/Prefabs/商店图标.prefab）。
         /// 空则编辑器/后续投放回退 <c>CardChassisPaths.ResolveRoomIconPrefab</c>。
         /// </summary>
         public string iconPrefab;
+    }
+
+    [Serializable]
+    public sealed class RoomOpeningInjectDto
+    {
+        public string side;
+        public string source;
+        public string cardDefId;
+        public int count = 1;
+        public bool allowDuplicates;
+        public int monsterSequence;
+        public RoomOpeningInjectPoolOptionDto[] pool;
+    }
+
+    [Serializable]
+    public sealed class RoomOpeningInjectPoolOptionDto
+    {
+        public string cardDefId;
+        public int weight;
     }
 
     [Serializable]

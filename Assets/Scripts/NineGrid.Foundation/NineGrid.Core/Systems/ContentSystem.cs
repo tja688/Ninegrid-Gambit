@@ -122,6 +122,7 @@ namespace NineGrid.Core.Systems
             ValidateEffectDefinitions(report);
             ValidateReferences(report);
             ValidateMonsterAttackPatterns(report);
+            ValidateRoomOpeningInjects(report);
             return report;
         }
 
@@ -389,6 +390,113 @@ namespace NineGrid.Core.Systems
                 {
                     report.AddIssue("card:" + pair.Key + ":missing or invalid attackPattern");
                 }
+            }
+        }
+
+        private void ValidateRoomOpeningInjects(ContentValidationReport report)
+        {
+            foreach (var pair in Catalog.Rewards.Rooms)
+            {
+                var room = pair.Value;
+                var injects = room.OpeningInjects;
+                for (var i = 0; i < injects.Count; i++)
+                {
+                    ValidateOneRoomInject(room.Kind, i, injects[i], report);
+                }
+            }
+        }
+
+        private void ValidateOneRoomInject(
+            RoomKind roomKind,
+            int index,
+            RoomInjectDeclaration inject,
+            ContentValidationReport report)
+        {
+            var prefix = "room:" + roomKind + ":inject[" + index + "]";
+            if (inject == null)
+            {
+                report.AddIssue(prefix + ":null");
+                return;
+            }
+
+            if (inject.Side != RoomInjectSide.Player && inject.Side != RoomInjectSide.Monster)
+            {
+                report.AddIssue(prefix + ":invalid side");
+            }
+
+            if (inject.Count <= 0)
+            {
+                report.AddIssue(prefix + ":count must be > 0");
+            }
+
+            switch (inject.SourceKind)
+            {
+                case RoomInjectSourceKind.FixedCard:
+                    if (string.IsNullOrWhiteSpace(inject.CardDefId))
+                    {
+                        report.AddIssue(prefix + ":fixed card missing cardDefId");
+                        break;
+                    }
+
+                    if (!Catalog.Cards.ContainsKey(inject.CardDefId))
+                    {
+                        report.AddIssue(prefix + ":missing card " + inject.CardDefId);
+                    }
+
+                    break;
+
+                case RoomInjectSourceKind.WeightedPool:
+                    if (inject.Pool == null || inject.Pool.Count == 0)
+                    {
+                        report.AddIssue(prefix + ":weighted pool empty");
+                        break;
+                    }
+
+                    var totalWeight = 0;
+                    for (var p = 0; p < inject.Pool.Count; p++)
+                    {
+                        var option = inject.Pool[p];
+                        if (option == null || string.IsNullOrWhiteSpace(option.CardDefId))
+                        {
+                            report.AddIssue(prefix + ":pool[" + p + "]:missing cardDefId");
+                            continue;
+                        }
+
+                        if (option.Weight <= 0)
+                        {
+                            report.AddIssue(prefix + ":pool[" + p + "]:weight must be > 0");
+                        }
+
+                        totalWeight += option.Weight;
+                        if (!Catalog.Cards.ContainsKey(option.CardDefId))
+                        {
+                            report.AddIssue(prefix + ":missing card " + option.CardDefId);
+                        }
+                    }
+
+                    if (totalWeight <= 0)
+                    {
+                        report.AddIssue(prefix + ":weighted pool total weight must be > 0");
+                    }
+
+                    break;
+
+                case RoomInjectSourceKind.FloorMonsterSequence:
+                    if (inject.Side != RoomInjectSide.Monster)
+                    {
+                        report.AddIssue(prefix + ":floor monster sequence must target Monster side");
+                    }
+
+                    if (inject.MonsterSequence < 1 || inject.MonsterSequence > 5)
+                    {
+                        report.AddIssue(prefix + ":monsterSequence must be 1..5");
+                    }
+
+                    break;
+
+                default:
+                    report.AddIssue(prefix + ":invalid source");
+                    break;
             }
         }
 

@@ -73,6 +73,15 @@ namespace NineGrid.Presentation.Tests.Cards
                 CardChassisPaths.RoomIconTavern,
                 CardChassisPaths.ResolveRoomIconPrefab("Tavern", null));
             Assert.AreEqual(
+                CardChassisPaths.RoomIconElite,
+                CardChassisPaths.ResolveRoomIconPrefab("Elite", null));
+            Assert.AreEqual(
+                CardChassisPaths.RoomIconAttribute,
+                CardChassisPaths.ResolveRoomIconPrefab("Attribute", null));
+            Assert.AreEqual(
+                string.Empty,
+                CardChassisPaths.ResolveRoomIconPrefab("ItemReward", null));
+            Assert.AreEqual(
                 CardChassisPaths.RoomIconLeave,
                 CardChassisPaths.ResolveRoomIconPrefab("Leave", null));
             Assert.AreEqual(

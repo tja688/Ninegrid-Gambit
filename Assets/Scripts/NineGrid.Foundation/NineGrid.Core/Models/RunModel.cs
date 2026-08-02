@@ -32,7 +32,7 @@ namespace NineGrid.Core
             Floor.Value = 1;
             NodeIndex.Value = 0;
             Seed.Value = seed;
-            Room.Value = RoomKind.Battle;
+            Room.Value = RoomKind.None;
             Phase.Value = GamePhase.BuildEnemyPool;
             Touch();
         }

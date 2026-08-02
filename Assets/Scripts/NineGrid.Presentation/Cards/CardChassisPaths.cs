@@ -18,13 +18,16 @@ namespace NineGrid.Cards
         public const string RoomOptionFacePrefab = "Assets/Prefabs/房间选项标准模板.prefab";
 
         public const string RoomIconBattle = "Assets/Prefabs/常规战斗图标.prefab";
+        public const string RoomIconElite = "Assets/Prefabs/困难战斗图标.prefab";
         public const string RoomIconBoss = "Assets/Prefabs/Boss房图标.prefab";
         public const string RoomIconGold = "Assets/Prefabs/钱袋图标.prefab";
+        public const string RoomIconGoldAlt = "Assets/Prefabs/金钱图标.prefab";
         public const string RoomIconTreasure = "Assets/Prefabs/宝箱图标.prefab";
         public const string RoomIconFountain = "Assets/Prefabs/温泉图标.prefab";
         public const string RoomIconShop = "Assets/Prefabs/商店图标.prefab";
-        public const string RoomIconTavern = "Assets/Prefabs/酒馆图标.prefab";
-        public const string RoomIconEvent = "Assets/Prefabs/属性提升图标.prefab";
+        public const string RoomIconTavern = "Assets/Prefabs/牌店图标.prefab";
+        public const string RoomIconTavernLegacy = "Assets/Prefabs/酒馆图标.prefab";
+        public const string RoomIconAttribute = "Assets/Prefabs/属性提升图标.prefab";
         public const string RoomIconLeave = "Assets/Prefabs/离开图标.prefab";
         public const string RoomIconGoUp = "Assets/Prefabs/上楼图标.prefab";
         public const string RoomIconGoDown = "Assets/Prefabs/下楼图标.prefab";
@@ -52,14 +55,14 @@ namespace NineGrid.Cards
 
             switch (contentId.Trim())
             {
-                case "Battle":
                 case "Elite":
-                    return RoomIconBattle;
+                    return RoomIconElite;
                 case "Boss":
                     return RoomIconBoss;
                 case "Gold":
                     return RoomIconGold;
                 case "Treasure":
+                case "TreasureReward":
                     return RoomIconTreasure;
                 case "Fountain":
                     return RoomIconFountain;
@@ -67,8 +70,11 @@ namespace NineGrid.Cards
                     return RoomIconShop;
                 case "Tavern":
                     return RoomIconTavern;
-                case "Event":
-                    return RoomIconEvent;
+                case "Attribute":
+                    return RoomIconAttribute;
+                case "ItemReward":
+                    // 缺图：道具奖励房尚无独立预制体，交给人在 JSON iconPrefab 补。
+                    return string.Empty;
                 case "Leave":
                     return RoomIconLeave;
                 case "GoUp":

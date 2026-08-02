@@ -1421,11 +1421,11 @@ namespace NineGrid.Core.Systems
             switch (family)
             {
                 case NodeOfferFamily.ConsumerRooms:
-                    return new[] { RoomKind.Gold, RoomKind.Fountain };
+                    return new[] { RoomKind.Shop, RoomKind.Tavern };
                 case NodeOfferFamily.SpecialRooms:
-                    return new[] { RoomKind.Treasure, RoomKind.Event };
+                    return new[] { RoomKind.TreasureReward, RoomKind.ItemReward };
                 default:
-                    return new[] { RoomKind.Battle, RoomKind.Battle };
+                    return new[] { RoomKind.Gold, RoomKind.Fountain };
             }
         }
 

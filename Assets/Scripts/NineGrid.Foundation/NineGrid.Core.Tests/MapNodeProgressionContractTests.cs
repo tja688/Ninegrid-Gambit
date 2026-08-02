@@ -295,14 +295,15 @@ namespace NineGrid.Core.Tests
             catalog.AddCard(new CardContentDefinition("trap.test", "测试机关", CardKind.Trap));
             catalog.AddCard(new CardContentDefinition("monster.test", "测试怪", CardKind.Monster));
             catalog.Rewards
-                .AddRoom(new RoomDefinition(RoomKind.Battle, "战斗") { Weight = 10 })
+                .AddRoom(new RoomDefinition(RoomKind.Gold, "金币") { Weight = 10 })
+                .AddRoom(new RoomDefinition(RoomKind.Fountain, "喷泉") { Weight = 10 })
+                .AddRoom(new RoomDefinition(RoomKind.Treasure, "宝藏") { Weight = 10 })
+                .AddRoom(new RoomDefinition(RoomKind.Attribute, "属性") { Weight = 10 })
                 .AddRoom(new RoomDefinition(RoomKind.Elite, "困难") { Weight = 10 })
                 .AddRoom(new RoomDefinition(RoomKind.Shop, "商店") { Weight = 10 })
                 .AddRoom(new RoomDefinition(RoomKind.Tavern, "酒馆") { Weight = 10 })
-                .AddRoom(new RoomDefinition(RoomKind.Fountain, "喷泉") { Weight = 10 })
-                .AddRoom(new RoomDefinition(RoomKind.Gold, "金币") { Weight = 10 })
-                .AddRoom(new RoomDefinition(RoomKind.Treasure, "宝藏") { Weight = 10 })
-                .AddRoom(new RoomDefinition(RoomKind.Event, "事件") { Weight = 10 });
+                .AddRoom(new RoomDefinition(RoomKind.TreasureReward, "宝箱奖励") { Weight = 10 })
+                .AddRoom(new RoomDefinition(RoomKind.ItemReward, "道具奖励") { Weight = 10 });
             return catalog;
         }
     }

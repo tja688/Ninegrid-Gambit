@@ -199,12 +199,8 @@ namespace NineGrid.Core.Tests
             catalog.Rewards
                 .AddPool(new RewardPoolDefinition("help.choice", 1)
                     .Add(RewardDefId, CardKind.HelpCard, 1))
-                .AddRoom(new RoomDefinition(RoomKind.Battle, "战斗房") { Weight = 1 })
-                .AddRoom(new RoomDefinition(RoomKind.Gold, "金币房")
-                {
-                    Weight = 1,
-                    GoldDelta = 5
-                });
+                .AddRoom(new RoomDefinition(RoomKind.Gold, "金币房") { Weight = 1 })
+                .AddRoom(new RoomDefinition(RoomKind.Fountain, "恢复房") { Weight = 1 });
 
             return catalog;
         }

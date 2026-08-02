@@ -3,11 +3,9 @@
     "contentId": "Fountain",
     "kind": "Room",
     "deckId": "",
-    "role": "",
-    "displayName": "篝火",
-    "description": "恢复房",
+    "displayName": "恢复房",
+    "description": "开局加入食品卡",
     "faceIntro": "",
-    "attackPattern": "",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -73,7 +71,6 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectAssemblies": [],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -84,10 +81,20 @@
     "deckKind": "",
     "monsterDefIds": [],
     "weight": 20,
-    "goldDelta": 0,
-    "maxHpDelta": 4,
-    "healToFull": true,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "iconPrefab": "Assets/Prefabs/温泉图标.prefab"
+    "iconPrefab": "Assets/Prefabs/温泉图标.prefab",
+    "effectAssemblies": [],
+    "role": "",
+    "openingInjects": [
+        {
+            "side": "Player",
+            "source": "FixedCard",
+            "cardDefId": "help.food_card",
+            "count": 1,
+            "allowDuplicates": false,
+            "monsterSequence": 0,
+            "pool": []
+        }
+    ]
 }

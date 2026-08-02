@@ -42,9 +42,14 @@ namespace NineGrid.Content
 
             catalog.Rewards.AddRoom(new RoomDefinition(RoomKind.Fountain, "夹具喷泉")
             {
-                Weight = 1,
-                HealToFull = true
-            });
+                Weight = 1
+            }.AddOpeningInject(new RoomInjectDeclaration
+            {
+                Side = RoomInjectSide.Player,
+                SourceKind = RoomInjectSourceKind.FixedCard,
+                CardDefId = "fixture.heal",
+                Count = 1
+            }));
 
             catalog.Rewards.AddNodeRule(new NodeDeckRule
             {

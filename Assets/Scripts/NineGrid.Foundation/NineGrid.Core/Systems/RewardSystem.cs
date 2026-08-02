@@ -149,7 +149,7 @@ namespace NineGrid.Core.Systems
                             allowElite: MapNodeProgression.AllowsEliteInBattleOffers(nodeIndex),
                             predicate: IsBattleOfferRoom),
                         2,
-                        RoomKind.Battle);
+                        RoomKind.Gold);
                 case NodeOfferFamily.ConsumerRooms:
                     return PadRoomChoices(
                         RollRoomChoicesFromPool(
@@ -158,7 +158,7 @@ namespace NineGrid.Core.Systems
                             allowElite: false,
                             predicate: IsConsumerOfferRoom),
                         2,
-                        RoomKind.Gold);
+                        RoomKind.Shop);
                 case NodeOfferFamily.SpecialRooms:
                     return PadRoomChoices(
                         RollRoomChoicesFromPool(
@@ -167,7 +167,7 @@ namespace NineGrid.Core.Systems
                             allowElite: false,
                             predicate: IsSpecialOfferRoom),
                         2,
-                        RoomKind.Treasure);
+                        RoomKind.TreasureReward);
                 default:
                     return new RoomKind[0];
             }
@@ -247,20 +247,21 @@ namespace NineGrid.Core.Systems
 
         private static bool IsBattleOfferRoom(RoomKind kind)
         {
-            return kind == RoomKind.Battle || kind == RoomKind.Elite;
+            return kind == RoomKind.Attribute
+                || kind == RoomKind.Gold
+                || kind == RoomKind.Fountain
+                || kind == RoomKind.Treasure
+                || kind == RoomKind.Elite;
         }
 
         private static bool IsConsumerOfferRoom(RoomKind kind)
         {
-            return kind == RoomKind.Shop
-                || kind == RoomKind.Tavern
-                || kind == RoomKind.Fountain
-                || kind == RoomKind.Gold;
+            return kind == RoomKind.Shop || kind == RoomKind.Tavern;
         }
 
         private static bool IsSpecialOfferRoom(RoomKind kind)
         {
-            return kind == RoomKind.Treasure || kind == RoomKind.Event;
+            return kind == RoomKind.TreasureReward || kind == RoomKind.ItemReward;
         }
 
         public NodeDeckOptions BuildNodeDeckOptions(int nodeIndex, string monsterDeckId)
@@ -325,21 +326,8 @@ namespace NineGrid.Core.Systems
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new ResolveRoomAction(room.Kind, room.DisplayName));
 
-            if (room.GoldDelta != 0)
-            {
-                pipeline.Enqueue(new ModifyGoldAction(room.GoldDelta, "room:" + room.Kind));
-            }
-
-            var avatarUid = this.GetModel<BoardModel>().AvatarUid.Value;
-            if (room.MaxHpDelta != 0)
-            {
-                pipeline.Enqueue(new ModifyBaseStatAction(avatarUid, StatId.MaxHp, room.MaxHpDelta, "room:" + room.Kind));
-            }
-
-            if (room.HealToFull)
-            {
-                pipeline.Enqueue(new HealAction(avatarUid, avatarUid, 9999));
-            }
+            // ADR-0022：进房即改数值已退役；开局注入执行在后续票（T12）。
+            // 房间内交互（奖励池 / 商店货架）仍可在此 enqueue。
 
             if (!string.IsNullOrEmpty(room.RewardPoolId))
             {

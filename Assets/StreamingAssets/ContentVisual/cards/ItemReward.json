@@ -1,10 +1,10 @@
 {
     "schemaVersion": 2,
-    "contentId": "Battle",
+    "contentId": "ItemReward",
     "kind": "Room",
     "deckId": "",
-    "displayName": "常规战斗",
-    "description": "常规战斗房间",
+    "displayName": "道具奖励房",
+    "description": "无开局注入（房内交互后续票）",
     "faceIntro": "",
     "gold": 0,
     "stats": {
@@ -80,13 +80,11 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
-    "weight": 40,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
+    "weight": 20,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "iconPrefab": "Assets/Prefabs/常规战斗图标.prefab",
+    "iconPrefab": "",
     "effectAssemblies": [],
-    "role": ""
+    "role": "",
+    "openingInjects": []
 }

@@ -1,10 +1,10 @@
 {
     "schemaVersion": 2,
-    "contentId": "Event",
+    "contentId": "TreasureReward",
     "kind": "Room",
     "deckId": "",
-    "displayName": "事件",
-    "description": "事件占位（设计属性房/奖励房缺口）",
+    "displayName": "宝箱奖励房",
+    "description": "无开局注入（房内交互后续票）",
     "faceIntro": "",
     "gold": 0,
     "stats": {
@@ -80,13 +80,11 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
-    "weight": 10,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
+    "weight": 20,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "iconPrefab": "Assets/Prefabs/属性提升图标.prefab",
+    "iconPrefab": "Assets/Prefabs/宝箱图标.prefab",
     "effectAssemblies": [],
-    "role": ""
+    "role": "",
+    "openingInjects": []
 }

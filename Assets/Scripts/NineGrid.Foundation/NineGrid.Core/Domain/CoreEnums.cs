@@ -89,7 +89,6 @@ namespace NineGrid.Core
     public enum RoomKind
     {
         None,
-        Battle,
         Elite,
         Boss,
         Shop,
@@ -97,7 +96,9 @@ namespace NineGrid.Core
         Fountain,
         Gold,
         Treasure,
-        Event
+        Attribute,
+        TreasureReward,
+        ItemReward
     }
 
     public enum TriggerTiming

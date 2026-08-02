@@ -81,12 +81,10 @@
     "deckKind": "",
     "monsterDefIds": [],
     "weight": 25,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
     "rewardPoolId": "",
     "shopOfferCount": 6,
     "iconPrefab": "Assets/Prefabs/商店图标.prefab",
     "effectAssemblies": [],
-    "role": ""
+    "role": "",
+    "openingInjects": []
 }

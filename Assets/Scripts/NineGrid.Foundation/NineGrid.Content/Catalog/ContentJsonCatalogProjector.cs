@@ -239,13 +239,72 @@ namespace NineGrid.Content
             room = new RoomDefinition(roomKind, ResolveDisplayName(dto))
             {
                 Weight = Math.Max(0, dto.weight),
-                GoldDelta = dto.goldDelta,
-                MaxHpDelta = dto.maxHpDelta,
-                HealToFull = dto.healToFull,
                 RewardPoolId = dto.rewardPoolId ?? string.Empty,
                 ShopOfferCount = Math.Max(0, dto.shopOfferCount),
             };
+            ApplyOpeningInjects(dto, room);
             return true;
+        }
+
+        private static void ApplyOpeningInjects(CardPresentationConfigDto dto, RoomDefinition room)
+        {
+            if (dto.openingInjects == null || dto.openingInjects.Length == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < dto.openingInjects.Length; i++)
+            {
+                var raw = dto.openingInjects[i];
+                if (raw == null)
+                {
+                    continue;
+                }
+
+                RoomInjectSide side;
+                RoomInjectSourceKind source;
+                TryParseInjectSide(raw.side, out side);
+                TryParseInjectSource(raw.source, out source);
+                var inject = new RoomInjectDeclaration
+                {
+                    Side = side,
+                    SourceKind = source,
+                    CardDefId = raw.cardDefId ?? string.Empty,
+                    Count = Math.Max(0, raw.count),
+                    AllowDuplicates = raw.allowDuplicates,
+                    MonsterSequence = raw.monsterSequence
+                };
+
+                if (raw.pool != null)
+                {
+                    for (var p = 0; p < raw.pool.Length; p++)
+                    {
+                        var option = raw.pool[p];
+                        if (option == null || string.IsNullOrWhiteSpace(option.cardDefId))
+                        {
+                            continue;
+                        }
+
+                        inject.AddPoolOption(option.cardDefId.Trim(), option.weight);
+                    }
+                }
+
+                room.AddOpeningInject(inject);
+            }
+        }
+
+        private static bool TryParseInjectSide(string raw, out RoomInjectSide side)
+        {
+            side = default;
+            return !string.IsNullOrWhiteSpace(raw)
+                && Enum.TryParse(raw.Trim(), ignoreCase: true, out side);
+        }
+
+        private static bool TryParseInjectSource(string raw, out RoomInjectSourceKind source)
+        {
+            source = default;
+            return !string.IsNullOrWhiteSpace(raw)
+                && Enum.TryParse(raw.Trim(), ignoreCase: true, out source);
         }
 
         private static bool IsReady(CardPresentationConfigDto dto)

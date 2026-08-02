@@ -752,16 +752,9 @@ namespace NineGrid.Flow
                     && content.Catalog.Rewards.TryGetRoom(room, out var def)
                     && !string.IsNullOrWhiteSpace(def.DisplayName))
                 {
-                    if (def.GoldDelta != 0)
+                    if (def.OpeningInjects != null && def.OpeningInjects.Count > 0)
                     {
-                        return $"{def.DisplayName}：金币{(def.GoldDelta > 0 ? "+" : string.Empty)}{def.GoldDelta}";
-                    }
-
-                    if (def.MaxHpDelta != 0 || def.HealToFull)
-                    {
-                        return def.HealToFull
-                            ? $"{def.DisplayName}：血量上限+{def.MaxHpDelta}，已回满"
-                            : $"{def.DisplayName}：血量上限+{def.MaxHpDelta}";
+                        return $"{def.DisplayName}：开局注入 {def.OpeningInjects.Count} 项";
                     }
 
                     return def.DisplayName;

@@ -3,11 +3,9 @@
     "contentId": "Tavern",
     "kind": "Room",
     "deckId": "",
-    "role": "",
     "displayName": "卡店",
-    "description": "道具强化/固定/扩容服务",
+    "description": "道具卡强化/固定/扩容",
     "faceIntro": "",
-    "attackPattern": "",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -73,7 +71,6 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
-    "effectAssemblies": [],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -84,10 +81,10 @@
     "deckKind": "",
     "monsterDefIds": [],
     "weight": 20,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "iconPrefab": "Assets/Prefabs/牌店图标.prefab"
+    "iconPrefab": "Assets/Prefabs/牌店图标.prefab",
+    "effectAssemblies": [],
+    "role": "",
+    "openingInjects": []
 }

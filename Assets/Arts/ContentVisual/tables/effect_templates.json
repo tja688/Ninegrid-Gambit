@@ -1398,5 +1398,29 @@
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
   "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"GlobalMonsterAdjacency\",\"target\":\"Self\",\"op\":\"Override\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.help.hp_card.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 永久获得2点血量上限",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.help.armor_card.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 永久获得1点护甲",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.help.attack_card.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 永久获得1点攻击",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
  }
 ]

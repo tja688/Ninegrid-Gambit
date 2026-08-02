@@ -81,12 +81,20 @@
     "deckKind": "",
     "monsterDefIds": [],
     "weight": 20,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
     "rewardPoolId": "",
     "shopOfferCount": 0,
     "iconPrefab": "Assets/Prefabs/钱袋图标.prefab",
     "effectAssemblies": [],
-    "role": ""
+    "role": "",
+    "openingInjects": [
+        {
+            "side": "Player",
+            "source": "FixedCard",
+            "cardDefId": "help.gold_card",
+            "count": 1,
+            "allowDuplicates": false,
+            "monsterSequence": 0,
+            "pool": []
+        }
+    ]
 }

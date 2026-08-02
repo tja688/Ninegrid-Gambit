@@ -2502,20 +2502,9 @@ namespace NineGrid.Content.Editor
                         BindInt(dto.weight, v => { dto.weight = v; OnDtoEdited(entry); }),
                         40f),
                     ContentVisualWarmConsoleUi.WrapControlRow(
-                        "金币Δ",
-                        BindInt(dto.goldDelta, v => { dto.goldDelta = v; OnDtoEdited(entry); }),
-                        40f),
-                    ContentVisualWarmConsoleUi.WrapControlRow(
-                        "血上限Δ",
-                        BindInt(dto.maxHpDelta, v => { dto.maxHpDelta = v; OnDtoEdited(entry); }),
-                        40f),
-                    ContentVisualWarmConsoleUi.WrapControlRow(
                         "商店货数",
                         BindInt(dto.shopOfferCount, v => { dto.shopOfferCount = v; OnDtoEdited(entry); }),
                         48f)));
-                column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
-                    "回满血",
-                    BindToggle(dto.healToFull, v => { dto.healToFull = v; OnDtoEdited(entry); })));
                 column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
                     "奖励池",
                     BindText(dto.rewardPoolId, v =>
@@ -2523,6 +2512,23 @@ namespace NineGrid.Content.Editor
                         dto.rewardPoolId = v ?? string.Empty;
                         OnDtoEdited(entry);
                     })));
+                var injectSummary = dto.openingInjects == null
+                    ? "0（显式无注入）"
+                    : dto.openingInjects.Length + " 项";
+                column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
+                    "开局注入",
+                    new Label(injectSummary),
+                    tooltip: "ADR-0022：side/source/cardDefId/pool 写在 JSON openingInjects；执行在后续票。"));
+                column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
+                    "注入 JSON",
+                    BindText(
+                        SerializeOpeningInjectsForEditor(dto.openingInjects),
+                        v =>
+                        {
+                            dto.openingInjects = ParseOpeningInjectsForEditor(v);
+                            OnDtoEdited(entry);
+                        }),
+                    tooltip: "JsonUtility 数组：[{side,source,cardDefId,count,allowDuplicates,monsterSequence,pool:[...]}]"));
             }
 
             if (CardPresentationEditorSession.IsCombatStatsKind(dto.kind))
@@ -3324,6 +3330,46 @@ namespace NineGrid.Content.Editor
             var field = new TextField { value = value ?? string.Empty };
             field.RegisterValueChangedCallback(evt => onChange?.Invoke(evt.newValue));
             return field;
+        }
+
+        [Serializable]
+        private sealed class RoomOpeningInjectListDto
+        {
+            public RoomOpeningInjectDto[] items;
+        }
+
+        private static string SerializeOpeningInjectsForEditor(RoomOpeningInjectDto[] injects)
+        {
+            if (injects == null || injects.Length == 0)
+            {
+                return "[]";
+            }
+
+            return JsonUtility.ToJson(new RoomOpeningInjectListDto { items = injects }, true);
+        }
+
+        private static RoomOpeningInjectDto[] ParseOpeningInjectsForEditor(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw) || raw.Trim() == "[]")
+            {
+                return Array.Empty<RoomOpeningInjectDto>();
+            }
+
+            var trimmed = raw.Trim();
+            if (trimmed.StartsWith("[", StringComparison.Ordinal))
+            {
+                trimmed = "{\"items\":" + trimmed + "}";
+            }
+
+            try
+            {
+                var wrapper = JsonUtility.FromJson<RoomOpeningInjectListDto>(trimmed);
+                return wrapper?.items ?? Array.Empty<RoomOpeningInjectDto>();
+            }
+            catch
+            {
+                return Array.Empty<RoomOpeningInjectDto>();
+            }
         }
 
         private static Toggle BindToggle(bool value, Action<bool> onChange)

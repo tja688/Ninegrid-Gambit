@@ -1,10 +1,10 @@
 {
     "schemaVersion": 2,
-    "contentId": "Elite",
+    "contentId": "Attribute",
     "kind": "Room",
     "deckId": "",
-    "displayName": "困难房",
-    "description": "开局抽2张奖励卡（不可重复）并注入序列3/4怪物",
+    "displayName": "属性房",
+    "description": "开局从属性道具卡加权抽2张（可重复）",
     "faceIntro": "",
     "gold": 0,
     "stats": {
@@ -80,10 +80,10 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
-    "weight": 15,
+    "weight": 10,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "iconPrefab": "Assets/Prefabs/困难战斗图标.prefab",
+    "iconPrefab": "Assets/Prefabs/属性提升图标.prefab",
     "effectAssemblies": [],
     "role": "",
     "openingInjects": [
@@ -92,52 +92,22 @@
             "source": "WeightedPool",
             "cardDefId": "",
             "count": 2,
-            "allowDuplicates": false,
+            "allowDuplicates": true,
             "monsterSequence": 0,
             "pool": [
                 {
-                    "cardDefId": "help.gold_card",
-                    "weight": 1
-                },
-                {
-                    "cardDefId": "help.common_chest_card",
-                    "weight": 1
-                },
-                {
-                    "cardDefId": "help.food_card",
-                    "weight": 1
-                },
-                {
                     "cardDefId": "help.hp_card",
-                    "weight": 1
+                    "weight": 40
                 },
                 {
                     "cardDefId": "help.armor_card",
-                    "weight": 1
+                    "weight": 40
                 },
                 {
                     "cardDefId": "help.attack_card",
-                    "weight": 1
+                    "weight": 20
                 }
             ]
-        },
-        {
-            "side": "Monster",
-            "source": "FloorMonsterSequence",
-            "cardDefId": "",
-            "count": 1,
-            "allowDuplicates": false,
-            "monsterSequence": 3,
-            "pool": []
-        },
-        {
-            "side": "Monster",
-            "source": "FloorMonsterSequence",
-            "cardDefId": "",
-            "count": 1,
-            "allowDuplicates": false,
-            "monsterSequence": 4,
-            "pool": []
         }
     ]
 }

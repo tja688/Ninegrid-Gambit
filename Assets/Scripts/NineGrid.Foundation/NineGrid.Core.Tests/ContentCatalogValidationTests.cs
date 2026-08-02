@@ -60,7 +60,7 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(CardKind.Trap, spring.Kind);
             Assert.AreEqual(1, spring.EffectIds.Count, "trap.healing_spring mounts must come from JSON projection");
             Assert.AreEqual("trap.healing_spring.heal_on_move", spring.EffectIds[0]);
-            Assert.AreEqual("治疗泉", spring.DisplayName);
+            Assert.AreEqual("疗愈之光", spring.DisplayName);
 
             Assert.IsTrue(catalog.Cards.TryGetValue("help.doubling_tower", out var tower));
             Assert.AreEqual(2, tower.EffectIds.Count);
@@ -87,7 +87,27 @@ namespace NineGrid.Core.Tests
             Assert.Greater(dragon.MonsterDefIds.Count, 0);
 
             Assert.IsTrue(catalog.Rewards.TryGetRoom(RoomKind.Fountain, out var fountain));
-            Assert.IsTrue(fountain.HealToFull);
+            Assert.AreEqual(1, fountain.OpeningInjects.Count);
+            Assert.AreEqual(RoomInjectSourceKind.FixedCard, fountain.OpeningInjects[0].SourceKind);
+            Assert.AreEqual("help.food_card", fountain.OpeningInjects[0].CardDefId);
+
+            Assert.IsTrue(catalog.Rewards.TryGetRoom(RoomKind.Gold, out var gold));
+            Assert.AreEqual("help.gold_card", gold.OpeningInjects[0].CardDefId);
+            Assert.IsTrue(catalog.Rewards.TryGetRoom(RoomKind.Attribute, out var attribute));
+            Assert.AreEqual(RoomInjectSourceKind.WeightedPool, attribute.OpeningInjects[0].SourceKind);
+            Assert.AreEqual(2, attribute.OpeningInjects[0].Count);
+            Assert.IsTrue(attribute.OpeningInjects[0].AllowDuplicates);
+            Assert.IsTrue(catalog.Rewards.TryGetRoom(RoomKind.Elite, out var elite));
+            Assert.AreEqual(3, elite.OpeningInjects.Count);
+            Assert.IsTrue(catalog.Rewards.TryGetRoom(RoomKind.Boss, out var boss));
+            Assert.AreEqual(0, boss.OpeningInjects.Count);
+            Assert.IsTrue(catalog.Rewards.TryGetRoom(RoomKind.TreasureReward, out _));
+            Assert.IsTrue(catalog.Rewards.TryGetRoom(RoomKind.ItemReward, out _));
+            Assert.IsFalse(System.Enum.IsDefined(typeof(RoomKind), "Battle"));
+            Assert.IsFalse(System.Enum.IsDefined(typeof(RoomKind), "Event"));
+            Assert.IsTrue(catalog.Cards.ContainsKey("help.hp_card"));
+            Assert.IsTrue(catalog.Cards.ContainsKey("help.armor_card"));
+            Assert.IsTrue(catalog.Cards.ContainsKey("help.attack_card"));
 
             Assert.IsTrue(catalog.Effects.ContainsKey("help.healing_potion.use"));
             Assert.IsTrue(catalog.Effects.ContainsKey("relic.junk_recycler.use"));

@@ -4,7 +4,7 @@
     "kind": "Room",
     "deckId": "",
     "displayName": "层主房",
-    "description": "层主战斗房间",
+    "description": "无开局注入",
     "faceIntro": "",
     "gold": 0,
     "stats": {
@@ -81,12 +81,10 @@
     "deckKind": "",
     "monsterDefIds": [],
     "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
     "rewardPoolId": "",
     "shopOfferCount": 0,
     "iconPrefab": "Assets/Prefabs/Boss房图标.prefab",
     "effectAssemblies": [],
-    "role": ""
+    "role": "",
+    "openingInjects": []
 }
