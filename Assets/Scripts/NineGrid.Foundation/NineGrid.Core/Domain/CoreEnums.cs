@@ -292,7 +292,6 @@ namespace NineGrid.Core
         EnterRoom,
         RevealFace,
         MoveAvatar,
-        StartWalkSandboxNode,
         PresentationFinished
     }
 

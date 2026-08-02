@@ -212,14 +212,6 @@ namespace NineGrid.Core.Commands
         }
     }
 
-    public sealed class StartWalkSandboxNodeCommand : AbstractCommand<CoreCommandResult>
-    {
-        protected override CoreCommandResult OnExecute()
-        {
-            return this.GetSystem<IPhaseSystem>().StartWalkSandboxNode();
-        }
-    }
-
     public sealed class UseItemCommand : AbstractCommand<CoreCommandResult>
     {
         private readonly int mItemUid;

@@ -80,10 +80,6 @@ namespace NineGrid.Core.Systems
             /// </summary>
             CoreCommandResult RevealFace(SlotId targetSlot);
             CoreCommandResult MoveAvatar(SlotId targetSlot);
-            /// <summary>
-            /// 跳格沙盒开局：空盘 + Avatar，结束于 RoomChoice（不清关、不发奖励/房间选项）。
-            /// </summary>
-            CoreCommandResult StartWalkSandboxNode();
             CoreCommandResult SelectReward(int optionIndex);
             CoreCommandResult SkipHelpChoice();
             CoreCommandResult SelectRoom(int optionIndex);
@@ -732,34 +728,6 @@ namespace NineGrid.Core.Systems
 
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new MoveAvatarAction(targetSlot));
-            return CoreCommandResult.Accept(pipeline.RunToCompletion());
-        }
-
-        public CoreCommandResult StartWalkSandboxNode()
-        {
-            if (!CanExecute(GameCommandKind.StartWalkSandboxNode)
-                && !CanExecute(GameCommandKind.StartNode))
-            {
-                return Reject(
-                    GameCommandKind.StartWalkSandboxNode,
-                    "Command is not legal in phase " + CurrentPhase,
-                    SlotId.None,
-                    0);
-            }
-
-            mInRoomRewardContext = false;
-            var options = NodeDeckOptions.CreateWalkSandbox();
-            var pipeline = this.GetSystem<IActionPipelineSystem>();
-            pipeline.Enqueue(new ClearPendingChoicesAction());
-            pipeline.Enqueue(new ChangePhaseAction(GamePhase.BuildEnemyPool));
-            pipeline.Enqueue(new SetupNodeDeckAction(options));
-            pipeline.Enqueue(new ChangePhaseAction(GamePhase.ResetNode));
-            pipeline.Enqueue(new ChangePhaseAction(GamePhase.DealOpeningCards));
-            pipeline.Enqueue(new OpeningDealAction(options));
-            pipeline.Enqueue(new FillEmptySlotsAction());
-            pipeline.Enqueue(new ResetCurrentArmorAction());
-            pipeline.Enqueue(new NodeStartedAction());
-            pipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomChoice));
             return CoreCommandResult.Accept(pipeline.RunToCompletion());
         }
 
@@ -1543,7 +1511,6 @@ namespace NineGrid.Core.Systems
                 case GamePhase.BuildEnemyPool:
                 case GamePhase.NodeCompleted:
                     mLegalCommands.Add(GameCommandKind.StartNode);
-                    mLegalCommands.Add(GameCommandKind.StartWalkSandboxNode);
                     break;
                 case GamePhase.InteractionLoop:
                     if (this.GetModel<PendingChoiceModel>().Kind.Value == PendingChoiceKind.Reward)
