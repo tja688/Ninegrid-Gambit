@@ -5,6 +5,7 @@ using NineGrid.Core;
 using NineGrid.DevTest.Commands;
 using NineGrid.Flow;
 using NineGrid.Flow.Diagnostics;
+using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
 
@@ -44,12 +45,31 @@ namespace NineGrid.DevTest.Flow
                 .Bind(KeyCode.Keypad4, "立即导出 Battle+FlowLog", ExportBattleAndFlowTrace)
                 .Bind(KeyCode.Keypad5, "开关 Battle/FlowTrace", ToggleBattleTrace)
                 .Bind(KeyCode.Keypad6, "强制本局胜利", CheatForceNodeVictory)
-                .Bind(KeyCode.Keypad7, "BUG现场戳点", StampBugScene);
+                .Bind(KeyCode.Keypad7, "BUG现场戳点", StampBugScene)
+                .Bind(KeyCode.KeypadMinus, "QuickTest跳过战斗", CheatQuickTestSkipBattle);
         }
 
         private static void StampBugScene()
         {
             PerfTraceRecorder.StampUserObservation("BugScene");
+        }
+
+        private void CheatQuickTestSkipBattle()
+        {
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return;
+            }
+
+            var shell = arch.GetSystem<IGameFlowShellSystem>();
+            if (shell == null || !shell.IsQuickTestMode)
+            {
+                Debug.Log("[InBattleManagerDevKeys] 跳过战斗仅 QuickTest 模式可用。");
+                return;
+            }
+
+            CheatForceNodeVictory();
         }
 
         private void CheatForceNodeVictory()

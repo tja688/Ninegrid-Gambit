@@ -86,11 +86,6 @@ namespace NineGrid.Presentation.Systems
             return mExecutor.StartBattleNodeAsync(options, cancellationToken);
         }
 
-        public UniTask StartWalkSandboxNodeAsync(CancellationToken cancellationToken = default)
-        {
-            return mExecutor.StartWalkSandboxNodeAsync(cancellationToken);
-        }
-
         public bool TryEnterNodeSettlement()
         {
             return mExecutor.TryEnterNodeSettlement();

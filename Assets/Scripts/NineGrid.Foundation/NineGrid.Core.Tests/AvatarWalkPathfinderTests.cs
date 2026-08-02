@@ -162,7 +162,7 @@ namespace NineGrid.Core.Tests
         public void MoveAvatar_AdjacentOccupied_Allowed_InRoomChoice_ForSoftFallback()
         {
             var phase = mArch.GetSystem<IPhaseSystem>();
-            Assert.IsTrue(phase.StartWalkSandboxNode().Accepted);
+            EnterRoomChoiceViaNonCombatNode(phase);
             var draft = new CardDraft("monster.block", CardKind.Monster) { MaxHp = 1, Attack = 0 };
             mBoard.PlaceCard(draft.Create(mArch.GetModel<CardRegistry>()), SlotId.Board(2));
 
@@ -175,7 +175,7 @@ namespace NineGrid.Core.Tests
         public void MoveAvatar_AdjacentEmpty_InRoomChoice_Accepted()
         {
             var phase = mArch.GetSystem<IPhaseSystem>();
-            Assert.IsTrue(phase.StartWalkSandboxNode().Accepted);
+            EnterRoomChoiceViaNonCombatNode(phase);
             Assert.AreEqual(GamePhase.RoomChoice, phase.CurrentPhase);
             Assert.AreEqual(5, mBoard.AvatarSlot.Value.Index);
 
@@ -194,12 +194,12 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void StartWalkSandboxNode_EndsInRoomChoice_WithoutReward()
+        public void NonCombatStartNode_EndsInRoomChoice_EmptyBoardExceptAvatar()
         {
             var phase = mArch.GetSystem<IPhaseSystem>();
-            Assert.IsTrue(phase.StartWalkSandboxNode().Accepted);
+            EnterRoomChoiceViaNonCombatNode(phase);
             Assert.AreEqual(GamePhase.RoomChoice, phase.CurrentPhase);
-            Assert.AreEqual(PendingChoiceKind.None, mArch.GetModel<PendingChoiceModel>().Kind.Value);
+            Assert.AreEqual(PendingChoiceKind.Navigation, mArch.GetModel<PendingChoiceModel>().Kind.Value);
 
             for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
             {
@@ -210,6 +210,12 @@ namespace NineGrid.Core.Tests
 
                 Assert.IsTrue(mBoard.IsEmpty(SlotId.Board(i)), "slot " + i);
             }
+        }
+
+        private void EnterRoomChoiceViaNonCombatNode(IPhaseSystem phase)
+        {
+            mArch.GetModel<RunModel>().NodeIndex.Value = 3;
+            Assert.IsTrue(phase.StartNode(null).Accepted);
         }
     }
 }

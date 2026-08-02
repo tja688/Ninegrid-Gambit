@@ -32,7 +32,7 @@ namespace NineGrid.Presentation.Tests
         [Test]
         public void BoardWalk_Disabled_Rejected()
         {
-            Assert.IsTrue(mPhase.StartWalkSandboxNode().Accepted);
+            EnterRoomChoiceViaNonCombatNode();
             mWalk.SetEnabled(false);
 
             string reason;
@@ -43,7 +43,7 @@ namespace NineGrid.Presentation.Tests
         [Test]
         public void BoardWalk_Enabled_FarEmpty_Legal()
         {
-            Assert.IsTrue(mPhase.StartWalkSandboxNode().Accepted);
+            EnterRoomChoiceViaNonCombatNode();
             mWalk.SetEnabled(true);
 
             string reason;
@@ -53,7 +53,7 @@ namespace NineGrid.Presentation.Tests
         [Test]
         public void Explore_Rejected_WhenWalkExclusive()
         {
-            Assert.IsTrue(mPhase.StartWalkSandboxNode().Accepted);
+            EnterRoomChoiceViaNonCombatNode();
             mWalk.SetEnabled(true);
 
             string reason;
@@ -64,7 +64,7 @@ namespace NineGrid.Presentation.Tests
         [Test]
         public void Attack_Rejected_WhenWalkExclusive()
         {
-            Assert.IsTrue(mPhase.StartWalkSandboxNode().Accepted);
+            EnterRoomChoiceViaNonCombatNode();
             mWalk.SetEnabled(true);
 
             string reason;
@@ -86,13 +86,21 @@ namespace NineGrid.Presentation.Tests
         [Test]
         public void Runner_SetDestination_UpdatesDesire_WhenIdle()
         {
-            Assert.IsTrue(mPhase.StartWalkSandboxNode().Accepted);
+            EnterRoomChoiceViaNonCombatNode();
             mWalk.SetEnabled(true);
             mWalk.SetDestination(1);
             // 无几何绑定：Core 可能已迁一格或保持欲望；至少不应抛。
             Assert.IsTrue(mWalk.IsEnabled);
             mWalk.Cancel();
             Assert.IsFalse(mWalk.IsHopping);
+        }
+
+        private void EnterRoomChoiceViaNonCombatNode()
+        {
+            // display node 4（0-based index 3）为非战斗，进 RoomChoice。
+            mArch.GetModel<RunModel>().NodeIndex.Value = 3;
+            Assert.IsTrue(mPhase.StartNode(null).Accepted);
+            Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
         }
     }
 }

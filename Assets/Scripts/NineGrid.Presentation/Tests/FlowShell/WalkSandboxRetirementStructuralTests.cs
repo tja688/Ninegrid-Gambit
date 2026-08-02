@@ -34,8 +34,9 @@ namespace NineGrid.Presentation.Tests.FlowShell
         [Test]
         public void GameCommandKind_HasNoStartWalkSandboxNode()
         {
+            var names = Enum.GetNames(typeof(GameCommandKind));
             Assert.IsFalse(
-                Enum.IsDefined(typeof(GameCommandKind), "StartWalkSandboxNode"),
+                Array.IndexOf(names, "StartWalkSandboxNode") >= 0,
                 "GameCommandKind.StartWalkSandboxNode 应已删除");
         }
 

@@ -29,11 +29,12 @@ description: >-
 
 1. **正式开局**：点开始按钮；`monster_*.json` 的 `effectAssemblies` / `skillIds` **保持空**；正常卡组逻辑发牌；道具正常发。
 2. **`\` 仅主菜单**：长按 `\` → 选 `0–9` → 开局。局内**无** `\` 逻辑（含调速）；要换通道就退回主菜单重开。
-3. **`\0`–`\9` 全是可挂技能通道**（含 `\0`）。通道预设表决定挂哪些 `skillId`；与旧「钉死军团牌组」解耦。
-4. **动态装配只发生在 QuickTest**：开局后把本通道 `skillIds` **一怪一技**挂到场上怪物（按格号升序；不够则再发白板宿主；另保至少一只无技能同伴）；**卡面描述必须写成该宿主单技能效果描述**（玩家能读到在测什么）。
+3. **`\0` 流程测试通道**：空 `skillIds` / 空 `trapContentIds`、节点序 Sequential，战斗内容同正式开局；叠 QuickTest 作弊（HP99/ATK5）。**`\1`–`\9` 为效果体验通道**。
+4. **动态装配只发生在 QuickTest `\1`–`\9`**：开局后把本通道 `skillIds` **一怪一技**挂到场上怪物（按格号升序；不够则再发白板宿主；另保至少一只无技能同伴）；**卡面描述必须写成该宿主单技能效果描述**（玩家能读到在测什么）。
 5. **独立效果可同通道分挂多怪**；自成体系、依赖配合的效果**单开通道**。禁止把通道全部 `skillIds` 叠到同一只怪。
 6. **同义改名原则**（ verbatim ）：能力一模一样就改为新的，无论是实际代码还是表述/名字，最终只留新的技能和完全不一样的老技能（作为后续设计储备，可能被归档）。
-7. 内容日常改 **`Assets/Arts/ContentVisual/`**，保存/同步到 StreamingAssets；勿只改 Streaming。
+7. **局内跳过战斗**（仅 QuickTest）：`KeypadMinus` → `BattleSessionCheat.TryForceNodeVictory()`；不得引入 `\` 逻辑。
+8. 内容日常改 **`Assets/Arts/ContentVisual/`**，保存/同步到 StreamingAssets；勿只改 Streaming。
 
 ## Agent workflow（落地一批效果后）
 

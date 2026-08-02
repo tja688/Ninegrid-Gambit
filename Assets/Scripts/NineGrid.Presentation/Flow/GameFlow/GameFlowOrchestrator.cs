@@ -174,12 +174,6 @@ namespace NineGrid.Flow
             mShell.SetBusy(true);
             try
             {
-                if (mShell.IsWalkSandbox)
-                {
-                    await EnterWalkSandboxAsync(ct);
-                    return;
-                }
-
                 while (!ct.IsCancellationRequested)
                 {
                     mShell.IncrementNodeIndex();
@@ -242,55 +236,6 @@ namespace NineGrid.Flow
             finally
             {
                 mShell.SetBusy(false);
-            }
-        }
-
-        /// <summary>\0 跳格沙盒：Avatar 入场、RoomChoice 相位、开跳格门禁，停在此直至回主菜单。</summary>
-        private async UniTask EnterWalkSandboxAsync(CancellationToken ct)
-        {
-            RequestSetState(GameFlowShellState.RoomChoice);
-            var view = mShell.View;
-            view?.EnsureViewBindings();
-            view?.ShowInRunShell(inBattle: true);
-
-            var session = ResolveSession();
-            if (session == null || !session.IsBound)
-            {
-                Debug.LogError("[GameFlow] 跳格沙盒：未绑定 IBattleSessionSystem。");
-                return;
-            }
-
-            mShell.IncrementNodeIndex();
-            var phase = NineGridArchitecture.Current.GetSystem<IPhaseSystem>();
-            EnsureBattleNodeBootstrap(session, phase);
-
-            Debug.Log("[GameFlow] \\0 跳格沙盒：拒对战，空盘 Avatar 可走格");
-            await session.StartWalkSandboxNodeAsync(ct);
-            if (ct.IsCancellationRequested)
-            {
-                return;
-            }
-
-            ApplyQuickTestAvatarCheatsIfNeeded();
-            ApplyQuickTestTimeScale();
-
-            var walk = AvatarWalkSystem.EnsureRegistered(NineGridArchitecture.Interface);
-            walk?.SetEnabled(true);
-
-            try
-            {
-                while (!ct.IsCancellationRequested)
-                {
-                    await UniTask.Yield(PlayerLoopTiming.Update, ct);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            finally
-            {
-                walk?.SetEnabled(false);
-                walk?.Cancel();
             }
         }
 

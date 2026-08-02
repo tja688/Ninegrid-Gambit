@@ -155,7 +155,9 @@ namespace NineGrid.Flow
 
                 builder.Append(code).Append(' ');
                 builder.Append(ResolveDisplayName(catalog, preset));
-                if (code == 0)
+                if (preset.NodeOrder == QuickTestNodeOrderMode.Sequential
+                    && (preset.SkillIds == null || preset.SkillIds.Count == 0)
+                    && (preset.TrapContentIds == null || preset.TrapContentIds.Count == 0))
                 {
                     builder.Append(" · 正式流程连跑");
                 }

@@ -2,11 +2,12 @@
 
 > 过程笔记，非权威。活文档：通道分配确认后由 Agent 维护；权威实现见 `skill_*.json` + `effect_templates.json` + `QuickTestDeckCatalog.cs`。
 
-**最后更新**：2026-08-01（机关卡批次3：倒刺/三图腾/治疗泉落地；QT `\1`–`\9` 机关注入齐全）  
+**最后更新**：2026-08-02（#91：`\0` 改流程测试通道；KeypadMinus 跳过战斗）  
 **预设快照**（`QuickTestDeckCatalog`）：
 
 | 码 | 主题 | 技能（= 挂载顺序，格号小→大） | 机关注入（敌池） |
 |----|------|------|------|
+| `\0` | 流程测试 | —（正式开局白板怪 / 正常发牌；节点序 Sequential） | — |
 | `\1` | 移除向 | `skill.sacrifice` → `skill.absorb` → `skill.offer_fire` | `trap.rolling_stone` |
 | `\2` | 互动向 | `skill.call_melee6` → `skill.link_prep` | `trap.attack_totem` |
 | `\3` | 翻面向 | `skill.leap_kill` → `skill.steal` → `skill.recuperate` | `trap.armor_totem` |
@@ -16,7 +17,6 @@
 | `\7` | 批次2·死亡潜伏 | `skill.death_summon` → `skill.lord_of_death` → `skill.ambush_melee` | `trap.healing_spring` |
 | `\8` | 刺客领袖 | `skill.assassin_leader` | `trap.flame` |
 | `\9` | 天涯若比邻 | `skill.world_as_neighbors` → `skill.link_tactics` | `trap.revive_stone` |
-| `\0` | 空置 | — | — |
 
 ### 批次现状
 
@@ -45,13 +45,24 @@
 
 | 键 | 用途 |
 |----|------|
+| **KeypadMinus** | **仅 QuickTest**：跳过当前战斗（`TryForceNodeVictory`，清怪走正常清关） |
 | **Alpha5** | 鼠标指向场地卡 → Core `Flip`（触发 `OnFlip`，走正式翻牌表现） |
 | **Alpha4** | 场地全体翻牌切换（表现 POC，**不**走 Core OnFlip 规则链时用） |
 | **Keypad1** | 导演攻击相邻怪（未击杀走反击锁步） |
 | **Keypad5** | 随机移除场上 1 张卡 |
-| **Keypad6** | 即死击杀相邻怪 |
+| **Keypad6** | 即死击杀相邻怪 / InBattle 强制本局胜利 |
 
 移除向 / 死亡召唤 / 刺客领袖补牌优先用 Keypad5/6；翻面向 / 潜伏翻回正面用 **Alpha5**。
+
+---
+
+## `\0` 流程测试（M1 终验）
+
+**内容**：与正式开局一致——白板怪、正常发牌、不动态挂技能/机关；叠 QuickTest 作弊（HP99 / ATK5 每关重置）；节点序 **Sequential**（1→8 × 3 层）。
+
+**怎么验**：主菜单长按 `\` → `0` → 连跑 24 节点。战斗内按 **KeypadMinus** 跳过战斗清关；节点 4/7 非战斗（只有离开图标）；节点 8 清关给下楼；第 3 层节点 8 通关。全程无浮层。
+
+**不应发生**：局内用 `\` 换通道；非 QuickTest 模式下 KeypadMinus 生效。
 
 ---
 
@@ -245,3 +256,4 @@
 | 2026-07-31 | **批次3**：批次2 收束到 `\6`（交战提速三技）+ `\7`（死亡潜伏三技）；`\8` 刺客领袖；`\9` 天涯若比邻+链接战术探针 |
 | 2026-08-01 | **机关批次2**：`help.rolling_stone/bear_trap/flame` → `trap.*`；QT `trapContentIds` 注入 `\1`滚石/`\6`捕熊/`\8`烈焰/`\9`复活石；`\4` 沸腾改验邻移伤 1→2 |
 | 2026-08-01 | **机关批次3**：倒刺/三图腾/治疗泉落地；删 `help.healing_spring`；QT `\2`–`\5`/`\7` 补齐，九码机关注入与 Living Note 对齐 |
+| 2026-08-02 | **#91**：`\0` 由跳格沙盒改流程测试（Sequential、空技能）；退役 `StartWalkSandboxNode`；KeypadMinus 仅 QT 跳过战斗 |
