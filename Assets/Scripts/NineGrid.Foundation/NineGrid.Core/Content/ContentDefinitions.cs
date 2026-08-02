@@ -36,13 +36,28 @@ namespace NineGrid.Core.Content
         RawDesignOnly
     }
 
+    /// <summary>
+    /// 主题怪物卡组标记（ADR-0022）。仅 <see cref="Reserve"/> 有语义（不参与每层随机）；
+    /// WeakElite/StrongElite/Boss 为历史分档残留，加载后视同可参与主题池（与 <see cref="Unknown"/> 同等）。
+    /// </summary>
     public enum MonsterDeckKind
     {
-        Unknown,
-        WeakElite,
-        StrongElite,
-        Boss,
-        Reserve
+        Unknown = 0,
+        /// <summary>历史残留；不再决定哪层用哪档。</summary>
+        WeakElite = 1,
+        /// <summary>历史残留；不再决定哪层用哪档。</summary>
+        StrongElite = 2,
+        /// <summary>历史残留；不再决定哪层用哪档。</summary>
+        Boss = 3,
+        /// <summary>不参与每层主题随机。</summary>
+        Reserve = 4
+    }
+
+    /// <summary>怪物等级（ADR-0022）：只区分普通 / 层主；梯队用 <see cref="CardContentDefinition.Sequence"/>。</summary>
+    public enum MonsterRank
+    {
+        Normal = 0,
+        FloorBoss = 1
     }
 
     public sealed class ContentStatLine
@@ -108,7 +123,12 @@ namespace NineGrid.Core.Content
         public int Price { get; set; }
         /// <summary>怪物击杀金币；0 表示回退 Economy.MonsterRemovedGold。</summary>
         public int KillGold { get; set; }
+        /// <summary>运行时 Level Counter 来源；怪物侧与 <see cref="Sequence"/> 对齐。</summary>
         public int Level { get; set; }
+        /// <summary>主题卡组内序列 1–5；0 表示未赋。</summary>
+        public int Sequence { get; set; }
+        /// <summary>普通 / 层主（与 <see cref="IsBoss"/> 对齐）。</summary>
+        public MonsterRank Rank { get; set; }
         public bool IsElite { get; set; }
         public bool IsBoss { get; set; }
         public bool IsReserve { get; set; }
@@ -170,6 +190,28 @@ namespace NineGrid.Core.Content
             return this;
         }
 
+        public CardContentDefinition WithSequence(int sequence)
+        {
+            Sequence = sequence;
+            if (sequence > 0)
+            {
+                Level = sequence;
+            }
+
+            return this;
+        }
+
+        public CardContentDefinition WithRank(MonsterRank rank)
+        {
+            Rank = rank;
+            if (rank == MonsterRank.FloorBoss)
+            {
+                IsBoss = true;
+            }
+
+            return this;
+        }
+
         public CardContentDefinition AsElite()
         {
             IsElite = true;
@@ -179,6 +221,7 @@ namespace NineGrid.Core.Content
         public CardContentDefinition AsBoss()
         {
             IsBoss = true;
+            Rank = MonsterRank.FloorBoss;
             return this;
         }
 
@@ -642,19 +685,33 @@ namespace NineGrid.Core.Content
         }
     }
 
+    /// <summary>节点 → 序列 1..5 各抽几张（ADR-0022）。节点 4/7 无行。</summary>
     public sealed class NodeDeckRule
     {
         public int NodeIndex { get; set; }
-        public int TotalMonsterCount { get; set; }
-        public int Level1Min { get; set; }
-        public int Level1Max { get; set; }
-        public int Level2Min { get; set; }
-        public int Level2Max { get; set; }
-        public int Level3Min { get; set; }
-        public int Level3Max { get; set; }
-        public int EliteCount { get; set; }
-        public int BossCount { get; set; }
-        public MonsterDeckKind DeckKind { get; set; }
+        public int Seq1Count { get; set; }
+        public int Seq2Count { get; set; }
+        public int Seq3Count { get; set; }
+        public int Seq4Count { get; set; }
+        public int Seq5Count { get; set; }
+
+        public int TotalMonsterCount
+        {
+            get { return Seq1Count + Seq2Count + Seq3Count + Seq4Count + Seq5Count; }
+        }
+
+        public int GetSequenceCount(int sequence)
+        {
+            switch (sequence)
+            {
+                case 1: return Seq1Count;
+                case 2: return Seq2Count;
+                case 3: return Seq3Count;
+                case 4: return Seq4Count;
+                case 5: return Seq5Count;
+                default: return 0;
+            }
+        }
     }
 
     /// <summary>房间开局注入目标侧（ADR-0022）。</summary>

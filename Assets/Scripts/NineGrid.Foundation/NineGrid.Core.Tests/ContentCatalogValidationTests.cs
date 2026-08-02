@@ -121,7 +121,34 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(EffectTemplateCatalog.TryGet("tpl.heal_player_on_use_help_card", out _));
 
             Assert.AreEqual(5, catalog.Economy.MonsterRemovedGold);
-            Assert.Greater(catalog.Rewards.NodeDeckRules.Count, 0);
+            Assert.AreEqual(6, catalog.Rewards.NodeDeckRules.Count, "战斗节点 1/2/3/5/6/8 各一行");
+            NodeDeckRule node1 = null;
+            NodeDeckRule node8 = null;
+            for (var i = 0; i < catalog.Rewards.NodeDeckRules.Count; i++)
+            {
+                var rule = catalog.Rewards.NodeDeckRules[i];
+                if (rule.NodeIndex == 1)
+                {
+                    node1 = rule;
+                }
+
+                if (rule.NodeIndex == 8)
+                {
+                    node8 = rule;
+                }
+            }
+
+            Assert.IsNotNull(node1);
+            Assert.IsNotNull(node8);
+            Assert.AreEqual(8, node1.Seq1Count);
+            Assert.AreEqual(1, node8.Seq5Count);
+
+            Assert.IsTrue(catalog.MonsterDecks.TryGetValue("deck.insect", out var insect));
+            Assert.AreNotEqual(MonsterDeckKind.Reserve, insect.Kind);
+            Assert.IsTrue(catalog.Cards.TryGetValue("monster.fire_dragon", out var floorBoss));
+            Assert.AreEqual(5, floorBoss.Sequence);
+            Assert.IsTrue(floorBoss.IsBoss);
+            Assert.AreEqual(MonsterRank.FloorBoss, floorBoss.Rank);
         }
 
         private static string FormatIssues(ContentValidationReport report)

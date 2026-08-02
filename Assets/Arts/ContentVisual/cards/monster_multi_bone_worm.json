@@ -4,15 +4,15 @@
   "kind": "Monster",
   "deckId": "deck.insect",
   "role": "",
-  "displayName": "沙虫",
+  "displayName": "特13",
   "description": "",
   "faceIntro": "会吐口水（就是沙子）",
   "attackPattern": "普通近战",
   "gold": 5,
   "stats": {
-    "hp": 3,
-    "armor": 6,
-    "attack": 2,
+    "hp": 12,
+    "armor": 0,
+    "attack": 1,
     "action": 3,
     "recovery": 0
   },
@@ -75,8 +75,11 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [],
-  "level": 2,
+  "skillIds": [
+    "skill.holy_duel",
+    "skill.battle_hardened"
+  ],
+  "level": "普通",
   "isElite": false,
   "isBoss": false,
   "isReserve": false,
@@ -88,5 +91,6 @@
   "maxHpDelta": 0,
   "healToFull": false,
   "rewardPoolId": "",
-  "shopOfferCount": 0
+  "shopOfferCount": 0,
+  "sequence": 3
 }

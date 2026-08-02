@@ -54,10 +54,7 @@ namespace NineGrid.Content
             catalog.Rewards.AddNodeRule(new NodeDeckRule
             {
                 NodeIndex = 1,
-                TotalMonsterCount = 1,
-                Level1Min = 1,
-                Level1Max = 1,
-                DeckKind = MonsterDeckKind.WeakElite
+                Seq1Count = 1
             });
 
             return catalog;

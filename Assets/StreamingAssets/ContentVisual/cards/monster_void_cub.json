@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "contentId": "monster.void_cub",
   "kind": "Monster",
-  "deckId": "deck.dragon",
+  "deckId": "deck.smallanimal",
   "role": "",
   "displayName": "宝宝莱姆",
   "description": "",
@@ -75,10 +75,10 @@
   "effectAssemblies": [],
   "effectIds": [],
   "skillIds": [],
-  "level": 1,
+  "level": "普通",
   "isElite": false,
   "isBoss": false,
-  "isReserve": false,
+  "isReserve": true,
   "containerType": "",
   "deckKind": "",
   "monsterDefIds": [],
@@ -87,5 +87,6 @@
   "maxHpDelta": 0,
   "healToFull": false,
   "rewardPoolId": "",
-  "shopOfferCount": 0
+  "shopOfferCount": 0,
+  "sequence": 0
 }

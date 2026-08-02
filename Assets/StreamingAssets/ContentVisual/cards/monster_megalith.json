@@ -4,15 +4,15 @@
   "kind": "Monster",
   "deckId": "deck.insect",
   "role": "",
-  "displayName": "蜂巢",
+  "displayName": "boss7",
   "description": "",
   "faceIntro": "不收快递",
-  "attackPattern": "全向近战",
+  "attackPattern": "普通近战",
   "gold": 5,
   "stats": {
-    "hp": 8,
-    "armor": 12,
-    "attack": 2,
+    "hp": 150,
+    "armor": 0,
+    "attack": 10,
     "action": 3,
     "recovery": 0
   },
@@ -75,10 +75,13 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [],
-  "level": 0,
-  "isElite": true,
-  "isBoss": false,
+  "skillIds": [
+    "skill.holy_duel",
+    "skill.attrition"
+  ],
+  "level": "层主",
+  "isElite": false,
+  "isBoss": true,
   "isReserve": false,
   "containerType": "",
   "deckKind": "",
@@ -88,5 +91,6 @@
   "maxHpDelta": 0,
   "healToFull": false,
   "rewardPoolId": "",
-  "shopOfferCount": 0
+  "shopOfferCount": 0,
+  "sequence": 5
 }

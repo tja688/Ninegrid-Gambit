@@ -2,17 +2,17 @@
   "schemaVersion": 2,
   "contentId": "monster.rogue",
   "kind": "Monster",
-  "deckId": "deck.void",
+  "deckId": "deck.orc_legion",
   "role": "",
-  "displayName": "法师",
+  "displayName": "特7",
   "description": "",
   "faceIntro": "头上的簪子其实是备用法杖",
   "attackPattern": "普通近战",
   "gold": 5,
   "stats": {
-    "hp": 2,
-    "armor": 6,
-    "attack": 2,
+    "hp": 12,
+    "armor": 0,
+    "attack": 1,
     "action": 3,
     "recovery": 0
   },
@@ -75,8 +75,11 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [],
-  "level": 2,
+  "skillIds": [
+    "skill.ambush_melee",
+    "skill.recuperate"
+  ],
+  "level": "普通",
   "isElite": false,
   "isBoss": false,
   "isReserve": false,
@@ -88,5 +91,6 @@
   "maxHpDelta": 0,
   "healToFull": false,
   "rewardPoolId": "",
-  "shopOfferCount": 0
+  "shopOfferCount": 0,
+  "sequence": 3
 }

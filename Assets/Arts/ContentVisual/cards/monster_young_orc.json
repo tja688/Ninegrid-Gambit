@@ -4,15 +4,15 @@
   "kind": "Monster",
   "deckId": "deck.stone_legion",
   "role": "",
-  "displayName": "大棒哥布",
+  "displayName": "近战2",
   "description": "",
   "faceIntro": "头脑简单，四肢发达",
-  "attackPattern": "普通近战",
+  "attackPattern": "斜角近战",
   "gold": 5,
   "stats": {
-    "hp": 6,
-    "armor": 4,
-    "attack": 2,
+    "hp": 4,
+    "armor": 2,
+    "attack": 1,
     "action": 3,
     "recovery": 0
   },
@@ -76,7 +76,7 @@
   "effectAssemblies": [],
   "effectIds": [],
   "skillIds": [],
-  "level": 1,
+  "level": "普通",
   "isElite": false,
   "isBoss": false,
   "isReserve": false,
@@ -88,5 +88,6 @@
   "maxHpDelta": 0,
   "healToFull": false,
   "rewardPoolId": "",
-  "shopOfferCount": 0
+  "shopOfferCount": 0,
+  "sequence": 1
 }

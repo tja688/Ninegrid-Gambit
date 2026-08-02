@@ -83,7 +83,8 @@ namespace NineGrid.Presentation.Tests.Cards
                 deckId = "deck.void",
                 gold = 7,
                 rarity = "None",
-                level = 2,
+                level = "普通",
+                sequence = 2,
                 isElite = true,
                 skillIds = new[] { "skill.proj_demo" },
                 effectIds = new[] { "monster.proj_demo.aura" },
@@ -99,6 +100,8 @@ namespace NineGrid.Presentation.Tests.Cards
             Assert.AreEqual(7, card.KillGold);
             Assert.AreEqual(0, card.Price);
             Assert.AreEqual(2, card.Level);
+            Assert.AreEqual(2, card.Sequence);
+            Assert.AreEqual(MonsterRank.Normal, card.Rank);
             Assert.IsTrue(card.IsElite);
             Assert.AreEqual("deck.void", card.DeckId);
             Assert.AreEqual(9, card.Stats.MaxHp);
@@ -127,7 +130,7 @@ namespace NineGrid.Presentation.Tests.Cards
             MonsterDeckTableCatalog.UpsertForTests(new MonsterDeckTableRow
             {
                 deck_id = "deck.proj_demo",
-                deck_kind = "Boss",
+                deck_kind = "Reserve",
             });
             CardPresentationConfigCatalog.UpsertForTests(new CardPresentationConfigDto
             {
@@ -140,7 +143,7 @@ namespace NineGrid.Presentation.Tests.Cards
             var applied = MonsterDeckCatalogBuilder.ApplyToCatalog(catalog);
             Assert.GreaterOrEqual(applied, 1);
             Assert.IsTrue(catalog.MonsterDecks.TryGetValue("deck.proj_demo", out var deck));
-            Assert.AreEqual(MonsterDeckKind.Boss, deck.Kind);
+            Assert.AreEqual(MonsterDeckKind.Reserve, deck.Kind);
             Assert.AreEqual(2, deck.MonsterDefIds.Count);
             CollectionAssert.Contains(deck.MonsterDefIds, "monster.a");
             CollectionAssert.Contains(deck.MonsterDefIds, "monster.b");

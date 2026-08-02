@@ -186,7 +186,7 @@ namespace NineGrid.Core.Tests
         }
 
         /// <summary>
-        /// #82 非默认（非普通近战）的设计赋模；攻 0 怪显式「无」；其余默认普通近战。
+        /// #82/#86 非默认（非普通近战）的设计赋模；攻 0 怪显式「无」；主题卡组回填后的序列怪按设计案。
         /// </summary>
         private static System.Collections.Generic.Dictionary<string, AttackPattern> DesignAttackPatterns()
         {
@@ -195,29 +195,26 @@ namespace NineGrid.Core.Tests
                 { "monster.big_stone", AttackPattern.None },
                 { "monster.fire_priest", AttackPattern.None },
 
+                // 主题序列远程
+                { "monster.salamander", AttackPattern.Ranged },
+                { "monster.veteran_orc", AttackPattern.Ranged },
+                { "monster.skull_head", AttackPattern.Ranged },
+                { "monster.pickpocket", AttackPattern.Ranged },
+                { "monster.smuggler", AttackPattern.Ranged },
+                { "monster.observer", AttackPattern.Ranged },
+
+                // Reserve 残留远程
                 { "monster.stone_thrower", AttackPattern.Ranged },
                 { "monster.skeleton_mage", AttackPattern.Ranged },
-                { "monster.sky_eye", AttackPattern.Ranged },
-                { "monster.observer", AttackPattern.Ranged },
-                { "monster.salamander", AttackPattern.Ranged },
 
+                // 主题序列斜角 / 全向
+                { "monster.young_orc", AttackPattern.DiagonalMelee },
+                { "monster.summon.special_omni", AttackPattern.OmnidirectionalMelee },
+
+                // Reserve 残留非默认
                 { "monster.big_orc", AttackPattern.OmnidirectionalMelee },
-                { "monster.fire_dragon", AttackPattern.OmnidirectionalMelee },
-                { "monster.space_master", AttackPattern.OmnidirectionalMelee },
-                { "monster.megalith", AttackPattern.OmnidirectionalMelee },
-                { "monster.orc_boss", AttackPattern.OmnidirectionalMelee },
-                { "monster.ringleader", AttackPattern.OmnidirectionalMelee },
-                { "monster.skeleton_king", AttackPattern.OmnidirectionalMelee },
-                { "monster.dragon_cult_leader", AttackPattern.OmnidirectionalMelee },
                 { "monster.fire_cult_leader", AttackPattern.OmnidirectionalMelee },
-                { "monster.killer", AttackPattern.OmnidirectionalMelee },
-                { "monster.executioner", AttackPattern.OmnidirectionalMelee },
-
-                { "monster.hoodlum", AttackPattern.DiagonalMelee },
-                { "monster.rolling_stone_man", AttackPattern.DiagonalMelee },
-                { "monster.world_turning_hand", AttackPattern.DiagonalMelee },
                 { "monster.growing_stone", AttackPattern.DiagonalMelee },
-                { "monster.smuggler", AttackPattern.DiagonalMelee },
             };
         }
 

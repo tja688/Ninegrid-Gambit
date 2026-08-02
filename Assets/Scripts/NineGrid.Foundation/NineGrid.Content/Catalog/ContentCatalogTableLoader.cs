@@ -243,16 +243,11 @@ namespace NineGrid.Content
                 catalog.Rewards.AddNodeRule(new NodeDeckRule
                 {
                     NodeIndex = row.node_index,
-                    TotalMonsterCount = row.total_monster_count,
-                    Level1Min = row.level1_min,
-                    Level1Max = row.level1_max,
-                    Level2Min = row.level2_min,
-                    Level2Max = row.level2_max,
-                    Level3Min = row.level3_min,
-                    Level3Max = row.level3_max,
-                    EliteCount = row.elite_count,
-                    BossCount = row.boss_count,
-                    DeckKind = ParseEnum(row.deck_kind, MonsterDeckKind.Unknown)
+                    Seq1Count = row.seq1,
+                    Seq2Count = row.seq2,
+                    Seq3Count = row.seq3,
+                    Seq4Count = row.seq4,
+                    Seq5Count = row.seq5
                 });
                 count++;
             }
@@ -352,16 +347,11 @@ namespace NineGrid.Content
         private sealed class NodeDeckRuleRowDto
         {
             public int node_index;
-            public int total_monster_count;
-            public int level1_min;
-            public int level1_max;
-            public int level2_min;
-            public int level2_max;
-            public int level3_min;
-            public int level3_max;
-            public int elite_count;
-            public int boss_count;
-            public string deck_kind;
+            public int seq1;
+            public int seq2;
+            public int seq3;
+            public int seq4;
+            public int seq5;
         }
     }
 }

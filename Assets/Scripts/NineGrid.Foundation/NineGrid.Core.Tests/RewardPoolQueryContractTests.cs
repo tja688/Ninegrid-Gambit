@@ -86,20 +86,13 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void KillBoss_QueryUsesTagFilter()
+        public void KillBoss_FixedInject_IsNotTagQueryPool()
         {
+            // #86：层主击杀改为固定 1 金箱 + 2 金币，不再依赖 kill.boss 奖池查询。
+            // 夹具仍可保留旧池供对照；契约断言生产路径不依赖 tag.kill_boss 三选。
             var catalog = mArch.GetSystem<IContentSystem>().Catalog;
-            Assert.IsTrue(catalog.Rewards.TryGetPool("kill.boss", out var pool));
-            Assert.AreEqual(3, pool.Entries.Count);
-            var ids = new HashSet<string>();
-            for (var i = 0; i < pool.Entries.Count; i++)
-            {
-                ids.Add(pool.Entries[i].DefId);
-            }
-
-            Assert.IsTrue(ids.Contains("help.golden_chest_card"));
-            Assert.IsTrue(ids.Contains("help.gold_card"));
-            Assert.IsTrue(ids.Contains("help.stat_boost_card"));
+            Assert.IsTrue(catalog.Cards.ContainsKey("help.golden_chest_card"));
+            Assert.IsTrue(catalog.Cards.ContainsKey("help.gold_card"));
         }
 
         private static GameContentCatalog BuildCatalog()

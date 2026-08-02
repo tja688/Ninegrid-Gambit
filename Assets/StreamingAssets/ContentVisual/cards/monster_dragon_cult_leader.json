@@ -2,16 +2,16 @@
   "schemaVersion": 2,
   "contentId": "monster.dragon_cult_leader",
   "kind": "Monster",
-  "deckId": "deck.wandering_legion",
+  "deckId": "deck.dragon",
   "role": "",
-  "displayName": "炸弹蜥",
+  "displayName": "boss6",
   "description": "",
   "faceIntro": "蜥蜴一族中爱剪指甲的",
-  "attackPattern": "全向近战",
+  "attackPattern": "普通近战",
   "gold": 5,
   "stats": {
-    "hp": 18,
-    "armor": 3,
+    "hp": 30,
+    "armor": 0,
     "attack": 3,
     "action": 3,
     "recovery": 0
@@ -75,10 +75,13 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [],
-  "level": 3,
+  "skillIds": [
+    "skill.cloud_breath",
+    "skill.endless_flame"
+  ],
+  "level": "层主",
   "isElite": false,
-  "isBoss": false,
+  "isBoss": true,
   "isReserve": false,
   "containerType": "",
   "deckKind": "",
@@ -88,5 +91,6 @@
   "maxHpDelta": 0,
   "healToFull": false,
   "rewardPoolId": "",
-  "shopOfferCount": 0
+  "shopOfferCount": 0,
+  "sequence": 5
 }

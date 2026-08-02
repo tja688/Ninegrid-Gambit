@@ -4,15 +4,15 @@
   "kind": "Monster",
   "deckId": "deck.dragon",
   "role": "",
-  "displayName": "人面莱姆",
+  "displayName": "远程6",
   "description": "",
   "faceIntro": "其实是三只史莱姆史套娃",
   "attackPattern": "普通远程",
   "gold": 5,
   "stats": {
-    "hp": 8,
-    "armor": 3,
-    "attack": 2,
+    "hp": 4,
+    "armor": 0,
+    "attack": 1,
     "action": 5,
     "recovery": 0
   },
@@ -75,8 +75,11 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [],
-  "level": 2,
+  "skillIds": [
+    "skill.ranged_weapon",
+    "skill.flame_boiling"
+  ],
+  "level": "普通",
   "isElite": false,
   "isBoss": false,
   "isReserve": false,
@@ -88,5 +91,6 @@
   "maxHpDelta": 0,
   "healToFull": false,
   "rewardPoolId": "",
-  "shopOfferCount": 0
+  "shopOfferCount": 0,
+  "sequence": 2
 }

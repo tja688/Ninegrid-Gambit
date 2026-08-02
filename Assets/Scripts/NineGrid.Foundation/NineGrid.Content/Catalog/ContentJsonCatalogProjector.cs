@@ -104,10 +104,12 @@ namespace NineGrid.Content
 
             card.WithRole(ParseRole(dto.role));
 
-            if (dto.level > 0)
+            if (dto.sequence > 0)
             {
-                card.WithLevel(dto.level);
+                card.WithSequence(dto.sequence);
             }
+
+            ApplyMonsterRank(dto, card);
 
             if (dto.isElite)
             {
@@ -144,6 +146,37 @@ namespace NineGrid.Content
             ApplyEffectMounts(dto, catalog, id => projected.AddEffect(id));
             AddTokens(dto.skillIds, value => projected.AddSkill(value));
             return true;
+        }
+
+        private static void ApplyMonsterRank(CardPresentationConfigDto dto, CardContentDefinition card)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            var raw = dto != null ? dto.level : null;
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                if (dto != null && dto.isBoss)
+                {
+                    card.WithRank(MonsterRank.FloorBoss);
+                }
+
+                return;
+            }
+
+            switch (raw.Trim())
+            {
+                case "层主":
+                case "FloorBoss":
+                case "Boss":
+                    card.WithRank(MonsterRank.FloorBoss);
+                    break;
+                default:
+                    card.WithRank(MonsterRank.Normal);
+                    break;
+            }
         }
 
         private static void ApplyMonsterAttackPattern(CardPresentationConfigDto dto, CardContentDefinition card)

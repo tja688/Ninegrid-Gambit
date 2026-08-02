@@ -4,15 +4,15 @@
   "kind": "Monster",
   "deckId": "deck.wandering_legion",
   "role": "",
-  "displayName": "双角毛猪",
+  "displayName": "特1",
   "description": "",
   "faceIntro": "由于毛太长了，不太看得清路",
   "attackPattern": "普通近战",
   "gold": 5,
   "stats": {
-    "hp": 18,
-    "armor": 5,
-    "attack": 2,
+    "hp": 12,
+    "armor": 0,
+    "attack": 1,
     "action": 3,
     "recovery": 0
   },
@@ -75,8 +75,10 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [],
-  "level": 3,
+  "skillIds": [
+    "skill.stack_armor"
+  ],
+  "level": "普通",
   "isElite": false,
   "isBoss": false,
   "isReserve": false,
@@ -88,5 +90,6 @@
   "maxHpDelta": 0,
   "healToFull": false,
   "rewardPoolId": "",
-  "shopOfferCount": 0
+  "shopOfferCount": 0,
+  "sequence": 3
 }

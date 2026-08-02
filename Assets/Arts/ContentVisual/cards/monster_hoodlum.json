@@ -2,12 +2,12 @@
   "schemaVersion": 2,
   "contentId": "monster.hoodlum",
   "kind": "Monster",
-  "deckId": "deck.void",
+  "deckId": "deck.orc_legion",
   "role": "",
-  "displayName": "醉鬼",
+  "displayName": "特8",
   "description": "",
   "faceIntro": "罗斯福十号？会有酒叫这个名字吗？",
-  "attackPattern": "斜角近战",
+  "attackPattern": "普通近战",
   "gold": 5,
   "stats": {
     "hp": 6,
@@ -75,8 +75,11 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [],
-  "level": 2,
+  "skillIds": [
+    "skill.ambush_melee",
+    "skill.steal"
+  ],
+  "level": "普通",
   "isElite": false,
   "isBoss": false,
   "isReserve": false,
@@ -88,5 +91,6 @@
   "maxHpDelta": 0,
   "healToFull": false,
   "rewardPoolId": "",
-  "shopOfferCount": 0
+  "shopOfferCount": 0,
+  "sequence": 4
 }

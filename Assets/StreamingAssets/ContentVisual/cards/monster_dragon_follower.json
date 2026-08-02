@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "contentId": "monster.dragon_follower",
   "kind": "Monster",
-  "deckId": "deck.wandering_legion",
+  "deckId": "deck.smallanimal",
   "role": "",
   "displayName": "爪蜥",
   "description": "",
@@ -76,10 +76,10 @@
   "effectAssemblies": [],
   "effectIds": [],
   "skillIds": [],
-  "level": 1,
+  "level": "普通",
   "isElite": false,
   "isBoss": false,
-  "isReserve": false,
+  "isReserve": true,
   "containerType": "",
   "deckKind": "",
   "monsterDefIds": [],
@@ -88,5 +88,6 @@
   "maxHpDelta": 0,
   "healToFull": false,
   "rewardPoolId": "",
-  "shopOfferCount": 0
+  "shopOfferCount": 0,
+  "sequence": 0
 }

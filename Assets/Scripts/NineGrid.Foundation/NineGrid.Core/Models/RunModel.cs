@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using QFramework;
 
 namespace NineGrid.Core
@@ -7,12 +8,21 @@ namespace NineGrid.Core
         public const int NodesPerFloor = 8;
         public const int FinalFloor = 3;
 
+        private readonly List<string> mUsedMonsterDeckIds = new List<string>();
+
         public BindableProperty<int> Floor { get; private set; }
         public BindableProperty<int> NodeIndex { get; private set; }
         public BindableProperty<ulong> Seed { get; private set; }
         public BindableProperty<RoomKind> Room { get; private set; }
         public BindableProperty<GamePhase> Phase { get; private set; }
         public BindableProperty<int> Version { get; private set; }
+        /// <summary>本层绑定的主题怪物卡组 Id（ADR-0022）；空表示尚未抽取。</summary>
+        public BindableProperty<string> FloorMonsterDeckId { get; private set; }
+
+        public IReadOnlyList<string> UsedMonsterDeckIds
+        {
+            get { return mUsedMonsterDeckIds; }
+        }
 
         protected override void OnInit()
         {
@@ -24,6 +34,7 @@ namespace NineGrid.Core
                 Room = new BindableProperty<RoomKind>(RoomKind.None);
                 Phase = new BindableProperty<GamePhase>(GamePhase.None);
                 Version = new BindableProperty<int>(0);
+                FloorMonsterDeckId = new BindableProperty<string>(string.Empty);
             }
         }
 
@@ -34,6 +45,8 @@ namespace NineGrid.Core
             Seed.Value = seed;
             Room.Value = RoomKind.None;
             Phase.Value = GamePhase.BuildEnemyPool;
+            FloorMonsterDeckId.Value = string.Empty;
+            mUsedMonsterDeckIds.Clear();
             Touch();
         }
 
@@ -41,6 +54,47 @@ namespace NineGrid.Core
         {
             Phase.Value = phase;
             Touch();
+        }
+
+        /// <summary>绑定本层主题卡组；同层重复调用保留首次结果。</summary>
+        public bool TryBindFloorMonsterDeck(string deckId)
+        {
+            if (string.IsNullOrEmpty(deckId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(FloorMonsterDeckId.Value))
+            {
+                return string.Equals(FloorMonsterDeckId.Value, deckId, System.StringComparison.Ordinal);
+            }
+
+            FloorMonsterDeckId.Value = deckId;
+            if (!mUsedMonsterDeckIds.Contains(deckId))
+            {
+                mUsedMonsterDeckIds.Add(deckId);
+            }
+
+            Touch();
+            return true;
+        }
+
+        public bool IsMonsterDeckUsed(string deckId)
+        {
+            if (string.IsNullOrEmpty(deckId))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < mUsedMonsterDeckIds.Count; i++)
+            {
+                if (string.Equals(mUsedMonsterDeckIds[i], deckId, System.StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public bool AdvanceNode()
@@ -57,6 +111,7 @@ namespace NineGrid.Core
 
                 Floor.Value++;
                 NodeIndex.Value = 0;
+                FloorMonsterDeckId.Value = string.Empty;
                 Touch();
                 return false;
             }

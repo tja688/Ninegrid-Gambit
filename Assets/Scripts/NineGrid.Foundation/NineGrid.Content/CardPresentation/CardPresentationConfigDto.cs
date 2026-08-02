@@ -57,8 +57,12 @@ namespace NineGrid.Content.CardPresentation
         public string[] effectIds;
         /// <summary>怪物技能挂载；Monster schema≥2 投影进 Catalog.SkillIds。</summary>
         public string[] skillIds;
-        /// <summary>怪物等级；Monster schema≥2。</summary>
-        public int level;
+        /// <summary>
+        /// 怪物等级：普通 / 层主（ADR-0022）。历史 int 1/2/3 已退役；投影只认中文或 FloorBoss/Normal。
+        /// </summary>
+        public string level;
+        /// <summary>主题卡组内序列 1–5；序列 5 即层主。</summary>
+        public int sequence;
         public bool isElite;
         public bool isBoss;
         public bool isReserve;

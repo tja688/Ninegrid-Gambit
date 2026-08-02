@@ -4,16 +4,16 @@
   "kind": "Monster",
   "deckId": "deck.skeleton_legion",
   "role": "",
-  "displayName": "短剑骷髅",
+  "displayName": "远程3",
   "description": "",
   "faceIntro": "剑是捡的",
-  "attackPattern": "普通近战",
+  "attackPattern": "普通远程",
   "gold": 5,
   "stats": {
-    "hp": 3,
-    "armor": 3,
-    "attack": 2,
-    "action": 3,
+    "hp": 4,
+    "armor": 0,
+    "attack": 1,
+    "action": 5,
     "recovery": 0
   },
   "sprites": {
@@ -75,8 +75,11 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [],
-  "level": 1,
+  "skillIds": [
+    "skill.ranged_weapon",
+    "skill.speed_up"
+  ],
+  "level": "普通",
   "isElite": false,
   "isBoss": false,
   "isReserve": false,
@@ -88,5 +91,6 @@
   "maxHpDelta": 0,
   "healToFull": false,
   "rewardPoolId": "",
-  "shopOfferCount": 0
+  "shopOfferCount": 0,
+  "sequence": 2
 }

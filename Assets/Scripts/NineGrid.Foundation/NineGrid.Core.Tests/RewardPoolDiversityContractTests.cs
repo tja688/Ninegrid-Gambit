@@ -9,7 +9,7 @@ using QFramework;
 namespace NineGrid.Core.Tests
 {
     /// <summary>
-    /// 奖励池分层抽取 + 同 Kind 怪物牌组按层随机缓存契约。
+    /// 奖励池分层抽取契约（主题卡组按层绑定见 <see cref="ThemeMonsterDeckContractTests"/>）。
     /// </summary>
     public sealed class RewardPoolDiversityContractTests
     {
@@ -39,7 +39,6 @@ namespace NineGrid.Core.Tests
         {
             var catalog = mArch.GetSystem<IContentSystem>().Catalog;
             Assert.IsTrue(catalog.Rewards.TryGetPool("help.choice", out var pool));
-            // 查询规则或白名单均可；至少覆盖攻/防/功能候选。
             Assert.GreaterOrEqual(pool.Entries.Count, 5);
 
             var ids = new HashSet<string>();
@@ -80,56 +79,6 @@ namespace NineGrid.Core.Tests
             Assert.AreNotEqual(rolled[0].DefId, rolled[1].DefId);
             Assert.AreNotEqual(rolled[0].DefId, rolled[2].DefId);
             Assert.AreNotEqual(rolled[1].DefId, rolled[2].DefId);
-        }
-
-        [Test]
-        public void FindMonsterDeck_SameKindCachedPerFloor_DifferentSeedsCanVary()
-        {
-            var optionsA = mReward.BuildNodeDeckOptions(1, monsterDeckId: null);
-            var optionsB = mReward.BuildNodeDeckOptions(2, monsterDeckId: null);
-            Assert.IsNotNull(optionsA);
-            Assert.IsNotNull(optionsB);
-
-            var deckIdA = FirstEnemyDeckId(optionsA);
-            var deckIdB = FirstEnemyDeckId(optionsB);
-            Assert.AreEqual(deckIdA, deckIdB);
-
-            var seen = new HashSet<string>();
-            seen.Add(deckIdA);
-            for (ulong seed = 1; seed <= 40; seed++)
-            {
-                NineGridArchitecture.ResetForTests();
-                var arch = NineGridArchitecture.Current;
-                arch.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, BuildCatalog());
-                InitialGameFactory.Create(arch, new InitialGameOptions { Seed = seed });
-                var opts = arch.GetSystem<IRewardSystem>().BuildNodeDeckOptions(1, null);
-                seen.Add(FirstEnemyDeckId(opts));
-                if (seen.Count >= 2)
-                {
-                    break;
-                }
-            }
-
-            Assert.GreaterOrEqual(seen.Count, 2, "同 Kind 应能随机到多套牌组");
-        }
-
-        private static string FirstEnemyDeckId(NodeDeckOptions options)
-        {
-            Assert.IsNotNull(options);
-            Assert.IsNotNull(options.EnemyCards);
-            Assert.Greater(options.EnemyCards.Count, 0);
-            var defId = options.EnemyCards[0].DefId;
-            if (defId == "monster.stone_man")
-            {
-                return "deck.stone";
-            }
-
-            if (defId == "monster.beggar")
-            {
-                return "deck.wandering";
-            }
-
-            return defId;
         }
 
         private static GameContentCatalog BuildCatalog()
@@ -210,51 +159,6 @@ namespace NineGrid.Core.Tests
                 .Add("relic.phoenix_feather", CardKind.Relic, 1)
                 .Add("relic.craving", CardKind.Relic, 1)
                 .Add("relic.junk_slot_machine", CardKind.Relic, 1));
-
-            var stone = new MonsterDeckDefinition("deck.stone_legion", "石人", MonsterDeckKind.WeakElite);
-            stone.AddMonster("monster.stone_man");
-            catalog.AddMonsterDeck(stone);
-            var wander = new MonsterDeckDefinition("deck.wandering_legion", "流浪", MonsterDeckKind.WeakElite);
-            wander.AddMonster("monster.beggar");
-            catalog.AddMonsterDeck(wander);
-
-            catalog.AddCard(new CardContentDefinition("monster.stone_man", "石人", CardKind.Monster)
-                .WithStats(10, 2, 0)
-                .WithLevel(1)
-                .InDeck(stone.Id));
-            catalog.AddCard(new CardContentDefinition("monster.beggar", "乞丐", CardKind.Monster)
-                .WithStats(8, 1, 0)
-                .WithLevel(1)
-                .InDeck(wander.Id));
-
-            catalog.Rewards.AddNodeRule(new NodeDeckRule
-            {
-                NodeIndex = 1,
-                TotalMonsterCount = 2,
-                Level1Min = 2,
-                Level1Max = 2,
-                Level2Min = 0,
-                Level2Max = 0,
-                Level3Min = 0,
-                Level3Max = 0,
-                EliteCount = 0,
-                BossCount = 0,
-                DeckKind = MonsterDeckKind.WeakElite
-            });
-            catalog.Rewards.AddNodeRule(new NodeDeckRule
-            {
-                NodeIndex = 2,
-                TotalMonsterCount = 2,
-                Level1Min = 2,
-                Level1Max = 2,
-                Level2Min = 0,
-                Level2Max = 0,
-                Level3Min = 0,
-                Level3Max = 0,
-                EliteCount = 0,
-                BossCount = 0,
-                DeckKind = MonsterDeckKind.WeakElite
-            });
 
             return catalog;
         }

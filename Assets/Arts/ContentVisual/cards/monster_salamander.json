@@ -4,15 +4,15 @@
   "kind": "Monster",
   "deckId": "deck.wandering_legion",
   "role": "",
-  "displayName": "战士蜥",
+  "displayName": "远程1",
   "description": "",
   "faceIntro": "蜥蜴一族中的战士",
   "attackPattern": "普通远程",
   "gold": 5,
   "stats": {
-    "hp": 9,
+    "hp": 4,
     "armor": 0,
-    "attack": 3,
+    "attack": 2,
     "action": 5,
     "recovery": 0
   },
@@ -75,8 +75,10 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [],
-  "level": 1,
+  "skillIds": [
+    "skill.ranged_weapon"
+  ],
+  "level": "普通",
   "isElite": false,
   "isBoss": false,
   "isReserve": false,
@@ -88,5 +90,6 @@
   "maxHpDelta": 0,
   "healToFull": false,
   "rewardPoolId": "",
-  "shopOfferCount": 0
+  "shopOfferCount": 0,
+  "sequence": 2
 }

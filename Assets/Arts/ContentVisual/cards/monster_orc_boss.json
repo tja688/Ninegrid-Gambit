@@ -2,17 +2,17 @@
   "schemaVersion": 2,
   "contentId": "monster.orc_boss",
   "kind": "Monster",
-  "deckId": "deck.wandering_legion",
+  "deckId": "deck.stone_legion",
   "role": "",
-  "displayName": "野牛",
+  "displayName": "boss2",
   "description": "",
   "faceIntro": "冲锋！！！！！！！！！！！！！！！",
-  "attackPattern": "全向近战",
+  "attackPattern": "普通近战",
   "gold": 5,
   "stats": {
-    "hp": 22,
-    "armor": 4,
-    "attack": 4,
+    "hp": 30,
+    "armor": 0,
+    "attack": 3,
     "action": 3,
     "recovery": 0
   },
@@ -75,10 +75,12 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [],
-  "level": 0,
-  "isElite": true,
-  "isBoss": false,
+  "skillIds": [
+    "skill.space_mastery"
+  ],
+  "level": "层主",
+  "isElite": false,
+  "isBoss": true,
   "isReserve": false,
   "containerType": "",
   "deckKind": "",
@@ -88,5 +90,6 @@
   "maxHpDelta": 0,
   "healToFull": false,
   "rewardPoolId": "",
-  "shopOfferCount": 0
+  "shopOfferCount": 0,
+  "sequence": 5
 }

@@ -2,17 +2,17 @@
   "schemaVersion": 2,
   "contentId": "monster.thug",
   "kind": "Monster",
-  "deckId": "deck.void",
+  "deckId": "deck.orc_legion",
   "role": "",
-  "displayName": "刺客",
+  "displayName": "近战4",
   "description": "",
   "faceIntro": "虽然白毛会暴露行踪，但是这是个性的表达",
   "attackPattern": "普通近战",
   "gold": 5,
   "stats": {
-    "hp": 6,
-    "armor": 0,
-    "attack": 2,
+    "hp": 4,
+    "armor": 2,
+    "attack": 1,
     "action": 3,
     "recovery": 0
   },
@@ -75,8 +75,11 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [],
-  "level": 2,
+  "skillIds": [
+    "skill.ambush_melee",
+    "skill.leap_kill"
+  ],
+  "level": "普通",
   "isElite": false,
   "isBoss": false,
   "isReserve": false,
@@ -88,5 +91,6 @@
   "maxHpDelta": 0,
   "healToFull": false,
   "rewardPoolId": "",
-  "shopOfferCount": 0
+  "shopOfferCount": 0,
+  "sequence": 1
 }

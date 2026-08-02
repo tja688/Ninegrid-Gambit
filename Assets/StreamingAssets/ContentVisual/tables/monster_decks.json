@@ -1,30 +1,11 @@
 [
-  {
-    "deck_id": "deck.wandering_legion",
-    "deck_kind": "WeakElite"
-  },
-  {
-    "deck_id": "deck.stone_legion",
-    "deck_kind": "WeakElite"
-  },
-  {
-    "deck_id": "deck.skeleton_legion",
-    "deck_kind": "StrongElite"
-  },
-  {
-    "deck_id": "deck.orc_legion",
-    "deck_kind": "StrongElite"
-  },
-  {
-    "deck_id": "deck.void",
-    "deck_kind": "Boss"
-  },
-  {
-    "deck_id": "deck.dragon",
-    "deck_kind": "Boss"
-  },
-  {
-    "deck_id": "deck.npc",
-    "deck_kind": "Reserve"
-  }
+  { "deck_id": "deck.wandering_legion", "deck_kind": "Unknown", "display_name": "基础" },
+  { "deck_id": "deck.stone_legion", "deck_kind": "Unknown", "display_name": "旋转" },
+  { "deck_id": "deck.skeleton_legion", "deck_kind": "Unknown", "display_name": "召唤" },
+  { "deck_id": "deck.orc_legion", "deck_kind": "Unknown", "display_name": "翻面" },
+  { "deck_id": "deck.void", "deck_kind": "Unknown", "display_name": "链接" },
+  { "deck_id": "deck.dragon", "deck_kind": "Unknown", "display_name": "烈焰" },
+  { "deck_id": "deck.insect", "deck_kind": "Unknown", "display_name": "决斗" },
+  { "deck_id": "deck.npc", "deck_kind": "Reserve", "display_name": "Reserve" },
+  { "deck_id": "deck.smallanimal", "deck_kind": "Reserve", "display_name": "Reserve" }
 ]

@@ -36,8 +36,9 @@
 | `CardKilledFaceAbsoluteTests` | #58：`CardKilled` 携带 `RemainingHp=0` |
 | `RewardOfferFaceProjectionContractTests` | #62：`OfferRewardChoice` 把 CreateDraft 攻/甲/血写入 `RewardEntry` 与 `RewardOffered` Message |
 | `RewardPoolQueryContractTests` / `RewardPoolDiversityContractTests` | #71：奖池查询规则展开、role 均衡、稀有度分层抽取 |
+| `ThemeMonsterDeckContractTests` | #86 / ADR-0022：每层主题卡组不重复绑定、节点按序列 1–5 抽、Reserve 不参与、层主击杀固定 1 金箱+2 金币 |
 | `MapNodeProgressionContractTests` | #84 / ADR-0021：8 节点编排全表、非战斗不进 InteractionLoop、清关跳过 help.choice、道具卡格结算+清 Trap、困难房门槛、第 3 层节点 8 通关 |
-| `ContentCatalogValidationTests` | 小型夹具 `ValidateCatalog` 绿；生产 Bootstrap（模板表 + 装配引用解析 + schema≥2 JSON 投影 + 奖池查询展开）校验绿；跨容器共享模板不同实参（#70 / ADR-0009） |
+| `ContentCatalogValidationTests` | 小型夹具 `ValidateCatalog` 绿；生产 Bootstrap（模板表 + 装配引用解析 + schema≥2 JSON 投影 + 奖池查询展开 + 节点序列规则）校验绿；跨容器共享模板不同实参（#70 / ADR-0009） |
 | `EffectTemplateAssemblyContractTests` | #70：取消 typeTag/verb 门禁；`requires` 解析；装配实参替换与跨容器共享模板 |
 | `EffectSelfDeclarationContractTests` | #72 / ADR-0010：requires 校验（未知 token / mount 错配 / 缺声明）；拒上下文开关旧形；生产卡挂载显式场景声明审计归零；`ValidateCatalog` 绿 |
 | `CardOwnedTriggerScopeGateRegressionTests` / `CardZoneDeckGateRegressionTests` | #73 / ADR-0010 Phase C：外部门禁拆除后自陈等价（无 `EffectOwnerScopeGate` / 区域门禁回流）；帮助卡互不误触、亡语互不误触 |
@@ -45,7 +46,7 @@
 | `InteractionCountDecoupleTests` | #75：未击杀交战/拾卡/点空格推进 interactionCount；道具使用不计；计数/补牌/旋转可分步 |
 | `ActionCountdownSemanticsTests` | #76 / ADR-0013：OnSelfMove / OnCumulative 倒计时拍序；OnInteract.every；外部加减不永久错相；`AttackPatternPrefix` 与 `effect.` 隔离 |
 | `SlotIdDiagonalAdjacencyTests` | #77 / ADR-0011：对角相邻谓词；正交 `IsAdjacentTo` 语义不变 |
-| `AttackPatternDataPlaneTests` | #77/#82 / ADR-0011：五取值与频率；缺省报错；显式「无」通过；进场倒计时初始化；#82 生产 Catalog 按设计赋模（非全员「无」；攻 0 怪为「无」） |
+| `AttackPatternDataPlaneTests` | #77/#82/#86 / ADR-0011：五取值与频率；缺省报错；显式「无」通过；进场倒计时初始化；生产 Catalog 按主题序列回填后的攻击模式赋模 |
 | `OnBattleEngagementScopeTests` | #78 / ADR-0012：OnBattle 仅交战作用域；非交战 DealDamage 不触发、不洗 UntilBattleEnds；「每战斗」只数交战 |
 | `EnemyActionPhaseTests` | #79/#80 / ADR-0011–0012：敌方行动报名/逐条/收尾；四开火模式位置×频率；窗口错过重置；Avatar 偏心真对角；盘面冻结；玩家死亡终止；名单冻结；反伤致死伤害仍成立；「无」不开火 |
 | `EnemyActionVolleyIntentTests` / `CardPresentationCommitTests`（ActionCount / Action_Icon） | #81：倒计时事件→指令 Commit；Action_Icon 模板兜底；导演单向打击走 Counter 分拍 |

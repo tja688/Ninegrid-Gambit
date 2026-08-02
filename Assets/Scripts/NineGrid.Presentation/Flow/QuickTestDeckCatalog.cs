@@ -123,17 +123,8 @@ namespace NineGrid.Flow
 
         public static int GetDefaultNodeIndexForDeckKind(MonsterDeckKind kind)
         {
-            switch (kind)
-            {
-                case MonsterDeckKind.WeakElite:
-                    return 1;
-                case MonsterDeckKind.StrongElite:
-                    return 4;
-                case MonsterDeckKind.Boss:
-                    return 7;
-                default:
-                    return 1;
-            }
+            // ADR-0022：deck_kind 不再分档；任意主题卡组默认从节点 1 开测。
+            return 1;
         }
 
         public static int GetDefaultNodeIndexForDeckId(GameContentCatalog catalog, string deckId)

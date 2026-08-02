@@ -35,8 +35,6 @@ namespace NineGrid.Core.Systems
         private const int ConsecutiveAppearanceWeightDenominator = 2;
 
         private IUnRegister mKillRewardUnregister;
-        private readonly Dictionary<string, string> mFloorMonsterDeckCache = new Dictionary<string, string>();
-        private ulong mFloorMonsterDeckCacheSeed = ulong.MaxValue;
         private readonly HashSet<string> mConsecutiveAppearancePenaltyRelics = new HashSet<string>();
 
         protected override void OnInit()
@@ -280,7 +278,7 @@ namespace NineGrid.Core.Systems
                 return fallback;
             }
 
-            MonsterDeckDefinition deck = FindMonsterDeck(catalog, monsterDeckId, rule.DeckKind);
+            MonsterDeckDefinition deck = FindMonsterDeck(catalog, monsterDeckId);
             if (deck == null)
             {
                 var fallback = new NodeDeckOptions();
@@ -292,25 +290,17 @@ namespace NineGrid.Core.Systems
             {
                 PlayerOpeningCount = 3,
                 EnemyOpeningCount = 3,
-                RequireElite = rule.EliteCount > 0 || rule.BossCount > 0
+                // 序列 5 = 层主；开局必含层主时 OpeningDeal 走 RequireElite（Boss Counter 亦计 Elite）。
+                RequireElite = rule.Seq5Count > 0
             };
 
             AddRunPlayerSideCards(catalog, options);
 
-            var selectedNormalCount = 0;
-            selectedNormalCount += AddLevelCards(catalog, deck, options, 1, RollRange(rule.Level1Min, rule.Level1Max));
-            selectedNormalCount += AddLevelCards(catalog, deck, options, 2, RollRange(rule.Level2Min, rule.Level2Max));
-
-            var remaining = rule.TotalMonsterCount - selectedNormalCount;
-            if (rule.Level3Max > 0)
+            for (var sequence = 1; sequence <= 5; sequence++)
             {
-                var rolled = RollRange(rule.Level3Min, rule.Level3Max);
-                remaining = remaining < rolled ? remaining : rolled;
+                AddSequenceCards(catalog, deck, options, sequence, rule.GetSequenceCount(sequence));
             }
 
-            AddLevelCards(catalog, deck, options, 3, remaining);
-            AddSpecialCards(catalog, deck, options, true, false, rule.EliteCount);
-            AddSpecialCards(catalog, deck, options, false, true, rule.BossCount);
             return options;
         }
 
@@ -366,15 +356,20 @@ namespace NineGrid.Core.Systems
                     continue;
                 }
 
-                var poolId = card.Counters.Get(CoreCounterKeys.Boss) > 0
-                    ? "kill.boss"
-                    : card.Counters.Get(CoreCounterKeys.Elite) > 0 ? "kill.elite" : string.Empty;
-                if (string.IsNullOrEmpty(poolId))
+                if (card.Counters.Get(CoreCounterKeys.Boss) > 0)
+                {
+                    // 设计案：层主死亡洗入 1 金色宝箱卡 + 2 金币卡（固定，不走奖池随机）。
+                    result.Add(new ShuffleIntoDrawPileAction("help.golden_chest_card", CardKind.HelpCard, 1, false));
+                    result.Add(new ShuffleIntoDrawPileAction("help.gold_card", CardKind.HelpCard, 2, false));
+                    continue;
+                }
+
+                if (card.Counters.Get(CoreCounterKeys.Elite) <= 0)
                 {
                     continue;
                 }
 
-                var rewards = RollPool(poolId);
+                var rewards = RollPool("kill.elite");
                 for (var j = 0; j < rewards.Count; j++)
                 {
                     result.Add(new ShuffleIntoDrawPileAction(rewards[j].DefId, rewards[j].Kind, rewards[j].Count, false));
@@ -404,11 +399,11 @@ namespace NineGrid.Core.Systems
             }
         }
 
-        private int AddLevelCards(
+        private int AddSequenceCards(
             GameContentCatalog catalog,
             MonsterDeckDefinition deck,
             NodeDeckOptions options,
-            int level,
+            int sequence,
             int count)
         {
             if (count <= 0)
@@ -416,7 +411,7 @@ namespace NineGrid.Core.Systems
                 return 0;
             }
 
-            var candidates = FilterMonsters(catalog, deck, level, false, false);
+            var candidates = FilterMonstersBySequence(catalog, deck, sequence);
             for (var i = 0; i < count && candidates.Count > 0; i++)
             {
                 var selected = candidates[this.GetUtility<IRngUtility>().Range(0, candidates.Count)];
@@ -426,33 +421,10 @@ namespace NineGrid.Core.Systems
             return count;
         }
 
-        private void AddSpecialCards(
+        private static List<CardContentDefinition> FilterMonstersBySequence(
             GameContentCatalog catalog,
             MonsterDeckDefinition deck,
-            NodeDeckOptions options,
-            bool elite,
-            bool boss,
-            int count)
-        {
-            if (count <= 0)
-            {
-                return;
-            }
-
-            var candidates = FilterMonsters(catalog, deck, 0, elite, boss);
-            for (var i = 0; i < count && candidates.Count > 0; i++)
-            {
-                var selected = candidates[this.GetUtility<IRngUtility>().Range(0, candidates.Count)];
-                options.AddEnemyCard(this.GetSystem<IContentSystem>().CreateDraft(selected.DefId));
-            }
-        }
-
-        private static List<CardContentDefinition> FilterMonsters(
-            GameContentCatalog catalog,
-            MonsterDeckDefinition deck,
-            int level,
-            bool elite,
-            bool boss)
+            int sequence)
         {
             var result = new List<CardContentDefinition>();
             for (var i = 0; i < deck.MonsterDefIds.Count; i++)
@@ -468,27 +440,7 @@ namespace NineGrid.Core.Systems
                     continue;
                 }
 
-                if (boss)
-                {
-                    if (card.IsBoss)
-                    {
-                        result.Add(card);
-                    }
-
-                    continue;
-                }
-
-                if (elite)
-                {
-                    if (card.IsElite && !card.IsBoss)
-                    {
-                        result.Add(card);
-                    }
-
-                    continue;
-                }
-
-                if (!card.IsElite && !card.IsBoss && card.Level == level)
+                if (card.Sequence == sequence)
                 {
                     result.Add(card);
                 }
@@ -510,7 +462,7 @@ namespace NineGrid.Core.Systems
             return null;
         }
 
-        private MonsterDeckDefinition FindMonsterDeck(GameContentCatalog catalog, string deckId, MonsterDeckKind kind)
+        private MonsterDeckDefinition FindMonsterDeck(GameContentCatalog catalog, string deckId)
         {
             MonsterDeckDefinition deck;
             if (!string.IsNullOrEmpty(deckId) && catalog.MonsterDecks.TryGetValue(deckId, out deck))
@@ -518,12 +470,9 @@ namespace NineGrid.Core.Systems
                 return deck;
             }
 
-            EnsureFloorMonsterDeckCache();
             var run = this.GetModel<RunModel>();
-            var cacheKey = run.Floor.Value + ":" + ((int)kind).ToString();
-            string cachedId;
-            if (mFloorMonsterDeckCache.TryGetValue(cacheKey, out cachedId)
-                && catalog.MonsterDecks.TryGetValue(cachedId, out deck))
+            if (!string.IsNullOrEmpty(run.FloorMonsterDeckId.Value)
+                && catalog.MonsterDecks.TryGetValue(run.FloorMonsterDeckId.Value, out deck))
             {
                 return deck;
             }
@@ -531,9 +480,28 @@ namespace NineGrid.Core.Systems
             var matches = new List<MonsterDeckDefinition>();
             foreach (var pair in catalog.MonsterDecks)
             {
-                if (pair.Value.Kind == kind)
+                if (pair.Value == null || pair.Value.Kind == MonsterDeckKind.Reserve)
                 {
-                    matches.Add(pair.Value);
+                    continue;
+                }
+
+                if (run.IsMonsterDeckUsed(pair.Value.Id))
+                {
+                    continue;
+                }
+
+                matches.Add(pair.Value);
+            }
+
+            if (matches.Count == 0)
+            {
+                // 主题卡组用尽时回退：任意非 Reserve（仍避免重复优先已失败）。
+                foreach (var pair in catalog.MonsterDecks)
+                {
+                    if (pair.Value != null && pair.Value.Kind != MonsterDeckKind.Reserve)
+                    {
+                        matches.Add(pair.Value);
+                    }
                 }
             }
 
@@ -543,20 +511,8 @@ namespace NineGrid.Core.Systems
             }
 
             var pick = matches[this.GetUtility<IRngUtility>().Range(0, matches.Count)];
-            mFloorMonsterDeckCache[cacheKey] = pick.Id;
+            run.TryBindFloorMonsterDeck(pick.Id);
             return pick;
-        }
-
-        private void EnsureFloorMonsterDeckCache()
-        {
-            var seed = this.GetModel<RunModel>().Seed.Value;
-            if (seed == mFloorMonsterDeckCacheSeed)
-            {
-                return;
-            }
-
-            mFloorMonsterDeckCache.Clear();
-            mFloorMonsterDeckCacheSeed = seed;
         }
 
         /// <summary>

@@ -4,13 +4,13 @@
   "kind": "Monster",
   "deckId": "deck.dragon",
   "role": "",
-  "displayName": "双球绿莱姆",
+  "displayName": "特12",
   "description": "",
   "faceIntro": "头上的洞其实是屁眼",
   "attackPattern": "普通近战",
   "gold": 5,
   "stats": {
-    "hp": 10,
+    "hp": 6,
     "armor": 0,
     "attack": 2,
     "action": 3,
@@ -75,8 +75,10 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [],
-  "level": 1,
+  "skillIds": [
+    "skill.intense_burning"
+  ],
+  "level": "普通",
   "isElite": false,
   "isBoss": false,
   "isReserve": false,
@@ -88,5 +90,6 @@
   "maxHpDelta": 0,
   "healToFull": false,
   "rewardPoolId": "",
-  "shopOfferCount": 0
+  "shopOfferCount": 0,
+  "sequence": 4
 }

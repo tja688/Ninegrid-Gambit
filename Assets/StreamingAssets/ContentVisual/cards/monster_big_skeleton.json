@@ -4,15 +4,15 @@
   "kind": "Monster",
   "deckId": "deck.skeleton_legion",
   "role": "",
-  "displayName": "巨剑骷髅",
+  "displayName": "特6",
   "description": "",
   "faceIntro": "蝉联三年最帅骷髅的称号",
   "attackPattern": "普通近战",
   "gold": 5,
   "stats": {
-    "hp": 10,
+    "hp": 8,
     "armor": 0,
-    "attack": 2,
+    "attack": 1,
     "action": 3,
     "recovery": 0
   },
@@ -75,8 +75,10 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [],
-  "level": 2,
+  "skillIds": [
+    "skill.chant"
+  ],
+  "level": "普通",
   "isElite": false,
   "isBoss": false,
   "isReserve": false,
@@ -88,5 +90,6 @@
   "maxHpDelta": 0,
   "healToFull": false,
   "rewardPoolId": "",
-  "shopOfferCount": 0
+  "shopOfferCount": 0,
+  "sequence": 4
 }

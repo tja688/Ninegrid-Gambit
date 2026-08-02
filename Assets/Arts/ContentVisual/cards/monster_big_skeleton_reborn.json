@@ -1,92 +1,93 @@
 {
-    "schemaVersion": 2,
-    "contentId": "monster.big_skeleton_reborn",
-    "kind": "Monster",
-    "deckId": "deck.skeleton_legion",
-    "role": "",
-    "displayName": "弓箭骷髅",
-    "description": "",
-    "faceIntro": "有人问他的箭从哪里来，答案是就地取材",
-    "attackPattern": "普通近战",
-    "gold": 5,
-    "stats": {
-        "hp": 10,
-        "armor": 0,
-        "attack": 2,
-        "action": 3,
-        "recovery": 0
-    },
-    "sprites": {
-        "mainIcon": "",
-        "faceBackground": "",
-        "cardFrame": "",
-        "banner": "",
-        "backBorder": "",
-        "backShirt": "",
-        "backLogo": ""
-    },
-    "mainVisual": {
+  "schemaVersion": 2,
+  "contentId": "monster.big_skeleton_reborn",
+  "kind": "Monster",
+  "deckId": "deck.smallanimal",
+  "role": "",
+  "displayName": "弓箭骷髅",
+  "description": "",
+  "faceIntro": "有人问他的箭从哪里来，答案是就地取材",
+  "attackPattern": "普通近战",
+  "gold": 5,
+  "stats": {
+    "hp": 10,
+    "armor": 0,
+    "attack": 2,
+    "action": 3,
+    "recovery": 0
+  },
+  "sprites": {
+    "mainIcon": "",
+    "faceBackground": "",
+    "cardFrame": "",
+    "banner": "",
+    "backBorder": "",
+    "backShirt": "",
+    "backLogo": ""
+  },
+  "mainVisual": {
+    "offsetX": 0.0,
+    "offsetY": -0.15000000596046448,
+    "uniformScale": 0.8999999761581421
+  },
+  "animations": {
+    "defaultFps": 8.0,
+    "slots": [
+      {
+        "id": "idle",
+        "sourceType": "folder",
+        "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/005skull_idle_01",
         "offsetX": 0.0,
-        "offsetY": -0.15000000596046449,
-        "uniformScale": 0.8999999761581421
-    },
-    "animations": {
-        "defaultFps": 8.0,
-        "slots": [
-            {
-                "id": "idle",
-                "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/005skull_idle_01",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "attack",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "hurt",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "death",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "lunch",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            }
-        ]
-    },
-    "extraSlots": [],
-    "rarity": "None",
-    "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 2,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": true,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0
+        "offsetY": 0.0
+      },
+      {
+        "id": "attack",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "hurt",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "death",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "lunch",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      }
+    ]
+  },
+  "extraSlots": [],
+  "rarity": "None",
+  "tags": [],
+  "effectAssemblies": [],
+  "effectIds": [],
+  "skillIds": [],
+  "level": "普通",
+  "isElite": false,
+  "isBoss": false,
+  "isReserve": true,
+  "containerType": "",
+  "deckKind": "",
+  "monsterDefIds": [],
+  "weight": 0,
+  "goldDelta": 0,
+  "maxHpDelta": 0,
+  "healToFull": false,
+  "rewardPoolId": "",
+  "shopOfferCount": 0,
+  "sequence": 0
 }
