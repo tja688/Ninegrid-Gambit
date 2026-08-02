@@ -5,7 +5,7 @@
   "deckId": "deck.wandering_legion",
   "role": "",
   "displayName": "战士蜥",
-  "description": "每移动3次放烈焰",
+  "description": "",
   "faceIntro": "蜥蜴一族中的战士",
   "attackPattern": "普通远程",
   "gold": 5,

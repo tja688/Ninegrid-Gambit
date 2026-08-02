@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "deck.help",
     "displayName": "传送",
-    "description": "选一张卡洗回卡组",
+    "description": "",
     "gold": 30,
     "stats": {
         "hp": 0,

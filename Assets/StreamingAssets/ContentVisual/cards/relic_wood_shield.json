@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "木盾",
-    "description": "基础护甲+{value}，木套装额外+2",
+    "description": "",
     "gold": 0,
     "stats": {
         "hp": 0,

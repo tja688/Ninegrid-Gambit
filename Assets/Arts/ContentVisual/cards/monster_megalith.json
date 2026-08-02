@@ -5,7 +5,7 @@
   "deckId": "deck.insect",
   "role": "",
   "displayName": "蜂巢",
-  "description": "移动吸相邻护甲；损10护甲洗石人",
+  "description": "",
   "faceIntro": "不收快递",
   "attackPattern": "全向近战",
   "gold": 5,

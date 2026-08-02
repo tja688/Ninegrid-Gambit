@@ -4,7 +4,7 @@
   "kind": "Relic",
   "deckId": "deck.relic",
   "displayName": "刺皮",
-  "description": "战斗时对怪物造成等同其攻击的伤害",
+  "description": "",
   "gold": 0,
   "stats": {
     "hp": 0,

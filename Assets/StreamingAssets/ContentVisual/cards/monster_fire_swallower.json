@@ -5,7 +5,7 @@
   "deckId": "deck.smallanimal",
   "role": "",
   "displayName": "田鼠",
-  "description": "左列战斗时按损失护甲伤害玩家",
+  "description": "",
   "faceIntro": "田鼠不会挖洞，那是鼹鼠干的事情",
   "attackPattern": "普通近战",
   "gold": 5,

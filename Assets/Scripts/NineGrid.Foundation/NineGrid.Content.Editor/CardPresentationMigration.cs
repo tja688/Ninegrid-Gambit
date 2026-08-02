@@ -46,7 +46,27 @@ namespace NineGrid.Content.Editor
         }
 
         /// <summary>
-        /// 表现层配置器条目门槛：卡面种 + 排除 <c>skill.*</c>（防 Kind 误标仍混入道具卡侧栏）。
+        /// 房间图标 / 特殊选项卡：进表现层配置器，但不算可 Spawn 真卡（见 <see cref="IsCardLikeKind"/>）。
+        /// </summary>
+        public static bool IsRoomOrChoiceOptionKind(string contentKind)
+        {
+            if (string.IsNullOrWhiteSpace(contentKind))
+            {
+                return false;
+            }
+
+            if (Enum.TryParse(contentKind, true, out ContentVisualKind kind))
+            {
+                return kind == ContentVisualKind.Room || kind == ContentVisualKind.ChoiceOption;
+            }
+
+            var k = contentKind.Trim();
+            return string.Equals(k, "Room", StringComparison.OrdinalIgnoreCase)
+                   || string.Equals(k, "ChoiceOption", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// 表现层配置器条目门槛：真卡种 + Room/ChoiceOption；排除 <c>skill.*</c>。
         /// </summary>
         public static bool IsPresentationEditorEntry(string contentKind, string contentId)
         {
@@ -56,7 +76,7 @@ namespace NineGrid.Content.Editor
                 return false;
             }
 
-            return IsCardLikeKind(contentKind);
+            return IsCardLikeKind(contentKind) || IsRoomOrChoiceOptionKind(contentKind);
         }
 
         public static CardPresentationConfigDto CreateFilledDefault(

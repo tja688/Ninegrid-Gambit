@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "deck.help",
     "displayName": "恢复药水",
-    "description": "[使用时] 恢复{amount}点血量",
+    "description": "",
     "gold": 30,
     "stats": {
         "hp": 0,

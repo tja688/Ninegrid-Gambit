@@ -5,7 +5,7 @@
   "deckId": "deck.wandering_legion",
   "role": "",
   "displayName": "紫袍鹰王",
-  "description": "相邻移除获属性；每移5次换2怪",
+  "description": "",
   "faceIntro": "鹰之王者不会飞是因为太他吃太胖了",
   "attackPattern": "全向近战",
   "gold": 5,

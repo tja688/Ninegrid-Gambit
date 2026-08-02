@@ -5,7 +5,7 @@
   "deckId": "deck.dragon",
   "role": "",
   "displayName": "黄莱姆",
-  "description": "[场上] 处于格{value}时，本卡获得先手还击",
+  "description": "",
   "faceIntro": "莱姆一族的巨人，擅长包裹住敌人",
   "attackPattern": "普通近战",
   "gold": 5,

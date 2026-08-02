@@ -5,7 +5,7 @@
     "deckId": "deck.trap",
     "role": "",
     "displayName": "恢复图腾",
-    "description": "机关卡：本卡移动/旋转落地后，邻格真怪与玩家各恢复1点血量",
+    "description": "",
     "faceIntro": "",
     "attackPattern": "无",
     "gold": 0,

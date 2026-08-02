@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "幸运硬币",
-    "description": "击杀精英/层主时加入金币卡",
+    "description": "",
     "gold": 0,
     "stats": {
         "hp": 0,

@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "deck.help",
     "displayName": "瞭望塔",
-    "description": "角格伤{amount}，4次移除；道具伤2",
+    "description": "",
     "gold": 150,
     "stats": {
         "hp": 0,

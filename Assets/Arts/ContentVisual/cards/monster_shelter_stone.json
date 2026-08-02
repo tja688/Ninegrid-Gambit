@@ -5,7 +5,7 @@
   "deckId": "deck.smallanimal",
   "role": "",
   "displayName": "鳄鳄龟",
-  "description": "其他怪物卡受到的伤害减少1点",
+  "description": "",
   "faceIntro": "他说自己还很年轻，大概300岁吧",
   "attackPattern": "普通近战",
   "gold": 5,

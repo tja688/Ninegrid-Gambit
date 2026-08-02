@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "deck.help",
     "displayName": "暴力",
-    "description": "下次战斗伤害翻倍",
+    "description": "",
     "gold": 30,
     "stats": {
         "hp": 0,

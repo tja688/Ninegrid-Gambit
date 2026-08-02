@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "deck.help",
     "displayName": "撞击教程",
-    "description": "对怪物造成=当前血量伤害",
+    "description": "",
     "gold": 80,
     "stats": {
         "hp": 0,

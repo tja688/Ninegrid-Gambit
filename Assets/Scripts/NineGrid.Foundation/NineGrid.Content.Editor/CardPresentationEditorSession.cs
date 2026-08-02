@@ -149,6 +149,10 @@ namespace NineGrid.Content.Editor
     {
         public const string UngroupedDeckId = "(未分组)";
         public const string PlayerDeckId = "deck.player";
+        public const string RoomIconGroupId = "__room_icons__";
+        public const string ChoiceOptionGroupId = "__choice_options__";
+        public const string RoomIconGroupTitle = "房间图标";
+        public const string ChoiceOptionGroupTitle = "房间选项";
 
         private readonly List<CardPresentationEditorEntry> faceEntries = new List<CardPresentationEditorEntry>();
         private readonly List<CardPresentationEditorEntry> deckEntries = new List<CardPresentationEditorEntry>();
@@ -589,15 +593,31 @@ namespace NineGrid.Content.Editor
             for (var i = 0; i < faceEntries.Count; i++)
             {
                 var entry = faceEntries[i];
-                var deckId = string.IsNullOrWhiteSpace(entry.DeckId)
-                    ? UngroupedDeckId
-                    : entry.DeckId.Trim();
+                string deckId;
+                string titleOverride = null;
+                if (string.Equals(entry.Kind, "Room", StringComparison.OrdinalIgnoreCase))
+                {
+                    deckId = RoomIconGroupId;
+                    titleOverride = RoomIconGroupTitle;
+                }
+                else if (string.Equals(entry.Kind, "ChoiceOption", StringComparison.OrdinalIgnoreCase))
+                {
+                    deckId = ChoiceOptionGroupId;
+                    titleOverride = ChoiceOptionGroupTitle;
+                }
+                else
+                {
+                    deckId = string.IsNullOrWhiteSpace(entry.DeckId)
+                        ? UngroupedDeckId
+                        : entry.DeckId.Trim();
+                }
+
                 if (!byDeck.TryGetValue(deckId, out var group))
                 {
                     group = new CardPresentationSidebarDeckGroup
                     {
                         DeckId = deckId,
-                        Title = ResolveDeckTitle(deckId),
+                        Title = titleOverride ?? ResolveDeckTitle(deckId),
                     };
                     byDeck[deckId] = group;
                 }
@@ -606,7 +626,20 @@ namespace NineGrid.Content.Editor
             }
 
             return byDeck.Values
-                .OrderBy(g => g.DeckId == UngroupedDeckId ? 1 : 0)
+                .OrderBy(g =>
+                {
+                    if (g.DeckId == RoomIconGroupId)
+                    {
+                        return 0;
+                    }
+
+                    if (g.DeckId == ChoiceOptionGroupId)
+                    {
+                        return 1;
+                    }
+
+                    return g.DeckId == UngroupedDeckId ? 3 : 2;
+                })
                 .ThenBy(g => g.Title, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
@@ -663,6 +696,16 @@ namespace NineGrid.Content.Editor
             if (string.IsNullOrWhiteSpace(deckId) || deckId == UngroupedDeckId)
             {
                 return UngroupedDeckId;
+            }
+
+            if (deckId == RoomIconGroupId)
+            {
+                return RoomIconGroupTitle;
+            }
+
+            if (deckId == ChoiceOptionGroupId)
+            {
+                return ChoiceOptionGroupTitle;
             }
 
             if (deckById.TryGetValue(deckId, out var deckEntry)
@@ -1698,6 +1741,9 @@ namespace NineGrid.Content.Editor
                         return CardPresentationSidebarCategory.Other;
                     case ContentVisualKind.Relic:
                         return CardPresentationSidebarCategory.Relic;
+                    case ContentVisualKind.Room:
+                    case ContentVisualKind.ChoiceOption:
+                        return CardPresentationSidebarCategory.Other;
                 }
             }
 
@@ -1722,6 +1768,18 @@ namespace NineGrid.Content.Editor
             }
 
             return CardPresentationSidebarCategory.Other;
+        }
+
+        public static bool IsRoomKind(string kind)
+        {
+            return !string.IsNullOrWhiteSpace(kind)
+                   && string.Equals(kind.Trim(), "Room", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool IsChoiceOptionKind(string kind)
+        {
+            return !string.IsNullOrWhiteSpace(kind)
+                   && string.Equals(kind.Trim(), "ChoiceOption", StringComparison.OrdinalIgnoreCase);
         }
 
         private void EnsurePlayerDeckSeed()

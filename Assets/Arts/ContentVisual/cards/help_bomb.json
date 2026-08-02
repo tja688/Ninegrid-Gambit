@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "deck.help",
     "displayName": "爆弹",
-    "description": "对所有怪物造成{amount}伤",
+    "description": "",
     "gold": 50,
     "stats": {
         "hp": 0,

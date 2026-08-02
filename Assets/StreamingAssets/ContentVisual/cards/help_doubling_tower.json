@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "deck.help",
     "displayName": "倍增塔",
-    "description": "格1帮助卡双倍；道具双倍后移除",
+    "description": "",
     "gold": 150,
     "stats": {
         "hp": 0,

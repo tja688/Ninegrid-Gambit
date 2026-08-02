@@ -5,7 +5,7 @@
   "deckId": "deck.insect",
   "role": "",
   "displayName": "大黄蜂",
-  "description": "移动到角格时对玩家造成2点伤害",
+  "description": "",
   "faceIntro": "能在人身上蜇出一个大洞",
   "attackPattern": "普通远程",
   "gold": 5,

@@ -5,7 +5,7 @@
   "deckId": "deck.trap",
   "role": "",
   "displayName": "烈焰",
-  "description": "机关卡：本卡每移动1次，若正交邻玩家则造成1伤；移动满3次后自移除",
+  "description": "",
   "faceIntro": "",
   "attackPattern": "无",
   "gold": 0,

@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "废物利用机",
-    "description": "使用帮助卡时恢复{amount}点血量",
+    "description": "",
     "gold": 0,
     "stats": {
         "hp": 0,

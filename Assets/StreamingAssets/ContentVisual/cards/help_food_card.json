@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "deck.help",
     "displayName": "生日蛋糕",
-    "description": "[使用时] 将玩家卡血量回满",
+    "description": "",
     "gold": 50,
     "stats": {
         "hp": 0,

@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "废物涂层",
-    "description": "使用帮助卡时获得护甲",
+    "description": "",
     "gold": 0,
     "stats": {
         "hp": 0,

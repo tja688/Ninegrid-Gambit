@@ -2354,6 +2354,7 @@ namespace NineGrid.Content.Editor
                 CardPresentationKind.Trap => CardChassisPaths.TrapFacePrefab,
                 CardPresentationKind.HelpCard => CardChassisPaths.ItemFacePrefab,
                 CardPresentationKind.Relic => CardChassisPaths.RelicFacePrefab,
+                CardPresentationKind.ChoiceOption => CardChassisPaths.RoomOptionFacePrefab,
                 _ => CardChassisPaths.MonsterFacePrefab,
             };
 
@@ -2485,6 +2486,45 @@ namespace NineGrid.Content.Editor
                     OnDtoEdited(entry);
                 })));
 
+            if (CardPresentationEditorSession.IsRoomKind(dto.kind))
+            {
+                column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
+                    "图标预制体",
+                    BindText(dto.iconPrefab, v =>
+                    {
+                        dto.iconPrefab = v ?? string.Empty;
+                        OnDtoEdited(entry);
+                    }),
+                    tooltip: "Assets/Prefabs/xxx图标.prefab；空则按 contentId 默认映射。"));
+                column.Add(ContentVisualWarmConsoleUi.CreateInlineFieldGroup(
+                    ContentVisualWarmConsoleUi.WrapControlRow(
+                        "权重",
+                        BindInt(dto.weight, v => { dto.weight = v; OnDtoEdited(entry); }),
+                        40f),
+                    ContentVisualWarmConsoleUi.WrapControlRow(
+                        "金币Δ",
+                        BindInt(dto.goldDelta, v => { dto.goldDelta = v; OnDtoEdited(entry); }),
+                        40f),
+                    ContentVisualWarmConsoleUi.WrapControlRow(
+                        "血上限Δ",
+                        BindInt(dto.maxHpDelta, v => { dto.maxHpDelta = v; OnDtoEdited(entry); }),
+                        40f),
+                    ContentVisualWarmConsoleUi.WrapControlRow(
+                        "商店货数",
+                        BindInt(dto.shopOfferCount, v => { dto.shopOfferCount = v; OnDtoEdited(entry); }),
+                        48f)));
+                column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
+                    "回满血",
+                    BindToggle(dto.healToFull, v => { dto.healToFull = v; OnDtoEdited(entry); })));
+                column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
+                    "奖励池",
+                    BindText(dto.rewardPoolId, v =>
+                    {
+                        dto.rewardPoolId = v ?? string.Empty;
+                        OnDtoEdited(entry);
+                    })));
+            }
+
             if (CardPresentationEditorSession.IsCombatStatsKind(dto.kind))
             {
                 column.Add(ContentVisualWarmConsoleUi.CreateInlineFieldGroup(
@@ -2506,10 +2546,43 @@ namespace NineGrid.Content.Editor
                         40f)));
             }
 
-            column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
-                "金币",
-                BindInt(dto.gold, v => { dto.gold = v; OnDtoEdited(entry); }),
-                tooltip: "HelpCard/Relic 商店价；Monster 击杀金。"));
+            if (!CardPresentationEditorSession.IsRoomKind(dto.kind)
+                && !CardPresentationEditorSession.IsChoiceOptionKind(dto.kind))
+            {
+                column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
+                    "金币",
+                    BindInt(dto.gold, v => { dto.gold = v; OnDtoEdited(entry); }),
+                    tooltip: "HelpCard/Relic 商店价；Monster 击杀金。"));
+            }
+            else if (CardPresentationEditorSession.IsChoiceOptionKind(dto.kind))
+            {
+                column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
+                    "金币",
+                    BindInt(dto.gold, v => { dto.gold = v; OnDtoEdited(entry); }),
+                    tooltip: "选项卡展示价（如卡店服务花费）；不进 Catalog。"));
+            }
+
+            if (CardPresentationEditorSession.IsRoomKind(dto.kind)
+                || CardPresentationEditorSession.IsChoiceOptionKind(dto.kind))
+            {
+                var faceIntroFieldRoom = new TextField
+                {
+                    multiline = true,
+                    value = dto.faceIntro ?? string.Empty,
+                };
+                faceIntroFieldRoom.style.minHeight = 56;
+                faceIntroFieldRoom.style.maxHeight = 96;
+                faceIntroFieldRoom.RegisterValueChangedCallback(evt =>
+                {
+                    dto.faceIntro = evt.newValue ?? string.Empty;
+                    OnDtoEdited(entry);
+                });
+                column.Add(ContentVisualWarmConsoleUi.WrapControl(
+                    "卡面介绍",
+                    "房间/选项说明；可不填",
+                    faceIntroFieldRoom));
+                return;
+            }
 
             var deckLabels = new List<string> { CardPresentationEditorSession.UngroupedDeckId };
             var deckValues = new List<string> { string.Empty };
@@ -3031,12 +3104,20 @@ namespace NineGrid.Content.Editor
                     {
                         kind = CardPresentationKind.Relic;
                     }
+                    else if (string.Equals(dto.kind, "Room", StringComparison.OrdinalIgnoreCase))
+                    {
+                        kind = CardPresentationKind.Room;
+                    }
+                    else if (string.Equals(dto.kind, "ChoiceOption", StringComparison.OrdinalIgnoreCase))
+                    {
+                        kind = CardPresentationKind.ChoiceOption;
+                    }
                 }
             }
 
             if (kind == CardPresentationKind.Unknown)
             {
-                error = "该 Kind 不挂四套卡面：" + dto.contentId;
+                error = "该 Kind 不挂卡面预览：" + dto.contentId;
                 return false;
             }
 
@@ -3080,6 +3161,7 @@ namespace NineGrid.Content.Editor
                     : CardFaceDescriptionParamFiller.FillFromAssemblies(
                         dto.description ?? string.Empty,
                         dto.effectAssemblies),
+                RoomIconPrefabPath = dto.iconPrefab ?? string.Empty,
                 MainIcon = isDeckEntry
                     ? null
                     : CardPresentationSpritePath.LoadSprite(sprites.mainIcon),
@@ -3240,6 +3322,13 @@ namespace NineGrid.Content.Editor
         private static TextField BindText(string value, Action<string> onChange)
         {
             var field = new TextField { value = value ?? string.Empty };
+            field.RegisterValueChangedCallback(evt => onChange?.Invoke(evt.newValue));
+            return field;
+        }
+
+        private static Toggle BindToggle(bool value, Action<bool> onChange)
+        {
+            var field = new Toggle { value = value };
             field.RegisterValueChangedCallback(evt => onChange?.Invoke(evt.newValue));
             return field;
         }

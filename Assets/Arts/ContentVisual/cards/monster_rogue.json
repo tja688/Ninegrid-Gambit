@@ -5,7 +5,7 @@
   "deckId": "deck.void",
   "role": "",
   "displayName": "法师",
-  "description": "每损失3点护甲，相邻怪物攻击+1",
+  "description": "",
   "faceIntro": "头上的簪子其实是备用法杖",
   "attackPattern": "普通近战",
   "gold": 5,

@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "deck.help",
     "displayName": "属性提升",
-    "description": "攻击+{delta}/护甲+1/血量+2",
+    "description": "",
     "gold": 100,
     "stats": {
         "hp": 0,

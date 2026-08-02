@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "deck.help",
     "displayName": "普通宝箱",
-    "description": "三选一获得遗物",
+    "description": "",
     "gold": 100,
     "stats": {
         "hp": 0,

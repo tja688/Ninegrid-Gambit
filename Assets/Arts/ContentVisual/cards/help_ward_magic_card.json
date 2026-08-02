@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "deck.help",
     "displayName": "庇佑",
-    "description": "下次受伤变为{value}",
+    "description": "",
     "gold": 20,
     "stats": {
         "hp": 0,

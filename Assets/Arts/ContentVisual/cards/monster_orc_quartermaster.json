@@ -5,7 +5,7 @@
   "deckId": "deck.smallanimal",
   "role": "",
   "displayName": "大葱袋熊",
-  "description": "每移动2次随机强化其他怪物",
+  "description": "",
   "faceIntro": "他说他背的是剑，但是外号已经传出去了",
   "attackPattern": "普通近战",
   "gold": 5,

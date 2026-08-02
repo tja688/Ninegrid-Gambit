@@ -5,7 +5,7 @@
     "deckId": "deck.skeleton_legion",
     "role": "",
     "displayName": "弓箭骷髅",
-    "description": "无",
+    "description": "",
     "faceIntro": "有人问他的箭从哪里来，答案是就地取材",
     "attackPattern": "普通近战",
     "gold": 5,

@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "deck.help",
     "displayName": "破击锤",
-    "description": "目标怪物护甲-{amount}",
+    "description": "",
     "gold": 50,
     "stats": {
         "hp": 0,

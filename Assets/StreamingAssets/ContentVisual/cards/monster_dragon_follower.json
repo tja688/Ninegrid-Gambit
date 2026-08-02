@@ -5,7 +5,7 @@
   "deckId": "deck.wandering_legion",
   "role": "",
   "displayName": "爪蜥",
-  "description": "[被移除时] 将{count}张烈焰加入战斗卡组",
+  "description": "",
   "faceIntro": "蜥蜴一族中不喜欢剪指甲的",
   "attackPattern": "普通近战",
   "gold": 5,

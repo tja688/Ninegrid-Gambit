@@ -5,7 +5,7 @@
   "deckId": "deck.smallanimal",
   "role": "",
   "displayName": "绿毛老鼠",
-  "description": "每移2次交换相邻帮助卡与怪物",
+  "description": "",
   "faceIntro": "他坚信自己是刺猬",
   "attackPattern": "普通近战",
   "gold": 5,

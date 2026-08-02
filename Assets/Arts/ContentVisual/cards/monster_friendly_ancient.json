@@ -5,7 +5,7 @@
   "deckId": "deck.wandering_legion",
   "role": "",
   "displayName": "双角毛猪",
-  "description": "每移动3次放旋转轮",
+  "description": "",
   "faceIntro": "由于毛太长了，不太看得清路",
   "attackPattern": "普通近战",
   "gold": 5,

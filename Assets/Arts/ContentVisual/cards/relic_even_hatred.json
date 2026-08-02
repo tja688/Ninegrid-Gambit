@@ -4,7 +4,7 @@
   "kind": "Relic",
   "deckId": "deck.relic",
   "displayName": "偶数仇恨",
-  "description": "对偶数等级怪物造成双倍伤害",
+  "description": "",
   "gold": 0,
   "stats": {
     "hp": 0,

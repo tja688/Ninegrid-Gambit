@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "deck.help",
     "displayName": "血液转换",
-    "description": "血量上限{delta}，随机得奖励",
+    "description": "",
     "gold": 50,
     "stats": {
         "hp": 0,

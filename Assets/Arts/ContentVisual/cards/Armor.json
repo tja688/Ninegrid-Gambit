@@ -4,8 +4,9 @@
     "kind": "ChoiceOption",
     "deckId": "",
     "displayName": "护甲+1",
-    "description": "",
-    "gold": 0,
+    "description": "永久获得1点护甲",
+    "faceIntro": "",
+    "gold": 50,
     "stats": {
         "hp": 0,
         "armor": 0,
@@ -85,6 +86,7 @@
     "healToFull": false,
     "rewardPoolId": "",
     "shopOfferCount": 0,
+    "iconPrefab": "",
     "effectAssemblies": [],
     "role": ""
 }

@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "废物老虎机",
-    "description": "使用帮助卡时随机触发九选一",
+    "description": "",
     "gold": 0,
     "stats": {
         "hp": 0,

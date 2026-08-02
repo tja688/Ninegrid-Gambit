@@ -5,7 +5,7 @@
   "deckId": "deck.void",
   "role": "",
   "displayName": "刺客",
-  "description": "登场在偶数边位时伤害玩家",
+  "description": "",
   "faceIntro": "虽然白毛会暴露行踪，但是这是个性的表达",
   "attackPattern": "普通近战",
   "gold": 5,

@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "重盔甲",
-    "description": "基础护甲+{value}，按基础护甲补当前护甲",
+    "description": "",
     "gold": 0,
     "stats": {
         "hp": 0,

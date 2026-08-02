@@ -5,7 +5,7 @@
   "deckId": "deck.smallanimal",
   "role": "",
   "displayName": "棕毛兔",
-  "description": "每移动3次与随机帮助卡交换",
+  "description": "",
   "faceIntro": "站得更高，看得更远",
   "attackPattern": "普通近战",
   "gold": 5,

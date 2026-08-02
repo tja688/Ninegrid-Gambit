@@ -5,7 +5,7 @@
   "deckId": "deck.wandering_legion",
   "role": "",
   "displayName": "野猪",
-  "description": "战斗时恢复1且攻击+1",
+  "description": "",
   "faceIntro": "横冲直撞！",
   "attackPattern": "普通近战",
   "gold": 5,

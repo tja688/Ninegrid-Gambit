@@ -5,7 +5,7 @@
   "deckId": "deck.smallanimal",
   "role": "",
   "displayName": "红蛙",
-  "description": "每加入烈焰额外加一张",
+  "description": "",
   "faceIntro": "根据常规的游戏逻辑，绿色蛙才有毒，红蛙也是这样想的",
   "attackPattern": "全向近战",
   "gold": 5,

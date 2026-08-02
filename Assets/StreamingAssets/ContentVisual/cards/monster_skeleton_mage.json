@@ -5,7 +5,7 @@
   "deckId": "deck.insect",
   "role": "",
   "displayName": "巨齿蜘蛛",
-  "description": "所有怪物卡视为与本卡正交相邻",
+  "description": "",
   "faceIntro": "比起结网更喜欢撕咬敌人",
   "attackPattern": "普通远程",
   "gold": 5,

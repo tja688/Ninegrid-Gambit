@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "活力护符",
-    "description": "血量上限+{amount}，关卡结束恢复6",
+    "description": "",
     "gold": 0,
     "stats": {
         "hp": 0,

@@ -56,6 +56,11 @@ namespace NineGrid.Presentation.Editor
                 return false;
             }
 
+            if (request.Kind == CardPresentationKind.Room)
+            {
+                return TryBuildRoomIcon(request, out result, out error);
+            }
+
             var chassisPrefab = chassisPrefabOverride != null
                 ? chassisPrefabOverride
                 : AssetDatabase.LoadAssetAtPath<GameObject>(CardChassisPaths.ChassisPrefab);
@@ -197,6 +202,9 @@ namespace NineGrid.Presentation.Editor
                 case CardPresentationKind.Relic:
                     path = CardChassisPaths.RelicFacePrefab;
                     break;
+                case CardPresentationKind.ChoiceOption:
+                    path = CardChassisPaths.RoomOptionFacePrefab;
+                    break;
                 default:
                     return null;
             }
@@ -218,11 +226,60 @@ namespace NineGrid.Presentation.Editor
                     return CardPresentationKind.HelpCard;
                 case ContentVisualKind.Relic:
                     return CardPresentationKind.Relic;
+                case ContentVisualKind.Room:
+                    return CardPresentationKind.Room;
+                case ContentVisualKind.ChoiceOption:
+                    return CardPresentationKind.ChoiceOption;
                 case ContentVisualKind.Skill:
                     return CardPresentationKind.Unknown;
                 default:
                     return CardPresentationKindResolver.FromDefId(defId);
             }
+        }
+
+        private static bool TryBuildRoomIcon(
+            CardFacePreviewRequest request,
+            out BuildResult result,
+            out string error)
+        {
+            result = null;
+            error = null;
+            var path = CardChassisPaths.ResolveRoomIconPrefab(
+                request.DefId,
+                request.RoomIconPrefabPath);
+            var iconPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (iconPrefab == null)
+            {
+                error = "找不到房间图标预制体：" + path;
+                return false;
+            }
+
+            var root = (GameObject)PrefabUtility.InstantiatePrefab(iconPrefab);
+            root.name = "RoomIconPreview_" + (string.IsNullOrEmpty(request.DefId) ? "Room" : request.DefId);
+            root.hideFlags = HideFlags.DontSave | HideFlags.HideInHierarchy;
+
+            if (request.MainIcon != null)
+            {
+                var renderers = root.GetComponentsInChildren<SpriteRenderer>(true);
+                for (var i = 0; i < renderers.Length; i++)
+                {
+                    if (renderers[i] != null && renderers[i].sprite != null)
+                    {
+                        renderers[i].sprite = request.MainIcon;
+                        break;
+                    }
+                }
+            }
+
+            result = new BuildResult
+            {
+                Root = root,
+                View = null,
+                Binder = null,
+                FaceRoot = root.transform,
+            };
+            CollectSortingWarnings(root.transform, result.SortingWarnings);
+            return true;
         }
 
         public static ContentVisualKind GuessContentVisualKind(string defId)

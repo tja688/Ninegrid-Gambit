@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "deck.help",
     "displayName": "绑票",
-    "description": "移除非BOSS怪得等量护甲",
+    "description": "",
     "gold": 100,
     "stats": {
         "hp": 0,

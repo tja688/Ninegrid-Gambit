@@ -5,7 +5,7 @@
   "deckId": "deck.wandering_legion",
   "role": "",
   "displayName": "黑翼蝙蝠",
-  "description": "相邻时只能与本卡战斗",
+  "description": "",
   "faceIntro": "靠回声定位，眼睛主要起到装饰作用",
   "attackPattern": "普通近战",
   "gold": 5,

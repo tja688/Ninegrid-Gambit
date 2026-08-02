@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "弹弓",
-    "description": "击杀怪物时随机伤害",
+    "description": "",
     "gold": 0,
     "stats": {
         "hp": 0,

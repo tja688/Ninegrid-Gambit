@@ -4,7 +4,8 @@
     "kind": "Room",
     "deckId": "",
     "displayName": "商店",
-    "description": "",
+    "description": "出售道具/宝箱等（货架复用 HelpCard）",
+    "faceIntro": "",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -85,6 +86,7 @@
     "healToFull": false,
     "rewardPoolId": "",
     "shopOfferCount": 6,
+    "iconPrefab": "Assets/Prefabs/商店图标.prefab",
     "effectAssemblies": [],
     "role": ""
 }

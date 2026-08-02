@@ -75,6 +75,11 @@ namespace NineGrid.Content.CardPresentation
         public bool healToFull;
         public string rewardPoolId;
         public int shopOfferCount;
+        /// <summary>
+        /// Room 场地图标预制体 Asset 路径（如 Assets/Prefabs/商店图标.prefab）。
+        /// 空则编辑器/后续投放回退 <c>CardChassisPaths.ResolveRoomIconPrefab</c>。
+        /// </summary>
+        public string iconPrefab;
     }
 
     [Serializable]

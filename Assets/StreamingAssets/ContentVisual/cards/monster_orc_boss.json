@@ -5,7 +5,7 @@
   "deckId": "deck.wandering_legion",
   "role": "",
   "displayName": "野牛",
-  "description": "每移2次移除相邻；靠暴力狂获属性",
+  "description": "",
   "faceIntro": "冲锋！！！！！！！！！！！！！！！",
   "attackPattern": "全向近战",
   "gold": 5,

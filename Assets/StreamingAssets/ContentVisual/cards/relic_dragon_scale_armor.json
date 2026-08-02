@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "龙鳞甲",
-    "description": "基础护甲+1，血量上限+{delta}，怪物攻击-1",
+    "description": "",
     "gold": 0,
     "stats": {
         "hp": 0,

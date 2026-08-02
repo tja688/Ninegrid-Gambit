@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "deck.help",
     "displayName": "钱袋子",
-    "description": "[使用时] 为玩家提供{delta}金币",
+    "description": "",
     "gold": 30,
     "stats": {
         "hp": 0,

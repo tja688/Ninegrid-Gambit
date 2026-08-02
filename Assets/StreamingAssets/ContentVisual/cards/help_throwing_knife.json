@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "deck.help",
     "displayName": "飞刀",
-    "description": "对怪物造成{amount}伤",
+    "description": "",
     "gold": 20,
     "stats": {
         "hp": 0,

@@ -18,7 +18,7 @@
 | `Systems/` | 18 | `NineGrid.Presentation.Systems` | QF System / 窄能力接口 |
 | `Flow/` | ~118 | `NineGrid.Flow*` | 导演/时间线/Channel/Scheduler、局内会话、流程壳、诊断、部分 Presenter |
 | `Cards/` | ~136 | `NineGrid.Cards*` | 卡视图、场地/手牌/牌库、收敛、特效 SO、静态 Hook |
-| `Editor/` | ~22 | `NineGrid.Presentation.Editor` | 编辑器工具；`CardFacePreviewHost` / `VisualEffectPreviewHost`（特效库：左怪物卡参照 + 右精灵表预览；卡组·卡背与卡面页共用 `CardFacePreviewHost`；翻牌预览经 `CardPresentationFlipPreview` 复用 `CardFaceFlipPresenter` 的 Flip.anim 采样） |
+| `Editor/` | ~22 | `NineGrid.Presentation.Editor` | 编辑器工具；`CardFacePreviewHost` / `VisualEffectPreviewHost`（特效库：左怪物卡参照 + 右精灵表预览；卡组·卡背与卡面页共用 `CardFacePreviewHost`；翻牌预览经 `CardPresentationFlipPreview` 复用 `CardFaceFlipPresenter` 的 Flip.anim 采样；**房间图标** `Room` 预览实例化图标预制体，**房间选项** `ChoiceOption` 挂 `房间选项标准模板`） |
 | `Tests/` | ~97 | `NineGrid.Presentation.Tests*` | EditMode |
 
 ### `Flow/` 子树
@@ -89,7 +89,8 @@
 
 这些是 **Presenter / 管理器壳**，不是旧四大巨型宿主（已改名为 `BattleSessionController` / `GroundFieldView` / `FieldBattleView` / `GameFlowController`）：
 
-- Cards：`CardManagerSingleton`（底盘 + Kind→卡面五套：`Avatar`/`Monster`/`HelpCard|Item|PlayerCard`/`Relic`/`Trap`，路径见 `CardChassisPaths`；ADR-0002 / ADR-0017）、`CardHandManagerSingleton`、`CardDeckManagerSingleton`
+- Cards：`CardManagerSingleton`（底盘 + Kind→卡面五套：`Avatar`/`Monster`/`HelpCard|Item|PlayerCard`/`Relic`/`Trap`，路径见 `CardChassisPaths`；ADR-0002 / ADR-0017；**运行时 Spawn 不含** `Room` / `ChoiceOption`）、`CardHandManagerSingleton`、`CardDeckManagerSingleton`
+- 编辑器扩展壳（非运行时五套）：`CardChassisPaths.RoomOptionFacePrefab`（`房间选项标准模板`）+ `ResolveRoomIconPrefab`（`Assets/Prefabs/*图标.prefab`）；卡牌表现编辑器侧栏「卡面」下另分 **房间图标** / **房间选项**
 - Flow：`DescriptionManagerSingleton`（**已退役**：不再写 Card InfoText / NoticeText；卡面静态描述权威在 `Basic_Description` Commit）、`DamageNumberManagerSingleton`、`GoldGainFxManagerSingleton`、`RelicManagerSingleton`（#69：图标优先一卡一文件 JSON `sprites.mainIcon`；空缺时回退 `RelicVisualCatalog` bootstrap）、`SelectorManagerSingleton`（卡面主视图锚定为祖先变换无关的局部空间计算，见 [ADR-0015](../adr/0015-card-slot-placement-local-space.md)；BounceFan 不得在 `scale=0` 期间提交卡面，`BuildEntries` 保持 `scale=1`，入场归零只在 `PlayEntryAnimation`）
 
 `DescriptionDisplayHook` 现为 no-op；Hover/Drag/BoardSelect 动态描述 TMP 管道已砍。卡牌运行时持续呈现的描述只走卡面槽 `Basic_Description`（可含 `{param}` 装配实参插值与方括号词条图标）。详情文案由 `CardDetailDescriptionComposer` 合成（概括 + 词条展开）写入 `CardPresentationSnapshot.DetailDescription`。卡面 JSON `faceIntro` 经 Mapper 写入 `CardPresentationSnapshot.FaceIntro`，右键详述面板 `CardInspectOverlayPresenter`（场景 `UI面板/右键描述`）消费：敌方 / 常规两态 BG、**占位锚点隐藏成品 mock 后挂真卡面预制体 Commit**、背景/牌组 TMP；**详细效果信息**由 `CardInspectDetailComposer` 展开效果模板 `design_text`（`[场上]`/`[使用时]` 等分门别类），不重复卡面简要 `description`。**技能列表以局内 `IEffectSystem` 已激活挂载为准**（`EffectOwner.SourceDefId`，含 QuickTest 动态注入与未来运行时加技），按技能装配 `argsJson` 填 `design_text` 数值；无 live 挂载时才回退卡 JSON `skillIds` / `effectAssemblies`。半黑屏 `BattleUiDimmerOverlay`（`UI面板/半黑屏BG`）引用计数挡 `PointerHitRouter` 射线、**不**改 `CurrentOwner` / 不暂停主线，局内奖励/属性三选一也 Acquire 同遮罩。稀有度经 `SetFrameColor` 驱动卡框色；卡背优先读卡组 JSON，单卡 `sprites.back*` 可覆写，否则模板兜底（ADR-0009 / #71）。
@@ -118,6 +119,36 @@
 6. 主动翻开：`InputIntentKinds.RevealFace` + `RevealFaceIntentScriptFactory`；邻接背面卡点击分流（AttackInputController）
 
 不要接回静态业务 Sink，也不要在 View 上直接改 Core 规则状态，也不要旁路直读 Core 写卡面数值。
+
+## 房间表现三分法（编辑器地基；场地走格子属后续票）
+
+局内「选下一房 / 进房选项 / 商店货架」表现资产分三类，**权威配置**在卡牌表现 JSON + 表现层编辑器（`NineGrid.Content.Editor`）：
+
+| 类 | `kind` | 形态 | 壳 / 预制体 | Catalog 投影 |
+|----|--------|------|-------------|--------------|
+| **A. 房间图标** | `Room` | 战后落九宫格的下一步图标（走上去即选房；接线后续） | `iconPrefab` 或 `CardChassisPaths.ResolveRoomIconPrefab` | 投影 `RoomDefinition`（`contentId`≡`RoomKind`） |
+| **B. 特殊选项卡** | `ChoiceOption` | 进房后就地点选生效（回血/给钱/卡店服务/离开等） | `房间选项标准模板.prefab` | **不**进玩法 Catalog |
+| **C. 复用真卡** | `HelpCard` 等 | 商店 6 格货架商品 | 既有道具卡模版 | 照常投影 |
+
+### 设计房间名 ↔ `RoomKind`（现状）
+
+| 策划名 | `RoomKind` / JSON `contentId` | 默认图标预制体 | 备注 |
+|--------|-------------------------------|----------------|------|
+| 常规战斗 | `Battle` | `常规战斗图标` | |
+| 困难房 | `Elite` | `常规战斗图标`（暂） | |
+| 层主房 | `Boss` | `Boss房图标` | |
+| 金币房 | `Gold` | `钱袋图标` | |
+| 宝箱房 | `Treasure` | `宝箱图标` | |
+| 恢复房 / 温泉 | `Fountain` | `温泉图标` | |
+| 商店 | `Shop` | `商店图标` | 货架复用 HelpCard |
+| 卡店 | `Tavern`（显示名「卡店」） | `酒馆图标` | contentId 保持枚举稳定 |
+| 事件占位 | `Event` | `属性提升图标`（暂） | |
+
+**缺口（本轮不扩枚举）**：策划「属性房 / 宝箱奖励房 / 道具奖励房」尚无独立 `RoomKind`；后续流程接线票再扩 Core 与发牌。
+
+特殊选项卡种子（`ChoiceOption`）：`Attack`/`Armor`/`Hp`（已有）、`HealFull`/`GainGold`/`UpgradeItemStats`/`FixItem`/`ExpandItemCapacity`/`RefreshShop`/`Leave`/`GoUp`/`GoDown`。
+
+当前局内仍走浮层二选一（`RoomChoicePresenter`）与扇形（`BounceFanChoicePresenter`）；**场地走格子选图标 / 点选项卡生效**不在本票。
 
 ## ADR 不变量（摘要）
 

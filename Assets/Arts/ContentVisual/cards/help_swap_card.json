@@ -4,7 +4,7 @@
     "kind": "HelpCard",
     "deckId": "deck.help",
     "displayName": "交换",
-    "description": "选两张卡互换位置",
+    "description": "",
     "gold": 50,
     "stats": {
         "hp": 0,

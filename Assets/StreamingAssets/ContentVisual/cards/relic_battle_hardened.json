@@ -4,7 +4,7 @@
   "kind": "Relic",
   "deckId": "deck.relic",
   "displayName": "历战",
-  "description": "战斗时攻击+{value}，换敌复原",
+  "description": "",
   "gold": 0,
   "stats": {
     "hp": 0,

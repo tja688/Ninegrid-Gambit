@@ -5,7 +5,7 @@
   "deckId": "deck.wandering_legion",
   "role": "",
   "displayName": "黑背狼",
-  "description": "移动到玩家相邻格时强制战斗",
+  "description": "",
   "faceIntro": "他不喜欢别人叫他地包天",
   "attackPattern": "全向近战",
   "gold": 5,

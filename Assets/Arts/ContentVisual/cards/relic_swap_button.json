@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "交换按钮",
-    "description": "每关卡开始放入交换卡",
+    "description": "",
     "gold": 0,
     "stats": {
         "hp": 0,

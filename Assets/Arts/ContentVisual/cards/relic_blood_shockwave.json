@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "血液冲击波",
-    "description": "血量上限+{delta}，关卡开始放入撞击教程，低血再放一张",
+    "description": "",
     "gold": 0,
     "stats": {
         "hp": 0,

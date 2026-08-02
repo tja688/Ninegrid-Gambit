@@ -14,6 +14,8 @@ namespace NineGrid.Presentation.Editor
         public CardPresentationKind Kind = CardPresentationKind.Unknown;
         public string DisplayName = string.Empty;
         public string BasicDescription = string.Empty;
+        /// <summary>Room 图标预制体路径；空则按 DefId 默认映射。</summary>
+        public string RoomIconPrefabPath = string.Empty;
 
         public Sprite MainIcon;
         public Sprite FaceBackground;

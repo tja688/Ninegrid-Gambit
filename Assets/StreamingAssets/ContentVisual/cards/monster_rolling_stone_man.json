@@ -5,7 +5,7 @@
   "deckId": "deck.insect",
   "role": "",
   "displayName": "黄贝蜗牛",
-  "description": "移动到格3时移除格6帮助卡",
+  "description": "",
   "faceIntro": "他认为他是蜗牛一族唯一没有跑过兔兔的，在他知道书上都是骗人的之前",
   "attackPattern": "斜角近战",
   "gold": 5,

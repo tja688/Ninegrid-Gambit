@@ -5,7 +5,7 @@
   "deckId": "deck.smallanimal",
   "role": "",
   "displayName": "宝石蜥",
-  "description": "每移动2次吸相邻怪物护甲",
+  "description": "",
   "faceIntro": "他背上的宝石价值千金",
   "attackPattern": "普通近战",
   "gold": 5,

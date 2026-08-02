@@ -5,7 +5,7 @@
   "deckId": "deck.insect",
   "role": "",
   "displayName": "沙虫",
-  "description": "移动时与相邻2怪合成巨骷髅",
+  "description": "",
   "faceIntro": "会吐口水（就是沙子）",
   "attackPattern": "普通近战",
   "gold": 5,

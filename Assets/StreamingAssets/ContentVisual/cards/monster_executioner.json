@@ -5,7 +5,7 @@
   "deckId": "deck.wandering_legion",
   "role": "",
   "displayName": "灰狼",
-  "description": "每移2次移除所有龙信徒",
+  "description": "",
   "faceIntro": "他究其一生没能找到属于自己的狈",
   "attackPattern": "全向近战",
   "gold": 5,

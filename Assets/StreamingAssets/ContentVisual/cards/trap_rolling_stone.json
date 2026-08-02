@@ -5,7 +5,7 @@
   "deckId": "deck.trap",
   "role": "",
   "displayName": "滚石",
-  "description": "机关卡：移动到格3时，清除格6上的怪物（非精英非层主）/道具/机关",
+  "description": "",
   "faceIntro": "",
   "attackPattern": "无",
   "gold": 0,

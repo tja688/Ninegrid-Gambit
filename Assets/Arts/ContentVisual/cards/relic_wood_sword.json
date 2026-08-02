@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "木剑",
-    "description": "攻击+{value}，木套装额外+2",
+    "description": "",
     "gold": 0,
     "stats": {
         "hp": 0,

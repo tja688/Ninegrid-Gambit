@@ -4,7 +4,8 @@
     "kind": "Room",
     "deckId": "",
     "displayName": "温泉房",
-    "description": "",
+    "description": "恢复房/温泉",
+    "faceIntro": "",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -85,6 +86,7 @@
     "healToFull": true,
     "rewardPoolId": "",
     "shopOfferCount": 0,
+    "iconPrefab": "Assets/Prefabs/温泉图标.prefab",
     "effectAssemblies": [],
     "role": ""
 }

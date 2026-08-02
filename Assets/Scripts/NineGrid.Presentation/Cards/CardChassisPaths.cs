@@ -1,8 +1,11 @@
+using System;
+
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 卡牌底盘与五套卡面模板的权威资产路径（#13/#14；ADR-0017 含机关）。
+    /// 卡牌底盘与卡面模板的权威资产路径（#13/#14；ADR-0017 含机关）。
     /// 旧路径 Assets/Prefabs/Standard Card.prefab 已失效，一律改用本常量。
+    /// Room / ChoiceOption 仅编辑器与后续场地投放使用，不进运行时五套 Spawn。
     /// </summary>
     public static class CardChassisPaths
     {
@@ -12,10 +15,80 @@ namespace NineGrid.Cards
         public const string ItemFacePrefab = "Assets/Prefabs/道具卡标准模版.prefab";
         public const string RelicFacePrefab = "Assets/Prefabs/遗物卡标准模版.prefab";
         public const string TrapFacePrefab = "Assets/Prefabs/机关卡标准模版.prefab";
+        public const string RoomOptionFacePrefab = "Assets/Prefabs/房间选项标准模板.prefab";
+
+        public const string RoomIconBattle = "Assets/Prefabs/常规战斗图标.prefab";
+        public const string RoomIconBoss = "Assets/Prefabs/Boss房图标.prefab";
+        public const string RoomIconGold = "Assets/Prefabs/钱袋图标.prefab";
+        public const string RoomIconTreasure = "Assets/Prefabs/宝箱图标.prefab";
+        public const string RoomIconFountain = "Assets/Prefabs/温泉图标.prefab";
+        public const string RoomIconShop = "Assets/Prefabs/商店图标.prefab";
+        public const string RoomIconTavern = "Assets/Prefabs/酒馆图标.prefab";
+        public const string RoomIconEvent = "Assets/Prefabs/属性提升图标.prefab";
+        public const string RoomIconLeave = "Assets/Prefabs/离开图标.prefab";
+        public const string RoomIconGoUp = "Assets/Prefabs/上楼图标.prefab";
+        public const string RoomIconGoDown = "Assets/Prefabs/下楼图标.prefab";
+
         public const string SlotRegistryAsset = "Assets/Arts/Cards/CardFaceSlotRegistry.asset";
         public const string DescriptionInlineIconStyleAsset =
             "Assets/Arts/Cards/CardFaceDescriptionInlineIconStyle.asset";
         public const string DescriptionIconCatalogAsset =
             "Assets/Arts/Cards/CardFaceDescriptionIconCatalog.asset";
+
+        /// <summary>
+        /// 解析房间图标预制体：优先 JSON <paramref name="iconPrefabOverride"/>，否则按 contentId/RoomKind 默认表。
+        /// </summary>
+        public static string ResolveRoomIconPrefab(string contentId, string iconPrefabOverride = null)
+        {
+            if (!string.IsNullOrWhiteSpace(iconPrefabOverride))
+            {
+                return iconPrefabOverride.Trim();
+            }
+
+            if (string.IsNullOrWhiteSpace(contentId))
+            {
+                return RoomIconBattle;
+            }
+
+            switch (contentId.Trim())
+            {
+                case "Battle":
+                case "Elite":
+                    return RoomIconBattle;
+                case "Boss":
+                    return RoomIconBoss;
+                case "Gold":
+                    return RoomIconGold;
+                case "Treasure":
+                    return RoomIconTreasure;
+                case "Fountain":
+                    return RoomIconFountain;
+                case "Shop":
+                    return RoomIconShop;
+                case "Tavern":
+                    return RoomIconTavern;
+                case "Event":
+                    return RoomIconEvent;
+                case "Leave":
+                    return RoomIconLeave;
+                case "GoUp":
+                    return RoomIconGoUp;
+                case "GoDown":
+                    return RoomIconGoDown;
+                default:
+                    return RoomIconBattle;
+            }
+        }
+
+        public static bool IsRoomOrChoiceOptionKind(string kind)
+        {
+            if (string.IsNullOrWhiteSpace(kind))
+            {
+                return false;
+            }
+
+            return string.Equals(kind, "Room", StringComparison.OrdinalIgnoreCase)
+                   || string.Equals(kind, "ChoiceOption", StringComparison.OrdinalIgnoreCase);
+        }
     }
 }

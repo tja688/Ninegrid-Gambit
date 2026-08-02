@@ -1,4 +1,5 @@
 using System;
+using NineGrid.Cards;
 using NineGrid.Content;
 using NineGrid.Content.CardPresentation;
 using NineGrid.Content.Editor;
@@ -25,6 +26,8 @@ namespace NineGrid.Presentation.Tests.Cards
             Assert.IsTrue(CardPresentationMigration.IsCardLikeKind("Relic"));
             Assert.IsTrue(CardPresentationMigration.IsCardLikeKind("Avatar"));
             Assert.IsTrue(CardPresentationMigration.IsCardLikeKind("Trap"));
+            Assert.IsFalse(CardPresentationMigration.IsCardLikeKind("Room"));
+            Assert.IsFalse(CardPresentationMigration.IsCardLikeKind("ChoiceOption"));
         }
 
         [Test]
@@ -40,6 +43,43 @@ namespace NineGrid.Presentation.Tests.Cards
                 CardPresentationMigration.IsPresentationEditorEntry("Item", "player.gold_card"));
             Assert.IsTrue(
                 CardPresentationMigration.IsPresentationEditorEntry("Trap", "trap.revive_stone"));
+            Assert.IsTrue(
+                CardPresentationMigration.IsPresentationEditorEntry("Room", "Shop"));
+            Assert.IsTrue(
+                CardPresentationMigration.IsPresentationEditorEntry("ChoiceOption", "HealFull"));
+        }
+
+        [Test]
+        public void IsRoomOrChoiceOptionKind_RecognizesBoth()
+        {
+            Assert.IsTrue(CardPresentationMigration.IsRoomOrChoiceOptionKind("Room"));
+            Assert.IsTrue(CardPresentationMigration.IsRoomOrChoiceOptionKind("ChoiceOption"));
+            Assert.IsFalse(CardPresentationMigration.IsRoomOrChoiceOptionKind("HelpCard"));
+        }
+
+        [Test]
+        public void ResolveRoomIconPrefab_UsesOverrideThenDefaults()
+        {
+            Assert.AreEqual(
+                "Assets/Prefabs/自定义.prefab",
+                CardChassisPaths.ResolveRoomIconPrefab("Shop", "Assets/Prefabs/自定义.prefab"));
+            Assert.AreEqual(
+                CardChassisPaths.RoomIconShop,
+                CardChassisPaths.ResolveRoomIconPrefab("Shop", null));
+            Assert.AreEqual(
+                CardChassisPaths.RoomIconBoss,
+                CardChassisPaths.ResolveRoomIconPrefab("Boss", string.Empty));
+            Assert.AreEqual(
+                CardChassisPaths.RoomIconTavern,
+                CardChassisPaths.ResolveRoomIconPrefab("Tavern", null));
+        }
+
+        [Test]
+        public void CardPresentationKind_RoomAndChoiceOption_DoNotCollideWithCardKindTrap()
+        {
+            Assert.AreEqual(7, (int)CardPresentationKind.Trap);
+            Assert.AreEqual(8, (int)CardPresentationKind.Room);
+            Assert.AreEqual(9, (int)CardPresentationKind.ChoiceOption);
         }
 
         [Test]

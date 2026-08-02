@@ -5,7 +5,7 @@
     "deckId": "deck.trap",
     "role": "",
     "displayName": "攻击图腾",
-    "description": "机关卡：邻格真怪与玩家攻击+1；离开邻接后失效",
+    "description": "",
     "faceIntro": "",
     "attackPattern": "无",
     "gold": 0,

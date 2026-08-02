@@ -5,7 +5,7 @@
   "deckId": "deck.dragon",
   "role": "",
   "displayName": "宝宝莱姆",
-  "description": "每移动3次随机交换怪物",
+  "description": "",
   "attackPattern": "普通近战",
   "gold": 5,
   "stats": {

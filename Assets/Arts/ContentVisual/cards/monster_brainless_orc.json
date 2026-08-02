@@ -5,8 +5,8 @@
     "deckId": "deck.stone_legion",
     "role": "",
     "displayName": "火把哥布",
-    "description": "[action]",
-    "faceIntro": "他坚称灯光师是剧组最重要的工种",
+    "description": "",
+    "faceIntro": "他坚称灯光师是剧组最重要的工种之一",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -26,7 +26,7 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
+        "offsetX": -0.10000000149011612,
         "offsetY": -0.15000000596046449,
         "uniformScale": 1.0
     },

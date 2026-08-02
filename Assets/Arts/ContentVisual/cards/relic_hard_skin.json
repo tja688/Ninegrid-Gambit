@@ -4,7 +4,7 @@
   "kind": "Relic",
   "deckId": "deck.relic",
   "displayName": "硬皮",
-  "description": "血量上限+{amount}，关卡结束恢复10",
+  "description": "",
   "gold": 0,
   "stats": {
     "hp": 0,
