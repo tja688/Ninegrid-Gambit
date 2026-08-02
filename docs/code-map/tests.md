@@ -44,6 +44,8 @@
 | `TavernSessionContractTests` | #93：卡店三项服务、扩容/强化扣费留店、刷新翻倍、离开、道具卡固定二级选择确认/取消、余额不足拒买 |
 | `SpecialRewardSessionContractTests` | #94：宝箱奖励 4 卡 / 道具奖励 5 卡、免费拿走进携带卡包留房、离开放弃不加 skip 金 |
 | `RoomOpeningInjectContractTests` | #95 / ADR-0022：五种战斗房开局注入（固定/权重可重复/不可重复）、困难房怪物侧序列 3+4、注入顺序（固定→房间→携带）、RandomBattle 开局分房 |
+| `CarryPackClosedLoopContractTests` | #96 / ADR-0022：商店买 3 张→下战斗张数=容量+房间注入+3、特殊房进包、注入未用清关 +10/张、与固定卡分容器 |
+| `CarryPackPreserveBootstrapContractTests`（Presentation `BattleSession/`） | #96：`BootstrapRun(preserveRunInventory)` 携带卡包存活；无 preserve 则清空 |
 | `ContentCatalogValidationTests` | 小型夹具 `ValidateCatalog` 绿；生产 Bootstrap（模板表 + 装配引用解析 + schema≥2 JSON 投影 + 奖池查询展开 + 节点序列规则）校验绿；跨容器共享模板不同实参（#70 / ADR-0009） |
 | `EffectTemplateAssemblyContractTests` | #70：取消 typeTag/verb 门禁；`requires` 解析；装配实参替换与跨容器共享模板 |
 | `EffectSelfDeclarationContractTests` | #72 / ADR-0010：requires 校验（未知 token / mount 错配 / 缺声明）；拒上下文开关旧形；生产卡挂载显式场景声明审计归零；`ValidateCatalog` 绿 |
