@@ -383,20 +383,57 @@ namespace NineGrid.Core.Systems
         {
             var player = this.GetModel<PlayerModel>();
             var content = this.GetSystem<IContentSystem>();
-            var stacks = player.ConsumeHelpCardStacksForNode();
-            for (var i = 0; i < stacks.Count; i++)
-            {
-                var stack = stacks[i];
-                if (string.IsNullOrEmpty(stack.DefId) || !catalog.Cards.ContainsKey(stack.DefId))
-                {
-                    continue;
-                }
+            var rng = this.GetUtility<IRngUtility>();
 
-                for (var count = 0; count < stack.Count; count++)
+            // 1) 按容量从来源池随机生成
+            var pool = player.ItemSourcePoolDefIds;
+            if (pool.Count > 0 && player.ItemDeckCapacity > 0)
+            {
+                for (var i = 0; i < player.ItemDeckCapacity; i++)
                 {
-                    options.AddPlayerCard(content.CreateDraft(stack.DefId));
+                    var defId = pool[rng.Range(0, pool.Count)];
+                    TryAddPlayerCard(catalog, content, options, defId);
                 }
             }
+
+            // 2) 叠固定卡
+            var fixedCards = player.FixedItemCardDefIds;
+            for (var i = 0; i < fixedCards.Count; i++)
+            {
+                TryAddPlayerCard(catalog, content, options, fixedCards[i]);
+            }
+
+            // 3) 叠房间注入卡（T12/#95 接线；M1 恒为空）
+            AppendRoomOpeningInjectPlayerCards(catalog, content, options);
+
+            // 4) 倒空携带卡包
+            var carry = player.DrainCarryPack();
+            for (var i = 0; i < carry.Count; i++)
+            {
+                TryAddPlayerCard(catalog, content, options, carry[i]);
+            }
+        }
+
+        private void AppendRoomOpeningInjectPlayerCards(
+            GameContentCatalog catalog,
+            IContentSystem content,
+            NodeDeckOptions options)
+        {
+            // ADR-0022：房间开局注入在 T12 生效；此处保留生成顺序槽位。
+        }
+
+        private static void TryAddPlayerCard(
+            GameContentCatalog catalog,
+            IContentSystem content,
+            NodeDeckOptions options,
+            string defId)
+        {
+            if (string.IsNullOrEmpty(defId) || catalog == null || !catalog.Cards.ContainsKey(defId))
+            {
+                return;
+            }
+
+            options.AddPlayerCard(content.CreateDraft(defId));
         }
 
         private int AddSequenceCards(

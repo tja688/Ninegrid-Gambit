@@ -153,7 +153,10 @@ namespace NineGrid.Core
 
             player.SetProfession(profession.DefId);
             ApplyAvatarStats(avatar, options);
-            ProfessionCatalog.SeedPlayerSideDeck(player, profession.DefId);
+            ProfessionCatalog.SeedItemGenerationRules(
+                player,
+                content != null ? content.Catalog : null,
+                profession.DefId);
 
             if (string.IsNullOrEmpty(profession.InitialRelicDefId))
             {

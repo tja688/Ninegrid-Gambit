@@ -6,8 +6,13 @@ namespace NineGrid.Core
 {
     public sealed class PlayerModel : AbstractModel
     {
+        public const int DefaultItemDeckCapacity = 6;
+
         private readonly List<string> mRelicDefIds = new List<string>();
-        private readonly List<HelpCardStackEntry> mHelpCardStacks = new List<HelpCardStackEntry>();
+        private readonly List<string> mItemSourcePoolDefIds = new List<string>();
+        private readonly List<string> mFixedItemCardDefIds = new List<string>();
+        private readonly List<string> mCarryPackDefIds = new List<string>();
+        private int mItemDeckCapacity = DefaultItemDeckCapacity;
 
         // 神圣决斗（skill.holy_duel）：玩家侧交战记忆，先挂简单状态，预留日后 buff 化。
         // 语义：玩家主动与本卡交战后记下持有者 uid；之后主动与其他怪开战 → 对玩家 2 伤；
@@ -58,9 +63,28 @@ namespace NineGrid.Core
             get { return mRelicDefIds; }
         }
 
-        public IReadOnlyList<HelpCardStackEntry> HelpCardStacks
+        /// <summary>玩家侧卡组容量（初始 6，可扩容）；每关按此数从来源池随机生成。</summary>
+        public int ItemDeckCapacity
         {
-            get { return mHelpCardStacks; }
+            get { return mItemDeckCapacity; }
+        }
+
+        /// <summary>道具卡来源池（通用卡组 + 角色卡组）；跨节点持久。</summary>
+        public IReadOnlyList<string> ItemSourcePoolDefIds
+        {
+            get { return mItemSourcePoolDefIds; }
+        }
+
+        /// <summary>固定卡列表（卡店「道具卡固定」）；每关生成时追加。</summary>
+        public IReadOnlyList<string> FixedItemCardDefIds
+        {
+            get { return mFixedItemCardDefIds; }
+        }
+
+        /// <summary>携带卡包；下一战斗节点开局倒空注入后清空。</summary>
+        public IReadOnlyList<string> CarryPackDefIds
+        {
+            get { return mCarryPackDefIds; }
         }
 
         protected override void OnInit()
@@ -112,105 +136,144 @@ namespace NineGrid.Core
             return removed;
         }
 
-        public void AddHelpCard(string defId, int count = 1)
+        public void SetItemDeckCapacity(int capacity)
         {
-            if (string.IsNullOrEmpty(defId) || count <= 0)
+            var next = capacity < 0 ? 0 : capacity;
+            if (mItemDeckCapacity == next)
             {
                 return;
             }
 
-            for (var i = 0; i < mHelpCardStacks.Count; i++)
-            {
-                if (mHelpCardStacks[i].DefId != defId)
-                {
-                    continue;
-                }
-
-                mHelpCardStacks[i] = new HelpCardStackEntry(defId, mHelpCardStacks[i].Count + count);
-                Touch();
-                return;
-            }
-
-            mHelpCardStacks.Add(new HelpCardStackEntry(defId, count));
+            mItemDeckCapacity = next;
             Touch();
         }
 
-        public bool TryRemoveHelpCard(string defId, int count = 1)
+        public void AddItemSourcePoolCard(string defId)
+        {
+            if (string.IsNullOrEmpty(defId) || mItemSourcePoolDefIds.Contains(defId))
+            {
+                return;
+            }
+
+            mItemSourcePoolDefIds.Add(defId);
+            Touch();
+        }
+
+        public void ReplaceItemSourcePool(IEnumerable<string> defIds)
+        {
+            mItemSourcePoolDefIds.Clear();
+            if (defIds != null)
+            {
+                foreach (var defId in defIds)
+                {
+                    if (string.IsNullOrEmpty(defId) || mItemSourcePoolDefIds.Contains(defId))
+                    {
+                        continue;
+                    }
+
+                    mItemSourcePoolDefIds.Add(defId);
+                }
+            }
+
+            Touch();
+        }
+
+        public void AddFixedItemCard(string defId)
+        {
+            if (string.IsNullOrEmpty(defId))
+            {
+                return;
+            }
+
+            mFixedItemCardDefIds.Add(defId);
+            Touch();
+        }
+
+        public void ReplaceFixedItemCards(IEnumerable<string> defIds)
+        {
+            mFixedItemCardDefIds.Clear();
+            if (defIds != null)
+            {
+                foreach (var defId in defIds)
+                {
+                    if (!string.IsNullOrEmpty(defId))
+                    {
+                        mFixedItemCardDefIds.Add(defId);
+                    }
+                }
+            }
+
+            Touch();
+        }
+
+        public void AddToCarryPack(string defId, int count = 1)
         {
             if (string.IsNullOrEmpty(defId) || count <= 0)
             {
-                return false;
+                return;
             }
 
-            for (var i = 0; i < mHelpCardStacks.Count; i++)
+            for (var i = 0; i < count; i++)
             {
-                if (mHelpCardStacks[i].DefId != defId)
-                {
-                    continue;
-                }
-
-                var next = mHelpCardStacks[i].Count - count;
-                if (next > 0)
-                {
-                    mHelpCardStacks[i] = new HelpCardStackEntry(defId, next);
-                }
-                else
-                {
-                    mHelpCardStacks.RemoveAt(i);
-                }
-
-                Touch();
-                return true;
+                mCarryPackDefIds.Add(defId);
             }
 
-            return false;
+            Touch();
         }
 
-        public int CountHelpCardsByDefId(string defId)
+        public void ReplaceCarryPack(IEnumerable<string> defIds)
+        {
+            mCarryPackDefIds.Clear();
+            if (defIds != null)
+            {
+                foreach (var defId in defIds)
+                {
+                    if (!string.IsNullOrEmpty(defId))
+                    {
+                        mCarryPackDefIds.Add(defId);
+                    }
+                }
+            }
+
+            Touch();
+        }
+
+        /// <summary>倒空携带卡包，返回本关待注入的 defId 列表。</summary>
+        public List<string> DrainCarryPack()
+        {
+            if (mCarryPackDefIds.Count == 0)
+            {
+                return new List<string>();
+            }
+
+            var drained = new List<string>(mCarryPackDefIds.Count);
+            for (var i = 0; i < mCarryPackDefIds.Count; i++)
+            {
+                drained.Add(mCarryPackDefIds[i]);
+            }
+
+            mCarryPackDefIds.Clear();
+            Touch();
+            return drained;
+        }
+
+        public int CountCarryPackByDefId(string defId)
         {
             if (string.IsNullOrEmpty(defId))
             {
                 return 0;
             }
 
-            for (var i = 0; i < mHelpCardStacks.Count; i++)
+            var count = 0;
+            for (var i = 0; i < mCarryPackDefIds.Count; i++)
             {
-                if (mHelpCardStacks[i].DefId == defId)
+                if (mCarryPackDefIds[i] == defId)
                 {
-                    return mHelpCardStacks[i].Count;
+                    count++;
                 }
             }
 
-            return 0;
-        }
-
-        public int TotalHelpCardCount()
-        {
-            var total = 0;
-            for (var i = 0; i < mHelpCardStacks.Count; i++)
-            {
-                total += mHelpCardStacks[i].Count;
-            }
-
-            return total;
-        }
-
-        public List<HelpCardStackEntry> ConsumeHelpCardStacksForNode()
-        {
-            if (mHelpCardStacks.Count == 0)
-            {
-                return new List<HelpCardStackEntry>();
-            }
-
-            var consumed = new List<HelpCardStackEntry>(mHelpCardStacks.Count);
-            for (var i = 0; i < mHelpCardStacks.Count; i++)
-            {
-                consumed.Add(mHelpCardStacks[i]);
-            }
-
-            mHelpCardStacks.Clear();
-            Touch();
-            return consumed;
+            return count;
         }
 
         public void Reset()
@@ -220,7 +283,10 @@ namespace NineGrid.Core
             InteractionCount.Value = 0;
             ProfessionId.Value = string.Empty;
             mRelicDefIds.Clear();
-            mHelpCardStacks.Clear();
+            mItemDeckCapacity = DefaultItemDeckCapacity;
+            mItemSourcePoolDefIds.Clear();
+            mFixedItemCardDefIds.Clear();
+            mCarryPackDefIds.Clear();
             mDuelMarkMonsterUid = 0;
             Touch();
         }
