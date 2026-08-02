@@ -163,5 +163,16 @@ namespace NineGrid.Core
                 .AddEnemyCard(new CardDraft("monster.bat", CardKind.Monster) { MaxHp = 2, Attack = 1, GoldReward = 1 })
                 .AddEnemyCard(new CardDraft("monster.guard", CardKind.Monster) { MaxHp = 4, Attack = 1, Armor = 1, GoldReward = 2 });
         }
+
+        /// <summary>跳格沙盒：无开局发牌、无敌方池，仅 Avatar 在场。</summary>
+        public static NodeDeckOptions CreateWalkSandbox()
+        {
+            return new NodeDeckOptions
+            {
+                PlayerOpeningCount = 0,
+                EnemyOpeningCount = 0,
+                RequireElite = false,
+            };
+        }
     }
 }

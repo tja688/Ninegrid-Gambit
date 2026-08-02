@@ -150,7 +150,8 @@ namespace NineGrid.Presentation.Setup
                 revealFaceFactory,
                 attackFactory,
                 useItemFactory,
-                new PickupIntentScriptFactory(architecture));
+                new PickupIntentScriptFactory(architecture),
+                new BoardWalkIntentScriptFactory(architecture));
 
             return InstallCore(
                 scriptFactory,
@@ -201,6 +202,7 @@ namespace NineGrid.Presentation.Setup
             ChoicePresentationSystem.EnsureRegistered(architecture);
             BoardSelectionSystem.EnsureRegistered(architecture);
             GameFlowShellSystem.EnsureRegistered(architecture);
+            AvatarWalkSystem.EnsureRegistered(architecture);
             InstallBattleBeatScheduler(architecture);
 
             var existing = architecture.GetSystem<IPresentationRuntimeSystem>();

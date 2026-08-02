@@ -193,6 +193,14 @@ namespace NineGrid.Presentation.Systems
             return mMotion.RequestRevealAvatarAsync(avatar, cancellationToken);
         }
 
+        public UniTask HopAvatarToSlotAsync(
+            int fromSlot,
+            int toSlot,
+            CancellationToken cancellationToken = default)
+        {
+            return mMotion.HopAvatarToSlotAsync(fromSlot, toSlot, cancellationToken);
+        }
+
         public UniTask RotateOuterRingClockwiseAsync(CancellationToken cancellationToken = default)
         {
             return mMotion.RotateOuterRingClockwiseAsync(cancellationToken);

@@ -82,6 +82,7 @@ namespace NineGrid.Cards
             ResolveSkeletonDeckPresentation();
             GroundFieldGeometryHook.RequestWire(this);
             ExploreInputHook.RequestWire(this);
+            BoardWalkInputHook.RequestWire(this);
             AvatarBoardFacingHook.RequestWire(this);
         }
 
@@ -304,6 +305,16 @@ namespace NineGrid.Cards
         {
             return Geometry != null
                 ? Geometry.RequestRevealAvatarAsync(avatar, cancellationToken)
+                : UniTask.CompletedTask;
+        }
+
+        public UniTask HopAvatarToSlotAsync(
+            int fromSlot,
+            int toSlot,
+            CancellationToken cancellationToken = default)
+        {
+            return Geometry != null
+                ? Geometry.HopAvatarToSlotAsync(fromSlot, toSlot, cancellationToken)
                 : UniTask.CompletedTask;
         }
 

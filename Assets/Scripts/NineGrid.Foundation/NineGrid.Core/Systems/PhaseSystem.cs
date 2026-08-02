@@ -79,6 +79,11 @@ namespace NineGrid.Core.Systems
             /// 主动翻开：场上邻接背面卡 → FaceUp；消耗互动由表现剧本分拍推进。
             /// </summary>
             CoreCommandResult RevealFace(SlotId targetSlot);
+            CoreCommandResult MoveAvatar(SlotId targetSlot);
+            /// <summary>
+            /// 跳格沙盒开局：空盘 + Avatar，结束于 RoomChoice（不清关、不发奖励/房间选项）。
+            /// </summary>
+            CoreCommandResult StartWalkSandboxNode();
             CoreCommandResult SelectReward(int optionIndex);
             CoreCommandResult SkipHelpChoice();
             CoreCommandResult SelectRoom(int optionIndex);
@@ -654,6 +659,79 @@ namespace NineGrid.Core.Systems
             var resolved = pipeline.RunToCompletion();
             // 旋转/补牌留给 ResolvePostKillBoard，供表演导演按批锁步。
             return CoreCommandResult.Accept(resolved);
+        }
+
+        public CoreCommandResult MoveAvatar(SlotId targetSlot)
+        {
+            if (!CanExecute(GameCommandKind.MoveAvatar))
+            {
+                return Reject(GameCommandKind.MoveAvatar, "Command is not legal in phase " + CurrentPhase, targetSlot, 0);
+            }
+
+            var board = this.GetModel<BoardModel>();
+            var avatarUid = board.AvatarUid.Value;
+            if (avatarUid <= 0)
+            {
+                return Reject(GameCommandKind.MoveAvatar, "Avatar is missing.", targetSlot, 0);
+            }
+
+            var from = board.AvatarSlot.Value;
+            if (!from.IsBoardSlot)
+            {
+                return Reject(GameCommandKind.MoveAvatar, "Avatar is not on the board.", targetSlot, avatarUid);
+            }
+
+            if (!targetSlot.IsBoardSlot)
+            {
+                return Reject(GameCommandKind.MoveAvatar, "Target is not a board slot.", targetSlot, avatarUid);
+            }
+
+            if (targetSlot == from)
+            {
+                return Reject(GameCommandKind.MoveAvatar, "Target is the current avatar slot.", targetSlot, avatarUid);
+            }
+
+            if (!board.IsEmpty(targetSlot))
+            {
+                return Reject(GameCommandKind.MoveAvatar, "Target slot is occupied.", targetSlot, avatarUid);
+            }
+
+            if (!from.IsAdjacentTo(targetSlot))
+            {
+                return Reject(GameCommandKind.MoveAvatar, "Target is not orthogonally adjacent.", targetSlot, avatarUid);
+            }
+
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new MoveAvatarAction(targetSlot));
+            return CoreCommandResult.Accept(pipeline.RunToCompletion());
+        }
+
+        public CoreCommandResult StartWalkSandboxNode()
+        {
+            if (!CanExecute(GameCommandKind.StartWalkSandboxNode)
+                && !CanExecute(GameCommandKind.StartNode))
+            {
+                return Reject(
+                    GameCommandKind.StartWalkSandboxNode,
+                    "Command is not legal in phase " + CurrentPhase,
+                    SlotId.None,
+                    0);
+            }
+
+            mInRoomRewardContext = false;
+            var options = NodeDeckOptions.CreateWalkSandbox();
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new ClearPendingChoicesAction());
+            pipeline.Enqueue(new ChangePhaseAction(GamePhase.BuildEnemyPool));
+            pipeline.Enqueue(new SetupNodeDeckAction(options));
+            pipeline.Enqueue(new ChangePhaseAction(GamePhase.ResetNode));
+            pipeline.Enqueue(new ChangePhaseAction(GamePhase.DealOpeningCards));
+            pipeline.Enqueue(new OpeningDealAction(options));
+            pipeline.Enqueue(new FillEmptySlotsAction());
+            pipeline.Enqueue(new ResetCurrentArmorAction());
+            pipeline.Enqueue(new NodeStartedAction());
+            pipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomChoice));
+            return CoreCommandResult.Accept(pipeline.RunToCompletion());
         }
 
         public CoreCommandResult UseItem(int itemUid)
@@ -1389,6 +1467,7 @@ namespace NineGrid.Core.Systems
                 case GamePhase.BuildEnemyPool:
                 case GamePhase.NodeCompleted:
                     mLegalCommands.Add(GameCommandKind.StartNode);
+                    mLegalCommands.Add(GameCommandKind.StartWalkSandboxNode);
                     break;
                 case GamePhase.InteractionLoop:
                     if (this.GetModel<PendingChoiceModel>().Kind.Value == PendingChoiceKind.Reward)
@@ -1415,9 +1494,11 @@ namespace NineGrid.Core.Systems
                     mLegalCommands.Add(GameCommandKind.SelectRoom);
                     mLegalCommands.Add(GameCommandKind.PickupItem);
                     mLegalCommands.Add(GameCommandKind.UseItem);
+                    mLegalCommands.Add(GameCommandKind.MoveAvatar);
                     break;
                 case GamePhase.RoomEvent:
                     mLegalCommands.Add(GameCommandKind.EnterRoom);
+                    mLegalCommands.Add(GameCommandKind.MoveAvatar);
                     break;
             }
         }

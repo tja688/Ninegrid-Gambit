@@ -36,6 +36,7 @@ namespace NineGrid.Presentation.Systems
         private string mPinnedFirstBattleDeckId;
         private IReadOnlyList<string> mQuickTestSkillIds = System.Array.Empty<string>();
         private IReadOnlyList<string> mQuickTestTrapContentIds = System.Array.Empty<string>();
+        private bool mWalkSandbox;
 
         public GameFlowShellSystem()
         {
@@ -71,6 +72,8 @@ namespace NineGrid.Presentation.Systems
         internal IReadOnlyList<string> QuickTestSkillIds => mQuickTestSkillIds;
 
         internal IReadOnlyList<string> QuickTestTrapContentIds => mQuickTestTrapContentIds;
+
+        internal bool IsWalkSandbox => mWalkSandbox;
 
         internal IReadOnlyList<int> QuickTestContentNodeQueue => mQuickTestContentNodeQueue;
 
@@ -151,6 +154,7 @@ namespace NineGrid.Presentation.Systems
                     PinnedFirstBattleDeckId = preset.PinnedFirstBattleDeckId,
                     SkillIds = preset.SkillIds,
                     TrapContentIds = preset.TrapContentIds,
+                    WalkSandbox = preset.WalkSandbox,
                 },
             });
             return true;
@@ -178,6 +182,7 @@ namespace NineGrid.Presentation.Systems
             mQuickTestSkillIds = System.Array.Empty<string>();
             mQuickTestTrapContentIds = System.Array.Empty<string>();
             mQuickTestNodeOrderMode = QuickTestNodeOrderMode.Shuffled;
+            mWalkSandbox = false;
         }
 
         internal void BumpGeneration()
@@ -208,6 +213,7 @@ namespace NineGrid.Presentation.Systems
             mQuickTestTrapContentIds = qt.TrapContentIds != null && qt.TrapContentIds.Count > 0
                 ? qt.TrapContentIds
                 : System.Array.Empty<string>();
+            mWalkSandbox = qt.WalkSandbox;
             PrepareQuickTestContentNodeQueue(mQuickTestNodeOrderMode);
         }
 
@@ -217,6 +223,7 @@ namespace NineGrid.Presentation.Systems
             mPinnedFirstBattleDeckId = null;
             mQuickTestSkillIds = System.Array.Empty<string>();
             mQuickTestTrapContentIds = System.Array.Empty<string>();
+            mWalkSandbox = false;
             mQuickTestContentNodeQueue = null;
             mQuickTestContentNodeCursor = 0;
         }

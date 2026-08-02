@@ -13,12 +13,75 @@ namespace NineGrid.Flow.Presentation
     /// </summary>
     public static class BoardIntentLegality
     {
+        public static bool TryExplainBoardWalk(IArchitecture arch, int groundSlot, out string rejectReason)
+        {
+            rejectReason = null;
+            if (arch == null)
+            {
+                rejectReason = "noArchitecture";
+                return false;
+            }
+
+            var walk = arch.GetSystem<IAvatarWalkSystem>();
+            if (walk == null || !walk.IsEnabled)
+            {
+                rejectReason = "avatarWalkDisabled";
+                return false;
+            }
+
+            if (!TryExplainPhaseAllowsBoardCommand(arch, GameCommandKind.MoveAvatar, out rejectReason))
+            {
+                return false;
+            }
+
+            if (groundSlot < SlotId.MinBoardIndex || groundSlot > SlotId.MaxBoardIndex)
+            {
+                rejectReason = "slotOutOfRange";
+                return false;
+            }
+
+            var board = arch.GetModel<BoardModel>();
+            var from = board.AvatarSlot.Value;
+            if (!from.IsBoardSlot)
+            {
+                rejectReason = "avatarNotOnBoard";
+                return false;
+            }
+
+            if (from.Index == groundSlot)
+            {
+                rejectReason = "alreadyAtDestination";
+                return false;
+            }
+
+            var to = SlotId.Board(groundSlot);
+            if (!board.IsEmpty(to))
+            {
+                rejectReason = "destinationOccupied";
+                return false;
+            }
+
+            var path = new List<SlotId>(4);
+            if (!AvatarWalkPathfinder.TryFindPath(board, from, to, path))
+            {
+                rejectReason = "noPath";
+                return false;
+            }
+
+            return true;
+        }
+
         public static bool TryExplainExplore(IArchitecture arch, int groundSlot, out string rejectReason)
         {
             rejectReason = null;
             if (arch == null)
             {
                 rejectReason = "noArchitecture";
+                return false;
+            }
+
+            if (IsAvatarWalkExclusive(arch, out rejectReason))
+            {
                 return false;
             }
 
@@ -57,6 +120,11 @@ namespace NineGrid.Flow.Presentation
             if (arch == null)
             {
                 rejectReason = "noArchitecture";
+                return false;
+            }
+
+            if (IsAvatarWalkExclusive(arch, out rejectReason))
+            {
                 return false;
             }
 
@@ -118,6 +186,11 @@ namespace NineGrid.Flow.Presentation
             if (arch == null)
             {
                 rejectReason = "noArchitecture";
+                return false;
+            }
+
+            if (IsAvatarWalkExclusive(arch, out rejectReason))
+            {
                 return false;
             }
 
@@ -240,6 +313,11 @@ namespace NineGrid.Flow.Presentation
                 return false;
             }
 
+            if (IsAvatarWalkExclusive(arch, out rejectReason))
+            {
+                return false;
+            }
+
             // 与 PhaseSystem.ApplyPickupItem 对齐：表现可信入口不查 CanExecute。
             // ADR-0004：表演锁步（IsInputLocked）不在此拒；忙时由 IntentIntake 缓冲。
             if (groundSlot < SlotId.MinBoardIndex || groundSlot > SlotId.MaxBoardIndex)
@@ -318,13 +396,31 @@ namespace NineGrid.Flow.Presentation
                     return command == GameCommandKind.Attack
                            || command == GameCommandKind.ClickEmpty
                            || command == GameCommandKind.UseItem
-                           || command == GameCommandKind.PickupItem;
+                           || command == GameCommandKind.PickupItem
+                           || command == GameCommandKind.RevealFace;
                 case GamePhase.RoomChoice:
                     return command == GameCommandKind.UseItem
-                           || command == GameCommandKind.PickupItem;
+                           || command == GameCommandKind.PickupItem
+                           || command == GameCommandKind.MoveAvatar;
+                case GamePhase.RoomEvent:
+                    return command == GameCommandKind.MoveAvatar
+                           || command == GameCommandKind.EnterRoom;
                 default:
                     return false;
             }
+        }
+
+        private static bool IsAvatarWalkExclusive(IArchitecture arch, out string rejectReason)
+        {
+            rejectReason = null;
+            var walk = arch.GetSystem<IAvatarWalkSystem>();
+            if (walk != null && walk.IsEnabled)
+            {
+                rejectReason = "avatarWalkExclusive";
+                return true;
+            }
+
+            return false;
         }
 
         private static bool IsRegisteredInItemSlots(DeckModel deck, int itemUid)

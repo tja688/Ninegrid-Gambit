@@ -79,6 +79,12 @@ namespace NineGrid.Presentation.Systems
 
         UniTask RequestRevealAvatarAsync(ManagedCard avatar, CancellationToken cancellationToken = default);
 
+        /// <summary>Avatar 邻格 hop：更新表现占格并播放旋转同款跳跃（允许落点含格5）。</summary>
+        UniTask HopAvatarToSlotAsync(
+            int fromSlot,
+            int toSlot,
+            CancellationToken cancellationToken = default);
+
         UniTask RotateOuterRingClockwiseAsync(CancellationToken cancellationToken = default);
 
         UniTask RotateOuterRingWhileBusyAsync(bool clockwise, CancellationToken cancellationToken = default);

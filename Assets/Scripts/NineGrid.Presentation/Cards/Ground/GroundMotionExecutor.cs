@@ -908,7 +908,13 @@ namespace NineGrid.Cards
         public bool TryHandleEmptySlotClick(int slot)
         {
             // 几何命中门：视图登记非空则无空槽代理可点。逻辑合法性由 Flow idle（BoardModel）裁决。
-            if (!IsEmpty(slot) || !IsAvatarOrthogonalBattleSlot(slot))
+            var walkEnabled = BoardWalkInputHook.IsEnabled != null && BoardWalkInputHook.IsEnabled();
+            if (!IsEmpty(slot))
+            {
+                return false;
+            }
+
+            if (!walkEnabled && !IsAvatarOrthogonalBattleSlot(slot))
             {
                 return false;
             }
@@ -919,6 +925,19 @@ namespace NineGrid.Cards
                 || PresentationInputGates.BoardSelectModeActive)
             {
                 return false;
+            }
+
+            if (walkEnabled)
+            {
+                if (BoardWalkInputHook.TrySubmitBoardWalk == null)
+                {
+                    Debug.LogWarning("[GroundMotionExecutor] BoardWalkInputHook.TrySubmitBoardWalk 未装配。");
+                    return false;
+                }
+
+                Debug.Log($"[GroundMotionExecutor] 空槽点击 → BoardWalk: slot={slot}");
+                _onEmptySlotClicked?.Invoke(slot);
+                return BoardWalkInputHook.TrySubmitBoardWalk(slot);
             }
 
             if (ExploreInputHook.TrySubmitExplore == null)
@@ -1619,6 +1638,66 @@ namespace NineGrid.Cards
                     _isBusy = false;
                     PresentationMainlineHold.Release(holdAcquired, "FieldMotion");
                 }
+            }
+        }
+
+        /// <summary>
+        /// Avatar 单格 hop：允许落点含格5；短租 FieldMotion 主线以便跳间缓冲改目标。
+        /// </summary>
+        public async UniTask HopAvatarToSlotAsync(
+            int fromSlot,
+            int toSlot,
+            CancellationToken cancellationToken = default)
+        {
+            if (!IsValidSlot(fromSlot) || !IsValidSlot(toSlot) || fromSlot == toSlot)
+            {
+                return;
+            }
+
+            var uid = _index.GetUidAt(fromSlot);
+            if (uid == 0)
+            {
+                Debug.LogWarning($"[GroundMotionExecutor] Avatar hop 起点无占格 from={fromSlot}");
+                return;
+            }
+
+            if (!IsEmpty(toSlot))
+            {
+                Debug.LogWarning($"[GroundMotionExecutor] Avatar hop 目标已占用 to={toSlot}");
+                return;
+            }
+
+            if (!CardEntityLifecycleHook.CardsOrNull().TryGet(uid, out var card) || card?.Transform == null)
+            {
+                Debug.LogWarning($"[GroundMotionExecutor] Avatar hop 无视图 uid={uid}");
+                return;
+            }
+
+            if (!PresentationMainlineHold.TryAcquire("FieldMotion", out var holdAcquired))
+            {
+                Debug.LogWarning("[GroundMotionExecutor] Avatar hop 无法取得主线租约。");
+                return;
+            }
+
+            _isBusy = true;
+            try
+            {
+                _index.Unregister(fromSlot);
+                if (!_index.TryRegister(toSlot, uid))
+                {
+                    _index.TryRegister(fromSlot, uid);
+                    Debug.LogWarning($"[GroundMotionExecutor] Avatar hop 登记失败 to={toSlot}");
+                    return;
+                }
+
+                RefreshSlotHitCollider(fromSlot);
+                RefreshSlotHitCollider(toSlot);
+                await AnimateCardHopToSlotAsync(card, fromSlot, toSlot, cancellationToken);
+            }
+            finally
+            {
+                _isBusy = false;
+                PresentationMainlineHold.Release(holdAcquired, "FieldMotion");
             }
         }
 

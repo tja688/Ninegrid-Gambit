@@ -129,6 +129,7 @@ namespace NineGrid.Presentation.Setup
             {
                 GroundFieldGeometryHook.RequestWire(groundField);
                 ExploreInputHook.RequestWire(groundField);
+                BoardWalkInputHook.RequestWire(groundField);
                 AvatarBoardFacingHook.RequestWire(groundField);
             }
 

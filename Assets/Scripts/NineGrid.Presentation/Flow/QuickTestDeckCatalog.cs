@@ -21,13 +21,15 @@ namespace NineGrid.Flow
                 IReadOnlyList<string> skillIds = null,
                 string pinnedFirstBattleDeckId = null,
                 QuickTestNodeOrderMode nodeOrder = QuickTestNodeOrderMode.Shuffled,
-                IReadOnlyList<string> trapContentIds = null)
+                IReadOnlyList<string> trapContentIds = null,
+                bool walkSandbox = false)
             {
                 DisplayName = displayName ?? string.Empty;
                 SkillIds = skillIds ?? Array.Empty<string>();
                 PinnedFirstBattleDeckId = pinnedFirstBattleDeckId;
                 NodeOrder = nodeOrder;
                 TrapContentIds = trapContentIds ?? Array.Empty<string>();
+                WalkSandbox = walkSandbox;
             }
 
             public string DisplayName { get; }
@@ -35,6 +37,7 @@ namespace NineGrid.Flow
             public string PinnedFirstBattleDeckId { get; }
             public QuickTestNodeOrderMode NodeOrder { get; }
             public IReadOnlyList<string> TrapContentIds { get; }
+            public bool WalkSandbox { get; }
         }
 
         /// <summary>
@@ -48,7 +51,7 @@ namespace NineGrid.Flow
         /// </summary>
         private static readonly ChannelPreset[] sPresets =
         {
-            new ChannelPreset("通道0", Array.Empty<string>()),
+            new ChannelPreset("跳格沙盒", Array.Empty<string>(), walkSandbox: true),
             new ChannelPreset(
                 "移除向",
                 new[] { "skill.sacrifice", "skill.absorb", "skill.offer_fire" },
@@ -160,6 +163,11 @@ namespace NineGrid.Flow
 
                 builder.Append(code).Append(' ');
                 builder.Append(ResolveDisplayName(catalog, preset));
+                if (preset.WalkSandbox)
+                {
+                    builder.Append(" · 跳格手感（拒对战）");
+                }
+
                 var hasSkills = preset.SkillIds != null && preset.SkillIds.Count > 0;
                 var hasTraps = preset.TrapContentIds != null && preset.TrapContentIds.Count > 0;
                 if (hasSkills || hasTraps)

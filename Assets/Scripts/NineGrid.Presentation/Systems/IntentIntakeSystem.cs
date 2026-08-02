@@ -261,6 +261,11 @@ namespace NineGrid.Presentation.Systems
                 return BoardIntentLegality.TryExplainRevealFace(arch, intent.TargetId, out rejectReason);
             }
 
+            if (string.Equals(intent.Kind, InputIntentKinds.BoardWalk, StringComparison.Ordinal))
+            {
+                return BoardIntentLegality.TryExplainBoardWalk(arch, intent.TargetId, out rejectReason);
+            }
+
             rejectReason = "unknownKind";
             return false;
         }

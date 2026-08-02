@@ -47,6 +47,9 @@ namespace NineGrid.Presentation.Systems
             NodeDeckOptions options = null,
             CancellationToken cancellationToken = default);
 
+        /// <summary>\0 跳格沙盒入场：空盘 Avatar，相位 RoomChoice，不结算。</summary>
+        UniTask StartWalkSandboxNodeAsync(CancellationToken cancellationToken = default);
+
         bool TryEnterNodeSettlement();
 
         void NotifyPresentationBoardMayBeClear();

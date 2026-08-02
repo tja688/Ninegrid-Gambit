@@ -489,6 +489,11 @@ namespace NineGrid.Flow
             return StartBattleNodeInternalAsync(options, cancellationToken);
         }
 
+        public UniTask StartWalkSandboxNodeAsync(CancellationToken cancellationToken = default)
+        {
+            return StartWalkSandboxNodeInternalAsync(cancellationToken);
+        }
+
         public void NotifyPresentationBoardMayBeClear()
         {
             TryEnterNodeSettlement();

@@ -52,9 +52,9 @@
 
 主线 busy 真相：`PresentationDirector.IsMainlineBusy`（经 `IPresentationRuntimeSystem` / InputState 只读投影）。`BattleBusy` / `FieldBusy` 不作独立输入门禁；`OccupancyDesyncLatched` 仅为诊断断言。
 
-## Controllers（18）
+## Controllers（19）
 
-`PresentationController` · `ExploreInputController` · `AttackInputController` · `PickupInputController` · `UseItemInputController` · `GroundFieldGeometryController` · `FieldBattlePresentationController` · `CardEntityLifecycleController` · `ZoneOwnershipQueryController` · `DescriptionOutputController`（**已退役**：动态 HUD 描述 TMP 不再接线） · `DamageNumberOutputController` · `RelicHudController` · `RoomChoiceInputController` · `RewardChoiceInputController` · `GameFlowShellController` · `TriggerPulseOutputController` · `DiagnosticOutputController` · `BattleSessionPresentationController`
+`PresentationController` · `ExploreInputController` · `BoardWalkInputController` · `AttackInputController` · `PickupInputController` · `UseItemInputController` · `GroundFieldGeometryController` · `FieldBattlePresentationController` · `CardEntityLifecycleController` · `ZoneOwnershipQueryController` · `DescriptionOutputController`（**已退役**：动态 HUD 描述 TMP 不再接线） · `DamageNumberOutputController` · `RelicHudController` · `RoomChoiceInputController` · `RewardChoiceInputController` · `GameFlowShellController` · `TriggerPulseOutputController` · `DiagnosticOutputController` · `BattleSessionPresentationController`
 
 典型路径：场景 Host / Hook → Controller → `IntentIntake.Submit`（所有权 × MainlineBusy）→ Director / Core Command。
 
@@ -70,6 +70,7 @@
 | `IGameFlowShellSystem` / `GameFlowShellSystem` | 流程壳相位权威 |
 | `IPresentationInputStateSystem` / `PresentationInputStateSystem` | 输入所有权轴只读投影（`CurrentOwner`）+ MainlineBusy |
 | `IIntentIntake` / `IntentIntakeSystem` | 唯一意图收口：两轴门禁 + 合法性 + Director 缓冲；忙时 `IAccelerationSink` |
+| `IAvatarWalkSystem` / `AvatarWalkSystem` | 非战斗跳格门禁 + `AvatarWalkRunner`（BFS 连跳 / 改目标） |
 | `BoardSelectionSystem` | 棋盘选择模式 |
 | `ChoicePresentationSystem` | 房间/奖励选择表现 |
 | `GroundPresentation` | 场地表现辅助 |
@@ -80,7 +81,7 @@
 
 | 位置 | 示例 |
 |------|------|
-| `Cards/` | `AttackInputHook`、`ExploreInputHook`、`PickupInputHook`、`UseItemInputHook`、`FieldBattlePresentationHook`、`GroundFieldGeometryHook`、`CardEntityLifecycleHook`、`CardZoneOwnershipHook`、输出类 Hook… |
+| `Cards/` | `AttackInputHook`、`ExploreInputHook`、`BoardWalkInputHook`、`PickupInputHook`、`UseItemInputHook`、`FieldBattlePresentationHook`、`GroundFieldGeometryHook`、`CardEntityLifecycleHook`、`CardZoneOwnershipHook`、输出类 Hook… |
 | `Flow/` | `GameFlowShellHook`、`RelicHudHook`、`RoomChoiceCoreHook`、`RewardChoiceCoreHook`、`BattleBeatHook`（排期器报点） |
 
 **禁止**新增业务静态 Sink（跨层读写规则状态）。新交互优先走 Command / Query / Event / System。
@@ -120,7 +121,7 @@
 
 不要接回静态业务 Sink，也不要在 View 上直接改 Core 规则状态，也不要旁路直读 Core 写卡面数值。
 
-## 房间表现三分法（编辑器地基；场地走格子属后续票）
+## 房间表现三分法（走格子移动已落地；选图标/选项卡仍后续）
 
 局内「选下一房 / 进房选项 / 商店货架」表现资产分三类，**权威配置**在卡牌表现 JSON + 表现层编辑器（`NineGrid.Content.Editor`）：
 
@@ -129,6 +130,14 @@
 | **A. 房间图标** | `Room` | 战后落九宫格的下一步图标（走上去即选房；接线后续） | `iconPrefab` 或 `CardChassisPaths.ResolveRoomIconPrefab` | 投影 `RoomDefinition`（`contentId`≡`RoomKind`） |
 | **B. 特殊选项卡** | `ChoiceOption` | 进房后就地点选生效（回血/给钱/卡店服务/离开等） | `房间选项标准模板.prefab` | **不**进玩法 Catalog |
 | **C. 复用真卡** | `HelpCard` 等 | 商店 6 格货架商品 | 既有道具卡模版 | 照常投影 |
+
+### Avatar 跳格（已落地 · ADR-0019）
+
+- 意图 `InputIntentKinds.BoardWalk` → IntentIntake → `BoardWalkIntentScriptFactory` → `IAvatarWalkSystem.SetDestination`
+- Core：`MoveAvatar`（单邻格）+ `AvatarWalkPathfinder`（正交 BFS，空格途经/终点）；相位仅 `RoomChoice` / `RoomEvent`
+- 表现：`HopAvatarToSlotAsync` 复用旋转 hop；半空改目标等落地后重规划
+- `\0` QuickTest：`WalkSandbox` → `StartWalkSandboxNode` 空盘 + 开跳格门禁；拒 Explore/Attack/Pickup/Reveal
+- **战斗 `InteractionLoop` 禁走**；开战前 Avatar 须回格 5（交战表现仍有格 5 假设）
 
 ### 设计房间名 ↔ `RoomKind`（现状）
 
@@ -148,7 +157,7 @@
 
 特殊选项卡种子（`ChoiceOption`）：`Attack`/`Armor`/`Hp`（已有）、`HealFull`/`GainGold`/`UpgradeItemStats`/`FixItem`/`ExpandItemCapacity`/`RefreshShop`/`Leave`/`GoUp`/`GoDown`。
 
-当前局内仍走浮层二选一（`RoomChoicePresenter`）与扇形（`BounceFanChoicePresenter`）；**场地走格子选图标 / 点选项卡生效**不在本票。
+当前局内仍走浮层二选一（`RoomChoicePresenter`）与扇形（`BounceFanChoicePresenter`）；**场地走格子选图标 / 点选项卡生效**仍后续；**纯跳格移动**已由 ADR-0019 / `\0` 沙盒落地。
 
 ## ADR 不变量（摘要）
 
@@ -156,6 +165,7 @@
 - 逻辑占格唯一归 Core `BoardModel`  
 - 卡面可见值经投影 Commit（ADR-0002）；禁止队列外正式 Setter 通路  
 - 输入唯一收口 IntentIntake + 两轴门禁（ADR-0004）  
+- 非战斗 Avatar 正交跳格（ADR-0019）；战斗相位禁走  
 - 卡面**数值**只经结算指令在表演锚点提交，不直读 Core（ADR-0005）；装饰消费者经同一排期器多处理器分发（ADR-0007）  
 - **触发可见因果** / **基础触发表现**：无命中帧、靠运动落地才成立的触发，Impact 须在条件可见之后；Triggered 卡牌触发须 `EffectTriggered` + 在场持有者 v1 缩放（ADR-0018）  
 - Windows Player 高回报率鼠标：`RIDEV_NOLEGACY` + 轮询注入 Input System；命中走 `PointerHitRouter`，禁 `OnMouse*`（ADR-0006）

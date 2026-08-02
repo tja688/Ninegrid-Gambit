@@ -3,9 +3,11 @@
     "contentId": "FixItem",
     "kind": "ChoiceOption",
     "deckId": "",
+    "role": "",
     "displayName": "道具卡固定",
     "description": "花费50金币，固定生成一张选定的道具卡",
     "faceIntro": "",
+    "attackPattern": "",
     "gold": 50,
     "stats": {
         "hp": 0,
@@ -15,7 +17,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_21",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -71,6 +73,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
+    "effectAssemblies": [],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -86,7 +89,5 @@
     "healToFull": false,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "iconPrefab": "",
-    "effectAssemblies": [],
-    "role": ""
+    "iconPrefab": ""
 }

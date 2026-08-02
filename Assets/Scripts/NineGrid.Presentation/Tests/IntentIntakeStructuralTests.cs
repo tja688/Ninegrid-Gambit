@@ -66,6 +66,9 @@ namespace NineGrid.Presentation.Tests
             AssertSourceMatches(
                 "Commands/SubmitRevealFaceIntentCommand.cs",
                 @"intake\.Submit\s*\(");
+            AssertSourceMatches(
+                "Commands/SubmitBoardWalkIntentCommand.cs",
+                @"intake\.Submit\s*\(");
         }
 
         [Test]
@@ -75,6 +78,9 @@ namespace NineGrid.Presentation.Tests
             AssertSourceMentions(
                 "Controllers/ExploreInputController.cs",
                 "SubmitExploreIntentCommand");
+            AssertSourceMentions(
+                "Controllers/BoardWalkInputController.cs",
+                "SubmitBoardWalkIntentCommand");
             AssertSourceMentions(
                 "Controllers/AttackInputController.cs",
                 "SubmitAttackIntentCommand");

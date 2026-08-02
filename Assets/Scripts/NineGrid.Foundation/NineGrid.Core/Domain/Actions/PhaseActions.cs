@@ -410,6 +410,36 @@ namespace NineGrid.Core
         }
     }
 
+    /// <summary>非战斗 Avatar 单步邻格迁移（跳格路径的一跳）。</summary>
+    public sealed class MoveAvatarAction : GameAction
+    {
+        public MoveAvatarAction(SlotId toSlot)
+        {
+            ToSlot = toSlot;
+        }
+
+        public SlotId ToSlot { get; private set; }
+        public override string ActionName { get { return "MoveAvatar"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var board = context.GetModel<BoardModel>();
+            var registry = context.GetModel<CardRegistry>();
+            var avatarUid = board.AvatarUid.Value;
+            if (avatarUid <= 0 || !registry.TryGet(avatarUid, out var avatar))
+            {
+                return GameActionResult.Empty;
+            }
+
+            var fromSlot = board.AvatarSlot.Value;
+            board.SetAvatar(avatar, ToSlot);
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.AvatarMoved, context.ActionId, ActionName)
+                    .WithCard(avatarUid)
+                    .WithSlots(fromSlot, ToSlot));
+        }
+    }
+
     public sealed class UseItemAction : GameAction
     {
         private static readonly TriggerPoint[] sPostTriggers =

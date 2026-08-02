@@ -178,7 +178,8 @@ namespace NineGrid.Core
         BoardMarked,
         ContentLoaded,
         ActionCountdownChanged,
-        CardFaceChanged
+        CardFaceChanged,
+        AvatarMoved
     }
 
     public enum PresentationEventCategory
@@ -246,7 +247,8 @@ namespace NineGrid.Core
         MarkBoard,
         LoadContent,
         UpdateActionCount,
-        UpdateFaceUp
+        UpdateFaceUp,
+        MoveAvatar
     }
 
     public enum GamePhase
@@ -288,6 +290,8 @@ namespace NineGrid.Core
         SelectRoom,
         EnterRoom,
         RevealFace,
+        MoveAvatar,
+        StartWalkSandboxNode,
         PresentationFinished
     }
 
