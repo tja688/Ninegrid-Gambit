@@ -288,6 +288,7 @@ namespace NineGrid.Core
         ApplyUseItem,
         SelectReward,
         SkipHelpChoice,
+        RefreshShop,
         SelectRoom,
         EnterRoom,
         RevealFace,

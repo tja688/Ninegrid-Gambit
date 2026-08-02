@@ -16,6 +16,9 @@ namespace NineGrid.Core
         public BindableProperty<NavigationKind> SelectedNavigation { get; private set; }
         public BindableProperty<int> Version { get; private set; }
 
+        /// <summary>商店刷新价（金币）；仅本次进店有效，离开后清零。</summary>
+        public BindableProperty<int> ShopRefreshPriceGold { get; private set; }
+
         public IReadOnlyList<RewardEntry> RewardOptions
         {
             get { return mRewardOptions; }
@@ -36,6 +39,11 @@ namespace NineGrid.Core
                 NavigationOffer = new BindableProperty<NavigationKind>(NavigationKind.None);
                 SelectedNavigation = new BindableProperty<NavigationKind>(NavigationKind.None);
                 Version = new BindableProperty<int>(0);
+            }
+
+            if (ShopRefreshPriceGold == null)
+            {
+                ShopRefreshPriceGold = new BindableProperty<int>(0);
             }
         }
 
@@ -59,7 +67,32 @@ namespace NineGrid.Core
             SelectedRoom.Value = RoomKind.None;
             NavigationOffer.Value = NavigationKind.None;
             SelectedNavigation.Value = NavigationKind.None;
+            if (!IsShopPool(poolId))
+            {
+                ShopRefreshPriceGold.Value = 0;
+            }
+
             Touch();
+        }
+
+        /// <summary>商店货架会话：4 货架 + 本次进店刷新价。</summary>
+        public void OfferShop(IReadOnlyList<RewardEntry> shelves, int refreshPriceGold)
+        {
+            OfferRewards(ShopPoolId, shelves);
+            ShopRefreshPriceGold.Value = refreshPriceGold < 0 ? 0 : refreshPriceGold;
+            Touch();
+        }
+
+        public bool RemoveRewardOptionAt(int index)
+        {
+            if (index < 0 || index >= mRewardOptions.Count)
+            {
+                return false;
+            }
+
+            mRewardOptions.RemoveAt(index);
+            Touch();
+            return true;
         }
 
         public void ClearRewardChoices()
@@ -71,7 +104,15 @@ namespace NineGrid.Core
             }
 
             PoolId.Value = string.Empty;
+            ShopRefreshPriceGold.Value = 0;
             Touch();
+        }
+
+        public const string ShopPoolId = "shop.helpCards";
+
+        public static bool IsShopPool(string poolId)
+        {
+            return string.Equals(poolId, ShopPoolId, System.StringComparison.Ordinal);
         }
 
         public void OfferRooms(IReadOnlyList<RoomKind> options)
@@ -94,6 +135,7 @@ namespace NineGrid.Core
             SelectedRoom.Value = RoomKind.None;
             NavigationOffer.Value = NavigationKind.None;
             SelectedNavigation.Value = NavigationKind.None;
+            ShopRefreshPriceGold.Value = 0;
             Touch();
         }
 
@@ -106,6 +148,7 @@ namespace NineGrid.Core
             SelectedRoom.Value = RoomKind.None;
             NavigationOffer.Value = kind;
             SelectedNavigation.Value = NavigationKind.None;
+            ShopRefreshPriceGold.Value = 0;
             Touch();
         }
 
@@ -132,6 +175,7 @@ namespace NineGrid.Core
             SelectedRoom.Value = RoomKind.None;
             NavigationOffer.Value = NavigationKind.None;
             SelectedNavigation.Value = NavigationKind.None;
+            ShopRefreshPriceGold.Value = 0;
             Touch();
         }
 

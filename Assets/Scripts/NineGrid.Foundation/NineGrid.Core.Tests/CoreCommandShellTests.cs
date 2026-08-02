@@ -31,8 +31,11 @@ namespace NineGrid.Core.Tests
             (typeof(ApplyUseItemCommand), GameCommandKind.ApplyUseItem),
             (typeof(SelectRewardCommand), GameCommandKind.SelectReward),
             (typeof(SkipHelpChoiceCommand), GameCommandKind.SkipHelpChoice),
+            (typeof(RefreshShopCommand), GameCommandKind.RefreshShop),
             (typeof(SelectRoomCommand), GameCommandKind.SelectRoom),
             (typeof(EnterRoomCommand), GameCommandKind.EnterRoom),
+            (typeof(RevealFaceCommand), GameCommandKind.RevealFace),
+            (typeof(MoveAvatarCommand), GameCommandKind.MoveAvatar),
             (typeof(PresentationFinishedCommand), GameCommandKind.PresentationFinished),
         };
 

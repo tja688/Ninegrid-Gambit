@@ -296,6 +296,14 @@ namespace NineGrid.Core.Commands
         }
     }
 
+    public sealed class RefreshShopCommand : AbstractCommand<CoreCommandResult>
+    {
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().RefreshShop();
+        }
+    }
+
     public sealed class SelectRoomCommand : AbstractCommand<CoreCommandResult>
     {
         private readonly int mOptionIndex;

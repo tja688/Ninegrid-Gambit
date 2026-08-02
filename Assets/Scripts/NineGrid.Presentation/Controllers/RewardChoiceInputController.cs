@@ -15,6 +15,7 @@ namespace NineGrid.Presentation.Controllers
     {
         private System.Func<int, CoreCommandResult> mSelectHandler;
         private System.Func<CoreCommandResult> mSkipHandler;
+        private System.Func<CoreCommandResult> mRefreshHandler;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void RegisterInstallHook()
@@ -22,6 +23,7 @@ namespace NineGrid.Presentation.Controllers
             RewardChoiceCoreHook.WireController = Wire;
             RewardChoiceCoreHook.SelectReward = null;
             RewardChoiceCoreHook.SkipHelpChoice = null;
+            RewardChoiceCoreHook.RefreshShop = null;
         }
 
         protected override void OnBind()
@@ -54,6 +56,16 @@ namespace NineGrid.Presentation.Controllers
             return this.SendCommand(new SubmitSkipHelpChoiceCommand());
         }
 
+        public CoreCommandResult HandleRefreshShop()
+        {
+            if (!TryIntakeModal(InputIntentKinds.RefreshShop, 0))
+            {
+                return CoreCommandResult.Reject("intentIntakeReject");
+            }
+
+            return this.SendCommand(new SubmitRefreshShopCommand());
+        }
+
         private bool TryIntakeModal(string kind, int targetId)
         {
             var intake = this.GetSystem<IIntentIntake>()
@@ -69,8 +81,10 @@ namespace NineGrid.Presentation.Controllers
         {
             mSelectHandler = HandleSelectReward;
             mSkipHandler = HandleSkipHelpChoice;
+            mRefreshHandler = HandleRefreshShop;
             RewardChoiceCoreHook.SelectReward = mSelectHandler;
             RewardChoiceCoreHook.SkipHelpChoice = mSkipHandler;
+            RewardChoiceCoreHook.RefreshShop = mRefreshHandler;
         }
 
         private void ClearHandlers()
@@ -85,8 +99,14 @@ namespace NineGrid.Presentation.Controllers
                 RewardChoiceCoreHook.SkipHelpChoice = null;
             }
 
+            if (mRefreshHandler != null && RewardChoiceCoreHook.RefreshShop == mRefreshHandler)
+            {
+                RewardChoiceCoreHook.RefreshShop = null;
+            }
+
             mSelectHandler = null;
             mSkipHandler = null;
+            mRefreshHandler = null;
         }
 
         private static void Wire()

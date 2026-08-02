@@ -190,9 +190,10 @@ namespace NineGrid.Presentation.Tests
                 "SubmitSelectRewardCommand.cs",
                 "SubmitEnterRoomCommand.cs",
                 "SubmitSkipHelpChoiceCommand.cs",
+                "SubmitRefreshShopCommand.cs",
             };
             var pattern = new Regex(
-                @"\bnew\s+Submit(?:SelectRoom|SelectReward|EnterRoom|SkipHelpChoice)Command\b",
+                @"\bnew\s+Submit(?:SelectRoom|SelectReward|EnterRoom|SkipHelpChoice|RefreshShop)Command\b",
                 RegexOptions.CultureInvariant);
             var offenders = Directory
                 .EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)

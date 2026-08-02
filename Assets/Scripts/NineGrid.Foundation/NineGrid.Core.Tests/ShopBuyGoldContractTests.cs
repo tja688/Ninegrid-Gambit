@@ -12,9 +12,6 @@ namespace NineGrid.Core.Tests
     /// </summary>
     public sealed class ShopBuyGoldContractTests
     {
-        private const string ShopItemDefId = "help.shop_item";
-        private const int ShopItemPrice = 50;
-
         private IArchitecture mArch;
         private IPhaseSystem mPhase;
         private IActionPipelineSystem mPipeline;
@@ -41,13 +38,16 @@ namespace NineGrid.Core.Tests
         {
             EnterShop();
             var player = mArch.GetModel<PlayerModel>();
-            player.AddCoins(100);
+            player.AddCoins(200);
+            var pending = mArch.GetModel<PendingChoiceModel>();
+            var defId = pending.RewardOptions[2].DefId; // 恢复药水 30
+            var price = 30;
             var coinsBefore = player.Coins.Value;
             var startIndex = mPipeline.EventLog.Entries.Count;
 
-            var buy = mPhase.SelectReward(0);
+            var buy = mPhase.SelectReward(2);
             Assert.IsTrue(buy.Accepted, buy.Reason);
-            Assert.AreEqual(coinsBefore - ShopItemPrice, player.Coins.Value);
+            Assert.AreEqual(coinsBefore - price, player.Coins.Value);
 
             var sawSpend = false;
             var entries = mPipeline.EventLog.Entries;
@@ -60,7 +60,7 @@ namespace NineGrid.Core.Tests
                 }
 
                 sawSpend = true;
-                Assert.AreEqual(-ShopItemPrice, e.Delta);
+                Assert.AreEqual(-price, e.Delta);
                 Assert.IsTrue(
                     (e.Message ?? string.Empty).StartsWith("shopBuy:"),
                     "期望 reason 为 shopBuy:<defId>，实际=" + e.Message);
@@ -68,7 +68,7 @@ namespace NineGrid.Core.Tests
             }
 
             Assert.IsTrue(sawSpend, "EventLog 应有商店扣金 GoldModified");
-            Assert.IsTrue(HasCardInCarryPack(ShopItemDefId), "购买后应写入携带卡包");
+            Assert.IsTrue(HasCardInCarryPack(defId), "购买后应写入携带卡包");
         }
 
         [Test]
@@ -78,13 +78,14 @@ namespace NineGrid.Core.Tests
             var player = mArch.GetModel<PlayerModel>();
             player.AddCoins(10);
             var coinsBefore = player.Coins.Value;
+            var defId = mArch.GetModel<PendingChoiceModel>().RewardOptions[0].DefId; // 宝箱 100
 
             var buy = mPhase.SelectReward(0);
             Assert.IsFalse(buy.Accepted, "金币不足应拒买");
             Assert.AreEqual("Not enough gold", buy.Reason);
             Assert.AreEqual(coinsBefore, player.Coins.Value);
             Assert.AreEqual(PendingChoiceKind.Reward, mArch.GetModel<PendingChoiceModel>().Kind.Value);
-            Assert.IsFalse(HasCardDefInDeck(ShopItemDefId));
+            Assert.IsFalse(HasCardInCarryPack(defId));
         }
 
         [Test]
@@ -103,6 +104,30 @@ namespace NineGrid.Core.Tests
                 "商店离开不应发放 skipHelpChoice 金币");
         }
 
+        [Test]
+        public void SelectReward_Shop_PersistsAcrossNextNode()
+        {
+            EnterShop();
+            var player = mArch.GetModel<PlayerModel>();
+            player.AddCoins(200);
+            var potionIndex = IndexOfDef(RewardSystem.ShopPotionDefId);
+            Assert.GreaterOrEqual(potionIndex, 0);
+            Assert.IsTrue(mPhase.SelectReward(potionIndex).Accepted);
+            Assert.GreaterOrEqual(player.CountCarryPackByDefId(RewardSystem.ShopPotionDefId), 1);
+            Assert.AreEqual(GamePhase.RewardItemChoice, mPhase.CurrentPhase);
+
+            Assert.IsTrue(mPhase.SkipHelpChoice().Accepted);
+            Assert.AreEqual(GamePhase.NodeCompleted, mPhase.CurrentPhase);
+
+            var options = mArch.GetSystem<IRewardSystem>().BuildNodeDeckOptions(1, null);
+            options.AddEnemyCard(new CardDraft("monster.hold", CardKind.Monster) { MaxHp = 20, Attack = 0 });
+            options.EnemyOpeningCount = 1;
+            Assert.IsTrue(mPhase.StartNode(options).Accepted);
+            Assert.AreEqual(GamePhase.InteractionLoop, mPhase.CurrentPhase);
+            Assert.IsTrue(HasHelpCardInBattleDeck(RewardSystem.ShopPotionDefId), "商店购买卡下一节点应可见");
+            Assert.AreEqual(0, player.CarryPackDefIds.Count, "携带卡包开局倒空");
+        }
+
         private void EnterShop()
         {
             Assert.IsTrue(mPhase.StartNode(CreateMinimalNode()).Accepted);
@@ -116,28 +141,22 @@ namespace NineGrid.Core.Tests
 
             var pending = mArch.GetModel<PendingChoiceModel>();
             Assert.AreEqual(PendingChoiceKind.Reward, pending.Kind.Value);
-            Assert.AreEqual("shop.helpCards", pending.PoolId.Value);
-            Assert.Greater(pending.RewardOptions.Count, 0);
-            Assert.AreEqual(ShopItemDefId, pending.RewardOptions[0].DefId);
+            Assert.AreEqual(PendingChoiceModel.ShopPoolId, pending.PoolId.Value);
+            Assert.AreEqual(4, pending.RewardOptions.Count);
         }
 
-        [Test]
-        public void SelectReward_Shop_PersistsAcrossNextNode()
+        private int IndexOfDef(string defId)
         {
-            EnterShop();
-            var player = mArch.GetModel<PlayerModel>();
-            player.AddCoins(100);
-            Assert.IsTrue(mPhase.SelectReward(0).Accepted);
-            Assert.GreaterOrEqual(player.CountCarryPackByDefId(ShopItemDefId), 1);
-            Assert.AreEqual(GamePhase.NodeCompleted, mPhase.CurrentPhase);
+            var options = mArch.GetModel<PendingChoiceModel>().RewardOptions;
+            for (var i = 0; i < options.Count; i++)
+            {
+                if (options[i].DefId == defId)
+                {
+                    return i;
+                }
+            }
 
-            var options = mArch.GetSystem<IRewardSystem>().BuildNodeDeckOptions(1, null);
-            options.AddEnemyCard(new CardDraft("monster.hold", CardKind.Monster) { MaxHp = 20, Attack = 0 });
-            options.EnemyOpeningCount = 1;
-            Assert.IsTrue(mPhase.StartNode(options).Accepted);
-            Assert.AreEqual(GamePhase.InteractionLoop, mPhase.CurrentPhase);
-            Assert.IsTrue(HasHelpCardInBattleDeck(ShopItemDefId), "商店购买卡下一节点应可见");
-            Assert.AreEqual(0, player.CarryPackDefIds.Count, "携带卡包开局倒空");
+            return -1;
         }
 
         private bool HasCardInCarryPack(string defId)
@@ -201,18 +220,17 @@ namespace NineGrid.Core.Tests
             catalog.Economy.SkipHelpChoiceGold = 10;
             catalog.Economy.UnusedHelpCardGold = 0;
             catalog.Economy.MonsterRemovedGold = 5;
-            catalog.AddCard(new CardContentDefinition(ShopItemDefId, "店货", CardKind.HelpCard)
-                .WithRarity(ContentRarity.White)
-                .WithPrice(ShopItemPrice));
+            catalog.AddCard(new CardContentDefinition(RewardSystem.ShopChestDefId, "普通宝箱卡", CardKind.HelpCard)
+                .WithPrice(100));
+            catalog.AddCard(new CardContentDefinition("help.hp_card", "血量卡", CardKind.HelpCard).WithPrice(50));
+            catalog.AddCard(new CardContentDefinition("help.armor_card", "加甲卡", CardKind.HelpCard).WithPrice(50));
+            catalog.AddCard(new CardContentDefinition("help.attack_card", "加攻卡", CardKind.HelpCard).WithPrice(50));
+            catalog.AddCard(new CardContentDefinition(RewardSystem.ShopPotionDefId, "恢复药水", CardKind.HelpCard)
+                .WithPrice(30));
+            catalog.AddCard(new CardContentDefinition(RewardSystem.ShopFoodDefId, "食品卡", CardKind.HelpCard)
+                .WithPrice(50));
             catalog.AddCard(new CardContentDefinition("monster.hold", "占位怪", CardKind.Monster));
-            catalog.Rewards
-                .AddPool(new RewardPoolDefinition("shop.helpCards", 1)
-                    .Add(ShopItemDefId, CardKind.HelpCard, 1))
-                .AddRoom(new RoomDefinition(RoomKind.Shop, "商店")
-                {
-                    Weight = 1,
-                    ShopOfferCount = 1
-                });
+            catalog.Rewards.AddRoom(new RoomDefinition(RoomKind.Shop, "商店") { Weight = 1 });
             return catalog;
         }
 

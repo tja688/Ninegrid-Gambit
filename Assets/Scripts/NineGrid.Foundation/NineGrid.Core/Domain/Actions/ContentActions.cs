@@ -148,6 +148,32 @@ namespace NineGrid.Core
         }
     }
 
+    /// <summary>商店四货架会话（#92）：固定角色货架 + 本次进店刷新价。</summary>
+    public sealed class OfferShopSessionAction : GameAction
+    {
+        public const int DefaultRefreshPriceGold = 10;
+
+        public OfferShopSessionAction(IReadOnlyList<RewardEntry> shelves, int refreshPriceGold)
+        {
+            Shelves = shelves;
+            RefreshPriceGold = refreshPriceGold < 0 ? 0 : refreshPriceGold;
+        }
+
+        public IReadOnlyList<RewardEntry> Shelves { get; private set; }
+        public int RefreshPriceGold { get; private set; }
+        public override string ActionName { get { return "OfferShopSession"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var projected = RewardOfferFaceProjection.Project(context, Shelves);
+            context.GetModel<PendingChoiceModel>().OfferShop(projected, RefreshPriceGold);
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.RewardOffered, context.ActionId, ActionName)
+                    .WithAmount(projected != null ? projected.Count : 0)
+                    .WithMessage(RewardOfferFaceEncoding.Format(PendingChoiceModel.ShopPoolId, projected)));
+        }
+    }
+
     public sealed class GrantRewardChoiceAction : GameAction
     {
         public GrantRewardChoiceAction(RewardEntry entry, int optionIndex)

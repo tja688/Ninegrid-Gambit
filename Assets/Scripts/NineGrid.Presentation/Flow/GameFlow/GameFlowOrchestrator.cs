@@ -10,6 +10,7 @@ using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using NineGrid.Flow.RoomIcons;
+using NineGrid.Flow.ShopBoard;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Commands;
 using NineGrid.Presentation.Systems;
@@ -634,20 +635,27 @@ namespace NineGrid.Flow
                     Debug.LogWarning("[GameFlow] FlowTrace RoomRewardPresented: " + ex.Message);
                 }
 
-                view?.ShowRewardOverlay();
-                BoardCardSelectModeController.RequestAbort("mainloop-room-reward-overlay");
-                PresentationInputGates.SetChoiceOverlay(true);
-                try
+                if (PendingChoiceModel.IsShopPool(pending.PoolId.Value))
                 {
-                    var session = ResolveSession();
-                    if (session != null)
-                    {
-                        await session.PresentRewardChoiceFromCoreAsync(hoverOnNotice: true);
-                    }
+                    await PresentShopBoardAsync(ct);
                 }
-                finally
+                else
                 {
-                    PresentationInputGates.SetChoiceOverlay(false);
+                    view?.ShowRewardOverlay();
+                    BoardCardSelectModeController.RequestAbort("mainloop-room-reward-overlay");
+                    PresentationInputGates.SetChoiceOverlay(true);
+                    try
+                    {
+                        var session = ResolveSession();
+                        if (session != null)
+                        {
+                            await session.PresentRewardChoiceFromCoreAsync(hoverOnNotice: true);
+                        }
+                    }
+                    finally
+                    {
+                        PresentationInputGates.SetChoiceOverlay(false);
+                    }
                 }
             }
             else
@@ -665,6 +673,55 @@ namespace NineGrid.Flow
 
             view?.HideAllOverlays();
             ResolveSession()?.RefreshPersistentInBattleUi(animate: false);
+        }
+
+        private async UniTask PresentShopBoardAsync(CancellationToken ct)
+        {
+            var arch = NineGridArchitecture.Current;
+            var phaseSystem = arch.GetSystem<IPhaseSystem>();
+            var walk = AvatarWalkSystem.EnsureRegistered(NineGridArchitecture.Interface);
+            walk?.SetEnabled(true);
+            BoardCardSelectModeController.RequestAbort("mainloop-shop-board");
+
+            var shop = ShopBoardPresenter.Current;
+            shop.Bind(arch);
+            RoomIconBoardPresenter.Current.HardCutAfterEnter(arch);
+            if (!shop.TrySpawnFromPending(arch))
+            {
+                Debug.LogError("[GameFlow] 商店货架 Spawn 失败");
+                walk?.SetEnabled(false);
+                return;
+            }
+
+            PresentationInputGates.SetChoiceOverlay(true);
+            try
+            {
+                await UniTask.WaitUntil(
+                    () =>
+                    {
+                        if (ct.IsCancellationRequested)
+                        {
+                            return true;
+                        }
+
+                        var p = phaseSystem.CurrentPhase;
+                        return p == GamePhase.NodeCompleted
+                               || p == GamePhase.Victory
+                               || p == GamePhase.Defeat
+                               || phaseSystem.CanExecute(GameCommandKind.StartNode);
+                    },
+                    cancellationToken: ct);
+            }
+            finally
+            {
+                PresentationInputGates.SetChoiceOverlay(false);
+                walk?.SetEnabled(false);
+                walk?.Cancel();
+                if (shop.IsActive)
+                {
+                    shop.DespawnAll();
+                }
+            }
         }
 
         private static string BuildRoomResolvedNotice(RoomKind room)

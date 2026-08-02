@@ -411,6 +411,8 @@ namespace NineGrid.Flow.Presentation
                 case GamePhase.RoomEvent:
                     return command == GameCommandKind.MoveAvatar
                            || command == GameCommandKind.EnterRoom;
+                case GamePhase.RewardItemChoice:
+                    return command == GameCommandKind.MoveAvatar;
                 default:
                     return false;
             }

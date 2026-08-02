@@ -82,6 +82,8 @@ namespace NineGrid.Core.Systems
             CoreCommandResult MoveAvatar(SlotId targetSlot);
             CoreCommandResult SelectReward(int optionIndex);
             CoreCommandResult SkipHelpChoice();
+            /// <summary>商店刷新货架：扣本次进店刷新价并翻倍。</summary>
+            CoreCommandResult RefreshShop();
             CoreCommandResult SelectRoom(int optionIndex);
             CoreCommandResult EnterRoom();
         }
@@ -713,10 +715,11 @@ namespace NineGrid.Core.Systems
             }
 
             // BoardWalk 相位允许踩非空格（寻路软占回退）；AvatarSlot 与 card uid 独立，不清除格上卡。
-            // InteractionLoop 等相位本就不合法 MoveAvatar；此处仅 RoomChoice/RoomEvent 会走到。
+            // InteractionLoop 等相位本就不合法 MoveAvatar；RoomChoice/RoomEvent/商店 RewardItemChoice 可踩软占。
             if (!board.IsEmpty(targetSlot)
                 && CurrentPhase != GamePhase.RoomChoice
-                && CurrentPhase != GamePhase.RoomEvent)
+                && CurrentPhase != GamePhase.RoomEvent
+                && CurrentPhase != GamePhase.RewardItemChoice)
             {
                 return Reject(GameCommandKind.MoveAvatar, "Target slot is occupied.", targetSlot, avatarUid);
             }
@@ -839,7 +842,8 @@ namespace NineGrid.Core.Systems
             var pipeline = this.GetSystem<IActionPipelineSystem>();
 
             // 商店购买：按卡牌 Price 扣金；通关/宝箱等免费池不扣。
-            if (poolId == ShopHelpCardsPoolId)
+            var isShop = PendingChoiceModel.IsShopPool(poolId);
+            if (isShop)
             {
                 var price = ResolveShopPrice(entry != null ? entry.DefId : null);
                 if (price > 0)
@@ -862,9 +866,55 @@ namespace NineGrid.Core.Systems
             }
 
             pipeline.Enqueue(new GrantRewardChoiceAction(entry, optionIndex));
+            if (isShop)
+            {
+                // 货架买走后留在店内；离开另走 SkipHelpChoice。
+                var resolvedShop = pipeline.RunToCompletion();
+                pending.RemoveRewardOptionAt(optionIndex);
+                return CoreCommandResult.Accept(resolvedShop);
+            }
+
             pipeline.Enqueue(new ClearPendingRewardChoiceAction());
             var resolved = ResolvePostRewardChoiceFlow(pipeline, 0);
             return CoreCommandResult.Accept(resolved);
+        }
+
+        public CoreCommandResult RefreshShop()
+        {
+            if (!CanExecute(GameCommandKind.RefreshShop))
+            {
+                return Reject(GameCommandKind.RefreshShop, "Command is not legal in phase " + CurrentPhase, SlotId.None, 0);
+            }
+
+            var pending = this.GetModel<PendingChoiceModel>();
+            if (pending.Kind.Value != PendingChoiceKind.Reward
+                || !PendingChoiceModel.IsShopPool(pending.PoolId.Value))
+            {
+                return Reject(GameCommandKind.RefreshShop, "No active shop session.", SlotId.None, 0);
+            }
+
+            var price = pending.ShopRefreshPriceGold.Value;
+            if (price < 0)
+            {
+                price = 0;
+            }
+
+            var player = this.GetModel<PlayerModel>();
+            if (price > 0 && player.Coins.Value < price)
+            {
+                return Reject(GameCommandKind.RefreshShop, "Not enough gold", SlotId.None, 0);
+            }
+
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            if (price > 0)
+            {
+                pipeline.Enqueue(new ModifyGoldAction(-price, "shopRefresh", null));
+            }
+
+            var nextPrice = price <= 0 ? OfferShopSessionAction.DefaultRefreshPriceGold : price * 2;
+            var shelves = this.GetSystem<IRewardSystem>().BuildShopShelves();
+            pipeline.Enqueue(new OfferShopSessionAction(shelves, nextPrice));
+            return CoreCommandResult.Accept(pipeline.RunToCompletion());
         }
 
         public CoreCommandResult SkipHelpChoice()
@@ -876,7 +926,7 @@ namespace NineGrid.Core.Systems
 
             var pending = this.GetModel<PendingChoiceModel>();
             var poolId = pending.PoolId.Value ?? string.Empty;
-            var isShop = poolId == ShopHelpCardsPoolId;
+            var isShop = PendingChoiceModel.IsShopPool(poolId);
             if (IsRelicRewardPool(poolId))
             {
                 this.GetSystem<IRewardSystem>().RememberUnselectedRelics(pending.RewardOptions, null);
@@ -1323,7 +1373,7 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new OfferRoomChoicesAction(RollRoomChoicesOrFallback(nodeIndex)));
         }
 
-        private const string ShopHelpCardsPoolId = "shop.helpCards";
+        private const string ShopHelpCardsPoolId = PendingChoiceModel.ShopPoolId;
 
         private static bool IsRelicRewardPool(string poolId)
         {
@@ -1532,6 +1582,13 @@ namespace NineGrid.Core.Systems
                 case GamePhase.RewardItemChoice:
                     mLegalCommands.Add(GameCommandKind.SelectReward);
                     mLegalCommands.Add(GameCommandKind.SkipHelpChoice);
+                    AppendShopRefreshIfActive();
+                    // 商店离开图标需 BoardWalk；其它奖励覆盖层不走格。
+                    if (PendingChoiceModel.IsShopPool(this.GetModel<PendingChoiceModel>().PoolId.Value))
+                    {
+                        mLegalCommands.Add(GameCommandKind.MoveAvatar);
+                    }
+
                     break;
                 case GamePhase.RoomChoice:
                     mLegalCommands.Add(GameCommandKind.SelectRoom);
@@ -1548,15 +1605,27 @@ namespace NineGrid.Core.Systems
 
         private void AppendPendingChoiceCommandsWhilePresentationLocked()
         {
-            var pending = this.GetModel<PendingChoiceModel>().Kind.Value;
-            if (pending == PendingChoiceKind.Reward)
+            var pending = this.GetModel<PendingChoiceModel>();
+            if (pending.Kind.Value == PendingChoiceKind.Reward)
             {
                 mLegalCommands.Add(GameCommandKind.SelectReward);
                 mLegalCommands.Add(GameCommandKind.SkipHelpChoice);
+                AppendShopRefreshIfActive();
             }
-            else if (pending == PendingChoiceKind.Room || pending == PendingChoiceKind.Navigation)
+            else if (pending.Kind.Value == PendingChoiceKind.Room
+                     || pending.Kind.Value == PendingChoiceKind.Navigation)
             {
                 mLegalCommands.Add(GameCommandKind.SelectRoom);
+            }
+        }
+
+        private void AppendShopRefreshIfActive()
+        {
+            var pending = this.GetModel<PendingChoiceModel>();
+            if (pending.Kind.Value == PendingChoiceKind.Reward
+                && PendingChoiceModel.IsShopPool(pending.PoolId.Value))
+            {
+                mLegalCommands.Add(GameCommandKind.RefreshShop);
             }
         }
     }

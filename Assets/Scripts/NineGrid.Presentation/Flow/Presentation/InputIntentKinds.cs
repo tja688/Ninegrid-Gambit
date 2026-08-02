@@ -23,6 +23,7 @@ namespace NineGrid.Flow.Presentation
         public const string EnterRoom = "enterRoom";
         public const string SelectReward = "selectReward";
         public const string SkipHelpChoice = "skipHelpChoice";
+        public const string RefreshShop = "refreshShop";
 
         public static bool IsBoardAction(string kind)
         {
@@ -40,7 +41,8 @@ namespace NineGrid.Flow.Presentation
                 || string.Equals(kind, SelectRoom, System.StringComparison.Ordinal)
                 || string.Equals(kind, EnterRoom, System.StringComparison.Ordinal)
                 || string.Equals(kind, SelectReward, System.StringComparison.Ordinal)
-                || string.Equals(kind, SkipHelpChoice, System.StringComparison.Ordinal);
+                || string.Equals(kind, SkipHelpChoice, System.StringComparison.Ordinal)
+                || string.Equals(kind, RefreshShop, System.StringComparison.Ordinal);
         }
     }
 }

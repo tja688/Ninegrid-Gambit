@@ -13,6 +13,9 @@ namespace NineGrid.Core.Systems
         NodeDeckOptions BuildNodeDeckOptions(int nodeIndex, string monsterDeckId);
         int ResolveRoom(RoomKind roomKind);
 
+        /// <summary>商店四货架草案（宝箱 / 随机属性 / 药水 / 食品）。</summary>
+        IReadOnlyList<RewardEntry> BuildShopShelves();
+
         /// <summary>
         /// 遗物三选一结算后：未选中的遗物记入「连续再出现」降权，仅作用于下一次遗物池抽取。
         /// </summary>
@@ -319,6 +322,15 @@ namespace NineGrid.Core.Systems
             // ADR-0022：进房即改数值已退役；开局注入执行在后续票（T12）。
             // 房间内交互（奖励池 / 商店货架）仍可在此 enqueue。
 
+            if (room.Kind == RoomKind.Shop)
+            {
+                var shelves = BuildShopShelves();
+                pipeline.Enqueue(new OfferShopSessionAction(
+                    shelves,
+                    OfferShopSessionAction.DefaultRefreshPriceGold));
+                return pipeline.RunToCompletion();
+            }
+
             if (!string.IsNullOrEmpty(room.RewardPoolId))
             {
                 pipeline.Enqueue(new OfferRewardChoiceAction(room.RewardPoolId, 0));
@@ -330,6 +342,42 @@ namespace NineGrid.Core.Systems
             }
 
             return pipeline.RunToCompletion();
+        }
+
+        /// <summary>
+        /// 商店四货架：宝箱 / 随机属性道具 / 恢复药水 / 食品（设计案房间.md）。
+        /// </summary>
+        public IReadOnlyList<RewardEntry> BuildShopShelves()
+        {
+            var shelves = new List<RewardEntry>(4)
+            {
+                new RewardEntry(ShopChestDefId, CardKind.HelpCard, 1, 1),
+                new RewardEntry(RollShopAttributeDefId(), CardKind.HelpCard, 1, 1),
+                new RewardEntry(ShopPotionDefId, CardKind.HelpCard, 1, 1),
+                new RewardEntry(ShopFoodDefId, CardKind.HelpCard, 1, 1),
+            };
+            return shelves;
+        }
+
+        public const string ShopChestDefId = "help.common_chest_card";
+        public const string ShopPotionDefId = "help.healing_potion";
+        public const string ShopFoodDefId = "help.food_card";
+
+        private string RollShopAttributeDefId()
+        {
+            // 血量 40% / 加甲 40% / 加攻 20%（与属性房池一致）
+            var roll = this.GetUtility<IRngUtility>().Range(0, 100);
+            if (roll < 40)
+            {
+                return "help.hp_card";
+            }
+
+            if (roll < 80)
+            {
+                return "help.armor_card";
+            }
+
+            return "help.attack_card";
         }
 
         private IEnumerable<GameAction> ReactToKill(TriggerContext context)
