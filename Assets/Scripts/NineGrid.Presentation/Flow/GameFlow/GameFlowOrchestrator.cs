@@ -9,6 +9,7 @@ using NineGrid.Core.Systems;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
+using NineGrid.Flow.RewardBoard;
 using NineGrid.Flow.RoomIcons;
 using NineGrid.Flow.ShopBoard;
 using NineGrid.Flow.TavernBoard;
@@ -645,6 +646,10 @@ namespace NineGrid.Flow
                 {
                     await PresentTavernBoardAsync(ct);
                 }
+                else if (PendingChoiceModel.IsSpecialRewardPool(pending.PoolId.Value))
+                {
+                    await PresentRewardBoardAsync(ct);
+                }
                 else
                 {
                     view?.ShowRewardOverlay();
@@ -775,6 +780,55 @@ namespace NineGrid.Flow
                 if (tavern.IsActive)
                 {
                     tavern.DespawnAll();
+                }
+            }
+        }
+
+        private async UniTask PresentRewardBoardAsync(CancellationToken ct)
+        {
+            var arch = NineGridArchitecture.Current;
+            var phaseSystem = arch.GetSystem<IPhaseSystem>();
+            var walk = AvatarWalkSystem.EnsureRegistered(NineGridArchitecture.Interface);
+            walk?.SetEnabled(true);
+            BoardCardSelectModeController.RequestAbort("mainloop-reward-board");
+
+            var reward = RewardBoardPresenter.Current;
+            reward.Bind(arch);
+            RoomIconBoardPresenter.Current.HardCutAfterEnter(arch);
+            if (!reward.TrySpawnFromPending(arch))
+            {
+                Debug.LogError("[GameFlow] 特殊奖励房 Spawn 失败");
+                walk?.SetEnabled(false);
+                return;
+            }
+
+            PresentationInputGates.SetChoiceOverlay(true);
+            try
+            {
+                await UniTask.WaitUntil(
+                    () =>
+                    {
+                        if (ct.IsCancellationRequested)
+                        {
+                            return true;
+                        }
+
+                        var p = phaseSystem.CurrentPhase;
+                        return p == GamePhase.NodeCompleted
+                               || p == GamePhase.Victory
+                               || p == GamePhase.Defeat
+                               || phaseSystem.CanExecute(GameCommandKind.StartNode);
+                    },
+                    cancellationToken: ct);
+            }
+            finally
+            {
+                PresentationInputGates.SetChoiceOverlay(false);
+                walk?.SetEnabled(false);
+                walk?.Cancel();
+                if (reward.IsActive)
+                {
+                    reward.DespawnAll();
                 }
             }
         }

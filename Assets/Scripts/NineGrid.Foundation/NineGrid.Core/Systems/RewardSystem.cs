@@ -19,6 +19,12 @@ namespace NineGrid.Core.Systems
         /// <summary>卡店三项服务草案（数值强化 / 固定 / 扩容）。</summary>
         IReadOnlyList<RewardEntry> BuildTavernServices();
 
+        /// <summary>宝箱奖励房：1 宝箱 + 3 随机道具。</summary>
+        IReadOnlyList<RewardEntry> BuildTreasureRewardShelves();
+
+        /// <summary>道具奖励房：2 属性道具 + 3 随机道具。</summary>
+        IReadOnlyList<RewardEntry> BuildItemRewardShelves();
+
         /// <summary>
         /// 遗物三选一结算后：未选中的遗物记入「连续再出现」降权，仅作用于下一次遗物池抽取。
         /// </summary>
@@ -342,6 +348,22 @@ namespace NineGrid.Core.Systems
                 return pipeline.RunToCompletion();
             }
 
+            if (room.Kind == RoomKind.TreasureReward)
+            {
+                pipeline.Enqueue(new OfferSpecialRewardSessionAction(
+                    PendingChoiceModel.TreasureRewardPoolId,
+                    BuildTreasureRewardShelves()));
+                return pipeline.RunToCompletion();
+            }
+
+            if (room.Kind == RoomKind.ItemReward)
+            {
+                pipeline.Enqueue(new OfferSpecialRewardSessionAction(
+                    PendingChoiceModel.ItemRewardPoolId,
+                    BuildItemRewardShelves()));
+                return pipeline.RunToCompletion();
+            }
+
             if (!string.IsNullOrEmpty(room.RewardPoolId))
             {
                 pipeline.Enqueue(new OfferRewardChoiceAction(room.RewardPoolId, 0));
@@ -383,6 +405,29 @@ namespace NineGrid.Core.Systems
             };
         }
 
+        /// <summary>宝箱奖励房：1 宝箱卡 + 3 随机道具卡（#94）。</summary>
+        public IReadOnlyList<RewardEntry> BuildTreasureRewardShelves()
+        {
+            var shelves = new List<RewardEntry>(4)
+            {
+                new RewardEntry(ShopChestDefId, CardKind.HelpCard, 1, 1),
+            };
+            AppendRandomItemShelves(shelves, 3);
+            return shelves;
+        }
+
+        /// <summary>道具奖励房：2 属性道具卡 + 3 随机道具卡（#94）。</summary>
+        public IReadOnlyList<RewardEntry> BuildItemRewardShelves()
+        {
+            var shelves = new List<RewardEntry>(5)
+            {
+                new RewardEntry(RollShopAttributeDefId(), CardKind.HelpCard, 1, 1),
+                new RewardEntry(RollShopAttributeDefId(), CardKind.HelpCard, 1, 1),
+            };
+            AppendRandomItemShelves(shelves, 3);
+            return shelves;
+        }
+
         public const string ShopChestDefId = "help.common_chest_card";
         public const string ShopPotionDefId = "help.healing_potion";
         public const string ShopFoodDefId = "help.food_card";
@@ -392,6 +437,14 @@ namespace NineGrid.Core.Systems
         public const string TavernExpandDefId = "ExpandItemCapacity";
         public const int TavernServicePriceGold = 50;
         public const int TavernUpgradeStatDelta = 3;
+
+        private void AppendRandomItemShelves(List<RewardEntry> shelves, int count)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                shelves.Add(new RewardEntry(RollRandomItemDefId(), CardKind.HelpCard, 1, 1));
+            }
+        }
 
         private string RollShopAttributeDefId()
         {
@@ -408,6 +461,18 @@ namespace NineGrid.Core.Systems
             }
 
             return "help.attack_card";
+        }
+
+        /// <summary>从玩家道具来源池均匀抽一张；池空时回退属性三卡。</summary>
+        private string RollRandomItemDefId()
+        {
+            var pool = this.GetModel<PlayerModel>().ItemSourcePoolDefIds;
+            if (pool != null && pool.Count > 0)
+            {
+                return pool[this.GetUtility<IRngUtility>().Range(0, pool.Count)];
+            }
+
+            return RollShopAttributeDefId();
         }
 
         private IEnumerable<GameAction> ReactToKill(TriggerContext context)

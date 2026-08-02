@@ -855,6 +855,7 @@ namespace NineGrid.Core.Systems
 
             // 商店购买：按卡牌 Price 扣金；通关/宝箱等免费池不扣。
             var isShop = PendingChoiceModel.IsShopPool(poolId);
+            var isSpecialReward = PendingChoiceModel.IsSpecialRewardPool(poolId);
             if (isShop)
             {
                 var price = ResolveShopPrice(entry != null ? entry.DefId : null);
@@ -878,12 +879,12 @@ namespace NineGrid.Core.Systems
             }
 
             pipeline.Enqueue(new GrantRewardChoiceAction(entry, optionIndex));
-            if (isShop)
+            if (isShop || isSpecialReward)
             {
-                // 货架买走后留在店内；离开另走 SkipHelpChoice。
-                var resolvedShop = pipeline.RunToCompletion();
+                // 货架拿走后留在房内；离开另走 SkipHelpChoice。
+                var resolvedStay = pipeline.RunToCompletion();
                 pending.RemoveRewardOptionAt(optionIndex);
-                return CoreCommandResult.Accept(resolvedShop);
+                return CoreCommandResult.Accept(resolvedStay);
             }
 
             pipeline.Enqueue(new ClearPendingRewardChoiceAction());
@@ -1074,7 +1075,7 @@ namespace NineGrid.Core.Systems
                 this.GetSystem<IRewardSystem>().RememberUnselectedRelics(pending.RewardOptions, null);
             }
 
-            // 商店/卡店离开：不发跳过帮助卡选择的 +金币；通关帮助三选一跳过仍发。
+            // 商店/卡店/特殊奖励房离开：不发跳过帮助卡选择的 +金币；通关帮助三选一跳过仍发。
             var isConsumerLeave = PendingChoiceModel.IsConsumerLeavePool(poolId);
             var resolved = isConsumerLeave ? 0 : this.GetSystem<IEconomySystem>().AwardSkipHelpChoice();
             var pipeline = this.GetSystem<IActionPipelineSystem>();

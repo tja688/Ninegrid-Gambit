@@ -220,6 +220,30 @@ namespace NineGrid.Core
         }
     }
 
+    /// <summary>特殊奖励房免费货架会话（#94）：宝箱奖励 / 道具奖励。</summary>
+    public sealed class OfferSpecialRewardSessionAction : GameAction
+    {
+        public OfferSpecialRewardSessionAction(string poolId, IReadOnlyList<RewardEntry> shelves)
+        {
+            PoolId = poolId ?? string.Empty;
+            Shelves = shelves;
+        }
+
+        public string PoolId { get; private set; }
+        public IReadOnlyList<RewardEntry> Shelves { get; private set; }
+        public override string ActionName { get { return "OfferSpecialRewardSession"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var projected = RewardOfferFaceProjection.Project(context, Shelves);
+            context.GetModel<PendingChoiceModel>().OfferRewards(PoolId, projected);
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.RewardOffered, context.ActionId, ActionName)
+                    .WithAmount(projected != null ? projected.Count : 0)
+                    .WithMessage(RewardOfferFaceEncoding.Format(PoolId, projected)));
+        }
+    }
+
     public sealed class GrantRewardChoiceAction : GameAction
     {
         public GrantRewardChoiceAction(RewardEntry entry, int optionIndex)

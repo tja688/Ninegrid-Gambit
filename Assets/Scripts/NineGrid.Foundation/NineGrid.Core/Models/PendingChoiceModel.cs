@@ -128,6 +128,8 @@ namespace NineGrid.Core
         public const string ShopPoolId = "shop.helpCards";
         public const string TavernPoolId = "tavern.services";
         public const string TavernFixItemPoolId = "tavern.fixItem";
+        public const string TreasureRewardPoolId = "reward.treasure";
+        public const string ItemRewardPoolId = "reward.item";
 
         public static bool IsShopPool(string poolId)
         {
@@ -144,22 +146,41 @@ namespace NineGrid.Core
             return string.Equals(poolId, TavernFixItemPoolId, System.StringComparison.Ordinal);
         }
 
+        public static bool IsTreasureRewardPool(string poolId)
+        {
+            return string.Equals(poolId, TreasureRewardPoolId, System.StringComparison.Ordinal);
+        }
+
+        public static bool IsItemRewardPool(string poolId)
+        {
+            return string.Equals(poolId, ItemRewardPoolId, System.StringComparison.Ordinal);
+        }
+
+        /// <summary>特殊奖励房（#94）：免费货架，拿后留房。</summary>
+        public static bool IsSpecialRewardPool(string poolId)
+        {
+            return IsTreasureRewardPool(poolId) || IsItemRewardPool(poolId);
+        }
+
         /// <summary>商店 / 卡店主面：可刷新货架或服务。</summary>
         public static bool IsConsumerRefreshPool(string poolId)
         {
             return IsShopPool(poolId) || IsTavernPool(poolId);
         }
 
-        /// <summary>商店 / 卡店主面离店（不发跳过帮助卡金币）。</summary>
+        /// <summary>商店 / 卡店 / 特殊奖励房离开（不发跳过帮助卡金币）。</summary>
         public static bool IsConsumerLeavePool(string poolId)
         {
-            return IsShopPool(poolId) || IsTavernPool(poolId);
+            return IsShopPool(poolId) || IsTavernPool(poolId) || IsSpecialRewardPool(poolId);
         }
 
-        /// <summary>消费房场地板（含卡店二级选择）：允许 BoardWalk。</summary>
+        /// <summary>消费/特殊房场地板（含卡店二级选择）：允许 BoardWalk。</summary>
         public static bool IsConsumerBoardPool(string poolId)
         {
-            return IsShopPool(poolId) || IsTavernPool(poolId) || IsTavernFixItemPool(poolId);
+            return IsShopPool(poolId)
+                   || IsTavernPool(poolId)
+                   || IsTavernFixItemPool(poolId)
+                   || IsSpecialRewardPool(poolId);
         }
 
         private static bool KeepsVisitRefreshPrice(string poolId)

@@ -4,7 +4,7 @@
     "kind": "Room",
     "deckId": "",
     "displayName": "道具奖励房",
-    "description": "无开局注入（房内交互后续票）",
+    "description": "房内铺 2 属性道具 + 3 随机道具；点击拿走，离开放弃",
     "faceIntro": "",
     "gold": 0,
     "stats": {
