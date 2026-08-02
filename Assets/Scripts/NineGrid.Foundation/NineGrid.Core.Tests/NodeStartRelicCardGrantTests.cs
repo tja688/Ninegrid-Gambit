@@ -10,7 +10,7 @@ using QFramework;
 namespace NineGrid.Core.Tests
 {
   /// <summary>
-  /// 关卡开始遗物加卡：本关 DrawPile / ItemSlots 与 run 持久层双写契约。
+  /// 关卡开始遗物加卡：本关 DrawPile / ItemSlots 契约（不进携带卡包）。
   /// </summary>
   public sealed class NodeStartRelicCardGrantTests
   {
@@ -39,11 +39,11 @@ namespace NineGrid.Core.Tests
     }
 
     [Test]
-    public void ThrowingKnifeBag_OnNodeStart_AddsToDrawPileAndPlayerSideDeck()
+    public void ThrowingKnifeBag_OnNodeStart_AddsToDrawPileOnly()
     {
       mContent.ActivateRelic("relic.throwing_knife_bag");
       var player = mArch.GetModel<PlayerModel>();
-      var helpBefore = player.CountHelpCardsByDefId(ThrowingKnifeDefId);
+      var carryBefore = player.CountCarryPackByDefId(ThrowingKnifeDefId);
 
       Assert.IsTrue(mPhase.StartNode(CreateMinimalNode()).Accepted);
 
@@ -53,9 +53,9 @@ namespace NineGrid.Core.Tests
         CountDefInList(mArch.GetModel<CardRegistry>(), deck.DrawPileUids, ThrowingKnifeDefId),
         "飞刀袋应在关卡开始时将两张飞刀写入本关抽牌堆");
       Assert.AreEqual(
-        helpBefore + 2,
-        player.CountHelpCardsByDefId(ThrowingKnifeDefId),
-        "飞刀袋应同步写入玩家侧 run 卡组");
+        carryBefore,
+        player.CountCarryPackByDefId(ThrowingKnifeDefId),
+        "关卡开始遗物加卡只写入本关牌堆，不进携带卡包");
     }
 
     [Test]

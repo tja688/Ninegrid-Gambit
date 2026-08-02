@@ -461,13 +461,6 @@ namespace NineGrid.Core
             card.Zone.Value = DestinationZone;
             card.Slot.Value = SlotId.None;
 
-            if (card.Kind == CardKind.HelpCard
-                && card.Counters.Get(CoreCounterKeys.PlayerSideDeck) > 0
-                && Reason == "useItem")
-            {
-                context.GetModel<PlayerModel>().TryRemoveHelpCard(card.DefId);
-            }
-
             var result = new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.CardRemoved, context.ActionId, ActionName)
                     .WithCard(CardUid)

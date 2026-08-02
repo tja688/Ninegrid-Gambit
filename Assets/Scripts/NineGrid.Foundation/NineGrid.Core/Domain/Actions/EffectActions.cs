@@ -523,7 +523,6 @@ namespace NineGrid.Core
                     && Zone == ZoneId.PlayerCardPool
                     && Kind == CardKind.HelpCard)
                 {
-                    context.GetModel<PlayerModel>().AddHelpCard(DefId, 1);
                     var grantCard = CreateConfiguredCard(context, registry, DefId, Kind);
                     grantCard.Counters.Set(CoreCounterKeys.PlayerSideDeck, 1);
                     deck.AddToDrawPile(grantCard, false);
@@ -539,9 +538,9 @@ namespace NineGrid.Core
 
                 if (Zone == ZoneId.PlayerCardPool
                     && Kind == CardKind.HelpCard
-                    && HelpCardGrantRouting.ShouldGrantToPlayerSideDeck(context))
+                    && HelpCardGrantRouting.ShouldGrantToCarryPack(context))
                 {
-                    context.GetModel<PlayerModel>().AddHelpCard(DefId, 1);
+                    context.GetModel<PlayerModel>().AddToCarryPack(DefId, 1);
                     result.AddEvent(new CoreGameEvent(CoreEventType.CardSpawned, context.ActionId, ActionName)
                         .WithMessage(DefId)
                         .WithSource(DefId, Cause));

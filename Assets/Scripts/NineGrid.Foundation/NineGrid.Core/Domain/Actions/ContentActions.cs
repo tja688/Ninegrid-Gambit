@@ -87,7 +87,7 @@ namespace NineGrid.Core
 
         public override GameActionResult Apply(GameActionContext context)
         {
-            context.GetModel<PlayerModel>().AddHelpCard(DefId, Count);
+            context.GetModel<PlayerModel>().AddToCarryPack(DefId, Count);
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.RewardSelected, context.ActionId, ActionName)
                     .WithAmount(Count)
@@ -113,10 +113,10 @@ namespace NineGrid.Core
                     .WithAmount(offered.Count)
                     .WithMessage(RewardOfferFaceEncoding.Format(PoolId, offered)));
 
-            var toPlayerSideDeck = HelpCardGrantRouting.ShouldGrantToPlayerSideDeck(context);
+            var toCarryPack = HelpCardGrantRouting.ShouldGrantToCarryPack(context);
             for (var i = 0; i < offered.Count; i++)
             {
-                RewardGrantActionSupport.AddGrantFollowUp(result, offered[i], toPlayerSideDeck);
+                RewardGrantActionSupport.AddGrantFollowUp(result, offered[i], toCarryPack);
             }
 
             return result;
@@ -174,7 +174,7 @@ namespace NineGrid.Core
             RewardGrantActionSupport.AddGrantFollowUp(
                 result,
                 Entry,
-                HelpCardGrantRouting.ShouldGrantToPlayerSideDeck(context));
+                HelpCardGrantRouting.ShouldGrantToCarryPack(context));
             return result;
         }
     }
@@ -253,9 +253,9 @@ namespace NineGrid.Core
     internal static class HelpCardGrantRouting
     {
         /// <summary>
-        /// 局内（InteractionLoop / 开局发牌）帮助卡进战斗卡组；通关/商店/节点末进玩家侧 run 卡组。
+        /// 局内（InteractionLoop / 开局发牌）帮助卡进战斗卡组；通关/商店/节点末进携带卡包。
         /// </summary>
-        public static bool ShouldGrantToPlayerSideDeck(GameActionContext context)
+        public static bool ShouldGrantToCarryPack(GameActionContext context)
         {
             var phase = context.GetModel<RunModel>().Phase.Value;
             return phase != GamePhase.InteractionLoop && phase != GamePhase.DealOpeningCards;
@@ -264,7 +264,7 @@ namespace NineGrid.Core
 
     internal static class RewardGrantActionSupport
     {
-        public static void AddGrantFollowUp(GameActionResult result, RewardEntry entry, bool toPlayerSideDeck)
+        public static void AddGrantFollowUp(GameActionResult result, RewardEntry entry, bool toCarryPack)
         {
             if (entry == null || string.IsNullOrEmpty(entry.DefId))
             {
@@ -279,7 +279,7 @@ namespace NineGrid.Core
                 }
                 else if (entry.Kind == CardKind.HelpCard)
                 {
-                    if (toPlayerSideDeck)
+                    if (toCarryPack)
                     {
                         if (i == 0)
                         {

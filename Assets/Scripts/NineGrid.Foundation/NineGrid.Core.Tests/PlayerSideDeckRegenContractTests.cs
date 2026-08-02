@@ -9,7 +9,7 @@ using QFramework;
 namespace NineGrid.Core.Tests
 {
     /// <summary>
-    /// ADR-0022 / #87：玩家侧卡组每关重生成；跨节点持有生成规则而非 HelpCardStacks。
+    /// ADR-0022 / #87：玩家侧卡组每关重生成；跨节点持有生成规则而非持久牌堆。
     /// Seams：PlayerModel 规则位、BuildNodeDeckOptions 生成顺序、Grant→携带卡包、清关全清。
     /// </summary>
     public sealed class PlayerSideDeckRegenContractTests
@@ -43,10 +43,12 @@ namespace NineGrid.Core.Tests
         {
             var player = mArch.GetModel<PlayerModel>();
             Assert.AreEqual(PlayerModel.DefaultItemDeckCapacity, player.ItemDeckCapacity);
-            Assert.AreEqual(3, player.ItemSourcePoolDefIds.Count);
             CollectionAssert.Contains(player.ItemSourcePoolDefIds, "help.pool_a");
             CollectionAssert.Contains(player.ItemSourcePoolDefIds, "help.pool_b");
             CollectionAssert.Contains(player.ItemSourcePoolDefIds, "help.warrior_only");
+            CollectionAssert.DoesNotContain(player.ItemSourcePoolDefIds, "help.fixed_card");
+            CollectionAssert.DoesNotContain(player.ItemSourcePoolDefIds, "help.carry_a");
+            Assert.AreEqual(3, player.ItemSourcePoolDefIds.Count, "仅 deck.help + deck.player 的道具卡");
             Assert.AreEqual(0, player.FixedItemCardDefIds.Count);
             Assert.AreEqual(0, player.CarryPackDefIds.Count);
         }
@@ -55,10 +57,11 @@ namespace NineGrid.Core.Tests
         public void BuildNodeDeckOptions_DrawsCapacityFromPool_AndKeepsRules()
         {
             var player = mArch.GetModel<PlayerModel>();
+            var poolBefore = player.ItemSourcePoolDefIds.Count;
             var first = mReward.BuildNodeDeckOptions(1, null);
             Assert.AreEqual(player.ItemDeckCapacity, first.PlayerCards.Count);
             Assert.AreEqual(PlayerModel.DefaultItemDeckCapacity, player.ItemDeckCapacity);
-            Assert.AreEqual(3, player.ItemSourcePoolDefIds.Count, "来源池跨节点不消耗");
+            Assert.AreEqual(poolBefore, player.ItemSourcePoolDefIds.Count, "来源池跨节点不消耗");
 
             var second = mReward.BuildNodeDeckOptions(2, null);
             Assert.AreEqual(player.ItemDeckCapacity, second.PlayerCards.Count);
@@ -213,9 +216,9 @@ namespace NineGrid.Core.Tests
             catalog.AddCard(new CardContentDefinition("help.pool_a", "池A", CardKind.HelpCard).InDeck("deck.help"));
             catalog.AddCard(new CardContentDefinition("help.pool_b", "池B", CardKind.HelpCard).InDeck("deck.help"));
             catalog.AddCard(new CardContentDefinition("help.warrior_only", "战士专属", CardKind.HelpCard).InDeck("deck.player"));
-            catalog.AddCard(new CardContentDefinition("help.fixed_card", "固定", CardKind.HelpCard).InDeck("deck.help"));
-            catalog.AddCard(new CardContentDefinition("help.carry_a", "携带A", CardKind.HelpCard).InDeck("deck.help"));
-            catalog.AddCard(new CardContentDefinition("help.carry_b", "携带B", CardKind.HelpCard).InDeck("deck.help"));
+            catalog.AddCard(new CardContentDefinition("help.fixed_card", "固定", CardKind.HelpCard));
+            catalog.AddCard(new CardContentDefinition("help.carry_a", "携带A", CardKind.HelpCard));
+            catalog.AddCard(new CardContentDefinition("help.carry_b", "携带B", CardKind.HelpCard));
             catalog.AddCard(new CardContentDefinition("help.settle_gold", "结算", CardKind.HelpCard));
             catalog.AddCard(new CardContentDefinition("monster.test", "测试怪", CardKind.Monster));
             catalog.AddCard(new CardContentDefinition("monster.theme_a1", "怪1", CardKind.Monster)

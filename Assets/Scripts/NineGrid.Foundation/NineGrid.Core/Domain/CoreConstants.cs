@@ -19,7 +19,7 @@ namespace NineGrid.Core
         /// <see cref="EffectCounterPrefix"/> 隔离；仅已 Register 的键在背面向敌方报名时 Tick。
         /// </summary>
         public const string FaceDownTickPrefix = "faceDownTick.";
-        /// <summary>实例来自玩家侧 run 卡组（节点末可回库；局内掉落不带此标记）。</summary>
+        /// <summary>实例来自本关玩家侧装填（开局生成 / 注入）；清关时与其它帮助卡一并结算移除。</summary>
         public const string PlayerSideDeck = "playerSideDeck";
     }
 }

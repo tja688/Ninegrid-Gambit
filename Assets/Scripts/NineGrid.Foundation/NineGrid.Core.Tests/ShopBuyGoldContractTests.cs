@@ -68,7 +68,7 @@ namespace NineGrid.Core.Tests
             }
 
             Assert.IsTrue(sawSpend, "EventLog 应有商店扣金 GoldModified");
-            Assert.IsTrue(HasCardInPlayerSideDeck(ShopItemDefId), "购买后应写入玩家侧 run 卡组");
+            Assert.IsTrue(HasCardInCarryPack(ShopItemDefId), "购买后应写入携带卡包");
         }
 
         [Test]
@@ -128,7 +128,7 @@ namespace NineGrid.Core.Tests
             var player = mArch.GetModel<PlayerModel>();
             player.AddCoins(100);
             Assert.IsTrue(mPhase.SelectReward(0).Accepted);
-            Assert.GreaterOrEqual(player.CountHelpCardsByDefId(ShopItemDefId), 1);
+            Assert.GreaterOrEqual(player.CountCarryPackByDefId(ShopItemDefId), 1);
             Assert.AreEqual(GamePhase.NodeCompleted, mPhase.CurrentPhase);
 
             var options = mArch.GetSystem<IRewardSystem>().BuildNodeDeckOptions(1, null);
@@ -137,11 +137,12 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(mPhase.StartNode(options).Accepted);
             Assert.AreEqual(GamePhase.InteractionLoop, mPhase.CurrentPhase);
             Assert.IsTrue(HasHelpCardInBattleDeck(ShopItemDefId), "商店购买卡下一节点应可见");
+            Assert.AreEqual(0, player.CarryPackDefIds.Count, "携带卡包开局倒空");
         }
 
-        private bool HasCardInPlayerSideDeck(string defId)
+        private bool HasCardInCarryPack(string defId)
         {
-            return mArch.GetModel<PlayerModel>().CountHelpCardsByDefId(defId) > 0;
+            return mArch.GetModel<PlayerModel>().CountCarryPackByDefId(defId) > 0;
         }
 
         private bool HasHelpCardInBattleDeck(string defId)

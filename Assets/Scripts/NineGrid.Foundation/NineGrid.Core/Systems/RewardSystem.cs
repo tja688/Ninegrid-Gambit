@@ -419,7 +419,11 @@ namespace NineGrid.Core.Systems
             IContentSystem content,
             NodeDeckOptions options)
         {
-            // ADR-0022：房间开局注入在 T12 生效；此处保留生成顺序槽位。
+            // ADR-0022：房间开局注入在 T12/#95 生效；此处保留生成顺序槽位。
+            if (catalog == null || content == null || options == null)
+            {
+                return;
+            }
         }
 
         private static void TryAddPlayerCard(

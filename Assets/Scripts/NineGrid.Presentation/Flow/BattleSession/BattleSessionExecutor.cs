@@ -334,7 +334,10 @@ namespace NineGrid.Flow
         private sealed class RunInventorySnapshot
         {
             public string[] RelicDefIds;
-            public HelpCardStackEntry[] HelpCardStacks;
+            public int ItemDeckCapacity;
+            public string[] ItemSourcePoolDefIds;
+            public string[] FixedItemCardDefIds;
+            public string[] CarryPackDefIds;
             public int Coins;
             public int InteractionCount;
             public string ProfessionId;
@@ -353,11 +356,16 @@ namespace NineGrid.Flow
             var player = arch.GetModel<PlayerModel>();
             var run = arch.GetModel<RunModel>();
             var relics = player.RelicDefIds;
-            var helps = player.HelpCardStacks;
+            var sourcePool = player.ItemSourcePoolDefIds;
+            var fixedCards = player.FixedItemCardDefIds;
+            var carry = player.CarryPackDefIds;
             var snapshot = new RunInventorySnapshot
             {
                 RelicDefIds = new string[relics.Count],
-                HelpCardStacks = new HelpCardStackEntry[helps.Count],
+                ItemDeckCapacity = player.ItemDeckCapacity,
+                ItemSourcePoolDefIds = new string[sourcePool.Count],
+                FixedItemCardDefIds = new string[fixedCards.Count],
+                CarryPackDefIds = new string[carry.Count],
                 Coins = player.Coins.Value,
                 InteractionCount = player.InteractionCount.Value,
                 ProfessionId = player.ProfessionId.Value ?? string.Empty,
@@ -370,9 +378,19 @@ namespace NineGrid.Flow
                 snapshot.RelicDefIds[i] = relics[i];
             }
 
-            for (var i = 0; i < helps.Count; i++)
+            for (var i = 0; i < sourcePool.Count; i++)
             {
-                snapshot.HelpCardStacks[i] = helps[i];
+                snapshot.ItemSourcePoolDefIds[i] = sourcePool[i];
+            }
+
+            for (var i = 0; i < fixedCards.Count; i++)
+            {
+                snapshot.FixedItemCardDefIds[i] = fixedCards[i];
+            }
+
+            for (var i = 0; i < carry.Count; i++)
+            {
+                snapshot.CarryPackDefIds[i] = carry[i];
             }
 
             return snapshot;
@@ -396,6 +414,10 @@ namespace NineGrid.Flow
 
             player.AddCoins(inventory.Coins - player.Coins.Value);
             player.AddInteractionCount(inventory.InteractionCount - player.InteractionCount.Value);
+            player.SetItemDeckCapacity(inventory.ItemDeckCapacity);
+            player.ReplaceItemSourcePool(inventory.ItemSourcePoolDefIds);
+            player.ReplaceFixedItemCards(inventory.FixedItemCardDefIds);
+            player.ReplaceCarryPack(inventory.CarryPackDefIds);
 
             if (inventory.RelicDefIds != null)
             {
@@ -419,20 +441,6 @@ namespace NineGrid.Flow
                     {
                         content?.ActivateRelic(defId);
                     }
-                }
-            }
-
-            if (inventory.HelpCardStacks != null)
-            {
-                for (var i = 0; i < inventory.HelpCardStacks.Length; i++)
-                {
-                    var stack = inventory.HelpCardStacks[i];
-                    if (string.IsNullOrEmpty(stack.DefId) || stack.Count <= 0)
-                    {
-                        continue;
-                    }
-
-                    player.AddHelpCard(stack.DefId, stack.Count);
                 }
             }
 
