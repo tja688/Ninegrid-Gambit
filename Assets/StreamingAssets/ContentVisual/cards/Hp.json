@@ -3,10 +3,12 @@
     "contentId": "Hp",
     "kind": "ChoiceOption",
     "deckId": "",
+    "role": "StatBoost",
     "displayName": "血量+2",
-    "description": "永久获得2点血量上限",
+    "description": "永久+2血量上限",
     "faceIntro": "",
-    "gold": 50,
+    "attackPattern": "",
+    "gold": 0,
     "stats": {
         "hp": 0,
         "armor": 0,
@@ -15,7 +17,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_0",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -70,7 +72,10 @@
     },
     "extraSlots": [],
     "rarity": "",
-    "tags": [],
+    "tags": [
+        "statBoost"
+    ],
+    "effectAssemblies": [],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -86,7 +91,5 @@
     "healToFull": false,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "iconPrefab": "",
-    "effectAssemblies": [],
-    "role": ""
+    "iconPrefab": ""
 }

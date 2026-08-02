@@ -5,7 +5,7 @@
     "deckId": "",
     "role": "",
     "displayName": "道具卡固定",
-    "description": "花费50金币，固定生成一张选定的道具卡",
+    "description": "固定生成一张选定的道具卡",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 50,

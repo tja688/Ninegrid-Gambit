@@ -72,6 +72,35 @@ namespace NineGrid.Presentation.Tests.Cards
             Assert.AreEqual(
                 CardChassisPaths.RoomIconTavern,
                 CardChassisPaths.ResolveRoomIconPrefab("Tavern", null));
+            Assert.AreEqual(
+                CardChassisPaths.RoomIconLeave,
+                CardChassisPaths.ResolveRoomIconPrefab("Leave", null));
+            Assert.AreEqual(
+                CardChassisPaths.RoomIconGoUp,
+                CardChassisPaths.ResolveRoomIconPrefab("GoUp", null));
+            Assert.AreEqual(
+                CardChassisPaths.RoomIconGoDown,
+                CardChassisPaths.ResolveRoomIconPrefab("GoDown", null));
+        }
+
+        [Test]
+        public void NavigationIcons_AreRoomKind_NotChoiceOption()
+        {
+            foreach (var id in new[] { "Leave", "GoUp", "GoDown" })
+            {
+                var path = CardPresentationJsonIO.GetAuthoringAbsolutePath(id);
+                Assert.IsTrue(System.IO.File.Exists(path), id);
+                Assert.IsTrue(
+                    CardPresentationJsonIO.TryLoad(path, out var dto, out var err),
+                    err);
+                Assert.AreEqual("Room", dto.kind, id);
+                Assert.IsFalse(string.IsNullOrWhiteSpace(dto.iconPrefab), id);
+            }
+
+            Assert.IsFalse(
+                System.IO.File.Exists(CardPresentationJsonIO.GetAuthoringAbsolutePath("HealFull")));
+            Assert.IsFalse(
+                System.IO.File.Exists(CardPresentationJsonIO.GetAuthoringAbsolutePath("GainGold")));
         }
 
         [Test]

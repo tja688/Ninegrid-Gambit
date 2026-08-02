@@ -3,12 +3,12 @@
     "contentId": "Armor",
     "kind": "ChoiceOption",
     "deckId": "",
-    "role": "",
+    "role": "StatBoost",
     "displayName": "护甲+1",
-    "description": "永久获得1点护甲",
+    "description": "永久+1护甲",
     "faceIntro": "",
     "attackPattern": "",
-    "gold": 50,
+    "gold": 0,
     "stats": {
         "hp": 0,
         "armor": 0,
@@ -72,7 +72,9 @@
     },
     "extraSlots": [],
     "rarity": "",
-    "tags": [],
+    "tags": [
+        "statBoost"
+    ],
     "effectAssemblies": [],
     "effectIds": [],
     "skillIds": [],

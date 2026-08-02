@@ -3,9 +3,11 @@
     "contentId": "RefreshShop",
     "kind": "ChoiceOption",
     "deckId": "",
+    "role": "",
     "displayName": "刷新货物",
-    "description": "花费金币刷新商店/卡店货物，每次翻倍",
+    "description": "刷新商店/卡店货物，每次适用开销翻倍",
     "faceIntro": "",
+    "attackPattern": "",
     "gold": 10,
     "stats": {
         "hp": 0,
@@ -15,7 +17,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_38",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -71,6 +73,7 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
+    "effectAssemblies": [],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -86,7 +89,5 @@
     "healToFull": false,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "iconPrefab": "",
-    "effectAssemblies": [],
-    "role": ""
+    "iconPrefab": ""
 }

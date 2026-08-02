@@ -17,15 +17,19 @@ namespace NineGrid.Cards
     {
         private const float InputRootAlignEpsilonSqr = 0.01f;
         private const int TypePriority = 30;
+        /// <summary>跳格时 Avatar 让位给空槽代理（TypePriority 10），避免卡面 collider 吞邻格点击。</summary>
+        private const int AvatarWalkPassthroughTypePriority = 0;
 
         private BoxCollider2D _collider;
         private CardVisualDriver _driver;
 
         public Collider2D HitCollider => _collider != null ? _collider : (_collider = GetComponent<BoxCollider2D>());
 
-        public int HitSortOrder => ResolveHitSortOrder();
+        public int HitSortOrder =>
+            IsAvatarWalkPassthrough() ? int.MinValue : ResolveHitSortOrder();
 
-        public int HitTypePriority => TypePriority;
+        public int HitTypePriority =>
+            IsAvatarWalkPassthrough() ? AvatarWalkPassthroughTypePriority : TypePriority;
 
         private void Awake()
         {
@@ -137,6 +141,18 @@ namespace NineGrid.Cards
             RecordPickupEligibility(card, canRespond: true);
             // 道具卡 / 帮助卡等：场地仅允许点击入手，禁止拖拽
             CardEntityLifecycleHook.HandOrNull()?.TryPickupFromGround(card);
+        }
+
+        private bool IsAvatarWalkPassthrough()
+        {
+            if (!BoardWalkSlotHitPolicy.IsWalkEnabledNow())
+            {
+                return false;
+            }
+
+            _driver ??= GetComponent<CardVisualDriver>();
+            var card = _driver != null ? _driver.BoundCard : null;
+            return card != null && card.CoreKind == CardPresentationKind.Avatar;
         }
 
         private int ResolveHitSortOrder()

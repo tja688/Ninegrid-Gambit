@@ -127,9 +127,9 @@
 
 | 类 | `kind` | 形态 | 壳 / 预制体 | Catalog 投影 |
 |----|--------|------|-------------|--------------|
-| **A. 房间图标** | `Room` | 战后落九宫格的下一步图标（走上去即选房；接线后续） | `iconPrefab` 或 `CardChassisPaths.ResolveRoomIconPrefab` | 投影 `RoomDefinition`（`contentId`≡`RoomKind`） |
-| **B. 特殊选项卡** | `ChoiceOption` | 进房后就地点选生效（回血/给钱/卡店服务/离开等） | `房间选项标准模板.prefab` | **不**进玩法 Catalog |
-| **C. 复用真卡** | `HelpCard` 等 | 商店 6 格货架商品 | 既有道具卡模版 | 照常投影 |
+| **A. 场地图标** | `Room` | 下一步房间 **或** 导航（离开/上楼/下楼）：落九宫格，走到即触发 | `iconPrefab` 或 `CardChassisPaths.ResolveRoomIconPrefab` | 仅 `contentId`≡合法 `RoomKind` 时投影 `RoomDefinition`；`Leave`/`GoUp`/`GoDown` 为导航图标，**不**进 Catalog |
+| **B. 特殊选项卡** | `ChoiceOption` | 进房后就地点选生效（主要是**卡店服务**；另含局内属性三选一 UI） | `房间选项标准模板.prefab` | **不**进玩法 Catalog |
+| **C. 复用真卡** | `HelpCard` 等 | 商店货架 / 战斗房开局塞进卡组的道具与宝箱等 | 既有道具卡模版 | 照常投影 |
 
 ### Avatar 跳格（已落地 · ADR-0019）
 
@@ -137,6 +137,8 @@
 - Core：`MoveAvatar`（单邻格）+ `AvatarWalkPathfinder`（正交 BFS，空格途经/终点）；相位仅 `RoomChoice` / `RoomEvent`
 - 表现：`HopAvatarToSlotAsync` 复用旋转 hop；半空改目标等落地后重规划
 - `\0` QuickTest：`WalkSandbox` → `StartWalkSandboxNode` 空盘 + 开跳格门禁；拒 Explore/Attack/Pickup/Reveal
+- 空槽 Hit：跳格开启时任意空格可点（`BoardWalkSlotHitPolicy`，含角格与离场后的格5）；关闭时仍仅中心正交邻格（Explore）
+- Avatar 朝向：`AvatarBoardFacingController` 按卡面图标当前世界 X 相对指针，不锁死格5
 - **战斗 `InteractionLoop` 禁走**；开战前 Avatar 须回格 5（交战表现仍有格 5 假设）
 
 ### 设计房间名 ↔ `RoomKind`（现状）
@@ -152,12 +154,24 @@
 | 商店 | `Shop` | `商店图标` | 货架复用 HelpCard |
 | 卡店 | `Tavern`（显示名「卡店」） | `酒馆图标` | contentId 保持枚举稳定 |
 | 事件占位 | `Event` | `属性提升图标`（暂） | |
+| 离开 | `Leave`（非 `RoomKind`） | `离开图标` | 导航图标；走上去触发；不进 Catalog |
+| 上楼 | `GoUp` | `上楼图标` | 同上 |
+| 下楼 | `GoDown` | `下楼图标` | 同上 |
 
 **缺口（本轮不扩枚举）**：策划「属性房 / 宝箱奖励房 / 道具奖励房」尚无独立 `RoomKind`；后续流程接线票再扩 Core 与发牌。
 
-特殊选项卡种子（`ChoiceOption`）：`Attack`/`Armor`/`Hp`（已有）、`HealFull`/`GainGold`/`UpgradeItemStats`/`FixItem`/`ExpandItemCapacity`/`RefreshShop`/`Leave`/`GoUp`/`GoDown`。
+**勿与选项卡混淆（设计案对照）**
 
-当前局内仍走浮层二选一（`RoomChoicePresenter`）与扇形（`BounceFanChoicePresenter`）；**场地走格子选图标 / 点选项卡生效**仍后续；**纯跳格移动**已由 ADR-0019 / `\0` 沙盒落地。
+| 表象 | 设计案实际 | 配置落点 |
+|------|------------|----------|
+| 「回满血」 | **恢复房**开局塞 **食品卡**（HelpCard）；非就地选项卡 | 不建 `HealFull` ChoiceOption |
+| 「血量+2 / 攻击+1 / 护甲+1」 | **属性房**开局从 **血量卡/加攻卡/加甲卡** 中抽进卡组；永久属性点选是局内 BounceFan 的 `Attack`/`Armor`/`Hp`（旧属性三选一 UI） | HelpCard 真卡 + 可选留存的 ChoiceOption 三选一 |
+| 「给钱」 | **金币房**开局塞 **金币卡** | HelpCard，不建 `GainGold` ChoiceOption |
+| 卡店三项 + 刷新 | 策划消费房明文服务 | `UpgradeItemStats` / `FixItem` / `ExpandItemCapacity` / `RefreshShop` |
+
+特殊选项卡种子（`ChoiceOption`）：卡店服务 `UpgradeItemStats`/`FixItem`/`ExpandItemCapacity`/`RefreshShop`；局内属性三选一 UI `Attack`/`Armor`/`Hp`（非房间入口图标）。
+
+当前局内仍走浮层二选一（`RoomChoicePresenter`）与扇形（`BounceFanChoicePresenter`）；**场地走格子选房间/导航图标 / 点卡店选项卡生效**仍后续；**纯跳格移动**已由 ADR-0019 / `\0` 沙盒落地。
 
 ## ADR 不变量（摘要）
 

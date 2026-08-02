@@ -195,6 +195,11 @@ namespace NineGrid.Flow.Presentation
             {
                 mRunner?.Cancel();
             }
+
+            // 跳格开/关切换 Hit 策略：任意空格 ↔ 中心正交邻格。
+            var geometry = this.GetSystem<IGroundFieldGeometrySystem>()
+                           ?? NineGridArchitecture.Interface?.GetSystem<IGroundFieldGeometrySystem>();
+            geometry?.RefreshSlotHitColliders();
         }
 
         public void SetDestination(int groundSlot)

@@ -5,7 +5,7 @@
     "deckId": "",
     "role": "",
     "displayName": "道具数值强化",
-    "description": "花费50金币，提升所有道具卡数值3点",
+    "description": "提升所有道具卡数值3点",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 50,

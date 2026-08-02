@@ -153,18 +153,21 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var enabled = _index.IsEmpty(slot)
-                          && !GroundSlotTopology.IsAvatarReserved(slot)
-                          && GroundSlotTopology.AreOrthogonal(slot, GroundSlotTopology.AvatarReservedSlot);
+            var enabled = BoardWalkSlotHitPolicy.ShouldEnableEmptySlotHit(
+                _index.IsEmpty(slot),
+                slot,
+                BoardWalkSlotHitPolicy.IsWalkEnabledNow());
             _view.RefreshSlotHit(slot, enabled);
         }
 
         private void RefreshAllSlotHitColliders()
         {
+            var walkEnabled = BoardWalkSlotHitPolicy.IsWalkEnabledNow();
             _view?.RefreshAllSlotHits(slot =>
-                _index.IsEmpty(slot)
-                && !GroundSlotTopology.IsAvatarReserved(slot)
-                && GroundSlotTopology.AreOrthogonal(slot, GroundSlotTopology.AvatarReservedSlot));
+                BoardWalkSlotHitPolicy.ShouldEnableEmptySlotHit(
+                    _index.IsEmpty(slot),
+                    slot,
+                    walkEnabled));
         }
 
         public void RefreshSlotHitColliders()

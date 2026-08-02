@@ -5,7 +5,7 @@
     "deckId": "",
     "role": "",
     "displayName": "道具卡扩容",
-    "description": "花费50金币，提高1点玩家侧卡组容量",
+    "description": "提高1点玩家侧卡组容量",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 50,

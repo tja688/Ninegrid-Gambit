@@ -1,10 +1,10 @@
 {
     "schemaVersion": 2,
     "contentId": "Leave",
-    "kind": "ChoiceOption",
+    "kind": "Room",
     "deckId": "",
     "displayName": "离开",
-    "description": "离开当前房间选项",
+    "description": "场地导航图标：踏上即离开当前房/选项上下文",
     "faceIntro": "",
     "gold": 0,
     "stats": {
@@ -70,7 +70,9 @@
     },
     "extraSlots": [],
     "rarity": "",
-    "tags": [],
+    "tags": [
+        "nav"
+    ],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -86,7 +88,7 @@
     "healToFull": false,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "iconPrefab": "",
+    "iconPrefab": "Assets/Prefabs/离开图标.prefab",
     "effectAssemblies": [],
-    "role": ""
+    "role": "Navigation"
 }

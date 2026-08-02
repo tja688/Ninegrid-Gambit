@@ -76,9 +76,12 @@ namespace NineGrid.Cards
             ResolveSceneReferences();
             CacheAnchors();
             EnsureHitProxies();
+            // Awake 时尚无走格门禁；默认按战斗 Explore（中心正交邻格）。开跳格后由 Geometry 全量刷新。
             RefreshAllSlotHits(slot =>
-                !GroundSlotTopology.IsAvatarReserved(slot)
-                && GroundSlotTopology.AreOrthogonal(slot, GroundSlotTopology.AvatarReservedSlot));
+                BoardWalkSlotHitPolicy.ShouldEnableEmptySlotHit(
+                    isEmpty: true,
+                    slot,
+                    walkEnabled: false));
             ResolveSkeletonDeckPresentation();
             GroundFieldGeometryHook.RequestWire(this);
             ExploreInputHook.RequestWire(this);

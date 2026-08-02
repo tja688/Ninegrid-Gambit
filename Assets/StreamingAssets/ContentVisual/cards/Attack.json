@@ -3,12 +3,12 @@
     "contentId": "Attack",
     "kind": "ChoiceOption",
     "deckId": "",
-    "role": "",
+    "role": "StatBoost",
     "displayName": "攻击+1",
-    "description": "永久获得1点攻击",
+    "description": "永久+1攻击",
     "faceIntro": "",
     "attackPattern": "",
-    "gold": 50,
+    "gold": 0,
     "stats": {
         "hp": 0,
         "armor": 0,
@@ -72,7 +72,9 @@
     },
     "extraSlots": [],
     "rarity": "",
-    "tags": [],
+    "tags": [
+        "statBoost"
+    ],
     "effectAssemblies": [],
     "effectIds": [],
     "skillIds": [],

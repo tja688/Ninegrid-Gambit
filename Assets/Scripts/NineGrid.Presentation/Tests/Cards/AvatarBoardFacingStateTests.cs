@@ -20,6 +20,18 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void ResolveFromPointerX_UsesAvatarWorldX_NotFixedOrigin()
+        {
+            // Avatar 已跳到右侧（世界 x=3）：指针在其左侧但仍在盘面正 x，应朝左。
+            Assert.AreEqual(
+                AvatarBoardFacing.Left,
+                AvatarBoardFacingState.ResolveFromPointerX(pointerX: 2f, avatarCenterX: 3f));
+            Assert.AreEqual(
+                AvatarBoardFacing.Right,
+                AvatarBoardFacingState.ResolveFromPointerX(pointerX: 4f, avatarCenterX: 3f));
+        }
+
+        [Test]
         public void ResolveFromPointerX_RightOfAvatar_IsRight()
         {
             Assert.AreEqual(

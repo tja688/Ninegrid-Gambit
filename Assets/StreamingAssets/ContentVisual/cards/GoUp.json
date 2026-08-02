@@ -1,10 +1,10 @@
 {
     "schemaVersion": 2,
     "contentId": "GoUp",
-    "kind": "ChoiceOption",
+    "kind": "Room",
     "deckId": "",
     "displayName": "上楼",
-    "description": "前往上一层",
+    "description": "场地导航图标：踏上前往上一层",
     "faceIntro": "",
     "gold": 0,
     "stats": {
@@ -70,7 +70,9 @@
     },
     "extraSlots": [],
     "rarity": "",
-    "tags": [],
+    "tags": [
+        "nav"
+    ],
     "effectIds": [],
     "skillIds": [],
     "level": 0,
@@ -86,7 +88,7 @@
     "healToFull": false,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "iconPrefab": "",
+    "iconPrefab": "Assets/Prefabs/上楼图标.prefab",
     "effectAssemblies": [],
-    "role": ""
+    "role": "Navigation"
 }
