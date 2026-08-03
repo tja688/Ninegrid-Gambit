@@ -45,6 +45,7 @@ namespace NineGrid.Presentation.Tests
         {
             var files = new[]
             {
+                Path.Combine("Cards", "GroundCardHitProxy.cs"),
                 Path.Combine("Flow", "BoardBriefTip", "BoardBriefTipHitProxy.cs"),
                 Path.Combine("Flow", "ShopBoard", "ShopBoardHitProxy.cs"),
                 Path.Combine("Flow", "TavernBoard", "TavernBoardHitProxy.cs"),
@@ -66,6 +67,15 @@ namespace NineGrid.Presentation.Tests
                 Assert.IsFalse(
                     Regex.IsMatch(text, @"Vector2\?\s*colliderSize"),
                     relative + " 不得再接受 hitBox / colliderSize 传参");
+                Assert.IsFalse(
+                    Regex.IsMatch(text, @"AddComponent\s*<\s*\w*Collider2D\s*>"),
+                    relative + " 落格对象不得自建 Collider2D 作命中区");
+                Assert.IsFalse(
+                    Regex.IsMatch(text, @"AddComponent\s*\(\s*typeof\s*\(\s*\w*Collider2D\s*\)"),
+                    relative + " 落格对象不得 AddComponent(typeof(*Collider2D))");
+                Assert.IsFalse(
+                    Regex.IsMatch(text, @"RequireComponent\s*\(\s*typeof\s*\(\s*\w*Collider2D\s*\)"),
+                    relative + " 落格对象不得 RequireComponent Collider2D");
             }
         }
 

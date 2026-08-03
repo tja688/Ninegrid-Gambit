@@ -15,30 +15,29 @@
 | `BattleSession/` | 局内会话；**NodeSettlementReadiness**（#83 / ADR-0021：清关 RoomChoice 须唤醒主循环）；**ForceNodeVictoryStructuralTests**（跳过战斗不得再 Offer help.choice） |
 | `Output/` | 描述 / 伤害等输出 |
 | `Cards/` | 卡面 Commit、牌库闸、飞行排序、致死表现回归；**CardDisplayModeVisualsTests**（#104：mode 倍率相对预制体基准且可还原）；**DealFlightRemoveCancelContractTests**（同批 Deal→Remove 须取消飞牌，防 choreo 泄漏 / Pickup Buffered）；表现层配置器条目门槛（Skill 不进窗口、HelpCard/Item 保留）+ **空装配清 effectIds / 挂装配投影 / 效果分类标注（道具/遗物/怪物技能/机关技能）/ 同类多载过滤 / skillIds→assemblies 展开**（解耦装配 IA）+ **装配描述自动同步/自定义锁定 / design_text→{param} 参数化** 等；**ContentArt** 路径约定 / Resources 帧加载 / 断链校验（#66）；**JSON→Catalog 投影**（帮助卡/怪物/技能/遗物/牌组/房间）+ 表 JSON（效果模板 + 装配引用，#67–#70、ADR-0008/0009）；**词条/`{param}`/详情合成**（#71）；**右键详述 live 挂载优先**（空白板 JSON + 局内注入技能 / 忽略预设 skillIds）；**Disable Domain Reload 下 Catalog 重绑**；**装配 argsJson 缺占位实参拦截 / 选模板建议实参**；**特效库** `visual_effects.json` 扫描/粘性合并/atlas 帧加载（与 DSL 效果池区分；纯预览阶段） |
-| `Flow/` | Flow 侧遗留/切片；**BoardBriefTipCopy / Session**（#89）；**BoardPlacementStructuralTests**（#104 / ADR-0024：无 Fit / 无 GroundAnchors parent / 无 `slotHitBoxSize`）；**ShopBoardSlotResolver**（#92）；**TavernBoardSlotResolver**（#93）；**RewardBoardSlotResolver**（#94）；**InRoomLeaveWatchStructuralTests**（离开监视 Active 顺序 / 扣金 HUD / SoftBlockOnly） |
+| `Flow/` | Flow 侧遗留/切片；**BoardBriefTipCopy / Session**（#89）；**BoardPlacementStructuralTests**（#104+#105 / ADR-0024：生产全集禁 Fit / 禁 parent 到 GroundAnchors / 落格路径禁写 `localScale` / 无 `slotHitBoxSize`）；**ShopBoardSlotResolver**（#92）；**TavernBoardSlotResolver**（#93）；**RewardBoardSlotResolver**（#94）；**InRoomLeaveWatchStructuralTests**（离开监视 Active 顺序 / 扣金 HUD / SoftBlockOnly；选项与真卡均预制体尺度、禁 Fit） |
 | `Fixtures/` | EditMode 夹具 |
 | `HostContractStructuralTests.cs` | 结构护栏：禁四大旧宿主名、禁 `CombatHitSink`、禁回流 `new PresentationDirector`、System 不暴露具体 View |
 | `RoomChoiceRetirementStructuralTests.cs` | 结构护栏（#90）：无 `RoomChoicePresenter`；`IGameFlowView`/`SelectorManager`/`UiPanelRouter` 无房间浮层 API；无属性三选一 Bounce 入口；BounceFan 仍在 |
 | `InRoomBoardWiringStructuralTests.cs` | 结构护栏：`PlayRoomIconChoiceAsync` 进消费/特殊房后须调用 `PresentInRoomSessionAfterEnterAsync`；无独立 `PlayRoomEventAsync` 二次 Enter |
 | `WalkSandboxRetirementStructuralTests.cs` | 结构护栏（#91）：无 `WalkSandbox`/`StartWalkSandboxNode`；`\0` 流程测试通道（空技能/Sequential） |
 | `IntentIntakeStructuralTests.cs` | 结构护栏（#52）：输入路径须经 IntentIntake（含 RevealFace）；门禁/收口决策禁用壁钟；ADR-0004 accepted |
-| `PointerInputStructuralTests.cs` / `PointerHitRouterTests.cs` / `GroundFieldHitSurfaceTests.cs` / `PointerHitSurfacePriorityTests.cs` / `SlotClaimRegistryTests.cs` / `SlotClaimStructuralTests.cs` / `WildPickPathStructuralTests.cs` | ADR-0006 / #101–#103：禁 HitProxy `OnMouse*`；场地面解格号；停写格位 size/offset；表面优先级互异与同分装配错误；一格一认领；禁 `BoardWalkSlotHitPolicy` / Avatar `int.MinValue` / 落格自建 collider 回流；禁手牌 `OverlapPointAll` / `TryPickCollider` / HUD z=0 换算 / legacy `OnMouse*`；mitigation 标记 |
+| `PointerInputStructuralTests.cs` / `PointerHitRouterTests.cs` / `GroundFieldHitSurfaceTests.cs` / `PointerHitSurfacePriorityTests.cs` / `SlotClaimRegistryTests.cs` / `SlotClaimStructuralTests.cs` / `WildPickPathStructuralTests.cs` | ADR-0006 / ADR-0023 / #101–#103+#105：禁 HitProxy `OnMouse*`；场地面解格号；停写格位 size/offset；表面优先级互异与同分装配错误；一格一认领；禁 `BoardWalkSlotHitPolicy` / Avatar `int.MinValue` / 落格自建 collider 回流；禁手牌 `OverlapPointAll` / `TryPickCollider` / HUD z=0 换算 / legacy `OnMouse*`；mitigation 标记 |
 | `CardFaceBeatStructuralTests.cs` | 结构护栏（#55–#62）：禁石头爱好者卡面提前同步；攻击/反击命中帧须报 Impact 且不得 Sync/SpawnDamagePopups；PresentStep 通道前 FlushUpdateFaceUp、Idle 门控、ack 前 FlushBeats；战斗 Present `flushFaceUpBeforeBegin: false`；Handler 禁 Forget PlayFlipAsync、须 Enqueue Coordinator；用道具 Present 禁 CommitAllSpawnedCards、须 Vacate 前报 Impact；探索/用道具批次投影禁写卡面数值；禁 JSON stats 盖写；首次 ApplyToManagedCard 禁 TryRead；Handler 消费 Spawn/Deal/Avatar/OfferReward；Bounce 禁 `clearCombatStats` 数值旁路；CommitPresentation 生产调用方白名单（含 `CardFaceFlipBeatHandler`）；MarkFieldDead 禁直置零；ApplyKill 取 RemainingHp；底盘数值 Setter 非公开；禁 `PresentEffectTriggersFromEventLog` / `SpawnDamagePopups` / `PresentGoldGainsFromEventLog`；组合根注册飘字/FX/金币/Avatar HUD/翻牌朝向处理器并接线 FlushUpdateFaceUp；排期器禁 SyncFromCore；ADR-0005/0007 交叉引用；排期器多 `IBattleBeatHandler` |
 | `FlipPlaybackCoordinatorTests.cs` | ADR-0016：串行入队不丢翻；PresentStep FaceUp 未 Idle 前不 Begin；战斗延后 FaceUp 不前置 Flush；FlushUpdateFaceUp 只消费 FaceUp |
 
-### 待新增护栏（ADR-0024，随 #105 落地）
+### ADR-0023 / ADR-0024 结构护栏（#101–#105 已落地）
 
-#104 已退役 `RoomIconVisualFit` / `slotHitBoxSize`，并用 `BoardPlacementStructuralTests` + `CardDisplayModeVisualsTests` 护住 Presenter 源码与相对倍率；#105 补全集结构护栏（扫描生产代码禁 parent 到 `GroundAnchors`、禁运行时写 `localScale` 绝对值）。
-
-| 计划护栏 | 保护什么 |
-|----------|----------|
-| 落格 collider 护栏 | 落格对象不得自建 `Collider2D` 作命中区（ADR-0023 / #102，`SlotClaimStructuralTests`）；运行时不得写格位命中框 `size` / `offset`（#101） |
-| 认领唯一性 | 一格一认领者；重复认领失败保留先到；Avatar 与运动中对象不认领（`SlotClaimRegistryTests` / #102） |
-| 表面优先级 | **已落地（#101）**：`PointerHitSurfacePriorities` 互异；Router 同分 Error；`PointerHitSurfacePriorityTests` |
-| 命中恒成功 | **已落地（#102）**：无「按规则禁用命中框」路径；`BoardWalkSlotHitPolicy` / 软占关 collider / `int.MinValue` 穿透不得回流（`SlotClaimStructuralTests`） |
-| 野生拾取路径 | **已落地（#103）**：无 `TryPickCollider` z=0 拾取、无 legacy `OnMouse*`、HUD / 主菜单走平面 Overlap（`WildPickPathStructuralTests`） |
-| 落格父级 | **部分落地（#104）**：Presenter 源码护栏；#105 扩至生产代码全集 |
-| 运行时缩放 | **部分落地（#104）**：无 `RoomIconVisualFit` 回流 + 相对倍率测试；#105 扩至禁写 `localScale` 绝对值 |
+| 护栏 | 测试 | 保护什么 |
+|------|------|----------|
+| 落格 collider | `SlotClaimStructuralTests` | 落格对象不得自建 `Collider2D` / `EnsureCollider`；不得再注册 Router |
+| 格位框 size/offset | `PointerInputStructuralTests` | 运行时不得写格位命中框 `size` / `offset`；无 `slotHitBoxSize` 覆盖 |
+| 认领唯一性 | `SlotClaimRegistryTests` | 一格一认领；冲突保留先到；成对登记/注销 |
+| 表面优先级 | `PointerHitSurfacePriorityTests` | `PointerHitSurfacePriorities` 互异；Router 同分 Error |
+| 命中恒成功 | `SlotClaimStructuralTests` | 无 `BoardWalkSlotHitPolicy` / 软占关框 / Avatar `int.MinValue` 穿透回流 |
+| 野生拾取路径 | `WildPickPathStructuralTests` | 无 `TryPickCollider` z=0、无 legacy `OnMouse*`；HUD / 主菜单走平面 Overlap |
+| 落格父级 | `BoardPlacementStructuralTests` | 生产全集禁 parent 到 `GroundAnchors`；Presenter 禁 `Instantiate(prefab, parent\|anchor)` |
+| 运行时缩放 | `BoardPlacementStructuralTests` + `CardDisplayModeVisualsTests` + `InRoomLeaveWatchStructuralTests` | 禁 Fit API / `slotHitBoxSize`；落格路径禁写 `localScale`；mode 倍率相对预制体基准且可还原；选项与真卡均预制体尺度 |
 
 ### Core 契约护栏（`NineGrid.Core.Tests`）
 

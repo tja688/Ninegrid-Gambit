@@ -277,9 +277,7 @@
 
 ### 收敛方向（ADR-0023 / ADR-0024）
 
-**已落地（#101+#102+#103+#104）**：格位命中框场景权威 + 场地面单一注册 + 表面优先级互异/同分告警 + 一格一认领（`SlotClaimRegistry`）+ 落格对象去 collider/Router + 退役 `BoardWalkSlotHitPolicy` / 软占关框 / Avatar 穿透 + 运行时停写格位 size/offset + 手牌拖拽落点交棒场地面 + 悬停简要解释与点击同源（认领者）+ 退役野生拾取（`TryPickCollider` / legacy `OnMouse*` / HUD 私有 z=0 换算）+ 落格不 SetParent / 删 Fit / 删 `slotHitBoxSize` / 动效相对预制体基准。
-
-**尚未落地（#105）**：结构护栏全集（落格父级 / 运行时缩放回流）。实施拆票见 issue #99。
+**已落地（#101–#105）**：格位命中框场景权威 + 场地面单一注册 + 表面优先级互异/同分告警 + 一格一认领（`SlotClaimRegistry`）+ 落格对象去 collider/Router + 退役 `BoardWalkSlotHitPolicy` / 软占关框 / Avatar 穿透 + 运行时停写格位 size/offset + 手牌拖拽落点交棒场地面 + 悬停简要解释与点击同源（认领者）+ 退役野生拾取（`TryPickCollider` / legacy `OnMouse*` / HUD 私有 z=0 换算）+ 落格不 SetParent / 删 Fit / 删 `slotHitBoxSize` / 动效相对预制体基准 + **结构护栏全集**（生产禁 parent 到 `GroundAnchors`、禁 Fit 回流、落格路径禁写 `localScale`；见 `docs/code-map/tests.md`）。
 ## Core 表演契约与统一表现管线（#54–#62）
 
 - `NineGrid.Core.PresentationBeat`：`Impact` / `Settled` / `None`（**表演消费归属**，非仅卡面；升级路径注释在枚举旁）

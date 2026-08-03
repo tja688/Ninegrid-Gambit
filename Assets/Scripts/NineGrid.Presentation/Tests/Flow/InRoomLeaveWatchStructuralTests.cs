@@ -113,5 +113,95 @@ namespace NineGrid.Presentation.Tests.Flow
                 tavern.IndexOf("RoomIconWalkRole.WalkDestination", StringComparison.Ordinal) >= 0,
                 "卡店离开须 WalkDestination");
         }
+
+        /// <summary>
+        /// 改写自退役的「选项须 Fit / 真卡禁 Fit」断言（#104 删 Fit 后不得静默删除）。
+        /// 新不变量（ADR-0024 / #105）：选项与真卡一律预制体尺寸，禁止 Fit；落格只对齐世界位置。
+        /// </summary>
+        [Test]
+        public void OptionAndShelfSpawns_UsePrefabScale_WithoutFit()
+        {
+            var root = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow"));
+            var shop = File.ReadAllText(Path.Combine(root, "ShopBoard", "ShopBoardPresenter.cs"));
+            var tavern = File.ReadAllText(Path.Combine(root, "TavernBoard", "TavernBoardPresenter.cs"));
+            var reward = File.ReadAllText(Path.Combine(root, "RewardBoard", "RewardBoardPresenter.cs"));
+
+            AssertNoFit(shop, "ShopBoardPresenter");
+            AssertNoFit(tavern, "TavernBoardPresenter");
+            AssertNoFit(reward, "RewardBoardPresenter");
+
+            // 选项（刷新/服务/离开）与真卡货架均走世界对齐，不得再靠 Fit 压尺寸。
+            Assert.IsTrue(
+                shop.IndexOf("BoardSlotWorldPlacement.TryAlignToSlot", StringComparison.Ordinal) >= 0,
+                "商店落格须 BoardSlotWorldPlacement");
+            Assert.IsTrue(
+                tavern.IndexOf("BoardSlotWorldPlacement.TryAlignToSlot", StringComparison.Ordinal) >= 0,
+                "卡店落格须 BoardSlotWorldPlacement");
+            Assert.IsTrue(
+                reward.IndexOf("BoardSlotWorldPlacement.TryAlignToSlot", StringComparison.Ordinal) >= 0,
+                "奖励房落格须 BoardSlotWorldPlacement");
+
+            Assert.IsTrue(
+                Regex.IsMatch(
+                    shop,
+                    @"SpawnPresentationOnly\s*\(\s*entry\.DefId\s*,\s*parent:\s*null",
+                    RegexOptions.CultureInvariant),
+                "商店货架真卡须 parent:null（预制体尺度）");
+            Assert.IsTrue(
+                Regex.IsMatch(
+                    tavern,
+                    @"SpawnPresentationOnly\s*\(\s*entry\.DefId\s*,\s*parent:\s*null",
+                    RegexOptions.CultureInvariant),
+                "卡店候选真卡须 parent:null（预制体尺度）");
+            Assert.IsTrue(
+                Regex.IsMatch(
+                    reward,
+                    @"SpawnPresentationOnly\s*\(\s*entry\.DefId\s*,\s*parent:\s*null",
+                    RegexOptions.CultureInvariant),
+                "奖励房真卡须 parent:null（预制体尺度）");
+
+            // 选项 Spawn（刷新/服务/离开）同样 Instantiate(prefab) 无 parent，再 TryAlignToSlot。
+            Assert.IsTrue(
+                Regex.IsMatch(
+                    shop,
+                    @"Object\.Instantiate\s*\(\s*prefab\s*\)",
+                    RegexOptions.CultureInvariant),
+                "商店选项须 Instantiate(prefab) 无 parent");
+            Assert.IsTrue(
+                Regex.IsMatch(
+                    tavern,
+                    @"Object\.Instantiate\s*\(\s*prefab\s*\)",
+                    RegexOptions.CultureInvariant),
+                "卡店选项须 Instantiate(prefab) 无 parent");
+            Assert.IsTrue(
+                Regex.IsMatch(
+                    reward,
+                    @"Object\.Instantiate\s*\(\s*prefab\s*\)",
+                    RegexOptions.CultureInvariant),
+                "奖励房离开选项须 Instantiate(prefab) 无 parent");
+            Assert.IsFalse(
+                Regex.IsMatch(
+                    shop + "\n" + tavern + "\n" + reward,
+                    @"Object\.Instantiate\s*\(\s*prefab\s*,",
+                    RegexOptions.CultureInvariant),
+                "房内选项/离开不得 Instantiate(prefab, parent|anchor)");
+        }
+
+        private static void AssertNoFit(string text, string label)
+        {
+            Assert.IsFalse(
+                text.IndexOf("FitRoomIcon", StringComparison.Ordinal) >= 0,
+                label + " 不得调用 FitRoomIcon（选项与真卡均禁 Fit）");
+            Assert.IsFalse(
+                text.IndexOf("RoomIconVisualFit", StringComparison.Ordinal) >= 0,
+                label + " 不得引用 RoomIconVisualFit");
+            Assert.IsFalse(
+                text.IndexOf("FitToTarget", StringComparison.Ordinal) >= 0,
+                label + " 不得调用 FitToTarget");
+        }
     }
 }
